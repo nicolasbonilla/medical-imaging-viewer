@@ -41,7 +41,7 @@ steps:
           --port 8080 \
           --cpu-boost \
           --no-cpu-throttling \
-          --set-env-vars ENVIRONMENT=production,REDIS_HOST=127.0.0.1
+          --set-env-vars ENVIRONMENT=production,REDIS_HOST=127.0.0.1,JWT_SECRET_KEY=ecNKVzus1Yus_96fuo6liRFEt0FmZahWrv2HHphcEslKM4KnfwvN96hyHxviFHf-c54s-LErrsOrVI-VFzuy6Q
 
   # Update CORS_ORIGINS separately to avoid parsing issues with commas
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
