@@ -37,9 +37,7 @@ steps:
       - 'managed'
       - '--allow-unauthenticated'
       - '--set-env-vars'
-      - 'ENVIRONMENT=production'
-      - '--set-env-vars'
-      - 'CORS_ORIGINS=https://medical-imaging-viewer.web.app,https://medical-imaging-viewer.firebaseapp.com'
+      - ENVIRONMENT=production,CORS_ORIGINS=https://medical-imaging-viewer.web.app\\,https://medical-imaging-viewer.firebaseapp.com
 
 images:
   - 'gcr.io/$PROJECT_ID/brain-mri:$COMMIT_SHA'
