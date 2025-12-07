@@ -91,14 +91,17 @@ class RedisCacheService(ICacheService):
         """
         if self._client is None:
             try:
-                # Create connection pool
+                # Create connection pool with aggressive timeout for Cloud Run
                 self._pool = ConnectionPool(
                     host=self.host,
                     port=self.port,
                     db=self.db,
                     password=self.password,
                     max_connections=self.max_connections,
-                    decode_responses=False  # We handle encoding ourselves
+                    decode_responses=False,  # We handle encoding ourselves
+                    socket_connect_timeout=2,  # Fail fast if Redis unavailable
+                    socket_timeout=2,  # Quick timeout for operations
+                    retry_on_timeout=False  # Don't retry, fall back immediately
                 )
 
                 # Create client
