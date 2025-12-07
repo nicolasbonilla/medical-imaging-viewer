@@ -1,0 +1,47 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/brain-mri:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/brain-mri:latest'
+      - '-f'
+      - 'backend/Dockerfile'
+      - './backend'
+    
+  # Push the container image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/brain-mri:$COMMIT_SHA'
+      
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/brain-mri:latest'
+
+  # Deploy container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'brain-mri'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/brain-mri:$COMMIT_SHA'
+      - '--region'
+      - 'europe-west1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars'
+      - 'ENVIRONMENT=production,CORS_ORIGINS=https://medical-imaging-viewer.web.app,https://medical-imaging-viewer.firebaseapp.com'
+
+images:
+  - 'gcr.io/$PROJECT_ID/brain-mri:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/brain-mri:latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
