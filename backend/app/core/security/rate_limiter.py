@@ -553,9 +553,13 @@ def get_rate_limiter(redis_client: Optional[redis.Redis] = None) -> RateLimiter:
                 port=settings.REDIS_PORT,
                 db=settings.REDIS_DB,
                 password=settings.REDIS_PASSWORD if settings.REDIS_PASSWORD else None,
-                decode_responses=False
+                decode_responses=False,
+                socket_connect_timeout=1,  # Fail fast if Redis unavailable (1 second)
+                socket_timeout=1,  # Quick timeout for operations
+                socket_keepalive=True,
+                retry_on_timeout=False  # Don't retry, fall back immediately
             )
-            # Test connection
+            # Test connection with explicit timeout
             redis_client.ping()
         except Exception as e:
             logger.warning(f"Failed to connect to Redis for rate limiting: {e}")
