@@ -24,22 +24,17 @@ steps:
 
   # Deploy container image to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
+    entrypoint: bash
     args:
-      - 'run'
-      - 'deploy'
-      - 'brain-mri'
-      - '--image'
-      - 'gcr.io/$PROJECT_ID/brain-mri:$COMMIT_SHA'
-      - '--region'
-      - 'europe-west1'
-      - '--platform'
-      - 'managed'
-      - '--allow-unauthenticated'
-      - '--set-env-vars'
-      - 'ENVIRONMENT=production'
-      - '--set-env-vars'
-      - '^CORS_ORIGINS=https://medical-imaging-viewer.web.app,https://medical-imaging-viewer.firebaseapp.com'
+      - '-c'
+      - |
+        gcloud run deploy brain-mri \
+          --image gcr.io/$PROJECT_ID/brain-mri:$COMMIT_SHA \
+          --region europe-west1 \
+          --platform managed \
+          --allow-unauthenticated \
+          --set-env-vars ENVIRONMENT=production \
+          --update-env-vars "CORS_ORIGINS=https://medical-imaging-viewer.web.app,https://medical-imaging-viewer.firebaseapp.com"
 
 images:
   - 'gcr.io/$PROJECT_ID/brain-mri:$COMMIT_SHA'
