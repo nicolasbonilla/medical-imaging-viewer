@@ -33,6 +33,11 @@ steps:
           --region europe-west1 \
           --platform managed \
           --allow-unauthenticated \
+          --timeout 300 \
+          --cpu 2 \
+          --memory 2Gi \
+          --min-instances 0 \
+          --max-instances 10 \
           --set-env-vars ENVIRONMENT=production
 
   # Update CORS_ORIGINS separately to avoid parsing issues with commas

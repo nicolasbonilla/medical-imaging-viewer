@@ -68,4 +68,7 @@ EXPOSE 8080
 
 # Run the application
 # Cloud Run will inject PORT environment variable
-CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} --workers 1
+# Use exec form to ensure proper signal handling
+# Single worker for Cloud Run (horizontal scaling handled by Cloud Run)
+# --timeout-keep-alive for Cloud Run load balancer compatibility
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} --workers 1 --timeout-keep-alive 60"]
