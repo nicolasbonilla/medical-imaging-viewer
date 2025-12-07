@@ -22,7 +22,7 @@ steps:
       - 'push'
       - 'gcr.io/$PROJECT_ID/brain-mri:latest'
 
-  # Deploy container image to Cloud Run
+  # Deploy container image to Cloud Run with startup probe configuration
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: bash
     args:
@@ -38,6 +38,9 @@ steps:
           --memory 2Gi \
           --min-instances 0 \
           --max-instances 10 \
+          --port 8080 \
+          --startup-cpu-boost \
+          --no-cpu-throttling \
           --set-env-vars ENVIRONMENT=production
 
   # Update CORS_ORIGINS separately to avoid parsing issues with commas

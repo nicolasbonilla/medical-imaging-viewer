@@ -26,12 +26,9 @@ from dependency_injector import containers, providers
 from app.core.config import get_settings
 from app.core.logging import get_logger
 
-# Import concrete implementations
-from app.services.drive_service import GoogleDriveService
-from app.services.imaging_service import ImagingService
-from app.services.segmentation_service import SegmentationService
-from app.services.cache_service import RedisCacheService
-from app.services.prefetch_service import PrefetchService
+# Lazy imports - DO NOT import service implementations at module level
+# This defers heavy medical imaging library imports until first use
+# Critical for Cloud Run startup time optimization
 
 logger = get_logger(__name__)
 
@@ -54,8 +51,11 @@ class Container(containers.DeclarativeContainer):
     config = providers.Singleton(get_settings)
 
     # Cache Service (initialized first as other services may depend on it)
-    cache_service = providers.Singleton(
-        RedisCacheService,
+    # Using Factory with lazy imports to defer heavy library loading
+    cache_service = providers.Factory(
+        lambda host, port, db, password, max_connections: __import__('app.services.cache_service', fromlist=['RedisCacheService']).RedisCacheService(
+            host=host, port=port, db=db, password=password, max_connections=max_connections
+        ),
         host=config.provided.REDIS_HOST,
         port=config.provided.REDIS_PORT,
         db=config.provided.REDIS_DB,
@@ -63,29 +63,38 @@ class Container(containers.DeclarativeContainer):
         max_connections=config.provided.REDIS_MAX_CONNECTIONS
     )
 
-    # Google Drive Service
-    drive_service = providers.Singleton(
-        GoogleDriveService,
-        cache_service=cache_service
+    # Google Drive Service - Lazy loaded on first access
+    drive_service = providers.Factory(
+        lambda cache: __import__('app.services.drive_service', fromlist=['GoogleDriveService']).GoogleDriveService(
+            cache_service=cache
+        ),
+        cache=cache_service
     )
 
-    # Medical Imaging Service
-    imaging_service = providers.Singleton(
-        ImagingService,
-        cache_service=cache_service
+    # Medical Imaging Service - Lazy loaded (HEAVY: nibabel, SimpleITK, opencv, skimage)
+    imaging_service = providers.Factory(
+        lambda cache: __import__('app.services.imaging_service', fromlist=['ImagingService']).ImagingService(
+            cache_service=cache
+        ),
+        cache=cache_service
     )
 
-    # Segmentation Service
-    segmentation_service = providers.Singleton(
-        SegmentationService,
-        cache_service=cache_service
+    # Segmentation Service - Lazy loaded (HEAVY: scikit-image, scipy)
+    segmentation_service = providers.Factory(
+        lambda cache: __import__('app.services.segmentation_service', fromlist=['SegmentationService']).SegmentationService(
+            cache_service=cache
+        ),
+        cache=cache_service
     )
 
-    # Prefetch Service (FASE 1: Quick Wins)
-    prefetch_service = providers.Singleton(
-        PrefetchService,
-        imaging_service=imaging_service,
-        cache_service=cache_service
+    # Prefetch Service - Lazy loaded
+    prefetch_service = providers.Factory(
+        lambda imaging, cache: __import__('app.services.prefetch_service', fromlist=['PrefetchService']).PrefetchService(
+            imaging_service=imaging,
+            cache_service=cache
+        ),
+        imaging=imaging_service,
+        cache=cache_service
     )
 
 
