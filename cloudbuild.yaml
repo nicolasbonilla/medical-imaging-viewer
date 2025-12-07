@@ -51,7 +51,7 @@ steps:
       - |
         gcloud run services update brain-mri \
           --region europe-west1 \
-          --update-env-vars CORS_ORIGINS='https://medical-imaging-viewer.web.app,https://medical-imaging-viewer.firebaseapp.com'
+          --update-env-vars "CORS_ORIGINS=https://medical-imaging-viewer.web.app,https://medical-imaging-viewer.firebaseapp.com"
 
 images:
   - 'gcr.io/$PROJECT_ID/brain-mri:$COMMIT_SHA'
