@@ -1,0 +1,168 @@
+# =============================================================================
+# Testing Dependencies
+# Medical Imaging Viewer - Enterprise Security Testing Suite
+#
+# ISO 27001 A.14.2.8 - System security testing
+# OWASP ASVS 4.0 - Security testing requirements
+#
+# This file contains state-of-the-art testing tools including:
+# - Property-based testing (Hypothesis)
+# - Security fuzzing (Atheris)
+# - Code coverage analysis
+# - Performance testing
+# - API testing
+# =============================================================================
+
+# Core Testing Framework
+# ------------------------------------------------------------------------------
+pytest>=8.0.0                          # Modern testing framework
+pytest-asyncio>=0.23.0                 # Async test support
+pytest-cov>=4.1.0                      # Code coverage plugin
+pytest-xdist>=3.5.0                    # Parallel test execution
+pytest-timeout>=2.2.0                  # Test timeout enforcement
+pytest-mock>=3.12.0                    # Mocking and test doubles
+pytest-benchmark>=4.0.0                # Performance benchmarking
+
+# Property-Based Testing
+# ------------------------------------------------------------------------------
+hypothesis>=6.95.0                     # Property-based testing framework
+hypothesis[cli,dpcontracts]>=6.95.0    # Additional Hypothesis features
+
+# Security Fuzzing
+# ------------------------------------------------------------------------------
+# atheris>=2.3.0                       # Google's fuzzing engine (Python 3.11+)
+# Note: Atheris requires Python 3.8-3.11, may need alternative for 3.12+
+
+# HTTP/API Testing
+# ------------------------------------------------------------------------------
+httpx>=0.26.0                          # Async HTTP client (for FastAPI testing)
+requests>=2.31.0                       # Sync HTTP client
+requests-mock>=1.11.0                  # Mock HTTP requests
+freezegun>=1.4.0                       # Time mocking for tests
+
+# Database Testing
+# ------------------------------------------------------------------------------
+# pytest-postgresql>=5.0.0             # PostgreSQL test fixtures
+# pytest-redis>=3.0.2                  # Redis test fixtures
+fakeredis>=2.21.0                      # Redis mock for testing
+
+# Code Quality and Coverage
+# ------------------------------------------------------------------------------
+coverage[toml]>=7.4.0                  # Coverage measurement
+pytest-coverage>=0.0                   # Coverage reporting
+codecov>=2.1.13                        # Coverage upload to codecov.io
+
+# Test Data Generation
+# ------------------------------------------------------------------------------
+faker>=22.5.0                          # Fake data generation
+factory-boy>=3.3.0                     # Test factories
+mimesis>=13.0.0                        # Advanced fake data
+
+# Security Testing
+# ------------------------------------------------------------------------------
+safety>=3.0.1                          # Dependency vulnerability scanner
+bandit>=1.7.6                          # SAST for Python
+semgrep>=1.55.0                        # Advanced SAST
+
+# Performance Testing
+# ------------------------------------------------------------------------------
+locust>=2.20.0                         # Load testing framework
+pytest-profiling>=1.7.0                # Profiling for tests
+
+# Mutation Testing
+# ------------------------------------------------------------------------------
+mutmut>=2.4.4                          # Mutation testing tool
+
+# API Documentation Testing
+# ------------------------------------------------------------------------------
+openapi-spec-validator>=0.7.1          # OpenAPI schema validation
+pydantic>=2.5.0                        # Data validation (already in main deps)
+
+# Compliance and Security Auditing
+# ------------------------------------------------------------------------------
+# pip-audit>=2.6.3                     # PyPI package security auditor
+# truffleHog>=3.0.0                    # Secret scanner
+
+# Test Reporting
+# ------------------------------------------------------------------------------
+pytest-html>=4.1.1                     # HTML test reports
+pytest-json-report>=1.5.0              # JSON test reports
+allure-pytest>=2.13.2                  # Allure test reporting
+
+# Type Checking (Development)
+# ------------------------------------------------------------------------------
+mypy>=1.8.0                            # Static type checker
+types-requests>=2.31.0                 # Type stubs for requests
+types-redis>=4.6.0                     # Type stubs for Redis
+
+# Linting and Formatting (Development)
+# ------------------------------------------------------------------------------
+ruff>=0.1.14                           # Fast Python linter
+black>=24.1.0                          # Code formatter
+isort>=5.13.2                          # Import sorting
+flake8>=7.0.0                          # Linting
+pylint>=3.0.3                          # Advanced linting
+
+# Documentation Testing
+# ------------------------------------------------------------------------------
+# sphinx>=7.2.6                        # Documentation builder
+# sphinx-rtd-theme>=2.0.0              # ReadTheDocs theme
+
+# Cryptography Testing
+# ------------------------------------------------------------------------------
+# cryptography>=41.0.7                 # Already in main requirements
+pyopenssl>=24.0.0                      # TLS/SSL testing utilities
+
+# Medical Imaging Testing
+# ------------------------------------------------------------------------------
+# pydicom>=2.4.4                       # Already in main requirements
+# nibabel>=5.2.0                       # Already in main requirements
+
+# Utilities
+# ------------------------------------------------------------------------------
+pytest-env>=1.1.3                      # Environment variable management
+pytest-dotenv>=0.5.2                   # .env file loading for tests
+python-dotenv>=1.0.0                   # .env loading
+colorama>=0.4.6                        # Colored terminal output
+
+# Advanced Testing Features
+# ------------------------------------------------------------------------------
+pytest-repeat>=0.9.3                   # Repeat tests for flakiness detection
+pytest-randomly>=3.15.0                # Randomize test order
+pytest-instafail>=0.5.0                # Instant failure reporting
+pytest-testmon>=2.1.1                  # Run only affected tests
+
+# CI/CD Integration
+# ------------------------------------------------------------------------------
+# pytest-github-actions-annotate-failures>=0.2.0  # GitHub Actions integration
+# pytest-azurepipelines>=1.0.5         # Azure Pipelines integration
+
+# =============================================================================
+# Installation Instructions
+# =============================================================================
+#
+# Install all test dependencies:
+#   pip install -r requirements-test.txt
+#
+# Install for development (includes test deps):
+#   pip install -r requirements.txt -r requirements-test.txt
+#
+# Run tests:
+#   pytest                               # Run all tests
+#   pytest -m security                   # Run security tests only
+#   pytest -m "security and authentication"  # Run specific category
+#   pytest --cov=app --cov-report=html   # Run with coverage
+#   pytest -n auto                       # Run in parallel
+#
+# Security scanning:
+#   safety check                         # Scan for vulnerabilities
+#   bandit -r app/                       # SAST scan
+#   semgrep --config=auto app/           # Advanced SAST
+#
+# Mutation testing:
+#   mutmut run                           # Run mutation tests
+#
+# Performance testing:
+#   locust -f tests/performance/locustfile.py  # Load testing
+#
+# =============================================================================

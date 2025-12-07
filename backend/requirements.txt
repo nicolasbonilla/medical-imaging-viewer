@@ -1,0 +1,53 @@
+# FastAPI Core
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+pydantic==2.9.0
+pydantic-settings==2.5.0
+
+# Medical Imaging
+pydicom==2.4.4
+nibabel==5.3.0
+SimpleITK==2.3.1
+Pillow==10.4.0
+numpy==1.26.4
+scipy==1.13.1
+scikit-image==0.24.0
+
+# Google Drive Integration
+google-auth==2.35.0
+google-auth-oauthlib==1.2.1
+google-auth-httplib2==0.2.0
+google-api-python-client==2.147.0
+
+# Data Processing
+pandas==2.2.2
+pyarrow==17.0.0
+
+# CORS and Security (ISO 27001 A.10.1.1, A.9.4.3)
+python-multipart==0.0.12
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+argon2-cffi==23.1.0
+cryptography==43.0.1
+pydantic[email]==2.9.0
+PyJWT==2.9.0
+
+# Utilities
+aiofiles==24.1.0
+python-dotenv==1.0.1
+httpx==0.27.2
+python-json-logger==2.0.7
+dependency-injector==4.41.0
+
+# Image Processing
+opencv-python-headless==4.10.0.84
+matplotlib==3.9.2
+
+# Caching
+redis==5.1.0
+hiredis==2.3.2
+
+# Testing
+pytest==8.3.3
+pytest-asyncio==0.24.0
+httpx==0.27.2

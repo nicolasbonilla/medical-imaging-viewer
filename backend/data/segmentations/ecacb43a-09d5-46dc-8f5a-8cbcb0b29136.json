@@ -1,0 +1,23 @@
+{
+  "file_id": "test_file_123",
+  "created_at": "2025-11-30T19:27:07.385820",
+  "modified_at": "2025-11-30T19:27:07.385820",
+  "labels": [
+    {
+      "id": 0,
+      "name": "Background",
+      "color": "#000000",
+      "opacity": 0.0,
+      "visible": false
+    },
+    {
+      "id": 1,
+      "name": "Lesion",
+      "color": "#FF0000",
+      "opacity": 0.5,
+      "visible": true
+    }
+  ],
+  "description": "Test segmentation",
+  "source_format": "nifti"
+}

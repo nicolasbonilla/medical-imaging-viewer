@@ -1,0 +1,23 @@
+{
+  "file_id": "1tQv4NLBVhnzoG32OHMaObhbZo3xI1ImP",
+  "created_at": "2025-11-30T09:17:20.085185",
+  "modified_at": "2025-11-30T09:17:20.085185",
+  "labels": [
+    {
+      "id": 0,
+      "name": "Background",
+      "color": "#000000",
+      "opacity": 0.0,
+      "visible": false
+    },
+    {
+      "id": 1,
+      "name": "Lesion",
+      "color": "#FF0000",
+      "opacity": 0.5,
+      "visible": true
+    }
+  ],
+  "description": null,
+  "source_format": "nifti"
+}

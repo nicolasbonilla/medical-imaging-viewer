@@ -1,0 +1,93 @@
+# ============================================================================
+# Medical Imaging Viewer - Git Ignore Rules
+# ISO 27001 A.9.2.4 (Protection of secret authentication information)
+# ============================================================================
+
+# Environment Variables (CRITICAL - NEVER commit)
+.env
+.env.local
+.env.*.local
+*.env
+
+# Security Keys and Certificates (CRITICAL - NEVER commit)
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+*.jks
+credentials.json
+token.json
+secrets/
+keys/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environments
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Logs (may contain sensitive information)
+*.log
+logs/
+*.log.*
+
+# Database (may contain PHI)
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS specific
+Thumbs.db
+desktop.ini
+
+# ============================================================================
+# END OF GIT IGNORE RULES
+# ============================================================================

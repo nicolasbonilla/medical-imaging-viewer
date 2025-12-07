@@ -1,0 +1,23 @@
+{
+  "file_id": "workflow_test_file",
+  "created_at": "2025-11-30T19:27:07.534670",
+  "modified_at": "2025-11-30T19:27:07.534670",
+  "labels": [
+    {
+      "id": 0,
+      "name": "Background",
+      "color": "#000000",
+      "opacity": 0.0,
+      "visible": false
+    },
+    {
+      "id": 1,
+      "name": "ROI",
+      "color": "#00FF00",
+      "opacity": 0.6,
+      "visible": true
+    }
+  ],
+  "description": "Workflow test",
+  "source_format": "nifti"
+}

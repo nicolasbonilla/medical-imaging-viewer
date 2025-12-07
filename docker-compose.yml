@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: medical-viewer-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - HOST=0.0.0.0
+      - PORT=8000
+    volumes:
+      - ./backend:/app
+      - ./backend/credentials.json:/app/credentials.json
+      - ./backend/token.json:/app/token.json
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: medical-viewer-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: medical-viewer-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+networks:
+  default:
+    name: medical-viewer-network

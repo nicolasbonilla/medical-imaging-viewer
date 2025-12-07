@@ -1,0 +1,373 @@
+import { useEffect, useRef, useState } from 'react';
+import { ZoomIn, ZoomOut, RotateCw, Move, Maximize2, Palette } from 'lucide-react';
+import { useViewerStore } from '@/store/useViewerStore';
+import { useQuery } from '@tanstack/react-query';
+import { imagingAPI } from '@/services/api';
+
+export default function ImageViewer2D() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [renderMode, setRenderMode] = useState<'standard' | 'matplotlib'>('standard');
+  const [colormap, setColormap] = useState('gray');
+
+  // Axis limits state
+  const [xMin, setXMin] = useState<string>('');
+  const [xMax, setXMax] = useState<string>('');
+  const [yMin, setYMin] = useState<string>('');
+  const [yMax, setYMax] = useState<string>('');
+
+  const {
+    currentSeries,
+    currentSliceIndex,
+    setCurrentSliceIndex,
+    zoomLevel,
+    setZoomLevel,
+    panOffset,
+    setPanOffset,
+  } = useViewerStore();
+
+  // Fetch matplotlib visualization when in matplotlib mode
+  const { data: matplotlibData, isLoading: matplotlibLoading } = useQuery({
+    queryKey: ['matplotlib-2d', currentSeries?.file_id, currentSliceIndex, colormap, xMin, xMax, yMin, yMax],
+    queryFn: () =>
+      currentSeries && currentSeries.file_id
+        ? imagingAPI.getMatplotlib2D(
+            currentSeries.file_id,
+            currentSliceIndex,
+            undefined,
+            undefined,
+            colormap,
+            xMin ? parseInt(xMin) : undefined,
+            xMax ? parseInt(xMax) : undefined,
+            yMin ? parseInt(yMin) : undefined,
+            yMax ? parseInt(yMax) : undefined
+          )
+        : null,
+    enabled: !!(currentSeries && currentSeries.file_id && renderMode === 'matplotlib'),
+    staleTime: 0, // Always fetch fresh data
+    cacheTime: 60000, // Keep in cache for 1 minute
+  });
+
+  // Render image (standard mode)
+  useEffect(() => {
+    if (renderMode !== 'standard') return;
+    if (!currentSeries || !canvasRef.current || !containerRef.current) return;
+
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const currentSlice = currentSeries.slices?.[currentSliceIndex];
+    if (!currentSlice) return;
+
+    // Create image from base64
+    const img = new Image();
+    img.onload = () => {
+      // Calculate scale to fit container while maintaining aspect ratio
+      const containerWidth = container.clientWidth;
+      const containerHeight = container.clientHeight;
+      const imageAspect = currentSlice.width / currentSlice.height;
+      const containerAspect = containerWidth / containerHeight;
+
+      let renderWidth, renderHeight;
+      if (imageAspect > containerAspect) {
+        renderWidth = containerWidth * 0.9; // 90% of container width
+        renderHeight = renderWidth / imageAspect;
+      } else {
+        renderHeight = containerHeight * 0.9; // 90% of container height
+        renderWidth = renderHeight * imageAspect;
+      }
+
+      // Set canvas size to scaled dimensions
+      canvas.width = renderWidth;
+      canvas.height = renderHeight;
+
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Apply transformations
+      ctx.save();
+
+      // Center the zoom
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+
+      ctx.translate(centerX + panOffset.x, centerY + panOffset.y);
+      ctx.scale(zoomLevel, zoomLevel);
+      ctx.translate(-centerX, -centerY);
+
+      // Draw image scaled to canvas size
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      ctx.restore();
+    };
+    img.src = `data:image/png;base64,${currentSlice.image_data}`;
+  }, [currentSeries, currentSliceIndex, zoomLevel, panOffset, renderMode]);
+
+
+  // Mouse wheel for slice navigation
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    if (!currentSeries) return;
+
+    const delta = e.deltaY > 0 ? 1 : -1;
+    const newIndex = Math.max(
+      0,
+      Math.min(currentSeries.total_slices - 1, currentSliceIndex + delta)
+    );
+    setCurrentSliceIndex(newIndex);
+  };
+
+  // Mouse drag for pan
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    setPanOffset({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y,
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (!currentSeries) return;
+
+      if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+        setCurrentSliceIndex(Math.max(0, currentSliceIndex - 1));
+      } else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+        setCurrentSliceIndex(
+          Math.min(currentSeries.total_slices - 1, currentSliceIndex + 1)
+        );
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [currentSeries, currentSliceIndex, setCurrentSliceIndex]);
+
+  // Zoom controls
+  const handleZoomIn = () => setZoomLevel(Math.min(5, zoomLevel + 0.25));
+  const handleZoomOut = () => setZoomLevel(Math.max(0.25, zoomLevel - 0.25));
+  const handleResetView = () => {
+    setZoomLevel(1);
+    setPanOffset({ x: 0, y: 0 });
+  };
+
+  if (!currentSeries) {
+    return (
+      <div className="flex items-center justify-center h-full bg-black">
+        <div className="text-center text-gray-400">
+          <Maximize2 className="w-16 h-16 mx-auto mb-4 opacity-50" />
+          <p>Select an image to view</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative h-full bg-black" ref={containerRef}>
+      {/* Canvas or Matplotlib Image */}
+      <div
+        className="absolute inset-0 overflow-auto cursor-move"
+        onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
+        <div className="flex items-center justify-center min-h-full min-w-full">
+          {renderMode === 'matplotlib' && matplotlibData ? (
+            <img
+              src={matplotlibData.image}
+              alt="Matplotlib 2D Slice"
+              className="max-w-full max-h-full object-contain"
+            />
+          ) : renderMode === 'matplotlib' && matplotlibLoading ? (
+            <div className="text-white">Loading matplotlib visualization...</div>
+          ) : (
+            <canvas ref={canvasRef} />
+          )}
+        </div>
+      </div>
+
+      {/* Controls (only for standard mode) */}
+      {renderMode === 'standard' && (
+        <div className="absolute top-4 right-4 bg-gray-900 bg-opacity-90 rounded-lg p-2 space-y-2">
+          <button
+            onClick={handleZoomIn}
+            className="block p-2 hover:bg-gray-800 rounded transition-colors"
+            title="Zoom In"
+          >
+            <ZoomIn className="w-5 h-5 text-white" />
+          </button>
+          <button
+            onClick={handleZoomOut}
+            className="block p-2 hover:bg-gray-800 rounded transition-colors"
+            title="Zoom Out"
+          >
+            <ZoomOut className="w-5 h-5 text-white" />
+          </button>
+          <button
+            onClick={handleResetView}
+            className="block p-2 hover:bg-gray-800 rounded transition-colors"
+            title="Reset View"
+          >
+            <RotateCw className="w-5 h-5 text-white" />
+          </button>
+        </div>
+      )}
+
+      {/* Render Mode & Colormap Controls */}
+      <div className="absolute top-4 left-4 bg-gray-900 bg-opacity-90 rounded-lg p-4 space-y-4 w-64">
+        <div>
+          <label className="block text-sm text-gray-300 mb-2">Render Mode</label>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setRenderMode('standard')}
+              className={`flex-1 px-3 py-2 rounded text-sm transition-colors ${
+                renderMode === 'standard'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+            >
+              Standard
+            </button>
+            <button
+              onClick={() => setRenderMode('matplotlib')}
+              className={`flex-1 px-3 py-2 rounded text-sm transition-colors ${
+                renderMode === 'matplotlib'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+            >
+              Matplotlib
+            </button>
+          </div>
+        </div>
+
+        {renderMode === 'matplotlib' && (
+          <>
+            <div>
+              <label className="block text-sm text-gray-300 mb-2">Colormap</label>
+              <select
+                value={colormap}
+                onChange={(e) => setColormap(e.target.value)}
+                className="w-full px-3 py-2 bg-gray-700 text-white rounded text-sm"
+              >
+                <option value="gray">Gray</option>
+                <option value="viridis">Viridis</option>
+                <option value="plasma">Plasma</option>
+                <option value="inferno">Inferno</option>
+                <option value="magma">Magma</option>
+                <option value="hot">Hot</option>
+                <option value="cool">Cool</option>
+                <option value="bone">Bone</option>
+                <option value="jet">Jet</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm text-gray-300 mb-2">Eje X (horizontal)</label>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  placeholder="Límite inferior"
+                  value={xMin}
+                  onChange={(e) => setXMin(e.target.value)}
+                  className="flex-1 px-2 py-1 bg-gray-700 text-white rounded text-sm"
+                />
+                <input
+                  type="number"
+                  placeholder="Límite superior"
+                  value={xMax}
+                  onChange={(e) => setXMax(e.target.value)}
+                  className="flex-1 px-2 py-1 bg-gray-700 text-white rounded text-sm"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm text-gray-300 mb-2">Eje Y (vertical)</label>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  placeholder="Límite inferior"
+                  value={yMin}
+                  onChange={(e) => setYMin(e.target.value)}
+                  className="flex-1 px-2 py-1 bg-gray-700 text-white rounded text-sm"
+                />
+                <input
+                  type="number"
+                  placeholder="Límite superior"
+                  value={yMax}
+                  onChange={(e) => setYMax(e.target.value)}
+                  className="flex-1 px-2 py-1 bg-gray-700 text-white rounded text-sm"
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                setXMin('');
+                setXMax('');
+                setYMin('');
+                setYMax('');
+              }}
+              className="w-full px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded text-sm transition-colors"
+            >
+              Resetear Límites
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Slice Info */}
+      <div className="absolute bottom-4 left-4 bg-gray-900 bg-opacity-90 rounded-lg px-4 py-2">
+        <div className="text-sm text-white">
+          Slice: {currentSliceIndex + 1} / {currentSeries.total_slices}
+        </div>
+        {renderMode === 'standard' && (
+          <div className="text-xs text-gray-400 mt-1">
+            Zoom: {(zoomLevel * 100).toFixed(0)}%
+          </div>
+        )}
+        {renderMode === 'matplotlib' && (
+          <div className="text-xs text-blue-400 mt-1">
+            Matplotlib (Static with Axes & Colorbar)
+          </div>
+        )}
+      </div>
+
+      {/* Slice Slider */}
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-900 bg-opacity-90 rounded-lg px-6 py-3">
+        <input
+          type="range"
+          min="0"
+          max={currentSeries.total_slices - 1}
+          value={currentSliceIndex}
+          onChange={(e) => setCurrentSliceIndex(parseInt(e.target.value))}
+          className="w-64"
+        />
+      </div>
+
+      {/* Metadata */}
+      <div className="absolute top-4 left-4 bg-gray-900 bg-opacity-90 rounded-lg px-4 py-2 text-xs text-gray-300 space-y-1">
+        <div>Patient: {currentSeries.metadata.patient_name || 'Unknown'}</div>
+        <div>Study: {currentSeries.metadata.study_description || 'N/A'}</div>
+        <div>Modality: {currentSeries.metadata.modality || 'N/A'}</div>
+      </div>
+    </div>
+  );
+}
