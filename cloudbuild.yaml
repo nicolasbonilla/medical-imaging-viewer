@@ -33,8 +33,7 @@ steps:
           --region europe-west1 \
           --platform managed \
           --allow-unauthenticated \
-          --set-env-vars ENVIRONMENT=production \
-          --update-env-vars "CORS_ORIGINS=https://medical-imaging-viewer.web.app,https://medical-imaging-viewer.firebaseapp.com"
+          --set-env-vars "^:^ENVIRONMENT=production:CORS_ORIGINS=https://medical-imaging-viewer.web.app,https://medical-imaging-viewer.firebaseapp.com"
 
 images:
   - 'gcr.io/$PROJECT_ID/brain-mri:$COMMIT_SHA'
