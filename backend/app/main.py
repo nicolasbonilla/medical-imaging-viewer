@@ -57,8 +57,65 @@ async def lifespan(app: FastAPI):
     Lifespan event handler for application startup and shutdown.
     Replaces deprecated on_event decorators.
     """
-    # Startup: nothing needed for now
+    # Startup: Create default admin user if no users exist
+    try:
+        from app.security.user_storage import get_user_storage
+        from app.security.password import PasswordManager
+        from app.security.models import User, UserRole
+        from datetime import datetime
+        import uuid
+
+        storage = get_user_storage()
+        user_count = storage.get_user_count()
+
+        if user_count == 0:
+            logger.info("No users found - creating default admin user")
+
+            # Create default admin user
+            username = "admin"
+            password = "Admin123!@2024"
+            email = "admin@example.com"
+            full_name = "Administrator"
+
+            pwd_manager = PasswordManager()
+            password_hash = pwd_manager.hash_password(password)
+
+            user = User(
+                id=str(uuid.uuid4()),
+                username=username,
+                email=email,
+                full_name=full_name,
+                role=UserRole.ADMIN,
+                is_active=True,
+                email_verified=True,
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow(),
+                last_password_change=datetime.utcnow(),
+                failed_login_attempts=0
+            )
+
+            storage.save_user(user, password_hash)
+
+            logger.info(
+                "Default admin user created successfully",
+                extra={
+                    "username": username,
+                    "user_id": user.id,
+                    "role": user.role.value
+                }
+            )
+            logger.warning(
+                "SECURITY WARNING: Default admin credentials in use. "
+                "Change password immediately after first login!"
+            )
+        else:
+            logger.info(f"User storage initialized with {user_count} existing users")
+    except Exception as e:
+        logger.error(f"Failed to initialize user storage: {e}", exc_info=True)
+        # Don't fail startup - allow app to run even if user creation fails
+
     yield
+
     # Shutdown: gracefully handle shutdown
     logger.info("Application shutdown initiated - waiting for pending tasks")
     await asyncio.sleep(0.1)
