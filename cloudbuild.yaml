@@ -28,7 +28,6 @@ steps:
     args:
       - '-c'
       - |
-        CORS_URLS="https://medical-imaging-viewer.web.app,https://medical-imaging-viewer.firebaseapp.com"
         gcloud run deploy brain-mri \
           --image gcr.io/$PROJECT_ID/brain-mri:$COMMIT_SHA \
           --region europe-west1 \
@@ -42,7 +41,8 @@ steps:
           --port 8080 \
           --cpu-boost \
           --no-cpu-throttling \
-          --set-env-vars ENVIRONMENT=production,REDIS_HOST=127.0.0.1,JWT_SECRET_KEY=ecNKVzus1Yus_96fuo6liRFEt0FmZahWrv2HHphcEslKM4KnfwvN96hyHxviFHf-c54s-LErrsOrVI-VFzuy6Q,CORS_ORIGINS="$CORS_URLS"
+          --set-env-vars ENVIRONMENT=production,REDIS_HOST=127.0.0.1,JWT_SECRET_KEY=ecNKVzus1Yus_96fuo6liRFEt0FmZahWrv2HHphcEslKM4KnfwvN96hyHxviFHf-c54s-LErrsOrVI-VFzuy6Q \
+          --update-env-vars CORS_ORIGINS=https://medical-imaging-viewer.web.app,https://medical-imaging-viewer.firebaseapp.com
 
 images:
   - 'gcr.io/$PROJECT_ID/brain-mri:$COMMIT_SHA'
