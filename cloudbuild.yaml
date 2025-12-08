@@ -24,25 +24,23 @@ steps:
 
   # Deploy container image to Cloud Run with CPU boost
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: bash
     args:
-      - '-c'
-      - |
-        gcloud run deploy brain-mri \
-          --image gcr.io/$PROJECT_ID/brain-mri:$COMMIT_SHA \
-          --region europe-west1 \
-          --platform managed \
-          --allow-unauthenticated \
-          --timeout 300 \
-          --cpu 2 \
-          --memory 2Gi \
-          --min-instances 0 \
-          --max-instances 10 \
-          --port 8080 \
-          --cpu-boost \
-          --no-cpu-throttling \
-          --set-env-vars ENVIRONMENT=production,REDIS_HOST=127.0.0.1,JWT_SECRET_KEY=ecNKVzus1Yus_96fuo6liRFEt0FmZahWrv2HHphcEslKM4KnfwvN96hyHxviFHf-c54s-LErrsOrVI-VFzuy6Q \
-          --update-env-vars CORS_ORIGINS=https://medical-imaging-viewer.web.app,https://medical-imaging-viewer.firebaseapp.com
+      - 'run'
+      - 'deploy'
+      - 'brain-mri'
+      - '--image=gcr.io/$PROJECT_ID/brain-mri:$COMMIT_SHA'
+      - '--region=europe-west1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--timeout=300'
+      - '--cpu=2'
+      - '--memory=2Gi'
+      - '--min-instances=0'
+      - '--max-instances=10'
+      - '--port=8080'
+      - '--cpu-boost'
+      - '--no-cpu-throttling'
+      - '--env-vars-file=env.yaml'
 
 images:
   - 'gcr.io/$PROJECT_ID/brain-mri:$COMMIT_SHA'
