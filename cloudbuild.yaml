@@ -24,6 +24,7 @@ steps:
 
   # Deploy container image to Cloud Run with CPU boost
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
     args:
       - 'run'
       - 'deploy'
