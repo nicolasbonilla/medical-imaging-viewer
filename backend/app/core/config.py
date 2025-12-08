@@ -10,7 +10,7 @@ and A.10.1.2 (Key management).
 import os
 import secrets
 import warnings
-from typing import List
+from typing import List, Union
 from functools import lru_cache
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -75,12 +75,14 @@ class Settings(BaseSettings):
     PORT: int = Field(default=8000, ge=1, le=65535)
 
     # CORS Configuration
-    CORS_ORIGINS: List[str] = Field(default=["http://localhost:5173", "http://localhost:3000"])
+    # Note: Annotated with Union[str, List[str]] to prevent Pydantic from JSON-decoding string values
+    CORS_ORIGINS: Union[str, List[str]] = Field(default=["http://localhost:5173", "http://localhost:3000"])
 
     @field_validator('CORS_ORIGINS', mode='before')
     @classmethod
-    def parse_cors_origins(cls, v):
+    def parse_cors_origins(cls, v) -> List[str]:
         if isinstance(v, str):
+            # Parse comma-separated string
             return [origin.strip() for origin in v.split(',')]
         return v
 
