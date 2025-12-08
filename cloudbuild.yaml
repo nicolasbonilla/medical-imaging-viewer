@@ -41,17 +41,7 @@ steps:
           --port 8080 \
           --cpu-boost \
           --no-cpu-throttling \
-          --set-env-vars ENVIRONMENT=production,REDIS_HOST=127.0.0.1,JWT_SECRET_KEY=ecNKVzus1Yus_96fuo6liRFEt0FmZahWrv2HHphcEslKM4KnfwvN96hyHxviFHf-c54s-LErrsOrVI-VFzuy6Q
-
-  # Update CORS_ORIGINS separately to avoid parsing issues with commas
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: bash
-    args:
-      - '-c'
-      - |
-        gcloud run services update brain-mri \
-          --region europe-west1 \
-          --update-env-vars CORS_ORIGINS="https://medical-imaging-viewer.web.app,https://medical-imaging-viewer.firebaseapp.com"
+          --set-env-vars ENVIRONMENT=production,REDIS_HOST=127.0.0.1,JWT_SECRET_KEY=ecNKVzus1Yus_96fuo6liRFEt0FmZahWrv2HHphcEslKM4KnfwvN96hyHxviFHf-c54s-LErrsOrVI-VFzuy6Q,CORS_ORIGINS=http://localhost:5173
 
 images:
   - 'gcr.io/$PROJECT_ID/brain-mri:$COMMIT_SHA'
