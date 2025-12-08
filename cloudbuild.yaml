@@ -41,7 +41,7 @@ steps:
           --port 8080 \
           --cpu-boost \
           --no-cpu-throttling \
-          --set-env-vars ENVIRONMENT=production,REDIS_HOST=127.0.0.1,JWT_SECRET_KEY=ecNKVzus1Yus_96fuo6liRFEt0FmZahWrv2HHphcEslKM4KnfwvN96hyHxviFHf-c54s-LErrsOrVI-VFzuy6Q,CORS_ORIGINS=http://localhost:5173
+          --set-env-vars ENVIRONMENT=production,REDIS_HOST=127.0.0.1,JWT_SECRET_KEY=ecNKVzus1Yus_96fuo6liRFEt0FmZahWrv2HHphcEslKM4KnfwvN96hyHxviFHf-c54s-LErrsOrVI-VFzuy6Q
 
 images:
   - 'gcr.io/$PROJECT_ID/brain-mri:$COMMIT_SHA'
