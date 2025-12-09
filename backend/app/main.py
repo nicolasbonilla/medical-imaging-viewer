@@ -221,6 +221,17 @@ async def api_health_check():
     )
 
 
+@app.get("/api/debug/users", tags=["Debug"])
+async def debug_users():
+    """Debug endpoint to check registered users."""
+    from app.api.routes.auth import auth_service
+    users = auth_service.list_users()
+    return {
+        "user_count": len(users),
+        "users": [{"id": u.id, "username": u.username, "role": u.role.value} for u in users]
+    }
+
+
 # Include routers
 # Authentication routes (ISO 27001 A.9.4.2)
 app.include_router(authentication.router, prefix=settings.API_V1_STR)
