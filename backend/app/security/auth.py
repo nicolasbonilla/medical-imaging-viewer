@@ -537,6 +537,17 @@ class AuthService:
                 return user
         return None
 
+    def list_users(self) -> List[User]:
+        """
+        List all registered users.
+
+        Returns:
+            List of all users
+
+        ISO 27001: A.9.2.5 (Review of user access rights)
+        """
+        return list(self._users.values())
+
     def _log_audit_event(
         self,
         action: str,
