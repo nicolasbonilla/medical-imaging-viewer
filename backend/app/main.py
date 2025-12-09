@@ -59,17 +59,14 @@ async def lifespan(app: FastAPI):
     """
     # Startup: Create default admin user if no users exist
     try:
-        from app.security.user_storage import get_user_storage
-        from app.security.password import PasswordManager
-        from app.security.models import User, UserRole
-        from datetime import datetime
-        import uuid
+        from app.api.routes.auth import auth_service
+        from app.security.models import UserCreate, UserRole
 
-        storage = get_user_storage()
-        user_count = storage.get_user_count()
+        # Check if any users exist in AuthService
+        all_users = auth_service.list_users()
 
-        if user_count == 0:
-            logger.info("No users found - creating default admin user")
+        if len(all_users) == 0:
+            logger.info("No users found in AuthService - creating default admin user")
 
             # Create default admin user
             username = "admin"
@@ -77,31 +74,23 @@ async def lifespan(app: FastAPI):
             email = "admin@example.com"
             full_name = "Administrator"
 
-            pwd_manager = PasswordManager()
-            password_hash = pwd_manager.hash_password(password)
-
-            user = User(
-                id=str(uuid.uuid4()),
+            user_create = UserCreate(
                 username=username,
                 email=email,
+                password=password,
                 full_name=full_name,
-                role=UserRole.ADMIN,
-                is_active=True,
-                email_verified=True,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
-                last_password_change=datetime.utcnow(),
-                failed_login_attempts=0
+                role=UserRole.ADMIN
             )
 
-            storage.save_user(user, password_hash)
+            # Register user through AuthService (same as registration endpoint)
+            created_user = auth_service.register_user(user_create)
 
             logger.info(
                 "Default admin user created successfully",
                 extra={
                     "username": username,
-                    "user_id": user.id,
-                    "role": user.role.value
+                    "user_id": created_user.id,
+                    "role": created_user.role.value
                 }
             )
             logger.warning(
@@ -109,9 +98,9 @@ async def lifespan(app: FastAPI):
                 "Change password immediately after first login!"
             )
         else:
-            logger.info(f"User storage initialized with {user_count} existing users")
+            logger.info(f"AuthService initialized with {len(all_users)} existing users")
     except Exception as e:
-        logger.error(f"Failed to initialize user storage: {e}", exc_info=True)
+        logger.error(f"Failed to initialize default admin user: {e}", exc_info=True)
         # Don't fail startup - allow app to run even if user creation fails
 
     yield
