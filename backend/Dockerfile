@@ -49,8 +49,8 @@ COPY --from=builder /root/.local /home/appuser/.local
 # Copy application code
 COPY . .
 
-# Create necessary directories
-RUN mkdir -p logs storage && \
+# Create necessary directories including data for SecureUserStorage
+RUN mkdir -p logs storage data && \
     chown -R appuser:appuser /app
 
 # Switch to non-root user

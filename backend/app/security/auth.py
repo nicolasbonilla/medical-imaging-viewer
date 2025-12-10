@@ -103,6 +103,13 @@ class AuthService:
         self._password_history: Dict[str, List[str]] = {}  # user_id -> [hashes]
         self._audit_logs: List[AuditLog] = []
 
+        # Persistent storage for Cloud Run
+        from app.security.user_storage import get_user_storage
+        self._storage = get_user_storage()
+
+        # Load existing users from persistent storage on startup
+        self._load_users_from_storage()
+
         logger.info("AuthService initialized")
 
     def register_user(
@@ -203,10 +210,22 @@ class AuthService:
             created_by=created_by,
         )
 
-        # Store user and password
+        # Store user and password in memory
         self._users[user_id] = user
         self._user_passwords[user_id] = hashed_password
         self._password_history[user_id] = [hashed_password]
+
+        # Save to persistent storage for Cloud Run
+        try:
+            self._storage.save_user(user, hashed_password, [hashed_password])
+            logger.debug(f"User {username} saved to persistent storage")
+        except Exception as e:
+            logger.error(
+                "Failed to save user to persistent storage",
+                extra={"user_id": user_id, "error": str(e)},
+                exc_info=True
+            )
+            # Continue - user is still in memory
 
         self._log_audit_event(
             user_id=user_id,
@@ -536,6 +555,38 @@ class AuthService:
             if user.username == identifier or user.email == identifier:
                 return user
         return None
+
+    def _load_users_from_storage(self) -> None:
+        """
+        Load all users from persistent storage into memory.
+
+        This is called on startup to populate in-memory caches from
+        encrypted disk storage, ensuring persistence across Cloud Run restarts.
+        """
+        try:
+            # Get all users from persistent storage
+            all_users = self._storage.list_all_users()
+
+            for user in all_users:
+                # Load user into memory
+                self._users[user.id] = user
+
+                # Load password hash from storage
+                pwd_data = self._storage.get_user_password_data(user.id)
+                if pwd_data:
+                    self._user_passwords[user.id] = pwd_data['password_hash']
+                    self._password_history[user.id] = pwd_data.get('password_history', [])
+
+            logger.info(
+                "Loaded users from persistent storage",
+                extra={"user_count": len(all_users)}
+            )
+        except Exception as e:
+            logger.error(
+                "Failed to load users from storage",
+                extra={"error": str(e)},
+                exc_info=True
+            )
 
     def list_users(self) -> List[User]:
         """
