@@ -226,9 +226,20 @@ async def debug_users():
     """Debug endpoint to check registered users."""
     from app.api.routes.auth import auth_service
     users = auth_service.list_users()
+
+    # Check password storage
+    password_info = {}
+    for user in users:
+        has_password = user.id in auth_service._user_passwords
+        password_info[user.username] = {
+            "user_id": user.id,
+            "has_password_hash": has_password
+        }
+
     return {
         "user_count": len(users),
-        "users": [{"id": u.id, "username": u.username, "role": u.role.value} for u in users]
+        "users": [{"id": u.id, "username": u.username, "role": u.role.value} for u in users],
+        "password_storage": password_info
     }
 
 
