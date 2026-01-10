@@ -12,13 +12,13 @@ Usage in routes:
     from app.core.container import Container
     from dependency_injector.wiring import inject, Provide
 
-    @router.get("/files")
+    @router.get("/image/{file_id}")
     @inject
-    async def list_files(
-        drive_service: IDriveService = Depends(Provide[Container.drive_service])
+    async def get_image(
+        file_id: str,
+        imaging_service: IImagingService = Depends(Provide[Container.imaging_service])
     ):
-        files = drive_service.list_files()
-        return files
+        return imaging_service.get_image(file_id)
 """
 
 from dependency_injector import containers, providers
@@ -42,9 +42,10 @@ class Container(containers.DeclarativeContainer):
 
     Attributes:
         config: Configuration provider
-        drive_service: Google Drive service singleton
         imaging_service: Medical imaging service singleton
         segmentation_service: Segmentation service singleton
+        cache_service: Redis cache service singleton
+        prefetch_service: Image prefetch service singleton
     """
 
     # Configuration
@@ -61,14 +62,6 @@ class Container(containers.DeclarativeContainer):
         db=config.provided.REDIS_DB,
         password=config.provided.REDIS_PASSWORD,
         max_connections=config.provided.REDIS_MAX_CONNECTIONS
-    )
-
-    # Google Drive Service - Lazy loaded on first access
-    drive_service = providers.Factory(
-        lambda cache: __import__('app.services.drive_service', fromlist=['GoogleDriveService']).GoogleDriveService(
-            cache_service=cache
-        ),
-        cache=cache_service
     )
 
     # Medical Imaging Service - Lazy loaded (HEAVY: nibabel, SimpleITK, opencv, skimage)
@@ -97,6 +90,26 @@ class Container(containers.DeclarativeContainer):
         cache=cache_service
     )
 
+    # Storage Service - GCS-based file storage
+    storage_service = providers.Factory(
+        lambda: __import__('app.services.storage_service', fromlist=['GCSStorageService']).GCSStorageService()
+    )
+
+    # Patient Service - Firestore-based patient management
+    patient_service = providers.Factory(
+        lambda: __import__('app.services.patient_service_firestore', fromlist=['PatientServiceFirestore']).PatientServiceFirestore()
+    )
+
+    # Study Service - Firestore-based study management
+    study_service = providers.Factory(
+        lambda: __import__('app.services.study_service_firestore', fromlist=['StudyServiceFirestore']).StudyServiceFirestore()
+    )
+
+    # Document Service - Firestore-based document management
+    document_service = providers.Factory(
+        lambda: __import__('app.services.document_service_firestore', fromlist=['DocumentServiceFirestore']).DocumentServiceFirestore()
+    )
+
 
 def init_container() -> Container:
     """
@@ -120,7 +133,6 @@ def init_container() -> Container:
     # Wire the container to modules that use @inject decorator
     # This allows automatic dependency injection in routes
     container.wire(modules=[
-        "app.api.routes.drive",
         "app.api.routes.imaging",
         "app.api.routes.segmentation",
     ])
@@ -155,24 +167,6 @@ def get_container() -> Container:
 
 
 # Convenience function for FastAPI Depends()
-def get_drive_service():
-    """
-    Dependency function for FastAPI routes to get DriveService.
-
-    Usage:
-        from fastapi import Depends
-        from app.core.container import get_drive_service
-
-        @router.get("/files")
-        async def list_files(
-            drive_service = Depends(get_drive_service)
-        ):
-            return drive_service.list_files()
-    """
-    container = get_container()
-    return container.drive_service()
-
-
 def get_imaging_service():
     """
     Dependency function for FastAPI routes to get ImagingService.
@@ -248,3 +242,52 @@ def get_prefetch_service():
     """
     container = get_container()
     return container.prefetch_service()
+
+
+def get_storage_service():
+    """
+    Dependency function for FastAPI routes to get StorageService.
+
+    Usage:
+        from fastapi import Depends
+        from app.core.container import get_storage_service
+
+        @router.get("/files/{path}")
+        async def get_file(
+            path: str,
+            storage_service = Depends(get_storage_service)
+        ):
+            return await storage_service.download_file(bucket, path)
+    """
+    container = get_container()
+    return container.storage_service()
+
+
+def get_patient_service():
+    """
+    Dependency function for FastAPI routes to get PatientService.
+
+    Uses Firestore backend for patient data persistence.
+    """
+    container = get_container()
+    return container.patient_service()
+
+
+def get_study_service():
+    """
+    Dependency function for FastAPI routes to get StudyService.
+
+    Uses Firestore backend for study data persistence.
+    """
+    container = get_container()
+    return container.study_service()
+
+
+def get_document_service():
+    """
+    Dependency function for FastAPI routes to get DocumentService.
+
+    Uses Firestore backend for document data persistence.
+    """
+    container = get_container()
+    return container.document_service()

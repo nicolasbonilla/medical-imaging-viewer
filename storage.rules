@@ -1,0 +1,32 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Medical images - requires authentication
+    match /images/{patientId}/{studyId}/{imageFile} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Documents (PDFs, reports, etc.)
+    match /documents/{patientId}/{documentFile} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Segmentation results
+    match /segmentations/{studyId}/{segmentationFile} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Temporary uploads
+    match /temp/{userId}/{tempFile} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Deny all other access
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

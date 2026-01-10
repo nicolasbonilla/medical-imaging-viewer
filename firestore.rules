@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Patients collection - requires authentication
+    match /patients/{patientId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Studies collection - requires authentication
+    match /studies/{studyId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Documents collection - requires authentication
+    match /documents/{documentId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Users collection - admin only for write, self for read
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // Audit logs - read only for admins
+    match /audit_logs/{logId} {
+      allow read: if request.auth != null && request.auth.token.admin == true;
+      allow write: if false; // Only backend can write
+    }
+  }
+}

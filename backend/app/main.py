@@ -18,7 +18,9 @@ from app.core.security import (
 )
 from app.core.exception_handlers import register_exception_handlers
 from app.core.container import init_container
-from app.api.routes import auth, drive, imaging, segmentation, websocket, authentication
+from app.api.routes import auth, imaging, segmentation, websocket, authentication, patients
+# NOTE: Studies and documents routes temporarily disabled during Firebase migration
+# from app.api.routes import studies, documents
 from app.models.schemas import HealthCheck
 
 settings = get_settings()
@@ -221,6 +223,21 @@ async def api_health_check():
     )
 
 
+@app.post("/api/debug/init-db", tags=["Debug"])
+async def init_database():
+    """Initialize database (for first deployment) - Now uses Firebase."""
+    try:
+        from app.core.firebase import get_firebase_app, get_firestore_client
+        # Initialize Firebase
+        get_firebase_app()
+        db = get_firestore_client()
+        # Test connection by trying to access collections
+        db.collection("patients").limit(1).get()
+        return {"status": "success", "message": "Firebase Firestore initialized and connected"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
 @app.get("/api/debug/users", tags=["Debug"])
 async def debug_users():
     """Debug endpoint to check registered users."""
@@ -247,10 +264,18 @@ async def debug_users():
 # Authentication routes (ISO 27001 A.9.4.2)
 app.include_router(authentication.router, prefix=settings.API_V1_STR)
 app.include_router(auth.router, prefix=settings.API_V1_STR)
-app.include_router(drive.router, prefix=settings.API_V1_STR)
 app.include_router(imaging.router, prefix=settings.API_V1_STR)
 app.include_router(segmentation.router, prefix=settings.API_V1_STR)
 app.include_router(websocket.router, prefix=settings.API_V1_STR)
+
+# EHR routes (Patient management)
+app.include_router(patients.router, prefix=settings.API_V1_STR)
+
+# EHR routes (Study management) - TEMPORARILY DISABLED DURING FIREBASE MIGRATION
+# app.include_router(studies.router, prefix=settings.API_V1_STR)
+
+# EHR routes (Document management) - TEMPORARILY DISABLED DURING FIREBASE MIGRATION
+# app.include_router(documents.router, prefix=settings.API_V1_STR)
 
 
 if __name__ == "__main__":
