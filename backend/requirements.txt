@@ -30,7 +30,7 @@ passlib[bcrypt]==1.7.4
 argon2-cffi==23.1.0
 cryptography==43.0.1
 pydantic[email]==2.9.0
-PyJWT==2.9.0
+PyJWT>=2.10.1
 
 # Utilities
 aiofiles==24.1.0
@@ -54,7 +54,7 @@ psycopg2-binary==2.9.9
 asyncpg==0.29.0
 
 # Google Cloud Storage
-google-cloud-storage==2.14.0
+google-cloud-storage>=3.1.1
 
 # Firebase Admin SDK (Firestore + Storage)
 firebase-admin==7.1.0
