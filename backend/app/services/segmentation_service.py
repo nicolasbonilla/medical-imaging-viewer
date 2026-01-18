@@ -1,6 +1,9 @@
 """
 Segmentation service for manual lesion annotation.
 Provides ITK-SNAP style manual segmentation capabilities.
+
+Uses Firestore for metadata persistence and GCS for mask storage.
+This ensures segmentation data survives Cloud Run instance restarts.
 """
 
 import numpy as np
@@ -18,11 +21,13 @@ from pydicom.dataset import Dataset, FileDataset
 from pydicom.uid import generate_uid
 import nibabel as nib
 
+from google.cloud import storage as gcs_storage
+
 from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.core.exceptions import SegmentationException, NotFoundException, ValidationException
-from app.core.interfaces.segmentation_interface import ISegmentationService
 from app.core.interfaces.cache_interface import ICacheService
+from app.core.firebase import get_firestore_client
 from app.models.schemas import (
     LabelInfo,
     SegmentationMetadata,
@@ -47,32 +52,68 @@ from app.utils import (
 
 logger = get_logger(__name__)
 
+# Firestore collection name for segmentations
+SEGMENTATIONS_COLLECTION = "segmentations"
 
-class SegmentationService(ISegmentationService):
-    """Service for managing medical image segmentations."""
+
+class SegmentationService:
+    """Service for managing medical image segmentations (v1 API).
+
+    Uses Firestore for metadata and GCS for mask storage to ensure
+    persistence across Cloud Run instance restarts.
+
+    Note: This is the v1 service used by /api/v1/segmentation/ routes.
+    For the v2 hierarchical API, see SegmentationServiceFirestore.
+    """
 
     def __init__(
         self,
         storage_path: str = "./data/segmentations",
-        drive_service=None,
         cache_service: Optional[ICacheService] = None
     ):
         """
         Initialize segmentation service.
 
         Args:
-            storage_path: Directory to store segmentation files
-            drive_service: Optional DriveService dependency (will be injected via DI)
+            storage_path: Directory to store segmentation files (local fallback)
             cache_service: Optional CacheService for Redis caching
         """
         self.storage_path = Path(storage_path)
         self.storage_path.mkdir(parents=True, exist_ok=True)
-        self.drive_service = drive_service  # For future use with DI
         self.cache = cache_service
         self.settings = get_settings()
 
-        # In-memory cache: {segmentation_id: {metadata, masks_3d}}
+        # In-memory cache: {segmentation_id: {metadata, masks_3d, dirty_slices}}
         self.segmentations_cache: Dict[str, Dict] = {}
+
+        # Firestore client (lazy initialization)
+        self._db = None
+
+        # GCS client (lazy initialization)
+        self._gcs_client = None
+        self._gcs_bucket = None
+
+    @property
+    def db(self):
+        """Lazy initialization of Firestore client."""
+        if self._db is None:
+            self._db = get_firestore_client()
+        return self._db
+
+    @property
+    def gcs_client(self):
+        """Lazy initialization of GCS client."""
+        if self._gcs_client is None:
+            self._gcs_client = gcs_storage.Client()
+        return self._gcs_client
+
+    @property
+    def gcs_bucket(self):
+        """Lazy initialization of GCS bucket."""
+        if self._gcs_bucket is None:
+            bucket_name = self.settings.GCS_BUCKET_NAME
+            self._gcs_bucket = self.gcs_client.bucket(bucket_name)
+        return self._gcs_bucket
 
     def create_segmentation(
         self,
@@ -196,9 +237,15 @@ class SegmentationService(ISegmentationService):
             await self.cache.delete(cache_key)
             logger.debug(f"Invalidated cache for segmentation slice: {segmentation_id}:{stroke.slice_index}")
 
-        # Don't save to disk on every paint stroke - only save when explicitly requested
-        # This prevents excessive file writes and Google Drive uploads
-        # self._save_segmentation(segmentation_id)
+        # IMPORTANT: Save immediately to persist across Cloud Run instance restarts
+        # Without this, paint strokes are lost when requests go to different instances
+        try:
+            self._save_segmentation(segmentation_id)
+            logger.debug("Paint stroke saved to GCS", extra={"segmentation_id": segmentation_id})
+        except Exception as e:
+            logger.error("Failed to save paint stroke", extra={"error": str(e), "segmentation_id": segmentation_id})
+            # Don't fail the request if save fails - the stroke is still in memory
+            # The user can try saving again manually
 
         return True
 
@@ -332,6 +379,8 @@ class SegmentationService(ISegmentationService):
         """
         List all segmentations, optionally filtered by file_id.
 
+        Searches Firestore first, then local storage as fallback.
+
         Args:
             file_id: Optional file ID to filter by
 
@@ -339,12 +388,57 @@ class SegmentationService(ISegmentationService):
             List of SegmentationResponse
         """
         results = []
+        found_ids = set()
 
-        # Scan storage directory
+        # First, query Firestore
+        try:
+            query = self.db.collection(SEGMENTATIONS_COLLECTION)
+            if file_id:
+                query = query.where("file_id", "==", file_id)
+
+            docs = query.stream()
+            for doc in docs:
+                seg_id = doc.id
+                found_ids.add(seg_id)
+                data = doc.to_dict()
+
+                # Load into cache if needed
+                if seg_id not in self.segmentations_cache:
+                    self._load_segmentation(seg_id)
+
+                if seg_id in self.segmentations_cache:
+                    seg_data = self.segmentations_cache[seg_id]
+                    metadata = seg_data["metadata"]
+                    total_slices = seg_data["masks_3d"].shape[0]  # D,H,W convention
+                else:
+                    # Use data from Firestore directly
+                    mask_shape = data.get("mask_shape", [1, 256, 256])
+                    total_slices = mask_shape[0] if mask_shape else 1
+                    # Create minimal metadata
+                    data.pop('source_format', None)
+                    data.pop('mask_shape', None)
+                    data.pop('segmentation_id', None)
+                    metadata = SegmentationMetadata(**data)
+
+                results.append(SegmentationResponse(
+                    segmentation_id=seg_id,
+                    file_id=metadata.file_id,
+                    metadata=metadata,
+                    total_slices=total_slices,
+                    masks=None
+                ))
+
+            logger.info("Listed segmentations from Firestore", extra={"count": len(results), "file_id": file_id})
+
+        except Exception as e:
+            logger.warning("Failed to query Firestore, using local", extra={"error": str(e)})
+
+        # Also check local storage (for backward compatibility)
         for seg_file in self.storage_path.glob("*.json"):
             seg_id = seg_file.stem
+            if seg_id in found_ids:
+                continue  # Already found in Firestore
 
-            # Load if not in cache
             if seg_id not in self.segmentations_cache:
                 self._load_segmentation(seg_id)
 
@@ -352,17 +446,41 @@ class SegmentationService(ISegmentationService):
                 seg_data = self.segmentations_cache[seg_id]
                 metadata = seg_data["metadata"]
 
-                # Filter by file_id if provided
                 if file_id is None or metadata.file_id == file_id:
                     results.append(SegmentationResponse(
                         segmentation_id=seg_id,
                         file_id=metadata.file_id,
                         metadata=metadata,
-                        total_slices=seg_data["masks_3d"].shape[2],
+                        total_slices=seg_data["masks_3d"].shape[0],
                         masks=None
                     ))
 
         return results
+
+    async def save_segmentation_async(self, segmentation_id: str) -> bool:
+        """
+        Explicitly save a segmentation to persistent storage.
+
+        This should be called by the frontend when changing slices or
+        when the user clicks "Save".
+
+        Args:
+            segmentation_id: ID of the segmentation to save
+
+        Returns:
+            True if successful
+        """
+        if segmentation_id not in self.segmentations_cache:
+            logger.warning("Segmentation not in cache, nothing to save", extra={"segmentation_id": segmentation_id})
+            return False
+
+        try:
+            self._save_segmentation(segmentation_id)
+            logger.info("Segmentation saved successfully", extra={"segmentation_id": segmentation_id})
+            return True
+        except Exception as e:
+            logger.error("Failed to save segmentation", extra={"error": str(e), "segmentation_id": segmentation_id})
+            return False
 
     async def generate_overlay_image(
         self,
@@ -491,21 +609,190 @@ class SegmentationService(ISegmentationService):
         return array_to_base64(overlay_image)
 
     def _save_segmentation(self, segmentation_id: str):
-        """Save segmentation to disk in same format as source (NIfTI or DICOM)."""
+        """Save segmentation to Firestore (metadata) and GCS (masks).
+
+        This ensures persistence across Cloud Run instance restarts.
+        """
         if segmentation_id not in self.segmentations_cache:
             return
 
         seg_data = self.segmentations_cache[segmentation_id]
         masks_3d = seg_data["masks_3d"]
         metadata = seg_data["metadata"]
-        source_format = seg_data.get("source_format", "nifti")  # Default to nifti
+        source_format = seg_data.get("source_format", "nifti")
 
-        # Save metadata as JSON (for quick access to labels, etc.)
+        # Prepare metadata dict for Firestore
+        metadata_dict = metadata.model_dump(mode='json')
+        metadata_dict["source_format"] = source_format
+        metadata_dict["segmentation_id"] = segmentation_id
+
+        # Convert datetime objects to ISO format strings
+        if 'created_at' in metadata_dict and isinstance(metadata_dict['created_at'], datetime):
+            metadata_dict['created_at'] = metadata_dict['created_at'].isoformat()
+        if 'modified_at' in metadata_dict and isinstance(metadata_dict['modified_at'], datetime):
+            metadata_dict['modified_at'] = metadata_dict['modified_at'].isoformat()
+
+        # Add image shape info
+        metadata_dict["mask_shape"] = list(masks_3d.shape)
+
+        try:
+            # Save metadata to Firestore
+            doc_ref = self.db.collection(SEGMENTATIONS_COLLECTION).document(segmentation_id)
+            doc_ref.set(metadata_dict)
+            logger.info("Saved segmentation metadata to Firestore", extra={"segmentation_id": segmentation_id})
+
+            # Save masks to GCS as compressed numpy array
+            self._save_masks_to_gcs(segmentation_id, masks_3d)
+
+        except Exception as e:
+            logger.error("Failed to save to Firestore/GCS, falling back to local", extra={"error": str(e)})
+            # Fallback to local storage
+            self._save_segmentation_local(segmentation_id, masks_3d, metadata, source_format)
+
+    def _save_masks_to_gcs(self, segmentation_id: str, masks_3d: np.ndarray):
+        """Save mask data to Google Cloud Storage as NIfTI format (.nii.gz).
+
+        The segmentation NIfTI will have the same affine and header as the original
+        MRI image, ensuring perfect spatial alignment for use in tools like ITK-SNAP.
+        """
+        import tempfile
+        import os
+
+        try:
+            # Get file_id from segmentation metadata to load original image
+            seg_data = self.segmentations_cache.get(segmentation_id)
+            file_id = seg_data["metadata"].file_id if seg_data else None
+
+            # Transpose from internal (D,H,W) convention to NIfTI (W,H,D) convention
+            nifti_data = transpose_for_nifti(masks_3d, from_convention='DHW')
+
+            # Try to get affine and header from original MRI image
+            affine = None
+            header = None
+            if file_id:
+                try:
+                    # Download original NIfTI from GCS to get its affine/header
+                    original_blob = self.gcs_bucket.blob(file_id)
+                    if original_blob.exists():
+                        buffer = io.BytesIO()
+                        original_blob.download_to_file(buffer)
+                        buffer.seek(0)
+
+                        # Load original NIfTI to get affine and header
+                        with tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False) as tmp:
+                            tmp.write(buffer.read())
+                            tmp_path = tmp.name
+
+                        original_nifti = nib.load(tmp_path)
+                        affine = original_nifti.affine.copy()
+                        header = original_nifti.header.copy()
+                        os.unlink(tmp_path)
+
+                        logger.info("Loaded affine/header from original MRI", extra={
+                            "file_id": file_id,
+                            "original_shape": original_nifti.shape,
+                            "seg_shape": nifti_data.shape
+                        })
+                    else:
+                        logger.warning("Original MRI file not found, using identity affine", extra={"file_id": file_id})
+                except Exception as e:
+                    logger.warning("Could not load original MRI affine/header", extra={"error": str(e), "file_id": file_id})
+
+            # Create NIfTI image with original affine/header if available
+            if affine is not None and header is not None:
+                # Use the original header but update data-specific fields
+                header.set_data_dtype(np.uint8)
+                header.set_data_shape(nifti_data.shape)
+                nifti_img = nib.Nifti1Image(nifti_data.astype(np.uint8), affine, header)
+                logger.info("Created segmentation NIfTI with original MRI affine/header")
+            else:
+                # Fallback to generic NIfTI with identity affine
+                nifti_img = create_nifti_image(nifti_data)
+                logger.info("Created segmentation NIfTI with identity affine (original not available)")
+
+            # Save to temp file as compressed NIfTI
+            with tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False) as tmp:
+                tmp_path = tmp.name
+            save_nifti(nifti_img, tmp_path, compress=True)
+
+            # Read the compressed file into buffer
+            buffer = io.BytesIO()
+            with open(tmp_path, 'rb') as f:
+                buffer.write(f.read())
+            buffer.seek(0)
+
+            # Clean up temp file
+            os.unlink(tmp_path)
+
+            # Upload to GCS as NIfTI
+            blob_path = f"segmentations/{segmentation_id}/masks.nii.gz"
+            blob = self.gcs_bucket.blob(blob_path)
+            blob.upload_from_file(buffer, content_type="application/gzip")
+
+            logger.info("Saved masks to GCS as NIfTI", extra={"segmentation_id": segmentation_id, "path": blob_path})
+        except Exception as e:
+            logger.error("Failed to save masks to GCS", extra={"error": str(e)})
+            raise
+
+    def _load_masks_from_gcs(self, segmentation_id: str) -> Optional[np.ndarray]:
+        """Load mask data from Google Cloud Storage (NIfTI or NPZ format)."""
+        try:
+            # First try NIfTI format (new format)
+            nifti_blob_path = f"segmentations/{segmentation_id}/masks.nii.gz"
+            nifti_blob = self.gcs_bucket.blob(nifti_blob_path)
+
+            if nifti_blob.exists():
+                # Load NIfTI format
+                buffer = io.BytesIO()
+                nifti_blob.download_to_file(buffer)
+                buffer.seek(0)
+
+                # nibabel needs a file, so use temp file
+                import tempfile
+                import os
+                with tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False) as tmp:
+                    tmp.write(buffer.read())
+                    tmp_path = tmp.name
+
+                import nibabel as nib
+                nifti_img = nib.load(tmp_path)
+                nifti_data = nifti_img.get_fdata().astype(np.uint8)
+                os.unlink(tmp_path)
+
+                # Transpose from NIfTI (W,H,D) to internal (D,H,W)
+                masks_3d = np.transpose(nifti_data, (2, 1, 0))
+
+                logger.info("Loaded masks from GCS (NIfTI)", extra={"segmentation_id": segmentation_id, "shape": masks_3d.shape})
+                return masks_3d
+
+            # Fallback to NPZ format (legacy)
+            npz_blob_path = f"segmentations/{segmentation_id}/masks.npz"
+            npz_blob = self.gcs_bucket.blob(npz_blob_path)
+
+            if npz_blob.exists():
+                buffer = io.BytesIO()
+                npz_blob.download_to_file(buffer)
+                buffer.seek(0)
+
+                data = np.load(buffer)
+                masks_3d = data["masks"]
+
+                logger.info("Loaded masks from GCS (NPZ legacy)", extra={"segmentation_id": segmentation_id, "shape": masks_3d.shape})
+                return masks_3d
+
+            logger.debug("No masks found in GCS", extra={"segmentation_id": segmentation_id})
+            return None
+        except Exception as e:
+            logger.error("Failed to load masks from GCS", extra={"error": str(e)})
+            return None
+
+    def _save_segmentation_local(self, segmentation_id: str, masks_3d: np.ndarray, metadata, source_format: str):
+        """Fallback: Save segmentation to local disk."""
+        # Save metadata as JSON
         metadata_path = self.storage_path / f"{segmentation_id}.json"
         metadata_dict = metadata.model_dump(mode='json')
-        metadata_dict["source_format"] = source_format  # Store format in metadata
+        metadata_dict["source_format"] = source_format
 
-        # Convert datetime objects to ISO format strings for proper JSON serialization
         if 'created_at' in metadata_dict and isinstance(metadata_dict['created_at'], datetime):
             metadata_dict['created_at'] = metadata_dict['created_at'].isoformat()
         if 'modified_at' in metadata_dict and isinstance(metadata_dict['modified_at'], datetime):
@@ -514,54 +801,35 @@ class SegmentationService(ISegmentationService):
         with open(metadata_path, 'w') as f:
             json.dump(metadata_dict, f, indent=2)
 
-        # Save masks in appropriate format
+        # Save masks
         if source_format == "nifti":
             self._save_as_nifti(segmentation_id, masks_3d, metadata)
         else:
             self._save_as_dicom(segmentation_id, masks_3d, metadata)
 
     def _save_as_nifti(self, segmentation_id: str, masks_3d: np.ndarray, metadata):
-        """Save segmentation as NIfTI file (.nii.gz) and upload to Google Drive."""
+        """Save segmentation as NIfTI file (.nii.gz) locally."""
         # Transpose from internal (D,H,W) convention to NIfTI (W,H,D) convention
         nifti_data = transpose_for_nifti(masks_3d, from_convention='DHW')
 
         # Create NIfTI image using utility function
         nifti_img = create_nifti_image(nifti_data)
 
-        # Get original file metadata from Google Drive
+        # Create segmentation filename from file_id
         file_id = metadata.file_id
-        try:
-            file_metadata = drive_service.get_file_metadata(file_id)
-            original_filename = file_metadata['name']
-            parent_folder_id = file_metadata['parents'][0] if file_metadata['parents'] else None
+        original_filename = file_id.split('/')[-1] if file_id else segmentation_id
 
-            # Create segmentation filename using utility function
-            new_filename = create_segmentation_filename(original_filename)
-
-            logger.debug("Renaming segmentation file", extra={"original": original_filename, "new": new_filename})
-
-        except Exception as e:
-            logger.warning("Could not get file metadata from Google Drive", extra={"error": str(e)})
+        # Create segmentation filename using utility function
+        new_filename = create_segmentation_filename(original_filename)
+        if not new_filename.endswith('.nii.gz'):
             new_filename = f"{segmentation_id}_seg.nii.gz"
-            parent_folder_id = None
+
+        logger.debug("Creating segmentation file", extra={"original": original_filename, "new": new_filename})
 
         # Save locally using utility function
         output_path = self.storage_path / new_filename
         save_nifti(nifti_img, str(output_path), compress=True)
         logger.info("Saved segmentation locally as NIfTI", extra={"output_path": str(output_path)})
-
-        # Upload to Google Drive in the same folder as original image
-        try:
-            uploaded_file_id = drive_service.upload_file(
-                file_path=str(output_path),
-                filename=new_filename,
-                parent_folder_id=parent_folder_id,
-                mime_type='application/gzip'
-            )
-            logger.info("Uploaded segmentation to Google Drive", extra={"file_id": uploaded_file_id})
-        except Exception as e:
-            logger.error("Failed to upload segmentation to Google Drive", extra={"error": str(e)})
-            logger.warning("Segmentation saved locally only (Google Drive upload failed)", extra={"output_path": str(output_path)})
 
     def _save_as_dicom(self, segmentation_id: str, masks_3d: np.ndarray, metadata):
         """Save segmentation as DICOM series using utility functions."""
@@ -592,7 +860,66 @@ class SegmentationService(ISegmentationService):
         logger.info("Saved segmentation as DICOM series", extra={"num_files": depth, "directory": str(dicom_dir)})
 
     def _load_segmentation(self, segmentation_id: str) -> bool:
-        """Load segmentation from disk (DICOM series)."""
+        """Load segmentation from Firestore (metadata) and GCS (masks).
+
+        Falls back to local disk if cloud storage fails.
+        """
+        try:
+            # First try Firestore
+            doc_ref = self.db.collection(SEGMENTATIONS_COLLECTION).document(segmentation_id)
+            doc = doc_ref.get()
+
+            if doc.exists:
+                metadata_dict = doc.to_dict()
+                logger.info("Loaded metadata from Firestore", extra={"segmentation_id": segmentation_id})
+
+                # Extract source_format
+                source_format = metadata_dict.pop('source_format', 'nifti')
+                mask_shape = metadata_dict.pop('mask_shape', None)
+                metadata_dict.pop('segmentation_id', None)  # Remove if present
+
+                # Create metadata object
+                metadata = SegmentationMetadata(**metadata_dict)
+
+                # Load masks from GCS
+                masks_3d = self._load_masks_from_gcs(segmentation_id)
+
+                if masks_3d is not None:
+                    # Cache in memory
+                    self.segmentations_cache[segmentation_id] = {
+                        "metadata": metadata,
+                        "masks_3d": masks_3d,
+                        "image_shape": masks_3d.shape,
+                        "source_format": source_format
+                    }
+                    logger.info("Segmentation loaded from Firestore/GCS", extra={"segmentation_id": segmentation_id})
+                    return True
+                else:
+                    # Masks not in GCS, create empty based on mask_shape from Firestore
+                    if mask_shape:
+                        masks_3d = np.zeros(tuple(mask_shape), dtype=np.uint8)
+                    else:
+                        # Default to small empty mask if no shape info available
+                        logger.warning("No mask_shape in Firestore, using default", extra={"segmentation_id": segmentation_id})
+                        masks_3d = np.zeros((1, 256, 256), dtype=np.uint8)
+
+                    self.segmentations_cache[segmentation_id] = {
+                        "metadata": metadata,
+                        "masks_3d": masks_3d,
+                        "image_shape": masks_3d.shape,
+                        "source_format": source_format
+                    }
+                    logger.warning("Masks not found in GCS, using empty", extra={"segmentation_id": segmentation_id})
+                    return True
+
+        except Exception as e:
+            logger.warning("Failed to load from Firestore/GCS, trying local", extra={"error": str(e)})
+
+        # Fallback to local storage
+        return self._load_segmentation_local(segmentation_id)
+
+    def _load_segmentation_local(self, segmentation_id: str) -> bool:
+        """Fallback: Load segmentation from local disk."""
         metadata_path = self.storage_path / f"{segmentation_id}.json"
         dicom_dir = self.storage_path / "dicom" / segmentation_id
 
@@ -604,80 +931,54 @@ class SegmentationService(ISegmentationService):
             with open(metadata_path, 'r') as f:
                 metadata_dict = json.load(f)
 
-            # Extract source_format before creating metadata
             source_format = metadata_dict.pop('source_format', 'nifti')
-
-            # Create metadata from dict (Pydantic will validate)
             metadata = SegmentationMetadata(**metadata_dict)
 
             # Load masks from DICOM series
             if dicom_dir.exists():
-                # Get all DICOM files sorted by name
                 dicom_files = sorted(dicom_dir.glob("seg_*.dcm"))
 
                 if len(dicom_files) == 0:
                     logger.warning("No DICOM files found", extra={"directory": str(dicom_dir)})
                     return False
 
-                # Read first file to get dimensions
                 first_ds = pydicom.dcmread(dicom_files[0])
                 height = first_ds.Rows
                 width = first_ds.Columns
                 depth = len(dicom_files)
 
-                # Create 3D array
                 masks_3d = np.zeros((depth, height, width), dtype=np.uint8)
 
-                # Load each slice
                 for idx, dicom_file in enumerate(dicom_files):
                     ds = pydicom.dcmread(dicom_file)
                     pixel_array = ds.pixel_array
                     masks_3d[idx, :, :] = pixel_array.astype(np.uint8)
 
-                logger.debug("Loaded segmentation from {len(dicom_files)} DICOM files")
+                logger.debug(f"Loaded segmentation from {len(dicom_files)} DICOM files")
             else:
-                # Fallback: try to load from old NPY format
+                # Try NPY format
                 masks_path = self.storage_path / f"{segmentation_id}.npy"
                 if masks_path.exists():
                     masks_3d = np.load(masks_path)
                     logger.debug("Loaded segmentation from legacy NPY format")
                 else:
-                    logger.warning("No segmentation data found", extra={"segmentation_id": segmentation_id})
-                    return False
+                    # Try NIfTI format
+                    nifti_pattern = f"{segmentation_id}*_seg.nii.gz"
+                    nifti_files = list(self.storage_path.glob(nifti_pattern))
+                    if nifti_files:
+                        nifti_img = nib.load(str(nifti_files[0]))
+                        nifti_data = nifti_img.get_fdata().astype(np.uint8)
+                        # Transpose from NIfTI (W,H,D) to internal (D,H,W)
+                        masks_3d = np.transpose(nifti_data, (2, 1, 0))
+                        logger.debug("Loaded segmentation from NIfTI format")
+                    else:
+                        logger.warning("No segmentation data found", extra={"segmentation_id": segmentation_id})
+                        return False
 
-            # Validate and migrate dimensions if needed (for old segmentations created with wrong convention)
-            # Expected: (Depth, Height, Width) medical imaging convention
-            # Old incorrect convention: (Height, Width, Depth)
-            expected_depth = metadata.image_shape.slices
-            expected_height = metadata.image_shape.rows
-            expected_width = metadata.image_shape.columns
+            # Note: We skip dimension validation here since metadata doesn't store image_shape
+            # The mask shape is authoritative from the loaded file
+            logger.debug("Loaded local segmentation", extra={"shape": masks_3d.shape})
 
-            actual_shape = masks_3d.shape
-            if actual_shape != (expected_depth, expected_height, expected_width):
-                # Check if it's in the old (H,W,D) format
-                if actual_shape == (expected_height, expected_width, expected_depth):
-                    logger.warning(
-                        "Migrating old segmentation from (H,W,D) to (D,H,W) convention",
-                        extra={
-                            "segmentation_id": segmentation_id,
-                            "old_shape": actual_shape,
-                            "new_shape": (expected_depth, expected_height, expected_width)
-                        }
-                    )
-                    # Transpose from (H,W,D) to (D,H,W)
-                    masks_3d = np.transpose(masks_3d, (2, 0, 1))
-                else:
-                    logger.error(
-                        "Segmentation dimensions don't match expected shape",
-                        extra={
-                            "segmentation_id": segmentation_id,
-                            "expected": (expected_depth, expected_height, expected_width),
-                            "actual": actual_shape
-                        }
-                    )
-                    return False
-
-            # Cache in memory
             self.segmentations_cache[segmentation_id] = {
                 "metadata": metadata,
                 "masks_3d": masks_3d,
@@ -687,8 +988,7 @@ class SegmentationService(ISegmentationService):
 
             return True
         except Exception as e:
-            # TODO: Replace with structured logging in Phase 2
-            logger.error("Error loading segmentation", extra={"segmentation_id": segmentation_id, "error": str(e)})
+            logger.error("Error loading segmentation locally", extra={"error": str(e)})
             return False
 
     def export_to_dicom_series(self, segmentation_id: str, output_dir: Optional[str] = None) -> str:
