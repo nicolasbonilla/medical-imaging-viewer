@@ -73,8 +73,18 @@ class Container(containers.DeclarativeContainer):
     )
 
     # Segmentation Service - Lazy loaded (HEAVY: scikit-image, scipy)
+    # Legacy service for backward compatibility
     segmentation_service = providers.Factory(
         lambda cache: __import__('app.services.segmentation_service', fromlist=['SegmentationService']).SegmentationService(
+            cache_service=cache
+        ),
+        cache=cache_service
+    )
+
+    # Segmentation Service V2 - Firestore-based with hierarchical support
+    # Supports multi-patient, multi-study, multi-expert workflow
+    segmentation_service_v2 = providers.Factory(
+        lambda cache: __import__('app.services.segmentation_service_firestore', fromlist=['SegmentationServiceFirestore']).SegmentationServiceFirestore(
             cache_service=cache
         ),
         cache=cache_service
@@ -100,9 +110,12 @@ class Container(containers.DeclarativeContainer):
         lambda: __import__('app.services.patient_service_firestore', fromlist=['PatientServiceFirestore']).PatientServiceFirestore()
     )
 
-    # Study Service - Firestore-based study management
+    # Study Service - Firestore-based study management (with storage for signed URLs)
     study_service = providers.Factory(
-        lambda: __import__('app.services.study_service_firestore', fromlist=['StudyServiceFirestore']).StudyServiceFirestore()
+        lambda storage: __import__('app.services.study_service_firestore', fromlist=['StudyServiceFirestore']).StudyServiceFirestore(
+            storage_service=storage
+        ),
+        storage=storage_service
     )
 
     # Document Service - Firestore-based document management
@@ -135,6 +148,7 @@ def init_container() -> Container:
     container.wire(modules=[
         "app.api.routes.imaging",
         "app.api.routes.segmentation",
+        "app.api.routes.segmentation_v2",
     ])
 
     logger.info("DI Container initialized and wired successfully")
@@ -291,3 +305,28 @@ def get_document_service():
     """
     container = get_container()
     return container.document_service()
+
+
+def get_segmentation_service_v2():
+    """
+    Dependency function for FastAPI routes to get SegmentationServiceV2.
+
+    Uses Firestore backend with hierarchical Patient → Study → Series → Segmentation
+    support, multi-expert workflow, and ITK-SNAP style segmentation.
+
+    Usage:
+        from fastapi import Depends
+        from app.core.container import get_segmentation_service_v2
+
+        @router.post("/patients/{patient_id}/studies/{study_id}/series/{series_id}/segmentations")
+        async def create_segmentation(
+            patient_id: UUID,
+            study_id: UUID,
+            series_id: UUID,
+            data: SegmentationCreate,
+            segmentation_service = Depends(get_segmentation_service_v2)
+        ):
+            return await segmentation_service.create_segmentation(...)
+    """
+    container = get_container()
+    return container.segmentation_service_v2()

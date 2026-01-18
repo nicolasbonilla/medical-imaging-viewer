@@ -10,9 +10,9 @@ from app.models.schemas import (
     WindowLevelRequest,
     ImageOrientation
 )
-from app.core.interfaces.drive_interface import IDriveService
 from app.core.interfaces.imaging_interface import IImagingService
-from app.core.container import get_drive_service, get_imaging_service, get_prefetch_service
+from app.core.interfaces.storage_interface import IStorageService
+from app.core.container import get_imaging_service, get_prefetch_service, get_storage_service
 from app.services.prefetch_service import PrefetchService
 
 router = APIRouter(prefix="/imaging", tags=["Medical Imaging"])
@@ -20,26 +20,33 @@ logger = get_logger(__name__)
 settings = get_settings()
 
 
-@router.get("/process/{file_id}", response_model=ImageSeriesResponse)
+def get_filename_from_path(path: str) -> str:
+    """Extract filename from GCS object path."""
+    return path.split('/')[-1] if path else "unknown"
+
+
+@router.get("/process/{file_id:path}", response_model=ImageSeriesResponse)
 async def process_image(
     file_id: str,
     start_slice: Optional[int] = Query(None, ge=0, description="Start slice index"),
     end_slice: Optional[int] = Query(None, ge=0, description="End slice index"),
     max_slices: int = Query(50, ge=1, le=500, description="Maximum slices to return"),
-    drive_service: IDriveService = Depends(get_drive_service),
+    storage_service: IStorageService = Depends(get_storage_service),
     imaging_service: IImagingService = Depends(get_imaging_service)
 ):
     """
-    Process a medical image file from Google Drive.
+    Process a medical image file from GCS storage.
     Returns image metadata and slice data.
 
-    Uses dependency injection to get DriveService and ImagingService instances.
+    The file_id is the GCS object path (e.g., patients/{id}/studies/{id}/series/{id}/image.dcm)
+
+    Uses dependency injection to get StorageService and ImagingService instances.
     Custom exceptions will be caught by global exception handler.
     """
     try:
-        # Download file from Drive
-        file_metadata = await drive_service.get_file_metadata(file_id)
-        file_data = await drive_service.download_file(file_id)
+        # Download file from GCS
+        file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, file_id)
+        filename = get_filename_from_path(file_id)
 
         # Determine slice range
         slice_range = None
@@ -56,7 +63,7 @@ async def process_image(
         # Process image
         result = await imaging_service.process_image(
             file_data=file_data,
-            filename=file_metadata['name'],
+            filename=filename,
             slice_range=slice_range
         )
 
@@ -66,28 +73,28 @@ async def process_image(
         raise HTTPException(status_code=500, detail=f"Error processing image: {str(e)}")
 
 
-@router.post("/window-level/{file_id}", response_model=ImageSlice)
+@router.post("/window-level/{file_id:path}", response_model=ImageSlice)
 async def apply_window_level(
     file_id: str,
     request: WindowLevelRequest,
-    drive_service: IDriveService = Depends(get_drive_service),
+    storage_service: IStorageService = Depends(get_storage_service),
     imaging_service: IImagingService = Depends(get_imaging_service)
 ):
     """
     Apply window/level adjustment to a specific slice.
 
-    Uses dependency injection to get DriveService and ImagingService instances.
+    Uses dependency injection to get StorageService and ImagingService instances.
     Custom exceptions will be caught by global exception handler.
     """
     try:
-        # Download file
-        file_metadata = await drive_service.get_file_metadata(file_id)
-        file_data = await drive_service.download_file(file_id)
+        # Download file from GCS
+        file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, file_id)
+        filename = get_filename_from_path(file_id)
 
         # Get slice with windowing
         result = imaging_service.get_slice_with_window(
             file_data=file_data,
-            filename=file_metadata['name'],
+            filename=filename,
             slice_index=request.slice_index,
             window_center=request.window_center,
             window_width=request.window_width
@@ -99,21 +106,21 @@ async def apply_window_level(
         raise HTTPException(status_code=500, detail=f"Error applying window/level: {str(e)}")
 
 
-@router.get("/slice/{file_id}/{slice_index}", response_model=ImageSlice)
+@router.get("/slice/{file_id:path}/{slice_index}", response_model=ImageSlice)
 async def get_slice(
     file_id: str,
     slice_index: int,
     window_center: Optional[float] = Query(None, description="Window center"),
     window_width: Optional[float] = Query(None, description="Window width"),
     direction: str = Query("forward", description="Navigation direction: 'forward' or 'backward'"),
-    drive_service: IDriveService = Depends(get_drive_service),
+    storage_service: IStorageService = Depends(get_storage_service),
     imaging_service: IImagingService = Depends(get_imaging_service),
     prefetch_service: PrefetchService = Depends(get_prefetch_service)
 ):
     """
     Get a specific slice from an image file.
 
-    Uses dependency injection to get DriveService and ImagingService instances.
+    Uses dependency injection to get StorageService and ImagingService instances.
     Custom exceptions will be caught by global exception handler.
 
     FASE 1 Optimization: Intelligent prefetching enabled.
@@ -121,14 +128,14 @@ async def get_slice(
     to improve cache hit rate from 80% to 95%.
     """
     try:
-        # Download file
-        file_metadata = await drive_service.get_file_metadata(file_id)
-        file_data = await drive_service.download_file(file_id)
+        # Download file from GCS
+        file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, file_id)
+        filename = get_filename_from_path(file_id)
 
         # Get slice
         result = imaging_service.get_slice_with_window(
             file_data=file_data,
-            filename=file_metadata['name'],
+            filename=filename,
             slice_index=slice_index,
             window_center=window_center,
             window_width=window_width
@@ -138,7 +145,7 @@ async def get_slice(
         # Prefetch next N slices in background based on navigation direction
         if settings.ENABLE_PREFETCHING:
             # Get total slices from metadata
-            img_format = imaging_service.detect_format(file_data, file_metadata['name'])
+            img_format = imaging_service.detect_format(file_data, filename)
             if img_format.value == "dicom":
                 _, metadata = imaging_service.load_dicom(file_data)
             elif img_format.value == "nifti":
@@ -174,29 +181,29 @@ async def get_slice(
         raise HTTPException(status_code=500, detail=f"Error getting slice: {str(e)}")
 
 
-@router.get("/volume/{file_id}")
+@router.get("/volume/{file_id:path}")
 async def get_3d_volume(
     file_id: str,
     orientation: ImageOrientation = Query(ImageOrientation.AXIAL, description="Volume orientation"),
-    drive_service: IDriveService = Depends(get_drive_service),
+    storage_service: IStorageService = Depends(get_storage_service),
     imaging_service: IImagingService = Depends(get_imaging_service)
 ):
     """
     Get 3D volume data for rendering.
     Warning: This can be memory intensive for large volumes.
 
-    Uses dependency injection to get DriveService and ImagingService instances.
+    Uses dependency injection to get StorageService and ImagingService instances.
     Custom exceptions will be caught by global exception handler.
     """
     try:
-        # Download file
-        file_metadata = await drive_service.get_file_metadata(file_id)
-        file_data = await drive_service.download_file(file_id)
+        # Download file from GCS
+        file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, file_id)
+        filename = get_filename_from_path(file_id)
 
         # Generate 3D volume
         result = imaging_service.generate_3d_volume(
             file_data=file_data,
-            filename=file_metadata['name'],
+            filename=filename,
             orientation=orientation
         )
 
@@ -206,25 +213,26 @@ async def get_3d_volume(
         raise HTTPException(status_code=500, detail=f"Error generating 3D volume: {str(e)}")
 
 
-@router.get("/metadata/{file_id}")
+@router.get("/metadata/{file_id:path}")
 async def get_image_metadata(
     file_id: str,
-    drive_service: IDriveService = Depends(get_drive_service),
+    storage_service: IStorageService = Depends(get_storage_service),
     imaging_service: IImagingService = Depends(get_imaging_service)
 ):
     """
     Get only metadata from an image file without loading pixel data.
 
-    Uses dependency injection to get DriveService and ImagingService instances.
+    Uses dependency injection to get StorageService and ImagingService instances.
     Custom exceptions will be caught by global exception handler.
     """
     try:
-        # Download file
-        file_metadata = await drive_service.get_file_metadata(file_id)
-        file_data = await drive_service.download_file(file_id)
+        # Download file from GCS
+        file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, file_id)
+        file_metadata = await storage_service.get_file_metadata(settings.GCS_BUCKET_NAME, file_id)
+        filename = get_filename_from_path(file_id)
 
         # Detect format and load metadata only
-        img_format = imaging_service.detect_format(file_data, file_metadata['name'])
+        img_format = imaging_service.detect_format(file_data, filename)
 
         if img_format.value == "dicom":
             _, metadata = imaging_service.load_dicom(file_data)
@@ -236,33 +244,38 @@ async def get_image_metadata(
         return {
             "format": img_format,
             "metadata": metadata,
-            "file_info": file_metadata
+            "file_info": {
+                "name": filename,
+                "path": file_id,
+                "size": file_metadata.size if file_metadata else None,
+                "content_type": file_metadata.content_type if file_metadata else None
+            }
         }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting metadata: {str(e)}")
 
 
-@router.get("/voxel-3d/{file_id}")
+@router.get("/voxel-3d/{file_id:path}")
 async def get_voxel_3d_visualization(
     file_id: str,
     start_slice: Optional[int] = Query(None, ge=0, description="Start slice index"),
     end_slice: Optional[int] = Query(None, ge=0, description="End slice index"),
     angle: int = Query(320, ge=0, le=360, description="Viewing angle"),
-    drive_service: IDriveService = Depends(get_drive_service),
+    storage_service: IStorageService = Depends(get_storage_service),
     imaging_service: IImagingService = Depends(get_imaging_service)
 ):
     """
     Generate a 3D voxel visualization using matplotlib.
     Returns a base64 encoded PNG image.
 
-    Uses dependency injection to get DriveService and ImagingService instances.
+    Uses dependency injection to get StorageService and ImagingService instances.
     Custom exceptions will be caught by global exception handler.
     """
     try:
-        # Download file
-        file_metadata = await drive_service.get_file_metadata(file_id)
-        file_data = await drive_service.download_file(file_id)
+        # Download file from GCS
+        file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, file_id)
+        filename = get_filename_from_path(file_id)
 
         # Determine slice range
         slice_range = None
@@ -272,7 +285,7 @@ async def get_voxel_3d_visualization(
         # Generate 3D voxel visualization
         img_b64 = imaging_service.generate_3d_voxel_visualization(
             file_data=file_data,
-            filename=file_metadata['name'],
+            filename=filename,
             slice_range=slice_range,
             angle=angle
         )
@@ -283,7 +296,7 @@ async def get_voxel_3d_visualization(
         raise HTTPException(status_code=500, detail=f"Error generating 3D visualization: {str(e)}")
 
 
-@router.get("/matplotlib-2d/{file_id}/{slice_index}")
+@router.get("/matplotlib-2d/{file_id:path}/{slice_index}")
 async def get_matplotlib_2d_slice(
     file_id: str,
     slice_index: int,
@@ -296,7 +309,7 @@ async def get_matplotlib_2d_slice(
     y_max: Optional[int] = Query(None, ge=0, description="Y-axis upper limit (pixels)"),
     minimal: bool = Query(False, description="If True, renders only image data without axes/labels/colorbar for segmentation overlay"),
     segmentation_id: Optional[str] = Query(None, description="If provided, overlay segmentation on the matplotlib image"),
-    drive_service: IDriveService = Depends(get_drive_service),
+    storage_service: IStorageService = Depends(get_storage_service),
     imaging_service: IImagingService = Depends(get_imaging_service)
 ):
     """
@@ -309,7 +322,7 @@ async def get_matplotlib_2d_slice(
     When segmentation_id is provided, the segmentation will be overlaid on the image using matplotlib,
     ensuring perfect voxel coordinate alignment.
 
-    Uses dependency injection to get DriveService and ImagingService instances.
+    Uses dependency injection to get StorageService and ImagingService instances.
     Custom exceptions will be caught by global exception handler.
     """
     try:
@@ -331,14 +344,14 @@ async def get_matplotlib_2d_slice(
             }
         )
 
-        # Download file
-        file_metadata = await drive_service.get_file_metadata(file_id)
-        file_data = await drive_service.download_file(file_id)
+        # Download file from GCS
+        file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, file_id)
+        filename = get_filename_from_path(file_id)
 
         # Generate 2D matplotlib visualization
         result = await imaging_service.generate_2d_matplotlib_slice(
             file_data=file_data,
-            filename=file_metadata['name'],
+            filename=filename,
             slice_index=slice_index,
             window_center=window_center,
             window_width=window_width,
@@ -355,4 +368,3 @@ async def get_matplotlib_2d_slice(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating 2D matplotlib visualization: {str(e)}")
-
