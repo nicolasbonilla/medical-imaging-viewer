@@ -1,0 +1,8 @@
+[
+  {
+    "origin": ["https://brain-mri-476110.web.app", "https://brain-mri-476110.firebaseapp.com", "https://medical-imaging-viewer.web.app", "https://medical-imaging-viewer.firebaseapp.com", "http://localhost:5173", "http://localhost:3000"],
+    "method": ["GET", "PUT", "POST", "DELETE", "OPTIONS", "HEAD"],
+    "responseHeader": ["Content-Type", "Content-Length", "Content-MD5", "x-goog-content-length-range", "x-goog-resumable"],
+    "maxAgeSeconds": 3600
+  }
+]
