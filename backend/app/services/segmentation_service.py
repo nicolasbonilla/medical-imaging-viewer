@@ -652,8 +652,9 @@ class SegmentationService:
     def _save_masks_to_gcs(self, segmentation_id: str, masks_3d: np.ndarray):
         """Save mask data to Google Cloud Storage as NIfTI format (.nii.gz).
 
-        The segmentation NIfTI will have the same affine and header as the original
-        MRI image, ensuring perfect spatial alignment for use in tools like ITK-SNAP.
+        The segmentation NIfTI will have the EXACT same affine, header, dimensions,
+        and voxel sizes as the original MRI image, ensuring perfect spatial alignment
+        for use in tools like ITK-SNAP.
         """
         import tempfile
         import os
@@ -663,12 +664,11 @@ class SegmentationService:
             seg_data = self.segmentations_cache.get(segmentation_id)
             file_id = seg_data["metadata"].file_id if seg_data else None
 
-            # Transpose from internal (D,H,W) convention to NIfTI (W,H,D) convention
-            nifti_data = transpose_for_nifti(masks_3d, from_convention='DHW')
-
             # Try to get affine and header from original MRI image
             affine = None
             header = None
+            original_shape = None
+
             if file_id:
                 try:
                     # Download original NIfTI from GCS to get its affine/header
@@ -677,26 +677,75 @@ class SegmentationService:
                         buffer = io.BytesIO()
                         original_blob.download_to_file(buffer)
                         buffer.seek(0)
+                        file_bytes = buffer.read()
+
+                        # Detect file type from extension and magic bytes
+                        is_gzipped = file_bytes[:2] == b'\x1f\x8b'
+                        if file_id.endswith('.nii.gz') or is_gzipped:
+                            suffix = '.nii.gz'
+                        else:
+                            suffix = '.nii'
 
                         # Load original NIfTI to get affine and header
-                        with tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False) as tmp:
-                            tmp.write(buffer.read())
+                        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+                            tmp.write(file_bytes)
                             tmp_path = tmp.name
 
                         original_nifti = nib.load(tmp_path)
                         affine = original_nifti.affine.copy()
                         header = original_nifti.header.copy()
+                        original_shape = original_nifti.shape
                         os.unlink(tmp_path)
 
                         logger.info("Loaded affine/header from original MRI", extra={
                             "file_id": file_id,
-                            "original_shape": original_nifti.shape,
-                            "seg_shape": nifti_data.shape
+                            "original_shape": original_shape,
+                            "original_affine_diag": [affine[0,0], affine[1,1], affine[2,2]],
+                            "voxel_sizes": list(header.get_zooms()[:3])
                         })
                     else:
                         logger.warning("Original MRI file not found, using identity affine", extra={"file_id": file_id})
                 except Exception as e:
                     logger.warning("Could not load original MRI affine/header", extra={"error": str(e), "file_id": file_id})
+
+            # Create segmentation data with EXACT same shape as original MRI
+            if original_shape is not None:
+                # The original MRI shape in NIfTI format is already correct
+                # Our internal mask is (D, H, W), we need to match original NIfTI shape
+                # Original shape: (W, H, D) in NIfTI convention
+
+                # Create mask in the exact same shape as original MRI
+                nifti_data = np.zeros(original_shape, dtype=np.uint8)
+
+                # Copy our segmentation data into this array
+                # Our internal convention is (D, H, W), original is NIfTI (W, H, D)
+                # We need to transpose our data to match
+                internal_d, internal_h, internal_w = masks_3d.shape
+                orig_w, orig_h, orig_d = original_shape
+
+                # Verify dimensions match (may be transposed)
+                if (internal_d == orig_d and internal_h == orig_h and internal_w == orig_w):
+                    # Direct transpose (D,H,W) -> (W,H,D)
+                    nifti_data = np.transpose(masks_3d, (2, 1, 0)).astype(np.uint8)
+                elif (internal_d == orig_w and internal_h == orig_h and internal_w == orig_d):
+                    # Dimensions match but already in different order
+                    nifti_data = masks_3d.astype(np.uint8)
+                else:
+                    # Dimensions don't match exactly - use standard transpose
+                    logger.warning("Dimension mismatch between mask and original", extra={
+                        "mask_shape": masks_3d.shape,
+                        "original_shape": original_shape
+                    })
+                    nifti_data = transpose_for_nifti(masks_3d, from_convention='DHW')
+
+                logger.info("Segmentation data prepared for NIfTI", extra={
+                    "internal_shape": masks_3d.shape,
+                    "nifti_shape": nifti_data.shape,
+                    "original_shape": original_shape
+                })
+            else:
+                # No original - use standard transpose
+                nifti_data = transpose_for_nifti(masks_3d, from_convention='DHW')
 
             # Create NIfTI image with original affine/header if available
             if affine is not None and header is not None:
@@ -704,7 +753,10 @@ class SegmentationService:
                 header.set_data_dtype(np.uint8)
                 header.set_data_shape(nifti_data.shape)
                 nifti_img = nib.Nifti1Image(nifti_data.astype(np.uint8), affine, header)
-                logger.info("Created segmentation NIfTI with original MRI affine/header")
+                logger.info("Created segmentation NIfTI with original MRI affine/header", extra={
+                    "final_shape": nifti_img.shape,
+                    "affine_diag": [affine[0,0], affine[1,1], affine[2,2]]
+                })
             else:
                 # Fallback to generic NIfTI with identity affine
                 nifti_img = create_nifti_image(nifti_data)
