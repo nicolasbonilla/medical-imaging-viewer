@@ -90,9 +90,7 @@ export default function DocumentsPage() {
     page_size: pageSize,
     category: filters.category || undefined,
     status: filters.status || undefined,
-    search: filters.search || undefined,
-    sort_by: sortField,
-    sort_order: sortOrder,
+    query: filters.search || undefined,
   });
 
   const deleteDocumentMutation = useDeleteDocument();
@@ -105,7 +103,10 @@ export default function DocumentsPage() {
   const handleDeleteDocument = useCallback(async (doc: Document | DocumentSummary) => {
     if (window.confirm(t('document.confirmDelete', { title: doc.title }))) {
       try {
-        await deleteDocumentMutation.mutateAsync(doc.id);
+        await deleteDocumentMutation.mutateAsync({
+          id: doc.id,
+          patientId: doc.patient_id,
+        });
         toast.success(t('document.deleteSuccess'));
       } catch (error) {
         toast.error(t('document.deleteFailed'));

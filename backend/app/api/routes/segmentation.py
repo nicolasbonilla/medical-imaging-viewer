@@ -3,6 +3,7 @@ API routes for segmentation operations.
 """
 
 from fastapi import APIRouter, HTTPException, status, Query, Body, Depends
+from fastapi.responses import Response
 from typing import List, Optional
 from datetime import datetime
 import numpy as np
@@ -544,4 +545,58 @@ async def update_labels(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update labels: {str(e)}"
+        )
+
+
+@router.get("/{segmentation_id}/nifti")
+async def get_segmentation_nifti(
+    segmentation_id: str,
+    segmentation_service: SegmentationService = Depends(get_segmentation_service)
+):
+    """
+    Serve the segmentation as a raw NIfTI file (.nii.gz) for WebGL-based viewers.
+
+    This endpoint returns the segmentation mask as a NIfTI file with the exact same
+    affine, header, and dimensions as the original MRI image, making it compatible
+    with ITK-SNAP and NiiVue for overlay visualization.
+
+    The NIfTI file is served directly from GCS storage where it was saved during
+    the last save operation.
+    """
+    try:
+        # Get the segmentation NIfTI from GCS
+        nifti_data = segmentation_service.get_segmentation_nifti(segmentation_id)
+
+        if nifti_data is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Segmentation NIfTI file not found for {segmentation_id}"
+            )
+
+        logger.info("Serving segmentation NIfTI file", extra={
+            "segmentation_id": segmentation_id,
+            "size_bytes": len(nifti_data)
+        })
+
+        return Response(
+            content=nifti_data,
+            media_type="application/gzip",
+            headers={
+                "Content-Disposition": f'inline; filename="{segmentation_id}_segmentation.nii.gz"',
+                "Content-Length": str(len(nifti_data)),
+                "Cache-Control": "no-cache",  # Segmentation can change, don't cache
+                "Access-Control-Expose-Headers": "Content-Disposition, Content-Length"
+            }
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error serving segmentation NIfTI", extra={
+            "segmentation_id": segmentation_id,
+            "error": str(e)
+        })
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get segmentation NIfTI: {str(e)}"
         )

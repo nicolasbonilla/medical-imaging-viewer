@@ -437,7 +437,7 @@ export class IntegratedCache {
         hitRate: l2HitRate,
       },
       canvasPool: {
-        poolSize: canvasStats.poolSize,
+        poolSize: canvasStats.totalCanvases,
         inUse: canvasStats.inUse,
         poolHits: canvasStats.poolHits,
         poolMisses: canvasStats.poolMisses,

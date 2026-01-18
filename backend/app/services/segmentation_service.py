@@ -239,13 +239,28 @@ class SegmentationService:
 
         # IMPORTANT: Save immediately to persist across Cloud Run instance restarts
         # Without this, paint strokes are lost when requests go to different instances
+        # NOTE: This is SYNCHRONOUS to ensure data is persisted before returning
+        # The frontend depends on this to know when it's safe to change slices
         try:
             self._save_segmentation(segmentation_id)
-            logger.debug("Paint stroke saved to GCS", extra={"segmentation_id": segmentation_id})
+            logger.info("Paint stroke saved to GCS", extra={
+                "segmentation_id": segmentation_id,
+                "slice_index": stroke.slice_index,
+                "position": {"x": stroke.x, "y": stroke.y}
+            })
         except Exception as e:
-            logger.error("Failed to save paint stroke", extra={"error": str(e), "segmentation_id": segmentation_id})
-            # Don't fail the request if save fails - the stroke is still in memory
-            # The user can try saving again manually
+            logger.error("Failed to save paint stroke to GCS", extra={
+                "error": str(e),
+                "segmentation_id": segmentation_id,
+                "slice_index": stroke.slice_index
+            })
+            # IMPORTANT: Re-raise the exception so the frontend knows the save failed
+            # This allows the frontend to keep local paints as backup
+            raise SegmentationException(
+                message=f"Failed to persist paint stroke to cloud storage: {str(e)}",
+                error_code="GCS_SAVE_FAILED",
+                details={"segmentation_id": segmentation_id, "slice_index": stroke.slice_index}
+            )
 
         return True
 
@@ -300,6 +315,16 @@ class SegmentationService:
         """
         Get segmentation mask for a specific slice with caching.
 
+        In Cloud Run multi-instance environment:
+        - If segmentation is NOT in cache: load from GCS (fresh data)
+        - If segmentation IS in cache: use it (this instance may have painted)
+
+        The key insight is that paint strokes are saved immediately to GCS,
+        so any instance loading fresh will get the latest data. An instance
+        that has the segmentation in cache either:
+        a) Has fresh data (just painted), or
+        b) May have stale data, but will sync on next full reload
+
         Args:
             segmentation_id: Segmentation ID
             slice_index: Slice index
@@ -307,17 +332,13 @@ class SegmentationService:
         Returns:
             2D numpy array with label values, or None if not found
         """
-        # Try Redis cache first
-        cache_key = f"seg:mask:{segmentation_id}:{slice_index}"
-        if self.cache:
-            cached_mask = await self.cache.get(cache_key)
-            if cached_mask is not None:
-                logger.debug(f"Cache hit for segmentation mask: {segmentation_id}:{slice_index}")
-                # Convert list back to numpy array
-                return np.array(cached_mask, dtype=np.uint8)
+        logger.debug(f"Getting slice mask for {segmentation_id}:{slice_index}")
 
+        # Load from GCS if not in memory cache
         if segmentation_id not in self.segmentations_cache:
+            logger.info(f"Loading segmentation {segmentation_id} from GCS (not in cache)")
             if not self._load_segmentation(segmentation_id):
+                logger.warning(f"Failed to load segmentation {segmentation_id} from GCS")
                 return None
 
         seg_data = self.segmentations_cache[segmentation_id]
@@ -325,18 +346,14 @@ class SegmentationService:
 
         # Check slice index validity (using D, H, W convention)
         if slice_index >= masks_3d.shape[0]:
+            logger.warning(f"Slice index {slice_index} out of range (max: {masks_3d.shape[0]-1})")
             return None
 
         mask = masks_3d[slice_index, :, :].copy()
 
-        # Store in Redis cache (convert numpy to list for JSON serialization)
-        if self.cache:
-            await self.cache.set(
-                cache_key,
-                mask.tolist(),
-                ttl=None  # No expiration for segmentations (invalidate manually)
-            )
-            logger.debug(f"Cached segmentation mask: {segmentation_id}:{slice_index}")
+        # Log non-zero voxels for debugging
+        non_zero = np.sum(mask > 0)
+        logger.debug(f"Retrieved mask for slice {slice_index}: {non_zero} non-zero voxels")
 
         return mask
 
@@ -836,6 +853,50 @@ class SegmentationService:
             return None
         except Exception as e:
             logger.error("Failed to load masks from GCS", extra={"error": str(e)})
+            return None
+
+    def get_segmentation_nifti(self, segmentation_id: str) -> Optional[bytes]:
+        """Get the segmentation NIfTI file as raw bytes for direct serving.
+
+        Returns the NIfTI file (.nii.gz) directly from GCS without any processing.
+        This allows WebGL-based viewers like NiiVue to load the segmentation
+        as an overlay.
+
+        Args:
+            segmentation_id: The segmentation ID
+
+        Returns:
+            Raw bytes of the .nii.gz file, or None if not found
+        """
+        try:
+            # Check GCS for the NIfTI file
+            nifti_blob_path = f"segmentations/{segmentation_id}/masks.nii.gz"
+            nifti_blob = self.gcs_bucket.blob(nifti_blob_path)
+
+            if nifti_blob.exists():
+                buffer = io.BytesIO()
+                nifti_blob.download_to_file(buffer)
+                buffer.seek(0)
+
+                logger.info("Retrieved segmentation NIfTI from GCS", extra={
+                    "segmentation_id": segmentation_id,
+                    "path": nifti_blob_path,
+                    "size_bytes": buffer.getbuffer().nbytes
+                })
+
+                return buffer.read()
+
+            logger.warning("Segmentation NIfTI not found in GCS", extra={
+                "segmentation_id": segmentation_id,
+                "path": nifti_blob_path
+            })
+            return None
+
+        except Exception as e:
+            logger.error("Failed to get segmentation NIfTI", extra={
+                "segmentation_id": segmentation_id,
+                "error": str(e)
+            })
             return None
 
     def _save_segmentation_local(self, segmentation_id: str, masks_3d: np.ndarray, metadata, source_format: str):

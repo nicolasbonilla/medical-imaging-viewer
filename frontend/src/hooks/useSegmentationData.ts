@@ -14,7 +14,8 @@ import type { SegmentationResponse, PaintStroke, ImageShape } from '../types/seg
 interface UseSegmentationDataProps {
   currentSegmentation: SegmentationResponse | null;
   setCurrentSegmentation: (seg: SegmentationResponse | null) => void;
-  onPaintComplete?: () => void;
+  /** Called when a paint stroke completes - receives the slice index for cache management */
+  onPaintComplete?: (sliceIndex: number) => void;
 }
 
 // Track if there are unsaved changes (module-level for persistence)
@@ -98,16 +99,26 @@ export function useSegmentationData({
   }, [createSegmentationMutation]);
 
   // Paint stroke mutation
+  // IMPORTANT: Each paint stroke is saved to GCS immediately by the backend
+  // On success, we notify the caller with the slice_index so they can clear local cache
   const paintStrokeMutation = useMutation({
     mutationFn: async (stroke: PaintStroke) => {
       if (!currentSegmentation) {
         throw new Error('No active segmentation');
       }
-      return segmentationAPI.applyPaintStroke(currentSegmentation.segmentation_id, stroke);
+      // Return both the API response and the stroke info for onSuccess
+      const response = await segmentationAPI.applyPaintStroke(currentSegmentation.segmentation_id, stroke);
+      return { response, sliceIndex: stroke.slice_index };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       hasUnsavedChanges = true;
-      onPaintComplete?.();
+      // Pass the slice index to the callback so the canvas can clear its local paint cache
+      onPaintComplete?.(data.sliceIndex);
+      console.log(`✅ Paint stroke saved to server for slice ${data.sliceIndex}`);
+    },
+    onError: (error, variables) => {
+      // On error, keep local paints as backup
+      console.error(`❌ Failed to save paint stroke for slice ${variables.slice_index}:`, error);
     },
   });
 

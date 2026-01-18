@@ -4,8 +4,16 @@
  * Similar to ITK-SNAP architecture
  */
 
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
 import type { PaintStroke } from '../types/segmentation';
+
+/** Methods exposed via ref for external control */
+export interface SegmentationCanvasRef {
+  /** Clear local paint cache for a specific slice (call when server confirms save) */
+  clearLocalPaintsForSlice: (sliceIndex: number) => void;
+  /** Force reload segmentation from server */
+  reloadFromServer: () => void;
+}
 
 interface SegmentationCanvasProps {
   segmentationId: string;
@@ -33,7 +41,7 @@ interface SegmentationCanvasProps {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
-export const SegmentationCanvas: React.FC<SegmentationCanvasProps> = ({
+export const SegmentationCanvas = forwardRef<SegmentationCanvasRef, SegmentationCanvasProps>(({
   segmentationId,
   sliceIndex,
   totalSlices,
@@ -55,7 +63,7 @@ export const SegmentationCanvas: React.FC<SegmentationCanvasProps> = ({
   renderedImageSize = null, // Rendered size for matplotlib mode
   matplotlibBbox = null, // Bounding box for matplotlib mode
   renderSegmentationOverlay = true, // Default to true for backward compatibility
-}) => {
+}, ref) => {
   // Two separate canvas refs
   const baseCanvasRef = useRef<HTMLCanvasElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -67,22 +75,69 @@ export const SegmentationCanvas: React.FC<SegmentationCanvasProps> = ({
   const [cursorPosition, setCursorPosition] = useState<{ x: number; y: number } | null>(null);
   const [segmentationVersion, setSegmentationVersion] = useState(0);
   const pendingReloadRef = useRef<NodeJS.Timeout | null>(null);
+
+  // CRITICAL FIX: Store local paints PER SLICE to preserve them when navigating
+  // This fixes the issue where paints were lost when changing slices before server confirmed save
+  const localPaintsBySliceRef = useRef<Map<number, Array<{ x: number; y: number; size: number; erase: boolean }>>>(new Map());
+
+  // Legacy reference for backward compatibility with existing code
   const localPaintsRef = useRef<Array<{ x: number; y: number; size: number; erase: boolean }>>([]);
+
+  // Sync localPaintsRef with current slice's paints
+  const syncLocalPaintsRef = useCallback(() => {
+    const currentPaints = localPaintsBySliceRef.current.get(sliceIndex) || [];
+    localPaintsRef.current = currentPaints;
+  }, [sliceIndex]);
+
+  // Expose methods via ref for external control (e.g., clearing paints when server confirms save)
+  useImperativeHandle(ref, () => ({
+    clearLocalPaintsForSlice: (targetSlice: number) => {
+      const paintsCount = localPaintsBySliceRef.current.get(targetSlice)?.length || 0;
+      if (paintsCount > 0) {
+        console.log(`🧹 Clearing ${paintsCount} local paints for slice ${targetSlice} (server confirmed save)`);
+        localPaintsBySliceRef.current.set(targetSlice, []);
+        // If clearing current slice, also update the legacy ref
+        if (targetSlice === sliceIndex) {
+          localPaintsRef.current = [];
+        }
+      }
+    },
+    reloadFromServer: () => {
+      console.log('🔄 Force reloading segmentation from server');
+      setSegmentationVersion(prev => prev + 1);
+    },
+  }), [sliceIndex]);
+
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   const previousSliceRef = useRef<number>(sliceIndex);
   const previousSegIdRef = useRef<string>(segmentationId);
 
-  // Clear local paints and force reload when slice or segmentation changes
+  // When slice or segmentation changes, force reload from server
+  // But DON'T clear local paints for other slices - they persist per slice
   useEffect(() => {
     if (previousSliceRef.current !== sliceIndex || previousSegIdRef.current !== segmentationId) {
-      console.log('🧹 Clearing local paints due to slice/segmentation change');
-      localPaintsRef.current = [];
+      console.log('🔄 Slice/segmentation changed', {
+        previousSlice: previousSliceRef.current,
+        newSlice: sliceIndex,
+        hasPaintsForNewSlice: localPaintsBySliceRef.current.has(sliceIndex),
+        paintsCount: localPaintsBySliceRef.current.get(sliceIndex)?.length || 0
+      });
+
+      // If segmentation changed (not just slice), clear ALL local paints
+      if (previousSegIdRef.current !== segmentationId) {
+        console.log('🧹 Segmentation changed, clearing all local paints');
+        localPaintsBySliceRef.current.clear();
+      }
+
+      // Sync the legacy ref with current slice's paints
+      syncLocalPaintsRef();
+
       previousSliceRef.current = sliceIndex;
       previousSegIdRef.current = segmentationId;
       // Force reload from server to get persisted segmentation data
       setSegmentationVersion(prev => prev + 1);
     }
-  }, [sliceIndex, segmentationId]);
+  }, [sliceIndex, segmentationId, syncLocalPaintsRef]);
 
   // Segmentation overlay URL (separate from base image)
   const segmentationUrl = `${API_BASE_URL}/api/v1/segmentation/${segmentationId}/slice/${sliceIndex}/segmentation-only?t=${segmentationVersion}`;
@@ -199,22 +254,32 @@ export const SegmentationCanvas: React.FC<SegmentationCanvasProps> = ({
   }, [canvasSize, showBaseImage, renderBaseLayer]);
 
   // Load SEGMENTATION overlay - updates when painting
-  // NOTE: We keep local paints visible as the primary source of truth
-  // because Cloud Run is stateless and the server may lose paint data
+  // When the server responds successfully with segmentation data, we can clear local paints
+  // because the server has confirmed it persisted the data
   useEffect(() => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
 
     img.onload = () => {
       segmentationImageRef.current = img;
-      // DON'T clear local paints - they represent the user's unsaved work
-      // The server may not have persisted them due to Cloud Run's stateless nature
+
+      // SUCCESS: Server responded with segmentation data
+      // This means our paint strokes have been persisted to GCS
+      // We can now safely clear local paints for this slice
+      const currentSlicePaints = localPaintsBySliceRef.current.get(sliceIndex);
+      if (currentSlicePaints && currentSlicePaints.length > 0) {
+        console.log(`✅ Server confirmed segmentation for slice ${sliceIndex}, clearing ${currentSlicePaints.length} local paints`);
+        localPaintsBySliceRef.current.set(sliceIndex, []);
+        localPaintsRef.current = [];
+      }
+
       renderOverlayLayer();
     };
 
     img.onerror = (e) => {
       console.error('Failed to load segmentation overlay:', e);
-      // On error, still render to show local paints
+      // On error, keep local paints as backup - they represent unsaved work
+      console.warn(`⚠️ Keeping ${localPaintsRef.current.length} local paints as backup for slice ${sliceIndex}`);
       renderOverlayLayer();
     };
 
@@ -226,7 +291,7 @@ export const SegmentationCanvas: React.FC<SegmentationCanvasProps> = ({
       img.onerror = null;
       img.src = '';
     };
-  }, [segmentationUrl, segmentationVersion]);
+  }, [segmentationUrl, segmentationVersion, sliceIndex]);
 
   // Render OVERLAY layer (segmentation + local paints + cursor)
   const renderOverlayLayer = useCallback(() => {
@@ -356,13 +421,23 @@ export const SegmentationCanvas: React.FC<SegmentationCanvasProps> = ({
   }, []);
 
   // Apply paint stroke
+  // CRITICAL FIX: Store paints in the per-slice Map so they persist when navigating
   const applyPaintStroke = useCallback((pos: { x: number; y: number }) => {
-    localPaintsRef.current.push({
+    const paintData = {
       x: pos.x,
       y: pos.y,
       size: brushSize,
       erase: eraseMode,
-    });
+    };
+
+    // Store in per-slice Map for persistence across slice navigation
+    if (!localPaintsBySliceRef.current.has(sliceIndex)) {
+      localPaintsBySliceRef.current.set(sliceIndex, []);
+    }
+    localPaintsBySliceRef.current.get(sliceIndex)!.push(paintData);
+
+    // Also update legacy ref for immediate rendering
+    localPaintsRef.current.push(paintData);
 
     renderOverlayLayer();
 
@@ -373,7 +448,7 @@ export const SegmentationCanvas: React.FC<SegmentationCanvasProps> = ({
       brush_size: brushSize,
       erase: eraseMode,
     });
-  }, [brushSize, eraseMode, selectedLabelId, onPaintStroke, renderOverlayLayer]);
+  }, [brushSize, eraseMode, selectedLabelId, onPaintStroke, renderOverlayLayer, sliceIndex]);
 
   // Mouse handlers
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -468,4 +543,7 @@ export const SegmentationCanvas: React.FC<SegmentationCanvasProps> = ({
       />
     </div>
   );
-};
+});
+
+// Display name for React DevTools
+SegmentationCanvas.displayName = 'SegmentationCanvas';

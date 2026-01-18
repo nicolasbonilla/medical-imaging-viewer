@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi.responses import Response
 from typing import Optional
 import asyncio
 
@@ -368,3 +369,56 @@ async def get_matplotlib_2d_slice(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating 2D matplotlib visualization: {str(e)}")
+
+
+@router.get("/nifti/{file_id:path}")
+async def get_nifti_file(
+    file_id: str,
+    storage_service: IStorageService = Depends(get_storage_service)
+):
+    """
+    Serve raw NIfTI file directly for WebGL-based viewers like NiiVue.
+
+    Returns the NIfTI file (.nii or .nii.gz) as binary data with appropriate
+    content-type headers. This allows client-side rendering without PNG conversion.
+
+    The file_id is the GCS object path (e.g., patients/{id}/studies/{id}/series/{id}/image.nii.gz)
+    """
+    try:
+        # Download file from GCS
+        file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, file_id)
+        filename = get_filename_from_path(file_id)
+
+        # Determine content type based on file extension
+        if filename.endswith('.nii.gz'):
+            content_type = 'application/gzip'
+        elif filename.endswith('.nii'):
+            content_type = 'application/octet-stream'
+        else:
+            # Check magic bytes for gzip
+            if file_data[:2] == b'\x1f\x8b':
+                content_type = 'application/gzip'
+            else:
+                content_type = 'application/octet-stream'
+
+        logger.info("Serving NIfTI file directly", extra={
+            "file_id": file_id,
+            "filename": filename,
+            "content_type": content_type,
+            "size_bytes": len(file_data)
+        })
+
+        return Response(
+            content=file_data,
+            media_type=content_type,
+            headers={
+                "Content-Disposition": f'inline; filename="{filename}"',
+                "Content-Length": str(len(file_data)),
+                "Cache-Control": "public, max-age=3600",  # Cache for 1 hour
+                "Access-Control-Expose-Headers": "Content-Disposition, Content-Length"
+            }
+        )
+
+    except Exception as e:
+        logger.error("Error serving NIfTI file", extra={"file_id": file_id, "error": str(e)})
+        raise HTTPException(status_code=500, detail=f"Error serving NIfTI file: {str(e)}")

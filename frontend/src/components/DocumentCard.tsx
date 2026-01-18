@@ -155,8 +155,8 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
         setShowMenu(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    window.document.addEventListener('mousedown', handleClickOutside);
+    return () => window.document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // Compact view (for list mode)

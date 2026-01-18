@@ -23,7 +23,7 @@ import {
   useSaveSegmentation,
   useUnloadSegmentationFromMemory,
 } from '@/hooks/useSegmentations';
-import type { LabelInfo, SegmentationCreate, Segmentation } from '@/types';
+import type { LabelInfo, SegmentationCreate, Segmentation, SegmentationSummary } from '@/types';
 import { DEFAULT_LABEL_PRESETS } from '@/types';
 
 // ============================================================================
@@ -306,7 +306,7 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
   const saveSegmentation = useSaveSegmentation();
   const unloadSegmentation = useUnloadSegmentationFromMemory();
 
-  const segmentations = segmentationListData?.segmentations ?? [];
+  const segmentations = segmentationListData?.items ?? [];
 
   // Sync overlay visibility with parent
   useEffect(() => {
@@ -335,11 +335,10 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
     const name = newSegmentationName.trim() || `Segmentation ${new Date().toLocaleDateString()}`;
 
     const createData: SegmentationCreate = {
+      series_id: seriesId,
       name,
       description: '',
       labels: DEFAULT_LABEL_PRESETS.BRATS,
-      total_slices: totalSlices,
-      dimensions: { width: dimensions[0], height: dimensions[1], depth: totalSlices },
     };
 
     try {
@@ -360,7 +359,7 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
     // The useSegmentation hook will update the store
     // We just need to trigger a fetch here
     // For now, we'll use the data from the list
-    const seg = segmentations.find((s) => s.id === segmentationId);
+    const seg = segmentations.find((s: SegmentationSummary) => s.id === segmentationId);
     if (seg) {
       // Load full segmentation data (this would typically be a separate API call)
       // For now, we create a mock Segmentation from the summary
@@ -407,7 +406,7 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
   }, [activeSegmentation, isDirty, handleSaveSegmentation, unloadSegmentation, reset, setActiveSegmentation, t]);
 
   // Derived state
-  const isLoading = externalLoading || isLoadingList || createSegmentation.isLoading;
+  const isLoading = externalLoading || isLoadingList || createSegmentation.isPending;
   const hasContext = !!patientId && !!studyId && !!seriesId;
 
   return (
@@ -482,9 +481,9 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                     segmentations={segmentations}
                     onLoad={handleLoadSegmentation}
                     onDelete={handleDeleteSegmentation}
-                    activeSegmentationId={activeSegmentation?.id}
+                    activeSegmentationId={(activeSegmentation as Segmentation | null)?.id}
                     isLoading={isLoading}
-                    isDeleting={deleteSegmentation.isLoading}
+                    isDeleting={deleteSegmentation.isPending}
                   />
                 )}
 
@@ -507,10 +506,10 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                     {/* Create button */}
                     <button
                       onClick={handleCreateSegmentation}
-                      disabled={createSegmentation.isLoading}
+                      disabled={createSegmentation.isPending}
                       className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded text-sm font-medium transition-colors flex items-center justify-center gap-2"
                     >
-                      {createSegmentation.isLoading ? (
+                      {createSegmentation.isPending ? (
                         <>
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
                           <span>{t('segmentation.creating')}</span>

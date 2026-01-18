@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, memo } from 'react';
+import { useEffect, useRef, useState, memo, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Maximize2 } from 'lucide-react';
 import { useViewerStore } from '@/store/useViewerStore';
@@ -11,7 +11,10 @@ import { ViewerToolbar } from './viewer/ViewerToolbar';
 import { SliceInfo } from './viewer/SliceInfo';
 import { SliceSlider } from './viewer/SliceSlider';
 import { MetadataPanel } from './viewer/MetadataPanel';
-import { SegmentationCanvas } from './SegmentationCanvas';
+import { SegmentationCanvas, type SegmentationCanvasRef } from './SegmentationCanvas';
+import { NiiVueViewer } from './NiiVueViewer';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 interface ImageViewer2DProps {
   viewerControls: ReturnType<typeof import('../hooks/useViewerControls').useViewerControls>;
@@ -34,6 +37,9 @@ function ImageViewer2D({ viewerControls, segmentationControls, createSegmentatio
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollableRef = useRef<HTMLDivElement>(null);
   const matplotlibImageRef = useRef<HTMLImageElement>(null);
+  // Refs for segmentation canvases (standard and matplotlib modes)
+  const segmentationCanvasRef = useRef<SegmentationCanvasRef>(null);
+  const segmentationCanvasMatplotlibRef = useRef<SegmentationCanvasRef>(null);
 
   // Viewer controls from props
   const {
@@ -70,9 +76,17 @@ function ImageViewer2D({ viewerControls, segmentationControls, createSegmentatio
     appliedYMax,
   });
 
+  // Callback when paint stroke is successfully saved to server
+  const handlePaintComplete = useCallback((sliceIndex: number) => {
+    // Clear local paints for the saved slice from both canvas refs
+    segmentationCanvasRef.current?.clearLocalPaintsForSlice(sliceIndex);
+    segmentationCanvasMatplotlibRef.current?.clearLocalPaintsForSlice(sliceIndex);
+  }, []);
+
   const { createSegmentation, paintStrokeMutation, isCreatingSegmentation, saveSegmentation, isSaving, saveStatus, lastSaveTime } = useSegmentationData({
     currentSegmentation,
     setCurrentSegmentation,
+    onPaintComplete: handlePaintComplete,
   });
 
   useSliceNavigation({ scrollableRef });
@@ -224,6 +238,17 @@ function ImageViewer2D({ viewerControls, segmentationControls, createSegmentatio
 
   // Removed unused handlePaintStroke function (kept paintStrokeMutation for future use)
 
+  // Construct NIfTI URLs for NiiVue mode
+  const niftiUrl = useMemo(() => {
+    if (!currentSeries?.file_id) return '';
+    return `${API_BASE_URL}/api/v1/imaging/nifti/${currentSeries.file_id}`;
+  }, [currentSeries?.file_id]);
+
+  const segmentationNiftiUrl = useMemo(() => {
+    if (!currentSegmentation?.segmentation_id) return null;
+    return `${API_BASE_URL}/api/v1/segmentation/${currentSegmentation.segmentation_id}/nifti`;
+  }, [currentSegmentation?.segmentation_id]);
+
   if (!currentSeries) {
     return (
       <div className="flex items-center justify-center h-full bg-black">
@@ -281,6 +306,7 @@ function ImageViewer2D({ viewerControls, segmentationControls, createSegmentatio
               {/* Interactive segmentation canvas - positioned at scaled bbox */}
               {segmentationMode && currentSegmentation && currentSeries && matplotlibBbox && (
                 <SegmentationCanvas
+                  ref={segmentationCanvasMatplotlibRef}
                   segmentationId={currentSegmentation.segmentation_id}
                   sliceIndex={currentSliceIndex}
                   totalSlices={currentSeries.total_slices}
@@ -321,6 +347,7 @@ function ImageViewer2D({ viewerControls, segmentationControls, createSegmentatio
               {/* Interactive segmentation canvas - same size as canvas */}
               {segmentationMode && currentSegmentation && currentSeries && (
                 <SegmentationCanvas
+                  ref={segmentationCanvasRef}
                   segmentationId={currentSegmentation.segmentation_id}
                   sliceIndex={currentSliceIndex}
                   totalSlices={currentSeries.total_slices}
@@ -348,6 +375,23 @@ function ImageViewer2D({ viewerControls, segmentationControls, createSegmentatio
                 />
               )}
             </div>
+          ) : renderMode === 'niivue' && niftiUrl ? (
+            /* NiiVue WebGL2-based NIfTI viewer - No PNG conversion */
+            <NiiVueViewer
+              fileUrl={niftiUrl}
+              segmentation={currentSegmentation}
+              segmentationUrl={segmentationNiftiUrl}
+              onSliceChange={setCurrentSliceIndex}
+              onPaintStroke={(stroke) => {
+                paintStrokeMutation.mutate(stroke);
+              }}
+              colormap={colormap}
+              showOverlay={showOverlay}
+              segmentationMode={segmentationMode}
+              brushSize={brushSize}
+              eraseMode={eraseMode}
+              selectedLabelId={selectedLabelId}
+            />
           ) : null}
         </div>
       </div>

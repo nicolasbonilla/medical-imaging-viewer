@@ -54,7 +54,7 @@ export default function PatientDetailPage() {
   const [showEditForm, setShowEditForm] = useState(false);
   const [showStudyUploader, setShowStudyUploader] = useState(false);
   const [showDocumentUploader, setShowDocumentUploader] = useState(false);
-  const [viewingDocument, setViewingDocument] = useState<Document | DocumentSummary | null>(null);
+  const [viewingDocument, setViewingDocument] = useState<DocType | DocumentSummary | null>(null);
   const [studiesPage, setStudiesPage] = useState(1);
   const [documentsPage, setDocumentsPage] = useState(1);
   const [studiesViewMode, setStudiesViewMode] = useState<'grid' | 'list'>('grid');
@@ -116,14 +116,14 @@ export default function PatientDetailPage() {
     navigate(`/app/viewer?studyId=${study.id}`);
   }, [navigate]);
 
-  const handleViewDocument = useCallback((doc: Document | DocumentSummary) => {
+  const handleViewDocument = useCallback((doc: DocType | DocumentSummary) => {
     setViewingDocument(doc);
   }, []);
 
-  const handleDeleteDocument = useCallback(async (doc: Document | DocumentSummary) => {
+  const handleDeleteDocument = useCallback(async (doc: DocType | DocumentSummary) => {
     if (window.confirm(t('document.confirmDelete', { title: doc.title }))) {
       try {
-        await deleteDocumentMutation.mutateAsync(doc.id);
+        await deleteDocumentMutation.mutateAsync({ id: doc.id, patientId: doc.patient_id });
         toast.success(t('document.deleteSuccess'));
         refetchDocuments();
       } catch (error) {
@@ -139,7 +139,7 @@ export default function PatientDetailPage() {
     // Don't show toast here since StudyCreateAndUpload already shows one
   }, [refetchStudies, refetchPatient]);
 
-  const handleDocumentUploadComplete = useCallback(() => {
+  const handleDocumentUploadComplete = useCallback((_documents?: DocType[]) => {
     setShowDocumentUploader(false);
     refetchDocuments();
     refetchPatient();
@@ -770,7 +770,7 @@ export default function PatientDetailPage() {
               <div className="p-6">
                 <DocumentUploader
                   patientId={patientId}
-                  onSuccess={handleDocumentUploadComplete}
+                  onComplete={handleDocumentUploadComplete}
                   onCancel={() => setShowDocumentUploader(false)}
                 />
               </div>

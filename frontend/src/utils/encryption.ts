@@ -144,8 +144,8 @@ export class EncryptionService {
       const ciphertext = await crypto.subtle.encrypt(
         {
           name: this.config.algorithm,
-          iv: iv,
-          additionalData: aad,
+          iv: iv as BufferSource,
+          additionalData: aad as BufferSource,
         },
         this.derivedKey,
         plaintext
@@ -213,11 +213,11 @@ export class EncryptionService {
       const plaintextBuffer = await crypto.subtle.decrypt(
         {
           name: this.config.algorithm,
-          iv: iv,
-          additionalData: aad,
+          iv: iv as BufferSource,
+          additionalData: aad as BufferSource,
         },
         this.derivedKey,
-        ciphertextBuffer
+        ciphertextBuffer as BufferSource
       );
 
       // Convert to string
@@ -261,7 +261,7 @@ export class EncryptionService {
     const derivedKey = await crypto.subtle.deriveKey(
       {
         name: 'PBKDF2',
-        salt: salt,
+        salt: salt as BufferSource,
         iterations: this.config.kdfIterations,
         hash: 'SHA-256',
       },

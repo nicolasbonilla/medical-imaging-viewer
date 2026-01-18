@@ -1,10 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import { useViewerStore } from '@/store/useViewerStore';
 import { SegmentationPanel } from './SegmentationPanel';
+import type { RenderMode } from '@/hooks/useViewerControls';
 
 interface ViewerControlsProps {
-  renderMode: 'standard' | 'matplotlib';
-  setRenderMode: (mode: 'standard' | 'matplotlib') => void;
+  renderMode: RenderMode;
+  setRenderMode: (mode: RenderMode) => void;
   colormap: string;
   setColormap: (colormap: string) => void;
   segmentationMode: boolean;
@@ -60,7 +61,17 @@ export default function ViewerControls({
     <div className="bg-gray-900 rounded-lg p-3 space-y-2">
       <div>
         <label className="block text-xs text-gray-300 mb-1">{t('viewer.renderMode')}</label>
-        <div className="flex gap-2">
+        <div className="flex gap-1">
+          <button
+            onClick={() => setRenderMode('niivue')}
+            className={`flex-1 px-2 py-1.5 rounded text-xs transition-colors ${
+              renderMode === 'niivue'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+          >
+            NiiVue
+          </button>
           <button
             onClick={() => setRenderMode('standard')}
             className={`flex-1 px-2 py-1.5 rounded text-xs transition-colors ${
@@ -72,11 +83,7 @@ export default function ViewerControls({
             {t('viewer.standard')}
           </button>
           <button
-            onClick={() => {
-              console.log('CLICKING MATPLOTLIB BUTTON - changing from', renderMode, 'to matplotlib');
-              setRenderMode('matplotlib');
-              console.log('setRenderMode called');
-            }}
+            onClick={() => setRenderMode('matplotlib')}
             className={`flex-1 px-2 py-1.5 rounded text-xs transition-colors ${
               renderMode === 'matplotlib'
                 ? 'bg-blue-600 text-white'
@@ -87,6 +94,28 @@ export default function ViewerControls({
           </button>
         </div>
       </div>
+
+      {renderMode === 'niivue' && (
+        <div>
+          <label className="block text-xs text-gray-300 mb-1">{t('viewer.colormap')}</label>
+          <select
+            value={colormap}
+            onChange={(e) => setColormap(e.target.value)}
+            className="w-full px-2 py-1.5 bg-gray-700 text-white rounded text-xs"
+          >
+            <option value="gray">Gray</option>
+            <option value="hot">Hot</option>
+            <option value="winter">Winter</option>
+            <option value="warm">Warm</option>
+            <option value="cool">Cool</option>
+            <option value="copper">Copper</option>
+            <option value="bone">Bone</option>
+            <option value="viridis">Viridis</option>
+            <option value="plasma">Plasma</option>
+            <option value="inferno">Inferno</option>
+          </select>
+        </div>
+      )}
 
       {renderMode === 'matplotlib' && (
         <>
@@ -202,7 +231,7 @@ export default function ViewerControls({
             studyId={currentStudyId ?? undefined}
             seriesId={currentSeriesId ?? undefined}
             totalSlices={currentSeries?.total_slices ?? 1}
-            dimensions={currentSeries ? [currentSeries.width, currentSeries.height] : [256, 256]}
+            dimensions={currentSeries?.metadata ? [currentSeries.metadata.columns ?? 256, currentSeries.metadata.rows ?? 256] : [256, 256]}
           />
         </div>
       )}

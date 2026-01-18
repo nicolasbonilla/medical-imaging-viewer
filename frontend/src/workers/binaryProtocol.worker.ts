@@ -255,7 +255,7 @@ self.onmessage = (event: MessageEvent<WorkerRequest>) => {
       data: result,
     };
 
-    self.postMessage(response, transferables);
+    (self as unknown as DedicatedWorkerGlobalScope).postMessage(response, transferables);
   } catch (error: any) {
     const response: WorkerResponse = {
       id: request.id,

@@ -176,7 +176,13 @@
       "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZmQ4NjUxZDgtMTY0Yy00MjU3LWJiN2QtMGI5NTBjMzYzOTA1IiwidXNlcm5hbWUiOiJhZG1pbiIsInJvbGUiOiJhZG1pbiIsInBlcm1pc3Npb25zIjpbImltYWdlOmV4cG9ydCIsImltYWdlOnZpZXciLCJpbWFnZTp1cGxvYWQiLCJhdWRpdDp2aWV3Iiwic2VnbWVudGF0aW9uOmNyZWF0ZSIsInNlZ21lbnRhdGlvbjp2aWV3Iiwic2VnbWVudGF0aW9uOmRlbGV0ZSIsInN5c3RlbTpoZWFsdGgiLCJ1c2VyOnZpZXciLCJzeXN0ZW06Y29uZmlnIiwidXNlcjpjcmVhdGUiLCJ1c2VyOmRlbGV0ZSIsInVzZXI6dXBkYXRlIiwiaW1hZ2U6ZGVsZXRlIiwiYXVkaXQ6ZXhwb3J0Il0sImV4cCI6MTc2ODc2NDQ5NiwiaWF0IjoxNzY4NzYwODk2LCJqdGkiOiIxYTgyZTc4Yi0xYTUxLTQ1ODktYjUwZi0yNzIxMWIzYjlkNDIiLCJ0eXBlIjoiYWNjZXNzIn0.ZngUAYeFknx-mM98RVSZEAH6KfIO3eCkUlmEeHnGi6g\")",
       "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZmQ4NjUxZDgtMTY0Yy00MjU3LWJiN2QtMGI5NTBjMzYzOTA1IiwidXNlcm5hbWUiOiJhZG1pbiIsInJvbGUiOiJhZG1pbiIsInBlcm1pc3Npb25zIjpbImltYWdlOmV4cG9ydCIsImltYWdlOnZpZXciLCJpbWFnZTp1cGxvYWQiLCJhdWRpdDp2aWV3Iiwic2VnbWVudGF0aW9uOmNyZWF0ZSIsInNlZ21lbnRhdGlvbjp2aWV3Iiwic2VnbWVudGF0aW9uOmRlbGV0ZSIsInN5c3RlbTpoZWFsdGgiLCJ1c2VyOnZpZXciLCJzeXN0ZW06Y29uZmlnIiwidXNlcjpjcmVhdGUiLCJ1c2VyOmRlbGV0ZSIsInVzZXI6dXBkYXRlIiwiaW1hZ2U6ZGVsZXRlIiwiYXVkaXQ6ZXhwb3J0Il0sImV4cCI6MTc2ODc2NTc4OCwiaWF0IjoxNzY4NzYyMTg4LCJqdGkiOiJmZTdiN2NjMS0yY2VjLTQyNDItYjg2MC04Yjk0ZWU1OGM2NjciLCJ0eXBlIjoiYWNjZXNzIn0.tMHtEGT52Zb3KTaGZykrb9qS_7Cbx_CunowesO3p0hM\")",
       "Bash(__NEW_LINE__ echo \"=== Listing existing segmentations ===\")",
-      "Bash(backend/venv/Scripts/python.exe:*)"
+      "Bash(backend/venv/Scripts/python.exe:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMGIyOTEyMjItMzM5ZC00M2Y0LWJiYWItYzg0ODI2OGVmMmM4IiwidXNlcm5hbWUiOiJhZG1pbiIsInJvbGUiOiJhZG1pbiIsInBlcm1pc3Npb25zIjpbInVzZXI6dXBkYXRlIiwic2VnbWVudGF0aW9uOmRlbGV0ZSIsImltYWdlOnVwbG9hZCIsImF1ZGl0OmV4cG9ydCIsInVzZXI6dmlldyIsInVzZXI6Y3JlYXRlIiwidXNlcjpkZWxldGUiLCJzZWdtZW50YXRpb246dmlldyIsImF1ZGl0OnZpZXciLCJzeXN0ZW06Y29uZmlnIiwic2VnbWVudGF0aW9uOmNyZWF0ZSIsImltYWdlOnZpZXciLCJpbWFnZTpleHBvcnQiLCJpbWFnZTpkZWxldGUiLCJzeXN0ZW06aGVhbHRoIl0sImV4cCI6MTc2ODc2NjY4NCwiaWF0IjoxNzY4NzYzMDg0LCJqdGkiOiJmODBmODQ4Yi02YTA1LTQ1NTktOWFiYy1mMjM1NzY3MTViM2IiLCJ0eXBlIjoiYWNjZXNzIn0.FNKo02wu2UCcB-bGHSTo2hVXRDvVChHUYTsY9xirMEQ\")",
+      "Bash(__NEW_LINE__ echo \"=== Creating new segmentation ===\")",
+      "Bash(SEG_ID=\"4fb028c4-a372-4b68-b2a6-498b6f824f4d\")",
+      "Bash(__NEW_LINE__ echo \"=== Applying paint strokes ===\")",
+      "Bash(__NEW_LINE__ curl -s -X POST \"https://brain-mri-209356685171.us-central1.run.app/api/v1/segmentation/$SEG_ID/paint\" )",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []

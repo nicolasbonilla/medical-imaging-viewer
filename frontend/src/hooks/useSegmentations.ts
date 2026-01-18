@@ -8,7 +8,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import * as segmentationApi from '@/services/segmentationApi';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import type {
@@ -173,15 +173,21 @@ export function useSegmentation(segmentationId: string | undefined) {
     (state) => state.setActiveSegmentation
   );
 
-  return useQuery<Segmentation>({
+  const query = useQuery<Segmentation>({
     queryKey: segmentationKeys.detail(segmentationId!),
     queryFn: () => segmentationApi.getSegmentation(segmentationId!),
     enabled: !!segmentationId,
     staleTime: 30000,
-    onSuccess: (data) => {
-      setActiveSegmentation(data);
-    },
   });
+
+  // Update store when data changes (replaces onSuccess)
+  useEffect(() => {
+    if (query.data) {
+      setActiveSegmentation(query.data);
+    }
+  }, [query.data, setActiveSegmentation]);
+
+  return query;
 }
 
 /**
@@ -560,7 +566,7 @@ export function useSegmentationEditor(segmentationId: string | undefined) {
 
   const { data: segmentation, isLoading } = useSegmentation(segmentationId);
   const { data: statistics } = useSegmentationStatistics(segmentationId);
-  const { mutateAsync: saveAsync, isLoading: isSaving } = useSaveSegmentation();
+  const { mutateAsync: saveAsync, isPending: isSaving } = useSaveSegmentation();
   const { mutateAsync: paintBatchAsync } = usePaintBatch();
 
   const save = useCallback(async () => {
@@ -609,7 +615,7 @@ export function useSegmentationEditor(segmentationId: string | undefined) {
     // Labels
     activeLabel: store.activeLabel,
     setActiveLabel: store.setActiveLabel,
-    labels: segmentation?.labels ?? [],
+    labels: (segmentation?.labels as LabelInfo[]) ?? [],
     // Overlay
     overlaySettings: store.overlaySettings,
     isOverlayVisible: store.isOverlayVisible,

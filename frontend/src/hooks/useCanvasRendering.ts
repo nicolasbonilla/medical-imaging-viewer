@@ -5,11 +5,12 @@
 
 import { useEffect } from 'react';
 import { useViewerStore } from '@/store/useViewerStore';
+import type { RenderMode } from './useViewerControls';
 
 interface UseCanvasRenderingProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;
   containerRef: React.RefObject<HTMLDivElement>;
-  renderMode: 'standard' | 'matplotlib';
+  renderMode: RenderMode;
 }
 
 export function useCanvasRendering({ canvasRef, containerRef, renderMode }: UseCanvasRenderingProps) {

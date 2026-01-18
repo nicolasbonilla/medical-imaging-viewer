@@ -1,11 +1,13 @@
 import { useState, useCallback, useMemo } from 'react';
 
+export type RenderMode = 'standard' | 'matplotlib' | 'niivue';
+
 export function useViewerControls() {
-  const [renderMode, setRenderModeInternal] = useState<'standard' | 'matplotlib'>('standard');
+  const [renderMode, setRenderModeInternal] = useState<RenderMode>('niivue'); // Default to NiiVue for native NIfTI rendering
   const [colormap, setColormap] = useState('gray');
   const [segmentationMode, setSegmentationMode] = useState(false);
 
-  const setRenderMode = useCallback((mode: 'standard' | 'matplotlib') => {
+  const setRenderMode = useCallback((mode: RenderMode) => {
     console.log('⚠️ setRenderMode CALLED - changing to', mode);
     console.trace('Stack trace:');
     setRenderModeInternal(mode);

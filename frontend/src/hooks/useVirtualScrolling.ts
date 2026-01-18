@@ -22,7 +22,28 @@
  */
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useRAF } from '../utils/performance';
+
+/**
+ * Simple RAF hook for animation frames.
+ */
+function useRAF() {
+  const rafRef = useRef<number | null>(null);
+
+  const requestFrame = useCallback((callback: () => void) => {
+    rafRef.current = requestAnimationFrame(callback);
+    return rafRef.current;
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
+
+  return { requestFrame };
+}
 
 /**
  * Virtual scrolling configuration.
