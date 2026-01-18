@@ -74,7 +74,9 @@ class Container(containers.DeclarativeContainer):
 
     # Segmentation Service - Lazy loaded (HEAVY: scikit-image, scipy)
     # Legacy service for backward compatibility
-    segmentation_service = providers.Factory(
+    # IMPORTANT: Using Singleton to persist in-memory cache across requests
+    # This is critical for Cloud Run where each request could create a new instance
+    segmentation_service = providers.Singleton(
         lambda cache: __import__('app.services.segmentation_service', fromlist=['SegmentationService']).SegmentationService(
             cache_service=cache
         ),
@@ -83,7 +85,8 @@ class Container(containers.DeclarativeContainer):
 
     # Segmentation Service V2 - Firestore-based with hierarchical support
     # Supports multi-patient, multi-study, multi-expert workflow
-    segmentation_service_v2 = providers.Factory(
+    # IMPORTANT: Using Singleton to persist in-memory cache across requests
+    segmentation_service_v2 = providers.Singleton(
         lambda cache: __import__('app.services.segmentation_service_firestore', fromlist=['SegmentationServiceFirestore']).SegmentationServiceFirestore(
             cache_service=cache
         ),
