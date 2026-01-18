@@ -263,14 +263,41 @@ export const SegmentationCanvas = forwardRef<SegmentationCanvasRef, Segmentation
     img.onload = () => {
       segmentationImageRef.current = img;
 
-      // SUCCESS: Server responded with segmentation data
-      // This means our paint strokes have been persisted to GCS
-      // We can now safely clear local paints for this slice
+      // CRITICAL FIX: Verify the server image actually contains painted data
+      // before clearing local paints. The server may return an empty/transparent
+      // image if it doesn't have the data (e.g., different Cloud Run instance).
       const currentSlicePaints = localPaintsBySliceRef.current.get(sliceIndex);
       if (currentSlicePaints && currentSlicePaints.length > 0) {
-        console.log(`✅ Server confirmed segmentation for slice ${sliceIndex}, clearing ${currentSlicePaints.length} local paints`);
-        localPaintsBySliceRef.current.set(sliceIndex, []);
-        localPaintsRef.current = [];
+        // Check if the loaded image has any non-transparent pixels
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = img.naturalWidth || img.width;
+        tempCanvas.height = img.naturalHeight || img.height;
+        const tempCtx = tempCanvas.getContext('2d');
+
+        if (tempCtx && tempCanvas.width > 0 && tempCanvas.height > 0) {
+          tempCtx.drawImage(img, 0, 0);
+          const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+          const pixels = imageData.data;
+
+          // Check if any pixel has non-zero alpha (has actual data)
+          let hasData = false;
+          for (let i = 3; i < pixels.length; i += 4) {
+            if (pixels[i] > 0) {
+              hasData = true;
+              break;
+            }
+          }
+
+          if (hasData) {
+            // Server image has actual painted data - safe to clear local paints
+            console.log(`✅ Server image verified with data for slice ${sliceIndex}, clearing ${currentSlicePaints.length} local paints`);
+            localPaintsBySliceRef.current.set(sliceIndex, []);
+            localPaintsRef.current = [];
+          } else {
+            // Server returned empty image - KEEP local paints as they are the source of truth
+            console.warn(`⚠️ Server returned empty image for slice ${sliceIndex}, keeping ${currentSlicePaints.length} local paints`);
+          }
+        }
       }
 
       renderOverlayLayer();

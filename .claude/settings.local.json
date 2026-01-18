@@ -182,7 +182,9 @@
       "Bash(SEG_ID=\"4fb028c4-a372-4b68-b2a6-498b6f824f4d\")",
       "Bash(__NEW_LINE__ echo \"=== Applying paint strokes ===\")",
       "Bash(__NEW_LINE__ curl -s -X POST \"https://brain-mri-209356685171.us-central1.run.app/api/v1/segmentation/$SEG_ID/paint\" )",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTBmY2VjODItMTZiOS00YjgxLWIwYzQtMGU1NzNjOTc4ZWNlIiwidXNlcm5hbWUiOiJhZG1pbiIsInJvbGUiOiJhZG1pbiIsInBlcm1pc3Npb25zIjpbInN5c3RlbTpoZWFsdGgiLCJ1c2VyOmRlbGV0ZSIsInN5c3RlbTpjb25maWciLCJzZWdtZW50YXRpb246Y3JlYXRlIiwiaW1hZ2U6dXBsb2FkIiwidXNlcjp2aWV3IiwidXNlcjpjcmVhdGUiLCJhdWRpdDp2aWV3IiwiaW1hZ2U6ZXhwb3J0IiwidXNlcjp1cGRhdGUiLCJhdWRpdDpleHBvcnQiLCJpbWFnZTpkZWxldGUiLCJzZWdtZW50YXRpb246dmlldyIsImltYWdlOnZpZXciLCJzZWdtZW50YXRpb246ZGVsZXRlIl0sImV4cCI6MTc2ODc3MDIyMSwiaWF0IjoxNzY4NzY2NjIxLCJqdGkiOiI3OWZmMDUzZS0xY2I5LTQ4NjItYmZiYi0wYmUwNjI4ZDgyYzUiLCJ0eXBlIjoiYWNjZXNzIn0.-ByeTG5FrbtWnFCINaRSUFc5V4BLYcyTomf3J-G7I-w\")",
+      "Bash(__NEW_LINE__ echo \"=== Pacientes ===\")"
     ],
     "deny": [],
     "ask": []
