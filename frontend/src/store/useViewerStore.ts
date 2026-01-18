@@ -1,7 +1,13 @@
 import { create } from 'zustand';
-import type { ImageSeriesResponse, DriveFileInfo, ImageOrientation } from '@/types';
+import type { ImageSeriesResponse, StorageFileInfo, ImageOrientation } from '@/types';
 
 interface ViewerState {
+  // Hierarchical context for segmentation
+  currentPatientId: string | null;
+  currentStudyId: string | null;
+  currentSeriesId: string | null;
+  setHierarchicalContext: (patientId: string | null, studyId: string | null, seriesId: string | null) => void;
+
   // Current image series
   currentSeries: ImageSeriesResponse | null;
   setCurrentSeries: (series: ImageSeriesResponse | null) => void;
@@ -16,9 +22,9 @@ interface ViewerState {
   setWindowLevel: (center: number, width: number) => void;
 
   // Selected files
-  selectedFiles: DriveFileInfo[];
-  setSelectedFiles: (files: DriveFileInfo[]) => void;
-  addSelectedFile: (file: DriveFileInfo) => void;
+  selectedFiles: StorageFileInfo[];
+  setSelectedFiles: (files: StorageFileInfo[]) => void;
+  addSelectedFile: (file: StorageFileInfo) => void;
   removeSelectedFile: (fileId: string) => void;
 
   // View mode
@@ -46,6 +52,9 @@ interface ViewerState {
 }
 
 const initialState = {
+  currentPatientId: null,
+  currentStudyId: null,
+  currentSeriesId: null,
   currentSeries: null,
   currentSliceIndex: 0,
   windowCenter: 0,
@@ -60,6 +69,9 @@ const initialState = {
 
 export const useViewerStore = create<ViewerState>((set) => ({
   ...initialState,
+
+  setHierarchicalContext: (patientId, studyId, seriesId) =>
+    set({ currentPatientId: patientId, currentStudyId: studyId, currentSeriesId: seriesId }),
 
   setCurrentSeries: (series) => set({ currentSeries: series }),
 

@@ -1,8 +1,16 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import axios from 'axios';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import axios, { AxiosError } from 'axios';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 const API_V1_URL = `${API_URL}/api/v1`;
+
+// Helper to clear auth data
+const clearAuthData = () => {
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('refresh_token');
+  localStorage.removeItem('user');
+  delete axios.defaults.headers.common['Authorization'];
+};
 
 // User interface matching backend User model
 export interface User {
@@ -67,6 +75,38 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Logout function - defined early so interceptor can use it
+  const performLogout = useCallback(() => {
+    clearAuthData();
+    setToken(null);
+    setUser(null);
+  }, []);
+
+  // Setup axios interceptor for automatic logout on 401
+  useEffect(() => {
+    const interceptorId = axios.interceptors.response.use(
+      (response) => response,
+      (error: AxiosError) => {
+        // If we get a 401 (Unauthorized) or 400 with auth error, logout automatically
+        if (error.response?.status === 401 ||
+            (error.response?.status === 400 && error.config?.url?.includes('/auth/'))) {
+          console.warn('Authentication error detected, logging out...');
+          performLogout();
+          // Redirect to login if not already there
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    // Cleanup interceptor on unmount
+    return () => {
+      axios.interceptors.response.eject(interceptorId);
+    };
+  }, [performLogout]);
+
   // Initialize auth state from localStorage
   useEffect(() => {
     const initializeAuth = async () => {
@@ -87,12 +127,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           localStorage.setItem('user', JSON.stringify(response.data));
         } catch (error) {
           console.error('Token validation failed:', error);
-          // Clear invalid token
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('user');
-          setToken(null);
-          setUser(null);
-          delete axios.defaults.headers.common['Authorization'];
+          // Clear invalid token - interceptor will handle redirect
+          performLogout();
         }
       }
 
@@ -100,7 +136,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     initializeAuth();
-  }, []);
+  }, [performLogout]);
 
   // Login function
   const login = async (
@@ -152,22 +188,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Logout function
-  const logout = (): void => {
-    // Clear storage
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user');
-
-    // Clear state
-    setToken(null);
-    setUser(null);
-
-    // Clear axios default authorization
-    delete axios.defaults.headers.common['Authorization'];
-  };
+  // Logout function (public API)
+  const logout = useCallback((): void => {
+    performLogout();
+  }, [performLogout]);
 
   // Refresh user data
-  const refreshUser = async (): Promise<void> => {
+  const refreshUser = useCallback(async (): Promise<void> => {
     if (!token) return;
 
     try {
@@ -176,10 +203,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(response.data));
     } catch (error) {
       console.error('Failed to refresh user:', error);
-      // If refresh fails, logout
-      logout();
+      // If refresh fails, logout (interceptor will handle 401)
+      performLogout();
     }
-  };
+  }, [token, performLogout]);
 
   const value: AuthContextType = {
     user,

@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useViewerStore } from '@/store/useViewerStore';
 import { SegmentationPanel } from './SegmentationPanel';
-import type { SegmentationResponse, SegmentationListItem } from '../types/segmentation';
 
 interface ViewerControlsProps {
   renderMode: 'standard' | 'matplotlib';
@@ -26,26 +25,6 @@ interface ViewerControlsProps {
   setAppliedYMin: (val: string) => void;
   appliedYMax: string;
   setAppliedYMax: (val: string) => void;
-  // Segmentation controls
-  currentSegmentation?: SegmentationResponse | null;
-  setCurrentSegmentation?: (seg: SegmentationResponse | null) => void;
-  selectedLabelId?: number;
-  setSelectedLabelId?: (id: number) => void;
-  brushSize?: number;
-  setBrushSize?: (size: number) => void;
-  eraseMode?: boolean;
-  setEraseMode?: (mode: boolean) => void;
-  showOverlay?: boolean;
-  setShowOverlay?: (show: boolean) => void;
-  onCreateSegmentation?: () => void;
-  // Segmentation manager props
-  segmentations?: SegmentationListItem[];
-  isLoadingList?: boolean;
-  isLoadingSegmentation?: boolean;
-  isDeletingSegmentation?: boolean;
-  onLoadSegmentation?: (segmentationId: string) => void;
-  onDeleteSegmentation?: (segmentationId: string) => void;
-  onCloseSegmentation?: () => void;
 }
 
 export default function ViewerControls({
@@ -71,29 +50,9 @@ export default function ViewerControls({
   setAppliedYMin,
   appliedYMax,
   setAppliedYMax,
-  // Segmentation controls
-  currentSegmentation,
-  setCurrentSegmentation,
-  selectedLabelId = 1,
-  setSelectedLabelId = () => {},
-  brushSize = 3,
-  setBrushSize = () => {},
-  eraseMode = false,
-  setEraseMode = () => {},
-  showOverlay = true,
-  setShowOverlay = () => {},
-  onCreateSegmentation,
-  // Segmentation manager props
-  segmentations = [],
-  isLoadingList = false,
-  isLoadingSegmentation = false,
-  isDeletingSegmentation = false,
-  onLoadSegmentation,
-  onDeleteSegmentation,
-  onCloseSegmentation,
 }: ViewerControlsProps) {
   const { t } = useTranslation();
-  const { currentSeries } = useViewerStore();
+  const { currentSeries, currentPatientId, currentStudyId, currentSeriesId } = useViewerStore();
 
   if (!currentSeries) return null;
 
@@ -236,26 +195,14 @@ export default function ViewerControls({
       </div>
 
       {/* Segmentation Panel */}
-      {segmentationMode && setCurrentSegmentation && onCreateSegmentation && (
+      {segmentationMode && (
         <div className="pt-2 border-t border-gray-700">
           <SegmentationPanel
-            currentSegmentation={currentSegmentation ?? null}
-            selectedLabelId={selectedLabelId}
-            brushSize={brushSize}
-            eraseMode={eraseMode}
-            showOverlay={showOverlay}
-            segmentations={segmentations}
-            isLoadingList={isLoadingList}
-            isLoadingSegmentation={isLoadingSegmentation}
-            isDeletingSegmentation={isDeletingSegmentation}
-            onCreateSegmentation={onCreateSegmentation}
-            onLoadSegmentation={onLoadSegmentation}
-            onDeleteSegmentation={onDeleteSegmentation}
-            onSelectLabel={setSelectedLabelId}
-            onBrushSizeChange={setBrushSize}
-            onEraseModeChange={setEraseMode}
-            onShowOverlayChange={setShowOverlay}
-            onCloseSegmentation={onCloseSegmentation}
+            patientId={currentPatientId ?? undefined}
+            studyId={currentStudyId ?? undefined}
+            seriesId={currentSeriesId ?? undefined}
+            totalSlices={currentSeries?.total_slices ?? 1}
+            dimensions={currentSeries ? [currentSeries.width, currentSeries.height] : [256, 256]}
           />
         </div>
       )}

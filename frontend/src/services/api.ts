@@ -1,6 +1,5 @@
 import axios from 'axios';
 import type {
-  DriveFileInfo,
   ImageSeriesResponse,
   ImageSlice,
   WindowLevelRequest,
@@ -8,7 +7,7 @@ import type {
   VolumeData,
 } from '@/types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -16,38 +15,6 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
-
-// Google Drive API
-export const driveAPI = {
-  authenticate: async () => {
-    const { data } = await api.get('/api/v1/drive/auth');
-    return data;
-  },
-
-  listFolders: async (parentId?: string): Promise<DriveFileInfo[]> => {
-    const { data } = await api.get('/api/v1/drive/folders', {
-      params: { parent_id: parentId },
-    });
-    return data;
-  },
-
-  listFiles: async (folderId?: string, pageSize = 100): Promise<DriveFileInfo[]> => {
-    const { data } = await api.get('/api/v1/drive/files', {
-      params: { folder_id: folderId, page_size: pageSize },
-    });
-    return data;
-  },
-
-  getFileMetadata: async (fileId: string): Promise<DriveFileInfo> => {
-    const { data } = await api.get(`/api/v1/drive/files/${fileId}/metadata`);
-    return data;
-  },
-
-  downloadFile: async (fileId: string) => {
-    const { data } = await api.get(`/api/v1/drive/files/${fileId}/download`);
-    return data;
-  },
-};
 
 // Medical Imaging API
 export const imagingAPI = {
@@ -158,14 +125,35 @@ export const imagingAPI = {
       segmentation_id: segmentationId,
     };
     console.log('📡 MAKING MATPLOTLIB REQUEST:', url, 'params:', params);
-    try {
-      const { data } = await api.get(url, { params });
-      console.log('✅ MATPLOTLIB RESPONSE RECEIVED, data length:', data?.image?.length || 0);
-      return data;
-    } catch (error) {
-      console.error('❌ MATPLOTLIB REQUEST FAILED:', error);
-      throw error;
+
+    // Retry logic for transient 503 errors (server overload)
+    const maxRetries = 3;
+    let lastError: Error | null = null;
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const { data } = await api.get(url, { params });
+        console.log('✅ MATPLOTLIB RESPONSE RECEIVED, data length:', data?.image?.length || 0);
+        return data;
+      } catch (error: unknown) {
+        lastError = error as Error;
+        const axiosError = error as { response?: { status: number } };
+
+        // Only retry on 503 (Service Unavailable) errors
+        if (axiosError.response?.status === 503 && attempt < maxRetries - 1) {
+          const delay = Math.min(1000 * Math.pow(2, attempt), 5000); // Exponential backoff: 1s, 2s, 4s (max 5s)
+          console.warn(`⚠️ MATPLOTLIB 503 error, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+
+        console.error('❌ MATPLOTLIB REQUEST FAILED:', error);
+        throw error;
+      }
     }
+
+    // Should not reach here, but just in case
+    throw lastError || new Error('Max retries exceeded');
   },
 
   getMetadata: async (fileId: string) => {

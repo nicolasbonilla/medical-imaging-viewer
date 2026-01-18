@@ -34,8 +34,8 @@ i18n
   // Initialize i18next
   .init({
     resources,
-    fallbackLng: 'es', // Changed from 'en' to 'es' for Spanish default
-    lng: 'es', // Force Spanish as default language
+    fallbackLng: 'en', // English as fallback language
+    lng: 'en', // English as default language
     debug: false,
 
     // Language detection options

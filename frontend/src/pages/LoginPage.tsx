@@ -11,7 +11,8 @@ import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import LanguageSelector from '../components/LanguageSelector';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_URL = BASE_URL + '/api/v1';
 
 interface LoginForm {
   username: string;
@@ -315,7 +316,7 @@ export default function LoginPage() {
                       value={loginForm.username}
                       onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
                       className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
-                      placeholder="{t('auth.username')}"
+                      placeholder={t('auth.usernamePlaceholder')}
                       required
                     />
                   </div>
@@ -324,7 +325,7 @@ export default function LoginPage() {
                 {/* Password */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Password
+                    {t('auth.password')}
                   </label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -333,7 +334,7 @@ export default function LoginPage() {
                       value={loginForm.password}
                       onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
                       className="w-full pl-10 pr-12 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
-                      placeholder="Enter your password"
+                      placeholder={t('auth.passwordPlaceholder')}
                       required
                     />
                     <button
@@ -394,12 +395,12 @@ export default function LoginPage() {
                   {loading ? (
                     <>
                       <RefreshCw className="w-5 h-5 animate-spin" />
-                      Logging in...
+                      {t('auth.loggingIn')}
                     </>
                   ) : (
                     <>
                       <Shield className="w-5 h-5" />
-                      Login
+                      {t('auth.loginButton')}
                     </>
                   )}
                 </button>
@@ -426,7 +427,7 @@ export default function LoginPage() {
                       value={registerForm.full_name}
                       onChange={(e) => setRegisterForm({ ...registerForm, full_name: e.target.value })}
                       className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
-                      placeholder="Dr. John Doe"
+                      placeholder={t('auth.fullNamePlaceholder')}
                       required
                     />
                   </div>
@@ -435,7 +436,7 @@ export default function LoginPage() {
                 {/* Username */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Username
+                    {t('auth.username')}
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -444,9 +445,9 @@ export default function LoginPage() {
                       value={registerForm.username}
                       onChange={(e) => setRegisterForm({ ...registerForm, username: e.target.value })}
                       className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
-                      placeholder="john_doe"
+                      placeholder={t('auth.usernameRegisterPlaceholder')}
                       pattern="[a-zA-Z0-9_-]+"
-                      title="Only letters, numbers, underscores, and hyphens allowed"
+                      title={t('auth.usernamePatternTitle')}
                       required
                     />
                   </div>
@@ -455,7 +456,7 @@ export default function LoginPage() {
                 {/* Email */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Email
+                    {t('auth.email')}
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -464,7 +465,7 @@ export default function LoginPage() {
                       value={registerForm.email}
                       onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
                       className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
-                      placeholder="john@hospital.com"
+                      placeholder={t('auth.emailPlaceholder')}
                       required
                     />
                   </div>
@@ -473,7 +474,7 @@ export default function LoginPage() {
                 {/* Password */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Password
+                    {t('auth.password')}
                   </label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -482,7 +483,7 @@ export default function LoginPage() {
                       value={registerForm.password}
                       onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
                       className="w-full pl-10 pr-12 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
-                      placeholder="Create a strong password"
+                      placeholder={t('auth.createPasswordPlaceholder')}
                       minLength={12}
                       required
                     />
@@ -536,7 +537,7 @@ export default function LoginPage() {
                       value={registerForm.confirm_password}
                       onChange={(e) => setRegisterForm({ ...registerForm, confirm_password: e.target.value })}
                       className="w-full pl-10 pr-12 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
-                      placeholder="Confirm your password"
+                      placeholder={t('auth.confirmPasswordPlaceholder')}
                       required
                     />
                     <button
@@ -550,13 +551,13 @@ export default function LoginPage() {
                   {registerForm.confirm_password && registerForm.password !== registerForm.confirm_password && (
                     <div className="mt-1 flex items-center gap-1 text-xs text-red-400">
                       <AlertCircle className="w-3 h-3" />
-                      Passwords do not match
+                      {t('auth.passwordsDoNotMatch')}
                     </div>
                   )}
                   {registerForm.confirm_password && registerForm.password === registerForm.confirm_password && (
                     <div className="mt-1 flex items-center gap-1 text-xs text-green-400">
                       <CheckCircle2 className="w-3 h-3" />
-                      Passwords match
+                      {t('auth.passwordsMatch')}
                     </div>
                   )}
                 </div>
@@ -570,7 +571,7 @@ export default function LoginPage() {
                   {loading ? (
                     <>
                       <RefreshCw className="w-5 h-5 animate-spin" />
-                      Creating account...
+                      {t('auth.creatingAccount')}
                     </>
                   ) : (
                     <>

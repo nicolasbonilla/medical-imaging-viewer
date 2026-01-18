@@ -2,7 +2,7 @@
  * API client for segmentation operations
  */
 
-import axios from 'axios';
+import { apiClient } from '@/services/apiClient';
 import type {
   CreateSegmentationRequest,
   SegmentationResponse,
@@ -11,16 +11,15 @@ import type {
   OverlayImageResponse,
 } from '../types/segmentation';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-const API_V1 = `${API_BASE_URL}/api/v1`;
+const API_PREFIX = '/api/v1';
 
 export const segmentationAPI = {
   /**
    * Create a new segmentation for a file
    */
   async createSegmentation(request: CreateSegmentationRequest): Promise<SegmentationResponse> {
-    const response = await axios.post<SegmentationResponse>(
-      `${API_V1}/segmentation/create`,
+    const response = await apiClient.post<SegmentationResponse>(
+      `${API_PREFIX}/segmentation/create`,
       request
     );
     return response.data;
@@ -31,8 +30,8 @@ export const segmentationAPI = {
    */
   async listSegmentations(fileId?: string): Promise<SegmentationResponse[]> {
     const params = fileId ? { file_id: fileId } : {};
-    const response = await axios.get<SegmentationResponse[]>(
-      `${API_V1}/segmentation/list`,
+    const response = await apiClient.get<SegmentationResponse[]>(
+      `${API_PREFIX}/segmentation/list`,
       { params }
     );
     return response.data;
@@ -42,8 +41,8 @@ export const segmentationAPI = {
    * Get segmentation by ID
    */
   async getSegmentation(segmentationId: string): Promise<SegmentationResponse> {
-    const response = await axios.get<SegmentationResponse>(
-      `${API_V1}/segmentation/${segmentationId}`
+    const response = await apiClient.get<SegmentationResponse>(
+      `${API_PREFIX}/segmentation/${segmentationId}`
     );
     return response.data;
   },
@@ -52,7 +51,7 @@ export const segmentationAPI = {
    * Apply a paint stroke to the segmentation
    */
   async applyPaintStroke(segmentationId: string, stroke: PaintStroke): Promise<void> {
-    await axios.post(`${API_V1}/segmentation/${segmentationId}/paint`, stroke);
+    await apiClient.post(`${API_PREFIX}/segmentation/${segmentationId}/paint`, stroke);
   },
 
   /**
@@ -68,14 +67,14 @@ export const segmentationAPI = {
       showLabels?: number[];
     }
   ): Promise<OverlayImageResponse> {
-    const params: any = {};
+    const params: Record<string, unknown> = {};
     if (options?.windowCenter !== undefined) params.window_center = options.windowCenter;
     if (options?.windowWidth !== undefined) params.window_width = options.windowWidth;
     if (options?.colormap) params.colormap = options.colormap;
     if (options?.showLabels) params.show_labels = options.showLabels.join(',');
 
-    const response = await axios.get<OverlayImageResponse>(
-      `${API_V1}/segmentation/${segmentationId}/slice/${sliceIndex}/overlay`,
+    const response = await apiClient.get<OverlayImageResponse>(
+      `${API_PREFIX}/segmentation/${segmentationId}/slice/${sliceIndex}/overlay`,
       { params }
     );
     return response.data;
@@ -85,13 +84,24 @@ export const segmentationAPI = {
    * Update label definitions
    */
   async updateLabels(segmentationId: string, labels: LabelInfo[]): Promise<void> {
-    await axios.put(`${API_V1}/segmentation/${segmentationId}/labels`, labels);
+    await apiClient.put(`${API_PREFIX}/segmentation/${segmentationId}/labels`, labels);
   },
 
   /**
    * Delete a segmentation
    */
   async deleteSegmentation(segmentationId: string): Promise<void> {
-    await axios.delete(`${API_V1}/segmentation/${segmentationId}`);
+    await apiClient.delete(`${API_PREFIX}/segmentation/${segmentationId}`);
+  },
+
+  /**
+   * Save segmentation to persistent storage (Firestore + GCS)
+   * Should be called when changing slices or when user explicitly saves
+   */
+  async saveSegmentation(segmentationId: string): Promise<{ success: boolean; message: string }> {
+    const response = await apiClient.post<{ success: boolean; message: string }>(
+      `${API_PREFIX}/segmentation/${segmentationId}/save`
+    );
+    return response.data;
   },
 };

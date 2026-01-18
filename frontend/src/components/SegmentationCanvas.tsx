@@ -69,6 +69,20 @@ export const SegmentationCanvas: React.FC<SegmentationCanvasProps> = ({
   const pendingReloadRef = useRef<NodeJS.Timeout | null>(null);
   const localPaintsRef = useRef<Array<{ x: number; y: number; size: number; erase: boolean }>>([]);
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
+  const previousSliceRef = useRef<number>(sliceIndex);
+  const previousSegIdRef = useRef<string>(segmentationId);
+
+  // Clear local paints and force reload when slice or segmentation changes
+  useEffect(() => {
+    if (previousSliceRef.current !== sliceIndex || previousSegIdRef.current !== segmentationId) {
+      console.log('🧹 Clearing local paints due to slice/segmentation change');
+      localPaintsRef.current = [];
+      previousSliceRef.current = sliceIndex;
+      previousSegIdRef.current = segmentationId;
+      // Force reload from server to get persisted segmentation data
+      setSegmentationVersion(prev => prev + 1);
+    }
+  }, [sliceIndex, segmentationId]);
 
   // Segmentation overlay URL (separate from base image)
   const segmentationUrl = `${API_BASE_URL}/api/v1/segmentation/${segmentationId}/slice/${sliceIndex}/segmentation-only?t=${segmentationVersion}`;
@@ -185,18 +199,23 @@ export const SegmentationCanvas: React.FC<SegmentationCanvasProps> = ({
   }, [canvasSize, showBaseImage, renderBaseLayer]);
 
   // Load SEGMENTATION overlay - updates when painting
+  // NOTE: We keep local paints visible as the primary source of truth
+  // because Cloud Run is stateless and the server may lose paint data
   useEffect(() => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
 
     img.onload = () => {
       segmentationImageRef.current = img;
-      localPaintsRef.current = []; // Clear local paints when server image arrives
+      // DON'T clear local paints - they represent the user's unsaved work
+      // The server may not have persisted them due to Cloud Run's stateless nature
       renderOverlayLayer();
     };
 
     img.onerror = (e) => {
       console.error('Failed to load segmentation overlay:', e);
+      // On error, still render to show local paints
+      renderOverlayLayer();
     };
 
     img.src = segmentationUrl;
