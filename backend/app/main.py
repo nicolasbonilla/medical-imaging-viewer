@@ -18,9 +18,7 @@ from app.core.security import (
 )
 from app.core.exception_handlers import register_exception_handlers
 from app.core.container import init_container
-from app.api.routes import auth, imaging, segmentation, websocket, authentication, patients
-# NOTE: Studies and documents routes temporarily disabled during Firebase migration
-# from app.api.routes import studies, documents
+from app.api.routes import auth, imaging, segmentation, websocket, authentication, patients, studies, documents
 from app.models.schemas import HealthCheck
 
 settings = get_settings()
@@ -271,11 +269,11 @@ app.include_router(websocket.router, prefix=settings.API_V1_STR)
 # EHR routes (Patient management)
 app.include_router(patients.router, prefix=settings.API_V1_STR)
 
-# EHR routes (Study management) - TEMPORARILY DISABLED DURING FIREBASE MIGRATION
-# app.include_router(studies.router, prefix=settings.API_V1_STR)
+# EHR routes (Study management) - Firebase/Firestore backend
+app.include_router(studies.router, prefix=settings.API_V1_STR)
 
-# EHR routes (Document management) - TEMPORARILY DISABLED DURING FIREBASE MIGRATION
-# app.include_router(documents.router, prefix=settings.API_V1_STR)
+# EHR routes (Document management) - Firebase/Firestore backend
+app.include_router(documents.router, prefix=settings.API_V1_STR)
 
 
 if __name__ == "__main__":

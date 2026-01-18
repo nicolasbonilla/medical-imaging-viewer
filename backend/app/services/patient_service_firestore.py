@@ -153,7 +153,12 @@ class PatientServiceFirestore(IPatientService):
             document_count=document_count
         )
 
-    def _doc_to_summary(self, doc_data: dict) -> PatientSummary:
+    def _doc_to_summary(
+        self,
+        doc_data: dict,
+        study_count: Optional[int] = None,
+        document_count: Optional[int] = None
+    ) -> PatientSummary:
         """Convert Firestore document to PatientSummary."""
         birth_date = doc_data.get("birth_date")
         if isinstance(birth_date, str):
@@ -175,7 +180,9 @@ class PatientServiceFirestore(IPatientService):
             full_name=full_name,
             birth_date=birth_date,
             gender=Gender(doc_data["gender"]),
-            status=PatientStatus(doc_data.get("status", "active"))
+            status=PatientStatus(doc_data.get("status", "active")),
+            study_count=study_count,
+            document_count=document_count
         )
 
     async def create_patient(
@@ -432,11 +439,40 @@ class PatientServiceFirestore(IPatientService):
             query = query.limit(search.page_size)
             docs = list(query.stream())
 
+        # Collect patient IDs for batch count queries
+        patient_ids = [doc.id for doc in docs]
+
+        # Get study counts for all patients in this page
+        study_counts = {}
+        for patient_id in patient_ids:
+            try:
+                studies = self.db.collection(Collections.STUDIES).where(
+                    filter=FieldFilter("patient_id", "==", patient_id)
+                ).count().get()
+                study_counts[patient_id] = studies[0][0].value if studies else 0
+            except Exception:
+                study_counts[patient_id] = 0
+
+        # Get document counts for all patients in this page
+        document_counts = {}
+        for patient_id in patient_ids:
+            try:
+                documents = self.db.collection(Collections.DOCUMENTS).where(
+                    filter=FieldFilter("patient_id", "==", patient_id)
+                ).count().get()
+                document_counts[patient_id] = documents[0][0].value if documents else 0
+            except Exception:
+                document_counts[patient_id] = 0
+
         results = []
         for doc in docs:
             doc_data = doc.to_dict()
             doc_data["id"] = doc.id
-            results.append(self._doc_to_summary(doc_data))
+            results.append(self._doc_to_summary(
+                doc_data,
+                study_count=study_counts.get(doc.id, 0),
+                document_count=document_counts.get(doc.id, 0)
+            ))
 
         return results, total
 
@@ -446,7 +482,7 @@ class PatientServiceFirestore(IPatientService):
         page_size: int = 20,
         status: Optional[str] = None
     ) -> Tuple[List[PatientSummary], int]:
-        """List all patients with pagination."""
+        """List all patients with pagination and study/document counts."""
         query = self.db.collection(self.collection)
 
         if status:
@@ -469,11 +505,40 @@ class PatientServiceFirestore(IPatientService):
             query = query.limit(page_size)
             docs = list(query.stream())
 
+        # Collect patient IDs for batch count queries
+        patient_ids = [doc.id for doc in docs]
+
+        # Get study counts for all patients in this page
+        study_counts = {}
+        for patient_id in patient_ids:
+            try:
+                studies = self.db.collection(Collections.STUDIES).where(
+                    filter=FieldFilter("patient_id", "==", patient_id)
+                ).count().get()
+                study_counts[patient_id] = studies[0][0].value if studies else 0
+            except Exception:
+                study_counts[patient_id] = 0
+
+        # Get document counts for all patients in this page
+        document_counts = {}
+        for patient_id in patient_ids:
+            try:
+                documents = self.db.collection(Collections.DOCUMENTS).where(
+                    filter=FieldFilter("patient_id", "==", patient_id)
+                ).count().get()
+                document_counts[patient_id] = documents[0][0].value if documents else 0
+            except Exception:
+                document_counts[patient_id] = 0
+
         results = []
         for doc in docs:
             doc_data = doc.to_dict()
             doc_data["id"] = doc.id
-            results.append(self._doc_to_summary(doc_data))
+            results.append(self._doc_to_summary(
+                doc_data,
+                study_count=study_counts.get(doc.id, 0),
+                document_count=document_counts.get(doc.id, 0)
+            ))
 
         return results, total
 

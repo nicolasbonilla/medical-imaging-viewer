@@ -108,7 +108,7 @@ class InputValidationMiddleware(BaseHTTPMiddleware):
                 'check_path': True,
                 'allow_html': False,
             },
-            '/api/v1/drive': {
+            '/api/v1/storage': {
                 'check_sql': True,
                 'check_xss': True,
                 'check_command': False,

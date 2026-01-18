@@ -53,7 +53,7 @@ class AuditMiddleware(BaseHTTPMiddleware):
 
             # Data access
             '/api/v1/imaging': AuditEventType.DATA_ACCESS_FILE,
-            '/api/v1/drive/files': AuditEventType.DATA_ACCESS_FILE,
+            '/api/v1/storage': AuditEventType.DATA_ACCESS_FILE,
         }
 
         # Sensitive endpoints that require detailed logging
@@ -285,7 +285,7 @@ class AuditMiddleware(BaseHTTPMiddleware):
                 return AuditEventType.ADMIN_USER_MODIFIED
 
         # Data access
-        elif '/imaging' in path or '/drive' in path:
+        elif '/imaging' in path or '/storage' in path:
             if method == 'GET':
                 return AuditEventType.DATA_ACCESS_FILE
             elif method == 'DELETE':
@@ -328,8 +328,8 @@ class AuditMiddleware(BaseHTTPMiddleware):
         """Extract resource type from path."""
         if '/imaging' in path:
             return 'medical_image'
-        elif '/drive' in path:
-            return 'drive_file'
+        elif '/storage' in path:
+            return 'storage_file'
         elif '/users' in path:
             return 'user'
         elif '/auth' in path:

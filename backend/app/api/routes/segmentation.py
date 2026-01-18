@@ -15,10 +15,13 @@ from app.models.schemas import (
     CreateSegmentationRequest,
     ErrorResponse
 )
-from app.core.interfaces.segmentation_interface import ISegmentationService
 from app.core.interfaces.imaging_interface import IImagingService
-from app.core.interfaces.drive_interface import IDriveService
-from app.core.container import get_segmentation_service, get_imaging_service, get_drive_service
+from app.core.interfaces.storage_interface import IStorageService
+from app.core.container import get_segmentation_service, get_imaging_service, get_storage_service
+from app.services.segmentation_service import SegmentationService
+from app.core.config import get_settings
+
+settings = get_settings()
 
 router = APIRouter(prefix="/segmentation", tags=["segmentation"])
 logger = get_logger(__name__)
@@ -27,7 +30,7 @@ logger = get_logger(__name__)
 @router.post("/create", response_model=SegmentationResponse)
 async def create_segmentation(
     request: CreateSegmentationRequest,
-    segmentation_service: ISegmentationService = Depends(get_segmentation_service)
+    segmentation_service: SegmentationService = Depends(get_segmentation_service)
 ):
     """
     Create a new segmentation for an image file.
@@ -97,7 +100,7 @@ async def create_segmentation(
 @router.get("/list", response_model=List[SegmentationResponse])
 async def list_segmentations(
     file_id: Optional[str] = Query(None),
-    segmentation_service: ISegmentationService = Depends(get_segmentation_service)
+    segmentation_service: SegmentationService = Depends(get_segmentation_service)
 ):
     """
     List all segmentations, optionally filtered by file_id.
@@ -117,7 +120,7 @@ async def list_segmentations(
 @router.get("/{segmentation_id}", response_model=SegmentationResponse)
 async def get_segmentation(
     segmentation_id: str,
-    segmentation_service: ISegmentationService = Depends(get_segmentation_service)
+    segmentation_service: SegmentationService = Depends(get_segmentation_service)
 ):
     """
     Get segmentation metadata and information.
@@ -161,7 +164,7 @@ async def get_segmentation(
 async def apply_paint_stroke(
     segmentation_id: str,
     stroke: PaintStroke = Body(...),
-    segmentation_service: ISegmentationService = Depends(get_segmentation_service)
+    segmentation_service: SegmentationService = Depends(get_segmentation_service)
 ):
     """
     Apply a paint stroke to the segmentation.
@@ -215,7 +218,7 @@ async def apply_paint_stroke(
 async def get_slice_mask(
     segmentation_id: str,
     slice_index: int,
-    segmentation_service: ISegmentationService = Depends(get_segmentation_service)
+    segmentation_service: SegmentationService = Depends(get_segmentation_service)
 ):
     """
     Get the segmentation mask for a specific slice as base64 encoded image.
@@ -254,9 +257,9 @@ async def get_overlay_image(
     colormap: str = Query("gray"),
     show_labels: Optional[str] = Query(None, description="Comma-separated label IDs"),
     t: Optional[int] = Query(None, description="Cache buster"),
-    segmentation_service: ISegmentationService = Depends(get_segmentation_service),
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
     imaging_service: IImagingService = Depends(get_imaging_service),
-    drive_service: IDriveService = Depends(get_drive_service)
+    storage_service: IStorageService = Depends(get_storage_service)
 ):
     """
     Get overlay image with segmentation on top of base image.
@@ -278,14 +281,14 @@ async def get_overlay_image(
                 detail=f"Segmentation {segmentation_id} not found"
             )
 
-        # Get base image using imaging service
-        file_metadata_obj = drive_service.get_file_metadata(metadata.file_id)
-        file_data = drive_service.download_file(metadata.file_id)
+        # Get base image using storage and imaging services
+        file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, metadata.file_id)
+        filename = metadata.file_id.split('/')[-1] if metadata.file_id else "unknown"
 
         # Process image to get slice
         result = imaging_service.process_image(
             file_data=file_data,
-            filename=file_metadata_obj.name,
+            filename=filename,
             slice_range=(slice_index, slice_index + 1)
         )
 
@@ -294,7 +297,7 @@ async def get_overlay_image(
             # Decode base64 image - for now, we'll need to reprocess
             # This is a workaround until we have better caching
             from app.services.imaging_service import ImageFormat
-            img_format = imaging_service.detect_format(file_data, file_metadata_obj.name)
+            img_format = imaging_service.detect_format(file_data, filename)
 
             if img_format == ImageFormat.DICOM:
                 pixel_array, _ = imaging_service.load_dicom(file_data)
@@ -369,7 +372,7 @@ async def get_segmentation_only(
     segmentation_id: str,
     slice_index: int,
     t: Optional[int] = Query(None, description="Cache buster"),
-    segmentation_service: ISegmentationService = Depends(get_segmentation_service)
+    segmentation_service: SegmentationService = Depends(get_segmentation_service)
 ):
     """
     Get ONLY the segmentation mask as a transparent PNG overlay.
@@ -418,41 +421,58 @@ async def get_segmentation_only(
 @router.post("/{segmentation_id}/save")
 async def save_segmentation(
     segmentation_id: str,
-    segmentation_service: ISegmentationService = Depends(get_segmentation_service)
+    segmentation_service: SegmentationService = Depends(get_segmentation_service)
 ):
     """
-    Save segmentation to disk (NIfTI or DICOM based on source format).
+    Save segmentation to persistent storage (Firestore + GCS).
+
+    This endpoint should be called:
+    - When the user explicitly clicks "Save"
+    - When changing slices (to persist paint strokes)
+    - Before closing the viewer
 
     Uses dependency injection to get SegmentationService instance.
-    Custom exceptions will be caught by global exception handler.
     """
     try:
-        segmentation_service._save_segmentation(segmentation_id)
+        # Use the async save method
+        success = await segmentation_service.save_segmentation_async(segmentation_id)
 
-        # Get output path based on format
-        from pathlib import Path
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Segmentation {segmentation_id} not found or nothing to save"
+            )
+
+        # Get info about saved segmentation
         seg_data = segmentation_service.segmentations_cache.get(segmentation_id)
 
         if seg_data:
             source_format = seg_data.get("source_format", "nifti")
-            if source_format == "nifti":
-                output_path = Path(segmentation_service.storage_path) / f"{segmentation_id}_seg.nii.gz"
-                message = "Segmentation saved as NIfTI file"
-            else:
-                output_path = Path(segmentation_service.storage_path) / "dicom" / segmentation_id
-                message = "Segmentation saved as DICOM series"
+            masks_3d = seg_data.get("masks_3d")
+            # Count non-zero voxels
+            annotated_voxels = int(np.sum(masks_3d > 0)) if masks_3d is not None else 0
+            message = f"Segmentation saved to cloud storage ({annotated_voxels} annotated voxels)"
         else:
-            output_path = "Unknown"
             message = "Segmentation saved"
+
+        logger.info(
+            "Segmentation saved via API",
+            extra={"segmentation_id": segmentation_id}
+        )
 
         return {
             "success": True,
-            "output_path": str(output_path),
-            "dicom_directory": str(output_path),  # Keep for compatibility
+            "segmentation_id": segmentation_id,
             "message": message
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error(
+            "Failed to save segmentation",
+            extra={"segmentation_id": segmentation_id, "error": str(e)}
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to save segmentation: {str(e)}"
@@ -462,7 +482,7 @@ async def save_segmentation(
 @router.delete("/{segmentation_id}")
 async def delete_segmentation(
     segmentation_id: str,
-    segmentation_service: ISegmentationService = Depends(get_segmentation_service)
+    segmentation_service: SegmentationService = Depends(get_segmentation_service)
 ):
     """
     Delete a segmentation.
@@ -493,7 +513,7 @@ async def delete_segmentation(
 async def update_labels(
     segmentation_id: str,
     labels: List[LabelInfo] = Body(...),
-    segmentation_service: ISegmentationService = Depends(get_segmentation_service)
+    segmentation_service: SegmentationService = Depends(get_segmentation_service)
 ):
     """
     Update label definitions for a segmentation.

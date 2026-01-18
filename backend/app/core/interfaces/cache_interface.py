@@ -94,7 +94,7 @@ class ICacheService(ABC):
         Clear all keys matching a pattern.
 
         Args:
-            pattern: Redis pattern (e.g., "drive:*", "image:123:*")
+            pattern: Redis pattern (e.g., "storage:*", "image:123:*")
 
         Returns:
             Number of keys deleted

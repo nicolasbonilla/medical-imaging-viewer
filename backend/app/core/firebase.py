@@ -61,7 +61,7 @@ def get_firebase_app() -> firebase_admin.App:
         logger.info("Using Application Default Credentials")
 
     # Get project ID
-    project_id = os.environ.get("GOOGLE_CLOUD_PROJECT", "medical-imaging-viewer")
+    project_id = os.environ.get("GOOGLE_CLOUD_PROJECT", "brain-mri-476110")
 
     # Initialize Firebase
     _firebase_app = firebase_admin.initialize_app(cred, {
@@ -107,6 +107,7 @@ class Collections:
     DOCUMENTS = "documents"
     USERS = "users"
     AUDIT_LOGS = "audit_logs"
+    UPLOAD_SESSIONS = "upload_sessions"  # For Cloud Run multi-instance compatibility
 
 
 # Helper functions for common operations

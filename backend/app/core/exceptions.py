@@ -205,7 +205,7 @@ class NotFoundException(AppException):
         - File not found
         - User not found
         - Segmentation not found
-        - Drive file not found
+        - Storage file not found
     """
 
     def __init__(
@@ -334,35 +334,6 @@ class SegmentationException(AppException):
         )
 
 
-class DriveServiceException(AppException):
-    """
-    Exception raised during Google Drive operations.
-
-    HTTP Status: Variable (depends on operation)
-
-    Examples:
-        - Authentication failed
-        - File not found in Drive
-        - Upload failed
-        - Download failed
-        - Permission denied
-    """
-
-    def __init__(
-        self,
-        message: str = "Google Drive operation failed",
-        error_code: str = "DRIVE_SERVICE_ERROR",
-        status_code: int = 500,
-        details: Optional[Dict[str, Any]] = None
-    ):
-        super().__init__(
-            message=message,
-            status_code=status_code,
-            error_code=error_code,
-            details=details
-        )
-
-
 class CacheException(AppException):
     """
     Exception raised when cache operations fail.
@@ -385,6 +356,63 @@ class CacheException(AppException):
         super().__init__(
             message=message,
             status_code=500,
+            error_code=error_code,
+            details=details
+        )
+
+
+class StorageException(AppException):
+    """
+    Exception raised during cloud storage operations.
+
+    HTTP Status: Variable (depends on operation)
+
+    Examples:
+        - Upload failed
+        - Download failed
+        - File not found in storage
+        - Permission denied
+        - Signed URL generation failed
+    """
+
+    def __init__(
+        self,
+        message: str = "Storage operation failed",
+        error_code: str = "STORAGE_ERROR",
+        status_code: int = 500,
+        details: Optional[Dict[str, Any]] = None
+    ):
+        super().__init__(
+            message=message,
+            status_code=status_code,
+            error_code=error_code,
+            details=details
+        )
+
+
+class DatabaseException(AppException):
+    """
+    Exception raised during database operations.
+
+    HTTP Status: 500 Internal Server Error
+
+    Examples:
+        - Connection failed
+        - Query timeout
+        - Integrity constraint violation
+        - Transaction rollback
+    """
+
+    def __init__(
+        self,
+        message: str = "Database operation failed",
+        error_code: str = "DATABASE_ERROR",
+        status_code: int = 500,
+        details: Optional[Dict[str, Any]] = None
+    ):
+        super().__init__(
+            message=message,
+            status_code=status_code,
             error_code=error_code,
             details=details
         )

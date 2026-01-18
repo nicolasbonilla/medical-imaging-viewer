@@ -18,17 +18,6 @@ class ImageOrientation(str, Enum):
     CORONAL = "coronal"
 
 
-class DriveFileInfo(BaseModel):
-    """Google Drive file information."""
-    id: str
-    name: str
-    mimeType: str
-    size: Optional[int] = None
-    modifiedTime: Optional[datetime] = None
-    webViewLink: Optional[str] = None
-    thumbnailLink: Optional[str] = None
-
-
 class ImageMetadata(BaseModel):
     """Medical image metadata."""
     patient_id: Optional[str] = None
