@@ -59,6 +59,20 @@ google-cloud-storage>=3.1.1
 # Firebase Admin SDK (Firestore + Storage)
 firebase-admin==7.1.0
 
+# AI/ML Inference
+onnxruntime==1.19.0
+google-cloud-aiplatform==1.72.0
+anthropic==0.39.0
+
+# MCP (Model Context Protocol)
+fastmcp==2.3.0
+
+# DICOM Structured Reports
+highdicom==0.23.0
+
+# Neuroimaging Analysis (Brain Atlas, Parcellation)
+nilearn==0.10.4
+
 # Testing
 pytest==8.3.3
 pytest-asyncio==0.24.0

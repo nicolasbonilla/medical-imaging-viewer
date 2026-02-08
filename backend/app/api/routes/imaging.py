@@ -403,7 +403,7 @@ async def get_nifti_file(
 
         logger.info("Serving NIfTI file directly", extra={
             "file_id": file_id,
-            "filename": filename,
+            "nifti_filename": filename,
             "content_type": content_type,
             "size_bytes": len(file_data)
         })

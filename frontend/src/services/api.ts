@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { apiClient } from './apiClient';
 import type {
   ImageSeriesResponse,
   ImageSlice,
@@ -6,15 +6,6 @@ import type {
   ImageOrientation,
   VolumeData,
 } from '@/types';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
 
 // Medical Imaging API
 export const imagingAPI = {
@@ -24,7 +15,7 @@ export const imagingAPI = {
     endSlice?: number,
     maxSlices = 50
   ): Promise<ImageSeriesResponse> => {
-    const { data } = await api.get(`/api/v1/imaging/process/${fileId}`, {
+    const { data } = await apiClient.get(`/api/v1/imaging/process/${fileId}`, {
       params: {
         start_slice: startSlice,
         end_slice: endSlice,
@@ -38,7 +29,7 @@ export const imagingAPI = {
     fileId: string,
     request: WindowLevelRequest
   ): Promise<ImageSlice> => {
-    const { data } = await api.post(
+    const { data } = await apiClient.post(
       `/api/v1/imaging/window-level/${fileId}`,
       request
     );
@@ -51,7 +42,7 @@ export const imagingAPI = {
     windowCenter?: number,
     windowWidth?: number
   ): Promise<ImageSlice> => {
-    const { data } = await api.get(
+    const { data } = await apiClient.get(
       `/api/v1/imaging/slice/${fileId}/${sliceIndex}`,
       {
         params: {
@@ -67,7 +58,7 @@ export const imagingAPI = {
     fileId: string,
     orientation: ImageOrientation = 'axial'
   ): Promise<VolumeData> => {
-    const { data } = await api.get(`/api/v1/imaging/volume/${fileId}`, {
+    const { data } = await apiClient.get(`/api/v1/imaging/volume/${fileId}`, {
       params: { orientation },
     });
     return data;
@@ -79,7 +70,7 @@ export const imagingAPI = {
     endSlice?: number,
     angle: number = 320
   ): Promise<{ image: string }> => {
-    const { data } = await api.get(`/api/v1/imaging/voxel-3d/${fileId}`, {
+    const { data } = await apiClient.get(`/api/v1/imaging/voxel-3d/${fileId}`, {
       params: {
         start_slice: startSlice,
         end_slice: endSlice,
@@ -124,16 +115,13 @@ export const imagingAPI = {
       minimal,
       segmentation_id: segmentationId,
     };
-    console.log('📡 MAKING MATPLOTLIB REQUEST:', url, 'params:', params);
-
     // Retry logic for transient 503 errors (server overload)
     const maxRetries = 3;
     let lastError: Error | null = null;
 
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
-        const { data } = await api.get(url, { params });
-        console.log('✅ MATPLOTLIB RESPONSE RECEIVED, data length:', data?.image?.length || 0);
+        const { data } = await apiClient.get(url, { params });
         return data;
       } catch (error: unknown) {
         lastError = error as Error;
@@ -142,12 +130,12 @@ export const imagingAPI = {
         // Only retry on 503 (Service Unavailable) errors
         if (axiosError.response?.status === 503 && attempt < maxRetries - 1) {
           const delay = Math.min(1000 * Math.pow(2, attempt), 5000); // Exponential backoff: 1s, 2s, 4s (max 5s)
-          console.warn(`⚠️ MATPLOTLIB 503 error, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
+          console.warn(`[ImagingAPI] 503 error, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
 
-        console.error('❌ MATPLOTLIB REQUEST FAILED:', error);
+        console.error('[ImagingAPI] Matplotlib request failed:', error);
         throw error;
       }
     }
@@ -157,15 +145,15 @@ export const imagingAPI = {
   },
 
   getMetadata: async (fileId: string) => {
-    const { data } = await api.get(`/api/v1/imaging/metadata/${fileId}`);
+    const { data } = await apiClient.get(`/api/v1/imaging/metadata/${fileId}`);
     return data;
   },
 };
 
 // Health check
 export const healthCheck = async () => {
-  const { data } = await api.get('/api/health');
+  const { data } = await apiClient.get('/api/health');
   return data;
 };
 
-export default api;
+export default apiClient;

@@ -1214,7 +1214,7 @@ class SegmentationService:
 
     def delete_segmentation(self, segmentation_id: str) -> bool:
         """
-        Delete a segmentation.
+        Delete a segmentation from cache, Firestore, and GCS.
 
         Args:
             segmentation_id: Segmentation ID
@@ -1222,15 +1222,41 @@ class SegmentationService:
         Returns:
             True if successful
         """
+        success = False
+
         # Remove from cache
         if segmentation_id in self.segmentations_cache:
             del self.segmentations_cache[segmentation_id]
+            success = True
 
-        # Delete from disk
+        # Delete from Firestore
+        try:
+            doc_ref = self.db.collection(SEGMENTATIONS_COLLECTION).document(segmentation_id)
+            doc = doc_ref.get()
+            if doc.exists:
+                doc_ref.delete()
+                logger.info("Deleted segmentation from Firestore", extra={"segmentation_id": segmentation_id})
+                success = True
+        except Exception as e:
+            logger.error("Failed to delete from Firestore", extra={"segmentation_id": segmentation_id, "error": str(e)})
+
+        # Delete from GCS (masks.nii.gz and masks.npz)
+        try:
+            for blob_name in [
+                f"segmentations/{segmentation_id}/masks.nii.gz",
+                f"segmentations/{segmentation_id}/masks.npz",
+            ]:
+                blob = self.gcs_bucket.blob(blob_name)
+                if blob.exists():
+                    blob.delete()
+                    logger.info("Deleted blob from GCS", extra={"blob": blob_name})
+                    success = True
+        except Exception as e:
+            logger.error("Failed to delete from GCS", extra={"segmentation_id": segmentation_id, "error": str(e)})
+
+        # Also try local disk cleanup (fallback storage)
         metadata_path = self.storage_path / f"{segmentation_id}.json"
         masks_path = self.storage_path / f"{segmentation_id}.npy"
-
-        success = False
         if metadata_path.exists():
             metadata_path.unlink()
             success = True

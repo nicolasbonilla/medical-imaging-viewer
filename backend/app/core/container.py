@@ -126,6 +126,16 @@ class Container(containers.DeclarativeContainer):
         lambda: __import__('app.services.document_service_firestore', fromlist=['DocumentServiceFirestore']).DocumentServiceFirestore()
     )
 
+    # AI Segmentation Service - Lazy loaded (Vertex AI, ONNX)
+    # Handles interactive segmentation, auto brain structure segmentation,
+    # and anomaly detection via Vertex AI endpoints
+    ai_segmentation_service = providers.Singleton(
+        lambda cache: __import__('app.services.ai_segmentation_service', fromlist=['AISegmentationService']).AISegmentationService(
+            cache_service=cache
+        ),
+        cache=cache_service
+    )
+
 
 def init_container() -> Container:
     """
@@ -152,6 +162,7 @@ def init_container() -> Container:
         "app.api.routes.imaging",
         "app.api.routes.segmentation",
         "app.api.routes.segmentation_v2",
+        "app.api.routes.ai_segmentation",
     ])
 
     logger.info("DI Container initialized and wired successfully")
@@ -308,6 +319,16 @@ def get_document_service():
     """
     container = get_container()
     return container.document_service()
+
+
+def get_ai_segmentation_service():
+    """
+    Dependency function for FastAPI routes to get AISegmentationService.
+
+    Provides AI-powered brain segmentation via Vertex AI endpoints.
+    """
+    container = get_container()
+    return container.ai_segmentation_service()
 
 
 def get_segmentation_service_v2():

@@ -1,36 +1,31 @@
-import { useEffect, useRef, useState, memo, useMemo, useCallback } from 'react';
+import { useEffect, useRef, useState, memo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Maximize2 } from 'lucide-react';
 import { useViewerStore } from '@/store/useViewerStore';
+import { useSegmentationStore } from '@/store/useSegmentationStore';
 import { usePanZoom } from '@/hooks/usePanZoom';
 import { useMatplotlibVisualization } from '@/hooks/useMatplotlibVisualization';
 import { useSegmentationData } from '@/hooks/useSegmentationData';
 import { useSliceNavigation } from '@/hooks/useSliceNavigation';
 import { useCanvasRendering } from '@/hooks/useCanvasRendering';
+import { useSegmentationShortcuts } from '@/hooks/useSegmentationShortcuts';
 import { ViewerToolbar } from './viewer/ViewerToolbar';
 import { SliceInfo } from './viewer/SliceInfo';
 import { SliceSlider } from './viewer/SliceSlider';
 import { MetadataPanel } from './viewer/MetadataPanel';
-import { SegmentationCanvas, type SegmentationCanvasRef } from './SegmentationCanvas';
-import { NiiVueViewer } from './NiiVueViewer';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+import { SegmentationCanvasLocal, type SegmentationCanvasLocalRef } from './SegmentationCanvasLocal';
+import { useAISegmentation } from '@/hooks/useAISegmentation';
 
 interface ImageViewer2DProps {
   viewerControls: ReturnType<typeof import('../hooks/useViewerControls').useViewerControls>;
-  segmentationControls: ReturnType<typeof import('../hooks/useSegmentationControls').useSegmentationControls>;
   createSegmentationRef: React.MutableRefObject<(() => void) | null>;
   patientName?: string;
   studyDescription?: string;
   studyModality?: string;
 }
 
-function ImageViewer2D({ viewerControls, segmentationControls, createSegmentationRef, patientName, studyDescription, studyModality }: ImageViewer2DProps) {
+function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, studyDescription, studyModality }: ImageViewer2DProps) {
   const { t } = useTranslation();
-  console.log('🔄 ImageViewer2D COMPONENT RENDER', {
-    renderMode: viewerControls.renderMode,
-    segmentationMode: viewerControls.segmentationMode,
-  });
 
   // Refs
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -38,8 +33,8 @@ function ImageViewer2D({ viewerControls, segmentationControls, createSegmentatio
   const scrollableRef = useRef<HTMLDivElement>(null);
   const matplotlibImageRef = useRef<HTMLImageElement>(null);
   // Refs for segmentation canvases (standard and matplotlib modes)
-  const segmentationCanvasRef = useRef<SegmentationCanvasRef>(null);
-  const segmentationCanvasMatplotlibRef = useRef<SegmentationCanvasRef>(null);
+  const segmentationCanvasRef = useRef<SegmentationCanvasLocalRef>(null);
+  const segmentationCanvasMatplotlibRef = useRef<SegmentationCanvasLocalRef>(null);
 
   // Viewer controls from props
   const {
@@ -52,15 +47,20 @@ function ImageViewer2D({ viewerControls, segmentationControls, createSegmentatio
     appliedYMax,
   } = viewerControls;
 
-  // Segmentation controls from props
-  const {
-    currentSegmentation,
-    setCurrentSegmentation,
-    showOverlay,
-    selectedLabelId,
-    brushSize,
-    eraseMode,
-  } = segmentationControls;
+  // Segmentation: which segmentation is active (from Zustand — single source of truth)
+  const currentSegmentation = useSegmentationStore((s) => s.currentSegmentation);
+  const setCurrentSegmentation = useSegmentationStore((s) => s.setCurrentSegmentation);
+
+  // Paint settings from Zustand store (single source of truth, shared with SegmentationPanel)
+  const paintTool = useSegmentationStore((s) => s.paintTool);
+  const activeLabel = useSegmentationStore((s) => s.activeLabel);
+  const isOverlayVisible = useSegmentationStore((s) => s.isOverlayVisible);
+
+  // Derived values — same names so JSX props don't need changes
+  const brushSize = paintTool.brushSize;
+  const eraseMode = paintTool.tool === 'eraser';
+  const selectedLabelId = activeLabel;
+  const showOverlay = isOverlayVisible;
 
   // Store state
   const { currentSeries, currentSliceIndex, setCurrentSliceIndex, zoomLevel, panOffset } = useViewerStore();
@@ -76,16 +76,14 @@ function ImageViewer2D({ viewerControls, segmentationControls, createSegmentatio
     appliedYMax,
   });
 
-  // Callback when paint stroke is successfully saved to server
-  const handlePaintComplete = useCallback((sliceIndex: number) => {
-    // Clear local paints for the saved slice from both canvas refs
-    segmentationCanvasRef.current?.clearLocalPaintsForSlice(sliceIndex);
-    segmentationCanvasMatplotlibRef.current?.clearLocalPaintsForSlice(sliceIndex);
+  // Callback when paint stroke is applied locally - refresh canvas overlay
+  const handlePaintComplete = useCallback((_sliceIndex: number) => {
+    // Refresh the canvas overlays to show the updated mask
+    segmentationCanvasRef.current?.refresh();
+    segmentationCanvasMatplotlibRef.current?.refresh();
   }, []);
 
-  const { createSegmentation, paintStrokeMutation, isCreatingSegmentation, saveSegmentation, isSaving, saveStatus, lastSaveTime } = useSegmentationData({
-    currentSegmentation,
-    setCurrentSegmentation,
+  const { createSegmentation, paintStrokeMutation, isCreatingSegmentation, saveSegmentation, isSaving, saveStatus, segmentationMask } = useSegmentationData({
     onPaintComplete: handlePaintComplete,
   });
 
@@ -93,42 +91,41 @@ function ImageViewer2D({ viewerControls, segmentationControls, createSegmentatio
 
   useCanvasRendering({ canvasRef, containerRef, renderMode });
 
-  // Debug: log renderMode changes
-  useEffect(() => {
-    console.log('🔄 RENDER MODE CHANGED TO:', renderMode);
-  }, [renderMode]);
+  // Segmentation keyboard shortcuts (Ctrl+Z, E, B, S, +/-, 1-9)
+  const handleShortcutRefresh = useCallback(() => {
+    segmentationCanvasRef.current?.refresh();
+    segmentationCanvasMatplotlibRef.current?.refresh();
+  }, []);
 
-  // Debug: log segmentation state changes
-  useEffect(() => {
-    console.log('🎨 SEGMENTATION STATE:', {
-      segmentationMode,
-      currentSegmentation: currentSegmentation ? {
-        id: currentSegmentation.segmentation_id,
-        fileId: currentSegmentation.file_id,
-      } : null,
-      showOverlay,
-      brushSize,
-      eraseMode,
-    });
-  }, [segmentationMode, currentSegmentation, showOverlay, brushSize, eraseMode]);
+  useSegmentationShortcuts({
+    enabled: segmentationMode && !!currentSegmentation,
+    segmentationMask,
+    onRefresh: handleShortcutRefresh,
+  });
+
+  // AI segmentation hook
+  const aiSeg = useAISegmentation({
+    fileId: currentSeries?.file_id,
+    currentSliceIndex,
+  });
 
   // Segmentation handlers - assign to ref so App can call it
   // Using useCallback-based createSegmentation for stable reference
   useEffect(() => {
     createSegmentationRef.current = () => {
-      console.log('🎯 createSegmentationRef called, currentSeries:', currentSeries);
-      if (currentSeries) {
-        const fileId = currentSeries.file_id;
-        const imageShape = {
-          rows: currentSeries.metadata.rows!,
-          columns: currentSeries.metadata.columns!,
-          slices: currentSeries.metadata.slices!,
-        };
-        console.log('🎯 Calling createSegmentation with:', { fileId, imageShape });
-        createSegmentation(fileId!, imageShape);
-      } else {
-        console.warn('⚠️ No currentSeries available for segmentation creation');
+      if (!currentSeries) {
+        console.warn('[ImageViewer2D] No currentSeries available for segmentation creation');
+        return;
       }
+      const fileId = currentSeries.file_id;
+      const rows = currentSeries.metadata.rows;
+      const columns = currentSeries.metadata.columns;
+      const slices = currentSeries.metadata.slices;
+      if (!fileId || !rows || !columns || !slices) {
+        console.warn('[ImageViewer2D] Missing image dimensions or file_id for segmentation');
+        return;
+      }
+      createSegmentation(fileId, { rows, columns, slices });
     };
   }, [currentSeries, createSegmentation, createSegmentationRef]);
 
@@ -189,11 +186,6 @@ function ImageViewer2D({ viewerControls, segmentationControls, createSegmentatio
       const naturalWidth = imgElement.naturalWidth;
       const naturalHeight = imgElement.naturalHeight;
 
-      console.log('📏 MATPLOTLIB IMAGE SIZE:', {
-        actual: `${actualWidth}x${actualHeight}`,
-        natural: `${naturalWidth}x${naturalHeight}`
-      });
-
       setMatplotlibImageSize({ width: actualWidth, height: actualHeight });
 
       // Scale bbox from natural size to actual rendered size
@@ -209,12 +201,6 @@ function ImageViewer2D({ viewerControls, segmentationControls, createSegmentatio
           figure_width: actualWidth,
           figure_height: actualHeight
         };
-
-        console.log('📦 BBOX SCALED:', {
-          original: matplotlibData.bbox,
-          scale: `${scaleX.toFixed(3)}x${scaleY.toFixed(3)}`,
-          scaled: scaledBbox
-        });
 
         setMatplotlibBbox(scaledBbox);
       }
@@ -235,19 +221,6 @@ function ImageViewer2D({ viewerControls, segmentationControls, createSegmentatio
       window.removeEventListener('resize', updateSize);
     };
   }, [matplotlibData?.image, matplotlibData?.bbox, renderMode]);
-
-  // Removed unused handlePaintStroke function (kept paintStrokeMutation for future use)
-
-  // Construct NIfTI URLs for NiiVue mode
-  const niftiUrl = useMemo(() => {
-    if (!currentSeries?.file_id) return '';
-    return `${API_BASE_URL}/api/v1/imaging/nifti/${currentSeries.file_id}`;
-  }, [currentSeries?.file_id]);
-
-  const segmentationNiftiUrl = useMemo(() => {
-    if (!currentSegmentation?.segmentation_id) return null;
-    return `${API_BASE_URL}/api/v1/segmentation/${currentSegmentation.segmentation_id}/nifti`;
-  }, [currentSegmentation?.segmentation_id]);
 
   if (!currentSeries) {
     return (
@@ -303,15 +276,14 @@ function ImageViewer2D({ viewerControls, segmentationControls, createSegmentatio
                 } : undefined}
                 className={renderDimensions ? '' : 'max-w-full max-h-full object-contain'}
               />
-              {/* Interactive segmentation canvas - positioned at scaled bbox */}
-              {segmentationMode && currentSegmentation && currentSeries && matplotlibBbox && (
-                <SegmentationCanvas
+              {/* Interactive segmentation canvas - covers full image in minimal mode, or bbox area */}
+              {segmentationMode && currentSegmentation && currentSeries && (
+                <SegmentationCanvasLocal
                   ref={segmentationCanvasMatplotlibRef}
-                  segmentationId={currentSegmentation.segmentation_id}
+                  segmentationMask={segmentationMask}
                   sliceIndex={currentSliceIndex}
-                  totalSlices={currentSeries.total_slices}
-                  imageWidth={currentSeries.metadata.columns!}
-                  imageHeight={currentSeries.metadata.rows!}
+                  imageWidth={currentSeries.metadata.columns ?? 256}
+                  imageHeight={currentSeries.metadata.rows ?? 256}
                   containerRef={containerRef}
                   onPaintStroke={(stroke) => {
                     paintStrokeMutation.mutate({
@@ -319,13 +291,11 @@ function ImageViewer2D({ viewerControls, segmentationControls, createSegmentatio
                       slice_index: currentSliceIndex,
                     });
                   }}
-                  onSliceChange={setCurrentSliceIndex}
                   selectedLabelId={selectedLabelId}
                   brushSize={brushSize}
                   eraseMode={eraseMode}
                   showOverlay={showOverlay}
                   enabled={segmentationMode}
-                  colormap={colormap}
                   baseImageData={`data:image/png;base64,${currentSeries.slices?.[currentSliceIndex]?.image_data || ''}`}
                   zoomLevel={zoomLevel}
                   panOffset={panOffset}
@@ -334,8 +304,15 @@ function ImageViewer2D({ viewerControls, segmentationControls, createSegmentatio
                     width: matplotlibImageRef.current.offsetWidth,
                     height: matplotlibImageRef.current.offsetHeight
                   } : null}
-                  matplotlibBbox={matplotlibBbox}
-                  renderSegmentationOverlay={true}
+                  matplotlibBbox={matplotlibBbox || (renderDimensions ? {
+                    left: 0,
+                    top: 0,
+                    width: renderDimensions.width,
+                    height: renderDimensions.height,
+                  } : null)}
+                  aiClickPoints={aiSeg.aiMode === 'interactive' ? aiSeg.clickPoints : undefined}
+                  aiInteractiveMode={aiSeg.aiMode === 'interactive'}
+                  onAIClick={aiSeg.handleCanvasClick}
                 />
               )}
             </div>
@@ -346,13 +323,12 @@ function ImageViewer2D({ viewerControls, segmentationControls, createSegmentatio
               <canvas ref={canvasRef} />
               {/* Interactive segmentation canvas - same size as canvas */}
               {segmentationMode && currentSegmentation && currentSeries && (
-                <SegmentationCanvas
+                <SegmentationCanvasLocal
                   ref={segmentationCanvasRef}
-                  segmentationId={currentSegmentation.segmentation_id}
+                  segmentationMask={segmentationMask}
                   sliceIndex={currentSliceIndex}
-                  totalSlices={currentSeries.total_slices}
-                  imageWidth={currentSeries.metadata.columns!}
-                  imageHeight={currentSeries.metadata.rows!}
+                  imageWidth={currentSeries.metadata.columns ?? 256}
+                  imageHeight={currentSeries.metadata.rows ?? 256}
                   containerRef={containerRef}
                   onPaintStroke={(stroke) => {
                     paintStrokeMutation.mutate({
@@ -360,38 +336,21 @@ function ImageViewer2D({ viewerControls, segmentationControls, createSegmentatio
                       slice_index: currentSliceIndex,
                     });
                   }}
-                  onSliceChange={setCurrentSliceIndex}
                   selectedLabelId={selectedLabelId}
                   brushSize={brushSize}
                   eraseMode={eraseMode}
                   showOverlay={showOverlay}
                   enabled={segmentationMode}
-                  colormap={colormap}
                   baseImageData={`data:image/png;base64,${currentSeries.slices?.[currentSliceIndex]?.image_data || ''}`}
                   zoomLevel={zoomLevel}
                   panOffset={panOffset}
                   showBaseImage={false}
-                  renderSegmentationOverlay={true}
+                  aiClickPoints={aiSeg.aiMode === 'interactive' ? aiSeg.clickPoints : undefined}
+                  aiInteractiveMode={aiSeg.aiMode === 'interactive'}
+                  onAIClick={aiSeg.handleCanvasClick}
                 />
               )}
             </div>
-          ) : renderMode === 'niivue' && niftiUrl ? (
-            /* NiiVue WebGL2-based NIfTI viewer - No PNG conversion */
-            <NiiVueViewer
-              fileUrl={niftiUrl}
-              segmentation={currentSegmentation}
-              segmentationUrl={segmentationNiftiUrl}
-              onSliceChange={setCurrentSliceIndex}
-              onPaintStroke={(stroke) => {
-                paintStrokeMutation.mutate(stroke);
-              }}
-              colormap={colormap}
-              showOverlay={showOverlay}
-              segmentationMode={segmentationMode}
-              brushSize={brushSize}
-              eraseMode={eraseMode}
-              selectedLabelId={selectedLabelId}
-            />
           ) : null}
         </div>
       </div>

@@ -13,36 +13,21 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { SegmentationList } from './SegmentationList';
-import { useSegmentationStore, type PaintTool, type BrushShape } from '@/store/useSegmentationStore';
-import {
-  useSegmentationsBySeries,
-  useSegmentation,
-  useCreateSegmentation,
-  useDeleteSegmentation,
-  useSaveSegmentation,
-  useUnloadSegmentationFromMemory,
-} from '@/hooks/useSegmentations';
-import type { LabelInfo, SegmentationCreate, Segmentation, SegmentationSummary } from '@/types';
-import { DEFAULT_LABEL_PRESETS } from '@/types';
+import { useSegmentationStore, type PaintTool, type BrushShape, type DrawOverMode } from '@/store/useSegmentationStore';
+import { useViewerStore } from '@/store/useViewerStore';
+import { useAIStore } from '@/store/useAIStore';
+import { segmentationAPI } from '@/api/segmentation';
+import type { LabelInfo, Segmentation, SegmentationResponse, AIMode, AIModel } from '@/types';
 
 // ============================================================================
 // Types
 // ============================================================================
 
-type TabType = 'load' | 'new';
+type TabType = 'load' | 'new' | 'ai';
 
 interface SegmentationPanelProps {
-  /** Patient ID for hierarchical context */
-  patientId?: string;
-  /** Study ID for hierarchical context */
-  studyId?: string;
-  /** Series ID for the current image series */
-  seriesId?: string;
-  /** Total slices in the series (for new segmentations) */
-  totalSlices?: number;
-  /** Image dimensions [width, height] for new segmentations */
-  dimensions?: [number, number];
   /** Callback when overlay visibility changes */
   onOverlayVisibilityChange?: (visible: boolean) => void;
   /** Callback when active label changes */
@@ -53,6 +38,10 @@ interface SegmentationPanelProps {
   onPaintToolChange?: (tool: PaintTool) => void;
   /** External loading state */
   isLoading?: boolean;
+  /** Callback to run AI segmentation */
+  onAIRun?: () => void;
+  /** Callback to cancel AI processing */
+  onAICancel?: () => void;
 }
 
 // ============================================================================
@@ -254,27 +243,207 @@ const PaintToolbar: React.FC<PaintToolbarProps> = ({
 };
 
 // ============================================================================
+// AI Segmentation Tab
+// ============================================================================
+
+interface AISegmentationTabProps {
+  onRun?: () => void;
+  onCancel?: () => void;
+}
+
+const AISegmentationTab: React.FC<AISegmentationTabProps> = ({ onRun, onCancel }) => {
+  const { t } = useTranslation();
+  const {
+    aiMode,
+    clickPoints,
+    selectedModel,
+    isProcessing,
+    progress,
+    error,
+    setAIMode,
+    clearClicks,
+    removeLastClick,
+    setSelectedModel,
+  } = useAIStore();
+
+  return (
+    <div className="py-3 space-y-3">
+      {/* AI Mode Selection */}
+      <div>
+        <label className="block text-xs text-gray-300 mb-2">
+          {t('ai.mode', 'Segmentation Mode')}
+        </label>
+        <div className="flex gap-1">
+          <button
+            onClick={() => setAIMode(aiMode === 'interactive' ? null : 'interactive')}
+            className={`flex-1 px-2 py-2 rounded text-xs font-medium transition-colors ${
+              aiMode === 'interactive'
+                ? 'bg-purple-600 text-white'
+                : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+            }`}
+          >
+            <svg className="w-4 h-4 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+            </svg>
+            {t('ai.interactive', 'Interactive')}
+          </button>
+          <button
+            onClick={() => setAIMode(aiMode === 'auto' ? null : 'auto')}
+            className={`flex-1 px-2 py-2 rounded text-xs font-medium transition-colors ${
+              aiMode === 'auto'
+                ? 'bg-purple-600 text-white'
+                : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+            }`}
+          >
+            <svg className="w-4 h-4 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+            {t('ai.auto', 'Auto Brain')}
+          </button>
+        </div>
+      </div>
+
+      {/* Interactive mode — click points info */}
+      {aiMode === 'interactive' && (
+        <div className="space-y-2">
+          <p className="text-xs text-gray-400">
+            {t('ai.clickInstruction', 'Left-click: include | Right-click: exclude')}
+          </p>
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-300">
+              {t('ai.clicks', 'Click points')}: {clickPoints.length}
+            </span>
+            <div className="flex gap-1">
+              <button
+                onClick={removeLastClick}
+                disabled={clickPoints.length === 0}
+                className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 disabled:opacity-40 text-gray-300 rounded transition-colors"
+              >
+                {t('ai.undo', 'Undo')}
+              </button>
+              <button
+                onClick={clearClicks}
+                disabled={clickPoints.length === 0}
+                className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 disabled:opacity-40 text-gray-300 rounded transition-colors"
+              >
+                {t('ai.clear', 'Clear')}
+              </button>
+            </div>
+          </div>
+          {/* Click points list */}
+          {clickPoints.length > 0 && (
+            <div className="max-h-24 overflow-y-auto space-y-0.5">
+              {clickPoints.map((pt, i) => (
+                <div key={i} className="flex items-center gap-1 text-xs text-gray-400">
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      pt.label === 'positive' ? 'bg-green-500' : 'bg-red-500'
+                    }`}
+                  />
+                  <span>
+                    ({pt.x}, {pt.y}, z={pt.z})
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Auto mode — info */}
+      {aiMode === 'auto' && (
+        <div className="space-y-2">
+          <p className="text-xs text-gray-400">
+            {t('ai.autoDescription', 'Automatically segment 30+ brain structures (hippocampus, ventricles, cortex, thalamus, etc.)')}
+          </p>
+        </div>
+      )}
+
+      {/* Progress bar */}
+      {isProcessing && (
+        <div className="space-y-1">
+          <div className="flex justify-between text-xs text-gray-400">
+            <span>{t('ai.processing', 'AI processing...')}</span>
+            <span>{Math.round(progress)}%</span>
+          </div>
+          <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-purple-500 to-purple-400 transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Error message */}
+      {error && (
+        <div className="p-2 bg-red-900/30 border border-red-800 rounded text-xs text-red-300">
+          {error}
+        </div>
+      )}
+
+      {/* Run / Cancel buttons */}
+      {aiMode && (
+        <div className="flex gap-2">
+          {isProcessing ? (
+            <button
+              onClick={onCancel}
+              className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm font-medium transition-colors flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              {t('ai.cancel', 'Cancel')}
+            </button>
+          ) : (
+            <button
+              onClick={onRun}
+              disabled={aiMode === 'interactive' && clickPoints.length === 0}
+              className="flex-1 px-3 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded text-sm font-medium transition-colors flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              {t('ai.runAI', 'Run AI')}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* No mode selected */}
+      {!aiMode && (
+        <p className="text-xs text-gray-500 text-center py-2">
+          {t('ai.selectMode', 'Select a mode above to start AI segmentation')}
+        </p>
+      )}
+    </div>
+  );
+};
+
+// ============================================================================
 // Main Component
 // ============================================================================
 
 export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
-  patientId,
-  studyId,
-  seriesId,
-  totalSlices = 1,
-  dimensions = [256, 256],
   onOverlayVisibilityChange,
   onActiveLabelChange,
   onBrushSizeChange,
   onPaintToolChange,
   isLoading: externalLoading = false,
+  onAIRun,
+  onAICancel,
 }) => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
 
   // Local state
   const [expanded, setExpanded] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('load');
   const [newSegmentationName, setNewSegmentationName] = useState('');
+
+  // Viewer store (for file_id and image dimensions)
+  const currentSeries = useViewerStore((s) => s.currentSeries);
+  const fileId = currentSeries?.file_id;
 
   // Zustand store
   const {
@@ -285,28 +454,53 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
     isOverlayVisible,
     isDirty,
     isSaving,
+    drawOverMode,
+    saveCallback,
+    createCallback,
     setActiveLabel,
     toggleLabelVisibility,
     setPaintTool,
     setBrushSize,
     setBrushShape,
     setIsOverlayVisible,
+    setDrawOverMode,
     setActiveSegmentation,
+    setCurrentSegmentation,
     reset,
   } = useSegmentationStore();
 
-  // React Query hooks
-  const {
-    data: segmentationListData,
-    isLoading: isLoadingList,
-  } = useSegmentationsBySeries(patientId, studyId, seriesId);
+  // Fetch segmentations list via flat API (same cache key as useSegmentationData)
+  const { data: segmentationsList, isLoading: isLoadingList } = useQuery({
+    queryKey: ['segmentations', fileId],
+    queryFn: () => fileId ? segmentationAPI.listSegmentations(fileId) : Promise.resolve([]),
+    enabled: !!fileId,
+  });
 
-  const createSegmentation = useCreateSegmentation();
-  const deleteSegmentation = useDeleteSegmentation();
-  const saveSegmentation = useSaveSegmentation();
-  const unloadSegmentation = useUnloadSegmentationFromMemory();
+  // Track local creation state for UI feedback
+  const [isCreating, setIsCreating] = useState(false);
 
-  const segmentations = segmentationListData?.items ?? [];
+  // Delete segmentation via flat API
+  const deleteSegmentationMutation = useMutation({
+    mutationFn: (segmentationId: string) => segmentationAPI.deleteSegmentation(segmentationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['segmentations'] });
+    },
+  });
+
+  // Map SegmentationResponse[] to minimal SegmentationSummary-like objects for the list
+  const segmentations = (segmentationsList ?? []).map((seg: SegmentationResponse) => ({
+    id: seg.segmentation_id,
+    name: seg.metadata?.description || 'Segmentation',
+    status: 'saved' as const,
+    progress_percentage: 0,
+    slices_annotated: 0,
+    total_slices: seg.total_slices,
+    created_by: 'current_user',
+    created_at: seg.metadata?.created_at || new Date().toISOString(),
+    modified_at: seg.metadata?.modified_at || new Date().toISOString(),
+    label_count: seg.metadata?.labels?.filter(l => l.id !== 0).length ?? 1,
+    primary_label_color: seg.metadata?.labels?.find(l => l.id !== 0)?.color ?? '#FF0000',
+  }));
 
   // Sync overlay visibility with parent
   useEffect(() => {
@@ -329,60 +523,43 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
   }, [paintTool.tool, onPaintToolChange]);
 
   // Handlers
-  const handleCreateSegmentation = useCallback(async () => {
-    if (!patientId || !studyId || !seriesId) return;
+  const handleCreateSegmentation = useCallback(() => {
+    if (!fileId || !currentSeries || !createCallback) return;
+    createCallback(fileId, {
+      rows: currentSeries.metadata.rows ?? 256,
+      columns: currentSeries.metadata.columns ?? 256,
+      slices: currentSeries.total_slices ?? 1,
+    });
+    setNewSegmentationName('');
+    setActiveTab('load');
+  }, [fileId, currentSeries, createCallback]);
 
-    const name = newSegmentationName.trim() || `Segmentation ${new Date().toLocaleDateString()}`;
-
-    const createData: SegmentationCreate = {
-      series_id: seriesId,
-      name,
-      description: '',
-      labels: DEFAULT_LABEL_PRESETS.BRATS,
-    };
-
+  const handleLoadSegmentation = useCallback(async (segmentationId: string) => {
+    // Load segmentation via API and set as current
     try {
-      await createSegmentation.mutateAsync({
-        patientId,
-        studyId,
-        seriesId,
-        data: createData,
-      });
-      setNewSegmentationName('');
-      setActiveTab('load');
+      const seg = await segmentationAPI.getSegmentation(segmentationId);
+      setCurrentSegmentation(seg);
     } catch (error) {
-      console.error('Failed to create segmentation:', error);
+      console.error('Failed to load segmentation:', error);
     }
-  }, [patientId, studyId, seriesId, newSegmentationName, totalSlices, dimensions, createSegmentation]);
-
-  const handleLoadSegmentation = useCallback((segmentationId: string) => {
-    // The useSegmentation hook will update the store
-    // We just need to trigger a fetch here
-    // For now, we'll use the data from the list
-    const seg = segmentations.find((s: SegmentationSummary) => s.id === segmentationId);
-    if (seg) {
-      // Load full segmentation data (this would typically be a separate API call)
-      // For now, we create a mock Segmentation from the summary
-      // In production, this would be handled by useSegmentation hook
-    }
-  }, [segmentations]);
+  }, [setCurrentSegmentation]);
 
   const handleDeleteSegmentation = useCallback(async (segmentationId: string) => {
     try {
-      await deleteSegmentation.mutateAsync(segmentationId);
+      await deleteSegmentationMutation.mutateAsync(segmentationId);
     } catch (error) {
       console.error('Failed to delete segmentation:', error);
     }
-  }, [deleteSegmentation]);
+  }, [deleteSegmentationMutation]);
 
   const handleSaveSegmentation = useCallback(async () => {
-    if (!activeSegmentation) return;
+    if (!saveCallback) return;
     try {
-      await saveSegmentation.mutateAsync(activeSegmentation.id);
+      await saveCallback();
     } catch (error) {
       console.error('Failed to save segmentation:', error);
     }
-  }, [activeSegmentation, saveSegmentation]);
+  }, [saveCallback]);
 
   const handleCloseSegmentation = useCallback(async () => {
     if (!activeSegmentation) return;
@@ -395,19 +572,15 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
       }
     }
 
-    try {
-      await unloadSegmentation.mutateAsync(activeSegmentation.id);
-    } catch (error) {
-      console.error('Failed to close segmentation:', error);
-      // Reset anyway
-      reset();
-      setActiveSegmentation(null);
-    }
-  }, [activeSegmentation, isDirty, handleSaveSegmentation, unloadSegmentation, reset, setActiveSegmentation, t]);
+    // Clear current segmentation (useSegmentationData will unload the mask)
+    setCurrentSegmentation(null);
+    reset();
+    setActiveSegmentation(null);
+  }, [activeSegmentation, isDirty, handleSaveSegmentation, setCurrentSegmentation, reset, setActiveSegmentation, t]);
 
   // Derived state
-  const isLoading = externalLoading || isLoadingList || createSegmentation.isPending;
-  const hasContext = !!patientId && !!studyId && !!seriesId;
+  const isLoading = externalLoading || isLoadingList || isCreating;
+  const hasContext = !!fileId;
 
   return (
     <div className="bg-gray-800 rounded-lg shadow-lg">
@@ -472,6 +645,16 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                 >
                   {t('segmentation.new')}
                 </button>
+                <button
+                  onClick={() => setActiveTab('ai')}
+                  className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                    activeTab === 'ai'
+                      ? 'bg-purple-600 text-white'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                  }`}
+                >
+                  {t('ai.title', 'AI')}
+                </button>
               </div>
 
               {/* Tab Content */}
@@ -483,7 +666,7 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                     onDelete={handleDeleteSegmentation}
                     activeSegmentationId={(activeSegmentation as Segmentation | null)?.id}
                     isLoading={isLoading}
-                    isDeleting={deleteSegmentation.isPending}
+                    isDeleting={deleteSegmentationMutation.isPending}
                   />
                 )}
 
@@ -506,26 +689,24 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                     {/* Create button */}
                     <button
                       onClick={handleCreateSegmentation}
-                      disabled={createSegmentation.isPending}
+                      disabled={!createCallback}
                       className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded text-sm font-medium transition-colors flex items-center justify-center gap-2"
                     >
-                      {createSegmentation.isPending ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                          <span>{t('segmentation.creating')}</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>+</span>
-                          <span>{t('segmentation.newSegmentation')}</span>
-                        </>
-                      )}
+                      <span>+</span>
+                      <span>{t('segmentation.newSegmentation')}</span>
                     </button>
 
                     <p className="text-xs text-gray-400 text-center">
                       {t('segmentation.createNewEmpty')}
                     </p>
                   </div>
+                )}
+
+                {activeTab === 'ai' && (
+                  <AISegmentationTab
+                    onRun={onAIRun}
+                    onCancel={onAICancel}
+                  />
                 )}
               </div>
             </>
@@ -628,6 +809,22 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                 />
               </div>
 
+              {/* Draw-Over Mode */}
+              <div>
+                <label className="block text-xs text-gray-300 mb-1">
+                  {t('segmentation.drawOver', 'Draw Over')}
+                </label>
+                <select
+                  value={drawOverMode}
+                  onChange={(e) => setDrawOverMode(e.target.value as DrawOverMode)}
+                  className="w-full px-2 py-1.5 bg-gray-700 border border-gray-600 rounded text-xs text-white focus:outline-none focus:border-blue-500"
+                >
+                  <option value="all">{t('segmentation.drawOverAll', 'All labels')}</option>
+                  <option value="emptyOnly">{t('segmentation.drawOverEmpty', 'Empty only')}</option>
+                  <option value="activeLabel">{t('segmentation.drawOverActive', 'Active label only')}</option>
+                </select>
+              </div>
+
               {/* Save Button */}
               <button
                 onClick={handleSaveSegmentation}
@@ -649,8 +846,8 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                 )}
               </button>
 
-              {/* Instructions */}
-              <div className="pt-2 border-t border-gray-700">
+              {/* Instructions & Shortcuts */}
+              <div className="pt-2 border-t border-gray-700 space-y-2">
                 <p className="text-xs text-gray-400">
                   <strong>{t('segmentation.instructions.title')}</strong>
                   <br />• {t('segmentation.instructions.clickDrag')}
@@ -658,6 +855,20 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                   <br />• {t('segmentation.instructions.adjustBrush')}
                   <br />• {t('segmentation.instructions.eraseMode')}
                 </p>
+                <details className="text-xs text-gray-400">
+                  <summary className="cursor-pointer hover:text-gray-300 font-medium">
+                    {t('segmentation.shortcuts.title', 'Keyboard shortcuts')}
+                  </summary>
+                  <div className="mt-1 space-y-0.5 pl-2">
+                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">Ctrl+Z</kbd> Undo</p>
+                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">Ctrl+Y</kbd> Redo</p>
+                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">E</kbd> Toggle eraser</p>
+                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">B</kbd> Brush</p>
+                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">S</kbd> Toggle overlay</p>
+                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">+</kbd> / <kbd className="px-1 bg-gray-700 rounded text-gray-300">-</kbd> Brush size</p>
+                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">1-9</kbd> Select label</p>
+                  </div>
+                </details>
               </div>
             </>
           )}

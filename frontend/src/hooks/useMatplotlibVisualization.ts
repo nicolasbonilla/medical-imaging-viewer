@@ -56,7 +56,7 @@ export function useMatplotlibVisualization({
     };
   }, [currentSliceIndex]);
 
-  const { data: matplotlibData, isLoading: matplotlibLoading, error } = useQuery({
+  const { data: matplotlibData, isLoading: matplotlibLoading } = useQuery({
     queryKey: [
       'matplotlib-2d',
       currentSeries?.file_id,
@@ -68,14 +68,6 @@ export function useMatplotlibVisualization({
       appliedYMax,
     ],
     queryFn: async () => {
-      // NEVER pass segmentation_id to backend - frontend always handles segmentation overlay
-      console.log('🔍 [HOOK] useMatplotlibVisualization queryFn called', {
-        file_id: currentSeries?.file_id,
-        slice: debouncedSliceIndex,
-        colormap,
-        bounds: { appliedXMin, appliedXMax, appliedYMin, appliedYMax }
-      });
-
       const result = currentSeries && currentSeries.file_id
         ? await imagingAPI.getMatplotlib2D(
             currentSeries.file_id,
@@ -91,14 +83,6 @@ export function useMatplotlibVisualization({
           )
         : null;
 
-      console.log('🔍 [HOOK] Result from API:', {
-        hasResult: !!result,
-        resultType: typeof result,
-        hasImage: result ? 'image' in result : false,
-        imageLength: result?.image?.length,
-        imagePrefix: result?.image?.substring(0, 50)
-      });
-
       return result;
     },
     enabled: !!currentSeries?.file_id,
@@ -110,19 +94,6 @@ export function useMatplotlibVisualization({
 
   // Determine if we're still waiting for debounce to settle
   const isPendingDebounce = currentSliceIndex !== debouncedSliceIndex;
-
-  console.log('🔍 [HOOK] Current state:', {
-    hasData: !!matplotlibData,
-    dataType: typeof matplotlibData,
-    hasImage: matplotlibData ? 'image' in matplotlibData : false,
-    imageLength: matplotlibData?.image?.length,
-    isLoading: matplotlibLoading || isPendingDebounce,
-    hasError: !!error,
-    error: error,
-    currentSlice: currentSliceIndex,
-    debouncedSlice: debouncedSliceIndex,
-    isPendingDebounce
-  });
 
   return {
     matplotlibData,

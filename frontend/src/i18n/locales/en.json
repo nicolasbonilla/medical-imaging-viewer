@@ -749,6 +749,23 @@
       "unknown": "Unknown"
     }
   },
+  "ai": {
+    "title": "AI",
+    "mode": "Segmentation Mode",
+    "interactive": "Interactive",
+    "auto": "Auto Brain",
+    "clickInstruction": "Left-click: include | Right-click: exclude",
+    "clicks": "Click points",
+    "undo": "Undo",
+    "clear": "Clear",
+    "autoDescription": "Automatically segment 30+ brain structures (hippocampus, ventricles, cortex, thalamus, etc.)",
+    "processing": "AI processing...",
+    "cancel": "Cancel",
+    "runAI": "Run AI",
+    "selectMode": "Select a mode above to start AI segmentation",
+    "notConfigured": "AI model not configured on server",
+    "taskFailed": "AI task failed"
+  },
   "accessibility": {
     "skipNavigation": "Skip navigation",
     "skipToMain": "Skip to main content",

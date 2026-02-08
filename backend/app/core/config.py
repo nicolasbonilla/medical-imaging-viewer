@@ -168,6 +168,26 @@ class Settings(BaseSettings):
             raise ValueError(f"LOG_LEVEL must be one of: {', '.join(valid_levels)}")
         return v_upper
 
+    # AI/ML Configuration
+    VERTEX_AI_PROJECT_ID: str = Field(default="", description="GCP project for Vertex AI endpoints")
+    VERTEX_AI_REGION: str = Field(default="us-central1")
+    VERTEX_AI_ENDPOINT_INTERACTIVE: str = Field(default="", description="Endpoint ID for interactive segmentation (SAM-Med3D/nnInteractive)")
+    VERTEX_AI_ENDPOINT_AUTO: str = Field(default="", description="Endpoint ID for auto brain segmentation (SynthSeg)")
+    VERTEX_AI_ENDPOINT_ANOMALY: str = Field(default="", description="Endpoint ID for brain anomaly detection")
+    AI_INFERENCE_TIMEOUT_SECONDS: int = Field(default=120, ge=30, le=600)
+    AI_MAX_CONCURRENT_REQUESTS: int = Field(default=5, ge=1, le=20)
+
+    # Claude API Configuration (for report generation)
+    ANTHROPIC_API_KEY: str = Field(default="", description="Anthropic API key for Claude")
+    CLAUDE_MODEL: str = Field(default="claude-sonnet-4-20250514")
+    CLAUDE_MAX_TOKENS: int = Field(default=4096, ge=256, le=16384)
+
+    # MCP (Model Context Protocol) Configuration
+    MCP_ENABLED: bool = Field(default=False)
+    MCP_IMAGING_PORT: int = Field(default=8001, ge=1, le=65535)
+    MCP_SEGMENTATION_PORT: int = Field(default=8002, ge=1, le=65535)
+    MCP_REPORT_PORT: int = Field(default=8003, ge=1, le=65535)
+
     # Performance Optimization Flags
     ENABLE_BINARY_PROTOCOL: bool = Field(default=False)
     ENABLE_WEBSOCKET: bool = Field(default=False)

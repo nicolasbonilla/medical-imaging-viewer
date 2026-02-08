@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { toast, Toaster } from 'sonner';
@@ -14,14 +14,14 @@ import { imagingAPI } from './services/api';
 import { studyAPI } from './services/studyApi';
 import { useViewerStore } from './store/useViewerStore';
 import { useViewerControls } from './hooks/useViewerControls';
-import { useSegmentationControls } from './hooks/useSegmentationControls';
 import type { ImagingStudy, ImagingSeries, ImagingInstance } from './types';
-import { LogOut, Sparkles, ArrowLeft, Brain, FileImage, AlertCircle, Loader2, Puzzle, Upload, Eye, CheckCircle, Clock, Plus } from 'lucide-react';
+import { LogOut, Sparkles, ArrowLeft, Brain, FileImage, AlertCircle, Loader2, Puzzle, Upload, Eye, CheckCircle, Clock, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from './contexts/AuthContext';
 import { useTheme } from './contexts/ThemeContext';
-import { useSegmentationsByStudy } from './hooks/useSegmentations';
+import { segmentationAPI } from './api/segmentation';
 import { usePatient } from './hooks/usePatients';
-import type { SegmentationSummary } from './types';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { useSegmentationStore } from './store/useSegmentationStore';
 
 interface StudyInfo {
   study: ImagingStudy;
@@ -30,7 +30,6 @@ interface StudyInfo {
 }
 
 function ViewerApp() {
-  console.log('🔥 VIEWER APP v3 - FIXED PATIENT INFO - BUILD 2026-01-18-1450');
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const { theme } = useTheme();
@@ -46,31 +45,34 @@ function ViewerApp() {
 
   const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(null);
   const [studyInfo, setStudyInfo] = useState<StudyInfo | null>(null);
+  const [deletingSegId, setDeletingSegId] = useState<string | null>(null);
+
+  const queryClient = useQueryClient();
+  const currentSegmentation = useSegmentationStore((s) => s.currentSegmentation);
+  const activeSegmentation = useSegmentationStore((s) => s.activeSegmentation);
+  const setCurrentSegmentation = useSegmentationStore((s) => s.setCurrentSegmentation);
 
   const viewerControls = useViewerControls();
-  const segmentationControls = useSegmentationControls();
   const createSegmentationRef = useRef<(() => void) | null>(null);
   const segmentationUploadRef = useRef<HTMLInputElement>(null);
 
-  // Fetch segmentations for this study
-  const { data: segmentationsData, isLoading: isLoadingSegmentations } = useSegmentationsByStudy(
-    studyInfo?.study.patient_id,
-    studyId ?? undefined
-  );
+  // Fetch segmentations for current image (flat API)
+  const { data: segmentationsData, isLoading: isLoadingSegmentations } = useQuery({
+    queryKey: ['segmentations', currentSeries?.file_id],
+    queryFn: () => currentSeries?.file_id
+      ? segmentationAPI.listSegmentations(currentSeries.file_id)
+      : Promise.resolve([]),
+    enabled: !!currentSeries?.file_id,
+  });
 
-  const segmentations = segmentationsData?.items ?? [];
+  const segmentations = (segmentationsData ?? []).map((seg) => ({
+    id: seg.segmentation_id,
+    name: seg.metadata?.description || 'Segmentation',
+    status: 'saved' as const,
+  }));
 
   // Fetch patient info to display name in viewer
   const { data: patientData, isLoading: isLoadingPatient, error: patientError } = usePatient(studyInfo?.study.patient_id);
-
-  // Debug patient data
-  console.log('👤 PATIENT DATA DEBUG:', {
-    patientId: studyInfo?.study.patient_id,
-    patientData: patientData,
-    isLoadingPatient,
-    patientError,
-    fullName: patientData?.full_name,
-  });
 
   // Load study data when studyId is present
   const { data: loadedStudyInfo, isLoading: isLoadingStudy, error: studyError } = useQuery({
@@ -171,11 +173,16 @@ function ViewerApp() {
   };
 
   // Handle opening/loading an existing segmentation
-  const handleOpenSegmentation = useCallback((segmentation: SegmentationSummary) => {
-    // Activate segmentation mode and load this segmentation
+  const handleOpenSegmentation = useCallback((segmentation: { id: string; name: string }) => {
+    // Find full segmentation data from the query results
+    const fullSeg = segmentationsData?.find((s) => s.segmentation_id === segmentation.id);
+    if (fullSeg) {
+      setCurrentSegmentation(fullSeg);
+    }
+    // Activate segmentation mode
     viewerControls.setSegmentationMode(true);
     toast.success(t('viewer.segmentationLoaded', `Segmentación "${segmentation.name}" cargada`));
-  }, [viewerControls, t]);
+  }, [viewerControls, t, segmentationsData, setCurrentSegmentation]);
 
   // Handle upload segmentation file
   const handleUploadSegmentation = useCallback(() => {
@@ -199,6 +206,29 @@ function ViewerApp() {
       segmentationUploadRef.current.value = '';
     }
   }, [t]);
+
+  // Handle deleting a segmentation
+  const handleDeleteSegmentation = useCallback(async (segId: string, segName: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Don't trigger the open handler
+    if (!confirm(t('viewer.confirmDeleteSegmentation', `¿Eliminar segmentación "${segName}"?`))) return;
+
+    setDeletingSegId(segId);
+    try {
+      await segmentationAPI.deleteSegmentation(segId);
+      // If the deleted one was active, clear it
+      if (currentSegmentation?.segmentation_id === segId) {
+        setCurrentSegmentation(null);
+        viewerControls.setSegmentationMode(false);
+      }
+      queryClient.invalidateQueries({ queryKey: ['segmentations'] });
+      toast.success(t('viewer.segmentationDeleted', 'Segmentación eliminada'));
+    } catch (error) {
+      console.error('[ViewerApp] Failed to delete segmentation:', error);
+      toast.error(t('viewer.segmentationDeleteFailed', 'Error al eliminar segmentación'));
+    } finally {
+      setDeletingSegId(null);
+    }
+  }, [currentSegmentation, setCurrentSegmentation, viewerControls, queryClient, t]);
 
   // Handle create new segmentation (activates segmentation mode and creates segmentation)
   const handleCreateSegmentation = useCallback(() => {
@@ -226,6 +256,13 @@ function ViewerApp() {
           bg: 'bg-green-100 dark:bg-green-900/30',
           text: 'text-green-700 dark:text-green-400',
           label: t('segmentation.status.approved', 'Aprobada')
+        };
+      case 'saved':
+        return {
+          icon: <CheckCircle className="w-3 h-3" />,
+          bg: 'bg-green-100 dark:bg-green-900/30',
+          text: 'text-green-700 dark:text-green-400',
+          label: t('segmentation.status.saved', 'Guardada')
         };
       case 'in_progress':
         return {
@@ -443,91 +480,9 @@ function ViewerApp() {
             )}
           </div>
 
-          {/* Segmentations Section - Compact */}
-          <div className="p-3 border-b border-gray-200/50 dark:border-gray-700/50">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Puzzle className="w-4 h-4 text-purple-500" />
-                <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                  {t('viewer.segmentations', 'Segmentaciones')}
-                </span>
-              </div>
-              <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-                segmentations.length > 0
-                  ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                  : 'bg-gray-100 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400'
-              }`}>
-                {segmentations.length}
-              </span>
-            </div>
-
-            {/* Action Buttons - Smaller */}
-            <div className="flex gap-1.5 mb-2">
-              <button
-                onClick={handleCreateSegmentation}
-                disabled={!currentSeries}
-                className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-purple-500 hover:bg-purple-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white text-xs font-medium rounded-md transition-colors"
-                title={t('viewer.createSegmentation', 'Crear nueva segmentación')}
-              >
-                <Plus className="w-3 h-3" />
-                {t('viewer.create', 'Crear')}
-              </button>
-              <button
-                onClick={handleUploadSegmentation}
-                disabled={!studyInfo}
-                className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white text-xs font-medium rounded-md transition-colors"
-                title={t('viewer.uploadSegmentation', 'Subir segmentación')}
-              >
-                <Upload className="w-3 h-3" />
-                {t('viewer.upload', 'Subir')}
-              </button>
-              <input
-                ref={segmentationUploadRef}
-                type="file"
-                accept=".nii,.nii.gz,.nrrd,.seg.nrrd"
-                className="hidden"
-                onChange={handleSegmentationFileChange}
-              />
-            </div>
-
-            {/* Segmentations List - Minimal when empty */}
-            {isLoadingSegmentations ? (
-              <div className="flex items-center justify-center py-2">
-                <Loader2 className="w-4 h-4 text-purple-500 animate-spin" />
-              </div>
-            ) : segmentations.length === 0 ? (
-              <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-1">
-                {t('viewer.noSegmentations', 'Sin segmentaciones')}
-              </p>
-            ) : (
-              <div className="space-y-1 max-h-24 overflow-y-auto">
-                {segmentations.map((seg) => {
-                  const statusBadge = getStatusBadge(seg.status);
-                  return (
-                    <button
-                      key={seg.id}
-                      onClick={() => handleOpenSegmentation(seg)}
-                      className="w-full p-1.5 rounded-md bg-white/60 dark:bg-gray-800/60 hover:bg-white dark:hover:bg-gray-800 border border-gray-200/50 dark:border-gray-700/50 transition-all text-left group"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Puzzle className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" />
-                        <span className="text-xs font-medium text-gray-900 dark:text-white truncate flex-1">
-                          {seg.name}
-                        </span>
-                        <span className={`px-1 py-0.5 rounded text-[10px] ${statusBadge.bg} ${statusBadge.text}`}>
-                          {statusBadge.label}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Instance List - Takes remaining space */}
+          {/* Instance List */}
           {studyInfo && studyInfo.instances.length > 0 && (
-            <div className="flex-1 overflow-y-auto p-3 min-h-0">
+            <div className="p-3 border-b border-gray-200/50 dark:border-gray-700/50">
               <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                 <FileImage className="w-4 h-4" />
                 {t('viewer.availableImages', 'Imágenes')} ({studyInfo.instances.length})
@@ -568,6 +523,124 @@ function ViewerApp() {
             </div>
           )}
 
+          {/* Segmentations Section - Below Images */}
+          <div className="flex-1 overflow-y-auto p-3 min-h-0">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Puzzle className="w-4 h-4 text-purple-500" />
+                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {t('viewer.segmentations', 'Segmentaciones')}
+                </span>
+              </div>
+              <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                segmentations.length > 0
+                  ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                  : 'bg-gray-100 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400'
+              }`}>
+                {segmentations.length}
+              </span>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-1.5 mb-2">
+              <button
+                onClick={handleCreateSegmentation}
+                disabled={!currentSeries}
+                className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-purple-500 hover:bg-purple-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white text-xs font-medium rounded-md transition-colors"
+                title={t('viewer.createSegmentation', 'Crear nueva segmentación')}
+              >
+                <Plus className="w-3 h-3" />
+                {t('viewer.create', 'Crear')}
+              </button>
+              <button
+                onClick={handleUploadSegmentation}
+                disabled={!studyInfo}
+                className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white text-xs font-medium rounded-md transition-colors"
+                title={t('viewer.uploadSegmentation', 'Subir segmentación')}
+              >
+                <Upload className="w-3 h-3" />
+                {t('viewer.upload', 'Subir')}
+              </button>
+              <input
+                ref={segmentationUploadRef}
+                type="file"
+                accept=".nii,.nii.gz,.nrrd,.seg.nrrd"
+                className="hidden"
+                onChange={handleSegmentationFileChange}
+              />
+            </div>
+
+            {/* Segmentations List - only shows saved segmentations from server */}
+            {isLoadingSegmentations ? (
+              <div className="flex items-center justify-center py-2">
+                <Loader2 className="w-4 h-4 text-purple-500 animate-spin" />
+              </div>
+            ) : segmentations.length === 0 ? (
+              <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-1">
+                {t('viewer.noSegmentations', 'Sin segmentaciones')}
+              </p>
+            ) : (
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {segmentations.map((seg) => {
+                  const isActive = currentSegmentation?.segmentation_id === seg.id || activeSegmentation?.id === seg.id;
+                  const isDeleting = deletingSegId === seg.id;
+                  return (
+                    <div
+                      key={seg.id}
+                      className={`rounded-lg overflow-hidden ${
+                        isActive
+                          ? 'ring-2 ring-purple-400 bg-purple-900/50'
+                          : 'bg-gray-800/80'
+                      }`}
+                    >
+                      {/* Segmentation name row - clickable to load */}
+                      <div
+                        onClick={() => handleOpenSegmentation(seg)}
+                        className="flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-700/50 transition-colors"
+                      >
+                        <Puzzle className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-purple-400' : 'text-purple-500'}`} />
+                        <span className="text-sm font-medium text-white truncate flex-1">
+                          {seg.name}
+                        </span>
+                        {isActive ? (
+                          <span className="px-2 py-0.5 rounded-full text-[11px] bg-purple-500 text-white font-bold">
+                            Activa
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full text-[11px] bg-green-600/30 text-green-400 font-medium">
+                            Guardada
+                          </span>
+                        )}
+                      </div>
+                      {/* Delete button row */}
+                      <div className="flex border-t border-gray-700/50">
+                        <button
+                          onClick={() => handleOpenSegmentation(seg)}
+                          className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[11px] text-gray-400 hover:text-white hover:bg-gray-700/50 transition-colors"
+                        >
+                          <Eye className="w-3 h-3" />
+                          Cargar
+                        </button>
+                        <button
+                          onClick={(e) => handleDeleteSegmentation(seg.id, seg.name, e)}
+                          disabled={isDeleting}
+                          className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[11px] text-red-400 hover:text-red-300 hover:bg-red-900/30 transition-colors border-l border-gray-700/50"
+                        >
+                          {isDeleting ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-3 h-3" />
+                          )}
+                          Eliminar
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           {/* Viewer Controls */}
           {currentSeries && viewMode === '2d' && (
             <motion.div
@@ -576,9 +649,11 @@ function ViewerApp() {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="p-2 border-t border-gray-200 dark:border-gray-700 overflow-y-auto max-h-[35vh] flex-shrink-0"
             >
-              <ViewerControls
-                {...viewerControls}
-              />
+              <ErrorBoundary name="ViewerControls">
+                <ViewerControls
+                  {...viewerControls}
+                />
+              </ErrorBoundary>
             </motion.div>
           )}
         </motion.div>
@@ -597,16 +672,19 @@ function ViewerApp() {
                 <p className="text-gray-600 dark:text-gray-400">{t('viewer.loadingImage')}</p>
               </div>
             ) : viewMode === '2d' ? (
-              <ImageViewer2D
-                viewerControls={viewerControls}
-                segmentationControls={segmentationControls}
-                createSegmentationRef={createSegmentationRef}
-                patientName={patientData?.full_name}
-                studyDescription={studyInfo?.study.study_description}
-                studyModality={studyInfo?.study.modality}
-              />
+              <ErrorBoundary name="ImageViewer2D">
+                <ImageViewer2D
+                  viewerControls={viewerControls}
+                  createSegmentationRef={createSegmentationRef}
+                  patientName={patientData?.full_name}
+                  studyDescription={studyInfo?.study.study_description}
+                  studyModality={studyInfo?.study.modality}
+                />
+              </ErrorBoundary>
             ) : (
-              <ImageViewer3D />
+              <ErrorBoundary name="ImageViewer3D">
+                <ImageViewer3D />
+              </ErrorBoundary>
             )}
           </div>
         </motion.div>

@@ -2,11 +2,12 @@
  * Segmentation Store - Zustand state management for ITK-SNAP style segmentation.
  *
  * Manages:
- * - Active segmentation state
+ * - Active segmentation and current segmentation response
  * - Label palette and visibility
  * - Paint tool settings
- * - Undo/redo history
  * - Overlay rendering settings
+ *
+ * Undo/redo is handled by useSegmentationMask (slice-level snapshots).
  *
  * @module store/useSegmentationStore
  */
@@ -16,11 +17,10 @@ import { subscribeWithSelector, persist } from 'zustand/middleware';
 import type {
   Segmentation,
   SegmentationSummary,
+  SegmentationResponse,
   LabelInfo,
-  PaintStroke,
   OverlaySettings,
   OverlayMode,
-  SegmentationStatus,
 } from '@/types';
 
 // ============================================================================
@@ -38,6 +38,14 @@ export type PaintTool = 'brush' | 'eraser' | 'fill' | 'polygon' | 'threshold';
 export type BrushShape = 'circle' | 'square';
 
 /**
+ * Draw-over mode controls which existing voxels can be overwritten during painting.
+ * - 'all': Overwrite everything (default)
+ * - 'emptyOnly': Only paint on empty (background) voxels
+ * - 'activeLabel': Only overwrite the currently active label or empty voxels
+ */
+export type DrawOverMode = 'all' | 'emptyOnly' | 'activeLabel';
+
+/**
  * Paint tool configuration.
  */
 export interface PaintToolConfig {
@@ -51,19 +59,6 @@ export interface PaintToolConfig {
 }
 
 /**
- * Undo/redo action for segmentation changes.
- */
-export interface SegmentationAction {
-  type: 'paint' | 'fill' | 'clear_slice' | 'clear_label';
-  timestamp: number;
-  sliceIndex: number;
-  labelId: number;
-  // Compressed data for undo (base64 encoded RLE)
-  previousData?: string;
-  affectedVoxels?: number;
-}
-
-/**
  * Segmentation store state.
  */
 interface SegmentationState {
@@ -71,7 +66,10 @@ interface SegmentationState {
   // Active Segmentation
   // =========================================================================
 
-  /** Currently active segmentation for editing */
+  /** Current segmentation response (server-side data, selected by user) */
+  currentSegmentation: SegmentationResponse | null;
+
+  /** Currently active segmentation for editing (rich Segmentation type for UI) */
   activeSegmentation: Segmentation | null;
 
   /** Series ID of the active segmentation */
@@ -82,6 +80,12 @@ interface SegmentationState {
 
   /** Whether segmentation is being saved */
   isSaving: boolean;
+
+  /** Save callback set by useSegmentationData — allows panel to trigger save */
+  saveCallback: (() => Promise<void>) | null;
+
+  /** Create callback set by useSegmentationData — allows panel to create locally */
+  createCallback: ((fileId: string, imageShape: { rows: number; columns: number; slices: number }) => void) | null;
 
   /** Last save timestamp */
   lastSavedAt: string | null;
@@ -116,8 +120,8 @@ interface SegmentationState {
   /** Whether paint mode is active */
   isPaintMode: boolean;
 
-  /** Pending strokes to send to backend */
-  pendingStrokes: PaintStroke[];
+  /** Draw-over mode: controls which voxels can be overwritten */
+  drawOverMode: DrawOverMode;
 
   // =========================================================================
   // Overlay Settings
@@ -130,22 +134,10 @@ interface SegmentationState {
   isOverlayVisible: boolean;
 
   // =========================================================================
-  // Undo/Redo
-  // =========================================================================
-
-  /** Undo history stack */
-  undoStack: SegmentationAction[];
-
-  /** Redo history stack */
-  redoStack: SegmentationAction[];
-
-  /** Maximum undo history size */
-  maxUndoSize: number;
-
-  // =========================================================================
   // Actions - Segmentation
   // =========================================================================
 
+  setCurrentSegmentation: (segmentation: SegmentationResponse | null) => void;
   setActiveSegmentation: (segmentation: Segmentation | null) => void;
   setActiveSeriesId: (seriesId: string | null) => void;
   setSeriesSegmentations: (segmentations: SegmentationSummary[]) => void;
@@ -153,6 +145,8 @@ interface SegmentationState {
   setIsDirty: (dirty: boolean) => void;
   setIsSaving: (saving: boolean) => void;
   setLastSavedAt: (timestamp: string | null) => void;
+  setSaveCallback: (fn: (() => Promise<void>) | null) => void;
+  setCreateCallback: (fn: ((fileId: string, imageShape: { rows: number; columns: number; slices: number }) => void) | null) => void;
 
   // =========================================================================
   // Actions - Labels
@@ -178,14 +172,7 @@ interface SegmentationState {
   setThresholdRange: (min: number, max: number) => void;
   togglePaintMode: () => void;
   setIsPaintMode: (active: boolean) => void;
-
-  // =========================================================================
-  // Actions - Strokes
-  // =========================================================================
-
-  addPendingStroke: (stroke: PaintStroke) => void;
-  clearPendingStrokes: () => void;
-  flushPendingStrokes: () => PaintStroke[];
+  setDrawOverMode: (mode: DrawOverMode) => void;
 
   // =========================================================================
   // Actions - Overlay
@@ -196,17 +183,6 @@ interface SegmentationState {
   setOutlineThickness: (thickness: number) => void;
   toggleOverlayVisibility: () => void;
   setIsOverlayVisible: (visible: boolean) => void;
-
-  // =========================================================================
-  // Actions - Undo/Redo
-  // =========================================================================
-
-  pushUndoAction: (action: SegmentationAction) => void;
-  undo: () => SegmentationAction | null;
-  redo: () => SegmentationAction | null;
-  clearHistory: () => void;
-  canUndo: () => boolean;
-  canRedo: () => boolean;
 
   // =========================================================================
   // Actions - Reset
@@ -240,33 +216,31 @@ const defaultOverlaySettings: OverlaySettings = {
 
 const initialState = {
   // Segmentation
-  activeSegmentation: null,
-  activeSeriesId: null,
+  currentSegmentation: null as SegmentationResponse | null,
+  activeSegmentation: null as Segmentation | null,
+  activeSeriesId: null as string | null,
   isDirty: false,
   isSaving: false,
-  lastSavedAt: null,
+  saveCallback: null as (() => Promise<void>) | null,
+  createCallback: null as ((fileId: string, imageShape: { rows: number; columns: number; slices: number }) => void) | null,
+  lastSavedAt: null as string | null,
 
   // List
-  seriesSegmentations: [],
+  seriesSegmentations: [] as SegmentationSummary[],
   isLoadingList: false,
 
   // Labels
   activeLabel: 1,
-  labelVisibility: {},
+  labelVisibility: {} as Record<number, boolean>,
 
   // Paint tool
   paintTool: defaultPaintTool,
   isPaintMode: false,
-  pendingStrokes: [],
+  drawOverMode: 'all' as DrawOverMode,
 
   // Overlay
   overlaySettings: defaultOverlaySettings,
   isOverlayVisible: true,
-
-  // Undo/Redo
-  undoStack: [],
-  redoStack: [],
-  maxUndoSize: 50,
 };
 
 // ============================================================================
@@ -282,6 +256,9 @@ export const useSegmentationStore = create<SegmentationState>()(
         // =====================================================================
         // Segmentation Actions
         // =====================================================================
+
+        setCurrentSegmentation: (segmentation) =>
+          set({ currentSegmentation: segmentation }),
 
         setActiveSegmentation: (segmentation) =>
           set({
@@ -306,6 +283,10 @@ export const useSegmentationStore = create<SegmentationState>()(
         setIsSaving: (saving) => set({ isSaving: saving }),
 
         setLastSavedAt: (timestamp) => set({ lastSavedAt: timestamp }),
+
+        setSaveCallback: (fn) => set({ saveCallback: fn }),
+
+        setCreateCallback: (fn) => set({ createCallback: fn }),
 
         // =====================================================================
         // Label Actions
@@ -428,23 +409,7 @@ export const useSegmentationStore = create<SegmentationState>()(
 
         setIsPaintMode: (active) => set({ isPaintMode: active }),
 
-        // =====================================================================
-        // Stroke Actions
-        // =====================================================================
-
-        addPendingStroke: (stroke) =>
-          set((state) => ({
-            pendingStrokes: [...state.pendingStrokes, stroke],
-            isDirty: true,
-          })),
-
-        clearPendingStrokes: () => set({ pendingStrokes: [] }),
-
-        flushPendingStrokes: () => {
-          const strokes = get().pendingStrokes;
-          set({ pendingStrokes: [] });
-          return strokes;
-        },
+        setDrawOverMode: (mode) => set({ drawOverMode: mode }),
 
         // =====================================================================
         // Overlay Actions
@@ -477,53 +442,6 @@ export const useSegmentationStore = create<SegmentationState>()(
         setIsOverlayVisible: (visible) => set({ isOverlayVisible: visible }),
 
         // =====================================================================
-        // Undo/Redo Actions
-        // =====================================================================
-
-        pushUndoAction: (action) =>
-          set((state) => {
-            const newStack = [...state.undoStack, action];
-            // Trim to max size
-            if (newStack.length > state.maxUndoSize) {
-              newStack.shift();
-            }
-            return {
-              undoStack: newStack,
-              redoStack: [], // Clear redo on new action
-            };
-          }),
-
-        undo: () => {
-          const state = get();
-          if (state.undoStack.length === 0) return null;
-
-          const action = state.undoStack[state.undoStack.length - 1];
-          set({
-            undoStack: state.undoStack.slice(0, -1),
-            redoStack: [...state.redoStack, action],
-          });
-          return action;
-        },
-
-        redo: () => {
-          const state = get();
-          if (state.redoStack.length === 0) return null;
-
-          const action = state.redoStack[state.redoStack.length - 1];
-          set({
-            redoStack: state.redoStack.slice(0, -1),
-            undoStack: [...state.undoStack, action],
-          });
-          return action;
-        },
-
-        clearHistory: () => set({ undoStack: [], redoStack: [] }),
-
-        canUndo: () => get().undoStack.length > 0,
-
-        canRedo: () => get().redoStack.length > 0,
-
-        // =====================================================================
         // Reset Actions
         // =====================================================================
 
@@ -533,7 +451,6 @@ export const useSegmentationStore = create<SegmentationState>()(
           set({
             paintTool: defaultPaintTool,
             isPaintMode: false,
-            pendingStrokes: [],
           }),
       }),
       {
@@ -542,7 +459,7 @@ export const useSegmentationStore = create<SegmentationState>()(
           // Only persist user preferences, not active data
           paintTool: state.paintTool,
           overlaySettings: state.overlaySettings,
-          maxUndoSize: state.maxUndoSize,
+          drawOverMode: state.drawOverMode,
         }),
       }
     )

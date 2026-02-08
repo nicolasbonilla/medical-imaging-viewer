@@ -1,48 +1,99 @@
 /**
- * Hook for managing segmentation data queries and mutations.
- * Handles fetching segmentation lists, applying paint strokes, and auto-saving.
+ * Hook for managing segmentation data - ITK-SNAP Style Architecture
  *
- * IMPORTANT: Auto-save runs in background to avoid blocking UI.
+ * KEY ARCHITECTURAL CHANGE:
+ * - OLD: Each paint stroke makes an API call → slow, unreliable
+ * - NEW: All painting happens locally in memory → instant, save only on demand
+ *
+ * This matches how professional tools like ITK-SNAP work.
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRef, useCallback, useEffect, useState } from 'react';
 import { segmentationAPI } from '@/api/segmentation';
 import { useViewerStore } from '@/store/useViewerStore';
-import type { SegmentationResponse, PaintStroke, ImageShape } from '../types/segmentation';
+import { useSegmentationStore } from '@/store/useSegmentationStore';
+import { useSegmentationMask, type LocalPaintStroke } from './useSegmentationMask';
+import type { PaintStroke, ImageShape, Segmentation, SegmentationResponse } from '@/types';
 
 interface UseSegmentationDataProps {
-  currentSegmentation: SegmentationResponse | null;
-  setCurrentSegmentation: (seg: SegmentationResponse | null) => void;
   /** Called when a paint stroke completes - receives the slice index for cache management */
   onPaintComplete?: (sliceIndex: number) => void;
 }
 
-// Track if there are unsaved changes (module-level for persistence)
-let hasUnsavedChanges = false;
-
-// Debounce timer for auto-save
-let autoSaveTimer: NodeJS.Timeout | null = null;
-
 export function useSegmentationData({
-  currentSegmentation,
-  setCurrentSegmentation,
   onPaintComplete,
 }: UseSegmentationDataProps) {
   const { currentSeries } = useViewerStore();
   const queryClient = useQueryClient();
 
+  // Read currentSegmentation from Zustand (single source of truth)
+  const currentSegmentation = useSegmentationStore((s) => s.currentSegmentation);
+  const setCurrentSegmentation = useSegmentationStore((s) => s.setCurrentSegmentation);
+
+  // ITK-SNAP style mask management
+  const segmentationMask = useSegmentationMask();
+
   // State for save status feedback
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [lastSaveTime, setLastSaveTime] = useState<Date | null>(null);
 
-  // Use ref to keep stable reference to setCurrentSegmentation
-  const setCurrentSegmentationRef = useRef(setCurrentSegmentation);
-  setCurrentSegmentationRef.current = setCurrentSegmentation;
-
   // Ref for current segmentation to avoid stale closures
   const currentSegmentationRef = useRef(currentSegmentation);
   currentSegmentationRef.current = currentSegmentation;
+
+  // Flag to skip loadMask when transitioning from local-ID to server-ID after save
+  const skipNextLoadRef = useRef(false);
+
+  // Load mask when segmentation changes (skip local-only — mask is already initialized)
+  useEffect(() => {
+    if (!currentSegmentation?.segmentation_id) {
+      segmentationMask.clearMask();
+    } else if (!currentSegmentation.segmentation_id.startsWith('local-')) {
+      if (skipNextLoadRef.current) {
+        // After save: mask is already in memory, skip redundant server fetch
+        skipNextLoadRef.current = false;
+        return;
+      }
+      segmentationMask.loadMask(currentSegmentation.segmentation_id);
+    }
+    // local- IDs already have an empty mask initialized by createSegmentation
+  }, [currentSegmentation?.segmentation_id]);
+
+  // Sync currentSegmentation → Zustand activeSegmentation so the panel shows paint tools
+  useEffect(() => {
+    const store = useSegmentationStore.getState();
+    if (currentSegmentation) {
+      const labels = currentSegmentation.metadata?.labels || [
+        { id: 0, name: 'Background', color: '#000000', opacity: 0, visible: false },
+        { id: 1, name: 'Lesion', color: '#FF0000', opacity: 0.5, visible: true },
+      ];
+      // Build a minimal Segmentation object for the panel
+      const synced: Segmentation = {
+        id: currentSegmentation.segmentation_id,
+        patient_id: '',
+        study_id: '',
+        series_id: currentSeries?.file_id || '',
+        file_id: currentSegmentation.file_id,
+        name: currentSegmentation.metadata?.description || 'Segmentation',
+        segmentation_type: 'manual' as Segmentation['segmentation_type'],
+        status: 'in_progress' as Segmentation['status'],
+        progress_percentage: 0,
+        slices_annotated: 0,
+        total_slices: currentSegmentation.total_slices,
+        created_by: 'current_user',
+        labels,
+        created_at: currentSegmentation.metadata?.created_at || new Date().toISOString(),
+        modified_at: currentSegmentation.metadata?.modified_at || new Date().toISOString(),
+      };
+      store.setActiveSegmentation(synced);
+    } else {
+      // Only clear if Zustand still holds a segmentation from this flow
+      if (store.activeSegmentation) {
+        store.setActiveSegmentation(null);
+      }
+    }
+  }, [currentSegmentation, currentSeries?.file_id]);
 
   // Fetch segmentations list
   const { data: segmentations } = useQuery({
@@ -54,159 +105,172 @@ export function useSegmentationData({
     enabled: !!currentSeries?.file_id,
   });
 
-  // Create segmentation mutation
-  const createSegmentationMutation = useMutation({
-    mutationFn: async ({
-      fileId,
-      imageShape,
-    }: {
-      fileId: string;
-      imageShape: ImageShape;
-    }) => {
-      console.log('🎨 Creating segmentation with:', { fileId, imageShape });
-      const result = await segmentationAPI.createSegmentation({
-        file_id: fileId,
-        image_shape: imageShape,
-        labels: [
-          { id: 0, name: 'Background', color: '#000000', opacity: 0.0, visible: false },
-          { id: 1, name: 'Lesion', color: '#FF0000', opacity: 0.5, visible: true },
-        ],
-      });
-      console.log('🎨 API response:', result);
-      return result;
-    },
-    onSuccess: (data) => {
-      console.log('✅ Segmentation created successfully:', data);
-      console.log('✅ Calling setCurrentSegmentation with data');
-      // Use ref to ensure we have the latest setCurrentSegmentation function
-      setCurrentSegmentationRef.current(data);
-      queryClient.invalidateQueries({ queryKey: ['segmentations'] });
-    },
-    onError: (error) => {
-      console.error('❌ Failed to create segmentation:', error);
-      // Log more details about the error
-      if (error instanceof Error) {
-        console.error('❌ Error message:', error.message);
-        console.error('❌ Error stack:', error.stack);
-      }
-    },
-  });
+  // Default labels for new segmentations
+  const defaultLabels = [
+    { id: 0, name: 'Background', color: '#000000', opacity: 0.0, visible: false },
+    { id: 1, name: 'Lesion', color: '#FF0000', opacity: 0.5, visible: true },
+  ];
 
-  // Stable function to create segmentation
+  // Create segmentation LOCALLY (no server call until Save)
   const createSegmentation = useCallback((fileId: string, imageShape: ImageShape) => {
-    console.log('🚀 createSegmentation called with:', { fileId, imageShape });
-    createSegmentationMutation.mutate({ fileId, imageShape });
-  }, [createSegmentationMutation]);
+    const tempId = `local-${crypto.randomUUID()}`;
+    const now = new Date().toISOString();
 
-  // Paint stroke mutation
-  // IMPORTANT: Each paint stroke is saved to GCS immediately by the backend
-  // On success, we notify the caller with the slice_index so they can clear local cache
-  const paintStrokeMutation = useMutation({
-    mutationFn: async (stroke: PaintStroke) => {
-      if (!currentSegmentation) {
-        throw new Error('No active segmentation');
+    const localSeg: SegmentationResponse = {
+      segmentation_id: tempId,
+      file_id: fileId,
+      total_slices: imageShape.slices,
+      metadata: {
+        file_id: fileId,
+        description: 'Segmentation',
+        labels: defaultLabels,
+        created_at: now,
+        modified_at: now,
+      },
+    };
+
+    setCurrentSegmentation(localSeg);
+    // Initialize empty mask in memory (no network)
+    segmentationMask.initEmptyMask(imageShape.slices, imageShape.rows, imageShape.columns);
+  }, [setCurrentSegmentation, segmentationMask]);
+
+  // Placeholder for backward compatibility (no longer an actual mutation)
+  const createSegmentationMutation = {
+    mutate: ({ fileId, imageShape }: { fileId: string; imageShape: ImageShape }) =>
+      createSegmentation(fileId, imageShape),
+    isPending: false,
+    isError: false,
+    error: null,
+  };
+
+  /**
+   * Apply paint stroke LOCALLY (instant, no network!)
+   *
+   * This is the key change from the old architecture.
+   * The stroke is applied to the in-memory mask immediately.
+   * No API call is made. The mask is only saved when the user clicks "Save".
+   */
+  const applyPaintStrokeLocal = useCallback((stroke: PaintStroke) => {
+    const localStroke: LocalPaintStroke = {
+      x: stroke.x,
+      y: stroke.y,
+      sliceIndex: stroke.slice_index,
+      brushSize: stroke.brush_size,
+      labelId: stroke.label_id,
+      erase: stroke.erase,
+    };
+
+    // Apply locally (instant!)
+    segmentationMask.paintStroke(localStroke);
+
+    // Notify caller that paint was applied (for UI refresh)
+    onPaintComplete?.(stroke.slice_index);
+  }, [segmentationMask, onPaintComplete]);
+
+  // Legacy mutation object for compatibility (but now it's instant, no network)
+  const paintStrokeMutation = {
+    mutate: applyPaintStrokeLocal,
+    mutateAsync: async (stroke: PaintStroke) => {
+      applyPaintStrokeLocal(stroke);
+      return { success: true, sliceIndex: stroke.slice_index };
+    },
+    isPending: false,
+    isError: false,
+    error: null,
+  };
+
+  /**
+   * Save segmentation to server (explicit save only).
+   *
+   * For local-only segmentations (temp ID), this creates on the server first,
+   * then uploads the mask. For existing server segmentations, just uploads the mask.
+   */
+  const saveSegmentation = useCallback(async () => {
+    if (!currentSegmentation) return;
+
+    const isLocal = currentSegmentation.segmentation_id.startsWith('local-');
+
+    // For existing segmentations, skip save if nothing changed
+    if (!isLocal && !segmentationMask.state.isDirty) return;
+
+    setSaveStatus('saving');
+
+    // If local-only, create on server first to get a real ID
+    let serverSeg: SegmentationResponse | null = null;
+    if (isLocal) {
+      try {
+        const dims = segmentationMask.state.dimensions;
+        serverSeg = await segmentationAPI.createSegmentation({
+          file_id: currentSegmentation.file_id,
+          image_shape: {
+            rows: dims?.height ?? 256,
+            columns: dims?.width ?? 256,
+            slices: dims?.depth ?? 1,
+          },
+          labels: currentSegmentation.metadata?.labels ?? defaultLabels,
+        });
+
+        // Update mask hook with the real server ID (ref only — no React state change yet)
+        segmentationMask.updateSegmentationId(serverSeg.segmentation_id);
+        // DON'T call setCurrentSegmentation here — that would trigger loadMask
+        // and overwrite the local mask before saveMask can upload it
+      } catch (error) {
+        console.error('[SegmentationData] Failed to create segmentation on server:', error);
+        setSaveStatus('error');
+        setTimeout(() => setSaveStatus('idle'), 5000);
+        return;
       }
-      // Return both the API response and the stroke info for onSuccess
-      const response = await segmentationAPI.applyPaintStroke(currentSegmentation.segmentation_id, stroke);
-      return { response, sliceIndex: stroke.slice_index };
-    },
-    onSuccess: (data) => {
-      hasUnsavedChanges = true;
-      // Pass the slice index to the callback so the canvas can clear its local paint cache
-      onPaintComplete?.(data.sliceIndex);
-      console.log(`✅ Paint stroke saved to server for slice ${data.sliceIndex}`);
-    },
-    onError: (error, variables) => {
-      // On error, keep local paints as backup
-      console.error(`❌ Failed to save paint stroke for slice ${variables.slice_index}:`, error);
-    },
-  });
+    }
 
-  // Save segmentation mutation (non-blocking with status feedback)
-  const saveSegmentationMutation = useMutation({
-    mutationFn: async (segmentationId: string) => {
-      console.log('💾 Saving segmentation:', segmentationId);
-      setSaveStatus('saving');
-      return segmentationAPI.saveSegmentation(segmentationId);
-    },
-    onSuccess: (data) => {
-      console.log('✅ Segmentation saved:', data.message);
-      hasUnsavedChanges = false;
+    // Upload the mask (uses segmentationIdRef which was just updated)
+    const success = await segmentationMask.saveMask();
+
+    if (success) {
+      // NOW it's safe to update Zustand with the server response.
+      // Set skip flag so the useEffect doesn't reload the mask we just saved.
+      if (serverSeg) {
+        skipNextLoadRef.current = true;
+        setCurrentSegmentation(serverSeg);
+      }
       setSaveStatus('saved');
       setLastSaveTime(new Date());
-      // Reset status after 3 seconds
+      // Refresh the list so the saved segmentation appears in the sidebar
+      queryClient.invalidateQueries({ queryKey: ['segmentations'] });
       setTimeout(() => setSaveStatus('idle'), 3000);
-    },
-    onError: (error) => {
-      console.error('❌ Failed to save segmentation:', error);
+    } else {
+      console.error('[SegmentationData] Failed to save segmentation');
       setSaveStatus('error');
-      // Reset status after 5 seconds
       setTimeout(() => setSaveStatus('idle'), 5000);
-    },
-  });
-
-  // Stable function to save segmentation
-  const saveSegmentation = useCallback(async () => {
-    if (!currentSegmentation) {
-      console.log('⚠️ No active segmentation to save');
-      return;
     }
-    if (!hasUnsavedChanges) {
-      console.log('ℹ️ No unsaved changes to save');
-      return;
-    }
-    saveSegmentationMutation.mutate(currentSegmentation.segmentation_id);
-  }, [currentSegmentation, saveSegmentationMutation]);
+  }, [currentSegmentation, segmentationMask, setCurrentSegmentation, queryClient]);
 
-  // Auto-save when slice changes (DEBOUNCED and NON-BLOCKING)
-  const { currentSliceIndex } = useViewerStore();
-  const previousSliceRef = useRef<number>(currentSliceIndex);
+  // Legacy save mutation for compatibility
+  const saveSegmentationMutation = {
+    mutate: () => saveSegmentation(),
+    mutateAsync: saveSegmentation,
+    isPending: segmentationMask.state.isSaving,
+    isError: saveStatus === 'error',
+    error: segmentationMask.state.error,
+  };
 
+  // Register save callback in Zustand so SegmentationPanel can trigger saves
   useEffect(() => {
-    if (previousSliceRef.current !== currentSliceIndex && currentSegmentationRef.current && hasUnsavedChanges) {
-      // Clear existing timer
-      if (autoSaveTimer) {
-        clearTimeout(autoSaveTimer);
-      }
+    useSegmentationStore.getState().setSaveCallback(saveSegmentation);
+    return () => useSegmentationStore.getState().setSaveCallback(null);
+  }, [saveSegmentation]);
 
-      // Debounce auto-save by 300ms to avoid blocking rapid slice changes
-      autoSaveTimer = setTimeout(() => {
-        const segId = currentSegmentationRef.current?.segmentation_id;
-        if (segId && hasUnsavedChanges) {
-          console.log('🔄 Auto-saving segmentation in background...');
-          // Fire and forget - don't await, don't block UI
-          segmentationAPI.saveSegmentation(segId)
-            .then((data) => {
-              console.log('✅ Auto-save complete:', data.message);
-              hasUnsavedChanges = false;
-              setSaveStatus('saved');
-              setLastSaveTime(new Date());
-              setTimeout(() => setSaveStatus('idle'), 2000);
-            })
-            .catch((err) => {
-              console.error('❌ Auto-save failed:', err);
-              setSaveStatus('error');
-              setTimeout(() => setSaveStatus('idle'), 3000);
-            });
-        }
-      }, 300);
-    }
-    previousSliceRef.current = currentSliceIndex;
+  // Register create callback in Zustand so SegmentationPanel can create locally
+  useEffect(() => {
+    useSegmentationStore.getState().setCreateCallback(createSegmentation);
+    return () => useSegmentationStore.getState().setCreateCallback(null);
+  }, [createSegmentation]);
 
-    // Cleanup timer on unmount
-    return () => {
-      if (autoSaveTimer) {
-        clearTimeout(autoSaveTimer);
-      }
-    };
-  }, [currentSliceIndex]);
-
-  // Auto-save before unload
+  // Auto-save before unload (only if there are unsaved changes)
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (currentSegmentation && hasUnsavedChanges) {
+      if (currentSegmentation && segmentationMask.state.isDirty) {
         // Try to save (best effort - may not complete before unload)
-        segmentationAPI.saveSegmentation(currentSegmentation.segmentation_id)
+        segmentationMask.saveMask()
           .catch(err => console.error('Failed to save on unload:', err));
         // Show browser warning
         e.preventDefault();
@@ -216,7 +280,7 @@ export function useSegmentationData({
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [currentSegmentation]);
+  }, [currentSegmentation, segmentationMask]);
 
   return {
     segmentations,
@@ -225,11 +289,13 @@ export function useSegmentationData({
     paintStrokeMutation,
     saveSegmentation,
     saveSegmentationMutation,
-    hasUnsavedChanges,
+    hasUnsavedChanges: segmentationMask.state.isDirty,
     isCreatingSegmentation: createSegmentationMutation.isPending,
-    isSaving: saveSegmentationMutation.isPending,
-    // New: save status for UI feedback
+    isSaving: segmentationMask.state.isSaving,
+    // Save status for UI feedback
     saveStatus,
     lastSaveTime,
+    // NEW: Expose mask functions for rendering
+    segmentationMask,
   };
 }

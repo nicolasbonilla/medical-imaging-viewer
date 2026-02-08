@@ -7,10 +7,7 @@
 import { useEffect, useRef, useState, useCallback, memo } from 'react';
 import { Niivue, NVImage, SLICE_TYPE } from '@niivue/niivue';
 import { useViewerStore } from '@/store/useViewerStore';
-import type { SegmentationResponse, PaintStroke } from '../types/segmentation';
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+import type { SegmentationResponse, PaintStroke } from '@/types';
 
 // Extended Niivue type to include methods not in default types
 interface NiivueExtended extends Niivue {
@@ -53,13 +50,40 @@ function NiiVueViewerComponent({
   const [error, setError] = useState<string | null>(null);
   const [volumeLoaded, setVolumeLoaded] = useState(false);
   const [isPainting, setIsPainting] = useState(false);
+  const [nvReady, setNvReady] = useState(false);
+  // Track container dimensions for canvas sizing
+  const [canvasSize, setCanvasSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
 
-  // Initialize NiiVue
+  // Track container size with ResizeObserver
   useEffect(() => {
-    if (!canvasRef.current) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateSize = () => {
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      if (w > 0 && h > 0) {
+        setCanvasSize({ width: w, height: h });
+      }
+    };
+
+    // Initial measurement
+    updateSize();
+
+    const ro = new ResizeObserver(updateSize);
+    ro.observe(container);
+
+    return () => ro.disconnect();
+  }, []);
+
+  // Initialize NiiVue AFTER canvas has valid dimensions
+  useEffect(() => {
+    if (!canvasRef.current || canvasSize.width === 0 || canvasSize.height === 0) return;
+    // Already initialized
+    if (nvRef.current) return;
 
     const nv = new Niivue({
-      backColor: [0, 0, 0, 1], // Black background
+      backColor: [0, 0, 0, 1],
       show3Dcrosshair: false,
       isRadiologicalConvention: false,
       sliceType: SLICE_TYPE.AXIAL,
@@ -72,28 +96,34 @@ function NiiVueViewerComponent({
 
     nv.attachToCanvas(canvasRef.current);
     nvRef.current = nv;
+    setNvReady(true);
 
     // Handle slice change events
     nv.onLocationChange = (data: unknown) => {
       const locationData = data as { vox?: number[] };
       if (locationData.vox && locationData.vox.length >= 3) {
         const newSlice = Math.round(locationData.vox[2]);
-        if (newSlice !== currentSliceIndex) {
-          setCurrentSliceIndex(newSlice);
-          onSliceChange?.(newSlice);
-        }
+        setCurrentSliceIndex(newSlice);
+        onSliceChange?.(newSlice);
       }
     };
 
     return () => {
       nvRef.current = null;
+      setNvReady(false);
     };
-  }, []);
+  }, [canvasSize.width, canvasSize.height]);
 
-  // Load volume when URL changes
+  // Notify NiiVue when canvas size changes (after init)
+  useEffect(() => {
+    if (!nvRef.current || canvasSize.width === 0) return;
+    nvRef.current.drawScene();
+  }, [canvasSize.width, canvasSize.height]);
+
+  // Load volume when URL changes or NiiVue becomes ready
   useEffect(() => {
     const loadVolume = async () => {
-      if (!nvRef.current || !fileUrl) return;
+      if (!nvReady || !nvRef.current || !fileUrl) return;
 
       setIsLoading(true);
       setError(null);
@@ -114,30 +144,29 @@ function NiiVueViewerComponent({
         await nvRef.current.loadVolumes(volumeList);
         setVolumeLoaded(true);
 
-        // Set initial slice using moveCrosshairInVox
+        // Set initial slice to middle of volume
         if (nvRef.current.volumes.length > 0) {
           const vol = nvRef.current.volumes[0];
           const dims = vol.dims;
           if (dims && dims.length >= 4) {
-            // dims[3] is the number of slices in Z
             const totalSlices = dims[3];
             const initialSlice = Math.floor(totalSlices / 2);
             const nv = nvRef.current as NiivueExtended;
-            // Move crosshair to center of volume at initial slice
             nv.moveCrosshairInVox(dims[1] / 2, dims[2] / 2, initialSlice);
+            setCurrentSliceIndex(initialSlice);
           }
         }
 
         setIsLoading(false);
       } catch (err) {
-        console.error('Failed to load NIfTI volume:', err);
+        console.error('[NiiVueViewer] Failed to load NIfTI volume:', err);
         setError(err instanceof Error ? err.message : 'Failed to load volume');
         setIsLoading(false);
       }
     };
 
     loadVolume();
-  }, [fileUrl, colormap]);
+  }, [fileUrl, colormap, nvReady]);
 
   // Load segmentation overlay when available
   useEffect(() => {
@@ -153,13 +182,13 @@ function NiiVueViewerComponent({
         // Add segmentation as overlay
         const segVolume = await NVImage.loadFromUrl({
           url: segmentationUrl,
-          colormap: 'red', // Segmentation color
+          colormap: 'red',
           opacity: 0.5,
         });
 
         nvRef.current.addVolume(segVolume);
       } catch (err) {
-        console.error('Failed to load segmentation overlay:', err);
+        console.error('[NiiVueViewer] Failed to load segmentation overlay:', err);
       }
     };
 
@@ -169,7 +198,6 @@ function NiiVueViewerComponent({
   // Update zoom level
   useEffect(() => {
     if (!nvRef.current || !volumeLoaded) return;
-    // NiiVue uses setScale for zoom
     nvRef.current.setScale(zoomLevel);
   }, [zoomLevel, volumeLoaded]);
 
@@ -182,7 +210,6 @@ function NiiVueViewerComponent({
     if (!dims || dims.length < 4) return;
 
     const nv = nvRef.current as NiivueExtended;
-    // Move crosshair to center of XY at the requested Z slice
     nv.moveCrosshairInVox(dims[1] / 2, dims[2] / 2, currentSliceIndex);
   }, [currentSliceIndex, volumeLoaded]);
 
@@ -199,8 +226,6 @@ function NiiVueViewerComponent({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // Convert canvas coordinates to voxel coordinates
-    // NiiVue provides canvasPos2frac for this
     const frac = nvRef.current.canvasPos2frac([x, y]);
     if (frac && nvRef.current.volumes.length > 0) {
       const vol = nvRef.current.volumes[0];
@@ -282,12 +307,16 @@ function NiiVueViewerComponent({
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-full bg-black"
+      style={{ position: 'absolute', inset: 0 }}
     >
       <canvas
         ref={canvasRef}
-        className="w-full h-full"
+        width={canvasSize.width}
+        height={canvasSize.height}
         style={{
+          width: '100%',
+          height: '100%',
+          display: 'block',
           cursor: segmentationMode ? 'crosshair' : 'default',
         }}
         onMouseDown={handleCanvasMouseDown}

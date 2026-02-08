@@ -19,7 +19,6 @@ import {
   Puzzle,
 } from 'lucide-react';
 import type { ImagingStudy, StudySummary } from '@/types';
-import { useSegmentationCountByStudy } from '@/hooks/useSegmentations';
 
 // Modality icons and colors
 const modalityConfig: Record<string, { icon: string; color: string; bgColor: string; useIcon?: 'brain' | 'scan' }> = {
@@ -63,8 +62,9 @@ export const StudyCard: React.FC<StudyCardProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  // Fetch segmentation count for this study
-  const { data: segmentationInfo } = useSegmentationCountByStudy(study.patient_id, study.id);
+  // Segmentation count placeholder — the backend flat API doesn't support study-level counts yet.
+  // When a study-level count endpoint is added, replace this with a useQuery call.
+  const segmentationInfo = undefined as { count: number; has_approved: boolean; has_in_progress: boolean } | undefined;
 
   // Get modality configuration
   const modality = modalityConfig[study.modality] || modalityConfig.OT;

@@ -705,6 +705,23 @@
       "unknown": "Unbekannt"
     }
   },
+  "ai": {
+    "title": "KI",
+    "mode": "Segmentierungsmodus",
+    "interactive": "Interaktiv",
+    "auto": "Auto Gehirn",
+    "clickInstruction": "Linksklick: einschließen | Rechtsklick: ausschließen",
+    "clicks": "Klickpunkte",
+    "undo": "Rückgängig",
+    "clear": "Löschen",
+    "autoDescription": "Automatische Segmentierung von 30+ Gehirnstrukturen (Hippocampus, Ventrikel, Kortex, Thalamus, etc.)",
+    "processing": "KI verarbeitet...",
+    "cancel": "Abbrechen",
+    "runAI": "KI starten",
+    "selectMode": "Wählen Sie oben einen Modus, um die KI-Segmentierung zu starten",
+    "notConfigured": "KI-Modell nicht auf dem Server konfiguriert",
+    "taskFailed": "KI-Aufgabe fehlgeschlagen"
+  },
   "accessibility": {
     "skipNavigation": "Navigation überspringen",
     "skipToMain": "Zum Hauptinhalt springen",

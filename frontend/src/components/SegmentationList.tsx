@@ -68,6 +68,16 @@ const getStatusConfig = (status: SegmentationStatus, t: (key: string) => string)
         </svg>
       ),
     },
+    saved: {
+      label: t('segmentation.status.saved'),
+      color: 'text-green-400',
+      bgColor: 'bg-green-500/20',
+      icon: (
+        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        </svg>
+      ),
+    },
     pending_review: {
       label: t('segmentation.status.pendingReview'),
       color: 'text-yellow-400',

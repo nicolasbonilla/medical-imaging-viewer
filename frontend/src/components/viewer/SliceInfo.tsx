@@ -21,7 +21,7 @@ export function SliceInfo({ currentSliceIndex, totalSlices, zoomLevel, renderMod
       <div className="text-sm text-white">
         {t('viewer.slice')}: {currentSliceIndex + 1} / {totalSlices}
       </div>
-      {(renderMode === 'standard' || renderMode === 'niivue') && (
+      {renderMode === 'standard' && (
         <div className="text-xs text-gray-400 mt-1">
           {t('viewer.zoom')}: {(zoomLevel * 100).toFixed(0)}%
         </div>
@@ -29,11 +29,6 @@ export function SliceInfo({ currentSliceIndex, totalSlices, zoomLevel, renderMod
       {renderMode === 'matplotlib' && (
         <div className="text-xs text-blue-400 mt-1">
           {t('viewer.matplotlibStatic')}
-        </div>
-      )}
-      {renderMode === 'niivue' && (
-        <div className="text-xs text-green-400 mt-1">
-          WebGL2 NIfTI
         </div>
       )}
     </div>

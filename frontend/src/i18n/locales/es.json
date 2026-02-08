@@ -749,6 +749,23 @@
       "unknown": "Desconocido"
     }
   },
+  "ai": {
+    "title": "IA",
+    "mode": "Modo de Segmentación",
+    "interactive": "Interactivo",
+    "auto": "Auto Cerebro",
+    "clickInstruction": "Clic izquierdo: incluir | Clic derecho: excluir",
+    "clicks": "Puntos de clic",
+    "undo": "Deshacer",
+    "clear": "Limpiar",
+    "autoDescription": "Segmentar automáticamente 30+ estructuras cerebrales (hipocampo, ventrículos, corteza, tálamo, etc.)",
+    "processing": "IA procesando...",
+    "cancel": "Cancelar",
+    "runAI": "Ejecutar IA",
+    "selectMode": "Selecciona un modo arriba para iniciar segmentación con IA",
+    "notConfigured": "Modelo de IA no configurado en el servidor",
+    "taskFailed": "La tarea de IA falló"
+  },
   "accessibility": {
     "skipNavigation": "Saltar navegación",
     "skipToMain": "Ir al contenido principal",

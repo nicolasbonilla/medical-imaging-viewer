@@ -2,7 +2,7 @@
 API routes for segmentation operations.
 """
 
-from fastapi import APIRouter, HTTPException, status, Query, Body, Depends
+from fastapi import APIRouter, HTTPException, status, Query, Body, Depends, Request
 from fastapi.responses import Response
 from typing import List, Optional
 from datetime import datetime
@@ -599,4 +599,226 @@ async def get_segmentation_nifti(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get segmentation NIfTI: {str(e)}"
+        )
+
+
+# =============================================================================
+# ITK-SNAP STYLE ARCHITECTURE: Binary mask endpoints for local-first editing
+# =============================================================================
+# These endpoints enable the frontend to:
+# 1. Download the entire 3D mask once at startup
+# 2. Edit locally in memory (instant, no network)
+# 3. Upload the complete mask only when user clicks "Save"
+# =============================================================================
+
+@router.get("/{segmentation_id}/mask/binary")
+async def get_binary_mask(
+    segmentation_id: str,
+    segmentation_service: SegmentationService = Depends(get_segmentation_service)
+):
+    """
+    Download the complete 3D segmentation mask as raw binary data.
+
+    ITK-SNAP Architecture: The frontend loads this ONCE at startup,
+    stores it in memory, and all painting happens locally without
+    any network calls. This is how professional segmentation tools work.
+
+    Returns:
+        Raw binary data (Uint8Array) with header containing dimensions.
+        Format: [depth:4bytes][height:4bytes][width:4bytes][mask_data:D*H*W bytes]
+    """
+    try:
+        # Load segmentation if not in cache
+        if segmentation_id not in segmentation_service.segmentations_cache:
+            if not segmentation_service._load_segmentation(segmentation_id):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Segmentation {segmentation_id} not found"
+                )
+
+        seg_data = segmentation_service.segmentations_cache[segmentation_id]
+        masks_3d = seg_data["masks_3d"]  # numpy array (D, H, W), dtype=uint8
+
+        # Get dimensions
+        depth, height, width = masks_3d.shape
+
+        # Create binary buffer with header
+        # Header: 12 bytes (3 x uint32 for dimensions)
+        # Data: D * H * W bytes
+        import struct
+        header = struct.pack('<III', depth, height, width)  # Little-endian uint32
+        mask_bytes = masks_3d.tobytes()
+
+        binary_data = header + mask_bytes
+
+        logger.info("Serving binary mask", extra={
+            "segmentation_id": segmentation_id,
+            "shape": (depth, height, width),
+            "size_bytes": len(binary_data)
+        })
+
+        return Response(
+            content=binary_data,
+            media_type="application/octet-stream",
+            headers={
+                "Content-Length": str(len(binary_data)),
+                "X-Mask-Depth": str(depth),
+                "X-Mask-Height": str(height),
+                "X-Mask-Width": str(width),
+                "Cache-Control": "no-cache",
+                "Access-Control-Expose-Headers": "X-Mask-Depth, X-Mask-Height, X-Mask-Width, Content-Length"
+            }
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error serving binary mask", extra={
+            "segmentation_id": segmentation_id,
+            "error": str(e)
+        })
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get binary mask: {str(e)}"
+        )
+
+
+@router.put("/{segmentation_id}/mask/binary")
+async def upload_binary_mask(
+    segmentation_id: str,
+    request: Request,
+    segmentation_service: SegmentationService = Depends(get_segmentation_service)
+):
+    """
+    Upload the complete 3D segmentation mask from the frontend.
+
+    ITK-SNAP Architecture: This is called ONLY when the user clicks "Save".
+    All painting happens locally in the frontend - no network calls per stroke.
+
+    Expects:
+        Raw binary data (Uint8Array) with header containing dimensions.
+        Format: [depth:4bytes][height:4bytes][width:4bytes][mask_data:D*H*W bytes]
+
+    Returns:
+        Success confirmation with voxel count
+    """
+    try:
+        # Read raw binary data
+        body = await request.body()
+
+        if len(body) < 12:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid binary data: too short for header"
+            )
+
+        # Parse header
+        import struct
+        depth, height, width = struct.unpack('<III', body[:12])
+        mask_bytes = body[12:]
+
+        expected_size = depth * height * width
+        if len(mask_bytes) != expected_size:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid mask size: expected {expected_size}, got {len(mask_bytes)}"
+            )
+
+        # Convert to numpy array
+        masks_3d = np.frombuffer(mask_bytes, dtype=np.uint8).reshape((depth, height, width))
+
+        # Load existing segmentation to get metadata
+        if segmentation_id not in segmentation_service.segmentations_cache:
+            if not segmentation_service._load_segmentation(segmentation_id):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Segmentation {segmentation_id} not found"
+                )
+
+        # Update the mask in cache
+        seg_data = segmentation_service.segmentations_cache[segmentation_id]
+        seg_data["masks_3d"] = masks_3d
+        seg_data["metadata"].modified_at = datetime.utcnow()
+
+        # Save to GCS (this is the ONLY time we save during editing)
+        segmentation_service._save_segmentation(segmentation_id)
+
+        # Count annotated voxels
+        annotated_voxels = int(np.sum(masks_3d > 0))
+
+        logger.info("Binary mask uploaded and saved", extra={
+            "segmentation_id": segmentation_id,
+            "shape": (depth, height, width),
+            "annotated_voxels": annotated_voxels
+        })
+
+        return {
+            "success": True,
+            "segmentation_id": segmentation_id,
+            "shape": {"depth": depth, "height": height, "width": width},
+            "annotated_voxels": annotated_voxels,
+            "message": f"Mask saved successfully ({annotated_voxels} annotated voxels)"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error uploading binary mask", extra={
+            "segmentation_id": segmentation_id,
+            "error": str(e)
+        })
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to upload binary mask: {str(e)}"
+        )
+
+
+@router.get("/{segmentation_id}/info")
+async def get_segmentation_info(
+    segmentation_id: str,
+    segmentation_service: SegmentationService = Depends(get_segmentation_service)
+):
+    """
+    Get segmentation metadata and dimensions without downloading the full mask.
+
+    Useful for the frontend to know the mask dimensions before downloading.
+    """
+    try:
+        # Load segmentation if not in cache
+        if segmentation_id not in segmentation_service.segmentations_cache:
+            if not segmentation_service._load_segmentation(segmentation_id):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Segmentation {segmentation_id} not found"
+                )
+
+        seg_data = segmentation_service.segmentations_cache[segmentation_id]
+        masks_3d = seg_data["masks_3d"]
+        metadata = seg_data["metadata"]
+
+        depth, height, width = masks_3d.shape
+        annotated_voxels = int(np.sum(masks_3d > 0))
+
+        return {
+            "segmentation_id": segmentation_id,
+            "file_id": metadata.file_id,
+            "shape": {"depth": depth, "height": height, "width": width},
+            "total_voxels": depth * height * width,
+            "annotated_voxels": annotated_voxels,
+            "labels": [label.dict() for label in metadata.labels],
+            "created_at": metadata.created_at.isoformat(),
+            "modified_at": metadata.modified_at.isoformat(),
+            "description": metadata.description
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error getting segmentation info", extra={
+            "segmentation_id": segmentation_id,
+            "error": str(e)
+        })
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get segmentation info: {str(e)}"
         )

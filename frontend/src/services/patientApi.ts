@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { apiClient } from './apiClient';
 import type {
   Patient,
   PatientCreate,
@@ -9,24 +9,6 @@ import type {
   PatientStatus,
   Gender,
 } from '@/types';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Add auth interceptor
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
 
 export interface PatientSearchParams {
   query?: string;
@@ -45,13 +27,13 @@ export interface PatientSearchParams {
 export const patientAPI = {
   // Create a new patient
   create: async (data: PatientCreate): Promise<Patient> => {
-    const { data: response } = await api.post('/api/v1/patients', data);
+    const { data: response } = await apiClient.post('/api/v1/patients', data);
     return response;
   },
 
   // Get patient by ID
   getById: async (patientId: string, includeStats = true): Promise<Patient> => {
-    const { data } = await api.get(`/api/v1/patients/${patientId}`, {
+    const { data } = await apiClient.get(`/api/v1/patients/${patientId}`, {
       params: { include_stats: includeStats },
     });
     return data;
@@ -59,7 +41,7 @@ export const patientAPI = {
 
   // Get patient by MRN
   getByMrn: async (mrn: string): Promise<Patient> => {
-    const { data } = await api.get(`/api/v1/patients/by-mrn/${mrn}`);
+    const { data } = await apiClient.get(`/api/v1/patients/by-mrn/${mrn}`);
     return data;
   },
 
@@ -69,7 +51,7 @@ export const patientAPI = {
     pageSize = 20,
     status?: PatientStatus
   ): Promise<PatientListResponse> => {
-    const { data } = await api.get('/api/v1/patients', {
+    const { data } = await apiClient.get('/api/v1/patients', {
       params: {
         page,
         page_size: pageSize,
@@ -81,7 +63,7 @@ export const patientAPI = {
 
   // Search patients
   search: async (params: PatientSearchParams): Promise<PatientListResponse> => {
-    const { data } = await api.get('/api/v1/patients/search', {
+    const { data } = await apiClient.get('/api/v1/patients/search', {
       params: {
         query: params.query,
         mrn: params.mrn,
@@ -101,13 +83,13 @@ export const patientAPI = {
 
   // Update patient
   update: async (patientId: string, data: PatientUpdate): Promise<Patient> => {
-    const { data: response } = await api.put(`/api/v1/patients/${patientId}`, data);
+    const { data: response } = await apiClient.put(`/api/v1/patients/${patientId}`, data);
     return response;
   },
 
   // Delete (deactivate) patient
   delete: async (patientId: string): Promise<void> => {
-    await api.delete(`/api/v1/patients/${patientId}`);
+    await apiClient.delete(`/api/v1/patients/${patientId}`);
   },
 
   // Medical History
@@ -115,7 +97,7 @@ export const patientAPI = {
     patientId: string,
     data: MedicalHistoryCreate
   ): Promise<MedicalHistory> => {
-    const { data: response } = await api.post(
+    const { data: response } = await apiClient.post(
       `/api/v1/patients/${patientId}/history`,
       data
     );
@@ -126,7 +108,7 @@ export const patientAPI = {
     patientId: string,
     activeOnly = false
   ): Promise<MedicalHistory[]> => {
-    const { data } = await api.get(`/api/v1/patients/${patientId}/history`, {
+    const { data } = await apiClient.get(`/api/v1/patients/${patientId}/history`, {
       params: { active_only: activeOnly },
     });
     return data;
@@ -137,7 +119,7 @@ export const patientAPI = {
     isActive: boolean,
     resolutionDate?: string
   ): Promise<MedicalHistory> => {
-    const { data } = await api.patch(`/api/v1/patients/history/${historyId}`, null, {
+    const { data } = await apiClient.patch(`/api/v1/patients/history/${historyId}`, null, {
       params: {
         is_active: isActive,
         resolution_date: resolutionDate,

@@ -9,7 +9,7 @@ import type {
   PaintStroke,
   LabelInfo,
   OverlayImageResponse,
-} from '../types/segmentation';
+} from '@/types';
 
 const API_PREFIX = '/api/v1';
 
