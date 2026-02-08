@@ -933,6 +933,48 @@ export const BRAIN_STRUCTURE_LABELS: LabelInfo[] = [
 ];
 
 // ============================================================================
+// Brain Volumetry Types
+// ============================================================================
+
+export interface BrainStructureVolume {
+  label_id: number;
+  structure_name: string;
+  volume_mm3: number;
+  volume_ml: number;
+  normative_percentile?: number;
+  is_abnormal: boolean;
+  abnormality_type?: 'atrophy' | 'enlargement';
+}
+
+export interface VolumetryResult {
+  segmentation_id: string;
+  structures: BrainStructureVolume[];
+  total_brain_volume_ml?: number;
+  intracranial_volume_ml?: number;
+  processing_time_ms?: number;
+}
+
+export interface VolumetryComparisonResult {
+  patient_id: string;
+  timepoints: Array<{ study_id: string; date: string }>;
+  changes: Array<{
+    label_id: number;
+    structure: string;
+    volume_first_ml: number;
+    volume_last_ml: number;
+    change_percent: number;
+    trend: 'stable' | 'increasing' | 'decreasing';
+  }>;
+}
+
+export interface VolumetryRequest {
+  segmentation_id: string;
+  voxel_spacing?: [number, number, number];
+  patient_age?: number;
+  patient_sex?: 'M' | 'F';
+}
+
+// ============================================================================
 // Segmentation API Types (ITK-SNAP local-first flow)
 // ============================================================================
 

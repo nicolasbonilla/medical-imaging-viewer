@@ -1,6 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { useViewerStore } from '@/store/useViewerStore';
 import { SegmentationPanel } from './SegmentationPanel';
+import { BrainVolumetryPanel } from './BrainVolumetryPanel';
+import { useSegmentationStore } from '@/store/useSegmentationStore';
 import type { RenderMode } from '@/hooks/useViewerControls';
 
 interface ViewerControlsProps {
@@ -54,6 +56,7 @@ export default function ViewerControls({
 }: ViewerControlsProps) {
   const { t } = useTranslation();
   const { currentSeries, currentPatientId, currentStudyId, currentSeriesId } = useViewerStore();
+  const activeSegmentation = useSegmentationStore((s) => s.activeSegmentation);
 
   if (!currentSeries) return null;
 
@@ -195,6 +198,15 @@ export default function ViewerControls({
       {segmentationMode && (
         <div className="pt-2 border-t border-gray-700">
           <SegmentationPanel />
+        </div>
+      )}
+
+      {/* Brain Volumetry Panel (visible when segmentation is active) */}
+      {segmentationMode && activeSegmentation && (
+        <div className="pt-2 border-t border-gray-700">
+          <BrainVolumetryPanel
+            segmentationId={activeSegmentation.id}
+          />
         </div>
       )}
     </div>

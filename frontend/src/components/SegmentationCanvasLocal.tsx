@@ -63,6 +63,8 @@ interface SegmentationCanvasLocalProps {
   aiInteractiveMode?: boolean;
   /** Callback when AI click point is added */
   onAIClick?: (x: number, y: number, isPositive: boolean) => void;
+  /** Render mask as heatmap (for anomaly detection probability maps) */
+  heatmapMode?: boolean;
 }
 
 /** Parsed RGBA color for fast pixel filling */
@@ -128,6 +130,67 @@ function renderMaskToCanvas(
   ctx.drawImage(tempCanvas, 0, 0, canvasWidth, canvasHeight);
 }
 
+/**
+ * Render heatmap (anomaly probability) to canvas.
+ * Values 0-255 are mapped to a hot colormap (black→red→yellow→white)
+ * with opacity proportional to confidence.
+ */
+function renderHeatmapToCanvas(
+  ctx: CanvasRenderingContext2D,
+  maskSlice: Uint8Array | null,
+  width: number,
+  height: number,
+  canvasWidth: number,
+  canvasHeight: number,
+): void {
+  if (!maskSlice) return;
+
+  const imageData = ctx.createImageData(width, height);
+  const data = imageData.data;
+
+  for (let i = 0; i < maskSlice.length; i++) {
+    const val = maskSlice[i]; // 0-255 confidence
+    if (val === 0) continue;
+
+    const pixelIndex = i * 4;
+    const t = val / 255.0;
+
+    // Hot colormap: black → red → yellow → white
+    let r: number, g: number, b: number;
+    if (t < 0.33) {
+      const s = t / 0.33;
+      r = Math.round(s * 255);
+      g = 0;
+      b = 0;
+    } else if (t < 0.66) {
+      const s = (t - 0.33) / 0.33;
+      r = 255;
+      g = Math.round(s * 255);
+      b = 0;
+    } else {
+      const s = (t - 0.66) / 0.34;
+      r = 255;
+      g = 255;
+      b = Math.round(s * 255);
+    }
+
+    data[pixelIndex] = r;
+    data[pixelIndex + 1] = g;
+    data[pixelIndex + 2] = b;
+    data[pixelIndex + 3] = Math.round(t * 200); // opacity scales with confidence
+  }
+
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = width;
+  tempCanvas.height = height;
+  const tempCtx = tempCanvas.getContext('2d');
+  if (!tempCtx) return;
+
+  tempCtx.putImageData(imageData, 0, 0);
+  ctx.imageSmoothingEnabled = true; // smooth for heatmap
+  ctx.drawImage(tempCanvas, 0, 0, canvasWidth, canvasHeight);
+}
+
 export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, SegmentationCanvasLocalProps>(({
   segmentationMask,
   sliceIndex,
@@ -149,6 +212,7 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
   aiClickPoints = [],
   aiInteractiveMode = false,
   onAIClick,
+  heatmapMode = false,
 }, ref) => {
   // Canvas refs
   const baseCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -298,25 +362,37 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
     if (showOverlay && segmentationMask.isLoaded) {
       const maskSlice = segmentationMask.getSliceMask(sliceIndex);
       if (maskSlice) {
-        // Build per-label color map from store labels
-        const labelColors: Record<number, ParsedColor> = {};
-        if (storeLabels) {
-          for (const label of storeLabels) {
-            if (label.id !== 0) {
-              labelColors[label.id] = parseColor(label.color, label.opacity);
+        if (heatmapMode) {
+          // Heatmap mode: values = confidence (0-255), rendered as hot colormap
+          renderHeatmapToCanvas(
+            ctx,
+            maskSlice,
+            imageWidth,
+            imageHeight,
+            canvasSize.width,
+            canvasSize.height,
+          );
+        } else {
+          // Label mode: each voxel colored by label ID
+          const labelColors: Record<number, ParsedColor> = {};
+          if (storeLabels) {
+            for (const label of storeLabels) {
+              if (label.id !== 0) {
+                labelColors[label.id] = parseColor(label.color, label.opacity);
+              }
             }
           }
-        }
 
-        renderMaskToCanvas(
-          ctx,
-          maskSlice,
-          imageWidth,
-          imageHeight,
-          canvasSize.width,
-          canvasSize.height,
-          labelColors,
-        );
+          renderMaskToCanvas(
+            ctx,
+            maskSlice,
+            imageWidth,
+            imageHeight,
+            canvasSize.width,
+            canvasSize.height,
+            labelColors,
+          );
+        }
       }
     }
 
@@ -387,7 +463,7 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
     canvasSize, imageWidth, imageHeight, cursorPosition, enabled,
     brushSize, brushShape, eraseMode, showOverlay, zoomLevel, panOffset,
     matplotlibBbox, segmentationMask, sliceIndex, renderVersion, storeLabels,
-    aiClickPoints
+    aiClickPoints, heatmapMode
   ]);
 
   // Re-render overlay when mask or slice changes

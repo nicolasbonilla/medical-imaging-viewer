@@ -722,6 +722,23 @@
     "notConfigured": "KI-Modell nicht auf dem Server konfiguriert",
     "taskFailed": "KI-Aufgabe fehlgeschlagen"
   },
+  "volumetry": {
+    "title": "Gehirn-Volumetrie",
+    "compute": "Volumen berechnen",
+    "computing": "Berechnung...",
+    "totalBrain": "Gesamthirn",
+    "icv": "IKV",
+    "sortVolume": "Volumen",
+    "sortName": "Name",
+    "sortPercentile": "%il",
+    "percentile": "Perzentil",
+    "computeTime": "Berechnet in",
+    "reset": "Zurücksetzen",
+    "needSegmentation": "Laden Sie zuerst eine Gehirnsegmentierung",
+    "atrophy": "Atrophie",
+    "enlarged": "Vergrößert",
+    "normal": "Normal"
+  },
   "accessibility": {
     "skipNavigation": "Navigation überspringen",
     "skipToMain": "Zum Hauptinhalt springen",

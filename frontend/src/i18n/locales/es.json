@@ -766,6 +766,23 @@
     "notConfigured": "Modelo de IA no configurado en el servidor",
     "taskFailed": "La tarea de IA falló"
   },
+  "volumetry": {
+    "title": "Volumetría Cerebral",
+    "compute": "Calcular Volúmenes",
+    "computing": "Calculando...",
+    "totalBrain": "Cerebro Total",
+    "icv": "VIC",
+    "sortVolume": "Volumen",
+    "sortName": "Nombre",
+    "sortPercentile": "%il",
+    "percentile": "Percentil",
+    "computeTime": "Calculado en",
+    "reset": "Reiniciar",
+    "needSegmentation": "Carga una segmentación cerebral primero",
+    "atrophy": "Atrofia",
+    "enlarged": "Agrandado",
+    "normal": "Normal"
+  },
   "accessibility": {
     "skipNavigation": "Saltar navegación",
     "skipToMain": "Ir al contenido principal",

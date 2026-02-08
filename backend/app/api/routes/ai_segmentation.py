@@ -12,7 +12,8 @@ Provides endpoints for:
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
+from pydantic import BaseModel, Field
 
 from app.core.logging import get_logger
 from app.core.interfaces.ai_interface import (
@@ -21,6 +22,8 @@ from app.core.interfaces.ai_interface import (
     AnomalyDetectionRequest,
     AITaskResult,
     AnomalyDetectionResult,
+    VolumetryResult,
+    VolumetryComparisonResult,
 )
 
 logger = get_logger(__name__)
@@ -171,3 +174,121 @@ async def get_synthseg_labels():
         for label_id, (name, color) in SYNTHSEG_LABELS.items()
     ]
     return {"labels": labels, "count": len(labels)}
+
+
+# =============================================================================
+# Brain Volumetry
+# =============================================================================
+
+class VolumetryRequest(BaseModel):
+    """Request for brain volumetry computation."""
+    segmentation_id: str = Field(..., description="ID of the segmentation to measure")
+    voxel_spacing: List[float] = Field(
+        default=[1.0, 1.0, 1.0],
+        min_length=3,
+        max_length=3,
+        description="Voxel spacing in mm [z, y, x]",
+    )
+    patient_age: Optional[int] = Field(None, ge=0, le=150)
+    patient_sex: Optional[str] = Field(None, pattern="^(M|F)$")
+
+
+class VolumetryCompareRequest(BaseModel):
+    """Request for longitudinal volumetry comparison."""
+    patient_id: str
+    timepoints: List[Dict[str, Any]] = Field(
+        ...,
+        min_length=2,
+        description="List of timepoint dicts with study_id, date, structures",
+    )
+
+
+def get_volumetry_service():
+    """Lazy-load brain volumetry service (CPU-only, no heavy deps)."""
+    from app.services.brain_volumetry_service import BrainVolumetryService
+    return BrainVolumetryService()
+
+
+@router.post(
+    "/volumetry/compute",
+    response_model=VolumetryResult,
+    summary="Compute brain volumetry",
+    description="Compute per-structure volumes from a brain segmentation mask. "
+                "Compares against normative data when patient age is provided. "
+                "Runs on CPU — no GPU required.",
+)
+async def compute_volumetry(
+    request: VolumetryRequest,
+    volumetry_service=Depends(get_volumetry_service),
+):
+    """Volumetry: segmentation_id → per-structure volumes in mm3 and mL."""
+    logger.info(
+        f"[AI] Volumetry requested: "
+        f"segmentation_id={request.segmentation_id}, "
+        f"age={request.patient_age}, sex={request.patient_sex}"
+    )
+
+    # Load the segmentation mask from storage
+    try:
+        from app.core.container import get_container
+        container = get_container()
+        seg_service = container.segmentation_service()
+        mask_data = seg_service.get_segmentation_mask(request.segmentation_id)
+
+        if mask_data is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Segmentation {request.segmentation_id} not found or has no mask data",
+            )
+
+        import numpy as np
+        mask = np.array(mask_data, dtype=np.uint8)
+
+        # Reshape if flat (need to know dimensions from metadata)
+        seg_meta = seg_service.get_segmentation_metadata(request.segmentation_id)
+        if seg_meta and hasattr(seg_meta, 'shape'):
+            mask = mask.reshape(seg_meta.shape)
+
+        voxel_spacing = tuple(request.voxel_spacing)
+
+        result = volumetry_service.compute_volumes(
+            mask=mask,
+            voxel_spacing=voxel_spacing,
+            segmentation_id=request.segmentation_id,
+            patient_age=request.patient_age,
+            patient_sex=request.patient_sex,
+        )
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[AI] Volumetry computation failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Volumetry computation failed: {str(e)}",
+        )
+
+
+@router.post(
+    "/volumetry/compare",
+    response_model=VolumetryComparisonResult,
+    summary="Compare brain volumes longitudinally",
+    description="Compare brain structure volumes across multiple timepoints "
+                "for longitudinal tracking (atrophy progression, treatment response).",
+)
+async def compare_volumetry(
+    request: VolumetryCompareRequest,
+    volumetry_service=Depends(get_volumetry_service),
+):
+    """Longitudinal comparison: timepoints → change percentages + trends."""
+    logger.info(
+        f"[AI] Volumetry comparison requested: "
+        f"patient_id={request.patient_id}, timepoints={len(request.timepoints)}"
+    )
+
+    result = volumetry_service.compare_timepoints(
+        patient_id=request.patient_id,
+        timepoints=request.timepoints,
+    )
+    return result

@@ -13,6 +13,9 @@ import type {
   AITaskResult,
   AnomalyDetectionResult,
   AIModelInfo,
+  VolumetryResult,
+  VolumetryRequest,
+  VolumetryComparisonResult,
 } from '@/types';
 
 const API_PREFIX = '/api/v1/ai';
@@ -69,6 +72,32 @@ export const aiSegmentationAPI = {
   async listModels(): Promise<AIModelInfo[]> {
     const response = await apiClient.get<AIModelInfo[]>(
       `${API_PREFIX}/models`
+    );
+    return response.data;
+  },
+
+  /**
+   * Compute brain volumetry from a segmentation mask.
+   * Returns per-structure volumes in mm3 and mL with normative comparison.
+   */
+  async computeVolumetry(request: VolumetryRequest): Promise<VolumetryResult> {
+    const response = await apiClient.post<VolumetryResult>(
+      `${API_PREFIX}/volumetry/compute`,
+      request
+    );
+    return response.data;
+  },
+
+  /**
+   * Compare brain volumes across multiple timepoints (longitudinal tracking).
+   */
+  async compareVolumetry(
+    patientId: string,
+    timepoints: Array<{ study_id: string; date: string; structures: Array<{ label_id: number; volume_ml: number }> }>,
+  ): Promise<VolumetryComparisonResult> {
+    const response = await apiClient.post<VolumetryComparisonResult>(
+      `${API_PREFIX}/volumetry/compare`,
+      { patient_id: patientId, timepoints }
     );
     return response.data;
   },

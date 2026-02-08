@@ -14,10 +14,10 @@ scipy==1.13.1
 scikit-image==0.24.0
 
 # Google Drive Integration
-google-auth==2.35.0
-google-auth-oauthlib==1.2.1
-google-auth-httplib2==0.2.0
-google-api-python-client==2.147.0
+google-auth>=2.47.0
+google-auth-oauthlib>=1.2.1
+google-auth-httplib2>=0.2.0
+google-api-python-client>=2.147.0
 
 # Data Processing
 pandas==2.2.2
@@ -34,7 +34,7 @@ PyJWT>=2.10.1
 
 # Utilities
 aiofiles==24.1.0
-python-dotenv==1.0.1
+python-dotenv>=1.1.0
 httpx==0.28.1
 python-json-logger==2.0.7
 dependency-injector==4.41.0
@@ -59,19 +59,14 @@ google-cloud-storage>=3.1.1
 # Firebase Admin SDK (Firestore + Storage)
 firebase-admin==7.1.0
 
-# AI/ML Inference
-onnxruntime==1.19.0
-google-cloud-aiplatform==1.72.0
-anthropic==0.39.0
+# AI/ML — Vertex AI proxy (used by ai_segmentation_service.py)
+google-cloud-aiplatform==1.136.0
 
-# MCP (Model Context Protocol)
-fastmcp==2.3.0
+# Claude API — Report generation (Phase 4)
+anthropic==0.44.0
 
-# DICOM Structured Reports
-highdicom==0.23.0
-
-# Neuroimaging Analysis (Brain Atlas, Parcellation)
-nilearn==0.10.4
+# MCP — Model Context Protocol (Phase 5, install when needed)
+# fastmcp==2.3.0  # Requires pydantic-settings>=2.5.2, conflicts with current pin
 
 # Testing
 pytest==8.3.3

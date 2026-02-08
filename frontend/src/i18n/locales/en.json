@@ -766,6 +766,23 @@
     "notConfigured": "AI model not configured on server",
     "taskFailed": "AI task failed"
   },
+  "volumetry": {
+    "title": "Brain Volumetry",
+    "compute": "Compute Volumes",
+    "computing": "Computing...",
+    "totalBrain": "Total Brain",
+    "icv": "ICV",
+    "sortVolume": "Volume",
+    "sortName": "Name",
+    "sortPercentile": "%ile",
+    "percentile": "Percentile",
+    "computeTime": "Computed in",
+    "reset": "Reset",
+    "needSegmentation": "Load a brain segmentation first",
+    "atrophy": "Atrophy",
+    "enlarged": "Enlarged",
+    "normal": "Normal"
+  },
   "accessibility": {
     "skipNavigation": "Skip navigation",
     "skipToMain": "Skip to main content",
