@@ -975,6 +975,35 @@ export interface VolumetryRequest {
 }
 
 // ============================================================================
+// AI Report Types
+// ============================================================================
+
+export type ReportTemplateType = 'general' | 'stroke' | 'tumor' | 'dementia';
+
+export interface ReportGenerateRequest {
+  template_type: ReportTemplateType;
+  language: string;
+  findings: Record<string, any>;
+  volumetry?: Record<string, any> | null;
+}
+
+export interface ReportResponse {
+  report_id: string;
+  content: string;
+  template_type: ReportTemplateType;
+  language: string;
+  processing_time_ms: number;
+  model?: string;
+  tokens_used?: { input: number; output: number };
+}
+
+export interface ReportTemplateInfo {
+  id: ReportTemplateType;
+  name: string;
+  description: string;
+}
+
+// ============================================================================
 // Segmentation API Types (ITK-SNAP local-first flow)
 // ============================================================================
 

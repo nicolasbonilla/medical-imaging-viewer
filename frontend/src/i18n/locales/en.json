@@ -783,6 +783,31 @@
     "enlarged": "Enlarged",
     "normal": "Normal"
   },
+  "report": {
+    "title": "AI Report",
+    "template": "Template",
+    "language": "Language",
+    "indication": "Clinical Indication",
+    "indicationPlaceholder": "e.g., Headache, rule out mass",
+    "technique": "Technique/Sequences",
+    "techniquePlaceholder": "e.g., T1, T2, FLAIR, DWI, Gd+",
+    "observations": "Additional Observations",
+    "observationsPlaceholder": "Any additional findings or context...",
+    "volumetryIncluded": "Volumetry data will be included",
+    "generate": "Generate Report",
+    "generating": "Generating...",
+    "generateError": "Report generation failed",
+    "tokens": "Tokens",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "newReport": "New Report",
+    "templates": {
+      "general": "General",
+      "stroke": "Stroke",
+      "tumor": "Tumor",
+      "dementia": "Dementia"
+    }
+  },
   "accessibility": {
     "skipNavigation": "Skip navigation",
     "skipToMain": "Skip to main content",

@@ -783,6 +783,31 @@
     "enlarged": "Agrandado",
     "normal": "Normal"
   },
+  "report": {
+    "title": "Informe IA",
+    "template": "Plantilla",
+    "language": "Idioma",
+    "indication": "Indicacion Clinica",
+    "indicationPlaceholder": "ej., Cefalea, descartar masa",
+    "technique": "Tecnica/Secuencias",
+    "techniquePlaceholder": "ej., T1, T2, FLAIR, DWI, Gd+",
+    "observations": "Observaciones Adicionales",
+    "observationsPlaceholder": "Hallazgos o contexto adicional...",
+    "volumetryIncluded": "Se incluiran datos de volumetria",
+    "generate": "Generar Informe",
+    "generating": "Generando...",
+    "generateError": "Error al generar el informe",
+    "tokens": "Tokens",
+    "copy": "Copiar",
+    "copied": "Copiado!",
+    "newReport": "Nuevo Informe",
+    "templates": {
+      "general": "General",
+      "stroke": "ACV",
+      "tumor": "Tumor",
+      "dementia": "Demencia"
+    }
+  },
   "accessibility": {
     "skipNavigation": "Saltar navegación",
     "skipToMain": "Ir al contenido principal",

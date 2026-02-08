@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useViewerStore } from '@/store/useViewerStore';
 import { SegmentationPanel } from './SegmentationPanel';
 import { BrainVolumetryPanel } from './BrainVolumetryPanel';
+import { AIReportPanel } from './AIReportPanel';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import type { RenderMode } from '@/hooks/useViewerControls';
 
@@ -207,6 +208,13 @@ export default function ViewerControls({
           <BrainVolumetryPanel
             segmentationId={activeSegmentation.id}
           />
+        </div>
+      )}
+
+      {/* AI Report Panel (visible when segmentation mode is active) */}
+      {segmentationMode && (
+        <div className="pt-2 border-t border-gray-700">
+          <AIReportPanel />
         </div>
       )}
     </div>

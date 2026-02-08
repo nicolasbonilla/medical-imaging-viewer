@@ -739,6 +739,31 @@
     "enlarged": "Vergrößert",
     "normal": "Normal"
   },
+  "report": {
+    "title": "KI-Bericht",
+    "template": "Vorlage",
+    "language": "Sprache",
+    "indication": "Klinische Indikation",
+    "indicationPlaceholder": "z.B., Kopfschmerz, Raumforderung ausschliessen",
+    "technique": "Technik/Sequenzen",
+    "techniquePlaceholder": "z.B., T1, T2, FLAIR, DWI, Gd+",
+    "observations": "Zusaetzliche Beobachtungen",
+    "observationsPlaceholder": "Weitere Befunde oder Kontext...",
+    "volumetryIncluded": "Volumetriedaten werden einbezogen",
+    "generate": "Bericht Erstellen",
+    "generating": "Wird erstellt...",
+    "generateError": "Berichterstellung fehlgeschlagen",
+    "tokens": "Tokens",
+    "copy": "Kopieren",
+    "copied": "Kopiert!",
+    "newReport": "Neuer Bericht",
+    "templates": {
+      "general": "Allgemein",
+      "stroke": "Schlaganfall",
+      "tumor": "Tumor",
+      "dementia": "Demenz"
+    }
+  },
   "accessibility": {
     "skipNavigation": "Navigation überspringen",
     "skipToMain": "Zum Hauptinhalt springen",
