@@ -2,7 +2,7 @@
 fastapi==0.115.0
 uvicorn[standard]==0.32.0
 pydantic==2.9.0
-pydantic-settings==2.5.0
+pydantic-settings==2.5.2
 
 # Medical Imaging
 pydicom==2.4.4
@@ -65,8 +65,8 @@ google-cloud-aiplatform==1.136.0
 # Claude API — Report generation (Phase 4)
 anthropic==0.44.0
 
-# MCP — Model Context Protocol (Phase 5, install when needed)
-# fastmcp==2.3.0  # Requires pydantic-settings>=2.5.2, conflicts with current pin
+# MCP — Model Context Protocol (Phase 5)
+fastmcp==2.3.0
 
 # Testing
 pytest==8.3.3
