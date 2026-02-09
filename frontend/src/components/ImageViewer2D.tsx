@@ -15,6 +15,7 @@ import { SliceSlider } from './viewer/SliceSlider';
 import { MetadataPanel } from './viewer/MetadataPanel';
 import { SegmentationCanvasLocal, type SegmentationCanvasLocalRef } from './SegmentationCanvasLocal';
 import { useAISegmentation } from '@/hooks/useAISegmentation';
+import { QuickScreenBadge } from './QuickScreenBadge';
 
 interface ImageViewer2DProps {
   viewerControls: ReturnType<typeof import('../hooks/useViewerControls').useViewerControls>;
@@ -422,6 +423,17 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
         onZoomOut={panZoomHandlers.handleZoomOut}
         onResetView={panZoomHandlers.handleResetView}
       />
+
+      {/* Edge AI Quick Screen — bottom right above slice slider */}
+      {currentSeries?.slices?.[currentSliceIndex]?.image_data && (
+        <div className="absolute bottom-20 right-4 z-20">
+          <QuickScreenBadge
+            currentSliceBase64={`data:image/png;base64,${currentSeries.slices[currentSliceIndex].image_data}`}
+            imageWidth={currentSeries.metadata.columns ?? 256}
+            imageHeight={currentSeries.metadata.rows ?? 256}
+          />
+        </div>
+      )}
 
       {/* Slice Info */}
       <SliceInfo

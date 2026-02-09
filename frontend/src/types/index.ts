@@ -1004,6 +1004,18 @@ export interface ReportTemplateInfo {
 }
 
 // ============================================================================
+// Edge AI Types (Browser-based ONNX screening)
+// ============================================================================
+
+export interface EdgeAIScreeningResult {
+  normal: number;
+  abnormal: number;
+  inferenceTimeMs: number;
+  label: 'normal' | 'abnormal';
+  confidence: number;
+}
+
+// ============================================================================
 // Segmentation API Types (ITK-SNAP local-first flow)
 // ============================================================================
 

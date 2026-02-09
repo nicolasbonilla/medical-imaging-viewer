@@ -808,6 +808,16 @@
       "dementia": "Dementia"
     }
   },
+  "edgeAI": {
+    "quickScreen": "Quick Screen",
+    "loadingModel": "Loading model...",
+    "classifying": "Analyzing...",
+    "resultNormal": "Normal",
+    "resultAbnormal": "Review Recommended",
+    "disclaimer": "Disclaimer",
+    "disclaimerText": "This is an assistive screening tool only. Results are NOT diagnostic and must be confirmed by a qualified radiologist. All processing runs locally in your browser — no patient data is transmitted.",
+    "modelNotAvailable": "Screening model not available"
+  },
   "accessibility": {
     "skipNavigation": "Skip navigation",
     "skipToMain": "Skip to main content",
