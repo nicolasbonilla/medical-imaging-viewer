@@ -62,3 +62,72 @@ body {
 .animate-spin {
   animation: spin 1s linear infinite;
 }
+
+/* ============================================================================
+ * Print Styles — Professional Medical Report (A4)
+ * Triggered by window.print() from ReportViewerModal
+ * ============================================================================ */
+@media print {
+  /* Hide everything except the report modal */
+  body > #root > * {
+    display: none !important;
+  }
+  .report-print-root {
+    display: flex !important;
+    position: static !important;
+    background: white !important;
+  }
+
+  /* Page setup */
+  @page {
+    size: A4;
+    margin: 2cm 2.5cm;
+  }
+
+  /* Remove modal decorations */
+  .report-document {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+  }
+
+  /* Force black text on white */
+  .report-document,
+  .report-document * {
+    color: #000 !important;
+    background: #fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Preserve the demographics bar background */
+  .report-demographics {
+    background: #f9fafb !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Keep border structure */
+  .report-section-heading {
+    border-bottom: 1px solid #333 !important;
+  }
+  .report-header {
+    border-bottom: 2px solid #000 !important;
+  }
+  .report-footer {
+    border-top: 2px solid #000 !important;
+    page-break-inside: avoid;
+  }
+
+  /* Prevent sections from breaking across pages */
+  .report-section {
+    page-break-inside: avoid;
+  }
+
+  /* Hide the action bar */
+  .report-action-bar {
+    display: none !important;
+  }
+}

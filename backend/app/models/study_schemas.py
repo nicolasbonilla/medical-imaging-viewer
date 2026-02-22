@@ -17,16 +17,7 @@ class Modality(str, Enum):
     """
     Imaging modality codes (DICOM standard).
     """
-    CT = "CT"           # Computed Tomography
     MR = "MR"           # Magnetic Resonance
-    US = "US"           # Ultrasound
-    XR = "XR"           # X-Ray/Radiography
-    CR = "CR"           # Computed Radiography
-    DX = "DX"           # Digital Radiography
-    MG = "MG"           # Mammography
-    NM = "NM"           # Nuclear Medicine
-    PT = "PT"           # PET
-    RF = "RF"           # Fluoroscopy
     OT = "OT"           # Other
 
 
@@ -262,6 +253,13 @@ class InstanceResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class InstanceUpdate(BaseModel):
+    """
+    Schema for updating an instance (e.g. renaming).
+    """
+    original_filename: Optional[str] = Field(None, max_length=255, description="New display filename")
 
 
 class InstanceSummary(BaseModel):

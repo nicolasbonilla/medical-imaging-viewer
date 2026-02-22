@@ -8,13 +8,18 @@ REST API endpoints for managing imaging studies, series, and instances.
 
 from typing import Optional
 from uuid import UUID
+import struct
 
+import numpy as np
 from fastapi import APIRouter, Depends, Query, HTTPException, UploadFile, File
+from fastapi.responses import Response
 
 from app.core.logging import get_logger
 from app.core.config import get_settings
-from app.core.container import get_study_service
+from app.core.container import get_study_service, get_storage_service
 from app.core.interfaces.study_interface import IStudyService
+from app.core.interfaces.storage_interface import IStorageService
+from app.utils import load_nifti_from_bytes
 from app.models.study_schemas import (
     StudyCreate,
     StudyUpdate,
@@ -24,6 +29,7 @@ from app.models.study_schemas import (
     StudyListResponse,
     SeriesCreate,
     SeriesResponse,
+    InstanceUpdate,
     InstanceResponse,
     UploadInitRequest,
     UploadInitResponse,
@@ -249,6 +255,20 @@ async def get_instance(
     return await study_service.get_instance(instance_id)
 
 
+@router.patch("/instances/{instance_id}", response_model=InstanceResponse)
+async def update_instance(
+    instance_id: UUID,
+    data: InstanceUpdate,
+    study_service: IStudyService = Depends(get_study_service)
+):
+    """
+    Update an instance (e.g. rename original_filename).
+
+    Requires STUDY_UPDATE permission.
+    """
+    return await study_service.update_instance(instance_id, data)
+
+
 @router.delete("/instances/{instance_id}")
 async def delete_instance(
     instance_id: UUID,
@@ -261,6 +281,66 @@ async def delete_instance(
     """
     await study_service.delete_instance(instance_id)
     return {"message": "Instance deleted successfully"}
+
+
+# =============================================================================
+# Instance Mask Endpoint (for expert annotation NIfTI overlays)
+# =============================================================================
+
+@router.get("/instances/{instance_id}/mask-data")
+async def get_instance_mask_data(
+    instance_id: UUID,
+    study_service: IStudyService = Depends(get_study_service),
+    storage_service: IStorageService = Depends(get_storage_service)
+):
+    """
+    Download a NIfTI instance as binary mask data.
+
+    Used for loading expert annotation masks as overlays.
+    Returns the same binary format as segmentation masks:
+    [depth:4bytes][height:4bytes][width:4bytes][mask_data:D*H*W bytes]
+    """
+    try:
+        instance = await study_service.get_instance(instance_id)
+        gcs_path = instance.gcs_object_name
+
+        file_data = await storage_service.download_file(
+            settings.GCS_BUCKET_NAME, gcs_path
+        )
+
+        img, data = load_nifti_from_bytes(file_data, normalize=False)
+
+        # Ensure uint8 binary mask (0 or 1)
+        mask = (data > 0).astype(np.uint8)
+
+        # Transpose from NIfTI (W,H,D) to viewer convention (D,H,W)
+        if mask.ndim == 3:
+            mask = np.transpose(mask, (2, 1, 0))
+
+        depth, height, width = mask.shape
+        header = struct.pack('<III', depth, height, width)
+        binary_data = header + mask.tobytes()
+
+        return Response(
+            content=binary_data,
+            media_type="application/octet-stream",
+            headers={
+                "Content-Length": str(len(binary_data)),
+                "X-Mask-Depth": str(depth),
+                "X-Mask-Height": str(height),
+                "X-Mask-Width": str(width),
+                "Cache-Control": "public, max-age=3600",
+                "Access-Control-Expose-Headers": "X-Mask-Depth, X-Mask-Height, X-Mask-Width, Content-Length"
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error loading instance mask data", extra={
+            "instance_id": str(instance_id),
+            "error": str(e)
+        })
+        raise HTTPException(status_code=500, detail=f"Failed to load mask data: {str(e)}")
 
 
 # =============================================================================

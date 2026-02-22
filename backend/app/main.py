@@ -41,7 +41,7 @@ setup_logging()
 logger = get_logger(__name__)
 
 logger.info(
-    "Starting Medical Imaging Viewer API",
+    "Starting MS Brain MRI Viewer API",
     extra={
         "version": settings.APP_VERSION,
         "debug": settings.DEBUG,
@@ -115,7 +115,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    description="Professional Medical Imaging Viewer API",
+    description="MS Brain MRI Viewer API — Multiple Sclerosis lesion analysis",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",

@@ -80,7 +80,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -10 }}
                 transition={{ duration: 0.15 }}
-                className="absolute top-full mt-2 right-0 z-50 min-w-[200px] bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl shadow-2xl overflow-hidden"
+                className="absolute top-full mt-2 right-0 z-50 min-w-[200px] bg-gray-900 border border-gray-600 rounded-xl shadow-2xl overflow-hidden"
               >
                 {languages.map((language) => (
                   <button
@@ -88,19 +88,19 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
                     onClick={() => handleLanguageChange(language.code)}
                     className={`w-full px-4 py-3 flex items-center justify-between gap-3 transition-all duration-150 ${
                       currentLanguage.code === language.code
-                        ? 'bg-blue-500/30 text-white'
-                        : 'hover:bg-white/10 text-gray-200'
+                        ? 'bg-blue-600 text-white'
+                        : 'hover:bg-gray-700 text-white'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">{language.flag}</span>
                       <div className="text-left">
                         <div className="text-sm font-medium">{language.nativeName}</div>
-                        <div className="text-xs opacity-70">{language.name}</div>
+                        <div className="text-xs text-gray-300">{language.name}</div>
                       </div>
                     </div>
                     {currentLanguage.code === language.code && (
-                      <Check className="w-4 h-4 text-blue-400" />
+                      <Check className="w-4 h-4 text-white" />
                     )}
                   </button>
                 ))}

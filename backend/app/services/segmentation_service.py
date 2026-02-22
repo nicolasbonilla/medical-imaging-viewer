@@ -392,14 +392,19 @@ class SegmentationService:
 
         return metadata
 
-    def list_segmentations(self, file_id: Optional[str] = None) -> List[SegmentationResponse]:
+    def list_segmentations(
+        self,
+        file_id: Optional[str] = None,
+        file_ids: Optional[List[str]] = None,
+    ) -> List[SegmentationResponse]:
         """
-        List all segmentations, optionally filtered by file_id.
+        List all segmentations, optionally filtered by file_id or file_ids.
 
         Searches Firestore first, then local storage as fallback.
 
         Args:
-            file_id: Optional file ID to filter by
+            file_id: Optional single file ID to filter by
+            file_ids: Optional list of file IDs to filter by (for study-level queries)
 
         Returns:
             List of SegmentationResponse
@@ -407,10 +412,21 @@ class SegmentationService:
         results = []
         found_ids = set()
 
+        # Determine file_id filter set
+        filter_set = None
+        if file_ids:
+            filter_set = set(file_ids)
+        elif file_id:
+            filter_set = {file_id}
+
         # First, query Firestore
         try:
             query = self.db.collection(SEGMENTATIONS_COLLECTION)
-            if file_id:
+
+            if file_ids and len(file_ids) <= 30:
+                # Firestore 'in' operator supports up to 30 values
+                query = query.where("file_id", "in", file_ids)
+            elif file_id:
                 query = query.where("file_id", "==", file_id)
 
             docs = query.stream()
@@ -445,7 +461,11 @@ class SegmentationService:
                     masks=None
                 ))
 
-            logger.info("Listed segmentations from Firestore", extra={"count": len(results), "file_id": file_id})
+            logger.info("Listed segmentations from Firestore", extra={
+                "count": len(results),
+                "file_id": file_id,
+                "file_ids_count": len(file_ids) if file_ids else 0,
+            })
 
         except Exception as e:
             logger.warning("Failed to query Firestore, using local", extra={"error": str(e)})
@@ -463,7 +483,7 @@ class SegmentationService:
                 seg_data = self.segmentations_cache[seg_id]
                 metadata = seg_data["metadata"]
 
-                if file_id is None or metadata.file_id == file_id:
+                if filter_set is None or metadata.file_id in filter_set:
                     results.append(SegmentationResponse(
                         segmentation_id=seg_id,
                         file_id=metadata.file_id,

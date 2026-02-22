@@ -53,20 +53,40 @@ class ImagingService(IImagingService):
         elif filename.endswith('.nii') or filename.endswith('.nii.gz'):
             return ImageFormat.NIFTI
         else:
-            # Try to detect by content
+            # Check magic bytes: gzip starts with \x1f\x8b, NIfTI gzip files are .nii.gz
+            if file_data[:2] == b'\x1f\x8b':
+                # Gzipped file — likely .nii.gz stored with just .gz extension
+                import gzip
+                try:
+                    header = gzip.decompress(file_data[:1024])
+                    # NIfTI-1 magic: "n+1\0" at offset 344, or "ni1\0"
+                    if len(header) > 347 and header[344:348] in (b'n+1\x00', b'ni1\x00'):
+                        return ImageFormat.NIFTI
+                except Exception:
+                    pass
+            # Try DICOM
             try:
                 pydicom.dcmread(io.BytesIO(file_data))
                 return ImageFormat.DICOM
-            except:
+            except Exception:
+                pass
+            # Try NIfTI via temp file (handles gzipped NIfTI reliably)
+            try:
+                suffix = '.nii.gz' if file_data[:2] == b'\x1f\x8b' else '.nii'
+                with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+                    tmp.write(file_data)
+                    tmp_path = tmp.name
                 try:
-                    nib.load(io.BytesIO(file_data))
+                    nib.load(tmp_path)
                     return ImageFormat.NIFTI
-                except:
-                    raise ValidationException(
-                        message="Unsupported image format - file must be DICOM or NIfTI",
-                        error_code="UNSUPPORTED_IMAGE_FORMAT",
-                        details={"filename": filename}
-                    )
+                finally:
+                    os.unlink(tmp_path)
+            except Exception:
+                raise ValidationException(
+                    message="Unsupported image format - file must be DICOM or NIfTI",
+                    error_code="UNSUPPORTED_IMAGE_FORMAT",
+                    details={"file_name": filename}
+                )
 
     def load_dicom(self, file_data: bytes) -> Tuple[np.ndarray, ImageMetadata]:
         """Load DICOM file and extract metadata."""

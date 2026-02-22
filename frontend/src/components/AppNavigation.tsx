@@ -40,19 +40,19 @@ export default function AppNavigation({ variant = 'header', showRecent = true }:
   const navItems: NavItem[] = [
     {
       id: 'patients',
-      label: t('navigation.patients', 'Pacientes'),
+      label: t('navigation.patients', 'Patients'),
       icon: <Users className="w-5 h-5" />,
       path: '/app/patients',
     },
     {
       id: 'documents',
-      label: t('navigation.documents', 'Documentos'),
+      label: t('navigation.documents', 'Documents'),
       icon: <FileText className="w-5 h-5" />,
       path: '/app/documents',
     },
     {
       id: 'viewer',
-      label: t('navigation.viewer', 'Visor'),
+      label: t('navigation.viewer', 'Viewer'),
       icon: <FileImage className="w-5 h-5" />,
       path: '/app/viewer',
     },
@@ -89,7 +89,7 @@ export default function AppNavigation({ variant = 'header', showRecent = true }:
                 Medical EHR
               </h1>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {t('navigation.subtitle', 'Sistema de Imágenes')}
+                {t('navigation.subtitle', 'Imaging System')}
               </p>
             </div>
           </div>
@@ -126,7 +126,7 @@ export default function AppNavigation({ variant = 'header', showRecent = true }:
         {showRecent && recentPatients.length > 0 && (
           <div className="p-4 border-t border-gray-200/50 dark:border-gray-700/50">
             <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-              {t('navigation.recentPatients', 'Pacientes Recientes')}
+              {t('navigation.recentPatients', 'Recent Patients')}
             </h3>
             <div className="space-y-1">
               {recentPatients.slice(0, 3).map((patient) => (

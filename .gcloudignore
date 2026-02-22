@@ -1,0 +1,106 @@
+# Cloud Build ignore file
+# Based on .gitignore but ensures env.yaml IS included for deployment
+
+# Include env.yaml for Cloud Run environment variables
+!env.yaml
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv
+
+# Environment Variables (but NOT env.yaml - needed for Cloud Run)
+.env
+.env.local
+.env.*.local
+*.env
+
+# Logs
+logs/
+*.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# User Storage
+storage/
+user_data/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Build outputs
+frontend/dist/
+frontend/build/
+*.tsbuildinfo
+
+# Firebase
+.firebase/
+firebase-debug.log
+.firebaserc
+
+# Google Cloud
+credentials.json
+token.json
+service-account-key.json
+*.json.key
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# OS
+Thumbs.db
+NUL
+
+# Frontend (not needed for backend build)
+frontend/node_modules/
+frontend/src/
+frontend/public/
+frontend/*.json
+frontend/*.js
+frontend/*.ts
+frontend/*.html
+frontend/Dockerfile
+frontend/nginx.conf

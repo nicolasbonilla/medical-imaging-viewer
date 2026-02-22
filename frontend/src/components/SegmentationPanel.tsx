@@ -444,6 +444,8 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
   // Viewer store (for file_id and image dimensions)
   const currentSeries = useViewerStore((s) => s.currentSeries);
   const fileId = currentSeries?.file_id;
+  const currentStudyId = useViewerStore((s) => s.currentStudyId);
+  const allFileIds = useViewerStore((s) => s.allFileIds);
 
   // Zustand store
   const {
@@ -469,11 +471,13 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
     reset,
   } = useSegmentationStore();
 
-  // Fetch segmentations list via flat API (same cache key as useSegmentationData)
+  // Fetch segmentations list for ALL images in the study (same cache key as ViewerApp)
   const { data: segmentationsList, isLoading: isLoadingList } = useQuery({
-    queryKey: ['segmentations', fileId],
-    queryFn: () => fileId ? segmentationAPI.listSegmentations(fileId) : Promise.resolve([]),
-    enabled: !!fileId,
+    queryKey: ['segmentations', 'study', currentStudyId],
+    queryFn: () => allFileIds.length > 0
+      ? segmentationAPI.listSegmentationsByFileIds(allFileIds)
+      : Promise.resolve([]),
+    enabled: allFileIds.length > 0,
   });
 
   // Track local creation state for UI feedback
@@ -483,14 +487,14 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
   const deleteSegmentationMutation = useMutation({
     mutationFn: (segmentationId: string) => segmentationAPI.deleteSegmentation(segmentationId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['segmentations'] });
+      queryClient.invalidateQueries({ queryKey: ['segmentations', 'study', currentStudyId] });
     },
   });
 
   // Map SegmentationResponse[] to minimal SegmentationSummary-like objects for the list
   const segmentations = (segmentationsList ?? []).map((seg: SegmentationResponse) => ({
     id: seg.segmentation_id,
-    name: seg.metadata?.description || 'Segmentation',
+    name: seg.metadata?.description || t('segmentation.defaultName', 'Segmentation'),
     status: 'saved' as const,
     progress_percentage: 0,
     slices_annotated: 0,
@@ -782,6 +786,32 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                 </button>
               </div>
 
+              {/* Label Preset Selector */}
+              <div>
+                <label className="block text-xs text-gray-300 mb-1">
+                  {t('magnims.preset', 'Label Preset')}
+                </label>
+                <select
+                  value={(() => {
+                    const names = activeSegmentation.labels.filter(l => l.id !== 0).map(l => l.name);
+                    if (names.length === 6 && names[0] === 'Periventricular') return 'magnims';
+                    if (names.length === 4 && names[0] === 'MS Lesion (Active)') return 'default';
+                    return 'custom';
+                  })()}
+                  onChange={(e) => {
+                    const preset = e.target.value;
+                    if (preset === 'default' || preset === 'magnims') {
+                      useSegmentationStore.getState().setLabelPreset(preset as 'default' | 'magnims');
+                    }
+                  }}
+                  className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-xs text-white"
+                >
+                  <option value="default">{t('magnims.default', 'Default')}</option>
+                  <option value="magnims">{t('magnims.magnims', 'MAGNIMS Regional')}</option>
+                  <option value="custom" disabled>{t('magnims.custom', 'Custom')}</option>
+                </select>
+              </div>
+
               {/* Labels List */}
               <div>
                 <label className="block text-xs text-gray-300 mb-2">
@@ -860,13 +890,13 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                     {t('segmentation.shortcuts.title', 'Keyboard shortcuts')}
                   </summary>
                   <div className="mt-1 space-y-0.5 pl-2">
-                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">Ctrl+Z</kbd> Undo</p>
-                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">Ctrl+Y</kbd> Redo</p>
-                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">E</kbd> Toggle eraser</p>
-                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">B</kbd> Brush</p>
-                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">S</kbd> Toggle overlay</p>
-                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">+</kbd> / <kbd className="px-1 bg-gray-700 rounded text-gray-300">-</kbd> Brush size</p>
-                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">1-9</kbd> Select label</p>
+                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">Ctrl+Z</kbd> {t('segmentation.shortcuts.undo', 'Undo')}</p>
+                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">Ctrl+Y</kbd> {t('segmentation.shortcuts.redo', 'Redo')}</p>
+                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">E</kbd> {t('segmentation.shortcuts.toggleEraser', 'Toggle eraser')}</p>
+                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">B</kbd> {t('segmentation.shortcuts.brush', 'Brush')}</p>
+                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">S</kbd> {t('segmentation.shortcuts.toggleOverlay', 'Toggle overlay')}</p>
+                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">+</kbd> / <kbd className="px-1 bg-gray-700 rounded text-gray-300">-</kbd> {t('segmentation.shortcuts.brushSize', 'Brush size')}</p>
+                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">1-9</kbd> {t('segmentation.shortcuts.selectLabel', 'Select label')}</p>
                   </div>
                 </details>
               </div>

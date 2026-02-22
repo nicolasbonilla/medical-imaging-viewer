@@ -13,9 +13,10 @@
  */
 
 import React, { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { UseSegmentationMaskReturn } from '@/hooks/useSegmentationMask';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
-import type { ClickPoint3D } from '@/types';
+import type { ClickPoint3D, ExpertMaskData } from '@/types';
 
 /** Methods exposed via ref for external control */
 export interface SegmentationCanvasLocalRef {
@@ -65,6 +66,8 @@ interface SegmentationCanvasLocalProps {
   onAIClick?: (x: number, y: number, isPositive: boolean) => void;
   /** Render mask as heatmap (for anomaly detection probability maps) */
   heatmapMode?: boolean;
+  /** Expert annotation masks for contour overlay rendering */
+  expertMasks?: Map<string, ExpertMaskData>;
 }
 
 /** Parsed RGBA color for fast pixel filling */
@@ -78,6 +81,20 @@ function parseColor(hex: string, opacity: number): ParsedColor {
     b: parseInt(hex.slice(5, 7), 16),
     a: Math.round(opacity * 255),
   };
+}
+
+/**
+ * Transpose a 2D mask slice from (srcH × srcW) to (srcW × srcH) layout.
+ * Used to fix axis ordering mismatch between backend mask format and MRI display.
+ */
+function transposeSlice(src: Uint8Array, srcH: number, srcW: number): Uint8Array {
+  const dst = new Uint8Array(src.length);
+  for (let h = 0; h < srcH; h++) {
+    for (let w = 0; w < srcW; w++) {
+      dst[w * srcH + h] = src[h * srcW + w];
+    }
+  }
+  return dst;
 }
 
 /**
@@ -191,6 +208,71 @@ function renderHeatmapToCanvas(
   ctx.drawImage(tempCanvas, 0, 0, canvasWidth, canvasHeight);
 }
 
+/**
+ * Render a binary mask as colored contour lines on canvas.
+ * Edge detection: a voxel is a border if it's non-zero and any 4-neighbor is zero.
+ * Used for expert annotation overlays (read-only contour display).
+ */
+function renderContourToCanvas(
+  ctx: CanvasRenderingContext2D,
+  maskSlice: Uint8Array,
+  width: number,
+  height: number,
+  canvasWidth: number,
+  canvasHeight: number,
+  color: string,
+  thickness: number = 2,
+): void {
+  const imageData = ctx.createImageData(width, height);
+  const data = imageData.data;
+
+  // Parse color
+  const r = parseInt(color.slice(1, 3), 16);
+  const g = parseInt(color.slice(3, 5), 16);
+  const b = parseInt(color.slice(5, 7), 16);
+
+  // Edge detection with configurable thickness
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const idx = y * width + x;
+      if (maskSlice[idx] === 0) continue;
+
+      // Check if this voxel is near a border (within thickness distance)
+      let isBorder = false;
+      for (let dy = -thickness; dy <= thickness && !isBorder; dy++) {
+        for (let dx = -thickness; dx <= thickness && !isBorder; dx++) {
+          if (dx === 0 && dy === 0) continue;
+          const ny = y + dy;
+          const nx = x + dx;
+          if (ny < 0 || ny >= height || nx < 0 || nx >= width) {
+            isBorder = true; // Edge of image counts as border
+          } else if (maskSlice[ny * width + nx] === 0) {
+            isBorder = true;
+          }
+        }
+      }
+
+      if (isBorder) {
+        const pixelIndex = idx * 4;
+        data[pixelIndex] = r;
+        data[pixelIndex + 1] = g;
+        data[pixelIndex + 2] = b;
+        data[pixelIndex + 3] = 220; // High opacity for contours
+      }
+    }
+  }
+
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = width;
+  tempCanvas.height = height;
+  const tempCtx = tempCanvas.getContext('2d');
+  if (!tempCtx) return;
+
+  tempCtx.putImageData(imageData, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(tempCanvas, 0, 0, canvasWidth, canvasHeight);
+}
+
 export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, SegmentationCanvasLocalProps>(({
   segmentationMask,
   sliceIndex,
@@ -213,7 +295,10 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
   aiInteractiveMode = false,
   onAIClick,
   heatmapMode = false,
+  expertMasks,
 }, ref) => {
+  const { t } = useTranslation();
+
   // Canvas refs
   const baseCanvasRef = useRef<HTMLCanvasElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -223,6 +308,11 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
   const drawOverMode = useSegmentationStore((s) => s.drawOverMode);
   const brushShape = useSegmentationStore((s) => s.paintTool.brushShape);
   const storeLabels = useSegmentationStore((s) => s.activeSegmentation?.labels);
+
+  // Zone map background overlay
+  const zoneMapMask = useSegmentationStore((s) => s.zoneMapMask);
+  const zoneMapDims = useSegmentationStore((s) => s.zoneMapDims);
+  const zoneMapVisible = useSegmentationStore((s) => s.zoneMapVisible);
 
   // State
   const [isPainting, setIsPainting] = useState(false);
@@ -358,15 +448,62 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
       ctx.translate(-centerX, -centerY);
     }
 
+    // Draw MAGNIMS zone map as semi-transparent background (before lesion mask)
+    if (zoneMapVisible && zoneMapMask && zoneMapDims) {
+      const zmSliceSize = zoneMapDims.width * zoneMapDims.height;
+      const zmSliceOffset = sliceIndex * zmSliceSize;
+      if (zmSliceOffset + zmSliceSize <= zoneMapMask.length) {
+        let zmSlice: Uint8Array = zoneMapMask.subarray(zmSliceOffset, zmSliceOffset + zmSliceSize);
+        let zmRenderW = zoneMapDims.width;
+        let zmRenderH = zoneMapDims.height;
+
+        // Auto-fix axis mismatch: if zone map dims are swapped relative to MRI,
+        // transpose the slice so it aligns with the displayed image.
+        if (zmRenderW !== imageWidth && zmRenderH === imageWidth && zmRenderW === imageHeight) {
+          zmSlice = transposeSlice(zmSlice, zoneMapDims.height, zoneMapDims.width);
+          zmRenderW = imageWidth;
+          zmRenderH = imageHeight;
+        }
+
+        // Use MAGNIMS colors at low opacity for background visualization
+        // Alpha is in 0-255 range (ImageData format): 40 ≈ 16% opacity
+        const zoneColors: Record<number, ParsedColor> = {
+          1: { r: 255, g: 0, b: 0, a: 40 },      // PV - red
+          2: { r: 0, g: 204, b: 0, a: 40 },       // JC - green
+          3: { r: 0, g: 102, b: 255, a: 40 },     // IT - blue
+          4: { r: 255, g: 215, b: 0, a: 40 },     // DWM - yellow
+        };
+        renderMaskToCanvas(
+          ctx, zmSlice,
+          zmRenderW, zmRenderH,
+          canvasSize.width, canvasSize.height,
+          zoneColors,
+        );
+      }
+    }
+
     // Draw mask from LOCAL MEMORY (instant!)
     if (showOverlay && segmentationMask.isLoaded) {
       const maskSlice = segmentationMask.getSliceMask(sliceIndex);
       if (maskSlice) {
+        // Auto-fix axis mismatch: if mask dims are swapped relative to MRI display,
+        // transpose the slice on the fly. This handles backend-generated masks
+        // (zone maps, AI results) that were stored with (k,j,i) instead of (k,i,j).
+        let renderSlice = maskSlice;
+        const maskDims = segmentationMask.state.dimensions;
+        const needsTranspose = maskDims
+          && maskDims.width !== imageWidth
+          && maskDims.height === imageWidth
+          && maskDims.width === imageHeight;
+        if (needsTranspose && maskDims) {
+          renderSlice = transposeSlice(maskSlice, maskDims.height, maskDims.width);
+        }
+
         if (heatmapMode) {
           // Heatmap mode: values = confidence (0-255), rendered as hot colormap
           renderHeatmapToCanvas(
             ctx,
-            maskSlice,
+            renderSlice,
             imageWidth,
             imageHeight,
             canvasSize.width,
@@ -385,7 +522,7 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
 
           renderMaskToCanvas(
             ctx,
-            maskSlice,
+            renderSlice,
             imageWidth,
             imageHeight,
             canvasSize.width,
@@ -431,6 +568,38 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
       }
     }
 
+    // Draw expert annotation masks as contours
+    if (expertMasks && expertMasks.size > 0) {
+      for (const [, maskData] of expertMasks) {
+        if (!maskData.visible || !maskData.mask || maskData.loading) continue;
+
+        // Extract the current slice from the expert mask
+        const sliceSize = maskData.width * maskData.height;
+        const sliceOffset = sliceIndex * sliceSize;
+        if (sliceOffset + sliceSize > maskData.mask.length) continue;
+
+        const expertSlice = maskData.mask.subarray(sliceOffset, sliceOffset + sliceSize);
+
+        // Check if this slice has any non-zero voxels
+        let hasData = false;
+        for (let i = 0; i < expertSlice.length; i++) {
+          if (expertSlice[i] > 0) { hasData = true; break; }
+        }
+        if (!hasData) continue;
+
+        renderContourToCanvas(
+          ctx,
+          expertSlice,
+          maskData.width,
+          maskData.height,
+          canvasSize.width,
+          canvasSize.height,
+          maskData.color,
+          2, // thickness
+        );
+      }
+    }
+
     // Draw cursor
     if (cursorPosition && enabled) {
       const canvasX = (cursorPosition.x / imageWidth) * canvasSize.width;
@@ -463,7 +632,8 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
     canvasSize, imageWidth, imageHeight, cursorPosition, enabled,
     brushSize, brushShape, eraseMode, showOverlay, zoomLevel, panOffset,
     matplotlibBbox, segmentationMask, sliceIndex, renderVersion, storeLabels,
-    aiClickPoints, heatmapMode
+    aiClickPoints, heatmapMode, expertMasks,
+    zoneMapMask, zoneMapDims, zoneMapVisible,
   ]);
 
   // Re-render overlay when mask or slice changes
@@ -565,7 +735,7 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
   };
 
   if (canvasSize.width === 0) {
-    return <div className="text-white">Loading canvas...</div>;
+    return <div className="text-white">{t('segmentation.loadingCanvas', 'Loading canvas...')}</div>;
   }
 
   // Position style
@@ -618,7 +788,7 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
       {/* Loading indicator */}
       {segmentationMask.state.isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="text-white">Loading mask...</div>
+          <div className="text-white">{t('segmentation.loadingMask', 'Loading mask...')}</div>
         </div>
       )}
     </div>

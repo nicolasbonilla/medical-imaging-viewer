@@ -78,13 +78,26 @@ class AppException(Exception):
         # Automatically log the exception
         self._log_exception()
 
+    # Keys that conflict with Python LogRecord built-in attributes
+    _LOGRECORD_RESERVED = frozenset({
+        "name", "msg", "args", "levelname", "levelno", "pathname",
+        "filename", "module", "exc_info", "exc_text", "stack_info",
+        "lineno", "funcName", "created", "msecs", "relativeCreated",
+        "thread", "threadName", "process", "processName", "message",
+    })
+
     def _log_exception(self) -> None:
         """Log the exception with appropriate level based on status code."""
+        # Prefix any detail keys that conflict with LogRecord attributes
+        safe_details = {
+            (f"detail_{k}" if k in self._LOGRECORD_RESERVED else k): v
+            for k, v in self.details.items()
+        }
         log_data = {
             "error_code": self.error_code,
             "status_code": self.status_code,
             "error_message": self.message,
-            **self.details
+            **safe_details
         }
 
         # 5xx errors are logged as ERROR, others as WARNING

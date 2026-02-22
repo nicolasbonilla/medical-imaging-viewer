@@ -721,6 +721,33 @@ class StudyService(IStudyService):
 
         return [self._instance_to_response(i) for i in instances]
 
+    async def update_instance(
+        self,
+        instance_id: UUID,
+        data
+    ) -> InstanceResponse:
+        """Update instance metadata (e.g. original_filename)."""
+        result = await self.db.execute(
+            select(ImagingInstance).where(ImagingInstance.id == instance_id)
+        )
+        instance = result.scalar_one_or_none()
+
+        if not instance:
+            raise NotFoundException(
+                message="Instance not found",
+                error_code="INSTANCE_NOT_FOUND",
+                details={"instance_id": str(instance_id)}
+            )
+
+        update_data = data.model_dump(exclude_none=True)
+        for key, value in update_data.items():
+            setattr(instance, key, value)
+
+        await self.db.flush()
+        await self.db.refresh(instance)
+
+        return self._instance_to_response(instance)
+
     async def delete_instance(
         self,
         instance_id: UUID

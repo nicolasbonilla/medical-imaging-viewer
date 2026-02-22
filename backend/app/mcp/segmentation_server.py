@@ -224,72 +224,27 @@ async def get_brain_structure_labels() -> dict:
 # =============================================================================
 
 @mcp.prompt()
-async def brain_tumor_analysis(file_id: str) -> str:
-    """
-    Complete workflow for brain tumor analysis.
+async def ms_lesion_analysis(file_id: str) -> str:
+    """Complete workflow for MS lesion evaluation and analysis."""
+    return f"""# MS Lesion Analysis Workflow
 
-    Guides through: auto-segmentation → anomaly detection → volumetry → report.
-    """
-    return f"""Analyze this brain MRI for tumor evaluation.
+Analyze brain MRI for Multiple Sclerosis lesion evaluation.
 
-Steps:
-1. First, get the image metadata: get_image_metadata(file_id="{file_id}")
-2. Run automatic brain segmentation: segment_brain_auto(file_id="{file_id}")
-3. Run anomaly detection: detect_anomalies(file_id="{file_id}", sensitivity="high")
-4. If segmentation succeeds, compute brain volumes with patient demographics
-5. Generate a tumor-focused report with the findings
+## Steps:
+1. Get image metadata: `get_image_metadata(file_id="{file_id}")`
+2. Run brain structure segmentation to identify anatomy
+3. Identify MS lesions: T2/FLAIR hyperintensities, active (enhancing) lesions, chronic lesions, black holes
+4. Compute lesion volumetry: total lesion volume, lesion count by region
+5. Assess disease activity: new lesions, enhancing lesions, McDonald criteria
 
-Focus on:
-- Tumor location, size, and enhancement pattern
-- Mass effect and midline shift
-- Edema extent
-- RANO criteria if follow-up study
-"""
+## Key Analysis Points:
+- Lesion distribution: periventricular, juxtacortical, infratentorial, spinal cord
+- Dissemination in space (DIS) and time (DIT)
+- Gadolinium enhancement status for active lesions
+- T1 black holes indicating chronic tissue damage
+- Brain atrophy assessment
+- Comparison with prior studies if available
 
-
-@mcp.prompt()
-async def dementia_assessment(file_id: str, patient_age: int = 70) -> str:
-    """
-    Complete workflow for dementia/Alzheimer's assessment.
-
-    Guides through: segmentation → volumetry with normative comparison → report.
-    """
-    return f"""Assess this brain MRI for cognitive decline / dementia.
-
-Steps:
-1. Get image metadata: get_image_metadata(file_id="{file_id}")
-2. Run brain structure segmentation: segment_brain_auto(file_id="{file_id}")
-3. Compute volumetry with age: compute_brain_volumes(segmentation_id=<from step 2>, patient_age={patient_age})
-4. Generate a dementia assessment report
-
-Focus on:
-- Hippocampal volumes (bilateral comparison)
-- Ventricular enlargement (especially temporal horns)
-- Cortical atrophy pattern (GCA score)
-- White matter hyperintensities (Fazekas score)
-- Pattern analysis: Alzheimer's vs vascular vs frontotemporal vs Lewy body
-"""
-
-
-@mcp.prompt()
-async def stroke_evaluation(file_id: str) -> str:
-    """
-    Complete workflow for acute stroke evaluation.
-
-    Guides through: anomaly detection → segmentation → report.
-    """
-    return f"""Evaluate this brain MRI for acute stroke.
-
-Steps:
-1. Get image metadata: get_image_metadata(file_id="{file_id}")
-2. Run anomaly detection with high sensitivity: detect_anomalies(file_id="{file_id}", sensitivity="high")
-3. Run brain segmentation: segment_brain_auto(file_id="{file_id}")
-4. Generate a stroke protocol report
-
-Focus on:
-- DWI restriction pattern and location
-- Vascular territory (ACA, MCA, PCA, vertebrobasilar)
-- ASPECTS score if MCA territory
-- Hemorrhagic transformation
-- Mass effect
+## Report:
+Generate MS assessment report with lesion count, volumes, activity status, and disease classification (RRMS/SPMS/PPMS).
 """

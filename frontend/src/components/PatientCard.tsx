@@ -61,7 +61,7 @@ const getDisplayName = (patient: Patient): string => {
   if (patient.given_name && patient.family_name) {
     return `${patient.given_name} ${patient.family_name}`;
   }
-  return 'Paciente';
+  return 'Patient';
 };
 
 export default function PatientCard({

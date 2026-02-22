@@ -91,15 +91,9 @@ export type PatientStatus = 'active' | 'inactive' | 'deceased';
 export type Modality = 'CT' | 'MR' | 'US' | 'XR' | 'MG' | 'NM' | 'PT' | 'CR' | 'DX' | 'RF' | 'OT';
 export type StudyStatus = 'registered' | 'available' | 'cancelled' | 'entered-in-error';
 export type DocumentCategory =
-  | 'lab-result'
-  | 'prescription'
   | 'clinical-note'
-  | 'discharge-summary'
   | 'radiology-report'
-  | 'consent-form'
-  | 'referral'
-  | 'operative-note'
-  | 'pathology-report'
+  | 'ms-assessment'
   | 'other';
 export type DocumentStatus = 'current' | 'superseded' | 'entered-in-error';
 
@@ -798,32 +792,81 @@ export interface SeriesSegmentationCount {
 }
 
 /**
- * Default labels for common segmentation tasks.
+ * Default labels for MS lesion segmentation.
  */
 export const DEFAULT_SEGMENTATION_LABELS: LabelInfo[] = [
   { id: 0, name: 'Background', color: '#000000', opacity: 0.0, visible: false },
-  { id: 1, name: 'Lesion', color: '#FF0000', opacity: 0.5, visible: true },
-  { id: 2, name: 'Tumor', color: '#00FF00', opacity: 0.5, visible: true },
-  { id: 3, name: 'Edema', color: '#0000FF', opacity: 0.5, visible: true },
-  { id: 4, name: 'Necrosis', color: '#FFFF00', opacity: 0.5, visible: true },
+  { id: 1, name: 'MS Lesion (Active)', color: '#FF0000', opacity: 0.6, visible: true, snomed_code: '421399003' },
+  { id: 2, name: 'MS Lesion (Chronic)', color: '#FFD700', opacity: 0.5, visible: true, snomed_code: '24700007' },
+  { id: 3, name: 'T2/FLAIR Hyperintensity', color: '#4169E1', opacity: 0.5, visible: true },
+  { id: 4, name: 'Black Hole (T1)', color: '#9932CC', opacity: 0.5, visible: true },
 ];
 
 /**
- * Brain tumor segmentation labels (BraTS standard).
+ * MAGNIMS regional labels for MS lesion classification.
+ * Based on McDonald 2024 / MAGNIMS criteria for Dissemination in Space (DIS).
  */
-export const BRATS_SEGMENTATION_LABELS: LabelInfo[] = [
+export const MAGNIMS_LESION_LABELS: LabelInfo[] = [
   { id: 0, name: 'Background', color: '#000000', opacity: 0.0, visible: false },
-  { id: 1, name: 'Necrotic Core (NCR)', color: '#FF0000', opacity: 0.6, visible: true, snomed_code: '6574001' },
-  { id: 2, name: 'Peritumoral Edema (ED)', color: '#00FF00', opacity: 0.5, visible: true, snomed_code: '79654002' },
-  { id: 4, name: 'Enhancing Tumor (ET)', color: '#FFFF00', opacity: 0.6, visible: true, snomed_code: '86049000' },
+  { id: 1, name: 'Periventricular', color: '#FF0000', opacity: 0.6, visible: true,
+    snomed_code: '12738006', finding_site: 'Periventricular white matter',
+    description: 'Dawson fingers — perpendicular to lateral ventricles' },
+  { id: 2, name: 'Juxtacortical', color: '#00CC00', opacity: 0.6, visible: true,
+    snomed_code: '4479006', finding_site: 'Juxtacortical/cortical',
+    description: 'Touching cortex, involving U-fibers' },
+  { id: 3, name: 'Infratentorial', color: '#0066FF', opacity: 0.6, visible: true,
+    snomed_code: '31065004', finding_site: 'Brainstem/cerebellum',
+    description: 'Brainstem, cerebellum, cerebellar peduncles' },
+  { id: 4, name: 'Deep White Matter', color: '#FFD700', opacity: 0.6, visible: true,
+    snomed_code: '69536005', finding_site: 'Deep white matter',
+    description: 'Atypical for MS — common in vascular processes' },
+  { id: 5, name: 'Active (Gd+)', color: '#FF00FF', opacity: 0.6, visible: true,
+    description: 'Gadolinium-enhancing lesion — acute inflammation' },
+  { id: 6, name: 'Black Hole (T1)', color: '#9932CC', opacity: 0.5, visible: true,
+    description: 'T1-hypointense — irreversible axonal loss' },
 ];
+
+/**
+ * Label preset identifiers.
+ */
+export type LabelPreset = 'default' | 'magnims' | 'custom';
 
 /**
  * Label presets for quick segmentation setup.
  */
-export const DEFAULT_LABEL_PRESETS = {
-  DEFAULT: DEFAULT_SEGMENTATION_LABELS,
-  BRATS: BRATS_SEGMENTATION_LABELS,
+export const DEFAULT_LABEL_PRESETS: Record<string, LabelInfo[]> = {
+  default: DEFAULT_SEGMENTATION_LABELS,
+  magnims: MAGNIMS_LESION_LABELS,
+};
+
+/**
+ * Expert mask data for overlay rendering.
+ */
+export interface ExpertMaskData {
+  instanceId: string;
+  label: string;           // "Expert 1", "Expert 2", "Consensus"
+  color: string;           // Hex color for contour rendering
+  mask: Uint8Array | null; // 3D binary mask (null if not loaded yet)
+  depth: number;
+  height: number;
+  width: number;
+  visible: boolean;
+  loading: boolean;
+}
+
+/**
+ * Expert mask classification from BIDS filename.
+ */
+export type ExpertType = 'expert1' | 'expert2' | 'consensus' | 'mask';
+
+/**
+ * Expert mask display config.
+ */
+export const EXPERT_COLORS: Record<ExpertType, { color: string; label: string }> = {
+  expert1: { color: '#FF4444', label: 'Expert 1' },
+  expert2: { color: '#4488FF', label: 'Expert 2' },
+  consensus: { color: '#44CC44', label: 'Consensus' },
+  mask: { color: '#FFAA44', label: 'Auto Mask' },
 };
 
 // ============================================================================
@@ -865,10 +908,11 @@ export interface AITaskResult {
 }
 
 export interface BrainAnomaly {
-  type: 'tumor' | 'lesion' | 'hemorrhage' | 'infarct' | 'atrophy';
+  type: 'ms_lesion' | 'active_lesion' | 'chronic_lesion' | 'black_hole';
   location: string;
   confidence: number;
   volume_mm3?: number;
+  gadolinium_enhancement?: boolean;
   bounding_box?: {
     x_min: number; y_min: number; z_min: number;
     x_max: number; y_max: number; z_max: number;
@@ -978,7 +1022,7 @@ export interface VolumetryRequest {
 // AI Report Types
 // ============================================================================
 
-export type ReportTemplateType = 'general' | 'stroke' | 'tumor' | 'dementia';
+export type ReportTemplateType = 'general' | 'ms_activity' | 'ms_lesion_burden' | 'ms_longitudinal';
 
 export interface ReportGenerateRequest {
   template_type: ReportTemplateType;
@@ -1013,6 +1057,158 @@ export interface EdgeAIScreeningResult {
   inferenceTimeMs: number;
   label: 'normal' | 'abnormal';
   confidence: number;
+}
+
+// ============================================================================
+// Lesion Analysis + DIS Assessment Types
+// ============================================================================
+
+export interface LesionCentroid {
+  z: number;
+  y: number;
+  x: number;
+}
+
+export interface LesionBoundingBox {
+  z_min: number; z_max: number;
+  y_min: number; y_max: number;
+  x_min: number; x_max: number;
+}
+
+export type LesionSizeCategory = 'small' | 'medium' | 'large';
+
+export interface LesionInfo {
+  id: number;
+  label_id: number;
+  region: string;
+  voxel_count: number;
+  volume_mm3: number;
+  volume_ml: number;
+  size_category: LesionSizeCategory;
+  centroid: LesionCentroid;
+  bounding_box: LesionBoundingBox;
+}
+
+export interface RegionSummary {
+  label_id: number;
+  lesion_count: number;
+  total_voxels: number;
+  total_volume_mm3: number;
+  total_volume_ml: number;
+}
+
+export interface LesionAnalysisResult {
+  segmentation_id: string;
+  lesions: LesionInfo[];
+  total_count: number;
+  total_burden_mm3: number;
+  total_burden_ml: number;
+  regions: Record<string, RegionSummary>;
+  size_distribution: { small: number; medium: number; large: number };
+  unique_labels: number[];
+}
+
+export interface DISRegionDetail {
+  label_id: number;
+  present: boolean;
+  voxel_count: number;
+}
+
+export interface DISAssessment {
+  segmentation_id: string;
+  dis_met: boolean;
+  regions_with_lesions: number;
+  total_dis_regions: number;
+  region_details: Record<string, DISRegionDetail>;
+  has_active_lesions: boolean;
+  has_black_holes: boolean;
+  active_voxels: number;
+  black_hole_voxels: number;
+}
+
+// ============================================================================
+// Longitudinal Tracking Types
+// ============================================================================
+
+export type LesionChangeStatus = 'new' | 'resolved' | 'enlarged' | 'shrunk' | 'stable';
+
+export interface LesionChange {
+  centroid_z: number;
+  centroid_y: number;
+  centroid_x: number;
+  volume_tp1_mm3: number;
+  volume_tp2_mm3: number;
+  volume_tp1_ml: number;
+  volume_tp2_ml: number;
+  change_mm3: number;
+  change_percent: number;
+  status: LesionChangeStatus;
+  iou: number;
+}
+
+export interface LongitudinalResult {
+  changes: LesionChange[];
+  total_lesions_tp1: number;
+  total_lesions_tp2: number;
+  burden_tp1_mm3: number;
+  burden_tp2_mm3: number;
+  burden_tp1_ml: number;
+  burden_tp2_ml: number;
+  burden_delta_mm3: number;
+  burden_delta_percent: number;
+  status_counts: Record<LesionChangeStatus, number>;
+}
+
+// ============================================================================
+// Region Classification Types (MAGNIMS / SynthSeg + EDT)
+// ============================================================================
+
+export type ClassificationMethod = 'auto' | 'parcellation' | 'geometric';
+
+export interface LesionDistances {
+  to_ventricle: number;
+  to_cortex: number;
+  to_infratentorial: number;
+}
+
+export interface ClassifiedLesion {
+  lesion_id: number;
+  region_id: number;
+  region: string;
+  confidence: number;
+  volume_mm3: number;
+  volume_ml: number;
+  voxel_count: number;
+  centroid: LesionCentroid;
+  distances_mm: LesionDistances;
+}
+
+export interface RegionClassificationResult {
+  segmentation_id: string;
+  method: 'parcellation' | 'geometric';
+  lesions: ClassifiedLesion[];
+  total_classified: number;
+  classification_summary: Record<string, number>;
+  thresholds_mm: Record<string, number | string>;
+  processing_time_ms: number;
+  mask_updated: boolean;
+  labels_updated: boolean;
+}
+
+export interface ZoneMapStat {
+  zone_id: number;
+  voxel_count: number;
+  volume_mm3: number;
+  volume_ml: number;
+  percentage: number;
+}
+
+export interface ZoneMapResult {
+  segmentation_id: string;
+  file_id: string;
+  zone_stats: Record<string, ZoneMapStat>;
+  total_brain_voxels: number;
+  processing_time_ms: number;
 }
 
 // ============================================================================

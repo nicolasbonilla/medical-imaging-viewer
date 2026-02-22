@@ -133,7 +133,7 @@ function PatientBannerComponent({
             {formatBirthDate(patient.birth_date)}
           </span>
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            ({age} {t('patients.years', 'años')})
+            ({age} {t('patients.years', 'years')})
           </span>
         </div>
 
@@ -255,7 +255,7 @@ function PatientBannerComponent({
                       {formatBirthDate(patient.birth_date)}
                     </span>
                     <span className="text-sm text-gray-600 dark:text-gray-400">
-                      ({age} {t('patients.years', 'años')})
+                      ({age} {t('patients.years', 'years')})
                     </span>
                   </div>
                 </div>

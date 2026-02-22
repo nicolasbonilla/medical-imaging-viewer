@@ -20,6 +20,7 @@ from app.models.study_schemas import (
     SeriesCreate,
     SeriesResponse,
     InstanceCreate,
+    InstanceUpdate,
     InstanceResponse,
     UploadInitRequest,
     UploadInitResponse,
@@ -299,6 +300,24 @@ class IStudyService(ABC):
 
         Returns:
             List of instances
+        """
+        pass
+
+    @abstractmethod
+    async def update_instance(
+        self,
+        instance_id: UUID,
+        data: InstanceUpdate
+    ) -> InstanceResponse:
+        """
+        Update instance metadata (e.g. original_filename).
+
+        Args:
+            instance_id: Instance UUID
+            data: Fields to update
+
+        Returns:
+            Updated instance
         """
         pass
 

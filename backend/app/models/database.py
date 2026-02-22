@@ -58,29 +58,15 @@ class StudyStatus(str, PyEnum):
 
 class Modality(str, PyEnum):
     """DICOM Modality codes (subset)."""
-    CT = "CT"           # Computed Tomography
     MR = "MR"           # Magnetic Resonance
-    US = "US"           # Ultrasound
-    XR = "XR"           # X-Ray Radiography
-    MG = "MG"           # Mammography
-    NM = "NM"           # Nuclear Medicine
-    PT = "PT"           # PET
-    CR = "CR"           # Computed Radiography
-    DX = "DX"           # Digital Radiography
     OT = "OT"           # Other
 
 
 class DocumentCategory(str, PyEnum):
     """HL7 FHIR Document Reference category."""
-    LAB_RESULT = "lab-result"
-    PRESCRIPTION = "prescription"
     CLINICAL_NOTE = "clinical-note"
-    DISCHARGE_SUMMARY = "discharge-summary"
     RADIOLOGY_REPORT = "radiology-report"
-    CONSENT_FORM = "consent-form"
-    REFERRAL = "referral"
-    OPERATIVE_NOTE = "operative-note"
-    PATHOLOGY_REPORT = "pathology-report"
+    MS_ASSESSMENT = "ms-assessment"
     OTHER = "other"
 
 

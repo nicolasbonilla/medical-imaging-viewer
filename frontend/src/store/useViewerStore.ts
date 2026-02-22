@@ -1,12 +1,23 @@
 import { create } from 'zustand';
 import type { ImageSeriesResponse, StorageFileInfo, ImageOrientation } from '@/types';
 
+export interface CursorInfo {
+  x: number;
+  y: number;
+  z: number;
+  intensity: number | null;
+}
+
 interface ViewerState {
   // Hierarchical context for segmentation
   currentPatientId: string | null;
   currentStudyId: string | null;
   currentSeriesId: string | null;
   setHierarchicalContext: (patientId: string | null, studyId: string | null, seriesId: string | null) => void;
+
+  // All file_ids from all instances in the current study (for study-level segmentation queries)
+  allFileIds: string[];
+  setAllFileIds: (fileIds: string[]) => void;
 
   // Current image series
   currentSeries: ImageSeriesResponse | null;
@@ -20,6 +31,21 @@ interface ViewerState {
   windowCenter: number;
   windowWidth: number;
   setWindowLevel: (center: number, width: number) => void;
+
+  // Brightness/Contrast (CSS filter, 0-200, default 100)
+  brightness: number;
+  contrast: number;
+  setBrightness: (value: number) => void;
+  setContrast: (value: number) => void;
+  resetImageAdjustments: () => void;
+
+  // Cursor info
+  cursorInfo: CursorInfo | null;
+  setCursorInfo: (info: CursorInfo | null) => void;
+
+  // Slice histogram (256 bins of grayscale intensity counts)
+  sliceHistogram: number[] | null;
+  setSliceHistogram: (histogram: number[] | null) => void;
 
   // Selected files
   selectedFiles: StorageFileInfo[];
@@ -55,10 +81,15 @@ const initialState = {
   currentPatientId: null,
   currentStudyId: null,
   currentSeriesId: null,
+  allFileIds: [] as string[],
   currentSeries: null,
   currentSliceIndex: 0,
   windowCenter: 0,
   windowWidth: 0,
+  brightness: 100,
+  contrast: 100,
+  cursorInfo: null as CursorInfo | null,
+  sliceHistogram: null as number[] | null,
   selectedFiles: [],
   viewMode: '2d' as const,
   orientation: 'axial' as ImageOrientation,
@@ -73,12 +104,22 @@ export const useViewerStore = create<ViewerState>((set) => ({
   setHierarchicalContext: (patientId, studyId, seriesId) =>
     set({ currentPatientId: patientId, currentStudyId: studyId, currentSeriesId: seriesId }),
 
+  setAllFileIds: (fileIds) => set({ allFileIds: fileIds }),
+
   setCurrentSeries: (series) => set({ currentSeries: series }),
 
   setCurrentSliceIndex: (index) => set({ currentSliceIndex: index }),
 
   setWindowLevel: (center, width) =>
     set({ windowCenter: center, windowWidth: width }),
+
+  setBrightness: (value) => set({ brightness: value }),
+  setContrast: (value) => set({ contrast: value }),
+  resetImageAdjustments: () => set({ brightness: 100, contrast: 100 }),
+
+  setCursorInfo: (info) => set({ cursorInfo: info }),
+
+  setSliceHistogram: (histogram) => set({ sliceHistogram: histogram }),
 
   setSelectedFiles: (files) => set({ selectedFiles: files }),
 

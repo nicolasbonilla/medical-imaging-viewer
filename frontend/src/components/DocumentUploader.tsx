@@ -43,15 +43,9 @@ const DEFAULT_ACCEPTED_TYPES = [
 ];
 
 const DOCUMENT_CATEGORIES: DocumentCategory[] = [
-  'lab-result',
-  'prescription',
   'clinical-note',
-  'discharge-summary',
   'radiology-report',
-  'consent-form',
-  'referral',
-  'operative-note',
-  'pathology-report',
+  'ms-assessment',
   'other',
 ];
 

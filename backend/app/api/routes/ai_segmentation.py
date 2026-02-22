@@ -228,33 +228,40 @@ async def compute_volumetry(
         f"age={request.patient_age}, sex={request.patient_sex}"
     )
 
-    # Load the segmentation mask from storage
+    # Load the segmentation mask from storage via SegmentationService
     try:
         from app.core.container import get_container
+        import numpy as np
+
         container = get_container()
         seg_service = container.segmentation_service()
-        mask_data = seg_service.get_segmentation_mask(request.segmentation_id)
+        seg_id = request.segmentation_id
 
-        if mask_data is None:
+        # Load segmentation into cache if not already there
+        if seg_id not in seg_service.segmentations_cache:
+            loaded = seg_service._load_segmentation(seg_id)
+            if not loaded:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Segmentation {seg_id} not found. "
+                           f"Make sure the segmentation is saved before computing volumetry.",
+                )
+
+        seg_data = seg_service.segmentations_cache[seg_id]
+        mask = seg_data["masks_3d"]  # numpy array (D, H, W), dtype=uint8
+
+        if mask is None or mask.size == 0:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Segmentation {request.segmentation_id} not found or has no mask data",
+                detail=f"Segmentation {seg_id} has no mask data",
             )
-
-        import numpy as np
-        mask = np.array(mask_data, dtype=np.uint8)
-
-        # Reshape if flat (need to know dimensions from metadata)
-        seg_meta = seg_service.get_segmentation_metadata(request.segmentation_id)
-        if seg_meta and hasattr(seg_meta, 'shape'):
-            mask = mask.reshape(seg_meta.shape)
 
         voxel_spacing = tuple(request.voxel_spacing)
 
         result = volumetry_service.compute_volumes(
             mask=mask,
             voxel_spacing=voxel_spacing,
-            segmentation_id=request.segmentation_id,
+            segmentation_id=seg_id,
             patient_age=request.patient_age,
             patient_sex=request.patient_sex,
         )

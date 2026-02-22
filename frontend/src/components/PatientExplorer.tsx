@@ -100,7 +100,7 @@ export default function PatientExplorer({
               <User className="w-5 h-5 text-white" />
             </div>
             <h2 className="text-lg font-bold bg-gradient-to-r from-primary-600 to-accent-600 dark:from-primary-400 dark:to-accent-400 bg-clip-text text-transparent">
-              {t('patients.title', 'Pacientes')}
+              {t('patients.title', 'Patients')}
             </h2>
           </div>
           <div className="flex items-center gap-2">
@@ -138,7 +138,7 @@ export default function PatientExplorer({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t('patients.searchPlaceholder', 'Buscar por nombre o MRN...')}
+              placeholder={t('patients.searchPlaceholder', 'Search by name or MRN...')}
               className="w-full pl-10 pr-4 py-2 bg-white/60 dark:bg-gray-800/60 border border-gray-200/50 dark:border-gray-700/50 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm"
             />
           </div>
@@ -154,7 +154,7 @@ export default function PatientExplorer({
                   : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
               }`}
             >
-              {t('patients.all', 'Todos')}
+              {t('patients.all', 'All')}
             </button>
             <button
               type="button"
@@ -165,7 +165,7 @@ export default function PatientExplorer({
                   : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
               }`}
             >
-              {t('patients.active', 'Activos')}
+              {t('patients.active', 'Active')}
             </button>
             <button
               type="button"
@@ -176,7 +176,7 @@ export default function PatientExplorer({
                   : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
               }`}
             >
-              {t('patients.inactive', 'Inactivos')}
+              {t('patients.inactive', 'Inactive')}
             </button>
           </div>
         </form>
@@ -192,7 +192,7 @@ export default function PatientExplorer({
               className="w-12 h-12 border-4 border-primary-200 dark:border-primary-800 border-t-primary-600 dark:border-t-primary-400 rounded-full"
             />
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              {t('patients.loading', 'Cargando pacientes...')}
+              {t('patients.loading', 'Loading patients...')}
             </p>
           </div>
         ) : (
@@ -247,7 +247,7 @@ export default function PatientExplorer({
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
                           {formatDate(patient.birth_date)} ({patient.age}{' '}
-                          {t('patients.years', 'años')})
+                          {t('patients.years', 'years')})
                         </span>
                       </div>
 
@@ -305,15 +305,15 @@ export default function PatientExplorer({
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
                     {searchQuery
-                      ? t('patients.noResults', 'No se encontraron pacientes')
-                      : t('patients.noPatients', 'No hay pacientes registrados')}
+                      ? t('patients.noResults', 'No patients found')
+                      : t('patients.noPatients', 'No patients registered')}
                   </p>
                   {onCreatePatient && !searchQuery && (
                     <button
                       onClick={onCreatePatient}
                       className="mt-4 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors text-sm"
                     >
-                      {t('patients.createFirst', 'Crear primer paciente')}
+                      {t('patients.createFirst', 'Create first patient')}
                     </button>
                   )}
                 </motion.div>
@@ -328,7 +328,7 @@ export default function PatientExplorer({
         <div className="p-4 border-t border-gray-200/50 dark:border-gray-700/50">
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-500 dark:text-gray-400">
-              {t('patients.showing', 'Mostrando')} {(page - 1) * pageSize + 1}-
+              {t('patients.showing', 'Showing')} {(page - 1) * pageSize + 1}-
               {Math.min(page * pageSize, patientsData.total)}{' '}
               {t('patients.of', 'de')} {patientsData.total}
             </span>
@@ -338,7 +338,7 @@ export default function PatientExplorer({
                 disabled={page === 1}
                 className="px-3 py-1 bg-white/60 dark:bg-gray-800/60 rounded border border-gray-200/50 dark:border-gray-700/50 disabled:opacity-50"
               >
-                {t('common.previous', 'Anterior')}
+                {t('common.previous', 'Previous')}
               </button>
               <button
                 onClick={() =>
@@ -347,7 +347,7 @@ export default function PatientExplorer({
                 disabled={page === patientsData.total_pages}
                 className="px-3 py-1 bg-white/60 dark:bg-gray-800/60 rounded border border-gray-200/50 dark:border-gray-700/50 disabled:opacity-50"
               >
-                {t('common.next', 'Siguiente')}
+                {t('common.next', 'Next')}
               </button>
             </div>
           </div>

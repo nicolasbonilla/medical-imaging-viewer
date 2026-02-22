@@ -27,15 +27,16 @@ interface AIReportPanelProps {
   volumetry?: Record<string, any> | null;
   patientAge?: number;
   patientSex?: 'M' | 'F';
+  onReportGenerated?: (report: ReportResponse) => void;
 }
 
 export const AIReportPanel: React.FC<AIReportPanelProps> = ({
   volumetry,
   patientAge,
   patientSex,
+  onReportGenerated,
 }) => {
   const { t, i18n } = useTranslation();
-  const [expanded, setExpanded] = useState(true);
   const [template, setTemplate] = useState<ReportTemplateType>('general');
   const [language, setLanguage] = useState(i18n.language || 'en');
   const [indication, setIndication] = useState('');
@@ -54,7 +55,10 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
   // Generate report mutation
   const generateMutation = useMutation({
     mutationFn: (req: ReportGenerateRequest) => aiReportAPI.generateReport(req),
-    onSuccess: (data) => setReport(data),
+    onSuccess: (data) => {
+      setReport(data);
+      onReportGenerated?.(data);
+    },
   });
 
   const handleGenerate = () => {
@@ -99,51 +103,34 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
 
   const templateIcons: Record<ReportTemplateType, string> = {
     general: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
-    stroke: 'M13 10V3L4 14h7v7l9-11h-7z',
-    tumor: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z',
-    dementia: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z',
+    ms_activity: 'M13 10V3L4 14h7v7l9-11h-7z',
+    ms_lesion_burden: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+    ms_longitudinal: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6',
   };
 
   return (
-    <div className="bg-gray-800 rounded-lg shadow-lg">
-      {/* Header */}
-      <div
-        className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-700 transition-colors"
-        onClick={() => setExpanded(!expanded)}
-      >
-        <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-          <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          {t('report.title', 'AI Report')}
-        </h3>
-        <span className="text-gray-400 text-sm">{expanded ? '\u25BC' : '\u25B6'}</span>
-      </div>
-
-      {expanded && (
-        <div className="p-3 space-y-3 border-t border-gray-700">
+    <div className="space-y-3">
           {/* Report not yet generated */}
           {!report && (
             <>
               {/* Template selection */}
               <div>
-                <label className="block text-xs text-gray-300 mb-1">
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
                   {t('report.template', 'Template')}
                 </label>
                 <div className="grid grid-cols-2 gap-1">
                   {(templates ?? [
-                    { id: 'general', name: 'General', description: '' },
-                    { id: 'stroke', name: 'Stroke', description: '' },
-                    { id: 'tumor', name: 'Tumor', description: '' },
-                    { id: 'dementia', name: 'Dementia', description: '' },
+                    { id: 'general', name: t('report.templates.general', 'General'), description: '' },
+                    { id: 'ms_activity', name: t('report.templates.ms_activity', 'MS Activity'), description: '' },
+                    { id: 'ms_lesion_burden', name: t('report.templates.ms_lesion_burden', 'Lesion Burden'), description: '' },
                   ] as ReportTemplateInfo[]).map((tmpl) => (
                     <button
                       key={tmpl.id}
                       onClick={() => setTemplate(tmpl.id)}
-                      className={`px-2 py-2 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                      className={`px-2 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${
                         template === tmpl.id
-                          ? 'bg-amber-600 text-white'
-                          : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                          ? 'bg-amber-500 text-white shadow-sm'
+                          : 'bg-white/60 dark:bg-gray-800/60 hover:bg-white dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200/50 dark:border-gray-700/50'
                       }`}
                       title={tmpl.description}
                     >
@@ -158,7 +145,7 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
 
               {/* Language selection */}
               <div>
-                <label className="block text-xs text-gray-300 mb-1">
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
                   {t('report.language', 'Language')}
                 </label>
                 <div className="flex gap-1">
@@ -172,8 +159,8 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
                       onClick={() => setLanguage(lang.code)}
                       className={`flex-1 px-2 py-1 rounded text-xs transition-colors ${
                         language === lang.code
-                          ? 'bg-amber-600 text-white'
-                          : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                          ? 'bg-amber-500 text-white'
+                          : 'bg-white/60 dark:bg-gray-800/60 hover:bg-white dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200/50 dark:border-gray-700/50'
                       }`}
                     >
                       {lang.label}
@@ -184,7 +171,7 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
 
               {/* Clinical indication */}
               <div>
-                <label className="block text-xs text-gray-300 mb-1">
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
                   {t('report.indication', 'Clinical Indication')}
                 </label>
                 <input
@@ -192,13 +179,13 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
                   value={indication}
                   onChange={(e) => setIndication(e.target.value)}
                   placeholder={t('report.indicationPlaceholder', 'e.g., Headache, rule out mass')}
-                  className="w-full px-2 py-1.5 bg-gray-700 border border-gray-600 rounded text-xs text-white placeholder-gray-500 focus:outline-none focus:border-amber-500"
+                  className="w-full px-2 py-1.5 bg-white/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-amber-500"
                 />
               </div>
 
               {/* Technique */}
               <div>
-                <label className="block text-xs text-gray-300 mb-1">
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
                   {t('report.technique', 'Technique/Sequences')}
                 </label>
                 <input
@@ -206,13 +193,13 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
                   value={technique}
                   onChange={(e) => setTechnique(e.target.value)}
                   placeholder={t('report.techniquePlaceholder', 'e.g., T1, T2, FLAIR, DWI, Gd+')}
-                  className="w-full px-2 py-1.5 bg-gray-700 border border-gray-600 rounded text-xs text-white placeholder-gray-500 focus:outline-none focus:border-amber-500"
+                  className="w-full px-2 py-1.5 bg-white/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-amber-500"
                 />
               </div>
 
               {/* Additional observations */}
               <div>
-                <label className="block text-xs text-gray-300 mb-1">
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
                   {t('report.observations', 'Additional Observations')}
                 </label>
                 <textarea
@@ -220,17 +207,17 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
                   onChange={(e) => setObservations(e.target.value)}
                   placeholder={t('report.observationsPlaceholder', 'Any additional findings or context...')}
                   rows={2}
-                  className="w-full px-2 py-1.5 bg-gray-700 border border-gray-600 rounded text-xs text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 resize-none"
+                  className="w-full px-2 py-1.5 bg-white/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-amber-500 resize-none"
                 />
               </div>
 
               {/* Volumetry indicator */}
               {volumetry && (
-                <div className="flex items-center gap-1.5 px-2 py-1.5 bg-purple-900/30 border border-purple-800 rounded">
-                  <svg className="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex items-center gap-1.5 px-2 py-1.5 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 rounded">
+                  <svg className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
-                  <span className="text-xs text-purple-300">
+                  <span className="text-xs text-purple-700 dark:text-purple-300">
                     {t('report.volumetryIncluded', 'Volumetry data will be included')}
                   </span>
                 </div>
@@ -238,7 +225,7 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
 
               {/* Error */}
               {generateMutation.isError && (
-                <div className="p-2 bg-red-900/30 border border-red-800 rounded text-xs text-red-300">
+                <div className="p-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded text-xs text-red-700 dark:text-red-300">
                   {(generateMutation.error as Error)?.message || t('report.generateError', 'Report generation failed')}
                 </div>
               )}
@@ -247,7 +234,7 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
               <button
                 onClick={handleGenerate}
                 disabled={generateMutation.isPending}
-                className="w-full px-3 py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                className="w-full px-3 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 shadow-sm"
               >
                 {generateMutation.isPending ? (
                   <>
@@ -266,64 +253,65 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
             </>
           )}
 
-          {/* Report generated — show result */}
+          {/* Report generated — compact summary */}
           {report && (
             <>
-              {/* Report header info */}
-              <div className="flex items-center justify-between text-xs text-gray-400">
-                <span>
-                  {report.template_type.charAt(0).toUpperCase() + report.template_type.slice(1)} | {report.language.toUpperCase()}
-                </span>
-                <span>{report.processing_time_ms}ms</span>
-              </div>
-
-              {/* Report content */}
-              <div className="bg-gray-900 rounded p-3 max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-900">
-                <pre className="text-xs text-gray-200 whitespace-pre-wrap font-mono leading-relaxed">
-                  {report.content}
-                </pre>
-              </div>
-
-              {/* Token usage */}
-              {report.tokens_used && (
-                <p className="text-xs text-gray-500 text-right">
-                  {t('report.tokens', 'Tokens')}: {report.tokens_used.input} in / {report.tokens_used.output} out
+              {/* Success indicator */}
+              <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700/50 rounded-lg p-3 text-center">
+                <svg className="w-6 h-6 text-green-500 dark:text-green-400 mx-auto mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-sm text-green-700 dark:text-green-300 font-medium">
+                  {t('reportViewer.reportReady', 'Report generated successfully')}
                 </p>
-              )}
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {report.template_type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} | {report.language.toUpperCase()} | {report.processing_time_ms}ms
+                </p>
+              </div>
 
               {/* Action buttons */}
-              <div className="flex gap-2">
+              <div className="space-y-1.5">
                 <button
-                  onClick={handleCopy}
-                  className="flex-1 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded text-xs transition-colors flex items-center justify-center gap-1"
+                  onClick={() => onReportGenerated?.(report)}
+                  className="w-full px-3 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 shadow-sm"
                 >
-                  {copied ? (
-                    <>
-                      <svg className="w-3.5 h-3.5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      {t('report.copied', 'Copied!')}
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                      </svg>
-                      {t('report.copy', 'Copy')}
-                    </>
-                  )}
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  {t('reportViewer.viewFullReport', 'View Full Report')}
                 </button>
-                <button
-                  onClick={handleReset}
-                  className="flex-1 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded text-xs transition-colors"
-                >
-                  {t('report.newReport', 'New Report')}
-                </button>
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={handleCopy}
+                    className="flex-1 px-3 py-1.5 bg-white/60 dark:bg-gray-800/60 hover:bg-white dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200/50 dark:border-gray-700/50 rounded text-xs transition-colors flex items-center justify-center gap-1"
+                  >
+                    {copied ? (
+                      <>
+                        <svg className="w-3.5 h-3.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        {t('report.copied', 'Copied!')}
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                        </svg>
+                        {t('report.copy', 'Copy')}
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={handleReset}
+                    className="flex-1 px-3 py-1.5 bg-white/60 dark:bg-gray-800/60 hover:bg-white dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200/50 dark:border-gray-700/50 rounded text-xs transition-colors"
+                  >
+                    {t('report.newReport', 'New Report')}
+                  </button>
+                </div>
               </div>
             </>
           )}
-        </div>
-      )}
     </div>
   );
 };

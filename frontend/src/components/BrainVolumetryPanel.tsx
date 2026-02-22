@@ -1,12 +1,12 @@
 /**
- * BrainVolumetryPanel - Brain Structure Volume Dashboard.
+ * BrainVolumetryPanel - MS Lesion Volumetry Dashboard.
  *
- * Displays per-structure volumes computed from AI segmentation masks.
+ * Displays per-structure/lesion volumes computed from AI segmentation masks.
  * Features:
- * - Bar chart showing volume per structure vs normative data
+ * - Bar chart showing volume per lesion type vs normative data
  * - Color coding: green (normal), yellow (borderline), red (abnormal)
- * - Total brain volume and intracranial volume
- * - Atrophy/enlargement flags
+ * - Total lesion volume and intracranial volume
+ * - Lesion burden flags
  *
  * @module components/BrainVolumetryPanel
  */
@@ -42,7 +42,7 @@ function getPercentileColor(percentile: number | undefined, isVentricular: boole
 }
 
 /** Get text color for abnormality status */
-function getAbnormalityBadge(structure: BrainStructureVolume): React.ReactNode {
+function getAbnormalityBadge(structure: BrainStructureVolume, t: (key: string, defaultValue: string) => string): React.ReactNode {
   if (!structure.is_abnormal) return null;
 
   const isAtrophy = structure.abnormality_type === 'atrophy';
@@ -50,7 +50,7 @@ function getAbnormalityBadge(structure: BrainStructureVolume): React.ReactNode {
     <span className={`text-xs px-1.5 py-0.5 rounded ${
       isAtrophy ? 'bg-red-900/50 text-red-300' : 'bg-orange-900/50 text-orange-300'
     }`}>
-      {isAtrophy ? 'Atrophy' : 'Enlarged'}
+      {isAtrophy ? t('volumetry.atrophy', 'Atrophy') : t('volumetry.enlarged', 'Enlarged')}
     </span>
   );
 }
@@ -114,7 +114,7 @@ export const BrainVolumetryPanel: React.FC<BrainVolumetryPanelProps> = ({
           <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
-          {t('volumetry.title', 'Brain Volumetry')}
+          {t('volumetry.title', 'Lesion Volumetry')}
           {abnormalCount > 0 && (
             <span className="ml-1 px-1.5 py-0.5 bg-red-600 rounded-full text-xs">
               {abnormalCount}
@@ -150,7 +150,7 @@ export const BrainVolumetryPanel: React.FC<BrainVolumetryPanelProps> = ({
               </button>
               {!segmentationId && (
                 <p className="text-xs text-gray-500 mt-2">
-                  {t('volumetry.needSegmentation', 'Load a brain segmentation first')}
+                  {t('volumetry.needSegmentation', 'Load an MS lesion segmentation first')}
                 </p>
               )}
             </div>
@@ -159,7 +159,7 @@ export const BrainVolumetryPanel: React.FC<BrainVolumetryPanelProps> = ({
           {/* Error */}
           {computeMutation.isError && (
             <div className="p-2 bg-red-900/30 border border-red-800 rounded text-xs text-red-300">
-              {(computeMutation.error as Error)?.message || 'Volumetry computation failed'}
+              {(computeMutation.error as Error)?.message || t('volumetry.computeError', 'Volumetry computation failed')}
             </div>
           )}
 
@@ -219,7 +219,7 @@ export const BrainVolumetryPanel: React.FC<BrainVolumetryPanelProps> = ({
                           {structure.structure_name}
                         </span>
                         <div className="flex items-center gap-1">
-                          {getAbnormalityBadge(structure)}
+                          {getAbnormalityBadge(structure, t)}
                           <span className="text-white font-mono whitespace-nowrap">
                             {structure.volume_ml.toFixed(1)} mL
                           </span>

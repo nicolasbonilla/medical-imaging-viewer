@@ -64,7 +64,7 @@ class Settings(BaseSettings):
     """Application settings with environment variable support."""
 
     # Application Configuration
-    APP_NAME: str = Field(default="Medical Imaging Viewer")
+    APP_NAME: str = Field(default="MS Brain MRI Viewer")
     APP_VERSION: str = Field(default="1.0.0")
     DEBUG: bool = Field(default=False)
     ENVIRONMENT: str = Field(default="production")
@@ -179,7 +179,7 @@ class Settings(BaseSettings):
 
     # Claude API Configuration (for report generation)
     ANTHROPIC_API_KEY: str = Field(default="", description="Anthropic API key for Claude")
-    CLAUDE_MODEL: str = Field(default="claude-sonnet-4-20250514")
+    CLAUDE_MODEL: str = Field(default="claude-sonnet-4-5-20250929")
     CLAUDE_MAX_TOKENS: int = Field(default=4096, ge=256, le=16384)
 
     # MCP (Model Context Protocol) Configuration

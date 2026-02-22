@@ -24,7 +24,7 @@ interface UseSegmentationDataProps {
 export function useSegmentationData({
   onPaintComplete,
 }: UseSegmentationDataProps) {
-  const { currentSeries } = useViewerStore();
+  const { currentSeries, currentStudyId, allFileIds } = useViewerStore();
   const queryClient = useQueryClient();
 
   // Read currentSegmentation from Zustand (single source of truth)
@@ -95,14 +95,14 @@ export function useSegmentationData({
     }
   }, [currentSegmentation, currentSeries?.file_id]);
 
-  // Fetch segmentations list
+  // Fetch segmentations list for ALL images in the study
   const { data: segmentations } = useQuery({
-    queryKey: ['segmentations', currentSeries?.file_id],
+    queryKey: ['segmentations', 'study', currentStudyId],
     queryFn: () =>
-      currentSeries?.file_id
-        ? segmentationAPI.listSegmentations(currentSeries.file_id)
+      allFileIds.length > 0
+        ? segmentationAPI.listSegmentationsByFileIds(allFileIds)
         : Promise.resolve([]),
-    enabled: !!currentSeries?.file_id,
+    enabled: allFileIds.length > 0,
   });
 
   // Default labels for new segmentations
@@ -235,7 +235,7 @@ export function useSegmentationData({
       setSaveStatus('saved');
       setLastSaveTime(new Date());
       // Refresh the list so the saved segmentation appears in the sidebar
-      queryClient.invalidateQueries({ queryKey: ['segmentations'] });
+      queryClient.invalidateQueries({ queryKey: ['segmentations', 'study', currentStudyId] });
       setTimeout(() => setSaveStatus('idle'), 3000);
     } else {
       console.error('[SegmentationData] Failed to save segmentation');
@@ -264,6 +264,19 @@ export function useSegmentationData({
     useSegmentationStore.getState().setCreateCallback(createSegmentation);
     return () => useSegmentationStore.getState().setCreateCallback(null);
   }, [createSegmentation]);
+
+  // Register reload-mask callback so LesionDashboard can reload after auto-classify
+  const reloadCurrentMask = useCallback(async () => {
+    const seg = useSegmentationStore.getState().currentSegmentation;
+    if (seg) {
+      await segmentationMask.loadMask(seg.segmentation_id);
+    }
+  }, [segmentationMask]);
+
+  useEffect(() => {
+    useSegmentationStore.getState().setReloadMaskCallback(reloadCurrentMask);
+    return () => useSegmentationStore.getState().setReloadMaskCallback(null);
+  }, [reloadCurrentMask]);
 
   // Auto-save before unload (only if there are unsaved changes)
   useEffect(() => {

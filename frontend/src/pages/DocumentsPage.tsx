@@ -40,15 +40,9 @@ interface Filters {
 }
 
 const CATEGORIES: DocumentCategory[] = [
-  'lab-result',
-  'prescription',
   'clinical-note',
-  'discharge-summary',
   'radiology-report',
-  'consent-form',
-  'referral',
-  'operative-note',
-  'pathology-report',
+  'ms-assessment',
   'other',
 ];
 
@@ -167,11 +161,11 @@ export default function DocumentsPage() {
               </motion.div>
               <div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-accent-600 dark:from-primary-400 dark:to-accent-400 bg-clip-text text-transparent flex items-center gap-2">
-                  {t('document.title', 'Documentos')}
+                  {t('document.title', 'Documents')}
                   <Sparkles className="w-5 h-5 text-accent-500 dark:text-accent-400 animate-pulse" />
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                  {t('document.subtitle', 'Gestión de documentos clínicos')}
+                  {t('document.subtitle', 'Clinical Document Management')}
                 </p>
               </div>
             </div>
@@ -404,9 +398,9 @@ export default function DocumentsPage() {
                         onChange={(e) => setSortField(e.target.value as SortField)}
                         className="w-full px-3 py-2 border border-gray-200/50 dark:border-gray-700/50 rounded-xl bg-white/60 dark:bg-gray-900/60 text-gray-900 dark:text-gray-100"
                       >
-                        <option value="date">{t('document.date', 'Fecha')}</option>
-                        <option value="title">{t('document.docTitle', 'Título')}</option>
-                        <option value="category">{t('document.category', 'Categoría')}</option>
+                        <option value="date">{t('document.date', 'Date')}</option>
+                        <option value="title">{t('document.docTitle', 'Title')}</option>
+                        <option value="category">{t('document.category', 'Category')}</option>
                       </select>
                     </div>
                   </div>
@@ -452,12 +446,12 @@ export default function DocumentsPage() {
               </div>
               <h3 className="text-xl font-medium text-gray-900 dark:text-gray-100 mb-2">
                 {filters.search || hasActiveFilters
-                  ? t('document.noResults', 'No se encontraron documentos')
+                  ? t('document.noResults', 'No documents found')
                   : t('document.noDocuments')}
               </h3>
               <p className="text-gray-500 dark:text-gray-400">
                 {filters.search || hasActiveFilters
-                  ? t('document.tryDifferentSearch', 'Intenta con otros filtros')
+                  ? t('document.tryDifferentSearch', 'Try different filters')
                   : t('document.noDocumentsDescription')}
               </p>
             </motion.div>

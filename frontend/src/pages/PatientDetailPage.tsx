@@ -143,7 +143,7 @@ export default function PatientDetailPage() {
     setShowDocumentUploader(false);
     refetchDocuments();
     refetchPatient();
-    toast.success(t('document.uploadSuccess'));
+    toast.success(t('document.messages.uploadSuccess'));
   }, [refetchDocuments, refetchPatient, t]);
 
   // Format helpers
@@ -189,10 +189,10 @@ export default function PatientDetailPage() {
   }
 
   const tabs: { id: TabType; label: string; icon: React.ReactNode; count?: number }[] = [
-    { id: 'overview', label: t('patients.tabs.overview', 'Resumen'), icon: <User className="w-4 h-4" /> },
-    { id: 'studies', label: t('patients.tabs.studies', 'Estudios'), icon: <FileImage className="w-4 h-4" />, count: patient.study_count },
-    { id: 'documents', label: t('patients.tabs.documents', 'Documentos'), icon: <FileText className="w-4 h-4" />, count: patient.document_count },
-    { id: 'history', label: t('patients.tabs.history', 'Historial'), icon: <Heart className="w-4 h-4" /> },
+    { id: 'overview', label: t('patients.tabs.overview', 'Overview'), icon: <User className="w-4 h-4" /> },
+    { id: 'studies', label: t('patients.tabs.studies', 'Studies'), icon: <FileImage className="w-4 h-4" />, count: patient.study_count },
+    { id: 'documents', label: t('patients.tabs.documents', 'Documents'), icon: <FileText className="w-4 h-4" />, count: patient.document_count },
+    { id: 'history', label: t('patients.tabs.history', 'History'), icon: <Heart className="w-4 h-4" /> },
   ];
 
   return (
@@ -355,13 +355,13 @@ export default function PatientDetailPage() {
                   <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-6 shadow-lg">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                       <User className="w-5 h-5 text-primary-500" />
-                      {t('patients.personalInfo', 'Información Personal')}
+                      {t('patients.personalInfo', 'Personal Information')}
                     </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                          {t('patients.fullName', 'Nombre Completo')}
+                          {t('patients.fullName', 'Full Name')}
                         </label>
                         <p className="text-gray-900 dark:text-white font-medium">{patient.full_name}</p>
                       </div>
@@ -376,7 +376,7 @@ export default function PatientDetailPage() {
                       <div>
                         <label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
-                          {t('patients.birthDate', 'Fecha de Nacimiento')}
+                          {t('patients.birthDate', 'Date of Birth')}
                         </label>
                         <p className="text-gray-900 dark:text-white">
                           {formatDate(patient.birth_date)} ({patient.age} {t('patients.years')})
@@ -385,7 +385,7 @@ export default function PatientDetailPage() {
 
                       <div>
                         <label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                          {t('patients.gender', 'Género')}
+                          {t('patients.gender', 'Gender')}
                         </label>
                         <p className="text-gray-900 dark:text-white">
                           {getGenderSymbol(patient.gender)} {t(`patients.genders.${patient.gender}`)}
@@ -398,7 +398,7 @@ export default function PatientDetailPage() {
                   <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-6 shadow-lg">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                       <Phone className="w-5 h-5 text-primary-500" />
-                      {t('patients.contactInfo', 'Información de Contacto')}
+                      {t('patients.contactInfo', 'Contact Information')}
                     </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -406,7 +406,7 @@ export default function PatientDetailPage() {
                         <div>
                           <label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide flex items-center gap-1">
                             <Phone className="w-3 h-3" />
-                            {t('patients.phoneMobile', 'Teléfono Móvil')}
+                            {t('patients.phoneMobile', 'Mobile Phone')}
                           </label>
                           <p className="text-gray-900 dark:text-white">{patient.phone_mobile}</p>
                         </div>
@@ -415,7 +415,7 @@ export default function PatientDetailPage() {
                       {patient.phone_home && (
                         <div>
                           <label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                            {t('patients.phoneHome', 'Teléfono Casa')}
+                            {t('patients.phoneHome', 'Home Phone')}
                           </label>
                           <p className="text-gray-900 dark:text-white">{patient.phone_home}</p>
                         </div>
@@ -435,7 +435,7 @@ export default function PatientDetailPage() {
                         <div className="md:col-span-2">
                           <label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide flex items-center gap-1">
                             <MapPin className="w-3 h-3" />
-                            {t('patients.address', 'Dirección')}
+                            {t('patients.address', 'Address')}
                           </label>
                           <p className="text-gray-900 dark:text-white">
                             {[patient.address_line1, patient.address_line2, patient.city, patient.state, patient.postal_code, patient.country]
@@ -452,20 +452,20 @@ export default function PatientDetailPage() {
                     <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-6 shadow-lg">
                       <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                         <AlertCircle className="w-5 h-5 text-red-500" />
-                        {t('patients.emergencyContact', 'Contacto de Emergencia')}
+                        {t('patients.emergencyContact', 'Emergency Contact')}
                       </h3>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                           <label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                            {t('patients.name', 'Nombre')}
+                            {t('patients.name', 'Name')}
                           </label>
                           <p className="text-gray-900 dark:text-white">{patient.emergency_contact_name}</p>
                         </div>
                         {patient.emergency_contact_phone && (
                           <div>
                             <label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                              {t('patients.phone', 'Teléfono')}
+                              {t('patients.phone', 'Phone')}
                             </label>
                             <p className="text-gray-900 dark:text-white">{patient.emergency_contact_phone}</p>
                           </div>
@@ -473,7 +473,7 @@ export default function PatientDetailPage() {
                         {patient.emergency_contact_relationship && (
                           <div>
                             <label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                              {t('patients.relationship', 'Relación')}
+                              {t('patients.relationship', 'Relationship')}
                             </label>
                             <p className="text-gray-900 dark:text-white">{patient.emergency_contact_relationship}</p>
                           </div>
@@ -489,7 +489,7 @@ export default function PatientDetailPage() {
                   <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-6 shadow-lg">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                       <Activity className="w-5 h-5 text-primary-500" />
-                      {t('patients.quickStats', 'Estadísticas')}
+                      {t('patients.quickStats', 'Statistics')}
                     </h3>
 
                     <div className="space-y-4">
@@ -520,20 +520,20 @@ export default function PatientDetailPage() {
                     <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-6 shadow-lg">
                       <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                         <Shield className="w-5 h-5 text-primary-500" />
-                        {t('patients.insurance', 'Seguro')}
+                        {t('patients.insurance', 'Insurance')}
                       </h3>
 
                       <div className="space-y-2">
                         <div>
                           <label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                            {t('patients.insuranceProvider', 'Aseguradora')}
+                            {t('patients.insuranceProvider', 'Insurance Provider')}
                           </label>
                           <p className="text-gray-900 dark:text-white">{patient.insurance_provider}</p>
                         </div>
                         {patient.insurance_policy_number && (
                           <div>
                             <label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                              {t('patients.policyNumber', 'Número de Póliza')}
+                              {t('patients.policyNumber', 'Policy Number')}
                             </label>
                             <p className="text-gray-900 dark:text-white font-mono">{patient.insurance_policy_number}</p>
                           </div>
@@ -546,7 +546,7 @@ export default function PatientDetailPage() {
                   <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-6 shadow-lg">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                       <Clock className="w-5 h-5 text-primary-500" />
-                      {t('patients.timestamps', 'Registro')}
+                      {t('patients.timestamps', 'Record')}
                     </h3>
 
                     <div className="space-y-2 text-sm">
@@ -564,7 +564,7 @@ export default function PatientDetailPage() {
                   {/* Quick Actions */}
                   <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-6 shadow-lg">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
-                      {t('patients.quickActions', 'Acciones Rápidas')}
+                      {t('patients.quickActions', 'Quick Actions')}
                     </h3>
 
                     <div className="space-y-2">
@@ -573,14 +573,14 @@ export default function PatientDetailPage() {
                         className="w-full flex items-center gap-2 px-4 py-2.5 bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-colors"
                       >
                         <Plus className="w-4 h-4" />
-                        {t('study.uploadStudy', 'Subir Estudio')}
+                        {t('study.uploadStudy', 'Upload Study')}
                       </button>
                       <button
                         onClick={() => { setActiveTab('documents'); setShowDocumentUploader(true); }}
                         className="w-full flex items-center gap-2 px-4 py-2.5 bg-accent-500 text-white rounded-xl hover:bg-accent-600 transition-colors"
                       >
                         <Plus className="w-4 h-4" />
-                        {t('document.uploadDocument', 'Subir Documento')}
+                        {t('document.uploadDocument', 'Upload Document')}
                       </button>
                     </div>
                   </div>
@@ -646,10 +646,10 @@ export default function PatientDetailPage() {
                 <div className="text-center py-12">
                   <Heart className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                    {t('patients.noMedicalHistory', 'Sin historial médico')}
+                    {t('patients.noMedicalHistory', 'No medical history')}
                   </h3>
                   <p className="text-gray-500 dark:text-gray-400">
-                    {t('patients.medicalHistoryComingSoon', 'El historial médico estará disponible próximamente')}
+                    {t('patients.medicalHistoryComingSoon', 'Medical history will be available soon')}
                   </p>
                 </div>
               </motion.div>
@@ -717,7 +717,7 @@ export default function PatientDetailPage() {
             >
               <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                  {t('study.newBrainMRI', 'Nuevo Estudio de IRM Cerebral')}
+                  {t('study.newBrainMRI', 'New Brain MRI Study')}
                 </h2>
                 <button
                   onClick={() => setShowStudyUploader(false)}

@@ -80,7 +80,7 @@ export default function LoginPage() {
       setCaptchaData(response.data);
       setRequiresCaptcha(true);
     } catch (error) {
-      toast.error('Failed to generate CAPTCHA');
+      toast.error(t('auth.captchaGenerationFailed', 'Failed to generate CAPTCHA'));
       console.error(error);
     }
   };
@@ -98,10 +98,10 @@ export default function LoginPage() {
 
     if (password.length >= 12) {
       score += 2;
-      feedback.push('Good length');
+      feedback.push(t('auth.passwordRequirements.goodLength', 'Good length'));
     } else if (password.length >= 8) {
       score += 1;
-      feedback.push('Consider longer password');
+      feedback.push(t('auth.passwordRequirements.considerLonger', 'Consider longer password'));
     }
 
     if (/[A-Z]/.test(password)) score += 1;
@@ -117,9 +117,9 @@ export default function LoginPage() {
     ].filter(Boolean).length;
 
     if (diversity === 4) {
-      feedback.push('Excellent diversity');
+      feedback.push(t('auth.passwordRequirements.excellentDiversity', 'Excellent diversity'));
     } else if (diversity >= 3) {
-      feedback.push('Good diversity');
+      feedback.push(t('auth.passwordRequirements.goodDiversity', 'Good diversity'));
     }
 
     setPasswordStrength({ score, feedback });

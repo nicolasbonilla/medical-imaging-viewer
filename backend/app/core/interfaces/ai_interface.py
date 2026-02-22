@@ -62,11 +62,12 @@ class AnomalyDetectionRequest(BaseModel):
 
 
 class BrainAnomaly(BaseModel):
-    """A detected brain anomaly."""
-    type: str = Field(..., description="Anomaly type: tumor, lesion, hemorrhage, infarct, atrophy")
+    """A detected MS lesion or brain anomaly."""
+    type: str = Field(..., description="Anomaly type: ms_lesion, active_lesion, chronic_lesion, black_hole")
     location: str = Field(..., description="Anatomical location description")
     confidence: float = Field(..., ge=0.0, le=1.0)
     volume_mm3: Optional[float] = None
+    gadolinium_enhancement: Optional[bool] = Field(None, description="Whether lesion shows gadolinium enhancement")
     bounding_box: Optional[Dict[str, int]] = Field(
         None, description="3D bounding box: x_min, y_min, z_min, x_max, y_max, z_max"
     )

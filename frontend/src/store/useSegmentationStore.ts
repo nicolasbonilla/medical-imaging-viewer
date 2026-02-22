@@ -19,9 +19,11 @@ import type {
   SegmentationSummary,
   SegmentationResponse,
   LabelInfo,
+  LabelPreset,
   OverlaySettings,
   OverlayMode,
 } from '@/types';
+import { DEFAULT_LABEL_PRESETS } from '@/types';
 
 // ============================================================================
 // Types
@@ -87,6 +89,9 @@ interface SegmentationState {
   /** Create callback set by useSegmentationData — allows panel to create locally */
   createCallback: ((fileId: string, imageShape: { rows: number; columns: number; slices: number }) => void) | null;
 
+  /** Reload mask callback — allows LesionDashboard to trigger mask reload after auto-classify */
+  reloadMaskCallback: (() => Promise<void>) | null;
+
   /** Last save timestamp */
   lastSavedAt: string | null;
 
@@ -134,6 +139,22 @@ interface SegmentationState {
   isOverlayVisible: boolean;
 
   // =========================================================================
+  // Zone Map (MAGNIMS background overlay)
+  // =========================================================================
+
+  /** Zone map segmentation ID (null if not generated) */
+  zoneMapSegId: string | null;
+
+  /** Zone map 3D mask data (loaded separately from active segmentation) */
+  zoneMapMask: Uint8Array | null;
+
+  /** Zone map mask dimensions */
+  zoneMapDims: { depth: number; height: number; width: number } | null;
+
+  /** Whether zone map background overlay is visible */
+  zoneMapVisible: boolean;
+
+  // =========================================================================
   // Actions - Segmentation
   // =========================================================================
 
@@ -147,6 +168,7 @@ interface SegmentationState {
   setLastSavedAt: (timestamp: string | null) => void;
   setSaveCallback: (fn: (() => Promise<void>) | null) => void;
   setCreateCallback: (fn: ((fileId: string, imageShape: { rows: number; columns: number; slices: number }) => void) | null) => void;
+  setReloadMaskCallback: (fn: (() => Promise<void>) | null) => void;
 
   // =========================================================================
   // Actions - Labels
@@ -160,6 +182,7 @@ interface SegmentationState {
   updateLabel: (labelId: number, updates: Partial<LabelInfo>) => void;
   addLabel: (label: LabelInfo) => void;
   removeLabel: (labelId: number) => void;
+  setLabelPreset: (preset: LabelPreset) => void;
 
   // =========================================================================
   // Actions - Paint Tool
@@ -183,6 +206,14 @@ interface SegmentationState {
   setOutlineThickness: (thickness: number) => void;
   toggleOverlayVisibility: () => void;
   setIsOverlayVisible: (visible: boolean) => void;
+
+  // =========================================================================
+  // Actions - Zone Map
+  // =========================================================================
+
+  setZoneMap: (segId: string, mask: Uint8Array, dims: { depth: number; height: number; width: number }) => void;
+  clearZoneMap: () => void;
+  toggleZoneMapVisibility: () => void;
 
   // =========================================================================
   // Actions - Reset
@@ -223,6 +254,7 @@ const initialState = {
   isSaving: false,
   saveCallback: null as (() => Promise<void>) | null,
   createCallback: null as ((fileId: string, imageShape: { rows: number; columns: number; slices: number }) => void) | null,
+  reloadMaskCallback: null as (() => Promise<void>) | null,
   lastSavedAt: null as string | null,
 
   // List
@@ -241,6 +273,12 @@ const initialState = {
   // Overlay
   overlaySettings: defaultOverlaySettings,
   isOverlayVisible: true,
+
+  // Zone Map
+  zoneMapSegId: null as string | null,
+  zoneMapMask: null as Uint8Array | null,
+  zoneMapDims: null as { depth: number; height: number; width: number } | null,
+  zoneMapVisible: false,
 };
 
 // ============================================================================
@@ -287,6 +325,8 @@ export const useSegmentationStore = create<SegmentationState>()(
         setSaveCallback: (fn) => set({ saveCallback: fn }),
 
         setCreateCallback: (fn) => set({ createCallback: fn }),
+
+        setReloadMaskCallback: (fn) => set({ reloadMaskCallback: fn }),
 
         // =====================================================================
         // Label Actions
@@ -372,6 +412,21 @@ export const useSegmentationStore = create<SegmentationState>()(
             };
           }),
 
+        setLabelPreset: (preset) =>
+          set((state) => {
+            if (!state.activeSegmentation) return state;
+            const labels = DEFAULT_LABEL_PRESETS[preset];
+            if (!labels) return state;
+            const visibility: Record<number, boolean> = {};
+            labels.forEach((l) => { visibility[l.id] = l.visible; });
+            return {
+              activeSegmentation: { ...state.activeSegmentation, labels },
+              labelVisibility: visibility,
+              activeLabel: labels.find((l) => l.id !== 0)?.id ?? 1,
+              isDirty: true,
+            };
+          }),
+
         // =====================================================================
         // Paint Tool Actions
         // =====================================================================
@@ -440,6 +495,19 @@ export const useSegmentationStore = create<SegmentationState>()(
           set((state) => ({ isOverlayVisible: !state.isOverlayVisible })),
 
         setIsOverlayVisible: (visible) => set({ isOverlayVisible: visible }),
+
+        // =====================================================================
+        // Zone Map Actions
+        // =====================================================================
+
+        setZoneMap: (segId, mask, dims) =>
+          set({ zoneMapSegId: segId, zoneMapMask: mask, zoneMapDims: dims, zoneMapVisible: true }),
+
+        clearZoneMap: () =>
+          set({ zoneMapSegId: null, zoneMapMask: null, zoneMapDims: null, zoneMapVisible: false }),
+
+        toggleZoneMapVisibility: () =>
+          set((state) => ({ zoneMapVisible: !state.zoneMapVisible })),
 
         // =====================================================================
         // Reset Actions

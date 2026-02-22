@@ -14,7 +14,7 @@ interface UseCanvasRenderingProps {
 }
 
 export function useCanvasRendering({ canvasRef, containerRef, renderMode }: UseCanvasRenderingProps) {
-  const { currentSeries, currentSliceIndex, zoomLevel, panOffset } = useViewerStore();
+  const { currentSeries, currentSliceIndex, zoomLevel, panOffset, setSliceHistogram } = useViewerStore();
 
   useEffect(() => {
     if (renderMode !== 'standard') return;
@@ -68,6 +68,23 @@ export function useCanvasRendering({ canvasRef, containerRef, renderMode }: UseC
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
       ctx.restore();
+
+      // Compute histogram from raw image (no zoom/pan)
+      const tempCanvas = document.createElement('canvas');
+      const tw = Math.min(img.naturalWidth, 256);
+      const th = Math.min(img.naturalHeight, 256);
+      tempCanvas.width = tw;
+      tempCanvas.height = th;
+      const tempCtx = tempCanvas.getContext('2d');
+      if (tempCtx) {
+        tempCtx.drawImage(img, 0, 0, tw, th);
+        const pixels = tempCtx.getImageData(0, 0, tw, th).data;
+        const hist = new Array(256).fill(0);
+        for (let i = 0; i < pixels.length; i += 4) {
+          hist[pixels[i]]++; // R channel (grayscale)
+        }
+        setSliceHistogram(hist);
+      }
     };
     img.src = `data:image/png;base64,${currentSlice.image_data}`;
 

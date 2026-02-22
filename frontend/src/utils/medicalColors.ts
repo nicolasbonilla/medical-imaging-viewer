@@ -252,59 +252,11 @@ export const GENDER_COLORS = {
 // ============================================================================
 
 export const MODALITY_COLORS = {
-  CT: {
-    bg: 'bg-blue-50 dark:bg-blue-900/20',
-    bgSolid: 'bg-blue-500',
-    text: 'text-blue-700 dark:text-blue-300',
-    hex: '#3B82F6',
-  },
   MR: {
     bg: 'bg-purple-50 dark:bg-purple-900/20',
     bgSolid: 'bg-purple-500',
     text: 'text-purple-700 dark:text-purple-300',
     hex: '#8B5CF6',
-  },
-  US: {
-    bg: 'bg-cyan-50 dark:bg-cyan-900/20',
-    bgSolid: 'bg-cyan-500',
-    text: 'text-cyan-700 dark:text-cyan-300',
-    hex: '#06B6D4',
-  },
-  XR: {
-    bg: 'bg-slate-50 dark:bg-slate-800/50',
-    bgSolid: 'bg-slate-500',
-    text: 'text-slate-700 dark:text-slate-300',
-    hex: '#64748B',
-  },
-  MG: {
-    bg: 'bg-pink-50 dark:bg-pink-900/20',
-    bgSolid: 'bg-pink-500',
-    text: 'text-pink-700 dark:text-pink-300',
-    hex: '#EC4899',
-  },
-  NM: {
-    bg: 'bg-emerald-50 dark:bg-emerald-900/20',
-    bgSolid: 'bg-emerald-500',
-    text: 'text-emerald-700 dark:text-emerald-300',
-    hex: '#10B981',
-  },
-  PT: {
-    bg: 'bg-orange-50 dark:bg-orange-900/20',
-    bgSolid: 'bg-orange-500',
-    text: 'text-orange-700 dark:text-orange-300',
-    hex: '#F97316',
-  },
-  CR: {
-    bg: 'bg-gray-50 dark:bg-gray-800/50',
-    bgSolid: 'bg-gray-500',
-    text: 'text-gray-700 dark:text-gray-300',
-    hex: '#6B7280',
-  },
-  DX: {
-    bg: 'bg-gray-50 dark:bg-gray-800/50',
-    bgSolid: 'bg-gray-500',
-    text: 'text-gray-700 dark:text-gray-300',
-    hex: '#6B7280',
   },
   OT: {
     bg: 'bg-gray-50 dark:bg-gray-800/50',
@@ -319,50 +271,20 @@ export const MODALITY_COLORS = {
 // ============================================================================
 
 export const DOCUMENT_CATEGORY_COLORS = {
-  'lab-result': {
-    bg: 'bg-emerald-50 dark:bg-emerald-900/20',
-    icon: 'text-emerald-600 dark:text-emerald-400',
-    hex: '#10B981',
-  },
-  'prescription': {
-    bg: 'bg-blue-50 dark:bg-blue-900/20',
-    icon: 'text-blue-600 dark:text-blue-400',
-    hex: '#3B82F6',
-  },
   'clinical-note': {
     bg: 'bg-purple-50 dark:bg-purple-900/20',
     icon: 'text-purple-600 dark:text-purple-400',
     hex: '#8B5CF6',
-  },
-  'discharge-summary': {
-    bg: 'bg-amber-50 dark:bg-amber-900/20',
-    icon: 'text-amber-600 dark:text-amber-400',
-    hex: '#F59E0B',
   },
   'radiology-report': {
     bg: 'bg-cyan-50 dark:bg-cyan-900/20',
     icon: 'text-cyan-600 dark:text-cyan-400',
     hex: '#06B6D4',
   },
-  'consent-form': {
-    bg: 'bg-slate-50 dark:bg-slate-800/50',
-    icon: 'text-slate-600 dark:text-slate-400',
-    hex: '#64748B',
-  },
-  'referral': {
-    bg: 'bg-indigo-50 dark:bg-indigo-900/20',
-    icon: 'text-indigo-600 dark:text-indigo-400',
-    hex: '#6366F1',
-  },
-  'operative-note': {
-    bg: 'bg-rose-50 dark:bg-rose-900/20',
-    icon: 'text-rose-600 dark:text-rose-400',
-    hex: '#F43F5E',
-  },
-  'pathology-report': {
-    bg: 'bg-pink-50 dark:bg-pink-900/20',
-    icon: 'text-pink-600 dark:text-pink-400',
-    hex: '#EC4899',
+  'ms-assessment': {
+    bg: 'bg-blue-50 dark:bg-blue-900/20',
+    icon: 'text-blue-600 dark:text-blue-400',
+    hex: '#3B82F6',
   },
   'other': {
     bg: 'bg-gray-50 dark:bg-gray-800/50',

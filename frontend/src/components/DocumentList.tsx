@@ -55,15 +55,9 @@ export interface DocumentFilters {
 }
 
 const CATEGORIES: DocumentCategory[] = [
-  'lab-result',
-  'prescription',
   'clinical-note',
-  'discharge-summary',
   'radiology-report',
-  'consent-form',
-  'referral',
-  'operative-note',
-  'pathology-report',
+  'ms-assessment',
   'other',
 ];
 
@@ -241,7 +235,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
             >
               <Upload className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('document.upload')}</span>
+              <span className="hidden sm:inline">{t('document.uploadDocument')}</span>
             </button>
           )}
         </div>

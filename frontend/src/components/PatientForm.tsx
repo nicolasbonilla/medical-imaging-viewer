@@ -78,30 +78,30 @@ export default function PatientForm({
     const newErrors: Record<string, string> = {};
 
     if (!formData.mrn) {
-      newErrors.mrn = t('patients.form.errors.mrnRequired', 'MRN es requerido');
+      newErrors.mrn = t('patient.validation.mrnRequired', 'MRN is required');
     }
     if (!formData.given_name) {
       newErrors.given_name = t(
-        'patients.form.errors.givenNameRequired',
-        'Nombre es requerido'
+        'patient.validation.givenNameRequired',
+        'First name is required'
       );
     }
     if (!formData.family_name) {
       newErrors.family_name = t(
-        'patients.form.errors.familyNameRequired',
-        'Apellido es requerido'
+        'patient.validation.familyNameRequired',
+        'Last name is required'
       );
     }
     if (!formData.birth_date) {
       newErrors.birth_date = t(
-        'patients.form.errors.birthDateRequired',
-        'Fecha de nacimiento es requerida'
+        'patient.validation.birthDateRequired',
+        'Birth date is required'
       );
     }
     if (!formData.phone_mobile) {
       newErrors.phone_mobile = t(
-        'patients.form.errors.phoneMobileRequired',
-        'Teléfono móvil es requerido'
+        'patient.validation.phoneMobileRequired',
+        'Mobile phone is required'
       );
     }
 
@@ -127,24 +127,24 @@ export default function PatientForm({
         if (isEdit && patient) {
           const { mrn: _mrn, ...updateData } = formData;
           await updateMutation.mutateAsync({ id: patient.id, data: updateData });
-          toast.success(t('patients.updateSuccess', 'Paciente actualizado'));
+          toast.success(t('patients.updateSuccess', 'Patient updated successfully'));
         } else {
           await createMutation.mutateAsync(formData);
-          toast.success(t('patients.createSuccess', 'Paciente creado'));
+          toast.success(t('patients.createSuccess', 'Patient created successfully'));
         }
       }
       onSuccess?.();
     } catch (error) {
-      toast.error(t('errors.generic', 'Error al guardar'));
+      toast.error(t('errors.generic', 'An error occurred. Please try again.'));
       console.error('Form submission error:', error);
     }
   };
 
   const genderOptions: { value: Gender; label: string }[] = [
-    { value: 'male', label: t('patients.gender.male', 'Masculino') },
-    { value: 'female', label: t('patients.gender.female', 'Femenino') },
-    { value: 'other', label: t('patients.gender.other', 'Otro') },
-    { value: 'unknown', label: t('patients.gender.unknown', 'Desconocido') },
+    { value: 'male', label: t('patient.gender.male', 'Male') },
+    { value: 'female', label: t('patient.gender.female', 'Female') },
+    { value: 'other', label: t('patient.gender.other', 'Other') },
+    { value: 'unknown', label: t('patient.gender.unknown', 'Unknown') },
   ];
 
   const inputClass = (field: string) =>
@@ -174,8 +174,8 @@ export default function PatientForm({
             </div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">
               {isEdit
-                ? t('patients.form.editTitle', 'Editar Paciente')
-                : t('patients.form.createTitle', 'Nuevo Paciente')}
+                ? t('patient.editPatient', 'Edit Patient')
+                : t('patient.newPatient', 'New Patient')}
             </h2>
           </div>
           <button
@@ -196,7 +196,7 @@ export default function PatientForm({
             <section>
               <h3 className="flex items-center gap-2 text-lg font-semibold mb-4 text-gray-900 dark:text-white">
                 <User className="w-5 h-5 text-primary-500" />
-                {t('patients.form.sections.basicInfo', 'Información Básica')}
+                {t('patient.form.basicInfo', 'Basic Information')}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
@@ -219,7 +219,7 @@ export default function PatientForm({
 
                 <div>
                   <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                    {t('patients.form.givenName', 'Nombre')} *
+                    {t('patients.form.givenName', 'Given Name')} *
                   </label>
                   <input
                     type="text"
@@ -235,7 +235,7 @@ export default function PatientForm({
 
                 <div>
                   <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                    {t('patients.form.middleName', 'Segundo Nombre')}
+                    {t('patients.form.middleName', 'Middle Name')}
                   </label>
                   <input
                     type="text"
@@ -248,7 +248,7 @@ export default function PatientForm({
 
                 <div>
                   <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                    {t('patients.form.familyName', 'Apellido')} *
+                    {t('patients.form.familyName', 'Family Name')} *
                   </label>
                   <input
                     type="text"
@@ -264,7 +264,7 @@ export default function PatientForm({
 
                 <div>
                   <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                    {t('patients.form.birthDate', 'Fecha de Nacimiento')} *
+                    {t('patients.form.birthDate', 'Date of Birth')} *
                   </label>
                   <input
                     type="date"
@@ -280,7 +280,7 @@ export default function PatientForm({
 
                 <div>
                   <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                    {t('patients.form.gender', 'Género')} *
+                    {t('patients.form.gender', 'Gender')} *
                   </label>
                   <select
                     name="gender"
@@ -302,12 +302,12 @@ export default function PatientForm({
             <section>
               <h3 className="flex items-center gap-2 text-lg font-semibold mb-4 text-gray-900 dark:text-white">
                 <Phone className="w-5 h-5 text-primary-500" />
-                {t('patients.form.sections.contact', 'Contacto')}
+                {t('patients.form.sections.contact', 'Contact')}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                    {t('patients.form.phoneMobile', 'Teléfono Móvil')} *
+                    {t('patients.form.phoneMobile', 'Mobile Phone')} *
                   </label>
                   <input
                     type="tel"
@@ -324,7 +324,7 @@ export default function PatientForm({
 
                 <div>
                   <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                    {t('patients.form.phoneHome', 'Teléfono Casa')}
+                    {t('patients.form.phoneHome', 'Home Phone')}
                   </label>
                   <input
                     type="tel"
@@ -355,12 +355,12 @@ export default function PatientForm({
             <section>
               <h3 className="flex items-center gap-2 text-lg font-semibold mb-4 text-gray-900 dark:text-white">
                 <MapPin className="w-5 h-5 text-primary-500" />
-                {t('patients.form.sections.address', 'Dirección')}
+                {t('patients.form.sections.address', 'Address')}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                    {t('patients.form.addressLine1', 'Dirección')}
+                    {t('patients.form.addressLine1', 'Address Line 1')}
                   </label>
                   <input
                     type="text"
@@ -373,7 +373,7 @@ export default function PatientForm({
 
                 <div>
                   <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                    {t('patients.form.city', 'Ciudad')}
+                    {t('patients.form.city', 'City')}
                   </label>
                   <input
                     type="text"
@@ -386,7 +386,7 @@ export default function PatientForm({
 
                 <div>
                   <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                    {t('patients.form.state', 'Departamento')}
+                    {t('patients.form.state', 'State')}
                   </label>
                   <input
                     type="text"
@@ -399,7 +399,7 @@ export default function PatientForm({
 
                 <div>
                   <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                    {t('patients.form.postalCode', 'Código Postal')}
+                    {t('patients.form.postalCode', 'Postal Code')}
                   </label>
                   <input
                     type="text"
@@ -412,7 +412,7 @@ export default function PatientForm({
 
                 <div>
                   <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                    {t('patients.form.country', 'País')}
+                    {t('patients.form.country', 'Country')}
                   </label>
                   <input
                     type="text"
@@ -430,12 +430,12 @@ export default function PatientForm({
             <section>
               <h3 className="flex items-center gap-2 text-lg font-semibold mb-4 text-gray-900 dark:text-white">
                 <Heart className="w-5 h-5 text-red-500" />
-                {t('patients.form.sections.emergency', 'Contacto de Emergencia')}
+                {t('patients.form.sections.emergency', 'Emergency Contact')}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                    {t('patients.form.emergencyName', 'Nombre')}
+                    {t('patients.form.emergencyName', 'Name')}
                   </label>
                   <input
                     type="text"
@@ -448,7 +448,7 @@ export default function PatientForm({
 
                 <div>
                   <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                    {t('patients.form.emergencyPhone', 'Teléfono')}
+                    {t('patients.form.emergencyPhone', 'Phone')}
                   </label>
                   <input
                     type="tel"
@@ -461,7 +461,7 @@ export default function PatientForm({
 
                 <div>
                   <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                    {t('patients.form.emergencyRelationship', 'Parentesco')}
+                    {t('patients.form.emergencyRelationship', 'Relationship')}
                   </label>
                   <input
                     type="text"
@@ -469,7 +469,7 @@ export default function PatientForm({
                     value={formData.emergency_contact_relationship}
                     onChange={handleChange}
                     className={inputClass('emergency_contact_relationship')}
-                    placeholder={t('patients.form.relationshipPlaceholder', 'Ej: Esposa, Hijo')}
+                    placeholder={t('patients.form.relationshipPlaceholder', 'e.g. Spouse, Son')}
                   />
                 </div>
               </div>
@@ -479,12 +479,12 @@ export default function PatientForm({
             <section>
               <h3 className="flex items-center gap-2 text-lg font-semibold mb-4 text-gray-900 dark:text-white">
                 <Shield className="w-5 h-5 text-primary-500" />
-                {t('patients.form.sections.insurance', 'Seguro Médico')}
+                {t('patients.form.sections.insurance', 'Insurance')}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                    {t('patients.form.insuranceProvider', 'Aseguradora')}
+                    {t('patients.form.insuranceProvider', 'Insurance Provider')}
                   </label>
                   <input
                     type="text"
@@ -497,7 +497,7 @@ export default function PatientForm({
 
                 <div>
                   <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                    {t('patients.form.insurancePolicyNumber', 'Número de Póliza')}
+                    {t('patients.form.insurancePolicyNumber', 'Policy Number')}
                   </label>
                   <input
                     type="text"
@@ -519,7 +519,7 @@ export default function PatientForm({
             onClick={onCancel}
             className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
           >
-            {t('common.cancel', 'Cancelar')}
+            {t('common.cancel', 'Cancel')}
           </button>
           <button
             onClick={handleSubmit}
@@ -536,8 +536,8 @@ export default function PatientForm({
               <Save className="w-4 h-4" />
             )}
             {isEdit
-              ? t('common.save', 'Guardar')
-              : t('common.create', 'Crear')}
+              ? t('common.save', 'Save')
+              : t('common.create', 'Create')}
           </button>
         </div>
       </motion.div>

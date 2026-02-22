@@ -8,6 +8,8 @@ from typing import List, Optional
 from datetime import datetime
 import numpy as np
 
+import struct
+
 from app.core.logging import get_logger
 from app.models.schemas import (
     LabelInfo,
@@ -20,7 +22,25 @@ from app.core.interfaces.imaging_interface import IImagingService
 from app.core.interfaces.storage_interface import IStorageService
 from app.core.container import get_segmentation_service, get_imaging_service, get_storage_service
 from app.services.segmentation_service import SegmentationService
+from app.services.segmentation_comparison_service import (
+    compare_two_masks,
+    compute_agreement_map,
+    compute_per_slice_dice,
+)
+from app.services.lesion_analysis_service import (
+    analyze_lesions,
+    compute_dis_criteria,
+    MAGNIMS_REGIONS,
+)
+from app.services.ms_region_classifier import (
+    classify_lesions_with_parcellation,
+    classify_lesions_geometric,
+    generate_zone_map,
+    generate_zone_map_atlas,
+)
+from app.services.longitudinal_tracking_service import compare_timepoints
 from app.core.config import get_settings
+from app.utils import load_nifti_from_bytes
 
 settings = get_settings()
 
@@ -101,15 +121,23 @@ async def create_segmentation(
 @router.get("/list", response_model=List[SegmentationResponse])
 async def list_segmentations(
     file_id: Optional[str] = Query(None),
+    file_ids: Optional[str] = Query(None, description="Comma-separated list of file_ids to query across multiple images"),
     segmentation_service: SegmentationService = Depends(get_segmentation_service)
 ):
     """
-    List all segmentations, optionally filtered by file_id.
+    List all segmentations, optionally filtered by file_id or file_ids.
+
+    - file_id: Filter by a single file_id
+    - file_ids: Filter by multiple file_ids (comma-separated), useful for study-level queries
 
     Uses dependency injection to get SegmentationService instance.
     Custom exceptions will be caught by global exception handler.
     """
     try:
+        if file_ids:
+            ids_list = [fid.strip() for fid in file_ids.split(",") if fid.strip()]
+            if ids_list:
+                return segmentation_service.list_segmentations(file_ids=ids_list)
         return segmentation_service.list_segmentations(file_id=file_id)
     except Exception as e:
         raise HTTPException(
@@ -822,3 +850,746 @@ async def get_segmentation_info(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get segmentation info: {str(e)}"
         )
+
+
+# =============================================================================
+# Comparison Endpoints
+# =============================================================================
+
+@router.post("/compare")
+async def compare_masks(
+    request: Request,
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    storage_service: IStorageService = Depends(get_storage_service),
+):
+    """
+    Compare 2+ segmentation/expert masks.
+
+    Request body:
+    {
+      "masks": [
+        {"type": "segmentation", "id": "<segmentation_id>", "label": "My Seg"},
+        {"type": "instance", "id": "<instance_id>", "label": "Expert 1"}
+      ]
+    }
+
+    For type "segmentation": loads from segmentation cache/storage.
+    For type "instance": loads NIfTI from GCS and converts to binary mask.
+
+    Returns pairwise comparison metrics (Dice, Hausdorff, volume diff).
+    """
+    from app.core.container import get_study_service
+    study_service = get_study_service()
+
+    try:
+        body = await request.json()
+        mask_specs = body.get("masks", [])
+
+        if len(mask_specs) < 2:
+            raise HTTPException(status_code=400, detail="At least 2 masks required")
+
+        # Load all masks
+        loaded_masks = []
+        for spec in mask_specs:
+            mask_type = spec.get("type")
+            mask_id = spec.get("id")
+            label = spec.get("label", mask_id)
+
+            if mask_type == "segmentation":
+                # Load from segmentation cache
+                if mask_id not in segmentation_service.segmentations_cache:
+                    if not segmentation_service._load_segmentation(mask_id):
+                        raise HTTPException(status_code=404, detail=f"Segmentation {mask_id} not found")
+                mask_3d = segmentation_service.segmentations_cache[mask_id]["masks_3d"]
+                loaded_masks.append({"mask": (mask_3d > 0).astype(np.uint8), "label": label})
+
+            elif mask_type == "instance":
+                # Load NIfTI from instance
+                instance = await study_service.get_instance(mask_id)
+                file_data = await storage_service.download_file(
+                    settings.GCS_BUCKET_NAME, instance.gcs_object_name
+                )
+                _, data = load_nifti_from_bytes(file_data, normalize=False)
+                mask = (data > 0).astype(np.uint8)
+                if mask.ndim == 3:
+                    mask = np.transpose(mask, (2, 1, 0))  # NIfTI (W,H,D) -> (D,H,W)
+                loaded_masks.append({"mask": mask, "label": label})
+            else:
+                raise HTTPException(status_code=400, detail=f"Unknown mask type: {mask_type}")
+
+        # Compute pairwise metrics
+        comparisons = []
+        for i in range(len(loaded_masks)):
+            for j in range(i + 1, len(loaded_masks)):
+                result = compare_two_masks(
+                    loaded_masks[i]["mask"],
+                    loaded_masks[j]["mask"],
+                    loaded_masks[i]["label"],
+                    loaded_masks[j]["label"],
+                )
+                comparisons.append(result)
+
+        return {"comparisons": comparisons, "mask_count": len(loaded_masks)}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error comparing masks", extra={"error": str(e)})
+        raise HTTPException(status_code=500, detail=f"Comparison failed: {str(e)}")
+
+
+@router.post("/agreement-map")
+async def get_agreement_map(
+    request: Request,
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    storage_service: IStorageService = Depends(get_storage_service),
+):
+    """
+    Compute voxel-wise agreement map across N masks.
+
+    Returns binary data: [depth:4][height:4][width:4][mask_count:4][agreement_data:D*H*W bytes]
+    Each voxel value = number of masks that agree (0 to N).
+    """
+    from app.core.container import get_study_service
+    study_service = get_study_service()
+
+    try:
+        body = await request.json()
+        mask_specs = body.get("masks", [])
+
+        if len(mask_specs) < 2:
+            raise HTTPException(status_code=400, detail="At least 2 masks required")
+
+        loaded_masks = []
+        for spec in mask_specs:
+            mask_type = spec.get("type")
+            mask_id = spec.get("id")
+
+            if mask_type == "segmentation":
+                if mask_id not in segmentation_service.segmentations_cache:
+                    if not segmentation_service._load_segmentation(mask_id):
+                        raise HTTPException(status_code=404, detail=f"Segmentation {mask_id} not found")
+                mask_3d = segmentation_service.segmentations_cache[mask_id]["masks_3d"]
+                loaded_masks.append((mask_3d > 0).astype(np.uint8))
+
+            elif mask_type == "instance":
+                instance = await study_service.get_instance(mask_id)
+                file_data = await storage_service.download_file(
+                    settings.GCS_BUCKET_NAME, instance.gcs_object_name
+                )
+                _, data = load_nifti_from_bytes(file_data, normalize=False)
+                mask = (data > 0).astype(np.uint8)
+                if mask.ndim == 3:
+                    mask = np.transpose(mask, (2, 1, 0))
+                loaded_masks.append(mask)
+
+        agreement = compute_agreement_map(loaded_masks)
+        depth, height, width = agreement.shape
+
+        header = struct.pack('<IIII', depth, height, width, len(loaded_masks))
+        binary_data = header + agreement.tobytes()
+
+        return Response(
+            content=binary_data,
+            media_type="application/octet-stream",
+            headers={
+                "Content-Length": str(len(binary_data)),
+                "X-Mask-Count": str(len(loaded_masks)),
+            }
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error computing agreement map", extra={"error": str(e)})
+        raise HTTPException(status_code=500, detail=f"Agreement map failed: {str(e)}")
+
+
+# =============================================================================
+# Lesion Analysis Endpoints
+# =============================================================================
+
+@router.get("/{segmentation_id}/lesion-analysis")
+async def get_lesion_analysis(
+    segmentation_id: str,
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+):
+    """
+    Analyze lesions in a segmentation using connected components.
+
+    Returns per-lesion statistics (volume, centroid, bounding box),
+    region summary, total burden, and size distribution.
+    """
+    try:
+        # Load segmentation
+        if segmentation_id not in segmentation_service.segmentations_cache:
+            if not segmentation_service._load_segmentation(segmentation_id):
+                raise HTTPException(status_code=404, detail=f"Segmentation {segmentation_id} not found")
+
+        seg_data = segmentation_service.segmentations_cache[segmentation_id]
+        masks_3d = seg_data["masks_3d"]
+        metadata = seg_data["metadata"]
+
+        # Build label map from metadata
+        label_map = {}
+        for lbl in metadata.labels:
+            if hasattr(lbl, 'id') and hasattr(lbl, 'name'):
+                label_map[lbl.id] = lbl.name
+            elif isinstance(lbl, dict):
+                label_map[lbl.get("id", 0)] = lbl.get("name", f"Label {lbl.get('id', 0)}")
+
+        # Use MAGNIMS defaults if no custom labels
+        if not label_map or all(lid == 0 for lid in label_map):
+            label_map = MAGNIMS_REGIONS
+
+        # Get voxel spacing from metadata if available
+        voxel_spacing = (1.0, 1.0, 1.0)
+        if hasattr(metadata, 'extra_fields') and metadata.extra_fields:
+            ps = metadata.extra_fields.get('pixel_spacing')
+            st = metadata.extra_fields.get('slice_thickness')
+            if ps and len(ps) >= 2:
+                voxel_spacing = (float(st or 1.0), float(ps[0]), float(ps[1]))
+
+        result = analyze_lesions(masks_3d, voxel_spacing, label_map)
+        result["segmentation_id"] = segmentation_id
+
+        logger.info("Lesion analysis completed", extra={
+            "segmentation_id": segmentation_id,
+            "lesion_count": result["total_count"],
+            "total_burden_ml": result["total_burden_ml"],
+        })
+
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error analyzing lesions", extra={
+            "segmentation_id": segmentation_id,
+            "error": str(e),
+        })
+        raise HTTPException(status_code=500, detail=f"Lesion analysis failed: {str(e)}")
+
+
+@router.get("/{segmentation_id}/dis-assessment")
+async def get_dis_assessment(
+    segmentation_id: str,
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+):
+    """
+    Evaluate McDonald 2024 DIS (Dissemination in Space) criteria.
+
+    Checks if lesions are present in ≥2 of 4 characteristic MAGNIMS regions.
+    """
+    try:
+        if segmentation_id not in segmentation_service.segmentations_cache:
+            if not segmentation_service._load_segmentation(segmentation_id):
+                raise HTTPException(status_code=404, detail=f"Segmentation {segmentation_id} not found")
+
+        seg_data = segmentation_service.segmentations_cache[segmentation_id]
+        masks_3d = seg_data["masks_3d"]
+        metadata = seg_data["metadata"]
+
+        # Build label map
+        label_map = {}
+        for lbl in metadata.labels:
+            if hasattr(lbl, 'id') and hasattr(lbl, 'name'):
+                label_map[lbl.id] = lbl.name
+            elif isinstance(lbl, dict):
+                label_map[lbl.get("id", 0)] = lbl.get("name", f"Label {lbl.get('id', 0)}")
+
+        if not label_map or all(lid == 0 for lid in label_map):
+            label_map = MAGNIMS_REGIONS
+
+        result = compute_dis_criteria(masks_3d, label_map)
+        result["segmentation_id"] = segmentation_id
+
+        logger.info("DIS assessment completed", extra={
+            "segmentation_id": segmentation_id,
+            "dis_met": result["dis_met"],
+            "regions_with_lesions": result["regions_with_lesions"],
+        })
+
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error computing DIS assessment", extra={
+            "segmentation_id": segmentation_id,
+            "error": str(e),
+        })
+        raise HTTPException(status_code=500, detail=f"DIS assessment failed: {str(e)}")
+
+
+# =============================================================================
+# Region Classification Endpoint (SynthSeg + EDT / Geometric)
+# =============================================================================
+
+@router.post("/{segmentation_id}/classify-regions")
+async def classify_regions(
+    segmentation_id: str,
+    request: Request,
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    storage_service: IStorageService = Depends(get_storage_service),
+):
+    """
+    Auto-classify lesions into MAGNIMS regions (PV, JC, IT, DWM).
+
+    Uses brain parcellation (SynthSeg/FreeSurfer labels) + Euclidean Distance
+    Transform for high-accuracy classification (~90%+ agreement with expert
+    neuroradiologists). Falls back to geometric heuristics when no parcellation
+    is available.
+
+    Request body:
+    {
+      "parcellation_id": "<optional segmentation_id with FreeSurfer labels>",
+      "method": "auto" | "parcellation" | "geometric"
+    }
+
+    - method "auto" (default): tries parcellation first, falls back to geometric
+    - method "parcellation": requires parcellation_id
+    - method "geometric": uses spatial heuristics only
+
+    The segmentation mask is reclassified IN-PLACE (label values changed from
+    binary 1 to MAGNIMS labels 1-4) and saved. The frontend should re-download
+    the binary mask after this call.
+    """
+    try:
+        body = await request.json()
+        parcellation_id = body.get("parcellation_id")
+        method = body.get("method", "auto")
+
+        # Load the lesion segmentation
+        if segmentation_id not in segmentation_service.segmentations_cache:
+            if not segmentation_service._load_segmentation(segmentation_id):
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Segmentation {segmentation_id} not found",
+                )
+
+        seg_data = segmentation_service.segmentations_cache[segmentation_id]
+        lesion_mask = seg_data["masks_3d"]  # (D, H, W), uint8
+        metadata = seg_data["metadata"]
+
+        # Get voxel spacing
+        voxel_spacing = (1.0, 1.0, 1.0)
+        if hasattr(metadata, 'extra_fields') and metadata.extra_fields:
+            ps = metadata.extra_fields.get('pixel_spacing')
+            st = metadata.extra_fields.get('slice_thickness')
+            if ps and len(ps) >= 2:
+                voxel_spacing = (float(st or 1.0), float(ps[0]), float(ps[1]))
+
+        result = None
+
+        # --- Try parcellation-based classification ---
+        if method in ("auto", "parcellation") and parcellation_id:
+            try:
+                # Load parcellation mask
+                if parcellation_id not in segmentation_service.segmentations_cache:
+                    if not segmentation_service._load_segmentation(parcellation_id):
+                        if method == "parcellation":
+                            raise HTTPException(
+                                status_code=404,
+                                detail=f"Parcellation {parcellation_id} not found",
+                            )
+                        logger.warning(
+                            "[ClassifyRegions] Parcellation %s not found, falling back to geometric",
+                            parcellation_id,
+                        )
+
+                if parcellation_id in segmentation_service.segmentations_cache:
+                    parc_data = segmentation_service.segmentations_cache[parcellation_id]
+                    parcellation_mask = parc_data["masks_3d"]
+
+                    result = classify_lesions_with_parcellation(
+                        lesion_mask, parcellation_mask, voxel_spacing
+                    )
+                    logger.info(
+                        "[ClassifyRegions] Parcellation-based classification succeeded",
+                        extra={"segmentation_id": segmentation_id},
+                    )
+            except HTTPException:
+                raise
+            except Exception as e:
+                if method == "parcellation":
+                    raise
+                logger.warning(
+                    "[ClassifyRegions] Parcellation classification failed: %s. Falling back.",
+                    str(e),
+                )
+
+        # --- Try parcellation from instance (expert mask as NIfTI) ---
+        if result is None and method in ("auto", "parcellation") and not parcellation_id:
+            # Check if there is another segmentation for the same file that
+            # looks like a parcellation (has FreeSurfer-range labels)
+            file_id = metadata.file_id
+            all_segs = segmentation_service.list_segmentations(file_id=file_id)
+            for candidate in all_segs:
+                if candidate.segmentation_id == segmentation_id:
+                    continue
+                # Load candidate and check for FreeSurfer labels
+                try:
+                    cand_id = candidate.segmentation_id
+                    if cand_id not in segmentation_service.segmentations_cache:
+                        segmentation_service._load_segmentation(cand_id)
+                    if cand_id in segmentation_service.segmentations_cache:
+                        cand_mask = segmentation_service.segmentations_cache[cand_id]["masks_3d"]
+                        unique_vals = set(int(v) for v in np.unique(cand_mask) if v > 0)
+                        # FreeSurfer labels include values like 2,3,4,7,8,10...
+                        freesurfer_check = unique_vals & {2, 3, 4, 7, 8, 10, 16, 41, 42, 43}
+                        if len(freesurfer_check) >= 3:
+                            logger.info(
+                                "[ClassifyRegions] Found parcellation candidate: %s",
+                                cand_id,
+                            )
+                            result = classify_lesions_with_parcellation(
+                                lesion_mask, cand_mask, voxel_spacing
+                            )
+                            break
+                except Exception:
+                    continue
+
+        # --- Fallback to geometric ---
+        if result is None:
+            if method == "parcellation":
+                raise HTTPException(
+                    status_code=400,
+                    detail="Parcellation method requested but no parcellation available. "
+                           "Run AI Brain Parcellation (SynthSeg) first.",
+                )
+            result = classify_lesions_geometric(
+                lesion_mask, image_data=None, voxel_spacing=voxel_spacing
+            )
+
+        # --- Update the segmentation mask in place ---
+        classified_mask = result.get("classified_mask")
+        if classified_mask is not None:
+            seg_data["masks_3d"] = classified_mask
+
+            # Update labels to MAGNIMS
+            from app.models.schemas import LabelInfo as SchemaLabelInfo
+            magnims_labels = [
+                SchemaLabelInfo(id=0, name="Background", color="#000000", opacity=0.0, visible=False),
+                SchemaLabelInfo(id=1, name="Periventricular", color="#FF0000", opacity=0.6, visible=True),
+                SchemaLabelInfo(id=2, name="Juxtacortical", color="#00CC00", opacity=0.6, visible=True),
+                SchemaLabelInfo(id=3, name="Infratentorial", color="#0066FF", opacity=0.6, visible=True),
+                SchemaLabelInfo(id=4, name="Deep White Matter", color="#FFD700", opacity=0.6, visible=True),
+                SchemaLabelInfo(id=5, name="Active (Gd+)", color="#FF00FF", opacity=0.6, visible=True),
+                SchemaLabelInfo(id=6, name="Black Hole (T1)", color="#9932CC", opacity=0.5, visible=True),
+            ]
+            metadata.labels = magnims_labels
+            metadata.modified_at = datetime.utcnow()
+
+            # Save to GCS
+            segmentation_service._save_segmentation(segmentation_id)
+
+        # Remove numpy array from response (not JSON serializable)
+        response_data = {k: v for k, v in result.items() if k != "classified_mask"}
+        response_data["segmentation_id"] = segmentation_id
+        response_data["mask_updated"] = classified_mask is not None
+        response_data["labels_updated"] = classified_mask is not None
+
+        logger.info(
+            "[ClassifyRegions] Region classification completed",
+            extra={
+                "segmentation_id": segmentation_id,
+                "method": result["method"],
+                "total_classified": result["total_classified"],
+                "processing_time_ms": result["processing_time_ms"],
+            },
+        )
+
+        return response_data
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "[ClassifyRegions] Classification failed",
+            extra={"segmentation_id": segmentation_id, "error": str(e)},
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=f"Region classification failed: {str(e)}",
+        )
+
+
+# =============================================================================
+# MAGNIMS Zone Map Generation
+# =============================================================================
+
+
+@router.post("/generate-zone-map")
+async def generate_zone_map_endpoint(
+    request: Request,
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    storage_service: IStorageService = Depends(get_storage_service),
+):
+    """
+    Generate a MAGNIMS zone map for a brain MRI.
+
+    Creates a new segmentation where every brain voxel is classified into one of
+    the four MAGNIMS regions (Periventricular, Juxtacortical, Infratentorial,
+    Deep White Matter).
+
+    Method selection:
+    - If a brain parcellation (SynthSeg) exists: uses EDT from anatomical landmarks (~90% accuracy)
+    - Fallback: loads MRI image, computes brain mask via Otsu thresholding, uses geometric heuristics (~70%)
+
+    Request body:
+    {
+      "file_id": "<image file_id>",
+      "parcellation_id": "<optional segmentation_id with FreeSurfer labels>"
+    }
+    """
+    try:
+        body = await request.json()
+        file_id = body.get("file_id")
+        parcellation_id = body.get("parcellation_id")
+
+        if not file_id:
+            raise HTTPException(
+                status_code=400,
+                detail="file_id is required",
+            )
+
+        # --- Delete existing zone maps for this file (prevent duplicates) ---
+        all_existing = segmentation_service.list_segmentations(file_id=file_id)
+        for existing in all_existing:
+            eid = existing.segmentation_id
+            try:
+                if eid not in segmentation_service.segmentations_cache:
+                    segmentation_service._load_segmentation(eid)
+                if eid in segmentation_service.segmentations_cache:
+                    emeta = segmentation_service.segmentations_cache[eid].get("metadata")
+                    if emeta and getattr(emeta, 'description', '') == "MAGNIMS Zone Map":
+                        logger.info("[ZoneMap] Deleting old zone map: %s", eid)
+                        segmentation_service.delete_segmentation(eid)
+            except Exception:
+                pass
+
+        # --- Find parcellation ---
+        parcellation_mask = None
+        parc_source = None
+
+        # Explicit parcellation_id
+        if parcellation_id:
+            if parcellation_id not in segmentation_service.segmentations_cache:
+                if not segmentation_service._load_segmentation(parcellation_id):
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Parcellation {parcellation_id} not found",
+                    )
+            parc_data = segmentation_service.segmentations_cache[parcellation_id]
+            parcellation_mask = parc_data["masks_3d"]
+            parc_source = parcellation_id
+        else:
+            # Auto-detect parcellation for this file
+            all_segs = segmentation_service.list_segmentations(file_id=file_id)
+            for candidate in all_segs:
+                cand_id = candidate.segmentation_id
+                try:
+                    if cand_id not in segmentation_service.segmentations_cache:
+                        segmentation_service._load_segmentation(cand_id)
+                    if cand_id in segmentation_service.segmentations_cache:
+                        # Skip zone map segmentations (labels 1-4 overlap with FreeSurfer)
+                        cand_meta = segmentation_service.segmentations_cache[cand_id].get("metadata")
+                        if cand_meta and getattr(cand_meta, 'description', '') == "MAGNIMS Zone Map":
+                            continue
+                        cand_mask = segmentation_service.segmentations_cache[cand_id]["masks_3d"]
+                        unique_vals = set(int(v) for v in np.unique(cand_mask) if v > 0)
+                        # FreeSurfer parcellations have hemispheric labels (41-43)
+                        # and brainstem (16). Zone maps only have labels 1-4.
+                        # Require at least one high label to distinguish.
+                        freesurfer_check = unique_vals & {2, 3, 4, 7, 8, 10, 16, 41, 42, 43}
+                        has_high_labels = bool(unique_vals & {16, 41, 42, 43})
+                        if len(freesurfer_check) >= 3 and has_high_labels:
+                            parcellation_mask = cand_mask
+                            parc_source = cand_id
+                            break
+                except Exception:
+                    continue
+
+        # Get voxel spacing from metadata if available
+        voxel_spacing = (1.0, 1.0, 1.0)
+        if parc_source and parc_source in segmentation_service.segmentations_cache:
+            meta = segmentation_service.segmentations_cache[parc_source].get("metadata")
+            if meta and hasattr(meta, 'extra_fields') and meta.extra_fields:
+                ps = meta.extra_fields.get('pixel_spacing')
+                st = meta.extra_fields.get('slice_thickness')
+                if ps and len(ps) >= 2:
+                    voxel_spacing = (float(st or 1.0), float(ps[0]), float(ps[1]))
+
+        # --- Generate zone map ---
+        if parcellation_mask is not None:
+            # Preferred method: parcellation-based (high accuracy)
+            logger.info("[ZoneMap] Using parcellation-based method (source=%s)", parc_source)
+            result = generate_zone_map(parcellation_mask, voxel_spacing)
+        else:
+            # Atlas-based method: Harvard-Oxford atlas resampled to patient image
+            logger.info("[ZoneMap] No parcellation found, using atlas method for file=%s", file_id)
+            file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, file_id)
+            img, data = load_nifti_from_bytes(file_data, normalize=False)
+            # Create in-memory NIfTI (the temp file from load_nifti_from_bytes is
+            # already deleted, so img.dataobj is a dead file proxy; we need a new
+            # image backed by the in-memory data array for resample_to_img to work)
+            import nibabel as nib
+            target_img = nib.Nifti1Image(data, img.affine, img.header)
+            result = generate_zone_map_atlas(target_img, voxel_spacing)
+            # Transpose zone_mask from NIfTI native (i,j,k) to display-compatible
+            # internal format (k,i,j) using transpose (2,0,1).
+            #
+            # Why (2,0,1) instead of the usual (2,1,0)?
+            # The MRI display pipeline (imaging_service) does NOT transpose — it
+            # serves slices as raw NIfTI[:,:,k], shape (i,j). The frontend renders
+            # each slice with imageWidth=columns=j and imageHeight=rows=i.
+            # To overlay correctly, the zone map must have the same per-slice layout:
+            #   internal[k, i, j] = nifti[i, j, k]  →  transpose (2, 0, 1)
+            # The standard (2,1,0) would give internal[k, j, i], swapping the axes.
+            zone_mask_raw = result["zone_mask"]
+            if zone_mask_raw.ndim == 3:
+                result["zone_mask"] = np.transpose(zone_mask_raw, (2, 0, 1))
+
+        zone_mask = result["zone_mask"]
+
+        if zone_mask is None or int(zone_mask.sum()) == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Failed to generate zone map: no brain voxels detected.",
+            )
+
+        # --- Create segmentation with zone mask ---
+        from app.models.schemas import LabelInfo as SchemaLabelInfo
+
+        depth, height, width = zone_mask.shape
+        magnims_labels = [
+            SchemaLabelInfo(id=0, name="Background", color="#000000", opacity=0.0, visible=False),
+            SchemaLabelInfo(id=1, name="Periventricular", color="#FF0000", opacity=0.6, visible=True),
+            SchemaLabelInfo(id=2, name="Juxtacortical", color="#00CC00", opacity=0.6, visible=True),
+            SchemaLabelInfo(id=3, name="Infratentorial", color="#0066FF", opacity=0.6, visible=True),
+            SchemaLabelInfo(id=4, name="Deep White Matter", color="#FFD700", opacity=0.6, visible=True),
+        ]
+
+        # create_segmentation expects: file_id: str, image_shape: (H, W, D) tuple
+        seg_response = segmentation_service.create_segmentation(
+            file_id=file_id,
+            image_shape=(height, width, depth),
+            labels=magnims_labels,
+            description="MAGNIMS Zone Map",
+        )
+        new_seg_id = seg_response.segmentation_id
+
+        # Write the zone mask into the cache
+        if new_seg_id in segmentation_service.segmentations_cache:
+            segmentation_service.segmentations_cache[new_seg_id]["masks_3d"] = zone_mask.astype(np.uint8)
+
+        # Save to GCS
+        segmentation_service._save_segmentation(new_seg_id)
+
+        logger.info(
+            "[ZoneMap] Zone map segmentation created",
+            extra={
+                "segmentation_id": new_seg_id,
+                "file_id": file_id,
+                "processing_time_ms": result["processing_time_ms"],
+            },
+        )
+
+        return {
+            "segmentation_id": new_seg_id,
+            "file_id": file_id,
+            "zone_stats": result["zone_stats"],
+            "total_brain_voxels": result["total_brain_voxels"],
+            "processing_time_ms": result["processing_time_ms"],
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "[ZoneMap] Zone map generation failed",
+            extra={"error": str(e)},
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=f"Zone map generation failed: {str(e)}",
+        )
+
+
+# =============================================================================
+# Longitudinal Tracking Endpoints
+# =============================================================================
+
+@router.post("/longitudinal/compare")
+async def compare_longitudinal(
+    request: Request,
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    storage_service: IStorageService = Depends(get_storage_service),
+):
+    """
+    Compare lesion masks from two timepoints.
+
+    Request body:
+    {
+      "tp1": {"type": "segmentation"|"instance", "id": "<id>"},
+      "tp2": {"type": "segmentation"|"instance", "id": "<id>"}
+    }
+
+    Returns lesion-by-lesion changes (new, resolved, enlarged, shrunk, stable),
+    total burden delta, and summary counts.
+    """
+    from app.core.container import get_study_service
+    study_service = get_study_service()
+
+    try:
+        body = await request.json()
+        tp1_spec = body.get("tp1")
+        tp2_spec = body.get("tp2")
+
+        if not tp1_spec or not tp2_spec:
+            raise HTTPException(status_code=400, detail="Both tp1 and tp2 are required")
+
+        async def load_mask(spec):
+            mask_type = spec.get("type")
+            mask_id = spec.get("id")
+
+            if mask_type == "segmentation":
+                if mask_id not in segmentation_service.segmentations_cache:
+                    if not segmentation_service._load_segmentation(mask_id):
+                        raise HTTPException(status_code=404, detail=f"Segmentation {mask_id} not found")
+                return segmentation_service.segmentations_cache[mask_id]["masks_3d"]
+
+            elif mask_type == "instance":
+                instance = await study_service.get_instance(mask_id)
+                file_data = await storage_service.download_file(
+                    settings.GCS_BUCKET_NAME, instance.gcs_object_name
+                )
+                _, data = load_nifti_from_bytes(file_data, normalize=False)
+                mask = (data > 0).astype(np.uint8)
+                if mask.ndim == 3:
+                    mask = np.transpose(mask, (2, 1, 0))
+                return mask
+            else:
+                raise HTTPException(status_code=400, detail=f"Unknown mask type: {mask_type}")
+
+        mask_tp1 = await load_mask(tp1_spec)
+        mask_tp2 = await load_mask(tp2_spec)
+
+        result = compare_timepoints(mask_tp1, mask_tp2)
+
+        logger.info("Longitudinal comparison completed", extra={
+            "new": result["status_counts"]["new"],
+            "resolved": result["status_counts"]["resolved"],
+            "enlarged": result["status_counts"]["enlarged"],
+        })
+
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Longitudinal comparison failed", extra={"error": str(e)})
+        raise HTTPException(status_code=500, detail=f"Longitudinal comparison failed: {str(e)}")

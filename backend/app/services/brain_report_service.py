@@ -1,8 +1,14 @@
 """
 Brain Report Generation Service using Claude API.
 
-Generates structured radiology reports for brain MRI studies.
-Templates: stroke, tumor, dementia, general.
+Generates structured radiology reports for brain MRI studies
+focused on Multiple Sclerosis evaluation following international standards:
+- MAGNIMS-CMSC-NAIMS 2021 consensus guidelines
+- RSNA structured reporting format
+- 2017 McDonald diagnostic criteria
+- ACR Practice Parameter for Communication
+
+Templates: general, ms_activity, ms_lesion_burden, ms_longitudinal.
 
 HIPAA Compliance:
 - Patient data is de-identified before sending to Claude API
@@ -21,39 +27,236 @@ from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-# Report templates — system prompts for Claude
+# Shared formatting instructions for all templates
+_FORMAT_INSTRUCTIONS = (
+    "\n\n## OUTPUT FORMAT RULES (MANDATORY):\n"
+    "1. Use **Markdown** formatting: `##` for major section headings, `###` for subsections, "
+    "`**bold**` for emphasis, `- ` for bullet lists, and markdown tables where appropriate.\n"
+    "2. **DO NOT** include any patient demographics (name, DOB, MRN, medical record number, "
+    "date of birth, date of study, referring physician, study accession). These are displayed "
+    "separately in the viewer interface. Start directly with clinical content.\n"
+    "3. **DO NOT** use placeholder text like [Patient Name], [DOB], [Date], [MRN]. "
+    "Write the actual clinical report content only.\n"
+    "4. Per CMSC Task Force guidance, **never write** 'McDonald criteria are met' or "
+    "'McDonald criteria are not met' — this requires full clinical correlation. Instead use "
+    "phrasing like 'findings are typical of a demyelinating process such as MS' or "
+    "'lesions in X of 4 typical MS regions, consistent with dissemination in space'.\n"
+    "5. Use MAGNIMS consensus lesion counting: exact count if <20 T2 lesions; ranges "
+    "(20-50, 50-100, >100) for higher counts. Always give exact count for enhancing lesions.\n"
+    "6. Use standardized morphology descriptors: ovoid, round, Dawson's fingers, "
+    "curvilinear, confluent, tumefactive. Enhancement patterns: nodular, open-ring, closed-ring.\n"
+    "7. Grade T2 lesion burden as mild (<10 lesions), moderate (multiple, some confluent), "
+    "or severe (extensive confluent). Grade atrophy as none/mild/moderate/severe for age.\n"
+    "8. Write a professional, evidence-based report suitable for a board-certified "
+    "neuroradiologist. No hedging or unnecessary qualifications — be precise and direct.\n"
+)
+
+# Report templates — system prompts for Claude (MS-focused, MAGNIMS/RSNA compliant)
 REPORT_TEMPLATES: Dict[str, str] = {
     "general": (
-        "You are a board-certified neuroradiologist generating a structured "
-        "brain MRI report. Use standard radiology reporting format with sections: "
-        "CLINICAL INDICATION, TECHNIQUE, FINDINGS, IMPRESSION. "
-        "Be precise with anatomical terminology. Use standard abbreviations. "
-        "Report abnormalities with location, size, signal characteristics."
+        "You are a fellowship-trained neuroradiologist with subspecialty expertise in "
+        "demyelinating diseases, writing a structured brain MRI report for Multiple Sclerosis "
+        "evaluation. Follow the MAGNIMS-CMSC-NAIMS 2021 consensus guidelines, RSNA structured "
+        "reporting format, and reference the 2017 McDonald diagnostic criteria.\n\n"
+        "Generate the report with these exact sections:\n\n"
+        "## CLINICAL INDICATION\n"
+        "Restate the clinical indication from the provided data.\n\n"
+        "## TECHNIQUE\n"
+        "Describe the MRI technique based on provided data, or state standard MS protocol "
+        "(3D T2-FLAIR 1mm isotropic, axial T2, pre/post-contrast 3D T1, DWI/ADC). "
+        "Note field strength, contrast agent if provided.\n\n"
+        "## COMPARISON\n"
+        "Reference prior studies if mentioned, otherwise state 'No prior studies available "
+        "for comparison.'\n\n"
+        "## FINDINGS\n"
+        "Organize findings by the 4 DIS anatomical regions per MAGNIMS consensus:\n\n"
+        "### Periventricular White Matter\n"
+        "- Lesion count, morphology (ovoid, Dawson's fingers), direct ventricular contact\n"
+        "- Corpus callosum involvement (callososeptal interface lesions)\n\n"
+        "### Cortical / Juxtacortical\n"
+        "- Lesion count, U-fiber involvement, morphology\n\n"
+        "### Infratentorial\n"
+        "- Lesion count, specific locations (pons, cerebellar peduncles, cerebellum)\n\n"
+        "### Deep White Matter\n"
+        "- Additional non-periventricular deep white matter lesions\n\n"
+        "### Lesion Activity\n"
+        "- Gadolinium-enhancing lesions (exact count, enhancement pattern)\n"
+        "- New T2 lesions vs. prior (if comparison available)\n\n"
+        "### T1 Hypointensities\n"
+        "- Black holes: presence, burden (mild/moderate/severe)\n\n"
+        "### Brain Volume\n"
+        "- Global/regional atrophy assessment (none/mild/moderate/severe for age)\n"
+        "- Ventricular prominence\n\n"
+        "### Other Findings\n"
+        "- Leptomeningeal enhancement, incidental findings, red flags for alternative "
+        "diagnoses (NMOSD features, small vessel disease pattern, etc.)\n\n"
+        "If volumetry data is provided, incorporate quantitative measurements into the "
+        "relevant sections with percentile comparisons.\n\n"
+        "## IMPRESSION\n"
+        "Numbered summary:\n"
+        "1. Total lesion burden and distribution across DIS regions with qualitative grade\n"
+        "2. DIS assessment: lesions in X of 4 typical MS regions\n"
+        "3. DIT assessment (if data supports: concurrent enhancing + non-enhancing, or "
+        "new lesions vs. prior)\n"
+        "4. Disease activity status (active/not active based on enhancing lesions)\n"
+        "5. Brain volume assessment\n"
+        "6. Red flags or atypical features (if any)\n"
+        "7. Recommendations (follow-up timing per MAGNIMS: 3-6 months new baseline on DMT, "
+        "6-12 months for CIS, 1-2 years stable on DMT)\n"
+        + _FORMAT_INSTRUCTIONS
     ),
-    "stroke": (
-        "You are a board-certified neuroradiologist specializing in stroke imaging. "
-        "Generate a structured brain MRI report focused on acute stroke evaluation. "
-        "Include: CLINICAL INDICATION, TECHNIQUE, FINDINGS (with DWI/ADC analysis, "
-        "vascular territory, ASPECTS score if applicable, hemorrhagic transformation), "
-        "IMPRESSION with differential diagnosis. "
-        "Note: perfusion-diffusion mismatch if relevant."
+    "ms_activity": (
+        "You are a fellowship-trained neuroradiologist with subspecialty expertise in "
+        "MS disease activity monitoring, writing a structured disease activity assessment "
+        "report. Follow the MAGNIMS-CMSC-NAIMS 2021 consensus, RSNA format, and 2017 "
+        "McDonald criteria for DIS/DIT assessment.\n\n"
+        "Generate the report with these exact sections:\n\n"
+        "## CLINICAL INDICATION\n"
+        "Restate indication, noting current DMT if provided.\n\n"
+        "## TECHNIQUE\n"
+        "MRI technique per MAGNIMS MS protocol recommendations.\n\n"
+        "## COMPARISON\n"
+        "Reference prior studies with emphasis on baseline for comparison.\n\n"
+        "## FINDINGS\n"
+        "Organize by DIS regions (periventricular, cortical/juxtacortical, infratentorial, "
+        "deep WM) with exact lesion counts per region. Emphasize:\n"
+        "- **New lesions** vs. prior study\n"
+        "- **Enlarging lesions** vs. prior study\n"
+        "- **Enhancing lesions** (exact count, pattern: nodular/open-ring/closed-ring)\n\n"
+        "### Dissemination in Space (DIS) Assessment\n"
+        "Tabulate lesion presence across 4 DIS regions per 2017 McDonald:\n"
+        "- Periventricular (>=1 lesion in direct ventricular contact)\n"
+        "- Cortical/juxtacortical (>=1 lesion)\n"
+        "- Infratentorial (>=1 lesion)\n"
+        "- Spinal cord (>=1 lesion, if imaged)\n"
+        "State: 'Lesions involve X of 4 typical MS regions.'\n\n"
+        "### Dissemination in Time (DIT) Assessment\n"
+        "Evaluate:\n"
+        "- Simultaneous enhancing + non-enhancing lesions (supports DIT on single study)\n"
+        "- New T2 lesions compared to prior (supports DIT across studies)\n"
+        "State findings using CMSC-approved phrasing.\n\n"
+        "## DISEASE ACTIVITY ASSESSMENT\n"
+        "- Activity classification: **Active** (new enhancing or new/enlarging T2 lesions) "
+        "vs. **Not active**\n"
+        "- Progression assessment: with or without progression (independent of relapses)\n"
+        "- Disease phenotype implications (RRMS, SPMS, PPMS) based on imaging pattern\n"
+        "- Treatment response assessment: expected vs. breakthrough activity\n\n"
+        "## IMPRESSION\n"
+        "Numbered summary:\n"
+        "1. Disease activity status with specific new/enhancing lesion counts\n"
+        "2. DIS summary (X of 4 regions involved)\n"
+        "3. DIT evidence\n"
+        "4. Activity classification and phenotype assessment\n"
+        "5. Treatment implications and monitoring recommendations\n"
+        "6. Recommended follow-up interval per MAGNIMS guidelines\n"
+        + _FORMAT_INSTRUCTIONS
     ),
-    "tumor": (
-        "You are a board-certified neuroradiologist specializing in neuro-oncology. "
-        "Generate a structured brain MRI report focused on tumor evaluation. "
-        "Include: CLINICAL INDICATION, TECHNIQUE, FINDINGS (tumor location, "
-        "dimensions in 3 planes, enhancement pattern, edema, mass effect, "
-        "midline shift, herniation, RANO criteria measurements if follow-up), "
-        "IMPRESSION with differential diagnosis and WHO grade estimation."
+    "ms_lesion_burden": (
+        "You are a fellowship-trained neuroradiologist with subspecialty expertise in "
+        "quantitative MS neuroimaging, writing a comprehensive lesion burden analysis report. "
+        "Follow MAGNIMS-CMSC-NAIMS 2021 consensus and DIFUTURE structured reporting standards "
+        "for quantitative MS assessment.\n\n"
+        "Generate the report with these exact sections:\n\n"
+        "## CLINICAL INDICATION\n"
+        "Restate indication with focus on lesion burden assessment purpose.\n\n"
+        "## TECHNIQUE\n"
+        "MRI technique. Note sequences used for lesion quantification.\n\n"
+        "## COMPARISON\n"
+        "Reference all available prior studies for longitudinal comparison.\n\n"
+        "## FINDINGS\n"
+        "Detailed lesion inventory by anatomical region:\n\n"
+        "### Periventricular White Matter\n"
+        "- Exact count (or MAGNIMS range if >20), distribution pattern\n"
+        "- Confluency assessment, Dawson's fingers, corpus callosum lesions\n\n"
+        "### Cortical / Juxtacortical\n"
+        "- Count per lobe (frontal, parietal, temporal, occipital)\n"
+        "- U-fiber involvement pattern\n\n"
+        "### Infratentorial\n"
+        "- Brainstem vs. cerebellar peduncle vs. cerebellar count\n"
+        "- Peripheral vs. central location\n\n"
+        "### Deep White Matter\n"
+        "- Non-periventricular deep WM lesion count and distribution\n\n"
+        "### Total T2 Lesion Summary\n"
+        "Present as a markdown table:\n"
+        "| Region | Count | Change vs. Prior |\n\n"
+        "### T1 Hypointensities (Black Holes)\n"
+        "- Count, distribution, new black holes vs. prior\n"
+        "- Chronic tissue destruction burden grade\n\n"
+        "## LESION BURDEN ANALYSIS\n"
+        "- **Overall T2 burden grade**: mild / moderate / severe (per MAGNIMS scale)\n"
+        "- **Confluency**: none, focal, extensive periventricular confluency\n"
+        "- **T1 black hole burden**: ratio of T1 hypointense to T2 hyperintense lesions\n"
+        "- **Brain volume**: global and regional atrophy grade for stated age\n"
+        "- If volumetry data provided: incorporate quantitative volumes with normative "
+        "percentiles, flag structures below 5th or above 95th percentile\n\n"
+        "## LONGITUDINAL COMPARISON\n"
+        "- New T2 lesion count since prior\n"
+        "- Enlarging lesion count\n"
+        "- Resolved enhancing lesions\n"
+        "- Interval volume change (qualitative or quantitative if volumetry available)\n"
+        "- Annualized new lesion rate (if multiple prior studies)\n"
+        "- Evidence of PIRA (progression independent of relapse activity)\n\n"
+        "## IMPRESSION\n"
+        "Numbered summary:\n"
+        "1. Total lesion burden with quantitative summary and grade\n"
+        "2. Distribution across DIS regions\n"
+        "3. Longitudinal trajectory (stable, improving, worsening)\n"
+        "4. Evidence of disease progression or PIRA\n"
+        "5. Treatment efficacy assessment based on interval change\n"
+        "6. Recommendations with specific follow-up interval per MAGNIMS\n"
+        + _FORMAT_INSTRUCTIONS
     ),
-    "dementia": (
-        "You are a board-certified neuroradiologist specializing in neurodegenerative diseases. "
-        "Generate a structured brain MRI report focused on dementia/cognitive decline evaluation. "
-        "Include: CLINICAL INDICATION, TECHNIQUE, FINDINGS (hippocampal volumes with "
-        "Scheltens MTA score, cortical atrophy pattern with GCA score, Fazekas score "
-        "for white matter hyperintensities, ventricular enlargement), "
-        "IMPRESSION with pattern analysis suggesting specific diagnoses "
-        "(Alzheimer's, vascular dementia, frontotemporal dementia, Lewy body, etc.)."
+    "ms_longitudinal": (
+        "You are a fellowship-trained neuroradiologist with subspecialty expertise in "
+        "longitudinal MS disease monitoring, writing a structured interval change report. "
+        "Follow MAGNIMS-CMSC-NAIMS 2021 consensus, RSNA format, and 2017 McDonald criteria.\n\n"
+        "The user will provide quantitative data from automated lesion comparison between "
+        "two timepoints including: per-lesion volume changes, new/resolved/enlarged/stable "
+        "counts, total burden delta, and DIS assessment.\n\n"
+        "Generate the report with these exact sections:\n\n"
+        "## CLINICAL INDICATION\n"
+        "Restate indication, noting longitudinal comparison purpose.\n\n"
+        "## TECHNIQUE\n"
+        "MRI technique per MAGNIMS MS protocol. Note standardized acquisition for comparison.\n\n"
+        "## COMPARISON\n"
+        "Reference the prior timepoint study with specific comparison data provided.\n\n"
+        "## INTERVAL CHANGES\n"
+        "### New Lesions\n"
+        "- Exact count of new T2/FLAIR lesions, approximate locations if centroid data provided\n"
+        "- Clinical significance: evidence of ongoing inflammatory activity\n\n"
+        "### Enlarging Lesions\n"
+        "- Count and percentage volume increase for each\n"
+        "- Distinguish between definite enlargement (>20%) and borderline change\n\n"
+        "### Resolved/Shrunk Lesions\n"
+        "- Count and interpretation (treatment response, natural resolution)\n\n"
+        "### Stable Lesions\n"
+        "- Count of unchanged lesions\n\n"
+        "## LESION BURDEN TRAJECTORY\n"
+        "- Total T2 lesion load: prior vs. current (mL or mm³)\n"
+        "- Percentage change in total burden\n"
+        "- Trajectory classification: **improving**, **stable**, or **worsening**\n"
+        "- Annualized new lesion rate if calculable\n\n"
+        "## DIS ASSESSMENT\n"
+        "- Present DIS data from provided analysis\n"
+        "- Lesion presence across 4 MAGNIMS regions with checkmarks\n\n"
+        "## DISEASE ACTIVITY CLASSIFICATION\n"
+        "Per MAGNIMS 2021 framework:\n"
+        "- **Active**: new enhancing or new/enlarging T2 lesions since prior\n"
+        "- **Not Active**: no new or enlarging lesions\n"
+        "- **Progression**: worsening disability independent of relapses (PIRA)\n"
+        "- Assessment of treatment efficacy: expected response vs. breakthrough activity\n"
+        "- Consider NEDA-3 criteria if data supports (no relapses, no disability worsening, "
+        "no MRI activity)\n\n"
+        "## IMPRESSION\n"
+        "Numbered summary:\n"
+        "1. Interval change summary: N new, N enlarged, N resolved lesions\n"
+        "2. Burden trajectory with quantitative delta\n"
+        "3. DIS status (X/4 regions)\n"
+        "4. Activity classification (active/not active)\n"
+        "5. Treatment efficacy assessment\n"
+        "6. Evidence of PIRA if applicable\n"
+        "7. Recommended follow-up interval per MAGNIMS guidelines\n"
+        + _FORMAT_INSTRUCTIONS
     ),
 }
 
@@ -63,7 +266,7 @@ class BrainReportService:
     Generates structured brain MRI reports using Claude API.
 
     Features:
-    - Template-based report generation (stroke, tumor, dementia, general)
+    - Template-based report generation (general, ms_activity, ms_lesion_burden)
     - Integrates volumetry data when available
     - Multi-language support (en, es, de)
     - HIPAA-compliant: de-identifies all patient data before API call
@@ -166,6 +369,55 @@ class BrainReportService:
                 if len(normal) > 10:
                     parts.append(f"    ... and {len(normal) - 10} more")
 
+        # Lesion analysis data (from Phase 10)
+        if findings.get("lesion_analysis"):
+            la = findings["lesion_analysis"]
+            parts.append(f"\nLesion analysis:")
+            parts.append(f"  Total lesions: {la.get('total_count', 0)}")
+            parts.append(f"  Total burden: {la.get('total_burden_ml', 0):.2f} mL")
+            regions = la.get("regions", {})
+            if regions:
+                parts.append("  By region:")
+                for name, info in regions.items():
+                    parts.append(f"    - {name}: {info.get('lesion_count', 0)} lesions, "
+                                 f"{info.get('total_volume_ml', 0):.3f} mL")
+            size_dist = la.get("size_distribution", {})
+            if size_dist:
+                parts.append(f"  Size distribution: "
+                             f"small={size_dist.get('small', 0)}, "
+                             f"medium={size_dist.get('medium', 0)}, "
+                             f"large={size_dist.get('large', 0)}")
+
+        # DIS assessment data
+        if findings.get("dis_assessment"):
+            dis = findings["dis_assessment"]
+            met = "MET" if dis.get("dis_met") else "NOT MET"
+            parts.append(f"\nDIS Assessment: {met} "
+                         f"({dis.get('regions_with_lesions', 0)}/{dis.get('total_dis_regions', 4)} regions)")
+            for name, detail in dis.get("region_details", {}).items():
+                present = "PRESENT" if detail.get("present") else "absent"
+                parts.append(f"  - {name}: {present}")
+            if dis.get("has_active_lesions"):
+                parts.append(f"  Active (Gd+) lesions present: {dis.get('active_voxels', 0)} voxels")
+            if dis.get("has_black_holes"):
+                parts.append(f"  T1 black holes present: {dis.get('black_hole_voxels', 0)} voxels")
+
+        # Longitudinal comparison data (from Phase 11)
+        if findings.get("longitudinal"):
+            lng = findings["longitudinal"]
+            parts.append(f"\nLongitudinal comparison data:")
+            parts.append(f"  TP1 burden: {lng.get('burden_tp1_ml', 0):.3f} mL "
+                         f"({lng.get('total_lesions_tp1', 0)} lesions)")
+            parts.append(f"  TP2 burden: {lng.get('burden_tp2_ml', 0):.3f} mL "
+                         f"({lng.get('total_lesions_tp2', 0)} lesions)")
+            parts.append(f"  Burden delta: {lng.get('burden_delta_percent', 0):.1f}%")
+            sc = lng.get("status_counts", {})
+            parts.append(f"  New lesions: {sc.get('new', 0)}")
+            parts.append(f"  Enlarged lesions: {sc.get('enlarged', 0)}")
+            parts.append(f"  Resolved lesions: {sc.get('resolved', 0)}")
+            parts.append(f"  Shrunk lesions: {sc.get('shrunk', 0)}")
+            parts.append(f"  Stable lesions: {sc.get('stable', 0)}")
+
         # Additional observations
         if findings.get("additional_observations"):
             parts.append(f"\nAdditional observations: {findings['additional_observations']}")
@@ -183,7 +435,7 @@ class BrainReportService:
         Generate a structured brain MRI report.
 
         Args:
-            template_type: Report template (general, stroke, tumor, dementia)
+            template_type: Report template (general, ms_activity, ms_lesion_burden)
             findings: Clinical findings dict (de-identified)
             volumetry: Volumetry results dict (optional)
             language: Report language (en, es, de)
@@ -254,23 +506,35 @@ class BrainReportService:
         templates = [
             {
                 "id": "general",
-                "name": "General Brain MRI",
-                "description": "Standard structured brain MRI report",
+                "name": "General MS Brain MRI",
+                "description": (
+                    "MAGNIMS-compliant structured brain MRI report for MS evaluation. "
+                    "Includes DIS/DIT assessment per 2017 McDonald criteria."
+                ),
             },
             {
-                "id": "stroke",
-                "name": "Stroke Protocol",
-                "description": "Acute stroke evaluation with DWI, vascular territory, ASPECTS",
+                "id": "ms_activity",
+                "name": "MS Disease Activity Assessment",
+                "description": (
+                    "Disease activity monitoring report with DIS/DIT evaluation, "
+                    "new/enhancing lesion analysis, and treatment response assessment."
+                ),
             },
             {
-                "id": "tumor",
-                "name": "Tumor Follow-up",
-                "description": "Neuro-oncology report with RANO criteria and measurements",
+                "id": "ms_lesion_burden",
+                "name": "Quantitative Lesion Burden Analysis",
+                "description": (
+                    "Comprehensive lesion burden quantification with longitudinal comparison, "
+                    "regional distribution, and PIRA assessment per MAGNIMS/DIFUTURE standards."
+                ),
             },
             {
-                "id": "dementia",
-                "name": "Dementia Assessment",
-                "description": "Cognitive decline evaluation with MTA score, GCA, Fazekas",
+                "id": "ms_longitudinal",
+                "name": "MS Longitudinal Comparison",
+                "description": (
+                    "Interval change report with per-lesion tracking (new/enlarged/resolved), "
+                    "burden trajectory, DIS assessment, and NEDA-3 evaluation."
+                ),
             },
         ]
         return templates

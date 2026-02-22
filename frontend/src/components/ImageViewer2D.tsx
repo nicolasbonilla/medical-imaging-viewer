@@ -23,9 +23,11 @@ interface ImageViewer2DProps {
   patientName?: string;
   studyDescription?: string;
   studyModality?: string;
+  /** Expert annotation masks for contour overlay rendering */
+  expertMasks?: Map<string, import('@/types').ExpertMaskData>;
 }
 
-function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, studyDescription, studyModality }: ImageViewer2DProps) {
+function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, studyDescription, studyModality, expertMasks }: ImageViewer2DProps) {
   const { t } = useTranslation();
 
   // Refs
@@ -64,7 +66,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
   const showOverlay = isOverlayVisible;
 
   // Store state
-  const { currentSeries, currentSliceIndex, setCurrentSliceIndex, zoomLevel, panOffset } = useViewerStore();
+  const { currentSeries, currentSliceIndex, setCurrentSliceIndex, zoomLevel, panOffset, brightness, contrast, setCursorInfo } = useViewerStore();
 
   // Custom hooks
   const panZoomHandlers = usePanZoom();
@@ -109,6 +111,9 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
     fileId: currentSeries?.file_id,
     currentSliceIndex,
   });
+
+  // Check if any expert masks are visible (to show canvas even without segmentation mode)
+  const hasVisibleExperts = expertMasks ? Array.from(expertMasks.values()).some(m => m.visible && m.mask) : false;
 
   // Segmentation handlers - assign to ref so App can call it
   // Using useCallback-based createSegmentation for stable reference
@@ -223,6 +228,59 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
     };
   }, [matplotlibData?.image, matplotlibData?.bbox, renderMode]);
 
+  // CSS filter for brightness/contrast adjustments
+  const imageFilter = brightness !== 100 || contrast !== 100
+    ? `brightness(${brightness / 100}) contrast(${contrast / 100})`
+    : undefined;
+
+  // Track cursor position over the image
+  const handleCursorMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!currentSeries || !containerRef.current) return;
+
+    const canvasEl = canvasRef.current;
+    if (!canvasEl) return;
+
+    const rect = canvasEl.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    // Convert to image coordinates
+    const imgW = currentSeries.metadata.columns ?? 256;
+    const imgH = currentSeries.metadata.rows ?? 256;
+    const scaleX = imgW / rect.width;
+    const scaleY = imgH / rect.height;
+    const imgX = Math.floor(mouseX * scaleX);
+    const imgY = Math.floor(mouseY * scaleY);
+
+    if (imgX < 0 || imgX >= imgW || imgY < 0 || imgY >= imgH) {
+      return;
+    }
+
+    // Read pixel intensity from canvas
+    let intensity: number | null = null;
+    try {
+      const ctx = canvasEl.getContext('2d');
+      if (ctx) {
+        const pixel = ctx.getImageData(Math.floor(mouseX), Math.floor(mouseY), 1, 1).data;
+        // Grayscale: R=G=B for medical images
+        intensity = pixel[0];
+      }
+    } catch {
+      // Canvas may be tainted
+    }
+
+    setCursorInfo({
+      x: imgX,
+      y: imgY,
+      z: currentSliceIndex,
+      intensity,
+    });
+  }, [currentSeries, currentSliceIndex, setCursorInfo]);
+
+  const handleCursorLeave = useCallback(() => {
+    setCursorInfo(null);
+  }, [setCursorInfo]);
+
   if (!currentSeries) {
     return (
       <div className="flex items-center justify-center h-full bg-black">
@@ -245,12 +303,14 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
         }}
         onMouseMove={(e) => {
           if (!segmentationMode) panZoomHandlers.handleMouseMove(e);
+          handleCursorMove(e);
         }}
         onMouseUp={() => {
           if (!segmentationMode) panZoomHandlers.handleMouseUp();
         }}
         onMouseLeave={() => {
           if (!segmentationMode) panZoomHandlers.handleMouseUp();
+          handleCursorLeave();
         }}
       >
         <div className="flex items-center justify-center min-h-full min-w-full">
@@ -272,13 +332,14 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
                 style={renderDimensions ? {
                   width: '100%',
                   height: '100%',
-                  objectFit: 'fill', // Fill exact dimensions to match Standard mode voxel-by-voxel
-                  imageRendering: 'pixelated', // Preserve sharp pixels
-                } : undefined}
+                  objectFit: 'fill',
+                  imageRendering: 'pixelated',
+                  filter: imageFilter,
+                } : { filter: imageFilter }}
                 className={renderDimensions ? '' : 'max-w-full max-h-full object-contain'}
               />
               {/* Interactive segmentation canvas - covers full image in minimal mode, or bbox area */}
-              {segmentationMode && currentSegmentation && currentSeries && (
+              {((segmentationMode && currentSegmentation) || hasVisibleExperts) && currentSeries && (
                 <SegmentationCanvasLocal
                   ref={segmentationCanvasMatplotlibRef}
                   segmentationMask={segmentationMask}
@@ -314,6 +375,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
                   aiClickPoints={aiSeg.aiMode === 'interactive' ? aiSeg.clickPoints : undefined}
                   aiInteractiveMode={aiSeg.aiMode === 'interactive'}
                   onAIClick={aiSeg.handleCanvasClick}
+                  expertMasks={expertMasks}
                 />
               )}
             </div>
@@ -321,9 +383,9 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
             <div className="text-white">{t('viewer.loadingMatplotlib')}</div>
           ) : renderMode === 'standard' ? (
             <div className="relative">
-              <canvas ref={canvasRef} />
+              <canvas ref={canvasRef} style={{ filter: imageFilter }} />
               {/* Interactive segmentation canvas - same size as canvas */}
-              {segmentationMode && currentSegmentation && currentSeries && (
+              {((segmentationMode && currentSegmentation) || hasVisibleExperts) && currentSeries && (
                 <SegmentationCanvasLocal
                   ref={segmentationCanvasRef}
                   segmentationMask={segmentationMask}
@@ -349,6 +411,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
                   aiClickPoints={aiSeg.aiMode === 'interactive' ? aiSeg.clickPoints : undefined}
                   aiInteractiveMode={aiSeg.aiMode === 'interactive'}
                   onAIClick={aiSeg.handleCanvasClick}
+                  expertMasks={expertMasks}
                 />
               )}
             </div>
@@ -362,19 +425,19 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
           {isCreatingSegmentation ? (
             <div className="flex items-center gap-2 bg-yellow-500 text-black px-3 py-1.5 rounded-lg text-sm font-medium shadow-lg">
               <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-              {t('viewer.creatingSegmentation', 'Creando segmentación...')}
+              {t('viewer.creatingSegmentation', 'Creating segmentation...')}
             </div>
           ) : currentSegmentation ? (
             <>
               <div className="flex items-center gap-2 bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium shadow-lg">
                 <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                {t('viewer.segmentationActive', 'Segmentación activa')}
+                {t('viewer.segmentationActive', 'Segmentation active')}
               </div>
               <button
                 onClick={saveSegmentation}
                 disabled={isSaving}
                 className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-3 py-1.5 rounded-lg text-sm font-medium shadow-lg transition-colors"
-                title={t('viewer.saveSegmentation', 'Guardar segmentación')}
+                title={t('viewer.saveSegmentation', 'Save segmentation')}
               >
                 {isSaving ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -383,13 +446,13 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                   </svg>
                 )}
-                {t('viewer.save', 'Guardar')}
+                {t('viewer.save', 'Save')}
               </button>
               {/* Save status indicator */}
               {saveStatus === 'saving' && (
                 <div className="flex items-center gap-1 bg-yellow-500 text-black px-2 py-1 rounded text-xs font-medium shadow-lg animate-pulse">
                   <div className="w-3 h-3 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                  {t('viewer.autoSaving', 'Guardando...')}
+                  {t('viewer.autoSaving', 'Saving...')}
                 </div>
               )}
               {saveStatus === 'saved' && (
@@ -397,7 +460,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  {t('viewer.saved', 'Guardado')}
+                  {t('viewer.saved', 'Saved')}
                 </div>
               )}
               {saveStatus === 'error' && (
@@ -405,13 +468,13 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
-                  {t('viewer.saveError', 'Error al guardar')}
+                  {t('viewer.saveError', 'Save error')}
                 </div>
               )}
             </>
           ) : (
             <div className="flex items-center gap-2 bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium shadow-lg">
-              {t('viewer.noSegmentation', 'Sin segmentación')}
+              {t('viewer.noSegmentation', 'No segmentation')}
             </div>
           )}
         </div>

@@ -169,7 +169,7 @@ function ResultBadge({
 }: {
   result: ScreeningResult;
   onDismiss: () => void;
-  t: (key: string, fallback?: string) => string;
+  t: (key: string, defaultValue: string) => string;
 }) {
   const isNormal = result.label === 'normal';
   const confidence = (result.confidence * 100).toFixed(1);

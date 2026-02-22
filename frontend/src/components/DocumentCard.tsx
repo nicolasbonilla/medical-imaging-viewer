@@ -33,24 +33,9 @@ interface DocumentCardProps {
 // Category colors and icons
 const getCategoryInfo = (category: DocumentCategory) => {
   const categoryMap: Record<DocumentCategory, { color: string; bgColor: string; icon: React.ReactNode }> = {
-    'lab-result': {
-      color: 'text-green-600 dark:text-green-400',
-      bgColor: 'bg-green-100 dark:bg-green-900/30',
-      icon: <FileText className="w-4 h-4" />,
-    },
-    'prescription': {
-      color: 'text-blue-600 dark:text-blue-400',
-      bgColor: 'bg-blue-100 dark:bg-blue-900/30',
-      icon: <FileText className="w-4 h-4" />,
-    },
     'clinical-note': {
       color: 'text-purple-600 dark:text-purple-400',
       bgColor: 'bg-purple-100 dark:bg-purple-900/30',
-      icon: <FileText className="w-4 h-4" />,
-    },
-    'discharge-summary': {
-      color: 'text-orange-600 dark:text-orange-400',
-      bgColor: 'bg-orange-100 dark:bg-orange-900/30',
       icon: <FileText className="w-4 h-4" />,
     },
     'radiology-report': {
@@ -58,24 +43,9 @@ const getCategoryInfo = (category: DocumentCategory) => {
       bgColor: 'bg-cyan-100 dark:bg-cyan-900/30',
       icon: <FileImage className="w-4 h-4" />,
     },
-    'consent-form': {
-      color: 'text-yellow-600 dark:text-yellow-400',
-      bgColor: 'bg-yellow-100 dark:bg-yellow-900/30',
-      icon: <FileText className="w-4 h-4" />,
-    },
-    'referral': {
-      color: 'text-indigo-600 dark:text-indigo-400',
-      bgColor: 'bg-indigo-100 dark:bg-indigo-900/30',
-      icon: <FileText className="w-4 h-4" />,
-    },
-    'operative-note': {
-      color: 'text-red-600 dark:text-red-400',
-      bgColor: 'bg-red-100 dark:bg-red-900/30',
-      icon: <FileText className="w-4 h-4" />,
-    },
-    'pathology-report': {
-      color: 'text-pink-600 dark:text-pink-400',
-      bgColor: 'bg-pink-100 dark:bg-pink-900/30',
+    'ms-assessment': {
+      color: 'text-blue-600 dark:text-blue-400',
+      bgColor: 'bg-blue-100 dark:bg-blue-900/30',
       icon: <FileText className="w-4 h-4" />,
     },
     'other': {

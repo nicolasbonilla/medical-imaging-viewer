@@ -53,11 +53,9 @@ export const StudyCreateAndUpload: React.FC<StudyCreateAndUploadProps> = ({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Modality options - focus on MR for brain imaging
+  // Modality: MR only for brain MS imaging
   const modalityOptions: { value: Modality; label: string }[] = [
-    { value: 'MR', label: t('study.modality.MR', 'MRI (Resonancia Magnética)') },
-    { value: 'CT', label: t('study.modality.CT', 'CT (Tomografía)') },
-    { value: 'OT', label: t('study.modality.OT', 'Otro') },
+    { value: 'MR', label: t('study.modality.MR', 'MRI (Magnetic Resonance)') },
   ];
 
   const handleChange = (
@@ -74,7 +72,7 @@ export const StudyCreateAndUpload: React.FC<StudyCreateAndUploadProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (!formData.study_date) {
-      newErrors.study_date = t('study.errors.dateRequired', 'La fecha del estudio es requerida');
+      newErrors.study_date = t('study.errors.dateRequired', 'Study date is required');
     }
 
     setErrors(newErrors);
@@ -99,10 +97,10 @@ export const StudyCreateAndUpload: React.FC<StudyCreateAndUploadProps> = ({
       const study = await studyAPI.create(studyData);
       setCreatedStudy(study);
       setCurrentStep('upload');
-      toast.success(t('study.createSuccess', 'Estudio creado correctamente'));
+      toast.success(t('study.createSuccess', 'Study created successfully'));
     } catch (error) {
       console.error('Error creating study:', error);
-      toast.error(t('study.createError', 'Error al crear el estudio'));
+      toast.error(t('study.createError', 'Error creating study'));
     } finally {
       setIsCreating(false);
     }
@@ -111,7 +109,7 @@ export const StudyCreateAndUpload: React.FC<StudyCreateAndUploadProps> = ({
   const handleUploadComplete = useCallback((files: UploadFile[]) => {
     setUploadedFiles(files);
     setCurrentStep('complete');
-    toast.success(t('study.uploadComplete', 'Imágenes subidas correctamente'));
+    toast.success(t('study.uploadComplete', 'Images uploaded successfully'));
   }, [t]);
 
   const handleViewStudy = () => {
@@ -135,9 +133,9 @@ export const StudyCreateAndUpload: React.FC<StudyCreateAndUploadProps> = ({
 
   // Step indicator
   const steps = [
-    { id: 'metadata', label: t('study.steps.metadata', 'Datos del Estudio'), icon: FileImage },
-    { id: 'upload', label: t('study.steps.upload', 'Subir Imágenes'), icon: Upload },
-    { id: 'complete', label: t('study.steps.complete', 'Completado'), icon: Check },
+    { id: 'metadata', label: t('study.steps.metadata', 'Study Details'), icon: FileImage },
+    { id: 'upload', label: t('study.steps.upload', 'Upload Images'), icon: Upload },
+    { id: 'complete', label: t('study.steps.complete', 'Complete'), icon: Check },
   ];
 
   const currentStepIndex = steps.findIndex((s) => s.id === currentStep);
@@ -178,7 +176,7 @@ export const StudyCreateAndUpload: React.FC<StudyCreateAndUploadProps> = ({
         <div className="flex items-center gap-3 px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-xl">
           <Brain className="w-5 h-5 text-primary-600 dark:text-primary-400" />
           <span className="text-primary-700 dark:text-primary-300">
-            {t('study.forPatient', 'Estudio para')}: <strong>{patientName}</strong>
+            {t('study.forPatient', 'Study for')}: <strong>{patientName}</strong>
           </span>
         </div>
       )}
@@ -195,10 +193,10 @@ export const StudyCreateAndUpload: React.FC<StudyCreateAndUploadProps> = ({
           >
             <div className="text-center mb-6">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                {t('study.createTitle', 'Crear Nuevo Estudio de IRM')}
+                {t('study.createTitle', 'Create New MRI Study')}
               </h3>
               <p className="text-gray-500 dark:text-gray-400 mt-1">
-                {t('study.createDescription', 'Ingresa los datos del estudio antes de subir las imágenes NIfTI')}
+                {t('study.createDescription', 'Enter study details before uploading NIfTI images')}
               </p>
             </div>
 
@@ -206,7 +204,7 @@ export const StudyCreateAndUpload: React.FC<StudyCreateAndUploadProps> = ({
               {/* Modality */}
               <div>
                 <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                  {t('study.form.modality', 'Modalidad')} *
+                  {t('study.form.modality', 'Modality')} *
                 </label>
                 <select
                   name="modality"
@@ -225,7 +223,7 @@ export const StudyCreateAndUpload: React.FC<StudyCreateAndUploadProps> = ({
               {/* Study Date */}
               <div>
                 <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                  {t('study.form.studyDate', 'Fecha del Estudio')} *
+                  {t('study.form.studyDate', 'Study Date')} *
                 </label>
                 <input
                   type="date"
@@ -239,25 +237,24 @@ export const StudyCreateAndUpload: React.FC<StudyCreateAndUploadProps> = ({
                 )}
               </div>
 
-              {/* Body Site */}
+              {/* Body Site - Fixed to BRAIN for MS application */}
               <div>
                 <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                  {t('study.form.bodySite', 'Región Anatómica')}
+                  {t('study.form.bodySite', 'Body Site')}
                 </label>
                 <input
                   type="text"
                   name="body_site"
-                  value={formData.body_site}
-                  onChange={handleChange}
-                  placeholder="BRAIN"
-                  className={inputClass('body_site')}
+                  value="BRAIN"
+                  readOnly
+                  className={`${inputClass('body_site')} opacity-60 cursor-not-allowed`}
                 />
               </div>
 
               {/* Referring Physician */}
               <div>
                 <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                  {t('study.form.referringPhysician', 'Médico Referente')}
+                  {t('study.form.referringPhysician', 'Referring Physician')}
                 </label>
                 <input
                   type="text"
@@ -271,14 +268,14 @@ export const StudyCreateAndUpload: React.FC<StudyCreateAndUploadProps> = ({
               {/* Study Description */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                  {t('study.form.description', 'Descripción del Estudio')}
+                  {t('study.form.studyDescription', 'Study Description')}
                 </label>
                 <input
                   type="text"
                   name="study_description"
                   value={formData.study_description}
                   onChange={handleChange}
-                  placeholder={t('study.form.descriptionPlaceholder', 'Ej: IRM Cerebro con contraste')}
+                  placeholder={t('study.form.studyDescriptionPlaceholder', 'e.g., MS lesion evaluation')}
                   className={inputClass('study_description')}
                 />
               </div>
@@ -286,14 +283,14 @@ export const StudyCreateAndUpload: React.FC<StudyCreateAndUploadProps> = ({
               {/* Reason for Study */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                  {t('study.form.reason', 'Motivo del Estudio')}
+                  {t('study.form.reasonForStudy', 'Study Reason')}
                 </label>
                 <textarea
                   name="reason_for_study"
                   value={formData.reason_for_study}
                   onChange={handleChange}
                   rows={3}
-                  placeholder={t('study.form.reasonPlaceholder', 'Ej: Evaluación de lesiones cerebrales')}
+                  placeholder={t('study.form.reasonForStudyPlaceholder', 'e.g., MS lesion evaluation')}
                   className={inputClass('reason_for_study')}
                 />
               </div>
@@ -307,7 +304,7 @@ export const StudyCreateAndUpload: React.FC<StudyCreateAndUploadProps> = ({
                   disabled={isCreating}
                   className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
-                  {t('common.cancel', 'Cancelar')}
+                  {t('common.cancel', 'Cancel')}
                 </button>
               )}
               <button
@@ -323,7 +320,7 @@ export const StudyCreateAndUpload: React.FC<StudyCreateAndUploadProps> = ({
                   />
                 ) : (
                   <>
-                    {t('study.createAndContinue', 'Crear y Continuar')}
+                    {t('study.createAndContinue', 'Create and Continue')}
                     <ArrowRight className="w-5 h-5" />
                   </>
                 )}
@@ -342,10 +339,10 @@ export const StudyCreateAndUpload: React.FC<StudyCreateAndUploadProps> = ({
           >
             <div className="text-center mb-6">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                {t('study.uploadTitle', 'Subir Imágenes NIfTI')}
+                {t('study.uploadTitle', 'Upload NIfTI Images')}
               </h3>
               <p className="text-gray-500 dark:text-gray-400 mt-1">
-                {t('study.uploadDescription', 'Arrastra o selecciona archivos .nii o .nii.gz para el estudio')}
+                {t('study.uploadDescription', 'Drag or select .nii or .nii.gz files for the study')}
               </p>
             </div>
 
@@ -353,19 +350,19 @@ export const StudyCreateAndUpload: React.FC<StudyCreateAndUploadProps> = ({
             <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 mb-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div>
-                  <span className="text-gray-500 dark:text-gray-400">{t('study.accession', 'Accesión')}:</span>
+                  <span className="text-gray-500 dark:text-gray-400">{t('study.accession', 'Accession')}:</span>
                   <p className="font-mono text-gray-900 dark:text-white">{createdStudy.accession_number || 'N/A'}</p>
                 </div>
                 <div>
-                  <span className="text-gray-500 dark:text-gray-400">{t('study.modality', 'Modalidad')}:</span>
+                  <span className="text-gray-500 dark:text-gray-400">{t('study.modality', 'Modality')}:</span>
                   <p className="font-medium text-gray-900 dark:text-white">{createdStudy.modality}</p>
                 </div>
                 <div>
-                  <span className="text-gray-500 dark:text-gray-400">{t('study.date', 'Fecha')}:</span>
+                  <span className="text-gray-500 dark:text-gray-400">{t('study.date', 'Date')}:</span>
                   <p className="text-gray-900 dark:text-white">{new Date(createdStudy.study_date).toLocaleDateString()}</p>
                 </div>
                 <div>
-                  <span className="text-gray-500 dark:text-gray-400">{t('study.status.label', 'Estado')}:</span>
+                  <span className="text-gray-500 dark:text-gray-400">{t('study.status.label', 'Status')}:</span>
                   <p className="text-gray-900 dark:text-white capitalize">{t(`study.status.${createdStudy.status}`, createdStudy.status)}</p>
                 </div>
               </div>
@@ -395,10 +392,10 @@ export const StudyCreateAndUpload: React.FC<StudyCreateAndUploadProps> = ({
 
             <div>
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-                {t('study.completeTitle', '¡Estudio Creado Exitosamente!')}
+                {t('study.completeTitle', 'Study Created Successfully!')}
               </h3>
               <p className="text-gray-500 dark:text-gray-400 mt-2">
-                {t('study.completeDescription', 'Las imágenes han sido subidas y están listas para visualizar y segmentar.')}
+                {t('study.completeDescription', 'Images have been uploaded and are ready to view and segment.')}
               </p>
             </div>
 
@@ -409,7 +406,7 @@ export const StudyCreateAndUpload: React.FC<StudyCreateAndUploadProps> = ({
                   {uploadedFiles.length}
                 </p>
                 <p className="text-sm text-primary-600/70 dark:text-primary-400/70">
-                  {t('study.filesUploaded', 'Archivos subidos')}
+                  {t('study.filesUploaded', 'Files uploaded')}
                 </p>
               </div>
               <div className="bg-accent-50 dark:bg-accent-900/20 rounded-xl p-4">
@@ -417,7 +414,7 @@ export const StudyCreateAndUpload: React.FC<StudyCreateAndUploadProps> = ({
                   {createdStudy.modality}
                 </p>
                 <p className="text-sm text-accent-600/70 dark:text-accent-400/70">
-                  {t('study.modalityLabel', 'Modalidad')}
+                  {t('study.modalityLabel', 'Modality')}
                 </p>
               </div>
             </div>
@@ -429,13 +426,13 @@ export const StudyCreateAndUpload: React.FC<StudyCreateAndUploadProps> = ({
                 className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-accent-500 text-white rounded-xl hover:from-primary-600 hover:to-accent-600 transition-all font-medium"
               >
                 <Eye className="w-5 h-5" />
-                {t('study.viewAndSegment', 'Ver y Segmentar Imágenes')}
+                {t('study.viewAndSegment', 'View and Segment Images')}
               </button>
               <button
                 onClick={handleFinish}
                 className="flex items-center gap-2 px-6 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-colors"
               >
-                {t('study.backToPatient', 'Volver al Paciente')}
+                {t('study.backToPatient', 'Back to Patient')}
               </button>
             </div>
           </motion.div>

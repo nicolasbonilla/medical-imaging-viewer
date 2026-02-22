@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useRef, useState, useCallback, memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Niivue, NVImage, SLICE_TYPE } from '@niivue/niivue';
 import { useViewerStore } from '@/store/useViewerStore';
 import type { SegmentationResponse, PaintStroke } from '@/types';
@@ -41,6 +42,7 @@ function NiiVueViewerComponent({
   eraseMode = false,
   selectedLabelId = 1,
 }: NiiVueViewerProps) {
+  const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const nvRef = useRef<Niivue | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -330,7 +332,7 @@ function NiiVueViewerComponent({
         <div className="absolute inset-0 flex items-center justify-center bg-black/50">
           <div className="flex flex-col items-center gap-2">
             <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-            <span className="text-white text-sm">Cargando NIfTI...</span>
+            <span className="text-white text-sm">{t('viewer.loadingNifti', 'Loading NIfTI...')}</span>
           </div>
         </div>
       )}
@@ -338,7 +340,7 @@ function NiiVueViewerComponent({
       {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/80">
           <div className="text-red-500 text-center p-4">
-            <p className="font-bold">Error al cargar el archivo</p>
+            <p className="font-bold">{t('viewer.niftiLoadError', 'Error loading file')}</p>
             <p className="text-sm mt-2">{error}</p>
           </div>
         </div>

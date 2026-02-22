@@ -159,78 +159,49 @@ async def differential_diagnosis(
 # Resources — Report Templates
 # =============================================================================
 
-@mcp.resource("report-templates://stroke")
-async def stroke_template() -> str:
-    """Stroke protocol report template and evaluation criteria."""
-    return """# Stroke Protocol Report Template
+@mcp.resource("report-templates://ms-activity")
+async def ms_activity_template() -> str:
+    """MS activity assessment report template reference."""
+    return """# MS Activity Assessment Report Template
 
-## Sections
-1. **CLINICAL INDICATION**: Presenting symptoms, onset time, NIHSS score
-2. **TECHNIQUE**: DWI, ADC, FLAIR, T2*, MRA, perfusion (if available)
-3. **FINDINGS**:
-   - DWI/ADC: Restricted diffusion location and extent
-   - Vascular territory: ACA, MCA, PCA, vertebrobasilar
-   - ASPECTS score (if MCA territory): Score 0-10
-   - Hemorrhagic transformation: Absent/present, type (HI-1/HI-2/PH-1/PH-2)
-   - Mass effect: Sulcal effacement, midline shift (mm)
-   - Perfusion-diffusion mismatch (if applicable)
-4. **IMPRESSION**: Summary with territory, acuity, and recommendations
+## Required Sections:
+1. CLINICAL INDICATION: MS type, disease duration, current DMT, EDSS score
+2. TECHNIQUE: MRI sequences (T1, T2, FLAIR, T1+Gd, DWI)
+3. FINDINGS:
+   - New T2/FLAIR lesions since prior study (count, location)
+   - Gadolinium-enhancing lesions (count, location, size)
+   - Total T2 lesion burden change
+   - Brain atrophy assessment
+4. IMPRESSION: Disease activity status, treatment response assessment
 
-## ASPECTS Regions (MCA territory)
-C - Caudate, L - Lentiform, IC - Internal capsule,
-I - Insular ribbon, MCA - M1/M2/M3/M4/M5/M6
+## Key Terminology:
+- McDonald criteria for MS diagnosis
+- DIS (Dissemination in Space) / DIT (Dissemination in Time)
+- RRMS / SPMS / PPMS classification
+- NEDA (No Evidence of Disease Activity) status
 """
 
 
-@mcp.resource("report-templates://tumor")
-async def tumor_template() -> str:
-    """Tumor evaluation report template and RANO criteria."""
-    return """# Tumor Evaluation Report Template
+@mcp.resource("report-templates://ms-lesion-burden")
+async def ms_lesion_burden_template() -> str:
+    """MS lesion burden analysis report template reference."""
+    return """# MS Lesion Burden Analysis Report Template
 
-## Sections
-1. **CLINICAL INDICATION**: Known diagnosis, treatment history
-2. **TECHNIQUE**: T1 pre/post, T2, FLAIR, DWI, perfusion, spectroscopy
-3. **FINDINGS**:
-   - Tumor location and dimensions (AP x TR x CC in mm)
-   - Enhancement pattern: Solid, ring, heterogeneous, non-enhancing
-   - T2/FLAIR extent (edema vs infiltration)
-   - Mass effect: Midline shift (mm), herniation
-   - RANO measurements: Sum of products of perpendicular diameters
-   - Comparison with prior: Increased/decreased/stable
-4. **IMPRESSION**: WHO grade estimation, RANO response category
-
-## RANO Response Categories
-- Complete Response: No enhancing tumor
-- Partial Response: ≥50% decrease
-- Stable Disease: <50% decrease, <25% increase
-- Progressive Disease: ≥25% increase or new lesion
-"""
-
-
-@mcp.resource("report-templates://dementia")
-async def dementia_template() -> str:
-    """Dementia assessment report template and scoring systems."""
-    return """# Dementia Assessment Report Template
-
-## Sections
-1. **CLINICAL INDICATION**: Cognitive symptoms, duration, MMSE/MoCA score
-2. **TECHNIQUE**: T1 3D, T2, FLAIR, DWI
-3. **FINDINGS**:
-   - Hippocampal volumes: Scheltens MTA score (0-4) bilateral
-   - Cortical atrophy: GCA score (0-3) — frontal, temporal, parietal
-   - White matter: Fazekas score (0-3) periventricular + deep
-   - Ventricular size: Evans index, temporal horn enlargement
-   - Focal lesions: Microbleeds, lacunar infarcts
-4. **IMPRESSION**: Pattern analysis with differential
-
-## Scheltens MTA Score
-0 = No atrophy, 1 = Widening of choroid fissure,
-2 = Widening of temporal horn, 3 = Moderate volume loss,
-4 = Severe volume loss
-
-## Atrophy Patterns
-- Alzheimer's: Bilateral medial temporal > posterior cortical
-- Vascular: Periventricular WMH + lacunes
-- Frontotemporal: Frontal and/or temporal predominant
-- Lewy body: Relative hippocampal preservation, midbrain atrophy
+## Required Sections:
+1. LESION INVENTORY:
+   - Total lesion count and volume (mL)
+   - Distribution: periventricular, juxtacortical, infratentorial, spinal
+   - Active vs chronic lesion ratio
+2. VOLUMETRIC ANALYSIS:
+   - Total T2 lesion volume
+   - T1 black hole volume
+   - Brain parenchymal fraction (atrophy measure)
+3. LONGITUDINAL COMPARISON:
+   - New lesions since prior study
+   - Resolved/stable lesions
+   - Volume change trends
+4. CLINICAL CORRELATION:
+   - Lesion burden vs EDSS correlation
+   - Disease progression risk assessment
+   - Treatment efficacy indicators
 """

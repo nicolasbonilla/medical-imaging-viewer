@@ -14,19 +14,10 @@ from enum import Enum
 
 
 class DocumentCategory(str, Enum):
-    """Document category types (HL7 FHIR DocumentReference)."""
-    LAB_RESULT = "lab-result"
-    PRESCRIPTION = "prescription"
+    """Document category types for MS Brain MRI workflow."""
     CLINICAL_NOTE = "clinical-note"
-    DISCHARGE_SUMMARY = "discharge-summary"
     RADIOLOGY_REPORT = "radiology-report"
-    CONSENT_FORM = "consent-form"
-    REFERRAL = "referral"
-    OPERATIVE_NOTE = "operative-note"
-    PATHOLOGY_REPORT = "pathology-report"
-    IMAGING_REPORT = "imaging-report"
-    PROGRESS_NOTE = "progress-note"
-    CONSULTATION = "consultation"
+    MS_ASSESSMENT = "ms-assessment"
     OTHER = "other"
 
 

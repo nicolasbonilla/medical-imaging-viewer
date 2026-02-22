@@ -2,9 +2,12 @@ import { useTranslation } from 'react-i18next';
 import { useViewerStore } from '@/store/useViewerStore';
 import { SegmentationPanel } from './SegmentationPanel';
 import { BrainVolumetryPanel } from './BrainVolumetryPanel';
-import { AIReportPanel } from './AIReportPanel';
+import { ComparisonMetricsPanel } from './ComparisonMetricsPanel';
+import { LesionDashboard } from './LesionDashboard';
+import { LongitudinalCompare } from './LongitudinalCompare';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import type { RenderMode } from '@/hooks/useViewerControls';
+import type { ExpertMaskData } from '@/types';
 
 interface ViewerControlsProps {
   renderMode: RenderMode;
@@ -29,6 +32,10 @@ interface ViewerControlsProps {
   setAppliedYMin: (val: string) => void;
   appliedYMax: string;
   setAppliedYMax: (val: string) => void;
+  expertMasks?: Map<string, ExpertMaskData>;
+  onNavigateToSlice?: (sliceIndex: number) => void;
+  /** Called when auto-classify updates the mask — parent should reload from server */
+  onMaskUpdated?: () => void;
 }
 
 export default function ViewerControls({
@@ -54,6 +61,9 @@ export default function ViewerControls({
   setAppliedYMin,
   appliedYMax,
   setAppliedYMax,
+  expertMasks,
+  onNavigateToSlice,
+  onMaskUpdated,
 }: ViewerControlsProps) {
   const { t } = useTranslation();
   const { currentSeries, currentPatientId, currentStudyId, currentSeriesId } = useViewerStore();
@@ -105,7 +115,6 @@ export default function ViewerControls({
               <option value="magma">{t('viewer.magma')}</option>
               <option value="hot">{t('viewer.hot')}</option>
               <option value="cool">{t('viewer.cool')}</option>
-              <option value="bone">{t('viewer.bone')}</option>
               <option value="jet">{t('viewer.jet')}</option>
             </select>
           </div>
@@ -211,12 +220,37 @@ export default function ViewerControls({
         </div>
       )}
 
-      {/* AI Report Panel (visible when segmentation mode is active) */}
-      {segmentationMode && (
+      {/* Comparison Metrics Panel (visible when expert masks are loaded) */}
+      {expertMasks && expertMasks.size > 0 && (
         <div className="pt-2 border-t border-gray-700">
-          <AIReportPanel />
+          <ComparisonMetricsPanel
+            expertMasks={expertMasks}
+            activeSegmentationId={activeSegmentation?.id}
+            onNavigateToSlice={onNavigateToSlice}
+          />
         </div>
       )}
+
+      {/* Lesion Dashboard (visible when segmentation is active and saved) */}
+      {segmentationMode && activeSegmentation && !activeSegmentation.id.startsWith('local-') && (
+        <div className="pt-2 border-t border-gray-700">
+          <LesionDashboard
+            segmentationId={activeSegmentation.id}
+            onNavigateToSlice={onNavigateToSlice}
+            onMaskUpdated={onMaskUpdated}
+          />
+        </div>
+      )}
+
+      {/* Longitudinal Tracking (visible in segmentation mode) */}
+      {segmentationMode && (
+        <div className="pt-2 border-t border-gray-700">
+          <LongitudinalCompare
+            onNavigateToSlice={onNavigateToSlice}
+          />
+        </div>
+      )}
+
     </div>
   );
 }

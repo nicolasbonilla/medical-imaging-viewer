@@ -24,6 +24,16 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
+# Pre-download nilearn atlas data at build time (avoids runtime download)
+ENV PATH=/root/.local/bin:$PATH
+RUN mkdir -p /app/data/nilearn_data && \
+    python -c "\
+from nilearn import datasets; \
+d = '/app/data/nilearn_data'; \
+datasets.fetch_atlas_harvard_oxford('sub-maxprob-thr25-1mm', data_dir=d); \
+datasets.fetch_atlas_harvard_oxford('cort-maxprob-thr25-1mm', data_dir=d); \
+print('Atlas data pre-downloaded successfully')"
+
 # Stage 2: Runtime
 FROM python:3.11-slim
 
@@ -48,6 +58,9 @@ COPY --from=builder /root/.local /home/appuser/.local
 
 # Copy application code
 COPY . .
+
+# Copy pre-downloaded atlas data from builder (AFTER COPY . . to avoid overwrite)
+COPY --from=builder /app/data/nilearn_data /app/data/nilearn_data
 
 # Create necessary directories including data for SecureUserStorage
 RUN mkdir -p logs storage data && \

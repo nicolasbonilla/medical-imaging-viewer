@@ -182,7 +182,7 @@ export default function PatientsPage() {
                   <Sparkles className="w-5 h-5 text-accent-500 dark:text-accent-400 animate-pulse" />
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                  {t('patients.subtitle', 'Gestión de pacientes del sistema EHR')}
+                  {t('patients.subtitle', 'EHR Patient Management')}
                 </p>
               </div>
             </div>
@@ -355,7 +355,7 @@ export default function PatientsPage() {
                     {/* Status Filter */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        {t('patients.status.label', 'Estado')}
+                        {t('patients.status.label', 'Status')}
                       </label>
                       <select
                         value={filters.status}
@@ -372,7 +372,7 @@ export default function PatientsPage() {
                     {/* Gender Filter */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        {t('patients.gender', 'Género')}
+                        {t('patients.gender', 'Gender')}
                       </label>
                       <select
                         value={filters.gender}
@@ -380,27 +380,27 @@ export default function PatientsPage() {
                         className="w-full px-3 py-2 border border-gray-200/50 dark:border-gray-700/50 rounded-xl bg-white/60 dark:bg-gray-900/60 text-gray-900 dark:text-gray-100"
                       >
                         <option value="">{t('common.all')}</option>
-                        <option value="male">{t('patients.genders.male', 'Masculino')}</option>
-                        <option value="female">{t('patients.genders.female', 'Femenino')}</option>
-                        <option value="other">{t('patients.genders.other', 'Otro')}</option>
-                        <option value="unknown">{t('patients.genders.unknown', 'Desconocido')}</option>
+                        <option value="male">{t('patients.genders.male', 'Male')}</option>
+                        <option value="female">{t('patients.genders.female', 'Female')}</option>
+                        <option value="other">{t('patients.genders.other', 'Other')}</option>
+                        <option value="unknown">{t('patients.genders.unknown', 'Unknown')}</option>
                       </select>
                     </div>
 
                     {/* Sort By */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        {t('common.sortBy', 'Ordenar por')}
+                        {t('common.sortBy', 'Sort by')}
                       </label>
                       <select
                         value={sortField}
                         onChange={(e) => setSortField(e.target.value as SortField)}
                         className="w-full px-3 py-2 border border-gray-200/50 dark:border-gray-700/50 rounded-xl bg-white/60 dark:bg-gray-900/60 text-gray-900 dark:text-gray-100"
                       >
-                        <option value="created_at">{t('common.createdAt', 'Fecha de creación')}</option>
-                        <option value="name">{t('patients.name', 'Nombre')}</option>
+                        <option value="created_at">{t('common.createdAt', 'Created')}</option>
+                        <option value="name">{t('patients.name', 'Name')}</option>
                         <option value="mrn">{t('patients.mrn', 'MRN')}</option>
-                        <option value="birth_date">{t('patients.birthDate', 'Fecha de nacimiento')}</option>
+                        <option value="birth_date">{t('patients.birthDate', 'Date of birth')}</option>
                       </select>
                     </div>
                   </div>
@@ -455,8 +455,8 @@ export default function PatientsPage() {
               </h3>
               <p className="text-gray-500 dark:text-gray-400 mb-6">
                 {filters.search
-                  ? t('patients.tryDifferentSearch', 'Intenta con otra búsqueda')
-                  : t('patients.createFirstDescription', 'Comienza registrando tu primer paciente')}
+                  ? t('patients.tryDifferentSearch', 'Try a different search')
+                  : t('patients.createFirstDescription', 'Start by registering your first patient')}
               </p>
               {!filters.search && (
                 <motion.button

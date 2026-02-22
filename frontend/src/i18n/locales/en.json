@@ -25,8 +25,13 @@
     "sortBy": "Sort By",
     "createdAt": "Created",
     "updatedAt": "Updated",
-    "retry": "Retry",
-    "goBack": "Go Back"
+    "retry": "Try again",
+    "goBack": "Go Back",
+    "create": "Create",
+    "error": {
+      "unexpected": "Something went wrong",
+      "unexpectedDescription": "An unexpected error occurred"
+    }
   },
   "navigation": {
     "patients": "Patients",
@@ -56,8 +61,8 @@
     "confirmPassword": "Confirm Password",
     "fullName": "Full Name",
     "welcomeBack": "Welcome back!",
-    "welcomeTitle": "Welcome to Medical Imaging Viewer",
-    "welcomeSubtitle": "Professional MRI/DICOM Visualization Platform",
+    "welcomeTitle": "Welcome to MS Brain MRI Viewer",
+    "welcomeSubtitle": "Multiple Sclerosis MRI Analysis Platform",
     "loginTitle": "Sign in to your account",
     "registerTitle": "Create your account",
     "loginButton": "Sign In",
@@ -83,6 +88,12 @@
     "registrationFailed": "Registration failed. Please try again.",
     "invalidCredentials": "Incorrect username or password",
     "accountLocked": "Account is locked",
+    "accessDenied": "Access Denied",
+    "captchaGenerationFailed": "Failed to generate CAPTCHA",
+    "insufficientPermissions": "You don't have sufficient permissions to access this page.",
+    "requiredRole": "Required role:",
+    "verifyingAuth": "Verifying authentication...",
+    "yourRole": "Your role:",
     "securityBadges": {
       "iso27001": "ISO 27001:2022 Compliant",
       "hipaa": "HIPAA Secure",
@@ -101,8 +112,8 @@
     }
   },
   "viewer": {
-    "title": "Medical Imaging Viewer",
-    "subtitle": "Professional MRI/DICOM Visualization",
+    "title": "MS Brain MRI Viewer",
+    "subtitle": "MS Lesion Analysis",
     "imageLoaded": "Image Loaded",
     "loadingImage": "Loading image...",
     "imageLoadSuccess": "Image loaded successfully",
@@ -139,8 +150,8 @@
     "apply": "Apply",
     "presets": "Presets",
     "brain": "Brain",
-    "abdomen": "Abdomen",
-    "bone": "Bone",
+    "flair": "FLAIR",
+    "t2": "T2",
     "imageInformation": "Image Information",
     "format": "Format",
     "dimensions": "Dimensions",
@@ -207,9 +218,42 @@
     "save": "Save",
     "autoSaving": "Saving...",
     "saved": "Saved",
-    "saveError": "Save error"
+    "saveError": "Save error",
+    "availableImages": "Available Images",
+    "confirmDeleteSegmentation": "Are you sure you want to delete this segmentation?",
+    "create": "Create",
+    "goToPatients": "Go to Patients",
+    "imageLabel": "Image",
+    "loadingNifti": "Loading NIfTI...",
+    "loadingStudy": "Loading study...",
+    "niftiLoadError": "Error loading file",
+    "noImageLoaded": "No image loaded",
+    "noSegmentations": "No segmentations",
+    "noStudySelected": "No study selected",
+    "segmentationCreationFailed": "Segmentation creation failed",
+    "segmentationDeleteFailed": "Failed to delete segmentation",
+    "segmentationModeActivated": "Segmentation mode activated",
+    "segmentationUploaded": "Segmentation uploaded",
+    "selectStudyDescription": "Select a study to start viewing",
+    "studyInfo": "Study Info",
+    "studyNotFound": "Study not found",
+    "studyNotFoundDescription": "The study you're looking for doesn't exist",
+    "upload": "Upload",
+    "uploadingSegmentation": "Uploading segmentation...",
+    "uploadSegmentation": "Upload Segmentation",
+    "segmentations": "Segmentations",
+    "sliceNavigation": "Slice Navigation",
+    "sliceOf": "{{current}} / {{total}}",
+    "brightnessContrast": "Brightness & Contrast",
+    "resetAdjustments": "Reset",
+    "fitToWindow": "Fit",
+    "cursorPosition": "Cursor",
+    "intensity": "Intensity",
+    "sliceThickness": "Thickness",
+    "histogram": "Histogram"
   },
   "segmentation": {
+    "defaultName": "Segmentation",
     "manualSegmentation": "Manual Segmentation",
     "open": "Open",
     "new": "New",
@@ -236,6 +280,12 @@
     "errorSaving": "Error saving segmentation",
     "selectImageFirst": "Select an image first",
     "unsavedChanges": "You have unsaved changes. Do you want to save before closing?",
+    "drawOver": "Draw Over",
+    "drawOverActive": "Active Label Only",
+    "drawOverAll": "All Labels",
+    "drawOverEmpty": "Empty Only",
+    "loadingCanvas": "Loading canvas...",
+    "loadingMask": "Loading mask...",
     "paintTools": "Paint Tools",
     "circle": "Circle",
     "square": "Square",
@@ -273,7 +323,8 @@
       "pendingReview": "Pending Review",
       "reviewed": "Reviewed",
       "approved": "Approved",
-      "archived": "Archived"
+      "archived": "Archived",
+      "saved": "Saved"
     },
     "progress": {
       "annotated": "Annotated"
@@ -283,6 +334,16 @@
       "minutesAgo": "{{count}}m ago",
       "hoursAgo": "{{count}}h ago",
       "daysAgo": "{{count}}d ago"
+    },
+    "shortcuts": {
+      "title": "Keyboard shortcuts",
+      "undo": "Undo",
+      "redo": "Redo",
+      "toggleEraser": "Toggle eraser",
+      "brush": "Brush",
+      "toggleOverlay": "Toggle overlay",
+      "brushSize": "Brush size",
+      "selectLabel": "Select label"
     }
   },
   "fileExplorer": {
@@ -497,15 +558,7 @@
       "entered-in-error": "Entered in Error"
     },
     "modalities": {
-      "CT": "Computed Tomography",
       "MR": "Magnetic Resonance",
-      "US": "Ultrasound",
-      "XR": "X-Ray",
-      "MG": "Mammography",
-      "NM": "Nuclear Medicine",
-      "PT": "PET Scan",
-      "CR": "Computed Radiography",
-      "DX": "Digital Radiography",
       "OT": "Other"
     },
     "upload": {
@@ -528,7 +581,7 @@
       "studyDescription": "Study Description",
       "studyDescriptionPlaceholder": "e.g., Brain MRI with contrast",
       "bodySite": "Body Site",
-      "bodySitePlaceholder": "e.g., Head, Chest, Abdomen",
+      "bodySitePlaceholder": "e.g., Brain",
       "reasonForStudy": "Reason for Study",
       "reasonForStudyPlaceholder": "Clinical indication for the study",
       "referringPhysician": "Referring Physician",
@@ -583,7 +636,11 @@
       "dateRequired": "Study date is required"
     },
     "segmentations": "segmentation(s)",
-    "segmentationsTooltip": "{{count}} segmentation(s) available"
+    "segmentationsTooltip": "{{count}} segmentation(s) available",
+    "uploadStudy": "Upload Study",
+    "uploadComplete": "Upload complete",
+    "createSuccess": "Study created successfully",
+    "createError": "Error creating study"
   },
   "document": {
     "title": "Documents",
@@ -624,15 +681,9 @@
       "entered-in-error": "Entered in Error"
     },
     "categories": {
-      "lab-result": "Lab Result",
-      "prescription": "Prescription",
       "clinical-note": "Clinical Note",
-      "discharge-summary": "Discharge Summary",
       "radiology-report": "Radiology Report",
-      "consent-form": "Consent Form",
-      "referral": "Referral",
-      "operative-note": "Operative Note",
-      "pathology-report": "Pathology Report",
+      "ms-assessment": "MS Assessment",
       "other": "Other"
     },
     "viewer": {
@@ -676,7 +727,17 @@
       "deleteError": "Error deleting document",
       "downloadError": "Error downloading document",
       "loadError": "Error loading document"
-    }
+    },
+    "uploadDocument": "Upload Document",
+    "date": "Date",
+    "noResults": "No documents found",
+    "tryDifferentSearch": "Try different filters",
+    "totalDocuments": "Total Documents",
+    "docTitle": "Title",
+    "confirmDelete": "Are you sure you want to delete this document?",
+    "deleteSuccess": "Document deleted successfully",
+    "deleteFailed": "Failed to delete document",
+    "subtitle": "Document Management"
   },
   "patients": {
     "title": "Patients",
@@ -731,6 +792,43 @@
     "allergiesAlert": "ALLERGIES",
     "criticalAlert": "CRITICAL ALERT",
     "confirmDelete": "Are you sure you want to delete {{name}}?",
+    "all": "All",
+    "active": "Active",
+    "inactive": "Inactive",
+    "loading": "Loading patients...",
+    "noResults": "No patients found",
+    "showing": "Showing",
+    "totalPatients": "Total Patients",
+    "of": "of",
+    "tryDifferentSearch": "Try a different search",
+    "form": {
+      "mrn": "MRN",
+      "givenName": "Given Name",
+      "middleName": "Middle Name",
+      "familyName": "Family Name",
+      "birthDate": "Date of Birth",
+      "gender": "Gender",
+      "phoneMobile": "Mobile Phone",
+      "phoneHome": "Home Phone",
+      "email": "Email",
+      "addressLine1": "Address Line 1",
+      "city": "City",
+      "state": "State",
+      "postalCode": "Postal Code",
+      "country": "Country",
+      "emergencyName": "Name",
+      "emergencyPhone": "Phone",
+      "emergencyRelationship": "Relationship",
+      "relationshipPlaceholder": "e.g. Spouse, Son",
+      "insuranceProvider": "Insurance Provider",
+      "insurancePolicyNumber": "Policy Number",
+      "sections": {
+        "contact": "Contact",
+        "address": "Address",
+        "emergency": "Emergency Contact",
+        "insurance": "Insurance"
+      }
+    },
     "tabs": {
       "overview": "Overview",
       "studies": "Studies",
@@ -738,6 +836,7 @@
       "history": "History"
     },
     "status": {
+      "label": "Status",
       "active": "Active",
       "inactive": "Inactive",
       "deceased": "Deceased"
@@ -767,7 +866,7 @@
     "taskFailed": "AI task failed"
   },
   "volumetry": {
-    "title": "Brain Volumetry",
+    "title": "Lesion Volumetry",
     "compute": "Compute Volumes",
     "computing": "Computing...",
     "totalBrain": "Total Brain",
@@ -779,12 +878,13 @@
     "computeTime": "Computed in",
     "reset": "Reset",
     "needSegmentation": "Load a brain segmentation first",
+    "computeError": "Volumetry computation failed",
     "atrophy": "Atrophy",
     "enlarged": "Enlarged",
     "normal": "Normal"
   },
   "report": {
-    "title": "AI Report",
+    "title": "MS Report",
     "template": "Template",
     "language": "Language",
     "indication": "Clinical Indication",
@@ -803,10 +903,140 @@
     "newReport": "New Report",
     "templates": {
       "general": "General",
-      "stroke": "Stroke",
-      "tumor": "Tumor",
-      "dementia": "Dementia"
+      "ms_activity": "MS Activity Assessment",
+      "ms_lesion_burden": "Lesion Burden Analysis"
     }
+  },
+  "reportViewer": {
+    "title": "Medical Report",
+    "print": "Print",
+    "close": "Close",
+    "viewFullReport": "View Full Report",
+    "reportReady": "Report generated successfully",
+    "institutionName": "MS Brain MRI Viewer",
+    "subtitle": "AI-Assisted Radiology Report",
+    "reportId": "Report ID",
+    "generatedAt": "Generated",
+    "patientLabel": "Patient",
+    "mrnLabel": "MRN",
+    "ageSexLabel": "Age / Sex",
+    "studyDateLabel": "Study Date",
+    "studyDescLabel": "Study",
+    "institutionLabel": "Institution",
+    "aiDisclaimer": "AI-Generated Report — Disclaimer",
+    "aiDisclaimerText": "This report was generated by an artificial intelligence system and is intended for informational purposes only. It does not constitute a medical diagnosis. All findings must be reviewed and confirmed by a board-certified radiologist before clinical use. The AI model may produce inaccurate or incomplete information.",
+    "hipaaNote": "HIPAA Compliant — Only de-identified clinical findings were used for report generation. No protected health information (PHI) was transmitted to external services.",
+    "model": "Model",
+    "processingTime": "Processing Time",
+    "tokens": "Tokens",
+    "templateLabel": "Template",
+    "languageLabel": "Language",
+    "keyboardHint": "Press Esc to close"
+  },
+  "experts": {
+    "title": "Expert Annotations",
+    "readOnly": "Read-only contour overlays",
+    "expert1": "Expert 1",
+    "expert2": "Expert 2",
+    "consensus": "Consensus",
+    "autoMask": "Auto Mask",
+    "loading": "Loading mask...",
+    "loadError": "Failed to load expert mask"
+  },
+  "magnims": {
+    "preset": "Label Preset",
+    "default": "Default",
+    "magnims": "MAGNIMS Regional",
+    "custom": "Custom",
+    "periventricular": "Periventricular",
+    "juxtacortical": "Juxtacortical",
+    "infratentorial": "Infratentorial",
+    "deepWhiteMatter": "Deep White Matter",
+    "activeGd": "Active (Gd+)",
+    "blackHole": "Black Hole (T1)"
+  },
+  "layout": {
+    "single": "Single View",
+    "sideBySide": "1x2 Side by Side",
+    "grid": "2x2 Grid",
+    "syncOn": "Slice sync: ON",
+    "syncOff": "Slice sync: OFF",
+    "emptyPanel": "No image assigned"
+  },
+  "comparison": {
+    "title": "Comparison Metrics",
+    "compare": "Compare",
+    "needTwo": "Enable 2+ expert masks to compare",
+    "mySegmentation": "My Segmentation",
+    "volumeDiff": "Vol Diff",
+    "perSliceDice": "Dice per Slice",
+    "agreementMap": "Agreement Map"
+  },
+  "lesions": {
+    "title": "Lesion Analysis",
+    "analyze": "Analyze",
+    "totalBurden": "T2 Lesion Load",
+    "totalCount": "Total Lesions",
+    "byRegion": "By Region",
+    "lesionTable": "Lesion Table",
+    "region": "Region",
+    "size": "Size",
+    "small": "Small",
+    "medium": "Medium",
+    "large": "Large",
+    "regions": "regions",
+    "criterionMet": "Criterion Met",
+    "criterionNotMet": "Not Met",
+    "active": "Active",
+    "blackHoles": "Black Holes",
+    "exportCSV": "Export CSV"
+  },
+  "classify": {
+    "title": "MAGNIMS Region Classification",
+    "description": "Auto-classify lesions into Periventricular, Juxtacortical, Infratentorial, and Deep WM regions using brain parcellation (SynthSeg) + distance transform analysis.",
+    "classify": "Auto-Classify Regions",
+    "classifying": "Classifying...",
+    "method": "Method",
+    "methodAuto": "Auto (best)",
+    "methodParcellation": "Parcellation",
+    "methodGeometric": "Geometric",
+    "avgConfidence": "Avg confidence",
+    "distanceDetails": "Classification Distances (mm)",
+    "region": "Region"
+  },
+  "zoneMap": {
+    "title": "MAGNIMS Zone Map",
+    "description": "Visualize anatomical zone boundaries (PV, JC, IT, DWM) as a semi-transparent background overlay. Requires brain parcellation (SynthSeg).",
+    "generate": "Generate",
+    "generating": "Generating...",
+    "show": "Show zones",
+    "hide": "Hide zones",
+    "brainVoxels": "brain voxels"
+  },
+  "longitudinal": {
+    "title": "Longitudinal Tracking",
+    "tp1": "TP1 (Earlier)",
+    "tp2": "TP2 (Later)",
+    "select": "Select...",
+    "compare": "Compare Timepoints",
+    "needTwo": "Need 2+ saved segmentations to compare timepoints",
+    "burden": "Lesion Burden",
+    "change": "Change",
+    "lesionCount": "Lesion Count",
+    "changeTable": "Change Table",
+    "statusCol": "Status",
+    "new": "New",
+    "resolved": "Resolved",
+    "enlarged": "Enlarged",
+    "shrunk": "Shrunk",
+    "stable": "Stable"
+  },
+  "overlay": {
+    "mode": "Overlay Mode",
+    "fill": "Fill",
+    "contour": "Contour",
+    "fillContour": "Fill + Contour",
+    "thickness": "Contour Thickness"
   },
   "edgeAI": {
     "quickScreen": "Quick Screen",
@@ -817,6 +1047,18 @@
     "disclaimer": "Disclaimer",
     "disclaimerText": "This is an assistive screening tool only. Results are NOT diagnostic and must be confirmed by a qualified radiologist. All processing runs locally in your browser — no patient data is transmitted.",
     "modelNotAvailable": "Screening model not available"
+  },
+  "panel": {
+    "medicalHistory": "Medical History",
+    "noActiveConditions": "No active conditions recorded",
+    "severity": {
+      "severe": "Severe",
+      "moderate": "Moderate",
+      "mild": "Mild"
+    },
+    "since": "Since",
+    "studyTimeline": "Study Timeline",
+    "current": "Current"
   },
   "accessibility": {
     "skipNavigation": "Skip navigation",

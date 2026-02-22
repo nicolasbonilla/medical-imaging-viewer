@@ -801,6 +801,34 @@ class StudyServiceFirestore(IStudyService):
 
         return []
 
+    async def update_instance(
+        self,
+        instance_id: UUID,
+        data
+    ) -> InstanceResponse:
+        """Update instance metadata (e.g. original_filename)."""
+        studies = self.db.collection(Collections.STUDIES).stream()
+
+        for study_doc in studies:
+            series_stream = study_doc.reference.collection("series").stream()
+            for series_doc in series_stream:
+                instance_ref = series_doc.reference.collection("instances").document(str(instance_id))
+                instance_doc = instance_ref.get()
+
+                if instance_doc.exists:
+                    update_data = data.model_dump(exclude_none=True)
+                    if update_data:
+                        instance_ref.update(update_data)
+                    doc_data = instance_ref.get().to_dict()
+                    doc_data["id"] = str(instance_id)
+                    return self._instance_to_response(doc_data)
+
+        raise NotFoundException(
+            message="Instance not found",
+            error_code="INSTANCE_NOT_FOUND",
+            details={"instance_id": str(instance_id)}
+        )
+
     async def delete_instance(
         self,
         instance_id: UUID
