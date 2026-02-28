@@ -1,201 +1,369 @@
-import { useEffect, useRef, useState } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
-import * as THREE from 'three';
-import { useQuery } from '@tanstack/react-query';
+/**
+ * 3D Brain MRI Viewer using NiiVue volume rendering.
+ *
+ * Downloads NIfTI files with auth + progress tracking, then loads
+ * into NiiVue's WebGL2 ray-casting volume renderer. Supports:
+ * - Volume rendering (3D) with rotation, zoom, pan
+ * - Multiplanar view (axial + coronal + sagittal + 3D)
+ * - Colormaps, clip planes, orientation cube
+ * - Segmentation overlay in 3D
+ * - Download progress with percentage
+ *
+ * @module components/ImageViewer3D
+ */
+
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Box, Eye, EyeOff } from 'lucide-react';
-import { imagingAPI } from '@/services/api';
+import { Niivue, NVImage, SLICE_TYPE, SHOW_RENDER } from '@niivue/niivue';
+import { Loader2, AlertCircle, Box } from 'lucide-react';
 import { useViewerStore } from '@/store/useViewerStore';
-import type { VolumeData } from '@/types';
+import { useSegmentationStore } from '@/store/useSegmentationStore';
 
-interface VolumeRenderProps {
-  volumeData: VolumeData;
-  opacity: number;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
+/** Get auth token from localStorage */
+function getAuthHeaders(): Record<string, string> {
+  const token = localStorage.getItem('access_token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-function VolumeRender({ volumeData, opacity }: VolumeRenderProps) {
-  const groupRef = useRef<THREE.Group>(null);
-  const [sliceMeshes, setSliceMeshes] = useState<THREE.Mesh[]>([]);
+/**
+ * Fetch a file with progress tracking via ReadableStream.
+ * Returns an ArrayBuffer of the downloaded content.
+ */
+async function fetchWithProgress(
+  url: string,
+  headers: Record<string, string>,
+  onProgress: (percent: number, loadedMB: number, totalMB: number) => void,
+): Promise<ArrayBuffer> {
+  const response = await fetch(url, { headers });
 
-  useFrame(() => {
-    if (groupRef.current) {
-      // Slow rotation for better visualization
-      groupRef.current.rotation.y += 0.005;
-    }
-  });
+  if (!response.ok) {
+    const text = await response.text().catch(() => '');
+    throw new Error(`HTTP ${response.status}: ${text.slice(0, 200) || response.statusText}`);
+  }
 
-  useEffect(() => {
-    const [depth, height, width] = volumeData.shape;
-    const meshes: THREE.Mesh[] = [];
+  const contentLength = response.headers.get('content-length');
+  const total = contentLength ? parseInt(contentLength, 10) : 0;
 
-    // Create a slice every N slices to avoid too many planes
-    const step = Math.max(1, Math.floor(depth / 20)); // Show ~20 slices
+  // If no content-length or no body stream, fall back to simple arrayBuffer()
+  if (!total || !response.body) {
+    onProgress(-1, 0, 0); // indeterminate
+    const buffer = await response.arrayBuffer();
+    onProgress(100, buffer.byteLength / 1048576, buffer.byteLength / 1048576);
+    return buffer;
+  }
 
-    for (let z = 0; z < depth; z += step) {
-      // Create canvas for this slice
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let received = 0;
 
-      if (ctx) {
-        const imageData = ctx.createImageData(width, height);
-        const data = imageData.data;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    received += value.length;
+    const percent = Math.round((received / total) * 100);
+    onProgress(percent, received / 1048576, total / 1048576);
+  }
 
-        // Fill imageData with slice data
-        for (let y = 0; y < height; y++) {
-          for (let x = 0; x < width; x++) {
-            const value = volumeData.volume[z][y][x];
-            const index = (y * width + x) * 4;
-            data[index] = value;     // R
-            data[index + 1] = value; // G
-            data[index + 2] = value; // B
-            data[index + 3] = value > 10 ? 255 : 0; // A - transparency for low values
-          }
-        }
+  // Merge chunks into single ArrayBuffer
+  const merged = new Uint8Array(received);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.length;
+  }
 
-        ctx.putImageData(imageData, 0, 0);
-
-        // Create texture from canvas
-        const texture = new THREE.CanvasTexture(canvas);
-        texture.needsUpdate = true;
-
-        // Create mesh for this slice
-        const geometry = new THREE.PlaneGeometry(2, 2);
-        const material = new THREE.MeshBasicMaterial({
-          map: texture,
-          transparent: true,
-          opacity: opacity,
-          side: THREE.DoubleSide,
-        });
-
-        const mesh = new THREE.Mesh(geometry, material);
-
-        // Position slice along Z axis
-        const normalizedZ = (z / depth) * 2 - 1; // Map to -1 to 1
-        mesh.position.z = normalizedZ;
-
-        meshes.push(mesh);
-      }
-    }
-
-    setSliceMeshes(meshes);
-
-    // Cleanup
-    return () => {
-      meshes.forEach(mesh => {
-        mesh.geometry.dispose();
-        if (mesh.material instanceof THREE.Material) {
-          mesh.material.dispose();
-        }
-      });
-    };
-  }, [volumeData, opacity]);
-
-  return (
-    <group ref={groupRef}>
-      {sliceMeshes.map((mesh, i) => (
-        <primitive key={i} object={mesh} />
-      ))}
-    </group>
-  );
+  return merged.buffer;
 }
+
+/** Available colormaps for 3D rendering */
+const COLORMAPS_3D = [
+  { id: 'gray', label: 'Gray' },
+  { id: 'hot', label: 'Hot' },
+  { id: 'bone', label: 'Bone' },
+  { id: 'winter', label: 'Winter' },
+  { id: 'viridis', label: 'Viridis' },
+  { id: 'cool', label: 'Cool' },
+  { id: 'ge_color', label: 'GE Color' },
+  { id: 'inferno', label: 'Inferno' },
+] as const;
 
 export default function ImageViewer3D() {
   const { t } = useTranslation();
-  const [opacity, setOpacity] = useState(0.8);
-  const [showWireframe, setShowWireframe] = useState(false);
-  const [renderMode, setRenderMode] = useState<'interactive' | 'voxel'>('interactive');
-  const [voxelAngle, setVoxelAngle] = useState(320);
-  const { currentSeries, orientation } = useViewerStore();
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const nvRef = useRef<Niivue | null>(null);
 
-  // Fetch 3D volume data for interactive mode
-  const { data: volumeData, isLoading } = useQuery({
-    queryKey: ['volume', currentSeries?.file_id, orientation],
-    queryFn: () =>
-      currentSeries && currentSeries.file_id
-        ? imagingAPI.get3DVolume(currentSeries.file_id, orientation)
-        : null,
-    enabled: !!(currentSeries && currentSeries.file_id && renderMode === 'interactive'),
-  });
+  const currentSeries = useViewerStore((s) => s.currentSeries);
+  const render3DMode = useViewerStore((s) => s.render3DMode);
+  const colormap3D = useViewerStore((s) => s.colormap3D);
+  const clipPlaneEnabled = useViewerStore((s) => s.clipPlaneEnabled);
+  const clipPlanePosition = useViewerStore((s) => s.clipPlanePosition);
+  const clipPlaneAxis = useViewerStore((s) => s.clipPlaneAxis);
+  const currentSegmentation = useSegmentationStore((s) => s.currentSegmentation);
 
-  // Fetch voxel visualization for static mode
-  const { data: voxelData, isLoading: voxelLoading } = useQuery({
-    queryKey: ['voxel-3d', currentSeries?.file_id, voxelAngle],
-    queryFn: () =>
-      currentSeries && currentSeries.file_id
-        ? imagingAPI.getVoxel3D(currentSeries.file_id, undefined, undefined, voxelAngle)
-        : null,
-    enabled: !!(currentSeries && currentSeries.file_id && renderMode === 'voxel'),
-  });
+  // Reactive flag so load-volume effect re-runs when NiiVue is ready
+  const [nvReady, setNvReady] = useState(false);
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadProgress, setLoadProgress] = useState(0); // 0-100, -1 = indeterminate
+  const [loadedMB, setLoadedMB] = useState(0);
+  const [totalMB, setTotalMB] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [volumeLoaded, setVolumeLoaded] = useState(false);
+  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
+
+  const fileId = currentSeries?.file_id;
+
+  // Build NIfTI URL
+  const niftiUrl = useMemo(() => {
+    if (!fileId) return null;
+    return `${API_BASE_URL}/api/v1/imaging/nifti/${fileId}`;
+  }, [fileId]);
+
+  // Build segmentation NIfTI URL
+  const segNiftiUrl = useMemo(() => {
+    const segId = currentSegmentation?.segmentation_id;
+    if (!segId || segId.startsWith('local-')) return null;
+    return `${API_BASE_URL}/api/v1/segmentation/${segId}/nifti`;
+  }, [currentSegmentation?.segmentation_id]);
+
+  // Track container size
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateSize = () => {
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      if (w > 0 && h > 0) setCanvasSize({ width: w, height: h });
+    };
+
+    updateSize();
+    const ro = new ResizeObserver(updateSize);
+    ro.observe(container);
+    return () => ro.disconnect();
+  }, []);
+
+  // Initialize NiiVue once canvas has dimensions
+  useEffect(() => {
+    if (!canvasRef.current || canvasSize.width === 0 || canvasSize.height === 0) return;
+    if (nvRef.current) return; // already initialized
+
+    try {
+      const nv = new Niivue({
+        backColor: [0, 0, 0, 1],
+        show3Dcrosshair: true,
+        isRadiologicalConvention: false,
+        sliceType: SLICE_TYPE.RENDER,
+        multiplanarShowRender: SHOW_RENDER.ALWAYS,
+        isColorbar: true,
+        isOrientCube: true,
+        crosshairWidth: 1,
+        textHeight: 0.03,
+        clipPlaneColor: [1, 1, 1, 0.5],
+        loadingText: '',
+      });
+
+      nv.attachToCanvas(canvasRef.current);
+      nvRef.current = nv;
+      setNvReady(true); // <-- triggers load-volume effect
+      console.log('[ImageViewer3D] NiiVue initialized, canvas:', canvasSize.width, 'x', canvasSize.height);
+    } catch (err) {
+      console.error('[ImageViewer3D] NiiVue init failed:', err);
+      setError(err instanceof Error ? err.message : 'WebGL initialization failed');
+    }
+
+    return () => {
+      nvRef.current = null;
+      setNvReady(false);
+    };
+  }, [canvasSize.width, canvasSize.height]);
+
+  // Redraw on resize
+  useEffect(() => {
+    if (!nvRef.current || canvasSize.width === 0) return;
+    nvRef.current.drawScene();
+  }, [canvasSize.width, canvasSize.height]);
+
+  // Load volume: fetch ourselves with progress, then give blob URL to NiiVue
+  // Depends on BOTH niftiUrl AND nvReady to avoid race condition
+  useEffect(() => {
+    if (!nvReady || !niftiUrl) {
+      console.log('[ImageViewer3D] Waiting...', { nvReady, hasUrl: !!niftiUrl });
+      return;
+    }
+
+    let cancelled = false;
+    let blobUrl: string | null = null;
+
+    const loadVolume = async () => {
+      const nv = nvRef.current;
+      if (!nv) return;
+
+      setIsLoading(true);
+      setError(null);
+      setVolumeLoaded(false);
+      setLoadProgress(0);
+      setLoadedMB(0);
+      setTotalMB(0);
+
+      try {
+        // Step 1: Download NIfTI with progress tracking
+        const headers = getAuthHeaders();
+        console.log('[ImageViewer3D] Fetching NIfTI:', niftiUrl);
+
+        const buffer = await fetchWithProgress(niftiUrl, headers, (percent, loaded, total) => {
+          if (cancelled) return;
+          setLoadProgress(percent);
+          setLoadedMB(loaded);
+          setTotalMB(total);
+        });
+
+        if (cancelled) return;
+        console.log('[ImageViewer3D] Downloaded:', (buffer.byteLength / 1048576).toFixed(1), 'MB');
+
+        // Step 2: Create blob URL so NiiVue loads from local memory
+        const blob = new Blob([buffer]);
+        blobUrl = URL.createObjectURL(blob);
+
+        // Step 3: Load into NiiVue from blob URL
+        setLoadProgress(100);
+        console.log('[ImageViewer3D] Loading into NiiVue...');
+        await nv.loadVolumes([{
+          url: blobUrl,
+          colormap: colormap3D,
+          opacity: 1,
+        }]);
+
+        if (cancelled) return;
+        console.log('[ImageViewer3D] Volume loaded, volumes:', nv.volumes.length);
+
+        // Default view: front (coronal) so top-to-bottom clip makes sense
+        nv.setRenderAzimuthElevation(0, 15);
+
+        setVolumeLoaded(true);
+        setIsLoading(false);
+      } catch (err) {
+        if (cancelled) return;
+        console.error('[ImageViewer3D] Failed to load NIfTI:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load volume');
+        setIsLoading(false);
+      }
+    };
+
+    loadVolume();
+
+    return () => {
+      cancelled = true;
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
+  }, [niftiUrl, nvReady]);
+
+  // Load segmentation overlay (also with our own fetch)
+  useEffect(() => {
+    if (!nvReady || !volumeLoaded || !segNiftiUrl) return;
+
+    let cancelled = false;
+    let blobUrl: string | null = null;
+
+    const loadSegOverlay = async () => {
+      const nv = nvRef.current;
+      if (!nv) return;
+
+      try {
+        // Remove existing overlays (keep main volume at index 0)
+        while (nv.volumes.length > 1) {
+          nv.removeVolume(nv.volumes[1]);
+        }
+
+        const headers = getAuthHeaders();
+        const buffer = await fetchWithProgress(segNiftiUrl, headers, () => {});
+
+        if (cancelled) return;
+
+        const blob = new Blob([buffer]);
+        blobUrl = URL.createObjectURL(blob);
+
+        const segVolume = await NVImage.loadFromUrl({
+          url: blobUrl,
+          colormap: 'red',
+          opacity: 0.5,
+        });
+
+        if (cancelled) return;
+        nv.addVolume(segVolume);
+        console.log('[ImageViewer3D] Segmentation overlay loaded');
+      } catch (err) {
+        console.error('[ImageViewer3D] Failed to load segmentation overlay:', err);
+      }
+    };
+
+    loadSegOverlay();
+
+    return () => {
+      cancelled = true;
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
+  }, [segNiftiUrl, volumeLoaded, nvReady]);
+
+  // Update render mode
+  useEffect(() => {
+    if (!nvRef.current || !volumeLoaded) return;
+
+    if (render3DMode === 'multiplanar') {
+      nvRef.current.setSliceType(SLICE_TYPE.MULTIPLANAR);
+    } else {
+      nvRef.current.setSliceType(SLICE_TYPE.RENDER);
+    }
+  }, [render3DMode, volumeLoaded]);
+
+  // Update colormap
+  useEffect(() => {
+    if (!nvRef.current || !volumeLoaded || nvRef.current.volumes.length === 0) return;
+
+    nvRef.current.volumes[0].colormap = colormap3D;
+    nvRef.current.updateGLVolume();
+  }, [colormap3D, volumeLoaded]);
+
+  // Update clip plane
+  useEffect(() => {
+    if (!nvRef.current || !volumeLoaded) return;
+
+    if (clipPlaneEnabled) {
+      const depth = clipPlanePosition * 1.73;
+      // Axis angles: [depth, azimuth, elevation]
+      const axisAngles = {
+        axial:    [depth, 0, 90],    // XY plane, top-to-bottom
+        coronal:  [depth, 0, 0],     // XZ plane, front-to-back
+        sagittal: [depth, 270, 0],   // YZ plane, left-to-right
+      };
+      nvRef.current.setClipPlane(axisAngles[clipPlaneAxis]);
+    } else {
+      nvRef.current.setClipPlane([3, 0, 0]);
+    }
+  }, [clipPlaneEnabled, clipPlanePosition, clipPlaneAxis, volumeLoaded]);
+
+  // No image loaded
   if (!currentSeries) {
     return (
-      <div className="flex items-center justify-center h-full bg-gray-800">
+      <div className="flex items-center justify-center h-full bg-black">
         <div className="text-center text-gray-400">
           <Box className="w-16 h-16 mx-auto mb-4 opacity-50" />
-          <p>{t('viewer.selectImageFor3D')}</p>
+          <p>{t('viewer.selectImageFor3D', 'Select an image for 3D viewing')}</p>
         </div>
       </div>
     );
   }
 
-  if (!currentSeries.file_id) {
+  if (!fileId) {
     return (
-      <div className="flex items-center justify-center h-full bg-gray-800">
+      <div className="flex items-center justify-center h-full bg-black">
         <div className="text-center text-gray-400">
-          <Box className="w-16 h-16 mx-auto mb-4 opacity-50" />
-          <p>{t('viewer.noFileId')}</p>
-          <p className="text-sm mt-2">{t('viewer.tryReload')}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (isLoading || voxelLoading) {
-    return (
-      <div className="flex items-center justify-center h-full bg-gray-800">
-        <div className="text-center text-white">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
-          <p>{t('viewer.loading3D')} {renderMode === 'voxel' ? t('viewer.voxelVisualization') : t('viewer.volumeVisualization')}...</p>
-          <p className="text-sm text-gray-400 mt-2">{t('viewer.takesTime')}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (renderMode === 'interactive' && !volumeData) {
-    return (
-      <div className="flex items-center justify-center h-full bg-gray-800">
-        <div className="text-center text-gray-400">
-          <Box className="w-16 h-16 mx-auto mb-4 opacity-50" />
-          <p>{t('viewer.not3DAvailable')}</p>
-          <p className="text-sm mt-2">{t('viewer.volumeDataNotLoaded')}</p>
-          <button
-            onClick={() => setRenderMode('voxel')}
-            className="mt-4 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded transition-colors"
-          >
-            {t('viewer.tryVoxelView')}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (renderMode === 'voxel' && !voxelData) {
-    return (
-      <div className="flex items-center justify-center h-full bg-gray-800">
-        <div className="text-center text-gray-400">
-          <Box className="w-16 h-16 mx-auto mb-4 opacity-50" />
-          <p>{t('viewer.voxelNotAvailable')}</p>
-          <p className="text-sm mt-2">{t('viewer.voxelDataNotLoaded')}</p>
-          <button
-            onClick={() => setRenderMode('interactive')}
-            className="mt-4 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded transition-colors"
-          >
-            {t('viewer.tryInteractiveView')}
-          </button>
+          <AlertCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
+          <p>{t('viewer.noFileId', 'No file available for 3D rendering')}</p>
         </div>
       </div>
     );
@@ -203,146 +371,79 @@ export default function ImageViewer3D() {
 
   return (
     <div className="relative h-full bg-black">
-      {renderMode === 'voxel' && voxelData ? (
-        <div className="flex items-center justify-center h-full p-4">
-          <img
-            src={voxelData.image}
-            alt="3D Voxel Visualization"
-            className="max-w-full max-h-full object-contain"
-          />
-        </div>
-      ) : volumeData ? (
-        <Canvas>
-          <PerspectiveCamera makeDefault position={[3, 3, 3]} />
-          <OrbitControls enableDamping dampingFactor={0.05} />
+      {/* Canvas container */}
+      <div ref={containerRef} className="absolute inset-0">
+        <canvas
+          ref={canvasRef}
+          width={canvasSize.width}
+          height={canvasSize.height}
+          style={{ width: '100%', height: '100%', display: 'block' }}
+        />
+      </div>
 
-          {/* Lighting */}
-          <ambientLight intensity={0.5} />
-          <directionalLight position={[10, 10, 5]} intensity={1} />
-          <directionalLight position={[-10, -10, -5]} intensity={0.5} />
+      {/* Loading overlay with progress */}
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-10">
+          <div className="flex flex-col items-center gap-4 w-72">
+            <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
+            <p className="text-white text-sm font-medium">
+              {t('viewer.loading3D', 'Loading 3D volume...')}
+            </p>
 
-          {/* Volume */}
-          <VolumeRender volumeData={volumeData} opacity={opacity} />
-
-          {/* Grid helper */}
-          <gridHelper args={[10, 10]} />
-          <axesHelper args={[2]} />
-        </Canvas>
-      ) : null}
-
-      {/* Controls Panel */}
-      <div className="absolute top-4 right-4 bg-gray-900 bg-opacity-90 rounded-lg p-4 space-y-4 w-64">
-        {/* Render Mode Toggle */}
-        <div>
-          <label className="block text-sm text-gray-300 mb-2">{t('viewer.renderMode')}</label>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setRenderMode('interactive')}
-              className={`flex-1 px-3 py-2 rounded text-sm transition-colors ${
-                renderMode === 'interactive'
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-              }`}
-            >
-              {t('viewer.interactive')}
-            </button>
-            <button
-              onClick={() => setRenderMode('voxel')}
-              className={`flex-1 px-3 py-2 rounded text-sm transition-colors ${
-                renderMode === 'voxel'
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-              }`}
-            >
-              {t('viewer.voxel')}
-            </button>
-          </div>
-        </div>
-
-        {renderMode === 'interactive' && (
-          <>
-            <div>
-              <label className="block text-sm text-gray-300 mb-2">{t('viewer.opacity')}</label>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={opacity * 100}
-                onChange={(e) => setOpacity(parseFloat(e.target.value) / 100)}
-                className="w-full"
-              />
-              <div className="text-xs text-gray-400 mt-1">
-                {(opacity * 100).toFixed(0)}%
+            {/* Progress bar */}
+            <div className="w-full">
+              <div className="w-full h-2.5 bg-gray-700 rounded-full overflow-hidden">
+                {loadProgress >= 0 ? (
+                  <div
+                    className="h-full bg-blue-500 rounded-full transition-all duration-200"
+                    style={{ width: `${loadProgress}%` }}
+                  />
+                ) : (
+                  <div className="h-full bg-blue-500 rounded-full animate-pulse w-full opacity-40" />
+                )}
+              </div>
+              <div className="flex justify-between mt-1.5">
+                <span className="text-gray-400 text-xs">
+                  {loadProgress >= 0 ? `${loadProgress}%` : t('viewer.downloading', 'Downloading...')}
+                </span>
+                {totalMB > 0 && (
+                  <span className="text-gray-400 text-xs">
+                    {loadedMB.toFixed(1)} / {totalMB.toFixed(1)} MB
+                  </span>
+                )}
               </div>
             </div>
 
-            <button
-              onClick={() => setShowWireframe(!showWireframe)}
-              className="w-full flex items-center justify-between px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded transition-colors text-sm text-white"
-            >
-              <span>{t('viewer.wireframe')}</span>
-              {showWireframe ? (
-                <Eye className="w-4 h-4" />
-              ) : (
-                <EyeOff className="w-4 h-4" />
-              )}
-            </button>
-          </>
-        )}
-
-        {renderMode === 'voxel' && (
-          <div>
-            <label className="block text-sm text-gray-300 mb-2">{t('viewer.viewAngle')}</label>
-            <input
-              type="range"
-              min="0"
-              max="360"
-              value={voxelAngle}
-              onChange={(e) => setVoxelAngle(parseInt(e.target.value))}
-              className="w-full"
-            />
-            <div className="text-xs text-gray-400 mt-1">
-              {voxelAngle}°
-            </div>
+            <p className="text-gray-500 text-xs text-center">
+              {loadProgress === 100
+                ? t('viewer.rendering3D', 'Initializing WebGL renderer...')
+                : t('viewer.loading3DDesc', 'Downloading NIfTI file for WebGL rendering')}
+            </p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Info Panel */}
-      {volumeData && renderMode === 'interactive' && (
-        <div className="absolute top-4 left-4 bg-gray-900 bg-opacity-90 rounded-lg px-4 py-2 text-xs text-gray-300 space-y-1">
-          <div>{t('viewer.mode')}: {t('viewer.interactive')}</div>
-          <div>{t('viewer.orientation')}: {orientation}</div>
-          <div>
-            {t('viewer.dimensions')}: {volumeData.shape[0]} x {volumeData.shape[1]} x{' '}
-            {volumeData.shape[2]}
+      {/* Error overlay */}
+      {error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-10">
+          <div className="text-center p-6 max-w-sm">
+            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+            <p className="text-red-400 font-medium">{t('viewer.error3D', '3D rendering failed')}</p>
+            <p className="text-gray-400 text-sm mt-2 break-words">{error}</p>
           </div>
-          <div>{t('viewer.modality')}: {volumeData.metadata.modality || 'N/A'}</div>
         </div>
       )}
 
-      {renderMode === 'voxel' && (
-        <div className="absolute top-4 left-4 bg-gray-900 bg-opacity-90 rounded-lg px-4 py-2 text-xs text-gray-300 space-y-1">
-          <div>{t('viewer.mode')}: {t('viewer.voxel')}</div>
-          <div>{t('viewer.viewAngle')}: {voxelAngle}°</div>
-        </div>
-      )}
-
-      {/* Instructions */}
-      {renderMode === 'interactive' && (
-        <div className="absolute bottom-4 left-4 bg-gray-900 bg-opacity-90 rounded-lg px-4 py-2 text-xs text-gray-400">
-          <div>{t('viewer.instructions.leftClick')}</div>
-          <div>{t('viewer.instructions.rightClick')}</div>
-          <div>{t('viewer.instructions.scroll')}</div>
-        </div>
-      )}
-
-      {renderMode === 'voxel' && (
-        <div className="absolute bottom-4 left-4 bg-gray-900 bg-opacity-90 rounded-lg px-4 py-2 text-xs text-gray-400">
-          <div>{t('viewer.instructions.adjustAngle')}</div>
-          <div>{t('viewer.instructions.tryAngles')}</div>
+      {/* Instructions overlay (bottom-left, subtle) */}
+      {volumeLoaded && !isLoading && (
+        <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 text-[10px] text-gray-400 space-y-0.5 z-10 pointer-events-none">
+          <div>{t('viewer.3d.dragRotate', 'Left-click drag: Rotate')}</div>
+          <div>{t('viewer.3d.scrollZoom', 'Scroll: Zoom')}</div>
+          <div>{t('viewer.3d.rightPan', 'Right-click drag: Pan')}</div>
         </div>
       )}
     </div>
   );
 }
+
+export { COLORMAPS_3D };

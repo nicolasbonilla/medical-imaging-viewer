@@ -904,10 +904,13 @@ async def compare_masks(
                 loaded_masks.append({"mask": (mask_3d > 0).astype(np.uint8), "label": label})
 
             elif mask_type == "instance":
-                # Load NIfTI from instance
-                instance = await study_service.get_instance(mask_id)
+                # Load NIfTI from instance — prefer gcs_path (fast) over instance lookup (slow)
+                gcs_path = spec.get("gcs_path")
+                if not gcs_path:
+                    instance = await study_service.get_instance(mask_id)
+                    gcs_path = instance.gcs_object_name
                 file_data = await storage_service.download_file(
-                    settings.GCS_BUCKET_NAME, instance.gcs_object_name
+                    settings.GCS_BUCKET_NAME, gcs_path
                 )
                 _, data = load_nifti_from_bytes(file_data, normalize=False)
                 mask = (data > 0).astype(np.uint8)
@@ -917,10 +920,34 @@ async def compare_masks(
             else:
                 raise HTTPException(status_code=400, detail=f"Unknown mask type: {mask_type}")
 
-        # Compute pairwise metrics
+        # Compute pairwise metrics (skip pairs with shape mismatch)
         comparisons = []
         for i in range(len(loaded_masks)):
             for j in range(i + 1, len(loaded_masks)):
+                if loaded_masks[i]["mask"].shape != loaded_masks[j]["mask"].shape:
+                    logger.warning(
+                        "Shape mismatch in comparison, skipping pair",
+                        extra={
+                            "label_a": loaded_masks[i]["label"],
+                            "label_b": loaded_masks[j]["label"],
+                            "shape_a": str(loaded_masks[i]["mask"].shape),
+                            "shape_b": str(loaded_masks[j]["mask"].shape),
+                        }
+                    )
+                    comparisons.append({
+                        "label_a": loaded_masks[i]["label"],
+                        "label_b": loaded_masks[j]["label"],
+                        "dice": 0.0,
+                        "hausdorff_mm": None,
+                        "volume": {
+                            "volume_a_mm3": 0,
+                            "volume_b_mm3": 0,
+                            "diff_percent": 0,
+                        },
+                        "per_slice_dice": [],
+                        "error": f"Shape mismatch: {loaded_masks[i]['mask'].shape} vs {loaded_masks[j]['mask'].shape}",
+                    })
+                    continue
                 result = compare_two_masks(
                     loaded_masks[i]["mask"],
                     loaded_masks[j]["mask"],
@@ -1428,8 +1455,8 @@ async def generate_zone_map_endpoint(
             logger.info("[ZoneMap] Using parcellation-based method (source=%s)", parc_source)
             result = generate_zone_map(parcellation_mask, voxel_spacing)
         else:
-            # Atlas-based method: Harvard-Oxford atlas resampled to patient image
-            logger.info("[ZoneMap] No parcellation found, using atlas method for file=%s", file_id)
+            # MSMask-based method: LST-AI validated atlas (Wiltgen et al. 2024)
+            logger.info("[ZoneMap] No parcellation found, using MSMask method for file=%s", file_id)
             file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, file_id)
             img, data = load_nifti_from_bytes(file_data, normalize=False)
             # Create in-memory NIfTI (the temp file from load_nifti_from_bytes is

@@ -14,21 +14,52 @@ import { EXPERT_COLORS } from '@/types';
 
 /**
  * Classify an expert mask filename into an ExpertType.
+ *
+ * Categories:
+ *   - expert: Manual expert annotation (desc-expertNN)
+ *   - output: Algorithm output mask (desc-outputN, desc-maskN, out_mask)
+ *   - consensus: STAPLE consensus or unclassified (label-lesion_dseg without descriptor)
  */
 export function classifyExpertFile(filename: string): ExpertType {
   const lower = filename.toLowerCase();
-  if (lower.includes('desc-expert1') || lower.includes('expert1') || lower.includes('expert_1'))
-    return 'expert1';
-  if (lower.includes('desc-expert2') || lower.includes('expert2') || lower.includes('expert_2'))
-    return 'expert2';
-  if (lower.includes('desc-experto1') || lower.includes('experto1'))
-    return 'expert1';
-  if (lower.includes('desc-experto2') || lower.includes('experto2'))
-    return 'expert2';
-  if (lower.includes('desc-mask') || lower.includes('out_mask'))
-    return 'mask';
-  // Default: consensus (label-lesion_dseg without expert descriptor)
+  // Expert annotation: desc-expert01, desc-expert02, Expert01, experto12, etc.
+  if (/expert[eo]?\d/.test(lower)) return 'expert';
+  // Algorithm output: desc-output1, desc-output2, desc-mask, desc-mask2, out_mask
+  if (/desc-output|desc-mask|out_mask/.test(lower)) return 'output';
+  // Default: consensus (label-lesion_dseg without expert/output descriptor)
   return 'consensus';
+}
+
+/**
+ * Derive a human-readable label from a BIDS mask filename.
+ * Extracts type + output number + session info.
+ *
+ * Examples:
+ *   "sub-MS007_ses-01_label-lesion_desc-expert02_dseg.nii.gz" → "Expert Annotation (TP1)"
+ *   "sub-MS007_ses-01_label-lesion_desc-output1_dseg.nii.gz"  → "Algorithm Output 1 (TP1)"
+ *   "sub-MS007_ses-01_label-lesion_desc-output2_dseg.nii.gz"  → "Algorithm Output 2 (TP1)"
+ *   "sub-MS007_ses-01_label-lesion_dseg.nii.gz"               → "Consensus (TP1)"
+ */
+export function deriveExpertLabel(filename: string): string {
+  const expertType = classifyExpertFile(filename);
+  let baseLabel = EXPERT_COLORS[expertType].label;
+
+  // For output masks, append the output number if present
+  if (expertType === 'output') {
+    const numMatch = filename.match(/desc-(?:output|mask)(\d+)/i);
+    if (numMatch) {
+      baseLabel = `${baseLabel} ${numMatch[1]}`;
+    }
+  }
+
+  // Extract session number from BIDS filename
+  const sesMatch = filename.match(/ses-(\d+)/i);
+  if (sesMatch) {
+    const tp = parseInt(sesMatch[1], 10);
+    return `${baseLabel} (TP${tp})`;
+  }
+
+  return baseLabel;
 }
 
 /**

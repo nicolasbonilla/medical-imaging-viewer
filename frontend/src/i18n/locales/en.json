@@ -182,10 +182,34 @@
     "wireframe": "Wireframe",
     "viewAngle": "View Angle",
     "mode": "Mode",
-    "selectImageFor3D": "Select an image for 3D visualization",
-    "noFileId": "No file ID available for 3D rendering",
+    "volumeRender": "Volume",
+    "multiplanar": "Multiplanar",
+    "colormap": "Colormap",
+    "clipPlane": "Clip Plane",
+    "clipPlaneOn": "Clip: ON",
+    "clipPlaneOff": "Clip: OFF",
+    "clipAxis": {
+      "axial": "Axial",
+      "coronal": "Coronal",
+      "sagittal": "Sagittal"
+    },
+    "cameraView": "Camera View",
+    "view3D": {
+      "top": "Top",
+      "bottom": "Bottom",
+      "front": "Front",
+      "back": "Back",
+      "left": "Left",
+      "right": "Right"
+    },
+    "selectImageFor3D": "Select an image for 3D viewing",
+    "noFileId": "No file available for 3D rendering",
     "tryReload": "Try reloading the image",
-    "loading3D": "Loading 3D",
+    "loading3D": "Loading 3D volume...",
+    "loading3DDesc": "Downloading NIfTI file for WebGL rendering",
+    "rendering3D": "Initializing WebGL renderer...",
+    "downloading": "Downloading...",
+    "error3D": "3D rendering failed",
     "volumeVisualization": "volume visualization",
     "voxelVisualization": "voxel visualization",
     "takesTime": "This may take a while for large volumes",
@@ -195,6 +219,11 @@
     "voxelNotAvailable": "Voxel visualization not available",
     "voxelDataNotLoaded": "The voxel data could not be loaded",
     "tryInteractiveView": "Try Interactive View",
+    "3d": {
+      "dragRotate": "Left-click drag: Rotate",
+      "scrollZoom": "Scroll: Zoom",
+      "rightPan": "Right-click drag: Pan"
+    },
     "instructions": {
       "leftClick": "Left click + drag: Rotate",
       "rightClick": "Right click + drag: Pan",
@@ -266,6 +295,8 @@
     "createNewToStart": "Create a new one to start",
     "activeSegmentation": "Active segmentation",
     "showOverlay": "Show Overlay",
+    "lesionOpacity": "Lesion opacity",
+    "zoneMapOpacity": "Zone map opacity",
     "hideLabel": "Hide label",
     "showLabel": "Show label",
     "labels": "Labels",
@@ -903,8 +934,9 @@
     "newReport": "New Report",
     "templates": {
       "general": "General",
-      "ms_activity": "MS Activity Assessment",
-      "ms_lesion_burden": "Lesion Burden Analysis"
+      "ms_activity": "MS Activity",
+      "ms_comprehensive": "Comprehensive",
+      "ms_lesion_burden": "Lesion Burden"
     }
   },
   "reportViewer": {
@@ -934,14 +966,15 @@
     "keyboardHint": "Press Esc to close"
   },
   "experts": {
-    "title": "Expert Annotations",
-    "readOnly": "Read-only contour overlays",
+    "title": "Reference Masks",
+    "readOnly": "Read-only overlays (expert & algorithm outputs)",
     "expert1": "Expert 1",
     "expert2": "Expert 2",
     "consensus": "Consensus",
     "autoMask": "Auto Mask",
     "loading": "Loading mask...",
-    "loadError": "Failed to load expert mask"
+    "loadError": "Failed to load expert mask",
+    "switchedToPreprocessed": "Switched to preprocessed image (masks require MNI space)"
   },
   "magnims": {
     "preset": "Label Preset",
@@ -961,7 +994,11 @@
     "grid": "2x2 Grid",
     "syncOn": "Slice sync: ON",
     "syncOff": "Slice sync: OFF",
-    "emptyPanel": "No image assigned"
+    "emptyPanel": "No image assigned",
+    "originals": "Original",
+    "preprocessed": "Preproc",
+    "showOriginals": "Switch to original images",
+    "showPreprocessed": "Switch to preprocessed images"
   },
   "comparison": {
     "title": "Comparison Metrics",
@@ -1011,7 +1048,9 @@
     "generating": "Generating...",
     "show": "Show zones",
     "hide": "Hide zones",
-    "brainVoxels": "brain voxels"
+    "brainVoxels": "brain voxels",
+    "colorizeOn": "Colorize lesions by zone",
+    "colorizeOff": "Normal label colors"
   },
   "longitudinal": {
     "title": "Longitudinal Tracking",

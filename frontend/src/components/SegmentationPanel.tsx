@@ -459,6 +459,9 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
     drawOverMode,
     saveCallback,
     createCallback,
+    lesionOpacity,
+    zoneMapOpacity,
+    zoneMapVisible,
     setActiveLabel,
     toggleLabelVisibility,
     setPaintTool,
@@ -468,6 +471,8 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
     setDrawOverMode,
     setActiveSegmentation,
     setCurrentSegmentation,
+    setLesionOpacity,
+    setZoneMapOpacity,
     reset,
   } = useSegmentationStore();
 
@@ -785,6 +790,42 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                   />
                 </button>
               </div>
+
+              {/* Opacity Sliders */}
+              {isOverlayVisible && (
+                <div className="space-y-2">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs text-gray-400">{t('segmentation.lesionOpacity', 'Lesion opacity')}</label>
+                      <span className="text-xs text-gray-500">{Math.round(lesionOpacity * 100)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={Math.round(lesionOpacity * 100)}
+                      onChange={(e) => setLesionOpacity(Number(e.target.value) / 100)}
+                      className="w-full h-1.5 bg-gray-700 rounded-full appearance-none cursor-pointer accent-blue-500"
+                    />
+                  </div>
+                  {zoneMapVisible && (
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs text-gray-400">{t('segmentation.zoneMapOpacity', 'Zone map opacity')}</label>
+                        <span className="text-xs text-gray-500">{Math.round(zoneMapOpacity * 100)}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={Math.round(zoneMapOpacity * 100)}
+                        onChange={(e) => setZoneMapOpacity(Number(e.target.value) / 100)}
+                        className="w-full h-1.5 bg-gray-700 rounded-full appearance-none cursor-pointer accent-green-500"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Label Preset Selector */}
               <div>

@@ -13,9 +13,9 @@ Two methods are provided:
     with Euclidean Distance Transforms (EDT). Higher accuracy when parcellation
     is available.
 
-  - **Atlas-based** (generate_zone_map_atlas): Uses Harvard-Oxford atlas with
-    single-voxel binary dilation, following the LST-AI methodology (Wiltgen
-    et al., NeuroImage: Clinical 2024). Fallback when no parcellation exists.
+  - **MSMask-based** (generate_zone_map_atlas): Uses LST-AI's MSMask atlas
+    with binary dilation (Wiltgen et al., NeuroImage: Clinical 2024).
+    The only published, validated method for MAGNIMS zone classification.
 
 Priority cascade: IT -> PV -> JC -> DWM (most specific first).
 
@@ -58,19 +58,28 @@ INFRATENTORIAL_LABELS = {
 WHITE_MATTER_LABELS = {2, 41}  # L/R Cerebral White Matter
 
 # =============================================================================
-# Clinical Thresholds (mm) — Based on MAGNIMS guidelines
+# LST-AI MSMask Atlas (Wiltgen et al., NeuroImage: Clinical 2024)
 # =============================================================================
 
-# Periventricular: "directly abutting the lateral ventricle" (Filippi 2019).
-# We use <=3mm to account for partial volume effects at typical 1mm isotropic.
-PV_DISTANCE_THRESHOLD_MM = 3.0
+# The MSMask is a manually-labeled MNI152 atlas included in LST-AI.
+# It is the ONLY published, validated atlas for MAGNIMS zone classification.
+MSMASK_PATH = "/app/data/msmask/sub-mni152_space-mni_msmask.nii.gz"
+MSMASK_LABELS = {"CSF": 1, "GM": 2, "WM": 3, "Ventricles": 4, "Infratentorial": 5}
 
-# Juxtacortical: "touching the cortex with no intervening white matter"
-# (Thompson 2018). In practice <=4mm accounts for cortical ribbon thickness.
-JC_DISTANCE_THRESHOLD_MM = 4.0
+# =============================================================================
+# Clinical Thresholds (mm) — Based on LST-AI "direct contact" criterion
+# =============================================================================
+
+# LST-AI uses binary dilation with a 3x3x3 cube at 1mm isotropic (~1.73mm
+# diagonal). For the EDT-based parcellation method, we use 1.5mm to match
+# the same "direct contact" criterion (Filippi 2019: "directly abutting").
+PV_DISTANCE_THRESHOLD_MM = 1.5
+
+# Juxtacortical: "touching the cortex" (Thompson 2018, Filippi 2019).
+JC_DISTANCE_THRESHOLD_MM = 1.5
 
 # Infratentorial: lesion within or touching brainstem/cerebellum.
-IT_DISTANCE_THRESHOLD_MM = 3.0
+IT_DISTANCE_THRESHOLD_MM = 1.5
 
 # Minimum lesion volume (mm3) to classify — ignore very small noise components
 MIN_LESION_VOLUME_MM3 = 3.0  # ~3 voxels at 1mm isotropic
@@ -558,209 +567,178 @@ def generate_zone_map_atlas(
     voxel_spacing: tuple[float, float, float] = (1.0, 1.0, 1.0),
 ) -> dict:
     """
-    Generate a 3D MAGNIMS zone map using Harvard-Oxford atlas.
+    Generate a 3D MAGNIMS zone map using LST-AI's MSMask atlas.
 
-    Implements the LST-AI methodology (Wiltgen et al., NeuroImage: Clinical
-    2024) adapted from per-lesion classification to pre-computed zone map:
+    Uses the exact methodology from LST-AI (Wiltgen et al., NeuroImage:
+    Clinical 2024), the ONLY published and validated tool for MAGNIMS zone
+    classification:
 
-    1. Load Harvard-Oxford subcortical + cortical atlases at 1mm MNI resolution
-    2. Extract anatomical masks: ventricles, cortex (combined), WM, brainstem
-    3. Infer infratentorial region via MNI z-coordinate (z < -30mm)
-    4. Single-voxel binary dilation (3x3x3 cube) of ventricles and cortex to
-       implement MAGNIMS "abutting" criterion (Filippi et al., Brain 2019)
+    1. Load MSMask atlas (manually-labeled MNI152, 5 tissue classes)
+    2. Extract anatomical masks from MSMask labels
+    3. Binary dilation (3x3x3 cube) of ventricles and cortex for "abutting"
+    4. Classify WM voxels: PV > JC > IT > DWM (LST-AI priority order)
     5. Resample zone map to patient image grid via corrected affine
 
-    Priority cascade: IT > PV > JC > DWM. For zone maps, IT has absolute
-    priority as lateral ventricles do not exist in the infratentorial region,
-    making the cascade equivalent to LST-AI's PV > JC > IT > SC.
+    MSMask labels (from LST-AI source):
+      1 = CSF, 2 = GM (cortex), 3 = WM, 4 = Ventricles, 5 = Infratentorial
 
-    Harvard-Oxford subcortical maxprob-thr0-1mm labels (nilearn 1-based):
-      1/12 = L/R Cerebral White Matter
-      2/13 = L/R Cerebral Cortex
-      3/14 = L/R Lateral Ventricle
-      8    = Brain-Stem
-
-    Harvard-Oxford cortical maxprob-thr0-1mm: 48 cortical parcellation
-    regions (all labels > 0), combined with subcortical cortex labels for
-    complete cortical surface coverage.
+    LST-AI classification logic (annotate.py):
+      - For each lesion, dilate by 3x3x3 cube, then check overlap:
+        - If dilated lesion overlaps Ventricles(4) → PV
+        - Elif dilated lesion overlaps GM(2) → JC
+        - Elif dilated lesion overlaps Infratentorial(5) → IT
+        - Else → DWM (subcortical)
+      - We adapt this per-lesion logic to a pre-computed zone map.
 
     Args:
         target_img: nibabel Nifti1Image of the patient MRI in MNI space.
-            Used for shape and affine to determine the output grid.
-        voxel_spacing: Unused (kept for API compatibility). Atlas is 1mm
-            isotropic.
+        voxel_spacing: Unused (kept for API compatibility).
 
     Returns:
-        Dict with zone_mask (uint8 in NIfTI native order i,j,k), zone_stats,
-        total_brain_voxels, processing_time_ms, method='atlas'.
+        Dict with zone_mask (uint8), zone_stats, total_brain_voxels,
+        processing_time_ms, method='msmask'.
 
     References:
         Wiltgen et al. (2024). LST-AI: A deep learning ensemble for accurate
         MS lesion segmentation. NeuroImage: Clinical, 42, 103611.
-
-        Filippi et al. (2019). Assessment of lesions on MRI in MS: practical
-        guidelines. Brain, 142(7), 1858-1875.
     """
     import nibabel as nib
     from scipy.ndimage import binary_dilation
-    from nilearn import datasets
     from pathlib import Path
 
     start_time = time.time()
 
-    # ── 1. Load atlases at NATIVE resolution (no resampling of masks) ──
-    data_dir = "/app/data/nilearn_data"
-    data_dir = data_dir if Path(data_dir).exists() else None
+    # ── 1. Load MSMask atlas ──
+    msmask_path = Path(MSMASK_PATH)
+    if not msmask_path.exists():
+        # Fallback: check relative to module
+        alt_path = Path(__file__).resolve().parent.parent.parent / "data" / "msmask" / "sub-mni152_space-mni_msmask.nii.gz"
+        if alt_path.exists():
+            msmask_path = alt_path
+        else:
+            raise FileNotFoundError(
+                f"MSMask atlas not found at {MSMASK_PATH} or {alt_path}. "
+                "Run scripts/download_msmask.py to download it."
+            )
 
-    # Subcortical atlas: ventricles, WM, cortex (grey matter), brainstem
-    # thr25 = 25% probability threshold (FSL default for clinical applications)
-    atlas = datasets.fetch_atlas_harvard_oxford(
-        'sub-maxprob-thr25-1mm', data_dir=data_dir
-    )
-    atlas_img = (
-        atlas.maps if isinstance(atlas.maps, nib.spatialimages.SpatialImage)
-        else nib.load(atlas.maps)
-    )
-    atlas_data = np.asarray(atlas_img.dataobj, dtype=np.int16)
-
-    # Cortical atlas: 48 cortical regions for more complete cortex coverage
-    # thr25 excludes low-probability voxels that may extend into white matter
-    cort_atlas = datasets.fetch_atlas_harvard_oxford(
-        'cort-maxprob-thr25-1mm', data_dir=data_dir
-    )
-    cort_img = (
-        cort_atlas.maps if isinstance(cort_atlas.maps, nib.spatialimages.SpatialImage)
-        else nib.load(cort_atlas.maps)
-    )
-    cort_data = np.asarray(cort_img.dataobj, dtype=np.int16)
-
+    msmask_img = nib.load(str(msmask_path))
+    msmask_data = np.asarray(msmask_img.dataobj, dtype=np.int16)
     target_shape = target_img.shape[:3]
 
     logger.info(
-        "[ZoneMap-Atlas] Atlas: shape=%s, affine_diag=%s, origin=%s",
-        atlas_data.shape,
-        np.diag(atlas_img.affine[:3, :3]).tolist(),
-        atlas_img.affine[:3, 3].tolist(),
+        "[ZoneMap-MSMask] Atlas: shape=%s, origin=%s",
+        msmask_data.shape,
+        msmask_img.affine[:3, 3].tolist(),
     )
     logger.info(
-        "[ZoneMap-Atlas] Target: shape=%s, affine_diag=%s, origin=%s",
+        "[ZoneMap-MSMask] Target: shape=%s, affine_diag=%s, origin=%s",
         target_shape,
         np.diag(target_img.affine[:3, :3]).tolist(),
         target_img.affine[:3, 3].tolist(),
     )
 
-    # ── 2. Extract masks at NATIVE atlas resolution ──
-    ventricle = (atlas_data == 3) | (atlas_data == 14)     # L/R Lat Ventricle
-    cortex_sub = (atlas_data == 2) | (atlas_data == 13)    # L/R Cerebral Cortex (subcortical)
-    cortex_cort = cort_data > 0                             # All 48 cortical regions
-    cortex = cortex_sub | cortex_cort                       # Combined cortex mask
-    wm = (atlas_data == 1) | (atlas_data == 12)             # L/R Cerebral WM
-    brainstem = (atlas_data == 8)                            # Brain-Stem
-    brain = (atlas_data > 0) | cortex_cort                  # Any labeled tissue
-
-    # ── 3. Infer infratentorial region via MNI z-coordinate ──
-    # Tentorium cerebelli is approximately at z = -30mm in MNI space.
-    # Everything below (brainstem + cerebellum) = infratentorial.
-    affine = atlas_img.affine
-    k_indices = np.arange(atlas_data.shape[2])
-    # MNI z for each k-slice: z = affine[2,2]*k + affine[2,3]
-    mni_z_per_slice = affine[2, 2] * k_indices + affine[2, 3]
-    z_volume = np.broadcast_to(
-        mni_z_per_slice[np.newaxis, np.newaxis, :], atlas_data.shape
-    )
-    infratentorial = brainstem | (brain & (z_volume < -30))
+    # ── 2. Extract anatomical masks from MSMask labels ──
+    ventricles = (msmask_data == MSMASK_LABELS["Ventricles"])   # label 4
+    cortex = (msmask_data == MSMASK_LABELS["GM"])               # label 2
+    wm = (msmask_data == MSMASK_LABELS["WM"])                   # label 3
+    infratentorial = (msmask_data == MSMASK_LABELS["Infratentorial"])  # label 5
 
     logger.info(
-        "[ZoneMap-Atlas] Masks at native res: brain=%d, ventricle=%d, "
-        "cortex=%d (sub=%d, cort=%d), wm=%d, brainstem=%d, infratentorial=%d",
-        int(brain.sum()), int(ventricle.sum()), int(cortex.sum()),
-        int(cortex_sub.sum()), int(cortex_cort.sum()),
-        int(wm.sum()), int(brainstem.sum()), int(infratentorial.sum()),
+        "[ZoneMap-MSMask] Masks: ventricles=%d, cortex=%d, wm=%d, infratentorial=%d",
+        int(ventricles.sum()), int(cortex.sum()),
+        int(wm.sum()), int(infratentorial.sum()),
     )
 
-    # ── 4. Build zone map using binary dilation (LST-AI methodology) ──
-    # LST-AI (Wiltgen et al. 2024) uses single-voxel binary dilation with a
-    # 3x3x3 cube footprint to implement the MAGNIMS "abutting" criterion.
-    # At 1mm isotropic MNI resolution this captures structures within ~1.73mm
-    # (cube diagonal), matching the clinical definition of "direct contact."
+    # ── 3. Binary dilation (LST-AI exact methodology) ──
+    # LST-AI uses a 3x3x3 cube structuring element for "abutting" criterion.
+    # At 1mm isotropic this captures structures within ~1.73mm (cube diagonal).
+    # We dilate ALL reference masks: ventricles, cortex, AND infratentorial.
+    # This ensures WM voxels adjacent to infratentorial structures (e.g.,
+    # cerebellar WM) are correctly classified as IT, not DWM.
     struct = np.ones((3, 3, 3), dtype=bool)
-    ventricle_dilated = binary_dilation(ventricle, structure=struct)
+    ventricles_dilated = binary_dilation(ventricles, structure=struct)
     cortex_dilated = binary_dilation(cortex, structure=struct)
+    infratentorial_dilated = binary_dilation(infratentorial, structure=struct)
 
-    zone_map = np.zeros(atlas_data.shape, dtype=np.uint8)
+    # ── 4. Build zone map ──
+    # Priority: IT > PV > JC > DWM
+    # IT has highest priority because "infratentorial" is a LOCATION definition
+    # (posterior fossa), not proximity-based. Any lesion in brainstem/cerebellum
+    # is infratentorial per MAGNIMS (Filippi 2019), regardless of proximity to
+    # other structures.
+    zone_map = np.zeros(msmask_data.shape, dtype=np.uint8)
 
-    # Assign ALL white matter voxels as DWM (default)
+    # Default: all WM voxels = DWM (label 4)
     zone_map[wm] = 4
 
-    # IT: WM in infratentorial region + brainstem (overrides DWM)
-    # Only classify WM tissue (where MS lesions occur) + brainstem grey matter.
-    # Cerebellar cortex stays as background (0) for clean overlay rendering.
-    zone_map[(infratentorial & wm) | brainstem] = 3
+    # Infratentorial: label-5 voxels + WM abutting infratentorial structures
+    # This captures cerebellar WM (labeled as WM=3 in MSMask but located
+    # in the posterior fossa, which is infratentorial per MAGNIMS).
+    zone_map[infratentorial] = 3
+    it_wm = infratentorial_dilated & wm
+    zone_map[it_wm] = 3
 
     # JC: WM voxels abutting cortex (overrides DWM, not IT)
     jc_mask = cortex_dilated & wm & (zone_map != 3)
     zone_map[jc_mask] = 2
 
-    # PV: WM voxels abutting lateral ventricles (overrides JC/DWM, not IT)
-    pv_mask = ventricle_dilated & wm & (zone_map != 3)
+    # PV: WM voxels abutting ventricles (overrides JC/DWM, not IT)
+    pv_mask = ventricles_dilated & wm & (zone_map != 3)
     zone_map[pv_mask] = 1
 
-    # ── 5. Map zone map to patient image grid ──
-    # The patient NIfTI may have a wrong affine (e.g., origin [0,0,0] in ISBI
-    # 2015 datasets that are registered to MNI but lack correct sform/qform).
-    # We compute a CORRECTED affine from the atlas's MNI extent and the
-    # patient's axis directions (sign of diagonal), guaranteeing alignment.
+    # ── 5. Resample zone map to patient image grid ──
     from nilearn.image import resample_to_img
 
-    # Derive corrected affine from atlas extent + patient axis directions
-    atlas_diag = np.diag(atlas_img.affine[:3, :3])       # e.g., [1, 1, 1]
-    atlas_origin = atlas_img.affine[:3, 3]                 # e.g., [-91, -126, -72]
-    atlas_end = atlas_origin + atlas_diag * (np.array(atlas_img.shape[:3]) - 1)
-    # atlas_end = [90, 91, 109]
+    # Determine the reference affine for resampling.
+    # If the target image has a plausible MNI affine, use it directly.
+    # Otherwise (e.g., ISBI 2015 with origin [0,0,0]), compute a corrected
+    # affine by aligning the spatial centers of atlas and target.
+    target_diag = np.diag(target_img.affine[:3, :3])
+    target_origin = target_img.affine[:3, 3]
+    target_end = target_origin + target_diag * (np.array(target_shape) - 1)
+    target_center_mni = (target_origin + target_end) / 2.0
 
-    target_diag = np.diag(target_img.affine[:3, :3])       # e.g., [-1, -1, 1]
+    atlas_diag = np.diag(msmask_img.affine[:3, :3])
+    atlas_center_vox = (np.array(msmask_img.shape[:3]) - 1) / 2.0
+    atlas_center_mni = msmask_img.affine[:3, 3] + atlas_diag * atlas_center_vox
 
-    # For each axis, voxel[0] maps to:
-    #   high end of MNI range if stride < 0 (axis is flipped)
-    #   low end of MNI range if stride >= 0
-    corrected_origin = np.zeros(3)
-    for ax in range(3):
-        lo = min(atlas_origin[ax], atlas_end[ax])
-        hi = max(atlas_origin[ax], atlas_end[ax])
-        corrected_origin[ax] = hi if target_diag[ax] < 0 else lo
+    center_distance = float(np.linalg.norm(target_center_mni - atlas_center_mni))
 
-    corrected_affine = np.eye(4)
-    corrected_affine[:3, :3] = np.diag(target_diag)
-    corrected_affine[:3, 3] = corrected_origin
+    if center_distance < 30.0:
+        # Target affine is plausible for MNI space — use it directly
+        logger.info(
+            "[ZoneMap-MSMask] Using target affine (center distance %.1fmm)",
+            center_distance,
+        )
+        ref_affine = target_img.affine.copy()
+    else:
+        # Target affine is wrong — compute corrected affine by aligning
+        # spatial centers. This maps the target's center voxel to the same
+        # MNI coordinate as the atlas center, preserving axis directions.
+        target_center_vox = (np.array(target_shape) - 1) / 2.0
+        corrected_origin = atlas_center_mni - target_diag * target_center_vox
+        ref_affine = np.eye(4)
+        ref_affine[:3, :3] = np.diag(target_diag)
+        ref_affine[:3, 3] = corrected_origin
+        logger.info(
+            "[ZoneMap-MSMask] Target affine wrong (center distance %.1fmm), "
+            "using center-aligned affine: origin=%s",
+            center_distance, corrected_origin.tolist(),
+        )
 
     logger.info(
-        "[ZoneMap-Atlas] Corrected affine: diag=%s, origin=%s (patient original: %s)",
-        target_diag.tolist(), corrected_origin.tolist(),
-        target_img.affine[:3, 3].tolist(),
+        "[ZoneMap-MSMask] Reference affine: diag=%s, origin=%s",
+        np.diag(ref_affine[:3, :3]).tolist(), ref_affine[:3, 3].tolist(),
     )
 
-    # Resample zone map from atlas space to corrected patient space
-    zone_nifti = nib.Nifti1Image(zone_map.astype(np.float32), atlas_img.affine)
+    zone_nifti = nib.Nifti1Image(zone_map.astype(np.float32), msmask_img.affine)
     target_ref = nib.Nifti1Image(
-        np.zeros(target_shape, dtype=np.uint8), corrected_affine
+        np.zeros(target_shape, dtype=np.uint8), ref_affine
     )
     zone_resampled = resample_to_img(
         zone_nifti, target_ref, interpolation='nearest'
     )
     zone_final = np.asarray(zone_resampled.dataobj, dtype=np.uint8)
-
-    # Log zone data distribution for verification
-    zone_nz = np.argwhere(zone_final > 0)
-    if len(zone_nz) > 0:
-        zone_com = zone_nz.mean(axis=0)
-        zone_bb_min = zone_nz.min(axis=0)
-        zone_bb_max = zone_nz.max(axis=0)
-        logger.info(
-            "[ZoneMap-Atlas] Zone data: com=%s, bbox=[%s..%s], shape=%s",
-            [round(c, 1) for c in zone_com],
-            zone_bb_min.tolist(), zone_bb_max.tolist(),
-            zone_final.shape,
-        )
 
     # ── 6. Compute zone statistics ──
     total_classified = int((zone_final > 0).sum())
@@ -770,7 +748,7 @@ def generate_zone_map_atlas(
         zone_stats[zone_name] = {
             "zone_id": zone_id,
             "voxel_count": count,
-            "volume_mm3": round(count * 1.0, 1),  # 1mm isotropic
+            "volume_mm3": round(count * 1.0, 1),
             "volume_ml": round(count / 1000, 3),
             "percentage": round(count / max(total_classified, 1) * 100, 1),
         }
@@ -778,7 +756,7 @@ def generate_zone_map_atlas(
     elapsed_ms = int((time.time() - start_time) * 1000)
 
     logger.info(
-        "[ZoneMap-Atlas] Generated in %dms — PV=%.1f%%, JC=%.1f%%, IT=%.1f%%, DWM=%.1f%%, total=%d",
+        "[ZoneMap-MSMask] Generated in %dms — PV=%.1f%%, JC=%.1f%%, IT=%.1f%%, DWM=%.1f%%, total=%d",
         elapsed_ms,
         zone_stats.get("Periventricular", {}).get("percentage", 0),
         zone_stats.get("Juxtacortical", {}).get("percentage", 0),
@@ -792,7 +770,7 @@ def generate_zone_map_atlas(
         "zone_stats": zone_stats,
         "total_brain_voxels": total_classified,
         "processing_time_ms": elapsed_ms,
-        "method": "atlas",
+        "method": "msmask",
     }
 
 

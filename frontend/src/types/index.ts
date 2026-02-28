@@ -856,17 +856,20 @@ export interface ExpertMaskData {
 
 /**
  * Expert mask classification from BIDS filename.
+ *
+ * - expert: Manual expert annotation (desc-expertNN)
+ * - output: Algorithm output mask (desc-outputN, desc-maskN, out_mask)
+ * - consensus: STAPLE consensus (label-lesion_dseg without descriptor) — legacy
  */
-export type ExpertType = 'expert1' | 'expert2' | 'consensus' | 'mask';
+export type ExpertType = 'expert' | 'output' | 'consensus';
 
 /**
  * Expert mask display config.
  */
 export const EXPERT_COLORS: Record<ExpertType, { color: string; label: string }> = {
-  expert1: { color: '#FF4444', label: 'Expert 1' },
-  expert2: { color: '#4488FF', label: 'Expert 2' },
+  expert: { color: '#FF4444', label: 'Expert Annotation' },
+  output: { color: '#FFAA44', label: 'Algorithm Output' },
   consensus: { color: '#44CC44', label: 'Consensus' },
-  mask: { color: '#FFAA44', label: 'Auto Mask' },
 };
 
 // ============================================================================
@@ -1022,7 +1025,7 @@ export interface VolumetryRequest {
 // AI Report Types
 // ============================================================================
 
-export type ReportTemplateType = 'general' | 'ms_activity' | 'ms_lesion_burden' | 'ms_longitudinal';
+export type ReportTemplateType = 'general' | 'ms_activity' | 'ms_comprehensive' | 'ms_lesion_burden' | 'ms_longitudinal';
 
 export interface ReportGenerateRequest {
   template_type: ReportTemplateType;

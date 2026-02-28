@@ -27,7 +27,7 @@ import { AIReportPanel } from './components/AIReportPanel';
 import { useSegmentationStore } from './store/useSegmentationStore';
 import { useMultiViewerStore, type ViewerLayout } from './store/useMultiViewerStore';
 import { autoAssignPanels } from './utils/sequenceDetection';
-import { useExpertMasks, classifyExpertFile, getExpertDisplayInfo } from './hooks/useExpertMasks';
+import { useExpertMasks, classifyExpertFile, getExpertDisplayInfo, deriveExpertLabel } from './hooks/useExpertMasks';
 import type { ReportResponse } from './types';
 
 interface StudyInfo {
@@ -67,7 +67,7 @@ function ViewerApp() {
   const [reportToView, setReportToView] = useState<ReportResponse | null>(null);
 
   // Expert masks hook
-  const { expertMasks, toggleExpert } = useExpertMasks();
+  const { expertMasks, toggleExpert: rawToggleExpert } = useExpertMasks();
 
   // Multi-panel viewer
   const multiLayout = useMultiViewerStore((s) => s.layout);
@@ -76,6 +76,7 @@ function ViewerApp() {
   const setSyncSlice = useMultiViewerStore((s) => s.setSyncSlice);
   const autoAssign = useMultiViewerStore((s) => s.autoAssign);
   const isMultiPanel = multiLayout !== 'single';
+  const [multiPanelSource, setMultiPanelSource] = useState<'originals' | 'preprocessed'>('originals');
 
   // Collapsible section states
   const [sectionsExpanded, setSectionsExpanded] = useState({
@@ -135,16 +136,36 @@ function ViewerApp() {
     [studyInfo?.instances, isPreprocessedInstance]
   );
 
+  // Instances to use for multi-panel viewer (based on source toggle)
+  const multiPanelInstances = useMemo(() =>
+    multiPanelSource === 'preprocessed' && preprocessedInstances.length > 0
+      ? preprocessedInstances
+      : originalInstances,
+    [multiPanelSource, originalInstances, preprocessedInstances]
+  );
+
   // Auto-assign panels when switching to multi-panel layout
   const handleLayoutChange = useCallback((layout: ViewerLayout) => {
     setMultiLayout(layout);
-    if (layout !== 'single' && originalInstances.length > 0) {
-      const assignments = autoAssignPanels(originalInstances);
+    if (layout !== 'single' && multiPanelInstances.length > 0) {
+      const assignments = autoAssignPanels(multiPanelInstances);
       autoAssign(assignments.map((a) => ({ instanceId: a.instance.id, sequence: a.sequence })));
     }
-  }, [setMultiLayout, autoAssign, originalInstances]);
+  }, [setMultiLayout, autoAssign, multiPanelInstances]);
 
-  // Expert annotation instances (masks from expert raters + consensus)
+  // Re-assign panels when source toggle changes
+  const handleMultiPanelSourceChange = useCallback((source: 'originals' | 'preprocessed') => {
+    setMultiPanelSource(source);
+    const instances = source === 'preprocessed' && preprocessedInstances.length > 0
+      ? preprocessedInstances
+      : originalInstances;
+    if (isMultiPanel && instances.length > 0) {
+      const assignments = autoAssignPanels(instances);
+      autoAssign(assignments.map((a) => ({ instanceId: a.instance.id, sequence: a.sequence })));
+    }
+  }, [autoAssign, isMultiPanel, originalInstances, preprocessedInstances]);
+
+  // Reference mask instances (expert annotations + algorithm outputs)
   const expertInstances = useMemo(() =>
     studyInfo?.instances.filter(inst => isMaskInstance(inst.original_filename || '')) ?? [],
     [studyInfo?.instances, isMaskInstance]
@@ -165,12 +186,15 @@ function ViewerApp() {
     enabled: allFileIds.length > 0,
   });
 
-  const segmentations = (segmentationsData ?? []).map((seg) => ({
-    id: seg.segmentation_id,
-    name: seg.metadata?.description || t('segmentation.defaultName', 'Segmentation'),
-    status: 'saved' as const,
-    fileId: seg.file_id, // Track which image this segmentation belongs to
-  }));
+  const segmentations = (segmentationsData ?? [])
+    // Filter out MAGNIMS zone maps from user-facing segmentation list
+    .filter((seg) => seg.metadata?.description !== 'MAGNIMS Zone Map')
+    .map((seg) => ({
+      id: seg.segmentation_id,
+      name: seg.metadata?.description || t('segmentation.defaultName', 'Segmentation'),
+      status: 'saved' as const,
+      fileId: seg.file_id,
+    }));
 
   // Fetch patient info to display name in viewer
   const { data: patientData } = usePatient(studyInfo?.study.patient_id);
@@ -280,8 +304,37 @@ function ViewerApp() {
     setSelectedInstanceId(instanceId);
   };
 
-  // Handle opening/loading an existing segmentation
+  // Wrap toggleExpert: masks are in MNI space, auto-switch to preprocessed FLAIR
+  const toggleExpert = useCallback(async (instanceId: string, filename: string) => {
+    // Check if we're currently on a native (non-preprocessed) image
+    const currentFilename = studyInfo?.instances.find(
+      (inst) => inst.gcs_object_name === currentSeries?.file_id
+    )?.original_filename || '';
+    const isOnPreprocessed = isPreprocessedInstance(currentFilename);
+
+    // If toggling ON (mask not loaded yet or currently hidden), switch to preprocessed
+    const existing = expertMasks.get(instanceId);
+    const willBeVisible = !existing || !existing.visible;
+    if (willBeVisible && !isOnPreprocessed && preprocessedInstances.length > 0) {
+      setSelectedInstanceId(preprocessedInstances[0].id);
+      toast(t('experts.switchedToPreprocessed', 'Switched to preprocessed image (masks require MNI space)'), {
+        icon: '\u2139\uFE0F',
+        duration: 3000,
+      });
+    }
+
+    return rawToggleExpert(instanceId, filename);
+  }, [rawToggleExpert, studyInfo, currentSeries?.file_id, isPreprocessedInstance, preprocessedInstances, expertMasks, t]);
+
+  // Handle opening/loading an existing segmentation (toggle: click again to deactivate)
   const handleOpenSegmentation = useCallback((segmentation: { id: string; name: string; fileId?: string }) => {
+    // Toggle off if clicking the already-active segmentation
+    if (currentSegmentation?.segmentation_id === segmentation.id) {
+      setCurrentSegmentation(null);
+      viewerControls.setSegmentationMode(false);
+      return;
+    }
+
     // Find full segmentation data from the query results
     const fullSeg = segmentationsData?.find((s) => s.segmentation_id === segmentation.id);
     if (!fullSeg) return;
@@ -301,7 +354,7 @@ function ViewerApp() {
     // Activate segmentation mode
     viewerControls.setSegmentationMode(true);
     toast.success(t('viewer.segmentationLoaded', `Segmentation "${segmentation.name}" loaded`));
-  }, [viewerControls, t, segmentationsData, setCurrentSegmentation, currentSeries?.file_id, studyInfo, isPreprocessedInstance, preprocessedInstances]);
+  }, [viewerControls, t, segmentationsData, setCurrentSegmentation, currentSegmentation, currentSeries?.file_id, studyInfo, isPreprocessedInstance, preprocessedInstances]);
 
   // Handle upload segmentation file
   const handleUploadSegmentation = useCallback(() => {
@@ -824,7 +877,7 @@ function ViewerApp() {
               )}
             </div>
 
-            {/* Section 4: Expert Annotations */}
+            {/* Section 4: Reference Masks (expert annotations + algorithm outputs) */}
             {expertInstances.length > 0 && (
               <div className="border-b border-gray-200/50 dark:border-gray-700/50">
                 <button
@@ -855,6 +908,7 @@ function ViewerApp() {
                       const fn = instance.original_filename || '';
                       const expertType = classifyExpertFile(fn);
                       const displayInfo = getExpertDisplayInfo(expertType);
+                      const label = deriveExpertLabel(fn);
                       const maskData = expertMasks.get(instance.id);
                       const isVisible = maskData?.visible ?? false;
                       const isLoadingMask = maskData?.loading ?? false;
@@ -877,7 +931,7 @@ function ViewerApp() {
                             <span className={`text-[11px] font-medium truncate flex-1 ${
                               isVisible ? 'text-amber-800 dark:text-amber-300' : 'text-gray-600 dark:text-gray-400'
                             }`}>
-                              {displayInfo.label}
+                              {label}
                             </span>
                             {isLoadingMask ? (
                               <Loader2 className="w-3 h-3 text-amber-500 animate-spin flex-shrink-0" />
@@ -909,6 +963,7 @@ function ViewerApp() {
                 <ViewerControls
                   {...viewerControls}
                   expertMasks={expertMasks}
+                  expertInstances={expertInstances}
                   onNavigateToSlice={(idx) => setCurrentSliceIndex(idx)}
                 />
               </ErrorBoundary>
@@ -924,7 +979,7 @@ function ViewerApp() {
           className="flex-1 p-4"
         >
           {/* Layout Switcher Toolbar */}
-          {viewMode === '2d' && originalInstances.length > 1 && (
+          {viewMode === '2d' && (originalInstances.length > 1 || preprocessedInstances.length > 1) && (
             <div className="flex items-center justify-center gap-2 mb-2">
               <div className="flex items-center bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-lg border border-gray-200/50 dark:border-gray-700/50 p-1 gap-1">
                 <button
@@ -966,6 +1021,34 @@ function ViewerApp() {
                     >
                       {syncSlice ? <Link2 className="w-4 h-4" /> : <Unlink2 className="w-4 h-4" />}
                     </button>
+                    {preprocessedInstances.length > 0 && (
+                      <>
+                        <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
+                        <button
+                          onClick={() => handleMultiPanelSourceChange(
+                            multiPanelSource === 'originals' ? 'preprocessed' : 'originals'
+                          )}
+                          className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors ${
+                            multiPanelSource === 'preprocessed'
+                              ? 'bg-teal-500 text-white'
+                              : 'text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700'
+                          }`}
+                          title={multiPanelSource === 'preprocessed'
+                            ? t('layout.showOriginals', 'Switch to original images')
+                            : t('layout.showPreprocessed', 'Switch to preprocessed images')
+                          }
+                        >
+                          {multiPanelSource === 'preprocessed'
+                            ? <FlaskConical className="w-3.5 h-3.5" />
+                            : <FileImage className="w-3.5 h-3.5" />
+                          }
+                          {multiPanelSource === 'preprocessed'
+                            ? t('layout.preprocessed', 'Preproc')
+                            : t('layout.originals', 'Original')
+                          }
+                        </button>
+                      </>
+                    )}
                   </>
                 )}
               </div>
@@ -981,7 +1064,7 @@ function ViewerApp() {
             ) : isMultiPanel && viewMode === '2d' ? (
               <ErrorBoundary name="MultiPanelViewer">
                 <MultiPanelViewer
-                  instances={originalInstances}
+                  instances={multiPanelInstances}
                   expertMasks={expertMasks}
                 />
               </ErrorBoundary>

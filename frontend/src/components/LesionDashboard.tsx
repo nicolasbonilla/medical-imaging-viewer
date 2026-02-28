@@ -25,6 +25,7 @@ import {
   Map,
   Eye,
   EyeOff,
+  Palette,
 } from 'lucide-react';
 import { segmentationAPI } from '@/api/segmentation';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
@@ -83,6 +84,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
   const currentFileId = useSegmentationStore((s) => s.currentSegmentation?.file_id);
   const zoneMapSegId = useSegmentationStore((s) => s.zoneMapSegId);
   const zoneMapVisible = useSegmentationStore((s) => s.zoneMapVisible);
+  const zoneColorizeEnabled = useSegmentationStore((s) => s.zoneColorizeEnabled);
   const [analysis, setAnalysis] = useState<LesionAnalysisResult | null>(null);
   const [dis, setDis] = useState<DISAssessment | null>(null);
   const [classification, setClassification] = useState<RegionClassificationResult | null>(null);
@@ -194,6 +196,10 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
 
   const handleToggleZoneMap = useCallback(() => {
     useSegmentationStore.getState().toggleZoneMapVisibility();
+  }, []);
+
+  const handleToggleZoneColorize = useCallback(() => {
+    useSegmentationStore.getState().toggleZoneColorize();
   }, []);
 
   const handleLesionClick = useCallback((lesion: LesionInfo) => {
@@ -395,7 +401,35 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
               {zoneMapVisible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
             </button>
           )}
+
+          {/* Toggle zone colorization of lesions (only when zone map exists) */}
+          {zoneMapSegId && (
+            <button
+              onClick={handleToggleZoneColorize}
+              className={`px-2 py-1.5 rounded text-xs font-medium transition-colors ${
+                zoneColorizeEnabled
+                  ? 'bg-amber-600 text-white'
+                  : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+              }`}
+              title={zoneColorizeEnabled
+                ? t('zoneMap.colorizeOff', 'Normal label colors')
+                : t('zoneMap.colorizeOn', 'Colorize lesions by zone')
+              }
+            >
+              <Palette className="w-3 h-3" />
+            </button>
+          )}
         </div>
+
+        {/* Zone colorization legend */}
+        {zoneMapSegId && zoneColorizeEnabled && (
+          <div className="flex items-center gap-2 text-[9px] text-gray-300">
+            <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-red-500" />PV</span>
+            <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-green-500" />JC</span>
+            <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-blue-500" />IT</span>
+            <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-yellow-500" />DWM</span>
+          </div>
+        )}
 
         {/* Zone map stats */}
         {zoneMapStats && (

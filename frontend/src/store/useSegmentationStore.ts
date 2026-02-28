@@ -154,6 +154,15 @@ interface SegmentationState {
   /** Whether zone map background overlay is visible */
   zoneMapVisible: boolean;
 
+  /** Whether lesion mask should be colorized by MAGNIMS zone instead of label colors */
+  zoneColorizeEnabled: boolean;
+
+  /** Opacity for lesion segmentation overlay (0-1) */
+  lesionOpacity: number;
+
+  /** Opacity for zone map background overlay (0-1) */
+  zoneMapOpacity: number;
+
   // =========================================================================
   // Actions - Segmentation
   // =========================================================================
@@ -214,6 +223,9 @@ interface SegmentationState {
   setZoneMap: (segId: string, mask: Uint8Array, dims: { depth: number; height: number; width: number }) => void;
   clearZoneMap: () => void;
   toggleZoneMapVisibility: () => void;
+  toggleZoneColorize: () => void;
+  setLesionOpacity: (opacity: number) => void;
+  setZoneMapOpacity: (opacity: number) => void;
 
   // =========================================================================
   // Actions - Reset
@@ -279,6 +291,9 @@ const initialState = {
   zoneMapMask: null as Uint8Array | null,
   zoneMapDims: null as { depth: number; height: number; width: number } | null,
   zoneMapVisible: false,
+  zoneColorizeEnabled: false,
+  lesionOpacity: 0.6,
+  zoneMapOpacity: 0.3,
 };
 
 // ============================================================================
@@ -501,13 +516,26 @@ export const useSegmentationStore = create<SegmentationState>()(
         // =====================================================================
 
         setZoneMap: (segId, mask, dims) =>
-          set({ zoneMapSegId: segId, zoneMapMask: mask, zoneMapDims: dims, zoneMapVisible: true }),
+          set({ zoneMapSegId: segId, zoneMapMask: mask, zoneMapDims: dims, zoneMapVisible: true, zoneColorizeEnabled: true }),
 
         clearZoneMap: () =>
-          set({ zoneMapSegId: null, zoneMapMask: null, zoneMapDims: null, zoneMapVisible: false }),
+          set({ zoneMapSegId: null, zoneMapMask: null, zoneMapDims: null, zoneMapVisible: false, zoneColorizeEnabled: false }),
 
         toggleZoneMapVisibility: () =>
-          set((state) => ({ zoneMapVisible: !state.zoneMapVisible })),
+          set((state) => ({
+            zoneMapVisible: !state.zoneMapVisible,
+            // Auto-sync: colorize lesions when zone map is shown
+            zoneColorizeEnabled: !state.zoneMapVisible,
+          })),
+
+        toggleZoneColorize: () =>
+          set((state) => ({ zoneColorizeEnabled: !state.zoneColorizeEnabled })),
+
+        setLesionOpacity: (opacity) =>
+          set({ lesionOpacity: Math.max(0, Math.min(1, opacity)) }),
+
+        setZoneMapOpacity: (opacity) =>
+          set({ zoneMapOpacity: Math.max(0, Math.min(1, opacity)) }),
 
         // =====================================================================
         // Reset Actions
@@ -528,6 +556,8 @@ export const useSegmentationStore = create<SegmentationState>()(
           paintTool: state.paintTool,
           overlaySettings: state.overlaySettings,
           drawOverMode: state.drawOverMode,
+          lesionOpacity: state.lesionOpacity,
+          zoneMapOpacity: state.zoneMapOpacity,
         }),
       }
     )

@@ -7,7 +7,7 @@ import { LesionDashboard } from './LesionDashboard';
 import { LongitudinalCompare } from './LongitudinalCompare';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import type { RenderMode } from '@/hooks/useViewerControls';
-import type { ExpertMaskData } from '@/types';
+import type { ExpertMaskData, ImagingInstance } from '@/types';
 
 interface ViewerControlsProps {
   renderMode: RenderMode;
@@ -33,6 +33,7 @@ interface ViewerControlsProps {
   appliedYMax: string;
   setAppliedYMax: (val: string) => void;
   expertMasks?: Map<string, ExpertMaskData>;
+  expertInstances?: ImagingInstance[];
   onNavigateToSlice?: (sliceIndex: number) => void;
   /** Called when auto-classify updates the mask — parent should reload from server */
   onMaskUpdated?: () => void;
@@ -62,6 +63,7 @@ export default function ViewerControls({
   appliedYMax,
   setAppliedYMax,
   expertMasks,
+  expertInstances,
   onNavigateToSlice,
   onMaskUpdated,
 }: ViewerControlsProps) {
@@ -225,6 +227,7 @@ export default function ViewerControls({
         <div className="pt-2 border-t border-gray-700">
           <ComparisonMetricsPanel
             expertMasks={expertMasks}
+            expertInstances={expertInstances}
             activeSegmentationId={activeSegmentation?.id}
             onNavigateToSlice={onNavigateToSlice}
           />

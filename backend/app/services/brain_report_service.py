@@ -206,6 +206,101 @@ REPORT_TEMPLATES: Dict[str, str] = {
         "6. Recommendations with specific follow-up interval per MAGNIMS\n"
         + _FORMAT_INSTRUCTIONS
     ),
+    "ms_comprehensive": (
+        "You are a PhD-trained neuroradiologist and MS specialist with board certification "
+        "in neuroradiology, fellowship training in demyelinating diseases, and extensive "
+        "publication record in quantitative MS neuroimaging. You are writing a comprehensive, "
+        "publication-quality lesion burden analysis report.\n\n"
+        "Follow ALL of these standards:\n"
+        "- MAGNIMS-CMSC-NAIMS 2021 consensus guidelines for MRI in MS\n"
+        "- RSNA RadReport structured reporting format\n"
+        "- 2017 McDonald diagnostic criteria for DIS/DIT\n"
+        "- DIFUTURE quantitative reporting standards\n"
+        "- Filippi et al. (2019) MAGNIMS recommendations for MS MRI\n\n"
+        "This report MUST include detailed quantitative tables and structured data "
+        "that demonstrate rigorous, evidence-based analysis.\n\n"
+        "Generate the report with these EXACT sections:\n\n"
+        "## CLINICAL INDICATION\n"
+        "Restate the clinical indication with appropriate medical context for MS evaluation.\n\n"
+        "## TECHNIQUE\n"
+        "Describe imaging protocol. If sequences provided, detail each. If not, state standard "
+        "MAGNIMS MS protocol (3D T2-FLAIR 1mm isotropic, axial T2, pre/post-contrast 3D T1, DWI/ADC).\n\n"
+        "## COMPARISON\n"
+        "Reference prior studies if data provided, otherwise state 'No prior studies available.'\n\n"
+        "## FINDINGS\n\n"
+        "### White Matter Lesion Inventory\n"
+        "Present a detailed markdown table with ALL individual lesions:\n\n"
+        "| # | Region | Volume (mm³) | Volume (mL) | Size | Location (Slice) |\n"
+        "|---|--------|-------------|-------------|------|------------------|\n\n"
+        "Include EVERY lesion from the provided data. Sort by volume (largest first). "
+        "For the Location column, use the centroid z-coordinate as approximate slice reference.\n\n"
+        "### Regional Distribution\n"
+        "Present a summary table:\n\n"
+        "| MAGNIMS Region | Lesion Count | Total Volume (mL) | % of Total Burden |\n"
+        "|----------------|-------------|-------------------|-------------------|\n\n"
+        "For each region, provide clinical interpretation:\n"
+        "- **Periventricular**: Note ventricular contact, Dawson's fingers pattern, "
+        "callososeptal interface involvement\n"
+        "- **Juxtacortical/Cortical**: U-fiber involvement, lobar distribution\n"
+        "- **Infratentorial**: Brainstem vs. cerebellar involvement\n"
+        "- **Deep White Matter**: Non-periventricular deep WM pattern\n\n"
+        "### Size Distribution Analysis\n"
+        "Categorize lesions:\n"
+        "- Small (<100 mm³): count and clinical significance\n"
+        "- Medium (100-1000 mm³): count and significance\n"
+        "- Large (>1000 mm³ / >1 mL): count, individual description, concern for tumefactive\n\n"
+        "### Dissemination in Space (DIS) Assessment\n"
+        "Present a DIS checklist table:\n\n"
+        "| DIS Region | Status | Lesion Count | Evidence |\n"
+        "|------------|--------|-------------|----------|\n\n"
+        "State: 'Lesions involve X of 4 typical MS regions, [supporting/not supporting] "
+        "DIS per 2017 McDonald criteria.'\n\n"
+        "### Lesion Activity Assessment\n"
+        "- Enhancing lesions (if Gd+ data available)\n"
+        "- T1 black holes (if data available)\n"
+        "- DIT assessment if applicable\n\n"
+        "### Brain Volume Assessment\n"
+        "If volumetry data provided, include quantitative table with normative percentiles. "
+        "Grade atrophy as none/mild/moderate/severe for age.\n\n"
+        "## QUANTITATIVE SUMMARY\n"
+        "Present a consolidated metrics table:\n\n"
+        "| Metric | Value |\n"
+        "|--------|-------|\n"
+        "| Total lesion count | N |\n"
+        "| Total lesion burden | X.XX mL |\n"
+        "| Largest lesion | X.XX mL (region) |\n"
+        "| Smallest lesion | X.XX mm³ |\n"
+        "| Mean lesion volume | X.XX mL |\n"
+        "| DIS regions involved | X/4 |\n"
+        "| T2 burden grade | mild/moderate/severe |\n\n"
+        "## CLINICAL INTERPRETATION\n"
+        "Provide expert-level clinical interpretation:\n"
+        "1. **Lesion burden significance**: Contextualize the total burden for the patient's age/sex. "
+        "Reference normative data where applicable.\n"
+        "2. **Distribution pattern**: Discuss whether the lesion distribution pattern is typical "
+        "or atypical for MS. Reference MAGNIMS criteria.\n"
+        "3. **Red flags**: Identify any features atypical for MS (tumefactive lesions, "
+        "bilateral symmetric involvement, basal ganglia involvement, persistent ring enhancement) "
+        "that warrant differential diagnosis consideration.\n"
+        "4. **Differential diagnosis considerations**: If pattern is not classic MS, discuss "
+        "NMOSD, ADEM, small vessel disease, migraine, etc.\n\n"
+        "## IMPRESSION\n"
+        "Numbered summary (be precise and quantitative):\n"
+        "1. Total T2 lesion burden: N lesions totaling X.XX mL, burden grade\n"
+        "2. Regional distribution across MAGNIMS DIS regions (X/4)\n"
+        "3. Lesion size profile (predominance of small/medium/large)\n"
+        "4. DIS assessment with specific evidence\n"
+        "5. Disease activity status\n"
+        "6. Brain volume assessment (if data available)\n"
+        "7. Atypical features or red flags (if any)\n"
+        "8. Recommendations: follow-up interval per MAGNIMS guidelines, suggested sequences\n\n"
+        "## REFERENCES\n"
+        "Cite 3-5 relevant references that support your findings (use real, published references):\n"
+        "- Filippi et al. (2019) MAGNIMS recommendations\n"
+        "- Thompson et al. (2018) 2017 McDonald criteria revisions\n"
+        "- Wattjes et al. (2021) MAGNIMS-CMSC-NAIMS consensus\n"
+        + _FORMAT_INSTRUCTIONS
+    ),
     "ms_longitudinal": (
         "You are a fellowship-trained neuroradiologist with subspecialty expertise in "
         "longitudinal MS disease monitoring, writing a structured interval change report. "
@@ -374,19 +469,37 @@ class BrainReportService:
             la = findings["lesion_analysis"]
             parts.append(f"\nLesion analysis:")
             parts.append(f"  Total lesions: {la.get('total_count', 0)}")
-            parts.append(f"  Total burden: {la.get('total_burden_ml', 0):.2f} mL")
+            parts.append(f"  Total burden: {la.get('total_burden_mm3', 0):.2f} mm³ "
+                         f"({la.get('total_burden_ml', 0):.4f} mL)")
             regions = la.get("regions", {})
             if regions:
-                parts.append("  By region:")
+                parts.append("  Regional summary:")
                 for name, info in regions.items():
                     parts.append(f"    - {name}: {info.get('lesion_count', 0)} lesions, "
-                                 f"{info.get('total_volume_ml', 0):.3f} mL")
+                                 f"{info.get('total_volume_mm3', 0):.2f} mm³ "
+                                 f"({info.get('total_volume_ml', 0):.4f} mL)")
             size_dist = la.get("size_distribution", {})
             if size_dist:
                 parts.append(f"  Size distribution: "
-                             f"small={size_dist.get('small', 0)}, "
-                             f"medium={size_dist.get('medium', 0)}, "
-                             f"large={size_dist.get('large', 0)}")
+                             f"small(<100mm³)={size_dist.get('small', 0)}, "
+                             f"medium(100-1000mm³)={size_dist.get('medium', 0)}, "
+                             f"large(>1000mm³)={size_dist.get('large', 0)}")
+
+            # Per-lesion detail table (critical for comprehensive reports)
+            lesions = la.get("lesions", [])
+            if lesions:
+                parts.append(f"\n  Individual lesion data ({len(lesions)} lesions):")
+                parts.append("  # | Region | Volume_mm3 | Volume_mL | Size | Centroid(z,y,x)")
+                parts.append("  --|--------|-----------|----------|------|----------------")
+                for les in lesions:
+                    ctr = les.get("centroid", {})
+                    parts.append(
+                        f"  {les.get('id', '?')} | {les.get('region', 'Unknown')} | "
+                        f"{les.get('volume_mm3', 0):.1f} | "
+                        f"{les.get('volume_ml', 0):.4f} | "
+                        f"{les.get('size_category', '?')} | "
+                        f"z={ctr.get('z', 0):.0f}, y={ctr.get('y', 0):.0f}, x={ctr.get('x', 0):.0f}"
+                    )
 
         # DIS assessment data
         if findings.get("dis_assessment"):
@@ -417,6 +530,17 @@ class BrainReportService:
             parts.append(f"  Resolved lesions: {sc.get('resolved', 0)}")
             parts.append(f"  Shrunk lesions: {sc.get('shrunk', 0)}")
             parts.append(f"  Stable lesions: {sc.get('stable', 0)}")
+
+        # Zone map statistics (from MSMask atlas)
+        if findings.get("zone_stats"):
+            zs = findings["zone_stats"]
+            parts.append(f"\nMAGNIMS zone map statistics (MSMask atlas, Wiltgen et al. 2024):")
+            parts.append(f"  Total classified brain voxels: {zs.get('total_brain_voxels', 0)}")
+            for zone_name, info in zs.get("zones", {}).items():
+                parts.append(
+                    f"  - {zone_name}: {info.get('voxel_count', 0)} voxels "
+                    f"({info.get('percentage', 0):.1f}%)"
+                )
 
         # Additional observations
         if findings.get("additional_observations"):
@@ -463,9 +587,13 @@ class BrainReportService:
 
         try:
             client = self._get_client()
+            # Use higher token limit for comprehensive reports with per-lesion data
+            max_tokens = self._settings.CLAUDE_MAX_TOKENS
+            if template_type == "ms_comprehensive":
+                max_tokens = min(max(max_tokens, 8192), 16384)
             message = client.messages.create(
                 model=self._settings.CLAUDE_MODEL,
-                max_tokens=self._settings.CLAUDE_MAX_TOKENS,
+                max_tokens=max_tokens,
                 system=system_prompt,
                 messages=[
                     {"role": "user", "content": user_prompt},
@@ -518,6 +646,15 @@ class BrainReportService:
                 "description": (
                     "Disease activity monitoring report with DIS/DIT evaluation, "
                     "new/enhancing lesion analysis, and treatment response assessment."
+                ),
+            },
+            {
+                "id": "ms_comprehensive",
+                "name": "Comprehensive MS Analysis",
+                "description": (
+                    "Publication-quality comprehensive report with per-lesion tables, "
+                    "regional distribution, DIS assessment, size analysis, and clinical "
+                    "interpretation per MAGNIMS/DIFUTURE/McDonald standards."
                 ),
             },
             {

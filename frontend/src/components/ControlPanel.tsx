@@ -3,11 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import {
   Calendar, Activity, ChevronDown, ChevronRight,
-  Layers, ZoomIn, ZoomOut, RotateCcw, Box, Info
+  Layers, ZoomIn, ZoomOut, RotateCcw, Box, Info, Scissors, Palette
 } from 'lucide-react';
 import { useViewerStore } from '@/store/useViewerStore';
 import { usePatient, useMedicalHistory } from '@/hooks/usePatients';
 import { studyAPI } from '@/services/studyApi';
+import { COLORMAPS_3D } from '@/components/ImageViewer3D';
 import type { StudySummary, ImageOrientation } from '@/types';
 
 export default function ControlPanel() {
@@ -33,6 +34,15 @@ export default function ControlPanel() {
     sliceHistogram,
     currentPatientId,
     currentStudyId,
+    render3DMode,
+    colormap3D,
+    clipPlaneEnabled,
+    clipPlanePosition,
+    setRender3DMode,
+    setColormap3D,
+    setClipPlane,
+    clipPlaneAxis,
+    setClipPlaneAxis,
   } = useViewerStore();
 
   const [imageInfoOpen, setImageInfoOpen] = useState(false);
@@ -275,27 +285,108 @@ export default function ControlPanel() {
             </div>
           </div>
 
-          {/* 3D Orientation */}
+          {/* 3D Render Mode */}
           {viewMode === '3d' && (
-            <div>
-              <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
-                <Layers className="w-3.5 h-3.5" />
-                {t('viewer.orientation')}
-              </label>
-              <div className="flex gap-1">
-                {(['axial', 'sagittal', 'coronal'] as ImageOrientation[]).map((orient) => (
+            <div className="space-y-3">
+              {/* Render mode toggle */}
+              <div>
+                <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
+                  <Layers className="w-3.5 h-3.5" />
+                  {t('viewer.renderMode', 'Render Mode')}
+                </label>
+                <div className="grid grid-cols-2 gap-1.5">
                   <button
-                    key={orient}
-                    onClick={() => setOrientation(orient)}
-                    className={`flex-1 px-1.5 py-1 rounded text-[11px] font-medium transition-all capitalize ${
-                      orientation === orient
-                        ? 'bg-accent-500 text-white'
+                    onClick={() => setRender3DMode('volume')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      render3DMode === 'volume'
+                        ? 'bg-accent-500 text-white shadow-md'
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                     }`}
                   >
-                    {t(`viewer.${orient}`)}
+                    {t('viewer.volumeRender', 'Volume')}
                   </button>
-                ))}
+                  <button
+                    onClick={() => setRender3DMode('multiplanar')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      render3DMode === 'multiplanar'
+                        ? 'bg-accent-500 text-white shadow-md'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    {t('viewer.multiplanar', 'Multiplanar')}
+                  </button>
+                </div>
+              </div>
+
+              {/* Colormap selector */}
+              <div>
+                <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
+                  <Palette className="w-3.5 h-3.5" />
+                  {t('viewer.colormap', 'Colormap')}
+                </label>
+                <select
+                  value={colormap3D}
+                  onChange={(e) => setColormap3D(e.target.value)}
+                  className="w-full px-2 py-1.5 rounded-lg text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 focus:ring-1 focus:ring-accent-500 outline-none"
+                >
+                  {COLORMAPS_3D.map((cm) => (
+                    <option key={cm.id} value={cm.id}>{cm.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Clip plane */}
+              <div>
+                <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
+                  <Scissors className="w-3.5 h-3.5" />
+                  {t('viewer.clipPlane', 'Clip Plane')}
+                </label>
+                <div className="space-y-1.5">
+                  <button
+                    onClick={() => setClipPlane(!clipPlaneEnabled)}
+                    className={`w-full px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      clipPlaneEnabled
+                        ? 'bg-red-500 text-white'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    {clipPlaneEnabled ? t('viewer.clipPlaneOn', 'Clip: ON') : t('viewer.clipPlaneOff', 'Clip: OFF')}
+                  </button>
+                  {clipPlaneEnabled && (
+                    <>
+                      {/* Axis selector */}
+                      <div className="grid grid-cols-3 gap-1">
+                        {(['axial', 'coronal', 'sagittal'] as const).map((axis) => (
+                          <button
+                            key={axis}
+                            onClick={() => setClipPlaneAxis(axis)}
+                            className={`px-2 py-1 rounded text-[10px] font-medium transition-colors ${
+                              clipPlaneAxis === axis
+                                ? 'bg-red-500 text-white'
+                                : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                            }`}
+                          >
+                            {t(`viewer.clipAxis.${axis}`, axis.charAt(0).toUpperCase() + axis.slice(1))}
+                          </button>
+                        ))}
+                      </div>
+                      {/* Depth slider */}
+                      <div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={Math.round(clipPlanePosition * 100)}
+                          onChange={(e) => setClipPlane(true, parseInt(e.target.value) / 100)}
+                          className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-red-500"
+                        />
+                        <div className="text-[10px] text-gray-400 text-right mt-0.5">
+                          {Math.round(clipPlanePosition * 100)}%
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           )}

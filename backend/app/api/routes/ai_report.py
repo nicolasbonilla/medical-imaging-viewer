@@ -26,7 +26,7 @@ class ReportGenerateRequest(BaseModel):
     """Request to generate a brain MRI report."""
     template_type: str = Field(
         default="general",
-        pattern="^(general|ms_activity|ms_lesion_burden)$",
+        pattern="^(general|ms_activity|ms_lesion_burden|ms_comprehensive|ms_longitudinal)$",
         description="Report template type",
     )
     language: str = Field(

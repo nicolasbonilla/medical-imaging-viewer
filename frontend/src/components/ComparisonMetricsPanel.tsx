@@ -12,11 +12,13 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BarChart3, Loader2, AlertCircle } from 'lucide-react';
 import { segmentationAPI, type PairwiseComparison, type ComparisonResult } from '@/api/segmentation';
-import type { ExpertMaskData } from '@/types';
+import type { ExpertMaskData, ImagingInstance } from '@/types';
 
 interface ComparisonMetricsPanelProps {
   /** Expert masks that are loaded and visible */
   expertMasks: Map<string, ExpertMaskData>;
+  /** Expert annotation instances (for GCS path resolution) */
+  expertInstances?: ImagingInstance[];
   /** Currently active segmentation ID (if user has one) */
   activeSegmentationId?: string | null;
   /** Callback to navigate to a specific slice */
@@ -124,6 +126,7 @@ function DiceSparkline({
 
 export function ComparisonMetricsPanel({
   expertMasks,
+  expertInstances,
   activeSegmentationId,
   onNavigateToSlice,
 }: ComparisonMetricsPanelProps) {
@@ -133,15 +136,19 @@ export function ComparisonMetricsPanel({
   const [error, setError] = useState<string | null>(null);
   const [selectedPair, setSelectedPair] = useState<number>(0);
 
-  // Collect available masks for comparison
-  const availableMasks: { type: 'segmentation' | 'instance'; id: string; label: string }[] =
+  // Collect available masks for comparison (include gcs_path for fast backend lookup)
+  const availableMasks: { type: 'segmentation' | 'instance'; id: string; label: string; gcs_path?: string }[] =
     Array.from(expertMasks.entries())
       .filter(([, data]) => data.visible && data.mask)
-      .map(([id, data]) => ({
-        type: 'instance' as const,
-        id,
-        label: data.label,
-      }));
+      .map(([id, data]) => {
+        const inst = expertInstances?.find(i => i.id === id);
+        return {
+          type: 'instance' as const,
+          id,
+          label: data.label,
+          gcs_path: inst?.gcs_object_name,
+        };
+      });
 
   // Add user segmentation if active
   if (activeSegmentationId && !activeSegmentationId.startsWith('local-')) {

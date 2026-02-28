@@ -97,6 +97,33 @@ function transposeSlice(src: Uint8Array, srcH: number, srcW: number): Uint8Array
   return dst;
 }
 
+/** MAGNIMS zone colors at lesion opacity (60%) for zone-colorized rendering */
+const MAGNIMS_ZONE_COLORS_LESION: Record<number, ParsedColor> = {
+  1: { r: 255, g: 0,   b: 0,   a: 153 },  // PV - red
+  2: { r: 0,   g: 204, b: 0,   a: 153 },  // JC - green
+  3: { r: 0,   g: 102, b: 255, a: 153 },  // IT - blue
+  4: { r: 255, g: 215, b: 0,   a: 153 },  // DWM - yellow
+};
+
+/**
+ * Create a composite slice: for each lesion voxel (>0), use the zone map value
+ * at the same position as the label ID. This colorizes lesions by MAGNIMS zone
+ * without modifying the original mask.
+ */
+function createZoneColorizedSlice(
+  lesionSlice: Uint8Array,
+  zoneSlice: Uint8Array,
+  length: number,
+): Uint8Array {
+  const composite = new Uint8Array(length);
+  for (let i = 0; i < length; i++) {
+    if (lesionSlice[i] > 0 && zoneSlice[i] > 0) {
+      composite[i] = zoneSlice[i];
+    }
+  }
+  return composite;
+}
+
 /**
  * Render mask slice to canvas with per-label colors.
  * Each non-zero voxel is colored according to its label ID.
@@ -313,6 +340,11 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
   const zoneMapMask = useSegmentationStore((s) => s.zoneMapMask);
   const zoneMapDims = useSegmentationStore((s) => s.zoneMapDims);
   const zoneMapVisible = useSegmentationStore((s) => s.zoneMapVisible);
+  const zoneColorizeEnabled = useSegmentationStore((s) => s.zoneColorizeEnabled);
+
+  // Opacity controls
+  const lesionOpacity = useSegmentationStore((s) => s.lesionOpacity);
+  const zoneMapOpacity = useSegmentationStore((s) => s.zoneMapOpacity);
 
   // State
   const [isPainting, setIsPainting] = useState(false);
@@ -465,13 +497,13 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
           zmRenderH = imageHeight;
         }
 
-        // Use MAGNIMS colors at low opacity for background visualization
-        // Alpha is in 0-255 range (ImageData format): 40 ≈ 16% opacity
+        // Use MAGNIMS colors with user-controlled opacity for background visualization
+        const zmAlpha = Math.round(zoneMapOpacity * 255);
         const zoneColors: Record<number, ParsedColor> = {
-          1: { r: 255, g: 0, b: 0, a: 40 },      // PV - red
-          2: { r: 0, g: 204, b: 0, a: 40 },       // JC - green
-          3: { r: 0, g: 102, b: 255, a: 40 },     // IT - blue
-          4: { r: 255, g: 215, b: 0, a: 40 },     // DWM - yellow
+          1: { r: 255, g: 0, b: 0, a: zmAlpha },      // PV - red
+          2: { r: 0, g: 204, b: 0, a: zmAlpha },       // JC - green
+          3: { r: 0, g: 102, b: 255, a: zmAlpha },     // IT - blue
+          4: { r: 255, g: 215, b: 0, a: zmAlpha },     // DWM - yellow
         };
         renderMaskToCanvas(
           ctx, zmSlice,
@@ -510,24 +542,54 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
             canvasSize.height,
           );
         } else {
-          // Label mode: each voxel colored by label ID
+          // Build standard label colors scaled by lesionOpacity slider
           const labelColors: Record<number, ParsedColor> = {};
           if (storeLabels) {
             for (const label of storeLabels) {
               if (label.id !== 0) {
-                labelColors[label.id] = parseColor(label.color, label.opacity);
+                const c = parseColor(label.color, label.opacity);
+                labelColors[label.id] = { ...c, a: Math.round(c.a * lesionOpacity) };
+              }
+            }
+          }
+
+          let sliceToRender = renderSlice;
+          let colorsToUse: Record<number, ParsedColor> = labelColors;
+
+          // Zone colorization: override lesion colors with MAGNIMS zone colors
+          if (zoneColorizeEnabled && zoneMapMask && zoneMapDims) {
+            const zmSliceSize = zoneMapDims.width * zoneMapDims.height;
+            const zmSliceOffset = sliceIndex * zmSliceSize;
+            if (zmSliceOffset + zmSliceSize <= zoneMapMask.length) {
+              let zmSlice = zoneMapMask.subarray(zmSliceOffset, zmSliceOffset + zmSliceSize);
+              let zmW = zoneMapDims.width;
+              let zmH = zoneMapDims.height;
+              // Auto-fix axis mismatch (same logic as zone map background)
+              if (zmW !== imageWidth && zmH === imageWidth && zmW === imageHeight) {
+                zmSlice = transposeSlice(zmSlice, zoneMapDims.height, zoneMapDims.width);
+                zmW = imageWidth;
+                zmH = imageHeight;
+              }
+              if (zmW === imageWidth && zmH === imageHeight && renderSlice.length === zmSlice.length) {
+                sliceToRender = createZoneColorizedSlice(renderSlice, zmSlice, renderSlice.length);
+                // Apply lesionOpacity to zone-colorized lesion colors
+                const scaledZoneColors: Record<number, ParsedColor> = {};
+                for (const [k, v] of Object.entries(MAGNIMS_ZONE_COLORS_LESION)) {
+                  scaledZoneColors[Number(k)] = { ...v, a: Math.round(v.a * lesionOpacity) };
+                }
+                colorsToUse = scaledZoneColors;
               }
             }
           }
 
           renderMaskToCanvas(
             ctx,
-            renderSlice,
+            sliceToRender,
             imageWidth,
             imageHeight,
             canvasSize.width,
             canvasSize.height,
-            labelColors,
+            colorsToUse,
           );
         }
       }
@@ -568,10 +630,13 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
       }
     }
 
-    // Draw expert annotation masks as contours
+    // Draw expert annotation masks as contours (only when image matches MNI space)
     if (expertMasks && expertMasks.size > 0) {
       for (const [, maskData] of expertMasks) {
         if (!maskData.visible || !maskData.mask || maskData.loading) continue;
+
+        // Skip if mask dimensions don't match displayed image (spatial mismatch)
+        if (maskData.width !== imageWidth || maskData.height !== imageHeight) continue;
 
         // Extract the current slice from the expert mask
         const sliceSize = maskData.width * maskData.height;
@@ -633,7 +698,8 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
     brushSize, brushShape, eraseMode, showOverlay, zoomLevel, panOffset,
     matplotlibBbox, segmentationMask, sliceIndex, renderVersion, storeLabels,
     aiClickPoints, heatmapMode, expertMasks,
-    zoneMapMask, zoneMapDims, zoneMapVisible,
+    zoneMapMask, zoneMapDims, zoneMapVisible, zoneColorizeEnabled,
+    lesionOpacity, zoneMapOpacity,
   ]);
 
   // Re-render overlay when mask or slice changes

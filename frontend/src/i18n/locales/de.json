@@ -182,10 +182,34 @@
     "wireframe": "Drahtmodell",
     "viewAngle": "Betrachtungswinkel",
     "mode": "Modus",
+    "volumeRender": "Volumen",
+    "multiplanar": "Multiplanar",
+    "colormap": "Farbskala",
+    "clipPlane": "Schnittebene",
+    "clipPlaneOn": "Schnitt: EIN",
+    "clipPlaneOff": "Schnitt: AUS",
+    "clipAxis": {
+      "axial": "Axial",
+      "coronal": "Koronal",
+      "sagittal": "Sagittal"
+    },
+    "cameraView": "Kameraansicht",
+    "view3D": {
+      "top": "Oben",
+      "bottom": "Unten",
+      "front": "Vorne",
+      "back": "Hinten",
+      "left": "Links",
+      "right": "Rechts"
+    },
     "selectImageFor3D": "Wählen Sie ein Bild für 3D-Visualisierung",
-    "noFileId": "Keine Datei-ID für 3D-Rendering verfügbar",
+    "noFileId": "Keine Datei für 3D-Rendering verfügbar",
     "tryReload": "Versuchen Sie, das Bild neu zu laden",
-    "loading3D": "Lade 3D",
+    "loading3D": "Lade 3D-Volumen...",
+    "loading3DDesc": "NIfTI-Datei wird für WebGL-Rendering heruntergeladen",
+    "rendering3D": "WebGL-Renderer wird initialisiert...",
+    "downloading": "Herunterladen...",
+    "error3D": "3D-Rendering fehlgeschlagen",
     "volumeVisualization": "Volumenvisualisierung",
     "voxelVisualization": "Voxel-Visualisierung",
     "takesTime": "Dies kann bei großen Volumen eine Weile dauern",
@@ -195,6 +219,11 @@
     "voxelNotAvailable": "Voxel-Visualisierung nicht verfügbar",
     "voxelDataNotLoaded": "Die Voxel-Daten konnten nicht geladen werden",
     "tryInteractiveView": "Interaktive Ansicht Versuchen",
+    "3d": {
+      "dragRotate": "Linksklick ziehen: Drehen",
+      "scrollZoom": "Scrollen: Zoom",
+      "rightPan": "Rechtsklick ziehen: Schwenken"
+    },
     "instructions": {
       "leftClick": "Linksklick + Ziehen: Drehen",
       "rightClick": "Rechtsklick + Ziehen: Schwenken",
@@ -262,6 +291,8 @@
     "createNewEmpty": "Erstellen Sie eine neue leere Segmentierung für das aktuelle Bild",
     "activeSegmentation": "Aktive Segmentierung",
     "showOverlay": "Überlagerung Anzeigen",
+    "lesionOpacity": "Läsion-Opazität",
+    "zoneMapOpacity": "Zonenkartenopazität",
     "labels": "Beschriftungen",
     "brushSize": "Pinselgröße",
     "voxels": "Voxel",
@@ -898,8 +929,9 @@
     "newReport": "Neuer Bericht",
     "templates": {
       "general": "Allgemein",
-      "ms_activity": "MS-Aktivitätsbewertung",
-      "ms_lesion_burden": "Läsionslast-Analyse"
+      "ms_activity": "MS-Aktivität",
+      "ms_comprehensive": "Umfassend",
+      "ms_lesion_burden": "Läsionslast"
     }
   },
   "reportViewer": {
@@ -929,14 +961,15 @@
     "keyboardHint": "Esc zum Schließen"
   },
   "experts": {
-    "title": "Experten-Annotationen",
-    "readOnly": "Nur-Lese-Konturüberlagerungen",
+    "title": "Referenzmasken",
+    "readOnly": "Nur-Lese-Overlays (Experten & Algorithmus-Ausgaben)",
     "expert1": "Experte 1",
     "expert2": "Experte 2",
     "consensus": "Konsens",
     "autoMask": "Auto-Maske",
     "loading": "Maske wird geladen...",
-    "loadError": "Experten-Maske konnte nicht geladen werden"
+    "loadError": "Experten-Maske konnte nicht geladen werden",
+    "switchedToPreprocessed": "Auf vorverarbeitetes Bild umgeschaltet (Masken benötigen MNI-Raum)"
   },
   "magnims": {
     "preset": "Label-Vorlage",
@@ -963,7 +996,11 @@
     "grid": "2x2 Raster",
     "syncOn": "Schnitt-Sync: EIN",
     "syncOff": "Schnitt-Sync: AUS",
-    "emptyPanel": "Kein Bild zugewiesen"
+    "emptyPanel": "Kein Bild zugewiesen",
+    "originals": "Original",
+    "preprocessed": "Vorverarb.",
+    "showOriginals": "Zu Originalbildern wechseln",
+    "showPreprocessed": "Zu vorverarbeiteten Bildern wechseln"
   },
   "comparison": {
     "title": "Vergleichsmetriken",
@@ -1013,7 +1050,9 @@
     "generating": "Generiert...",
     "show": "Zonen anzeigen",
     "hide": "Zonen ausblenden",
-    "brainVoxels": "Gehirnvoxel"
+    "brainVoxels": "Gehirnvoxel",
+    "colorizeOn": "Läsionen nach Zone einfärben",
+    "colorizeOff": "Normale Labelfarben"
   },
   "longitudinal": {
     "title": "Longitudinale Verfolgung",

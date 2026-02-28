@@ -61,6 +61,17 @@ interface ViewerState {
   orientation: ImageOrientation;
   setOrientation: (orientation: ImageOrientation) => void;
 
+  // 3D rendering controls
+  render3DMode: 'volume' | 'multiplanar';
+  colormap3D: string;
+  clipPlaneEnabled: boolean;
+  clipPlanePosition: number;
+  clipPlaneAxis: 'axial' | 'coronal' | 'sagittal';
+  setRender3DMode: (mode: 'volume' | 'multiplanar') => void;
+  setColormap3D: (colormap: string) => void;
+  setClipPlane: (enabled: boolean, position?: number) => void;
+  setClipPlaneAxis: (axis: 'axial' | 'coronal' | 'sagittal') => void;
+
   // Loading state
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
@@ -93,6 +104,11 @@ const initialState = {
   selectedFiles: [],
   viewMode: '2d' as const,
   orientation: 'axial' as ImageOrientation,
+  render3DMode: 'volume' as const,
+  colormap3D: 'gray',
+  clipPlaneEnabled: false,
+  clipPlanePosition: 0.5,
+  clipPlaneAxis: 'axial' as const,
   isLoading: false,
   zoomLevel: 1,
   panOffset: { x: 0, y: 0 },
@@ -136,6 +152,14 @@ export const useViewerStore = create<ViewerState>((set) => ({
   setViewMode: (mode) => set({ viewMode: mode }),
 
   setOrientation: (orientation) => set({ orientation }),
+
+  setRender3DMode: (mode) => set({ render3DMode: mode }),
+  setColormap3D: (colormap) => set({ colormap3D: colormap }),
+  setClipPlane: (enabled, position) => set((state) => ({
+    clipPlaneEnabled: enabled,
+    clipPlanePosition: position ?? state.clipPlanePosition,
+  })),
+  setClipPlaneAxis: (axis) => set({ clipPlaneAxis: axis }),
 
   setIsLoading: (loading) => set({ isLoading: loading }),
 

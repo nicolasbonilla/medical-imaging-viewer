@@ -16,6 +16,8 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { aiReportAPI } from '@/api/aiReport';
+import { segmentationAPI } from '@/api/segmentation';
+import { useSegmentationStore } from '@/store/useSegmentationStore';
 import type {
   ReportTemplateType,
   ReportGenerateRequest,
@@ -61,13 +63,32 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
     },
   });
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     const findings: Record<string, any> = {};
     if (indication) findings.clinical_indication = indication;
     if (technique) findings.technique = technique;
     if (observations) findings.additional_observations = observations;
     if (patientAge) findings.patient_age = patientAge;
     if (patientSex) findings.patient_sex = patientSex;
+
+    // Auto-collect lesion analysis and DIS data from active segmentation
+    const activeSegId = useSegmentationStore.getState().currentSegmentation?.segmentation_id;
+    if (activeSegId) {
+      try {
+        const [lesionData, disData] = await Promise.all([
+          segmentationAPI.analyzeLesions(activeSegId).catch(() => null),
+          segmentationAPI.getDISAssessment(activeSegId).catch(() => null),
+        ]);
+        if (lesionData) {
+          findings.lesion_analysis = lesionData;
+        }
+        if (disData) {
+          findings.dis_assessment = disData;
+        }
+      } catch {
+        // Continue without lesion data if fetch fails
+      }
+    }
 
     generateMutation.mutate({
       template_type: template,
@@ -104,6 +125,7 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
   const templateIcons: Record<ReportTemplateType, string> = {
     general: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
     ms_activity: 'M13 10V3L4 14h7v7l9-11h-7z',
+    ms_comprehensive: 'M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z',
     ms_lesion_burden: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
     ms_longitudinal: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6',
   };
@@ -210,6 +232,18 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
                   className="w-full px-2 py-1.5 bg-white/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-amber-500 resize-none"
                 />
               </div>
+
+              {/* Active segmentation indicator — lesion data will be auto-collected */}
+              {useSegmentationStore.getState().currentSegmentation && (
+                <div className="flex items-center gap-1.5 px-2 py-1.5 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded">
+                  <svg className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  <span className="text-xs text-blue-700 dark:text-blue-300">
+                    {t('report.lesionDataIncluded', 'Lesion analysis data will be auto-collected')}
+                  </span>
+                </div>
+              )}
 
               {/* Volumetry indicator */}
               {volumetry && (

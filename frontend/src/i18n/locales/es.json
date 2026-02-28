@@ -180,27 +180,56 @@
     "voxel": "Voxel",
     "opacity": "Opacidad",
     "wireframe": "Malla",
-    "viewAngle": "Ángulo de Vista",
+    "viewAngle": "Angulo de Vista",
     "mode": "Modo",
-    "selectImageFor3D": "Selecciona una imagen para visualización 3D",
-    "noFileId": "No hay ID de archivo disponible para renderizado 3D",
+    "volumeRender": "Volumen",
+    "multiplanar": "Multiplanar",
+    "colormap": "Mapa de Color",
+    "clipPlane": "Plano de Corte",
+    "clipPlaneOn": "Corte: ON",
+    "clipPlaneOff": "Corte: OFF",
+    "clipAxis": {
+      "axial": "Axial",
+      "coronal": "Coronal",
+      "sagittal": "Sagital"
+    },
+    "cameraView": "Vista de Cámara",
+    "view3D": {
+      "top": "Arriba",
+      "bottom": "Abajo",
+      "front": "Frontal",
+      "back": "Posterior",
+      "left": "Izquierda",
+      "right": "Derecha"
+    },
+    "selectImageFor3D": "Selecciona una imagen para vista 3D",
+    "noFileId": "No hay archivo disponible para renderizado 3D",
     "tryReload": "Intenta recargar la imagen",
-    "loading3D": "Cargando 3D",
-    "volumeVisualization": "visualización de volumen",
-    "voxelVisualization": "visualización de voxel",
-    "takesTime": "Esto puede tomar un tiempo para volúmenes grandes",
-    "not3DAvailable": "Visualización 3D no disponible",
+    "loading3D": "Cargando volumen 3D...",
+    "loading3DDesc": "Descargando archivo NIfTI para renderizado WebGL",
+    "rendering3D": "Inicializando renderizador WebGL...",
+    "downloading": "Descargando...",
+    "error3D": "Error en renderizado 3D",
+    "volumeVisualization": "visualizacion de volumen",
+    "voxelVisualization": "visualizacion de voxel",
+    "takesTime": "Esto puede tomar un tiempo para volumenes grandes",
+    "not3DAvailable": "Visualizacion 3D no disponible",
     "volumeDataNotLoaded": "Los datos de volumen no se pudieron cargar",
     "tryVoxelView": "Probar Vista Voxel",
-    "voxelNotAvailable": "Visualización voxel no disponible",
+    "voxelNotAvailable": "Visualizacion voxel no disponible",
     "voxelDataNotLoaded": "Los datos de voxel no se pudieron cargar",
     "tryInteractiveView": "Probar Vista Interactiva",
+    "3d": {
+      "dragRotate": "Clic izquierdo + arrastrar: Rotar",
+      "scrollZoom": "Desplazar: Zoom",
+      "rightPan": "Clic derecho + arrastrar: Mover"
+    },
     "instructions": {
       "leftClick": "Clic izquierdo + arrastrar: Rotar",
       "rightClick": "Clic derecho + arrastrar: Mover",
       "scroll": "Desplazar: Zoom",
-      "adjustAngle": "Ajusta el deslizador de ángulo de vista para rotar",
-      "tryAngles": "Prueba diferentes ángulos para mejor visualización"
+      "adjustAngle": "Ajusta el deslizador de angulo de vista para rotar",
+      "tryAngles": "Prueba diferentes angulos para mejor visualizacion"
     },
     "selectImageToView": "Selecciona una imagen para visualizar",
     "loadingMatplotlib": "Cargando visualización matplotlib...",
@@ -266,6 +295,8 @@
     "createNewToStart": "Crea una nueva para empezar",
     "activeSegmentation": "Segmentación activa",
     "showOverlay": "Mostrar Overlay",
+    "lesionOpacity": "Opacidad de lesiones",
+    "zoneMapOpacity": "Opacidad de zonas",
     "hideLabel": "Ocultar etiqueta",
     "showLabel": "Mostrar etiqueta",
     "labels": "Etiquetas",
@@ -903,7 +934,8 @@
     "newReport": "Nuevo Informe",
     "templates": {
       "general": "General",
-      "ms_activity": "Evaluación de Actividad EM",
+      "ms_activity": "Actividad EM",
+      "ms_comprehensive": "Completo",
       "ms_lesion_burden": "Carga Lesional"
     }
   },
@@ -934,14 +966,15 @@
     "keyboardHint": "Presione Esc para cerrar"
   },
   "experts": {
-    "title": "Anotaciones de Expertos",
-    "readOnly": "Contornos de solo lectura",
+    "title": "Máscaras de Referencia",
+    "readOnly": "Overlays de solo lectura (experto y salidas de algoritmo)",
     "expert1": "Experto 1",
     "expert2": "Experto 2",
     "consensus": "Consenso",
     "autoMask": "Mascara Automatica",
     "loading": "Cargando mascara...",
-    "loadError": "Error al cargar mascara de experto"
+    "loadError": "Error al cargar mascara de experto",
+    "switchedToPreprocessed": "Cambiado a imagen preprocesada (las máscaras requieren espacio MNI)"
   },
   "magnims": {
     "preset": "Preset de Etiquetas",
@@ -961,7 +994,11 @@
     "grid": "2x2 Cuadricula",
     "syncOn": "Sincronizar cortes: ON",
     "syncOff": "Sincronizar cortes: OFF",
-    "emptyPanel": "Sin imagen asignada"
+    "emptyPanel": "Sin imagen asignada",
+    "originals": "Original",
+    "preprocessed": "Preproc",
+    "showOriginals": "Cambiar a imagenes originales",
+    "showPreprocessed": "Cambiar a imagenes preprocesadas"
   },
   "comparison": {
     "title": "Metricas de Comparacion",
@@ -1011,7 +1048,9 @@
     "generating": "Generando...",
     "show": "Mostrar zonas",
     "hide": "Ocultar zonas",
-    "brainVoxels": "vóxeles cerebrales"
+    "brainVoxels": "vóxeles cerebrales",
+    "colorizeOn": "Colorizar lesiones por zona",
+    "colorizeOff": "Colores normales"
   },
   "longitudinal": {
     "title": "Seguimiento Longitudinal",
