@@ -356,7 +356,7 @@ export default function ImageViewer3D() {
     }
   }, [colormap3D, volumeReady, mpReady, render3DMode]);
 
-  // ─── EFFECT 5: Update clip plane (applies to 3D panel only) ───
+  // ─── EFFECT 5: Update clip plane + sync crosshair to clip position ───
   useEffect(() => {
     // Get the 3D NiiVue instance
     const nv3d = render3DMode === 'volume' ? volumeNvRef.current : mpNvRefs.current[0];
@@ -364,17 +364,57 @@ export default function ImageViewer3D() {
     if (!nv3d || !ready) return;
 
     if (clipPlaneEnabled) {
-      const depth = clipPlanePosition * 1.73;
+      // Map slider 0-100% to full volume range per axis
+      // Shader: dot(normal, pos-0.5) + depth = 0
+      // Axial  normal [0,0,-1]: cut at z = 0.5+depth → depth = pos-0.5
+      // Coronal normal [0,1,0]: cut at y = 0.5-depth → depth = 0.5-pos
+      // Sagittal normal [1,0,0]: cut at x = 0.5-depth → depth = 0.5-pos
+      const depthByAxis = {
+        axial:    clipPlanePosition - 0.5,
+        coronal:  0.5 - clipPlanePosition,
+        sagittal: 0.5 - clipPlanePosition,
+      };
+      const depth = depthByAxis[clipPlaneAxis];
       const axisAngles = {
         axial:    [depth, 0, 90],
         coronal:  [depth, 0, 0],
         sagittal: [depth, 270, 0],
       };
       nv3d.setClipPlane(axisAngles[clipPlaneAxis]);
+
+      // Sync crosshair: pos maps directly to fractional coordinate
+      if (render3DMode === 'multiplanar') {
+        const axisIndex = { axial: 2, coronal: 1, sagittal: 0 }[clipPlaneAxis];
+        mpNvRefs.current.forEach((nv) => {
+          if (nv && nv.volumes.length > 0) {
+            nv.scene.crosshairPos[axisIndex] = clipPlanePosition;
+            nv.drawScene();
+          }
+        });
+      }
     } else {
       nv3d.setClipPlane([3, 0, 0]);
     }
   }, [clipPlaneEnabled, clipPlanePosition, clipPlaneAxis, volumeReady, mpReady, render3DMode]);
+
+  // ─── EFFECT 6: Mouse wheel on 3D canvas → move clip plane ───
+  useEffect(() => {
+    if (!clipPlaneEnabled) return;
+    const canvas = render3DMode === 'volume' ? volumeCanvasRef.current : mpCanvasRefs.current[0];
+    const ready = render3DMode === 'volume' ? volumeReady : mpReady;
+    if (!canvas || !ready) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? 0.02 : -0.02;
+      const store = useViewerStore.getState();
+      const newPos = Math.max(0, Math.min(1, store.clipPlanePosition + delta));
+      store.setClipPlane(true, newPos);
+    };
+
+    canvas.addEventListener('wheel', handleWheel, { passive: false });
+    return () => canvas.removeEventListener('wheel', handleWheel);
+  }, [clipPlaneEnabled, render3DMode, volumeReady, mpReady]);
 
   // ─── Early returns for missing data ───
   if (!currentSeries) {
