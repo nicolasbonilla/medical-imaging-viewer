@@ -1,0 +1,1143 @@
+{
+  "date": "2026-02-22T10:39:49.645Z",
+  "patients": 19,
+  "misplaced": 19,
+  "masks": 77,
+  "sums": [
+    {
+      "mrn": "ISBI-MS-001",
+      "ns": 4,
+      "nm": 1,
+      "nmk": 5
+    },
+    {
+      "mrn": "ISBI-MS-002",
+      "ns": 4,
+      "nm": 1,
+      "nmk": 4
+    },
+    {
+      "mrn": "ISBI-MS-003",
+      "ns": 5,
+      "nm": 1,
+      "nmk": 4
+    },
+    {
+      "mrn": "ISBI-MS-004",
+      "ns": 4,
+      "nm": 1,
+      "nmk": 4
+    },
+    {
+      "mrn": "ISBI-MS-005",
+      "ns": 4,
+      "nm": 1,
+      "nmk": 4
+    },
+    {
+      "mrn": "ISBI-MS-006",
+      "ns": 4,
+      "nm": 1,
+      "nmk": 4
+    },
+    {
+      "mrn": "ISBI-MS-007",
+      "ns": 5,
+      "nm": 1,
+      "nmk": 4
+    },
+    {
+      "mrn": "ISBI-MS-008",
+      "ns": 4,
+      "nm": 1,
+      "nmk": 4
+    },
+    {
+      "mrn": "ISBI-MS-009",
+      "ns": 4,
+      "nm": 1,
+      "nmk": 4
+    },
+    {
+      "mrn": "ISBI-MS-010",
+      "ns": 4,
+      "nm": 1,
+      "nmk": 4
+    },
+    {
+      "mrn": "ISBI-MS-011",
+      "ns": 4,
+      "nm": 1,
+      "nmk": 4
+    },
+    {
+      "mrn": "ISBI-MS-012",
+      "ns": 4,
+      "nm": 1,
+      "nmk": 4
+    },
+    {
+      "mrn": "ISBI-MS-013",
+      "ns": 4,
+      "nm": 1,
+      "nmk": 4
+    },
+    {
+      "mrn": "ISBI-MS-014",
+      "ns": 4,
+      "nm": 1,
+      "nmk": 4
+    },
+    {
+      "mrn": "ISBI-MS-015",
+      "ns": 6,
+      "nm": 1,
+      "nmk": 4
+    },
+    {
+      "mrn": "ISBI-MS-016",
+      "ns": 5,
+      "nm": 1,
+      "nmk": 4
+    },
+    {
+      "mrn": "ISBI-MS-017",
+      "ns": 4,
+      "nm": 1,
+      "nmk": 4
+    },
+    {
+      "mrn": "ISBI-MS-018",
+      "ns": 4,
+      "nm": 1,
+      "nmk": 4
+    },
+    {
+      "mrn": "ISBI-MS-019",
+      "ns": 5,
+      "nm": 1,
+      "nmk": 4
+    }
+  ],
+  "allM": [
+    {
+      "mrn": "ISBI-MS-001",
+      "iid": "56e567b3-19aa-4d9a-9788-ac36eeb78327",
+      "serid": "fafe2967-22a1-4544-933d-324f7841cc4b",
+      "snum": 8,
+      "sid": "ba97458f-2a36-4a5f-936e-2c0ea384a645",
+      "ctp": 1,
+      "ses": 2,
+      "fn": "sub-MS001_ses-02_label-lesion_desc-expert01_dseg.nii.gz",
+      "gcs": "patients/6ccf7491-0aed-45fe-8a13-2ca6c82980b7/studies/ba97458f-2a36-4a5f-936e-2c0ea384a645/series/fafe2967-22a1-4544-933d-324f7841cc4b/56e567b3-19aa-4d9a-9788-ac36eeb78327.gz",
+      "mask": true,
+      "sd": "2020-01-15T09:00:00"
+    },
+    {
+      "mrn": "ISBI-MS-002",
+      "iid": "b8d56353-612c-4ad5-9c72-adca21097c88",
+      "serid": "e2bdfacb-4cc2-456e-94a0-8188ea6e17f4",
+      "snum": 8,
+      "sid": "e7f19290-cf02-425f-9620-c5f978985df4",
+      "ctp": 1,
+      "ses": 2,
+      "fn": "sub-MS002_ses-02_label-lesion_desc-expert02_dseg.nii.gz",
+      "gcs": "patients/0c96e8df-f3bc-4b0a-a931-ee1cf94b2ee1/studies/e7f19290-cf02-425f-9620-c5f978985df4/series/e2bdfacb-4cc2-456e-94a0-8188ea6e17f4/b8d56353-612c-4ad5-9c72-adca21097c88.gz",
+      "mask": true,
+      "sd": "2020-01-15T09:00:00"
+    },
+    {
+      "mrn": "ISBI-MS-003",
+      "iid": "22982061-08c3-4f69-b567-74481e7d2a7f",
+      "serid": "bfd69435-06bd-4adf-a3e4-801290b923df",
+      "snum": 8,
+      "sid": "fa78a1c0-340f-4d08-9baf-e713ef655775",
+      "ctp": 1,
+      "ses": 2,
+      "fn": "sub-MS003_ses-02_label-lesion_desc-expert03_dseg.nii.gz",
+      "gcs": "patients/417eae0c-4665-4a1e-9059-fe59959b8870/studies/fa78a1c0-340f-4d08-9baf-e713ef655775/series/bfd69435-06bd-4adf-a3e4-801290b923df/22982061-08c3-4f69-b567-74481e7d2a7f.gz",
+      "mask": true,
+      "sd": "2020-01-15T09:00:00"
+    },
+    {
+      "mrn": "ISBI-MS-004",
+      "iid": "2aa87ecd-87d3-43a6-ba82-dd40c51e347c",
+      "serid": "bde3680a-84e7-4f8c-a8ec-dc235a50060b",
+      "snum": 8,
+      "sid": "7f9149a2-8219-4d6b-9e36-54cbabcb9967",
+      "ctp": 1,
+      "ses": 2,
+      "fn": "sub-MS004_ses-02_label-lesion_desc-expert04_dseg.nii.gz",
+      "gcs": "patients/a5735b64-ece1-42c3-93d9-226ddbab5465/studies/7f9149a2-8219-4d6b-9e36-54cbabcb9967/series/bde3680a-84e7-4f8c-a8ec-dc235a50060b/2aa87ecd-87d3-43a6-ba82-dd40c51e347c.gz",
+      "mask": true,
+      "sd": "2020-01-15T09:00:00"
+    },
+    {
+      "mrn": "ISBI-MS-005",
+      "iid": "42751e8a-f50f-41cd-aabc-ed181c2a4f8b",
+      "serid": "c1143a4b-b3ed-4a3c-b2ec-42de985d9bf1",
+      "snum": 8,
+      "sid": "ff7381ba-272b-4369-8825-f8d386412d0d",
+      "ctp": 1,
+      "ses": 2,
+      "fn": "sub-MS005_ses-02_label-lesion_desc-expert05_dseg.nii.gz",
+      "gcs": "patients/7d2c1f38-a931-4412-8438-50072ebde81f/studies/ff7381ba-272b-4369-8825-f8d386412d0d/series/c1143a4b-b3ed-4a3c-b2ec-42de985d9bf1/42751e8a-f50f-41cd-aabc-ed181c2a4f8b.gz",
+      "mask": true,
+      "sd": "2020-01-15T09:00:00"
+    },
+    {
+      "mrn": "ISBI-MS-006",
+      "iid": "42beebf5-46bb-48ac-b456-92d8f1c3b980",
+      "serid": "7f4b76cd-3dc9-4eb5-ad97-7f4b5ce8ef3c",
+      "snum": 8,
+      "sid": "8e7e03c1-e857-4047-9524-0356f61c1002",
+      "ctp": 1,
+      "ses": 2,
+      "fn": "sub-MS006_ses-02_label-lesion_desc-expert01_dseg.nii.gz",
+      "gcs": "patients/855ba1b7-be62-4679-af97-b8088d610498/studies/8e7e03c1-e857-4047-9524-0356f61c1002/series/7f4b76cd-3dc9-4eb5-ad97-7f4b5ce8ef3c/42beebf5-46bb-48ac-b456-92d8f1c3b980.gz",
+      "mask": true,
+      "sd": "2020-01-15T09:00:00"
+    },
+    {
+      "mrn": "ISBI-MS-007",
+      "iid": "e677b580-e94c-42e7-86dd-258ea2cae359",
+      "serid": "9a84406a-7d3a-4aae-aab6-af3095df35c0",
+      "snum": 8,
+      "sid": "f6475b26-ac74-4783-a64f-c69f44f01f57",
+      "ctp": 1,
+      "ses": 2,
+      "fn": "sub-MS007_ses-02_label-lesion_desc-expert02_dseg.nii.gz",
+      "gcs": "patients/897906e6-04ca-4826-a1ea-25cc9321a874/studies/f6475b26-ac74-4783-a64f-c69f44f01f57/series/9a84406a-7d3a-4aae-aab6-af3095df35c0/e677b580-e94c-42e7-86dd-258ea2cae359.gz",
+      "mask": true,
+      "sd": "2020-01-15T09:00:00"
+    },
+    {
+      "mrn": "ISBI-MS-008",
+      "iid": "1098b30b-c24c-4526-990b-6b723778bcfb",
+      "serid": "dab56d85-439c-4a96-81c2-12ef72051c55",
+      "snum": 8,
+      "sid": "99111635-e8dd-4e70-9c96-12ba04163d5a",
+      "ctp": 1,
+      "ses": 2,
+      "fn": "sub-MS008_ses-02_label-lesion_desc-expert03_dseg.nii.gz",
+      "gcs": "patients/ba38b12c-dc13-431d-ac87-54ab7c54ddb5/studies/99111635-e8dd-4e70-9c96-12ba04163d5a/series/dab56d85-439c-4a96-81c2-12ef72051c55/1098b30b-c24c-4526-990b-6b723778bcfb.gz",
+      "mask": true,
+      "sd": "2020-01-15T09:00:00"
+    },
+    {
+      "mrn": "ISBI-MS-009",
+      "iid": "4cbe1621-ad70-443e-9fb2-2a45937752e5",
+      "serid": "ce01c37e-2133-4a5d-9925-d7f9157e880e",
+      "snum": 8,
+      "sid": "c5e36e7f-fc0e-4e1a-b801-5c92db87fe65",
+      "ctp": 1,
+      "ses": 2,
+      "fn": "sub-MS009_ses-02_label-lesion_desc-expert04_dseg.nii.gz",
+      "gcs": "patients/c4c58d2e-5dda-4372-93cd-d73dc9107022/studies/c5e36e7f-fc0e-4e1a-b801-5c92db87fe65/series/ce01c37e-2133-4a5d-9925-d7f9157e880e/4cbe1621-ad70-443e-9fb2-2a45937752e5.gz",
+      "mask": true,
+      "sd": "2020-01-15T09:00:00"
+    },
+    {
+      "mrn": "ISBI-MS-010",
+      "iid": "d1afe00c-07d9-4659-a270-59c6a634e465",
+      "serid": "21cc5b36-640e-4260-bf6b-74ba15c7b399",
+      "snum": 8,
+      "sid": "aa72cf8c-b2ae-41ac-8cb0-dae176ae147e",
+      "ctp": 1,
+      "ses": 2,
+      "fn": "sub-MS010_ses-02_label-lesion_desc-expert05_dseg.nii.gz",
+      "gcs": "patients/f4ec9e06-0c12-42de-9294-699d481c1e97/studies/aa72cf8c-b2ae-41ac-8cb0-dae176ae147e/series/21cc5b36-640e-4260-bf6b-74ba15c7b399/d1afe00c-07d9-4659-a270-59c6a634e465.gz",
+      "mask": true,
+      "sd": "2020-01-15T09:00:00"
+    },
+    {
+      "mrn": "ISBI-MS-011",
+      "iid": "32ddad47-7811-45dc-84ac-1b617976ab89",
+      "serid": "7cce27b2-b89e-4fe4-acc2-b9912eab827b",
+      "snum": 8,
+      "sid": "a97bbe94-0e09-4694-9e96-b3f1a28f47fd",
+      "ctp": 1,
+      "ses": 2,
+      "fn": "sub-MS011_ses-02_label-lesion_desc-expert06_dseg.nii.gz",
+      "gcs": "patients/469e1d61-dcfc-451b-a728-e36ecba9aae6/studies/a97bbe94-0e09-4694-9e96-b3f1a28f47fd/series/7cce27b2-b89e-4fe4-acc2-b9912eab827b/32ddad47-7811-45dc-84ac-1b617976ab89.gz",
+      "mask": true,
+      "sd": "2020-01-15T09:00:00"
+    },
+    {
+      "mrn": "ISBI-MS-012",
+      "iid": "681e3904-39ab-4d61-b1a0-f984e845b8b0",
+      "serid": "1a99ffdc-0b6e-4851-85e5-8704b8b71b9c",
+      "snum": 8,
+      "sid": "ab85d5c6-45a9-457f-b8d8-aa2a1f897a79",
+      "ctp": 1,
+      "ses": 2,
+      "fn": "sub-MS012_ses-02_label-lesion_desc-expert07_dseg.nii.gz",
+      "gcs": "patients/c273d893-938b-4bf5-a3de-3af77dd62a01/studies/ab85d5c6-45a9-457f-b8d8-aa2a1f897a79/series/1a99ffdc-0b6e-4851-85e5-8704b8b71b9c/681e3904-39ab-4d61-b1a0-f984e845b8b0.gz",
+      "mask": true,
+      "sd": "2020-01-15T09:00:00"
+    },
+    {
+      "mrn": "ISBI-MS-013",
+      "iid": "f39eefde-9581-4fcb-97dc-48ea10b3332e",
+      "serid": "634fc7fa-938e-477d-991b-e7638ca4e08b",
+      "snum": 8,
+      "sid": "df6633e7-0576-4517-8348-bc7f3389cabb",
+      "ctp": 1,
+      "ses": 2,
+      "fn": "sub-MS013_ses-02_label-lesion_desc-expert08_dseg.nii.gz",
+      "gcs": "patients/8c31e870-8576-4f70-aeb4-f5da2972f36a/studies/df6633e7-0576-4517-8348-bc7f3389cabb/series/634fc7fa-938e-477d-991b-e7638ca4e08b/f39eefde-9581-4fcb-97dc-48ea10b3332e.gz",
+      "mask": true,
+      "sd": "2020-01-15T09:00:00"
+    },
+    {
+      "mrn": "ISBI-MS-014",
+      "iid": "a5d8b925-5ab6-4d6c-a785-6aad31b15ee3",
+      "serid": "0c9d6e9b-a910-4c59-b9e1-0a7c4fe9ae77",
+      "snum": 8,
+      "sid": "c820c4d6-e4ba-4efd-b9f8-5080f31ed1e9",
+      "ctp": 1,
+      "ses": 2,
+      "fn": "sub-MS014_ses-02_label-lesion_desc-expert09_dseg.nii.gz",
+      "gcs": "patients/83375699-82a3-4d06-9033-8d7a3d48bf46/studies/c820c4d6-e4ba-4efd-b9f8-5080f31ed1e9/series/0c9d6e9b-a910-4c59-b9e1-0a7c4fe9ae77/a5d8b925-5ab6-4d6c-a785-6aad31b15ee3.gz",
+      "mask": true,
+      "sd": "2020-01-15T09:00:00"
+    },
+    {
+      "mrn": "ISBI-MS-015",
+      "iid": "066420d4-2f6a-486f-b286-76911d4c3c9e",
+      "serid": "6aecd4b1-79c0-4653-b88b-65ebb10496bf",
+      "snum": 8,
+      "sid": "0ba2006f-2410-4c3b-a820-75f8754f8e3d",
+      "ctp": 1,
+      "ses": 2,
+      "fn": "sub-MS015_ses-02_label-lesion_desc-expert10_dseg.nii.gz",
+      "gcs": "patients/8fc9f862-bacd-4baa-9a08-08c478f22afa/studies/0ba2006f-2410-4c3b-a820-75f8754f8e3d/series/6aecd4b1-79c0-4653-b88b-65ebb10496bf/066420d4-2f6a-486f-b286-76911d4c3c9e.gz",
+      "mask": true,
+      "sd": "2020-01-15T09:00:00"
+    },
+    {
+      "mrn": "ISBI-MS-016",
+      "iid": "d6e8b0c1-f611-44eb-aa89-7c823f830861",
+      "serid": "8e8bf3a7-5efe-4a4e-9fe7-83509a553c62",
+      "snum": 8,
+      "sid": "85cb714e-3531-4894-a78f-22ad1c10bbc4",
+      "ctp": 1,
+      "ses": 2,
+      "fn": "sub-MS016_ses-02_label-lesion_desc-expert11_dseg.nii.gz",
+      "gcs": "patients/91d76347-2224-4a67-875b-87d6eb7aa755/studies/85cb714e-3531-4894-a78f-22ad1c10bbc4/series/8e8bf3a7-5efe-4a4e-9fe7-83509a553c62/d6e8b0c1-f611-44eb-aa89-7c823f830861.gz",
+      "mask": true,
+      "sd": "2020-01-15T09:00:00"
+    },
+    {
+      "mrn": "ISBI-MS-017",
+      "iid": "726974c8-dc06-492f-8ad6-bf201c0457cf",
+      "serid": "a1023e40-ebad-4f59-b7a5-1c0f18cbdc50",
+      "snum": 7,
+      "sid": "d6e1efd0-5ed2-4740-8532-2b67ba3972e1",
+      "ctp": 1,
+      "ses": 2,
+      "fn": "sub-MS017_ses-02_label-lesion_desc-expert12_dseg.nii.gz",
+      "gcs": "patients/871ad47e-2d77-4990-83f3-34cbfae4ebe4/studies/d6e1efd0-5ed2-4740-8532-2b67ba3972e1/series/a1023e40-ebad-4f59-b7a5-1c0f18cbdc50/726974c8-dc06-492f-8ad6-bf201c0457cf.gz",
+      "mask": true,
+      "sd": "2020-01-15T09:00:00"
+    },
+    {
+      "mrn": "ISBI-MS-018",
+      "iid": "ce35caa7-e859-4470-a5f6-e34a4cc67eba",
+      "serid": "d2abe596-656b-47ac-ab31-5d51c66e56a4",
+      "snum": 8,
+      "sid": "1d6d96d5-9039-48f5-9b24-fafdf8d59780",
+      "ctp": 1,
+      "ses": 2,
+      "fn": "sub-MS018_ses-02_label-lesion_desc-expert13_dseg.nii.gz",
+      "gcs": "patients/9b9e6946-7aff-4e81-a57b-d1341b524f31/studies/1d6d96d5-9039-48f5-9b24-fafdf8d59780/series/d2abe596-656b-47ac-ab31-5d51c66e56a4/ce35caa7-e859-4470-a5f6-e34a4cc67eba.gz",
+      "mask": true,
+      "sd": "2020-01-15T09:00:00"
+    },
+    {
+      "mrn": "ISBI-MS-019",
+      "iid": "fa307315-35d1-4587-b6d0-a7e1b23e30e3",
+      "serid": "58f89d32-4acb-41e4-8b82-57d6a4487f9b",
+      "snum": 8,
+      "sid": "cb2309d1-669f-4be5-be6f-a03e5aa15d4d",
+      "ctp": 1,
+      "ses": 2,
+      "fn": "sub-MS019_ses-02_label-lesion_desc-expert14_dseg.nii.gz",
+      "gcs": "patients/5f9d0b3b-2315-4e10-be7b-0a7d1eb00eef/studies/cb2309d1-669f-4be5-be6f-a03e5aa15d4d/series/58f89d32-4acb-41e4-8b82-57d6a4487f9b/fa307315-35d1-4587-b6d0-a7e1b23e30e3.gz",
+      "mask": true,
+      "sd": "2020-01-15T09:00:00"
+    }
+  ],
+  "allMasks": [
+    {
+      "iid": "5174c9ef-088b-4191-bd73-9430bb201d28",
+      "sid": "ba97458f-2a36-4a5f-936e-2c0ea384a645",
+      "tp": 1,
+      "fn": "sub-MS001_ses-01_label-lesion_desc-expert01_dseg.nii.gz",
+      "gcs": "patients/6ccf7491-0aed-45fe-8a13-2ca6c82980b7/studies/ba97458f-2a36-4a5f-936e-2c0ea384a645/series/f9b269d8-6f7d-4760-83a4-bd1358c3daaa/5174c9ef-088b-4191-bd73-9430bb201d28.gz",
+      "mrn": "ISBI-MS-001",
+      "snum": 7,
+      "serid": "f9b269d8-6f7d-4760-83a4-bd1358c3daaa"
+    },
+    {
+      "iid": "d444aaa6-76aa-4e02-af75-e7aad09cdfbc",
+      "sid": "ba97458f-2a36-4a5f-936e-2c0ea384a645",
+      "tp": 1,
+      "fn": "sub-MS001_ses-01_label-lesion_desc-expert01_dseg.nii.gz",
+      "gcs": "patients/6ccf7491-0aed-45fe-8a13-2ca6c82980b7/studies/ba97458f-2a36-4a5f-936e-2c0ea384a645/series/f9b269d8-6f7d-4760-83a4-bd1358c3daaa/d444aaa6-76aa-4e02-af75-e7aad09cdfbc.gz",
+      "mrn": "ISBI-MS-001",
+      "snum": 7,
+      "serid": "f9b269d8-6f7d-4760-83a4-bd1358c3daaa"
+    },
+    {
+      "iid": "56e567b3-19aa-4d9a-9788-ac36eeb78327",
+      "sid": "ba97458f-2a36-4a5f-936e-2c0ea384a645",
+      "tp": 1,
+      "fn": "sub-MS001_ses-02_label-lesion_desc-expert01_dseg.nii.gz",
+      "gcs": "patients/6ccf7491-0aed-45fe-8a13-2ca6c82980b7/studies/ba97458f-2a36-4a5f-936e-2c0ea384a645/series/fafe2967-22a1-4544-933d-324f7841cc4b/56e567b3-19aa-4d9a-9788-ac36eeb78327.gz",
+      "mrn": "ISBI-MS-001",
+      "snum": 8,
+      "serid": "fafe2967-22a1-4544-933d-324f7841cc4b"
+    },
+    {
+      "iid": "63f5debe-90bf-41da-896d-4818b3a4671a",
+      "sid": "ba97458f-2a36-4a5f-936e-2c0ea384a645",
+      "tp": 1,
+      "fn": "sub-MS001_ses-01_label-lesion_dseg.nii.gz",
+      "gcs": "patients/6ccf7491-0aed-45fe-8a13-2ca6c82980b7/studies/ba97458f-2a36-4a5f-936e-2c0ea384a645/series/28003539-9e11-45fb-880f-972adef9bd11/63f5debe-90bf-41da-896d-4818b3a4671a.gz",
+      "mrn": "ISBI-MS-001",
+      "snum": 9,
+      "serid": "28003539-9e11-45fb-880f-972adef9bd11"
+    },
+    {
+      "iid": "bf129ee1-bfe9-4f5a-929f-e236ca8dcec7",
+      "sid": "ba97458f-2a36-4a5f-936e-2c0ea384a645",
+      "tp": 1,
+      "fn": "sub-MS001_ses-01_label-lesion_desc-mask2_dseg.nii.gz",
+      "gcs": "patients/6ccf7491-0aed-45fe-8a13-2ca6c82980b7/studies/ba97458f-2a36-4a5f-936e-2c0ea384a645/series/83f8f3b4-1dc7-4294-8611-223e4c82192a/bf129ee1-bfe9-4f5a-929f-e236ca8dcec7.gz",
+      "mrn": "ISBI-MS-001",
+      "snum": 10,
+      "serid": "83f8f3b4-1dc7-4294-8611-223e4c82192a"
+    },
+    {
+      "iid": "82c51baa-026e-4baf-a929-694ee5a55ede",
+      "sid": "e7f19290-cf02-425f-9620-c5f978985df4",
+      "tp": 1,
+      "fn": "sub-MS002_ses-01_label-lesion_desc-expert02_dseg.nii.gz",
+      "gcs": "patients/0c96e8df-f3bc-4b0a-a931-ee1cf94b2ee1/studies/e7f19290-cf02-425f-9620-c5f978985df4/series/50a883a6-4bba-4426-9a63-dd1ed74b4899/82c51baa-026e-4baf-a929-694ee5a55ede.gz",
+      "mrn": "ISBI-MS-002",
+      "snum": 7,
+      "serid": "50a883a6-4bba-4426-9a63-dd1ed74b4899"
+    },
+    {
+      "iid": "b8d56353-612c-4ad5-9c72-adca21097c88",
+      "sid": "e7f19290-cf02-425f-9620-c5f978985df4",
+      "tp": 1,
+      "fn": "sub-MS002_ses-02_label-lesion_desc-expert02_dseg.nii.gz",
+      "gcs": "patients/0c96e8df-f3bc-4b0a-a931-ee1cf94b2ee1/studies/e7f19290-cf02-425f-9620-c5f978985df4/series/e2bdfacb-4cc2-456e-94a0-8188ea6e17f4/b8d56353-612c-4ad5-9c72-adca21097c88.gz",
+      "mrn": "ISBI-MS-002",
+      "snum": 8,
+      "serid": "e2bdfacb-4cc2-456e-94a0-8188ea6e17f4"
+    },
+    {
+      "iid": "6d23f966-62b3-4857-8340-66829337830a",
+      "sid": "e7f19290-cf02-425f-9620-c5f978985df4",
+      "tp": 1,
+      "fn": "sub-MS002_ses-01_label-lesion_dseg.nii.gz",
+      "gcs": "patients/0c96e8df-f3bc-4b0a-a931-ee1cf94b2ee1/studies/e7f19290-cf02-425f-9620-c5f978985df4/series/f62af009-d209-49d9-842a-cca75898d34a/6d23f966-62b3-4857-8340-66829337830a.gz",
+      "mrn": "ISBI-MS-002",
+      "snum": 9,
+      "serid": "f62af009-d209-49d9-842a-cca75898d34a"
+    },
+    {
+      "iid": "b47a9e3b-f9e5-43ad-afb8-a75e33f642de",
+      "sid": "e7f19290-cf02-425f-9620-c5f978985df4",
+      "tp": 1,
+      "fn": "sub-MS002_ses-01_label-lesion_desc-mask2_dseg.nii.gz",
+      "gcs": "patients/0c96e8df-f3bc-4b0a-a931-ee1cf94b2ee1/studies/e7f19290-cf02-425f-9620-c5f978985df4/series/9e9919ef-1e3e-45a0-a84b-2c736ac9277a/b47a9e3b-f9e5-43ad-afb8-a75e33f642de.gz",
+      "mrn": "ISBI-MS-002",
+      "snum": 10,
+      "serid": "9e9919ef-1e3e-45a0-a84b-2c736ac9277a"
+    },
+    {
+      "iid": "cda177e9-79c9-44a4-879b-ff4fb59fef20",
+      "sid": "fa78a1c0-340f-4d08-9baf-e713ef655775",
+      "tp": 1,
+      "fn": "sub-MS003_ses-01_label-lesion_desc-expert03_dseg.nii.gz",
+      "gcs": "patients/417eae0c-4665-4a1e-9059-fe59959b8870/studies/fa78a1c0-340f-4d08-9baf-e713ef655775/series/9967c312-6dd0-4ed3-b1e0-39589f67e4f5/cda177e9-79c9-44a4-879b-ff4fb59fef20.gz",
+      "mrn": "ISBI-MS-003",
+      "snum": 7,
+      "serid": "9967c312-6dd0-4ed3-b1e0-39589f67e4f5"
+    },
+    {
+      "iid": "22982061-08c3-4f69-b567-74481e7d2a7f",
+      "sid": "fa78a1c0-340f-4d08-9baf-e713ef655775",
+      "tp": 1,
+      "fn": "sub-MS003_ses-02_label-lesion_desc-expert03_dseg.nii.gz",
+      "gcs": "patients/417eae0c-4665-4a1e-9059-fe59959b8870/studies/fa78a1c0-340f-4d08-9baf-e713ef655775/series/bfd69435-06bd-4adf-a3e4-801290b923df/22982061-08c3-4f69-b567-74481e7d2a7f.gz",
+      "mrn": "ISBI-MS-003",
+      "snum": 8,
+      "serid": "bfd69435-06bd-4adf-a3e4-801290b923df"
+    },
+    {
+      "iid": "3a1c995e-185a-402c-b718-b2c518206b87",
+      "sid": "fa78a1c0-340f-4d08-9baf-e713ef655775",
+      "tp": 1,
+      "fn": "sub-MS003_ses-01_label-lesion_dseg.nii.gz",
+      "gcs": "patients/417eae0c-4665-4a1e-9059-fe59959b8870/studies/fa78a1c0-340f-4d08-9baf-e713ef655775/series/4200c5e0-67e3-4b6a-9001-364cb8b0172f/3a1c995e-185a-402c-b718-b2c518206b87.gz",
+      "mrn": "ISBI-MS-003",
+      "snum": 9,
+      "serid": "4200c5e0-67e3-4b6a-9001-364cb8b0172f"
+    },
+    {
+      "iid": "5b15278d-a9c6-48d8-a854-7e3a12c97752",
+      "sid": "fa78a1c0-340f-4d08-9baf-e713ef655775",
+      "tp": 1,
+      "fn": "sub-MS003_ses-01_label-lesion_desc-mask2_dseg.nii.gz",
+      "gcs": "patients/417eae0c-4665-4a1e-9059-fe59959b8870/studies/fa78a1c0-340f-4d08-9baf-e713ef655775/series/702cc1bb-69c3-4c65-afb8-6f0a98ef6b8c/5b15278d-a9c6-48d8-a854-7e3a12c97752.gz",
+      "mrn": "ISBI-MS-003",
+      "snum": 10,
+      "serid": "702cc1bb-69c3-4c65-afb8-6f0a98ef6b8c"
+    },
+    {
+      "iid": "ab29219d-b190-422c-930f-4c2c0c603126",
+      "sid": "7f9149a2-8219-4d6b-9e36-54cbabcb9967",
+      "tp": 1,
+      "fn": "sub-MS004_ses-01_label-lesion_desc-expert04_dseg.nii.gz",
+      "gcs": "patients/a5735b64-ece1-42c3-93d9-226ddbab5465/studies/7f9149a2-8219-4d6b-9e36-54cbabcb9967/series/70534086-885a-4259-bada-239c3aa4ea7c/ab29219d-b190-422c-930f-4c2c0c603126.gz",
+      "mrn": "ISBI-MS-004",
+      "snum": 7,
+      "serid": "70534086-885a-4259-bada-239c3aa4ea7c"
+    },
+    {
+      "iid": "2aa87ecd-87d3-43a6-ba82-dd40c51e347c",
+      "sid": "7f9149a2-8219-4d6b-9e36-54cbabcb9967",
+      "tp": 1,
+      "fn": "sub-MS004_ses-02_label-lesion_desc-expert04_dseg.nii.gz",
+      "gcs": "patients/a5735b64-ece1-42c3-93d9-226ddbab5465/studies/7f9149a2-8219-4d6b-9e36-54cbabcb9967/series/bde3680a-84e7-4f8c-a8ec-dc235a50060b/2aa87ecd-87d3-43a6-ba82-dd40c51e347c.gz",
+      "mrn": "ISBI-MS-004",
+      "snum": 8,
+      "serid": "bde3680a-84e7-4f8c-a8ec-dc235a50060b"
+    },
+    {
+      "iid": "ff9ff5f9-7ba1-4599-b12f-d7cc08ab6334",
+      "sid": "7f9149a2-8219-4d6b-9e36-54cbabcb9967",
+      "tp": 1,
+      "fn": "sub-MS004_ses-01_label-lesion_dseg.nii.gz",
+      "gcs": "patients/a5735b64-ece1-42c3-93d9-226ddbab5465/studies/7f9149a2-8219-4d6b-9e36-54cbabcb9967/series/e4dde621-04e5-46ef-8c9c-5db1dd374c63/ff9ff5f9-7ba1-4599-b12f-d7cc08ab6334.gz",
+      "mrn": "ISBI-MS-004",
+      "snum": 9,
+      "serid": "e4dde621-04e5-46ef-8c9c-5db1dd374c63"
+    },
+    {
+      "iid": "437aaefe-6c97-401f-b62c-706da74455b3",
+      "sid": "7f9149a2-8219-4d6b-9e36-54cbabcb9967",
+      "tp": 1,
+      "fn": "sub-MS004_ses-01_label-lesion_desc-mask2_dseg.nii.gz",
+      "gcs": "patients/a5735b64-ece1-42c3-93d9-226ddbab5465/studies/7f9149a2-8219-4d6b-9e36-54cbabcb9967/series/8a66b1ec-6050-4941-ad33-006e65d25d18/437aaefe-6c97-401f-b62c-706da74455b3.gz",
+      "mrn": "ISBI-MS-004",
+      "snum": 10,
+      "serid": "8a66b1ec-6050-4941-ad33-006e65d25d18"
+    },
+    {
+      "iid": "8301273f-b5e6-4a36-96f0-db423c38e526",
+      "sid": "ff7381ba-272b-4369-8825-f8d386412d0d",
+      "tp": 1,
+      "fn": "sub-MS005_ses-01_label-lesion_desc-expert05_dseg.nii.gz",
+      "gcs": "patients/7d2c1f38-a931-4412-8438-50072ebde81f/studies/ff7381ba-272b-4369-8825-f8d386412d0d/series/25abda64-b2e5-44b0-a942-1a68a9e3ead6/8301273f-b5e6-4a36-96f0-db423c38e526.gz",
+      "mrn": "ISBI-MS-005",
+      "snum": 7,
+      "serid": "25abda64-b2e5-44b0-a942-1a68a9e3ead6"
+    },
+    {
+      "iid": "42751e8a-f50f-41cd-aabc-ed181c2a4f8b",
+      "sid": "ff7381ba-272b-4369-8825-f8d386412d0d",
+      "tp": 1,
+      "fn": "sub-MS005_ses-02_label-lesion_desc-expert05_dseg.nii.gz",
+      "gcs": "patients/7d2c1f38-a931-4412-8438-50072ebde81f/studies/ff7381ba-272b-4369-8825-f8d386412d0d/series/c1143a4b-b3ed-4a3c-b2ec-42de985d9bf1/42751e8a-f50f-41cd-aabc-ed181c2a4f8b.gz",
+      "mrn": "ISBI-MS-005",
+      "snum": 8,
+      "serid": "c1143a4b-b3ed-4a3c-b2ec-42de985d9bf1"
+    },
+    {
+      "iid": "e8b734c8-3902-4e5a-86e0-f7d6a55f3229",
+      "sid": "ff7381ba-272b-4369-8825-f8d386412d0d",
+      "tp": 1,
+      "fn": "sub-MS005_ses-01_label-lesion_dseg.nii.gz",
+      "gcs": "patients/7d2c1f38-a931-4412-8438-50072ebde81f/studies/ff7381ba-272b-4369-8825-f8d386412d0d/series/8e6198d4-b23a-4da0-b9d1-f245b072aac3/e8b734c8-3902-4e5a-86e0-f7d6a55f3229.gz",
+      "mrn": "ISBI-MS-005",
+      "snum": 9,
+      "serid": "8e6198d4-b23a-4da0-b9d1-f245b072aac3"
+    },
+    {
+      "iid": "28fc99cd-b451-4a4d-8a72-0db58bb56e77",
+      "sid": "ff7381ba-272b-4369-8825-f8d386412d0d",
+      "tp": 1,
+      "fn": "sub-MS005_ses-01_label-lesion_desc-mask2_dseg.nii.gz",
+      "gcs": "patients/7d2c1f38-a931-4412-8438-50072ebde81f/studies/ff7381ba-272b-4369-8825-f8d386412d0d/series/83d6c1db-e0cc-494d-bc56-e97abdfea861/28fc99cd-b451-4a4d-8a72-0db58bb56e77.gz",
+      "mrn": "ISBI-MS-005",
+      "snum": 10,
+      "serid": "83d6c1db-e0cc-494d-bc56-e97abdfea861"
+    },
+    {
+      "iid": "518d8607-99ab-4bc9-b232-aca77febe52d",
+      "sid": "8e7e03c1-e857-4047-9524-0356f61c1002",
+      "tp": 1,
+      "fn": "sub-MS006_ses-01_label-lesion_desc-expert01_dseg.nii.gz",
+      "gcs": "patients/855ba1b7-be62-4679-af97-b8088d610498/studies/8e7e03c1-e857-4047-9524-0356f61c1002/series/333160ba-0639-4814-bb7e-9f584e53bab7/518d8607-99ab-4bc9-b232-aca77febe52d.gz",
+      "mrn": "ISBI-MS-006",
+      "snum": 7,
+      "serid": "333160ba-0639-4814-bb7e-9f584e53bab7"
+    },
+    {
+      "iid": "42beebf5-46bb-48ac-b456-92d8f1c3b980",
+      "sid": "8e7e03c1-e857-4047-9524-0356f61c1002",
+      "tp": 1,
+      "fn": "sub-MS006_ses-02_label-lesion_desc-expert01_dseg.nii.gz",
+      "gcs": "patients/855ba1b7-be62-4679-af97-b8088d610498/studies/8e7e03c1-e857-4047-9524-0356f61c1002/series/7f4b76cd-3dc9-4eb5-ad97-7f4b5ce8ef3c/42beebf5-46bb-48ac-b456-92d8f1c3b980.gz",
+      "mrn": "ISBI-MS-006",
+      "snum": 8,
+      "serid": "7f4b76cd-3dc9-4eb5-ad97-7f4b5ce8ef3c"
+    },
+    {
+      "iid": "7d2e812d-2e87-4a79-91bb-1395e80066a1",
+      "sid": "8e7e03c1-e857-4047-9524-0356f61c1002",
+      "tp": 1,
+      "fn": "sub-MS006_ses-01_label-lesion_dseg.nii.gz",
+      "gcs": "patients/855ba1b7-be62-4679-af97-b8088d610498/studies/8e7e03c1-e857-4047-9524-0356f61c1002/series/b470e757-cd3c-4afd-bb8f-56df782b2537/7d2e812d-2e87-4a79-91bb-1395e80066a1.gz",
+      "mrn": "ISBI-MS-006",
+      "snum": 9,
+      "serid": "b470e757-cd3c-4afd-bb8f-56df782b2537"
+    },
+    {
+      "iid": "bfbc752e-80c5-41eb-980e-1d47c332fd9e",
+      "sid": "8e7e03c1-e857-4047-9524-0356f61c1002",
+      "tp": 1,
+      "fn": "sub-MS006_ses-01_label-lesion_desc-mask2_dseg.nii.gz",
+      "gcs": "patients/855ba1b7-be62-4679-af97-b8088d610498/studies/8e7e03c1-e857-4047-9524-0356f61c1002/series/6bc78d91-d130-4548-9d23-1ee6e93daaec/bfbc752e-80c5-41eb-980e-1d47c332fd9e.gz",
+      "mrn": "ISBI-MS-006",
+      "snum": 10,
+      "serid": "6bc78d91-d130-4548-9d23-1ee6e93daaec"
+    },
+    {
+      "iid": "60cd4219-7c2f-498d-8fff-28b7ce987cb4",
+      "sid": "f6475b26-ac74-4783-a64f-c69f44f01f57",
+      "tp": 1,
+      "fn": "sub-MS007_ses-01_label-lesion_desc-expert02_dseg.nii.gz",
+      "gcs": "patients/897906e6-04ca-4826-a1ea-25cc9321a874/studies/f6475b26-ac74-4783-a64f-c69f44f01f57/series/10491117-30bd-4e81-9bb4-e6db68d1af0d/60cd4219-7c2f-498d-8fff-28b7ce987cb4.gz",
+      "mrn": "ISBI-MS-007",
+      "snum": 7,
+      "serid": "10491117-30bd-4e81-9bb4-e6db68d1af0d"
+    },
+    {
+      "iid": "e677b580-e94c-42e7-86dd-258ea2cae359",
+      "sid": "f6475b26-ac74-4783-a64f-c69f44f01f57",
+      "tp": 1,
+      "fn": "sub-MS007_ses-02_label-lesion_desc-expert02_dseg.nii.gz",
+      "gcs": "patients/897906e6-04ca-4826-a1ea-25cc9321a874/studies/f6475b26-ac74-4783-a64f-c69f44f01f57/series/9a84406a-7d3a-4aae-aab6-af3095df35c0/e677b580-e94c-42e7-86dd-258ea2cae359.gz",
+      "mrn": "ISBI-MS-007",
+      "snum": 8,
+      "serid": "9a84406a-7d3a-4aae-aab6-af3095df35c0"
+    },
+    {
+      "iid": "4c51873c-bef7-4ca1-bbd9-2fbd6f93648a",
+      "sid": "f6475b26-ac74-4783-a64f-c69f44f01f57",
+      "tp": 1,
+      "fn": "sub-MS007_ses-01_label-lesion_dseg.nii.gz",
+      "gcs": "patients/897906e6-04ca-4826-a1ea-25cc9321a874/studies/f6475b26-ac74-4783-a64f-c69f44f01f57/series/ef7defbd-13fb-4d7f-958c-3c8445f00a36/4c51873c-bef7-4ca1-bbd9-2fbd6f93648a.gz",
+      "mrn": "ISBI-MS-007",
+      "snum": 9,
+      "serid": "ef7defbd-13fb-4d7f-958c-3c8445f00a36"
+    },
+    {
+      "iid": "6afd361d-016e-4438-9f45-d640b1616326",
+      "sid": "f6475b26-ac74-4783-a64f-c69f44f01f57",
+      "tp": 1,
+      "fn": "sub-MS007_ses-01_label-lesion_desc-mask2_dseg.nii.gz",
+      "gcs": "patients/897906e6-04ca-4826-a1ea-25cc9321a874/studies/f6475b26-ac74-4783-a64f-c69f44f01f57/series/807c9e99-4c2f-4fb2-b0e7-6de6664d8226/6afd361d-016e-4438-9f45-d640b1616326.gz",
+      "mrn": "ISBI-MS-007",
+      "snum": 10,
+      "serid": "807c9e99-4c2f-4fb2-b0e7-6de6664d8226"
+    },
+    {
+      "iid": "a411f060-31a0-485b-8ecd-a3c641ddb65f",
+      "sid": "99111635-e8dd-4e70-9c96-12ba04163d5a",
+      "tp": 1,
+      "fn": "sub-MS008_ses-01_label-lesion_desc-expert03_dseg.nii.gz",
+      "gcs": "patients/ba38b12c-dc13-431d-ac87-54ab7c54ddb5/studies/99111635-e8dd-4e70-9c96-12ba04163d5a/series/47d94de6-3de0-494c-aaf8-ee24c1ebc02d/a411f060-31a0-485b-8ecd-a3c641ddb65f.gz",
+      "mrn": "ISBI-MS-008",
+      "snum": 7,
+      "serid": "47d94de6-3de0-494c-aaf8-ee24c1ebc02d"
+    },
+    {
+      "iid": "1098b30b-c24c-4526-990b-6b723778bcfb",
+      "sid": "99111635-e8dd-4e70-9c96-12ba04163d5a",
+      "tp": 1,
+      "fn": "sub-MS008_ses-02_label-lesion_desc-expert03_dseg.nii.gz",
+      "gcs": "patients/ba38b12c-dc13-431d-ac87-54ab7c54ddb5/studies/99111635-e8dd-4e70-9c96-12ba04163d5a/series/dab56d85-439c-4a96-81c2-12ef72051c55/1098b30b-c24c-4526-990b-6b723778bcfb.gz",
+      "mrn": "ISBI-MS-008",
+      "snum": 8,
+      "serid": "dab56d85-439c-4a96-81c2-12ef72051c55"
+    },
+    {
+      "iid": "97f67796-0382-4753-8ace-c63b408fa9ce",
+      "sid": "99111635-e8dd-4e70-9c96-12ba04163d5a",
+      "tp": 1,
+      "fn": "sub-MS008_ses-01_label-lesion_dseg.nii.gz",
+      "gcs": "patients/ba38b12c-dc13-431d-ac87-54ab7c54ddb5/studies/99111635-e8dd-4e70-9c96-12ba04163d5a/series/fdb13c0e-3448-4c7f-abd4-e191c766a493/97f67796-0382-4753-8ace-c63b408fa9ce.gz",
+      "mrn": "ISBI-MS-008",
+      "snum": 9,
+      "serid": "fdb13c0e-3448-4c7f-abd4-e191c766a493"
+    },
+    {
+      "iid": "f93440b4-6c78-4c0d-b35c-dfc38d0e30ef",
+      "sid": "99111635-e8dd-4e70-9c96-12ba04163d5a",
+      "tp": 1,
+      "fn": "sub-MS008_ses-01_label-lesion_desc-mask2_dseg.nii.gz",
+      "gcs": "patients/ba38b12c-dc13-431d-ac87-54ab7c54ddb5/studies/99111635-e8dd-4e70-9c96-12ba04163d5a/series/95d0dab2-9e83-40e7-95a1-af0fad037a48/f93440b4-6c78-4c0d-b35c-dfc38d0e30ef.gz",
+      "mrn": "ISBI-MS-008",
+      "snum": 10,
+      "serid": "95d0dab2-9e83-40e7-95a1-af0fad037a48"
+    },
+    {
+      "iid": "53911d66-887a-4d70-95b8-73f03709996a",
+      "sid": "c5e36e7f-fc0e-4e1a-b801-5c92db87fe65",
+      "tp": 1,
+      "fn": "sub-MS009_ses-01_label-lesion_desc-expert04_dseg.nii.gz",
+      "gcs": "patients/c4c58d2e-5dda-4372-93cd-d73dc9107022/studies/c5e36e7f-fc0e-4e1a-b801-5c92db87fe65/series/441653c7-6472-49ba-92ee-f1fef8eac210/53911d66-887a-4d70-95b8-73f03709996a.gz",
+      "mrn": "ISBI-MS-009",
+      "snum": 7,
+      "serid": "441653c7-6472-49ba-92ee-f1fef8eac210"
+    },
+    {
+      "iid": "4cbe1621-ad70-443e-9fb2-2a45937752e5",
+      "sid": "c5e36e7f-fc0e-4e1a-b801-5c92db87fe65",
+      "tp": 1,
+      "fn": "sub-MS009_ses-02_label-lesion_desc-expert04_dseg.nii.gz",
+      "gcs": "patients/c4c58d2e-5dda-4372-93cd-d73dc9107022/studies/c5e36e7f-fc0e-4e1a-b801-5c92db87fe65/series/ce01c37e-2133-4a5d-9925-d7f9157e880e/4cbe1621-ad70-443e-9fb2-2a45937752e5.gz",
+      "mrn": "ISBI-MS-009",
+      "snum": 8,
+      "serid": "ce01c37e-2133-4a5d-9925-d7f9157e880e"
+    },
+    {
+      "iid": "9446f337-3bf5-4797-93d4-99a1b2cd0cf2",
+      "sid": "c5e36e7f-fc0e-4e1a-b801-5c92db87fe65",
+      "tp": 1,
+      "fn": "sub-MS009_ses-01_label-lesion_dseg.nii.gz",
+      "gcs": "patients/c4c58d2e-5dda-4372-93cd-d73dc9107022/studies/c5e36e7f-fc0e-4e1a-b801-5c92db87fe65/series/4e520a52-bbfc-40af-a4bc-f3aa8f74a12b/9446f337-3bf5-4797-93d4-99a1b2cd0cf2.gz",
+      "mrn": "ISBI-MS-009",
+      "snum": 9,
+      "serid": "4e520a52-bbfc-40af-a4bc-f3aa8f74a12b"
+    },
+    {
+      "iid": "242f5497-5a48-43d1-b2ef-3f8e0783a258",
+      "sid": "c5e36e7f-fc0e-4e1a-b801-5c92db87fe65",
+      "tp": 1,
+      "fn": "sub-MS009_ses-01_label-lesion_desc-mask2_dseg.nii.gz",
+      "gcs": "patients/c4c58d2e-5dda-4372-93cd-d73dc9107022/studies/c5e36e7f-fc0e-4e1a-b801-5c92db87fe65/series/426e46cc-68cc-4b95-90b6-df7af8779c4c/242f5497-5a48-43d1-b2ef-3f8e0783a258.gz",
+      "mrn": "ISBI-MS-009",
+      "snum": 10,
+      "serid": "426e46cc-68cc-4b95-90b6-df7af8779c4c"
+    },
+    {
+      "iid": "cc63397d-a0e4-470c-8ca8-b8aa92925185",
+      "sid": "aa72cf8c-b2ae-41ac-8cb0-dae176ae147e",
+      "tp": 1,
+      "fn": "sub-MS010_ses-01_label-lesion_desc-expert05_dseg.nii.gz",
+      "gcs": "patients/f4ec9e06-0c12-42de-9294-699d481c1e97/studies/aa72cf8c-b2ae-41ac-8cb0-dae176ae147e/series/474cd865-db68-45aa-8a8a-1f2fae7fcc91/cc63397d-a0e4-470c-8ca8-b8aa92925185.gz",
+      "mrn": "ISBI-MS-010",
+      "snum": 7,
+      "serid": "474cd865-db68-45aa-8a8a-1f2fae7fcc91"
+    },
+    {
+      "iid": "d1afe00c-07d9-4659-a270-59c6a634e465",
+      "sid": "aa72cf8c-b2ae-41ac-8cb0-dae176ae147e",
+      "tp": 1,
+      "fn": "sub-MS010_ses-02_label-lesion_desc-expert05_dseg.nii.gz",
+      "gcs": "patients/f4ec9e06-0c12-42de-9294-699d481c1e97/studies/aa72cf8c-b2ae-41ac-8cb0-dae176ae147e/series/21cc5b36-640e-4260-bf6b-74ba15c7b399/d1afe00c-07d9-4659-a270-59c6a634e465.gz",
+      "mrn": "ISBI-MS-010",
+      "snum": 8,
+      "serid": "21cc5b36-640e-4260-bf6b-74ba15c7b399"
+    },
+    {
+      "iid": "188e7787-aaa7-4b20-85c9-f6f8348f093a",
+      "sid": "aa72cf8c-b2ae-41ac-8cb0-dae176ae147e",
+      "tp": 1,
+      "fn": "sub-MS010_ses-01_label-lesion_dseg.nii.gz",
+      "gcs": "patients/f4ec9e06-0c12-42de-9294-699d481c1e97/studies/aa72cf8c-b2ae-41ac-8cb0-dae176ae147e/series/b6db61dd-732d-4de4-81b7-d1c559a4e9b8/188e7787-aaa7-4b20-85c9-f6f8348f093a.gz",
+      "mrn": "ISBI-MS-010",
+      "snum": 9,
+      "serid": "b6db61dd-732d-4de4-81b7-d1c559a4e9b8"
+    },
+    {
+      "iid": "71d2919c-2763-4d4b-be0d-92317f6d78f2",
+      "sid": "aa72cf8c-b2ae-41ac-8cb0-dae176ae147e",
+      "tp": 1,
+      "fn": "sub-MS010_ses-01_label-lesion_desc-mask2_dseg.nii.gz",
+      "gcs": "patients/f4ec9e06-0c12-42de-9294-699d481c1e97/studies/aa72cf8c-b2ae-41ac-8cb0-dae176ae147e/series/eca8119a-54fa-4804-8bb0-22977928bc45/71d2919c-2763-4d4b-be0d-92317f6d78f2.gz",
+      "mrn": "ISBI-MS-010",
+      "snum": 10,
+      "serid": "eca8119a-54fa-4804-8bb0-22977928bc45"
+    },
+    {
+      "iid": "a022d82b-389d-4f7b-a100-17fde8217f11",
+      "sid": "a97bbe94-0e09-4694-9e96-b3f1a28f47fd",
+      "tp": 1,
+      "fn": "sub-MS011_ses-01_label-lesion_desc-expert06_dseg.nii.gz",
+      "gcs": "patients/469e1d61-dcfc-451b-a728-e36ecba9aae6/studies/a97bbe94-0e09-4694-9e96-b3f1a28f47fd/series/e8ac023d-4b62-49cd-b804-a1e6f700ea17/a022d82b-389d-4f7b-a100-17fde8217f11.gz",
+      "mrn": "ISBI-MS-011",
+      "snum": 7,
+      "serid": "e8ac023d-4b62-49cd-b804-a1e6f700ea17"
+    },
+    {
+      "iid": "32ddad47-7811-45dc-84ac-1b617976ab89",
+      "sid": "a97bbe94-0e09-4694-9e96-b3f1a28f47fd",
+      "tp": 1,
+      "fn": "sub-MS011_ses-02_label-lesion_desc-expert06_dseg.nii.gz",
+      "gcs": "patients/469e1d61-dcfc-451b-a728-e36ecba9aae6/studies/a97bbe94-0e09-4694-9e96-b3f1a28f47fd/series/7cce27b2-b89e-4fe4-acc2-b9912eab827b/32ddad47-7811-45dc-84ac-1b617976ab89.gz",
+      "mrn": "ISBI-MS-011",
+      "snum": 8,
+      "serid": "7cce27b2-b89e-4fe4-acc2-b9912eab827b"
+    },
+    {
+      "iid": "335859d0-22ee-4a57-868d-d3fc9e8b9041",
+      "sid": "a97bbe94-0e09-4694-9e96-b3f1a28f47fd",
+      "tp": 1,
+      "fn": "sub-MS011_ses-01_label-lesion_dseg.nii.gz",
+      "gcs": "patients/469e1d61-dcfc-451b-a728-e36ecba9aae6/studies/a97bbe94-0e09-4694-9e96-b3f1a28f47fd/series/cacdd3b7-d0b0-4eb6-a8a7-1c096669308b/335859d0-22ee-4a57-868d-d3fc9e8b9041.gz",
+      "mrn": "ISBI-MS-011",
+      "snum": 9,
+      "serid": "cacdd3b7-d0b0-4eb6-a8a7-1c096669308b"
+    },
+    {
+      "iid": "d4afdcbc-279c-4fee-a64f-45b5876c8729",
+      "sid": "a97bbe94-0e09-4694-9e96-b3f1a28f47fd",
+      "tp": 1,
+      "fn": "sub-MS011_ses-01_label-lesion_desc-mask2_dseg.nii.gz",
+      "gcs": "patients/469e1d61-dcfc-451b-a728-e36ecba9aae6/studies/a97bbe94-0e09-4694-9e96-b3f1a28f47fd/series/4c308fb9-ab53-4d7d-84ab-888055219e4f/d4afdcbc-279c-4fee-a64f-45b5876c8729.gz",
+      "mrn": "ISBI-MS-011",
+      "snum": 10,
+      "serid": "4c308fb9-ab53-4d7d-84ab-888055219e4f"
+    },
+    {
+      "iid": "e3696645-438a-4d22-81cd-1dc5a4a76019",
+      "sid": "ab85d5c6-45a9-457f-b8d8-aa2a1f897a79",
+      "tp": 1,
+      "fn": "sub-MS012_ses-01_label-lesion_desc-expert07_dseg.nii.gz",
+      "gcs": "patients/c273d893-938b-4bf5-a3de-3af77dd62a01/studies/ab85d5c6-45a9-457f-b8d8-aa2a1f897a79/series/0bfb1eb4-e96e-42d1-a365-908b17c74423/e3696645-438a-4d22-81cd-1dc5a4a76019.gz",
+      "mrn": "ISBI-MS-012",
+      "snum": 7,
+      "serid": "0bfb1eb4-e96e-42d1-a365-908b17c74423"
+    },
+    {
+      "iid": "681e3904-39ab-4d61-b1a0-f984e845b8b0",
+      "sid": "ab85d5c6-45a9-457f-b8d8-aa2a1f897a79",
+      "tp": 1,
+      "fn": "sub-MS012_ses-02_label-lesion_desc-expert07_dseg.nii.gz",
+      "gcs": "patients/c273d893-938b-4bf5-a3de-3af77dd62a01/studies/ab85d5c6-45a9-457f-b8d8-aa2a1f897a79/series/1a99ffdc-0b6e-4851-85e5-8704b8b71b9c/681e3904-39ab-4d61-b1a0-f984e845b8b0.gz",
+      "mrn": "ISBI-MS-012",
+      "snum": 8,
+      "serid": "1a99ffdc-0b6e-4851-85e5-8704b8b71b9c"
+    },
+    {
+      "iid": "68737e03-bb91-4fab-bf6c-987cd1f594a9",
+      "sid": "ab85d5c6-45a9-457f-b8d8-aa2a1f897a79",
+      "tp": 1,
+      "fn": "sub-MS012_ses-01_label-lesion_dseg.nii.gz",
+      "gcs": "patients/c273d893-938b-4bf5-a3de-3af77dd62a01/studies/ab85d5c6-45a9-457f-b8d8-aa2a1f897a79/series/7eee95c4-c550-40d0-8c8f-d81dfb0952b4/68737e03-bb91-4fab-bf6c-987cd1f594a9.gz",
+      "mrn": "ISBI-MS-012",
+      "snum": 9,
+      "serid": "7eee95c4-c550-40d0-8c8f-d81dfb0952b4"
+    },
+    {
+      "iid": "5b413285-464e-4aa8-952c-6500daadeba1",
+      "sid": "ab85d5c6-45a9-457f-b8d8-aa2a1f897a79",
+      "tp": 1,
+      "fn": "sub-MS012_ses-01_label-lesion_desc-mask2_dseg.nii.gz",
+      "gcs": "patients/c273d893-938b-4bf5-a3de-3af77dd62a01/studies/ab85d5c6-45a9-457f-b8d8-aa2a1f897a79/series/b8c4459b-6530-4d5f-87a7-76b5eb2d38c3/5b413285-464e-4aa8-952c-6500daadeba1.gz",
+      "mrn": "ISBI-MS-012",
+      "snum": 10,
+      "serid": "b8c4459b-6530-4d5f-87a7-76b5eb2d38c3"
+    },
+    {
+      "iid": "ed43a039-789b-406d-baf3-437594de9d06",
+      "sid": "df6633e7-0576-4517-8348-bc7f3389cabb",
+      "tp": 1,
+      "fn": "sub-MS013_ses-01_label-lesion_desc-expert08_dseg.nii.gz",
+      "gcs": "patients/8c31e870-8576-4f70-aeb4-f5da2972f36a/studies/df6633e7-0576-4517-8348-bc7f3389cabb/series/72b31b03-81cc-4759-8f57-e1abc5ace7b1/ed43a039-789b-406d-baf3-437594de9d06.gz",
+      "mrn": "ISBI-MS-013",
+      "snum": 7,
+      "serid": "72b31b03-81cc-4759-8f57-e1abc5ace7b1"
+    },
+    {
+      "iid": "f39eefde-9581-4fcb-97dc-48ea10b3332e",
+      "sid": "df6633e7-0576-4517-8348-bc7f3389cabb",
+      "tp": 1,
+      "fn": "sub-MS013_ses-02_label-lesion_desc-expert08_dseg.nii.gz",
+      "gcs": "patients/8c31e870-8576-4f70-aeb4-f5da2972f36a/studies/df6633e7-0576-4517-8348-bc7f3389cabb/series/634fc7fa-938e-477d-991b-e7638ca4e08b/f39eefde-9581-4fcb-97dc-48ea10b3332e.gz",
+      "mrn": "ISBI-MS-013",
+      "snum": 8,
+      "serid": "634fc7fa-938e-477d-991b-e7638ca4e08b"
+    },
+    {
+      "iid": "d10df2c9-d299-4d16-a47b-662a9daf2e6a",
+      "sid": "df6633e7-0576-4517-8348-bc7f3389cabb",
+      "tp": 1,
+      "fn": "sub-MS013_ses-01_label-lesion_dseg.nii.gz",
+      "gcs": "patients/8c31e870-8576-4f70-aeb4-f5da2972f36a/studies/df6633e7-0576-4517-8348-bc7f3389cabb/series/15c003b3-aa25-4235-b453-3154738b1b20/d10df2c9-d299-4d16-a47b-662a9daf2e6a.gz",
+      "mrn": "ISBI-MS-013",
+      "snum": 9,
+      "serid": "15c003b3-aa25-4235-b453-3154738b1b20"
+    },
+    {
+      "iid": "cf4215b3-9a1c-4217-9c0d-eaa4cda58e6f",
+      "sid": "df6633e7-0576-4517-8348-bc7f3389cabb",
+      "tp": 1,
+      "fn": "sub-MS013_ses-01_label-lesion_desc-mask2_dseg.nii.gz",
+      "gcs": "patients/8c31e870-8576-4f70-aeb4-f5da2972f36a/studies/df6633e7-0576-4517-8348-bc7f3389cabb/series/04321c12-5b0f-4c64-a921-89fa025c39c7/cf4215b3-9a1c-4217-9c0d-eaa4cda58e6f.gz",
+      "mrn": "ISBI-MS-013",
+      "snum": 10,
+      "serid": "04321c12-5b0f-4c64-a921-89fa025c39c7"
+    },
+    {
+      "iid": "6322d901-322f-4523-8a82-b175407d2c3c",
+      "sid": "c820c4d6-e4ba-4efd-b9f8-5080f31ed1e9",
+      "tp": 1,
+      "fn": "sub-MS014_ses-01_label-lesion_desc-expert09_dseg.nii.gz",
+      "gcs": "patients/83375699-82a3-4d06-9033-8d7a3d48bf46/studies/c820c4d6-e4ba-4efd-b9f8-5080f31ed1e9/series/3719d621-74e7-4913-a383-f662b87f2849/6322d901-322f-4523-8a82-b175407d2c3c.gz",
+      "mrn": "ISBI-MS-014",
+      "snum": 7,
+      "serid": "3719d621-74e7-4913-a383-f662b87f2849"
+    },
+    {
+      "iid": "a5d8b925-5ab6-4d6c-a785-6aad31b15ee3",
+      "sid": "c820c4d6-e4ba-4efd-b9f8-5080f31ed1e9",
+      "tp": 1,
+      "fn": "sub-MS014_ses-02_label-lesion_desc-expert09_dseg.nii.gz",
+      "gcs": "patients/83375699-82a3-4d06-9033-8d7a3d48bf46/studies/c820c4d6-e4ba-4efd-b9f8-5080f31ed1e9/series/0c9d6e9b-a910-4c59-b9e1-0a7c4fe9ae77/a5d8b925-5ab6-4d6c-a785-6aad31b15ee3.gz",
+      "mrn": "ISBI-MS-014",
+      "snum": 8,
+      "serid": "0c9d6e9b-a910-4c59-b9e1-0a7c4fe9ae77"
+    },
+    {
+      "iid": "f97abb29-bbbc-4204-ad89-8a869103efff",
+      "sid": "c820c4d6-e4ba-4efd-b9f8-5080f31ed1e9",
+      "tp": 1,
+      "fn": "sub-MS014_ses-01_label-lesion_dseg.nii.gz",
+      "gcs": "patients/83375699-82a3-4d06-9033-8d7a3d48bf46/studies/c820c4d6-e4ba-4efd-b9f8-5080f31ed1e9/series/569bc3ad-fc9f-4528-bfc3-9d95afd35d94/f97abb29-bbbc-4204-ad89-8a869103efff.gz",
+      "mrn": "ISBI-MS-014",
+      "snum": 9,
+      "serid": "569bc3ad-fc9f-4528-bfc3-9d95afd35d94"
+    },
+    {
+      "iid": "b898ffa8-1778-4aae-ba28-49afb666e1bf",
+      "sid": "c820c4d6-e4ba-4efd-b9f8-5080f31ed1e9",
+      "tp": 1,
+      "fn": "sub-MS014_ses-01_label-lesion_desc-mask2_dseg.nii.gz",
+      "gcs": "patients/83375699-82a3-4d06-9033-8d7a3d48bf46/studies/c820c4d6-e4ba-4efd-b9f8-5080f31ed1e9/series/27eb354d-f8e3-4933-bc1e-a4e915a0f11e/b898ffa8-1778-4aae-ba28-49afb666e1bf.gz",
+      "mrn": "ISBI-MS-014",
+      "snum": 10,
+      "serid": "27eb354d-f8e3-4933-bc1e-a4e915a0f11e"
+    },
+    {
+      "iid": "0472ffbd-80b8-4c80-ab99-117daeabd14d",
+      "sid": "0ba2006f-2410-4c3b-a820-75f8754f8e3d",
+      "tp": 1,
+      "fn": "sub-MS015_ses-01_label-lesion_desc-expert10_dseg.nii.gz",
+      "gcs": "patients/8fc9f862-bacd-4baa-9a08-08c478f22afa/studies/0ba2006f-2410-4c3b-a820-75f8754f8e3d/series/734d19fa-d9fc-4fa8-9b33-0968593a36b3/0472ffbd-80b8-4c80-ab99-117daeabd14d.gz",
+      "mrn": "ISBI-MS-015",
+      "snum": 7,
+      "serid": "734d19fa-d9fc-4fa8-9b33-0968593a36b3"
+    },
+    {
+      "iid": "066420d4-2f6a-486f-b286-76911d4c3c9e",
+      "sid": "0ba2006f-2410-4c3b-a820-75f8754f8e3d",
+      "tp": 1,
+      "fn": "sub-MS015_ses-02_label-lesion_desc-expert10_dseg.nii.gz",
+      "gcs": "patients/8fc9f862-bacd-4baa-9a08-08c478f22afa/studies/0ba2006f-2410-4c3b-a820-75f8754f8e3d/series/6aecd4b1-79c0-4653-b88b-65ebb10496bf/066420d4-2f6a-486f-b286-76911d4c3c9e.gz",
+      "mrn": "ISBI-MS-015",
+      "snum": 8,
+      "serid": "6aecd4b1-79c0-4653-b88b-65ebb10496bf"
+    },
+    {
+      "iid": "ac52bed3-d26e-453d-85be-15fbde99458e",
+      "sid": "0ba2006f-2410-4c3b-a820-75f8754f8e3d",
+      "tp": 1,
+      "fn": "sub-MS015_ses-01_label-lesion_dseg.nii.gz",
+      "gcs": "patients/8fc9f862-bacd-4baa-9a08-08c478f22afa/studies/0ba2006f-2410-4c3b-a820-75f8754f8e3d/series/863803c5-aa0e-495c-933e-a6d80eb3a0b6/ac52bed3-d26e-453d-85be-15fbde99458e.gz",
+      "mrn": "ISBI-MS-015",
+      "snum": 9,
+      "serid": "863803c5-aa0e-495c-933e-a6d80eb3a0b6"
+    },
+    {
+      "iid": "78f90292-3aa2-4791-9a87-24a572cf9960",
+      "sid": "0ba2006f-2410-4c3b-a820-75f8754f8e3d",
+      "tp": 1,
+      "fn": "sub-MS015_ses-01_label-lesion_desc-mask2_dseg.nii.gz",
+      "gcs": "patients/8fc9f862-bacd-4baa-9a08-08c478f22afa/studies/0ba2006f-2410-4c3b-a820-75f8754f8e3d/series/410b026b-4551-4533-aba4-db86e57bb12e/78f90292-3aa2-4791-9a87-24a572cf9960.gz",
+      "mrn": "ISBI-MS-015",
+      "snum": 10,
+      "serid": "410b026b-4551-4533-aba4-db86e57bb12e"
+    },
+    {
+      "iid": "047e087c-c9ed-46db-826f-8be3cc1347ae",
+      "sid": "85cb714e-3531-4894-a78f-22ad1c10bbc4",
+      "tp": 1,
+      "fn": "sub-MS016_ses-01_label-lesion_desc-expert11_dseg.nii.gz",
+      "gcs": "patients/91d76347-2224-4a67-875b-87d6eb7aa755/studies/85cb714e-3531-4894-a78f-22ad1c10bbc4/series/68cf0bfb-6845-4534-8263-6000821fdb0c/047e087c-c9ed-46db-826f-8be3cc1347ae.gz",
+      "mrn": "ISBI-MS-016",
+      "snum": 7,
+      "serid": "68cf0bfb-6845-4534-8263-6000821fdb0c"
+    },
+    {
+      "iid": "d6e8b0c1-f611-44eb-aa89-7c823f830861",
+      "sid": "85cb714e-3531-4894-a78f-22ad1c10bbc4",
+      "tp": 1,
+      "fn": "sub-MS016_ses-02_label-lesion_desc-expert11_dseg.nii.gz",
+      "gcs": "patients/91d76347-2224-4a67-875b-87d6eb7aa755/studies/85cb714e-3531-4894-a78f-22ad1c10bbc4/series/8e8bf3a7-5efe-4a4e-9fe7-83509a553c62/d6e8b0c1-f611-44eb-aa89-7c823f830861.gz",
+      "mrn": "ISBI-MS-016",
+      "snum": 8,
+      "serid": "8e8bf3a7-5efe-4a4e-9fe7-83509a553c62"
+    },
+    {
+      "iid": "1a98612c-1e8d-4c2f-8e3b-e89bade0e89d",
+      "sid": "85cb714e-3531-4894-a78f-22ad1c10bbc4",
+      "tp": 1,
+      "fn": "sub-MS016_ses-01_label-lesion_dseg.nii.gz",
+      "gcs": "patients/91d76347-2224-4a67-875b-87d6eb7aa755/studies/85cb714e-3531-4894-a78f-22ad1c10bbc4/series/554e40d2-cb3a-4f75-820d-15e73ec265b4/1a98612c-1e8d-4c2f-8e3b-e89bade0e89d.gz",
+      "mrn": "ISBI-MS-016",
+      "snum": 9,
+      "serid": "554e40d2-cb3a-4f75-820d-15e73ec265b4"
+    },
+    {
+      "iid": "7b6bc971-5a0e-46db-891a-7bb1c0c99f1a",
+      "sid": "85cb714e-3531-4894-a78f-22ad1c10bbc4",
+      "tp": 1,
+      "fn": "sub-MS016_ses-01_label-lesion_desc-mask2_dseg.nii.gz",
+      "gcs": "patients/91d76347-2224-4a67-875b-87d6eb7aa755/studies/85cb714e-3531-4894-a78f-22ad1c10bbc4/series/552b7ad5-2f46-41fc-8890-8b15a2a79601/7b6bc971-5a0e-46db-891a-7bb1c0c99f1a.gz",
+      "mrn": "ISBI-MS-016",
+      "snum": 10,
+      "serid": "552b7ad5-2f46-41fc-8890-8b15a2a79601"
+    },
+    {
+      "iid": "726974c8-dc06-492f-8ad6-bf201c0457cf",
+      "sid": "d6e1efd0-5ed2-4740-8532-2b67ba3972e1",
+      "tp": 1,
+      "fn": "sub-MS017_ses-02_label-lesion_desc-expert12_dseg.nii.gz",
+      "gcs": "patients/871ad47e-2d77-4990-83f3-34cbfae4ebe4/studies/d6e1efd0-5ed2-4740-8532-2b67ba3972e1/series/a1023e40-ebad-4f59-b7a5-1c0f18cbdc50/726974c8-dc06-492f-8ad6-bf201c0457cf.gz",
+      "mrn": "ISBI-MS-017",
+      "snum": 7,
+      "serid": "a1023e40-ebad-4f59-b7a5-1c0f18cbdc50"
+    },
+    {
+      "iid": "2a90731c-26d9-473b-954b-0e12bb5ef2ef",
+      "sid": "d6e1efd0-5ed2-4740-8532-2b67ba3972e1",
+      "tp": 1,
+      "fn": "sub-MS017_ses-01_label-lesion_desc-experto12_dseg.nii.gz",
+      "gcs": "patients/871ad47e-2d77-4990-83f3-34cbfae4ebe4/studies/d6e1efd0-5ed2-4740-8532-2b67ba3972e1/series/251a5ce7-34a9-47fe-8394-f12dd041aa58/2a90731c-26d9-473b-954b-0e12bb5ef2ef.gz",
+      "mrn": "ISBI-MS-017",
+      "snum": 8,
+      "serid": "251a5ce7-34a9-47fe-8394-f12dd041aa58"
+    },
+    {
+      "iid": "23eff0c3-399b-4a85-baa6-0b91a5a5d3d6",
+      "sid": "d6e1efd0-5ed2-4740-8532-2b67ba3972e1",
+      "tp": 1,
+      "fn": "sub-MS017_ses-01_label-lesion_dseg.nii.gz",
+      "gcs": "patients/871ad47e-2d77-4990-83f3-34cbfae4ebe4/studies/d6e1efd0-5ed2-4740-8532-2b67ba3972e1/series/54a63fd3-b051-413f-86a2-6c8243fcad2b/23eff0c3-399b-4a85-baa6-0b91a5a5d3d6.gz",
+      "mrn": "ISBI-MS-017",
+      "snum": 9,
+      "serid": "54a63fd3-b051-413f-86a2-6c8243fcad2b"
+    },
+    {
+      "iid": "84a0e850-a3dd-42ca-b14f-090abcb55ee7",
+      "sid": "d6e1efd0-5ed2-4740-8532-2b67ba3972e1",
+      "tp": 1,
+      "fn": "sub-MS017_ses-01_label-lesion_desc-mask2_dseg.nii.gz",
+      "gcs": "patients/871ad47e-2d77-4990-83f3-34cbfae4ebe4/studies/d6e1efd0-5ed2-4740-8532-2b67ba3972e1/series/41ca34e6-7fe4-44c7-b6c8-ee1d55d35e72/84a0e850-a3dd-42ca-b14f-090abcb55ee7.gz",
+      "mrn": "ISBI-MS-017",
+      "snum": 10,
+      "serid": "41ca34e6-7fe4-44c7-b6c8-ee1d55d35e72"
+    },
+    {
+      "iid": "5fcdbeb2-3fbb-454d-9c8d-0f35699ea296",
+      "sid": "1d6d96d5-9039-48f5-9b24-fafdf8d59780",
+      "tp": 1,
+      "fn": "sub-MS018_ses-01_label-lesion_desc-expert13_dseg.nii.gz",
+      "gcs": "patients/9b9e6946-7aff-4e81-a57b-d1341b524f31/studies/1d6d96d5-9039-48f5-9b24-fafdf8d59780/series/3015b017-508b-4bd4-832b-4e617d124bb6/5fcdbeb2-3fbb-454d-9c8d-0f35699ea296.gz",
+      "mrn": "ISBI-MS-018",
+      "snum": 7,
+      "serid": "3015b017-508b-4bd4-832b-4e617d124bb6"
+    },
+    {
+      "iid": "ce35caa7-e859-4470-a5f6-e34a4cc67eba",
+      "sid": "1d6d96d5-9039-48f5-9b24-fafdf8d59780",
+      "tp": 1,
+      "fn": "sub-MS018_ses-02_label-lesion_desc-expert13_dseg.nii.gz",
+      "gcs": "patients/9b9e6946-7aff-4e81-a57b-d1341b524f31/studies/1d6d96d5-9039-48f5-9b24-fafdf8d59780/series/d2abe596-656b-47ac-ab31-5d51c66e56a4/ce35caa7-e859-4470-a5f6-e34a4cc67eba.gz",
+      "mrn": "ISBI-MS-018",
+      "snum": 8,
+      "serid": "d2abe596-656b-47ac-ab31-5d51c66e56a4"
+    },
+    {
+      "iid": "7244461b-f9ae-4b12-9c11-8daea08c157a",
+      "sid": "1d6d96d5-9039-48f5-9b24-fafdf8d59780",
+      "tp": 1,
+      "fn": "sub-MS018_ses-01_label-lesion_dseg.nii.gz",
+      "gcs": "patients/9b9e6946-7aff-4e81-a57b-d1341b524f31/studies/1d6d96d5-9039-48f5-9b24-fafdf8d59780/series/1c87a589-001f-4d82-870c-d787dee6e05a/7244461b-f9ae-4b12-9c11-8daea08c157a.gz",
+      "mrn": "ISBI-MS-018",
+      "snum": 9,
+      "serid": "1c87a589-001f-4d82-870c-d787dee6e05a"
+    },
+    {
+      "iid": "2305d4c3-b8e3-4734-8b7d-a4f2049f90f7",
+      "sid": "1d6d96d5-9039-48f5-9b24-fafdf8d59780",
+      "tp": 1,
+      "fn": "sub-MS018_ses-01_label-lesion_desc-mask2_dseg.nii.gz",
+      "gcs": "patients/9b9e6946-7aff-4e81-a57b-d1341b524f31/studies/1d6d96d5-9039-48f5-9b24-fafdf8d59780/series/53691aff-308c-4904-9337-5c34f7c7b925/2305d4c3-b8e3-4734-8b7d-a4f2049f90f7.gz",
+      "mrn": "ISBI-MS-018",
+      "snum": 10,
+      "serid": "53691aff-308c-4904-9337-5c34f7c7b925"
+    },
+    {
+      "iid": "b5f7f35d-3b0e-4bb7-aec6-8c699c0226b4",
+      "sid": "cb2309d1-669f-4be5-be6f-a03e5aa15d4d",
+      "tp": 1,
+      "fn": "sub-MS019_ses-01_label-lesion_desc-expert14_dseg.nii.gz",
+      "gcs": "patients/5f9d0b3b-2315-4e10-be7b-0a7d1eb00eef/studies/cb2309d1-669f-4be5-be6f-a03e5aa15d4d/series/875889f3-fd13-407d-9f11-392911790415/b5f7f35d-3b0e-4bb7-aec6-8c699c0226b4.gz",
+      "mrn": "ISBI-MS-019",
+      "snum": 7,
+      "serid": "875889f3-fd13-407d-9f11-392911790415"
+    },
+    {
+      "iid": "fa307315-35d1-4587-b6d0-a7e1b23e30e3",
+      "sid": "cb2309d1-669f-4be5-be6f-a03e5aa15d4d",
+      "tp": 1,
+      "fn": "sub-MS019_ses-02_label-lesion_desc-expert14_dseg.nii.gz",
+      "gcs": "patients/5f9d0b3b-2315-4e10-be7b-0a7d1eb00eef/studies/cb2309d1-669f-4be5-be6f-a03e5aa15d4d/series/58f89d32-4acb-41e4-8b82-57d6a4487f9b/fa307315-35d1-4587-b6d0-a7e1b23e30e3.gz",
+      "mrn": "ISBI-MS-019",
+      "snum": 8,
+      "serid": "58f89d32-4acb-41e4-8b82-57d6a4487f9b"
+    },
+    {
+      "iid": "e88e1919-b5b1-42cd-a908-61f6ce7afad7",
+      "sid": "cb2309d1-669f-4be5-be6f-a03e5aa15d4d",
+      "tp": 1,
+      "fn": "sub-MS019_ses-01_label-lesion_dseg.nii.gz",
+      "gcs": "patients/5f9d0b3b-2315-4e10-be7b-0a7d1eb00eef/studies/cb2309d1-669f-4be5-be6f-a03e5aa15d4d/series/a016c098-2004-4b4d-8cbd-84b3a8eb21cc/e88e1919-b5b1-42cd-a908-61f6ce7afad7.gz",
+      "mrn": "ISBI-MS-019",
+      "snum": 9,
+      "serid": "a016c098-2004-4b4d-8cbd-84b3a8eb21cc"
+    },
+    {
+      "iid": "43d5028e-7cc6-4cb3-8bce-24c3d06358ef",
+      "sid": "cb2309d1-669f-4be5-be6f-a03e5aa15d4d",
+      "tp": 1,
+      "fn": "sub-MS019_ses-01_label-lesion_desc-mask2_dseg.nii.gz",
+      "gcs": "patients/5f9d0b3b-2315-4e10-be7b-0a7d1eb00eef/studies/cb2309d1-669f-4be5-be6f-a03e5aa15d4d/series/8c406ea4-9c8b-4623-a25c-f0613db430e6/43d5028e-7cc6-4cb3-8bce-24c3d06358ef.gz",
+      "mrn": "ISBI-MS-019",
+      "snum": 10,
+      "serid": "8c406ea4-9c8b-4623-a25c-f0613db430e6"
+    }
+  ]
+}

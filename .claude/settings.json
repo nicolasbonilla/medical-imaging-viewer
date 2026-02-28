@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"require\\(''fs''\\).writeFileSync\\(process.env.HOME+''/tmp/full_audit.mjs'', ''''\\)\")"
+    ]
+  }
+}
