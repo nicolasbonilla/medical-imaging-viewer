@@ -65,11 +65,15 @@ export function usePanZoom(): PanZoomHandlers {
   }, []);
 
   const handleZoomIn = useCallback(() => {
-    setZoomLevel(Math.min(5, zoomLevel + 0.25));
+    // Adaptive step: 25% of current zoom, rounded to 0.25 increments
+    // At 1x → +0.25, at 2x → +0.5, at 4x → +1.0, at 8x → +2.0
+    const step = Math.max(0.25, Math.round(zoomLevel * 0.25 * 4) / 4);
+    setZoomLevel(Math.min(20, zoomLevel + step));
   }, [zoomLevel, setZoomLevel]);
 
   const handleZoomOut = useCallback(() => {
-    setZoomLevel(Math.max(0.25, zoomLevel - 0.25));
+    const step = Math.max(0.25, Math.round(zoomLevel * 0.25 * 4) / 4);
+    setZoomLevel(Math.max(0.25, zoomLevel - step));
   }, [zoomLevel, setZoomLevel]);
 
   const handleResetView = useCallback(() => {

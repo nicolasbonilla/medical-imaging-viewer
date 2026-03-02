@@ -336,6 +336,9 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
   const brushShape = useSegmentationStore((s) => s.paintTool.brushShape);
   const storeLabels = useSegmentationStore((s) => s.activeSegmentation?.labels);
 
+  // Paint mode: controls whether painting is allowed (view-only vs edit mode)
+  const isPaintMode = useSegmentationStore((s) => s.isPaintMode);
+
   // Zone map background overlay
   const zoneMapMask = useSegmentationStore((s) => s.zoneMapMask);
   const zoneMapDims = useSegmentationStore((s) => s.zoneMapDims);
@@ -357,7 +360,7 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
     refresh: () => setRenderVersion(prev => prev + 1),
   }), []);
 
-  // Calculate canvas size
+  // Calculate canvas size — uses ResizeObserver to stay in sync with container changes
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -386,6 +389,8 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
       // Calculate based on container (standard mode)
       const containerWidth = container.clientWidth;
       const containerHeight = container.clientHeight;
+      if (containerWidth === 0 || containerHeight === 0) return;
+
       const imageAspect = imageWidth / imageHeight;
       const containerAspect = containerWidth / containerHeight;
 
@@ -402,8 +407,16 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
     };
 
     calculateSize();
+
+    // ResizeObserver detects container size changes (sidebar toggle, panel resize, etc.)
+    // that window 'resize' event does NOT catch.
+    const observer = new ResizeObserver(calculateSize);
+    observer.observe(containerRef.current);
     window.addEventListener('resize', calculateSize);
-    return () => window.removeEventListener('resize', calculateSize);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', calculateSize);
+    };
   }, [containerRef, imageWidth, imageHeight, renderedImageSize, matplotlibBbox]);
 
   // Load base image
@@ -665,8 +678,8 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
       }
     }
 
-    // Draw cursor
-    if (cursorPosition && enabled) {
+    // Draw cursor — only in edit mode (isPaintMode), not view-only
+    if (cursorPosition && enabled && isPaintMode) {
       const canvasX = (cursorPosition.x / imageWidth) * canvasSize.width;
       const canvasY = (cursorPosition.y / imageHeight) * canvasSize.height;
 
@@ -694,7 +707,7 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
       ctx.restore();
     }
   }, [
-    canvasSize, imageWidth, imageHeight, cursorPosition, enabled,
+    canvasSize, imageWidth, imageHeight, cursorPosition, enabled, isPaintMode,
     brushSize, brushShape, eraseMode, showOverlay, zoomLevel, panOffset,
     matplotlibBbox, segmentationMask, sliceIndex, renderVersion, storeLabels,
     aiClickPoints, heatmapMode, expertMasks,
@@ -707,43 +720,75 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
     renderOverlayLayer();
   }, [renderOverlayLayer, sliceIndex, segmentationMask.state.isDirty]);
 
-  // Get mouse position in image coordinates
-  // Must apply inverse of the canvas zoom/pan transform used in renderOverlayLayer
+  // Get mouse position in image coordinates.
+  // Uses the canvas DOM element's actual dimensions (canvas.width/height) and
+  // getBoundingClientRect() to reliably convert screen → canvas → image coords.
+  // This is robust against canvasSize state being stale or CSS scaling the canvas.
   const getMousePos = useCallback(
     (e: React.MouseEvent<HTMLDivElement>): { x: number; y: number } => {
       const canvas = overlayCanvasRef.current;
       if (!canvas) return { x: 0, y: 0 };
 
       const rect = canvas.getBoundingClientRect();
-      let canvasX = e.clientX - rect.left;
-      let canvasY = e.clientY - rect.top;
+      if (rect.width === 0 || rect.height === 0) return { x: 0, y: 0 };
 
-      // In standard mode, inverse-transform to account for zoom/pan applied in the canvas context
-      // Forward transform: translate(center+pan) → scale(zoom) → translate(-center)
-      // Inverse: P_image = (P_screen - center - pan) / zoom + center
+      // Step 1: Mouse position in CSS pixels relative to the canvas element
+      const cssX = e.clientX - rect.left;
+      const cssY = e.clientY - rect.top;
+
+      // Step 2: Convert CSS pixels → canvas logical pixels.
+      // Handles any mismatch between CSS display size (rect) and canvas drawing buffer (canvas.width).
+      // Normally these are equal, but CSS scaling could make them differ.
+      const logicalW = canvas.width;
+      const logicalH = canvas.height;
+      let logicalX = (cssX / rect.width) * logicalW;
+      let logicalY = (cssY / rect.height) * logicalH;
+
+      // Step 3: Apply inverse zoom/pan transform.
+      // Forward (in renderOverlayLayer): translate(center+pan) → scale(zoom) → translate(-center)
+      //   screenPt = (canvasPt - center) * zoom + center + pan
+      // Inverse:
+      //   canvasPt = (screenPt - center - pan) / zoom + center
       if (!matplotlibBbox) {
-        const centerX = canvasSize.width / 2;
-        const centerY = canvasSize.height / 2;
-        canvasX = (canvasX - centerX - panOffset.x) / zoomLevel + centerX;
-        canvasY = (canvasY - centerY - panOffset.y) / zoomLevel + centerY;
+        const centerX = logicalW / 2;
+        const centerY = logicalH / 2;
+        logicalX = (logicalX - centerX - panOffset.x) / zoomLevel + centerX;
+        logicalY = (logicalY - centerY - panOffset.y) / zoomLevel + centerY;
       }
 
-      const imageX = Math.floor((canvasX / canvasSize.width) * imageWidth);
-      const imageY = Math.floor((canvasY / canvasSize.height) * imageHeight);
+      // Step 4: Canvas logical pixels → image pixel coordinates
+      const imageX = Math.floor((logicalX / logicalW) * imageWidth);
+      const imageY = Math.floor((logicalY / logicalH) * imageHeight);
 
-      const clampedX = Math.max(0, Math.min(imageWidth - 1, imageX));
-      const clampedY = Math.max(0, Math.min(imageHeight - 1, imageY));
-
-      return { x: clampedX, y: clampedY };
+      return {
+        x: Math.max(0, Math.min(imageWidth - 1, imageX)),
+        y: Math.max(0, Math.min(imageHeight - 1, imageY)),
+      };
     },
-    [canvasSize, imageWidth, imageHeight, matplotlibBbox, zoomLevel, panOffset]
+    [imageWidth, imageHeight, matplotlibBbox, zoomLevel, panOffset]
   );
+
+  // Check if mask dimensions are transposed relative to display dimensions.
+  // When true, the rendering transposes slices to align with the image,
+  // so painting coordinates must also be swapped to match the mask layout.
+  const maskDims = segmentationMask.state.dimensions;
+  const maskDimsTransposed = (() => {
+    if (!maskDims) return false;
+    if (maskDims.width === imageWidth && maskDims.height === imageHeight) return false;
+    if (maskDims.width === imageHeight && maskDims.height === imageWidth) return true;
+    return false;
+  })();
 
   // Apply paint stroke (LOCAL - instant!)
   const applyPaintStroke = useCallback((pos: { x: number; y: number }) => {
+    // When the mask dimensions are transposed relative to the display,
+    // swap x/y so the paint goes to the correct position in the mask array
+    const paintX = maskDimsTransposed ? pos.y : pos.x;
+    const paintY = maskDimsTransposed ? pos.x : pos.y;
+
     segmentationMask.paintStroke({
-      x: pos.x,
-      y: pos.y,
+      x: paintX,
+      y: paintY,
       sliceIndex,
       brushSize,
       labelId: selectedLabelId,
@@ -755,13 +800,13 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
     renderOverlayLayer();
 
     onPaintStroke({
-      x: pos.x,
-      y: pos.y,
+      x: paintX,
+      y: paintY,
       label_id: selectedLabelId,
       brush_size: brushSize,
       erase: eraseMode,
     });
-  }, [segmentationMask, sliceIndex, brushSize, selectedLabelId, eraseMode, drawOverMode, onPaintStroke, renderOverlayLayer]);
+  }, [segmentationMask, sliceIndex, brushSize, selectedLabelId, eraseMode, drawOverMode, onPaintStroke, renderOverlayLayer, maskDimsTransposed]);
 
   // Mouse handlers — beginStroke/endStroke bracket each drag for undo
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -773,6 +818,22 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
       const isPositive = e.button === 0; // Left = positive, right = negative
       onAIClick(pos.x, pos.y, isPositive);
       return;
+    }
+
+    // Diagnostic: log all relevant values at paint start
+    const canvas = overlayCanvasRef.current;
+    if (canvas) {
+      const rect = canvas.getBoundingClientRect();
+      console.warn('[SegCanvas] Paint start', {
+        canvasState: `${canvasSize.width}×${canvasSize.height}`,
+        canvasDOM: `${canvas.width}×${canvas.height}`,
+        cssRect: `${Math.round(rect.width)}×${Math.round(rect.height)}`,
+        image: `${imageWidth}×${imageHeight}`,
+        mask: maskDims ? `${maskDims.width}×${maskDims.height}` : 'none',
+        transposed: maskDimsTransposed,
+        zoom: zoomLevel,
+        pan: `${panOffset.x},${panOffset.y}`,
+      });
     }
 
     segmentationMask.beginStroke(sliceIndex);
@@ -804,21 +865,23 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
     return <div className="text-white">{t('segmentation.loadingCanvas', 'Loading canvas...')}</div>;
   }
 
-  // Position style
+  // Position style — pointerEvents only active when painting is enabled (isPaintMode).
+  // In view-only mode (enabled but !isPaintMode), clicks pass through to pan/zoom handlers.
+  const canInteract = enabled && isPaintMode;
   const positionStyle = matplotlibBbox ? {
     position: 'absolute' as const,
     left: matplotlibBbox.left,
     top: matplotlibBbox.top,
     width: canvasSize.width,
     height: canvasSize.height,
-    pointerEvents: enabled ? 'auto' as const : 'none' as const
+    pointerEvents: canInteract ? 'auto' as const : 'none' as const
   } : {
     position: 'absolute' as const,
     top: 0,
     left: 0,
     width: canvasSize.width,
     height: canvasSize.height,
-    pointerEvents: enabled ? 'auto' as const : 'none' as const
+    pointerEvents: canInteract ? 'auto' as const : 'none' as const
   };
 
   return (

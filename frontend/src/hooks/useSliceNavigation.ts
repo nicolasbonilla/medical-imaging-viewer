@@ -11,56 +11,51 @@ interface UseSliceNavigationProps {
 }
 
 export function useSliceNavigation({ scrollableRef }: UseSliceNavigationProps) {
-  const { currentSeries, currentSliceIndex, setCurrentSliceIndex } = useViewerStore();
+  const { currentSeries, currentSliceIndex, setCurrentSliceIndex, zoomLevel, setZoomLevel } = useViewerStore();
 
   // Use refs to avoid recreating wheel listener on every render
   const currentSliceRef = useRef(currentSliceIndex);
   const totalSlicesRef = useRef(currentSeries?.total_slices || 0);
   const currentSeriesRef = useRef(currentSeries);
+  const zoomLevelRef = useRef(zoomLevel);
 
   // Keep refs updated without triggering listener re-creation
   currentSliceRef.current = currentSliceIndex;
   totalSlicesRef.current = currentSeries?.total_slices || 0;
   currentSeriesRef.current = currentSeries;
+  zoomLevelRef.current = zoomLevel;
 
-  // Setup wheel listener
+  // Setup wheel listener: plain wheel = slice nav, Ctrl+wheel = zoom
   useEffect(() => {
     const scrollable = scrollableRef.current;
-    console.log('[WHEEL SETUP] Setting up wheel listener, scrollable:', !!scrollable, 'series:', !!currentSeries);
-
-    if (!scrollable || !currentSeries) {
-      console.log('[WHEEL SETUP] Skipping - missing scrollable or series');
-      return;
-    }
+    if (!scrollable || !currentSeries) return;
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      console.log('[WHEEL] ImageViewer2D wheel event:', {
-        deltaY: e.deltaY,
-        currentSlice: currentSliceRef.current,
-        totalSlices: totalSlicesRef.current
-      });
 
-      const delta = e.deltaY > 0 ? 1 : -1;
-      const newIndex = Math.max(
-        0,
-        Math.min(totalSlicesRef.current - 1, currentSliceRef.current + delta)
-      );
-
-      console.log('[WHEEL] Changing slice from', currentSliceRef.current, 'to', newIndex);
-      setCurrentSliceIndex(newIndex);
+      if (e.ctrlKey || e.metaKey) {
+        // Ctrl+wheel: zoom in/out with adaptive step
+        const currentZoom = zoomLevelRef.current;
+        const step = Math.max(0.25, Math.round(currentZoom * 0.15 * 4) / 4);
+        const newZoom = e.deltaY < 0
+          ? Math.min(20, currentZoom + step)
+          : Math.max(0.25, currentZoom - step);
+        setZoomLevel(newZoom);
+      } else {
+        // Plain wheel: slice navigation
+        const delta = e.deltaY > 0 ? 1 : -1;
+        const newIndex = Math.max(
+          0,
+          Math.min(totalSlicesRef.current - 1, currentSliceRef.current + delta)
+        );
+        setCurrentSliceIndex(newIndex);
+      }
     };
 
-    // Add event listener with passive: false to allow preventDefault
-    console.log('[WHEEL SETUP] Adding wheel event listener to scrollable div');
     scrollable.addEventListener('wheel', handleWheel, { passive: false });
-
-    return () => {
-      console.log('[WHEEL SETUP] Removing wheel event listener');
-      scrollable.removeEventListener('wheel', handleWheel);
-    };
-  }, [currentSeries, scrollableRef, setCurrentSliceIndex]);
+    return () => scrollable.removeEventListener('wheel', handleWheel);
+  }, [currentSeries, scrollableRef, setCurrentSliceIndex, setZoomLevel]);
 
   // Keyboard navigation
   useEffect(() => {

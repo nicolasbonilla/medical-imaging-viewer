@@ -241,8 +241,8 @@ interface SegmentationState {
 
 const defaultPaintTool: PaintToolConfig = {
   tool: 'brush',
-  brushSize: 5,
-  brushShape: 'circle',
+  brushSize: 1,
+  brushShape: 'square',
   activeLabel: 1,
   fillTolerance: 10,
   thresholdMin: 0,

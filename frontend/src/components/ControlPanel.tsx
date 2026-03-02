@@ -74,11 +74,13 @@ export default function ControlPanel() {
   const activeConditions = (medicalHistory ?? []).filter((h) => h.is_active);
 
   const handleZoomIn = useCallback(() => {
-    setZoomLevel(Math.min(zoomLevel + 0.25, 5));
+    const step = Math.max(0.25, Math.round(zoomLevel * 0.25 * 4) / 4);
+    setZoomLevel(Math.min(zoomLevel + step, 20));
   }, [zoomLevel, setZoomLevel]);
 
   const handleZoomOut = useCallback(() => {
-    setZoomLevel(Math.max(zoomLevel - 0.25, 0.25));
+    const step = Math.max(0.25, Math.round(zoomLevel * 0.25 * 4) / 4);
+    setZoomLevel(Math.max(zoomLevel - step, 0.25));
   }, [zoomLevel, setZoomLevel]);
 
   const handleResetView = useCallback(() => {
@@ -424,12 +426,12 @@ export default function ControlPanel() {
               >
                 <ZoomOut className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
               </button>
-              <span className="text-xs font-mono font-bold text-gray-700 dark:text-gray-300 w-10 text-center">
+              <span className="text-xs font-mono font-bold text-gray-700 dark:text-gray-300 w-14 text-center">
                 {Math.round(zoomLevel * 100)}%
               </span>
               <button
                 onClick={handleZoomIn}
-                disabled={zoomLevel >= 5}
+                disabled={zoomLevel >= 20}
                 className="p-1.5 bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-30 transition-colors"
               >
                 <ZoomIn className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />

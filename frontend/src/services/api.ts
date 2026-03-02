@@ -91,7 +91,8 @@ export const imagingAPI = {
     yMin?: number,
     yMax?: number,
     minimal: boolean = false,
-    segmentationId?: string
+    segmentationId?: string,
+    overlayOpacity?: number
   ): Promise<{
     image: string;
     bbox?: {
@@ -114,6 +115,7 @@ export const imagingAPI = {
       y_max: yMax,
       minimal,
       segmentation_id: segmentationId,
+      overlay_opacity: overlayOpacity,
     };
     // Retry logic for transient 503 errors (server overload)
     const maxRetries = 3;

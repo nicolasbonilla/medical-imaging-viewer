@@ -16,6 +16,7 @@ import { MetadataPanel } from './viewer/MetadataPanel';
 import { SegmentationCanvasLocal, type SegmentationCanvasLocalRef } from './SegmentationCanvasLocal';
 import { useAISegmentation } from '@/hooks/useAISegmentation';
 import { QuickScreenBadge } from './QuickScreenBadge';
+import { VoxelValueOverlay } from './VoxelValueOverlay';
 
 interface ImageViewer2DProps {
   viewerControls: ReturnType<typeof import('../hooks/useViewerControls').useViewerControls>;
@@ -58,6 +59,9 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
   const paintTool = useSegmentationStore((s) => s.paintTool);
   const activeLabel = useSegmentationStore((s) => s.activeLabel);
   const isOverlayVisible = useSegmentationStore((s) => s.isOverlayVisible);
+  const lesionOpacity = useSegmentationStore((s) => s.lesionOpacity);
+  const isPaintMode = useSegmentationStore((s) => s.isPaintMode);
+  const setIsPaintMode = useSegmentationStore((s) => s.setIsPaintMode);
 
   // Derived values — same names so JSX props don't need changes
   const brushSize = paintTool.brushSize;
@@ -71,13 +75,31 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
   // Custom hooks
   const panZoomHandlers = usePanZoom();
 
-  const { matplotlibData, matplotlibLoading } = useMatplotlibVisualization({
+  // In matplotlib view mode, pass segmentationId so backend renders the overlay.
+  // Only for saved segmentations (not local-* temp IDs) and only in view mode (not editing).
+  const matplotlibSegId = (
+    renderMode === 'matplotlib'
+    && segmentationMode
+    && currentSegmentation
+    && !isPaintMode
+    && !currentSegmentation.segmentation_id.startsWith('local-')
+  ) ? currentSegmentation.segmentation_id : undefined;
+
+  // Effective opacity: 0 when overlay toggle is OFF (hides overlay), slider value when ON.
+  const effectiveOverlayOpacity = isOverlayVisible ? lesionOpacity : 0;
+
+  const { matplotlibData, matplotlibLoading, matplotlibError } = useMatplotlibVisualization({
     colormap,
     appliedXMin,
     appliedXMax,
     appliedYMin,
     appliedYMax,
+    segmentationId: matplotlibSegId,
+    overlayOpacity: effectiveOverlayOpacity,
   });
+
+  // If matplotlib query with segmentation overlay failed, fall back to local canvas overlay
+  const useLocalOverlayFallback = matplotlibError && !!matplotlibSegId;
 
   // Callback when paint stroke is applied locally - refresh canvas overlay
   const handlePaintComplete = useCallback((_sliceIndex: number) => {
@@ -93,6 +115,13 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
   useSliceNavigation({ scrollableRef });
 
   useCanvasRendering({ canvasRef, containerRef, renderMode });
+
+  // Reset paint mode when segmentation mode is turned off
+  useEffect(() => {
+    if (!segmentationMode) {
+      setIsPaintMode(false);
+    }
+  }, [segmentationMode, setIsPaintMode]);
 
   // Segmentation keyboard shortcuts (Ctrl+Z, E, B, S, +/-, 1-9)
   const handleShortcutRefresh = useCallback(() => {
@@ -233,7 +262,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
     ? `brightness(${brightness / 100}) contrast(${contrast / 100})`
     : undefined;
 
-  // Track cursor position over the image
+  // Track cursor position over the image (zoom/pan aware)
   const handleCursorMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!currentSeries || !containerRef.current) return;
 
@@ -241,27 +270,36 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
     if (!canvasEl) return;
 
     const rect = canvasEl.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
+    if (rect.width === 0 || rect.height === 0) return;
+
+    // CSS → canvas logical pixels
+    const cssX = e.clientX - rect.left;
+    const cssY = e.clientY - rect.top;
+    let logicalX = (cssX / rect.width) * canvasEl.width;
+    let logicalY = (cssY / rect.height) * canvasEl.height;
+
+    // Apply inverse zoom/pan transform (same as SegmentationCanvasLocal's getMousePos)
+    const centerX = canvasEl.width / 2;
+    const centerY = canvasEl.height / 2;
+    logicalX = (logicalX - centerX - panOffset.x) / zoomLevel + centerX;
+    logicalY = (logicalY - centerY - panOffset.y) / zoomLevel + centerY;
 
     // Convert to image coordinates
     const imgW = currentSeries.metadata.columns ?? 256;
     const imgH = currentSeries.metadata.rows ?? 256;
-    const scaleX = imgW / rect.width;
-    const scaleY = imgH / rect.height;
-    const imgX = Math.floor(mouseX * scaleX);
-    const imgY = Math.floor(mouseY * scaleY);
+    const imgX = Math.floor((logicalX / canvasEl.width) * imgW);
+    const imgY = Math.floor((logicalY / canvasEl.height) * imgH);
 
     if (imgX < 0 || imgX >= imgW || imgY < 0 || imgY >= imgH) {
       return;
     }
 
-    // Read pixel intensity from canvas
+    // Read pixel intensity from canvas at the screen position (accounts for zoom)
     let intensity: number | null = null;
     try {
       const ctx = canvasEl.getContext('2d');
       if (ctx) {
-        const pixel = ctx.getImageData(Math.floor(mouseX), Math.floor(mouseY), 1, 1).data;
+        const pixel = ctx.getImageData(Math.floor(cssX * (canvasEl.width / rect.width)), Math.floor(cssY * (canvasEl.height / rect.height)), 1, 1).data;
         // Grayscale: R=G=B for medical images
         intensity = pixel[0];
       }
@@ -275,7 +313,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
       z: currentSliceIndex,
       intensity,
     });
-  }, [currentSeries, currentSliceIndex, setCursorInfo]);
+  }, [currentSeries, currentSliceIndex, setCursorInfo, zoomLevel, panOffset]);
 
   const handleCursorLeave = useCallback(() => {
     setCursorInfo(null);
@@ -299,17 +337,17 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
         ref={scrollableRef}
         className="absolute inset-0 overflow-auto cursor-move"
         onMouseDown={(e) => {
-          if (!segmentationMode) panZoomHandlers.handleMouseDown(e);
+          if (!segmentationMode || !isPaintMode) panZoomHandlers.handleMouseDown(e);
         }}
         onMouseMove={(e) => {
-          if (!segmentationMode) panZoomHandlers.handleMouseMove(e);
+          if (!segmentationMode || !isPaintMode) panZoomHandlers.handleMouseMove(e);
           handleCursorMove(e);
         }}
         onMouseUp={() => {
-          if (!segmentationMode) panZoomHandlers.handleMouseUp();
+          if (!segmentationMode || !isPaintMode) panZoomHandlers.handleMouseUp();
         }}
         onMouseLeave={() => {
-          if (!segmentationMode) panZoomHandlers.handleMouseUp();
+          if (!segmentationMode || !isPaintMode) panZoomHandlers.handleMouseUp();
           handleCursorLeave();
         }}
       >
@@ -338,8 +376,11 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
                 } : { filter: imageFilter }}
                 className={renderDimensions ? '' : 'max-w-full max-h-full object-contain'}
               />
-              {/* Interactive segmentation canvas - covers full image in minimal mode, or bbox area */}
-              {((segmentationMode && currentSegmentation) || hasVisibleExperts) && currentSeries && (
+              {/* Interactive segmentation canvas - covers full image in minimal mode, or bbox area.
+                  When matplotlibSegId is set, backend renders the segmentation in the matplotlib PNG,
+                  so hide the local canvas (avoid double overlay). Show it for editing, expert masks,
+                  or as fallback when backend overlay fails. */}
+              {((segmentationMode && currentSegmentation && (!matplotlibSegId || useLocalOverlayFallback)) || hasVisibleExperts) && currentSeries && (
                 <SegmentationCanvasLocal
                   ref={segmentationCanvasMatplotlibRef}
                   segmentationMask={segmentationMask}
@@ -417,6 +458,18 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
             </div>
           ) : null}
         </div>
+        {/* Voxel value overlay — crisp text at viewport level, outside CSS scale transform */}
+        {renderMode === 'matplotlib' && zoomLevel >= 14 && currentSeries?.slices?.[currentSliceIndex]?.image_data && (
+          <VoxelValueOverlay
+            sliceImageData={currentSeries.slices[currentSliceIndex].image_data}
+            imageWidth={currentSeries.metadata.columns ?? 256}
+            imageHeight={currentSeries.metadata.rows ?? 256}
+            scrollableRef={scrollableRef as React.RefObject<HTMLDivElement>}
+            imageElementRef={matplotlibImageRef as React.RefObject<HTMLImageElement>}
+            zoomLevel={zoomLevel}
+            panOffset={panOffset}
+          />
+        )}
       </div>
 
       {/* Segmentation Mode Indicator - positioned top center to not overlap controls */}
@@ -429,25 +482,66 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
             </div>
           ) : currentSegmentation ? (
             <>
-              <div className="flex items-center gap-2 bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium shadow-lg">
-                <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                {t('viewer.segmentationActive', 'Segmentation active')}
-              </div>
-              <button
-                onClick={saveSegmentation}
-                disabled={isSaving}
-                className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-3 py-1.5 rounded-lg text-sm font-medium shadow-lg transition-colors"
-                title={t('viewer.saveSegmentation', 'Save segmentation')}
-              >
-                {isSaving ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
+              {/* View/Edit mode indicator */}
+              {isPaintMode ? (
+                <div className="flex items-center gap-2 bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium shadow-lg">
+                  <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                  {t('viewer.editingSegmentation', 'Editing')}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium shadow-lg">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
+                  {t('viewer.viewingSegmentation', 'Viewing')}
+                </div>
+              )}
+              {/* Edit toggle button */}
+              <button
+                onClick={() => setIsPaintMode(!isPaintMode)}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium shadow-lg transition-colors ${
+                  isPaintMode
+                    ? 'bg-yellow-500 hover:bg-yellow-600 text-black'
+                    : 'bg-green-600 hover:bg-green-700 text-white'
+                }`}
+                title={isPaintMode ? t('viewer.switchToView', 'Switch to view mode') : t('viewer.switchToEdit', 'Switch to edit mode')}
+              >
+                {isPaintMode ? (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    {t('viewer.viewMode', 'View')}
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    {t('viewer.editMode', 'Edit')}
+                  </>
                 )}
-                {t('viewer.save', 'Save')}
               </button>
+              {/* Save button - only visible in edit mode */}
+              {isPaintMode && (
+                <button
+                  onClick={saveSegmentation}
+                  disabled={isSaving}
+                  className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-3 py-1.5 rounded-lg text-sm font-medium shadow-lg transition-colors"
+                  title={t('viewer.saveSegmentation', 'Save segmentation')}
+                >
+                  {isSaving ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                    </svg>
+                  )}
+                  {t('viewer.save', 'Save')}
+                </button>
+              )}
               {/* Save status indicator */}
               {saveStatus === 'saving' && (
                 <div className="flex items-center gap-1 bg-yellow-500 text-black px-2 py-1 rounded text-xs font-medium shadow-lg animate-pulse">

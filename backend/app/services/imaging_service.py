@@ -502,7 +502,8 @@ class ImagingService(IImagingService):
         segmentation_data: Optional[bytes] = None,
         segmentation_id: Optional[str] = None,
         window_center: Optional[float] = None,
-        window_width: Optional[float] = None
+        window_width: Optional[float] = None,
+        overlay_opacity: float = 0.5
     ) -> bytes:
         """Generate a matplotlib visualization of a 2D slice - returns bytes instead of str."""
         result = await self.generate_2d_matplotlib_slice(
@@ -517,7 +518,8 @@ class ImagingService(IImagingService):
             y_min=y_min,
             y_max=y_max,
             minimal=minimal,
-            segmentation_id=segmentation_id
+            segmentation_id=segmentation_id,
+            overlay_opacity=overlay_opacity
         )
         # Convert data URL string to bytes
         if isinstance(result, dict):
@@ -545,7 +547,8 @@ class ImagingService(IImagingService):
         y_min: Optional[int] = None,
         y_max: Optional[int] = None,
         minimal: bool = False,
-        segmentation_id: Optional[str] = None
+        segmentation_id: Optional[str] = None,
+        overlay_opacity: float = 0.5
     ) -> str:
         """Generate a 2D slice visualization using matplotlib with axis limits support.
 
@@ -553,6 +556,7 @@ class ImagingService(IImagingService):
             minimal: If True, renders only the image data without axes, labels, grid, or colorbar.
                     Perfect for segmentation overlay where voxel coordinates must match exactly.
             segmentation_id: If provided, overlay the segmentation on the image using matplotlib.
+            overlay_opacity: Opacity for the segmentation overlay (0-1). Default 0.5.
         """
         import matplotlib
         matplotlib.use('Agg')
@@ -628,15 +632,20 @@ class ImagingService(IImagingService):
 
             # Overlay segmentation if provided
             if segmentation_id:
-                from app.services.segmentation_service import segmentation_service
-                from matplotlib.colors import ListedColormap
                 try:
-                    logger.debug("Overlaying segmentation {segmentation_id} on slice {slice_index}")
+                    from app.core.container import get_segmentation_service
+                    from matplotlib.colors import ListedColormap
+                    seg_service = get_segmentation_service()
+                    logger.debug("Overlaying segmentation %s on slice %s", segmentation_id, slice_index)
                     # Get segmentation data for this slice
-                    seg_slice = await segmentation_service.get_slice_mask(segmentation_id, slice_index)
+                    seg_slice = await seg_service.get_slice_mask(segmentation_id, slice_index)
 
                     if seg_slice is not None:
-                        logger.debug("Seg slice shape: {seg_slice.shape}, has data: {np.any(seg_slice > 0)}, unique values: {np.unique(seg_slice)}")
+                        # Fix axis convention: base image is NIfTI (X,Y,Z) → slice is (X,Y)
+                        # Segmentation is (D,H,W) → slice is (H,W). Transpose if needed.
+                        if seg_slice.shape != (img_height, img_width):
+                            seg_slice = seg_slice.T
+
                         if np.any(seg_slice > 0):
                             # Apply same cropping to segmentation
                             if x_min is not None or x_max is not None or y_min is not None or y_max is not None:
@@ -649,12 +658,12 @@ class ImagingService(IImagingService):
                             red_cmap = ListedColormap(['red'])
                             # Overlay segmentation with transparency
                             ax.imshow(seg_masked, cmap=red_cmap, interpolation='none',
-                                     alpha=0.5, aspect='equal', origin='upper', vmin=0, vmax=1)
+                                     alpha=overlay_opacity, aspect='equal', origin='upper', vmin=0, vmax=1)
                             logger.debug("Successfully overlayed segmentation")
                         else:
                             logger.debug("Segmentation slice is empty")
                     else:
-                        logger.debug("No segmentation data found for slice {slice_index}")
+                        logger.debug("No segmentation data found for slice %s", slice_index)
                 except Exception as e:
                     logger.warning(
                         "Could not overlay segmentation on matplotlib image",
@@ -709,25 +718,30 @@ class ImagingService(IImagingService):
 
             # Overlay segmentation if provided (for cropped view)
             if segmentation_id:
-                from app.services.segmentation_service import segmentation_service
-                from matplotlib.colors import ListedColormap
                 try:
-                    logger.debug("Overlaying segmentation {segmentation_id} on slice {slice_index} (cropped)")
-                    seg_slice = await segmentation_service.get_slice_mask(segmentation_id, slice_index)
+                    from app.core.container import get_segmentation_service
+                    from matplotlib.colors import ListedColormap
+                    seg_service = get_segmentation_service()
+                    logger.debug("Overlaying segmentation %s on slice %s (cropped)", segmentation_id, slice_index)
+                    seg_slice = await seg_service.get_slice_mask(segmentation_id, slice_index)
 
-                    if seg_slice is not None and np.any(seg_slice > 0):
-                        # Crop segmentation to match image crop
-                        seg_cropped = seg_slice[y_start:y_end, x_start:x_end]
-                        if np.any(seg_cropped > 0):
-                            seg_masked = np.ma.masked_where(seg_cropped == 0, seg_cropped)
-                            # Create red colormap for segmentation (same as standard mode)
-                            red_cmap = ListedColormap(['red'])
-                            ax.imshow(seg_masked, cmap=red_cmap, interpolation='none',
-                                     alpha=0.5, extent=[x_start, x_end, y_end, y_start],
-                                     origin='upper', aspect='equal', vmin=0, vmax=1)
-                            logger.debug("Successfully overlayed segmentation (cropped)")
+                    if seg_slice is not None:
+                        # Fix axis convention mismatch
+                        if seg_slice.shape != (img_height, img_width):
+                            seg_slice = seg_slice.T
+
+                        if np.any(seg_slice > 0):
+                            # Crop segmentation to match image crop
+                            seg_cropped = seg_slice[y_start:y_end, x_start:x_end]
+                            if np.any(seg_cropped > 0):
+                                seg_masked = np.ma.masked_where(seg_cropped == 0, seg_cropped)
+                                red_cmap = ListedColormap(['red'])
+                                ax.imshow(seg_masked, cmap=red_cmap, interpolation='none',
+                                         alpha=overlay_opacity, extent=[x_start, x_end, y_end, y_start],
+                                         origin='upper', aspect='equal', vmin=0, vmax=1)
+                                logger.debug("Successfully overlayed segmentation (cropped)")
                 except Exception as e:
-                    logger.debug("Warning: Could not overlay segmentation: {e}")
+                    logger.warning("Could not overlay segmentation (cropped): %s", str(e))
 
             # Enable axes with white labels and ticks
             ax.set_xlabel('X (pixels)', color='white', fontsize=10)
@@ -756,22 +770,27 @@ class ImagingService(IImagingService):
 
             # Overlay segmentation if provided (for full view)
             if segmentation_id:
-                from app.services.segmentation_service import segmentation_service
-                from matplotlib.colors import ListedColormap
                 try:
-                    logger.debug("Overlaying segmentation {segmentation_id} on slice {slice_index} (full)")
-                    seg_slice = await segmentation_service.get_slice_mask(segmentation_id, slice_index)
+                    from app.core.container import get_segmentation_service
+                    from matplotlib.colors import ListedColormap
+                    seg_service = get_segmentation_service()
+                    logger.debug("Overlaying segmentation %s on slice %s (full)", segmentation_id, slice_index)
+                    seg_slice = await seg_service.get_slice_mask(segmentation_id, slice_index)
 
-                    if seg_slice is not None and np.any(seg_slice > 0):
-                        seg_masked = np.ma.masked_where(seg_slice == 0, seg_slice)
-                        # Create red colormap for segmentation (same as standard mode)
-                        red_cmap = ListedColormap(['red'])
-                        ax.imshow(seg_masked, cmap=red_cmap, interpolation='none',
-                                 alpha=0.5, extent=[0, img_width, img_height, 0],
-                                 origin='upper', aspect='auto', vmin=0, vmax=1)
-                        logger.debug("Successfully overlayed segmentation (full)")
+                    if seg_slice is not None:
+                        # Fix axis convention mismatch
+                        if seg_slice.shape != (img_height, img_width):
+                            seg_slice = seg_slice.T
+
+                        if np.any(seg_slice > 0):
+                            seg_masked = np.ma.masked_where(seg_slice == 0, seg_slice)
+                            red_cmap = ListedColormap(['red'])
+                            ax.imshow(seg_masked, cmap=red_cmap, interpolation='none',
+                                     alpha=overlay_opacity, extent=[0, img_width, img_height, 0],
+                                     origin='upper', aspect='auto', vmin=0, vmax=1)
+                            logger.debug("Successfully overlayed segmentation (full)")
                 except Exception as e:
-                    logger.debug("Warning: Could not overlay segmentation: {e}")
+                    logger.warning("Could not overlay segmentation (full): %s", str(e))
 
             # Enable axes with white labels for full image
             ax.set_xlabel('X (pixels)', color='white', fontsize=12)

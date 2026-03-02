@@ -60,6 +60,7 @@ function ViewerApp() {
   const currentSegmentation = useSegmentationStore((s) => s.currentSegmentation);
   const activeSegmentation = useSegmentationStore((s) => s.activeSegmentation);
   const setCurrentSegmentation = useSegmentationStore((s) => s.setCurrentSegmentation);
+  const setIsPaintMode = useSegmentationStore((s) => s.setIsPaintMode);
 
   const viewerControls = useViewerControls();
   const createSegmentationRef = useRef<(() => void) | null>(null);
@@ -410,6 +411,8 @@ function ViewerApp() {
     }
     // First enable segmentation mode
     viewerControls.setSegmentationMode(true);
+    // Auto-enable paint mode for new segmentations (user wants to start drawing)
+    setIsPaintMode(true);
     // Then trigger segmentation creation
     if (createSegmentationRef.current) {
       createSegmentationRef.current();
@@ -417,7 +420,7 @@ function ViewerApp() {
     } else {
       toast.error(t('viewer.segmentationCreationFailed', 'Failed to create segmentation'));
     }
-  }, [viewerControls, t, currentSeries]);
+  }, [viewerControls, t, currentSeries, setIsPaintMode]);
 
   // No study ID provided
   if (!studyId) {

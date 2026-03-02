@@ -14,7 +14,7 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Niivue, NVImage, SLICE_TYPE, SHOW_RENDER } from '@niivue/niivue';
-import { Loader2, AlertCircle, Box } from 'lucide-react';
+import { Loader2, AlertCircle, Box, ZoomIn, ZoomOut, Eye } from 'lucide-react';
 import { useViewerStore } from '@/store/useViewerStore';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 
@@ -134,6 +134,10 @@ export default function ImageViewer3D() {
 
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
 
+  // Per-panel controls
+  const [panelOpacity, setPanelOpacity] = useState([1, 1, 1, 1]);
+  const [panelZoom, setPanelZoom] = useState([1, 1, 1, 1]);
+
   const fileId = currentSeries?.file_id;
 
   const niftiUrl = useMemo(() => {
@@ -150,6 +154,30 @@ export default function ImageViewer3D() {
   // Callback ref setter for multiplanar canvases
   const setMpCanvasRef = useCallback((index: number) => (el: HTMLCanvasElement | null) => {
     mpCanvasRefs.current[index] = el;
+  }, []);
+
+  const handlePanelOpacity = useCallback((index: number, value: number) => {
+    const nv = mpNvRefs.current[index];
+    if (nv && nv.volumes.length > 0) {
+      nv.setOpacity(0, value);
+    }
+    setPanelOpacity((prev) => { const next = [...prev]; next[index] = value; return next; });
+  }, []);
+
+  const handlePanelZoom = useCallback((index: number, delta: number) => {
+    const nv = mpNvRefs.current[index];
+    if (!nv) return;
+    setPanelZoom((prev) => {
+      const next = [...prev];
+      next[index] = Math.max(0.5, Math.min(4, prev[index] + delta));
+      if (index === 0) {
+        nv.setScale(next[index]);
+      } else {
+        const pan = nv.scene.pan2Dxyzmm;
+        nv.setPan2Dxyzmm([pan[0], pan[1], pan[2], next[index]]);
+      }
+      return next;
+    });
   }, []);
 
   // Track container size
@@ -446,19 +474,42 @@ export default function ImageViewer3D() {
       <div ref={containerRef} className="absolute inset-0">
         {/* Volume mode: single canvas */}
         {render3DMode === 'volume' && (
-          <canvas
-            ref={volumeCanvasRef}
-            width={containerSize.width}
-            height={containerSize.height}
-            style={{ width: '100%', height: '100%', display: 'block' }}
-          />
+          <div className="relative w-full h-full group/vol">
+            <canvas
+              ref={volumeCanvasRef}
+              width={containerSize.width}
+              height={containerSize.height}
+              style={{ width: '100%', height: '100%', display: 'block' }}
+            />
+            {volumeReady && (
+              <div className="absolute bottom-3 left-3 flex items-center gap-2 px-2 py-1 bg-black/60 rounded-lg opacity-0 group-hover/vol:opacity-100 transition-opacity z-10">
+                <Eye className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={panelOpacity[0]}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    const nv = volumeNvRef.current;
+                    if (nv && nv.volumes.length > 0) nv.setOpacity(0, val);
+                    setPanelOpacity((prev) => { const next = [...prev]; next[0] = val; return next; });
+                  }}
+                  className="w-20 h-1 accent-blue-500 cursor-pointer"
+                  title={`Opacity ${Math.round(panelOpacity[0] * 100)}%`}
+                />
+                <span className="text-[10px] text-gray-400 w-8 text-right">{Math.round(panelOpacity[0] * 100)}%</span>
+              </div>
+            )}
+          </div>
         )}
 
         {/* Multiplanar mode: 2x2 grid */}
         {render3DMode === 'multiplanar' && (
           <div className="grid grid-cols-2 grid-rows-2 w-full h-full gap-px bg-gray-800">
             {PANEL_CONFIG.map((panel, i) => (
-              <div key={panel.key} className="relative bg-black overflow-hidden">
+              <div key={panel.key} className="relative bg-black overflow-hidden group/panel">
                 <canvas
                   ref={setMpCanvasRef(i)}
                   width={Math.floor(containerSize.width / 2)}
@@ -469,6 +520,40 @@ export default function ImageViewer3D() {
                 <div className="absolute top-1 left-2 text-[10px] font-bold text-gray-400 pointer-events-none uppercase tracking-wider">
                   {panel.label}
                 </div>
+                {/* Per-panel controls */}
+                {mpReady && (
+                  <div className="absolute bottom-0 left-0 right-0 flex items-center gap-2 px-2 py-1 bg-black/60 opacity-0 group-hover/panel:opacity-100 transition-opacity z-10">
+                    <Eye className="w-3 h-3 text-gray-400 shrink-0" />
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={panelOpacity[i]}
+                      onChange={(e) => handlePanelOpacity(i, parseFloat(e.target.value))}
+                      className="w-16 h-1 accent-blue-500 cursor-pointer"
+                      title={`Opacity ${Math.round(panelOpacity[i] * 100)}%`}
+                    />
+                    <span className="text-[9px] text-gray-400 w-7 text-right">{Math.round(panelOpacity[i] * 100)}%</span>
+                    <div className="ml-auto flex items-center gap-1">
+                      <button
+                        onClick={() => handlePanelZoom(i, -0.25)}
+                        className="p-0.5 text-gray-400 hover:text-white rounded hover:bg-white/10"
+                        title="Zoom out"
+                      >
+                        <ZoomOut className="w-3 h-3" />
+                      </button>
+                      <span className="text-[9px] text-gray-400 w-8 text-center">{Math.round(panelZoom[i] * 100)}%</span>
+                      <button
+                        onClick={() => handlePanelZoom(i, 0.25)}
+                        className="p-0.5 text-gray-400 hover:text-white rounded hover:bg-white/10"
+                        title="Zoom in"
+                      >
+                        <ZoomIn className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

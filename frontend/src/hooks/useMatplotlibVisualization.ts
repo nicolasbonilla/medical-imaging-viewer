@@ -8,7 +8,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { imagingAPI } from '@/services/api';
 import { useViewerStore } from '@/store/useViewerStore';
 
@@ -18,6 +18,10 @@ interface UseMatplotlibVisualizationProps {
   appliedXMax: string;
   appliedYMin: string;
   appliedYMax: string;
+  /** Segmentation ID to overlay on the matplotlib image (backend renders it) */
+  segmentationId?: string;
+  /** Opacity for the segmentation overlay (0-1) */
+  overlayOpacity?: number;
 }
 
 // Debounce delay in ms - prevents server overload when scrolling
@@ -29,6 +33,8 @@ export function useMatplotlibVisualization({
   appliedXMax,
   appliedYMin,
   appliedYMax,
+  segmentationId,
+  overlayOpacity,
 }: UseMatplotlibVisualizationProps) {
   const { currentSeries, currentSliceIndex } = useViewerStore();
 
@@ -56,7 +62,7 @@ export function useMatplotlibVisualization({
     };
   }, [currentSliceIndex]);
 
-  const { data: matplotlibData, isLoading: matplotlibLoading } = useQuery({
+  const { data: matplotlibData, isLoading: matplotlibLoading, isError: matplotlibError } = useQuery({
     queryKey: [
       'matplotlib-2d',
       currentSeries?.file_id,
@@ -66,6 +72,8 @@ export function useMatplotlibVisualization({
       appliedXMax,
       appliedYMin,
       appliedYMax,
+      segmentationId ?? null,
+      overlayOpacity ?? null,
     ],
     queryFn: async () => {
       const result = currentSeries && currentSeries.file_id
@@ -79,7 +87,9 @@ export function useMatplotlibVisualization({
             appliedXMax.trim() !== '' ? parseInt(appliedXMax) : undefined,
             appliedYMin.trim() !== '' ? parseInt(appliedYMin) : undefined,
             appliedYMax.trim() !== '' ? parseInt(appliedYMax) : undefined,
-            true  // minimal=true for exact voxel-to-voxel match with Standard mode
+            true,  // minimal=true for exact voxel-to-voxel match with Standard mode
+            segmentationId,
+            overlayOpacity
           )
         : null;
 
@@ -88,6 +98,7 @@ export function useMatplotlibVisualization({
     enabled: !!currentSeries?.file_id,
     staleTime: 5 * 60 * 1000, // 5 minutes - cache results to avoid redundant requests
     gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache longer
+    placeholderData: keepPreviousData, // Keep showing previous image while new query loads (prevents black screen)
     retry: 2, // Retry failed requests up to 2 times
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff
   });
@@ -99,5 +110,7 @@ export function useMatplotlibVisualization({
     matplotlibData,
     // Show loading state if either waiting for debounce or actually loading
     matplotlibLoading: matplotlibLoading || isPendingDebounce,
+    // Expose error state so ImageViewer2D can fall back to local canvas overlay
+    matplotlibError,
   };
 }

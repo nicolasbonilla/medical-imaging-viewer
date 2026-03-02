@@ -310,6 +310,7 @@ async def get_matplotlib_2d_slice(
     y_max: Optional[int] = Query(None, ge=0, description="Y-axis upper limit (pixels)"),
     minimal: bool = Query(False, description="If True, renders only image data without axes/labels/colorbar for segmentation overlay"),
     segmentation_id: Optional[str] = Query(None, description="If provided, overlay segmentation on the matplotlib image"),
+    overlay_opacity: float = Query(0.5, ge=0.0, le=1.0, description="Opacity for the segmentation overlay (0-1)"),
     storage_service: IStorageService = Depends(get_storage_service),
     imaging_service: IImagingService = Depends(get_imaging_service)
 ):
@@ -362,7 +363,8 @@ async def get_matplotlib_2d_slice(
             y_min=y_min,
             y_max=y_max,
             minimal=minimal,
-            segmentation_id=segmentation_id
+            segmentation_id=segmentation_id,
+            overlay_opacity=overlay_opacity
         )
 
         return result
