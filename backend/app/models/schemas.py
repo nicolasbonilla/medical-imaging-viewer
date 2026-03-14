@@ -129,6 +129,27 @@ class LabelInfo(BaseModel):
     visible: bool = Field(default=True, description="Whether label is visible")
 
 
+class LesionAnnotation(BaseModel):
+    """Per-lesion CVS and PRL annotations (McDonald 2024 biomarkers).
+
+    McDonald 2024 (Montalban et al., Lancet Neurology 2025) officially
+    incorporates Central Vein Sign (CVS) and Paramagnetic Rim Lesions (PRL)
+    as diagnostic biomarkers for MS.
+    """
+    lesion_id: int = Field(..., description="Lesion ID from classification results")
+    cvs_status: Optional[str] = Field(
+        None, description="CVS status: 'positive', 'negative', 'indeterminate'"
+    )
+    prl_status: Optional[str] = Field(
+        None, description="PRL status: 'positive', 'negative', 'indeterminate'"
+    )
+    annotated_by: Optional[str] = Field(
+        None, description="Annotation source: 'manual', 'cvs_net', 'deep_prl'"
+    )
+    annotated_at: Optional[datetime] = None
+    notes: Optional[str] = None
+
+
 class SegmentationMetadata(BaseModel):
     """Metadata for a segmentation."""
     file_id: str = Field(..., description="Associated image file ID")
@@ -136,6 +157,19 @@ class SegmentationMetadata(BaseModel):
     modified_at: datetime = Field(default_factory=datetime.utcnow)
     labels: List[LabelInfo] = Field(default_factory=list, description="Label definitions")
     description: Optional[str] = None
+    validation_source: Optional[str] = Field(
+        None,
+        description="Origin tool: 'manual', 'lst-ai-v1.0.3', 'synthseg-v2.0', 'custom-edt'"
+    )
+    analysis_data: Optional[Dict[str, Any]] = Field(
+        None,
+        description=(
+            "Cached MAGNIMS analysis results (McDonald 2024). Keys: "
+            "'lesion_analysis', 'dis_assessment', 'classification', "
+            "'zone_map_seg_id', 'analysis_mask_modified_at', "
+            "'lesion_annotations', 'cvs_summary', 'prl_summary'."
+        )
+    )
 
 
 class PaintStroke(BaseModel):

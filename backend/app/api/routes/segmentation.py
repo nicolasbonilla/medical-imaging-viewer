@@ -34,6 +34,7 @@ from app.services.lesion_analysis_service import (
 )
 from app.services.ms_region_classifier import (
     classify_lesions_with_parcellation,
+    classify_lesions_with_atlas,
     classify_lesions_geometric,
     generate_zone_map,
     generate_zone_map_atlas,
@@ -1057,6 +1058,15 @@ async def get_lesion_analysis(
         masks_3d = seg_data["masks_3d"]
         metadata = seg_data["metadata"]
 
+        # Stale check — return cached result if mask hasn't changed
+        cached = metadata.analysis_data or {}
+        mask_mod = metadata.modified_at.isoformat()
+        if cached.get("analysis_mask_modified_at") == mask_mod and "lesion_analysis" in cached:
+            logger.info("Returning cached lesion analysis for %s", segmentation_id)
+            result = dict(cached["lesion_analysis"])
+            result["segmentation_id"] = segmentation_id
+            return result
+
         # Build label map from metadata
         label_map = {}
         for lbl in metadata.labels:
@@ -1080,7 +1090,15 @@ async def get_lesion_analysis(
         result = analyze_lesions(masks_3d, voxel_spacing, label_map)
         result["segmentation_id"] = segmentation_id
 
-        logger.info("Lesion analysis completed", extra={
+        # Persist analysis result in metadata
+        metadata.analysis_data = {
+            **cached,
+            "lesion_analysis": result,
+            "analysis_mask_modified_at": mask_mod,
+        }
+        segmentation_service._save_segmentation(segmentation_id)
+
+        logger.info("Lesion analysis completed and cached", extra={
             "segmentation_id": segmentation_id,
             "lesion_count": result["total_count"],
             "total_burden_ml": result["total_burden_ml"],
@@ -1106,7 +1124,8 @@ async def get_dis_assessment(
     """
     Evaluate McDonald 2024 DIS (Dissemination in Space) criteria.
 
-    Checks if lesions are present in ≥2 of 4 characteristic MAGNIMS regions.
+    McDonald 2024 (Montalban et al., 2025): DIS requires ≥2 of 5 regions
+    (PV, JC, IT, spinal cord, optic nerve). Brain MRI evaluates 3 of 5.
     """
     try:
         if segmentation_id not in segmentation_service.segmentations_cache:
@@ -1116,6 +1135,15 @@ async def get_dis_assessment(
         seg_data = segmentation_service.segmentations_cache[segmentation_id]
         masks_3d = seg_data["masks_3d"]
         metadata = seg_data["metadata"]
+
+        # Stale check — return cached result if mask hasn't changed
+        cached = metadata.analysis_data or {}
+        mask_mod = metadata.modified_at.isoformat()
+        if cached.get("analysis_mask_modified_at") == mask_mod and "dis_assessment" in cached:
+            logger.info("Returning cached DIS assessment for %s", segmentation_id)
+            result = dict(cached["dis_assessment"])
+            result["segmentation_id"] = segmentation_id
+            return result
 
         # Build label map
         label_map = {}
@@ -1128,13 +1156,29 @@ async def get_dis_assessment(
         if not label_map or all(lid == 0 for lid in label_map):
             label_map = MAGNIMS_REGIONS
 
-        result = compute_dis_criteria(masks_3d, label_map)
+        # Get voxel spacing for minimum volume filter
+        voxel_spacing = (1.0, 1.0, 1.0)
+        if hasattr(metadata, 'extra_fields') and metadata.extra_fields:
+            ps = metadata.extra_fields.get('pixel_spacing')
+            st = metadata.extra_fields.get('slice_thickness')
+            if ps and len(ps) >= 2:
+                voxel_spacing = (float(st or 1.0), float(ps[0]), float(ps[1]))
+
+        result = compute_dis_criteria(masks_3d, label_map, voxel_spacing)
         result["segmentation_id"] = segmentation_id
 
-        logger.info("DIS assessment completed", extra={
+        # Persist DIS result in metadata
+        metadata.analysis_data = {
+            **cached,
+            "dis_assessment": result,
+            "analysis_mask_modified_at": mask_mod,
+        }
+        segmentation_service._save_segmentation(segmentation_id)
+
+        logger.info("DIS assessment completed and cached", extra={
             "segmentation_id": segmentation_id,
-            "dis_met": result["dis_met"],
-            "regions_with_lesions": result["regions_with_lesions"],
+            "dis_met_brain": result.get("dis_met_brain", False),
+            "brain_regions_with_lesions": result.get("brain_regions_with_lesions", 0),
         })
 
         return result
@@ -1171,11 +1215,13 @@ async def classify_regions(
     Request body:
     {
       "parcellation_id": "<optional segmentation_id with FreeSurfer labels>",
-      "method": "auto" | "parcellation" | "geometric"
+      "method": "auto" | "parcellation" | "msmask" | "geometric" | "lst-ai"
     }
 
-    - method "auto" (default): tries parcellation first, falls back to geometric
+    - method "auto" (default): tries lst-ai → parcellation → msmask → geometric
+    - method "lst-ai": uses pre-computed LST-AI MAGNIMS zones (requires LST-AI segmentation)
     - method "parcellation": requires parcellation_id
+    - method "msmask": uses MSMask atlas (LST-AI validated, requires nilearn)
     - method "geometric": uses spatial heuristics only
 
     The segmentation mask is reclassified IN-PLACE (label values changed from
@@ -1209,8 +1255,68 @@ async def classify_regions(
 
         result = None
 
+        # --- Try LST-AI pre-computed MAGNIMS zones ---
+        if method in ("auto", "lst-ai"):
+            # Look for an existing LST-AI segmentation for the same file
+            file_id = metadata.file_id
+            all_segs = segmentation_service.list_segmentations(file_id=file_id)
+            for candidate in all_segs:
+                if candidate.segmentation_id == segmentation_id:
+                    continue
+                try:
+                    cand_id = candidate.segmentation_id
+                    if cand_id not in segmentation_service.segmentations_cache:
+                        segmentation_service._load_segmentation(cand_id)
+                    if cand_id in segmentation_service.segmentations_cache:
+                        cand_meta = segmentation_service.segmentations_cache[cand_id].get("metadata", {})
+                        vs = getattr(cand_meta, "validation_source", None) or (
+                            cand_meta.get("validation_source") if isinstance(cand_meta, dict) else None
+                        )
+                        if vs and "lst-ai" in str(vs):
+                            # Found LST-AI types mask — use it directly
+                            cand_mask = segmentation_service.segmentations_cache[cand_id]["masks_3d"]
+                            # Apply LST-AI zones to our lesion mask locations
+                            import time as _time
+                            _start = _time.time()
+                            classified = np.zeros_like(lesion_mask)
+                            for zone_val in [1, 2, 3, 4]:
+                                classified[(lesion_mask > 0) & (cand_mask == zone_val)] = zone_val
+                            # Any lesion not covered by zones → DWM (4) fallback
+                            classified[(lesion_mask > 0) & (classified == 0)] = 4
+                            _elapsed = int((_time.time() - _start) * 1000)
+
+                            total = int(np.sum(classified > 0))
+                            result = {
+                                "classified_mask": classified,
+                                "method": "lst-ai",
+                                "validation_source": str(vs),
+                                "total_classified": total,
+                                "per_region": {
+                                    "periventricular": int(np.sum(classified == 1)),
+                                    "juxtacortical": int(np.sum(classified == 2)),
+                                    "infratentorial": int(np.sum(classified == 3)),
+                                    "deep_white_matter": int(np.sum(classified == 4)),
+                                },
+                                "processing_time_ms": _elapsed,
+                            }
+                            logger.info(
+                                "[ClassifyRegions] LST-AI classification applied",
+                                extra={"segmentation_id": segmentation_id, "source": cand_id},
+                            )
+                            break
+                except Exception as e:
+                    logger.warning(f"[ClassifyRegions] LST-AI candidate check failed: {e}")
+                    continue
+
+            if result is None and method == "lst-ai":
+                raise HTTPException(
+                    status_code=400,
+                    detail="LST-AI method requested but no LST-AI segmentation found. "
+                           "Run LST-AI segmentation first via /clinical/lst-ai/segment.",
+                )
+
         # --- Try parcellation-based classification ---
-        if method in ("auto", "parcellation") and parcellation_id:
+        if result is None and method in ("auto", "parcellation") and parcellation_id:
             try:
                 # Load parcellation mask
                 if parcellation_id not in segmentation_service.segmentations_cache:
@@ -1277,16 +1383,103 @@ async def classify_regions(
                 except Exception:
                     continue
 
-        # --- Fallback to geometric ---
-        if result is None:
-            if method == "parcellation":
-                raise HTTPException(
-                    status_code=400,
-                    detail="Parcellation method requested but no parcellation available. "
-                           "Run AI Brain Parcellation (SynthSeg) first.",
+        # --- MSMask atlas-based classification ---
+        if result is None and method in ("auto", "msmask"):
+            try:
+                from app.services.ms_region_classifier import classify_from_zone_mask
+
+                file_id = metadata.file_id
+
+                # Try reusing a persisted zone map first
+                zone_map_seg_id = (metadata.analysis_data or {}).get("zone_map_seg_id")
+                if zone_map_seg_id:
+                    if zone_map_seg_id not in segmentation_service.segmentations_cache:
+                        segmentation_service._load_segmentation(zone_map_seg_id)
+                    if zone_map_seg_id in segmentation_service.segmentations_cache:
+                        zone_mask = segmentation_service.segmentations_cache[zone_map_seg_id]["masks_3d"]
+                        result = classify_from_zone_mask(lesion_mask, zone_mask, voxel_spacing)
+                        result["method"] = "msmask"
+                        logger.info(
+                            "[ClassifyRegions] Reused persisted zone map %s",
+                            zone_map_seg_id,
+                            extra={"segmentation_id": segmentation_id},
+                        )
+
+                # If no cached zone map, generate fresh via atlas
+                if result is None:
+                    nifti_data = await storage_service.download_file(
+                        settings.GCS_BUCKET_NAME, file_id
+                    )
+                    nifti_img, _ = load_nifti_from_bytes(nifti_data, normalize=False)
+
+                    result = classify_lesions_with_atlas(
+                        lesion_mask, nifti_img, voxel_spacing
+                    )
+                    logger.info(
+                        "[ClassifyRegions] MSMask atlas classification applied (fresh)",
+                        extra={"segmentation_id": segmentation_id},
+                    )
+            except FileNotFoundError as e:
+                if method == "msmask":
+                    raise HTTPException(status_code=400, detail=str(e))
+                logger.warning(
+                    "[ClassifyRegions] MSMask atlas not available: %s. Falling back.",
+                    str(e),
                 )
-            result = classify_lesions_geometric(
-                lesion_mask, image_data=None, voxel_spacing=voxel_spacing
+            except ImportError as e:
+                if method == "msmask":
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"MSMask requires nilearn: {e}",
+                    )
+                logger.warning(
+                    "[ClassifyRegions] nilearn not installed: %s. Falling back to geometric.",
+                    str(e),
+                )
+            except Exception as e:
+                if method == "msmask":
+                    raise HTTPException(status_code=500, detail=str(e))
+                logger.warning(
+                    "[ClassifyRegions] MSMask classification failed: %s. Falling back.",
+                    str(e),
+                )
+
+        # --- Geometric fallback (no parcellation or atlas available) ---
+        if result is None and method in ("auto", "geometric"):
+            try:
+                # Load the original image data for intensity-based heuristics
+                image_data = None
+                file_id = metadata.file_id
+                try:
+                    nifti_data = await storage_service.download_file(
+                        settings.GCS_BUCKET_NAME, file_id
+                    )
+                    _, image_data = load_nifti_from_bytes(nifti_data, normalize=False)
+                except Exception as img_err:
+                    logger.warning(
+                        "[ClassifyRegions] Could not load image data for geometric: %s",
+                        str(img_err),
+                    )
+
+                result = classify_lesions_geometric(
+                    lesion_mask, image_data, voxel_spacing
+                )
+                logger.info(
+                    "[ClassifyRegions] Geometric classification applied (fallback)",
+                    extra={"segmentation_id": segmentation_id},
+                )
+            except Exception as e:
+                logger.warning(
+                    "[ClassifyRegions] Geometric classification failed: %s",
+                    str(e),
+                )
+
+        # --- No method available ---
+        if result is None:
+            raise HTTPException(
+                status_code=400,
+                detail="No classification method available. "
+                       "Ensure the segmentation has lesion voxels to classify.",
             )
 
         # --- Update the segmentation mask in place ---
@@ -1308,7 +1501,7 @@ async def classify_regions(
             metadata.labels = magnims_labels
             metadata.modified_at = datetime.utcnow()
 
-            # Save to GCS
+            # Save classified mask to GCS
             segmentation_service._save_segmentation(segmentation_id)
 
         # Remove numpy array from response (not JSON serializable)
@@ -1316,6 +1509,59 @@ async def classify_regions(
         response_data["segmentation_id"] = segmentation_id
         response_data["mask_updated"] = classified_mask is not None
         response_data["labels_updated"] = classified_mask is not None
+
+        # Sanitize: replace inf/nan with finite values (EDT can produce inf)
+        import math
+
+        def _sanitize(obj):
+            if isinstance(obj, float):
+                if math.isinf(obj) or math.isnan(obj):
+                    return 0.0
+                return obj
+            if isinstance(obj, dict):
+                return {k: _sanitize(v) for k, v in obj.items()}
+            if isinstance(obj, list):
+                return [_sanitize(v) for v in obj]
+            # Convert numpy scalars to Python types
+            if hasattr(obj, 'item'):
+                return _sanitize(obj.item())
+            return obj
+
+        response_data = _sanitize(response_data)
+
+        # --- Auto-compute and persist ALL analysis data ---
+        if classified_mask is not None:
+            try:
+                label_map = {}
+                for lbl in metadata.labels:
+                    if hasattr(lbl, 'id') and hasattr(lbl, 'name'):
+                        label_map[lbl.id] = lbl.name
+                if not label_map or all(lid == 0 for lid in label_map):
+                    label_map = MAGNIMS_REGIONS
+
+                analysis_result = analyze_lesions(classified_mask, voxel_spacing, label_map)
+                analysis_result["segmentation_id"] = segmentation_id
+                dis_result = compute_dis_criteria(classified_mask, label_map, voxel_spacing)
+                dis_result["segmentation_id"] = segmentation_id
+
+                mask_mod = metadata.modified_at.isoformat()
+                metadata.analysis_data = {
+                    **(metadata.analysis_data or {}),
+                    "classification": response_data,
+                    "lesion_analysis": _sanitize(analysis_result),
+                    "dis_assessment": _sanitize(dis_result),
+                    "analysis_mask_modified_at": mask_mod,
+                }
+                segmentation_service._save_segmentation(segmentation_id)
+
+                logger.info(
+                    "[ClassifyRegions] Analysis data persisted (classification + lesion analysis + DIS)",
+                    extra={"segmentation_id": segmentation_id},
+                )
+            except Exception as e:
+                logger.warning(
+                    "[ClassifyRegions] Failed to persist analysis data: %s", str(e)
+                )
 
         logger.info(
             "[ClassifyRegions] Region classification completed",
@@ -1450,6 +1696,13 @@ async def generate_zone_map_endpoint(
                     voxel_spacing = (float(st or 1.0), float(ps[0]), float(ps[1]))
 
         # --- Generate zone map ---
+        # nifti_native_* hold the zone mask in NIfTI native (i,j,k) order
+        # plus the MRI affine/header, so we can save a correctly-oriented NIfTI
+        # to GCS after the standard save pipeline (which has a transpose bug).
+        nifti_native_data = None
+        nifti_native_affine = None
+        nifti_native_header = None
+
         if parcellation_mask is not None:
             # Preferred method: parcellation-based (high accuracy)
             logger.info("[ZoneMap] Using parcellation-based method (source=%s)", parc_source)
@@ -1466,17 +1719,13 @@ async def generate_zone_map_endpoint(
             target_img = nib.Nifti1Image(data, img.affine, img.header)
             result = generate_zone_map_atlas(target_img, voxel_spacing)
             # Transpose zone_mask from NIfTI native (i,j,k) to display-compatible
-            # internal format (k,i,j) using transpose (2,0,1).
-            #
-            # Why (2,0,1) instead of the usual (2,1,0)?
-            # The MRI display pipeline (imaging_service) does NOT transpose — it
-            # serves slices as raw NIfTI[:,:,k], shape (i,j). The frontend renders
-            # each slice with imageWidth=columns=j and imageHeight=rows=i.
-            # To overlay correctly, the zone map must have the same per-slice layout:
-            #   internal[k, i, j] = nifti[i, j, k]  →  transpose (2, 0, 1)
-            # The standard (2,1,0) would give internal[k, j, i], swapping the axes.
+            # internal format (k,i,j) using transpose (2,0,1) for 2D overlay.
             zone_mask_raw = result["zone_mask"]
             if zone_mask_raw.ndim == 3:
+                # Preserve the NIfTI-native data for correct GCS save
+                nifti_native_data = zone_mask_raw.copy()
+                nifti_native_affine = img.affine.copy()
+                nifti_native_header = img.header.copy()
                 result["zone_mask"] = np.transpose(zone_mask_raw, (2, 0, 1))
 
         zone_mask = result["zone_mask"]
@@ -1512,8 +1761,43 @@ async def generate_zone_map_endpoint(
         if new_seg_id in segmentation_service.segmentations_cache:
             segmentation_service.segmentations_cache[new_seg_id]["masks_3d"] = zone_mask.astype(np.uint8)
 
-        # Save to GCS
+        # Save to GCS (metadata + masks via standard pipeline)
         segmentation_service._save_segmentation(new_seg_id)
+
+        # Overwrite GCS NIfTI with correctly-oriented zone map.
+        # The standard _save_masks_to_gcs transposes (2,1,0) assuming internal
+        # format (D,H,W)=(k,j,i), but the msmask path produces (k,i,j).
+        # This causes X/Y axis swap in the NIfTI. We fix it by saving the
+        # original NIfTI-native (i,j,k) data directly.
+        if nifti_native_data is not None and nifti_native_affine is not None:
+            try:
+                import tempfile as _tmpmod
+                import os as _os
+                import nibabel as nib
+
+                nifti_native_header.set_data_dtype(np.uint8)
+                nifti_native_header.set_data_shape(nifti_native_data.shape)
+                zone_nifti = nib.Nifti1Image(
+                    nifti_native_data.astype(np.uint8),
+                    nifti_native_affine,
+                    nifti_native_header,
+                )
+                with _tmpmod.NamedTemporaryFile(suffix='.nii.gz', delete=False) as tmp:
+                    nib.save(zone_nifti, tmp.name)
+                    tmp_path = tmp.name
+                with open(tmp_path, 'rb') as f:
+                    nifti_bytes = f.read()
+                _os.unlink(tmp_path)
+
+                blob_path = f"segmentations/{new_seg_id}/masks.nii.gz"
+                blob = segmentation_service.gcs_bucket.blob(blob_path)
+                blob.upload_from_string(nifti_bytes, content_type="application/gzip")
+                logger.info(
+                    "[ZoneMap] Saved correctly-oriented NIfTI to GCS",
+                    extra={"path": blob_path, "shape": list(nifti_native_data.shape)},
+                )
+            except Exception as e:
+                logger.warning("[ZoneMap] Failed to save corrected NIfTI: %s", str(e))
 
         logger.info(
             "[ZoneMap] Zone map segmentation created",
@@ -1523,6 +1807,30 @@ async def generate_zone_map_endpoint(
                 "processing_time_ms": result["processing_time_ms"],
             },
         )
+
+        # Propagate zone_map_seg_id to all lesion segmentations for this file
+        try:
+            all_segs = segmentation_service.list_segmentations(file_id=file_id)
+            for seg in all_segs:
+                if seg.segmentation_id == new_seg_id:
+                    continue
+                seg_meta = getattr(seg, 'metadata', None)
+                if seg_meta and getattr(seg_meta, 'description', '') == "MAGNIMS Zone Map":
+                    continue
+                seg_cache = segmentation_service.segmentations_cache.get(seg.segmentation_id)
+                if seg_cache:
+                    s_meta = seg_cache["metadata"]
+                    s_meta.analysis_data = {
+                        **(s_meta.analysis_data or {}),
+                        "zone_map_seg_id": new_seg_id,
+                    }
+                    segmentation_service._save_segmentation(seg.segmentation_id)
+                    logger.info(
+                        "[ZoneMap] Propagated zone_map_seg_id to %s",
+                        seg.segmentation_id,
+                    )
+        except Exception as e:
+            logger.warning("[ZoneMap] Failed to propagate zone_map_seg_id: %s", str(e))
 
         return {
             "segmentation_id": new_seg_id,
@@ -1620,3 +1928,106 @@ async def compare_longitudinal(
     except Exception as e:
         logger.error("Longitudinal comparison failed", extra={"error": str(e)})
         raise HTTPException(status_code=500, detail=f"Longitudinal comparison failed: {str(e)}")
+
+
+# =============================================================================
+# CVS / PRL Lesion Annotations (McDonald 2024 Biomarkers)
+# =============================================================================
+
+@router.post("/{segmentation_id}/lesion-annotations")
+async def annotate_lesions(
+    segmentation_id: str,
+    body: dict,
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+):
+    """
+    Save CVS/PRL annotations for individual lesions (McDonald 2024 biomarkers).
+
+    McDonald 2024 (Montalban et al., Lancet Neurology 2025) incorporates
+    Central Vein Sign (CVS) and Paramagnetic Rim Lesions (PRL) as diagnostic
+    biomarkers. CVS Select-6: >=6 CVS+ lesions. PRL: >=1 positive.
+
+    Body: { annotations: [{ lesion_id, cvs_status, prl_status, notes }] }
+    """
+    try:
+        if segmentation_id not in segmentation_service.segmentations_cache:
+            if not segmentation_service._load_segmentation(segmentation_id):
+                raise HTTPException(status_code=404, detail=f"Segmentation {segmentation_id} not found")
+
+        seg_data = segmentation_service.segmentations_cache[segmentation_id]
+        metadata = seg_data["metadata"]
+
+        annotations = body.get("annotations", [])
+        if not annotations:
+            raise HTTPException(status_code=400, detail="No annotations provided")
+
+        from datetime import datetime
+
+        # Merge annotations with existing ones
+        existing = (metadata.analysis_data or {}).get("lesion_annotations", [])
+        existing_map = {a.get("lesion_id"): a for a in existing if isinstance(a, dict)}
+
+        for ann in annotations:
+            lesion_id = ann.get("lesion_id")
+            if lesion_id is None:
+                continue
+            existing_map[lesion_id] = {
+                "lesion_id": lesion_id,
+                "cvs_status": ann.get("cvs_status"),
+                "prl_status": ann.get("prl_status"),
+                "annotated_by": ann.get("annotated_by", "manual"),
+                "annotated_at": datetime.utcnow().isoformat(),
+                "notes": ann.get("notes"),
+            }
+
+        merged_annotations = list(existing_map.values())
+
+        # Compute CVS summary (McDonald 2024 Select-6 and 40% rule)
+        cvs_evaluated = [a for a in merged_annotations if a.get("cvs_status") in ("positive", "negative")]
+        cvs_positive = sum(1 for a in cvs_evaluated if a.get("cvs_status") == "positive")
+        total_cvs_evaluated = len(cvs_evaluated)
+        cvs_summary = {
+            "total_evaluated": total_cvs_evaluated,
+            "cvs_positive": cvs_positive,
+            "cvs_negative": total_cvs_evaluated - cvs_positive,
+            "meets_select6": cvs_positive >= 6,
+            "meets_40pct": (cvs_positive / total_cvs_evaluated >= 0.4) if total_cvs_evaluated > 0 else False,
+        }
+
+        # Compute PRL summary (McDonald 2024: >=1 PRL)
+        prl_evaluated = [a for a in merged_annotations if a.get("prl_status") in ("positive", "negative")]
+        prl_positive = sum(1 for a in prl_evaluated if a.get("prl_status") == "positive")
+        prl_summary = {
+            "total_evaluated": len(prl_evaluated),
+            "prl_positive": prl_positive,
+            "meets_criteria": prl_positive >= 1,
+        }
+
+        # Persist in analysis_data
+        metadata.analysis_data = {
+            **(metadata.analysis_data or {}),
+            "lesion_annotations": merged_annotations,
+            "cvs_summary": cvs_summary,
+            "prl_summary": prl_summary,
+        }
+        segmentation_service._save_segmentation(segmentation_id)
+
+        logger.info("Lesion annotations saved", extra={
+            "segmentation_id": segmentation_id,
+            "annotations_count": len(merged_annotations),
+            "cvs_positive": cvs_positive,
+            "prl_positive": prl_positive,
+        })
+
+        return {
+            "segmentation_id": segmentation_id,
+            "annotations_count": len(merged_annotations),
+            "cvs_summary": cvs_summary,
+            "prl_summary": prl_summary,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Lesion annotation failed", extra={"error": str(e)})
+        raise HTTPException(status_code=500, detail=f"Lesion annotation failed: {str(e)}")

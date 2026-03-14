@@ -301,6 +301,7 @@
     "createNewToStart": "Create a new one to start",
     "activeSegmentation": "Active segmentation",
     "showOverlay": "Show Overlay",
+    "emptyMask": "Mask is empty — no annotated voxels found",
     "lesionOpacity": "Lesion opacity",
     "zoneMapOpacity": "Zone map opacity",
     "hideLabel": "Hide label",
@@ -1042,6 +1043,7 @@
     "method": "Method",
     "methodAuto": "Auto (best)",
     "methodParcellation": "Parcellation",
+    "methodMSMask": "MSMask",
     "methodGeometric": "Geometric",
     "avgConfidence": "Avg confidence",
     "distanceDetails": "Classification Distances (mm)",
@@ -1134,5 +1136,26 @@
     "focusMode": "Focus mode enabled",
     "highContrast": "High contrast enabled",
     "reducedMotion": "Reduced motion detected"
+  },
+  "clinical": {
+    "tools": "Tools",
+    "loading": "Loading tools...",
+    "researchOnly": "Research Use Only - Not FDA Cleared",
+    "available": "Available",
+    "unavailable": "Unavailable",
+    "lstaiDesc": "MS lesion segmentation + MAGNIMS zone classification",
+    "synthsegDesc": "Brain parcellation (30+ structures, any contrast)",
+    "requires": "Requires",
+    "selectFile": "Select file...",
+    "inputImage": "Input image",
+    "runLSTAI": "Run LST-AI Segmentation",
+    "runSynthSeg": "Run Brain Parcellation",
+    "running": "Running...",
+    "pending": "Pending",
+    "downloading": "Downloading NIfTI...",
+    "processing": "Processing...",
+    "storing": "Storing result...",
+    "completed": "Completed",
+    "failed": "Failed"
   }
 }

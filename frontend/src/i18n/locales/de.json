@@ -297,6 +297,7 @@
     "createNewEmpty": "Erstellen Sie eine neue leere Segmentierung für das aktuelle Bild",
     "activeSegmentation": "Aktive Segmentierung",
     "showOverlay": "Überlagerung Anzeigen",
+    "emptyMask": "Die Maske ist leer — keine annotierten Voxel gefunden",
     "lesionOpacity": "Läsion-Opazität",
     "zoneMapOpacity": "Zonenkartenopazität",
     "labels": "Beschriftungen",
@@ -1044,6 +1045,7 @@
     "method": "Methode",
     "methodAuto": "Auto (beste)",
     "methodParcellation": "Parzellierung",
+    "methodMSMask": "MSMask",
     "methodGeometric": "Geometrisch",
     "avgConfidence": "Durchschn. Konfidenz",
     "distanceDetails": "Klassifikationsabstände (mm)",
@@ -1129,5 +1131,26 @@
     "focusMode": "Fokusmodus aktiviert",
     "highContrast": "Hoher Kontrast aktiviert",
     "reducedMotion": "Reduzierte Bewegung erkannt"
+  },
+  "clinical": {
+    "tools": "Werkzeuge",
+    "loading": "Werkzeuge laden...",
+    "researchOnly": "Nur fuer Forschung - Nicht FDA-zugelassen",
+    "available": "Verfuegbar",
+    "unavailable": "Nicht verfuegbar",
+    "lstaiDesc": "MS-Laesionssegmentierung + MAGNIMS-Zonenklassifikation",
+    "synthsegDesc": "Hirnparzellierung (30+ Strukturen, jeder Kontrast)",
+    "requires": "Erfordert",
+    "selectFile": "Datei auswaehlen...",
+    "inputImage": "Eingabebild",
+    "runLSTAI": "LST-AI ausfuehren",
+    "runSynthSeg": "Hirnparzellierung ausfuehren",
+    "running": "Laeuft...",
+    "pending": "Ausstehend",
+    "downloading": "NIfTI herunterladen...",
+    "processing": "Verarbeitung...",
+    "storing": "Ergebnis speichern...",
+    "completed": "Abgeschlossen",
+    "failed": "Fehlgeschlagen"
   }
 }

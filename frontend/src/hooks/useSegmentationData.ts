@@ -60,7 +60,11 @@ export function useSegmentationData({
     // local- IDs already have an empty mask initialized by createSegmentation
   }, [currentSegmentation?.segmentation_id]);
 
-  // Sync currentSegmentation → Zustand activeSegmentation so the panel shows paint tools
+  // Sync currentSegmentation → Zustand activeSegmentation so the panel shows paint tools.
+  // Re-runs when mask loading completes (annotatedVoxels changes) to show real progress.
+  const annotatedVoxels = segmentationMask.state.annotatedVoxels;
+  const maskDimensions = segmentationMask.state.dimensions;
+
   useEffect(() => {
     const store = useSegmentationStore.getState();
     if (currentSegmentation) {
@@ -68,6 +72,24 @@ export function useSegmentationData({
         { id: 0, name: 'Background', color: '#000000', opacity: 0, visible: false },
         { id: 1, name: 'Lesion', color: '#FF0000', opacity: 0.5, visible: true },
       ];
+
+      // Compute actual annotated slice count from mask data
+      let slicesAnnotated = 0;
+      const totalSlices = currentSegmentation.total_slices;
+      if (segmentationMask.isLoaded && maskDimensions) {
+        const { height, width } = maskDimensions;
+        const sliceSize = height * width;
+        for (let s = 0; s < totalSlices; s++) {
+          const slice = segmentationMask.getSliceMask(s);
+          if (slice) {
+            for (let i = 0; i < sliceSize; i++) {
+              if (slice[i] > 0) { slicesAnnotated++; break; }
+            }
+          }
+        }
+      }
+      const progressPct = totalSlices > 0 ? Math.round((slicesAnnotated / totalSlices) * 100) : 0;
+
       // Build a minimal Segmentation object for the panel
       const synced: Segmentation = {
         id: currentSegmentation.segmentation_id,
@@ -78,9 +100,9 @@ export function useSegmentationData({
         name: currentSegmentation.metadata?.description || 'Segmentation',
         segmentation_type: 'manual' as Segmentation['segmentation_type'],
         status: 'in_progress' as Segmentation['status'],
-        progress_percentage: 0,
-        slices_annotated: 0,
-        total_slices: currentSegmentation.total_slices,
+        progress_percentage: progressPct,
+        slices_annotated: slicesAnnotated,
+        total_slices: totalSlices,
         created_by: 'current_user',
         labels,
         created_at: currentSegmentation.metadata?.created_at || new Date().toISOString(),
@@ -93,7 +115,7 @@ export function useSegmentationData({
         store.setActiveSegmentation(null);
       }
     }
-  }, [currentSegmentation, currentSeries?.file_id]);
+  }, [currentSegmentation, currentSeries?.file_id, annotatedVoxels, maskDimensions]);
 
   // Fetch segmentations list for ALL images in the study
   const { data: segmentations } = useQuery({

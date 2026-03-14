@@ -106,9 +106,11 @@ const MAGNIMS_ZONE_COLORS_LESION: Record<number, ParsedColor> = {
 };
 
 /**
- * Create a composite slice: for each lesion voxel (>0), use the zone map value
- * at the same position as the label ID. This colorizes lesions by MAGNIMS zone
- * without modifying the original mask.
+ * Create a composite slice for MAGNIMS zone colorization.
+ *
+ * If the lesion mask already has MAGNIMS labels (1-4) from classification,
+ * use those directly (coherent with per-lesion classification results).
+ * Otherwise, fall back to zone map per-voxel colorization (visual reference only).
  */
 function createZoneColorizedSlice(
   lesionSlice: Uint8Array,
@@ -116,9 +118,29 @@ function createZoneColorizedSlice(
   length: number,
 ): Uint8Array {
   const composite = new Uint8Array(length);
+
+  // Check if mask already has MAGNIMS classification labels (1-4)
+  let hasClassifiedLabels = false;
   for (let i = 0; i < length; i++) {
-    if (lesionSlice[i] > 0 && zoneSlice[i] > 0) {
-      composite[i] = zoneSlice[i];
+    if (lesionSlice[i] >= 1 && lesionSlice[i] <= 4) {
+      hasClassifiedLabels = true;
+      break;
+    }
+  }
+
+  if (hasClassifiedLabels) {
+    // Classified mask: use each lesion's own MAGNIMS label (coherent with table)
+    for (let i = 0; i < length; i++) {
+      if (lesionSlice[i] >= 1 && lesionSlice[i] <= 4) {
+        composite[i] = lesionSlice[i];
+      }
+    }
+  } else {
+    // Unclassified mask: use zone map as visual reference (per-voxel)
+    for (let i = 0; i < length; i++) {
+      if (lesionSlice[i] > 0 && zoneSlice[i] > 0) {
+        composite[i] = zoneSlice[i];
+      }
     }
   }
   return composite;
@@ -349,6 +371,9 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
   const lesionOpacity = useSegmentationStore((s) => s.lesionOpacity);
   const zoneMapOpacity = useSegmentationStore((s) => s.zoneMapOpacity);
 
+  // Selected lesion for bounding box + centroid rendering
+  const selectedLesion = useSegmentationStore((s) => s.selectedLesion);
+
   // State
   const [isPainting, setIsPainting] = useState(false);
   const [cursorPosition, setCursorPosition] = useState<{ x: number; y: number } | null>(null);
@@ -436,6 +461,11 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
     };
   }, [baseImageData, showBaseImage]);
 
+  // In matplotlib mode, CSS transform: scale(zoom) on the parent stretches the canvas
+  // bitmap, making strokes blurry. Compensate by rendering at higher resolution.
+  // Cap at 4x to avoid excessive memory usage.
+  const bufferScale = matplotlibBbox ? Math.min(Math.max(1, Math.ceil(zoomLevel)), 4) : 1;
+
   // Render base layer
   const renderBaseLayer = useCallback(() => {
     const canvas = baseCanvasRef.current;
@@ -445,7 +475,7 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (!matplotlibBbox) {
       // Standard mode: Apply transformations
@@ -458,10 +488,13 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
       ctx.drawImage(img, 0, 0, canvasSize.width, canvasSize.height);
       ctx.restore();
     } else {
-      // Matplotlib mode: No transformations
+      // Matplotlib mode: scale context to match higher-res buffer
+      ctx.save();
+      ctx.scale(bufferScale, bufferScale);
       ctx.drawImage(img, 0, 0, canvasSize.width, canvasSize.height);
+      ctx.restore();
     }
-  }, [canvasSize, zoomLevel, panOffset, matplotlibBbox]);
+  }, [canvasSize, zoomLevel, panOffset, matplotlibBbox, bufferScale]);
 
   // Re-render base when params change
   useEffect(() => {
@@ -478,8 +511,8 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Clear overlay
-    ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
+    // Clear overlay (use buffer dimensions, not display dimensions)
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const isMatplotlibMode = !!matplotlibBbox;
 
@@ -491,6 +524,10 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
       ctx.translate(centerX + panOffset.x, centerY + panOffset.y);
       ctx.scale(zoomLevel, zoomLevel);
       ctx.translate(-centerX, -centerY);
+    } else if (bufferScale > 1) {
+      // Matplotlib mode: scale context to match higher-res buffer for crisp strokes
+      ctx.save();
+      ctx.scale(bufferScale, bufferScale);
     }
 
     // Draw MAGNIMS zone map as semi-transparent background (before lesion mask)
@@ -678,6 +715,59 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
       }
     }
 
+    // Draw selected lesion bounding box + centroid
+    // Backend np.argwhere returns (z, y, x) in mask's (D, H, W) space.
+    // Empirically confirmed: backend y maps to display X, backend x maps to display Y.
+    if (selectedLesion) {
+      const bb = selectedLesion.bounding_box;
+      const centroid = selectedLesion.centroid;
+      const isSliceInRange = sliceIndex >= bb.z_min && sliceIndex <= bb.z_max;
+
+      if (isSliceInRange) {
+        const pixelsPerVoxelX = canvasSize.width / imageWidth;
+        const pixelsPerVoxelY = canvasSize.height / imageHeight;
+
+        // Map backend coords → display coords: y→X, x→Y
+        const bx = bb.y_min * pixelsPerVoxelX;
+        const by = bb.x_min * pixelsPerVoxelY;
+        const bw = (bb.y_max - bb.y_min + 1) * pixelsPerVoxelX;
+        const bh = (bb.x_max - bb.x_min + 1) * pixelsPerVoxelY;
+
+        // Dashed yellow bounding box
+        ctx.save();
+        ctx.strokeStyle = '#FFD700';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 3]);
+        ctx.strokeRect(bx, by, bw, bh);
+        ctx.setLineDash([]);
+        ctx.restore();
+
+        // Centroid crosshair (show on centroid's z slice ± 1)
+        if (Math.abs(sliceIndex - Math.round(centroid.z)) <= 1) {
+          const cx = (centroid.y + 0.5) * pixelsPerVoxelX;
+          const cy = (centroid.x + 0.5) * pixelsPerVoxelY;
+          const armLen = 8;
+
+          ctx.save();
+          ctx.strokeStyle = '#FF4444';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(cx - armLen, cy); ctx.lineTo(cx + armLen, cy);
+          ctx.moveTo(cx, cy - armLen); ctx.lineTo(cx, cy + armLen);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+          ctx.fillStyle = '#FF4444';
+          ctx.fill();
+          ctx.strokeStyle = '#FFFFFF';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+    }
+
     // Draw cursor — only in edit mode (isPaintMode), not view-only
     if (cursorPosition && enabled && isPaintMode) {
       const canvasX = (cursorPosition.x / imageWidth) * canvasSize.width;
@@ -703,16 +793,16 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
       }
     }
 
-    if (!isMatplotlibMode) {
+    if (!isMatplotlibMode || bufferScale > 1) {
       ctx.restore();
     }
   }, [
     canvasSize, imageWidth, imageHeight, cursorPosition, enabled, isPaintMode,
     brushSize, brushShape, eraseMode, showOverlay, zoomLevel, panOffset,
-    matplotlibBbox, segmentationMask, sliceIndex, renderVersion, storeLabels,
+    matplotlibBbox, bufferScale, segmentationMask, sliceIndex, renderVersion, storeLabels,
     aiClickPoints, heatmapMode, expertMasks,
     zoneMapMask, zoneMapDims, zoneMapVisible, zoneColorizeEnabled,
-    lesionOpacity, zoneMapOpacity,
+    lesionOpacity, zoneMapOpacity, selectedLesion,
   ]);
 
   // Re-render overlay when mask or slice changes
@@ -820,22 +910,6 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
       return;
     }
 
-    // Diagnostic: log all relevant values at paint start
-    const canvas = overlayCanvasRef.current;
-    if (canvas) {
-      const rect = canvas.getBoundingClientRect();
-      console.warn('[SegCanvas] Paint start', {
-        canvasState: `${canvasSize.width}×${canvasSize.height}`,
-        canvasDOM: `${canvas.width}×${canvas.height}`,
-        cssRect: `${Math.round(rect.width)}×${Math.round(rect.height)}`,
-        image: `${imageWidth}×${imageHeight}`,
-        mask: maskDims ? `${maskDims.width}×${maskDims.height}` : 'none',
-        transposed: maskDimsTransposed,
-        zoom: zoomLevel,
-        pan: `${panOffset.x},${panOffset.y}`,
-      });
-    }
-
     segmentationMask.beginStroke(sliceIndex);
     setIsPainting(true);
     const pos = getMousePos(e);
@@ -898,20 +972,20 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
       {showBaseImage && (
         <canvas
           ref={baseCanvasRef}
-          width={canvasSize.width}
-          height={canvasSize.height}
+          width={canvasSize.width * bufferScale}
+          height={canvasSize.height * bufferScale}
           className="absolute top-0 left-0"
-          style={{ pointerEvents: 'none' }}
+          style={{ pointerEvents: 'none', width: canvasSize.width, height: canvasSize.height, imageRendering: 'pixelated' }}
         />
       )}
 
       {/* Overlay layer: Mask + Cursor */}
       <canvas
         ref={overlayCanvasRef}
-        width={canvasSize.width}
-        height={canvasSize.height}
+        width={canvasSize.width * bufferScale}
+        height={canvasSize.height * bufferScale}
         className="absolute top-0 left-0"
-        style={{ pointerEvents: 'none' }}
+        style={{ pointerEvents: 'none', width: canvasSize.width, height: canvasSize.height, imageRendering: 'pixelated' }}
       />
 
       {/* Loading indicator */}

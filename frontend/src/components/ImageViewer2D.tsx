@@ -62,6 +62,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
   const lesionOpacity = useSegmentationStore((s) => s.lesionOpacity);
   const isPaintMode = useSegmentationStore((s) => s.isPaintMode);
   const setIsPaintMode = useSegmentationStore((s) => s.setIsPaintMode);
+  const selectedLesion = useSegmentationStore((s) => s.selectedLesion);
 
   // Derived values — same names so JSX props don't need changes
   const brushSize = paintTool.brushSize;
@@ -379,8 +380,8 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
               {/* Interactive segmentation canvas - covers full image in minimal mode, or bbox area.
                   When matplotlibSegId is set, backend renders the segmentation in the matplotlib PNG,
                   so hide the local canvas (avoid double overlay). Show it for editing, expert masks,
-                  or as fallback when backend overlay fails. */}
-              {((segmentationMode && currentSegmentation && (!matplotlibSegId || useLocalOverlayFallback)) || hasVisibleExperts) && currentSeries && (
+                  selected lesion bounding box, or as fallback when backend overlay fails. */}
+              {((segmentationMode && currentSegmentation && (!matplotlibSegId || useLocalOverlayFallback)) || hasVisibleExperts || selectedLesion) && currentSeries && (
                 <SegmentationCanvasLocal
                   ref={segmentationCanvasMatplotlibRef}
                   segmentationMask={segmentationMask}

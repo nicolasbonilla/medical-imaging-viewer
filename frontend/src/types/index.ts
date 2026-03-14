@@ -876,7 +876,7 @@ export const EXPERT_COLORS: Record<ExpertType, { color: string; label: string }>
 // AI Segmentation Types
 // ============================================================================
 
-export type AIModel = 'sam_med3d' | 'nninteractive' | 'synthseg';
+export type AIModel = 'sam_med3d' | 'nninteractive' | 'synthseg' | 'mindglide';
 
 export type AITaskStatus = 'pending' | 'processing' | 'completed' | 'failed';
 
@@ -1115,18 +1115,34 @@ export interface DISRegionDetail {
   label_id: number;
   present: boolean;
   voxel_count: number;
+  qualifying_lesion_count?: number;
 }
 
+/**
+ * McDonald 2024 DIS assessment (Montalban et al., Lancet Neurology 2025).
+ * Evaluates 3 brain MRI regions (PV, JC, IT) out of 5 total DIS regions
+ * (spinal cord and optic nerve require separate imaging).
+ */
 export interface DISAssessment {
   segmentation_id: string;
-  dis_met: boolean;
-  regions_with_lesions: number;
-  total_dis_regions: number;
+  dis_met_brain: boolean;
+  dis_criteria_version: string;
+  brain_regions_with_lesions: number;
+  total_dis_regions: number;         // 5 (McDonald 2024)
+  brain_regions_evaluated: number;   // 3
+  spinal_cord_evaluated: boolean;
+  optic_nerve_evaluated: boolean;
+  note: string;
   region_details: Record<string, DISRegionDetail>;
+  dwm_lesion_count: number;
+  dwm_voxels: number;
   has_active_lesions: boolean;
   has_black_holes: boolean;
   active_voxels: number;
   black_hole_voxels: number;
+  // Legacy fields for backwards compatibility
+  dis_met?: boolean;
+  regions_with_lesions?: number;
 }
 
 // ============================================================================
@@ -1166,7 +1182,7 @@ export interface LongitudinalResult {
 // Region Classification Types (MAGNIMS / SynthSeg + EDT)
 // ============================================================================
 
-export type ClassificationMethod = 'auto' | 'parcellation' | 'geometric';
+export type ClassificationMethod = 'auto' | 'parcellation' | 'msmask' | 'geometric';
 
 export interface LesionDistances {
   to_ventricle: number;
@@ -1215,8 +1231,50 @@ export interface ZoneMapResult {
 }
 
 // ============================================================================
+// CVS / PRL Annotations (McDonald 2024 Biomarkers)
+// ============================================================================
+
+export interface LesionAnnotation {
+  lesion_id: number;
+  cvs_status: 'positive' | 'negative' | 'indeterminate' | null;
+  prl_status: 'positive' | 'negative' | 'indeterminate' | null;
+  annotated_by: string | null;
+  annotated_at: string | null;
+  notes: string | null;
+}
+
+export interface CVSSummary {
+  total_evaluated: number;
+  cvs_positive: number;
+  cvs_negative: number;
+  meets_select6: boolean;     // McDonald 2024: >=6 CVS+ lesions
+  meets_40pct: boolean;       // McDonald 2024: >=40% CVS+ of evaluated
+}
+
+export interface PRLSummary {
+  total_evaluated: number;
+  prl_positive: number;
+  meets_criteria: boolean;    // McDonald 2024: >=1 PRL
+}
+
+// ============================================================================
 // Segmentation API Types (ITK-SNAP local-first flow)
 // ============================================================================
+
+/**
+ * Cached MAGNIMS analysis results persisted in Firestore (McDonald 2024).
+ */
+export interface SegmentationAnalysisData {
+  lesion_analysis?: LesionAnalysisResult;
+  dis_assessment?: DISAssessment;
+  classification?: RegionClassificationResult;
+  zone_map_seg_id?: string;
+  analysis_mask_modified_at?: string;
+  // McDonald 2024 biomarker annotations
+  lesion_annotations?: LesionAnnotation[];
+  cvs_summary?: CVSSummary;
+  prl_summary?: PRLSummary;
+}
 
 /**
  * Segmentation metadata returned by the server.
@@ -1227,6 +1285,7 @@ export interface SegmentationMetadata {
   modified_at: string;
   labels: LabelInfo[];
   description?: string;
+  analysis_data?: SegmentationAnalysisData | null;
 }
 
 /**
@@ -1264,4 +1323,41 @@ export interface CreateSegmentationRequest {
 export interface OverlayImageResponse {
   slice_index: number;
   overlay_image: string; // Base64 encoded image
+}
+
+// ============================================================================
+// Clinical Tools Types (LST-AI, SynthSeg)
+// ============================================================================
+
+export interface ClinicalToolInfo {
+  id: string;
+  name: string;
+  version: string;
+  available: boolean;
+  healthy?: boolean;
+  description: string;
+  citation: string;
+  license: string;
+  fda_status: 'research_only' | '510k_cleared';
+  required_inputs: string[];
+}
+
+export type ToolTaskStatus =
+  | 'pending'
+  | 'downloading'
+  | 'processing'
+  | 'storing'
+  | 'completed'
+  | 'failed';
+
+export interface ToolTaskResult {
+  task_id: string;
+  tool: string;
+  status: ToolTaskStatus;
+  progress: number;
+  segmentation_id?: string;
+  error?: string;
+  processing_time_ms?: number;
+  validation_source: string;
+  created_at: string;
 }

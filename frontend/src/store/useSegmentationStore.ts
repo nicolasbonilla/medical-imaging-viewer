@@ -22,6 +22,7 @@ import type {
   LabelPreset,
   OverlaySettings,
   OverlayMode,
+  LesionInfo,
 } from '@/types';
 import { DEFAULT_LABEL_PRESETS } from '@/types';
 
@@ -164,6 +165,13 @@ interface SegmentationState {
   zoneMapOpacity: number;
 
   // =========================================================================
+  // Selected Lesion (bounding box + centroid highlight)
+  // =========================================================================
+
+  /** Currently selected lesion from LesionDashboard click (for bounding box + centroid rendering) */
+  selectedLesion: LesionInfo | null;
+
+  // =========================================================================
   // Actions - Segmentation
   // =========================================================================
 
@@ -226,6 +234,12 @@ interface SegmentationState {
   toggleZoneColorize: () => void;
   setLesionOpacity: (opacity: number) => void;
   setZoneMapOpacity: (opacity: number) => void;
+
+  // =========================================================================
+  // Actions - Selected Lesion
+  // =========================================================================
+
+  setSelectedLesion: (lesion: LesionInfo | null) => void;
 
   // =========================================================================
   // Actions - Reset
@@ -294,6 +308,9 @@ const initialState = {
   zoneColorizeEnabled: false,
   lesionOpacity: 0.6,
   zoneMapOpacity: 0.3,
+
+  // Selected lesion
+  selectedLesion: null as LesionInfo | null,
 };
 
 // ============================================================================
@@ -536,6 +553,12 @@ export const useSegmentationStore = create<SegmentationState>()(
 
         setZoneMapOpacity: (opacity) =>
           set({ zoneMapOpacity: Math.max(0, Math.min(1, opacity)) }),
+
+        // =====================================================================
+        // Selected Lesion Actions
+        // =====================================================================
+
+        setSelectedLesion: (lesion) => set({ selectedLesion: lesion }),
 
         // =====================================================================
         // Reset Actions

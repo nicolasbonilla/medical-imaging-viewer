@@ -9,7 +9,7 @@
  * @module components/LesionDashboard
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Activity,
@@ -26,6 +26,7 @@ import {
   Eye,
   EyeOff,
   Palette,
+  Info,
 } from 'lucide-react';
 import { segmentationAPI } from '@/api/segmentation';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
@@ -37,8 +38,11 @@ import {
   type RegionClassificationResult,
   type ClassificationMethod,
   type ZoneMapResult,
+  type LesionAnnotation,
+  type CVSSummary,
+  type PRLSummary,
 } from '@/types';
-import { apiClient } from '@/services/apiClient';
+
 
 interface LesionDashboardProps {
   segmentationId: string;
@@ -81,7 +85,8 @@ function confidenceBadge(confidence: number): string {
 export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdated }: LesionDashboardProps) {
   const { t } = useTranslation();
   const reloadMaskCallback = useSegmentationStore((s) => s.reloadMaskCallback);
-  const currentFileId = useSegmentationStore((s) => s.currentSegmentation?.file_id);
+  const currentSegmentation = useSegmentationStore((s) => s.currentSegmentation);
+  const currentFileId = currentSegmentation?.file_id;
   const zoneMapSegId = useSegmentationStore((s) => s.zoneMapSegId);
   const zoneMapVisible = useSegmentationStore((s) => s.zoneMapVisible);
   const zoneColorizeEnabled = useSegmentationStore((s) => s.zoneColorizeEnabled);
@@ -96,6 +101,65 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
   const [expanded, setExpanded] = useState(false);
   const [highlightedLesion, setHighlightedLesion] = useState<number | null>(null);
   const [classifyMethod, setClassifyMethod] = useState<ClassificationMethod>('auto');
+  const [lesionAnnotations, setLesionAnnotations] = useState<Record<number, Partial<LesionAnnotation>>>({});
+  const [cvsSummary, setCvsSummary] = useState<CVSSummary | null>(null);
+  const [prlSummary, setPrlSummary] = useState<PRLSummary | null>(null);
+  const annotationDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Auto-populate from persisted analysis_data
+  useEffect(() => {
+    const cached = currentSegmentation?.metadata?.analysis_data;
+    if (!cached) {
+      // Clear state when switching to a segmentation without cached data
+      setAnalysis(null);
+      setDis(null);
+      setClassification(null);
+      setExpanded(false);
+      return;
+    }
+    if (cached.lesion_analysis) {
+      setAnalysis(cached.lesion_analysis);
+      setExpanded(true);
+    }
+    if (cached.dis_assessment) setDis(cached.dis_assessment);
+    if (cached.classification) setClassification(cached.classification);
+    // CVS/PRL annotations
+    if (cached.lesion_annotations) {
+      const map: Record<number, Partial<LesionAnnotation>> = {};
+      for (const ann of cached.lesion_annotations) {
+        map[ann.lesion_id] = ann;
+      }
+      setLesionAnnotations(map);
+    }
+    if (cached.cvs_summary) setCvsSummary(cached.cvs_summary);
+    if (cached.prl_summary) setPrlSummary(cached.prl_summary);
+  }, [segmentationId, currentSegmentation?.metadata?.analysis_data]);
+
+  // Stale check: mask was edited after analysis was computed
+  const isAnalysisStale = !!(
+    analysis &&
+    currentSegmentation?.metadata?.modified_at &&
+    currentSegmentation?.metadata?.analysis_data?.analysis_mask_modified_at &&
+    currentSegmentation.metadata.modified_at !== currentSegmentation.metadata.analysis_data.analysis_mask_modified_at
+  );
+
+  // Helper: patch Zustand currentSegmentation with updated analysis_data (avoids extra API call)
+  const patchAnalysisData = useCallback((patch: Record<string, unknown>) => {
+    const store = useSegmentationStore.getState();
+    const cur = store.currentSegmentation;
+    if (!cur) return;
+    store.setCurrentSegmentation({
+      ...cur,
+      metadata: {
+        ...cur.metadata,
+        analysis_data: {
+          ...(cur.metadata?.analysis_data || {}),
+          ...patch,
+          analysis_mask_modified_at: cur.metadata.modified_at,
+        },
+      },
+    });
+  }, []);
 
   const handleAnalyze = useCallback(async () => {
     setIsLoading(true);
@@ -108,12 +172,14 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       setAnalysis(analysisResult);
       setDis(disResult);
       setExpanded(true);
+      // Persist in Zustand (server already cached in Firestore)
+      patchAnalysisData({ lesion_analysis: analysisResult, dis_assessment: disResult });
     } catch (err: any) {
       setError(err?.response?.data?.detail || err?.message || String(err));
     } finally {
       setIsLoading(false);
     }
-  }, [segmentationId]);
+  }, [segmentationId, patchAnalysisData]);
 
   const handleClassifyRegions = useCallback(async () => {
     setIsClassifying(true);
@@ -142,7 +208,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
         }
       }
 
-      // Re-run analysis to reflect the new MAGNIMS labels
+      // Re-run analysis to reflect the new MAGNIMS labels (server cache hit — fast)
       const [analysisResult, disResult] = await Promise.all([
         segmentationAPI.analyzeLesions(segmentationId),
         segmentationAPI.getDISAssessment(segmentationId),
@@ -150,49 +216,44 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       setAnalysis(analysisResult);
       setDis(disResult);
       setExpanded(true);
+
+      // Persist all in Zustand
+      patchAnalysisData({
+        classification: result,
+        lesion_analysis: analysisResult,
+        dis_assessment: disResult,
+      });
     } catch (err: any) {
       setError(err?.response?.data?.detail || err?.message || String(err));
     } finally {
       setIsClassifying(false);
     }
-  }, [segmentationId, classifyMethod, onMaskUpdated, reloadMaskCallback]);
+  }, [segmentationId, classifyMethod, onMaskUpdated, reloadMaskCallback, patchAnalysisData]);
 
   const handleGenerateZoneMap = useCallback(async () => {
     if (!currentFileId) return;
     setIsGeneratingZoneMap(true);
     setError(null);
     try {
-      // 1. Generate zone map on server (creates a new segmentation)
+      // 1. Generate zone map on server (creates a new segmentation + propagates zone_map_seg_id)
       const result = await segmentationAPI.generateZoneMap(currentFileId);
       setZoneMapStats(result);
 
-      // 2. Download the binary zone mask
-      const response = await apiClient.get(
-        `/api/v1/segmentation/${result.segmentation_id}/mask/binary`,
-        { responseType: 'arraybuffer' },
-      );
-      const buffer = response.data as ArrayBuffer;
-      if (buffer.byteLength < 12) throw new Error('Invalid zone map data');
-
-      const headerView = new DataView(buffer, 0, 12);
-      const depth = headerView.getUint32(0, true);
-      const height = headerView.getUint32(4, true);
-      const width = headerView.getUint32(8, true);
-      const maskData = new Uint8Array(buffer, 12);
+      // 2. Download via the reusable helper
+      const { mask, depth, height, width } = await segmentationAPI.loadZoneMapMask(result.segmentation_id);
 
       // 3. Store in Zustand for rendering
-      useSegmentationStore.getState().setZoneMap(
-        result.segmentation_id,
-        maskData,
-        { depth, height, width },
-      );
+      useSegmentationStore.getState().setZoneMap(result.segmentation_id, mask, { depth, height, width });
+
+      // 4. Update Zustand with zone_map_seg_id (server already propagated to Firestore)
+      patchAnalysisData({ zone_map_seg_id: result.segmentation_id });
     } catch (err: any) {
       const detail = err?.response?.data?.detail || err?.message || String(err);
       setError(detail);
     } finally {
       setIsGeneratingZoneMap(false);
     }
-  }, [currentFileId]);
+  }, [currentFileId, patchAnalysisData]);
 
   const handleToggleZoneMap = useCallback(() => {
     useSegmentationStore.getState().toggleZoneMapVisibility();
@@ -203,9 +264,16 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
   }, []);
 
   const handleLesionClick = useCallback((lesion: LesionInfo) => {
+    // Toggle: clicking the same lesion again deselects it
+    const current = useSegmentationStore.getState().selectedLesion;
+    if (current && current.id === lesion.id) {
+      setHighlightedLesion(null);
+      useSegmentationStore.getState().setSelectedLesion(null);
+      return;
+    }
     setHighlightedLesion(lesion.id);
     onNavigateToSlice?.(Math.round(lesion.centroid.z));
-    setTimeout(() => setHighlightedLesion(null), 2000);
+    useSegmentationStore.getState().setSelectedLesion(lesion);
   }, [onNavigateToSlice]);
 
   const handleExportCSV = useCallback(() => {
@@ -226,6 +294,48 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
     URL.revokeObjectURL(url);
   }, [analysis, segmentationId]);
 
+  /** Save CVS/PRL annotation change (debounced 1s) */
+  const handleAnnotationChange = useCallback((
+    lesionId: number,
+    field: 'cvs_status' | 'prl_status',
+    value: string | null,
+  ) => {
+    setLesionAnnotations((prev) => ({
+      ...prev,
+      [lesionId]: {
+        ...prev[lesionId],
+        lesion_id: lesionId,
+        [field]: value,
+        annotated_by: 'manual',
+      },
+    }));
+    // Debounce save to backend
+    if (annotationDebounceRef.current) clearTimeout(annotationDebounceRef.current);
+    annotationDebounceRef.current = setTimeout(async () => {
+      try {
+        const allAnnotations = Object.values({
+          ...lesionAnnotations,
+          [lesionId]: {
+            ...lesionAnnotations[lesionId],
+            lesion_id: lesionId,
+            [field]: value,
+            annotated_by: 'manual',
+          },
+        });
+        const result = await segmentationAPI.annotateLesions(segmentationId, allAnnotations);
+        setCvsSummary(result.cvs_summary);
+        setPrlSummary(result.prl_summary);
+        patchAnalysisData({
+          lesion_annotations: allAnnotations,
+          cvs_summary: result.cvs_summary,
+          prl_summary: result.prl_summary,
+        });
+      } catch (err: any) {
+        console.error('[LesionDashboard] Failed to save annotations:', err?.message || err);
+      }
+    }, 1000);
+  }, [segmentationId, lesionAnnotations, patchAnalysisData]);
+
   const maxRegionVol = analysis
     ? Math.max(...Object.values(analysis.regions).map((r) => r.total_volume_mm3), 1)
     : 1;
@@ -240,17 +350,24 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
             {t('lesions.title', 'Lesion Analysis')}
           </span>
         </div>
-        <button
-          onClick={handleAnalyze}
-          disabled={isLoading}
-          className="px-2 py-1 bg-amber-600 hover:bg-amber-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded text-xs text-white transition-colors"
-        >
-          {isLoading ? (
-            <Loader2 className="w-3 h-3 animate-spin" />
-          ) : (
-            t('lesions.analyze', 'Analyze')
+        <div className="flex items-center gap-1.5">
+          {isAnalysisStale && (
+            <span className="flex items-center gap-0.5 text-[9px] text-amber-400" title="Mask was edited since last analysis">
+              <AlertCircle className="w-3 h-3" /> Outdated
+            </span>
           )}
-        </button>
+          <button
+            onClick={handleAnalyze}
+            disabled={isLoading}
+            className="px-2 py-1 bg-amber-600 hover:bg-amber-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded text-xs text-white transition-colors"
+          >
+            {isLoading ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              t('lesions.analyze', 'Analyze')
+            )}
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -278,7 +395,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
 
         {/* Method selector */}
         <div className="flex gap-1">
-          {(['auto', 'geometric'] as const).map((m) => (
+          {(['auto', 'msmask', 'geometric'] as const).map((m) => (
             <button
               key={m}
               onClick={() => setClassifyMethod(m)}
@@ -290,6 +407,8 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
             >
               {m === 'auto'
                 ? t('classify.methodAuto', 'Auto (best)')
+                : m === 'msmask'
+                ? t('classify.methodMSMask', 'MSMask')
                 : t('classify.methodGeometric', 'Geometric')}
             </button>
           ))}
@@ -343,7 +462,12 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
               <div className="text-[9px] text-gray-400">
                 {t('classify.avgConfidence', 'Avg confidence')}:{' '}
                 <span className="text-white font-mono">
-                  {(classification.lesions.reduce((sum, l) => sum + l.confidence, 0) / classification.lesions.length * 100).toFixed(0)}%
+                  {(() => {
+                    const withConf = classification.lesions.filter(l => l.confidence != null);
+                    return withConf.length > 0
+                      ? `${(withConf.reduce((sum, l) => sum + (l.confidence ?? 0), 0) / withConf.length * 100).toFixed(0)}%`
+                      : 'N/A';
+                  })()}
                 </span>
               </div>
             )}
@@ -452,20 +576,20 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
         )}
       </div>
 
-      {/* DIS Badge */}
-      {dis && (
+      {/* DIS Badge — McDonald 2024 */}
+      {dis ? (
         <div className={`flex items-center gap-2 p-2 rounded-lg ${
-          dis.dis_met ? 'bg-green-900/30 border border-green-700/50' : 'bg-red-900/30 border border-red-700/50'
+          (dis.dis_met_brain ?? dis.dis_met) ? 'bg-green-900/30 border border-green-700/50' : 'bg-red-900/30 border border-red-700/50'
         }`}>
-          {dis.dis_met ? (
+          {(dis.dis_met_brain ?? dis.dis_met) ? (
             <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
           ) : (
             <XCircle className="w-4 h-4 text-red-400 shrink-0" />
           )}
           <div className="flex-1 min-w-0">
-            <div className={`text-xs font-bold ${dis.dis_met ? 'text-green-300' : 'text-red-300'}`}>
-              DIS: {dis.regions_with_lesions}/{dis.total_dis_regions} {t('lesions.regions', 'regions')}
-              {dis.dis_met ? ` \u2014 ${t('lesions.criterionMet', 'Criterion Met')}` : ` \u2014 ${t('lesions.criterionNotMet', 'Not Met')}`}
+            <div className={`text-xs font-bold ${(dis.dis_met_brain ?? dis.dis_met) ? 'text-green-300' : 'text-red-300'}`}>
+              DIS (Brain MRI): {dis.brain_regions_with_lesions ?? dis.regions_with_lesions}/{dis.brain_regions_evaluated ?? 3} {t('lesions.regions', 'regions')}
+              {(dis.dis_met_brain ?? dis.dis_met) ? ` — ${t('lesions.criterionMet', 'Criterion Met')}` : ` — ${t('lesions.criterionNotMet', 'Not Met')}`}
             </div>
             <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-1">
               {Object.entries(dis.region_details).map(([name, detail]) => (
@@ -479,13 +603,31 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                 </span>
               ))}
             </div>
+            {dis.note && (
+              <div className="text-[8px] text-gray-500 mt-1 italic">{dis.note}</div>
+            )}
+            {dis.dis_criteria_version && (
+              <div className="text-[7px] text-gray-600 mt-0.5">{dis.dis_criteria_version}</div>
+            )}
           </div>
+        </div>
+      ) : !classification && analysis && (
+        <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-800/50 border border-gray-700/50">
+          <Info className="w-4 h-4 text-gray-500 shrink-0" />
+          <span className="text-[10px] text-gray-400">
+            {t('lesions.classifyFirst', 'Classify regions first to evaluate DIS criteria')}
+          </span>
         </div>
       )}
 
-      {/* Additional DIS badges */}
-      {dis && (dis.has_active_lesions || dis.has_black_holes) && (
-        <div className="flex gap-2">
+      {/* Additional badges (DWM, active, black holes) */}
+      {dis && (dis.dwm_lesion_count > 0 || dis.has_active_lesions || dis.has_black_holes) && (
+        <div className="flex flex-wrap gap-2">
+          {dis.dwm_lesion_count > 0 && (
+            <span className="px-1.5 py-0.5 bg-yellow-900/40 border border-yellow-700/50 rounded text-[9px] text-yellow-300">
+              DWM: {dis.dwm_lesion_count} lesions (not a DIS region)
+            </span>
+          )}
           {dis.has_active_lesions && (
             <span className="px-1.5 py-0.5 bg-fuchsia-900/40 border border-fuchsia-700/50 rounded text-[9px] text-fuchsia-300">
               Gd+ {t('lesions.active', 'Active')}
@@ -496,6 +638,64 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
               T1 {t('lesions.blackHoles', 'Black Holes')}
             </span>
           )}
+        </div>
+      )}
+
+      {/* McDonald 2024 Biomarkers — CVS + PRL */}
+      {(cvsSummary || prlSummary) && (
+        <div className="bg-gray-900/60 rounded-lg p-2 space-y-1.5 border border-indigo-700/40">
+          <div className="flex items-center gap-1.5">
+            <Activity className="w-3.5 h-3.5 text-indigo-400" />
+            <span className="text-xs font-semibold text-white">McDonald 2024 Biomarkers</span>
+          </div>
+
+          {cvsSummary && (
+            <div className="space-y-1">
+              <span className="text-[9px] text-gray-400 font-medium">
+                CVS (Central Vein Sign)
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                <span className={`px-1.5 py-0.5 rounded border text-[9px] font-medium ${
+                  cvsSummary.meets_select6
+                    ? 'bg-green-900/40 text-green-300 border-green-700/50'
+                    : 'bg-gray-800 text-gray-400 border-gray-700/50'
+                }`}>
+                  {cvsSummary.meets_select6 ? <CheckCircle2 className="w-2.5 h-2.5 inline mr-0.5" /> : <XCircle className="w-2.5 h-2.5 inline mr-0.5" />}
+                  Select 6: {cvsSummary.cvs_positive}/{cvsSummary.total_evaluated} CVS+
+                </span>
+                <span className={`px-1.5 py-0.5 rounded border text-[9px] font-medium ${
+                  cvsSummary.meets_40pct
+                    ? 'bg-green-900/40 text-green-300 border-green-700/50'
+                    : 'bg-gray-800 text-gray-400 border-gray-700/50'
+                }`}>
+                  {cvsSummary.meets_40pct ? <CheckCircle2 className="w-2.5 h-2.5 inline mr-0.5" /> : <XCircle className="w-2.5 h-2.5 inline mr-0.5" />}
+                  40% rule: {cvsSummary.total_evaluated > 0 ? `${Math.round(cvsSummary.cvs_positive / cvsSummary.total_evaluated * 100)}%` : '0%'}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {prlSummary && (
+            <div className="space-y-1">
+              <span className="text-[9px] text-gray-400 font-medium">
+                PRL (Paramagnetic Rim Lesions)
+              </span>
+              <div>
+                <span className={`px-1.5 py-0.5 rounded border text-[9px] font-medium ${
+                  prlSummary.meets_criteria
+                    ? 'bg-green-900/40 text-green-300 border-green-700/50'
+                    : 'bg-gray-800 text-gray-400 border-gray-700/50'
+                }`}>
+                  {prlSummary.meets_criteria ? <CheckCircle2 className="w-2.5 h-2.5 inline mr-0.5" /> : <XCircle className="w-2.5 h-2.5 inline mr-0.5" />}
+                  PRL: {prlSummary.prl_positive}/{prlSummary.total_evaluated} positive
+                </span>
+              </div>
+            </div>
+          )}
+
+          <div className="text-[7px] text-gray-600">
+            Montalban et al., Lancet Neurology 2025; 24(10): 850-865
+          </div>
         </div>
       )}
 
@@ -631,6 +831,8 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                       <th className="text-right py-0.5 px-1">JC</th>
                       <th className="text-right py-0.5 px-1">IT</th>
                       <th className="text-center py-0.5 px-1">Conf.</th>
+                      <th className="text-center py-0.5 px-1">CVS</th>
+                      <th className="text-center py-0.5 px-1">PRL</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -646,18 +848,46 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                           </span>
                         </td>
                         <td className="py-0.5 px-1 text-right font-mono text-gray-400">
-                          {cl.distances_mm.to_ventricle.toFixed(1)}
+                          {cl.distances_mm?.to_ventricle?.toFixed(1) ?? '-'}
                         </td>
                         <td className="py-0.5 px-1 text-right font-mono text-gray-400">
-                          {cl.distances_mm.to_cortex.toFixed(1)}
+                          {cl.distances_mm?.to_cortex?.toFixed(1) ?? '-'}
                         </td>
                         <td className="py-0.5 px-1 text-right font-mono text-gray-400">
-                          {cl.distances_mm.to_infratentorial.toFixed(1)}
+                          {cl.distances_mm?.to_infratentorial?.toFixed(1) ?? '-'}
                         </td>
                         <td className="py-0.5 px-1 text-center">
-                          <span className={`px-1 py-0.5 rounded border text-[8px] font-mono ${confidenceBadge(cl.confidence)}`}>
-                            {(cl.confidence * 100).toFixed(0)}%
-                          </span>
+                          {cl.confidence != null ? (
+                            <span className={`px-1 py-0.5 rounded border text-[8px] font-mono ${confidenceBadge(cl.confidence)}`}>
+                              {(cl.confidence * 100).toFixed(0)}%
+                            </span>
+                          ) : (
+                            <span className="text-[8px] text-gray-600">N/A</span>
+                          )}
+                        </td>
+                        <td className="py-0.5 px-1 text-center">
+                          <select
+                            value={lesionAnnotations[cl.lesion_id]?.cvs_status ?? ''}
+                            onChange={(e) => handleAnnotationChange(cl.lesion_id, 'cvs_status', e.target.value || null)}
+                            className="bg-gray-800 text-[8px] text-gray-300 border border-gray-700 rounded px-0.5 py-0 w-10"
+                          >
+                            <option value="">—</option>
+                            <option value="positive">+</option>
+                            <option value="negative">−</option>
+                            <option value="indeterminate">?</option>
+                          </select>
+                        </td>
+                        <td className="py-0.5 px-1 text-center">
+                          <select
+                            value={lesionAnnotations[cl.lesion_id]?.prl_status ?? ''}
+                            onChange={(e) => handleAnnotationChange(cl.lesion_id, 'prl_status', e.target.value || null)}
+                            className="bg-gray-800 text-[8px] text-gray-300 border border-gray-700 rounded px-0.5 py-0 w-10"
+                          >
+                            <option value="">—</option>
+                            <option value="positive">+</option>
+                            <option value="negative">−</option>
+                            <option value="indeterminate">?</option>
+                          </select>
                         </td>
                       </tr>
                     ))}

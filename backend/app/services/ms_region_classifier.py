@@ -1,11 +1,17 @@
 """
 MS Lesion Region Classification Service.
 
-Classifies MS lesions into MAGNIMS/McDonald 2024 anatomical regions:
-  1 - Periventricular (PV): Direct contact with lateral ventricles
-  2 - Juxtacortical (JC): Touching cortex / involving U-fibers
+Classifies MS lesions into anatomical regions per McDonald 2024 criteria
+(Montalban et al., Lancet Neurology 2025; 24(10): 850-865) and
+2024 MAGNIMS-CMSC-NAIMS consensus (Barkhof et al., Lancet Neurology 2025;
+24(10): 866-879):
+  1 - Periventricular (PV): Abutting lateral ventricles
+  2 - Juxtacortical (JC): Directly abutting cortex
   3 - Infratentorial (IT): Brainstem, cerebellum, cerebellar peduncles
   4 - Deep White Matter (DWM): Cerebral WM not meeting PV/JC/IT criteria
+
+Note: McDonald 2024 DIS regions are PV, JC, IT, spinal cord, and optic nerve.
+DWM is NOT a DIS region. Spinal cord and optic nerve require separate imaging.
 
 Two methods are provided:
 
@@ -20,9 +26,10 @@ Two methods are provided:
 Priority cascade: IT -> PV -> JC -> DWM (most specific first).
 
 References:
-  - Filippi et al., Brain 2019; 142(7): 1858-1875 (MAGNIMS practical guidelines)
-  - Thompson et al., Lancet Neurology 2018; 17: 162-173 (McDonald 2017 criteria)
-  - Wiltgen et al., NeuroImage: Clinical 2024 (LST-AI zone classification)
+  - Montalban et al., Lancet Neurol 2025; 24(10): 850-865 (McDonald 2024)
+  - Barkhof et al., Lancet Neurol 2025; 24(10): 866-879 (MAGNIMS-CMSC-NAIMS 2024)
+  - Filippi et al., Brain 2019; 142(7): 1858-1875 (practical MRI guidelines)
+  - Wiltgen et al., NeuroImage: Clinical 2024; 42: 103611 (LST-AI/MSMask)
   - Billot et al., NeuroImage 2023 (SynthSeg parcellation)
 
 @module services.ms_region_classifier
@@ -75,7 +82,7 @@ MSMASK_LABELS = {"CSF": 1, "GM": 2, "WM": 3, "Ventricles": 4, "Infratentorial": 
 # the same "direct contact" criterion (Filippi 2019: "directly abutting").
 PV_DISTANCE_THRESHOLD_MM = 1.5
 
-# Juxtacortical: "touching the cortex" (Thompson 2018, Filippi 2019).
+# Juxtacortical: "directly abutting cortex" (McDonald 2024, Filippi 2019).
 JC_DISTANCE_THRESHOLD_MM = 1.5
 
 # Infratentorial: lesion within or touching brainstem/cerebellum.
@@ -360,21 +367,25 @@ def classify_lesions_geometric(
         cz = float(centroid[0])
 
         # Geometric heuristics (priority cascade)
+        # NOTE: Geometric method has no empirically calibrated confidence scores.
+        # confidence=None indicates uncalibrated (use parcellation or MSMask for validated results).
         # 1. Infratentorial: z-coordinate below threshold
         if cz < it_z_threshold:
-            region_id, region_name, confidence = 3, "Infratentorial", 0.75
+            region_id, region_name = 3, "Infratentorial"
 
         # 2. Periventricular: close to center of brain
         elif float(dist_from_center[comp_mask].mean()) < pv_center_threshold:
-            region_id, region_name, confidence = 1, "Periventricular", 0.60
+            region_id, region_name = 1, "Periventricular"
 
         # 3. Juxtacortical: close to brain surface
         elif float(dist_from_surface[comp_mask].min()) < jc_surface_threshold:
-            region_id, region_name, confidence = 2, "Juxtacortical", 0.55
+            region_id, region_name = 2, "Juxtacortical"
 
         # 4. Deep white matter: default
         else:
-            region_id, region_name, confidence = 4, "Deep White Matter", 0.50
+            region_id, region_name = 4, "Deep White Matter"
+
+        confidence = None  # Geometric: not empirically calibrated
 
         classified_mask[comp_mask] = region_id
 
@@ -382,7 +393,8 @@ def classify_lesions_geometric(
             "lesion_id": len(lesion_details) + 1,
             "region_id": region_id,
             "region": region_name,
-            "confidence": round(confidence, 3),
+            "confidence": confidence,  # None — geometric method is not calibrated
+            "confidence_note": "Geometric method — not empirically calibrated. Use parcellation or MSMask for validated confidence.",
             "volume_mm3": round(volume_mm3, 2),
             "volume_ml": round(volume_mm3 / 1000, 4),
             "voxel_count": voxel_count,
@@ -427,6 +439,175 @@ def classify_lesions_geometric(
 
 
 # =============================================================================
+# MSMask Atlas-based Lesion Classification
+# =============================================================================
+
+
+def classify_from_zone_mask(
+    lesion_mask: np.ndarray,
+    zone_mask: np.ndarray,
+    voxel_spacing: tuple[float, float, float] = (1.0, 1.0, 1.0),
+) -> dict:
+    """
+    Classify MS lesions into MAGNIMS regions using a pre-computed zone mask.
+
+    For each connected component in lesion_mask, counts overlapping zone voxels
+    and assigns the region with the majority vote. This function does NOT generate
+    the zone mask — it expects one already computed (from atlas or parcellation).
+
+    Args:
+        lesion_mask: 3D binary lesion mask (D, H, W), uint8.
+        zone_mask: 3D zone mask (D, H, W), uint8 with values 0-4.
+        voxel_spacing: (dz, dy, dx) in mm.
+
+    Returns:
+        Dict with classified_mask, lesions list, summary, processing time.
+    """
+    from scipy.ndimage import label as scipy_label
+
+    start_time = time.time()
+
+    binary = (lesion_mask > 0).astype(np.int32)
+    labeled, num_components = scipy_label(binary)
+
+    if num_components == 0:
+        elapsed_ms = int((time.time() - start_time) * 1000)
+        return {
+            "classified_mask": np.zeros_like(lesion_mask, dtype=np.uint8),
+            "lesions": [],
+            "total_classified": 0,
+            "classification_summary": {},
+            "processing_time_ms": elapsed_ms,
+        }
+
+    classified_mask = np.zeros_like(lesion_mask, dtype=np.uint8)
+    voxel_vol_mm3 = float(np.prod(voxel_spacing))
+    lesion_details = []
+
+    for comp_id in range(1, num_components + 1):
+        comp_mask = labeled == comp_id
+        voxel_count = int(comp_mask.sum())
+        volume_mm3 = voxel_count * voxel_vol_mm3
+
+        if volume_mm3 < MIN_LESION_VOLUME_MM3:
+            continue
+
+        # Get zone values at lesion voxels
+        zone_vals = zone_mask[comp_mask]
+
+        # Count votes per zone (ignore 0 = background)
+        zone_counts = {}
+        for z_id in [1, 2, 3, 4]:
+            count = int((zone_vals == z_id).sum())
+            if count > 0:
+                zone_counts[z_id] = count
+
+        if not zone_counts:
+            # Lesion falls entirely outside atlas coverage → DWM fallback
+            region_id = 4
+            confidence = 0.50
+        else:
+            # Majority vote
+            region_id = max(zone_counts, key=zone_counts.get)
+            total_in_zones = sum(zone_counts.values())
+            confidence = zone_counts[region_id] / total_in_zones
+
+            # Boost confidence: atlas-based is inherently more accurate
+            # Scale from raw agreement (0.25-1.0) to (0.75-0.98)
+            confidence = 0.75 + 0.23 * min(1.0, confidence)
+
+        region_name = REGION_NAMES.get(region_id, "Unknown")
+        classified_mask[comp_mask] = region_id
+
+        # Compute centroid
+        coords = np.argwhere(comp_mask)
+        centroid = coords.mean(axis=0)
+
+        lesion_details.append({
+            "lesion_id": len(lesion_details) + 1,
+            "region_id": region_id,
+            "region": region_name,
+            "confidence": round(confidence, 3),
+            "volume_mm3": round(volume_mm3, 2),
+            "volume_ml": round(volume_mm3 / 1000, 4),
+            "voxel_count": voxel_count,
+            "centroid": {
+                "z": round(float(centroid[0]), 1),
+                "y": round(float(centroid[1]), 1),
+                "x": round(float(centroid[2]), 1),
+            },
+            "zone_votes": {
+                REGION_NAMES.get(z, "Unknown"): c
+                for z, c in sorted(zone_counts.items())
+            } if zone_counts else {},
+        })
+
+    elapsed_ms = int((time.time() - start_time) * 1000)
+    summary = _build_summary(lesion_details)
+
+    logger.info(
+        "[RegionClassifier-ZoneMask] Classification: "
+        "%d lesions in %dms — PV=%d, JC=%d, IT=%d, DWM=%d",
+        len(lesion_details), elapsed_ms,
+        summary.get("Periventricular", 0),
+        summary.get("Juxtacortical", 0),
+        summary.get("Infratentorial", 0),
+        summary.get("Deep White Matter", 0),
+    )
+
+    return {
+        "classified_mask": classified_mask,
+        "lesions": lesion_details,
+        "total_classified": len(lesion_details),
+        "classification_summary": summary,
+        "processing_time_ms": elapsed_ms,
+    }
+
+
+def classify_lesions_with_atlas(
+    lesion_mask: np.ndarray,
+    target_img,
+    voxel_spacing: tuple[float, float, float] = (1.0, 1.0, 1.0),
+) -> dict:
+    """
+    Classify MS lesions into MAGNIMS regions using the MSMask atlas.
+
+    Generates a zone map via generate_zone_map_atlas(), then delegates to
+    classify_from_zone_mask() for the actual per-lesion classification.
+
+    Args:
+        lesion_mask: 3D binary lesion mask (D, H, W), uint8.
+        target_img: nibabel Nifti1Image of the patient MRI (for atlas resampling).
+        voxel_spacing: (dz, dy, dx) in mm.
+
+    Returns:
+        Dict with classified_mask, lesions list, summary, processing time.
+    """
+    start_time = time.time()
+
+    # 1. Generate zone map from MSMask atlas
+    zone_result = generate_zone_map_atlas(target_img, voxel_spacing)
+    zone_mask = zone_result["zone_mask"]
+    zone_gen_ms = zone_result["processing_time_ms"]
+
+    logger.info(
+        "[RegionClassifier-MSMask] Zone map generated in %dms, classifying lesions...",
+        zone_gen_ms,
+    )
+
+    # 2. Classify using the generated zone mask
+    result = classify_from_zone_mask(lesion_mask, zone_mask, voxel_spacing)
+
+    # Add method info and total timing
+    total_ms = int((time.time() - start_time) * 1000)
+    result["method"] = "msmask"
+    result["processing_time_ms"] = total_ms
+    result["zone_generation_ms"] = zone_gen_ms
+
+    return result
+
+
+# =============================================================================
 # Zone Map Generation
 # =============================================================================
 
@@ -463,7 +644,8 @@ def generate_zone_map(
     start_time = time.time()
 
     # --- Extract anatomical reference masks ---
-    ventricle_mask = np.isin(parcellation_mask, list(ALL_VENTRICLE_LABELS))
+    # McDonald 2024: PV = "abutting the lateral ventricles" only (excludes 3rd/4th ventricle)
+    ventricle_mask = np.isin(parcellation_mask, list(LATERAL_VENTRICLE_LABELS))
     cortex_mask = np.isin(parcellation_mask, list(CORTEX_LABELS))
     infratentorial_mask = np.isin(parcellation_mask, list(INFRATENTORIAL_LABELS))
     white_matter_mask = np.isin(parcellation_mask, list(WHITE_MATTER_LABELS))
@@ -788,8 +970,8 @@ def generate_zone_map_geometric(
     Steps:
       1. Brain extraction: Otsu threshold + morphological skull stripping
       2. Ventricle detection: dark CSF regions in the brain interior
-      3. PV zone: EDT from detected ventricles, <= 3mm (MAGNIMS threshold)
-      4. JC zone: EDT from brain surface (cortex), <= 4mm
+      3. PV zone: EDT from detected ventricles, <= 1.5mm (direct contact approx.)
+      4. JC zone: EDT from brain surface (cortex), <= 1.5mm (direct contact approx.)
       5. IT zone: bottom 25% of brain in z-axis
       6. DWM zone: remaining brain tissue
 

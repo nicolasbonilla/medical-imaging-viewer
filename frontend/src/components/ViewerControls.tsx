@@ -3,7 +3,6 @@ import { useViewerStore } from '@/store/useViewerStore';
 import { SegmentationPanel } from './SegmentationPanel';
 import { BrainVolumetryPanel } from './BrainVolumetryPanel';
 import { ComparisonMetricsPanel } from './ComparisonMetricsPanel';
-import { LesionDashboard } from './LesionDashboard';
 import { LongitudinalCompare } from './LongitudinalCompare';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import type { RenderMode } from '@/hooks/useViewerControls';
@@ -35,8 +34,8 @@ interface ViewerControlsProps {
   expertMasks?: Map<string, ExpertMaskData>;
   expertInstances?: ImagingInstance[];
   onNavigateToSlice?: (sliceIndex: number) => void;
-  /** Called when auto-classify updates the mask — parent should reload from server */
-  onMaskUpdated?: () => void;
+  /** Current view mode — controls which sections are visible */
+  viewMode?: '2d' | '3d';
 }
 
 export default function ViewerControls({
@@ -65,7 +64,7 @@ export default function ViewerControls({
   expertMasks,
   expertInstances,
   onNavigateToSlice,
-  onMaskUpdated,
+  viewMode = '2d',
 }: ViewerControlsProps) {
   const { t } = useTranslation();
   const { currentSeries, currentPatientId, currentStudyId, currentSeriesId } = useViewerStore();
@@ -75,6 +74,8 @@ export default function ViewerControls({
 
   return (
     <div className="bg-gray-900 rounded-lg p-3 space-y-2">
+      {/* 2D-only: Render mode toggle and matplotlib controls */}
+      {viewMode === '2d' && (
       <div>
         <label className="block text-xs text-gray-300 mb-1">{t('viewer.renderMode')}</label>
         <div className="flex gap-1">
@@ -100,8 +101,9 @@ export default function ViewerControls({
           </button>
         </div>
       </div>
+      )}
 
-      {renderMode === 'matplotlib' && (
+      {viewMode === '2d' && renderMode === 'matplotlib' && (
         <>
           <div>
             <label className="block text-xs text-gray-300 mb-1">{t('viewer.colormap')}</label>
@@ -213,8 +215,15 @@ export default function ViewerControls({
         </div>
       )}
 
-      {/* Brain Volumetry Panel (visible when segmentation is active) */}
-      {segmentationMode && activeSegmentation && (
+      {/* Brain Volumetry Panel (visible only for parcellation segmentations, not lesion masks) */}
+      {segmentationMode && activeSegmentation && (() => {
+        // Only show volumetry for parcellations (FreeSurfer labels have IDs > 6)
+        // Lesion/MAGNIMS masks use labels 0-6 only
+        const hasFreeSurferLabels = activeSegmentation.labels?.some(
+          (l) => l.id > 6
+        );
+        return hasFreeSurferLabels;
+      })() && (
         <div className="pt-2 border-t border-gray-700">
           <BrainVolumetryPanel
             segmentationId={activeSegmentation.id}
@@ -230,17 +239,6 @@ export default function ViewerControls({
             expertInstances={expertInstances}
             activeSegmentationId={activeSegmentation?.id}
             onNavigateToSlice={onNavigateToSlice}
-          />
-        </div>
-      )}
-
-      {/* Lesion Dashboard (visible when segmentation is active and saved) */}
-      {segmentationMode && activeSegmentation && !activeSegmentation.id.startsWith('local-') && (
-        <div className="pt-2 border-t border-gray-700">
-          <LesionDashboard
-            segmentationId={activeSegmentation.id}
-            onNavigateToSlice={onNavigateToSlice}
-            onMaskUpdated={onMaskUpdated}
           />
         </div>
       )}

@@ -119,6 +119,61 @@ class VolumetryComparisonResult(BaseModel):
 
 
 # =============================================================================
+# Validated Clinical Tool Models
+# =============================================================================
+
+class ToolTaskStatus(str, Enum):
+    """Status of an async clinical tool task."""
+    PENDING = "pending"
+    DOWNLOADING = "downloading"
+    PROCESSING = "processing"
+    STORING = "storing"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class ToolTask(BaseModel):
+    """Result/status of a validated clinical tool task (LST-AI, SynthSeg)."""
+    task_id: str
+    tool: str = Field(..., description="Tool identifier: 'lst-ai' or 'synthseg'")
+    status: ToolTaskStatus
+    progress: float = Field(default=0.0, ge=0.0, le=100.0)
+    segmentation_id: Optional[str] = None
+    error: Optional[str] = None
+    processing_time_ms: Optional[int] = None
+    validation_source: str = Field(default="custom", description="Tool version string, e.g. 'lst-ai-v1.0.3'")
+    created_at: str = Field(..., description="ISO 8601 timestamp")
+
+
+class LSTAISegmentRequest(BaseModel):
+    """Request for LST-AI lesion segmentation (requires T1 + FLAIR)."""
+    t1_file_id: str = Field(..., description="GCS file ID for T1-weighted MRI")
+    flair_file_id: str = Field(..., description="GCS file ID for FLAIR MRI")
+    patient_id: Optional[str] = None
+    study_id: Optional[str] = None
+
+
+class SynthSegRequest(BaseModel):
+    """Request for SynthSeg brain parcellation."""
+    file_id: str = Field(..., description="GCS file ID for brain MRI (any contrast)")
+    patient_id: Optional[str] = None
+    study_id: Optional[str] = None
+
+
+class ClinicalToolInfo(BaseModel):
+    """Information about a validated clinical tool."""
+    id: str
+    name: str
+    version: str
+    available: bool
+    description: str
+    citation: str
+    license: str
+    fda_status: str = Field(default="research_only", description="'research_only' or '510k_cleared'")
+    required_inputs: List[str] = Field(default_factory=list, description="Required input types, e.g. ['T1w', 'FLAIR']")
+
+
+# =============================================================================
 # AI Service Interface
 # =============================================================================
 

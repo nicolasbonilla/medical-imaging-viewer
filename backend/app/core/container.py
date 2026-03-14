@@ -136,6 +136,14 @@ class Container(containers.DeclarativeContainer):
         cache=cache_service
     )
 
+    # Clinical Tool Runner Service - Orchestrates validated tools (LST-AI, SynthSeg)
+    tool_runner_service = providers.Singleton(
+        lambda storage: __import__('app.services.tool_runner_service', fromlist=['ToolRunnerService']).ToolRunnerService(
+            storage_service=storage
+        ),
+        storage=storage_service
+    )
+
 
 def init_container() -> Container:
     """
@@ -163,6 +171,7 @@ def init_container() -> Container:
         "app.api.routes.segmentation",
         "app.api.routes.segmentation_v2",
         "app.api.routes.ai_segmentation",
+        "app.api.routes.clinical_tools",
     ])
 
     logger.info("DI Container initialized and wired successfully")
@@ -329,6 +338,16 @@ def get_ai_segmentation_service():
     """
     container = get_container()
     return container.ai_segmentation_service()
+
+
+def get_tool_runner_service():
+    """
+    Dependency function for FastAPI routes to get ToolRunnerService.
+
+    Orchestrates validated clinical tools (LST-AI, SynthSeg).
+    """
+    container = get_container()
+    return container.tool_runner_service()
 
 
 def get_segmentation_service_v2():

@@ -301,6 +301,7 @@
     "createNewToStart": "Crea una nueva para empezar",
     "activeSegmentation": "Segmentación activa",
     "showOverlay": "Mostrar Overlay",
+    "emptyMask": "La máscara está vacía — no se encontraron vóxeles anotados",
     "lesionOpacity": "Opacidad de lesiones",
     "zoneMapOpacity": "Opacidad de zonas",
     "hideLabel": "Ocultar etiqueta",
@@ -1042,6 +1043,7 @@
     "method": "Método",
     "methodAuto": "Auto (mejor)",
     "methodParcellation": "Parcelación",
+    "methodMSMask": "MSMask",
     "methodGeometric": "Geométrico",
     "avgConfidence": "Confianza promedio",
     "distanceDetails": "Distancias de Clasificación (mm)",
@@ -1134,5 +1136,26 @@
     "focusMode": "Modo de enfoque activado",
     "highContrast": "Alto contraste activado",
     "reducedMotion": "Movimiento reducido detectado"
+  },
+  "clinical": {
+    "tools": "Herramientas",
+    "loading": "Cargando herramientas...",
+    "researchOnly": "Solo para investigacion - No aprobado por FDA",
+    "available": "Disponible",
+    "unavailable": "No disponible",
+    "lstaiDesc": "Segmentacion de lesiones MS + clasificacion MAGNIMS",
+    "synthsegDesc": "Parcelacion cerebral (30+ estructuras, cualquier contraste)",
+    "requires": "Requiere",
+    "selectFile": "Seleccionar archivo...",
+    "inputImage": "Imagen de entrada",
+    "runLSTAI": "Ejecutar LST-AI",
+    "runSynthSeg": "Ejecutar Parcelacion Cerebral",
+    "running": "Ejecutando...",
+    "pending": "Pendiente",
+    "downloading": "Descargando NIfTI...",
+    "processing": "Procesando...",
+    "storing": "Almacenando resultado...",
+    "completed": "Completado",
+    "failed": "Fallido"
   }
 }

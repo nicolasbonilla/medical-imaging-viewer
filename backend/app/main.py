@@ -18,7 +18,7 @@ from app.core.security import (
 )
 from app.core.exception_handlers import register_exception_handlers
 from app.core.container import init_container
-from app.api.routes import auth, imaging, segmentation, websocket, authentication, patients, studies, documents, ai_segmentation, ai_report
+from app.api.routes import auth, imaging, segmentation, websocket, authentication, patients, studies, documents, ai_segmentation, ai_report, clinical_tools
 from app.models.schemas import HealthCheck
 
 settings = get_settings()
@@ -269,6 +269,9 @@ app.include_router(websocket.router, prefix=settings.API_V1_STR)
 # AI routes (Brain segmentation, anomaly detection, report generation)
 app.include_router(ai_segmentation.router, prefix=settings.API_V1_STR)
 app.include_router(ai_report.router, prefix=settings.API_V1_STR)
+
+# Validated clinical tools (LST-AI, SynthSeg)
+app.include_router(clinical_tools.router, prefix=settings.API_V1_STR)
 
 # EHR routes (Patient management)
 app.include_router(patients.router, prefix=settings.API_V1_STR)

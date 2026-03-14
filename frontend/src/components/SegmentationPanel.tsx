@@ -19,13 +19,14 @@ import { useSegmentationStore, type PaintTool, type BrushShape, type DrawOverMod
 import { useViewerStore } from '@/store/useViewerStore';
 import { useAIStore } from '@/store/useAIStore';
 import { segmentationAPI } from '@/api/segmentation';
+import { ClinicalToolsPanel } from './ClinicalToolsPanel';
 import type { LabelInfo, Segmentation, SegmentationResponse, AIMode, AIModel } from '@/types';
 
 // ============================================================================
 // Types
 // ============================================================================
 
-type TabType = 'load' | 'new' | 'ai';
+type TabType = 'load' | 'new' | 'tools';
 
 interface SegmentationPanelProps {
   /** Callback when overlay visibility changes */
@@ -350,11 +351,25 @@ const AISegmentationTab: React.FC<AISegmentationTabProps> = ({ onRun, onCancel }
         </div>
       )}
 
-      {/* Auto mode — info */}
+      {/* Auto mode — model selector + info */}
       {aiMode === 'auto' && (
         <div className="space-y-2">
+          <label className="block text-xs text-gray-300 mb-1">
+            {t('ai.model', 'Model')}
+          </label>
+          <select
+            value={selectedModel}
+            onChange={(e) => setSelectedModel(e.target.value as AIModel)}
+            className="w-full bg-gray-700 text-gray-200 text-xs rounded px-2 py-1.5 border border-gray-600"
+          >
+            <option value="synthseg">SynthSeg — 30+ brain structures</option>
+            <option value="mindglide">mindGlide (MS-PINPOINT) — MS lesions + 20 structures</option>
+          </select>
           <p className="text-xs text-gray-400">
-            {t('ai.autoDescription', 'Automatically segment 30+ brain structures (hippocampus, ventricles, cortex, thalamus, etc.)')}
+            {selectedModel === 'mindglide'
+              ? t('ai.mindglideDescription', 'SOTA MS lesion + brain structure segmentation (Nature Comms 2025). DynUNet trained on 23,000+ scans.')
+              : t('ai.autoDescription', 'Automatically segment 30+ brain structures (hippocampus, ventricles, cortex, thalamus, etc.)')
+            }
           </p>
         </div>
       )}
@@ -441,11 +456,13 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
   const [activeTab, setActiveTab] = useState<TabType>('load');
   const [newSegmentationName, setNewSegmentationName] = useState('');
 
-  // Viewer store (for file_id and image dimensions)
+  // Viewer store (for file_id, image dimensions, and view mode)
   const currentSeries = useViewerStore((s) => s.currentSeries);
   const fileId = currentSeries?.file_id;
   const currentStudyId = useViewerStore((s) => s.currentStudyId);
   const allFileIds = useViewerStore((s) => s.allFileIds);
+  const viewMode = useViewerStore((s) => s.viewMode);
+  const is3D = viewMode === '3d';
 
   // Zustand store
   const {
@@ -644,6 +661,7 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                 >
                   {t('segmentation.open')} ({segmentations.length})
                 </button>
+                {!is3D && (
                 <button
                   onClick={() => setActiveTab('new')}
                   className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
@@ -654,15 +672,16 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                 >
                   {t('segmentation.new')}
                 </button>
+                )}
                 <button
-                  onClick={() => setActiveTab('ai')}
+                  onClick={() => setActiveTab('tools')}
                   className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                    activeTab === 'ai'
+                    activeTab === 'tools'
                       ? 'bg-purple-600 text-white'
                       : 'text-gray-400 hover:text-white hover:bg-gray-700'
                   }`}
                 >
-                  {t('ai.title', 'AI')}
+                  {t('clinical.tools', 'Tools')}
                 </button>
               </div>
 
@@ -711,11 +730,8 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                   </div>
                 )}
 
-                {activeTab === 'ai' && (
-                  <AISegmentationTab
-                    onRun={onAIRun}
-                    onCancel={onAICancel}
-                  />
+                {activeTab === 'tools' && (
+                  <ClinicalToolsPanel fileId={fileId} />
                 )}
               </div>
             </>
@@ -769,6 +785,11 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                       style={{ width: `${activeSegmentation.progress_percentage}%` }}
                     />
                   </div>
+                  {activeSegmentation.slices_annotated === 0 && activeSegmentation.total_slices > 0 && !activeSegmentation.id.startsWith('local-') && (
+                    <p className="text-xs text-yellow-400 mt-1">
+                      {t('segmentation.emptyMask', 'Mask is empty — no annotated voxels found')}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -867,7 +888,8 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                 />
               </div>
 
-              {/* Paint Tools */}
+              {/* Paint Tools — 2D only (painting not supported in 3D) */}
+              {!is3D && (
               <div className="border-t border-gray-700 pt-3">
                 <label className="block text-xs text-gray-300 mb-2">{t('segmentation.paintTools')}</label>
                 <PaintToolbar
@@ -879,8 +901,10 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                   onBrushShapeChange={setBrushShape}
                 />
               </div>
+              )}
 
-              {/* Draw-Over Mode */}
+              {/* Draw-Over Mode — 2D only */}
+              {!is3D && (
               <div>
                 <label className="block text-xs text-gray-300 mb-1">
                   {t('segmentation.drawOver', 'Draw Over')}
@@ -895,8 +919,10 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                   <option value="activeLabel">{t('segmentation.drawOverActive', 'Active label only')}</option>
                 </select>
               </div>
+              )}
 
-              {/* Save Button */}
+              {/* Save Button — 2D only */}
+              {!is3D && (
               <button
                 onClick={handleSaveSegmentation}
                 disabled={isSaving || !isDirty}
@@ -916,8 +942,10 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                   </>
                 )}
               </button>
+              )}
 
-              {/* Instructions & Shortcuts */}
+              {/* Instructions & Shortcuts — 2D only */}
+              {!is3D && (
               <div className="pt-2 border-t border-gray-700 space-y-2">
                 <p className="text-xs text-gray-400">
                   <strong>{t('segmentation.instructions.title')}</strong>
@@ -941,6 +969,7 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                   </div>
                 </details>
               </div>
+              )}
             </>
           )}
         </div>

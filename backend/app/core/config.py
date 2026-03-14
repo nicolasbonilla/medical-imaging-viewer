@@ -177,6 +177,18 @@ class Settings(BaseSettings):
     AI_INFERENCE_TIMEOUT_SECONDS: int = Field(default=120, ge=30, le=600)
     AI_MAX_CONCURRENT_REQUESTS: int = Field(default=5, ge=1, le=20)
 
+    # Validated Clinical Tools Configuration
+    LSTAI_ENDPOINT: str = Field(default="", description="LST-AI sidecar HTTP endpoint (e.g., http://lst-ai:5000)")
+    LSTAI_ENABLED: bool = Field(default=False)
+    LSTAI_TIMEOUT_SECONDS: int = Field(default=900, ge=60, le=3600)
+    SYNTHSEG_ENDPOINT: str = Field(default="", description="SynthSeg sidecar HTTP endpoint (e.g., http://synthseg:5001)")
+    SYNTHSEG_ENABLED: bool = Field(default=False)
+    SYNTHSEG_TIMEOUT_SECONDS: int = Field(default=300, ge=60, le=1200)
+    MINDGLIDE_ENDPOINT: str = Field(default="", description="mindGlide sidecar HTTP endpoint (e.g., http://mindglide:5002)")
+    MINDGLIDE_ENABLED: bool = Field(default=False)
+    MINDGLIDE_TIMEOUT_SECONDS: int = Field(default=600, ge=60, le=1800)
+    CLINICAL_TOOLS_SHARED_VOLUME: str = Field(default="/tmp/clinical-tools-shared", description="Shared volume for NIfTI I/O with sidecar containers")
+
     # Claude API Configuration (for report generation)
     ANTHROPIC_API_KEY: str = Field(default="", description="Anthropic API key for Claude")
     CLAUDE_MODEL: str = Field(default="claude-sonnet-4-5-20250929")
@@ -187,6 +199,14 @@ class Settings(BaseSettings):
     MCP_IMAGING_PORT: int = Field(default=8001, ge=1, le=65535)
     MCP_SEGMENTATION_PORT: int = Field(default=8002, ge=1, le=65535)
     MCP_REPORT_PORT: int = Field(default=8003, ge=1, le=65535)
+    MCP_PACS_PORT: int = Field(default=8004, ge=1, le=65535)
+    MCP_MS_CLINICAL_PORT: int = Field(default=8005, ge=1, le=65535)
+
+    # PACS / DICOM Connectivity
+    PACS_HOST: str = Field(default="", description="PACS server hostname or IP")
+    PACS_PORT: int = Field(default=104, ge=1, le=65535)
+    PACS_AE_TITLE: str = Field(default="", description="PACS Application Entity title")
+    PACS_CALLING_AE: str = Field(default="BRAIN_VIEWER", description="Local AE title for C-FIND/C-MOVE")
 
     # Performance Optimization Flags
     ENABLE_BINARY_PROTOCOL: bool = Field(default=False)

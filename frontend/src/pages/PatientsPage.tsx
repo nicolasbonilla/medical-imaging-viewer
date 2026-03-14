@@ -66,15 +66,16 @@ export default function PatientsPage() {
     gender: '',
   });
 
-  // Data fetching
+  // When search/gender filter is active, fetch all patients for client-side filtering
+  const hasClientFilter = !!filters.search || !!filters.gender;
   const {
     data: patientsData,
     isLoading,
     isFetching,
     refetch,
   } = usePatientList(
-    page,
-    pageSize,
+    hasClientFilter ? 1 : page,
+    hasClientFilter ? 100 : pageSize,
     filters.status || undefined
   );
 
@@ -142,9 +143,40 @@ export default function PatientsPage() {
 
   const hasActiveFilters = filters.search || filters.status || filters.gender;
 
-  const patients = patientsData?.items || [];
-  const totalPages = patientsData?.total_pages || 1;
-  const total = patientsData?.total || 0;
+  // Client-side filtering and sorting
+  const allPatients = patientsData?.items || [];
+  const filteredPatients = allPatients.filter((patient) => {
+    // Search filter: match name or MRN
+    if (filters.search) {
+      const q = filters.search.toLowerCase();
+      const nameMatch = patient.full_name?.toLowerCase().includes(q);
+      const mrnMatch = patient.mrn?.toLowerCase().includes(q);
+      if (!nameMatch && !mrnMatch) return false;
+    }
+    // Gender filter
+    if (filters.gender && patient.gender !== filters.gender) return false;
+    return true;
+  }).sort((a, b) => {
+    let cmp = 0;
+    switch (sortField) {
+      case 'name':
+        cmp = (a.full_name || '').localeCompare(b.full_name || '');
+        break;
+      case 'mrn':
+        cmp = (a.mrn || '').localeCompare(b.mrn || '');
+        break;
+      case 'birth_date':
+        cmp = (a.birth_date || '').localeCompare(b.birth_date || '');
+        break;
+      default: // created_at
+        cmp = (a.created_at || '').localeCompare(b.created_at || '');
+    }
+    return sortOrder === 'asc' ? cmp : -cmp;
+  });
+
+  const patients = filteredPatients;
+  const totalPages = hasClientFilter ? 1 : (patientsData?.total_pages || 1);
+  const total = hasClientFilter ? filteredPatients.length : (patientsData?.total || 0);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">

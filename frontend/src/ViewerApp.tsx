@@ -24,6 +24,7 @@ import { usePatient } from './hooks/usePatients';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ReportViewerModal } from './components/ReportViewerModal';
 import { AIReportPanel } from './components/AIReportPanel';
+import { LesionDashboard } from './components/LesionDashboard';
 import { useSegmentationStore } from './store/useSegmentationStore';
 import { useMultiViewerStore, type ViewerLayout } from './store/useMultiViewerStore';
 import { autoAssignPanels } from './utils/sequenceDetection';
@@ -187,15 +188,23 @@ function ViewerApp() {
     enabled: allFileIds.length > 0,
   });
 
-  const segmentations = (segmentationsData ?? [])
-    // Filter out MAGNIMS zone maps from user-facing segmentation list
-    .filter((seg) => seg.metadata?.description !== 'MAGNIMS Zone Map')
-    .map((seg) => ({
+  const segmentations = (() => {
+    const all = (segmentationsData ?? []).map((seg) => ({
       id: seg.segmentation_id,
       name: seg.metadata?.description || t('segmentation.defaultName', 'Segmentation'),
       status: 'saved' as const,
       fileId: seg.file_id,
     }));
+    // Deduplicate zone maps — keep only one per study (the first found)
+    let zoneMapSeen = false;
+    return all.filter((seg) => {
+      if (seg.name === 'MAGNIMS Zone Map') {
+        if (zoneMapSeen) return false;
+        zoneMapSeen = true;
+      }
+      return true;
+    });
+  })();
 
   // Fetch patient info to display name in viewer
   const { data: patientData } = usePatient(studyInfo?.study.patient_id);
@@ -292,6 +301,27 @@ function ViewerApp() {
       loadImage();
     }
   }, [selectedInstanceId, loadImage]);
+
+  // Auto-load zone map when a segmentation with zone_map_seg_id is selected
+  useEffect(() => {
+    const zoneMapSegId = currentSegmentation?.metadata?.analysis_data?.zone_map_seg_id;
+    if (!zoneMapSegId) {
+      // Clear zone map if the segmentation has no reference
+      useSegmentationStore.getState().clearZoneMap();
+      return;
+    }
+    // Don't reload if already loaded
+    if (useSegmentationStore.getState().zoneMapSegId === zoneMapSegId) return;
+
+    segmentationAPI.loadZoneMapMask(zoneMapSegId)
+      .then(({ mask, depth, height, width }) => {
+        useSegmentationStore.getState().setZoneMap(zoneMapSegId, mask, { depth, height, width });
+      })
+      .catch(() => {
+        console.warn('[ViewerApp] Zone map not found, clearing reference');
+        useSegmentationStore.getState().clearZoneMap();
+      });
+  }, [currentSegmentation?.segmentation_id, currentSegmentation?.metadata?.analysis_data?.zone_map_seg_id]);
 
   const handleBack = useCallback(() => {
     if (studyInfo?.study.patient_id) {
@@ -835,42 +865,52 @@ function ViewerApp() {
                       {segmentations.map((seg) => {
                         const isActive = currentSegmentation?.segmentation_id === seg.id || activeSegmentation?.id === seg.id;
                         const isDeleting = deletingSegId === seg.id;
+                        const isSaved = !seg.id.startsWith('local-');
                         return (
-                          <div
-                            key={seg.id}
-                            onClick={() => handleOpenSegmentation(seg)}
-                            className={`rounded-lg cursor-pointer transition-all ${
-                              isActive
-                                ? 'ring-2 ring-purple-400 bg-purple-100 dark:bg-purple-900/50'
-                                : 'bg-white/60 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700/80'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2 p-2">
-                              <Puzzle className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-purple-500 dark:text-purple-400' : 'text-purple-500'}`} />
-                              <span className={`text-[11px] font-medium truncate flex-1 ${isActive ? 'text-purple-900 dark:text-white' : 'text-gray-700 dark:text-white'}`}>
-                                {seg.name}
-                              </span>
-                              {isActive ? (
-                                <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-purple-500 text-white font-bold">
-                                  {t('segmentation.list.active', 'Active')}
+                          <div key={seg.id}>
+                            <div
+                              onClick={() => handleOpenSegmentation(seg)}
+                              className={`rounded-lg cursor-pointer transition-all ${
+                                isActive
+                                  ? 'ring-2 ring-purple-400 bg-purple-100 dark:bg-purple-900/50'
+                                  : 'bg-white/60 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700/80'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 p-2">
+                                <Puzzle className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-purple-500 dark:text-purple-400' : 'text-purple-500'}`} />
+                                <span className={`text-[11px] font-medium truncate flex-1 ${isActive ? 'text-purple-900 dark:text-white' : 'text-gray-700 dark:text-white'}`}>
+                                  {seg.name}
                                 </span>
-                              ) : (
-                                <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-green-100 text-green-700 dark:bg-green-600/30 dark:text-green-400 font-medium">
-                                  {t('viewer.saved', 'Saved')}
-                                </span>
-                              )}
-                              <button
-                                onClick={(e) => handleDeleteSegmentation(seg.id, seg.name, e)}
-                                disabled={isDeleting}
-                                className="p-1 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-colors flex-shrink-0"
-                              >
-                                {isDeleting ? (
-                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                {isActive ? (
+                                  <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-purple-500 text-white font-bold">
+                                    {t('segmentation.list.active', 'Active')}
+                                  </span>
                                 ) : (
-                                  <Trash2 className="w-3 h-3" />
+                                  <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-green-100 text-green-700 dark:bg-green-600/30 dark:text-green-400 font-medium">
+                                    {t('viewer.saved', 'Saved')}
+                                  </span>
                                 )}
-                              </button>
+                                <button
+                                  onClick={(e) => handleDeleteSegmentation(seg.id, seg.name, e)}
+                                  disabled={isDeleting}
+                                  className="p-1 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-colors flex-shrink-0"
+                                >
+                                  {isDeleting ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="w-3 h-3" />
+                                  )}
+                                </button>
+                              </div>
                             </div>
+                            {isActive && isSaved && seg.name !== 'MAGNIMS Zone Map' && (
+                              <div className="ml-2 mt-1 mb-1 border-l-2 border-cyan-600/30 pl-2">
+                                <LesionDashboard
+                                  segmentationId={seg.id}
+                                  onNavigateToSlice={(idx) => setCurrentSliceIndex(idx)}
+                                />
+                              </div>
+                            )}
                           </div>
                         );
                       })}
@@ -955,7 +995,7 @@ function ViewerApp() {
           </div>
 
           {/* Viewer Controls */}
-          {currentSeries && viewMode === '2d' && (
+          {currentSeries && (
             <motion.div
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -965,6 +1005,7 @@ function ViewerApp() {
               <ErrorBoundary name="ViewerControls">
                 <ViewerControls
                   {...viewerControls}
+                  viewMode={viewMode}
                   expertMasks={expertMasks}
                   expertInstances={expertInstances}
                   onNavigateToSlice={(idx) => setCurrentSliceIndex(idx)}

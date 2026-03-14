@@ -15,6 +15,9 @@ import type {
   RegionClassificationResult,
   ClassificationMethod,
   ZoneMapResult,
+  LesionAnnotation,
+  CVSSummary,
+  PRLSummary,
 } from '@/types';
 
 const API_PREFIX = '/api/v1';
@@ -231,6 +234,41 @@ export const segmentationAPI = {
       { file_id: fileId, parcellation_id: parcellationId },
     );
     return response.data;
+  },
+
+  /**
+   * Load a zone map binary mask from the server.
+   * Returns the Uint8Array mask data and its dimensions.
+   */
+  async loadZoneMapMask(
+    segmentationId: string,
+  ): Promise<{ mask: Uint8Array; depth: number; height: number; width: number }> {
+    const response = await apiClient.get(
+      `${API_PREFIX}/segmentation/${segmentationId}/mask/binary`,
+      { responseType: 'arraybuffer' },
+    );
+    const buffer = response.data as ArrayBuffer;
+    if (buffer.byteLength < 12) throw new Error('Invalid zone map data');
+    const headerView = new DataView(buffer, 0, 12);
+    const depth = headerView.getUint32(0, true);
+    const height = headerView.getUint32(4, true);
+    const width = headerView.getUint32(8, true);
+    const mask = new Uint8Array(buffer, 12);
+    return { mask, depth, height, width };
+  },
+
+  /**
+   * Save CVS/PRL annotations for individual lesions (McDonald 2024 biomarkers).
+   */
+  async annotateLesions(
+    segmentationId: string,
+    annotations: Partial<LesionAnnotation>[],
+  ): Promise<{ cvs_summary: CVSSummary; prl_summary: PRLSummary; annotations_count: number }> {
+    const { data } = await apiClient.post(
+      `${API_PREFIX}/segmentation/${segmentationId}/lesion-annotations`,
+      { annotations },
+    );
+    return data;
   },
 };
 

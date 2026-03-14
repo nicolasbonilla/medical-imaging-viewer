@@ -10,10 +10,22 @@ services:
       - DEBUG=True
       - HOST=0.0.0.0
       - PORT=8000
+      - LSTAI_ENDPOINT=http://lst-ai:5000
+      - LSTAI_ENABLED=true
+      - SYNTHSEG_ENDPOINT=http://synthseg:5001
+      - SYNTHSEG_ENABLED=true
+      - MINDGLIDE_ENDPOINT=http://mindglide:5002
+      - MINDGLIDE_ENABLED=true
+      - CLINICAL_TOOLS_SHARED_VOLUME=/shared
     volumes:
       - ./backend:/app
       - ./backend/credentials.json:/app/credentials.json
       - ./backend/token.json:/app/token.json
+      - clinical-shared:/shared
+    depends_on:
+      - lst-ai
+      - synthseg
+      - mindglide
     restart: unless-stopped
 
   frontend:
@@ -31,6 +43,43 @@ services:
     ports:
       - "6379:6379"
     restart: unless-stopped
+
+  # Validated Clinical Tool Sidecars
+  lst-ai:
+    build: ./backend/docker/lst-ai
+    container_name: medical-viewer-lst-ai
+    volumes:
+      - clinical-shared:/shared
+    restart: unless-stopped
+    # Uncomment for GPU support:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - capabilities: [gpu]
+
+  synthseg:
+    build: ./backend/docker/synthseg
+    container_name: medical-viewer-synthseg
+    volumes:
+      - clinical-shared:/shared
+    restart: unless-stopped
+
+  mindglide:
+    build: ./backend/docker/mindglide
+    container_name: medical-viewer-mindglide
+    volumes:
+      - clinical-shared:/shared
+    restart: unless-stopped
+    # Uncomment for GPU support (recommended for mindGlide):
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - capabilities: [gpu]
+
+volumes:
+  clinical-shared:
 
 networks:
   default:
