@@ -147,10 +147,17 @@ export default function ImageViewer3D() {
   const zoneMapOpacity = useSegmentationStore((s) => s.zoneMapOpacity);
   const currentSliceIndex = useViewerStore((s) => s.currentSliceIndex);
 
+  // Longitudinal overlay state
+  const longTp1SegId = useSegmentationStore((s) => s.longitudinalTp1SegId);
+  const longTp2SegId = useSegmentationStore((s) => s.longitudinalTp2SegId);
+  const longitudinalVisible = useSegmentationStore((s) => s.longitudinalVisible);
+
   // Downloaded NIfTI data (persists across mode switches)
   const [niftiBuffer, setNiftiBuffer] = useState<ArrayBuffer | null>(null);
   const [segBuffer, setSegBuffer] = useState<ArrayBuffer | null>(null);
   const [zoneMapBuffer, setZoneMapBuffer] = useState<ArrayBuffer | null>(null);
+  const [longTp1Buffer, setLongTp1Buffer] = useState<ArrayBuffer | null>(null);
+  const [longTp2Buffer, setLongTp2Buffer] = useState<ArrayBuffer | null>(null);
 
   // Loading state
   const [isLoading, setIsLoading] = useState(false);
@@ -304,6 +311,29 @@ export default function ImageViewer3D() {
     return () => { cancelled = true; };
   }, [zoneMapNiftiUrl]);
 
+  // ─── EFFECT 1d: Download longitudinal TP1 NIfTI (normalized orientation) ───
+  useEffect(() => {
+    if (!longTp1SegId || longTp1SegId.startsWith('local-')) { setLongTp1Buffer(null); return; }
+    let cancelled = false;
+    const url = `${API_BASE_URL}/api/v1/segmentation/${longTp1SegId}/nifti`;
+    fetchWithProgress(url, getAuthHeaders(), () => {})
+      .then(buffer => { if (!cancelled) setLongTp1Buffer(buffer); })
+      .catch(err => console.error('[3D] Long TP1 download failed:', err));
+    return () => { cancelled = true; };
+  }, [longTp1SegId, fileId]);
+
+  // ─── EFFECT 1e: Download longitudinal TP2 NIfTI (aligned to current MRI) ───
+  useEffect(() => {
+    if (!longTp2SegId || longTp2SegId.startsWith('local-')) { setLongTp2Buffer(null); return; }
+    let cancelled = false;
+    // Use ref_file_id to align TP2's axes and affine to the current MRI
+    const url = `${API_BASE_URL}/api/v1/segmentation/${longTp2SegId}/nifti`;
+    fetchWithProgress(url, getAuthHeaders(), () => {})
+      .then(buffer => { if (!cancelled) setLongTp2Buffer(buffer); })
+      .catch(err => console.error('[3D] Long TP2 download failed:', err));
+    return () => { cancelled = true; };
+  }, [longTp2SegId, fileId]);
+
   // ─── EFFECT 2: Volume mode — single NiiVue instance ───
   useEffect(() => {
     if (render3DMode !== 'volume' || !niftiBuffer || !volumeCanvasRef.current || containerSize.width === 0) return;
@@ -344,8 +374,25 @@ export default function ImageViewer3D() {
           nv.addVolume(zmVol);
         }
 
+        // Load longitudinal TP1 overlay (blue) — original NIfTI, already aligned
+        if (longTp1Buffer && longitudinalVisible) {
+          const tp1Url = URL.createObjectURL(new Blob([longTp1Buffer]));
+          blobUrls.push(tp1Url);
+          const tp1Vol = await NVImage.loadFromUrl({ url: tp1Url, colormap: 'blue', opacity: 0.5 });
+          nv.addVolume(tp1Vol);
+        }
+
+        // Load longitudinal TP2 overlay (red) — backend aligns to current MRI via ref_file_id
+        if (longTp2Buffer && longitudinalVisible) {
+          const tp2Url = URL.createObjectURL(new Blob([longTp2Buffer]));
+          blobUrls.push(tp2Url);
+          const tp2Vol = await NVImage.loadFromUrl({ url: tp2Url, colormap: 'hot', opacity: 0.5 });
+          nv.addVolume(tp2Vol);
+        }
+
         // Clip overlays along with MRI only when zone map is loaded
-        nv.backgroundMasksOverlays = zoneMapBuffer ? 1 : 0;
+        // Only clip zone map with brain; longitudinal overlays stay visible through clip plane
+        nv.backgroundMasksOverlays = (zoneMapBuffer && !longTp1Buffer) ? 1 : 0;
 
         setVolumeReady(true);
         console.log('[3D] Volume mode ready');
@@ -363,7 +410,7 @@ export default function ImageViewer3D() {
       setVolumeReady(false);
       blobUrls.forEach(url => URL.revokeObjectURL(url));
     };
-  }, [render3DMode, niftiBuffer, segBuffer, zoneMapBuffer, containerSize.width]);
+  }, [render3DMode, niftiBuffer, segBuffer, zoneMapBuffer, longTp1Buffer, longTp2Buffer, longitudinalVisible, containerSize.width]);
 
   // ─── EFFECT 3: Multiplanar mode — 4 NiiVue instances with sync ───
   useEffect(() => {
@@ -421,13 +468,29 @@ export default function ImageViewer3D() {
             });
             nvInstances[i].addVolume(zmVol);
           }
+
+          // Load longitudinal TP1 overlay (blue)
+          if (longTp1Buffer && longitudinalVisible) {
+            const tp1Url = URL.createObjectURL(new Blob([longTp1Buffer]));
+            blobUrls.push(tp1Url);
+            const tp1Vol = await NVImage.loadFromUrl({ url: tp1Url, colormap: 'blue', opacity: i === 0 ? 0.5 : 0.3 });
+            nvInstances[i].addVolume(tp1Vol);
+          }
+
+          // Load longitudinal TP2 overlay (red) — backend aligns via ref_file_id
+          if (longTp2Buffer && longitudinalVisible) {
+            const tp2Url = URL.createObjectURL(new Blob([longTp2Buffer]));
+            blobUrls.push(tp2Url);
+            const tp2Vol = await NVImage.loadFromUrl({ url: tp2Url, colormap: 'hot', opacity: i === 0 ? 0.5 : 0.3 });
+            nvInstances[i].addVolume(tp2Vol);
+          }
         }
 
         if (cancelled) return;
 
         // Clip overlays along with MRI when clip plane is active
         for (const nvInst of nvInstances) {
-          nvInst.backgroundMasksOverlays = zoneMapBuffer ? 1 : 0;
+          nvInst.backgroundMasksOverlays = (zoneMapBuffer && !longTp1Buffer) ? 1 : 0;
         }
 
         // Set 3D panel view angle
@@ -458,7 +521,7 @@ export default function ImageViewer3D() {
       setMpReady(false);
       blobUrls.forEach((url) => URL.revokeObjectURL(url));
     };
-  }, [render3DMode, niftiBuffer, segBuffer, zoneMapBuffer, containerSize.width]);
+  }, [render3DMode, niftiBuffer, segBuffer, zoneMapBuffer, longTp1Buffer, longTp2Buffer, longitudinalVisible, containerSize.width]);
 
   // ─── EFFECT 4: Update colormap ───
   useEffect(() => {

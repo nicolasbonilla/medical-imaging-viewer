@@ -16,11 +16,10 @@ import { imagingAPI } from '@/services/api';
 import { useMultiViewerStore, getPanelCount, type PanelState } from '@/store/useMultiViewerStore';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import { SEQUENCE_INFO } from '@/utils/sequenceDetection';
-import type { ExpertMaskData, ImagingInstance } from '@/types';
+import type { ImagingInstance } from '@/types';
 
 interface MultiPanelViewerProps {
   instances: ImagingInstance[];
-  expertMasks?: Map<string, ExpertMaskData>;
   /** Segmentation mask from useSegmentationMask (shared across panels) */
   segmentationMask?: {
     mask: Uint8Array | null;
@@ -37,13 +36,11 @@ function ViewerPanel({
   panel,
   isActive,
   onActivate,
-  expertMasks,
   segmentationMask,
 }: {
   panel: PanelState;
   isActive: boolean;
   onActivate: () => void;
-  expertMasks?: Map<string, ExpertMaskData>;
   segmentationMask?: { mask: Uint8Array | null; depth: number; height: number; width: number };
 }) {
   const { t } = useTranslation();
@@ -101,26 +98,6 @@ function ViewerPanel({
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(img, 0, 0, renderWidth, renderHeight);
 
-      // Render expert mask contours
-      if (expertMasks && expertMasks.size > 0) {
-        for (const [, maskData] of expertMasks) {
-          if (!maskData.visible || !maskData.mask || maskData.loading) continue;
-
-          const sliceSize = maskData.width * maskData.height;
-          const sliceOffset = panel.sliceIndex * sliceSize;
-          if (sliceOffset + sliceSize > maskData.mask.length) continue;
-
-          const expertSlice = maskData.mask.subarray(sliceOffset, sliceOffset + sliceSize);
-          let hasData = false;
-          for (let i = 0; i < expertSlice.length; i++) {
-            if (expertSlice[i] > 0) { hasData = true; break; }
-          }
-          if (!hasData) continue;
-
-          renderContourOnCtx(ctx, expertSlice, maskData.width, maskData.height, renderWidth, renderHeight, maskData.color);
-        }
-      }
-
       // Render segmentation overlay
       if (segmentationMask?.mask && isOverlayVisible) {
         const sliceSize = segmentationMask.width * segmentationMask.height;
@@ -132,7 +109,7 @@ function ViewerPanel({
       }
     };
     img.src = panel.imageData;
-  }, [panel.imageData, panel.sliceIndex, panel.metadata, expertMasks, segmentationMask, isOverlayVisible]);
+  }, [panel.imageData, panel.sliceIndex, panel.metadata, segmentationMask, isOverlayVisible]);
 
   // Mouse wheel for slice navigation
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -192,50 +169,6 @@ function ViewerPanel({
 /**
  * Render contour overlay on a canvas context (simplified version for multi-panel).
  */
-function renderContourOnCtx(
-  ctx: CanvasRenderingContext2D,
-  maskSlice: Uint8Array,
-  maskW: number,
-  maskH: number,
-  canvasW: number,
-  canvasH: number,
-  color: string,
-) {
-  const imageData = ctx.createImageData(maskW, maskH);
-  const data = imageData.data;
-  const r = parseInt(color.slice(1, 3), 16);
-  const g = parseInt(color.slice(3, 5), 16);
-  const b = parseInt(color.slice(5, 7), 16);
-
-  for (let y = 0; y < maskH; y++) {
-    for (let x = 0; x < maskW; x++) {
-      const idx = y * maskW + x;
-      if (maskSlice[idx] === 0) continue;
-      // 4-neighbor edge detection
-      let isBorder = false;
-      if (y === 0 || y === maskH - 1 || x === 0 || x === maskW - 1) isBorder = true;
-      else if (maskSlice[(y - 1) * maskW + x] === 0 || maskSlice[(y + 1) * maskW + x] === 0
-        || maskSlice[y * maskW + (x - 1)] === 0 || maskSlice[y * maskW + (x + 1)] === 0) isBorder = true;
-
-      if (isBorder) {
-        const pi = idx * 4;
-        data[pi] = r; data[pi + 1] = g; data[pi + 2] = b; data[pi + 3] = 220;
-      }
-    }
-  }
-
-  const tmp = document.createElement('canvas');
-  tmp.width = maskW; tmp.height = maskH;
-  const tmpCtx = tmp.getContext('2d');
-  if (!tmpCtx) return;
-  tmpCtx.putImageData(imageData, 0, 0);
-
-  ctx.save();
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(tmp, 0, 0, canvasW, canvasH);
-  ctx.restore();
-}
-
 /**
  * Render segmentation mask overlay on a canvas context (simplified for multi-panel).
  */
@@ -281,7 +214,7 @@ function renderSegOverlayOnCtx(
  * Main multi-panel viewer component.
  * Renders a CSS grid of ViewerPanel components.
  */
-export function MultiPanelViewer({ instances, expertMasks, segmentationMask }: MultiPanelViewerProps) {
+export function MultiPanelViewer({ instances, segmentationMask }: MultiPanelViewerProps) {
   const { t } = useTranslation();
   const layout = useMultiViewerStore((s) => s.layout);
   const panels = useMultiViewerStore((s) => s.panels);
@@ -372,7 +305,6 @@ export function MultiPanelViewer({ instances, expertMasks, segmentationMask }: M
           panel={panel}
           isActive={panel.id === activePanelId}
           onActivate={() => setActivePanelId(panel.id)}
-          expertMasks={expertMasks}
           segmentationMask={segmentationMask}
         />
       ))}

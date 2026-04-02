@@ -16,7 +16,7 @@ import { studyAPI } from './services/studyApi';
 import { useViewerStore } from './store/useViewerStore';
 import { useViewerControls } from './hooks/useViewerControls';
 import type { ImagingStudy, ImagingSeries, ImagingInstance } from './types';
-import { LogOut, Sparkles, ArrowLeft, Brain, FileImage, AlertCircle, Loader2, Puzzle, Upload, Eye, Plus, Trash2, ChevronDown, ChevronRight, FlaskConical, FileText, ShieldCheck, LayoutGrid, Columns2, Square, Link2, Unlink2 } from 'lucide-react';
+import { LogOut, Sparkles, ArrowLeft, Brain, FileImage, AlertCircle, Loader2, Puzzle, Upload, Eye, EyeOff, Plus, Trash2, ChevronDown, ChevronRight, FlaskConical, FileText, LayoutGrid, Columns2, Square, Link2, Unlink2, Map } from 'lucide-react';
 import { useAuth } from './contexts/AuthContext';
 import { useTheme } from './contexts/ThemeContext';
 import { segmentationAPI } from './api/segmentation';
@@ -25,16 +25,106 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { ReportViewerModal } from './components/ReportViewerModal';
 import { AIReportPanel } from './components/AIReportPanel';
 import { LesionDashboard } from './components/LesionDashboard';
+import { MAGNIMSZoneMapPanel } from './components/MAGNIMSZoneMapPanel';
 import { useSegmentationStore } from './store/useSegmentationStore';
 import { useMultiViewerStore, type ViewerLayout } from './store/useMultiViewerStore';
 import { autoAssignPanels } from './utils/sequenceDetection';
-import { useExpertMasks, classifyExpertFile, getExpertDisplayInfo, deriveExpertLabel } from './hooks/useExpertMasks';
 import type { ReportResponse } from './types';
 
 interface StudyInfo {
   study: ImagingStudy;
   series: ImagingSeries[];
   instances: ImagingInstance[];
+}
+
+/** Inline overlay toggle + opacity slider + label visibility for segmentation list items */
+function OverlayControls() {
+  const { t } = useTranslation();
+  const isOverlayVisible = useSegmentationStore((s) => s.isOverlayVisible);
+  const setIsOverlayVisible = useSegmentationStore((s) => s.setIsOverlayVisible);
+  const lesionOpacity = useSegmentationStore((s) => s.lesionOpacity);
+  const setLesionOpacity = useSegmentationStore((s) => s.setLesionOpacity);
+  const labels = useSegmentationStore((s) => s.activeSegmentation?.labels);
+  const labelVisibility = useSegmentationStore((s) => s.labelVisibility);
+  const toggleLabelVisibility = useSegmentationStore((s) => s.toggleLabelVisibility);
+
+  return (
+    <div className="space-y-1.5 mb-2 p-1.5 rounded bg-gray-800/40">
+      <div className="flex items-center justify-between">
+        <label className="text-[10px] text-gray-300">{t('segmentation.showOverlay', 'Show Overlay')}</label>
+        <button
+          onClick={() => setIsOverlayVisible(!isOverlayVisible)}
+          className={`relative w-8 h-4 rounded-full transition-colors ${isOverlayVisible ? 'bg-blue-600' : 'bg-gray-600'}`}
+        >
+          <span className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform ${isOverlayVisible ? 'translate-x-4' : 'translate-x-0'}`} />
+        </button>
+      </div>
+      {isOverlayVisible && (
+        <>
+          <div>
+            <div className="flex items-center justify-between mb-0.5">
+              <label className="text-[10px] text-gray-400">{t('segmentation.lesionOpacity', 'Lesion opacity')}</label>
+              <span className="text-[10px] text-gray-500">{Math.round(lesionOpacity * 100)}%</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={Math.round(lesionOpacity * 100)}
+              onChange={(e) => setLesionOpacity(Number(e.target.value) / 100)}
+              className="w-full h-1 bg-gray-700 rounded-full appearance-none cursor-pointer accent-blue-500"
+            />
+          </div>
+          {labels && labels.filter((l) => l.id !== 0).length > 0 && (
+            <div className="space-y-1">
+              <select
+                value={(() => {
+                  const names = labels.filter(l => l.id !== 0).map(l => l.name);
+                  if (names.length === 6 && names[0] === 'Periventricular') return 'magnims';
+                  if (names.length === 4 && names[0] === 'MS Lesion (Active)') return 'default';
+                  return 'custom';
+                })()}
+                onChange={(e) => {
+                  const preset = e.target.value;
+                  if (preset === 'default' || preset === 'magnims') {
+                    useSegmentationStore.getState().setLabelPreset(preset as 'default' | 'magnims');
+                  }
+                }}
+                className="w-full px-1.5 py-1 bg-gray-700 border border-gray-600 rounded text-[10px] text-white"
+              >
+                <option value="default">Default</option>
+                <option value="magnims">MAGNIMS Regional</option>
+                <option value="custom" disabled>Custom</option>
+              </select>
+            </div>
+          )}
+          {labels && labels.filter((l) => l.id !== 0).length > 0 && (
+            <div className="space-y-0.5 max-h-28 overflow-y-auto">
+              {labels.filter((l) => l.id !== 0).map((label) => {
+                const visible = labelVisibility[label.id] !== false;
+                return (
+                  <button
+                    key={label.id}
+                    onClick={() => toggleLabelVisibility(label.id)}
+                    className="w-full flex items-center gap-1.5 px-1 py-0.5 rounded hover:bg-gray-700/50 transition-colors"
+                  >
+                    <span
+                      className="w-2.5 h-2.5 rounded-sm flex-shrink-0 border border-gray-600"
+                      style={{ backgroundColor: visible ? label.color : 'transparent' }}
+                    />
+                    <span className={`text-[10px] truncate flex-1 text-left ${visible ? 'text-gray-200' : 'text-gray-500 line-through'}`}>
+                      {label.name}
+                    </span>
+                    <Eye className={`w-2.5 h-2.5 flex-shrink-0 ${visible ? 'text-blue-400' : 'text-gray-600'}`} />
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
 }
 
 function ViewerApp() {
@@ -56,20 +146,21 @@ function ViewerApp() {
   const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(null);
   const [studyInfo, setStudyInfo] = useState<StudyInfo | null>(null);
   const [deletingSegId, setDeletingSegId] = useState<string | null>(null);
+  const [expandedSegIds, setExpandedSegIds] = useState<Set<string>>(new Set());
 
   const queryClient = useQueryClient();
   const currentSegmentation = useSegmentationStore((s) => s.currentSegmentation);
   const activeSegmentation = useSegmentationStore((s) => s.activeSegmentation);
   const setCurrentSegmentation = useSegmentationStore((s) => s.setCurrentSegmentation);
   const setIsPaintMode = useSegmentationStore((s) => s.setIsPaintMode);
+  const zoneMapVisible = useSegmentationStore((s) => s.zoneMapVisible);
+  const isOverlayVisible = useSegmentationStore((s) => s.isOverlayVisible);
 
   const viewerControls = useViewerControls();
   const createSegmentationRef = useRef<(() => void) | null>(null);
   const segmentationUploadRef = useRef<HTMLInputElement>(null);
   const [reportToView, setReportToView] = useState<ReportResponse | null>(null);
 
-  // Expert masks hook
-  const { expertMasks, toggleExpert: rawToggleExpert } = useExpertMasks();
 
   // Multi-panel viewer
   const multiLayout = useMultiViewerStore((s) => s.layout);
@@ -109,14 +200,6 @@ function ViewerApp() {
 
   // Filter instances into groups: originals, preprocessed, masks (hidden)
   // Supports both legacy names (test01_01_flair_pp.nii) and BIDS names (sub-MS001_ses-01_desc-preproc_FLAIR.nii.gz)
-  const isMaskInstance = useCallback((filename: string) => {
-    const lower = filename.toLowerCase();
-    // Legacy: expert*, out_mask*, patient*
-    // BIDS: *_dseg.nii.gz (discrete segmentation), *label-lesion*
-    return lower.includes('expert') || lower.includes('out_mask') || lower.startsWith('patient')
-      || lower.includes('_dseg.') || lower.includes('label-lesion');
-  }, []);
-
   const isPreprocessedInstance = useCallback((filename: string) => {
     const lower = filename.toLowerCase();
     // Legacy: *_pp.nii or *_pp.nii.gz
@@ -128,9 +211,9 @@ function ViewerApp() {
   const originalInstances = useMemo(() =>
     studyInfo?.instances.filter(inst => {
       const fn = inst.original_filename || '';
-      return !isMaskInstance(fn) && !isPreprocessedInstance(fn);
+      return !isPreprocessedInstance(fn);
     }) ?? [],
-    [studyInfo?.instances, isMaskInstance, isPreprocessedInstance]
+    [studyInfo?.instances, isPreprocessedInstance]
   );
 
   const preprocessedInstances = useMemo(() =>
@@ -166,12 +249,6 @@ function ViewerApp() {
       autoAssign(assignments.map((a) => ({ instanceId: a.instance.id, sequence: a.sequence })));
     }
   }, [autoAssign, isMultiPanel, originalInstances, preprocessedInstances]);
-
-  // Reference mask instances (expert annotations + algorithm outputs)
-  const expertInstances = useMemo(() =>
-    studyInfo?.instances.filter(inst => isMaskInstance(inst.original_filename || '')) ?? [],
-    [studyInfo?.instances, isMaskInstance]
-  );
 
   // Collect all file_ids from all instances in the study
   const allFileIds = useMemo(() =>
@@ -302,15 +379,16 @@ function ViewerApp() {
     }
   }, [selectedInstanceId, loadImage]);
 
-  // Auto-load zone map when a segmentation with zone_map_seg_id is selected
+  // Auto-load zone map when a lesion segmentation references one via analysis_data.
+  // Zone map loading via sidebar click is handled by handleToggleZoneMap (independent).
   useEffect(() => {
+    const segId = currentSegmentation?.segmentation_id;
+    if (!segId) return;
+    // Skip if current segmentation IS the zone map (handled by handleToggleZoneMap)
+    if (currentSegmentation?.metadata?.description === 'MAGNIMS Zone Map') return;
+
     const zoneMapSegId = currentSegmentation?.metadata?.analysis_data?.zone_map_seg_id;
-    if (!zoneMapSegId) {
-      // Clear zone map if the segmentation has no reference
-      useSegmentationStore.getState().clearZoneMap();
-      return;
-    }
-    // Don't reload if already loaded
+    if (!zoneMapSegId) return;
     if (useSegmentationStore.getState().zoneMapSegId === zoneMapSegId) return;
 
     segmentationAPI.loadZoneMapMask(zoneMapSegId)
@@ -318,8 +396,7 @@ function ViewerApp() {
         useSegmentationStore.getState().setZoneMap(zoneMapSegId, mask, { depth, height, width });
       })
       .catch(() => {
-        console.warn('[ViewerApp] Zone map not found, clearing reference');
-        useSegmentationStore.getState().clearZoneMap();
+        console.warn('[ViewerApp] Referenced zone map not found');
       });
   }, [currentSegmentation?.segmentation_id, currentSegmentation?.metadata?.analysis_data?.zone_map_seg_id]);
 
@@ -334,28 +411,6 @@ function ViewerApp() {
   const handleSelectInstance = (instanceId: string) => {
     setSelectedInstanceId(instanceId);
   };
-
-  // Wrap toggleExpert: masks are in MNI space, auto-switch to preprocessed FLAIR
-  const toggleExpert = useCallback(async (instanceId: string, filename: string) => {
-    // Check if we're currently on a native (non-preprocessed) image
-    const currentFilename = studyInfo?.instances.find(
-      (inst) => inst.gcs_object_name === currentSeries?.file_id
-    )?.original_filename || '';
-    const isOnPreprocessed = isPreprocessedInstance(currentFilename);
-
-    // If toggling ON (mask not loaded yet or currently hidden), switch to preprocessed
-    const existing = expertMasks.get(instanceId);
-    const willBeVisible = !existing || !existing.visible;
-    if (willBeVisible && !isOnPreprocessed && preprocessedInstances.length > 0) {
-      setSelectedInstanceId(preprocessedInstances[0].id);
-      toast(t('experts.switchedToPreprocessed', 'Switched to preprocessed image (masks require MNI space)'), {
-        icon: '\u2139\uFE0F',
-        duration: 3000,
-      });
-    }
-
-    return rawToggleExpert(instanceId, filename);
-  }, [rawToggleExpert, studyInfo, currentSeries?.file_id, isPreprocessedInstance, preprocessedInstances, expertMasks, t]);
 
   // Handle opening/loading an existing segmentation (toggle: click again to deactivate)
   const handleOpenSegmentation = useCallback((segmentation: { id: string; name: string; fileId?: string }) => {
@@ -386,6 +441,38 @@ function ViewerApp() {
     viewerControls.setSegmentationMode(true);
     toast.success(t('viewer.segmentationLoaded', `Segmentation "${segmentation.name}" loaded`));
   }, [viewerControls, t, segmentationsData, setCurrentSegmentation, currentSegmentation, currentSeries?.file_id, studyInfo, isPreprocessedInstance, preprocessedInstances]);
+
+  // Toggle expand/collapse for a segmentation item's info panel
+  const toggleSegExpanded = useCallback((segId: string) => {
+    setExpandedSegIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(segId)) next.delete(segId);
+      else next.add(segId);
+      return next;
+    });
+  }, []);
+
+  // Handle clicking MAGNIMS Zone Map — independent from lesion segmentations.
+  // Does NOT set currentSegmentation; only loads zone map into its own store fields.
+  const handleToggleZoneMap = useCallback((seg: { id: string; name: string }) => {
+    toggleSegExpanded(seg.id);
+    // Load zone map mask into independent store fields (if not already loaded)
+    const store = useSegmentationStore.getState();
+    if (store.zoneMapSegId === seg.id) {
+      // Already loaded — just toggle visibility
+      store.toggleZoneMapVisibility();
+      return;
+    }
+    // First time — load from server
+    segmentationAPI.loadZoneMapMask(seg.id)
+      .then(({ mask, depth, height, width }) => {
+        useSegmentationStore.getState().setZoneMap(seg.id, mask, { depth, height, width });
+        useSegmentationStore.setState({ zoneMapVisible: true });
+      })
+      .catch(() => {
+        console.warn('[ViewerApp] Zone map mask not found');
+      });
+  }, [toggleSegExpanded]);
 
   // Handle upload segmentation file
   const handleUploadSegmentation = useCallback(() => {
@@ -863,13 +950,76 @@ function ViewerApp() {
                   ) : (
                     <div className="space-y-1.5">
                       {segmentations.map((seg) => {
+                        const isZoneMap = seg.name === 'MAGNIMS Zone Map';
                         const isActive = currentSegmentation?.segmentation_id === seg.id || activeSegmentation?.id === seg.id;
+                        const isExpanded = expandedSegIds.has(seg.id);
                         const isDeleting = deletingSegId === seg.id;
                         const isSaved = !seg.id.startsWith('local-');
+
+                        if (isZoneMap) {
+                          // --- MAGNIMS Zone Map: independent layer, NOT tied to currentSegmentation ---
+                          return (
+                            <div key={seg.id}>
+                              <div
+                                onClick={() => handleToggleZoneMap(seg)}
+                                className={`rounded-lg cursor-pointer transition-all ${
+                                  isExpanded
+                                    ? 'ring-2 ring-emerald-400 bg-emerald-100 dark:bg-emerald-900/40'
+                                    : 'bg-white/60 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700/80'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 p-2">
+                                  {isExpanded
+                                    ? <ChevronDown className="w-3 h-3 flex-shrink-0 text-emerald-400" />
+                                    : <ChevronRight className="w-3 h-3 flex-shrink-0 text-gray-400" />
+                                  }
+                                  <Map className="w-3.5 h-3.5 flex-shrink-0 text-emerald-500" />
+                                  <span className={`text-[11px] font-medium truncate flex-1 ${isExpanded ? 'text-emerald-900 dark:text-white' : 'text-gray-700 dark:text-white'}`}>
+                                    {seg.name}
+                                  </span>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      useSegmentationStore.getState().toggleZoneMapVisibility();
+                                    }}
+                                    className={`p-1 rounded transition-colors flex-shrink-0 ${
+                                      zoneMapVisible ? 'text-emerald-400 hover:text-emerald-300' : 'text-gray-500 hover:text-gray-300'
+                                    }`}
+                                    title={zoneMapVisible ? 'Hide overlay' : 'Show overlay'}
+                                  >
+                                    {zoneMapVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                                  </button>
+                                  <button
+                                    onClick={(e) => handleDeleteSegmentation(seg.id, seg.name, e)}
+                                    disabled={isDeleting}
+                                    className="p-1 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-colors flex-shrink-0"
+                                  >
+                                    {isDeleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                                  </button>
+                                </div>
+                              </div>
+                              {isExpanded && isSaved && (
+                                <div className="ml-2 mt-1 mb-1 border-l-2 border-emerald-600/30 pl-2">
+                                  <MAGNIMSZoneMapPanel fileId={currentSeries?.file_id} />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }
+
+                        // --- Regular segmentation (Expert Rater, Brain Extraction, etc.) ---
                         return (
                           <div key={seg.id}>
                             <div
-                              onClick={() => handleOpenSegmentation(seg)}
+                              onClick={() => {
+                                handleOpenSegmentation(seg);
+                                // Auto-expand on activate, collapse on deactivate
+                                if (isActive) {
+                                  setExpandedSegIds((prev) => { const n = new Set(prev); n.delete(seg.id); return n; });
+                                } else {
+                                  setExpandedSegIds((prev) => new Set(prev).add(seg.id));
+                                }
+                              }}
                               className={`rounded-lg cursor-pointer transition-all ${
                                 isActive
                                   ? 'ring-2 ring-purple-400 bg-purple-100 dark:bg-purple-900/50'
@@ -877,34 +1027,44 @@ function ViewerApp() {
                               }`}
                             >
                               <div className="flex items-center gap-2 p-2">
+                                {isExpanded
+                                  ? <ChevronDown className="w-3 h-3 flex-shrink-0 text-purple-400" />
+                                  : <ChevronRight className="w-3 h-3 flex-shrink-0 text-gray-400" />
+                                }
                                 <Puzzle className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-purple-500 dark:text-purple-400' : 'text-purple-500'}`} />
                                 <span className={`text-[11px] font-medium truncate flex-1 ${isActive ? 'text-purple-900 dark:text-white' : 'text-gray-700 dark:text-white'}`}>
                                   {seg.name}
                                 </span>
-                                {isActive ? (
-                                  <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-purple-500 text-white font-bold">
-                                    {t('segmentation.list.active', 'Active')}
-                                  </span>
-                                ) : (
-                                  <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-green-100 text-green-700 dark:bg-green-600/30 dark:text-green-400 font-medium">
-                                    {t('viewer.saved', 'Saved')}
-                                  </span>
-                                )}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (isActive) {
+                                      useSegmentationStore.getState().setIsOverlayVisible(!isOverlayVisible);
+                                    } else {
+                                      handleOpenSegmentation(seg);
+                                      setExpandedSegIds((prev) => new Set(prev).add(seg.id));
+                                    }
+                                  }}
+                                  className={`p-1 rounded transition-colors flex-shrink-0 ${
+                                    isActive && isOverlayVisible ? 'text-purple-400 hover:text-purple-300' : 'text-gray-500 hover:text-gray-300'
+                                  }`}
+                                  title={isActive && isOverlayVisible ? 'Hide overlay' : 'Show overlay'}
+                                >
+                                  {isActive && isOverlayVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                                </button>
                                 <button
                                   onClick={(e) => handleDeleteSegmentation(seg.id, seg.name, e)}
                                   disabled={isDeleting}
                                   className="p-1 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-colors flex-shrink-0"
                                 >
-                                  {isDeleting ? (
-                                    <Loader2 className="w-3 h-3 animate-spin" />
-                                  ) : (
-                                    <Trash2 className="w-3 h-3" />
-                                  )}
+                                  {isDeleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
                                 </button>
                               </div>
                             </div>
-                            {isActive && isSaved && seg.name !== 'MAGNIMS Zone Map' && (
+                            {isExpanded && isSaved && (
                               <div className="ml-2 mt-1 mb-1 border-l-2 border-cyan-600/30 pl-2">
+                                {/* Overlay controls inline */}
+                                <OverlayControls />
                                 <LesionDashboard
                                   segmentationId={seg.id}
                                   onNavigateToSlice={(idx) => setCurrentSliceIndex(idx)}
@@ -920,78 +1080,6 @@ function ViewerApp() {
               )}
             </div>
 
-            {/* Section 4: Reference Masks (expert annotations + algorithm outputs) */}
-            {expertInstances.length > 0 && (
-              <div className="border-b border-gray-200/50 dark:border-gray-700/50">
-                <button
-                  onClick={() => toggleSection('experts')}
-                  className="w-full flex items-center justify-between p-3 hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-amber-500" />
-                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                      {t('experts.title', 'Expert Annotations')}
-                    </span>
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                      {expertInstances.length}
-                    </span>
-                  </div>
-                  {sectionsExpanded.experts ? (
-                    <ChevronDown className="w-4 h-4 text-gray-400" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
-                  )}
-                </button>
-                {sectionsExpanded.experts && (
-                  <div className="px-3 pb-3 space-y-1">
-                    <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-1.5">
-                      {t('experts.readOnly', 'Read-only contour overlays')}
-                    </p>
-                    {expertInstances.map((instance) => {
-                      const fn = instance.original_filename || '';
-                      const expertType = classifyExpertFile(fn);
-                      const displayInfo = getExpertDisplayInfo(expertType);
-                      const label = deriveExpertLabel(fn);
-                      const maskData = expertMasks.get(instance.id);
-                      const isVisible = maskData?.visible ?? false;
-                      const isLoadingMask = maskData?.loading ?? false;
-
-                      return (
-                        <button
-                          key={instance.id}
-                          onClick={() => toggleExpert(instance.id, fn)}
-                          className={`w-full p-1.5 rounded-lg text-left transition-all ${
-                            isVisible
-                              ? 'bg-amber-50 dark:bg-amber-900/20 ring-1 ring-amber-300 dark:ring-amber-700'
-                              : 'bg-white/60 dark:bg-gray-800/60 hover:bg-white dark:hover:bg-gray-800'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="w-3 h-3 rounded-sm flex-shrink-0 border border-gray-300 dark:border-gray-600"
-                              style={{ backgroundColor: isVisible ? displayInfo.color : 'transparent' }}
-                            />
-                            <span className={`text-[11px] font-medium truncate flex-1 ${
-                              isVisible ? 'text-amber-800 dark:text-amber-300' : 'text-gray-600 dark:text-gray-400'
-                            }`}>
-                              {label}
-                            </span>
-                            {isLoadingMask ? (
-                              <Loader2 className="w-3 h-3 text-amber-500 animate-spin flex-shrink-0" />
-                            ) : (
-                              <Eye className={`w-3 h-3 flex-shrink-0 ${
-                                isVisible ? 'text-amber-500' : 'text-gray-300 dark:text-gray-600'
-                              }`} />
-                            )}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-
           </div>
 
           {/* Viewer Controls */}
@@ -1006,8 +1094,6 @@ function ViewerApp() {
                 <ViewerControls
                   {...viewerControls}
                   viewMode={viewMode}
-                  expertMasks={expertMasks}
-                  expertInstances={expertInstances}
                   onNavigateToSlice={(idx) => setCurrentSliceIndex(idx)}
                 />
               </ErrorBoundary>
@@ -1109,7 +1195,6 @@ function ViewerApp() {
               <ErrorBoundary name="MultiPanelViewer">
                 <MultiPanelViewer
                   instances={multiPanelInstances}
-                  expertMasks={expertMasks}
                 />
               </ErrorBoundary>
             ) : viewMode === '2d' ? (
@@ -1120,7 +1205,6 @@ function ViewerApp() {
                   patientName={patientData?.full_name}
                   studyDescription={studyInfo?.study.study_description}
                   studyModality={studyInfo?.study.modality}
-                  expertMasks={expertMasks}
                 />
               </ErrorBoundary>
             ) : (

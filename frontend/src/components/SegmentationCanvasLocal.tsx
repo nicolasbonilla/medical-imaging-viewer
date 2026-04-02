@@ -16,7 +16,7 @@ import React, { useRef, useEffect, useState, useCallback, forwardRef, useImperat
 import { useTranslation } from 'react-i18next';
 import type { UseSegmentationMaskReturn } from '@/hooks/useSegmentationMask';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
-import type { ClickPoint3D, ExpertMaskData } from '@/types';
+import type { ClickPoint3D } from '@/types';
 
 /** Methods exposed via ref for external control */
 export interface SegmentationCanvasLocalRef {
@@ -66,8 +66,6 @@ interface SegmentationCanvasLocalProps {
   onAIClick?: (x: number, y: number, isPositive: boolean) => void;
   /** Render mask as heatmap (for anomaly detection probability maps) */
   heatmapMode?: boolean;
-  /** Expert annotation masks for contour overlay rendering */
-  expertMasks?: Map<string, ExpertMaskData>;
 }
 
 /** Parsed RGBA color for fast pixel filling */
@@ -158,7 +156,6 @@ function renderMaskToCanvas(
   canvasWidth: number,
   canvasHeight: number,
   labelColors: Record<number, ParsedColor>,
-  fallbackColor: ParsedColor = { r: 255, g: 0, b: 0, a: 128 },
 ): void {
   if (!maskSlice) return;
 
@@ -171,11 +168,13 @@ function renderMaskToCanvas(
     const labelId = maskSlice[i];
     const pixelIndex = i * 4;
     if (labelId > 0) {
-      const c = labelColors[labelId] || fallbackColor;
-      data[pixelIndex] = c.r;
-      data[pixelIndex + 1] = c.g;
-      data[pixelIndex + 2] = c.b;
-      data[pixelIndex + 3] = c.a;
+      const c = labelColors[labelId];
+      if (c) {
+        data[pixelIndex] = c.r;
+        data[pixelIndex + 1] = c.g;
+        data[pixelIndex + 2] = c.b;
+        data[pixelIndex + 3] = c.a;
+      }
     }
     // else: all zeros (transparent) — default for new ImageData
   }
@@ -262,65 +261,7 @@ function renderHeatmapToCanvas(
  * Edge detection: a voxel is a border if it's non-zero and any 4-neighbor is zero.
  * Used for expert annotation overlays (read-only contour display).
  */
-function renderContourToCanvas(
-  ctx: CanvasRenderingContext2D,
-  maskSlice: Uint8Array,
-  width: number,
-  height: number,
-  canvasWidth: number,
-  canvasHeight: number,
-  color: string,
-  thickness: number = 2,
-): void {
-  const imageData = ctx.createImageData(width, height);
-  const data = imageData.data;
 
-  // Parse color
-  const r = parseInt(color.slice(1, 3), 16);
-  const g = parseInt(color.slice(3, 5), 16);
-  const b = parseInt(color.slice(5, 7), 16);
-
-  // Edge detection with configurable thickness
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const idx = y * width + x;
-      if (maskSlice[idx] === 0) continue;
-
-      // Check if this voxel is near a border (within thickness distance)
-      let isBorder = false;
-      for (let dy = -thickness; dy <= thickness && !isBorder; dy++) {
-        for (let dx = -thickness; dx <= thickness && !isBorder; dx++) {
-          if (dx === 0 && dy === 0) continue;
-          const ny = y + dy;
-          const nx = x + dx;
-          if (ny < 0 || ny >= height || nx < 0 || nx >= width) {
-            isBorder = true; // Edge of image counts as border
-          } else if (maskSlice[ny * width + nx] === 0) {
-            isBorder = true;
-          }
-        }
-      }
-
-      if (isBorder) {
-        const pixelIndex = idx * 4;
-        data[pixelIndex] = r;
-        data[pixelIndex + 1] = g;
-        data[pixelIndex + 2] = b;
-        data[pixelIndex + 3] = 220; // High opacity for contours
-      }
-    }
-  }
-
-  const tempCanvas = document.createElement('canvas');
-  tempCanvas.width = width;
-  tempCanvas.height = height;
-  const tempCtx = tempCanvas.getContext('2d');
-  if (!tempCtx) return;
-
-  tempCtx.putImageData(imageData, 0, 0);
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(tempCanvas, 0, 0, canvasWidth, canvasHeight);
-}
 
 export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, SegmentationCanvasLocalProps>(({
   segmentationMask,
@@ -344,7 +285,6 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
   aiInteractiveMode = false,
   onAIClick,
   heatmapMode = false,
-  expertMasks,
 }, ref) => {
   const { t } = useTranslation();
 
@@ -357,6 +297,7 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
   const drawOverMode = useSegmentationStore((s) => s.drawOverMode);
   const brushShape = useSegmentationStore((s) => s.paintTool.brushShape);
   const storeLabels = useSegmentationStore((s) => s.activeSegmentation?.labels);
+  const labelVisibility = useSegmentationStore((s) => s.labelVisibility);
 
   // Paint mode: controls whether painting is allowed (view-only vs edit mode)
   const isPaintMode = useSegmentationStore((s) => s.isPaintMode);
@@ -373,6 +314,13 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
 
   // Selected lesion for bounding box + centroid rendering
   const selectedLesion = useSegmentationStore((s) => s.selectedLesion);
+
+  // Longitudinal overlay (dual mask comparison)
+  const longTp1Mask = useSegmentationStore((s) => s.longitudinalTp1Mask);
+  const longTp1Dims = useSegmentationStore((s) => s.longitudinalTp1Dims);
+  const longTp2Mask = useSegmentationStore((s) => s.longitudinalTp2Mask);
+  const longTp2Dims = useSegmentationStore((s) => s.longitudinalTp2Dims);
+  const longVisible = useSegmentationStore((s) => s.longitudinalVisible);
 
   // State
   const [isPainting, setIsPainting] = useState(false);
@@ -564,6 +512,59 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
       }
     }
 
+    // Draw longitudinal overlay (TP1=blue, TP2=red, overlap=green)
+    if (longVisible && longTp1Mask && longTp1Dims && longTp2Mask && longTp2Dims) {
+      const tp1SliceSize = longTp1Dims.width * longTp1Dims.height;
+      const tp1Offset = sliceIndex * tp1SliceSize;
+      const tp2SliceSize = longTp2Dims.width * longTp2Dims.height;
+      const tp2Offset = sliceIndex * tp2SliceSize;
+
+      if (tp1Offset + tp1SliceSize <= longTp1Mask.length &&
+          tp2Offset + tp2SliceSize <= longTp2Mask.length) {
+        let tp1Slice = longTp1Mask.subarray(tp1Offset, tp1Offset + tp1SliceSize);
+        let tp2Slice = longTp2Mask.subarray(tp2Offset, tp2Offset + tp2SliceSize);
+        let w1 = longTp1Dims.width, h1 = longTp1Dims.height;
+        let w2 = longTp2Dims.width, h2 = longTp2Dims.height;
+
+        // Auto-fix axis mismatch
+        if (w1 !== imageWidth && h1 === imageWidth && w1 === imageHeight) {
+          tp1Slice = transposeSlice(tp1Slice, h1, w1);
+          w1 = imageWidth; h1 = imageHeight;
+        }
+        if (w2 !== imageWidth && h2 === imageWidth && w2 === imageHeight) {
+          tp2Slice = transposeSlice(tp2Slice, h2, w2);
+          w2 = imageWidth; h2 = imageHeight;
+        }
+
+        const longImgData = ctx.createImageData(imageWidth, imageHeight);
+        const ld = longImgData.data;
+        const opacity = Math.round(0.55 * 255);
+        for (let i = 0; i < imageWidth * imageHeight; i++) {
+          const inTp1 = tp1Slice[i] > 0;
+          const inTp2 = tp2Slice[i] > 0;
+          const pi = i * 4;
+          if (inTp1 && inTp2) {
+            // Overlap (persistent) = green
+            ld[pi] = 50; ld[pi+1] = 205; ld[pi+2] = 50; ld[pi+3] = opacity;
+          } else if (inTp1) {
+            // TP1 only (resolved) = blue
+            ld[pi] = 65; ld[pi+1] = 135; ld[pi+2] = 245; ld[pi+3] = opacity;
+          } else if (inTp2) {
+            // TP2 only (new) = red
+            ld[pi] = 245; ld[pi+1] = 70; ld[pi+2] = 70; ld[pi+3] = opacity;
+          }
+        }
+        const tmpC = document.createElement('canvas');
+        tmpC.width = imageWidth; tmpC.height = imageHeight;
+        const tmpCtx = tmpC.getContext('2d');
+        if (tmpCtx) {
+          tmpCtx.putImageData(longImgData, 0, 0);
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(tmpC, 0, 0, canvasSize.width, canvasSize.height);
+        }
+      }
+    }
+
     // Draw mask from LOCAL MEMORY (instant!)
     if (showOverlay && segmentationMask.isLoaded) {
       const maskSlice = segmentationMask.getSliceMask(sliceIndex);
@@ -596,7 +597,7 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
           const labelColors: Record<number, ParsedColor> = {};
           if (storeLabels) {
             for (const label of storeLabels) {
-              if (label.id !== 0) {
+              if (label.id !== 0 && labelVisibility[label.id] !== false) {
                 const c = parseColor(label.color, label.opacity);
                 labelColors[label.id] = { ...c, a: Math.round(c.a * lesionOpacity) };
               }
@@ -677,41 +678,6 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
           ctx.moveTo(px - 4, py); ctx.lineTo(px + 4, py);
         }
         ctx.stroke();
-      }
-    }
-
-    // Draw expert annotation masks as contours (only when image matches MNI space)
-    if (expertMasks && expertMasks.size > 0) {
-      for (const [, maskData] of expertMasks) {
-        if (!maskData.visible || !maskData.mask || maskData.loading) continue;
-
-        // Skip if mask dimensions don't match displayed image (spatial mismatch)
-        if (maskData.width !== imageWidth || maskData.height !== imageHeight) continue;
-
-        // Extract the current slice from the expert mask
-        const sliceSize = maskData.width * maskData.height;
-        const sliceOffset = sliceIndex * sliceSize;
-        if (sliceOffset + sliceSize > maskData.mask.length) continue;
-
-        const expertSlice = maskData.mask.subarray(sliceOffset, sliceOffset + sliceSize);
-
-        // Check if this slice has any non-zero voxels
-        let hasData = false;
-        for (let i = 0; i < expertSlice.length; i++) {
-          if (expertSlice[i] > 0) { hasData = true; break; }
-        }
-        if (!hasData) continue;
-
-        renderContourToCanvas(
-          ctx,
-          expertSlice,
-          maskData.width,
-          maskData.height,
-          canvasSize.width,
-          canvasSize.height,
-          maskData.color,
-          2, // thickness
-        );
       }
     }
 
@@ -799,10 +765,11 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
   }, [
     canvasSize, imageWidth, imageHeight, cursorPosition, enabled, isPaintMode,
     brushSize, brushShape, eraseMode, showOverlay, zoomLevel, panOffset,
-    matplotlibBbox, bufferScale, segmentationMask, sliceIndex, renderVersion, storeLabels,
-    aiClickPoints, heatmapMode, expertMasks,
+    matplotlibBbox, bufferScale, segmentationMask, sliceIndex, renderVersion, storeLabels, labelVisibility,
+    aiClickPoints, heatmapMode,
     zoneMapMask, zoneMapDims, zoneMapVisible, zoneColorizeEnabled,
     lesionOpacity, zoneMapOpacity, selectedLesion,
+    longTp1Mask, longTp1Dims, longTp2Mask, longTp2Dims, longVisible,
   ]);
 
   // Re-render overlay when mask or slice changes

@@ -839,39 +839,6 @@ export const DEFAULT_LABEL_PRESETS: Record<string, LabelInfo[]> = {
   magnims: MAGNIMS_LESION_LABELS,
 };
 
-/**
- * Expert mask data for overlay rendering.
- */
-export interface ExpertMaskData {
-  instanceId: string;
-  label: string;           // "Expert 1", "Expert 2", "Consensus"
-  color: string;           // Hex color for contour rendering
-  mask: Uint8Array | null; // 3D binary mask (null if not loaded yet)
-  depth: number;
-  height: number;
-  width: number;
-  visible: boolean;
-  loading: boolean;
-}
-
-/**
- * Expert mask classification from BIDS filename.
- *
- * - expert: Manual expert annotation (desc-expertNN)
- * - output: Algorithm output mask (desc-outputN, desc-maskN, out_mask)
- * - consensus: STAPLE consensus (label-lesion_dseg without descriptor) — legacy
- */
-export type ExpertType = 'expert' | 'output' | 'consensus';
-
-/**
- * Expert mask display config.
- */
-export const EXPERT_COLORS: Record<ExpertType, { color: string; label: string }> = {
-  expert: { color: '#FF4444', label: 'Expert Annotation' },
-  output: { color: '#FFAA44', label: 'Algorithm Output' },
-  consensus: { color: '#44CC44', label: 'Consensus' },
-};
-
 // ============================================================================
 // AI Segmentation Types
 // ============================================================================

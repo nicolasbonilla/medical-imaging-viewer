@@ -5,12 +5,11 @@
  * - Burden delta summary (TP1 vs TP2)
  * - Status counts (new, resolved, enlarged, shrunk, stable)
  * - Per-lesion change table with click-to-navigate
- * - Color coding: green (resolved/stable), yellow (enlarged <20%), red (enlarged >20%), blue (new)
  *
  * @module components/LongitudinalCompare
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -26,11 +25,22 @@ import {
   Equal,
 } from 'lucide-react';
 import { segmentationAPI } from '@/api/segmentation';
+import { studyAPI } from '@/services/studyApi';
 import { useViewerStore } from '@/store/useViewerStore';
-import type { LongitudinalResult, LesionChange } from '@/types';
+import { useSegmentationStore } from '@/store/useSegmentationStore';
+import type { LongitudinalResult, LesionChange, StudySummary, SegmentationResponse } from '@/types';
+
+/** Names that indicate non-lesion segmentations (excluded from dropdowns) */
+const EXCLUDED_DESCRIPTIONS = ['magnims zone map', 'brain extraction', 'brain mask', 'synthseg', 'parcellation'];
+
+function isLesionSegmentation(seg: SegmentationResponse): boolean {
+  const desc = (seg.metadata?.description || '').toLowerCase();
+  return !EXCLUDED_DESCRIPTIONS.some((ex) => desc.includes(ex));
+}
 
 interface LongitudinalCompareProps {
   onNavigateToSlice?: (sliceIndex: number) => void;
+  studies?: StudySummary[];
 }
 
 function statusIcon(status: string) {
@@ -66,154 +76,247 @@ function statusBg(status: string): string {
   }
 }
 
+function formatStudyDate(dateStr: string): string {
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  } catch { return dateStr; }
+}
+
+/** Hook to fetch file_ids for a study (series → instances → gcs_object_name) */
+function useStudyFileIds(studyId: string | null) {
+  return useQuery({
+    queryKey: ['study-file-ids', studyId],
+    queryFn: async () => {
+      if (!studyId) return [];
+      const series = await studyAPI.listSeries(studyId);
+      const allInstances = await Promise.all(series.map((s) => studyAPI.listInstances(s.id)));
+      return allInstances.flat().map((inst) => inst.gcs_object_name).filter(Boolean);
+    },
+    enabled: !!studyId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+/** Hook to fetch lesion segmentations for a set of file_ids */
+function useStudyLesionSegs(fileIds: string[], studyId: string | null) {
+  return useQuery({
+    queryKey: ['segmentations-lesion', studyId],
+    queryFn: async () => {
+      if (fileIds.length === 0) return [];
+      const segs = await segmentationAPI.listSegmentationsByFileIds(fileIds);
+      return segs.filter((s) => s.segmentation_id && isLesionSegmentation(s));
+    },
+    enabled: fileIds.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 export function LongitudinalCompare({
   onNavigateToSlice,
+  studies = [],
 }: LongitudinalCompareProps) {
   const { t } = useTranslation();
-  const allFileIds = useViewerStore((s) => s.allFileIds);
   const currentStudyId = useViewerStore((s) => s.currentStudyId);
-  const [tp1Id, setTp1Id] = useState<string>('');
-  const [tp2Id, setTp2Id] = useState<string>('');
+
+  // Sort studies oldest first (TP1 = earlier, TP2 = later)
+  const sortedStudies = useMemo(() =>
+    [...studies].sort((a, b) => new Date(a.study_date).getTime() - new Date(b.study_date).getTime()),
+    [studies]
+  );
+
+  // Study selection state
+  const [tp1StudyId, setTp1StudyId] = useState<string>('');
+  const [tp2StudyId, setTp2StudyId] = useState<string>('');
+
+  // Segmentation selection state
+  const [tp1SegId, setTp1SegId] = useState<string>('');
+  const [tp2SegId, setTp2SegId] = useState<string>('');
+
+  // Result state
   const [result, setResult] = useState<LongitudinalResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
 
-  // Fetch segmentations list for this study
-  const { data: segmentations = [] } = useQuery({
-    queryKey: ['segmentations', 'study', currentStudyId],
-    queryFn: () => allFileIds.length > 0
-      ? segmentationAPI.listSegmentationsByFileIds(allFileIds)
-      : Promise.resolve([]),
-    enabled: allFileIds.length > 0,
-  });
+  // Fetch file_ids and segmentations for each selected study
+  const { data: tp1FileIds = [] } = useStudyFileIds(tp1StudyId || null);
+  const { data: tp2FileIds = [] } = useStudyFileIds(tp2StudyId || null);
+  const { data: tp1Segs = [] } = useStudyLesionSegs(tp1FileIds, tp1StudyId || null);
+  const { data: tp2Segs = [] } = useStudyLesionSegs(tp2FileIds, tp2StudyId || null);
 
-  const savedSegs = segmentations.filter((s) => s.segmentation_id);
-  const canCompare = tp1Id && tp2Id && tp1Id !== tp2Id;
+  // Auto-select first segmentation when list loads
+  const canCompare = tp1SegId && tp2SegId;
 
   const handleCompare = useCallback(async () => {
     if (!canCompare) return;
     setIsLoading(true);
     setError(null);
     try {
-      const data = await segmentationAPI.compareLongitudinal(
-        { type: 'segmentation', id: tp1Id },
-        { type: 'segmentation', id: tp2Id },
+      // Load both masks for visual overlay (parallel)
+      const [tp1MaskData, tp2MaskData, data] = await Promise.all([
+        segmentationAPI.loadZoneMapMask(tp1SegId),
+        segmentationAPI.loadZoneMapMask(tp2SegId),
+        segmentationAPI.compareLongitudinal(
+          { type: 'segmentation', id: tp1SegId },
+          { type: 'segmentation', id: tp2SegId },
+        ),
+      ]);
+
+      // Store masks in Zustand for canvas rendering
+      useSegmentationStore.getState().setLongitudinalOverlay(
+        { mask: tp1MaskData.mask, dims: { depth: tp1MaskData.depth, height: tp1MaskData.height, width: tp1MaskData.width }, segId: tp1SegId },
+        { mask: tp2MaskData.mask, dims: { depth: tp2MaskData.depth, height: tp2MaskData.height, width: tp2MaskData.width }, segId: tp2SegId },
       );
+
       setResult(data);
       setExpanded(true);
-    } catch (err) {
-      setError(String(err));
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail || err?.response?.data?.error?.message || err?.message || String(err);
+      setError(detail);
     } finally {
       setIsLoading(false);
     }
-  }, [tp1Id, tp2Id, canCompare]);
+  }, [tp1SegId, tp2SegId, canCompare]);
 
   const handleLesionClick = useCallback((change: LesionChange) => {
     onNavigateToSlice?.(Math.round(change.centroid_z));
   }, [onNavigateToSlice]);
 
+  if (sortedStudies.length < 2) {
+    return null;
+  }
+
   return (
-    <div className="bg-gray-800/80 rounded-xl p-3 space-y-3">
+    <div className="space-y-3">
       {/* Header */}
       <div className="flex items-center gap-2">
-        <TrendingUp className="w-4 h-4 text-indigo-400" />
-        <span className="text-sm font-semibold text-white">
+        <TrendingUp className="w-3.5 h-3.5 text-indigo-400" />
+        <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
           {t('longitudinal.title', 'Longitudinal Tracking')}
         </span>
       </div>
 
-      {/* Timepoint selectors */}
-      {savedSegs.length >= 2 ? (
-        <div className="space-y-1.5">
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <label className="text-[9px] text-gray-500 block mb-0.5">
-                {t('longitudinal.tp1', 'TP1 (Earlier)')}
-              </label>
-              <select
-                value={tp1Id}
-                onChange={(e) => setTp1Id(e.target.value)}
-                className="w-full px-1.5 py-1 bg-gray-700 text-white rounded text-[10px]"
-              >
-                <option value="">{t('longitudinal.select', 'Select...')}</option>
-                {savedSegs.map((s) => (
-                  <option key={s.segmentation_id} value={s.segmentation_id}>
-                    {s.segmentation_id.slice(0, 8)} — {s.metadata?.description || s.file_id?.split('/').pop()}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex-1">
-              <label className="text-[9px] text-gray-500 block mb-0.5">
-                {t('longitudinal.tp2', 'TP2 (Later)')}
-              </label>
-              <select
-                value={tp2Id}
-                onChange={(e) => setTp2Id(e.target.value)}
-                className="w-full px-1.5 py-1 bg-gray-700 text-white rounded text-[10px]"
-              >
-                <option value="">{t('longitudinal.select', 'Select...')}</option>
-                {savedSegs.map((s) => (
-                  <option key={s.segmentation_id} value={s.segmentation_id}>
-                    {s.segmentation_id.slice(0, 8)} — {s.metadata?.description || s.file_id?.split('/').pop()}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <button
-            onClick={handleCompare}
-            disabled={!canCompare || isLoading}
-            className="w-full px-2 py-1 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded text-xs text-white transition-colors"
+      {/* TP1: Study + Segmentation */}
+      <div className="space-y-1">
+        <label className="text-[9px] text-gray-500 block font-medium">
+          {t('longitudinal.tp1', 'TP1 (Earlier)')}
+        </label>
+        <select
+          value={tp1StudyId}
+          onChange={(e) => { setTp1StudyId(e.target.value); setTp1SegId(''); setResult(null); }}
+          className="w-full px-1.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded text-[10px] border border-gray-200 dark:border-gray-600"
+        >
+          <option value="">Select study...</option>
+          {sortedStudies.map((s) => (
+            <option key={s.id} value={s.id}>
+              {formatStudyDate(s.study_date)} — {s.study_description || s.modality}
+              {s.id === currentStudyId ? ' (current)' : ''}
+            </option>
+          ))}
+        </select>
+        {tp1StudyId && tp1Segs.length > 0 && (
+          <select
+            value={tp1SegId}
+            onChange={(e) => { setTp1SegId(e.target.value); setResult(null); }}
+            className="w-full px-1.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded text-[10px] border border-gray-200 dark:border-gray-600"
           >
-            {isLoading ? (
-              <Loader2 className="w-3 h-3 animate-spin mx-auto" />
-            ) : (
-              t('longitudinal.compare', 'Compare Timepoints')
-            )}
-          </button>
-        </div>
-      ) : (
-        <p className="text-[10px] text-gray-500">
-          {t('longitudinal.needTwo', 'Need 2+ saved segmentations to compare timepoints')}
-        </p>
-      )}
+            <option value="">Select segmentation...</option>
+            {tp1Segs.map((s) => (
+              <option key={s.segmentation_id} value={s.segmentation_id}>
+                {s.metadata?.description || s.segmentation_id.slice(0, 8)}
+              </option>
+            ))}
+          </select>
+        )}
+        {tp1StudyId && tp1Segs.length === 0 && tp1FileIds.length > 0 && (
+          <p className="text-[9px] text-gray-500 italic">No lesion segmentations found</p>
+        )}
+      </div>
+
+      {/* TP2: Study + Segmentation */}
+      <div className="space-y-1">
+        <label className="text-[9px] text-gray-500 block font-medium">
+          {t('longitudinal.tp2', 'TP2 (Later)')}
+        </label>
+        <select
+          value={tp2StudyId}
+          onChange={(e) => { setTp2StudyId(e.target.value); setTp2SegId(''); setResult(null); }}
+          className="w-full px-1.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded text-[10px] border border-gray-200 dark:border-gray-600"
+        >
+          <option value="">Select study...</option>
+          {sortedStudies.map((s) => (
+            <option key={s.id} value={s.id}>
+              {formatStudyDate(s.study_date)} — {s.study_description || s.modality}
+              {s.id === currentStudyId ? ' (current)' : ''}
+            </option>
+          ))}
+        </select>
+        {tp2StudyId && tp2Segs.length > 0 && (
+          <select
+            value={tp2SegId}
+            onChange={(e) => { setTp2SegId(e.target.value); setResult(null); }}
+            className="w-full px-1.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded text-[10px] border border-gray-200 dark:border-gray-600"
+          >
+            <option value="">Select segmentation...</option>
+            {tp2Segs.map((s) => (
+              <option key={s.segmentation_id} value={s.segmentation_id}>
+                {s.metadata?.description || s.segmentation_id.slice(0, 8)}
+              </option>
+            ))}
+          </select>
+        )}
+        {tp2StudyId && tp2Segs.length === 0 && tp2FileIds.length > 0 && (
+          <p className="text-[9px] text-gray-500 italic">No lesion segmentations found</p>
+        )}
+      </div>
+
+      {/* Compare Button */}
+      <button
+        onClick={handleCompare}
+        disabled={!canCompare || isLoading}
+        className="w-full px-2 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded text-xs text-white font-medium transition-colors"
+      >
+        {isLoading ? (
+          <Loader2 className="w-3 h-3 animate-spin mx-auto" />
+        ) : (
+          t('longitudinal.compare', 'Compare Timepoints')
+        )}
+      </button>
 
       {error && (
-        <div className="flex items-center gap-1 text-red-400 text-xs">
+        <div className="flex items-center gap-1 text-red-400 text-[10px]">
           <AlertCircle className="w-3 h-3" />
-          <span>{error}</span>
+          <span className="truncate">{error}</span>
         </div>
       )}
 
       {result && (
         <>
           {/* Burden Summary */}
-          <div className="bg-gray-900/50 rounded-lg p-2 space-y-1.5">
+          <div className="bg-gray-100 dark:bg-gray-900/50 rounded-lg p-2 space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] text-gray-400">
+              <span className="text-[10px] text-gray-500 dark:text-gray-400">
                 {t('longitudinal.burden', 'Lesion Burden')}
               </span>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] text-gray-500">{result.burden_tp1_ml.toFixed(2)} mL</span>
-                <span className="text-[10px] text-gray-500">&rarr;</span>
-                <span className="text-xs font-mono font-bold text-white">{result.burden_tp2_ml.toFixed(2)} mL</span>
+                <span className="text-[10px] text-gray-400 dark:text-gray-500">{result.burden_tp1_ml.toFixed(2)} mL</span>
+                <span className="text-[10px] text-gray-400">&rarr;</span>
+                <span className="text-xs font-mono font-bold text-gray-800 dark:text-white">{result.burden_tp2_ml.toFixed(2)} mL</span>
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[10px] text-gray-400">{t('longitudinal.change', 'Change')}</span>
+              <span className="text-[10px] text-gray-500 dark:text-gray-400">{t('longitudinal.change', 'Change')}</span>
               <span className={`text-xs font-mono font-bold ${
                 result.burden_delta_percent > 5 ? 'text-red-400' :
-                result.burden_delta_percent < -5 ? 'text-green-400' : 'text-gray-300'
+                result.burden_delta_percent < -5 ? 'text-green-400' : 'text-gray-500 dark:text-gray-300'
               }`}>
                 {result.burden_delta_percent > 0 ? '+' : ''}{result.burden_delta_percent.toFixed(1)}%
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[10px] text-gray-400">{t('longitudinal.lesionCount', 'Lesion Count')}</span>
-              <span className="text-[10px] text-gray-300">
+              <span className="text-[10px] text-gray-500 dark:text-gray-400">{t('longitudinal.lesionCount', 'Lesion Count')}</span>
+              <span className="text-[10px] text-gray-600 dark:text-gray-300">
                 {result.total_lesions_tp1} &rarr; {result.total_lesions_tp2}
               </span>
             </div>
@@ -225,7 +328,7 @@ export function LongitudinalCompare({
               count > 0 && (
                 <span
                   key={status}
-                  className="flex items-center gap-1 px-1.5 py-0.5 bg-gray-900/60 rounded text-[9px]"
+                  className="flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 dark:bg-gray-900/60 rounded text-[9px]"
                 >
                   <span className={`w-1.5 h-1.5 rounded-full ${statusBg(status)}`} />
                   <span className={statusColor(status)}>
@@ -249,7 +352,7 @@ export function LongitudinalCompare({
             <div className="max-h-48 overflow-y-auto">
               <table className="w-full text-[9px]">
                 <thead>
-                  <tr className="text-gray-500 border-b border-gray-700">
+                  <tr className="text-gray-500 border-b border-gray-300 dark:border-gray-700">
                     <th className="text-center py-0.5 px-1">{t('longitudinal.statusCol', 'Status')}</th>
                     <th className="text-right py-0.5 px-1">TP1</th>
                     <th className="text-right py-0.5 px-1">TP2</th>
@@ -261,7 +364,7 @@ export function LongitudinalCompare({
                     <tr
                       key={i}
                       onClick={() => handleLesionClick(change)}
-                      className="cursor-pointer border-b border-gray-800 hover:bg-gray-700/50 transition-colors"
+                      className="cursor-pointer border-b border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
                     >
                       <td className="py-0.5 px-1 text-center">
                         <span className="flex items-center justify-center gap-0.5">
@@ -271,11 +374,11 @@ export function LongitudinalCompare({
                           </span>
                         </span>
                       </td>
-                      <td className="py-0.5 px-1 text-right font-mono text-gray-300">
-                        {change.volume_tp1_ml > 0 ? `${change.volume_tp1_ml.toFixed(3)}` : '—'}
+                      <td className="py-0.5 px-1 text-right font-mono text-gray-600 dark:text-gray-300">
+                        {change.volume_tp1_ml > 0 ? `${change.volume_tp1_ml.toFixed(3)}` : '\u2014'}
                       </td>
-                      <td className="py-0.5 px-1 text-right font-mono text-white">
-                        {change.volume_tp2_ml > 0 ? `${change.volume_tp2_ml.toFixed(3)}` : '—'}
+                      <td className="py-0.5 px-1 text-right font-mono text-gray-800 dark:text-white">
+                        {change.volume_tp2_ml > 0 ? `${change.volume_tp2_ml.toFixed(3)}` : '\u2014'}
                       </td>
                       <td className={`py-0.5 px-1 text-right font-mono ${statusColor(change.status)}`}>
                         {change.status === 'new' ? '+new' :

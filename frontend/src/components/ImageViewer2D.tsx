@@ -24,11 +24,9 @@ interface ImageViewer2DProps {
   patientName?: string;
   studyDescription?: string;
   studyModality?: string;
-  /** Expert annotation masks for contour overlay rendering */
-  expertMasks?: Map<string, import('@/types').ExpertMaskData>;
 }
 
-function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, studyDescription, studyModality, expertMasks }: ImageViewer2DProps) {
+function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, studyDescription, studyModality }: ImageViewer2DProps) {
   const { t } = useTranslation();
 
   // Refs
@@ -63,6 +61,8 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
   const isPaintMode = useSegmentationStore((s) => s.isPaintMode);
   const setIsPaintMode = useSegmentationStore((s) => s.setIsPaintMode);
   const selectedLesion = useSegmentationStore((s) => s.selectedLesion);
+  const zoneMapVisible = useSegmentationStore((s) => s.zoneMapVisible);
+  const longitudinalVisible = useSegmentationStore((s) => s.longitudinalVisible);
 
   // Derived values — same names so JSX props don't need changes
   const brushSize = paintTool.brushSize;
@@ -141,9 +141,6 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
     fileId: currentSeries?.file_id,
     currentSliceIndex,
   });
-
-  // Check if any expert masks are visible (to show canvas even without segmentation mode)
-  const hasVisibleExperts = expertMasks ? Array.from(expertMasks.values()).some(m => m.visible && m.mask) : false;
 
   // Segmentation handlers - assign to ref so App can call it
   // Using useCallback-based createSegmentation for stable reference
@@ -379,9 +376,9 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
               />
               {/* Interactive segmentation canvas - covers full image in minimal mode, or bbox area.
                   When matplotlibSegId is set, backend renders the segmentation in the matplotlib PNG,
-                  so hide the local canvas (avoid double overlay). Show it for editing, expert masks,
+                  so hide the local canvas (avoid double overlay). Show it for editing,
                   selected lesion bounding box, or as fallback when backend overlay fails. */}
-              {((segmentationMode && currentSegmentation && (!matplotlibSegId || useLocalOverlayFallback)) || hasVisibleExperts || selectedLesion) && currentSeries && (
+              {((segmentationMode && currentSegmentation && (!matplotlibSegId || useLocalOverlayFallback)) || selectedLesion || zoneMapVisible || longitudinalVisible) && currentSeries && (
                 <SegmentationCanvasLocal
                   ref={segmentationCanvasMatplotlibRef}
                   segmentationMask={segmentationMask}
@@ -417,7 +414,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
                   aiClickPoints={aiSeg.aiMode === 'interactive' ? aiSeg.clickPoints : undefined}
                   aiInteractiveMode={aiSeg.aiMode === 'interactive'}
                   onAIClick={aiSeg.handleCanvasClick}
-                  expertMasks={expertMasks}
+
                 />
               )}
             </div>
@@ -427,7 +424,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
             <div className="relative">
               <canvas ref={canvasRef} style={{ filter: imageFilter }} />
               {/* Interactive segmentation canvas - same size as canvas */}
-              {((segmentationMode && currentSegmentation) || hasVisibleExperts) && currentSeries && (
+              {((segmentationMode && currentSegmentation) || zoneMapVisible || longitudinalVisible) && currentSeries && (
                 <SegmentationCanvasLocal
                   ref={segmentationCanvasRef}
                   segmentationMask={segmentationMask}
@@ -453,7 +450,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
                   aiClickPoints={aiSeg.aiMode === 'interactive' ? aiSeg.clickPoints : undefined}
                   aiInteractiveMode={aiSeg.aiMode === 'interactive'}
                   onAIClick={aiSeg.handleCanvasClick}
-                  expertMasks={expertMasks}
+
                 />
               )}
             </div>

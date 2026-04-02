@@ -10,6 +10,7 @@ import { usePatient, useMedicalHistory } from '@/hooks/usePatients';
 import { studyAPI } from '@/services/studyApi';
 import { COLORMAPS_3D } from '@/components/ImageViewer3D';
 import type { StudySummary, ImageOrientation } from '@/types';
+import { LongitudinalCompare } from './LongitudinalCompare';
 
 export default function ControlPanel() {
   const { t } = useTranslation();
@@ -259,6 +260,13 @@ export default function ControlPanel() {
                 })}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Longitudinal Tracking (below timeline) */}
+        {sortedStudies.length > 1 && (
+          <div className="px-4 py-2 border-b border-gray-200/50 dark:border-gray-700/50">
+            <LongitudinalCompare studies={sortedStudies} />
           </div>
         )}
 

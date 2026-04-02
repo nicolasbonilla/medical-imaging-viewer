@@ -580,21 +580,106 @@ async def update_labels(
 @router.get("/{segmentation_id}/nifti")
 async def get_segmentation_nifti(
     segmentation_id: str,
-    segmentation_service: SegmentationService = Depends(get_segmentation_service)
+    ref_file_id: Optional[str] = None,
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    storage_service: IStorageService = Depends(get_storage_service),
 ):
     """
     Serve the segmentation as a raw NIfTI file (.nii.gz) for WebGL-based viewers.
 
-    This endpoint returns the segmentation mask as a NIfTI file with the exact same
-    affine, header, and dimensions as the original MRI image, making it compatible
-    with ITK-SNAP and NiiVue for overlay visualization.
-
-    The NIfTI file is served directly from GCS storage where it was saved during
-    the last save operation.
+    If ref_file_id is provided, regenerates the NIfTI using the reference MRI's affine matrix,
+    ensuring the overlay aligns perfectly with the displayed brain image regardless of how
+    the segmentation was originally saved.
     """
     try:
-        # Get the segmentation NIfTI from GCS
-        nifti_data = segmentation_service.get_segmentation_nifti(segmentation_id)
+        nifti_data = None
+
+        if ref_file_id:
+            import nibabel as nib
+            import tempfile, os
+
+            # Load the EXISTING segmentation NIfTI from GCS (not internal mask)
+            existing_bytes = segmentation_service.get_segmentation_nifti(segmentation_id)
+            if not existing_bytes:
+                raise HTTPException(status_code=404, detail=f"Segmentation NIfTI not found for {segmentation_id}")
+
+            # Load reference MRI NIfTI
+            ref_blob = segmentation_service.gcs_bucket.blob(ref_file_id)
+            if not ref_blob.exists():
+                # Fallback: serve original NIfTI as-is
+                nifti_data = existing_bytes
+            else:
+                # Load reference MRI
+                ref_buffer = io.BytesIO()
+                ref_blob.download_to_file(ref_buffer)
+                ref_buffer.seek(0)
+                with tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False) as rtmp:
+                    rtmp.write(ref_buffer.read())
+                    ref_tmp_path = rtmp.name
+                ref_img = nib.load(ref_tmp_path)
+
+                # Load existing segmentation NIfTI
+                with tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False) as stmp:
+                    stmp.write(existing_bytes)
+                    seg_tmp_path = stmp.name
+                seg_img = nib.load(seg_tmp_path)
+                seg_data = seg_img.get_fdata()
+
+                ref_shape = ref_img.shape[:3]
+                seg_shape = seg_data.shape[:3]
+
+                logger.info("Aligning segmentation to reference", extra={
+                    "seg_shape": str(seg_shape),
+                    "ref_shape": str(ref_shape),
+                    "seg_affine_diag": str(np.diag(seg_img.affine)[:3].tolist()),
+                    "ref_affine_diag": str(np.diag(ref_img.affine)[:3].tolist()),
+                })
+
+                if seg_shape == ref_shape:
+                    # Same shape — just apply reference affine + header
+                    result_data = seg_data.astype(np.uint8)
+                elif sorted(seg_shape) == sorted(ref_shape):
+                    # Same dimensions but different axis order — find permutation
+                    perm = []
+                    used = [False] * 3
+                    for t_dim in ref_shape:
+                        for i, s_dim in enumerate(seg_shape):
+                            if s_dim == t_dim and not used[i]:
+                                perm.append(i)
+                                used[i] = True
+                                break
+                    result_data = np.transpose(seg_data, perm).astype(np.uint8)
+                    logger.info("Permuted segmentation axes", extra={
+                        "permutation": str(perm),
+                        "result_shape": str(result_data.shape),
+                    })
+                else:
+                    # Incompatible shapes — serve original
+                    logger.warning("Cannot align: incompatible shapes")
+                    os.unlink(ref_tmp_path)
+                    os.unlink(seg_tmp_path)
+                    nifti_data = existing_bytes
+                    result_data = None
+
+                if result_data is not None:
+                    # Save with reference affine AND full header
+                    aligned_img = nib.Nifti1Image(result_data, ref_img.affine, ref_img.header)
+                    with tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False) as otmp:
+                        out_path = otmp.name
+                    nib.save(aligned_img, out_path)
+                    with open(out_path, 'rb') as f:
+                        nifti_data = f.read()
+                    os.unlink(out_path)
+                    logger.info("Generated aligned NIfTI", extra={
+                        "size_bytes": len(nifti_data),
+                        "shape": str(result_data.shape),
+                    })
+
+                os.unlink(ref_tmp_path)
+                os.unlink(seg_tmp_path)
+        else:
+            # Get the segmentation NIfTI from GCS (original orientation)
+            nifti_data = segmentation_service.get_segmentation_nifti(segmentation_id)
 
         if nifti_data is None:
             raise HTTPException(
@@ -1913,7 +1998,46 @@ async def compare_longitudinal(
         mask_tp1 = await load_mask(tp1_spec)
         mask_tp2 = await load_mask(tp2_spec)
 
-        result = compare_timepoints(mask_tp1, mask_tp2)
+        logger.info("Longitudinal masks loaded", extra={
+            "tp1_shape": str(mask_tp1.shape),
+            "tp2_shape": str(mask_tp2.shape),
+            "tp1_nonzero": int(np.count_nonzero(mask_tp1)),
+            "tp2_nonzero": int(np.count_nonzero(mask_tp2)),
+        })
+
+        # Normalize orientation: if shapes differ but sorted dims match, transpose TP2 to match TP1
+        if mask_tp1.shape != mask_tp2.shape:
+            sorted1 = sorted(mask_tp1.shape)
+            sorted2 = sorted(mask_tp2.shape)
+            if sorted1 == sorted2:
+                # Find the permutation that maps TP2 shape to TP1 shape
+                target = mask_tp1.shape
+                source = mask_tp2.shape
+                perm = []
+                used = [False] * len(source)
+                for t in target:
+                    for i, s in enumerate(source):
+                        if s == t and not used[i]:
+                            perm.append(i)
+                            used[i] = True
+                            break
+                mask_tp2 = np.transpose(mask_tp2, perm)
+                logger.info("Transposed TP2 mask to match TP1", extra={
+                    "original_shape": str(source),
+                    "new_shape": str(mask_tp2.shape),
+                    "permutation": str(perm),
+                })
+            else:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Mask dimensions incompatible: TP1={mask_tp1.shape} vs TP2={mask_tp2.shape}"
+                )
+
+        # Binarize masks (labels > 0 → 1) for comparison
+        mask_tp1_bin = (mask_tp1 > 0).astype(np.uint8)
+        mask_tp2_bin = (mask_tp2 > 0).astype(np.uint8)
+
+        result = compare_timepoints(mask_tp1_bin, mask_tp2_bin)
 
         logger.info("Longitudinal comparison completed", extra={
             "new": result["status_counts"]["new"],

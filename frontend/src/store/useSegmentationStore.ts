@@ -155,6 +155,9 @@ interface SegmentationState {
   /** Whether zone map background overlay is visible */
   zoneMapVisible: boolean;
 
+  /** True when the active segmentation IS the zone map itself (prevents dual rendering) */
+  isZoneMapActiveSegmentation: boolean;
+
   /** Whether lesion mask should be colorized by MAGNIMS zone instead of label colors */
   zoneColorizeEnabled: boolean;
 
@@ -163,6 +166,21 @@ interface SegmentationState {
 
   /** Opacity for zone map background overlay (0-1) */
   zoneMapOpacity: number;
+
+  // =========================================================================
+  // Longitudinal Overlay (dual mask comparison)
+  // =========================================================================
+
+  /** TP1 mask for longitudinal overlay (blue = resolved) */
+  longitudinalTp1Mask: Uint8Array | null;
+  longitudinalTp1Dims: { depth: number; height: number; width: number } | null;
+  longitudinalTp1SegId: string | null;
+  /** TP2 mask for longitudinal overlay (red = new) */
+  longitudinalTp2Mask: Uint8Array | null;
+  longitudinalTp2Dims: { depth: number; height: number; width: number } | null;
+  longitudinalTp2SegId: string | null;
+  /** Whether longitudinal overlay is visible */
+  longitudinalVisible: boolean;
 
   // =========================================================================
   // Selected Lesion (bounding box + centroid highlight)
@@ -240,6 +258,11 @@ interface SegmentationState {
   // =========================================================================
 
   setSelectedLesion: (lesion: LesionInfo | null) => void;
+  setLongitudinalOverlay: (
+    tp1: { mask: Uint8Array; dims: { depth: number; height: number; width: number }; segId: string } | null,
+    tp2: { mask: Uint8Array; dims: { depth: number; height: number; width: number }; segId: string } | null,
+  ) => void;
+  clearLongitudinalOverlay: () => void;
 
   // =========================================================================
   // Actions - Reset
@@ -305,12 +328,22 @@ const initialState = {
   zoneMapMask: null as Uint8Array | null,
   zoneMapDims: null as { depth: number; height: number; width: number } | null,
   zoneMapVisible: false,
+  isZoneMapActiveSegmentation: false,
   zoneColorizeEnabled: false,
   lesionOpacity: 0.6,
   zoneMapOpacity: 0.3,
 
   // Selected lesion
   selectedLesion: null as LesionInfo | null,
+
+  // Longitudinal overlay
+  longitudinalTp1Mask: null as Uint8Array | null,
+  longitudinalTp1Dims: null as { depth: number; height: number; width: number } | null,
+  longitudinalTp1SegId: null as string | null,
+  longitudinalTp2Mask: null as Uint8Array | null,
+  longitudinalTp2Dims: null as { depth: number; height: number; width: number } | null,
+  longitudinalTp2SegId: null as string | null,
+  longitudinalVisible: false,
 };
 
 // ============================================================================
@@ -533,10 +566,10 @@ export const useSegmentationStore = create<SegmentationState>()(
         // =====================================================================
 
         setZoneMap: (segId, mask, dims) =>
-          set({ zoneMapSegId: segId, zoneMapMask: mask, zoneMapDims: dims, zoneMapVisible: true, zoneColorizeEnabled: true }),
+          set({ zoneMapSegId: segId, zoneMapMask: mask, zoneMapDims: dims }),
 
         clearZoneMap: () =>
-          set({ zoneMapSegId: null, zoneMapMask: null, zoneMapDims: null, zoneMapVisible: false, zoneColorizeEnabled: false }),
+          set({ zoneMapSegId: null, zoneMapMask: null, zoneMapDims: null, zoneMapVisible: false, isZoneMapActiveSegmentation: false, zoneColorizeEnabled: false }),
 
         toggleZoneMapVisibility: () =>
           set((state) => ({
@@ -559,6 +592,20 @@ export const useSegmentationStore = create<SegmentationState>()(
         // =====================================================================
 
         setSelectedLesion: (lesion) => set({ selectedLesion: lesion }),
+        setLongitudinalOverlay: (tp1, tp2) => set({
+          longitudinalTp1Mask: tp1?.mask ?? null,
+          longitudinalTp1Dims: tp1?.dims ?? null,
+          longitudinalTp1SegId: tp1?.segId ?? null,
+          longitudinalTp2Mask: tp2?.mask ?? null,
+          longitudinalTp2Dims: tp2?.dims ?? null,
+          longitudinalTp2SegId: tp2?.segId ?? null,
+          longitudinalVisible: true,
+        }),
+        clearLongitudinalOverlay: () => set({
+          longitudinalTp1Mask: null, longitudinalTp1Dims: null, longitudinalTp1SegId: null,
+          longitudinalTp2Mask: null, longitudinalTp2Dims: null, longitudinalTp2SegId: null,
+          longitudinalVisible: false,
+        }),
 
         // =====================================================================
         // Reset Actions

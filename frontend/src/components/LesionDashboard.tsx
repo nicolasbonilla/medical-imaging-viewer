@@ -22,10 +22,6 @@ import {
   ChevronUp,
   MapPin,
   Zap,
-  Map,
-  Eye,
-  EyeOff,
-  Palette,
   Info,
 } from 'lucide-react';
 import { segmentationAPI } from '@/api/segmentation';
@@ -37,7 +33,6 @@ import {
   type LesionInfo,
   type RegionClassificationResult,
   type ClassificationMethod,
-  type ZoneMapResult,
   type LesionAnnotation,
   type CVSSummary,
   type PRLSummary,
@@ -86,17 +81,11 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
   const { t } = useTranslation();
   const reloadMaskCallback = useSegmentationStore((s) => s.reloadMaskCallback);
   const currentSegmentation = useSegmentationStore((s) => s.currentSegmentation);
-  const currentFileId = currentSegmentation?.file_id;
-  const zoneMapSegId = useSegmentationStore((s) => s.zoneMapSegId);
-  const zoneMapVisible = useSegmentationStore((s) => s.zoneMapVisible);
-  const zoneColorizeEnabled = useSegmentationStore((s) => s.zoneColorizeEnabled);
   const [analysis, setAnalysis] = useState<LesionAnalysisResult | null>(null);
   const [dis, setDis] = useState<DISAssessment | null>(null);
   const [classification, setClassification] = useState<RegionClassificationResult | null>(null);
-  const [zoneMapStats, setZoneMapStats] = useState<ZoneMapResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isClassifying, setIsClassifying] = useState(false);
-  const [isGeneratingZoneMap, setIsGeneratingZoneMap] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [highlightedLesion, setHighlightedLesion] = useState<number | null>(null);
@@ -110,7 +99,6 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
   useEffect(() => {
     const cached = currentSegmentation?.metadata?.analysis_data;
     if (!cached) {
-      // Clear state when switching to a segmentation without cached data
       setAnalysis(null);
       setDis(null);
       setClassification(null);
@@ -123,7 +111,6 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
     }
     if (cached.dis_assessment) setDis(cached.dis_assessment);
     if (cached.classification) setClassification(cached.classification);
-    // CVS/PRL annotations
     if (cached.lesion_annotations) {
       const map: Record<number, Partial<LesionAnnotation>> = {};
       for (const ann of cached.lesion_annotations) {
@@ -143,7 +130,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
     currentSegmentation.metadata.modified_at !== currentSegmentation.metadata.analysis_data.analysis_mask_modified_at
   );
 
-  // Helper: patch Zustand currentSegmentation with updated analysis_data (avoids extra API call)
+  // Helper: patch Zustand currentSegmentation with updated analysis_data
   const patchAnalysisData = useCallback((patch: Record<string, unknown>) => {
     const store = useSegmentationStore.getState();
     const cur = store.currentSegmentation;
@@ -172,7 +159,6 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       setAnalysis(analysisResult);
       setDis(disResult);
       setExpanded(true);
-      // Persist in Zustand (server already cached in Firestore)
       patchAnalysisData({ lesion_analysis: analysisResult, dis_assessment: disResult });
     } catch (err: any) {
       setError(err?.response?.data?.detail || err?.message || String(err));
@@ -190,13 +176,11 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       });
       setClassification(result);
 
-      // The mask has been reclassified on the server — reload from server
       if (result.mask_updated) {
         await reloadMaskCallback?.();
         onMaskUpdated?.();
       }
 
-      // Sync MAGNIMS labels into Zustand so the canvas renders correct colors
       if (result.labels_updated) {
         const store = useSegmentationStore.getState();
         const curSeg = store.currentSegmentation;
@@ -208,7 +192,6 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
         }
       }
 
-      // Re-run analysis to reflect the new MAGNIMS labels (server cache hit — fast)
       const [analysisResult, disResult] = await Promise.all([
         segmentationAPI.analyzeLesions(segmentationId),
         segmentationAPI.getDISAssessment(segmentationId),
@@ -217,7 +200,6 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       setDis(disResult);
       setExpanded(true);
 
-      // Persist all in Zustand
       patchAnalysisData({
         classification: result,
         lesion_analysis: analysisResult,
@@ -230,41 +212,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
     }
   }, [segmentationId, classifyMethod, onMaskUpdated, reloadMaskCallback, patchAnalysisData]);
 
-  const handleGenerateZoneMap = useCallback(async () => {
-    if (!currentFileId) return;
-    setIsGeneratingZoneMap(true);
-    setError(null);
-    try {
-      // 1. Generate zone map on server (creates a new segmentation + propagates zone_map_seg_id)
-      const result = await segmentationAPI.generateZoneMap(currentFileId);
-      setZoneMapStats(result);
-
-      // 2. Download via the reusable helper
-      const { mask, depth, height, width } = await segmentationAPI.loadZoneMapMask(result.segmentation_id);
-
-      // 3. Store in Zustand for rendering
-      useSegmentationStore.getState().setZoneMap(result.segmentation_id, mask, { depth, height, width });
-
-      // 4. Update Zustand with zone_map_seg_id (server already propagated to Firestore)
-      patchAnalysisData({ zone_map_seg_id: result.segmentation_id });
-    } catch (err: any) {
-      const detail = err?.response?.data?.detail || err?.message || String(err);
-      setError(detail);
-    } finally {
-      setIsGeneratingZoneMap(false);
-    }
-  }, [currentFileId, patchAnalysisData]);
-
-  const handleToggleZoneMap = useCallback(() => {
-    useSegmentationStore.getState().toggleZoneMapVisibility();
-  }, []);
-
-  const handleToggleZoneColorize = useCallback(() => {
-    useSegmentationStore.getState().toggleZoneColorize();
-  }, []);
-
   const handleLesionClick = useCallback((lesion: LesionInfo) => {
-    // Toggle: clicking the same lesion again deselects it
     const current = useSegmentationStore.getState().selectedLesion;
     if (current && current.id === lesion.id) {
       setHighlightedLesion(null);
@@ -309,7 +257,6 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
         annotated_by: 'manual',
       },
     }));
-    // Debounce save to backend
     if (annotationDebounceRef.current) clearTimeout(annotationDebounceRef.current);
     annotationDebounceRef.current = setTimeout(async () => {
       try {
@@ -378,6 +325,65 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       )}
 
       {/* ================================================================ */}
+      {/* LESION TABLE — Primary view, always visible when analysis exists */}
+      {/* ================================================================ */}
+      {analysis && analysis.lesions.length > 0 && (
+        <div className="bg-gray-900/60 rounded-lg p-2.5 border border-gray-700/50">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-semibold text-white">
+              {t('lesions.lesionTable', 'Lesion Table')}
+            </span>
+            <span className="text-[10px] text-gray-400 font-mono">
+              {analysis.total_count} {t('lesions.totalCount', 'lesions')} &middot; {analysis.total_burden_ml.toFixed(2)} mL
+            </span>
+          </div>
+          <div className="max-h-72 overflow-y-auto">
+            <table className="w-full text-[10px]">
+              <thead className="sticky top-0 bg-gray-900/95 z-10">
+                <tr className="text-gray-400 border-b border-gray-600">
+                  <th className="text-left py-1 px-1.5">#</th>
+                  <th className="text-left py-1 px-1.5">{t('lesions.region', 'Region')}</th>
+                  <th className="text-right py-1 px-1.5">mm&sup3;</th>
+                  <th className="text-right py-1 px-1.5">mL</th>
+                  <th className="text-center py-1 px-1.5">{t('lesions.size', 'Size')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analysis.lesions.map((lesion) => (
+                  <tr
+                    key={lesion.id}
+                    onClick={() => handleLesionClick(lesion)}
+                    className={`cursor-pointer border-b border-gray-800 transition-colors ${
+                      highlightedLesion === lesion.id
+                        ? 'bg-amber-900/40'
+                        : 'hover:bg-gray-700/50'
+                    }`}
+                  >
+                    <td className="py-1 px-1.5 text-gray-400">{lesion.id}</td>
+                    <td className="py-1 px-1.5">
+                      <span className="flex items-center gap-1">
+                        <span className={`w-2 h-2 rounded-full ${REGION_COLORS[lesion.region] ?? 'bg-gray-500'}`} />
+                        <span className="text-gray-200">{lesion.region}</span>
+                      </span>
+                    </td>
+                    <td className="py-1 px-1.5 text-right font-mono text-gray-300">
+                      {lesion.volume_mm3.toLocaleString()}
+                    </td>
+                    <td className="py-1 px-1.5 text-right font-mono text-white font-medium">
+                      {lesion.volume_ml.toFixed(3)}
+                    </td>
+                    <td className={`py-1 px-1.5 text-center font-medium ${sizeColor(lesion.size_category)}`}>
+                      {lesion.size_category === 'small' ? 'S' : lesion.size_category === 'medium' ? 'M' : 'L'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ================================================================ */}
       {/* Auto-Classify Regions (MAGNIMS) */}
       {/* ================================================================ */}
       <div className="bg-gray-900/60 rounded-lg p-2 space-y-2 border border-gray-700/50">
@@ -414,7 +420,6 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
           ))}
         </div>
 
-        {/* Classify button */}
         <button
           onClick={handleClassifyRegions}
           disabled={isClassifying}
@@ -433,7 +438,6 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
           )}
         </button>
 
-        {/* Classification result badge */}
         {classification && (
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-[9px]">
@@ -444,8 +448,6 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                 {classification.processing_time_ms}ms
               </span>
             </div>
-
-            {/* Region breakdown with colored dots */}
             <div className="flex flex-wrap gap-x-2 gap-y-1">
               {Object.entries(classification.classification_summary).map(([region, count]) => (
                 <span key={region} className="flex items-center gap-1 text-[9px]">
@@ -456,8 +458,6 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                 </span>
               ))}
             </div>
-
-            {/* Confidence info */}
             {classification.lesions.length > 0 && (
               <div className="text-[9px] text-gray-400">
                 {t('classify.avgConfidence', 'Avg confidence')}:{' '}
@@ -475,107 +475,6 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
         )}
       </div>
 
-      {/* ================================================================ */}
-      {/* MAGNIMS Zone Map */}
-      {/* ================================================================ */}
-      <div className="bg-gray-900/60 rounded-lg p-2 space-y-2 border border-gray-700/50">
-        <div className="flex items-center gap-1.5">
-          <Map className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="text-xs font-semibold text-white">
-            {t('zoneMap.title', 'MAGNIMS Zone Map')}
-          </span>
-        </div>
-        <p className="text-[9px] text-gray-400 leading-relaxed">
-          {t('zoneMap.description',
-            'Visualize anatomical zone boundaries (PV, JC, IT, DWM) as a semi-transparent background overlay. Requires brain parcellation (SynthSeg).'
-          )}
-        </p>
-
-        <div className="flex gap-1.5">
-          {/* Generate button */}
-          <button
-            onClick={handleGenerateZoneMap}
-            disabled={isGeneratingZoneMap || !currentFileId}
-            className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded text-xs text-white font-medium transition-colors"
-          >
-            {isGeneratingZoneMap ? (
-              <>
-                <Loader2 className="w-3 h-3 animate-spin" />
-                {t('zoneMap.generating', 'Generating...')}
-              </>
-            ) : (
-              <>
-                <Map className="w-3 h-3" />
-                {t('zoneMap.generate', 'Generate')}
-              </>
-            )}
-          </button>
-
-          {/* Toggle visibility (only when zone map exists) */}
-          {zoneMapSegId && (
-            <button
-              onClick={handleToggleZoneMap}
-              className={`px-2 py-1.5 rounded text-xs font-medium transition-colors ${
-                zoneMapVisible
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
-              }`}
-              title={zoneMapVisible ? t('zoneMap.hide', 'Hide zones') : t('zoneMap.show', 'Show zones')}
-            >
-              {zoneMapVisible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-            </button>
-          )}
-
-          {/* Toggle zone colorization of lesions (only when zone map exists) */}
-          {zoneMapSegId && (
-            <button
-              onClick={handleToggleZoneColorize}
-              className={`px-2 py-1.5 rounded text-xs font-medium transition-colors ${
-                zoneColorizeEnabled
-                  ? 'bg-amber-600 text-white'
-                  : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
-              }`}
-              title={zoneColorizeEnabled
-                ? t('zoneMap.colorizeOff', 'Normal label colors')
-                : t('zoneMap.colorizeOn', 'Colorize lesions by zone')
-              }
-            >
-              <Palette className="w-3 h-3" />
-            </button>
-          )}
-        </div>
-
-        {/* Zone colorization legend */}
-        {zoneMapSegId && zoneColorizeEnabled && (
-          <div className="flex items-center gap-2 text-[9px] text-gray-300">
-            <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-red-500" />PV</span>
-            <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-green-500" />JC</span>
-            <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-blue-500" />IT</span>
-            <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-yellow-500" />DWM</span>
-          </div>
-        )}
-
-        {/* Zone map stats */}
-        {zoneMapStats && (
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-[9px] text-gray-400">
-              <span>{zoneMapStats.processing_time_ms}ms</span>
-              <span>{zoneMapStats.total_brain_voxels.toLocaleString()} {t('zoneMap.brainVoxels', 'brain voxels')}</span>
-            </div>
-            <div className="flex flex-wrap gap-x-2 gap-y-1">
-              {Object.entries(zoneMapStats.zone_stats).map(([region, stat]) => (
-                <span key={region} className="flex items-center gap-1 text-[9px]">
-                  <span className={`w-2 h-2 rounded-full ${REGION_COLORS[region] ?? 'bg-gray-500'}`} />
-                  <span className={REGION_TEXT_COLORS[region] ?? 'text-gray-300'}>
-                    {region}: {stat.percentage}%
-                  </span>
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
       {/* DIS Badge — McDonald 2024 */}
       {dis ? (
         <div className={`flex items-center gap-2 p-2 rounded-lg ${
@@ -589,7 +488,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
           <div className="flex-1 min-w-0">
             <div className={`text-xs font-bold ${(dis.dis_met_brain ?? dis.dis_met) ? 'text-green-300' : 'text-red-300'}`}>
               DIS (Brain MRI): {dis.brain_regions_with_lesions ?? dis.regions_with_lesions}/{dis.brain_regions_evaluated ?? 3} {t('lesions.regions', 'regions')}
-              {(dis.dis_met_brain ?? dis.dis_met) ? ` — ${t('lesions.criterionMet', 'Criterion Met')}` : ` — ${t('lesions.criterionNotMet', 'Not Met')}`}
+              {(dis.dis_met_brain ?? dis.dis_met) ? ` \u2014 ${t('lesions.criterionMet', 'Criterion Met')}` : ` \u2014 ${t('lesions.criterionNotMet', 'Not Met')}`}
             </div>
             <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-1">
               {Object.entries(dis.region_details).map(([name, detail]) => (
@@ -701,7 +600,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
 
       {analysis && (
         <>
-          {/* Total Burden */}
+          {/* Total Burden + Size Distribution */}
           <div className="bg-gray-900/50 rounded-lg p-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] text-gray-400">
@@ -719,19 +618,17 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                 {analysis.total_count}
               </span>
             </div>
-          </div>
-
-          {/* Size Distribution */}
-          <div className="flex gap-2 text-[10px]">
-            <span className="text-gray-400">
-              {t('lesions.small', 'Small')}: <span className="text-gray-300">{analysis.size_distribution.small}</span>
-            </span>
-            <span className="text-yellow-400">
-              {t('lesions.medium', 'Medium')}: <span className="text-yellow-300">{analysis.size_distribution.medium}</span>
-            </span>
-            <span className="text-red-400">
-              {t('lesions.large', 'Large')}: <span className="text-red-300">{analysis.size_distribution.large}</span>
-            </span>
+            <div className="flex gap-2 text-[10px] mt-1.5 pt-1.5 border-t border-gray-700/50">
+              <span className="text-gray-400">
+                {t('lesions.small', 'Small')}: <span className="text-gray-300">{analysis.size_distribution.small}</span>
+              </span>
+              <span className="text-yellow-400">
+                {t('lesions.medium', 'Medium')}: <span className="text-yellow-300">{analysis.size_distribution.medium}</span>
+              </span>
+              <span className="text-red-400">
+                {t('lesions.large', 'Large')}: <span className="text-red-300">{analysis.size_distribution.large}</span>
+              </span>
+            </div>
           </div>
 
           {/* Region Summary Bars */}
@@ -760,62 +657,15 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
             ))}
           </div>
 
-          {/* Expandable Lesion Table */}
+          {/* Classification details (expandable) */}
           <button
             onClick={() => setExpanded(!expanded)}
             className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-gray-200 transition-colors"
           >
             {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-            {t('lesions.lesionTable', 'Lesion Table')} ({analysis.total_count})
+            {t('classify.distanceDetails', 'Classification Distances')} ({analysis.total_count})
           </button>
 
-          {expanded && analysis.lesions.length > 0 && (
-            <div className="max-h-48 overflow-y-auto">
-              <table className="w-full text-[9px]">
-                <thead>
-                  <tr className="text-gray-500 border-b border-gray-700">
-                    <th className="text-left py-0.5 px-1">#</th>
-                    <th className="text-left py-0.5 px-1">{t('lesions.region', 'Region')}</th>
-                    <th className="text-right py-0.5 px-1">mm\u00b3</th>
-                    <th className="text-right py-0.5 px-1">mL</th>
-                    <th className="text-center py-0.5 px-1">{t('lesions.size', 'Size')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {analysis.lesions.map((lesion) => (
-                    <tr
-                      key={lesion.id}
-                      onClick={() => handleLesionClick(lesion)}
-                      className={`cursor-pointer border-b border-gray-800 transition-colors ${
-                        highlightedLesion === lesion.id
-                          ? 'bg-amber-900/40'
-                          : 'hover:bg-gray-700/50'
-                      }`}
-                    >
-                      <td className="py-0.5 px-1 text-gray-400">{lesion.id}</td>
-                      <td className="py-0.5 px-1">
-                        <span className="flex items-center gap-1">
-                          <span className={`w-1.5 h-1.5 rounded-full ${REGION_COLORS[lesion.region] ?? 'bg-gray-500'}`} />
-                          <span className="text-gray-200">{lesion.region}</span>
-                        </span>
-                      </td>
-                      <td className="py-0.5 px-1 text-right font-mono text-gray-300">
-                        {lesion.volume_mm3.toLocaleString()}
-                      </td>
-                      <td className="py-0.5 px-1 text-right font-mono text-white">
-                        {lesion.volume_ml.toFixed(3)}
-                      </td>
-                      <td className={`py-0.5 px-1 text-center ${sizeColor(lesion.size_category)}`}>
-                        {lesion.size_category === 'small' ? 'S' : lesion.size_category === 'medium' ? 'M' : 'L'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {/* Classification detail table (shows distances when available) */}
           {classification && classification.lesions.length > 0 && expanded && (
             <div className="mt-2">
               <label className="text-[10px] text-gray-400 block mb-1">
@@ -871,9 +721,9 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                             onChange={(e) => handleAnnotationChange(cl.lesion_id, 'cvs_status', e.target.value || null)}
                             className="bg-gray-800 text-[8px] text-gray-300 border border-gray-700 rounded px-0.5 py-0 w-10"
                           >
-                            <option value="">—</option>
+                            <option value="">{'\u2014'}</option>
                             <option value="positive">+</option>
-                            <option value="negative">−</option>
+                            <option value="negative">{'\u2212'}</option>
                             <option value="indeterminate">?</option>
                           </select>
                         </td>
@@ -883,9 +733,9 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                             onChange={(e) => handleAnnotationChange(cl.lesion_id, 'prl_status', e.target.value || null)}
                             className="bg-gray-800 text-[8px] text-gray-300 border border-gray-700 rounded px-0.5 py-0 w-10"
                           >
-                            <option value="">—</option>
+                            <option value="">{'\u2014'}</option>
                             <option value="positive">+</option>
-                            <option value="negative">−</option>
+                            <option value="negative">{'\u2212'}</option>
                             <option value="indeterminate">?</option>
                           </select>
                         </td>

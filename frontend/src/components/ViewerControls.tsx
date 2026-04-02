@@ -2,11 +2,8 @@ import { useTranslation } from 'react-i18next';
 import { useViewerStore } from '@/store/useViewerStore';
 import { SegmentationPanel } from './SegmentationPanel';
 import { BrainVolumetryPanel } from './BrainVolumetryPanel';
-import { ComparisonMetricsPanel } from './ComparisonMetricsPanel';
-import { LongitudinalCompare } from './LongitudinalCompare';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import type { RenderMode } from '@/hooks/useViewerControls';
-import type { ExpertMaskData, ImagingInstance } from '@/types';
 
 interface ViewerControlsProps {
   renderMode: RenderMode;
@@ -31,8 +28,6 @@ interface ViewerControlsProps {
   setAppliedYMin: (val: string) => void;
   appliedYMax: string;
   setAppliedYMax: (val: string) => void;
-  expertMasks?: Map<string, ExpertMaskData>;
-  expertInstances?: ImagingInstance[];
   onNavigateToSlice?: (sliceIndex: number) => void;
   /** Current view mode — controls which sections are visible */
   viewMode?: '2d' | '3d';
@@ -61,8 +56,6 @@ export default function ViewerControls({
   setAppliedYMin,
   appliedYMax,
   setAppliedYMax,
-  expertMasks,
-  expertInstances,
   onNavigateToSlice,
   viewMode = '2d',
 }: ViewerControlsProps) {
@@ -231,26 +224,6 @@ export default function ViewerControls({
         </div>
       )}
 
-      {/* Comparison Metrics Panel (visible when expert masks are loaded) */}
-      {expertMasks && expertMasks.size > 0 && (
-        <div className="pt-2 border-t border-gray-700">
-          <ComparisonMetricsPanel
-            expertMasks={expertMasks}
-            expertInstances={expertInstances}
-            activeSegmentationId={activeSegmentation?.id}
-            onNavigateToSlice={onNavigateToSlice}
-          />
-        </div>
-      )}
-
-      {/* Longitudinal Tracking (visible in segmentation mode) */}
-      {segmentationMode && (
-        <div className="pt-2 border-t border-gray-700">
-          <LongitudinalCompare
-            onNavigateToSlice={onNavigateToSlice}
-          />
-        </div>
-      )}
 
     </div>
   );
