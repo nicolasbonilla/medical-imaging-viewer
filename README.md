@@ -24,6 +24,10 @@
   <img src="https://img.shields.io/badge/Cloud_Run-deployed-4285F4?logo=googlecloud" alt="Cloud Run">
   <img src="https://img.shields.io/badge/HIPAA-compliant-green" alt="HIPAA">
   <img src="https://img.shields.io/badge/WebAuthn-passkeys-orange" alt="WebAuthn">
+  <img src="https://img.shields.io/badge/DICOMweb-PACS-red" alt="DICOMweb">
+  <img src="https://img.shields.io/badge/HL7_FHIR-R4-dc3545" alt="FHIR">
+  <img src="https://img.shields.io/badge/DICOM--SEG-export-purple" alt="DICOM-SEG">
+  <img src="https://img.shields.io/badge/CI%2FCD-GitHub_Actions-2088FF?logo=githubactions" alt="CI/CD">
 </p>
 
 ---
@@ -32,7 +36,7 @@
 
 **MSTool-AI** is a full-stack cloud-native web application engineered for the visualization, interactive segmentation, quantitative analysis, and longitudinal tracking of brain magnetic resonance imaging (MRI) data in the clinical context of **Multiple Sclerosis (MS)**. The platform integrates real-time 2D and 3D neuroimaging visualization with automated lesion detection, region-specific classification conforming to the **MAGNIMS 2024 consensus guidelines** (Barkhof et al., 2025), IoU-based longitudinal disease progression tracking, normative brain volumetry with z-score percentile computation, and AI-powered clinical report generation via the **Claude API** with HIPAA-compliant de-identification.
 
-The system implements a decoupled client-server architecture with a **React/TypeScript** single-page application deployed on Firebase Hosting and a **FastAPI/Python** backend deployed on Google Cloud Run with auto-scaling. State management employs the Zustand library following a single-source-of-truth pattern. The codebase comprises approximately **82,400 lines** of production code across **210+ files**, with comprehensive internationalization (English, Spanish, German), WebAuthn/Passkeys biometric authentication, edge-based neural network inference via ONNX Runtime Web, and Model Context Protocol (MCP) server integration for Claude-native tool use.
+The system implements a decoupled client-server architecture with a **React/TypeScript** single-page application deployed on Firebase Hosting and a **FastAPI/Python** backend deployed on Google Cloud Run with auto-scaling. State management employs the Zustand library following a single-source-of-truth pattern. Hospital integration is achieved through **DICOMweb** (QIDO-RS/WADO-RS) for PACS connectivity, **DICOM-SEG** for standardized segmentation export, and **HL7 FHIR R4** for EHR interoperability. The codebase comprises approximately **84,000 lines** of production code across **224+ files**, with CI/CD automation (GitHub Actions), 35+ automated tests, clinical measurement tools (ruler, angle, ROI), WebAuthn/Passkeys biometric authentication, edge-based neural network inference via ONNX Runtime Web, and Model Context Protocol (MCP) server integration for Claude-native tool use.
 
 **Live application**: [brain-mri-476110.web.app](https://brain-mri-476110.web.app)
 
@@ -289,6 +293,7 @@ HD₉₅(A, B) = max(P₉₅{d(a,B) : a ∈ ∂A}, P₉₅{d(b,A) : b ∈ ∂B})
 | FastMCP | 2.3.0 | Model Context Protocol servers |
 | Firebase Admin | 7.1.0 | Auth, Firestore, Storage |
 | Google Cloud AI Platform | 1.136.0 | Vertex AI endpoints |
+| httpx | 0.28.1 | Async HTTP (DICOMweb PACS calls) |
 
 ### Infrastructure
 
@@ -300,7 +305,8 @@ HD₉₅(A, B) = max(P₉₅{d(a,B) : a ∈ ∂A}, P₉₅{d(b,A) : b ∈ ∂B})
 | Blob Storage | Cloud Storage | NIfTI/DICOM files, segmentation masks |
 | Cache | Redis | Response caching |
 | AI/ML | Vertex AI + Anthropic API | Segmentation + report generation |
-| CI/CD | Cloud Build | Docker build + deploy pipeline |
+| CI/CD (Deploy) | Cloud Build | Docker build + Cloud Run deploy |
+| CI/CD (Test) | GitHub Actions | TypeScript, build, pytest, syntax (5 jobs) |
 
 ---
 
@@ -377,7 +383,9 @@ mstool-ai/
 │       │   ├── imaging.py                       # NIfTI serving, slice extraction
 │       │   ├── ai_segmentation.py               # Vertex AI + volumetry
 │       │   ├── ai_report.py                     # Claude report generation
-│       │   └── studies.py                       # Patient/study management
+│       │   ├── studies.py                       # Patient/study management
+│       │   ├── dicomweb.py                     # DICOMweb PACS integration (10 endpoints)
+│       │   └── fhir.py                         # HL7 FHIR R4 (ImagingStudy, Report, Patient)
 │       ├── services/
 │       │   ├── segmentation_service.py          # Mask I/O, NIfTI conversion (1464 lines)
 │       │   ├── ms_region_classifier.py          # MAGNIMS two-tier classification (1291 lines)
@@ -386,7 +394,8 @@ mstool-ai/
 │       │   ├── brain_report_service.py          # Claude API report generation
 │       │   ├── lesion_analysis_service.py       # Connected components, DIS criteria
 │       │   ├── longitudinal_tracking_service.py # IoU matching, status classification
-│       │   └── segmentation_comparison_service.py # Dice, Hausdorff (HD95)
+│       │   ├── segmentation_comparison_service.py # Dice, Hausdorff (HD95)
+│       │   └── dicomweb_service.py              # DICOMweb PACS bridge (QIDO/WADO-RS)
 │       ├── security/
 │       │   ├── auth.py                          # AuthService, RBAC dependencies
 │       │   ├── jwt_manager.py                   # JWT creation/validation/revocation
@@ -423,15 +432,19 @@ mstool-ai/
 │       │   ├── BrainVolumetryPanel.tsx           # Volumetry dashboard
 │       │   ├── AIReportPanel.tsx                 # Report generation UI
 │       │   ├── UserMenu.tsx                      # Unified user dropdown
-│       │   └── QuickScreenBadge.tsx              # Edge AI badge
+│       │   ├── QuickScreenBadge.tsx              # Edge AI badge
+│       │   ├── MeasurementOverlay.tsx            # Ruler, angle, ROI tools (SVG)
+│       │   ├── ScreenshotButton.tsx              # PNG export from viewer
+│       │   └── KeyboardShortcutsModal.tsx        # Shortcut help (press ?)
 │       ├── pages/
 │       │   ├── LoginPage.tsx                     # Auth + video background + passkey
 │       │   ├── ProfilePage.tsx                   # User info + passkey management
+│       │   ├── PACSBrowserPage.tsx               # DICOMweb PACS search + import
 │       │   ├── PatientsPage.tsx                  # Patient directory
 │       │   └── PatientDetailPage.tsx             # Patient details + studies
 │       ├── hooks/                               # 22 React hooks
 │       ├── store/                               # 5 Zustand stores
-│       ├── api/                                 # API clients
+│       ├── api/                                 # API clients (segmentation, AI, DICOMweb, FHIR)
 │       ├── workers/                             # Web Workers (ONNX, binary protocol)
 │       ├── utils/
 │       │   ├── webauthn.ts                      # WebAuthn browser API helpers
@@ -443,7 +456,11 @@ mstool-ai/
 ├── docs/
 │   ├── Technical_Documentation_MS_Brain_MRI_Viewer.md
 │   ├── MS_Brain_MRI_Viewer_Technical_Documentation.pdf
+│   ├── Production_Readiness_Analysis.md         # State-of-art + regulatory analysis
+│   ├── Strategic_Roadmap_MSTool_AI.md           # 18-month deployment roadmap
 │   └── generate_pdf.py                          # ReportLab PDF generator
+├── .github/workflows/ci.yml                     # CI/CD pipeline (5 jobs)
+├── test_endpoints.sh                            # Pre/post-deploy verification (9 checks)
 ├── cloudbuild.yaml
 └── README.md
 ```
@@ -452,17 +469,20 @@ mstool-ai/
 
 | Metric | Value |
 |--------|-------|
-| Total files | 220+ |
-| Total lines of code | ~83,300 |
-| Frontend (React/TypeScript) | ~40,200 lines |
-| Backend (Python/FastAPI) | ~38,800 lines |
-| Test coverage | ~5,300 lines |
-| API endpoints | ~60 |
+| Total files | 224+ |
+| Total lines of code | ~84,000 |
+| Frontend (React/TypeScript) | ~40,500 lines |
+| Backend (Python/FastAPI) | ~43,400 lines |
+| Test lines | ~5,300 lines |
+| Automated tests | 35+ (pytest + vitest) |
+| API endpoints | ~70 |
 | i18n keys | 1,160 per language |
-| Zustand stores | 5 |
+| Frontend components | 48 |
 | React hooks | 22 |
-| Backend services | 24 |
+| Zustand stores | 5 |
+| Backend services | 26 |
 | MCP tools | 22 |
+| CI/CD | GitHub Actions (5 jobs) |
 
 ---
 
@@ -480,6 +500,8 @@ mstool-ai/
 | Input Validation | Pydantic schemas + sanitization | OWASP Top 10 |
 | Password Policy | Argon2id, 12+ chars, complexity, history | NIST SP 800-63B |
 | Session Management | Configurable timeout, automatic logout | ISO 27001 A.9.4.2 |
+| CI/CD | GitHub Actions (TypeScript, build, pytest, syntax) | IEC 62304 |
+| Secrets Management | Cloud-excluded env.yaml, .gitignore protected | ISO 27001 A.10.1.2 |
 
 ---
 

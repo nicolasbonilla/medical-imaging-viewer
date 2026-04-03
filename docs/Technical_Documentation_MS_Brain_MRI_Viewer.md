@@ -1,9 +1,9 @@
-# MS Brain MRI Viewer: A Cloud-Native Platform for Multiple Sclerosis Lesion Analysis, Longitudinal Tracking, and AI-Assisted Reporting
+# MSTool-AI: A Cloud-Native Platform for Multiple Sclerosis Lesion Analysis, Longitudinal Tracking, and AI-Assisted Reporting
 
 ## Technical Documentation
 
-**Version:** 2.0
-**Date:** March 2026
+**Version:** 3.0
+**Date:** April 2026
 **Classification:** Medical Imaging Software — Research & Clinical Decision Support
 
 ---
@@ -39,7 +39,7 @@ This document presents the complete technical specification of the MS Brain MRI 
 
 The system architecture follows a decoupled client-server paradigm with a React/TypeScript frontend deployed on Firebase Hosting and a FastAPI/Python backend deployed on Google Cloud Run, communicating through RESTful endpoints and WebSocket channels. State management employs the Zustand library with a single-source-of-truth pattern for segmentation state, and data persistence is handled through Google Cloud Firestore and Google Cloud Storage (GCS).
 
-The codebase comprises approximately 82,400 lines of production code across 210 files, implementing a comprehensive feature set that spans from low-level binary protocol optimization (achieving 17--42x throughput improvement over Base64 encoding) to high-level clinical decision support through natural language report generation.
+The codebase comprises approximately 84,000 lines of production code across 224+ files, implementing a comprehensive feature set that spans from low-level binary protocol optimization (achieving 17--42x throughput improvement over Base64 encoding) to high-level clinical decision support through natural language report generation.
 
 ---
 
@@ -862,7 +862,73 @@ where T is the 256-entry lookup table and the initial CRC value is 0xFFFFFFFF wi
 
 ---
 
-## 15. Model Context Protocol Integration
+## 15. Hospital Integration
+
+### 15.1 DICOMweb PACS Integration
+
+The platform implements a bridge pattern for PACS connectivity:
+
+```
+Hospital PACS → DICOMweb (QIDO-RS/WADO-RS) → DICOM → NIfTI → GCS → Existing Pipeline
+```
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/dicomweb/connections` | POST/GET/DELETE | PACS connection CRUD |
+| `/dicomweb/connections/{id}/test` | POST | Connectivity test |
+| `/dicomweb/search/studies` | POST | QIDO-RS study search |
+| `/dicomweb/search/series` | POST | QIDO-RS series search |
+| `/dicomweb/import` | POST | Start WADO-RS import job |
+| `/dicomweb/import/{job_id}` | GET | Poll import status |
+
+The import pipeline downloads DICOM instances, sorts by `InstanceNumber`/`SliceLocation`, computes the NIfTI affine matrix from `ImageOrientationPatient`/`ImagePositionPatient`/`PixelSpacing`, and stores the result as `.nii.gz` in GCS.
+
+### 15.2 DICOM-SEG Export
+
+Segmentation masks are exported as DICOM Segmentation objects (SOP Class `1.2.840.10008.5.1.4.1.1.66.4`) with:
+- BINARY segmentation type
+- Per-label `SegmentSequence` with coded terminology (SRT)
+- `PerFrameFunctionalGroupsSequence` for spatial localization
+- Bit-packed pixel data (8 pixels per byte, little-endian)
+- Compatible with pydicom 2.4.4 (no highdicom dependency)
+
+### 15.3 HL7 FHIR R4
+
+Three FHIR R4 resources are generated on-demand:
+
+| Resource | Endpoint | Conformance |
+|----------|----------|-------------|
+| ImagingStudy | `GET /fhir/ImagingStudy/{id}` | Modality coding (DCM ontology), series metadata, DICOM UIDs |
+| DiagnosticReport | `GET /fhir/DiagnosticReport/{id}` | LOINC coding (18748-4), RAD category, performer attribution |
+| Patient | `GET /fhir/Patient/{id}` | Name, gender mapping, MRN identifier, telecom, address |
+
+---
+
+## 16. Clinical Measurement Tools
+
+### 16.1 Measurement Overlay
+
+SVG-based measurement tools rendered as a transparent overlay on the 2D viewer:
+
+| Tool | Color | Output | Method |
+|------|-------|--------|--------|
+| Ruler | Yellow | Distance (mm) | Euclidean distance × pixel spacing |
+| Angle | Green | Degrees | Dot product of arm vectors |
+| Elliptical ROI | Blue | Area (mm²) | π × rx × ry × pixel spacing product |
+
+Measurements persist per-slice, are clickable to delete, and assume 1mm isotropic voxels (MNI template).
+
+### 16.2 Screenshot Export
+
+Canvas compositing captures the current viewer state (base image + all overlays + SVG annotations) as a timestamped PNG file.
+
+### 16.3 Keyboard Shortcuts
+
+Global shortcut modal (press `?`) organized by context: Navigation, Segmentation Tools, Edit, Measurement Tools, View.
+
+---
+
+## 17. Model Context Protocol Integration
 
 ### 15.1 MCP Server Architecture
 
@@ -1059,8 +1125,8 @@ Timeout: 300s (per request)
 
 | Metric | Value |
 |--------|-------|
-| Total files | 210+ |
-| Total lines of code | ~82,400 |
+| Total files | 224+ |
+| Total lines of code | ~84,000 |
 | Frontend files | 119 |
 | Frontend LOC | ~40,200 |
 | Backend files | 87 |
