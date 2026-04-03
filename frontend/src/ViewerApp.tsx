@@ -16,7 +16,8 @@ import { studyAPI } from './services/studyApi';
 import { useViewerStore } from './store/useViewerStore';
 import { useViewerControls } from './hooks/useViewerControls';
 import type { ImagingStudy, ImagingSeries, ImagingInstance } from './types';
-import { LogOut, Sparkles, ArrowLeft, Brain, FileImage, AlertCircle, Loader2, Puzzle, Upload, Eye, EyeOff, Plus, Trash2, ChevronDown, ChevronRight, FlaskConical, FileText, LayoutGrid, Columns2, Square, Link2, Unlink2, Map } from 'lucide-react';
+import { Sparkles, ArrowLeft, Brain, FileImage, AlertCircle, Loader2, Puzzle, Upload, Eye, EyeOff, Plus, Trash2, ChevronDown, ChevronRight, FlaskConical, FileText, LayoutGrid, Columns2, Square, Link2, Unlink2, Map } from 'lucide-react';
+import UserMenu from './components/UserMenu';
 import { useAuth } from './contexts/AuthContext';
 import { useTheme } from './contexts/ThemeContext';
 import { segmentationAPI } from './api/segmentation';
@@ -681,50 +682,9 @@ function ViewerApp() {
                 )}
               </div>
 
-              {/* Image Loaded Badge */}
-              {currentSeries && (
-                <motion.span
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="px-4 py-2 bg-gradient-to-r from-success-500/20 to-success-600/20 dark:from-success-500/30 dark:to-success-600/30 backdrop-blur-md border border-success-500/30 dark:border-success-500/20 text-success-700 dark:text-success-400 rounded-xl text-xs font-semibold shadow-lg shadow-success-500/10 flex items-center gap-2"
-                >
-                  <span className="w-2 h-2 bg-success-500 rounded-full animate-pulse" />
-                  {t('viewer.imageLoaded')}
-                </motion.span>
-              )}
-
-              {/* User Info */}
-              {user && (
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  className="flex items-center gap-3 px-4 py-2 bg-white/60 dark:bg-gray-800/60 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-xl shadow-lg"
-                >
-                  <div className="w-9 h-9 bg-gradient-to-br from-primary-500 to-accent-500 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-lg">
-                    {user.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-gray-900 dark:text-white font-semibold">{user.full_name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{user.role.toLowerCase()}</p>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Theme Toggle */}
               <ThemeToggle variant="minimal" />
-
-              {/* Language Selector */}
               <LanguageSelector variant="minimal" />
-
-              {/* Logout Button */}
-              <motion.button
-                onClick={logout}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="p-3 bg-white/60 dark:bg-gray-800/60 hover:bg-error-50 dark:hover:bg-error-900/30 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 hover:border-error-300 dark:hover:border-error-700 rounded-xl transition-all duration-200 group shadow-lg"
-                title={t('auth.logout')}
-              >
-                <LogOut className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-error-600 dark:group-hover:text-error-400 transition-colors" />
-              </motion.button>
+              <UserMenu />
             </div>
           </div>
         </div>

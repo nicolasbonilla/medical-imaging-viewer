@@ -8,12 +8,12 @@ import {
   FileImage,
   Activity,
   Home,
-  LogOut,
   Sparkles,
   ChevronRight,
 } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import LanguageSelector from './LanguageSelector';
+import UserMenu from './UserMenu';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRecentPatients } from '@/store/usePatientStore';
 
@@ -152,41 +152,13 @@ export default function AppNavigation({ variant = 'header', showRecent = true }:
 
         {/* User & Settings */}
         <div className="p-4 border-t border-gray-200/50 dark:border-gray-700/50 space-y-3">
-          {/* User info */}
-          {user && (
-            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-accent-500 rounded-lg flex items-center justify-center text-white font-bold">
-                {user.full_name
-                  .split(' ')
-                  .map((n) => n[0])
-                  .join('')
-                  .toUpperCase()
-                  .slice(0, 2)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                  {user.full_name}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
-                  {user.role.toLowerCase()}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Controls */}
+          {/* Controls + User Menu */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ThemeToggle variant="minimal" />
               <LanguageSelector variant="minimal" />
             </div>
-            <button
-              onClick={logout}
-              className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-              title={t('auth.logout')}
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
+            <UserMenu />
           </div>
         </div>
       </motion.aside>

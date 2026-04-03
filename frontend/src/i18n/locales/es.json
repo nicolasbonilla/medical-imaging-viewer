@@ -61,7 +61,7 @@
     "confirmPassword": "Confirmar Contraseña",
     "fullName": "Nombre Completo",
     "welcomeBack": "¡Bienvenido de nuevo!",
-    "welcomeTitle": "Bienvenido al Visor de RM Cerebral para EM",
+    "welcomeTitle": "Bienvenido a MSTool-AI",
     "welcomeSubtitle": "Plataforma de Análisis de RM para Esclerosis Múltiple",
     "loginTitle": "Ingresa a tu cuenta",
     "registerTitle": "Crea tu cuenta",
@@ -112,7 +112,7 @@
     }
   },
   "viewer": {
-    "title": "Visor de RM Cerebral para EM",
+    "title": "MSTool-AI",
     "subtitle": "Análisis de Lesiones de Esclerosis Múltiple",
     "imageLoaded": "Imagen Cargada",
     "loadingImage": "Cargando imagen...",
@@ -952,7 +952,7 @@
     "close": "Cerrar",
     "viewFullReport": "Ver Informe Completo",
     "reportReady": "Informe generado exitosamente",
-    "institutionName": "MS Brain MRI Viewer",
+    "institutionName": "MSTool-AI",
     "subtitle": "Informe Radiológico Asistido por IA",
     "reportId": "ID del Informe",
     "generatedAt": "Generado",

@@ -61,7 +61,7 @@
     "confirmPassword": "Confirm Password",
     "fullName": "Full Name",
     "welcomeBack": "Welcome back!",
-    "welcomeTitle": "Welcome to MS Brain MRI Viewer",
+    "welcomeTitle": "Welcome to MSTool-AI",
     "welcomeSubtitle": "Multiple Sclerosis MRI Analysis Platform",
     "loginTitle": "Sign in to your account",
     "registerTitle": "Create your account",
@@ -112,7 +112,7 @@
     }
   },
   "viewer": {
-    "title": "MS Brain MRI Viewer",
+    "title": "MSTool-AI",
     "subtitle": "MS Lesion Analysis",
     "imageLoaded": "Image Loaded",
     "loadingImage": "Loading image...",
@@ -952,7 +952,7 @@
     "close": "Close",
     "viewFullReport": "View Full Report",
     "reportReady": "Report generated successfully",
-    "institutionName": "MS Brain MRI Viewer",
+    "institutionName": "MSTool-AI",
     "subtitle": "AI-Assisted Radiology Report",
     "reportId": "Report ID",
     "generatedAt": "Generated",

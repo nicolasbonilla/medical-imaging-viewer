@@ -36,7 +36,7 @@ interface CaptchaData {
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login, register, isAuthenticated } = useAuth();
+  const { login, loginWithPasskey, register, isAuthenticated } = useAuth();
   const { t } = useTranslation();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [showPassword, setShowPassword] = useState(false);
@@ -137,17 +137,20 @@ export default function LoginPage() {
         requiresCaptcha ? loginForm.captcha_response : undefined
       );
 
+      localStorage.setItem('last_username', loginForm.username);
       toast.success(t('auth.welcomeBack'));
       navigate('/app', { replace: true });
 
     } catch (error: any) {
       console.error('Login error:', error);
 
-      if (error.response?.status === 400 && error.response.headers['x-captcha-required']) {
+      const errMsg = error.response?.data?.detail || error.response?.data?.error?.message || error.response?.data?.message || '';
+      if (error.response?.status === 400 && (error.response.headers['x-captcha-required'] || errMsg.toLowerCase().includes('captcha'))) {
+        setRequiresCaptcha(true);
         await generateCaptcha();
-        toast.warning(t('auth.captchaRequired'));
-      } else if (error.response?.data?.detail) {
-        toast.error(error.response.data.detail);
+        toast.warning(t('auth.captchaRequired', 'CAPTCHA required. Please complete verification.'));
+      } else if (errMsg) {
+        toast.error(errMsg);
       } else {
         toast.error(t('auth.loginFailed'));
       }
@@ -208,14 +211,27 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-blue-950 to-purple-950 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Fullscreen video background */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover z-0"
+      >
+        <source src="/intro.mp4" type="video/mp4" />
+      </video>
+      {/* Dark overlay for readability */}
+      <div className="absolute inset-0 bg-black/60 z-[1]" />
+
       {/* Language Selector - Top Right */}
       <div className="absolute top-6 right-6 z-50">
         <LanguageSelector variant="minimal" />
       </div>
 
       {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-[2]">
         <motion.div
           className="absolute top-1/4 -left-20 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20"
           animate={{
@@ -247,7 +263,7 @@ export default function LoginPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-md relative z-10"
+        className="w-full max-w-md relative z-10 drop-shadow-2xl"
       >
         {/* Glassmorphism card */}
         <div className="backdrop-blur-2xl bg-white/10 border border-white/20 rounded-3xl shadow-2xl p-8">
@@ -404,6 +420,44 @@ export default function LoginPage() {
                     </>
                   )}
                 </button>
+
+                {/* Passkey Login */}
+                {window.PublicKeyCredential && (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-px bg-white/10" />
+                      <span className="text-xs text-gray-500">or</span>
+                      <div className="flex-1 h-px bg-white/10" />
+                    </div>
+                    <button
+                      type="button"
+                      disabled={loading}
+                      onClick={async () => {
+                        const username = loginForm.username || localStorage.getItem('last_username') || '';
+                        if (!username) {
+                          toast.error('Enter your username first');
+                          return;
+                        }
+                        setLoading(true);
+                        try {
+                          await loginWithPasskey(username);
+                          localStorage.setItem('last_username', username);
+                          toast.success(t('auth.welcomeBack'));
+                          navigate('/app', { replace: true });
+                        } catch (err: any) {
+                          const msg = err?.response?.data?.detail || err?.response?.data?.error?.message || err?.message || 'Passkey authentication failed';
+                          toast.error(msg);
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      className="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/20 rounded-xl text-white font-medium flex items-center justify-center gap-2 transition-all"
+                    >
+                      <KeyRound className="w-5 h-5" />
+                      Sign in with Passkey
+                    </button>
+                  </>
+                )}
               </motion.form>
             ) : (
               <motion.form

@@ -61,7 +61,7 @@
     "confirmPassword": "Passwort Bestätigen",
     "fullName": "Vollständiger Name",
     "welcomeBack": "Willkommen zurück!",
-    "welcomeTitle": "Willkommen beim MS-Hirn-MRT-Viewer",
+    "welcomeTitle": "Willkommen bei MSTool-AI",
     "welcomeSubtitle": "Multiple-Sklerose MRT-Analyseplattform",
     "loginTitle": "Melden Sie sich bei Ihrem Konto an",
     "registerTitle": "Erstellen Sie Ihr Konto",
@@ -112,7 +112,7 @@
     "yourRole": "Ihre Rolle:"
   },
   "viewer": {
-    "title": "MS-Hirn-MRT-Viewer",
+    "title": "MSTool-AI",
     "subtitle": "MS-Läsionsanalyse",
     "imageLoaded": "Bild Geladen",
     "loadingImage": "Bild wird geladen...",
@@ -947,7 +947,7 @@
     "close": "Schließen",
     "viewFullReport": "Vollständigen Bericht Anzeigen",
     "reportReady": "Bericht erfolgreich erstellt",
-    "institutionName": "MS Brain MRI Viewer",
+    "institutionName": "MSTool-AI",
     "subtitle": "KI-gestützter Radiologischer Bericht",
     "reportId": "Berichts-ID",
     "generatedAt": "Erstellt",

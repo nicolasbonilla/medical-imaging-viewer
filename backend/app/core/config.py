@@ -194,6 +194,11 @@ class Settings(BaseSettings):
     CLAUDE_MODEL: str = Field(default="claude-sonnet-4-5-20250929")
     CLAUDE_MAX_TOKENS: int = Field(default=4096, ge=256, le=16384)
 
+    # WebAuthn / Passkeys Configuration
+    WEBAUTHN_RP_ID: str = Field(default="brain-mri-476110.web.app", description="Relying Party ID (domain)")
+    WEBAUTHN_RP_NAME: str = Field(default="MSTool-AI", description="Relying Party display name")
+    WEBAUTHN_ORIGIN: str = Field(default="https://brain-mri-476110.web.app", description="Expected origin for WebAuthn")
+
     # MCP (Model Context Protocol) Configuration
     MCP_ENABLED: bool = Field(default=False)
     MCP_IMAGING_PORT: int = Field(default=8001, ge=1, le=65535)

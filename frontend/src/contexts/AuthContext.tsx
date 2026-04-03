@@ -41,6 +41,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (username: string, password: string, captchaId?: string, captchaResponse?: string) => Promise<void>;
+  loginWithPasskey: (username: string) => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
@@ -88,14 +89,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       (response) => response,
       (error: AxiosError) => {
         // If we get a 401 (Unauthorized) or 400 with auth error, logout automatically
-        if (error.response?.status === 401 ||
-            (error.response?.status === 400 && error.config?.url?.includes('/auth/'))) {
+        // Only auto-logout on 401 from non-login endpoints
+        const isLoginPage = window.location.pathname === '/login';
+        const isLoginEndpoint = error.config?.url?.includes('/auth/login') || error.config?.url?.includes('/webauthn/login');
+        if (!isLoginPage && !isLoginEndpoint && error.response?.status === 401) {
           console.warn('Authentication error detected, logging out...');
           performLogout();
-          // Redirect to login if not already there
-          if (window.location.pathname !== '/login') {
-            window.location.href = '/login';
-          }
+          window.location.href = '/login';
         }
         return Promise.reject(error);
       }
@@ -175,6 +175,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // Login with Passkey (WebAuthn)
+  const loginWithPasskey = async (username: string): Promise<void> => {
+    const { prepareAuthenticationOptions, serializeAuthenticationCredential } = await import('@/utils/webauthn');
+
+    // Step 1: Get authentication options
+    const beginRes = await axios.post(`${API_V1_URL}/auth/webauthn/login/begin`, { username });
+    const options = prepareAuthenticationOptions(beginRes.data.options);
+
+    // Step 2: Browser prompt (Face ID, Windows Hello, fingerprint)
+    const credential = await navigator.credentials.get({ publicKey: options }) as PublicKeyCredential;
+    if (!credential) throw new Error('Authentication cancelled');
+
+    // Step 3: Verify on server
+    const completeRes = await axios.post(`${API_V1_URL}/auth/webauthn/login/complete`, {
+      credential: serializeAuthenticationCredential(credential),
+      username,
+    });
+
+    const { token: tokenData, user: userData } = completeRes.data;
+    localStorage.setItem('access_token', tokenData.access_token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setToken(tokenData.access_token);
+    setUser(userData);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${tokenData.access_token}`;
+  };
+
   // Register function
   const register = async (userData: RegisterData): Promise<void> => {
     try {
@@ -214,6 +240,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isAuthenticated: !!user && !!token,
     isLoading,
     login,
+    loginWithPasskey,
     register,
     logout,
     refreshUser,

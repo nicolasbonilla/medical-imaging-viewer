@@ -102,6 +102,8 @@ auth_service = AuthService(
 )
 
 
+
+
 # Helper functions
 def _get_client_ip(request: Request) -> str:
     """Extract client IP address from request."""
@@ -1023,3 +1025,199 @@ async def get_audit_logs(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve audit logs"
         )
+
+
+# =============================================================================
+# WebAuthn / Passkeys Endpoints
+# =============================================================================
+
+def _get_webauthn_service():
+    """Lazy-initialize WebAuthn service."""
+    if not hasattr(_get_webauthn_service, '_instance'):
+        from app.security.webauthn_service import WebAuthnService
+        from app.core.config import Settings
+        from app.core.firebase import get_firestore_client
+        s = Settings()
+        try:
+            db = get_firestore_client()
+        except Exception:
+            db = None
+        _get_webauthn_service._instance = WebAuthnService(
+            rp_id=s.WEBAUTHN_RP_ID,
+            rp_name=s.WEBAUTHN_RP_NAME,
+            origin=s.WEBAUTHN_ORIGIN,
+            db=db,
+        )
+    return _get_webauthn_service._instance
+
+
+@router.post("/webauthn/register/begin")
+async def webauthn_register_begin(
+    request: Request,
+    current_user=Depends(get_current_active_user),
+):
+    """Begin WebAuthn credential registration (requires authentication)."""
+    try:
+        wa = _get_webauthn_service()
+        options = wa.generate_registration(
+            user_id=current_user.id,
+            username=current_user.username,
+            display_name=current_user.full_name,
+        )
+        return {"options": options}
+    except Exception as e:
+        logger.error("WebAuthn register begin failed", extra={"error": str(e)})
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/webauthn/register/complete")
+async def webauthn_register_complete(
+    request: Request,
+    current_user=Depends(get_current_active_user),
+):
+    """Complete WebAuthn credential registration."""
+    try:
+        body = await request.json()
+        wa = _get_webauthn_service()
+        credential = wa.verify_registration(
+            user_id=current_user.id,
+            credential_json=body.get('credential', {}),
+            device_name=body.get('device_name', ''),
+        )
+        return credential
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error("WebAuthn register complete failed", extra={"error": str(e)})
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/webauthn/login/begin")
+async def webauthn_login_begin(request: Request):
+    """Begin WebAuthn authentication (public, no auth required)."""
+    try:
+        body = await request.json()
+        username = body.get('username', '')
+        if not username:
+            raise HTTPException(status_code=400, detail="Username is required")
+
+        # Find user
+        user = auth_service._find_user_by_username_or_email(username)
+        if not user:
+            raise HTTPException(status_code=400, detail="Invalid credentials")
+
+        wa = _get_webauthn_service()
+        options = wa.generate_authentication(user_id=user.id)
+        return {"options": options}
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error("WebAuthn login begin failed", extra={"error": str(e)})
+        raise HTTPException(status_code=400, detail="Invalid credentials")
+
+
+@router.post("/webauthn/login/complete")
+async def webauthn_login_complete(request: Request):
+    """Complete WebAuthn authentication and issue JWT token."""
+    try:
+        body = await request.json()
+        username = body.get('username', '')
+        credential = body.get('credential', {})
+
+        user = auth_service._find_user_by_username_or_email(username)
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+
+        if not user.is_active:
+            raise HTTPException(status_code=403, detail="Account is disabled")
+        if user.is_locked:
+            raise HTTPException(status_code=403, detail="Account is locked")
+
+        wa = _get_webauthn_service()
+        wa.verify_authentication(user_id=user.id, credential_json=credential)
+
+        # Issue JWT (same as password login)
+        from app.security.models import UserRole
+        token_obj = token_manager.create_access_token(
+            user_id=user.id,
+            username=user.username,
+            role=UserRole(user.role) if isinstance(user.role, str) else user.role,
+        )
+
+        # Update last login
+        from datetime import datetime as dt
+        user.last_login = dt.utcnow()
+        user.failed_login_attempts = 0
+        try:
+            pwd_data = auth_service._storage.get_user_password_data(user.id)
+            pwd_hash = pwd_data.get('password_hash', '') if pwd_data else ''
+            auth_service._storage.save_user(user, pwd_hash)
+        except Exception as e:
+            logger.warning("Could not update last_login after WebAuthn", extra={"error": str(e)})
+
+        logger.info("WebAuthn login successful", extra={
+            "user_id": user.id,
+            "username": user.username,
+            "ip": _get_client_ip(request),
+        })
+
+        return {
+            "token": {
+                "access_token": token_obj.access_token,
+                "token_type": "bearer",
+            },
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "full_name": user.full_name,
+                "role": user.role,
+                "is_active": user.is_active,
+                "is_locked": user.is_locked,
+                "failed_login_attempts": user.failed_login_attempts,
+                "last_login": user.last_login.isoformat() if user.last_login else None,
+                "created_at": user.created_at.isoformat() if user.created_at else None,
+                "updated_at": user.updated_at.isoformat() if user.updated_at else None,
+            },
+        }
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail=str(e))
+    except Exception as e:
+        logger.error("WebAuthn login complete failed", extra={"error": str(e)})
+        raise HTTPException(status_code=401, detail="Authentication failed")
+
+
+@router.get("/webauthn/credentials")
+async def webauthn_list_credentials(current_user=Depends(get_current_active_user)):
+    """List registered WebAuthn credentials for the current user."""
+    wa = _get_webauthn_service()
+    creds = wa.get_credentials(current_user.id)
+    # Strip private key data before returning
+    return [
+        {
+            "credential_id": c.get('credential_id', ''),
+            "device_name": c.get('device_name', ''),
+            "created_at": c.get('created_at', ''),
+            "last_used": c.get('last_used'),
+        }
+        for c in creds
+    ]
+
+
+@router.delete("/webauthn/credentials/{credential_id}")
+async def webauthn_delete_credential(
+    credential_id: str,
+    current_user=Depends(get_current_active_user),
+):
+    """Delete a WebAuthn credential."""
+    wa = _get_webauthn_service()
+    creds = wa.get_credentials(current_user.id)
+    if len(creds) <= 1:
+        raise HTTPException(status_code=400, detail="Cannot delete the last passkey")
+    if not wa.delete_credential(current_user.id, credential_id):
+        raise HTTPException(status_code=404, detail="Credential not found")
+    return {"status": "deleted"}

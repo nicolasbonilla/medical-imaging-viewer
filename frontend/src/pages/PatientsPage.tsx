@@ -26,6 +26,7 @@ import PatientCard from '@/components/PatientCard';
 import PatientForm from '@/components/PatientForm';
 import ThemeToggle from '@/components/ThemeToggle';
 import LanguageSelector from '@/components/LanguageSelector';
+import UserMenu from '@/components/UserMenu';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { Patient, PatientStatus, Gender } from '@/types';
@@ -231,34 +232,9 @@ export default function PatientsPage() {
                 {total} {t('patients.totalPatients', 'pacientes')}
               </motion.span>
 
-              {/* User Info */}
-              {user && (
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  className="flex items-center gap-3 px-4 py-2 bg-white/60 dark:bg-gray-800/60 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-xl shadow-lg"
-                >
-                  <div className="w-9 h-9 bg-gradient-to-br from-primary-500 to-accent-500 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-lg">
-                    {user.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-gray-900 dark:text-white font-semibold">{user.full_name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{user.role.toLowerCase()}</p>
-                  </div>
-                </motion.div>
-              )}
-
               <ThemeToggle variant="minimal" />
               <LanguageSelector variant="minimal" />
-
-              <motion.button
-                onClick={logout}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="p-3 bg-white/60 dark:bg-gray-800/60 hover:bg-error-50 dark:hover:bg-error-900/30 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 hover:border-error-300 dark:hover:border-error-700 rounded-xl transition-all duration-200 group shadow-lg"
-                title={t('auth.logout')}
-              >
-                <LogOut className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-error-600 dark:group-hover:text-error-400 transition-colors" />
-              </motion.button>
+              <UserMenu />
             </div>
           </div>
         </div>

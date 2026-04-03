@@ -15,13 +15,13 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ variant = 'default' }) => {
     return (
       <button
         onClick={toggleTheme}
-        className="relative w-14 h-7 bg-gradient-to-r from-primary-500/20 to-accent-500/20 dark:from-primary-600/30 dark:to-accent-600/30 rounded-full p-1 backdrop-blur-md border border-white/10 dark:border-white/5 transition-all duration-300 hover:scale-105 group"
+        className="relative w-12 h-6 bg-gradient-to-r from-primary-500/20 to-accent-500/20 dark:from-primary-600/30 dark:to-accent-600/30 rounded-full backdrop-blur-md border border-white/10 dark:border-white/5 transition-all duration-300 hover:scale-105 group"
         aria-label="Toggle theme"
       >
         <motion.div
-          className="absolute w-5 h-5 bg-gradient-to-br from-primary-400 to-accent-400 dark:from-primary-500 dark:to-accent-500 rounded-full shadow-lg flex items-center justify-center"
+          className="absolute top-[3px] left-[3px] w-[18px] h-[18px] bg-gradient-to-br from-primary-400 to-accent-400 dark:from-primary-500 dark:to-accent-500 rounded-full shadow-lg flex items-center justify-center"
           animate={{
-            x: isDark ? 28 : 2,
+            x: isDark ? 24 : 0,
           }}
           transition={{
             type: 'spring',
@@ -30,9 +30,9 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ variant = 'default' }) => {
           }}
         >
           {isDark ? (
-            <Moon className="w-3 h-3 text-white" />
+            <Moon className="w-2.5 h-2.5 text-white" />
           ) : (
-            <Sun className="w-3 h-3 text-white" />
+            <Sun className="w-2.5 h-2.5 text-white" />
           )}
         </motion.div>
       </button>
@@ -42,15 +42,15 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ variant = 'default' }) => {
   return (
     <motion.button
       onClick={toggleTheme}
-      className="relative w-16 h-8 bg-gradient-to-r from-primary-500/20 to-accent-500/20 dark:from-primary-600/30 dark:to-accent-600/30 rounded-full p-1 backdrop-blur-md border border-white/10 dark:border-white/5 transition-all duration-300 hover:shadow-xl hover:shadow-primary-500/20 dark:hover:shadow-accent-500/20"
+      className="relative w-14 h-7 bg-gradient-to-r from-primary-500/20 to-accent-500/20 dark:from-primary-600/30 dark:to-accent-600/30 rounded-full backdrop-blur-md border border-white/10 dark:border-white/5 transition-all duration-300 hover:shadow-xl hover:shadow-primary-500/20 dark:hover:shadow-accent-500/20"
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       aria-label="Toggle theme"
     >
       <motion.div
-        className="absolute top-1 w-6 h-6 bg-gradient-to-br from-primary-400 to-accent-400 dark:from-primary-500 dark:to-accent-500 rounded-full shadow-lg flex items-center justify-center"
+        className="absolute top-[3px] left-[3px] w-[22px] h-[22px] bg-gradient-to-br from-primary-400 to-accent-400 dark:from-primary-500 dark:to-accent-500 rounded-full shadow-lg flex items-center justify-center"
         animate={{
-          x: isDark ? 32 : 2,
+          x: isDark ? 28 : 0,
         }}
         transition={{
           type: 'spring',

@@ -68,6 +68,9 @@ anthropic==0.44.0
 # MCP — Model Context Protocol (Phase 5)
 fastmcp==2.3.0
 
+# WebAuthn / Passkeys
+webauthn>=2.1.0
+
 # Atlas-based brain region classification (Harvard-Oxford via nilearn)
 nilearn>=0.10.0
 

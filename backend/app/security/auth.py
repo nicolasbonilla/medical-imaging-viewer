@@ -666,7 +666,7 @@ async def get_current_user(
             id=token_data.user_id,
             username=token_data.username,
             email=f"{token_data.username}@example.com",
-            full_name="",
+            full_name=token_data.username,
             role=token_data.role,
             is_active=True,
             is_locked=False,
@@ -677,10 +677,11 @@ async def get_current_user(
 
         return user
 
-    except Exception:
+    except Exception as e:
+        logger.error(f"Token validation failed in get_current_user: {type(e).__name__}: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
+            detail=f"Could not validate credentials: {type(e).__name__}: {str(e)}",
             headers={"WWW-Authenticate": "Bearer"},
         )
 

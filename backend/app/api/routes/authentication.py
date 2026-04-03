@@ -576,12 +576,21 @@ async def generate_captcha(
     description="Get current authenticated user information"
 )
 async def get_current_user_info(
-    token: str,
+    request: Request,
     token_manager: TokenManager = Depends(get_token_manager),
     user_storage: SecureUserStorage = Depends(get_user_storage),
 ) -> User:
     """Get current authenticated user."""
     try:
+        # Accept token from Authorization header or query param
+        token = None
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:]
+        if not token:
+            token = request.query_params.get("token", "")
+        if not token:
+            raise HTTPException(status_code=401, detail="Not authenticated")
         token_data = token_manager.decode_token_data(token)
         user = user_storage.get_user_by_id(token_data.user_id)
 
