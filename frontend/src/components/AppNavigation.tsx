@@ -10,6 +10,7 @@ import {
   Home,
   Sparkles,
   ChevronRight,
+  Server,
 } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import LanguageSelector from './LanguageSelector';
@@ -55,6 +56,12 @@ export default function AppNavigation({ variant = 'header', showRecent = true }:
       label: t('navigation.viewer', 'Viewer'),
       icon: <FileImage className="w-5 h-5" />,
       path: '/app/viewer',
+    },
+    {
+      id: 'pacs',
+      label: t('navigation.pacs', 'PACS'),
+      icon: <Server className="w-5 h-5" />,
+      path: '/app/pacs',
     },
   ];
 

@@ -193,7 +193,13 @@ Five MCP servers (FastMCP) providing Claude with 22 specialized tools:
 - **Session Management**: Configurable idle timeout with warning dialog
 - **User Profile**: Account information, activity history, passkey management
 
-### 3.12 Platform Features
+### 3.12 Hospital Integration (DICOM/FHIR)
+
+- **DICOMweb PACS Integration**: QIDO-RS study/series search, WADO-RS retrieval with automatic DICOM-to-NIfTI conversion, async import with job tracking, PACS Browser UI (`/app/pacs`)
+- **DICOM-SEG Export**: Segmentation masks exported as DICOM Segmentation objects (SOP Class 1.2.840.10008.5.1.4.1.1.66.4, binary segmentation type, bit-packed pixel data) for PACS archival
+- **HL7 FHIR R4**: ImagingStudy, DiagnosticReport, and Patient resource generation conforming to the HL7 FHIR R4 specification for EHR interoperability
+
+### 3.13 Platform Features
 
 - **Patient Management**: CRUD with demographic data, medical history, study timeline
 - **Study Management**: DICOM/NIfTI organization with series, instances, timepoints
@@ -446,8 +452,8 @@ mstool-ai/
 
 | Metric | Value |
 |--------|-------|
-| Total files | 210+ |
-| Total lines of code | ~82,400 |
+| Total files | 220+ |
+| Total lines of code | ~83,300 |
 | Frontend (React/TypeScript) | ~40,200 lines |
 | Backend (Python/FastAPI) | ~38,800 lines |
 | Test coverage | ~5,300 lines |

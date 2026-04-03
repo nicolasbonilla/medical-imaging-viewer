@@ -755,6 +755,31 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
             <Download className="w-3 h-3" />
             {t('lesions.exportCSV', 'Export CSV')}
           </button>
+
+          {/* Export DICOM-SEG */}
+          <button
+            onClick={() => {
+              const url = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/v1/segmentation/${segmentationId}/export/dicom-seg`;
+              const token = localStorage.getItem('access_token');
+              fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+                .then(res => {
+                  if (!res.ok) throw new Error('Export failed');
+                  return res.blob();
+                })
+                .then(blob => {
+                  const a = document.createElement('a');
+                  a.href = URL.createObjectURL(blob);
+                  a.download = `${segmentationId}_seg.dcm`;
+                  a.click();
+                  URL.revokeObjectURL(a.href);
+                })
+                .catch(() => {/* silent */});
+            }}
+            className="flex items-center gap-1 px-2 py-1 bg-blue-700/50 hover:bg-blue-600/50 rounded text-[10px] text-blue-300 transition-colors"
+          >
+            <Download className="w-3 h-3" />
+            DICOM-SEG
+          </button>
         </>
       )}
     </div>
