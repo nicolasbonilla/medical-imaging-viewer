@@ -11,7 +11,7 @@
 
 The MSTool-AI codebase is **functionally complete and operational** with all 70+ endpoints verified. The audit identifies **5 high-priority**, **8 medium-priority**, and **6 low-priority** findings across code organization, dead code, and quality patterns. No critical security vulnerabilities or data integrity issues were found.
 
-**Overall Assessment**: Production-ready for supervised clinical pilot with documented known limitations. Full IEC 62304 compliance requires the refactoring items below.
+**Overall Assessment**: Production-ready for supervised clinical pilot with documented known limitations. All immediate action items have been executed (-1,331 lines of dead code removed, 9/9 endpoints verified). Remaining items are maintainability refactoring documented for future sprints. Full IEC 62304 compliance requires the medium-term refactoring items and formal documentation.
 
 ---
 
@@ -182,25 +182,32 @@ Both `auth.py` and `authentication.py` are registered with prefix `/auth`:
 
 ---
 
-## 7. Priority Action Items
+## 7. Action Items — Status
 
-### Immediate (Safe, No Risk of Breaking)
+### Immediate (Safe, No Risk of Breaking) — ✅ ALL COMPLETED
 
-1. **Delete dead files**: NiiVueViewer.tsx, PatientExplorer.tsx
-2. **Remove unused type exports**: DriveFileInfo, SeriesSegmentationCount, Export*
-3. **Remove console.log**: 4 debug logs in ImageViewer3D.tsx
-4. **Delete segmentation_v2.py**: Not registered, contains only 501 stubs
+1. ~~**Delete dead files**: NiiVueViewer.tsx, PatientExplorer.tsx~~ ✅ Done (commit `78d0349`)
+2. ~~**Remove unused type exports**: DriveFileInfo, SeriesSegmentationCount, Export*~~ ✅ Done
+3. ~~**Remove console.log**: 4 debug logs in ImageViewer3D.tsx~~ ✅ Done
+4. ~~**Delete segmentation_v2.py**: Not registered, contains only 501 stubs~~ ✅ Done
+5. ~~**Remove segmentation_v2 from container.py wiring**~~ ✅ Done
 
-### Short-term (Low Risk)
+**Total dead code removed: -1,331 lines. All 9/9 endpoint tests passing after cleanup.**
 
-5. **Centralize API URLs**: All frontend files should use apiClient
-6. **Wire ScreenshotButton**: Integrate into ImageViewer2D toolbar
+### Future Refactoring (Documented — Not Yet Executed)
 
-### Medium-term (Refactoring)
+These are **code maintainability improvements**, not functional bugs. They require extensive testing due to their invasive nature and should be executed after the clinical pilot, not before.
 
-7. **Split segmentation.py routes**: 2,238 lines → 5 focused files
-8. **Split useSegmentationStore**: 34 fields → 5-7 focused stores
-9. **Extract ViewerApp sub-components**: 1,217 lines → smaller components
+| # | Item | Current | Target | Risk | Effort |
+|---|------|---------|--------|------|--------|
+| 6 | Centralize API URLs | 5 duplicate definitions | Single apiClient | Low | 2 hours |
+| 7 | Wire ScreenshotButton | Created, not integrated | Add to viewer toolbar | Low | 1 hour |
+| 8 | Split segmentation.py routes | 2,238 lines (1 file) | 5 focused files | High | 8 hours |
+| 9 | Split useSegmentationStore | 34 state fields (1 store) | 5-7 focused stores | Very High | 12 hours |
+| 10 | Extract ViewerApp sub-components | 1,217 lines (1 component) | 4-5 smaller components | High | 8 hours |
+| 11 | Split classify_regions function | 397 lines (1 function) | 4 smaller functions | Medium | 4 hours |
+
+**Recommendation**: Items 6-7 are safe to do anytime. Items 8-11 should be done in a dedicated refactoring sprint with full regression testing.
 
 ---
 
