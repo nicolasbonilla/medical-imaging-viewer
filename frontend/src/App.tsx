@@ -13,6 +13,7 @@ import PACSBrowserPage from './pages/PACSBrowserPage';
 import ProfilePage from './pages/ProfilePage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { initializeFocusVisible } from './utils/accessibility';
+import KeyboardShortcutsModal from './components/KeyboardShortcutsModal';
 
 /**
  * Main App Component with Routing
@@ -41,6 +42,7 @@ function App() {
         <AuthProvider>
           {/* WCAG 2.4.1: Skip navigation link for keyboard users */}
           <SkipLink mainContentId="main-content" />
+          <KeyboardShortcutsModal />
 
           {/* HIPAA-compliant session timeout management (15 minutes) */}
           <SessionManager timeoutMinutes={15} warningMinutes={2}>
