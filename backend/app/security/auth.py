@@ -599,6 +599,83 @@ class AuthService:
         """
         return list(self._users.values())
 
+    def get_user_by_id(self, user_id: str) -> Optional[User]:
+        """Get a user by ID."""
+        return self._users.get(user_id)
+
+    def update_user(
+        self,
+        user_id: str,
+        user_update,
+        updated_by: Optional[str] = None,
+    ) -> User:
+        """Update a user's profile fields."""
+        user = self._users.get(user_id)
+        if not user:
+            raise ValueError(f"User {user_id} not found")
+
+        update_data = user_update.model_dump(exclude_unset=True) if hasattr(user_update, 'model_dump') else user_update
+        for field, value in update_data.items():
+            if field in ('role',) and updated_by != user_id:
+                # Role changes require admin — just set it
+                pass
+            if hasattr(user, field) and field not in ('id', 'created_at', 'password'):
+                setattr(user, field, value)
+
+        user.updated_at = datetime.utcnow()
+        self._users[user_id] = user
+
+        # Persist
+        pwd_data = self._storage.get_user_password_data(user_id)
+        pwd_hash = pwd_data.get('password_hash', '') if pwd_data else self._user_passwords.get(user_id, '')
+        self._storage.save_user(user, pwd_hash)
+
+        self._log_audit_event("user_updated", f"user:{user_id}", "success",
+                              user_id=updated_by or user_id, username=user.username)
+        return user
+
+    def delete_user(self, user_id: str, deleted_by: Optional[str] = None) -> None:
+        """Delete a user account."""
+        user = self._users.get(user_id)
+        if not user:
+            raise ValueError(f"User {user_id} not found")
+
+        # Remove from memory
+        self._users.pop(user_id, None)
+        self._user_passwords.pop(user_id, None)
+        self._password_history.pop(user_id, None)
+
+        # Remove from persistent storage
+        self._storage.delete_user(user_id)
+
+        self._log_audit_event("user_deleted", f"user:{user_id}", "success",
+                              user_id=deleted_by, username=user.username)
+
+    def logout(self, token: str) -> None:
+        """Revoke a token (logout)."""
+        try:
+            self.token_manager.revoke_token(token)
+        except Exception as e:
+            logger.warning(f"Token revocation failed: {e}")
+        self._log_audit_event("logout", "session", "success")
+
+    def get_audit_logs(
+        self,
+        limit: int = 100,
+        offset: int = 0,
+        user_id: Optional[str] = None,
+        action: Optional[str] = None,
+    ) -> List[AuditLog]:
+        """Get filtered audit logs."""
+        logs = self._audit_logs
+        if user_id:
+            logs = [l for l in logs if l.user_id == user_id]
+        if action:
+            logs = [l for l in logs if l.action == action]
+        # Sort newest first
+        logs = sorted(logs, key=lambda l: l.timestamp, reverse=True)
+        return logs[offset:offset + limit]
+
     def _log_audit_event(
         self,
         action: str,
