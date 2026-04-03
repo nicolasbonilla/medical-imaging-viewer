@@ -467,3 +467,230 @@ def extract_dicom_metadata(ds: FileDataset) -> Dict[str, Any]:
         metadata['slice_thickness'] = float(ds.SliceThickness)
 
     return metadata
+
+
+# ============================================================================
+# DICOM-SEG (Segmentation Storage)
+# ============================================================================
+
+# SOP Class UID for Segmentation Storage
+SEGMENTATION_STORAGE_UID = '1.2.840.10008.5.1.4.1.1.66.4'
+
+
+def create_dicom_seg(
+    mask_3d: np.ndarray,
+    labels: list,
+    patient_name: str = '',
+    patient_id: str = '',
+    study_instance_uid: Optional[str] = None,
+    series_instance_uid: Optional[str] = None,
+    study_description: str = '',
+    series_description: str = 'Segmentation',
+    rows: Optional[int] = None,
+    columns: Optional[int] = None,
+) -> FileDataset:
+    """
+    Create a DICOM Segmentation (DICOM-SEG) object from a 3D mask.
+
+    Encodes the segmentation as a multi-frame DICOM-SEG with BINARY
+    segmentation type. Each label becomes a separate segment with its
+    own color and description.
+
+    Args:
+        mask_3d: Segmentation mask, shape (D, H, W), dtype uint8.
+                 Values 0=background, 1..N=label IDs.
+        labels: List of dicts with {id, name, color} for each label.
+        patient_name: Patient name for DICOM header.
+        patient_id: Patient ID for DICOM header.
+        study_instance_uid: Link to original study (for PACS co-location).
+        series_instance_uid: Will be auto-generated if not provided.
+        study_description: Study description string.
+        series_description: Series description string.
+        rows: Image rows (auto-detected from mask if None).
+        columns: Image columns (auto-detected from mask if None).
+
+    Returns:
+        pydicom FileDataset ready for save_dicom() or direct streaming.
+    """
+    import io
+    from pydicom.sequence import Sequence
+
+    depth, height, width = mask_3d.shape
+    if rows is None:
+        rows = height
+    if columns is None:
+        columns = width
+
+    # Generate UIDs
+    sop_instance_uid = generate_uid()
+    if not study_instance_uid:
+        study_instance_uid = generate_uid()
+    if not series_instance_uid:
+        series_instance_uid = generate_uid()
+
+    # Create file meta
+    file_meta = create_file_meta(
+        sop_class_uid=SEGMENTATION_STORAGE_UID,
+        transfer_syntax_uid='1.2.840.10008.1.2.1',  # Explicit VR Little Endian
+    )
+
+    # Create dataset
+    ds = FileDataset('', {}, file_meta=file_meta, preamble=b'\x00' * 128)
+    ds.is_little_endian = True
+    ds.is_implicit_VR = False
+
+    # Patient Module
+    ds.PatientName = patient_name
+    ds.PatientID = patient_id
+
+    # General Study Module
+    ds.StudyInstanceUID = study_instance_uid
+    ds.StudyDate = datetime.now().strftime('%Y%m%d')
+    ds.StudyTime = datetime.now().strftime('%H%M%S')
+    ds.StudyDescription = study_description
+    ds.AccessionNumber = ''
+
+    # General Series Module
+    ds.Modality = 'SEG'
+    ds.SeriesInstanceUID = series_instance_uid
+    ds.SeriesNumber = 99
+    ds.SeriesDescription = series_description
+
+    # SOP Common Module
+    ds.SOPClassUID = SEGMENTATION_STORAGE_UID
+    ds.SOPInstanceUID = sop_instance_uid
+    ds.InstanceCreationDate = ds.StudyDate
+    ds.InstanceCreationTime = ds.StudyTime
+
+    # Frame of Reference Module
+    ds.FrameOfReferenceUID = generate_uid()
+    ds.PositionReferenceIndicator = ''
+
+    # General Equipment Module
+    ds.Manufacturer = 'MSTool-AI'
+    ds.ManufacturerModelName = 'MSTool-AI Segmentation'
+    ds.SoftwareVersions = '2.0'
+
+    # Image Pixel Module
+    ds.SamplesPerPixel = 1
+    ds.PhotometricInterpretation = 'MONOCHROME2'
+    ds.Rows = rows
+    ds.Columns = columns
+    ds.BitsAllocated = 1
+    ds.BitsStored = 1
+    ds.HighBit = 0
+    ds.PixelRepresentation = 0
+    ds.LossyImageCompression = '00'
+
+    # Segmentation Module
+    ds.SegmentationType = 'BINARY'
+    ds.ContentCreatorName = 'MSTool-AI'
+    ds.ContentLabel = 'SEGMENTATION'
+    ds.ContentDescription = series_description
+
+    # Build SegmentSequence — one entry per label
+    active_labels = [l for l in labels if l.get('id', 0) != 0]
+    segment_sequence = []
+
+    for label in active_labels:
+        seg_item = Dataset()
+        seg_item.SegmentNumber = label['id']
+        seg_item.SegmentLabel = label.get('name', f'Label {label["id"]}')
+        seg_item.SegmentAlgorithmType = 'SEMIAUTOMATIC'
+        seg_item.SegmentAlgorithmName = 'MSTool-AI'
+
+        # Segmented Property Category — Tissue
+        cat = Dataset()
+        cat.CodeValue = 'T-D0050'
+        cat.CodingSchemeDesignator = 'SRT'
+        cat.CodeMeaning = 'Tissue'
+        seg_item.SegmentedPropertyCategoryCodeSequence = Sequence([cat])
+
+        # Segmented Property Type — Lesion
+        prop = Dataset()
+        prop.CodeValue = 'M-01000'
+        prop.CodingSchemeDesignator = 'SRT'
+        prop.CodeMeaning = 'Morphologically Abnormal Structure'
+        seg_item.SegmentedPropertyTypeCodeSequence = Sequence([prop])
+
+        # Recommended Display Color (from label hex color)
+        color_hex = label.get('color', '#FF0000')
+        try:
+            r = int(color_hex[1:3], 16)
+            g = int(color_hex[3:5], 16)
+            b = int(color_hex[5:7], 16)
+            seg_item.RecommendedDisplayCIELabValue = [
+                int(r * 100 / 255),  # Approximate L*
+                int((r - 128)),       # Approximate a*
+                int((b - 128)),       # Approximate b*
+            ]
+        except (ValueError, IndexError):
+            pass
+
+        segment_sequence.append(seg_item)
+
+    ds.SegmentSequence = Sequence(segment_sequence)
+
+    # Number of Frames
+    num_frames = depth * len(active_labels)
+    ds.NumberOfFrames = num_frames
+
+    # Per-Frame Functional Groups Sequence
+    per_frame_seq = []
+    frame_data_list = []
+
+    for slice_idx in range(depth):
+        for label in active_labels:
+            # Frame Content
+            frame_content = Dataset()
+            frame_content.DimensionIndexValues = [label['id'], slice_idx + 1]
+
+            # Segment Identification
+            seg_id = Dataset()
+            seg_id.ReferencedSegmentNumber = label['id']
+
+            # Plane Position
+            plane_pos = Dataset()
+            plane_pos.ImagePositionPatient = [0.0, 0.0, float(slice_idx)]
+
+            # Build per-frame item
+            pf_item = Dataset()
+            pf_item.FrameContentSequence = Sequence([frame_content])
+            pf_item.SegmentIdentificationSequence = Sequence([seg_id])
+            pf_item.PlanePositionSequence = Sequence([plane_pos])
+            per_frame_seq.append(pf_item)
+
+            # Extract binary frame: 1 where mask == label_id, 0 elsewhere
+            binary_slice = (mask_3d[slice_idx] == label['id']).astype(np.uint8)
+            frame_data_list.append(binary_slice)
+
+    ds.PerFrameFunctionalGroupsSequence = Sequence(per_frame_seq)
+
+    # Shared Functional Groups
+    shared = Dataset()
+
+    # Plane Orientation
+    plane_orient = Dataset()
+    plane_orient.ImageOrientationPatient = [1, 0, 0, 0, 1, 0]
+    shared.PlaneOrientationSequence = Sequence([plane_orient])
+
+    # Pixel Measures
+    pixel_measures = Dataset()
+    pixel_measures.PixelSpacing = [1.0, 1.0]
+    pixel_measures.SliceThickness = 1.0
+    pixel_measures.SpacingBetweenSlices = 1.0
+    shared.PixelMeasuresSequence = Sequence([pixel_measures])
+
+    ds.SharedFunctionalGroupsSequence = Sequence([shared])
+
+    # Pack binary pixel data — bit-packed (8 pixels per byte)
+    all_frames = np.concatenate([f.flatten() for f in frame_data_list])
+    # Pad to multiple of 8
+    padded_len = ((len(all_frames) + 7) // 8) * 8
+    padded = np.zeros(padded_len, dtype=np.uint8)
+    padded[:len(all_frames)] = all_frames
+    # Pack bits
+    packed = np.packbits(padded, bitorder='little')
+    ds.PixelData = packed.tobytes()
+
+    return ds

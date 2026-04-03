@@ -2155,3 +2155,84 @@ async def annotate_lesions(
     except Exception as e:
         logger.error("Lesion annotation failed", extra={"error": str(e)})
         raise HTTPException(status_code=500, detail=f"Lesion annotation failed: {str(e)}")
+
+
+# =============================================================================
+# DICOM-SEG Export
+# =============================================================================
+
+@router.get("/{segmentation_id}/export/dicom-seg")
+async def export_dicom_seg(
+    segmentation_id: str,
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+):
+    """
+    Export a segmentation as a DICOM Segmentation (DICOM-SEG) object.
+
+    Returns a binary DICOM file (.dcm) suitable for PACS archival.
+    The file uses SOP Class 1.2.840.10008.5.1.4.1.1.66.4 (Segmentation Storage)
+    with BINARY segmentation type and per-label segment entries.
+    """
+    from app.utils.dicom_utils import create_dicom_seg, save_dicom
+    import tempfile
+
+    try:
+        # Load mask
+        if segmentation_id not in segmentation_service.segmentations_cache:
+            if not segmentation_service._load_segmentation(segmentation_id):
+                raise HTTPException(status_code=404, detail=f"Segmentation {segmentation_id} not found")
+
+        cache_entry = segmentation_service.segmentations_cache[segmentation_id]
+        mask_3d = cache_entry["masks_3d"]
+        metadata = cache_entry["metadata"]
+
+        # Extract label info
+        labels = []
+        if hasattr(metadata, 'labels') and metadata.labels:
+            labels = [{"id": l.id, "name": l.name, "color": l.color} for l in metadata.labels]
+        else:
+            # Fallback: detect unique labels
+            unique_labels = np.unique(mask_3d)
+            labels = [{"id": int(v), "name": f"Label {v}", "color": "#FF0000"} for v in unique_labels if v > 0]
+
+        if not labels:
+            raise HTTPException(status_code=400, detail="Segmentation has no labels")
+
+        # Create DICOM-SEG
+        description = getattr(metadata, 'description', '') or 'Segmentation'
+        ds = create_dicom_seg(
+            mask_3d=mask_3d,
+            labels=labels,
+            study_description=description,
+            series_description=description,
+        )
+
+        # Serialize to bytes
+        with tempfile.NamedTemporaryFile(suffix='.dcm', delete=False) as tmp:
+            tmp_path = tmp.name
+        save_dicom(ds, tmp_path)
+        with open(tmp_path, 'rb') as f:
+            dicom_bytes = f.read()
+        import os
+        os.unlink(tmp_path)
+
+        logger.info("DICOM-SEG export generated", extra={
+            "segmentation_id": segmentation_id,
+            "labels_count": len(labels),
+            "size_bytes": len(dicom_bytes),
+        })
+
+        return Response(
+            content=dicom_bytes,
+            media_type="application/dicom",
+            headers={
+                "Content-Disposition": f'attachment; filename="{segmentation_id}_seg.dcm"',
+                "Content-Length": str(len(dicom_bytes)),
+            }
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("DICOM-SEG export failed", extra={"error": str(e)})
+        raise HTTPException(status_code=500, detail=f"DICOM-SEG export failed: {str(e)}")
