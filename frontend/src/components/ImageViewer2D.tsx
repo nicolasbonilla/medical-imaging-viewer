@@ -17,6 +17,7 @@ import { SegmentationCanvasLocal, type SegmentationCanvasLocalRef } from './Segm
 import { useAISegmentation } from '@/hooks/useAISegmentation';
 import { QuickScreenBadge } from './QuickScreenBadge';
 import { VoxelValueOverlay } from './VoxelValueOverlay';
+import MeasurementOverlay from './MeasurementOverlay';
 
 interface ImageViewer2DProps {
   viewerControls: ReturnType<typeof import('../hooks/useViewerControls').useViewerControls>;
@@ -451,6 +452,18 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
                   aiInteractiveMode={aiSeg.aiMode === 'interactive'}
                   onAIClick={aiSeg.handleCanvasClick}
 
+                />
+              )}
+              {/* Measurement tools overlay */}
+              {currentSeries && canvasRef.current && (
+                <MeasurementOverlay
+                  imageWidth={currentSeries.metadata.columns ?? 256}
+                  imageHeight={currentSeries.metadata.rows ?? 256}
+                  canvasWidth={canvasRef.current.width || (currentSeries.metadata.columns ?? 256)}
+                  canvasHeight={canvasRef.current.height || (currentSeries.metadata.rows ?? 256)}
+                  sliceIndex={currentSliceIndex}
+                  zoomLevel={zoomLevel}
+                  panOffset={panOffset}
                 />
               )}
             </div>
