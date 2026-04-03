@@ -260,7 +260,6 @@ export default function ImageViewer3D() {
 
       try {
         const headers = getAuthHeaders();
-        console.log('[3D] Fetching NIfTI:', niftiUrl);
         const buffer = await fetchWithProgress(niftiUrl, headers, (pct, loaded, total) => {
           if (cancelled) return;
           setLoadProgress(pct);
@@ -268,7 +267,6 @@ export default function ImageViewer3D() {
           setTotalMB(total);
         });
         if (cancelled) return;
-        console.log('[3D] Downloaded:', (buffer.byteLength / 1048576).toFixed(1), 'MB');
         setNiftiBuffer(buffer);
         setLoadProgress(100);
         setIsLoading(false);
@@ -395,7 +393,6 @@ export default function ImageViewer3D() {
         nv.backgroundMasksOverlays = (zoneMapBuffer && !longTp1Buffer) ? 1 : 0;
 
         setVolumeReady(true);
-        console.log('[3D] Volume mode ready');
       } catch (err) {
         console.error('[3D] Volume init failed:', err);
         setError(err instanceof Error ? err.message : 'Volume init failed');
@@ -503,7 +500,6 @@ export default function ImageViewer3D() {
         }
 
         setMpReady(true);
-        console.log('[3D] Multiplanar mode ready, 4 instances synced');
       } catch (err) {
         console.error('[3D] Multiplanar init failed:', err);
         setError(err instanceof Error ? err.message : 'Multiplanar init failed');

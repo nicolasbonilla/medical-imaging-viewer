@@ -169,7 +169,6 @@ def init_container() -> Container:
     container.wire(modules=[
         "app.api.routes.imaging",
         "app.api.routes.segmentation",
-        "app.api.routes.segmentation_v2",
         "app.api.routes.ai_segmentation",
         "app.api.routes.clinical_tools",
     ])

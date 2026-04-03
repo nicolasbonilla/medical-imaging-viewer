@@ -11,9 +11,6 @@ export interface StorageFileInfo {
   path?: string;
 }
 
-/** @deprecated Alias for StorageFileInfo - use StorageFileInfo instead */
-export type DriveFileInfo = StorageFileInfo;
-
 export interface ImageMetadata {
   patient_id?: string;
   patient_name?: string;
@@ -725,27 +722,6 @@ export interface SegmentationComparisonResponse {
 /**
  * Export format options.
  */
-export type ExportFormat = 'nifti' | 'dicom_seg' | 'nrrd';
-
-/**
- * Request to export segmentation.
- */
-export interface ExportRequest {
-  format: ExportFormat;
-  include_metadata?: boolean;
-  compress?: boolean;
-}
-
-/**
- * Response with export download information.
- */
-export interface ExportResponse {
-  download_url: string;
-  filename: string;
-  format: ExportFormat;
-  size_bytes: number;
-  expires_at: string;
-}
 
 /**
  * Search parameters for segmentations.
@@ -779,16 +755,6 @@ export interface SegmentationSearch {
   // Sorting
   sort_by?: string;
   sort_order?: 'asc' | 'desc';
-}
-
-/**
- * Segmentation count by series (for UI indicators).
- */
-export interface SeriesSegmentationCount {
-  series_id: string;
-  count: number;
-  has_approved: boolean;
-  has_in_progress: boolean;
 }
 
 /**
