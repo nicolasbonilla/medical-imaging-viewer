@@ -18,7 +18,7 @@ from app.core.security import (
 )
 from app.core.exception_handlers import register_exception_handlers
 from app.core.container import init_container
-from app.api.routes import auth, imaging, segmentation, websocket, authentication, patients, studies, documents, ai_segmentation, ai_report, clinical_tools
+from app.api.routes import auth, imaging, segmentation, websocket, authentication, patients, studies, documents, ai_segmentation, ai_report, clinical_tools, dicomweb
 from app.models.schemas import HealthCheck
 
 settings = get_settings()
@@ -281,6 +281,9 @@ app.include_router(studies.router, prefix=settings.API_V1_STR)
 
 # EHR routes (Document management) - Firebase/Firestore backend
 app.include_router(documents.router, prefix=settings.API_V1_STR)
+
+# DICOMweb PACS integration (QIDO-RS search, WADO-RS import)
+app.include_router(dicomweb.router, prefix=settings.API_V1_STR)
 
 
 if __name__ == "__main__":

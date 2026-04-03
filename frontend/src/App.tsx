@@ -9,6 +9,7 @@ import PatientsPage from './pages/PatientsPage';
 import PatientDetailPage from './pages/PatientDetailPage';
 import DocumentsPage from './pages/DocumentsPage';
 import ViewerApp from './ViewerApp';
+import PACSBrowserPage from './pages/PACSBrowserPage';
 import ProfilePage from './pages/ProfilePage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { initializeFocusVisible } from './utils/accessibility';
@@ -80,6 +81,15 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <DocumentsPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/app/pacs"
+                element={
+                  <ProtectedRoute>
+                    <PACSBrowserPage />
                   </ProtectedRoute>
                 }
               />
