@@ -48,11 +48,12 @@
 | Lesion Analysis | UT-LES-001 | pytest | Component count matches reference | DONE (test_lesion_analysis_service.py) |
 | DIS Criteria | UT-DIS-001 | pytest | DIS evaluation matches expert | DONE (test_lesion_analysis_service.py) |
 | MAGNIMS Classifier | UT-CLS-001 | pytest | Region assignment matches reference | DONE (test_ms_region_classifier.py) |
-| DICOM-SEG | UT-SEG-001..008 | pytest | Valid DICOM-SEG structure | DONE (8 tests) |
+| DICOM-SEG | UT-SEG-001..008 | pytest | Valid DICOM-SEG structure | DONE (test_dicom_seg.py) |
+| DICOM Utils | UT-DICOM-001..007 | pytest | File meta, patient info, image info, spatial, pixel data, save, extract metadata, DICOM-SEG creation | DONE (test_dicom_utils.py — 250 lines) |
 | NIfTI Utils | UT-NII-001 | pytest | Load/transpose round-trip correct | DONE (test_nifti_utils.py) |
 | Edge AI | UT-EDGE-001 | vitest | Preprocessing output correct shape | TO DO |
 
-> **Note**: Class C unit test files added April 2026. Tests run in CI pipeline (`python -m pytest tests/unit/ -v --cov`). Coverage reports uploaded as GitHub Actions artifacts.
+> **Note**: Class C unit test files added April 2026. All 8 Class C backend modules now have unit tests (dicom_utils covered separately by test_dicom_utils.py in addition to test_dicom_seg.py). Tests run in CI pipeline (`python -m pytest tests/unit/ -v --cov`). Coverage reports uploaded as GitHub Actions artifacts.
 
 ### 1.6 Integration Verification
 

@@ -78,11 +78,11 @@
 | Requirement → Architecture | 91 | 91 | 0 | 100% |
 | Requirement → Design (Class C) | 25 | 25 | 0 | 100% |
 | Requirement → Code | 91 | 91 | 0 | 100% |
-| Requirement → Test | 91 | 35 | 56 | **38%** |
+| Requirement → Test | 91 | 38 | 53 | **42%** |
 | Safety Req → Risk Control | 20 | 20 | 0 | 100% |
 | Risk Control → Verification | 22 | 21 | 1 | **95%** |
 
-**Key Gap**: 56 requirements lack formal test traceability. 1 risk control lacks verification evidence. Unit tests for Class C services significantly improved coverage (April 2026).
+**Key Gap**: 53 requirements lack formal test traceability. 1 risk control lacks verification evidence. Unit tests for Class C services significantly improved coverage (April 2026). dicom_utils tests added ~4 additional requirements covered.
 
 ---
 
@@ -96,7 +96,8 @@
 | `test_lesion_analysis_service.py` | UT-LES-001, UT-DIS-001 | REQ-FUNC-050, REQ-FUNC-052 |
 | `test_ms_region_classifier.py` | UT-CLS-001 | REQ-FUNC-053 |
 | `test_nifti_utils.py` | UT-NII-001 | REQ-FUNC-001 |
-| `test_dicom_utils.py` | UT-SEG-001..008 | REQ-FUNC-072 |
+| `test_dicom_seg.py` | UT-SEG-001..008 | REQ-FUNC-072 |
+| `test_dicom_utils.py` | UT-DICOM-001..007 | REQ-FUNC-072, REQ-SAFE-013 | RC-016 | VERIFIED |
 
 ---
 

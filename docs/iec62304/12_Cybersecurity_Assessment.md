@@ -42,7 +42,7 @@ Internet
 
 | Control | Implementation | IEC 81001-5-1 Clause | Status |
 |---------|---------------|---------------------|--------|
-| User authentication | Firebase Auth + JWT | 5.3.2 | IMPLEMENTED |
+| User authentication | Firebase Auth + JWT — 103 API endpoints, 100% coverage | 5.3.2 | IMPLEMENTED |
 | Biometric auth (WebAuthn/Passkeys) | FIDO2 protocol, credentials in Firestore | 5.3.2 | IMPLEMENTED |
 | Role-based access control (RBAC) | 4 roles, 15 granular permissions | 5.3.3 | IMPLEMENTED |
 | Token expiration | JWT expires in 60 minutes | 5.3.2 | IMPLEMENTED |

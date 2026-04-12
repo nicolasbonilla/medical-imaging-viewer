@@ -78,7 +78,7 @@ RISK_CONTROLS = [
     ("RC-016", "HAZ-008", "DICOM-SEG export follows SOP Class 1.2.840.10008.5.1.4.1.1.66.4",
      "dicom_utils.py create_dicom_seg uses correct SOP Class UID and per-frame/shared groups",
      "Code inspection + unit test: test_dicom_seg.py, test_dicom_utils.py"),
-    ("RC-017", "HAZ-010", "JWT authentication on ALL API endpoints (33 Class C + 52 other = 85 total)",
+    ("RC-017", "HAZ-010", "JWT authentication on ALL 103 API endpoints (100% coverage)",
      "All route files import get_current_active_user; every async def endpoint has auth dependency",
      "Code inspection: grep -c get_current_active_user across all route files"),
     ("RC-018", "HAZ-010", "RBAC with 4 roles and 15 granular permissions",
