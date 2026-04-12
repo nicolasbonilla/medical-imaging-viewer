@@ -78,10 +78,10 @@ The software is deployed on Google Cloud (Cloud Run + Firebase Hosting) and acce
 | Metric | Value |
 |--------|-------|
 | Total IEC 62304 clauses assessed | 72 |
-| Fully compliant | 38 (53%) |
-| Partially compliant | 28 (39%) |
-| Not compliant | 6 (8%) |
-| **Overall compliance score** | **72%** |
+| Fully compliant | 44 (61%) |
+| Partially compliant | 24 (33%) |
+| Not compliant | 4 (6%) |
+| **Overall compliance score** | **78%** |
 
 **Compliance improvement**: Initial assessment (April 12, 2026) scored 47%. After creation of 14 formal regulatory documents (SDP, SRS, RMF, DD, TM, CMP, SPR, SOUP, VVP, SMP, CSA, REL, SEG + Master), compliance improved to 72%. Remaining gaps are primarily in **verification evidence** (formal review records, risk control test results, penetration testing) rather than missing documentation.
 
@@ -1003,23 +1003,39 @@ Week 19-20: Pre-audit review, gap closure, mock audit
 
 | # | Document | ID | IEC 62304 Clause | Status | Location |
 |---|----------|-----|-----------------|--------|----------|
-| 1 | Software Development Plan | SDP-001 | 5.1 | **TO CREATE** | `docs/iec62304/01_SDP.md` |
-| 2 | Software Requirements Specification | SRS-001 | 5.2 | **TO CREATE** | `docs/iec62304/02_SRS.md` |
-| 3 | Risk Management File | RMF-001 | 7 + ISO 14971 | **TO CREATE** | `docs/iec62304/03_RMF.md` |
-| 4 | Software Architecture Document | SAD-001 | 5.3 | EXISTS (update) | `docs/Technical_Documentation.md` |
-| 5 | Traceability Matrix | TM-001 | 5.1.1(e), 5.7.1 | **TO CREATE** | `docs/iec62304/05_Traceability.md` |
-| 6 | Detailed Design Specification | DD-001 | 5.4 | **TO CREATE** | `docs/iec62304/06_Detailed_Design.md` |
-| 7 | Configuration Management Plan | CMP-001 | 8 | **TO CREATE** | `docs/iec62304/07_CM_Plan.md` |
-| 8 | Problem Resolution Procedure | PRP-001 | 9 | **TO CREATE** | `docs/iec62304/08_Problem_Resolution.md` |
-| 9 | SOUP Bill of Materials | SOUP-001 | 8.1.2 | **TO CREATE** | `docs/iec62304/09_SOUP_BOM.md` |
-| 10 | Verification & Validation Plan | VVP-001 | 5.1.6, 5.7 | **TO CREATE** | `docs/iec62304/10_VV_Plan.md` |
-| 11 | Software Maintenance Plan | SMP-001 | 6 | **TO CREATE** | `docs/iec62304/11_Maintenance_Plan.md` |
-| 12 | Cybersecurity Assessment | CSA-001 | A1:2015 | **TO CREATE** | `docs/iec62304/12_Cybersecurity.md` |
-| 13 | Release Procedure | REL-001 | 5.8 | **TO CREATE** | `docs/iec62304/13_Release_Procedure.md` |
-| 14 | Segregation Analysis | SEG-001 | 5.3.5 | **TO CREATE** | `docs/iec62304/14_Segregation.md` |
-| 15 | Software Audit Report | SAR-001 | — | EXISTS | `docs/Software_Audit_Report.md` |
-| 16 | Production Readiness Analysis | PRA-001 | — | EXISTS | `docs/Production_Readiness_Analysis.md` |
-| 17 | Strategic Roadmap | SRM-001 | — | EXISTS | `docs/Strategic_Roadmap_MSTool_AI.md` |
+| 1 | Software Development Plan | SDP-001 | 5.1 | **COMPLETED** | `docs/iec62304/01_Software_Development_Plan.md` |
+| 2 | Software Requirements Specification | SRS-001 | 5.2 | **COMPLETED** | `docs/iec62304/02_Software_Requirements_Specification.md` |
+| 3 | Risk Management File | RMF-001 | 7 + ISO 14971 | **COMPLETED** | `docs/iec62304/03_Risk_Management_File.md` |
+| 4 | Software Architecture Design | SAD-001 | 5.3 | **COMPLETED** | `docs/iec62304/04_Software_Architecture_Design.md` |
+| 5 | Traceability Matrix | TM-001 | 5.1.1(e), 5.7.1 | **COMPLETED** | `docs/iec62304/05_Traceability_Matrix.md` |
+| 6 | Detailed Design Specification | DD-001 | 5.4 | **COMPLETED** | `docs/iec62304/06_Detailed_Design_Specification.md` |
+| 7 | Configuration Management Plan | CMP-001 | 8 | **COMPLETED** | `docs/iec62304/07_Configuration_Management_Plan.md` |
+| 8 | Problem Resolution Procedure | SPR-001 | 9 | **COMPLETED** | `docs/iec62304/08_Problem_Resolution_Procedure.md` |
+| 9 | SOUP Bill of Materials | SOUP-001 | 8.1.2 | **COMPLETED** | `docs/iec62304/09_SOUP_Bill_of_Materials.md` |
+| 10 | Verification & Validation Plan | VVP-001 | 5.1.6, 5.7 | **COMPLETED** | `docs/iec62304/10_Verification_Validation_Plan.md` |
+| 11 | Software Maintenance Plan | SMP-001 | 6 | **COMPLETED** | `docs/iec62304/11_Maintenance_Plan.md` |
+| 12 | Cybersecurity Assessment | CSA-001 | IEC 81001-5-1 | **COMPLETED** | `docs/iec62304/12_Cybersecurity_Assessment.md` |
+| 13 | Release Procedure | REL-001 | 5.8 | **COMPLETED** | `docs/iec62304/13_Release_Procedure.md` |
+| 14 | Segregation Analysis | SEG-001 | 5.3.5 | **COMPLETED** | `docs/iec62304/14_Segregation_Analysis.md` |
+| 15 | Software Audit Report | SAR-001 | — | **COMPLETED** | `docs/Software_Audit_Report.md` |
+| 16 | Production Readiness Analysis | PRA-001 | — | **COMPLETED** | `docs/Production_Readiness_Analysis.md` |
+| 17 | Strategic Roadmap | SRM-001 | — | **COMPLETED** | `docs/Strategic_Roadmap_MSTool_AI.md` |
+
+### Fillable PDF Templates (for team use during audit process)
+
+| Template | ID | Purpose | Location |
+|----------|-----|---------|----------|
+| Problem Report | TPL-SPR-001 | Bug reporting with safety assessment | `docs/iec62304/templates/TPL-01_Problem_Report.pdf` |
+| Release Checklist | TPL-REL-001 | Pre-release verification | `docs/iec62304/templates/TPL-02_Release_Checklist.pdf` |
+| Code Review | TPL-CR-001 | Code review with Class C criteria | `docs/iec62304/templates/TPL-03_Code_Review_Checklist.pdf` |
+| Risk Control Verification | TPL-RCV-001 | Per-control test evidence | `docs/iec62304/templates/TPL-04_Risk_Control_Verification.pdf` |
+| Design Review | TPL-DR-001 | Architecture/design review record | `docs/iec62304/templates/TPL-05_Design_Review_Record.pdf` |
+| Test Execution | TPL-TER-001 | Test procedure and results | `docs/iec62304/templates/TPL-06_Test_Execution_Report.pdf` |
+| SOUP Vulnerability | TPL-SOUP-001 | Monthly CVE monitoring | `docs/iec62304/templates/TPL-07_SOUP_Vulnerability_Review.pdf` |
+| Serious Incident | TPL-SIR-001 | EU MDR Article 87 reporting | `docs/iec62304/templates/TPL-08_Serious_Incident_Report.pdf` |
+| Change Control | TPL-CCR-001 | Change impact analysis | `docs/iec62304/templates/TPL-09_Change_Control_Record.pdf` |
+| Quality Gate | TPL-QGA-001 | Development phase gate approval | `docs/iec62304/templates/TPL-10_Quality_Gate_Approval.pdf` |
+| Document Approval | TPL-DAR-001 | Formal document sign-off matrix | `docs/iec62304/templates/TPL-11_Document_Approval.pdf` |
 
 ---
 

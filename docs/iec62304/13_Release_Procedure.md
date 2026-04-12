@@ -8,6 +8,8 @@
 
 ---
 
+**Fillable PDF templates**: `TPL-02_Release_Checklist.pdf` (TPL-REL-001), `TPL-10_Quality_Gate_Approval.pdf` (TPL-QGA-001)
+
 ## 1. Release Types
 
 | Type | Versioning | Trigger | Approval |

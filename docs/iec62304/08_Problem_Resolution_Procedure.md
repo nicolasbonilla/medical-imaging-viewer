@@ -6,7 +6,11 @@
 
 ## 1. Problem Reporting
 
-All software problems are reported via GitHub Issues using the following template:
+All software problems are reported via GitHub Issues using the following template.
+
+**Fillable PDF template**: `TPL-01_Problem_Report.pdf` (TPL-SPR-001) — use for formal audit records.
+
+Template structure:
 
 ```
 **Problem ID**: AUTO-GENERATED

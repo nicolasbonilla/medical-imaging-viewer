@@ -19,6 +19,8 @@
 | Deployment artifacts | Cloud Run revision ID, Firebase deploy version | Cloud console |
 | Environment config | env.yaml (not in Git), .env.production | Local / Git |
 
+**Fillable PDF templates**: `TPL-09_Change_Control_Record.pdf` (TPL-CCR-001), `TPL-03_Code_Review_Checklist.pdf` (TPL-CR-001)
+
 ## 2. Change Control Process
 
 ```
