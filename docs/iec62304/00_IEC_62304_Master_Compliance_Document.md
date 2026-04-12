@@ -96,10 +96,13 @@ The software's functional implementation is mature (~84,000 LOC across 224+ file
 | Standard | Title | Edition | Applicability |
 |----------|-------|---------|---------------|
 | **IEC 62304:2006+A1:2015** | Medical device software — Software life cycle processes | Ed. 1.1 (2015) | Primary standard for software lifecycle |
+| **IEC 81001-5-1:2021** | Health software and health IT systems safety, effectiveness and security — Part 5-1: Security | Ed. 1.0 (2021) | **Cybersecurity lifecycle (EU MDR harmonized)** |
 | **ISO 14971:2019** | Medical devices — Application of risk management | Ed. 3 | Risk management process |
 | **IEC 62366-1:2015+A1:2020** | Medical devices — Usability engineering | Ed. 1.1 | Usability requirements |
 | **IEC 82304-1:2016** | Health software — Part 1: General requirements for product safety | Ed. 1 | Standalone software product |
 | **ISO 13485:2016** | Medical devices — Quality management systems | Ed. 3 | QMS requirements |
+
+**Note on standard currency**: As of April 2026, IEC 62304:2006+A1:2015 remains the current published edition. Edition 2 is in development by IEC TC 62/SC 62A but has not yet reached FDIS stage. IEC 81001-5-1:2021 was harmonized under EU MDR and is effectively mandatory for cybersecurity compliance alongside IEC 62304 A1. All standard versions referenced in this document have been verified against the IEC Webstore and EU Official Journal harmonized standards list.
 
 ### 2.2 EU Regulatory Framework
 
