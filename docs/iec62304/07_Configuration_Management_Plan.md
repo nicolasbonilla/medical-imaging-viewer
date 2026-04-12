@@ -34,6 +34,12 @@
    - Test evidence
 4. Reviewer performs code review (per CR checklist)
 5. CI pipeline must pass (TypeScript, build, tests, syntax)
+5.1 CI pipeline must pass ALL gates (no failure suppression):
+   - TypeScript compilation, frontend build, frontend tests
+   - Backend unit tests with coverage reporting
+   - Backend integration tests
+   - SOUP vulnerability scanning (npm audit + pip-audit)
+   - Python syntax check
 6. Reviewer approves PR
 7. Merge to main (squash merge preferred)
 8. For backend: deploy via Cloud Build + verify with test_endpoints.sh
@@ -46,6 +52,18 @@
 - Pull request required: **YES**
 - CI status checks must pass: **YES**
 - At least 1 approving review: **REQUIRED**
+
+## 3.1 Code Ownership (IEC 62304 Clause 5.5.4)
+
+Code review responsibility is enforced via `.github/CODEOWNERS`:
+
+| Module Category | Required Reviewer |
+|----------------|-------------------|
+| Class C backend services | @nicolasbonilla |
+| Edge AI Worker | @nicolasbonilla |
+| Regulatory documentation | @nicolasbonilla |
+| CI/CD pipeline | @nicolasbonilla |
+| Security-critical code | @nicolasbonilla |
 
 ## 4. Release Management
 

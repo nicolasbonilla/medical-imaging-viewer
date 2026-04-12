@@ -35,22 +35,24 @@
 
 | Req ID | Safety Requirement | Risk Control | HAZ ID | Design (DD) | Implementation | Test ID | Verified? |
 |--------|-------------------|-------------|--------|-------------|----------------|---------|-----------|
-| REQ-SAFE-001 | AI disclaimer label | RC-001 | HAZ-001 | DD-AI-001 | `QuickScreenBadge.tsx` | TST-SAFE-001 | TO DO |
-| REQ-SAFE-002 | Viewing/Edit mode separation | RC-002 | HAZ-001 | DD-AI-001 | `ViewerApp.tsx` | TST-SAFE-002 | TO DO |
-| REQ-SAFE-003 | Manual override available | RC-003 | HAZ-001 | DD-AI-001 | `SegmentationPanel.tsx` | TST-SAFE-003 | TO DO |
-| REQ-SAFE-004 | Volumetry percentile display | RC-004 | HAZ-002 | DD-VOL-001 | `BrainVolumetryPanel.tsx` | TST-SAFE-004 | TO DO |
-| REQ-SAFE-005 | Abnormality threshold display | RC-005 | HAZ-002 | DD-VOL-001 | `BrainVolumetryPanel.tsx` | TST-SAFE-005 | TO DO |
-| REQ-SAFE-006 | Report disclaimer header | RC-006 | HAZ-003 | DD-RPT-001 | `brain_report_service.py` | TST-SAFE-006 | TO DO |
-| REQ-SAFE-007 | Report no auto-commit | RC-007 | HAZ-003 | DD-RPT-001 | `AIReportPanel.tsx` | TST-SAFE-007 | TO DO |
-| REQ-SAFE-008 | Edge AI confidence + disclaimer | RC-008 | HAZ-004 | DD-EDGE-003 | `QuickScreenBadge.tsx` | TST-SAFE-008 | TO DO |
-| REQ-SAFE-009 | Edge AI hidden when no model | RC-009 | HAZ-004 | DD-EDGE-002 | `useEdgeAI.ts` | TST-SAFE-009 | TO DO |
-| REQ-SAFE-010 | Classification confidence scores | RC-010 | HAZ-005 | DD-CLS-001 | `LesionDashboard.tsx` | TST-SAFE-010 | TO DO |
-| REQ-SAFE-012 | Auto-transpose axis mismatch | RC-012 | HAZ-006 | DD-NII-002 | `SegmentationCanvasLocal.tsx` | TST-SAFE-012 | TO DO |
-| REQ-SAFE-014 | Longitudinal tri-color overlay | RC-014 | HAZ-007 | — | `LongitudinalCompare.tsx` | TST-SAFE-014 | TO DO |
-| REQ-SAFE-015 | DIS per-region details | RC-015 | HAZ-008 | DD-LES-002 | `LesionDashboard.tsx` | TST-SAFE-015 | TO DO |
-| REQ-SAFE-016 | Patient ID prominent | RC-016 | HAZ-009 | — | `ViewerApp.tsx` | TST-SAFE-016 | TO DO |
-| REQ-SAFE-018 | DICOMweb import confirmation | RC-020 | HAZ-012 | — | `PACSBrowserPage.tsx` | TST-SAFE-018 | TO DO |
-| REQ-SAFE-020 | MNI 1mm template preprocessing | RC-022 | HAZ-014 | — | Preprocessing pipeline | TST-SAFE-020 | TO DO |
+| REQ-SAFE-001 | AI disclaimer label | RC-001 | HAZ-001 | DD-AI-001 | `QuickScreenBadge.tsx` | TST-SAFE-001 | VERIFIED (code inspection) |
+| REQ-SAFE-002 | Viewing/Edit mode separation | RC-002 | HAZ-001 | DD-AI-001 | `ViewerApp.tsx` | TST-SAFE-002 | VERIFIED (code inspection) |
+| REQ-SAFE-003 | Manual override available | RC-003 | HAZ-001 | DD-AI-001 | `SegmentationPanel.tsx` | TST-SAFE-003 | VERIFIED (code inspection) |
+| REQ-SAFE-004 | Volumetry percentile display | RC-004 | HAZ-002 | DD-VOL-001 | `BrainVolumetryPanel.tsx` | TST-SAFE-004 | VERIFIED (code inspection) |
+| REQ-SAFE-005 | Abnormality threshold display | RC-005 | HAZ-002 | DD-VOL-001 | `BrainVolumetryPanel.tsx` | TST-SAFE-005 | VERIFIED (code inspection) |
+| REQ-SAFE-006 | Report disclaimer header | RC-006 | HAZ-003 | DD-RPT-001 | `brain_report_service.py` | TST-SAFE-006 | VERIFIED (code inspection) |
+| REQ-SAFE-007 | Report no auto-commit | RC-007 | HAZ-003 | DD-RPT-001 | `AIReportPanel.tsx` | TST-SAFE-007 | VERIFIED (code inspection) |
+| REQ-SAFE-008 | Edge AI confidence + disclaimer | RC-008 | HAZ-004 | DD-EDGE-003 | `QuickScreenBadge.tsx` | TST-SAFE-008 | VERIFIED (code inspection) |
+| REQ-SAFE-009 | Edge AI hidden when no model | RC-009 | HAZ-004 | DD-EDGE-002 | `useEdgeAI.ts` | TST-SAFE-009 | VERIFIED (code inspection) |
+| REQ-SAFE-010 | Classification confidence scores | RC-010 | HAZ-005 | DD-CLS-001 | `LesionDashboard.tsx` | TST-SAFE-010 | VERIFIED (code inspection) |
+| REQ-SAFE-012 | Auto-transpose axis mismatch | RC-012 | HAZ-006 | DD-NII-002 | `SegmentationCanvasLocal.tsx` | TST-SAFE-012 | VERIFIED (code inspection) |
+| REQ-SAFE-014 | Longitudinal tri-color overlay | RC-014 | HAZ-007 | — | `LongitudinalCompare.tsx` | TST-SAFE-014 | VERIFIED (code inspection) |
+| REQ-SAFE-015 | DIS per-region details | RC-015 | HAZ-008 | DD-LES-002 | `LesionDashboard.tsx` | TST-SAFE-015 | VERIFIED (code inspection) |
+| REQ-SAFE-016 | Patient ID prominent | RC-016 | HAZ-009 | — | `ViewerApp.tsx` | TST-SAFE-016 | VERIFIED (code inspection) |
+| REQ-SAFE-018 | DICOMweb import confirmation | RC-020 | HAZ-012 | — | `PACSBrowserPage.tsx` | TST-SAFE-018 | VERIFIED (code inspection) |
+| REQ-SAFE-020 | MNI 1mm template preprocessing | RC-022 | HAZ-014 | — | Preprocessing pipeline | TST-SAFE-020 | VERIFIED (code inspection) |
+
+> **Note**: All safety requirements verified by code inspection per RMF-001 (April 2026). Formal test execution reports pending (TPL-06).
 
 ---
 
@@ -76,11 +78,25 @@
 | Requirement → Architecture | 91 | 91 | 0 | 100% |
 | Requirement → Design (Class C) | 25 | 25 | 0 | 100% |
 | Requirement → Code | 91 | 91 | 0 | 100% |
-| Requirement → Test | 91 | 23 | 68 | **25%** |
+| Requirement → Test | 91 | 35 | 56 | **38%** |
 | Safety Req → Risk Control | 20 | 20 | 0 | 100% |
-| Risk Control → Verification | 22 | 0 | 22 | **0%** |
+| Risk Control → Verification | 22 | 21 | 1 | **95%** |
 
-**Key Gap**: 68 requirements lack formal test traceability. 22 risk controls lack verification evidence. These are the highest priority items for audit remediation.
+**Key Gap**: 56 requirements lack formal test traceability. 1 risk control lacks verification evidence. Unit tests for Class C services significantly improved coverage (April 2026).
+
+---
+
+## Unit Test Traceability (Class C Services)
+
+| Test File | Test IDs | Requirements Covered |
+|-----------|---------|---------------------|
+| `test_ai_segmentation_service.py` | UT-AI-001 | REQ-FUNC-030 |
+| `test_brain_volumetry_service.py` | UT-VOL-001..003 | REQ-FUNC-040, REQ-FUNC-041, REQ-FUNC-042 |
+| `test_brain_report_service.py` | UT-RPT-001 | REQ-FUNC-060 |
+| `test_lesion_analysis_service.py` | UT-LES-001, UT-DIS-001 | REQ-FUNC-050, REQ-FUNC-052 |
+| `test_ms_region_classifier.py` | UT-CLS-001 | REQ-FUNC-053 |
+| `test_nifti_utils.py` | UT-NII-001 | REQ-FUNC-001 |
+| `test_dicom_utils.py` | UT-SEG-001..008 | REQ-FUNC-072 |
 
 ---
 

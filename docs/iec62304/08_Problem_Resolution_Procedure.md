@@ -71,6 +71,17 @@ Template structure:
    - Commit SHA of fix
    - Affected version and fixed version
 
+## 4.1 Integration with CAPA (ISO 13485 Clause 8.5)
+
+For problems meeting any of these criteria, initiate CAPA per QP-002:
+- Critical severity
+- Affects Class C software item
+- Recurs 2+ times within 90 days
+- Affects regulatory compliance
+- Post-market surveillance indicates trend
+
+Document CAPA ID in problem report closure for traceability.
+
 ## 5. Trend Analysis
 
 Quarterly review of:

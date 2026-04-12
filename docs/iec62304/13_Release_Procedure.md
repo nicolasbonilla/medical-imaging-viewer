@@ -36,6 +36,7 @@
 | [ ] SOUP list updated (if dependencies changed) | Major/Minor | SOUP-001 checked |
 | [ ] Traceability matrix updated | Major | TM-001 updated |
 | [ ] Clinical review completed | Major | Clinical advisor sign-off |
+| [ ] CODEOWNERS approvals obtained for all Class C changes | All releases | GitHub PR CODEOWNERS approval |
 
 ### 2.2 Known Residual Anomalies (Clause 5.8.2, 5.8.3)
 
@@ -108,6 +109,7 @@ Create GitHub Release with:
 | Test results | GitHub Actions artifacts | 5 years |
 | Release notes | GitHub Releases | Lifetime of device |
 | Deployment logs | Cloud Run revision history | 2 years |
+| SBOM (CycloneDX) | docs/iec62304/SBOM_CycloneDX.json | Lifetime of device + 10 years |
 
 ---
 

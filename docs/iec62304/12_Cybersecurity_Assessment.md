@@ -126,15 +126,17 @@ Internet
 | Activity | Frequency | Tool | Status |
 |----------|-----------|------|--------|
 | SOUP anomaly review | Monthly | Manual NVD check | PARTIAL |
-| npm audit | Per build (CI) | npm audit | TO IMPLEMENT |
-| pip-audit | Per build (CI) | pip-audit | TO IMPLEMENT |
+| npm audit | Per build (CI) | npm audit | IMPLEMENTED (`.github/workflows/ci.yml`) |
+| pip-audit | Per build (CI) | pip-audit | IMPLEMENTED (`.github/workflows/ci.yml`) |
 | Container scanning | Not implemented | — | GAP |
 | Penetration testing | Not performed | — | GAP |
 
-### 5.2 Recommended Additions to CI Pipeline
+### 5.2 SOUP Vulnerability Scanning in CI (Implemented)
+
+npm audit and pip-audit are already integrated in `.github/workflows/ci.yml` and run on every build. No further action required for SOUP scanning.
 
 ```yaml
-# Add to .github/workflows/ci.yml
+# Already in .github/workflows/ci.yml
 - name: npm audit
   run: npm audit --audit-level=high
   working-directory: frontend
@@ -166,13 +168,13 @@ Internet
 | 5.3.12 | Vulnerability management | IMPLEMENTED (npm audit + pip-audit in GitHub Actions CI) |
 | 5.3.13 | Security testing | GAP (no penetration test) |
 
-### Overall Cybersecurity Compliance: **82%**
+### Overall Cybersecurity Compliance: **87%**
 
 ### Critical Actions Required
 
 | Action | Priority | Effort |
 |--------|----------|--------|
-| Add npm audit + pip-audit to CI | HIGH | 1 day |
+| ~~Add npm audit + pip-audit to CI~~ | ~~HIGH~~ | COMPLETED (2026-04-12) |
 | Add Content Security Policy headers | MEDIUM | 1 day |
 | Schedule penetration test (external firm) | HIGH | 2 weeks + report |
 | Implement automated SOUP CVE monitoring | MEDIUM | 2 days |

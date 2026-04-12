@@ -68,3 +68,12 @@
 ---
 
 *SOUP anomalies are reviewed monthly using npm audit, pip-audit, and NVD database queries.*
+
+## 6. CycloneDX Software Bill of Materials
+
+A machine-readable SBOM in CycloneDX 1.5 format is maintained at `docs/iec62304/SBOM_CycloneDX.json`.
+
+- Contains all SOUP items with versions and purl identifiers
+- Each component tagged with IEC 62304 safety class (A/B/C)
+- Updated with each major/minor release when dependencies change
+- Compliant with NTIA minimum elements, EU Cybersecurity Act Annex IV

@@ -42,15 +42,17 @@
 
 | Unit | Test IDs | Method | Acceptance Criteria | Status |
 |------|---------|--------|-------------------|--------|
-| AI Segmentation | UT-AI-001 | pytest | Returns valid AITaskResult | TO DO |
-| Volumetry | UT-VOL-001..003 | pytest | Volumes within ±1% of reference | TO DO |
-| Report Generation | UT-RPT-001 | pytest | Returns valid report content | TO DO |
-| Lesion Analysis | UT-LES-001 | pytest | Component count matches reference | TO DO |
-| DIS Criteria | UT-DIS-001 | pytest | DIS evaluation matches expert | TO DO |
-| MAGNIMS Classifier | UT-CLS-001 | pytest | Region assignment matches reference | TO DO |
+| AI Segmentation | UT-AI-001 | pytest | Returns valid AITaskResult | DONE (test_ai_segmentation_service.py) |
+| Volumetry | UT-VOL-001..003 | pytest | Volumes within ±1% of reference | DONE (test_brain_volumetry_service.py) |
+| Report Generation | UT-RPT-001 | pytest | Returns valid report content | DONE (test_brain_report_service.py) |
+| Lesion Analysis | UT-LES-001 | pytest | Component count matches reference | DONE (test_lesion_analysis_service.py) |
+| DIS Criteria | UT-DIS-001 | pytest | DIS evaluation matches expert | DONE (test_lesion_analysis_service.py) |
+| MAGNIMS Classifier | UT-CLS-001 | pytest | Region assignment matches reference | DONE (test_ms_region_classifier.py) |
 | DICOM-SEG | UT-SEG-001..008 | pytest | Valid DICOM-SEG structure | DONE (8 tests) |
-| NIfTI Utils | UT-NII-001 | pytest | Load/transpose round-trip correct | TO DO |
+| NIfTI Utils | UT-NII-001 | pytest | Load/transpose round-trip correct | DONE (test_nifti_utils.py) |
 | Edge AI | UT-EDGE-001 | vitest | Preprocessing output correct shape | TO DO |
+
+> **Note**: Class C unit test files added April 2026. Tests run in CI pipeline (`python -m pytest tests/unit/ -v --cov`). Coverage reports uploaded as GitHub Actions artifacts.
 
 ### 1.6 Integration Verification
 
