@@ -11,6 +11,8 @@ from typing import Optional, List
 from uuid import UUID
 import math
 
+from app.security import get_current_active_user
+from app.security.models import User
 from app.core.logging import get_logger
 from app.core.exceptions import NotFoundException, ValidationException
 from app.core.interfaces.document_interface import IDocumentService
@@ -57,6 +59,7 @@ async def list_documents(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     document_service: IDocumentService = Depends(get_document_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     List documents with optional filters and pagination.
@@ -88,6 +91,7 @@ async def list_patient_documents(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     document_service: IDocumentService = Depends(get_document_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     List all documents for a specific patient.
@@ -111,6 +115,7 @@ async def list_study_documents(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     document_service: IDocumentService = Depends(get_document_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     List all documents linked to a specific study.
@@ -132,6 +137,7 @@ async def list_study_documents(
 async def get_document(
     document_id: UUID,
     document_service: IDocumentService = Depends(get_document_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get a document by ID.
@@ -147,6 +153,7 @@ async def update_document(
     document_id: UUID,
     data: DocumentUpdate,
     document_service: IDocumentService = Depends(get_document_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Update document metadata.
@@ -162,6 +169,7 @@ async def delete_document(
     document_id: UUID,
     hard_delete: bool = Query(False, description="Permanently delete from storage"),
     document_service: IDocumentService = Depends(get_document_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Delete a document. By default, marks as entered-in-error.
@@ -182,6 +190,7 @@ async def delete_document(
 async def list_document_versions(
     document_id: UUID,
     document_service: IDocumentService = Depends(get_document_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     List all versions of a document.
@@ -193,6 +202,7 @@ async def list_document_versions(
 async def get_version(
     version_id: UUID,
     document_service: IDocumentService = Depends(get_document_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get a specific version by ID.
@@ -211,6 +221,7 @@ async def get_version(
 async def init_upload(
     request: DocumentUploadInit,
     document_service: IDocumentService = Depends(get_document_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Initialize a new document upload.
@@ -228,6 +239,7 @@ async def init_upload(
 async def complete_upload(
     request: DocumentUploadComplete,
     document_service: IDocumentService = Depends(get_document_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Complete a document upload.
@@ -244,6 +256,7 @@ async def complete_upload(
 async def init_version_upload(
     request: VersionUploadInit,
     document_service: IDocumentService = Depends(get_document_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Initialize upload for a new document version.
@@ -262,6 +275,7 @@ async def init_version_upload(
 async def complete_version_upload(
     request: VersionUploadComplete,
     document_service: IDocumentService = Depends(get_document_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Complete a version upload.
@@ -284,6 +298,7 @@ async def get_download_url(
     version: Optional[int] = Query(None, description="Specific version (default: latest)"),
     expiration_minutes: int = Query(60, ge=1, le=1440),
     document_service: IDocumentService = Depends(get_document_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get a signed download URL for a document.
@@ -305,6 +320,7 @@ async def get_patient_download_urls(
     patient_id: UUID,
     expiration_minutes: int = Query(60, ge=1, le=1440),
     document_service: IDocumentService = Depends(get_document_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get download URLs for all documents of a patient.

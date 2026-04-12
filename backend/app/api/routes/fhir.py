@@ -15,6 +15,8 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Depends
 
+from app.security import get_current_active_user
+from app.security.models import User
 from app.core.logging import get_logger
 from app.core.config import get_settings
 
@@ -36,7 +38,7 @@ def _fhir_datetime(dt_str: Optional[str]) -> Optional[str]:
 
 
 @router.get("/ImagingStudy/{study_id}")
-async def get_imaging_study(study_id: str):
+async def get_imaging_study(study_id: str, current_user: User = Depends(get_current_active_user)):
     """
     Generate a FHIR R4 ImagingStudy resource from a study.
 
@@ -121,6 +123,7 @@ async def get_diagnostic_report(
     report_id: str,
     study_id: Optional[str] = None,
     patient_id: Optional[str] = None,
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Generate a FHIR R4 DiagnosticReport resource.
@@ -173,7 +176,7 @@ async def get_diagnostic_report(
 
 
 @router.get("/Patient/{patient_id}")
-async def get_patient(patient_id: str):
+async def get_patient(patient_id: str, current_user: User = Depends(get_current_active_user)):
     """
     Generate a FHIR R4 Patient resource from internal patient record.
 

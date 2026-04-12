@@ -13,6 +13,8 @@ from fastapi import APIRouter, Depends, Query, Path, status
 
 from app.core.container import get_patient_service
 from app.core.logging import get_logger
+from app.security import get_current_active_user
+from app.security.models import User
 from app.services.patient_service_firestore import PatientServiceFirestore
 from app.models.patient_schemas import (
     PatientCreate,
@@ -44,7 +46,8 @@ logger = get_logger(__name__)
 )
 async def create_patient(
     data: PatientCreate,
-    service: PatientServiceFirestore = Depends(get_patient_service)
+    service: PatientServiceFirestore = Depends(get_patient_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Create a new patient record.
@@ -68,7 +71,8 @@ async def list_patients(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     status: Optional[PatientStatus] = Query(None, description="Filter by status"),
-    service: PatientServiceFirestore = Depends(get_patient_service)
+    service: PatientServiceFirestore = Depends(get_patient_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     List all patients with pagination.
@@ -110,7 +114,8 @@ async def search_patients(
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     sort_by: str = Query("family_name", description="Sort field"),
     sort_order: str = Query("asc", pattern="^(asc|desc)$", description="Sort order"),
-    service: PatientServiceFirestore = Depends(get_patient_service)
+    service: PatientServiceFirestore = Depends(get_patient_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Search patients with filters and pagination.
@@ -153,7 +158,8 @@ async def search_patients(
 )
 async def get_patient_by_mrn(
     mrn: str = Path(..., description="Medical Record Number"),
-    service: PatientServiceFirestore = Depends(get_patient_service)
+    service: PatientServiceFirestore = Depends(get_patient_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Get a patient by MRN.
@@ -183,7 +189,8 @@ async def get_patient_by_mrn(
 async def get_patient(
     patient_id: UUID = Path(..., description="Patient UUID"),
     include_stats: bool = Query(True, description="Include study/document counts"),
-    service: PatientServiceFirestore = Depends(get_patient_service)
+    service: PatientServiceFirestore = Depends(get_patient_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Get a patient by ID.
@@ -205,7 +212,8 @@ async def get_patient(
 async def update_patient(
     patient_id: UUID = Path(..., description="Patient UUID"),
     data: PatientUpdate = ...,
-    service: PatientServiceFirestore = Depends(get_patient_service)
+    service: PatientServiceFirestore = Depends(get_patient_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Update a patient record.
@@ -226,7 +234,8 @@ async def update_patient(
 )
 async def delete_patient(
     patient_id: UUID = Path(..., description="Patient UUID"),
-    service: PatientServiceFirestore = Depends(get_patient_service)
+    service: PatientServiceFirestore = Depends(get_patient_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Deactivate a patient (soft delete).
@@ -253,7 +262,8 @@ async def delete_patient(
 async def add_medical_history(
     patient_id: UUID = Path(..., description="Patient UUID"),
     data: MedicalHistoryCreate = ...,
-    service: PatientServiceFirestore = Depends(get_patient_service)
+    service: PatientServiceFirestore = Depends(get_patient_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Add a medical history entry.
@@ -275,7 +285,8 @@ async def add_medical_history(
 async def get_medical_history(
     patient_id: UUID = Path(..., description="Patient UUID"),
     active_only: bool = Query(False, description="Return only active conditions"),
-    service: PatientServiceFirestore = Depends(get_patient_service)
+    service: PatientServiceFirestore = Depends(get_patient_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Get medical history for a patient.
@@ -298,7 +309,8 @@ async def update_medical_history(
     history_id: UUID = Path(..., description="Medical history entry UUID"),
     is_active: bool = Query(..., description="Active status"),
     resolution_date: Optional[str] = Query(None, description="Date condition resolved (ISO format)"),
-    service: PatientServiceFirestore = Depends(get_patient_service)
+    service: PatientServiceFirestore = Depends(get_patient_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Update a medical history entry.

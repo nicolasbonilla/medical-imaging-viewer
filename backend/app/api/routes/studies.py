@@ -16,6 +16,8 @@ from fastapi.responses import Response
 
 from app.core.logging import get_logger
 from app.core.config import get_settings
+from app.security import get_current_active_user
+from app.security.models import User
 from app.core.container import get_study_service, get_storage_service
 from app.core.interfaces.study_interface import IStudyService
 from app.core.interfaces.storage_interface import IStorageService
@@ -52,7 +54,8 @@ settings = get_settings()
 @router.post("", response_model=StudyResponse, status_code=201)
 async def create_study(
     data: StudyCreate,
-    study_service: IStudyService = Depends(get_study_service)
+    study_service: IStudyService = Depends(get_study_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Create a new imaging study.
@@ -72,7 +75,8 @@ async def list_studies(
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     sort_by: str = Query("study_date", description="Sort field"),
     sort_order: str = Query("desc", pattern="^(asc|desc)$", description="Sort order"),
-    study_service: IStudyService = Depends(get_study_service)
+    study_service: IStudyService = Depends(get_study_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     List and search studies.
@@ -105,7 +109,8 @@ async def list_studies(
 async def get_study(
     study_id: UUID,
     include_stats: bool = Query(True, description="Include series/instance counts"),
-    study_service: IStudyService = Depends(get_study_service)
+    study_service: IStudyService = Depends(get_study_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Get a study by ID.
@@ -118,7 +123,8 @@ async def get_study(
 @router.get("/accession/{accession_number}", response_model=StudyResponse)
 async def get_study_by_accession(
     accession_number: str,
-    study_service: IStudyService = Depends(get_study_service)
+    study_service: IStudyService = Depends(get_study_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Get a study by accession number.
@@ -135,7 +141,8 @@ async def get_study_by_accession(
 async def update_study(
     study_id: UUID,
     data: StudyUpdate,
-    study_service: IStudyService = Depends(get_study_service)
+    study_service: IStudyService = Depends(get_study_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Update a study.
@@ -149,7 +156,8 @@ async def update_study(
 async def delete_study(
     study_id: UUID,
     hard_delete: bool = Query(False, description="Permanently delete files from storage"),
-    study_service: IStudyService = Depends(get_study_service)
+    study_service: IStudyService = Depends(get_study_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Delete or cancel a study.
@@ -171,7 +179,8 @@ async def delete_study(
 async def create_series(
     study_id: UUID,
     data: SeriesCreate,
-    study_service: IStudyService = Depends(get_study_service)
+    study_service: IStudyService = Depends(get_study_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Create a new series within a study.
@@ -188,7 +197,8 @@ async def create_series(
 @router.get("/{study_id}/series", response_model=list[SeriesResponse])
 async def list_series(
     study_id: UUID,
-    study_service: IStudyService = Depends(get_study_service)
+    study_service: IStudyService = Depends(get_study_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     List all series in a study.
@@ -201,7 +211,8 @@ async def list_series(
 @router.get("/series/{series_id}", response_model=SeriesResponse)
 async def get_series(
     series_id: UUID,
-    study_service: IStudyService = Depends(get_study_service)
+    study_service: IStudyService = Depends(get_study_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Get a series by ID.
@@ -214,7 +225,8 @@ async def get_series(
 @router.delete("/series/{series_id}")
 async def delete_series(
     series_id: UUID,
-    study_service: IStudyService = Depends(get_study_service)
+    study_service: IStudyService = Depends(get_study_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Delete a series and all its instances.
@@ -232,7 +244,8 @@ async def delete_series(
 @router.get("/series/{series_id}/instances", response_model=list[InstanceResponse])
 async def list_instances(
     series_id: UUID,
-    study_service: IStudyService = Depends(get_study_service)
+    study_service: IStudyService = Depends(get_study_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     List all instances in a series.
@@ -245,7 +258,8 @@ async def list_instances(
 @router.get("/instances/{instance_id}", response_model=InstanceResponse)
 async def get_instance(
     instance_id: UUID,
-    study_service: IStudyService = Depends(get_study_service)
+    study_service: IStudyService = Depends(get_study_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Get an instance by ID.
@@ -259,7 +273,8 @@ async def get_instance(
 async def update_instance(
     instance_id: UUID,
     data: InstanceUpdate,
-    study_service: IStudyService = Depends(get_study_service)
+    study_service: IStudyService = Depends(get_study_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Update an instance (e.g. rename original_filename).
@@ -272,7 +287,8 @@ async def update_instance(
 @router.delete("/instances/{instance_id}")
 async def delete_instance(
     instance_id: UUID,
-    study_service: IStudyService = Depends(get_study_service)
+    study_service: IStudyService = Depends(get_study_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Delete an instance.
@@ -291,7 +307,8 @@ async def delete_instance(
 async def get_instance_mask_data(
     instance_id: UUID,
     study_service: IStudyService = Depends(get_study_service),
-    storage_service: IStorageService = Depends(get_storage_service)
+    storage_service: IStorageService = Depends(get_storage_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Download a NIfTI instance as binary mask data.
@@ -350,7 +367,8 @@ async def get_instance_mask_data(
 @router.post("/upload/init", response_model=UploadInitResponse)
 async def init_upload(
     request: UploadInitRequest,
-    study_service: IStudyService = Depends(get_study_service)
+    study_service: IStudyService = Depends(get_study_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Initialize a file upload.
@@ -369,7 +387,8 @@ async def init_upload(
 @router.post("/upload/complete", response_model=UploadCompleteResponse)
 async def complete_upload(
     request: UploadCompleteRequest,
-    study_service: IStudyService = Depends(get_study_service)
+    study_service: IStudyService = Depends(get_study_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Complete a file upload.
@@ -389,7 +408,8 @@ async def complete_upload(
 async def get_instance_download_url(
     instance_id: UUID,
     expiration_minutes: int = Query(60, ge=5, le=1440, description="URL expiration in minutes"),
-    study_service: IStudyService = Depends(get_study_service)
+    study_service: IStudyService = Depends(get_study_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Get a signed download URL for an instance.
@@ -404,7 +424,8 @@ async def get_instance_download_url(
 async def get_study_download_urls(
     study_id: UUID,
     expiration_minutes: int = Query(60, ge=5, le=1440, description="URL expiration in minutes"),
-    study_service: IStudyService = Depends(get_study_service)
+    study_service: IStudyService = Depends(get_study_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Get download URLs for all instances in a study.
@@ -430,7 +451,8 @@ async def list_patient_studies(
     patient_id: UUID,
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
-    study_service: IStudyService = Depends(get_study_service)
+    study_service: IStudyService = Depends(get_study_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     List all studies for a patient.

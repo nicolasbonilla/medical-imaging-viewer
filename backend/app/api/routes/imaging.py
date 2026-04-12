@@ -15,6 +15,8 @@ from app.core.interfaces.imaging_interface import IImagingService
 from app.core.interfaces.storage_interface import IStorageService
 from app.core.container import get_imaging_service, get_prefetch_service, get_storage_service
 from app.services.prefetch_service import PrefetchService
+from app.security import get_current_active_user
+from app.security.models import User
 
 router = APIRouter(prefix="/imaging", tags=["Medical Imaging"])
 logger = get_logger(__name__)
@@ -33,7 +35,8 @@ async def process_image(
     end_slice: Optional[int] = Query(None, ge=0, description="End slice index"),
     max_slices: int = Query(50, ge=1, le=500, description="Maximum slices to return"),
     storage_service: IStorageService = Depends(get_storage_service),
-    imaging_service: IImagingService = Depends(get_imaging_service)
+    imaging_service: IImagingService = Depends(get_imaging_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Process a medical image file from GCS storage.
@@ -79,7 +82,8 @@ async def apply_window_level(
     file_id: str,
     request: WindowLevelRequest,
     storage_service: IStorageService = Depends(get_storage_service),
-    imaging_service: IImagingService = Depends(get_imaging_service)
+    imaging_service: IImagingService = Depends(get_imaging_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Apply window/level adjustment to a specific slice.
@@ -116,7 +120,8 @@ async def get_slice(
     direction: str = Query("forward", description="Navigation direction: 'forward' or 'backward'"),
     storage_service: IStorageService = Depends(get_storage_service),
     imaging_service: IImagingService = Depends(get_imaging_service),
-    prefetch_service: PrefetchService = Depends(get_prefetch_service)
+    prefetch_service: PrefetchService = Depends(get_prefetch_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Get a specific slice from an image file.
@@ -187,7 +192,8 @@ async def get_3d_volume(
     file_id: str,
     orientation: ImageOrientation = Query(ImageOrientation.AXIAL, description="Volume orientation"),
     storage_service: IStorageService = Depends(get_storage_service),
-    imaging_service: IImagingService = Depends(get_imaging_service)
+    imaging_service: IImagingService = Depends(get_imaging_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Get 3D volume data for rendering.
@@ -218,7 +224,8 @@ async def get_3d_volume(
 async def get_image_metadata(
     file_id: str,
     storage_service: IStorageService = Depends(get_storage_service),
-    imaging_service: IImagingService = Depends(get_imaging_service)
+    imaging_service: IImagingService = Depends(get_imaging_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Get only metadata from an image file without loading pixel data.
@@ -264,7 +271,8 @@ async def get_voxel_3d_visualization(
     end_slice: Optional[int] = Query(None, ge=0, description="End slice index"),
     angle: int = Query(320, ge=0, le=360, description="Viewing angle"),
     storage_service: IStorageService = Depends(get_storage_service),
-    imaging_service: IImagingService = Depends(get_imaging_service)
+    imaging_service: IImagingService = Depends(get_imaging_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Generate a 3D voxel visualization using matplotlib.
@@ -312,7 +320,8 @@ async def get_matplotlib_2d_slice(
     segmentation_id: Optional[str] = Query(None, description="If provided, overlay segmentation on the matplotlib image"),
     overlay_opacity: float = Query(0.5, ge=0.0, le=1.0, description="Opacity for the segmentation overlay (0-1)"),
     storage_service: IStorageService = Depends(get_storage_service),
-    imaging_service: IImagingService = Depends(get_imaging_service)
+    imaging_service: IImagingService = Depends(get_imaging_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Generate a 2D slice visualization using matplotlib with colormap and axis limits support.
@@ -376,7 +385,8 @@ async def get_matplotlib_2d_slice(
 @router.get("/nifti/{file_id:path}")
 async def get_nifti_file(
     file_id: str,
-    storage_service: IStorageService = Depends(get_storage_service)
+    storage_service: IStorageService = Depends(get_storage_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Serve raw NIfTI file directly for WebGL-based viewers like NiiVue.

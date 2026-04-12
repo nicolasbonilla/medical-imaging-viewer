@@ -13,6 +13,8 @@ the tool version, academic citation, and regulatory status.
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List, Dict, Any
 
+from app.security import get_current_active_user
+from app.security.models import User
 from app.core.logging import get_logger
 from app.core.container import get_tool_runner_service
 from app.core.interfaces.ai_interface import (
@@ -29,6 +31,7 @@ router = APIRouter(prefix="/clinical", tags=["Clinical Tools"])
 @router.get("/tools", response_model=List[Dict[str, Any]])
 async def list_clinical_tools(
     tool_runner=Depends(get_tool_runner_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     List available validated clinical tools with status, version, and citation.
@@ -50,6 +53,7 @@ async def list_clinical_tools(
 async def run_lstai_segmentation(
     request: LSTAISegmentRequest,
     tool_runner=Depends(get_tool_runner_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Submit LST-AI MS lesion segmentation task.
@@ -79,6 +83,7 @@ async def run_lstai_segmentation(
 async def run_synthseg_parcellation(
     request: SynthSegRequest,
     tool_runner=Depends(get_tool_runner_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Submit SynthSeg brain parcellation task.
@@ -108,6 +113,7 @@ async def run_synthseg_parcellation(
 async def get_task_status(
     task_id: str,
     tool_runner=Depends(get_tool_runner_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Poll the status of an async clinical tool task.
@@ -126,6 +132,7 @@ async def get_task_status(
 async def get_task_result(
     task_id: str,
     tool_runner=Depends(get_tool_runner_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get the full result of a completed clinical tool task.

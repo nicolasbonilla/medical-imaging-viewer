@@ -10,6 +10,8 @@ and WADO-RS import with automatic DICOM-to-NIfTI conversion.
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
 
+from app.security import get_current_active_user
+from app.security.models import User
 from app.core.logging import get_logger
 from app.models.dicomweb_schemas import (
     PACSConnectionCreate, PACSConnectionResponse,
@@ -46,7 +48,7 @@ def _get_dicomweb_service():
 # ============================================================================
 
 @router.post("/connections", response_model=PACSConnectionResponse)
-async def create_connection(data: PACSConnectionCreate):
+async def create_connection(data: PACSConnectionCreate, current_user: User = Depends(get_current_active_user)):
     """Save a new PACS DICOMweb connection."""
     svc = _get_dicomweb_service()
     conn = await svc.save_connection(data.model_dump())
@@ -55,7 +57,7 @@ async def create_connection(data: PACSConnectionCreate):
 
 
 @router.get("/connections")
-async def list_connections():
+async def list_connections(current_user: User = Depends(get_current_active_user)):
     """List all configured PACS connections."""
     svc = _get_dicomweb_service()
     conns = await svc.list_connections()
@@ -67,7 +69,7 @@ async def list_connections():
 
 
 @router.get("/connections/{connection_id}")
-async def get_connection(connection_id: str):
+async def get_connection(connection_id: str, current_user: User = Depends(get_current_active_user)):
     """Get a single PACS connection (credentials redacted)."""
     svc = _get_dicomweb_service()
     conn = await svc.get_connection(connection_id)
@@ -80,7 +82,7 @@ async def get_connection(connection_id: str):
 
 
 @router.delete("/connections/{connection_id}")
-async def delete_connection(connection_id: str):
+async def delete_connection(connection_id: str, current_user: User = Depends(get_current_active_user)):
     """Delete a PACS connection."""
     svc = _get_dicomweb_service()
     await svc.delete_connection(connection_id)
@@ -88,7 +90,7 @@ async def delete_connection(connection_id: str):
 
 
 @router.post("/connections/{connection_id}/test")
-async def test_connection(connection_id: str):
+async def test_connection(connection_id: str, current_user: User = Depends(get_current_active_user)):
     """Test PACS connectivity."""
     svc = _get_dicomweb_service()
     result = await svc.test_connection(connection_id)
@@ -100,7 +102,7 @@ async def test_connection(connection_id: str):
 # ============================================================================
 
 @router.post("/search/studies")
-async def search_studies(request: StudySearchRequest):
+async def search_studies(request: StudySearchRequest, current_user: User = Depends(get_current_active_user)):
     """Search studies on a remote PACS via QIDO-RS."""
     svc = _get_dicomweb_service()
     try:
@@ -117,7 +119,7 @@ async def search_studies(request: StudySearchRequest):
 
 
 @router.post("/search/series")
-async def search_series(connection_id: str, study_instance_uid: str):
+async def search_series(connection_id: str, study_instance_uid: str, current_user: User = Depends(get_current_active_user)):
     """Search series within a study on a remote PACS via QIDO-RS."""
     svc = _get_dicomweb_service()
     try:
@@ -135,7 +137,7 @@ async def search_series(connection_id: str, study_instance_uid: str):
 # ============================================================================
 
 @router.post("/import")
-async def start_import(request: ImportRequest):
+async def start_import(request: ImportRequest, current_user: User = Depends(get_current_active_user)):
     """Start importing a DICOM series from PACS (async with job tracking)."""
     svc = _get_dicomweb_service()
     try:
@@ -155,7 +157,7 @@ async def start_import(request: ImportRequest):
 
 
 @router.get("/import/{job_id}")
-async def get_import_status(job_id: str):
+async def get_import_status(job_id: str, current_user: User = Depends(get_current_active_user)):
     """Poll import job status."""
     svc = _get_dicomweb_service()
     status = svc.get_import_status(job_id)
@@ -165,7 +167,7 @@ async def get_import_status(job_id: str):
 
 
 @router.get("/imports")
-async def list_imports():
+async def list_imports(current_user: User = Depends(get_current_active_user)):
     """List all import jobs."""
     svc = _get_dicomweb_service()
     return list(svc._import_jobs.values())
