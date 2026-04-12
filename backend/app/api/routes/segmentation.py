@@ -10,6 +10,8 @@ import numpy as np
 
 import struct
 
+from app.security import get_current_active_user
+from app.security.models import User
 from app.core.logging import get_logger
 from app.models.schemas import (
     LabelInfo,
@@ -52,7 +54,8 @@ logger = get_logger(__name__)
 @router.post("/create", response_model=SegmentationResponse)
 async def create_segmentation(
     request: CreateSegmentationRequest,
-    segmentation_service: SegmentationService = Depends(get_segmentation_service)
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Create a new segmentation for an image file.
@@ -123,7 +126,8 @@ async def create_segmentation(
 async def list_segmentations(
     file_id: Optional[str] = Query(None),
     file_ids: Optional[str] = Query(None, description="Comma-separated list of file_ids to query across multiple images"),
-    segmentation_service: SegmentationService = Depends(get_segmentation_service)
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     List all segmentations, optionally filtered by file_id or file_ids.
@@ -150,7 +154,8 @@ async def list_segmentations(
 @router.get("/{segmentation_id}", response_model=SegmentationResponse)
 async def get_segmentation(
     segmentation_id: str,
-    segmentation_service: SegmentationService = Depends(get_segmentation_service)
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Get segmentation metadata and information.
@@ -194,7 +199,8 @@ async def get_segmentation(
 async def apply_paint_stroke(
     segmentation_id: str,
     stroke: PaintStroke = Body(...),
-    segmentation_service: SegmentationService = Depends(get_segmentation_service)
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Apply a paint stroke to the segmentation.
@@ -248,7 +254,8 @@ async def apply_paint_stroke(
 async def get_slice_mask(
     segmentation_id: str,
     slice_index: int,
-    segmentation_service: SegmentationService = Depends(get_segmentation_service)
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Get the segmentation mask for a specific slice as base64 encoded image.
@@ -289,7 +296,8 @@ async def get_overlay_image(
     t: Optional[int] = Query(None, description="Cache buster"),
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
     imaging_service: IImagingService = Depends(get_imaging_service),
-    storage_service: IStorageService = Depends(get_storage_service)
+    storage_service: IStorageService = Depends(get_storage_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Get overlay image with segmentation on top of base image.
@@ -402,7 +410,8 @@ async def get_segmentation_only(
     segmentation_id: str,
     slice_index: int,
     t: Optional[int] = Query(None, description="Cache buster"),
-    segmentation_service: SegmentationService = Depends(get_segmentation_service)
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Get ONLY the segmentation mask as a transparent PNG overlay.
@@ -451,7 +460,8 @@ async def get_segmentation_only(
 @router.post("/{segmentation_id}/save")
 async def save_segmentation(
     segmentation_id: str,
-    segmentation_service: SegmentationService = Depends(get_segmentation_service)
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Save segmentation to persistent storage (Firestore + GCS).
@@ -512,7 +522,8 @@ async def save_segmentation(
 @router.delete("/{segmentation_id}")
 async def delete_segmentation(
     segmentation_id: str,
-    segmentation_service: SegmentationService = Depends(get_segmentation_service)
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Delete a segmentation.
@@ -543,7 +554,8 @@ async def delete_segmentation(
 async def update_labels(
     segmentation_id: str,
     labels: List[LabelInfo] = Body(...),
-    segmentation_service: SegmentationService = Depends(get_segmentation_service)
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Update label definitions for a segmentation.
@@ -583,6 +595,7 @@ async def get_segmentation_nifti(
     ref_file_id: Optional[str] = None,
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
     storage_service: IStorageService = Depends(get_storage_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Serve the segmentation as a raw NIfTI file (.nii.gz) for WebGL-based viewers.
@@ -728,7 +741,8 @@ async def get_segmentation_nifti(
 @router.get("/{segmentation_id}/mask/binary")
 async def get_binary_mask(
     segmentation_id: str,
-    segmentation_service: SegmentationService = Depends(get_segmentation_service)
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Download the complete 3D segmentation mask as raw binary data.
@@ -801,7 +815,8 @@ async def get_binary_mask(
 async def upload_binary_mask(
     segmentation_id: str,
     request: Request,
-    segmentation_service: SegmentationService = Depends(get_segmentation_service)
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Upload the complete 3D segmentation mask from the frontend.
@@ -890,7 +905,8 @@ async def upload_binary_mask(
 @router.get("/{segmentation_id}/info")
 async def get_segmentation_info(
     segmentation_id: str,
-    segmentation_service: SegmentationService = Depends(get_segmentation_service)
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Get segmentation metadata and dimensions without downloading the full mask.
@@ -947,6 +963,7 @@ async def compare_masks(
     request: Request,
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
     storage_service: IStorageService = Depends(get_storage_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Compare 2+ segmentation/expert masks.
@@ -1056,6 +1073,7 @@ async def get_agreement_map(
     request: Request,
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
     storage_service: IStorageService = Depends(get_storage_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Compute voxel-wise agreement map across N masks.
@@ -1126,6 +1144,7 @@ async def get_agreement_map(
 async def get_lesion_analysis(
     segmentation_id: str,
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Analyze lesions in a segmentation using connected components.
@@ -1205,6 +1224,7 @@ async def get_lesion_analysis(
 async def get_dis_assessment(
     segmentation_id: str,
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Evaluate McDonald 2024 DIS (Dissemination in Space) criteria.
@@ -1288,6 +1308,7 @@ async def classify_regions(
     request: Request,
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
     storage_service: IStorageService = Depends(get_storage_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Auto-classify lesions into MAGNIMS regions (PV, JC, IT, DWM).
@@ -1684,6 +1705,7 @@ async def generate_zone_map_endpoint(
     request: Request,
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
     storage_service: IStorageService = Depends(get_storage_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Generate a MAGNIMS zone map for a brain MRI.
@@ -1948,6 +1970,7 @@ async def compare_longitudinal(
     request: Request,
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
     storage_service: IStorageService = Depends(get_storage_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Compare lesion masks from two timepoints.
@@ -2063,6 +2086,7 @@ async def annotate_lesions(
     segmentation_id: str,
     body: dict,
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Save CVS/PRL annotations for individual lesions (McDonald 2024 biomarkers).
@@ -2165,6 +2189,7 @@ async def annotate_lesions(
 async def export_dicom_seg(
     segmentation_id: str,
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Export a segmentation as a DICOM Segmentation (DICOM-SEG) object.

@@ -119,6 +119,15 @@ def classify_lesions_with_parcellation(
         Dict with classified_mask (MAGNIMS labels 1-4), per-lesion details,
         classification summary, and confidence scores.
     """
+    # IEC 62304 Class C — Input validation (REQ-SAFE-005)
+    if not isinstance(lesion_mask, np.ndarray) or lesion_mask.ndim != 3:
+        raise ValueError("lesion_mask must be a 3D numpy ndarray")
+    if not isinstance(parcellation_mask, np.ndarray) or parcellation_mask.ndim != 3:
+        raise ValueError("parcellation_mask must be a 3D numpy ndarray")
+    if voxel_spacing is not None:
+        if not all(isinstance(v, (int, float)) and v > 0 for v in voxel_spacing):
+            raise ValueError(f"voxel_spacing values must be positive, got {voxel_spacing}")
+
     from scipy.ndimage import label as cc_label, center_of_mass
     from scipy.ndimage import distance_transform_edt
 
@@ -276,6 +285,13 @@ def classify_lesions_geometric(
     Returns:
         Dict with classified_mask and per-lesion details.
     """
+    # IEC 62304 Class C — Input validation (REQ-SAFE-005)
+    if not isinstance(lesion_mask, np.ndarray) or lesion_mask.ndim != 3:
+        raise ValueError("lesion_mask must be a 3D numpy ndarray")
+    if voxel_spacing is not None:
+        if not all(isinstance(v, (int, float)) and v > 0 for v in voxel_spacing):
+            raise ValueError(f"voxel_spacing values must be positive, got {voxel_spacing}")
+
     from scipy.ndimage import label as cc_label, center_of_mass
     from scipy.ndimage import distance_transform_edt, binary_fill_holes
 
@@ -583,6 +599,15 @@ def classify_lesions_with_atlas(
     Returns:
         Dict with classified_mask, lesions list, summary, processing time.
     """
+    # IEC 62304 Class C — Input validation (REQ-SAFE-005)
+    if not isinstance(lesion_mask, np.ndarray) or lesion_mask.ndim != 3:
+        raise ValueError("lesion_mask must be a 3D numpy ndarray")
+    if target_img is None:
+        raise ValueError("target_img must be a nibabel Nifti1Image")
+    if voxel_spacing is not None:
+        if not all(isinstance(v, (int, float)) and v > 0 for v in voxel_spacing):
+            raise ValueError(f"voxel_spacing values must be positive, got {voxel_spacing}")
+
     start_time = time.time()
 
     # 1. Generate zone map from MSMask atlas

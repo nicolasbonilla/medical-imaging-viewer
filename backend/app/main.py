@@ -66,12 +66,21 @@ async def lifespan(app: FastAPI):
         all_users = auth_service.list_users()
 
         if len(all_users) == 0:
+            import secrets
             logger.info("No users found in AuthService - creating default admin user")
 
-            # Create default admin user
-            username = "admin"
-            password = "Admin123!@2024"
-            email = "admin@example.com"
+            # Create default admin user — credentials from environment (IEC 62304 REQ-SEC-003)
+            import os
+            username = os.environ.get("ADMIN_DEFAULT_USERNAME", "admin")
+            password = os.environ.get("ADMIN_DEFAULT_PASSWORD")
+            if not password:
+                password = secrets.token_urlsafe(32)
+                logger.warning(
+                    "SECURITY: No ADMIN_DEFAULT_PASSWORD env var set. "
+                    "Generated random password. Set ADMIN_DEFAULT_PASSWORD "
+                    "environment variable for deterministic admin setup."
+                )
+            email = os.environ.get("ADMIN_DEFAULT_EMAIL", "admin@mstool-ai.com")
             full_name = "Administrator"
 
             user_create = UserCreate(
@@ -221,41 +230,41 @@ async def api_health_check():
     )
 
 
-@app.post("/api/debug/init-db", tags=["Debug"])
-async def init_database():
-    """Initialize database (for first deployment) - Now uses Firebase."""
-    try:
-        from app.core.firebase import get_firebase_app, get_firestore_client
-        # Initialize Firebase
-        get_firebase_app()
-        db = get_firestore_client()
-        # Test connection by trying to access collections
-        db.collection("patients").limit(1).get()
-        return {"status": "success", "message": "Firebase Firestore initialized and connected"}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
+if settings.DEBUG:
+    @app.post("/api/debug/init-db", tags=["Debug"])
+    async def init_database():
+        """Initialize database (for first deployment) - Now uses Firebase."""
+        try:
+            from app.core.firebase import get_firebase_app, get_firestore_client
+            # Initialize Firebase
+            get_firebase_app()
+            db = get_firestore_client()
+            # Test connection by trying to access collections
+            db.collection("patients").limit(1).get()
+            return {"status": "success", "message": "Firebase Firestore initialized and connected"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
 
+    @app.get("/api/debug/users", tags=["Debug"])
+    async def debug_users():
+        """Debug endpoint to check registered users."""
+        from app.api.routes.auth import auth_service
+        users = auth_service.list_users()
 
-@app.get("/api/debug/users", tags=["Debug"])
-async def debug_users():
-    """Debug endpoint to check registered users."""
-    from app.api.routes.auth import auth_service
-    users = auth_service.list_users()
+        # Check password storage
+        password_info = {}
+        for user in users:
+            has_password = user.id in auth_service._user_passwords
+            password_info[user.username] = {
+                "user_id": user.id,
+                "has_password_hash": has_password
+            }
 
-    # Check password storage
-    password_info = {}
-    for user in users:
-        has_password = user.id in auth_service._user_passwords
-        password_info[user.username] = {
-            "user_id": user.id,
-            "has_password_hash": has_password
+        return {
+            "user_count": len(users),
+            "users": [{"id": u.id, "username": u.username, "role": u.role.value} for u in users],
+            "password_storage": password_info
         }
-
-    return {
-        "user_count": len(users),
-        "users": [{"id": u.id, "username": u.username, "role": u.role.value} for u in users],
-        "password_storage": password_info
-    }
 
 
 # Include routers

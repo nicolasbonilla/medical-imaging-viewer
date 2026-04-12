@@ -15,6 +15,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
 
+from app.security import get_current_active_user
+from app.security.models import User
+
 from app.core.logging import get_logger
 from app.core.interfaces.ai_interface import (
     InteractiveSegmentRequest,
@@ -52,6 +55,7 @@ def get_ai_service():
 async def segment_interactive(
     request: InteractiveSegmentRequest,
     ai_service=Depends(get_ai_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """Interactive segmentation: click points → 3D mask."""
     logger.info(
@@ -77,6 +81,7 @@ async def segment_interactive(
 async def segment_auto(
     request: AutoSegmentRequest,
     ai_service=Depends(get_ai_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """Auto segmentation: file_id → full brain labelmap."""
     logger.info(
@@ -102,6 +107,7 @@ async def segment_auto(
 async def detect_anomalies(
     request: AnomalyDetectionRequest,
     ai_service=Depends(get_ai_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """Anomaly detection: file_id → heatmap + anomaly list."""
     logger.info(
@@ -126,6 +132,7 @@ async def detect_anomalies(
 async def get_task_status(
     task_id: str,
     ai_service=Depends(get_ai_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """Poll async AI task: task_id → status + result."""
     result = await ai_service.get_task_status(task_id)
@@ -146,6 +153,7 @@ async def get_task_status(
 )
 async def list_models(
     ai_service=Depends(get_ai_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """List available AI models and configuration status."""
     models = await ai_service.list_available_models()
@@ -162,7 +170,7 @@ async def list_models(
     description="Returns the mapping of SynthSeg label IDs to brain structure "
                 "names and colors (FreeSurfer convention).",
 )
-async def get_synthseg_labels():
+async def get_synthseg_labels(current_user: User = Depends(get_current_active_user)):
     """Get brain structure label reference."""
     from app.services.ai_segmentation_service import SYNTHSEG_LABELS
     labels = [
@@ -220,6 +228,7 @@ def get_volumetry_service():
 async def compute_volumetry(
     request: VolumetryRequest,
     volumetry_service=Depends(get_volumetry_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """Volumetry: segmentation_id → per-structure volumes in mm3 and mL."""
     logger.info(
@@ -287,6 +296,7 @@ async def compute_volumetry(
 async def compare_volumetry(
     request: VolumetryCompareRequest,
     volumetry_service=Depends(get_volumetry_service),
+    current_user: User = Depends(get_current_active_user),
 ):
     """Longitudinal comparison: timepoints → change percentages + trends."""
     logger.info(

@@ -1,0 +1,31 @@
+# MSTool-AI CODEOWNERS — IEC 62304 Class C Code Review Enforcement
+#
+# Class C modules require mandatory code review before merge.
+# Per IEC 62304 Clause 5.5.4, changes to Class C software units
+# must be verified by a person other than the author.
+
+# ─── Class C Modules (highest safety class) ───
+backend/app/services/ai_segmentation_service.py    @nicolasbonilla
+backend/app/services/brain_volumetry_service.py     @nicolasbonilla
+backend/app/services/brain_report_service.py        @nicolasbonilla
+backend/app/services/lesion_analysis_service.py     @nicolasbonilla
+backend/app/services/ms_region_classifier.py        @nicolasbonilla
+backend/app/utils/nifti_utils.py                    @nicolasbonilla
+backend/app/utils/dicom_utils.py                    @nicolasbonilla
+frontend/src/workers/edgeAI.worker.ts               @nicolasbonilla
+
+# ─── Regulatory Documentation ───
+docs/iec62304/    @nicolasbonilla
+docs/qms/         @nicolasbonilla
+docs/clinical/    @nicolasbonilla
+docs/mdr/         @nicolasbonilla
+docs/usability/   @nicolasbonilla
+docs/ai-act/      @nicolasbonilla
+
+# ─── CI/CD Pipeline ───
+.github/workflows/    @nicolasbonilla
+.github/CODEOWNERS    @nicolasbonilla
+
+# ─── Security-Critical Files ───
+backend/app/security/     @nicolasbonilla
+backend/app/core/config.py @nicolasbonilla

@@ -229,6 +229,14 @@ class BrainVolumetryService:
         """
         start_time = time.time()
 
+        # IEC 62304 Class C — Input validation (REQ-SAFE-005)
+        if not isinstance(mask, np.ndarray):
+            raise ValueError("mask must be a numpy ndarray")
+        if mask.ndim != 3:
+            raise ValueError(f"mask must be 3D, got {mask.ndim}D")
+        if not all(isinstance(v, (int, float)) and 0.1 <= v <= 10.0 for v in voxel_spacing):
+            raise ValueError(f"voxel_spacing values must be between 0.1mm and 10.0mm, got {voxel_spacing}")
+
         # Voxel volume in mm3
         voxel_volume_mm3 = float(np.prod(voxel_spacing))
 
@@ -322,6 +330,12 @@ class BrainVolumetryService:
 
         Returns comparison with change percentages and trends.
         """
+        # IEC 62304 Class C — Input validation (REQ-SAFE-005)
+        if not isinstance(patient_id, str) or not patient_id.strip():
+            raise ValueError("patient_id must be a non-empty string")
+        if not isinstance(timepoints, list):
+            raise ValueError("timepoints must be a list")
+
         if len(timepoints) < 2:
             return VolumetryComparisonResult(
                 patient_id=patient_id,

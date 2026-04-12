@@ -4,6 +4,7 @@
 # Usage: bash test_endpoints.sh
 
 BASE="https://brain-mri-7bp6oqdu7a-uc.a.run.app/api/v1"
+ADMIN_PASSWORD="${ADMIN_DEFAULT_PASSWORD:-Admin123!@2024}"
 PASS=0
 FAIL=0
 
@@ -31,7 +32,7 @@ check "Root health" "200" "$STATUS"
 
 # 2. Login
 echo "[2/8] Login..."
-LOGIN_RESPONSE=$(curl -s "$BASE/auth/login" -X POST -H "Content-Type: application/json" --data-raw '{"username":"admin","password":"Admin123!@2024"}')
+LOGIN_RESPONSE=$(curl -s "$BASE/auth/login" -X POST -H "Content-Type: application/json" --data-raw "{\"username\":\"admin\",\"password\":\"$ADMIN_PASSWORD\"}")
 TOKEN=$(echo "$LOGIN_RESPONSE" | python -c "import sys,json; d=json.load(sys.stdin); print(d.get('token',{}).get('access_token',''))" 2>/dev/null)
 if [ -n "$TOKEN" ] && [ "$TOKEN" != "" ]; then
     echo "  PASS: Login (token received)"

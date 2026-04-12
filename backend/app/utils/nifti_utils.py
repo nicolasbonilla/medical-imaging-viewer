@@ -58,6 +58,13 @@ def load_nifti_from_bytes(
         >>> array.shape
         (256, 256, 160)
     """
+    # IEC 62304 Class C — Input validation (REQ-SAFE-005)
+    MAX_NIFTI_SIZE_BYTES = 2 * 1024 * 1024 * 1024  # 2 GB
+    if len(file_data) > MAX_NIFTI_SIZE_BYTES:
+        raise ValueError("NIfTI file exceeds maximum size limit (2 GB)")
+    if len(file_data) < 348:  # Minimum NIfTI-1 header size
+        raise ValueError("File too small to be a valid NIfTI file (minimum 348 bytes header)")
+
     # Detect compression
     is_gzipped = detect_gzip(file_data)
     suffix = '.nii.gz' if is_gzipped else '.nii'

@@ -1,4 +1,4 @@
-name: CI — Tests & Type Check
+name: CI — IEC 62304 Class C Verification Pipeline
 
 on:
   push:
@@ -53,11 +53,11 @@ jobs:
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
-      - run: npx vitest run --reporter=verbose 2>&1 || true
-        # Allow failure for now — tests are being added incrementally
+      - name: Run frontend tests (IEC 62304 Clause 5.5)
+        run: npx vitest run --reporter=verbose
 
   backend-tests:
-    name: Backend Pytest
+    name: Backend Pytest (Class C Unit Verification)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -79,15 +79,22 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-      - name: Run unit tests
+          pip install pytest-cov
+      - name: Run unit tests with coverage (IEC 62304 Clause 5.5.5)
         run: |
-          python -m pytest tests/unit/ -v --tb=short 2>&1 || true
-      - name: Run integration tests (no external services)
+          python -m pytest tests/unit/ -v --tb=short --cov=app --cov-report=xml --cov-report=term-missing
+      - name: Run integration tests (IEC 62304 Clause 5.6)
         run: |
-          python -m pytest tests/integration/ -v --tb=short -k "not requires_pacs and not requires_gcs" 2>&1 || true
+          python -m pytest tests/integration/ -v --tb=short -k "not requires_pacs and not requires_gcs"
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: backend/coverage.xml
 
   security-audit:
-    name: SOUP Vulnerability Scan (IEC 81001-5-1)
+    name: SOUP Vulnerability Scan (IEC 81001-5-1 Clause 5.3.12)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -101,18 +108,18 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
           cache-dependency-path: backend/requirements.txt
-      - name: Frontend SOUP audit (npm)
+      - name: Frontend SOUP audit — critical/high vulnerabilities block merge
         run: |
           cd frontend && npm ci
-          npm audit --audit-level=high 2>&1 || echo "::warning::npm audit found vulnerabilities"
-      - name: Backend SOUP audit (pip-audit)
+          npm audit --audit-level=critical
+      - name: Backend SOUP audit — all vulnerabilities reported
         run: |
           pip install pip-audit
           cd backend && pip install -r requirements.txt
-          pip-audit --strict 2>&1 || echo "::warning::pip-audit found vulnerabilities"
+          pip-audit --desc on
 
   syntax-check:
-    name: Python Syntax Check
+    name: Python Syntax & Static Analysis
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

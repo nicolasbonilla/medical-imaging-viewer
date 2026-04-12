@@ -1,0 +1,246 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:mstool-ai-sbom-2026-04-12",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-04-12T00:00:00Z",
+    "component": {
+      "type": "application",
+      "name": "MSTool-AI",
+      "version": "1.0.0",
+      "description": "AI-powered brain MRI analysis platform for Multiple Sclerosis — IEC 62304 Class C SaMD",
+      "licenses": [{ "license": { "id": "Proprietary" } }],
+      "supplier": { "name": "MSTool-AI Development Team" }
+    },
+    "manufacture": { "name": "MSTool-AI Development Team" },
+    "tools": [{ "name": "Manual SBOM generation", "version": "1.0" }]
+  },
+  "components": [
+    {
+      "type": "framework",
+      "name": "fastapi",
+      "version": "0.115.0",
+      "purl": "pkg:pypi/fastapi@0.115.0",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "B" }, { "name": "iec62304:soup-id", "value": "SOUP-BE-001" }]
+    },
+    {
+      "type": "library",
+      "name": "uvicorn",
+      "version": "0.32.0",
+      "purl": "pkg:pypi/uvicorn@0.32.0",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "A" }]
+    },
+    {
+      "type": "library",
+      "name": "pydantic",
+      "version": "2.9.0",
+      "purl": "pkg:pypi/pydantic@2.9.0",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "B" }]
+    },
+    {
+      "type": "library",
+      "name": "pydicom",
+      "version": "2.4.4",
+      "purl": "pkg:pypi/pydicom@2.4.4",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "C" }, { "name": "iec62304:soup-id", "value": "SOUP-BE-004" }]
+    },
+    {
+      "type": "library",
+      "name": "nibabel",
+      "version": "5.3.0",
+      "purl": "pkg:pypi/nibabel@5.3.0",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "C" }, { "name": "iec62304:soup-id", "value": "SOUP-BE-005" }]
+    },
+    {
+      "type": "library",
+      "name": "SimpleITK",
+      "version": "2.3.1",
+      "purl": "pkg:pypi/SimpleITK@2.3.1",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "B" }]
+    },
+    {
+      "type": "library",
+      "name": "numpy",
+      "version": "1.26.4",
+      "purl": "pkg:pypi/numpy@1.26.4",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "C" }, { "name": "iec62304:soup-id", "value": "SOUP-BE-006" }]
+    },
+    {
+      "type": "library",
+      "name": "scipy",
+      "version": "1.13.1",
+      "purl": "pkg:pypi/scipy@1.13.1",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "C" }, { "name": "iec62304:soup-id", "value": "SOUP-BE-007" }]
+    },
+    {
+      "type": "library",
+      "name": "scikit-image",
+      "version": "0.24.0",
+      "purl": "pkg:pypi/scikit-image@0.24.0",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "B" }]
+    },
+    {
+      "type": "library",
+      "name": "Pillow",
+      "version": "10.4.0",
+      "purl": "pkg:pypi/Pillow@10.4.0",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "B" }]
+    },
+    {
+      "type": "library",
+      "name": "pandas",
+      "version": "2.2.2",
+      "purl": "pkg:pypi/pandas@2.2.2",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "A" }]
+    },
+    {
+      "type": "library",
+      "name": "cryptography",
+      "version": "43.0.1",
+      "purl": "pkg:pypi/cryptography@43.0.1",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "B" }]
+    },
+    {
+      "type": "library",
+      "name": "python-jose",
+      "version": "3.3.0",
+      "purl": "pkg:pypi/python-jose@3.3.0",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "B" }]
+    },
+    {
+      "type": "library",
+      "name": "anthropic",
+      "version": "0.44.0",
+      "purl": "pkg:pypi/anthropic@0.44.0",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "C" }, { "name": "iec62304:soup-id", "value": "SOUP-BE-019" }]
+    },
+    {
+      "type": "library",
+      "name": "google-cloud-aiplatform",
+      "version": "1.136.0",
+      "purl": "pkg:pypi/google-cloud-aiplatform@1.136.0",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "C" }, { "name": "iec62304:soup-id", "value": "SOUP-BE-018" }]
+    },
+    {
+      "type": "library",
+      "name": "firebase-admin",
+      "version": "7.1.0",
+      "purl": "pkg:pypi/firebase-admin@7.1.0",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "B" }]
+    },
+    {
+      "type": "library",
+      "name": "google-cloud-storage",
+      "version": "3.1.1",
+      "purl": "pkg:pypi/google-cloud-storage@3.1.1",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "B" }]
+    },
+    {
+      "type": "library",
+      "name": "fastmcp",
+      "version": "2.3.0",
+      "purl": "pkg:pypi/fastmcp@2.3.0",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "A" }]
+    },
+    {
+      "type": "library",
+      "name": "nilearn",
+      "version": "0.10.0",
+      "purl": "pkg:pypi/nilearn@0.10.0",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "B" }]
+    },
+    {
+      "type": "library",
+      "name": "webauthn",
+      "version": "2.1.0",
+      "purl": "pkg:pypi/webauthn@2.1.0",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "B" }]
+    },
+    {
+      "type": "framework",
+      "name": "react",
+      "version": "18.3.1",
+      "purl": "pkg:npm/react@18.3.1",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "B" }, { "name": "iec62304:soup-id", "value": "SOUP-FE-001" }]
+    },
+    {
+      "type": "library",
+      "name": "typescript",
+      "version": "5.5.4",
+      "purl": "pkg:npm/typescript@5.5.4",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "A" }]
+    },
+    {
+      "type": "library",
+      "name": "onnxruntime-web",
+      "version": "1.21.0",
+      "purl": "pkg:npm/onnxruntime-web@1.21.0",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "C" }, { "name": "iec62304:soup-id", "value": "SOUP-FE-006" }]
+    },
+    {
+      "type": "library",
+      "name": "@niivue/niivue",
+      "version": "0.67.0",
+      "purl": "pkg:npm/%40niivue/niivue@0.67.0",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "C" }, { "name": "iec62304:soup-id", "value": "SOUP-FE-002" }]
+    },
+    {
+      "type": "library",
+      "name": "zustand",
+      "version": "5.0.2",
+      "purl": "pkg:npm/zustand@5.0.2",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "B" }]
+    },
+    {
+      "type": "library",
+      "name": "axios",
+      "version": "1.7.9",
+      "purl": "pkg:npm/axios@1.7.9",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "B" }]
+    },
+    {
+      "type": "library",
+      "name": "three",
+      "version": "0.169.0",
+      "purl": "pkg:npm/three@0.169.0",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "A" }]
+    },
+    {
+      "type": "library",
+      "name": "vite",
+      "version": "6.0.5",
+      "purl": "pkg:npm/vite@6.0.5",
+      "scope": "required",
+      "properties": [{ "name": "iec62304:safety-class", "value": "A" }]
+    }
+  ]
+}

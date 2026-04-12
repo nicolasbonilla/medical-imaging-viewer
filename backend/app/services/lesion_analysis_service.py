@@ -53,6 +53,15 @@ def analyze_lesions(
     Returns:
         Dict with lesions list, region summary, total burden, and size distribution.
     """
+    # IEC 62304 Class C — Input validation (REQ-SAFE-005)
+    if not isinstance(mask_3d, np.ndarray):
+        raise ValueError("mask_3d must be a numpy ndarray")
+    if mask_3d.ndim != 3:
+        raise ValueError(f"mask_3d must be 3D, got {mask_3d.ndim}D")
+    if voxel_spacing is not None:
+        if not all(isinstance(v, (int, float)) and v > 0 for v in voxel_spacing):
+            raise ValueError(f"voxel_spacing values must be positive, got {voxel_spacing}")
+
     try:
         from scipy.ndimage import label as cc_label, center_of_mass
     except ImportError:
@@ -194,6 +203,15 @@ def compute_dis_criteria(
     Returns:
         Dict with McDonald 2024 DIS assessment (brain regions only).
     """
+    # IEC 62304 Class C — Input validation (REQ-SAFE-005)
+    if not isinstance(mask_3d, np.ndarray):
+        raise ValueError("mask_3d must be a numpy ndarray")
+    if mask_3d.ndim != 3:
+        raise ValueError(f"mask_3d must be 3D, got {mask_3d.ndim}D")
+    if voxel_spacing is not None:
+        if not all(isinstance(v, (int, float)) and v > 0 for v in voxel_spacing):
+            raise ValueError(f"voxel_spacing values must be positive, got {voxel_spacing}")
+
     try:
         from scipy.ndimage import label as cc_label
     except ImportError:

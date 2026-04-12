@@ -7,9 +7,12 @@ using Claude API, listing templates, and exporting reports.
 @module api.routes.ai_report
 """
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field
+
+from app.security import get_current_active_user
+from app.security.models import User
 
 from app.core.logging import get_logger
 
@@ -87,7 +90,10 @@ def get_report_service():
                 "dementia, general) and languages (en, es, de). "
                 "HIPAA compliant: only de-identified findings are sent to Claude.",
 )
-async def generate_report(request: ReportGenerateRequest):
+async def generate_report(
+    request: ReportGenerateRequest,
+    current_user: User = Depends(get_current_active_user),
+):
     """Generate a brain MRI report from clinical findings."""
     logger.info(
         f"[Report] Generate request: template={request.template_type}, "
@@ -124,7 +130,7 @@ async def generate_report(request: ReportGenerateRequest):
     summary="List report templates",
     description="List available brain MRI report templates with descriptions.",
 )
-async def list_templates():
+async def list_templates(current_user: User = Depends(get_current_active_user)):
     """List available report templates."""
     service = get_report_service()
     return service.list_templates()
