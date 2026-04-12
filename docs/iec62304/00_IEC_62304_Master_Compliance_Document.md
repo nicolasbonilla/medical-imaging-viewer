@@ -1252,20 +1252,67 @@ MSTool-AI's AI components are classified as **high-risk AI** under EU AI Act 202
 | SRS | Software Requirements Specification |
 | V&V | Verification and Validation |
 
-### Appendix B: Reference Documents
+### Appendix B: Normative References (Full Citations)
 
-1. IEC 62304:2006+A1:2015 — Medical device software — Software life cycle processes
-2. ISO 14971:2019 — Medical devices — Application of risk management
-3. IEC 62366-1:2015+A1:2020 — Medical devices — Usability engineering
-4. IEC 82304-1:2016 — Health software — Product safety
-5. ISO 13485:2016 — Medical devices — Quality management systems
-6. EU MDR 2017/745 — Medical Device Regulation
-7. EU AI Act 2024/1689 — Artificial Intelligence Act
-8. MDCG 2019-11 — Guidance on qualification and classification of software
-9. MDCG 2020-1 — Clinical evaluation of medical device software
-10. MDCG 2019-16 Rev 1 — Cybersecurity for medical devices
-11. IMDRF SaMD N12 — Framework for Risk Categorization
-12. FDA Guidance — Predetermined Change Control Plans for ML-Enabled Devices (2023)
+#### International Standards
+
+[1] International Electrotechnical Commission. *IEC 62304:2006+AMD1:2015 — Medical device software — Software life cycle processes*. Edition 1.1. Geneva: IEC, 2015. Available: https://webstore.iec.ch/en/publication/22794
+
+[2] International Electrotechnical Commission. *IEC 81001-5-1:2021 — Health software and health IT systems safety, effectiveness and security — Part 5-1: Security — Activities in the product life cycle*. Edition 1.0. Geneva: IEC, 2021. Available: https://webstore.iec.ch/en/publication/34263
+
+[3] International Organization for Standardization. *ISO 14971:2019 — Medical devices — Application of risk management to medical devices*. Third edition. Geneva: ISO, 2019. Available: https://www.iso.org/standard/72704.html
+
+[4] International Organization for Standardization. *ISO/TR 24971:2020 — Medical devices — Guidance on the application of ISO 14971*. First edition. Geneva: ISO, 2020. Available: https://www.iso.org/standard/80585.html
+
+[5] International Electrotechnical Commission. *IEC 62366-1:2015+AMD1:2020 — Medical devices — Part 1: Application of usability engineering to medical devices*. Edition 1.1. Geneva: IEC, 2020. Available: https://webstore.iec.ch/en/publication/67218
+
+[6] International Electrotechnical Commission. *IEC 82304-1:2016 — Health software — Part 1: General requirements for product safety*. Edition 1.0. Geneva: IEC, 2016. Available: https://webstore.iec.ch/en/publication/24680
+
+[7] International Organization for Standardization. *ISO 13485:2016 — Medical devices — Quality management systems — Requirements for regulatory purposes*. Third edition. Geneva: ISO, 2016. Available: https://www.iso.org/standard/59752.html
+
+[8] International Electrotechnical Commission. *IEC 80002-1:2021 — Application of risk management to medical device software*. First edition (replaces IEC TR 80002-1:2009). Geneva: IEC, 2021.
+
+#### European Union Regulations and Guidance
+
+[9] European Parliament and Council. *Regulation (EU) 2017/745 — on medical devices (MDR)*. Official Journal of the European Union, L 117, 5 April 2017. Available: https://eur-lex.europa.eu/eli/reg/2017/745/oj
+
+[10] European Parliament and Council. *Regulation (EU) 2024/1689 — laying down harmonised rules on artificial intelligence (AI Act)*. Official Journal of the European Union, L, 12 July 2024. Available: https://eur-lex.europa.eu/eli/reg/2024/1689/oj
+
+[11] Medical Device Coordination Group. *MDCG 2019-11 — Guidance on Qualification and Classification of Software in Regulation (EU) 2017/745 – MDR and Regulation (EU) 2017/746 – IVDR*. October 2019. Available: https://health.ec.europa.eu/system/files/2020-09/md_mdcg_2019_11_guidance_qualification_classification_software_en_0.pdf
+
+[12] Medical Device Coordination Group. *MDCG 2020-1 — Guidance on Clinical Evaluation (MDR) / Performance Evaluation (IVDR) of Medical Device Software*. March 2020. Available: https://health.ec.europa.eu/system/files/2020-09/md_mdcg_2020_1_guidance_clinic_eval_md_software_en_0.pdf
+
+[13] Medical Device Coordination Group. *MDCG 2019-16 Rev.1 — Guidance on Cybersecurity for medical devices*. December 2019 (Revised July 2020). Available: https://health.ec.europa.eu/system/files/2020-09/md_cybersecurity_en_0.pdf
+
+[14] European Parliament and Council. *Directive (EU) 2022/2555 — on measures for a high common level of cybersecurity across the Union (NIS2)*. Official Journal of the European Union, L 333, 14 December 2022.
+
+#### International Frameworks
+
+[15] International Medical Device Regulators Forum. *IMDRF/SaMD WG/N12FINAL:2013 — Software as a Medical Device: Possible Framework for Risk Categorization and Corresponding Considerations*. September 2013. Available: https://www.imdrf.org/documents/software-medical-device-samd-possible-framework-risk-categorization-and-corresponding
+
+[16] International Medical Device Regulators Forum. *IMDRF/SaMD WG/N41FINAL:2017 — Software as a Medical Device (SaMD): Clinical Evaluation*. October 2017. Available: https://www.imdrf.org/documents/software-medical-device-samd-clinical-evaluation
+
+[17] U.S. Food and Drug Administration. *Marketing Submission Recommendations for a Predetermined Change Control Plan for Artificial Intelligence/Machine Learning (AI/ML)-Enabled Device Software Functions*. September 2023. Available: https://www.fda.gov/regulatory-information/search-fda-guidance-documents
+
+[18] U.S. Food and Drug Administration. *Cybersecurity in Medical Devices: Quality System Considerations and Content of Premarket Submissions — Final Guidance*. September 2023.
+
+#### Germany-Specific
+
+[19] Bundesamt fur Sicherheit in der Informationstechnik (BSI). *IT-Grundschutz Kompendium — Module Healthcare*. Available: https://www.bsi.bund.de/EN/Themen/Unternehmen-und-Organisationen/Standards-und-Zertifizierung/IT-Grundschutz/it-grundschutz_node.html
+
+[20] Federal Republic of Germany. *BSI-Gesetz (BSIG) — as amended by NIS2 transposition*, effective December 6, 2025.
+
+#### Clinical and Scientific References
+
+[21] Montalban, X., et al. (2025). "Revised McDonald criteria for the diagnosis of multiple sclerosis." *Lancet Neurology*, 24(10), 850–865. DOI: 10.1016/S1474-4422(25)00304-7
+
+[22] Barkhof, F., et al. (2025). "MAGNIMS-CMSC-NAIMS 2024 consensus guidelines on the use of MRI in patients with multiple sclerosis." *Lancet Neurology*, 24(10), 866–879.
+
+[23] Wiltgen, T., et al. (2024). "LST-AI: A deep learning ensemble for accurate MS lesion segmentation." *NeuroImage: Clinical*, 42, 103611.
+
+[24] Billot, B., et al. (2023). "SynthSeg: Segmentation of brain MRI scans of any contrast and resolution without retraining." *Medical Image Analysis*, 86, 102789.
+
+[25] Fischl, B. (2012). "FreeSurfer." *NeuroImage*, 62(2), 774–781.
 
 ### Appendix C: Document Change Log
 
