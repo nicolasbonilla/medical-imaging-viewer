@@ -78,8 +78,8 @@ Internet
 |---------|---------------|---------------------|--------|
 | SOUP inventory | 37 items documented (SOUP-001) | 5.3.11 | IMPLEMENTED |
 | SOUP version pinning | package.json + requirements.txt | 5.3.11 | IMPLEMENTED |
-| Vulnerability scanning (npm) | npm audit (to add to CI) | 5.3.12 | GAP |
-| Vulnerability scanning (pip) | pip-audit (to add to CI) | 5.3.12 | GAP |
+| Vulnerability scanning (npm) | npm audit in GitHub Actions CI | 5.3.12 | IMPLEMENTED |
+| Vulnerability scanning (pip) | pip-audit in GitHub Actions CI | 5.3.12 | IMPLEMENTED |
 | Container base image | Python 3.11 slim (Docker) | 5.3.11 | IMPLEMENTED |
 
 ### 3.5 Secrets Management
@@ -162,11 +162,11 @@ Internet
 | 5.3.8 | Backup and recovery | PARTIAL |
 | 5.3.9 | Network security | PARTIAL (CSP missing) |
 | 5.3.10 | Input validation | IMPLEMENTED |
-| 5.3.11 | SOUP security management | PARTIAL (inventory done, scanning not automated) |
-| 5.3.12 | Vulnerability management | GAP (no automated scanning) |
+| 5.3.11 | SOUP security management | IMPLEMENTED (37 items inventoried in SOUP-001, CI scanning active) |
+| 5.3.12 | Vulnerability management | IMPLEMENTED (npm audit + pip-audit in GitHub Actions CI) |
 | 5.3.13 | Security testing | GAP (no penetration test) |
 
-### Overall Cybersecurity Compliance: **72%**
+### Overall Cybersecurity Compliance: **82%**
 
 ### Critical Actions Required
 
