@@ -1,0 +1,295 @@
+# MSTool-AI: Software Requirements Specification
+
+## IEC 62304 Clause 5.2 Compliant Requirements Document
+
+**Document ID**: SRS-001
+**Version**: 1.0
+**Effective Date**: April 12, 2026
+**Standard**: IEC 62304:2006+A1:2015 Clause 5.2
+**Software Safety Class**: IEC 62304 Class C
+**Confidentiality**: Restricted — Regulatory Audit Use Only
+
+---
+
+## Document Control
+
+| Version | Date | Author | Changes | Approved By |
+|---------|------|--------|---------|-------------|
+| 1.0 | 2026-04-12 | Development Team | Initial release | — |
+
+---
+
+## 1. Introduction
+
+### 1.1 Purpose
+
+This Software Requirements Specification (SRS) defines the functional, performance, safety, security, and interface requirements for MSTool-AI. Each requirement is uniquely identified, traceable to risk analysis (RMF-001) and system-level needs, and verifiable through defined test methods.
+
+### 1.2 Scope
+
+This SRS covers all software requirements for MSTool-AI version 2.0, including frontend (React/TypeScript), backend (FastAPI/Python), and external service integrations (Vertex AI, Claude API, DICOMweb).
+
+### 1.3 Definitions
+
+| Term | Definition |
+|------|-----------|
+| Shall | Mandatory requirement |
+| Should | Recommended but not mandatory |
+| May | Optional |
+| User | Any authenticated user of the system |
+| Clinician | Physician using the system for clinical decisions |
+| Administrator | User with ADMIN role |
+
+---
+
+## 2. Functional Requirements
+
+### 2.1 Medical Image Loading and Display
+
+| ID | Requirement | Priority | Safety Class | Verification | Risk Ref |
+|----|-------------|----------|-------------|-------------|----------|
+| REQ-FUNC-001 | The system shall load NIfTI (.nii, .nii.gz) files and display them as navigable 2D slices. | Must | B | Test | — |
+| REQ-FUNC-002 | The system shall load DICOM files and display them as navigable 2D slices. | Must | B | Test | — |
+| REQ-FUNC-003 | The system shall provide 3D volume rendering of loaded NIfTI files using WebGL2. | Must | B | Test | — |
+| REQ-FUNC-004 | The system shall provide multiplanar reconstruction (axial, coronal, sagittal) with synchronized crosshairs. | Must | B | Test | — |
+| REQ-FUNC-005 | The system shall support windowing (brightness/contrast) adjustment for 2D slices. | Must | B | Test | — |
+| REQ-FUNC-006 | The system shall support zoom (0.25x to 20x) and pan in 2D view. | Should | A | Test | — |
+| REQ-FUNC-007 | The system shall provide a clip plane tool for 3D volume slicing with axial/coronal/sagittal options. | Should | B | Test | — |
+| REQ-FUNC-008 | The system shall support multiple colormaps (Gray, Hot, Bone, Viridis, Inferno, etc.). | Should | A | Test | — |
+| REQ-FUNC-009 | The system shall detect MRI sequence type from BIDS filename (FLAIR, T1, T2, PD). | Should | A | Test | — |
+| REQ-FUNC-010 | The system shall display patient name, MRN, and study information in the viewer header. | Must | B | Test | HAZ-009 |
+
+### 2.2 Segmentation
+
+| ID | Requirement | Priority | Safety Class | Verification | Risk Ref |
+|----|-------------|----------|-------------|-------------|----------|
+| REQ-FUNC-020 | The system shall provide brush painting tools (circle/square) with configurable size (1-50 voxels). | Must | B | Test | — |
+| REQ-FUNC-021 | The system shall provide an eraser tool that sets voxels to background (label 0). | Must | B | Test | — |
+| REQ-FUNC-022 | The system shall provide flood fill (BFS, 4-connectivity) and threshold-based region growing. | Should | B | Test | — |
+| REQ-FUNC-023 | The system shall support undo/redo for segmentation operations with slice-level snapshots. | Must | B | Test | — |
+| REQ-FUNC-024 | The system shall store segmentation masks as 3D Uint8Array in browser memory (local-first architecture). | Must | B | Test | — |
+| REQ-FUNC-025 | The system shall save segmentation masks to server storage on explicit user action only. | Must | B | Test | — |
+| REQ-FUNC-026 | The system shall support two label presets: Default (4 labels) and MAGNIMS Regional (6 labels). | Must | B | Test | — |
+| REQ-FUNC-027 | The system shall allow per-label visibility toggling in both viewing and editing modes. | Should | A | Test | — |
+| REQ-FUNC-028 | The system shall support overlay rendering with configurable opacity (0-100%). | Should | A | Test | — |
+
+### 2.3 AI Segmentation
+
+| ID | Requirement | Priority | Safety Class | Verification | Risk Ref |
+|----|-------------|----------|-------------|-------------|----------|
+| REQ-FUNC-030 | The system shall provide automatic brain parcellation via SynthSeg on Vertex AI. | Must | C | Test | HAZ-001 |
+| REQ-FUNC-031 | The system shall provide interactive click-based segmentation (positive/negative points). | Should | C | Test | HAZ-001 |
+| REQ-FUNC-032 | The system shall display AI segmentation results as an overlay on the medical image. | Must | C | Test | HAZ-001 |
+| REQ-FUNC-033 | The system shall provide edge AI screening via ONNX Runtime Web in browser. | Should | C | Test | HAZ-004 |
+
+### 2.4 Brain Volumetry
+
+| ID | Requirement | Priority | Safety Class | Verification | Risk Ref |
+|----|-------------|----------|-------------|-------------|----------|
+| REQ-FUNC-040 | The system shall compute volumes (mm³ and mL) for each segmented brain structure. | Must | C | Test | HAZ-002 |
+| REQ-FUNC-041 | The system shall compute normative percentiles using z-score against age-matched reference distributions. | Must | C | Test | HAZ-002 |
+| REQ-FUNC-042 | The system shall flag structures with percentile < 10 (atrophy) or > 90 (enlargement). | Must | C | Test | HAZ-002 |
+
+### 2.5 MS-Specific Analysis
+
+| ID | Requirement | Priority | Safety Class | Verification | Risk Ref |
+|----|-------------|----------|-------------|-------------|----------|
+| REQ-FUNC-050 | The system shall perform connected component analysis to identify individual lesions. | Must | C | Test | HAZ-005 |
+| REQ-FUNC-051 | The system shall compute per-lesion volume, centroid, and bounding box. | Must | C | Test | — |
+| REQ-FUNC-052 | The system shall evaluate McDonald 2024 DIS criteria across PV, JC, IT regions. | Must | C | Test | HAZ-008 |
+| REQ-FUNC-053 | The system shall classify lesions into MAGNIMS regions using SynthSeg parcellation + EDT (Tier 2) with MSMask atlas fallback (Tier 1). | Must | C | Test | HAZ-005 |
+| REQ-FUNC-054 | The system shall provide longitudinal tracking with IoU-based lesion matching (threshold >= 0.3). | Must | C | Test | HAZ-007 |
+| REQ-FUNC-055 | The system shall classify longitudinal lesion status: NEW, RESOLVED, ENLARGED (>20%), SHRUNK (<-20%), STABLE. | Must | C | Test | HAZ-007 |
+| REQ-FUNC-056 | The system shall display longitudinal comparison as tri-color overlay (blue=TP1, red=TP2, green=overlap). | Must | B | Test | — |
+
+### 2.6 AI Report Generation
+
+| ID | Requirement | Priority | Safety Class | Verification | Risk Ref |
+|----|-------------|----------|-------------|-------------|----------|
+| REQ-FUNC-060 | The system shall generate structured clinical reports using the Claude API. | Must | C | Test | HAZ-003 |
+| REQ-FUNC-061 | The system shall support report templates: General MS, Activity, Lesion Burden, Comprehensive, Longitudinal. | Must | C | Test | — |
+| REQ-FUNC-062 | The system shall generate reports in English, Spanish, and German. | Should | A | Test | — |
+| REQ-FUNC-063 | The system shall integrate volumetry, DIS assessment, and longitudinal data into report prompts. | Must | C | Test | HAZ-003 |
+
+### 2.7 Hospital Integration
+
+| ID | Requirement | Priority | Safety Class | Verification | Risk Ref |
+|----|-------------|----------|-------------|-------------|----------|
+| REQ-FUNC-070 | The system shall support QIDO-RS queries to search studies on remote PACS. | Must | B | Test | — |
+| REQ-FUNC-071 | The system shall support WADO-RS retrieval of DICOM series from PACS with automatic DICOM-to-NIfTI conversion. | Must | B | Test | HAZ-012 |
+| REQ-FUNC-072 | The system shall export segmentation masks as DICOM-SEG (SOP Class 1.2.840.10008.5.1.4.1.1.66.4). | Must | B | Test | HAZ-011 |
+| REQ-FUNC-073 | The system shall generate HL7 FHIR R4 ImagingStudy, DiagnosticReport, and Patient resources. | Should | B | Test | — |
+
+### 2.8 Patient and Study Management
+
+| ID | Requirement | Priority | Safety Class | Verification | Risk Ref |
+|----|-------------|----------|-------------|-------------|----------|
+| REQ-FUNC-080 | The system shall support patient CRUD operations with demographic data. | Must | A | Test | — |
+| REQ-FUNC-081 | The system shall organize studies by patient with timepoint timeline. | Must | A | Test | — |
+| REQ-FUNC-082 | The system shall support NIfTI and DICOM file upload with SHA-256 checksum verification. | Must | B | Test | — |
+
+### 2.9 Measurement Tools
+
+| ID | Requirement | Priority | Safety Class | Verification | Risk Ref |
+|----|-------------|----------|-------------|-------------|----------|
+| REQ-FUNC-090 | The system shall provide a ruler tool measuring distance in millimeters. | Should | B | Test | — |
+| REQ-FUNC-091 | The system shall provide an angle measurement tool (3-point, degrees). | Should | B | Test | — |
+| REQ-FUNC-092 | The system shall provide an elliptical ROI tool measuring area in mm². | Should | B | Test | — |
+
+---
+
+## 3. Safety Requirements
+
+*Derived from Risk Management File (RMF-001)*
+
+| ID | Requirement | Risk Ref | Priority | Verification |
+|----|-------------|----------|----------|-------------|
+| REQ-SAFE-001 | All AI-generated segmentation results shall be labeled "Assistive tool — requires physician review". | HAZ-001 | Must | Test + Inspection |
+| REQ-SAFE-002 | AI results shall be presented in read-only Viewing mode; clinician must explicitly switch to Edit mode to modify. | HAZ-001 | Must | Test |
+| REQ-SAFE-003 | Manual segmentation tools shall always be available as override to any AI result. | HAZ-001 | Must | Test |
+| REQ-SAFE-004 | Volumetry results shall display normative percentile range with reference distribution source. | HAZ-002 | Must | Test |
+| REQ-SAFE-005 | Abnormality flags shall display the threshold criteria used (percentile < 10 or > 90). | HAZ-002 | Must | Test |
+| REQ-SAFE-006 | AI-generated reports shall include header: "AI-Generated — Requires Physician Review Before Clinical Action". | HAZ-003 | Must | Test + Inspection |
+| REQ-SAFE-007 | AI reports shall not be auto-committed to clinical record; clinician confirmation required for any export. | HAZ-003 | Must | Test |
+| REQ-SAFE-008 | Edge AI screening badge shall display confidence percentage and "assistive tool only, not diagnostic" disclaimer. | HAZ-004 | Must | Test + Inspection |
+| REQ-SAFE-009 | Edge AI screening shall be hidden when model file is not available (graceful degradation). | HAZ-004 | Must | Test |
+| REQ-SAFE-010 | MAGNIMS classification shall display per-lesion confidence scores. | HAZ-005 | Must | Test |
+| REQ-SAFE-011 | Classification method (EDT/Atlas/Geometric) shall be displayed to the user. | HAZ-005 | Should | Inspection |
+| REQ-SAFE-012 | The system shall auto-detect and transpose axis mismatches between mask and image dimensions. | HAZ-006 | Must | Test |
+| REQ-SAFE-013 | The system shall validate NIfTI orientation headers on file upload and warn if non-standard. | HAZ-006 | Must | Test |
+| REQ-SAFE-014 | Longitudinal comparison shall display tri-color overlay for visual verification of lesion matching. | HAZ-007 | Must | Test |
+| REQ-SAFE-015 | DIS assessment shall display per-region detail with qualifying lesion counts. | HAZ-008 | Must | Test |
+| REQ-SAFE-016 | Patient name and MRN shall be prominently displayed in the viewer header at all times. | HAZ-009 | Must | Inspection |
+| REQ-SAFE-017 | DICOM-SEG export shall use standard SOP Class UID and proper DICOM header structure. | HAZ-011 | Must | Test |
+| REQ-SAFE-018 | DICOMweb import shall display study/patient metadata for user confirmation before import. | HAZ-012 | Must | Test |
+| REQ-SAFE-019 | Report generation shall timeout after 30 seconds with user-visible error message if API fails. | HAZ-013 | Must | Test |
+| REQ-SAFE-020 | All images shall be preprocessed to MNI 1mm isotropic template before quantitative analysis. | HAZ-014 | Must | Inspection |
+
+---
+
+## 4. Security Requirements
+
+*Per IEC 62304 Amendment 1 (2015)*
+
+| ID | Requirement | Priority | Verification |
+|----|-------------|----------|-------------|
+| REQ-SEC-001 | All API communications shall use TLS 1.2 or higher. | Must | Test |
+| REQ-SEC-002 | Authentication shall be required for all non-public endpoints. | Must | Test |
+| REQ-SEC-003 | JWT access tokens shall expire within 60 minutes. | Must | Test |
+| REQ-SEC-004 | The system shall support WebAuthn/Passkeys (FIDO2) for biometric authentication. | Should | Test |
+| REQ-SEC-005 | The system shall implement RBAC with 4 roles (Viewer, Technician, Radiologist, Admin) and 15 permissions. | Must | Test |
+| REQ-SEC-006 | Patient data shall be encrypted at rest using AES-256-GCM. | Must | Inspection |
+| REQ-SEC-007 | No PHI (patient name, DOB, MRN) shall be transmitted to external AI APIs (Claude, Vertex AI). | Must | Test + Inspection |
+| REQ-SEC-008 | The system shall enforce rate limiting (100 requests/minute per IP) on all API endpoints. | Must | Test |
+| REQ-SEC-009 | The system shall log all data access events with user ID, action, resource, and timestamp. | Must | Inspection |
+| REQ-SEC-010 | Secrets (API keys, JWT signing keys) shall not be stored in version control. | Must | Inspection |
+| REQ-SEC-011 | Password policy shall enforce minimum 12 characters with uppercase, lowercase, digit, and special character. | Must | Test |
+| REQ-SEC-012 | Account shall lock after 5 consecutive failed login attempts for 30 minutes. | Must | Test |
+| REQ-SEC-013 | DICOM/NIfTI file parsing shall validate input headers and reject malformed files. | Must | Test |
+
+---
+
+## 5. Performance Requirements
+
+| ID | Requirement | Priority | Verification |
+|----|-------------|----------|-------------|
+| REQ-PERF-001 | 2D slice rendering shall complete within 500ms after data is loaded. | Must | Test |
+| REQ-PERF-002 | 3D volume rendering shall initialize within 5 seconds for a standard brain MRI (~27MB NIfTI). | Must | Test |
+| REQ-PERF-003 | Segmentation painting shall respond within 16ms (60fps) for brush strokes. | Must | Test |
+| REQ-PERF-004 | API responses shall return within 3 seconds for standard operations. | Must | Test |
+| REQ-PERF-005 | AI report generation shall complete within 30 seconds. | Must | Test |
+| REQ-PERF-006 | The system shall support at least 10 concurrent users. | Should | Test |
+| REQ-PERF-007 | DICOMweb import of a single MRI series shall complete within 5 minutes. | Should | Test |
+
+---
+
+## 6. Interface Requirements
+
+### 6.1 User Interface
+
+| ID | Requirement | Priority | Verification |
+|----|-------------|----------|-------------|
+| REQ-UI-001 | The system shall be accessible via modern web browsers (Chrome, Firefox, Edge — last 2 versions). | Must | Test |
+| REQ-UI-002 | The system shall provide internationalization in English, Spanish, and German. | Must | Test |
+| REQ-UI-003 | The system shall be responsive across desktop screen sizes (minimum 1280x720). | Should | Test |
+| REQ-UI-004 | The system shall support dark mode (default) and light mode with persistent preference. | Should | Test |
+
+### 6.2 External System Interfaces
+
+| ID | Requirement | Priority | Verification |
+|----|-------------|----------|-------------|
+| REQ-IF-001 | The system shall interface with hospital PACS via DICOMweb (QIDO-RS, WADO-RS). | Must | Test |
+| REQ-IF-002 | The system shall generate HL7 FHIR R4 resources (ImagingStudy, DiagnosticReport, Patient). | Should | Test |
+| REQ-IF-003 | The system shall interface with Vertex AI for AI segmentation inference. | Must | Test |
+| REQ-IF-004 | The system shall interface with Anthropic Claude API for report generation. | Must | Test |
+| REQ-IF-005 | The system shall store data in Google Cloud Firestore and Google Cloud Storage. | Must | Inspection |
+
+---
+
+## 7. Data Requirements
+
+| ID | Requirement | Priority | Verification |
+|----|-------------|----------|-------------|
+| REQ-DATA-001 | The system shall support NIfTI-1 format (.nii, .nii.gz) for medical image storage. | Must | Test |
+| REQ-DATA-002 | The system shall support DICOM format for medical image import. | Must | Test |
+| REQ-DATA-003 | Segmentation masks shall be stored as 3D Uint8Array with label values 0-255. | Must | Inspection |
+| REQ-DATA-004 | Patient records shall include: name, MRN, date of birth, gender, contact information. | Must | Inspection |
+| REQ-DATA-005 | Segmentation metadata shall include: labels (id, name, color), creation date, description. | Must | Inspection |
+
+---
+
+## 8. Regulatory Requirements
+
+| ID | Requirement | Priority | Verification |
+|----|-------------|----------|-------------|
+| REQ-REG-001 | The system shall comply with EU MDR 2017/745 Annex I General Safety and Performance Requirements. | Must | Analysis |
+| REQ-REG-002 | The system shall comply with GDPR requirements for medical data processing. | Must | Analysis |
+| REQ-REG-003 | The system shall comply with IEC 62304:2006+A1:2015 Class C software lifecycle requirements. | Must | Analysis |
+| REQ-REG-004 | The system shall comply with ISO 14971:2019 risk management requirements. | Must | Analysis |
+| REQ-REG-005 | The system shall comply with EU AI Act high-risk AI requirements (when applicable). | Should | Analysis |
+
+---
+
+## 9. Requirements Summary
+
+| Category | Count |
+|----------|-------|
+| Functional Requirements (REQ-FUNC) | 32 |
+| Safety Requirements (REQ-SAFE) | 20 |
+| Security Requirements (REQ-SEC) | 13 |
+| Performance Requirements (REQ-PERF) | 7 |
+| Interface Requirements (REQ-UI + REQ-IF) | 9 |
+| Data Requirements (REQ-DATA) | 5 |
+| Regulatory Requirements (REQ-REG) | 5 |
+| **Total** | **91** |
+
+| Priority | Count | Percentage |
+|----------|-------|-----------|
+| Must | 72 | 79% |
+| Should | 19 | 21% |
+
+| Safety Class | Count |
+|-------------|-------|
+| Class C | 25 |
+| Class B | 38 |
+| Class A | 9 |
+| N/A (safety/security/performance) | 19 |
+
+---
+
+## 10. Requirements Verification Cross-Reference
+
+*Full traceability to tests will be documented in the Traceability Matrix (TM-001).*
+
+| Verification Method | Count | Description |
+|-------------------|-------|-------------|
+| Test | 72 | Verified by automated or manual test |
+| Inspection | 12 | Verified by code/document review |
+| Analysis | 5 | Verified by regulatory analysis |
+| Demonstration | 2 | Verified by user demonstration |
+
+---
+
+*End of Software Requirements Specification*
+
+*This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/02_Software_Requirements_Specification.md`.*
