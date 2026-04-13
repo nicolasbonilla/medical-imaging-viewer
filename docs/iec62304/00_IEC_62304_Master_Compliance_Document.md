@@ -91,7 +91,7 @@ The software's functional implementation is mature (~84,000 LOC across 224+ file
 
 1. **Formal review records** (5 audit records now exist: RCV-SUMMARY, TST-UNIT-SUMMARY, SOUP-2026-04, CR-SUMMARY, DR-SUMMARY; remaining records need formal sign-off)
 2. **Risk control verification tests** (21 of 22 controls verified; RC-013 remains PARTIAL)
-3. **System test procedures** (requirement-to-test traceability at 38%, target 100%)
+3. **System test procedures** (requirement-to-test traceability at 42%, target 100%)
 4. **External security assessment** (penetration testing not yet performed)
 5. **Clinical validation** (AI component validation requires clinical study)
 6. **Document approval** (all documents at Version 1.0, awaiting formal approval)
@@ -945,7 +945,7 @@ IEC 62304 requires requirements to cover (where applicable):
 | Category | Description | Status |
 |----------|-------------|--------|
 | Risk Management (Section 7) | Foundation for all safety | **88% — GOOD** (RMF-001 complete, verification pending) |
-| System Testing (Section 5.7) | Requirement verification | **30% — NEEDS WORK** (test-to-requirement traceability at 38%) |
+| System Testing (Section 5.7) | Requirement verification | **30% — NEEDS WORK** (test-to-requirement traceability at 42%) |
 | Requirements (Section 5.2) | Traceability source | **83% — GOOD** (SRS-001 with 91 requirements) |
 | Detailed Design (Section 5.4) | Class C differentiator | **38% — HIGH** |
 | Config Management (Section 8) | Best area | **90% — GOOD** (CMP-001, CODEOWNERS, SBOM, CI hardened) |
@@ -1165,7 +1165,7 @@ System Test
 | Risk → Requirement | RMF → SRS | **ESTABLISHED** | RMF-001 → SRS-001 safety requirements |
 | Risk Control → Verification | RC → Test | **ESTABLISHED** | 21/22 controls verified (95%) |
 
-**Overall Traceability: PARTIAL (38%)** — The "golden thread" is established in formal documentation (RMF-001 → SRS-001 → SAD-001 → DD-001 → TM-001). Test coverage needs expansion from 38% to 100%.
+**Overall Traceability: PARTIAL (38%)** — The "golden thread" is established in formal documentation (RMF-001 → SRS-001 → SAD-001 → DD-001 → TM-001). Test coverage needs expansion from 42% to 100%.
 
 ---
 
