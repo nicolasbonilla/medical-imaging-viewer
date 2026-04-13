@@ -57,7 +57,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - name: Run frontend tests (IEC 62304 Clause 5.5)
-        run: npx vitest run --reporter=verbose --timeout 30000
+        run: npx vitest run --reporter=verbose
         timeout-minutes: 5
 
   backend-tests:

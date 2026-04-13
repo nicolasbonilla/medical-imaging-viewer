@@ -9,6 +9,14 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: true,
+    testTimeout: 30000,
+    hookTimeout: 30000,
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        singleFork: false,
+      },
+    },
     // Allow per-file environment override
     environmentMatchGlobs: [
       ['**/*.test.ts', 'node'],  // Default to node for .test.ts files

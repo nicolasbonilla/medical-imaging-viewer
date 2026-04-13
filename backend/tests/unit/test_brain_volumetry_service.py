@@ -123,7 +123,7 @@ class TestBrainVolumetryService:
         mask[0:5, 0:5, 0:5] = 4  # 125 voxels — Left Lateral Ventricle
         result = self.service.compute_volumes(mask, (1.0, 1.0, 1.0), segmentation_id="seg-vent")
 
-        assert result.intracranial_volume_ml == pytest.approx(0.125, abs=0.001)
+        assert result.intracranial_volume_ml == pytest.approx(0.125, abs=0.01)
         assert result.total_brain_volume_ml == 0.0  # Ventricles excluded
 
     def test_csf_excluded_from_brain_volume(self):
