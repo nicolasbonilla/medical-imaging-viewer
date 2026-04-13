@@ -142,6 +142,8 @@ def password_manager():
 @pytest.fixture
 def token_manager():
     """Create token manager for testing."""
+    if settings is None:
+        pytest.skip("Settings not available (app dependencies not installed)")
     from app.core.security.auth import TokenManager
     return TokenManager(
         secret_key=settings.JWT_SECRET_KEY,
@@ -487,6 +489,8 @@ def malicious_file_payloads() -> Dict[str, bytes]:
 @pytest.fixture
 def encryption_service():
     """Create encryption service for testing."""
+    if settings is None:
+        pytest.skip("Settings not available (app dependencies not installed)")
     from app.core.security.encryption import EncryptionService
     return EncryptionService(master_key=settings.ENCRYPTION_MASTER_KEY)
 
