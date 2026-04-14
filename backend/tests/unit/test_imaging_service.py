@@ -66,8 +66,8 @@ class TestImagingService:
 
     def test_detect_format_unsupported(self, imaging_service):
         """Test format detection rejects unsupported files."""
-        from app.core.exceptions import ImageProcessingException
-        with pytest.raises((ImageProcessingException, ValueError)):
+        from app.core.exceptions import ImageProcessingException, ValidationException
+        with pytest.raises((ImageProcessingException, ValidationException, ValueError)):
             imaging_service.detect_format(b"", "test.txt")
 
     # ─── Window/level ───

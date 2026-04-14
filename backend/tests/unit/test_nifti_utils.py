@@ -157,7 +157,7 @@ class TestLoadNiftiFromBytes:
 
         from app.utils.nifti_utils import load_nifti_from_bytes
 
-        data = np.zeros((4, 4, 4), dtype=np.float32)
+        data = np.random.rand(16, 16, 16).astype(np.float32)
         img = nib.Nifti1Image(data, np.eye(4))
         with tempfile.NamedTemporaryFile(suffix=".nii.gz", delete=False) as tmp:
             nib.save(img, tmp.name)
@@ -173,7 +173,7 @@ class TestLoadNiftiFromBytes:
             after = set(os.listdir(temp_dir))
 
             # Verify data loaded correctly
-            assert loaded_data.shape == (4, 4, 4)
+            assert loaded_data.shape == (16, 16, 16)
             # New nifti temp files should be cleaned up (not persist)
             new_files = after - before
             nifti_temps = [f for f in new_files if '.nii' in f]
