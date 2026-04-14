@@ -175,7 +175,7 @@ class TestNumpyToPixelData:
         """uint8 array correctly converted to DICOM pixel data."""
         from app.utils.dicom_utils import numpy_to_dicom_pixel_data
         arr = np.array([[0, 128], [255, 64]], dtype=np.uint8)
-        pixel_data = numpy_to_dicom_pixel_data(arr, bits_allocated=8)
+        pixel_data = numpy_to_dicom_pixel_data(arr, bits=8)
         assert isinstance(pixel_data, bytes)
         assert len(pixel_data) == 4
 
@@ -183,7 +183,7 @@ class TestNumpyToPixelData:
         """uint16 array correctly converted."""
         from app.utils.dicom_utils import numpy_to_dicom_pixel_data
         arr = np.array([[0, 1000], [4095, 2048]], dtype=np.uint16)
-        pixel_data = numpy_to_dicom_pixel_data(arr, bits_allocated=16)
+        pixel_data = numpy_to_dicom_pixel_data(arr, bits=16)
         assert isinstance(pixel_data, bytes)
         assert len(pixel_data) == 8  # 4 pixels * 2 bytes
 

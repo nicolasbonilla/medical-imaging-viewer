@@ -33,7 +33,7 @@ class TestClassifyWithParcellation:
         lesions_list = result.get("classified_lesions", result.get("lesions", []))
         if len(lesions_list) > 0:
             # Region label 1 = Periventricular
-            assert lesions_list[0].get("region_label", lesions_list[0].get("label")) == 1
+            assert lesions_list[0].get("region_id", lesions_list[0].get("region_label", lesions_list[0].get("label"))) == 1
 
     def test_jc_lesion_near_cortex(self):
         """Lesion adjacent to cortex -> classified as JC (label 2)."""
@@ -47,7 +47,7 @@ class TestClassifyWithParcellation:
         lesions_list = result.get("classified_lesions", result.get("lesions", []))
         if len(lesions_list) > 0:
             # Region label 2 = Juxtacortical
-            assert lesions_list[0].get("region_label", lesions_list[0].get("label")) == 2
+            assert lesions_list[0].get("region_id", lesions_list[0].get("region_label", lesions_list[0].get("label"))) == 2
 
     def test_it_lesion_near_brainstem(self):
         """Lesion adjacent to brainstem -> classified as IT (label 3)."""
@@ -60,7 +60,7 @@ class TestClassifyWithParcellation:
         lesions_list = result.get("classified_lesions", result.get("lesions", []))
         if len(lesions_list) > 0:
             # Region label 3 = Infratentorial (IT has highest priority in cascade)
-            assert lesions_list[0].get("region_label", lesions_list[0].get("label")) == 3
+            assert lesions_list[0].get("region_id", lesions_list[0].get("region_label", lesions_list[0].get("label"))) == 3
 
     def test_shape_mismatch_raises_error(self):
         """Different shape masks raise ValueError."""
@@ -219,5 +219,5 @@ class TestClassifyGeometric:
         lesions_list = result.get("classified_lesions", result.get("lesions", []))
         valid_labels = {1, 2, 3, 4}
         for les in lesions_list:
-            region_label = les.get("region_label", les.get("label", 0))
+            region_label = les.get("region_id", les.get("region_label", les.get("label", 0)))
             assert region_label in valid_labels, f"Invalid MAGNIMS label: {region_label}"

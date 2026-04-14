@@ -132,16 +132,12 @@ class TestLoadNiftiFromBytes:
     def test_valid_nifti_roundtrip(self):
         """A real NIfTI file created in-memory loads correctly."""
         import nibabel as nib
-        import io
 
         from app.utils.nifti_utils import load_nifti_from_bytes
 
-        # Create a valid NIfTI in memory
+        # Create a valid NIfTI via tempfile (nibabel requires a file path)
         data = np.random.rand(8, 8, 8).astype(np.float32)
         img = nib.Nifti1Image(data, np.eye(4))
-        bio = io.BytesIO()
-        nib.save(img, bio)  # nibabel can save to file-like with .nii extension workaround
-        # nibabel needs a real file for saving, so use tempfile
         with tempfile.NamedTemporaryFile(suffix=".nii.gz", delete=False) as tmp:
             nib.save(img, tmp.name)
             tmp_path = tmp.name
@@ -156,7 +152,7 @@ class TestLoadNiftiFromBytes:
                 os.unlink(tmp_path)
 
     def test_temp_file_cleanup_on_success(self):
-        """Temporary file is deleted after successful load."""
+        """load_nifti_from_bytes does not leave temp files behind."""
         import nibabel as nib
 
         from app.utils.nifti_utils import load_nifti_from_bytes
@@ -170,21 +166,18 @@ class TestLoadNiftiFromBytes:
             with open(tmp_path, "rb") as f:
                 file_bytes = f.read()
 
-            # Track temp files created during load
-            original_named_temp = tempfile.NamedTemporaryFile
-            created_paths = []
+            # Count temp files before and after
+            temp_dir = tempfile.gettempdir()
+            before = set(os.listdir(temp_dir))
+            loaded_img, loaded_data = load_nifti_from_bytes(file_bytes)
+            after = set(os.listdir(temp_dir))
 
-            def tracking_temp(**kwargs):
-                result = original_named_temp(**kwargs)
-                created_paths.append(result.name)
-                return result
-
-            with patch("app.utils.nifti_utils.tempfile.NamedTemporaryFile", side_effect=tracking_temp):
-                load_nifti_from_bytes(file_bytes)
-
-            # Verify temp file was cleaned up
-            for path in created_paths:
-                assert not os.path.exists(path), f"Temp file not cleaned up: {path}"
+            # Verify data loaded correctly
+            assert loaded_data.shape == (4, 4, 4)
+            # New nifti temp files should be cleaned up (not persist)
+            new_files = after - before
+            nifti_temps = [f for f in new_files if '.nii' in f]
+            assert len(nifti_temps) == 0, f"Temp NIfTI files not cleaned up: {nifti_temps}"
         finally:
             if os.path.exists(tmp_path):
                 os.unlink(tmp_path)
