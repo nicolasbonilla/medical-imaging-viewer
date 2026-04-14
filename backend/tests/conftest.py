@@ -76,23 +76,30 @@ def container():
 
 @pytest.fixture
 async def async_client() -> AsyncGenerator[AsyncClient, None]:
-    """Create an async HTTP client for testing FastAPI endpoints with auth."""
+    """Create an async HTTP client with valid JWT auth for integration tests."""
     if app is None:
         pytest.skip("FastAPI app not available (app dependencies not installed)")
 
-    # Generate a test JWT token for integration tests
+    # Generate a real JWT token using the same TokenManager the app uses
     test_token = None
     try:
-        from app.core.security.auth import TokenManager
+        from app.security.jwt_manager import TokenManager
+        from app.security.models import UserRole
         tm = TokenManager(
             secret_key=os.environ.get('JWT_SECRET_KEY', 'test-secret-key-minimum-32-characters-required-for-security'),
             algorithm="HS256",
-            access_token_expire_minutes=30,
+            access_token_expire_minutes=60,
             refresh_token_expire_days=7,
         )
-        test_token = tm.create_access_token(data={"sub": "test_user", "role": "admin"})
-    except Exception:
-        pass
+        token_obj = tm.create_access_token(
+            user_id="test-user-001",
+            username="test_admin",
+            role=UserRole.ADMIN,
+        )
+        test_token = token_obj.access_token
+    except Exception as e:
+        import warnings
+        warnings.warn(f"conftest: Could not generate JWT token: {e}")
 
     transport = ASGITransport(app=app)
     headers = {"Authorization": f"Bearer {test_token}"} if test_token else {}
@@ -160,12 +167,12 @@ def token_manager():
     """Create token manager for testing."""
     if settings is None:
         pytest.skip("Settings not available (app dependencies not installed)")
-    from app.core.security.auth import TokenManager
+    from app.security.jwt_manager import TokenManager
     return TokenManager(
         secret_key=settings.JWT_SECRET_KEY,
         algorithm="HS256",
         access_token_expire_minutes=30,
-        refresh_token_expire_days=7
+        refresh_token_expire_days=7,
     )
 
 
@@ -240,17 +247,27 @@ async def admin_user(admin_user_data: dict, password_manager):
 @pytest.fixture
 def test_access_token(test_user, token_manager) -> str:
     """Generate access token for test user."""
-    return token_manager.create_access_token(
-        data={"sub": test_user.username, "role": test_user.role}
+    from app.security.models import UserRole
+    role = UserRole(test_user.role) if isinstance(test_user.role, str) else test_user.role
+    token_obj = token_manager.create_access_token(
+        user_id=getattr(test_user, 'id', 'test-id'),
+        username=test_user.username,
+        role=role,
     )
+    return token_obj.access_token
 
 
 @pytest.fixture
 def admin_access_token(admin_user, token_manager) -> str:
     """Generate access token for admin user."""
-    return token_manager.create_access_token(
-        data={"sub": admin_user.username, "role": admin_user.role}
+    from app.security.models import UserRole
+    role = UserRole(admin_user.role) if isinstance(admin_user.role, str) else admin_user.role
+    token_obj = token_manager.create_access_token(
+        user_id=getattr(admin_user, 'id', 'admin-id'),
+        username=admin_user.username,
+        role=role,
     )
+    return token_obj.access_token
 
 
 @pytest.fixture
