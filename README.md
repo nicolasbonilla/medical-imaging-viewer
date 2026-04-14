@@ -110,6 +110,7 @@ Commercial QMS solutions (Ketryx ~$50K/yr, Greenlight Guru ~$30K/yr, MasterContr
 | **ISO 13485:2016** | Quality management systems | Forms, audit trail, document control |
 | **ISO 14971:2019** | Risk management | Traceability graph, risk verification (TPL-04) |
 | **IEC 81001-5-1:2021** | Health software cybersecurity | SOUP monitoring, auth coverage analysis |
+| **ISO/IEC 27001:2022** | Information security management | ISMS-001 control mapping (42 controls, 95% alignment) |
 | **EU MDR 2017/745** | Medical device regulation | Compliance scoring, incident reporting (TPL-08) |
 | **EU AI Act 2024/1689** | AI governance | AI documentation, transparency tracking |
 
@@ -168,8 +169,9 @@ docs/
 │   ├── 12_Cybersecurity_Assessment.md
 │   ├── 13_Release_Procedure.md
 │   └── 14_Segregation_Analysis.md
-├── qms/                               # ISO 13485 quality management
+├── qms/                               # ISO 13485 quality management + ISO 27001 ISMS
 │   ├── QM-001_Quality_Manual.md
+│   ├── ISMS-001_Information_Security_Management.md  (ISO 27001 Annex A mapping)
 │   ├── QP-001_Document_Control.md
 │   ├── QP-003_Management_Review.md
 │   ├── QP-004_Internal_Audit.md
@@ -604,21 +606,24 @@ mstool-ai/
 
 ## 10. Security & Compliance
 
-| Layer | Mechanism | Standard |
-|-------|-----------|----------|
-| Authentication | Firebase Auth + JWT + WebAuthn/Passkeys | FIDO2 / W3C WebAuthn Level 2 |
-| Encryption at Rest | AES-256-GCM (user data), GCS server-side encryption | ISO 27001 A.10.1.1 |
-| Encryption in Transit | TLS 1.3 enforced | ISO 27001 A.13.1.1 |
-| Access Control | RBAC with 4 roles, 15 permissions | ISO 27001 A.9.4.1 |
-| Audit Logging | Structured JSON logs per access | HIPAA 164.312(b) |
-| De-Identification | PHI stripped before AI API calls | HIPAA 164.514(b) |
-| Rate Limiting | Token bucket (100 req capacity, 10 req/s refill) | OWASP |
-| Input Validation | Pydantic schemas + sanitization | OWASP Top 10 |
-| Password Policy | Argon2id, 12+ chars, complexity, history | NIST SP 800-63B |
-| Session Management | Configurable timeout, automatic logout | ISO 27001 A.9.4.2 |
-| CI/CD | GitHub Actions (TypeScript, build, pytest, syntax) | IEC 62304 |
-| QMS Monitoring | [MSTool-AI-QMS](https://mstool-ai-qms.web.app) — AI-powered compliance automation | IEC 62304 + ISO 13485 |
-| Secrets Management | Cloud-excluded env.yaml, .gitignore protected | ISO 27001 A.10.1.2 |
+The security architecture satisfies **IEC 81001-5-1:2021** (mandatory for CE Marking) using **ISO 27001:2022 Annex A** as the control framework, as recommended by **MDCG 2019-16 Rev.1**. See `docs/qms/ISMS-001_Information_Security_Management.md` for the complete ISO 27001 control mapping (42 controls assessed, **95% alignment**).
+
+| Layer | Mechanism | IEC 81001-5-1 | ISO 27001 |
+|-------|-----------|:-------------:|:---------:|
+| Authentication | Firebase Auth + JWT + WebAuthn/Passkeys (FIDO2) | 5.3.2 | A.8.5 |
+| Access Control | RBAC with 4 roles, 15 permissions | 5.3.3 | A.5.2, A.8.3 |
+| Encryption at Rest | AES-256-GCM (user data), GCS server-side encryption | 5.3.5 | A.8.24 |
+| Encryption in Transit | TLS 1.3 enforced (Cloud Run + Firebase) | 5.3.5 | A.8.24 |
+| De-Identification | PHI stripped before AI API calls | 5.3.6 | A.8.12 |
+| Audit Logging | Structured JSON logs + QMS immutable audit trail | 5.3.7 | A.8.15, A.5.28 |
+| Input Validation | Pydantic schemas + sanitization on all endpoints | 5.3.10 | A.8.7, A.8.28 |
+| SOUP Management | SBOM (CycloneDX) + npm/pip audit in CI + QMS CVE scan | 5.3.11, 5.3.12 | A.5.9, A.8.8 |
+| Rate Limiting | Token bucket (100 req/min per IP) | 5.3.9 | A.8.20 |
+| Password Policy | Argon2id, 12+ chars, complexity, history | 5.3.2 | A.8.5 |
+| Session Management | Configurable timeout, automatic logout | 5.3.4 | A.8.5 |
+| Secure Development | IEC 62304 Class C lifecycle, CODEOWNERS, CI/CD | 5.3.1 | A.8.25, A.8.26 |
+| QMS Monitoring | [MSTool-AI-QMS](https://mstool-ai-qms.web.app) — AI-powered compliance (93.9%) | 5.3.1 | A.5.36 |
+| Secrets Management | Cloud-excluded env.yaml, .gitignore protected | 5.3.5 | A.8.24 |
 
 ---
 

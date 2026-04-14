@@ -1,17 +1,28 @@
 # MSTool-AI: Cybersecurity Assessment
 
-## IEC 81001-5-1:2021 + IEC 62304 Amendment 1 (2015) Compliance
+## IEC 81001-5-1:2021 + ISO 27001:2022 + IEC 62304 Amendment 1 (2015) Compliance
 
 **Document ID**: CSA-001
-**Version**: 1.0
-**Effective Date**: April 12, 2026
-**Standards**: IEC 81001-5-1:2021 (Health software and health IT systems safety, effectiveness and security), IEC 62304:2006+A1:2015 (cybersecurity requirements)
+**Version**: 1.1
+**Effective Date**: April 14, 2026
+**Standards**: IEC 81001-5-1:2021 (Health software cybersecurity — primary), ISO/IEC 27001:2022 (ISMS control framework), IEC 62304:2006+A1:2015 (cybersecurity requirements)
+**Related Documents**: ISMS-001 (ISO 27001 Annex A Control Mapping)
 
 ---
 
 ## 1. Scope
 
-This assessment covers the cybersecurity posture of MSTool-AI as a cloud-deployed medical device software (SaMD) processing sensitive medical imaging data. The assessment addresses requirements from IEC 81001-5-1:2021 and the cybersecurity additions in IEC 62304 Amendment 1 (2015).
+This assessment covers the cybersecurity posture of MSTool-AI as a cloud-deployed medical device software (SaMD) processing sensitive medical imaging data. The assessment addresses requirements from IEC 81001-5-1:2021 (primary obligation for CE Marking) and uses ISO/IEC 27001:2022 Annex A as the control framework, as recommended by MDCG 2019-16 Rev.1.
+
+### 1.1 Regulatory Hierarchy for Cybersecurity
+
+For CE Marking under EU MDR 2017/745:
+- **EU MDR Annex I, Section 17.2** requires cybersecurity measures "according to the state of the art"
+- **IEC 81001-5-1:2021** is the harmonized standard satisfying this requirement (mandatory)
+- **ISO/IEC 27001:2022** provides the recognized control framework referenced by MDCG 2019-16
+- **IEC 62304 Amendment 1 (2015)** adds software-specific cybersecurity requirements
+
+The complete ISO 27001 Annex A control mapping is documented in **ISMS-001** (42 controls assessed, 95% alignment).
 
 ---
 
@@ -40,27 +51,27 @@ Internet
 
 ### 3.1 Authentication and Access Control
 
-| Control | Implementation | IEC 81001-5-1 Clause | Status |
-|---------|---------------|---------------------|--------|
-| User authentication | Firebase Auth + JWT — 103 API endpoints, 100% coverage | 5.3.2 | IMPLEMENTED |
-| Biometric auth (WebAuthn/Passkeys) | FIDO2 protocol, credentials in Firestore | 5.3.2 | IMPLEMENTED |
-| Role-based access control (RBAC) | 4 roles, 15 granular permissions | 5.3.3 | IMPLEMENTED |
-| Token expiration | JWT expires in 60 minutes | 5.3.2 | IMPLEMENTED |
-| Account lockout | After 5 failed attempts, 30 min lock | 5.3.2 | IMPLEMENTED |
-| Password policy | Argon2id, 12+ chars, complexity, history | 5.3.2 | IMPLEMENTED |
-| Session management | Configurable idle timeout with warning | 5.3.4 | IMPLEMENTED |
-| CAPTCHA | Numeric challenge after failed attempts | 5.3.2 | IMPLEMENTED |
+| Control | Implementation | IEC 81001-5-1 | ISO 27001 | Status |
+|---------|---------------|---------------|-----------|--------|
+| User authentication | Firebase Auth + JWT — 103 API endpoints, 100% coverage | 5.3.2 | A.8.5 | IMPLEMENTED |
+| Biometric auth (WebAuthn/Passkeys) | FIDO2 protocol, credentials in Firestore | 5.3.2 | A.8.5 | IMPLEMENTED |
+| Role-based access control (RBAC) | 4 roles, 15 granular permissions | 5.3.3 | A.5.2, A.8.3 | IMPLEMENTED |
+| Token expiration | JWT expires in 60 minutes | 5.3.2 | A.8.5 | IMPLEMENTED |
+| Account lockout | After 5 failed attempts, 30 min lock | 5.3.2 | A.8.5 | IMPLEMENTED |
+| Password policy | Argon2id, 12+ chars, complexity, history | 5.3.2 | A.8.5 | IMPLEMENTED |
+| Session management | Configurable idle timeout with warning | 5.3.4 | A.8.5 | IMPLEMENTED |
+| CAPTCHA | Numeric challenge after failed attempts | 5.3.2 | A.8.5 | IMPLEMENTED |
 
 ### 3.2 Data Protection
 
-| Control | Implementation | IEC 81001-5-1 Clause | Status |
-|---------|---------------|---------------------|--------|
-| Encryption in transit | TLS 1.3 (Cloud Run enforced) | 5.3.5 | IMPLEMENTED |
-| Encryption at rest (user data) | AES-256-GCM | 5.3.5 | IMPLEMENTED |
-| Encryption at rest (storage) | GCS server-side encryption | 5.3.5 | IMPLEMENTED |
-| PHI de-identification | Stripped before AI API calls | 5.3.6 | IMPLEMENTED |
-| Audit logging | Structured JSON per access event | 5.3.7 | IMPLEMENTED |
-| Data backup | GCS versioning + Firestore export | 5.3.8 | PARTIAL |
+| Control | Implementation | IEC 81001-5-1 | ISO 27001 | Status |
+|---------|---------------|---------------|-----------|--------|
+| Encryption in transit | TLS 1.3 (Cloud Run enforced) | 5.3.5 | A.8.24 | IMPLEMENTED |
+| Encryption at rest (user data) | AES-256-GCM | 5.3.5 | A.8.24 | IMPLEMENTED |
+| Encryption at rest (storage) | GCS server-side encryption | 5.3.5 | A.8.24 | IMPLEMENTED |
+| PHI de-identification | Stripped before AI API calls | 5.3.6 | A.8.12 | IMPLEMENTED |
+| Audit logging | Structured JSON per access event | 5.3.7 | A.8.15 | IMPLEMENTED |
+| Data backup | GCS versioning + Firestore export | 5.3.8 | A.5.29 | PARTIAL |
 
 ### 3.3 Network Security
 
@@ -182,4 +193,30 @@ npm audit and pip-audit are already integrated in `.github/workflows/ci.yml` and
 
 ---
 
-*End of Cybersecurity Assessment*
+---
+
+## 7. ISO 27001:2022 Alignment
+
+A comprehensive mapping of all applicable ISO 27001:2022 Annex A controls is documented in **ISMS-001_Information_Security_Management.md**.
+
+**Summary**: 42 of 93 Annex A controls are applicable to MSTool-AI as a cloud-deployed SaMD. Of these, **39 are fully implemented**, **2 are partial** (disaster recovery procedure, penetration testing), and **1 is N/A** (physical premises — cloud only).
+
+**Overall ISO 27001 Annex A Alignment: 95%**
+
+This alignment provides strong evidence for EU MDR Annex I Section 17.2 compliance ("state of the art" cybersecurity measures) and satisfies MDCG 2019-16 Rev.1 recommendations for recognized cybersecurity frameworks.
+
+---
+
+## 8. Continuous Monitoring
+
+All cybersecurity controls are continuously monitored by the **MSTool-AI-QMS** platform ([mstool-ai-qms.web.app](https://mstool-ai-qms.web.app)):
+
+- **Cybersecurity compliance score**: 93.9% (real-time, computed from auth coverage + input validation + SOUP vulnerability + CODEOWNERS)
+- **SOUP CVE scanning**: NVD API 2.0 integration with safety classification per IEC 62304
+- **AI code review**: Automated OWASP Top 10 analysis of Class C modules
+- **Auth coverage tracking**: 100% of API endpoints verified as protected
+
+---
+
+*End of Cybersecurity Assessment — CSA-001 v1.1*
+*Monitored by [MSTool-AI-QMS](https://mstool-ai-qms.web.app)*
