@@ -777,6 +777,15 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "slow: Tests that take significant time to run"
     )
+    config.addinivalue_line(
+        "markers", "requires_firestore: Tests requiring Firestore (emulator or real)"
+    )
+    config.addinivalue_line(
+        "markers", "requires_pacs: Tests requiring PACS connection"
+    )
+    config.addinivalue_line(
+        "markers", "requires_gcs: Tests requiring Google Cloud Storage"
+    )
 
 
 # =============================================================================
