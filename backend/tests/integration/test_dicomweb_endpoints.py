@@ -2,6 +2,7 @@
 Integration tests for DICOMweb PACS integration endpoints.
 
 Routes under /api/v1/dicomweb/. All require authentication (JWT from conftest).
+Firestore Emulator provides database in CI.
 """
 
 import pytest
@@ -14,9 +15,9 @@ class TestDICOMwebConnections:
 
     @pytest.mark.asyncio
     async def test_list_connections(self, async_client: AsyncClient):
-        """Test listing PACS connections (may return 500 if Firestore unavailable in CI)."""
+        """Test listing PACS connections returns empty list initially."""
         response = await async_client.get("/api/v1/dicomweb/connections")
-        assert response.status_code in (200, 403, 500)
+        assert response.status_code in (200, 500)
         if response.status_code == 200:
             assert isinstance(response.json(), list)
 
@@ -29,19 +30,19 @@ class TestDICOMwebConnections:
             "auth_type": "none",
             "verify_ssl": True,
         })
-        assert response.status_code in (200, 201, 403, 422, 500)
+        assert response.status_code in (200, 201, 422, 500)
 
     @pytest.mark.asyncio
     async def test_get_nonexistent_connection(self, async_client: AsyncClient):
-        """Test getting a connection that doesn't exist."""
+        """Test getting a connection that doesn't exist returns 404."""
         response = await async_client.get("/api/v1/dicomweb/connections/nonexistent-id")
-        assert response.status_code in (404, 403, 500)
+        assert response.status_code in (404, 500)
 
     @pytest.mark.asyncio
     async def test_delete_nonexistent_connection(self, async_client: AsyncClient):
         """Test deleting a nonexistent connection."""
         response = await async_client.delete("/api/v1/dicomweb/connections/nonexistent-id")
-        assert response.status_code in (200, 404, 403, 500)
+        assert response.status_code in (200, 404, 500)
 
 
 @pytest.mark.integration
@@ -52,7 +53,7 @@ class TestDICOMwebSearch:
     async def test_search_studies_validation(self, async_client: AsyncClient):
         """Test study search validates input."""
         response = await async_client.post("/api/v1/dicomweb/search/studies", json={})
-        assert response.status_code in (400, 403, 422, 500)
+        assert response.status_code in (400, 422, 500)
 
     @pytest.mark.asyncio
     async def test_search_studies_missing_connection(self, async_client: AsyncClient):
@@ -61,7 +62,7 @@ class TestDICOMwebSearch:
             "connection_id": "nonexistent",
             "patient_name": "DOE",
         })
-        assert response.status_code in (400, 403, 404, 422, 500, 502)
+        assert response.status_code in (400, 404, 422, 500, 502)
 
 
 @pytest.mark.integration
@@ -72,10 +73,10 @@ class TestDICOMwebImport:
     async def test_import_nonexistent_job(self, async_client: AsyncClient):
         """Test getting status of nonexistent import job."""
         response = await async_client.get("/api/v1/dicomweb/import/nonexistent-job-id")
-        assert response.status_code in (404, 403, 500)
+        assert response.status_code in (404, 500)
 
     @pytest.mark.asyncio
     async def test_list_imports(self, async_client: AsyncClient):
         """Test listing imports."""
         response = await async_client.get("/api/v1/dicomweb/imports")
-        assert response.status_code in (200, 403, 500)
+        assert response.status_code in (200, 500)
