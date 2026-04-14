@@ -91,7 +91,6 @@ jobs:
           python -m pytest tests/unit/ -v --tb=short --cov=app --cov-report=xml --cov-report=term-missing --timeout=60
         timeout-minutes: 10
       - name: Run integration tests (IEC 62304 Clause 5.6)
-        continue-on-error: true
         run: |
           python -m pytest tests/integration/ -v --tb=short -k "not requires_pacs and not requires_gcs" --timeout=60
         timeout-minutes: 10
