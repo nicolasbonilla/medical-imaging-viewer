@@ -5,6 +5,8 @@
 This project is a **Class C medical device software** under IEC 62304:2006+A1:2015.
 Every code change can potentially affect patient safety. Follow these rules without exception.
 
+**QMS Platform**: This repository is continuously monitored by [MSTool-AI-QMS](https://mstool-ai-qms.web.app) — an AI-powered compliance automation platform that scores compliance in real-time, detects risks in code changes, and tracks traceability. See [github.com/nicolasbonilla/mstool-ai-qms](https://github.com/nicolasbonilla/mstool-ai-qms) for details.
+
 ---
 
 ## Before Writing Any Code

@@ -29,10 +29,11 @@ IEC 62304 Software Safety Class C per RMF-001 Section 3 (death or serious injury
 
 | Document | ID | Description |
 |----------|-----|-------------|
-| Software Requirements Specification | SRS-001 | Requirements (91 items) |
+| Software Requirements Specification | SRS-001 | Requirements (106 items) |
 | Risk Management File | RMF-001 | ISO 14971 risk analysis (14 hazards, 22 controls) |
 | Master Compliance Document | IEC62304-MASTER-001 | Clause-by-clause assessment |
 | Technical Documentation | TD-001 | Architecture and algorithms |
+| **QMS Platform** | **QMS-001** | **AI-powered compliance automation ([mstool-ai-qms.web.app](https://mstool-ai-qms.web.app))** |
 
 ---
 

@@ -23,7 +23,11 @@ MSTool-AI is committed to developing safe, effective, and reliable AI-powered me
 
 ## 2. Scope
 
-### 2.1 QMS Scope
+### 2.1 QMS Platform
+
+Quality management processes are supported by **MSTool-AI-QMS** ([mstool-ai-qms.web.app](https://mstool-ai-qms.web.app)), an AI-powered compliance automation platform that continuously monitors this repository and provides real-time compliance scoring, automated audit simulation, traceability visualization, form management (TPL-01 to TPL-11), SOUP/CVE monitoring, and AI-assisted analysis (Claude Sonnet 4). See the QMS repository for technical details: [github.com/nicolasbonilla/mstool-ai-qms](https://github.com/nicolasbonilla/mstool-ai-qms).
+
+### 2.2 QMS Scope
 
 This Quality Management System applies to the design, development, deployment, and maintenance of **MSTool-AI**, a cloud-native Software as a Medical Device (SaMD) for:
 - AI-assisted brain MRI segmentation for Multiple Sclerosis

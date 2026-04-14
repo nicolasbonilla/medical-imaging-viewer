@@ -85,7 +85,23 @@ The software is deployed on Google Cloud (Cloud Run + Firebase Hosting) and acce
 
 **Compliance improvement**: Initial assessment (April 12, 2026) scored 47%. After creation of 14 formal regulatory documents (SDP, SRS, RMF, DD, TM, CMP, SPR, SOUP, VVP, SMP, CSA, REL, SEG + Master), compliance improved to 72%. Subsequent hardening — authentication enforcement on all 103 API endpoints (100% coverage), CI pipeline hardening (removal of `|| true` failure suppression), CODEOWNERS file, SBOM generation (CycloneDX 1.5), and creation of 18 additional regulatory documents (ISO 13485 QMS, Clinical Evaluation, Usability Engineering, EU MDR Technical Documentation, EU AI Act) — raised compliance to 85%. Further improvements — unit tests achieving 100% Class C module coverage (8 of 8 backend modules), 5 formal audit records (RCV-SUMMARY, TST-UNIT-SUMMARY, SOUP-2026-04, CR-SUMMARY, DR-SUMMARY) — raised compliance to 88%. Remaining gaps are primarily in **formal verification evidence** (penetration testing, clinical validation, document formal approval).
 
-### 1.5 Current Status
+### 1.5 Quality Management System (QMS)
+
+As of April 14, 2026, this project is continuously monitored by **MSTool-AI-QMS** ([mstool-ai-qms.web.app](https://mstool-ai-qms.web.app)), an AI-powered compliance automation platform that provides:
+
+- **Real-time compliance scoring** — IEC 62304: 97.1%, ISO 13485: 96.3%, Cybersecurity: 93.9%, CE Mark: 96.6%
+- **Automated audit simulation** — 20 IEC 62304 clauses checked against real repository evidence via GitHub API
+- **Traceability graph** — 242 nodes (106 REQs → 10 ARCH → 30 CODE → 10 TEST → 86 RISK) with orphan detection
+- **AI-powered analysis** — Claude Sonnet 4 (Anthropic) for CAPA generation, code review, risk detection, form auto-fill
+- **Form management** — 11 regulatory templates (TPL-01 to TPL-11) with 178 fields, e-signatures, PDF export
+- **SOUP monitoring** — Dependency parsing + NVD CVE scanning + IEC 62304 safety classification
+- **Immutable audit trail** — Every action logged to Cloud Firestore
+
+The QMS is a separate application (read-only observer) that does not modify this repository. It reads source code, documentation, and metadata via the GitHub API.
+
+**QMS Repository**: [github.com/nicolasbonilla/mstool-ai-qms](https://github.com/nicolasbonilla/mstool-ai-qms)
+
+### 1.6 Current Status
 
 The software's functional implementation is mature (~84,000 LOC across 224+ files), well-architected, and operational in a cloud environment. A comprehensive regulatory documentation suite of 14 documents (~4,500+ lines) has been created covering all IEC 62304 Sections 5-9 plus IEC 81001-5-1:2021 cybersecurity. The remaining compliance gaps are in:
 

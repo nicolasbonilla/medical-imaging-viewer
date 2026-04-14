@@ -10,12 +10,15 @@
 </h3>
 
 <p align="center">
-  <a href="https://brain-mri-476110.web.app"><strong>Live Application</strong></a> &nbsp;&bull;&nbsp;
+  <a href="https://app.mstool-ai.com"><strong>Live Application</strong></a> &nbsp;&bull;&nbsp;
+  <a href="https://mstool-ai-qms.web.app"><strong>QMS Platform</strong></a> &nbsp;&bull;&nbsp;
   <a href="docs/Technical_Documentation_MS_Brain_MRI_Viewer.md"><strong>Technical Documentation</strong></a> &nbsp;&bull;&nbsp;
   <a href="docs/MS_Brain_MRI_Viewer_Technical_Documentation.pdf"><strong>PDF Report</strong></a>
 </p>
 
 <p align="center">
+  <img src="https://img.shields.io/badge/IEC_62304-Class_C-red?style=flat-square" alt="IEC 62304 Class C">
+  <img src="https://img.shields.io/badge/QMS-AI_Powered-teal?style=flat-square" alt="QMS">
   <img src="https://img.shields.io/badge/React-18.3-61DAFB?logo=react" alt="React">
   <img src="https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi" alt="FastAPI">
   <img src="https://img.shields.io/badge/TypeScript-5.6-3178C6?logo=typescript" alt="TypeScript">
@@ -38,24 +41,25 @@
 
 The system implements a decoupled client-server architecture with a **React/TypeScript** single-page application deployed on Firebase Hosting and a **FastAPI/Python** backend deployed on Google Cloud Run with auto-scaling. State management employs the Zustand library following a single-source-of-truth pattern. Hospital integration is achieved through **DICOMweb** (QIDO-RS/WADO-RS) for PACS connectivity, **DICOM-SEG** for standardized segmentation export, and **HL7 FHIR R4** for EHR interoperability. The codebase comprises approximately **84,000 lines** of production code across **224+ files**, with CI/CD automation (GitHub Actions), 35+ automated tests, clinical measurement tools (ruler, angle, ROI), WebAuthn/Passkeys biometric authentication, edge-based neural network inference via ONNX Runtime Web, and Model Context Protocol (MCP) server integration for Claude-native tool use.
 
-**Live application**: [brain-mri-476110.web.app](https://brain-mri-476110.web.app)
+**Live application**: [app.mstool-ai.com](https://app.mstool-ai.com) | **QMS Platform**: [mstool-ai-qms.web.app](https://mstool-ai-qms.web.app)
 
 ---
 
 ## Table of Contents
 
 1. [Clinical Motivation](#1-clinical-motivation)
-2. [System Architecture](#2-system-architecture)
-3. [Core Features](#3-core-features)
-4. [Mathematical Foundations](#4-mathematical-foundations)
-5. [Technology Stack](#5-technology-stack)
-6. [Getting Started](#6-getting-started)
-7. [Deployment](#7-deployment)
-8. [Project Structure](#8-project-structure)
-9. [Security & Compliance](#9-security--compliance)
-10. [Performance](#10-performance)
-11. [References](#11-references)
-12. [License](#12-license)
+2. [Quality Management System (QMS)](#2-quality-management-system-qms)
+3. [System Architecture](#3-system-architecture)
+4. [Core Features](#4-core-features)
+5. [Mathematical Foundations](#5-mathematical-foundations)
+6. [Technology Stack](#6-technology-stack)
+7. [Getting Started](#7-getting-started)
+8. [Deployment](#8-deployment)
+9. [Project Structure](#9-project-structure)
+10. [Security & Compliance](#10-security--compliance)
+11. [Performance](#11-performance)
+12. [References](#12-references)
+13. [License](#13-license)
 
 ---
 
@@ -72,7 +76,119 @@ MSTool-AI addresses the gap between research-grade neuroimaging tools (FSL, Free
 
 ---
 
-## 2. System Architecture
+## 2. Quality Management System (QMS)
+
+MSTool-AI is classified as **IEC 62304 Class C** (highest safety class) medical device software, meaning a software failure could result in death or serious injury. To meet the rigorous regulatory requirements for CE Marking under the EU Medical Devices Regulation (2017/745), this project is monitored by a dedicated **AI-powered Quality Management System**.
+
+### MSTool-AI-QMS
+
+> **Live Platform**: [mstool-ai-qms.web.app](https://mstool-ai-qms.web.app)
+> **Repository**: [github.com/nicolasbonilla/mstool-ai-qms](https://github.com/nicolasbonilla/mstool-ai-qms)
+
+MSTool-AI-QMS is a **separate companion application** that continuously monitors this repository via GitHub API and automates regulatory compliance using large language models (Claude Sonnet 4, Anthropic) and agentic AI workflows. It does **not** modify the medical device code — it is a read-only observer that analyzes, scores, and reports.
+
+#### Why a Dedicated QMS?
+
+Commercial QMS solutions (Ketryx ~$50K/yr, Greenlight Guru ~$30K/yr, MasterControl ~$100K+/yr) provide workflow management but lack deep code-level intelligence. MSTool-AI-QMS takes a fundamentally different approach: it **reads the actual source code, test files, and documentation** to compute compliance metrics and uses **LLM reasoning** for intelligent analysis.
+
+#### What It Does
+
+| Capability | Description | AI Role |
+|-----------|-------------|---------|
+| **Compliance Dashboard** | Real-time scoring across IEC 62304, ISO 13485, IEC 81001-5-1, and CE Mark | Weighted scoring algorithm |
+| **Audit Simulator** | 20 IEC 62304 clauses checked against real repository evidence | AI generates remediation plans |
+| **Traceability Graph** | Interactive visualization: 106 REQs → Architecture → 30 Code modules → 10 Test files → 86 Risk Controls | AI-assisted orphan detection |
+| **Form Manager** | 11 regulatory templates (TPL-01 to TPL-11) with 178 fields, e-signatures, PDF export | AI auto-fills forms from code analysis |
+| **SOUP Monitor** | Dependency parsing + NVD CVE scanning + IEC 62304 safety classification | AI risk assessment per dependency |
+| **AI Assistant** | Floating chat panel — CAPA generation (5 Whys), code review, risk detection, compliance Q&A | Claude Sonnet 4 (Anthropic) |
+
+#### Regulatory Standards Enforced
+
+| Standard | Scope | QMS Coverage |
+|----------|-------|-------------|
+| **IEC 62304:2006+A1:2015** | Medical device software lifecycle | 20 clauses checked automatically |
+| **ISO 13485:2016** | Quality management systems | Forms, audit trail, document control |
+| **ISO 14971:2019** | Risk management | Traceability graph, risk verification (TPL-04) |
+| **IEC 81001-5-1:2021** | Health software cybersecurity | SOUP monitoring, auth coverage analysis |
+| **EU MDR 2017/745** | Medical device regulation | Compliance scoring, incident reporting (TPL-08) |
+| **EU AI Act 2024/1689** | AI governance | AI documentation, transparency tracking |
+
+#### Current Compliance Scores (Live)
+
+| Standard | Score | Status |
+|----------|-------|--------|
+| IEC 62304 | **97.1%** | PASS |
+| ISO 13485 | **96.3%** | PASS |
+| Cybersecurity | **93.9%** | PASS |
+| CE Mark Overall | **96.6%** | PASS |
+
+#### QMS Architecture
+
+The QMS is deployed as a fully independent cloud application:
+
+- **Frontend**: React + TypeScript on Firebase Hosting ([mstool-ai-qms.web.app](https://mstool-ai-qms.web.app))
+- **Backend**: FastAPI on Cloud Run (34 API endpoints)
+- **Database**: Cloud Firestore (forms, audit trail, user profiles)
+- **Auth**: Firebase Authentication with role-based access (Admin, QMS Manager, Developer, QA, Clinical Advisor, Viewer)
+- **AI**: Claude Sonnet 4 (Anthropic) for intelligent compliance analysis
+- **Data Source**: This repository via GitHub API (read-only)
+
+#### AI Capabilities in Detail
+
+The QMS uses **agentic AI at Level 3 (Assistive)** — the AI generates complete outputs that are presented to humans for review:
+
+| Agent | Input | Output |
+|-------|-------|--------|
+| **CAPA Generator** | Problem description + affected module | Root cause analysis (5 Whys), risk assessment, corrective/preventive actions |
+| **Code Reviewer** | Source file path | TPL-03 Code Review Checklist with pass/fail per criterion, issues with line numbers |
+| **Risk Detector** | Recent commits (automatic) | Risk severity per change, affected Class C modules, recommended actions |
+| **Audit Analyzer** | Audit results | Prioritized remediation plan with effort estimates and deadlines |
+| **Form Auto-Fill** | Template ID | Pre-populated fields from real repository data with confidence scores |
+| **Compliance Chat** | Natural language question | IEC 62304/ISO 13485/EU MDR guidance with clause references |
+
+#### Regulatory Documentation in This Repository
+
+This repository contains 33+ regulatory documents under `docs/`:
+
+```
+docs/
+├── iec62304/                          # IEC 62304 lifecycle documents
+│   ├── 00_IEC_62304_Master_Compliance_Document.md
+│   ├── 01_Software_Development_Plan.md
+│   ├── 02_Software_Requirements_Specification.md  (106 requirements)
+│   ├── 03_Risk_Management_File.md                 (36+ hazards)
+│   ├── 04_Software_Architecture_Design.md
+│   ├── 05_Traceability_Matrix.md
+│   ├── 06_Detailed_Design_Specification.md
+│   ├── 07_Configuration_Management_Plan.md
+│   ├── 08_Problem_Resolution_Procedure.md
+│   ├── 09_SOUP_Bill_of_Materials.md
+│   ├── 10_Verification_Validation_Plan.md
+│   ├── 11_Maintenance_Plan.md
+│   ├── 12_Cybersecurity_Assessment.md
+│   ├── 13_Release_Procedure.md
+│   └── 14_Segregation_Analysis.md
+├── qms/                               # ISO 13485 quality management
+│   ├── QM-001_Quality_Manual.md
+│   ├── QP-001_Document_Control.md
+│   ├── QP-003_Management_Review.md
+│   ├── QP-004_Internal_Audit.md
+│   ├── QP-005_Supplier_Evaluation.md
+│   └── QP-007_Complaints_Handling.md
+├── mdr/                               # EU MDR technical documentation
+│   ├── TD-001_Technical_Documentation.md
+│   └── PMS-001_Post_Market_Surveillance_Plan.md
+├── clinical/                          # Clinical evaluation
+├── usability/                         # IEC 62366 usability engineering
+└── ai-act/                            # EU AI Act compliance
+    └── AIA-001_AI_Act_Compliance.md
+```
+
+All these documents are automatically monitored by the QMS for freshness, completeness, and consistency with the codebase.
+
+---
+
+## 3. System Architecture
 
 ```
                          ┌─────────────────────────┐
@@ -99,7 +215,7 @@ MSTool-AI addresses the gap between research-grade neuroimaging tools (FSL, Free
 
 ---
 
-## 3. Core Features
+## 4. Core Features
 
 ### 3.1 Medical Image Visualization
 
@@ -214,7 +330,7 @@ Five MCP servers (FastMCP) providing Claude with 22 specialized tools:
 
 ---
 
-## 4. Mathematical Foundations
+## 5. Mathematical Foundations
 
 ### Euclidean Distance Transform (Region Classification)
 
@@ -259,7 +375,7 @@ HD₉₅(A, B) = max(P₉₅{d(a,B) : a ∈ ∂A}, P₉₅{d(b,A) : b ∈ ∂B})
 
 ---
 
-## 5. Technology Stack
+## 6. Technology Stack
 
 ### Frontend
 
@@ -310,7 +426,7 @@ HD₉₅(A, B) = max(P₉₅{d(a,B) : a ∈ ∂A}, P₉₅{d(b,A) : b ∈ ∂B})
 
 ---
 
-## 6. Getting Started
+## 7. Getting Started
 
 ### Prerequisites
 
@@ -352,7 +468,7 @@ Place an ONNX model at `frontend/public/models/brain_screening.onnx` for in-brow
 
 ---
 
-## 7. Deployment
+## 8. Deployment
 
 ### Frontend (Firebase Hosting)
 
@@ -369,7 +485,7 @@ gcloud builds submit --config=cloudbuild.yaml \
 
 ---
 
-## 8. Project Structure
+## 9. Project Structure
 
 ```
 mstool-ai/
@@ -486,7 +602,7 @@ mstool-ai/
 
 ---
 
-## 9. Security & Compliance
+## 10. Security & Compliance
 
 | Layer | Mechanism | Standard |
 |-------|-----------|----------|
@@ -501,11 +617,12 @@ mstool-ai/
 | Password Policy | Argon2id, 12+ chars, complexity, history | NIST SP 800-63B |
 | Session Management | Configurable timeout, automatic logout | ISO 27001 A.9.4.2 |
 | CI/CD | GitHub Actions (TypeScript, build, pytest, syntax) | IEC 62304 |
+| QMS Monitoring | [MSTool-AI-QMS](https://mstool-ai-qms.web.app) — AI-powered compliance automation | IEC 62304 + ISO 13485 |
 | Secrets Management | Cloud-excluded env.yaml, .gitignore protected | ISO 27001 A.10.1.2 |
 
 ---
 
-## 10. Performance
+## 11. Performance
 
 | Optimization | Impact |
 |-------------|--------|
@@ -518,7 +635,7 @@ mstool-ai/
 
 ---
 
-## 11. References
+## 12. References
 
 1. Montalban, X., et al. (2025). Revised McDonald criteria for the diagnosis of multiple sclerosis. *Lancet Neurology*, 24(10), 850–865.
 
@@ -542,12 +659,13 @@ mstool-ai/
 
 ---
 
-## 12. License
+## 13. License
 
 MIT
 
 ---
 
 <p align="center">
-  <sub>Built with React, FastAPI, NiiVue, Claude API, and WebAuthn. Deployed on Google Cloud.</sub>
+  <sub>Built with React, FastAPI, NiiVue, Claude API, and WebAuthn. Deployed on Google Cloud.</sub><br/>
+  <sub>Quality managed by <a href="https://mstool-ai-qms.web.app">MSTool-AI-QMS</a> — AI-powered regulatory compliance for IEC 62304 Class C.</sub>
 </p>
