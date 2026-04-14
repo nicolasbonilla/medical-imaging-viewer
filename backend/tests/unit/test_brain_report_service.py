@@ -90,15 +90,16 @@ class TestBrainReportService:
 
     def test_get_client_caches_instance(self):
         """Once created, the same client instance is reused."""
-        with patch("app.services.brain_report_service.anthropic") as mock_anthropic:
-            mock_anthropic.Anthropic.return_value = MagicMock()
-            self.service._settings.ANTHROPIC_API_KEY = "valid-key"
-            self.service._client = None
+        mock_module = MagicMock()
+        mock_module.Anthropic.return_value = MagicMock()
+        self.service._settings.ANTHROPIC_API_KEY = "valid-key"
+        self.service._client = None
 
+        with patch.dict("sys.modules", {"anthropic": mock_module}):
             client1 = self.service._get_client()
             client2 = self.service._get_client()
             assert client1 is client2
-            mock_anthropic.Anthropic.assert_called_once()
+            mock_module.Anthropic.assert_called_once()
 
     # =========================================================================
     # Report generation — success path

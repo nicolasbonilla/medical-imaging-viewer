@@ -86,7 +86,7 @@ class TestSegmentAuto:
         request = AutoSegmentRequest(file_id="test-file-123")
 
         with patch(
-            "app.services.ai_segmentation_service.get_tool_runner_service",
+            "app.core.container.get_tool_runner_service",
             side_effect=ImportError("No tool runner"),
         ):
             result = await self.service.segment_auto(request)
@@ -109,7 +109,7 @@ class TestSegmentAuto:
         mock_runner.get_task_status = AsyncMock(return_value=mock_task)
 
         with patch(
-            "app.services.ai_segmentation_service.get_tool_runner_service",
+            "app.core.container.get_tool_runner_service",
             return_value=mock_runner,
         ):
             result = await self.service.segment_auto(request)
@@ -127,7 +127,7 @@ class TestSegmentAuto:
         mock_runner.is_synthseg_available.return_value = False
 
         with patch(
-            "app.services.ai_segmentation_service.get_tool_runner_service",
+            "app.core.container.get_tool_runner_service",
             return_value=mock_runner,
         ):
             result = await self.service.segment_auto(request)
@@ -234,7 +234,7 @@ class TestListAvailableModels:
     async def test_graceful_when_tool_runner_unavailable(self):
         """Models list still returns when ToolRunnerService is not available."""
         with patch(
-            "app.services.ai_segmentation_service.get_tool_runner_service",
+            "app.core.container.get_tool_runner_service",
             side_effect=ImportError("not available"),
         ):
             result = await self.service.list_available_models()

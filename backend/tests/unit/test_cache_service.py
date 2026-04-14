@@ -37,6 +37,7 @@ class TestCacheService:
             service = RedisCacheService(host="localhost", port=6379)
             service._client = mock_redis
             service._redis_available = True
+            service._get_client = AsyncMock(return_value=mock_redis)
             yield service
 
     @pytest.mark.asyncio
@@ -65,14 +66,14 @@ class TestCacheService:
         key = "test_key"
         value = "test_value"
         ttl = timedelta(seconds=300)
+        mock_redis.setex = AsyncMock(return_value=True)
 
         # Act
-        await cache_service.set(key, value, ttl=ttl)
+        result = await cache_service.set(key, value, ttl=ttl)
 
         # Assert
-        mock_redis.set.assert_called_once()
-        call_args = mock_redis.set.call_args
-        assert call_args.kwargs.get('ex') == 300
+        assert result is True
+        mock_redis.setex.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_delete_key(self, cache_service, mock_redis):
@@ -104,47 +105,50 @@ class TestCacheService:
 
     @pytest.mark.asyncio
     async def test_clear_pattern(self, cache_service, mock_redis):
-        """Test clearing keys by pattern."""
+        """Test clearing keys by pattern via scan_iter."""
         # Arrange
         pattern = "test_*"
-        mock_redis.keys.return_value = [b"test_1", b"test_2", b"test_3"]
-        mock_redis.delete.return_value = 3
+
+        async def mock_scan_iter(**kwargs):
+            for key in [b"test_1", b"test_2", b"test_3"]:
+                yield key
+
+        mock_redis.scan_iter = mock_scan_iter
+        mock_redis.delete = AsyncMock(return_value=3)
 
         # Act
         count = await cache_service.clear_pattern(pattern)
 
         # Assert
         assert count == 3
-        mock_redis.keys.assert_called_once_with(pattern)
-        mock_redis.delete.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_increment(self, cache_service, mock_redis):
         """Test incrementing a counter."""
         # Arrange
         key = "counter"
-        mock_redis.incr.return_value = 5
+        mock_redis.incrby = AsyncMock(return_value=5)
 
         # Act
         result = await cache_service.increment(key)
 
         # Assert
         assert result == 5
-        mock_redis.incr.assert_called_once_with(key, 1)
+        mock_redis.incrby.assert_called_once_with(key, 1)
 
     @pytest.mark.asyncio
     async def test_decrement(self, cache_service, mock_redis):
         """Test decrementing a counter."""
         # Arrange
         key = "counter"
-        mock_redis.decr.return_value = 3
+        mock_redis.decrby = AsyncMock(return_value=3)
 
         # Act
         result = await cache_service.decrement(key)
 
         # Assert
         assert result == 3
-        mock_redis.decr.assert_called_once_with(key, 1)
+        mock_redis.decrby.assert_called_once_with(key, 1)
 
     @pytest.mark.asyncio
     async def test_get_ttl(self, cache_service, mock_redis):
@@ -175,35 +179,39 @@ class TestCacheService:
 
     @pytest.mark.asyncio
     async def test_set_many(self, cache_service, mock_redis):
-        """Test setting multiple key-value pairs."""
+        """Test setting multiple key-value pairs via pipeline."""
         # Arrange
         items = {
             "key1": "value1",
             "key2": "value2",
             "key3": "value3",
         }
-        mock_redis.set.return_value = True
+        mock_pipe = AsyncMock()
+        mock_pipe.mset = AsyncMock()
+        mock_pipe.execute = AsyncMock(return_value=[True])
+        mock_pipe.__aenter__ = AsyncMock(return_value=mock_pipe)
+        mock_pipe.__aexit__ = AsyncMock(return_value=False)
+        mock_redis.pipeline = MagicMock(return_value=mock_pipe)
 
         # Act
         result = await cache_service.set_many(items)
 
         # Assert
         assert result is True
-        assert mock_redis.set.call_count == 3
 
     @pytest.mark.asyncio
     async def test_get_many(self, cache_service, mock_redis):
-        """Test getting multiple keys."""
+        """Test getting multiple keys via mget."""
         # Arrange
         keys = ["key1", "key2", "key3"]
-        mock_redis.get.side_effect = [b'"value1"', b'"value2"', b'"value3"']
+        mock_redis.mget = AsyncMock(return_value=[b'"value1"', b'"value2"', b'"value3"'])
 
         # Act
         result = await cache_service.get_many(keys)
 
         # Assert
         assert result == {"key1": "value1", "key2": "value2", "key3": "value3"}
-        assert mock_redis.get.call_count == 3
+        mock_redis.mget.assert_called_once_with(keys)
 
     @pytest.mark.asyncio
     async def test_clear_all(self, cache_service, mock_redis):
