@@ -76,11 +76,27 @@ def container():
 
 @pytest.fixture
 async def async_client() -> AsyncGenerator[AsyncClient, None]:
-    """Create an async HTTP client for testing FastAPI endpoints."""
+    """Create an async HTTP client for testing FastAPI endpoints with auth."""
     if app is None:
         pytest.skip("FastAPI app not available (app dependencies not installed)")
+
+    # Generate a test JWT token for integration tests
+    test_token = None
+    try:
+        from app.core.security.auth import TokenManager
+        tm = TokenManager(
+            secret_key=os.environ.get('JWT_SECRET_KEY', 'test-secret-key-minimum-32-characters-required-for-security'),
+            algorithm="HS256",
+            access_token_expire_minutes=30,
+            refresh_token_expire_days=7,
+        )
+        test_token = tm.create_access_token(data={"sub": "test_user", "role": "admin"})
+    except Exception:
+        pass
+
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    headers = {"Authorization": f"Bearer {test_token}"} if test_token else {}
+    async with AsyncClient(transport=transport, base_url="http://test", headers=headers) as client:
         yield client
 
 
