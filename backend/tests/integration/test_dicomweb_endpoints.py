@@ -10,8 +10,9 @@ from httpx import AsyncClient
 
 
 @pytest.mark.integration
+@pytest.mark.requires_firestore
 class TestDICOMwebConnections:
-    """Test PACS connection management."""
+    """Test PACS connection management. Requires Firestore."""
 
     @pytest.mark.asyncio
     async def test_list_connections(self, async_client: AsyncClient):
