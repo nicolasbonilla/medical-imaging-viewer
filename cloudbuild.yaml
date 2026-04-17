@@ -10,19 +10,28 @@ steps:
       - '-f'
       - 'backend/Dockerfile'
       - './backend'
-    
+
   # Push the container image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args:
-      - 'push'
-      - 'gcr.io/$PROJECT_ID/brain-mri:$COMMIT_SHA'
-      
-  - name: 'gcr.io/cloud-builders/docker'
-    args:
-      - 'push'
-      - 'gcr.io/$PROJECT_ID/brain-mri:latest'
+    args: ['push', 'gcr.io/$PROJECT_ID/brain-mri:$COMMIT_SHA']
 
-  # Deploy container image to Cloud Run with CPU boost
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/brain-mri:latest']
+
+  # Deploy container image to Cloud Run
+  #
+  # CRITICAL: --update-env-vars PRESERVES env vars set out-of-band.
+  # The previous version had NO env-var flags → every deploy SILENTLY
+  # DELETED all secrets (ENCRYPTION_MASTER_KEY, JWT_SECRET_KEY, etc.)
+  # → login broke, CORS blocked, encryption failed.
+  #
+  # NEVER use --set-env-vars here (it replaces everything).
+  # NEVER remove the --update-env-vars line.
+  #
+  # Required env vars (configured once via gcloud run services update):
+  #   ENVIRONMENT, REDIS_HOST, JWT_SECRET_KEY, CORS_ORIGINS,
+  #   GOOGLE_CLOUD_PROJECT, GCS_BUCKET_NAME, GCS_PROJECT_ID,
+  #   ANTHROPIC_API_KEY, ENCRYPTION_MASTER_KEY
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'gcloud'
     args:
@@ -34,13 +43,30 @@ steps:
       - '--platform=managed'
       - '--allow-unauthenticated'
       - '--timeout=300'
-      - '--cpu=2'
-      - '--memory=2Gi'
+      - '--cpu=1'
+      - '--memory=1Gi'
       - '--min-instances=0'
-      - '--max-instances=10'
+      - '--max-instances=5'
+      - '--concurrency=40'
       - '--port=8080'
       - '--cpu-boost'
-      - '--no-cpu-throttling'
+      - '--cpu-throttling'
+      - '--update-env-vars'
+      - 'GOOGLE_CLOUD_PROJECT=brain-mri-476110'
+
+  # Cost guardrail: prune old container images (keep 3 most recent)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gcloud container images list-tags gcr.io/$PROJECT_ID/brain-mri \
+          --sort-by=~timestamp --format='value(digest)' --limit=999 | tail -n +4 | \
+        while read DIGEST; do
+          [ -n "$$DIGEST" ] && \
+            gcloud container images delete "gcr.io/$PROJECT_ID/brain-mri@$$DIGEST" \
+              --force-delete-tags --quiet || true
+        done
 
 images:
   - 'gcr.io/$PROJECT_ID/brain-mri:$COMMIT_SHA'

@@ -91,3 +91,8 @@ htmlcov/
 # OS
 Thumbs.db
 NUL
+
+# Large media files
+*.mp4
+*.mov
+*.avi
