@@ -96,3 +96,6 @@ NUL
 *.mp4
 *.mov
 *.avi
+frontend/public/*.mp4
+env.yaml
+audit_report.json

@@ -302,7 +302,8 @@
       "WebFetch(domain:help.jamasoftware.com)",
       "WebFetch(domain:reactflow.dev)",
       "WebFetch(domain:almdemo.polarion.com)",
-      "Bash(nslookup app.mstool-ai.com)"
+      "Bash(nslookup app.mstool-ai.com)",
+      "Bash(cd /c/Users/Nicolas/medical-imaging-viewer echo \"=== Removing obsolete files ===\")"
     ],
     "deny": [],
     "ask": [],
