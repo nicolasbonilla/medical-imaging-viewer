@@ -57,10 +57,16 @@ export function useEdgeAI(): UseEdgeAIReturn {
   // Track pending classify request while model loads
   const pendingClassifyRef = useRef<{ pixelData: Float32Array; width: number; height: number } | null>(null);
 
-  // Check model availability on mount
+  // Check model availability on mount.
+  // Firebase Hosting SPA rewrite returns 200 + index.html for ANY path
+  // (including /models/brain_screening.onnx when file doesn't exist).
+  // Must verify content-type is NOT text/html to avoid ONNX parsing HTML.
   useEffect(() => {
     fetch(MODEL_URL, { method: 'HEAD' })
-      .then((res) => setIsModelAvailable(res.ok))
+      .then((res) => {
+        const ct = res.headers.get('content-type') || '';
+        setIsModelAvailable(res.ok && !ct.includes('text/html'));
+      })
       .catch(() => setIsModelAvailable(false));
   }, []);
 
