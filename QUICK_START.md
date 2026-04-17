@@ -1,6 +1,18 @@
-# 🚀 Inicio Rápido - Medical Imaging Viewer
+# 🚀 Inicio Rápido - MSTool-AI (Medical Imaging Viewer)
 
-## Instalación Rápida (5 minutos)
+## Production
+
+The app is live at **https://app.mstool-ai.com**
+
+- Login: `admin / Admin123!@2024`
+- Backend API: `https://brain-mri-209356685171.us-central1.run.app`
+- API docs: `https://brain-mri-209356685171.us-central1.run.app/api/docs`
+- QMS companion: `https://mstool-ai-qms.web.app`
+
+For deployment, see [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md).
+For costs, see [COSTS.md](COSTS.md).
+
+## Local Development (5 minutes)
 
 ### Opción 1: Sin Docker (Desarrollo)
 

@@ -44,3 +44,8 @@ Run `bash test_endpoints.sh` — all 9 checks must PASS.
 ## Templates
 
 Fillable PDF forms are in `docs/iec62304/templates/` — use them for formal records.
+
+## Operational Documentation
+- **DEPLOYMENT_CHECKLIST.md** — 9 required env vars + verification commands + failure/fix table
+- **COSTS.md** — Infrastructure cost analysis with before/after optimization comparison
+

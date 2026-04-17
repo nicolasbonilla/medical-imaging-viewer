@@ -128,7 +128,7 @@ Commercial QMS solutions (Ketryx ~$50K/yr, Greenlight Guru ~$30K/yr, MasterContr
 The QMS is deployed as a fully independent cloud application:
 
 - **Frontend**: React + TypeScript on Firebase Hosting ([mstool-ai-qms.web.app](https://mstool-ai-qms.web.app))
-- **Backend**: FastAPI on Cloud Run (34 API endpoints)
+- **Backend**: FastAPI on Cloud Run (14 route modules (60+ endpoints))
 - **Database**: Cloud Firestore (forms, audit trail, user profiles)
 - **Auth**: Firebase Authentication with role-based access (Admin, QMS Manager, Developer, QA, Clinical Advisor, Viewer)
 - **AI**: Claude Sonnet 4 (Anthropic) for intelligent compliance analysis
