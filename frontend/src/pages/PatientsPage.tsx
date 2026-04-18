@@ -196,12 +196,7 @@ export default function PatientsPage() {
           { label: t('nav.home', 'Home'), path: '/app' },
           { label: t('patients.title') },
         ]}
-        rightControls={
-          <span className="px-3 py-1.5 bg-blue-500/10 dark:bg-blue-500/20 border border-blue-500/20 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-semibold flex items-center gap-1.5">
-            <Users className="w-3.5 h-3.5" />
-            {total} {t('patients.totalPatients', 'pacientes')}
-          </span>
-        }
+        /* No rightControls — total count shown in "Showing X of Y" below */
       />
 
       {/* Main Content - WCAG 2.4.1 Skip Link Target */}
