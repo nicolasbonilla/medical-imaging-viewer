@@ -306,7 +306,12 @@
       "Bash(cd /c/Users/Nicolas/medical-imaging-viewer echo \"=== Removing obsolete files ===\")",
       "WebFetch(domain:medcurity.com)",
       "WebFetch(domain:dmed-software.com)",
-      "WebFetch(domain:censinet.com)"
+      "WebFetch(domain:censinet.com)",
+      "WebFetch(domain:www.nngroup.com)",
+      "WebFetch(domain:www.w3.org)",
+      "WebFetch(domain:docs.ohif.org)",
+      "WebFetch(domain:insightsimaging.springeropen.com)",
+      "WebFetch(domain:link.springer.com)"
     ],
     "deny": [],
     "ask": [],

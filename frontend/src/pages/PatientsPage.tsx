@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import AppHeader from '../components/AppHeader';
 import { toast, Toaster } from 'sonner';
 import {
   Users,
@@ -188,57 +189,20 @@ export default function PatientsPage() {
       </div>
 
       {/* Header */}
-      <motion.header
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, type: 'spring', stiffness: 100 }}
-        className="relative z-10 backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border-b border-gray-200/50 dark:border-gray-700/50 shadow-lg shadow-gray-200/50 dark:shadow-gray-900/50"
-      >
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            {/* Logo & Title */}
-            <div className="flex items-center gap-4">
-              <motion.div
-                whileHover={{ scale: 1.05, rotate: 5 }}
-                whileTap={{ scale: 0.95 }}
-                className="relative cursor-pointer"
-                onClick={() => navigate('/app')}
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-accent-500 rounded-2xl blur-lg opacity-60 dark:opacity-40 animate-pulse-slow" />
-                <div className="relative bg-gradient-to-br from-primary-500 to-accent-500 p-3 rounded-2xl shadow-lg">
-                  <Activity className="w-7 h-7 text-white" />
-                </div>
-              </motion.div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-accent-600 dark:from-primary-400 dark:to-accent-400 bg-clip-text text-transparent flex items-center gap-2">
-                  {t('patients.title')}
-                  <Sparkles className="w-5 h-5 text-accent-500 dark:text-accent-400 animate-pulse" />
-                </h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                  {t('patients.subtitle', 'EHR Patient Management')}
-                </p>
-              </div>
-            </div>
-
-            {/* Right Side Controls */}
-            <div className="flex items-center gap-3">
-              {/* Stats Badge */}
-              <motion.span
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="px-4 py-2 bg-gradient-to-r from-primary-500/20 to-accent-500/20 dark:from-primary-500/30 dark:to-accent-600/30 backdrop-blur-md border border-primary-500/30 dark:border-primary-500/20 text-primary-700 dark:text-primary-400 rounded-xl text-xs font-semibold shadow-lg shadow-primary-500/10 flex items-center gap-2"
-              >
-                <Users className="w-4 h-4" />
-                {total} {t('patients.totalPatients', 'pacientes')}
-              </motion.span>
-
-              <ThemeToggle variant="minimal" />
-              <LanguageSelector variant="minimal" />
-              <UserMenu />
-            </div>
-          </div>
-        </div>
-      </motion.header>
+      <AppHeader
+        title={t('patients.title')}
+        subtitle={t('patients.subtitle', 'EHR Patient Management')}
+        breadcrumbs={[
+          { label: t('nav.home', 'Home'), path: '/app' },
+          { label: t('patients.title') },
+        ]}
+        rightControls={
+          <span className="px-3 py-1.5 bg-blue-500/10 dark:bg-blue-500/20 border border-blue-500/20 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-semibold flex items-center gap-1.5">
+            <Users className="w-3.5 h-3.5" />
+            {total} {t('patients.totalPatients', 'pacientes')}
+          </span>
+        }
+      />
 
       {/* Main Content - WCAG 2.4.1 Skip Link Target */}
       <main id="main-content" className="relative z-0 flex-1 p-6 overflow-auto" tabIndex={-1}>

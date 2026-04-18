@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import AppHeader from '../components/AppHeader';
 import { toast, Toaster } from 'sonner';
 import {
   ArrowLeft,
@@ -205,79 +206,28 @@ export default function PatientDetailPage() {
       </div>
 
       {/* Header */}
-      <motion.header
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, type: 'spring', stiffness: 100 }}
-        className="relative z-10 backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border-b border-gray-200/50 dark:border-gray-700/50 shadow-lg"
-      >
-        <div className="px-6 py-3">
-          <div className="flex items-center justify-between">
-            {/* Left: Back + Logo */}
-            <div className="flex items-center gap-4">
-              <motion.button
-                onClick={handleBack}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="p-2 bg-white/60 dark:bg-gray-800/60 hover:bg-white/80 dark:hover:bg-gray-800/80 rounded-xl border border-gray-200/50 dark:border-gray-700/50 transition-all"
-                aria-label={t('common.back')}
-              >
-                <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-              </motion.button>
-
-              <motion.div
-                whileHover={{ scale: 1.05, rotate: 5 }}
-                whileTap={{ scale: 0.95 }}
-                className="relative cursor-pointer"
-                onClick={() => navigate('/app')}
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-accent-500 rounded-2xl blur-lg opacity-60 dark:opacity-40 animate-pulse-slow" />
-                <div className="relative bg-gradient-to-br from-primary-500 to-accent-500 p-3 rounded-2xl shadow-lg">
-                  <Activity className="w-7 h-7 text-white" />
-                </div>
-              </motion.div>
-
-              <div>
-                <h1 className="text-lg font-bold bg-gradient-to-r from-primary-600 to-accent-600 dark:from-primary-400 dark:to-accent-400 bg-clip-text text-transparent">
-                  {t('viewer.title')}
-                </h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {t('navigation.subtitle')}
-                </p>
-              </div>
-            </div>
-
-            {/* Right: Actions */}
-            <div className="flex items-center gap-3">
-              <motion.button
-                onClick={handleEditPatient}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex items-center gap-2 px-4 py-2 bg-white/60 dark:bg-gray-800/60 hover:bg-white/80 dark:hover:bg-gray-800/80 border border-gray-200/50 dark:border-gray-700/50 rounded-xl transition-all text-sm font-medium"
-                aria-label={t('common.edit')}
-              >
-                <Edit className="w-4 h-4" />
-                {t('common.edit')}
-              </motion.button>
-
-              <motion.button
-                onClick={handleDeletePatient}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-xl transition-all text-sm font-medium"
-                aria-label={t('common.delete')}
-              >
-                <Trash2 className="w-4 h-4" />
-                {t('common.delete')}
-              </motion.button>
-
-              <ThemeToggle variant="minimal" />
-              <LanguageSelector variant="minimal" />
-              <UserMenu />
-            </div>
+      <AppHeader
+        title={patient?.full_name || t('patient.detail', 'Patient Detail')}
+        subtitle={patient?.mrn ? `MRN: ${patient.mrn}` : undefined}
+        breadcrumbs={[
+          { label: t('nav.home', 'Home'), path: '/app' },
+          { label: t('patients.title'), path: '/app/patients' },
+          { label: patient?.full_name || '...' },
+        ]}
+        onBack={handleBack}
+        rightControls={
+          <div className="flex items-center gap-2">
+            <button onClick={handleEditPatient}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/60 dark:bg-gray-800/60 hover:bg-white/80 dark:hover:bg-gray-800/80 border border-gray-200/50 dark:border-gray-700/50 rounded-lg transition-all text-xs font-medium">
+              <Edit className="w-3.5 h-3.5" /> {t('common.edit')}
+            </button>
+            <button onClick={handleDeletePatient}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-lg transition-all text-xs font-medium">
+              <Trash2 className="w-3.5 h-3.5" /> {t('common.delete')}
+            </button>
           </div>
-        </div>
-      </motion.header>
+        }
+      />
 
       {/* HIPAA-Compliant Patient Banner - Two Identifier Rule */}
       <PatientBanner patient={patient} />
