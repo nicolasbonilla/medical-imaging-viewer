@@ -61,72 +61,17 @@ export default function AppHeader({
   })();
 
   return (
-    <header className="relative z-20 backdrop-blur-xl bg-white/70 dark:bg-gray-900/80 border-b border-gray-200/50 dark:border-gray-700/50">
-      <div className={`px-5 ${compact ? 'py-2.5' : 'py-3'}`}>
-        <div className="flex items-center justify-between gap-4">
-
-          {/* Left: Back + Logo + Title + Breadcrumb */}
-          <div className="flex items-center gap-3 min-w-0">
-            {/* Back button */}
-            {onBack && (
-              <button onClick={onBack}
-                className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors shrink-0"
-                aria-label="Go back">
-                <ChevronRight className="w-4 h-4 text-gray-500 rotate-180" />
-              </button>
-            )}
-
-            {/* App logo — always visible, always same position */}
-            <Link to="/app" className="shrink-0 flex items-center gap-2.5 group" aria-label="MSTool-AI Home">
-              <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-2 rounded-xl shadow-md group-hover:shadow-lg transition-shadow">
-                <Brain className="w-5 h-5 text-white" />
-              </div>
-              <div className="hidden sm:block">
-                <span className="text-sm font-bold text-gray-800 dark:text-white leading-none">MSTool-AI</span>
-              </div>
-            </Link>
-
-            {/* Separator */}
-            <div className="w-px h-8 bg-gray-200 dark:bg-gray-700 shrink-0" />
-
-            {/* Breadcrumb + Title */}
-            <div className="min-w-0">
-              {/* Breadcrumb trail */}
-              {autoBreadcrumbs.length > 0 && (
-                <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-[11px] mb-0.5">
-                  {autoBreadcrumbs.map((item, i) => (
-                    <span key={i} className="flex items-center gap-1">
-                      {i > 0 && <ChevronRight className="w-3 h-3 text-gray-400 dark:text-gray-600 shrink-0" />}
-                      {item.path ? (
-                        <Link to={item.path}
-                          className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate max-w-[120px]">
-                          {item.label}
-                        </Link>
-                      ) : (
-                        <span className="text-gray-700 dark:text-gray-300 font-medium truncate max-w-[200px]"
-                          aria-current="page">
-                          {item.label}
-                        </span>
-                      )}
-                    </span>
-                  ))}
-                </nav>
-              )}
-
-              {/* Page title */}
-              <h1 className={`font-bold text-gray-900 dark:text-white leading-tight truncate ${compact ? 'text-base' : 'text-lg'}`}>
-                {title}
-              </h1>
-              {subtitle && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                  {subtitle}
-                </p>
-              )}
+    <header className="relative z-20">
+      {/* LINE 1: App identity (persistent, never changes layout) */}
+      <div className="backdrop-blur-xl bg-white/80 dark:bg-gray-900/90 border-b border-gray-200/50 dark:border-gray-700/50 px-5 py-2">
+        <div className="flex items-center justify-between">
+          <Link to="/app" className="flex items-center gap-2.5 group" aria-label="MSTool-AI Home">
+            <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-1.5 rounded-lg shadow-sm group-hover:shadow-md transition-shadow">
+              <Brain className="w-4 h-4 text-white" />
             </div>
-          </div>
-
-          {/* Right: Custom controls + standard controls */}
-          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-sm font-bold text-gray-800 dark:text-white">MSTool-AI</span>
+          </Link>
+          <div className="flex items-center gap-2">
             {rightControls}
             <ThemeToggle variant="minimal" />
             <LanguageSelector variant="minimal" />
@@ -134,6 +79,33 @@ export default function AppHeader({
           </div>
         </div>
       </div>
+
+      {/* LINE 2: Breadcrumb (shows where you are in the hierarchy) */}
+      {autoBreadcrumbs.length > 0 && (
+        <div className="bg-gray-50/80 dark:bg-gray-800/50 border-b border-gray-200/30 dark:border-gray-700/30 px-5 py-1.5">
+          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs">
+            {onBack && (
+              <button onClick={onBack} className="mr-1 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors" aria-label="Go back">
+                <ChevronRight className="w-3.5 h-3.5 rotate-180" />
+              </button>
+            )}
+            {autoBreadcrumbs.map((item, i) => (
+              <span key={i} className="flex items-center gap-1.5">
+                {i > 0 && <ChevronRight className="w-3 h-3 text-gray-300 dark:text-gray-600 shrink-0" />}
+                {item.path ? (
+                  <Link to={item.path} className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                    {item.label}
+                  </Link>
+                ) : (
+                  <span className="text-gray-800 dark:text-gray-200 font-medium" aria-current="page">
+                    {item.label}
+                  </span>
+                )}
+              </span>
+            ))}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }
