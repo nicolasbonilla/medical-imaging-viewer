@@ -2,9 +2,15 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, User, ChevronDown } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
+/**
+ * UserMenu — icon-only in header (36×36 avatar), name in dropdown.
+ *
+ * Design System §2: all header controls are 36×36, radius-md (6px).
+ * Name and role shown in dropdown panel, NOT in the button.
+ */
 export default function UserMenu() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -22,50 +28,50 @@ export default function UserMenu() {
 
   return (
     <div className="relative">
-      <motion.button
+      {/* Trigger: 36×36 avatar-only button — Design System §2 */}
+      <button
         onClick={() => setOpen(!open)}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        className="flex items-center gap-2 px-3 py-2 bg-white/60 dark:bg-gray-800/60 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-xl shadow-lg hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all"
+        aria-label={user.full_name}
+        title={`${user.full_name} (${user.role})`}
+        style={{ width: 36, height: 36, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-xs hover:opacity-90 transition-opacity"
       >
-        <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-accent-500 rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-lg">
-          {initials}
-        </div>
-        <div className="text-left hidden sm:block">
-          <p className="text-xs text-gray-900 dark:text-white font-semibold leading-tight">{user.full_name}</p>
-          <p className="text-[10px] text-gray-500 dark:text-gray-400 capitalize">{user.role.toLowerCase()}</p>
-        </div>
-        <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
-      </motion.button>
+        {initials}
+      </button>
 
       <AnimatePresence>
         {open && (
           <>
-            <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+            <div className="fixed inset-0" style={{ zIndex: 400 }} onClick={() => setOpen(false)} />
             <motion.div
-              initial={{ opacity: 0, y: -8, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.95 }}
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.15 }}
-              className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl overflow-hidden z-50"
+              className="absolute right-0 top-full mt-2 border border-gray-700 overflow-hidden"
+              style={{ width: 220, borderRadius: 8, background: '#1F2937', zIndex: 500 }}
             >
-              <div className="p-3 border-b border-gray-100 dark:border-gray-700">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">{user.full_name}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{user.email || user.username}</p>
+              {/* User info — visible here, NOT in the button */}
+              <div className="px-4 py-3 border-b border-gray-700">
+                <p style={{ fontSize: 14, fontWeight: 600, color: '#F9FAFB' }}>{user.full_name}</p>
+                <p style={{ fontSize: 12, color: '#9CA3AF' }}>{user.email || user.username}</p>
+                <p style={{ fontSize: 11, color: '#6B7280', marginTop: 2, textTransform: 'capitalize' }}>{user.role}</p>
               </div>
               <div className="py-1">
                 <button
                   onClick={() => { navigate('/app/profile'); setOpen(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                  className="w-full flex items-center gap-3 px-4 text-gray-300 hover:bg-gray-700/50 transition-colors"
+                  style={{ height: 40, fontSize: 13 }}
                 >
-                  <User className="w-4 h-4" />
+                  <User style={{ width: 16, height: 16 }} />
                   {t('auth.profile', 'My Profile')}
                 </button>
                 <button
                   onClick={() => { setOpen(false); logout(); }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                  className="w-full flex items-center gap-3 px-4 text-red-400 hover:bg-red-900/20 transition-colors"
+                  style={{ height: 40, fontSize: 13 }}
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut style={{ width: 16, height: 16 }} />
                   {t('auth.logout')}
                 </button>
               </div>

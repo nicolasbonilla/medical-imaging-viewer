@@ -56,13 +56,15 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
   if (variant === 'minimal') {
     return (
       <div className="relative">
+        {/* Design System §2: icon-only button, 36×36, radius-md (6px) */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-lg transition-all duration-200"
           aria-label="Change language"
+          title={currentLanguage.name}
+          style={{ width: 36, height: 36, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          className="bg-transparent hover:bg-gray-700 border border-gray-700 transition-colors"
         >
-          <Globe className="w-4 h-4 text-white" />
-          <span className="text-sm text-white font-medium">{currentLanguage.flag}</span>
+          <span style={{ fontSize: 16, lineHeight: 1 }}>{currentLanguage.flag}</span>
         </button>
 
         <AnimatePresence>
