@@ -27,8 +27,8 @@ export interface BreadcrumbItem {
 }
 
 interface AppHeaderProps {
-  /** Page title shown below breadcrumb */
-  title: string;
+  /** Page title (optional — breadcrumb last item serves as location) */
+  title?: string;
   /** Optional subtitle (e.g., study description) */
   subtitle?: string;
   /** Breadcrumb items — last item is current page (auto-marked) */
