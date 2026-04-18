@@ -66,29 +66,27 @@ export default function ViewerControls({
   if (!currentSeries) return null;
 
   return (
-    <div className="bg-gray-900 rounded-lg p-3 space-y-2">
+    <div style={{ background: '#111827', borderRadius: 8, padding: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
       {/* 2D-only: Render mode toggle and matplotlib controls */}
       {viewMode === '2d' && (
       <div>
-        <label className="block text-xs text-gray-300 mb-1">{t('viewer.renderMode')}</label>
-        <div className="flex gap-1">
+        <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{t('viewer.renderMode')}</label>
+        <div className="grid grid-cols-2" style={{ gap: 4 }}>
           <button
             onClick={() => setRenderMode('standard')}
-            className={`flex-1 px-2 py-1.5 rounded text-xs transition-colors ${
-              renderMode === 'standard'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            className={`flex items-center justify-center transition-colors ${
+              renderMode === 'standard' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
             }`}
+            style={{ height: 28, borderRadius: 6, fontSize: 12, fontWeight: 500 }}
           >
             {t('viewer.standard')}
           </button>
           <button
             onClick={() => setRenderMode('matplotlib')}
-            className={`flex-1 px-2 py-1.5 rounded text-xs transition-colors ${
-              renderMode === 'matplotlib'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            className={`flex items-center justify-center transition-colors ${
+              renderMode === 'matplotlib' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
             }`}
+            style={{ height: 28, borderRadius: 6, fontSize: 12, fontWeight: 500 }}
           >
             {t('viewer.matplotlib')}
           </button>
@@ -99,11 +97,12 @@ export default function ViewerControls({
       {viewMode === '2d' && renderMode === 'matplotlib' && (
         <>
           <div>
-            <label className="block text-xs text-gray-300 mb-1">{t('viewer.colormap')}</label>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{t('viewer.colormap')}</label>
             <select
               value={colormap}
               onChange={(e) => setColormap(e.target.value)}
-              className="w-full px-2 py-1.5 bg-gray-700 text-white rounded text-xs"
+              className="w-full border border-gray-600 focus:ring-1 focus:ring-blue-500 outline-none"
+              style={{ height: 28, padding: '0 8px', borderRadius: 6, background: '#1F2937', color: '#E5E7EB', fontSize: 12 }}
             >
               <option value="gray">{t('viewer.gray')}</option>
               <option value="viridis">{t('viewer.viridis')}</option>
@@ -117,69 +116,41 @@ export default function ViewerControls({
           </div>
 
           <div>
-            <label className="block text-xs text-gray-300 mb-1">{t('viewer.xAxis')}</label>
-            <div className="flex gap-2">
-              <input
-                type="number"
-                placeholder={t('viewer.min')}
-                value={xMin}
-                onChange={(e) => setXMin(e.target.value)}
-                className="w-16 px-1.5 py-1 bg-gray-700 text-white rounded text-xs"
-              />
-              <input
-                type="number"
-                placeholder={t('viewer.max')}
-                value={xMax}
-                onChange={(e) => setXMax(e.target.value)}
-                className="w-16 px-1.5 py-1 bg-gray-700 text-white rounded text-xs"
-              />
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{t('viewer.xAxis')}</label>
+            <div className="flex" style={{ gap: 4 }}>
+              <input type="number" placeholder={t('viewer.min')} value={xMin} onChange={(e) => setXMin(e.target.value)}
+                className="border border-gray-600 outline-none focus:ring-1 focus:ring-blue-500"
+                style={{ width: 64, height: 28, padding: '0 6px', borderRadius: 6, background: '#1F2937', color: '#E5E7EB', fontSize: 12 }} />
+              <input type="number" placeholder={t('viewer.max')} value={xMax} onChange={(e) => setXMax(e.target.value)}
+                className="border border-gray-600 outline-none focus:ring-1 focus:ring-blue-500"
+                style={{ width: 64, height: 28, padding: '0 6px', borderRadius: 6, background: '#1F2937', color: '#E5E7EB', fontSize: 12 }} />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs text-gray-300 mb-1">{t('viewer.yAxis')}</label>
-            <div className="flex gap-2">
-              <input
-                type="number"
-                placeholder={t('viewer.min')}
-                value={yMin}
-                onChange={(e) => setYMin(e.target.value)}
-                className="w-16 px-1.5 py-1 bg-gray-700 text-white rounded text-xs"
-              />
-              <input
-                type="number"
-                placeholder={t('viewer.max')}
-                value={yMax}
-                onChange={(e) => setYMax(e.target.value)}
-                className="w-16 px-1.5 py-1 bg-gray-700 text-white rounded text-xs"
-              />
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{t('viewer.yAxis')}</label>
+            <div className="flex" style={{ gap: 4 }}>
+              <input type="number" placeholder={t('viewer.min')} value={yMin} onChange={(e) => setYMin(e.target.value)}
+                className="border border-gray-600 outline-none focus:ring-1 focus:ring-blue-500"
+                style={{ width: 64, height: 28, padding: '0 6px', borderRadius: 6, background: '#1F2937', color: '#E5E7EB', fontSize: 12 }} />
+              <input type="number" placeholder={t('viewer.max')} value={yMax} onChange={(e) => setYMax(e.target.value)}
+                className="border border-gray-600 outline-none focus:ring-1 focus:ring-blue-500"
+                style={{ width: 64, height: 28, padding: '0 6px', borderRadius: 6, background: '#1F2937', color: '#E5E7EB', fontSize: 12 }} />
             </div>
           </div>
 
-          <div className="flex gap-1">
+          <div className="grid grid-cols-2" style={{ gap: 4 }}>
             <button
-              onClick={() => {
-                setAppliedXMin(xMin);
-                setAppliedXMax(xMax);
-                setAppliedYMin(yMin);
-                setAppliedYMax(yMax);
-              }}
-              className="flex-1 px-2 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs transition-colors"
+              onClick={() => { setAppliedXMin(xMin); setAppliedXMax(xMax); setAppliedYMin(yMin); setAppliedYMax(yMax); }}
+              className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+              style={{ height: 28, borderRadius: 6, fontSize: 12, fontWeight: 500 }}
             >
               {t('viewer.apply')}
             </button>
             <button
-              onClick={() => {
-                setXMin('');
-                setXMax('');
-                setYMin('');
-                setYMax('');
-                setAppliedXMin('');
-                setAppliedXMax('');
-                setAppliedYMin('');
-                setAppliedYMax('');
-              }}
-              className="flex-1 px-2 py-1.5 bg-gray-700 hover:bg-gray-600 text-white rounded text-xs transition-colors"
+              onClick={() => { setXMin(''); setXMax(''); setYMin(''); setYMax(''); setAppliedXMin(''); setAppliedXMax(''); setAppliedYMin(''); setAppliedYMax(''); }}
+              className="flex items-center justify-center bg-gray-800 hover:bg-gray-700 text-gray-300 transition-colors"
+              style={{ height: 28, borderRadius: 6, fontSize: 12, fontWeight: 500 }}
             >
               {t('viewer.reset')}
             </button>
@@ -187,17 +158,18 @@ export default function ViewerControls({
         </>
       )}
 
-      {/* Segmentation Toggle */}
-      <div className="pt-2 border-t border-gray-700">
+      {/* Segmentation Toggle — 28px (sm), radius 6 */}
+      <div className="border-t border-gray-700" style={{ paddingTop: 8 }}>
         <button
           onClick={() => setSegmentationMode(!segmentationMode)}
-          className={`w-full px-3 py-2 rounded text-sm font-medium transition-colors ${
+          className={`w-full flex items-center justify-center transition-colors ${
             segmentationMode
               ? 'bg-green-600 hover:bg-green-700 text-white'
-              : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+              : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
           }`}
+          style={{ height: 28, borderRadius: 6, fontSize: 12, fontWeight: 500 }}
         >
-          {segmentationMode ? `✓ ${t('viewer.segmentationMode')}` : `🎨 ${t('viewer.activateSegmentation')}`}
+          {segmentationMode ? `✓ ${t('viewer.segmentationMode')}` : t('viewer.activateSegmentation')}
         </button>
       </div>
 

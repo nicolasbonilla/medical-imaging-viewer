@@ -108,32 +108,33 @@ export default function ControlPanel() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-xl border-l border-gray-200/50 dark:border-gray-700/50">
+    <div className="h-full flex flex-col overflow-hidden" style={{ background: '#111827' }}>
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
 
         {/* Patient Info */}
         {patient && (
-          <div className="px-4 py-3 border-b border-gray-200/50 dark:border-gray-700/50 bg-gradient-to-r from-primary-500/5 to-accent-500/5 dark:from-primary-500/10 dark:to-accent-500/10">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-accent-500 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+          <div className="border-b border-gray-700" style={{ padding: '8px 12px' }}>
+            <div className="flex items-center" style={{ gap: 8 }}>
+              <div className="flex-shrink-0 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white"
+                style={{ width: 36, height: 36, borderRadius: 6, fontSize: 14, fontWeight: 700 }}>
                 {patient.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-gray-900 dark:text-white text-sm truncate">
+                <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: '#F9FAFB', margin: 0 }}>
                   {patient.full_name}
                 </p>
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                <div className="flex items-center" style={{ gap: 6, marginTop: 2 }}>
                   {patient.age != null && (
-                    <span>{patient.age} {t('patients.years')}</span>
+                    <span style={{ fontSize: 11, color: '#9CA3AF' }}>{patient.age} {t('patients.years')}</span>
                   )}
                   {patient.gender && (
-                    <span className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-[10px] font-medium uppercase">
+                    <span style={{ fontSize: 10, fontWeight: 500, color: '#9CA3AF', background: '#1F2937', padding: '1px 4px', borderRadius: 4, textTransform: 'uppercase' }}>
                       {patient.gender === 'male' ? 'M' : patient.gender === 'female' ? 'F' : patient.gender.charAt(0).toUpperCase()}
                     </span>
                   )}
                   {patient.mrn && (
-                    <span className="font-mono text-[10px]">MRN: {patient.mrn}</span>
+                    <span className="font-mono" style={{ fontSize: 10, color: '#6B7280' }}>MRN: {patient.mrn}</span>
                   )}
                 </div>
               </div>
@@ -143,15 +144,15 @@ export default function ControlPanel() {
 
         {/* Medical History */}
         {patient && (
-          <div className="px-4 py-2 border-b border-gray-200/50 dark:border-gray-700/50">
+          <div className="px-4 py-2 border-b border-gray-700">
             <button
               onClick={() => setHistoryOpen(!historyOpen)}
-              className="w-full flex items-center gap-2 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+              className="w-full flex items-center gap-2 py-1 text-[11px] font-medium text-gray-500 uppercase tracking-wide hover:text-gray-300 transition-colors"
             >
               <Activity className="w-3.5 h-3.5" />
               {t('panel.medicalHistory', 'Medical History')}
               {activeConditions.length > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full text-[10px] font-bold">
+                <span className="ml-1 px-1.5 py-0.5 bg-red-900/30 text-red-400 rounded-full text-[10px] font-bold">
                   {activeConditions.length}
                 </span>
               )}
@@ -163,7 +164,7 @@ export default function ControlPanel() {
             {historyOpen && (
               <div className="mt-1 space-y-1.5 pb-1">
                 {activeConditions.length === 0 ? (
-                  <p className="text-xs text-gray-400 dark:text-gray-500 py-1">
+                  <p className="text-xs text-gray-500 py-1">
                     {t('panel.noActiveConditions', 'No active conditions recorded')}
                   </p>
                 ) : (
@@ -198,14 +199,14 @@ export default function ControlPanel() {
 
         {/* Study Timeline */}
         {sortedStudies.length > 0 && (
-          <div className="px-4 py-2 border-b border-gray-200/50 dark:border-gray-700/50">
+          <div className="px-4 py-2 border-b border-gray-700">
             <button
               onClick={() => setTimelineOpen(!timelineOpen)}
-              className="w-full flex items-center gap-2 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+              className="w-full flex items-center gap-2 py-1 text-[11px] font-medium text-gray-500 uppercase tracking-wide hover:text-gray-300 transition-colors"
             >
               <Calendar className="w-3.5 h-3.5" />
               {t('panel.studyTimeline', 'Study Timeline')}
-              <span className="ml-1 px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-[10px] font-bold">
+              <span className="ml-1 px-1.5 py-0.5 bg-blue-900/30 text-blue-400 rounded-full text-[10px] font-bold">
                 {sortedStudies.length}
               </span>
               {timelineOpen
@@ -222,19 +223,19 @@ export default function ControlPanel() {
                       key={study.id}
                       className={`relative pl-5 py-1.5 text-xs rounded-md transition-colors ${
                         isCurrent
-                          ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                          ? 'bg-blue-900/20 text-blue-300'
+                          : 'text-gray-400 hover:bg-gray-800/50'
                       }`}
                     >
                       {/* Timeline dot and line */}
                       <div className="absolute left-1.5 top-0 bottom-0 flex flex-col items-center">
                         <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
                           isCurrent
-                            ? 'bg-primary-500 ring-2 ring-primary-300 dark:ring-primary-700'
-                            : 'bg-gray-300 dark:bg-gray-600'
+                            ? 'bg-blue-500 ring-2 ring-blue-700'
+                            : 'bg-gray-600'
                         }`} />
                         {idx < sortedStudies.length - 1 && (
-                          <div className="w-px flex-1 bg-gray-200 dark:bg-gray-700 mt-0.5" />
+                          <div className="w-px flex-1 bg-gray-700 mt-0.5" />
                         )}
                       </div>
                       <div className="flex items-center justify-between">
@@ -243,12 +244,12 @@ export default function ControlPanel() {
                             {formatDate(study.study_date)}
                           </span>
                           {isCurrent && (
-                            <span className="ml-1.5 text-[10px] font-bold uppercase text-primary-500">
+                            <span className="ml-1.5 text-[10px] font-bold uppercase text-blue-500">
                               {t('panel.current', 'Current')}
                             </span>
                           )}
                         </div>
-                        <span className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-[10px] font-medium">
+                        <span className="px-1.5 py-0.5 bg-gray-800 rounded text-[10px] font-medium">
                           {study.modality}
                         </span>
                       </div>
@@ -265,16 +266,16 @@ export default function ControlPanel() {
 
         {/* Longitudinal Tracking (below timeline) */}
         {sortedStudies.length > 1 && (
-          <div className="px-4 py-2 border-b border-gray-200/50 dark:border-gray-700/50">
+          <div className="px-4 py-2 border-b border-gray-700">
             <LongitudinalCompare studies={sortedStudies} />
           </div>
         )}
 
         {/* View Controls (compact) */}
-        <div className="px-4 py-2 border-b border-gray-200/50 dark:border-gray-700/50 space-y-3">
+        <div className="px-4 py-2 border-b border-gray-700 space-y-3">
           {/* View Mode Toggle */}
           <div>
-            <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
+            <label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-500 uppercase tracking-wide mb-1.5">
               <Box className="w-3.5 h-3.5" />
               {t('viewer.viewMode')}
             </label>
@@ -283,10 +284,10 @@ export default function ControlPanel() {
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  className={`flex items-center justify-center h-7 rounded-md text-xs font-medium transition-all ${
                     viewMode === mode
-                      ? 'bg-primary-500 text-white shadow-md'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                   }`}
                 >
                   {t(`viewer.${mode}View`).toUpperCase()}
@@ -300,27 +301,27 @@ export default function ControlPanel() {
             <div className="space-y-3">
               {/* Render mode toggle */}
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
+                <label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-500 uppercase tracking-wide mb-1.5">
                   <Layers className="w-3.5 h-3.5" />
                   {t('viewer.renderMode', 'Render Mode')}
                 </label>
                 <div className="grid grid-cols-2 gap-1.5">
                   <button
                     onClick={() => setRender3DMode('volume')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    className={`flex items-center justify-center h-7 rounded-md text-xs font-medium transition-all ${
                       render3DMode === 'volume'
-                        ? 'bg-accent-500 text-white shadow-md'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                     }`}
                   >
                     {t('viewer.volumeRender', 'Volume')}
                   </button>
                   <button
                     onClick={() => setRender3DMode('multiplanar')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    className={`flex items-center justify-center h-7 rounded-md text-xs font-medium transition-all ${
                       render3DMode === 'multiplanar'
-                        ? 'bg-accent-500 text-white shadow-md'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                     }`}
                   >
                     {t('viewer.multiplanar', 'Multiplanar')}
@@ -330,14 +331,15 @@ export default function ControlPanel() {
 
               {/* Colormap selector */}
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
+                <label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-500 uppercase tracking-wide mb-1.5">
                   <Palette className="w-3.5 h-3.5" />
                   {t('viewer.colormap', 'Colormap')}
                 </label>
                 <select
                   value={colormap3D}
                   onChange={(e) => setColormap3D(e.target.value)}
-                  className="w-full px-2 py-1.5 rounded-lg text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 focus:ring-1 focus:ring-accent-500 outline-none"
+                  className="w-full border border-gray-600 focus:ring-1 focus:ring-blue-500 outline-none"
+                  style={{ height: 28, padding: '0 8px', borderRadius: 6, background: '#1F2937', color: '#E5E7EB', fontSize: 12 }}
                 >
                   {COLORMAPS_3D.map((cm) => (
                     <option key={cm.id} value={cm.id}>{cm.label}</option>
@@ -347,17 +349,17 @@ export default function ControlPanel() {
 
               {/* Clip plane */}
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
+                <label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-500 uppercase tracking-wide mb-1.5">
                   <Scissors className="w-3.5 h-3.5" />
                   {t('viewer.clipPlane', 'Clip Plane')}
                 </label>
                 <div className="space-y-1.5">
                   <button
                     onClick={() => setClipPlane(!clipPlaneEnabled)}
-                    className={`w-full px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    className={`w-full flex items-center justify-center h-7 rounded-md text-xs font-medium transition-colors ${
                       clipPlaneEnabled
-                        ? 'bg-red-500 text-white'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                        ? 'bg-red-600 text-white'
+                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                     }`}
                   >
                     {clipPlaneEnabled ? t('viewer.clipPlaneOn', 'Clip: ON') : t('viewer.clipPlaneOff', 'Clip: OFF')}
@@ -370,10 +372,10 @@ export default function ControlPanel() {
                           <button
                             key={axis}
                             onClick={() => setClipPlaneAxis(axis)}
-                            className={`px-2 py-1 rounded text-[10px] font-medium transition-colors ${
+                            className={`flex items-center justify-center h-6 rounded text-[10px] font-medium transition-colors ${
                               clipPlaneAxis === axis
-                                ? 'bg-red-500 text-white'
-                                : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                ? 'bg-red-600 text-white'
+                                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                             }`}
                           >
                             {t(`viewer.clipAxis.${axis}`, axis.charAt(0).toUpperCase() + axis.slice(1))}
@@ -388,7 +390,7 @@ export default function ControlPanel() {
                           max="100"
                           value={Math.round(clipPlanePosition * 100)}
                           onChange={(e) => setClipPlane(true, parseInt(e.target.value) / 100)}
-                          className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-red-500"
+                          className="w-full h-1.5 bg-gray-700 rounded-full appearance-none cursor-pointer accent-red-500"
                         />
                         <div className="text-[10px] text-gray-400 text-right mt-0.5">
                           {Math.round(clipPlanePosition * 100)}%
@@ -405,11 +407,11 @@ export default function ControlPanel() {
           {viewMode === '2d' && currentSeries && totalSlices > 1 && (
             <div>
               <div className="flex items-center justify-between text-xs mb-1">
-                <span className="font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                <span className="font-semibold text-gray-400 flex items-center gap-1">
                   <Layers className="w-3 h-3" />
                   {t('viewer.slice', 'Slice')}
                 </span>
-                <span className="font-mono font-bold text-gray-700 dark:text-gray-300">
+                <span className="font-mono font-bold text-gray-300">
                   {currentSliceIndex + 1} / {totalSlices}
                 </span>
               </div>
@@ -419,37 +421,40 @@ export default function ControlPanel() {
                 max={totalSlices - 1}
                 value={currentSliceIndex}
                 onChange={(e) => setCurrentSliceIndex(Number(e.target.value))}
-                className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-primary-500"
+                className="w-full h-1.5 bg-gray-700 rounded-full appearance-none cursor-pointer accent-blue-500"
               />
             </div>
           )}
 
           {/* Zoom + Reset (compact row) */}
           {currentSeries && (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center" style={{ gap: 4 }}>
               <button
                 onClick={handleZoomOut}
                 disabled={zoomLevel <= 0.25}
-                className="p-1.5 bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-30 transition-colors"
+                className="flex items-center justify-center bg-gray-800 hover:bg-gray-700 disabled:opacity-30 transition-colors"
+                style={{ width: 28, height: 28, borderRadius: 6 }}
               >
-                <ZoomOut className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+                <ZoomOut style={{ width: 14, height: 14, color: '#9CA3AF' }} />
               </button>
-              <span className="text-xs font-mono font-bold text-gray-700 dark:text-gray-300 w-14 text-center">
+              <span className="font-mono" style={{ fontSize: 11, fontWeight: 600, color: '#E5E7EB', width: 48, textAlign: 'center' }}>
                 {Math.round(zoomLevel * 100)}%
               </span>
               <button
                 onClick={handleZoomIn}
                 disabled={zoomLevel >= 20}
-                className="p-1.5 bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-30 transition-colors"
+                className="flex items-center justify-center bg-gray-800 hover:bg-gray-700 disabled:opacity-30 transition-colors"
+                style={{ width: 28, height: 28, borderRadius: 6 }}
               >
-                <ZoomIn className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+                <ZoomIn style={{ width: 14, height: 14, color: '#9CA3AF' }} />
               </button>
               <div className="flex-1" />
               <button
                 onClick={handleResetView}
-                className="px-2 py-1 text-[10px] font-medium bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors flex items-center gap-1"
+                className="flex items-center bg-gray-800 text-gray-400 hover:bg-gray-700 transition-colors"
+                style={{ height: 28, gap: 4, padding: '0 8px', borderRadius: 6, fontSize: 10, fontWeight: 500 }}
               >
-                <RotateCcw className="w-3 h-3" />
+                <RotateCcw style={{ width: 12, height: 12 }} />
                 {t('viewer.resetView')}
               </button>
             </div>
@@ -457,12 +462,12 @@ export default function ControlPanel() {
 
           {/* Brightness/Contrast (compact) */}
           {viewMode === '2d' && currentSeries && (brightness !== 100 || contrast !== 100) && (
-            <div className="flex items-center gap-2 text-[10px] text-gray-400 dark:text-gray-500">
+            <div className="flex items-center gap-2 text-[10px] text-gray-500">
               <span>{t('viewer.brightness')}: {brightness}%</span>
               <span>{t('viewer.contrast')}: {contrast}%</span>
               <button
                 onClick={resetImageAdjustments}
-                className="ml-auto text-primary-500 hover:text-primary-400 font-medium"
+                className="ml-auto text-blue-500 hover:text-blue-400 font-medium"
               >
                 {t('viewer.resetAdjustments', 'Reset')}
               </button>
@@ -472,20 +477,20 @@ export default function ControlPanel() {
 
         {/* Cursor Info + Histogram */}
         {currentSeries && cursorInfo && (
-          <div className="px-4 py-2 border-b border-gray-200/50 dark:border-gray-700/50">
+          <div className="px-4 py-2 border-b border-gray-700">
             <div className="flex items-center gap-3 text-xs">
-              <span className="text-gray-400 dark:text-gray-500">
-                X:<span className="font-mono font-bold text-gray-700 dark:text-gray-300 ml-0.5">{cursorInfo.x}</span>
+              <span className="text-gray-500">
+                X:<span className="font-mono font-bold text-gray-300 ml-0.5">{cursorInfo.x}</span>
               </span>
-              <span className="text-gray-400 dark:text-gray-500">
-                Y:<span className="font-mono font-bold text-gray-700 dark:text-gray-300 ml-0.5">{cursorInfo.y}</span>
+              <span className="text-gray-500">
+                Y:<span className="font-mono font-bold text-gray-300 ml-0.5">{cursorInfo.y}</span>
               </span>
-              <span className="text-gray-400 dark:text-gray-500">
-                Z:<span className="font-mono font-bold text-gray-700 dark:text-gray-300 ml-0.5">{cursorInfo.z}</span>
+              <span className="text-gray-500">
+                Z:<span className="font-mono font-bold text-gray-300 ml-0.5">{cursorInfo.z}</span>
               </span>
               {cursorInfo.intensity !== null && (
-                <span className="ml-auto text-gray-400 dark:text-gray-500">
-                  {t('viewer.intensity', 'Val')}:<span className="font-mono font-bold text-gray-700 dark:text-gray-300 ml-0.5">{cursorInfo.intensity}</span>
+                <span className="ml-auto text-gray-500">
+                  {t('viewer.intensity', 'Val')}:<span className="font-mono font-bold text-gray-300 ml-0.5">{cursorInfo.intensity}</span>
                 </span>
               )}
             </div>
@@ -499,8 +504,8 @@ export default function ControlPanel() {
 
         {/* Histogram (visible even without cursor, if slice is loaded) */}
         {currentSeries && !cursorInfo && sliceHistogram && (
-          <div className="px-4 py-2 border-b border-gray-200/50 dark:border-gray-700/50">
-            <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
+          <div className="px-4 py-2 border-b border-gray-700">
+            <label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-500 uppercase tracking-wide mb-1.5">
               {t('viewer.histogram', 'Histogram')}
             </label>
             <SliceHistogram histogram={sliceHistogram} cursorIntensity={null} />
@@ -512,7 +517,7 @@ export default function ControlPanel() {
           <div className="px-4 py-2">
             <button
               onClick={() => setImageInfoOpen(!imageInfoOpen)}
-              className="w-full flex items-center gap-2 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+              className="w-full flex items-center gap-2 py-1 text-[11px] font-medium text-gray-500 uppercase tracking-wide hover:text-gray-300 transition-colors"
             >
               <Info className="w-3.5 h-3.5" />
               {t('viewer.imageInformation')}
@@ -556,8 +561,8 @@ export default function ControlPanel() {
         {/* Empty state — no image loaded */}
         {!currentSeries && !patient && (
           <div className="flex flex-col items-center justify-center py-16 text-center px-4">
-            <Box className="w-10 h-10 text-gray-300 dark:text-gray-600 mb-3" />
-            <p className="text-sm text-gray-400 dark:text-gray-500">
+            <Box className="w-10 h-10 text-gray-600 mb-3" />
+            <p className="text-sm text-gray-500">
               {t('viewer.selectImageToView')}
             </p>
           </div>
@@ -569,9 +574,9 @@ export default function ControlPanel() {
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between items-center px-2 py-1 bg-gray-50 dark:bg-gray-800/50 rounded">
-      <span className="text-gray-500 dark:text-gray-400">{label}</span>
-      <span className="text-gray-900 dark:text-white font-semibold">{value}</span>
+    <div className="flex justify-between items-center px-2 py-1 bg-gray-800/50 rounded">
+      <span className="text-gray-400">{label}</span>
+      <span className="text-white font-semibold">{value}</span>
     </div>
   );
 }

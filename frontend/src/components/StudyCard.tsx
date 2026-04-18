@@ -20,25 +20,25 @@ import {
 } from 'lucide-react';
 import type { ImagingStudy, StudySummary } from '@/types';
 
-// Modality icons and colors
-const modalityConfig: Record<string, { icon: string; color: string; bgColor: string; useIcon?: 'brain' | 'scan' }> = {
-  CT: { icon: 'CT', color: 'text-blue-600', bgColor: 'bg-blue-100', useIcon: 'scan' },
-  MR: { icon: 'MR', color: 'text-purple-600', bgColor: 'bg-purple-100', useIcon: 'brain' },
-  US: { icon: 'US', color: 'text-green-600', bgColor: 'bg-green-100' },
-  XR: { icon: 'XR', color: 'text-orange-600', bgColor: 'bg-orange-100' },
-  MG: { icon: 'MG', color: 'text-pink-600', bgColor: 'bg-pink-100' },
-  NM: { icon: 'NM', color: 'text-yellow-600', bgColor: 'bg-yellow-100' },
-  PT: { icon: 'PT', color: 'text-red-600', bgColor: 'bg-red-100' },
-  CR: { icon: 'CR', color: 'text-cyan-600', bgColor: 'bg-cyan-100' },
-  DX: { icon: 'DX', color: 'text-indigo-600', bgColor: 'bg-indigo-100' },
-  OT: { icon: 'OT', color: 'text-gray-600', bgColor: 'bg-gray-100' },
+// Modality colors — inline styles, no Tailwind light-mode classes
+const modalityColors: Record<string, { bg: string; color: string }> = {
+  CT: { bg: 'rgba(59,130,246,0.15)', color: '#60A5FA' },
+  MR: { bg: 'rgba(139,92,246,0.15)', color: '#A78BFA' },
+  US: { bg: 'rgba(34,197,94,0.15)', color: '#4ADE80' },
+  XR: { bg: 'rgba(249,115,22,0.15)', color: '#FB923C' },
+  MG: { bg: 'rgba(236,72,153,0.15)', color: '#F472B6' },
+  NM: { bg: 'rgba(234,179,8,0.15)', color: '#FACC15' },
+  PT: { bg: 'rgba(239,68,68,0.15)', color: '#F87171' },
+  CR: { bg: 'rgba(6,182,212,0.15)', color: '#22D3EE' },
+  DX: { bg: 'rgba(99,102,241,0.15)', color: '#818CF8' },
+  OT: { bg: 'rgba(107,114,128,0.15)', color: '#9CA3AF' },
 };
 
-const statusConfig: Record<string, { color: string; bgColor: string }> = {
-  registered: { color: 'text-blue-600', bgColor: 'bg-blue-100' },
-  available: { color: 'text-green-600', bgColor: 'bg-green-100' },
-  cancelled: { color: 'text-red-600', bgColor: 'bg-red-100' },
-  'entered-in-error': { color: 'text-orange-600', bgColor: 'bg-orange-100' },
+const statusColors: Record<string, { bg: string; color: string }> = {
+  registered: { bg: 'rgba(59,130,246,0.12)', color: '#60A5FA' },
+  available: { bg: 'rgba(16,185,129,0.12)', color: '#34D399' },
+  cancelled: { bg: 'rgba(239,68,68,0.12)', color: '#F87171' },
+  'entered-in-error': { bg: 'rgba(249,115,22,0.12)', color: '#FB923C' },
 };
 
 interface StudyCardProps {
@@ -58,19 +58,14 @@ export const StudyCard: React.FC<StudyCardProps> = ({
   onDelete,
   onDownload,
   compact = false,
-  showPatientInfo = false,
 }) => {
   const { t } = useTranslation();
 
-  // Segmentation count placeholder — the backend flat API doesn't support study-level counts yet.
-  // When a study-level count endpoint is added, replace this with a useQuery call.
   const segmentationInfo = undefined as { count: number; has_approved: boolean; has_in_progress: boolean } | undefined;
 
-  // Get modality configuration
-  const modality = modalityConfig[study.modality] || modalityConfig.OT;
-  const status = statusConfig[study.status] || statusConfig.registered;
+  const mod = modalityColors[study.modality] || modalityColors.OT;
+  const stat = statusColors[study.status] || statusColors.registered;
 
-  // Format date
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString(undefined, {
       year: 'numeric',
@@ -79,7 +74,6 @@ export const StudyCard: React.FC<StudyCardProps> = ({
     });
   };
 
-  // Format file size
   const formatSize = (bytes: number | undefined | null) => {
     if (bytes === undefined || bytes === null || isNaN(bytes) || bytes === 0) return '0 B';
     const k = 1024;
@@ -88,97 +82,68 @@ export const StudyCard: React.FC<StudyCardProps> = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
 
-  // Check if study is full ImagingStudy (has additional fields)
   const isFullStudy = (s: ImagingStudy | StudySummary): s is ImagingStudy => {
     return 'study_instance_uid' in s;
   };
 
+  const ModalityIcon = ({ size = 16 }: { size?: number }) => {
+    if (study.modality === 'MR') return <Brain style={{ width: size, height: size }} />;
+    if (study.modality === 'CT') return <Scan style={{ width: size, height: size }} />;
+    return <span style={{ fontSize: size * 0.7, fontWeight: 700 }}>{study.modality}</span>;
+  };
+
+  // ==================== COMPACT / LIST VIEW ====================
   if (compact) {
     return (
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-4 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer"
         onClick={onView}
+        className="group border border-gray-700 hover:border-gray-600 transition-colors"
+        style={{ background: '#1F2937', borderRadius: 8, padding: 12, cursor: onView ? 'pointer' : 'default', display: 'flex', alignItems: 'center', gap: 12 }}
       >
-        {/* Modality Badge */}
-        <div
-          className={`flex items-center justify-center w-12 h-12 rounded-lg ${modality.bgColor} ${modality.color} font-bold text-lg`}
-        >
-          {modality.useIcon === 'brain' ? (
-            <Brain className="w-6 h-6" />
-          ) : modality.useIcon === 'scan' ? (
-            <Scan className="w-6 h-6" />
-          ) : (
-            modality.icon
-          )}
+        {/* Modality — 36×36 */}
+        <div className="flex-shrink-0 flex items-center justify-center"
+          style={{ width: 36, height: 36, borderRadius: 6, background: mod.bg, color: mod.color }}>
+          <ModalityIcon />
         </div>
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-gray-900 dark:text-gray-100 truncate">
+          <div className="flex items-center" style={{ gap: 6 }}>
+            <span className="truncate" style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB' }}>
               {study.study_description || t('study.noDescription')}
             </span>
-            <span
-              className={`px-2 py-0.5 rounded-full text-xs font-medium ${status.bgColor} ${status.color}`}
-            >
+            <span style={{ fontSize: 11, fontWeight: 500, padding: '1px 6px', borderRadius: 4, background: stat.bg, color: stat.color, flexShrink: 0 }}>
               {t(`study.status.${study.status}`)}
             </span>
           </div>
-          <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mt-1">
-            <span className="flex items-center gap-1">
-              <Calendar className="w-3.5 h-3.5" />
+          <div className="flex items-center" style={{ gap: 8, marginTop: 2 }}>
+            <span className="flex items-center" style={{ gap: 4, fontSize: 12, color: '#9CA3AF' }}>
+              <Calendar style={{ width: 12, height: 12 }} />
               {formatDate(study.study_date)}
             </span>
-            <span className="flex items-center gap-1">
-              <Layers className="w-3.5 h-3.5" />
-              {study.series_count ?? 0} {t('study.series', { count: study.series_count ?? 0 })}
-            </span>
-            <span className="flex items-center gap-1">
-              <FileImage className="w-3.5 h-3.5" />
-              {study.instance_count ?? 0} {t('study.images', { count: study.instance_count ?? 0 })}
-            </span>
-            <span
-              className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                segmentationInfo?.has_approved
-                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                  : segmentationInfo?.has_in_progress
-                  ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                  : 'bg-gray-100 text-gray-600 dark:bg-gray-700/50 dark:text-gray-400'
-              }`}
-              title={t('study.segmentationsTooltip', { count: segmentationInfo?.count ?? 0 })}
-            >
-              <Puzzle className="w-3 h-3" />
-              {segmentationInfo?.count ?? 0}
-            </span>
+            <span style={{ color: '#374151' }}>·</span>
+            <span style={{ fontSize: 12, color: '#9CA3AF' }}>{study.series_count ?? 0} series</span>
+            <span style={{ color: '#374151' }}>·</span>
+            <span style={{ fontSize: 12, color: '#9CA3AF' }}>{study.instance_count ?? 0} images</span>
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-1">
+        {/* Actions — 28×28 (sm) */}
+        <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ gap: 4 }}>
           {onDownload && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onDownload();
-              }}
-              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-              title={t('common.download')}
-            >
-              <Download className="w-4 h-4" />
+            <button onClick={(e) => { e.stopPropagation(); onDownload(); }}
+              className="flex items-center justify-center hover:bg-gray-700 transition-colors"
+              style={{ width: 28, height: 28, borderRadius: 6 }} title={t('common.download')}>
+              <Download style={{ width: 14, height: 14, color: '#9CA3AF' }} />
             </button>
           )}
           {onView && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onView();
-              }}
-              className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-              title={t('common.view')}
-            >
-              <Eye className="w-4 h-4" />
+            <button onClick={(e) => { e.stopPropagation(); onView(); }}
+              className="flex items-center justify-center hover:bg-gray-700 transition-colors"
+              style={{ width: 28, height: 28, borderRadius: 6 }} title={t('common.view')}>
+              <Eye style={{ width: 14, height: 14, color: '#9CA3AF' }} />
             </button>
           )}
         </div>
@@ -186,232 +151,94 @@ export const StudyCard: React.FC<StudyCardProps> = ({
     );
   }
 
+  // ==================== GRID / CARD VIEW ====================
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg transition-shadow overflow-hidden"
+      className="group border border-gray-700 hover:border-gray-600 transition-colors overflow-hidden"
+      style={{ background: '#1F2937', borderRadius: 8 }}
     >
-      {/* Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            {/* Modality Badge */}
-            <div
-              className={`flex items-center justify-center w-14 h-14 rounded-xl ${modality.bgColor} ${modality.color} font-bold text-xl`}
-            >
-              {modality.useIcon === 'brain' ? (
-                <Brain className="w-7 h-7" />
-              ) : modality.useIcon === 'scan' ? (
-                <Scan className="w-7 h-7" />
-              ) : (
-                modality.icon
-              )}
+      {/* Header — modality + title + status + date */}
+      <div style={{ padding: 12 }}>
+        <div className="flex items-start justify-between" style={{ gap: 8 }}>
+          <div className="flex items-center min-w-0" style={{ gap: 8 }}>
+            {/* Modality badge — 36×36, radius 6 */}
+            <div className="flex-shrink-0 flex items-center justify-center"
+              style={{ width: 36, height: 36, borderRadius: 6, background: mod.bg, color: mod.color }}>
+              <ModalityIcon />
             </div>
-            <div>
-              <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100">
+            <div className="min-w-0">
+              <h3 className="truncate" style={{ fontSize: 14, fontWeight: 600, color: '#F9FAFB', margin: 0 }}>
                 {study.study_description || t('study.noDescription')}
               </h3>
-              <div className="flex items-center gap-2 mt-1">
-                <span
-                  className={`px-2 py-0.5 rounded-full text-xs font-medium ${status.bgColor} ${status.color}`}
-                >
+              <div className="flex items-center" style={{ gap: 6, marginTop: 2 }}>
+                <span style={{ fontSize: 11, fontWeight: 500, padding: '1px 6px', borderRadius: 4, background: stat.bg, color: stat.color }}>
                   {t(`study.status.${study.status}`)}
                 </span>
-                {study.accession_number && (
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                    #{study.accession_number}
-                  </span>
-                )}
+                <span className="flex items-center" style={{ gap: 4, fontSize: 11, color: '#6B7280' }}>
+                  <Calendar style={{ width: 10, height: 10 }} />
+                  {formatDate(study.study_date)}
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-1">
-            {onView && (
-              <button
-                onClick={onView}
-                className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-                title={t('common.view')}
-              >
-                <Eye className="w-5 h-5" />
-              </button>
-            )}
-            {onDownload && (
-              <button
-                onClick={onDownload}
-                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                title={t('common.download')}
-              >
-                <Download className="w-5 h-5" />
-              </button>
-            )}
+          {/* Actions — 28×28 (sm), show on hover */}
+          <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ gap: 2 }}>
             {onEdit && (
-              <button
-                onClick={onEdit}
-                className="p-2 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition-colors"
-                title={t('common.edit')}
-              >
-                <Edit className="w-5 h-5" />
+              <button onClick={onEdit}
+                className="flex items-center justify-center hover:bg-gray-700 transition-colors"
+                style={{ width: 28, height: 28, borderRadius: 6 }} title={t('common.edit')}>
+                <Edit style={{ width: 14, height: 14, color: '#9CA3AF' }} />
               </button>
             )}
             {onDelete && (
-              <button
-                onClick={onDelete}
-                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                title={t('common.delete')}
-              >
-                <Trash2 className="w-5 h-5" />
+              <button onClick={onDelete}
+                className="flex items-center justify-center hover:bg-red-900/30 transition-colors"
+                style={{ width: 28, height: 28, borderRadius: 6 }} title={t('common.delete')}>
+                <Trash2 style={{ width: 14, height: 14, color: '#9CA3AF' }} />
               </button>
             )}
           </div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="p-4">
-        {/* Stats */}
-        <div className="grid gap-3 mb-4 grid-cols-2">
-          <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-            <Layers className="w-8 h-8 text-blue-500 flex-shrink-0" />
-            <div>
-              <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                {study.series_count ?? 0}
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">
-                {t('study.series', { count: study.series_count ?? 0 })}
-              </div>
-            </div>
+      {/* Stats — horizontal row, compact, labeled with UPPERCASE 11px */}
+      <div className="border-t border-gray-700 grid grid-cols-4" style={{ padding: '8px 12px', gap: 8 }}>
+        <div>
+          <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+            {t('study.series', { count: study.series_count ?? 0 })}
           </div>
-          <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-            <FileImage className="w-8 h-8 text-green-500 flex-shrink-0" />
-            <div>
-              <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                {study.instance_count ?? 0}
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">
-                {t('study.images', { count: study.instance_count ?? 0 })}
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-            <HardDrive className="w-8 h-8 text-purple-500 flex-shrink-0" />
-            <div>
-              <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                {formatSize(study.total_size_bytes)}
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">
-                {t('study.totalSize')}
-              </div>
-            </div>
-          </div>
-          <div
-            className={`flex items-center gap-3 p-3 rounded-lg ${
-              segmentationInfo?.has_approved
-                ? 'bg-green-50 dark:bg-green-900/20'
-                : segmentationInfo?.has_in_progress
-                ? 'bg-yellow-50 dark:bg-yellow-900/20'
-                : 'bg-gray-50 dark:bg-gray-700/50'
-            }`}
-          >
-            <Puzzle
-              className={`w-8 h-8 flex-shrink-0 ${
-                segmentationInfo?.has_approved
-                  ? 'text-green-500'
-                  : segmentationInfo?.has_in_progress
-                  ? 'text-yellow-500'
-                  : 'text-gray-400'
-              }`}
-            />
-            <div>
-              <div
-                className={`text-lg font-semibold ${
-                  segmentationInfo?.has_approved
-                    ? 'text-green-700 dark:text-green-400'
-                    : segmentationInfo?.has_in_progress
-                    ? 'text-yellow-700 dark:text-yellow-400'
-                    : 'text-gray-700 dark:text-gray-300'
-                }`}
-              >
-                {segmentationInfo?.count ?? 0}
-              </div>
-              <div
-                className={`text-xs ${
-                  segmentationInfo?.has_approved
-                    ? 'text-green-600 dark:text-green-500'
-                    : segmentationInfo?.has_in_progress
-                    ? 'text-yellow-600 dark:text-yellow-500'
-                    : 'text-gray-500 dark:text-gray-400'
-                }`}
-              >
-                {t('study.segmentations', { count: segmentationInfo?.count ?? 0 })}
-              </div>
-            </div>
-          </div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: '#E5E7EB' }}>{study.series_count ?? 0}</div>
         </div>
-
-        {/* Details */}
-        <div className="space-y-2 text-sm">
-          <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-            <Calendar className="w-4 h-4 text-gray-400" />
-            <span className="font-medium">{t('study.studyDate')}:</span>
-            <span>{formatDate(study.study_date)}</span>
+        <div>
+          <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+            {t('study.images', { count: study.instance_count ?? 0 })}
           </div>
-
-          {isFullStudy(study) && (
-            <>
-              {study.body_site && (
-                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                  <Activity className="w-4 h-4 text-gray-400" />
-                  <span className="font-medium">{t('study.bodySite')}:</span>
-                  <span>{study.body_site}</span>
-                </div>
-              )}
-
-              {study.referring_physician_name && (
-                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                  <User className="w-4 h-4 text-gray-400" />
-                  <span className="font-medium">{t('study.referringPhysician')}:</span>
-                  <span>{study.referring_physician_name}</span>
-                </div>
-              )}
-
-              {study.institution_name && (
-                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                  <Building2 className="w-4 h-4 text-gray-400" />
-                  <span className="font-medium">{t('study.institution')}:</span>
-                  <span>{study.institution_name}</span>
-                </div>
-              )}
-
-              {study.reason_for_study && (
-                <div className="flex items-start gap-2 text-gray-600 dark:text-gray-300">
-                  <FileImage className="w-4 h-4 text-gray-400 mt-0.5" />
-                  <span className="font-medium">{t('study.reason')}:</span>
-                  <span className="flex-1">{study.reason_for_study}</span>
-                </div>
-              )}
-
-              <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs pt-2 border-t border-gray-100 dark:border-gray-700">
-                <Clock className="w-3.5 h-3.5" />
-                <span>
-                  {t('common.createdAt')}: {formatDate(study.created_at)}
-                </span>
-              </div>
-            </>
-          )}
+          <div style={{ fontSize: 17, fontWeight: 700, color: '#E5E7EB' }}>{study.instance_count ?? 0}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+            {t('study.totalSize')}
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: '#9CA3AF' }}>{formatSize(study.total_size_bytes)}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+            Segm.
+          </div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: '#E5E7EB' }}>{segmentationInfo?.count ?? 0}</div>
         </div>
       </div>
 
-      {/* Footer - View Button */}
+      {/* Footer — View Study, 36px, subtle border-top style */}
       {onView && (
-        <div className="px-4 pb-4">
-          <button
-            onClick={onView}
-            className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
-          >
-            <Eye className="w-4 h-4" />
+        <div className="border-t border-gray-700" style={{ padding: 8 }}>
+          <button onClick={onView}
+            className="w-full flex items-center justify-center border border-gray-600 hover:bg-gray-700 transition-colors"
+            style={{ height: 36, gap: 6, borderRadius: 6, fontSize: 13, fontWeight: 500, color: '#E5E7EB' }}>
+            <Eye style={{ width: 16, height: 16 }} />
             {t('study.viewStudy')}
           </button>
         </div>

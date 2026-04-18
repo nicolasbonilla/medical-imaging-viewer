@@ -101,7 +101,8 @@ export const QuickScreenBadge: React.FC<QuickScreenBadgeProps> = ({
       <button
         onClick={handleScreen}
         disabled={isProcessing}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-800/80 hover:bg-gray-700/90 disabled:bg-gray-800/50 backdrop-blur-sm text-white rounded-lg text-xs font-medium transition-colors shadow-lg border border-gray-600/50"
+        className="flex items-center gap-1.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-white border border-gray-600 transition-colors"
+        style={{ height: 28, padding: '0 10px', borderRadius: 6, fontSize: 12, fontWeight: 500 }}
         title={t('edgeAI.quickScreen', 'Quick Screen')}
       >
         {isProcessing ? (
@@ -140,7 +141,7 @@ export const QuickScreenBadge: React.FC<QuickScreenBadgeProps> = ({
 
       {/* Disclaimer */}
       {showDisclaimer && (
-        <div className="max-w-[240px] p-2 bg-gray-900/95 backdrop-blur-sm border border-yellow-700/50 rounded text-[10px] text-yellow-300/80 leading-tight">
+        <div className="border border-yellow-700/50 rounded text-[10px] text-yellow-300/80 leading-tight" style={{ maxWidth: 240, padding: 8, background: '#111827', borderRadius: 6 }}>
           {t(
             'edgeAI.disclaimerText',
             'This is an assistive screening tool only. Results are NOT diagnostic and must be confirmed by a qualified radiologist. All processing runs locally in your browser — no patient data is transmitted.',
@@ -176,11 +177,12 @@ function ResultBadge({
 
   return (
     <div
-      className={`flex items-center gap-2 px-3 py-2 rounded-lg shadow-lg border backdrop-blur-sm ${
+      className={`flex items-center border ${
         isNormal
-          ? 'bg-green-900/70 border-green-600/50 text-green-200'
-          : 'bg-red-900/70 border-red-600/50 text-red-200'
+          ? 'bg-green-900/70 border-green-700 text-green-200'
+          : 'bg-red-900/70 border-red-700 text-red-200'
       }`}
+      style={{ gap: 8, padding: '6px 12px', borderRadius: 6 }}
     >
       {/* Icon */}
       {isNormal ? (

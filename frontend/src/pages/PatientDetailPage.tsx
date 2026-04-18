@@ -42,7 +42,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { getStatusColor, getGenderColor } from '@/utils/medicalColors';
 import type { ImagingStudy, StudySummary, Document as DocType, DocumentSummary } from '@/types';
 
-type TabType = 'overview' | 'studies' | 'documents' | 'history';
+type TabType = 'studies' | 'documents';
 
 export default function PatientDetailPage() {
   const { t } = useTranslation();
@@ -52,7 +52,7 @@ export default function PatientDetailPage() {
   const { theme } = useTheme();
 
   // UI State
-  const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [activeTab, setActiveTab] = useState<TabType>('studies');
   const [showEditForm, setShowEditForm] = useState(false);
   const [showStudyUploader, setShowStudyUploader] = useState(false);
   const [showDocumentUploader, setShowDocumentUploader] = useState(false);
@@ -159,11 +159,12 @@ export default function PatientDetailPage() {
   // Loading state
   if (isLoadingPatient) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#030712' }}>
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          className="w-12 h-12 border-4 border-primary-200 dark:border-primary-800 border-t-primary-600 dark:border-t-primary-400 rounded-full"
+          className="border-2 border-gray-700 border-t-blue-500 rounded-full"
+          style={{ width: 36, height: 36 }}
         />
       </div>
     );
@@ -172,17 +173,18 @@ export default function PatientDetailPage() {
   // Error state
   if (patientError || !patient) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
-        <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+      <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: '#030712' }}>
+        <AlertCircle style={{ width: 36, height: 36, color: '#F87171', marginBottom: 12 }} />
+        <h2 style={{ fontSize: 17, fontWeight: 700, color: '#F9FAFB', marginBottom: 4 }}>
           {t('patients.notFound')}
         </h2>
-        <p className="text-gray-500 dark:text-gray-400 mb-4">
+        <p style={{ fontSize: 13, color: '#9CA3AF', marginBottom: 16 }}>
           {t('patients.notFoundDescription')}
         </p>
         <button
           onClick={handleBack}
-          className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600"
+          className="bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+          style={{ height: 36, padding: '0 16px', borderRadius: 6, fontSize: 13, fontWeight: 500 }}
         >
           {t('common.goBack')}
         </button>
@@ -191,19 +193,12 @@ export default function PatientDetailPage() {
   }
 
   const tabs: { id: TabType; label: string; icon: React.ReactNode; count?: number }[] = [
-    { id: 'overview', label: t('patients.tabs.overview', 'Overview'), icon: <User className="w-4 h-4" /> },
-    { id: 'studies', label: t('patients.tabs.studies', 'Studies'), icon: <FileImage className="w-4 h-4" />, count: patient.study_count },
-    { id: 'documents', label: t('patients.tabs.documents', 'Documents'), icon: <FileText className="w-4 h-4" />, count: patient.document_count },
-    { id: 'history', label: t('patients.tabs.history', 'History'), icon: <Heart className="w-4 h-4" /> },
+    { id: 'studies', label: t('patients.tabs.studies', 'Studies'), icon: <FileImage style={{ width: 16, height: 16 }} />, count: patient.study_count },
+    { id: 'documents', label: t('patients.tabs.documents', 'Documents'), icon: <FileText style={{ width: 16, height: 16 }} />, count: patient.document_count },
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
-      {/* Animated Background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-to-br from-primary-500/5 to-accent-500/5 dark:from-primary-500/10 dark:to-accent-500/10 rounded-full blur-3xl animate-pulse-slow" />
-        <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-gradient-to-tr from-accent-500/5 to-primary-500/5 dark:from-accent-500/10 dark:to-primary-500/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1s' }} />
-      </div>
+    <div className="min-h-screen flex flex-col" style={{ background: '#030712' }}>
 
       {/* Header */}
       <AppHeader
@@ -215,310 +210,250 @@ export default function PatientDetailPage() {
         onBack={handleBack}
       />
 
-      {/* Patient Banner with Edit/Delete at the patient level */}
+      {/* Patient Banner with Edit/Delete */}
       <div className="relative">
         <PatientBanner patient={patient} />
-        <div className="absolute top-4 right-5 flex items-center gap-2 z-10">
+        <div className="absolute flex items-center" style={{ top: 12, right: 24, gap: 4, zIndex: 10 }}>
           <button onClick={handleEditPatient}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100/80 dark:bg-gray-800/80 hover:bg-gray-200 dark:hover:bg-gray-700 backdrop-blur-sm rounded-lg transition-all text-xs font-medium text-gray-700 dark:text-gray-300 border border-gray-200/50 dark:border-gray-700/50">
-            <Edit className="w-3.5 h-3.5" /> {t('common.edit')}
+            className="flex items-center justify-center border border-gray-700 hover:bg-gray-700 transition-colors"
+            style={{ width: 36, height: 36, borderRadius: 6, background: '#1F2937' }}
+            title={t('common.edit')}>
+            <Edit style={{ width: 16, height: 16, color: '#9CA3AF' }} />
           </button>
           <button onClick={handleDeletePatient}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50/80 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/40 backdrop-blur-sm text-red-600 dark:text-red-400 rounded-lg transition-all text-xs font-medium border border-red-200/50 dark:border-red-800/50">
-            <Trash2 className="w-3.5 h-3.5" /> {t('common.delete')}
+            className="flex items-center justify-center border border-gray-700 hover:bg-red-900/30 transition-colors"
+            style={{ width: 36, height: 36, borderRadius: 6, background: '#1F2937' }}
+            title={t('common.delete')}>
+            <Trash2 style={{ width: 16, height: 16, color: '#9CA3AF' }} />
           </button>
         </div>
       </div>
 
       {/* Main Content - WCAG 2.4.1 Skip Link Target */}
-      <main id="main-content" className="relative z-0 flex-1 overflow-auto" tabIndex={-1}>
-        <div className="max-w-7xl mx-auto p-6">
-          {/* Tabs */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-2 mb-6 p-1 bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl shadow-lg w-fit"
-          >
+      <main id="main-content" className="relative z-0 flex-1 overflow-auto" style={{ padding: '16px 24px' }} tabIndex={-1}>
+        <div className="max-w-7xl mx-auto" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {/* ════════════════════════════════════════════════
+              SECTION 1: Patient Information (always visible)
+              ════════════════════════════════════════════════ */}
+
+          {/* Patient Identification — single full-width card, 7 fields in one grid */}
+          <div className="border border-gray-700" style={{ background: '#1F2937', borderRadius: 8, padding: 16 }}>
+            <h3 className="flex items-center" style={{ gap: 6, fontSize: 14, fontWeight: 600, color: '#F9FAFB', margin: '0 0 12px 0' }}>
+              <User style={{ width: 16, height: 16, color: '#60A5FA' }} />
+              {t('patients.personalInfo', 'Patient Identification')}
+            </h3>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7" style={{ gap: 12 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                  {t('patients.fullName', 'Full Name')}
+                </label>
+                <p style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0 }}>{patient.full_name}</p>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                  {t('patients.mrn', 'MRN')}
+                </label>
+                <p className="font-mono" style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0 }}>{patient.mrn}</p>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                  {t('patients.birthDate', 'Date of Birth')}
+                </label>
+                <p style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0 }}>
+                  {formatDate(patient.birth_date)} ({patient.age}{t('patients.years', 'y')})
+                </p>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                  {t('patients.gender', 'Gender')}
+                </label>
+                <p style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0 }}>
+                  {getGenderSymbol(patient.gender)} {t(`patients.genders.${patient.gender}`)}
+                </p>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                  {t('patients.status.label', 'Status')}
+                </label>
+                <p className="flex items-center" style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0, gap: 6 }}>
+                  <span style={{
+                    width: 8, height: 8, borderRadius: '50%',
+                    background: patient.status === 'active' ? '#10B981' :
+                                patient.status === 'deceased' ? '#6B7280' : '#94A3B8',
+                  }} />
+                  {t(`patients.status.${patient.status}`, patient.status)}
+                </p>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                  {t('common.createdAt', 'Created')}
+                </label>
+                <p style={{ fontSize: 14, fontWeight: 500, color: '#9CA3AF', margin: 0 }}>{formatDate(patient.created_at)}</p>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                  {t('common.updatedAt', 'Updated')}
+                </label>
+                <p style={{ fontSize: 14, fontWeight: 500, color: '#9CA3AF', margin: 0 }}>{formatDate(patient.updated_at)}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Contact + Emergency + Insurance — align-start so empty cards don't stretch */}
+          <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: 16, alignItems: 'start' }}>
+
+            {/* Contact Information */}
+            <div className="border border-gray-700" style={{ background: '#1F2937', borderRadius: 8, padding: 16 }}>
+              <h3 className="flex items-center" style={{ gap: 6, fontSize: 14, fontWeight: 600, color: '#F9FAFB', margin: '0 0 12px 0' }}>
+                <Phone style={{ width: 16, height: 16, color: '#34D399' }} />
+                {t('patients.contactInfo', 'Contact Information')}
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {patient.phone_mobile && (
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                      {t('patients.phoneMobile', 'Mobile Phone')}
+                    </label>
+                    <p style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0 }}>{patient.phone_mobile}</p>
+                  </div>
+                )}
+                {patient.email && (
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                      {t('patients.email', 'Email')}
+                    </label>
+                    <p style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0 }}>{patient.email}</p>
+                  </div>
+                )}
+                {(patient.address_line1 || patient.city) && (
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                      {t('patients.address', 'Address')}
+                    </label>
+                    <p style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0 }}>
+                      {[patient.address_line1, patient.address_line2, patient.city, patient.state, patient.postal_code, patient.country]
+                        .filter(Boolean)
+                        .join(', ')}
+                    </p>
+                  </div>
+                )}
+                {!patient.phone_mobile && !patient.email && !patient.address_line1 && !patient.city && (
+                  <p style={{ fontSize: 12, color: '#6B7280', margin: 0, fontStyle: 'italic' }}>
+                    {t('patients.noContactInfo', 'No contact information available')}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Emergency Contact */}
+            <div className="border border-gray-700" style={{ background: '#1F2937', borderRadius: 8, padding: 16 }}>
+              <h3 className="flex items-center" style={{ gap: 6, fontSize: 14, fontWeight: 600, color: '#F9FAFB', margin: '0 0 12px 0' }}>
+                <AlertCircle style={{ width: 16, height: 16, color: '#F87171' }} />
+                {t('patients.emergencyContact', 'Emergency Contact')}
+              </h3>
+              {patient.emergency_contact_name ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                      {t('patients.name', 'Name')}
+                    </label>
+                    <p style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0 }}>{patient.emergency_contact_name}</p>
+                  </div>
+                  {patient.emergency_contact_phone && (
+                    <div>
+                      <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                        {t('patients.phone', 'Phone')}
+                      </label>
+                      <p style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0 }}>{patient.emergency_contact_phone}</p>
+                    </div>
+                  )}
+                  {patient.emergency_contact_relationship && (
+                    <div>
+                      <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                        {t('patients.relationship', 'Relationship')}
+                      </label>
+                      <p style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0 }}>{patient.emergency_contact_relationship}</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p style={{ fontSize: 12, color: '#6B7280', margin: 0, fontStyle: 'italic' }}>
+                  {t('patients.noEmergencyContact', 'No emergency contact registered')}
+                </p>
+              )}
+            </div>
+
+            {/* Insurance */}
+            <div className="border border-gray-700" style={{ background: '#1F2937', borderRadius: 8, padding: 16 }}>
+              <h3 className="flex items-center" style={{ gap: 6, fontSize: 14, fontWeight: 600, color: '#F9FAFB', margin: '0 0 12px 0' }}>
+                <Shield style={{ width: 16, height: 16, color: '#60A5FA' }} />
+                {t('patients.insurance', 'Insurance')}
+              </h3>
+              {patient.insurance_provider ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                      {t('patients.insuranceProvider', 'Provider')}
+                    </label>
+                    <p style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0 }}>{patient.insurance_provider}</p>
+                  </div>
+                  {patient.insurance_policy_number && (
+                    <div>
+                      <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                        {t('patients.policyNumber', 'Policy Number')}
+                      </label>
+                      <p className="font-mono" style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0 }}>{patient.insurance_policy_number}</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p style={{ fontSize: 12, color: '#6B7280', margin: 0, fontStyle: 'italic' }}>
+                  {t('patients.noInsurance', 'No insurance information')}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* ════════════════════════════════════════════════
+              SECTION 2: Collections (tabs for Studies / Documents)
+              ════════════════════════════════════════════════ */}
+          <div className="flex items-center border border-gray-700 w-fit"
+            style={{ gap: 4, padding: 4, background: '#1F2937', borderRadius: 8 }}>
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all ${
+                className={`flex items-center transition-colors ${
                   activeTab === tab.id
-                    ? 'bg-gradient-to-r from-primary-500 to-accent-500 text-white shadow-lg'
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-400 hover:bg-gray-700'
                 }`}
+                style={{ height: 36, gap: 6, padding: '0 14px', borderRadius: 6, fontSize: 13, fontWeight: 500 }}
               >
                 {tab.icon}
                 {tab.label}
                 {tab.count !== undefined && (
-                  <span className={`px-2 py-0.5 rounded-full text-xs ${
-                    activeTab === tab.id
-                      ? 'bg-white/20'
-                      : 'bg-gray-200 dark:bg-gray-700'
-                  }`}>
+                  <span className={`rounded-full ${
+                    activeTab === tab.id ? 'bg-white/20' : 'bg-gray-700'
+                  }`} style={{ fontSize: 11, padding: '1px 6px' }}>
                     {tab.count}
                   </span>
                 )}
               </button>
             ))}
-          </motion.div>
+          </div>
 
-          {/* Tab Content */}
           <AnimatePresence mode="wait">
-            {activeTab === 'overview' && (
-              <motion.div
-                key="overview"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="grid grid-cols-1 lg:grid-cols-3 gap-6"
-              >
-                {/* Personal Information */}
-                <div className="lg:col-span-2 space-y-6">
-                  <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-6 shadow-lg">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                      <User className="w-5 h-5 text-primary-500" />
-                      {t('patients.personalInfo', 'Personal Information')}
-                    </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                          {t('patients.fullName', 'Full Name')}
-                        </label>
-                        <p className="text-gray-900 dark:text-white font-medium">{patient.full_name}</p>
-                      </div>
-
-                      <div>
-                        <label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                          {t('patients.mrn', 'MRN')}
-                        </label>
-                        <p className="text-gray-900 dark:text-white font-mono">{patient.mrn}</p>
-                      </div>
-
-                      <div>
-                        <label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {t('patients.birthDate', 'Date of Birth')}
-                        </label>
-                        <p className="text-gray-900 dark:text-white">
-                          {formatDate(patient.birth_date)} ({patient.age} {t('patients.years')})
-                        </p>
-                      </div>
-
-                      <div>
-                        <label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                          {t('patients.gender', 'Gender')}
-                        </label>
-                        <p className="text-gray-900 dark:text-white">
-                          {getGenderSymbol(patient.gender)} {t(`patients.genders.${patient.gender}`)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Contact Information */}
-                  <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-6 shadow-lg">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                      <Phone className="w-5 h-5 text-primary-500" />
-                      {t('patients.contactInfo', 'Contact Information')}
-                    </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {patient.phone_mobile && (
-                        <div>
-                          <label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide flex items-center gap-1">
-                            <Phone className="w-3 h-3" />
-                            {t('patients.phoneMobile', 'Mobile Phone')}
-                          </label>
-                          <p className="text-gray-900 dark:text-white">{patient.phone_mobile}</p>
-                        </div>
-                      )}
-
-                      {patient.phone_home && (
-                        <div>
-                          <label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                            {t('patients.phoneHome', 'Home Phone')}
-                          </label>
-                          <p className="text-gray-900 dark:text-white">{patient.phone_home}</p>
-                        </div>
-                      )}
-
-                      {patient.email && (
-                        <div className="md:col-span-2">
-                          <label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide flex items-center gap-1">
-                            <Mail className="w-3 h-3" />
-                            {t('patients.email', 'Email')}
-                          </label>
-                          <p className="text-gray-900 dark:text-white">{patient.email}</p>
-                        </div>
-                      )}
-
-                      {(patient.address_line1 || patient.city) && (
-                        <div className="md:col-span-2">
-                          <label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide flex items-center gap-1">
-                            <MapPin className="w-3 h-3" />
-                            {t('patients.address', 'Address')}
-                          </label>
-                          <p className="text-gray-900 dark:text-white">
-                            {[patient.address_line1, patient.address_line2, patient.city, patient.state, patient.postal_code, patient.country]
-                              .filter(Boolean)
-                              .join(', ')}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Emergency Contact */}
-                  {patient.emergency_contact_name && (
-                    <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-6 shadow-lg">
-                      <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                        <AlertCircle className="w-5 h-5 text-red-500" />
-                        {t('patients.emergencyContact', 'Emergency Contact')}
-                      </h3>
-
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                          <label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                            {t('patients.name', 'Name')}
-                          </label>
-                          <p className="text-gray-900 dark:text-white">{patient.emergency_contact_name}</p>
-                        </div>
-                        {patient.emergency_contact_phone && (
-                          <div>
-                            <label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                              {t('patients.phone', 'Phone')}
-                            </label>
-                            <p className="text-gray-900 dark:text-white">{patient.emergency_contact_phone}</p>
-                          </div>
-                        )}
-                        {patient.emergency_contact_relationship && (
-                          <div>
-                            <label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                              {t('patients.relationship', 'Relationship')}
-                            </label>
-                            <p className="text-gray-900 dark:text-white">{patient.emergency_contact_relationship}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Sidebar */}
-                <div className="space-y-6">
-                  {/* Quick Stats */}
-                  <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-6 shadow-lg">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                      <Activity className="w-5 h-5 text-primary-500" />
-                      {t('patients.quickStats', 'Statistics')}
-                    </h3>
-
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between p-3 bg-primary-50 dark:bg-primary-900/20 rounded-xl">
-                        <div className="flex items-center gap-2">
-                          <FileImage className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-                          <span className="text-gray-700 dark:text-gray-300">{t('patients.studies')}</span>
-                        </div>
-                        <span className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-                          {patient.study_count || 0}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between p-3 bg-accent-50 dark:bg-accent-900/20 rounded-xl">
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-5 h-5 text-accent-600 dark:text-accent-400" />
-                          <span className="text-gray-700 dark:text-gray-300">{t('patients.documents')}</span>
-                        </div>
-                        <span className="text-2xl font-bold text-accent-600 dark:text-accent-400">
-                          {patient.document_count || 0}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Insurance */}
-                  {patient.insurance_provider && (
-                    <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-6 shadow-lg">
-                      <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                        <Shield className="w-5 h-5 text-primary-500" />
-                        {t('patients.insurance', 'Insurance')}
-                      </h3>
-
-                      <div className="space-y-2">
-                        <div>
-                          <label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                            {t('patients.insuranceProvider', 'Insurance Provider')}
-                          </label>
-                          <p className="text-gray-900 dark:text-white">{patient.insurance_provider}</p>
-                        </div>
-                        {patient.insurance_policy_number && (
-                          <div>
-                            <label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                              {t('patients.policyNumber', 'Policy Number')}
-                            </label>
-                            <p className="text-gray-900 dark:text-white font-mono">{patient.insurance_policy_number}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Timestamps */}
-                  <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-6 shadow-lg">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                      <Clock className="w-5 h-5 text-primary-500" />
-                      {t('patients.timestamps', 'Record')}
-                    </h3>
-
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-500 dark:text-gray-400">{t('common.createdAt')}</span>
-                        <span className="text-gray-900 dark:text-white">{formatDate(patient.created_at)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500 dark:text-gray-400">{t('common.updatedAt')}</span>
-                        <span className="text-gray-900 dark:text-white">{formatDate(patient.updated_at)}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Quick Actions */}
-                  <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-6 shadow-lg">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
-                      {t('patients.quickActions', 'Quick Actions')}
-                    </h3>
-
-                    <div className="space-y-2">
-                      <button
-                        onClick={() => { setActiveTab('studies'); setShowStudyUploader(true); }}
-                        className="w-full flex items-center gap-2 px-4 py-2.5 bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-colors"
-                      >
-                        <Plus className="w-4 h-4" />
-                        {t('study.uploadStudy', 'Upload Study')}
-                      </button>
-                      <button
-                        onClick={() => { setActiveTab('documents'); setShowDocumentUploader(true); }}
-                        className="w-full flex items-center gap-2 px-4 py-2.5 bg-accent-500 text-white rounded-xl hover:bg-accent-600 transition-colors"
-                      >
-                        <Plus className="w-4 h-4" />
-                        {t('document.uploadDocument', 'Upload Document')}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
             {activeTab === 'studies' && (
               <motion.div
                 key="studies"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-6 shadow-lg"
+                className="border border-gray-700"
+                style={{ background: '#1F2937', borderRadius: 8, padding: 16 }}
               >
                 <StudyList
                   studies={studiesData?.items || []}
@@ -541,7 +476,8 @@ export default function PatientDetailPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-6 shadow-lg"
+                className="border border-gray-700"
+                style={{ background: '#1F2937', borderRadius: 8, padding: 16 }}
               >
                 <DocumentList
                   documents={documentsData?.items || []}
@@ -559,25 +495,6 @@ export default function PatientDetailPage() {
               </motion.div>
             )}
 
-            {activeTab === 'history' && (
-              <motion.div
-                key="history"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-6 shadow-lg"
-              >
-                <div className="text-center py-12">
-                  <Heart className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                    {t('patients.noMedicalHistory', 'No medical history')}
-                  </h3>
-                  <p className="text-gray-500 dark:text-gray-400">
-                    {t('patients.medicalHistoryComingSoon', 'Medical history will be available soon')}
-                  </p>
-                </div>
-              </motion.div>
-            )}
           </AnimatePresence>
         </div>
       </main>
@@ -596,7 +513,8 @@ export default function PatientDetailPage() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 rounded-2xl shadow-2xl"
+              className="w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-700"
+              style={{ background: '#111827', borderRadius: 8 }}
               onClick={e => e.stopPropagation()}
             >
               <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
@@ -636,7 +554,8 @@ export default function PatientDetailPage() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 rounded-2xl shadow-2xl"
+              className="w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-gray-700"
+              style={{ background: '#111827', borderRadius: 8 }}
               onClick={e => e.stopPropagation()}
             >
               <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
@@ -677,7 +596,8 @@ export default function PatientDetailPage() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 rounded-2xl shadow-2xl"
+              className="w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-700"
+              style={{ background: '#111827', borderRadius: 8 }}
               onClick={e => e.stopPropagation()}
             >
               <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">

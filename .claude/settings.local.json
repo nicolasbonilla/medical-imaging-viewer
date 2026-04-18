@@ -319,7 +319,8 @@
       "WebFetch(domain:studioncreations.com)",
       "WebFetch(domain:conceptviz.app)",
       "WebFetch(domain:polaris-react.shopify.com)",
-      "WebFetch(domain:carbondesignsystem.com)"
+      "WebFetch(domain:carbondesignsystem.com)",
+      "Bash(netstat -ano)"
     ],
     "deny": [],
     "ask": [],

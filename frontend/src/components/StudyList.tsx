@@ -9,7 +9,6 @@ import {
   ChevronRight,
   Loader2,
   FileImage,
-  Calendar,
   X,
   Grid,
   List,
@@ -23,21 +22,17 @@ interface StudyListProps {
   studies: (StudySummary | ImagingStudy)[];
   isLoading?: boolean;
   error?: Error | null;
-  // Pagination
   page?: number;
   totalPages?: number;
   total?: number;
   onPageChange?: (page: number) => void;
-  // Actions
   onViewStudy?: (study: StudySummary | ImagingStudy) => void;
   onEditStudy?: (study: StudySummary | ImagingStudy) => void;
   onDeleteStudy?: (study: StudySummary | ImagingStudy) => void;
   onDownloadStudy?: (study: StudySummary | ImagingStudy) => void;
   onCreateStudy?: () => void;
-  // Filters
   showFilters?: boolean;
   onFilterChange?: (filters: StudyFilters) => void;
-  // Display
   viewMode?: 'grid' | 'list';
   onViewModeChange?: (mode: 'grid' | 'list') => void;
   emptyMessage?: string;
@@ -77,169 +72,141 @@ export const StudyList: React.FC<StudyListProps> = ({
 }) => {
   const { t } = useTranslation();
   const [filters, setFilters] = useState<StudyFilters>({
-    search: '',
-    modality: '',
-    status: '',
-    dateFrom: '',
-    dateTo: '',
-    sortBy: 'date',
-    sortOrder: 'desc',
+    search: '', modality: '', status: '', dateFrom: '', dateTo: '',
+    sortBy: 'date', sortOrder: 'desc',
   });
   const [showFilterPanel, setShowFilterPanel] = useState(false);
 
-  // Handle filter changes
   const handleFilterChange = (key: keyof StudyFilters, value: string) => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
-    if (onFilterChange) {
-      onFilterChange(newFilters);
-    }
+    onFilterChange?.(newFilters);
   };
 
-  // Clear all filters
   const clearFilters = () => {
-    const clearedFilters: StudyFilters = {
-      search: '',
-      modality: '',
-      status: '',
-      dateFrom: '',
-      dateTo: '',
-      sortBy: 'date',
-      sortOrder: 'desc',
-    };
-    setFilters(clearedFilters);
-    if (onFilterChange) {
-      onFilterChange(clearedFilters);
-    }
+    const cleared: StudyFilters = { search: '', modality: '', status: '', dateFrom: '', dateTo: '', sortBy: 'date', sortOrder: 'desc' };
+    setFilters(cleared);
+    onFilterChange?.(cleared);
   };
 
-  // Check if any filters are active
-  const hasActiveFilters =
-    filters.search ||
-    filters.modality ||
-    filters.status ||
-    filters.dateFrom ||
-    filters.dateTo;
+  const hasActiveFilters = filters.search || filters.modality || filters.status || filters.dateFrom || filters.dateTo;
 
-  // Render loading state
+  // Loading
   if (isLoading && studies.length === 0) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-        <span className="ml-3 text-gray-500 dark:text-gray-400">
-          {t('common.loading')}
-        </span>
+      <div className="flex items-center justify-center" style={{ padding: '48px 0' }}>
+        <Loader2 className="animate-spin" style={{ width: 24, height: 24, color: '#60A5FA' }} />
+        <span style={{ marginLeft: 8, fontSize: 13, color: '#9CA3AF' }}>{t('common.loading')}</span>
       </div>
     );
   }
 
-  // Render error state
+  // Error
   if (error) {
     return (
-      <div className="text-center py-12">
-        <div className="text-red-500 mb-2">{t('common.error')}</div>
-        <p className="text-gray-500 dark:text-gray-400">{error.message}</p>
+      <div className="text-center" style={{ padding: '48px 0' }}>
+        <p style={{ fontSize: 14, color: '#F87171', marginBottom: 4 }}>{t('common.error')}</p>
+        <p style={{ fontSize: 12, color: '#9CA3AF' }}>{error.message}</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {/* Header with search and actions */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4 flex-1 w-full sm:w-auto">
-          {/* Search */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+      {/* ── Toolbar ── */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between" style={{ gap: 8 }}>
+        <div className="flex items-center flex-1 w-full sm:w-auto" style={{ gap: 8 }}>
+          {/* Search — 36px height, radius 6 */}
           {showFilters && (
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute" style={{ left: 10, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, color: '#6B7280' }} />
               <input
                 type="text"
                 value={filters.search}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
                 placeholder={t('study.searchPlaceholder')}
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                style={{ height: 36, paddingLeft: 36, paddingRight: 12, background: '#111827', borderRadius: 6, fontSize: 13, color: '#E5E7EB' }}
               />
             </div>
           )}
 
-          {/* Filter toggle */}
+          {/* Filter toggle — 36px, radius 6 */}
           {showFilters && (
             <button
               onClick={() => setShowFilterPanel(!showFilterPanel)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors ${
+              className={`flex items-center border transition-colors ${
                 showFilterPanel || hasActiveFilters
-                  ? 'border-blue-500 text-blue-600 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  ? 'border-blue-500 text-blue-400 bg-blue-900/20'
+                  : 'border-gray-600 text-gray-300 hover:bg-gray-700'
               }`}
+              style={{ height: 36, gap: 6, padding: '0 12px', borderRadius: 6, fontSize: 13 }}
             >
-              <Filter className="w-4 h-4" />
+              <Filter style={{ width: 16, height: 16 }} />
               <span className="hidden sm:inline">{t('common.filters')}</span>
               {hasActiveFilters && (
-                <span className="w-5 h-5 flex items-center justify-center bg-blue-500 text-white text-xs rounded-full">
-                  !
-                </span>
+                <span className="flex items-center justify-center bg-blue-500 text-white rounded-full"
+                  style={{ width: 18, height: 18, fontSize: 11 }}>!</span>
               )}
             </button>
           )}
         </div>
 
-        {/* Right side actions */}
-        <div className="flex items-center gap-2">
-          {/* View mode toggle */}
+        {/* Right actions */}
+        <div className="flex items-center" style={{ gap: 4 }}>
+          {/* View mode — 36px buttons */}
           {onViewModeChange && (
-            <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+            <div className="flex items-center border border-gray-600 overflow-hidden" style={{ borderRadius: 6 }}>
               <button
                 onClick={() => onViewModeChange('grid')}
-                className={`p-2 ${
-                  viewMode === 'grid'
-                    ? 'bg-blue-500 text-white'
-                    : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700'
+                className={`flex items-center justify-center ${
+                  viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700'
                 }`}
+                style={{ width: 36, height: 36 }}
               >
-                <Grid className="w-4 h-4" />
+                <Grid style={{ width: 16, height: 16 }} />
               </button>
               <button
                 onClick={() => onViewModeChange('list')}
-                className={`p-2 ${
-                  viewMode === 'list'
-                    ? 'bg-blue-500 text-white'
-                    : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700'
+                className={`flex items-center justify-center ${
+                  viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700'
                 }`}
+                style={{ width: 36, height: 36 }}
               >
-                <List className="w-4 h-4" />
+                <List style={{ width: 16, height: 16 }} />
               </button>
             </div>
           )}
 
-          {/* Sort toggle */}
+          {/* Sort — 36×36 */}
           <button
-            onClick={() =>
-              handleFilterChange('sortOrder', filters.sortOrder === 'asc' ? 'desc' : 'asc')
-            }
-            className="p-2 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-700"
+            onClick={() => handleFilterChange('sortOrder', filters.sortOrder === 'asc' ? 'desc' : 'asc')}
+            className="flex items-center justify-center text-gray-400 hover:bg-gray-700 border border-gray-600 transition-colors"
+            style={{ width: 36, height: 36, borderRadius: 6 }}
             title={t('common.sort')}
           >
-            {filters.sortOrder === 'asc' ? (
-              <SortAsc className="w-4 h-4" />
-            ) : (
-              <SortDesc className="w-4 h-4" />
-            )}
+            {filters.sortOrder === 'asc'
+              ? <SortAsc style={{ width: 16, height: 16 }} />
+              : <SortDesc style={{ width: 16, height: 16 }} />
+            }
           </button>
 
-          {/* Create button */}
+          {/* New Study — 36px, radius 6 */}
           {onCreateStudy && (
             <button
               onClick={onCreateStudy}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              className="flex items-center bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 transition-colors"
+              style={{ height: 36, gap: 6, padding: '0 14px', borderRadius: 6, fontSize: 13, fontWeight: 600 }}
             >
-              <Plus className="w-4 h-4" />
+              <Plus style={{ width: 16, height: 16 }} />
               <span className="hidden sm:inline">{t('study.createStudy')}</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* Filter panel */}
+      {/* ── Filter panel ── */}
       <AnimatePresence>
         {showFilterPanel && (
           <motion.div
@@ -248,85 +215,63 @@ export const StudyList: React.FC<StudyListProps> = ({
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-medium text-gray-900 dark:text-gray-100">
+            <div className="border border-gray-700" style={{ background: '#111827', borderRadius: 8, padding: 12 }}>
+              <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+                <h3 style={{ fontSize: 13, fontWeight: 600, color: '#E5E7EB', margin: 0 }}>
                   {t('common.filters')}
                 </h3>
                 {hasActiveFilters && (
-                  <button
-                    onClick={clearFilters}
-                    className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                  >
-                    <X className="w-3.5 h-3.5" />
+                  <button onClick={clearFilters}
+                    className="flex items-center text-blue-400 hover:text-blue-300 transition-colors"
+                    style={{ gap: 4, fontSize: 12 }}>
+                    <X style={{ width: 14, height: 14 }} />
                     {t('common.clearFilters')}
                   </button>
                 )}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Modality filter */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" style={{ gap: 12 }}>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
                     {t('study.modality')}
                   </label>
-                  <select
-                    value={filters.modality}
-                    onChange={(e) => handleFilterChange('modality', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                  >
+                  <select value={filters.modality} onChange={(e) => handleFilterChange('modality', e.target.value)}
+                    className="w-full border border-gray-600 focus:ring-2 focus:ring-blue-500"
+                    style={{ height: 36, padding: '0 12px', borderRadius: 6, background: '#1F2937', color: '#E5E7EB', fontSize: 13 }}>
                     <option value="">{t('common.all')}</option>
                     {MODALITIES.map((mod) => (
-                      <option key={mod} value={mod}>
-                        {mod} - {t(`study.modalities.${mod}`)}
-                      </option>
+                      <option key={mod} value={mod}>{mod} - {t(`study.modalities.${mod}`)}</option>
                     ))}
                   </select>
                 </div>
-
-                {/* Status filter */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
                     {t('study.status.label')}
                   </label>
-                  <select
-                    value={filters.status}
-                    onChange={(e) => handleFilterChange('status', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                  >
+                  <select value={filters.status} onChange={(e) => handleFilterChange('status', e.target.value)}
+                    className="w-full border border-gray-600 focus:ring-2 focus:ring-blue-500"
+                    style={{ height: 36, padding: '0 12px', borderRadius: 6, background: '#1F2937', color: '#E5E7EB', fontSize: 13 }}>
                     <option value="">{t('common.all')}</option>
-                    {STATUSES.map((status) => (
-                      <option key={status} value={status}>
-                        {t(`study.status.${status}`)}
-                      </option>
+                    {STATUSES.map((s) => (
+                      <option key={s} value={s}>{t(`study.status.${s}`)}</option>
                     ))}
                   </select>
                 </div>
-
-                {/* Date from */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
                     {t('study.dateFrom')}
                   </label>
-                  <input
-                    type="date"
-                    value={filters.dateFrom}
-                    onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                  />
+                  <input type="date" value={filters.dateFrom} onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+                    className="w-full border border-gray-600 focus:ring-2 focus:ring-blue-500"
+                    style={{ height: 36, padding: '0 12px', borderRadius: 6, background: '#1F2937', color: '#E5E7EB', fontSize: 13 }} />
                 </div>
-
-                {/* Date to */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
                     {t('study.dateTo')}
                   </label>
-                  <input
-                    type="date"
-                    value={filters.dateTo}
-                    onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                  />
+                  <input type="date" value={filters.dateTo} onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+                    className="w-full border border-gray-600 focus:ring-2 focus:ring-blue-500"
+                    style={{ height: 36, padding: '0 12px', borderRadius: 6, background: '#1F2937', color: '#E5E7EB', fontSize: 13 }} />
                 </div>
               </div>
             </div>
@@ -334,43 +279,35 @@ export const StudyList: React.FC<StudyListProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Results count */}
-      <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-        <span>
-          {t('study.showingResults', { count: studies.length, total })}
-        </span>
-        {isLoading && (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        )}
+      {/* ── Results count — 12px ── */}
+      <div className="flex items-center justify-between" style={{ fontSize: 12, color: '#9CA3AF' }}>
+        <span>{t('study.showingResults', { count: studies.length, total })}</span>
+        {isLoading && <Loader2 className="animate-spin" style={{ width: 16, height: 16, color: '#60A5FA' }} />}
       </div>
 
-      {/* Study grid/list */}
+      {/* ── Study grid/list ── */}
       {studies.length === 0 ? (
-        <div className="text-center py-12">
-          <FileImage className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+        <div className="text-center" style={{ padding: '48px 16px' }}>
+          <FileImage className="mx-auto" style={{ width: 36, height: 36, color: '#4B5563', marginBottom: 12 }} />
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: '#E5E7EB', margin: '0 0 4px 0' }}>
             {t('study.noStudies')}
           </h3>
-          <p className="text-gray-500 dark:text-gray-400 mb-4">
+          <p style={{ fontSize: 12, color: '#9CA3AF', margin: '0 0 16px 0' }}>
             {emptyMessage || t('study.noStudiesDescription')}
           </p>
           {onCreateStudy && (
-            <button
-              onClick={onCreateStudy}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-            >
-              <Plus className="w-4 h-4" />
+            <button onClick={onCreateStudy}
+              className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+              style={{ height: 36, gap: 6, padding: '0 14px', borderRadius: 6, fontSize: 13, fontWeight: 500 }}>
+              <Plus style={{ width: 16, height: 16 }} />
               {t('study.createStudy')}
             </button>
           )}
         </div>
       ) : (
         <div
-          className={
-            viewMode === 'grid'
-              ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'
-              : 'space-y-3'
-          }
+          className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : ''}
+          style={{ gap: viewMode === 'grid' ? 16 : 8 }}
         >
           <AnimatePresence mode="popLayout">
             {studies.map((study) => (
@@ -388,39 +325,34 @@ export const StudyList: React.FC<StudyListProps> = ({
         </div>
       )}
 
-      {/* Pagination */}
+      {/* ── Pagination — 36px buttons, radius 6 ── */}
       {totalPages > 1 && onPageChange && (
-        <div className="flex items-center justify-center gap-2 pt-4">
+        <div className="flex items-center justify-center" style={{ gap: 4, paddingTop: 8 }}>
           <button
             onClick={() => onPageChange(page - 1)}
             disabled={page <= 1}
-            className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center justify-center text-gray-400 hover:bg-gray-700 border border-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            style={{ width: 36, height: 36, borderRadius: 6 }}
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft style={{ width: 16, height: 16 }} />
           </button>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center" style={{ gap: 4 }}>
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
               let pageNum: number;
-              if (totalPages <= 5) {
-                pageNum = i + 1;
-              } else if (page <= 3) {
-                pageNum = i + 1;
-              } else if (page >= totalPages - 2) {
-                pageNum = totalPages - 4 + i;
-              } else {
-                pageNum = page - 2 + i;
-              }
+              if (totalPages <= 5) pageNum = i + 1;
+              else if (page <= 3) pageNum = i + 1;
+              else if (page >= totalPages - 2) pageNum = totalPages - 4 + i;
+              else pageNum = page - 2 + i;
 
               return (
                 <button
                   key={pageNum}
                   onClick={() => onPageChange(pageNum)}
-                  className={`w-10 h-10 rounded-lg font-medium transition-colors ${
-                    page === pageNum
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  className={`flex items-center justify-center transition-colors ${
+                    page === pageNum ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 border border-gray-700'
                   }`}
+                  style={{ width: 36, height: 36, borderRadius: 6, fontSize: 13, fontWeight: 500 }}
                 >
                   {pageNum}
                 </button>
@@ -431,9 +363,10 @@ export const StudyList: React.FC<StudyListProps> = ({
           <button
             onClick={() => onPageChange(page + 1)}
             disabled={page >= totalPages}
-            className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center justify-center text-gray-400 hover:bg-gray-700 border border-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            style={{ width: 36, height: 36, borderRadius: 6 }}
           >
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight style={{ width: 16, height: 16 }} />
           </button>
         </div>
       )}

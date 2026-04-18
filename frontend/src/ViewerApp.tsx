@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { toast, Toaster } from 'sonner';
 import { motion } from 'framer-motion';
+import AppHeader from './components/AppHeader';
 import ImageViewer2D from './components/ImageViewer2D';
 import ImageViewer3D from './components/ImageViewer3D';
 import { MultiPanelViewer } from './components/MultiPanelViewer';
@@ -16,7 +17,7 @@ import { studyAPI } from './services/studyApi';
 import { useViewerStore } from './store/useViewerStore';
 import { useViewerControls } from './hooks/useViewerControls';
 import type { ImagingStudy, ImagingSeries, ImagingInstance } from './types';
-import { Sparkles, ArrowLeft, Brain, FileImage, AlertCircle, Loader2, Puzzle, Upload, Eye, EyeOff, Plus, Trash2, ChevronDown, ChevronRight, FlaskConical, FileText, LayoutGrid, Columns2, Square, Link2, Unlink2, Map } from 'lucide-react';
+import { ArrowLeft, Brain, FileImage, AlertCircle, Loader2, Puzzle, Upload, Eye, EyeOff, Plus, Trash2, ChevronDown, ChevronRight, FlaskConical, FileText, LayoutGrid, Columns2, Square, Link2, Unlink2, Map } from 'lucide-react';
 import UserMenu from './components/UserMenu';
 import { useAuth } from './contexts/AuthContext';
 import { useTheme } from './contexts/ThemeContext';
@@ -543,9 +544,9 @@ function ViewerApp() {
   // No study ID provided
   if (!studyId) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+      <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: '#030712' }}>
         <AlertCircle className="w-16 h-16 text-amber-500 mb-4" />
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+        <h2 className="text-xl font-bold text-white mb-2">
           {t('viewer.noStudySelected', 'No study selected')}
         </h2>
         <p className="text-gray-500 dark:text-gray-400 mb-4 text-center max-w-md">
@@ -565,13 +566,13 @@ function ViewerApp() {
   // Loading study
   if (isLoadingStudy) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+      <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: '#030712' }}>
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
           className="w-12 h-12 border-4 border-primary-200 dark:border-primary-800 border-t-primary-600 dark:border-t-primary-400 rounded-full mb-4"
         />
-        <p className="text-gray-600 dark:text-gray-400">{t('viewer.loadingStudy', 'Loading study...')}</p>
+        <p className="text-gray-400">{t('viewer.loadingStudy', 'Loading study...')}</p>
       </div>
     );
   }
@@ -579,9 +580,9 @@ function ViewerApp() {
   // Study error or not found
   if (studyError || (!isLoadingStudy && !studyInfo)) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+      <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: '#030712' }}>
         <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+        <h2 className="text-xl font-bold text-white mb-2">
           {t('viewer.studyNotFound', 'Study not found')}
         </h2>
         <p className="text-gray-500 dark:text-gray-400 mb-4">
@@ -599,96 +600,17 @@ function ViewerApp() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
-      {/* Animated Background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-to-br from-primary-500/5 to-accent-500/5 dark:from-primary-500/10 dark:to-accent-500/10 rounded-full blur-3xl animate-pulse-slow" />
-        <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-gradient-to-tr from-accent-500/5 to-primary-500/5 dark:from-accent-500/10 dark:to-primary-500/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1s' }} />
-      </div>
+    <div className="h-screen flex flex-col" style={{ background: '#030712' }}>
 
-      {/* Header */}
-      <motion.header
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, type: 'spring', stiffness: 100 }}
-        className="relative z-10 backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border-b border-gray-200/50 dark:border-gray-700/50 shadow-lg shadow-gray-200/50 dark:shadow-gray-900/50"
-      >
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            {/* Left: Back + Logo & Title */}
-            <div className="flex items-center gap-4">
-              <motion.button
-                onClick={handleBack}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="p-2 bg-white/60 dark:bg-gray-800/60 hover:bg-white/80 dark:hover:bg-gray-800/80 rounded-xl border border-gray-200/50 dark:border-gray-700/50 transition-all"
-              >
-                <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-              </motion.button>
-
-              <motion.div
-                whileHover={{ scale: 1.05, rotate: 5 }}
-                whileTap={{ scale: 0.95 }}
-                className="relative"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-accent-500 rounded-2xl blur-lg opacity-60 dark:opacity-40 animate-pulse-slow" />
-                <div className="relative bg-gradient-to-br from-primary-500 to-accent-500 p-3 rounded-2xl shadow-lg">
-                  <Brain className="w-7 h-7 text-white" />
-                </div>
-              </motion.div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-accent-600 dark:from-primary-400 dark:to-accent-400 bg-clip-text text-transparent flex items-center gap-2">
-                  {t('viewer.title')}
-                  <Sparkles className="w-5 h-5 text-accent-500 dark:text-accent-400 animate-pulse" />
-                </h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                  {studyInfo?.study.study_description || studyInfo?.study.modality || t('viewer.subtitle')}
-                </p>
-              </div>
-            </div>
-
-            {/* Right Side Controls */}
-            <div className="flex items-center gap-3">
-              {/* MS Report Button + Dropdown */}
-              <div className="relative" ref={reportPanelRef}>
-                <motion.button
-                  onClick={() => setReportPanelOpen(!reportPanelOpen)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`flex items-center gap-2 px-4 py-2 backdrop-blur-md border rounded-xl text-xs font-semibold shadow-lg transition-all ${
-                    reportPanelOpen
-                      ? 'bg-amber-500 border-amber-400 text-white shadow-amber-500/20'
-                      : 'bg-gradient-to-r from-amber-500/20 to-amber-600/20 dark:from-amber-500/30 dark:to-amber-600/30 border-amber-500/30 dark:border-amber-500/20 text-amber-700 dark:text-amber-400 shadow-amber-500/10 hover:from-amber-500/30 hover:to-amber-600/30'
-                  }`}
-                >
-                  <FileText className="w-4 h-4" />
-                  {t('report.title', 'MS Report')}
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${reportPanelOpen ? 'rotate-180' : ''}`} />
-                </motion.button>
-
-                {/* Dropdown Panel */}
-                {reportPanelOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute top-full right-0 mt-2 w-80 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl shadow-2xl shadow-gray-900/20 dark:shadow-black/40 z-50 overflow-hidden"
-                  >
-                    <div className="p-4">
-                      <AIReportPanel onReportGenerated={(report) => { setReportToView(report); setReportPanelOpen(false); }} />
-                    </div>
-                  </motion.div>
-                )}
-              </div>
-
-              <ThemeToggle variant="minimal" />
-              <LanguageSelector variant="minimal" />
-              <UserMenu />
-            </div>
-          </div>
-        </div>
-      </motion.header>
+      {/* Header — AppHeader with breadcrumbs (same as all other pages) */}
+      <AppHeader
+        breadcrumbs={[
+          { label: t('nav.home', 'Home'), path: '/app' },
+          { label: t('patients.title', 'Patients'), path: '/app/patients' },
+          ...(patientData ? [{ label: patientData.full_name, path: `/app/patients/${patientData.id}` }] : []),
+          { label: studyInfo?.study.study_description || studyInfo?.study.modality || t('viewer.title', 'Viewer') },
+        ]}
+      />
 
       {/* Main Content */}
       <div className="relative z-0 flex-1 flex overflow-hidden">
@@ -697,13 +619,14 @@ function ViewerApp() {
           initial={{ x: -300, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="w-72 flex-shrink-0 flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-xl border-r border-gray-200/50 dark:border-gray-700/50 overflow-hidden"
+          className="w-72 flex-shrink-0 flex flex-col border-r border-gray-700 overflow-hidden"
+          style={{ background: '#111827' }}
         >
           {/* Study Info - Compact */}
-          <div className="p-3 border-b border-gray-200/50 dark:border-gray-700/50">
+          <div className="p-3 border-b border-gray-700">
             <div className="flex items-center gap-2 mb-2">
               <FileImage className="w-4 h-4 text-primary-500" />
-              <span className="text-sm font-semibold text-gray-900 dark:text-white">
+              <span className="text-sm font-semibold text-white">
                 {t('viewer.studyInfo', 'Study')}
               </span>
             </div>
@@ -714,7 +637,7 @@ function ViewerApp() {
                   <span className="text-gray-400">•</span>
                 </div>
                 <div>
-                  <span className="text-gray-900 dark:text-white">{new Date(studyInfo.study.study_date).toLocaleDateString()}</span>
+                  <span className="text-white">{new Date(studyInfo.study.study_date).toLocaleDateString()}</span>
                 </div>
                 <div>
                   <span className="text-gray-500">{studyInfo.series.length} {t('study.series', 'series')}</span>
@@ -736,17 +659,17 @@ function ViewerApp() {
 
             {/* Section 1: Original Images */}
             {originalInstances.length > 0 && (
-              <div className="border-b border-gray-200/50 dark:border-gray-700/50">
+              <div className="border-b border-gray-700">
                 <button
                   onClick={() => toggleSection('originals')}
-                  className="w-full flex items-center justify-between p-3 hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-colors"
+                  className="w-full flex items-center justify-between p-3 hover:bg-gray-800 transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     <FileImage className="w-4 h-4 text-primary-500" />
-                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    <span className="text-sm font-semibold text-gray-300">
                       {t('viewer.originalImages', 'Originales')}
                     </span>
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400">
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-900/30 text-blue-400">
                       {originalInstances.length}
                     </span>
                   </div>
@@ -764,8 +687,8 @@ function ViewerApp() {
                         onClick={() => handleSelectInstance(instance.id)}
                         className={`w-full p-1.5 rounded-lg text-left transition-all ${
                           selectedInstanceId === instance.id
-                            ? 'bg-primary-500 text-white shadow-md'
-                            : 'bg-white/60 dark:bg-gray-800/60 hover:bg-white dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-800/60 hover:bg-gray-800 text-gray-300'
                         }`}
                       >
                         <div className="flex items-center gap-2">
@@ -790,17 +713,17 @@ function ViewerApp() {
 
             {/* Section 2: Preprocessed Images */}
             {preprocessedInstances.length > 0 && (
-              <div className="border-b border-gray-200/50 dark:border-gray-700/50">
+              <div className="border-b border-gray-700">
                 <button
                   onClick={() => toggleSection('preprocessed')}
-                  className="w-full flex items-center justify-between p-3 hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-colors"
+                  className="w-full flex items-center justify-between p-3 hover:bg-gray-800 transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     <FlaskConical className="w-4 h-4 text-teal-500" />
-                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    <span className="text-sm font-semibold text-gray-300">
                       {t('viewer.preprocessedImages', 'Preprocesadas')}
                     </span>
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400">
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-teal-900/30 text-teal-400">
                       {preprocessedInstances.length}
                     </span>
                   </div>
@@ -818,8 +741,8 @@ function ViewerApp() {
                         onClick={() => handleSelectInstance(instance.id)}
                         className={`w-full p-1.5 rounded-lg text-left transition-all ${
                           selectedInstanceId === instance.id
-                            ? 'bg-teal-500 text-white shadow-md'
-                            : 'bg-white/60 dark:bg-gray-800/60 hover:bg-white dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
+                            ? 'bg-teal-600 text-white'
+                            : 'bg-gray-800/60 hover:bg-gray-800 text-gray-300'
                         }`}
                       >
                         <div className="flex items-center gap-2">
@@ -843,19 +766,19 @@ function ViewerApp() {
             )}
 
             {/* Section 3: Segmentations */}
-            <div className="border-b border-gray-200/50 dark:border-gray-700/50">
+            <div className="border-b border-gray-700">
               <button
                 onClick={() => toggleSection('segmentations')}
-                className="w-full flex items-center justify-between p-3 hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-colors"
+                className="w-full flex items-center justify-between p-3 hover:bg-gray-800 transition-colors"
               >
                 <div className="flex items-center gap-2">
                   <Puzzle className="w-4 h-4 text-purple-500" />
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  <span className="text-sm font-semibold text-gray-300">
                     {t('viewer.segmentations', 'Segmentaciones')}
                   </span>
                   <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
                     segmentations.length > 0
-                      ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                      ? 'bg-purple-900/30 text-purple-400'
                       : 'bg-gray-100 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400'
                   }`}>
                     {segmentations.length}
@@ -1048,7 +971,8 @@ function ViewerApp() {
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="p-2 border-t border-gray-200 dark:border-gray-700 overflow-y-auto max-h-[35vh] flex-shrink-0"
+              className="border-t border-gray-700 overflow-y-auto max-h-[35vh] flex-shrink-0"
+              style={{ padding: 8 }}
             >
               <ErrorBoundary name="ViewerControls">
                 <ViewerControls
@@ -1071,11 +995,11 @@ function ViewerApp() {
           {/* Layout Switcher Toolbar */}
           {viewMode === '2d' && (originalInstances.length > 1 || preprocessedInstances.length > 1) && (
             <div className="flex items-center justify-center gap-2 mb-2">
-              <div className="flex items-center bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-lg border border-gray-200/50 dark:border-gray-700/50 p-1 gap-1">
+              <div className="flex items-center border border-gray-700" style={{ background: '#1F2937', borderRadius: 8, padding: 4, gap: 4 }}>
                 <button
                   onClick={() => handleLayoutChange('single')}
                   className={`p-1.5 rounded transition-colors ${
-                    multiLayout === 'single' ? 'bg-blue-500 text-white' : 'text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    multiLayout === 'single' ? 'bg-blue-500 text-white' : 'text-gray-500 hover:bg-gray-700'
                   }`}
                   title={t('layout.single', 'Single View')}
                 >
@@ -1084,7 +1008,7 @@ function ViewerApp() {
                 <button
                   onClick={() => handleLayoutChange('1x2')}
                   className={`p-1.5 rounded transition-colors ${
-                    multiLayout === '1x2' ? 'bg-blue-500 text-white' : 'text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    multiLayout === '1x2' ? 'bg-blue-500 text-white' : 'text-gray-500 hover:bg-gray-700'
                   }`}
                   title={t('layout.sideBySide', '1x2 Side by Side')}
                 >
@@ -1093,7 +1017,7 @@ function ViewerApp() {
                 <button
                   onClick={() => handleLayoutChange('2x2')}
                   className={`p-1.5 rounded transition-colors ${
-                    multiLayout === '2x2' ? 'bg-blue-500 text-white' : 'text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    multiLayout === '2x2' ? 'bg-blue-500 text-white' : 'text-gray-500 hover:bg-gray-700'
                   }`}
                   title={t('layout.grid', '2x2 Grid')}
                 >
@@ -1105,7 +1029,7 @@ function ViewerApp() {
                     <button
                       onClick={() => setSyncSlice(!syncSlice)}
                       className={`p-1.5 rounded transition-colors ${
-                        syncSlice ? 'bg-green-500 text-white' : 'text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700'
+                        syncSlice ? 'bg-green-500 text-white' : 'text-gray-500 hover:bg-gray-700'
                       }`}
                       title={syncSlice ? t('layout.syncOn', 'Slice sync: ON') : t('layout.syncOff', 'Slice sync: OFF')}
                     >
@@ -1121,7 +1045,7 @@ function ViewerApp() {
                           className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors ${
                             multiPanelSource === 'preprocessed'
                               ? 'bg-teal-500 text-white'
-                              : 'text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700'
+                              : 'text-gray-500 hover:bg-gray-700'
                           }`}
                           title={multiPanelSource === 'preprocessed'
                             ? t('layout.showOriginals', 'Switch to original images')
@@ -1145,11 +1069,11 @@ function ViewerApp() {
             </div>
           )}
 
-          <div className="h-full bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl shadow-2xl overflow-hidden">
+          <div className="h-full border border-gray-700 overflow-hidden" style={{ background: '#0a0f1a', borderRadius: 8 }}>
             {isLoadingImage && !isMultiPanel ? (
               <div className="h-full flex flex-col items-center justify-center">
                 <Loader2 className="w-12 h-12 text-primary-500 animate-spin mb-4" />
-                <p className="text-gray-600 dark:text-gray-400">{t('viewer.loadingImage')}</p>
+                <p className="text-gray-400">{t('viewer.loadingImage')}</p>
               </div>
             ) : isMultiPanel && viewMode === '2d' ? (
               <ErrorBoundary name="MultiPanelViewer">
@@ -1180,9 +1104,33 @@ function ViewerApp() {
           initial={{ x: 300, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="w-80 flex-shrink-0"
+          className="w-80 flex-shrink-0 flex flex-col border-l border-gray-700 overflow-hidden"
+          style={{ background: '#111827' }}
         >
-          <ControlPanel />
+          {/* MS Report section — collapsible, at the top of right sidebar */}
+          <div className="border-b border-gray-700">
+            <button
+              onClick={() => setReportPanelOpen(!reportPanelOpen)}
+              className="w-full flex items-center justify-between hover:bg-gray-800 transition-colors"
+              style={{ padding: '8px 12px' }}
+            >
+              <div className="flex items-center" style={{ gap: 6 }}>
+                <FileText style={{ width: 16, height: 16, color: '#FBBF24' }} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#E5E7EB' }}>{t('report.title', 'MS Report')}</span>
+              </div>
+              <ChevronDown style={{ width: 14, height: 14, color: '#6B7280', transition: 'transform 0.15s', transform: reportPanelOpen ? 'rotate(180deg)' : 'none' }} />
+            </button>
+            {reportPanelOpen && (
+              <div style={{ padding: '0 12px 12px' }}>
+                <AIReportPanel onReportGenerated={(report) => { setReportToView(report); setReportPanelOpen(false); }} />
+              </div>
+            )}
+          </div>
+
+          {/* Main control panel */}
+          <div className="flex-1 overflow-hidden">
+            <ControlPanel />
+          </div>
         </motion.div>
       </div>
 

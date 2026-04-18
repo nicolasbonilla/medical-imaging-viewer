@@ -104,257 +104,168 @@ export default function PatientCard({
 
   const activeConditions = medicalHistory.filter(h => h.is_active);
 
+  /*
+   * Design System v2.0 — Minor Third scale (1.2):
+   *   12px labels → 14px body → 17px emphasis → 20px heading
+   * Proportional elements: avatar 44px (lg touch target), stats icon 36px (md)
+   * Spacing: 4px grid — related=8px, groups=16px
+   */
+
   // ==================== COMPACT/LIST VIEW ====================
+  // Same pattern as StudyCard compact
   if (compact) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         onClick={onSelect}
-        className={`
-          group relative bg-white dark:bg-slate-800
-          rounded-xl border border-slate-200 dark:border-slate-700
-          p-4 hover:shadow-lg hover:border-slate-300 dark:hover:border-slate-600
-          transition-all duration-200
+        className={`group border transition-colors duration-150
+          border-gray-700 hover:border-gray-600
           ${onSelect ? 'cursor-pointer' : ''}
           ${isDeleting ? 'opacity-50 pointer-events-none' : ''}
         `}
+        style={{ background: '#1F2937', borderRadius: 8, padding: 12, display: 'flex', alignItems: 'center', gap: 12 }}
       >
-        <div className="flex items-center gap-4">
-          {/* Avatar */}
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-sm shadow-md flex-shrink-0">
-            {initials}
-          </div>
-
-          {/* Patient Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-semibold text-slate-900 dark:text-white truncate">
-                {displayName}
-              </h3>
-              {patient.gender && (
-                <span className="text-blue-500 dark:text-blue-400 text-sm">
-                  {getGenderSymbol(patient.gender)}
-                </span>
-              )}
-              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(patient.status)}`}>
-                {t(`patient.status.${patient.status}`)}
-              </span>
-            </div>
-            <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 mt-1">
-              <span className="font-mono text-xs bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">
-                {patient.mrn}
-              </span>
-              {patientAge > 0 && (
-                <>
-                  <span className="text-slate-300 dark:text-slate-600">•</span>
-                  <span>{patientAge} {t('patient.years')}</span>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            {onEdit && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onEdit(); }}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                title={t('common.edit')}
-              >
-                <Edit className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-              </button>
-            )}
-            {onDelete && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                title={t('common.delete')}
-              >
-                <Trash2 className="w-4 h-4 text-slate-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400" />
-              </button>
-            )}
-          </div>
-
-          <ChevronRight className="w-5 h-5 text-slate-400 dark:text-slate-500 flex-shrink-0" />
+        {/* Avatar — 36×36, radius 6 */}
+        <div className="flex-shrink-0 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white"
+          style={{ width: 36, height: 36, borderRadius: 6, fontSize: 14, fontWeight: 700 }}>
+          {initials}
         </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center" style={{ gap: 6 }}>
+            <h3 className="truncate" style={{ fontSize: 14, fontWeight: 600, color: '#F9FAFB', margin: 0 }}>
+              {displayName}
+            </h3>
+            <span style={{
+              fontSize: 11, fontWeight: 500, padding: '1px 6px', borderRadius: 4,
+              background: patient.status === 'active' ? 'rgba(16,185,129,0.12)' : 'rgba(148,163,184,0.12)',
+              color: patient.status === 'active' ? '#34D399' : '#94A3B8',
+            }}>
+              {t(`patient.status.${patient.status}`)}
+            </span>
+          </div>
+          <div className="flex items-center" style={{ gap: 8, marginTop: 2 }}>
+            <span className="font-mono" style={{ fontSize: 12, color: '#9CA3AF' }}>{patient.mrn}</span>
+            <span style={{ color: '#374151' }}>·</span>
+            {patientAge > 0 && <span style={{ fontSize: 12, color: '#9CA3AF' }}>{patientAge} {t('patient.years')}</span>}
+            {patient.gender && <><span style={{ color: '#374151' }}>·</span><span style={{ fontSize: 12, color: '#6B7280' }}>{getGenderSymbol(patient.gender)}</span></>}
+          </div>
+        </div>
+        {/* Actions — 28×28 */}
+        <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ gap: 4 }}>
+          {onEdit && (
+            <button onClick={(e) => { e.stopPropagation(); onEdit(); }}
+              className="flex items-center justify-center hover:bg-gray-700 transition-colors" title={t('common.edit')}
+              style={{ width: 28, height: 28, borderRadius: 6 }}>
+              <Edit style={{ width: 14, height: 14, color: '#9CA3AF' }} />
+            </button>
+          )}
+          {onDelete && (
+            <button onClick={(e) => { e.stopPropagation(); onDelete(); }}
+              className="flex items-center justify-center hover:bg-red-900/30 transition-colors" title={t('common.delete')}
+              style={{ width: 28, height: 28, borderRadius: 6 }}>
+              <Trash2 style={{ width: 14, height: 14, color: '#9CA3AF' }} />
+            </button>
+          )}
+        </div>
+        <ChevronRight style={{ width: 16, height: 16, color: '#6B7280', flexShrink: 0 }} />
       </motion.div>
     );
   }
 
   // ==================== GRID/CARD VIEW ====================
+  // Same pattern as StudyCard: header → data grid → footer
   return (
     <motion.div
       data-component="patient-card-v2"
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       onClick={onSelect}
-      className={`
-        group relative bg-white dark:bg-slate-800
-        rounded-2xl border border-slate-200 dark:border-slate-700
-        shadow-sm hover:shadow-xl
-        transition-all duration-300 overflow-hidden
+      className={`group relative border overflow-hidden transition-colors duration-150
+        border-gray-700 hover:border-gray-600
         ${onSelect ? 'cursor-pointer' : ''}
         ${isDeleting ? 'opacity-50 pointer-events-none' : ''}
       `}
+      style={{ background: '#1F2937', borderRadius: 8 }}
     >
-      {/* Header with gradient */}
-      <div className="relative bg-gradient-to-r from-blue-500 to-indigo-600 px-5 py-4">
-        {/* Action buttons - top right */}
-        <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          {onEdit && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onEdit(); }}
-              className="p-1.5 bg-white/20 hover:bg-white/30 rounded-lg transition-colors backdrop-blur-sm"
-              title={t('common.edit')}
-            >
-              <Edit className="w-4 h-4 text-white" />
-            </button>
-          )}
-          {onDelete && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onDelete(); }}
-              className="p-1.5 bg-white/20 hover:bg-red-500/60 rounded-lg transition-colors backdrop-blur-sm"
-              title={t('common.delete')}
-            >
-              <Trash2 className="w-4 h-4 text-white" />
-            </button>
-          )}
-        </div>
-
-        {/* Patient identity */}
-        <div className="flex items-center gap-4">
-          {/* Avatar */}
-          <div className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white text-lg font-bold shadow-lg flex-shrink-0">
-            {initials}
-          </div>
-
-          {/* Name and MRN */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-white truncate">{displayName}</h2>
-              {patient.gender && (
-                <span className="text-white/80 text-base flex-shrink-0">
-                  {getGenderSymbol(patient.gender)}
+      {/* Header — avatar + name + status (same pattern as StudyCard header) */}
+      <div style={{ padding: 12 }}>
+        <div className="flex items-start justify-between" style={{ gap: 8 }}>
+          <div className="flex items-center min-w-0" style={{ gap: 8 }}>
+            {/* Avatar — 36×36, radius 6 (same as modality badge in StudyCard) */}
+            <div className="flex-shrink-0 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white"
+              style={{ width: 36, height: 36, borderRadius: 6, fontSize: 14, fontWeight: 700 }}>
+              {initials}
+            </div>
+            <div className="min-w-0">
+              <h2 className="truncate" style={{ fontSize: 14, fontWeight: 600, color: '#F9FAFB', margin: 0 }}>
+                {displayName}
+              </h2>
+              <div className="flex items-center" style={{ gap: 6, marginTop: 2 }}>
+                <span style={{
+                  fontSize: 11, fontWeight: 500, padding: '1px 6px', borderRadius: 4,
+                  background: patient.status === 'active' ? 'rgba(16,185,129,0.12)' : 'rgba(148,163,184,0.12)',
+                  color: patient.status === 'active' ? '#34D399' : '#94A3B8',
+                }}>
+                  {t(`patient.status.${patient.status}`)}
                 </span>
-              )}
-            </div>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="font-mono text-xs bg-white/20 text-white/90 px-2 py-0.5 rounded">
-                {patient.mrn}
-              </span>
-              {patientAge > 0 && (
-                <>
-                  <span className="text-white/60">•</span>
-                  <span className="text-white/90 text-sm">{patientAge} {t('patient.years')}</span>
-                </>
-              )}
+                {patient.gender && (
+                  <span style={{ fontSize: 11, color: '#6B7280' }}>{getGenderSymbol(patient.gender)}</span>
+                )}
+                {patientAge > 0 && (
+                  <span style={{ fontSize: 11, color: '#6B7280' }}>{patientAge} {t('patient.years')}</span>
+                )}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Status badge */}
-        <div className="mt-3">
-          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(patient.status)}`}>
-            <Activity className="w-3 h-3 mr-1" />
-            {t(`patient.status.${patient.status}`)}
-          </span>
+          {/* Actions — 28×28 (sm), show on hover */}
+          <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ gap: 2 }}>
+            {onEdit && (
+              <button onClick={(e) => { e.stopPropagation(); onEdit(); }}
+                className="flex items-center justify-center hover:bg-gray-700 transition-colors" title={t('common.edit')}
+                style={{ width: 28, height: 28, borderRadius: 6 }}>
+                <Edit style={{ width: 14, height: 14, color: '#9CA3AF' }} />
+              </button>
+            )}
+            {onDelete && (
+              <button onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                className="flex items-center justify-center hover:bg-red-900/30 transition-colors" title={t('common.delete')}
+                style={{ width: 28, height: 28, borderRadius: 6 }}>
+                <Trash2 style={{ width: 14, height: 14, color: '#9CA3AF' }} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="p-5">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-3">
-          {/* Studies */}
-          <button
-            onClick={(e) => { e.stopPropagation(); onViewStudies?.(); }}
-            disabled={!onViewStudies}
-            className={`
-              flex items-center gap-3 p-3 rounded-xl
-              bg-blue-50 dark:bg-blue-900/20
-              border border-blue-100 dark:border-blue-800/50
-              ${onViewStudies ? 'hover:bg-blue-100 dark:hover:bg-blue-900/30 cursor-pointer' : 'cursor-default'}
-              transition-colors
-            `}
-          >
-            <div className="w-10 h-10 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center">
-              <Image className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div className="text-left">
-              <div className="text-xl font-bold text-blue-700 dark:text-blue-300">
-                {patient.study_count ?? 0}
-              </div>
-              <div className="text-xs text-blue-600/80 dark:text-blue-400/80">
-                {t('patient.studies')}
-              </div>
-            </div>
-          </button>
+      {/* Stats — same label/value pattern as StudyCard and PatientDetailPage */}
+      <div className="border-t border-gray-700 grid grid-cols-3" style={{ padding: '8px 12px', gap: 8 }}>
+        <div>
+          <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>MRN</div>
+          <div className="font-mono" style={{ fontSize: 12, fontWeight: 500, color: '#E5E7EB' }}>{patient.mrn}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>{t('patient.studies')}</div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: '#E5E7EB' }}>{patient.study_count ?? 0}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>{t('patient.documents')}</div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: '#E5E7EB' }}>{patient.document_count ?? 0}</div>
+        </div>
+      </div>
 
-          {/* Documents */}
-          <button
-            onClick={(e) => { e.stopPropagation(); onViewDocuments?.(); }}
-            disabled={!onViewDocuments}
-            className={`
-              flex items-center gap-3 p-3 rounded-xl
-              bg-violet-50 dark:bg-violet-900/20
-              border border-violet-100 dark:border-violet-800/50
-              ${onViewDocuments ? 'hover:bg-violet-100 dark:hover:bg-violet-900/30 cursor-pointer' : 'cursor-default'}
-              transition-colors
-            `}
-          >
-            <div className="w-10 h-10 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 flex items-center justify-center">
-              <FileText className="w-5 h-5 text-violet-600 dark:text-violet-400" />
-            </div>
-            <div className="text-left">
-              <div className="text-xl font-bold text-violet-700 dark:text-violet-300">
-                {patient.document_count ?? 0}
-              </div>
-              <div className="text-xs text-violet-600/80 dark:text-violet-400/80">
-                {t('patient.documents')}
-              </div>
-            </div>
+      {/* Footer — View Patient button (same as View Study in StudyCard) */}
+      {onSelect && (
+        <div className="border-t border-gray-700" style={{ padding: 8 }}>
+          <button onClick={(e) => { e.stopPropagation(); onSelect(); }}
+            className="w-full flex items-center justify-center border border-gray-600 hover:bg-gray-700 transition-colors"
+            style={{ height: 36, gap: 6, borderRadius: 6, fontSize: 13, fontWeight: 500, color: '#E5E7EB' }}>
+            <ChevronRight style={{ width: 16, height: 16 }} />
+            {t('patient.viewPatient', 'View Patient')}
           </button>
         </div>
-
-        {/* Contact Info - only if available */}
-        {(patient.phone_mobile || patient.email) && (
-          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 space-y-2">
-            {patient.phone_mobile && (
-              <a
-                href={`tel:${patient.phone_mobile}`}
-                onClick={(e) => e.stopPropagation()}
-                className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-              >
-                <Phone className="w-4 h-4" />
-                <span>{patient.phone_mobile}</span>
-              </a>
-            )}
-            {patient.email && (
-              <a
-                href={`mailto:${patient.email}`}
-                onClick={(e) => e.stopPropagation()}
-                className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate"
-              >
-                <Mail className="w-4 h-4 flex-shrink-0" />
-                <span className="truncate">{patient.email}</span>
-              </a>
-            )}
-          </div>
-        )}
-
-        {/* Active conditions badge - only if there are any */}
-        {activeConditions.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
-            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-              <Activity className="w-4 h-4" />
-              <span className="text-sm font-medium">
-                {activeConditions.length} {t('patient.activeConditions')}
-              </span>
-            </div>
-          </div>
-        )}
-      </div>
+      )}
     </motion.div>
   );
 }

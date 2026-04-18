@@ -170,135 +170,54 @@ function PatientBannerComponent({
     );
   }
 
-  // Full Banner (default)
+  // Full Banner — ONLY name + status (title bar, not data display)
   return (
     <motion.div
-      initial={{ opacity: 0, y: -10 }}
+      initial={{ opacity: 0, y: -4 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`
-        relative
-        bg-white dark:bg-gray-900/95
-        border-b border-gray-200/50 dark:border-gray-700/50
-        ${className}
-      `}
+      className={`relative border-b border-gray-700 ${className}`}
+      style={{ background: '#111827' }}
       role="banner"
       aria-label={t('patients.patientBanner', 'Patient identification banner')}
     >
-
-      <div className="relative px-5 py-4">
-        <div className="flex items-start justify-between gap-6">
-          {/* Left Section: Primary Identifiers */}
-          <div className="flex-1">
-            {/* Row 1: Name + Gender + Status */}
-            <div className="flex items-center gap-3 mb-2">
-              {/* Patient Photo Placeholder */}
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white font-bold text-lg shadow-md">
-                {patient.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-              </div>
-
-              <div className="flex-1">
-                {/* HIPAA Identifier 1: Full Name */}
-                <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
-                    {patient.full_name}
-                  </h2>
-                  <span
-                    className={`text-2xl ${genderStyle.text}`}
-                    aria-label={t(`patients.genders.${patient.gender}`)}
-                    title={t(`patients.genders.${patient.gender}`)}
-                  >
-                    {genderSymbol}
-                  </span>
-
-                  {/* Status Badge */}
-                  <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${statusStyle.bg} ${statusStyle.border} border`}>
-                    <div className={`w-2 h-2 rounded-full ${statusStyle.dot} animate-pulse`} aria-hidden="true" />
-                    <span className={`text-xs font-semibold uppercase tracking-wide ${statusStyle.text}`}>
-                      {t(`patients.status.${patient.status}`, patient.status)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* HIPAA Identifier 2 & 3: MRN + DOB */}
-                <div className="flex items-center gap-4 mt-1">
-                  {/* MRN */}
-                  <div
-                    className="flex items-center gap-1.5 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded"
-                    title={t('patients.mrnFull', 'Medical Record Number')}
-                  >
-                    <Hash className="w-3.5 h-3.5 text-primary-600 dark:text-primary-400" aria-hidden="true" />
-                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">MRN:</span>
-                    <span className="font-mono text-sm font-bold text-gray-800 dark:text-gray-200">
-                      {patient.mrn}
-                    </span>
-                  </div>
-
-                  {/* Date of Birth + Age */}
-                  <div
-                    className="flex items-center gap-1.5 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded"
-                    title={t('patients.dateOfBirth', 'Date of Birth')}
-                  >
-                    <Calendar className="w-3.5 h-3.5 text-primary-600 dark:text-primary-400" aria-hidden="true" />
-                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">DOB:</span>
-                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                      {formatBirthDate(patient.birth_date)}
-                    </span>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      ({age} {t('patients.years', 'years')})
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Section: Alerts & Quick Info */}
-          <div className="flex flex-col items-end gap-2">
-            {/* Insurance/Coverage indicator */}
-            {patient.insurance_provider && (
-              <div
-                className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg"
-                title={t('patients.insuranceInfo', 'Insurance Information')}
-              >
-                <Shield className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
-                <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
-                  {patient.insurance_provider}
-                </span>
-              </div>
-            )}
-
-            {/* Allergy Alert Banner */}
-            {showAllergies && hasAllergies && (
-              <div
-                className="flex items-center gap-2 px-3 py-1.5 bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-lg"
-                role="alert"
-                aria-live="polite"
-              >
-                <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
-                <span className="text-xs font-bold text-amber-800 dark:text-amber-200 uppercase tracking-wide">
-                  {t('patients.allergiesAlert', 'ALLERGIES')}
-                </span>
-              </div>
-            )}
-
-            {/* Critical Alert */}
-            {hasCriticalAlerts && (
-              <div
-                className="flex items-center gap-2 px-3 py-1.5 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg animate-pulse"
-                role="alert"
-                aria-live="assertive"
-              >
-                <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" aria-hidden="true" />
-                <span className="text-xs font-bold text-red-800 dark:text-red-200 uppercase tracking-wide">
-                  {t('patients.criticalAlert', 'CRITICAL ALERT')}
-                </span>
-              </div>
-            )}
-          </div>
+      <div className="flex items-center" style={{ height: 60, padding: '0 24px', gap: 8 }}>
+        {/* Avatar — 36×36, radius 6 (= app logo) */}
+        <div
+          className="flex-shrink-0 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white"
+          style={{ width: 36, height: 36, borderRadius: 6, fontSize: 14, fontWeight: 700 }}
+        >
+          {patient.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
         </div>
 
-        {/* HIPAA compliance is enforced by design (two-identifier rule),
-             not displayed as a badge — clinicians don't need to see this */}
+        {/* Name only — same weight as app name, this is a page title */}
+        <h2 className="truncate" style={{ fontSize: 14, fontWeight: 600, color: '#F9FAFB', margin: 0 }}>
+          {patient.full_name}
+        </h2>
+
+        {/* Right: Clinical alerts (only if present) */}
+        <div className="ml-auto flex items-center flex-shrink-0" style={{ gap: 4 }}>
+          {showAllergies && hasAllergies && (
+            <div className="flex items-center"
+              style={{ gap: 4, padding: '4px 8px', borderRadius: 4, background: 'rgba(146,64,14,0.2)' }}
+              role="alert" aria-live="polite">
+              <AlertTriangle style={{ width: 12, height: 12, color: '#FBBF24' }} aria-hidden="true" />
+              <span style={{ fontSize: 11, fontWeight: 600, color: '#FDE68A', textTransform: 'uppercase' }}>
+                {t('patients.allergiesAlert', 'ALLERGIES')}
+              </span>
+            </div>
+          )}
+
+          {hasCriticalAlerts && (
+            <div className="flex items-center"
+              style={{ gap: 4, padding: '4px 8px', borderRadius: 4, background: 'rgba(127,29,29,0.25)' }}
+              role="alert" aria-live="assertive">
+              <AlertCircle style={{ width: 12, height: 12, color: '#F87171' }} aria-hidden="true" />
+              <span style={{ fontSize: 11, fontWeight: 600, color: '#FCA5A5', textTransform: 'uppercase' }}>
+                {t('patients.criticalAlert', 'CRITICAL ALERT')}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </motion.div>
   );

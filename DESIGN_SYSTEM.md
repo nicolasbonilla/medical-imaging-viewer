@@ -54,6 +54,21 @@ Minimum touch target: 44×44px (Apple HIG / WCAG 2.5.8).
 | **Ghost** | transparent | none | `text-gray-400` |
 | **Danger** | `bg-red-600/10` | `border-red-700/50` | `text-red-400` |
 
+### Button hierarchy by context
+
+Buttons must match their position in the information architecture.
+Higher context = more visual weight. Lower context = more subtle.
+
+| Level | Context | Style | Example |
+|-------|---------|-------|---------|
+| **L1 — Create/CTA** | Primary "create new" action in any toolbar | `gradient blue→purple`, filled, 600 weight | "New Patient", "New Study", "Upload Document" |
+| **L2 — Active navigation** | Currently selected tab or mode | `bg-blue-600`, filled | Active tab (Studies / Documents) |
+| **L3 — Section action** | Secondary action inside a section | `border-blue-500 text-blue-400`, outline | Rarely used; for non-CTA section actions |
+| **L4 — Card action** | Action within a content card | `border-gray-600 text-gray-300`, outline | "View Study" inside a StudyCard |
+| **L5 — Functional control** | Utility buttons (sort, view mode) | `border-gray-600`, icon-only 36×36 | Grid/List toggle, Sort, Edit, Delete |
+
+**Rule**: A button inside a card or tab MUST NOT have more visual weight than the page-level primary action. Gradients and filled backgrounds are reserved for L1–L2 only.
+
 ### Interaction states (apply to ALL buttons)
 
 | State | Change |
@@ -147,24 +162,51 @@ For charts and graphs. Never rely on color alone — pair with shape/label.
 
 ---
 
-## 4. TYPOGRAPHY
+## 4. TYPOGRAPHY (Minor Third scale — ratio 1.2)
 
-| Token | Size | Weight | Line Height | Usage |
-|-------|------|--------|-------------|-------|
-| `text-2xs` | 10px | 400 | 14px | Micro labels (rare) |
-| `text-xs` | 11px | 400 | 16px | Badges, timestamps |
-| `text-sm` | 13px | 400 | 20px | Metadata, secondary info |
-| `text-base` | 14px | 400 | 20px | Body text, table cells |
-| `text-md` | 16px | 500 | 24px | Emphasis, subtitles |
-| `text-lg` | 18px | 600 | 28px | Section headings |
-| `text-xl` | 20px | 600 | 28px | Panel titles |
-| `text-2xl` | 24px | 700 | 32px | Page headings |
+Scale: 10 → 11 → 12 → 14 → 17 → 20 → 24px.
+**Rule**: No element inside a page may have a larger font than the app name (14px/700).
+
+| Step | Size | Weight | Usage |
+|------|------|--------|-------|
+| **-3** | 10px | 400 | Stat labels in cards (UPPERCASE) |
+| **-2** | 11px | 400–500 | Badges, field labels (UPPERCASE), timestamps |
+| **-1** | 12px | 400–500 | Secondary text, metadata, results count, contact info |
+| **0 (base)** | 13px | 500 | Button labels, input text, filter text |
+| **+1** | 14px | 500–600 | Body text, card titles, field values, app name |
+| **+2** | 17px | 700 | Stat numbers (emphasis), patient name in banner |
+| **+3** | 20px | 600 | Page headings (rarely used) |
 
 ### Font weights — usage rules
-- **400**: Body text, descriptions, table cells
-- **500**: Button labels, input labels, emphasis
-- **600**: Section headings, card titles
-- **700**: Page titles ONLY. Max 1 per screen.
+- **400**: Descriptions, secondary text, metadata
+- **500**: Button labels, input labels, field values
+- **600**: Card/section titles, app name
+- **700**: Stat emphasis numbers ONLY (17px). App name uses 700 at 14px.
+
+### Text color hierarchy
+
+Colors communicate information importance. Brighter = more important.
+
+| Color | Hex | Usage |
+|-------|-----|-------|
+| **White** | `#F9FAFB` | Primary text: titles, names, active elements |
+| **Light gray** | `#E5E7EB` | Field values, data, card content |
+| **Mid gray** | `#9CA3AF` | Secondary: MRN, dates, metadata, results count |
+| **Dark gray** | `#6B7280` | Tertiary: labels (UPPERCASE), icons, timestamps |
+| **Darkest gray** | `#4B5563` | Separators, disabled text, empty state icons |
+
+### Section title icon colors
+
+Each section uses a distinct icon color to aid quick scanning:
+
+| Section | Icon color | Hex | Meaning |
+|---------|-----------|-----|---------|
+| Patient ID | Blue | `#60A5FA` | Clinical identity |
+| Contact | Green | `#34D399` | Communication |
+| Emergency | Red | `#F87171` | Urgency |
+| Insurance | Blue | `#60A5FA` | Coverage |
+| Record/timestamps | Dark gray | `#6B7280` | Metadata (lowest priority) |
+| Statistics | Gray | `#9CA3AF` | Neutral metrics |
 
 ### Font family
 ```css
@@ -335,42 +377,65 @@ font-family-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Consolas', monospac
 
 ### Header (App bar)
 ```
-Height: 48px
-Background: bg-gray-900/90 backdrop-blur
-Left:  [Logo 28×28] [gap-8] [App name text-sm/700]
-Right: [Controls — ALL 36×36 buttons, gap-4 between them]
+Height: 60px (12+36+12)
+Background: #111827 solid (no blur, no transparency)
+Padding: 0 24px
+Left:  [Logo 36×36, radius 6] [gap-8] [App name 14px/700, #F9FAFB]
+Right: [Controls — ALL 36×36 buttons, gap-4]
+Border: border-b border-gray-700 solid
 ```
 
 ### Breadcrumb bar
 ```
-Height: 36px
-Background: bg-gray-800/50
-Font: 12px / 400
-Separator: ChevronRight 12×12, text-gray-600
-Current page: 12px / 500, text-gray-200
-Parent links: text-gray-400, hover → text-blue-400
-Padding: 0 20px
+Height: 32px
+Background: #1a2332 solid
+Padding: 0 24px
+Font: 12px / 400, #9CA3AF (links), 12px / 500, #E5E7EB (current page)
+Separator: ChevronRight 12×12, #4B5563
 ```
 
-### Patient banner
+### Patient banner (title bar)
 ```
-Background: bg-gray-900 (surface)
-Border: bottom only, border-default
-Padding: 16px 20px
-Avatar: 40px circle, gradient, initials text-lg/700
-Name: text-xl / 700 / text-primary
-Identifiers: text-sm font-mono, inside bg-gray-800 rounded-sm px-8 py-2
-Status badge: pill (radius-pill), text-xs/600 uppercase
+Height: 60px (same as header)
+Background: #111827 solid
+Padding: 0 24px, gap 8px
+Avatar: 36×36, radius 6, gradient blue→purple, initials 14px/700
+Name: 14px / 600 / #F9FAFB (same weight as app name, NEVER larger)
+Border: border-b border-gray-700 solid
+NO identifiers in banner — those go in Patient ID card below
 ```
 
-### Cards
+### Cards (data display)
 ```
-Background: bg-surface
-Border: 1px border-default
-Border radius: radius-lg (8px)
+Background: #1F2937 solid
+Border: 1px solid border-gray-700
+Border radius: 8px
 Padding: 16px
-Hover: bg-elevated (if interactive)
-NO shadows in dark mode
+Title: 14px/600, #F9FAFB, with 16px icon in section color
+Labels: 11px/500, #6B7280, UPPERCASE, letter-spacing 0.05em
+Values: 14px/500, #E5E7EB
+Gap between fields: 12px
+Title margin-bottom: 12px
+NO shadows, NO backdrop-blur, NO semi-transparent backgrounds
+```
+
+### Information architecture (PatientDetailPage)
+```
+┌── Header (60px) ── app identity, global controls ──────────────┐
+├── Breadcrumb (32px) ── navigation path ─────────────────────────┤
+├── Patient Banner (60px) ── avatar + name only (title bar) ─────┤
+├── Main Content (padding: 16px 24px) ───────────────────────────┤
+│   ┌─ Patient ID card (full width) ── HIPAA identifiers ──────┐ │
+│   ├─ Contact │ Emergency │ Insurance (3-col, align-start) ────┤ │
+│   ├─ Tabs: [Studies N] [Documents N] ── collections only ────┤ │
+│   └─ Tab content (StudyList / DocumentList) ──────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+
+Rules:
+- Patient info is ALWAYS visible (not hidden inside a tab)
+- Tabs only contain collections (lists), not patient data
+- Empty tabs (like "History") are hidden until they have content
+- No redundant info: data shown in one place only
 ```
 
 ### Tables

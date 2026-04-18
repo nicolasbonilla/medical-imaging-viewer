@@ -487,7 +487,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
       {segmentationMode && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
           {isCreatingSegmentation ? (
-            <div className="flex items-center gap-2 bg-yellow-500 text-black px-3 py-1.5 rounded-lg text-sm font-medium shadow-lg">
+            <div className="flex items-center gap-2 bg-yellow-500 text-black px-3 py-1.5 text-xs font-medium">
               <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
               {t('viewer.creatingSegmentation', 'Creating segmentation...')}
             </div>
@@ -495,12 +495,12 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
             <>
               {/* View/Edit mode indicator */}
               {isPaintMode ? (
-                <div className="flex items-center gap-2 bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium shadow-lg">
+                <div className="flex items-center gap-2 bg-green-500 text-white px-3 py-1.5 text-xs font-medium">
                   <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
                   {t('viewer.editingSegmentation', 'Editing')}
                 </div>
               ) : (
-                <div className="flex items-center gap-2 bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium shadow-lg">
+                <div className="flex items-center gap-2 bg-blue-500 text-white px-3 py-1.5 text-xs font-medium">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -511,7 +511,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
               {/* Edit toggle button */}
               <button
                 onClick={() => setIsPaintMode(!isPaintMode)}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium shadow-lg transition-colors ${
+                className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium transition-colors ${
                   isPaintMode
                     ? 'bg-yellow-500 hover:bg-yellow-600 text-black'
                     : 'bg-green-600 hover:bg-green-700 text-white'
@@ -540,7 +540,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
                 <button
                   onClick={saveSegmentation}
                   disabled={isSaving}
-                  className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-3 py-1.5 rounded-lg text-sm font-medium shadow-lg transition-colors"
+                  className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-3 py-1.5 text-xs font-medium transition-colors"
                   title={t('viewer.saveSegmentation', 'Save segmentation')}
                 >
                   {isSaving ? (
@@ -555,13 +555,13 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
               )}
               {/* Save status indicator */}
               {saveStatus === 'saving' && (
-                <div className="flex items-center gap-1 bg-yellow-500 text-black px-2 py-1 rounded text-xs font-medium shadow-lg animate-pulse">
+                <div className="flex items-center gap-1 bg-yellow-500 text-black px-2 py-1 rounded text-xs font-medium animate-pulse">
                   <div className="w-3 h-3 border-2 border-black border-t-transparent rounded-full animate-spin" />
                   {t('viewer.autoSaving', 'Saving...')}
                 </div>
               )}
               {saveStatus === 'saved' && (
-                <div className="flex items-center gap-1 bg-green-600 text-white px-2 py-1 rounded text-xs font-medium shadow-lg">
+                <div className="flex items-center gap-1 bg-green-600 text-white px-2 py-1 rounded text-xs font-medium ">
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
@@ -569,7 +569,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
                 </div>
               )}
               {saveStatus === 'error' && (
-                <div className="flex items-center gap-1 bg-red-600 text-white px-2 py-1 rounded text-xs font-medium shadow-lg">
+                <div className="flex items-center gap-1 bg-red-600 text-white px-2 py-1 rounded text-xs font-medium ">
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
@@ -578,7 +578,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
               )}
             </>
           ) : (
-            <div className="flex items-center gap-2 bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium shadow-lg">
+            <div className="flex items-center gap-2 bg-red-500 text-white px-3 py-1.5 text-xs font-medium">
               {t('viewer.noSegmentation', 'No segmentation')}
             </div>
           )}

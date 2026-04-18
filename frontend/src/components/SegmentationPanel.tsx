@@ -609,7 +609,7 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
   const hasContext = !!fileId;
 
   return (
-    <div className="bg-gray-800 rounded-lg shadow-lg">
+    <div style={{ background: '#1F2937', borderRadius: 8 }}>
       {/* Header */}
       <div
         className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-700 transition-colors"

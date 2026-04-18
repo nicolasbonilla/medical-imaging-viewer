@@ -181,12 +181,7 @@ export default function PatientsPage() {
   const total = hasClientFilter ? filteredPatients.length : (patientsData?.total || 0);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
-      {/* Animated Background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-to-br from-primary-500/5 to-accent-500/5 dark:from-primary-500/10 dark:to-accent-500/10 rounded-full blur-3xl animate-pulse-slow" />
-        <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-gradient-to-tr from-accent-500/5 to-primary-500/5 dark:from-accent-500/10 dark:to-primary-500/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1s' }} />
-      </div>
+    <div className="min-h-screen flex flex-col" style={{ background: '#030712' }}>
 
       {/* Header */}
       <AppHeader
@@ -200,41 +195,45 @@ export default function PatientsPage() {
       />
 
       {/* Main Content - WCAG 2.4.1 Skip Link Target */}
-      <main id="main-content" className="relative z-0 flex-1 p-6 overflow-auto" tabIndex={-1}>
-        <div className="max-w-7xl mx-auto space-y-6">
-          {/* Toolbar */}
+      <main id="main-content" className="relative z-0 flex-1 overflow-auto" style={{ padding: '16px 24px' }} tabIndex={-1}>
+        <div className="max-w-7xl mx-auto" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Toolbar — inline, same pattern as StudyList/DocumentList */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-4 shadow-lg"
+            className="flex flex-col sm:flex-row items-start sm:items-center justify-between"
+            style={{ gap: 8 }}
           >
             {/* Search & Filters */}
-            <div className="flex items-center gap-3 flex-1 w-full sm:w-auto">
-              {/* Search */}
+            <div className="flex items-center flex-1 w-full sm:w-auto" style={{ gap: 8 }}>
+              {/* Search — 36px height (md), radius 6px */}
               <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute" style={{ left: 10, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, color: '#6B7280' }} />
                 <input
                   type="text"
                   value={filters.search}
                   onChange={(e) => handleFilterChange('search', e.target.value)}
                   placeholder={t('patients.searchPlaceholder')}
-                  className="w-full pl-10 pr-4 py-2.5 bg-white/60 dark:bg-gray-900/60 border border-gray-200/50 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm"
+                  className="w-full border border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  style={{ height: 36, paddingLeft: 36, paddingRight: 12, background: '#111827', borderRadius: 6, fontSize: 13, color: '#E5E7EB' }}
                 />
               </div>
 
-              {/* Filter Toggle */}
+              {/* Filter Toggle — 36px height, radius 6px */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all ${
+                className={`flex items-center border transition-colors ${
                   showFilters || hasActiveFilters
-                    ? 'border-primary-500 text-primary-600 bg-primary-50 dark:bg-primary-900/20'
-                    : 'border-gray-200/50 dark:border-gray-700/50 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    ? 'border-blue-500 text-blue-400 bg-blue-900/20'
+                    : 'border-gray-600 text-gray-300 hover:bg-gray-700'
                 }`}
+                style={{ height: 36, gap: 6, padding: '0 12px', borderRadius: 6, fontSize: 13 }}
               >
-                <Filter className="w-4 h-4" />
+                <Filter style={{ width: 16, height: 16 }} />
                 <span className="hidden sm:inline">{t('common.filters')}</span>
                 {hasActiveFilters && (
-                  <span className="w-5 h-5 flex items-center justify-center bg-primary-500 text-white text-xs rounded-full">
+                  <span className="flex items-center justify-center bg-blue-500 text-white rounded-full"
+                    style={{ width: 18, height: 18, fontSize: 11 }}>
                     !
                   </span>
                 )}
@@ -242,54 +241,56 @@ export default function PatientsPage() {
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-2">
-              {/* View Mode */}
-              <div className="flex items-center border border-gray-200/50 dark:border-gray-700/50 rounded-xl overflow-hidden">
+            <div className="flex items-center" style={{ gap: 4 }}>
+              {/* View Mode — 36px buttons, radius 6px */}
+              <div className="flex items-center border border-gray-600 overflow-hidden" style={{ borderRadius: 6 }}>
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-2.5 ${
+                  className={`flex items-center justify-center ${
                     viewMode === 'grid'
-                      ? 'bg-primary-500 text-white'
-                      : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-400 hover:bg-gray-700'
                   }`}
+                  style={{ width: 36, height: 36 }}
                 >
-                  <Grid className="w-4 h-4" />
+                  <Grid style={{ width: 16, height: 16 }} />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-2.5 ${
+                  className={`flex items-center justify-center ${
                     viewMode === 'list'
-                      ? 'bg-primary-500 text-white'
-                      : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-400 hover:bg-gray-700'
                   }`}
+                  style={{ width: 36, height: 36 }}
                 >
-                  <List className="w-4 h-4" />
+                  <List style={{ width: 16, height: 16 }} />
                 </button>
               </div>
 
-              {/* Sort */}
+              {/* Sort — 36×36, radius 6px */}
               <button
                 onClick={toggleSortOrder}
-                className="p-2.5 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl border border-gray-200/50 dark:border-gray-700/50"
+                className="flex items-center justify-center text-gray-400 hover:bg-gray-700 border border-gray-600 transition-colors"
+                style={{ width: 36, height: 36, borderRadius: 6 }}
                 title={t('common.sort')}
               >
                 {sortOrder === 'asc' ? (
-                  <SortAsc className="w-4 h-4" />
+                  <SortAsc style={{ width: 16, height: 16 }} />
                 ) : (
-                  <SortDesc className="w-4 h-4" />
+                  <SortDesc style={{ width: 16, height: 16 }} />
                 )}
               </button>
 
-              {/* Create Patient */}
-              <motion.button
+              {/* Create Patient — 36px height, radius 6px */}
+              <button
                 onClick={handleCreatePatient}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-500 to-accent-500 text-white rounded-xl shadow-lg hover:shadow-xl transition-all"
+                className="flex items-center bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 transition-colors"
+                style={{ height: 36, gap: 6, padding: '0 14px', borderRadius: 6, fontSize: 13, fontWeight: 600 }}
               >
-                <Plus className="w-4 h-4" />
+                <Plus style={{ width: 16, height: 16 }} />
                 <span className="hidden sm:inline">{t('patients.createPatient')}</span>
-              </motion.button>
+              </button>
             </div>
           </motion.div>
 
@@ -302,32 +303,34 @@ export default function PatientsPage() {
                 exit={{ opacity: 0, height: 0 }}
                 className="overflow-hidden"
               >
-                <div className="p-4 bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-lg">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-medium text-gray-900 dark:text-gray-100">
+                <div className="border border-gray-700" style={{ background: '#111827', borderRadius: 8, padding: 12 }}>
+                  <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+                    <h3 style={{ fontSize: 13, fontWeight: 600, color: '#E5E7EB', margin: 0 }}>
                       {t('common.filters')}
                     </h3>
                     {hasActiveFilters && (
                       <button
                         onClick={clearFilters}
-                        className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1"
+                        className="flex items-center text-blue-400 hover:text-blue-300 transition-colors"
+                        style={{ gap: 4, fontSize: 12 }}
                       >
-                        <X className="w-3.5 h-3.5" />
+                        <X style={{ width: 14, height: 14 }} />
                         {t('common.clearFilters')}
                       </button>
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3" style={{ gap: 12 }}>
                     {/* Status Filter */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: 4 }}>
                         {t('patients.status.label', 'Status')}
                       </label>
                       <select
                         value={filters.status}
                         onChange={(e) => handleFilterChange('status', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-200/50 dark:border-gray-700/50 rounded-xl bg-white/60 dark:bg-gray-900/60 text-gray-900 dark:text-gray-100"
+                        className="w-full border border-gray-600 focus:ring-2 focus:ring-blue-500"
+                        style={{ height: 36, padding: '0 12px', borderRadius: 6, background: '#111827', color: '#E5E7EB', fontSize: 13 }}
                       >
                         <option value="">{t('common.all')}</option>
                         <option value="active">{t('patients.status.active')}</option>
@@ -338,13 +341,14 @@ export default function PatientsPage() {
 
                     {/* Gender Filter */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: 4 }}>
                         {t('patients.gender', 'Gender')}
                       </label>
                       <select
                         value={filters.gender}
                         onChange={(e) => handleFilterChange('gender', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-200/50 dark:border-gray-700/50 rounded-xl bg-white/60 dark:bg-gray-900/60 text-gray-900 dark:text-gray-100"
+                        className="w-full border border-gray-600 focus:ring-2 focus:ring-blue-500"
+                        style={{ height: 36, padding: '0 12px', borderRadius: 6, background: '#111827', color: '#E5E7EB', fontSize: 13 }}
                       >
                         <option value="">{t('common.all')}</option>
                         <option value="male">{t('patients.genders.male', 'Male')}</option>
@@ -356,13 +360,14 @@ export default function PatientsPage() {
 
                     {/* Sort By */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: 4 }}>
                         {t('common.sortBy', 'Sort by')}
                       </label>
                       <select
                         value={sortField}
                         onChange={(e) => setSortField(e.target.value as SortField)}
-                        className="w-full px-3 py-2 border border-gray-200/50 dark:border-gray-700/50 rounded-xl bg-white/60 dark:bg-gray-900/60 text-gray-900 dark:text-gray-100"
+                        className="w-full border border-gray-600 focus:ring-2 focus:ring-blue-500"
+                        style={{ height: 36, padding: '0 12px', borderRadius: 6, background: '#111827', color: '#E5E7EB', fontSize: 13 }}
                       >
                         <option value="created_at">{t('common.createdAt', 'Created')}</option>
                         <option value="name">{t('patients.name', 'Name')}</option>
@@ -376,8 +381,8 @@ export default function PatientsPage() {
             )}
           </AnimatePresence>
 
-          {/* Results Count */}
-          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+          {/* Results Count — 12px label */}
+          <div className="flex items-center justify-between" style={{ fontSize: 12, color: '#9CA3AF' }}>
             <span>
               {t('patients.showingResults', {
                 from: patients.length > 0 ? (page - 1) * pageSize + 1 : 0,
@@ -389,52 +394,50 @@ export default function PatientsPage() {
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                className="w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full"
+                className="border-2 border-blue-500 border-t-transparent rounded-full"
+                style={{ width: 16, height: 16 }}
               />
             )}
           </div>
 
           {/* Patient Grid/List */}
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-16 gap-4">
+            <div className="flex items-center justify-center" style={{ padding: '48px 0', gap: 8 }}>
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                className="w-12 h-12 border-4 border-primary-200 dark:border-primary-800 border-t-primary-600 dark:border-t-primary-400 rounded-full"
+                className="border-2 border-gray-700 border-t-blue-500 rounded-full"
+                style={{ width: 24, height: 24 }}
               />
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {t('patients.loading')}
-              </p>
+              <span style={{ fontSize: 13, color: '#9CA3AF' }}>{t('patients.loading')}</span>
             </div>
           ) : patients.length === 0 ? (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-center py-16"
+              className="text-center"
+              style={{ padding: '48px 16px' }}
             >
-              <div className="w-20 h-20 mx-auto mb-6 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
-                <Users className="w-10 h-10 text-gray-400" />
-              </div>
-              <h3 className="text-xl font-medium text-gray-900 dark:text-gray-100 mb-2">
+              <Users className="mx-auto" style={{ width: 36, height: 36, color: '#4B5563', marginBottom: 12 }} />
+              <h3 style={{ fontSize: 14, fontWeight: 600, color: '#E5E7EB', margin: '0 0 4px 0' }}>
                 {filters.search
                   ? t('patients.noResults')
                   : t('patients.noPatients')}
               </h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-6">
+              <p style={{ fontSize: 12, color: '#9CA3AF', margin: '0 0 16px 0' }}>
                 {filters.search
                   ? t('patients.tryDifferentSearch', 'Try a different search')
                   : t('patients.createFirstDescription', 'Start by registering your first patient')}
               </p>
               {!filters.search && (
-                <motion.button
+                <button
                   onClick={handleCreatePatient}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-accent-500 text-white rounded-xl shadow-lg"
+                  className="inline-flex items-center bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 transition-colors"
+                  style={{ height: 36, gap: 6, padding: '0 14px', borderRadius: 6, fontSize: 13, fontWeight: 600 }}
                 >
-                  <Plus className="w-5 h-5" />
+                  <Plus style={{ width: 16, height: 16 }} />
                   {t('patients.createFirst')}
-                </motion.button>
+                </button>
               )}
             </motion.div>
           ) : (
@@ -443,9 +446,10 @@ export default function PatientsPage() {
               animate={{ opacity: 1, y: 0 }}
               className={
                 viewMode === 'grid'
-                  ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6'
-                  : 'space-y-3'
+                  ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
+                  : ''
               }
+              style={{ gap: viewMode === 'grid' ? 16 : 8 }}
             >
               <AnimatePresence mode="popLayout">
                 {patients.map((patient, index) => (
@@ -470,22 +474,24 @@ export default function PatientsPage() {
             </motion.div>
           )}
 
-          {/* Pagination */}
+          {/* Pagination — 36px buttons, radius 6px */}
           {totalPages > 1 && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex items-center justify-center gap-2 pt-4"
+              className="flex items-center justify-center"
+              style={{ gap: 4, paddingTop: 8 }}
             >
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page <= 1}
-                className="p-2.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed border border-gray-200/50 dark:border-gray-700/50"
+                className="flex items-center justify-center text-gray-400 hover:bg-gray-700 border border-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                style={{ width: 36, height: 36, borderRadius: 6 }}
               >
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft style={{ width: 16, height: 16 }} />
               </button>
 
-              <div className="flex items-center gap-1">
+              <div className="flex items-center" style={{ gap: 4 }}>
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   let pageNum: number;
                   if (totalPages <= 5) {
@@ -502,11 +508,12 @@ export default function PatientsPage() {
                     <button
                       key={pageNum}
                       onClick={() => setPage(pageNum)}
-                      className={`w-10 h-10 rounded-xl font-medium transition-colors ${
+                      className={`flex items-center justify-center transition-colors ${
                         page === pageNum
-                          ? 'bg-gradient-to-r from-primary-500 to-accent-500 text-white shadow-lg'
-                          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200/50 dark:border-gray-700/50'
+                          ? 'bg-blue-600 text-white'
+                          : 'text-gray-400 hover:bg-gray-700 border border-gray-700'
                       }`}
+                      style={{ width: 36, height: 36, borderRadius: 6, fontSize: 13, fontWeight: 500 }}
                     >
                       {pageNum}
                     </button>
@@ -517,9 +524,10 @@ export default function PatientsPage() {
               <button
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 disabled={page >= totalPages}
-                className="p-2.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed border border-gray-200/50 dark:border-gray-700/50"
+                className="flex items-center justify-center text-gray-400 hover:bg-gray-700 border border-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                style={{ width: 36, height: 36, borderRadius: 6 }}
               >
-                <ChevronRight className="w-5 h-5" />
+                <ChevronRight style={{ width: 16, height: 16 }} />
               </button>
             </motion.div>
           )}

@@ -49,21 +49,22 @@ export default function AppHeader({
   return (
     <header className="relative" style={{ zIndex: 200 }}>
 
-      {/* ── LINE 1: App bar — 48px, per Design System §6 + §11 ── */}
+      {/* ── LINE 1: App bar — 60px (12+36+12), padding 24px ── */}
       <div
-        className="border-b border-gray-700/50 backdrop-blur-xl"
+        className="border-b border-gray-700"
         style={{
-          height: 48,
+          height: 60,
           display: 'flex',
           alignItems: 'center',
-          padding: '0 20px',
-          background: 'rgba(17,24,39,0.92)',
+          padding: '0 24px',
+          background: '#111827',
         }}
       >
-        {/* Left: Logo + name */}
+        {/* Left: Logo + name — gap 8px (4px grid) */}
         <Link
           to="/app"
-          className="flex items-center gap-2.5 no-underline"
+          className="flex items-center no-underline"
+          style={{ gap: 8 }}
           aria-label="MSTool-AI Home"
         >
           <div
@@ -94,16 +95,16 @@ export default function AppHeader({
         </div>
       </div>
 
-      {/* ── LINE 2: Breadcrumb — 36px, per Design System §6 + §11 ── */}
+      {/* ── LINE 2: Breadcrumb — 32px, padding 24px ── */}
       {autoBreadcrumbs.length > 0 && (
         <div
           className="border-b border-gray-700/30"
           style={{
-            height: 36,
+            height: 32,
             display: 'flex',
             alignItems: 'center',
-            padding: '0 20px',
-            background: 'rgba(31,41,55,0.5)',
+            padding: '0 24px',
+            background: '#1a2332',
           }}
         >
           <nav aria-label="Breadcrumb" className="flex items-center" style={{ gap: 6 }}>

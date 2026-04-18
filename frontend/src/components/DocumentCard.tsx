@@ -11,13 +11,23 @@ import {
   Trash2,
   Clock,
   History,
-  MoreVertical,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
 } from 'lucide-react';
 import type { Document, DocumentSummary, DocumentCategory, DocumentStatus } from '@/types';
 import { documentAPI } from '@/services/documentApi';
+
+// Category colors — inline, dark-first
+const categoryColors: Record<DocumentCategory, { bg: string; color: string }> = {
+  'clinical-note': { bg: 'rgba(139,92,246,0.15)', color: '#A78BFA' },
+  'radiology-report': { bg: 'rgba(6,182,212,0.15)', color: '#22D3EE' },
+  'ms-assessment': { bg: 'rgba(59,130,246,0.15)', color: '#60A5FA' },
+  'other': { bg: 'rgba(107,114,128,0.15)', color: '#9CA3AF' },
+};
+
+const statusColors: Record<DocumentStatus, { bg: string; color: string }> = {
+  'current': { bg: 'rgba(16,185,129,0.12)', color: '#34D399' },
+  'superseded': { bg: 'rgba(234,179,8,0.12)', color: '#FACC15' },
+  'entered-in-error': { bg: 'rgba(239,68,68,0.12)', color: '#F87171' },
+};
 
 interface DocumentCardProps {
   document: Document | DocumentSummary;
@@ -30,69 +40,6 @@ interface DocumentCardProps {
   showPatient?: boolean;
 }
 
-// Category colors and icons
-const getCategoryInfo = (category: DocumentCategory) => {
-  const categoryMap: Record<DocumentCategory, { color: string; bgColor: string; icon: React.ReactNode }> = {
-    'clinical-note': {
-      color: 'text-purple-600 dark:text-purple-400',
-      bgColor: 'bg-purple-100 dark:bg-purple-900/30',
-      icon: <FileText className="w-4 h-4" />,
-    },
-    'radiology-report': {
-      color: 'text-cyan-600 dark:text-cyan-400',
-      bgColor: 'bg-cyan-100 dark:bg-cyan-900/30',
-      icon: <FileImage className="w-4 h-4" />,
-    },
-    'ms-assessment': {
-      color: 'text-blue-600 dark:text-blue-400',
-      bgColor: 'bg-blue-100 dark:bg-blue-900/30',
-      icon: <FileText className="w-4 h-4" />,
-    },
-    'other': {
-      color: 'text-gray-600 dark:text-gray-400',
-      bgColor: 'bg-gray-100 dark:bg-gray-900/30',
-      icon: <File className="w-4 h-4" />,
-    },
-  };
-  return categoryMap[category] || categoryMap['other'];
-};
-
-// Status badge styles
-const getStatusBadge = (status: DocumentStatus) => {
-  const statusMap: Record<DocumentStatus, { color: string; bgColor: string; icon: React.ReactNode }> = {
-    'current': {
-      color: 'text-green-600 dark:text-green-400',
-      bgColor: 'bg-green-100 dark:bg-green-900/30',
-      icon: <CheckCircle2 className="w-3.5 h-3.5" />,
-    },
-    'superseded': {
-      color: 'text-yellow-600 dark:text-yellow-400',
-      bgColor: 'bg-yellow-100 dark:bg-yellow-900/30',
-      icon: <AlertCircle className="w-3.5 h-3.5" />,
-    },
-    'entered-in-error': {
-      color: 'text-red-600 dark:text-red-400',
-      bgColor: 'bg-red-100 dark:bg-red-900/30',
-      icon: <XCircle className="w-3.5 h-3.5" />,
-    },
-  };
-  return statusMap[status] || statusMap['current'];
-};
-
-// Get file type icon
-const getFileIcon = (contentType: string) => {
-  if (contentType.startsWith('image/')) {
-    return <FileImage className="w-8 h-8" />;
-  }
-  if (contentType === 'application/pdf') {
-    return <FileText className="w-8 h-8 text-red-500" />;
-  }
-  if (contentType.includes('word') || contentType.includes('document')) {
-    return <FileText className="w-8 h-8 text-blue-500" />;
-  }
-  return <File className="w-8 h-8" />;
-};
-
 export const DocumentCard: React.FC<DocumentCardProps> = ({
   document,
   compact = false,
@@ -103,257 +50,177 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
   onViewVersions,
 }) => {
   const { t } = useTranslation();
-  const [showMenu, setShowMenu] = React.useState(false);
-  const menuRef = React.useRef<HTMLDivElement>(null);
+  const cat = categoryColors[document.category] || categoryColors['other'];
+  const stat = statusColors[document.status] || statusColors['current'];
 
-  const categoryInfo = getCategoryInfo(document.category);
-  const statusBadge = getStatusBadge(document.status);
-
-  // Format date
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+    return new Date(dateString).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
   };
 
-  // Close menu when clicking outside
-  React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setShowMenu(false);
-      }
-    };
-    window.document.addEventListener('mousedown', handleClickOutside);
-    return () => window.document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const CategoryIcon = () => {
+    if (document.category === 'radiology-report') return <FileImage style={{ width: 16, height: 16 }} />;
+    if (document.category === 'other') return <File style={{ width: 16, height: 16 }} />;
+    return <FileText style={{ width: 16, height: 16 }} />;
+  };
 
-  // Compact view (for list mode)
+  // ==================== COMPACT / LIST VIEW ====================
   if (compact) {
     return (
       <motion.div
         layout
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        className="flex items-center gap-4 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
+        exit={{ opacity: 0, y: -8 }}
+        onClick={onView}
+        className="group border border-gray-700 hover:border-gray-600 transition-colors"
+        style={{ background: '#1F2937', borderRadius: 8, padding: 12, cursor: onView ? 'pointer' : 'default', display: 'flex', alignItems: 'center', gap: 12 }}
       >
-        {/* File icon */}
-        <div className={`p-2 rounded-lg ${categoryInfo.bgColor}`}>
-          {getFileIcon(document.content_type)}
+        {/* Category icon — 36×36 */}
+        <div className="flex-shrink-0 flex items-center justify-center"
+          style={{ width: 36, height: 36, borderRadius: 6, background: cat.bg, color: cat.color }}>
+          <CategoryIcon />
         </div>
 
-        {/* Document info */}
+        {/* Info */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">
+          <div className="flex items-center" style={{ gap: 6 }}>
+            <span className="truncate" style={{ fontSize: 14, fontWeight: 600, color: '#F9FAFB' }}>
               {document.title}
-            </h3>
-            <span
-              className={`px-2 py-0.5 text-xs font-medium rounded-full ${categoryInfo.bgColor} ${categoryInfo.color}`}
-            >
-              {t(`document.categories.${document.category}`)}
+            </span>
+            <span style={{ fontSize: 11, fontWeight: 500, padding: '1px 6px', borderRadius: 4, background: stat.bg, color: stat.color, flexShrink: 0 }}>
+              {t(`document.status.${document.status}`)}
             </span>
           </div>
-          <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-            <span className="flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5" />
+          <div className="flex items-center" style={{ gap: 8, marginTop: 2 }}>
+            <span className="flex items-center" style={{ gap: 4, fontSize: 12, color: '#9CA3AF' }}>
+              <Clock style={{ width: 12, height: 12 }} />
               {formatDate(document.document_date)}
             </span>
-            <span>{documentAPI.formatFileSize(document.file_size_bytes)}</span>
+            <span style={{ color: '#374151' }}>·</span>
+            <span style={{ fontSize: 12, color: '#9CA3AF' }}>{documentAPI.formatFileSize(document.file_size_bytes)}</span>
             {document.version > 1 && (
-              <span className="flex items-center gap-1">
-                <History className="w-3.5 h-3.5" />
-                v{document.version}
-              </span>
+              <>
+                <span style={{ color: '#374151' }}>·</span>
+                <span style={{ fontSize: 12, color: '#9CA3AF' }}>v{document.version}</span>
+              </>
             )}
           </div>
         </div>
 
-        {/* Status badge */}
-        <span
-          className={`flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${statusBadge.bgColor} ${statusBadge.color}`}
-        >
-          {statusBadge.icon}
-          {t(`document.status.${document.status}`)}
-        </span>
-
-        {/* Actions */}
-        <div className="flex items-center gap-1">
-          {onView && (
-            <button
-              onClick={onView}
-              className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-              title={t('common.view')}
-            >
-              <Eye className="w-4 h-4" />
-            </button>
-          )}
+        {/* Actions — 28×28 */}
+        <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ gap: 4 }}>
           {onDownload && (
-            <button
-              onClick={onDownload}
-              className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-              title={t('common.download')}
-            >
-              <Download className="w-4 h-4" />
+            <button onClick={(e) => { e.stopPropagation(); onDownload(); }}
+              className="flex items-center justify-center hover:bg-gray-700 transition-colors"
+              style={{ width: 28, height: 28, borderRadius: 6 }} title={t('common.download')}>
+              <Download style={{ width: 14, height: 14, color: '#9CA3AF' }} />
             </button>
           )}
-          <div className="relative" ref={menuRef}>
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            >
-              <MoreVertical className="w-4 h-4" />
+          {onEdit && (
+            <button onClick={(e) => { e.stopPropagation(); onEdit(); }}
+              className="flex items-center justify-center hover:bg-gray-700 transition-colors"
+              style={{ width: 28, height: 28, borderRadius: 6 }} title={t('common.edit')}>
+              <Edit2 style={{ width: 14, height: 14, color: '#9CA3AF' }} />
             </button>
-            {showMenu && (
-              <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-10">
-                {onViewVersions && (
-                  <button
-                    onClick={() => {
-                      setShowMenu(false);
-                      onViewVersions();
-                    }}
-                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    <History className="w-4 h-4" />
-                    {t('document.viewVersions')}
-                  </button>
-                )}
-                {onEdit && (
-                  <button
-                    onClick={() => {
-                      setShowMenu(false);
-                      onEdit();
-                    }}
-                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                    {t('common.edit')}
-                  </button>
-                )}
-                {onDelete && (
-                  <button
-                    onClick={() => {
-                      setShowMenu(false);
-                      onDelete();
-                    }}
-                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    {t('common.delete')}
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+          )}
+          {onDelete && (
+            <button onClick={(e) => { e.stopPropagation(); onDelete(); }}
+              className="flex items-center justify-center hover:bg-red-900/30 transition-colors"
+              style={{ width: 28, height: 28, borderRadius: 6 }} title={t('common.delete')}>
+              <Trash2 style={{ width: 14, height: 14, color: '#9CA3AF' }} />
+            </button>
+          )}
         </div>
       </motion.div>
     );
   }
 
-  // Full card view (for grid mode)
+  // ==================== GRID / CARD VIEW ====================
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-shadow"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      className="group border border-gray-700 hover:border-gray-600 transition-colors overflow-hidden"
+      style={{ background: '#1F2937', borderRadius: 8 }}
     >
-      {/* Header with category badge */}
-      <div className={`p-4 ${categoryInfo.bgColor}`}>
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-              {getFileIcon(document.content_type)}
+      {/* Header — category icon + title + status */}
+      <div style={{ padding: 12 }}>
+        <div className="flex items-start justify-between" style={{ gap: 8 }}>
+          <div className="flex items-center min-w-0" style={{ gap: 8 }}>
+            <div className="flex-shrink-0 flex items-center justify-center"
+              style={{ width: 36, height: 36, borderRadius: 6, background: cat.bg, color: cat.color }}>
+              <CategoryIcon />
             </div>
-            <div>
-              <span
-                className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-white dark:bg-gray-800 ${categoryInfo.color}`}
-              >
-                {categoryInfo.icon}
-                {t(`document.categories.${document.category}`)}
-              </span>
+            <div className="min-w-0">
+              <h3 className="truncate" style={{ fontSize: 14, fontWeight: 600, color: '#F9FAFB', margin: 0 }}>
+                {document.title}
+              </h3>
+              <div className="flex items-center" style={{ gap: 6, marginTop: 2 }}>
+                <span style={{ fontSize: 11, fontWeight: 500, padding: '1px 6px', borderRadius: 4, background: stat.bg, color: stat.color }}>
+                  {t(`document.status.${document.status}`)}
+                </span>
+                <span style={{ fontSize: 11, fontWeight: 500, padding: '1px 6px', borderRadius: 4, background: cat.bg, color: cat.color }}>
+                  {t(`document.categories.${document.category}`)}
+                </span>
+              </div>
             </div>
           </div>
-          <span
-            className={`flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${statusBadge.bgColor} ${statusBadge.color}`}
-          >
-            {statusBadge.icon}
-            {t(`document.status.${document.status}`)}
-          </span>
-        </div>
-      </div>
 
-      {/* Content */}
-      <div className="p-4">
-        <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1 truncate">
-          {document.title}
-        </h3>
-
-        {'description' in document && document.description && (
-          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3">
-            {document.description}
-          </p>
-        )}
-
-        {/* Meta info */}
-        <div className="space-y-2 text-sm text-gray-500 dark:text-gray-400">
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4" />
-            <span>{formatDate(document.document_date)}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span>{documentAPI.formatFileSize(document.file_size_bytes)}</span>
-            {document.version > 1 && (
-              <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
-                <History className="w-3.5 h-3.5" />
-                v{document.version}
-              </span>
+          {/* Actions — 28×28 */}
+          <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ gap: 2 }}>
+            {onEdit && (
+              <button onClick={onEdit}
+                className="flex items-center justify-center hover:bg-gray-700 transition-colors"
+                style={{ width: 28, height: 28, borderRadius: 6 }} title={t('common.edit')}>
+                <Edit2 style={{ width: 14, height: 14, color: '#9CA3AF' }} />
+              </button>
+            )}
+            {onDelete && (
+              <button onClick={onDelete}
+                className="flex items-center justify-center hover:bg-red-900/30 transition-colors"
+                style={{ width: 28, height: 28, borderRadius: 6 }} title={t('common.delete')}>
+                <Trash2 style={{ width: 14, height: 14, color: '#9CA3AF' }} />
+              </button>
             )}
           </div>
         </div>
-
-        {'author_name' in document && document.author_name && (
-          <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {t('document.author')}: {document.author_name}
-            </span>
-          </div>
-        )}
       </div>
 
-      {/* Actions */}
-      <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-700 flex items-center justify-end gap-2">
-        {onViewVersions && document.version > 1 && (
-          <button
-            onClick={onViewVersions}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-          >
-            <History className="w-4 h-4" />
-            {t('document.versions')}
-          </button>
-        )}
-        {onDownload && (
-          <button
-            onClick={onDownload}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-          >
-            <Download className="w-4 h-4" />
-            {t('common.download')}
-          </button>
-        )}
-        {onView && (
-          <button
-            onClick={onView}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-          >
-            <Eye className="w-4 h-4" />
+      {/* Stats — same label/value pattern */}
+      <div className="border-t border-gray-700 grid grid-cols-3" style={{ padding: '8px 12px', gap: 8 }}>
+        <div>
+          <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+            {t('document.date', 'Date')}
+          </div>
+          <div style={{ fontSize: 12, fontWeight: 500, color: '#E5E7EB' }}>{formatDate(document.document_date)}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+            {t('document.size', 'Size')}
+          </div>
+          <div style={{ fontSize: 12, fontWeight: 500, color: '#E5E7EB' }}>{documentAPI.formatFileSize(document.file_size_bytes)}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+            {t('document.version', 'Version')}
+          </div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: '#E5E7EB' }}>{document.version}</div>
+        </div>
+      </div>
+
+      {/* Footer — View Document */}
+      {onView && (
+        <div className="border-t border-gray-700" style={{ padding: 8 }}>
+          <button onClick={onView}
+            className="w-full flex items-center justify-center border border-gray-600 hover:bg-gray-700 transition-colors"
+            style={{ height: 36, gap: 6, borderRadius: 6, fontSize: 13, fontWeight: 500, color: '#E5E7EB' }}>
+            <Eye style={{ width: 16, height: 16 }} />
             {t('common.view')}
           </button>
-        )}
-      </div>
+        </div>
+      )}
     </motion.div>
   );
 };
