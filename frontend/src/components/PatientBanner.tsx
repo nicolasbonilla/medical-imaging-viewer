@@ -176,25 +176,14 @@ function PatientBannerComponent({
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       className={`
-        relative overflow-hidden
-        bg-gradient-to-r from-slate-50 via-white to-slate-50
-        dark:from-slate-900 dark:via-slate-800 dark:to-slate-900
-        border-l-4 border-primary-500 dark:border-primary-400
-        shadow-lg rounded-lg
+        relative
+        bg-white dark:bg-gray-900/95
+        border-b border-gray-200/50 dark:border-gray-700/50
         ${className}
       `}
       role="banner"
       aria-label={t('patients.patientBanner', 'Patient identification banner')}
     >
-      {/* Subtle pattern overlay for depth */}
-      <div
-        className="absolute inset-0 opacity-[0.02] dark:opacity-[0.05]"
-        style={{
-          backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)',
-          backgroundSize: '16px 16px',
-        }}
-        aria-hidden="true"
-      />
 
       <div className="relative px-5 py-4">
         <div className="flex items-start justify-between gap-6">
@@ -308,11 +297,8 @@ function PatientBannerComponent({
           </div>
         </div>
 
-        {/* HIPAA Compliance Indicator */}
-        <div className="absolute bottom-1 right-3 flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-600">
-          <span>HIPAA</span>
-          <div className="w-1 h-1 rounded-full bg-green-500" title="Two-identifier verification active" />
-        </div>
+        {/* HIPAA compliance is enforced by design (two-identifier rule),
+             not displayed as a badge — clinicians don't need to see this */}
       </div>
     </motion.div>
   );

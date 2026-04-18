@@ -215,19 +215,17 @@ export default function PatientDetailPage() {
         onBack={handleBack}
       />
 
-      {/* HIPAA-Compliant Patient Banner + Patient-level Actions */}
-      <div className="relative">
-        <PatientBanner patient={patient} />
-        <div className="absolute top-3 right-5 flex items-center gap-2 z-10">
-          <button onClick={handleEditPatient}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition-all text-xs font-medium text-white/80 hover:text-white">
-            <Edit className="w-3.5 h-3.5" /> {t('common.edit')}
-          </button>
-          <button onClick={handleDeletePatient}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 hover:text-red-300 rounded-lg transition-all text-xs font-medium">
-            <Trash2 className="w-3.5 h-3.5" /> {t('common.delete')}
-          </button>
-        </div>
+      {/* Patient Banner + inline actions */}
+      <PatientBanner patient={patient} />
+      <div className="flex items-center justify-end gap-2 px-5 py-2 border-b border-gray-200/30 dark:border-gray-700/30 bg-gray-50/50 dark:bg-gray-800/30">
+        <button onClick={handleEditPatient}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-all text-xs font-medium text-gray-700 dark:text-gray-300">
+          <Edit className="w-3.5 h-3.5" /> {t('common.edit')}
+        </button>
+        <button onClick={handleDeletePatient}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg transition-all text-xs font-medium">
+          <Trash2 className="w-3.5 h-3.5" /> {t('common.delete')}
+        </button>
       </div>
 
       {/* Main Content - WCAG 2.4.1 Skip Link Target */}
