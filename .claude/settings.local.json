@@ -311,7 +311,15 @@
       "WebFetch(domain:www.w3.org)",
       "WebFetch(domain:docs.ohif.org)",
       "WebFetch(domain:insightsimaging.springeropen.com)",
-      "WebFetch(domain:link.springer.com)"
+      "WebFetch(domain:link.springer.com)",
+      "WebFetch(domain:m3.material.io)",
+      "WebFetch(domain:nordhealth.design)",
+      "WebFetch(domain:www.radix-ui.com)",
+      "WebFetch(domain:service-manual.nhs.uk)",
+      "WebFetch(domain:studioncreations.com)",
+      "WebFetch(domain:conceptviz.app)",
+      "WebFetch(domain:polaris-react.shopify.com)",
+      "WebFetch(domain:carbondesignsystem.com)"
     ],
     "deny": [],
     "ask": [],

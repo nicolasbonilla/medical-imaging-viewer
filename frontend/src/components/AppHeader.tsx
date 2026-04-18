@@ -1,16 +1,12 @@
 /**
  * AppHeader — persistent header bar + breadcrumb navigation.
  *
- * Implements the three-tier medical imaging standard:
- * 1) Top bar: App name (always visible) + user controls (right)
- * 2) Breadcrumb: Home > Patient > Study > Current View
- * 3) Page title: shown below breadcrumb
- *
- * References:
- * - NNGroup breadcrumb guidelines (11 rules)
- * - WCAG 2.4.8 (Location) + aria-current="page"
- * - OHIF Viewer / Philips IntelliSpace "Control Strip" pattern
- * - Epic patient banner persistent context
+ * Design System compliance:
+ * - App bar: h-[48px], bg-gray-900/90
+ * - Breadcrumb: h-[36px], bg-gray-800/50
+ * - All header controls: 36×36px (md button size), gap-4
+ * - Border radius: 6px (radius-md)
+ * - Typography: app name 14px/700, breadcrumb 12px/400
  *
  * @module components/AppHeader
  */
@@ -23,33 +19,23 @@ import UserMenu from './UserMenu';
 
 export interface BreadcrumbItem {
   label: string;
-  path?: string; // undefined = current page (not clickable)
+  path?: string;
 }
 
 interface AppHeaderProps {
-  /** Page title (optional — breadcrumb last item serves as location) */
   title?: string;
-  /** Optional subtitle (e.g., study description) */
   subtitle?: string;
-  /** Breadcrumb items — last item is current page (auto-marked) */
   breadcrumbs?: BreadcrumbItem[];
-  /** Extra controls to show on the right (before user menu) */
   rightControls?: React.ReactNode;
-  /** If true, show a compact header (for the viewer) */
   compact?: boolean;
-  /** Optional back button handler (shows ← arrow) */
   onBack?: () => void;
 }
 
 export default function AppHeader({
-  title,
-  subtitle,
   breadcrumbs,
   rightControls,
-  compact = false,
   onBack,
 }: AppHeaderProps) {
-  // Auto-generate breadcrumb from current URL if none provided
   const location = useLocation();
   const autoBreadcrumbs: BreadcrumbItem[] = breadcrumbs || (() => {
     const parts = location.pathname.split('/').filter(Boolean);
@@ -61,51 +47,96 @@ export default function AppHeader({
   })();
 
   return (
-    <header className="relative z-20">
-      {/* LINE 1: App identity bar — fixed layout, always same structure */}
-      <div className="backdrop-blur-xl bg-white/80 dark:bg-gray-900/90 border-b border-gray-200/50 dark:border-gray-700/50 px-5 h-12 flex items-center">
-        <div className="flex items-center justify-between w-full">
-          {/* Left: logo */}
-          <Link to="/app" className="flex items-center gap-2.5 group" aria-label="MSTool-AI Home">
-            <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-1.5 rounded-lg">
-              <Brain className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-sm font-bold text-gray-800 dark:text-white">MSTool-AI</span>
-          </Link>
+    <header className="relative" style={{ zIndex: 200 }}>
 
-          {/* Right: controls — consistent spacing, vertically centered */}
-          <div className="flex items-center gap-1">
-            {rightControls && (
-              <>
-                {rightControls}
-                <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1" />
-              </>
-            )}
-            <ThemeToggle variant="minimal" />
-            <LanguageSelector variant="minimal" />
-            <UserMenu />
+      {/* ── LINE 1: App bar — 48px, per Design System §6 + §11 ── */}
+      <div
+        className="border-b border-gray-700/50 backdrop-blur-xl"
+        style={{
+          height: 48,
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 20px',
+          background: 'rgba(17,24,39,0.92)',
+        }}
+      >
+        {/* Left: Logo + name */}
+        <Link
+          to="/app"
+          className="flex items-center gap-2.5 no-underline"
+          aria-label="MSTool-AI Home"
+        >
+          <div
+            className="flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600"
+            style={{ width: 28, height: 28, borderRadius: 6 }}
+          >
+            <Brain style={{ width: 16, height: 16, color: 'white' }} />
           </div>
+          <span style={{ fontSize: 14, fontWeight: 700, color: '#F9FAFB' }}>
+            MSTool-AI
+          </span>
+        </Link>
+
+        {/* Right: controls — ALL 36×36, gap 4px per Design System §2 */}
+        <div
+          className="ml-auto flex items-center"
+          style={{ gap: 4 }}
+        >
+          {rightControls && (
+            <>
+              {rightControls}
+              <div style={{ width: 1, height: 24, background: '#374151', margin: '0 8px' }} />
+            </>
+          )}
+          <ThemeToggle variant="minimal" />
+          <LanguageSelector variant="minimal" />
+          <UserMenu />
         </div>
       </div>
 
-      {/* LINE 2: Breadcrumb (shows where you are in the hierarchy) */}
+      {/* ── LINE 2: Breadcrumb — 36px, per Design System §6 + §11 ── */}
       {autoBreadcrumbs.length > 0 && (
-        <div className="bg-gray-50/80 dark:bg-gray-800/50 border-b border-gray-200/30 dark:border-gray-700/30 px-5 py-1.5">
-          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs">
+        <div
+          className="border-b border-gray-700/30"
+          style={{
+            height: 36,
+            display: 'flex',
+            alignItems: 'center',
+            padding: '0 20px',
+            background: 'rgba(31,41,55,0.5)',
+          }}
+        >
+          <nav aria-label="Breadcrumb" className="flex items-center" style={{ gap: 6 }}>
             {onBack && (
-              <button onClick={onBack} className="mr-1 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors" aria-label="Go back">
-                <ChevronRight className="w-3.5 h-3.5 rotate-180" />
+              <button
+                onClick={onBack}
+                className="text-gray-400 hover:text-gray-200 transition-colors"
+                style={{ marginRight: 4, display: 'flex', alignItems: 'center' }}
+                aria-label="Go back"
+              >
+                <ChevronRight style={{ width: 14, height: 14, transform: 'rotate(180deg)' }} />
               </button>
             )}
             {autoBreadcrumbs.map((item, i) => (
-              <span key={i} className="flex items-center gap-1.5">
-                {i > 0 && <ChevronRight className="w-3 h-3 text-gray-300 dark:text-gray-600 shrink-0" />}
+              <span key={i} className="flex items-center" style={{ gap: 6 }}>
+                {i > 0 && (
+                  <ChevronRight
+                    style={{ width: 12, height: 12, color: '#4B5563', flexShrink: 0 }}
+                  />
+                )}
                 {item.path ? (
-                  <Link to={item.path} className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  <Link
+                    to={item.path}
+                    className="hover:text-blue-400 transition-colors"
+                    style={{ fontSize: 12, fontWeight: 400, color: '#9CA3AF' }}
+                  >
                     {item.label}
                   </Link>
                 ) : (
-                  <span className="text-gray-800 dark:text-gray-200 font-medium" aria-current="page">
+                  <span
+                    aria-current="page"
+                    style={{ fontSize: 12, fontWeight: 500, color: '#E5E7EB' }}
+                  >
                     {item.label}
                   </span>
                 )}
