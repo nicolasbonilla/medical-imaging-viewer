@@ -147,12 +147,19 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-gray-900 via-slate-900 to-gray-950">
-      {/* Subtle animated background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div className="absolute top-1/4 -left-20 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10"
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Fullscreen video background */}
+      <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover z-0">
+        <source src="/intro.mp4" type="video/mp4" />
+      </video>
+      {/* Dark overlay for readability */}
+      <div className="absolute inset-0 bg-black/60 z-[1]" />
+
+      {/* Animated blobs on top of video */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-[2]">
+        <motion.div className="absolute top-1/4 -left-20 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-15"
           animate={{ x: [0, 100, 0], y: [0, -50, 0] }} transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }} />
-        <motion.div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10"
+        <motion.div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-15"
           animate={{ x: [0, -100, 0], y: [0, 50, 0] }} transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }} />
       </div>
 
@@ -163,7 +170,7 @@ export default function LoginPage() {
 
       {/* Main card */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-        className="w-full max-w-md relative z-10">
+        className="w-full max-w-md relative z-10 drop-shadow-2xl">
         <div className="backdrop-blur-2xl bg-white/[0.07] border border-white/[0.12] rounded-3xl shadow-2xl p-8">
 
           {/* Logo */}

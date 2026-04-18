@@ -92,10 +92,10 @@ htmlcov/
 Thumbs.db
 NUL
 
-# Large media files
+# Large media files (root level only — frontend/public/intro.mp4 is needed for login)
 *.mp4
+!frontend/public/intro.mp4
 *.mov
 *.avi
-frontend/public/*.mp4
 env.yaml
 audit_report.json
