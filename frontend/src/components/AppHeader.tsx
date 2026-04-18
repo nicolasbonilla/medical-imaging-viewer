@@ -68,9 +68,9 @@ export default function AppHeader({
         >
           <div
             className="flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600"
-            style={{ width: 28, height: 28, borderRadius: 6 }}
+            style={{ width: 36, height: 36, borderRadius: 6 }}
           >
-            <Brain style={{ width: 16, height: 16, color: 'white' }} />
+            <Brain style={{ width: 18, height: 18, color: 'white' }} />
           </div>
           <span style={{ fontSize: 14, fontWeight: 700, color: '#F9FAFB' }}>
             MSTool-AI
