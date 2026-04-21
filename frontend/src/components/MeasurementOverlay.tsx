@@ -10,6 +10,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Ruler, Triangle, Circle, Trash2, X } from 'lucide-react';
+import { useViewerStore } from '@/store/useViewerStore';
 
 interface Point { x: number; y: number }
 
@@ -42,11 +43,22 @@ export default function MeasurementOverlay({
   panOffset,
   pixelSpacing = [1, 1],
 }: MeasurementOverlayProps) {
-  const [activeTool, setActiveTool] = useState<'ruler' | 'angle' | 'ellipse' | null>(null);
+  const activeTool = useViewerStore((s) => s.measurementTool);
+  const setActiveTool = useViewerStore((s) => s.setMeasurementTool);
+  const clearSignal = useViewerStore((s) => s.measurementClearSignal);
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [currentPoints, setCurrentPoints] = useState<Point[]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
+
+  // Clear all measurements when signal changes
+  useEffect(() => {
+    if (clearSignal > 0) {
+      setMeasurements([]);
+      setCurrentPoints([]);
+      setIsDrawing(false);
+    }
+  }, [clearSignal]);
 
   // Scale factors: image coords → canvas coords
   const scaleX = canvasWidth / imageWidth;
@@ -180,54 +192,14 @@ export default function MeasurementOverlay({
   // Filter measurements for current slice
   const visibleMeasurements = measurements.filter(m => m.sliceIndex === sliceIndex);
 
+  // Toolbar moved to ViewerApp toolbar bar — only render SVG overlay when needed
   if (!activeTool && visibleMeasurements.length === 0) {
-    // Show just the toolbar
-    return (
-      <div className="absolute top-2 right-2 z-20 flex gap-1 bg-black/60 backdrop-blur-sm rounded-lg p-1">
-        <button onClick={() => setActiveTool('ruler')} title="Ruler (distance)"
-          className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors">
-          <Ruler className="w-4 h-4" />
-        </button>
-        <button onClick={() => setActiveTool('angle')} title="Angle"
-          className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors">
-          <Triangle className="w-4 h-4" />
-        </button>
-        <button onClick={() => setActiveTool('ellipse')} title="Elliptical ROI (area)"
-          className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors">
-          <Circle className="w-4 h-4" />
-        </button>
-      </div>
-    );
+    return null;
   }
 
   return (
     <>
-      {/* Toolbar */}
-      <div className="absolute top-2 right-2 z-20 flex gap-1 bg-black/60 backdrop-blur-sm rounded-lg p-1">
-        <button onClick={() => setActiveTool('ruler')} title="Ruler"
-          className={`p-1.5 rounded transition-colors ${activeTool === 'ruler' ? 'bg-yellow-500/30 text-yellow-400' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}>
-          <Ruler className="w-4 h-4" />
-        </button>
-        <button onClick={() => setActiveTool('angle')} title="Angle"
-          className={`p-1.5 rounded transition-colors ${activeTool === 'angle' ? 'bg-yellow-500/30 text-yellow-400' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}>
-          <Triangle className="w-4 h-4" />
-        </button>
-        <button onClick={() => setActiveTool('ellipse')} title="ROI"
-          className={`p-1.5 rounded transition-colors ${activeTool === 'ellipse' ? 'bg-yellow-500/30 text-yellow-400' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}>
-          <Circle className="w-4 h-4" />
-        </button>
-        <div className="w-px bg-gray-600" />
-        <button onClick={clearAll} title="Clear all"
-          className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors">
-          <Trash2 className="w-4 h-4" />
-        </button>
-        <button onClick={() => { setActiveTool(null); setCurrentPoints([]); setIsDrawing(false); }} title="Close"
-          className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors">
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* SVG overlay for drawing measurements */}
+      {/* SVG overlay for drawing measurements — toolbar is in ViewerApp */}
       <svg
         ref={svgRef}
         className="absolute inset-0 z-10"

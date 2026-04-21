@@ -585,12 +585,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
         </div>
       )}
 
-      {/* Controls (for both Standard and Matplotlib modes, and segmentation mode) */}
-      <ViewerToolbar
-        onZoomIn={panZoomHandlers.handleZoomIn}
-        onZoomOut={panZoomHandlers.handleZoomOut}
-        onResetView={panZoomHandlers.handleResetView}
-      />
+      {/* Zoom controls moved to ViewerApp toolbar bar above the image */}
 
       {/* Edge AI Quick Screen — bottom right above slice slider */}
       {currentSeries?.slices?.[currentSliceIndex]?.image_data && (
@@ -603,28 +598,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
         </div>
       )}
 
-      {/* Slice Info */}
-      <SliceInfo
-        currentSliceIndex={currentSliceIndex}
-        totalSlices={currentSeries.total_slices}
-        zoomLevel={zoomLevel}
-        renderMode={renderMode}
-      />
 
-      {/* Slice Slider */}
-      <SliceSlider
-        currentSliceIndex={currentSliceIndex}
-        totalSlices={currentSeries.total_slices}
-        onChange={setCurrentSliceIndex}
-      />
-
-      {/* Metadata */}
-      <MetadataPanel
-        metadata={currentSeries.metadata}
-        patientName={patientName}
-        studyDescription={studyDescription}
-        modality={studyModality}
-      />
     </div>
   );
 }

@@ -84,6 +84,12 @@ interface ViewerState {
   panOffset: { x: number; y: number };
   setPanOffset: (offset: { x: number; y: number }) => void;
 
+  // Measurement tool (controlled from toolbar, read by MeasurementOverlay)
+  measurementTool: 'ruler' | 'angle' | 'ellipse' | null;
+  setMeasurementTool: (tool: 'ruler' | 'angle' | 'ellipse' | null) => void;
+  measurementClearSignal: number;
+  triggerMeasurementClear: () => void;
+
   // Reset all
   reset: () => void;
 }
@@ -112,6 +118,8 @@ const initialState = {
   isLoading: false,
   zoomLevel: 1,
   panOffset: { x: 0, y: 0 },
+  measurementTool: null as 'ruler' | 'angle' | 'ellipse' | null,
+  measurementClearSignal: 0,
 };
 
 export const useViewerStore = create<ViewerState>((set) => ({
@@ -166,6 +174,9 @@ export const useViewerStore = create<ViewerState>((set) => ({
   setZoomLevel: (zoom) => set({ zoomLevel: zoom }),
 
   setPanOffset: (offset) => set({ panOffset: offset }),
+
+  setMeasurementTool: (tool) => set({ measurementTool: tool }),
+  triggerMeasurementClear: () => set((s) => ({ measurementClearSignal: s.measurementClearSignal + 1, measurementTool: null })),
 
   reset: () => set(initialState),
 }));

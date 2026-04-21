@@ -275,7 +275,8 @@ export function LongitudinalCompare({
       <button
         onClick={handleCompare}
         disabled={!canCompare || isLoading}
-        className="w-full px-2 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded text-xs text-white font-medium transition-colors"
+        className="w-full flex items-center justify-center border border-blue-500 text-blue-400 hover:bg-blue-900/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        style={{ height: 28, borderRadius: 6, fontSize: 12, fontWeight: 500 }}
       >
         {isLoading ? (
           <Loader2 className="w-3 h-3 animate-spin mx-auto" />

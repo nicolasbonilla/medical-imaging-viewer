@@ -17,7 +17,7 @@ import { studyAPI } from './services/studyApi';
 import { useViewerStore } from './store/useViewerStore';
 import { useViewerControls } from './hooks/useViewerControls';
 import type { ImagingStudy, ImagingSeries, ImagingInstance } from './types';
-import { ArrowLeft, Brain, FileImage, AlertCircle, Loader2, Puzzle, Upload, Eye, EyeOff, Plus, Trash2, ChevronDown, ChevronRight, FlaskConical, FileText, LayoutGrid, Columns2, Square, Link2, Unlink2, Map } from 'lucide-react';
+import { ArrowLeft, Brain, FileImage, AlertCircle, Loader2, Puzzle, Upload, Eye, EyeOff, Plus, Trash2, ChevronDown, ChevronRight, FlaskConical, FileText, LayoutGrid, Columns2, Square, Link2, Unlink2, Map, ZoomIn, ZoomOut, RotateCw, Ruler, Triangle, Circle } from 'lucide-react';
 import UserMenu from './components/UserMenu';
 import { useAuth } from './contexts/AuthContext';
 import { useTheme } from './contexts/ThemeContext';
@@ -30,7 +30,8 @@ import { LesionDashboard } from './components/LesionDashboard';
 import { MAGNIMSZoneMapPanel } from './components/MAGNIMSZoneMapPanel';
 import { useSegmentationStore } from './store/useSegmentationStore';
 import { useMultiViewerStore, type ViewerLayout } from './store/useMultiViewerStore';
-import { autoAssignPanels } from './utils/sequenceDetection';
+import { autoAssignPanels, detectSequence } from './utils/sequenceDetection';
+import { useActiveSliceInfo } from './hooks/useActiveSliceInfo';
 import type { ReportResponse } from './types';
 
 interface StudyInfo {
@@ -144,6 +145,16 @@ function ViewerApp() {
   const setHierarchicalContext = useViewerStore((state) => state.setHierarchicalContext);
   const setAllFileIds = useViewerStore((state) => state.setAllFileIds);
   const setCurrentSliceIndex = useViewerStore((state) => state.setCurrentSliceIndex);
+  const currentSliceIndex = useViewerStore((state) => state.currentSliceIndex);
+  const zoomLevel = useViewerStore((state) => state.zoomLevel);
+  const setZoomLevel = useViewerStore((state) => state.setZoomLevel);
+  const setPanOffset = useViewerStore((state) => state.setPanOffset);
+  const measurementTool = useViewerStore((state) => state.measurementTool);
+  const setMeasurementTool = useViewerStore((state) => state.setMeasurementTool);
+  const triggerMeasurementClear = useViewerStore((state) => state.triggerMeasurementClear);
+
+  // Unified slice info — reads from correct store based on single/multi panel mode
+  const activeSlice = useActiveSliceInfo();
 
   const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(null);
   const [studyInfo, setStudyInfo] = useState<StudyInfo | null>(null);
@@ -169,6 +180,8 @@ function ViewerApp() {
   const setMultiLayout = useMultiViewerStore((s) => s.setLayout);
   const syncSlice = useMultiViewerStore((s) => s.syncSlice);
   const setSyncSlice = useMultiViewerStore((s) => s.setSyncSlice);
+  const activePanelId = useMultiViewerStore((s) => s.activePanelId);
+  const assignInstance = useMultiViewerStore((s) => s.assignInstance);
   const autoAssign = useMultiViewerStore((s) => s.autoAssign);
   const isMultiPanel = multiLayout !== 'single';
   const [multiPanelSource, setMultiPanelSource] = useState<'originals' | 'preprocessed'>('originals');
@@ -411,7 +424,15 @@ function ViewerApp() {
   }, [navigate, studyInfo]);
 
   const handleSelectInstance = (instanceId: string) => {
-    setSelectedInstanceId(instanceId);
+    if (isMultiPanel) {
+      // In multi-panel mode: assign the clicked image to the active (focused) panel
+      const instance = studyInfo?.instances.find(i => i.id === instanceId);
+      const sequence = instance ? detectSequence(instance.original_filename || '') : 'unknown';
+      assignInstance(activePanelId, instanceId, sequence);
+    } else {
+      // In single panel mode: load the image normally
+      setSelectedInstanceId(instanceId);
+    }
   };
 
   // Handle opening/loading an existing segmentation (toggle: click again to deactivate)
@@ -549,12 +570,13 @@ function ViewerApp() {
         <h2 className="text-xl font-bold text-white mb-2">
           {t('viewer.noStudySelected', 'No study selected')}
         </h2>
-        <p className="text-gray-500 dark:text-gray-400 mb-4 text-center max-w-md">
+        <p className="text-gray-400 mb-4 text-center max-w-md">
           {t('viewer.selectStudyDescription', 'Select a patient and upload an MRI study to view it.')}
         </p>
         <button
           onClick={() => navigate('/app')}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600"
+          className="flex items-center bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+          style={{ height: 36, gap: 6, padding: '0 14px', borderRadius: 6, fontSize: 13, fontWeight: 500 }}
         >
           <ArrowLeft className="w-4 h-4" />
           {t('viewer.goToPatients', 'Go to Patients')}
@@ -570,7 +592,8 @@ function ViewerApp() {
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          className="w-12 h-12 border-4 border-primary-200 dark:border-primary-800 border-t-primary-600 dark:border-t-primary-400 rounded-full mb-4"
+          className="border-2 border-gray-700 border-t-blue-500 rounded-full mb-4"
+          style={{ width: 36, height: 36 }}
         />
         <p className="text-gray-400">{t('viewer.loadingStudy', 'Loading study...')}</p>
       </div>
@@ -585,12 +608,13 @@ function ViewerApp() {
         <h2 className="text-xl font-bold text-white mb-2">
           {t('viewer.studyNotFound', 'Study not found')}
         </h2>
-        <p className="text-gray-500 dark:text-gray-400 mb-4">
+        <p className="text-gray-400 mb-4">
           {t('viewer.studyNotFoundDescription', 'The requested study does not exist or you do not have access.')}
         </p>
         <button
           onClick={() => navigate('/app')}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600"
+          className="flex items-center bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+          style={{ height: 36, gap: 6, padding: '0 14px', borderRadius: 6, fontSize: 13, fontWeight: 500 }}
         >
           <ArrowLeft className="w-4 h-4" />
           {t('common.goBack', 'Go Back')}
@@ -622,34 +646,40 @@ function ViewerApp() {
           className="w-72 flex-shrink-0 flex flex-col border-r border-gray-700 overflow-hidden"
           style={{ background: '#111827' }}
         >
-          {/* Study Info - Compact */}
-          <div className="p-3 border-b border-gray-700">
-            <div className="flex items-center gap-2 mb-2">
-              <FileImage className="w-4 h-4 text-primary-500" />
-              <span className="text-sm font-semibold text-white">
-                {t('viewer.studyInfo', 'Study')}
+          {/* Study Info — DS: labels 11px UPPERCASE, values 12px */}
+          <div className="border-b border-gray-700" style={{ padding: '8px 12px' }}>
+            <div className="flex items-center" style={{ gap: 6, marginBottom: 8 }}>
+              <FileImage style={{ width: 16, height: 16, color: '#60A5FA' }} />
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#F9FAFB' }}>
+                {t('viewer.studyInfo', 'Study Info')}
               </span>
             </div>
             {studyInfo && (
-              <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">{studyInfo.study.modality}</span>
-                  <span className="text-gray-400">•</span>
-                </div>
+              <div className="grid grid-cols-2" style={{ gap: 8 }}>
                 <div>
-                  <span className="text-white">{new Date(studyInfo.study.study_date).toLocaleDateString()}</span>
-                </div>
-                <div>
-                  <span className="text-gray-500">{studyInfo.series.length} {t('study.series', 'series')}</span>
-                </div>
-                <div>
-                  <span className="text-gray-500">{originalInstances.length + preprocessedInstances.length} {t('study.images', 'images')}</span>
-                </div>
-                {studyInfo.study.body_site && (
-                  <div className="col-span-2">
-                    <span className="text-gray-400">{studyInfo.study.body_site}</span>
+                  <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                    {t('study.modality', 'Modality')}
                   </div>
-                )}
+                  <div style={{ fontSize: 12, fontWeight: 500, color: '#E5E7EB' }}>{studyInfo.study.modality}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                    {t('study.studyDate', 'Date')}
+                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: '#E5E7EB' }}>{new Date(studyInfo.study.study_date).toLocaleDateString()}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                    {t('study.series', 'Series')}
+                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: '#E5E7EB' }}>{studyInfo.series.length}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                    {t('study.images', 'Images')}
+                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: '#E5E7EB' }}>{originalInstances.length + preprocessedInstances.length}</div>
+                </div>
               </div>
             )}
           </div>
@@ -662,21 +692,22 @@ function ViewerApp() {
               <div className="border-b border-gray-700">
                 <button
                   onClick={() => toggleSection('originals')}
-                  className="w-full flex items-center justify-between p-3 hover:bg-gray-800 transition-colors"
+                  className="w-full flex items-center justify-between hover:bg-gray-800 transition-colors"
+                  style={{ padding: '8px 12px' }}
                 >
-                  <div className="flex items-center gap-2">
-                    <FileImage className="w-4 h-4 text-primary-500" />
-                    <span className="text-sm font-semibold text-gray-300">
-                      {t('viewer.originalImages', 'Originales')}
+                  <div className="flex items-center" style={{ gap: 6 }}>
+                    <FileImage style={{ width: 16, height: 16, color: '#60A5FA' }} />
+                    <span style={{ fontSize: 14, fontWeight: 600, color: '#F9FAFB' }}>
+                      {t('viewer.originalImages', 'Originals')}
                     </span>
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-900/30 text-blue-400">
+                    <span style={{ fontSize: 10, fontWeight: 500, padding: '1px 6px', borderRadius: 4, background: 'rgba(30,64,175,0.2)', color: '#60A5FA' }}>
                       {originalInstances.length}
                     </span>
                   </div>
                   {sectionsExpanded.originals ? (
-                    <ChevronDown className="w-4 h-4 text-gray-400" />
+                    <ChevronDown style={{ width: 14, height: 14, color: '#6B7280' }} />
                   ) : (
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                    <ChevronRight style={{ width: 14, height: 14, color: '#6B7280' }} />
                   )}
                 </button>
                 {sectionsExpanded.originals && (
@@ -685,15 +716,16 @@ function ViewerApp() {
                       <button
                         key={instance.id}
                         onClick={() => handleSelectInstance(instance.id)}
-                        className={`w-full p-1.5 rounded-lg text-left transition-all ${
+                        className={`w-full text-left transition-colors ${
                           selectedInstanceId === instance.id
                             ? 'bg-blue-600 text-white'
                             : 'bg-gray-800/60 hover:bg-gray-800 text-gray-300'
                         }`}
+                        style={{ padding: '4px 8px', borderRadius: 6 }}
                       >
                         <div className="flex items-center gap-2">
                           <FileImage className={`w-3.5 h-3.5 flex-shrink-0 ${
-                            selectedInstanceId === instance.id ? 'text-white' : 'text-primary-500'
+                            selectedInstanceId === instance.id ? 'text-white' : 'text-blue-500'
                           }`} />
                           <p className="text-[11px] font-medium truncate flex-1">
                             {instance.original_filename || 'Image'}
@@ -716,21 +748,22 @@ function ViewerApp() {
               <div className="border-b border-gray-700">
                 <button
                   onClick={() => toggleSection('preprocessed')}
-                  className="w-full flex items-center justify-between p-3 hover:bg-gray-800 transition-colors"
+                  className="w-full flex items-center justify-between hover:bg-gray-800 transition-colors"
+                  style={{ padding: '8px 12px' }}
                 >
-                  <div className="flex items-center gap-2">
-                    <FlaskConical className="w-4 h-4 text-teal-500" />
-                    <span className="text-sm font-semibold text-gray-300">
-                      {t('viewer.preprocessedImages', 'Preprocesadas')}
+                  <div className="flex items-center" style={{ gap: 6 }}>
+                    <FlaskConical style={{ width: 16, height: 16, color: '#2DD4BF' }} />
+                    <span style={{ fontSize: 14, fontWeight: 600, color: '#F9FAFB' }}>
+                      {t('viewer.preprocessedImages', 'Preprocessed')}
                     </span>
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-teal-900/30 text-teal-400">
+                    <span style={{ fontSize: 10, fontWeight: 500, padding: '1px 6px', borderRadius: 4, background: 'rgba(13,148,136,0.2)', color: '#2DD4BF' }}>
                       {preprocessedInstances.length}
                     </span>
                   </div>
                   {sectionsExpanded.preprocessed ? (
-                    <ChevronDown className="w-4 h-4 text-gray-400" />
+                    <ChevronDown style={{ width: 14, height: 14, color: '#6B7280' }} />
                   ) : (
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                    <ChevronRight style={{ width: 14, height: 14, color: '#6B7280' }} />
                   )}
                 </button>
                 {sectionsExpanded.preprocessed && (
@@ -739,11 +772,12 @@ function ViewerApp() {
                       <button
                         key={instance.id}
                         onClick={() => handleSelectInstance(instance.id)}
-                        className={`w-full p-1.5 rounded-lg text-left transition-all ${
+                        className={`w-full text-left transition-colors ${
                           selectedInstanceId === instance.id
                             ? 'bg-teal-600 text-white'
                             : 'bg-gray-800/60 hover:bg-gray-800 text-gray-300'
                         }`}
+                        style={{ padding: '4px 8px', borderRadius: 6 }}
                       >
                         <div className="flex items-center gap-2">
                           <FlaskConical className={`w-3.5 h-3.5 flex-shrink-0 ${
@@ -769,18 +803,19 @@ function ViewerApp() {
             <div className="border-b border-gray-700">
               <button
                 onClick={() => toggleSection('segmentations')}
-                className="w-full flex items-center justify-between p-3 hover:bg-gray-800 transition-colors"
+                className="w-full flex items-center justify-between hover:bg-gray-800 transition-colors"
+                style={{ padding: '8px 12px' }}
               >
-                <div className="flex items-center gap-2">
-                  <Puzzle className="w-4 h-4 text-purple-500" />
-                  <span className="text-sm font-semibold text-gray-300">
-                    {t('viewer.segmentations', 'Segmentaciones')}
+                <div className="flex items-center" style={{ gap: 6 }}>
+                  <Puzzle style={{ width: 16, height: 16, color: '#A78BFA' }} />
+                  <span style={{ fontSize: 14, fontWeight: 600, color: '#F9FAFB' }}>
+                    {t('viewer.segmentations', 'Segmentations')}
                   </span>
-                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                    segmentations.length > 0
-                      ? 'bg-purple-900/30 text-purple-400'
-                      : 'bg-gray-100 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400'
-                  }`}>
+                  <span style={{
+                    fontSize: 10, fontWeight: 500, padding: '1px 6px', borderRadius: 4,
+                    background: segmentations.length > 0 ? 'rgba(139,92,246,0.2)' : 'rgba(75,85,99,0.3)',
+                    color: segmentations.length > 0 ? '#A78BFA' : '#9CA3AF',
+                  }}>
                     {segmentations.length}
                   </span>
                 </div>
@@ -791,25 +826,27 @@ function ViewerApp() {
                 )}
               </button>
               {sectionsExpanded.segmentations && (
-                <div className="px-3 pb-3">
-                  {/* Action Buttons */}
-                  <div className="flex gap-1.5 mb-2">
+                <div style={{ padding: '4px 12px 12px' }}>
+                  {/* Action Buttons — L5 outline (functional controls in sidebar) */}
+                  <div className="grid grid-cols-2" style={{ gap: 4, marginBottom: 8 }}>
                     <button
                       onClick={handleCreateSegmentation}
                       disabled={!currentSeries}
-                      className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-purple-500 hover:bg-purple-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white text-xs font-medium rounded-md transition-colors"
+                      className="flex items-center justify-center border border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-40 transition-colors"
+                      style={{ height: 28, gap: 4, borderRadius: 6, fontSize: 12, fontWeight: 500 }}
                       title={t('viewer.createSegmentation', 'Create new segmentation')}
                     >
-                      <Plus className="w-3 h-3" />
+                      <Plus style={{ width: 12, height: 12 }} />
                       {t('viewer.create', 'Create')}
                     </button>
                     <button
                       onClick={handleUploadSegmentation}
                       disabled={!studyInfo}
-                      className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white text-xs font-medium rounded-md transition-colors"
+                      className="flex items-center justify-center border border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-40 transition-colors"
+                      style={{ height: 28, gap: 4, borderRadius: 6, fontSize: 12, fontWeight: 500 }}
                       title={t('viewer.uploadSegmentation', 'Upload segmentation')}
                     >
-                      <Upload className="w-3 h-3" />
+                      <Upload style={{ width: 12, height: 12 }} />
                       {t('viewer.upload', 'Upload')}
                     </button>
                     <input
@@ -827,7 +864,7 @@ function ViewerApp() {
                       <Loader2 className="w-4 h-4 text-purple-500 animate-spin" />
                     </div>
                   ) : segmentations.length === 0 ? (
-                    <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-1">
+                    <p className="text-xs text-gray-500 text-center py-1">
                       {t('viewer.noSegmentations', 'No segmentations')}
                     </p>
                   ) : (
@@ -845,19 +882,20 @@ function ViewerApp() {
                             <div key={seg.id}>
                               <div
                                 onClick={() => handleToggleZoneMap(seg)}
-                                className={`rounded-lg cursor-pointer transition-all ${
+                                className={`cursor-pointer transition-colors ${
                                   isExpanded
-                                    ? 'ring-2 ring-emerald-400 bg-emerald-100 dark:bg-emerald-900/40'
-                                    : 'bg-white/60 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700/80'
+                                    ? 'bg-emerald-900/40 border border-emerald-700'
+                                    : 'bg-gray-800/60 hover:bg-gray-800 border border-transparent'
                                 }`}
+                                style={{ borderRadius: 6, padding: '4px 8px' }}
                               >
-                                <div className="flex items-center gap-2 p-2">
+                                <div className="flex items-center" style={{ gap: 6 }}>
                                   {isExpanded
                                     ? <ChevronDown className="w-3 h-3 flex-shrink-0 text-emerald-400" />
                                     : <ChevronRight className="w-3 h-3 flex-shrink-0 text-gray-400" />
                                   }
                                   <Map className="w-3.5 h-3.5 flex-shrink-0 text-emerald-500" />
-                                  <span className={`text-[11px] font-medium truncate flex-1 ${isExpanded ? 'text-emerald-900 dark:text-white' : 'text-gray-700 dark:text-white'}`}>
+                                  <span className={`text-[11px] font-medium truncate flex-1 ${isExpanded ? 'text-white' : 'text-white'}`}>
                                     {seg.name}
                                   </span>
                                   <button
@@ -875,7 +913,7 @@ function ViewerApp() {
                                   <button
                                     onClick={(e) => handleDeleteSegmentation(seg.id, seg.name, e)}
                                     disabled={isDeleting}
-                                    className="p-1 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-colors flex-shrink-0"
+                                    className="p-1 text-gray-500 hover:text-red-400 transition-colors flex-shrink-0"
                                   >
                                     {isDeleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
                                   </button>
@@ -903,19 +941,20 @@ function ViewerApp() {
                                   setExpandedSegIds((prev) => new Set(prev).add(seg.id));
                                 }
                               }}
-                              className={`rounded-lg cursor-pointer transition-all ${
+                              className={`cursor-pointer transition-colors ${
                                 isActive
-                                  ? 'ring-2 ring-purple-400 bg-purple-100 dark:bg-purple-900/50'
-                                  : 'bg-white/60 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700/80'
+                                  ? 'bg-purple-900/50 border border-purple-700'
+                                  : 'bg-gray-800/60 hover:bg-gray-800 border border-transparent'
                               }`}
+                              style={{ borderRadius: 6, padding: '4px 8px' }}
                             >
-                              <div className="flex items-center gap-2 p-2">
+                              <div className="flex items-center" style={{ gap: 6 }}>
                                 {isExpanded
                                   ? <ChevronDown className="w-3 h-3 flex-shrink-0 text-purple-400" />
                                   : <ChevronRight className="w-3 h-3 flex-shrink-0 text-gray-400" />
                                 }
-                                <Puzzle className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-purple-500 dark:text-purple-400' : 'text-purple-500'}`} />
-                                <span className={`text-[11px] font-medium truncate flex-1 ${isActive ? 'text-purple-900 dark:text-white' : 'text-gray-700 dark:text-white'}`}>
+                                <Puzzle className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-purple-400' : 'text-purple-500'}`} />
+                                <span className={`text-[11px] font-medium truncate flex-1 ${isActive ? 'text-white' : 'text-white'}`}>
                                   {seg.name}
                                 </span>
                                 <button
@@ -938,7 +977,7 @@ function ViewerApp() {
                                 <button
                                   onClick={(e) => handleDeleteSegmentation(seg.id, seg.name, e)}
                                   disabled={isDeleting}
-                                  className="p-1 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-colors flex-shrink-0"
+                                  className="p-1 text-gray-500 hover:text-red-400 transition-colors flex-shrink-0"
                                 >
                                   {isDeleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
                                 </button>
@@ -950,7 +989,7 @@ function ViewerApp() {
                                 <OverlayControls />
                                 <LesionDashboard
                                   segmentationId={seg.id}
-                                  onNavigateToSlice={(idx) => setCurrentSliceIndex(idx)}
+                                  onNavigateToSlice={(idx) => activeSlice.setSliceIndex(idx)}
                                 />
                               </div>
                             )}
@@ -978,7 +1017,7 @@ function ViewerApp() {
                 <ViewerControls
                   {...viewerControls}
                   viewMode={viewMode}
-                  onNavigateToSlice={(idx) => setCurrentSliceIndex(idx)}
+                  onNavigateToSlice={(idx) => activeSlice.setSliceIndex(idx)}
                 />
               </ErrorBoundary>
             </motion.div>
@@ -990,95 +1029,126 @@ function ViewerApp() {
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="flex-1 p-4"
+          className="flex-1"
         >
-          {/* Layout Switcher Toolbar */}
-          {viewMode === '2d' && (originalInstances.length > 1 || preprocessedInstances.length > 1) && (
-            <div className="flex items-center justify-center gap-2 mb-2">
+          {/* Viewer Toolbar — centered bar with all controls */}
+          {viewMode === '2d' && currentSeries && (
+            <div className="flex items-center justify-center" style={{ padding: '8px 0' }}>
               <div className="flex items-center border border-gray-700" style={{ background: '#1F2937', borderRadius: 8, padding: 4, gap: 4 }}>
-                <button
-                  onClick={() => handleLayoutChange('single')}
-                  className={`p-1.5 rounded transition-colors ${
-                    multiLayout === 'single' ? 'bg-blue-500 text-white' : 'text-gray-500 hover:bg-gray-700'
-                  }`}
-                  title={t('layout.single', 'Single View')}
-                >
-                  <Square className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleLayoutChange('1x2')}
-                  className={`p-1.5 rounded transition-colors ${
-                    multiLayout === '1x2' ? 'bg-blue-500 text-white' : 'text-gray-500 hover:bg-gray-700'
-                  }`}
-                  title={t('layout.sideBySide', '1x2 Side by Side')}
-                >
-                  <Columns2 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleLayoutChange('2x2')}
-                  className={`p-1.5 rounded transition-colors ${
-                    multiLayout === '2x2' ? 'bg-blue-500 text-white' : 'text-gray-500 hover:bg-gray-700'
-                  }`}
-                  title={t('layout.grid', '2x2 Grid')}
-                >
-                  <LayoutGrid className="w-4 h-4" />
-                </button>
-                {isMultiPanel && (
+                {/* Layout buttons (only when multiple images) */}
+                {(originalInstances.length > 1 || preprocessedInstances.length > 1) && (
                   <>
-                    <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
-                    <button
-                      onClick={() => setSyncSlice(!syncSlice)}
-                      className={`p-1.5 rounded transition-colors ${
-                        syncSlice ? 'bg-green-500 text-white' : 'text-gray-500 hover:bg-gray-700'
-                      }`}
-                      title={syncSlice ? t('layout.syncOn', 'Slice sync: ON') : t('layout.syncOff', 'Slice sync: OFF')}
-                    >
-                      {syncSlice ? <Link2 className="w-4 h-4" /> : <Unlink2 className="w-4 h-4" />}
+                    <button onClick={() => handleLayoutChange('single')}
+                      className={`flex items-center justify-center transition-colors ${multiLayout === 'single' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
+                      style={{ width: 28, height: 28, borderRadius: 6 }} title={t('layout.single', 'Single')}>
+                      <Square style={{ width: 14, height: 14 }} />
                     </button>
-                    {preprocessedInstances.length > 0 && (
+                    <button onClick={() => handleLayoutChange('1x2')}
+                      className={`flex items-center justify-center transition-colors ${multiLayout === '1x2' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
+                      style={{ width: 28, height: 28, borderRadius: 6 }} title={t('layout.sideBySide', '1x2')}>
+                      <Columns2 style={{ width: 14, height: 14 }} />
+                    </button>
+                    <button onClick={() => handleLayoutChange('2x2')}
+                      className={`flex items-center justify-center transition-colors ${multiLayout === '2x2' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
+                      style={{ width: 28, height: 28, borderRadius: 6 }} title={t('layout.grid', '2x2')}>
+                      <LayoutGrid style={{ width: 14, height: 14 }} />
+                    </button>
+                    {isMultiPanel && (
                       <>
-                        <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
-                        <button
-                          onClick={() => handleMultiPanelSourceChange(
-                            multiPanelSource === 'originals' ? 'preprocessed' : 'originals'
-                          )}
-                          className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors ${
-                            multiPanelSource === 'preprocessed'
-                              ? 'bg-teal-500 text-white'
-                              : 'text-gray-500 hover:bg-gray-700'
-                          }`}
-                          title={multiPanelSource === 'preprocessed'
-                            ? t('layout.showOriginals', 'Switch to original images')
-                            : t('layout.showPreprocessed', 'Switch to preprocessed images')
-                          }
-                        >
-                          {multiPanelSource === 'preprocessed'
-                            ? <FlaskConical className="w-3.5 h-3.5" />
-                            : <FileImage className="w-3.5 h-3.5" />
-                          }
-                          {multiPanelSource === 'preprocessed'
-                            ? t('layout.preprocessed', 'Preproc')
-                            : t('layout.originals', 'Original')
-                          }
+                        <div style={{ width: 1, height: 20, background: '#374151' }} />
+                        <button onClick={() => setSyncSlice(!syncSlice)}
+                          className={`flex items-center justify-center transition-colors ${syncSlice ? 'bg-green-600 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
+                          style={{ width: 28, height: 28, borderRadius: 6 }}
+                          title={syncSlice ? 'Sync: ON' : 'Sync: OFF'}>
+                          {syncSlice ? <Link2 style={{ width: 14, height: 14 }} /> : <Unlink2 style={{ width: 14, height: 14 }} />}
                         </button>
+                        {preprocessedInstances.length > 0 && (
+                          <button onClick={() => handleMultiPanelSourceChange(multiPanelSource === 'originals' ? 'preprocessed' : 'originals')}
+                            className={`flex items-center transition-colors ${multiPanelSource === 'preprocessed' ? 'bg-teal-600 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
+                            style={{ height: 28, gap: 4, padding: '0 8px', borderRadius: 6, fontSize: 12, fontWeight: 500 }}>
+                            {multiPanelSource === 'preprocessed' ? <FlaskConical style={{ width: 14, height: 14 }} /> : <FileImage style={{ width: 14, height: 14 }} />}
+                            {multiPanelSource === 'preprocessed' ? 'Preproc' : 'Original'}
+                          </button>
+                        )}
                       </>
                     )}
+                    <div style={{ width: 1, height: 20, background: '#374151' }} />
                   </>
                 )}
+
+                {/* Slice info + slider — reads from active panel in multi-panel mode */}
+                <span className="font-mono" style={{ fontSize: 12, fontWeight: 500, color: '#E5E7EB', padding: '0 4px' }}>
+                  {activeSlice.sliceIndex + 1}/{activeSlice.totalSlices}
+                </span>
+                <input
+                  type="range"
+                  min="0"
+                  max={Math.max(0, activeSlice.totalSlices - 1)}
+                  value={activeSlice.sliceIndex}
+                  onChange={(e) => activeSlice.setSliceIndex(parseInt(e.target.value))}
+                  className="h-1 bg-gray-700 rounded-full appearance-none cursor-pointer accent-blue-500"
+                  style={{ width: 120 }}
+                />
+
+                <div style={{ width: 1, height: 20, background: '#374151' }} />
+
+                {/* Zoom controls */}
+                <button onClick={() => setZoomLevel(Math.max(0.25, zoomLevel / 1.2))}
+                  className="flex items-center justify-center text-gray-400 hover:bg-gray-700 transition-colors"
+                  style={{ width: 28, height: 28, borderRadius: 6 }} title={t('viewer.zoomOut', 'Zoom Out')}>
+                  <ZoomOut style={{ width: 14, height: 14 }} />
+                </button>
+                <span className="font-mono" style={{ fontSize: 11, color: '#9CA3AF', padding: '0 2px', minWidth: 36, textAlign: 'center' }}>
+                  {(zoomLevel * 100).toFixed(0)}%
+                </span>
+                <button onClick={() => setZoomLevel(Math.min(20, zoomLevel * 1.2))}
+                  className="flex items-center justify-center text-gray-400 hover:bg-gray-700 transition-colors"
+                  style={{ width: 28, height: 28, borderRadius: 6 }} title={t('viewer.zoomIn', 'Zoom In')}>
+                  <ZoomIn style={{ width: 14, height: 14 }} />
+                </button>
+                <button onClick={() => { setZoomLevel(1); setPanOffset({ x: 0, y: 0 }); }}
+                  className="flex items-center justify-center text-gray-400 hover:bg-gray-700 transition-colors"
+                  style={{ width: 28, height: 28, borderRadius: 6 }} title={t('viewer.resetView', 'Reset')}>
+                  <RotateCw style={{ width: 14, height: 14 }} />
+                </button>
+
+                <div style={{ width: 1, height: 20, background: '#374151' }} />
+
+                {/* Measurement tools */}
+                <button onClick={() => setMeasurementTool(measurementTool === 'ruler' ? null : 'ruler')}
+                  className={`flex items-center justify-center transition-colors ${measurementTool === 'ruler' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
+                  style={{ width: 28, height: 28, borderRadius: 6 }} title="Ruler">
+                  <Ruler style={{ width: 14, height: 14 }} />
+                </button>
+                <button onClick={() => setMeasurementTool(measurementTool === 'angle' ? null : 'angle')}
+                  className={`flex items-center justify-center transition-colors ${measurementTool === 'angle' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
+                  style={{ width: 28, height: 28, borderRadius: 6 }} title="Angle">
+                  <Triangle style={{ width: 14, height: 14 }} />
+                </button>
+                <button onClick={() => setMeasurementTool(measurementTool === 'ellipse' ? null : 'ellipse')}
+                  className={`flex items-center justify-center transition-colors ${measurementTool === 'ellipse' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
+                  style={{ width: 28, height: 28, borderRadius: 6 }} title="ROI">
+                  <Circle style={{ width: 14, height: 14 }} />
+                </button>
+                <button onClick={triggerMeasurementClear}
+                  className="flex items-center justify-center text-gray-400 hover:text-red-400 hover:bg-red-900/30 transition-colors"
+                  style={{ width: 28, height: 28, borderRadius: 6 }} title={t('viewer.clearMeasurements', 'Clear measurements')}>
+                  <Trash2 style={{ width: 14, height: 14 }} />
+                </button>
               </div>
             </div>
           )}
 
-          <div className="h-full border border-gray-700 overflow-hidden" style={{ background: '#0a0f1a', borderRadius: 8 }}>
+          <div className="h-full overflow-hidden" style={{ background: '#000' }}>
             {isLoadingImage && !isMultiPanel ? (
               <div className="h-full flex flex-col items-center justify-center">
-                <Loader2 className="w-12 h-12 text-primary-500 animate-spin mb-4" />
-                <p className="text-gray-400">{t('viewer.loadingImage')}</p>
+                <Loader2 className="animate-spin" style={{ width: 36, height: 36, color: '#60A5FA', marginBottom: 8 }} />
+                <p style={{ fontSize: 13, color: '#9CA3AF' }}>{t('viewer.loadingImage')}</p>
               </div>
             ) : isMultiPanel && viewMode === '2d' ? (
               <ErrorBoundary name="MultiPanelViewer">
                 <MultiPanelViewer
-                  instances={multiPanelInstances}
+                  instances={[...originalInstances, ...preprocessedInstances]}
                 />
               </ErrorBoundary>
             ) : viewMode === '2d' ? (

@@ -75,7 +75,7 @@ export default function ViewerControls({
           <button
             onClick={() => setRenderMode('standard')}
             className={`flex items-center justify-center transition-colors ${
-              renderMode === 'standard' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+              renderMode === 'standard' ? 'bg-gray-700 text-white border border-gray-600' : 'bg-gray-800 text-gray-400 hover:bg-gray-700 border border-transparent'
             }`}
             style={{ height: 28, borderRadius: 6, fontSize: 12, fontWeight: 500 }}
           >
@@ -84,7 +84,7 @@ export default function ViewerControls({
           <button
             onClick={() => setRenderMode('matplotlib')}
             className={`flex items-center justify-center transition-colors ${
-              renderMode === 'matplotlib' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+              renderMode === 'matplotlib' ? 'bg-gray-700 text-white border border-gray-600' : 'bg-gray-800 text-gray-400 hover:bg-gray-700 border border-transparent'
             }`}
             style={{ height: 28, borderRadius: 6, fontSize: 12, fontWeight: 500 }}
           >
@@ -164,8 +164,8 @@ export default function ViewerControls({
           onClick={() => setSegmentationMode(!segmentationMode)}
           className={`w-full flex items-center justify-center transition-colors ${
             segmentationMode
-              ? 'bg-green-600 hover:bg-green-700 text-white'
-              : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+              ? 'bg-green-900/30 border border-green-700 text-green-400'
+              : 'bg-gray-800 hover:bg-gray-700 text-gray-300 border border-transparent'
           }`}
           style={{ height: 28, borderRadius: 6, fontSize: 12, fontWeight: 500 }}
         >

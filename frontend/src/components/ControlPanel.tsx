@@ -112,183 +112,38 @@ export default function ControlPanel() {
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
 
-        {/* Patient Info */}
-        {patient && (
-          <div className="border-b border-gray-700" style={{ padding: '8px 12px' }}>
-            <div className="flex items-center" style={{ gap: 8 }}>
-              <div className="flex-shrink-0 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white"
-                style={{ width: 36, height: 36, borderRadius: 6, fontSize: 14, fontWeight: 700 }}>
-                {patient.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: '#F9FAFB', margin: 0 }}>
-                  {patient.full_name}
-                </p>
-                <div className="flex items-center" style={{ gap: 6, marginTop: 2 }}>
-                  {patient.age != null && (
-                    <span style={{ fontSize: 11, color: '#9CA3AF' }}>{patient.age} {t('patients.years')}</span>
-                  )}
-                  {patient.gender && (
-                    <span style={{ fontSize: 10, fontWeight: 500, color: '#9CA3AF', background: '#1F2937', padding: '1px 4px', borderRadius: 4, textTransform: 'uppercase' }}>
-                      {patient.gender === 'male' ? 'M' : patient.gender === 'female' ? 'F' : patient.gender.charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                  {patient.mrn && (
-                    <span className="font-mono" style={{ fontSize: 10, color: '#6B7280' }}>MRN: {patient.mrn}</span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Patient Info removed — already in breadcrumbs and PatientDetailPage */}
 
-        {/* Medical History */}
-        {patient && (
-          <div className="px-4 py-2 border-b border-gray-700">
-            <button
-              onClick={() => setHistoryOpen(!historyOpen)}
-              className="w-full flex items-center gap-2 py-1 text-[11px] font-medium text-gray-500 uppercase tracking-wide hover:text-gray-300 transition-colors"
-            >
-              <Activity className="w-3.5 h-3.5" />
-              {t('panel.medicalHistory', 'Medical History')}
-              {activeConditions.length > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 bg-red-900/30 text-red-400 rounded-full text-[10px] font-bold">
-                  {activeConditions.length}
-                </span>
-              )}
-              {historyOpen
-                ? <ChevronDown className="w-3 h-3 ml-auto" />
-                : <ChevronRight className="w-3 h-3 ml-auto" />
-              }
-            </button>
-            {historyOpen && (
-              <div className="mt-1 space-y-1.5 pb-1">
-                {activeConditions.length === 0 ? (
-                  <p className="text-xs text-gray-500 py-1">
-                    {t('panel.noActiveConditions', 'No active conditions recorded')}
-                  </p>
-                ) : (
-                  activeConditions.map((condition) => (
-                    <div
-                      key={condition.id}
-                      className={`px-2.5 py-2 rounded-lg border text-xs ${getSeverityColor(condition.severity)}`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold">{condition.condition_name}</span>
-                        {condition.severity && (
-                          <span className="text-[10px] uppercase font-medium opacity-70">
-                            {t(`panel.severity.${condition.severity}`, condition.severity)}
-                          </span>
-                        )}
-                      </div>
-                      {condition.onset_date && (
-                        <p className="mt-0.5 opacity-70">
-                          {t('panel.since', 'Since')}: {formatDate(condition.onset_date)}
-                        </p>
-                      )}
-                      {condition.notes && (
-                        <p className="mt-0.5 opacity-60 truncate">{condition.notes}</p>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
-        )}
+        {/* Medical History removed — belongs in PatientDetailPage, not in the viewer */}
 
-        {/* Study Timeline */}
-        {sortedStudies.length > 0 && (
-          <div className="px-4 py-2 border-b border-gray-700">
-            <button
-              onClick={() => setTimelineOpen(!timelineOpen)}
-              className="w-full flex items-center gap-2 py-1 text-[11px] font-medium text-gray-500 uppercase tracking-wide hover:text-gray-300 transition-colors"
-            >
-              <Calendar className="w-3.5 h-3.5" />
-              {t('panel.studyTimeline', 'Study Timeline')}
-              <span className="ml-1 px-1.5 py-0.5 bg-blue-900/30 text-blue-400 rounded-full text-[10px] font-bold">
-                {sortedStudies.length}
-              </span>
-              {timelineOpen
-                ? <ChevronDown className="w-3 h-3 ml-auto" />
-                : <ChevronRight className="w-3 h-3 ml-auto" />
-              }
-            </button>
-            {timelineOpen && (
-              <div className="mt-1 space-y-0.5 pb-1">
-                {sortedStudies.map((study, idx) => {
-                  const isCurrent = study.id === currentStudyId;
-                  return (
-                    <div
-                      key={study.id}
-                      className={`relative pl-5 py-1.5 text-xs rounded-md transition-colors ${
-                        isCurrent
-                          ? 'bg-blue-900/20 text-blue-300'
-                          : 'text-gray-400 hover:bg-gray-800/50'
-                      }`}
-                    >
-                      {/* Timeline dot and line */}
-                      <div className="absolute left-1.5 top-0 bottom-0 flex flex-col items-center">
-                        <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                          isCurrent
-                            ? 'bg-blue-500 ring-2 ring-blue-700'
-                            : 'bg-gray-600'
-                        }`} />
-                        {idx < sortedStudies.length - 1 && (
-                          <div className="w-px flex-1 bg-gray-700 mt-0.5" />
-                        )}
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <span className={`font-semibold ${isCurrent ? '' : 'font-normal'}`}>
-                            {formatDate(study.study_date)}
-                          </span>
-                          {isCurrent && (
-                            <span className="ml-1.5 text-[10px] font-bold uppercase text-blue-500">
-                              {t('panel.current', 'Current')}
-                            </span>
-                          )}
-                        </div>
-                        <span className="px-1.5 py-0.5 bg-gray-800 rounded text-[10px] font-medium">
-                          {study.modality}
-                        </span>
-                      </div>
-                      {study.study_description && (
-                        <p className="truncate opacity-70 mt-0.5">{study.study_description}</p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
+        {/* Study Timeline removed — already in PatientDetailPage */}
 
         {/* Longitudinal Tracking (below timeline) */}
         {sortedStudies.length > 1 && (
-          <div className="px-4 py-2 border-b border-gray-700">
+          <div className="border-b border-gray-700" style={{ padding: '8px 12px' }}>
             <LongitudinalCompare studies={sortedStudies} />
           </div>
         )}
 
         {/* View Controls (compact) */}
-        <div className="px-4 py-2 border-b border-gray-700 space-y-3">
+        <div className="border-b border-gray-700" style={{ padding: '8px 12px', display: 'flex', flexDirection: 'column' as const, gap: 12 }}>
           {/* View Mode Toggle */}
           <div>
             <label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-500 uppercase tracking-wide mb-1.5">
               <Box className="w-3.5 h-3.5" />
               {t('viewer.viewMode')}
             </label>
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-2 gap-1" style={{ gap: 4 }}>
               {(['2d', '3d'] as const).map((mode) => (
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode)}
-                  className={`flex items-center justify-center h-7 rounded-md text-xs font-medium transition-all ${
+                  className={`flex items-center justify-center h-7 text-xs font-medium transition-colors ${
                     viewMode === mode
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                      ? 'bg-gray-700 text-white border border-gray-600'
+                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700 border border-transparent'
                   }`}
+                  style={{ borderRadius: 6 }}
                 >
                   {t(`viewer.${mode}View`).toUpperCase()}
                 </button>
@@ -308,9 +163,9 @@ export default function ControlPanel() {
                 <div className="grid grid-cols-2 gap-1.5">
                   <button
                     onClick={() => setRender3DMode('volume')}
-                    className={`flex items-center justify-center h-7 rounded-md text-xs font-medium transition-all ${
+                    className={`flex items-center justify-center h-7 rounded-[6px] text-xs font-medium transition-all ${
                       render3DMode === 'volume'
-                        ? 'bg-purple-600 text-white'
+                        ? 'bg-gray-700 text-white border border-gray-600'
                         : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                     }`}
                   >
@@ -318,9 +173,9 @@ export default function ControlPanel() {
                   </button>
                   <button
                     onClick={() => setRender3DMode('multiplanar')}
-                    className={`flex items-center justify-center h-7 rounded-md text-xs font-medium transition-all ${
+                    className={`flex items-center justify-center h-7 rounded-[6px] text-xs font-medium transition-all ${
                       render3DMode === 'multiplanar'
-                        ? 'bg-purple-600 text-white'
+                        ? 'bg-gray-700 text-white border border-gray-600'
                         : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                     }`}
                   >
@@ -356,7 +211,7 @@ export default function ControlPanel() {
                 <div className="space-y-1.5">
                   <button
                     onClick={() => setClipPlane(!clipPlaneEnabled)}
-                    className={`w-full flex items-center justify-center h-7 rounded-md text-xs font-medium transition-colors ${
+                    className={`w-full flex items-center justify-center h-7 rounded-[6px] text-xs font-medium transition-colors ${
                       clipPlaneEnabled
                         ? 'bg-red-600 text-white'
                         : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
@@ -477,7 +332,7 @@ export default function ControlPanel() {
 
         {/* Cursor Info + Histogram */}
         {currentSeries && cursorInfo && (
-          <div className="px-4 py-2 border-b border-gray-700">
+          <div className="border-b border-gray-700" style={{ padding: '8px 12px' }}>
             <div className="flex items-center gap-3 text-xs">
               <span className="text-gray-500">
                 X:<span className="font-mono font-bold text-gray-300 ml-0.5">{cursorInfo.x}</span>
@@ -504,7 +359,7 @@ export default function ControlPanel() {
 
         {/* Histogram (visible even without cursor, if slice is loaded) */}
         {currentSeries && !cursorInfo && sliceHistogram && (
-          <div className="px-4 py-2 border-b border-gray-700">
+          <div className="border-b border-gray-700" style={{ padding: '8px 12px' }}>
             <label className="flex items-center gap-1.5 text-[11px] font-medium text-gray-500 uppercase tracking-wide mb-1.5">
               {t('viewer.histogram', 'Histogram')}
             </label>
