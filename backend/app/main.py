@@ -18,7 +18,7 @@ from app.core.security import (
 )
 from app.core.exception_handlers import register_exception_handlers
 from app.core.container import init_container
-from app.api.routes import auth, imaging, segmentation, segmentation_regions, websocket, authentication, patients, studies, documents, ai_segmentation, ai_report, clinical_tools, dicomweb, fhir
+from app.api.routes import auth, imaging, segmentation, segmentation_regions, segmentation_analysis, websocket, authentication, patients, studies, documents, ai_segmentation, ai_report, clinical_tools, dicomweb, fhir
 from app.models.schemas import HealthCheck
 
 settings = get_settings()
@@ -273,9 +273,11 @@ app.include_router(authentication.router, prefix=settings.API_V1_STR)
 app.include_router(auth.router, prefix=settings.API_V1_STR)
 app.include_router(imaging.router, prefix=settings.API_V1_STR)
 app.include_router(segmentation.router, prefix=settings.API_V1_STR)
-# Region classification + zone-map endpoints, split out of segmentation.py (C3).
-# Same /segmentation prefix; registered after so no route is shadowed.
+# Region classification/zone-map and analysis endpoints, split out of
+# segmentation.py (C3). Same /segmentation prefix; registered after the CRUD
+# router so no route is shadowed.
 app.include_router(segmentation_regions.router, prefix=settings.API_V1_STR)
+app.include_router(segmentation_analysis.router, prefix=settings.API_V1_STR)
 app.include_router(websocket.router, prefix=settings.API_V1_STR)
 
 # AI routes (Brain segmentation, anomaly detection, report generation)
