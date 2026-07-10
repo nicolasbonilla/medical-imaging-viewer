@@ -3,8 +3,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { SliceSlider } from './SliceSlider';
 
 describe('SliceSlider', () => {
@@ -36,9 +35,8 @@ describe('SliceSlider', () => {
     expect(slider).toHaveAttribute('max', '49'); // totalSlices - 1
   });
 
-  it('should call onChange when slider value changes', async () => {
+  it('should call onChange when slider value changes', () => {
     const mockOnChange = vi.fn();
-    const user = userEvent.setup();
 
     render(
       <SliceSlider
@@ -50,11 +48,11 @@ describe('SliceSlider', () => {
 
     const slider = screen.getByRole('slider');
 
-    // Simulate changing the slider value
-    await user.click(slider);
-    await user.keyboard('[ArrowRight]'); // Increment by 1
+    // jsdom does not implement range-input keyboard stepping, so drive the
+    // change event directly (this is the actual DOM event the component binds).
+    fireEvent.change(slider, { target: { value: '1' } });
 
-    expect(mockOnChange).toHaveBeenCalled();
+    expect(mockOnChange).toHaveBeenCalledWith(1);
   });
 
   it('should call onChange with correct slice index', async () => {
