@@ -164,7 +164,6 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
   }, [currentSeries, createSegmentation, createSegmentationRef]);
 
   // Matplotlib image state for segmentation overlay
-  const [, setMatplotlibImageSize] = useState<{ width: number; height: number } | null>(null);
   const [matplotlibBbox, setMatplotlibBbox] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
 
   // Calculated render dimensions (same formula as useCanvasRendering for consistency)
@@ -209,7 +208,6 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
   useEffect(() => {
     const imgElement = matplotlibImageRef.current;
     if (!imgElement || renderMode !== 'matplotlib') {
-      setMatplotlibImageSize(null);
       setMatplotlibBbox(null);
       return;
     }
@@ -219,8 +217,6 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
       const actualHeight = imgElement.offsetHeight;
       const naturalWidth = imgElement.naturalWidth;
       const naturalHeight = imgElement.naturalHeight;
-
-      setMatplotlibImageSize({ width: actualWidth, height: actualHeight });
 
       // Scale bbox from natural size to actual rendered size
       if (matplotlibData?.bbox && naturalWidth > 0 && naturalHeight > 0) {
