@@ -31,6 +31,8 @@ import { MAGNIMSZoneMapPanel } from './components/MAGNIMSZoneMapPanel';
 import { useSegmentationStore } from './store/useSegmentationStore';
 import { useMultiViewerStore, type ViewerLayout } from './store/useMultiViewerStore';
 import { autoAssignPanels, detectSequence } from './utils/sequenceDetection';
+import { isPreprocessedInstance } from './utils/instanceClassification';
+import { detectLabelPreset } from './utils/labelPresets';
 import { useActiveSliceInfo } from './hooks/useActiveSliceInfo';
 import type { ReportResponse } from './types';
 
@@ -81,12 +83,7 @@ function OverlayControls() {
           {labels && labels.filter((l) => l.id !== 0).length > 0 && (
             <div className="space-y-1">
               <select
-                value={(() => {
-                  const names = labels.filter(l => l.id !== 0).map(l => l.name);
-                  if (names.length === 6 && names[0] === 'Periventricular') return 'magnims';
-                  if (names.length === 4 && names[0] === 'MS Lesion (Active)') return 'default';
-                  return 'custom';
-                })()}
+                value={detectLabelPreset(labels)}
                 onChange={(e) => {
                   const preset = e.target.value;
                   if (preset === 'default' || preset === 'magnims') {
@@ -213,27 +210,19 @@ function ViewerApp() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [reportPanelOpen]);
 
-  // Filter instances into groups: originals, preprocessed, masks (hidden)
-  // Supports both legacy names (test01_01_flair_pp.nii) and BIDS names (sub-MS001_ses-01_desc-preproc_FLAIR.nii.gz)
-  const isPreprocessedInstance = useCallback((filename: string) => {
-    const lower = filename.toLowerCase();
-    // Legacy: *_pp.nii or *_pp.nii.gz
-    // BIDS: *desc-preproc* or *desc-segfrompreproc*
-    return lower.endsWith('_pp.nii') || lower.endsWith('_pp.nii.gz')
-      || lower.includes('desc-preproc') || lower.includes('desc-segfrompreproc');
-  }, []);
-
+  // Filter instances into groups: originals, preprocessed, masks (hidden).
+  // Classification lives in utils/instanceClassification (pure + unit-tested).
   const originalInstances = useMemo(() =>
     studyInfo?.instances.filter(inst => {
       const fn = inst.original_filename || '';
       return !isPreprocessedInstance(fn);
     }) ?? [],
-    [studyInfo?.instances, isPreprocessedInstance]
+    [studyInfo?.instances]
   );
 
   const preprocessedInstances = useMemo(() =>
     studyInfo?.instances.filter(inst => isPreprocessedInstance(inst.original_filename || '')) ?? [],
-    [studyInfo?.instances, isPreprocessedInstance]
+    [studyInfo?.instances]
   );
 
   // Instances to use for multi-panel viewer (based on source toggle)
@@ -463,7 +452,7 @@ function ViewerApp() {
     // Activate segmentation mode
     viewerControls.setSegmentationMode(true);
     toast.success(t('viewer.segmentationLoaded', `Segmentation "${segmentation.name}" loaded`));
-  }, [viewerControls, t, segmentationsData, setCurrentSegmentation, currentSegmentation, currentSeries?.file_id, studyInfo, isPreprocessedInstance, preprocessedInstances]);
+  }, [viewerControls, t, segmentationsData, setCurrentSegmentation, currentSegmentation, currentSeries?.file_id, studyInfo, preprocessedInstances]);
 
   // Toggle expand/collapse for a segmentation item's info panel
   const toggleSegExpanded = useCallback((segId: string) => {
