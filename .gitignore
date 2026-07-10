@@ -46,6 +46,9 @@ logs/
 storage/
 user_data/
 
+# Local-disk segmentation fallback store (runtime/test artifacts, never tracked)
+backend/data/segmentations/
+
 # IDE
 .vscode/
 .idea/
