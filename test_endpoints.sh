@@ -3,8 +3,10 @@
 # Run BEFORE and AFTER every backend deploy to ensure nothing is broken
 # Usage: bash test_endpoints.sh
 
-BASE="https://brain-mri-7bp6oqdu7a-uc.a.run.app/api/v1"
-ADMIN_PASSWORD="${ADMIN_DEFAULT_PASSWORD:-Admin123!@2024}"
+BASE="${MSTOOL_API_BASE:-https://brain-mri-7bp6oqdu7a-uc.a.run.app/api/v1}"
+# Never hardcode the production admin password. Require it from the environment
+# and fail fast if it is not set.
+ADMIN_PASSWORD="${ADMIN_DEFAULT_PASSWORD:?ADMIN_DEFAULT_PASSWORD must be set (export it before running; do not hardcode the production admin password)}"
 PASS=0
 FAIL=0
 

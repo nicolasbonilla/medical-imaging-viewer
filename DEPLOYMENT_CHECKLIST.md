@@ -28,7 +28,7 @@ gcloud run services describe brain-mri --region=us-central1 \
 # 2) Test login works
 curl -s -w "\nHTTP: %{http_code}\n" \
   -X POST -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"Admin123!@2024"}' \
+  -d "{\"username\":\"admin\",\"password\":\"$ADMIN_DEFAULT_PASSWORD\"}" \
   "https://brain-mri-209356685171.us-central1.run.app/api/v1/auth/login" | tail -2
 
 # 3) Test CORS

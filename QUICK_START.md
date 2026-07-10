@@ -4,7 +4,7 @@
 
 The app is live at **https://app.mstool-ai.com**
 
-- Login: `admin / Admin123!@2024`
+- Login: `admin` / password provisioned via the `ADMIN_DEFAULT_PASSWORD` env var (never hardcode it)
 - Backend API: `https://brain-mri-209356685171.us-central1.run.app`
 - API docs: `https://brain-mri-209356685171.us-central1.run.app/api/docs`
 - QMS companion: `https://mstool-ai-qms.web.app`

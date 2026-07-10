@@ -26,8 +26,9 @@ import requests
 
 API_BASE = "https://brain-mri-209356685171.us-central1.run.app/api/v1"
 USERNAME = "admin"
-PASSWORD = "Admin123!@2024"
-
+import os
+PASSWORD = os.environ.get("ADMIN_DEFAULT_PASSWORD")
+assert PASSWORD, "Set ADMIN_DEFAULT_PASSWORD env var; do not hardcode the admin password"
 ZIP_FILES = [
     "C:/Users/Nicolas/Downloads/ISBI-20251117T213912Z-1-001.zip",
     "C:/Users/Nicolas/Downloads/ISBI-20251117T213912Z-1-002.zip",

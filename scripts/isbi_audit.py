@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-import requests, json, re, sys
+import os, requests, json, re, sys
 from collections import defaultdict
 
-API = "https://brain-mri-209356685171.us-central1.run.app/api/v1"
+API = os.environ.get("MSTOOL_API_BASE", "https://brain-mri-209356685171.us-central1.run.app/api/v1")
+ADMIN_PASSWORD = os.environ.get("ADMIN_DEFAULT_PASSWORD")
+assert ADMIN_PASSWORD, "Set ADMIN_DEFAULT_PASSWORD env var; do not hardcode the admin password"
 
 print("Logging in...")
-resp = requests.post(API + "/auth/login", json={"username": "admin", "password": "Admin123!@2024"})
+resp = requests.post(API + "/auth/login", json={"username": "admin", "password": ADMIN_PASSWORD})
 resp.raise_for_status()
 token = resp.json()["token"]["access_token"]
 headers = {"Authorization": "Bearer " + token}

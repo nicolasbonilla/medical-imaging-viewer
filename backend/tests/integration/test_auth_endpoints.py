@@ -5,8 +5,14 @@ Tests login, WebAuthn, user management, and CAPTCHA flows.
 Routes under /api/v1/auth/ (authentication.py) and /api/v1/auth/ (auth.py).
 """
 
+import os
+
 import pytest
 from httpx import AsyncClient
+
+# Never hardcode the production admin password in tests. This login test
+# accepts 401, so any value works; read from env with a harmless default.
+ADMIN_PASSWORD = os.environ.get("ADMIN_DEFAULT_PASSWORD", "test-admin-password")
 
 
 @pytest.mark.integration
@@ -33,7 +39,7 @@ class TestLoginFlow:
         """Test login returns token or captcha challenge."""
         response = await async_client.post("/api/v1/auth/login", json={
             "username": "admin",
-            "password": "Admin123!@2024",
+            "password": ADMIN_PASSWORD,
         })
         # 200 = success, 400 = captcha required, 401 = bad creds (no user in test DB)
         assert response.status_code in (200, 400, 401)
