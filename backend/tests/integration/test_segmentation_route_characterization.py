@@ -99,6 +99,18 @@ class TestSegmentationCrudContract:
         r = await async_client.get("/api/v1/segmentation/does-not-exist-xyz")
         assert r.status_code == 404
 
+    @pytest.mark.asyncio
+    async def test_get_slice_mask_returns_base64(self, async_client: AsyncClient):
+        # Regression: the endpoint called a non-existent private method
+        # segmentation_service._array_to_base64 -> AttributeError -> 500.
+        seg_id = await _create(async_client, "char_slice_001")
+        await _paint(async_client, seg_id, slices=(7,))
+        r = await async_client.get(f"/api/v1/segmentation/{seg_id}/slice/7/mask")
+        assert r.status_code == 200, f"slice mask failed: {r.status_code} {r.text[:300]}"
+        body = r.json()
+        assert body["slice_index"] == 7
+        assert isinstance(body["mask_data"], str) and len(body["mask_data"]) > 0
+
 
 @pytest.mark.integration
 class TestClassifyRegionsContract:

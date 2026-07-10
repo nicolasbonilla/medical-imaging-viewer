@@ -151,12 +151,9 @@ async def get_segmentation(
                 detail=f"Segmentation {segmentation_id} not found"
             )
 
-        # Get image shape from cache
-        if segmentation_id in segmentation_service.segmentations_cache:
-            seg_data = segmentation_service.segmentations_cache[segmentation_id]
-            total_slices = seg_data["masks_3d"].shape[0]  # Using D,H,W convention
-        else:
-            total_slices = 0
+        # Get image shape from the cached entry (metadata was already fetched above)
+        seg_data = segmentation_service.get_cached(segmentation_id)
+        total_slices = seg_data["masks_3d"].shape[0] if seg_data else 0  # D,H,W convention
 
         return SegmentationResponse(
             segmentation_id=segmentation_id,
@@ -252,7 +249,7 @@ async def get_slice_mask(
             )
 
         # Convert mask to base64 image
-        mask_base64 = segmentation_service._array_to_base64(mask)
+        mask_base64 = segmentation_service.array_to_base64(mask)
 
         return {"slice_index": slice_index, "mask_data": mask_base64}
 
@@ -464,7 +461,7 @@ async def save_segmentation(
             )
 
         # Get info about saved segmentation
-        seg_data = segmentation_service.segmentations_cache.get(segmentation_id)
+        seg_data = segmentation_service.get_cached(segmentation_id)
 
         if seg_data:
             source_format = seg_data.get("source_format", "nifti")
@@ -556,7 +553,7 @@ async def update_labels(
         metadata.modified_at = datetime.utcnow()
 
         # Save changes
-        segmentation_service._save_segmentation(segmentation_id)
+        segmentation_service.persist(segmentation_id)
 
         return {"success": True, "message": "Labels updated successfully"}
 
@@ -736,15 +733,13 @@ async def get_binary_mask(
         Format: [depth:4bytes][height:4bytes][width:4bytes][mask_data:D*H*W bytes]
     """
     try:
-        # Load segmentation if not in cache
-        if segmentation_id not in segmentation_service.segmentations_cache:
-            if not segmentation_service._load_segmentation(segmentation_id):
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Segmentation {segmentation_id} not found"
-                )
-
-        seg_data = segmentation_service.segmentations_cache[segmentation_id]
+        # Load segmentation (from cache or durable storage)
+        seg_data = segmentation_service.get_loaded(segmentation_id)
+        if seg_data is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Segmentation {segmentation_id} not found"
+            )
         masks_3d = seg_data["masks_3d"]  # numpy array (D, H, W), dtype=uint8
 
         # Get dimensions
@@ -837,20 +832,19 @@ async def upload_binary_mask(
         masks_3d = np.frombuffer(mask_bytes, dtype=np.uint8).reshape((depth, height, width))
 
         # Load existing segmentation to get metadata
-        if segmentation_id not in segmentation_service.segmentations_cache:
-            if not segmentation_service._load_segmentation(segmentation_id):
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Segmentation {segmentation_id} not found"
-                )
+        seg_data = segmentation_service.get_loaded(segmentation_id)
+        if seg_data is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Segmentation {segmentation_id} not found"
+            )
 
         # Update the mask in cache
-        seg_data = segmentation_service.segmentations_cache[segmentation_id]
         seg_data["masks_3d"] = masks_3d
         seg_data["metadata"].modified_at = datetime.utcnow()
 
         # Save to GCS (this is the ONLY time we save during editing)
-        segmentation_service._save_segmentation(segmentation_id)
+        segmentation_service.persist(segmentation_id)
 
         # Count annotated voxels
         annotated_voxels = int(np.sum(masks_3d > 0))
@@ -894,15 +888,13 @@ async def get_segmentation_info(
     Useful for the frontend to know the mask dimensions before downloading.
     """
     try:
-        # Load segmentation if not in cache
-        if segmentation_id not in segmentation_service.segmentations_cache:
-            if not segmentation_service._load_segmentation(segmentation_id):
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Segmentation {segmentation_id} not found"
-                )
-
-        seg_data = segmentation_service.segmentations_cache[segmentation_id]
+        # Load segmentation (from cache or durable storage)
+        seg_data = segmentation_service.get_loaded(segmentation_id)
+        if seg_data is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Segmentation {segmentation_id} not found"
+            )
         masks_3d = seg_data["masks_3d"]
         metadata = seg_data["metadata"]
 

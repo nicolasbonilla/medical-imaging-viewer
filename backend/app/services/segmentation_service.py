@@ -175,6 +175,48 @@ class SegmentationService:
             masks=None
         )
 
+    # ------------------------------------------------------------------
+    # Public cache accessors
+    #
+    # These form the supported surface for callers (API routes) so they no
+    # longer reach into the private `segmentations_cache` dict or the
+    # underscore-prefixed persistence helpers. This keeps the in-memory
+    # working set an implementation detail of the service (IEC 62304: a single
+    # audited access path to Class C segmentation state).
+    # ------------------------------------------------------------------
+    def is_cached(self, segmentation_id: str) -> bool:
+        """Return True if the segmentation is currently in the in-memory cache."""
+        return segmentation_id in self.segmentations_cache
+
+    def get_cached(self, segmentation_id: str) -> Optional[dict]:
+        """Return the cached entry without touching durable storage (None if not loaded)."""
+        return self.segmentations_cache.get(segmentation_id)
+
+    def get_loaded(self, segmentation_id: str) -> Optional[dict]:
+        """Return the segmentation entry, loading it from storage if needed.
+
+        Returns None if the segmentation exists nowhere (caller decides 404 vs
+        fallback). This is the faithful, single-source replacement for the
+        previous inline `if id not in cache: _load_segmentation(id)` pattern.
+        """
+        if segmentation_id not in self.segmentations_cache:
+            if not self._load_segmentation(segmentation_id):
+                return None
+        return self.segmentations_cache.get(segmentation_id)
+
+    def get_mask(self, segmentation_id: str) -> Optional[np.ndarray]:
+        """Return the 3D mask array (D, H, W), loading if needed. None if absent."""
+        entry = self.get_loaded(segmentation_id)
+        return entry["masks_3d"] if entry else None
+
+    def persist(self, segmentation_id: str) -> None:
+        """Persist metadata + mask to durable storage (public form of _save_segmentation)."""
+        self._save_segmentation(segmentation_id)
+
+    def array_to_base64(self, array: np.ndarray) -> str:
+        """Encode a 2D mask slice to a base64 PNG data string."""
+        return array_to_base64(array)
+
     async def apply_paint_stroke(
         self,
         segmentation_id: str,
