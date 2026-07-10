@@ -171,3 +171,72 @@ class TestClassifyRegionsContract:
             f"/api/v1/segmentation/{seg_id}/classify-regions", json={"method": "lst-ai"},
         )
         assert r.status_code == 400
+
+
+@pytest.mark.integration
+class TestAnalysisContract:
+    """Pin the analysis endpoints (lesion-analysis, DIS, compare) that hold the
+    bulk of the private-cache reach-ins — protects the planned 1.3c encapsulation."""
+
+    @pytest.mark.asyncio
+    async def test_lesion_analysis_contract(self, async_client: AsyncClient):
+        seg_id = await _create(async_client, "char_lesion_001")
+        await _paint(async_client, seg_id)
+        r = await async_client.get(f"/api/v1/segmentation/{seg_id}/lesion-analysis")
+        assert r.status_code == 200, r.text[:300]
+        body = r.json()
+        assert body["segmentation_id"] == seg_id
+        # partition invariant: total_count == number of lesion objects
+        assert body["total_count"] == len(body["lesions"]) > 0
+        lesion = body["lesions"][0]
+        for k in ("id", "label_id", "voxel_count", "volume_mm3", "centroid", "bounding_box"):
+            assert k in lesion, f"missing {k}: {lesion}"
+        # burden equals sum of per-lesion volumes
+        assert body["total_burden_mm3"] == sum(l["volume_mm3"] for l in body["lesions"])
+        # size_distribution counts sum to total
+        assert sum(body["size_distribution"].values()) == body["total_count"]
+
+    @pytest.mark.asyncio
+    async def test_dis_assessment_contract(self, async_client: AsyncClient):
+        seg_id = await _create(async_client, "char_dis_001")
+        await _paint(async_client, seg_id)
+        r = await async_client.get(f"/api/v1/segmentation/{seg_id}/dis-assessment")
+        assert r.status_code == 200, r.text[:300]
+        body = r.json()
+        assert isinstance(body["dis_met_brain"], bool)
+        assert body["total_dis_regions"] == 5
+        assert body["brain_regions_evaluated"] == 3
+        assert "McDonald 2024" in body["dis_criteria_version"]
+        assert "region_details" in body
+
+    @pytest.mark.asyncio
+    async def test_compare_two_segmentations_contract(self, async_client: AsyncClient):
+        a = await _create(async_client, "char_cmp_shared")
+        await _paint(async_client, a, slices=(6, 7, 8))
+        b = await _create(async_client, "char_cmp_shared")
+        await _paint(async_client, b, slices=(6, 7))
+        r = await async_client.post("/api/v1/segmentation/compare", json={
+            "masks": [
+                {"type": "segmentation", "id": a, "label": "A"},
+                {"type": "segmentation", "id": b, "label": "B"},
+            ]
+        })
+        assert r.status_code == 200, r.text[:300]
+        body = r.json()
+        assert body["mask_count"] == 2
+        assert len(body["comparisons"]) == 1
+        comp = body["comparisons"][0]
+        assert 0.0 <= comp["dice"] <= 1.0
+        assert comp["label_a"] == "A" and comp["label_b"] == "B"
+        assert "volume" in comp and "per_slice_dice" in comp
+        # per-slice dice spans every slice of the 16-slice volume
+        assert len(comp["per_slice_dice"]) == 16
+
+    @pytest.mark.asyncio
+    async def test_compare_requires_two_masks(self, async_client: AsyncClient):
+        a = await _create(async_client, "char_cmp_one")
+        await _paint(async_client, a)
+        r = await async_client.post("/api/v1/segmentation/compare", json={
+            "masks": [{"type": "segmentation", "id": a, "label": "A"}]
+        })
+        assert r.status_code == 400
