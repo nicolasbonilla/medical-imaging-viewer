@@ -33,6 +33,7 @@ import { useMultiViewerStore, type ViewerLayout } from './store/useMultiViewerSt
 import { autoAssignPanels, detectSequence } from './utils/sequenceDetection';
 import { isPreprocessedInstance } from './utils/instanceClassification';
 import { detectLabelPreset } from './utils/labelPresets';
+import { buildSegmentationList } from './utils/segmentationList';
 import { useActiveSliceInfo } from './hooks/useActiveSliceInfo';
 import type { ReportResponse } from './types';
 
@@ -269,23 +270,10 @@ function ViewerApp() {
     enabled: allFileIds.length > 0,
   });
 
-  const segmentations = (() => {
-    const all = (segmentationsData ?? []).map((seg) => ({
-      id: seg.segmentation_id,
-      name: seg.metadata?.description || t('segmentation.defaultName', 'Segmentation'),
-      status: 'saved' as const,
-      fileId: seg.file_id,
-    }));
-    // Deduplicate zone maps — keep only one per study (the first found)
-    let zoneMapSeen = false;
-    return all.filter((seg) => {
-      if (seg.name === 'MAGNIMS Zone Map') {
-        if (zoneMapSeen) return false;
-        zoneMapSeen = true;
-      }
-      return true;
-    });
-  })();
+  const segmentations = buildSegmentationList(
+    segmentationsData,
+    t('segmentation.defaultName', 'Segmentation'),
+  );
 
   // Fetch patient info to display name in viewer
   const { data: patientData } = usePatient(studyInfo?.study.patient_id);
