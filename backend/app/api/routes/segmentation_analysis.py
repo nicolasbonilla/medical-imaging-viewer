@@ -81,10 +81,9 @@ async def compare_masks(
 
             if mask_type == "segmentation":
                 # Load from segmentation cache
-                if mask_id not in segmentation_service.segmentations_cache:
-                    if not segmentation_service._load_segmentation(mask_id):
-                        raise HTTPException(status_code=404, detail=f"Segmentation {mask_id} not found")
-                mask_3d = segmentation_service.segmentations_cache[mask_id]["masks_3d"]
+                mask_3d = segmentation_service.get_mask(mask_id)
+                if mask_3d is None:
+                    raise HTTPException(status_code=404, detail=f"Segmentation {mask_id} not found")
                 loaded_masks.append({"mask": (mask_3d > 0).astype(np.uint8), "label": label})
 
             elif mask_type == "instance":
@@ -178,10 +177,9 @@ async def get_agreement_map(
             mask_id = spec.get("id")
 
             if mask_type == "segmentation":
-                if mask_id not in segmentation_service.segmentations_cache:
-                    if not segmentation_service._load_segmentation(mask_id):
-                        raise HTTPException(status_code=404, detail=f"Segmentation {mask_id} not found")
-                mask_3d = segmentation_service.segmentations_cache[mask_id]["masks_3d"]
+                mask_3d = segmentation_service.get_mask(mask_id)
+                if mask_3d is None:
+                    raise HTTPException(status_code=404, detail=f"Segmentation {mask_id} not found")
                 loaded_masks.append((mask_3d > 0).astype(np.uint8))
 
             elif mask_type == "instance":
@@ -235,11 +233,9 @@ async def get_lesion_analysis(
     """
     try:
         # Load segmentation
-        if segmentation_id not in segmentation_service.segmentations_cache:
-            if not segmentation_service._load_segmentation(segmentation_id):
-                raise HTTPException(status_code=404, detail=f"Segmentation {segmentation_id} not found")
-
-        seg_data = segmentation_service.segmentations_cache[segmentation_id]
+        seg_data = segmentation_service.get_loaded(segmentation_id)
+        if seg_data is None:
+            raise HTTPException(status_code=404, detail=f"Segmentation {segmentation_id} not found")
         masks_3d = seg_data["masks_3d"]
         metadata = seg_data["metadata"]
 
@@ -281,7 +277,7 @@ async def get_lesion_analysis(
             "lesion_analysis": result,
             "analysis_mask_modified_at": mask_mod,
         }
-        segmentation_service._save_segmentation(segmentation_id)
+        segmentation_service.persist(segmentation_id)
 
         logger.info("Lesion analysis completed and cached", extra={
             "segmentation_id": segmentation_id,
@@ -314,11 +310,9 @@ async def get_dis_assessment(
     (PV, JC, IT, spinal cord, optic nerve). Brain MRI evaluates 3 of 5.
     """
     try:
-        if segmentation_id not in segmentation_service.segmentations_cache:
-            if not segmentation_service._load_segmentation(segmentation_id):
-                raise HTTPException(status_code=404, detail=f"Segmentation {segmentation_id} not found")
-
-        seg_data = segmentation_service.segmentations_cache[segmentation_id]
+        seg_data = segmentation_service.get_loaded(segmentation_id)
+        if seg_data is None:
+            raise HTTPException(status_code=404, detail=f"Segmentation {segmentation_id} not found")
         masks_3d = seg_data["masks_3d"]
         metadata = seg_data["metadata"]
 
@@ -359,7 +353,7 @@ async def get_dis_assessment(
             "dis_assessment": result,
             "analysis_mask_modified_at": mask_mod,
         }
-        segmentation_service._save_segmentation(segmentation_id)
+        segmentation_service.persist(segmentation_id)
 
         logger.info("DIS assessment completed and cached", extra={
             "segmentation_id": segmentation_id,
@@ -418,10 +412,10 @@ async def compare_longitudinal(
             mask_id = spec.get("id")
 
             if mask_type == "segmentation":
-                if mask_id not in segmentation_service.segmentations_cache:
-                    if not segmentation_service._load_segmentation(mask_id):
-                        raise HTTPException(status_code=404, detail=f"Segmentation {mask_id} not found")
-                return segmentation_service.segmentations_cache[mask_id]["masks_3d"]
+                _m = segmentation_service.get_mask(mask_id)
+                if _m is None:
+                    raise HTTPException(status_code=404, detail=f"Segmentation {mask_id} not found")
+                return _m
 
             elif mask_type == "instance":
                 instance = await study_service.get_instance(mask_id)
@@ -516,11 +510,9 @@ async def annotate_lesions(
     Body: { annotations: [{ lesion_id, cvs_status, prl_status, notes }] }
     """
     try:
-        if segmentation_id not in segmentation_service.segmentations_cache:
-            if not segmentation_service._load_segmentation(segmentation_id):
-                raise HTTPException(status_code=404, detail=f"Segmentation {segmentation_id} not found")
-
-        seg_data = segmentation_service.segmentations_cache[segmentation_id]
+        seg_data = segmentation_service.get_loaded(segmentation_id)
+        if seg_data is None:
+            raise HTTPException(status_code=404, detail=f"Segmentation {segmentation_id} not found")
         metadata = seg_data["metadata"]
 
         annotations = body.get("annotations", [])
@@ -576,7 +568,7 @@ async def annotate_lesions(
             "cvs_summary": cvs_summary,
             "prl_summary": prl_summary,
         }
-        segmentation_service._save_segmentation(segmentation_id)
+        segmentation_service.persist(segmentation_id)
 
         logger.info("Lesion annotations saved", extra={
             "segmentation_id": segmentation_id,
@@ -621,11 +613,9 @@ async def export_dicom_seg(
 
     try:
         # Load mask
-        if segmentation_id not in segmentation_service.segmentations_cache:
-            if not segmentation_service._load_segmentation(segmentation_id):
-                raise HTTPException(status_code=404, detail=f"Segmentation {segmentation_id} not found")
-
-        cache_entry = segmentation_service.segmentations_cache[segmentation_id]
+        cache_entry = segmentation_service.get_loaded(segmentation_id)
+        if cache_entry is None:
+            raise HTTPException(status_code=404, detail=f"Segmentation {segmentation_id} not found")
         mask_3d = cache_entry["masks_3d"]
         metadata = cache_entry["metadata"]
 
