@@ -62,8 +62,7 @@ class SegmentationService:
     Uses Firestore for metadata and GCS for mask storage to ensure
     persistence across Cloud Run instance restarts.
 
-    Note: This is the v1 service used by /api/v1/segmentation/ routes.
-    For the v2 hierarchical API, see SegmentationServiceFirestore.
+    Note: This is the service used by /api/v1/segmentation/ routes.
     """
 
     def __init__(

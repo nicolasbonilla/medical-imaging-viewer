@@ -83,16 +83,6 @@ class Container(containers.DeclarativeContainer):
         cache=cache_service
     )
 
-    # Segmentation Service V2 - Firestore-based with hierarchical support
-    # Supports multi-patient, multi-study, multi-expert workflow
-    # IMPORTANT: Using Singleton to persist in-memory cache across requests
-    segmentation_service_v2 = providers.Singleton(
-        lambda cache: __import__('app.services.segmentation_service_firestore', fromlist=['SegmentationServiceFirestore']).SegmentationServiceFirestore(
-            cache_service=cache
-        ),
-        cache=cache_service
-    )
-
     # Prefetch Service - Lazy loaded
     prefetch_service = providers.Factory(
         lambda imaging, cache: __import__('app.services.prefetch_service', fromlist=['PrefetchService']).PrefetchService(
@@ -347,28 +337,3 @@ def get_tool_runner_service():
     """
     container = get_container()
     return container.tool_runner_service()
-
-
-def get_segmentation_service_v2():
-    """
-    Dependency function for FastAPI routes to get SegmentationServiceV2.
-
-    Uses Firestore backend with hierarchical Patient → Study → Series → Segmentation
-    support, multi-expert workflow, and ITK-SNAP style segmentation.
-
-    Usage:
-        from fastapi import Depends
-        from app.core.container import get_segmentation_service_v2
-
-        @router.post("/patients/{patient_id}/studies/{study_id}/series/{series_id}/segmentations")
-        async def create_segmentation(
-            patient_id: UUID,
-            study_id: UUID,
-            series_id: UUID,
-            data: SegmentationCreate,
-            segmentation_service = Depends(get_segmentation_service_v2)
-        ):
-            return await segmentation_service.create_segmentation(...)
-    """
-    container = get_container()
-    return container.segmentation_service_v2()
