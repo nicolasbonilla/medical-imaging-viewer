@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { studyAPI } from '@/services/studyApi';
+import { studyAPI } from '@/api/study';
 import { studyKeys } from './useStudies';
 import type {
   UploadInitRequest,

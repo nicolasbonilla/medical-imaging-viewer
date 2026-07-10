@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { patientAPI, type PatientSearchParams } from '@/services/patientApi';
+import { patientAPI, type PatientSearchParams } from '@/api/patient';
 import type {
   Patient,
   PatientCreate,

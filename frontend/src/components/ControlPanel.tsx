@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { useViewerStore } from '@/store/useViewerStore';
 import { usePatient, useMedicalHistory } from '@/hooks/usePatients';
-import { studyAPI } from '@/services/studyApi';
+import { studyAPI } from '@/api/study';
 import { COLORMAPS_3D } from '@/components/ImageViewer3D';
 import type { StudySummary, ImageOrientation } from '@/types';
 import { LongitudinalCompare } from './LongitudinalCompare';
