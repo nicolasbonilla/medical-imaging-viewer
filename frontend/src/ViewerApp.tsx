@@ -35,6 +35,7 @@ import { isPreprocessedInstance } from './utils/instanceClassification';
 import { detectLabelPreset } from './utils/labelPresets';
 import { buildSegmentationList } from './utils/segmentationList';
 import { InstanceButton } from './components/viewer/InstanceButton';
+import { SegmentationRow } from './components/viewer/SegmentationRow';
 import { useActiveSliceInfo } from './hooks/useActiveSliceInfo';
 import type { ReportResponse } from './types';
 
@@ -824,45 +825,21 @@ function ViewerApp() {
                           // --- MAGNIMS Zone Map: independent layer, NOT tied to currentSegmentation ---
                           return (
                             <div key={seg.id}>
-                              <div
-                                onClick={() => handleToggleZoneMap(seg)}
-                                className={`cursor-pointer transition-colors ${
-                                  isExpanded
-                                    ? 'bg-emerald-900/40 border border-emerald-700'
-                                    : 'bg-gray-800/60 hover:bg-gray-800 border border-transparent'
-                                }`}
-                                style={{ borderRadius: 6, padding: '4px 8px' }}
-                              >
-                                <div className="flex items-center" style={{ gap: 6 }}>
-                                  {isExpanded
-                                    ? <ChevronDown className="w-3 h-3 flex-shrink-0 text-emerald-400" />
-                                    : <ChevronRight className="w-3 h-3 flex-shrink-0 text-gray-400" />
-                                  }
-                                  <Map className="w-3.5 h-3.5 flex-shrink-0 text-emerald-500" />
-                                  <span className={`text-[11px] font-medium truncate flex-1 ${isExpanded ? 'text-white' : 'text-white'}`}>
-                                    {seg.name}
-                                  </span>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      useSegmentationStore.getState().toggleZoneMapVisibility();
-                                    }}
-                                    className={`p-1 rounded transition-colors flex-shrink-0 ${
-                                      zoneMapVisible ? 'text-emerald-400 hover:text-emerald-300' : 'text-gray-500 hover:text-gray-300'
-                                    }`}
-                                    title={zoneMapVisible ? 'Hide overlay' : 'Show overlay'}
-                                  >
-                                    {zoneMapVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                                  </button>
-                                  <button
-                                    onClick={(e) => handleDeleteSegmentation(seg.id, seg.name, e)}
-                                    disabled={isDeleting}
-                                    className="p-1 text-gray-500 hover:text-red-400 transition-colors flex-shrink-0"
-                                  >
-                                    {isDeleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
-                                  </button>
-                                </div>
-                              </div>
+                              <SegmentationRow
+                                name={seg.name}
+                                icon={Map}
+                                accent="emerald"
+                                highlighted={isExpanded}
+                                expanded={isExpanded}
+                                overlayOn={zoneMapVisible}
+                                isDeleting={isDeleting}
+                                onRowClick={() => handleToggleZoneMap(seg)}
+                                onToggleOverlay={(e) => {
+                                  e.stopPropagation();
+                                  useSegmentationStore.getState().toggleZoneMapVisibility();
+                                }}
+                                onDelete={(e) => handleDeleteSegmentation(seg.id, seg.name, e)}
+                              />
                               {isExpanded && isSaved && (
                                 <div className="ml-2 mt-1 mb-1 border-l-2 border-emerald-600/30 pl-2">
                                   <MAGNIMSZoneMapPanel fileId={currentSeries?.file_id} />
@@ -875,8 +852,15 @@ function ViewerApp() {
                         // --- Regular segmentation (Expert Rater, Brain Extraction, etc.) ---
                         return (
                           <div key={seg.id}>
-                            <div
-                              onClick={() => {
+                            <SegmentationRow
+                              name={seg.name}
+                              icon={Puzzle}
+                              accent="purple"
+                              highlighted={isActive}
+                              expanded={isExpanded}
+                              overlayOn={isActive && isOverlayVisible}
+                              isDeleting={isDeleting}
+                              onRowClick={() => {
                                 handleOpenSegmentation(seg);
                                 // Auto-expand on activate, collapse on deactivate
                                 if (isActive) {
@@ -885,48 +869,17 @@ function ViewerApp() {
                                   setExpandedSegIds((prev) => new Set(prev).add(seg.id));
                                 }
                               }}
-                              className={`cursor-pointer transition-colors ${
-                                isActive
-                                  ? 'bg-purple-900/50 border border-purple-700'
-                                  : 'bg-gray-800/60 hover:bg-gray-800 border border-transparent'
-                              }`}
-                              style={{ borderRadius: 6, padding: '4px 8px' }}
-                            >
-                              <div className="flex items-center" style={{ gap: 6 }}>
-                                {isExpanded
-                                  ? <ChevronDown className="w-3 h-3 flex-shrink-0 text-purple-400" />
-                                  : <ChevronRight className="w-3 h-3 flex-shrink-0 text-gray-400" />
+                              onToggleOverlay={(e) => {
+                                e.stopPropagation();
+                                if (isActive) {
+                                  useSegmentationStore.getState().setIsOverlayVisible(!isOverlayVisible);
+                                } else {
+                                  handleOpenSegmentation(seg);
+                                  setExpandedSegIds((prev) => new Set(prev).add(seg.id));
                                 }
-                                <Puzzle className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-purple-400' : 'text-purple-500'}`} />
-                                <span className={`text-[11px] font-medium truncate flex-1 ${isActive ? 'text-white' : 'text-white'}`}>
-                                  {seg.name}
-                                </span>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (isActive) {
-                                      useSegmentationStore.getState().setIsOverlayVisible(!isOverlayVisible);
-                                    } else {
-                                      handleOpenSegmentation(seg);
-                                      setExpandedSegIds((prev) => new Set(prev).add(seg.id));
-                                    }
-                                  }}
-                                  className={`p-1 rounded transition-colors flex-shrink-0 ${
-                                    isActive && isOverlayVisible ? 'text-purple-400 hover:text-purple-300' : 'text-gray-500 hover:text-gray-300'
-                                  }`}
-                                  title={isActive && isOverlayVisible ? 'Hide overlay' : 'Show overlay'}
-                                >
-                                  {isActive && isOverlayVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                                </button>
-                                <button
-                                  onClick={(e) => handleDeleteSegmentation(seg.id, seg.name, e)}
-                                  disabled={isDeleting}
-                                  className="p-1 text-gray-500 hover:text-red-400 transition-colors flex-shrink-0"
-                                >
-                                  {isDeleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
-                                </button>
-                              </div>
-                            </div>
+                              }}
+                              onDelete={(e) => handleDeleteSegmentation(seg.id, seg.name, e)}
+                            />
                             {isExpanded && isSaved && (
                               <div className="ml-2 mt-1 mb-1 border-l-2 border-cyan-600/30 pl-2">
                                 {/* Overlay controls inline */}
