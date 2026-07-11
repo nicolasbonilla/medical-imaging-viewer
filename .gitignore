@@ -48,6 +48,8 @@ user_data/
 
 # Local-disk segmentation fallback store (runtime/test artifacts, never tracked)
 backend/data/segmentations/
+# Local-disk SecureUserStorage (encrypted user profiles — runtime/test only)
+backend/data/users/
 
 # IDE
 .vscode/
