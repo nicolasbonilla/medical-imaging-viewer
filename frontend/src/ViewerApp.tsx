@@ -34,6 +34,7 @@ import { autoAssignPanels, detectSequence } from './utils/sequenceDetection';
 import { isPreprocessedInstance } from './utils/instanceClassification';
 import { detectLabelPreset } from './utils/labelPresets';
 import { buildSegmentationList } from './utils/segmentationList';
+import { InstanceButton } from './components/viewer/InstanceButton';
 import { useActiveSliceInfo } from './hooks/useActiveSliceInfo';
 import type { ReportResponse } from './types';
 
@@ -690,30 +691,13 @@ function ViewerApp() {
                 {sectionsExpanded.originals && (
                   <div className="px-3 pb-3 space-y-1">
                     {originalInstances.map((instance) => (
-                      <button
+                      <InstanceButton
                         key={instance.id}
-                        onClick={() => handleSelectInstance(instance.id)}
-                        className={`w-full text-left transition-colors ${
-                          selectedInstanceId === instance.id
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-800/60 hover:bg-gray-800 text-gray-300'
-                        }`}
-                        style={{ padding: '4px 8px', borderRadius: 6 }}
-                      >
-                        <div className="flex items-center gap-2">
-                          <FileImage className={`w-3.5 h-3.5 flex-shrink-0 ${
-                            selectedInstanceId === instance.id ? 'text-white' : 'text-blue-500'
-                          }`} />
-                          <p className="text-[11px] font-medium truncate flex-1">
-                            {instance.original_filename || 'Image'}
-                          </p>
-                          <span className={`text-[10px] ${
-                            selectedInstanceId === instance.id ? 'text-white/70' : 'text-gray-400'
-                          }`}>
-                            {(instance.file_size_bytes / 1024 / 1024).toFixed(1)}MB
-                          </span>
-                        </div>
-                      </button>
+                        instance={instance}
+                        selected={selectedInstanceId === instance.id}
+                        onSelect={handleSelectInstance}
+                        variant="original"
+                      />
                     ))}
                   </div>
                 )}
@@ -746,30 +730,13 @@ function ViewerApp() {
                 {sectionsExpanded.preprocessed && (
                   <div className="px-3 pb-3 space-y-1">
                     {preprocessedInstances.map((instance) => (
-                      <button
+                      <InstanceButton
                         key={instance.id}
-                        onClick={() => handleSelectInstance(instance.id)}
-                        className={`w-full text-left transition-colors ${
-                          selectedInstanceId === instance.id
-                            ? 'bg-teal-600 text-white'
-                            : 'bg-gray-800/60 hover:bg-gray-800 text-gray-300'
-                        }`}
-                        style={{ padding: '4px 8px', borderRadius: 6 }}
-                      >
-                        <div className="flex items-center gap-2">
-                          <FlaskConical className={`w-3.5 h-3.5 flex-shrink-0 ${
-                            selectedInstanceId === instance.id ? 'text-white' : 'text-teal-500'
-                          }`} />
-                          <p className="text-[11px] font-medium truncate flex-1">
-                            {instance.original_filename || 'Preprocessed'}
-                          </p>
-                          <span className={`text-[10px] ${
-                            selectedInstanceId === instance.id ? 'text-white/70' : 'text-gray-400'
-                          }`}>
-                            {(instance.file_size_bytes / 1024 / 1024).toFixed(1)}MB
-                          </span>
-                        </div>
-                      </button>
+                        instance={instance}
+                        selected={selectedInstanceId === instance.id}
+                        onSelect={handleSelectInstance}
+                        variant="preprocessed"
+                      />
                     ))}
                   </div>
                 )}
