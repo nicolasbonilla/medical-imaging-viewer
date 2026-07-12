@@ -209,6 +209,18 @@ class SegmentationService:
         entry = self.get_loaded(segmentation_id)
         return entry["masks_3d"] if entry else None
 
+    def set_mask(self, segmentation_id: str, mask: np.ndarray) -> bool:
+        """Replace the in-memory 3D mask for a cached segmentation.
+
+        Returns False if the segmentation is not currently cached (caller decides
+        whether to load first). Does not persist — call persist() to save.
+        """
+        entry = self.segmentations_cache.get(segmentation_id)
+        if entry is None:
+            return False
+        entry["masks_3d"] = mask
+        return True
+
     def persist(self, segmentation_id: str) -> None:
         """Persist metadata + mask to durable storage (public form of _save_segmentation)."""
         self._save_segmentation(segmentation_id)

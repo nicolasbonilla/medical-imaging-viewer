@@ -79,14 +79,12 @@ async def classify_regions(
         method = body.get("method", "auto")
 
         # Load the lesion segmentation
-        if segmentation_id not in segmentation_service.segmentations_cache:
-            if not segmentation_service._load_segmentation(segmentation_id):
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"Segmentation {segmentation_id} not found",
-                )
-
-        seg_data = segmentation_service.segmentations_cache[segmentation_id]
+        seg_data = segmentation_service.get_loaded(segmentation_id)
+        if seg_data is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Segmentation {segmentation_id} not found",
+            )
         lesion_mask = seg_data["masks_3d"]  # (D, H, W), uint8
         metadata = seg_data["metadata"]
 
@@ -110,16 +108,15 @@ async def classify_regions(
                     continue
                 try:
                     cand_id = candidate.segmentation_id
-                    if cand_id not in segmentation_service.segmentations_cache:
-                        segmentation_service._load_segmentation(cand_id)
-                    if cand_id in segmentation_service.segmentations_cache:
-                        cand_meta = segmentation_service.segmentations_cache[cand_id].get("metadata", {})
+                    cand_entry = segmentation_service.get_loaded(cand_id)
+                    if cand_entry is not None:
+                        cand_meta = cand_entry.get("metadata", {})
                         vs = getattr(cand_meta, "validation_source", None) or (
                             cand_meta.get("validation_source") if isinstance(cand_meta, dict) else None
                         )
                         if vs and "lst-ai" in str(vs):
                             # Found LST-AI types mask — use it directly
-                            cand_mask = segmentation_service.segmentations_cache[cand_id]["masks_3d"]
+                            cand_mask = cand_entry["masks_3d"]
                             # Apply LST-AI zones to our lesion mask locations
                             import time as _time
                             _start = _time.time()
@@ -164,20 +161,19 @@ async def classify_regions(
         if result is None and method in ("auto", "parcellation") and parcellation_id:
             try:
                 # Load parcellation mask
-                if parcellation_id not in segmentation_service.segmentations_cache:
-                    if not segmentation_service._load_segmentation(parcellation_id):
-                        if method == "parcellation":
-                            raise HTTPException(
-                                status_code=404,
-                                detail=f"Parcellation {parcellation_id} not found",
-                            )
-                        logger.warning(
-                            "[ClassifyRegions] Parcellation %s not found, falling back to geometric",
-                            parcellation_id,
+                parc_data = segmentation_service.get_loaded(parcellation_id)
+                if parc_data is None:
+                    if method == "parcellation":
+                        raise HTTPException(
+                            status_code=404,
+                            detail=f"Parcellation {parcellation_id} not found",
                         )
+                    logger.warning(
+                        "[ClassifyRegions] Parcellation %s not found, falling back to geometric",
+                        parcellation_id,
+                    )
 
-                if parcellation_id in segmentation_service.segmentations_cache:
-                    parc_data = segmentation_service.segmentations_cache[parcellation_id]
+                if parc_data is not None:
                     parcellation_mask = parc_data["masks_3d"]
 
                     result = classify_lesions_with_parcellation(
@@ -209,10 +205,9 @@ async def classify_regions(
                 # Load candidate and check for FreeSurfer labels
                 try:
                     cand_id = candidate.segmentation_id
-                    if cand_id not in segmentation_service.segmentations_cache:
-                        segmentation_service._load_segmentation(cand_id)
-                    if cand_id in segmentation_service.segmentations_cache:
-                        cand_mask = segmentation_service.segmentations_cache[cand_id]["masks_3d"]
+                    cand_entry = segmentation_service.get_loaded(cand_id)
+                    if cand_entry is not None:
+                        cand_mask = cand_entry["masks_3d"]
                         unique_vals = set(int(v) for v in np.unique(cand_mask) if v > 0)
                         # FreeSurfer labels include values like 2,3,4,7,8,10...
                         freesurfer_check = unique_vals & {2, 3, 4, 7, 8, 10, 16, 41, 42, 43}
@@ -238,10 +233,9 @@ async def classify_regions(
                 # Try reusing a persisted zone map first
                 zone_map_seg_id = (metadata.analysis_data or {}).get("zone_map_seg_id")
                 if zone_map_seg_id:
-                    if zone_map_seg_id not in segmentation_service.segmentations_cache:
-                        segmentation_service._load_segmentation(zone_map_seg_id)
-                    if zone_map_seg_id in segmentation_service.segmentations_cache:
-                        zone_mask = segmentation_service.segmentations_cache[zone_map_seg_id]["masks_3d"]
+                    zone_entry = segmentation_service.get_loaded(zone_map_seg_id)
+                    if zone_entry is not None:
+                        zone_mask = zone_entry["masks_3d"]
                         result = classify_from_zone_mask(lesion_mask, zone_mask, voxel_spacing)
                         result["method"] = "msmask"
                         logger.info(
@@ -347,7 +341,7 @@ async def classify_regions(
             metadata.modified_at = datetime.utcnow()
 
             # Save classified mask to GCS
-            segmentation_service._save_segmentation(segmentation_id)
+            segmentation_service.persist(segmentation_id)
 
         # Remove numpy array from response (not JSON serializable)
         response_data = {k: v for k, v in result.items() if k != "classified_mask"}
@@ -397,7 +391,7 @@ async def classify_regions(
                     "dis_assessment": _sanitize(dis_result),
                     "analysis_mask_modified_at": mask_mod,
                 }
-                segmentation_service._save_segmentation(segmentation_id)
+                segmentation_service.persist(segmentation_id)
 
                 logger.info(
                     "[ClassifyRegions] Analysis data persisted (classification + lesion analysis + DIS)",
@@ -479,10 +473,9 @@ async def generate_zone_map_endpoint(
         for existing in all_existing:
             eid = existing.segmentation_id
             try:
-                if eid not in segmentation_service.segmentations_cache:
-                    segmentation_service._load_segmentation(eid)
-                if eid in segmentation_service.segmentations_cache:
-                    emeta = segmentation_service.segmentations_cache[eid].get("metadata")
+                eentry = segmentation_service.get_loaded(eid)
+                if eentry is not None:
+                    emeta = eentry.get("metadata")
                     if emeta and getattr(emeta, 'description', '') == "MAGNIMS Zone Map":
                         logger.info("[ZoneMap] Deleting old zone map: %s", eid)
                         segmentation_service.delete_segmentation(eid)
@@ -495,13 +488,12 @@ async def generate_zone_map_endpoint(
 
         # Explicit parcellation_id
         if parcellation_id:
-            if parcellation_id not in segmentation_service.segmentations_cache:
-                if not segmentation_service._load_segmentation(parcellation_id):
-                    raise HTTPException(
-                        status_code=404,
-                        detail=f"Parcellation {parcellation_id} not found",
-                    )
-            parc_data = segmentation_service.segmentations_cache[parcellation_id]
+            parc_data = segmentation_service.get_loaded(parcellation_id)
+            if parc_data is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Parcellation {parcellation_id} not found",
+                )
             parcellation_mask = parc_data["masks_3d"]
             parc_source = parcellation_id
         else:
@@ -510,14 +502,13 @@ async def generate_zone_map_endpoint(
             for candidate in all_segs:
                 cand_id = candidate.segmentation_id
                 try:
-                    if cand_id not in segmentation_service.segmentations_cache:
-                        segmentation_service._load_segmentation(cand_id)
-                    if cand_id in segmentation_service.segmentations_cache:
+                    cand_entry = segmentation_service.get_loaded(cand_id)
+                    if cand_entry is not None:
                         # Skip zone map segmentations (labels 1-4 overlap with FreeSurfer)
-                        cand_meta = segmentation_service.segmentations_cache[cand_id].get("metadata")
+                        cand_meta = cand_entry.get("metadata")
                         if cand_meta and getattr(cand_meta, 'description', '') == "MAGNIMS Zone Map":
                             continue
-                        cand_mask = segmentation_service.segmentations_cache[cand_id]["masks_3d"]
+                        cand_mask = cand_entry["masks_3d"]
                         unique_vals = set(int(v) for v in np.unique(cand_mask) if v > 0)
                         # FreeSurfer parcellations have hemispheric labels (41-43)
                         # and brainstem (16). Zone maps only have labels 1-4.
@@ -533,8 +524,9 @@ async def generate_zone_map_endpoint(
 
         # Get voxel spacing from metadata if available
         voxel_spacing = (1.0, 1.0, 1.0)
-        if parc_source and parc_source in segmentation_service.segmentations_cache:
-            meta = segmentation_service.segmentations_cache[parc_source].get("metadata")
+        parc_entry = segmentation_service.get_cached(parc_source) if parc_source else None
+        if parc_entry is not None:
+            meta = parc_entry.get("metadata")
             if meta and hasattr(meta, 'extra_fields') and meta.extra_fields:
                 ps = meta.extra_fields.get('pixel_spacing')
                 st = meta.extra_fields.get('slice_thickness')
@@ -604,11 +596,10 @@ async def generate_zone_map_endpoint(
         new_seg_id = seg_response.segmentation_id
 
         # Write the zone mask into the cache
-        if new_seg_id in segmentation_service.segmentations_cache:
-            segmentation_service.segmentations_cache[new_seg_id]["masks_3d"] = zone_mask.astype(np.uint8)
+        segmentation_service.set_mask(new_seg_id, zone_mask.astype(np.uint8))
 
         # Save to GCS (metadata + masks via standard pipeline)
-        segmentation_service._save_segmentation(new_seg_id)
+        segmentation_service.persist(new_seg_id)
 
         # Overwrite GCS NIfTI with correctly-oriented zone map.
         # The standard _save_masks_to_gcs transposes (2,1,0) assuming internal
@@ -663,14 +654,14 @@ async def generate_zone_map_endpoint(
                 seg_meta = getattr(seg, 'metadata', None)
                 if seg_meta and getattr(seg_meta, 'description', '') == "MAGNIMS Zone Map":
                     continue
-                seg_cache = segmentation_service.segmentations_cache.get(seg.segmentation_id)
+                seg_cache = segmentation_service.get_cached(seg.segmentation_id)
                 if seg_cache:
                     s_meta = seg_cache["metadata"]
                     s_meta.analysis_data = {
                         **(s_meta.analysis_data or {}),
                         "zone_map_seg_id": new_seg_id,
                     }
-                    segmentation_service._save_segmentation(seg.segmentation_id)
+                    segmentation_service.persist(seg.segmentation_id)
                     logger.info(
                         "[ZoneMap] Propagated zone_map_seg_id to %s",
                         seg.segmentation_id,
