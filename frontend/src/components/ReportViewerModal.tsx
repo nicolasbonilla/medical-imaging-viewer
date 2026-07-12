@@ -21,6 +21,7 @@ import { Printer, Copy, Check, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { ReportResponse } from '@/types';
+import { formatDate as formatLocalizedDate } from '@/utils/formatDate';
 
 interface ReportViewerModalProps {
   report: ReportResponse;
@@ -90,11 +91,7 @@ export function ReportViewerModal({
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '---';
     try {
-      return new Date(dateStr).toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      });
+      return formatLocalizedDate(dateStr, { year: 'numeric', month: 'long', day: 'numeric' });
     } catch {
       return dateStr;
     }

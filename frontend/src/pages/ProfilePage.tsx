@@ -8,6 +8,7 @@ import axios from 'axios';
 import { useAuth } from '@/contexts/AuthContext';
 import { isWebAuthnSupported, prepareRegistrationOptions, serializeRegistrationCredential } from '@/utils/webauthn';
 import AppHeader from '@/components/AppHeader';
+import { formatDate } from '@/utils/formatDate';
 
 export default function ProfilePage() {
   const { t } = useTranslation();
@@ -274,8 +275,8 @@ function PasskeySection({ userId }: { userId: string }) {
                 <div>
                   <p className="text-sm text-white font-medium">{cred.device_name || 'Passkey'}</p>
                   <p className="text-[10px] text-gray-500">
-                    Created: {new Date(cred.created_at).toLocaleDateString()}
-                    {cred.last_used && ` \u00b7 Last used: ${new Date(cred.last_used).toLocaleDateString()}`}
+                    Created: {formatDate(cred.created_at)}
+                    {cred.last_used && ` \u00b7 Last used: ${formatDate(cred.last_used)}`}
                   </p>
                 </div>
               </div>

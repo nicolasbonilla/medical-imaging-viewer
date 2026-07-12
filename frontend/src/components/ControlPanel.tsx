@@ -10,6 +10,7 @@ import { usePatient, useMedicalHistory } from '@/hooks/usePatients';
 import { studyAPI } from '@/api/study';
 import { COLORMAPS_3D } from '@/components/ImageViewer3D';
 import type { StudySummary, ImageOrientation } from '@/types';
+import { formatDate as formatLocalizedDate } from '@/utils/formatDate';
 import { LongitudinalCompare } from './LongitudinalCompare';
 
 export default function ControlPanel() {
@@ -92,7 +93,7 @@ export default function ControlPanel() {
 
   const formatDate = (dateStr: string) => {
     try {
-      return new Date(dateStr).toLocaleDateString();
+      return formatLocalizedDate(dateStr);
     } catch {
       return dateStr;
     }

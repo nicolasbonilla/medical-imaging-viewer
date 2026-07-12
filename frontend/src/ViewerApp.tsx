@@ -34,6 +34,7 @@ import { autoAssignPanels, detectSequence } from './utils/sequenceDetection';
 import { isPreprocessedInstance } from './utils/instanceClassification';
 import { detectLabelPreset } from './utils/labelPresets';
 import { buildSegmentationList } from './utils/segmentationList';
+import { formatDate } from './utils/formatDate';
 import { InstanceButton } from './components/viewer/InstanceButton';
 import { SegmentationRow } from './components/viewer/SegmentationRow';
 import { useActiveSliceInfo } from './hooks/useActiveSliceInfo';
@@ -645,7 +646,7 @@ function ViewerApp() {
                   <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
                     {t('study.studyDate', 'Date')}
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 500, color: '#E5E7EB' }}>{new Date(studyInfo.study.study_date).toLocaleDateString()}</div>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: '#E5E7EB' }}>{formatDate(studyInfo.study.study_date)}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>

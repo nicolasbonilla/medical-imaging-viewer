@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import type { Patient } from '@/types';
 import { getStatusColor, getGenderColor, STATUS_COLORS, GENDER_COLORS } from '@/utils/medicalColors';
+import { formatDate } from '@/utils/formatDate';
 
 interface PatientBannerProps {
   patient: Patient;
@@ -34,15 +35,10 @@ interface PatientBannerProps {
 }
 
 /**
- * Formats a date string to locale-appropriate display
+ * Formats a date string in the active UI language.
  */
 function formatBirthDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+  return formatDate(dateStr);
 }
 
 /**

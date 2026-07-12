@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import AppHeader from '../components/AppHeader';
 import { toast, Toaster } from 'sonner';
 import {
-  ArrowLeft,
   Calendar,
   Phone,
   Mail,
@@ -17,7 +16,6 @@ import {
   FileText,
   Plus,
   Activity,
-  LogOut,
   X,
   Heart,
   Clock,
@@ -34,10 +32,7 @@ import { DocumentUploader } from '@/components/DocumentUploader';
 import { StudyCreateAndUpload } from '@/components/StudyCreateAndUpload';
 import PatientForm from '@/components/PatientForm';
 import { PatientBanner } from '@/components/PatientBanner';
-import ThemeToggle from '@/components/ThemeToggle';
-import LanguageSelector from '@/components/LanguageSelector';
-import UserMenu from '@/components/UserMenu';
-import { useAuth } from '@/contexts/AuthContext';
+import { PatientClinicalOverview } from '@/components/patients/PatientClinicalOverview';
 import { useTheme } from '@/contexts/ThemeContext';
 import { getStatusColor, getGenderColor } from '@/utils/medicalColors';
 import type { ImagingStudy, StudySummary, Document as DocType, DocumentSummary } from '@/types';
@@ -45,10 +40,9 @@ import type { ImagingStudy, StudySummary, Document as DocType, DocumentSummary }
 type TabType = 'studies' | 'documents';
 
 export default function PatientDetailPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { patientId } = useParams<{ patientId: string }>();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
   const { theme } = useTheme();
 
   // UI State
@@ -150,7 +144,9 @@ export default function PatientDetailPage() {
 
   // Format helpers
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString();
+    // Format in the active UI language, not the OS locale (avoids e.g. a
+    // Spanish "12 de jul de 2026" leaking into an English session).
+    return new Date(dateStr).toLocaleDateString(i18n.language);
   };
 
   // Helper to get gender symbol from centralized color utility
@@ -262,7 +258,7 @@ export default function PatientDetailPage() {
                   {t('patients.birthDate', 'Date of Birth')}
                 </label>
                 <p style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0 }}>
-                  {formatDate(patient.birth_date)} ({patient.age}{t('patients.years', 'y')})
+                  {formatDate(patient.birth_date)} ({patient.age} {t('patients.years', 'years')})
                 </p>
               </div>
               <div>
@@ -300,6 +296,12 @@ export default function PatientDetailPage() {
               </div>
             </div>
           </div>
+
+          {/* Clinical intelligence — imaging summary derived from this patient's studies */}
+          <PatientClinicalOverview
+            studies={studiesData?.items ?? []}
+            totalStudies={studiesData?.total ?? 0}
+          />
 
           {/* Contact + Emergency + Insurance — align-start so empty cards don't stretch */}
           <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: 16, alignItems: 'start' }}>
