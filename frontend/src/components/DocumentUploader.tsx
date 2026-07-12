@@ -13,7 +13,7 @@ import {
   Pause,
 } from 'lucide-react';
 import { useDocumentUpload, DocumentUploadFile } from '@/hooks/useDocuments';
-import { documentAPI } from '@/services/documentApi';
+import { documentAPI } from '@/api/document';
 import type { Document, DocumentCategory } from '@/types';
 
 interface DocumentUploaderProps {

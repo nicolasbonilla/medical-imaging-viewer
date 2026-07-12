@@ -12,8 +12,8 @@ import ControlPanel from './components/ControlPanel';
 import ViewerControls from './components/ViewerControls';
 import LanguageSelector from './components/LanguageSelector';
 import ThemeToggle from './components/ThemeToggle';
-import { imagingAPI } from './services/api';
-import { studyAPI } from './services/studyApi';
+import { imagingAPI } from './api/imaging';
+import { studyAPI } from './api/study';
 import { useViewerStore } from './store/useViewerStore';
 import { useViewerControls } from './hooks/useViewerControls';
 import type { ImagingStudy, ImagingSeries, ImagingInstance } from './types';
@@ -31,6 +31,11 @@ import { MAGNIMSZoneMapPanel } from './components/MAGNIMSZoneMapPanel';
 import { useSegmentationStore } from './store/useSegmentationStore';
 import { useMultiViewerStore, type ViewerLayout } from './store/useMultiViewerStore';
 import { autoAssignPanels, detectSequence } from './utils/sequenceDetection';
+import { isPreprocessedInstance } from './utils/instanceClassification';
+import { detectLabelPreset } from './utils/labelPresets';
+import { buildSegmentationList } from './utils/segmentationList';
+import { InstanceButton } from './components/viewer/InstanceButton';
+import { SegmentationRow } from './components/viewer/SegmentationRow';
 import { useActiveSliceInfo } from './hooks/useActiveSliceInfo';
 import type { ReportResponse } from './types';
 
@@ -81,12 +86,7 @@ function OverlayControls() {
           {labels && labels.filter((l) => l.id !== 0).length > 0 && (
             <div className="space-y-1">
               <select
-                value={(() => {
-                  const names = labels.filter(l => l.id !== 0).map(l => l.name);
-                  if (names.length === 6 && names[0] === 'Periventricular') return 'magnims';
-                  if (names.length === 4 && names[0] === 'MS Lesion (Active)') return 'default';
-                  return 'custom';
-                })()}
+                value={detectLabelPreset(labels)}
                 onChange={(e) => {
                   const preset = e.target.value;
                   if (preset === 'default' || preset === 'magnims') {
@@ -213,27 +213,19 @@ function ViewerApp() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [reportPanelOpen]);
 
-  // Filter instances into groups: originals, preprocessed, masks (hidden)
-  // Supports both legacy names (test01_01_flair_pp.nii) and BIDS names (sub-MS001_ses-01_desc-preproc_FLAIR.nii.gz)
-  const isPreprocessedInstance = useCallback((filename: string) => {
-    const lower = filename.toLowerCase();
-    // Legacy: *_pp.nii or *_pp.nii.gz
-    // BIDS: *desc-preproc* or *desc-segfrompreproc*
-    return lower.endsWith('_pp.nii') || lower.endsWith('_pp.nii.gz')
-      || lower.includes('desc-preproc') || lower.includes('desc-segfrompreproc');
-  }, []);
-
+  // Filter instances into groups: originals, preprocessed, masks (hidden).
+  // Classification lives in utils/instanceClassification (pure + unit-tested).
   const originalInstances = useMemo(() =>
     studyInfo?.instances.filter(inst => {
       const fn = inst.original_filename || '';
       return !isPreprocessedInstance(fn);
     }) ?? [],
-    [studyInfo?.instances, isPreprocessedInstance]
+    [studyInfo?.instances]
   );
 
   const preprocessedInstances = useMemo(() =>
     studyInfo?.instances.filter(inst => isPreprocessedInstance(inst.original_filename || '')) ?? [],
-    [studyInfo?.instances, isPreprocessedInstance]
+    [studyInfo?.instances]
   );
 
   // Instances to use for multi-panel viewer (based on source toggle)
@@ -280,23 +272,10 @@ function ViewerApp() {
     enabled: allFileIds.length > 0,
   });
 
-  const segmentations = (() => {
-    const all = (segmentationsData ?? []).map((seg) => ({
-      id: seg.segmentation_id,
-      name: seg.metadata?.description || t('segmentation.defaultName', 'Segmentation'),
-      status: 'saved' as const,
-      fileId: seg.file_id,
-    }));
-    // Deduplicate zone maps — keep only one per study (the first found)
-    let zoneMapSeen = false;
-    return all.filter((seg) => {
-      if (seg.name === 'MAGNIMS Zone Map') {
-        if (zoneMapSeen) return false;
-        zoneMapSeen = true;
-      }
-      return true;
-    });
-  })();
+  const segmentations = buildSegmentationList(
+    segmentationsData,
+    t('segmentation.defaultName', 'Segmentation'),
+  );
 
   // Fetch patient info to display name in viewer
   const { data: patientData } = usePatient(studyInfo?.study.patient_id);
@@ -463,7 +442,7 @@ function ViewerApp() {
     // Activate segmentation mode
     viewerControls.setSegmentationMode(true);
     toast.success(t('viewer.segmentationLoaded', `Segmentation "${segmentation.name}" loaded`));
-  }, [viewerControls, t, segmentationsData, setCurrentSegmentation, currentSegmentation, currentSeries?.file_id, studyInfo, isPreprocessedInstance, preprocessedInstances]);
+  }, [viewerControls, t, segmentationsData, setCurrentSegmentation, currentSegmentation, currentSeries?.file_id, studyInfo, preprocessedInstances]);
 
   // Toggle expand/collapse for a segmentation item's info panel
   const toggleSegExpanded = useCallback((segId: string) => {
@@ -713,30 +692,13 @@ function ViewerApp() {
                 {sectionsExpanded.originals && (
                   <div className="px-3 pb-3 space-y-1">
                     {originalInstances.map((instance) => (
-                      <button
+                      <InstanceButton
                         key={instance.id}
-                        onClick={() => handleSelectInstance(instance.id)}
-                        className={`w-full text-left transition-colors ${
-                          selectedInstanceId === instance.id
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-800/60 hover:bg-gray-800 text-gray-300'
-                        }`}
-                        style={{ padding: '4px 8px', borderRadius: 6 }}
-                      >
-                        <div className="flex items-center gap-2">
-                          <FileImage className={`w-3.5 h-3.5 flex-shrink-0 ${
-                            selectedInstanceId === instance.id ? 'text-white' : 'text-blue-500'
-                          }`} />
-                          <p className="text-[11px] font-medium truncate flex-1">
-                            {instance.original_filename || 'Image'}
-                          </p>
-                          <span className={`text-[10px] ${
-                            selectedInstanceId === instance.id ? 'text-white/70' : 'text-gray-400'
-                          }`}>
-                            {(instance.file_size_bytes / 1024 / 1024).toFixed(1)}MB
-                          </span>
-                        </div>
-                      </button>
+                        instance={instance}
+                        selected={selectedInstanceId === instance.id}
+                        onSelect={handleSelectInstance}
+                        variant="original"
+                      />
                     ))}
                   </div>
                 )}
@@ -769,30 +731,13 @@ function ViewerApp() {
                 {sectionsExpanded.preprocessed && (
                   <div className="px-3 pb-3 space-y-1">
                     {preprocessedInstances.map((instance) => (
-                      <button
+                      <InstanceButton
                         key={instance.id}
-                        onClick={() => handleSelectInstance(instance.id)}
-                        className={`w-full text-left transition-colors ${
-                          selectedInstanceId === instance.id
-                            ? 'bg-teal-600 text-white'
-                            : 'bg-gray-800/60 hover:bg-gray-800 text-gray-300'
-                        }`}
-                        style={{ padding: '4px 8px', borderRadius: 6 }}
-                      >
-                        <div className="flex items-center gap-2">
-                          <FlaskConical className={`w-3.5 h-3.5 flex-shrink-0 ${
-                            selectedInstanceId === instance.id ? 'text-white' : 'text-teal-500'
-                          }`} />
-                          <p className="text-[11px] font-medium truncate flex-1">
-                            {instance.original_filename || 'Preprocessed'}
-                          </p>
-                          <span className={`text-[10px] ${
-                            selectedInstanceId === instance.id ? 'text-white/70' : 'text-gray-400'
-                          }`}>
-                            {(instance.file_size_bytes / 1024 / 1024).toFixed(1)}MB
-                          </span>
-                        </div>
-                      </button>
+                        instance={instance}
+                        selected={selectedInstanceId === instance.id}
+                        onSelect={handleSelectInstance}
+                        variant="preprocessed"
+                      />
                     ))}
                   </div>
                 )}
@@ -880,45 +825,21 @@ function ViewerApp() {
                           // --- MAGNIMS Zone Map: independent layer, NOT tied to currentSegmentation ---
                           return (
                             <div key={seg.id}>
-                              <div
-                                onClick={() => handleToggleZoneMap(seg)}
-                                className={`cursor-pointer transition-colors ${
-                                  isExpanded
-                                    ? 'bg-emerald-900/40 border border-emerald-700'
-                                    : 'bg-gray-800/60 hover:bg-gray-800 border border-transparent'
-                                }`}
-                                style={{ borderRadius: 6, padding: '4px 8px' }}
-                              >
-                                <div className="flex items-center" style={{ gap: 6 }}>
-                                  {isExpanded
-                                    ? <ChevronDown className="w-3 h-3 flex-shrink-0 text-emerald-400" />
-                                    : <ChevronRight className="w-3 h-3 flex-shrink-0 text-gray-400" />
-                                  }
-                                  <Map className="w-3.5 h-3.5 flex-shrink-0 text-emerald-500" />
-                                  <span className={`text-[11px] font-medium truncate flex-1 ${isExpanded ? 'text-white' : 'text-white'}`}>
-                                    {seg.name}
-                                  </span>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      useSegmentationStore.getState().toggleZoneMapVisibility();
-                                    }}
-                                    className={`p-1 rounded transition-colors flex-shrink-0 ${
-                                      zoneMapVisible ? 'text-emerald-400 hover:text-emerald-300' : 'text-gray-500 hover:text-gray-300'
-                                    }`}
-                                    title={zoneMapVisible ? 'Hide overlay' : 'Show overlay'}
-                                  >
-                                    {zoneMapVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                                  </button>
-                                  <button
-                                    onClick={(e) => handleDeleteSegmentation(seg.id, seg.name, e)}
-                                    disabled={isDeleting}
-                                    className="p-1 text-gray-500 hover:text-red-400 transition-colors flex-shrink-0"
-                                  >
-                                    {isDeleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
-                                  </button>
-                                </div>
-                              </div>
+                              <SegmentationRow
+                                name={seg.name}
+                                icon={Map}
+                                accent="emerald"
+                                highlighted={isExpanded}
+                                expanded={isExpanded}
+                                overlayOn={zoneMapVisible}
+                                isDeleting={isDeleting}
+                                onRowClick={() => handleToggleZoneMap(seg)}
+                                onToggleOverlay={(e) => {
+                                  e.stopPropagation();
+                                  useSegmentationStore.getState().toggleZoneMapVisibility();
+                                }}
+                                onDelete={(e) => handleDeleteSegmentation(seg.id, seg.name, e)}
+                              />
                               {isExpanded && isSaved && (
                                 <div className="ml-2 mt-1 mb-1 border-l-2 border-emerald-600/30 pl-2">
                                   <MAGNIMSZoneMapPanel fileId={currentSeries?.file_id} />
@@ -931,8 +852,15 @@ function ViewerApp() {
                         // --- Regular segmentation (Expert Rater, Brain Extraction, etc.) ---
                         return (
                           <div key={seg.id}>
-                            <div
-                              onClick={() => {
+                            <SegmentationRow
+                              name={seg.name}
+                              icon={Puzzle}
+                              accent="purple"
+                              highlighted={isActive}
+                              expanded={isExpanded}
+                              overlayOn={isActive && isOverlayVisible}
+                              isDeleting={isDeleting}
+                              onRowClick={() => {
                                 handleOpenSegmentation(seg);
                                 // Auto-expand on activate, collapse on deactivate
                                 if (isActive) {
@@ -941,48 +869,17 @@ function ViewerApp() {
                                   setExpandedSegIds((prev) => new Set(prev).add(seg.id));
                                 }
                               }}
-                              className={`cursor-pointer transition-colors ${
-                                isActive
-                                  ? 'bg-purple-900/50 border border-purple-700'
-                                  : 'bg-gray-800/60 hover:bg-gray-800 border border-transparent'
-                              }`}
-                              style={{ borderRadius: 6, padding: '4px 8px' }}
-                            >
-                              <div className="flex items-center" style={{ gap: 6 }}>
-                                {isExpanded
-                                  ? <ChevronDown className="w-3 h-3 flex-shrink-0 text-purple-400" />
-                                  : <ChevronRight className="w-3 h-3 flex-shrink-0 text-gray-400" />
+                              onToggleOverlay={(e) => {
+                                e.stopPropagation();
+                                if (isActive) {
+                                  useSegmentationStore.getState().setIsOverlayVisible(!isOverlayVisible);
+                                } else {
+                                  handleOpenSegmentation(seg);
+                                  setExpandedSegIds((prev) => new Set(prev).add(seg.id));
                                 }
-                                <Puzzle className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-purple-400' : 'text-purple-500'}`} />
-                                <span className={`text-[11px] font-medium truncate flex-1 ${isActive ? 'text-white' : 'text-white'}`}>
-                                  {seg.name}
-                                </span>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (isActive) {
-                                      useSegmentationStore.getState().setIsOverlayVisible(!isOverlayVisible);
-                                    } else {
-                                      handleOpenSegmentation(seg);
-                                      setExpandedSegIds((prev) => new Set(prev).add(seg.id));
-                                    }
-                                  }}
-                                  className={`p-1 rounded transition-colors flex-shrink-0 ${
-                                    isActive && isOverlayVisible ? 'text-purple-400 hover:text-purple-300' : 'text-gray-500 hover:text-gray-300'
-                                  }`}
-                                  title={isActive && isOverlayVisible ? 'Hide overlay' : 'Show overlay'}
-                                >
-                                  {isActive && isOverlayVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                                </button>
-                                <button
-                                  onClick={(e) => handleDeleteSegmentation(seg.id, seg.name, e)}
-                                  disabled={isDeleting}
-                                  className="p-1 text-gray-500 hover:text-red-400 transition-colors flex-shrink-0"
-                                >
-                                  {isDeleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
-                                </button>
-                              </div>
-                            </div>
+                              }}
+                              onDelete={(e) => handleDeleteSegmentation(seg.id, seg.name, e)}
+                            />
                             {isExpanded && isSaved && (
                               <div className="ml-2 mt-1 mb-1 border-l-2 border-cyan-600/30 pl-2">
                                 {/* Overlay controls inline */}

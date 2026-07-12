@@ -1,17 +1,25 @@
 #!/usr/bin/env python3
 """Audit ISBI-MS patients 001-005 for expert mask annotations."""
+import os
+import sys
 import requests
 import json
 
-API = "https://brain-mri-209356685171.us-central1.run.app/api/v1"
+API = os.environ.get("MSTOOL_API_BASE", "https://brain-mri-209356685171.us-central1.run.app/api/v1")
 SEP = "=" * 80
 
 def login():
     print(SEP)
     print("ISBI-MS Expert Mask Audit (Patients 001-005)")
     print(SEP)
+    # Never hardcode the production admin password. Require it from the
+    # environment and fail fast if it is not set.
+    admin_password = os.environ.get("ADMIN_DEFAULT_PASSWORD")
+    if not admin_password:
+        sys.exit("ADMIN_DEFAULT_PASSWORD must be set (export it before running; "
+                 "do not hardcode the production admin password)")
     resp = requests.post(API + "/auth/login",
-                         json={"username": "admin", "password": "Admin123!@2024"})
+                         json={"username": "admin", "password": admin_password})
     resp.raise_for_status()
     token = resp.json()["token"]["access_token"]
     print("[OK] Logged in\n")

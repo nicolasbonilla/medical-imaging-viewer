@@ -218,7 +218,7 @@ class AuthService:
         # Save to persistent storage for Cloud Run
         try:
             self._storage.save_user(user, hashed_password, [hashed_password])
-            logger.debug(f"User {username} saved to persistent storage")
+            logger.debug(f"User {user.username} saved to persistent storage")
         except Exception as e:
             logger.error(
                 "Failed to save user to persistent storage",

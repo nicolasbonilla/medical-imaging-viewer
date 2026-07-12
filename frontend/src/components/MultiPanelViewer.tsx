@@ -12,7 +12,7 @@ import { useEffect, useRef, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { imagingAPI } from '@/services/api';
+import { imagingAPI } from '@/api/imaging';
 import { useMultiViewerStore, getPanelCount, type PanelState } from '@/store/useMultiViewerStore';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import { SEQUENCE_INFO } from '@/utils/sequenceDetection';

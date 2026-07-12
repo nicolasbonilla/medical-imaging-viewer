@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback } from 'react';
-import { documentAPI, DocumentSearchParams } from '@/services/documentApi';
+import { documentAPI, DocumentSearchParams } from '@/api/document';
 import type {
   Document,
   DocumentUpdate,

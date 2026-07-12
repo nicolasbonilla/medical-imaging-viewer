@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { studyAPI } from '@/services/studyApi';
+import { studyAPI } from '@/api/study';
 import type {
   ImagingStudy,
   StudyCreate,

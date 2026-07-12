@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 # ISBI-MS Migration Verification Audit
-import requests, sys, re, json
+import os, requests, sys, re, json
 from collections import defaultdict
 
-BASE = "https://brain-mri-209356685171.us-central1.run.app/api/v1"
+BASE = os.environ.get("MSTOOL_API_BASE", "https://brain-mri-209356685171.us-central1.run.app/api/v1")
+ADMIN_PASSWORD = os.environ.get("ADMIN_DEFAULT_PASSWORD")
+assert ADMIN_PASSWORD, "Set ADMIN_DEFAULT_PASSWORD env var; do not hardcode the admin password"
 
 def login():
-    payload = {"username": "admin", "password": "Admin123!@2024"}
+    payload = {"username": "admin", "password": ADMIN_PASSWORD}
     r = requests.post(f"{BASE}/auth/login", json=payload)
     if r.status_code == 400 and "CAPTCHA" in r.text:
         cr = requests.post(f"{BASE}/auth/captcha", json={})

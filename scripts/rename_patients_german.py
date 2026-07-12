@@ -15,8 +15,9 @@ import requests
 
 API_BASE = "https://brain-mri-209356685171.us-central1.run.app/api/v1"
 USERNAME = "admin"
-PASSWORD = "Admin123!@2024"
-
+import os
+PASSWORD = os.environ.get("ADMIN_DEFAULT_PASSWORD")
+assert PASSWORD, "Set ADMIN_DEFAULT_PASSWORD env var; do not hardcode the admin password"
 # 19 German names (MS demographics: ~65% female, ages 25-55)
 GERMAN_NAMES = [
     # (first_name, last_name, gender)

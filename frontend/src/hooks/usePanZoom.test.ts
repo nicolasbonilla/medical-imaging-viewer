@@ -60,9 +60,9 @@ describe('usePanZoom', () => {
     expect(mockSetZoomLevel).toHaveBeenCalledWith(0.75);
   });
 
-  it('should not zoom in beyond maximum (5x)', () => {
+  it('should not zoom in beyond maximum (20x)', () => {
     (useViewerStore as any).mockReturnValue({
-      zoomLevel: 5,
+      zoomLevel: 20,
       setZoomLevel: mockSetZoomLevel,
       panOffset: { x: 0, y: 0 },
       setPanOffset: mockSetPanOffset,
@@ -74,7 +74,7 @@ describe('usePanZoom', () => {
       result.current.handleZoomIn();
     });
 
-    expect(mockSetZoomLevel).toHaveBeenCalledWith(5); // Max zoom
+    expect(mockSetZoomLevel).toHaveBeenCalledWith(20); // Clamped at max zoom (20x)
   });
 
   it('should not zoom out beyond minimum (0.25x)', () => {
@@ -146,6 +146,13 @@ describe('usePanZoom', () => {
   });
 
   it('should update pan offset when dragging', () => {
+    // The hook RAF-throttles pan updates for 60fps; run requestAnimationFrame
+    // synchronously so the throttled setPanOffset flushes within the test.
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+      cb(0);
+      return 0;
+    });
+
     const { result } = renderHook(() => usePanZoom());
 
     // Start dragging
@@ -159,6 +166,8 @@ describe('usePanZoom', () => {
     });
 
     expect(mockSetPanOffset).toHaveBeenCalledWith({ x: 50, y: 50 });
+
+    vi.unstubAllGlobals();
   });
 
   it('should not update pan offset when not dragging', () => {

@@ -18,7 +18,7 @@ import {
   Minimize2,
 } from 'lucide-react';
 import { useDocumentDownload, useDocumentVersions } from '@/hooks/useDocuments';
-import { documentAPI } from '@/services/documentApi';
+import { documentAPI } from '@/api/document';
 import type { Document, DocumentSummary, DocumentVersion } from '@/types';
 
 interface DocumentViewerProps {

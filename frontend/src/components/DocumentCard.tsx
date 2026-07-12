@@ -13,7 +13,7 @@ import {
   History,
 } from 'lucide-react';
 import type { Document, DocumentSummary, DocumentCategory, DocumentStatus } from '@/types';
-import { documentAPI } from '@/services/documentApi';
+import { documentAPI } from '@/api/document';
 
 // Category colors — inline, dark-first
 const categoryColors: Record<DocumentCategory, { bg: string; color: string }> = {

@@ -25,7 +25,7 @@ import {
   Equal,
 } from 'lucide-react';
 import { segmentationAPI } from '@/api/segmentation';
-import { studyAPI } from '@/services/studyApi';
+import { studyAPI } from '@/api/study';
 import { useViewerStore } from '@/store/useViewerStore';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import type { LongitudinalResult, LesionChange, StudySummary, SegmentationResponse } from '@/types';

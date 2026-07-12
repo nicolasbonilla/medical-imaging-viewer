@@ -13,7 +13,7 @@ import {
   Eye,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { studyAPI } from '@/services/studyApi';
+import { studyAPI } from '@/api/study';
 import { StudyUploader } from './StudyUploader';
 import type { StudyCreate, Modality, ImagingStudy } from '@/types';
 import type { UploadFile } from '@/hooks/useUpload';

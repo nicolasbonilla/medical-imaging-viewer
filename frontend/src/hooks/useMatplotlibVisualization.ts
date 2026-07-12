@@ -9,7 +9,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import { imagingAPI } from '@/services/api';
+import { imagingAPI } from '@/api/imaging';
 import { useViewerStore } from '@/store/useViewerStore';
 
 interface UseMatplotlibVisualizationProps {

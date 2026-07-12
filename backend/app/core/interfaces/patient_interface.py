@@ -24,7 +24,7 @@ class IPatientService(ABC):
     Interface for patient management operations.
 
     Implementations:
-    - PatientService (production)
+    - PatientServiceFirestore (production)
     - MockPatientService (testing)
     """
 

@@ -294,7 +294,10 @@ const defaultOverlaySettings: OverlaySettings = {
   outline_only: false,
 };
 
-const initialState = {
+// Factory so every reset()/creation gets FRESH nested objects — returning a
+// shared const would let an in-place mutation leak across resets and into the
+// module-level defaults.
+const createInitialState = () => ({
   // Segmentation
   currentSegmentation: null as SegmentationResponse | null,
   activeSegmentation: null as Segmentation | null,
@@ -315,12 +318,12 @@ const initialState = {
   labelVisibility: {} as Record<number, boolean>,
 
   // Paint tool
-  paintTool: defaultPaintTool,
+  paintTool: { ...defaultPaintTool },
   isPaintMode: false,
   drawOverMode: 'all' as DrawOverMode,
 
   // Overlay
-  overlaySettings: defaultOverlaySettings,
+  overlaySettings: { ...defaultOverlaySettings },
   isOverlayVisible: true,
 
   // Zone Map
@@ -344,7 +347,7 @@ const initialState = {
   longitudinalTp2Dims: null as { depth: number; height: number; width: number } | null,
   longitudinalTp2SegId: null as string | null,
   longitudinalVisible: false,
-};
+});
 
 // ============================================================================
 // Store
@@ -354,7 +357,7 @@ export const useSegmentationStore = create<SegmentationState>()(
   subscribeWithSelector(
     persist(
       (set, get) => ({
-        ...initialState,
+        ...createInitialState(),
 
         // =====================================================================
         // Segmentation Actions
@@ -611,7 +614,7 @@ export const useSegmentationStore = create<SegmentationState>()(
         // Reset Actions
         // =====================================================================
 
-        reset: () => set(initialState),
+        reset: () => set(createInitialState()),
 
         resetPaintTool: () =>
           set({
