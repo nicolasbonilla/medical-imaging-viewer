@@ -62,9 +62,6 @@ async def compare_masks(
 
     Returns pairwise comparison metrics (Dice, Hausdorff, volume diff).
     """
-    from app.core.container import get_study_service
-    study_service = get_study_service()
-
     try:
         body = await request.json()
         mask_specs = body.get("masks", [])
@@ -90,7 +87,11 @@ async def compare_masks(
                 # Load NIfTI from instance — prefer gcs_path (fast) over instance lookup (slow)
                 gcs_path = spec.get("gcs_path")
                 if not gcs_path:
-                    instance = await study_service.get_instance(mask_id)
+                    # Lazy: only resolve the study service when an instance mask
+                    # actually needs a GCS path (avoids a Firestore client init —
+                    # and ADC requirement — for segmentation-only comparisons).
+                    from app.core.container import get_study_service
+                    instance = await get_study_service().get_instance(mask_id)
                     gcs_path = instance.gcs_object_name
                 file_data = await storage_service.download_file(
                     settings.GCS_BUCKET_NAME, gcs_path
@@ -161,9 +162,6 @@ async def get_agreement_map(
     Returns binary data: [depth:4][height:4][width:4][mask_count:4][agreement_data:D*H*W bytes]
     Each voxel value = number of masks that agree (0 to N).
     """
-    from app.core.container import get_study_service
-    study_service = get_study_service()
-
     try:
         body = await request.json()
         mask_specs = body.get("masks", [])
@@ -183,7 +181,10 @@ async def get_agreement_map(
                 loaded_masks.append((mask_3d > 0).astype(np.uint8))
 
             elif mask_type == "instance":
-                instance = await study_service.get_instance(mask_id)
+                # Lazy study-service resolution — see compare_masks (avoids a
+                # Firestore/ADC dependency for segmentation-only requests).
+                from app.core.container import get_study_service
+                instance = await get_study_service().get_instance(mask_id)
                 file_data = await storage_service.download_file(
                     settings.GCS_BUCKET_NAME, instance.gcs_object_name
                 )
@@ -396,9 +397,6 @@ async def compare_longitudinal(
     Returns lesion-by-lesion changes (new, resolved, enlarged, shrunk, stable),
     total burden delta, and summary counts.
     """
-    from app.core.container import get_study_service
-    study_service = get_study_service()
-
     try:
         body = await request.json()
         tp1_spec = body.get("tp1")
@@ -418,7 +416,10 @@ async def compare_longitudinal(
                 return _m
 
             elif mask_type == "instance":
-                instance = await study_service.get_instance(mask_id)
+                # Lazy study-service resolution — see compare_masks (avoids a
+                # Firestore/ADC dependency for segmentation-only requests).
+                from app.core.container import get_study_service
+                instance = await get_study_service().get_instance(mask_id)
                 file_data = await storage_service.download_file(
                     settings.GCS_BUCKET_NAME, instance.gcs_object_name
                 )

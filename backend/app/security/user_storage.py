@@ -84,7 +84,29 @@ class SecureUserStorage:
 
     @staticmethod
     def _try_firestore_client():
-        """Return a Firestore client, or None if unavailable (→ disk fallback)."""
+        """Return a Firestore client, or None if unavailable (→ disk fallback).
+
+        When pointed at an emulator (FIRESTORE_EMULATOR_HOST), verify the host is
+        actually reachable first: CI and some test envs SET that variable without
+        running an emulator, and firebase_admin would happily build a client whose
+        operations then hang. A fast socket probe avoids that.
+        """
+        import os
+
+        emu = os.environ.get("FIRESTORE_EMULATOR_HOST")
+        if emu:
+            import socket
+            host, _, port = emu.partition(":")
+            try:
+                with socket.create_connection((host, int(port or 8080)), timeout=1.0):
+                    pass
+            except Exception:
+                logger.warning(
+                    "FIRESTORE_EMULATOR_HOST is set but unreachable — using encrypted disk fallback",
+                    extra={"emulator_host": emu},
+                )
+                return None
+
         try:
             from app.core.firebase import get_firestore_client
             return get_firestore_client()
