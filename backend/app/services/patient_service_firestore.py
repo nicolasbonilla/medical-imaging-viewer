@@ -7,7 +7,7 @@ following HL7 FHIR standards with Firestore backend.
 @module services.patient_service_firestore
 """
 
-from typing import Optional, List, Tuple
+from typing import Optional, Union, List, Tuple
 from uuid import UUID, uuid4
 from datetime import date, datetime
 import logging
@@ -188,7 +188,10 @@ class PatientServiceFirestore(IPatientService):
     async def create_patient(
         self,
         data: PatientCreate,
-        created_by: Optional[UUID] = None
+        # Union[UUID, str]: User.id is a str-encoded UUID, and this value is
+        # stringified before storage anyway. Annotating it UUID-only was
+        # inaccurate — the type hint said something the code did not require.
+        created_by: Optional[Union[UUID, str]] = None
     ) -> PatientResponse:
         """Create a new patient record."""
         # Check if MRN already exists

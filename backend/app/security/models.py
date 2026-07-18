@@ -46,6 +46,24 @@ class Permission(str, Enum):
     SEGMENTATION_VIEW = "segmentation:view"
     SEGMENTATION_DELETE = "segmentation:delete"
 
+    # Patient record permissions.
+    #
+    # CAPA-002 / CAPA-004 CA-4.5: ten route docstrings in patients.py stated
+    # "Required permissions: PATIENT_CREATE" (and VIEW/UPDATE/DELETE) for
+    # permissions that did NOT EXIST in this enum and were enforced nowhere.
+    # In a Class C device a docstring naming a required permission is a claim a
+    # reviewer will believe. These are the permissions those docstrings promised.
+    #
+    # NOTE: these govern what a ROLE may do to patient records in general. They
+    # do NOT answer "may this user access THIS patient" — that is object-level
+    # authorization, which requires an entitlement model and is tracked
+    # separately as CAPA-002 CA-2.1. Do not read enforcement of these as closing
+    # CAPA-002.
+    PATIENT_VIEW = "patient:view"
+    PATIENT_CREATE = "patient:create"
+    PATIENT_UPDATE = "patient:update"
+    PATIENT_DELETE = "patient:delete"
+
     # User management permissions
     USER_CREATE = "user:create"
     USER_VIEW = "user:view"

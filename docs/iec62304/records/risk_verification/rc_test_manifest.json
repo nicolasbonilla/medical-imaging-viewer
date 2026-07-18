@@ -240,6 +240,17 @@
       ],
       "negative_control": "CAPA-001 CA-5 — helper returns 1mm default → 17 failed; a route restores the default → 1 failed",
       "note": "Supersedes the RC-022 assumption that all images are MNI 1 mm, which was 'verified by recollection'. The code no longer depends on that assumption: it requires the real geometry and raises (HTTP 422, VOXEL_SPACING_UNAVAILABLE) when it is unavailable."
+    },
+    "RC-025": {
+      "description": "Role-level authorization enforced on every patient-record route",
+      "hazard": "HAZ-010",
+      "status": "implemented",
+      "implementation": "app/security/models.py (4 PATIENT_* permissions), app/security/rbac.py (role map), app/api/routes/patients.py (10/10 routes)",
+      "tests": [
+        "tests/unit/test_rc025_patient_authorization.py"
+      ],
+      "negative_control": "CAPA-004 CA-4.5 — three vectors: a route reverted to authentication-only → 3 failed; VIEWER granted PATIENT_DELETE → 4 failed; created_by capture removed → 1 failed",
+      "note": "SCOPE LIMIT: answers 'may this ROLE operate on patient records', NOT 'may this user access THIS patient'. Object-level authorization remains absent and CAPA-002 CA-2.1 stays OPEN — an authenticated VIEWER still reaches every patient in the system. Do not read this control as closing CAPA-002. Ten route docstrings previously promised PATIENT_* permissions that did not exist in the enum and were enforced nowhere."
     }
   },
   "unverified_controls_note": [

@@ -106,3 +106,76 @@ design above protective measures.
 **Requires**: review, root-cause confirmation and sign-off by the Software Safety
 Officer. The action plan above is a draft prepared by the finder and must not be
 treated as approved.
+
+---
+
+## 8. Investigation update — 2026-07-18
+
+Two findings while preparing CA-2.1 materially change the remediation.
+
+### 8.1 There is no data to authorize against
+
+`created_by` exists on the patient model and the Firestore service has accepted
+a `created_by` argument all along — **and no caller ever supplied it**. The route
+had `current_user` in scope and called `service.create_patient(data)`.
+
+Every patient record therefore has `created_by = None`. Object-level
+authorization needs an entitlement relation to evaluate, and provenance is the
+minimum such relation. **It cannot be reconstructed retroactively**: for records
+created before 2026-07-18 there is no record anywhere of who created them.
+
+This inverts the sequencing. CA-2.1 cannot simply be "add checks to routes" —
+the data those checks would read does not exist. Capturing provenance is now
+landed ahead of the entitlement decision, because every day without it enlarges
+the permanently un-attributable set. Existing records will need an explicit
+disposition (grandfathered, reassigned, or quarantined) as part of CA-2.1.
+
+### 8.2 The routes documented an access-control model that was never built
+
+Ten route docstrings in `patients.py` state *"Required permissions:
+PATIENT_CREATE"* (and VIEW / UPDATE / DELETE). **None of those four permissions
+existed in the `Permission` enum**, and none was enforced. Every patient route
+gated on authentication alone.
+
+In a Class C device a docstring naming a required permission is a claim a
+reviewer will believe. An auditor reading `patients.py` would reasonably
+conclude the routes were access-controlled.
+
+This is the same class as CAPA-001 — documentation asserting a control that does
+not exist — but located in source comments rather than the QMS, so no QMS review
+would ever have caught it.
+
+### 8.3 What has been done, and what it does NOT close
+
+Landed as **RC-025** (CAPA-004 CA-4.5):
+
+- The four `PATIENT_*` permissions now exist and are mapped across the four
+  roles, with `PATIENT_DELETE` restricted to ADMIN (destructive, and subject to
+  regulatory retention).
+- All **10 of 10** patient routes enforce a permission; none gates on
+  authentication alone.
+- `created_by` is captured at creation.
+- A test asserts that **no route docstring anywhere promises a permission that
+  does not exist** — this is the assertion that would have caught the original
+  defect, and it now guards every future route.
+
+**This does NOT close CAPA-002.** RC-025 answers *"may this role operate on
+patient records"*. CAPA-002 asks *"may this user access THIS patient"*. An
+authenticated VIEWER still reaches every patient in the system. The manifest
+entry and the test suite both record that boundary explicitly, so the two
+controls cannot be conflated in a future audit.
+
+### 8.4 The open decision
+
+CA-2.1 cannot proceed without an entitlement model, which is a product decision,
+not an engineering one. The candidates:
+
+| Model | Rule | Fits |
+|---|---|---|
+| Creator-scoped | a user sees the records they created | single-clinician research use; wrong for a shared clinic |
+| Care-team | explicit user↔patient assignment | clinical reality; needs an assignment UI and workflow |
+| Institution/tenant | a user sees their organisation's records | multi-site deployments; requires a tenant field that does not exist |
+| Role-graded | RADIOLOGIST sees all, VIEWER sees assigned | common compromise; still needs assignment data |
+
+Only the first is satisfiable with the data now being captured. The others each
+require a new relation and a migration decision for existing records.

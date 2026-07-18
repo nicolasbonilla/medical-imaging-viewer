@@ -14,6 +14,8 @@ from fastapi import APIRouter, Depends, Query, Path, status
 from app.core.container import get_patient_service
 from app.core.logging import get_logger
 from app.security import get_current_active_user
+from app.security.auth import require_permission
+from app.security.models import Permission
 from app.security.models import User
 from app.services.patient_service_firestore import PatientServiceFirestore
 from app.models.patient_schemas import (
@@ -47,7 +49,7 @@ logger = get_logger(__name__)
 async def create_patient(
     data: PatientCreate,
     service: PatientServiceFirestore = Depends(get_patient_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_permission(Permission.PATIENT_CREATE))
 ):
     """
     Create a new patient record.
@@ -57,7 +59,17 @@ async def create_patient(
     Returns the created patient with generated UUID.
     Raises 409 Conflict if MRN already exists.
     """
-    patient = await service.create_patient(data)
+    # CAPA-002: record WHO created this patient. The service has accepted a
+    # `created_by` argument all along and no caller ever supplied it, so every
+    # existing patient document has created_by = None.
+    #
+    # This matters beyond audit: object-level authorization (CA-2.1) needs an
+    # entitlement relation to authorize against, and provenance is the minimum
+    # such relation. It CANNOT be reconstructed retroactively — records created
+    # before this change have irrecoverably lost who made them. That is the
+    # reason this is landing now rather than waiting for the entitlement model
+    # to be decided: every day without it enlarges the un-attributable set.
+    patient = await service.create_patient(data, created_by=current_user.id)
     return patient
 
 
@@ -72,7 +84,7 @@ async def list_patients(
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     status: Optional[PatientStatus] = Query(None, description="Filter by status"),
     service: PatientServiceFirestore = Depends(get_patient_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_permission(Permission.PATIENT_VIEW))
 ):
     """
     List all patients with pagination.
@@ -115,7 +127,7 @@ async def search_patients(
     sort_by: str = Query("family_name", description="Sort field"),
     sort_order: str = Query("asc", pattern="^(asc|desc)$", description="Sort order"),
     service: PatientServiceFirestore = Depends(get_patient_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_permission(Permission.PATIENT_VIEW))
 ):
     """
     Search patients with filters and pagination.
@@ -159,7 +171,7 @@ async def search_patients(
 async def get_patient_by_mrn(
     mrn: str = Path(..., description="Medical Record Number"),
     service: PatientServiceFirestore = Depends(get_patient_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_permission(Permission.PATIENT_VIEW))
 ):
     """
     Get a patient by MRN.
@@ -190,7 +202,7 @@ async def get_patient(
     patient_id: UUID = Path(..., description="Patient UUID"),
     include_stats: bool = Query(True, description="Include study/document counts"),
     service: PatientServiceFirestore = Depends(get_patient_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_permission(Permission.PATIENT_VIEW))
 ):
     """
     Get a patient by ID.
@@ -213,7 +225,7 @@ async def update_patient(
     patient_id: UUID = Path(..., description="Patient UUID"),
     data: PatientUpdate = ...,
     service: PatientServiceFirestore = Depends(get_patient_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_permission(Permission.PATIENT_UPDATE))
 ):
     """
     Update a patient record.
@@ -235,7 +247,7 @@ async def update_patient(
 async def delete_patient(
     patient_id: UUID = Path(..., description="Patient UUID"),
     service: PatientServiceFirestore = Depends(get_patient_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_permission(Permission.PATIENT_DELETE))
 ):
     """
     Deactivate a patient (soft delete).
@@ -263,7 +275,7 @@ async def add_medical_history(
     patient_id: UUID = Path(..., description="Patient UUID"),
     data: MedicalHistoryCreate = ...,
     service: PatientServiceFirestore = Depends(get_patient_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_permission(Permission.PATIENT_UPDATE))
 ):
     """
     Add a medical history entry.
@@ -286,7 +298,7 @@ async def get_medical_history(
     patient_id: UUID = Path(..., description="Patient UUID"),
     active_only: bool = Query(False, description="Return only active conditions"),
     service: PatientServiceFirestore = Depends(get_patient_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_permission(Permission.PATIENT_VIEW))
 ):
     """
     Get medical history for a patient.
@@ -310,7 +322,7 @@ async def update_medical_history(
     is_active: bool = Query(..., description="Active status"),
     resolution_date: Optional[str] = Query(None, description="Date condition resolved (ISO format)"),
     service: PatientServiceFirestore = Depends(get_patient_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_permission(Permission.PATIENT_UPDATE))
 ):
     """
     Update a medical history entry.
