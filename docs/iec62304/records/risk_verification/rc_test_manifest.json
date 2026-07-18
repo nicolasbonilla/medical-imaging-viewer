@@ -1,0 +1,85 @@
+{
+  "$comment": [
+    "Risk-control → test binding manifest. Created as CAPA-001 action PA-1.",
+    "",
+    "CAPA-001 root cause: 'The verification process accepts unexecuted,",
+    "unreproducible, self-attested prose as objective evidence for risk-control",
+    "implementation, and nothing in the build pipeline can contradict it.'",
+    "",
+    "This file is the contradiction mechanism. Every risk control whose status is",
+    "'implemented' MUST name test node IDs that exist and pass. The manifest is",
+    "enforced by backend/tests/unit/test_risk_control_manifest.py, which fails if",
+    "a named test has disappeared. Deleting a risk control's test therefore turns",
+    "CI red instead of producing a silent green build.",
+    "",
+    "Status values:",
+    "  implemented  - control exists in code AND is bound to passing tests.",
+    "                 'tests' must be non-empty and every entry must resolve.",
+    "  not_implemented - control does not exist. Recorded honestly. 'tests' empty.",
+    "  deliberately_absent - the code intentionally does NOT provide this control;",
+    "                 the documentation was wrong. Requires 'rationale'.",
+    "  unverified   - not yet re-verified to the CAPA-001 standard. Must not be",
+    "                 recorded as VERIFIED in the RMF until it is.",
+    "",
+    "A control may only be recorded VERIFIED in the Risk Management File when its",
+    "status here is 'implemented' or 'deliberately_absent'."
+  ],
+  "manifest_version": 1,
+  "capa_reference": "CAPA-001",
+  "last_updated": "2026-07-18",
+  "controls": {
+    "RC-006": {
+      "description": "AI-generated report carries a mandatory physician-review disclaimer",
+      "hazard": "HAZ-003",
+      "status": "implemented",
+      "implementation": "backend/app/services/brain_report_service.py::_apply_disclaimer",
+      "tests": [
+        "tests/unit/test_rc006_report_disclaimer.py"
+      ],
+      "negative_control": "CAPA-001 §5.1 — enforcement line removed: 8 failed, 6 passed"
+    },
+    "RC-017": {
+      "description": "Authentication required on all API endpoints, including the WebSocket transport",
+      "hazard": "HAZ-010",
+      "status": "implemented",
+      "implementation": "backend/app/api/routes/websocket.py::_authenticate_websocket",
+      "tests": [
+        "tests/unit/test_rc017_websocket_auth.py"
+      ],
+      "negative_control": "CAPA-001 §5.2 — two vectors: 1 failed (unwired), 5 failed (neutralised)",
+      "note": "Covers authentication only. Object-level authorization is absent and is tracked as CAPA-002."
+    },
+    "RC-007": {
+      "description": "De-identified data only sent to the third-party model API",
+      "hazard": "HAZ-003",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "note": "CAPA-001 §2.3 — no de-identification routine exists under backend/app/. Tracked as CAPA-001 CA-4. The RMF must not record this as VERIFIED."
+    },
+    "RC-010": {
+      "description": "Classification confidence displayed per lesion",
+      "hazard": "HAZ-006",
+      "status": "deliberately_absent",
+      "implementation": "backend/app/services/ms_region_classifier.py",
+      "tests": [],
+      "rationale": "CAPA-001 §2.4 — the geometric classification path sets confidence = None on purpose, because it has no empirically calibrated confidence. Emitting an uncalibrated number would be worse than emitting none. The code is more honest than the documentation was; the RMF row is what must change, not the code.",
+      "note": "Requires a test asserting confidence stays None on the geometric path, so the deliberate absence cannot be 'fixed' by accident. Tracked under CA-3."
+    },
+    "RC-022": {
+      "description": "All images preprocessed to MNI 1 mm isotropic space",
+      "hazard": "HAZ-014",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "note": "CAPA-001 §2.5 — verified only by recollection, which is not objective evidence. The code does not depend on the assumption: it silently defaults voxel_spacing to (1.0, 1.0, 1.0) when metadata is absent, which is the harm HAZ-014 describes. Tracked as CA-5."
+    }
+  },
+  "unverified_controls_note": [
+    "The remaining 17 risk controls in the Risk Management File have NOT been",
+    "re-verified to the standard this manifest requires. They are absent from",
+    "'controls' rather than listed as verified, because listing them without",
+    "evidence would repeat the exact nonconformity CAPA-001 was raised for.",
+    "Tracked as CAPA-001 action CA-3."
+  ]
+}

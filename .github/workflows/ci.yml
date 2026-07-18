@@ -102,6 +102,67 @@ jobs:
           name: coverage-report
           path: backend/coverage.xml
 
+  risk-control-verification:
+    name: Risk Control Verification (ISO 14971 / CAPA-001 PA-2)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      ENVIRONMENT: testing
+      DEBUG: "false"
+      JWT_SECRET_KEY: test-secret-key-minimum-32-characters-required-for-security
+      ENCRYPTION_MASTER_KEY: test-encryption-key-32-chars-min
+      GCS_BUCKET_NAME: test-bucket
+      GOOGLE_CLOUD_PROJECT: test-project
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: backend/requirements.txt
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-test.txt
+
+      # CAPA-001 PA-2. Root cause #4 was "a missing control produces a green
+      # build". This job is the gate that makes that impossible: the manifest
+      # binds every implemented risk control to a named test, and the manifest
+      # test fails if that test has been deleted or emptied.
+      - name: Enforce risk-control → test manifest
+        run: python -m pytest tests/unit/test_risk_control_manifest.py -v --tb=short
+
+      # Belt and braces: run the risk-control tests by name. The minimum-count
+      # check lives in test_risk_control_manifest.py rather than here, because
+      # counting pytest's `--collect-only -q` output in shell is fragile across
+      # pytest versions (it silently reported 0 against pytest 9 while 28 tests
+      # were in fact collected — a false negative in a gate is as bad as a false
+      # positive).
+      - name: Run risk-control tests
+        run: python -m pytest tests/unit/ -k "test_rc" -v --tb=short
+
+      # CAPA-001 §3 root cause #4: tests/security/ existed but was never executed
+      # by CI. When first run (2026-07-18) it did not even import: it referenced
+      # `app.core.security.auth`, a module that has never existed in this
+      # repository's history. After repairing that import the suite reported
+      # 63 failed / 43 errors / 9 passed — it was written against a codebase
+      # shape that does not exist.
+      #
+      # This step is deliberately NON-BLOCKING and deliberately loud. Making it
+      # blocking today would red-line every build; deleting it would destroy the
+      # evidence; and silently omitting it is what produced the problem. It stays
+      # visible until CAPA-003 repairs the suite, at which point continue-on-error
+      # MUST be removed. Do not read a green pipeline as "security tests pass".
+      - name: Run security test suite (CAPA-003 — known broken, non-blocking)
+        continue-on-error: true
+        run: |
+          echo "::warning::tests/security/ is known broken — see CAPA-003. This step does not gate the build."
+          python -m pytest tests/security/ -v --tb=short -k "not requires_gcs and not requires_firestore"
+
   security-audit:
     name: SOUP Vulnerability Scan (IEC 81001-5-1 Clause 5.3.12)
     runs-on: ubuntu-latest
@@ -139,15 +200,28 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      # CAPA-001 PA-2: the previous implementation used `find -exec python -c ...`,
+      # which does NOT propagate the exit code of the executed command. A file
+      # with a syntax error printed FAIL and the job stayed green — the same
+      # "absence goes unnoticed" failure mode that opened CAPA-001, inside the
+      # verification pipeline itself. Verified: `find . -exec python -c
+      # "sys.exit(1)" \;` returns 0.
       - name: Check all Python files parse correctly
         run: |
-          find backend/app -name "*.py" -exec python -c "
-          import ast, sys
-          try:
-              with open(sys.argv[1], 'r') as f:
-                  ast.parse(f.read())
-          except SyntaxError as e:
-              print(f'FAIL: {sys.argv[1]}: {e}')
-              sys.exit(1)
-          " {} \;
-          echo "All Python files syntax OK"
+          python - <<'PY'
+          import ast, pathlib, sys
+
+          failures = []
+          for path in pathlib.Path("backend/app").rglob("*.py"):
+              try:
+                  ast.parse(path.read_text(encoding="utf-8"))
+              except SyntaxError as exc:
+                  failures.append(f"{path}: {exc}")
+
+          for failure in failures:
+              print(f"::error::SyntaxError {failure}")
+
+          if failures:
+              sys.exit(f"{len(failures)} file(s) failed to parse")
+          print("All Python files syntax OK")
+          PY

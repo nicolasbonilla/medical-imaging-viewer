@@ -35,7 +35,13 @@ from typing import Dict
 from hypothesis import given, strategies as st, settings, HealthCheck
 from jose import jwt, JWTError
 
-from app.core.security.auth import PasswordManager, TokenManager
+# CAPA-001 PA-2: this module imported `app.core.security.auth`, a path that has
+# never existed in the repository's history. The suite therefore failed at
+# collection and had never executed — and CI never ran tests/security/ at all,
+# so nothing reported it. A security test suite that cannot be imported is
+# documentation, not verification.
+from app.security.password import PasswordManager
+from app.security.jwt_manager import TokenManager
 from app.core.config import get_settings
 
 settings_config = get_settings()
