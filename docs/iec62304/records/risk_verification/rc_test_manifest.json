@@ -115,12 +115,15 @@
       "note": "Thresholds live only in Python comments; flag can never fire. See CAPA-005."
     },
     "RC-008": {
-      "description": "Edge AI badge displays confidence and assistive-only disclaimer",
+      "description": "Edge AI badge displays confidence and an unconditional assistive-only disclaimer",
       "hazard": "HAZ-004",
-      "status": "not_implemented",
-      "implementation": null,
-      "tests": [],
-      "note": "Disclaimer gated behind useState(false); renders only after a click. See CAPA-004 CA-4.4."
+      "status": "implemented",
+      "implementation": "frontend/src/components/QuickScreenBadge.tsx — disclaimer shares the result's visibility condition; no toggle",
+      "tests": [
+        "frontend/src/components/QuickScreenBadge.test.tsx"
+      ],
+      "negative_control": "CAPA-004 CA-4.4 — toggle restored (showDisclaimer gate reinstated) → 2 failed, 3 passed",
+      "note": "Repaired under CAPA-004 CA-4.4. Previously the string existed in the component but was gated behind useState(false), so a user could read a confidence-scored verdict with no limitation statement — while the file's header comment claimed it was always shown. Verification by grepping for the string could not tell a displayed control from a hidden one."
     },
     "RC-009": {
       "description": "Edge AI model admin-supplied; feature hidden when unavailable",

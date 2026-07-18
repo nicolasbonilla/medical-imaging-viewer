@@ -6,7 +6,9 @@
  * leaves the browser.
  *
  * IMPORTANT: This is an assistive screening tool, NOT a diagnostic device.
- * A clear disclaimer is always shown.
+ * The disclaimer is rendered unconditionally alongside every result (RC-008,
+ * risk control for HAZ-004). Until CAPA-004 CA-4.4 this comment was false: the
+ * disclaimer was hidden behind a toggle that defaulted to closed.
  *
  * @module components/QuickScreenBadge
  */
@@ -41,7 +43,6 @@ export const QuickScreenBadge: React.FC<QuickScreenBadgeProps> = ({
     reset,
   } = useEdgeAI();
 
-  const [showDisclaimer, setShowDisclaimer] = useState(false);
 
   // Extract grayscale pixel data from base64 PNG
   const extractPixelData = useCallback(
@@ -129,19 +130,16 @@ export const QuickScreenBadge: React.FC<QuickScreenBadgeProps> = ({
         )}
       </button>
 
-      {/* Disclaimer toggle */}
+      {/* RC-008 — risk control for HAZ-004 (CAPA-004 CA-4.4).
+          Rendered UNCONDITIONALLY whenever a result is on screen or being
+          produced. It was previously gated behind `showDisclaimer`, initialised
+          false, so a user could read a confidence-scored abnormal/normal verdict
+          with no limitation statement at all — while this file's own header
+          claimed "A clear disclaimer is always shown".
+          The toggle is deliberately gone: a limitation the user must opt into is
+          not a risk control, and a control that can be dismissed will be. */}
       {(result || isProcessing) && (
-        <button
-          onClick={() => setShowDisclaimer(!showDisclaimer)}
-          className="text-[10px] text-gray-500 hover:text-gray-400 underline"
-        >
-          {t('edgeAI.disclaimer', 'Disclaimer')}
-        </button>
-      )}
-
-      {/* Disclaimer */}
-      {showDisclaimer && (
-        <div className="border border-yellow-700/50 rounded text-[10px] text-yellow-300/80 leading-tight" style={{ maxWidth: 240, padding: 8, background: '#111827', borderRadius: 6 }}>
+        <div data-testid="edge-ai-disclaimer" className="border border-yellow-700/50 rounded text-[10px] text-yellow-300/80 leading-tight" style={{ maxWidth: 240, padding: 8, background: '#111827', borderRadius: 6 }}>
           {t(
             'edgeAI.disclaimerText',
             'This is an assistive screening tool only. Results are NOT diagnostic and must be confirmed by a qualified radiologist. All processing runs locally in your browser — no patient data is transmitted.',
