@@ -251,6 +251,17 @@
       ],
       "negative_control": "CAPA-004 CA-4.5 — three vectors: a route reverted to authentication-only → 3 failed; VIEWER granted PATIENT_DELETE → 4 failed; created_by capture removed → 1 failed",
       "note": "SCOPE LIMIT: answers 'may this ROLE operate on patient records', NOT 'may this user access THIS patient'. Object-level authorization remains absent and CAPA-002 CA-2.1 stays OPEN — an authenticated VIEWER still reaches every patient in the system. Do not read this control as closing CAPA-002. Ten route docstrings previously promised PATIENT_* permissions that did not exist in the enum and were enforced nowhere."
+    },
+    "RC-026": {
+      "description": "Object-level authorization for patient records under the care-team entitlement model",
+      "hazard": "HAZ-010",
+      "status": "implemented",
+      "implementation": "backend/app/security/patient_access.py::decide_patient_access (pure decision function)",
+      "tests": [
+        "tests/unit/test_rc026_patient_access.py"
+      ],
+      "negative_control": "CAPA-002 CA-2.1 — four vectors: default-grant instead of default-deny -> 7 failed; assignment patient_id ignored (cross-patient leak) -> 2 failed; revocation ignored -> 1 failed; provenance treated as entitlement -> 7 failed",
+      "note": "DECISION LAYER ONLY. The policy is implemented, pure and fully tested, but is NOT YET WIRED into the clinical routes — imaging.py, studies.py, documents.py and the remaining patient routes still authorize nothing. CAPA-002 CA-2.1 stays OPEN until enforcement is applied at every data-returning route and a cross-user denial test covers each. Also outstanding: the patient_assignments store and its management UI, and CA-2.3 (routes still accept raw GCS paths as caller input)."
     }
   },
   "unverified_controls_note": [
