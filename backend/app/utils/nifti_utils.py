@@ -31,6 +31,102 @@ def detect_gzip(file_data: bytes) -> bool:
     return file_data[:2] == b'\x1f\x8b'
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Orientation handling — CAPA-004 CA-4.1
+#
+# Risk control for HAZ-006 (misaligned / mirrored anatomy → wrong-side reporting).
+#
+# Before this, the product contained NO orientation logic of any kind: no affine
+# inspection, no laterality handling, no L/R labels. A volume stored LAS rendered
+# mirrored relative to one stored RAS with nothing to indicate it. RC-013 was
+# recorded as PARTIAL ("loaded and parsed; orientation warning pending"), which
+# described a system that did not exist — orientation was never parsed.
+#
+# DELIBERATE SCOPE LIMIT — read before changing a default.
+# These primitives are additive and canonicalisation is OPT-IN. Silently
+# canonicalising here would create a NEW hazard worse than the one being fixed:
+# an image and its segmentation mask are loaded through separate calls, so
+# transforming one and not the other misaligns them — a lesion would be drawn at
+# the wrong coordinates while looking entirely plausible. Any migration to
+# canonical-by-default must convert image AND mask together, in one change, with
+# a test that loads a matched pair and asserts voxel correspondence.
+# That migration is the remaining part of CA-4.1 and is NOT done here.
+#
+# Verified by: backend/tests/unit/test_rc013_orientation.py (tests named
+#              test_rc013_*). Removing this control MUST turn CI red.
+# ─────────────────────────────────────────────────────────────────────────────
+def get_orientation_codes(img: nib.Nifti1Image) -> Optional[Tuple[str, str, str]]:
+    """Return the anatomical axis codes of an image, e.g. ('R', 'A', 'S').
+
+    Each code names the direction of INCREASING index along that axis:
+    R/L = right/left, A/P = anterior/posterior, S/I = superior/inferior.
+    This is the information needed to label a viewport, and it is exactly what
+    the product had no access to before.
+
+    Returns None when the orientation cannot be determined — a singular or
+    degenerate affine. Returning None rather than a guess is the point: a
+    plausible-looking wrong laterality label is more dangerous than no label.
+    """
+    try:
+        affine = img.affine
+    except Exception:
+        return None
+
+    if affine is None:
+        return None
+
+    affine = np.asarray(affine, dtype=float)
+    if affine.shape != (4, 4) or not np.all(np.isfinite(affine)):
+        return None
+
+    # A singular direction matrix carries no orientation information.
+    direction = affine[:3, :3]
+    if abs(np.linalg.det(direction)) < 1e-8:
+        return None
+
+    try:
+        return tuple(nib.aff2axcodes(affine))
+    except Exception:
+        return None
+
+
+def is_orientation_determinate(img: nib.Nifti1Image) -> bool:
+    """True when the image's anatomical orientation can be established."""
+    codes = get_orientation_codes(img)
+    return codes is not None and all(c is not None for c in codes)
+
+
+def describe_orientation(img: nib.Nifti1Image) -> str:
+    """Human-readable orientation for logs, reports and viewport labels.
+
+    Returns 'UNKNOWN' when indeterminate — never a guess.
+    """
+    codes = get_orientation_codes(img)
+    if codes is None or any(c is None for c in codes):
+        return "UNKNOWN"
+    return "".join(codes)
+
+
+def canonicalize_orientation(img: nib.Nifti1Image) -> nib.Nifti1Image:
+    """Reorient an image to canonical RAS+.
+
+    Raises ValueError when orientation is indeterminate. It fails closed
+    deliberately: silently returning the original image would mean the caller
+    believes it holds canonical data when it does not, which reintroduces the
+    hazard this function exists to remove.
+
+    NOTE: applying this to an image without applying it to the matching
+    segmentation mask will misalign them. See the module comment above.
+    """
+    if not is_orientation_determinate(img):
+        raise ValueError(
+            "Cannot canonicalise orientation: the NIfTI affine does not "
+            "determine an anatomical orientation. Refusing to guess — a "
+            "mis-oriented volume can cause wrong-side reporting."
+        )
+    return nib.as_closest_canonical(img)
+
+
 def load_nifti_from_bytes(
     file_data: bytes,
     normalize: bool = False

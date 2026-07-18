@@ -152,7 +152,7 @@
       "status": "not_implemented",
       "implementation": null,
       "tests": [],
-      "note": "No orientation logic exists anywhere in the product; no L/R labels on any viewport. See CAPA-004 CA-4.1/4.2."
+      "note": "No orientation validation on upload. CAPA-004 CA-4.1 has landed the primitives (see RC-023) but they are NOT yet wired into load_nifti_from_bytes — see RC-023's note for why that migration must convert image and mask together. Also outstanding: L/R laterality labels on the viewport (CA-4.2). See CAPA-004."
     },
     "RC-014": {
       "description": "Longitudinal tri-colour overlay (TP1/TP2/overlap)",
@@ -211,6 +211,17 @@
       "implementation": null,
       "tests": [],
       "note": "No timeout exists anywhere in the report path; no CLAUDE_TIMEOUT setting. Also a synchronous call inside an async handler blocks the worker. CA-3."
+    },
+    "RC-023": {
+      "description": "Anatomical orientation is determinable from the affine, and is never guessed when indeterminate",
+      "hazard": "HAZ-006",
+      "status": "implemented",
+      "implementation": "backend/app/utils/nifti_utils.py::get_orientation_codes / canonicalize_orientation",
+      "tests": [
+        "tests/unit/test_rc023_orientation.py"
+      ],
+      "negative_control": "CAPA-004 CA-4.1 — two vectors: fixed RAS return → 9 failed; canonicalisation neutralised → 2 failed",
+      "note": "NEW control created by CAPA-004 CA-4.1; MUST be added to the Risk Management File §5.1 (tracked). It provides the primitives only. RC-013 — orientation VALIDATION ON UPLOAD — remains not_implemented because canonicalisation is deliberately opt-in: image and mask load through separate calls, so transforming one and not the other would misalign them and create a worse hazard than the one being fixed. Migrating to canonical-by-default must convert both together in one change, with a matched-pair correspondence test."
     }
   },
   "unverified_controls_note": [
