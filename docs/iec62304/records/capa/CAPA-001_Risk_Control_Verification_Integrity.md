@@ -142,7 +142,7 @@ implementation 7 days · effectiveness verification 30 days.
 | ID | Type | Action | Acceptance criteria | Status |
 |----|------|--------|--------------------|--------|
 | **CA-1** | Corrective | Implement RC-006: mandatory, non-removable AI/physician-review disclaimer in `brain_report_service.py` output **and** in the report UI. | Automated test asserts the disclaimer string is present in every generated report for all 5 templates and all 3 languages. | **BACKEND DONE** (see §5.1) — UI pending |
-| **CA-2** | Corrective | Implement RC-017: authenticate all WebSocket endpoints; authorize `file_id` against the caller. | Automated test asserts an unauthenticated WS connection is rejected (close code 1008). | IN PROGRESS |
+| **CA-2** | Corrective | Implement RC-017: authenticate all WebSocket endpoints; authorize `file_id` against the caller. | Automated test asserts an unauthenticated WS connection is rejected (close code 1008). | **AUTH DONE** (see §5.3) — authorization split to CAPA-002 |
 | **CA-3** | Corrective | Correct RC-006, RC-007, RC-010, RC-017, RC-022 rows in the RMF and RCV-SUMMARY to their true status, with linked evidence. Re-verify the remaining 17 controls by the same standard. | No row reads VERIFIED without a linked, executable test ID. | PENDING |
 | **CA-4** | Corrective | Implement RC-007 (de-identification) or restate the control to match reality and re-assess HAZ-003 residual risk. | De-identifier with an allow-list, tested with PHI present in the input. | PENDING |
 | **CA-5** | Corrective | Make `voxel_spacing` a required input; remove the silent 1 mm default (HAZ-014). | Raises when spacing is unavailable; test with 3 mm slice thickness. | PENDING |
@@ -188,17 +188,57 @@ fallback, idempotency, and absence of fabricated-citation instructions.
 
 The control is therefore bound to executable evidence: its removal turns the suite red.
 
-### 5.2 Process observation — the first negative control was invalid
+### 5.2 Result — RC-017 negative control (executed)
 
-The negative control was first attempted with a string-substitution patch that
-**silently did not match**. The suite reported 14 passed, which would have been
-recorded as "negative control performed, control confirmed" — when in fact the
-control had never been challenged.
+**Implementation**: `backend/app/api/routes/websocket.py` — `_extract_token()` /
+`_authenticate_websocket()`, invoked before the socket is accepted and before any
+service capable of reading patient data is constructed. Credentials accepted via
+`Authorization: Bearer`, the `bearer` subprotocol (the only way a browser can send
+a credential without putting it in the URL), or `?token=` (accepted for
+compatibility, logged as a warning — query strings are recorded by proxies and
+access logs, so such a token should be treated as disclosed). All failure modes
+close with **1008** and an identical reason, so a caller cannot distinguish
+"no token" from "bad token" from "expired token". The two `/ws/stats` and
+`/ws/connections/{id}` GET endpoints, also unauthenticated, now require
+`get_current_active_user`.
+
+**Test**: `backend/tests/unit/test_rc017_websocket_auth.py` — 14 assertions. Uses
+a WebSocket double rather than a live server, deliberately: a risk-control test
+that cannot run in CI without Redis, GCS and a DI container is not a risk control.
+
+Two independent sabotage vectors were exercised, because a control can disappear
+either by being unwired or by being neutralised in place:
+
+| Codebase state | Expected | Observed |
+|---|---|---|
+| Control present | all pass | **14 passed** |
+| Enforcement call removed from the endpoint (unwired) | must fail | **1 failed, 13 passed** |
+| `_authenticate_websocket` returns a token unconditionally (neutralised) | must fail | **5 failed, 9 passed** |
+
+Full backend unit suite after the change: **264 passed, 0 failed**.
+
+**Observation — the endpoint has no consumers.** A repository-wide search found
+no client of `/ws/imaging`: the router is registered in `app/main.py:281` and
+served in production, but nothing in the frontend or elsewhere connects to it.
+It was therefore live, unauthenticated attack surface streaming patient imaging,
+with zero functional benefit. ISO 14971 §7.1 ranks *inherently safe design* above
+*protective measures*: **removing** the endpoint would eliminate the hazard rather
+than mitigate it. That is a product decision, not a unilateral one, so the
+endpoint has been authenticated as CA-2 specifies and the removal option is
+raised here for the Software Safety Officer to decide.
+
+### 5.3 Process observation — the first negative control was invalid
+
+The RC-006 negative control was first attempted with a string-substitution patch
+that **silently did not match**. The suite reported 14 passed, which would have
+been recorded as "negative control performed, control confirmed" — when in fact
+the control had never been challenged.
 
 This is the **same failure mode as the finding that opened this CAPA**: an
 unverified action recorded as a completed verification. It was caught only because
-the sabotage was independently re-checked (`grep` for the marker) before trusting
-the result.
+the sabotage was independently re-checked (`grep` for the marker) before the result
+was trusted. Every negative control in §5.1 and §5.2 was subsequently confirmed
+applied before its result was accepted.
 
 **Consequence for PA-1**: a negative control is only evidence if the record shows
 *both* that the sabotage was applied and that the suite failed. Adding to PA-1's
