@@ -27,6 +27,65 @@ from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
+# ─────────────────────────────────────────────────────────────────────────────
+# RC-006 — risk control for HAZ-003 (AI report hallucination, severity S5).
+#
+# CAPA-001: the Risk Management File recorded RC-006 as "VERIFIED — disclaimer
+# present in all 5 templates". It was not present in any form. This is the
+# implementation.
+#
+# The disclaimer is applied DETERMINISTICALLY in code (see _apply_disclaimer),
+# not merely requested of the model. A risk control that depends on an LLM
+# choosing to comply is not a risk control: the model can silently omit it, and
+# omission would be invisible. The prompt instruction below is defence in depth,
+# not the control itself.
+#
+# Verified by: backend/tests/unit/test_rc006_report_disclaimer.py
+#              (tests named test_rc006_*). Removing this control MUST turn CI red
+#              — that is the CAPA-001 §5 effectiveness criterion.
+# ─────────────────────────────────────────────────────────────────────────────
+REPORT_DISCLAIMER_EN = (
+    "> **AI-Generated — Requires Physician Review Before Clinical Action.** "
+    "This draft was produced by an automated system from computed measurements. "
+    "It is not a diagnosis. A qualified physician must review, correct and sign "
+    "it before it is used for any clinical decision."
+)
+REPORT_DISCLAIMER_ES = (
+    "> **Generado por IA — Requiere revisión médica antes de cualquier acción "
+    "clínica.** Este borrador fue producido por un sistema automatizado a partir "
+    "de mediciones calculadas. No es un diagnóstico. Un médico cualificado debe "
+    "revisarlo, corregirlo y firmarlo antes de usarlo para cualquier decisión clínica."
+)
+REPORT_DISCLAIMER_DE = (
+    "> **KI-generiert — ärztliche Überprüfung vor klinischer Verwendung "
+    "erforderlich.** Dieser Entwurf wurde von einem automatisierten System aus "
+    "berechneten Messwerten erstellt. Er ist keine Diagnose. Eine qualifizierte "
+    "ärztliche Fachperson muss ihn vor jeder klinischen Entscheidung prüfen, "
+    "korrigieren und signieren."
+)
+
+REPORT_DISCLAIMERS: Dict[str, str] = {
+    "en": REPORT_DISCLAIMER_EN,
+    "es": REPORT_DISCLAIMER_ES,
+    "de": REPORT_DISCLAIMER_DE,
+}
+
+
+def _apply_disclaimer(content: str, language: str) -> str:
+    """Prepend the mandatory RC-006 disclaimer to generated report content.
+
+    Applied unconditionally to every report, in every language, on every
+    template. Falls back to English for unknown languages rather than emitting
+    a report with no disclaimer at all.
+    """
+    disclaimer = REPORT_DISCLAIMERS.get((language or "en").lower(), REPORT_DISCLAIMER_EN)
+    body = (content or "").lstrip()
+    # Idempotent: never stack the banner if it is somehow already present.
+    if body.startswith(disclaimer):
+        return body
+    return f"{disclaimer}\n\n{body}"
+
+
 # Shared formatting instructions for all templates
 _FORMAT_INSTRUCTIONS = (
     "\n\n## OUTPUT FORMAT RULES (MANDATORY):\n"
@@ -49,6 +108,11 @@ _FORMAT_INSTRUCTIONS = (
     "or severe (extensive confluent). Grade atrophy as none/mild/moderate/severe for age.\n"
     "8. Write a professional, evidence-based report suitable for a board-certified "
     "neuroradiologist. No hedging or unnecessary qualifications — be precise and direct.\n"
+    "9. Report ONLY values present in the supplied measurements. Never estimate, "
+    "interpolate or invent a count, volume, percentage or measurement. If a value is "
+    "not supplied, write 'not assessed' — do not supply a plausible number.\n"
+    "10. Do NOT cite literature references. Any reference list must come from the "
+    "reporting system, not from you.\n"
 )
 
 # Report templates — system prompts for Claude (MS-focused, MAGNIMS/RSNA compliant)
@@ -294,11 +358,14 @@ REPORT_TEMPLATES: Dict[str, str] = {
         "6. Brain volume assessment (if data available)\n"
         "7. Atypical features or red flags (if any)\n"
         "8. Recommendations: follow-up interval per MAGNIMS guidelines, suggested sequences\n\n"
+        # CAPA-001: the previous instruction asked the model to "cite 3-5 relevant
+        # references (use real, published references)", which invites fabricated
+        # citations into a clinical document — a known LLM failure mode and a
+        # realisation of HAZ-003. References must come from a curated list held by
+        # the reporting system, never from the model.
         "## REFERENCES\n"
-        "Cite 3-5 relevant references that support your findings (use real, published references):\n"
-        "- Filippi et al. (2019) MAGNIMS recommendations\n"
-        "- Thompson et al. (2018) 2017 McDonald criteria revisions\n"
-        "- Wattjes et al. (2021) MAGNIMS-CMSC-NAIMS consensus\n"
+        "Do NOT generate a reference list. References are appended by the reporting "
+        "system from a curated, verified bibliography.\n"
         + _FORMAT_INSTRUCTIONS
     ),
     "ms_longitudinal": (
@@ -600,7 +667,10 @@ class BrainReportService:
                 ],
             )
 
-            content = message.content[0].text
+            # RC-006 (HAZ-003): the disclaimer is applied here, in code, so that
+            # no generated report can leave this service without it — regardless
+            # of what the model produced. See _apply_disclaimer.
+            content = _apply_disclaimer(message.content[0].text, language)
             processing_time_ms = int((time.time() - start_time) * 1000)
 
             logger.info(
