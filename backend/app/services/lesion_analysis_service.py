@@ -11,6 +11,7 @@ Connected component analysis for segmentation masks:
 """
 
 import numpy as np
+from app.utils.spacing_utils import SPACING_REQUIRED, require_spacing
 from typing import Optional
 
 from app.core.logging import get_logger
@@ -39,7 +40,7 @@ MIN_LESION_VOLUME_MM3 = 3.0  # ~3 voxels at 1mm isotropic
 
 def analyze_lesions(
     mask_3d: np.ndarray,
-    voxel_spacing: tuple[float, float, float] = (1.0, 1.0, 1.0),
+    voxel_spacing: tuple[float, float, float],
     labels: Optional[dict[int, str]] = None,
 ) -> dict:
     """
@@ -179,7 +180,9 @@ def analyze_lesions(
 def compute_dis_criteria(
     mask_3d: np.ndarray,
     labels: Optional[dict[int, str]] = None,
-    voxel_spacing: tuple[float, float, float] = (1.0, 1.0, 1.0),
+    # RC-024 (CAPA-001 CA-5): required. The sentinel replaces the old
+    # (1.0, 1.0, 1.0) default; omitting it now raises instead of assuming.
+    voxel_spacing: tuple[float, float, float] = SPACING_REQUIRED,
 ) -> dict:
     """
     Evaluate McDonald 2024 Dissemination in Space (DIS) criteria.
@@ -203,6 +206,7 @@ def compute_dis_criteria(
     Returns:
         Dict with McDonald 2024 DIS assessment (brain regions only).
     """
+    voxel_spacing = require_spacing(voxel_spacing, caller="compute_dis_criteria")
     # IEC 62304 Class C — Input validation (REQ-SAFE-005)
     if not isinstance(mask_3d, np.ndarray):
         raise ValueError("mask_3d must be a numpy ndarray")

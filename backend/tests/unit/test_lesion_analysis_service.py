@@ -59,7 +59,7 @@ class TestAnalyzeLesions:
         from app.services.lesion_analysis_service import analyze_lesions
         mask = np.zeros((20, 20), dtype=np.int32)
         with pytest.raises(ValueError, match="3D"):
-            analyze_lesions(mask)
+            analyze_lesions(mask, (1.0, 1.0, 1.0))  # RC-024: spacing now required
 
     def test_input_validation_negative_spacing(self):
         """Negative spacing raises ValueError."""
@@ -140,7 +140,7 @@ class TestAnalyzeLesions:
         """Non-ndarray input raises ValueError."""
         from app.services.lesion_analysis_service import analyze_lesions
         with pytest.raises(ValueError, match="numpy ndarray"):
-            analyze_lesions([[1, 2], [3, 4]])
+            analyze_lesions([[1, 2], [3, 4]], (1.0, 1.0, 1.0))  # RC-024
 
     def test_custom_labels(self):
         """Custom label mapping is used in output."""
@@ -195,7 +195,7 @@ class TestDISCriteria:
         """2D mask raises ValueError."""
         from app.services.lesion_analysis_service import compute_dis_criteria
         with pytest.raises(ValueError, match="3D"):
-            compute_dis_criteria(np.zeros((20, 20), dtype=np.int32))
+            compute_dis_criteria(np.zeros((20, 20), dtype=np.int32), None, (1.0, 1.0, 1.0))  # RC-024
 
     def test_dis_all_three_brain_regions(self):
         """DIS met when all 3 brain regions (PV, JC, IT) have lesions."""
@@ -257,4 +257,4 @@ class TestDISCriteria:
         """Non-ndarray input raises ValueError."""
         from app.services.lesion_analysis_service import compute_dis_criteria
         with pytest.raises(ValueError, match="numpy ndarray"):
-            compute_dis_criteria([[1, 2], [3, 4]])
+            compute_dis_criteria([[1, 2], [3, 4]], None, (1.0, 1.0, 1.0))  # RC-024

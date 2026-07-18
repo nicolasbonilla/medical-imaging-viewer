@@ -37,6 +37,7 @@ References:
 
 import time
 import numpy as np
+from app.utils.spacing_utils import SPACING_REQUIRED, require_spacing
 from typing import Optional
 
 from app.core.logging import get_logger
@@ -95,7 +96,7 @@ MIN_LESION_VOLUME_MM3 = 3.0  # ~3 voxels at 1mm isotropic
 def classify_lesions_with_parcellation(
     lesion_mask: np.ndarray,
     parcellation_mask: np.ndarray,
-    voxel_spacing: tuple[float, float, float] = (1.0, 1.0, 1.0),
+    voxel_spacing: tuple[float, float, float],
 ) -> dict:
     """
     Classify MS lesions into MAGNIMS regions using brain parcellation + EDT.
@@ -263,7 +264,9 @@ def classify_lesions_with_parcellation(
 def classify_lesions_geometric(
     lesion_mask: np.ndarray,
     image_data: Optional[np.ndarray] = None,
-    voxel_spacing: tuple[float, float, float] = (1.0, 1.0, 1.0),
+    # RC-024 (CAPA-001 CA-5): required. The sentinel replaces the old
+    # (1.0, 1.0, 1.0) default; omitting it now raises instead of assuming.
+    voxel_spacing: tuple[float, float, float] = SPACING_REQUIRED,
 ) -> dict:
     """
     Classify MS lesions using geometric heuristics (fallback method).
@@ -285,6 +288,7 @@ def classify_lesions_geometric(
     Returns:
         Dict with classified_mask and per-lesion details.
     """
+    voxel_spacing = require_spacing(voxel_spacing, caller="classify_lesions_geometric")
     # IEC 62304 Class C — Input validation (REQ-SAFE-005)
     if not isinstance(lesion_mask, np.ndarray) or lesion_mask.ndim != 3:
         raise ValueError("lesion_mask must be a 3D numpy ndarray")
@@ -462,7 +466,7 @@ def classify_lesions_geometric(
 def classify_from_zone_mask(
     lesion_mask: np.ndarray,
     zone_mask: np.ndarray,
-    voxel_spacing: tuple[float, float, float] = (1.0, 1.0, 1.0),
+    voxel_spacing: tuple[float, float, float],
 ) -> dict:
     """
     Classify MS lesions into MAGNIMS regions using a pre-computed zone mask.
@@ -583,7 +587,7 @@ def classify_from_zone_mask(
 def classify_lesions_with_atlas(
     lesion_mask: np.ndarray,
     target_img,
-    voxel_spacing: tuple[float, float, float] = (1.0, 1.0, 1.0),
+    voxel_spacing: tuple[float, float, float],
 ) -> dict:
     """
     Classify MS lesions into MAGNIMS regions using the MSMask atlas.
@@ -639,7 +643,7 @@ def classify_lesions_with_atlas(
 
 def generate_zone_map(
     parcellation_mask: np.ndarray,
-    voxel_spacing: tuple[float, float, float] = (1.0, 1.0, 1.0),
+    voxel_spacing: tuple[float, float, float],
 ) -> dict:
     """
     Generate a 3D MAGNIMS zone map from brain parcellation.
@@ -771,7 +775,7 @@ def generate_zone_map(
 
 def generate_zone_map_atlas(
     target_img,
-    voxel_spacing: tuple[float, float, float] = (1.0, 1.0, 1.0),
+    voxel_spacing: tuple[float, float, float],
 ) -> dict:
     """
     Generate a 3D MAGNIMS zone map using LST-AI's MSMask atlas.
@@ -983,7 +987,7 @@ def generate_zone_map_atlas(
 
 def generate_zone_map_geometric(
     image_data: np.ndarray,
-    voxel_spacing: tuple[float, float, float] = (1.0, 1.0, 1.0),
+    voxel_spacing: tuple[float, float, float],
 ) -> dict:
     """
     DEPRECATED: Use generate_zone_map_atlas() instead.

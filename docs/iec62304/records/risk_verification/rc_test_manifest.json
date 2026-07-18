@@ -72,7 +72,7 @@
       "status": "not_implemented",
       "implementation": null,
       "tests": [],
-      "note": "CAPA-001 §2.5 — verified only by recollection, which is not objective evidence. The code does not depend on the assumption: it silently defaults voxel_spacing to (1.0, 1.0, 1.0) when metadata is absent, which is the harm HAZ-014 describes. Tracked as CA-5."
+      "note": "Superseded in effect by RC-024 (CAPA-001 CA-5). The MNI 1 mm claim remains unverified — recollection is not objective evidence — but the code no longer relies on it: voxel spacing is now required and validated rather than assumed. RC-022 itself should be retired or restated by the Safety Officer."
     },
     "RC-001": {
       "description": "All AI segmentation results labeled assistive / requires physician review",
@@ -229,6 +229,17 @@
       ],
       "negative_control": "CAPA-004 CA-4.1 — fixed RAS return → 9 failed; canonicalisation neutralised → 2 failed. CA-4.2 — orientation warning silenced in the viewport → 2 failed",
       "note": "NEW control created by CAPA-004 CA-4.1; MUST be added to the Risk Management File §5.1 (tracked). It provides the primitives only. RC-013 — orientation VALIDATION ON UPLOAD — remains not_implemented because canonicalisation is deliberately opt-in: image and mask load through separate calls, so transforming one and not the other would misalign them and create a worse hazard than the one being fixed. Migrating to canonical-by-default must convert both together in one change, with a matched-pair correspondence test. The viewport now REPORTS the orientation and warns when it is UNKNOWN or non-canonical, but deliberately renders NO L/R edge labels: volumes are not canonicalised on load and imaging_service transposes with fixed axis tuples presuming RAS, so the axis-to-screen mapping is unverified. A test asserts that absence. Labels may only be added under CA-4.3, after verification against a phantom of known laterality."
+    },
+    "RC-024": {
+      "description": "Voxel spacing is required for every quantitative measurement; never assumed",
+      "hazard": "HAZ-014",
+      "status": "implemented",
+      "implementation": "backend/app/utils/spacing_utils.py::resolve_voxel_spacing / require_spacing; 4 route sites and 14 Class C service signatures",
+      "tests": [
+        "tests/unit/test_rc024_voxel_spacing.py"
+      ],
+      "negative_control": "CAPA-001 CA-5 — helper returns 1mm default → 17 failed; a route restores the default → 1 failed",
+      "note": "Supersedes the RC-022 assumption that all images are MNI 1 mm, which was 'verified by recollection'. The code no longer depends on that assumption: it requires the real geometry and raises (HTTP 422, VOXEL_SPACING_UNAVAILABLE) when it is unavailable."
     }
   },
   "unverified_controls_note": [

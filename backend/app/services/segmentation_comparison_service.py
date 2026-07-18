@@ -11,6 +11,7 @@ Computes similarity metrics between segmentation/expert masks:
 """
 
 import numpy as np
+from app.utils.spacing_utils import SPACING_REQUIRED, require_spacing
 from typing import Optional
 
 from app.core.logging import get_logger
@@ -42,7 +43,7 @@ def compute_dice(mask_a: np.ndarray, mask_b: np.ndarray) -> float:
 def compute_hausdorff(
     mask_a: np.ndarray,
     mask_b: np.ndarray,
-    voxel_spacing: tuple[float, float, float] = (1.0, 1.0, 1.0),
+    voxel_spacing: tuple[float, float, float],
 ) -> float:
     """
     Compute 95th percentile Hausdorff distance between two binary masks.
@@ -83,7 +84,7 @@ def compute_hausdorff(
 def compute_volume_diff(
     mask_a: np.ndarray,
     mask_b: np.ndarray,
-    voxel_spacing: tuple[float, float, float] = (1.0, 1.0, 1.0),
+    voxel_spacing: tuple[float, float, float],
 ) -> dict:
     """
     Compute volume difference between two masks.
@@ -152,13 +153,16 @@ def compare_two_masks(
     mask_b: np.ndarray,
     label_a: str = "Mask A",
     label_b: str = "Mask B",
-    voxel_spacing: tuple[float, float, float] = (1.0, 1.0, 1.0),
+    # RC-024 (CAPA-001 CA-5): required. The sentinel replaces the old
+    # (1.0, 1.0, 1.0) default; omitting it now raises instead of assuming.
+    voxel_spacing: tuple[float, float, float] = SPACING_REQUIRED,
 ) -> dict:
     """
     Full pairwise comparison between two masks.
     Returns Dice, Hausdorff, volume diff, and per-slice Dice.
     Raises ValueError if mask shapes don't match.
     """
+    voxel_spacing = require_spacing(voxel_spacing, caller="compare_two_masks")
     if mask_a.shape != mask_b.shape:
         raise ValueError(f"Mask shapes must match: {mask_a.shape} vs {mask_b.shape}")
 
