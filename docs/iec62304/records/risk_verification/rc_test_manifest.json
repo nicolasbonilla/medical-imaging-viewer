@@ -25,7 +25,7 @@
     "status here is 'implemented' or 'deliberately_absent'."
   ],
   "manifest_version": 1,
-  "capa_reference": "CAPA-001",
+  "capa_reference": "CAPA-001, CAPA-002, CAPA-004, CAPA-005",
   "last_updated": "2026-07-18",
   "controls": {
     "RC-006": {
@@ -73,13 +73,152 @@
       "implementation": null,
       "tests": [],
       "note": "CAPA-001 §2.5 — verified only by recollection, which is not objective evidence. The code does not depend on the assumption: it silently defaults voxel_spacing to (1.0, 1.0, 1.0) when metadata is absent, which is the harm HAZ-014 describes. Tracked as CA-5."
+    },
+    "RC-001": {
+      "description": "All AI segmentation results labeled assistive / requires physician review",
+      "hazard": "HAZ-001",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "note": "RCV-2026-07-18 §3.3 — the phrase appears nowhere in the codebase; AI masks are indistinguishable from hand-drawn ones. Tracked as CAPA-001 CA-3."
+    },
+    "RC-002": {
+      "description": "Viewing/Edit mode separation; AI results read-only until clinician activates edit",
+      "hazard": "HAZ-001",
+      "status": "unverified",
+      "implementation": "frontend/src/components/ImageViewer2D.tsx (NOT ViewerApp.tsx as the RMF cites)",
+      "tests": [],
+      "note": "Control is real and effective but not bound to a test; UI-layer only, no server-side enforcement. CA-3."
+    },
+    "RC-003": {
+      "description": "Manual segmentation tools always available as override",
+      "hazard": "HAZ-001",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "note": "Rendered only when !is3D && activeSegmentation; in 3D there is no manual override. 'Always' is false. CA-3."
+    },
+    "RC-004": {
+      "description": "Volumetry displays percentile ranges with normative reference",
+      "hazard": "HAZ-002",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "note": "Normative table has no provenance; sole call site omits patientAge so no percentile is ever computed. See CAPA-005."
+    },
+    "RC-005": {
+      "description": "Abnormality flags show threshold criteria used",
+      "hazard": "HAZ-002",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "note": "Thresholds live only in Python comments; flag can never fire. See CAPA-005."
+    },
+    "RC-008": {
+      "description": "Edge AI badge displays confidence and assistive-only disclaimer",
+      "hazard": "HAZ-004",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "note": "Disclaimer gated behind useState(false); renders only after a click. See CAPA-004 CA-4.4."
+    },
+    "RC-009": {
+      "description": "Edge AI model admin-supplied; feature hidden when unavailable",
+      "hazard": "HAZ-004",
+      "status": "unverified",
+      "implementation": "frontend/src/hooks/useEdgeAI.ts",
+      "tests": [],
+      "note": "Verified by inspection 2026-07-18 and broader than claimed (also rejects text/html), but not bound to a test. ID conflicts with the withdrawn RCV-SUMMARY. CA-3."
+    },
+    "RC-011": {
+      "description": "Classification method displayed",
+      "hazard": "HAZ-005",
+      "status": "unverified",
+      "implementation": "frontend/src/components/LesionDashboard.tsx",
+      "tests": [],
+      "note": "Displayed and honest, but the control names EDT/Atlas/Geometric while the UI exposes auto/msmask/geometric. Wording cannot be mapped to the screen. CA-3."
+    },
+    "RC-012": {
+      "description": "Auto-transpose detection for axis mismatch",
+      "hazard": "HAZ-006",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "note": "Purely dimensional; a no-op on square 256x256 volumes, the standard brain-MRI matrix. See CAPA-004 CA-4.3."
+    },
+    "RC-013": {
+      "description": "NIfTI orientation validation on upload",
+      "hazard": "HAZ-006",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "note": "No orientation logic exists anywhere in the product; no L/R labels on any viewport. See CAPA-004 CA-4.1/4.2."
+    },
+    "RC-014": {
+      "description": "Longitudinal tri-colour overlay (TP1/TP2/overlap)",
+      "hazard": "HAZ-007",
+      "status": "unverified",
+      "implementation": "frontend/src/components/SegmentationCanvasLocal.tsx",
+      "tests": [],
+      "note": "Implemented exactly as written — the only control of which that is true — but not bound to a test. CA-3."
+    },
+    "RC-015": {
+      "description": "DIS per-region details with qualifying lesion counts",
+      "hazard": "HAZ-008",
+      "status": "unverified",
+      "implementation": "backend/app/services/lesion_analysis_service.py",
+      "tests": [],
+      "note": "3 of 5 McDonald 2024 regions, correctly and honestly disclosed. Counts are returned and typed but rendered by no component. CA-3."
+    },
+    "RC-016": {
+      "description": "Patient name and MRN displayed in viewer",
+      "hazard": "HAZ-009",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "note": "patientName is a dead prop in ImageViewer2D; MRN displayed nowhere. See CAPA-004 CA-4.2."
+    },
+    "RC-018": {
+      "description": "RBAC: 4 roles, 15 granular permissions",
+      "hazard": "HAZ-010",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "note": "Model correct; 7 of 124 routes enforce a permission, 0 enforce a role, 10 of 15 permissions never checked. See CAPA-004 CA-4.5 and CAPA-002."
+    },
+    "RC-019": {
+      "description": "DICOM-SEG with standard SOP Class UID",
+      "hazard": "HAZ-011",
+      "status": "unverified",
+      "implementation": "backend/app/utils/dicom_utils.py::create_dicom_seg",
+      "tests": [
+        "tests/unit/test_dicom_seg.py"
+      ],
+      "note": "Code correct. Tests exist but are not RC-named, so the manifest gate cannot bind them yet; the RMF claimed 8 tests and there are 7. CA-3."
+    },
+    "RC-020": {
+      "description": "DICOMweb import shows metadata before import",
+      "hazard": "HAZ-012",
+      "status": "unverified",
+      "implementation": "frontend/src/pages/PACSBrowserPage.tsx",
+      "tests": [],
+      "note": "Source metadata is shown, but the destination is an unvalidated free-text prompt() patient ID with no name confirmation — a mis-association hazard covered by no control. CA-3."
+    },
+    "RC-021": {
+      "description": "Report generation timeout (30s) with error message",
+      "hazard": "HAZ-013",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "note": "No timeout exists anywhere in the report path; no CLAUDE_TIMEOUT setting. Also a synchronous call inside an async handler blocks the worker. CA-3."
     }
   },
   "unverified_controls_note": [
-    "The remaining 17 risk controls in the Risk Management File have NOT been",
-    "re-verified to the standard this manifest requires. They are absent from",
-    "'controls' rather than listed as verified, because listing them without",
-    "evidence would repeat the exact nonconformity CAPA-001 was raised for.",
-    "Tracked as CAPA-001 action CA-3."
+    "All 22 controls were re-verified against source on 2026-07-18 (CAPA-001 CA-3).",
+    "Status 'unverified' here means: found present by inspection, but NOT bound to an",
+    "automated test whose removal turns CI red. Under CAPA-001 PA-1 that is not",
+    "sufficient to record VERIFIED in the Risk Management File. Only RC-006 and",
+    "RC-017 meet the full standard.",
+    "Evidence: docs/iec62304/records/risk_verification/RCV-SUMMARY_2026-07-18.md"
   ]
 }

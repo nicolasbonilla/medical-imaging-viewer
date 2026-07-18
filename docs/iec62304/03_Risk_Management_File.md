@@ -1,9 +1,31 @@
 # MSTool-AI: Risk Management File
 
+> ## ⚠️ RESIDUAL RISK DETERMINATIONS WITHDRAWN — 2026-07-18
+>
+> Adversarial re-verification of all 22 risk controls against the source code
+> (CAPA-001 action CA-3) found **4 verified, 5 partial, and 12 overstated or not
+> implemented**. Four controls recorded as VERIFIED were absent from the codebase
+> in every form.
+>
+> **Six residual-risk determinations are withdrawn** (HAZ-002, HAZ-004, HAZ-005,
+> HAZ-006, HAZ-009, HAZ-010) because the controls that discharged them do not
+> exist. They must be **re-derived, not amended**. Section 6 must not be relied on.
+>
+> **No Declaration of Conformity may be executed, and no clinical use may proceed**,
+> while CAPA-001, CAPA-002, CAPA-004 and CAPA-005 are open.
+>
+> The Verification column in §5.1 now records the true state of each control as of
+> 2026-07-18. The **Implementation column has deliberately not been edited** — it
+> shows the original claim, so the discrepancy between what was cited and what
+> exists remains visible in the record.
+>
+> Evidence: [`RCV-SUMMARY_2026-07-18.md`](records/risk_verification/RCV-SUMMARY_2026-07-18.md).
+> The prior verification record (2026-04-12) is retained and marked withdrawn.
+
 ## ISO 14971:2019 Compliant Risk Management Documentation
 
 **Document ID**: RMF-001
-**Version**: 1.0
+**Version**: 1.1 (2026-07-18 — verification column corrected under CAPA-001 CA-3)
 **Effective Date**: April 12, 2026
 **Standard**: ISO 14971:2019 — Medical devices — Application of risk management to medical devices
 **Software Safety Class**: IEC 62304 Class C
@@ -205,43 +227,43 @@ Hazard identification was performed using **Software Failure Modes and Effects A
 
 | HAZ ID | Risk Control Measure | Type | Requirement ID | Implementation | Verification |
 |--------|---------------------|------|---------------|----------------|-------------|
-| HAZ-001 | RC-001: All AI segmentation results labeled "assistive — requires physician review" | Inherent safety (warning) | REQ-SAFE-001 | `QuickScreenBadge.tsx` disclaimer text, `brain_report_service.py` system prompt | VERIFIED — Code inspection confirmed disclaimer present in component JSX and report prompt template |
-| HAZ-001 | RC-002: Viewing/Edit mode separation — AI results are read-only until clinician activates edit | Design control | REQ-SAFE-002 | `ViewerApp.tsx` Viewing/Edit mode toggle, `useSegmentationStore.ts` isPaintMode flag | VERIFIED — Mode toggle implemented; paint operations gated by isPaintMode state |
-| HAZ-001 | RC-003: Manual segmentation tools always available as override | Design control | REQ-SAFE-003 | `SegmentationPanel.tsx` brush/eraser/fill tools always rendered in edit mode | VERIFIED — Paint tools available independently of AI results |
-| HAZ-002 | RC-004: Volumetry displays percentile ranges with normative reference | Information for safety | REQ-SAFE-004 | `BrainVolumetryPanel.tsx` percentile bar chart with color coding | VERIFIED — Percentile displayed per structure with age-group reference |
-| HAZ-002 | RC-005: Abnormality flags show threshold criteria used | Information for safety | REQ-SAFE-005 | `brain_volumetry_service.py` — percentile < 10 (atrophy) or > 90 (enlargement) flagged | VERIFIED — Threshold logic in compute_volumes(), UI shows badge with percentile value |
-| HAZ-003 | RC-006: Report header states "AI-Generated — Requires Physician Review Before Clinical Action" | Inherent safety (warning) | REQ-SAFE-006 | `brain_report_service.py` REPORT_TEMPLATES system prompt includes mandatory disclaimer | VERIFIED — System prompt reviewed, disclaimer present in all 5 templates |
-| HAZ-003 | RC-007: Report cannot be auto-committed to clinical record without clinician confirmation | Design control | REQ-SAFE-007 | `AIReportPanel.tsx` — report displayed in viewer with copy button; no auto-save to FHIR or PACS | VERIFIED — No automatic export path exists; clinician must explicitly copy/export |
-| HAZ-004 | RC-008: Edge AI badge displays confidence percentage and "assistive tool only, not diagnostic" disclaimer | Information for safety | REQ-SAFE-008 | `QuickScreenBadge.tsx` — shows confidence %, inference time, and disclaimer text | VERIFIED — Component JSX contains disclaimer string and confidence display |
-| HAZ-004 | RC-009: Edge AI model file must be explicitly supplied by administrator; hidden when unavailable | Design control | REQ-SAFE-009 | `useEdgeAI.ts` — HEAD request checks model file availability; component hidden if 404 | VERIFIED — Graceful degradation implemented via HEAD check and conditional rendering |
-| HAZ-005 | RC-010: Classification confidence scores displayed per lesion | Information for safety | REQ-SAFE-010 | `LesionDashboard.tsx` — confidence column in lesion table, color-coded badges | VERIFIED — Per-lesion confidence displayed from ms_region_classifier.py output |
-| HAZ-005 | RC-011: Classification method displayed (EDT/Atlas/Geometric) | Information for safety | REQ-SAFE-011 | `LesionDashboard.tsx` — method selector dropdown and method label in results | VERIFIED — Method name included in classification result and displayed in UI |
-| HAZ-006 | RC-012: Auto-transpose detection for axis mismatch in 2D rendering | Design control | REQ-SAFE-012 | `SegmentationCanvasLocal.tsx` transposeSlice() function with needsTranspose detection | VERIFIED — Axis mismatch auto-detected by comparing mask dims vs image dims; transpose applied on-the-fly |
-| HAZ-006 | RC-013: NIfTI orientation validation on upload | Design control | REQ-SAFE-013 | `nifti_utils.py` load_nifti_from_bytes() validates file via nibabel | PARTIAL — NIfTI loaded and parsed; explicit orientation warning not yet implemented |
-| HAZ-007 | RC-014: Longitudinal comparison displays tri-color overlay (TP1/TP2/overlap) for visual verification | Information for safety | REQ-SAFE-014 | `SegmentationCanvasLocal.tsx` — longitudinal overlay renders blue (TP1), red (TP2), green (overlap) | VERIFIED — Canvas rendering code reviewed, tri-color logic confirmed |
-| HAZ-008 | RC-015: DIS assessment displays per-region details with qualifying lesion counts | Information for safety | REQ-SAFE-015 | `LesionDashboard.tsx` DIS section with per-region presence indicators and counts | VERIFIED — DIS badge and region details rendered from compute_dis_criteria() output |
-| HAZ-009 | RC-016: Patient name and MRN prominently displayed in viewer header | Information for safety | REQ-SAFE-016 | `ViewerApp.tsx` header section displays patient name, MRN from ControlPanel data | VERIFIED — Patient identification visible in viewer header at all times |
-| HAZ-010 | RC-017: JWT authentication on ALL 103 API endpoints (100% coverage) with token expiry (1 hour) + WebAuthn/Passkeys | Design control | REQ-SEC-001 | `authentication.py` JWT creation with exp claim; `webauthn_service.py` FIDO2 flow; all route files import `get_current_active_user` | VERIFIED — All 103 API endpoints require JWT authentication; JWT expiry set to ACCESS_TOKEN_EXPIRE_MINUTES (60); WebAuthn endpoints functional |
-| HAZ-010 | RC-018: RBAC with 4 roles and 15 granular permissions | Design control | REQ-SEC-002 | `rbac.py` RBACManager with role hierarchy VIEWER→TECHNICIAN→RADIOLOGIST→ADMIN | VERIFIED — 15 permissions defined in Permission enum; role-to-permission mapping in RBACManager |
-| HAZ-011 | RC-019: DICOM-SEG generated with standard SOP Class UID and proper header | Design control | REQ-SAFE-017 | `dicom_utils.py` create_dicom_seg() — SOP Class UID 1.2.840.10008.5.1.4.1.1.66.4 | VERIFIED — 8 unit tests confirm valid DICOM-SEG structure (test_dicom_seg.py) |
-| HAZ-012 | RC-020: DICOMweb import displays study/patient metadata for user confirmation before import | Design control | REQ-SAFE-018 | `PACSBrowserPage.tsx` — study search results show patient name, ID, modality before import | VERIFIED — Import requires explicit user action after viewing metadata |
-| HAZ-013 | RC-021: Report generation timeout (30s) with error message if API fails | Design control | REQ-SAFE-019 | `brain_report_service.py` — httpx client with configurable timeout; error caught and returned | VERIFIED — Anthropic SDK timeout handling; error message returned to frontend |
-| HAZ-014 | RC-022: All images preprocessed to MNI 1mm template before analysis (voxel spacing guaranteed 1mm isotropic) | Inherent safety (design) | REQ-SAFE-020 | Preprocessing pipeline produces MNI 1mm registered NIfTI files before segmentation | VERIFIED — Confirmed by user: all analysis data is MNI 1mm template (documented in project memory) |
+| HAZ-001 | RC-001: All AI segmentation results labeled "assistive — requires physician review" | Inherent safety (warning) | REQ-SAFE-001 | `QuickScreenBadge.tsx` disclaimer text, `brain_report_service.py` system prompt | **NOT IMPLEMENTED** (2026-07-18) — the phrase appears nowhere in the codebase; `SegmentationPanel.tsx` carries no disclaimer; AI masks are indistinguishable from hand-drawn ones. Cited `QuickScreenBadge.tsx` is a different feature. See RCV-SUMMARY_2026-07-18 §3.3. |
+| HAZ-001 | RC-002: Viewing/Edit mode separation — AI results are read-only until clinician activates edit | Design control | REQ-SAFE-002 | `ViewerApp.tsx` Viewing/Edit mode toggle, `useSegmentationStore.ts` isPaintMode flag | **PARTIAL** (2026-07-18) — control is real and effective, but the cited file is wrong: the toggle is in `ImageViewer2D.tsx`, not `ViewerApp.tsx`. UI-layer only; no server-side enforcement. Not bound to a test. |
+| HAZ-001 | RC-003: Manual segmentation tools always available as override | Design control | REQ-SAFE-003 | `SegmentationPanel.tsx` brush/eraser/fill tools always rendered in edit mode | **OVERSTATED** (2026-07-18) — rendered under two conditions (`!is3D && activeSegmentation`); in 3D view there is no manual override at all. "Always" is false. |
+| HAZ-002 | RC-004: Volumetry displays percentile ranges with normative reference | Information for safety | REQ-SAFE-004 | `BrainVolumetryPanel.tsx` percentile bar chart with color coding | **NOT IMPLEMENTED** (2026-07-18) — normative table has no provenance; 11/32 structures covered; `patient_sex` accepted and never used; the sole call site omits `patientAge`, so no percentile is ever computed. See CAPA-005. |
+| HAZ-002 | RC-005: Abnormality flags show threshold criteria used | Information for safety | REQ-SAFE-005 | `brain_volumetry_service.py` — percentile < 10 (atrophy) or > 90 (enlargement) flagged | **NOT IMPLEMENTED** (2026-07-18) — thresholds exist only in Python comments and never reach the UI; the flag can never fire (same dead path as RC-004). See CAPA-005. |
+| HAZ-003 | RC-006: Report header states "AI-Generated — Requires Physician Review Before Clinical Action" | Inherent safety (warning) | REQ-SAFE-006 | `brain_report_service.py` REPORT_TEMPLATES system prompt includes mandatory disclaimer | **VERIFIED** (2026-07-18) — `brain_report_service.py::_apply_disclaimer`, bound to `tests/unit/test_rc006_report_disclaimer.py`; negative control: removing the enforcement line → 8 failed. Implemented under CAPA-001 CA-1; was **absent** when previously recorded VERIFIED. |
+| HAZ-003 | RC-007: Report cannot be auto-committed to clinical record without clinician confirmation | Design control | REQ-SAFE-007 | `AIReportPanel.tsx` — report displayed in viewer with copy button; no auto-save to FHIR or PACS | **IMPLEMENTED BY ABSENCE OF FEATURE, NOT BY A CONTROL** (2026-07-18) — exhaustive search found no persistence path (FHIR is GET-only, DICOMweb inbound-only), but there is no confirmation gate, no export function and no test to turn CI red if auto-save were added. Note: the withdrawn RCV-SUMMARY defines RC-007 as de-identification, which is **not implemented** (CAPA-001 CA-4). |
+| HAZ-004 | RC-008: Edge AI badge displays confidence percentage and "assistive tool only, not diagnostic" disclaimer | Information for safety | REQ-SAFE-008 | `QuickScreenBadge.tsx` — shows confidence %, inference time, and disclaimer text | **OVERSTATED** (2026-07-18) — the disclaimer is gated behind `useState(false)` and renders only after a click; a user reading a confidence-scored verdict sees no limitation statement. The component's own comment "A clear disclaimer is always shown" is false. See CAPA-004 §4. |
+| HAZ-004 | RC-009: Edge AI model file must be explicitly supplied by administrator; hidden when unavailable | Design control | REQ-SAFE-009 | `useEdgeAI.ts` — HEAD request checks model file availability; component hidden if 404 | **VERIFIED** (2026-07-18) — HEAD check also rejects `text/html`, defeating the SPA-rewrite false positive; broader than claimed. Residual: brief pre-resolution window where the button is clickable (fails to an error, not a wrong answer). Not bound to a test. **ID conflict**: the withdrawn RCV-SUMMARY defines RC-009 differently. |
+| HAZ-005 | RC-010: Classification confidence scores displayed per lesion | Information for safety | REQ-SAFE-010 | `LesionDashboard.tsx` — confidence column in lesion table, color-coded badges | **DELIBERATELY ABSENT** (2026-07-18) — the geometric path sets `confidence = None` on purpose, having no calibrated confidence. The code is more honest than this document was. The row was wrong, not the code. |
+| HAZ-005 | RC-011: Classification method displayed (EDT/Atlas/Geometric) | Information for safety | REQ-SAFE-011 | `LesionDashboard.tsx` — method selector dropdown and method label in results | **PARTIAL** (2026-07-18) — method is displayed and honestly resolves the effective method, but the backend has five methods and the UI exposes three; "EDT" and "Atlas" are not selectable method names. The control's wording cannot be mapped to the screen. |
+| HAZ-006 | RC-012: Auto-transpose detection for axis mismatch in 2D rendering | Design control | REQ-SAFE-012 | `SegmentationCanvasLocal.tsx` transposeSlice() function with needsTranspose detection | **PARTIAL** (2026-07-18) — the detector is purely dimensional and is a **no-op on square (256×256) volumes**, the standard brain-MRI matrix. Blind in the geometry it most needs to cover. Overlay-only, 2D-only. See CAPA-004 §2.3. |
+| HAZ-006 | RC-013: NIfTI orientation validation on upload | Design control | REQ-SAFE-013 | `nifti_utils.py` load_nifti_from_bytes() validates file via nibabel | **NOT IMPLEMENTED** (2026-07-18) — overstated even as PARTIAL. `load_nifti_from_bytes()` checks size and parseability only; it never reads the affine. **No orientation logic exists anywhere in the product**, and there are no L/R laterality labels on any viewport. See CAPA-004 §2. |
+| HAZ-007 | RC-014: Longitudinal comparison displays tri-color overlay (TP1/TP2/overlap) for visual verification | Information for safety | REQ-SAFE-014 | `SegmentationCanvasLocal.tsx` — longitudinal overlay renders blue (TP1), red (TP2), green (overlap) | **VERIFIED** (2026-07-18) — blue/red/green confirmed; the overlap branch is correctly tested first; bounds-guarded and fails closed on dimension mismatch. The one control found implemented exactly as written. Not bound to a test. |
+| HAZ-008 | RC-015: DIS assessment displays per-region details with qualifying lesion counts | Information for safety | REQ-SAFE-015 | `LesionDashboard.tsx` DIS section with per-region presence indicators and counts | **PARTIAL** (2026-07-18) — implements 3 of 5 McDonald 2024 DIS regions, correctly and honestly disclosed in both payload and UI. However the **qualifying lesion counts are not displayed**: the field is returned and typed but read by no component. |
+| HAZ-009 | RC-016: Patient name and MRN prominently displayed in viewer header | Information for safety | REQ-SAFE-016 | `ViewerApp.tsx` header section displays patient name, MRN from ControlPanel data | **NOT IMPLEMENTED** (2026-07-18) — `patientName` reaches `ImageViewer2D` and is **never rendered** (dead prop). **MRN is displayed nowhere in the viewer.** Identity appears only as a conditional breadcrumb; 3D and multi-panel receive no patient props. See CAPA-004 §3. |
+| HAZ-010 | RC-017: JWT authentication on ALL 103 API endpoints (100% coverage) with token expiry (1 hour) + WebAuthn/Passkeys | Design control | REQ-SEC-001 | `authentication.py` JWT creation with exp claim; `webauthn_service.py` FIDO2 flow; all route files import `get_current_active_user` | **VERIFIED — AUTHENTICATION ONLY** (2026-07-18) — `websocket.py::_authenticate_websocket`, bound to `tests/unit/test_rc017_websocket_auth.py`; two negative-control vectors. Implemented under CAPA-001 CA-2; the WebSocket transport was **entirely unauthenticated** when previously recorded as 100% coverage. **Object-level authorization is absent — see CAPA-002.** |
+| HAZ-010 | RC-018: RBAC with 4 roles and 15 granular permissions | Design control | REQ-SEC-002 | `rbac.py` RBACManager with role hierarchy VIEWER→TECHNICIAN→RADIOLOGIST→ADMIN | **OVERSTATED** (2026-07-18) — the model is correct (4 roles, 15 permissions) but of **124 route decorators, 7 enforce a permission and 0 enforce a role**, all in `auth.py`. Every clinical route gates on authentication only; a VIEWER can delete studies and generate reports. 10 of 15 permissions are never checked. See CAPA-004 §4. |
+| HAZ-011 | RC-019: DICOM-SEG generated with standard SOP Class UID and proper header | Design control | REQ-SAFE-017 | `dicom_utils.py` create_dicom_seg() — SOP Class UID 1.2.840.10008.5.1.4.1.1.66.4 | **PARTIAL** (2026-07-18) — code is correct (SOP Class UID set in both file meta and SOP Common). **The test count is false: there are 7, not 8**, with no parametrisation to expand it. |
+| HAZ-012 | RC-020: DICOMweb import displays study/patient metadata for user confirmation before import | Design control | REQ-SAFE-018 | `PACSBrowserPage.tsx` — study search results show patient name, ID, modality before import | **VERIFIED** (2026-07-18) — source metadata is displayed before an explicit import action. **New finding**: the destination is a raw `prompt()` free-text patient ID with no validation and no display of the destination patient's name, so a typo files one patient's series into another's record. Not covered by any control. |
+| HAZ-013 | RC-021: Report generation timeout (30s) with error message if API fails | Design control | REQ-SAFE-019 | `brain_report_service.py` — httpx client with configurable timeout; error caught and returned | **NOT IMPLEMENTED** (2026-07-18) — **no timeout exists anywhere** in the report path; there is no `CLAUDE_TIMEOUT` setting. The cited "httpx client" is not used (the Anthropic SDK is). Additionally the `async def` handler calls the **synchronous** client without a threadpool, so a hung upstream call blocks the whole worker. |
+| HAZ-014 | RC-022: All images preprocessed to MNI 1mm template before analysis (voxel spacing guaranteed 1mm isotropic) | Inherent safety (design) | REQ-SAFE-020 | Preprocessing pipeline produces MNI 1mm registered NIfTI files before segmentation | **NOT VERIFIED** (2026-07-18) — recollection is not objective evidence under ISO 14971. The code does not depend on the assumption: it silently defaults `voxel_spacing` to 1 mm, which is the harm HAZ-014 describes. Tracked as CAPA-001 CA-5. |
 
 ### 5.2 Post-Control Risk Assessment
 
 | HAZ ID | Severity | Probability (post-control) | Residual Risk | Acceptable? |
 |--------|----------|---------------------------|---------------|-------------|
 | HAZ-001 | S5 | P1 (Improbable) — physician review mandatory | ALARP | Yes — benefit outweighs residual risk |
-| HAZ-002 | S4 | P1 — percentile display provides context | ACCEPTABLE | Yes |
-| HAZ-003 | S5 | P1 — physician review mandatory, disclaimer prominent | ALARP | Yes — benefit outweighs residual risk |
-| HAZ-004 | S5 | P1 — disclaimer, hidden when model unavailable | ALARP | Yes — benefit outweighs residual risk |
-| HAZ-005 | S4 | P2 — confidence scores allow clinical judgment | ALARP | Yes |
-| HAZ-006 | S5 | P1 — auto-transpose + orientation validation | ALARP | Yes |
+| HAZ-002 | S4 | ~~P1 — percentile display provides context~~ **WITHDRAWN 2026-07-18** — no percentile is ever computed or displayed (CAPA-005) | **UNDETERMINED** | **No — re-assessment required** |
+| HAZ-003 | S5 | P1 — disclaimer now implemented and test-bound (RC-006, CAPA-001 CA-1). Note it was **absent** when this ALARP was first recorded. De-identification (RC-007′) still absent. | ALARP **pending CA-4** | Provisional |
+| HAZ-004 | S5 | ~~P1 — disclaimer~~ **WITHDRAWN** — the Edge AI disclaimer renders only after a user click (CAPA-004 §4). Model-availability gating (RC-009) does hold. | **UNDETERMINED** | **No — re-assessment required** |
+| HAZ-005 | S4 | ~~P2 — confidence scores~~ **WITHDRAWN** — the geometric path deliberately emits no confidence (RC-010). The control cannot discharge this hazard on that path. | **UNDETERMINED** | **No — re-assessment required** |
+| HAZ-006 | S5 | ~~P1 — auto-transpose + orientation validation~~ **WITHDRAWN** — orientation validation does not exist; auto-transpose is a no-op on square volumes (CAPA-004 §2). | **UNDETERMINED** | **No — re-assessment required** |
 | HAZ-007 | S4 | P2 — visual overlay enables verification | ACCEPTABLE | Yes |
-| HAZ-008 | S4 | P2 — detailed per-region display | ACCEPTABLE | Yes |
-| HAZ-009 | S5 | P1 — prominent patient identification | ALARP | Yes |
-| HAZ-010 | S4 | P1 — multi-factor auth + RBAC | ACCEPTABLE | Yes |
+| HAZ-008 | S4 | P2 — per-region presence displayed; **qualifying lesion counts are not** (RC-015) | ACCEPTABLE **pending** | Provisional |
+| HAZ-009 | S5 | ~~P1 — prominent patient identification~~ **WITHDRAWN** — no patient identifier is rendered in the image viewport in any view mode; MRN is displayed nowhere (CAPA-004 §3). | **UNDETERMINED** | **No — re-assessment required** |
+| HAZ-010 | S4 | ~~P1 — multi-factor auth + RBAC~~ **WITHDRAWN** — 7 of 124 routes enforce a permission, 0 enforce a role; there is no object-level authorization at all (CAPA-002, CAPA-004 §4). | **UNDETERMINED** | **No — re-assessment required** |
 | HAZ-011 | S4 | P1 — standard DICOM format | ACCEPTABLE | Yes |
 | HAZ-012 | S5 | P1 — user confirmation before import | ALARP | Yes |
 | HAZ-013 | S3 | P2 — timeout handling + error message | ACCEPTABLE | Yes |
@@ -299,18 +321,18 @@ All identified risks have been evaluated and are either ACCEPTABLE or ALARP with
 | Risk estimation | DONE | This document, Section 4 |
 | Risk evaluation | DONE | This document, Section 4 |
 | Risk control measures defined | DONE | This document, Section 5 (22 controls) |
-| Risk control implementation | DONE | 21/22 implemented; RC-013 partial (NIfTI parsing validates via nibabel, explicit orientation warning pending) |
-| Risk control verification | DONE | 21/22 verified by code inspection (see Section 5.1); RC-013 partial |
-| Overall residual risk acceptable | DONE | This document, Section 6 |
+| Risk control implementation | **NOT DONE** | **4/22 implemented as written** (RC-006, RC-009, RC-014, RC-017); 5 partial; 12 overstated or absent. Re-verified 2026-07-18 under CAPA-001 CA-3. |
+| Risk control verification | **NOT DONE** | Only RC-006 and RC-017 are bound to automated tests. The remaining 20 rest on inspection, which CAPA-001 PA-1 records as insufficient. The 2026-04-12 verification record is **withdrawn**; see RCV-SUMMARY_2026-07-18. |
+| Overall residual risk acceptable | **WITHDRAWN** | Section 6 rests on controls now known absent. HAZ-006's ALARP cites orientation validation that does not exist; HAZ-009's cites patient identification that is never rendered. Must be re-derived, not amended. |
 | Post-production plan | DONE | This document, Section 8; SMP-001 |
 
 ### 7.2 Open Items
 
 | Item | Action Required | Priority | Target Date |
 |------|----------------|----------|-------------|
-| RC-013 (NIfTI orientation warning) | Add explicit orientation warning dialog on upload for non-standard headers | MEDIUM | Next release |
+| RC-013 / laterality (CAPA-004) | Canonicalise orientation on load; render persistent L/R labels and patient identity in every viewport. **No orientation logic exists today.** | **CRITICAL** | Before any clinical use |
 | Clinical expert review | Independent clinical review of risk analysis by board-certified neuroradiologist | HIGH | Before CE submission |
-| Automated verification tests | Create automated test suite for risk controls (currently verified by code inspection) | MEDIUM | Phase C (Weeks 9-14) |
+| Automated verification tests | Bind every risk control to a test whose removal turns CI red. 2 of 22 done (RC-006, RC-017). Manifest + CI gate in place (CAPA-001 PA-2). | **HIGH** | Per CAPA-001 |
 
 ---
 
