@@ -215,12 +215,13 @@ claimed*, because the hazard was never framed in terms a control could address.
 | ID | Type | Action | Acceptance criteria | Status |
 |----|------|--------|--------------------|--------|
 | **CA-4.1** | Corrective | Canonicalise orientation on load: read the affine, convert to a known orientation (e.g. `nib.as_closest_canonical`), and **refuse to display** a volume whose orientation cannot be determined rather than guessing. | Test: an LAS volume and an RAS volume of the same subject render identically; a volume with an unusable affine raises rather than rendering. | PENDING |
-| **CA-4.2** | Corrective | Render persistent L/R (and A/P, S/I) laterality labels on every 2D viewport, and patient name + MRN as a persistent viewport annotation in 2D, 3D and multi-panel. | Test: labels present in the rendered output for every view mode; identity annotation survives maximise and is included in any export. | PENDING |
+| **CA-4.2** | Corrective | Render persistent L/R (and A/P, S/I) laterality labels on every 2D viewport, and patient name + MRN as a persistent viewport annotation in 2D, 3D and multi-panel. | Test: labels present in the rendered output for every view mode; identity annotation survives maximise and is included in any export. | **2D IDENTITY + ORIENTATION DONE** (see §9) — L/R labels deferred to CA-4.3; 3D and multi-panel outstanding |
 | **CA-4.3** | Corrective | Replace RC-012's dimensional heuristic with affine-derived axis order, so detection does not degenerate on square volumes. | Test: a transposed 256×256 mask is detected. | PENDING |
 | **CA-4.4** | Corrective | Render the Edge AI disclaimer unconditionally (RC-008); remove the false "always shown" comment. | Test asserts the disclaimer renders without user interaction. | PENDING |
 | **CA-4.5** | Corrective | Enforce permissions on clinical routes (RC-018), coordinated with CAPA-002 CA-2.1 so authentication, authorization and role enforcement are designed together rather than in three passes. | Test: a VIEWER receives 403 on delete/generate routes. | PENDING |
 | **PA-4.1** | Preventive | Add "hazards of presentation" to the hazard-analysis checklist: for each displayed quantity, ask how a clinician could be misled by it being wrong, absent, mirrored or unattributed. | Checklist updated; RMF re-run against it. | PENDING |
 | **PA-4.2** | Preventive | Verification of any UI control must inspect the **render path**, not the call site or the presence of a string in source. | Verification procedure updated; §3.3 cited as the worked example. | PENDING |
+| **PA-4.3** | Preventive | No test file or directory may exist that no CI step executes. Generalises CAPA-003 PA-3.1 from directories to path filters, after a third instance of the same defect (§9.3). | CI check enumerates test files and fails on any not covered by a workflow step. | PENDING |
 
 ---
 
@@ -233,6 +234,85 @@ authorization work in CAPA-002.
 
 CA-4.3 depends on CA-4.1: once orientation is canonical, the transpose heuristic
 can be derived from the affine instead of guessed from shape.
+
+---
+
+---
+
+## 9. Result — CA-4.2 (partial), executed 2026-07-18
+
+**Implementation**: `frontend/src/components/ViewportSafetyOverlay.tsx`, rendered
+**unconditionally** by `ImageViewer2D.tsx`. The backend now surfaces
+`ImageMetadata.anatomical_orientation`, populated via RC-023's
+`describe_orientation()`, which returns `"UNKNOWN"` rather than guessing.
+
+What the viewport now shows:
+
+- Patient name and MRN, burned into the image area (DICOM convention, top-left),
+  so they survive a screenshot, an export or a maximised view.
+- An explicit **"PATIENT NOT IDENTIFIED — do not use for reporting"** banner when
+  identity is absent. Rendering nothing would leave an unidentified image looking
+  identical to an identified one, which is the §3 failure.
+- The anatomical axis codes read from the affine, with a **"laterality
+  unverified"** flag when they are not RAS, and a red **"ORIENTATION UNKNOWN —
+  left/right cannot be verified"** alert when indeterminate. Missing metadata is
+  treated exactly as UNKNOWN, so an un-redeployed backend cannot read as "fine".
+- A standing caveat that laterality is not labelled.
+
+### 9.1 Why no L/R edge labels were drawn — a deliberate refusal
+
+CA-4.2 asks for L/R labels. They were **not** implemented, and a test asserts
+their continued absence. The reason:
+
+- Volumes are **not canonicalised on load** (RC-013 open — see `nifti_utils.py`
+  for why that migration must move image and mask together).
+- Plane selection in `imaging_service` transposes with **fixed axis tuples** —
+  `(2,1,0)` for sagittal, `(0,2,1)` for coronal — which presume a canonical axis
+  order that is never enforced. **For a non-RAS volume, the plane labelled
+  "sagittal" is not necessarily sagittal.**
+
+So no verified axis→screen mapping exists. An "L" drawn on the wrong edge is
+materially worse than no "L": it converts an absence the clinician can see into
+a confident error they cannot. Labels may only be added under **CA-4.3**, after
+the mapping is verified against a phantom of known laterality.
+
+This is recorded because a future reader will otherwise see "CA-4.2 done" next to
+an unlabelled viewport and assume an oversight.
+
+### 9.2 Evidence — negative controls (each confirmed applied first)
+
+| Codebase state | Expected | Observed |
+|---|---|---|
+| Control present | all pass | **16 passed** |
+| Identity block removed from the overlay | must fail | **1 failed, 15 passed** |
+| Orientation-unknown warning silenced | must fail | **2 failed, 14 passed** |
+| Overlay unwired from `ImageViewer2D` (`{false && …}`) | must fail | **1 failed, 15 passed** |
+
+The tests assert what is **rendered**, never what is passed — the original defect
+was a dead prop that looked correct at the call site (§3.3). A wiring guard
+additionally fails if the overlay is placed behind any conditional, because a
+safety annotation shown only in some states is not one.
+
+Backend 390 passed · frontend 74 passed · `tsc --noEmit` clean.
+
+### 9.3 Third instance of the same CI defect
+
+The frontend CI step ran only `src/services/ src/utils/`, so **every component
+test was invisible to CI** — including these risk-control tests. This is the
+third occurrence of one pattern in this audit: `tests/security/` never executed
+(CAPA-003), `syntax-check` unable to fail (CAPA-001 PA-2), and now a path filter
+excluding the tests that matter.
+
+A test outside the runner's path filter is documentation, not verification. The
+step now runs the whole suite, plus an explicit named run of the risk-control
+file. **PA-4.3 is added: no test directory or file may exist that no CI step
+executes** — this generalises CAPA-003's PA-3.1 from directories to path filters.
+
+### 9.4 Remaining under CA-4.2
+
+- 3D (`ImageViewer3D`) and multi-panel (`MultiPanelViewer`) receive **no patient
+  props at all** and remain unannotated.
+- Identity is not burned into exported images.
 
 ---
 

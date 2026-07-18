@@ -36,6 +36,19 @@ class ImageMetadata(BaseModel):
     pixel_spacing: Optional[List[float]] = None
     slice_thickness: Optional[float] = None
 
+    # Anatomical orientation — risk control RC-023 for HAZ-006 (CAPA-004 CA-4.2).
+    #
+    # Three-letter axis code, e.g. "RAS" or "LAS", naming the direction of
+    # INCREASING index along each axis. This is what a viewport needs in order to
+    # label left from right.
+    #
+    # "UNKNOWN" means the affine does not determine an orientation. It is a
+    # distinct, meaningful value and MUST NOT be coerced to a default: the client
+    # is required to warn the user rather than draw a laterality label it cannot
+    # justify. A plausible-looking wrong L/R marker is more dangerous than none,
+    # because it turns an obvious absence into a confident error.
+    anatomical_orientation: Optional[str] = None
+
     # Window/Level
     window_center: Optional[float] = None
     window_width: Optional[float] = None

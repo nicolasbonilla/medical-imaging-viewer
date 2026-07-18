@@ -56,9 +56,21 @@ jobs:
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
+      # CAPA-001 PA-2 / CAPA-004: this step previously ran only
+      # `src/services/ src/utils/`, so every component test was invisible to CI —
+      # including the risk-control tests for patient identity in the viewport
+      # (RC-016). That is the same failure mode as tests/security/ never being
+      # executed: a test outside the path filter is documentation, not
+      # verification. Run the whole suite; narrow it only with a recorded reason.
       - name: Run frontend tests (IEC 62304 Clause 5.5)
-        run: npx vitest run --reporter=verbose src/services/ src/utils/
+        run: npx vitest run --reporter=verbose
         timeout-minutes: 5
+
+      # Belt and braces, matching the backend gate: the viewport safety
+      # annotation is a risk control, so its absence must turn CI red rather
+      # than simply reducing the test count.
+      - name: Risk-control tests must be present (RC-016 / RC-023)
+        run: npx vitest run --reporter=verbose src/components/ViewportSafetyOverlay.test.tsx
 
   backend-tests:
     name: Backend Pytest (Class C Unit Verification)

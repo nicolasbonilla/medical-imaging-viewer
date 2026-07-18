@@ -45,6 +45,19 @@ VALID_STATUSES = {
 VERIFIABLE_STATUSES = {"implemented", "deliberately_absent"}
 
 
+def _resolve(rel: str):
+    """Resolve a manifest test path.
+
+    Backend paths are given relative to `backend/`; frontend paths are given
+    relative to the repository root and start with `frontend/`. Risk controls
+    live on both sides of the stack — RC-016 (patient identity in the viewport)
+    is enforced by a React test — so the manifest must be able to name either.
+    """
+    if rel.startswith("frontend/"):
+        return REPO_ROOT / rel
+    return BACKEND_ROOT / rel
+
+
 def _load_manifest():
     assert MANIFEST_PATH.exists(), (
         f"risk-control manifest is missing at {MANIFEST_PATH}. It is a controlled "
@@ -106,7 +119,7 @@ class TestImplementedControlsAreBoundToTests:
     )
     def test_named_test_files_exist(self, rc_id):
         for rel in CONTROLS[rc_id]["tests"]:
-            path = BACKEND_ROOT / rel
+            path = _resolve(rel)
             assert path.exists(), (
                 f"{rc_id} names test file '{rel}', which does not exist. Either the "
                 "test was deleted (restore it) or the control is no longer verified "
@@ -118,13 +131,25 @@ class TestImplementedControlsAreBoundToTests:
         sorted(k for k, v in CONTROLS.items() if v["status"] == "implemented"),
     )
     def test_named_test_files_actually_assert_the_control(self, rc_id):
-        """Guard against the file surviving as an empty shell."""
+        """Guard against the file surviving as an empty shell.
+
+        The naming convention differs by language and both are accepted, but
+        neither is relaxed: a Python test must be named `test_rc016_*`, and a
+        vitest case must begin its description with `rc016`. Either way the
+        control ID has to appear in a test NAME, not merely in a comment — a
+        file can be gutted while keeping its header docstring.
+        """
         slug = rc_id.replace("-", "").lower()  # RC-006 -> rc006
         for rel in CONTROLS[rc_id]["tests"]:
-            source = (BACKEND_ROOT / rel).read_text(encoding="utf-8")
-            assert f"def test_{slug}" in source, (
-                f"{rel} contains no test named test_{slug}_* — it no longer "
-                f"demonstrates {rc_id}."
+            source = _resolve(rel).read_text(encoding="utf-8")
+
+            python_named = f"def test_{slug}" in source
+            js_named = f"it('{slug} " in source or f'it("{slug} ' in source
+
+            assert python_named or js_named, (
+                f"{rel} contains no test named for {rc_id} (expected a Python "
+                f"`def test_{slug}_*` or a vitest `it('{slug} ...')`). It no "
+                f"longer demonstrates {rc_id}."
             )
 
     @pytest.mark.parametrize(
@@ -188,7 +213,7 @@ def test_a_minimum_body_of_risk_control_tests_exists():
     total = 0
     for control in CONTROLS.values():
         for rel in control.get("tests") or []:
-            path = BACKEND_ROOT / rel
+            path = _resolve(rel)
             if path.exists():
                 # Count at any indentation: methods inside classes and
                 # module-level functions both count.

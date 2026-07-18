@@ -18,16 +18,18 @@ import { useAISegmentation } from '@/hooks/useAISegmentation';
 import { QuickScreenBadge } from './QuickScreenBadge';
 import { VoxelValueOverlay } from './VoxelValueOverlay';
 import MeasurementOverlay from './MeasurementOverlay';
+import { ViewportSafetyOverlay } from './ViewportSafetyOverlay';
 
 interface ImageViewer2DProps {
   viewerControls: ReturnType<typeof import('../hooks/useViewerControls').useViewerControls>;
   createSegmentationRef: React.MutableRefObject<(() => void) | null>;
   patientName?: string;
+  patientMRN?: string;
   studyDescription?: string;
   studyModality?: string;
 }
 
-function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, studyDescription, studyModality }: ImageViewer2DProps) {
+function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, patientMRN, studyDescription, studyModality }: ImageViewer2DProps) {
   const { t } = useTranslation();
 
   // Refs
@@ -327,6 +329,16 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, stu
 
   return (
     <div className="relative h-full bg-black" ref={containerRef}>
+      {/* RC-016 + RC-023 (CAPA-004 CA-4.2): patient identity and orientation
+          state annotated onto the viewport itself, so they survive a
+          screenshot, an export, or a maximised view. Rendered FIRST and
+          unconditionally — a conditional safety annotation is not one. */}
+      <ViewportSafetyOverlay
+        patientName={patientName}
+        patientMRN={patientMRN}
+        studyDescription={studyDescription}
+        anatomicalOrientation={currentSeries?.metadata?.anatomical_orientation}
+      />
       {/* Canvas or Matplotlib Image */}
       <div
         ref={scrollableRef}
