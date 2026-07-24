@@ -16,6 +16,7 @@ from app.core.interfaces.storage_interface import IStorageService
 from app.core.container import get_imaging_service, get_prefetch_service, get_storage_service
 from app.services.prefetch_service import PrefetchService
 from app.security import get_current_active_user
+from app.security.patient_access_dependency import require_imaging_access
 from app.security.models import User
 
 router = APIRouter(prefix="/imaging", tags=["Medical Imaging"])
@@ -48,6 +49,11 @@ async def process_image(
     Custom exceptions will be caught by global exception handler.
     """
     try:
+        # CAPA-002 CA-2.3 (RC-027 + RC-026): validate and authorize the storage
+        # reference before any access. From here on, file_id is the parsed,
+        # normalised, patient-authorized path — never the raw client input.
+        _ref = await require_imaging_access(file_id, current_user)
+        file_id = _ref.object_path
         # Download file from GCS
         file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, file_id)
         filename = get_filename_from_path(file_id)
@@ -92,6 +98,11 @@ async def apply_window_level(
     Custom exceptions will be caught by global exception handler.
     """
     try:
+        # CAPA-002 CA-2.3 (RC-027 + RC-026): validate and authorize the storage
+        # reference before any access. From here on, file_id is the parsed,
+        # normalised, patient-authorized path — never the raw client input.
+        _ref = await require_imaging_access(file_id, current_user)
+        file_id = _ref.object_path
         # Download file from GCS
         file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, file_id)
         filename = get_filename_from_path(file_id)
@@ -134,6 +145,11 @@ async def get_slice(
     to improve cache hit rate from 80% to 95%.
     """
     try:
+        # CAPA-002 CA-2.3 (RC-027 + RC-026): validate and authorize the storage
+        # reference before any access. From here on, file_id is the parsed,
+        # normalised, patient-authorized path — never the raw client input.
+        _ref = await require_imaging_access(file_id, current_user)
+        file_id = _ref.object_path
         # Download file from GCS
         file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, file_id)
         filename = get_filename_from_path(file_id)
@@ -203,6 +219,11 @@ async def get_3d_volume(
     Custom exceptions will be caught by global exception handler.
     """
     try:
+        # CAPA-002 CA-2.3 (RC-027 + RC-026): validate and authorize the storage
+        # reference before any access. From here on, file_id is the parsed,
+        # normalised, patient-authorized path — never the raw client input.
+        _ref = await require_imaging_access(file_id, current_user)
+        file_id = _ref.object_path
         # Download file from GCS
         file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, file_id)
         filename = get_filename_from_path(file_id)
@@ -234,6 +255,11 @@ async def get_image_metadata(
     Custom exceptions will be caught by global exception handler.
     """
     try:
+        # CAPA-002 CA-2.3 (RC-027 + RC-026): validate and authorize the storage
+        # reference before any access. From here on, file_id is the parsed,
+        # normalised, patient-authorized path — never the raw client input.
+        _ref = await require_imaging_access(file_id, current_user)
+        file_id = _ref.object_path
         # Download file from GCS
         file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, file_id)
         file_metadata = await storage_service.get_file_metadata(settings.GCS_BUCKET_NAME, file_id)
@@ -282,6 +308,11 @@ async def get_voxel_3d_visualization(
     Custom exceptions will be caught by global exception handler.
     """
     try:
+        # CAPA-002 CA-2.3 (RC-027 + RC-026): validate and authorize the storage
+        # reference before any access. From here on, file_id is the parsed,
+        # normalised, patient-authorized path — never the raw client input.
+        _ref = await require_imaging_access(file_id, current_user)
+        file_id = _ref.object_path
         # Download file from GCS
         file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, file_id)
         filename = get_filename_from_path(file_id)
@@ -337,6 +368,11 @@ async def get_matplotlib_2d_slice(
     Custom exceptions will be caught by global exception handler.
     """
     try:
+        # CAPA-002 CA-2.3 (RC-027 + RC-026): validate and authorize the storage
+        # reference before any access. From here on, file_id is the parsed,
+        # normalised, patient-authorized path — never the raw client input.
+        _ref = await require_imaging_access(file_id, current_user)
+        file_id = _ref.object_path
         # Log received parameters
         logger.debug(
             "Matplotlib 2D visualization request",
@@ -397,6 +433,11 @@ async def get_nifti_file(
     The file_id is the GCS object path (e.g., patients/{id}/studies/{id}/series/{id}/image.nii.gz)
     """
     try:
+        # CAPA-002 CA-2.3 (RC-027 + RC-026): validate and authorize the storage
+        # reference before any access. From here on, file_id is the parsed,
+        # normalised, patient-authorized path — never the raw client input.
+        _ref = await require_imaging_access(file_id, current_user)
+        file_id = _ref.object_path
         # Download file from GCS
         file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, file_id)
         filename = get_filename_from_path(file_id)

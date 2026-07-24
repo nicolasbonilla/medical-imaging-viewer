@@ -110,6 +110,80 @@ async def authorize_patient_access(
     return patient
 
 
+async def authorize_storage_ref(
+    *,
+    raw_file_id: str,
+    user: User,
+    patient_service,
+    care_team_service,
+):
+    """Parse a raw imaging file_id, then authorize its patient (RC-027 + RC-026).
+
+    Returns the validated `PatientStorageRef` on success — the route must use
+    `ref.object_path`, never the raw input, so no unparsed caller byte reaches
+    the storage key.
+
+    A malformed reference and an unauthorised patient both raise the SAME 404 as
+    a missing patient. Distinguishing "that is not a valid object" from "that
+    object exists but is not yours" would itself leak information; collapsing
+    both to 404 keeps the client unable to probe either the key space or the
+    patient space.
+    """
+    from app.security.storage_access import StorageRefError, parse_patient_storage_ref
+
+    not_found = HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Imaging object not found",
+    )
+
+    try:
+        ref = parse_patient_storage_ref(raw_file_id)
+    except StorageRefError:
+        # Do not echo the offending input, and do not reveal why it was refused.
+        logger.warning(
+            "Rejected malformed imaging storage reference",
+            extra={"user_id": str(user.id)},
+        )
+        raise not_found
+
+    # Reuse the patient authorization decision against the parsed patient_id.
+    # authorize_patient_access raises its own 404 ("Patient not found") on denial.
+    # We must normalise that to THIS path's 404 body, or the two failure modes —
+    # "not a valid imaging object" and "valid object, not your patient" — would
+    # carry different detail strings, and that difference is itself the
+    # enumeration oracle the 404 exists to close. Both must be byte-identical.
+    try:
+        await authorize_patient_access(
+            patient_id=ref.patient_id,
+            user=user,
+            patient_service=patient_service,
+            care_team_service=care_team_service,
+        )
+    except HTTPException:
+        raise not_found
+    return ref
+
+
+def require_imaging_access(file_id: str, current_user: User):
+    """Callable used inside imaging routes to authorize and validate a file_id.
+
+    Not a bare FastAPI dependency because imaging routes declare `file_id` with a
+    `{file_id:path}` converter and varied signatures; calling this explicitly at
+    the top of each handler is clearer than threading a dependency, and keeps the
+    validated ref in scope for the download call.
+    """
+    return _run_storage_authorization(file_id, current_user)
+
+
+async def _run_storage_authorization(file_id: str, current_user: User):
+    return await authorize_storage_ref(
+        raw_file_id=file_id,
+        user=current_user,
+        patient_service=_get_patient_service(),
+        care_team_service=_get_care_team_service(),
+    )
+
+
 def _created_by_of(patient) -> Optional[str]:
     """Read created_by off a patient record of unknown concrete shape."""
     if patient is None:

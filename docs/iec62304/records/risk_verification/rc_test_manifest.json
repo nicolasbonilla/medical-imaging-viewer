@@ -263,6 +263,17 @@
       ],
       "negative_control": "decision layer — 4 vectors (7/2/1/7 failed); enforcement layer — 3 vectors: guard removed from a route -> 1 failed; enforcement returns patient unconditionally -> 7 failed; 403 instead of 404 (enumeration leak) -> 1 failed",
       "note": "ENFORCED on the PATIENT resource: all 6 patient-scoped routes (get/update/delete + 3 medical-history) plus care-team management now call require_patient_access, which denies with 404 (never 403) to prevent patient enumeration. Care-team assignment/revocation themselves require object access, so a clinician cannot add themselves to a team they are not on; ADMIN bootstraps. STILL OPEN under CAPA-002: imaging.py, studies.py and documents.py are NOT yet wired — they identify the patient indirectly (via file_id / study_id), which needs CA-2.3 (opaque IDs resolved server-side) first. CAPA-002 remains OPEN until those routes enforce access and CA-2.3 lands."
+    },
+    "RC-027": {
+      "description": "Imaging storage references are parsed against a positive grammar and patient-authorized; raw client paths are never used as bucket keys",
+      "hazard": "HAZ-010",
+      "status": "implemented",
+      "implementation": "app/security/storage_access.py::parse_patient_storage_ref (pure grammar) + app/security/patient_access_dependency.py::authorize_storage_ref (parse + RC-026) + app/api/routes/imaging.py (8 handlers authorize before any storage access)",
+      "tests": [
+        "tests/unit/test_rc027_storage_access.py"
+      ],
+      "negative_control": "3 vectors, each re-measured in isolation after a chained run gave a spurious result: prefix check removed -> 1 failed; UUID validation skipped -> 2 failed; object_path echoes raw input -> 2 failed",
+      "note": "Closes the imaging half of CAPA-002. Malformed references and cross-patient references both return an identical 404 (no enumeration oracle over key space or patient space). object_path is rebuilt from parsed components, so no unparsed caller byte reaches the storage key. SCOPE: patient-scoped imaging grammar only. Segmentation objects (segmentations/{id}/...) and the studies/documents routes are NOT yet covered — CAPA-002 remains OPEN for those."
     }
   },
   "unverified_controls_note": [

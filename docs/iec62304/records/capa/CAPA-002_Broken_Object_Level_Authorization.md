@@ -220,3 +220,40 @@ CA-2.1 is **not** complete and this CAPA stays **OPEN**:
 - **Existing-record disposition.** Quarantine is enforced (non-ADMIN denied on
   `created_by = None` with no assignment), but the operational triage — an ADMIN
   reviewing and reassigning legacy records — is a process, not yet a workflow.
+
+
+---
+
+## 10. CA-2.3 update — 2026-07-19 — imaging references parsed and authorized
+
+The imaging half of the finding in §2 is closed. `imaging.py` no longer passes a
+raw caller-supplied key to storage.
+
+**Approach — a parser, not a blocklist.** The instinct is to reject bad paths
+(strip `..`, block `config/`). Blocklists on storage keys lose: GCS names are
+opaque byte strings, `..` does not traverse, encodings vary, every new prefix is
+a new hole. Instead `parse_patient_storage_ref` accepts input *only* if it
+matches `patients/{uuid}/studies/{uuid}/series/{uuid}/{safe-filename}` exactly.
+Anything that parses has, by construction, a patient_id — which is then
+authorized via RC-026. `object_path` is rebuilt from the parsed components, so no
+unparsed caller byte reaches the bucket key (RC-027).
+
+This is the CA-2.3 structural fix for imaging: the route no longer trusts the
+raw key at all. It did not require a frontend change — the path shape the client
+sends is unchanged; it is now validated and authorized rather than used verbatim.
+
+**Enumeration defence preserved.** A malformed reference and a valid reference to
+a patient the caller may not see both return an identical 404. During
+implementation the two paths initially returned different 404 bodies ("Imaging
+object not found" vs "Patient not found") — a genuine oracle, caught by a test
+asserting the two are byte-identical, and fixed before commit.
+
+### 10.1 What remains OPEN — CAPA-002 stays OPEN
+
+- **studies.py, documents.py** are not yet wired. They identify the object by
+  `study_id` / `document_id`, which need their own resolve-then-authorize path
+  (look up the owning patient in Firestore, authorize via RC-026).
+- **Segmentation objects** (`segmentations/{id}/...`) are outside the imaging
+  grammar and are authorized via their Firestore patient link — not yet built.
+- **CA-2.2** (SRS requirement for record-level access) — still to be written.
+- **Quarantine triage workflow** for legacy `created_by = None` records.
