@@ -33,6 +33,21 @@
 
 ## Safety Requirements Traceability
 
+> ## ⚠️ VERIFICATION STATUS IN THIS TABLE IS WITHDRAWN — 2026-07-18/19
+>
+> The "VERIFIED (code inspection)" entries below were **not updated** when the
+> Risk Management File's verification column was corrected under CAPA-001 CA-3.
+> Adversarial re-verification found **4 of 22 controls verified, 12 overstated or
+> absent** — for example RC-001, RC-004, RC-005, RC-016 and RC-022 are **not
+> implemented as described**, and RC-007's row here (`no auto-commit`) does not
+> match the RCV-SUMMARY's RC-007 (`de-identification`, also absent).
+>
+> **Do not rely on the "Verified?" column below.** The authoritative status is
+> [`RCV-SUMMARY_2026-07-18.md`](records/risk_verification/RCV-SUMMARY_2026-07-18.md)
+> and the RMF §5.1 verification column. This table's rows are retained unedited as
+> evidence of the same records-disagreement documented in CAPA-001; per-row
+> correction is tracked there.
+
 | Req ID | Safety Requirement | Risk Control | HAZ ID | Design (DD) | Implementation | Test ID | Verified? |
 |--------|-------------------|-------------|--------|-------------|----------------|---------|-----------|
 | REQ-SAFE-001 | AI disclaimer label | RC-001 | HAZ-001 | DD-AI-001 | `QuickScreenBadge.tsx` | TST-SAFE-001 | VERIFIED (code inspection) |
@@ -52,7 +67,33 @@
 | REQ-SAFE-018 | DICOMweb import confirmation | RC-020 | HAZ-012 | — | `PACSBrowserPage.tsx` | TST-SAFE-018 | VERIFIED (code inspection) |
 | REQ-SAFE-020 | MNI 1mm template preprocessing | RC-022 | HAZ-014 | — | Preprocessing pipeline | TST-SAFE-020 | VERIFIED (code inspection) |
 
-> **Note**: All safety requirements verified by code inspection per RMF-001 (April 2026). Formal test execution reports pending (TPL-06).
+> **Note**: The original claim "All safety requirements verified by code
+> inspection per RMF-001 (April 2026)" is **withdrawn** — see the banner above.
+> Code inspection recorded as prose, with no executed check, is precisely the
+> nonconformity CAPA-001 was raised for.
+
+---
+
+## Security Requirements Traceability — Object-Level Authorization (CAPA-002)
+
+Added 2026-07-19. Unlike the safety table above, every row here is bound to an
+automated test whose removal turns CI red (the standard CAPA-001 established), and
+each carries a recorded negative-control result. "Verified?" here means
+*test-bound and negative-control-checked*, not *inspected*.
+
+| Req ID | Requirement | Risk Control | HAZ ID | Implementation | Test | Verified? |
+|--------|-------------|-------------|--------|----------------|------|-----------|
+| REQ-SEC-014 | Object-level authorization (care-team) | RC-026 | HAZ-010 | `patient_access.py`, `patient_access_dependency.py`, `care_team_service.py` | `test_rc026_patient_access.py`, `test_rc026_access_enforcement.py` | TEST-BOUND (neg. control 7/2/1/7 + 1/7/1) |
+| REQ-SEC-016 | No raw storage paths; parse + re-authorize | RC-027 | HAZ-010 | `storage_access.py`, `imaging.py` (8 routes) | `test_rc027_storage_access.py` | TEST-BOUND (neg. control 1/2/2) |
+| REQ-SEC-014 | Object-level authz — study/series/instance/document | RC-028 | HAZ-010 | `resource_access.py`, `studies.py` (12), `documents.py` (6) | `test_rc028_resource_access.py` | TEST-BOUND (neg. control 1/2/1) |
+| REQ-SEC-014 | Object-level authz — segmentation | RC-029 | HAZ-010 | `resource_access.py`, `segmentation.py` (12+2) | `test_rc029_segmentation_access.py` | TEST-BOUND (neg. control 2/1) |
+| REQ-SEC-015 | Enumeration defence (404 not 403) | RC-026/027/028/029 | HAZ-010 | identical-404 in every guard | assertions in each test above | TEST-BOUND |
+| REQ-SEC-017 | Provenance capture (created_by) | RC-025 | HAZ-010 | `patients.py` create route | `test_rc025_patient_authorization.py` | TEST-BOUND (neg. control 1) |
+| REQ-SEC-018 | Quarantine of unattributable records | RC-026 | HAZ-010 | `patient_access.py` (DENIED_QUARANTINED) | `test_rc026_patient_access.py` | TEST-BOUND |
+
+The full binding is machine-checked in
+[`rc_test_manifest.json`](records/risk_verification/rc_test_manifest.json), enforced
+by `backend/tests/unit/test_risk_control_manifest.py`.
 
 ---
 

@@ -86,9 +86,9 @@ warrants its own CAPA rather than an action under CAPA-001.
 
 | ID | Type | Action | Acceptance criteria | Status |
 |----|------|--------|--------------------|--------|
-| **CA-2.1** | Corrective | Define and implement object-level authorization for imaging, studies, patients and documents: every route resolves the requested object and verifies the caller's entitlement before returning data. | Automated test: user A receives 403/404 for user B's `file_id`, on every data-returning route. | PENDING |
-| **CA-2.2** | Corrective | Add the missing requirement to the SRS (which users may access which records) and the corresponding hazard + risk control to the RMF. | REQ and RC exist, RC bound to the CA-2.1 test. | PENDING |
-| **CA-2.3** | Corrective | Stop accepting raw storage paths as caller input; use opaque identifiers resolved server-side against the caller's entitlements. | No route takes a `{file_id:path}` that maps directly to a bucket key. | PENDING |
+| **CA-2.1** | Corrective | Define and implement object-level authorization for imaging, studies, patients and documents: every route resolves the requested object and verifies the caller's entitlement before returning data. | Automated test: user A receives 403/404 for user B's `file_id`, on every data-returning route. | **DONE (enforcement)** — RC-026/027/028/029 cover all data surfaces; each test-bound with a negative control (§9–§12). |
+| **CA-2.2** | Corrective | Add the missing requirement to the SRS (which users may access which records) and the corresponding hazard + risk control to the RMF. | REQ and RC exist, RC bound to the CA-2.1 test. | **DONE** — REQ-SEC-014…018 added to the SRS; RC-026…029 added to RMF §5.1; traceability rows added to the matrix (§13). |
+| **CA-2.3** | Corrective | Stop accepting raw storage paths as caller input; use opaque identifiers resolved server-side against the caller's entitlements. | No route takes a `{file_id:path}` that maps directly to a bucket key. | **DONE (imaging)** — RC-027 parses against a fixed grammar and rebuilds the key server-side; raw client bytes never reach storage (§10). |
 | **PA-2.1** | Preventive | Add an authorization test to the route-review checklist: a new data-returning route may not merge without a cross-tenant denial test. | Checklist updated; CI enforces via `tests/security/`. | PENDING |
 
 ## 6. Note on CA-2.3
@@ -355,3 +355,38 @@ The enforcement is complete; the CAPA is not yet closable:
   full-collection scans (N+1). Correct but not performant; storing patient_id on
   those documents would fix it.
 - **Effectiveness verification** by the Safety Officer, per QP-002.
+
+
+---
+
+## 13. CA-2.2 update — 2026-07-19 — the specification now exists
+
+The controls RC-026…RC-029 were implemented ahead of any requirement stating
+*which users may access which records*. Under IEC 62304 §5.2 a control without a
+stated requirement is not traceable, so the requirement has now been written:
+
+- **SRS**: REQ-SEC-014 (object-level authorization / care-team), REQ-SEC-015
+  (enumeration defence — 404 not 403), REQ-SEC-016 (no raw storage paths),
+  REQ-SEC-017 (provenance capture), REQ-SEC-018 (quarantine). REQ-SEC-005's
+  permission count corrected 15 → 19.
+- **RMF §5.1**: RC-026, RC-027, RC-028, RC-029 rows added, each VERIFIED against a
+  named test with a recorded negative control.
+- **Traceability matrix §**: a new *Object-Level Authorization* section binds each
+  REQ-SEC-014…018 to its control and test. While there, the matrix's stale
+  "VERIFIED (code inspection)" safety rows — a THIRD document still asserting the
+  status CAPA-001 CA-3 corrected in the RMF — were marked withdrawn, closing a
+  records-disagreement that had survived the earlier correction.
+
+### 13.1 Remaining before CAPA-002 can be CLOSED
+
+Enforcement and specification are complete. Still open:
+
+- **Quarantine-triage workflow** — the policy denies legacy `created_by = None`
+  records to non-admins (REQ-SEC-018), but the ADMIN reassignment process is not
+  built.
+- **Result-level list filtering** — non-admins must scope listings to one patient.
+- **Resolution efficiency** — series/instance/segmentation resolution rides
+  pre-existing full-collection scans (N+1).
+- **Effectiveness verification** by the Software Safety Officer per QP-002 §4.6,
+  including a negative-control demonstration that removing a guard turns CI red on
+  a representative data route.

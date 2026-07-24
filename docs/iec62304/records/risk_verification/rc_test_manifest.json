@@ -250,7 +250,8 @@
         "tests/unit/test_rc025_patient_authorization.py"
       ],
       "negative_control": "CAPA-004 CA-4.5 — three vectors: a route reverted to authentication-only → 3 failed; VIEWER granted PATIENT_DELETE → 4 failed; created_by capture removed → 1 failed",
-      "note": "SCOPE LIMIT: answers 'may this ROLE operate on patient records', NOT 'may this user access THIS patient'. Object-level authorization remains absent and CAPA-002 CA-2.1 stays OPEN — an authenticated VIEWER still reaches every patient in the system. Do not read this control as closing CAPA-002. Ten route docstrings previously promised PATIENT_* permissions that did not exist in the enum and were enforced nowhere."
+      "note": "SCOPE LIMIT: answers 'may this ROLE operate on patient records', NOT 'may this user access THIS patient'. Object-level authorization remains absent and CAPA-002 CA-2.1 stays OPEN — an authenticated VIEWER still reaches every patient in the system. Do not read this control as closing CAPA-002. Ten route docstrings previously promised PATIENT_* permissions that did not exist in the enum and were enforced nowhere.",
+      "requirement": "REQ-SEC-017"
     },
     "RC-026": {
       "description": "Object-level authorization for patient records under the care-team entitlement model",
@@ -262,7 +263,8 @@
         "tests/unit/test_rc026_access_enforcement.py"
       ],
       "negative_control": "decision layer — 4 vectors (7/2/1/7 failed); enforcement layer — 3 vectors: guard removed from a route -> 1 failed; enforcement returns patient unconditionally -> 7 failed; 403 instead of 404 (enumeration leak) -> 1 failed",
-      "note": "ENFORCED on the PATIENT resource: all 6 patient-scoped routes (get/update/delete + 3 medical-history) plus care-team management now call require_patient_access, which denies with 404 (never 403) to prevent patient enumeration. Care-team assignment/revocation themselves require object access, so a clinician cannot add themselves to a team they are not on; ADMIN bootstraps. STILL OPEN under CAPA-002: imaging.py, studies.py and documents.py are NOT yet wired — they identify the patient indirectly (via file_id / study_id), which needs CA-2.3 (opaque IDs resolved server-side) first. CAPA-002 remains OPEN until those routes enforce access and CA-2.3 lands."
+      "note": "ENFORCED on the PATIENT resource: all 6 patient-scoped routes (get/update/delete + 3 medical-history) plus care-team management now call require_patient_access, which denies with 404 (never 403) to prevent patient enumeration. Care-team assignment/revocation themselves require object access, so a clinician cannot add themselves to a team they are not on; ADMIN bootstraps. STILL OPEN under CAPA-002: imaging.py, studies.py and documents.py are NOT yet wired — they identify the patient indirectly (via file_id / study_id), which needs CA-2.3 (opaque IDs resolved server-side) first. CAPA-002 remains OPEN until those routes enforce access and CA-2.3 lands.",
+      "requirement": "REQ-SEC-014/015/018"
     },
     "RC-027": {
       "description": "Imaging storage references are parsed against a positive grammar and patient-authorized; raw client paths are never used as bucket keys",
@@ -273,7 +275,8 @@
         "tests/unit/test_rc027_storage_access.py"
       ],
       "negative_control": "3 vectors, each re-measured in isolation after a chained run gave a spurious result: prefix check removed -> 1 failed; UUID validation skipped -> 2 failed; object_path echoes raw input -> 2 failed",
-      "note": "Closes the imaging half of CAPA-002. Malformed references and cross-patient references both return an identical 404 (no enumeration oracle over key space or patient space). object_path is rebuilt from parsed components, so no unparsed caller byte reaches the storage key. SCOPE: patient-scoped imaging grammar only. Segmentation objects (segmentations/{id}/...) and the studies/documents routes are NOT yet covered — CAPA-002 remains OPEN for those."
+      "note": "Closes the imaging half of CAPA-002. Malformed references and cross-patient references both return an identical 404 (no enumeration oracle over key space or patient space). object_path is rebuilt from parsed components, so no unparsed caller byte reaches the storage key. SCOPE: patient-scoped imaging grammar only. Segmentation objects (segmentations/{id}/...) and the studies/documents routes are NOT yet covered — CAPA-002 remains OPEN for those.",
+      "requirement": "REQ-SEC-016"
     },
     "RC-028": {
       "description": "Object-level authorization on study, series, instance and document routes; list routes are patient-scoped",
@@ -284,7 +287,8 @@
         "tests/unit/test_rc028_resource_access.py"
       ],
       "negative_control": "3 vectors, each measured in a single isolated run (chained runs retired): guard grants on unresolved patient (patient_id=None) -> 1 failed; a resolver raises instead of returning None -> 2 failed; unscoped listing allowed for non-admin -> 1 failed",
-      "note": "Resolves each object to its owning patient (study.patient_id direct; series/instance via study_id; document.patient_id direct) and authorizes via the RC-026 decision. Unresolved objects and unauthorized patients both return an identical 404 (no id enumeration). List routes require a patient_id scope for non-admins — an unscoped archive-wide listing is the bulk form of the CAPA-002 defect. SCOPE NOTE: series/instance resolution relies on the study service's existing full-collection scan (a pre-existing N+1); correct but not yet efficient. Segmentation objects and result-level list filtering remain open."
+      "note": "Resolves each object to its owning patient (study.patient_id direct; series/instance via study_id; document.patient_id direct) and authorizes via the RC-026 decision. Unresolved objects and unauthorized patients both return an identical 404 (no id enumeration). List routes require a patient_id scope for non-admins — an unscoped archive-wide listing is the bulk form of the CAPA-002 defect. SCOPE NOTE: series/instance resolution relies on the study service's existing full-collection scan (a pre-existing N+1); correct but not yet efficient. Segmentation objects and result-level list filtering remain open.",
+      "requirement": "REQ-SEC-014/015"
     },
     "RC-029": {
       "description": "Object-level authorization on segmentation routes; create authorizes the target image; list is file-scoped",
@@ -295,7 +299,8 @@
         "tests/unit/test_rc029_segmentation_access.py"
       ],
       "negative_control": "2 vectors, each in a single isolated run: resolver invents a patient for a non-patient file_id -> 2 failed; unscoped listing allowed for a non-admin -> 1 failed",
-      "note": "Last data surface of CAPA-002. A segmentation stores no patient_id — it stores the file_id of the image it segments, which is patient-scoped; the owning patient is extracted from that file_id (reusing RC-027). Non-patient or malformed file_ids fail closed to a 404. create authorizes request.file_id via the imaging guard (a caller may only segment an image they can access). list requires a file_id scope for non-admins and authorizes every referenced patient. With RC-026/027/028/029, all patient, imaging, study, document and segmentation data routes now enforce object-level access."
+      "note": "Last data surface of CAPA-002. A segmentation stores no patient_id — it stores the file_id of the image it segments, which is patient-scoped; the owning patient is extracted from that file_id (reusing RC-027). Non-patient or malformed file_ids fail closed to a 404. create authorizes request.file_id via the imaging guard (a caller may only segment an image they can access). list requires a file_id scope for non-admins and authorizes every referenced patient. With RC-026/027/028/029, all patient, imaging, study, document and segmentation data routes now enforce object-level access.",
+      "requirement": "REQ-SEC-014/015"
     }
   },
   "unverified_controls_note": [
