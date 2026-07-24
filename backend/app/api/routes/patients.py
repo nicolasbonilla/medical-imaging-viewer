@@ -16,6 +16,7 @@ from app.core.logging import get_logger
 from app.security import get_current_active_user
 from app.security.auth import require_permission
 from app.security.models import Permission
+from app.security.patient_access_dependency import require_patient_access
 from app.security.models import User
 from app.services.patient_service_firestore import PatientServiceFirestore
 from app.models.patient_schemas import (
@@ -202,7 +203,10 @@ async def get_patient(
     patient_id: UUID = Path(..., description="Patient UUID"),
     include_stats: bool = Query(True, description="Include study/document counts"),
     service: PatientServiceFirestore = Depends(get_patient_service),
-    current_user: User = Depends(require_permission(Permission.PATIENT_VIEW))
+    current_user: User = Depends(require_permission(Permission.PATIENT_VIEW)),
+    # CAPA-002 CA-2.1: object-level authorization. Runs after the role
+    # check; denies with 404 (never 403) if the caller is not on the care team.
+    _authorized_patient=Depends(require_patient_access),
 ):
     """
     Get a patient by ID.
@@ -225,7 +229,10 @@ async def update_patient(
     patient_id: UUID = Path(..., description="Patient UUID"),
     data: PatientUpdate = ...,
     service: PatientServiceFirestore = Depends(get_patient_service),
-    current_user: User = Depends(require_permission(Permission.PATIENT_UPDATE))
+    current_user: User = Depends(require_permission(Permission.PATIENT_UPDATE)),
+    # CAPA-002 CA-2.1: object-level authorization. Runs after the role
+    # check; denies with 404 (never 403) if the caller is not on the care team.
+    _authorized_patient=Depends(require_patient_access),
 ):
     """
     Update a patient record.
@@ -247,7 +254,10 @@ async def update_patient(
 async def delete_patient(
     patient_id: UUID = Path(..., description="Patient UUID"),
     service: PatientServiceFirestore = Depends(get_patient_service),
-    current_user: User = Depends(require_permission(Permission.PATIENT_DELETE))
+    current_user: User = Depends(require_permission(Permission.PATIENT_DELETE)),
+    # CAPA-002 CA-2.1: object-level authorization. Runs after the role
+    # check; denies with 404 (never 403) if the caller is not on the care team.
+    _authorized_patient=Depends(require_patient_access),
 ):
     """
     Deactivate a patient (soft delete).
@@ -275,7 +285,10 @@ async def add_medical_history(
     patient_id: UUID = Path(..., description="Patient UUID"),
     data: MedicalHistoryCreate = ...,
     service: PatientServiceFirestore = Depends(get_patient_service),
-    current_user: User = Depends(require_permission(Permission.PATIENT_UPDATE))
+    current_user: User = Depends(require_permission(Permission.PATIENT_UPDATE)),
+    # CAPA-002 CA-2.1: object-level authorization. Runs after the role
+    # check; denies with 404 (never 403) if the caller is not on the care team.
+    _authorized_patient=Depends(require_patient_access),
 ):
     """
     Add a medical history entry.
@@ -298,7 +311,10 @@ async def get_medical_history(
     patient_id: UUID = Path(..., description="Patient UUID"),
     active_only: bool = Query(False, description="Return only active conditions"),
     service: PatientServiceFirestore = Depends(get_patient_service),
-    current_user: User = Depends(require_permission(Permission.PATIENT_VIEW))
+    current_user: User = Depends(require_permission(Permission.PATIENT_VIEW)),
+    # CAPA-002 CA-2.1: object-level authorization. Runs after the role
+    # check; denies with 404 (never 403) if the caller is not on the care team.
+    _authorized_patient=Depends(require_patient_access),
 ):
     """
     Get medical history for a patient.
@@ -322,7 +338,10 @@ async def update_medical_history(
     is_active: bool = Query(..., description="Active status"),
     resolution_date: Optional[str] = Query(None, description="Date condition resolved (ISO format)"),
     service: PatientServiceFirestore = Depends(get_patient_service),
-    current_user: User = Depends(require_permission(Permission.PATIENT_UPDATE))
+    current_user: User = Depends(require_permission(Permission.PATIENT_UPDATE)),
+    # CAPA-002 CA-2.1: object-level authorization. Runs after the role
+    # check; denies with 404 (never 403) if the caller is not on the care team.
+    _authorized_patient=Depends(require_patient_access),
 ):
     """
     Update a medical history entry.
@@ -333,3 +352,104 @@ async def update_medical_history(
     """
     history = await service.update_medical_history(history_id, is_active, resolution_date)
     return history
+
+
+# =============================================================================
+# Care-team assignment management — CAPA-002 CA-2.1 (RC-026)
+#
+# These endpoints administer the entitlement relation that object-level
+# authorization reads. The security posture is deliberate: creating and listing
+# assignments both require object-level access to the patient (require_patient_
+# access), so a clinician can only add colleagues to a care team they are
+# already on. ADMIN bootstraps the first assignment on any patient, including
+# quarantined legacy records.
+# =============================================================================
+from pydantic import BaseModel, Field as PydField  # noqa: E402
+from app.services.care_team_service import CareTeamService, VALID_CARE_ROLES  # noqa: E402
+
+
+def get_care_team_service() -> CareTeamService:
+    return CareTeamService()
+
+
+class CareTeamAssignRequest(BaseModel):
+    user_id: str = PydField(..., description="User to grant care-team access to")
+    role_in_care: str = PydField("attending", description=f"One of {sorted(VALID_CARE_ROLES)}")
+
+
+@router.post(
+    "/{patient_id}/care-team",
+    summary="Assign a user to a patient's care team",
+    description="Grant a colleague object-level access. Requires you to already "
+                "have access to this patient (or be an administrator).",
+)
+async def assign_care_team_member(
+    patient_id: UUID = Path(..., description="Patient UUID"),
+    body: CareTeamAssignRequest = ...,
+    care_team: CareTeamService = Depends(get_care_team_service),
+    current_user: User = Depends(require_permission(Permission.PATIENT_UPDATE)),
+    # Object-level: only a member of this care team (or ADMIN) may extend it.
+    _authorized_patient=Depends(require_patient_access),
+):
+    try:
+        record = care_team.assign(
+            patient_id=str(patient_id),
+            user_id=body.user_id,
+            role_in_care=body.role_in_care,
+            granted_by=str(current_user.id),
+        )
+    except ValueError as exc:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=422, detail=str(exc))
+    return {
+        "id": record.id,
+        "patient_id": record.patient_id,
+        "user_id": record.user_id,
+        "role_in_care": record.role_in_care,
+        "granted_by": record.granted_by,
+        "granted_at": record.granted_at,
+    }
+
+
+@router.get(
+    "/{patient_id}/care-team",
+    summary="List a patient's care team",
+    description="List all assignments (active and revoked) for the patient.",
+)
+async def list_care_team(
+    patient_id: UUID = Path(..., description="Patient UUID"),
+    care_team: CareTeamService = Depends(get_care_team_service),
+    current_user: User = Depends(require_permission(Permission.PATIENT_VIEW)),
+    _authorized_patient=Depends(require_patient_access),
+):
+    records = care_team.list_for_patient(str(patient_id))
+    return [
+        {
+            "id": r.id,
+            "user_id": r.user_id,
+            "role_in_care": r.role_in_care,
+            "granted_by": r.granted_by,
+            "granted_at": r.granted_at,
+            "revoked_at": r.revoked_at,
+            "revoked_by": r.revoked_by,
+            "active": r.revoked_at is None,
+        }
+        for r in records
+    ]
+
+
+@router.delete(
+    "/{patient_id}/care-team/{assignment_id}",
+    summary="Revoke a care-team assignment",
+    description="Revoke access. The assignment is retained (stamped revoked), "
+                "never deleted, for GDPR accountability.",
+)
+async def revoke_care_team_member(
+    patient_id: UUID = Path(..., description="Patient UUID"),
+    assignment_id: str = Path(..., description="Assignment ID to revoke"),
+    care_team: CareTeamService = Depends(get_care_team_service),
+    current_user: User = Depends(require_permission(Permission.PATIENT_UPDATE)),
+    _authorized_patient=Depends(require_patient_access),
+):
+    care_team.revoke(assignment_id=assignment_id, revoked_by=str(current_user.id))
+    return {"revoked": assignment_id}

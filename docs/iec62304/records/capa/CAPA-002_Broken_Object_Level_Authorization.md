@@ -179,3 +179,44 @@ not an engineering one. The candidates:
 
 Only the first is satisfiable with the data now being captured. The others each
 require a new relation and a migration decision for existing records.
+
+
+---
+
+## 9. Enforcement update — 2026-07-19
+
+The three-layer implementation of CA-2.1 under the care-team model is now
+enforced on the **patient resource**.
+
+| Layer | Module | Status |
+|---|---|---|
+| Decision (pure rule) | `app/security/patient_access.py` | Done — RC-026, 19 tests, 4 negative vectors |
+| Store (Firestore) | `app/services/care_team_service.py` | Done — assignments never deleted, only revoked (GDPR Art. 5(2)) |
+| HTTP guard | `app/security/patient_access_dependency.py` | Done — 11 tests, 3 negative vectors |
+| Route wiring | `app/api/routes/patients.py` | Done — 6 patient-scoped routes + care-team management |
+
+**Enumeration defence.** The guard denies with **404, never 403**, and returns an
+identical body for "patient does not exist" and "you are not entitled to see it".
+A 403 would confirm a record's existence to an unauthorised caller. The audit log
+still records the true reason server-side, where it is safe.
+
+**Bootstrap and delegation.** Care-team assignment and revocation themselves
+require object-level access to the patient, so a clinician cannot add themselves
+to a team they are not on. ADMIN bootstraps the first assignment on any patient,
+including quarantined legacy records.
+
+### 9.1 What remains OPEN
+
+CA-2.1 is **not** complete and this CAPA stays **OPEN**:
+
+- **imaging.py, studies.py, documents.py are not yet wired.** They identify the
+  patient indirectly — via `file_id` (a raw GCS path) or `study_id` — so
+  object-level enforcement there depends on **CA-2.3** (opaque identifiers
+  resolved server-side) landing first. Wiring them against a caller-supplied path
+  would authorize the path the attacker already controls.
+- **CA-2.3** (stop accepting raw storage paths) — not started.
+- **CA-2.2** (SRS requirement + RMF hazard/RC for authorization) — the RC now
+  exists (RC-026); the SRS requirement is still to be written.
+- **Existing-record disposition.** Quarantine is enforced (non-ADMIN denied on
+  `created_by = None` with no assignment), but the operational triage — an ADMIN
+  reviewing and reassigning legacy records — is a process, not yet a workflow.

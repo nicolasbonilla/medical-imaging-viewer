@@ -108,6 +108,7 @@ class Collections:
     USERS = "users"
     AUDIT_LOGS = "audit_logs"
     UPLOAD_SESSIONS = "upload_sessions"  # For Cloud Run multi-instance compatibility
+    PATIENT_ASSIGNMENTS = "patient_assignments"  # CAPA-002 CA-2.1 — care-team entitlements
 
 
 # Helper functions for common operations
