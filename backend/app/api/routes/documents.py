@@ -12,6 +12,10 @@ from uuid import UUID
 import math
 
 from app.security import get_current_active_user
+from app.security.resource_access import (
+    require_document_access, require_document_list_scope,
+)
+from app.security.patient_access_dependency import require_patient_access
 from app.security.models import User
 from app.core.logging import get_logger
 from app.core.exceptions import NotFoundException, ValidationException
@@ -60,6 +64,8 @@ async def list_documents(
     page_size: int = Query(20, ge=1, le=100),
     document_service: IDocumentService = Depends(get_document_service),
     current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-028 - object-level authorization.
+    _authorized=Depends(require_document_list_scope),
 ):
     """
     List documents with optional filters and pagination.
@@ -92,6 +98,8 @@ async def list_patient_documents(
     page_size: int = Query(20, ge=1, le=100),
     document_service: IDocumentService = Depends(get_document_service),
     current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-028 - object-level authorization.
+    _authorized=Depends(require_patient_access),
 ):
     """
     List all documents for a specific patient.
@@ -138,6 +146,8 @@ async def get_document(
     document_id: UUID,
     document_service: IDocumentService = Depends(get_document_service),
     current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-028 - object-level authorization.
+    _authorized=Depends(require_document_access),
 ):
     """
     Get a document by ID.
@@ -154,6 +164,8 @@ async def update_document(
     data: DocumentUpdate,
     document_service: IDocumentService = Depends(get_document_service),
     current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-028 - object-level authorization.
+    _authorized=Depends(require_document_access),
 ):
     """
     Update document metadata.
@@ -170,6 +182,8 @@ async def delete_document(
     hard_delete: bool = Query(False, description="Permanently delete from storage"),
     document_service: IDocumentService = Depends(get_document_service),
     current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-028 - object-level authorization.
+    _authorized=Depends(require_document_access),
 ):
     """
     Delete a document. By default, marks as entered-in-error.
@@ -191,6 +205,8 @@ async def list_document_versions(
     document_id: UUID,
     document_service: IDocumentService = Depends(get_document_service),
     current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-028 - object-level authorization.
+    _authorized=Depends(require_document_access),
 ):
     """
     List all versions of a document.

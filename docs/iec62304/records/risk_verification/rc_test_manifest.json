@@ -274,6 +274,17 @@
       ],
       "negative_control": "3 vectors, each re-measured in isolation after a chained run gave a spurious result: prefix check removed -> 1 failed; UUID validation skipped -> 2 failed; object_path echoes raw input -> 2 failed",
       "note": "Closes the imaging half of CAPA-002. Malformed references and cross-patient references both return an identical 404 (no enumeration oracle over key space or patient space). object_path is rebuilt from parsed components, so no unparsed caller byte reaches the storage key. SCOPE: patient-scoped imaging grammar only. Segmentation objects (segmentations/{id}/...) and the studies/documents routes are NOT yet covered — CAPA-002 remains OPEN for those."
+    },
+    "RC-028": {
+      "description": "Object-level authorization on study, series, instance and document routes; list routes are patient-scoped",
+      "hazard": "HAZ-010",
+      "status": "implemented",
+      "implementation": "app/security/resource_access.py (resolve object -> patient_id, then reuse RC-026) + app/api/routes/studies.py (12 routes) + app/api/routes/documents.py (6 routes)",
+      "tests": [
+        "tests/unit/test_rc028_resource_access.py"
+      ],
+      "negative_control": "3 vectors, each measured in a single isolated run (chained runs retired): guard grants on unresolved patient (patient_id=None) -> 1 failed; a resolver raises instead of returning None -> 2 failed; unscoped listing allowed for non-admin -> 1 failed",
+      "note": "Resolves each object to its owning patient (study.patient_id direct; series/instance via study_id; document.patient_id direct) and authorizes via the RC-026 decision. Unresolved objects and unauthorized patients both return an identical 404 (no id enumeration). List routes require a patient_id scope for non-admins — an unscoped archive-wide listing is the bulk form of the CAPA-002 defect. SCOPE NOTE: series/instance resolution relies on the study service's existing full-collection scan (a pre-existing N+1); correct but not yet efficient. Segmentation objects and result-level list filtering remain open."
     }
   },
   "unverified_controls_note": [

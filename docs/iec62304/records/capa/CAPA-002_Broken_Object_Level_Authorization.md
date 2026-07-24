@@ -257,3 +257,47 @@ asserting the two are byte-identical, and fixed before commit.
   grammar and are authorized via their Firestore patient link — not yet built.
 - **CA-2.2** (SRS requirement for record-level access) — still to be written.
 - **Quarantine triage workflow** for legacy `created_by = None` records.
+
+
+---
+
+## 11. Studies and documents update — 2026-07-19 (RC-028)
+
+Object-level authorization now covers the **study, series, instance and document**
+resources, not just patient and imaging objects.
+
+**Uniform resolve-then-authorize.** Every such object belongs to one patient and
+the datastore records the link (study.patient_id; series/instance via study_id;
+document.patient_id). `resource_access.py` resolves the object to its owning
+patient and reuses the RC-026 decision. A single chokepoint, wired as a
+dependency — writing `if obj.patient_id == ...` inline in ~18 routes is how
+CAPA-002 happened, and a hand-duplicated check is one that gets omitted from the
+next route added. A wiring test asserts each data route depends on the guard.
+
+**Wired**: studies.py — get/update/delete study, list/create series,
+get/delete series, list instances, get/update/delete instance, list studies
+(scoped). documents.py — get/update/delete document, list versions, list
+documents (scoped), list-by-patient (reuses require_patient_access).
+
+**List routes.** An archive-wide listing is the bulk form of this finding. Rule:
+a patient_id scope is required for non-admins; with it, the scope is authorized;
+admins may list archive-wide. This closes the bulk-metadata leak without needing
+result-level entitlement filtering (which remains the fuller, not-yet-built
+solution).
+
+**Enumeration defence preserved.** An object that does not exist and one the
+caller may not see both resolve to "no authorized patient" and raise an identical
+404 — no id-enumeration oracle.
+
+### 11.1 Still OPEN
+
+- **Segmentation objects** (`segmentations/{id}/...`) — authorized via their
+  Firestore patient link, not yet built.
+- **Result-level list filtering** — the fuller alternative to requiring a
+  patient scope, so a clinician could see all patients they are entitled to in
+  one unscoped call. Not built.
+- **series/instance resolution efficiency** — currently rides the study
+  service's pre-existing full-collection scan (N+1). Correct but not efficient;
+  a stored patient_id on series/instance docs, or a collectionGroup index, would
+  fix it.
+- **CA-2.2** (SRS requirement) and the quarantine-triage workflow.
