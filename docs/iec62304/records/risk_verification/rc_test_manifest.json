@@ -285,6 +285,17 @@
       ],
       "negative_control": "3 vectors, each measured in a single isolated run (chained runs retired): guard grants on unresolved patient (patient_id=None) -> 1 failed; a resolver raises instead of returning None -> 2 failed; unscoped listing allowed for non-admin -> 1 failed",
       "note": "Resolves each object to its owning patient (study.patient_id direct; series/instance via study_id; document.patient_id direct) and authorizes via the RC-026 decision. Unresolved objects and unauthorized patients both return an identical 404 (no id enumeration). List routes require a patient_id scope for non-admins — an unscoped archive-wide listing is the bulk form of the CAPA-002 defect. SCOPE NOTE: series/instance resolution relies on the study service's existing full-collection scan (a pre-existing N+1); correct but not yet efficient. Segmentation objects and result-level list filtering remain open."
+    },
+    "RC-029": {
+      "description": "Object-level authorization on segmentation routes; create authorizes the target image; list is file-scoped",
+      "hazard": "HAZ-010",
+      "status": "implemented",
+      "implementation": "app/security/resource_access.py::resolve_segmentation_patient_id + authorize_file_scope (resolve via metadata.file_id -> extract_patient_id_from_path) + app/api/routes/segmentation.py (12 object routes + create + list)",
+      "tests": [
+        "tests/unit/test_rc029_segmentation_access.py"
+      ],
+      "negative_control": "2 vectors, each in a single isolated run: resolver invents a patient for a non-patient file_id -> 2 failed; unscoped listing allowed for a non-admin -> 1 failed",
+      "note": "Last data surface of CAPA-002. A segmentation stores no patient_id — it stores the file_id of the image it segments, which is patient-scoped; the owning patient is extracted from that file_id (reusing RC-027). Non-patient or malformed file_ids fail closed to a 404. create authorizes request.file_id via the imaging guard (a caller may only segment an image they can access). list requires a file_id scope for non-admins and authorizes every referenced patient. With RC-026/027/028/029, all patient, imaging, study, document and segmentation data routes now enforce object-level access."
     }
   },
   "unverified_controls_note": [

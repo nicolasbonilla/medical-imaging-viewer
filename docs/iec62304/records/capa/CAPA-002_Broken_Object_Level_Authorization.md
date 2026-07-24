@@ -301,3 +301,57 @@ caller may not see both resolve to "no authorized patient" and raise an identica
   a stored patient_id on series/instance docs, or a collectionGroup index, would
   fix it.
 - **CA-2.2** (SRS requirement) and the quarantine-triage workflow.
+
+
+---
+
+## 12. Segmentation update — 2026-07-19 (RC-029) — all data surfaces covered
+
+Object-level authorization now covers the segmentation resource, the last data
+surface identified in this CAPA.
+
+**Resolution.** A segmentation stores no patient_id; it stores the file_id of the
+image it segments, which is patient-scoped
+(`patients/{patient_id}/studies/.../image`). The owning patient is extracted from
+that file_id via `extract_patient_id_from_path` — a lenient counterpart to
+RC-027's strict download parser, appropriate because here the path is being read
+for authorization, not dereferenced. A non-patient or malformed file_id fails
+closed to a 404.
+
+**Wired.** 12 object routes (`{segmentation_id}`: get, paint, slice mask, overlay,
+segmentation-only, save, delete, labels, nifti, binary mask get/put, info) via
+`require_segmentation_access`. `create_segmentation` authorizes `request.file_id`
+through the imaging guard — a caller may only segment an image they can access.
+`list_segmentations` requires a file_id scope for non-admins and authorizes every
+referenced patient; one off-limits file denies the whole listing.
+
+### 12.1 Coverage reached
+
+| Data surface | Control | Status |
+|---|---|---|
+| Patient records | RC-026 | enforced |
+| Imaging objects | RC-027 | enforced |
+| Study / series / instance | RC-028 | enforced |
+| Clinical documents | RC-028 | enforced |
+| Segmentations | RC-029 | enforced |
+
+Every data-returning route now resolves the requested object to an owning patient
+and authorizes the caller against the care-team decision, denying with an
+identical 404 that never reveals object or patient existence.
+
+### 12.2 What remains before CAPA-002 can CLOSE
+
+The enforcement is complete; the CAPA is not yet closable:
+
+- **CA-2.2** — the SRS requirement stating which users may access which records is
+  still to be written (the control RC-026…RC-029 exists; the specification it
+  satisfies does not yet).
+- **Quarantine-triage workflow** for legacy `created_by = None` records — the
+  policy denies them to non-admins, but the operational ADMIN reassignment
+  process is not built.
+- **Result-level list filtering** — non-admins must currently scope listings to
+  one patient; seeing all entitled patients in one call needs result filtering.
+- **Efficiency** — series/instance and segmentation resolution ride pre-existing
+  full-collection scans (N+1). Correct but not performant; storing patient_id on
+  those documents would fix it.
+- **Effectiveness verification** by the Safety Officer, per QP-002.

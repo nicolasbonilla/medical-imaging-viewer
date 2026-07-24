@@ -151,6 +151,33 @@ async def resolve_document_patient_id(document_id, document_service) -> Optional
     return _patient_id_of(document)
 
 
+async def resolve_segmentation_patient_id(segmentation_id, segmentation_service) -> Optional[str]:
+    """Resolve a segmentation to its owning patient.
+
+    A segmentation's metadata does not store patient_id directly — it stores the
+    file_id of the image it segments, which IS patient-scoped
+    (patients/{patient_id}/studies/.../image). So the owning patient is the
+    patient of the segmented image, extracted from that file_id.
+
+    Returns None on: not found, no metadata, no file_id, or a file_id that is not
+    patient-scoped — all of which fail closed to a 404.
+    """
+    from app.security.storage_access import extract_patient_id_from_path
+
+    try:
+        metadata = await segmentation_service.get_metadata(segmentation_id)
+    except Exception:
+        return None
+    if metadata is None:
+        return None
+    file_id = getattr(metadata, "file_id", None)
+    if file_id is None and isinstance(metadata, dict):
+        file_id = metadata.get("file_id")
+    if not file_id:
+        return None
+    return extract_patient_id_from_path(str(file_id))
+
+
 def _patient_id_of(obj) -> Optional[str]:
     value = getattr(obj, "patient_id", None)
     if value is None and isinstance(obj, dict):
@@ -169,6 +196,11 @@ def _study_service():
 def _document_service():
     from app.core.container import get_document_service
     return get_document_service()
+
+
+def _segmentation_service():
+    from app.core.container import get_segmentation_service
+    return get_segmentation_service()
 
 
 def _patient_service():
@@ -228,6 +260,17 @@ async def require_document_access(
     )
 
 
+async def require_segmentation_access(
+    segmentation_id: str = Path(..., description="Segmentation ID"),
+    current_user: User = Depends(get_current_active_user),
+) -> None:
+    pid = await resolve_segmentation_patient_id(segmentation_id, _segmentation_service())
+    await authorize_resolved_patient(
+        patient_id=pid, resource_label="Segmentation", user=current_user,
+        patient_service=_patient_service(), care_team_service=_care_team_service(),
+    )
+
+
 # ---------------------------------------------------------------------------
 # List routes: authorize the patient scope of a listing.
 # ---------------------------------------------------------------------------
@@ -270,6 +313,47 @@ async def authorize_list_scope(
             "across all patients is restricted."
         ),
     )
+
+
+async def authorize_file_scope(
+    *,
+    file_ids,
+    user,
+    patient_service,
+    care_team_service,
+) -> None:
+    """Authorize a segmentation listing scoped by imaging file_ids.
+
+    Segmentations are listed by the file_id of the image they segment. Each
+    file_id is patient-scoped, so authorizing the listing means authorizing each
+    referenced patient. Same rule as the other list routes: a scope is required
+    for non-admins; every referenced patient must be one the caller may access.
+
+    A file_id that does not resolve to a patient, or that resolves to a patient
+    the caller may not access, denies the whole request with a 404 — consistent
+    with never revealing which patients or objects exist.
+    """
+    from app.security.models import UserRole
+    from app.security.storage_access import extract_patient_id_from_path
+
+    ids = [f for f in (file_ids or []) if f]
+    if not ids:
+        if user.role == UserRole.ADMIN:
+            return
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "A file_id scope is required for this listing. Listing "
+                "segmentations across all patients is restricted."
+            ),
+        )
+
+    for file_id in ids:
+        patient_id = extract_patient_id_from_path(str(file_id))
+        await authorize_resolved_patient(
+            patient_id=patient_id, resource_label="Segmentation", user=user,
+            patient_service=patient_service, care_team_service=care_team_service,
+        )
 
 
 async def require_study_list_scope(

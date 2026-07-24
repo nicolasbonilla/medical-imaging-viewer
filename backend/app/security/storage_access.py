@@ -39,6 +39,7 @@ patient link, not via this parser, and are tracked separately.
 """
 import re
 from dataclasses import dataclass
+from typing import Optional
 from uuid import UUID
 
 
@@ -106,6 +107,38 @@ def _valid_filename(segment: str) -> str:
     if not any(lowered.endswith(suffix) for suffix in _ALLOWED_SUFFIXES):
         raise StorageRefError("storage reference has an unsupported file type")
     return segment
+
+
+def extract_patient_id_from_path(raw: str) -> Optional[str]:
+    """Extract the owning patient_id from a `patients/{uuid}/...` key, or None.
+
+    This is the RESOLUTION counterpart to parse_patient_storage_ref. The strict
+    parser exists to gate a DOWNLOAD — it must validate the whole key because the
+    key becomes a bucket fetch. This function exists to answer "whose patient does
+    this object belong to?" for authorization, where only the patient segment
+    matters and the rest of the path is not about to be dereferenced.
+
+    Being deliberately lenient about the tail avoids over-denial: a segmentation
+    whose stored file_id is validly patient-scoped but shaped slightly differently
+    from the imaging grammar still resolves to its patient and is authorized,
+    rather than failing closed to ADMIN-only. It is still strict about the ONE
+    thing that matters here — the patient segment must be a real UUID under the
+    `patients/` prefix, so no non-patient object resolves to a patient.
+
+    Returns None (never raises) so callers can treat "unresolvable" uniformly as
+    a 404.
+    """
+    if not raw or not isinstance(raw, str):
+        return None
+    if any(ord(ch) < 0x20 for ch in raw) or raw.startswith("/") or "\\" in raw:
+        return None
+    segments = raw.split("/")
+    if len(segments) < 2 or segments[0] != "patients":
+        return None
+    try:
+        return str(UUID(segments[1]))
+    except (ValueError, AttributeError, TypeError):
+        return None
 
 
 def parse_patient_storage_ref(raw: str) -> PatientStorageRef:
