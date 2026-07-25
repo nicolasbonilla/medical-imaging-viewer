@@ -381,9 +381,14 @@ stated requirement is not traceable, so the requirement has now been written:
 
 Enforcement and specification are complete. Still open:
 
-- **Quarantine-triage workflow** — the policy denies legacy `created_by = None`
-  records to non-admins (REQ-SEC-018), but the ADMIN reassignment process is not
-  built.
+- ~~**Quarantine-triage workflow**~~ **DONE (2026-07-19)** — `GET /patients/quarantined`
+  (ADMIN-only via `require_role`, the first use of that previously-dead
+  dependency) lists records with no provenance. It scans and filters in memory
+  because legacy records lack the `created_by` field entirely and a Firestore
+  `== None` query would miss them; a capped scan reports `scan_capped` so a
+  truncated view is never mistaken for the whole. Reassignment reuses the
+  existing `POST /{patient_id}/care-team`, after which the record leaves
+  quarantine.
 - **Result-level list filtering** — non-admins must scope listings to one patient.
 - **Resolution efficiency** — series/instance/segmentation resolution rides
   pre-existing full-collection scans (N+1).

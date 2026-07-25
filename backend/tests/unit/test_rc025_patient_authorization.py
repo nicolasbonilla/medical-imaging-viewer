@@ -132,12 +132,17 @@ class TestRC025RoutesEnforceThePermissions:
             "a patient route has been reverted to authentication-only access"
         )
 
-    def test_rc025_every_patient_route_enforces_a_permission(self):
+    def test_rc025_every_patient_route_enforces_role_or_permission(self):
+        """Every route must gate on a permission OR a role. require_role counts:
+        the quarantine-triage route is ADMIN-only via require_role, which is a
+        stronger gate than any single permission, not a weaker one."""
         route_count = len(re.findall(r"@router\.(get|post|put|patch|delete)", self.SOURCE))
-        enforced = self.SOURCE.count("Depends(require_permission(")
+        by_permission = self.SOURCE.count("Depends(require_permission(")
+        by_role = self.SOURCE.count("Depends(require_role(")
 
-        assert enforced == route_count, (
-            f"{enforced} of {route_count} patient routes enforce a permission"
+        assert by_permission + by_role == route_count, (
+            f"{by_permission} permission + {by_role} role = "
+            f"{by_permission + by_role} of {route_count} patient routes enforce access"
         )
 
     def test_rc025_destructive_route_requires_the_delete_permission(self):

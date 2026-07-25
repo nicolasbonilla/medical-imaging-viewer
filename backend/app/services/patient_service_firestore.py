@@ -479,6 +479,34 @@ class PatientServiceFirestore(IPatientService):
 
         return results, total
 
+    async def list_unattributed_patients(
+        self,
+        limit: int = 200,
+    ) -> List[PatientSummary]:
+        """List patient records that carry no provenance (created_by).
+
+        These are the quarantined records of CAPA-002 §8.1: created before
+        provenance capture (REQ-SEC-017) was enforced. They are accessible only
+        to an administrator for triage (REQ-SEC-018).
+
+        Implemented as a bounded in-memory scan rather than a Firestore query,
+        deliberately: legacy records predate the `created_by` field entirely, so
+        it is MISSING, not null. Firestore's equality filter matches explicit
+        null but not a missing field, so `where created_by == None` would silently
+        omit exactly the records this endpoint exists to surface. The scan filters
+        for both missing and null, and is capped — an admin triage view, not a
+        hot path. If the cap is hit, the caller is told (see the route) so the
+        omission is never silent.
+        """
+        summaries: List[PatientSummary] = []
+        for doc in self.db.collection(self.collection).limit(limit).stream():
+            doc_data = doc.to_dict() or {}
+            if doc_data.get("created_by") is not None:
+                continue
+            doc_data["id"] = doc.id
+            summaries.append(self._doc_to_summary(doc_data, study_count=0, document_count=0))
+        return summaries
+
     async def list_patients(
         self,
         page: int = 1,

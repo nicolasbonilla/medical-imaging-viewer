@@ -14,8 +14,8 @@ from fastapi import APIRouter, Depends, Query, Path, status
 from app.core.container import get_patient_service
 from app.core.logging import get_logger
 from app.security import get_current_active_user
-from app.security.auth import require_permission
-from app.security.models import Permission
+from app.security.auth import require_permission, require_role
+from app.security.models import Permission, UserRole
 from app.security.patient_access_dependency import require_patient_access
 from app.security.models import User
 from app.services.patient_service_firestore import PatientServiceFirestore
@@ -191,6 +191,41 @@ async def get_patient_by_mrn(
             details={"mrn": mrn}
         )
     return patient
+
+
+@router.get(
+    "/quarantined",
+    summary="List quarantined (unattributed) patient records",
+    description="Administrator triage view of records that carry no provenance "
+                "and cannot be auto-attributed. Reassign with POST "
+                "/{patient_id}/care-team. Admin only.",
+)
+async def list_quarantined_patients(
+    limit: int = Query(200, ge=1, le=1000, description="Scan cap for the triage view"),
+    service: PatientServiceFirestore = Depends(get_patient_service),
+    # CAPA-002 CA-2.1 / REQ-SEC-018: quarantined records are ADMIN-only. This is
+    # the first use of require_role in the codebase — the audit (RC-018) found it
+    # defined but applied nowhere.
+    current_user: User = Depends(require_role(UserRole.ADMIN)),
+):
+    """List patient records with no provenance, for administrator triage.
+
+    Reassignment is not a new mechanism: an admin grants a care-team assignment
+    via POST /{patient_id}/care-team (the admin passes the object-access guard on
+    any patient), after which the record is no longer quarantined.
+    """
+    patients = await service.list_unattributed_patients(limit=limit)
+    return {
+        "quarantined": patients,
+        "count": len(patients),
+        "scan_capped": len(patients) >= limit,
+        "note": (
+            "Records here carry no created_by and no care-team assignment. "
+            "They are accessible only to administrators until reassigned. "
+            "If scan_capped is true, raise `limit` to see the rest — the omission "
+            "is not silent."
+        ),
+    }
 
 
 @router.get(
