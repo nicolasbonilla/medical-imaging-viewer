@@ -165,3 +165,32 @@ class TestRC029RoutesAreWired:
         assert "authorize_file_scope(" in body, (
             "list_segmentations must authorize its file_id scope"
         )
+
+
+@pytest.mark.asyncio
+class TestRC029AdminMayQueryAnyScope:
+    """Regression guard for the admin edge case found at deploy time: an admin
+    filtering by a file_id that resolves to no patient must get an empty result
+    (authorized), not a 404. Surfaced by test_endpoints.sh check #6
+    (GET /segmentation/list?file_ids=test)."""
+
+    async def _scope(self, file_ids, role):
+        await authorize_file_scope(
+            file_ids=file_ids, user=_User(role=role),
+            patient_service=_PatientService(), care_team_service=_CareTeam([]),
+        )
+
+    async def test_rc029_admin_with_unresolvable_file_id_is_allowed(self):
+        await self._scope(["test"], UserRole.ADMIN)  # must not raise (was 404)
+
+    async def test_rc029_admin_with_empty_scope_is_allowed(self):
+        await self._scope([], UserRole.ADMIN)  # must not raise
+
+    async def test_rc029_admin_with_real_file_id_is_allowed(self):
+        await self._scope([FILE_ID], UserRole.ADMIN)  # must not raise
+
+    async def test_rc029_non_admin_unresolvable_file_id_still_denied(self):
+        """The fix must NOT weaken non-admins: a bogus file_id is still 404."""
+        with pytest.raises(Exception) as exc:
+            await self._scope(["test"], UserRole.RADIOLOGIST)
+        assert exc.value.status_code == 404

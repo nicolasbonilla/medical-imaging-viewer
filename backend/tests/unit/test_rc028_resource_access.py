@@ -251,3 +251,37 @@ class TestRC028RoutesAreWired:
         assert "Depends(require_patient_access)" in self.DOCUMENTS[start:end], (
             "list_patient_documents must authorize the patient in its path"
         )
+
+
+@pytest.mark.asyncio
+class TestRC028AdminMayQueryAnyListScope:
+    """Companion to the RC-029 admin fix: an admin filtering a study/document
+    listing by a patient_id that does not resolve must be allowed (empty result),
+    not 404. Admin bypass moved to the top of authorize_list_scope."""
+
+    async def _scope(self, patient_id, role):
+        await authorize_list_scope(
+            patient_id=patient_id, user=_User(role=role),
+            patient_service=_PatientService(_Patient(created_by="other")),
+            care_team_service=_CareTeam([]),
+        )
+
+    async def test_rc028_admin_with_unresolvable_patient_filter_is_allowed(self):
+        # A patient_service that reports "not found" -> pid resolves to None-ish;
+        # admin must still be allowed rather than 404.
+        class _Missing:
+            async def get_patient(self, pid):
+                raise Exception("not found")
+        await authorize_list_scope(
+            patient_id="99999999-9999-9999-9999-999999999999",
+            user=_User(role=UserRole.ADMIN),
+            patient_service=_Missing(), care_team_service=_CareTeam([]),
+        )  # must not raise
+
+    async def test_rc028_admin_with_no_filter_is_allowed(self):
+        await self._scope(None, UserRole.ADMIN)  # must not raise
+
+    async def test_rc028_non_admin_no_filter_still_400(self):
+        with pytest.raises(Exception) as exc:
+            await self._scope(None, UserRole.RADIOLOGIST)
+        assert exc.value.status_code == 400
