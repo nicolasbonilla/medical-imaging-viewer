@@ -5,14 +5,14 @@
 **Status**: Draft for discussion. Contains verified market facts, clearly separated
 from inference and from unverified leads.
 
-> **Research completeness warning.** This analysis was assembled from a research
-> sweep that was **cut short by a session limit**. Two research streams completed
-> (icometrix/Cortechs.ai deep dive; a nine-company scan for new entrants). Several
-> others — MAGNIMS/McDonald criteria status, CVS/PRL biomarker readiness, OHIF /
-> Cornerstone3D / MONAI build-vs-buy, public benchmark datasets, German
-> reimbursement (NUB), and PACS integration paths — **did not finish**. Sections
-> resting on those are marked **[RESEARCH INCOMPLETE]** and must not be treated as
-> settled.
+> **Research completeness.** The competitive scan (§1–§9) completed two streams
+> in the first pass (icometrix/Cortechs.ai deep dive; a nine-company entrant scan).
+> The clinical/scientific state of the art was **completed 2026-07-25** via the
+> deep-research harness — 25 claims verified 3-0, none refuted — and is written up
+> in **§4b** (criteria, CVS/PRL, benchmarks), with honest caveats in **§4c**.
+> **Still open**: the build-vs-buy engineering question (OHIF/Cornerstone3D/MONAI,
+> DICOM-SR integration path) did not survive verification, and German NUB
+> reimbursement was not covered — both flagged in the appendix and §8.
 
 ---
 
@@ -148,6 +148,95 @@ LesionQuant is stale.
 
 ---
 
+## 4b. State of the art, 2024–2026 — verified (deep-research, 2026-07-25)
+
+The interrupted research was re-run through the deep-research harness (fan-out →
+fetch 16 sources → 3-vote adversarial verification → synthesis). **25 claims
+verified 3-0, none refuted.** Every finding below is high-confidence with primary
+sources; the honest caveats follow in §4c. Question 4 (build-vs-buy) did **not**
+survive verification and remains open.
+
+### 4b.1 The diagnostic criteria changed — and this reshapes the product
+
+**The 2024 McDonald criteria (published *Lancet Neurology* Sept 2025, Montalban
+et al. 24(10):850-865) are a material revision.** Three changes matter:
+
+1. **The optic nerve is now a FIFTH formal DIS location** (with periventricular,
+   juxtacortical/cortical, infratentorial, spinal cord). DIS is met with typical
+   lesions in ≥2 of 5. *A DIS implementation covering only 3–4 is outdated.*
+   [Lancet Neurology](https://www.thelancet.com/journals/laneur/article/PIIS1474-4422(25)00304-7/abstract),
+   [ECTRIMS](https://ectrims.eu/insights/diagnosis-of-ms-2024-revisions-of-the-mcdonald-criteria/)
+2. **Diagnosis at first attack** is now possible when DIS spans ≥4 of 5 locations,
+   **without separately demonstrating dissemination in time.**
+3. **CVS and PRL moved from research-only to formal high-specificity supportive
+   markers.** CVS applies via a **"select 6" rule** (≥6 CVS-positive lesions, or
+   the majority if <10 total); CVS in ≥2 CNS locations can substitute for DIT.
+
+**Connection to our code — better than feared.** `lesion_analysis_service.py`
+already encodes `DIS_TOTAL_REGIONS = 5` (PV, JC, IT, spinal cord, optic nerve),
+cites Montalban et al. 2025, and honestly discloses that spinal cord and optic
+nerve require separate imaging. The framework is current. What it does **not**
+implement — and what is now the frontier — is CVS/PRL detection, the "select 6"
+rule, and the DIS≥4 shortcut.
+
+### 4b.2 CVS/PRL is the strongest verified product niche
+
+This is the finding that most changes the plan. It elevates the earlier
+"Strategy C" from *unverified hypothesis* to *verified opportunity*:
+
+- **CVS and PRL differentiate MS from its mimics** — the unmet need the incumbents
+  do not address. A combined CVS/cortical-lesion/PRL ML model reached
+  **92.6–97.2% balanced accuracy**, with 51 of 71 models significantly beating the
+  standard DIS criterion (by up to 13%).
+  [Brain Communications](https://academic.oup.com/braincomms/article/8/2/fcag079/8514312)
+- **Automated tools exist — but are research-grade, not cleared.** ALPaCA segments
+  lesions + PRL + CVS simultaneously from clinically feasible scans (T1 MPRAGE,
+  T2-FLAIR, T2*-EPI magnitude+phase): lesion AUROC 0.95, PRL 0.91, CVS 0.87.
+  [ScienceDirect](https://www.sciencedirect.com/science/article/pii/S1053811921008624)
+- **PRL prevalence ≈ 52% of patients**, ≈12% of lesions; susceptibility sequences
+  (SWI/QSM/phase); persistent rims predict poor lesion outcome.
+- **No verified evidence any FDA/CE-cleared product performs CVS or PRL
+  detection.** That is the white space.
+
+**The catch, stated plainly:** CVS/PRL require susceptibility sequences (SWI /
+QSM / T2*) our current FLAIR+T1 pipeline does not process, detection is highly
+sequence- and field-strength-dependent (meta-analytic I² up to 99%), and
+clinical-utility standardisation is "still under development." This is a real
+opportunity **and** a real acquisition-protocol and validation burden.
+
+### 4b.3 The segmentation bar, and where to prove it
+
+- The oft-cited "best auto Dice 0.59 vs expert 0.67" is **from 2016 and dated.**
+  Modern pipelines report **~0.71** (MSLesSeg / ICPR 2024 winner) to **~0.78–0.80**
+  (nnU-Net / Swin UNETR).
+- **Dice is dataset-dependent** — a credible tool reports **lesion-wise F1 and
+  normalised Dice on named public sets**, never one global number.
+- **Public benchmarks to validate against**: MSSEG-2016 (53 patients, 7 raters,
+  LOP-STAPLE consensus), ISBI-2015 (longitudinal), Shifts / Shifts 2.0
+  (distribution-shift + uncertainty), MSLesSeg / ICPR-2024 (115 series, 75
+  patients). [Shifts](https://shifts.grand-challenge.org/medical-dataset/),
+  [MSSEG](https://www.nature.com/articles/s41598-018-31911-7)
+
+This is directly actionable: it is exactly the evidence base CAPA-005 and the
+mask-provenance work need, and it sets the bar our own segmentation must clear.
+
+## 4c. Honest caveats on the above (carried verbatim from the verification)
+
+- **CVS/PRL tools are research-grade single-study results** (ALPaCA n=97; the ML
+  model has small test cohorts with wide CIs reaching 100%, unreplicated).
+  Impressive, not independently validated or cleared.
+- **The incumbent gap is asserted, not re-confirmed here.** That icobrain/
+  NeuroQuant do not address MS-vs-mimic is carried from prior (unverified-here)
+  research. Before betting on it, confirm directly.
+- **Heterogeneity is very high.** Any CVS/PRL product claim must specify the
+  acquisition protocol (sequence, field strength, resolution).
+- **Build-vs-buy (Q4) is unanswered** — no claims on OHIF / Cornerstone3D / 3D
+  Slicer / MONAI or the DICOMweb/DICOM-SR integration path survived verification.
+  Still open; do not decide viewer-vs-pipeline on this research alone.
+- **Secondary biomarkers** (thalamic/deep-grey atrophy, cortical lesions via
+  DIR/MP2RAGE, spinal cord atrophy, choroid plexus volume) — no claims survived;
+  unresearched.
+
 ## 5. What the incumbents do well — and what that means we must match
 
 Honest assessment of the bar, from their published specifications:
@@ -249,15 +338,35 @@ publishes anything comparable.
 publish the model card and the failure modes; publish the validation dataset and
 the Dice distribution, not just the mean.
 
-### Strategy C — A biomarker niche the incumbents have not taken
+### Strategy C — The CVS/PRL biomarker niche  ★ now VERIFIED (2026-07-25), and the strongest option
 
-**[RESEARCH INCOMPLETE — do not act on this section without finishing the
-biomarker research.]** The candidates that were *to be* assessed for clinical
-readiness were central vein sign (CVS), paramagnetic rim lesions (PRL), spinal
-cord involvement, and cortical lesions. The hypothesis — unverified — is that
-CVS/PRL require SWI/FLAIR* sequences the incumbents do not process, and that
-automated CVS could differentiate MS from mimics, which is a genuine unmet
-clinical need. **This must be verified before any resource is committed.**
+**Upgraded from hypothesis to verified opportunity by the deep-research pass
+(§4b.2).** The evidence now supports what was previously a guess:
+
+- CVS and PRL are, as of the **2024 McDonald criteria**, formal supportive
+  diagnostic markers — no longer research-only.
+- They **differentiate MS from mimics** (92–97% balanced accuracy in a combined
+  ML model, beating standard DIS by up to 13%) — a need the incumbents do not
+  address.
+- **No FDA/CE-cleared product does CVS/PRL detection** (no verified evidence of
+  one) — genuine white space.
+- Automated methods exist (ALPaCA does lesion+PRL+CVS at once) but are
+  research-grade and uncleared — so the moat is *validation and clearance*, not
+  algorithm novelty.
+
+**Why this fits us specifically.** It aligns with the transparency/auditability
+position (Strategy B): the CVS "select 6" rule and PRL counting are exactly the
+kind of explicit, criteria-anchored, showable computation that the QMS discipline
+built this quarter is designed to substantiate — and that a research/RUO audience
+values.
+
+**The honest cost of entry** (§4c): CVS/PRL need susceptibility sequences (SWI/
+QSM/T2*) our FLAIR+T1 pipeline does not process; detection is highly protocol-
+dependent (I² up to 99%); the tools are single-study; and clinical-utility
+standardisation is still developing. This is a 2–3 year research programme with a
+real acquisition-protocol and validation burden — not a feature to bolt on. But
+it is the one direction where the market leaders are demonstrably absent and the
+clinical need is now written into the diagnostic criteria.
 
 ---
 
@@ -265,15 +374,23 @@ clinical need. **This must be verified before any resource is committed.**
 
 Ordered by ratio of decision value to cost.
 
-1. **Finish the interrupted research** — especially (a) German NUB / reimbursement
-   status, (b) McDonald 2024 criteria status and whether optic nerve is now a
-   fifth DIS location, (c) CVS/PRL clinical readiness, (d) OHIF/Cornerstone3D
-   build-vs-buy. Each of these changes the plan materially and none is expensive.
+1. **Finish the remaining research (narrowed).** The clinical state of the art is
+   done (§4b). Two items remain: (a) the **build-vs-buy** engineering question
+   (OHIF/Cornerstone3D/MONAI, DICOM-SR integration) — the one input to the
+   viewer-vs-pipeline decision (#4); and (b) **German NUB / reimbursement**, given
+   the Munich orientation. Both are focused, single-pass questions.
 2. **Resolve mask provenance** (blocked on the professor). Nothing validation-
    related can proceed without it, and the entire evidence story depends on it.
-3. **Close CAPA-002** — object-level authorization enforcement. It is the only
-   open item that independently blocks *any* clinical use, including research use
-   with real patient data under GDPR.
+   The public benchmarks in §4b.3 (MSSEG/ISBI/Shifts/MSLesSeg) are where the
+   segmentation is then proven, against a SOTA bar of Dice ~0.71–0.80.
+3. **Close CAPA-002 — enforcement is now DONE** (RC-026…029 cover every data
+   surface; REQ-SEC-014…018 written; quarantine triage built). What remains is
+   Safety-Officer effectiveness verification and two deferred efficiency/UX items.
+   Object-level authorization no longer blocks research use with real patient data.
+4. **The CVS/PRL programme (§4b.2, Strategy C) is the strategic bet** — the one
+   direction with verified clinical need (now in the criteria), a verified
+   incumbent gap, and no cleared competitor. It requires susceptibility sequences
+   and a multi-year validation effort; scope it deliberately, do not bolt it on.
 4. **Decide: viewer or pipeline.** The incumbents both push results into the
    radiologist's *existing* tools via DICOM SR and report templates. Being a new
    viewer is a materially harder sale. **[RESEARCH INCOMPLETE]** on the practical
@@ -305,12 +422,12 @@ clean-looking file.** That is the position worth building on.
 
 | Item | Status |
 |---|---|
-| MAGNIMS / McDonald 2024 criteria current status; optic nerve as 5th DIS location | **Not researched — agent terminated** |
-| CVS / PRL clinical readiness and automation status | **Not researched — agent terminated** |
-| OHIF v3 / Cornerstone3D / MONAI build-vs-buy assessment | **Not researched — agent terminated** |
-| Public MS benchmark datasets and state-of-the-art Dice | **Not researched — agent terminated** |
-| German NUB / reimbursement | **Not researched — agent terminated** |
-| PACS integration paths, DICOM SR acceptance in practice | **Not researched — agent terminated** |
+| MAGNIMS / McDonald 2024 criteria; optic nerve as 5th DIS location | **RESOLVED 2026-07-25 (§4b.1)** — confirmed: 5 locations, DIS≥4 shortcut, CVS/PRL supportive |
+| CVS / PRL clinical readiness and automation status | **RESOLVED 2026-07-25 (§4b.2)** — supportive markers; research-grade tools; no cleared product |
+| Public MS benchmark datasets and state-of-the-art Dice | **RESOLVED 2026-07-25 (§4b.3)** — MSSEG/ISBI/Shifts/MSLesSeg; SOTA ~0.71–0.80 |
+| OHIF v3 / Cornerstone3D / MONAI build-vs-buy assessment | **STILL OPEN** — did not survive verification; needs a focused second pass |
+| German NUB / reimbursement | **STILL OPEN** — not covered in this pass |
+| PACS integration paths, DICOM SR acceptance in practice | **STILL OPEN** — tied to the build-vs-buy question |
 | mediaire, Combinostics, Pixyl, Brainreader, jung diagnostics detail | **Partial — not reached** |
 | Cortechs.ai pricing | **Not published; VA solicitation lead returned HTTP 403** |
 | Normative database size for either leader | **Not disclosed by either vendor** |
