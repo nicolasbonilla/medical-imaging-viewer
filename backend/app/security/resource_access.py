@@ -293,17 +293,23 @@ async def authorize_list_scope(
         (not yet built), an unscoped listing would leak every patient's study or
         document metadata. Requiring the scope is the safe, clinically ordinary
         rule: you list records for a patient you are caring for.
+
+    ADMIN bypass is at the top: an administrator may query any scope, including
+    a filter that resolves to no patient (which then simply yields an empty
+    result). This mirrors the GRANTED_ADMIN bypass in decide_patient_access and
+    grants admin nothing new — it only avoids the edge case where an admin's
+    unresolvable filter returned a 404 instead of an empty list.
     """
     from app.security.models import UserRole
+
+    if user.role == UserRole.ADMIN:
+        return
 
     if patient_id is not None:
         await authorize_resolved_patient(
             patient_id=str(patient_id), resource_label="Patient", user=user,
             patient_service=patient_service, care_team_service=care_team_service,
         )
-        return
-
-    if user.role == UserRole.ADMIN:
         return
 
     raise HTTPException(
@@ -329,17 +335,22 @@ async def authorize_file_scope(
     referenced patient. Same rule as the other list routes: a scope is required
     for non-admins; every referenced patient must be one the caller may access.
 
-    A file_id that does not resolve to a patient, or that resolves to a patient
-    the caller may not access, denies the whole request with a 404 — consistent
-    with never revealing which patients or objects exist.
+    For a non-admin, a file_id that does not resolve to a patient, or that
+    resolves to a patient the caller may not access, denies the whole request
+    with a 404 — consistent with never revealing which patients or objects exist.
+
+    ADMIN bypass is at the top: an administrator may list any scope, including a
+    file_id that resolves to no patient (which then yields an empty result rather
+    than a 404). Mirrors the GRANTED_ADMIN bypass and grants admin nothing new.
     """
     from app.security.models import UserRole
     from app.security.storage_access import extract_patient_id_from_path
 
+    if user.role == UserRole.ADMIN:
+        return
+
     ids = [f for f in (file_ids or []) if f]
     if not ids:
-        if user.role == UserRole.ADMIN:
-            return
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=(
