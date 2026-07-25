@@ -1,3 +1,22 @@
+> # ⚠️ WITHDRAWN — DO NOT RELY ON THIS RECORD
+>
+> **Withdrawn**: 2026-07-18 under CAPA-001 action CA-3.
+> **Superseded by**: [`RCV-SUMMARY_2026-07-18.md`](RCV-SUMMARY_2026-07-18.md)
+>
+> This record states **"Total Risk Controls 22 · Verified 21 (95.5 %) · Partial 1 ·
+> Failed 0"**. That is not accurate. Adversarial re-verification against the source
+> code on 2026-07-18 found **4 of 22 verified and 12 overstated or not implemented**,
+> including four controls recorded as VERIFIED that were absent from the codebase in
+> every form.
+>
+> It is **retained deliberately and not deleted**: it is the primary evidence of the
+> nonconformity documented in CAPA-001, and destroying it would destroy the audit
+> trail. Nothing below has been edited.
+>
+> Note also that this record assigns **different content to several RC IDs than the
+> Risk Management File does** (RC-007, RC-009, RC-012, RC-016, RC-020). See
+> RCV-SUMMARY_2026-07-18 §4.
+
 # Risk Control Verification Summary Record
 
 **Record ID**: RCV-SUMMARY-2026-04-12

@@ -29,7 +29,8 @@ from app.utils import (
     normalize_to_uint8,
     array_to_base64,
     load_nifti_from_bytes,
-    extract_nifti_metadata
+    extract_nifti_metadata,
+    describe_orientation,
 )
 
 logger = get_logger(__name__)
@@ -151,7 +152,11 @@ class ImagingService(IImagingService):
                 slices=data.shape[2] if len(data.shape) > 2 else 1,
                 pixel_spacing=[float(pixdim[0]), float(pixdim[1])] if len(pixdim) > 1 else [1.0, 1.0],
                 slice_thickness=float(pixdim[2]) if len(pixdim) > 2 else 1.0,
-                modality="MRI"
+                modality="MRI",
+                # RC-023 (CAPA-004 CA-4.2): surface the anatomical orientation so
+                # the viewport can label laterality. describe_orientation returns
+                # "UNKNOWN" rather than guessing when the affine is unusable.
+                anatomical_orientation=describe_orientation(img),
             )
 
             return data, metadata

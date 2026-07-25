@@ -1,0 +1,314 @@
+{
+  "$comment": [
+    "Risk-control → test binding manifest. Created as CAPA-001 action PA-1.",
+    "",
+    "CAPA-001 root cause: 'The verification process accepts unexecuted,",
+    "unreproducible, self-attested prose as objective evidence for risk-control",
+    "implementation, and nothing in the build pipeline can contradict it.'",
+    "",
+    "This file is the contradiction mechanism. Every risk control whose status is",
+    "'implemented' MUST name test node IDs that exist and pass. The manifest is",
+    "enforced by backend/tests/unit/test_risk_control_manifest.py, which fails if",
+    "a named test has disappeared. Deleting a risk control's test therefore turns",
+    "CI red instead of producing a silent green build.",
+    "",
+    "Status values:",
+    "  implemented  - control exists in code AND is bound to passing tests.",
+    "                 'tests' must be non-empty and every entry must resolve.",
+    "  not_implemented - control does not exist. Recorded honestly. 'tests' empty.",
+    "  deliberately_absent - the code intentionally does NOT provide this control;",
+    "                 the documentation was wrong. Requires 'rationale'.",
+    "  unverified   - not yet re-verified to the CAPA-001 standard. Must not be",
+    "                 recorded as VERIFIED in the RMF until it is.",
+    "",
+    "A control may only be recorded VERIFIED in the Risk Management File when its",
+    "status here is 'implemented' or 'deliberately_absent'."
+  ],
+  "manifest_version": 1,
+  "capa_reference": "CAPA-001, CAPA-002, CAPA-004, CAPA-005",
+  "last_updated": "2026-07-18",
+  "controls": {
+    "RC-006": {
+      "description": "AI-generated report carries a mandatory physician-review disclaimer",
+      "hazard": "HAZ-003",
+      "status": "implemented",
+      "implementation": "backend/app/services/brain_report_service.py::_apply_disclaimer",
+      "tests": [
+        "tests/unit/test_rc006_report_disclaimer.py"
+      ],
+      "negative_control": "CAPA-001 §5.1 — enforcement line removed: 8 failed, 6 passed"
+    },
+    "RC-017": {
+      "description": "Authentication required on all API endpoints, including the WebSocket transport",
+      "hazard": "HAZ-010",
+      "status": "implemented",
+      "implementation": "backend/app/api/routes/websocket.py::_authenticate_websocket",
+      "tests": [
+        "tests/unit/test_rc017_websocket_auth.py"
+      ],
+      "negative_control": "CAPA-001 §5.2 — two vectors: 1 failed (unwired), 5 failed (neutralised)",
+      "note": "Covers authentication only. Object-level authorization is absent and is tracked as CAPA-002."
+    },
+    "RC-007": {
+      "description": "De-identified data only sent to the third-party model API",
+      "hazard": "HAZ-003",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "note": "CAPA-001 §2.3 — no de-identification routine exists under backend/app/. Tracked as CAPA-001 CA-4. The RMF must not record this as VERIFIED."
+    },
+    "RC-010": {
+      "description": "Classification confidence displayed per lesion",
+      "hazard": "HAZ-006",
+      "status": "deliberately_absent",
+      "implementation": "backend/app/services/ms_region_classifier.py",
+      "tests": [],
+      "rationale": "CAPA-001 §2.4 — the geometric classification path sets confidence = None on purpose, because it has no empirically calibrated confidence. Emitting an uncalibrated number would be worse than emitting none. The code is more honest than the documentation was; the RMF row is what must change, not the code.",
+      "note": "Requires a test asserting confidence stays None on the geometric path, so the deliberate absence cannot be 'fixed' by accident. Tracked under CA-3."
+    },
+    "RC-022": {
+      "description": "All images preprocessed to MNI 1 mm isotropic space",
+      "hazard": "HAZ-014",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "note": "Superseded in effect by RC-024 (CAPA-001 CA-5). The MNI 1 mm claim remains unverified — recollection is not objective evidence — but the code no longer relies on it: voxel spacing is now required and validated rather than assumed. RC-022 itself should be retired or restated by the Safety Officer."
+    },
+    "RC-001": {
+      "description": "All AI segmentation results labeled assistive / requires physician review",
+      "hazard": "HAZ-001",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "note": "RCV-2026-07-18 §3.3 — the phrase appears nowhere in the codebase; AI masks are indistinguishable from hand-drawn ones. Tracked as CAPA-001 CA-3."
+    },
+    "RC-002": {
+      "description": "Viewing/Edit mode separation; AI results read-only until clinician activates edit",
+      "hazard": "HAZ-001",
+      "status": "unverified",
+      "implementation": "frontend/src/components/ImageViewer2D.tsx (NOT ViewerApp.tsx as the RMF cites)",
+      "tests": [],
+      "note": "Control is real and effective but not bound to a test; UI-layer only, no server-side enforcement. CA-3."
+    },
+    "RC-003": {
+      "description": "Manual segmentation tools always available as override",
+      "hazard": "HAZ-001",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "note": "Rendered only when !is3D && activeSegmentation; in 3D there is no manual override. 'Always' is false. CA-3."
+    },
+    "RC-004": {
+      "description": "Volumetry displays percentile ranges with normative reference",
+      "hazard": "HAZ-002",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "note": "Normative table has no provenance; sole call site omits patientAge so no percentile is ever computed. See CAPA-005."
+    },
+    "RC-005": {
+      "description": "Abnormality flags show threshold criteria used",
+      "hazard": "HAZ-002",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "note": "Thresholds live only in Python comments; flag can never fire. See CAPA-005."
+    },
+    "RC-008": {
+      "description": "Edge AI badge displays confidence and an unconditional assistive-only disclaimer",
+      "hazard": "HAZ-004",
+      "status": "implemented",
+      "implementation": "frontend/src/components/QuickScreenBadge.tsx — disclaimer shares the result's visibility condition; no toggle",
+      "tests": [
+        "frontend/src/components/QuickScreenBadge.test.tsx"
+      ],
+      "negative_control": "CAPA-004 CA-4.4 — toggle restored (showDisclaimer gate reinstated) → 2 failed, 3 passed",
+      "note": "Repaired under CAPA-004 CA-4.4. Previously the string existed in the component but was gated behind useState(false), so a user could read a confidence-scored verdict with no limitation statement — while the file's header comment claimed it was always shown. Verification by grepping for the string could not tell a displayed control from a hidden one."
+    },
+    "RC-009": {
+      "description": "Edge AI model admin-supplied; feature hidden when unavailable",
+      "hazard": "HAZ-004",
+      "status": "unverified",
+      "implementation": "frontend/src/hooks/useEdgeAI.ts",
+      "tests": [],
+      "note": "Verified by inspection 2026-07-18 and broader than claimed (also rejects text/html), but not bound to a test. ID conflicts with the withdrawn RCV-SUMMARY. CA-3."
+    },
+    "RC-011": {
+      "description": "Classification method displayed",
+      "hazard": "HAZ-005",
+      "status": "unverified",
+      "implementation": "frontend/src/components/LesionDashboard.tsx",
+      "tests": [],
+      "note": "Displayed and honest, but the control names EDT/Atlas/Geometric while the UI exposes auto/msmask/geometric. Wording cannot be mapped to the screen. CA-3."
+    },
+    "RC-012": {
+      "description": "Auto-transpose detection for axis mismatch",
+      "hazard": "HAZ-006",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "note": "Purely dimensional; a no-op on square 256x256 volumes, the standard brain-MRI matrix. See CAPA-004 CA-4.3."
+    },
+    "RC-013": {
+      "description": "NIfTI orientation validation on upload",
+      "hazard": "HAZ-006",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "note": "No orientation validation on upload. CAPA-004 CA-4.1 has landed the primitives (see RC-023) but they are NOT yet wired into load_nifti_from_bytes — see RC-023's note for why that migration must convert image and mask together. Also outstanding: L/R laterality labels on the viewport (CA-4.2). See CAPA-004."
+    },
+    "RC-014": {
+      "description": "Longitudinal tri-colour overlay (TP1/TP2/overlap)",
+      "hazard": "HAZ-007",
+      "status": "unverified",
+      "implementation": "frontend/src/components/SegmentationCanvasLocal.tsx",
+      "tests": [],
+      "note": "Implemented exactly as written — the only control of which that is true — but not bound to a test. CA-3."
+    },
+    "RC-015": {
+      "description": "DIS per-region details with qualifying lesion counts",
+      "hazard": "HAZ-008",
+      "status": "unverified",
+      "implementation": "backend/app/services/lesion_analysis_service.py",
+      "tests": [],
+      "note": "3 of 5 McDonald 2024 regions, correctly and honestly disclosed. Counts are returned and typed but rendered by no component. CA-3."
+    },
+    "RC-016": {
+      "description": "Patient name and MRN rendered in the image viewport itself",
+      "hazard": "HAZ-009",
+      "status": "implemented",
+      "implementation": "frontend/src/components/ViewportSafetyOverlay.tsx, rendered unconditionally by ImageViewer2D.tsx",
+      "tests": [
+        "frontend/src/components/ViewportSafetyOverlay.test.tsx"
+      ],
+      "negative_control": "CAPA-004 CA-4.2 — three vectors: identity block removed → 1 failed; overlay unwired from ImageViewer2D → 1 failed; orientation warning silenced → 2 failed",
+      "note": "Covers the 2D viewer. 3D and multi-panel views still receive no patient props and remain uncovered — tracked under CAPA-004 CA-4.2. Tests assert what is RENDERED, not what is passed: the original defect was a dead prop that looked correct at the call site."
+    },
+    "RC-018": {
+      "description": "RBAC: 4 roles, 15 granular permissions",
+      "hazard": "HAZ-010",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "note": "Model correct; 7 of 124 routes enforce a permission, 0 enforce a role, 10 of 15 permissions never checked. See CAPA-004 CA-4.5 and CAPA-002."
+    },
+    "RC-019": {
+      "description": "DICOM-SEG with standard SOP Class UID",
+      "hazard": "HAZ-011",
+      "status": "unverified",
+      "implementation": "backend/app/utils/dicom_utils.py::create_dicom_seg",
+      "tests": [
+        "tests/unit/test_dicom_seg.py"
+      ],
+      "note": "Code correct. Tests exist but are not RC-named, so the manifest gate cannot bind them yet; the RMF claimed 8 tests and there are 7. CA-3."
+    },
+    "RC-020": {
+      "description": "DICOMweb import shows metadata before import",
+      "hazard": "HAZ-012",
+      "status": "unverified",
+      "implementation": "frontend/src/pages/PACSBrowserPage.tsx",
+      "tests": [],
+      "note": "Source metadata is shown, but the destination is an unvalidated free-text prompt() patient ID with no name confirmation — a mis-association hazard covered by no control. CA-3."
+    },
+    "RC-021": {
+      "description": "Report generation timeout (30s) with error message",
+      "hazard": "HAZ-013",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "note": "No timeout exists anywhere in the report path; no CLAUDE_TIMEOUT setting. Also a synchronous call inside an async handler blocks the worker. CA-3."
+    },
+    "RC-023": {
+      "description": "Anatomical orientation is determinable from the affine, and is never guessed when indeterminate",
+      "hazard": "HAZ-006",
+      "status": "implemented",
+      "implementation": "backend/app/utils/nifti_utils.py::get_orientation_codes / canonicalize_orientation",
+      "tests": [
+        "tests/unit/test_rc023_orientation.py",
+        "frontend/src/components/ViewportSafetyOverlay.test.tsx"
+      ],
+      "negative_control": "CAPA-004 CA-4.1 — fixed RAS return → 9 failed; canonicalisation neutralised → 2 failed. CA-4.2 — orientation warning silenced in the viewport → 2 failed",
+      "note": "NEW control created by CAPA-004 CA-4.1; MUST be added to the Risk Management File §5.1 (tracked). It provides the primitives only. RC-013 — orientation VALIDATION ON UPLOAD — remains not_implemented because canonicalisation is deliberately opt-in: image and mask load through separate calls, so transforming one and not the other would misalign them and create a worse hazard than the one being fixed. Migrating to canonical-by-default must convert both together in one change, with a matched-pair correspondence test. The viewport now REPORTS the orientation and warns when it is UNKNOWN or non-canonical, but deliberately renders NO L/R edge labels: volumes are not canonicalised on load and imaging_service transposes with fixed axis tuples presuming RAS, so the axis-to-screen mapping is unverified. A test asserts that absence. Labels may only be added under CA-4.3, after verification against a phantom of known laterality."
+    },
+    "RC-024": {
+      "description": "Voxel spacing is required for every quantitative measurement; never assumed",
+      "hazard": "HAZ-014",
+      "status": "implemented",
+      "implementation": "backend/app/utils/spacing_utils.py::resolve_voxel_spacing / require_spacing; 4 route sites and 14 Class C service signatures",
+      "tests": [
+        "tests/unit/test_rc024_voxel_spacing.py"
+      ],
+      "negative_control": "CAPA-001 CA-5 — helper returns 1mm default → 17 failed; a route restores the default → 1 failed",
+      "note": "Supersedes the RC-022 assumption that all images are MNI 1 mm, which was 'verified by recollection'. The code no longer depends on that assumption: it requires the real geometry and raises (HTTP 422, VOXEL_SPACING_UNAVAILABLE) when it is unavailable."
+    },
+    "RC-025": {
+      "description": "Role-level authorization enforced on every patient-record route",
+      "hazard": "HAZ-010",
+      "status": "implemented",
+      "implementation": "app/security/models.py (4 PATIENT_* permissions), app/security/rbac.py (role map), app/api/routes/patients.py (10/10 routes)",
+      "tests": [
+        "tests/unit/test_rc025_patient_authorization.py"
+      ],
+      "negative_control": "CAPA-004 CA-4.5 — three vectors: a route reverted to authentication-only → 3 failed; VIEWER granted PATIENT_DELETE → 4 failed; created_by capture removed → 1 failed",
+      "note": "SCOPE LIMIT: answers 'may this ROLE operate on patient records', NOT 'may this user access THIS patient'. Object-level authorization remains absent and CAPA-002 CA-2.1 stays OPEN — an authenticated VIEWER still reaches every patient in the system. Do not read this control as closing CAPA-002. Ten route docstrings previously promised PATIENT_* permissions that did not exist in the enum and were enforced nowhere.",
+      "requirement": "REQ-SEC-017"
+    },
+    "RC-026": {
+      "description": "Object-level authorization for patient records under the care-team entitlement model",
+      "hazard": "HAZ-010",
+      "status": "implemented",
+      "implementation": "app/security/patient_access.py (pure decision) + app/services/care_team_service.py (assignment store) + app/security/patient_access_dependency.py (HTTP guard) + app/api/routes/patients.py (6 patient-scoped routes + care-team management)",
+      "tests": [
+        "tests/unit/test_rc026_patient_access.py",
+        "tests/unit/test_rc026_access_enforcement.py"
+      ],
+      "negative_control": "decision layer — 4 vectors (7/2/1/7 failed); enforcement layer — 3 vectors: guard removed from a route -> 1 failed; enforcement returns patient unconditionally -> 7 failed; 403 instead of 404 (enumeration leak) -> 1 failed",
+      "note": "ENFORCED on the PATIENT resource: all 6 patient-scoped routes (get/update/delete + 3 medical-history) plus care-team management now call require_patient_access, which denies with 404 (never 403) to prevent patient enumeration. Care-team assignment/revocation themselves require object access, so a clinician cannot add themselves to a team they are not on; ADMIN bootstraps. STILL OPEN under CAPA-002: imaging.py, studies.py and documents.py are NOT yet wired — they identify the patient indirectly (via file_id / study_id), which needs CA-2.3 (opaque IDs resolved server-side) first. CAPA-002 remains OPEN until those routes enforce access and CA-2.3 lands.",
+      "requirement": "REQ-SEC-014/015/018"
+    },
+    "RC-027": {
+      "description": "Imaging storage references are parsed against a positive grammar and patient-authorized; raw client paths are never used as bucket keys",
+      "hazard": "HAZ-010",
+      "status": "implemented",
+      "implementation": "app/security/storage_access.py::parse_patient_storage_ref (pure grammar) + app/security/patient_access_dependency.py::authorize_storage_ref (parse + RC-026) + app/api/routes/imaging.py (8 handlers authorize before any storage access)",
+      "tests": [
+        "tests/unit/test_rc027_storage_access.py"
+      ],
+      "negative_control": "3 vectors, each re-measured in isolation after a chained run gave a spurious result: prefix check removed -> 1 failed; UUID validation skipped -> 2 failed; object_path echoes raw input -> 2 failed",
+      "note": "Closes the imaging half of CAPA-002. Malformed references and cross-patient references both return an identical 404 (no enumeration oracle over key space or patient space). object_path is rebuilt from parsed components, so no unparsed caller byte reaches the storage key. SCOPE: patient-scoped imaging grammar only. Segmentation objects (segmentations/{id}/...) and the studies/documents routes are NOT yet covered — CAPA-002 remains OPEN for those.",
+      "requirement": "REQ-SEC-016"
+    },
+    "RC-028": {
+      "description": "Object-level authorization on study, series, instance and document routes; list routes are patient-scoped",
+      "hazard": "HAZ-010",
+      "status": "implemented",
+      "implementation": "app/security/resource_access.py (resolve object -> patient_id, then reuse RC-026) + app/api/routes/studies.py (12 routes) + app/api/routes/documents.py (6 routes)",
+      "tests": [
+        "tests/unit/test_rc028_resource_access.py"
+      ],
+      "negative_control": "3 vectors, each measured in a single isolated run (chained runs retired): guard grants on unresolved patient (patient_id=None) -> 1 failed; a resolver raises instead of returning None -> 2 failed; unscoped listing allowed for non-admin -> 1 failed",
+      "note": "Resolves each object to its owning patient (study.patient_id direct; series/instance via study_id; document.patient_id direct) and authorizes via the RC-026 decision. Unresolved objects and unauthorized patients both return an identical 404 (no id enumeration). List routes require a patient_id scope for non-admins — an unscoped archive-wide listing is the bulk form of the CAPA-002 defect. SCOPE NOTE: series/instance resolution relies on the study service's existing full-collection scan (a pre-existing N+1); correct but not yet efficient. Segmentation objects and result-level list filtering remain open.",
+      "requirement": "REQ-SEC-014/015"
+    },
+    "RC-029": {
+      "description": "Object-level authorization on segmentation routes; create authorizes the target image; list is file-scoped",
+      "hazard": "HAZ-010",
+      "status": "implemented",
+      "implementation": "app/security/resource_access.py::resolve_segmentation_patient_id + authorize_file_scope (resolve via metadata.file_id -> extract_patient_id_from_path) + app/api/routes/segmentation.py (12 object routes + create + list)",
+      "tests": [
+        "tests/unit/test_rc029_segmentation_access.py"
+      ],
+      "negative_control": "2 vectors, each in a single isolated run: resolver invents a patient for a non-patient file_id -> 2 failed; unscoped listing allowed for a non-admin -> 1 failed",
+      "note": "Last data surface of CAPA-002. A segmentation stores no patient_id — it stores the file_id of the image it segments, which is patient-scoped; the owning patient is extracted from that file_id (reusing RC-027). Non-patient or malformed file_ids fail closed to a 404. create authorizes request.file_id via the imaging guard (a caller may only segment an image they can access). list requires a file_id scope for non-admins and authorizes every referenced patient. With RC-026/027/028/029, all patient, imaging, study, document and segmentation data routes now enforce object-level access.",
+      "requirement": "REQ-SEC-014/015"
+    }
+  },
+  "unverified_controls_note": [
+    "All 22 controls were re-verified against source on 2026-07-18 (CAPA-001 CA-3).",
+    "Status 'unverified' here means: found present by inspection, but NOT bound to an",
+    "automated test whose removal turns CI red. Under CAPA-001 PA-1 that is not",
+    "sufficient to record VERIFIED in the Risk Management File. Only RC-006 and",
+    "RC-017 meet the full standard.",
+    "Evidence: docs/iec62304/records/risk_verification/RCV-SUMMARY_2026-07-18.md"
+  ]
+}

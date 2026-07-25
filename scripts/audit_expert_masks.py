@@ -108,6 +108,51 @@ def is_mask_file(fname):
     fl = fname.lower()
     return any(k in fl for k in MASK_KEYWORDS)
 
+# ─────────────────────────────────────────────────────────────────────────────
+# PROVENANCE CLASSIFICATION
+#
+# This audit previously counted FILES and, on finding two per timepoint, printed
+# "MATCHES the ISBI 2015 standard (2 raters per TP)". That is unsound: two files
+# is not two independent human raters. If one of them is an algorithm output,
+# the script certifies a defect as compliant — and any Dice computed against
+# that "second rater" measures agreement between two algorithms, not accuracy.
+#
+# Filenames are a WEAK signal (the repository stores no provenance field for
+# masks created through the public API), so this classifier is deliberately
+# conservative: it can flag a file as algorithm-derived, but it can never
+# *prove* a file is a human expert annotation. Anything not positively
+# identifiable is UNKNOWN, and unknown never counts toward rater independence.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Tokens that indicate a mask was produced by an algorithm, not a human.
+ALGORITHM_TOKENS = [
+    "out_mask", "outmask", "output", "pred", "prediction", "auto",
+    "consensus", "lst-ai", "lstai", "synthseg", "mindglide", "nnunet",
+    "ai_", "_ai", "model", "inference",
+]
+# Tokens that merely *claim* human annotation. Claim != proof.
+EXPERT_CLAIM_TOKENS = ["expert", "rater", "manual", "annotation"]
+
+PROV_ALGORITHM = "algorithm"
+PROV_EXPERT_CLAIMED = "expert_claimed"
+PROV_UNKNOWN = "unknown"
+
+
+def classify_mask_provenance(fname):
+    """Best-effort provenance from the filename alone.
+
+    Returns one of PROV_ALGORITHM / PROV_EXPERT_CLAIMED / PROV_UNKNOWN.
+    Algorithm tokens win over expert tokens: a file called
+    'Expert01_out_mask.nii.gz' is an algorithm output that merely sits in an
+    expert-named series.
+    """
+    fl = fname.lower()
+    if any(tok in fl for tok in ALGORITHM_TOKENS):
+        return PROV_ALGORITHM
+    if any(tok in fl for tok in EXPERT_CLAIM_TOKENS):
+        return PROV_EXPERT_CLAIMED
+    return PROV_UNKNOWN
+
 def main():
     H = login()
     isbi_patients = get_patients(H)
@@ -248,46 +293,111 @@ def print_report(summary, seg_data_all):
 
     print()
     print(SEP)
+    print("PROVENANCE BREAKDOWN (by filename — a weak signal, see notes)")
+    print(SEP)
+    print()
+
+    prov_counts = {PROV_ALGORITHM: 0, PROV_EXPERT_CLAIMED: 0, PROV_UNKNOWN: 0}
+    tps_with_algorithm = 0
+    algorithm_examples = []
+    for pid, tps in summary.items():
+        for tp, info in sorted(tps.items()):
+            saw_algorithm = False
+            for m in info["masks"]:
+                cls = classify_mask_provenance(m)
+                prov_counts[cls] += 1
+                if cls == PROV_ALGORITHM:
+                    saw_algorithm = True
+                    if len(algorithm_examples) < 6:
+                        algorithm_examples.append("{} {} : {}".format(pid, tp, m))
+            if saw_algorithm:
+                tps_with_algorithm += 1
+
+    print("  Files that look ALGORITHM-derived: {}".format(prov_counts[PROV_ALGORITHM]))
+    print("  Files that CLAIM human annotation: {}".format(prov_counts[PROV_EXPERT_CLAIMED]))
+    print("  Files of UNKNOWN provenance:       {}".format(prov_counts[PROV_UNKNOWN]))
+    print("  Timepoints containing >=1 algorithm-derived mask: {}".format(tps_with_algorithm))
+    if algorithm_examples:
+        print()
+        print("  Examples flagged as algorithm-derived:")
+        for ex in algorithm_examples:
+            print("    - {}".format(ex))
+    print()
+
+    print(SEP)
     print("COMPARISON WITH ISBI 2015 CHALLENGE STANDARD")
     print(SEP)
     print()
     print("ISBI 2015 Training set (patients 1-5):")
     print("  Expected: mask1.nii (rater 1) + mask2.nii (rater 2) per timepoint")
-    print("  = 2 expert masks per timepoint, 2 independent raters")
+    print("  = 2 expert masks per timepoint, 2 INDEPENDENT HUMAN raters")
     print()
-    print("What we found (file instances with mask/dseg/expert/seg keywords):")
+    print("File counts (any mask-like instance):")
     print("  Total TPs examined:    {}".format(total_tps))
     print("  TPs with 2+ masks:    {}".format(tps_2f))
     print("  TPs with 1 mask:      {}".format(tps_1f))
     print("  TPs with 0 masks:     {}".format(tps_0f))
     print()
-    print("What we found (segmentation objects):")
+    print("Segmentation objects:")
     print("  TPs with 2+ segs:     {}".format(tps_2s))
     print("  TPs with 1 seg:       {}".format(tps_1s))
     print("  TPs with 0 segs:      {}".format(total_tps - tps_2s - tps_1s))
     print()
 
-    total_masks = tps_2f + tps_1f
-    total_segs = tps_2s + tps_1s
-    combined = max(total_masks, total_segs)
+    # ── VERDICT ──────────────────────────────────────────────────────────────
+    # This script must NEVER certify rater independence from a file count.
+    # Counting two files and concluding "2 independent raters" is how an
+    # algorithm output gets laundered into ground truth; a Dice measured against
+    # it would be algorithm-vs-algorithm agreement wearing the label of accuracy.
+    #
+    # Exit codes:
+    #   0 = nothing to flag AND provenance was positively established
+    #   2 = cannot certify (unverified provenance, or algorithm masks present)
+    #   3 = no masks found at all
+    print(SEP)
+    print("VERDICT")
+    print(SEP)
+    print()
+
+    if total_tps == 0 or (tps_2f + tps_1f == 0 and tps_2s + tps_1s == 0):
+        print("  NO MASKS FOUND.")
+        print("  Nothing to audit — annotations may not be uploaded yet.")
+        sys.exit(3)
+
+    print("  CANNOT CERTIFY RATER INDEPENDENCE.")
+    print()
+    print("  This repository stores no provenance field for masks created through")
+    print("  the public segmentation API, so neither this script nor any reviewer")
+    print("  can establish from the data whether a given mask was drawn by a human")
+    print("  expert or produced by an algorithm. Filenames are a claim, not proof.")
+    print()
+
+    if tps_with_algorithm > 0:
+        print("  *** {} timepoint(s) contain a mask that looks ALGORITHM-DERIVED. ***".format(tps_with_algorithm))
+        print("  If such a mask is being treated as a second 'expert rater', then:")
+        print("    - it is NOT an independent human rater;")
+        print("    - inter-rater agreement computed from it is meaningless;")
+        print("    - any Dice/accuracy validated against it is CIRCULAR and invalid.")
+        print()
 
     if tps_2f == total_tps and total_tps > 0:
-        print("VERDICT: ALL {} TPs have 2+ expert mask FILES.".format(total_tps))
-        print("  MATCHES the ISBI 2015 standard (2 raters per TP).")
-    elif tps_2s == total_tps and total_tps > 0:
-        print("VERDICT: ALL {} TPs have 2+ segmentation objects.".format(total_tps))
-        print("  MATCHES the ISBI 2015 standard (2 raters per TP).")
-    elif tps_2f > 0 or tps_2s > 0:
-        print("VERDICT: MIXED")
-        print("  {}/{} TPs have 2+ mask files".format(tps_2f, total_tps))
-        print("  {}/{} TPs have 2+ seg objects".format(tps_2s, total_tps))
-    elif tps_1f > 0 or tps_1s > 0:
-        print("VERDICT: Only 1 expert annotation per timepoint (where found).")
-        print("  This means only ONE expert annotated these cases,")
-        print("  NOT the 2 independent raters from the ISBI 2015 challenge.")
-    else:
-        print("VERDICT: No expert masks or segmentation objects found.")
-        print("  The annotations may not have been uploaded yet.")
+        print("  NOTE: all {} timepoints have 2+ mask FILES.".format(total_tps))
+        print("  That is a COUNT, not evidence of two independent human raters.")
+        print("  (A previous version of this script reported exactly this as")
+        print("   'MATCHES the ISBI 2015 standard' — it does not.)")
+        print()
+
+    print("  REQUIRED BEFORE ANY VALIDATION METRIC IS COMPUTED:")
+    print("    1. Record provenance per mask (human_expert / ai_tool / manual / unknown),")
+    print("       enforced in the schema and writable through the API.")
+    print("    2. Label the existing ISBI masks with their true, confirmed provenance.")
+    print("    3. Make the comparison endpoint record which mask is the REFERENCE")
+    print("       and persist both masks' provenance with every metric.")
+    print()
+    print("  Until then, treat every Dice/Hausdorff figure from this dataset as")
+    print("  UNTRACEABLE and unusable as clinical-validation evidence.")
+    sys.exit(2)
+
 
 if __name__ == "__main__":
     main()

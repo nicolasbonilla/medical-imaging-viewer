@@ -40,11 +40,14 @@ class RBACManager:
     # Default permissions per role
     ROLE_PERMISSIONS: Dict[UserRole, Set[Permission]] = {
         UserRole.VIEWER: {
+            Permission.PATIENT_VIEW,
             Permission.IMAGE_VIEW,
             Permission.SEGMENTATION_VIEW,
             Permission.SYSTEM_HEALTH,
         },
         UserRole.TECHNICIAN: {
+            Permission.PATIENT_VIEW,
+            Permission.PATIENT_CREATE,
             Permission.IMAGE_VIEW,
             Permission.IMAGE_UPLOAD,
             Permission.SEGMENTATION_VIEW,
@@ -52,6 +55,9 @@ class RBACManager:
             Permission.SYSTEM_HEALTH,
         },
         UserRole.RADIOLOGIST: {
+            Permission.PATIENT_VIEW,
+            Permission.PATIENT_CREATE,
+            Permission.PATIENT_UPDATE,
             Permission.IMAGE_VIEW,
             Permission.IMAGE_UPLOAD,
             Permission.IMAGE_EXPORT,
@@ -63,6 +69,12 @@ class RBACManager:
         },
         UserRole.ADMIN: {
             # Admin has all permissions
+            # PATIENT_DELETE is ADMIN-only: deleting a patient record is
+            # destructive and subject to regulatory retention requirements.
+            Permission.PATIENT_VIEW,
+            Permission.PATIENT_CREATE,
+            Permission.PATIENT_UPDATE,
+            Permission.PATIENT_DELETE,
             Permission.IMAGE_VIEW,
             Permission.IMAGE_UPLOAD,
             Permission.IMAGE_DELETE,

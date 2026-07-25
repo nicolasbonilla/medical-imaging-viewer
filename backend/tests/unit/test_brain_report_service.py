@@ -124,7 +124,14 @@ class TestBrainReportService:
 
         assert "report_id" in result
         assert "content" in result
-        assert result["content"] == "# Brain MRI Report\n\nFindings: Normal brain."
+        # RC-006 (CAPA-001): every generated report carries the mandatory
+        # AI/physician-review disclaimer, prepended in code. Exact equality with
+        # the model output is therefore no longer the contract — the contract is
+        # "disclaimer, then the model's content verbatim".
+        from app.services.brain_report_service import REPORT_DISCLAIMERS
+
+        assert result["content"].startswith(REPORT_DISCLAIMERS["en"])
+        assert result["content"].endswith("# Brain MRI Report\n\nFindings: Normal brain.")
         assert result["template_type"] == "general"
         assert result["language"] == "en"
         assert "processing_time_ms" in result
@@ -524,7 +531,11 @@ class TestBrainReportService:
                 template_type="general", findings=None, language="en"
             )
 
-        assert result["content"] == "Minimal report."
+        # RC-006 (CAPA-001): disclaimer is prepended unconditionally.
+        from app.services.brain_report_service import REPORT_DISCLAIMERS
+
+        assert result["content"].startswith(REPORT_DISCLAIMERS["en"])
+        assert result["content"].endswith("Minimal report.")
 
     # =========================================================================
     # REPORT_TEMPLATES integrity

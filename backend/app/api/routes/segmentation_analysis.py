@@ -17,6 +17,7 @@ import struct
 from app.security import get_current_active_user
 from app.security.models import User
 from app.core.logging import get_logger
+from app.utils import resolve_voxel_spacing, VoxelSpacingUnavailableError
 from app.core.interfaces.storage_interface import IStorageService
 from app.core.container import get_segmentation_service, get_storage_service
 from app.services.segmentation_service import SegmentationService
@@ -261,13 +262,13 @@ async def get_lesion_analysis(
         if not label_map or all(lid == 0 for lid in label_map):
             label_map = MAGNIMS_REGIONS
 
-        # Get voxel spacing from metadata if available
-        voxel_spacing = (1.0, 1.0, 1.0)
-        if hasattr(metadata, 'extra_fields') and metadata.extra_fields:
-            ps = metadata.extra_fields.get('pixel_spacing')
-            st = metadata.extra_fields.get('slice_thickness')
-            if ps and len(ps) >= 2:
-                voxel_spacing = (float(st or 1.0), float(ps[0]), float(ps[1]))
+        # RC-024 (CAPA-001 CA-5): voxel spacing is REQUIRED. This previously
+        # defaulted to (1.0, 1.0, 1.0) whenever metadata was absent — and to
+        # 1.0 slice thickness via `st or 1.0` even when pixel spacing WAS
+        # present. Lesion volumes are voxel_count x product(spacing), so a 3 mm
+        # study reported volumes understated 3x, with full apparent precision,
+        # feeding the MAGNIMS lesion-size thresholds that determine DIS.
+        voxel_spacing = resolve_voxel_spacing(metadata, context=f"segmentation {segmentation_id}")
 
         result = analyze_lesions(masks_3d, voxel_spacing, label_map)
         result["segmentation_id"] = segmentation_id
@@ -337,13 +338,13 @@ async def get_dis_assessment(
         if not label_map or all(lid == 0 for lid in label_map):
             label_map = MAGNIMS_REGIONS
 
-        # Get voxel spacing for minimum volume filter
-        voxel_spacing = (1.0, 1.0, 1.0)
-        if hasattr(metadata, 'extra_fields') and metadata.extra_fields:
-            ps = metadata.extra_fields.get('pixel_spacing')
-            st = metadata.extra_fields.get('slice_thickness')
-            if ps and len(ps) >= 2:
-                voxel_spacing = (float(st or 1.0), float(ps[0]), float(ps[1]))
+        # RC-024 (CAPA-001 CA-5): voxel spacing is REQUIRED. This previously
+        # defaulted to (1.0, 1.0, 1.0) whenever metadata was absent — and to
+        # 1.0 slice thickness via `st or 1.0` even when pixel spacing WAS
+        # present. Lesion volumes are voxel_count x product(spacing), so a 3 mm
+        # study reported volumes understated 3x, with full apparent precision,
+        # feeding the MAGNIMS lesion-size thresholds that determine DIS.
+        voxel_spacing = resolve_voxel_spacing(metadata, context=f"segmentation {segmentation_id}")
 
         result = compute_dis_criteria(masks_3d, label_map, voxel_spacing)
         result["segmentation_id"] = segmentation_id

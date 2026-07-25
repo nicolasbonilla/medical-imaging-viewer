@@ -44,6 +44,9 @@ async def create_segmentation(
     Custom exceptions will be caught by global exception handler.
     """
     try:
+        # CAPA-002 CA-2.1 RC-029: a caller may only create a segmentation on an
+        # image they can access. Authorizes request.file_id (parse + patient).
+        await require_imaging_access(request.file_id, current_user)
         # Use image shape from request (provided by frontend)
         image_shape = (
             request.image_shape.rows,
@@ -119,10 +122,17 @@ async def list_segmentations(
     Custom exceptions will be caught by global exception handler.
     """
     try:
-        if file_ids:
-            ids_list = [fid.strip() for fid in file_ids.split(",") if fid.strip()]
-            if ids_list:
-                return segmentation_service.list_segmentations(file_ids=ids_list)
+        ids_list = [fid.strip() for fid in file_ids.split(",") if fid.strip()] if file_ids else []
+        # CAPA-002 CA-2.1 RC-029: authorize the file_id scope before listing.
+        # An unscoped listing across all patients is the bulk form of the defect.
+        scope = ids_list if ids_list else ([file_id] if file_id else [])
+        await authorize_file_scope(
+            file_ids=scope, user=current_user,
+            patient_service=_seg_patient_service(),
+            care_team_service=_seg_care_team_service(),
+        )
+        if ids_list:
+            return segmentation_service.list_segmentations(file_ids=ids_list)
         return segmentation_service.list_segmentations(file_id=file_id)
     except Exception as e:
         raise HTTPException(
@@ -135,7 +145,9 @@ async def list_segmentations(
 async def get_segmentation(
     segmentation_id: str,
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-029 - object-level authorization.
+    _authorized=Depends(require_segmentation_access),
 ):
     """
     Get segmentation metadata and information.
@@ -177,7 +189,9 @@ async def apply_paint_stroke(
     segmentation_id: str,
     stroke: PaintStroke = Body(...),
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-029 - object-level authorization.
+    _authorized=Depends(require_segmentation_access),
 ):
     """
     Apply a paint stroke to the segmentation.
@@ -232,7 +246,9 @@ async def get_slice_mask(
     segmentation_id: str,
     slice_index: int,
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-029 - object-level authorization.
+    _authorized=Depends(require_segmentation_access),
 ):
     """
     Get the segmentation mask for a specific slice as base64 encoded image.
@@ -274,7 +290,9 @@ async def get_overlay_image(
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
     imaging_service: IImagingService = Depends(get_imaging_service),
     storage_service: IStorageService = Depends(get_storage_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-029 - object-level authorization.
+    _authorized=Depends(require_segmentation_access),
 ):
     """
     Get overlay image with segmentation on top of base image.
@@ -388,7 +406,9 @@ async def get_segmentation_only(
     slice_index: int,
     t: Optional[int] = Query(None, description="Cache buster"),
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-029 - object-level authorization.
+    _authorized=Depends(require_segmentation_access),
 ):
     """
     Get ONLY the segmentation mask as a transparent PNG overlay.
@@ -438,7 +458,9 @@ async def get_segmentation_only(
 async def save_segmentation(
     segmentation_id: str,
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-029 - object-level authorization.
+    _authorized=Depends(require_segmentation_access),
 ):
     """
     Save segmentation to persistent storage (Firestore + GCS).
@@ -500,7 +522,9 @@ async def save_segmentation(
 async def delete_segmentation(
     segmentation_id: str,
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-029 - object-level authorization.
+    _authorized=Depends(require_segmentation_access),
 ):
     """
     Delete a segmentation.
@@ -532,7 +556,9 @@ async def update_labels(
     segmentation_id: str,
     labels: List[LabelInfo] = Body(...),
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-029 - object-level authorization.
+    _authorized=Depends(require_segmentation_access),
 ):
     """
     Update label definitions for a segmentation.
@@ -573,6 +599,8 @@ async def get_segmentation_nifti(
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
     storage_service: IStorageService = Depends(get_storage_service),
     current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-029 - object-level authorization.
+    _authorized=Depends(require_segmentation_access),
 ):
     """
     Serve the segmentation as a raw NIfTI file (.nii.gz) for WebGL-based viewers.
@@ -719,7 +747,9 @@ async def get_segmentation_nifti(
 async def get_binary_mask(
     segmentation_id: str,
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-029 - object-level authorization.
+    _authorized=Depends(require_segmentation_access),
 ):
     """
     Download the complete 3D segmentation mask as raw binary data.
@@ -791,7 +821,9 @@ async def upload_binary_mask(
     segmentation_id: str,
     request: Request,
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-029 - object-level authorization.
+    _authorized=Depends(require_segmentation_access),
 ):
     """
     Upload the complete 3D segmentation mask from the frontend.
@@ -880,7 +912,9 @@ async def upload_binary_mask(
 async def get_segmentation_info(
     segmentation_id: str,
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-029 - object-level authorization.
+    _authorized=Depends(require_segmentation_access),
 ):
     """
     Get segmentation metadata and dimensions without downloading the full mask.

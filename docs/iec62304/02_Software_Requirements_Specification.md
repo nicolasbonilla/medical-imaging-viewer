@@ -177,7 +177,7 @@ This SRS covers all software requirements for MSTool-AI version 2.0, including f
 | REQ-SEC-002 | Authentication shall be required for all non-public endpoints. | Must | Test |
 | REQ-SEC-003 | JWT access tokens shall expire within 60 minutes. | Must | Test |
 | REQ-SEC-004 | The system shall support WebAuthn/Passkeys (FIDO2) for biometric authentication. | Should | Test |
-| REQ-SEC-005 | The system shall implement RBAC with 4 roles (Viewer, Technician, Radiologist, Admin) and 15 permissions. | Must | Test |
+| REQ-SEC-005 | The system shall implement RBAC with 4 roles (Viewer, Technician, Radiologist, Admin) and 19 permissions (incl. 4 patient-record permissions added under CAPA-004 CA-4.5). | Must | Test |
 | REQ-SEC-006 | Patient data shall be encrypted at rest using AES-256-GCM. | Must | Inspection |
 | REQ-SEC-007 | No PHI (patient name, DOB, MRN) shall be transmitted to external AI APIs (Claude, Vertex AI). | Must | Test + Inspection |
 | REQ-SEC-008 | The system shall enforce rate limiting (100 requests/minute per IP) on all API endpoints. | Must | Test |
@@ -186,6 +186,23 @@ This SRS covers all software requirements for MSTool-AI version 2.0, including f
 | REQ-SEC-011 | Password policy shall enforce minimum 12 characters with uppercase, lowercase, digit, and special character. | Must | Test |
 | REQ-SEC-012 | Account shall lock after 5 consecutive failed login attempts for 30 minutes. | Must | Test |
 | REQ-SEC-013 | DICOM/NIfTI file parsing shall validate input headers and reject malformed files. | Must | Test |
+| REQ-SEC-014 | The system shall enforce **object-level authorization** on every data-returning endpoint: a user may access a patient's records — and the imaging, study, series, instance, document and segmentation objects belonging to that patient — only if the user is an administrator or holds an active care-team assignment to that patient. Authentication and role permission alone shall not grant access to a specific patient's data. | Must | Test | HAZ-010 |
+| REQ-SEC-015 | Denial of object-level access shall be **indistinguishable from non-existence**: the system shall respond with HTTP 404 and an identical response body whether the requested object does not exist or the caller is not entitled to it, so that object and patient identifiers cannot be enumerated. The true reason shall be recorded only in the server-side audit log. | Must | Test | HAZ-010 |
+| REQ-SEC-016 | The system shall not accept a **raw storage path** as caller input for retrieving patient data. Imaging references shall be parsed against a fixed grammar and re-authorized to their owning patient; the storage key used shall be reconstructed server-side from validated components, never echoed from client input. | Must | Test | HAZ-010 |
+| REQ-SEC-017 | The system shall record the **creating user (provenance)** on every patient record at creation. Provenance shall not be inferred or backfilled. | Must | Test | HAZ-010 |
+| REQ-SEC-018 | Patient records lacking provenance and any care-team assignment (e.g. records created before REQ-SEC-017 was enforced) shall be **quarantined**: accessible only to an administrator for explicit triage, never auto-attributed to any user. | Must | Test | HAZ-010 |
+
+**Note on REQ-SEC-014…018 (added 2026-07-19 under CAPA-002 CA-2.2).** These
+requirements did not exist in the 2026-04-12 baseline. CAPA-002 found that the
+software authenticated callers and checked roles but never verified that a caller
+was entitled to a *specific* patient's data — a requirements gap that manifested
+as OWASP API1:2023 (Broken Object Level Authorization). The requirements are
+recorded here because the controls that satisfy them (RC-026 patient, RC-027
+imaging, RC-028 study/document, RC-029 segmentation) were implemented ahead of the
+specification, and a control without a stated requirement is not traceable under
+IEC 62304 §5.2. The entitlement model chosen is **care-team assignment** (explicit
+user↔patient links), decided by the product owner; alternatives (creator-scoped,
+institution/tenant, role-graded) are recorded in CAPA-002 §8.4.
 
 ---
 

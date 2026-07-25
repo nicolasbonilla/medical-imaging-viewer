@@ -1054,6 +1054,7 @@ function ViewerApp() {
                   viewerControls={viewerControls}
                   createSegmentationRef={createSegmentationRef}
                   patientName={patientData?.full_name}
+                  patientMRN={patientData?.mrn}
                   studyDescription={studyInfo?.study.study_description}
                   studyModality={studyInfo?.study.modality}
                 />

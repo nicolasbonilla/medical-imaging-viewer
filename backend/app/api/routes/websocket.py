@@ -11,6 +11,8 @@ import uuid
 
 from app.core.logging import get_logger
 from app.core.container import get_imaging_service
+from app.security.auth import get_current_active_user
+from app.security.jwt_manager import TokenData, get_token_manager
 from app.services.websocket_service import WebSocketService, ConnectionManager
 from app.services.binary_protocol import CompressionType
 
@@ -19,6 +21,99 @@ router = APIRouter(prefix="/ws", tags=["websocket"])
 
 # Global connection manager (shared across all connections)
 connection_manager = ConnectionManager()
+
+# WebSocket close code 1008 — "Policy Violation" (RFC 6455 §7.4.1). Used for
+# every authentication failure so that clients cannot distinguish "no token"
+# from "bad token" from "expired token".
+WS_POLICY_VIOLATION = status.WS_1008_POLICY_VIOLATION
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# RC-017 — risk control for HAZ-010 (unauthorized access to patient imaging, S4)
+#
+# CAPA-001 §2.2: the Risk Management File recorded RC-017 as "VERIFIED — All 103
+# API endpoints require JWT authentication (100% coverage)". This module was not
+# authenticated in any form. The REST surface is protected; the WebSocket
+# transport was not, and it streams pixel data by file_id.
+#
+# Verified by: backend/tests/unit/test_rc017_websocket_auth.py
+#              (tests named test_rc017_*). Removing this control MUST turn CI red.
+# ─────────────────────────────────────────────────────────────────────────────
+def _extract_token(websocket: WebSocket) -> Optional[str]:
+    """Extract a bearer token from a WebSocket handshake.
+
+    Three transports are accepted, in order of preference:
+
+    1. ``Authorization: Bearer <token>`` header — for non-browser clients.
+    2. ``Sec-WebSocket-Protocol: bearer, <token>`` — the only way a browser can
+       supply a credential without putting it in the URL.
+    3. ``?token=<token>`` query parameter — accepted for compatibility only.
+
+    Option 3 is deliberately last: query strings are recorded in proxy logs,
+    load-balancer access logs and browser history, so a token supplied that way
+    should be treated as disclosed. Its use is logged as a warning.
+    """
+    header = websocket.headers.get("authorization")
+    if header and header.lower().startswith("bearer "):
+        return header[7:].strip() or None
+
+    protocols = websocket.headers.get("sec-websocket-protocol")
+    if protocols:
+        parts = [p.strip() for p in protocols.split(",")]
+        if len(parts) >= 2 and parts[0].lower() == "bearer":
+            return parts[1] or None
+
+    token = websocket.query_params.get("token")
+    if token:
+        logger.warning(
+            "WebSocket token supplied via query string — credentials in URLs are "
+            "recorded by proxies and access logs. Use the Authorization header or "
+            "the 'bearer' subprotocol.",
+        )
+        return token
+
+    return None
+
+
+async def _authenticate_websocket(websocket: WebSocket) -> Optional[TokenData]:
+    """Authenticate a WebSocket handshake, or close it with 1008.
+
+    Returns the decoded token data on success, ``None`` after having closed the
+    connection on failure. Fails closed: any error path closes the socket.
+
+    The token is never logged, and the close reason never reveals *why*
+    authentication failed.
+    """
+    token = _extract_token(websocket)
+
+    if not token:
+        logger.warning(
+            "WebSocket connection rejected: no credentials presented",
+            extra={"client": websocket.client.host if websocket.client else "unknown"},
+        )
+        await websocket.close(code=WS_POLICY_VIOLATION, reason="Authentication required")
+        return None
+
+    try:
+        token_data = get_token_manager().decode_token_data(token)
+    except Exception as exc:
+        # Deliberately broad: an invalid, expired, malformed or unverifiable
+        # token must all produce the same outcome for the caller.
+        logger.warning(
+            "WebSocket connection rejected: invalid credentials",
+            extra={
+                "error_type": type(exc).__name__,
+                "client": websocket.client.host if websocket.client else "unknown",
+            },
+        )
+        await websocket.close(code=WS_POLICY_VIOLATION, reason="Authentication required")
+        return None
+
+    logger.info(
+        "WebSocket authenticated",
+        extra={"user_id": token_data.user_id, "username": token_data.username},
+    )
+    return token_data
 
 
 @router.websocket("/imaging")
@@ -66,7 +161,18 @@ async def websocket_imaging_endpoint(
             file_id: 'abc123',
             slice_index: 42
         }));
+
+    Authentication (RC-017):
+        Required. Supply a bearer token via the Authorization header, the
+        'bearer' WebSocket subprotocol, or (discouraged) a ?token= parameter.
+        Unauthenticated connections are closed with code 1008.
     """
+    # RC-017: authenticate BEFORE accepting the socket or constructing any
+    # service that can read patient data. Fails closed.
+    token_data = await _authenticate_websocket(websocket)
+    if token_data is None:
+        return
+
     # Parse compression type
     compression_type = CompressionType.NONE
 
@@ -102,9 +208,12 @@ async def websocket_imaging_endpoint(
 
 
 @router.get("/stats")
-async def get_websocket_stats():
+async def get_websocket_stats(current_user=Depends(get_current_active_user)):
     """
     Get WebSocket connection manager statistics.
+
+    RC-017: authenticated. Operational telemetry about who is streaming what is
+    not public information.
 
     Returns:
         Connection statistics including active connections, total messages sent, etc.
@@ -121,9 +230,14 @@ async def get_websocket_stats():
 
 
 @router.get("/connections/{connection_id}")
-async def get_connection_stats(connection_id: str):
+async def get_connection_stats(
+    connection_id: str,
+    current_user=Depends(get_current_active_user),
+):
     """
     Get statistics for a specific connection.
+
+    RC-017: authenticated.
 
     Args:
         connection_id: Connection identifier

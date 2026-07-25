@@ -21,7 +21,7 @@ from app.core.logging import get_logger
 logger = get_logger(__name__)
 
 
-def _extract_components(mask_3d: np.ndarray, voxel_spacing: tuple[float, float, float] = (1.0, 1.0, 1.0)):
+def _extract_components(mask_3d: np.ndarray, voxel_spacing: tuple[float, float, float]):
     """
     Extract connected components from a binary mask.
     Returns list of dicts with centroid, volume, and component mask indices.
@@ -100,7 +100,7 @@ def _match_components(comps_a, comps_b, iou_threshold: float = 0.3):
 def compare_timepoints(
     mask_tp1: np.ndarray,
     mask_tp2: np.ndarray,
-    voxel_spacing: tuple[float, float, float] = (1.0, 1.0, 1.0),
+    voxel_spacing: tuple[float, float, float],
     iou_threshold: float = 0.3,
     change_threshold: float = 0.20,
 ) -> dict:

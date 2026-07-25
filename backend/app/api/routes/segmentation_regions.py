@@ -13,6 +13,7 @@ import numpy as np
 from app.security import get_current_active_user
 from app.security.models import User
 from app.core.logging import get_logger
+from app.utils import resolve_voxel_spacing, VoxelSpacingUnavailableError
 from app.core.interfaces.storage_interface import IStorageService
 from app.core.container import get_segmentation_service, get_storage_service
 from app.services.segmentation_service import SegmentationService
@@ -88,13 +89,13 @@ async def classify_regions(
         lesion_mask = seg_data["masks_3d"]  # (D, H, W), uint8
         metadata = seg_data["metadata"]
 
-        # Get voxel spacing
-        voxel_spacing = (1.0, 1.0, 1.0)
-        if hasattr(metadata, 'extra_fields') and metadata.extra_fields:
-            ps = metadata.extra_fields.get('pixel_spacing')
-            st = metadata.extra_fields.get('slice_thickness')
-            if ps and len(ps) >= 2:
-                voxel_spacing = (float(st or 1.0), float(ps[0]), float(ps[1]))
+        # RC-024 (CAPA-001 CA-5): voxel spacing is REQUIRED. This previously
+        # defaulted to (1.0, 1.0, 1.0) whenever metadata was absent — and to
+        # 1.0 slice thickness via `st or 1.0` even when pixel spacing WAS
+        # present. Lesion volumes are voxel_count x product(spacing), so a 3 mm
+        # study reported volumes understated 3x, with full apparent precision,
+        # feeding the MAGNIMS lesion-size thresholds that determine DIS.
+        voxel_spacing = resolve_voxel_spacing(metadata, context=f"segmentation {segmentation_id}")
 
         result = None
 
@@ -522,16 +523,22 @@ async def generate_zone_map_endpoint(
                 except Exception:
                     continue
 
-        # Get voxel spacing from metadata if available
-        voxel_spacing = (1.0, 1.0, 1.0)
+        # RC-024 (CAPA-001 CA-5): voxel spacing is REQUIRED — generate_zone_map
+        # applies distance thresholds in millimetres, so an assumed 1 mm
+        # isotropic geometry silently mislabels MAGNIMS zones on any study with
+        # a different slice thickness. Prefer the parcellation's geometry (it is
+        # the volume being partitioned); fall back to the segmentation's own
+        # metadata, and raise rather than assume if neither carries it.
         parc_entry = segmentation_service.get_cached(parc_source) if parc_source else None
-        if parc_entry is not None:
-            meta = parc_entry.get("metadata")
-            if meta and hasattr(meta, 'extra_fields') and meta.extra_fields:
-                ps = meta.extra_fields.get('pixel_spacing')
-                st = meta.extra_fields.get('slice_thickness')
-                if ps and len(ps) >= 2:
-                    voxel_spacing = (float(st or 1.0), float(ps[0]), float(ps[1]))
+        parc_meta = parc_entry.get("metadata") if parc_entry is not None else None
+        try:
+            voxel_spacing = resolve_voxel_spacing(
+                parc_meta, context=f"parcellation {parc_source}"
+            )
+        except VoxelSpacingUnavailableError:
+            voxel_spacing = resolve_voxel_spacing(
+                metadata, context=f"segmentation {segmentation_id}"
+            )
 
         # --- Generate zone map ---
         # nifti_native_* hold the zone mask in NIfTI native (i,j,k) order

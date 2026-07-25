@@ -212,6 +212,38 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
     )
 
 
+async def voxel_spacing_unavailable_handler(request: Request, exc) -> JSONResponse:
+    """Handle RC-024 refusals (CAPA-001 CA-5).
+
+    This is NOT an internal error and must not be reported as one. The study
+    genuinely lacks the geometry metadata required for quantitative analysis,
+    and the operator can act on that — by re-importing with complete
+    DICOM/NIfTI headers. The catch-all handler would replace the actionable
+    message with "An unexpected error occurred", which would lead a user to
+    file a bug rather than fix their data.
+
+    422 rather than 400: the request is well formed; the referenced resource is
+    not analysable.
+    """
+    logger.warning(
+        "Quantitative analysis refused: voxel spacing unavailable",
+        extra={"path": str(request.url.path), "reason": str(exc)},
+    )
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": {
+                "code": "VOXEL_SPACING_UNAVAILABLE",
+                "message": str(exc),
+                "details": {
+                    "risk_control": "RC-024",
+                    "hazard": "HAZ-014",
+                },
+            }
+        },
+    )
+
+
 def register_exception_handlers(app) -> None:
     """
     Register all exception handlers with the FastAPI app.
@@ -235,6 +267,14 @@ def register_exception_handlers(app) -> None:
 
     # Starlette HTTP exceptions
     app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+
+    # RC-024: voxel spacing refusals are a client-actionable condition, not an
+    # internal error. Registered before the catch-all so the actionable message
+    # survives (CAPA-001 CA-5).
+    from app.utils.spacing_utils import VoxelSpacingUnavailableError
+    app.add_exception_handler(
+        VoxelSpacingUnavailableError, voxel_spacing_unavailable_handler
+    )
 
     # Catch-all for unhandled exceptions (lowest priority)
     app.add_exception_handler(Exception, unhandled_exception_handler)

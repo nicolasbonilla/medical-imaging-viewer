@@ -68,7 +68,7 @@ class TestClassifyWithParcellation:
         lesion = np.zeros((10, 10, 10), dtype=np.int32)
         parc = np.zeros((20, 20, 20), dtype=np.int32)
         with pytest.raises(ValueError):
-            classify_lesions_with_parcellation(lesion, parc)
+            classify_lesions_with_parcellation(lesion, parc, (1.0, 1.0, 1.0))  # RC-024
 
     def test_empty_lesion_mask(self):
         """All-zero lesion mask returns empty result."""
@@ -86,7 +86,8 @@ class TestClassifyWithParcellation:
         with pytest.raises(ValueError):
             classify_lesions_with_parcellation(
                 np.zeros((10, 10), dtype=np.int32),
-                np.zeros((10, 10), dtype=np.int32)
+                np.zeros((10, 10), dtype=np.int32),
+                (1.0, 1.0, 1.0),  # RC-024: spacing now required
             )
 
     def test_negative_spacing_raises(self):

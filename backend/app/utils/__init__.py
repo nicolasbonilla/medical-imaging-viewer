@@ -17,9 +17,18 @@ from app.utils.image_utils import (
     combine_mask_overlays
 )
 
+from app.utils.spacing_utils import (
+    resolve_voxel_spacing,
+    VoxelSpacingUnavailableError,
+)
+
 from app.utils.nifti_utils import (
     detect_gzip,
     load_nifti_from_bytes,
+    get_orientation_codes,
+    is_orientation_determinate,
+    describe_orientation,
+    canonicalize_orientation,
     create_nifti_image,
     save_nifti,
     transpose_for_nifti,
@@ -58,6 +67,12 @@ __all__ = [
     # nifti_utils
     'detect_gzip',
     'load_nifti_from_bytes',
+    'resolve_voxel_spacing',
+    'VoxelSpacingUnavailableError',
+    'get_orientation_codes',
+    'is_orientation_determinate',
+    'describe_orientation',
+    'canonicalize_orientation',
     'create_nifti_image',
     'save_nifti',
     'transpose_for_nifti',

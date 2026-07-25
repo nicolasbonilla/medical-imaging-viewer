@@ -34,6 +34,15 @@ export interface ImageMetadata {
   slice_thickness?: number;
   window_center?: number;
   window_width?: number;
+  /**
+   * Anatomical axis codes, e.g. "RAS" or "LAS" — the direction of INCREASING
+   * index along each axis. Risk control RC-023 for HAZ-006 (CAPA-004).
+   *
+   * "UNKNOWN" is a real value, not a missing one: it means the affine does not
+   * determine an orientation. Never coerce it to a default. The viewport must
+   * warn instead of drawing a laterality label it cannot justify.
+   */
+  anatomical_orientation?: string;
   extra_fields?: Record<string, any>;
 }
 

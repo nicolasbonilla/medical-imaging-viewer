@@ -17,6 +17,10 @@ from fastapi.responses import Response
 from app.core.logging import get_logger
 from app.core.config import get_settings
 from app.security import get_current_active_user
+from app.security.resource_access import (
+    require_study_access, require_series_access, require_instance_access,
+    require_study_list_scope,
+)
 from app.security.models import User
 from app.core.container import get_study_service, get_storage_service
 from app.core.interfaces.study_interface import IStudyService
@@ -76,7 +80,9 @@ async def list_studies(
     sort_by: str = Query("study_date", description="Sort field"),
     sort_order: str = Query("desc", pattern="^(asc|desc)$", description="Sort order"),
     study_service: IStudyService = Depends(get_study_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-028 - object-level authorization.
+    _authorized=Depends(require_study_list_scope),
 ):
     """
     List and search studies.
@@ -110,7 +116,9 @@ async def get_study(
     study_id: UUID,
     include_stats: bool = Query(True, description="Include series/instance counts"),
     study_service: IStudyService = Depends(get_study_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-028 - object-level authorization.
+    _authorized=Depends(require_study_access),
 ):
     """
     Get a study by ID.
@@ -142,7 +150,9 @@ async def update_study(
     study_id: UUID,
     data: StudyUpdate,
     study_service: IStudyService = Depends(get_study_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-028 - object-level authorization.
+    _authorized=Depends(require_study_access),
 ):
     """
     Update a study.
@@ -157,7 +167,9 @@ async def delete_study(
     study_id: UUID,
     hard_delete: bool = Query(False, description="Permanently delete files from storage"),
     study_service: IStudyService = Depends(get_study_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-028 - object-level authorization.
+    _authorized=Depends(require_study_access),
 ):
     """
     Delete or cancel a study.
@@ -180,7 +192,9 @@ async def create_series(
     study_id: UUID,
     data: SeriesCreate,
     study_service: IStudyService = Depends(get_study_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-028 - object-level authorization.
+    _authorized=Depends(require_study_access),
 ):
     """
     Create a new series within a study.
@@ -198,7 +212,9 @@ async def create_series(
 async def list_series(
     study_id: UUID,
     study_service: IStudyService = Depends(get_study_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-028 - object-level authorization.
+    _authorized=Depends(require_study_access),
 ):
     """
     List all series in a study.
@@ -212,7 +228,9 @@ async def list_series(
 async def get_series(
     series_id: UUID,
     study_service: IStudyService = Depends(get_study_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-028 - object-level authorization.
+    _authorized=Depends(require_series_access),
 ):
     """
     Get a series by ID.
@@ -226,7 +244,9 @@ async def get_series(
 async def delete_series(
     series_id: UUID,
     study_service: IStudyService = Depends(get_study_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-028 - object-level authorization.
+    _authorized=Depends(require_series_access),
 ):
     """
     Delete a series and all its instances.
@@ -245,7 +265,9 @@ async def delete_series(
 async def list_instances(
     series_id: UUID,
     study_service: IStudyService = Depends(get_study_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-028 - object-level authorization.
+    _authorized=Depends(require_series_access),
 ):
     """
     List all instances in a series.
@@ -259,7 +281,9 @@ async def list_instances(
 async def get_instance(
     instance_id: UUID,
     study_service: IStudyService = Depends(get_study_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-028 - object-level authorization.
+    _authorized=Depends(require_instance_access),
 ):
     """
     Get an instance by ID.
@@ -274,7 +298,9 @@ async def update_instance(
     instance_id: UUID,
     data: InstanceUpdate,
     study_service: IStudyService = Depends(get_study_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-028 - object-level authorization.
+    _authorized=Depends(require_instance_access),
 ):
     """
     Update an instance (e.g. rename original_filename).
@@ -288,7 +314,9 @@ async def update_instance(
 async def delete_instance(
     instance_id: UUID,
     study_service: IStudyService = Depends(get_study_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-028 - object-level authorization.
+    _authorized=Depends(require_instance_access),
 ):
     """
     Delete an instance.
