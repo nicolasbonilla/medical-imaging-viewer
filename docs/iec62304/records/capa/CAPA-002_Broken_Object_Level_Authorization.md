@@ -390,8 +390,16 @@ Enforcement and specification are complete. Still open:
   existing `POST /{patient_id}/care-team`, after which the record leaves
   quarantine.
 - **Result-level list filtering** — non-admins must scope listings to one patient.
-- **Resolution efficiency** — series/instance/segmentation resolution rides
-  pre-existing full-collection scans (N+1).
+- **Resolution efficiency — DEFERRED with a recorded reason.** `get_series` is
+  O(studies); `get_instance` is O(studies × series). The fix is to denormalise
+  `patient_id` onto series/instance documents and resolve via a Firestore
+  `collectionGroup` query (a slot in the existing `firestore.indexes.json`). It
+  is deliberately not done in this pass: the study service's Firestore methods
+  are not exercised against a live store or emulator in CI (the unit suite uses
+  fakes), so a `collectionGroup` change would ship UNVERIFIED to a Class C data
+  path — contradicting the discipline this effort established. It needs a
+  Firestore-emulator integration test in CI first. Correctness and security are
+  unaffected meanwhile; only latency on the series/instance authorization path.
 - **Effectiveness verification** by the Software Safety Officer per QP-002 §4.6,
   including a negative-control demonstration that removing a guard turns CI red on
   a representative data route.
