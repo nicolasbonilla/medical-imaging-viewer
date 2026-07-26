@@ -48,6 +48,12 @@ class TestImagingEndpoints:
 
 
 @pytest.mark.integration
+@pytest.mark.requires_firestore
+# CAPA-002 RC-029: segmentation routes now perform object-level authorization,
+# which resolves the caller's patient/care-team from Firestore. These endpoint
+# tests therefore require Firestore (or its emulator); CI deselects them
+# (`-k "not requires_firestore"`). The authorization logic itself is covered
+# without Firestore by the unit tests test_rc026..029.
 class TestSegmentationEndpoints:
     """Test segmentation API endpoints."""
 
