@@ -12,7 +12,19 @@ import struct
 
 from app.security import get_current_active_user
 from app.security.models import User
+# CAPA-002 CA-2.1 (RC-029): object-level authorization for segmentations.
+from app.security.resource_access import (
+    require_segmentation_access,
+    authorize_file_scope,
+)
+from app.security.patient_access_dependency import require_imaging_access
+from app.core.container import get_patient_service as _seg_patient_service
 from app.core.logging import get_logger
+
+
+def _seg_care_team_service():
+    from app.services.care_team_service import CareTeamService
+    return CareTeamService()
 from app.models.schemas import (
     LabelInfo,
     PaintStroke,
