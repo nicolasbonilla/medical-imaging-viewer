@@ -301,6 +301,18 @@
       "negative_control": "2 vectors, each in a single isolated run: resolver invents a patient for a non-patient file_id -> 2 failed; unscoped listing allowed for a non-admin -> 1 failed",
       "note": "Last data surface of CAPA-002. A segmentation stores no patient_id — it stores the file_id of the image it segments, which is patient-scoped; the owning patient is extracted from that file_id (reusing RC-027). Non-patient or malformed file_ids fail closed to a 404. create authorizes request.file_id via the imaging guard (a caller may only segment an image they can access). list requires a file_id scope for non-admins and authorizes every referenced patient. With RC-026/027/028/029, all patient, imaging, study, document and segmentation data routes now enforce object-level access.",
       "requirement": "REQ-SEC-014/015"
+    },
+    "RC-030": {
+      "description": "Discrete lesions are labelled with 18-connectivity (ISBI-2015/MSSEG-2016), and the min-lesion-volume noise floor is a single documented MSSEG-2016 constant",
+      "hazard": "HAZ-005",
+      "status": "implemented",
+      "implementation": "backend/app/services/lesion_metrics.py (shared 18-conn structuring element + MIN_LESION_VOLUME_MM3) used by lesion_analysis_service.py (3 sites), ms_region_classifier.py (3 sites), longitudinal_tracking_service.py (1 site)",
+      "tests": [
+        "tests/unit/test_rc030_lesion_metrics.py"
+      ],
+      "negative_control": "revert label_lesions to scipy's default (6-connectivity) -> 3 failed",
+      "requirement": "REQ-FUNC-050",
+      "note": "Evidence: deep-research 2026-07-27, 22 claims confirmed. scipy.ndimage.label defaulted to 6-connectivity, which over-counts vs the two reference challenges that both use 18-connectivity. The 3.0 mm3 floor is re-anchored to MSSEG-2016's evaluation gate and explicitly NOT the 3 mm-DIAMETER (~14 mm3) diagnostic criterion (the old '~3 voxels' justification was conflatable and is removed); the duplicated literal is consolidated. Longitudinal tracking now applies the same noise floor. CHANGES REPORTED LESION COUNT and DIS region-presence — a risk-controlled clinical change. HONEST LIMITS: 18-conn is the challenge-EVALUATION standard, not a clinical consensus; CC labelling cannot separate confluent lesions, so count is inherently less reliable than volume/load (rho ~0.92-0.97 vs ~0.83-0.94). Class C modules changed (lesion_analysis, ms_region_classifier) — needs review."
     }
   },
   "unverified_controls_note": [
