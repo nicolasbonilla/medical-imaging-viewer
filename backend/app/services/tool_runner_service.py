@@ -637,6 +637,26 @@ class ToolRunnerService:
 
         depth, height, width = mask_data.shape
 
+        # Silent-failure visibility (finding #7): a sidecar can complete its HTTP
+        # call yet write an all-zeros mask (model didn't run, wrong contrast,
+        # resampled off-grid). Stored as-is, that is INDISTINGUISHABLE from a
+        # genuine negative result — "0 lesions" reads as a clean scan when the
+        # tool actually produced nothing. We do NOT reject an empty mask (a
+        # healthy brain legitimately has zero LESION voxels), but we record the
+        # annotated-voxel count in metadata and log a warning so the emptiness is
+        # visible to downstream consumers and to ops, never silent.
+        annotated_voxels = int((mask_data > 0).sum())
+        if annotated_voxels == 0:
+            logger.warning(
+                "[ToolRunner] Stored an ALL-ZERO clinical-tool mask — "
+                "verify this is a true negative and not a sidecar failure",
+                extra={
+                    "validation_source": validation_source,
+                    "file_id": file_id,
+                    "shape": [depth, height, width],
+                },
+            )
+
         # Build 12-byte header + uint8 data (app's binary protocol)
         import struct
         header = struct.pack('<III', depth, height, width)
@@ -668,6 +688,7 @@ class ToolRunnerService:
                 "description": description,
                 "segmentation_type": "automatic",
                 "status": "completed",
+                "annotated_voxels": annotated_voxels,
                 "image_shape": [height, width, depth],
                 "gcs_path": gcs_path,
                 "validation_source": validation_source,
