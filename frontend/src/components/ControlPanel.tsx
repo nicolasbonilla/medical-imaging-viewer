@@ -11,6 +11,7 @@ import { studyAPI } from '@/api/study';
 import { COLORMAPS_3D } from '@/components/ImageViewer3D';
 import type { StudySummary, ImageOrientation } from '@/types';
 import { LongitudinalCompare } from './LongitudinalCompare';
+import { SegmentationComparison } from './SegmentationComparison';
 
 export default function ControlPanel() {
   const { t } = useTranslation();
@@ -124,6 +125,12 @@ export default function ControlPanel() {
             <LongitudinalCompare studies={sortedStudies} />
           </div>
         )}
+
+        {/* Segmentation comparison (Dice + lesion-wise detection F1) — self-hides
+            unless the current study has ≥2 segmentations to compare. */}
+        <div className="border-b border-gray-700" style={{ padding: '8px 12px' }}>
+          <SegmentationComparison />
+        </div>
 
         {/* View Controls (compact) */}
         <div className="border-b border-gray-700" style={{ padding: '8px 12px', display: 'flex', flexDirection: 'column' as const, gap: 12 }}>

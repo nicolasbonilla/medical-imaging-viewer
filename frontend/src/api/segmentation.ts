@@ -285,6 +285,24 @@ export interface PairwiseComparison {
     diff_percent: number;
   };
   per_slice_dice: number[];
+  /** Lesion-wise detection metrics (ISBI-2015/MSSEG-2016). B = reference, A = prediction. */
+  lesion_detection?: LesionDetectionMetrics;
+}
+
+/** Lesion-WISE detection metrics — a distinct quality axis from Dice (voxel overlap). */
+export interface LesionDetectionMetrics {
+  ref_lesion_count: number;
+  pred_lesion_count: number;
+  true_positives: number;
+  false_positives: number;
+  false_negatives: number;
+  /** Sensitivity / lesion true-positive rate = detected reference lesions / reference lesions. */
+  sensitivity_ltpr: number;
+  /** Precision / lesion positive-predictive value = predictions hitting a real lesion / predictions. */
+  precision_lppv: number;
+  lesion_f1: number;
+  min_overlap_ratio: number;
+  connectivity: number;
 }
 
 export interface ComparisonResult {
