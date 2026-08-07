@@ -82,9 +82,13 @@ async def test_empty_mask_is_stored_but_flagged(tmp_path, _capture):
 
     assert isinstance(seg_id, str) and seg_id  # still stored (not rejected)
     assert sink["doc"]["annotated_voxels"] == 0, "empty mask must record 0 annotated voxels"
-    assert len(warnings_seen) == 1, "an all-zero clinical-tool mask must emit exactly one warning"
+    # Scope to the empty-mask warning specifically — other subsystems (e.g. the
+    # RC-031 orientation fail-safe when no reference MRI is passed) may log their
+    # own warnings, which are irrelevant to this control.
+    empty_warnings = [w for w in warnings_seen if w[0] and "ALL-ZERO" in str(w[0][0])]
+    assert len(empty_warnings) == 1, "an all-zero clinical-tool mask must emit exactly one warning"
     # the warning must carry enough context to investigate the sidecar run
-    _, kwargs = warnings_seen[0]
+    _, kwargs = empty_warnings[0]
     assert kwargs["extra"]["validation_source"] == "mindglide-v1.0"
     assert kwargs["extra"]["file_id"] == "file-xyz"
 
@@ -107,4 +111,5 @@ async def test_nonempty_mask_records_true_count_and_no_warning(tmp_path, _captur
 
     assert isinstance(seg_id, str) and seg_id
     assert sink["doc"]["annotated_voxels"] == 3, "voxel count must reflect the actual mask"
-    assert warnings_seen == [], "a populated mask must not raise the empty-mask warning"
+    empty_warnings = [w for w in warnings_seen if w[0] and "ALL-ZERO" in str(w[0][0])]
+    assert empty_warnings == [], "a populated mask must not raise the empty-mask warning"
