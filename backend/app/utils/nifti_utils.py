@@ -127,6 +127,77 @@ def canonicalize_orientation(img: nib.Nifti1Image) -> nib.Nifti1Image:
     return nib.as_closest_canonical(img)
 
 
+def _affine_is_determinate(affine: np.ndarray) -> bool:
+    """A 4x4 affine determines a voxel orientation iff it is finite and its
+    3x3 direction block is non-singular. Mirrors get_orientation_codes()."""
+    if affine is None:
+        return False
+    affine = np.asarray(affine, dtype=float)
+    if affine.shape != (4, 4) or not np.all(np.isfinite(affine)):
+        return False
+    return bool(abs(np.linalg.det(affine[:3, :3])) > 1e-8)
+
+
+def reorient_array_to_reference(
+    data: np.ndarray,
+    source_affine: np.ndarray,
+    reference_affine: np.ndarray,
+) -> np.ndarray:
+    """Reorient a volume so its voxel axes match a reference volume's voxel axes.
+
+    RC-031 step 2 primitive (risk control for HAZ-006, mirrored/mis-oriented
+    overlay). The parcellation-branch zone map is served in the parcellation's
+    voxel order (k,j,i) while the display uses the MRI's voxel order (k,i,j); the
+    in-plane axes are swapped (proven in test_rc031_parcellation_load_order.py).
+    A FIXED transpose "fixes" that only for one source orientation and silently
+    mirrors any other — the failure mode behind five prior attempts. This aligns
+    by the AFFINES instead, so it is correct for any source orientation.
+
+    Given `data` in the source voxel grid (`source_affine`), returns the array
+    reordered/flipped so that indexing it matches the reference voxel grid
+    (`reference_affine`). When source and reference occupy the SAME physical
+    (world) space — as an MRI and a parcellation derived from it do — the result
+    has EXACT voxel correspondence with the reference: the value at reference
+    voxel r is the source value whose world coordinate equals reference_affine @ r.
+
+    This does NOT resample: it only permutes and flips axes (the affines must
+    describe the same sampling grid up to axis order/flips, which co-registered
+    MRI/parcellation pairs satisfy). It fails CLOSED — raising rather than
+    guessing — when either affine is singular or non-finite, because a mirrored
+    overlay can drive wrong-side reporting.
+
+    Args:
+        data: source volume (>= 3D; leading 3 axes are the spatial grid).
+        source_affine: 4x4 voxel->world affine for `data`.
+        reference_affine: 4x4 voxel->world affine of the target grid.
+
+    Returns:
+        `data` reoriented onto the reference voxel axes.
+
+    Raises:
+        ValueError: if data is not >= 3D or either affine is indeterminate.
+    """
+    if data.ndim < 3:
+        raise ValueError(f"reorient requires a >=3D volume, got {data.ndim}D")
+    if not _affine_is_determinate(source_affine):
+        raise ValueError(
+            "source affine is singular or non-finite — refusing to reorient "
+            "(a mis-oriented overlay can cause wrong-side reporting)"
+        )
+    if not _affine_is_determinate(reference_affine):
+        raise ValueError(
+            "reference affine is singular or non-finite — refusing to reorient"
+        )
+
+    from nibabel.orientations import io_orientation, ornt_transform, apply_orientation
+
+    src_ornt = io_orientation(np.asarray(source_affine, dtype=float))
+    ref_ornt = io_orientation(np.asarray(reference_affine, dtype=float))
+    # Transform that carries the SOURCE orientation onto the REFERENCE one.
+    transform = ornt_transform(src_ornt, ref_ornt)
+    return apply_orientation(data, transform)
+
+
 def load_nifti_from_bytes(
     file_data: bytes,
     normalize: bool = False
