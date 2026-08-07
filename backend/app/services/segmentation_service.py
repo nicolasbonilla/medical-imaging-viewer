@@ -739,12 +739,50 @@ class SegmentationService:
             # Fallback to local storage
             self._save_segmentation_local(segmentation_id, masks_3d, metadata, source_format)
 
+    # RC-031 (HAZ-006): free-text NIfTI header marker distinguishing masks saved
+    # in the corrected MRI-native voxel order from legacy ones. Self-contained in
+    # the NIfTI, so the low-level loader needs no Firestore lookup.
+    _RC031_ORIENT_MARKER = b"RC031-ORIENT-V2"
+
+    @staticmethod
+    def _internal_to_nifti_native(masks_3d: np.ndarray) -> np.ndarray:
+        """Internal (k, a0, a1) -> MRI-native NIfTI order (a0, a1, k).
+
+        Internal masks are (D,H,W)=(k,a0,a1)=transpose(mri_native,(2,0,1)) — proven
+        in test_rc031_display_convention.py — so the inverse (1,2,0) restores the
+        MRI's own voxel array order. A directly-served overlay (longitudinal
+        NiiVue, ITK-SNAP, ref_file_id) then aligns with the MRI. The legacy save
+        used (2,1,0) => (a1,a0,k), the in-plane TRANSPOSE, which mirrored such
+        overlays (HAZ-006) even though it round-tripped internally.
+        """
+        return np.transpose(masks_3d, (1, 2, 0)).astype(np.uint8)
+
+    @staticmethod
+    def _nifti_native_to_internal(nifti_data: np.ndarray, oriented_v2: bool) -> np.ndarray:
+        """Stored NIfTI -> internal (k, a0, a1). v2 masks are MRI-native (a0,a1,k)
+        so (2,0,1); legacy masks are (a1,a0,k) so (2,1,0). Both yield the same
+        internal convention, so display/edit is unaffected — only the on-disk
+        orientation (and thus direct-serve alignment) differs."""
+        return np.transpose(nifti_data, (2, 0, 1) if oriented_v2 else (2, 1, 0))
+
+    @classmethod
+    def _header_has_v2_marker(cls, header) -> bool:
+        try:
+            return cls._RC031_ORIENT_MARKER in bytes(np.asarray(header["descrip"]).tobytes())
+        except Exception:
+            return False
+
     def _save_masks_to_gcs(self, segmentation_id: str, masks_3d: np.ndarray):
         """Save mask data to Google Cloud Storage as NIfTI format (.nii.gz).
 
         The segmentation NIfTI will have the EXACT same affine, header, dimensions,
         and voxel sizes as the original MRI image, ensuring perfect spatial alignment
         for use in tools like ITK-SNAP.
+
+        RC-031: the mask is stored in the MRI's own voxel array order (a0,a1,k) and
+        tagged with a header marker, so a directly-served overlay aligns. Masks
+        without the marker are legacy (in-plane transposed on disk) and are read
+        back with the legacy transpose for backward compatibility.
         """
         import tempfile
         import os
@@ -798,50 +836,32 @@ class SegmentationService:
                 except Exception as e:
                     logger.warning("Could not load original MRI affine/header", extra={"error": str(e), "file_id": file_id})
 
-            # Create segmentation data with EXACT same shape as original MRI
-            if original_shape is not None:
-                # The original MRI shape in NIfTI format is already correct
-                # Our internal mask is (D, H, W), we need to match original NIfTI shape
-                # Original shape: (W, H, D) in NIfTI convention
+            # RC-031: store in the MRI's own voxel array order (a0,a1,k) so a
+            # directly-served overlay aligns. internal (k,a0,a1) -> (1,2,0).
+            nifti_data = self._internal_to_nifti_native(masks_3d)
 
-                # Create mask in the exact same shape as original MRI
-                nifti_data = np.zeros(original_shape, dtype=np.uint8)
-
-                # Copy our segmentation data into this array
-                # Our internal convention is (D, H, W), original is NIfTI (W, H, D)
-                # We need to transpose our data to match
-                internal_d, internal_h, internal_w = masks_3d.shape
-                orig_w, orig_h, orig_d = original_shape
-
-                # Verify dimensions match (may be transposed)
-                if (internal_d == orig_d and internal_h == orig_h and internal_w == orig_w):
-                    # Direct transpose (D,H,W) -> (W,H,D)
-                    nifti_data = np.transpose(masks_3d, (2, 1, 0)).astype(np.uint8)
-                elif (internal_d == orig_w and internal_h == orig_h and internal_w == orig_d):
-                    # Dimensions match but already in different order
-                    nifti_data = masks_3d.astype(np.uint8)
-                else:
-                    # Dimensions don't match exactly - use standard transpose
-                    logger.warning("Dimension mismatch between mask and original", extra={
-                        "mask_shape": masks_3d.shape,
-                        "original_shape": original_shape
-                    })
-                    nifti_data = transpose_for_nifti(masks_3d, from_convention='DHW')
-
-                logger.info("Segmentation data prepared for NIfTI", extra={
+            if original_shape is not None and nifti_data.shape != tuple(original_shape):
+                # The mask does not correspond voxel-for-voxel to this MRI grid.
+                # Keep the RC-031 orientation but flag it; the affine/header may
+                # not describe this array cleanly.
+                logger.warning("Mask shape does not match original MRI after RC-031 orientation", extra={
                     "internal_shape": masks_3d.shape,
                     "nifti_shape": nifti_data.shape,
-                    "original_shape": original_shape
+                    "original_shape": original_shape,
                 })
             else:
-                # No original - use standard transpose
-                nifti_data = transpose_for_nifti(masks_3d, from_convention='DHW')
+                logger.info("Segmentation data prepared for NIfTI (RC-031 MRI-native order)", extra={
+                    "internal_shape": masks_3d.shape,
+                    "nifti_shape": nifti_data.shape,
+                    "original_shape": original_shape,
+                })
 
             # Create NIfTI image with original affine/header if available
             if affine is not None and header is not None:
                 # Use the original header but update data-specific fields
                 header.set_data_dtype(np.uint8)
                 header.set_data_shape(nifti_data.shape)
+                header["descrip"] = self._RC031_ORIENT_MARKER  # RC-031 v2 tag
                 nifti_img = nib.Nifti1Image(nifti_data.astype(np.uint8), affine, header)
                 logger.info("Created segmentation NIfTI with original MRI affine/header", extra={
                     "final_shape": nifti_img.shape,
@@ -850,6 +870,7 @@ class SegmentationService:
             else:
                 # Fallback to generic NIfTI with identity affine
                 nifti_img = create_nifti_image(nifti_data)
+                nifti_img.header["descrip"] = self._RC031_ORIENT_MARKER  # RC-031 v2 tag
                 logger.info("Created segmentation NIfTI with identity affine (original not available)")
 
             # Save to temp file as compressed NIfTI
@@ -899,12 +920,18 @@ class SegmentationService:
                 import nibabel as nib
                 nifti_img = nib.load(tmp_path)
                 nifti_data = nifti_img.get_fdata().astype(np.uint8)
+                # RC-031: v2 masks are stored MRI-native (a0,a1,k) and tagged;
+                # legacy masks are (a1,a0,k). Read the tag BEFORE unlinking.
+                oriented_v2 = self._header_has_v2_marker(nifti_img.header)
                 os.unlink(tmp_path)
 
-                # Transpose from NIfTI (W,H,D) to internal (D,H,W)
-                masks_3d = np.transpose(nifti_data, (2, 1, 0))
+                masks_3d = self._nifti_native_to_internal(nifti_data, oriented_v2)
 
-                logger.info("Loaded masks from GCS (NIfTI)", extra={"segmentation_id": segmentation_id, "shape": masks_3d.shape})
+                logger.info("Loaded masks from GCS (NIfTI)", extra={
+                    "segmentation_id": segmentation_id,
+                    "shape": masks_3d.shape,
+                    "rc031_v2": oriented_v2,
+                })
                 return masks_3d
 
             # Fallback to NPZ format (legacy)
@@ -1154,8 +1181,10 @@ class SegmentationService:
                     if nifti_files:
                         nifti_img = nib.load(str(nifti_files[0]))
                         nifti_data = nifti_img.get_fdata().astype(np.uint8)
-                        # Transpose from NIfTI (W,H,D) to internal (D,H,W)
-                        masks_3d = np.transpose(nifti_data, (2, 1, 0))
+                        # RC-031: marker-aware transpose (v2 MRI-native vs legacy)
+                        masks_3d = self._nifti_native_to_internal(
+                            nifti_data, self._header_has_v2_marker(nifti_img.header)
+                        )
                         logger.debug("Loaded segmentation from NIfTI format")
                     else:
                         logger.warning("No segmentation data found", extra={"segmentation_id": segmentation_id})
