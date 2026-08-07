@@ -148,6 +148,98 @@ def compute_per_slice_dice(
     return dice_per_slice
 
 
+def compute_lesion_detection_metrics(
+    pred_mask: np.ndarray,
+    ref_mask: np.ndarray,
+    min_overlap_ratio: float = 0.0,
+) -> dict:
+    """Lesion-WISE detection metrics (TPR / PPV / F1) — the challenge standard.
+
+    Dice measures voxel OVERLAP; it says nothing about whether the right DISCRETE
+    lesions were found. Two segmentations with equal Dice can disagree sharply on
+    lesion detection (one large lesion segmented loosely vs. many small lesions
+    missed). MS lesion segmentation is therefore evaluated on BOTH axes, and the
+    detection axis is defined lesion-wise in the two reference challenges:
+
+      - ISBI-2015 (Carass et al., NeuroImage 2017; PMC5344762): a reference lesion
+        counts as detected (a true positive) when it OVERLAPS the segmentation;
+        LTPR = detected reference lesions / reference lesions, and LFPR =
+        segmentation lesions not overlapping the reference / segmentation lesions.
+      - MSSEG-2016 (Commowick et al., Sci Rep 2018): detection with an
+        18-connectivity kernel and an overlap gate.
+
+    Discrete lesions are labelled with the shared 18-connected convention
+    (RC-030, lesion_metrics.label_lesions), so this metric is consistent with the
+    lesion COUNT reported everywhere else in the app.
+
+    Directionality (documented, not symmetric): `ref_mask` is the reference /
+    ground truth, `pred_mask` the prediction under test.
+      - sensitivity (LTPR) = TP_ref / n_ref  — fraction of reference lesions hit.
+      - precision   (LPPV) = matched_pred / n_pred = 1 - LFPR.
+      - lesion_f1          = 2*P*R / (P+R).
+    TP_ref (reference lesions detected) and matched_pred (predictions hitting a
+    reference) can differ when lesions are confluent — this asymmetry is inherent
+    to lesion-wise scoring and matches the challenge definitions.
+
+    `min_overlap_ratio` gates "detected": a reference lesion counts as detected
+    only if the predicted foreground covers at least this FRACTION of its voxels.
+    Default 0.0 = any-voxel overlap (the ISBI-2015 convention). Raise it to demand
+    partial spatial agreement (MSSEG-style).
+
+    Empty-mask conventions (documented): a vacuous rate is 1.0 (nothing to detect
+    → "all detected"; nothing predicted → "no false positives"), so two empty
+    masks score F1 = 1.0 (they agree there are no lesions), while an empty-vs-
+    populated pair scores F1 = 0.0.
+    """
+    from app.services.lesion_metrics import label_lesions
+
+    pred_labels, n_pred = label_lesions(pred_mask > 0)
+    ref_labels, n_ref = label_lesions(ref_mask > 0)
+
+    pred_fg = pred_mask > 0
+    ref_fg = ref_mask > 0
+
+    # Reference lesions detected by the prediction (sensitivity numerator).
+    detected_ref = 0
+    for lesion_id in range(1, n_ref + 1):
+        component = ref_labels == lesion_id
+        overlap = int(np.count_nonzero(component & pred_fg))
+        size = int(np.count_nonzero(component))
+        if size > 0 and (overlap / size) > min_overlap_ratio:
+            detected_ref += 1
+
+    # Predicted lesions that hit a real lesion (precision numerator); the rest
+    # are false positives. Gate symmetrically on the predicted lesion's own size.
+    matched_pred = 0
+    for lesion_id in range(1, n_pred + 1):
+        component = pred_labels == lesion_id
+        overlap = int(np.count_nonzero(component & ref_fg))
+        size = int(np.count_nonzero(component))
+        if size > 0 and (overlap / size) > min_overlap_ratio:
+            matched_pred += 1
+
+    false_positives = n_pred - matched_pred
+    false_negatives = n_ref - detected_ref
+
+    sensitivity = (detected_ref / n_ref) if n_ref > 0 else 1.0   # LTPR
+    precision = (matched_pred / n_pred) if n_pred > 0 else 1.0   # LPPV
+    denom = precision + sensitivity
+    lesion_f1 = (2 * precision * sensitivity / denom) if denom > 0 else 0.0
+
+    return {
+        "ref_lesion_count": n_ref,
+        "pred_lesion_count": n_pred,
+        "true_positives": detected_ref,
+        "false_positives": false_positives,
+        "false_negatives": false_negatives,
+        "sensitivity_ltpr": round(sensitivity, 4),
+        "precision_lppv": round(precision, 4),
+        "lesion_f1": round(lesion_f1, 4),
+        "min_overlap_ratio": min_overlap_ratio,
+        "connectivity": 18,  # RC-030 shared convention
+    }
+
+
 def compare_two_masks(
     mask_a: np.ndarray,
     mask_b: np.ndarray,
@@ -159,7 +251,10 @@ def compare_two_masks(
 ) -> dict:
     """
     Full pairwise comparison between two masks.
-    Returns Dice, Hausdorff, volume diff, and per-slice Dice.
+    Returns Dice (voxel overlap), Hausdorff, volume diff, per-slice Dice, and
+    lesion-wise detection metrics (TPR/PPV/F1 — a distinct quality axis from
+    Dice). Mask B is treated as the reference for the directional detection
+    metrics; see compute_lesion_detection_metrics.
     Raises ValueError if mask shapes don't match.
     """
     voxel_spacing = require_spacing(voxel_spacing, caller="compare_two_masks")
@@ -170,6 +265,8 @@ def compare_two_masks(
     hausdorff = compute_hausdorff(mask_a, mask_b, voxel_spacing)
     volume = compute_volume_diff(mask_a, mask_b, voxel_spacing)
     per_slice = compute_per_slice_dice(mask_a, mask_b)
+    # Directional: A = prediction under test, B = reference.
+    lesion_detection = compute_lesion_detection_metrics(pred_mask=mask_a, ref_mask=mask_b)
 
     return {
         "label_a": label_a,
@@ -178,4 +275,5 @@ def compare_two_masks(
         "hausdorff_mm": round(hausdorff, 2) if hausdorff != float('inf') else None,
         "volume": volume,
         "per_slice_dice": [round(d, 4) for d in per_slice],
+        "lesion_detection": lesion_detection,
     }
