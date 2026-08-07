@@ -665,27 +665,27 @@ async def get_segmentation_nifti(
                     "ref_affine_diag": str(np.diag(ref_img.affine)[:3].tolist()),
                 })
 
-                if seg_shape == ref_shape:
-                    # Same shape — just apply reference affine + header
-                    result_data = seg_data.astype(np.uint8)
-                elif sorted(seg_shape) == sorted(ref_shape):
-                    # Same dimensions but different axis order — find permutation
-                    perm = []
-                    used = [False] * 3
-                    for t_dim in ref_shape:
-                        for i, s_dim in enumerate(seg_shape):
-                            if s_dim == t_dim and not used[i]:
-                                perm.append(i)
-                                used[i] = True
-                                break
-                    result_data = np.transpose(seg_data, perm).astype(np.uint8)
-                    logger.info("Permuted segmentation axes", extra={
-                        "permutation": str(perm),
+                # RC-031: reorient by the header marker, not a shape-permutation
+                # guess. v2 masks are MRI-native; legacy masks are the in-plane
+                # transpose. This is deterministic even on square (a0==a1) data,
+                # where the greedy permutation could not detect the swap and left
+                # legacy overlays mirrored.
+                seg_v2 = segmentation_service._header_has_v2_marker(seg_img.header)
+                oriented = segmentation_service._seg_native_to_reference_order(seg_data, seg_v2)
+
+                if tuple(oriented.shape[:3]) == tuple(ref_shape):
+                    result_data = oriented.astype(np.uint8)
+                    logger.info("Aligned segmentation to reference", extra={
+                        "rc031_v2": seg_v2,
                         "result_shape": str(result_data.shape),
                     })
                 else:
-                    # Incompatible shapes — serve original
-                    logger.warning("Cannot align: incompatible shapes")
+                    # Dimensional mismatch (e.g. different resolution) — serve original
+                    logger.warning("Cannot align: incompatible shapes", extra={
+                        "seg_shape": str(seg_shape),
+                        "ref_shape": str(ref_shape),
+                        "rc031_v2": seg_v2,
+                    })
                     os.unlink(ref_tmp_path)
                     os.unlink(seg_tmp_path)
                     nifti_data = existing_bytes

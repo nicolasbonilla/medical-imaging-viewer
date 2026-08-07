@@ -765,6 +765,19 @@ class SegmentationService:
         orientation (and thus direct-serve alignment) differs."""
         return np.transpose(nifti_data, (2, 0, 1) if oriented_v2 else (2, 1, 0))
 
+    @staticmethod
+    def _seg_native_to_reference_order(seg_native: np.ndarray, oriented_v2: bool) -> np.ndarray:
+        """Reorient a STORED segmentation NIfTI into the reference MRI's native
+        voxel order (a0,a1,k) so a directly-served overlay aligns.
+
+        v2 masks are already MRI-native (a0,a1,k); legacy masks are (a1,a0,k), an
+        in-plane swap (1,0,2) away. This is deterministic from the header marker,
+        replacing the greedy `sorted(seg_shape)==sorted(ref_shape)` permutation
+        that CANNOT detect the swap on square (a0==a1) data — where legacy overlays
+        were silently mirrored.
+        """
+        return seg_native if oriented_v2 else np.transpose(seg_native, (1, 0, 2))
+
     @classmethod
     def _header_has_v2_marker(cls, header) -> bool:
         try:
