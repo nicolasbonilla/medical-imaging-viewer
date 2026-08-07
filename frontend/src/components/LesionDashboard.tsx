@@ -499,6 +499,17 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                     <XCircle className="w-2.5 h-2.5 text-gray-600" />
                   )}
                   <span className={detail.present ? 'text-green-300' : 'text-gray-500'}>{name}</span>
+                  {typeof detail.qualifying_lesion_count === 'number' && (
+                    <span
+                      className={detail.present ? 'text-green-400/80' : 'text-gray-600'}
+                      title={t(
+                        'lesions.qualifyingLesionsTooltip',
+                        'Lesions in this region meeting the MAGNIMS size/location criteria; a region counts toward DIS when this is ≥ 1',
+                      )}
+                    >
+                      ({detail.qualifying_lesion_count})
+                    </span>
+                  )}
                 </span>
               ))}
             </div>
