@@ -266,6 +266,7 @@ class ToolRunnerService:
                 validation_source="lst-ai-v1.0.3",
                 patient_id=patient_id,
                 study_id=study_id,
+                reference_mri_path=flair_path,  # RC-031: LST-AI segments FLAIR space
             )
 
             elapsed_ms = int((time.time() - start_time) * 1000)
@@ -393,6 +394,7 @@ class ToolRunnerService:
                 validation_source="synthseg-v2.0",
                 patient_id=patient_id,
                 study_id=study_id,
+                reference_mri_path=input_path,  # RC-031: orient by affine
             )
 
             # Store volumes CSV if available
@@ -526,6 +528,7 @@ class ToolRunnerService:
                 validation_source="mindglide-v1.0",
                 patient_id=patient_id,
                 study_id=study_id,
+                reference_mri_path=input_path,  # RC-031: orient by affine
             )
 
             # Store brain structure mask separately if available
@@ -538,6 +541,7 @@ class ToolRunnerService:
                     validation_source="mindglide-v1.0-structures",
                     patient_id=patient_id,
                     study_id=study_id,
+                    reference_mri_path=input_path,  # RC-031: orient by affine
                 )
 
             elapsed_ms = int((time.time() - start_time) * 1000)
@@ -599,6 +603,59 @@ class ToolRunnerService:
         )
         return output_path
 
+    def _orient_mask_to_display(
+        self,
+        mask_native: np.ndarray,
+        source_affine: np.ndarray,
+        reference_mri_path: Optional[Path],
+    ) -> np.ndarray:
+        """RC-031 (risk control for HAZ-006): bring a clinical-tool mask into the
+        app's DISPLAY convention (k, a0, a1) — the one painted masks
+        (segmentation_service.py:157) and the viewer's MSMask branch
+        (segmentation_regions.py:566-574, transpose (2,0,1)) use.
+
+        The legacy path applied a blind np.transpose(mask,(2,1,0)) -> (k, a1, a0),
+        which is the in-plane TRANSPOSE of the display convention. That mirrored
+        parcellation overlays and — because classify_lesions_with_parcellation
+        (ms_region_classifier.py:138) only guards on equal SHAPE — silently
+        mis-assigned MAGNIMS regions (and DIS) on square 256x256 data, where the
+        two conventions share a shape. Proven in
+        test_rc031_ingest_order_characterization.py.
+
+        This aligns by the AFFINES instead of a fixed transpose: reorient the mask
+        onto the reference MRI's voxel grid (correct for any source orientation —
+        the property five prior fixed-transpose attempts lacked), then apply the
+        (2,0,1) display transpose.
+
+        Fails SAFE: if the reference MRI or a determinate affine is unavailable it
+        falls back to the legacy (2,1,0), so behaviour never regresses below the
+        current baseline.
+        """
+        import nibabel as nib
+        from app.utils.nifti_utils import reorient_array_to_reference
+
+        DISPLAY_TRANSPOSE = (2, 0, 1)
+        LEGACY_TRANSPOSE = (2, 1, 0)
+        try:
+            if reference_mri_path is not None and Path(reference_mri_path).exists():
+                ref_img = nib.load(str(reference_mri_path))
+                aligned = reorient_array_to_reference(
+                    mask_native, source_affine, ref_img.affine
+                )
+                return np.transpose(aligned, DISPLAY_TRANSPOSE)
+            logger.warning(
+                "[RC-031] No reference MRI for orientation (%s); using legacy "
+                "(2,1,0) transpose — overlay/classification may be in-plane "
+                "transposed on this mask.",
+                reference_mri_path,
+            )
+        except Exception as e:  # noqa: BLE001 — fail safe, never block ingest
+            logger.warning(
+                "[RC-031] Affine reorientation failed (%s); using legacy "
+                "(2,1,0) transpose.", e,
+            )
+        return np.transpose(mask_native, LEGACY_TRANSPOSE)
+
     async def _store_nifti_as_segmentation(
         self,
         mask_path: Path,
@@ -608,6 +665,7 @@ class ToolRunnerService:
         patient_id: Optional[str] = None,
         study_id: Optional[str] = None,
         types_path: Optional[Path] = None,
+        reference_mri_path: Optional[Path] = None,
     ) -> str:
         """
         Read a NIfTI mask from disk and store it as a segmentation.
@@ -615,25 +673,33 @@ class ToolRunnerService:
         Converts the NIfTI to the app's binary protocol format:
         12-byte header (uint32 depth, height, width) + uint8 voxel data.
         Uploads to GCS and creates Firestore metadata.
+
+        reference_mri_path: the MRI the tool ran on. Used to orient the mask into
+        the app's display convention by affine (RC-031); if omitted, falls back
+        to the legacy fixed transpose.
         """
         import nibabel as nib
 
-        # Read primary mask
+        # Read primary mask (keep its affine for RC-031 affine-based orientation)
         img = nib.load(str(mask_path))
         mask_data = np.asarray(img.dataobj).astype(np.uint8)
+        source_affine = img.affine
 
         # If types mask exists (LST-AI MAGNIMS zones), use it instead
         if types_path is not None and types_path.exists():
             types_img = nib.load(str(types_path))
             mask_data = np.asarray(types_img.dataobj).astype(np.uint8)
+            source_affine = types_img.affine
 
         # Ensure 3D
         if mask_data.ndim == 4:
             mask_data = mask_data[:, :, :, 0]
 
-        # NIfTI convention: (x, y, z) → app convention: (depth, height, width) = (z, y, x)
-        # Transpose to match the app's (slices, rows, columns) format
-        mask_data = np.transpose(mask_data, (2, 1, 0))
+        # RC-031: orient into the app's display convention by AFFINE, not a blind
+        # transpose (fails safe to the legacy (2,1,0) when no reference MRI).
+        mask_data = self._orient_mask_to_display(
+            mask_data, source_affine, reference_mri_path
+        )
 
         depth, height, width = mask_data.shape
 
