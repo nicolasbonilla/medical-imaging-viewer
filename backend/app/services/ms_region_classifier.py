@@ -89,8 +89,9 @@ JC_DISTANCE_THRESHOLD_MM = 1.5
 # Infratentorial: lesion within or touching brainstem/cerebellum.
 IT_DISTANCE_THRESHOLD_MM = 1.5
 
-# Minimum lesion volume (mm3) to classify — ignore very small noise components
-MIN_LESION_VOLUME_MM3 = 3.0  # ~3 voxels at 1mm isotropic
+# RC-030: min-volume floor and 18-connectivity centralised in lesion_metrics
+# (ISBI-2015 / MSSEG-2016), replacing a duplicated 3.0 literal.
+from app.services.lesion_metrics import MIN_LESION_VOLUME_MM3, label_lesions
 
 
 def classify_lesions_with_parcellation(
@@ -177,7 +178,7 @@ def classify_lesions_with_parcellation(
     )
 
     # --- Step 3: Connected components ---
-    labeled_array, num_components = cc_label(binary_lesion)
+    labeled_array, num_components = label_lesions(binary_lesion)  # RC-030: 18-connectivity
 
     if num_components == 0:
         return _empty_result("parcellation", time.time() - start_time)
@@ -359,7 +360,7 @@ def classify_lesions_geometric(
     )
 
     # --- Connected components ---
-    labeled_array, num_components = cc_label(binary_lesion)
+    labeled_array, num_components = label_lesions(binary_lesion)  # RC-030: 18-connectivity
 
     if num_components == 0:
         return _empty_result("geometric", time.time() - start_time)
@@ -488,7 +489,7 @@ def classify_from_zone_mask(
     start_time = time.time()
 
     binary = (lesion_mask > 0).astype(np.int32)
-    labeled, num_components = scipy_label(binary)
+    labeled, num_components = label_lesions(binary)  # RC-030: 18-connectivity
 
     if num_components == 0:
         elapsed_ms = int((time.time() - start_time) * 1000)

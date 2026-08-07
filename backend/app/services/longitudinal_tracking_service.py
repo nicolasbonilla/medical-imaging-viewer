@@ -27,13 +27,14 @@ def _extract_components(mask_3d: np.ndarray, voxel_spacing: tuple[float, float, 
     Returns list of dicts with centroid, volume, and component mask indices.
     """
     try:
-        from scipy.ndimage import label as cc_label, center_of_mass
+        from scipy.ndimage import center_of_mass
+        from app.services.lesion_metrics import label_lesions, meets_min_volume
     except ImportError:
         logger.error("scipy required for longitudinal tracking")
         return []
 
     binary = (mask_3d > 0).astype(np.uint8)
-    labeled, num = cc_label(binary)
+    labeled, num = label_lesions(binary)  # RC-030: 18-connectivity (ISBI-2015/MSSEG-2016)
     if num == 0:
         return []
 
@@ -45,6 +46,11 @@ def _extract_components(mask_3d: np.ndarray, voxel_spacing: tuple[float, float, 
     for comp_id, centroid in zip(comp_ids, centroids):
         comp_mask = labeled == comp_id
         voxel_count = int(comp_mask.sum())
+        # RC-030: drop sub-noise-floor specks (consistent with analyze_lesions /
+        # compute_dis_criteria). This is the MSSEG-2016 evaluation floor, not a
+        # validated new/enlarging-lesion threshold.
+        if not meets_min_volume(voxel_count, voxel_vol):
+            continue
         components.append({
             "id": comp_id,
             "centroid": (float(centroid[0]), float(centroid[1]), float(centroid[2])),

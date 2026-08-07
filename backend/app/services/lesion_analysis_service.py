@@ -34,8 +34,13 @@ MAGNIMS_REGIONS = {
 DIS_BRAIN_REGIONS = {1, 2, 3}  # PV, JC, IT (brain MRI only)
 DIS_TOTAL_REGIONS = 5  # Total McDonald 2024 DIS regions
 
-# Minimum lesion volume (mm3) — consistent with ms_region_classifier.py
-MIN_LESION_VOLUME_MM3 = 3.0  # ~3 voxels at 1mm isotropic
+# RC-030: lesion connectivity (18-conn) and the min-volume noise floor are
+# centralised in lesion_metrics — a single source of truth citing ISBI-2015 /
+# MSSEG-2016, replacing a duplicated 3.0 literal and scipy's 6-connectivity default.
+from app.services.lesion_metrics import (
+    MIN_LESION_VOLUME_MM3,
+    label_lesions,
+)
 
 
 def analyze_lesions(
@@ -86,7 +91,7 @@ def analyze_lesions(
         binary = (mask_3d == label_id).astype(np.uint8)
 
         # Connected components
-        labeled_array, num_features = cc_label(binary)
+        labeled_array, num_features = label_lesions(binary)  # RC-030: 18-connectivity
 
         if num_features == 0:
             continue
@@ -237,7 +242,7 @@ def compute_dis_criteria(
         # Count lesions meeting minimum volume threshold
         qualifying_lesions = 0
         if total_voxels > 0:
-            labeled_array, num_features = cc_label(binary)
+            labeled_array, num_features = label_lesions(binary)  # RC-030: 18-connectivity
             for comp_id in range(1, num_features + 1):
                 comp_voxels = int((labeled_array == comp_id).sum())
                 if comp_voxels * voxel_vol_mm3 >= MIN_LESION_VOLUME_MM3:
@@ -260,7 +265,7 @@ def compute_dis_criteria(
     dwm_lesion_count = 0
     if dwm_voxels > 0:
         dwm_binary = (mask_3d == 4).astype(np.uint8)
-        dwm_labeled, dwm_features = cc_label(dwm_binary)
+        dwm_labeled, dwm_features = label_lesions(dwm_binary)  # RC-030: 18-connectivity
         for comp_id in range(1, dwm_features + 1):
             comp_voxels = int((dwm_labeled == comp_id).sum())
             if comp_voxels * voxel_vol_mm3 >= MIN_LESION_VOLUME_MM3:
