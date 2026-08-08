@@ -57,7 +57,11 @@ _SAFE_FILENAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,254}$")
 
 # Extensions the imaging pipeline actually reads. An allowlist, not a blocklist:
 # an unrecognised extension is refused rather than passed through.
-_ALLOWED_SUFFIXES = (".dcm", ".nii", ".nii.gz", ".npz", ".json")
+# NOTE: original/preprocessed imaging objects are stored as gzipped NIfTI under a
+# bare `.gz` name ("{uuid}.gz"), not "{uuid}.nii.gz" — so ".gz" MUST be allowed or
+# every original image 404s at the storage-ref gate (RC-027 regression). The
+# content is still validated downstream (load_nifti detects the gzip magic).
+_ALLOWED_SUFFIXES = (".dcm", ".nii", ".nii.gz", ".gz", ".npz", ".json")
 
 _EXPECTED_SEGMENTS = 7  # patients / pid / studies / sid / series / serid / file
 
