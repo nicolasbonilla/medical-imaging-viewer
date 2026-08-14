@@ -5,6 +5,7 @@ import asyncio
 
 from app.core.logging import get_logger
 from app.core.config import get_settings
+from app.core.exceptions import AppException
 from app.models.schemas import (
     ImageSeriesResponse,
     ImageSlice,
@@ -79,6 +80,12 @@ async def process_image(
 
         return result
 
+    except (HTTPException, AppException):
+        # Preserve intended status codes (401/403/404/400/409/…). The broad
+        # handler below would otherwise remask them all as 500 — which is why an
+        # auth/not-found 404 surfaced to the client as a confusing 500. The global
+        # handlers (register_exception_handlers) format these correctly.
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing image: {str(e)}")
 
@@ -118,6 +125,12 @@ async def apply_window_level(
 
         return result
 
+    except (HTTPException, AppException):
+        # Preserve intended status codes (401/403/404/400/409/…). The broad
+        # handler below would otherwise remask them all as 500 — which is why an
+        # auth/not-found 404 surfaced to the client as a confusing 500. The global
+        # handlers (register_exception_handlers) format these correctly.
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error applying window/level: {str(e)}")
 
@@ -199,6 +212,12 @@ async def get_slice(
 
         return result
 
+    except (HTTPException, AppException):
+        # Preserve intended status codes (401/403/404/400/409/…). The broad
+        # handler below would otherwise remask them all as 500 — which is why an
+        # auth/not-found 404 surfaced to the client as a confusing 500. The global
+        # handlers (register_exception_handlers) format these correctly.
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting slice: {str(e)}")
 
@@ -237,6 +256,12 @@ async def get_3d_volume(
 
         return result
 
+    except (HTTPException, AppException):
+        # Preserve intended status codes (401/403/404/400/409/…). The broad
+        # handler below would otherwise remask them all as 500 — which is why an
+        # auth/not-found 404 surfaced to the client as a confusing 500. The global
+        # handlers (register_exception_handlers) format these correctly.
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating 3D volume: {str(e)}")
 
@@ -286,6 +311,12 @@ async def get_image_metadata(
             }
         }
 
+    except (HTTPException, AppException):
+        # Preserve intended status codes (401/403/404/400/409/…). The broad
+        # handler below would otherwise remask them all as 500 — which is why an
+        # auth/not-found 404 surfaced to the client as a confusing 500. The global
+        # handlers (register_exception_handlers) format these correctly.
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting metadata: {str(e)}")
 
@@ -332,6 +363,12 @@ async def get_voxel_3d_visualization(
 
         return {"image": img_b64}
 
+    except (HTTPException, AppException):
+        # Preserve intended status codes (401/403/404/400/409/…). The broad
+        # handler below would otherwise remask them all as 500 — which is why an
+        # auth/not-found 404 surfaced to the client as a confusing 500. The global
+        # handlers (register_exception_handlers) format these correctly.
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating 3D visualization: {str(e)}")
 
@@ -414,6 +451,12 @@ async def get_matplotlib_2d_slice(
 
         return result
 
+    except (HTTPException, AppException):
+        # Preserve intended status codes (401/403/404/400/409/…). The broad
+        # handler below would otherwise remask them all as 500 — which is why an
+        # auth/not-found 404 surfaced to the client as a confusing 500. The global
+        # handlers (register_exception_handlers) format these correctly.
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating 2D matplotlib visualization: {str(e)}")
 
@@ -472,6 +515,12 @@ async def get_nifti_file(
             }
         )
 
+    except (HTTPException, AppException):
+        # Preserve intended status codes (401/403/404/400/409/…). The broad
+        # handler below would otherwise remask them all as 500 — which is why an
+        # auth/not-found 404 surfaced to the client as a confusing 500. The global
+        # handlers (register_exception_handlers) format these correctly.
+        raise
     except Exception as e:
         logger.error("Error serving NIfTI file", extra={"file_id": file_id, "error": str(e)})
         raise HTTPException(status_code=500, detail=f"Error serving NIfTI file: {str(e)}")
