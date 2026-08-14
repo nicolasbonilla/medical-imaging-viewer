@@ -1,16 +1,13 @@
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
 import {
-  ArrowLeft, Server, Search, Download, Loader2, CheckCircle2,
+  Search, Download, Loader2, CheckCircle2,
   AlertCircle, Plus, Trash2, Wifi, WifiOff, ChevronDown, ChevronRight,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import ThemeToggle from '@/components/ThemeToggle';
-import LanguageSelector from '@/components/LanguageSelector';
-import UserMenu from '@/components/UserMenu';
+import AppHeader from '@/components/AppHeader';
 import { dicomwebAPI } from '@/api/dicomweb';
 import type {
   PACSConnection, PACSConnectionCreate,
@@ -128,29 +125,17 @@ export default function PACSBrowserPage() {
   }, [selectedConnId]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
-      {/* Header */}
-      <motion.header
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="sticky top-0 z-30 backdrop-blur-xl bg-white/5 border-b border-white/10"
-      >
-        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate(-1)} className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <Server className="w-5 h-5 text-blue-400" />
-            <h1 className="text-lg font-semibold text-white">PACS Browser</h1>
-            <span className="text-xs text-gray-500">DICOMweb Integration</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <ThemeToggle variant="minimal" />
-            <LanguageSelector variant="minimal" />
-            <UserMenu />
-          </div>
-        </div>
-      </motion.header>
+    <div className="min-h-screen" style={{ background: '#030712' }}>
+      {/* Header — unified app bar (Design System v2.0) */}
+      <AppHeader
+        title={t('pacs.title', 'PACS Browser')}
+        subtitle={t('pacs.subtitle', 'DICOMweb Integration')}
+        breadcrumbs={[
+          { label: t('nav.home', 'Home'), path: '/app' },
+          { label: t('pacs.title', 'PACS Browser') },
+        ]}
+        onBack={() => navigate(-1)}
+      />
 
       <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
         {/* Connection Selector */}

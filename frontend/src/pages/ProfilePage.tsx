@@ -1,15 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { ArrowLeft, User, Mail, Shield, Clock, Calendar, KeyRound, Plus, Trash2, Loader2, Fingerprint } from 'lucide-react';
+import { User, Mail, Shield, Clock, Calendar, KeyRound, Plus, Trash2, Loader2, Fingerprint } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { useAuth } from '@/contexts/AuthContext';
 import { isWebAuthnSupported, prepareRegistrationOptions, serializeRegistrationCredential } from '@/utils/webauthn';
-import ThemeToggle from '@/components/ThemeToggle';
-import LanguageSelector from '@/components/LanguageSelector';
-import UserMenu from '@/components/UserMenu';
+import AppHeader from '@/components/AppHeader';
+import { formatDate } from '@/utils/formatDate';
 
 export default function ProfilePage() {
   const { t } = useTranslation();
@@ -42,30 +41,16 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
-      {/* Header */}
-      <motion.header
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="sticky top-0 z-30 backdrop-blur-xl bg-white/5 border-b border-white/10"
-      >
-        <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <h1 className="text-lg font-semibold text-white">{t('auth.profile', 'My Profile')}</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <ThemeToggle variant="minimal" />
-            <LanguageSelector variant="minimal" />
-            <UserMenu />
-          </div>
-        </div>
-      </motion.header>
+    <div className="min-h-screen" style={{ background: '#030712' }}>
+      {/* Header — unified app bar (Design System v2.0) */}
+      <AppHeader
+        title={t('auth.profile', 'My Profile')}
+        breadcrumbs={[
+          { label: t('nav.home', 'Home'), path: '/app' },
+          { label: t('auth.profile', 'My Profile') },
+        ]}
+        onBack={() => navigate(-1)}
+      />
 
       {/* Content */}
       <div className="max-w-5xl mx-auto px-6 py-8">
@@ -290,8 +275,8 @@ function PasskeySection({ userId }: { userId: string }) {
                 <div>
                   <p className="text-sm text-white font-medium">{cred.device_name || 'Passkey'}</p>
                   <p className="text-[10px] text-gray-500">
-                    Created: {new Date(cred.created_at).toLocaleDateString()}
-                    {cred.last_used && ` \u00b7 Last used: ${new Date(cred.last_used).toLocaleDateString()}`}
+                    Created: {formatDate(cred.created_at)}
+                    {cred.last_used && ` \u00b7 Last used: ${formatDate(cred.last_used)}`}
                   </p>
                 </div>
               </div>

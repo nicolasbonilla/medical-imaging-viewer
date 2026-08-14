@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { studyAPI } from '@/api/study';
 import { StudyUploader } from './StudyUploader';
 import type { StudyCreate, Modality, ImagingStudy } from '@/types';
+import { formatDate } from '@/utils/formatDate';
 import type { UploadFile } from '@/hooks/useUpload';
 
 interface StudyCreateAndUploadProps {
@@ -359,7 +360,7 @@ export const StudyCreateAndUpload: React.FC<StudyCreateAndUploadProps> = ({
                 </div>
                 <div>
                   <span className="text-gray-500 dark:text-gray-400">{t('study.date', 'Date')}:</span>
-                  <p className="text-gray-900 dark:text-white">{new Date(createdStudy.study_date).toLocaleDateString()}</p>
+                  <p className="text-gray-900 dark:text-white">{formatDate(createdStudy.study_date)}</p>
                 </div>
                 <div>
                   <span className="text-gray-500 dark:text-gray-400">{t('study.status.label', 'Status')}:</span>

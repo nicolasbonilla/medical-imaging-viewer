@@ -23,6 +23,7 @@ import {
   X,
 } from 'lucide-react';
 import { usePatientList, useDeletePatient } from '@/hooks/usePatients';
+import { PatientsOverview } from '@/components/patients/PatientsOverview';
 import PatientCard from '@/components/PatientCard';
 import PatientForm from '@/components/PatientForm';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -197,6 +198,9 @@ export default function PatientsPage() {
       {/* Main Content - WCAG 2.4.1 Skip Link Target */}
       <main id="main-content" className="relative z-0 flex-1 overflow-auto" style={{ padding: '16px 24px' }} tabIndex={-1}>
         <div className="max-w-7xl mx-auto" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Cohort overview — clinical command-center KPIs (real aggregates) */}
+          <PatientsOverview patients={patients as never} total={total} />
+
           {/* Toolbar — inline, same pattern as StudyList/DocumentList */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}

@@ -23,16 +23,14 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  // Initialize theme from localStorage or system preference
+  // Initialize theme. This is a clinical imaging product — dark-first is the
+  // radiology standard (OHIF, every DICOM viewer). Honour an explicit saved
+  // choice; otherwise default to dark so every page renders in the same theme
+  // (the v2.0 pages hardcode dark; defaulting dark keeps the rest consistent).
   const [theme, setThemeState] = useState<Theme>(() => {
     const savedTheme = localStorage.getItem('theme') as Theme | null;
-    if (savedTheme) return savedTheme;
-
-    // Check system preference
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
-    }
-    return 'light';
+    if (savedTheme === 'light' || savedTheme === 'dark') return savedTheme;
+    return 'dark';
   });
 
   useEffect(() => {

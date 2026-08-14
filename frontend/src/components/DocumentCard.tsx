@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import type { Document, DocumentSummary, DocumentCategory, DocumentStatus } from '@/types';
 import { documentAPI } from '@/api/document';
+import { formatDate } from '@/utils/formatDate';
 
 // Category colors — inline, dark-first
 const categoryColors: Record<DocumentCategory, { bg: string; color: string }> = {
@@ -52,10 +53,6 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
   const { t } = useTranslation();
   const cat = categoryColors[document.category] || categoryColors['other'];
   const stat = statusColors[document.status] || statusColors['current'];
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-  };
 
   const CategoryIcon = () => {
     if (document.category === 'radiology-report') return <FileImage style={{ width: 16, height: 16 }} />;

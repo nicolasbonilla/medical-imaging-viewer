@@ -20,6 +20,7 @@ import {
 import { useDocumentDownload, useDocumentVersions } from '@/hooks/useDocuments';
 import { documentAPI } from '@/api/document';
 import type { Document, DocumentSummary, DocumentVersion } from '@/types';
+import { formatDate } from '@/utils/formatDate';
 
 interface DocumentViewerProps {
   document: Document | DocumentSummary;
@@ -221,7 +222,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                         >
                           <span>v{version.version}</span>
                           <span className="text-xs text-gray-400">
-                            {new Date(version.created_at).toLocaleDateString()}
+                            {formatDate(version.created_at)}
                           </span>
                         </button>
                       ))}

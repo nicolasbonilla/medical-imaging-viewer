@@ -59,7 +59,7 @@ export const StudyCard: React.FC<StudyCardProps> = ({
   onDownload,
   compact = false,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const segmentationInfo = undefined as { count: number; has_approved: boolean; has_in_progress: boolean } | undefined;
 
@@ -67,7 +67,9 @@ export const StudyCard: React.FC<StudyCardProps> = ({
   const stat = statusColors[study.status] || statusColors.registered;
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(undefined, {
+    // Use the active UI language so dates match the session locale rather than
+    // the OS locale (avoids a Spanish "12 de jul de 2026" in an English UI).
+    return new Date(dateString).toLocaleDateString(i18n.language, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
