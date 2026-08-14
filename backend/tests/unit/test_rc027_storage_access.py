@@ -43,6 +43,10 @@ class TestRC027ParsesValidReferences:
 
     @pytest.mark.parametrize("name", [
         f"{uuid.uuid4()}.dcm", "series.nii", "masks.nii.gz", "volume.npz", "meta.json",
+        # Original/preprocessed images are stored as gzipped NIfTI under a bare
+        # `.gz` name ("{uuid}.gz"), so this MUST parse — omitting it 404'd every
+        # original image at the storage-ref gate (production regression).
+        f"{uuid.uuid4()}.gz",
     ])
     def test_rc027_accepts_supported_file_types(self, name):
         assert parse_patient_storage_ref(_ref(name)).filename == name
