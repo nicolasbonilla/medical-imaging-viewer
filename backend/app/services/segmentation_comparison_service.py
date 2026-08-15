@@ -46,36 +46,56 @@ def compute_hausdorff(
     voxel_spacing: tuple[float, float, float],
 ) -> float:
     """
-    Compute 95th percentile Hausdorff distance between two binary masks.
-    Uses scipy distance transform for efficient computation.
-    Returns distance in mm. Returns 0.0 if both masks are empty.
+    Compute the 95th-percentile Hausdorff distance (HD95) in mm between the two
+    masks' SURFACES — the boundary-distance metric used by the MS challenges
+    (MSSEG-2 / Anima animaSegPerfAnalyzer2, ISBI-2015) and reference libraries
+    (MONAI, medpy).
+
+    Surface-based is the point: HD95 measures how far the boundaries disagree.
+    The previous implementation took distances over EVERY foreground voxel, so
+    the many interior voxels (distance 0 wherever the masks overlap) diluted the
+    distribution and biased HD95 optimistically LOW versus the standard. Here the
+    distance is measured from each SURFACE voxel of one mask to the nearest
+    SURFACE voxel of the other, symmetrically.
+
+    Returns mm. 0.0 if both empty; inf if exactly one is empty.
     """
     try:
-        from scipy.ndimage import distance_transform_edt
+        from scipy.ndimage import distance_transform_edt, binary_erosion, generate_binary_structure
     except ImportError:
         logger.warning("scipy not available, returning -1 for Hausdorff")
         return -1.0
 
-    a = (mask_a > 0).astype(bool)
-    b = (mask_b > 0).astype(bool)
+    a = (mask_a > 0)
+    b = (mask_b > 0)
 
     if not a.any() and not b.any():
         return 0.0
     if not a.any() or not b.any():
         return float('inf')
 
-    # Distance transform of the complement
-    dist_a = distance_transform_edt(~a, sampling=voxel_spacing)
-    dist_b = distance_transform_edt(~b, sampling=voxel_spacing)
+    # Surface (boundary) voxels = foreground minus its erosion. A face-connected
+    # structuring element (connectivity 1) makes any foreground voxel touching
+    # background a surface voxel. border_value=0 treats out-of-bounds as
+    # background, so foreground that reaches the volume edge IS surface — the
+    # object genuinely ends there (the MONAI/medpy convention). Using
+    # border_value=1 would wrongly drop edge-touching faces and, for a mask that
+    # fills the volume, leave no surface at all.
+    struct = generate_binary_structure(a.ndim, 1)
+    surf_a = a & ~binary_erosion(a, structure=struct, border_value=0)
+    surf_b = b & ~binary_erosion(b, structure=struct, border_value=0)
 
-    # Surface distances: distance from each surface voxel of A to nearest surface of B
-    surface_a_to_b = dist_b[a]
-    surface_b_to_a = dist_a[b]
+    # Distance from every voxel to the nearest SURFACE voxel of the other mask.
+    dist_to_surf_b = distance_transform_edt(~surf_b, sampling=voxel_spacing)
+    dist_to_surf_a = distance_transform_edt(~surf_a, sampling=voxel_spacing)
 
-    # 95th percentile Hausdorff (more robust than max)
+    # Directed surface distances, then the symmetric 95th percentile.
+    d_a_to_b = dist_to_surf_b[surf_a]
+    d_b_to_a = dist_to_surf_a[surf_b]
+
     hd95 = max(
-        np.percentile(surface_a_to_b, 95) if len(surface_a_to_b) > 0 else 0.0,
-        np.percentile(surface_b_to_a, 95) if len(surface_b_to_a) > 0 else 0.0,
+        float(np.percentile(d_a_to_b, 95)) if d_a_to_b.size > 0 else 0.0,
+        float(np.percentile(d_b_to_a, 95)) if d_b_to_a.size > 0 else 0.0,
     )
 
     return float(hd95)
