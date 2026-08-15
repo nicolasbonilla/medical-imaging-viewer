@@ -148,7 +148,7 @@ async def compare_masks(
                 img, data = load_nifti_from_bytes(file_data, normalize=False)
                 mask = (data > 0).astype(np.uint8)
                 if mask.ndim == 3:
-                    mask = np.transpose(mask, (2, 1, 0))  # NIfTI (W,H,D) -> (D,H,W)
+                    mask = np.transpose(mask, (2, 0, 1))  # RC-031: native (a0,a1,k) -> internal (k,a0,a1)
                 loaded_masks.append({"mask": mask, "label": label})
                 if resolved_spacing is None:
                     zooms = img.header.get_zooms()[:3]
@@ -251,7 +251,7 @@ async def get_agreement_map(
                 _, data = load_nifti_from_bytes(file_data, normalize=False)
                 mask = (data > 0).astype(np.uint8)
                 if mask.ndim == 3:
-                    mask = np.transpose(mask, (2, 1, 0))
+                    mask = np.transpose(mask, (2, 0, 1))  # RC-031: native (a0,a1,k) -> internal (k,a0,a1)
                 loaded_masks.append(mask)
 
         agreement = compute_agreement_map(loaded_masks)
@@ -495,7 +495,7 @@ async def compare_longitudinal(
                 _, data = load_nifti_from_bytes(file_data, normalize=False)
                 mask = (data > 0).astype(np.uint8)
                 if mask.ndim == 3:
-                    mask = np.transpose(mask, (2, 1, 0))
+                    mask = np.transpose(mask, (2, 0, 1))  # RC-031: native (a0,a1,k) -> internal (k,a0,a1)
                 return mask
             else:
                 raise HTTPException(status_code=400, detail=f"Unknown mask type: {mask_type}")
