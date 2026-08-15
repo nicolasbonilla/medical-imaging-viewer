@@ -40,6 +40,38 @@ router = APIRouter(prefix="/segmentation", tags=["segmentation"])
 logger = get_logger(__name__)
 
 
+async def _voxel_spacing_from_source_image(file_id, storage_service, context: str):
+    """Resolve (dz, dy, dx) in mm from a segmentation's SOURCE IMAGE.
+
+    RC-024 required real voxel geometry, but every analysis route resolved it from
+    the SEGMENTATION metadata via resolve_voxel_spacing() — and SegmentationMetadata
+    never carries pixel_spacing/slice_thickness (it has no `extra_fields`). So
+    resolve_voxel_spacing(seg_metadata) always raised and lesion-analysis /
+    dis-assessment / compare returned 500 for every call. (The RC-024 unit test used
+    a mock object WITH extra_fields, so it never exercised the real metadata.)
+
+    The geometry lives on the source image. NIfTI zooms are native (za0, za1, zk);
+    the internal mask is (D,H,W)=(k,a0,a1), so the spacing order is (zk, za0, za1).
+    """
+    if not file_id:
+        raise VoxelSpacingUnavailableError(
+            f"{context}: segmentation has no source image file_id; cannot resolve voxel spacing."
+        )
+    try:
+        file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, file_id)
+        img, _ = load_nifti_from_bytes(file_data, normalize=False)
+        zooms = img.header.get_zooms()[:3]
+    except Exception as e:
+        raise VoxelSpacingUnavailableError(
+            f"{context}: could not read voxel geometry from source image {file_id}: {e}"
+        )
+    if len(zooms) < 3 or not all(float(z) > 0 for z in zooms):
+        raise VoxelSpacingUnavailableError(
+            f"{context}: source image {file_id} has no usable voxel spacing (zooms={zooms})."
+        )
+    return (float(zooms[2]), float(zooms[0]), float(zooms[1]))
+
+
 @router.post("/compare")
 async def compare_masks(
     request: Request,
@@ -72,17 +104,33 @@ async def compare_masks(
 
         # Load all masks
         loaded_masks = []
+        # RC-024: compare_two_masks REQUIRES real voxel geometry (Hausdorff in mm,
+        # volume). This route never resolved it -> compare_two_masks raised
+        # VoxelSpacingUnavailableError -> 500 on every call (dead endpoint).
+        # Resolve from the first mask that carries geometry: a segmentation's
+        # SOURCE IMAGE, or an instance NIfTI's own header.
+        resolved_spacing = None
         for spec in mask_specs:
             mask_type = spec.get("type")
             mask_id = spec.get("id")
             label = spec.get("label", mask_id)
 
             if mask_type == "segmentation":
-                # Load from segmentation cache
-                mask_3d = segmentation_service.get_mask(mask_id)
-                if mask_3d is None:
+                # Load from segmentation cache (marker-aware, correctly oriented).
+                entry = segmentation_service.get_loaded(mask_id)
+                if entry is None or entry.get("masks_3d") is None:
                     raise HTTPException(status_code=404, detail=f"Segmentation {mask_id} not found")
+                mask_3d = entry["masks_3d"]
                 loaded_masks.append({"mask": (mask_3d > 0).astype(np.uint8), "label": label})
+                if resolved_spacing is None:
+                    try:
+                        meta = entry.get("metadata")
+                        resolved_spacing = await _voxel_spacing_from_source_image(
+                            getattr(meta, "file_id", None), storage_service,
+                            context=f"segmentation {mask_id}",
+                        )
+                    except VoxelSpacingUnavailableError:
+                        pass
 
             elif mask_type == "instance":
                 # Load NIfTI from instance — prefer gcs_path (fast) over instance lookup (slow)
@@ -97,13 +145,23 @@ async def compare_masks(
                 file_data = await storage_service.download_file(
                     settings.GCS_BUCKET_NAME, gcs_path
                 )
-                _, data = load_nifti_from_bytes(file_data, normalize=False)
+                img, data = load_nifti_from_bytes(file_data, normalize=False)
                 mask = (data > 0).astype(np.uint8)
                 if mask.ndim == 3:
                     mask = np.transpose(mask, (2, 1, 0))  # NIfTI (W,H,D) -> (D,H,W)
                 loaded_masks.append({"mask": mask, "label": label})
+                if resolved_spacing is None:
+                    zooms = img.header.get_zooms()[:3]
+                    if len(zooms) == 3 and all(float(z) > 0 for z in zooms):
+                        resolved_spacing = (float(zooms[2]), float(zooms[1]), float(zooms[0]))
             else:
                 raise HTTPException(status_code=400, detail=f"Unknown mask type: {mask_type}")
+
+        if resolved_spacing is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Voxel spacing unavailable for the provided masks; cannot compute mm-based comparison metrics.",
+            )
 
         # Compute pairwise metrics (skip pairs with shape mismatch)
         comparisons = []
@@ -138,6 +196,7 @@ async def compare_masks(
                     loaded_masks[j]["mask"],
                     loaded_masks[i]["label"],
                     loaded_masks[j]["label"],
+                    voxel_spacing=resolved_spacing,
                 )
                 comparisons.append(result)
 
@@ -225,6 +284,7 @@ async def get_agreement_map(
 async def get_lesion_analysis(
     segmentation_id: str,
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    storage_service: IStorageService = Depends(get_storage_service),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -268,7 +328,11 @@ async def get_lesion_analysis(
         # present. Lesion volumes are voxel_count x product(spacing), so a 3 mm
         # study reported volumes understated 3x, with full apparent precision,
         # feeding the MAGNIMS lesion-size thresholds that determine DIS.
-        voxel_spacing = resolve_voxel_spacing(metadata, context=f"segmentation {segmentation_id}")
+        # RC-024 fix: spacing comes from the SOURCE IMAGE, not the segmentation
+        # metadata (which never carries it — see _voxel_spacing_from_source_image).
+        voxel_spacing = await _voxel_spacing_from_source_image(
+            metadata.file_id, storage_service, context=f"segmentation {segmentation_id}"
+        )
 
         result = analyze_lesions(masks_3d, voxel_spacing, label_map)
         result["segmentation_id"] = segmentation_id
@@ -303,6 +367,7 @@ async def get_lesion_analysis(
 async def get_dis_assessment(
     segmentation_id: str,
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    storage_service: IStorageService = Depends(get_storage_service),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -344,7 +409,10 @@ async def get_dis_assessment(
         # present. Lesion volumes are voxel_count x product(spacing), so a 3 mm
         # study reported volumes understated 3x, with full apparent precision,
         # feeding the MAGNIMS lesion-size thresholds that determine DIS.
-        voxel_spacing = resolve_voxel_spacing(metadata, context=f"segmentation {segmentation_id}")
+        # RC-024 fix: spacing from the SOURCE IMAGE, not the segmentation metadata.
+        voxel_spacing = await _voxel_spacing_from_source_image(
+            metadata.file_id, storage_service, context=f"segmentation {segmentation_id}"
+        )
 
         result = compute_dis_criteria(masks_3d, label_map, voxel_spacing)
         result["segmentation_id"] = segmentation_id
