@@ -221,9 +221,11 @@ class SegmentationService:
         entry["masks_3d"] = mask
         return True
 
-    def persist(self, segmentation_id: str) -> None:
-        """Persist metadata + mask to durable storage (public form of _save_segmentation)."""
-        self._save_segmentation(segmentation_id)
+    def persist(self, segmentation_id: str) -> Optional[str]:
+        """Persist metadata + mask to durable storage (public form of
+        _save_segmentation). Returns the durability tier: "gcs" (durable),
+        "local" (ephemeral fallback only), or None (nothing to persist)."""
+        return self._save_segmentation(segmentation_id)
 
     def array_to_base64(self, array: np.ndarray) -> str:
         """Encode a 2D mask slice to a base64 PNG data string."""
@@ -709,13 +711,22 @@ class SegmentationService:
 
         return array_to_base64(overlay_image)
 
-    def _save_segmentation(self, segmentation_id: str):
+    def _save_segmentation(self, segmentation_id: str) -> Optional[str]:
         """Save segmentation to Firestore (metadata) and GCS (masks).
 
         This ensures persistence across Cloud Run instance restarts.
+
+        Returns the durability tier reached so callers can report it honestly
+        (audit P-4.3):
+          - "gcs":   durably persisted to GCS + Firestore.
+          - "local": GCS/Firestore failed; written to the local fallback ONLY,
+                     which is EPHEMERAL on Cloud Run (lost on instance restart and
+                     invisible to other instances). Not a durable save.
+          - None:    nothing to save (segmentation not in cache).
+        Raises only if BOTH GCS and the local fallback fail.
         """
         if segmentation_id not in self.segmentations_cache:
-            return
+            return None
 
         seg_data = self.segmentations_cache[segmentation_id]
         masks_3d = seg_data["masks_3d"]
@@ -746,11 +757,14 @@ class SegmentationService:
             doc_ref = self.db.collection(SEGMENTATIONS_COLLECTION).document(segmentation_id)
             doc_ref.set(metadata_dict)
             logger.info("Saved segmentation to GCS + Firestore", extra={"segmentation_id": segmentation_id})
+            return "gcs"
 
         except Exception as e:
             logger.error("Failed to save to GCS/Firestore, falling back to local", extra={"error": str(e)})
-            # Fallback to local storage
+            # Fallback to local storage. NOTE: ephemeral on Cloud Run — the caller
+            # is told the save was NOT durable (P-4.3) so it can warn / keep a backup.
             self._save_segmentation_local(segmentation_id, masks_3d, metadata, source_format)
+            return "local"
 
     # RC-031 (HAZ-006): free-text NIfTI header marker distinguishing masks saved
     # in the corrected MRI-native voxel order from legacy ones. Self-contained in
