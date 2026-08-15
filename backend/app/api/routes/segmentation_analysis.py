@@ -72,6 +72,42 @@ async def _voxel_spacing_from_source_image(file_id, storage_service, context: st
     return (float(zooms[2]), float(zooms[0]), float(zooms[1]))
 
 
+def _require_comparable_grid(shape_tp1, shape_tp2) -> None:
+    """Reject a longitudinal comparison of two masks that don't share a voxel grid.
+
+    Audit A-3. Both timepoints are loaded in the SAME canonical internal order
+    (RC-031 for segmentations, the (2,0,1) transpose for instances / A-1), so equal
+    shapes mean the same grid and a voxel-wise lesion comparison is valid. When the
+    shapes DIFFER the old code transposed TP2 to whatever permutation made the sizes
+    line up — but matching dimension SIZES does not imply matching anatomical AXES,
+    and when two dims are equal (square in-plane) the permutation is ambiguous and
+    was picked arbitrarily. That silently produced a plausible-but-wrong longitudinal
+    result (new/resolved/enlarged lesion counts) — a Class C hazard.
+
+    A real spatial mismatch between two independent acquisitions needs resampling /
+    registration, not an axis permutation. We fail loud instead of guessing.
+    """
+    if tuple(shape_tp1) == tuple(shape_tp2):
+        return
+    same_dims = sorted(shape_tp1) == sorted(shape_tp2)
+    if same_dims:
+        detail = (
+            f"Timepoint masks share the same voxel dimensions but in a different "
+            f"axis order (TP1={tuple(shape_tp1)}, TP2={tuple(shape_tp2)}). Both are "
+            f"loaded in the canonical orientation, so this indicates genuinely "
+            f"different acquisitions; a voxel-wise longitudinal comparison requires "
+            f"spatial registration/resampling, which is not applied here. Comparison "
+            f"refused to avoid a silently mis-aligned result."
+        )
+    else:
+        detail = (
+            f"Timepoint masks are on different voxel grids "
+            f"(TP1={tuple(shape_tp1)}, TP2={tuple(shape_tp2)}); they must be "
+            f"registered/resampled to a common grid before comparison."
+        )
+    raise HTTPException(status_code=400, detail=detail)
+
+
 @router.post("/compare")
 async def compare_masks(
     request: Request,
@@ -510,33 +546,11 @@ async def compare_longitudinal(
             "tp2_nonzero": int(np.count_nonzero(mask_tp2)),
         })
 
-        # Normalize orientation: if shapes differ but sorted dims match, transpose TP2 to match TP1
-        if mask_tp1.shape != mask_tp2.shape:
-            sorted1 = sorted(mask_tp1.shape)
-            sorted2 = sorted(mask_tp2.shape)
-            if sorted1 == sorted2:
-                # Find the permutation that maps TP2 shape to TP1 shape
-                target = mask_tp1.shape
-                source = mask_tp2.shape
-                perm = []
-                used = [False] * len(source)
-                for t in target:
-                    for i, s in enumerate(source):
-                        if s == t and not used[i]:
-                            perm.append(i)
-                            used[i] = True
-                            break
-                mask_tp2 = np.transpose(mask_tp2, perm)
-                logger.info("Transposed TP2 mask to match TP1", extra={
-                    "original_shape": str(source),
-                    "new_shape": str(mask_tp2.shape),
-                    "permutation": str(perm),
-                })
-            else:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Mask dimensions incompatible: TP1={mask_tp1.shape} vs TP2={mask_tp2.shape}"
-                )
+        # Both masks are loaded in the SAME canonical internal order, so a valid
+        # voxel-wise comparison requires identical grids. A size-matching axis
+        # permutation (the old behavior) silently mis-aligned square/permuted
+        # volumes — audit A-3. Fail loud on any grid mismatch instead.
+        _require_comparable_grid(mask_tp1.shape, mask_tp2.shape)
 
         # Binarize masks (labels > 0 → 1) for comparison
         mask_tp1_bin = (mask_tp1 > 0).astype(np.uint8)
