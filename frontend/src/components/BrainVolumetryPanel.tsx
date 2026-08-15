@@ -184,6 +184,25 @@ export const BrainVolumetryPanel: React.FC<BrainVolumetryPanelProps> = ({
                 </div>
               </div>
 
+              {/* Brain Parenchymal Fraction — head-size-normalized atrophy metric
+                  (MS standard: SIENAX / icobrain / NeuroQuant). */}
+              {result.brain_parenchymal_fraction != null && (
+                <div
+                  className="bg-indigo-900/30 border border-indigo-700/40 rounded p-2 flex items-center justify-between"
+                  title={t(
+                    'volumetry.bpfTip',
+                    'Brain Parenchymal Fraction = brain parenchyma / intracranial volume. Head-size-normalized atrophy metric.',
+                  )}
+                >
+                  <span className="text-xs text-indigo-200">
+                    {t('volumetry.bpf', 'Brain Parenchymal Fraction (BPF)')}
+                  </span>
+                  <span className="text-lg font-bold text-indigo-100">
+                    {result.brain_parenchymal_fraction.toFixed(3)}
+                  </span>
+                </div>
+              )}
+
               {/* Sort controls */}
               <div className="flex gap-1">
                 {(['volume', 'name', 'percentile'] as const).map((s) => (

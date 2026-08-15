@@ -108,6 +108,12 @@ class VolumetryResult(BaseModel):
     structures: List[BrainStructureVolume]
     total_brain_volume_ml: Optional[float] = None
     intracranial_volume_ml: Optional[float] = None
+    # Brain Parenchymal Fraction = brain parenchyma / intracranial volume.
+    # The head-size-normalized atrophy metric standard in MS (SIENAX, icobrain,
+    # NeuroQuant). Dimensionless (0..1); ~0.80-0.85 in healthy adults, declining
+    # with atrophy. Enables cross-patient/cross-scanner comparability that raw
+    # brain volume (confounded by head size) cannot provide.
+    brain_parenchymal_fraction: Optional[float] = Field(None, ge=0.0, le=1.0)
     processing_time_ms: Optional[int] = None
 
 
@@ -115,7 +121,11 @@ class VolumetryComparisonResult(BaseModel):
     """Result of longitudinal volumetry comparison."""
     patient_id: str
     timepoints: List[Dict[str, Any]]  # [{study_id, date, volumes}]
-    changes: List[Dict[str, Any]]  # [{structure, change_percent, trend}]
+    changes: List[Dict[str, Any]]  # [{structure, change_percent, annualized_change_percent, trend}]
+    # Elapsed years between first and last timepoint (from ISO dates), used to
+    # annualize atrophy. None when dates are missing/unparseable, in which case
+    # annualized rates are also None (raw change is still reported).
+    interval_years: Optional[float] = None
 
 
 # =============================================================================

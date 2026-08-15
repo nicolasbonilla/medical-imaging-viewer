@@ -14,8 +14,14 @@ Features:
 """
 
 import time
+from datetime import datetime
 import numpy as np
 from typing import Optional, List, Dict, Tuple
+
+# Whole-brain atrophy rate (PBVC, %/year) more negative than this is pathological
+# in MS: it exceeds the ~0.1-0.3%/yr of normal aging. Threshold from the SIENA/
+# MS atrophy literature (De Stefano et al.), also the icobrain/NeuroQuant régime.
+PATHOLOGICAL_ATROPHY_PCT_PER_YEAR = -0.4
 
 from app.core.logging import get_logger
 from app.core.interfaces.ai_interface import (
@@ -300,11 +306,21 @@ class BrainVolumetryService:
         total_brain_ml = round((total_brain_voxels * voxel_volume_mm3) / 1000.0, 2)
         intracranial_ml = round((intracranial_voxels * voxel_volume_mm3) / 1000.0, 2)
 
+        # Brain Parenchymal Fraction (BPF) = brain parenchyma / intracranial volume.
+        # The head-size-normalized atrophy metric standard in MS (SIENAX/icobrain/
+        # NeuroQuant). Computed from voxel counts (not the rounded mL) to avoid
+        # compounding rounding. None when ICV is empty (no segmented tissue).
+        brain_parenchymal_fraction = (
+            round(total_brain_voxels / intracranial_voxels, 4)
+            if intracranial_voxels > 0 else None
+        )
+
         elapsed_ms = int((time.time() - start_time) * 1000)
 
         logger.info(
             f"[BrainVolumetry] Computed volumes for {len(structures)} structures "
-            f"in {elapsed_ms}ms. Total brain: {total_brain_ml}mL, ICV: {intracranial_ml}mL"
+            f"in {elapsed_ms}ms. Total brain: {total_brain_ml}mL, ICV: {intracranial_ml}mL, "
+            f"BPF: {brain_parenchymal_fraction}"
         )
 
         return VolumetryResult(
@@ -312,8 +328,37 @@ class BrainVolumetryService:
             structures=structures,
             total_brain_volume_ml=total_brain_ml,
             intracranial_volume_ml=intracranial_ml,
+            brain_parenchymal_fraction=brain_parenchymal_fraction,
             processing_time_ms=elapsed_ms,
         )
+
+    @staticmethod
+    def _interval_years(date_first: Optional[str], date_last: Optional[str]) -> Optional[float]:
+        """Years between two ISO dates, or None if either is missing/unparseable.
+
+        Tolerant of trailing 'Z' and of date-only strings. Never raises — a bad
+        date must not abort the whole longitudinal comparison; it only disables
+        annualization (raw change is still returned).
+        """
+        if not date_first or not date_last:
+            return None
+        try:
+            d0 = datetime.fromisoformat(str(date_first).replace("Z", "+00:00"))
+            d1 = datetime.fromisoformat(str(date_last).replace("Z", "+00:00"))
+        except (ValueError, TypeError):
+            return None
+        days = (d1 - d0).days
+        if days <= 0:
+            return None
+        return round(days / 365.25, 3)
+
+    @staticmethod
+    def _trend(change_pct: float) -> str:
+        """Coarse direction label. |change| < 2% reads as stable (measurement
+        noise band for segmentation-derived volumes)."""
+        if abs(change_pct) < 2.0:
+            return "stable"
+        return "increasing" if change_pct > 0 else "decreasing"
 
     def compare_timepoints(
         self,
@@ -343,15 +388,57 @@ class BrainVolumetryService:
                 changes=[],
             )
 
-        # Sort by date
-        sorted_tp = sorted(timepoints, key=lambda t: t.get("date", ""))
+        # Sort by date (coalesce missing/None dates to "" — a present key with a
+        # None value would otherwise break the comparison).
+        sorted_tp = sorted(timepoints, key=lambda t: t.get("date") or "")
 
         # Compare last vs first timepoint
         first = sorted_tp[0]
         last = sorted_tp[-1]
 
+        # Elapsed years between first and last scan, to annualize atrophy (PBVC).
+        # None when either date is missing/unparseable -> annualized rates are None
+        # but raw change is still reported.
+        interval_years = self._interval_years(first.get("date"), last.get("date"))
+
+        def _annualize(change_pct: float) -> Optional[float]:
+            if interval_years is None or interval_years <= 0:
+                return None
+            return round(change_pct / interval_years, 3)
+
         changes = []
 
+        # --- Whole-brain PBVC (Percent Brain Volume Change) --------------------
+        # The primary MS atrophy endpoint. Annualized and flagged pathological
+        # against the SIENA/icobrain régime. Prefer BPF (head-size normalized);
+        # fall back to absolute brain volume when BPF is unavailable.
+        for metric_key, label in (
+            ("brain_parenchymal_fraction", "Brain Parenchymal Fraction (BPF)"),
+            ("total_brain_volume_ml", "Whole brain (PBVC)"),
+        ):
+            v_first = first.get(metric_key)
+            v_last = last.get(metric_key)
+            if v_first in (None, 0) or v_last is None:
+                continue
+            change_pct = round(((v_last - v_first) / v_first) * 100.0, 3)
+            annualized = _annualize(change_pct)
+            is_pathological = (
+                annualized is not None
+                and annualized <= PATHOLOGICAL_ATROPHY_PCT_PER_YEAR
+            )
+            changes.append({
+                "label_id": None,
+                "structure": label,
+                "metric": metric_key,
+                "value_first": round(v_first, 4),
+                "value_last": round(v_last, 4),
+                "change_percent": change_pct,
+                "annualized_change_percent": annualized,
+                "is_pathological_atrophy": is_pathological,
+                "trend": self._trend(change_pct),
+            })
+
+        # --- Per-structure change --------------------------------------------
         first_vols = {s["label_id"]: s["volume_ml"] for s in first.get("structures", [])}
         last_vols = {s["label_id"]: s["volume_ml"] for s in last.get("structures", [])}
 
@@ -363,15 +450,6 @@ class BrainVolumetryService:
                 continue
 
             change_pct = round(((vol_last - vol_first) / vol_first) * 100.0, 2)
-
-            # Determine trend
-            if abs(change_pct) < 2.0:
-                trend = "stable"
-            elif change_pct > 0:
-                trend = "increasing"
-            else:
-                trend = "decreasing"
-
             structure_name = STRUCTURE_NAMES.get(label_id, f"Structure {label_id}")
 
             changes.append({
@@ -380,16 +458,18 @@ class BrainVolumetryService:
                 "volume_first_ml": vol_first,
                 "volume_last_ml": vol_last,
                 "change_percent": change_pct,
-                "trend": trend,
+                "annualized_change_percent": _annualize(change_pct),
+                "trend": self._trend(change_pct),
             })
 
         logger.info(
             f"[BrainVolumetry] Longitudinal comparison: {len(sorted_tp)} timepoints, "
-            f"{len(changes)} structures compared"
+            f"interval={interval_years}yr, {len(changes)} rows compared"
         )
 
         return VolumetryComparisonResult(
             patient_id=patient_id,
+            interval_years=interval_years,
             timepoints=[{
                 "study_id": tp.get("study_id"),
                 "date": tp.get("date"),
