@@ -726,16 +726,18 @@ class SegmentationService:
         metadata_dict["mask_shape"] = list(masks_3d.shape)
 
         try:
-            # Save metadata to Firestore
-            doc_ref = self.db.collection(SEGMENTATIONS_COLLECTION).document(segmentation_id)
-            doc_ref.set(metadata_dict)
-            logger.info("Saved segmentation metadata to Firestore", extra={"segmentation_id": segmentation_id})
-
-            # Save masks to GCS as compressed numpy array
+            # Save the mask to GCS FIRST (the durable data), then record the
+            # Firestore pointer. If GCS fails, the doc is never written, so a load
+            # cannot later find a doc pointing at a non-existent mask and surface an
+            # all-zero mask as the clinician's data (see the load path).
             self._save_masks_to_gcs(segmentation_id, masks_3d)
 
+            doc_ref = self.db.collection(SEGMENTATIONS_COLLECTION).document(segmentation_id)
+            doc_ref.set(metadata_dict)
+            logger.info("Saved segmentation to GCS + Firestore", extra={"segmentation_id": segmentation_id})
+
         except Exception as e:
-            logger.error("Failed to save to Firestore/GCS, falling back to local", extra={"error": str(e)})
+            logger.error("Failed to save to GCS/Firestore, falling back to local", extra={"error": str(e)})
             # Fallback to local storage
             self._save_segmentation_local(segmentation_id, masks_3d, metadata, source_format)
 
@@ -1121,22 +1123,26 @@ class SegmentationService:
                     logger.info("Segmentation loaded from Firestore/GCS", extra={"segmentation_id": segmentation_id})
                     return True
                 else:
-                    # Masks not in GCS, create empty based on mask_shape from Firestore
-                    if mask_shape:
-                        masks_3d = np.zeros(tuple(mask_shape), dtype=np.uint8)
-                    else:
-                        # Default to small empty mask if no shape info available
-                        logger.warning("No mask_shape in Firestore, using default", extra={"segmentation_id": segmentation_id})
-                        masks_3d = np.zeros((1, 256, 256), dtype=np.uint8)
-
-                    self.segmentations_cache[segmentation_id] = {
-                        "metadata": metadata,
-                        "masks_3d": masks_3d,
-                        "image_shape": masks_3d.shape,
-                        "source_format": source_format
-                    }
-                    logger.warning("Masks not found in GCS, using empty", extra={"segmentation_id": segmentation_id})
-                    return True
+                    # DATA-INTEGRITY (HAZ): the Firestore doc exists but its mask is
+                    # ABSENT from GCS. That is an inconsistent/corrupt state — a
+                    # failed durable save — NOT a valid empty segmentation. The old
+                    # code fabricated an all-zero mask and returned success, which
+                    # silently presented the clinician with a blank mask in place of
+                    # their work. Instead: try the local fallback, and if the mask is
+                    # truly unrecoverable, FAIL LOUDLY rather than fabricate data.
+                    logger.error(
+                        "Segmentation doc exists in Firestore but its mask is missing "
+                        "from GCS (possible failed save); attempting local fallback.",
+                        extra={"segmentation_id": segmentation_id},
+                    )
+                    if self._load_segmentation_local(segmentation_id):
+                        return True
+                    logger.error(
+                        "Mask unrecoverable from GCS and local storage — refusing to "
+                        "fabricate an empty mask (would silently discard the segmentation).",
+                        extra={"segmentation_id": segmentation_id, "mask_shape": mask_shape},
+                    )
+                    return False
 
         except Exception as e:
             logger.warning("Failed to load from Firestore/GCS, trying local", extra={"error": str(e)})
