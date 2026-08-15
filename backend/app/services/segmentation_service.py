@@ -256,6 +256,17 @@ class SegmentationService:
         seg_data = self.segmentations_cache[segmentation_id]
         masks_3d = seg_data["masks_3d"]
 
+        # Defense-in-depth (audit P-1.1): a mask ingested from an immutable buffer
+        # (np.frombuffer, memory-mapped load, cache deserialization) can be
+        # read-only, which makes the in-place brush below raise. Promote the
+        # CACHED array to writable once so the edit persists across strokes.
+        if not masks_3d.flags.writeable:
+            # .copy() always returns a writable, C-contiguous array (unlike
+            # np.ascontiguousarray, which is a no-op on an already-contiguous
+            # read-only array and would leave it read-only).
+            masks_3d = masks_3d.copy()
+            seg_data["masks_3d"] = masks_3d
+
         # Validate slice index (using D,H,W convention)
         if stroke.slice_index >= masks_3d.shape[0]:
             raise ValidationException(

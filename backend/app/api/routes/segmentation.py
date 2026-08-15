@@ -872,8 +872,11 @@ async def upload_binary_mask(
                 detail=f"Invalid mask size: expected {expected_size}, got {len(mask_bytes)}"
             )
 
-        # Convert to numpy array
-        masks_3d = np.frombuffer(mask_bytes, dtype=np.uint8).reshape((depth, height, width))
+        # Convert to numpy array. np.frombuffer yields a READ-ONLY view backed by
+        # the immutable request bytes; a subsequent in-place /paint edit on this
+        # cached array would raise "assignment destination is read-only" -> 500
+        # (audit P-1.1). .copy() gives a writable, C-contiguous array.
+        masks_3d = np.frombuffer(mask_bytes, dtype=np.uint8).reshape((depth, height, width)).copy()
 
         # Load existing segmentation to get metadata
         seg_data = segmentation_service.get_loaded(segmentation_id)
