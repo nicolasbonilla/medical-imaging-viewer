@@ -387,7 +387,7 @@ export function useSegmentationMask(): UseSegmentationMaskReturn {
 
       new Uint8Array(buffer, headerSize).set(mask);
 
-      await apiClient.put(`${API_BASE}/${segId}/mask/binary`, buffer, {
+      const response = await apiClient.put(`${API_BASE}/${segId}/mask/binary`, buffer, {
         headers: { 'Content-Type': 'application/octet-stream' },
       });
 
@@ -396,11 +396,31 @@ export function useSegmentationMask(): UseSegmentationMaskReturn {
         if (mask[i] > 0) annotated++;
       }
 
+      // P-4.3: the server reports whether the save was DURABLE. A non-durable
+      // save (ephemeral local fallback) must NOT clear the dirty flag — keep the
+      // local edit as backup and surface a warning so the user retries. `durable`
+      // absent (older backend) is treated as durable for backward compatibility.
+      const durable = (response?.data as { durable?: boolean })?.durable !== false;
+      if (!durable) {
+        const msg =
+          (response?.data as { message?: string })?.message ||
+          'Save was not durable — your changes may be lost. Please retry.';
+        console.warn('[useSegmentationMask] Non-durable save:', msg);
+        setState(prev => ({
+          ...prev,
+          isSaving: false,
+          annotatedVoxels: annotated,
+          error: msg,
+        }));
+        return false;
+      }
+
       setState(prev => ({
         ...prev,
         isSaving: false,
         isDirty: false,
         annotatedVoxels: annotated,
+        error: null,
       }));
 
       return true;

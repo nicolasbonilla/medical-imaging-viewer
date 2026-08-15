@@ -890,8 +890,11 @@ async def upload_binary_mask(
         seg_data["masks_3d"] = masks_3d
         seg_data["metadata"].modified_at = datetime.utcnow()
 
-        # Save to GCS (this is the ONLY time we save during editing)
-        segmentation_service.persist(segmentation_id)
+        # Save to GCS (this is the ONLY time we save during editing). persist()
+        # returns the durability tier so we don't claim an unqualified success when
+        # only the ephemeral local fallback was written (audit P-4.3).
+        durability = segmentation_service.persist(segmentation_id)
+        durable = durability == "gcs"
 
         # Count annotated voxels
         annotated_voxels = int(np.sum(masks_3d > 0))
@@ -899,15 +902,33 @@ async def upload_binary_mask(
         logger.info("Binary mask uploaded and saved", extra={
             "segmentation_id": segmentation_id,
             "shape": (depth, height, width),
-            "annotated_voxels": annotated_voxels
+            "annotated_voxels": annotated_voxels,
+            "durability": durability,
         })
+
+        if durable:
+            message = f"Mask saved successfully ({annotated_voxels} annotated voxels)"
+        else:
+            # GCS/Firestore write did not succeed — the data is NOT durably stored.
+            # Surface this so the client can keep a local backup and retry.
+            message = (
+                f"Mask saved to a non-durable local fallback only "
+                f"({annotated_voxels} annotated voxels). It may be lost on server "
+                f"restart — keep a local copy and retry saving."
+            )
+            logger.warning("Binary mask NOT durably persisted", extra={
+                "segmentation_id": segmentation_id,
+                "durability": durability,
+            })
 
         return {
             "success": True,
+            "durable": durable,
+            "storage": durability or "none",
             "segmentation_id": segmentation_id,
             "shape": {"depth": depth, "height": height, "width": width},
             "annotated_voxels": annotated_voxels,
-            "message": f"Mask saved successfully ({annotated_voxels} annotated voxels)"
+            "message": message,
         }
 
     except HTTPException:
