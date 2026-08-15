@@ -887,6 +887,13 @@ class SegmentationService:
                 # Use the original header but update data-specific fields
                 header.set_data_dtype(np.uint8)
                 header.set_data_shape(nifti_data.shape)
+                # Label masks store class IDs verbatim — never intensity-scaled.
+                # set_data_dtype(uint8) already makes nibabel recompute scaling on
+                # write (verified: an inherited scl_slope from the MRI does NOT
+                # corrupt labels 0-255), but we reset slope/inter EXPLICITLY so the
+                # "labels are verbatim" invariant does not depend on implicit
+                # library behavior. Audit P-4.1.
+                header.set_slope_inter(1.0, 0.0)
                 header["descrip"] = self._RC031_ORIENT_MARKER  # RC-031 v2 tag
                 nifti_img = nib.Nifti1Image(nifti_data.astype(np.uint8), affine, header)
                 logger.info("Created segmentation NIfTI with original MRI affine/header", extra={
