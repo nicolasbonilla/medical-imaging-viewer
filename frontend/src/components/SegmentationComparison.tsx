@@ -193,7 +193,14 @@ export function SegmentationComparison() {
                     Dice <b className="text-white">{result.dice.toFixed(3)}</b>
                   </span>
                   {result.hausdorff_mm != null && (
-                    <span>Hausdorff <b className="text-white">{result.hausdorff_mm.toFixed(1)} mm</b></span>
+                    <span title={t('comparison.hd95Tip', '95th-percentile surface distance (worst-case)')}>
+                      HD95 <b className="text-white">{result.hausdorff_mm.toFixed(1)} mm</b>
+                    </span>
+                  )}
+                  {result.assd_mm != null && (
+                    <span title={t('comparison.assdTip', 'Average symmetric surface distance (mean boundary)')}>
+                      ASSD <b className="text-white">{result.assd_mm.toFixed(1)} mm</b>
+                    </span>
                   )}
                   <span>
                     Δvol <b className="text-white">{result.volume.diff_percent.toFixed(1)}%</b>

@@ -61,7 +61,7 @@ def compute_hausdorff(
     Returns mm. 0.0 if both empty; inf if exactly one is empty.
     """
     try:
-        from scipy.ndimage import distance_transform_edt, binary_erosion, generate_binary_structure
+        import scipy.ndimage  # noqa: F401 — availability check only
     except ImportError:
         logger.warning("scipy not available, returning -1 for Hausdorff")
         return -1.0
@@ -74,24 +74,7 @@ def compute_hausdorff(
     if not a.any() or not b.any():
         return float('inf')
 
-    # Surface (boundary) voxels = foreground minus its erosion. A face-connected
-    # structuring element (connectivity 1) makes any foreground voxel touching
-    # background a surface voxel. border_value=0 treats out-of-bounds as
-    # background, so foreground that reaches the volume edge IS surface — the
-    # object genuinely ends there (the MONAI/medpy convention). Using
-    # border_value=1 would wrongly drop edge-touching faces and, for a mask that
-    # fills the volume, leave no surface at all.
-    struct = generate_binary_structure(a.ndim, 1)
-    surf_a = a & ~binary_erosion(a, structure=struct, border_value=0)
-    surf_b = b & ~binary_erosion(b, structure=struct, border_value=0)
-
-    # Distance from every voxel to the nearest SURFACE voxel of the other mask.
-    dist_to_surf_b = distance_transform_edt(~surf_b, sampling=voxel_spacing)
-    dist_to_surf_a = distance_transform_edt(~surf_a, sampling=voxel_spacing)
-
-    # Directed surface distances, then the symmetric 95th percentile.
-    d_a_to_b = dist_to_surf_b[surf_a]
-    d_b_to_a = dist_to_surf_a[surf_b]
+    d_a_to_b, d_b_to_a = _surface_distances(a, b, voxel_spacing)
 
     hd95 = max(
         float(np.percentile(d_a_to_b, 95)) if d_a_to_b.size > 0 else 0.0,
@@ -99,6 +82,65 @@ def compute_hausdorff(
     )
 
     return float(hd95)
+
+
+def _surface_distances(a_bool: np.ndarray, b_bool: np.ndarray, voxel_spacing):
+    """Directed surface-to-surface distances (mm), both directions.
+
+    Returns (d_a_to_b, d_b_to_a): for every SURFACE voxel of A, its distance to
+    the nearest surface voxel of B, and vice versa. Shared by HD95 (percentile)
+    and ASSD (mean) so both use one boundary definition.
+
+    Surface (boundary) voxels = foreground minus its erosion; a face-connected
+    structuring element makes any foreground voxel touching background a surface
+    voxel. border_value=0 treats out-of-bounds as background, so foreground that
+    reaches the volume edge IS surface (the MONAI/medpy convention) — the object
+    genuinely ends there.
+    """
+    from scipy.ndimage import distance_transform_edt, binary_erosion, generate_binary_structure
+
+    struct = generate_binary_structure(a_bool.ndim, 1)
+    surf_a = a_bool & ~binary_erosion(a_bool, structure=struct, border_value=0)
+    surf_b = b_bool & ~binary_erosion(b_bool, structure=struct, border_value=0)
+
+    dist_to_surf_b = distance_transform_edt(~surf_b, sampling=voxel_spacing)
+    dist_to_surf_a = distance_transform_edt(~surf_a, sampling=voxel_spacing)
+
+    return dist_to_surf_b[surf_a], dist_to_surf_a[surf_b]
+
+
+def compute_assd(
+    mask_a: np.ndarray,
+    mask_b: np.ndarray,
+    voxel_spacing: tuple[float, float, float],
+) -> float:
+    """Average Symmetric Surface Distance (ASSD / MSD) in mm.
+
+    The mean over BOTH masks' surface voxels of the distance to the nearest
+    surface voxel of the other mask — the MSSEG-2 / Anima symmetric surface
+    metric that complements HD95: HD95 reports the worst-case boundary gap, ASSD
+    the average boundary disagreement. Returns 0.0 if both empty, inf if exactly
+    one is empty.
+    """
+    try:
+        import scipy.ndimage  # noqa: F401 — availability check only
+    except ImportError:
+        logger.warning("scipy not available, returning -1 for ASSD")
+        return -1.0
+
+    a = (mask_a > 0)
+    b = (mask_b > 0)
+
+    if not a.any() and not b.any():
+        return 0.0
+    if not a.any() or not b.any():
+        return float('inf')
+
+    d_a_to_b, d_b_to_a = _surface_distances(a, b, voxel_spacing)
+    total = d_a_to_b.size + d_b_to_a.size
+    if total == 0:
+        return 0.0
+    return float((float(d_a_to_b.sum()) + float(d_b_to_a.sum())) / total)
 
 
 def compute_volume_diff(
@@ -283,6 +325,7 @@ def compare_two_masks(
 
     dice = compute_dice(mask_a, mask_b)
     hausdorff = compute_hausdorff(mask_a, mask_b, voxel_spacing)
+    assd = compute_assd(mask_a, mask_b, voxel_spacing)
     volume = compute_volume_diff(mask_a, mask_b, voxel_spacing)
     per_slice = compute_per_slice_dice(mask_a, mask_b)
     # Directional: A = prediction under test, B = reference.
@@ -293,6 +336,9 @@ def compare_two_masks(
         "label_b": label_b,
         "dice": round(dice, 4),
         "hausdorff_mm": round(hausdorff, 2) if hausdorff != float('inf') else None,
+        # ASSD (average symmetric surface distance, mm) — the MSSEG-2/Anima mean
+        # boundary metric complementing HD95's worst-case.
+        "assd_mm": round(assd, 2) if assd != float('inf') else None,
         "volume": volume,
         "per_slice_dice": [round(d, 4) for d in per_slice],
         "lesion_detection": lesion_detection,
