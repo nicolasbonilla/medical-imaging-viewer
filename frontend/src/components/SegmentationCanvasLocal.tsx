@@ -693,11 +693,25 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
         const pixelsPerVoxelX = canvasSize.width / imageWidth;
         const pixelsPerVoxelY = canvasSize.height / imageHeight;
 
-        // Map backend coords → display coords: y→X, x→Y
-        const bx = bb.y_min * pixelsPerVoxelX;
-        const by = bb.x_min * pixelsPerVoxelY;
-        const bw = (bb.y_max - bb.y_min + 1) * pixelsPerVoxelX;
-        const bh = (bb.x_max - bb.x_min + 1) * pixelsPerVoxelY;
+        // RC-031: the lesion bbox/centroid come from analyze_lesions run on the
+        // SAME (D,H,W) mask that is displayed — y = height axis (i), x = width
+        // axis (j) — so the correct display mapping is x→X, y→Y. But the overlay
+        // slice is only transposed for display when the mask dims are swapped vs
+        // the image (the `needsTranspose` condition used above). The bbox MUST
+        // follow that SAME transpose or it renders mirrored across the diagonal.
+        // The previous code swapped UNCONDITIONALLY (y→X, x→Y) — correct only for
+        // the transposed case, wrong for every correctly-oriented mask (all
+        // painted masks, square slices, and post-RC-031 tool masks).
+        const md = segmentationMask.state.dimensions;
+        const swap = !!(md && md.width !== imageWidth && md.height === imageWidth && md.width === imageHeight);
+        const bxMin = swap ? bb.y_min : bb.x_min;
+        const byMin = swap ? bb.x_min : bb.y_min;
+        const bxMax = swap ? bb.y_max : bb.x_max;
+        const byMax = swap ? bb.x_max : bb.y_max;
+        const bx = bxMin * pixelsPerVoxelX;
+        const by = byMin * pixelsPerVoxelY;
+        const bw = (bxMax - bxMin + 1) * pixelsPerVoxelX;
+        const bh = (byMax - byMin + 1) * pixelsPerVoxelY;
 
         // Dashed yellow bounding box
         ctx.save();
@@ -710,8 +724,8 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
 
         // Centroid crosshair (show on centroid's z slice ± 1)
         if (Math.abs(sliceIndex - Math.round(centroid.z)) <= 1) {
-          const cx = (centroid.y + 0.5) * pixelsPerVoxelX;
-          const cy = (centroid.x + 0.5) * pixelsPerVoxelY;
+          const cx = ((swap ? centroid.y : centroid.x) + 0.5) * pixelsPerVoxelX;
+          const cy = ((swap ? centroid.x : centroid.y) + 0.5) * pixelsPerVoxelY;
           const armLen = 8;
 
           ctx.save();
