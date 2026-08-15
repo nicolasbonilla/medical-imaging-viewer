@@ -133,20 +133,36 @@ export interface VolumetryResult {
   structures: BrainStructureVolume[];
   total_brain_volume_ml?: number;
   intracranial_volume_ml?: number;
+  /** Brain Parenchymal Fraction (brain / ICV) — head-size-normalized atrophy
+   *  metric standard in MS (SIENAX/icobrain/NeuroQuant). Dimensionless 0..1. */
+  brain_parenchymal_fraction?: number | null;
   processing_time_ms?: number;
+}
+
+export interface VolumetryChange {
+  /** null for whole-brain PBVC / BPF rows; a FreeSurfer label id for structures. */
+  label_id: number | null;
+  structure: string;
+  /** Present on whole-brain rows: 'total_brain_volume_ml' | 'brain_parenchymal_fraction'. */
+  metric?: string;
+  volume_first_ml?: number;
+  volume_last_ml?: number;
+  value_first?: number;
+  value_last?: number;
+  change_percent: number;
+  /** %/year, using the timepoint dates. null when dates are missing/equal. */
+  annualized_change_percent?: number | null;
+  /** True when annualized atrophy passes the ~-0.4%/yr MS/SIENA threshold. */
+  is_pathological_atrophy?: boolean;
+  trend: 'stable' | 'increasing' | 'decreasing';
 }
 
 export interface VolumetryComparisonResult {
   patient_id: string;
+  /** Elapsed years between first and last timepoint; null if dates missing. */
+  interval_years?: number | null;
   timepoints: Array<{ study_id: string; date: string }>;
-  changes: Array<{
-    label_id: number;
-    structure: string;
-    volume_first_ml: number;
-    volume_last_ml: number;
-    change_percent: number;
-    trend: 'stable' | 'increasing' | 'decreasing';
-  }>;
+  changes: VolumetryChange[];
 }
 
 export interface VolumetryRequest {
