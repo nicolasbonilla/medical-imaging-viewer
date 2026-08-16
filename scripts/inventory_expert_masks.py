@@ -47,7 +47,7 @@ API = os.environ.get(
     "https://brain-mri-7bp6oqdu7a-uc.a.run.app/api/v1",
 ).rstrip("/")
 SEP = "=" * 80
-TIMEOUT = 60
+TIMEOUT = 30
 
 
 # ---------------------------------------------------------------------------
@@ -139,23 +139,30 @@ def main():
     print(SEP)
 
     patients = fetch_patients(H)
-    print("Patients: %d\n" % len(patients))
+    n_pat = len(patients)
+    print("Patients: %d\n" % n_pat, flush=True)
 
     seg_records = []
     study_index = {}
 
-    for p in patients:
+    for idx, p in enumerate(patients, 1):
         pid = p.get("id")
         mrn = p.get("mrn") or p.get("full_name") or pid
         if not pid:
             continue
         studies = fetch_studies(H, pid)
+        pat_segs = 0
         for study in studies:
             sid = study.get("id")
             study_date = study.get("study_date") or ""
-            instances = fetch_study_instances(H, sid)
 
-            # Study-level sequence inventory (from every series in the study).
+            # Ask for segmentations FIRST — only pay for series/instances (the
+            # expensive part) on studies that actually carry a mask.
+            segs = fetch_segmentations(H, sid)
+            if not segs:
+                continue
+
+            instances = fetch_study_instances(H, sid)
             series_texts = [
                 "%s %s" % (i.get("_series_description", ""),
                            i.get("filename", "") or i.get("original_filename", ""))
@@ -180,7 +187,7 @@ def main():
                         i.get("filename", "") or i.get("original_filename", ""),
                     )
 
-            for seg in fetch_segmentations(H, sid):
+            for seg in segs:
                 meta = seg.get("metadata", {}) or {}
                 fid = seg.get("file_id") or meta.get("file_id")
                 seg_records.append({
@@ -197,6 +204,10 @@ def main():
                     "study_date": study_date,
                     "source_text": file_text.get(fid, ""),
                 })
+                pat_segs += 1
+
+        print("  [%2d/%d] %-16s studies=%-3d segs=%d"
+              % (idx, n_pat, str(mrn), len(studies), pat_segs), flush=True)
 
     manifest = build_manifest(seg_records, study_index)
 
