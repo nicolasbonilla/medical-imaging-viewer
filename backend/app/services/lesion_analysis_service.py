@@ -188,6 +188,17 @@ def compute_dis_criteria(
     # RC-024 (CAPA-001 CA-5): required. The sentinel replaces the old
     # (1.0, 1.0, 1.0) default; omitting it now raises instead of assuming.
     voxel_spacing: tuple[float, float, float] = SPACING_REQUIRED,
+    *,
+    # 2024 McDonald external evidence the brain MRI cannot supply, provided by the
+    # clinician from separate imaging / labs. None = not assessed (unchanged
+    # behavior); True/False = evidence present/absent.
+    spinal_cord_involved: Optional[bool] = None,
+    optic_nerve_involved: Optional[bool] = None,
+    # Supportive specificity markers (2024): central vein sign, paramagnetic rim
+    # lesion, CSF-specific finding (oligoclonal bands or elevated kappa FLC).
+    cvs_positive: Optional[bool] = None,
+    prl_present: Optional[bool] = None,
+    csf_specific: Optional[bool] = None,
 ) -> dict:
     """
     Evaluate McDonald 2024 Dissemination in Space (DIS) criteria.
@@ -197,19 +208,32 @@ def compute_dis_criteria(
       1. Periventricular (label 1)
       2. Juxtacortical/cortical (label 2)
       3. Infratentorial (label 3)
-      4. Spinal cord (requires separate imaging — not assessed here)
-      5. Optic nerve (requires separate imaging — not assessed here)
+      4. Spinal cord (separate imaging — supplied via spinal_cord_involved)
+      5. Optic nerve (separate imaging — supplied via optic_nerve_involved)
 
-    Note: Deep White Matter (label 4) is NOT a DIS region per McDonald 2024.
-    This function evaluates only the 3 brain MRI regions (PV, JC, IT).
+    2024 revisions modeled here (as radiological DECISION SUPPORT, never a
+    diagnosis — per CMSC guidance the tool must not assert "McDonald criteria
+    met/not met"):
+      - The optic nerve is a 5th topography.
+      - When ≥4 of the 5 topographies are involved, dissemination in time may be
+        waived (dit_waiver_supported) — clinical correlation required.
+      - Central vein sign, paramagnetic rim lesions, and CSF-specific findings
+        (OCB / elevated kappa FLC) provide supportive specificity.
+
+    Deep White Matter (label 4) is NOT a DIS region per McDonald. The brain MRI
+    supplies at most 3 of the 5 topographies; the other two come from the
+    optional external-evidence flags above.
 
     Args:
         mask_3d: 3D numpy array (D, H, W) with MAGNIMS label IDs.
         labels: Mapping of label_id -> label_name.
         voxel_spacing: (dz, dy, dx) in mm — used for minimum volume filter.
+        spinal_cord_involved / optic_nerve_involved: external topography evidence.
+        cvs_positive / prl_present / csf_specific: supportive specificity markers.
 
     Returns:
-        Dict with McDonald 2024 DIS assessment (brain regions only).
+        Dict with McDonald 2024 DIS assessment integrating brain regions and any
+        supplied external evidence.
     """
     voxel_spacing = require_spacing(voxel_spacing, caller="compute_dis_criteria")
     # IEC 62304 Class C — Input validation (REQ-SAFE-005)
@@ -276,17 +300,61 @@ def compute_dis_criteria(
     has_active = 5 in unique_labels_set
     has_black_holes = 6 in unique_labels_set
 
+    # --- 2024 five-topography integration --------------------------------------
+    # Fold in any clinician-supplied external evidence. None = not assessed.
+    spinal_counts = spinal_cord_involved is True
+    optic_counts = optic_nerve_involved is True
+    external_topographies = int(spinal_counts) + int(optic_counts)
+    total_topographies_involved = min(
+        brain_regions_with_lesions + external_topographies, DIS_TOTAL_REGIONS
+    )
+    dis_met_full = total_topographies_involved >= 2
+    # 2024: with lesions in ≥4 of the 5 topographies, dissemination in time may be
+    # waived. Radiological signal only — requires clinical correlation.
+    dit_waiver_supported = total_topographies_involved >= 4
+
+    supportive = {
+        "central_vein_sign": cvs_positive,
+        "paramagnetic_rim_lesion": prl_present,
+        "csf_specific": csf_specific,  # OCB or elevated kappa FLC
+    }
+    specificity_marker_present = any(v is True for v in supportive.values())
+    external_evidence_provided = any(
+        v is not None for v in (
+            spinal_cord_involved, optic_nerve_involved,
+            cvs_positive, prl_present, csf_specific,
+        )
+    )
+
     return {
         "dis_met_brain": dis_met_brain,
         "dis_criteria_version": "McDonald 2024 (Montalban et al., Lancet Neurology 2025)",
         "brain_regions_with_lesions": brain_regions_with_lesions,
         "total_dis_regions": DIS_TOTAL_REGIONS,
         "brain_regions_evaluated": len(DIS_BRAIN_REGIONS),
-        "spinal_cord_evaluated": False,
-        "optic_nerve_evaluated": False,
+        # Reflect whether external evidence was actually supplied (was hardcoded False).
+        "spinal_cord_evaluated": spinal_cord_involved is not None,
+        "optic_nerve_evaluated": optic_nerve_involved is not None,
+        "spinal_cord_involved": spinal_cord_involved,
+        "optic_nerve_involved": optic_nerve_involved,
+        # 2024 five-topography assessment (integrates external evidence).
+        "total_topographies_involved": total_topographies_involved,
+        "dis_met_full": dis_met_full,
+        "dit_waiver_supported": dit_waiver_supported,
+        "supportive_specificity_markers": supportive,
+        "specificity_marker_present": specificity_marker_present,
+        "external_evidence_provided": external_evidence_provided,
+        "decision_support_note": (
+            "Radiological decision support only — NOT a diagnosis. Under the 2024 "
+            "McDonald criteria, dissemination in time may be waived when ≥4 of the "
+            "5 topographies are involved; central vein sign, paramagnetic rim "
+            "lesions, and CSF-specific findings add specificity. Requires full "
+            "clinical correlation by a neurologist."
+        ),
         "note": (
-            "Brain MRI assessment only. Full McDonald 2024 DIS requires "
-            "5 regions including spinal cord and optic nerve imaging."
+            "Brain MRI supplies up to 3 of the 5 McDonald 2024 topographies "
+            "(PV, JC, IT); spinal cord and optic nerve are supplied as external "
+            "evidence when available."
         ),
         "region_details": region_presence,
         "dwm_lesion_count": dwm_lesion_count,

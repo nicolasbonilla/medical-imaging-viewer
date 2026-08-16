@@ -66,6 +66,12 @@ export interface DISRegionDetail {
  * Evaluates 3 brain MRI regions (PV, JC, IT) out of 5 total DIS regions
  * (spinal cord and optic nerve require separate imaging).
  */
+export interface DISSupportiveMarkers {
+  central_vein_sign: boolean | null;
+  paramagnetic_rim_lesion: boolean | null;
+  csf_specific: boolean | null; // OCB or elevated kappa FLC
+}
+
 export interface DISAssessment {
   segmentation_id: string;
   dis_met_brain: boolean;
@@ -75,6 +81,17 @@ export interface DISAssessment {
   brain_regions_evaluated: number;   // 3
   spinal_cord_evaluated: boolean;
   optic_nerve_evaluated: boolean;
+  spinal_cord_involved?: boolean | null;
+  optic_nerve_involved?: boolean | null;
+  // McDonald 2024 five-topography integration (folds in external evidence).
+  total_topographies_involved: number;
+  dis_met_full: boolean;
+  /** ≥4 of 5 topographies → dissemination in time may be waived (2024). */
+  dit_waiver_supported: boolean;
+  supportive_specificity_markers: DISSupportiveMarkers;
+  specificity_marker_present: boolean;
+  external_evidence_provided: boolean;
+  decision_support_note: string;
   note: string;
   region_details: Record<string, DISRegionDetail>;
   dwm_lesion_count: number;
@@ -86,6 +103,15 @@ export interface DISAssessment {
   // Legacy fields for backwards compatibility
   dis_met?: boolean;
   regions_with_lesions?: number;
+}
+
+/** Optional McDonald-2024 external evidence supplied to the DIS endpoint. */
+export interface DISExternalEvidence {
+  spinal_cord_involved?: boolean;
+  optic_nerve_involved?: boolean;
+  cvs_positive?: boolean;
+  prl_present?: boolean;
+  csf_specific?: boolean;
 }
 
 // ============================================================================

@@ -10,6 +10,7 @@ CRUD router so no route is shadowed.
 from fastapi import APIRouter, HTTPException, Depends, Request
 from fastapi.responses import Response
 from datetime import datetime
+from typing import Optional
 import numpy as np
 
 import struct
@@ -405,12 +406,22 @@ async def get_dis_assessment(
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
     storage_service: IStorageService = Depends(get_storage_service),
     current_user: User = Depends(get_current_active_user),
+    # 2024 McDonald external evidence the brain MRI cannot supply. None = not
+    # assessed (default; identical to prior behavior and cacheable).
+    spinal_cord_involved: Optional[bool] = None,
+    optic_nerve_involved: Optional[bool] = None,
+    cvs_positive: Optional[bool] = None,
+    prl_present: Optional[bool] = None,
+    csf_specific: Optional[bool] = None,
 ):
     """
     Evaluate McDonald 2024 DIS (Dissemination in Space) criteria.
 
     McDonald 2024 (Montalban et al., 2025): DIS requires ≥2 of 5 regions
-    (PV, JC, IT, spinal cord, optic nerve). Brain MRI evaluates 3 of 5.
+    (PV, JC, IT, spinal cord, optic nerve). Brain MRI supplies 3 of 5; the spinal
+    cord / optic nerve and the supportive specificity markers (central vein sign,
+    paramagnetic rim lesion, CSF-specific finding) are optional external evidence.
+    Decision support only — never a diagnosis (CMSC guidance).
     """
     try:
         seg_data = segmentation_service.get_loaded(segmentation_id)
@@ -419,10 +430,23 @@ async def get_dis_assessment(
         masks_3d = seg_data["masks_3d"]
         metadata = seg_data["metadata"]
 
+        external_evidence = {
+            "spinal_cord_involved": spinal_cord_involved,
+            "optic_nerve_involved": optic_nerve_involved,
+            "cvs_positive": cvs_positive,
+            "prl_present": prl_present,
+            "csf_specific": csf_specific,
+        }
+        # Only the brain-only assessment (no external evidence) is cached — a
+        # parameterized result must not overwrite or be served from that cache.
+        any_external = any(v is not None for v in external_evidence.values())
+
         # Stale check — return cached result if mask hasn't changed
         cached = metadata.analysis_data or {}
         mask_mod = metadata.modified_at.isoformat()
-        if cached.get("analysis_mask_modified_at") == mask_mod and "dis_assessment" in cached:
+        if (not any_external
+                and cached.get("analysis_mask_modified_at") == mask_mod
+                and "dis_assessment" in cached):
             logger.info("Returning cached DIS assessment for %s", segmentation_id)
             result = dict(cached["dis_assessment"])
             result["segmentation_id"] = segmentation_id
@@ -450,21 +474,28 @@ async def get_dis_assessment(
             metadata.file_id, storage_service, context=f"segmentation {segmentation_id}"
         )
 
-        result = compute_dis_criteria(masks_3d, label_map, voxel_spacing)
+        result = compute_dis_criteria(
+            masks_3d, label_map, voxel_spacing, **external_evidence
+        )
         result["segmentation_id"] = segmentation_id
 
-        # Persist DIS result in metadata
-        metadata.analysis_data = {
-            **cached,
-            "dis_assessment": result,
-            "analysis_mask_modified_at": mask_mod,
-        }
-        segmentation_service.persist(segmentation_id)
+        # Only persist the brain-only (unparameterized) assessment to the cache;
+        # a result that folds in external evidence must not become the cached one.
+        if not any_external:
+            metadata.analysis_data = {
+                **cached,
+                "dis_assessment": result,
+                "analysis_mask_modified_at": mask_mod,
+            }
+            segmentation_service.persist(segmentation_id)
 
-        logger.info("DIS assessment completed and cached", extra={
+        logger.info("DIS assessment completed", extra={
             "segmentation_id": segmentation_id,
             "dis_met_brain": result.get("dis_met_brain", False),
             "brain_regions_with_lesions": result.get("brain_regions_with_lesions", 0),
+            "total_topographies_involved": result.get("total_topographies_involved", 0),
+            "dit_waiver_supported": result.get("dit_waiver_supported", False),
+            "external_evidence": any_external,
         })
 
         return result
