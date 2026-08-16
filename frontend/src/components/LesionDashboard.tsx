@@ -30,6 +30,7 @@ import {
   MAGNIMS_LESION_LABELS,
   type LesionAnalysisResult,
   type DISAssessment,
+  type DISExternalEvidence,
   type LesionInfo,
   type RegionClassificationResult,
   type ClassificationMethod,
@@ -94,6 +95,33 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
   const [cvsSummary, setCvsSummary] = useState<CVSSummary | null>(null);
   const [prlSummary, setPrlSummary] = useState<PRLSummary | null>(null);
   const annotationDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // McDonald 2024 external evidence the brain MRI can't supply (spinal cord /
+  // optic nerve) + supportive specificity markers. A checked box = present (true);
+  // unchecked = not provided. Changing it re-queries the DIS endpoint.
+  const [disEvidence, setDisEvidence] = useState<DISExternalEvidence>({});
+  const [disEvidenceLoading, setDisEvidenceLoading] = useState(false);
+
+  const applyDisEvidence = useCallback(
+    async (next: DISExternalEvidence) => {
+      setDisEvidence(next);
+      setDisEvidenceLoading(true);
+      try {
+        const r = await segmentationAPI.getDISAssessment(segmentationId, next);
+        setDis(r);
+      } catch (e) {
+        console.error('[LesionDashboard] DIS re-eval failed:', e);
+      } finally {
+        setDisEvidenceLoading(false);
+      }
+    },
+    [segmentationId],
+  );
+
+  const toggleDisEvidence = useCallback(
+    (key: keyof DISExternalEvidence) =>
+      applyDisEvidence({ ...disEvidence, [key]: disEvidence[key] ? undefined : true }),
+    [disEvidence, applyDisEvidence],
+  );
 
   // Auto-populate from persisted analysis_data
   useEffect(() => {
@@ -527,6 +555,66 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
           <span className="text-[10px] text-gray-400">
             {t('lesions.classifyFirst', 'Classify regions first to evaluate DIS criteria')}
           </span>
+        </div>
+      )}
+
+      {/* McDonald 2024: five-topography integration + external evidence.
+          Decision support only — never a diagnosis (CMSC guidance). */}
+      {dis && (
+        <div className="p-2 rounded-lg bg-indigo-950/30 border border-indigo-800/40 flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-semibold text-indigo-200">
+              {t('lesions.mcdonald2024', 'McDonald 2024 · 5 topographies')}
+            </span>
+            <span className="text-[10px] text-indigo-100 font-bold">
+              {dis.total_topographies_involved}/5
+              {disEvidenceLoading && <span className="ml-1 text-indigo-400 animate-pulse">…</span>}
+            </span>
+          </div>
+
+          {dis.dit_waiver_supported && (
+            <div className="text-[9px] text-emerald-300 bg-emerald-900/20 border border-emerald-800/40 rounded px-1.5 py-1">
+              {t(
+                'lesions.ditWaiver',
+                '≥4 of 5 topographies — dissemination in time may be waived (2024). Clinical correlation required.',
+              )}
+            </div>
+          )}
+
+          {/* External evidence the brain MRI can't supply */}
+          <div className="flex flex-wrap gap-x-3 gap-y-1">
+            {([
+              ['optic_nerve_involved', t('lesions.opticNerve', 'Optic nerve')],
+              ['spinal_cord_involved', t('lesions.spinalCord', 'Spinal cord')],
+              ['cvs_positive', t('lesions.cvs', 'Central vein sign')],
+              ['prl_present', t('lesions.prl', 'Paramagnetic rim')],
+              ['csf_specific', t('lesions.csf', 'CSF-specific (OCB/kFLC)')],
+            ] as [keyof DISExternalEvidence, string][]).map(([key, label]) => (
+              <label key={key} className="flex items-center gap-1 text-[9px] text-gray-300 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  className="w-3 h-3 accent-indigo-500"
+                  checked={!!disEvidence[key]}
+                  disabled={disEvidenceLoading}
+                  onChange={() => toggleDisEvidence(key)}
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+
+          {dis.specificity_marker_present && (
+            <div className="text-[9px] text-indigo-300">
+              {t('lesions.specificityPresent', 'Supportive specificity marker present (adds diagnostic specificity).')}
+            </div>
+          )}
+
+          <div className="text-[8px] text-gray-500 italic">
+            {t(
+              'lesions.decisionSupport',
+              'Radiological decision support only — not a diagnosis. Requires clinical correlation by a neurologist.',
+            )}
+          </div>
         </div>
       )}
 

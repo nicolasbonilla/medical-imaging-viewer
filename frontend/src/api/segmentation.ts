@@ -11,6 +11,7 @@ import type {
   OverlayImageResponse,
   LesionAnalysisResult,
   DISAssessment,
+  DISExternalEvidence,
   LongitudinalResult,
   RegionClassificationResult,
   ClassificationMethod,
@@ -151,10 +152,25 @@ export const segmentationAPI = {
 
   /**
    * Evaluate McDonald 2024 DIS criteria for a segmentation.
+   *
+   * Optionally supply external evidence the brain MRI cannot provide (spinal
+   * cord / optic nerve involvement) and supportive specificity markers (central
+   * vein sign, paramagnetic rim lesion, CSF-specific finding). Omitting them
+   * returns the cacheable brain-only assessment (identical to before).
    */
-  async getDISAssessment(segmentationId: string): Promise<DISAssessment> {
+  async getDISAssessment(
+    segmentationId: string,
+    evidence?: DISExternalEvidence,
+  ): Promise<DISAssessment> {
+    const params: Record<string, boolean> = {};
+    if (evidence) {
+      for (const [k, v] of Object.entries(evidence)) {
+        if (typeof v === 'boolean') params[k] = v;
+      }
+    }
     const response = await apiClient.get<DISAssessment>(
-      `${API_PREFIX}/segmentation/${segmentationId}/dis-assessment`
+      `${API_PREFIX}/segmentation/${segmentationId}/dis-assessment`,
+      { params },
     );
     return response.data;
   },
