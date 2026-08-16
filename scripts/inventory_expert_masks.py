@@ -124,6 +124,24 @@ def fetch_segmentations(H, study_id):
     return _items(data)
 
 
+def fetch_segmentations_all(H):
+    """The whole segmentations collection (admin sees all; the study_id filter on
+    /segmentation/list is not applied server-side). The endpoint hydrates every
+    mask from GCS, so it is SLOW — use a long timeout and retry."""
+    last = None
+    for attempt in range(3):
+        try:
+            r = requests.get(API + "/segmentation/list", headers=H,
+                             params={"limit": 5000}, timeout=180)
+            if r.status_code == 200:
+                return _items(r.json())
+            last = "HTTP %s" % r.status_code
+        except requests.exceptions.RequestException as e:
+            last = str(e)
+        print("  list attempt %d failed (%s), retrying..." % (attempt + 1, last), flush=True)
+    sys.exit("Could not list segmentations after retries: %s" % last)
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -138,76 +156,62 @@ def main():
     print("EXPERT MASK INVENTORY  (API: %s)" % API)
     print(SEP)
 
+    # The list endpoint returns the WHOLE collection for an admin token (the
+    # study_id filter is not applied) — so ONE call yields every distinct
+    # segmentation. We then map each to its true case by PARSING its file_id
+    # (patients/{pid}/studies/{sid}/series/{serid}/{file}), not by which study
+    # loop it came from (the earlier bug that inflated counts 83x).
+    try:
+        from app.security.storage_access import parse_patient_storage_ref
+    except Exception:
+        parse_patient_storage_ref = None
+
+    all_segs = fetch_segmentations_all(H)
+    print("Distinct segmentations in system: %d\n" % len(all_segs), flush=True)
+
+    # Lightweight lookup maps: patient_id -> MRN, study_id -> (date, patient_id).
     patients = fetch_patients(H)
-    n_pat = len(patients)
-    print("Patients: %d\n" % n_pat, flush=True)
+    pid2mrn = {p.get("id"): (p.get("mrn") or p.get("full_name") or p.get("id")) for p in patients}
+    study_meta = {}
+    for p in patients:
+        for s in fetch_studies(H, p.get("id")):
+            study_meta[s.get("id")] = {"date": s.get("study_date") or "", "patient_id": p.get("id")}
 
     seg_records = []
+    for seg in all_segs:
+        meta = seg.get("metadata", {}) or {}
+        fid = seg.get("file_id") or meta.get("file_id") or ""
+        pid = sid = None
+        if parse_patient_storage_ref and fid:
+            try:
+                ref = parse_patient_storage_ref(fid)
+                pid, sid = ref.patient_id, ref.study_id
+            except Exception:
+                pid = sid = None
+        smeta = study_meta.get(sid, {})
+        seg_records.append({
+            "seg_id": seg.get("segmentation_id") or seg.get("id"),
+            "file_id": fid,
+            "description": meta.get("description") or seg.get("description") or "",
+            "validation_source": meta.get("validation_source") or seg.get("validation_source"),
+            "segmentation_type": seg.get("segmentation_type"),
+            "created_by": seg.get("created_by"),
+            "mask_shape": seg.get("mask_shape") or [seg.get("total_slices")],
+            "patient_mrn": pid2mrn.get(pid, pid),
+            "patient_id": pid,
+            "study_id": sid,
+            "study_date": smeta.get("date", ""),
+            "source_text": fid,
+        })
+
+    # Study index (sequences unknown here — filled only if needed later).
     study_index = {}
-
-    for idx, p in enumerate(patients, 1):
-        pid = p.get("id")
-        mrn = p.get("mrn") or p.get("full_name") or pid
-        if not pid:
-            continue
-        studies = fetch_studies(H, pid)
-        pat_segs = 0
-        for study in studies:
-            sid = study.get("id")
-            study_date = study.get("study_date") or ""
-
-            # Ask for segmentations FIRST — only pay for series/instances (the
-            # expensive part) on studies that actually carry a mask.
-            segs = fetch_segmentations(H, sid)
-            if not segs:
-                continue
-
-            instances = fetch_study_instances(H, sid)
-            series_texts = [
-                "%s %s" % (i.get("_series_description", ""),
-                           i.get("filename", "") or i.get("original_filename", ""))
-                for i in instances
-            ]
-            seqs = sequences_available(series_texts)
-            study_index[sid] = {
-                "patient_mrn": mrn,
-                "patient_id": pid,
-                "study_date": study_date,
-                "sequences": sorted(seqs),
-                "lst_ai_ready": is_lst_ai_ready(seqs),
+    for r in seg_records:
+        if r["study_id"] and r["study_id"] not in study_index:
+            study_index[r["study_id"]] = {
+                "patient_mrn": r["patient_mrn"], "patient_id": r["patient_id"],
+                "study_date": r["study_date"], "sequences": [], "lst_ai_ready": False,
             }
-
-            # Map each source image (file_id == gcs_object_name) -> descriptive text.
-            file_text = {}
-            for i in instances:
-                fid = i.get("gcs_object_name") or i.get("file_id")
-                if fid:
-                    file_text[fid] = "%s %s" % (
-                        i.get("_series_description", ""),
-                        i.get("filename", "") or i.get("original_filename", ""),
-                    )
-
-            for seg in segs:
-                meta = seg.get("metadata", {}) or {}
-                fid = seg.get("file_id") or meta.get("file_id")
-                seg_records.append({
-                    "seg_id": seg.get("segmentation_id") or seg.get("id"),
-                    "file_id": fid,
-                    "description": meta.get("description") or seg.get("description") or "",
-                    "validation_source": meta.get("validation_source") or seg.get("validation_source"),
-                    "segmentation_type": seg.get("segmentation_type"),
-                    "created_by": seg.get("created_by"),
-                    "mask_shape": seg.get("mask_shape") or [seg.get("total_slices")],
-                    "patient_mrn": mrn,
-                    "patient_id": pid,
-                    "study_id": sid,
-                    "study_date": study_date,
-                    "source_text": file_text.get(fid, ""),
-                })
-                pat_segs += 1
-
-        print("  [%2d/%d] %-16s studies=%-3d segs=%d"
-              % (idx, n_pat, str(mrn), len(studies), pat_segs), flush=True)
 
     manifest = build_manifest(seg_records, study_index)
 
