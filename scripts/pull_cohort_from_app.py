@@ -80,33 +80,23 @@ def _download_expert_mask(H, seg_id):
     return native
 
 
-def _nifti_shape(nifti_bytes):
-    with tempfile.NamedTemporaryFile(suffix=".nii.gz", delete=False) as t:
+def _pick_preproc(candidates):
+    """Prefer the BIDS 'desc-preproc' (brain-only, template) image the expert masks
+    were drawn on; fall back to the first candidate. candidates = [(file_id, name)]."""
+    pre = [c for c in candidates if "preproc" in (c[1] or "").lower()]
+    pool = pre if pre else candidates
+    return pool[0] if pool else (None, None)
+
+
+def _save_niigz(nifti_bytes, src_name, dst_path):
+    """Persist downloaded bytes (source .nii or .nii.gz) normalized to .nii.gz."""
+    ext = ".nii.gz" if str(src_name).lower().endswith(".gz") else ".nii"
+    with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as t:
         t.write(nifti_bytes); p = t.name
     try:
-        return tuple(int(x) for x in nib.load(p).shape[:3])
+        nib.save(nib.load(p), dst_path)
     finally:
         os.unlink(p)
-
-
-def _pick_template_image(H, candidates, target_dims):
-    """From candidate (file_id, name) images, return (file_id, bytes) of the one
-    whose voxel grid matches the 1mm template the expert mask lives on (sorted
-    dims == target). Falls back to the first downloadable candidate."""
-    fallback = None
-    for fid, _name in candidates:
-        b = _download_nifti_bytes(H, fid)
-        if b is None:
-            continue
-        try:
-            sh = _nifti_shape(b)
-        except Exception:
-            continue
-        if sorted(sh) == list(target_dims):
-            return fid, b
-        if fallback is None:
-            fallback = (fid, b)
-    return fallback if fallback else (None, None)
 
 
 def main():
@@ -158,29 +148,30 @@ def main():
                     elif seq == SEQ_FLAIR:
                         flair_cands.append((fid, name))
 
-        expert = _download_expert_mask(H, info["expert_seg_id"])   # native (a0,a1,k), 1mm template
-        if expert is None:
-            print("[%2d] %s  expert download failed — skipped" % (i, case), flush=True)
+        # Pick the brain-only 'desc-preproc' T1/FLAIR the expert masks were drawn
+        # on — NOT the raw 256xN skull images.
+        (t1_fid, t1name) = _pick_preproc(t1_cands)
+        (flair_fid, flname) = _pick_preproc(flair_cands)
+        if not (t1_fid and flair_fid):
+            print("[%2d] %s  missing preproc T1/FLAIR — skipped" % (i, case), flush=True)
             continue
-        target = sorted(expert.shape)   # the 1mm-template dims (e.g. [181,181,217])
 
-        # Pick the T1/FLAIR that live on the SAME 1mm template as the expert mask
-        # (brain-only, preprocessed) — NOT the raw 256xN skull images.
-        t1_fid, t1b = _pick_template_image(H, t1_cands, target)
-        flair_fid, flb = _pick_template_image(H, flair_cands, target)
-        if t1b is None or flb is None:
-            print("[%2d] %s  no template-space T1/FLAIR (t1=%s flair=%s) — skipped"
-                  % (i, case, bool(t1b), bool(flb)), flush=True)
+        t1b = _download_nifti_bytes(H, t1_fid)
+        flb = _download_nifti_bytes(H, flair_fid)
+        expert = _download_expert_mask(H, info["expert_seg_id"])
+        if t1b is None or flb is None or expert is None:
+            print("[%2d] %s  download failed — skipped" % (i, case), flush=True)
             continue
 
         t1p = os.path.join(args.out_dir, case + "_t1.nii.gz")
         flp = os.path.join(args.out_dir, case + "_flair.nii.gz")
         gtp = os.path.join(args.out_dir, case + "_gt.nii.gz")
-        open(t1p, "wb").write(t1b)
-        open(flp, "wb").write(flb)
+        _save_niigz(t1b, t1name, t1p)
+        _save_niigz(flb, flname, flp)
         nib.save(nib.Nifti1Image(expert, np.eye(4)), gtp)
         rows.append({"case": case, "t1_path": t1p, "flair_path": flp, "expert_path": gtp})
-        print("[%2d] %s  ok  (gt %s)" % (i, case, expert.shape), flush=True)
+        pre = "preproc" if "preproc" in (t1name or "").lower() else "RAW-fallback"
+        print("[%2d] %s  ok  (%s; gt %s)" % (i, case, pre, expert.shape), flush=True)
 
     man = os.path.join(args.out_dir, "cohort.csv")
     with open(man, "w", newline="", encoding="utf-8") as f:
