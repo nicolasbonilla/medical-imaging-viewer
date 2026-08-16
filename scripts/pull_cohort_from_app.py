@@ -89,8 +89,11 @@ def _pick_preproc(candidates):
 
 
 def _save_niigz(nifti_bytes, src_name, dst_path):
-    """Persist downloaded bytes (source .nii or .nii.gz) normalized to .nii.gz."""
-    ext = ".nii.gz" if str(src_name).lower().endswith(".gz") else ".nii"
+    """Persist downloaded bytes normalized to .nii.gz. Detects whether the bytes
+    are actually gzip (magic 1f 8b) rather than trusting the filename — the
+    /imaging/nifti endpoint may serve a decompressed body for a .gz-named file."""
+    is_gz = len(nifti_bytes) >= 2 and nifti_bytes[0] == 0x1F and nifti_bytes[1] == 0x8B
+    ext = ".nii.gz" if is_gz else ".nii"
     with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as t:
         t.write(nifti_bytes); p = t.name
     try:
