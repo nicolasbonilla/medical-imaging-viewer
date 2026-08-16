@@ -107,3 +107,6 @@ audit_report.json
 
 # Phase-0 inventory output (contains patient MRNs — never commit)
 inventory_manifest.json
+segmentations_full.csv
+segmentations_by_group.csv
+benchmark_results.csv
