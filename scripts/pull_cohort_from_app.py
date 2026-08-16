@@ -76,7 +76,7 @@ def _download_expert_mask(H, seg_id):
     if len(body) != d * h * w:
         return None
     internal = np.frombuffer(body, dtype=np.uint8).reshape((d, h, w))  # (k,a0,a1)
-    native = np.transpose(internal, (1, 2, 0)).astype(np.uint8)        # -> (a0,a1,k)
+    native = np.transpose(internal, (2, 1, 0)).astype(np.uint8)        # -> aligned w/ preproc imgs
     return native
 
 
