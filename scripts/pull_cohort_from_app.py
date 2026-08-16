@@ -23,6 +23,7 @@ import csv
 import os
 import struct
 import sys
+import tempfile
 
 import numpy as np
 import nibabel as nib
@@ -79,6 +80,35 @@ def _download_expert_mask(H, seg_id):
     return native
 
 
+def _nifti_shape(nifti_bytes):
+    with tempfile.NamedTemporaryFile(suffix=".nii.gz", delete=False) as t:
+        t.write(nifti_bytes); p = t.name
+    try:
+        return tuple(int(x) for x in nib.load(p).shape[:3])
+    finally:
+        os.unlink(p)
+
+
+def _pick_template_image(H, candidates, target_dims):
+    """From candidate (file_id, name) images, return (file_id, bytes) of the one
+    whose voxel grid matches the 1mm template the expert mask lives on (sorted
+    dims == target). Falls back to the first downloadable candidate."""
+    fallback = None
+    for fid, _name in candidates:
+        b = _download_nifti_bytes(H, fid)
+        if b is None:
+            continue
+        try:
+            sh = _nifti_shape(b)
+        except Exception:
+            continue
+        if sorted(sh) == list(target_dims):
+            return fid, b
+        if fallback is None:
+            fallback = (fid, b)
+    return fallback if fallback else (None, None)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out-dir", required=True)
@@ -114,27 +144,33 @@ def main():
     for i, (key, info) in enumerate(sorted(cases.items()), 1):
         case = "case%03d" % i
         study_id = info["study_id"]
-        t1_fid = flair_fid = None
+        # Gather ALL T1 / FLAIR candidates (raw AND 1mm-template brain-only) in the study.
+        t1_cands, flair_cands = [], []
         if study_id:
             for ser in _items(_get(H, "/studies/" + study_id + "/series")):
                 desc = ser.get("series_description", "") or ""
                 for inst in _items(_get(H, "/studies/series/" + ser.get("id", "") + "/instances", limit=200)):
                     fid = inst.get("gcs_object_name") or inst.get("file_id")
-                    seq = detect_sequence(desc, inst.get("original_filename", "") or inst.get("filename", ""))
-                    if seq == SEQ_T1 and not t1_fid:
-                        t1_fid = fid
-                    elif seq == SEQ_FLAIR and not flair_fid:
-                        flair_fid = fid
-        if not (t1_fid and flair_fid):
-            print("[%2d] %s  MISSING T1/FLAIR (t1=%s flair=%s) — skipped"
-                  % (i, case, bool(t1_fid), bool(flair_fid)), flush=True)
-            continue
+                    name = inst.get("original_filename", "") or inst.get("filename", "")
+                    seq = detect_sequence(desc, name)
+                    if seq == SEQ_T1:
+                        t1_cands.append((fid, name))
+                    elif seq == SEQ_FLAIR:
+                        flair_cands.append((fid, name))
 
-        t1b = _download_nifti_bytes(H, t1_fid)
-        flb = _download_nifti_bytes(H, flair_fid)
-        expert = _download_expert_mask(H, info["expert_seg_id"])
-        if t1b is None or flb is None or expert is None:
-            print("[%2d] %s  download failed — skipped" % (i, case), flush=True)
+        expert = _download_expert_mask(H, info["expert_seg_id"])   # native (a0,a1,k), 1mm template
+        if expert is None:
+            print("[%2d] %s  expert download failed — skipped" % (i, case), flush=True)
+            continue
+        target = sorted(expert.shape)   # the 1mm-template dims (e.g. [181,181,217])
+
+        # Pick the T1/FLAIR that live on the SAME 1mm template as the expert mask
+        # (brain-only, preprocessed) — NOT the raw 256xN skull images.
+        t1_fid, t1b = _pick_template_image(H, t1_cands, target)
+        flair_fid, flb = _pick_template_image(H, flair_cands, target)
+        if t1b is None or flb is None:
+            print("[%2d] %s  no template-space T1/FLAIR (t1=%s flair=%s) — skipped"
+                  % (i, case, bool(t1b), bool(flb)), flush=True)
             continue
 
         t1p = os.path.join(args.out_dir, case + "_t1.nii.gz")
