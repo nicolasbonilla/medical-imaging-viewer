@@ -40,6 +40,43 @@ def compute_dice(mask_a: np.ndarray, mask_b: np.ndarray) -> float:
     return float(2.0 * intersection / (sum_a + sum_b))
 
 
+def compute_jaccard(mask_a: np.ndarray, mask_b: np.ndarray) -> float:
+    """Jaccard index (IoU) between two binary masks: |A ∩ B| / |A ∪ B|.
+
+    Same empty-mask conventions as Dice: 1.0 if both empty, 0.0 if exactly one.
+    """
+    a = (mask_a > 0).astype(bool)
+    b = (mask_b > 0).astype(bool)
+    sum_a, sum_b = a.sum(), b.sum()
+    if sum_a == 0 and sum_b == 0:
+        return 1.0
+    if sum_a == 0 or sum_b == 0:
+        return 0.0
+    inter = np.logical_and(a, b).sum()
+    union = np.logical_or(a, b).sum()
+    return float(inter / union)
+
+
+def compute_avd(
+    mask_a: np.ndarray,
+    mask_b: np.ndarray,
+    voxel_spacing: tuple[float, float, float],
+) -> float:
+    """Absolute Volume Difference as a fraction of the REFERENCE volume (B).
+
+    AVD = |vol_a - vol_b| / vol_b — the standard benchmark volumetric error
+    (MSSEG/ISBI), unsigned and normalized, unlike compute_volume_diff's signed
+    percentage. Returns 0.0 if both empty; 1.0 (100%) if only the reference is
+    empty but the prediction is not.
+    """
+    voxel_vol = float(np.prod(voxel_spacing))
+    vol_a = float((mask_a > 0).sum()) * voxel_vol
+    vol_b = float((mask_b > 0).sum()) * voxel_vol
+    if vol_b == 0:
+        return 0.0 if vol_a == 0 else 1.0
+    return float(abs(vol_a - vol_b) / vol_b)
+
+
 def compute_hausdorff(
     mask_a: np.ndarray,
     mask_b: np.ndarray,
