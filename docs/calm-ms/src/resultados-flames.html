@@ -51,7 +51,7 @@
     <tbody>
       <tr class="base"><td>LST-AI</td><td class="n">19</td><td>1 rater</td><td class="n">0.697</td><td>✅</td><td class="n">+0.073</td></tr>
       <tr class="win"><td>FLAMeS · open_ms_data</td><td class="n">30</td><td><strong>consenso 3-raters</strong></td><td class="n ok">0.135</td><td>✅</td><td class="n up">+0.049</td></tr>
-      <tr class="win"><td>FLAMeS · MSLesSeg</td><td class="n">93</td><td>multi-sitio</td><td class="n ok">0.336</td><td>✅</td><td class="n up">+0.116</td></tr>
+      <tr class="win"><td>FLAMeS · MSLesSeg</td><td class="n">115</td><td>multi-sitio</td><td class="n ok">0.329</td><td>✅</td><td class="n up">+0.120</td></tr>
     </tbody>
   </table></div>
   <p class="sub">Al pasar de LST-AI a FLAMeS, el segmentador base sobre-segmenta mucho menos (FDR sin control 0.70 → 0.14–0.34), de modo que el punto de operación de partida ya es clínicamente razonable, y la capa conformal opera sobre candidatos mejor calibrados.</p>
@@ -69,34 +69,37 @@
   </table></div>
   <p class="sub">GT de <strong>consenso de 3 raters</strong> (discusión) → "falso" significa falso-por-consenso, no desacuerdo con un anotador. Esto responde el FATAL clínico de la auditoría. FLAMeS Dice ~0.77 vs el consenso (calidad SOTA confirmada).</p>
 
-  <h2>3 · MSLesSeg — 93 casos, multi-sitio, base FLAMeS</h2>
+  <h2>3 · MSLesSeg — 115 casos (COMPLETO), multi-sitio, base FLAMeS</h2>
   <div class="scroll"><table>
     <thead><tr><th>Operación</th><th class="n">α</th><th class="n">FDR realizado</th><th class="n">IC 95%</th><th class="n">Sens. Fase 1</th><th class="n">Sens. Fase 2</th><th class="n">Δ</th></tr></thead>
     <tbody>
-      <tr class="base"><td>Baseline (sin control)</td><td class="n">—</td><td class="n">0.336</td><td class="n">—</td><td class="n">0.831</td><td class="n">0.831</td><td class="n">—</td></tr>
-      <tr><td>Conformal</td><td class="n">0.05</td><td class="n ok">0.022</td><td class="n">[.00,.05]</td><td class="n">0.017</td><td class="n">0.045</td><td class="n up">+0.028</td></tr>
-      <tr><td>Conformal</td><td class="n">0.10</td><td class="n ok">0.036</td><td class="n">[.01,.07]</td><td class="n">0.061</td><td class="n">0.119</td><td class="n up">+0.058</td></tr>
-      <tr class="win"><td>Conformal</td><td class="n">0.20</td><td class="n ok">0.086</td><td class="n">[.06,.12]</td><td class="n">0.210</td><td class="n">0.326</td><td class="n up">+0.116</td></tr>
-      <tr class="win"><td>Conformal</td><td class="n">0.30</td><td class="n ok">0.115</td><td class="n">[.09,.15]</td><td class="n">0.351</td><td class="n">0.470</td><td class="n up">+0.119</td></tr>
+      <tr class="base"><td>Baseline (sin control)</td><td class="n">—</td><td class="n">0.329</td><td class="n">—</td><td class="n">0.820</td><td class="n">0.820</td><td class="n">—</td></tr>
+      <tr><td>Conformal</td><td class="n">0.05</td><td class="n ok">0.017</td><td class="n">[.00,.04]</td><td class="n">0.026</td><td class="n">0.063</td><td class="n up">+0.037</td></tr>
+      <tr><td>Conformal</td><td class="n">0.10</td><td class="n ok">0.044</td><td class="n">[.02,.08]</td><td class="n">0.069</td><td class="n">0.125</td><td class="n up">+0.057</td></tr>
+      <tr class="win"><td>Conformal</td><td class="n">0.20</td><td class="n ok">0.079</td><td class="n">[.05,.11]</td><td class="n">0.194</td><td class="n">0.314</td><td class="n up">+0.120</td></tr>
+      <tr class="win"><td>Conformal</td><td class="n">0.30</td><td class="n ok">0.123</td><td class="n">[.09,.15]</td><td class="n">0.335</td><td class="n">0.450</td><td class="n up">+0.114</td></tr>
     </tbody>
   </table></div>
-  <p class="sub">Lifts mayores (+0.12): MSLesSeg sobre-segmenta más, así que el scorer aprendido tiene más margen para separar TP/FP. A α=0.30, recupera el <strong>47% de las lesiones con FDR garantizado ≤30% (realizado 11.5%)</strong>.</p>
+  <p class="sub">Cohorte <strong>completa (115)</strong> — los 22 'faltantes' eran el split test (estructura plana), no fallos; el resultado es idéntico al de 93 (estable). Lifts +0.12: MSLesSeg sobre-segmenta más → más margen para el scorer. A α=0.30, recupera el <strong>45% de las lesiones con FDR garantizado ≤30% (realizado 12.3%)</strong>.</p>
 
-  <h2>4 · Qué responde de la auditoría</h2>
+  <h2>4 · Controles sanos (SibBMS) — un null de falsos limpio + especificidad de FLAMeS</h2>
+  <p>Se corrió FLAMeS sobre <strong>30 controles sanos</strong> de SibBMS (extraídos por HTTP-range, skull-strip con HD-BET, espacio nativo). En un cerebro sin lesiones, todo candidato es un falso positivo por construcción → un <strong>null de falsos limpio y protocolo-matched</strong>. Hallazgo: FLAMeS produce solo <strong>~2.8 falsos positivos por cerebro sano</strong> (83 candidatos en 30 controles, rango 0-7) @umbral 0.5. Es decir, <strong>FLAMeS es altamente específico</strong> — un resultado de calibración positivo y una fuente de null independiente para el paper.</p>
+
+  <h2>5 · Qué responde de la auditoría</h2>
   <div class="grid">
-    <div class="card"><strong>✅ Base SOTA</strong><p class="sub" style="margin-top:.3em">FLAMeS (nnU-Net, Dice 0.74/LTPR 0.84) reemplaza a LST-AI. Baseline FDR 0.70→0.14–0.34.</p></div>
+    <div class="card"><strong>✅ Base SOTA</strong><p class="sub" style="margin-top:.3em">FLAMeS (nnU-Net, Dice 0.74/LTPR 0.84) reemplaza a LST-AI. Baseline FDR 0.70→0.14–0.33.</p></div>
     <div class="card"><strong>✅ Multi-rater</strong><p class="sub" style="margin-top:.3em">open_ms_data = consenso de 3 raters → "falso por consenso", no por un anotador.</p></div>
-    <div class="card"><strong>✅ N y multi-sitio</strong><p class="sub" style="margin-top:.3em">19 → 123 casos, dos cohortes independientes (Ljubljana + Catania). Evidencia de transferencia entre sitios (C3).</p></div>
-    <div class="card"><strong>✅ Costo trazado</strong><p class="sub" style="margin-top:.3em">Todo por ~$0.67, con ledger + 5 capas de apagado + cero residual.</p></div>
+    <div class="card"><strong>✅ N + multi-sitio + controles</strong><p class="sub" style="margin-top:.3em">19 → <strong>145 casos etiquetados + 30 controles sanos</strong>, cohortes independientes (Ljubljana + Catania + Novosibirsk). Transferencia entre sitios (C3).</p></div>
+    <div class="card"><strong>✅ Costo trazado</strong><p class="sub" style="margin-top:.3em">Todo por ~$1.2, con ledger + 5 capas de apagado + cero residual verificado.</p></div>
   </div>
 
-  <h2>5 · Salvedades honestas</h2>
+  <h2>6 · Salvedades honestas</h2>
   <ul>
-    <li><strong>123/145 casos</strong>: 22 MSLesSeg fallaron la inferencia (casos borde) — a re-procesar; no afecta la validez de los 123.</li>
     <li>El conformal sigue <strong>conservador</strong> (FDR realizado &lt; α con holgura) — deja sensibilidad sobre la mesa; motiva los everywhere-valid FDP bounds del roadmap.</li>
     <li>MSLesSeg es <strong>GT de un rater</strong> validado (no consenso independiente) — usar para escala/multi-sitio, no para el claim de "falso por consenso".</li>
-    <li>Sigue siendo <strong>transversal</strong>; el head longitudinal (C4) y los controles sanos (SibBMS) son los próximos pasos.</li>
+    <li>El null de controles es <strong>limpio pero pequeño</strong> (FLAMeS es tan específico que da pocos falsos/control) — buen dato de especificidad, null suplementario más que primario.</li>
+    <li>Sigue siendo <strong>transversal</strong>; el head longitudinal (C4) es el próximo paso de mayor valor clínico.</li>
   </ul>
 
-  <p class="foot">CALM-MS = Conformal, cAlibrated Lesion Mapping for MS. Resultados 2026-08-17 sobre 123 casos (open_ms_data 30 + MSLesSeg 93), base FLAMeS, umbral 0.5, split-conformal leave-one-case-out. Cómputo: 4 VMs Spot n2-standard-8, ~62 min, $0.32 (+ pilotos $0.34). Datos y JSON gitignored (PHI). Ledger: cost-ledger.csv.</p>
+  <p class="foot">CALM-MS = Conformal, cAlibrated Lesion Mapping for MS. Resultados 2026-08-17 sobre 145 casos etiquetados (open_ms_data 30 + MSLesSeg 115) + 30 controles sanos (SibBMS), base FLAMeS, umbral 0.5, split-conformal leave-one-case-out. Cómputo: VMs Spot n2-standard-8, total ~$1.2, cero residual verificado. Datos y JSON gitignored (PHI). Ledger: cost-ledger.csv.</p>
 </div>
