@@ -44,8 +44,11 @@ RUNDEV=$(python3 -c "import torch;print('cuda' if torch.cuda.is_available() else
 echo "compute=$RUNDEV  nnUNetv2_predict=$(which nnUNetv2_predict||echo MISSING)  hd-bet=$(which hd-bet||echo MISSING)"; log
 
 echo "=== [2/6] FLAMeS weights ==="
-WZIP=$(curl -s https://zenodo.org/api/records/17955359 | python3 -c "import sys,json;d=json.load(sys.stdin);print([f['links']['self'] for f in d['files'] if f['key'].lower().endswith('.zip')][0])")
-curl -L -o $W/flames.zip "$WZIP"; unzip -q -o $W/flames.zip -d $nnUNet_results/; log
+for att in 1 2 3 4; do
+  WZIP=$(curl -s https://zenodo.org/api/records/17955359 | python3 -c "import sys,json;d=json.load(sys.stdin);print([f['links']['self'] for f in d['files'] if f['key'].lower().endswith('.zip')][0])" 2>/dev/null)
+  curl -L -o $W/flames.zip "$WZIP" && unzip -q -o $W/flames.zip -d $nnUNet_results/ && ls "$nnUNet_results" | grep -qi Dataset004 && { echo "weights OK"; break; }
+  echo "weights attempt $att failed; retry"; sleep 8
+done; log
 
 echo "=== [3/6] extract control FLAIR via remotezip (only Output/Norm/*FLAIR) ==="
 python3 - "$LIMIT" "$OFFSET" <<'PY'

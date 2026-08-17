@@ -49,11 +49,12 @@ echo "compute: requested=$DEVICE actual=$RUNDEV"; nvidia-smi 2>/dev/null | head 
 echo "nnUNetv2_predict=$(which nnUNetv2_predict || echo MISSING)"; log
 
 echo "=== [2/5] FLAMeS weights (Zenodo 17955359) ==="
-WZIP=$(curl -s https://zenodo.org/api/records/17955359 \
-  | python3 -c "import sys,json;d=json.load(sys.stdin);print([f['links']['self'] for f in d['files'] if f['key'].lower().endswith('.zip')][0])")
-curl -L -o $W/flames.zip "$WZIP"
-unzip -q -o $W/flames.zip -d $nnUNet_results/
-ls -R $nnUNet_results | head -20; log
+for att in 1 2 3 4; do
+  WZIP=$(curl -s https://zenodo.org/api/records/17955359 | python3 -c "import sys,json;d=json.load(sys.stdin);print([f['links']['self'] for f in d['files'] if f['key'].lower().endswith('.zip')][0])" 2>/dev/null)
+  curl -L -o $W/flames.zip "$WZIP" && unzip -q -o $W/flames.zip -d $nnUNet_results/ && ls "$nnUNet_results" | grep -qi Dataset004 && { echo "weights OK"; break; }
+  echo "weights attempt $att failed; retry"; sleep 8
+done
+ls "$nnUNet_results" | head; log
 
 echo "=== [3/5] fetch datasets + assemble nnU-Net input (FLAIR as _0000) ==="
 python3 - "$LIMIT" "$OFFSET" "$FILTER" <<'PY'
