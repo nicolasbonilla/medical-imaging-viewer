@@ -625,7 +625,10 @@ export const useSegmentationStore = create<SegmentationState>()(
           set({ zoneMapSegId: null, zoneMapMask: null, zoneMapDims: null, zoneMapVisible: false, isZoneMapActiveSegmentation: false, zoneColorizeEnabled: false }),
 
         // Conformal second-reader (CALM-MS) — additive tier overlay
-        setConformalPreset: (preset) => set({ conformalPreset: preset }),
+        setConformalPreset: (preset) =>
+          // Changing the operating point invalidates the shown result -> force a
+          // re-run so the panel never highlights a preset while showing another's tiers.
+          set({ conformalPreset: preset, conformalStatusMask: null, conformalDims: null, conformalSummary: null, conformalVisible: false }),
         setConformalReview: (mask, dims, summary) =>
           set({ conformalStatusMask: mask, conformalDims: dims, conformalSummary: summary, conformalVisible: true }),
         clearConformal: () =>

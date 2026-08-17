@@ -66,6 +66,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
   const selectedLesion = useSegmentationStore((s) => s.selectedLesion);
   const zoneMapVisible = useSegmentationStore((s) => s.zoneMapVisible);
   const longitudinalVisible = useSegmentationStore((s) => s.longitudinalVisible);
+  const conformalVisible = useSegmentationStore((s) => s.conformalVisible);
 
   // Derived values — same names so JSX props don't need changes
   const brushSize = paintTool.brushSize;
@@ -387,7 +388,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
                   When matplotlibSegId is set, backend renders the segmentation in the matplotlib PNG,
                   so hide the local canvas (avoid double overlay). Show it for editing,
                   selected lesion bounding box, or as fallback when backend overlay fails. */}
-              {((segmentationMode && currentSegmentation && (!matplotlibSegId || useLocalOverlayFallback)) || selectedLesion || zoneMapVisible || longitudinalVisible) && currentSeries && (
+              {((segmentationMode && currentSegmentation && (!matplotlibSegId || useLocalOverlayFallback)) || selectedLesion || zoneMapVisible || longitudinalVisible || conformalVisible) && currentSeries && (
                 <SegmentationCanvasLocal
                   ref={segmentationCanvasMatplotlibRef}
                   segmentationMask={segmentationMask}
@@ -433,7 +434,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
             <div className="relative">
               <canvas ref={canvasRef} style={{ filter: imageFilter }} />
               {/* Interactive segmentation canvas - same size as canvas */}
-              {((segmentationMode && currentSegmentation) || zoneMapVisible || longitudinalVisible) && currentSeries && (
+              {((segmentationMode && currentSegmentation) || zoneMapVisible || longitudinalVisible || conformalVisible) && currentSeries && (
                 <SegmentationCanvasLocal
                   ref={segmentationCanvasRef}
                   segmentationMask={segmentationMask}

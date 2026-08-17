@@ -10,7 +10,7 @@
  *
  * @module components/ConformalPanel
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSegmentationStore } from '../store/useSegmentationStore';
 import {
   runConformalSelect,
@@ -48,6 +48,11 @@ export function ConformalPanel({ probFileId: probFileIdProp }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Clear the additive tier overlay when the active segmentation/scan changes, so a
+  // review computed for scan A can never linger over scan B (adversarial finding).
+  const currentSegId = useSegmentationStore((s) => s.currentSegmentation?.segmentation_id);
+  useEffect(() => { clear(); }, [currentSegId, clear]);
+
   const analyze = async () => {
     if (!probFileId.trim()) { setError('Indica el file_id del mapa de probabilidad FLAMeS.'); return; }
     setLoading(true); setError(null);
@@ -76,7 +81,7 @@ export function ConformalPanel({ probFileId: probFileIdProp }: Props) {
   return (
     <div className="space-y-2 text-xs text-gray-200">
       <div className="flex items-center justify-between">
-        <span className="font-semibold text-gray-100">Confianza por lesión (CALM-MS)</span>
+        <span className="font-semibold text-gray-100">Segunda lectura por lesión (CALM-MS)</span>
         <span className="rounded bg-purple-900/60 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-purple-300">
           investigacional
         </span>

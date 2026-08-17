@@ -530,13 +530,18 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
           cRenderW = imageWidth;
           cRenderH = imageHeight;
         }
-        const a = 200;
-        const tierColors: Record<number, ParsedColor> = {
-          1: { r: 52, g: 211, b: 153, a },   // high  - emerald
-          2: { r: 251, g: 191, b: 36, a },   // medium - amber
-          3: { r: 148, g: 163, b: 184, a },  // low   - slate
-        };
-        renderMaskToCanvas(ctx, cSlice, cRenderW, cRenderH, canvasSize.width, canvasSize.height, tierColors);
+        // FAIL CLOSED on grid mismatch: only paint when the tier mask is on the
+        // displayed image grid (after the transpose attempt). A stale/off-grid mask
+        // must NOT be stretched onto the wrong anatomy (adversarial finding).
+        if (cRenderW === imageWidth && cRenderH === imageHeight) {
+          const a = 200;
+          const tierColors: Record<number, ParsedColor> = {
+            1: { r: 52, g: 211, b: 153, a },   // high  - emerald
+            2: { r: 251, g: 191, b: 36, a },   // medium - amber
+            3: { r: 148, g: 163, b: 184, a },  // low   - slate
+          };
+          renderMaskToCanvas(ctx, cSlice, cRenderW, cRenderH, canvasSize.width, canvasSize.height, tierColors);
+        }
       }
     }
 
