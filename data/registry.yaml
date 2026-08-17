@@ -67,12 +67,61 @@ datasets:
     source: "https://portal.fli-iam.irisa.fr/msseg-2/  (Shanoir)"
     license: "restricted (credentialed)"
     access: gated
-    patients: 100
-    raters: "consensus"
-    sequences: [FLAIR]           # 2 timepoints
+    patients: 40                 # 2 timepoints each; 29/40 have >=1 new lesion
+    raters: "4-rater consensus (STAPLE)"
+    sequences: [FLAIR]
     space: "native"
     status: gated
     value: "The benchmark for the C4 longitudinal new-lesion head (online-FDR regime)."
+
+  sibbms:
+    title: "SibBMS — Siberian Brain MS Dataset (2025)"
+    source: "https://www.medrxiv.org/content/10.1101/2025.08.14.25333741v1 (Zenodo)"
+    license: "open"
+    access: available
+    patients: 93                 # MS/RIS  + 100 HEALTHY CONTROLS
+    healthy_controls: 100
+    raters: "3-tier neuroradiologist panel"
+    sequences: [T1, FLAIR]
+    space: "native"
+    status: available
+    value: "Multi-rater review + 100 HEALTHY CONTROLS = a real false-candidate null for the conformal calibration, and Siberian site diversity for C3. Unique."
+
+  msmri_dib:
+    title: "Brain MRI MS consensus (Muslim et al., Data in Brief 2022)"
+    source: "https://www.sciencedirect.com/science/article/pii/S235234092200347X"
+    license: "CC-BY"
+    access: available
+    patients: 60
+    raters: "3-expert consensus (2 radiologists + 1 neurologist)"
+    sequences: [T1, T2, FLAIR]
+    space: "native"
+    status: available
+    value: "Multi-rater consensus + EDSS metadata. Malaysian cohort = geographic/scanner diversity."
+
+  msvalid:
+    title: "MSValid Data Collection (Zenodo 2024)"
+    source: "https://zenodo.org/records/10875606"
+    license: "open"
+    access: available
+    patients: 84                 # RRMS; mix of single + longitudinal
+    raters: "expert"
+    sequences: [T1, FLAIR]
+    space: "native"
+    status: available
+    value: "N boost + longitudinal (treatment between scans) → feeds C4 and progression analysis."
+
+  pedims:
+    title: "PediMS — Pediatric MS (Scientific Data 2025)"
+    source: "https://www.nature.com/articles/s41597-025-05346-5"
+    license: "open"
+    access: available
+    patients: 9                  # 28 scans, longitudinal
+    raters: "expert"
+    sequences: [T1, T2, FLAIR]
+    space: "native"
+    status: available
+    value: "Small but UNIQUE population (pediatric) → domain-shift stress test for the exchangeability/guarantee."
 
   shifts_ms:
     title: "Shifts-2022 MS (white-matter lesion, distribution shift)"
