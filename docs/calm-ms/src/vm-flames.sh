@@ -59,7 +59,7 @@ echo "=== [3/5] fetch datasets + assemble nnU-Net input (FLAIR as _0000) ==="
 python3 - "$LIMIT" "$OFFSET" "$FILTER" <<'PY'
 import os, sys, glob, subprocess, shutil, json
 LIMIT = int(sys.argv[1]); OFF = int(sys.argv[2])
-FILT = set(sys.argv[3].split(",")) if len(sys.argv)>3 and sys.argv[3] else set()
+FILT = set(x.strip() for x in sys.argv[3].replace("\n",",").split(",") if x.strip()) if len(sys.argv)>3 else set()
 W="/w"; IN=f"{W}/in"
 gt_map = {}   # caseid -> gt path (kept for later)
 def add(caseid, flair, gt):
