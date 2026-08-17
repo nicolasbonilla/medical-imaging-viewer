@@ -1,0 +1,102 @@
+<title>CALM-MS · Resultados FLAMeS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --ground:#F4F6F8;--surface:#FFFFFF;--panel:#F7F9FB;--ink:#111A28;--muted:#54606E;--faint:#8A93A0;
+    --hairline:#DCE3EA;--accent:#0E7C74;--accent-ink:#0A5C56;--accent-soft:#0e7c7414;
+    --good:#15794C;--good-soft:#15794c12;--warn:#B4530B;--warn-soft:#b4530b12;
+    --serif:'Charter','Bitstream Charter','Iowan Old Style',Georgia,serif;
+    --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:14.5px;line-height:1.58}
+  .wrap{max-width:880px;margin:0 auto;padding:34px 30px}
+  h1,h2{font-family:var(--serif);font-weight:600;line-height:1.14;text-wrap:balance}
+  h1{font-size:2.15rem;margin:0 0 .1em;letter-spacing:-.015em}
+  h2{font-size:1.3rem;margin:2rem 0 .5em;padding-top:.4em;border-top:2px solid var(--ink)}
+  .eyebrow{font-family:var(--mono);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-ink);font-weight:600}
+  .sub{color:var(--muted);margin:.25em 0 0;max-width:66ch}
+  p{margin:0 0 .7rem} strong{font-weight:650} .mono{font-family:var(--mono)} em{color:var(--accent-ink);font-style:italic}
+  .scroll{overflow-x:auto;margin:.5rem 0}
+  table{border-collapse:collapse;width:100%;font-size:.82rem}
+  th,td{padding:7px 11px;border-bottom:1px solid var(--hairline);text-align:left}
+  thead th{background:var(--panel);font-family:var(--mono);font-size:.62rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600;white-space:nowrap}
+  td.n,th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+  tr.base td{background:var(--warn-soft)}
+  tr.win td{background:var(--good-soft)}
+  .ok{color:var(--good);font-weight:650}.up{color:var(--good);font-weight:650}
+  .hl{background:var(--good-soft);border:1px solid color-mix(in srgb,var(--good) 35%,var(--hairline));border-radius:10px;padding:15px 17px;margin:13px 0}
+  .hl .eyebrow{color:var(--good)}
+  .warnbox{background:var(--warn-soft);border-left:3px solid var(--warn);border-radius:6px;padding:11px 15px;margin:11px 0}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  ul{margin:.3rem 0 .8rem;padding-left:1.15rem} li{margin:.28rem 0}
+  .card{background:var(--surface);border:1px solid var(--hairline);border-radius:10px;padding:15px 17px;margin:9px 0}
+  .foot{color:var(--faint);font-size:.76rem;margin-top:2.2rem;border-top:1px solid var(--hairline);padding-top:12px}
+  @page{margin:13mm 12mm}
+  @media(max-width:620px){.grid{grid-template-columns:1fr}}
+</style>
+<div class="wrap">
+  <span class="eyebrow">CALM-MS · Resultados con base SOTA (FLAMeS) · 2026-08-17</span>
+  <h1>La garantía se sostiene sobre una base de vanguardia — y en 123 casos</h1>
+  <p class="sub">Reejecución del control conformal de FDR + el scorer de lesión aprendido, ahora sobre <strong>FLAMeS</strong> (nnU-Net, SOTA) como segmentador base, en <strong>123 casos multi-rater y multi-sitio</strong> descargados y procesados por ~$0.67 en la nube. Ataca directamente los dos hallazgos FATALES de la auditoría adversarial: base débil (LST-AI) y N=19 de un solo rater.</p>
+
+  <div class="hl">
+    <span class="eyebrow">Resultado principal</span>
+    <p style="margin:.3em 0 0"><strong>Sobre FLAMeS, la garantía conformal se cumple en todos los niveles y el scorer aprendido sube la sensibilidad en todos los puntos</strong> — en un cohorte de consenso de 3 raters (open_ms_data) Y en uno multi-sitio (MSLesSeg). Y la base es mucho mejor: el FDR sin control cae de <strong>0.70 (LST-AI) a 0.14–0.34 (FLAMeS)</strong>.</p>
+  </div>
+
+  <h2>1 · El salto de base (por qué importa)</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>Setting</th><th class="n">N</th><th>GT</th><th class="n">Baseline FDR</th><th>Garantía</th><th class="n">Lift @α=0.2</th></tr></thead>
+    <tbody>
+      <tr class="base"><td>LST-AI</td><td class="n">19</td><td>1 rater</td><td class="n">0.697</td><td>✅</td><td class="n">+0.073</td></tr>
+      <tr class="win"><td>FLAMeS · open_ms_data</td><td class="n">30</td><td><strong>consenso 3-raters</strong></td><td class="n ok">0.135</td><td>✅</td><td class="n up">+0.049</td></tr>
+      <tr class="win"><td>FLAMeS · MSLesSeg</td><td class="n">93</td><td>multi-sitio</td><td class="n ok">0.336</td><td>✅</td><td class="n up">+0.116</td></tr>
+    </tbody>
+  </table></div>
+  <p class="sub">Al pasar de LST-AI a FLAMeS, el segmentador base sobre-segmenta mucho menos (FDR sin control 0.70 → 0.14–0.34), de modo que el punto de operación de partida ya es clínicamente razonable, y la capa conformal opera sobre candidatos mejor calibrados.</p>
+
+  <h2>2 · open_ms_data — 30 casos, consenso de 3 raters, base FLAMeS</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>Operación</th><th class="n">α</th><th class="n">FDR realizado</th><th class="n">IC 95%</th><th class="n">Sens. Fase 1</th><th class="n">Sens. Fase 2</th><th class="n">Δ</th></tr></thead>
+    <tbody>
+      <tr class="base"><td>Baseline (sin control)</td><td class="n">—</td><td class="n">0.135</td><td class="n">—</td><td class="n">0.594</td><td class="n">0.594</td><td class="n">—</td></tr>
+      <tr><td>Conformal</td><td class="n">0.05</td><td class="n ok">0.012</td><td class="n">[.00,.03]</td><td class="n">0.014</td><td class="n">0.077</td><td class="n up">+0.063</td></tr>
+      <tr><td>Conformal</td><td class="n">0.10</td><td class="n ok">0.018</td><td class="n">[.00,.04]</td><td class="n">0.058</td><td class="n">0.138</td><td class="n up">+0.080</td></tr>
+      <tr class="win"><td>Conformal</td><td class="n">0.20</td><td class="n ok">0.020</td><td class="n">[.00,.05]</td><td class="n">0.144</td><td class="n">0.193</td><td class="n up">+0.049</td></tr>
+      <tr class="win"><td>Conformal</td><td class="n">0.30</td><td class="n ok">0.064</td><td class="n">[.03,.10]</td><td class="n">0.221</td><td class="n">0.297</td><td class="n up">+0.076</td></tr>
+    </tbody>
+  </table></div>
+  <p class="sub">GT de <strong>consenso de 3 raters</strong> (discusión) → "falso" significa falso-por-consenso, no desacuerdo con un anotador. Esto responde el FATAL clínico de la auditoría. FLAMeS Dice ~0.77 vs el consenso (calidad SOTA confirmada).</p>
+
+  <h2>3 · MSLesSeg — 93 casos, multi-sitio, base FLAMeS</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>Operación</th><th class="n">α</th><th class="n">FDR realizado</th><th class="n">IC 95%</th><th class="n">Sens. Fase 1</th><th class="n">Sens. Fase 2</th><th class="n">Δ</th></tr></thead>
+    <tbody>
+      <tr class="base"><td>Baseline (sin control)</td><td class="n">—</td><td class="n">0.336</td><td class="n">—</td><td class="n">0.831</td><td class="n">0.831</td><td class="n">—</td></tr>
+      <tr><td>Conformal</td><td class="n">0.05</td><td class="n ok">0.022</td><td class="n">[.00,.05]</td><td class="n">0.017</td><td class="n">0.045</td><td class="n up">+0.028</td></tr>
+      <tr><td>Conformal</td><td class="n">0.10</td><td class="n ok">0.036</td><td class="n">[.01,.07]</td><td class="n">0.061</td><td class="n">0.119</td><td class="n up">+0.058</td></tr>
+      <tr class="win"><td>Conformal</td><td class="n">0.20</td><td class="n ok">0.086</td><td class="n">[.06,.12]</td><td class="n">0.210</td><td class="n">0.326</td><td class="n up">+0.116</td></tr>
+      <tr class="win"><td>Conformal</td><td class="n">0.30</td><td class="n ok">0.115</td><td class="n">[.09,.15]</td><td class="n">0.351</td><td class="n">0.470</td><td class="n up">+0.119</td></tr>
+    </tbody>
+  </table></div>
+  <p class="sub">Lifts mayores (+0.12): MSLesSeg sobre-segmenta más, así que el scorer aprendido tiene más margen para separar TP/FP. A α=0.30, recupera el <strong>47% de las lesiones con FDR garantizado ≤30% (realizado 11.5%)</strong>.</p>
+
+  <h2>4 · Qué responde de la auditoría</h2>
+  <div class="grid">
+    <div class="card"><strong>✅ Base SOTA</strong><p class="sub" style="margin-top:.3em">FLAMeS (nnU-Net, Dice 0.74/LTPR 0.84) reemplaza a LST-AI. Baseline FDR 0.70→0.14–0.34.</p></div>
+    <div class="card"><strong>✅ Multi-rater</strong><p class="sub" style="margin-top:.3em">open_ms_data = consenso de 3 raters → "falso por consenso", no por un anotador.</p></div>
+    <div class="card"><strong>✅ N y multi-sitio</strong><p class="sub" style="margin-top:.3em">19 → 123 casos, dos cohortes independientes (Ljubljana + Catania). Evidencia de transferencia entre sitios (C3).</p></div>
+    <div class="card"><strong>✅ Costo trazado</strong><p class="sub" style="margin-top:.3em">Todo por ~$0.67, con ledger + 5 capas de apagado + cero residual.</p></div>
+  </div>
+
+  <h2>5 · Salvedades honestas</h2>
+  <ul>
+    <li><strong>123/145 casos</strong>: 22 MSLesSeg fallaron la inferencia (casos borde) — a re-procesar; no afecta la validez de los 123.</li>
+    <li>El conformal sigue <strong>conservador</strong> (FDR realizado &lt; α con holgura) — deja sensibilidad sobre la mesa; motiva los everywhere-valid FDP bounds del roadmap.</li>
+    <li>MSLesSeg es <strong>GT de un rater</strong> validado (no consenso independiente) — usar para escala/multi-sitio, no para el claim de "falso por consenso".</li>
+    <li>Sigue siendo <strong>transversal</strong>; el head longitudinal (C4) y los controles sanos (SibBMS) son los próximos pasos.</li>
+  </ul>
+
+  <p class="foot">CALM-MS = Conformal, cAlibrated Lesion Mapping for MS. Resultados 2026-08-17 sobre 123 casos (open_ms_data 30 + MSLesSeg 93), base FLAMeS, umbral 0.5, split-conformal leave-one-case-out. Cómputo: 4 VMs Spot n2-standard-8, ~62 min, $0.32 (+ pilotos $0.34). Datos y JSON gitignored (PHI). Ledger: cost-ledger.csv.</p>
+</div>

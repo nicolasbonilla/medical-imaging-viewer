@@ -12,7 +12,7 @@ $map = @{
   "src/vm-costo.html"    = "CALM-MS-VM-Costo-y-Apagado.pdf"
   "src/costos-gcp.html"  = "CALM-MS-Costos-GCP.pdf"
   "src/estado-del-arte.html" = "CALM-MS-Estado-del-Arte.pdf"
-  "src/resultados-fase2.html" = "CALM-MS-Resultados-Fase2.pdf"
+  "src/resultados-flames.html" = "CALM-MS-Resultados-FLAMeS.pdf"
 }
 foreach ($srcRel in $map.Keys) {
   $src = Join-Path $here $srcRel
