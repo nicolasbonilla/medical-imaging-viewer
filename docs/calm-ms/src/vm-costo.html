@@ -1,0 +1,104 @@
+<title>VM Run — Costo y Apagado</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --ground:#F4F6F8; --surface:#FFFFFF; --panel:#F8FAFB; --ink:#111A28; --muted:#57616F;
+    --faint:#8A93A0; --hairline:#DBE2E9; --accent:#0E7C74; --accent-ink:#0A5C56; --accent-soft:#0e7c7416;
+    --good:#15794C; --good-soft:#15794c14; --warn:#B4530B; --warn-soft:#b4530b14;
+    --serif:'Charter','Bitstream Charter','Iowan Old Style',Georgia,serif;
+    --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .wrap{max-width:820px;margin:0 auto;padding:32px 28px}
+  h1,h2{font-family:var(--serif);font-weight:600;line-height:1.15;text-wrap:balance}
+  h1{font-size:2rem;margin:0 0 .2em;letter-spacing:-.01em}
+  h2{font-size:1.2rem;margin:1.8rem 0 .6em}
+  .eyebrow{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-ink);font-weight:600}
+  .sub{color:var(--muted);margin:.2em 0 0}
+  p{margin:0 0 .8rem} strong{font-weight:650}
+  .mono{font-family:var(--mono)}
+  table{border-collapse:collapse;width:100%;font-size:.9rem;margin:.4rem 0}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--hairline)}
+  thead th{background:var(--panel);font-family:var(--mono);font-size:.68rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+  .card{background:var(--surface);border:1px solid var(--hairline);border-radius:10px;padding:16px 18px;margin:10px 0}
+  .layers{list-style:none;padding:0;margin:.5rem 0;counter-reset:l}
+  .layers li{position:relative;background:var(--surface);border:1px solid var(--hairline);border-radius:10px;padding:14px 16px 14px 52px;margin:8px 0}
+  .layers li::before{counter-increment:l;content:counter(l);position:absolute;left:14px;top:14px;width:24px;height:24px;border-radius:50%;background:var(--good-soft);color:var(--good);font-family:var(--mono);font-weight:600;font-size:.8rem;display:flex;align-items:center;justify-content:center}
+  .layers b{display:block;margin-bottom:2px}
+  .layers span{font-size:.88rem;color:var(--muted)}
+  .layers code{font-family:var(--mono);font-size:.82rem;background:var(--panel);padding:1px 5px;border-radius:4px}
+  .big{font-family:var(--mono);font-size:2rem;font-weight:600;letter-spacing:-.02em}
+  .big.good{color:var(--good)} .big.warn{color:var(--warn)}
+  .hl{background:var(--good-soft);border:1px solid color-mix(in srgb,var(--good) 40%,var(--hairline));border-radius:10px;padding:14px 18px;margin:14px 0}
+  .hl .eyebrow{color:var(--good)}
+  .foot{color:var(--faint);font-size:.78rem;margin-top:2rem;border-top:1px solid var(--hairline);padding-top:12px}
+  @page{margin:14mm 14mm}
+</style>
+<div class="wrap">
+  <span class="eyebrow">CALM-MS · Ejecución en la nube</span>
+  <h1>Máquina, costo y garantías de apagado</h1>
+  <p class="sub">VM temporal en GCP para correr LST-AI (19 casos) + el experimento conformal, sin cargar tu computador. Proyecto <span class="mono">brain-mri-476110</span> · región <span class="mono">us-central1</span> · 2026-08-17.</p>
+
+  <h2>1 · Máquina exacta</h2>
+  <table>
+    <thead><tr><th>Parámetro</th><th>Valor</th></tr></thead>
+    <tbody>
+      <tr><td>Tipo de instancia</td><td class="mono"><strong>e2-standard-8</strong></td></tr>
+      <tr><td>vCPU</td><td class="mono">8 (Intel/AMD, compartido E2)</td></tr>
+      <tr><td>Memoria RAM</td><td class="mono">32 GB</td></tr>
+      <tr><td>Disco de arranque</td><td class="mono">60 GB pd-standard (aloja la imagen LST-AI de 32 GB + datos)</td></tr>
+      <tr><td>Región / Zona</td><td class="mono">us-central1-a (Iowa)</td></tr>
+      <tr><td>Modelo de aprovisionamiento</td><td class="mono">SPOT (más barato; se apaga solo si GCP lo recupera)</td></tr>
+      <tr><td>GPU</td><td class="mono">ninguna (CPU; evita trámite de cuota)</td></tr>
+      <tr><td>IP estática / recursos reservados</td><td class="mono">ninguno (nada factura por separado)</td></tr>
+    </tbody>
+  </table>
+  <p class="sub">Se elige <strong>32 GB de RAM</strong> porque LST-AI (3× U-Net + PyTorch + TensorFlow) necesita 8–12 GB y hace OOM con menos — justo lo que pasó en tu equipo (15 GB). 8 vCPU aceleran cada caso.</p>
+
+  <h2>2 · Costo detallado</h2>
+  <table>
+    <thead><tr><th>Concepto</th><th>Tarifa (us-central1)</th><th>×3 h (esperado)</th><th>×6 h (tope máx.)</th></tr></thead>
+    <tbody>
+      <tr><td>e2-standard-8 · <strong>SPOT</strong></td><td class="n">~$0.0805/h</td><td class="n">$0.242</td><td class="n">$0.483</td></tr>
+      <tr><td>Disco 60 GB pd-standard</td><td class="n">~$0.0033/h</td><td class="n">$0.010</td><td class="n">$0.020</td></tr>
+      <tr><td>Egress (traer resultados, ~pocos MB)</td><td class="n">~$0.00</td><td class="n">$0.00</td><td class="n">$0.00</td></tr>
+      <tr style="border-top:2px solid var(--hairline)"><td><strong>TOTAL estimado (SPOT)</strong></td><td></td><td class="n"><strong>~$0.25</strong></td><td class="n"><strong>≤ $0.50</strong></td></tr>
+    </tbody>
+  </table>
+  <div class="card">
+    <p style="margin:0"><strong>Referencia — mismo equipo pero on-demand</strong> (sin Spot, más estable, más caro):
+    e2-standard-8 ~$0.2681/h → <span class="mono">~$0.81 en 3 h</span>, <span class="mono">≤ $1.63 en 6 h</span>. Recomiendo <strong>Spot</strong> por costo; si prefieres estabilidad total sin preempción, uso on-demand (sigue &lt; $2).</p>
+  </div>
+  <div class="hl">
+    <span class="eyebrow">Cota dura</span>
+    <p style="margin:.3em 0 0"><span class="big good">≤ $0.50</span> &nbsp;costo máximo absoluto posible (Spot, tope de 6 h con auto-borrado forzado). Lo normal: <strong>~$0.25</strong> y se apaga en ~2–3 h.</p>
+  </div>
+
+  <h2>3 · Garantías de apagado (5 capas)</h2>
+  <p class="sub">No depende de una sola cosa: aunque mi sesión se caiga, el script falle y la red se corte, la VM se borra sola.</p>
+  <ol class="layers">
+    <li><b>Auto-borrado forzado por GCP (garantía de infraestructura)</b><span><code>--max-run-duration=21600s</code> + <code>--instance-termination-action=DELETE</code> → GCP <strong>elimina la VM a las 6 h pase lo que pase</strong>, aunque todo lo demás falle. Es el techo duro del costo.</span></li>
+    <li><b>Auto-eliminación al terminar el trabajo</b><span>El script de arranque, al subir los resultados a GCS, ejecuta <code>gcloud compute instances delete</code> de sí mismo → la VM <strong>se borra apenas termina</strong> (~2–3 h, mucho antes del tope).</span></li>
+    <li><b>Preempción Spot = otro apagado</b><span>Si GCP recupera la VM Spot, con la acción DELETE también se <strong>elimina</strong> (no queda apagada facturando disco).</span></li>
+    <li><b>Verificación activa mía</b><span>Al terminar corro <code>gcloud compute instances list</code> y te muestro <strong>“0 instancias”</strong>. Si algo quedara, lo borro explícito en el acto.</span></li>
+    <li><b>Cero recursos residuales</b><span>Sin IP estática, sin snapshots, sin discos extra. El disco de arranque se borra <strong>junto</strong> con la VM (auto-delete). Nada sobrevive para facturar.</span></li>
+  </ol>
+
+  <h2>4 · Qué hará la VM (y luego desaparece)</h2>
+  <table>
+    <thead><tr><th>#</th><th>Paso</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">1</td><td>Yo subo el cohorte (19 casos, ~145 MB) + los scripts/código a un bucket GCS temporal.</td></tr>
+      <tr><td class="mono">2</td><td>La VM arranca, instala Docker, baja la imagen LST-AI (32 GB) y el cohorte.</td></tr>
+      <tr><td class="mono">3</td><td>Corre LST-AI en los 19 casos → mapas de probabilidad.</td></tr>
+      <tr><td class="mono">4</td><td>Corre el experimento conformal (leave-one-out FDR) → tabla de resultados.</td></tr>
+      <tr><td class="mono">5</td><td>Sube resultados a GCS y <strong>se auto-elimina</strong>.</td></tr>
+      <tr><td class="mono">6</td><td>Yo bajo los resultados, verifico “0 instancias”, y te entrego la tabla real del paper.</td></tr>
+    </tbody>
+  </table>
+
+  <p class="foot">Estimaciones basadas en tarifas públicas de Google Cloud us-central1 (agosto 2026); el precio Spot fluctúa levemente pero el tope de 6 h + auto-borrado fija la cota máxima. El bucket temporal se vacía al final. Ningún costo continúa tras la ejecución.</p>
+</div>

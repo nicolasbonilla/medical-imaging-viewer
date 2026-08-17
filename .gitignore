@@ -110,3 +110,7 @@ inventory_manifest.json
 segmentations_full.csv
 segmentations_by_group.csv
 benchmark_results.csv
+docs/calm-ms/*.pdf
+experiment.json
+experiment_max.json
+cohort/

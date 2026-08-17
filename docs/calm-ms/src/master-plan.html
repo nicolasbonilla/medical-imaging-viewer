@@ -1,0 +1,404 @@
+<title>CALM-MS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  /* ---------- Tokens: light (bare :root) ---------- */
+  :root{
+    --ground:#F4F6F8; --surface:#FFFFFF; --surface-2:#EDF1F4; --panel:#F8FAFB;
+    --ink:#111A28; --muted:#57616F; --faint:#8A93A0; --hairline:#DBE2E9;
+    --accent:#0E7C74; --accent-ink:#0A5C56; --accent-soft:#0e7c7416;
+    --signal:#B4530B; --signal-soft:#b4530b14; --good:#15794C; --good-soft:#15794c14;
+    --serif:'Charter','Bitstream Charter','Iowan Old Style','Palatino Linotype',Georgia,'Times New Roman',serif;
+    --sans:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;
+    --maxw:1120px; --prose:70ch;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --ground:#0A0F16; --surface:#111823; --surface-2:#182230; --panel:#0F1620;
+      --ink:#E8EDF3; --muted:#9BA7B5; --faint:#6C7787; --hairline:#243140;
+      --accent:#3BC1B4; --accent-ink:#8CE3DA; --accent-soft:#3bc1b41f;
+      --signal:#E7954E; --signal-soft:#e7954e1f; --good:#48C288; --good-soft:#48c2881f;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0A0F16; --surface:#111823; --surface-2:#182230; --panel:#0F1620;
+    --ink:#E8EDF3; --muted:#9BA7B5; --faint:#6C7787; --hairline:#243140;
+    --accent:#3BC1B4; --accent-ink:#8CE3DA; --accent-soft:#3bc1b41f;
+    --signal:#E7954E; --signal-soft:#e7954e1f; --good:#48C288; --good-soft:#48c2881f;
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--sans); font-size:17px; line-height:1.65;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 24px}
+  .prose{max-width:var(--prose)}
+  a{color:var(--accent-ink); text-underline-offset:2px; text-decoration-thickness:.06em}
+  h1,h2,h3{font-family:var(--serif); font-weight:600; text-wrap:balance; line-height:1.15}
+  h2{font-size:1.75rem; margin:0 0 .4em}
+  h3{font-size:1.2rem; margin:2rem 0 .5em}
+  p{margin:0 0 1rem}
+  strong{font-weight:650}
+  .eyebrow{font-family:var(--mono); font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--accent-ink); font-weight:600}
+  .muted{color:var(--muted)}
+  .tnum{font-variant-numeric:tabular-nums}
+
+  /* ---------- Hero ---------- */
+  header.hero{border-bottom:1px solid var(--hairline); background:
+     radial-gradient(120% 140% at 88% -10%, var(--accent-soft), transparent 60%),
+     var(--surface)}
+  .hero-in{max-width:var(--maxw); margin:0 auto; padding:64px 24px 44px}
+  .kicker{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:26px}
+  .tag{font-family:var(--mono); font-size:.7rem; letter-spacing:.08em; text-transform:uppercase;
+    padding:4px 9px; border-radius:100px; border:1px solid var(--hairline); color:var(--muted); background:var(--panel)}
+  .tag.accent{color:var(--accent-ink); border-color:color-mix(in srgb,var(--accent) 40%,var(--hairline)); background:var(--accent-soft)}
+  h1{font-size:clamp(2.3rem,5.4vw,3.6rem); margin:0 0 .35em; letter-spacing:-.012em}
+  h1 .sub{display:block; font-family:var(--sans); font-weight:450; font-size:clamp(1rem,2.1vw,1.28rem); color:var(--muted); letter-spacing:0; margin-top:.5em; max-width:40ch}
+  .thesis{font-family:var(--serif); font-size:clamp(1.15rem,2.3vw,1.5rem); line-height:1.4; color:var(--ink); max-width:34ch; border-left:3px solid var(--accent); padding-left:18px; margin:30px 0 0}
+
+  /* ---------- Stat strip ---------- */
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px; background:var(--hairline);
+    border:1px solid var(--hairline); border-radius:12px; overflow:hidden; margin:40px 0 8px}
+  .stat{background:var(--surface); padding:18px 20px}
+  .stat .v{font-family:var(--mono); font-size:1.7rem; font-weight:600; letter-spacing:-.02em; line-height:1}
+  .stat .v.bad{color:var(--signal)} .stat .v.mid{color:var(--accent-ink)} .stat .v.ok{color:var(--good)}
+  .stat .k{font-size:.82rem; color:var(--muted); margin-top:8px}
+
+  /* ---------- Sections ---------- */
+  section{padding:52px 0; border-bottom:1px solid var(--hairline)}
+  .sec-head{display:flex; gap:16px; align-items:baseline; margin-bottom:22px}
+  .sec-no{font-family:var(--mono); font-size:.8rem; color:var(--accent-ink); font-weight:600; padding-top:.35em}
+  .lead{font-size:1.06rem; color:var(--muted); max-width:var(--prose)}
+
+  /* ---------- Cards / callouts ---------- */
+  .grid{display:grid; gap:16px}
+  .g2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .g3{grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+  .card{background:var(--surface); border:1px solid var(--hairline); border-radius:12px; padding:22px}
+  .card h3{margin:0 0 .4em; font-size:1.06rem}
+  .card p{font-size:.95rem; color:var(--muted); margin:0}
+  .card .idx{font-family:var(--mono); font-size:.72rem; color:var(--faint); letter-spacing:.1em}
+
+  .callout{border-radius:12px; padding:22px 24px; border:1px solid; margin:22px 0}
+  .callout .lbl{font-family:var(--mono); font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; font-weight:600; margin-bottom:8px; display:block}
+  .callout p{margin:0; font-size:.98rem}
+  .callout.core{background:var(--accent-soft); border-color:color-mix(in srgb,var(--accent) 45%,var(--hairline))}
+  .callout.core .lbl{color:var(--accent-ink)}
+  .callout.warn{background:var(--signal-soft); border-color:color-mix(in srgb,var(--signal) 40%,var(--hairline))}
+  .callout.warn .lbl{color:var(--signal)}
+
+  /* ---------- Tables ---------- */
+  .tscroll{overflow-x:auto; border:1px solid var(--hairline); border-radius:12px; margin:20px 0}
+  table{border-collapse:collapse; width:100%; font-size:.92rem; min-width:560px}
+  th,td{text-align:left; padding:12px 16px; border-bottom:1px solid var(--hairline); vertical-align:top}
+  thead th{background:var(--panel); font-family:var(--mono); font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:600}
+  tbody tr:last-child td{border-bottom:none}
+  td strong{color:var(--ink)}
+  .chip{font-family:var(--mono); font-size:.72rem; padding:2px 8px; border-radius:6px; white-space:nowrap}
+  .chip.us{background:var(--good-soft); color:var(--good)}
+  .chip.gap{background:var(--signal-soft); color:var(--signal)}
+
+  /* ---------- Diagram ---------- */
+  figure{margin:24px 0 8px}
+  .dgm-wrap{overflow-x:auto; border:1px solid var(--hairline); border-radius:12px; background:var(--panel); padding:24px}
+  svg .bx{fill:var(--surface); stroke:var(--hairline); stroke-width:1.5}
+  svg .bx-core{fill:var(--accent-soft); stroke:var(--accent); stroke-width:2}
+  svg .bx-road{fill:var(--panel); stroke:var(--hairline); stroke-width:1.5; stroke-dasharray:5 4}
+  svg .t{fill:var(--ink); font-family:var(--sans); font-size:13px; font-weight:600}
+  svg .ts{fill:var(--muted); font-family:var(--mono); font-size:10px; letter-spacing:.04em}
+  svg .tc{fill:var(--accent-ink); font-family:var(--mono); font-size:10px; letter-spacing:.06em; font-weight:600; text-transform:uppercase}
+  svg .flow{stroke:var(--muted); stroke-width:1.6; fill:none}
+  svg .fly{stroke:var(--signal); stroke-width:1.6; fill:none; stroke-dasharray:5 4}
+  figcaption{font-size:.82rem; color:var(--faint); margin-top:12px; font-family:var(--mono); letter-spacing:.02em}
+
+  /* ---------- Contributions list ---------- */
+  .contribs{list-style:none; padding:0; margin:18px 0; display:grid; gap:14px}
+  .contribs li{display:grid; grid-template-columns:auto 1fr; gap:16px; align-items:start;
+    background:var(--surface); border:1px solid var(--hairline); border-radius:10px; padding:18px 20px}
+  .contribs .c{font-family:var(--mono); font-weight:600; color:var(--accent-ink); font-size:.85rem; padding-top:2px}
+  .contribs b{display:block; margin-bottom:3px}
+  .contribs span{font-size:.93rem; color:var(--muted)}
+
+  /* ---------- Roadmap ---------- */
+  .road{display:grid; gap:0; margin:20px 0}
+  .phase{display:grid; grid-template-columns:120px 1fr; gap:20px; padding:20px 0; border-top:1px solid var(--hairline)}
+  .phase:first-child{border-top:none}
+  .phase .when{font-family:var(--mono); font-size:.8rem}
+  .phase .when .p{color:var(--accent-ink); font-weight:600; font-size:.95rem}
+  .phase .when .d{color:var(--faint); margin-top:3px}
+  .phase h3{margin:0 0 .3em; font-size:1.05rem}
+  .phase p{font-size:.93rem; color:var(--muted); margin:0}
+  .phase .done{color:var(--good); font-family:var(--mono); font-size:.7rem; letter-spacing:.08em; text-transform:uppercase}
+
+  .refs{font-size:.86rem; color:var(--muted)}
+  .refs li{margin-bottom:6px}
+  footer{padding:40px 0 64px; color:var(--faint); font-size:.82rem}
+  footer .wrap{display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; align-items:center}
+
+  @media (prefers-reduced-motion:no-preference){
+    .reveal{opacity:0; transform:translateY(10px); animation:rise .7s cubic-bezier(.2,.7,.2,1) forwards}
+    @keyframes rise{to{opacity:1; transform:none}}
+  }
+  @media (max-width:620px){
+    body{font-size:16px}
+    .phase{grid-template-columns:1fr; gap:6px}
+    .sec-head{flex-direction:column; gap:4px}
+  }
+
+  /* ---------- Print / PDF ---------- */
+  @page{ margin:14mm 13mm }
+  @media print{
+    body{ -webkit-print-color-adjust:exact; print-color-adjust:exact; font-size:11pt; background:#fff }
+    .wrap,.hero-in{ padding-left:0; padding-right:0 }
+    .reveal, section{ opacity:1 !important; transform:none !important; animation:none !important }
+    header.hero{ break-after:avoid }
+    section{ padding:22px 0; break-inside:auto }
+    .sec-head{ break-after:avoid }
+    h2,h3{ break-after:avoid }
+    .card,.callout,.tscroll,.phase,figure,.contribs li,.stats,.dgm-wrap{ break-inside:avoid }
+    a{ color:var(--ink); text-decoration:none }
+    .dgm-wrap{ overflow:visible }
+  }
+</style>
+
+<header class="hero">
+  <div class="hero-in">
+    <div class="kicker">
+      <span class="tag accent">Research &amp; Product Master Plan</span>
+      <span class="tag">MSTool-AI · Class C</span>
+      <span class="tag">v1 · Aug 2026</span>
+    </div>
+    <h1>CALM-MS
+      <span class="sub">Conformal, cAlibrated Lesion Mapping for Multiple Sclerosis — a trustworthy segmenter that ships in the product and stands up as a paper.</span>
+    </h1>
+    <p class="thesis">Not another U-Net. The first MS lesion segmenter that gives the clinician a <em>guaranteed</em> precision knob — and its guarantee is the publishable contribution.</p>
+
+    <div class="stats" aria-label="Empirical baseline from our own data">
+      <div class="stat"><div class="v tnum">19</div><div class="k">expert-annotated cases, benchmark harness live</div></div>
+      <div class="stat"><div class="v mid tnum">0.52</div><div class="k">legacy-AI Dice vs expert (median)</div></div>
+      <div class="stat"><div class="v ok tnum">0.85</div><div class="k">lesion sensitivity — it finds them</div></div>
+      <div class="stat"><div class="v bad tnum">0.22</div><div class="k">lesion precision — it over-invents them</div></div>
+    </div>
+    <p class="muted" style="font-size:.82rem;max-width:60ch">Numbers above are measured, not cited: our own AI-vs-expert benchmark on the loaded ISBI cohort. The precision gap is the problem this program is built to solve — and to solve <em>with a guarantee</em>.</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- 1 -->
+  <section>
+    <div class="sec-head"><span class="sec-no">01</span><div><span class="eyebrow">Motivation, from our own data</span><h2>The real failure mode isn't missing lesions — it's inventing them</h2></div></div>
+    <div class="prose">
+      <p class="lead">Every MS segmenter is graded on Dice. But clinicians abandon tools for a different reason: <strong>false positives</strong>. Our benchmark makes this concrete. The AI reaches <strong>0.85 sensitivity</strong> (it detects real lesions) but only <strong>0.22 lesion-wise precision</strong> — roughly four of every five "lesions" it reports are spurious. That destroys trust, inflates apparent lesion load, and corrupts the very DIS/atrophy metrics the app computes downstream.</p>
+      <p>The state of the art chases a higher mean Dice. That is the wrong target for a clinical product. A tool a neurologist will actually use must let them <strong>choose an operating point</strong> — "show me only lesions you are 90% sure of" — and it must be able to <strong>keep that promise</strong>. No published MS segmenter does this with a statistical guarantee. That gap is our opening.</p>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section>
+    <div class="sec-head"><span class="sec-no">02</span><div><span class="eyebrow">State of the art · 2025–2026</span><h2>Where the field is, and where LST-AI actually sits</h2></div></div>
+    <p class="lead prose">We reviewed five active frontiers. The advances are real — and <strong>dispersed</strong>: each solves one axis and ignores the others. That fragmentation is the scientific opportunity.</p>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Frontier</th><th>State of the art (2025–26)</th><th>Our position</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Backbone</strong></td><td>nnU-Net still dominant (Dice 0.6–0.8); lesion-aware augmentation (CarveMix), DenseLes</td><td><span class="chip us">baseline: LST-AI 3×U-Net</span></td></tr>
+          <tr><td><strong>Foundation models</strong></td><td>MedSAM, SAM-Med3D, <strong>Brain-SAM</strong> (SAM2 + 3D Hiera, 2026); still weak on diffuse WM boundaries</td><td><span class="chip gap">not adopted</span></td></tr>
+          <tr><td><strong>Domain generalization</strong></td><td>the #1 clinical blocker — scanner/site shift; Random Convolutions, harmonization, federated learning</td><td><span class="chip gap">open</span></td></tr>
+          <tr><td><strong>Uncertainty &amp; calibration</strong></td><td>lesion-wise confidence; FP reduction by uncertainty thresholding; calibrated ensembles</td><td><span class="chip gap">open — our wedge</span></td></tr>
+          <tr><td><strong>Biomarkers (multi-task)</strong></td><td><strong>ALPaCA</strong> (2025–26): joint lesion+PRL+CVS, AUROC 0.95/0.91/0.87 — needs SWI/EPI</td><td><span class="chip gap">roadmap (no SWI)</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout warn">
+      <span class="lbl">Honest read on what we run today</span>
+      <p><strong>LST-AI is a strong, adopted 2023–24 baseline — not the frontier.</strong> It is a pre-foundation-model ensemble with no domain generalization, no calibrated uncertainty, and no biomarker awareness. Excellent as the <em>backbone we build on</em>; not something to publish as-is.</p>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section>
+    <div class="sec-head"><span class="sec-no">03</span><div><span class="eyebrow">The thesis</span><h2>Unite the dispersed advances into one <em>trustworthy, controllable</em> segmenter</h2></div></div>
+    <div class="prose">
+      <p class="lead">Foundation models are powerful but uncalibrated. Domain generalization travels alone. Uncertainty work rarely reaches the lesion level. Biomarker models need contrasts most sites lack. <strong>Nobody has fused them into a segmenter a clinician can trust and tune.</strong></p>
+    </div>
+    <div class="callout core">
+      <span class="lbl">Central contribution</span>
+      <p><strong>Conformal, lesion-wise risk control.</strong> We wrap any base segmenter in a calibration layer that turns per-lesion uncertainty into a <em>distribution-free statistical guarantee</em> on the lesion-level false-discovery rate. The clinician sets a target FDR (say, ≤10%); conformal prediction guarantees it holds on unseen data. The over-segmentation problem becomes a controllable, provable dial. Conformal risk control is a top-tier ML trend — and it has <strong>never</strong> been applied to MS lesion segmentation.</p>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section>
+    <div class="sec-head"><span class="sec-no">04</span><div><span class="eyebrow">The system</span><h2>CALM-MS architecture</h2></div></div>
+    <p class="lead prose">A staged pipeline: a domain-generalized backbone feeds lesion candidates with uncertainty; a conformal layer converts that uncertainty into a guaranteed operating point; longitudinal and biomarker heads extend it; and the app's expert corrections feed a data flywheel back into training.</p>
+
+    <figure>
+      <div class="dgm-wrap">
+        <svg viewBox="0 0 980 340" width="980" role="img" aria-label="CALM-MS pipeline: MRI to domain-generalized backbone to lesion candidates with uncertainty to conformal risk control to clinical output, with longitudinal and biomarker heads and a data flywheel loop.">
+          <defs>
+            <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="var(--muted)"/></marker>
+            <marker id="ahf" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="var(--signal)"/></marker>
+          </defs>
+          <!-- input -->
+          <rect class="bx" x="18" y="120" width="130" height="86" rx="10"/>
+          <text class="t" x="83" y="150" text-anchor="middle">MRI input</text>
+          <text class="ts" x="83" y="170" text-anchor="middle">FLAIR + T1</text>
+          <text class="ts" x="83" y="186" text-anchor="middle">(+SWI later)</text>
+          <!-- backbone -->
+          <rect class="bx" x="182" y="104" width="168" height="118" rx="10"/>
+          <text class="tc" x="266" y="130" text-anchor="middle">Stage 1</text>
+          <text class="t" x="266" y="152" text-anchor="middle">Domain-general</text>
+          <text class="t" x="266" y="170" text-anchor="middle">backbone</text>
+          <text class="ts" x="266" y="192" text-anchor="middle">nnU-Net / SAM2</text>
+          <text class="ts" x="266" y="207" text-anchor="middle">+ Random Convs</text>
+          <!-- candidates + uncertainty -->
+          <rect class="bx" x="384" y="104" width="168" height="118" rx="10"/>
+          <text class="tc" x="468" y="130" text-anchor="middle">Stage 2</text>
+          <text class="t" x="468" y="152" text-anchor="middle">Lesion candidates</text>
+          <text class="t" x="468" y="170" text-anchor="middle">+ uncertainty</text>
+          <text class="ts" x="468" y="192" text-anchor="middle">instance-aware</text>
+          <text class="ts" x="468" y="207" text-anchor="middle">per-lesion score</text>
+          <!-- CORE conformal -->
+          <rect class="bx-core" x="586" y="98" width="176" height="130" rx="10"/>
+          <text class="tc" x="674" y="126" text-anchor="middle">Stage 3 · core</text>
+          <text class="t" x="674" y="148" text-anchor="middle">Conformal</text>
+          <text class="t" x="674" y="166" text-anchor="middle">risk control</text>
+          <text class="ts" x="674" y="188" text-anchor="middle">guaranteed FDR</text>
+          <text class="ts" x="674" y="204" text-anchor="middle">precision dial</text>
+          <!-- output -->
+          <rect class="bx" x="812" y="120" width="150" height="86" rx="10"/>
+          <text class="t" x="887" y="146" text-anchor="middle">Clinical output</text>
+          <text class="ts" x="887" y="166" text-anchor="middle">lesions +</text>
+          <text class="ts" x="887" y="182" text-anchor="middle">confidence</text>
+          <!-- roadmap heads -->
+          <rect class="bx-road" x="384" y="266" width="168" height="56" rx="10"/>
+          <text class="t" x="468" y="290" text-anchor="middle">Longitudinal head</text>
+          <text class="ts" x="468" y="308" text-anchor="middle">new-lesion consistency</text>
+          <rect class="bx-road" x="586" y="266" width="176" height="56" rx="10"/>
+          <text class="t" x="674" y="290" text-anchor="middle">Biomarker head</text>
+          <text class="ts" x="674" y="308" text-anchor="middle">PRL / CVS · needs SWI</text>
+          <!-- flows -->
+          <path class="flow" d="M148,163 L180,163" marker-end="url(#ah)"/>
+          <path class="flow" d="M350,163 L382,163" marker-end="url(#ah)"/>
+          <path class="flow" d="M552,163 L584,163" marker-end="url(#ah)"/>
+          <path class="flow" d="M762,163 L810,163" marker-end="url(#ah)"/>
+          <path class="flow" d="M468,222 L468,264" marker-end="url(#ah)"/>
+          <path class="flow" d="M674,228 L674,264" marker-end="url(#ah)"/>
+          <!-- flywheel -->
+          <path class="fly" d="M887,206 L887,246 Q887,258 875,258 L96,258 Q83,258 83,246 L83,208" marker-end="url(#ahf)"/>
+          <text class="ts" x="480" y="252" text-anchor="middle" style="fill:var(--signal)">data flywheel · expert corrections in the app → active-learning retrain</text>
+        </svg>
+      </div>
+      <figcaption>Fig 1 — CALM-MS. Solid = phase 1–2 build. Dashed heads = staged extensions. Amber loop = the software/research feedback engine.</figcaption>
+    </figure>
+
+    <div class="grid g3" style="margin-top:22px">
+      <div class="card"><span class="idx">STAGE 1</span><h3>Generalize across scanners</h3><p>Backbone trained with Random-Convolution augmentation + intensity harmonization so it holds on unseen sites — the field's #1 deployment blocker.</p></div>
+      <div class="card"><span class="idx">STAGE 2</span><h3>Score every lesion</h3><p>Instance-aware candidates with a calibrated per-lesion confidence, not just a voxel probability — the unit clinicians reason in.</p></div>
+      <div class="card"><span class="idx">STAGE 3</span><h3>Guarantee the operating point</h3><p>Conformal calibration converts confidence into a provable lesion-level FDR bound. The precision dial the product needs, with the math a journal wants.</p></div>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section>
+    <div class="sec-head"><span class="sec-no">05</span><div><span class="eyebrow">Why it publishes</span><h2>Four contributions, each defensible</h2></div></div>
+    <ol class="contribs">
+      <li><span class="c">C1</span><div><b>First conformal risk control for MS lesion segmentation.</b><span>Distribution-free, model-agnostic lesion-level FDR guarantee. Novel intersection of a hot ML method and an unsolved clinical problem.</span></div></li>
+      <li><span class="c">C2</span><div><b>Model-agnostic — demonstrated across backbones.</b><span>Wrap nnU-Net, LST-AI, a foundation model, and the legacy AI; show consistent, guaranteed precision control on all. A methods contribution, not a single-model result.</span></div></li>
+      <li><span class="c">C3</span><div><b>A clinical operating-point framework.</b><span>Formalize how a neurologist selects and trusts a precision/recall point, validated against a real expert reference — bridging trustworthy-AI theory and radiology practice.</span></div></li>
+      <li><span class="c">C4</span><div><b>Rigorous, standardized evaluation.</b><span>Lesion-wise LTPR/LFPR/F1, surface HD95, ASSD, with bootstrap CIs and Wilcoxon tests — answering the field's own "rethinking evaluation" call.</span></div></li>
+    </ol>
+  </section>
+
+  <!-- 6 -->
+  <section>
+    <div class="sec-head"><span class="sec-no">06</span><div><span class="eyebrow">Experimental design</span><h2>How we prove it</h2></div></div>
+    <div class="grid g2">
+      <div class="card"><h3>Datasets</h3><p>ISBI-2015 (multi-rater, longitudinal) · MSSEG-2 · MSLesSeg-2025 (new public set) · our expert-annotated cohort. Multi-site for the domain-generalization claim; leave-one-site-out for unseen-scanner tests.</p></div>
+      <div class="card"><h3>Baselines</h3><p>nnU-Net, LST-AI, the legacy AI, and an uncalibrated version of our own model — so the conformal guarantee is isolated as the contribution.</p></div>
+      <div class="card"><h3>Metrics</h3><p>Dice, Jaccard, AVD; surface HD95, ASSD; lesion-wise LTPR / LFPR / F1 (18-conn, 3 mm³ floor); calibration (ECE, reliability); realized vs target FDR.</p></div>
+      <div class="card"><h3>Statistics</h3><p>Per-case bootstrap 95% CIs; Wilcoxon signed-rank across methods; size-stratified detection; coverage validation of the conformal bound on held-out sites.</p></div>
+    </div>
+    <div class="callout core" style="margin-top:22px">
+      <span class="lbl">The headline experiment</span>
+      <p>Set a target lesion-FDR of 10%. Show that across every backbone and <em>every unseen site</em>, realized FDR stays ≤10% while sensitivity degrades gracefully — turning today's uncontrolled 0.22 precision into a guaranteed, clinician-chosen number. That single plot is the paper.</p>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section>
+    <div class="sec-head"><span class="sec-no">07</span><div><span class="eyebrow">Feasibility</span><h2>Data &amp; compute — honestly</h2></div></div>
+    <div class="prose">
+      <p class="lead">The conformal core is <strong>cheap</strong>: it calibrates on top of a trained model with a held-out set of a few dozen cases — we already have the expert reference and the harness. The backbone and domain-generalization training is the real cost.</p>
+      <p><strong>Compute:</strong> single modern GPU (24–48 GB) suffices for nnU-Net-scale training and all conformal work; multi-GPU only accelerates the foundation-model backbone. <strong>Data:</strong> public sets cover training and external validation; our cohort anchors the clinical-reference claim. <strong>Not blocked</strong> — unlike the biomarker head, which needs SWI/EPI we don't yet hold.</p>
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section>
+    <div class="sec-head"><span class="sec-no">08</span><div><span class="eyebrow">The product, at max level</span><h2>Because we are a software, not a paper mill</h2></div></div>
+    <p class="lead prose">The research only matters if it ships. CALM-MS is designed so every scientific contribution is also a product feature — the paper and the app are the same artifact seen from two sides.</p>
+    <div class="grid g2">
+      <div class="card"><h3>A precision dial in the UI</h3><p>A slider: "false-positive tolerance." It maps directly to the conformal FDR target. The clinician moves it; the guarantee moves with it. Nothing else on the market offers this.</p></div>
+      <div class="card"><h3>Per-lesion confidence overlay</h3><p>Each lesion carries a calibrated confidence, rendered as opacity/colour. Low-confidence lesions are flagged for review, not silently included in DIS/atrophy math.</p></div>
+      <div class="card"><h3>Trust report for Class C</h3><p>Every run emits calibration + coverage evidence — auditable proof the operating point held. Regulatory gold for an IEC 62304 device.</p></div>
+      <div class="card"><h3>The data flywheel</h3><p>Expert corrections made in the app become active-learning labels. The model that ships gets measurably better with use — the moat academia can't replicate without a product.</p></div>
+    </div>
+  </section>
+
+  <!-- 9 -->
+  <section>
+    <div class="sec-head"><span class="sec-no">09</span><div><span class="eyebrow">Execution</span><h2>Roadmap</h2></div></div>
+    <div class="road">
+      <div class="phase"><div class="when"><div class="p">Phase 0</div><div class="d">done</div><span class="done">✓ complete</span></div><div><h3>Ground truth &amp; benchmark harness</h3><p>Expert cohort mapped and de-polluted; AI-vs-expert metrics (Dice / HD95 / ASSD / lesion-F1) running. The empirical motivation and evaluation spine already exist.</p></div></div>
+      <div class="phase"><div class="when"><div class="p">Phase 1</div><div class="d">~4–6 wks</div></div><div><h3>Conformal core on existing backbones</h3><p>Lesion-wise conformal calibration over LST-AI / nnU-Net / legacy AI. Deliver the guaranteed precision dial + the headline FDR-coverage result. <em>This is the paper's core and a shippable feature.</em></p></div></div>
+      <div class="phase"><div class="when"><div class="p">Phase 2</div><div class="d">~2–3 mo</div></div><div><h3>Domain-generalized backbone</h3><p>Train our own backbone with Random-Convolution augmentation + harmonization; leave-one-site-out validation. Turns the paper from "wrapper" into "system."</p></div></div>
+      <div class="phase"><div class="when"><div class="p">Phase 3</div><div class="d">later</div></div><div><h3>Longitudinal + biomarker heads</h3><p>New-lesion temporal consistency; PRL/CVS multitask once SWI/EPI data is acquired. Extension papers, ALPaCA-class.</p></div></div>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section>
+    <div class="sec-head"><span class="sec-no">10</span><div><span class="eyebrow">Positioning &amp; risk</span><h2>Where it lands, and what could bite</h2></div></div>
+    <div class="grid g2">
+      <div class="card"><h3>Target venues</h3><p><strong>Medical Image Analysis</strong>, <strong>IEEE TMI</strong>, <strong>NeuroImage</strong>, <strong>MSARD</strong>; <strong>MICCAI</strong> for the methods core. The "trustworthy AI + real clinical problem + guarantee" framing is exactly their appetite.</p></div>
+      <div class="card"><h3>Honest risks</h3><p>Conformal exchangeability assumptions weaken under heavy domain shift — hence the multi-site coverage test is mandatory, not optional. Small expert cohort limits the clinical-claim strength until more sites are added. Biomarker head is data-blocked.</p></div>
+    </div>
+  </section>
+
+  <!-- refs -->
+  <section>
+    <div class="sec-head"><span class="sec-no">—</span><div><span class="eyebrow">Grounding</span><h2>Key references</h2></div></div>
+    <ul class="refs prose">
+      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12516162/">ALPaCA — automated lesion, PRL &amp; CVS segmentation</a> (Imaging Neuroscience, 2025–26)</li>
+      <li><a href="https://www.medrxiv.org/content/10.64898/2026.01.30.26345164v1.full">Brain-SAM — SAM2 tailored for brain MRI lesions</a> (medRxiv, 2026)</li>
+      <li><a href="https://www.sciencedirect.com/science/article/pii/S016786552500368X">Random Convolutions for out-of-domain MS generalization</a> (2025)</li>
+      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12457141/">Federated learning for MS lesion segmentation, multi-center</a> (Front. Neurol., 2025)</li>
+      <li><a href="https://arxiv.org/pdf/2605.09666">Rethinking Evaluation of MS Lesion Segmentation</a> (arXiv, 2026)</li>
+      <li><a href="https://www.nature.com/articles/s41597-025-05250-y">MSLesSeg — new MS lesion segmentation dataset</a> (Scientific Data, 2025)</li>
+    </ul>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>CALM-MS · Research &amp; Product Master Plan · MSTool-AI</span>
+    <span>Conformal, cAlibrated Lesion Mapping — trustworthy MS segmentation</span>
+  </div>
+</footer>
+
+<script>
+  // Tasteful, reduced-motion-safe staggered reveal of sections.
+  if (matchMedia('(prefers-reduced-motion: no-preference)').matches) {
+    const secs = document.querySelectorAll('section');
+    const io = new IntersectionObserver((es) => {
+      es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('reveal'); io.unobserve(e.target); } });
+    }, { threshold: 0.08 });
+    secs.forEach((s) => io.observe(s));
+  }
+</script>
