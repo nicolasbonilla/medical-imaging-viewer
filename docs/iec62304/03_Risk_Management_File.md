@@ -365,6 +365,24 @@ The risk management file must be updated when:
 
 ---
 
+## Addendum A — CALM-MS Conformal Second-Reader Hazards (INVESTIGATIONAL)
+
+Traces to REQ-FUNC-CALM-001..006. The feature is gated OFF (`CALM_MS_RESEARCH_ENABLED`)
+and investigational; these hazards were derived from a 4-angle adversarial design
+review (Class C/regulatory, clinical-UX, SOTA, engineering/security). Each has an
+IMPLEMENTED design-level risk control; residual acceptability is **PENDING** the
+listed V&V (mimic-cohort validation + summative usability study) before any clinical
+enablement.
+
+| Hazard | Failure mode | Harm | Risk control (implemented) | V&V still required |
+|---|---|---|---|---|
+| HAZ-CALM-1 | Sensitivity-spending suppression drops a true lesion from the mask/counts → missed lesion → wrong DMT / missed diagnosis | Serious | RC-CALM-1: feature is ADDITIVE-only (`conformal_review` never mutates the base mask; returns all candidates); downstream reads the full mask (REQ-FUNC-CALM-002) | Verify no downstream (DIS/volumetry/report) consumes a filtered mask |
+| HAZ-CALM-2 | Per-lesion "confidence %" read as P(lesion real) → over/under-trust | Serious | RC-CALM-2: no probability/confidence surfaced; ordinal tier only (REQ-FUNC-CALM-003); enforced by test | IEC 62366-1 summative usability study |
+| HAZ-CALM-3 | Per-scan FDR number read as this-scan precision (guarantee is marginal) | Serious | RC-CALM-3: only the preset α (input target) returned, labelled population-level scope; no realized-FDP; enforced by test | Summative usability study proving no per-scan inference |
+| HAZ-CALM-4 | Free α/threshold → un-validated operating point (PCCP violation) | Serious | RC-CALM-4: preset enum only; server maps to frozen (α, threshold); raw values rejected | Per-preset clinical validation + PCCP change-control plan |
+| HAZ-CALM-5 | Probability map from a different base model/grid scored against the FLAMeS null → mathematically VOID guarantee shown | Serious | RC-CALM-5: provenance stamp on null asset + `assert_compatible` fail-closed refusal on grid/spacing mismatch | Add base-model provenance stamp on prob maps; OOD monitor (validated, fail-closed) |
+| HAZ-CALM-6 | Missing/empty null asset or unauthenticated access → void guarantee / PHI exposure | Serious | RC-CALM-6: fail-closed asset load (`ConformalAssetError`); endpoint behind auth + object-level PHI authz | Integration tests for the endpoint auth + asset-missing paths |
+
 *End of Risk Management File*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/03_Risk_Management_File.md`.*

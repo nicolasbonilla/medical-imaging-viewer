@@ -189,6 +189,12 @@ class Settings(BaseSettings):
     MINDGLIDE_TIMEOUT_SECONDS: int = Field(default=600, ge=60, le=1800)
     CLINICAL_TOOLS_SHARED_VOLUME: str = Field(default="/tmp/clinical-tools-shared", description="Shared volume for NIfTI I/O with sidecar containers")
 
+    # CALM-MS conformal second-reader (REQ-FUNC-CALM-001) — INVESTIGATIONAL / research
+    # only. Default OFF. The clinical guarantee is valid only for FLAMeS-derived
+    # probability maps on the calibration grid, and full V&V (mimic-cohort validation,
+    # reader study, PCCP) is NOT yet complete, so the endpoint stays dark until enabled.
+    CALM_MS_RESEARCH_ENABLED: bool = Field(default=False)
+
     # Claude API Configuration (for report generation)
     ANTHROPIC_API_KEY: str = Field(default="", description="Anthropic API key for Claude")
     CLAUDE_MODEL: str = Field(default="claude-sonnet-4-5-20250929")

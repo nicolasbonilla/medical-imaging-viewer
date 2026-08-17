@@ -307,6 +307,23 @@ institution/tenant, role-graded) are recorded in CAPA-002 §8.4.
 
 ---
 
+## Addendum A — CALM-MS Conformal Second-Reader (INVESTIGATIONAL)
+
+**Status:** Investigational / research-only. Gated behind `CALM_MS_RESEARCH_ENABLED`
+(default OFF). NOT cleared for clinical use; full V&V (intended-use / mimic-cohort
+validation, IEC 62366-1 summative usability study, per-preset validation, PCCP) is
+pending. Requirements below define the safe behaviour the feature MUST exhibit even
+in the investigational state.
+
+| ID | Requirement | Priority | Class | Verification | Hazard |
+|---|---|---|---|---|---|
+| REQ-FUNC-CALM-001 | The system shall annotate lesion candidates from a probabilistic MS segmenter with a distribution-free, **population-level** lesion false-discovery-rate control (conformal p-values + Benjamini-Hochberg), exposing an ordinal per-lesion **review-priority tier** (high/medium/low). | Should | C | Test | HAZ-CALM-1..6 |
+| REQ-FUNC-CALM-002 | The feature shall be **additive**: it shall never remove, hide, or alter the base segmenter's lesion mask, and all downstream consumers (volumetry, DIS/MAGNIMS, reports) shall continue to read the full base mask. | Must | C | Test | HAZ-CALM-1 |
+| REQ-FUNC-CALM-003 | The system shall NOT present a per-lesion probability or "confidence" percentage, and shall NOT present a per-scan realized FDR; it shall present only the ordinal tier and the preset's target α, labelled as population-level scope. | Must | C | Test + usability | HAZ-CALM-2, HAZ-CALM-3 |
+| REQ-FUNC-CALM-004 | The system shall accept only a **validated preset** (high_sensitivity[default]/balanced/high_precision), each mapped server-side to a frozen (α, threshold); it shall reject raw α/threshold. | Must | C | Test | HAZ-CALM-4 |
+| REQ-FUNC-CALM-005 | The system shall **fail closed on exchangeability**: it shall refuse (4xx) any probability map whose base-model/grid/spacing does not match the frozen calibration null asset's provenance stamp. | Must | C | Test | HAZ-CALM-5 |
+| REQ-FUNC-CALM-006 | The system shall fail closed if the calibration null asset is missing or empty (no void guarantee shall be served), and shall enforce authentication + object-level PHI authorization on the endpoint. | Must | C | Test | HAZ-CALM-6 |
+
 *End of Software Requirements Specification*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/02_Software_Requirements_Specification.md`.*
