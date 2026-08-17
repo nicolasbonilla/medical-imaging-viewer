@@ -23,7 +23,9 @@ _BACKEND = os.path.join(_HERE, "..", "..", "backend")
 if _BACKEND not in sys.path:
     sys.path.insert(0, _BACKEND)
 
-from app.services.calm_ms_inference import build_calibration_nulls  # noqa: E402
+from app.services.calm_ms_inference import extract_lesion_candidates, label_candidates_tp  # noqa: E402
+
+OOD_FEATURES = ["n_candidates", "mean_score", "q10", "q50", "q90"]
 
 THRESHOLD = 0.5
 MIN_VOLUME_MM3 = 3.0
@@ -63,10 +65,22 @@ def main():
         sys.exit(f"cases span multiple grids {grids} — a single-grid null is required for exchangeability")
     grid = grids.pop()
 
-    print(f"Building null over {len(cases)} FLAMeS cases on grid {grid} @ {VOXEL_SPACING} mm ...")
-    null = build_calibration_nulls(cases, THRESHOLD, VOXEL_SPACING,
-                                   min_volume_mm3=MIN_VOLUME_MM3, score=SCORE)
-    null = np.asarray(null, dtype=np.float32)
+    print(f"Building null + OOD reference over {len(cases)} FLAMeS cases on grid {grid} @ {VOXEL_SPACING} mm ...")
+    null_list, ood_rows = [], []
+    for prob, gt in cases:
+        labeled, cands = extract_lesion_candidates(prob, THRESHOLD, VOXEL_SPACING,
+                                                   min_volume_mm3=MIN_VOLUME_MM3, score=SCORE)
+        if not cands:
+            continue
+        scores = np.array([c.score for c in cands], dtype=float)
+        # Per-case OOD summary over ALL candidates (computable at inference — no GT).
+        q10, q50, q90 = (float(q) for q in np.quantile(scores, [0.1, 0.5, 0.9]))
+        ood_rows.append([float(len(cands)), float(scores.mean()), q10, q50, q90])
+        # Null = FALSE-candidate scores (need GT here, at build time only).
+        is_tp = label_candidates_tp(labeled, cands, gt, min_overlap=0.0)
+        null_list.extend(c.score for c in cands if not is_tp[c.label])
+    null = np.asarray(null_list, dtype=np.float32)
+    ood_reference = np.asarray(ood_rows, dtype=np.float32)   # (n_cases, len(OOD_FEATURES))
     if null.size == 0:
         sys.exit("empty null — refusing to ship an unusable asset")
 
@@ -84,6 +98,8 @@ def main():
         "null_kind": "raw_pooled_probability (v1; learned scorer deferred to v2)",
         "n_cases": len(cases),
         "n_null_scores": int(null.size),
+        "ood_feature_names": OOD_FEATURES,
+        "ood_n_cases": int(ood_reference.shape[0]),
         "cohorts": COHORTS,
         "built_utc": datetime.datetime.utcnow().isoformat() + "Z",
         "requirement": "REQ-FUNC-CALM-001",
@@ -95,7 +111,8 @@ def main():
     out_dir = os.path.join(_BACKEND, "app", "services", "assets")
     os.makedirs(out_dir, exist_ok=True)
     out = os.path.join(out_dir, "calm_ms_null_flames_v1.npz")
-    np.savez_compressed(out, null_scores=null, provenance=json.dumps(provenance))
+    np.savez_compressed(out, null_scores=null, ood_reference=ood_reference,
+                        provenance=json.dumps(provenance))
     print(f"\nWROTE {out}")
     print(f"  null scores: {null.size}  (mean {null.mean():.3f}, min {null.min():.3f}, max {null.max():.3f})")
     print(f"  grid {grid} @ {VOXEL_SPACING}  base={BASE_MODEL}  sha={provenance['sha256']}")

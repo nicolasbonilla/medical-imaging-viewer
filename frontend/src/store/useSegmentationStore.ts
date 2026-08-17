@@ -61,7 +61,10 @@ export interface ConformalLesion {
 export interface ConformalSummary {
   preset: string;
   fdr_target: number;
+  /** False when the OOD monitor withholds the guarantee for this case. */
+  guarantee_applicable: boolean;
   guarantee_scope: string;
+  ood: { is_ood: boolean; distance: number; threshold: number; detail: string } | null;
   n_candidates: number;
   n_in_fdr_set: number;
   tier_counts: { high: number; medium: number; low: number };

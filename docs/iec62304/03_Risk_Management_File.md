@@ -380,7 +380,7 @@ enablement.
 | HAZ-CALM-2 | Per-lesion "confidence %" read as P(lesion real) → over/under-trust | Serious | RC-CALM-2: no probability/confidence surfaced; ordinal tier only (REQ-FUNC-CALM-003); enforced by test | IEC 62366-1 summative usability study |
 | HAZ-CALM-3 | Per-scan FDR number read as this-scan precision (guarantee is marginal) | Serious | RC-CALM-3: only the preset α (input target) returned, labelled population-level scope; no realized-FDP; enforced by test | Summative usability study proving no per-scan inference |
 | HAZ-CALM-4 | Free α/threshold → un-validated operating point (PCCP violation) | Serious | RC-CALM-4: preset enum only; server maps to frozen (α, threshold); raw values rejected | Per-preset clinical validation + PCCP change-control plan |
-| HAZ-CALM-5 | Probability map from a different base model/grid scored against the FLAMeS null → mathematically VOID guarantee shown | Serious | RC-CALM-5: provenance stamp on null asset + `assert_compatible` fail-closed refusal on grid/spacing mismatch | Add base-model provenance stamp on prob maps; OOD monitor (validated, fail-closed) |
+| HAZ-CALM-5 | Probability map from a different base model/grid/regime scored against the FLAMeS null → mathematically VOID guarantee shown | Serious | RC-CALM-5: (a) provenance stamp + `assert_compatible` fail-closed grid/spacing refusal; (b) **OOD monitor** (`conformal_ood.assess_ood`) — compares the case's candidate-score distribution to the calibration envelope and, on gross shift, WITHHOLDS the guarantee (`guarantee_applicable=False`, WITHHELD_SCOPE) while still showing unguaranteed tiers; fails closed when no reference | Validate the OOD monitor's own sensitivity/specificity on real scanner-shift + mimic cohorts; add base-model stamp on prob maps |
 | HAZ-CALM-6 | Missing/empty/degenerate null asset or unauthenticated access → void guarantee / PHI exposure | Serious | RC-CALM-6: fail-closed asset load (`ConformalAssetError`) on missing/empty **and now on wrong `base_model` value or degenerate (low-dispersion) null**; endpoint behind auth + object-level PHI authz | Integration tests for the endpoint auth + asset-missing paths |
 | HAZ-CALM-7 | Non-finite (NaN/inf) or out-of-range probability voxel bypasses the input gate (min/max propagate NaN) → guarantee served on a corrupt/failed-inference map | Serious | RC-CALM-7: explicit `np.isfinite` rejection added in `conformal_review`, `extract_lesion_candidates`, and `conformal_pvalues` (found & fixed in adversarial verification 2026-08-17) | — (covered by regression tests) |
 
@@ -394,11 +394,14 @@ served path; `status_mask` integrity; presets-only. **Fixed:** the non-finite in
 fail-open (HAZ-CALM-7), the unvalidated `base_model` value and degenerate-null gaps
 (HAZ-CALM-6). **Residual, documented limitation (feature stays dark):** the
 grid/spacing check (RC-CALM-5) is necessary but **not sufficient** for
-exchangeability — an on-grid out-of-distribution or same-shape re-oriented map
-cannot be detected from geometry alone and empirically voids the guarantee (realized
-FDR up to ~8× target). Closing this requires the **validated OOD monitor + a
-base-model-bound probability producer**, both hard prerequisites for clinical
-enablement (SRS Addendum A).
+exchangeability — an on-grid out-of-distribution map cannot be detected from
+geometry alone and empirically voids the guarantee (realized FDR up to ~8× target).
+**A v1 OOD monitor now closes the score-regime axis** (`conformal_ood.assess_ood`
+withholds the guarantee, fail-closed, when the candidate-score distribution is far
+from the calibration envelope; the null asset ships a per-case OOD reference).
+**Still pending for clinical enablement:** validating the OOD monitor's own
+sensitivity/specificity on real scanner-shift + mimic cohorts, a base-model-bound
+probability producer, and the IEC 62366-1 summative usability study (SRS Addendum A).
 
 *End of Risk Management File*
 

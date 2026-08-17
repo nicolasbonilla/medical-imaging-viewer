@@ -31,11 +31,18 @@ import numpy as np
 from app.services.calm_ms_inference import extract_lesion_candidates
 from app.services.conformal_lesion_fdr import conformal_pvalues, benjamini_hochberg
 from app.services.conformal_null_asset import get_null_asset, resolve_preset, PRESETS, DEFAULT_PRESET
+from app.services.conformal_ood import assess_ood, OODVerdict
 
 GUARANTEE_SCOPE = (
     "Population-level lesion false-discovery control (marginal over an exchangeable "
     "cohort). NOT a per-scan or per-lesion probability. Tiers rank review priority; "
     "they are not a probability that a lesion is real."
+)
+WITHHELD_SCOPE = (
+    "OUT OF VALIDATED DISTRIBUTION — the conformal FDR guarantee is WITHHELD for this "
+    "case (its candidate-score distribution is unlike the calibration cohort, so "
+    "exchangeability cannot be assumed). Tiers are shown only as an unguaranteed "
+    "second look."
 )
 
 # Ordinal review-priority tiers, keyed off the conformal p-value relative to the
@@ -72,6 +79,8 @@ class ConformalReview:
     lesions: list[LesionReview]
     status_mask: np.ndarray            # uint8: 1=high,2=medium,3=low per candidate (additive overlay)
     provenance: dict
+    guarantee_applicable: bool = True  # False when the OOD monitor withholds the guarantee
+    ood: OODVerdict | None = None
 
     def summary(self) -> dict:
         counts = {TIER_HIGH: 0, TIER_MEDIUM: 0, TIER_LOW: 0}
@@ -80,7 +89,9 @@ class ConformalReview:
         return {
             "preset": self.preset,
             "fdr_target": self.fdr_target,
+            "guarantee_applicable": self.guarantee_applicable,
             "guarantee_scope": self.guarantee_scope,
+            "ood": self.ood.as_dict() if self.ood is not None else None,
             "n_candidates": len(self.lesions),
             "n_in_fdr_set": sum(1 for r in self.lesions if r.in_fdr_set),
             "tier_counts": counts,
@@ -129,6 +140,9 @@ def conformal_review(prob_map: np.ndarray, voxel_spacing, preset: str = DEFAULT_
 
     status = np.zeros(prob_map.shape, dtype=np.uint8)
     lesions: list[LesionReview] = []
+    # OOD monitor (RC-CALM-5, 2nd axis): assess the candidate-score distribution vs
+    # the calibration envelope BEFORE trusting the FDR guarantee.
+    ood = assess_ood([c.score for c in cands], asset.ood_reference)
     if cands:
         scores = np.array([c.score for c in cands], dtype=float)
         pvals = conformal_pvalues(scores, asset.null_scores)
@@ -141,6 +155,9 @@ def conformal_review(prob_map: np.ndarray, voxel_spacing, preset: str = DEFAULT_
                 label=c.label, centroid=c.centroid, volume_mm3=c.volume_mm3,
                 n_voxels=c.n_voxels, review_priority=t, in_fdr_set=bool(sel)))
 
+    applicable = not ood.is_ood
     return ConformalReview(
-        preset=preset, fdr_target=float(alpha), guarantee_scope=GUARANTEE_SCOPE,
-        lesions=lesions, status_mask=status, provenance=asset.provenance)
+        preset=preset, fdr_target=float(alpha),
+        guarantee_scope=(GUARANTEE_SCOPE if applicable else WITHHELD_SCOPE),
+        lesions=lesions, status_mask=status, provenance=asset.provenance,
+        guarantee_applicable=applicable, ood=ood)

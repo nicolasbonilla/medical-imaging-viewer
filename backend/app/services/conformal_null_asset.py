@@ -63,6 +63,7 @@ class ProvenanceMismatch(ValueError):
 class NullAsset:
     null_scores: np.ndarray
     provenance: dict
+    ood_reference: np.ndarray | None = None   # (n_cases, n_features) calibration OOD envelope
 
     @property
     def threshold(self) -> float:
@@ -120,6 +121,7 @@ def load_null_asset(path: str = _ASSET_PATH) -> NullAsset:
         data = np.load(path, allow_pickle=False)
         null = np.asarray(data["null_scores"], dtype=float)
         provenance = json.loads(str(data["provenance"]))
+        ood_reference = np.asarray(data["ood_reference"], dtype=float) if "ood_reference" in data else None
     except Exception as e:  # noqa: BLE001
         raise ConformalAssetError(f"CALM-MS null asset unreadable: {e}") from e
     if null.size == 0:
@@ -134,7 +136,7 @@ def load_null_asset(path: str = _ASSET_PATH) -> NullAsset:
         raise ConformalAssetError(
             "CALM-MS null is degenerate (too few distinct values / near-zero spread) — "
             "it cannot produce calibrated p-values; refusing to serve")
-    return NullAsset(null_scores=null, provenance=provenance)
+    return NullAsset(null_scores=null, provenance=provenance, ood_reference=ood_reference)
 
 
 def get_null_asset() -> NullAsset:

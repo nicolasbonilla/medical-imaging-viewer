@@ -145,8 +145,17 @@ export function ConformalPanel({ probFileId: probFileIdProp }: Props) {
           <div className="text-gray-400">
             {summary.n_candidates} candidatos · objetivo FDR {summary.fdr_target} · base {summary.base_model ?? '—'}
           </div>
-          {/* Population-scope caveat — prominent, always shown */}
-          <div className="rounded border border-amber-700/50 bg-amber-900/20 px-2 py-1 text-[10px] leading-snug text-amber-200">
+          {/* Guarantee scope / OOD-withheld state — prominent, always shown */}
+          <div
+            className={`rounded border px-2 py-1 text-[10px] leading-snug ${
+              summary.guarantee_applicable
+                ? 'border-amber-700/50 bg-amber-900/20 text-amber-200'
+                : 'border-red-600/60 bg-red-900/30 text-red-200'
+            }`}
+          >
+            {!summary.guarantee_applicable && (
+              <div className="mb-0.5 font-semibold">⚠ Garantía retirada (fuera de distribución validada)</div>
+            )}
             {summary.guarantee_scope}
           </div>
           {/* Additive candidate list (ordinal tiers; no probabilities, no "keep") */}
