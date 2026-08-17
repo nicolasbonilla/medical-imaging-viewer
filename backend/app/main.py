@@ -18,7 +18,7 @@ from app.core.security import (
 )
 from app.core.exception_handlers import register_exception_handlers
 from app.core.container import init_container
-from app.api.routes import auth, imaging, segmentation, segmentation_regions, segmentation_analysis, websocket, authentication, patients, studies, documents, ai_segmentation, ai_report, clinical_tools, dicomweb, fhir
+from app.api.routes import auth, imaging, segmentation, segmentation_regions, segmentation_analysis, websocket, authentication, patients, studies, documents, ai_segmentation, ai_report, clinical_tools, dicomweb, fhir, conformal
 from app.models.schemas import HealthCheck
 
 settings = get_settings()
@@ -286,6 +286,9 @@ app.include_router(ai_report.router, prefix=settings.API_V1_STR)
 
 # Validated clinical tools (LST-AI, SynthSeg)
 app.include_router(clinical_tools.router, prefix=settings.API_V1_STR)
+
+# CALM-MS conformal second-reader (investigational; dark unless CALM_MS_RESEARCH_ENABLED)
+app.include_router(conformal.router, prefix=settings.API_V1_STR)
 
 # EHR routes (Patient management)
 app.include_router(patients.router, prefix=settings.API_V1_STR)
