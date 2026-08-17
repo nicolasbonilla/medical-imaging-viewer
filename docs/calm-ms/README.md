@@ -12,6 +12,7 @@ paper publicable en revista indexada **y** feature del software.
 | [`CALM-MS-Resultados.pdf`](CALM-MS-Resultados.pdf) | Fase 1 — resultados reales sobre 19 casos expertos: tabla FDR-cobertura, interpretación, salvedades e infra/costo. |
 | [`CALM-MS-Resultados-Fase2.pdf`](CALM-MS-Resultados-Fase2.pdf) | Fase 2 — el score de lesión aprendido sube la sensibilidad (FDR 0.20: 0.135→0.207) con la misma garantía; diseño split-conformal y próxima palanca (FLAMeS). |
 | [`CALM-MS-VM-Costo-y-Apagado.pdf`](CALM-MS-VM-Costo-y-Apagado.pdf) | Ficha de la VM de GCP: máquina exacta, costo detallado y las 5 capas de apagado garantizado. |
+| [`CALM-MS-Estado-del-Arte.pdf`](CALM-MS-Estado-del-Arte.pdf) | Dossier SOTA (academia + industria) + auditoría adversarial de 4 ángulos: veredicto, tesis defendible, prior-art que colisiona, y el programa de 4 contribuciones (C1–C4) para hacerlo vanguardia publicable. |
 
 Las fuentes HTML están en [`src/`](src/) — para regenerar los PDF ver `build-pdfs.ps1`.
 

@@ -1,0 +1,235 @@
+<title>CALM-MS · Estado del Arte</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --ground:#F4F6F8;--surface:#FFFFFF;--panel:#F7F9FB;--ink:#111A28;--muted:#54606E;--faint:#8A93A0;
+    --hairline:#DCE3EA;--accent:#0E7C74;--accent-ink:#0A5C56;--accent-soft:#0e7c7414;
+    --good:#15794C;--good-soft:#15794c12;--warn:#B4530B;--warn-soft:#b4530b12;--bad:#B42318;--bad-soft:#b4231810;
+    --serif:'Charter','Bitstream Charter','Iowan Old Style',Georgia,serif;
+    --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:14.5px;line-height:1.58;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .wrap{max-width:880px;margin:0 auto;padding:34px 30px}
+  h1,h2,h3{font-family:var(--serif);font-weight:600;line-height:1.14;text-wrap:balance}
+  h1{font-size:2.2rem;margin:0 0 .1em;letter-spacing:-.015em}
+  h2{font-size:1.4rem;margin:2.2rem 0 .5em;padding-top:.4em;border-top:2px solid var(--ink)}
+  h3{font-size:1.05rem;margin:1.4rem 0 .4em;color:var(--accent-ink)}
+  .eyebrow{font-family:var(--mono);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-ink);font-weight:600}
+  .sub{color:var(--muted);margin:.25em 0 0;max-width:66ch}
+  p{margin:0 0 .7rem} strong{font-weight:650} .mono{font-family:var(--mono)} em{color:var(--accent-ink);font-style:italic}
+  .lead{font-size:1.02rem}
+  .scroll{overflow-x:auto;margin:.6rem 0}
+  table{border-collapse:collapse;width:100%;font-size:.82rem}
+  th,td{padding:7px 11px;border-bottom:1px solid var(--hairline);text-align:left;vertical-align:top}
+  thead th{background:var(--panel);font-family:var(--mono);font-size:.62rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600;white-space:nowrap}
+  td.n,th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .num{color:var(--accent-ink);font-weight:650}
+  .card{background:var(--surface);border:1px solid var(--hairline);border-radius:10px;padding:15px 17px;margin:9px 0}
+  .hl{background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 35%,var(--hairline));border-radius:10px;padding:15px 17px;margin:13px 0}
+  .hl .eyebrow{color:var(--accent-ink)}
+  .warnbox{background:var(--warn-soft);border-left:3px solid var(--warn);border-radius:6px;padding:11px 15px;margin:11px 0}
+  .badbox{background:var(--bad-soft);border-left:3px solid var(--bad);border-radius:6px;padding:11px 15px;margin:11px 0}
+  .goodbox{background:var(--good-soft);border-left:3px solid var(--good);border-radius:6px;padding:11px 15px;margin:11px 0}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px}
+  ul,ol{margin:.3rem 0 .8rem;padding-left:1.15rem} li{margin:.28rem 0}
+  .pill{display:inline-block;font-family:var(--mono);font-size:.6rem;font-weight:700;letter-spacing:.04em;padding:1px 6px;border-radius:4px;text-transform:uppercase;vertical-align:middle}
+  .p-fatal{background:var(--bad);color:#fff}.p-high{background:var(--warn);color:#fff}.p-med{background:#8A6D1B;color:#fff}
+  .tag{display:inline-block;font-family:var(--mono);font-size:.64rem;color:var(--accent-ink);border:1px solid color-mix(in srgb,var(--accent) 40%,var(--hairline));border-radius:20px;padding:1px 9px;margin:2px 3px 2px 0}
+  .foot{color:var(--faint);font-size:.76rem;margin-top:2.4rem;border-top:1px solid var(--hairline);padding-top:12px}
+  .kick{font-family:var(--mono);font-size:.7rem;color:var(--faint)}
+  @page{margin:13mm 12mm}
+  h2,h3{break-after:avoid} table{break-inside:auto} tr{break-inside:avoid}
+  @media(max-width:620px){.grid2,.grid3{grid-template-columns:1fr}}
+</style>
+<div class="wrap">
+
+  <span class="eyebrow">CALM-MS · Dossier de estado del arte y posicionamiento · 2026-08-17</span>
+  <h1>Dónde está la vanguardia — y dónde encaja CALM-MS en ella</h1>
+  <p class="sub lead">Revisión profunda del sector (academia + industria) fusionada con una auditoría adversarial rigurosa de nuestro propio trabajo, para trazar el camino a un paper de nivel mundial y una app de máximo nivel. Elaborado con 8 agentes de investigación con acceso web + 4 agentes adversariales (650k tokens), con verificación de las afirmaciones sobre nuestro código.</p>
+
+  <div class="hl">
+    <span class="eyebrow">Veredicto en una frase</span>
+    <p style="margin:.35em 0 0" class="lead">CALM-MS ocupa un nicho <strong>real y casi vacío</strong> — control distribution-free del FDR <em>a nivel de instancia-lesión</em> con un dial clínico — pero hoy es una <strong>composición + aplicación</strong> de maquinaria conformal ya publicada, validada en 19 casos de un solo experto, con la ventaja competitiva <strong>sin cablear en la app</strong>. Es publicable en MICCAI/UNSURE si se enmarca sin sobre-reclamar; NO alcanza aún ni un journal de métodos top ni una revista clínica. Los cuatro revisores adversariales coincidieron: <strong>bloquearían la publicación en su forma actual</strong>. Este documento traza exactamente qué lo convierte en vanguardia defendible.</p>
+  </div>
+
+  <h2>1 · La tesis que sobrevive al ataque</h2>
+  <p>Sometimos CALM-MS a cuatro revisores adversariales (metodológico, novedad/prior-art, clínico-regulatorio, producto). Tras descartar todo lo atacable, la contribución que <strong>queda en pie</strong> es estrecha pero legítima:</p>
+  <div class="card">
+    <p style="margin:0"><strong>«Primera formulación de la detección de lesiones de EM como <em>inferencia selectiva a nivel de instancia-lesión</em> — un FDR discreto sobre objetos-lesión con α ajustable por el clínico — acoplada a un scorer de lesión aprendido y calibrado, sobre un segmentador base que demostradamente sobre-segmenta.»</strong></p>
+  </div>
+  <p class="sub">Cada pilar por separado ya existe (ver §6), así que la novedad es de <strong>combinación + aplicación</strong>, no de invención de método. Enmarcarlo de otro modo es suicida ante un revisor. El contraste que nos distingue de los tres competidores conformal de 2025: ellos controlan pérdida esperada a nivel <strong>píxel/umbral</strong> (framing CRC/LTT) sobre confianza cruda; nosotros seleccionamos un <strong>conjunto discreto de lesiones</strong> vía p-valores conformes + BH (inferencia selectiva) con un scorer aprendido, en EM.</p>
+
+  <h2>2 · Panorama académico — eventos y benchmarks</h2>
+  <p class="sub">No competimos en Dice (lo dominan nnU-Net/FLAMeS). Competimos en el eje <strong>detección/precisión + incertidumbre calibrada</strong>. Estos son los foros y datos que importan para ese eje.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Benchmark / evento</th><th>Qué es</th><th class="n">Escala</th><th>Por qué nos importa</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Shifts 2022 — MS track</strong></td><td>Shift distribucional + incertidumbre; curvas error-retention</td><td class="n">MSSEG+ISBI+PubMRI+Lausanne</td><td>El espejo más cercano de nuestra tesis (predicción selectiva); validación multi-sitio lista</td></tr>
+      <tr><td><strong>ISBI-2015 Longitudinal</strong></td><td>Benchmark MS canónico, métricas lesion-wise</td><td class="n">19 suj · 2 raters</td><td>Coincide EXACTO con nuestra validación; portal abierto = número público head-to-head</td></tr>
+      <tr><td><strong>MSLesSeg / ICPR-2024</strong></td><td>Benchmark MS moderno (Nature Sci. Data 2025)</td><td class="n">75 pac · 115 series</td><td>Demuestra que el wrapper generaliza más allá de ISBI; multi-hospital</td></tr>
+      <tr><td><strong>MSSEG-2016</strong></td><td>Multi-centro, <strong>7 expertos</strong> por paciente</td><td class="n">53 pac · 4 escáneres</td><td>La evidencia multi-rater que <em>justifica</em> un dial de FDR (el acuerdo experto es ruidoso)</td></tr>
+      <tr><td><strong>MSSEG-2 (2021)</strong></td><td>Detección de lesiones NUEVAS (2 timepoints)</td><td class="n">100 pac</td><td>El régimen de máximo valor para FDR de instancia (conteos bajos) — objetivo del head longitudinal</td></tr>
+      <tr><td>BraTS 2025 (GoAT) · WMH-2017</td><td>Plantillas metodológicas + tracks de incertidumbre/shift</td><td class="n">—</td><td>Cómo reportar métricas lesion-wise y leaderboard; prueba de transferencia a tumor</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>Venues del paper:</strong> <span class="tag">MICCAI 2026 — Strasbourg (+ workshop UNSURE)</span> <span class="tag">IPMI 2027 (teoría)</span> <span class="tag">MIDL (scorer aprendido)</span> <span class="tag">ISBI 2026 — Londres</span> <span class="tag">SPIE 2026 (app/regulatorio)</span> <span class="tag">ACTRIMS/ECTRIMS (clínico)</span>. Oportunidad singular: <strong>ningún challenge de EM evalúa hoy FDR de instancia con α ajustable — podríamos <em>definir</em> esa métrica/track</strong>, no solo participar.</p>
+
+  <h2>3 · Panorama académico — papers, grupos, científicos</h2>
+
+  <h3>Papers que definen el terreno</h3>
+  <div class="scroll"><table>
+    <thead><tr><th>Rol</th><th>Papers</th><th>Uso para CALM-MS</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Base a envolver</strong></td><td>nnU-Net (Nature Methods 2021); <strong>FLAMeS</strong> (2025, pesos Zenodo, Dice 0.74/LTPR 0.84); LST-AI (2024, actual); SAMSEG; DeepLesionBrain</td><td>Cambiar LST-AI→FLAMeS; FLAMeS∪LST-AI = feature de acuerdo</td></tr>
+      <tr><td><strong>Competidor directo</strong></td><td><strong>ConfLUNet</strong> (2025) — instancia MS, unidades de lesión confluente (CLU)</td><td>Ataca nuestra extracción por componentes-conexas; adoptar sus definiciones CLU</td></tr>
+      <tr><td><strong>Espina estadística</strong></td><td><strong>Jin &amp; Candès</strong> (JMLR 2023, selección conformal); BH-FDR (1995) + PRDS (Bates 2023); Angelopoulos/Bates (RCPS, CRC, LTT); Barber (límites conditional); Ramdas (e-values, online-FDR)</td><td>Citar como PADRES del método; NO reclamar como propio</td></tr>
+      <tr><td><strong>Rigor de validación</strong></td><td>nnU-Net Revisited (MICCAI 2024)</td><td>Exige baselines fuertes + datos suficientes — nuestra guía para sobrevivir revisión</td></tr>
+      <tr><td><strong>Roadmap heads</strong></td><td>Temporal Difference Weighting, SegHeD+, LongiSeg (longitudinal); ALPaCA/RimNet (PRL/CVS); TimeLesSeg (contrast-agnostic+longitudinal)</td><td>Diseño candidato-luego-clasificador para heads futuros</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="grid2">
+    <div>
+      <h3>Grupos líderes (anillos de colaboración)</h3>
+      <ul class="sub">
+        <li><strong>Basel / Granziera</strong> — FLAMeS (nuestro base planeado) + PRL/CVS</li>
+        <li><strong>TUM-Munich / Wiestler, Menze, Rueckert</strong> — LST-AI + metodología conformal/UQ</li>
+        <li><strong>Inria Empenn / Commowick</strong> — MSSEG/MSSEG-2, datos multi-rater, métricas Anima</li>
+        <li><strong>NIH / Daniel Reich</strong> — autoridad PRL/CVS/7T</li>
+        <li><strong>Imperial-TUM / Rueckert; ETH / Konukoglu; Bern / Reyes</strong> — UQ y ambigüedad de anotación</li>
+        <li><strong>UCL / Barkhof; Amsterdam / Vrenken</strong> — criterios clínicos MAGNIMS, atrofia</li>
+        <li><strong>JHU IACL / Prince, Carass</strong> — dueños del ISBI-2015; NeuroPoly / Cohen-Adad (open-science)</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Científicos influyentes (dos ejes)</h3>
+      <p class="sub" style="margin-top:.2em"><strong>Conformal / inferencia selectiva:</strong> Vovk (fundador), Candès, <strong>Ying Jin</strong> (nuestro método exacto), Angelopoulos (puente conformal+imagen), Bates, Rina Barber (límites), Ramdas (e-values/online-FDR), Jing Lei &amp; Lihua Lei (split/weighted).</p>
+      <p class="sub"><strong>Imagen / EM:</strong> Isensee (nnU-Net), Billot (SynthSeg), Van Leemput (SAMSEG), Commowick (MSSEG), Barkhof (MAGNIMS), Reich/Granziera (PRL/CVS), Oguz &amp; Landman (Vanderbilt).</p>
+      <p class="sub"><strong>Puente real (raro):</strong> Angelopoulos es casi el único individuo en ambos mundos — de ahí la oportunidad. Co-autores naturales: Rueckert, Konukoglu, Reyes, Oguz, Glocker.</p>
+    </div>
+  </div>
+
+  <h3>Revistas indexadas — escalera de venue</h3>
+  <div class="scroll"><table>
+    <thead><tr><th>Revista</th><th class="n">IF (JCR 2025)</th><th>Encaje</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Medical Image Analysis (MedIA)</strong></td><td class="n num">~14.0</td><td>PRIMARIA (método): garantía instancia-FDR, exchangeability, generalidad multi-base. Publicar tras FLAMeS + 2º dataset</td></tr>
+      <tr><td>IEEE TMI</td><td class="n">~9.8</td><td>Backup de método, mucho ablation + generalización multi-dataset</td></tr>
+      <tr><td>Radiology: AI</td><td class="n num">20.1</td><td>Techo alto (clínico): requiere test multi-sitio + reader study MRMC</td></tr>
+      <tr><td>npj Digital Medicine</td><td class="n">~15.1</td><td>Ideal para el ángulo «AI confiable + dispositivo Class C»; requiere estudio clínico</td></tr>
+      <tr><td>Nature Machine Intelligence</td><td class="n">~29.8</td><td>Solo si se enmarca como framework general de selección conformal (MS = caso)</td></tr>
+      <tr><td>MSJ / MSARD / Eur. Radiol.</td><td class="n">~4–6</td><td>Backup de comunidad clínica (credibilidad de adopción)</td></tr>
+    </tbody>
+  </table></div>
+  <p class="sub"><strong>Estrategia de dos papers:</strong> (1) métodos — MICCAI → MedIA/TMI — dueño de la garantía de FDR de instancia; (2) traslacional — Radiology:AI / npj — dueño del reader study del dial + app Class C + data flywheel. Separar método de evidencia clínica maximiza el rendimiento.</p>
+
+  <h2>4 · Panorama industria — competidores y el hueco preciso</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>Producto (empresa)</th><th>Regulatorio</th><th>Fortaleza</th><th>¿Dial FDR / incertidumbre?</th></tr></thead>
+    <tbody>
+      <tr><td><strong>icobrain ms</strong> (icometrix/GE)</td><td>FDA K192130, CE</td><td>Líder validado; BVL/atrofia longitudinal + reporte</td><td>No</td></tr>
+      <tr><td><strong>Pixyl.Neuro.MS</strong></td><td>FDA 2023, CE IIa</td><td>Competidor MS más alineado; clasifica lesión estable/nueva/crece; «rechaza FP»</td><td>No (heurística oculta)</td></tr>
+      <tr><td><strong>NeuroQuant MS / LesionQuant</strong> (Cortechs)</td><td>FDA, CE</td><td>Estándar atrofia+lesión; DB normativa edad+sexo (miles de scans); canal Philips</td><td>No</td></tr>
+      <tr><td>cNeuro cMRI (Combinostics)</td><td>FDA, CE-MDR</td><td>Atrofia + conteo FLAIR + T1-hipo; correlación EDSS</td><td>No</td></tr>
+      <tr><td>mdbrain (mediaire) · AI-Rad (Siemens) · Smart Quant (Philips)</td><td>CE / OEM</td><td>Lesiones nuevas/crecientes; distribución por canal de escáner</td><td>No</td></tr>
+      <tr><td>Jung Diagnostics</td><td>CE</td><td>Nicho: lesión activa (realce) — punto ciego del resto</td><td>No (tuned a precisión 0.91)</td></tr>
+    </tbody>
+  </table></div>
+  <div class="hl">
+    <span class="eyebrow">El hueco de producto — nuestra cuña</span>
+    <p style="margin:.3em 0 0">Todos entregan una máscara binaria FIJA a un trade-off precisión/sensibilidad que el clínico <strong>no ve ni puede mover</strong>. El mercado ya probó la demanda de supresión de FP (Pixyl «rechaza FP», Jung tunea precisión) pero SIEMPRE como heurística oculta sin confianza expuesta. <strong>Ningún producto aprobado ofrece un dial de precisión con garantía ni confianza por lesión.</strong> Esa es la cuña — pero solo gana al neurólogo si aterriza sobre un producto con las <em>features de mesa</em> (§7).</p>
+  </div>
+
+  <h2>5 · Veredicto adversarial — qué nos rompe hoy</h2>
+  <p class="sub">Los cuatro revisores bloquearían la publicación. Estos son los hallazgos de severidad <span class="pill p-fatal">fatal</span> y <span class="pill p-high">high</span>, sin edulcorar. Los tres últimos de producto están <strong>verificados en nuestro código</strong>.</p>
+
+  <h3>Validez metodológica</h3>
+  <div class="badbox"><p style="margin:0"><span class="pill p-fatal">fatal</span> <strong>La unidad de intercambiabilidad no está bien planteada.</strong> Los candidatos están agrupados dentro de cada caso (mismo escáner, anatomía, scorer congelado sobre una imagen). Tratar ~62 candidatos/caso como intercambiables infla el N de calibración efectivo de ~18 (casos) a ~1000+ (candidatos) → p-valores <em>anti-conservadores</em>. <strong>Fix:</strong> conformal Mondrian/condicional-por-caso, o e-values, y reportar FDP por-caso con bootstrap a nivel de CASO.</p></div>
+  <div class="badbox"><p style="margin:0"><span class="pill p-fatal">fatal</span> <strong>El emparejamiento TP «por cualquier voxel» sabotea el null.</strong> Con <span class="mono">min_overlap=0</span>, cinco fragmentos que solapan una misma lesión GT cuentan los cinco como TP → la sobre-segmentación (¡lo que decimos controlar!) se re-etiqueta como acierto y nunca entra al null de falsos. El null se construye solo con FP «limpios» de solape cero, distinto de la población de test. <strong>Fix:</strong> asignación 1-GT-a-1-candidato (húngaro/greedy) + umbral de solape mínimo; reportar con ≥1vox, ≥10%, mayoría.</p></div>
+  <div class="warnbox"><p style="margin:0"><span class="pill p-high">high</span> <strong>«Se cumple en todo α» es sospechoso, no tranquilizador.</strong> El FDR es una esperanza; para un procedimiento ajustado el FDP realizado debería a veces superar α por azar. Cumplir uniformemente sugiere conservadurismo (pierde potencia) o promediar 19 folds correlacionados y confundirlo con la garantía. Barrer el grid post-hoc también viola simultaneidad. <strong>Fix:</strong> pre-registrar un α clínico único, o adoptar <em>everywhere-valid FDP bounds</em> (arXiv 2605.20726); demostrar E[FDP]≤α con simulación semi-sintética.</p></div>
+  <div class="warnbox"><p style="margin:0"><span class="pill p-high">high</span> <strong>PRDS no transfiere entre folds con nulls distintos</strong>; <span class="pill p-med">med</span> la <strong>calibración isotónica es un NO-OP para la garantía</strong> (monótona → no cambia el ranking ni la selección; es solo para la confianza mostrada — nuestro código ya lo documenta así, pero hay que ablacionarlo y no presentarlo como carga de validez).</p></div>
+
+  <h3>Novedad y prior-art</h3>
+  <div class="scroll"><table>
+    <thead><tr><th>Amenaza</th><th>Qué colisiona</th><th>Nuestra frontera defendible</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Dai et al. 2504.04482</strong> (2025)</td><td>Título idéntico: «FDR en segmentación de instancia médica vía conformal»</td><td>Ellos: CRC/pérdida-esperada a nivel píxel sobre confianza cruda, tumor. Nosotros: BH selectivo a nivel instancia + scorer aprendido, EM. Retitular y citar al frente</td></tr>
+      <tr><td><strong>Jin &amp; Candès</strong> (JMLR 2023)</td><td>Es EXACTAMENTE nuestro p-valor+BH</td><td>Instanciamos, no inventamos. Escribirlo explícito</td></tr>
+      <tr><td><strong>NCCS 2606.22336</strong> (2026)</td><td>«Null-Calibrated Conformal Selection» = nuestro null de conocidos-falsos + score de membresía</td><td>Citar como forma general; nuestro null es la instanciación en EM</td></tr>
+      <tr><td>OptCS 2411.17983 · CLS 2510.17897 · CONSEMA/2511.15406</td><td>Score aprendido+conformal / FNR-dual / FP a nivel imagen</td><td>Acotar el claim del scorer a las features concretas; CLS es el DUAL (recall) de nuestro control de precisión</td></tr>
+      <tr><td>CIB (MICCAI 2025) · Nair (MedIA 2020)</td><td>Reducen FDR de lesión MS sin garantía</td><td>Baselines head-to-head. Somos «lo que estos son cuando exiges una garantía finita con α ajustable»</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Relevancia clínica</h3>
+  <div class="badbox"><p style="margin:0"><span class="pill p-fatal">fatal</span> <strong>Optimizamos el blanco equivocado.</strong> El dial controla precisión sobre la máscara transversal total — cantidad que la EM apenas usa para decidir. Lo que mueve tratamiento son lesiones NUEVAS/crecientes y realzantes en el tiempo, atrofia cerebral/GM, recaídas, EDSS/PIRA — todo roadmap o ausente. Y compramos precisión gastando sensibilidad justo donde el error caro es la <em>omisión</em> (diagnóstico, fallo de tratamiento). A sensibilidad 0.14–0.30 ninguna clínica lo despliega. <strong>Fix:</strong> reubicar la garantía al régimen longitudinal de lesión-nueva (online-FDR/e-values); reencuadrar el entregable como <em>overlay de confianza de segundo lector de ALTA sensibilidad</em>, no un supresor.</p></div>
+  <div class="warnbox"><p style="margin:0"><span class="pill p-high">high</span> <strong>La garantía es marginal, no por-scan</strong> — pero la UI del «dial» invita a leerla como «≤20% de las lesiones de ESTE paciente son falsas», que la estadística no da. En Class C es un peligro de etiquetado (IEC 62366/ISO 14971). <span class="pill p-high">high</span> El «falso» se define contra <strong>un solo rater</strong> (κ inter-observador ~0.7): garantizamos acuerdo-con-un-experto, no verdad. <span class="pill p-high">high</span> Un <strong>α continuo libre</strong> convierte un punto de operación bloqueado en un parámetro de riesgo del usuario → bajo FDA PCCP hay que validar todo el rango. <strong>Fix:</strong> presets validados (alta-sensibilidad/balanceado/alta-precisión) con default bloqueado; monitor de OOD/exchangeability; multi-rater (MSSEG-2016).</p></div>
+
+  <h3>Producto — verificado en el código</h3>
+  <div class="badbox"><p style="margin:0"><span class="pill p-fatal">fatal</span> <strong>La cuña no está en el producto.</strong> <span class="mono">conformal_lesion_fdr / calm_ms_inference / calibrated_lesion_scorer / phase2_lesion_rescoring</span> existen solo como servicios offline: grep de rutas de API por <span class="mono">conformal|calm_ms|fdr|alpha|precision</span> → <strong>cero</strong>. No hay slider de α ni overlay keep/needs-review; la «confianza» que pinta el viewer es el mapa de probabilidad crudo, no la confianza conformal. El único diferenciador que haría la app de nivel mundial es un harness invisible al clínico.</p></div>
+  <div class="grid2">
+    <div class="warnbox"><p style="margin:0"><span class="pill p-high">high</span> <strong>Sin vuelta a PACS.</strong> <span class="mono">dicomweb</span> solo importa (QIDO/WADO); cero STOW/DICOM-SR/GSPS. La puerta de adopción radiológica está sin construir.</p></div>
+    <div class="warnbox"><p style="margin:0"><span class="pill p-high">high</span> <strong>Longitudinal sin co-registro.</strong> <span class="mono">compare_timepoints</span> exige forma idéntica y diffea dos máscaras independientes → fabrica lesiones «nuevas» por desalineación. Falta registro rígido + QA.</p></div>
+    <div class="warnbox"><p style="margin:0"><span class="pill p-high">high</span> <strong>Volumetría no funcional en prod.</strong> Depende de sidecar SynthSeg «not configured» por defecto (inviable en 2CPU/2GB); <span class="mono">patient_sex</span> se acepta pero <strong>nunca se usa</strong> en el percentil (bug); sin GM ni PBVC registrado.</p></div>
+    <div class="warnbox"><p style="margin:0"><span class="pill p-med">med</span> <strong>PRL/CVS son checkboxes</strong>, no detectores; <span class="pill p-med">med</span> el <strong>data flywheel no existe</strong> como loop (no hay endpoint que capture correcciones del radiólogo como deltas etiquetados).</p></div>
+  </div>
+
+  <h2>6 · Unificación — el programa vanguardista coherente</h2>
+  <p class="lead">La pregunta que pediste responder: cómo <strong>unir el conocimiento disperso en armonía con lo que ya tenemos</strong>. La respuesta es que cada crítica adversarial mapea a una pieza publicada del SOTA que la resuelve. CALM-MS deja de ser «conformal aplicado a EM» y se convierte en un programa con cuatro contribuciones encadenadas, cada una defendible:</p>
+  <div class="scroll"><table>
+    <thead><tr><th>#</th><th>Contribución (lo nuevo en armonía)</th><th>Une</th><th>Neutraliza la crítica</th></tr></thead>
+    <tbody>
+      <tr><td>C1</td><td><strong>FDR de instancia-lesión</strong> vía selección conformal, sobre un <strong>generador de candidatos consciente de confluencia (CLU)</strong></td><td>Jin&amp;Candès + ConfLUNet</td><td>Unidad-null bien planteada; ataca sobre-segmentación en su origen real</td></tr>
+      <tr><td>C2</td><td><strong>Scorer de lesión aprendido</strong> (features estructurales + <strong>acuerdo de ensemble FLAMeS∪LST-AI</strong> + embeddings de un <strong>foundation encoder 3D</strong>)</td><td>OptCS/NCCS + FLAMeS + BrainSegFounder</td><td>Sube sensibilidad@FDR a banda clínica; scorer justificado, no cosmético</td></tr>
+      <tr><td>C3</td><td><strong>Garantía transferible entre escáneres</strong>: conformal Mondrian/ponderado + <strong>ComBat sobre features</strong> + augmentación <strong>GIN/RandConv</strong>; <em>everywhere-valid FDP</em> para el dial post-hoc</td><td>Barber/Lei + ComBat + Ramdas</td><td>Exchangeability bajo shift; dial de α riguroso; per-scan/condicional</td></tr>
+      <tr><td>C4</td><td><strong>Head longitudinal de lesión-nueva con online-FDR</strong> (registro rígido → difference-weighting → selección conformal secuencial)</td><td>MSSEG-2 + TDW/SegHeD + e-values</td><td>Reubica la garantía al régimen donde un FP cuesta un cambio de DMT real</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>La contribución de más alto techo (novedad genuina, confirmada como no publicada):</strong> C3 — <em>«un FDR de lesión distribution-free y transferible entre sitios»</em>, es decir un null de calibración federado/armonizado que mantiene la garantía bajo cambio de escáner. Nadie lo ha hecho; encaja con nuestra realidad Class C (privacidad, multi-centro) y es material de MedIA/Nature MI.</p>
+
+  <h2>7 · Roadmap concreto — método, paper, app</h2>
+  <div class="grid3">
+    <div class="card">
+      <h3 style="margin-top:0">Método (validez)</h3>
+      <ol class="sub" style="padding-left:1rem">
+        <li>Matching 1-GT-1-cand + solape mínimo; reconstruir el null</li>
+        <li>Conformal condicional-por-caso (Mondrian) + bootstrap a nivel caso</li>
+        <li>Candidatos CLU (ConfLUNet); sensibilidad al umbral</li>
+        <li><em>Everywhere-valid FDP</em> / e-BH para el dial y los folds</li>
+        <li>Ablación isotónica (mostrar selección idéntica)</li>
+        <li>Simulación semi-sintética para E[FDP]≤α</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Datos &amp; paper</h3>
+      <ol class="sub" style="padding-left:1rem">
+        <li>Swap base LST-AI→<strong>FLAMeS</strong> + feature de acuerdo (GPU, cost-gated)</li>
+        <li>Correr en <strong>ISBI-2015 + MSLesSeg + Shifts-MS</strong></li>
+        <li>Multi-rater: techo inter-observador (MSSEG-2016)</li>
+        <li>Baselines head-to-head: CIB, Nair</li>
+        <li>Experimento de shift escáner/sitio</li>
+        <li>MICCAI/UNSURE ahora → MedIA tras FLAMeS+2º dataset</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">App (máximo nivel)</h3>
+      <ol class="sub" style="padding-left:1rem">
+        <li><strong>Cablear la cuña</strong>: endpoint conformal + slider α + overlay keep/needs-review con la garantía inline</li>
+        <li>Registro rígido + QA en longitudinal</li>
+        <li>STOW-RS: DICOM-SR + overlay a PACS</li>
+        <li>Volumetría honesta (SynthSeg real o quitar el claim; fix bug sexo)</li>
+        <li>Endpoint de captura de correcciones (flywheel)</li>
+        <li>Presets validados en vez de α libre (Class C)</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="goodbox">
+    <span class="eyebrow" style="color:var(--good)">La secuencia que recomiendo</span>
+    <p style="margin:.3em 0 0">(1) <strong>Cablear la cuña en la app</strong> — es lo único que hoy la vuelve de nivel mundial y no cuesta GPU. (2) <strong>Fixes de validez del método</strong> (matching + Mondrian + everywhere-valid) — baratos, en CPU, y neutralizan los <span class="pill p-fatal">fatal</span> metodológicos. (3) <strong>Swap a FLAMeS + validación pública</strong> (cost-gated, con el mismo blindaje de la Fase 1) — sube la sensibilidad a banda clínica y responde a la crítica de datos. (4) Paper MICCAI/UNSURE con el framing honesto de §1. El head longitudinal (C4) es el gran salto clínico y de novedad, pero va después.</p>
+  </div>
+
+  <p class="foot">CALM-MS = Conformal, cAlibrated Lesion Mapping for MS. Dossier generado el 2026-08-17 fusionando un barrido SOTA multi-agente con acceso web (eventos, papers, grupos, científicos, revistas, industria) y una crítica adversarial de 4 ángulos, con verificación en el código de las afirmaciones de producto. Las cifras de impacto (JCR 2025) deben confirmarse en Clarivate antes de citarlas en un cover letter. Cómputo del análisis: 12 agentes, 650k tokens, cero costo de infraestructura externa.</p>
+</div>
