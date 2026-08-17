@@ -398,10 +398,20 @@ exchangeability — an on-grid out-of-distribution map cannot be detected from
 geometry alone and empirically voids the guarantee (realized FDR up to ~8× target).
 **A v1 OOD monitor now closes the score-regime axis** (`conformal_ood.assess_ood`
 withholds the guarantee, fail-closed, when the candidate-score distribution is far
-from the calibration envelope; the null asset ships a per-case OOD reference).
-**Still pending for clinical enablement:** validating the OOD monitor's own
-sensitivity/specificity on real scanner-shift + mimic cohorts, a base-model-bound
-probability producer, and the IEC 62366-1 summative usability study (SRS Addendum A).
+from the calibration envelope; the null asset ships a per-case OOD reference). The
+monitor was **validated, not assumed** (`scripts/calm-ms/validate_ood_monitor.py`,
+record `assets/ood_validation_record.json`): a naive max-robust-z statistic was found
+inadequate (to catch a +6σ score-regime shift it had to withhold the guarantee on
+~9% of legitimate cases), so the statistic was replaced with a covariance-aware
+**Mahalanobis** distance and the threshold set from the sweep (5.0). At that operating
+point the leave-one-case-out false-OOD rate on the 145 calibration cases is ~2% (a
+fail-closed, utility-only cost) and a +6σ shift is caught ~100% of the time.
+**Documented residual limitation:** the monitor is a GROSS-shift backstop — a subtle
+(~+3σ) shift is NOT reliably caught (detection ~25%). **Still pending for clinical
+enablement:** validating the monitor's sensitivity/specificity on REAL scanner-shift +
+mimic cohorts (the sweep above uses synthetic shifts of the calibration cohort), a
+base-model-bound probability producer, and the IEC 62366-1 summative usability study
+(SRS Addendum A).
 
 *End of Risk Management File*
 

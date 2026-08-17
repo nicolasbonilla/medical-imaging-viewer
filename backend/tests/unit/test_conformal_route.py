@@ -37,11 +37,24 @@ def _ball(shape, c, r):
     return (zz - c[0]) ** 2 + (yy - c[1]) ** 2 + (xx - c[2]) ** 2 <= r ** 2
 
 
-def _prob_bytes(shape, blobs=((60, 90, 90, 0.95), (90, 130, 100, 0.7)), spacing=(1.0, 1.0, 1.0)):
+def _prob_bytes(shape, spacing=(1.0, 1.0, 1.0)):
+    """A FLAMeS-like probability map on `shape` whose candidate-score summary sits
+    INSIDE the calibration envelope (~32 confident blobs), so the OOD monitor treats
+    on-grid maps as in-distribution and the guarantee applies. Off-grid shapes (e.g.
+    100³ provenance tests) are rejected before the monitor runs, so a partial fill is
+    fine there."""
     p = np.full(shape, 0.02, dtype=np.float32)
-    for z, y, x, v in blobs:
-        if z < shape[0] and y < shape[1] and x < shape[2]:
-            p[_ball(shape, (z, y, x), 3)] = v
+    scores = np.linspace(0.86, 0.98, 32)
+    k = 0
+    for z in range(40, 150, 16):
+        for y in range(45, 190, 35):
+            if k >= len(scores):
+                break
+            if z + 3 < shape[0] and y + 3 < shape[1] and 90 + 3 < shape[2]:
+                p[_ball(shape, (z, y, 90), 3)] = float(scores[k])
+                k += 1
+        if k >= len(scores):
+            break
     img = nib.Nifti1Image(p, np.eye(4)); img.header.set_zooms(spacing)
     return img.to_bytes()
 

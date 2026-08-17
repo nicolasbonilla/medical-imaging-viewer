@@ -1,0 +1,130 @@
+{
+  "n_cases": 145,
+  "shift_grid_sd": [
+    2,
+    3,
+    4,
+    6
+  ],
+  "max_z": {
+    "loo_p99": 11.71,
+    "loo_max": 15.76,
+    "sweep": [
+      {
+        "threshold": 4,
+        "false_ood_rate": 0.09,
+        "detect_+2SD": 0.09,
+        "detect_+3SD": 0.317,
+        "detect_+4SD": 0.683,
+        "detect_+6SD": 0.986
+      },
+      {
+        "threshold": 5,
+        "false_ood_rate": 0.062,
+        "detect_+2SD": 0.062,
+        "detect_+3SD": 0.069,
+        "detect_+4SD": 0.297,
+        "detect_+6SD": 0.924
+      },
+      {
+        "threshold": 6,
+        "false_ood_rate": 0.055,
+        "detect_+2SD": 0.055,
+        "detect_+3SD": 0.055,
+        "detect_+4SD": 0.062,
+        "detect_+6SD": 0.648
+      },
+      {
+        "threshold": 7,
+        "false_ood_rate": 0.048,
+        "detect_+2SD": 0.048,
+        "detect_+3SD": 0.048,
+        "detect_+4SD": 0.048,
+        "detect_+6SD": 0.297
+      },
+      {
+        "threshold": 8,
+        "false_ood_rate": 0.028,
+        "detect_+2SD": 0.028,
+        "detect_+3SD": 0.028,
+        "detect_+4SD": 0.028,
+        "detect_+6SD": 0.034
+      },
+      {
+        "threshold": 10,
+        "false_ood_rate": 0.021,
+        "detect_+2SD": 0.021,
+        "detect_+3SD": 0.021,
+        "detect_+4SD": 0.021,
+        "detect_+6SD": 0.021
+      },
+      {
+        "threshold": 12,
+        "false_ood_rate": 0.014,
+        "detect_+2SD": 0.014,
+        "detect_+3SD": 0.014,
+        "detect_+4SD": 0.014,
+        "detect_+6SD": 0.014
+      }
+    ]
+  },
+  "mahalanobis": {
+    "loo_p99": 6.25,
+    "loo_max": 7.28,
+    "sweep": [
+      {
+        "threshold": 3,
+        "false_ood_rate": 0.179,
+        "detect_+2SD": 0.676,
+        "detect_+3SD": 0.924,
+        "detect_+4SD": 0.986,
+        "detect_+6SD": 1.0
+      },
+      {
+        "threshold": 4,
+        "false_ood_rate": 0.055,
+        "detect_+2SD": 0.152,
+        "detect_+3SD": 0.703,
+        "detect_+4SD": 0.945,
+        "detect_+6SD": 1.0
+      },
+      {
+        "threshold": 5,
+        "false_ood_rate": 0.021,
+        "detect_+2SD": 0.048,
+        "detect_+3SD": 0.255,
+        "detect_+4SD": 0.779,
+        "detect_+6SD": 1.0
+      },
+      {
+        "threshold": 6,
+        "false_ood_rate": 0.014,
+        "detect_+2SD": 0.028,
+        "detect_+3SD": 0.048,
+        "detect_+4SD": 0.434,
+        "detect_+6SD": 0.972
+      },
+      {
+        "threshold": 7,
+        "false_ood_rate": 0.014,
+        "detect_+2SD": 0.007,
+        "detect_+3SD": 0.021,
+        "detect_+4SD": 0.062,
+        "detect_+6SD": 0.897
+      },
+      {
+        "threshold": 8,
+        "false_ood_rate": 0.0,
+        "detect_+2SD": 0.007,
+        "detect_+3SD": 0.014,
+        "detect_+4SD": 0.014,
+        "detect_+6SD": 0.669
+      }
+    ]
+  },
+  "chosen": {
+    "statistic": "mahalanobis",
+    "threshold": 5,
+    "scope": "gross-shift backstop; +6SD detected >=0.95, +3SD NOT claimed"
+  }
+}

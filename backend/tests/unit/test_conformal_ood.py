@@ -5,7 +5,7 @@ guarantee (fail closed) on an OOD case while still returning the additive tiers.
 import numpy as np
 import pytest
 
-from app.services.conformal_ood import assess_ood, case_features, OOD_THRESHOLD
+from app.services.conformal_ood import assess_ood, case_features, _mahalanobis, OOD_THRESHOLD
 from app.services.conformal_null_asset import get_null_asset, ConformalAssetError
 
 try:
@@ -19,13 +19,20 @@ except ConformalAssetError:
 pytestmark = pytest.mark.skipif(not _OK, reason="null asset / OOD reference not built")
 
 
-def test_in_distribution_case_not_flagged():
-    # A case whose summary sits at the calibration median must not be OOD.
+def test_center_is_in_distribution():
+    # The calibration median feature vector is the envelope centre: distance ~0.
     med = np.median(_REF, axis=0)
-    # reconstruct plausible scores matching that median feature vector loosely:
-    v = assess_ood(np.full(int(round(med[1] and 40 or 40)), float(med[1])), _REF)
-    # constant scores give q10=q50=q90=mean; still within a few robust-SD of the envelope
-    assert v.distance < OOD_THRESHOLD * 2  # sanity: near-centre is not grossly far
+    assert _mahalanobis(med, _REF) < OOD_THRESHOLD
+
+
+def test_specificity_most_calibration_cases_in_distribution():
+    # Leave-one-out: the validated statistic must NOT flag the bulk of the 145
+    # legitimate in-distribution cases (validation measured ~2% false-OOD at thr 5).
+    flagged = sum(
+        _mahalanobis(_REF[i], np.delete(_REF, i, axis=0)) > OOD_THRESHOLD
+        for i in range(_REF.shape[0])
+    )
+    assert flagged / _REF.shape[0] <= 0.05
 
 
 def test_gross_score_shift_is_ood():

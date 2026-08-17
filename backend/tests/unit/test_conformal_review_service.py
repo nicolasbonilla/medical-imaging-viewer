@@ -31,11 +31,21 @@ def _ball(shape, center, radius):
 
 
 def _synthetic_prob():
-    """A probability volume on the null's exact grid with a few confident blobs."""
+    """A probability volume on the null's exact grid whose candidate-score summary sits
+    INSIDE the FLAMeS calibration envelope (~32 confident blobs, scores ~0.86–0.98), so
+    the OOD monitor treats it as in-distribution and the guarantee applies. Validated:
+    Mahalanobis distance ~2.3 << threshold 5.0 (see validate_ood_monitor.py)."""
     p = np.full(_GRID, 0.02, dtype=np.float32)
-    for c, val in [((60, 90, 90), 0.95), ((60, 130, 90), 0.80), ((90, 90, 120), 0.62)]:
-        core = _ball(_GRID, c, 3)
-        p[core] = val
+    scores = np.linspace(0.86, 0.98, 32)
+    k = 0
+    for z in range(40, 150, 16):
+        for y in range(45, 190, 35):
+            if k >= len(scores):
+                break
+            p[_ball(_GRID, (z, y, 90), 3)] = float(scores[k])
+            k += 1
+        if k >= len(scores):
+            break
     return p
 
 
