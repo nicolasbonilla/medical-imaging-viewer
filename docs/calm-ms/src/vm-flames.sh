@@ -40,7 +40,7 @@ mkdir -p $nnUNet_raw $nnUNet_preprocessed $nnUNet_results
 echo "=== [1/5] deps + nnU-Net v2 ==="
 python3 -m pip install -q --upgrade pip 2>&1 | tail -1
 if [ "$DEVICE" = "cpu" ]; then TIDX="--index-url https://download.pytorch.org/whl/cpu"; else TIDX=""; fi
-python3 -m pip install -q torch $TIDX 2>&1 | tail -2
+python3 -m pip install -q torch torchvision $TIDX 2>&1 | tail -2   # both from same index -> matching ABI (fixes torchvision::nms)
 python3 -m pip install -q nnunetv2 nibabel 2>&1 | tail -2
 python3 -c "import numpy,torch,nibabel;print('deps ok: numpy',numpy.__version__,'torch',torch.__version__)" || echo "DEP IMPORT FAILED"
 echo "nnUNetv2_predict=$(which nnUNetv2_predict || echo MISSING)"; log
