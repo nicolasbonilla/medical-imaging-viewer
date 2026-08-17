@@ -14,6 +14,7 @@ RATE=$(meta attributes/hourly-rate);   RATE=${RATE:-0.22}
 MACHINE=$(meta attributes/machine-desc); MACHINE=${MACHINE:-n1-standard-4+P4}
 PFLAGS=$(meta attributes/predict-flags); PFLAGS=${PFLAGS:--f 0 --disable_tta}
 DEVICE=$(meta attributes/device); DEVICE=${DEVICE:-cuda}
+OFFSET=$(meta attributes/case-offset); OFFSET=${OFFSET:-0}   # for chunked parallel full run
 BK="gs://brain-mri-medical-images/calm-flames"
 START=$(date +%s)
 
@@ -52,9 +53,9 @@ unzip -q -o $W/flames.zip -d $nnUNet_results/
 ls -R $nnUNet_results | head -20; log
 
 echo "=== [3/5] fetch datasets + assemble nnU-Net input (FLAIR as _0000) ==="
-python3 - "$LIMIT" <<'PY'
+python3 - "$LIMIT" "$OFFSET" <<'PY'
 import os, sys, glob, subprocess, shutil, json
-LIMIT = int(sys.argv[1]); W="/w"; IN=f"{W}/in"
+LIMIT = int(sys.argv[1]); OFF = int(sys.argv[2]); W="/w"; IN=f"{W}/in"
 gt_map = {}   # caseid -> gt path (kept for later)
 def add(caseid, flair, gt):
     dst=os.path.join(IN, f"{caseid}_0000.nii.gz"); shutil.copy(flair, dst); gt_map[caseid]=gt
@@ -78,7 +79,7 @@ for split in root:
             if fl and gt: add(f"mslesseg_{os.path.basename(pat)}_{os.path.basename(tp)}", fl[0], gt[0])
 
 cases=sorted(gt_map)
-if LIMIT>0: cases=cases[:LIMIT]
+cases = cases[OFF:] if LIMIT<=0 else cases[OFF:OFF+LIMIT]   # chunk = [OFFSET, OFFSET+LIMIT)
 # keep only selected in IN, drop the rest
 for f in glob.glob(f"{IN}/*_0000.nii.gz"):
     cid=os.path.basename(f)[:-len("_0000.nii.gz")]
