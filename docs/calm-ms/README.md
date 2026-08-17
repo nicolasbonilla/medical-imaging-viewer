@@ -29,12 +29,15 @@ sensibilidad cae al controlar el FDR → motiva el backbone propio (Fase 2).
 - `backend/app/services/conformal_experiment.py` — experimento leave-one-case-out (FDR-cobertura).
 - `backend/app/services/segmentation_benchmark.py` — agregación + IC bootstrap + micro/macro F1.
 
-**Scripts (`scripts/`), orden de uso:**
+**Scripts (`scripts/calm-ms/`), orden de uso:**
 1. `pull_cohort_from_app.py` — baja de la app las imágenes `desc-preproc` (1mm, cerebro) + máscaras expertas → `cohort/`.
 2. `run_lstai_cohort.py` — corre LST-AI (Docker `jqmcginnis/lst-ai:v1.2.0`) → mapas de probabilidad. **Requiere ~32 GB RAM** (se corrió en VM de GCP; ver `src/vm-startup.sh`).
 3. `warp_cohort_probs.py` — reslice del prob MNI → espacio del experto (greedy, afín inverso).
 4. `run_conformal_experiment.py` — el experimento → tabla FDR-cobertura.
    Auxiliares: `probe_study.py`, `investigate_duplicates.py`, `benchmark_expert_vs_ai.py`, `inventory_expert_masks.py`.
+
+Todos en `scripts/calm-ms/`. Ejecutar desde la raíz del repo, p. ej.
+`python scripts/calm-ms/run_conformal_experiment.py --data-dir ./cohort`.
 
 ## ⚠️ Datos (NO versionados)
 

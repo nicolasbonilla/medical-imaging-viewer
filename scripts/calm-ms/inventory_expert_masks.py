@@ -16,11 +16,11 @@ Run (from the repo root or scripts/):
     # Option A — pre-minted admin bearer token (preferred; no password in shell)
     export MSTOOL_API_BASE="https://brain-mri-7bp6oqdu7a-uc.a.run.app/api/v1"
     export MSTOOL_ADMIN_TOKEN="<bearer>"
-    python scripts/inventory_expert_masks.py --out inventory_manifest.json
+    python scripts/calm-ms/inventory_expert_masks.py --out inventory_manifest.json
 
     # Option B — username/password login (password from env, never inline)
     export ADMIN_DEFAULT_PASSWORD="<admin password>"
-    python scripts/inventory_expert_masks.py
+    python scripts/calm-ms/inventory_expert_masks.py
 """
 import argparse
 import json
@@ -31,7 +31,7 @@ import requests
 
 # Make the backend package importable so we can reuse the tested inventory logic.
 _HERE = os.path.dirname(os.path.abspath(__file__))
-_BACKEND = os.path.join(_HERE, "..", "backend")
+_BACKEND = os.path.join(_HERE, "..", "..", "backend")
 if _BACKEND not in sys.path:
     sys.path.insert(0, _BACKEND)
 

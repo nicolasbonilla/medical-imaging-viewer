@@ -5,8 +5,8 @@ Reveals how the preprocessed brain-only 1mm images are named/described in the
 app, so the cohort pull can select them correctly. Cheap: metadata only, no NIfTI
 downloads. Admin token via MSTOOL_ADMIN_TOKEN.
 
-    python scripts/probe_study.py            # first Expert Rater 01 case
-    python scripts/probe_study.py --study <study_id>
+    python scripts/calm-ms/probe_study.py            # first Expert Rater 01 case
+    python scripts/calm-ms/probe_study.py --study <study_id>
 """
 import argparse
 import os
@@ -15,7 +15,7 @@ import sys
 import requests
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-_BACKEND = os.path.join(_HERE, "..", "backend")
+_BACKEND = os.path.join(_HERE, "..", "..", "backend")
 if _BACKEND not in sys.path:
     sys.path.insert(0, _BACKEND)
 try:

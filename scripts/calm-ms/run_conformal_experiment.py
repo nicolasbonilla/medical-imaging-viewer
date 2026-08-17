@@ -13,7 +13,7 @@ Inputs (either):
   --manifest cases.csv     columns: case,prob_path,gt_path
   --data-dir DIR           expects {case}_prob.nii.gz + {case}_gt.nii.gz per case
 
-    python scripts/run_conformal_experiment.py --data-dir ./cohort \
+    python scripts/calm-ms/run_conformal_experiment.py --data-dir ./cohort \
         --alphas 0.05,0.1,0.2,0.3 --threshold 0.5 --out experiment.json
 """
 import argparse
@@ -27,7 +27,7 @@ import numpy as np
 import nibabel as nib
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-_BACKEND = os.path.join(_HERE, "..", "backend")
+_BACKEND = os.path.join(_HERE, "..", "..", "backend")
 if _BACKEND not in sys.path:
     sys.path.insert(0, _BACKEND)
 

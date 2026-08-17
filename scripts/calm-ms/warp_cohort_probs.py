@@ -10,7 +10,7 @@ Per case in --dir it expects: {case}_flair.nii.gz (ref grid), {case}_prob_mni.ni
 {case}_flair2mni.mat  -> writes {case}_prob.nii.gz (181x217x181), which
 run_conformal_experiment.py --data-dir consumes alongside {case}_gt.nii.gz.
 
-    python scripts/warp_cohort_probs.py --dir ./cohort --image jqmcginnis/lst-ai:v1.2.0
+    python scripts/calm-ms/warp_cohort_probs.py --dir ./cohort --image jqmcginnis/lst-ai:v1.2.0
 """
 import argparse
 import glob
@@ -52,7 +52,7 @@ def main():
             print("[%2d] %s  greedy FAILED: %s" % (i, case, e), flush=True)
 
     print("\n%d/%d warped. Next:" % (ok, len(cases)))
-    print("  python scripts/run_conformal_experiment.py --data-dir %s --out experiment.json" % args.dir)
+    print("  python scripts/calm-ms/run_conformal_experiment.py --data-dir %s --out experiment.json" % args.dir)
 
 
 if __name__ == "__main__":

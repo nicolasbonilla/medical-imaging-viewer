@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Deep dive into the duplicated / mislabeled segmentation data.
 
-The metadata inventory (scripts/inventory_expert_masks.py) showed ~20x rows per
+The metadata inventory (scripts/calm-ms/inventory_expert_masks.py) showed ~20x rows per
 (patient, timepoint, rater) and named masks 'Expert Rater 01/02' — but a filename
 is NOT proof of a human rater. This script inspects the actual MASK CONTENT to
 answer, definitively, for one study:
@@ -18,7 +18,7 @@ Downloads mask binaries via GET /segmentation/{id}/mask/binary
 (header: uint32 LE depth,height,width; then depth*height*width uint8).
 
 Run (Git Bash) — reuses the same admin token/password env as the inventory:
-    python scripts/investigate_duplicates.py --mrn ISBI-MS-001 --study-index 0
+    python scripts/calm-ms/investigate_duplicates.py --mrn ISBI-MS-001 --study-index 0
 """
 import argparse
 import collections
@@ -31,7 +31,7 @@ import numpy as np
 import requests
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-_BACKEND = os.path.join(_HERE, "..", "backend")
+_BACKEND = os.path.join(_HERE, "..", "..", "backend")
 if _BACKEND not in sys.path:
     sys.path.insert(0, _BACKEND)
 

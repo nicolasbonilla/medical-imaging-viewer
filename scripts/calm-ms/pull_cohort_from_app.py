@@ -16,7 +16,7 @@ MRI-native order (a0,a1,k) via transpose(1,2,0) so it matches an MNI-native LST-
 output. VERIFY alignment on one case (Dice of LST-AI binary vs expert should be
 sane, not ~0) before trusting the full cohort.
 
-    python scripts/pull_cohort_from_app.py --out-dir ./cohort --expert-idx 01
+    python scripts/calm-ms/pull_cohort_from_app.py --out-dir ./cohort --expert-idx 01
 """
 import argparse
 import csv
@@ -30,7 +30,7 @@ import nibabel as nib
 import requests
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-_BACKEND = os.path.join(_HERE, "..", "backend")
+_BACKEND = os.path.join(_HERE, "..", "..", "backend")
 if _BACKEND not in sys.path:
     sys.path.insert(0, _BACKEND)
 
@@ -182,8 +182,8 @@ def main():
         w.writeheader(); w.writerows(rows)
     print("\n%d cases -> %s" % (len(rows), man))
     print("Next: run LST-AI, then the experiment:")
-    print("  python scripts/run_lstai_cohort.py --manifest %s --out-dir %s --stripped" % (man, args.out_dir))
-    print("  python scripts/run_conformal_experiment.py --data-dir %s" % args.out_dir)
+    print("  python scripts/calm-ms/run_lstai_cohort.py --manifest %s --out-dir %s --stripped" % (man, args.out_dir))
+    print("  python scripts/calm-ms/run_conformal_experiment.py --data-dir %s" % args.out_dir)
 
 
 if __name__ == "__main__":

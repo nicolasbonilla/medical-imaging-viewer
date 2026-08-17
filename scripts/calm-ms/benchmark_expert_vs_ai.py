@@ -14,7 +14,7 @@ metric code. Then we aggregate (mean/median/std) across cases.
 Masks are in MNI space (181,217,181) at 1 mm iso, so voxel spacing = (1,1,1).
 
 Run (Git Bash or PowerShell), same admin token/env as the inventory:
-    python scripts/benchmark_expert_vs_ai.py --out benchmark_results.csv
+    python scripts/calm-ms/benchmark_expert_vs_ai.py --out benchmark_results.csv
 Options:
     --expert-idx 01   which Expert Rater to use as GT (default 01)
     --ai-idx 1        which Output Mask to use as the AI prediction (default 1)
@@ -31,7 +31,7 @@ import numpy as np
 import requests
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-_BACKEND = os.path.join(_HERE, "..", "backend")
+_BACKEND = os.path.join(_HERE, "..", "..", "backend")
 if _BACKEND not in sys.path:
     sys.path.insert(0, _BACKEND)
 

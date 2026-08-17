@@ -5,16 +5,16 @@ LST-AI (CompImg/LST-AI) is a 3x 3D-U-Net ensemble for MS lesion segmentation. Ru
 with --probability_map it emits the ensemble's per-voxel lesion PROBABILITY — the
 missing input for the conformal experiment. This wrapper runs it per case (via
 Docker, the cleanest path on Windows) and lays outputs out for
-scripts/run_conformal_experiment.py.
+scripts/calm-ms/run_conformal_experiment.py.
 
 DOCKER (recommended — no conda/Python-3.9 needed):
     docker pull jqmcginnis/lst-ai:v1.2.0
-    python scripts/run_lstai_cohort.py --manifest ./cohort/cohort.csv \
+    python scripts/calm-ms/run_lstai_cohort.py --manifest ./cohort/cohort.csv \
         --out-dir ./cohort --docker-image jqmcginnis/lst-ai:v1.2.0 --limit 1
     # inspect case001 output, verify, then drop --limit to run all.
 
 NATIVE (Linux / a python 3.8-3.9 env with `pip install -e .` of LST-AI):
-    python scripts/run_lstai_cohort.py --manifest ./cohort/cohort.csv --out-dir ./cohort
+    python scripts/calm-ms/run_lstai_cohort.py --manifest ./cohort/cohort.csv --out-dir ./cohort
 
 The T1/FLAIR here are RAW (not skull-stripped / co-registered), so do NOT pass
 --stripped — LST-AI runs its full preprocessing. Outputs per case:
@@ -113,7 +113,7 @@ def main():
 
     print("\nDone: %d/%d cases with probability maps in %s" % (ok, len(rows), out_abs))
     if ok >= 2:
-        print("Next: python scripts/run_conformal_experiment.py --data-dir %s" % args.out_dir)
+        print("Next: python scripts/calm-ms/run_conformal_experiment.py --data-dir %s" % args.out_dir)
     elif ok == 1:
         print("1 case done — inspect its *_prob.nii.gz vs *_gt.nii.gz alignment, then drop --limit.")
 
