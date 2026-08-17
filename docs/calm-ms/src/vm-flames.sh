@@ -31,15 +31,17 @@ finish(){
 trap finish EXIT
 
 W=/w; mkdir -p $W/in $W/out $W/cohort; cd $W
-[ -d /opt/conda/bin ] && export PATH=/opt/conda/bin:$PATH   # use DLVM conda python/pip (numpy preinstalled) consistently
-apt-get update -qq && apt-get install -y -qq unzip git 2>&1 | tail -1
+[ -d /opt/conda/bin ] && export PATH=/opt/conda/bin:$PATH   # conda if present (older DLVM); else system python3 below
+apt-get update -qq && apt-get install -y -qq unzip git python3-pip 2>&1 | tail -1
 export nnUNet_raw=$W/raw nnUNet_preprocessed=$W/prep nnUNet_results=$W/nnunet_results
 mkdir -p $nnUNet_raw $nnUNet_preprocessed $nnUNet_results
 
 echo "=== [1/5] deps + nnU-Net v2 ==="
-echo "python=$(which python3) pip=$(which pip)"
-python3 -c "import numpy; print('numpy', numpy.__version__)" || true
-pip install nnunetv2 nibabel 2>&1 | tail -3
+python3 -m pip install -q --upgrade pip 2>&1 | tail -1
+if [ "$DEVICE" = "cpu" ]; then TIDX="--index-url https://download.pytorch.org/whl/cpu"; else TIDX=""; fi
+python3 -m pip install -q torch $TIDX 2>&1 | tail -2
+python3 -m pip install -q nnunetv2 nibabel 2>&1 | tail -2
+python3 -c "import numpy,torch,nibabel;print('deps ok: numpy',numpy.__version__,'torch',torch.__version__)" || echo "DEP IMPORT FAILED"
 echo "nnUNetv2_predict=$(which nnUNetv2_predict || echo MISSING)"; log
 
 echo "=== [2/5] FLAMeS weights (Zenodo 17955359) ==="
