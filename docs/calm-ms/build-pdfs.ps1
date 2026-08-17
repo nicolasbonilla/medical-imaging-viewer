@@ -8,6 +8,7 @@ if (-not (Test-Path $edge)) { $edge = "C:\Program Files\Microsoft\Edge\Applicati
 $map = @{
   "src/master-plan.html" = "CALM-MS-Master-Plan.pdf"
   "src/resultados.html"  = "CALM-MS-Resultados.pdf"
+  "src/resultados-fase2.html" = "CALM-MS-Resultados-Fase2.pdf"
   "src/vm-costo.html"    = "CALM-MS-VM-Costo-y-Apagado.pdf"
 }
 foreach ($srcRel in $map.Keys) {

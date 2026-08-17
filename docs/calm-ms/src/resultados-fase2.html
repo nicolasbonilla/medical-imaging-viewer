@@ -1,0 +1,90 @@
+<title>CALM-MS Fase 2</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --ground:#F4F6F8;--surface:#FFFFFF;--panel:#F8FAFB;--ink:#111A28;--muted:#57616F;--faint:#8A93A0;
+    --hairline:#DBE2E9;--accent:#0E7C74;--accent-ink:#0A5C56;--accent-soft:#0e7c7416;
+    --good:#15794C;--good-soft:#15794c14;--warn:#B4530B;--warn-soft:#b4530b14;
+    --serif:'Charter','Bitstream Charter','Iowan Old Style',Georgia,serif;
+    --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .wrap{max-width:840px;margin:0 auto;padding:34px 28px}
+  h1,h2{font-family:var(--serif);font-weight:600;line-height:1.15;text-wrap:balance}
+  h1{font-size:2.1rem;margin:0 0 .15em;letter-spacing:-.01em}
+  h2{font-size:1.25rem;margin:1.9rem 0 .6em}
+  .eyebrow{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-ink);font-weight:600}
+  .sub{color:var(--muted);margin:.2em 0 0;max-width:62ch}
+  p{margin:0 0 .8rem} strong{font-weight:650} .mono{font-family:var(--mono)}
+  table{border-collapse:collapse;width:100%;font-size:.9rem;margin:.5rem 0}
+  th,td{padding:9px 13px;border-bottom:1px solid var(--hairline);text-align:left}
+  thead th{background:var(--panel);font-family:var(--mono);font-size:.66rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  td.n,th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+  tr.base td{background:var(--warn-soft)}
+  tr.win td{background:var(--good-soft)}
+  .ok{color:var(--good);font-weight:650}
+  .up{color:var(--good);font-weight:650}
+  .card{background:var(--surface);border:1px solid var(--hairline);border-radius:10px;padding:16px 18px;margin:10px 0}
+  .hl{background:var(--good-soft);border:1px solid color-mix(in srgb,var(--good) 40%,var(--hairline));border-radius:10px;padding:16px 18px;margin:14px 0}
+  .hl .eyebrow{color:var(--good)}
+  .warnbox{background:var(--warn-soft);border:1px solid color-mix(in srgb,var(--warn) 40%,var(--hairline));border-radius:10px;padding:16px 18px;margin:14px 0}
+  .warnbox .eyebrow{color:var(--warn)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  ul{margin:.3rem 0 .8rem;padding-left:1.1rem} li{margin:.25rem 0}
+  .foot{color:var(--faint);font-size:.78rem;margin-top:2rem;border-top:1px solid var(--hairline);padding-top:12px}
+  @page{margin:14mm 14mm}
+  @media(max-width:560px){.grid{grid-template-columns:1fr}}
+</style>
+<div class="wrap">
+  <span class="eyebrow">CALM-MS · Fase 2 · Score de lesión aprendido</span>
+  <h1>Un score aprendido sube la sensibilidad — con la misma garantía</h1>
+  <p class="sub">Fase 1 demostró que la garantía conformal de FDR se cumple, pero la sensibilidad colapsaba porque el score base (probabilidad de LST-AI) apenas separa lesión real de falso positivo. Fase 2 reemplaza ese escalar por un <strong>score calibrado aprendido de las lesiones</strong>. Mismos 19 casos expertos · <span class="mono">brain-mri-476110</span> · 2026-08-17.</p>
+
+  <div class="hl">
+    <span class="eyebrow">Resultado principal</span>
+    <p style="margin:.3em 0 0"><strong>Con FDR objetivo 0.20, la sensibilidad sube de 0.135 a 0.207 (+54% relativo); con 0.30, de 0.258 a 0.303</strong> — y la garantía sigue cumpliéndose (FDR realizado ≤ objetivo en todos los niveles). El score aprendido usa <em>solo</em> estructura de la lesión (volumen, nitidez de borde, forma, entropía); todavía sin el segundo modelo.</p>
+  </div>
+
+  <h2>1 · Fase 1 vs Fase 2 (pareado, mismos candidatos)</h2>
+  <table>
+    <thead><tr><th>Operación</th><th class="n">FDR objetivo</th><th class="n">FDR realizado</th><th class="n">Sens. Fase 1</th><th class="n">Sens. Fase 2</th><th class="n">Δ</th></tr></thead>
+    <tbody>
+      <tr class="base"><td><strong>Baseline (sin control)</strong></td><td class="n">—</td><td class="n">0.697</td><td class="n">0.829</td><td class="n">0.829</td><td class="n">—</td></tr>
+      <tr><td>Conformal</td><td class="n">0.05</td><td class="n ok">≤ 0.00</td><td class="n">0.000</td><td class="n">0.005</td><td class="n">+0.005</td></tr>
+      <tr><td>Conformal</td><td class="n">0.10</td><td class="n ok">0.000</td><td class="n">0.050</td><td class="n">0.021</td><td class="n">−0.029</td></tr>
+      <tr class="win"><td>Conformal</td><td class="n">0.20</td><td class="n ok">0.110</td><td class="n">0.135</td><td class="n">0.207</td><td class="n up">+0.073</td></tr>
+      <tr class="win"><td>Conformal</td><td class="n">0.30</td><td class="n ok">0.164</td><td class="n">0.258</td><td class="n">0.303</td><td class="n up">+0.045</td></tr>
+    </tbody>
+  </table>
+  <p class="sub">19 casos · umbral 0.5 · leave-one-case-out. En los objetivos clínicamente útiles (0.20 y 0.30) el score aprendido recupera más lesiones verdaderas <strong>al mismo nivel de falsos positivos garantizado</strong>. En 0.05–0.10 ambos rozan cero (el margen es demasiado estricto para este segmentador base).</p>
+
+  <h2>2 · Por qué es honesto (diseño split-conformal)</h2>
+  <p>La validez es todo el punto. Por cada caso de test, los demás casos se parten en dos grupos disjuntos: <strong>TRAIN</strong> (entrena el scorer) y <strong>CALIB</strong> (construye el null conformal). Como el scorer nunca ve CALIB ni el caso de test, los scores de calibración y de test son ambos <em>fuera de muestra</em> para un scorer fijo → se mantiene la intercambiabilidad y la garantía FDR se preserva. Entrenar el null sobre los mismos casos que ajustan el scorer sería anti-conservador (rompería la garantía) — y se evita deliberadamente. Ambas curvas comparten el mismo CALIB y el mismo caso de test por fold, así que la diferencia es atribuible <strong>solo al score</strong>.</p>
+
+  <h2>3 · El score aprendido</h2>
+  <div class="grid">
+    <div class="card"><strong>Features por lesión</strong><p class="sub" style="margin-top:.3em">log-volumen, media/máx/desv. de probabilidad, entropía binaria (incertidumbre), superficie/volumen (forma), contraste de borde (nitidez), y <em>acuerdo</em> con un segundo modelo (deep-ensemble — aún sin usar).</p></div>
+    <div class="card"><strong>Modelo</strong><p class="sub" style="margin-top:.3em">Regresión logística L2 balanceada (determinista) + calibración isotónica (PAVA). La isotónica es monótona → preserva el ranking conformal; la calibración es solo para la confianza mostrada en la app. Puro NumPy, auditable, apto Class C.</p></div>
+  </div>
+
+  <h2>4 · Lo que confirma (y lo que falta)</h2>
+  <div class="warnbox">
+    <span class="eyebrow">Interpretación honesta</span>
+    <p style="margin:.3em 0 0">El mecanismo funciona en datos reales: <strong>mejorar la calidad del score sube la curva sensibilidad-FDR sin tocar la garantía</strong>. Pero la sensibilidad absoluta sigue baja porque el segmentador base (LST-AI) genera candidatos difíciles de separar. El techo lo pone el backbone, no el método.</p>
+  </div>
+  <ul>
+    <li><strong>N=19, un solo experto</strong> de referencia; split de calibración de ~9 casos (por eso los números crudos difieren un poco de la Fase 1 original de 18 casos).</li>
+    <li>Aún <strong>sin la feature de acuerdo multi-modelo</strong> (0/19 con 2º modelo). Es la palanca más fuerte de reducción de FP según la literatura.</li>
+  </ul>
+
+  <h2>5 · Próxima palanca (con costo, decisión abierta)</h2>
+  <p>El estado del arte (ago-2026) señala el camino para mover la curva mucho más arriba, sin entrenar de cero (no sería creíble con 19 casos):</p>
+  <ul>
+    <li><strong>Cambiar la base LST-AI → FLAMeS</strong> (nnU-Net, pesos públicos en Zenodo; Dice 0.74 / LTPR 0.84 en datos externos, supera a LST-AI). Mejor mapa de probabilidad = candidatos más separables.</li>
+    <li><strong>Activar el acuerdo de ensemble</strong> (FLAMeS ∪ LST-AI) como feature — el filtro de falsos positivos más potente.</li>
+    <li>Requiere GPU en la nube (paso <em>cost-gated</em>, con VM temporal y apagado garantizado como en Fase 1) — no se lanza sin tu visto bueno.</li>
+  </ul>
+
+  <p class="foot">CALM-MS = Conformal, cAlibrated Lesion Mapping for MS. Fase 2 generada el 2026-08-17 sobre 19 casos expertos. Librería puro-NumPy con 11 tests nuevos (garantía + lift verificados por Monte-Carlo sobre cohorte sintética); suite total 842 verde. Cómputo local, sin costo.</p>
+</div>

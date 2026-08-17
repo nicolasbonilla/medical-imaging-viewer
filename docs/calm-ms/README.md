@@ -9,7 +9,8 @@ paper publicable en revista indexada **y** feature del software.
 | Documento | Qué es |
 |---|---|
 | [`CALM-MS-Master-Plan.pdf`](CALM-MS-Master-Plan.pdf) | Plan maestro: revisión del estado del arte (2025-26), el método propio, diseño experimental, roadmap y revistas diana. |
-| [`CALM-MS-Resultados.pdf`](CALM-MS-Resultados.pdf) | Resultados reales sobre 19 casos expertos: tabla FDR-cobertura, interpretación, salvedades e infra/costo. |
+| [`CALM-MS-Resultados.pdf`](CALM-MS-Resultados.pdf) | Fase 1 — resultados reales sobre 19 casos expertos: tabla FDR-cobertura, interpretación, salvedades e infra/costo. |
+| [`CALM-MS-Resultados-Fase2.pdf`](CALM-MS-Resultados-Fase2.pdf) | Fase 2 — el score de lesión aprendido sube la sensibilidad (FDR 0.20: 0.135→0.207) con la misma garantía; diseño split-conformal y próxima palanca (FLAMeS). |
 | [`CALM-MS-VM-Costo-y-Apagado.pdf`](CALM-MS-VM-Costo-y-Apagado.pdf) | Ficha de la VM de GCP: máquina exacta, costo detallado y las 5 capas de apagado garantizado. |
 
 Las fuentes HTML están en [`src/`](src/) — para regenerar los PDF ver `build-pdfs.ps1`.
