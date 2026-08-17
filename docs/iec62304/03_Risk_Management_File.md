@@ -380,7 +380,7 @@ enablement.
 | HAZ-CALM-2 | Per-lesion "confidence %" read as P(lesion real) → over/under-trust | Serious | RC-CALM-2: no probability/confidence surfaced; ordinal tier only (REQ-FUNC-CALM-003); enforced by test | IEC 62366-1 summative usability study |
 | HAZ-CALM-3 | Per-scan FDR number read as this-scan precision (guarantee is marginal) | Serious | RC-CALM-3: only the preset α (input target) returned, labelled population-level scope; no realized-FDP; enforced by test | Summative usability study proving no per-scan inference |
 | HAZ-CALM-4 | Free α/threshold → un-validated operating point (PCCP violation) | Serious | RC-CALM-4: preset enum only; server maps to frozen (α, threshold); raw values rejected | Per-preset clinical validation + PCCP change-control plan |
-| HAZ-CALM-5 | Probability map from a different base model/grid/regime scored against the FLAMeS null → mathematically VOID guarantee shown | Serious | RC-CALM-5: (a) provenance stamp + `assert_compatible` fail-closed grid/spacing refusal; (b) **OOD monitor** (`conformal_ood.assess_ood`) — compares the case's candidate-score distribution to the calibration envelope and, on gross shift, WITHHOLDS the guarantee (`guarantee_applicable=False`, WITHHELD_SCOPE) while still showing unguaranteed tiers; fails closed when no reference | Validate the OOD monitor's own sensitivity/specificity on real scanner-shift + mimic cohorts; add base-model stamp on prob maps |
+| HAZ-CALM-5 | Probability map from a different base model/grid/regime scored against the FLAMeS null → mathematically VOID guarantee shown | Serious | RC-CALM-5: (a) provenance stamp + `assert_compatible` fail-closed grid/spacing refusal; (b) **gross-marginal-shift backstop** (`conformal_ood.assess_ood`) — flags a gross shift of the mixed candidate-score marginal and WITHHOLDS the guarantee (`guarantee_applicable=False`, WITHHELD_SCOPE), fail-closed on no/malformed reference and non-finite scores. **NECESSARY, NOT SUFFICIENT** (see residual below): it cannot detect the label-conditional false-positive shift that actually breaks the guarantee | **BLOCKING for clinical enablement:** class-conditional null re-estimation on a per-site labelled slice (or covariate/embedding-space check); base-model stamp on prob maps; validate on real scanner-shift + mimic cohorts |
 | HAZ-CALM-6 | Missing/empty/degenerate null asset or unauthenticated access → void guarantee / PHI exposure | Serious | RC-CALM-6: fail-closed asset load (`ConformalAssetError`) on missing/empty **and now on wrong `base_model` value or degenerate (low-dispersion) null**; endpoint behind auth + object-level PHI authz | Integration tests for the endpoint auth + asset-missing paths |
 | HAZ-CALM-7 | Non-finite (NaN/inf) or out-of-range probability voxel bypasses the input gate (min/max propagate NaN) → guarantee served on a corrupt/failed-inference map | Serious | RC-CALM-7: explicit `np.isfinite` rejection added in `conformal_review`, `extract_lesion_candidates`, and `conformal_pvalues` (found & fixed in adversarial verification 2026-08-17) | — (covered by regression tests) |
 
@@ -396,22 +396,55 @@ fail-open (HAZ-CALM-7), the unvalidated `base_model` value and degenerate-null g
 grid/spacing check (RC-CALM-5) is necessary but **not sufficient** for
 exchangeability — an on-grid out-of-distribution map cannot be detected from
 geometry alone and empirically voids the guarantee (realized FDR up to ~8× target).
-**A v1 OOD monitor now closes the score-regime axis** (`conformal_ood.assess_ood`
-withholds the guarantee, fail-closed, when the candidate-score distribution is far
-from the calibration envelope; the null asset ships a per-case OOD reference). The
-monitor was **validated, not assumed** (`scripts/calm-ms/validate_ood_monitor.py`,
-record `assets/ood_validation_record.json`): a naive max-robust-z statistic was found
-inadequate (to catch a +6σ score-regime shift it had to withhold the guarantee on
-~9% of legitimate cases), so the statistic was replaced with a covariance-aware
-**Mahalanobis** distance and the threshold set from the sweep (5.0). At that operating
-point the leave-one-case-out false-OOD rate on the 145 calibration cases is ~2% (a
-fail-closed, utility-only cost) and a +6σ shift is caught ~100% of the time.
-**Documented residual limitation:** the monitor is a GROSS-shift backstop — a subtle
-(~+3σ) shift is NOT reliably caught (detection ~25%). **Still pending for clinical
-enablement:** validating the monitor's sensitivity/specificity on REAL scanner-shift +
-mimic cohorts (the sweep above uses synthetic shifts of the calibration cohort), a
-base-model-bound probability producer, and the IEC 62366-1 summative usability study
-(SRS Addendum A).
+A v1 OOD monitor (`conformal_ood.assess_ood`) was added to withhold the guarantee on
+gross candidate-score-distribution shift, with a Mahalanobis statistic and a threshold
+(5.0) set from a validation sweep. **It is retained ONLY as a gross-marginal-shift
+disclosure backstop.**
+
+### Adversarial verification — round 2 (2026-08-17): the OOD monitor is necessary, not sufficient
+
+A second, deeper adversarial round (4 agents: statistical-methodology, conformal-theory,
+code-correctness, evasion) ran runnable probes against the OOD monitor and the guarantee.
+Its central result **downgrades the claim above** and is recorded honestly here because,
+for a Class C device, an overstated safety claim is itself the hazard:
+
+- **CRITICAL (2 independent confirmations) — the monitor audits the wrong distribution.**
+  It summarises the MIXED (true+false) candidate-score marginal, but the conformal FDR
+  guarantee depends on the FALSE-candidate scores being exchangeable with the frozen null
+  — a *label-conditional* property the marginal is blind to (a label-shift, not a
+  covariate-shift; Podkopaev & Ramdas 2021). Confirmed with the real code + asset: a case
+  whose 5-number summary sits *inside* the calibration envelope (Mahalanobis ≈ 0.75–3.1,
+  more "in-distribution" than the median legit case) realises **FDP up to 1.0** — the
+  monitor fails OPEN exactly where it must fail closed, and this false-positive-inflation
+  regime is the clinically *likely* scanner shift, not a contrived one. **No label-free
+  score statistic can close this**; it needs class-conditional null re-estimation on a
+  per-site labelled slice, or a covariate/embedding-space check (weighted / Mondrian
+  conformal — Tibshirani 2019; conformal-OOD on embeddings — Bates 2023). **This blocks
+  clinical enablement.**
+- **HIGH — frozen-null resolution overstated ~10×.** The 1,390 nulls are 145 scan clusters
+  (~9.6 each); the honest p-value resolution and conditional-FDR band scale with the
+  *cluster* count (~145), not 1,390. The advertised `1/1391` is corrected to ~`1/n_clusters`.
+- **MEDIUM — within-scan dependence.** BH still controls the *marginal* FDR under the
+  positive dependence (PRDS holds — the "needs Benjamini–Yekutieli" worry was *refuted* by
+  simulation), but the per-scan FDP disperses: P(FDP > α) ≈ 25% at α=0.30. The marginal
+  guarantee is honest but the *per-scan* experience a clinician reads is not controlled;
+  disclosed, not hidden.
+- **MEDIUM — v1 statistic weaknesses.** `n_candidates` (a skewed count) forced into a
+  Gaussian ellipsoid preferentially flags high-burden (sickest) patients; the 5 moments are
+  blind to shape/count evasions a full-distribution KS/energy/MMD test would catch; the
+  reported "~2% false-OOD" is an in-sample point estimate (held-out p90 ≈ 7%). Planned v2:
+  a KS two-sample test on the full candidate-score distribution (upgrades the backstop but
+  does **not** address the CRITICAL label-shift above).
+
+**Fixed this round:** the non-finite-score fail-open and malformed-reference crash in
+`assess_ood` (now fail-closed, regression-tested); the per-lesion `confidence = 1 - p`
+field removed from the inference layer (RC-CALM-2 hardening).
+
+**Bottom line:** the feature stays DARK (investigational). The lesion-FDR core is sound
+*when its exchangeability premise holds*; the premise cannot be certified at inference by
+any score-only monitor, so clinical enablement is gated on class-conditional / site-level
+recalibration, a base-model-bound probability producer, and the IEC 62366-1 summative
+usability study (SRS Addendum A).
 
 *End of Risk Management File*
 

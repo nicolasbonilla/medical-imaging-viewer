@@ -46,6 +46,20 @@ def test_no_reference_fails_closed():
     assert v.is_ood is True   # never claim in-distribution without evidence
 
 
+def test_non_finite_scores_fail_closed():
+    # A NaN/inf must NOT drive the distance to a spurious 0.0 (fail-open). Adversarial
+    # finding: max(0.0, nan)==0.0 and nan>thr==False previously read as in-distribution.
+    for bad in ([0.9, np.nan, 0.95], [0.9, np.inf, 0.95]):
+        v = assess_ood(bad, _REF)
+        assert v.is_ood is True and not np.isfinite(v.distance)
+
+
+def test_malformed_reference_width_fails_closed():
+    # A reference with the wrong number of columns must fail closed, not crash.
+    v = assess_ood(np.full(10, 0.9), _REF[:, :4])
+    assert v.is_ood is True
+
+
 def test_no_candidates_guarantee_trivially_applies():
     v = assess_ood(np.array([]), _REF)
     assert v.is_ood is False

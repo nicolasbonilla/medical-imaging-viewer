@@ -21,17 +21,41 @@ strong correlation among the mean/quantile features — separates far better: at
 threshold 5.0 it withholds the guarantee on only ~2% of legitimate in-distribution
 cases (a fail-closed, utility-only cost) while catching a +6SD shift ~100% of the time.
 
-SCOPE / residual limitation (documented in RMF Addendum A): this is a GROSS-shift
-backstop. A gross score-regime shift — the documented ~8x-FDR failure mode — is
-caught reliably; a SUBTLE shift (~+3SD) is NOT reliably caught (detection ~25%). The
-monitor's sensitivity/specificity on real mimic/scanner-shift cohorts remains a V&V
-prerequisite for clinical enablement.
+SCOPE / FUNDAMENTAL limitation — read before trusting this (RMF HAZ-CALM-5).
+Adversarial verification (2 independent reviews, runnable repros) proved this monitor
+is NECESSARY BUT NOT SUFFICIENT for the FDR guarantee, and cannot be made sufficient:
+
+  * It audits the MIXED (true+false) candidate-score MARGINAL. The conformal FDR
+    guarantee depends on the FALSE-candidate scores being exchangeable with the frozen
+    null — a LABEL-conditional property (P(score | candidate is false)) that the
+    marginal is blind to (a label-shift, not a covariate-shift; cf. Podkopaev &
+    Ramdas 2021). A case whose 5-number summary sits INSIDE this envelope can still
+    realize FDP ~1.0 (confirmed: false candidates parked in the null's upper tail get
+    small conformal p-values, are BH-selected, and the mixture still looks normal
+    because legitimate cases carry high scores from their TRUE lesions).
+  * It is therefore, at best, a GROSS-MARGINAL-SHIFT disclosure backstop — it flags
+    obvious whole-distribution shifts, NOT the clinically-likely false-positive
+    inflation that actually breaks the guarantee. No label-free score statistic can
+    close that hole; doing so needs class-conditional null re-estimation on a per-site
+    labelled slice, or a covariate/embedding-space check (weighted / Mondrian
+    conformal — Tibshirani 2019, Barber 2023). This is a BLOCKING prerequisite for
+    clinical enablement, tracked in the RMF.
+
+Known statistical weaknesses of the v1 statistic (see ood_validation_record.json):
+`n_candidates` is a skewed count forced into a Gaussian ellipsoid — it conflates
+lesion burden with score regime, so high-burden (sickest) patients are preferentially
+flagged; the 5 moments are also blind to shape/count evasions a full-distribution
+two-sample test (KS/energy/MMD) would catch. A KS-based v2 is the planned upgrade.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
 
 import numpy as np
+
+# Feature layout of both the per-case summary and the calibration reference. Order
+# and definition MUST match build_null_bundle.py (verified in test).
+OOD_FEATURES = ("n_candidates", "mean", "q10", "q50", "q90")
 
 # Mahalanobis distance beyond which a case is declared out of the validated
 # distribution. Chosen from the validation sweep (validate_ood_monitor.py): the
@@ -83,29 +107,49 @@ def _mahalanobis(feat: np.ndarray, ref: np.ndarray) -> float:
     different scales), then covariance-whitened so a coherent score-regime shift —
     which moves the correlated mean/quantile features together — registers as one
     large distance instead of being diluted across per-feature z-scores. Ridge keeps
-    the near-collinear quantile block invertible. Mirrors validate_ood_monitor.py."""
+    the near-collinear quantile block invertible. Mirrors validate_ood_monitor.py.
+
+    Fails closed numerically: a non-finite quadratic form (e.g. a NaN feature slipped
+    past the callers) returns +inf, not a spurious 0.0 that would read as
+    in-distribution."""
     mu = np.median(ref, axis=0)
     _, sc = _robust_center_scale(ref)
     R = (ref - mu) / sc
     C = np.cov(R, rowvar=False) + _COV_RIDGE * np.eye(ref.shape[1])
     Ci = np.linalg.pinv(C)
     v = (feat - mu) / sc
-    return float(np.sqrt(max(0.0, v @ Ci @ v)))
+    q = float(v @ Ci @ v)
+    if not np.isfinite(q):
+        return float("inf")
+    return float(np.sqrt(max(0.0, q)))
 
 
 def assess_ood(scores, ood_reference, threshold: float = OOD_THRESHOLD) -> OODVerdict:
     """Assess whether a case's candidate-score distribution is out of the calibration
-    envelope. Fail-safe: if no OOD reference is available, treat as OOD-unknown and
-    return is_ood=True (fail closed — never claim in-distribution without evidence)."""
-    if ood_reference is None or np.asarray(ood_reference).ndim != 2 or np.asarray(ood_reference).shape[0] < 5:
+    envelope. Fail-safe: if no OOD reference is available, or the case features are
+    non-finite, treat as OOD-unknown and return is_ood=True (fail closed — never claim
+    in-distribution without evidence).
+
+    SCOPE (see module docstring + RMF HAZ-CALM-5): this detects only a GROSS shift of
+    the *mixed* candidate-score marginal. It CANNOT certify exchangeability of the
+    *false*-candidate null the FDR guarantee actually depends on (a label-shift the
+    marginal is blind to); an in-distribution verdict here is necessary, not
+    sufficient, for the guarantee. Adversarially confirmed: a case matched to this
+    envelope can still realize FDP ~1.0."""
+    ref = np.asarray(ood_reference, dtype=float) if ood_reference is not None else None
+    if ref is None or ref.ndim != 2 or ref.shape[0] < 5 or ref.shape[1] != len(OOD_FEATURES):
         return OODVerdict(True, float("inf"), threshold,
-                          "no OOD reference available — guarantee withheld (fail closed)")
-    feat = case_features(scores)
+                          "no valid OOD reference available — guarantee withheld (fail closed)")
+    s = np.asarray(scores, dtype=float).ravel()
+    if s.size and not np.isfinite(s).all():
+        return OODVerdict(True, float("inf"), threshold,
+                          "non-finite candidate scores — guarantee withheld (fail closed)")
+    feat = case_features(s)
     if feat is None:
-        # No candidates on the map -> nothing flagged; guarantee trivially applies.
+        # No candidates on the map -> empty FDR set -> nothing to guarantee (vacuous).
         return OODVerdict(False, 0.0, threshold, "no candidates")
-    dist = _mahalanobis(feat, np.asarray(ood_reference, dtype=float))
+    dist = _mahalanobis(feat, ref)
     is_ood = dist > threshold
-    detail = ("in validated distribution" if not is_ood
+    detail = ("in validated distribution (marginal only — see scope)" if not is_ood
               else f"case is {dist:.1f} Mahalanobis-SD from the calibration envelope (> {threshold})")
     return OODVerdict(is_ood, dist, threshold, detail)

@@ -4,12 +4,16 @@ This is the bridge between a probabilistic base segmenter (LST-AI, nnU-Net, a
 foundation model) and the conformal guarantee in `conformal_lesion_fdr`. It:
 
   1. EXTRACTS lesion candidates from a soft probability map (threshold -> 18-conn
-     components -> per-lesion confidence score);
+     components -> per-lesion pooled probability score);
   2. CALIBRATES on held-out cases with expert ground truth, collecting the scores
      of the FALSE candidates (the conformal null distribution);
   3. SELECTS, on a new case, the subset of candidates whose expected
-     false-discovery proportion is <= a clinician-set alpha, painting them into a
-     final mask and attaching a calibrated per-lesion confidence.
+     false-discovery proportion is <= a clinician-set alpha, painting them in.
+
+RC-CALM-2: this layer attaches NO per-lesion probability / "confidence" (a
+per-lesion `1 - p` reads as P(real) and is a labelling hazard for a Class C
+device). Only the internal conformal `pvalue` and the ordinal selection are kept;
+the clinical surface (`conformal_review_service`) exposes ordinal tiers alone.
 
 The result is the product's precision dial with a statistical guarantee, and the
 data pipeline for the paper's FDR-coverage experiment. Model-agnostic: any
@@ -41,9 +45,10 @@ class LesionCandidate:
     n_voxels: int
     volume_mm3: float
     centroid: tuple            # (z, y, x)
-    pvalue: Optional[float] = None
-    confidence: Optional[float] = None   # 1 - pvalue once calibrated
+    pvalue: Optional[float] = None       # internal conformal p-value (NOT P(real))
     selected: Optional[bool] = None
+    # NOTE (RC-CALM-2): deliberately NO `confidence`/`1 - p` field — a per-lesion
+    # probability is a labelling hazard and must never reach a clinical surface.
 
     def as_dict(self) -> dict:
         return {
@@ -52,7 +57,6 @@ class LesionCandidate:
             "volume_mm3": round(float(self.volume_mm3), 2),
             "centroid": [round(float(c), 1) for c in self.centroid],
             "pvalue": None if self.pvalue is None else round(float(self.pvalue), 4),
-            "confidence": None if self.confidence is None else round(float(self.confidence), 4),
             "selected": self.selected,
         }
 
@@ -186,9 +190,9 @@ def select_lesions_conformal(
 ) -> ConformalResult:
     """End to end: probability map -> risk-controlled lesion mask.
 
-    Selects the candidate subset with expected lesion-level FDR <= alpha, paints
-    it, and attaches a calibrated confidence (1 - conformal p-value) to every
-    candidate. The clinician's "false-positive tolerance" is exactly `alpha`.
+    Selects the candidate subset with expected lesion-level FDR <= alpha and paints
+    it. The clinician's "false-positive tolerance" is exactly `alpha`. Per RC-CALM-2
+    no per-lesion confidence is attached — only the internal conformal p-value.
     """
     labeled, cands = extract_lesion_candidates(
         prob_map, threshold, voxel_spacing, min_volume_mm3, score)
@@ -202,8 +206,7 @@ def select_lesions_conformal(
 
     n_sel = 0
     for c, sel, p in zip(cands, selected, pvals):
-        c.pvalue = float(p)
-        c.confidence = float(1.0 - p)
+        c.pvalue = float(p)          # internal only; RC-CALM-2: no 1-p "confidence"
         c.selected = bool(sel)
         if sel:
             final[labeled == c.label] = 1

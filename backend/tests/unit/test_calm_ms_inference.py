@@ -113,8 +113,12 @@ def test_selection_paints_only_selected():
     sel_labels = {c.label for c in res.candidates if c.selected}
     expected = np.isin(labeled, list(sel_labels)) if sel_labels else np.zeros_like(labeled, bool)
     assert np.array_equal(res.mask > 0, expected)
-    # every candidate carries a calibrated confidence
-    assert all(c.confidence is not None and 0.0 <= c.confidence <= 1.0 for c in res.candidates)
+    # RC-CALM-2: candidates carry an internal conformal p-value but NO per-lesion
+    # 'confidence'/'1-p' probability (a labelling hazard) — neither as an attribute
+    # nor in the serialized form.
+    assert all(c.pvalue is not None and 0.0 <= c.pvalue <= 1.0 for c in res.candidates)
+    assert not any(hasattr(c, "confidence") for c in res.candidates)
+    assert all("confidence" not in c.as_dict() for c in res.candidates)
 
 
 def test_dial_monotone():

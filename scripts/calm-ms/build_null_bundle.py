@@ -116,7 +116,15 @@ def main():
     print(f"\nWROTE {out}")
     print(f"  null scores: {null.size}  (mean {null.mean():.3f}, min {null.min():.3f}, max {null.max():.3f})")
     print(f"  grid {grid} @ {VOXEL_SPACING}  base={BASE_MODEL}  sha={provenance['sha256']}")
-    print(f"  -> min conformal p-value achievable = 1/(n+1) = {1.0/(null.size+1):.4f}")
+    # HONEST resolution (adversarial round 2): the null scores are NOT independent —
+    # they cluster by scan (~n_scores/n_cases per scan). The effective calibration size
+    # for the conditional-FDR band is governed by the number of independent CLUSTERS
+    # (cases), not the raw count. Report both so the 1/(n+1) figure is not misread.
+    n_cases = int(ood_reference.shape[0])
+    print(f"  -> naive min conformal p = 1/(n+1) = {1.0/(null.size+1):.4f} "
+          f"(raw count {null.size})")
+    print(f"  -> HONEST effective resolution ~ 1/n_clusters = 1/{n_cases} = "
+          f"{1.0/n_cases:.4f}  (scan-clustered nulls; conditional-FDR band ~1/sqrt(n_eff))")
 
 
 if __name__ == "__main__":
