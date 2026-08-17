@@ -44,6 +44,10 @@ def conformal_pvalues(test_scores, calib_null_scores) -> np.ndarray:
     n = calib.size
     if n == 0:
         raise ValueError("conformal calibration null set is empty")
+    # A non-finite test score sorts ABOVE all finite null scores -> p = 1/(n+1),
+    # the SMALLEST possible p (highest priority) — inverting the guarantee. Refuse.
+    if not (np.isfinite(test).all() and np.isfinite(calib).all()):
+        raise ValueError("conformal scores must be finite")
     calib_sorted = np.sort(calib)
     # #{c_i >= s} = n - #{c_i < s} = n - searchsorted(sorted_calib, s, 'left')
     ge = n - np.searchsorted(calib_sorted, test, side="left")

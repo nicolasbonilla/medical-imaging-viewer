@@ -73,6 +73,10 @@ def extract_lesion_candidates(
         raise ValueError(f"prob_map must be 3D, got {prob_map.ndim}D")
     if not (0.0 <= threshold <= 1.0):
         raise ValueError(f"threshold must be in [0,1], got {threshold}")
+    # Defense in depth: a NaN voxel silently drops from `prob_map >= threshold`
+    # (NaN comparisons are False), corrupting the component; reject non-finite maps.
+    if not np.isfinite(prob_map).all():
+        raise ValueError("prob_map contains non-finite values (NaN/inf)")
     from scipy import ndimage
 
     binary = (prob_map >= threshold)

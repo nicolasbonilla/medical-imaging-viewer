@@ -110,6 +110,11 @@ def conformal_review(prob_map: np.ndarray, voxel_spacing, preset: str = DEFAULT_
     prob_map = np.asarray(prob_map, dtype=np.float32)
     if prob_map.ndim != 3:
         raise ValueError(f"prob_map must be 3D, got {prob_map.ndim}D")
+    # Fail closed on NaN/inf FIRST: min()/max() propagate NaN and both `nan<0` and
+    # `nan>1.001` are False, so a non-finite map would otherwise slip past the range
+    # gate and be scored (adversarial finding, HIGH).
+    if not np.isfinite(prob_map).all():
+        raise ValueError("prob_map contains non-finite values (NaN/inf)")
     pmin, pmax = float(prob_map.min()), float(prob_map.max())
     if pmin < 0.0 or pmax > 1.001:
         raise ValueError(f"prob_map must be in [0,1], got [{pmin:.3f},{pmax:.3f}]")

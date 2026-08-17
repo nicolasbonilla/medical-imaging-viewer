@@ -38,6 +38,14 @@ PRESETS: dict[str, float] = {
 }
 DEFAULT_PRESET = "high_sensitivity"
 
+# The null is valid ONLY for this base model. A null stamped with any other model
+# must be refused at load — the guarantee is model-specific (exchangeability).
+EXPECTED_BASE_MODEL = "FLAMeS"
+# A near-degenerate null (few distinct values / ~zero spread) maps every test score
+# to p ~ 1/(n+1) and selects everything, silently INVERTING the FDR control. Refuse.
+MIN_NULL_DISTINCT = 20
+MIN_NULL_STD = 1e-3
+
 _ASSET_PATH = os.path.join(os.path.dirname(__file__), "assets", "calm_ms_null_flames_v1.npz")
 
 
@@ -84,6 +92,10 @@ class NullAsset:
         here. Any mismatch voids the guarantee, so we refuse."""
         want_shape = self.grid_shape
         got_shape = tuple(int(x) for x in grid_shape)
+        # Validate lengths first: zip() would silently truncate a short spacing tuple
+        # and skip the missing axis (adversarial finding).
+        if len(got_shape) != 3 or len(tuple(voxel_spacing)) != 3 or len(want_shape) != 3:
+            raise ProvenanceMismatch("grid and voxel_spacing must both be length 3")
         if got_shape != want_shape:
             raise ProvenanceMismatch(
                 f"probability map grid {got_shape} != calibration grid {want_shape}; "
@@ -115,6 +127,13 @@ def load_null_asset(path: str = _ASSET_PATH) -> NullAsset:
     for k in ("threshold", "min_volume_mm3", "voxel_spacing", "grid_shape", "base_model"):
         if k not in provenance:
             raise ConformalAssetError(f"CALM-MS null asset missing provenance field '{k}'")
+    if provenance.get("base_model") != EXPECTED_BASE_MODEL:
+        raise ConformalAssetError(
+            f"CALM-MS null base_model {provenance.get('base_model')!r} != expected {EXPECTED_BASE_MODEL!r}")
+    if np.unique(null).size < MIN_NULL_DISTINCT or float(np.std(null)) < MIN_NULL_STD:
+        raise ConformalAssetError(
+            "CALM-MS null is degenerate (too few distinct values / near-zero spread) — "
+            "it cannot produce calibrated p-values; refusing to serve")
     return NullAsset(null_scores=null, provenance=provenance)
 
 

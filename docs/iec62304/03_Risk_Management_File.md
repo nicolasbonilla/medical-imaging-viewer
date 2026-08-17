@@ -381,7 +381,24 @@ enablement.
 | HAZ-CALM-3 | Per-scan FDR number read as this-scan precision (guarantee is marginal) | Serious | RC-CALM-3: only the preset α (input target) returned, labelled population-level scope; no realized-FDP; enforced by test | Summative usability study proving no per-scan inference |
 | HAZ-CALM-4 | Free α/threshold → un-validated operating point (PCCP violation) | Serious | RC-CALM-4: preset enum only; server maps to frozen (α, threshold); raw values rejected | Per-preset clinical validation + PCCP change-control plan |
 | HAZ-CALM-5 | Probability map from a different base model/grid scored against the FLAMeS null → mathematically VOID guarantee shown | Serious | RC-CALM-5: provenance stamp on null asset + `assert_compatible` fail-closed refusal on grid/spacing mismatch | Add base-model provenance stamp on prob maps; OOD monitor (validated, fail-closed) |
-| HAZ-CALM-6 | Missing/empty null asset or unauthenticated access → void guarantee / PHI exposure | Serious | RC-CALM-6: fail-closed asset load (`ConformalAssetError`); endpoint behind auth + object-level PHI authz | Integration tests for the endpoint auth + asset-missing paths |
+| HAZ-CALM-6 | Missing/empty/degenerate null asset or unauthenticated access → void guarantee / PHI exposure | Serious | RC-CALM-6: fail-closed asset load (`ConformalAssetError`) on missing/empty **and now on wrong `base_model` value or degenerate (low-dispersion) null**; endpoint behind auth + object-level PHI authz | Integration tests for the endpoint auth + asset-missing paths |
+| HAZ-CALM-7 | Non-finite (NaN/inf) or out-of-range probability voxel bypasses the input gate (min/max propagate NaN) → guarantee served on a corrupt/failed-inference map | Serious | RC-CALM-7: explicit `np.isfinite` rejection added in `conformal_review`, `extract_lesion_candidates`, and `conformal_pvalues` (found & fixed in adversarial verification 2026-08-17) | — (covered by regression tests) |
+
+### Adversarial verification (2026-08-17)
+
+Five adversarial agents wrote and executed probes against the conformal components.
+**Confirmed sound:** the core lesion-FDR control holds empirically (E[FDP] ≤ preset α)
+in every in-distribution regime including high-count clustered dependence (PRDS
+holds; BH step-up 0/20000 mismatches vs reference); no labeling-hazard leak on the
+served path; `status_mask` integrity; presets-only. **Fixed:** the non-finite input
+fail-open (HAZ-CALM-7), the unvalidated `base_model` value and degenerate-null gaps
+(HAZ-CALM-6). **Residual, documented limitation (feature stays dark):** the
+grid/spacing check (RC-CALM-5) is necessary but **not sufficient** for
+exchangeability — an on-grid out-of-distribution or same-shape re-oriented map
+cannot be detected from geometry alone and empirically voids the guarantee (realized
+FDR up to ~8× target). Closing this requires the **validated OOD monitor + a
+base-model-bound probability producer**, both hard prerequisites for clinical
+enablement (SRS Addendum A).
 
 *End of Risk Management File*
 
