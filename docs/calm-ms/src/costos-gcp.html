@@ -1,0 +1,87 @@
+<title>CALM-MS · Costos GCP</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --ground:#F4F6F8;--surface:#FFFFFF;--panel:#F7F9FB;--ink:#111A28;--muted:#54606E;--faint:#8A93A0;
+    --hairline:#DCE3EA;--accent:#0E7C74;--accent-ink:#0A5C56;--accent-soft:#0e7c7414;
+    --good:#15794C;--good-soft:#15794c12;--warn:#B4530B;--warn-soft:#b4530b12;--bad:#B42318;
+    --serif:'Charter','Bitstream Charter','Iowan Old Style',Georgia,serif;
+    --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:14.5px;line-height:1.58}
+  .wrap{max-width:860px;margin:0 auto;padding:34px 30px}
+  h1,h2{font-family:var(--serif);font-weight:600;line-height:1.14;text-wrap:balance}
+  h1{font-size:2.1rem;margin:0 0 .1em;letter-spacing:-.015em}
+  h2{font-size:1.3rem;margin:2rem 0 .5em;padding-top:.4em;border-top:2px solid var(--ink)}
+  .eyebrow{font-family:var(--mono);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-ink);font-weight:600}
+  .sub{color:var(--muted);margin:.25em 0 0;max-width:66ch}
+  p{margin:0 0 .7rem} strong{font-weight:650} .mono{font-family:var(--mono)}
+  table{border-collapse:collapse;width:100%;font-size:.8rem;margin:.5rem 0}
+  th,td{padding:7px 10px;border-bottom:1px solid var(--hairline);text-align:left;vertical-align:top}
+  thead th{background:var(--panel);font-family:var(--mono);font-size:.6rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:600;white-space:nowrap}
+  td.n,th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .scroll{overflow-x:auto}
+  .hl{background:var(--good-soft);border:1px solid color-mix(in srgb,var(--good) 35%,var(--hairline));border-radius:10px;padding:15px 17px;margin:13px 0}
+  .hl .eyebrow{color:var(--good)}
+  .warnbox{background:var(--warn-soft);border-left:3px solid var(--warn);border-radius:6px;padding:11px 15px;margin:11px 0}
+  ol,ul{margin:.3rem 0 .8rem;padding-left:1.2rem} li{margin:.3rem 0}
+  .layer{display:flex;gap:10px;align-items:flex-start;margin:.4rem 0}
+  .layer .num{font-family:var(--mono);font-weight:700;color:var(--accent-ink);background:var(--accent-soft);border-radius:6px;padding:2px 8px;font-size:.75rem}
+  .done{color:var(--good);font-weight:650}.run{color:var(--warn);font-weight:650}.plan{color:var(--faint)}
+  .foot{color:var(--faint);font-size:.76rem;margin-top:2.2rem;border-top:1px solid var(--hairline);padding-top:12px}
+  @page{margin:13mm 12mm}
+</style>
+<div class="wrap">
+  <span class="eyebrow">CALM-MS · Control y trazabilidad de costos en Google Cloud · 2026-08-17</span>
+  <h1>Cuándo, en qué y cuánto gastamos — y por qué nunca se dispara</h1>
+  <p class="sub">Todo el cómputo de investigación de CALM-MS corre bajo un modelo de costo acotado y auto-documentado. Este documento es la referencia; la fuente de verdad viva es <span class="mono">docs/calm-ms/cost-ledger.csv</span>, que cada corrida actualiza con su costo real.</p>
+
+  <div class="hl">
+    <span class="eyebrow">Estado a la fecha</span>
+    <p style="margin:.3em 0 0"><strong>Gastado real hasta ahora: ~$0.12</strong> (Fase 1, LST-AI, ya facturado y VM auto-eliminada). <strong>Corriendo: piloto FLAMeS ≤ $0.10</strong> (tope duro). <strong>Recursos always-on de investigación: CERO.</strong> Cada VM se autodestruye; no hay discos, buckets ni instancias residuales.</p>
+  </div>
+
+  <h2>1 · Principio: costo acotado por diseño</h2>
+  <p>Ninguna corrida puede "dispararse" porque el costo está limitado por construcción, no por vigilancia manual. Cada trabajo pesado usa una VM efímera con <strong>cinco capas de apagado</strong>, cualquiera de las cuales basta para detener el gasto:</p>
+  <div class="layer"><span class="num">1</span><div><strong>Spot</strong> — precio ~70% menor que on-demand; puede ser recuperada por Google en cualquier momento (y aun así se factura solo lo usado).</div></div>
+  <div class="layer"><span class="num">2</span><div><strong><span class="mono">--max-run-duration</span> + <span class="mono">--instance-termination-action=DELETE</span></strong> — tope duro de reloj (p. ej. 1 h piloto / 6 h full); al vencer, Google <em>elimina</em> la VM (no solo la apaga).</div></div>
+  <div class="layer"><span class="num">3</span><div><strong><span class="mono">trap … EXIT</span> auto-delete</strong> — el script se autoelimina la VM al terminar (éxito, fallo o error), típicamente mucho antes del tope.</div></div>
+  <div class="layer"><span class="num">4</span><div><strong>Guarda de presupuesto interna</strong> — el script mide su propio reloj y registra el costo incremental.</div></div>
+  <div class="layer"><span class="num">5</span><div><strong>Registro de costo escrito a GCS</strong> — cada corrida deja <span class="mono">cost/&lt;run&gt;.txt</span> con máquina, duración y costo real → alimenta el ledger.</div></div>
+
+  <h2>2 · Ledger de costos (fuente de verdad: cost-ledger.csv)</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>Fecha</th><th>Corrida</th><th>Máquina</th><th class="n">Est. $</th><th class="n">Tope $</th><th class="n">Real $</th><th>Estado</th></tr></thead>
+    <tbody>
+      <tr><td>2026-08-17</td><td>phase1-lstai</td><td>e2-standard-8 · Spot</td><td class="n">0.13</td><td class="n">1.20</td><td class="n">0.12</td><td class="done">done ✓</td></tr>
+      <tr><td>2026-08-17</td><td>flames-pilot</td><td>e2-standard-8 CPU · Spot</td><td class="n">0.05</td><td class="n">0.10</td><td class="n">—</td><td class="run">running</td></tr>
+      <tr><td>2026-08-17</td><td>flames-full</td><td>n1-std-4 + P4* · Spot</td><td class="n">0.44</td><td class="n">1.32</td><td class="n">—</td><td class="plan">planned</td></tr>
+      <tr><td>2026-08-17</td><td>flames-controls</td><td>n1-std-8 + P4* · Spot</td><td class="n">0.52</td><td class="n">1.56</td><td class="n">—</td><td class="plan">planned</td></tr>
+    </tbody>
+  </table></div>
+  <p class="sub">*GPU sujeta a habilitar cuota (ver §4). El costo real de cada corrida lo escribe la propia VM en GCS y se transcribe al CSV. <strong>Suma de topes de todo el plan &lt; $4.20</strong> — el gasto esperado total del programa de datos es &lt; $1.20.</p>
+
+  <h2>3 · Qué cuesta y qué no</h2>
+  <ul>
+    <li><strong>Bajar datasets públicos = $0 en GCP</strong> (GitHub/Zenodo/Figshare). El costo aparece solo al correr el segmentador base.</li>
+    <li><strong>Datos crudos públicos = data-as-code</strong> — no se guardan en GCS pago; se re-descargan gratis. Solo persistimos cohortes derivadas (pequeñas).</li>
+    <li><strong>Cómputo</strong> — VM Spot efímera, por corrida, auto-eliminada. Es el único rubro con costo, y está acotado por los topes de arriba.</li>
+    <li><strong>Almacenamiento GCS</strong> — solo artefactos derivados pequeños, transitorios; se limpian tras cada corrida. Producción PHI (bucket <span class="mono">brain-mri-medical-images</span>) es aparte e intacta.</li>
+  </ul>
+
+  <h2>4 · Nota de cuota GPU (decisión de costo)</h2>
+  <div class="warnbox">
+    <p style="margin:0">El proyecto tiene la cuota global <span class="mono">GPUS_ALL_REGIONS = 0</span> (default de proyectos nuevos), así que hoy corremos en <strong>CPU</strong>. Habilitar 1 GPU Spot (P4) requiere una solicitud de aumento (aprobación manual, horas/días). <strong>Con GPU el full-run sería más rápido Y más barato</strong> (~20-40 s/caso vs minutos). Decisión abierta: solicitar la cuota GPU, o correr el full en CPU por lotes (más lento, ~$1.50, igual acotado).</p>
+  </div>
+
+  <h2>5 · Cómo saber el gasto en cualquier momento</h2>
+  <ol>
+    <li><strong>Ledger:</strong> abrir <span class="mono">docs/calm-ms/cost-ledger.csv</span> — cada corrida con su costo real.</li>
+    <li><strong>Registros por corrida:</strong> <span class="mono">gcloud storage cat gs://brain-mri-medical-images/calm-flames/cost/&lt;run&gt;.txt</span></li>
+    <li><strong>Facturación real (autoritativa):</strong> consola GCP → Billing (cuenta <span class="mono">01A5BD-35871A-C6D7DF</span>) → Reports, filtrado por Compute Engine.</li>
+    <li><strong>Verificar cero residual:</strong> <span class="mono">gcloud compute instances list</span> (vacío) y <span class="mono">gcloud storage ls gs://…/calm-flames/</span> (solo artefactos pequeños).</li>
+  </ol>
+
+  <p class="foot">CALM-MS = Conformal, cAlibrated Lesion Mapping for MS. Documento de costos vivo — se actualiza con cada corrida. Fuente de verdad: cost-ledger.csv. Pipeline: docs/calm-ms/src/vm-flames.sh (5 capas de apagado + auto-registro de costo). Cuenta GCP nicolasbonillavargas@gmail.com · proyecto brain-mri-476110.</p>
+</div>

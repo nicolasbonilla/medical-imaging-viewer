@@ -13,6 +13,7 @@ paper publicable en revista indexada **y** feature del software.
 | [`CALM-MS-Resultados-Fase2.pdf`](CALM-MS-Resultados-Fase2.pdf) | Fase 2 — el score de lesión aprendido sube la sensibilidad (FDR 0.20: 0.135→0.207) con la misma garantía; diseño split-conformal y próxima palanca (FLAMeS). |
 | [`CALM-MS-VM-Costo-y-Apagado.pdf`](CALM-MS-VM-Costo-y-Apagado.pdf) | Ficha de la VM de GCP: máquina exacta, costo detallado y las 5 capas de apagado garantizado. |
 | [`CALM-MS-Estado-del-Arte.pdf`](CALM-MS-Estado-del-Arte.pdf) | Dossier SOTA (academia + industria) + auditoría adversarial de 4 ángulos: veredicto, tesis defendible, prior-art que colisiona, y el programa de 4 contribuciones (C1–C4) para hacerlo vanguardia publicable. |
+| [`CALM-MS-Costos-GCP.pdf`](CALM-MS-Costos-GCP.pdf) | Control y trazabilidad de costos en Google Cloud: modelo de costo acotado, las 5 capas de apagado, cómo saber el gasto, y garantía de cero residual. Fuente viva: [`cost-ledger.csv`](cost-ledger.csv). |
 
 Las fuentes HTML están en [`src/`](src/) — para regenerar los PDF ver `build-pdfs.ps1`.
 
