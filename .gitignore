@@ -112,5 +112,7 @@ segmentations_by_group.csv
 benchmark_results.csv
 docs/calm-ms/*.pdf
 experiment.json
+phase2_rescoring.json
+phase2.json
 experiment_max.json
 cohort/
