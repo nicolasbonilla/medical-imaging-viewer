@@ -1,149 +1,163 @@
-# CALM-MS dataset registry — the single catalogue of every MS lesion dataset we use
-# or plan to use. Committed (text only). Imaging bytes live under external/ or
-# cohorts/ (gitignored). Sizes are the SUBSET WE ACTUALLY NEED, not the full archive.
+# CALM-MS dataset registry — VETTED catalogue. Each entry was assessed against a
+# scientific-quality rubric (provenance, annotation/consensus type, geometry,
+# site diversity, license, completeness, contamination, CALM-MS fitness) by a
+# per-dataset deep read of the primary data paper (2026-08-17). Fields below carry
+# the VERIFIED findings, not marketing numbers.
 #
-# status:  have      = curated cohort already built locally
-#          fetching  = download in progress / just added
-#          available = public + downloadable, not yet pulled
-#          gated     = public but needs registration (credentialed access)
+# verdict:        include | conditional | exclude
+# consensus_type: multi_rater_staple | multi_rater_discussion | hierarchical_review
+#                 (single-rater + senior correction) | single | none
+# usable_labeled: expert-mask cases actually obtainable (test GT is often hidden)
+# geometry:       3D_iso | 2D_thick | mixed
+# space:          MNI_1mm | native
 
 datasets:
 
   isbi2015:
-    title: "ISBI-2015 Longitudinal MS Lesion Segmentation Challenge"
+    title: "ISBI-2015 Longitudinal MS Lesion Challenge"
     source: "https://smart-stats-tools.org/lesion-challenge-2015"
     license: "open (challenge terms)"
-    access: available            # our 19 cases were pulled from the app, ISBI-style
+    verdict: have
     patients: 19
-    raters: 2
+    usable_labeled: 19
+    consensus_type: multi_rater_discussion   # 2 raters
     sequences: [T1, T2, PD, FLAIR]
-    space: "MNI 1mm (as pulled/preprocessed)"
-    subset_gb: 1.2
-    status: have
+    geometry: 3D_iso
+    space: MNI_1mm
     cohort: cohorts/isbi19-lstai
-    value: "Our current validation. Exact match to CALM-MS setup; open leaderboard portal."
+    caveats: "Our current single(-ish)-rater validation. Appears inside Shifts-MS -> check base-segmenter didn't train on it."
 
   open_ms_data:
-    title: "Ljubljana 3D-MS-DB (Lesjak et al. 2018) — multi-rater CONSENSUS"
+    title: "Ljubljana 3D-MS-DB (Lesjak et al., Neuroinformatics 2018)"
     source: "https://github.com/muschellij2/open_ms_data"
     license: "CC-BY"
-    access: available
-    patients: 30                 # + 20 longitudinal (separate)
-    raters: 3                    # CONSENSUS of 3 experts -> kills the single-rater critique
+    verdict: include                         # TIER 1 — best quality/effort
+    patients: 30                             # + 20 longitudinal (lesion-change masks)
+    usable_labeled: 30
+    longitudinal: 20
+    consensus_type: multi_rater_discussion   # 3 raters, joint-session consensus, dual-pass 6-mo QA
     sequences: [T1, T1-Gd, T2, FLAIR]
-    space: "MNI 1mm (cross_sectional/MNI/*_regtoMNI.nii.gz)"
-    subset_gb: 0.57              # only cross_sectional/MNI (of a 9.5 GB repo)
-    status: fetching
+    geometry: 3D_iso
+    space: MNI_1mm                           # ships raw + coreg + 1mm + MNI
+    subset_gb: 0.57
+    status: have
     fetch: manifests/fetch_open_ms_data.sh
-    value: "Highest-value, lightest add. Multi-rater consensus + already MNI 1mm = plug-and-play. GT file = GOLD_STANDARD_*_regtoMNI."
+    caveats: "Single site (3T Siemens Ljubljana), no healthy controls, only FUSED consensus mask public (no per-rater layers). Highest-quality drop-in upgrade over ISBI."
 
   mslesseg:
-    title: "MSLesSeg / ICPR-2024 (Scientific Data 2025)"
-    source: "https://iplab.dmi.unict.it/mfs/ms-les-seg/  (repo: github.com/alessiarondinella/MSLesSeg-2024)"
-    license: "CC-BY-4.0"
-    access: available
-    patients: 75                 # 115 scans, baseline + follow-up, multi-hospital
-    raters: "expert-validated"
+    title: "MSLesSeg / ICPR-2024 (Nature Sci Data 2025)"
+    source: "https://github.com/alessiarondinella/MSLesSeg-2024  (data on Figshare)"
+    license: "CC-BY-4.0 (VERIFY live Figshare record + any DLA before ingest)"
+    verdict: include                         # TIER 1 — largest usable N
+    patients: 75                             # 115 scans
+    usable_labeled: 53                        # 22 test masks likely withheld -> confirm
+    longitudinal: 25                          # 25 patients have >=2 timepoints
+    consensus_type: hierarchical_review       # 1 junior rater, validated by neuroradiologist + neurologist (NOT independent multi-rater)
     sequences: [T1, T2, FLAIR]
-    space: "native (needs preprocessing to MNI)"
-    subset_gb: 6.0               # approx; confirm on fetch
+    geometry: 3D_iso
+    space: MNI_1mm                            # FSL FLIRT to MNI152 1mm + BET, provided
+    subset_gb: 3.0
     status: available
-    value: "Modern, cross-site, longitudinal. Biggest single N boost; proves the wrapper generalizes beyond ISBI."
-
-  msseg2016:
-    title: "MSSEG-2016 (MICCAI) — SEVEN-rater"
-    source: "https://portal.fli-iam.irisa.fr/msseg-challenge/  (Shanoir)"
-    license: "restricted (credentialed)"
-    access: gated
-    patients: 53
-    raters: 7                    # the inter-observer ceiling -> 'false by consensus'
-    sequences: [T1, T2, PD, FLAIR]
-    space: "native"
-    status: gated
-    value: "Re-derive 'false' against 7-rater consensus; the multi-scanner robustness test. Needs Shanoir registration."
-
-  msseg2:
-    title: "MSSEG-2 (MICCAI 2021) — NEW-lesion"
-    source: "https://portal.fli-iam.irisa.fr/msseg-2/  (Shanoir)"
-    license: "restricted (credentialed)"
-    access: gated
-    patients: 40                 # 2 timepoints each; 29/40 have >=1 new lesion
-    raters: "4-rater consensus (STAPLE)"
-    sequences: [FLAIR]
-    space: "native"
-    status: gated
-    value: "The benchmark for the C4 longitudinal new-lesion head (online-FDR regime)."
+    caveats: "Single-city Catania 1.5T (~3 scanners). 3mm lesion floor drops small lesions. GT is single-rater-validated, NOT consensus. SAME hospital pool as MSValid -> dedupe."
 
   sibbms:
-    title: "SibBMS — Siberian Brain MS Dataset (2025)"
-    source: "https://www.medrxiv.org/content/10.1101/2025.08.14.25333741v1 (Zenodo)"
-    license: "open"
-    access: available
-    patients: 93                 # MS/RIS  + 100 HEALTHY CONTROLS
-    healthy_controls: 100
-    raters: "3-tier neuroradiologist panel"
-    sequences: [T1, FLAIR]
-    space: "native"
+    title: "SibBMS — Siberian Brain MS (MELBA 2025, peer-reviewed)"
+    source: "https://ai.nsu.ru/files/sibbms/sibbms.zip  (request form)"
+    license: "CONTRADICTORY in paper (CC BY 3.0 vs CC BY-NC-SA 3.0) — CLARIFY before use"
+    verdict: conditional                      # TAKE THE CONTROLS; hold the patients
+    patients: 93                              # RRMS 57 / SPMS 24 / PPMS 5 / RIS 7
+    healthy_controls: 100                     # protocol-matched, lesion-free -> the value
+    usable_labeled: 10                        # ONLY 10 lesion masks released (NOT 93)
+    consensus_type: hierarchical_review       # 3-tier review cascade, single consensus mask
+    sequences: [T1, T1-Gd, T2, FLAIR]
+    geometry: mixed                           # 1.5T ~4mm thick + 3T ~0.6mm
+    space: native
     status: available
-    value: "Multi-rater review + 100 HEALTHY CONTROLS = a real false-candidate null for the conformal calibration, and Siberian site diversity for C3. Unique."
+    caveats: "HIGH VALUE = 100 healthy controls on same scanner/protocol = a genuine conformal FALSE-NULL. But only 10 masks public, native space, single-vendor Philips, license self-contradictory. Split use: take controls now, gate patient labels on author email."
 
-  msmri_dib:
-    title: "Brain MRI MS consensus (Muslim et al., Data in Brief 2022)"
-    source: "https://www.sciencedirect.com/science/article/pii/S235234092200347X"
-    license: "CC-BY"
-    access: available
-    patients: 60
-    raters: "3-expert consensus (2 radiologists + 1 neurologist)"
-    sequences: [T1, T2, FLAIR]
-    space: "native"
-    status: available
-    value: "Multi-rater consensus + EDSS metadata. Malaysian cohort = geographic/scanner diversity."
+  msseg2016:
+    title: "MSSEG-2016 (Commowick et al., Sci Rep 2018) — 7-RATER GOLD"
+    source: "https://portal.fli-iam.irisa.fr/msseg-challenge/  (Shanoir)"
+    license: "restricted (Shanoir account + free DUA)"
+    verdict: include                          # TIER 2 — the consensus anchor
+    patients: 53                              # 15 train / 38 test
+    usable_labeled: 15                        # test GT hidden (server-side eval)
+    consensus_type: multi_rater_staple        # 7 independent raters, LOP-STAPLE — field's best "false=consensus"
+    sequences: [T1, T1-Gd, T2, PD, FLAIR]
+    geometry: 3D_iso
+    space: native                             # MNI-registerable (Anima pipeline)
+    multi_site: "4 centers / 4 scanners, 1.5T+3T, Siemens/Philips/GE"
+    status: gated
+    caveats: "THE definition of lesion-instance truth for conformal calibration. Only 15 open masks. Appears in Shifts aggregates -> verify calibration independence. One-time free DUA (manual approval, days-weeks)."
 
-  msvalid:
-    title: "MSValid Data Collection (Zenodo 2024)"
-    source: "https://zenodo.org/records/10875606"
-    license: "open"
-    access: available
-    patients: 84                 # RRMS; mix of single + longitudinal
-    raters: "expert"
-    sequences: [T1, FLAIR]
-    space: "native"
-    status: available
-    value: "N boost + longitudinal (treatment between scans) → feeds C4 and progression analysis."
-
-  pedims:
-    title: "PediMS — Pediatric MS (Scientific Data 2025)"
-    source: "https://www.nature.com/articles/s41597-025-05346-5"
-    license: "open"
-    access: available
-    patients: 9                  # 28 scans, longitudinal
-    raters: "expert"
-    sequences: [T1, T2, FLAIR]
-    space: "native"
-    status: available
-    value: "Small but UNIQUE population (pediatric) → domain-shift stress test for the exchangeability/guarantee."
-
-  shifts_ms:
-    title: "Shifts-2022 MS (white-matter lesion, distribution shift)"
-    source: "https://shifts.grand-challenge.org/medical-dataset/"
-    license: "mixed (ISBI/PubMRI CC; MSSEG gated; Lausanne eval-only)"
-    access: gated
-    patients: "MSSEG + ISBI + PubMRI + Lausanne"
-    raters: "multi"
-    sequences: [FLAIR, T1]
-    space: "native"
-    status: available
-    value: "THE scanner-shift experiment for C3 (exchangeability under shift), with error-retention curves."
+  msseg2:
+    title: "MSSEG-2 (MICCAI 2021) — NEW-lesion, multi-site"
+    source: "https://portal.fli-iam.irisa.fr/msseg-2/  (Shanoir)"
+    license: "restricted (Shanoir account + free DUA)"
+    verdict: conditional                      # INCLUDE if new-lesion (C4) aligned
+    patients: 100                             # 40 train / 60 test, 2 timepoints
+    usable_labeled: 40
+    consensus_type: multi_rater_staple        # 4 raters, majority vote (weaker than 2016's LOP-STAPLE)
+    sequences: [FLAIR]                         # FLAIR-only (limits scorer features)
+    geometry: 3D_iso
+    space: native
+    multi_site: "15 scanners / 3 vendors, 1.5T+3T — strongest diversity"
+    status: gated
+    caveats: "Best multi-site + longitudinal set -> the C4 new-lesion / C3 shift benchmark. FLAIR-only. 40 open masks. Task = appearing lesions, not cross-sectional burden."
 
   ms3seg:
-    title: "MS3SEG (Iranian/Toshiba cohort, tri-mask)"
-    source: "https://github.com/Mahdi-Bashiri/MS3SEG"
-    license: "open"
-    access: available
+    title: "MS3SEG (Bashiri et al., Nature Sci Data 2026) — Toshiba/Iran"
+    source: "https://github.com/Mahdi-Bashiri/MS3SEG  (Figshare 30393475)"
+    license: "CC-BY-4.0 (data), MIT (code)"
+    verdict: conditional                      # cross-vendor EXTERNAL TEST only, native 2D
     patients: 100
-    raters: "expert tri-mask"
+    usable_labeled: 100
+    consensus_type: single                    # rater count/IRR NOT documented
+    tri_mask: "3 CLASSES (ventricles / normal-WMH / MS-lesion), NOT 3 raters. MS-lesion mask IS separable (good)."
     sequences: [T1, T2, FLAIR]
-    space: "native"
-    subset_gb: null
+    geometry: 2D_thick                         # axial 2D, anisotropic; voxel geometry NOT published
+    space: native
+    subset_gb: 5.0
     status: available
-    value: "Single distinct vendor (Toshiba) -> a clean cross-vendor generalization domain for C3."
+    caveats: "EXCLUDE from any MNI-1mm pipeline (resampling fabricates data). Use ONLY as a single cross-vendor (Toshiba 1.5T) domain-shift test in native 2D. Unknown raters, no IRR."
+
+  msmri_dib:
+    title: "Brain MRI MS consensus (Muslim et al., Data in Brief 2022) — Baghdad"
+    source: "https://data.mendeley.com/datasets/8bctsm8jz7/1"
+    license: "CC-BY-4.0"
+    verdict: conditional                      # supplementary external test only
+    patients: 60
+    usable_labeled: 60
+    consensus_type: hierarchical_review       # resident -> consultant radiologist -> neurologist (correction chain, not independent)
+    sequences: [T1, T2, FLAIR]
+    geometry: 2D_thick                         # 2D FLAIR 1.5T, geometry unspecified
+    space: native
+    status: available
+    caveats: "Baghdad cohort. Multi-centre ACQUISITION (~20 sources) but uncontrolled/undocumented. 2D thick-slice -> not clean MNI-1mm. No controls, no phenotype. Cheap real-world robustness test only."
+
+  pedims:
+    title: "PediMS — Pediatric MS (Nature Sci Data 2025)"
+    source: "https://www.nature.com/articles/s41597-025-05346-5  (Figshare 28701065)"
+    license: "CC-BY-4.0"
+    verdict: conditional                      # OOD pediatric probe only
+    patients: 9
+    usable_labeled: 28                        # scans; longitudinal
+    consensus_type: hierarchical_review       # 1 delineator + 2 senior validators
+    sequences: [T1, T2, FLAIR]
+    geometry: 2D_thick                         # FLAIR 3.9mm thick
+    space: native
+    status: available
+    caveats: "Unique pediatric domain-shift stress test. N far too small for conformal calibration. Frictionless CC-BY. One Balo's-sclerosis outlier (non-MS)."
+
+  msvalid:
+    title: "MSValid (Zenodo 2024) — Catania"
+    source: "https://zenodo.org/records/10875606"
+    license: "CC-BY-4.0"
+    verdict: exclude                          # NO public masks
+    patients: 84
+    usable_labeled: 0                         # UNLABELED image pool — no GT
+    consensus_type: none
+    sequences: [T1, T2, FLAIR]
+    space: native
+    status: available
+    caveats: "EXCLUDE: no public lesion masks (2.9 GB image-only zip). Same Catania source as MSLesSeg (overlap risk). Usable only as an unlabeled OOD/inference pool, never as GT."
