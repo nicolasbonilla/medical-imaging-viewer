@@ -1,0 +1,100 @@
+# CALM-MS dataset registry — the single catalogue of every MS lesion dataset we use
+# or plan to use. Committed (text only). Imaging bytes live under external/ or
+# cohorts/ (gitignored). Sizes are the SUBSET WE ACTUALLY NEED, not the full archive.
+#
+# status:  have      = curated cohort already built locally
+#          fetching  = download in progress / just added
+#          available = public + downloadable, not yet pulled
+#          gated     = public but needs registration (credentialed access)
+
+datasets:
+
+  isbi2015:
+    title: "ISBI-2015 Longitudinal MS Lesion Segmentation Challenge"
+    source: "https://smart-stats-tools.org/lesion-challenge-2015"
+    license: "open (challenge terms)"
+    access: available            # our 19 cases were pulled from the app, ISBI-style
+    patients: 19
+    raters: 2
+    sequences: [T1, T2, PD, FLAIR]
+    space: "MNI 1mm (as pulled/preprocessed)"
+    subset_gb: 1.2
+    status: have
+    cohort: cohorts/isbi19-lstai
+    value: "Our current validation. Exact match to CALM-MS setup; open leaderboard portal."
+
+  open_ms_data:
+    title: "Ljubljana 3D-MS-DB (Lesjak et al. 2018) — multi-rater CONSENSUS"
+    source: "https://github.com/muschellij2/open_ms_data"
+    license: "CC-BY"
+    access: available
+    patients: 30                 # + 20 longitudinal (separate)
+    raters: 3                    # CONSENSUS of 3 experts -> kills the single-rater critique
+    sequences: [T1, T1-Gd, T2, FLAIR]
+    space: "MNI 1mm (cross_sectional/MNI/*_regtoMNI.nii.gz)"
+    subset_gb: 0.57              # only cross_sectional/MNI (of a 9.5 GB repo)
+    status: fetching
+    fetch: manifests/fetch_open_ms_data.sh
+    value: "Highest-value, lightest add. Multi-rater consensus + already MNI 1mm = plug-and-play. GT file = GOLD_STANDARD_*_regtoMNI."
+
+  mslesseg:
+    title: "MSLesSeg / ICPR-2024 (Scientific Data 2025)"
+    source: "https://iplab.dmi.unict.it/mfs/ms-les-seg/  (repo: github.com/alessiarondinella/MSLesSeg-2024)"
+    license: "CC-BY-4.0"
+    access: available
+    patients: 75                 # 115 scans, baseline + follow-up, multi-hospital
+    raters: "expert-validated"
+    sequences: [T1, T2, FLAIR]
+    space: "native (needs preprocessing to MNI)"
+    subset_gb: 6.0               # approx; confirm on fetch
+    status: available
+    value: "Modern, cross-site, longitudinal. Biggest single N boost; proves the wrapper generalizes beyond ISBI."
+
+  msseg2016:
+    title: "MSSEG-2016 (MICCAI) — SEVEN-rater"
+    source: "https://portal.fli-iam.irisa.fr/msseg-challenge/  (Shanoir)"
+    license: "restricted (credentialed)"
+    access: gated
+    patients: 53
+    raters: 7                    # the inter-observer ceiling -> 'false by consensus'
+    sequences: [T1, T2, PD, FLAIR]
+    space: "native"
+    status: gated
+    value: "Re-derive 'false' against 7-rater consensus; the multi-scanner robustness test. Needs Shanoir registration."
+
+  msseg2:
+    title: "MSSEG-2 (MICCAI 2021) — NEW-lesion"
+    source: "https://portal.fli-iam.irisa.fr/msseg-2/  (Shanoir)"
+    license: "restricted (credentialed)"
+    access: gated
+    patients: 100
+    raters: "consensus"
+    sequences: [FLAIR]           # 2 timepoints
+    space: "native"
+    status: gated
+    value: "The benchmark for the C4 longitudinal new-lesion head (online-FDR regime)."
+
+  shifts_ms:
+    title: "Shifts-2022 MS (white-matter lesion, distribution shift)"
+    source: "https://shifts.grand-challenge.org/medical-dataset/"
+    license: "mixed (ISBI/PubMRI CC; MSSEG gated; Lausanne eval-only)"
+    access: gated
+    patients: "MSSEG + ISBI + PubMRI + Lausanne"
+    raters: "multi"
+    sequences: [FLAIR, T1]
+    space: "native"
+    status: available
+    value: "THE scanner-shift experiment for C3 (exchangeability under shift), with error-retention curves."
+
+  ms3seg:
+    title: "MS3SEG (Iranian/Toshiba cohort, tri-mask)"
+    source: "https://github.com/Mahdi-Bashiri/MS3SEG"
+    license: "open"
+    access: available
+    patients: 100
+    raters: "expert tri-mask"
+    sequences: [T1, T2, FLAIR]
+    space: "native"
+    subset_gb: null
+    status: available
+    value: "Single distinct vendor (Toshiba) -> a clean cross-vendor generalization domain for C3."

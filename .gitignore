@@ -114,5 +114,16 @@ docs/calm-ms/*.pdf
 experiment.json
 phase2_rescoring.json
 phase2.json
+
+# Research data tree — commit only the scaffolding (README, registry, manifests);
+# never the imaging bytes (public raw data is re-downloadable; cohorts are PHI/derived).
+/data/external/*
+/data/cohorts/*
+/data/experiments/*
+/data/cache/*
+!/data/external/.gitkeep
+!/data/cohorts/.gitkeep
+!/data/experiments/.gitkeep
+!/data/cache/.gitkeep
 experiment_max.json
 cohort/
