@@ -50,14 +50,15 @@ datasets:
     license: "CC-BY-4.0 (VERIFY live Figshare record + any DLA before ingest)"
     verdict: include                         # TIER 1 — largest usable N
     patients: 75                             # 115 scans
-    usable_labeled: 53                        # 22 test masks likely withheld -> confirm
-    longitudinal: 25                          # 25 patients have >=2 timepoints
+    usable_labeled: 115                       # VERIFIED: Figshare release INCLUDES test masks (93 train + 22 test)
+    longitudinal: 25                          # Pn/{T1,T2,T3} = timepoints; 25 patients have >=2
     consensus_type: hierarchical_review       # 1 junior rater, validated by neuroradiologist + neurologist (NOT independent multi-rater)
-    sequences: [T1, T2, FLAIR]
+    sequences: [T1, T2, FLAIR]                # per timepoint folder: FLAIR + T1 + T2 + MASK
     geometry: 3D_iso
-    space: MNI_1mm                            # FSL FLIRT to MNI152 1mm + BET, provided
-    subset_gb: 3.0
-    status: available
+    space: MNI_1mm                            # VERIFIED (182,218,182) 1mm binary, drop-in with open_ms_data
+    subset_gb: 1.4
+    status: have                              # downloaded to data/external/mslesseg
+    fetch: manifests/fetch_mslesseg.sh
     caveats: "Single-city Catania 1.5T (~3 scanners). 3mm lesion floor drops small lesions. GT is single-rater-validated, NOT consensus. SAME hospital pool as MSValid -> dedupe."
 
   sibbms:
