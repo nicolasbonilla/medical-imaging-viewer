@@ -43,6 +43,8 @@ if [ "$DEVICE" = "cpu" ]; then TIDX="--index-url https://download.pytorch.org/wh
 python3 -m pip install -q torch torchvision $TIDX 2>&1 | tail -2   # both from same index -> matching ABI (fixes torchvision::nms)
 python3 -m pip install -q nnunetv2 nibabel 2>&1 | tail -2
 python3 -c "import numpy,torch,nibabel;print('deps ok: numpy',numpy.__version__,'torch',torch.__version__)" || echo "DEP IMPORT FAILED"
+RUNDEV=$(python3 -c "import torch;print('cuda' if torch.cuda.is_available() else 'cpu')" 2>/dev/null || echo cpu)  # use GPU only if truly visible
+echo "compute: requested=$DEVICE actual=$RUNDEV"; nvidia-smi 2>/dev/null | head -3 || true
 echo "nnUNetv2_predict=$(which nnUNetv2_predict || echo MISSING)"; log
 
 echo "=== [2/5] FLAMeS weights (Zenodo 17955359) ==="
@@ -91,7 +93,7 @@ log
 
 echo "=== [4/5] FLAMeS inference (--save_probabilities) ==="
 nnUNetv2_predict -i $W/in -o $W/out -d 004 -c 3d_fullres -tr nnUNetTrainer_8000epochs \
-  -device $DEVICE $PFLAGS --save_probabilities 2>&1 | tail -20; log
+  -device $RUNDEV $PFLAGS --save_probabilities 2>&1 | tail -20; log
 
 echo "=== [5/5] npz -> lesion-probability NIfTI + pair with GT -> upload ==="
 python3 - <<'PY'
