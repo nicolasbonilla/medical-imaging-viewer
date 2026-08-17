@@ -103,13 +103,12 @@ gt_map=json.load(open(f"{W}/gt_map.json"))
 n=0
 for npz in sorted(glob.glob(f"{OUT}/*.npz")):
     cid=os.path.basename(npz)[:-4]
-    prob=np.load(npz)["probabilities"]           # (C, ...) ; channel 1 = lesion
+    prob=np.load(npz)["probabilities"]           # (C, z,y,x) in nnU-Net/SimpleITK order; channel 1 = lesion
     les=prob[1].astype(np.float32)
-    fl=nib.load(f"{W}/in/{cid}_0000.nii.gz")      # original geometry
-    arr=les
-    if arr.shape!=fl.shape:                        # nnU-Net may store (C,X,Y,Z) matching fl
-        try: arr=np.transpose(les, (0,1,2))
-        except Exception: pass
+    fl=nib.load(f"{W}/in/{cid}_0000.nii.gz")      # original geometry (nibabel x,y,z)
+    arr=np.transpose(les, (2,1,0))                 # (z,y,x)->(x,y,z); EMPIRICALLY VALIDATED (Dice 0.56 vs GT)
+    if arr.shape!=fl.shape:
+        print("SHAPE MISMATCH", cid, arr.shape, fl.shape); continue
     nib.save(nib.Nifti1Image(arr, fl.affine, fl.header), f"{COH}/{cid}_prob.nii.gz")
     g=nib.load(gt_map[cid]); nib.save(nib.Nifti1Image((g.get_fdata()>0).astype(np.uint8), g.affine, g.header), f"{COH}/{cid}_gt.nii.gz")
     n+=1
