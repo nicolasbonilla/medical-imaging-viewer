@@ -20,6 +20,7 @@ import { useViewerStore } from '@/store/useViewerStore';
 import { useAIStore } from '@/store/useAIStore';
 import { segmentationAPI } from '@/api/segmentation';
 import { ClinicalToolsPanel } from './ClinicalToolsPanel';
+import { ConformalPanel } from './ConformalPanel';
 import type { LabelInfo, Segmentation, SegmentationResponse, AIMode, AIModel } from '@/types';
 
 // ============================================================================
@@ -731,7 +732,12 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                 )}
 
                 {activeTab === 'tools' && (
-                  <ClinicalToolsPanel fileId={fileId} />
+                  <div className="space-y-3">
+                    <ClinicalToolsPanel fileId={fileId} />
+                    <div className="border-t border-gray-700 pt-2">
+                      <ConformalPanel />
+                    </div>
+                  </div>
                 )}
               </div>
             </>

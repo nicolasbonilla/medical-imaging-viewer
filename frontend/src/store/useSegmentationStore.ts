@@ -48,6 +48,28 @@ export type BrushShape = 'circle' | 'square';
  */
 export type DrawOverMode = 'all' | 'emptyOnly' | 'activeLabel';
 
+/** One candidate in a CALM-MS conformal review (ordinal tier; NEVER a probability). */
+export interface ConformalLesion {
+  centroid: number[];
+  volume_mm3: number;
+  n_voxels: number;
+  review_priority: 'high' | 'medium' | 'low';
+  in_fdr_set: boolean;
+}
+
+/** Response of POST /conformal/select — population-level scope, no per-scan FDR. */
+export interface ConformalSummary {
+  preset: string;
+  fdr_target: number;
+  guarantee_scope: string;
+  n_candidates: number;
+  n_in_fdr_set: number;
+  tier_counts: { high: number; medium: number; low: number };
+  base_model: string | null;
+  null_version: string | null;
+  lesions: ConformalLesion[];
+}
+
 /**
  * Paint tool configuration.
  */
@@ -168,6 +190,21 @@ interface SegmentationState {
   zoneMapOpacity: number;
 
   // =========================================================================
+  // CALM-MS conformal second-reader (INVESTIGATIONAL) — additive tier overlay
+  // =========================================================================
+
+  /** Conformal review preset (validated operating point); persisted preference */
+  conformalPreset: 'high_sensitivity' | 'balanced' | 'high_precision';
+  /** Tier status mask (1=high,2=medium,3=low per candidate voxel, 0 else); additive */
+  conformalStatusMask: Uint8Array | null;
+  /** Status mask dimensions */
+  conformalDims: { depth: number; height: number; width: number } | null;
+  /** The /conformal/select summary (counts, fdr_target, population-scope, lesions) */
+  conformalSummary: ConformalSummary | null;
+  /** Whether the conformal tier overlay is visible */
+  conformalVisible: boolean;
+
+  // =========================================================================
   // Longitudinal Overlay (dual mask comparison)
   // =========================================================================
 
@@ -253,6 +290,12 @@ interface SegmentationState {
   setLesionOpacity: (opacity: number) => void;
   setZoneMapOpacity: (opacity: number) => void;
 
+  // Actions - Conformal second-reader (CALM-MS)
+  setConformalPreset: (preset: 'high_sensitivity' | 'balanced' | 'high_precision') => void;
+  setConformalReview: (mask: Uint8Array, dims: { depth: number; height: number; width: number }, summary: ConformalSummary) => void;
+  clearConformal: () => void;
+  toggleConformalVisibility: () => void;
+
   // =========================================================================
   // Actions - Selected Lesion
   // =========================================================================
@@ -335,6 +378,13 @@ const createInitialState = () => ({
   zoneColorizeEnabled: false,
   lesionOpacity: 0.6,
   zoneMapOpacity: 0.3,
+
+  // Conformal second-reader (CALM-MS)
+  conformalPreset: 'high_sensitivity' as 'high_sensitivity' | 'balanced' | 'high_precision',
+  conformalStatusMask: null as Uint8Array | null,
+  conformalDims: null as { depth: number; height: number; width: number } | null,
+  conformalSummary: null as ConformalSummary | null,
+  conformalVisible: false,
 
   // Selected lesion
   selectedLesion: null as LesionInfo | null,
@@ -574,6 +624,15 @@ export const useSegmentationStore = create<SegmentationState>()(
         clearZoneMap: () =>
           set({ zoneMapSegId: null, zoneMapMask: null, zoneMapDims: null, zoneMapVisible: false, isZoneMapActiveSegmentation: false, zoneColorizeEnabled: false }),
 
+        // Conformal second-reader (CALM-MS) — additive tier overlay
+        setConformalPreset: (preset) => set({ conformalPreset: preset }),
+        setConformalReview: (mask, dims, summary) =>
+          set({ conformalStatusMask: mask, conformalDims: dims, conformalSummary: summary, conformalVisible: true }),
+        clearConformal: () =>
+          set({ conformalStatusMask: null, conformalDims: null, conformalSummary: null, conformalVisible: false }),
+        toggleConformalVisibility: () =>
+          set((state) => ({ conformalVisible: !state.conformalVisible })),
+
         toggleZoneMapVisibility: () =>
           set((state) => ({
             zoneMapVisible: !state.zoneMapVisible,
@@ -631,6 +690,7 @@ export const useSegmentationStore = create<SegmentationState>()(
           drawOverMode: state.drawOverMode,
           lesionOpacity: state.lesionOpacity,
           zoneMapOpacity: state.zoneMapOpacity,
+          conformalPreset: state.conformalPreset,
         }),
       }
     )

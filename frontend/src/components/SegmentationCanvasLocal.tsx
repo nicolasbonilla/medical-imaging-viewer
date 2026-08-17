@@ -305,6 +305,10 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
   // Zone map background overlay
   const zoneMapMask = useSegmentationStore((s) => s.zoneMapMask);
   const zoneMapDims = useSegmentationStore((s) => s.zoneMapDims);
+  // CALM-MS conformal tier overlay (additive)
+  const conformalStatusMask = useSegmentationStore((s) => s.conformalStatusMask);
+  const conformalDims = useSegmentationStore((s) => s.conformalDims);
+  const conformalVisible = useSegmentationStore((s) => s.conformalVisible);
   const zoneMapVisible = useSegmentationStore((s) => s.zoneMapVisible);
   const zoneColorizeEnabled = useSegmentationStore((s) => s.zoneColorizeEnabled);
 
@@ -509,6 +513,30 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
           canvasSize.width, canvasSize.height,
           zoneColors,
         );
+      }
+    }
+
+    // CALM-MS conformal second-reader — additive tier overlay (high/medium/low)
+    if (conformalVisible && conformalStatusMask && conformalDims) {
+      const cSliceSize = conformalDims.width * conformalDims.height;
+      const cOffset = sliceIndex * cSliceSize;
+      if (cOffset + cSliceSize <= conformalStatusMask.length) {
+        let cSlice: Uint8Array = conformalStatusMask.subarray(cOffset, cOffset + cSliceSize);
+        let cRenderW = conformalDims.width;
+        let cRenderH = conformalDims.height;
+        // Same axis auto-fix as the zone map (RC-031): transpose if H/W are swapped.
+        if (cRenderW !== imageWidth && cRenderH === imageWidth && cRenderW === imageHeight) {
+          cSlice = transposeSlice(cSlice, conformalDims.height, conformalDims.width);
+          cRenderW = imageWidth;
+          cRenderH = imageHeight;
+        }
+        const a = 200;
+        const tierColors: Record<number, ParsedColor> = {
+          1: { r: 52, g: 211, b: 153, a },   // high  - emerald
+          2: { r: 251, g: 191, b: 36, a },   // medium - amber
+          3: { r: 148, g: 163, b: 184, a },  // low   - slate
+        };
+        renderMaskToCanvas(ctx, cSlice, cRenderW, cRenderH, canvasSize.width, canvasSize.height, tierColors);
       }
     }
 
@@ -782,6 +810,7 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
     matplotlibBbox, bufferScale, segmentationMask, sliceIndex, renderVersion, storeLabels, labelVisibility,
     aiClickPoints, heatmapMode,
     zoneMapMask, zoneMapDims, zoneMapVisible, zoneColorizeEnabled,
+    conformalStatusMask, conformalDims, conformalVisible,
     lesionOpacity, zoneMapOpacity, selectedLesion,
     longTp1Mask, longTp1Dims, longTp2Mask, longTp2Dims, longVisible,
   ]);
