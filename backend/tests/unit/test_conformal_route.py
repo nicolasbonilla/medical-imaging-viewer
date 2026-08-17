@@ -116,6 +116,33 @@ def test_unknown_preset_returns_422(monkeypatch):
         _cleanup()
 
 
+def test_status_mask_returns_framed_tier_overlay(monkeypatch):
+    import struct
+    c = _client(monkeypatch, _prob_bytes(_GRID))
+    try:
+        r = c.post("/api/v1/conformal/status-mask", json={"prob_file_id": "x", "preset": "balanced"})
+        assert r.status_code == 200, f"{r.status_code}: {r.text[:200]}"
+        body = r.content
+        d, h, w = struct.unpack("<III", body[:12])
+        assert (d, h, w) == _GRID
+        arr = np.frombuffer(body[12:], dtype=np.uint8)
+        assert arr.size == d * h * w
+        assert set(np.unique(arr)).issubset({0, 1, 2, 3})   # tiers only, additive
+        assert int((arr > 0).sum()) > 0                      # some candidate painted
+        assert r.headers["X-Conformal-Preset"] == "balanced"
+    finally:
+        _cleanup()
+
+
+def test_status_mask_provenance_mismatch_409(monkeypatch):
+    c = _client(monkeypatch, _prob_bytes((100, 100, 100)))
+    try:
+        r = c.post("/api/v1/conformal/status-mask", json={"prob_file_id": "x", "preset": "balanced"})
+        assert r.status_code == 409
+    finally:
+        _cleanup()
+
+
 def test_out_of_range_prob_returns_422(monkeypatch):
     p = np.full(_GRID, 0.02, dtype=np.float32); p[0, 0, 0] = 7.0
     img = nib.Nifti1Image(p, np.eye(4)); img.header.set_zooms((1.0, 1.0, 1.0))

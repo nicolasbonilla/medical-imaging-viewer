@@ -18,7 +18,9 @@ FLAMeS float NIfTI already in GCS on the calibration grid. A production FLAMeS
 soft-inference producer + a validated OOD monitor + summative usability study are
 prerequisites for clinical enablement (see SRS/RMF Addendum A).
 """
-from fastapi import APIRouter, Depends, HTTPException
+import struct
+
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
@@ -81,3 +83,47 @@ async def conformal_select(
     except Exception:
         logger.error("[Conformal] select failed", exc_info=True)
         raise HTTPException(status_code=500, detail="conformal selection failed")
+
+
+@router.post("/status-mask")
+async def conformal_status_mask(
+    request: ConformalSelectRequest,
+    storage_service=Depends(get_storage_service),
+    current_user: User = Depends(get_current_active_user),
+):
+    """The ADDITIVE tier overlay for the viewer, in the same 12-byte-header binary
+    framing the client already parses for masks: [D:4][H:4][W:4][uint8 body], where
+    the body labels each candidate voxel with its review-priority tier
+    (1=high, 2=medium, 3=low; 0 elsewhere). Same fail-closed contract as /select.
+    """
+    settings = get_settings()
+    if not settings.CALM_MS_RESEARCH_ENABLED:
+        raise HTTPException(status_code=404, detail="Not found")
+    if request.preset not in PRESETS:
+        raise HTTPException(status_code=422, detail=f"unknown preset; allowed: {sorted(PRESETS)}")
+    try:
+        await require_imaging_access(request.prob_file_id, current_user)
+        file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, request.prob_file_id)
+        img, arr = load_nifti_from_bytes(file_data)
+        spacing = tuple(float(z) for z in img.header.get_zooms()[:3])
+        review = await run_in_threadpool(conformal_review, arr.astype("float32"), spacing, request.preset)
+        mask = review.status_mask
+        d, h, w = mask.shape
+        body = struct.pack("<III", int(d), int(h), int(w)) + mask.astype("uint8").tobytes()
+        return Response(content=body, media_type="application/octet-stream", headers={
+            "X-Mask-Depth": str(d), "X-Mask-Height": str(h), "X-Mask-Width": str(w),
+            "X-Conformal-Preset": request.preset, "X-Conformal-Fdr-Target": str(review.fdr_target),
+            "Cache-Control": "no-cache",
+            "Access-Control-Expose-Headers": "X-Mask-Depth, X-Mask-Height, X-Mask-Width, X-Conformal-Preset, X-Conformal-Fdr-Target",
+        })
+    except ProvenanceMismatch as e:
+        raise HTTPException(status_code=409, detail=f"exchangeability refused: {e}")
+    except ConformalAssetError as e:
+        raise HTTPException(status_code=503, detail=f"conformal null asset unavailable: {e}")
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception:
+        logger.error("[Conformal] status-mask failed", exc_info=True)
+        raise HTTPException(status_code=500, detail="conformal status-mask failed")
