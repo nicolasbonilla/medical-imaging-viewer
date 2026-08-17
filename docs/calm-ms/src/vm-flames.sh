@@ -7,7 +7,7 @@
 exec > /var/log/flames.log 2>&1
 set -x
 MD="http://metadata/computeMetadata/v1/instance"
-meta(){ curl -s -H "Metadata-Flavor: Google" "$MD/$1"; }
+meta(){ curl -sf -H "Metadata-Flavor: Google" "$MD/$1" 2>/dev/null || true; }  # -f: missing attr -> empty (not 404 HTML)
 NAME=$(meta name); ZONE=$(meta zone | awk -F/ '{print $NF}')
 LIMIT=$(meta attributes/case-limit);   LIMIT=${LIMIT:-3}
 RATE=$(meta attributes/hourly-rate);   RATE=${RATE:-0.22}
@@ -31,11 +31,16 @@ finish(){
 trap finish EXIT
 
 W=/w; mkdir -p $W/in $W/out $W/cohort; cd $W
+[ -d /opt/conda/bin ] && export PATH=/opt/conda/bin:$PATH   # use DLVM conda python/pip (numpy preinstalled) consistently
+apt-get update -qq && apt-get install -y -qq unzip git 2>&1 | tail -1
 export nnUNet_raw=$W/raw nnUNet_preprocessed=$W/prep nnUNet_results=$W/nnunet_results
 mkdir -p $nnUNet_raw $nnUNet_preprocessed $nnUNet_results
 
 echo "=== [1/5] deps + nnU-Net v2 ==="
-pip install -q nnunetv2 nibabel 2>&1 | tail -2; log
+echo "python=$(which python3) pip=$(which pip)"
+python3 -c "import numpy; print('numpy', numpy.__version__)" || true
+pip install nnunetv2 nibabel 2>&1 | tail -3
+echo "nnUNetv2_predict=$(which nnUNetv2_predict || echo MISSING)"; log
 
 echo "=== [2/5] FLAMeS weights (Zenodo 17955359) ==="
 WZIP=$(curl -s https://zenodo.org/api/records/17955359 \
