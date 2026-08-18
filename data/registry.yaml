@@ -25,7 +25,9 @@ datasets:
     geometry: 3D_iso
     space: MNI_1mm
     cohort: cohorts/isbi19-lstai
-    caveats: "Our current single(-ish)-rater validation. Appears inside Shifts-MS -> check base-segmenter didn't train on it."
+    base_model_overlap: {flames: true}       # CONFIRMED: FLAMeS ref 12 (Carass 2017) = ISBI-2015 -> IN-SAMPLE
+    appears_in: [shifts_ms]                   # ISBI = Shifts training split
+    caveats: "CONTAMINATED for a FLAMeS base: ISBI-2015 is FLAMeS training data (paper ref 12) AND a Shifts-MS component. FORBIDDEN as a FLAMeS conformal null / held-out test. Single(-ish)-rater. Usable only with a base model provably not trained on it."
 
   open_ms_data:
     title: "Ljubljana 3D-MS-DB (Lesjak et al., Neuroinformatics 2018)"
@@ -42,7 +44,9 @@ datasets:
     subset_gb: 0.57
     status: have
     fetch: manifests/fetch_open_ms_data.sh
-    caveats: "Single site (3T Siemens Ljubljana), no healthy controls, only FUSED consensus mask public (no per-rater layers). Highest-quality drop-in upgrade over ISBI."
+    base_model_overlap: {flames: true}       # CONFIRMED: FLAMeS ref 13 (Lesjak 2018) = this dataset -> IN-SAMPLE
+    appears_in: [shifts_ms]                   # = Shifts PubMRI / dev_out (do NOT double-count)
+    caveats: "CONTAMINATED for a FLAMeS base: this IS FLAMeS ref-13 training data (in-sample probability maps -> non-exchangeable null; its 'clean' within-site ECE 0.02-0.03 is an in-sample artefact) AND = Shifts dev_out. FORBIDDEN as a FLAMeS conformal null / held-out test. Single site (3T Siemens Ljubljana), FUSED consensus mask only. Recoverable only with a leave-this-out base model."
 
   mslesseg:
     title: "MSLesSeg / ICPR-2024 (Nature Sci Data 2025)"
@@ -59,7 +63,9 @@ datasets:
     subset_gb: 1.4
     status: have                              # downloaded to data/external/mslesseg
     fetch: manifests/fetch_mslesseg.sh
-    caveats: "Single-city Catania 1.5T (~3 scanners). 3mm lesion floor drops small lesions. GT is single-rater-validated, NOT consensus. SAME hospital pool as MSValid -> dedupe."
+    base_model_overlap: {flames: false}      # CLEAN: FLAMeS external-test only, not training -> valid null
+    per_scanner_labels: "UNVERIFIED — ~3 Catania 1.5T scanners but no per-scan scanner ID confirmed in the Figshare release; treat as ONE site until verified"
+    caveats: "The valuable CLEAN (FLAMeS-independent) 3D-MNI volume. BUT: single-city Catania 1.5T; 3mm floor drops small lesions; GT single-rater-validated NOT consensus; per-scanner metadata likely absent -> only usable as ONE whole-dataset site (re-imports the annotation confound). SAME pool as MSValid -> dedupe."
 
   sibbms:
     title: "SibBMS — Siberian Brain MS (MELBA 2025, peer-reviewed)"
@@ -89,7 +95,12 @@ datasets:
     space: native                             # MNI-registerable (Anima pipeline)
     multi_site: "4 centers / 4 scanners, 1.5T+3T, Siemens/Philips/GE"
     status: gated
-    caveats: "THE definition of lesion-instance truth for conformal calibration. Only 15 open masks. Appears in Shifts aggregates -> verify calibration independence. One-time free DUA (manual approval, days-weeks)."
+    base_model_overlap: {flames: true}       # CONFIRMED: FLAMeS ref 14 (Commowick 2021) = MSSEG-2016 -> IN-SAMPLE
+    appears_in: [shifts_ms]                   # MSSEG-1 = Shifts in-domain (Rennes/Bordeaux/Lyon)
+    commercial_use: prohibited               # OFSEP DUA: non-commercial; contact OFSEP for commercial
+    term: 3yr
+    per_site_masks: "~3.75 (15 masks / 4 centers) -> min conformal p ~0.21: CANNOT support a per-site null"
+    caveats: "The annotation-uniform (7-rater LOP-STAPLE) scanner-isolation anchor IN PRINCIPLE — but (1) CONTAMINATED: FLAMeS ref-14 training data, so unusable as a FLAMeS null until a base-model swap; (2) only 15 open masks across 4 centers = ~3.75/site, too few for a per-site conformal null (F1); (3) OFSEP DUA is NON-COMMERCIAL + 3yr. Recoverable as the scanner-isolation instrument ONLY with a leave-this-out base model."
 
   msseg2:
     title: "MSSEG-2 (MICCAI 2021) — NEW-lesion, multi-site"
@@ -104,7 +115,44 @@ datasets:
     space: native
     multi_site: "15 scanners / 3 vendors, 1.5T+3T — strongest diversity"
     status: gated
-    caveats: "Best multi-site + longitudinal set -> the C4 new-lesion / C3 shift benchmark. FLAIR-only. 40 open masks. Task = appearing lesions, not cross-sectional burden."
+    base_model_overlap: {flames: false}      # CLEAN: FLAMeS external-test only -> the load-bearing scanner instrument
+    commercial_use: prohibited               # OFSEP/Shanoir DUA: non-commercial + 3yr
+    term: 3yr
+    per_site_masks: "~2.7 (40 masks / 15 scanners) -> min conformal p ~0.27: NO per-site null; use for MARGINAL shift only"
+    caveats: "THE load-bearing clean instrument: FLAMeS-INDEPENDENT + annotation-uniform (4-rater majority) across 15 scanners -> the one design that ISOLATES scanner effect with the current base model. BUT FLAIR-only (limits scorer features), new-lesion task (C4 not burden), 40 masks/15 scanners too few for per-site nulls (marginal-shift study only), OFSEP DUA non-commercial. Primary scanner-shift claim should be built here."
+
+  shifts_ms:
+    title: "Shifts / Shifts 2.0 White-Matter MS Lesion benchmark (Malinin et al., NeurIPS 2022)"
+    source: "https://shifts.grand-challenge.org/medical-dataset/  (Zenodo 7051658 + 7051692)"
+    license: "CC-BY-NC-SA 4.0 + OFSEP DUA — NON-COMMERCIAL, 3yr"
+    verdict: reference                        # TIER-0 as a BENCHMARK PROTOCOL, not fresh data
+    commercial_use: prohibited
+    term: 3yr
+    patients: "~O(100) labeled aggregated"
+    composition: "MSSEG-2016 (in-domain) + ISBI-2015 (train) + Ljubljana/PubMRI (dev_out) + private Lausanne (eval_out, GT withheld)"
+    sequences: [T1, FLAIR]
+    geometry: 3D_iso
+    space: MNI_1mm
+    multi_site: "~6 centers (Rennes/Bordeaux/Lyon/Best/Ljubljana/Lausanne), 1.5T+3T, Siemens/Philips/GE"
+    base_model_overlap: {flames: true}       # its components ARE FLAMeS training data
+    status: available
+    caveats: "THE field's distribution-shift MS benchmark (in-domain vs dev_out/eval_out) — a conformal-FDR-under-shift paper is expected to report on it. BUT for a FLAMeS base it is CONTAMINATED (all public components are FLAMeS training), NON-COMMERCIAL, and supports only a MARGINAL (pooled) shift eval, not per-site Mondrian nulls. Adopt its SPLITS/PROTOCOL + lesion-wise+retention metrics; use as data only with a Shifts-independent base model. Companion uncertainty code: github.com/NatalijaMolch/MS_WML_uncs."
+
+  miccai2008:
+    title: "MICCAI-2008 MS Lesion Challenge (CHB/UNC, Boston)"
+    source: "https://www.nitrc.org/projects/msseg/"
+    license: "challenge/registration terms (NITRC, password-gated)"
+    verdict: conditional                      # external OOD test only
+    patients: 45                              # 20 train (public masks) + 25 test (hidden)
+    usable_labeled: 20                        # 10 CHB (3T Siemens) + 10 UNC (3T Siemens Allegra)
+    consensus_type: single                    # single CHB expert (weakness)
+    sequences: [T1, T2, FLAIR]
+    geometry: 3D_iso                          # 0.5mm isotropic -> resamplable to MNI-1mm
+    space: native
+    multi_site: "2 sites / 2 scanners (CHB + UNC), both 3T Siemens"
+    base_model_overlap: {flames: false}      # NOT in FLAMeS refs -> clean external test
+    status: available
+    caveats: "Clean (FLAMeS-independent) 2-site 3D-iso public masks — a rare uncontaminated cross-site probe. BUT single-rater GT, old (2008 acquisition), 20 masks. External OOD test, not a calibration anchor."
 
   ms3seg:
     title: "MS3SEG (Bashiri et al., Nature Sci Data 2026) — Toshiba/Iran"

@@ -116,10 +116,22 @@ precisely the gap CALM-MS has not closed.
 
 ## 5. What clinical enablement actually requires (the honest roadmap)
 
+> **Data reality (3 adversarial audits, 2026-08-18 — see `docs/calm-ms/DATA-STRATEGY.md`).**
+> Two findings reshape this roadmap: (1) **base-model contamination** — FLAMeS was trained on
+> `open_ms_data`, ISBI-2015 and MSSEG-2016 (its refs 12–14), so our openms-based null is in-sample
+> and the existing cross-site result is confounded (annotation + base-rate + in/out-of-sample, not
+> scanner physics); (2) **feasibility** — the public multi-scanner sets give only ~3 masks/scanner
+> (min conformal p ≈ 0.2–0.27), so they **cannot support a per-site Mondrian null**, and a
+> training-conditional bound needs ~150–600 scans/site. **A certified per-site guarantee is not
+> reachable with public data — it requires new multi-site acquisition — and power is AUC-capped, so
+> α<0.2 needs a better score, not more calibration data.** The load-bearing clean instrument is
+> MSSEG-2 (FLAMeS-independent, annotation-uniform, 15 scanners) — for a *marginal* shift study.
+
 The F1 fix is a program, not a patch — and it needs all of:
 
 1. **≥3–5 real acquisition sites/scanners** with expert ground truth (currently 2 domains,
-   145 cases; pooled cross-domain AUC 0.62). Non-negotiable — everything downstream needs it.
+   145 cases; pooled cross-domain AUC 0.62) — **and FLAMeS-independent** (the current 2 are not).
+   Non-negotiable — everything downstream needs it, and public data cannot supply it (see box).
 2. **Cross-site score harmonisation and/or a domain-invariant score**, to make the
    false-candidate law comparable. ComBat/neuroComBat (Johnson 2007; Fortin 2017) is the
    standard baseline but harmonises *scalar features estimated from a per-site batch* — it is

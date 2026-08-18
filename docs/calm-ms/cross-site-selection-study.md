@@ -6,6 +6,19 @@ Artifacts: `scripts/calm-ms/cross_site_selection_study.py`,
 Supersedes a flawed `wcs_experiment.py` (removed) whose headline result was a calibration
 double-use leak (two adversarial audits).
 
+> **⚠ VALIDITY CAVEAT — base-model contamination + confound (adversarial data audit, 2026-08-18).**
+> One of the two "sites", `open_ms_data` (Ljubljana), is in the **training set of the FLAMeS base
+> model** (FLAMeS paper refs 12–14 = ISBI-2015, Ljubljana, MSSEG-2016). Its probability maps are
+> therefore **in-sample**, its false-candidate null is not exchangeable with held-out data, and its
+> "clean" within-site ECE (0.02–0.03) is optimistic — an in-sample artefact, not evidence of good
+> calibration. Moreover openms↔mslesseg differ on ≥5 axes at once (scanner, annotation protocol
+> [3-rater consensus vs single-rater + 3 mm floor], base-rate 3.3×, in/out-of-sample, cohort), so
+> the measured "cross-site shift" is **confounded** and is mostly a label-protocol/base-rate shift
+> (the isotonic→ECE≈0 fingerprint), NOT scanner physics. **This study is therefore a MOTIVATING
+> ILLUSTRATION only, not a scanner-shift validation.** A valid measurement must use a
+> FLAMeS-independent base model and measure the shift *within* an annotation-uniform multi-scanner
+> dataset (MSSEG-2). See `docs/calm-ms/DATA-STRATEGY.md`.
+
 ## Why this study
 
 The consolidation named Weighted Conformalized Selection (WCS; Jin & Candès, arXiv
