@@ -446,6 +446,24 @@ any score-only monitor, so clinical enablement is gated on class-conditional / s
 recalibration, a base-model-bound probability producer, and the IEC 62366-1 summative
 usability study (SRS Addendum A).
 
+### F1 fix investigation (2026-08-18): site recalibration is necessary but NOT sufficient
+
+The proposed F1 fix — site-conditional (Mondrian) recalibration of the null — was tested
+on real data (`scripts/calm-ms/site_recalibration_experiment.py`, record
+`assets/site_recalibration_record.json`; write-up `docs/calm-ms/F1-site-shift-investigation.md`).
+Findings: (a) real cross-site FP shift exists (KS D=0.150, p=4.7e-4) but is mild between the
+two academic cohorts, so the pooled null stays near target there; (b) a **severe confident-FP
+shift** (a scanner emitting confident false positives) voids the pooled guarantee (realized
+FDR 0.43–0.63, up to ~6× target) and the OOD monitor is blind to it (0/115 flagged) —
+confirming F1 with a realistic construction; (c) **site-conditional recalibration does not
+rescue it**: it restores a valid null but power collapses (1 of 2692 true lesions recovered),
+because when FPs are as confident as TPs the raw-probability score is anti-informative. **The
+true F1 fix is two-part: a scanner-robust LEARNED lesion score (TP/FP separability beyond raw
+probability — the CALM-MS v2 scorer, now shown load-bearing, not optional) PLUS cluster-aware
+site-conditional calibration.** Clinical enablement is gated on BOTH, validated on real
+mimic/scanner-shift cohorts. This is a scoping result, recorded honestly: it delimits what the
+conformal layer alone can deliver under acquisition shift.
+
 *End of Risk Management File*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/03_Risk_Management_File.md`.*

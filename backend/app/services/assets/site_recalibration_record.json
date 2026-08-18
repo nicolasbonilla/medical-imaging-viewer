@@ -1,0 +1,80 @@
+{
+  "ks_fp_shift": {
+    "D": 0.15,
+    "p": 0.0004740264925737697
+  },
+  "realized_micro_fdr": {
+    "0.3|openms|openms": 0.1205,
+    "0.3|openms|mslesseg": 0.1769,
+    "0.3|mslesseg|openms": 0.1515,
+    "0.3|mslesseg|mslesseg": 0.1576,
+    "0.3|POOLED|openms": 0.1506,
+    "0.3|POOLED|mslesseg": 0.1566,
+    "0.2|openms|openms": 0.1288,
+    "0.2|openms|mslesseg": 0.153,
+    "0.2|mslesseg|openms": 0.0792,
+    "0.2|mslesseg|mslesseg": 0.1199,
+    "0.2|POOLED|openms": 0.0968,
+    "0.2|POOLED|mslesseg": 0.1281,
+    "0.1|openms|openms": 0.1111,
+    "0.1|openms|mslesseg": 0.0941,
+    "0.1|mslesseg|openms": 0.0541,
+    "0.1|mslesseg|mslesseg": 0.0859,
+    "0.1|POOLED|openms": 0.0556,
+    "0.1|POOLED|mslesseg": 0.0738
+  },
+  "alphas": [
+    0.3,
+    0.2,
+    0.1
+  ],
+  "severe_shift_demo": {
+    "delta_logit": 1.5,
+    "ood_flagged": "0/115",
+    "by_alpha": {
+      "0.3": {
+        "pooled": {
+          "fdr": 0.4328,
+          "sel": 2158,
+          "tp": 1224,
+          "fp": 934
+        },
+        "site_conditional": {
+          "fdr": 0.95,
+          "sel": 20,
+          "tp": 1,
+          "fp": 19
+        }
+      },
+      "0.2": {
+        "pooled": {
+          "fdr": 0.5088,
+          "sel": 1529,
+          "tp": 751,
+          "fp": 778
+        },
+        "site_conditional": {
+          "fdr": 0.9231,
+          "sel": 13,
+          "tp": 1,
+          "fp": 12
+        }
+      },
+      "0.1": {
+        "pooled": {
+          "fdr": 0.6256,
+          "sel": 788,
+          "tp": 295,
+          "fp": 493
+        },
+        "site_conditional": {
+          "fdr": 0.8333,
+          "sel": 6,
+          "tp": 1,
+          "fp": 5
+        }
+      }
+    }
+  },
+  "note": "diagonal = site-conditional leave-one-case-out; POOLED = shipped null; severe_shift = confident-FP inflation, pooled-null vs site-conditional-null"
+}

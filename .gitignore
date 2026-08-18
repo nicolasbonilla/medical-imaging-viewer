@@ -127,3 +127,6 @@ phase2.json
 !/data/cache/.gitkeep
 experiment_max.json
 cohort/
+
+# CALM-MS experiment cache (derived from gitignored cohort data)
+scripts/calm-ms/.site_cache.npz
