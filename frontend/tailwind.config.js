@@ -75,6 +75,41 @@ export default {
           800: '#991b1b',
           900: '#7f1d1d',
         },
+
+        // --- v2 IDENTITY (design audit 2026) ---------------------------------
+        // A deliberate move OFF the generic sky-blue + purple/pink gradient ("AI
+        // default") toward a calm, precise, medical-grade identity: a cool graphite
+        // neutral (hue-biased ~222, chosen not defaulted) + ONE confident accent, with
+        // saturated hue reserved for clinical data only. New components adopt these;
+        // legacy screens migrate progressively.
+        surface: {
+          void: '#08090C',      // app ground / viewport gutter
+          base: '#0E1014',      // panels
+          raised: '#161922',    // cards, toolbar pill
+          overlay: '#1C2029',   // popovers, menus
+          border: '#232833',
+          hover: '#2A303C',
+        },
+        ink: {
+          faint: '#5C6472',
+          muted: '#8A92A3',
+          soft: '#B7BECC',
+          base: '#EEF1F6',
+        },
+        brand: {                // single spectral cyan-teal accent (calm, not neon)
+          400: '#57C7D4',
+          500: '#35B4C4',
+          600: '#2A93A1',
+          700: '#227885',
+          950: '#0C2A2F',
+        },
+        // Clinical semantics tuned to read at a glance on the dark surface (AA on base)
+        clinical: {
+          good: '#3DD68C',
+          warn: '#E8B04B',
+          crit: '#F4785B',
+          info: '#6FA8FF',
+        },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

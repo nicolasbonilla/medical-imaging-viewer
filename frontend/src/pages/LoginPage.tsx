@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Lock, Mail, User, Eye, EyeOff, Shield, RefreshCw,
-  CheckCircle2, AlertCircle, Sparkles, KeyRound
+  CheckCircle2, AlertCircle, KeyRound
 } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
@@ -142,9 +142,9 @@ export default function LoginPage() {
   };
 
   const getPasswordStrengthColor = () => {
-    if (passwordStrength.score >= 6) return 'from-green-500 to-emerald-500';
-    if (passwordStrength.score >= 4) return 'from-yellow-500 to-orange-500';
-    return 'from-red-500 to-pink-500';
+    if (passwordStrength.score >= 6) return 'bg-clinical-good';
+    if (passwordStrength.score >= 4) return 'bg-clinical-warn';
+    return 'bg-clinical-crit';
   };
 
   const getPasswordStrengthLabel = () => {
@@ -154,21 +154,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Fullscreen video background */}
-      <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover z-0">
-        <source src="/intro.mp4" type="video/mp4" />
-      </video>
-      {/* Dark overlay for readability */}
-      <div className="absolute inset-0 bg-black/60 z-[1]" />
-
-      {/* Animated blobs on top of video */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none z-[2]">
-        <motion.div className="absolute top-1/4 -left-20 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-15"
-          animate={{ x: [0, 100, 0], y: [0, -50, 0] }} transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }} />
-        <motion.div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-15"
-          animate={{ x: [0, -100, 0], y: [0, 50, 0] }} transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }} />
-      </div>
+    <div
+      className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-surface-void"
+      style={{
+        // Calm, precise ground: a single soft accent glow + a faint technical grid.
+        // Replaces the video + animated blobs + glassmorphism the design audit flagged
+        // as generic and unserious for a Class C device.
+        backgroundImage:
+          'radial-gradient(60rem 60rem at 50% -10%, rgba(53,180,196,0.10), transparent 60%),' +
+          'linear-gradient(#12151C 1px, transparent 1px), linear-gradient(90deg, #12151C 1px, transparent 1px)',
+        backgroundSize: 'auto, 40px 40px, 40px 40px',
+      }}
+    >
 
       {/* Language Selector */}
       <div className="absolute top-6 right-6 z-50">
@@ -176,30 +173,29 @@ export default function LoginPage() {
       </div>
 
       {/* Main card */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-        className="w-full max-w-md relative z-10 drop-shadow-2xl">
-        <div className="backdrop-blur-2xl bg-white/[0.07] border border-white/[0.12] rounded-3xl shadow-2xl p-8">
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: 'easeOut' }}
+        className="w-full max-w-md relative z-10">
+        <div className="bg-surface-raised border border-surface-border rounded-2xl shadow-xl shadow-black/40 p-8">
 
           {/* Logo */}
           <div className="text-center mb-6">
-            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 15 }}
-              className="inline-block p-3.5 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-3">
-              <Shield className="w-10 h-10 text-white" />
-            </motion.div>
-            <h1 className="text-2xl font-bold text-white mb-1">MSTool-AI</h1>
-            <p className="text-gray-400 text-xs">
+            <div className="inline-flex items-center justify-center h-14 w-14 bg-brand-950 border border-brand-500/30 rounded-xl mb-3">
+              <Shield className="w-7 h-7 text-brand-400" />
+            </div>
+            <h1 className="text-2xl font-semibold text-ink-base mb-1 tracking-tight">MSTool-AI</h1>
+            <p className="text-ink-muted text-xs">
               AI-Powered Brain MRI Analysis · IEC 62304 Class C Medical Device
             </p>
           </div>
 
           {/* Mode toggle */}
-          <div className="flex gap-2 mb-5 p-1 bg-white/5 rounded-xl">
+          <div className="flex gap-1 mb-5 p-1 bg-surface-base border border-surface-border rounded-lg">
             <button onClick={() => setMode('login')}
-              className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${mode === 'login' ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}>
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60 ${mode === 'login' ? 'bg-brand-500 text-surface-void' : 'text-ink-muted hover:text-ink-base'}`}>
               {t('auth.login')}
             </button>
             <button onClick={() => setMode('register')}
-              className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${mode === 'register' ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}>
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60 ${mode === 'register' ? 'bg-brand-500 text-surface-void' : 'text-ink-muted hover:text-ink-base'}`}>
               {t('auth.register')}
             </button>
           </div>
@@ -211,28 +207,28 @@ export default function LoginPage() {
 
                 {/* Username */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-1.5">{t('auth.username')}</label>
+                  <label className="block text-xs font-medium text-ink-muted mb-1.5">{t('auth.username')}</label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-faint" />
                     <input type="text" autoComplete="username" value={loginForm.username}
                       onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
-                      className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+                      className="w-full pl-10 pr-4 py-2.5 bg-surface-base border border-surface-border rounded-lg text-ink-base text-sm placeholder-ink-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60 transition-all"
                       placeholder={t('auth.usernamePlaceholder')} required />
                   </div>
                 </div>
 
                 {/* Password */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-1.5">{t('auth.password')}</label>
+                  <label className="block text-xs font-medium text-ink-muted mb-1.5">{t('auth.password')}</label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-faint" />
                     <input type={showPassword ? 'text' : 'password'} autoComplete="current-password"
                       value={loginForm.password}
                       onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                      className="w-full pl-10 pr-12 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+                      className="w-full pl-10 pr-12 py-2.5 bg-surface-base border border-surface-border rounded-lg text-ink-base text-sm placeholder-ink-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60 transition-all"
                       placeholder={t('auth.passwordPlaceholder')} required />
                     <button type="button" onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors">
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink-base transition-colors">
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
@@ -241,15 +237,15 @@ export default function LoginPage() {
                 {/* CAPTCHA */}
                 {requiresCaptcha && captchaData && (
                   <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-2">
-                    <label className="flex items-center gap-2 text-xs font-medium text-gray-400"><KeyRound className="w-3 h-3" />{t('auth.captchaTitle')}</label>
-                    <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-xl p-3">
-                      <p className="text-2xl font-mono font-bold text-white text-center tracking-widest mb-2">{captchaData.challenge_text}</p>
+                    <label className="flex items-center gap-2 text-xs font-medium text-ink-muted"><KeyRound className="w-3 h-3" />{t('auth.captchaTitle')}</label>
+                    <div className="bg-surface-base border border-surface-border rounded-lg p-3">
+                      <p className="text-2xl font-mono font-bold text-ink-base text-center tracking-widest mb-2">{captchaData.challenge_text}</p>
                       <input type="text" autoComplete="off" value={loginForm.captcha_response}
                         onChange={(e) => setLoginForm({ ...loginForm, captcha_response: e.target.value })}
-                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-center text-lg font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                        className="w-full px-3 py-2 bg-surface-base border border-surface-border rounded-lg text-ink-base text-center text-lg font-mono tracking-widest focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60"
                         placeholder="• • • • • •" maxLength={10} required />
                       <button type="button" onClick={generateCaptcha}
-                        className="mt-1.5 w-full flex items-center justify-center gap-1 text-xs text-gray-500 hover:text-white transition-colors">
+                        className="mt-1.5 w-full flex items-center justify-center gap-1 text-xs text-ink-muted hover:text-ink-base transition-colors">
                         <RefreshCw className="w-3 h-3" />{t('auth.captchaRefresh')}
                       </button>
                     </div>
@@ -258,29 +254,29 @@ export default function LoginPage() {
 
                 {/* Login button */}
                 <button type="submit" disabled={loading}
-                  className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm font-medium rounded-xl shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                  className="w-full py-2.5 bg-brand-500 hover:bg-brand-400 text-surface-void text-sm font-medium rounded-xl shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2">
                   {loading ? <><RefreshCw className="w-4 h-4 animate-spin" />{t('auth.loggingIn')}</> : <><Shield className="w-4 h-4" />{t('auth.loginButton')}</>}
                 </button>
 
                 {/* Divider */}
                 <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px bg-white/10" />
-                  <span className="text-[10px] text-gray-500 uppercase tracking-wider">or continue with</span>
-                  <div className="flex-1 h-px bg-white/10" />
+                  <div className="flex-1 h-px bg-surface-border" />
+                  <span className="text-[10px] text-ink-faint uppercase tracking-wider">or continue with</span>
+                  <div className="flex-1 h-px bg-surface-border" />
                 </div>
 
                 {/* Social login + Passkey — icon-forward, compact */}
                 <div className="flex items-center justify-center gap-3">
                   <button type="button" onClick={() => handleSocialLogin('google')} title="Google"
-                    className="w-12 h-12 bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.12] rounded-xl flex items-center justify-center transition-all">
+                    className="w-12 h-12 bg-surface-raised hover:bg-surface-hover border border-surface-border rounded-xl flex items-center justify-center transition-all">
                     <GoogleIcon />
                   </button>
                   <button type="button" onClick={() => handleSocialLogin('apple')} title="Apple"
-                    className="w-12 h-12 bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.12] rounded-xl flex items-center justify-center transition-all">
+                    className="w-12 h-12 bg-surface-raised hover:bg-surface-hover border border-surface-border rounded-xl flex items-center justify-center transition-all">
                     <AppleIcon />
                   </button>
                   <button type="button" onClick={() => handleSocialLogin('github')} title="GitHub"
-                    className="w-12 h-12 bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.12] rounded-xl flex items-center justify-center transition-all">
+                    className="w-12 h-12 bg-surface-raised hover:bg-surface-hover border border-surface-border rounded-xl flex items-center justify-center transition-all">
                     <GitHubIcon />
                   </button>
                   {window.PublicKeyCredential && (
@@ -298,8 +294,8 @@ export default function LoginPage() {
                           toast.error(err?.response?.data?.detail || err?.message || 'Passkey failed');
                         } finally { setLoading(false); }
                       }}
-                      className="w-12 h-12 bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.12] rounded-xl flex items-center justify-center transition-all disabled:opacity-50">
-                      <KeyRound className="w-5 h-5 text-white" />
+                      className="w-12 h-12 bg-surface-raised hover:bg-surface-hover border border-surface-border rounded-xl flex items-center justify-center transition-all disabled:opacity-50">
+                      <KeyRound className="w-5 h-5 text-ink-base" />
                     </button>
                   )}
                 </div>
@@ -308,71 +304,71 @@ export default function LoginPage() {
               <motion.form key="register" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }} onSubmit={handleRegister} className="space-y-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-1.5">{t('auth.fullName')}</label>
+                  <label className="block text-xs font-medium text-ink-muted mb-1.5">{t('auth.fullName')}</label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-faint" />
                     <input type="text" autoComplete="name" value={registerForm.full_name}
                       onChange={(e) => setRegisterForm({ ...registerForm, full_name: e.target.value })}
-                      className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+                      className="w-full pl-10 pr-4 py-2.5 bg-surface-base border border-surface-border rounded-lg text-ink-base text-sm placeholder-ink-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60 transition-all"
                       placeholder={t('auth.fullNamePlaceholder')} required />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-1.5">{t('auth.username')}</label>
+                  <label className="block text-xs font-medium text-ink-muted mb-1.5">{t('auth.username')}</label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-faint" />
                     <input type="text" autoComplete="username" value={registerForm.username}
                       onChange={(e) => setRegisterForm({ ...registerForm, username: e.target.value })}
-                      className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+                      className="w-full pl-10 pr-4 py-2.5 bg-surface-base border border-surface-border rounded-lg text-ink-base text-sm placeholder-ink-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60 transition-all"
                       placeholder={t('auth.usernameRegisterPlaceholder')} pattern="[a-zA-Z0-9_-]+" required />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-1.5">{t('auth.email')}</label>
+                  <label className="block text-xs font-medium text-ink-muted mb-1.5">{t('auth.email')}</label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-faint" />
                     <input type="email" autoComplete="email" value={registerForm.email}
                       onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
-                      className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+                      className="w-full pl-10 pr-4 py-2.5 bg-surface-base border border-surface-border rounded-lg text-ink-base text-sm placeholder-ink-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60 transition-all"
                       placeholder={t('auth.emailPlaceholder')} required />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-1.5">{t('auth.password')}</label>
+                  <label className="block text-xs font-medium text-ink-muted mb-1.5">{t('auth.password')}</label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-faint" />
                     <input type={showPassword ? 'text' : 'password'} autoComplete="new-password"
                       value={registerForm.password}
                       onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
-                      className="w-full pl-10 pr-12 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+                      className="w-full pl-10 pr-12 py-2.5 bg-surface-base border border-surface-border rounded-lg text-ink-base text-sm placeholder-ink-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60 transition-all"
                       placeholder={t('auth.createPasswordPlaceholder')} minLength={12} required />
                     <button type="button" onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors">
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink-base transition-colors">
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                   {registerForm.password && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-1.5">
-                      <div className="flex items-center justify-between text-[10px] text-gray-500 mb-0.5">
+                      <div className="flex items-center justify-between text-[10px] text-ink-faint mb-0.5">
                         <span>{t('auth.passwordStrength')}</span><span className="font-medium">{getPasswordStrengthLabel()}</span>
                       </div>
-                      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                        <motion.div className={`h-full bg-gradient-to-r ${getPasswordStrengthColor()}`} initial={{ width: 0 }} animate={{ width: `${(passwordStrength.score / 8) * 100}%` }} />
+                      <div className="h-1.5 bg-surface-base rounded-full overflow-hidden">
+                        <motion.div className={`h-full ${getPasswordStrengthColor()}`} initial={{ width: 0 }} animate={{ width: `${(passwordStrength.score / 8) * 100}%` }} />
                       </div>
                     </motion.div>
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-1.5">{t('auth.confirmPassword')}</label>
+                  <label className="block text-xs font-medium text-ink-muted mb-1.5">{t('auth.confirmPassword')}</label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-faint" />
                     <input type={showConfirmPassword ? 'text' : 'password'} autoComplete="new-password"
                       value={registerForm.confirm_password}
                       onChange={(e) => setRegisterForm({ ...registerForm, confirm_password: e.target.value })}
-                      className="w-full pl-10 pr-12 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+                      className="w-full pl-10 pr-12 py-2.5 bg-surface-base border border-surface-border rounded-lg text-ink-base text-sm placeholder-ink-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60 transition-all"
                       placeholder={t('auth.confirmPasswordPlaceholder')} required />
                     <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors">
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink-base transition-colors">
                       {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
@@ -384,8 +380,8 @@ export default function LoginPage() {
                   )}
                 </div>
                 <button type="submit" disabled={loading || registerForm.password !== registerForm.confirm_password}
-                  className="w-full py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-sm font-medium rounded-xl shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-                  {loading ? <><RefreshCw className="w-4 h-4 animate-spin" />{t('auth.creatingAccount')}</> : <><Sparkles className="w-4 h-4" />{t('auth.registerButton')}</>}
+                  className="w-full py-2.5 bg-brand-500 hover:bg-brand-400 text-surface-void text-sm font-medium rounded-xl shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                  {loading ? <><RefreshCw className="w-4 h-4 animate-spin" />{t('auth.creatingAccount')}</> : <>{t('auth.registerButton')}</>}
                 </button>
               </motion.form>
             )}
@@ -401,13 +397,13 @@ export default function LoginPage() {
                 { label: 'AES-256', sub: 'Encrypted' },
                 { label: 'TLS 1.3', sub: 'Transport' },
               ].map(b => (
-                <span key={b.label} className="inline-flex flex-col items-center px-2 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06]">
+                <span key={b.label} className="inline-flex flex-col items-center px-2 py-1 rounded-lg bg-surface-base border border-surface-border">
                   <span className="text-[9px] font-bold text-gray-300 leading-none">{b.label}</span>
-                  <span className="text-[7px] text-gray-500 leading-none mt-0.5">{b.sub}</span>
+                  <span className="text-[7px] text-ink-faint leading-none mt-0.5">{b.sub}</span>
                 </span>
               ))}
             </div>
-            <div className="flex items-center justify-center gap-3 mt-3 text-[9px] text-gray-500">
+            <div className="flex items-center justify-center gap-3 mt-3 text-[9px] text-ink-faint">
               <a href="#" className="hover:text-gray-300 transition-colors">Privacy Policy</a>
               <span>·</span>
               <a href="#" className="hover:text-gray-300 transition-colors">Terms of Service</a>
