@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import App from './App.tsx'
+import '@fontsource-variable/space-grotesk'   // display face (panel titles, metric numerals)
 import './index.css'
 import './i18n/config'
 

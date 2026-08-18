@@ -113,7 +113,9 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Cal Sans', 'Inter', 'system-ui', 'sans-serif'],
+        // Characterful geometric grotesque for headings + metric numerals (loaded via
+        // @fontsource-variable/space-grotesk); Inter remains the workhorse body face.
+        display: ['"Space Grotesk Variable"', 'Inter', 'system-ui', 'sans-serif'],
         serif: ['Lora', 'Georgia', 'serif'],
       },
       backgroundImage: {
