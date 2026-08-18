@@ -99,7 +99,7 @@ investigation identified — **a better score does not fix it.**
 ## Conclusion (corrected)
 
 - **What the learned score IS:** a genuine WITHIN-DOMAIN improvement in TP/FP separability
-  (patient-grouped AUC ~0.80 vs 0.70 raw), well-calibrated (ECE 0.030), with no overfitting
+  (patient-grouped AUC ~0.80 vs 0.70 raw), well-calibrated (ECE 0.032), with no overfitting
   (label-shuffle AUC 0.499) and location/morphology as legitimate signal (not a site-identity
   confound). Worth keeping as a component.
 - **What it is NOT:** the F1 fix. It does not solve cross-site non-exchangeability

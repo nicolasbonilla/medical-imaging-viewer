@@ -472,7 +472,7 @@ RETRACTED.** Two independent adversarial audits (reproduced) found the load-bear
 (it inflated only the FALSE candidates' probability features — physically impossible — and was
 constructed to invert raw probability) and was run on a gradient-boosting model, not the shipped
 logistic regression. Honest result on the shipped model: the learned score is a real WITHIN-DOMAIN
-improvement (patient-grouped AUC 0.796 vs 0.701 raw, ECE 0.030, no overfit, location/morphology are
+improvement (patient-grouped AUC 0.796 vs 0.701 raw, ECE 0.032, no overfit, location/morphology are
 legitimate signal), but it does NOT solve cross-site non-exchangeability (pooled leave-one-site-out
 AUC 0.624), its within-domain conformal power is modest (~0.47 of true lesions at α=0.20), and under
 a FAIR monotone shift it does NOT beat raw probability (AUC 0.663 vs 0.736). **Neither a better null
