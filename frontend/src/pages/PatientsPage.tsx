@@ -26,6 +26,7 @@ import { usePatientList, useDeletePatient } from '@/hooks/usePatients';
 import { PatientsOverview } from '@/components/patients/PatientsOverview';
 import PatientCard from '@/components/PatientCard';
 import PatientForm from '@/components/PatientForm';
+import { SkeletonCard } from '@/components/ui';
 import ThemeToggle from '@/components/ThemeToggle';
 import LanguageSelector from '@/components/LanguageSelector';
 import UserMenu from '@/components/UserMenu';
@@ -406,14 +407,20 @@ export default function PatientsPage() {
 
           {/* Patient Grid/List */}
           {isLoading ? (
-            <div className="flex items-center justify-center" style={{ padding: '48px 0', gap: 8 }}>
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                className="border-2 border-gray-700 border-t-blue-500 rounded-full"
-                style={{ width: 24, height: 24 }}
-              />
-              <span style={{ fontSize: 13, color: '#9CA3AF' }}>{t('patients.loading')}</span>
+            // Skeleton grid that matches the real card layout, so results fade in without a
+            // spinner-then-pop layout jump (the audit's biggest perceived-quality gap).
+            <div
+              role="status"
+              aria-busy="true"
+              aria-label={t('patients.loading')}
+              className={viewMode === 'grid'
+                ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
+                : 'flex flex-col'}
+              style={{ gap: viewMode === 'grid' ? 16 : 8 }}
+            >
+              {Array.from({ length: 6 }).map((_, i) => (
+                <SkeletonCard key={i} />
+              ))}
             </div>
           ) : patients.length === 0 ? (
             <motion.div
