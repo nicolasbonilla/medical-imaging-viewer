@@ -464,6 +464,17 @@ site-conditional calibration.** Clinical enablement is gated on BOTH, validated 
 mimic/scanner-shift cohorts. This is a scoping result, recorded honestly: it delimits what the
 conformal layer alone can deliver under acquisition shift.
 
+**v2 learned scorer — part 1 empirically validated (2026-08-18)** (`scripts/calm-ms/train_lesion_scorer.py`,
+record `assets/lesion_scorer_record.json`, write-up `docs/calm-ms/v2-learned-scorer-result.md`).
+A learned per-candidate score on scanner-robust features (morphology + MNI location + probability)
+separates TP/FP at AUC 0.822 vs 0.701 for raw probability (case-grouped CV), generalises
+leave-one-site-out (0.77 vs 0.71/0.74), and — the load-bearing test — under the F1 confident-FP
+shift KEEPS AUC 0.727 where raw probability collapses to 0.203, recovering conformal power
+0.966 vs 0.391 (@α=0.20). Location + morphology carry the signal (permutation importance), as
+the physical hypothesis predicts. The residual FDR (0.29 > 0.20) confirms part 2 (site-conditional
+calibration) is still required. Remains investigational: synthetic shift, 2 sites/145 cases, needs
+real multi-scanner validation.
+
 *End of Risk Management File*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/03_Risk_Management_File.md`.*

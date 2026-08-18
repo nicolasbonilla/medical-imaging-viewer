@@ -1,0 +1,33 @@
+{
+  "n_candidates": 6224,
+  "n_true": 4834,
+  "n_false": 1390,
+  "auc_raw_prob": 0.7011,
+  "auc_learned_cv": 0.8224,
+  "leave_one_site_out": {
+    "openms": 0.7675,
+    "mslesseg": 0.7658
+  },
+  "top_features": [
+    "x_norm",
+    "prob_max",
+    "surf_to_vol",
+    "y_norm",
+    "prob_q90",
+    "z_norm",
+    "radial",
+    "sphericity"
+  ],
+  "shift_test": {
+    "auc_raw": 0.2027,
+    "auc_learned": 0.7274,
+    "conformal_raw": {
+      "fdr": 0.4671,
+      "power": 0.3908
+    },
+    "conformal_learned": {
+      "fdr": 0.2921,
+      "power": 0.9662
+    }
+  }
+}

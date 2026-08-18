@@ -130,3 +130,4 @@ cohort/
 
 # CALM-MS experiment cache (derived from gitignored cohort data)
 scripts/calm-ms/.site_cache.npz
+scripts/calm-ms/.scorer_cache.npz
