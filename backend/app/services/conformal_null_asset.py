@@ -46,7 +46,7 @@ EXPECTED_BASE_MODEL = "FLAMeS"
 MIN_NULL_DISTINCT = 20
 MIN_NULL_STD = 1e-3
 
-_ASSET_PATH = os.path.join(os.path.dirname(__file__), "assets", "calm_ms_null_flames_v1.npz")
+_ASSET_PATH = os.path.join(os.path.dirname(__file__), "assets", "calm_ms_null_flames_v2.npz")
 
 
 class ConformalAssetError(RuntimeError):

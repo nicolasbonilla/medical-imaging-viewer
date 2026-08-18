@@ -34,11 +34,17 @@ VOXEL_SPACING = (1.0, 1.0, 1.0)          # MNI 1mm
 BASE_MODEL = "FLAMeS"
 BASE_MODEL_VERSION = "Dataset004_WML (Zenodo 17955359)"
 PREPROCESSING_SPACE = "MNI152 1mm"
-VERSION = "v1"
+VERSION = "v2"                               # v2: DECONTAMINATED — FLAMeS-independent data only
 
+# DECONTAMINATION (adversarial data audit, 2026-08-18): open_ms_data and ISBI-2015 are in
+# FLAMeS's TRAINING set (FLAMeS paper refs 12-13), so their probability maps are in-sample
+# and their false-candidate scores are NOT exchangeable with held-out cases. They are
+# EXCLUDED from the null. MSLesSeg is FLAMeS external-test-only (base_model_overlap:false in
+# registry.yaml) -> the only FLAMeS-independent 3D-MNI labelled cohort we hold. The v2 null is
+# therefore single-site (Catania 1.5T) but VALID (exchangeable) for a FLAMeS base; its
+# guarantee is honestly scoped to that distribution. See docs/calm-ms/DATA-STRATEGY.md.
 COHORTS = {
-    "openms-flames": "open_ms_data (Lesjak 2018, 3-rater consensus)",
-    "mslesseg-flames": "MSLesSeg (ICPR-2024, multi-site)",
+    "mslesseg-flames": "MSLesSeg (ICPR-2024, Catania) — FLAMeS-INDEPENDENT (external test, not training)",
 }
 
 
@@ -101,16 +107,19 @@ def main():
         "ood_feature_names": OOD_FEATURES,
         "ood_n_cases": int(ood_reference.shape[0]),
         "cohorts": COHORTS,
+        "base_model_independent": True,          # v2: no cohort overlaps FLAMeS training (exchangeable)
+        "single_site": "Catania 1.5T (MSLesSeg) — guarantee scoped to this distribution",
+        "decontaminated_from": "v1 excluded open_ms_data (FLAMeS ref-13 in-sample)",
         "built_utc": datetime.datetime.utcnow().isoformat() + "Z",
         "requirement": "REQ-FUNC-CALM-001",
-        "note": "Valid ONLY for FLAMeS-derived probability maps on this exact MNI grid. Endpoint MUST fail closed on any provenance mismatch.",
+        "note": "v2 DECONTAMINATED: FLAMeS-independent (MSLesSeg only) so the conformal null is exchangeable for a FLAMeS base; single-site (Catania). Valid ONLY for FLAMeS-derived probability maps on this exact MNI grid. Endpoint MUST fail closed on any provenance mismatch.",
     }
     prov_json = json.dumps(provenance, indent=2, sort_keys=True)
     provenance["sha256"] = hashlib.sha256((prov_json + null.tobytes().hex()[:1024]).encode()).hexdigest()[:16]
 
     out_dir = os.path.join(_BACKEND, "app", "services", "assets")
     os.makedirs(out_dir, exist_ok=True)
-    out = os.path.join(out_dir, "calm_ms_null_flames_v1.npz")
+    out = os.path.join(out_dir, "calm_ms_null_flames_v2.npz")
     np.savez_compressed(out, null_scores=null, ood_reference=ood_reference,
                         provenance=json.dumps(provenance))
     print(f"\nWROTE {out}")

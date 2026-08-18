@@ -1,5 +1,5 @@
 {
-  "n_cases": 145,
+  "n_cases": 115,
   "shift_grid_sd": [
     2,
     3,
@@ -7,118 +7,118 @@
     6
   ],
   "max_z": {
-    "loo_p99": 11.71,
-    "loo_max": 15.76,
+    "loo_p99": 7.4,
+    "loo_max": 11.47,
     "sweep": [
       {
         "threshold": 4,
-        "false_ood_rate": 0.09,
-        "detect_+2SD": 0.09,
-        "detect_+3SD": 0.317,
-        "detect_+4SD": 0.683,
-        "detect_+6SD": 0.986
+        "false_ood_rate": 0.043,
+        "detect_+2SD": 0.035,
+        "detect_+3SD": 0.252,
+        "detect_+4SD": 0.643,
+        "detect_+6SD": 0.983
       },
       {
         "threshold": 5,
-        "false_ood_rate": 0.062,
-        "detect_+2SD": 0.062,
-        "detect_+3SD": 0.069,
-        "detect_+4SD": 0.297,
-        "detect_+6SD": 0.924
+        "false_ood_rate": 0.026,
+        "detect_+2SD": 0.026,
+        "detect_+3SD": 0.026,
+        "detect_+4SD": 0.252,
+        "detect_+6SD": 0.922
       },
       {
         "threshold": 6,
-        "false_ood_rate": 0.055,
-        "detect_+2SD": 0.055,
-        "detect_+3SD": 0.055,
-        "detect_+4SD": 0.062,
-        "detect_+6SD": 0.648
+        "false_ood_rate": 0.026,
+        "detect_+2SD": 0.026,
+        "detect_+3SD": 0.026,
+        "detect_+4SD": 0.026,
+        "detect_+6SD": 0.626
       },
       {
         "threshold": 7,
-        "false_ood_rate": 0.048,
-        "detect_+2SD": 0.048,
-        "detect_+3SD": 0.048,
-        "detect_+4SD": 0.048,
-        "detect_+6SD": 0.297
+        "false_ood_rate": 0.017,
+        "detect_+2SD": 0.017,
+        "detect_+3SD": 0.017,
+        "detect_+4SD": 0.017,
+        "detect_+6SD": 0.243
       },
       {
         "threshold": 8,
-        "false_ood_rate": 0.028,
-        "detect_+2SD": 0.028,
-        "detect_+3SD": 0.028,
-        "detect_+4SD": 0.028,
-        "detect_+6SD": 0.034
+        "false_ood_rate": 0.009,
+        "detect_+2SD": 0.009,
+        "detect_+3SD": 0.009,
+        "detect_+4SD": 0.009,
+        "detect_+6SD": 0.017
       },
       {
         "threshold": 10,
-        "false_ood_rate": 0.021,
-        "detect_+2SD": 0.021,
-        "detect_+3SD": 0.021,
-        "detect_+4SD": 0.021,
-        "detect_+6SD": 0.021
+        "false_ood_rate": 0.009,
+        "detect_+2SD": 0.009,
+        "detect_+3SD": 0.009,
+        "detect_+4SD": 0.009,
+        "detect_+6SD": 0.009
       },
       {
         "threshold": 12,
-        "false_ood_rate": 0.014,
-        "detect_+2SD": 0.014,
-        "detect_+3SD": 0.014,
-        "detect_+4SD": 0.014,
-        "detect_+6SD": 0.014
+        "false_ood_rate": 0.0,
+        "detect_+2SD": 0.0,
+        "detect_+3SD": 0.0,
+        "detect_+4SD": 0.0,
+        "detect_+6SD": 0.0
       }
     ]
   },
   "mahalanobis": {
-    "loo_p99": 6.25,
-    "loo_max": 7.28,
+    "loo_p99": 6.44,
+    "loo_max": 8.35,
     "sweep": [
       {
         "threshold": 3,
-        "false_ood_rate": 0.179,
-        "detect_+2SD": 0.676,
-        "detect_+3SD": 0.924,
-        "detect_+4SD": 0.986,
+        "false_ood_rate": 0.174,
+        "detect_+2SD": 0.574,
+        "detect_+3SD": 0.913,
+        "detect_+4SD": 0.983,
         "detect_+6SD": 1.0
       },
       {
         "threshold": 4,
-        "false_ood_rate": 0.055,
-        "detect_+2SD": 0.152,
-        "detect_+3SD": 0.703,
-        "detect_+4SD": 0.945,
+        "false_ood_rate": 0.078,
+        "detect_+2SD": 0.087,
+        "detect_+3SD": 0.643,
+        "detect_+4SD": 0.939,
         "detect_+6SD": 1.0
       },
       {
         "threshold": 5,
-        "false_ood_rate": 0.021,
-        "detect_+2SD": 0.048,
-        "detect_+3SD": 0.255,
-        "detect_+4SD": 0.779,
+        "false_ood_rate": 0.017,
+        "detect_+2SD": 0.035,
+        "detect_+3SD": 0.13,
+        "detect_+4SD": 0.765,
         "detect_+6SD": 1.0
       },
       {
         "threshold": 6,
-        "false_ood_rate": 0.014,
-        "detect_+2SD": 0.028,
-        "detect_+3SD": 0.048,
-        "detect_+4SD": 0.434,
-        "detect_+6SD": 0.972
+        "false_ood_rate": 0.017,
+        "detect_+2SD": 0.035,
+        "detect_+3SD": 0.035,
+        "detect_+4SD": 0.252,
+        "detect_+6SD": 0.957
       },
       {
         "threshold": 7,
-        "false_ood_rate": 0.014,
-        "detect_+2SD": 0.007,
-        "detect_+3SD": 0.021,
-        "detect_+4SD": 0.062,
-        "detect_+6SD": 0.897
+        "false_ood_rate": 0.009,
+        "detect_+2SD": 0.009,
+        "detect_+3SD": 0.026,
+        "detect_+4SD": 0.043,
+        "detect_+6SD": 0.887
       },
       {
         "threshold": 8,
-        "false_ood_rate": 0.0,
-        "detect_+2SD": 0.007,
-        "detect_+3SD": 0.014,
-        "detect_+4SD": 0.014,
-        "detect_+6SD": 0.669
+        "false_ood_rate": 0.009,
+        "detect_+2SD": 0.009,
+        "detect_+3SD": 0.009,
+        "detect_+4SD": 0.026,
+        "detect_+6SD": 0.557
       }
     ]
   },

@@ -27,8 +27,11 @@ ICIPCA 2025; pulmonary nodules: arXiv 2412.20167) — the program's actual contr
   + Benjamini–Hochberg selection. Verified: BH step-up matches reference (0/20000), the
   shared-calibration p-values are PRDS so BH controls marginal FDR, empirical E[FDP] ≤ α in
   every in-distribution regime.
-- **Frozen null asset** (`conformal_null_asset`, FLAMeS-derived, 145 labelled cases): loads
-  once, fails closed on missing/degenerate/wrong-base-model/provenance-mismatch.
+- **Frozen null asset** (`conformal_null_asset`): loads once, fails closed on
+  missing/degenerate/wrong-base-model/provenance-mismatch. **v2 is DECONTAMINATED** — rebuilt
+  from FLAMeS-*independent* data only (MSLesSeg, 115 cases; the contaminated open_ms_data was
+  dropped, §1), so the conformal null is genuinely exchangeable for the FLAMeS base — at the cost
+  of being single-site (Catania), which is the honest scope.
 - **OOD monitor** (`conformal_ood`): a gross-marginal-shift disclosure backstop.
 - **Learned lesion scorer** (`calm_ms_scorer` + `calm_ms_lesion_features`): a transparent
   degree-2 polynomial logistic regression on scanner-robust features (no pickle, pure-NumPy

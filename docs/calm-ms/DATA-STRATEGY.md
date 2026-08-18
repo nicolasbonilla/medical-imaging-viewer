@@ -76,9 +76,11 @@ field has moved past Dice); cite FeTS/QU-BraTS as multi-site protocol precedent 
 
 ## 4. The corrected roadmap (what is actually achievable, in order)
 
-1. **Decontaminate (now, free).** Rebuild the frozen null from FLAMeS-independent data; drop openms
-   from any calibration/held-out role; add `base_model_overlap` gates to the registry. Re-report the
-   affected numbers honestly.
+1. **Decontaminate (DONE, 2026-08-18).** The frozen null was rebuilt from FLAMeS-independent data
+   only — `calm_ms_null_flames_v2.npz` (MSLesSeg, 115 cases; contaminated open_ms_data dropped, the
+   v1 asset removed); `base_model_overlap` gates added to the registry; the OOD threshold re-validated
+   on the v2 reference (unchanged at 5.0); 59/59 conformal tests green. The null is now genuinely
+   exchangeable for a FLAMeS base, at the cost of being single-site (Catania) — the honest scope.
 2. **Scanner-isolated measurement (needs one DUA + a base-model swap).** Measure the shift *within*
    **MSSEG-2** (15 scanners, uniform 4-rater annotation, FLAMeS-independent) — the one clean
    multi-scanner instrument — accepting FLAIR-only + new-lesion-task limits. This is where a
