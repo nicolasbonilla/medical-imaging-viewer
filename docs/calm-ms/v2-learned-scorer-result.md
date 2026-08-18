@@ -1,4 +1,18 @@
-# CALM-MS v2 — the learned scanner-robust lesion scorer (empirical validation)
+# CALM-MS v2 — the learned lesion scorer (corrected after adversarial round 3)
+
+> **CORRECTION (2026-08-18, adversarial round 3).** An earlier version of this document
+> claimed the learned score "survives the confident-FP scanner shift where raw probability
+> collapses" and was therefore "F1 fix part 1, validated". **That claim is RETRACTED.** Two
+> independent adversarial audits showed (and I reproduced) that: (a) the load-bearing shift
+> test was RIGGED — it inflated only the FALSE candidates' probability features (physically
+> impossible; a scanner cannot know which candidates are false) and was constructed to invert
+> raw probability; (b) the headline numbers were computed on a gradient-boosting model, not
+> the logistic regression that ships; (c) under a FAIR monotone shift the learned score does
+> NOT beat raw probability (AUC 0.66 vs 0.74), and cross-site it does NOT restore the
+> guarantee. The honest result is below; the authoritative record is
+> `assets/lesion_scorer_record.json` (regenerated on the shipped model with honest protocols
+> by `scripts/calm-ms/evaluate_lesion_scorer.py`). The rigged experiment
+> `scripts/calm-ms/train_lesion_scorer.py` is superseded and retained only for provenance.
 
 **Status:** research finding, 2026-08-18. Feature remains DARK (investigational).
 **Artifacts:** `scripts/calm-ms/train_lesion_scorer.py`,
@@ -51,44 +65,57 @@ openms (2358) and mslesseg (3866).
 Cross-site AUC (0.77) is below the within-cohort CV (0.82) — a real domain gap — but the
 learned score beats raw probability on every held-out site.
 
+*Leakage note (2026-08-18):* MSLesSeg contains multiple longitudinal timepoints per
+patient. Grouping CV by patient (leak-free, 105 patients) rather than by scan (145) lowers
+the transparent poly-LR estimate only marginally, **0.801 → 0.796**, so the improvement over
+raw probability (0.70) is not an artefact of longitudinal leakage. The asset builder now
+groups by patient.
+
 **3. Location and morphology carry the signal (permutation importance, top 8):**
 `x_norm`, `prob_max`, `surf_to_vol`, `y_norm`, `prob_q90`, `z_norm`, `radial`, `sphericity`
 — anatomical location and shape co-lead with two probability moments, confirming the
 physical hypothesis: the discriminative content the scanner cannot inflate is *where* and
 *what shape* a candidate is, not how confident the model is.
 
-**4. LOAD-BEARING TEST — the learned score survives the F1 failure mode.**
-An FP-selective confidence inflation (only the FALSE candidates' probability features are
-pushed up in logit space; morphology/location untouched — an artefact FP keeps its FP-like
-shape/location), scored by a model trained on the *other* site:
+**4. Shift robustness — the RETRACTED claim, and the honest result.**
+The original "load-bearing test" inflated only the FALSE candidates' probability features.
+That is a stacked deck (a scanner cannot know which candidates are false, and the
+construction inverts raw probability by definition), so its result — raw AUC 0.203 vs
+learned 0.727 — is meaningless. Under a **fair** shift (a monotone confidence inflation of
+ALL candidates, on the shipped LR, trained openms → tested mslesseg):
 
-| Under F1 shift | Raw probability | Learned score |
+| | Raw probability | Learned score |
 |---|---|---|
-| TP/FP AUC | **0.203** (collapsed / rank-inverted) | **0.727** (survives) |
-| Conformal @α=0.20 — realized FDR | 0.467 (broken) | 0.292 |
-| Conformal @α=0.20 — power (TP recovered) | 0.391 | **0.966** |
+| No shift — TP/FP AUC | 0.736 | 0.798 |
+| **Fair shift (+1.5 all candidates) — TP/FP AUC** | **0.736** (unchanged) | **0.663** (worse) |
+| Fair shift — conformal FDR @α=0.20 | 0.288 (violated) | 0.068 |
+| Fair shift — conformal power @α=0.20 | 0.984 | 0.066 (collapses) |
 
-Where raw probability collapses (AUC 0.20, FDR 2.3× target), the learned score stays
-discriminative (AUC 0.73) and recovers conformal **power** (0.97 vs 0.39). The residual FDR
-(0.29 > 0.20) is exactly what the *second* part of the fix — site-conditional / cluster-aware
-calibration — is for: the learned score restores separability, the calibration restores the
-guarantee.
+Under a fair shift the learned score does **not** beat raw probability, and neither delivers
+a controlled-and-powerful guarantee cross-site: raw keeps power but violates FDR; learned
+keeps FDR but its power collapses. This is the same cross-site non-exchangeability the F1
+investigation identified — **a better score does not fix it.**
 
-## Conclusion — the two-part F1 fix is empirically validated
+## Conclusion (corrected)
 
-1. **Scanner-robust learned score** (this result): restores TP/FP separability and conformal
-   power under the confident-FP shift that breaks raw probability. **Load-bearing, confirmed.**
-2. **Site-conditional, cluster-aware calibration** (F1 investigation): needed to bring the
-   residual FDR back to target once the score is discriminative again.
+- **What the learned score IS:** a genuine WITHIN-DOMAIN improvement in TP/FP separability
+  (patient-grouped AUC ~0.80 vs 0.70 raw), well-calibrated (ECE 0.030), with no overfitting
+  (label-shuffle AUC 0.499) and location/morphology as legitimate signal (not a site-identity
+  confound). Worth keeping as a component.
+- **What it is NOT:** the F1 fix. It does not solve cross-site non-exchangeability
+  (pooled leave-one-site-out AUC ~0.62), and its conformal power even within-domain is modest
+  (~0.47 of true lesions at α=0.20). Neither a better null (F1 investigation) nor a better
+  score (this) alone restores the guarantee under acquisition shift.
+- **What F1 actually needs:** domain-conditional calibration **and** cross-site score
+  harmonisation (ComBat-style) **and** more sites (≥3–5), validated on real mimic/scanner-shift
+  cohorts — not a single silver bullet.
 
 ## Honest limitations
 
-- The shift is synthetic (FP-selective logit inflation); real scanner shifts require real
-  multi-scanner/mimic-cohort validation.
-- Two sites, 145 cases — the domain gap (0.82 → 0.77) will widen with more heterogeneous
-  scanners; more sites are needed before any performance claim.
-- Location features assume correct MNI registration (already a pipeline invariant); a
-  registration failure would corrupt them — must be gated by the existing provenance checks.
-- The learned FDR under shift is not yet ≤ α on its own; the guarantee is delivered only by
-  the full two-part method, and clinical enablement remains gated on real-cohort validation
-  plus the IEC 62366-1 usability study.
+- Two sites, 145 cases; pooled cross-domain AUC is only ~0.62 and will not improve without
+  more heterogeneous scanners.
+- Location features assume correct MNI registration (a pipeline invariant); off-grid maps
+  score plausibly-but-wrong — gated in production by the conformal provenance check, with a
+  defense-in-depth guard recommended in the scorer itself.
+- The scorer is NOT wired into the guarantee path and must not be until the above holds.
+  Clinical enablement remains gated on real-cohort validation + the IEC 62366-1 study.

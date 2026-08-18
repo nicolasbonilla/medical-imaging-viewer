@@ -1,33 +1,56 @@
 {
-  "n_candidates": 6224,
-  "n_true": 4834,
-  "n_false": 1390,
-  "auc_raw_prob": 0.7011,
-  "auc_learned_cv": 0.8224,
-  "leave_one_site_out": {
-    "openms": 0.7675,
-    "mslesseg": 0.7658
-  },
-  "top_features": [
-    "x_norm",
-    "prob_max",
-    "surf_to_vol",
-    "y_norm",
-    "prob_q90",
-    "z_norm",
-    "radial",
-    "sphericity"
-  ],
-  "shift_test": {
-    "auc_raw": 0.2027,
-    "auc_learned": 0.7274,
-    "conformal_raw": {
-      "fdr": 0.4671,
-      "power": 0.3908
-    },
-    "conformal_learned": {
-      "fdr": 0.2921,
-      "power": 0.9662
+  "model": "degree-2 polynomial logistic regression (SHIPPED; calm_ms_scorer)",
+  "supersedes": "prior record described a gradient-boosting model + a rigged FP-only shift",
+  "within_domain": {
+    "auc_patient_grouped": 0.7961,
+    "auc_raw_prob": 0.7011,
+    "ap_false_class": 0.5412,
+    "partial_auc_fpr_le_0.10": 0.3873,
+    "calibration_ece": 0.0319,
+    "conformal_power_at_alpha": {
+      "0.1": {
+        "fdr": 0.021,
+        "power": 0.314
+      },
+      "0.2": {
+        "fdr": 0.044,
+        "power": 0.469
+      },
+      "0.3": {
+        "fdr": 0.067,
+        "power": 0.554
+      }
     }
-  }
+  },
+  "cross_site_generalization": {
+    "pooled_leave_one_site_out_auc": 0.6235,
+    "note": "honest cross-domain estimate; per-site AUCs (~0.77) hide this"
+  },
+  "fair_shift_test": {
+    "no_shift": {
+      "auc_raw": 0.736,
+      "auc_learned": 0.798,
+      "fdr_raw": 0.0,
+      "fdr_learned": 0.184,
+      "power_raw": 0.0,
+      "power_learned": 0.831
+    },
+    "fair_all_+1.5": {
+      "auc_raw": 0.736,
+      "auc_learned": 0.663,
+      "fdr_raw": 0.288,
+      "fdr_learned": 0.068,
+      "power_raw": 0.984,
+      "power_learned": 0.066
+    },
+    "fp_only_+1.5_RIGGED": {
+      "auc_raw": 0.203,
+      "auc_learned": 0.963,
+      "fdr_raw": 0.467,
+      "fdr_learned": 0.036,
+      "power_raw": 0.391,
+      "power_learned": 0.817
+    }
+  },
+  "honest_conclusion": "The learned score is a genuine WITHIN-DOMAIN TP/FP improvement (AUC 0.80 vs 0.70 raw, well-calibrated) but does NOT solve cross-site non-exchangeability (LOSO AUC ~0.62) and under a FAIR monotone shift does NOT beat raw probability. It is not, by itself, the F1 fix."
 }

@@ -12,7 +12,7 @@ case-grouped AUC as a build-time check that the frozen asset matches the validat
 
 Output: backend/app/services/assets/calm_ms_lesion_scorer_v1.npz
 """
-import os, sys, glob, json, datetime, hashlib
+import os, sys, glob, json, re, datetime, hashlib
 
 import numpy as np
 import nibabel as nib
@@ -28,6 +28,13 @@ from app.services.calm_ms_lesion_features import candidate_feature_matrix, FEATU
 THRESHOLD, MIN_VOL, SCORE, SPACING = 0.5, 3.0, "mean", (1.0, 1.0, 1.0)
 SITES = {"openms": "openms-flames", "mslesseg": "mslesseg-flames"}
 DEGREE, C_REG = 2, 0.5
+
+
+def _patient_of(case):
+    """Group longitudinal timepoints of one patient together to avoid CV leakage
+    (MSLesSeg 'mslesseg_P12_T3' -> 'mslesseg_P12'; openms cases are their own patient)."""
+    m = re.match(r"(mslesseg_P\d+)_T\d+", case)
+    return m.group(1) if m else case
 
 
 def _load():
@@ -68,13 +75,15 @@ def main():
     Z = pf.fit_transform((X - mean) / std)
     powers = pf.powers_.astype(int)                          # (n_terms, d)
 
-    # honest reproduced AUC (case-grouped OOF) on the exact standardize+poly pipeline
+    # honest reproduced AUC — grouped by PATIENT (not timepoint) to avoid longitudinal
+    # leakage across a patient's repeated scans.
+    patients = np.array([_patient_of(str(c)) for c in cases])
     gkf, oof = GroupKFold(5), np.zeros(len(y))
-    for tr, te in gkf.split(Z, y, groups=cases):
+    for tr, te in gkf.split(Z, y, groups=patients):
         m = LogisticRegression(max_iter=5000, C=C_REG).fit(Z[tr], y[tr])
         oof[te] = m.predict_proba(Z[te])[:, 1]
     auc = roc_auc_score((y == 0).astype(int), 1 - oof)
-    print(f"  reproduced case-grouped AUC = {auc:.3f}")
+    print(f"  reproduced patient-grouped AUC (leak-free) = {auc:.3f}")
 
     clf = LogisticRegression(max_iter=5000, C=C_REG).fit(Z, y)
     coef = clf.coef_.ravel().astype(float)
@@ -85,7 +94,7 @@ def main():
             "feature_names": list(FEATURE_NAMES), "degree": DEGREE, "C": C_REG,
             "base_model": "FLAMeS", "n_candidates": int(len(y)),
             "n_true": int((y == 0).sum()), "n_false": int((y == 1).sum()),
-            "cv_auc_case_grouped": round(float(auc), 4),
+            "cv_auc_patient_grouped": round(float(auc), 4),
             "sites": list(SITES), "built_utc": datetime.datetime.utcnow().isoformat() + "Z",
             "note": "Transparent: parameters are plain arrays; inference is pure-NumPy in "
                     "calm_ms_scorer (no pickle, no sklearn). Investigational — DARK.",

@@ -1,5 +1,21 @@
 #!/usr/bin/env python3
-"""CALM-MS v2 — the LOAD-BEARING learned lesion scorer (scanner-robust TP/FP separation).
+"""CALM-MS v2 — learned lesion scorer research experiment. SUPERSEDED — see WARNING.
+
+!!! RETRACTED / SUPERSEDED (2026-08-18, adversarial round 3) !!!
+Two flaws invalidate this script's shift-robustness result:
+  1. Its "load-bearing" shift inflates ONLY the FALSE candidates' probability features
+     (a scanner cannot know which candidates are false; the shift inverts raw probability
+     by construction) — a stacked deck. Under a FAIR monotone shift of all candidates the
+     learned score does NOT beat raw probability.
+  2. It hardcodes GRID=[182,218,182] but the cohort is 181-voxel, so its features differ
+     slightly from the shared module (`calm_ms_lesion_features`) that ships.
+The authoritative, honest evaluation of the SHIPPED model is
+`scripts/calm-ms/evaluate_lesion_scorer.py` (record `assets/lesion_scorer_record.json`).
+This file is retained only for provenance of the retracted result; do not cite its numbers.
+
+Original (superseded) description follows.
+
+CALM-MS v2 — the LOAD-BEARING learned lesion scorer (scanner-robust TP/FP separation).
 
 The F1 investigation showed the conformal wrapper is only as good as the underlying
 score's TP/FP separability, and that raw pooled probability collapses when a scanner

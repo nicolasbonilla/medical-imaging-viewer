@@ -464,16 +464,23 @@ site-conditional calibration.** Clinical enablement is gated on BOTH, validated 
 mimic/scanner-shift cohorts. This is a scoping result, recorded honestly: it delimits what the
 conformal layer alone can deliver under acquisition shift.
 
-**v2 learned scorer — part 1 empirically validated (2026-08-18)** (`scripts/calm-ms/train_lesion_scorer.py`,
-record `assets/lesion_scorer_record.json`, write-up `docs/calm-ms/v2-learned-scorer-result.md`).
-A learned per-candidate score on scanner-robust features (morphology + MNI location + probability)
-separates TP/FP at AUC 0.822 vs 0.701 for raw probability (case-grouped CV), generalises
-leave-one-site-out (0.77 vs 0.71/0.74), and — the load-bearing test — under the F1 confident-FP
-shift KEEPS AUC 0.727 where raw probability collapses to 0.203, recovering conformal power
-0.966 vs 0.391 (@α=0.20). Location + morphology carry the signal (permutation importance), as
-the physical hypothesis predicts. The residual FDR (0.29 > 0.20) confirms part 2 (site-conditional
-calibration) is still required. Remains investigational: synthetic shift, 2 sites/145 cases, needs
-real multi-scanner validation.
+**v2 learned scorer — claim CORRECTED after adversarial round 3 (2026-08-18)**
+(`scripts/calm-ms/evaluate_lesion_scorer.py` [authoritative], record `assets/lesion_scorer_record.json`,
+write-up `docs/calm-ms/v2-learned-scorer-result.md`). An earlier entry claimed the learned score
+"survives the F1 shift where raw probability collapses" and was "F1 fix part 1, validated". **That is
+RETRACTED.** Two independent adversarial audits (reproduced) found the load-bearing test was RIGGED
+(it inflated only the FALSE candidates' probability features — physically impossible — and was
+constructed to invert raw probability) and was run on a gradient-boosting model, not the shipped
+logistic regression. Honest result on the shipped model: the learned score is a real WITHIN-DOMAIN
+improvement (patient-grouped AUC 0.796 vs 0.701 raw, ECE 0.030, no overfit, location/morphology are
+legitimate signal), but it does NOT solve cross-site non-exchangeability (pooled leave-one-site-out
+AUC 0.624), its within-domain conformal power is modest (~0.47 of true lesions at α=0.20), and under
+a FAIR monotone shift it does NOT beat raw probability (AUC 0.663 vs 0.736). **Neither a better null
+nor a better score alone is the F1 fix** — that requires domain-conditional calibration + cross-site
+score harmonisation + ≥3–5 sites, on real cohorts. Also fixed this round: two scorer fail-opens (an
+empty-coefficient asset scored every lesion as a constant; non-integer powers were silently
+truncated) — both now fail closed with regression tests. The scorer is NOT wired to the guarantee
+and must not be until the above holds.
 
 *End of Risk Management File*
 

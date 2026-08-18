@@ -71,6 +71,32 @@ def test_missing_asset_fails_closed():
         load_lesion_scorer("does_not_exist_calm_scorer.npz")
 
 
+def _write_asset(tmp_path, **over):
+    d = len(FEATURE_NAMES)
+    payload = dict(mean=np.zeros(d), std=np.ones(d), powers=np.eye(d, dtype=int),
+                   coef=np.ones(d), intercept=np.float64(0.0),
+                   provenance=json.dumps({"feature_names": list(FEATURE_NAMES),
+                                          "base_model": "FLAMeS", "degree": 2}))
+    payload.update(over)
+    p = str(tmp_path / "s.npz")
+    np.savez_compressed(p, **payload)
+    return p
+
+
+def test_empty_coef_asset_fails_closed(tmp_path):
+    # Corrupt/truncated asset with no terms would score every lesion identically
+    # (constant 1 - sigmoid(intercept)) — must be refused, not silently loaded.
+    p = _write_asset(tmp_path, powers=np.zeros((0, len(FEATURE_NAMES)), int), coef=np.zeros(0))
+    with pytest.raises(LesionScorerError):
+        load_lesion_scorer(p)
+
+
+def test_non_integer_powers_fail_closed(tmp_path):
+    p = _write_asset(tmp_path, powers=np.full((len(FEATURE_NAMES), len(FEATURE_NAMES)), 1.9))
+    with pytest.raises(LesionScorerError):
+        load_lesion_scorer(p)
+
+
 # --- asset-dependent (skip cleanly if not built) ---
 try:
     _SCORER = load_lesion_scorer()

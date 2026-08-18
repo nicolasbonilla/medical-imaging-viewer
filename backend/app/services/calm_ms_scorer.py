@@ -71,12 +71,17 @@ def load_lesion_scorer(path: str = _ASSET) -> LesionScorer:
         d = np.load(path, allow_pickle=False)
         prov = json.loads(str(d["provenance"]))
         mean, std = np.asarray(d["mean"], float), np.asarray(d["std"], float)
-        powers = np.asarray(d["powers"], int)
+        powers_raw = np.asarray(d["powers"])
         coef = np.asarray(d["coef"], float)
         intercept = float(d["intercept"])
         names = tuple(prov.get("feature_names", []))
     except Exception as e:                                    # malformed asset
         raise LesionScorerError(f"malformed lesion scorer asset: {e}") from e
+    # powers must be genuinely integer exponents — a silent float->int truncation
+    # (e.g. 1.9 -> 1) would corrupt the monomial expansion.
+    if not np.allclose(powers_raw, np.round(powers_raw)):
+        raise LesionScorerError("scorer powers are not integer exponents")
+    powers = np.round(powers_raw).astype(int)
     # provenance + shape invariants (fail closed on any mismatch)
     if names != tuple(FEATURE_NAMES):
         raise LesionScorerError("scorer feature_names do not match the code's FEATURE_NAMES")
@@ -85,6 +90,11 @@ def load_lesion_scorer(path: str = _ASSET) -> LesionScorer:
         raise LesionScorerError("scorer parameter shapes inconsistent with feature layout")
     if powers.shape[0] != coef.shape[0] or coef.ndim != 1:
         raise LesionScorerError("scorer coef/powers length mismatch")
+    if coef.shape[0] == 0 or powers.shape[0] == 0:
+        # An empty coefficient block passes every shape check but degrades the scorer to a
+        # constant 1 - sigmoid(intercept) for EVERY candidate — a silent total loss of
+        # TP/FP separation. Refuse it (fail closed).
+        raise LesionScorerError("empty scorer model (no terms) — refusing to load")
     if not (np.isfinite(mean).all() and np.isfinite(std).all()
             and np.isfinite(coef).all() and np.isfinite(intercept) and (std > 0).all()):
         raise LesionScorerError("scorer parameters non-finite or degenerate")
