@@ -16,15 +16,9 @@
   },
   "dependencies": {
     "@niivue/niivue": "^0.67.0",
-    "@react-three/drei": "^9.114.0",
-    "@react-three/fiber": "^8.17.8",
     "@tanstack/react-query": "^5.56.2",
     "axios": "^1.7.7",
     "clsx": "^2.1.1",
-    "cornerstone-core": "^2.6.1",
-    "cornerstone-tools": "^6.0.10",
-    "cornerstone-wado-image-loader": "^4.13.2",
-    "dicom-parser": "^1.8.21",
     "framer-motion": "^12.23.24",
     "i18next": "^25.6.3",
     "i18next-browser-languagedetector": "^8.2.0",
@@ -39,7 +33,6 @@
     "remark-gfm": "^4.0.1",
     "sonner": "^1.5.0",
     "tailwind-merge": "^2.5.2",
-    "three": "^0.169.0",
     "zustand": "^4.5.5"
   },
   "devDependencies": {

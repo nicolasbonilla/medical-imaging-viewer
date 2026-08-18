@@ -3,7 +3,9 @@
  *
  * Provides ruler (distance), angle, and elliptical ROI measurement tools
  * as a transparent overlay on top of the medical image canvas.
- * Measurements are displayed in mm (assumes 1mm isotropic voxels from MNI template).
+ * Measurements are displayed in mm using the image's REAL in-plane voxel spacing
+ * (`pixelSpacing` [row, col] mm, threaded from the header). Falls back to 1mm/px only
+ * when the header spacing is unavailable — never assume 1mm on anisotropic data.
  *
  * @module components/MeasurementOverlay
  */

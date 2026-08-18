@@ -11,6 +11,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import {
   Activity,
   Loader2,
@@ -47,18 +48,22 @@ interface LesionDashboardProps {
   onMaskUpdated?: () => void;
 }
 
+// MAGNIMS region legend uses the Okabe-Ito colour-blind-safe categorical palette.
+// The previous red(Periventricular)/green(Juxtacortical) pairing was indistinguishable
+// for the ~8% of males with red-green deficiency — a clinical-safety defect, since these
+// are the two most common lesion zones and sit adjacent in the legend and table.
 const REGION_COLORS: Record<string, string> = {
-  Periventricular: 'bg-red-500',
-  Juxtacortical: 'bg-green-500',
-  Infratentorial: 'bg-blue-500',
-  'Deep White Matter': 'bg-yellow-500',
+  Periventricular: 'bg-[#E69F00]',       // orange
+  Juxtacortical: 'bg-[#56B4E9]',         // sky blue
+  Infratentorial: 'bg-[#009E73]',        // bluish green
+  'Deep White Matter': 'bg-[#CC79A7]',   // reddish purple
 };
 
 const REGION_TEXT_COLORS: Record<string, string> = {
-  Periventricular: 'text-red-400',
-  Juxtacortical: 'text-green-400',
-  Infratentorial: 'text-blue-400',
-  'Deep White Matter': 'text-yellow-400',
+  Periventricular: 'text-[#F0A800]',
+  Juxtacortical: 'text-[#7FC7F0]',
+  Infratentorial: 'text-[#2DBF97]',
+  'Deep White Matter': 'text-[#DB93BC]',
 };
 
 function sizeColor(cat: string): string {
@@ -860,9 +865,10 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
             onClick={() => {
               const url = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/v1/segmentation/${segmentationId}/export/dicom-seg`;
               const token = localStorage.getItem('access_token');
+              const toastId = toast.loading(t('lesions.exportingSeg', 'Exporting DICOM-SEG…'));
               fetch(url, { headers: { Authorization: `Bearer ${token}` } })
                 .then(res => {
-                  if (!res.ok) throw new Error('Export failed');
+                  if (!res.ok) throw new Error(`Export failed (${res.status})`);
                   return res.blob();
                 })
                 .then(blob => {
@@ -871,8 +877,12 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                   a.download = `${segmentationId}_seg.dcm`;
                   a.click();
                   URL.revokeObjectURL(a.href);
+                  toast.success(t('lesions.exportSegOk', 'DICOM-SEG exported'), { id: toastId });
                 })
-                .catch(() => {/* silent */});
+                // A clinical data export must NEVER fail silently (Class C): surface it.
+                .catch((e) => toast.error(
+                  t('lesions.exportSegFail', 'DICOM-SEG export failed') +
+                  (e?.message ? `: ${e.message}` : ''), { id: toastId }));
             }}
             className="flex items-center gap-1 px-2 py-1 bg-blue-700/50 hover:bg-blue-600/50 rounded text-[10px] text-blue-300 transition-colors"
           >

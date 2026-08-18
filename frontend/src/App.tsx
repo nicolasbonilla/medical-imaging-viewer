@@ -1,19 +1,46 @@
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { SessionManager } from './components/SessionManager';
 import { SkipLink } from './components/SkipLink';
-import LoginPage from './pages/LoginPage';
-import PatientsPage from './pages/PatientsPage';
-import PatientDetailPage from './pages/PatientDetailPage';
-import DocumentsPage from './pages/DocumentsPage';
-import ViewerApp from './ViewerApp';
-import PACSBrowserPage from './pages/PACSBrowserPage';
-import ProfilePage from './pages/ProfilePage';
+import LoginPage from './pages/LoginPage';   // eager: first paint, keep the login bundle tiny
 import ProtectedRoute from './components/ProtectedRoute';
 import { initializeFocusVisible } from './utils/accessibility';
 import KeyboardShortcutsModal from './components/KeyboardShortcutsModal';
+
+// Route-level code splitting: the authenticated app — and especially the ~316 kB-gzip
+// niivue engine inside ViewerApp — loads only when its route is entered, so the login /
+// first paint no longer ships the whole 3D/report machinery.
+const PatientsPage = lazy(() => import('./pages/PatientsPage'));
+const PatientDetailPage = lazy(() => import('./pages/PatientDetailPage'));
+const DocumentsPage = lazy(() => import('./pages/DocumentsPage'));
+const ViewerApp = lazy(() => import('./ViewerApp'));
+const PACSBrowserPage = lazy(() => import('./pages/PACSBrowserPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+
+/** Minimal route-transition fallback, dark-theme matched. */
+function RouteFallback() {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#08090C' }}
+    >
+      <div
+        aria-hidden
+        className="animate-spin"
+        style={{
+          width: 28, height: 28, borderRadius: '9999px',
+          border: '2px solid #232833', borderTopColor: '#35B4C4',
+        }}
+      />
+      <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
+        Loading…
+      </span>
+    </div>
+  );
+}
 
 /**
  * Main App Component with Routing
@@ -46,6 +73,7 @@ function App() {
 
           {/* HIPAA-compliant session timeout management (15 minutes) */}
           <SessionManager timeoutMinutes={15} warningMinutes={2}>
+            <Suspense fallback={<RouteFallback />}>
             <Routes>
               {/* Public Routes */}
               <Route path="/login" element={<LoginPage />} />
@@ -120,6 +148,7 @@ function App() {
               {/* Catch all - redirect to root */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            </Suspense>
           </SessionManager>
         </AuthProvider>
       </ThemeProvider>

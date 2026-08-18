@@ -473,6 +473,15 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
                   sliceIndex={currentSliceIndex}
                   zoomLevel={zoomLevel}
                   panOffset={panOffset}
+                  // Real in-plane voxel spacing [row, col] mm from the image header, so
+                  // measurements are correct on ANISOTROPIC data (was hardcoded 1mm — a
+                  // Class C safety defect that reported wrong lengths on non-1mm scans).
+                  pixelSpacing={
+                    Array.isArray(currentSeries.metadata.pixel_spacing) &&
+                    currentSeries.metadata.pixel_spacing.length >= 2
+                      ? [currentSeries.metadata.pixel_spacing[0], currentSeries.metadata.pixel_spacing[1]]
+                      : undefined
+                  }
                 />
               )}
             </div>
