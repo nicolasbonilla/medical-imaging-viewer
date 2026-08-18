@@ -127,8 +127,15 @@ The F1 fix is a program, not a patch — and it needs all of:
    partial fit; its descendants (ComBat-GAM, CovBat, DeepComBat 2023, DeepResBat 2024) and
    **domain-invariant representation learning / test-time adaptation** are the more apt frames
    for a single-case learned FP score.
-3. **Domain-conditional (Mondrian) or weighted conformal calibration**, so the null matches the
-   deployment site; cluster-aware (scan-level) to respect within-scan dependence.
+3. **Domain-conditional (Mondrian) calibration** with a small labelled slice per deployment
+   site, so the null matches the site; cluster-aware (scan-level) for within-scan dependence.
+   A preliminary 2-site study (`docs/calm-ms/cross-site-selection-study.md`) supports this over
+   *weighted-covariate* conformal (WCS): the cross-site shift violates WCS's P(Y|X)-invariance
+   (cross-site calibration ECE 0.22–0.29 vs 0.02–0.03 within), leak-free weighted selection adds
+   no power, and few-shot Mondrian selection controls FDR (violation-fraction ≈0 over 30
+   resamples) from k=2 with power plateauing by k≈10 — though a leak-free *no-label* baseline also
+   held FDR empirically there, so the Mondrian value is the exchangeability *guarantee*, pending
+   ≥3–5-site validation and a training-conditional bound.
 4. **A base-model-bound probability producer in production** (today: bring-your-own-prob file_id).
 5. **IEC 62366-1 summative usability study** proving no per-scan / per-lesion mis-inference.
 6. **Per-preset clinical validation + a PCCP** change-control plan.
