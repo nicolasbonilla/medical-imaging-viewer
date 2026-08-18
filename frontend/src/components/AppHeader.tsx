@@ -68,7 +68,7 @@ export default function AppHeader({
           aria-label="MSTool-AI Home"
         >
           <div
-            className="flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600"
+            className="flex items-center justify-center bg-brand-950 border border-brand-500/30"
             style={{ width: 36, height: 36, borderRadius: 6 }}
           >
             <Brain style={{ width: 18, height: 18, color: 'white' }} />

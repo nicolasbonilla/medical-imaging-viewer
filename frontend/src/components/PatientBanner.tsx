@@ -179,7 +179,7 @@ function PatientBannerComponent({
       <div className="flex items-center" style={{ height: 60, padding: '0 24px', gap: 8 }}>
         {/* Avatar — 36×36, radius 6 (= app logo) */}
         <div
-          className="flex-shrink-0 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white"
+          className="flex-shrink-0 bg-brand-950 border border-brand-500/30 flex items-center justify-center text-white"
           style={{ width: 36, height: 36, borderRadius: 6, fontSize: 14, fontWeight: 700 }}
         >
           {patient.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}

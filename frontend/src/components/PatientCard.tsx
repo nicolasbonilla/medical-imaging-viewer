@@ -127,7 +127,7 @@ export default function PatientCard({
         style={{ background: '#1F2937', borderRadius: 8, padding: 12, display: 'flex', alignItems: 'center', gap: 12 }}
       >
         {/* Avatar — 36×36, radius 6 */}
-        <div className="flex-shrink-0 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white"
+        <div className="flex-shrink-0 bg-brand-950 border border-brand-500/30 flex items-center justify-center text-white"
           style={{ width: 36, height: 36, borderRadius: 6, fontSize: 14, fontWeight: 700 }}>
           {initials}
         </div>
@@ -193,7 +193,7 @@ export default function PatientCard({
         <div className="flex items-start justify-between" style={{ gap: 8 }}>
           <div className="flex items-center min-w-0" style={{ gap: 8 }}>
             {/* Avatar — 36×36, radius 6 (same as modality badge in StudyCard) */}
-            <div className="flex-shrink-0 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white"
+            <div className="flex-shrink-0 bg-brand-950 border border-brand-500/30 flex items-center justify-center text-white"
               style={{ width: 36, height: 36, borderRadius: 6, fontSize: 14, fontWeight: 700 }}>
               {initials}
             </div>

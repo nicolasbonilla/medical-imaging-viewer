@@ -119,7 +119,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-blue-600/20 to-purple-600/20 hover:from-blue-600/30 hover:to-purple-600/30 backdrop-blur-lg border border-white/20 rounded-xl transition-all duration-200 shadow-lg"
+        className="flex items-center gap-3 px-4 py-2.5 bg-surface-raised hover:bg-surface-hover border border-surface-border rounded-xl transition-all duration-200 shadow-lg"
         aria-label="Change language"
       >
         <Globe className="w-5 h-5 text-blue-400" />
@@ -160,7 +160,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
                     whileTap={{ scale: 0.98 }}
                     className={`w-full px-4 py-3 flex items-center justify-between gap-3 rounded-xl transition-all duration-150 ${
                       currentLanguage.code === language.code
-                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                        ? 'bg-brand-950 border border-brand-500/30 text-white shadow-lg'
                         : 'hover:bg-white/10 text-gray-200'
                     }`}
                   >

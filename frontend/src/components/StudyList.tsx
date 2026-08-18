@@ -196,7 +196,7 @@ export const StudyList: React.FC<StudyListProps> = ({
           {onCreateStudy && (
             <button
               onClick={onCreateStudy}
-              className="flex items-center bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 transition-colors"
+              className="flex items-center bg-brand-950 border border-brand-500/30 text-white hover:bg-brand-500/10 transition-colors"
               style={{ height: 36, gap: 6, padding: '0 14px', borderRadius: 6, fontSize: 13, fontWeight: 600 }}
             >
               <Plus style={{ width: 16, height: 16 }} />

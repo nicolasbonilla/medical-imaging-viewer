@@ -384,7 +384,7 @@ const AISegmentationTab: React.FC<AISegmentationTabProps> = ({ onRun, onCancel }
           </div>
           <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-purple-500 to-purple-400 transition-all duration-300"
+              className="h-full bg-brand-500 transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -787,7 +787,7 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                   </div>
                   <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-blue-500 to-blue-400 transition-all duration-300"
+                      className="h-full bg-brand-500 transition-all duration-300"
                       style={{ width: `${activeSegmentation.progress_percentage}%` }}
                     />
                   </div>

@@ -34,7 +34,7 @@ export default function UserMenu() {
         aria-label={user.full_name}
         title={`${user.full_name} (${user.role})`}
         style={{ width: 36, height: 36, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-        className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-xs hover:opacity-90 transition-opacity"
+        className="bg-brand-950 border border-brand-500/30 text-white font-bold text-xs hover:opacity-90 transition-opacity"
       >
         {initials}
       </button>
