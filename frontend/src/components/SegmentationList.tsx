@@ -12,6 +12,7 @@
 
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import type { SegmentationSummary, SegmentationStatus } from '@/types';
 
 // ============================================================================
@@ -364,9 +365,17 @@ export const SegmentationList: React.FC<SegmentationListProps> = ({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (window.confirm(t('segmentation.list.confirmDelete'))) {
-                    onDelete(seg.id);
-                  }
+                  // Styled, accessible confirm (sonner) instead of the native window.confirm
+                  // OS dialog — the audit's single most off-brand interaction. Ignoring the
+                  // toast cancels; clicking Delete confirms the destructive action.
+                  toast(t('segmentation.list.confirmDelete'), {
+                    action: {
+                      label: t('segmentation.list.delete', 'Delete'),
+                      onClick: () => onDelete(seg.id),
+                    },
+                    cancel: { label: t('common.cancel', 'Cancel'), onClick: () => {} },
+                    duration: 8000,
+                  });
                 }}
                 disabled={isDeleting}
                 className="px-3 py-1.5 bg-red-600/20 hover:bg-red-600/30 disabled:bg-gray-600 disabled:cursor-not-allowed text-red-400 hover:text-red-300 rounded text-xs font-medium transition-colors"
