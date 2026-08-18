@@ -922,8 +922,10 @@ function ViewerApp() {
           )}
         </motion.div>
 
-        {/* Viewer - Center */}
+        {/* Viewer - Center (main content target for the WCAG 2.4.1 skip link) */}
         <motion.div
+          id="main-content"
+          tabIndex={-1}
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}

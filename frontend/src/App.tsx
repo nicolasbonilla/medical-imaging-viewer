@@ -1,5 +1,6 @@
 import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { MotionConfig } from 'framer-motion';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { SessionManager } from './components/SessionManager';
@@ -64,6 +65,9 @@ function App() {
   }, []);
 
   return (
+    // WCAG 2.3.3 + vestibular safety: honor the OS "reduce motion" setting across every
+    // framer-motion animation in the app (entrance transitions, spinners, etc.).
+    <MotionConfig reducedMotion="user">
     <Router>
       <ThemeProvider>
         <AuthProvider>
@@ -153,6 +157,7 @@ function App() {
         </AuthProvider>
       </ThemeProvider>
     </Router>
+    </MotionConfig>
   );
 }
 

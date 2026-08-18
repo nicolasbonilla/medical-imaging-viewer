@@ -134,7 +134,7 @@ export default function DocumentsPage() {
       />
 
       {/* Main Content */}
-      <main className="relative z-0 flex-1 p-6 overflow-auto">
+      <main id="main-content" tabIndex={-1} className="relative z-0 flex-1 p-6 overflow-auto">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Toolbar */}
           <motion.div
