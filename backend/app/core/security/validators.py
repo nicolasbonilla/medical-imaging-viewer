@@ -617,7 +617,10 @@ class FileUploadValidator:
         logger.info(
             f"File upload validated: {filename}",
             extra={
-                'filename': filename,
+                # 'filename' is a RESERVED LogRecord attribute; using it here raises
+                # KeyError("Attempt to overwrite 'filename' in LogRecord") and crashed
+                # every successful validate_file() call. Use a non-reserved key.
+                'upload_filename': filename,
                 'format': detected_format,
                 'size': file_size,
                 'hash': file_hash

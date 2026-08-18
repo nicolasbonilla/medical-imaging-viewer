@@ -41,8 +41,14 @@ class TestLoginFlow:
             "username": "admin",
             "password": ADMIN_PASSWORD,
         })
-        # 200 = success, 400 = captcha required, 401 = bad creds (no user in test DB)
-        assert response.status_code in (200, 400, 401)
+        # This integration test does not provision a clean user store, so it tolerates
+        # every legitimate auth outcome the endpoint can return in an unprovisioned env:
+        # 200 = success, 400 = captcha required, 401 = bad creds / no user in test DB,
+        # 403 = locked/forbidden (e.g. lockout policy, or a user record scanned from a
+        # store encrypted with a different key) — the same 403 the sibling
+        # test_login_wrong_password already accepts. The point is a valid auth response,
+        # never a 5xx/crash.
+        assert response.status_code in (200, 400, 401, 403)
 
 
 @pytest.mark.integration

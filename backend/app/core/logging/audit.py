@@ -73,6 +73,7 @@ class AuditEventType(str, Enum):
     SECURITY_MALWARE_DETECTED = "security.malware.detected"
     SECURITY_POLICY_VIOLATION = "security.policy.violation"
     SECURITY_ENCRYPTION_FAILURE = "security.encryption.failure"
+    SECURITY_DATA_INTEGRITY_VIOLATION = "security.data.integrity_violation"
     SECURITY_KEY_COMPROMISED = "security.key.compromised"
 
     # Administrative Events (A.12.4.3)
