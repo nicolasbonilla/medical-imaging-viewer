@@ -788,6 +788,33 @@ def pytest_configure(config):
     )
 
 
+# External-service markers: tests carrying these need a backing service (Firestore
+# emulator, GCS, PACS) that a plain local/CI run does not provide. They are SKIPPED
+# (not failed) unless the service is opted in via env var — an honest "dependency
+# absent -> skip", never a fake pass. Set the env var to run them against a real/emulated
+# service. (These tests' behavior is otherwise covered by unit tests; see each file.)
+_SERVICE_MARKERS = {
+    "requires_firestore": ("FIRESTORE_EMULATOR_HOST", "RUN_FIRESTORE_TESTS"),
+    "requires_gcs": ("GCS_TEST_BUCKET", "RUN_GCS_TESTS"),
+    "requires_pacs": ("PACS_TEST_HOST", "RUN_PACS_TESTS"),
+}
+
+
+def pytest_collection_modifyitems(config, items):
+    import os
+    import pytest as _pytest
+    available = {
+        marker: any(os.environ.get(v) for v in envs)
+        for marker, envs in _SERVICE_MARKERS.items()
+    }
+    for item in items:
+        for marker, is_available in available.items():
+            if marker in item.keywords and not is_available:
+                item.add_marker(_pytest.mark.skip(
+                    reason=f"{marker}: backing service not configured "
+                           f"(set one of {_SERVICE_MARKERS[marker]} to run)"))
+
+
 # =============================================================================
 # UTILITY ASSERTION FIXTURES
 # =============================================================================
