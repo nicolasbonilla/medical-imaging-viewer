@@ -17,11 +17,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { SegmentationList } from './SegmentationList';
 import { useSegmentationStore, type PaintTool, type BrushShape, type DrawOverMode } from '@/store/useSegmentationStore';
 import { useViewerStore } from '@/store/useViewerStore';
-import { useAIStore } from '@/store/useAIStore';
 import { segmentationAPI } from '@/api/segmentation';
 import { ClinicalToolsPanel } from './ClinicalToolsPanel';
 import { ConformalPanel } from './ConformalPanel';
-import type { LabelInfo, Segmentation, SegmentationResponse, AIMode, AIModel } from '@/types';
+import type { LabelInfo, Segmentation, SegmentationResponse } from '@/types';
 
 // ============================================================================
 // Types
@@ -40,10 +39,6 @@ interface SegmentationPanelProps {
   onPaintToolChange?: (tool: PaintTool) => void;
   /** External loading state */
   isLoading?: boolean;
-  /** Callback to run AI segmentation */
-  onAIRun?: () => void;
-  /** Callback to cancel AI processing */
-  onAICancel?: () => void;
 }
 
 // ============================================================================
@@ -245,198 +240,6 @@ const PaintToolbar: React.FC<PaintToolbarProps> = ({
 };
 
 // ============================================================================
-// AI Segmentation Tab
-// ============================================================================
-
-interface AISegmentationTabProps {
-  onRun?: () => void;
-  onCancel?: () => void;
-}
-
-const AISegmentationTab: React.FC<AISegmentationTabProps> = ({ onRun, onCancel }) => {
-  const { t } = useTranslation();
-  const {
-    aiMode,
-    clickPoints,
-    selectedModel,
-    isProcessing,
-    progress,
-    error,
-    setAIMode,
-    clearClicks,
-    removeLastClick,
-    setSelectedModel,
-  } = useAIStore();
-
-  return (
-    <div className="py-3 space-y-3">
-      {/* AI Mode Selection */}
-      <div>
-        <label className="block text-xs text-gray-300 mb-2">
-          {t('ai.mode', 'Segmentation Mode')}
-        </label>
-        <div className="flex gap-1">
-          <button
-            onClick={() => setAIMode(aiMode === 'interactive' ? null : 'interactive')}
-            className={`flex-1 px-2 py-2 rounded text-xs font-medium transition-colors ${
-              aiMode === 'interactive'
-                ? 'bg-purple-600 text-white'
-                : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-            }`}
-          >
-            <svg className="w-4 h-4 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
-            </svg>
-            {t('ai.interactive', 'Interactive')}
-          </button>
-          <button
-            onClick={() => setAIMode(aiMode === 'auto' ? null : 'auto')}
-            className={`flex-1 px-2 py-2 rounded text-xs font-medium transition-colors ${
-              aiMode === 'auto'
-                ? 'bg-purple-600 text-white'
-                : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-            }`}
-          >
-            <svg className="w-4 h-4 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-            </svg>
-            {t('ai.auto', 'Auto Brain')}
-          </button>
-        </div>
-      </div>
-
-      {/* Interactive mode — click points info */}
-      {aiMode === 'interactive' && (
-        <div className="space-y-2">
-          <p className="text-xs text-gray-400">
-            {t('ai.clickInstruction', 'Left-click: include | Right-click: exclude')}
-          </p>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-300">
-              {t('ai.clicks', 'Click points')}: {clickPoints.length}
-            </span>
-            <div className="flex gap-1">
-              <button
-                onClick={removeLastClick}
-                disabled={clickPoints.length === 0}
-                className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 disabled:opacity-40 text-gray-300 rounded transition-colors"
-              >
-                {t('ai.undo', 'Undo')}
-              </button>
-              <button
-                onClick={clearClicks}
-                disabled={clickPoints.length === 0}
-                className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 disabled:opacity-40 text-gray-300 rounded transition-colors"
-              >
-                {t('ai.clear', 'Clear')}
-              </button>
-            </div>
-          </div>
-          {/* Click points list */}
-          {clickPoints.length > 0 && (
-            <div className="max-h-24 overflow-y-auto space-y-0.5">
-              {clickPoints.map((pt, i) => (
-                <div key={i} className="flex items-center gap-1 text-xs text-gray-400">
-                  <span
-                    className={`w-2 h-2 rounded-full ${
-                      pt.label === 'positive' ? 'bg-green-500' : 'bg-red-500'
-                    }`}
-                  />
-                  <span>
-                    ({pt.x}, {pt.y}, z={pt.z})
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Auto mode — model selector + info */}
-      {aiMode === 'auto' && (
-        <div className="space-y-2">
-          <label className="block text-xs text-gray-300 mb-1">
-            {t('ai.model', 'Model')}
-          </label>
-          <select
-            value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value as AIModel)}
-            className="w-full bg-gray-700 text-gray-200 text-xs rounded px-2 py-1.5 border border-gray-600"
-          >
-            <option value="synthseg">SynthSeg — 30+ brain structures</option>
-            <option value="mindglide">mindGlide (MS-PINPOINT) — MS lesions + 20 structures</option>
-          </select>
-          <p className="text-xs text-gray-400">
-            {selectedModel === 'mindglide'
-              ? t('ai.mindglideDescription', 'SOTA MS lesion + brain structure segmentation (Nature Comms 2025). DynUNet trained on 23,000+ scans.')
-              : t('ai.autoDescription', 'Automatically segment 30+ brain structures (hippocampus, ventricles, cortex, thalamus, etc.)')
-            }
-          </p>
-        </div>
-      )}
-
-      {/* Progress bar */}
-      {isProcessing && (
-        <div className="space-y-1">
-          <div className="flex justify-between text-xs text-gray-400">
-            <span>{t('ai.processing', 'AI processing...')}</span>
-            <span>{Math.round(progress)}%</span>
-          </div>
-          <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-brand-500 transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Error message */}
-      {error && (
-        <div className="p-2 bg-red-900/30 border border-red-800 rounded text-xs text-red-300">
-          {error}
-        </div>
-      )}
-
-      {/* Run / Cancel buttons */}
-      {aiMode && (
-        <div className="flex gap-2">
-          {isProcessing ? (
-            <button
-              onClick={onCancel}
-              className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm font-medium transition-colors flex items-center justify-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-              {t('ai.cancel', 'Cancel')}
-            </button>
-          ) : (
-            <button
-              onClick={onRun}
-              disabled={aiMode === 'interactive' && clickPoints.length === 0}
-              className="flex-1 px-3 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded text-sm font-medium transition-colors flex items-center justify-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              {t('ai.runAI', 'Run AI')}
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* No mode selected */}
-      {!aiMode && (
-        <p className="text-xs text-gray-500 text-center py-2">
-          {t('ai.selectMode', 'Select a mode above to start AI segmentation')}
-        </p>
-      )}
-    </div>
-  );
-};
-
-// ============================================================================
 // Main Component
 // ============================================================================
 
@@ -446,8 +249,6 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
   onBrushSizeChange,
   onPaintToolChange,
   isLoading: externalLoading = false,
-  onAIRun,
-  onAICancel,
 }) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
