@@ -36,31 +36,38 @@ export function useMatplotlibVisualization({
   segmentationId,
   overlayOpacity,
 }: UseMatplotlibVisualizationProps) {
-  const { currentSeries, currentSliceIndex } = useViewerStore();
+  const { currentSeries, currentSliceIndex, windowCenter, windowWidth } = useViewerStore();
 
-  // Debounced slice index - only updates after user stops scrolling
-  const [debouncedSliceIndex, setDebouncedSliceIndex] = useState(currentSliceIndex);
+  // Real DICOM window/level: the matplotlib endpoint re-renders the slice PNG from RAW
+  // intensities with window_center/window_width — a true VOI-LUT on the SAME grid the
+  // segmentation mask co-registers with (unlike the cosmetic CSS brightness/contrast filter
+  // that operates on an already-8-bit image). The store seeds 0/0 = "unset" → send undefined
+  // so the backend uses its default window; only send real values once windowWidth > 0.
+  const wlActive = windowWidth > 0;
+  const wc = wlActive ? windowCenter : undefined;
+  const ww = wlActive ? windowWidth : undefined;
+
+  // Debounce slice index AND window/level together — both hit the same per-slice server
+  // render, so a W/L drag must not fire a request per frame (the exact overload the slice
+  // debounce prevents). One combined debounced snapshot.
+  const [debounced, setDebounced] = useState({ slice: currentSliceIndex, wc, ww });
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Debounce the slice index changes
   useEffect(() => {
-    // Clear any existing timer
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
-
-    // Set new timer
     debounceTimerRef.current = setTimeout(() => {
-      setDebouncedSliceIndex(currentSliceIndex);
+      setDebounced({ slice: currentSliceIndex, wc, ww });
     }, DEBOUNCE_DELAY);
-
-    // Cleanup on unmount
     return () => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [currentSliceIndex]);
+  }, [currentSliceIndex, wc, ww]);
+
+  const debouncedSliceIndex = debounced.slice;
 
   const { data: matplotlibData, isLoading: matplotlibLoading, isError: matplotlibError } = useQuery({
     queryKey: [
@@ -74,14 +81,16 @@ export function useMatplotlibVisualization({
       appliedYMax,
       segmentationId ?? null,
       overlayOpacity ?? null,
+      debounced.wc ?? null,
+      debounced.ww ?? null,
     ],
     queryFn: async () => {
       const result = currentSeries && currentSeries.file_id
         ? await imagingAPI.getMatplotlib2D(
             currentSeries.file_id,
             debouncedSliceIndex,
-            undefined,
-            undefined,
+            debounced.wc,   // window_center (raw-intensity VOI-LUT)
+            debounced.ww,   // window_width
             colormap,
             appliedXMin.trim() !== '' ? parseInt(appliedXMin) : undefined,
             appliedXMax.trim() !== '' ? parseInt(appliedXMax) : undefined,
