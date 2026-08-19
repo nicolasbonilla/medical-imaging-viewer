@@ -723,21 +723,41 @@ class ToolRunnerService:
                 },
             )
 
-        # Build 12-byte header + uint8 data (app's binary protocol)
-        import struct
-        header = struct.pack('<III', depth, height, width)
-        binary_data = header + mask_data.tobytes()
+        # Store as NIfTI at the CANONICAL path the viewer actually loads. The previous
+        # code wrote the app's raw .bin protocol to `segmentations/clinical-tools/{id}/
+        # mask.bin`, but `_load_masks_from_gcs` only reads `segmentations/{id}/masks.nii.gz`
+        # (or .npz) — so an auto-segmentation appeared in the Firestore list but 404'd in
+        # the viewer. Match `_save_masks_to_gcs`: uint8 NIfTI with the source affine, the
+        # RC-031 v2 orient marker, and slope/inter reset so labels are verbatim.
+        import nibabel as nib
+        import tempfile as _tempfile
+        affine = source_affine if source_affine is not None else np.eye(4)
+        nifti_img = nib.Nifti1Image(mask_data.astype(np.uint8), affine)
+        nifti_img.header.set_data_dtype(np.uint8)
+        nifti_img.header.set_slope_inter(1.0, 0.0)
+        nifti_img.header["descrip"] = b"RC031-ORIENT-V2"   # matches segmentation_service._RC031_ORIENT_MARKER
+        with _tempfile.NamedTemporaryFile(suffix=".nii.gz", delete=False) as _tmp:
+            _tmp_path = _tmp.name
+        try:
+            nib.save(nifti_img, _tmp_path)
+            with open(_tmp_path, "rb") as _f:
+                binary_data = _f.read()
+        finally:
+            try:
+                os.unlink(_tmp_path)
+            except OSError:
+                pass
 
-        # Generate segmentation ID and GCS path
+        # Generate segmentation ID and GCS path (canonical — viewer-loadable)
         seg_id = str(uuid.uuid4())
-        gcs_path = f"segmentations/clinical-tools/{seg_id}/mask.bin"
+        gcs_path = f"segmentations/{seg_id}/masks.nii.gz"
 
         # Upload to GCS
         if self._storage is not None:
             await self._storage.upload(
                 object_name=gcs_path,
                 data=binary_data,
-                content_type="application/octet-stream",
+                content_type="application/gzip",
             )
 
         # Store metadata in Firestore
