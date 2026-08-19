@@ -13,12 +13,22 @@ import KeyboardShortcutsModal from './components/KeyboardShortcutsModal';
 // Route-level code splitting: the authenticated app — and especially the ~316 kB-gzip
 // niivue engine inside ViewerApp — loads only when its route is entered, so the login /
 // first paint no longer ships the whole 3D/report machinery.
-const PatientsPage = lazy(() => import('./pages/PatientsPage'));
-const PatientDetailPage = lazy(() => import('./pages/PatientDetailPage'));
-const DocumentsPage = lazy(() => import('./pages/DocumentsPage'));
-const ViewerApp = lazy(() => import('./ViewerApp'));
-const PACSBrowserPage = lazy(() => import('./pages/PACSBrowserPage'));
-const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+// The import thunks are named so they can ALSO be prefetched during idle (below): the
+// lazy split keeps first paint light, and the idle prefetch removes the full-screen
+// Suspense spinner on the FIRST navigation into each route (self-inflicted by the split).
+const loadPatients = () => import('./pages/PatientsPage');
+const loadPatientDetail = () => import('./pages/PatientDetailPage');
+const loadDocuments = () => import('./pages/DocumentsPage');
+const loadViewer = () => import('./ViewerApp');
+const loadPACS = () => import('./pages/PACSBrowserPage');
+const loadProfile = () => import('./pages/ProfilePage');
+
+const PatientsPage = lazy(loadPatients);
+const PatientDetailPage = lazy(loadPatientDetail);
+const DocumentsPage = lazy(loadDocuments);
+const ViewerApp = lazy(loadViewer);
+const PACSBrowserPage = lazy(loadPACS);
+const ProfilePage = lazy(loadProfile);
 
 /** Minimal route-transition fallback, dark-theme matched. */
 function RouteFallback() {
@@ -62,6 +72,30 @@ function App() {
   // Initialize keyboard focus visibility detection for WCAG 2.4.7
   useEffect(() => {
     initializeFocusVisible();
+  }, []);
+
+  // Warm the most-visited route chunks during browser idle AFTER first paint, so the
+  // first navigation into them doesn't flash the full-screen Suspense fallback. Dynamic
+  // imports are cached + idempotent and this is idle-scheduled, so it never competes with
+  // login/first paint; a real navigation that beats the prefetch just resolves the same
+  // promise. Ordered by likelihood: patient list → detail → viewer.
+  useEffect(() => {
+    const warm = () => { loadPatients(); loadPatientDetail(); loadViewer(); };
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    let idleId: number | undefined;
+    let timerId: ReturnType<typeof setTimeout> | undefined;
+    if (typeof w.requestIdleCallback === 'function') {
+      idleId = w.requestIdleCallback(warm, { timeout: 4000 });
+    } else {
+      timerId = setTimeout(warm, 2000);
+    }
+    return () => {
+      if (idleId !== undefined && typeof w.cancelIdleCallback === 'function') w.cancelIdleCallback(idleId);
+      if (timerId !== undefined) clearTimeout(timerId);
+    };
   }, []);
 
   return (
