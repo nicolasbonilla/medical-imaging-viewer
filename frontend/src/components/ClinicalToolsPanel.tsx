@@ -12,7 +12,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { clinicalToolsAPI } from '@/api/clinicalTools';
 import { useViewerStore } from '@/store/useViewerStore';
 import { detectSequence, type SequenceType, SEQUENCE_INFO } from '@/utils/sequenceDetection';
@@ -24,6 +24,7 @@ interface ClinicalToolsPanelProps {
 
 export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }) => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const allFileIds = useViewerStore((s) => s.allFileIds);
   const currentSeries = useViewerStore((s) => s.currentSeries);
 
@@ -39,12 +40,16 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
   const [flairFileId, setFlairFileId] = useState<string>('');
   const [lstaiTask, setLstaiTask] = useState<ToolTaskResult | null>(null);
 
+  // FLAMeS state (single-FLAIR SOTA — reuses flairFileId)
+  const [flamesTask, setFlamesTask] = useState<ToolTaskResult | null>(null);
+
   // SynthSeg state
   const [synthSegFileId, setSynthSegFileId] = useState<string>('');
   const [synthSegTask, setSynthSegTask] = useState<ToolTaskResult | null>(null);
 
   // Polling refs
   const lstaiPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const flamesPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const synthSegPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Auto-detect T1 and FLAIR from filenames
@@ -71,6 +76,7 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
   useEffect(() => {
     return () => {
       if (lstaiPollRef.current) clearInterval(lstaiPollRef.current);
+      if (flamesPollRef.current) clearInterval(flamesPollRef.current);
       if (synthSegPollRef.current) clearInterval(synthSegPollRef.current);
     };
   }, []);
@@ -79,6 +85,7 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
     taskId: string,
     setTask: React.Dispatch<React.SetStateAction<ToolTaskResult | null>>,
     pollRef: React.MutableRefObject<ReturnType<typeof setInterval> | null>,
+    onComplete?: (task: ToolTaskResult) => void,
   ) => {
     if (pollRef.current) clearInterval(pollRef.current);
     pollRef.current = setInterval(async () => {
@@ -88,6 +95,7 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
         if (status.status === 'completed' || status.status === 'failed') {
           if (pollRef.current) clearInterval(pollRef.current);
           pollRef.current = null;
+          if (status.status === 'completed') onComplete?.(status);
         }
       } catch {
         if (pollRef.current) clearInterval(pollRef.current);
@@ -95,6 +103,36 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
       }
     }, 3000);
   }, []);
+
+  // When an auto-segmentation lands, refresh the viewer's segmentation list so the
+  // new mask is immediately loadable (React Query cache key is ['segmentations', fileId]).
+  const refreshSegmentations = useCallback((segFileId: string) => {
+    queryClient.invalidateQueries({ queryKey: ['segmentations', segFileId] });
+    if (fileId && fileId !== segFileId) {
+      queryClient.invalidateQueries({ queryKey: ['segmentations', fileId] });
+    }
+  }, [queryClient, fileId]);
+
+  const handleRunFLAMeS = useCallback(async () => {
+    if (!flairFileId) return;
+    try {
+      const task = await clinicalToolsAPI.runFLAMeS(flairFileId);
+      setFlamesTask(task);
+      if (task.status !== 'completed' && task.status !== 'failed') {
+        pollTask(task.task_id, setFlamesTask, flamesPollRef,
+          () => refreshSegmentations(flairFileId));
+      } else if (task.status === 'completed') {
+        refreshSegmentations(flairFileId);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      setFlamesTask({
+        task_id: '', tool: 'flames', status: 'failed',
+        progress: 0, error: msg, validation_source: 'flames-v1.0',
+        created_at: new Date().toISOString(),
+      });
+    }
+  }, [flairFileId, pollTask, refreshSegmentations]);
 
   const handleRunLSTAI = useCallback(async () => {
     if (!t1FileId || !flairFileId) return;
@@ -132,6 +170,7 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
     }
   }, [synthSegFileId, pollTask]);
 
+  const flamesTool = tools?.find(t => t.id === 'flames');
   const lstaiTool = tools?.find(t => t.id === 'lst-ai');
   const synthSegTool = tools?.find(t => t.id === 'synthseg');
 
@@ -183,6 +222,62 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
         <p className="text-[10px] text-yellow-300/80">
           {t('clinical.researchOnly', 'Research Use Only - Not FDA Cleared')}
         </p>
+      </div>
+
+      {/* FLAMeS Card — featured single-FLAIR SOTA segmenter */}
+      <div className="bg-surface-raised rounded-lg border border-brand-700/50 p-3 space-y-2 ring-1 ring-brand-500/20">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <h4 className="text-xs font-semibold text-white">FLAMeS</h4>
+            <span className="text-[8px] uppercase tracking-wide px-1 py-0.5 rounded bg-brand-500/15 text-brand-400 border border-brand-500/30">
+              {t('clinical.recommended', 'Recommended')}
+            </span>
+          </div>
+          <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+            flamesTool?.available
+              ? 'bg-green-900/50 text-green-400 border border-green-700/50'
+              : 'bg-gray-700 text-gray-500 border border-gray-600'
+          }`}>
+            {flamesTool?.available ? t('clinical.available', 'Available') : t('clinical.unavailable', 'Unavailable')}
+          </span>
+        </div>
+        <p className="text-[10px] text-gray-400">
+          {t('clinical.flamesDesc', 'One-click MS lesion segmentation from FLAIR alone. State-of-the-art nnU-Net (Dice 0.74), outperforms LST-AI / SAMSEG.')}
+        </p>
+        <p className="text-[9px] text-gray-500 italic">
+          {t('clinical.requires', 'Requires')}: FLAIR
+        </p>
+
+        <div className="space-y-1">
+          <label className="text-[10px] text-gray-300">FLAIR:</label>
+          <select
+            value={flairFileId}
+            onChange={(e) => setFlairFileId(e.target.value)}
+            className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-[10px] text-white"
+          >
+            <option value="">{t('clinical.selectFile', 'Select file...')}</option>
+            {allFileIds.map(fid => (
+              <option key={fid} value={fid}>
+                {fileSeqLabel(fid)} {shortName(fid)}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <button
+          onClick={handleRunFLAMeS}
+          disabled={!flamesTool?.available || !flairFileId || (flamesTask?.status === 'processing' || flamesTask?.status === 'storing' || flamesTask?.status === 'downloading')}
+          className="w-full px-3 py-2 bg-brand-600 hover:bg-brand-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded text-xs font-medium transition-colors"
+        >
+          {flamesTask?.status === 'processing' || flamesTask?.status === 'storing' || flamesTask?.status === 'downloading'
+            ? t('clinical.running', 'Running...')
+            : t('clinical.runFLAMeS', 'Auto-segment MS lesions')
+          }
+        </button>
+
+        {flamesTask && (
+          <TaskProgress task={flamesTask} getStatusColor={getStatusColor} getStatusLabel={getStatusLabel} />
+        )}
       </div>
 
       {/* LST-AI Card */}
@@ -301,10 +396,11 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
       </div>
 
       {/* Citation footer */}
-      {lstaiTool && (
+      {(flamesTool || lstaiTool) && (
         <div className="text-[8px] text-gray-600 leading-tight">
-          <p>LST-AI: {lstaiTool.citation}</p>
-          <p className="mt-0.5">SynthSeg: {synthSegTool?.citation}</p>
+          {flamesTool && <p>FLAMeS: {flamesTool.citation}</p>}
+          {lstaiTool && <p className="mt-0.5">LST-AI: {lstaiTool.citation}</p>}
+          {synthSegTool && <p className="mt-0.5">SynthSeg: {synthSegTool.citation}</p>}
         </div>
       )}
     </div>

@@ -24,6 +24,19 @@ export const clinicalToolsAPI = {
     return response.data;
   },
 
+  async runFLAMeS(
+    flairFileId: string,
+    patientId?: string,
+    studyId?: string,
+  ): Promise<ToolTaskResult> {
+    const response = await apiClient.post(`${PREFIX}/flames/segment`, {
+      flair_file_id: flairFileId,
+      patient_id: patientId,
+      study_id: studyId,
+    });
+    return response.data;
+  },
+
   async runSynthSeg(
     fileId: string,
     patientId?: string,
