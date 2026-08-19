@@ -77,9 +77,15 @@ export default function ViewerControls({
   const wlActive = windowWidth > 0;
   const wlCenterStr = wlActive ? String(Math.round(windowCenter)) : '';
   const wlWidthStr = wlActive ? String(Math.round(windowWidth)) : '';
+  const hasSeed = dicomWC != null && dicomWW != null && dicomWW > 0;
   const applyCenter = (raw: string) => {
     const c = parseFloat(raw);
-    if (!Number.isNaN(c)) setWindowLevel(c, wlActive ? windowWidth : (dicomWW && dicomWW > 0 ? dicomWW : 1));
+    if (Number.isNaN(c)) return;
+    // Pair the center with an ALREADY-VALID width — the active one, else the seed.
+    // Never fabricate width=1 (a degenerate window that blanks the slice). With no
+    // valid width available, typing a center alone is a no-op; the user seeds first.
+    const w = wlActive ? windowWidth : (hasSeed ? (dicomWW as number) : null);
+    if (w != null && w > 0) setWindowLevel(c, w);
   };
   const applyWidth = (raw: string) => {
     const w = parseFloat(raw);
@@ -148,13 +154,13 @@ export default function ViewerControls({
             </div>
             <div className="grid grid-cols-2" style={{ gap: 4, marginTop: 4 }}>
               <button
-                onClick={() => { if (dicomWC != null && dicomWW != null && dicomWW > 0) setWindowLevel(dicomWC, dicomWW); }}
-                disabled={dicomWC == null || dicomWW == null || dicomWW <= 0}
+                onClick={() => { if (hasSeed) setWindowLevel(dicomWC as number, dicomWW as number); }}
+                disabled={!hasSeed}
                 className="flex items-center justify-center bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed border border-gray-600 transition-colors"
                 style={{ height: 26, borderRadius: 6, fontSize: 11, fontWeight: 500 }}
-                title={t('viewer.wlDicomHint', "Apply this scan's DICOM window")}
+                title={t('viewer.wlOptimalHint', 'Apply the optimal window (DICOM tag, or auto percentile)')}
               >
-                {t('viewer.wlDicom', 'DICOM window')}
+                {t('viewer.wlOptimal', 'Optimal')}
               </button>
               <button
                 onClick={() => setWindowLevel(0, 0)}
@@ -163,7 +169,7 @@ export default function ViewerControls({
                 style={{ height: 26, borderRadius: 6, fontSize: 11, fontWeight: 500 }}
                 title={t('viewer.wlResetHint', 'Reset to full-range auto')}
               >
-                {t('viewer.wlReset', 'Auto')}
+                {t('viewer.wlReset', 'Full range')}
               </button>
             </div>
           </div>

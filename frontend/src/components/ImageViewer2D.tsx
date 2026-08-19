@@ -255,8 +255,11 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
     };
   }, [matplotlibData?.image, matplotlibData?.bbox, renderMode]);
 
-  // CSS filter for brightness/contrast adjustments
-  const imageFilter = brightness !== 100 || contrast !== 100
+  // CSS filter for brightness/contrast adjustments. In matplotlib mode the base image
+  // already carries a TRUE VOI-LUT window/level (server-rendered from raw intensities),
+  // so the cosmetic 8-bit brightness/contrast filter must NOT stack on top of it (double
+  // adjustment). It applies only in standard mode, where it is the sole contrast control.
+  const imageFilter = renderMode !== 'matplotlib' && (brightness !== 100 || contrast !== 100)
     ? `brightness(${brightness / 100}) contrast(${contrast / 100})`
     : undefined;
 

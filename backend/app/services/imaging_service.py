@@ -146,6 +146,22 @@ class ImagingService(IImagingService):
             header = img.header
             pixdim = header.get_zooms()
 
+            # W/L seed for NIfTI (which carries no DICOM WindowCenter/Width): a robust
+            # 2nd/98th-percentile window on the intensities, in the SAME (normalized) scale
+            # the slice renderer sees. Gives the viewer's window/level control a sane
+            # starting point and — critically — prevents the frontend from falling back to a
+            # degenerate width of 1 (which would blank the slice). None if the volume is flat.
+            seed_wc = seed_ww = None
+            try:
+                finite = data[np.isfinite(data)]
+                if finite.size:
+                    p2, p98 = np.percentile(finite, [2, 98])
+                    if p98 > p2:
+                        seed_wc = float((p2 + p98) / 2.0)
+                        seed_ww = float(p98 - p2)
+            except Exception:  # noqa: BLE001 — a seed is best-effort, never blocks load
+                seed_wc = seed_ww = None
+
             metadata = ImageMetadata(
                 rows=data.shape[0] if len(data.shape) > 0 else 0,
                 columns=data.shape[1] if len(data.shape) > 1 else 0,
@@ -153,6 +169,8 @@ class ImagingService(IImagingService):
                 pixel_spacing=[float(pixdim[0]), float(pixdim[1])] if len(pixdim) > 1 else [1.0, 1.0],
                 slice_thickness=float(pixdim[2]) if len(pixdim) > 2 else 1.0,
                 modality="MRI",
+                window_center=seed_wc,
+                window_width=seed_ww,
                 # RC-023 (CAPA-004 CA-4.2): surface the anatomical orientation so
                 # the viewport can label laterality. describe_orientation returns
                 # "UNKNOWN" rather than guessing when the affine is unusable.
@@ -278,12 +296,29 @@ class ImagingService(IImagingService):
         window_center: float,
         window_width: float
     ) -> np.ndarray:
-        """Apply window/level adjustment to pixel array."""
-        img_min = window_center - window_width // 2
-        img_max = window_center + window_width // 2
+        """Apply window/level (VOI-LUT) to a pixel array.
+
+        Guards against a DEGENERATE window (width <= 0, or a zero/negative span from
+        integer-floor rounding) that would divide by zero → NaN → an all-BLACK slice.
+        Hiding a slice on a diagnostic viewer is a display-safety concern (a rater could
+        paint against black), so a degenerate window falls back to the array's own range
+        rather than rendering nothing. Uses float (not floor) division so width=1 spans 1,
+        not 0.
+        """
+        ww = float(window_width)
+        img_min = float(window_center) - ww / 2.0
+        img_max = float(window_center) + ww / 2.0
+        span = img_max - img_min
+        if span <= 0:
+            # Degenerate window — never blank the slice; window to the data's own range.
+            img_min = float(np.min(pixel_array))
+            img_max = float(np.max(pixel_array))
+            span = img_max - img_min
+            if span <= 0:
+                return np.zeros_like(pixel_array, dtype=np.uint8)
 
         windowed = np.clip(pixel_array, img_min, img_max)
-        windowed = ((windowed - img_min) / (img_max - img_min) * 255.0).astype(np.uint8)
+        windowed = ((windowed - img_min) / span * 255.0).astype(np.uint8)
 
         return windowed
 
