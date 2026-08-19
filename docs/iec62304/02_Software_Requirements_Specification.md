@@ -53,6 +53,7 @@ This SRS covers all software requirements for MSTool-AI version 2.0, including f
 | REQ-FUNC-003 | The system shall provide 3D volume rendering of loaded NIfTI files using WebGL2. | Must | B | Test | — |
 | REQ-FUNC-004 | The system shall provide multiplanar reconstruction (axial, coronal, sagittal) with synchronized crosshairs. | Must | B | Test | — |
 | REQ-FUNC-005 | The system shall support windowing (brightness/contrast) adjustment for 2D slices. | Must | B | Test | — |
+| REQ-FUNC-005a | The system shall provide true DICOM window/level (VOI-LUT applied to raw stored intensities server-side, not a cosmetic post-render filter) for 2D slices, seeded from the per-series DICOM WindowCenter/WindowWidth tag with a reset to full-range auto. This is display-fidelity for lesion conspicuity (esp. FLAIR); it operates on the same slice grid the segmentation overlay uses and does not alter mask geometry. | Must | B | Test | HAZ-001 |
 | REQ-FUNC-006 | The system shall support zoom (0.25x to 20x) and pan in 2D view. | Should | A | Test | — |
 | REQ-FUNC-007 | The system shall provide a clip plane tool for 3D volume slicing with axial/coronal/sagittal options. | Should | B | Test | — |
 | REQ-FUNC-008 | The system shall support multiple colormaps (Gray, Hot, Bone, Viridis, Inferno, etc.). | Should | A | Test | — |

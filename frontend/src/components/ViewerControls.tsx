@@ -61,9 +61,30 @@ export default function ViewerControls({
 }: ViewerControlsProps) {
   const { t } = useTranslation();
   const { currentSeries, currentPatientId, currentStudyId, currentSeriesId } = useViewerStore();
+  const windowCenter = useViewerStore((s) => s.windowCenter);
+  const windowWidth = useViewerStore((s) => s.windowWidth);
+  const setWindowLevel = useViewerStore((s) => s.setWindowLevel);
   const activeSegmentation = useSegmentationStore((s) => s.activeSegmentation);
 
   if (!currentSeries) return null;
+
+  // Window/Level (real DICOM VOI-LUT, matplotlib mode). windowWidth>0 = a window is
+  // active (server re-renders from raw intensities); 0 = full-range default (unchanged).
+  // Seed reference comes from the per-series DICOM tag (MRI has no standardized units, so
+  // there are NO fixed T1/T2/FLAIR presets — the correct seed is this scan's own tag).
+  const dicomWC = currentSeries.metadata?.window_center;
+  const dicomWW = currentSeries.metadata?.window_width;
+  const wlActive = windowWidth > 0;
+  const wlCenterStr = wlActive ? String(Math.round(windowCenter)) : '';
+  const wlWidthStr = wlActive ? String(Math.round(windowWidth)) : '';
+  const applyCenter = (raw: string) => {
+    const c = parseFloat(raw);
+    if (!Number.isNaN(c)) setWindowLevel(c, wlActive ? windowWidth : (dicomWW && dicomWW > 0 ? dicomWW : 1));
+  };
+  const applyWidth = (raw: string) => {
+    const w = parseFloat(raw);
+    if (!Number.isNaN(w) && w > 0) setWindowLevel(wlActive ? windowCenter : (dicomWC ?? 0), w);
+  };
 
   return (
     <div style={{ background: '#0E1014', borderRadius: 8, padding: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -96,6 +117,57 @@ export default function ViewerControls({
 
       {viewMode === '2d' && renderMode === 'matplotlib' && (
         <>
+          {/* Window / Level — real DICOM VOI-LUT (server re-renders from raw intensities).
+              Replaces the cosmetic CSS brightness/contrast filter for lesion conspicuity. */}
+          <div>
+            <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
+              <label style={{ fontSize: 11, fontWeight: 500, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {t('viewer.windowLevel', 'Window / Level')}
+              </label>
+              <span style={{ fontSize: 10, color: wlActive ? '#57C7D4' : '#5C6472', fontVariantNumeric: 'tabular-nums' }}>
+                {wlActive ? `C ${Math.round(windowCenter)} · A ${Math.round(windowWidth)}` : t('viewer.wlAuto', 'Auto (full range)')}
+              </span>
+            </div>
+            <div className="flex" style={{ gap: 4 }}>
+              <input
+                type="number" inputMode="numeric" value={wlCenterStr}
+                onChange={(e) => applyCenter(e.target.value)}
+                placeholder={dicomWC != null ? String(Math.round(dicomWC)) : t('viewer.wlCenter', 'Center')}
+                aria-label={t('viewer.wlCenter', 'Window center')}
+                className="w-full border border-gray-600 focus:ring-1 focus:ring-blue-500 outline-none"
+                style={{ height: 28, padding: '0 8px', borderRadius: 6, background: '#161922', color: '#E7EBF2', fontSize: 12, fontVariantNumeric: 'tabular-nums' }}
+              />
+              <input
+                type="number" inputMode="numeric" min={1} value={wlWidthStr}
+                onChange={(e) => applyWidth(e.target.value)}
+                placeholder={dicomWW != null ? String(Math.round(dicomWW)) : t('viewer.wlWidth', 'Width')}
+                aria-label={t('viewer.wlWidth', 'Window width')}
+                className="w-full border border-gray-600 focus:ring-1 focus:ring-blue-500 outline-none"
+                style={{ height: 28, padding: '0 8px', borderRadius: 6, background: '#161922', color: '#E7EBF2', fontSize: 12, fontVariantNumeric: 'tabular-nums' }}
+              />
+            </div>
+            <div className="grid grid-cols-2" style={{ gap: 4, marginTop: 4 }}>
+              <button
+                onClick={() => { if (dicomWC != null && dicomWW != null && dicomWW > 0) setWindowLevel(dicomWC, dicomWW); }}
+                disabled={dicomWC == null || dicomWW == null || dicomWW <= 0}
+                className="flex items-center justify-center bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed border border-gray-600 transition-colors"
+                style={{ height: 26, borderRadius: 6, fontSize: 11, fontWeight: 500 }}
+                title={t('viewer.wlDicomHint', "Apply this scan's DICOM window")}
+              >
+                {t('viewer.wlDicom', 'DICOM window')}
+              </button>
+              <button
+                onClick={() => setWindowLevel(0, 0)}
+                disabled={!wlActive}
+                className="flex items-center justify-center bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed border border-gray-600 transition-colors"
+                style={{ height: 26, borderRadius: 6, fontSize: 11, fontWeight: 500 }}
+                title={t('viewer.wlResetHint', 'Reset to full-range auto')}
+              >
+                {t('viewer.wlReset', 'Auto')}
+              </button>
+            </div>
+          </div>
+
           <div>
             <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{t('viewer.colormap')}</label>
             <select
