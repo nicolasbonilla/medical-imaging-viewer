@@ -124,7 +124,7 @@ export default function PatientCard({
           ${onSelect ? 'cursor-pointer' : ''}
           ${isDeleting ? 'opacity-50 pointer-events-none' : ''}
         `}
-        style={{ background: '#1F2937', borderRadius: 8, padding: 12, display: 'flex', alignItems: 'center', gap: 12 }}
+        style={{ background: '#161922', borderRadius: 8, padding: 12, display: 'flex', alignItems: 'center', gap: 12 }}
       >
         {/* Avatar — 36×36, radius 6 */}
         <div className="flex-shrink-0 bg-brand-950 border border-brand-500/30 flex items-center justify-center text-white"
@@ -145,10 +145,10 @@ export default function PatientCard({
             </span>
           </div>
           <div className="flex items-center" style={{ gap: 8, marginTop: 2 }}>
-            <span className="font-mono" style={{ fontSize: 12, color: '#9CA3AF' }}>{patient.mrn}</span>
-            <span style={{ color: '#374151' }}>·</span>
-            {patientAge > 0 && <span style={{ fontSize: 12, color: '#9CA3AF' }}>{patientAge} {t('patient.years')}</span>}
-            {patient.gender && <><span style={{ color: '#374151' }}>·</span><span style={{ fontSize: 12, color: '#6B7280' }}>{getGenderSymbol(patient.gender)}</span></>}
+            <span className="font-mono" style={{ fontSize: 12, color: '#96A0B0' }}>{patient.mrn}</span>
+            <span style={{ color: '#232833' }}>·</span>
+            {patientAge > 0 && <span style={{ fontSize: 12, color: '#96A0B0' }}>{patientAge} {t('patient.years')}</span>}
+            {patient.gender && <><span style={{ color: '#232833' }}>·</span><span style={{ fontSize: 12, color: '#767E8E' }}>{getGenderSymbol(patient.gender)}</span></>}
           </div>
         </div>
         {/* Actions — 28×28 */}
@@ -157,18 +157,18 @@ export default function PatientCard({
             <button onClick={(e) => { e.stopPropagation(); onEdit(); }}
               className="flex items-center justify-center hover:bg-gray-700 transition-colors" title={t('common.edit')}
               style={{ width: 28, height: 28, borderRadius: 6 }}>
-              <Edit style={{ width: 14, height: 14, color: '#9CA3AF' }} />
+              <Edit style={{ width: 14, height: 14, color: '#96A0B0' }} />
             </button>
           )}
           {onDelete && (
             <button onClick={(e) => { e.stopPropagation(); onDelete(); }}
               className="flex items-center justify-center hover:bg-red-900/30 transition-colors" title={t('common.delete')}
               style={{ width: 28, height: 28, borderRadius: 6 }}>
-              <Trash2 style={{ width: 14, height: 14, color: '#9CA3AF' }} />
+              <Trash2 style={{ width: 14, height: 14, color: '#96A0B0' }} />
             </button>
           )}
         </div>
-        <ChevronRight style={{ width: 16, height: 16, color: '#6B7280', flexShrink: 0 }} />
+        <ChevronRight style={{ width: 16, height: 16, color: '#767E8E', flexShrink: 0 }} />
       </motion.div>
     );
   }
@@ -186,7 +186,7 @@ export default function PatientCard({
         ${onSelect ? 'cursor-pointer' : ''}
         ${isDeleting ? 'opacity-50 pointer-events-none' : ''}
       `}
-      style={{ background: '#1F2937', borderRadius: 8 }}
+      style={{ background: '#161922', borderRadius: 8 }}
     >
       {/* Header — avatar + name + status (same pattern as StudyCard header) */}
       <div style={{ padding: 12 }}>
@@ -210,10 +210,10 @@ export default function PatientCard({
                   {t(`patient.status.${patient.status}`)}
                 </span>
                 {patient.gender && (
-                  <span style={{ fontSize: 11, color: '#6B7280' }}>{getGenderSymbol(patient.gender)}</span>
+                  <span style={{ fontSize: 11, color: '#767E8E' }}>{getGenderSymbol(patient.gender)}</span>
                 )}
                 {patientAge > 0 && (
-                  <span style={{ fontSize: 11, color: '#6B7280' }}>{patientAge} {t('patient.years')}</span>
+                  <span style={{ fontSize: 11, color: '#767E8E' }}>{patientAge} {t('patient.years')}</span>
                 )}
               </div>
             </div>
@@ -225,14 +225,14 @@ export default function PatientCard({
               <button onClick={(e) => { e.stopPropagation(); onEdit(); }}
                 className="flex items-center justify-center hover:bg-gray-700 transition-colors" title={t('common.edit')}
                 style={{ width: 28, height: 28, borderRadius: 6 }}>
-                <Edit style={{ width: 14, height: 14, color: '#9CA3AF' }} />
+                <Edit style={{ width: 14, height: 14, color: '#96A0B0' }} />
               </button>
             )}
             {onDelete && (
               <button onClick={(e) => { e.stopPropagation(); onDelete(); }}
                 className="flex items-center justify-center hover:bg-red-900/30 transition-colors" title={t('common.delete')}
                 style={{ width: 28, height: 28, borderRadius: 6 }}>
-                <Trash2 style={{ width: 14, height: 14, color: '#9CA3AF' }} />
+                <Trash2 style={{ width: 14, height: 14, color: '#96A0B0' }} />
               </button>
             )}
           </div>
@@ -242,16 +242,16 @@ export default function PatientCard({
       {/* Stats — same label/value pattern as StudyCard and PatientDetailPage */}
       <div className="border-t border-gray-700 grid grid-cols-3" style={{ padding: '8px 12px', gap: 8 }}>
         <div>
-          <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>MRN</div>
-          <div className="font-mono" style={{ fontSize: 12, fontWeight: 500, color: '#E5E7EB' }}>{patient.mrn}</div>
+          <div style={{ fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>MRN</div>
+          <div className="font-mono" style={{ fontSize: 12, fontWeight: 500, color: '#E7EBF2' }}>{patient.mrn}</div>
         </div>
         <div>
-          <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>{t('patient.studies')}</div>
-          <div style={{ fontSize: 17, fontWeight: 700, color: '#E5E7EB' }}>{patient.study_count ?? 0}</div>
+          <div style={{ fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>{t('patient.studies')}</div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: '#E7EBF2' }}>{patient.study_count ?? 0}</div>
         </div>
         <div>
-          <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>{t('patient.documents')}</div>
-          <div style={{ fontSize: 17, fontWeight: 700, color: '#E5E7EB' }}>{patient.document_count ?? 0}</div>
+          <div style={{ fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>{t('patient.documents')}</div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: '#E7EBF2' }}>{patient.document_count ?? 0}</div>
         </div>
       </div>
 
@@ -260,7 +260,7 @@ export default function PatientCard({
         <div className="border-t border-gray-700" style={{ padding: 8 }}>
           <button onClick={(e) => { e.stopPropagation(); onSelect(); }}
             className="w-full flex items-center justify-center border border-gray-600 hover:bg-gray-700 transition-colors"
-            style={{ height: 36, gap: 6, borderRadius: 6, fontSize: 13, fontWeight: 500, color: '#E5E7EB' }}>
+            style={{ height: 36, gap: 6, borderRadius: 6, fontSize: 13, fontWeight: 500, color: '#E7EBF2' }}>
             <ChevronRight style={{ width: 16, height: 16 }} />
             {t('patient.viewPatient', 'View Patient')}
           </button>

@@ -122,7 +122,7 @@ export default function DocumentsPage() {
   const total = documentsData?.total || 0;
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#030712' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#08090C' }}>
       {/* Header — unified app bar (Design System v2.0) */}
       <AppHeader
         title={t('document.title', 'Documents')}

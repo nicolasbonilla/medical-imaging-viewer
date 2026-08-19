@@ -57,7 +57,7 @@ export default function AppHeader({
           display: 'flex',
           alignItems: 'center',
           padding: '0 24px',
-          background: '#111827',
+          background: '#0E1014',
         }}
       >
         {/* Left: Logo + name — gap 8px (4px grid) */}
@@ -86,7 +86,7 @@ export default function AppHeader({
           {rightControls && (
             <>
               {rightControls}
-              <div style={{ width: 1, height: 24, background: '#374151', margin: '0 8px' }} />
+              <div style={{ width: 1, height: 24, background: '#232833', margin: '0 8px' }} />
             </>
           )}
           <ThemeToggle variant="minimal" />
@@ -122,21 +122,21 @@ export default function AppHeader({
               <span key={i} className="flex items-center" style={{ gap: 6 }}>
                 {i > 0 && (
                   <ChevronRight
-                    style={{ width: 12, height: 12, color: '#4B5563', flexShrink: 0 }}
+                    style={{ width: 12, height: 12, color: '#2A303C', flexShrink: 0 }}
                   />
                 )}
                 {item.path ? (
                   <Link
                     to={item.path}
                     className="hover:text-blue-400 transition-colors"
-                    style={{ fontSize: 12, fontWeight: 400, color: '#9CA3AF' }}
+                    style={{ fontSize: 12, fontWeight: 400, color: '#96A0B0' }}
                   >
                     {item.label}
                   </Link>
                 ) : (
                   <span
                     aria-current="page"
-                    style={{ fontSize: 12, fontWeight: 500, color: '#E5E7EB' }}
+                    style={{ fontSize: 12, fontWeight: 500, color: '#E7EBF2' }}
                   >
                     {item.label}
                   </span>

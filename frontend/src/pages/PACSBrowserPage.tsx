@@ -125,7 +125,7 @@ export default function PACSBrowserPage() {
   }, [selectedConnId]);
 
   return (
-    <div className="min-h-screen" style={{ background: '#030712' }}>
+    <div className="min-h-screen" style={{ background: '#08090C' }}>
       {/* Header — unified app bar (Design System v2.0) */}
       <AppHeader
         title={t('pacs.title', 'PACS Browser')}

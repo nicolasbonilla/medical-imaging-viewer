@@ -139,7 +139,7 @@ export const QuickScreenBadge: React.FC<QuickScreenBadgeProps> = ({
           The toggle is deliberately gone: a limitation the user must opt into is
           not a risk control, and a control that can be dismissed will be. */}
       {(result || isProcessing) && (
-        <div data-testid="edge-ai-disclaimer" className="border border-yellow-700/50 rounded text-[10px] text-yellow-300/80 leading-tight" style={{ maxWidth: 240, padding: 8, background: '#111827', borderRadius: 6 }}>
+        <div data-testid="edge-ai-disclaimer" className="border border-yellow-700/50 rounded text-[10px] text-yellow-300/80 leading-tight" style={{ maxWidth: 240, padding: 8, background: '#0E1014', borderRadius: 6 }}>
           {t(
             'edgeAI.disclaimerText',
             'This is an assistive screening tool only. Results are NOT diagnostic and must be confirmed by a qualified radiologist. All processing runs locally in your browser — no patient data is transmitted.',

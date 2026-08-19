@@ -21,7 +21,7 @@ const categoryColors: Record<DocumentCategory, { bg: string; color: string }> = 
   'clinical-note': { bg: 'rgba(139,92,246,0.15)', color: '#A78BFA' },
   'radiology-report': { bg: 'rgba(6,182,212,0.15)', color: '#22D3EE' },
   'ms-assessment': { bg: 'rgba(59,130,246,0.15)', color: '#60A5FA' },
-  'other': { bg: 'rgba(107,114,128,0.15)', color: '#9CA3AF' },
+  'other': { bg: 'rgba(107,114,128,0.15)', color: '#96A0B0' },
 };
 
 const statusColors: Record<DocumentStatus, { bg: string; color: string }> = {
@@ -70,7 +70,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
         exit={{ opacity: 0, y: -8 }}
         onClick={onView}
         className="group border border-gray-700 hover:border-gray-600 transition-colors"
-        style={{ background: '#1F2937', borderRadius: 8, padding: 12, cursor: onView ? 'pointer' : 'default', display: 'flex', alignItems: 'center', gap: 12 }}
+        style={{ background: '#161922', borderRadius: 8, padding: 12, cursor: onView ? 'pointer' : 'default', display: 'flex', alignItems: 'center', gap: 12 }}
       >
         {/* Category icon — 36×36 */}
         <div className="flex-shrink-0 flex items-center justify-center"
@@ -89,16 +89,16 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
             </span>
           </div>
           <div className="flex items-center" style={{ gap: 8, marginTop: 2 }}>
-            <span className="flex items-center" style={{ gap: 4, fontSize: 12, color: '#9CA3AF' }}>
+            <span className="flex items-center" style={{ gap: 4, fontSize: 12, color: '#96A0B0' }}>
               <Clock style={{ width: 12, height: 12 }} />
               {formatDate(document.document_date)}
             </span>
-            <span style={{ color: '#374151' }}>·</span>
-            <span style={{ fontSize: 12, color: '#9CA3AF' }}>{documentAPI.formatFileSize(document.file_size_bytes)}</span>
+            <span style={{ color: '#232833' }}>·</span>
+            <span style={{ fontSize: 12, color: '#96A0B0' }}>{documentAPI.formatFileSize(document.file_size_bytes)}</span>
             {document.version > 1 && (
               <>
-                <span style={{ color: '#374151' }}>·</span>
-                <span style={{ fontSize: 12, color: '#9CA3AF' }}>v{document.version}</span>
+                <span style={{ color: '#232833' }}>·</span>
+                <span style={{ fontSize: 12, color: '#96A0B0' }}>v{document.version}</span>
               </>
             )}
           </div>
@@ -110,21 +110,21 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
             <button onClick={(e) => { e.stopPropagation(); onDownload(); }}
               className="flex items-center justify-center hover:bg-gray-700 transition-colors"
               style={{ width: 28, height: 28, borderRadius: 6 }} title={t('common.download')}>
-              <Download style={{ width: 14, height: 14, color: '#9CA3AF' }} />
+              <Download style={{ width: 14, height: 14, color: '#96A0B0' }} />
             </button>
           )}
           {onEdit && (
             <button onClick={(e) => { e.stopPropagation(); onEdit(); }}
               className="flex items-center justify-center hover:bg-gray-700 transition-colors"
               style={{ width: 28, height: 28, borderRadius: 6 }} title={t('common.edit')}>
-              <Edit2 style={{ width: 14, height: 14, color: '#9CA3AF' }} />
+              <Edit2 style={{ width: 14, height: 14, color: '#96A0B0' }} />
             </button>
           )}
           {onDelete && (
             <button onClick={(e) => { e.stopPropagation(); onDelete(); }}
               className="flex items-center justify-center hover:bg-red-900/30 transition-colors"
               style={{ width: 28, height: 28, borderRadius: 6 }} title={t('common.delete')}>
-              <Trash2 style={{ width: 14, height: 14, color: '#9CA3AF' }} />
+              <Trash2 style={{ width: 14, height: 14, color: '#96A0B0' }} />
             </button>
           )}
         </div>
@@ -140,7 +140,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
       className="group border border-gray-700 hover:border-gray-600 transition-colors overflow-hidden"
-      style={{ background: '#1F2937', borderRadius: 8 }}
+      style={{ background: '#161922', borderRadius: 8 }}
     >
       {/* Header — category icon + title + status */}
       <div style={{ padding: 12 }}>
@@ -171,14 +171,14 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
               <button onClick={onEdit}
                 className="flex items-center justify-center hover:bg-gray-700 transition-colors"
                 style={{ width: 28, height: 28, borderRadius: 6 }} title={t('common.edit')}>
-                <Edit2 style={{ width: 14, height: 14, color: '#9CA3AF' }} />
+                <Edit2 style={{ width: 14, height: 14, color: '#96A0B0' }} />
               </button>
             )}
             {onDelete && (
               <button onClick={onDelete}
                 className="flex items-center justify-center hover:bg-red-900/30 transition-colors"
                 style={{ width: 28, height: 28, borderRadius: 6 }} title={t('common.delete')}>
-                <Trash2 style={{ width: 14, height: 14, color: '#9CA3AF' }} />
+                <Trash2 style={{ width: 14, height: 14, color: '#96A0B0' }} />
               </button>
             )}
           </div>
@@ -188,22 +188,22 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
       {/* Stats — same label/value pattern */}
       <div className="border-t border-gray-700 grid grid-cols-3" style={{ padding: '8px 12px', gap: 8 }}>
         <div>
-          <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+          <div style={{ fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
             {t('document.date', 'Date')}
           </div>
-          <div style={{ fontSize: 12, fontWeight: 500, color: '#E5E7EB' }}>{formatDate(document.document_date)}</div>
+          <div style={{ fontSize: 12, fontWeight: 500, color: '#E7EBF2' }}>{formatDate(document.document_date)}</div>
         </div>
         <div>
-          <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+          <div style={{ fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
             {t('document.size', 'Size')}
           </div>
-          <div style={{ fontSize: 12, fontWeight: 500, color: '#E5E7EB' }}>{documentAPI.formatFileSize(document.file_size_bytes)}</div>
+          <div style={{ fontSize: 12, fontWeight: 500, color: '#E7EBF2' }}>{documentAPI.formatFileSize(document.file_size_bytes)}</div>
         </div>
         <div>
-          <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+          <div style={{ fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
             {t('document.version', 'Version')}
           </div>
-          <div style={{ fontSize: 17, fontWeight: 700, color: '#E5E7EB' }}>{document.version}</div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: '#E7EBF2' }}>{document.version}</div>
         </div>
       </div>
 
@@ -212,7 +212,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
         <div className="border-t border-gray-700" style={{ padding: 8 }}>
           <button onClick={onView}
             className="w-full flex items-center justify-center border border-gray-600 hover:bg-gray-700 transition-colors"
-            style={{ height: 36, gap: 6, borderRadius: 6, fontSize: 13, fontWeight: 500, color: '#E5E7EB' }}>
+            style={{ height: 36, gap: 6, borderRadius: 6, fontSize: 13, fontWeight: 500, color: '#E7EBF2' }}>
             <Eye style={{ width: 16, height: 16 }} />
             {t('common.view')}
           </button>

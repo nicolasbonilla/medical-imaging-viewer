@@ -41,7 +41,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: '#030712' }}>
+    <div className="min-h-screen" style={{ background: '#08090C' }}>
       {/* Header — unified app bar (Design System v2.0) */}
       <AppHeader
         title={t('auth.profile', 'My Profile')}

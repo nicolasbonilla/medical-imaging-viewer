@@ -98,7 +98,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
     return (
       <div className="flex items-center justify-center" style={{ padding: '48px 0' }}>
         <Loader2 className="animate-spin" style={{ width: 24, height: 24, color: '#60A5FA' }} />
-        <span style={{ marginLeft: 8, fontSize: 13, color: '#9CA3AF' }}>{t('common.loading')}</span>
+        <span style={{ marginLeft: 8, fontSize: 13, color: '#96A0B0' }}>{t('common.loading')}</span>
       </div>
     );
   }
@@ -108,7 +108,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
     return (
       <div className="text-center" style={{ padding: '48px 0' }}>
         <p style={{ fontSize: 14, color: '#F87171', marginBottom: 4 }}>{t('common.error')}</p>
-        <p style={{ fontSize: 12, color: '#9CA3AF' }}>{error.message}</p>
+        <p style={{ fontSize: 12, color: '#96A0B0' }}>{error.message}</p>
       </div>
     );
   }
@@ -122,14 +122,14 @@ export const DocumentList: React.FC<DocumentListProps> = ({
           {/* Search — 36px, radius 6 */}
           {showFilters && (
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute" style={{ left: 10, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, color: '#6B7280' }} />
+              <Search className="absolute" style={{ left: 10, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, color: '#767E8E' }} />
               <input
                 type="text"
                 value={filters.search}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
                 placeholder={t('document.searchPlaceholder')}
                 className="w-full border border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                style={{ height: 36, paddingLeft: 36, paddingRight: 12, background: '#111827', borderRadius: 6, fontSize: 13, color: '#E5E7EB' }}
+                style={{ height: 36, paddingLeft: 36, paddingRight: 12, background: '#0E1014', borderRadius: 6, fontSize: 13, color: '#E7EBF2' }}
               />
             </div>
           )}
@@ -197,9 +197,9 @@ export const DocumentList: React.FC<DocumentListProps> = ({
       <AnimatePresence>
         {showFilterPanel && (
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-            <div className="border border-gray-700" style={{ background: '#111827', borderRadius: 8, padding: 12 }}>
+            <div className="border border-gray-700" style={{ background: '#0E1014', borderRadius: 8, padding: 12 }}>
               <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-                <h3 style={{ fontSize: 13, fontWeight: 600, color: '#E5E7EB', margin: 0 }}>{t('common.filters')}</h3>
+                <h3 style={{ fontSize: 13, fontWeight: 600, color: '#E7EBF2', margin: 0 }}>{t('common.filters')}</h3>
                 {hasActiveFilters && (
                   <button onClick={clearFilters} className="flex items-center text-blue-400 hover:text-blue-300 transition-colors" style={{ gap: 4, fontSize: 12 }}>
                     <X style={{ width: 14, height: 14 }} /> {t('common.clearFilters')}
@@ -208,34 +208,34 @@ export const DocumentList: React.FC<DocumentListProps> = ({
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" style={{ gap: 12 }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{t('document.category')}</label>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{t('document.category')}</label>
                   <select value={filters.category} onChange={(e) => handleFilterChange('category', e.target.value)}
                     className="w-full border border-gray-600 focus:ring-2 focus:ring-blue-500"
-                    style={{ height: 36, padding: '0 12px', borderRadius: 6, background: '#1F2937', color: '#E5E7EB', fontSize: 13 }}>
+                    style={{ height: 36, padding: '0 12px', borderRadius: 6, background: '#161922', color: '#E7EBF2', fontSize: 13 }}>
                     <option value="">{t('common.all')}</option>
                     {CATEGORIES.map((cat) => <option key={cat} value={cat}>{t(`document.categories.${cat}`)}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{t('document.status.label')}</label>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{t('document.status.label')}</label>
                   <select value={filters.status} onChange={(e) => handleFilterChange('status', e.target.value)}
                     className="w-full border border-gray-600 focus:ring-2 focus:ring-blue-500"
-                    style={{ height: 36, padding: '0 12px', borderRadius: 6, background: '#1F2937', color: '#E5E7EB', fontSize: 13 }}>
+                    style={{ height: 36, padding: '0 12px', borderRadius: 6, background: '#161922', color: '#E7EBF2', fontSize: 13 }}>
                     <option value="">{t('common.all')}</option>
                     {STATUSES.map((s) => <option key={s} value={s}>{t(`document.status.${s}`)}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{t('document.dateFrom')}</label>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{t('document.dateFrom')}</label>
                   <input type="date" value={filters.dateFrom} onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
                     className="w-full border border-gray-600 focus:ring-2 focus:ring-blue-500"
-                    style={{ height: 36, padding: '0 12px', borderRadius: 6, background: '#1F2937', color: '#E5E7EB', fontSize: 13 }} />
+                    style={{ height: 36, padding: '0 12px', borderRadius: 6, background: '#161922', color: '#E7EBF2', fontSize: 13 }} />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{t('document.dateTo')}</label>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{t('document.dateTo')}</label>
                   <input type="date" value={filters.dateTo} onChange={(e) => handleFilterChange('dateTo', e.target.value)}
                     className="w-full border border-gray-600 focus:ring-2 focus:ring-blue-500"
-                    style={{ height: 36, padding: '0 12px', borderRadius: 6, background: '#1F2937', color: '#E5E7EB', fontSize: 13 }} />
+                    style={{ height: 36, padding: '0 12px', borderRadius: 6, background: '#161922', color: '#E7EBF2', fontSize: 13 }} />
                 </div>
               </div>
             </div>
@@ -244,7 +244,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
       </AnimatePresence>
 
       {/* ── Results count — 12px ── */}
-      <div className="flex items-center justify-between" style={{ fontSize: 12, color: '#9CA3AF' }}>
+      <div className="flex items-center justify-between" style={{ fontSize: 12, color: '#96A0B0' }}>
         <span>{t('document.showingResults', { count: documents.length, total })}</span>
         {isLoading && <Loader2 className="animate-spin" style={{ width: 16, height: 16, color: '#60A5FA' }} />}
       </div>
@@ -252,11 +252,11 @@ export const DocumentList: React.FC<DocumentListProps> = ({
       {/* ── Document grid/list ── */}
       {documents.length === 0 ? (
         <div className="text-center" style={{ padding: '48px 16px' }}>
-          <FileText className="mx-auto" style={{ width: 36, height: 36, color: '#4B5563', marginBottom: 12 }} />
-          <h3 style={{ fontSize: 14, fontWeight: 600, color: '#E5E7EB', margin: '0 0 4px 0' }}>
+          <FileText className="mx-auto" style={{ width: 36, height: 36, color: '#2A303C', marginBottom: 12 }} />
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: '#E7EBF2', margin: '0 0 4px 0' }}>
             {t('document.noDocuments')}
           </h3>
-          <p style={{ fontSize: 12, color: '#9CA3AF', margin: '0 0 16px 0' }}>
+          <p style={{ fontSize: 12, color: '#96A0B0', margin: '0 0 16px 0' }}>
             {emptyMessage || t('document.noDocumentsDescription')}
           </p>
           {onUploadDocument && (

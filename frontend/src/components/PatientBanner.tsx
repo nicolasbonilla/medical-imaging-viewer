@@ -172,7 +172,7 @@ function PatientBannerComponent({
       initial={{ opacity: 0, y: -4 }}
       animate={{ opacity: 1, y: 0 }}
       className={`relative border-b border-gray-700 ${className}`}
-      style={{ background: '#111827' }}
+      style={{ background: '#0E1014' }}
       role="banner"
       aria-label={t('patients.patientBanner', 'Patient identification banner')}
     >

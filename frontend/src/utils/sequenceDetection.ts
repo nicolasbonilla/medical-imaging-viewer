@@ -17,7 +17,7 @@ export const SEQUENCE_INFO: Record<SequenceType, { label: string; color: string;
   T1w: { label: 'T1-weighted', color: '#3B82F6', shortLabel: 'T1' },
   T2w: { label: 'T2-weighted', color: '#10B981', shortLabel: 'T2' },
   PDw: { label: 'Proton Density', color: '#8B5CF6', shortLabel: 'PD' },
-  unknown: { label: 'Unknown', color: '#6B7280', shortLabel: '?' },
+  unknown: { label: 'Unknown', color: '#767E8E', shortLabel: '?' },
 };
 
 /**

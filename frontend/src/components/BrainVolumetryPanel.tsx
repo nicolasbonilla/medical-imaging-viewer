@@ -104,7 +104,7 @@ export const BrainVolumetryPanel: React.FC<BrainVolumetryPanelProps> = ({
   const abnormalCount = result?.structures.filter((s) => s.is_abnormal).length ?? 0;
 
   return (
-    <div style={{ background: '#1F2937', borderRadius: 8 }}>
+    <div style={{ background: '#161922', borderRadius: 8 }}>
       {/* Header */}
       <div
         className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-700 transition-colors"

@@ -321,7 +321,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
     : 1;
 
   return (
-    <div style={{ background: '#1F2937', borderRadius: 8, padding: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div style={{ background: '#161922', borderRadius: 8, padding: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">

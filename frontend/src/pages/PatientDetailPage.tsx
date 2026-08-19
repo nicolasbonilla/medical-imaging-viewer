@@ -155,7 +155,7 @@ export default function PatientDetailPage() {
   // Loading state
   if (isLoadingPatient) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#030712' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#08090C' }}>
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
@@ -169,12 +169,12 @@ export default function PatientDetailPage() {
   // Error state
   if (patientError || !patient) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: '#030712' }}>
+      <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: '#08090C' }}>
         <AlertCircle style={{ width: 36, height: 36, color: '#F87171', marginBottom: 12 }} />
         <h2 style={{ fontSize: 17, fontWeight: 700, color: '#F9FAFB', marginBottom: 4 }}>
           {t('patients.notFound')}
         </h2>
-        <p style={{ fontSize: 13, color: '#9CA3AF', marginBottom: 16 }}>
+        <p style={{ fontSize: 13, color: '#96A0B0', marginBottom: 16 }}>
           {t('patients.notFoundDescription')}
         </p>
         <button
@@ -194,7 +194,7 @@ export default function PatientDetailPage() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#030712' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#08090C' }}>
 
       {/* Header */}
       <AppHeader
@@ -212,15 +212,15 @@ export default function PatientDetailPage() {
         <div className="absolute flex items-center" style={{ top: 12, right: 24, gap: 4, zIndex: 10 }}>
           <button onClick={handleEditPatient}
             className="flex items-center justify-center border border-gray-700 hover:bg-gray-700 transition-colors"
-            style={{ width: 36, height: 36, borderRadius: 6, background: '#1F2937' }}
+            style={{ width: 36, height: 36, borderRadius: 6, background: '#161922' }}
             title={t('common.edit')}>
-            <Edit style={{ width: 16, height: 16, color: '#9CA3AF' }} />
+            <Edit style={{ width: 16, height: 16, color: '#96A0B0' }} />
           </button>
           <button onClick={handleDeletePatient}
             className="flex items-center justify-center border border-gray-700 hover:bg-red-900/30 transition-colors"
-            style={{ width: 36, height: 36, borderRadius: 6, background: '#1F2937' }}
+            style={{ width: 36, height: 36, borderRadius: 6, background: '#161922' }}
             title={t('common.delete')}>
-            <Trash2 style={{ width: 16, height: 16, color: '#9CA3AF' }} />
+            <Trash2 style={{ width: 16, height: 16, color: '#96A0B0' }} />
           </button>
         </div>
       </div>
@@ -234,7 +234,7 @@ export default function PatientDetailPage() {
               ════════════════════════════════════════════════ */}
 
           {/* Patient Identification — single full-width card, 7 fields in one grid */}
-          <div className="border border-gray-700" style={{ background: '#1F2937', borderRadius: 8, padding: 16 }}>
+          <div className="border border-gray-700" style={{ background: '#161922', borderRadius: 8, padding: 16 }}>
             <h3 className="flex items-center" style={{ gap: 6, fontSize: 14, fontWeight: 600, color: '#F9FAFB', margin: '0 0 12px 0' }}>
               <User style={{ width: 16, height: 16, color: '#60A5FA' }} />
               {t('patients.personalInfo', 'Patient Identification')}
@@ -242,57 +242,57 @@ export default function PatientDetailPage() {
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7" style={{ gap: 12 }}>
               <div>
-                <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                <label style={{ display: 'block', fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
                   {t('patients.fullName', 'Full Name')}
                 </label>
-                <p style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0 }}>{patient.full_name}</p>
+                <p style={{ fontSize: 14, fontWeight: 500, color: '#E7EBF2', margin: 0 }}>{patient.full_name}</p>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                <label style={{ display: 'block', fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
                   {t('patients.mrn', 'MRN')}
                 </label>
-                <p className="font-mono" style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0 }}>{patient.mrn}</p>
+                <p className="font-mono" style={{ fontSize: 14, fontWeight: 500, color: '#E7EBF2', margin: 0 }}>{patient.mrn}</p>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                <label style={{ display: 'block', fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
                   {t('patients.birthDate', 'Date of Birth')}
                 </label>
-                <p style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0 }}>
+                <p style={{ fontSize: 14, fontWeight: 500, color: '#E7EBF2', margin: 0 }}>
                   {formatDate(patient.birth_date)} ({patient.age} {t('patients.years', 'years')})
                 </p>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                <label style={{ display: 'block', fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
                   {t('patients.gender', 'Gender')}
                 </label>
-                <p style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0 }}>
+                <p style={{ fontSize: 14, fontWeight: 500, color: '#E7EBF2', margin: 0 }}>
                   {getGenderSymbol(patient.gender)} {t(`patients.genders.${patient.gender}`)}
                 </p>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                <label style={{ display: 'block', fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
                   {t('patients.status.label', 'Status')}
                 </label>
-                <p className="flex items-center" style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0, gap: 6 }}>
+                <p className="flex items-center" style={{ fontSize: 14, fontWeight: 500, color: '#E7EBF2', margin: 0, gap: 6 }}>
                   <span style={{
                     width: 8, height: 8, borderRadius: '50%',
                     background: patient.status === 'active' ? '#10B981' :
-                                patient.status === 'deceased' ? '#6B7280' : '#94A3B8',
+                                patient.status === 'deceased' ? '#767E8E' : '#94A3B8',
                   }} />
                   {t(`patients.status.${patient.status}`, patient.status)}
                 </p>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                <label style={{ display: 'block', fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
                   {t('common.createdAt', 'Created')}
                 </label>
-                <p style={{ fontSize: 14, fontWeight: 500, color: '#9CA3AF', margin: 0 }}>{formatDate(patient.created_at)}</p>
+                <p style={{ fontSize: 14, fontWeight: 500, color: '#96A0B0', margin: 0 }}>{formatDate(patient.created_at)}</p>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                <label style={{ display: 'block', fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
                   {t('common.updatedAt', 'Updated')}
                 </label>
-                <p style={{ fontSize: 14, fontWeight: 500, color: '#9CA3AF', margin: 0 }}>{formatDate(patient.updated_at)}</p>
+                <p style={{ fontSize: 14, fontWeight: 500, color: '#96A0B0', margin: 0 }}>{formatDate(patient.updated_at)}</p>
               </div>
             </div>
           </div>
@@ -307,7 +307,7 @@ export default function PatientDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: 16, alignItems: 'start' }}>
 
             {/* Contact Information */}
-            <div className="border border-gray-700" style={{ background: '#1F2937', borderRadius: 8, padding: 16 }}>
+            <div className="border border-gray-700" style={{ background: '#161922', borderRadius: 8, padding: 16 }}>
               <h3 className="flex items-center" style={{ gap: 6, fontSize: 14, fontWeight: 600, color: '#F9FAFB', margin: '0 0 12px 0' }}>
                 <Phone style={{ width: 16, height: 16, color: '#34D399' }} />
                 {t('patients.contactInfo', 'Contact Information')}
@@ -315,26 +315,26 @@ export default function PatientDetailPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {patient.phone_mobile && (
                   <div>
-                    <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                    <label style={{ display: 'block', fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
                       {t('patients.phoneMobile', 'Mobile Phone')}
                     </label>
-                    <p style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0 }}>{patient.phone_mobile}</p>
+                    <p style={{ fontSize: 14, fontWeight: 500, color: '#E7EBF2', margin: 0 }}>{patient.phone_mobile}</p>
                   </div>
                 )}
                 {patient.email && (
                   <div>
-                    <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                    <label style={{ display: 'block', fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
                       {t('patients.email', 'Email')}
                     </label>
-                    <p style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0 }}>{patient.email}</p>
+                    <p style={{ fontSize: 14, fontWeight: 500, color: '#E7EBF2', margin: 0 }}>{patient.email}</p>
                   </div>
                 )}
                 {(patient.address_line1 || patient.city) && (
                   <div>
-                    <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                    <label style={{ display: 'block', fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
                       {t('patients.address', 'Address')}
                     </label>
-                    <p style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0 }}>
+                    <p style={{ fontSize: 14, fontWeight: 500, color: '#E7EBF2', margin: 0 }}>
                       {[patient.address_line1, patient.address_line2, patient.city, patient.state, patient.postal_code, patient.country]
                         .filter(Boolean)
                         .join(', ')}
@@ -342,7 +342,7 @@ export default function PatientDetailPage() {
                   </div>
                 )}
                 {!patient.phone_mobile && !patient.email && !patient.address_line1 && !patient.city && (
-                  <p style={{ fontSize: 12, color: '#6B7280', margin: 0, fontStyle: 'italic' }}>
+                  <p style={{ fontSize: 12, color: '#767E8E', margin: 0, fontStyle: 'italic' }}>
                     {t('patients.noContactInfo', 'No contact information available')}
                   </p>
                 )}
@@ -350,7 +350,7 @@ export default function PatientDetailPage() {
             </div>
 
             {/* Emergency Contact */}
-            <div className="border border-gray-700" style={{ background: '#1F2937', borderRadius: 8, padding: 16 }}>
+            <div className="border border-gray-700" style={{ background: '#161922', borderRadius: 8, padding: 16 }}>
               <h3 className="flex items-center" style={{ gap: 6, fontSize: 14, fontWeight: 600, color: '#F9FAFB', margin: '0 0 12px 0' }}>
                 <AlertCircle style={{ width: 16, height: 16, color: '#F87171' }} />
                 {t('patients.emergencyContact', 'Emergency Contact')}
@@ -358,37 +358,37 @@ export default function PatientDetailPage() {
               {patient.emergency_contact_name ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                    <label style={{ display: 'block', fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
                       {t('patients.name', 'Name')}
                     </label>
-                    <p style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0 }}>{patient.emergency_contact_name}</p>
+                    <p style={{ fontSize: 14, fontWeight: 500, color: '#E7EBF2', margin: 0 }}>{patient.emergency_contact_name}</p>
                   </div>
                   {patient.emergency_contact_phone && (
                     <div>
-                      <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                      <label style={{ display: 'block', fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
                         {t('patients.phone', 'Phone')}
                       </label>
-                      <p style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0 }}>{patient.emergency_contact_phone}</p>
+                      <p style={{ fontSize: 14, fontWeight: 500, color: '#E7EBF2', margin: 0 }}>{patient.emergency_contact_phone}</p>
                     </div>
                   )}
                   {patient.emergency_contact_relationship && (
                     <div>
-                      <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                      <label style={{ display: 'block', fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
                         {t('patients.relationship', 'Relationship')}
                       </label>
-                      <p style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0 }}>{patient.emergency_contact_relationship}</p>
+                      <p style={{ fontSize: 14, fontWeight: 500, color: '#E7EBF2', margin: 0 }}>{patient.emergency_contact_relationship}</p>
                     </div>
                   )}
                 </div>
               ) : (
-                <p style={{ fontSize: 12, color: '#6B7280', margin: 0, fontStyle: 'italic' }}>
+                <p style={{ fontSize: 12, color: '#767E8E', margin: 0, fontStyle: 'italic' }}>
                   {t('patients.noEmergencyContact', 'No emergency contact registered')}
                 </p>
               )}
             </div>
 
             {/* Insurance */}
-            <div className="border border-gray-700" style={{ background: '#1F2937', borderRadius: 8, padding: 16 }}>
+            <div className="border border-gray-700" style={{ background: '#161922', borderRadius: 8, padding: 16 }}>
               <h3 className="flex items-center" style={{ gap: 6, fontSize: 14, fontWeight: 600, color: '#F9FAFB', margin: '0 0 12px 0' }}>
                 <Shield style={{ width: 16, height: 16, color: '#60A5FA' }} />
                 {t('patients.insurance', 'Insurance')}
@@ -396,22 +396,22 @@ export default function PatientDetailPage() {
               {patient.insurance_provider ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                    <label style={{ display: 'block', fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
                       {t('patients.insuranceProvider', 'Provider')}
                     </label>
-                    <p style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0 }}>{patient.insurance_provider}</p>
+                    <p style={{ fontSize: 14, fontWeight: 500, color: '#E7EBF2', margin: 0 }}>{patient.insurance_provider}</p>
                   </div>
                   {patient.insurance_policy_number && (
                     <div>
-                      <label style={{ display: 'block', fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                      <label style={{ display: 'block', fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
                         {t('patients.policyNumber', 'Policy Number')}
                       </label>
-                      <p className="font-mono" style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB', margin: 0 }}>{patient.insurance_policy_number}</p>
+                      <p className="font-mono" style={{ fontSize: 14, fontWeight: 500, color: '#E7EBF2', margin: 0 }}>{patient.insurance_policy_number}</p>
                     </div>
                   )}
                 </div>
               ) : (
-                <p style={{ fontSize: 12, color: '#6B7280', margin: 0, fontStyle: 'italic' }}>
+                <p style={{ fontSize: 12, color: '#767E8E', margin: 0, fontStyle: 'italic' }}>
                   {t('patients.noInsurance', 'No insurance information')}
                 </p>
               )}
@@ -422,7 +422,7 @@ export default function PatientDetailPage() {
               SECTION 2: Collections (tabs for Studies / Documents)
               ════════════════════════════════════════════════ */}
           <div className="flex items-center border border-gray-700 w-fit"
-            style={{ gap: 4, padding: 4, background: '#1F2937', borderRadius: 8 }}>
+            style={{ gap: 4, padding: 4, background: '#161922', borderRadius: 8 }}>
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -455,7 +455,7 @@ export default function PatientDetailPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 className="border border-gray-700"
-                style={{ background: '#1F2937', borderRadius: 8, padding: 16 }}
+                style={{ background: '#161922', borderRadius: 8, padding: 16 }}
               >
                 <StudyList
                   studies={studiesData?.items || []}
@@ -479,7 +479,7 @@ export default function PatientDetailPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 className="border border-gray-700"
-                style={{ background: '#1F2937', borderRadius: 8, padding: 16 }}
+                style={{ background: '#161922', borderRadius: 8, padding: 16 }}
               >
                 <DocumentList
                   documents={documentsData?.items || []}
@@ -516,7 +516,7 @@ export default function PatientDetailPage() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               className="w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-700"
-              style={{ background: '#111827', borderRadius: 8 }}
+              style={{ background: '#0E1014', borderRadius: 8 }}
               onClick={e => e.stopPropagation()}
             >
               <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
@@ -557,7 +557,7 @@ export default function PatientDetailPage() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               className="w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-gray-700"
-              style={{ background: '#111827', borderRadius: 8 }}
+              style={{ background: '#0E1014', borderRadius: 8 }}
               onClick={e => e.stopPropagation()}
             >
               <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
@@ -599,7 +599,7 @@ export default function PatientDetailPage() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               className="w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-700"
-              style={{ background: '#111827', borderRadius: 8 }}
+              style={{ background: '#0E1014', borderRadius: 8 }}
               onClick={e => e.stopPropagation()}
             >
               <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">

@@ -31,7 +31,7 @@ const modalityColors: Record<string, { bg: string; color: string }> = {
   PT: { bg: 'rgba(239,68,68,0.15)', color: '#F87171' },
   CR: { bg: 'rgba(6,182,212,0.15)', color: '#22D3EE' },
   DX: { bg: 'rgba(99,102,241,0.15)', color: '#818CF8' },
-  OT: { bg: 'rgba(107,114,128,0.15)', color: '#9CA3AF' },
+  OT: { bg: 'rgba(107,114,128,0.15)', color: '#96A0B0' },
 };
 
 const statusColors: Record<string, { bg: string; color: string }> = {
@@ -102,7 +102,7 @@ export const StudyCard: React.FC<StudyCardProps> = ({
         animate={{ opacity: 1, y: 0 }}
         onClick={onView}
         className="group border border-gray-700 hover:border-gray-600 transition-colors"
-        style={{ background: '#1F2937', borderRadius: 8, padding: 12, cursor: onView ? 'pointer' : 'default', display: 'flex', alignItems: 'center', gap: 12 }}
+        style={{ background: '#161922', borderRadius: 8, padding: 12, cursor: onView ? 'pointer' : 'default', display: 'flex', alignItems: 'center', gap: 12 }}
       >
         {/* Modality — 36×36 */}
         <div className="flex-shrink-0 flex items-center justify-center"
@@ -113,7 +113,7 @@ export const StudyCard: React.FC<StudyCardProps> = ({
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center" style={{ gap: 6 }}>
-            <span className="truncate" style={{ fontSize: 14, fontWeight: 500, color: '#E5E7EB' }}>
+            <span className="truncate" style={{ fontSize: 14, fontWeight: 500, color: '#E7EBF2' }}>
               {study.study_description || t('study.noDescription')}
             </span>
             <span style={{ fontSize: 11, fontWeight: 500, padding: '1px 6px', borderRadius: 4, background: stat.bg, color: stat.color, flexShrink: 0 }}>
@@ -121,14 +121,14 @@ export const StudyCard: React.FC<StudyCardProps> = ({
             </span>
           </div>
           <div className="flex items-center" style={{ gap: 8, marginTop: 2 }}>
-            <span className="flex items-center" style={{ gap: 4, fontSize: 12, color: '#9CA3AF' }}>
+            <span className="flex items-center" style={{ gap: 4, fontSize: 12, color: '#96A0B0' }}>
               <Calendar style={{ width: 12, height: 12 }} />
               {formatDate(study.study_date)}
             </span>
-            <span style={{ color: '#374151' }}>·</span>
-            <span style={{ fontSize: 12, color: '#9CA3AF' }}>{study.series_count ?? 0} series</span>
-            <span style={{ color: '#374151' }}>·</span>
-            <span style={{ fontSize: 12, color: '#9CA3AF' }}>{study.instance_count ?? 0} images</span>
+            <span style={{ color: '#232833' }}>·</span>
+            <span style={{ fontSize: 12, color: '#96A0B0' }}>{study.series_count ?? 0} series</span>
+            <span style={{ color: '#232833' }}>·</span>
+            <span style={{ fontSize: 12, color: '#96A0B0' }}>{study.instance_count ?? 0} images</span>
           </div>
         </div>
 
@@ -138,14 +138,14 @@ export const StudyCard: React.FC<StudyCardProps> = ({
             <button onClick={(e) => { e.stopPropagation(); onDownload(); }}
               className="flex items-center justify-center hover:bg-gray-700 transition-colors"
               style={{ width: 28, height: 28, borderRadius: 6 }} title={t('common.download')}>
-              <Download style={{ width: 14, height: 14, color: '#9CA3AF' }} />
+              <Download style={{ width: 14, height: 14, color: '#96A0B0' }} />
             </button>
           )}
           {onView && (
             <button onClick={(e) => { e.stopPropagation(); onView(); }}
               className="flex items-center justify-center hover:bg-gray-700 transition-colors"
               style={{ width: 28, height: 28, borderRadius: 6 }} title={t('common.view')}>
-              <Eye style={{ width: 14, height: 14, color: '#9CA3AF' }} />
+              <Eye style={{ width: 14, height: 14, color: '#96A0B0' }} />
             </button>
           )}
         </div>
@@ -159,7 +159,7 @@ export const StudyCard: React.FC<StudyCardProps> = ({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       className="group border border-gray-700 hover:border-gray-600 transition-colors overflow-hidden"
-      style={{ background: '#1F2937', borderRadius: 8 }}
+      style={{ background: '#161922', borderRadius: 8 }}
     >
       {/* Header — modality + title + status + date */}
       <div style={{ padding: 12 }}>
@@ -178,7 +178,7 @@ export const StudyCard: React.FC<StudyCardProps> = ({
                 <span style={{ fontSize: 11, fontWeight: 500, padding: '1px 6px', borderRadius: 4, background: stat.bg, color: stat.color }}>
                   {t(`study.status.${study.status}`)}
                 </span>
-                <span className="flex items-center" style={{ gap: 4, fontSize: 11, color: '#6B7280' }}>
+                <span className="flex items-center" style={{ gap: 4, fontSize: 11, color: '#767E8E' }}>
                   <Calendar style={{ width: 10, height: 10 }} />
                   {formatDate(study.study_date)}
                 </span>
@@ -192,14 +192,14 @@ export const StudyCard: React.FC<StudyCardProps> = ({
               <button onClick={onEdit}
                 className="flex items-center justify-center hover:bg-gray-700 transition-colors"
                 style={{ width: 28, height: 28, borderRadius: 6 }} title={t('common.edit')}>
-                <Edit style={{ width: 14, height: 14, color: '#9CA3AF' }} />
+                <Edit style={{ width: 14, height: 14, color: '#96A0B0' }} />
               </button>
             )}
             {onDelete && (
               <button onClick={onDelete}
                 className="flex items-center justify-center hover:bg-red-900/30 transition-colors"
                 style={{ width: 28, height: 28, borderRadius: 6 }} title={t('common.delete')}>
-                <Trash2 style={{ width: 14, height: 14, color: '#9CA3AF' }} />
+                <Trash2 style={{ width: 14, height: 14, color: '#96A0B0' }} />
               </button>
             )}
           </div>
@@ -209,28 +209,28 @@ export const StudyCard: React.FC<StudyCardProps> = ({
       {/* Stats — horizontal row, compact, labeled with UPPERCASE 11px */}
       <div className="border-t border-gray-700 grid grid-cols-4" style={{ padding: '8px 12px', gap: 8 }}>
         <div>
-          <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+          <div style={{ fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
             {t('study.series', { count: study.series_count ?? 0 })}
           </div>
-          <div style={{ fontSize: 17, fontWeight: 700, color: '#E5E7EB' }}>{study.series_count ?? 0}</div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: '#E7EBF2' }}>{study.series_count ?? 0}</div>
         </div>
         <div>
-          <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+          <div style={{ fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
             {t('study.images', { count: study.instance_count ?? 0 })}
           </div>
-          <div style={{ fontSize: 17, fontWeight: 700, color: '#E5E7EB' }}>{study.instance_count ?? 0}</div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: '#E7EBF2' }}>{study.instance_count ?? 0}</div>
         </div>
         <div>
-          <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+          <div style={{ fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
             {t('study.totalSize')}
           </div>
-          <div style={{ fontSize: 14, fontWeight: 600, color: '#9CA3AF' }}>{formatSize(study.total_size_bytes)}</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: '#96A0B0' }}>{formatSize(study.total_size_bytes)}</div>
         </div>
         <div>
-          <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+          <div style={{ fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
             Segm.
           </div>
-          <div style={{ fontSize: 17, fontWeight: 700, color: '#E5E7EB' }}>{segmentationInfo?.count ?? 0}</div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: '#E7EBF2' }}>{segmentationInfo?.count ?? 0}</div>
         </div>
       </div>
 
@@ -239,7 +239,7 @@ export const StudyCard: React.FC<StudyCardProps> = ({
         <div className="border-t border-gray-700" style={{ padding: 8 }}>
           <button onClick={onView}
             className="w-full flex items-center justify-center border border-gray-600 hover:bg-gray-700 transition-colors"
-            style={{ height: 36, gap: 6, borderRadius: 6, fontSize: 13, fontWeight: 500, color: '#E5E7EB' }}>
+            style={{ height: 36, gap: 6, borderRadius: 6, fontSize: 13, fontWeight: 500, color: '#E7EBF2' }}>
             <Eye style={{ width: 16, height: 16 }} />
             {t('study.viewStudy')}
           </button>

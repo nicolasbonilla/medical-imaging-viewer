@@ -49,13 +49,13 @@ export default function UserMenu() {
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.15 }}
               className="absolute right-0 top-full mt-2 border border-gray-700 overflow-hidden"
-              style={{ width: 220, borderRadius: 8, background: '#1F2937', zIndex: 500 }}
+              style={{ width: 220, borderRadius: 8, background: '#161922', zIndex: 500 }}
             >
               {/* User info — visible here, NOT in the button */}
               <div className="px-4 py-3 border-b border-gray-700">
                 <p style={{ fontSize: 14, fontWeight: 600, color: '#F9FAFB' }}>{user.full_name}</p>
-                <p style={{ fontSize: 12, color: '#9CA3AF' }}>{user.email || user.username}</p>
-                <p style={{ fontSize: 11, color: '#6B7280', marginTop: 2, textTransform: 'capitalize' }}>{user.role}</p>
+                <p style={{ fontSize: 12, color: '#96A0B0' }}>{user.email || user.username}</p>
+                <p style={{ fontSize: 11, color: '#767E8E', marginTop: 2, textTransform: 'capitalize' }}>{user.role}</p>
               </div>
               <div className="py-1">
                 <button

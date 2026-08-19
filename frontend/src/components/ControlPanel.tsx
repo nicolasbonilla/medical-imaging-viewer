@@ -110,7 +110,7 @@ export default function ControlPanel() {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden" style={{ background: '#111827' }}>
+    <div className="h-full flex flex-col overflow-hidden" style={{ background: '#0E1014' }}>
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
 
@@ -202,7 +202,7 @@ export default function ControlPanel() {
                   value={colormap3D}
                   onChange={(e) => setColormap3D(e.target.value)}
                   className="w-full border border-gray-600 focus:ring-1 focus:ring-blue-500 outline-none"
-                  style={{ height: 28, padding: '0 8px', borderRadius: 6, background: '#1F2937', color: '#E5E7EB', fontSize: 12 }}
+                  style={{ height: 28, padding: '0 8px', borderRadius: 6, background: '#161922', color: '#E7EBF2', fontSize: 12 }}
                 >
                   {COLORMAPS_3D.map((cm) => (
                     <option key={cm.id} value={cm.id}>{cm.label}</option>
@@ -298,9 +298,9 @@ export default function ControlPanel() {
                 className="flex items-center justify-center bg-gray-800 hover:bg-gray-700 disabled:opacity-30 transition-colors"
                 style={{ width: 28, height: 28, borderRadius: 6 }}
               >
-                <ZoomOut style={{ width: 14, height: 14, color: '#9CA3AF' }} />
+                <ZoomOut style={{ width: 14, height: 14, color: '#96A0B0' }} />
               </button>
-              <span className="font-mono" style={{ fontSize: 11, fontWeight: 600, color: '#E5E7EB', width: 48, textAlign: 'center' }}>
+              <span className="font-mono" style={{ fontSize: 11, fontWeight: 600, color: '#E7EBF2', width: 48, textAlign: 'center' }}>
                 {Math.round(zoomLevel * 100)}%
               </span>
               <button
@@ -309,7 +309,7 @@ export default function ControlPanel() {
                 className="flex items-center justify-center bg-gray-800 hover:bg-gray-700 disabled:opacity-30 transition-colors"
                 style={{ width: 28, height: 28, borderRadius: 6 }}
               >
-                <ZoomIn style={{ width: 14, height: 14, color: '#9CA3AF' }} />
+                <ZoomIn style={{ width: 14, height: 14, color: '#96A0B0' }} />
               </button>
               <div className="flex-1" />
               <button

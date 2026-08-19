@@ -545,7 +545,7 @@ function ViewerApp() {
   // No study ID provided
   if (!studyId) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: '#030712' }}>
+      <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: '#08090C' }}>
         <AlertCircle className="w-16 h-16 text-amber-500 mb-4" />
         <h2 className="text-xl font-bold text-white mb-2">
           {t('viewer.noStudySelected', 'No study selected')}
@@ -568,7 +568,7 @@ function ViewerApp() {
   // Loading study
   if (isLoadingStudy) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: '#030712' }}>
+      <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: '#08090C' }}>
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
@@ -583,7 +583,7 @@ function ViewerApp() {
   // Study error or not found
   if (studyError || (!isLoadingStudy && !studyInfo)) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: '#030712' }}>
+      <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: '#08090C' }}>
         <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
         <h2 className="text-xl font-bold text-white mb-2">
           {t('viewer.studyNotFound', 'Study not found')}
@@ -604,7 +604,7 @@ function ViewerApp() {
   }
 
   return (
-    <div className="h-screen flex flex-col" style={{ background: '#030712' }}>
+    <div className="h-screen flex flex-col" style={{ background: '#08090C' }}>
 
       {/* Header — AppHeader with breadcrumbs (same as all other pages) */}
       <AppHeader
@@ -624,7 +624,7 @@ function ViewerApp() {
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.1 }}
           className="w-72 flex-shrink-0 flex flex-col border-r border-gray-700 overflow-hidden"
-          style={{ background: '#111827' }}
+          style={{ background: '#0E1014' }}
         >
           {/* Study Info — DS: labels 11px UPPERCASE, values 12px */}
           <div className="border-b border-gray-700" style={{ padding: '8px 12px' }}>
@@ -637,28 +637,28 @@ function ViewerApp() {
             {studyInfo && (
               <div className="grid grid-cols-2" style={{ gap: 8 }}>
                 <div>
-                  <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                  <div style={{ fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
                     {t('study.modality', 'Modality')}
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 500, color: '#E5E7EB' }}>{studyInfo.study.modality}</div>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: '#E7EBF2' }}>{studyInfo.study.modality}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                  <div style={{ fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
                     {t('study.studyDate', 'Date')}
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 500, color: '#E5E7EB' }}>{formatDate(studyInfo.study.study_date)}</div>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: '#E7EBF2' }}>{formatDate(studyInfo.study.study_date)}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                  <div style={{ fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
                     {t('study.series', 'Series')}
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 500, color: '#E5E7EB' }}>{studyInfo.series.length}</div>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: '#E7EBF2' }}>{studyInfo.series.length}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+                  <div style={{ fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
                     {t('study.images', 'Images')}
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 500, color: '#E5E7EB' }}>{originalInstances.length + preprocessedInstances.length}</div>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: '#E7EBF2' }}>{originalInstances.length + preprocessedInstances.length}</div>
                 </div>
               </div>
             )}
@@ -685,9 +685,9 @@ function ViewerApp() {
                     </span>
                   </div>
                   {sectionsExpanded.originals ? (
-                    <ChevronDown style={{ width: 14, height: 14, color: '#6B7280' }} />
+                    <ChevronDown style={{ width: 14, height: 14, color: '#767E8E' }} />
                   ) : (
-                    <ChevronRight style={{ width: 14, height: 14, color: '#6B7280' }} />
+                    <ChevronRight style={{ width: 14, height: 14, color: '#767E8E' }} />
                   )}
                 </button>
                 {sectionsExpanded.originals && (
@@ -724,9 +724,9 @@ function ViewerApp() {
                     </span>
                   </div>
                   {sectionsExpanded.preprocessed ? (
-                    <ChevronDown style={{ width: 14, height: 14, color: '#6B7280' }} />
+                    <ChevronDown style={{ width: 14, height: 14, color: '#767E8E' }} />
                   ) : (
-                    <ChevronRight style={{ width: 14, height: 14, color: '#6B7280' }} />
+                    <ChevronRight style={{ width: 14, height: 14, color: '#767E8E' }} />
                   )}
                 </button>
                 {sectionsExpanded.preprocessed && (
@@ -760,7 +760,7 @@ function ViewerApp() {
                   <span style={{
                     fontSize: 10, fontWeight: 500, padding: '1px 6px', borderRadius: 4,
                     background: segmentations.length > 0 ? 'rgba(139,92,246,0.2)' : 'rgba(75,85,99,0.3)',
-                    color: segmentations.length > 0 ? '#A78BFA' : '#9CA3AF',
+                    color: segmentations.length > 0 ? '#A78BFA' : '#96A0B0',
                   }}>
                     {segmentations.length}
                   </span>
@@ -934,7 +934,7 @@ function ViewerApp() {
           {/* Viewer Toolbar — centered bar with all controls */}
           {viewMode === '2d' && currentSeries && (
             <div className="flex items-center justify-center" style={{ padding: '8px 0' }}>
-              <div className="flex items-center border border-gray-700" style={{ background: '#1F2937', borderRadius: 8, padding: 4, gap: 4 }}>
+              <div className="flex items-center border border-gray-700" style={{ background: '#161922', borderRadius: 8, padding: 4, gap: 4 }}>
                 {/* Layout buttons (only when multiple images) */}
                 {(originalInstances.length > 1 || preprocessedInstances.length > 1) && (
                   <>
@@ -955,7 +955,7 @@ function ViewerApp() {
                     </button>
                     {isMultiPanel && (
                       <>
-                        <div style={{ width: 1, height: 20, background: '#374151' }} />
+                        <div style={{ width: 1, height: 20, background: '#232833' }} />
                         <button onClick={() => setSyncSlice(!syncSlice)}
                           className={`flex items-center justify-center transition-colors ${syncSlice ? 'bg-green-600 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
                           style={{ width: 28, height: 28, borderRadius: 6 }}
@@ -972,12 +972,12 @@ function ViewerApp() {
                         )}
                       </>
                     )}
-                    <div style={{ width: 1, height: 20, background: '#374151' }} />
+                    <div style={{ width: 1, height: 20, background: '#232833' }} />
                   </>
                 )}
 
                 {/* Slice info + slider — reads from active panel in multi-panel mode */}
-                <span className="font-mono" style={{ fontSize: 12, fontWeight: 500, color: '#E5E7EB', padding: '0 4px' }}>
+                <span className="font-mono" style={{ fontSize: 12, fontWeight: 500, color: '#E7EBF2', padding: '0 4px' }}>
                   {activeSlice.sliceIndex + 1}/{activeSlice.totalSlices}
                 </span>
                 <input
@@ -990,7 +990,7 @@ function ViewerApp() {
                   style={{ width: 120 }}
                 />
 
-                <div style={{ width: 1, height: 20, background: '#374151' }} />
+                <div style={{ width: 1, height: 20, background: '#232833' }} />
 
                 {/* Zoom controls */}
                 <button onClick={() => setZoomLevel(Math.max(0.25, zoomLevel / 1.2))}
@@ -998,7 +998,7 @@ function ViewerApp() {
                   style={{ width: 28, height: 28, borderRadius: 6 }} aria-label={t('viewer.zoomOut', 'Zoom Out')} title={t('viewer.zoomOut', 'Zoom Out')}>
                   <ZoomOut style={{ width: 14, height: 14 }} />
                 </button>
-                <span className="font-mono" style={{ fontSize: 11, color: '#9CA3AF', padding: '0 2px', minWidth: 36, textAlign: 'center' }}>
+                <span className="font-mono" style={{ fontSize: 11, color: '#96A0B0', padding: '0 2px', minWidth: 36, textAlign: 'center' }}>
                   {(zoomLevel * 100).toFixed(0)}%
                 </span>
                 <button onClick={() => setZoomLevel(Math.min(20, zoomLevel * 1.2))}
@@ -1012,7 +1012,7 @@ function ViewerApp() {
                   <RotateCw style={{ width: 14, height: 14 }} />
                 </button>
 
-                <div style={{ width: 1, height: 20, background: '#374151' }} />
+                <div style={{ width: 1, height: 20, background: '#232833' }} />
 
                 {/* Measurement tools */}
                 <button onClick={() => setMeasurementTool(measurementTool === 'ruler' ? null : 'ruler')}
@@ -1043,7 +1043,7 @@ function ViewerApp() {
             {isLoadingImage && !isMultiPanel ? (
               <div className="h-full flex flex-col items-center justify-center">
                 <Loader2 className="animate-spin" style={{ width: 36, height: 36, color: '#60A5FA', marginBottom: 8 }} />
-                <p style={{ fontSize: 13, color: '#9CA3AF' }}>{t('viewer.loadingImage')}</p>
+                <p style={{ fontSize: 13, color: '#96A0B0' }}>{t('viewer.loadingImage')}</p>
               </div>
             ) : isMultiPanel && viewMode === '2d' ? (
               <ErrorBoundary name="MultiPanelViewer">
@@ -1076,7 +1076,7 @@ function ViewerApp() {
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.1 }}
           className="w-80 flex-shrink-0 flex flex-col border-l border-gray-700 overflow-hidden"
-          style={{ background: '#111827' }}
+          style={{ background: '#0E1014' }}
         >
           {/* MS Report section — collapsible, at the top of right sidebar */}
           <div className="border-b border-gray-700">
@@ -1087,9 +1087,9 @@ function ViewerApp() {
             >
               <div className="flex items-center" style={{ gap: 6 }}>
                 <FileText style={{ width: 16, height: 16, color: '#FBBF24' }} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#E5E7EB' }}>{t('report.title', 'MS Report')}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#E7EBF2' }}>{t('report.title', 'MS Report')}</span>
               </div>
-              <ChevronDown style={{ width: 14, height: 14, color: '#6B7280', transition: 'transform 0.15s', transform: reportPanelOpen ? 'rotate(180deg)' : 'none' }} />
+              <ChevronDown style={{ width: 14, height: 14, color: '#767E8E', transition: 'transform 0.15s', transform: reportPanelOpen ? 'rotate(180deg)' : 'none' }} />
             </button>
             {reportPanelOpen && (
               <div style={{ padding: '0 12px 12px' }}>

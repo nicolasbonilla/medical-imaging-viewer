@@ -48,7 +48,7 @@ export const STATUS_COLORS = {
     border: 'border-gray-300 dark:border-gray-600',
     text: 'text-gray-700 dark:text-gray-300',
     dot: 'bg-gray-500',
-    hex: '#6B7280',
+    hex: '#767E8E',
   },
   /** Pending - Yellow/amber for awaiting action */
   pending: {
@@ -84,7 +84,7 @@ export const STATUS_COLORS = {
     border: 'border-gray-200 dark:border-gray-700',
     text: 'text-gray-500 dark:text-gray-500 line-through',
     dot: 'bg-gray-400',
-    hex: '#9CA3AF',
+    hex: '#96A0B0',
   },
 } as const;
 
@@ -243,7 +243,7 @@ export const GENDER_COLORS = {
     bg: 'bg-gray-50 dark:bg-gray-800',
     border: 'border-gray-200 dark:border-gray-700',
     symbol: '○',
-    hex: '#6B7280',
+    hex: '#767E8E',
   },
 } as const;
 
@@ -262,7 +262,7 @@ export const MODALITY_COLORS = {
     bg: 'bg-gray-50 dark:bg-gray-800/50',
     bgSolid: 'bg-gray-400',
     text: 'text-gray-600 dark:text-gray-400',
-    hex: '#9CA3AF',
+    hex: '#96A0B0',
   },
 } as const;
 
@@ -289,7 +289,7 @@ export const DOCUMENT_CATEGORY_COLORS = {
   'other': {
     bg: 'bg-gray-50 dark:bg-gray-800/50',
     icon: 'text-gray-600 dark:text-gray-400',
-    hex: '#6B7280',
+    hex: '#767E8E',
   },
 } as const;
 

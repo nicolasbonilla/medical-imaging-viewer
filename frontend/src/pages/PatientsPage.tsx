@@ -183,7 +183,7 @@ export default function PatientsPage() {
   const total = hasClientFilter ? filteredPatients.length : (patientsData?.total || 0);
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#030712' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#08090C' }}>
 
       {/* Header */}
       <AppHeader
@@ -213,14 +213,14 @@ export default function PatientsPage() {
             <div className="flex items-center flex-1 w-full sm:w-auto" style={{ gap: 8 }}>
               {/* Search — 36px height (md), radius 6px */}
               <div className="relative flex-1 max-w-md">
-                <Search className="absolute" style={{ left: 10, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, color: '#6B7280' }} />
+                <Search className="absolute" style={{ left: 10, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, color: '#767E8E' }} />
                 <input
                   type="text"
                   value={filters.search}
                   onChange={(e) => handleFilterChange('search', e.target.value)}
                   placeholder={t('patients.searchPlaceholder')}
                   className="w-full border border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                  style={{ height: 36, paddingLeft: 36, paddingRight: 12, background: '#111827', borderRadius: 6, fontSize: 13, color: '#E5E7EB' }}
+                  style={{ height: 36, paddingLeft: 36, paddingRight: 12, background: '#0E1014', borderRadius: 6, fontSize: 13, color: '#E7EBF2' }}
                 />
               </div>
 
@@ -308,9 +308,9 @@ export default function PatientsPage() {
                 exit={{ opacity: 0, height: 0 }}
                 className="overflow-hidden"
               >
-                <div className="border border-gray-700" style={{ background: '#111827', borderRadius: 8, padding: 12 }}>
+                <div className="border border-gray-700" style={{ background: '#0E1014', borderRadius: 8, padding: 12 }}>
                   <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-                    <h3 style={{ fontSize: 13, fontWeight: 600, color: '#E5E7EB', margin: 0 }}>
+                    <h3 style={{ fontSize: 13, fontWeight: 600, color: '#E7EBF2', margin: 0 }}>
                       {t('common.filters')}
                     </h3>
                     {hasActiveFilters && (
@@ -328,14 +328,14 @@ export default function PatientsPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-3" style={{ gap: 12 }}>
                     {/* Status Filter */}
                     <div>
-                      <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: 4 }}>
+                      <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#767E8E', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: 4 }}>
                         {t('patients.status.label', 'Status')}
                       </label>
                       <select
                         value={filters.status}
                         onChange={(e) => handleFilterChange('status', e.target.value)}
                         className="w-full border border-gray-600 focus:ring-2 focus:ring-blue-500"
-                        style={{ height: 36, padding: '0 12px', borderRadius: 6, background: '#111827', color: '#E5E7EB', fontSize: 13 }}
+                        style={{ height: 36, padding: '0 12px', borderRadius: 6, background: '#0E1014', color: '#E7EBF2', fontSize: 13 }}
                       >
                         <option value="">{t('common.all')}</option>
                         <option value="active">{t('patients.status.active')}</option>
@@ -346,14 +346,14 @@ export default function PatientsPage() {
 
                     {/* Gender Filter */}
                     <div>
-                      <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: 4 }}>
+                      <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#767E8E', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: 4 }}>
                         {t('patients.gender', 'Gender')}
                       </label>
                       <select
                         value={filters.gender}
                         onChange={(e) => handleFilterChange('gender', e.target.value)}
                         className="w-full border border-gray-600 focus:ring-2 focus:ring-blue-500"
-                        style={{ height: 36, padding: '0 12px', borderRadius: 6, background: '#111827', color: '#E5E7EB', fontSize: 13 }}
+                        style={{ height: 36, padding: '0 12px', borderRadius: 6, background: '#0E1014', color: '#E7EBF2', fontSize: 13 }}
                       >
                         <option value="">{t('common.all')}</option>
                         <option value="male">{t('patients.genders.male', 'Male')}</option>
@@ -365,14 +365,14 @@ export default function PatientsPage() {
 
                     {/* Sort By */}
                     <div>
-                      <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: 4 }}>
+                      <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#767E8E', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: 4 }}>
                         {t('common.sortBy', 'Sort by')}
                       </label>
                       <select
                         value={sortField}
                         onChange={(e) => setSortField(e.target.value as SortField)}
                         className="w-full border border-gray-600 focus:ring-2 focus:ring-blue-500"
-                        style={{ height: 36, padding: '0 12px', borderRadius: 6, background: '#111827', color: '#E5E7EB', fontSize: 13 }}
+                        style={{ height: 36, padding: '0 12px', borderRadius: 6, background: '#0E1014', color: '#E7EBF2', fontSize: 13 }}
                       >
                         <option value="created_at">{t('common.createdAt', 'Created')}</option>
                         <option value="name">{t('patients.name', 'Name')}</option>
@@ -387,7 +387,7 @@ export default function PatientsPage() {
           </AnimatePresence>
 
           {/* Results Count — 12px label */}
-          <div className="flex items-center justify-between" style={{ fontSize: 12, color: '#9CA3AF' }}>
+          <div className="flex items-center justify-between" style={{ fontSize: 12, color: '#96A0B0' }}>
             <span>
               {t('patients.showingResults', {
                 from: patients.length > 0 ? (page - 1) * pageSize + 1 : 0,
@@ -429,13 +429,13 @@ export default function PatientsPage() {
               className="text-center"
               style={{ padding: '48px 16px' }}
             >
-              <Users className="mx-auto" style={{ width: 36, height: 36, color: '#4B5563', marginBottom: 12 }} />
-              <h3 style={{ fontSize: 14, fontWeight: 600, color: '#E5E7EB', margin: '0 0 4px 0' }}>
+              <Users className="mx-auto" style={{ width: 36, height: 36, color: '#2A303C', marginBottom: 12 }} />
+              <h3 style={{ fontSize: 14, fontWeight: 600, color: '#E7EBF2', margin: '0 0 4px 0' }}>
                 {filters.search
                   ? t('patients.noResults')
                   : t('patients.noPatients')}
               </h3>
-              <p style={{ fontSize: 12, color: '#9CA3AF', margin: '0 0 16px 0' }}>
+              <p style={{ fontSize: 12, color: '#96A0B0', margin: '0 0 16px 0' }}>
                 {filters.search
                   ? t('patients.tryDifferentSearch', 'Try a different search')
                   : t('patients.createFirstDescription', 'Start by registering your first patient')}

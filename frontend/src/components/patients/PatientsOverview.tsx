@@ -73,7 +73,7 @@ export function PatientsOverview({ patients, total }: PatientsOverviewProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: i * 0.06, ease: [0.2, 0, 0, 1] }}
             className="relative overflow-hidden border border-gray-800"
-            style={{ background: '#111827', borderRadius: 12, padding: 16 }}
+            style={{ background: '#0E1014', borderRadius: 12, padding: 16 }}
           >
             {/* hairline accent along the top edge */}
             <span
@@ -93,11 +93,11 @@ export function PatientsOverview({ patients, total }: PatientsOverviewProps) {
               {tile.value.toLocaleString()}
             </div>
             <div
-              style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', color: '#9CA3AF', textTransform: 'uppercase', marginTop: 8 }}
+              style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', color: '#96A0B0', textTransform: 'uppercase', marginTop: 8 }}
             >
               {tile.label}
             </div>
-            <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>{tile.context}</div>
+            <div style={{ fontSize: 11, color: '#767E8E', marginTop: 2 }}>{tile.context}</div>
           </motion.div>
         );
       })}
