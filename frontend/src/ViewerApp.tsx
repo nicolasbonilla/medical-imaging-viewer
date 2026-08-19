@@ -780,7 +780,7 @@ function ViewerApp() {
                       disabled={!currentSeries}
                       className="flex items-center justify-center border border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-40 transition-colors"
                       style={{ height: 28, gap: 4, borderRadius: 6, fontSize: 12, fontWeight: 500 }}
-                      title={t('viewer.createSegmentation', 'Create new segmentation')}
+                      aria-label={t('viewer.createSegmentation', 'Create new segmentation')} title={t('viewer.createSegmentation', 'Create new segmentation')}
                     >
                       <Plus style={{ width: 12, height: 12 }} />
                       {t('viewer.create', 'Create')}
@@ -790,7 +790,7 @@ function ViewerApp() {
                       disabled={!studyInfo}
                       className="flex items-center justify-center border border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-40 transition-colors"
                       style={{ height: 28, gap: 4, borderRadius: 6, fontSize: 12, fontWeight: 500 }}
-                      title={t('viewer.uploadSegmentation', 'Upload segmentation')}
+                      aria-label={t('viewer.uploadSegmentation', 'Upload segmentation')} title={t('viewer.uploadSegmentation', 'Upload segmentation')}
                     >
                       <Upload style={{ width: 12, height: 12 }} />
                       {t('viewer.upload', 'Upload')}
@@ -940,17 +940,17 @@ function ViewerApp() {
                   <>
                     <button onClick={() => handleLayoutChange('single')}
                       className={`flex items-center justify-center transition-colors ${multiLayout === 'single' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
-                      style={{ width: 28, height: 28, borderRadius: 6 }} title={t('layout.single', 'Single')}>
+                      style={{ width: 28, height: 28, borderRadius: 6 }} aria-label={t('layout.single', 'Single')} title={t('layout.single', 'Single')}>
                       <Square style={{ width: 14, height: 14 }} />
                     </button>
                     <button onClick={() => handleLayoutChange('1x2')}
                       className={`flex items-center justify-center transition-colors ${multiLayout === '1x2' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
-                      style={{ width: 28, height: 28, borderRadius: 6 }} title={t('layout.sideBySide', '1x2')}>
+                      style={{ width: 28, height: 28, borderRadius: 6 }} aria-label={t('layout.sideBySide', '1x2')} title={t('layout.sideBySide', '1x2')}>
                       <Columns2 style={{ width: 14, height: 14 }} />
                     </button>
                     <button onClick={() => handleLayoutChange('2x2')}
                       className={`flex items-center justify-center transition-colors ${multiLayout === '2x2' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
-                      style={{ width: 28, height: 28, borderRadius: 6 }} title={t('layout.grid', '2x2')}>
+                      style={{ width: 28, height: 28, borderRadius: 6 }} aria-label={t('layout.grid', '2x2')} title={t('layout.grid', '2x2')}>
                       <LayoutGrid style={{ width: 14, height: 14 }} />
                     </button>
                     {isMultiPanel && (
@@ -959,7 +959,7 @@ function ViewerApp() {
                         <button onClick={() => setSyncSlice(!syncSlice)}
                           className={`flex items-center justify-center transition-colors ${syncSlice ? 'bg-green-600 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
                           style={{ width: 28, height: 28, borderRadius: 6 }}
-                          title={syncSlice ? 'Sync: ON' : 'Sync: OFF'}>
+                          aria-label={syncSlice ? 'Sync: ON' : 'Sync: OFF'} title={syncSlice ? 'Sync: ON' : 'Sync: OFF'}>
                           {syncSlice ? <Link2 style={{ width: 14, height: 14 }} /> : <Unlink2 style={{ width: 14, height: 14 }} />}
                         </button>
                         {preprocessedInstances.length > 0 && (
@@ -995,7 +995,7 @@ function ViewerApp() {
                 {/* Zoom controls */}
                 <button onClick={() => setZoomLevel(Math.max(0.25, zoomLevel / 1.2))}
                   className="flex items-center justify-center text-gray-400 hover:bg-gray-700 transition-colors"
-                  style={{ width: 28, height: 28, borderRadius: 6 }} title={t('viewer.zoomOut', 'Zoom Out')}>
+                  style={{ width: 28, height: 28, borderRadius: 6 }} aria-label={t('viewer.zoomOut', 'Zoom Out')} title={t('viewer.zoomOut', 'Zoom Out')}>
                   <ZoomOut style={{ width: 14, height: 14 }} />
                 </button>
                 <span className="font-mono" style={{ fontSize: 11, color: '#9CA3AF', padding: '0 2px', minWidth: 36, textAlign: 'center' }}>
@@ -1003,12 +1003,12 @@ function ViewerApp() {
                 </span>
                 <button onClick={() => setZoomLevel(Math.min(20, zoomLevel * 1.2))}
                   className="flex items-center justify-center text-gray-400 hover:bg-gray-700 transition-colors"
-                  style={{ width: 28, height: 28, borderRadius: 6 }} title={t('viewer.zoomIn', 'Zoom In')}>
+                  style={{ width: 28, height: 28, borderRadius: 6 }} aria-label={t('viewer.zoomIn', 'Zoom In')} title={t('viewer.zoomIn', 'Zoom In')}>
                   <ZoomIn style={{ width: 14, height: 14 }} />
                 </button>
                 <button onClick={() => { setZoomLevel(1); setPanOffset({ x: 0, y: 0 }); }}
                   className="flex items-center justify-center text-gray-400 hover:bg-gray-700 transition-colors"
-                  style={{ width: 28, height: 28, borderRadius: 6 }} title={t('viewer.resetView', 'Reset')}>
+                  style={{ width: 28, height: 28, borderRadius: 6 }} aria-label={t('viewer.resetView', 'Reset')} title={t('viewer.resetView', 'Reset')}>
                   <RotateCw style={{ width: 14, height: 14 }} />
                 </button>
 
@@ -1017,22 +1017,22 @@ function ViewerApp() {
                 {/* Measurement tools */}
                 <button onClick={() => setMeasurementTool(measurementTool === 'ruler' ? null : 'ruler')}
                   className={`flex items-center justify-center transition-colors ${measurementTool === 'ruler' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
-                  style={{ width: 28, height: 28, borderRadius: 6 }} title="Ruler">
+                  style={{ width: 28, height: 28, borderRadius: 6 }} aria-label="Ruler" title="Ruler">
                   <Ruler style={{ width: 14, height: 14 }} />
                 </button>
                 <button onClick={() => setMeasurementTool(measurementTool === 'angle' ? null : 'angle')}
                   className={`flex items-center justify-center transition-colors ${measurementTool === 'angle' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
-                  style={{ width: 28, height: 28, borderRadius: 6 }} title="Angle">
+                  style={{ width: 28, height: 28, borderRadius: 6 }} aria-label="Angle" title="Angle">
                   <Triangle style={{ width: 14, height: 14 }} />
                 </button>
                 <button onClick={() => setMeasurementTool(measurementTool === 'ellipse' ? null : 'ellipse')}
                   className={`flex items-center justify-center transition-colors ${measurementTool === 'ellipse' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
-                  style={{ width: 28, height: 28, borderRadius: 6 }} title="ROI">
+                  style={{ width: 28, height: 28, borderRadius: 6 }} aria-label="ROI" title="ROI">
                   <Circle style={{ width: 14, height: 14 }} />
                 </button>
                 <button onClick={triggerMeasurementClear}
                   className="flex items-center justify-center text-gray-400 hover:text-red-400 hover:bg-red-900/30 transition-colors"
-                  style={{ width: 28, height: 28, borderRadius: 6 }} title={t('viewer.clearMeasurements', 'Clear measurements')}>
+                  style={{ width: 28, height: 28, borderRadius: 6 }} aria-label={t('viewer.clearMeasurements', 'Clear measurements')} title={t('viewer.clearMeasurements', 'Clear measurements')}>
                   <Trash2 style={{ width: 14, height: 14 }} />
                 </button>
               </div>
