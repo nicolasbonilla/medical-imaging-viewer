@@ -45,9 +45,17 @@ describe('buildSegmentationList', () => {
 });
 
 describe('classifySegOrigin (Class C provenance)', () => {
-  it('flags the legacy over-segmenter "Output Mask" as ai-legacy', () => {
+  it('flags the legacy over-segmenter family as ai-legacy (broadened past one exact string)', () => {
     expect(classifySegOrigin('Output Mask')).toBe('ai-legacy');
-    expect(classifySegOrigin('output mask (thesis)')).toBe('ai-legacy');
+    expect(classifySegOrigin('Output Mask 3 - Lesion Prediction')).toBe('ai-legacy'); // real dataset name
+    expect(classifySegOrigin('subject_out_mask')).toBe('ai-legacy');
+    expect(classifySegOrigin('out-mask')).toBe('ai-legacy');
+  });
+
+  it('labels an unrecognised validation_source as unknown, NEVER as validated ai', () => {
+    // Safety direction: the tool runner persists 'unknown' on its fallback path.
+    expect(classifySegOrigin('Some seg', 'unknown')).toBe('unknown');
+    expect(classifySegOrigin('Some seg', 'custom-tool-v9')).toBe('unknown');
   });
 
   it('classifies human expert ground truth', () => {

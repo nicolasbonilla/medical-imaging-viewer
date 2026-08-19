@@ -276,6 +276,8 @@
     "upload": "Hochladen",
     "uploadingSegmentation": "Segmentierung wird hochgeladen...",
     "uploadSegmentation": "Segmentierung Hochladen",
+    "uploadSegmentationSoon": "Segmentierung importieren (demnächst)",
+    "segmentationImportUnavailable": "Der Import einer Segmentierung ist noch nicht verfügbar — es wurde nichts hochgeladen.",
     "segmentations": "Segmentierungen",
     "sliceNavigation": "Schnittnavigation",
     "sliceOf": "{{current}} / {{total}}",

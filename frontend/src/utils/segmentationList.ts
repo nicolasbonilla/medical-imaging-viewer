@@ -16,13 +16,16 @@ export interface RawSegmentationSummary {
  * known-over-segmenting legacy model.
  *
  * - `expert`    — human ground truth (e.g. "Expert Rater")
- * - `ai`        — a validated automatic tool (FLAMeS / LST-AI / SynthSeg / mindGlide)
- * - `ai-legacy` — the legacy thesis auto-segmenter ("Output Mask"): Dice 0.52,
- *                 **precision 0.22** (over-segments). Must be surfaced research-only.
- * - `manual`    — hand-drawn in-app
+ * - `ai`        — a KNOWN, validated automatic tool (FLAMeS / LST-AI / SynthSeg / mindGlide)
+ * - `ai-legacy` — the legacy thesis auto-segmenter ("Output Mask … Lesion Prediction"):
+ *                 Dice 0.52, **precision 0.22** (over-segments). Surfaced research-only.
+ * - `unknown`   — a provenance we cannot vouch for (a `validation_source` that is neither a
+ *                 known validated tool nor an explicit manual marker, e.g. the tool runner's
+ *                 `'unknown'` fallback). NEVER presented as "validated" — the unsafe direction.
+ * - `manual`    — hand-drawn in-app (or no provenance recorded and no algorithmic name cues)
  * - `zonemap`   — the MAGNIMS anatomical zone map (an overlay layer, not a lesion mask)
  */
-export type SegOrigin = 'expert' | 'ai' | 'ai-legacy' | 'manual' | 'zonemap';
+export type SegOrigin = 'expert' | 'ai' | 'ai-legacy' | 'unknown' | 'manual' | 'zonemap';
 
 export interface ViewerSegmentationItem {
   id: string;
@@ -33,14 +36,25 @@ export interface ViewerSegmentationItem {
 }
 
 const ZONE_MAP_NAME = 'MAGNIMS Zone Map';
-const AUTO_TOOL = /flames|lst[\s_-]?ai|synthseg|mindglide|ms-pinpoint/i;
+// Known, validated auto-segmenters (matched in validation_source or the name).
+const KNOWN_AUTO_TOOL = /flames|lst[\s_-]?ai|synthseg|mindglide|ms-pinpoint/i;
+// The legacy thesis over-segmenter family: the display name "Output Mask N -
+// Lesion Prediction" (the word "output"), plus the filename tokens "out_mask" /
+// "out-mask". Broadened past a single exact substring so the research-only warning
+// does not hinge on one marketing-exact string (adversarial finding: the backend's
+// own provenance classifier flags this token set as algorithmic).
+const LEGACY_OUTPUT_MASK = /output[\s_-]*mask|(?:^|[\s_-])out[_-]mask/i;
 
 /**
  * Classify a mask's provenance from its name/description and structured
  * `validation_source` (set by the tool runner to e.g. 'flames-v1.0',
  * 'lst-ai-v1.0.3', 'synthseg-v2.0', 'mindglide-v1.0'; 'manual'/'custom-edt' for
- * hand-drawn). Structured `validation_source` is preferred; the name is the
- * fallback for legacy masks stored before that field existed. Pure + testable.
+ * hand-drawn; 'unknown' on its fallback path). Structured `validation_source` is
+ * preferred; the name is the fallback for legacy masks stored before it existed.
+ *
+ * SAFETY DIRECTION: when provenance is ambiguous we degrade toward LESS trust —
+ * an unrecognised source is `unknown` (never `ai`/"validated"), and the legacy
+ * over-segmenter is flagged even if a later automatic source is attached. Pure + testable.
  */
 export function classifySegOrigin(
   name: string,
@@ -50,16 +64,24 @@ export function classifySegOrigin(
   const n = (name || '').toLowerCase();
   const vs = (validationSource || '').toLowerCase();
 
-  // Legacy thesis AI over-segmenter — highest-priority flag (research-only gate).
-  if (n.includes('output mask')) return 'ai-legacy';
+  // 1. Legacy thesis AI over-segmenter — highest-priority flag (research-only gate),
+  //    checked before any "validated" path so it can never be mislabelled as trusted.
+  if (LEGACY_OUTPUT_MASK.test(n)) return 'ai-legacy';
 
-  // Human expert ground truth.
+  // 2. Human expert ground truth.
   if (n.includes('expert rater') || vs === 'expert') return 'expert';
 
-  // Validated automatic tools — structured source first, then name heuristics.
-  if (AUTO_TOOL.test(vs) || AUTO_TOOL.test(n) || n.includes('automated')) return 'ai';
-  if (vs && vs !== 'manual' && vs !== 'custom-edt') return 'ai';
+  // 3. KNOWN validated automatic tools (structured source first, then name).
+  if (KNOWN_AUTO_TOOL.test(vs) || KNOWN_AUTO_TOOL.test(n) || n.includes('automated')) return 'ai';
 
+  // 4. Explicit manual markers.
+  if (vs === 'manual' || vs === 'custom-edt') return 'manual';
+
+  // 5. A recorded-but-unrecognised source (e.g. the tool runner's 'unknown' fallback).
+  //    Do NOT call this "validated" — surface it as unverified.
+  if (vs) return 'unknown';
+
+  // 6. No provenance recorded and no algorithmic name cues → treat as manual.
   return 'manual';
 }
 

@@ -24,6 +24,10 @@ const PROVENANCE: Partial<Record<SegOrigin, { label: string; title: string; cls:
     label: 'IA · investigación', title: 'Legacy AI segmenter — research only (over-segments; precision 0.22)',
     cls: 'text-amber-300 bg-amber-900/40 border border-amber-700/60',
   },
+  unknown: {
+    label: 'Sin verificar', title: 'Unverified provenance — origin recorded but not a recognised validated tool',
+    cls: 'text-gray-300 bg-gray-700/50 border border-gray-600',
+  },
 };
 
 const ACCENTS: Record<Accent, {
