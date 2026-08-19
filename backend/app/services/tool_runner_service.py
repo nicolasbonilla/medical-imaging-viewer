@@ -72,12 +72,17 @@ class ToolRunnerService:
         """Check if mindGlide sidecar is configured."""
         return bool(settings.MINDGLIDE_ENABLED and settings.MINDGLIDE_ENDPOINT)
 
+    def is_flames_available(self) -> bool:
+        """Check if the FLAMeS GPU worker is configured."""
+        return bool(settings.FLAMES_ENABLED and settings.FLAMES_ENDPOINT)
+
     def is_tool_available(self, tool: str) -> bool:
         """Check if a clinical tool is available by ID."""
         checkers = {
             "lst-ai": self.is_lstai_available,
             "synthseg": self.is_synthseg_available,
             "mindglide": self.is_mindglide_available,
+            "flames": self.is_flames_available,
         }
         return checkers.get(tool, lambda: False)()
 
@@ -87,6 +92,7 @@ class ToolRunnerService:
             "lst-ai": settings.LSTAI_ENDPOINT,
             "synthseg": settings.SYNTHSEG_ENDPOINT,
             "mindglide": settings.MINDGLIDE_ENDPOINT,
+            "flames": settings.FLAMES_ENDPOINT,
         }
         endpoint = endpoints.get(tool, "")
         if not endpoint:
@@ -101,6 +107,28 @@ class ToolRunnerService:
     def list_tools(self) -> list:
         """List available clinical tools with metadata."""
         tools = [
+            ClinicalToolInfo(
+                id="flames",
+                name="FLAMeS",
+                version="1.0.0",
+                available=self.is_flames_available(),
+                description=(
+                    "SOTA single-FLAIR MS lesion segmentation. nnU-Net v2 ensemble "
+                    "(Dataset004_WML) externally validated to Dice 0.74 / F1 0.78, "
+                    "outperforming SAMSEG, LST-LPA and LST-AI. Needs only FLAIR — the "
+                    "modality essentially always acquired in MS — so it degrades "
+                    "gracefully when a T1 is unavailable. Runs on a scale-to-zero GPU."
+                ),
+                citation=(
+                    "Ballerini A, et al. FLAMeS: a robust deep learning model for "
+                    "automated multiple sclerosis lesion segmentation. "
+                    "J Neuroimaging 2025 (medRxiv 2025.05.19.25327707). Weights CC-BY-4.0, "
+                    "Zenodo 17955359."
+                ),
+                license="CC-BY-4.0 (weights); permissive",
+                fda_status="research_only",
+                required_inputs=["FLAIR"],
+            ),
             ClinicalToolInfo(
                 id="lst-ai",
                 name="LST-AI",
@@ -291,6 +319,164 @@ class ToolRunnerService:
         finally:
             # Cleanup working directory
             self._cleanup_work_dir(work_dir)
+
+    async def run_flames(
+        self,
+        flair_file_id: str,
+        patient_id: Optional[str] = None,
+        study_id: Optional[str] = None,
+    ) -> str:
+        """
+        Submit a FLAMeS single-FLAIR MS-lesion segmentation task.
+
+        Unlike the Docker-sidecar tools (which share a volume), FLAMeS runs as a
+        separate Cloud Run GPU service, so the contract is GCS-URI based: the main
+        service tells the worker the FLAIR's gs:// URI and a staging output URI, the
+        worker does GPU inference + skull-strip and writes the mask back to GCS. The
+        mask is then oriented (RC-031) and stored via the same canonical path as the
+        other tools, so the viewer loads it identically.
+
+        Returns:
+            task_id for status polling
+        """
+        task_id = str(uuid.uuid4())
+        now = datetime.now(timezone.utc).isoformat()
+
+        if not self.is_flames_available():
+            self._tasks[task_id] = ToolTask(
+                task_id=task_id,
+                tool="flames",
+                status=ToolTaskStatus.FAILED,
+                error=(
+                    "FLAMeS is not configured. Deploy the flames-worker GPU service "
+                    "and set FLAMES_ENABLED=true and FLAMES_ENDPOINT to its URL."
+                ),
+                validation_source="flames-v1.0",
+                created_at=now,
+            )
+            return task_id
+
+        self._tasks[task_id] = ToolTask(
+            task_id=task_id,
+            tool="flames",
+            status=ToolTaskStatus.PENDING,
+            progress=0.0,
+            validation_source="flames-v1.0",
+            created_at=now,
+        )
+
+        asyncio.create_task(
+            self._execute_flames(task_id, flair_file_id, patient_id, study_id)
+        )
+
+        return task_id
+
+    async def _execute_flames(
+        self,
+        task_id: str,
+        flair_file_id: str,
+        patient_id: Optional[str],
+        study_id: Optional[str],
+    ):
+        """Background execution of FLAMeS segmentation over the GCS-URI contract."""
+        import tempfile
+
+        start_time = time.time()
+        task = self._tasks[task_id]
+        bucket = settings.GCS_BUCKET_NAME
+        input_uri = f"gs://{bucket}/{flair_file_id}"
+        # Staging URI the worker writes to; we re-store it at the canonical
+        # segmentations/{id}/masks.nii.gz path after RC-031 orientation.
+        output_uri = f"gs://{bucket}/clinical-tools/flames/{task_id}/mask.nii.gz"
+        work_dir = Path(tempfile.mkdtemp(prefix=f"flames_{task_id}_"))
+
+        try:
+            # Phase 1: dispatch GPU inference (worker pulls FLAIR from GCS itself)
+            task.status = ToolTaskStatus.PROCESSING
+            task.progress = 20.0
+
+            async with httpx.AsyncClient(
+                timeout=httpx.Timeout(settings.FLAMES_TIMEOUT_SECONDS, connect=10.0)
+            ) as client:
+                headers = await self._worker_auth_headers(settings.FLAMES_ENDPOINT)
+                resp = await client.post(
+                    f"{settings.FLAMES_ENDPOINT}/segment",
+                    headers=headers,
+                    json={
+                        "input_gcs_uri": input_uri,
+                        "output_gcs_uri": output_uri,
+                        "skull_strip": True,
+                        "threshold": settings.FLAMES_THRESHOLD,
+                    },
+                )
+                resp.raise_for_status()
+                result = resp.json()
+
+            task.progress = 80.0
+
+            # Phase 2: pull the mask + reference FLAIR back for RC-031 orientation
+            # and canonical storage (the worker wrote to a staging URI, not the
+            # viewer-loadable path — orientation is applied here, not on the GPU).
+            task.status = ToolTaskStatus.STORING
+            task.progress = 85.0
+
+            mask_path = work_dir / "flames_mask.nii.gz"
+            mask_path.write_bytes(await self._storage.download(
+                f"clinical-tools/flames/{task_id}/mask.nii.gz"
+            ))
+            flair_path = work_dir / "flair.nii.gz"
+            flair_path.write_bytes(await self._storage.download(flair_file_id))
+
+            seg_id = await self._store_nifti_as_segmentation(
+                mask_path=mask_path,
+                file_id=flair_file_id,
+                description="FLAMeS automated MS lesion segmentation (single-FLAIR SOTA)",
+                validation_source="flames-v1.0",
+                patient_id=patient_id,
+                study_id=study_id,
+                reference_mri_path=flair_path,  # RC-031: FLAMeS segments FLAIR space
+            )
+
+            elapsed_ms = int((time.time() - start_time) * 1000)
+            task.status = ToolTaskStatus.COMPLETED
+            task.progress = 100.0
+            task.segmentation_id = seg_id
+            task.processing_time_ms = elapsed_ms
+            logger.info(
+                f"[ToolRunner] FLAMeS completed in {elapsed_ms}ms "
+                f"({result.get('lesion_voxels', '?')} lesion voxels)",
+                extra={"task_id": task_id, "segmentation_id": seg_id},
+            )
+
+        except Exception as e:
+            elapsed_ms = int((time.time() - start_time) * 1000)
+            task.status = ToolTaskStatus.FAILED
+            task.error = str(e)
+            task.processing_time_ms = elapsed_ms
+            logger.error(f"[ToolRunner] FLAMeS failed: {e}", extra={"task_id": task_id})
+
+        finally:
+            self._cleanup_work_dir(work_dir)
+
+    async def _worker_auth_headers(self, audience: str) -> dict:
+        """Mint an ID token so the main service can call a private ('--no-allow-
+        unauthenticated') Cloud Run worker. On Cloud Run the metadata server issues
+        an identity token for the service account, scoped to the worker's URL as the
+        audience. Fails open to no auth (local/dev, or a worker that allows
+        unauthenticated) so this never blocks a legitimately public endpoint."""
+        try:
+            import google.auth.transport.requests
+            import google.oauth2.id_token
+
+            def _mint():
+                req = google.auth.transport.requests.Request()
+                return google.oauth2.id_token.fetch_id_token(req, audience)
+
+            token = await asyncio.get_event_loop().run_in_executor(None, _mint)
+            return {"Authorization": f"Bearer {token}"} if token else {}
+        except Exception as e:  # noqa: BLE001 — auth is best-effort here
+            logger.debug(f"[ToolRunner] No ID token for worker call ({e}); calling unauthenticated")
+            return {}
 
     async def run_synthseg(
         self,
@@ -756,7 +942,7 @@ class ToolRunnerService:
         if self._storage is not None:
             await self._storage.upload(
                 object_name=gcs_path,
-                data=binary_data,
+                file_data=binary_data,
                 content_type="application/gzip",
             )
 
@@ -807,7 +993,7 @@ class ToolRunnerService:
             gcs_path = f"segmentations/clinical-tools/{seg_id}/volumes.csv"
             await self._storage.upload(
                 object_name=gcs_path,
-                data=csv_data,
+                file_data=csv_data,
                 content_type="text/csv",
             )
         except Exception as e:
@@ -826,6 +1012,12 @@ class ToolRunnerService:
     def _get_citation(validation_source: str) -> str:
         """Get the academic citation for a validation source."""
         citations = {
+            "flames-v1.0": (
+                "Ballerini A, et al. FLAMeS: a robust deep learning model for "
+                "automated multiple sclerosis lesion segmentation. J Neuroimaging "
+                "2025 (medRxiv 2025.05.19.25327707). nnU-Net v2, Dataset004_WML; "
+                "weights CC-BY-4.0, Zenodo 17955359."
+            ),
             "lst-ai-v1.0.3": (
                 "Wiltgen T, McGinnis J, Schlaeger S, et al. "
                 "LST-AI: a deep learning ensemble for accurate MS lesion segmentation. "

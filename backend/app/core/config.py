@@ -187,6 +187,15 @@ class Settings(BaseSettings):
     MINDGLIDE_ENDPOINT: str = Field(default="", description="mindGlide sidecar HTTP endpoint (e.g., http://mindglide:5002)")
     MINDGLIDE_ENABLED: bool = Field(default=False)
     MINDGLIDE_TIMEOUT_SECONDS: int = Field(default=600, ge=60, le=1800)
+    # FLAMeS — vanguard externally-validated single-FLAIR MS-lesion segmenter
+    # (nnU-Net v2, Dataset004_WML, CC-BY-4.0; Dice 0.74 / F1 0.78). Runs as a
+    # scale-to-zero Cloud Run GPU (L4) worker OUT of the main service, over a
+    # GCS-URI contract (no shared volume — Cloud Run services don't share a FS).
+    # Dark until FLAMES_ENABLED=true and FLAMES_ENDPOINT are set post-deploy.
+    FLAMES_ENDPOINT: str = Field(default="", description="FLAMeS GPU worker URL (Cloud Run, e.g., https://flames-worker-xxxxx.run.app)")
+    FLAMES_ENABLED: bool = Field(default=False)
+    FLAMES_TIMEOUT_SECONDS: int = Field(default=900, ge=60, le=3600)
+    FLAMES_THRESHOLD: float = Field(default=0.5, ge=0.05, le=0.95, description="Lesion-probability binarization threshold")
     CLINICAL_TOOLS_SHARED_VOLUME: str = Field(default="/tmp/clinical-tools-shared", description="Shared volume for NIfTI I/O with sidecar containers")
 
     # CALM-MS conformal second-reader (REQ-FUNC-CALM-001) — INVESTIGATIONAL / research

@@ -20,6 +20,7 @@ from app.core.container import get_tool_runner_service
 from app.core.interfaces.ai_interface import (
     LSTAISegmentRequest,
     SynthSegRequest,
+    FLAMeSSegmentRequest,
     ToolTask,
 )
 
@@ -70,6 +71,41 @@ async def run_lstai_segmentation(
     """
     task_id = await tool_runner.run_lstai(
         t1_file_id=request.t1_file_id,
+        flair_file_id=request.flair_file_id,
+        patient_id=request.patient_id,
+        study_id=request.study_id,
+    )
+
+    task = await tool_runner.get_task_status(task_id)
+    return task
+
+
+@router.post("/flames/segment", response_model=ToolTask)
+async def run_flames_segmentation(
+    request: FLAMeSSegmentRequest,
+    tool_runner=Depends(get_tool_runner_service),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Submit a FLAMeS MS-lesion segmentation task (single FLAIR, SOTA).
+
+    FLAMeS is the vanguard externally-validated automatic MS-lesion segmenter
+    (nnU-Net v2, Dataset004_WML; Dice 0.74 / F1 0.78, outperforming SAMSEG,
+    LST-LPA and LST-AI). It needs only a FLAIR volume, so it works even when a
+    co-registered T1 is unavailable. Inference runs on a scale-to-zero GPU worker.
+
+    Returns a task_id for status polling via GET /clinical/task/{task_id}. When
+    complete, the segmentation is loadable via the standard segmentation endpoints.
+
+    INVESTIGATIONAL / research-use only — the output is a review DRAFT, not an
+    autonomous diagnosis.
+
+    Reference:
+        Ballerini A, et al. FLAMeS: a robust deep learning model for automated
+        multiple sclerosis lesion segmentation. J Neuroimaging 2025
+        (medRxiv 2025.05.19.25327707). Weights CC-BY-4.0, Zenodo 17955359.
+    """
+    task_id = await tool_runner.run_flames(
         flair_file_id=request.flair_file_id,
         patient_id=request.patient_id,
         study_id=request.study_id,

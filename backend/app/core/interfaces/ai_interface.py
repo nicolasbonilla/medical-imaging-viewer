@@ -170,6 +170,13 @@ class SynthSegRequest(BaseModel):
     study_id: Optional[str] = None
 
 
+class FLAMeSSegmentRequest(BaseModel):
+    """Request for FLAMeS MS-lesion segmentation (single FLAIR)."""
+    flair_file_id: str = Field(..., description="GCS file ID for FLAIR MRI")
+    patient_id: Optional[str] = None
+    study_id: Optional[str] = None
+
+
 class ClinicalToolInfo(BaseModel):
     """Information about a validated clinical tool."""
     id: str
