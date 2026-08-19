@@ -27,7 +27,7 @@ import type { LabelInfo, Segmentation, SegmentationResponse, AIMode, AIModel } f
 // Types
 // ============================================================================
 
-type TabType = 'load' | 'new' | 'tools';
+type TabType = 'load' | 'new' | 'tools' | 'paint';
 
 interface SegmentationPanelProps {
   /** Callback when overlay visibility changes */
@@ -605,6 +605,18 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
     setActiveSegmentation(null);
   }, [activeSegmentation, isDirty, handleSaveSegmentation, setCurrentSegmentation, reset, setActiveSegmentation, t]);
 
+  // Keep the active tab valid as the mask comes and goes. When a mask becomes active,
+  // move off the Open/New tabs (which hide) to the Paint (edit) tab; when it closes, move
+  // off Paint back to Open. 'tools' persists across both states — auto-segmentation is
+  // always reachable and we never yank a user out of the Tools panel.
+  useEffect(() => {
+    if (activeSegmentation) {
+      setActiveTab((prev) => (prev === 'load' || prev === 'new') ? 'paint' : prev);
+    } else {
+      setActiveTab((prev) => (prev === 'paint') ? 'load' : prev);
+    }
+  }, [activeSegmentation]);
+
   // Derived state
   const isLoading = externalLoading || isLoadingList || isCreating;
   const hasContext = !!fileId;
@@ -647,11 +659,14 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
             </div>
           )}
 
-          {/* No segmentation active - show tabs */}
-          {hasContext && !activeSegmentation && (
+          {/* Tab strip — always visible when a study is loaded. Open/New show only when
+              no mask is active; Edit shows only when one is; Tools is ALWAYS available so
+              auto-segmentation no longer vanishes the moment a mask becomes active. */}
+          {hasContext && (
             <>
               {/* Tab Headers */}
               <div className="flex gap-1 bg-gray-900 p-1 rounded">
+                {!activeSegmentation && (
                 <button
                   onClick={() => setActiveTab('load')}
                   className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
@@ -662,7 +677,8 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                 >
                   {t('segmentation.open')} ({segmentations.length})
                 </button>
-                {!is3D && (
+                )}
+                {!activeSegmentation && !is3D && (
                 <button
                   onClick={() => setActiveTab('new')}
                   className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
@@ -672,6 +688,18 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                   }`}
                 >
                   {t('segmentation.new')}
+                </button>
+                )}
+                {activeSegmentation && (
+                <button
+                  onClick={() => setActiveTab('paint')}
+                  className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                    activeTab === 'paint'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                  }`}
+                >
+                  {t('segmentation.edit', 'Edit')}
                 </button>
                 )}
                 <button
@@ -686,9 +714,10 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                 </button>
               </div>
 
-              {/* Tab Content */}
-              <div className="min-h-[200px]">
-                {activeTab === 'load' && (
+              {/* Tab Content (load/new/tools; the paint tab renders in the block below,
+                  so this container collapses on 'paint' to avoid an empty gap). */}
+              <div className={activeTab === 'paint' ? undefined : 'min-h-[200px]'}>
+                {!activeSegmentation && activeTab === 'load' && (
                   <SegmentationList
                     segmentations={segmentations}
                     onLoad={handleLoadSegmentation}
@@ -699,7 +728,7 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                   />
                 )}
 
-                {activeTab === 'new' && (
+                {!activeSegmentation && activeTab === 'new' && (
                   <div className="py-4 space-y-4">
                     {/* Name input */}
                     <div>
@@ -743,8 +772,9 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
             </>
           )}
 
-          {/* Active segmentation - show controls */}
-          {activeSegmentation && (
+          {/* Active segmentation - paint/edit controls (the 'paint' tab; the tab strip
+              above stays visible so Tools/auto-seg remain reachable while editing) */}
+          {activeSegmentation && activeTab === 'paint' && (
             <>
               {/* Segmentation info header */}
               <div className="bg-gray-700/50 rounded p-2 border border-gray-600">

@@ -296,6 +296,7 @@
     "manualSegmentation": "Manual Segmentation",
     "open": "Open",
     "new": "New",
+    "edit": "Edit",
     "newSegmentation": "New Segmentation",
     "name": "Name",
     "namePlaceholder": "e.g., Tumor Segmentation",

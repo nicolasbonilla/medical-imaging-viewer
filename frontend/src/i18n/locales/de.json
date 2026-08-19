@@ -294,6 +294,7 @@
     "manualSegmentation": "Manuelle Segmentierung",
     "open": "Öffnen",
     "new": "Neu",
+    "edit": "Bearbeiten",
     "newSegmentation": "Neue Segmentierung",
     "creating": "Wird erstellt...",
     "createNewEmpty": "Erstellen Sie eine neue leere Segmentierung für das aktuelle Bild",

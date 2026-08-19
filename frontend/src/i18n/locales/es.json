@@ -294,6 +294,7 @@
     "manualSegmentation": "Segmentación Manual",
     "open": "Abrir",
     "new": "Nueva",
+    "edit": "Editar",
     "newSegmentation": "Nueva Segmentación",
     "name": "Nombre",
     "namePlaceholder": "Ej: Segmentación de Tumor",
