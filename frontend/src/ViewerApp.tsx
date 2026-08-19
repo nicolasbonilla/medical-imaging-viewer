@@ -484,20 +484,20 @@ function ViewerApp() {
 
   const handleSegmentationFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-
-    toast.loading(t('viewer.uploadingSegmentation', 'Uploading segmentation...'), { id: 'upload-seg' });
-
-    // TODO: Implement actual upload logic
-    // For now just show a message
-    setTimeout(() => {
-      toast.success(t('viewer.segmentationUploaded', 'Segmentation uploaded successfully'), { id: 'upload-seg' });
-    }, 1000);
-
-    // Reset input
+    // IMPORTANT (Class C integrity): mask import is NOT implemented — there is no
+    // segmentationAPI.importSegmentation endpoint. Previously this stub fired a
+    // fake `toast.success('uploaded successfully')` after a setTimeout, reporting a
+    // clinical data-entry action that never happened (IEC 62304 truthful-UI / FDA
+    // human-factors violation). Until a real import round-trip exists, report the
+    // true state — never a false success. The Upload button is also disabled below.
     if (segmentationUploadRef.current) {
       segmentationUploadRef.current.value = '';
     }
+    if (!file) return;
+    toast.error(
+      t('viewer.segmentationImportUnavailable', 'Importing a segmentation is not available yet — nothing was uploaded.'),
+      { id: 'upload-seg' },
+    );
   }, [t]);
 
   // Handle deleting a segmentation
@@ -787,10 +787,11 @@ function ViewerApp() {
                     </button>
                     <button
                       onClick={handleUploadSegmentation}
-                      disabled={!studyInfo}
-                      className="flex items-center justify-center border border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-40 transition-colors"
+                      disabled
+                      className="flex items-center justify-center border border-gray-600 text-gray-500 cursor-not-allowed opacity-50 transition-colors"
                       style={{ height: 28, gap: 4, borderRadius: 6, fontSize: 12, fontWeight: 500 }}
-                      aria-label={t('viewer.uploadSegmentation', 'Upload segmentation')} title={t('viewer.uploadSegmentation', 'Upload segmentation')}
+                      aria-label={t('viewer.uploadSegmentationSoon', 'Import segmentation (coming soon)')}
+                      title={t('viewer.uploadSegmentationSoon', 'Import segmentation (coming soon)')}
                     >
                       <Upload style={{ width: 12, height: 12 }} />
                       {t('viewer.upload', 'Upload')}
@@ -857,6 +858,7 @@ function ViewerApp() {
                               name={seg.name}
                               icon={Puzzle}
                               accent="purple"
+                              origin={seg.origin}
                               highlighted={isActive}
                               expanded={isExpanded}
                               overlayOn={isActive && isOverlayVisible}

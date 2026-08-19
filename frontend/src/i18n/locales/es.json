@@ -276,6 +276,8 @@
     "upload": "Subir",
     "uploadingSegmentation": "Subiendo segmentación...",
     "uploadSegmentation": "Subir Segmentación",
+    "uploadSegmentationSoon": "Importar segmentación (próximamente)",
+    "segmentationImportUnavailable": "La importación de segmentaciones aún no está disponible — no se subió nada.",
     "segmentations": "Segmentaciones",
     "sliceNavigation": "Navegación de Corte",
     "sliceOf": "{{current}} / {{total}}",

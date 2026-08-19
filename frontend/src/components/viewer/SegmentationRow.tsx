@@ -1,7 +1,30 @@
 import type { LucideIcon } from 'lucide-react';
 import { ChevronDown, ChevronRight, Eye, EyeOff, Loader2, Trash2 } from 'lucide-react';
+import type { SegOrigin } from '../../utils/segmentationList';
 
 type Accent = 'emerald' | 'purple';
+
+/**
+ * Provenance badge presentation. A Class C traceability control: a clinician must
+ * distinguish a human expert mask from a validated auto-segmenter from the legacy
+ * over-segmenter (precision 0.22) without reading names. `ai-legacy` is styled as a
+ * warning and labelled research-only; `zonemap`/`manual` render no badge (the zone
+ * map has its own emerald identity; manual is the unremarkable default).
+ */
+const PROVENANCE: Partial<Record<SegOrigin, { label: string; title: string; cls: string }>> = {
+  expert: {
+    label: 'Experto', title: 'Human expert ground truth',
+    cls: 'text-emerald-300 bg-emerald-900/50 border border-emerald-700/50',
+  },
+  ai: {
+    label: 'IA', title: 'Automatic segmentation (validated tool)',
+    cls: 'text-cyan-300 bg-cyan-900/40 border border-cyan-700/50',
+  },
+  'ai-legacy': {
+    label: 'IA · investigación', title: 'Legacy AI segmenter — research only (over-segments; precision 0.22)',
+    cls: 'text-amber-300 bg-amber-900/40 border border-amber-700/60',
+  },
+};
 
 const ACCENTS: Record<Accent, {
   activeBg: string; chevron: string; iconBase: string; iconActive: string; overlayOn: string;
@@ -33,6 +56,8 @@ interface SegmentationRowProps {
   /** Overlay visible → filled Eye + accent colour. */
   overlayOn: boolean;
   isDeleting: boolean;
+  /** Mask provenance — drives the traceability badge (Class C). Omit for zone maps. */
+  origin?: SegOrigin;
   onRowClick: () => void;
   onToggleOverlay: (e: React.MouseEvent) => void;
   onDelete: (e: React.MouseEvent) => void;
@@ -46,10 +71,11 @@ interface SegmentationRowProps {
  * card-specific click logic and the expanded content.
  */
 export function SegmentationRow({
-  name, icon: Icon, accent, highlighted, expanded, overlayOn, isDeleting,
+  name, icon: Icon, accent, highlighted, expanded, overlayOn, isDeleting, origin,
   onRowClick, onToggleOverlay, onDelete,
 }: SegmentationRowProps) {
   const a = ACCENTS[accent];
+  const prov = origin ? PROVENANCE[origin] : undefined;
   return (
     <div
       onClick={onRowClick}
@@ -64,6 +90,14 @@ export function SegmentationRow({
           : <ChevronRight className="w-3 h-3 flex-shrink-0 text-gray-400" />}
         <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${highlighted ? a.iconActive : a.iconBase}`} />
         <span className="text-[11px] font-medium truncate flex-1 text-white">{name}</span>
+        {prov && (
+          <span
+            className={`flex-shrink-0 text-[9px] leading-none font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded ${prov.cls}`}
+            title={prov.title}
+          >
+            {prov.label}
+          </span>
+        )}
         <button
           onClick={onToggleOverlay}
           className={`p-1 rounded transition-colors flex-shrink-0 ${
