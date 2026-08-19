@@ -81,6 +81,9 @@ This SRS covers all software requirements for MSTool-AI version 2.0, including f
 | REQ-FUNC-031 | The system shall provide interactive click-based segmentation (positive/negative points). | Should | C | Test | HAZ-001 |
 | REQ-FUNC-032 | The system shall display AI segmentation results as an overlay on the medical image. | Must | C | Test | HAZ-001 |
 | REQ-FUNC-033 | The system shall provide edge AI screening via ONNX Runtime Web in browser. | Should | C | Test | HAZ-004 |
+| REQ-FUNC-034 | The system shall provide automatic MS-lesion segmentation from a single FLAIR volume using an externally-validated deep-learning model (FLAMeS, nnU-Net v2, Dataset004_WML), executed on an isolated GPU inference worker. | Should | C | Test | HAZ-001 |
+| REQ-FUNC-035 | An auto-segmentation result shall be stored and surfaced as a reviewable DRAFT that is additive (it shall never overwrite or hide a clinician's own segmentation), shall record its provenance (model, version, citation, `validation_source`), and shall carry the "assistive — requires physician review" risk control (RC-001). | Must | C | Test + usability | HAZ-001 |
+| REQ-FUNC-036 | The auto-segmentation feature shall fail closed: it shall be selectable only when its inference worker is configured and reported available, and an all-zero (empty) result shall be recorded with its annotated-voxel count so a true negative is distinguishable from a silent model/worker failure. | Must | C | Test | HAZ-001 |
 
 ### 2.4 Brain Volumetry
 

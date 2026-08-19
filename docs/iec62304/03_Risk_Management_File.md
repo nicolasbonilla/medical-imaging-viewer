@@ -181,7 +181,7 @@ Hazard identification was performed using **Software Failure Modes and Effects A
 
 | HAZ ID | Software Item | Failure Mode | Hazardous Situation | Foreseeable Sequence of Events | Potential Harm |
 |--------|--------------|-------------|--------------------|---------------------------------|---------------|
-| HAZ-001 | AI Segmentation (Vertex AI) | Incorrect lesion boundary delineation | Clinician relies on AI segmentation for surgical/treatment planning | AI misses lesion → clinician does not treat → disease progression; OR AI creates false lesion → unnecessary treatment | Death / Serious injury |
+| HAZ-001 | AI Segmentation (Vertex AI; **FLAMeS single-FLAIR GPU worker**, REQ-FUNC-034) | Incorrect lesion boundary delineation (over-/under-segmentation) | Clinician relies on AI segmentation for surgical/treatment planning | AI misses lesion → clinician does not treat → disease progression; OR AI creates false lesion → unnecessary treatment | Death / Serious injury |
 | HAZ-002 | Brain Volumetry | Incorrect volume calculation | Clinician uses incorrect volumes for diagnosis | Atrophy missed → neurodegenerative disease untreated → permanent impairment | Serious injury |
 | HAZ-003 | AI Report Generation | Misleading or hallucinated clinical text | Clinician acts on AI-generated clinical recommendation without verification | Wrong treatment initiated based on AI text | Death / Serious injury |
 | HAZ-004 | Edge AI Screening | False negative (abnormal classified as normal) | Screening badge shows "Normal" for abnormal brain | Patient with pathology dismissed from further evaluation | Death / Serious injury |
