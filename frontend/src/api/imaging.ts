@@ -7,6 +7,50 @@ import type {
   VolumeData,
 } from '@/types';
 
+/**
+ * GET with a bounded timeout + retry on TRANSIENT failures. The main service is a
+ * scale-to-zero Cloud Run instance (min-instances=0 + cpu-throttling), so the first
+ * request after idle pays a cold start and the default axios instance has NO timeout —
+ * a cold/hung call freezes the viewer indefinitely with only a bare spinner. This bounds
+ * each attempt and retries cold-start-class failures (503/502/504, network abort/timeout)
+ * with backoff; the first attempt typically warms the instance so the retry succeeds.
+ * Non-transient errors (4xx) throw immediately — no pointless retries.
+ */
+async function getWithRetry<T>(
+  url: string,
+  config: Record<string, unknown>,
+  opts: { retries?: number; timeoutMs?: number; label?: string } = {},
+): Promise<T> {
+  const { retries = 2, timeoutMs = 120_000, label = url } = opts;
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const { data } = await apiClient.get(url, { ...config, timeout: timeoutMs });
+      return data as T;
+    } catch (error: unknown) {
+      lastError = error;
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      const code = (error as { code?: string })?.code;
+      // Transient = server overload, gateway, or a cold-start network abort/timeout.
+      // `status === undefined` (no response) covers ECONNABORTED / network errors.
+      const transient =
+        status === 503 || status === 502 || status === 504 ||
+        code === 'ECONNABORTED' || code === 'ERR_NETWORK' || status === undefined;
+      if (transient && attempt < retries) {
+        const delay = Math.min(1000 * 2 ** attempt, 6000); // 1s, 2s, ... (max 6s)
+        console.warn(
+          `[ImagingAPI] transient failure on ${label} (status=${status} code=${code}); ` +
+          `retry ${attempt + 1}/${retries} in ${delay}ms`,
+        );
+        await new Promise((r) => setTimeout(r, delay));
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error('Request failed after retries');
+}
+
 // Medical Imaging API
 export const imagingAPI = {
   processImage: async (
@@ -15,14 +59,13 @@ export const imagingAPI = {
     endSlice?: number,
     maxSlices = 50
   ): Promise<ImageSeriesResponse> => {
-    const { data } = await apiClient.get(`/api/v1/imaging/process/${fileId}`, {
-      params: {
-        start_slice: startSlice,
-        end_slice: endSlice,
-        max_slices: maxSlices,
-      },
-    });
-    return data;
+    // Bounded timeout + cold-start retry: a scale-to-zero backend must not freeze the
+    // viewer forever on the first (cold) study load. See getWithRetry.
+    return getWithRetry<ImageSeriesResponse>(
+      `/api/v1/imaging/process/${fileId}`,
+      { params: { start_slice: startSlice, end_slice: endSlice, max_slices: maxSlices } },
+      { retries: 2, timeoutMs: 120_000, label: `process/${fileId}` },
+    );
   },
 
   applyWindowLevel: async (
