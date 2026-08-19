@@ -65,14 +65,15 @@ export function useSegmentationData({
   const annotatedVoxels = segmentationMask.state.annotatedVoxels;
   const maskDimensions = segmentationMask.state.dimensions;
 
+  // The mask id last fully seeded into activeSegmentation. A same-id re-fire (progress
+  // recomputed after load/save) must NOT re-seed — that path resets the user's active
+  // label + per-label visibility and drops label-preset edits (adversarially verified
+  // data-loss bug). Only a genuinely NEW mask re-seeds.
+  const lastSyncedIdRef = useRef<string | null>(null);
+
   useEffect(() => {
     const store = useSegmentationStore.getState();
     if (currentSegmentation) {
-      const labels = currentSegmentation.metadata?.labels || [
-        { id: 0, name: 'Background', color: '#000000', opacity: 0, visible: false },
-        { id: 1, name: 'Lesion', color: '#FF0000', opacity: 0.5, visible: true },
-      ];
-
       // Compute actual annotated slice count from mask data
       let slicesAnnotated = 0;
       const totalSlices = currentSegmentation.total_slices;
@@ -90,30 +91,48 @@ export function useSegmentationData({
       }
       const progressPct = totalSlices > 0 ? Math.round((slicesAnnotated / totalSlices) * 100) : 0;
 
-      // Build a minimal Segmentation object for the panel
-      const synced: Segmentation = {
-        id: currentSegmentation.segmentation_id,
-        patient_id: '',
-        study_id: '',
-        series_id: currentSeries?.file_id || '',
-        file_id: currentSegmentation.file_id,
-        name: currentSegmentation.metadata?.description || 'Segmentation',
-        segmentation_type: 'manual' as Segmentation['segmentation_type'],
-        status: 'in_progress' as Segmentation['status'],
-        progress_percentage: progressPct,
-        slices_annotated: slicesAnnotated,
-        total_slices: totalSlices,
-        created_by: 'current_user',
-        labels,
-        created_at: currentSegmentation.metadata?.created_at || new Date().toISOString(),
-        modified_at: currentSegmentation.metadata?.modified_at || new Date().toISOString(),
-      };
-      store.setActiveSegmentation(synced);
+      const segId = currentSegmentation.segmentation_id;
+      const sameMask = store.activeSegmentation != null && lastSyncedIdRef.current === segId;
+
+      if (sameMask) {
+        // Progress-only update — preserve activeLabel / labelVisibility / label edits.
+        store.updateActiveSegmentationProgress({
+          slices_annotated: slicesAnnotated,
+          total_slices: totalSlices,
+          progress_percentage: progressPct,
+        });
+      } else {
+        // New mask: full seed (this legitimately (re)sets the active label + visibility).
+        const labels = currentSegmentation.metadata?.labels || [
+          { id: 0, name: 'Background', color: '#000000', opacity: 0, visible: false },
+          { id: 1, name: 'Lesion', color: '#FF0000', opacity: 0.5, visible: true },
+        ];
+        const synced: Segmentation = {
+          id: segId,
+          patient_id: '',
+          study_id: '',
+          series_id: currentSeries?.file_id || '',
+          file_id: currentSegmentation.file_id,
+          name: currentSegmentation.metadata?.description || 'Segmentation',
+          segmentation_type: 'manual' as Segmentation['segmentation_type'],
+          status: 'in_progress' as Segmentation['status'],
+          progress_percentage: progressPct,
+          slices_annotated: slicesAnnotated,
+          total_slices: totalSlices,
+          created_by: 'current_user',
+          labels,
+          created_at: currentSegmentation.metadata?.created_at || new Date().toISOString(),
+          modified_at: currentSegmentation.metadata?.modified_at || new Date().toISOString(),
+        };
+        store.setActiveSegmentation(synced);
+        lastSyncedIdRef.current = segId;
+      }
     } else {
       // Only clear if Zustand still holds a segmentation from this flow
       if (store.activeSegmentation) {
         store.setActiveSegmentation(null);
       }
+      lastSyncedIdRef.current = null;
     }
   }, [currentSegmentation, currentSeries?.file_id, annotatedVoxels, maskDimensions]);
 

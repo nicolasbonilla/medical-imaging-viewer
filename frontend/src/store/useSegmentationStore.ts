@@ -235,6 +235,18 @@ interface SegmentationState {
 
   setCurrentSegmentation: (segmentation: SegmentationResponse | null) => void;
   setActiveSegmentation: (segmentation: Segmentation | null) => void;
+  /**
+   * Patch ONLY the mask-derived progress of the active segmentation, preserving
+   * activeLabel / labelVisibility / isDirty / label edits — unlike setActiveSegmentation,
+   * which re-seeds all of them. Used by the sync effect on a same-mask progress re-fire
+   * (mask load complete, or annotatedVoxels recomputed after save) so the user's active
+   * label and visibility toggles are not silently reset.
+   */
+  updateActiveSegmentationProgress: (progress: {
+    slices_annotated: number;
+    total_slices: number;
+    progress_percentage: number;
+  }) => void;
   setActiveSeriesId: (seriesId: string | null) => void;
   setSeriesSegmentations: (segmentations: SegmentationSummary[]) => void;
   setIsLoadingList: (loading: boolean) => void;
@@ -430,6 +442,20 @@ export const useSegmentationStore = create<SegmentationState>()(
             ) ?? {},
           }),
 
+        updateActiveSegmentationProgress: (progress) =>
+          set((state) => {
+            if (!state.activeSegmentation) return state;
+            // Progress-only patch: NEVER touch activeLabel/labelVisibility/isDirty here.
+            return {
+              activeSegmentation: {
+                ...state.activeSegmentation,
+                slices_annotated: progress.slices_annotated,
+                total_slices: progress.total_slices,
+                progress_percentage: progress.progress_percentage,
+              },
+            };
+          }),
+
         setActiveSeriesId: (seriesId) => set({ activeSeriesId: seriesId }),
 
         setSeriesSegmentations: (segmentations) =>
@@ -540,8 +566,18 @@ export const useSegmentationStore = create<SegmentationState>()(
             if (!labels) return state;
             const visibility: Record<number, boolean> = {};
             labels.forEach((l) => { visibility[l.id] = l.visible; });
+            // Also write the CANONICAL labels onto currentSegmentation.metadata: the
+            // sync effect rebuilds activeSegmentation.labels from there, and save reads
+            // from there — so previously a preset change lived only on the derived
+            // activeSegmentation and was silently lost on the next re-sync and never
+            // persisted. Keeping both in step closes that data-loss path.
+            const cur = state.currentSegmentation;
+            const currentSegmentation = cur
+              ? { ...cur, metadata: { ...cur.metadata, labels } }
+              : cur;
             return {
               activeSegmentation: { ...state.activeSegmentation, labels },
+              currentSegmentation,
               labelVisibility: visibility,
               activeLabel: labels.find((l) => l.id !== 0)?.id ?? 1,
               isDirty: true,
