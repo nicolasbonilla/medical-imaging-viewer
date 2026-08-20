@@ -298,6 +298,8 @@ export interface PairwiseComparison {
   hausdorff_mm: number | null;
   /** Average symmetric surface distance (mm) — MSSEG-2/Anima mean-boundary metric. */
   assd_mm?: number | null;
+  /** Absolute volume difference (fraction of the reference volume B) — MSSEG/ISBI. */
+  avd?: number;
   volume: {
     volume_a_mm3: number;
     volume_b_mm3: number;

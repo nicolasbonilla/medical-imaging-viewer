@@ -210,6 +210,11 @@ export function SegmentationComparison() {
                   <span>
                     Δvol <b className="text-white">{result.volume.diff_percent.toFixed(1)}%</b>
                   </span>
+                  {result.avd != null && (
+                    <span title={t('comparison.avdTip', 'Absolute volume difference vs reference (MSSEG/ISBI), unsigned')}>
+                      AVD <b className="text-white">{pct(result.avd)}</b>
+                    </span>
+                  )}
                 </div>
               </div>
 

@@ -454,6 +454,9 @@ def compare_two_masks(
     ndsc = compute_normalized_dice(pred_mask=mask_a, ref_mask=mask_b)
     hausdorff = compute_hausdorff(mask_a, mask_b, voxel_spacing)
     assd = compute_assd(mask_a, mask_b, voxel_spacing)
+    # AVD = |vol_a − vol_b| / vol_b — the standard MSSEG/ISBI UNSIGNED, reference-normalised
+    # volumetric error (directional: B = reference). Complements the signed diff_percent.
+    avd = compute_avd(mask_a, mask_b, voxel_spacing)
     volume = compute_volume_diff(mask_a, mask_b, voxel_spacing)
     per_slice = compute_per_slice_dice(mask_a, mask_b)
     # Directional: A = prediction under test, B = reference.
@@ -474,6 +477,8 @@ def compare_two_masks(
         # ASSD (average symmetric surface distance, mm) — the MSSEG-2/Anima mean
         # boundary metric complementing HD95's worst-case.
         "assd_mm": round(assd, 2) if assd != float('inf') else None,
+        # AVD (absolute volume difference, fraction of the reference volume B) — MSSEG/ISBI.
+        "avd": round(avd, 4),
         "volume": volume,
         "per_slice_dice": [round(d, 4) for d in per_slice],
         "lesion_detection": lesion_detection,
