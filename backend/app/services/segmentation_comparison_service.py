@@ -247,10 +247,24 @@ def compute_per_slice_dice(
     return dice_per_slice
 
 
+# Lesion size buckets (mm³) for size-stratified detection sensitivity. Small lesions
+# are where every MS segmenter fails (e.g. FLAMeS 2025 reports ~35% detection for
+# 3–10 mm³ vs ~81% for >10 mm³), so a single LTPR hides the clinically important gap.
+# Aligned to the ISBI/MSSEG 3 mm³ noise floor and the FLAMeS size strata.
+_SIZE_BUCKETS_MM3 = [
+    (0.0, 3.0, "<3mm3 (sub-floor)"),
+    (3.0, 10.0, "3-10mm3"),
+    (10.0, 30.0, "10-30mm3"),
+    (30.0, 100.0, "30-100mm3"),
+    (100.0, float("inf"), ">=100mm3"),
+]
+
+
 def compute_lesion_detection_metrics(
     pred_mask: np.ndarray,
     ref_mask: np.ndarray,
     min_overlap_ratio: float = 0.0,
+    voxel_spacing: "tuple[float, float, float] | None" = None,
 ) -> dict:
     """Lesion-WISE detection metrics (TPR / PPV / F1) — the challenge standard.
 
@@ -298,14 +312,25 @@ def compute_lesion_detection_metrics(
     pred_fg = pred_mask > 0
     ref_fg = ref_mask > 0
 
-    # Reference lesions detected by the prediction (sensitivity numerator).
+    # Voxel volume for size stratification (mm³). None spacing → count in voxels.
+    voxel_volume_mm3 = (
+        float(voxel_spacing[0]) * float(voxel_spacing[1]) * float(voxel_spacing[2])
+        if voxel_spacing is not None else None
+    )
+
+    # Reference lesions detected by the prediction (sensitivity numerator), tracking each
+    # reference lesion's (size, detected) so detection can be stratified by lesion size.
     detected_ref = 0
+    ref_sizes_detected: list[tuple[float, bool]] = []  # (size_mm3_or_voxels, detected)
     for lesion_id in range(1, n_ref + 1):
         component = ref_labels == lesion_id
         overlap = int(np.count_nonzero(component & pred_fg))
         size = int(np.count_nonzero(component))
-        if size > 0 and (overlap / size) > min_overlap_ratio:
+        is_detected = size > 0 and (overlap / size) > min_overlap_ratio
+        if is_detected:
             detected_ref += 1
+        size_metric = size * voxel_volume_mm3 if voxel_volume_mm3 is not None else float(size)
+        ref_sizes_detected.append((size_metric, is_detected))
 
     # Predicted lesions that hit a real lesion (precision numerator); the rest
     # are false positives. Gate symmetrically on the predicted lesion's own size.
@@ -324,6 +349,29 @@ def compute_lesion_detection_metrics(
     precision = (matched_pred / n_pred) if n_pred > 0 else 1.0   # LPPV
     denom = precision + sensitivity
     lesion_f1 = (2 * precision * sensitivity / denom) if denom > 0 else 0.0
+    # LFPR = fraction of PREDICTED lesions that are false positives (= 1 - precision);
+    # reported explicitly because it is the ISBI/MSSEG axis that penalises over-segmentation
+    # (the field's honest failure mode), and 0.0 when nothing was predicted.
+    lfpr = round(false_positives / n_pred, 4) if n_pred > 0 else 0.0
+
+    # Size-stratified detection sensitivity — LTPR within each reference-lesion size band.
+    # A single LTPR averages over sizes and hides that small lesions are systematically
+    # missed; this exposes the clinically important small-lesion gap. mm³ when spacing is
+    # known, else voxel counts (labelled accordingly, never silently conflated).
+    size_unit = "mm3" if voxel_volume_mm3 is not None else "voxels"
+    size_buckets = []
+    for lo, hi, label_mm3 in _SIZE_BUCKETS_MM3:
+        members = [det for (sz, det) in ref_sizes_detected if lo <= sz < hi]
+        n_bucket = len(members)
+        det_bucket = sum(1 for det in members if det)
+        size_buckets.append({
+            "bucket": label_mm3 if size_unit == "mm3" else label_mm3.replace("mm3", "vox"),
+            "min": lo,
+            "max": None if hi == float("inf") else hi,
+            "n_ref": n_bucket,
+            "detected": det_bucket,
+            "sensitivity_ltpr": round(det_bucket / n_bucket, 4) if n_bucket > 0 else None,
+        })
 
     return {
         "ref_lesion_count": n_ref,
@@ -333,7 +381,9 @@ def compute_lesion_detection_metrics(
         "false_negatives": false_negatives,
         "sensitivity_ltpr": round(sensitivity, 4),
         "precision_lppv": round(precision, 4),
+        "false_positive_rate_lfpr": lfpr,
         "lesion_f1": round(lesion_f1, 4),
+        "size_stratified_sensitivity": {"unit": size_unit, "buckets": size_buckets},
         "min_overlap_ratio": min_overlap_ratio,
         "connectivity": 18,  # RC-030 shared convention
     }
@@ -366,7 +416,11 @@ def compare_two_masks(
     volume = compute_volume_diff(mask_a, mask_b, voxel_spacing)
     per_slice = compute_per_slice_dice(mask_a, mask_b)
     # Directional: A = prediction under test, B = reference.
-    lesion_detection = compute_lesion_detection_metrics(pred_mask=mask_a, ref_mask=mask_b)
+    # Pass voxel_spacing so detection sensitivity is stratified by lesion size in mm³
+    # (the SOTA/FLAMeS convention), not raw voxel counts.
+    lesion_detection = compute_lesion_detection_metrics(
+        pred_mask=mask_a, ref_mask=mask_b, voxel_spacing=voxel_spacing
+    )
 
     return {
         "label_a": label_a,
