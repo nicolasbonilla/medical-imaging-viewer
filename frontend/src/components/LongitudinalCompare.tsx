@@ -323,7 +323,16 @@ export function LongitudinalCompare({
             </div>
           </div>
 
-          {/* Status Counts */}
+          {/* Safety caveat (Class C): these are UNADJUDICATED CANDIDATES, not findings —
+              the comparison performs NO spatial registration (equal array dimensions are not
+              voxel alignment), so counts can include misregistration artefacts. A radiologist
+              must review each before it informs a diagnosis / dissemination-in-time. */}
+          <div className="rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-[10px] leading-snug text-amber-700 dark:text-amber-300">
+            {t('longitudinal.candidateCaveat',
+              'Unadjudicated change candidates — spatial registration NOT verified. Two timepoints with equal dimensions are not necessarily aligned; a radiologist must review each candidate before it informs a diagnosis.')}
+          </div>
+
+          {/* Status Counts (candidates) */}
           <div className="flex flex-wrap gap-1.5">
             {Object.entries(result.status_counts).map(([status, count]) => (
               count > 0 && (

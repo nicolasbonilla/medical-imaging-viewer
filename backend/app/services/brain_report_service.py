@@ -592,7 +592,11 @@ class BrainReportService:
         # instruct the report generator not to assert them as findings.
         if findings.get("longitudinal"):
             lng = findings["longitudinal"]
-            verified = bool(lng.get("registration_verified", False))
+            # No spatial registration exists anywhere in the system, and `findings` can be
+            # supplied straight from the client (/ai/report/generate). So NEVER trust a
+            # caller-provided registration_verified=true — always candidate-frame until a
+            # validated registration service ships. (Adversarial finding D4.)
+            verified = False
             parts.append(f"\nLongitudinal comparison data:")
             parts.append(f"  TP1 burden: {lng.get('burden_tp1_ml', 0):.3f} mL "
                          f"({lng.get('total_lesions_tp1', 0)} lesions)")

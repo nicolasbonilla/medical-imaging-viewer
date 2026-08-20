@@ -1089,6 +1089,7 @@
   },
   "longitudinal": {
     "title": "Seguimiento Longitudinal",
+    "candidateCaveat": "Candidatos de cambio sin adjudicar — registro espacial NO verificado. Dos timepoints con dimensiones iguales no están necesariamente alineados; un radiólogo debe revisar cada candidato antes de que informe un diagnóstico.",
     "tp1": "TP1 (Anterior)",
     "tp2": "TP2 (Posterior)",
     "select": "Seleccionar...",

@@ -483,8 +483,12 @@ class TestBrainReportService:
             }
         }
         prompt = self.service._build_findings_prompt(findings, language="en")
-        assert "New lesions: 3" in prompt
-        assert "Enlarged lesions: 1" in prompt
+        # Longitudinal counts are candidate-framed (no spatial registration is performed),
+        # so they carry the "candidate, registration unverified" label + a NOTE telling the
+        # generator not to assert them as confirmed new/enlarging lesions or DIT evidence.
+        assert "New-lesion count (candidate, registration unverified): 3" in prompt
+        assert "Enlarging count (candidate, registration unverified): 1" in prompt
+        assert "UNADJUDICATED CHANGE CANDIDATES" in prompt
         assert "25.0%" in prompt
 
     # =========================================================================

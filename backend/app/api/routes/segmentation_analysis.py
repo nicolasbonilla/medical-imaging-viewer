@@ -557,8 +557,8 @@ async def compare_longitudinal(
                     spacing = await _voxel_spacing_from_source_image(
                         getattr(meta, "file_id", None), storage_service, f"longitudinal/{mask_id}"
                     )
-                except VoxelSpacingUnavailableError:
-                    spacing = None  # counts are spacing-independent; mL burden flagged approximate
+                except Exception:  # noqa: BLE001 — spacing is best-effort; a metadata/cache
+                    spacing = None  # error must not 500 the comparison (adversarial finding D5)
                 return _m, spacing
 
             elif mask_type == "instance":
@@ -607,8 +607,12 @@ async def compare_longitudinal(
 
         # Spacing from TP1 (the common grid). compare_timepoints REQUIRES voxel_spacing —
         # omitting it raised TypeError → 500 for every request (the endpoint was dead).
-        # Counts (new/enlarging) are voxel-overlap based and spacing-independent; only the
-        # mL burden uses spacing, so a (1,1,1) fallback keeps counts correct and flags mL.
+        # Counts are voxel-overlap based, so a (1,1,1) fallback keeps the mL burden the only
+        # clearly-approximate output. NOTE (adversarial finding D3): the 3 mm³ lesion noise
+        # floor IS spacing-dependent (voxels × prod(spacing)); with the fallback, near-floor
+        # components real geometry would drop may survive → a few extra CANDIDATES. That is
+        # bounded by the candidate framing below + surfaced via `spacing_resolved`; it never
+        # feeds a finding. Prefer resolving true spacing; the fallback only prevents a 500.
         spacing = spacing_tp1 if spacing_tp1 is not None else (1.0, 1.0, 1.0)
         result = compare_timepoints(mask_tp1_bin, mask_tp2_bin, voxel_spacing=spacing)
 

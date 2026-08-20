@@ -45,11 +45,29 @@ def test_compare_timepoints_three_arg_call_detects_new_lesion():
     assert r["status_counts"]["stable"] >= 1
 
 
-def test_counts_are_spacing_independent():
-    """Counts (the safety-relevant part) do not depend on voxel spacing — so the (1,1,1)
-    fallback used when source spacing is unavailable keeps counts correct (only mL differs)."""
-    a = _lesion(np.zeros((8, 16, 16), np.uint8), 3, 4, 4)
+def test_suprafloor_counts_are_spacing_independent():
+    """ABOVE the 3 mm³ noise floor, counts don't depend on spacing — so the (1,1,1)
+    fallback keeps supra-floor counts correct (only mL burden differs). A 9-voxel lesion
+    clears the floor at every spacing tested."""
+    a = _lesion(np.zeros((8, 16, 16), np.uint8), 3, 4, 4)  # 3x3 = 9 voxels
     b = _lesion(np.zeros((8, 16, 16), np.uint8), 5, 10, 10)
     r1 = compare_timepoints((a > 0).astype(np.uint8), (b > 0).astype(np.uint8), voxel_spacing=(1.0, 1.0, 1.0))
     r2 = compare_timepoints((a > 0).astype(np.uint8), (b > 0).astype(np.uint8), voxel_spacing=(3.0, 0.5, 0.5))
     assert r1["status_counts"] == r2["status_counts"]
+
+
+def test_near_floor_counts_ARE_spacing_dependent():
+    """Adversarial finding D3: the 3 mm³ noise floor (voxels x prod(spacing)) IS
+    spacing-dependent, so the (1,1,1) fallback can RETAIN a near-floor candidate that true
+    geometry would drop. Documents the real behaviour the fallback comment now admits;
+    bounded by candidate framing (never a finding), but not to be claimed away."""
+    a = np.zeros((8, 16, 16), np.uint8)  # TP1 empty
+    b = _lesion(np.zeros((8, 16, 16), np.uint8), 4, 8, 8, size=1)  # 1 voxel at one z-slice
+    # 1-voxel component; add two neighbours in-plane to make a 3-voxel component.
+    b[4, 8, 9] = 1
+    b[4, 9, 8] = 1  # 3 voxels total
+    fallback = compare_timepoints(a, (b > 0).astype(np.uint8), voxel_spacing=(1.0, 1.0, 1.0))
+    real = compare_timepoints(a, (b > 0).astype(np.uint8), voxel_spacing=(1.0, 0.5, 0.5))  # 3x0.25=0.75mm³
+    assert fallback["status_counts"]["new"] >= real["status_counts"]["new"]
+    # true geometry drops the sub-floor candidate; the fallback keeps it → they differ
+    assert fallback["status_counts"]["new"] != real["status_counts"]["new"]
