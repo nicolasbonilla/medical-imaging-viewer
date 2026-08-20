@@ -192,6 +192,11 @@ export function SegmentationComparison() {
                   <span title={t('comparison.diceTip', 'Voxel overlap (Sørensen–Dice)')}>
                     Dice <b className="text-white">{result.dice.toFixed(3)}</b>
                   </span>
+                  {result.ndsc != null && (
+                    <span title={t('comparison.ndscTip', 'Normalised Dice (Shifts) — load-corrected, comparable across lesion loads')}>
+                      nDSC <b className="text-white">{result.ndsc.toFixed(3)}</b>
+                    </span>
+                  )}
                   {result.hausdorff_mm != null && (
                     <span title={t('comparison.hd95Tip', '95th-percentile surface distance (worst-case)')}>
                       HD95 <b className="text-white">{result.hausdorff_mm.toFixed(1)} mm</b>
@@ -225,6 +230,11 @@ export function SegmentationComparison() {
                     <span title={t('comparison.precTip', 'Predicted lesions that are real / predicted lesions')}>
                       {t('comparison.precision', 'Prec')} <b className="text-white">{pct(ld.precision_lppv)}</b>
                     </span>
+                    {ld.false_positive_rate_lfpr != null && (
+                      <span title={t('comparison.lfprTip', 'False-positive predicted lesions / predicted lesions (= 1 − precision)')}>
+                        LFPR <b className="text-white">{pct(ld.false_positive_rate_lfpr)}</b>
+                      </span>
+                    )}
                   </div>
                   <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5 text-[10px] text-gray-400">
                     <span className="text-green-400">TP {ld.true_positives}</span>
@@ -237,8 +247,36 @@ export function SegmentationComparison() {
                       })}
                     </span>
                   </div>
+
+                  {/* Detection sensitivity by lesion SIZE — exposes the small-lesion gap a
+                      single LTPR hides (small lesions are systematically missed). */}
+                  {ld.size_stratified_sensitivity && ld.size_stratified_sensitivity.buckets.some((b) => b.n_ref > 0) && (
+                    <div className="mt-1">
+                      <div className="text-[9px] uppercase tracking-wide text-gray-500 mb-0.5">
+                        {t('comparison.bySize', 'Detection by lesion size')}{' '}
+                        <span className="text-gray-600 normal-case">({ld.size_stratified_sensitivity.unit})</span>
+                      </div>
+                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-gray-300">
+                        {ld.size_stratified_sensitivity.buckets
+                          .filter((b) => b.n_ref > 0)
+                          .map((b) => (
+                            <span key={b.bucket} title={`${b.detected}/${b.n_ref} ${t('comparison.detected', 'detected')}`}>
+                              {b.bucket}{' '}
+                              <b className={b.sensitivity_ltpr != null && b.sensitivity_ltpr < 0.5 ? 'text-amber-300' : 'text-white'}>
+                                {b.sensitivity_ltpr != null ? pct(b.sensitivity_ltpr) : '—'}
+                              </b>
+                            </span>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
+
+              {/* Honest framing: these are evaluation-vs-reference metrics, not clinical accuracy. */}
+              <div className="text-[9px] text-gray-500 italic">
+                {t('comparison.caveat', 'Evaluation metrics vs the reference mask (B) — not a measure of clinical accuracy.')}
+              </div>
             </div>
           )}
         </div>

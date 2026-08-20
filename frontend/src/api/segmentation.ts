@@ -293,6 +293,8 @@ export interface PairwiseComparison {
   label_a: string;
   label_b: string;
   dice: number;
+  /** Normalised Dice (nDSC, Shifts) — load-corrected Dice, comparable across lesion loads. */
+  ndsc?: number;
   hausdorff_mm: number | null;
   /** Average symmetric surface distance (mm) — MSSEG-2/Anima mean-boundary metric. */
   assd_mm?: number | null;
@@ -318,7 +320,21 @@ export interface LesionDetectionMetrics {
   sensitivity_ltpr: number;
   /** Precision / lesion positive-predictive value = predictions hitting a real lesion / predictions. */
   precision_lppv: number;
+  /** Lesion false-positive rate = false-positive predictions / predictions (= 1 - precision). */
+  false_positive_rate_lfpr?: number;
   lesion_f1: number;
+  /** Detection sensitivity (LTPR) stratified by reference-lesion size band. */
+  size_stratified_sensitivity?: {
+    unit: 'mm3' | 'voxels' | string;
+    buckets: Array<{
+      bucket: string;
+      min: number;
+      max: number | null;
+      n_ref: number;
+      detected: number;
+      sensitivity_ltpr: number | null;
+    }>;
+  };
   min_overlap_ratio: number;
   connectivity: number;
 }

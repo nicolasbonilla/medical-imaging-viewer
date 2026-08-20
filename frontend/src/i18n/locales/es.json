@@ -1037,6 +1037,11 @@
   "comparison": {
     "title": "Metricas de Comparacion",
     "compare": "Comparar",
+    "ndscTip": "Dice normalizado (Shifts) — corregido por carga, comparable entre cargas lesionales",
+    "lfprTip": "Lesiones predichas falsas / lesiones predichas (= 1 − precisión)",
+    "bySize": "Detección por tamaño de lesión",
+    "detected": "detectadas",
+    "caveat": "Métricas de evaluación vs la máscara de referencia (B) — no una medida de exactitud clínica.",
     "needTwo": "Activa 2+ mascaras de expertos para comparar",
     "mySegmentation": "Mi Segmentacion",
     "volumeDiff": "Dif. Vol.",
