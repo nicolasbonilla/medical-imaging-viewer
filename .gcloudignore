@@ -51,6 +51,13 @@ logs/
 storage/
 user_data/
 
+# Local sample/reference imaging data (ISBI/NIfTI, ~4.9 GB) — NOT used by the build
+# (docker context is ./backend) nor at runtime (Cloud Run runs the built image), it only
+# bloated the `gcloud builds submit` SOURCE upload (4.9 GB → slow, flaky builds). Root-
+# anchored so it does NOT touch backend/data or any atlas/asset the backend bakes into
+# the image (those live under backend/ and stay in the build context).
+/data/
+
 # IDE
 .vscode/
 .idea/
