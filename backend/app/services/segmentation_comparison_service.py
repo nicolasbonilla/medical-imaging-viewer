@@ -40,6 +40,45 @@ def compute_dice(mask_a: np.ndarray, mask_b: np.ndarray) -> float:
     return float(2.0 * intersection / (sum_a + sum_b))
 
 
+def compute_normalized_dice(
+    pred_mask: np.ndarray,
+    ref_mask: np.ndarray,
+    effective_load: float = 0.001,
+) -> float:
+    """Normalised Dice (nDSC) — Raina et al. 2023 (arXiv:2302.05432), the load-corrected
+    Dice standardised by the Shifts MS white-matter-lesion challenge.
+
+    Plain DSC is biased by lesion LOAD (the fraction of voxels that are lesion): the same
+    per-lesion error scores a very different DSC on a heavy-load vs a light-load scan, so
+    DSC cannot be fairly compared or aggregated across patients. nDSC removes that bias by
+    rescaling the false positives to a fixed REFERENCE load r (=0.001, the average lesion
+    voxel fraction), so the score is load-invariant and equals plain DSC exactly when the
+    scan's load equals r.
+
+    Directional: `ref_mask` is the reference (ground truth), `pred_mask` the prediction.
+    Exact formula from the reference implementation (github.com/NataliiaMolch/nDSC):
+        scaling = (1 - r) * P / (r * (N - P))          # P = ref lesion voxels, N = total
+        nDSC    = 2*TP / (2*TP + FN + scaling * FP)
+    Empty-reference convention matches DSC (scaling=1 → nDSC=DSC; both empty → 1.0).
+    """
+    pred = pred_mask > 0
+    ref = ref_mask > 0
+    p = int(ref.sum())                 # reference lesion voxels
+    n_total = int(ref.size)
+    tp = int(np.count_nonzero(pred & ref))
+    fp = int(np.count_nonzero(pred & ~ref))
+    fn = int(np.count_nonzero(~pred & ref))
+
+    if p == 0:  # empty reference → reduce to standard DSC (both empty → 1.0)
+        denom = 2 * tp + fp + fn
+        return 1.0 if denom == 0 else float(2 * tp / denom)
+
+    n_neg = n_total - p
+    scaling = 1.0 if n_neg == 0 else (1.0 - effective_load) * p / (effective_load * n_neg)
+    denom = 2 * tp + fn + scaling * fp
+    return float(2 * tp / denom) if denom > 0 else 1.0
+
+
 def compute_jaccard(mask_a: np.ndarray, mask_b: np.ndarray) -> float:
     """Jaccard index (IoU) between two binary masks: |A ∩ B| / |A ∪ B|.
 
@@ -411,6 +450,8 @@ def compare_two_masks(
         raise ValueError(f"Mask shapes must match: {mask_a.shape} vs {mask_b.shape}")
 
     dice = compute_dice(mask_a, mask_b)
+    # nDSC (load-corrected Dice) — directional: A = prediction, B = reference.
+    ndsc = compute_normalized_dice(pred_mask=mask_a, ref_mask=mask_b)
     hausdorff = compute_hausdorff(mask_a, mask_b, voxel_spacing)
     assd = compute_assd(mask_a, mask_b, voxel_spacing)
     volume = compute_volume_diff(mask_a, mask_b, voxel_spacing)
@@ -426,6 +467,9 @@ def compare_two_masks(
         "label_a": label_a,
         "label_b": label_b,
         "dice": round(dice, 4),
+        # nDSC = load-corrected Dice (Shifts standard); comparable across lesion loads,
+        # unlike plain Dice. Equals Dice when the scan's lesion load == the reference (0.001).
+        "ndsc": round(ndsc, 4),
         "hausdorff_mm": round(hausdorff, 2) if hausdorff != float('inf') else None,
         # ASSD (average symmetric surface distance, mm) — the MSSEG-2/Anima mean
         # boundary metric complementing HD95's worst-case.
