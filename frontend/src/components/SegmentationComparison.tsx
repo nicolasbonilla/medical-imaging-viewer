@@ -16,13 +16,14 @@
  *
  * @module components/SegmentationComparison
  */
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { GitCompare, Loader2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { segmentationAPI, type PairwiseComparison } from '@/api/segmentation';
 import { studyAPI } from '@/api/study';
 import { useViewerStore } from '@/store/useViewerStore';
+import { classifySegOrigin } from '@/utils/segmentationList';
 import type { SegmentationResponse } from '@/types';
 
 /** Fetch all image file_ids for a study (mirrors LongitudinalCompare). */
@@ -84,6 +85,25 @@ export function SegmentationComparison() {
     (id: string) => options.find((o) => o.id === id)?.name || id,
     [options],
   );
+
+  // Provenance-aware default (reuses the Tier-0 origin classifier): when the study has
+  // both a human EXPERT mask and an AI mask, pre-select Expert = reference (B) and AI =
+  // prediction (A). Then the metrics read as "how does the AI compare to the human ground
+  // truth" — directly surfacing the project's core finding (legacy AI over-segments:
+  // low precision / high LFPR). The user can still change either selection.
+  useEffect(() => {
+    if (predId || refId || segs.length < 2) return;
+    const tagged = segs.map((s) => ({
+      id: s.segmentation_id,
+      origin: classifySegOrigin(s.metadata?.description || ''),
+    }));
+    const expert = tagged.find((x) => x.origin === 'expert');
+    const ai = tagged.find((x) => x.origin === 'ai' || x.origin === 'ai-legacy');
+    if (expert && ai && expert.id !== ai.id) {
+      setRefId(expert.id);   // reference = human ground truth
+      setPredId(ai.id);      // prediction = AI under test
+    }
+  }, [segs, predId, refId]);
 
   const canCompare = predId && refId && predId !== refId;
 
