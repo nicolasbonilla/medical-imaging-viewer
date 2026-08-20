@@ -104,6 +104,7 @@ This SRS covers all software requirements for MSTool-AI version 2.0, including f
 | REQ-FUNC-053 | The system shall classify lesions into MAGNIMS regions using SynthSeg parcellation + EDT (Tier 2) with MSMask atlas fallback (Tier 1). | Must | C | Test | HAZ-005 |
 | REQ-FUNC-054 | The system shall provide longitudinal tracking with IoU-based lesion matching (threshold >= 0.3). | Must | C | Test | HAZ-007 |
 | REQ-FUNC-055 | The system shall classify longitudinal lesion status: NEW, RESOLVED, ENLARGED (>20%), SHRUNK (<-20%), STABLE. | Must | C | Test | HAZ-007 |
+| REQ-FUNC-055a | Longitudinal new/enlarging counts shall be presented as UNADJUDICATED CANDIDATES, not confirmed findings: the comparison performs NO spatial registration (equal array shape is not voxel alignment), so the response shall carry `registration_verified=false` + `adjudication_required=true` + a false-positive caveat, and reports shall label them as candidates requiring radiologist review and shall NOT assert them as dissemination-in-time (DIT) evidence without reader adjudication. The comparison shall refuse (HTTP 400) non-comparable grids rather than silently re-aligning them. | Must | C | Test | HAZ-007 |
 | REQ-FUNC-056 | The system shall display longitudinal comparison as tri-color overlay (blue=TP1, red=TP2, green=overlap). | Must | B | Test | — |
 
 ### 2.6 AI Report Generation

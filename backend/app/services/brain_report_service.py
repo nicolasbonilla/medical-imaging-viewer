@@ -582,9 +582,17 @@ class BrainReportService:
             if dis.get("has_black_holes"):
                 parts.append(f"  T1 black holes present: {dis.get('black_hole_voxels', 0)} voxels")
 
-        # Longitudinal comparison data (from Phase 11)
+        # Longitudinal comparison data (from Phase 11).
+        # CLASS C SAFETY (adversarial finding): the longitudinal comparison does NOT verify
+        # spatial registration — two timepoints with equal array dimensions need not be
+        # voxel-aligned, so an IoU diff can manufacture FALSE new/enlarging lesions from
+        # misregistration. These counts are therefore UNADJUDICATED CANDIDATES, never
+        # confirmed findings, and must NOT drive dissemination-in-time (DIT) or any
+        # diagnostic conclusion until a reader adjudicates them. We label them as such and
+        # instruct the report generator not to assert them as findings.
         if findings.get("longitudinal"):
             lng = findings["longitudinal"]
+            verified = bool(lng.get("registration_verified", False))
             parts.append(f"\nLongitudinal comparison data:")
             parts.append(f"  TP1 burden: {lng.get('burden_tp1_ml', 0):.3f} mL "
                          f"({lng.get('total_lesions_tp1', 0)} lesions)")
@@ -592,11 +600,19 @@ class BrainReportService:
                          f"({lng.get('total_lesions_tp2', 0)} lesions)")
             parts.append(f"  Burden delta: {lng.get('burden_delta_percent', 0):.1f}%")
             sc = lng.get("status_counts", {})
-            parts.append(f"  New lesions: {sc.get('new', 0)}")
-            parts.append(f"  Enlarged lesions: {sc.get('enlarged', 0)}")
-            parts.append(f"  Resolved lesions: {sc.get('resolved', 0)}")
-            parts.append(f"  Shrunk lesions: {sc.get('shrunk', 0)}")
-            parts.append(f"  Stable lesions: {sc.get('stable', 0)}")
+            if not verified:
+                parts.append(
+                    "  NOTE: the following are UNADJUDICATED CHANGE CANDIDATES from a "
+                    "comparison that did NOT verify spatial registration. Do NOT report them "
+                    "as confirmed new/enlarging lesions or use them to assert dissemination "
+                    "in time; present them only as candidates requiring radiologist review."
+                )
+            label = (lambda k: k) if verified else (lambda k: f"{k} (candidate, registration unverified)")
+            parts.append(f"  New-lesion {label('count')}: {sc.get('new', 0)}")
+            parts.append(f"  Enlarging {label('count')}: {sc.get('enlarged', 0)}")
+            parts.append(f"  Resolved {label('count')}: {sc.get('resolved', 0)}")
+            parts.append(f"  Shrunk {label('count')}: {sc.get('shrunk', 0)}")
+            parts.append(f"  Stable {label('count')}: {sc.get('stable', 0)}")
 
         # Zone map statistics (from MSMask atlas)
         if findings.get("zone_stats"):

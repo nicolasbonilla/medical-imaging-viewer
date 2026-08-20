@@ -542,6 +542,8 @@ async def compare_longitudinal(
             raise HTTPException(status_code=400, detail="Both tp1 and tp2 are required")
 
         async def load_mask(spec):
+            """Return (mask, voxel_spacing) — spacing resolved from the SOURCE IMAGE
+            (never the segmentation metadata, RC-024), None if unavailable."""
             mask_type = spec.get("type")
             mask_id = spec.get("id")
 
@@ -549,7 +551,15 @@ async def compare_longitudinal(
                 _m = segmentation_service.get_mask(mask_id)
                 if _m is None:
                     raise HTTPException(status_code=404, detail=f"Segmentation {mask_id} not found")
-                return _m
+                spacing = None
+                try:
+                    meta = await segmentation_service.get_metadata(mask_id)
+                    spacing = await _voxel_spacing_from_source_image(
+                        getattr(meta, "file_id", None), storage_service, f"longitudinal/{mask_id}"
+                    )
+                except VoxelSpacingUnavailableError:
+                    spacing = None  # counts are spacing-independent; mL burden flagged approximate
+                return _m, spacing
 
             elif mask_type == "instance":
                 # Lazy study-service resolution — see compare_masks (avoids a
@@ -559,16 +569,24 @@ async def compare_longitudinal(
                 file_data = await storage_service.download_file(
                     settings.GCS_BUCKET_NAME, instance.gcs_object_name
                 )
-                _, data = load_nifti_from_bytes(file_data, normalize=False)
+                img, data = load_nifti_from_bytes(file_data, normalize=False)
                 mask = (data > 0).astype(np.uint8)
                 if mask.ndim == 3:
                     mask = np.transpose(mask, (2, 0, 1))  # RC-031: native (a0,a1,k) -> internal (k,a0,a1)
-                return mask
+                spacing = None
+                try:
+                    zooms = img.header.get_zooms()[:3]
+                    if len(zooms) >= 3 and all(float(z) > 0 for z in zooms):
+                        # native (za0, za1, zk) -> internal (k, a0, a1) spacing order
+                        spacing = (float(zooms[2]), float(zooms[0]), float(zooms[1]))
+                except Exception:  # noqa: BLE001 — spacing is best-effort
+                    spacing = None
+                return mask, spacing
             else:
                 raise HTTPException(status_code=400, detail=f"Unknown mask type: {mask_type}")
 
-        mask_tp1 = await load_mask(tp1_spec)
-        mask_tp2 = await load_mask(tp2_spec)
+        mask_tp1, spacing_tp1 = await load_mask(tp1_spec)
+        mask_tp2, _spacing_tp2 = await load_mask(tp2_spec)
 
         logger.info("Longitudinal masks loaded", extra={
             "tp1_shape": str(mask_tp1.shape),
@@ -587,12 +605,35 @@ async def compare_longitudinal(
         mask_tp1_bin = (mask_tp1 > 0).astype(np.uint8)
         mask_tp2_bin = (mask_tp2 > 0).astype(np.uint8)
 
-        result = compare_timepoints(mask_tp1_bin, mask_tp2_bin)
+        # Spacing from TP1 (the common grid). compare_timepoints REQUIRES voxel_spacing —
+        # omitting it raised TypeError → 500 for every request (the endpoint was dead).
+        # Counts (new/enlarging) are voxel-overlap based and spacing-independent; only the
+        # mL burden uses spacing, so a (1,1,1) fallback keeps counts correct and flags mL.
+        spacing = spacing_tp1 if spacing_tp1 is not None else (1.0, 1.0, 1.0)
+        result = compare_timepoints(mask_tp1_bin, mask_tp2_bin, voxel_spacing=spacing)
 
-        logger.info("Longitudinal comparison completed", extra={
+        # SAFETY FRAMING (adversarial finding): equal array SHAPE is NOT spatial
+        # registration — two sessions of the same patient have identical dimensions yet
+        # differ in head position/tilt, so an IoU diff manufactures FALSE new/enlarging
+        # lesions from misregistration. This service performs NO registration. Every count
+        # is therefore an UNADJUDICATED CANDIDATE, not a finding, and must not drive
+        # dissemination-in-time / diagnosis until a reader adjudicates it.
+        result["registration_verified"] = False
+        result["adjudication_required"] = True
+        result["spacing_resolved"] = spacing_tp1 is not None
+        result["alignment"] = "equal array shape; NOT verified as spatially co-registered"
+        result["caveat"] = (
+            "New/enlarging/resolved counts are UNADJUDICATED CANDIDATES. Timepoints with "
+            "equal array dimensions are not necessarily voxel-aligned; this comparison does "
+            "not perform spatial registration. A reader must adjudicate each candidate before "
+            "it informs dissemination-in-time or any diagnostic conclusion."
+        )
+
+        logger.info("Longitudinal comparison completed (candidates, registration unverified)", extra={
             "new": result["status_counts"]["new"],
             "resolved": result["status_counts"]["resolved"],
             "enlarged": result["status_counts"]["enlarged"],
+            "spacing_resolved": result["spacing_resolved"],
         })
 
         return result
