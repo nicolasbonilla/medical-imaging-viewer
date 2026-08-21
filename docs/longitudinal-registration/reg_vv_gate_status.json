@@ -1,0 +1,49 @@
+{
+  "asset": "Longitudinal TP2->TP1 registration — V&V enablement gate",
+  "requirement": "REQ-FUNC-LONG-010",
+  "updated_utc": "2026-08-21",
+  "source": "Converged conclusion of the 2026-08-21 adversarial design+refute (workflow w3p81u3kz, 2 lanes + 2 skeptics). Both refuters ruled the flip UNSAFE on in-hand data.",
+  "flag": "LONG_REGISTRATION_VERIFIED_ENABLED",
+  "enable_permitted": false,
+  "overall_status": "NOT_READY",
+  "rationale": "The registration SERVICE runs in shadow (truthfully co-registered overlay, fewer misregistration false positives feeding the CANDIDATE counts) with registration_verified HARD-FALSE and the candidate firewall + report guard intact. Flipping to VERIFIED change is not permitted: the specified whole-brain-Dice QC saturates above the lesion length-scale (cannot certify lesion-scale alignment), and the in-hand data cannot measure the false-accept rate.",
+  "gates": {
+    "gate_1_failclosed_and_determinism": {
+      "status": "pass",
+      "summary": "Rigid-only (deformable banned + static-tested); threads pinned to 1 for reproducible MI sampling; fail-closed on non-finite / non-3D / degenerate brain mask / non-convergence / ITK error; registration_verified never true in the response contract. Real SimpleITK recovery test passes.",
+      "evidence": "backend/app/services/registration_service.py; tests/unit/test_registration_failclosed.py (6 tests incl. real recovery)."
+    },
+    "gate_2_lesion_scale_qc_metric": {
+      "status": "blocked",
+      "summary": "The FLIP gate needs a QC metric at LESION scale (e.g. displacement of matched high-confidence stable lesions, or dilated-lesion-shell boundary Dice) that fails closed on a 3-5mm residual. The current whole-brain-overlap Dice is ADVISORY only — it saturates above the hazard scale and rubber-stamps the registrar's own MI success. Metric still to be designed.",
+      "evidence": null
+    },
+    "gate_3_deformable_ban_enforced": {
+      "status": "pass",
+      "summary": "Deformable registration banned (HAZ-LONG-2: a warp erases real lesion change). Enforced by a static test asserting no deformable-transform symbol in the service.",
+      "evidence": "tests/unit/test_registration_failclosed.py::test_no_deformable_registration_symbol_present"
+    },
+    "gate_4_qc_false_accept_measured": {
+      "status": "blocked",
+      "not_meetable_on_in_hand_data": true,
+      "summary": "The QC false-accept rate (QC-passed AND actually-misregistered) is the number the gate exists to produce. It CANNOT be measured on MSLesSeg: every pair is already on the identical MNI grid with zero misregistration, so the false-accept cell has no examples. Needs raw two-session intensity pairs with known/synthetic rigid perturbations across real scanners. (Mirror of CALM-MS Gate-7.)",
+      "evidence": null
+    },
+    "gate_5_new_lesion_detection_validation": {
+      "status": "blocked",
+      "not_meetable_on_in_hand_data": true,
+      "summary": "New-lesion F1/LTPR/LFPR needs ADJUDICATED new-lesion labels (MSSEG-2-style). MSLesSeg per-timepoint total-lesion masks are NOT adjudicated for 'new', and 'GT2 minus GT1' is a confounded, non-registration-validating reference (already MNI-aligned). A DETECTION consistency-check on the 40 in-hand pairs is informative but is NOT safety evidence.",
+      "evidence": null
+    },
+    "gate_6_report_firewall_interaction": {
+      "status": "blocked",
+      "summary": "brain_report_service currently hard-forces verified=False and always candidate-frames (D4). Flipping registration_verified true would require editing that Class C module under review — out of scope until gates 2/4/5 pass. Until then the flip is cosmetic (report still candidate-frames) OR a dangerous regression; keep it dark.",
+      "evidence": null
+    },
+    "gate_7_usability_and_pccp": {
+      "status": "blocked",
+      "summary": "IEC 62366-1 summative usability (reader does not over-trust an unregistered/QC-advisory overlay) + per-operating-point clinical validation + PCCP. Do not exist.",
+      "evidence": null
+    }
+  }
+}

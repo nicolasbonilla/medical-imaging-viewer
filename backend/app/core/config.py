@@ -204,6 +204,15 @@ class Settings(BaseSettings):
     # reader study, PCCP) is NOT yet complete, so the endpoint stays dark until enabled.
     CALM_MS_RESEARCH_ENABLED: bool = Field(default=False)
 
+    # Longitudinal TP2->TP1 registration "verified change" flip (REQ-FUNC-LONG-010) —
+    # INVESTIGATIONAL. Default OFF and PERMANENTLY blocked on in-hand data: the registration
+    # service runs in SHADOW (truthfully co-registered overlay; registration_verified stays
+    # false, candidate firewall intact), but asserting VERIFIED change needs a lesion-scale QC
+    # gate + validation on adjudicated multi-session intensity pairs that public data cannot
+    # provide (see docs/longitudinal-registration/REG-VV-DOSSIER.md). Do NOT flip without a
+    # green dossier + code review.
+    LONG_REGISTRATION_VERIFIED_ENABLED: bool = Field(default=False)
+
     # Claude API Configuration (for report generation)
     ANTHROPIC_API_KEY: str = Field(default="", description="Anthropic API key for Claude")
     CLAUDE_MODEL: str = Field(default="claude-sonnet-4-5-20250929")
