@@ -1,0 +1,26 @@
+{
+  "record": "MSLesSeg jitter-floor characterization (zero registration error)",
+  "n_pairs_total": 40,
+  "n_measurable": 1,
+  "n_unmeasurable": 39,
+  "jitter_floor_mm": {
+    "median": 1.333,
+    "p90": 1.333,
+    "max": 1.333
+  },
+  "pass_cut_mm": 1.0,
+  "interpretation": "R_disp here is pure biological + segmentation jitter (pairs already MNI-aligned). If the floor approaches the 1.0mm cut, the gate false-rejects clean pairs; if well below, the cut has margin. NOTE: most pairs are UNMEASURABLE (fewer than 3 large well-spread stable fiducials) -> the gate fails closed on them, which is correct but means the lesion-scale gate can certify only a minority of real MS pairs.",
+  "measurable": [
+    {
+      "pair": "P14:T3->T4",
+      "r_disp_mm": 1.333,
+      "n_fiducials": 3,
+      "coverage_span_mm": 73.8
+    }
+  ],
+  "unmeasurable_count_by_reason": {
+    "only 0 stable fiducials": 22,
+    "only 1 stable fiducials": 13,
+    "only 2 stable fiducials": 4
+  }
+}

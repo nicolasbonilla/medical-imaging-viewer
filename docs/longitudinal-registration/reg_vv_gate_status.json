@@ -15,8 +15,9 @@
     },
     "gate_2_lesion_scale_qc_metric": {
       "status": "blocked",
-      "summary": "The FLIP gate needs a QC metric at LESION scale (e.g. displacement of matched high-confidence stable lesions, or dilated-lesion-shell boundary Dice) that fails closed on a 3-5mm residual. The current whole-brain-overlap Dice is ADVISORY only — it saturates above the hazard scale and rubber-stamps the registrar's own MI success. Metric still to be designed.",
-      "evidence": null
+      "metric_implemented": true,
+      "summary": "The lesion-scale QC metric IS now implemented + fail-closed (registration_qc_service.lesion_scale_qc): worst-case matched-STABLE-fiducial centroid residual R_disp (mm), MUTUAL-best matching (kills the greedy neighbour-mismatch silent PASS), a COVERAGE guard (rejects centrally-clustered fiducials that cannot observe the rotational lever arm), fail-closed on <3 fiducials / no coverage / undefined. NCC arm demoted to advisory (not MI-independent + no in-hand intensity). This CLOSES the 'no lesion-scale gate exists' hole and supersedes whole-brain Dice as the flip QC. BUT it stays BLOCKED as a flip gate on two honest, MEASURED grounds: (a) on the 40 MSLesSeg pairs only 1/40 is MEASURABLE (39/40 have <3 large stable well-spread fiducials -> fail closed) — MS lesion morphology rarely provides the fiducials the metric needs; (b) that single measurable pair's jitter floor R_disp=1.33mm EXCEEDS the 1.0mm cut at ZERO registration error, so the cut has negative margin on the only real datum. Plus the registrar-in-the-loop test (Exp B) + NCC arm are FLAIR-blocked (no intensity in the staged cohort).",
+      "evidence": "backend/app/services/registration_qc_service.py; tests/unit/test_registration_qc.py (8 tests: fail-closed matrix + catches a 3mm translation whole-brain Dice would rubber-stamp); docs/longitudinal-registration/jitter_floor_record.json (1/40 measurable, floor 1.33mm)."
     },
     "gate_3_deformable_ban_enforced": {
       "status": "pass",
