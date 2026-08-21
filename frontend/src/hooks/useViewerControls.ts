@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 
-export type RenderMode = 'standard' | 'matplotlib';
+export type RenderMode = 'standard' | 'matplotlib' | 'niivue';
 
 export function useViewerControls() {
   const [renderMode, setRenderModeInternal] = useState<RenderMode>('standard');

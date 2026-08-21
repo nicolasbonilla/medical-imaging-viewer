@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, memo, useCallback } from 'react';
+import { useEffect, useRef, useState, memo, useCallback, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Maximize2 } from 'lucide-react';
 import { useViewerStore } from '@/store/useViewerStore';
@@ -14,6 +14,10 @@ import { SliceInfo } from './viewer/SliceInfo';
 import { SliceSlider } from './viewer/SliceSlider';
 import { MetadataPanel } from './viewer/MetadataPanel';
 import { SegmentationCanvasLocal, type SegmentationCanvasLocalRef } from './SegmentationCanvasLocal';
+// Lazy — niivue (~heavy WebGL lib) loads only when the user opts into the 'niivue'
+// fast-W/L mode, keeping the default 2D viewer bundle light.
+const NiivueViewer2D = lazy(() =>
+  import('./NiivueViewer2D').then((m) => ({ default: m.NiivueViewer2D })));
 import { useAISegmentation } from '@/hooks/useAISegmentation';
 import { QuickScreenBadge } from './QuickScreenBadge';
 import { VoxelValueOverlay } from './VoxelValueOverlay';
@@ -343,6 +347,17 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
         studyDescription={studyDescription}
         anatomicalOrientation={currentSeries?.metadata?.anatomical_orientation}
       />
+      {/* niivue fast-W/L mode (view-only GPU window/level). Sits below the z-20 safety
+          overlay so patient identity stays visible, and above the (empty in this mode)
+          standard/matplotlib viewport. Painting is intentionally NOT available here —
+          it stays in the standard/matplotlib modes (no wrong-location hazard). */}
+      {renderMode === 'niivue' && (
+        <div className="absolute inset-0 z-10">
+          <Suspense fallback={<div className="flex h-full w-full items-center justify-center text-xs text-gray-400">Cargando visor GPU…</div>}>
+            <NiivueViewer2D />
+          </Suspense>
+        </div>
+      )}
       {/* Canvas or Matplotlib Image */}
       <div
         ref={scrollableRef}

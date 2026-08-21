@@ -98,7 +98,7 @@ export default function ViewerControls({
       {viewMode === '2d' && (
       <div>
         <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{t('viewer.renderMode')}</label>
-        <div className="grid grid-cols-2" style={{ gap: 4 }}>
+        <div className="grid grid-cols-3" style={{ gap: 4 }}>
           <button
             onClick={() => setRenderMode('standard')}
             className={`flex items-center justify-center transition-colors ${
@@ -117,14 +117,25 @@ export default function ViewerControls({
           >
             {t('viewer.matplotlib')}
           </button>
+          <button
+            onClick={() => setRenderMode('niivue')}
+            title={t('viewer.niivueHint', 'Ventana/nivel instantáneo por GPU (solo visualización)')}
+            className={`flex items-center justify-center transition-colors ${
+              renderMode === 'niivue' ? 'bg-gray-700 text-white border border-gray-600' : 'bg-gray-800 text-gray-400 hover:bg-gray-700 border border-transparent'
+            }`}
+            style={{ height: 28, borderRadius: 6, fontSize: 12, fontWeight: 500 }}
+          >
+            {t('viewer.niivueFast', 'W/L GPU')}
+          </button>
         </div>
       </div>
       )}
 
-      {viewMode === '2d' && renderMode === 'matplotlib' && (
+      {viewMode === '2d' && (renderMode === 'matplotlib' || renderMode === 'niivue') && (
         <>
-          {/* Window / Level — real DICOM VOI-LUT (server re-renders from raw intensities).
-              Replaces the cosmetic CSS brightness/contrast filter for lesion conspicuity. */}
+          {/* Window / Level — real DICOM VOI-LUT. In 'matplotlib' the server re-renders
+              from raw intensities (a round-trip per change); in 'niivue' (W/L GPU) it is
+              an instant GPU cal_min/cal_max update — the same C/W numbers drive both. */}
           <div>
             <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
               <label style={{ fontSize: 11, fontWeight: 500, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
