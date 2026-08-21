@@ -132,6 +132,9 @@ export interface LesionChange {
   change_percent: number;
   status: LesionChangeStatus;
   iou: number;
+  /** For status==='new': false when the lesion is below the MAGNIMS ~3 mm-diameter
+   *  clinical size gate (reported but excluded from activity/DIT candidate counts). */
+  clinically_significant?: boolean;
   /** Advisory FLAIR-subtraction confirmation for status==='new' candidates: mean
    *  normalized subtraction signal (SD units) within the lesion. Positive = brighter
    *  at follow-up (supports a true new lesion). null when unavailable. */
@@ -156,6 +159,18 @@ export interface LongitudinalResult {
   burden_delta_mm3: number;
   burden_delta_percent: number;
   status_counts: Record<LesionChangeStatus, number>;
+  // ── MAGNIMS clinical CANDIDATE signals (advisory — never a diagnosis) ──
+  /** The ~3 mm-diameter minimum used to count a "clinically significant" new lesion. */
+  new_lesion_min_diameter_mm?: number;
+  /** Count of new lesions clearing the ≥3 mm size gate. */
+  new_clinically_significant_count?: number;
+  /** Count of enlarging lesions. */
+  enlarging_count?: number;
+  /** ≥1 significant new lesion → supports dissemination-in-time (CANDIDATE — a reader
+   *  must confirm; the report builder is barred from asserting DIT). */
+  dit_candidate?: boolean;
+  /** ≥2 new/enlarging lesions → MAGNIMS active-disease signal (CANDIDATE only). */
+  activity_candidate?: boolean;
   // ── Class C safety framing (the compare performs NO spatial registration) ──
   // The backend always sends these; the UI must gate any "change/new-lesion" wording on
   // them so a candidate is never presented as a verified finding (over-diagnosis hazard).

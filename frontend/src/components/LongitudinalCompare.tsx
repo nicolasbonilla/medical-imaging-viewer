@@ -373,6 +373,22 @@ export function LongitudinalCompare({
             </div>
           )}
 
+          {/* MAGNIMS activity / DIT CANDIDATE signal (advisory — never a diagnosis).
+              Gated on the same candidate framing: presented as "candidate", requires
+              radiologist adjudication, never asserts active disease or DIT. */}
+          {(result.activity_candidate || result.dit_candidate) && (
+            <div className="rounded border border-purple-500/40 bg-purple-500/10 px-2 py-1.5 text-[10px] leading-snug text-purple-700 dark:text-purple-300">
+              <span className="font-semibold">
+                {result.activity_candidate
+                  ? t('longitudinal.activityCandidate', 'Active-disease CANDIDATE')
+                  : t('longitudinal.ditCandidate', 'Dissemination-in-time CANDIDATE')}
+              </span>{' '}
+              {t('longitudinal.magnimsCandidateBody',
+                '{{n}} new (≥{{d}} mm) + {{e}} enlarging. MAGNIMS: ≥2 new/enlarging suggests activity, ≥1 new supports DIT. This is an UNADJUDICATED candidate — a radiologist must confirm before it informs any diagnosis or treatment change.',
+                { n: result.new_clinically_significant_count ?? 0, e: result.enlarging_count ?? 0, d: result.new_lesion_min_diameter_mm ?? 3 })}
+            </div>
+          )}
+
           {/* Status Counts (candidates) */}
           <div className="flex flex-wrap gap-1.5">
             {Object.entries(result.status_counts).map(([status, count]) => (
@@ -443,6 +459,12 @@ export function LongitudinalCompare({
                             {t(`longitudinal.${change.status}`, change.status)}
                           </span>
                           {/* FLAIR-subtraction confirmation badge (new candidates only) */}
+                          {change.status === 'new' && change.clinically_significant === false && (
+                            <span
+                              title={t('longitudinal.subthresholdTip', 'Below the ~3 mm clinical size gate — not counted toward activity/DIT')}
+                              className="ml-0.5 rounded bg-gray-400/15 px-1 text-[8px] font-medium text-gray-500 dark:text-gray-400"
+                            >&lt;3mm</span>
+                          )}
                           {change.status === 'new' && change.subtraction_confirmed === true && (
                             <span
                               title={t('longitudinal.subConfirmedTip', 'FLAIR brighter at follow-up (signal {{s}} SD) — supports a genuine new lesion', { s: (change.subtraction_signal ?? 0).toFixed(1) })}

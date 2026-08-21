@@ -20,6 +20,17 @@ from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
+# MAGNIMS / clinical-trial minimum for a COUNTABLE new T2 lesion: ~3 mm diameter.
+# This is distinct from (and larger than) the 3 mm³ MSSEG noise floor — a real but
+# sub-3mm speck is not a clinically-actionable new lesion. Candidates below this are
+# still reported, flagged clinically_significant=False, and excluded from the
+# activity/DIT candidate counts. A 3 mm sphere ≈ 14.14 mm³.
+NEW_LESION_MIN_DIAMETER_MM = 3.0
+
+
+def _sphere_volume_mm3(diameter_mm: float) -> float:
+    return (4.0 / 3.0) * np.pi * (diameter_mm / 2.0) ** 3
+
 
 def _extract_components(mask_3d: np.ndarray, voxel_spacing: tuple[float, float, float]):
     """
@@ -64,41 +75,46 @@ def _extract_components(mask_3d: np.ndarray, voxel_spacing: tuple[float, float, 
 
 def _match_components(comps_a, comps_b, iou_threshold: float = 0.3):
     """
-    Match lesions between two timepoints by overlap (IoU).
-    Returns: matched pairs, unmatched_a (resolved), unmatched_b (new).
+    Match lesions between two timepoints by overlap (IoU), MUTUAL-BEST.
+
+    A pair (a, b) is matched iff b is a's highest-IoU partner AND a is b's
+    highest-IoU partner (and IoU >= threshold). Mutual-best is the rigorous
+    convention (it is what the lesion-scale registration QC uses): it prevents a
+    large TP2 lesion from greedily "claiming" a small TP1 lesion that actually
+    corresponds to a different component, which would hide a real resolved/new
+    lesion. Returns: matched pairs, unmatched_a (resolved), unmatched_b (new).
     """
-    # Precompute voxel sets once (O(N+M) instead of O(N*M))
+    n, m = len(comps_a), len(comps_b)
+    if n == 0 or m == 0:
+        return [], list(comps_a), list(comps_b)
+
     sets_a = [set(map(tuple, ca["mask_indices"])) for ca in comps_a]
     sets_b = [set(map(tuple, cb["mask_indices"])) for cb in comps_b]
 
+    iou = [[0.0] * m for _ in range(n)]
+    for i in range(n):
+        for j in range(m):
+            inter = len(sets_a[i] & sets_b[j])
+            if inter == 0:
+                continue
+            union = len(sets_a[i] | sets_b[j])
+            if union:
+                iou[i][j] = inter / union
+
+    best_b_for_a = [max(range(m), key=lambda j: iou[i][j]) for i in range(n)]
+    best_a_for_b = [max(range(n), key=lambda i: iou[i][j]) for j in range(m)]
+
     matched = []
     used_b = set()
+    for i in range(n):
+        j = best_b_for_a[i]
+        if iou[i][j] >= iou_threshold and best_a_for_b[j] == i:
+            matched.append((comps_a[i], comps_b[j], iou[i][j]))
+            used_b.add(j)
 
-    for a_idx, ca in enumerate(comps_a):
-        best_iou = 0.0
-        best_b_idx = -1
-
-        for b_idx, cb in enumerate(comps_b):
-            if b_idx in used_b:
-                continue
-
-            intersection = len(sets_a[a_idx] & sets_b[b_idx])
-            union = len(sets_a[a_idx] | sets_b[b_idx])
-
-            if union == 0:
-                continue
-
-            iou = intersection / union
-            if iou > best_iou:
-                best_iou = iou
-                best_b_idx = b_idx
-
-        if best_iou >= iou_threshold and best_b_idx >= 0:
-            matched.append((ca, comps_b[best_b_idx], best_iou))
-            used_b.add(best_b_idx)
-
-    unmatched_a = [ca for ca in comps_a if not any(m[0]["id"] == ca["id"] for m in matched)]
-    unmatched_b = [comps_b[i] for i in range(len(comps_b)) if i not in used_b]
+    matched_a_ids = {mm[0]["id"] for mm in matched}
+    unmatched_a = [ca for ca in comps_a if ca["id"] not in matched_a_ids]
+    unmatched_b = [comps_b[j] for j in range(m) if j not in used_b]
 
     return matched, unmatched_a, unmatched_b
 
@@ -167,6 +183,7 @@ def compare_timepoints(
         })
 
     # New lesions
+    new_min_volume = _sphere_volume_mm3(NEW_LESION_MIN_DIAMETER_MM)
     for cb in new_lesions:
         changes.append({
             "centroid_z": round(cb["centroid"][0], 1),
@@ -180,6 +197,9 @@ def compare_timepoints(
             "change_percent": 100.0,
             "status": "new",
             "iou": 0,
+            # MAGNIMS clinical size gate: only ≥3 mm-diameter new lesions are
+            # clinically countable (below = likely non-actionable / subthreshold).
+            "clinically_significant": bool(cb["volume_mm3"] >= new_min_volume),
         })
 
     # Resolved lesions
@@ -208,6 +228,18 @@ def compare_timepoints(
     for c in changes:
         status_counts[c["status"]] += 1
 
+    # MAGNIMS activity / DIT CANDIDATE signals (never findings). The clinical
+    # thresholds (2021/2024 MAGNIMS-CMSC-NAIMS): ≥1 new lesion supports
+    # dissemination-in-time; ≥2 new/enlarging lesions signals active disease. We
+    # count only clinically-significant (≥3 mm) new lesions. These are CANDIDATE
+    # flags — the route stamps registration_verified=False + adjudication_required,
+    # and the report builder is barred from asserting DIT/active disease. They exist
+    # to surface "worth a radiologist's attention", not to diagnose.
+    new_significant = sum(
+        1 for c in changes if c["status"] == "new" and c.get("clinically_significant")
+    )
+    enlarging = status_counts["enlarged"]
+
     return {
         "changes": changes,
         "total_lesions_tp1": len(comps_a),
@@ -219,4 +251,10 @@ def compare_timepoints(
         "burden_delta_mm3": round(burden_delta, 2),
         "burden_delta_percent": round(burden_pct, 1),
         "status_counts": status_counts,
+        # Clinical candidate signals (advisory — see above).
+        "new_lesion_min_diameter_mm": NEW_LESION_MIN_DIAMETER_MM,
+        "new_clinically_significant_count": new_significant,
+        "enlarging_count": enlarging,
+        "dit_candidate": new_significant >= 1,
+        "activity_candidate": (new_significant + enlarging) >= 2,
     }
