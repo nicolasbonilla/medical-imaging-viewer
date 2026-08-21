@@ -80,6 +80,34 @@ def test_registration_verified_is_never_true_in_the_dict():
     assert res.as_dict()["registration_verified"] is False
 
 
+def _lesion(shape, c, r=4):
+    z, y, x = np.ogrid[:shape[0], :shape[1], :shape[2]]
+    return (((z - c[0]) ** 2 + (y - c[1]) ** 2 + (x - c[2]) ** 2) <= r * r).astype(np.uint8)
+
+
+def test_registered_change_candidates_contract_and_value():
+    """SHADOW register-then-compare: registration_verified must be False (invariant), the
+    comparison runs on the CO-REGISTERED mask, and a lesion that merely SHIFTED between
+    timepoints is matched as stable (registration removes the misregistration phantom) —
+    not reported as new+resolved."""
+    from app.services.registration_service import registered_change_candidates
+    shift = (0, 0, 3)
+    tp1_img = _brain_phantom()
+    tp2_img = _brain_phantom(shift=shift)
+    shp = tp1_img.shape
+    c = (shp[0] // 2, shp[1] // 2, shp[2] // 2 - 8)
+    tp1_mask = _lesion(shp, c)
+    tp2_mask = _lesion(shp, (c[0] + shift[0], c[1] + shift[1], c[2] + shift[2]))
+
+    res = registered_change_candidates(tp1_img, tp2_img, tp1_mask, tp2_mask, (1.0, 1.0, 1.0))
+
+    assert res["registration_verified"] is False          # INVARIANT — never true in shadow
+    assert res["registration_applied"] is True
+    assert "status_counts" in res and "registration_advisory_qc" in res
+    # the shifted lesion re-aligns -> matched/stable, no phantom new/resolved
+    assert res["status_counts"]["new"] == 0 and res["status_counts"]["resolved"] == 0
+
+
 def test_no_deformable_registration_symbol_present():
     """HAZ-LONG-2: deformable registration is BANNED (a warp erases real lesion change).
     Statically assert the service imports/uses no deformable transform or filter."""

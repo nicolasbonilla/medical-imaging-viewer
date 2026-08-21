@@ -199,3 +199,28 @@ def register_timepoints(fixed_img: np.ndarray, moving_img: np.ndarray,
     except Exception as e:  # noqa: BLE001 — any ITK/other failure must fail closed
         logger.warning("[Registration] failed closed", extra={"error": str(e)})
         return RegistrationResult(False, reason=f"registration error: {e}")
+
+
+def registered_change_candidates(tp1_img, tp2_img, tp1_mask, tp2_mask, spacing,
+                                 iou_threshold: float = 0.3) -> dict:
+    """SHADOW register-then-compare: register TP2->TP1 (rigid), resample the TP2 lesion mask
+    into TP1 space, and run the longitudinal change comparison on the CO-REGISTERED masks —
+    so change CANDIDATES are computed on truthfully aligned data (fewer misregistration
+    false positives) instead of index-aligned masks.
+
+    registration_verified is NEVER true here (shadow). If registration fails closed, the
+    comparison falls back to the UN-registered TP2 mask and `registration_applied=False`,
+    preserving today's candidate firewall verbatim. The QC readout is advisory, not a flip
+    gate. The caller must still present every count as an unadjudicated candidate.
+    """
+    from app.services.longitudinal_tracking_service import compare_timepoints
+    reg = register_timepoints(tp1_img, tp2_img, tp2_mask, spacing)
+    applied = bool(reg.registration_ok and reg.resampled_moving_mask is not None)
+    tp2_for_compare = reg.resampled_moving_mask if applied else np.asarray(tp2_mask)
+    result = compare_timepoints(np.asarray(tp1_mask), tp2_for_compare, tuple(float(s) for s in spacing),
+                                iou_threshold=iou_threshold)
+    result["registration_applied"] = applied
+    result["registration_verified"] = False        # invariant: never true in shadow
+    result["registration_advisory_qc"] = reg.advisory_qc
+    result["registration_reason"] = reg.reason
+    return result
