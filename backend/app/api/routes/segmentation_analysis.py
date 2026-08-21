@@ -73,6 +73,36 @@ async def _voxel_spacing_from_source_image(file_id, storage_service, context: st
     return (float(zooms[2]), float(zooms[0]), float(zooms[1]))
 
 
+async def _load_source_intensity(file_id, storage_service, context: str):
+    """Load a segmentation's SOURCE MRI intensities for longitudinal registration.
+
+    Returns (intensity_internal_3d float32, spacing) or (None, None) on ANY failure.
+    Best-effort by contract: registration is advisory and must never block or 500 the
+    comparison — a missing/unreadable source image simply disables registration and
+    the caller falls back to the index-aligned comparison (candidate firewall intact).
+
+    The array is returned in the SAME internal order as the mask ((k,a0,a1), RC-031),
+    so it lines up voxel-for-voxel with the segmentation grid.
+    """
+    if not file_id:
+        return None, None
+    try:
+        file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, file_id)
+        img, data = load_nifti_from_bytes(file_data, normalize=False)
+        data = np.asarray(data, dtype=np.float32)
+        if data.ndim != 3:
+            return None, None
+        intensity = np.transpose(data, (2, 0, 1))  # native (a0,a1,k) -> internal (k,a0,a1)
+        spacing = None
+        zooms = img.header.get_zooms()[:3]
+        if len(zooms) >= 3 and all(float(z) > 0 for z in zooms):
+            spacing = (float(zooms[2]), float(zooms[0]), float(zooms[1]))
+        return intensity, spacing
+    except Exception as e:  # noqa: BLE001 — advisory; never block the comparison
+        logger.warning(f"[{context}] source intensity load failed; registration disabled: {e}")
+        return None, None
+
+
 def _require_comparable_grid(shape_tp1, shape_tp2) -> None:
     """Reject a longitudinal comparison of two masks that don't share a voxel grid.
 
@@ -547,8 +577,10 @@ async def compare_longitudinal(
             raise HTTPException(status_code=400, detail="Both tp1 and tp2 are required")
 
         async def load_mask(spec):
-            """Return (mask, voxel_spacing) — spacing resolved from the SOURCE IMAGE
-            (never the segmentation metadata, RC-024), None if unavailable."""
+            """Return (mask, voxel_spacing, source_intensity) — spacing resolved from
+            the SOURCE IMAGE (never the segmentation metadata, RC-024), None if
+            unavailable. source_intensity is the FLAIR/MRI volume in internal order
+            for optional longitudinal registration, or None (registration disabled)."""
             mask_type = spec.get("type")
             mask_id = spec.get("id")
 
@@ -557,14 +589,18 @@ async def compare_longitudinal(
                 if _m is None:
                     raise HTTPException(status_code=404, detail=f"Segmentation {mask_id} not found")
                 spacing = None
+                intensity = None
                 try:
                     meta = await segmentation_service.get_metadata(mask_id)
-                    spacing = await _voxel_spacing_from_source_image(
-                        getattr(meta, "file_id", None), storage_service, f"longitudinal/{mask_id}"
+                    file_id = getattr(meta, "file_id", None)
+                    # One download resolves BOTH the spacing and the registration
+                    # intensities; both best-effort (must never 500 the comparison).
+                    intensity, spacing = await _load_source_intensity(
+                        file_id, storage_service, f"longitudinal/{mask_id}"
                     )
                 except Exception:  # noqa: BLE001 — spacing is best-effort; a metadata/cache
-                    spacing = None  # error must not 500 the comparison (adversarial finding D5)
-                return _m, spacing
+                    spacing, intensity = None, None  # error must not 500 (adversarial finding D5)
+                return _m, spacing, intensity
 
             elif mask_type == "instance":
                 # Lazy study-service resolution — see compare_masks (avoids a
@@ -586,12 +622,15 @@ async def compare_longitudinal(
                         spacing = (float(zooms[2]), float(zooms[0]), float(zooms[1]))
                 except Exception:  # noqa: BLE001 — spacing is best-effort
                     spacing = None
-                return mask, spacing
+                # Instance-type input IS a binary mask image (data>0), not an
+                # intensity MRI, so it carries no FLAIR to register — disable
+                # registration for this timepoint (index-aligned fallback).
+                return mask, spacing, None
             else:
                 raise HTTPException(status_code=400, detail=f"Unknown mask type: {mask_type}")
 
-        mask_tp1, spacing_tp1 = await load_mask(tp1_spec)
-        mask_tp2, _spacing_tp2 = await load_mask(tp2_spec)
+        mask_tp1, spacing_tp1, intensity_tp1 = await load_mask(tp1_spec)
+        mask_tp2, _spacing_tp2, intensity_tp2 = await load_mask(tp2_spec)
 
         logger.info("Longitudinal masks loaded", extra={
             "tp1_shape": str(mask_tp1.shape),
@@ -619,23 +658,61 @@ async def compare_longitudinal(
         # bounded by the candidate framing below + surfaced via `spacing_resolved`; it never
         # feeds a finding. Prefer resolving true spacing; the fallback only prevents a 500.
         spacing = spacing_tp1 if spacing_tp1 is not None else (1.0, 1.0, 1.0)
-        result = compare_timepoints(mask_tp1_bin, mask_tp2_bin, voxel_spacing=spacing)
 
-        # SAFETY FRAMING (adversarial finding): equal array SHAPE is NOT spatial
-        # registration — two sessions of the same patient have identical dimensions yet
-        # differ in head position/tilt, so an IoU diff manufactures FALSE new/enlarging
-        # lesions from misregistration. This service performs NO registration. Every count
-        # is therefore an UNADJUDICATED CANDIDATE, not a finding, and must not drive
-        # dissemination-in-time / diagnosis until a reader adjudicates it.
+        # KEYSTONE HARMONIZATION: when BOTH source FLAIR intensities are available and
+        # match their mask grids, rigidly co-register TP2→TP1 (fail-closed) and compute
+        # the change candidates on the ALIGNED masks — removing the misregistration
+        # false positives that an index-aligned IoU manufactures from head-position/tilt
+        # differences (the exact hazard the candidate firewall warns about). SIENA/
+        # icobrain/Pixyl all co-register before longitudinal comparison. registration
+        # remains ADVISORY: registration_verified stays False and, if registration fails
+        # closed (degenerate mask, non-convergence, any ITK error) it transparently falls
+        # back to the index-aligned comparison. Registration is only attempted within the
+        # SAME voxel grid (the A-3 guard above); it corrects pose, not grid mismatch.
+        can_register = (
+            intensity_tp1 is not None and intensity_tp2 is not None
+            and intensity_tp1.shape == mask_tp1_bin.shape
+            and intensity_tp2.shape == mask_tp2_bin.shape
+        )
+        if can_register:
+            from app.services.registration_service import registered_change_candidates
+            result = registered_change_candidates(
+                intensity_tp1, intensity_tp2, mask_tp1_bin, mask_tp2_bin, spacing
+            )
+        else:
+            result = compare_timepoints(mask_tp1_bin, mask_tp2_bin, voxel_spacing=spacing)
+            result["registration_applied"] = False
+            result["registration_reason"] = (
+                "source intensities unavailable for one or both timepoints; "
+                "index-aligned comparison"
+            )
+
+        registration_applied = bool(result.get("registration_applied"))
+
+        # SAFETY FRAMING (adversarial finding): registration here is ADVISORY and NEVER
+        # certified. Even co-registered, a residual few-mm misalignment can mint a phantom
+        # "new" lesion, and whole-brain overlap Dice cannot certify lesion-scale alignment
+        # (REG-VV dossier). So every count remains an UNADJUDICATED CANDIDATE, not a
+        # finding, and must not drive dissemination-in-time / diagnosis until a reader
+        # adjudicates it. registration_verified is hard-False regardless.
         result["registration_verified"] = False
         result["adjudication_required"] = True
         result["spacing_resolved"] = spacing_tp1 is not None
-        result["alignment"] = "equal array shape; NOT verified as spatially co-registered"
+        result["alignment"] = (
+            "rigidly co-registered (TP2→TP1), NOT verified at lesion scale"
+            if registration_applied
+            else "equal array shape; NOT spatially co-registered (index-aligned)"
+        )
         result["caveat"] = (
-            "New/enlarging/resolved counts are UNADJUDICATED CANDIDATES. Timepoints with "
-            "equal array dimensions are not necessarily voxel-aligned; this comparison does "
-            "not perform spatial registration. A reader must adjudicate each candidate before "
-            "it informs dissemination-in-time or any diagnostic conclusion."
+            "New/enlarging/resolved counts are UNADJUDICATED CANDIDATES. "
+            + ("Timepoints were rigidly co-registered, but registration is advisory and "
+               "NOT verified at lesion scale — a residual misalignment can still mint a "
+               "phantom new/enlarging lesion. "
+               if registration_applied else
+               "This comparison did NOT perform spatial registration (source intensities "
+               "unavailable); equal array dimensions are not necessarily voxel-aligned. ")
+            + "A reader must adjudicate each candidate before it informs "
+              "dissemination-in-time or any diagnostic conclusion."
         )
 
         logger.info("Longitudinal comparison completed (candidates, registration unverified)", extra={
@@ -643,6 +720,7 @@ async def compare_longitudinal(
             "resolved": result["status_counts"]["resolved"],
             "enlarged": result["status_counts"]["enlarged"],
             "spacing_resolved": result["spacing_resolved"],
+            "registration_applied": registration_applied,
         })
 
         return result

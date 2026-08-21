@@ -345,6 +345,22 @@ export function LongitudinalCompare({
                 'Voxel spacing could not be resolved — volumes (mL) are approximate.')}
             </div>
           )}
+          {/* Co-registration status (advisory). Rigid registration removes head-pose
+              misregistration false positives; it is NOT lesion-scale certification
+              (registration_verified stays false). Transparent method disclosure — a
+              gap most commercial tools leave as a black box. */}
+          <div className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-400">
+            <span className={`w-1.5 h-1.5 rounded-full ${result.registration_applied ? 'bg-sky-500' : 'bg-gray-400'}`} />
+            {result.registration_applied ? (
+              <span>
+                {t('longitudinal.coregistered', 'Rigidly co-registered (TP2→TP1, advisory)')}
+                {typeof result.registration_advisory_qc?.translation_mm === 'number' &&
+                  ` · ${result.registration_advisory_qc.translation_mm.toFixed(1)} mm, ${(result.registration_advisory_qc.rotation_deg ?? 0).toFixed(1)}°`}
+              </span>
+            ) : (
+              <span>{t('longitudinal.indexAligned', 'Index-aligned (no source image to register)')}</span>
+            )}
+          </div>
 
           {/* Status Counts (candidates) */}
           <div className="flex flex-wrap gap-1.5">

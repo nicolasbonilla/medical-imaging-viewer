@@ -159,6 +159,21 @@ export interface LongitudinalResult {
   alignment?: string;
   /** The authoritative caveat string from the backend — prefer it over any hardcoded copy. */
   caveat?: string;
+  /** True when TP2 was rigidly co-registered to TP1 before comparison (advisory, removes
+   *  head-pose misregistration false positives). Distinct from registration_verified,
+   *  which certifies lesion-scale alignment and is ALWAYS false. */
+  registration_applied?: boolean;
+  /** Why registration was or was not applied (e.g. "rigid registration converged" /
+   *  "source intensities unavailable ..."). */
+  registration_reason?: string;
+  /** Advisory-only registration QC (brain-overlap Dice, rotation °, translation mm). NOT a
+   *  lesion-scale certification. */
+  registration_advisory_qc?: {
+    brain_overlap_dice?: number;
+    rotation_deg?: number;
+    translation_mm?: number;
+    [k: string]: unknown;
+  };
 }
 
 // ============================================================================
