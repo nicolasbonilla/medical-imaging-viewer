@@ -10,8 +10,8 @@
   "gates": {
     "gate_1_failclosed_and_determinism": {
       "status": "pass",
-      "summary": "Rigid-only (deformable banned + static-tested); threads pinned to 1 for reproducible MI sampling; fail-closed on non-finite / non-3D / degenerate brain mask / non-convergence / ITK error; registration_verified never true in the response contract. Real SimpleITK recovery test passes.",
-      "evidence": "backend/app/services/registration_service.py; tests/unit/test_registration_failclosed.py (6 tests incl. real recovery)."
+      "summary": "Rigid-only (deformable banned + static-tested); threads pinned to 1 for reproducible MI sampling; fail-closed on non-finite / non-3D / degenerate brain mask / non-convergence / ITK error; registration_verified never true in the response contract. Recovery validated on a synthetic phantom AND on REAL MSLesSeg FLAIR anatomy (4 patients, injected 0-5mm rigid perturbation: post-reg brain-Dice stays flat at the unperturbed ceiling ~0.97 while pre-reg drops -> the optimizer recovers the offset). HONEST SCOPE (adversarial verification a03bbc02): real anatomy + real intensity but SYNTHETIC misalignment from the modelled rigid family (MSLesSeg is MNI-pre-aligned, so NO real inter-session misregistration exists); illustrative n=4, not powered; does NOT certify lesion-scale alignment (brain-Dice saturates) nor a production false-accept rate.",
+      "evidence": "backend/app/services/registration_service.py; tests/unit/test_registration_failclosed.py (6 tests incl. synthetic recovery); docs/longitudinal-registration/real_flair_recovery_record.json (real-FLAIR optimizer recovery)."
     },
     "gate_2_lesion_scale_qc_metric": {
       "status": "blocked",

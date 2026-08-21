@@ -1,0 +1,224 @@
+{
+  "record": "Registrar recovery on REAL MSLesSeg FLAIR \u2014 real anatomy, SYNTHETIC misalignment",
+  "scope": "Real FLAIR intensity + real Otsu masks, but the misalignment is a SYNTHETIC rigid perturbation from the family the registrar models (MSLesSeg is MNI-pre-aligned -> NO real inter-session misregistration exists here). Evidence that the OPTIMIZER converges + reduces a known rigid offset on real anatomy \u2014 NOT recovery on REAL misregistration, NOT a production false-accept rate (gate_4 NOT-MEETABLE), NOT lesion-scale certification (brain-Dice saturates).",
+  "recovery_signature": "post-reg brain-Dice is FLAT across 0-5mm injected while PRE-reg Dice drops monotonically -> the registrar pulls each perturbed pair back to the unperturbed t1/t2 ceiling. Genuine recovery, not metric saturation (pre-reg has ~0.08 dynamic range at P12).",
+  "caveats": [
+    "n=4 patients, illustrative, non-independent (4 levels x 4 patients), NOT powered",
+    "recovered_translation_mm is ||baseline+injected|| (confounded), shows under-recovery at 5mm",
+    "stopped_ok means 'not iteration-capped', not 'correct to sub-lesion tolerance'",
+    "post-reg brain-Dice ~0.97 is the different-session Otsu-mask ceiling, not 1.0"
+  ],
+  "n_patients": 4,
+  "perturbations_mm": [
+    0.0,
+    1.0,
+    2.0,
+    3.0,
+    5.0
+  ],
+  "median_pre_reg_dice_perturbed_illustrative": 0.9482,
+  "median_post_reg_dice_perturbed_illustrative": 0.9701,
+  "n_stopped_ok_of_perturbed": "16/16",
+  "rows": [
+    {
+      "patient": "P1",
+      "perturb_mm": 0.0,
+      "injected_translation_mm": 0.0,
+      "pre_reg_brain_dice": 0.9646,
+      "post_reg_brain_dice": 0.9691,
+      "recovered_translation_mm_confounded": 1.739,
+      "stopped_ok_not_iter_capped": true,
+      "reason": "rigid registration converged"
+    },
+    {
+      "patient": "P1",
+      "perturb_mm": 1.0,
+      "injected_translation_mm": 1.0,
+      "pre_reg_brain_dice": 0.968,
+      "post_reg_brain_dice": 0.9709,
+      "recovered_translation_mm_confounded": 1.1,
+      "stopped_ok_not_iter_capped": true,
+      "reason": "rigid registration converged"
+    },
+    {
+      "patient": "P1",
+      "perturb_mm": 2.0,
+      "injected_translation_mm": 2.0,
+      "pre_reg_brain_dice": 0.9552,
+      "post_reg_brain_dice": 0.9706,
+      "recovered_translation_mm_confounded": 2.902,
+      "stopped_ok_not_iter_capped": true,
+      "reason": "rigid registration converged"
+    },
+    {
+      "patient": "P1",
+      "perturb_mm": 3.0,
+      "injected_translation_mm": 3.0,
+      "pre_reg_brain_dice": 0.9485,
+      "post_reg_brain_dice": 0.9709,
+      "recovered_translation_mm_confounded": 3.456,
+      "stopped_ok_not_iter_capped": true,
+      "reason": "rigid registration converged"
+    },
+    {
+      "patient": "P1",
+      "perturb_mm": 5.0,
+      "injected_translation_mm": 5.0,
+      "pre_reg_brain_dice": 0.9316,
+      "post_reg_brain_dice": 0.9707,
+      "recovered_translation_mm_confounded": 4.515,
+      "stopped_ok_not_iter_capped": true,
+      "reason": "rigid registration converged"
+    },
+    {
+      "patient": "P10",
+      "perturb_mm": 0.0,
+      "injected_translation_mm": 0.0,
+      "pre_reg_brain_dice": 0.9884,
+      "post_reg_brain_dice": 0.9897,
+      "recovered_translation_mm_confounded": 0.47,
+      "stopped_ok_not_iter_capped": true,
+      "reason": "rigid registration converged"
+    },
+    {
+      "patient": "P10",
+      "perturb_mm": 1.0,
+      "injected_translation_mm": 1.0,
+      "pre_reg_brain_dice": 0.9826,
+      "post_reg_brain_dice": 0.9889,
+      "recovered_translation_mm_confounded": 1.129,
+      "stopped_ok_not_iter_capped": true,
+      "reason": "rigid registration converged"
+    },
+    {
+      "patient": "P10",
+      "perturb_mm": 2.0,
+      "injected_translation_mm": 2.0,
+      "pre_reg_brain_dice": 0.9692,
+      "post_reg_brain_dice": 0.9888,
+      "recovered_translation_mm_confounded": 2.27,
+      "stopped_ok_not_iter_capped": true,
+      "reason": "rigid registration converged"
+    },
+    {
+      "patient": "P10",
+      "perturb_mm": 3.0,
+      "injected_translation_mm": 3.0,
+      "pre_reg_brain_dice": 0.9619,
+      "post_reg_brain_dice": 0.9887,
+      "recovered_translation_mm_confounded": 2.996,
+      "stopped_ok_not_iter_capped": true,
+      "reason": "rigid registration converged"
+    },
+    {
+      "patient": "P10",
+      "perturb_mm": 5.0,
+      "injected_translation_mm": 5.0,
+      "pre_reg_brain_dice": 0.9423,
+      "post_reg_brain_dice": 0.9887,
+      "recovered_translation_mm_confounded": 4.598,
+      "stopped_ok_not_iter_capped": true,
+      "reason": "rigid registration converged"
+    },
+    {
+      "patient": "P11",
+      "perturb_mm": 0.0,
+      "injected_translation_mm": 0.0,
+      "pre_reg_brain_dice": 0.9528,
+      "post_reg_brain_dice": 0.956,
+      "recovered_translation_mm_confounded": 0.956,
+      "stopped_ok_not_iter_capped": true,
+      "reason": "rigid registration converged"
+    },
+    {
+      "patient": "P11",
+      "perturb_mm": 1.0,
+      "injected_translation_mm": 1.0,
+      "pre_reg_brain_dice": 0.9504,
+      "post_reg_brain_dice": 0.9575,
+      "recovered_translation_mm_confounded": 1.381,
+      "stopped_ok_not_iter_capped": true,
+      "reason": "rigid registration converged"
+    },
+    {
+      "patient": "P11",
+      "perturb_mm": 2.0,
+      "injected_translation_mm": 2.0,
+      "pre_reg_brain_dice": 0.9479,
+      "post_reg_brain_dice": 0.9573,
+      "recovered_translation_mm_confounded": 1.643,
+      "stopped_ok_not_iter_capped": true,
+      "reason": "rigid registration converged"
+    },
+    {
+      "patient": "P11",
+      "perturb_mm": 3.0,
+      "injected_translation_mm": 3.0,
+      "pre_reg_brain_dice": 0.9341,
+      "post_reg_brain_dice": 0.9574,
+      "recovered_translation_mm_confounded": 3.005,
+      "stopped_ok_not_iter_capped": true,
+      "reason": "rigid registration converged"
+    },
+    {
+      "patient": "P11",
+      "perturb_mm": 5.0,
+      "injected_translation_mm": 5.0,
+      "pre_reg_brain_dice": 0.9087,
+      "post_reg_brain_dice": 0.9572,
+      "recovered_translation_mm_confounded": 5.214,
+      "stopped_ok_not_iter_capped": true,
+      "reason": "rigid registration converged"
+    },
+    {
+      "patient": "P12",
+      "perturb_mm": 0.0,
+      "injected_translation_mm": 0.0,
+      "pre_reg_brain_dice": 0.9691,
+      "post_reg_brain_dice": 0.9698,
+      "recovered_translation_mm_confounded": 0.534,
+      "stopped_ok_not_iter_capped": true,
+      "reason": "rigid registration converged"
+    },
+    {
+      "patient": "P12",
+      "perturb_mm": 1.0,
+      "injected_translation_mm": 1.0,
+      "pre_reg_brain_dice": 0.9592,
+      "post_reg_brain_dice": 0.9695,
+      "recovered_translation_mm_confounded": 1.335,
+      "stopped_ok_not_iter_capped": true,
+      "reason": "rigid registration converged"
+    },
+    {
+      "patient": "P12",
+      "perturb_mm": 2.0,
+      "injected_translation_mm": 2.0,
+      "pre_reg_brain_dice": 0.9393,
+      "post_reg_brain_dice": 0.9686,
+      "recovered_translation_mm_confounded": 1.996,
+      "stopped_ok_not_iter_capped": true,
+      "reason": "rigid registration converged"
+    },
+    {
+      "patient": "P12",
+      "perturb_mm": 3.0,
+      "injected_translation_mm": 3.0,
+      "pre_reg_brain_dice": 0.9241,
+      "post_reg_brain_dice": 0.9693,
+      "recovered_translation_mm_confounded": 3.408,
+      "stopped_ok_not_iter_capped": true,
+      "reason": "rigid registration converged"
+    },
+    {
+      "patient": "P12",
+      "perturb_mm": 5.0,
+      "injected_translation_mm": 5.0,
+      "pre_reg_brain_dice": 0.8849,
+      "post_reg_brain_dice": 0.9687,
+      "recovered_translation_mm_confounded": 5.122,
+      "stopped_ok_not_iter_capped": true,
+      "reason": "rigid registration converged"
+    }
+  ]
+}
