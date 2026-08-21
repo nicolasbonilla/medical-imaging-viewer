@@ -75,6 +75,29 @@ def test_flag_is_not_enabled_unless_every_gate_is_green():
         )
 
 
+def test_gate2_status_is_bound_to_its_evidence_record():
+    """The Gate-2 dossier status must be consistent with its coverage record — nobody can
+    flip gate_2 green without the record's utility actually being cleared. Binds the gate
+    to its evidence (same 'a missing control must not produce a green build' pattern)."""
+    rec_path = _REPO / "docs" / "calm-ms" / "gate2_served_coverage_record.json"
+    if not rec_path.exists():
+        pytest.skip("gate2 coverage record not present")
+    rec = json.loads(rec_path.read_text(encoding="utf-8"))
+    verdict = rec.get("gate2_verdict", {})
+    g2 = _load_gate_status()["gates"]["gate_2_coverage_on_heldout"]
+    # utility not cleared in the record -> gate_2 may NOT be a green 'pass'
+    if not verdict.get("utility_cleared", False):
+        assert g2["status"] != "pass", (
+            "gate_2 is 'pass' but the coverage record's utility_cleared is False — "
+            "the recall cost (see gate2_served_coverage_record.json) must not be papered over"
+        )
+    # while amber, the gate must explicitly not advance enablement
+    if g2["status"] == "amber":
+        assert g2.get("counts_toward_enablement") is False, (
+            "amber gate_2 must set counts_toward_enablement=false"
+        )
+
+
 def test_no_deploy_config_force_enables_calm_ms():
     """A cloudbuild / deploy override must not enable CALM-MS while gates are not green."""
     data = _load_gate_status()
