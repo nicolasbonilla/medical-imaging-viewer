@@ -1,0 +1,190 @@
+{
+  "record": "CALM-MS Gate-2 within-domain coverage \u2014 SERVED raw mean-pooled statistic",
+  "requirement": "REQ-FUNC-CALM-001",
+  "generated_utc": "2026-08-21T07:37:38.883730Z",
+  "generator": "scripts/calm-ms/gate2_served_coverage.py",
+  "protocol_locked_by": "adversarial design+refute workflow w2nwis0e5 (2026-08-21)",
+  "supersedes": "learned-scorer figures 0.021/0.044/0.067 (UNWIRED; not served)",
+  "served_config": {
+    "score_pooling": "mean",
+    "threshold": 0.5,
+    "min_volume_mm3": 3.0,
+    "voxel_spacing": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "base_model": "FLAMeS",
+    "calib_overlap": 0.0,
+    "frozen_null_asset": "calm_ms_null_flames_v2.npz",
+    "n_null_scores": 1174,
+    "n_cases": 115
+  },
+  "null_equivalence_to_frozen_asset": {
+    "asserted": true,
+    "n_scores_matched": 1174
+  },
+  "exchangeability": {
+    "unit": "subject",
+    "n_subjects": 75,
+    "n_scans": 115,
+    "loso": "leave-one-SUBJECT-out \u2014 the held-out subject's ALL timepoints are excluded from its null (no same-patient self-calibration)",
+    "bootstrap_cluster": "subject",
+    "cohort_scope": "MSLesSeg (ICPR-2024) multi-center, single curated dataset / annotation protocol; NOT external-scanner validated"
+  },
+  "presets": [
+    {
+      "alpha": 0.3,
+      "realized_fdr_mean": 0.10455921284161962,
+      "realized_fdr_ci95_subject_bootstrap": [
+        0.07352383586278674,
+        0.13833124821001716
+      ],
+      "n_bootstrap": 10000,
+      "seed": 0,
+      "fdp_quantiles": {
+        "p50": 0.0,
+        "p75": 0.16228070175438597,
+        "p90": 0.3333333333333333,
+        "p95": 0.5,
+        "max": 1.0
+      },
+      "frac_scans_fdp_gt_alpha": 0.12173913043478261,
+      "frac_scans_fdp_gt_alpha_cond_selected": 0.19444444444444445,
+      "n_scans_zero_selected": 43,
+      "sensitivity_mean": 0.3400218997941926,
+      "sensitivity_median": 0.2857142857142857,
+      "n_selected_mean": 7.373913043478261,
+      "n_selected_total": 848,
+      "overlap_sensitivity_probe_A_eval_only": {
+        "eval_0.10": {
+          "realized_fdr_mean": 0.10455921284161962,
+          "frac_scans_fdp_gt_alpha": 0.12173913043478261
+        },
+        "eval_majority": {
+          "realized_fdr_mean": 0.17237414878685575,
+          "frac_scans_fdp_gt_alpha": 0.2782608695652174
+        },
+        "greedy_1to1": {
+          "realized_fdr_mean": 0.11718769712611413,
+          "frac_scans_fdp_gt_alpha": 0.13043478260869565
+        }
+      },
+      "pass_alpha": true
+    },
+    {
+      "alpha": 0.2,
+      "realized_fdr_mean": 0.08175641139196126,
+      "realized_fdr_ci95_subject_bootstrap": [
+        0.04817177271965016,
+        0.12018562614968178
+      ],
+      "n_bootstrap": 10000,
+      "seed": 0,
+      "fdp_quantiles": {
+        "p50": 0.0,
+        "p75": 0.07738095238095238,
+        "p90": 0.25,
+        "p95": 0.5,
+        "max": 1.0
+      },
+      "frac_scans_fdp_gt_alpha": 0.13043478260869565,
+      "frac_scans_fdp_gt_alpha_cond_selected": 0.25862068965517243,
+      "n_scans_zero_selected": 57,
+      "sensitivity_mean": 0.19711394581742359,
+      "sensitivity_median": 0.0,
+      "n_selected_mean": 3.869565217391304,
+      "n_selected_total": 445,
+      "overlap_sensitivity_probe_A_eval_only": {
+        "eval_0.10": {
+          "realized_fdr_mean": 0.08175641139196126,
+          "frac_scans_fdp_gt_alpha": 0.13043478260869565
+        },
+        "eval_majority": {
+          "realized_fdr_mean": 0.13539217886404586,
+          "frac_scans_fdp_gt_alpha": 0.24347826086956523
+        },
+        "greedy_1to1": {
+          "realized_fdr_mean": 0.08887435738458757,
+          "frac_scans_fdp_gt_alpha": 0.1391304347826087
+        }
+      },
+      "pass_alpha": true
+    },
+    {
+      "alpha": 0.1,
+      "realized_fdr_mean": 0.017729468599033814,
+      "realized_fdr_ci95_subject_bootstrap": [
+        0.006348627042057699,
+        0.03206898972142874
+      ],
+      "n_bootstrap": 10000,
+      "seed": 0,
+      "fdp_quantiles": {
+        "p50": 0.0,
+        "p75": 0.0,
+        "p90": 0.0,
+        "p95": 0.17666666666666658,
+        "max": 0.3333333333333333
+      },
+      "frac_scans_fdp_gt_alpha": 0.0782608695652174,
+      "frac_scans_fdp_gt_alpha_cond_selected": 0.3103448275862069,
+      "n_scans_zero_selected": 86,
+      "sensitivity_mean": 0.07649097084179926,
+      "sensitivity_median": 0.0,
+      "n_selected_mean": 1.2,
+      "n_selected_total": 138,
+      "overlap_sensitivity_probe_A_eval_only": {
+        "eval_0.10": {
+          "realized_fdr_mean": 0.017729468599033814,
+          "frac_scans_fdp_gt_alpha": 0.0782608695652174
+        },
+        "eval_majority": {
+          "realized_fdr_mean": 0.047329192546583854,
+          "frac_scans_fdp_gt_alpha": 0.13043478260869565
+        },
+        "greedy_1to1": {
+          "realized_fdr_mean": 0.017729468599033814,
+          "frac_scans_fdp_gt_alpha": 0.0782608695652174
+        }
+      },
+      "pass_alpha": true
+    }
+  ],
+  "baseline_keep_all": {
+    "fdr_mean": 0.32924450025541024,
+    "sensitivity_mean": 0.8196874062233648,
+    "n_selected_mean": 33.61739130434783,
+    "note": "uncontrolled operating point \u2014 the status quo the guarantee is measured against"
+  },
+  "sensitivity_acceptance": {
+    "gated_here": false,
+    "deferred_to": "gate_4/5",
+    "hazards": [
+      "HAZ-CALM-3",
+      "HAZ-CALM-8"
+    ],
+    "why": "a missed lesion is the more severe MS hazard and a recall floor needs a usability/clinical study, not this coverage script. The design is ADDITIVE (RC-CALM-1): the base FLAMeS mask is NEVER suppressed, so an unselected or low-tier true lesion is still painted and reviewed \u2014 this bounds recall-collapse to a UTILITY (tier-usefulness) failure, not a direct missed-lesion SAFETY failure. The residual automation-bias risk (a hurried reader trusting the tiers) is exactly what the Gate 4 usability study must prove."
+  },
+  "gate2_verdict": {
+    "status": "amber \u2014 marginal within-domain coverage MET; utility (recall) NOT cleared",
+    "coverage_subclaim_met": true,
+    "utility_cleared": false,
+    "counts_toward_enablement": false,
+    "does_not_advance_overall": "delta to enablement is essentially unchanged \u2014 Gates 4-7 (usability, PCCP, base-model producer, external multi-site) remain the blocking, expensive/unmeetable items; do not read a rising pass-count as 'nearly there'",
+    "marginal_is_consistency_check": "Gate 1 already proves marginal FDR <= alpha BY THEOREM (BH on conformal p-values, PRDS). This record only confirms it EMPIRICALLY within-domain and that subject-LOSO exchangeability roughly holds inside MSLesSeg \u2014 a sanity/consistency check, NOT independent safety evidence.",
+    "over_conservatism": "realized FDR runs far below target (e.g. 0.018 vs 0.10) BECAUSE the operating point selects NOTHING on 86/115 scans at alpha=0.10 (recall median 0). 'Well below alpha' is a symptom of near-empty selection, not a safety margin.",
+    "recall_collapse": "alpha 0.3: recall 0.340 (median 0.29), 43/115 scans select nothing; alpha 0.2: recall 0.197 (median 0.00), 57/115 scans select nothing; alpha 0.1: recall 0.076 (median 0.00), 86/115 scans select nothing",
+    "must_not_be_read_as": [
+      "clinically useful sensitivity \u2014 recall collapses (median 0 at alpha 0.10 and 0.20) and the point selects nothing on 86/115 scans at alpha=0.10; FDR is partly 'controlled' by not selecting",
+      "a per-scan guarantee \u2014 per-scan FDP disperses; up to ~31% of SELECTING scans exceed alpha",
+      "cross-site / external-scanner validity \u2014 that is Gate 7, still blocked",
+      "clinical fragment-level FDR \u2014 headline uses any-voxel TP; under majority-overlap it rises (Probe A)",
+      "the exact served-115 guarantee \u2014 this is the subject-LOSO estimate"
+    ],
+    "relocated_findings": [
+      "site-shift / OOD-blind confident-FP inflation (realized FDR up to ~6x, 0/115 flagged) -> Gate 7 external-validation evidence"
+    ],
+    "overall_status_unchanged": "NOT_READY (Gates 4-7 still blocked)"
+  }
+}

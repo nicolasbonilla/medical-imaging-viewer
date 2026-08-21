@@ -14,9 +14,16 @@
       "evidence": "tests/unit/test_conformal_lesion_fdr.py, test_conformal_adversarial_fixes.py; PROGRAM-CONSOLIDATION.md (BH matches reference 0/20000)."
     },
     "gate_2_coverage_on_heldout": {
-      "status": "fail",
-      "summary": "Within-domain (MSLesSeg) marginal FDR<=alpha holds for the SERVED statistic (raw pooled probability) BUT a coverage record for the raw-prob served path must be generated and cited (the 0.021/0.044/0.067 figures describe the UNWIRED learned scorer, not the served config). Cross-site validity is UNTESTED on a clean second site (only one decontaminated cohort exists) and fails under a plausible confident-FP shift the OOD monitor cannot see (0/115). Per-scan FDP disperses (~25% exceed alpha at 0.30).",
-      "evidence": "F1-site-shift-investigation.md; site_recalibration_record.json (synthetic +1.5-logit demo); lesion_scorer_record.json (now labelled BUILT, NOT WIRED)."
+      "status": "amber",
+      "coverage_subclaim_met": true,
+      "utility_cleared": false,
+      "counts_toward_enablement": false,
+      "summary": "SERVED raw mean-pooled statistic, MSLesSeg subject-LOSO (75 subjects / 115 scans, calib_overlap=0.0, null value-equivalent to the frozen 1174 scores). Marginal lesion-wise FDR <= alpha at all three presets (0.105/0.082/0.018), subject-clustered bootstrap 95% CI upper <= alpha. This is a CONSISTENCY CHECK confirming the Gate-1 theorem holds within-domain (no implementation bug + within-cohort exchangeability), NOT independent safety evidence. NOT cleared: (a) RECALL COLLAPSE - sensitivity 0.340/0.197/0.076 (median 0 at 0.20 and 0.10), selects NOTHING on 43/57/86 of 115 scans; FDR is partly controlled by near-empty selection (realized FDR up to ~5x below target = over-conservative, not well-calibrated). (b) per-scan FDP disperses: exceeds alpha on 12-13% of scans, 19-31% conditional on selecting. (c) any-voxel TP headline; under majority-overlap realized FDR rises (Probe A). Cross-site / OOD-blind confident-FP inflation RELOCATED to Gate 7. Recall-floor acceptance is an OPEN BLOCKING item at Gate 4/5 (HAZ-CALM-3/8); the additive design (base mask never suppressed) bounds the hazard to utility, not safety, but does NOT close it.",
+      "evidence": "docs/calm-ms/gate2_served_coverage_record.json; F1-site-shift-investigation.md; lesion_scorer_record.json (BUILT, NOT WIRED).",
+      "open_findings": [
+        "recall-collapse / near-empty selection -> Gate 4/5, HAZ-CALM-3/8 (BLOCKING)",
+        "per-scan FDP dispersion -> intrinsic to a marginal guarantee; usability disclosure (Gate 4)"
+      ]
     },
     "gate_3_prior_art_differentiation": {
       "status": "pass",

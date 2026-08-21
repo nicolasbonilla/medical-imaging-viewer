@@ -51,7 +51,7 @@ deployed guarantee.
 | Gate | Status | One-line |
 |---|---|---|
 | 1 · Calibration validity | **pass** | Conformal-p + BH marginal-FDR valid by theorem; fail-closed matrix enforced + tested. |
-| 2 · Coverage on held-out | **fail** | Cite the **served** raw-prob coverage (not the unwired learned scorer); cross-site is UNTESTED on clean data + fails under a synthetic confident-FP shift. |
+| 2 · Coverage on held-out | **amber** | SERVED raw-prob subject-LOSO (75 subj/115 scans): marginal FDR ≤ α at all presets (0.105/0.082/0.018, upper CI ≤ α) — a *consistency check* on the Gate-1 theorem. Utility NOT cleared: recall collapses (0.34/0.20/0.076; selects nothing on 43/57/86 scans). Does **not** advance enablement; recall-floor → Gate 4/5. Record: `gate2_served_coverage_record.json`. |
 | 3 · Prior-art differentiation | **pass** | Precision/FDR vs CLS's FNR; honest not-novel-wrapper framing. |
 | 4 · Usability (IEC 62366-1) | **blocked** | Summative study (HAZ-CALM-2/3/8) does not exist. |
 | 5 · Change control (PCCP) | **blocked** | Per-preset clinical validation + authorized PCCP do not exist. |

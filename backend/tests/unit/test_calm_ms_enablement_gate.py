@@ -26,7 +26,9 @@ _REPO = _BACKEND.parent                                  # repo root
 _CONFIG = _BACKEND / "app" / "core" / "config.py"
 _GATE_STATUS = _REPO / "docs" / "calm-ms" / "vv_gate_status.json"
 _FLAG = "CALM_MS_RESEARCH_ENABLED"
-_VALID_STATUS = {"pass", "fail", "blocked"}
+# "amber" = a sub-claim met but the gate is not green (does not advance enablement).
+# Only "pass" counts toward enabling the flag; amber/fail/blocked all keep it dark.
+_VALID_STATUS = {"pass", "amber", "fail", "blocked"}
 
 
 def _load_gate_status() -> dict:
