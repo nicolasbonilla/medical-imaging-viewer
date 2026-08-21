@@ -67,6 +67,30 @@ def test_bright_new_lesion_is_subtraction_confirmed():
     assert new_change["subtraction_signal"] > 0.5
 
 
+def test_border_candidate_is_withheld_not_confirmed():
+    """Adversarial Finding 1: a NEW candidate whose component touches the brain/FOV
+    boundary must be WITHHELD (subtraction_confirmed=None, note='border'), even when
+    the intensity delta there is large — that edge is exactly where a linear-resample
+    rim falsely 'confirms' a misregistration phantom."""
+    shp = (64, 64, 64)
+    edge = (32, 32, 52)                           # near the +x brain boundary (r≈22 @ center 32)
+    tp1_img = _brain_phantom()
+    tp2_img = _brain_phantom()
+    tp2_img[_sphere(shp, edge, 4)] = 300.0        # strong (would-confirm) signal at the edge
+    tp1_mask = np.zeros(shp, np.uint8)
+    tp2_mask = _sphere(shp, edge, 4).astype(np.uint8)
+
+    res = registered_change_candidates(tp1_img, tp2_img, tp1_mask, tp2_mask, SPACING)
+
+    assert res["status_counts"]["new"] == 1
+    assert res["subtraction_available"] is True
+    new_change = next(c for c in res["changes"] if c["status"] == "new")
+    assert new_change["subtraction_confirmed"] is None        # withheld, not a false True
+    assert new_change.get("subtraction_note") == "border"
+    assert res["subtraction_summary"]["new_withheld"] >= 1
+    assert res["subtraction_summary"]["new_subtraction_confirmed"] == 0
+
+
 def test_mask_only_artifact_is_not_confirmed():
     """A 'new' candidate whose FLAIR is UNCHANGED (identical intensity at both
     timepoints) is not subtraction-confirmed — the false-positive filter."""

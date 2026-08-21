@@ -455,6 +455,13 @@ export function LongitudinalCompare({
                               className="ml-0.5 rounded bg-gray-400/15 px-1 text-[8px] font-semibold text-gray-500 dark:text-gray-400"
                             >○sub</span>
                           )}
+                          {change.status === 'new' && change.subtraction_confirmed == null &&
+                            result.subtraction_available && change.subtraction_note === 'border' && (
+                            <span
+                              title={t('longitudinal.subWithheldTip', 'At brain/FOV edge — subtraction verdict withheld (unreliable at the boundary)')}
+                              className="ml-0.5 rounded bg-amber-400/15 px-1 text-[8px] font-semibold text-amber-600 dark:text-amber-400"
+                            >◌sub</span>
+                          )}
                         </span>
                       </td>
                       <td className="py-0.5 px-1 text-right font-mono text-gray-600 dark:text-gray-300">

@@ -138,8 +138,11 @@ export interface LesionChange {
   subtraction_signal?: number | null;
   /** True when the new candidate's subtraction signal clears the advisory bar (likely
    *  a genuine new lesion, not a segmentation/registration artifact). null/absent for
-   *  non-new changes or when subtraction was unavailable. NEVER a diagnostic verdict. */
+   *  non-new changes or when subtraction was unavailable/withheld. NEVER a diagnostic verdict. */
   subtraction_confirmed?: boolean | null;
+  /** Why the subtraction verdict is what it is: 'assessed' | 'border' | 'unmatched' |
+   *  'outside-domain' | 'no-centroid'. 'border' = at brain/FOV edge → verdict withheld. */
+  subtraction_note?: string;
 }
 
 export interface LongitudinalResult {

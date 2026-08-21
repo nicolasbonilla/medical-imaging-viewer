@@ -63,6 +63,12 @@ class RegistrationResult:
     # interpolation (intensities, not labels). Enables an intensity subtraction map
     # (TP2−TP1) for new-lesion confirmation. None when registration failed closed.
     resampled_moving_image: np.ndarray | None = None
+    # Valid subtraction domain (fixed space): where BOTH timepoints have brain —
+    # fixed brain ∩ resampled-moving brain. Excludes air/background, the resample
+    # zero-pad rim, and FOV-clipped regions, so subtraction normalization and
+    # boundary rejection avoid confirming misregistration/edge artifacts (A+B
+    # adversarial Findings 1/2). None when registration failed closed.
+    brain_domain: np.ndarray | None = None
 
     def as_dict(self) -> dict:
         return {
@@ -184,6 +190,14 @@ def register_timepoints(fixed_img: np.ndarray, moving_img: np.ndarray,
         # labels) so a subtraction map (TP2−TP1) can confirm new-lesion candidates.
         moving_img_resampled = sitk.Resample(m, f, tx, sitk.sitkLinear, 0.0, m.GetPixelID())
         resampled_img_arr = sitk.GetArrayFromImage(moving_img_resampled).astype(np.float32)
+
+        # Valid subtraction domain = fixed brain ∩ resampled-moving brain. Only where
+        # BOTH timepoints have brain is a subtraction meaningful; this excludes the
+        # resample zero-pad rim and FOV-clipped regions where a linear-interpolation
+        # edge would otherwise mint a false positive subtraction signal.
+        brain_fixed = sitk.GetArrayViewFromImage(fmask) > 0
+        brain_moving = sitk.GetArrayViewFromImage(mmask_resampled) > 0
+        brain_domain_arr = (brain_fixed & brain_moving).astype(np.uint8)
         params = tx.GetParameters()  # (rx, ry, rz, tx, ty, tz) for Euler3D
         rot_deg = float(np.degrees(np.linalg.norm(params[:3])))
         trans_mm = float(np.linalg.norm(params[3:6]))
@@ -205,7 +219,8 @@ def register_timepoints(fixed_img: np.ndarray, moving_img: np.ndarray,
             advisory_qc=advisory,
             transform_params={"rotation_deg": rot_deg, "translation_mm": trans_mm},
             resampled_moving_mask=resampled_arr,
-            resampled_moving_image=resampled_img_arr)
+            resampled_moving_image=resampled_img_arr,
+            brain_domain=brain_domain_arr)
     except Exception as e:  # noqa: BLE001 — any ITK/other failure must fail closed
         logger.warning("[Registration] failed closed", extra={"error": str(e)})
         return RegistrationResult(False, reason=f"registration error: {e}")
@@ -245,9 +260,14 @@ def registered_change_candidates(tp1_img, tp2_img, tp1_mask, tp2_mask, spacing,
     if applied and reg.resampled_moving_image is not None:
         try:
             from app.services.longitudinal_subtraction import subtraction_map, confirm_new_candidates
-            sub = subtraction_map(np.asarray(tp1_img, dtype=np.float32), reg.resampled_moving_image)
+            sub = subtraction_map(
+                np.asarray(tp1_img, dtype=np.float32), reg.resampled_moving_image,
+                brain_mask=reg.brain_domain,
+            )
             if sub is not None:
-                summary = confirm_new_candidates(result["changes"], tp2_for_compare, sub)
+                summary = confirm_new_candidates(
+                    result["changes"], tp2_for_compare, sub, brain_domain=reg.brain_domain,
+                )
                 result["subtraction_available"] = True
                 result["subtraction_summary"] = summary
         except Exception as e:  # noqa: BLE001 — advisory; must never break the comparison
