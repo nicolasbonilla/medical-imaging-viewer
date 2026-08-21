@@ -995,7 +995,10 @@ class SegmentationService:
                 buffer.seek(0)
 
                 data = np.load(buffer)
-                masks_3d = data["masks"]
+                # Force uint8 (audit #11): a non-uint8 legacy NPZ would make tobytes() length
+                # (D*H*W*itemsize) mismatch the <III binary header -> frontend garbage overlay
+                # + a follow-up Save persisting corruption. The NIfTI branch already coerces.
+                masks_3d = np.asarray(data["masks"]).astype(np.uint8)
 
                 logger.info("Loaded masks from GCS (NPZ legacy)", extra={"segmentation_id": segmentation_id, "shape": masks_3d.shape})
                 return masks_3d
@@ -1003,8 +1006,17 @@ class SegmentationService:
             logger.debug("No masks found in GCS", extra={"segmentation_id": segmentation_id})
             return None
         except Exception as e:
-            logger.error("Failed to load masks from GCS", extra={"error": str(e)})
-            return None
+            # Availability + data-integrity (audit #7): a genuine "not found" already returned
+            # None above (blob.exists() False). Reaching HERE means a TRANSIENT read/decode
+            # failure (network, corrupt download) — returning None would send it down the
+            # caller's "mask absent from GCS" path -> 404, misrepresenting a DURABLE mask as
+            # deleted. Re-raise so the route surfaces a retryable 5xx instead.
+            logger.error("Transient failure loading masks from GCS", extra={"error": str(e), "segmentation_id": segmentation_id})
+            raise SegmentationException(
+                message=f"Transient failure reading segmentation masks from storage: {e}",
+                error_code="GCS_READ_FAILED",
+                details={"segmentation_id": segmentation_id},
+            )
 
     def get_segmentation_nifti(self, segmentation_id: str) -> Optional[bytes]:
         """Get the segmentation NIfTI file as raw bytes for direct serving.
@@ -1180,6 +1192,15 @@ class SegmentationService:
                     )
                     return False
 
+        except SegmentationException:
+            # A TRANSIENT GCS read/decode error (audit #7), not a "not found". Try the local
+            # fallback for resilience; but if that ALSO fails, RE-RAISE (retryable 5xx) rather
+            # than falling through to return False -> 404, which would misrepresent a durable
+            # but temporarily-unreadable mask as deleted.
+            logger.warning("Transient GCS read error; trying local fallback", extra={"segmentation_id": segmentation_id})
+            if self._load_segmentation_local(segmentation_id):
+                return True
+            raise
         except Exception as e:
             logger.warning("Failed to load from Firestore/GCS, trying local", extra={"error": str(e)})
 

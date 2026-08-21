@@ -198,7 +198,11 @@ class VolumetryRequest(BaseModel):
         description="Voxel spacing in mm [z, y, x]",
     )
     patient_age: Optional[int] = Field(None, ge=0, le=150)
-    patient_sex: Optional[str] = Field(None, pattern="^(M|F)$")
+    patient_sex: Optional[str] = Field(
+        None, pattern="^(M|F)$",
+        description="Accepted but NOT yet used for normative comparison (audit #6): "
+                    "NORMATIVE_VOLUMES is single-sex, so percentiles/abnormality flags are "
+                    "age-based only. The response carries normative_sex_stratified=false.")
 
 
 class VolumetryCompareRequest(BaseModel):

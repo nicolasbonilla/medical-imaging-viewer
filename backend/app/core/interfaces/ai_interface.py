@@ -115,6 +115,10 @@ class VolumetryResult(BaseModel):
     # brain volume (confounded by head size) cannot provide.
     brain_parenchymal_fraction: Optional[float] = Field(None, ge=0.0, le=1.0)
     processing_time_ms: Optional[int] = None
+    # Honesty (audit #6): the normative percentiles + abnormality flags are AGE-based only.
+    # patient_sex is accepted by the API but NOT yet used (NORMATIVE_VOLUMES is single-sex),
+    # so a sex-adjusted claim would be false. Consumers must NOT present these as sex-adjusted.
+    normative_sex_stratified: bool = False
 
 
 class VolumetryComparisonResult(BaseModel):

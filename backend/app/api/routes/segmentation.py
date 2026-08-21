@@ -886,6 +886,20 @@ async def upload_binary_mask(
                 detail=f"Segmentation {segmentation_id} not found"
             )
 
+        # Class C guard (audit #12): reject an upload whose dims don't match the
+        # segmentation's KNOWN shape. The len==D*H*W self-consistency check above does NOT
+        # catch a height/width SWAP (same product, transposed) — persisting it would relocate
+        # every voxel (a wrong-location hazard). The mask grid is fixed by the source image.
+        existing = seg_data.get("masks_3d")
+        known_shape = (tuple(existing.shape) if existing is not None and getattr(existing, "size", 0)
+                       else seg_data.get("image_shape"))
+        if known_shape is not None and tuple(masks_3d.shape) != tuple(known_shape):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(f"Uploaded mask shape {tuple(masks_3d.shape)} != segmentation shape "
+                        f"{tuple(known_shape)}; refusing to persist a dimension mismatch/swap."),
+            )
+
         # Update the mask in cache
         seg_data["masks_3d"] = masks_3d
         seg_data["metadata"].modified_at = datetime.utcnow()
