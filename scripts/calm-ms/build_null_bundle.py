@@ -6,13 +6,14 @@ missing/empty or if a request's probability map does not match its provenance
 (same base model + same MNI grid/spacing). This is the enforced exchangeability
 invariant the adversarial Class C review demanded — never a comment or a warning.
 
-v1 uses the RAW pooled-probability null (the learned scorer is deferred to v2 to
-keep the validation surface minimal). Built over the 145 FLAMeS-derived labeled
-cases (open_ms_data 30 + MSLesSeg 115), all MNI 1mm.
+This RAW pooled-probability null (the learned scorer is deferred / research-only)
+is built over the 115 FLAMeS-derived labeled MSLesSeg cases, all MNI 1mm. v2 is
+DECONTAMINATED: open_ms_data (30 cases) was dropped because it is FLAMeS-in-sample
+(ref-13) — so its false-candidate scores are not exchangeable with held-out cases.
 
     python scripts/calm-ms/build_null_bundle.py
 
-Output: backend/app/services/assets/calm_ms_null_flames_v1.npz
+Output: backend/app/services/assets/calm_ms_null_flames_v2.npz
 """
 import os, sys, glob, json, datetime, hashlib
 import numpy as np
@@ -41,10 +42,14 @@ VERSION = "v2"                               # v2: DECONTAMINATED — FLAMeS-ind
 # and their false-candidate scores are NOT exchangeable with held-out cases. They are
 # EXCLUDED from the null. MSLesSeg is FLAMeS external-test-only (base_model_overlap:false in
 # registry.yaml) -> the only FLAMeS-independent 3D-MNI labelled cohort we hold. The v2 null is
-# therefore single-site (Catania 1.5T) but VALID (exchangeable) for a FLAMeS base; its
-# guarantee is honestly scoped to that distribution. See docs/calm-ms/DATA-STRATEGY.md.
+# therefore VALID (exchangeable) for a FLAMeS base and its guarantee is honestly scoped to the
+# MSLesSeg acquisition distribution. NOTE: MSLesSeg (ICPR-2024) is a MULTI-CENTER cohort — its
+# 115 series were acquired at different hospitals (Nature Sci Data 2025, s41597-025-05250-y),
+# curated + annotated by Unict/IPLab (Catania). It is a SINGLE curated dataset + annotation
+# protocol, NOT a single scanner; do not label it "single-site". It has NOT been validated on
+# external deployment scanners. See docs/calm-ms/DATA-STRATEGY.md.
 COHORTS = {
-    "mslesseg-flames": "MSLesSeg (ICPR-2024, Catania) — FLAMeS-INDEPENDENT (external test, not training)",
+    "mslesseg-flames": "MSLesSeg (ICPR-2024, multi-center; curated by Unict/IPLab) — FLAMeS-INDEPENDENT (external test, not training)",
 }
 
 
@@ -108,11 +113,11 @@ def main():
         "ood_n_cases": int(ood_reference.shape[0]),
         "cohorts": COHORTS,
         "base_model_independent": True,          # v2: no cohort overlaps FLAMeS training (exchangeable)
-        "single_site": "Catania 1.5T (MSLesSeg) — guarantee scoped to this distribution",
+        "acquisition_scope": "MSLesSeg (ICPR-2024) — multi-center cohort (115 series acquired at different hospitals), a SINGLE curated dataset + annotation protocol; NOT validated on external deployment scanners. Guarantee scoped to this MSLesSeg acquisition distribution.",
         "decontaminated_from": "v1 excluded open_ms_data (FLAMeS ref-13 in-sample)",
         "built_utc": datetime.datetime.utcnow().isoformat() + "Z",
         "requirement": "REQ-FUNC-CALM-001",
-        "note": "v2 DECONTAMINATED: FLAMeS-independent (MSLesSeg only) so the conformal null is exchangeable for a FLAMeS base; single-site (Catania). Valid ONLY for FLAMeS-derived probability maps on this exact MNI grid. Endpoint MUST fail closed on any provenance mismatch.",
+        "note": "v2 DECONTAMINATED: FLAMeS-independent (MSLesSeg only) so the conformal null is exchangeable for a FLAMeS base. MSLesSeg is a single curated MULTI-CENTER dataset (not one scanner), scoped to its own acquisition distribution and NOT validated on external scanners. Valid ONLY for FLAMeS-derived probability maps on this exact MNI grid. Endpoint MUST fail closed on any provenance mismatch.",
     }
     prov_json = json.dumps(provenance, indent=2, sort_keys=True)
     provenance["sha256"] = hashlib.sha256((prov_json + null.tobytes().hex()[:1024]).encode()).hexdigest()[:16]

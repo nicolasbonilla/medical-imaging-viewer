@@ -1,5 +1,7 @@
 {
-  "model": "degree-2 polynomial logistic regression (SHIPPED; calm_ms_scorer)",
+  "model": "degree-2 polynomial logistic regression (calm_ms_scorer)",
+  "status": "BUILT, NOT WIRED — research asset only. The served conformal path (conformal_review_service) scores lesion candidates by RAW pooled probability (score_pooling=mean, null_kind=raw_pooled_probability), NOT this learned scorer. calm_ms_scorer.LesionScorer is imported by no runtime service. Therefore the numbers below describe a configuration that is NOT the shipped guarantee; they must not be cited as the endpoint's realized coverage.",
+  "training_contamination_warning": "This scorer was fit on sites [openms, mslesseg]. open_ms_data is FLAMeS-in-sample (ref-13) — the exact cohort the v2 null was DEcontaminated to exclude. So within_domain numbers are optimistically contaminated. Any future wiring of this scorer requires (a) retraining on FLAMeS-independent data only and (b) a NEW null asset built with the SAME learned statistic (null_kind=learned_score).",
   "supersedes": "prior record described a gradient-boosting model + a rigged FP-only shift",
   "within_domain": {
     "auc_patient_grouped": 0.7961,

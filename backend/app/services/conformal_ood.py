@@ -18,8 +18,11 @@ Statistic + threshold are chosen from EVIDENCE, not guessed
 a naive max-robust-z statistic was found inadequate (to catch a +6SD score-regime
 shift it had to flag ~9% of legitimate cases). Mahalanobis — which accounts for the
 strong correlation among the mean/quantile features — separates far better: at
-threshold 5.0 it withholds the guarantee on only ~2% of legitimate in-distribution
-cases (a fail-closed, utility-only cost) while catching a +6SD shift ~100% of the time.
+threshold 5.0 it withholds the guarantee on ~2.6% of the 115 legitimate
+in-distribution cases (a fail-closed, utility-only cost) while catching a +6SD
+score-regime shift ~92% of the time — the best +6SD detection among thresholds that
+meet the <=3% false-OOD budget (t=4 detects ~98% but false-flags 4.3%). Numbers are
+the shipped validation record (115 MSLesSeg cases; assets/ood_validation_record.json).
 
 SCOPE / FUNDAMENTAL limitation — read before trusting this (RMF HAZ-CALM-5).
 Adversarial verification (2 independent reviews, runnable repros) proved this monitor
@@ -58,9 +61,10 @@ import numpy as np
 OOD_FEATURES = ("n_candidates", "mean", "q10", "q50", "q90")
 
 # Mahalanobis distance beyond which a case is declared out of the validated
-# distribution. Chosen from the validation sweep (validate_ood_monitor.py): the
-# lowest threshold with <=3% false-OOD on the 145 legit cases AND >=95% detection of
-# a +6SD score-regime shift. See assets/ood_validation_record.json.
+# distribution. Chosen from the validation sweep (validate_ood_monitor.py): the lowest
+# threshold whose false-OOD rate on the 115 legit cases is <=3% (2.6% at t=5; t=4 is
+# 4.3%). At that threshold, +6SD score-regime-shift detection is ~92% (t=4 reaches ~98%
+# but breaks the false-OOD budget). See assets/ood_validation_record.json.
 OOD_THRESHOLD = 5.0
 # Ridge added to the whitened covariance before inversion — the mean/quantile
 # features are near-collinear, so a small ridge keeps the inverse well-conditioned

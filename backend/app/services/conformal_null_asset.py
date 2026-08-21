@@ -132,6 +132,16 @@ def load_null_asset(path: str = _ASSET_PATH) -> NullAsset:
     if provenance.get("base_model") != EXPECTED_BASE_MODEL:
         raise ConformalAssetError(
             f"CALM-MS null base_model {provenance.get('base_model')!r} != expected {EXPECTED_BASE_MODEL!r}")
+    # Contamination gate (fail closed): a null whose cohorts overlap the base model's
+    # TRAINING data yields in-sample false-candidate scores that are NOT exchangeable
+    # with held-out cases (the exact defect the v2 decontamination fixed). Refuse to
+    # serve any null not explicitly stamped base_model_independent=true. This makes a
+    # contaminated rebuild structurally un-shippable rather than trusted by convention.
+    if provenance.get("base_model_independent") is not True:
+        raise ConformalAssetError(
+            "CALM-MS null is not stamped base_model_independent=true — its cohorts may "
+            "overlap the base model's training set (non-exchangeable false-candidate "
+            "scores); refusing to serve a potentially contaminated guarantee")
     if np.unique(null).size < MIN_NULL_DISTINCT or float(np.std(null)) < MIN_NULL_STD:
         raise ConformalAssetError(
             "CALM-MS null is degenerate (too few distinct values / near-zero spread) — "

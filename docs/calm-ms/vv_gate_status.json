@@ -1,0 +1,47 @@
+{
+  "asset": "CALM-MS conformal second-reader — V&V enablement gate",
+  "requirement": "REQ-FUNC-CALM-001",
+  "updated_utc": "2026-08-21",
+  "source": "Converged conclusion of the 2026-08-21 adversarial design+refute workflow (2 lanes, 2 skeptics) + independent ground-truth verification. See VV-DOSSIER.md.",
+  "flag": "CALM_MS_RESEARCH_ENABLED",
+  "enable_permitted": false,
+  "overall_status": "NOT_READY",
+  "rationale": "The conformal FDR/precision guarantee is valid ONLY within the single MSLesSeg exchangeable cohort and is undeliverable under real acquisition variation with the data on hand. The endpoint MUST stay dark. Enabling is permitted ONLY when every gate below is 'pass'.",
+  "gates": {
+    "gate_1_calibration_validity": {
+      "status": "pass",
+      "summary": "Distribution-free construction is correct: standard one-sided conformal p-values (PRDS) + Benjamini-Hochberg control MARGINAL lesion-wise FDR by theorem. Fail-closed matrix enforced + tested (non-finite refused, degenerate/empty null refused, contamination refused, grid/spacing mismatch refused).",
+      "evidence": "tests/unit/test_conformal_lesion_fdr.py, test_conformal_adversarial_fixes.py; PROGRAM-CONSOLIDATION.md (BH matches reference 0/20000)."
+    },
+    "gate_2_coverage_on_heldout": {
+      "status": "fail",
+      "summary": "Within-domain (MSLesSeg) marginal FDR<=alpha holds for the SERVED statistic (raw pooled probability) BUT a coverage record for the raw-prob served path must be generated and cited (the 0.021/0.044/0.067 figures describe the UNWIRED learned scorer, not the served config). Cross-site validity is UNTESTED on a clean second site (only one decontaminated cohort exists) and fails under a plausible confident-FP shift the OOD monitor cannot see (0/115). Per-scan FDP disperses (~25% exceed alpha at 0.30).",
+      "evidence": "F1-site-shift-investigation.md; site_recalibration_record.json (synthetic +1.5-logit demo); lesion_scorer_record.json (now labelled BUILT, NOT WIRED)."
+    },
+    "gate_3_prior_art_differentiation": {
+      "status": "pass",
+      "summary": "Positioned honestly: controls lesion-wise FDR/PRECISION via conformal selection (Jin & Candes 2023) + BH — orthogonal to CLS (arXiv 2510.17897) which controls FNR/RECALL via CRC (Angelopoulos & Bates 2208.02814). The wrapper itself is NOT novel (conformal lesion-FDR exists for tumour/nodule); the defensible contribution is the cautionary characterization of MS acquisition-driven label-shift + a transparent within-domain scorer.",
+      "evidence": "VV-DOSSIER.md; PROGRAM-CONSOLIDATION.md."
+    },
+    "gate_4_usability_iec62366": {
+      "status": "blocked",
+      "summary": "IEC 62366-1 summative usability study proving no reader mis-infers per-scan precision or per-lesion probability, and that low-tier (de-prioritized) true lesions are still reviewed (HAZ-CALM-2/3/8). Does not exist.",
+      "evidence": null
+    },
+    "gate_5_change_control_pccp": {
+      "status": "blocked",
+      "summary": "Per-preset clinical validation + an authorized Predetermined Change Control Plan (PCCP). Does not exist.",
+      "evidence": null
+    },
+    "gate_6_base_model_bound_producer": {
+      "status": "blocked",
+      "summary": "REQ-FUNC-CALM-007: a production probability-map producer that stamps base_model=FLAMeS + grid provenance the endpoint verifies. Today the map is bring-your-own (research); a non-FLAMeS map on the right grid is not caught. Does not exist.",
+      "evidence": null
+    },
+    "gate_7_multisite_external_validation": {
+      "status": "blocked",
+      "summary": ">=3-5 real acquisition sites, FLAMeS-independent, single geometry, ~20-30 labelled scans/scanner, with measured cross-site realized-FDR<=alpha per preset (and/or a validated Mondrian site-conditional calibration). Not meetable on public data; requires new acquisition.",
+      "evidence": null
+    }
+  }
+}

@@ -59,10 +59,12 @@ def test_conformal_review_rejects_non_finite():
 
 # ---- HAZ-CALM-6: bad null asset must fail closed at load -----------------------
 
-def _write_null(tmp, scores, base_model=EXPECTED_BASE_MODEL, grid=(182, 218, 182)):
+def _write_null(tmp, scores, base_model=EXPECTED_BASE_MODEL, grid=(182, 218, 182),
+                base_model_independent=True):
     prov = {
         "base_model": base_model, "version": "test", "threshold": 0.5,
         "min_volume_mm3": 3.0, "voxel_spacing": [1.0, 1.0, 1.0], "grid_shape": list(grid),
+        "base_model_independent": base_model_independent,
     }
     path = os.path.join(tmp, "null.npz")
     np.savez_compressed(path, null_scores=np.asarray(scores, dtype=np.float32),
@@ -111,3 +113,38 @@ def test_real_asset_still_loads():
         pytest.skip("null asset not built")
     assert a.provenance["base_model"] == EXPECTED_BASE_MODEL
     assert np.unique(a.null_scores).size >= 20 and float(np.std(a.null_scores)) >= 1e-3
+
+
+# ---- contamination gate: a null not stamped base_model_independent must fail closed --
+
+def test_load_rejects_null_not_marked_base_model_independent():
+    """A null whose cohorts might overlap the base model's training set (non-exchangeable
+    false-candidate scores) must be refused unless explicitly stamped independent."""
+    with tempfile.TemporaryDirectory() as tmp:
+        good = np.linspace(0.1, 0.9, 200)
+        # flag missing -> refuse
+        path = _write_null(tmp, good, base_model_independent=None)
+        # None serializes to JSON null; provenance.get(...) is not True -> ConformalAssetError
+        with pytest.raises(ConformalAssetError):
+            load_null_asset(path)
+        # flag explicitly False -> refuse
+        path2 = _write_null(tmp, good, base_model_independent=False)
+        with pytest.raises(ConformalAssetError):
+            load_null_asset(path2)
+
+
+def test_shipped_provenance_is_honest_about_acquisition():
+    """The shipped null must NOT claim single-site/1.5T (MSLesSeg is multi-center) and
+    MUST be stamped base_model_independent. Pins the 2026-08-21 honesty correction."""
+    try:
+        a = get_null_asset()
+    except ConformalAssetError:
+        pytest.skip("null asset not built")
+    prov = a.provenance
+    assert prov.get("base_model_independent") is True
+    # the false "single_site: Catania 1.5T" claim must be gone
+    assert "single_site" not in prov
+    blob = json.dumps(prov).lower()
+    assert "single-site" not in blob and "1.5t" not in blob
+    # and the honest multi-center scope must be recorded
+    assert "multi-center" in prov.get("acquisition_scope", "").lower()

@@ -328,6 +328,10 @@ in the investigational state.
 | REQ-FUNC-CALM-004 | The system shall accept only a **validated preset** (high_sensitivity[default]/balanced/high_precision), each mapped server-side to a frozen (α, threshold); it shall reject raw α/threshold. | Must | C | Test | HAZ-CALM-4 |
 | REQ-FUNC-CALM-005 | The system shall **fail closed on exchangeability**: it shall refuse (4xx) any probability map whose base-model/grid/spacing does not match the frozen calibration null asset's provenance stamp. | Must | C | Test | HAZ-CALM-5 |
 | REQ-FUNC-CALM-006 | The system shall fail closed if the calibration null asset is missing or empty (no void guarantee shall be served), and shall enforce authentication + object-level PHI authorization on the endpoint. | Must | C | Test | HAZ-CALM-6 |
+| REQ-FUNC-CALM-007 | The system shall accept a probability map only from a producer that stamps `base_model=FLAMeS` + grid provenance the endpoint verifies; bring-your-own-prob is research-only and shall not be enabled clinically (closes the "non-FLAMeS map on the right grid" hole). | Must | C | Test | HAZ-CALM-5 |
+| REQ-FUNC-CALM-008 | Every enabled preset's α shall satisfy α ≥ 1/(n_scans+1) of the shipped null (heuristic effective resolution, scan-clustered); the build shall reject any preset finer than the calibration can resolve. | Should | C | Test | HAZ-CALM-4 |
+| REQ-FUNC-CALM-009 | The population-level scope text shall state that validity assumes cross-site exchangeability of the **false-candidate** distribution, which is not certified at inference (the OOD monitor sees only the mixed marginal). | Must | C | Test + usability | HAZ-CALM-5 |
+| REQ-FUNC-CALM-010 | The feature shall remain disabled (`CALM_MS_RESEARCH_ENABLED=false`) until every gate in the V&V dossier (`docs/calm-ms/vv_gate_status.json`) is `pass`; a CI test shall fail the build if the flag is enabled while any gate is not green. | Must | C | Test | HAZ-CALM-1..8 |
 
 *End of Software Requirements Specification*
 
