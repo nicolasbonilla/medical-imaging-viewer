@@ -535,8 +535,13 @@ def classify_from_zone_mask(
             # flip met->not-met (false-negative MS diagnosis) — audit finding #2.
             region_id = next((z for z in (3, 1, 2) if zone_counts.get(z)), 4)  # IT,PV,JC else DWM
             total_in_zones = sum(zone_counts.values())
-            # Confidence reflects how much of the lesion lies in the assigned (contact) region.
-            confidence = 0.75 + 0.23 * min(1.0, zone_counts[region_id] / total_in_zones)
+            # HONEST confidence (audit #8): report the RAW fraction of the lesion volume that
+            # lies in the assigned region — NOT the old fabricated `0.75 + 0.23*agreement`
+            # rescale (which reported >=0.77 even for an 8%-contact assignment and was never
+            # empirically calibrated). The assignment itself is a deterministic MAGNIMS contact
+            # rule; this value is descriptive (fraction-in-region), not a calibrated probability
+            # — the full breakdown is exposed in `zone_votes`.
+            confidence = round(zone_counts[region_id] / total_in_zones, 3)
 
         region_name = REGION_NAMES.get(region_id, "Unknown")
         classified_mask[comp_mask] = region_id
