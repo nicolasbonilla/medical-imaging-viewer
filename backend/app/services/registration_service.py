@@ -59,6 +59,10 @@ class RegistrationResult:
     advisory_qc: dict = field(default_factory=dict)
     transform_params: dict = field(default_factory=dict)
     resampled_moving_mask: np.ndarray | None = None
+    # The moving (TP2) INTENSITY resampled into fixed (TP1) space — LINEAR
+    # interpolation (intensities, not labels). Enables an intensity subtraction map
+    # (TP2−TP1) for new-lesion confirmation. None when registration failed closed.
+    resampled_moving_image: np.ndarray | None = None
 
     def as_dict(self) -> dict:
         return {
@@ -175,6 +179,11 @@ def register_timepoints(fixed_img: np.ndarray, moving_img: np.ndarray,
         # Resample the moving brain mask too, for the ADVISORY overlap readout.
         mmask_resampled = sitk.Resample(mmask, f, tx, sitk.sitkNearestNeighbor, 0.0,
                                        mmask.GetPixelID())
+
+        # Resample the moving INTENSITY into fixed space (LINEAR — intensities, not
+        # labels) so a subtraction map (TP2−TP1) can confirm new-lesion candidates.
+        moving_img_resampled = sitk.Resample(m, f, tx, sitk.sitkLinear, 0.0, m.GetPixelID())
+        resampled_img_arr = sitk.GetArrayFromImage(moving_img_resampled).astype(np.float32)
         params = tx.GetParameters()  # (rx, ry, rz, tx, ty, tz) for Euler3D
         rot_deg = float(np.degrees(np.linalg.norm(params[:3])))
         trans_mm = float(np.linalg.norm(params[3:6]))
@@ -195,7 +204,8 @@ def register_timepoints(fixed_img: np.ndarray, moving_img: np.ndarray,
             registration_ok=True, reason="rigid registration converged",
             advisory_qc=advisory,
             transform_params={"rotation_deg": rot_deg, "translation_mm": trans_mm},
-            resampled_moving_mask=resampled_arr)
+            resampled_moving_mask=resampled_arr,
+            resampled_moving_image=resampled_img_arr)
     except Exception as e:  # noqa: BLE001 — any ITK/other failure must fail closed
         logger.warning("[Registration] failed closed", extra={"error": str(e)})
         return RegistrationResult(False, reason=f"registration error: {e}")
@@ -223,4 +233,23 @@ def registered_change_candidates(tp1_img, tp2_img, tp1_mask, tp2_mask, spacing,
     result["registration_verified"] = False        # invariant: never true in shadow
     result["registration_advisory_qc"] = reg.advisory_qc
     result["registration_reason"] = reg.reason
+
+    # FLAIR SUBTRACTION CONFIRMATION (advisory). On the CO-REGISTERED intensities,
+    # measure whether each NEW candidate is actually brighter at follow-up — the
+    # clinically-validated new-lesion sensitivity/specificity aid. A "new" candidate
+    # with no positive subtraction signal is likely a segmentation/registration
+    # artifact. NEVER upgrades a candidate to a finding (registration_verified stays
+    # False); only annotates. Requires registration to have run (subtraction on
+    # un-registered volumes is dominated by pose, not disease).
+    result["subtraction_available"] = False
+    if applied and reg.resampled_moving_image is not None:
+        try:
+            from app.services.longitudinal_subtraction import subtraction_map, confirm_new_candidates
+            sub = subtraction_map(np.asarray(tp1_img, dtype=np.float32), reg.resampled_moving_image)
+            if sub is not None:
+                summary = confirm_new_candidates(result["changes"], tp2_for_compare, sub)
+                result["subtraction_available"] = True
+                result["subtraction_summary"] = summary
+        except Exception as e:  # noqa: BLE001 — advisory; must never break the comparison
+            logger.warning("[Subtraction] confirmation skipped", extra={"error": str(e)})
     return result

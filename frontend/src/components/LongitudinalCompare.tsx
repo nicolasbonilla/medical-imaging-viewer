@@ -361,6 +361,17 @@ export function LongitudinalCompare({
               <span>{t('longitudinal.indexAligned', 'Index-aligned (no source image to register)')}</span>
             )}
           </div>
+          {/* FLAIR subtraction confirmation summary (advisory new-lesion filter). */}
+          {result.subtraction_available && result.subtraction_summary && result.subtraction_summary.new_total > 0 && (
+            <div className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-sky-500" />
+              <span>
+                {t('longitudinal.subSummary',
+                  'FLAIR subtraction: {{c}} of {{n}} new candidates confirmed brighter at follow-up',
+                  { c: result.subtraction_summary.new_subtraction_confirmed, n: result.subtraction_summary.new_total })}
+              </span>
+            </div>
+          )}
 
           {/* Status Counts (candidates) */}
           <div className="flex flex-wrap gap-1.5">
@@ -431,6 +442,19 @@ export function LongitudinalCompare({
                           <span className={statusColor(change.status)}>
                             {t(`longitudinal.${change.status}`, change.status)}
                           </span>
+                          {/* FLAIR-subtraction confirmation badge (new candidates only) */}
+                          {change.status === 'new' && change.subtraction_confirmed === true && (
+                            <span
+                              title={t('longitudinal.subConfirmedTip', 'FLAIR brighter at follow-up (signal {{s}} SD) — supports a genuine new lesion', { s: (change.subtraction_signal ?? 0).toFixed(1) })}
+                              className="ml-0.5 rounded bg-sky-500/15 px-1 text-[8px] font-semibold text-sky-600 dark:text-sky-300"
+                            >✓sub</span>
+                          )}
+                          {change.status === 'new' && change.subtraction_confirmed === false && (
+                            <span
+                              title={t('longitudinal.subUnconfirmedTip', 'No follow-up brightening on FLAIR subtraction — review for artifact')}
+                              className="ml-0.5 rounded bg-gray-400/15 px-1 text-[8px] font-semibold text-gray-500 dark:text-gray-400"
+                            >○sub</span>
+                          )}
                         </span>
                       </td>
                       <td className="py-0.5 px-1 text-right font-mono text-gray-600 dark:text-gray-300">

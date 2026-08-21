@@ -132,6 +132,14 @@ export interface LesionChange {
   change_percent: number;
   status: LesionChangeStatus;
   iou: number;
+  /** Advisory FLAIR-subtraction confirmation for status==='new' candidates: mean
+   *  normalized subtraction signal (SD units) within the lesion. Positive = brighter
+   *  at follow-up (supports a true new lesion). null when unavailable. */
+  subtraction_signal?: number | null;
+  /** True when the new candidate's subtraction signal clears the advisory bar (likely
+   *  a genuine new lesion, not a segmentation/registration artifact). null/absent for
+   *  non-new changes or when subtraction was unavailable. NEVER a diagnostic verdict. */
+  subtraction_confirmed?: boolean | null;
 }
 
 export interface LongitudinalResult {
@@ -173,6 +181,15 @@ export interface LongitudinalResult {
     rotation_deg?: number;
     translation_mm?: number;
     [k: string]: unknown;
+  };
+  /** True when FLAIR subtraction confirmation ran on the co-registered intensities. */
+  subtraction_available?: boolean;
+  /** How many of the NEW candidates the subtraction map confirmed as genuinely brighter
+   *  at follow-up (advisory false-positive filter). */
+  subtraction_summary?: {
+    new_total: number;
+    new_subtraction_confirmed: number;
+    min_signal_sd: number;
   };
 }
 
