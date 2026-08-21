@@ -297,18 +297,22 @@ class SegmentationService:
         # Update modification time
         seg_data["metadata"].modified_at = datetime.utcnow()
 
-        # Invalidate cache for this specific slice
-        if self.cache:
-            cache_key = f"seg:mask:{segmentation_id}:{stroke.slice_index}"
-            await self.cache.delete(cache_key)
-            logger.debug(f"Invalidated cache for segmentation slice: {segmentation_id}:{stroke.slice_index}")
-
-        # IMPORTANT: Save immediately to persist across Cloud Run instance restarts
-        # Without this, paint strokes are lost when requests go to different instances
-        # NOTE: This is SYNCHRONOUS to ensure data is persisted before returning
-        # The frontend depends on this to know when it's safe to change slices
+        # Persist FIRST, then invalidate the slice cache. This ordering matters for
+        # concurrency (audit P-4.2, lost-update race): the read -> in-place brush ->
+        # `_save_segmentation` sequence above/below contains NO `await`, so it runs
+        # atomically on the single-threaded event loop. A concurrent upload/delete on
+        # the same segmentation therefore cannot interleave at a yield point and orphan
+        # this stroke (`_save_segmentation` re-reads `seg_data["masks_3d"]`, so a mid-
+        # mutation yield would let a replacement pointer win). The ONLY await —
+        # `cache.delete` — is moved AFTER the save so nothing yields mid-mutation.
+        # NOTE: `_save_segmentation` is synchronous so the client knows data is durable
+        # before this returns (the frontend depends on it to gate slice changes).
         try:
             self._save_segmentation(segmentation_id)
+            if self.cache:
+                cache_key = f"seg:mask:{segmentation_id}:{stroke.slice_index}"
+                await self.cache.delete(cache_key)
+                logger.debug(f"Invalidated cache for segmentation slice: {segmentation_id}:{stroke.slice_index}")
             logger.info("Paint stroke saved to GCS", extra={
                 "segmentation_id": segmentation_id,
                 "slice_index": stroke.slice_index,

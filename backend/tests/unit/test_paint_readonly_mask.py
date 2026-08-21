@@ -69,3 +69,28 @@ async def test_second_stroke_accumulates(svc):
     cached = svc.segmentations_cache[sid]["masks_3d"]
     assert cached[0, 3, 3] == 1
     assert cached[0, 10, 10] == 1
+
+
+async def test_paint_persists_before_its_only_await_p42(tmp_path):
+    """Audit P-4.2 (lost-update race): the read -> in-place brush -> _save_segmentation
+    critical section must contain NO await, so a concurrent upload/delete on the same
+    segmentation cannot interleave at a yield point and orphan this stroke. Pin the
+    ordering — the persist must happen BEFORE the only await (the slice-cache delete).
+    A revert to 'delete-then-save' would let a replacement pointer win mid-mutation."""
+    order = []
+
+    class RecordingCache:
+        async def delete(self, key):
+            order.append("cache_delete")
+
+    s = SegmentationService(storage_path=str(tmp_path), cache_service=RecordingCache())
+    s._save_segmentation = lambda segmentation_id: order.append("save") or "gcs"
+    sid = "seg-p42"
+    _seed(s, sid)
+
+    await s.apply_paint_stroke(sid, PaintStroke(slice_index=0, label_id=1, x=5, y=5, brush_size=1))
+
+    assert order == ["save", "cache_delete"], (
+        f"paint must persist before its only await, else a concurrent op can orphan the "
+        f"stroke (audit P-4.2); got {order}"
+    )

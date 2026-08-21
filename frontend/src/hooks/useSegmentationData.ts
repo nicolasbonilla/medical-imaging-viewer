@@ -319,14 +319,18 @@ export function useSegmentationData({
     return () => useSegmentationStore.getState().setReloadMaskCallback(null);
   }, [reloadCurrentMask]);
 
-  // Auto-save before unload (only if there are unsaved changes)
+  // Warn (and best-effort save) before unload when there are unsaved changes.
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (currentSegmentation && segmentationMask.state.isDirty) {
-        // Try to save (best effort - may not complete before unload)
-        segmentationMask.saveMask()
-          .catch(err => console.error('Failed to save on unload:', err));
-        // Show browser warning
+        // Best-effort save through the UNIFIED path. The low-level
+        // `segmentationMask.saveMask()` NO-OPS on a `local-` (never-persisted) id —
+        // it has no server id to upload to — so using it here silently saved nothing
+        // for brand-new segmentations (audit F-1.2). `saveSegmentation` instead
+        // create-then-uploads a local id. NOTE: browsers do not await `beforeunload`,
+        // so this is genuinely best-effort — the RELIABLE protection against losing
+        // unsaved work is the native confirmation dialog triggered below.
+        saveSegmentation().catch(err => console.error('Failed to save on unload:', err));
         e.preventDefault();
         e.returnValue = '';
       }
@@ -334,7 +338,7 @@ export function useSegmentationData({
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [currentSegmentation, segmentationMask]);
+  }, [currentSegmentation, segmentationMask, saveSegmentation]);
 
   return {
     segmentations,
