@@ -206,6 +206,31 @@ class SegmentationService:
         """Return the cached entry without touching durable storage (None if not loaded)."""
         return self.segmentations_cache.get(segmentation_id)
 
+    def discard_cached(self, segmentation_id: str) -> None:
+        """Drop ALL in-memory state for a segmentation (mask cache + A-2 generation
+        baseline) so the next access reloads the authoritative durable version.
+
+        Used to roll back after a refused (409) stale write: restoring the
+        instance's own cached mask could pin a STALE mask + stale generation if
+        another instance advanced the durable object (audit A-2 Finding 1), which
+        would show the clinician an older segmentation than the truth and trap
+        them in a conflict loop. Eviction is the only correct rollback.
+        """
+        self.segmentations_cache.pop(segmentation_id, None)
+        self._gcs_generations.pop(segmentation_id, None)
+
+    def get_generation(self, segmentation_id: str) -> Optional[int]:
+        """Return the GCS object generation matching the currently-held mask bytes,
+        or None if unknown (local tier / never loaded from GCS). (A-2)
+
+        A client that reads this at load time and round-trips it as `If-Match` on
+        save makes ITS OWN observed generation authoritative — which is what
+        distinguishes two tabs sharing ONE instance's cache (whose shared
+        instance-level baseline cannot tell them apart) and closes the reroute
+        silent-clobber case that Increment 1's instance baseline alone does not.
+        """
+        return self._gcs_generations.get(segmentation_id)
+
     def get_loaded(self, segmentation_id: str) -> Optional[dict]:
         """Return the segmentation entry, loading it from storage if needed.
 
@@ -347,6 +372,10 @@ class SegmentationService:
                 "slice_index": stroke.slice_index,
                 "position": {"x": stroke.x, "y": stroke.y}
             })
+        except ConflictException:
+            # A-2: a stale-write conflict must surface as a reconcilable 409, not be
+            # repackaged as a generic GCS_SAVE_FAILED (500). Propagate verbatim.
+            raise
         except Exception as e:
             logger.error("Failed to save paint stroke to GCS", extra={
                 "error": str(e),
@@ -614,6 +643,10 @@ class SegmentationService:
             self._save_segmentation(segmentation_id)
             logger.info("Segmentation saved successfully", extra={"segmentation_id": segmentation_id})
             return True
+        except ConflictException:
+            # A-2: surface a stale-write conflict as a reconcilable 409 rather than
+            # collapsing it to False (which the route reports as a misleading 404).
+            raise
         except Exception as e:
             logger.error("Failed to save segmentation", extra={"error": str(e), "segmentation_id": segmentation_id})
             return False

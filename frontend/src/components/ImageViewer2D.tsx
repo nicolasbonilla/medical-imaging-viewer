@@ -22,6 +22,7 @@ import { useAISegmentation } from '@/hooks/useAISegmentation';
 import { QuickScreenBadge } from './QuickScreenBadge';
 import { VoxelValueOverlay } from './VoxelValueOverlay';
 import MeasurementOverlay from './MeasurementOverlay';
+import { SegmentationConflictDialog } from './SegmentationConflictDialog';
 import { ViewportSafetyOverlay } from './ViewportSafetyOverlay';
 
 interface ImageViewer2DProps {
@@ -634,6 +635,14 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
         </div>
       )}
 
+      {/* A-2: reconcile a concurrent-save conflict without silently losing edits. */}
+      <SegmentationConflictDialog
+        conflict={segmentationMask.state.conflict}
+        busy={segmentationMask.state.isSaving || segmentationMask.state.isLoading}
+        onOverwrite={() => { void segmentationMask.overwriteSave(); }}
+        onDiscardReload={() => { void segmentationMask.discardAndReload(); }}
+        onDismiss={segmentationMask.dismissConflict}
+      />
 
     </div>
   );

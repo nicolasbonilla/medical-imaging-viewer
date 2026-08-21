@@ -43,6 +43,14 @@ export interface SegmentationMaskState {
   error: string | null;
   dimensions: { depth: number; height: number; width: number } | null;
   annotatedVoxels: number;
+  /**
+   * A-2 concurrency: set when the server refused the save (409) because another
+   * session persisted a newer mask since this one loaded. The local edits are
+   * KEPT (never silently discarded) and isDirty stays true; the UI must let the
+   * clinician choose to Overwrite (deliberate) or Discard-and-reload (explicit).
+   * null = no conflict.
+   */
+  conflict: string | null;
 }
 
 interface UndoEntry {
@@ -60,7 +68,17 @@ export interface UseSegmentationMaskReturn {
   updateSegmentationId: (id: string) => void;
   paintStroke: (stroke: LocalPaintStroke) => void;
   getSliceMask: (sliceIndex: number) => Uint8Array | null;
+  /** Save the mask. On a 409 conflict returns false and sets state.conflict
+   * (the local edits are preserved). */
   saveMask: () => Promise<boolean>;
+  /** A-2: deliberately overwrite the newer server version with the local edits
+   * (the clinician's explicit "keep mine"). Clears the conflict on success. */
+  overwriteSave: () => Promise<boolean>;
+  /** A-2: DESTRUCTIVE — discard local edits + undo history and reload the
+   * server's newer version. The UI MUST confirm before calling this. */
+  discardAndReload: () => Promise<boolean>;
+  /** A-2: dismiss the conflict banner without saving (keep editing locally). */
+  dismissConflict: () => void;
   clearMask: () => void;
   getVoxel: (x: number, y: number, z: number) => number;
   isLoaded: boolean;
@@ -125,12 +143,19 @@ export function useSegmentationMask(): UseSegmentationMaskReturn {
     error: null,
     dimensions: null,
     annotatedVoxels: 0,
+    conflict: null,
   });
 
   // 3D mask data
   const maskRef = useRef<Uint8Array | null>(null);
   const segmentationIdRef = useRef<string | null>(null);
   const dimensionsRef = useRef<{ depth: number; height: number; width: number } | null>(null);
+  // A-2 concurrency baseline: the GCS object generation this client observed for
+  // the loaded mask (X-Mask-Generation). Round-tripped as `If-Match` on save so a
+  // stale overwrite is refused (409) instead of clobbering another session's work.
+  // null = unknown (no header / local tier) -> save falls back to the server-side
+  // instance baseline. Refreshed from the save response so sequential saves match.
+  const baseGenerationRef = useRef<string | null>(null);
 
   // Undo / redo stacks (slice-level snapshots, one per stroke)
   const undoStackRef = useRef<UndoEntry[]>([]);
@@ -168,6 +193,11 @@ export function useSegmentationMask(): UseSegmentationMaskReturn {
       segmentationIdRef.current = segmentationId;
       dimensionsRef.current = { depth, height, width };
 
+      // A-2: capture THIS client's concurrency baseline (may be absent on the
+      // local tier / older backend, in which case save uses the instance baseline).
+      const gen = response.headers?.['x-mask-generation'];
+      baseGenerationRef.current = gen != null ? String(gen) : null;
+
       // Reset undo stacks on new mask load
       undoStackRef.current = [];
       redoStackRef.current = [];
@@ -184,6 +214,8 @@ export function useSegmentationMask(): UseSegmentationMaskReturn {
         isDirty: false,
         dimensions: { depth, height, width },
         annotatedVoxels: annotated,
+        conflict: null,   // a fresh load reconciles any prior conflict
+        error: null,
       }));
 
       return true;
@@ -207,6 +239,7 @@ export function useSegmentationMask(): UseSegmentationMaskReturn {
     maskRef.current = new Uint8Array(size); // All zeros
     segmentationIdRef.current = null; // No server ID yet
     dimensionsRef.current = { depth, height, width };
+    baseGenerationRef.current = null; // local-only mask: first save is create-only
 
     undoStackRef.current = [];
     redoStackRef.current = [];
@@ -219,6 +252,7 @@ export function useSegmentationMask(): UseSegmentationMaskReturn {
       error: null,
       dimensions: { depth, height, width },
       annotatedVoxels: 0,
+      conflict: null,
     });
   }, []);
 
@@ -367,7 +401,10 @@ export function useSegmentationMask(): UseSegmentationMaskReturn {
   // Save
   // -----------------------------------------------------------------------
 
-  const saveMask = useCallback(async (): Promise<boolean> => {
+  // Shared write path. `force=true` (deliberate overwrite) sends X-Overwrite so
+  // the server writes unconditionally; otherwise the client's A-2 baseline is
+  // round-tripped as If-Match and a stale write comes back 409.
+  const putMask = useCallback(async (force: boolean): Promise<boolean> => {
     const mask = maskRef.current;
     const dims = dimensionsRef.current;
     const segId = segmentationIdRef.current;
@@ -387,14 +424,28 @@ export function useSegmentationMask(): UseSegmentationMaskReturn {
 
       new Uint8Array(buffer, headerSize).set(mask);
 
-      const response = await apiClient.put(`${API_BASE}/${segId}/mask/binary`, buffer, {
-        headers: { 'Content-Type': 'application/octet-stream' },
-      });
+      const headers: Record<string, string> = { 'Content-Type': 'application/octet-stream' };
+      if (force) {
+        headers['X-Overwrite'] = 'true';
+      } else if (baseGenerationRef.current != null) {
+        headers['If-Match'] = baseGenerationRef.current;
+      }
+
+      const response = await apiClient.put(`${API_BASE}/${segId}/mask/binary`, buffer, { headers });
 
       let annotated = 0;
       for (let i = 0; i < mask.length; i++) {
         if (mask[i] > 0) annotated++;
       }
+
+      // A-2: refresh the baseline to the generation the server now holds so this
+      // client's OWN next save matches instead of false-conflicting. If the server
+      // could not report a generation (local tier / capture miss), CLEAR the
+      // baseline rather than keep a now-stale token — the next save then omits
+      // If-Match and defers to the freshly-advanced instance baseline instead of
+      // spuriously 412-ing against a generation we know is out of date.
+      const newGen = (response?.data as { generation?: number | null })?.generation;
+      baseGenerationRef.current = newGen != null ? String(newGen) : null;
 
       // P-4.3: the server reports whether the save was DURABLE. A non-durable
       // save (ephemeral local fallback) must NOT clear the dirty flag — keep the
@@ -421,10 +472,24 @@ export function useSegmentationMask(): UseSegmentationMaskReturn {
         isDirty: false,
         annotatedVoxels: annotated,
         error: null,
+        conflict: null,
       }));
 
       return true;
     } catch (error: any) {
+      // A-2: 409 = another session persisted a newer mask since we loaded. Do NOT
+      // discard the local edits or clear isDirty — surface a conflict so the
+      // clinician chooses Overwrite or Discard-and-reload. This is the whole point
+      // of the guard: never lose the annotator's work to a silent last-writer-wins.
+      if (error?.response?.status === 409) {
+        const msg =
+          (error.response?.data as { detail?: string })?.detail ||
+          'This segmentation was modified by another session since you opened it. ' +
+          'Your edits are kept — choose to overwrite the newer version or reload it.';
+        console.warn('[useSegmentationMask] Save conflict (409):', msg);
+        setState(prev => ({ ...prev, isSaving: false, conflict: msg }));
+        return false;
+      }
       console.error('[useSegmentationMask] Failed to save:', error);
       setState(prev => ({
         ...prev,
@@ -435,6 +500,25 @@ export function useSegmentationMask(): UseSegmentationMaskReturn {
     }
   }, []);
 
+  const saveMask = useCallback((): Promise<boolean> => putMask(false), [putMask]);
+
+  // A-2: the clinician deliberately keeps their edits over the newer server
+  // version. Unconditional write (X-Overwrite). Only reachable from the conflict UI.
+  const overwriteSave = useCallback((): Promise<boolean> => putMask(true), [putMask]);
+
+  // A-2: DESTRUCTIVE reconciliation — discard local edits + undo history and
+  // reload the server's newer mask. loadMask already resets maskRef, the undo
+  // stacks, and the conflict flag. The UI MUST confirm before calling this.
+  const discardAndReload = useCallback(async (): Promise<boolean> => {
+    const segId = segmentationIdRef.current;
+    if (!segId) return false;
+    return loadMask(segId);
+  }, [loadMask]);
+
+  const dismissConflict = useCallback((): void => {
+    setState(prev => ({ ...prev, conflict: null }));
+  }, []);
+
   // -----------------------------------------------------------------------
   // Clear / Clean
   // -----------------------------------------------------------------------
@@ -443,6 +527,7 @@ export function useSegmentationMask(): UseSegmentationMaskReturn {
     maskRef.current = null;
     segmentationIdRef.current = null;
     dimensionsRef.current = null;
+    baseGenerationRef.current = null;
     undoStackRef.current = [];
     redoStackRef.current = [];
     setUndoVersion(0);
@@ -453,6 +538,7 @@ export function useSegmentationMask(): UseSegmentationMaskReturn {
       error: null,
       dimensions: null,
       annotatedVoxels: 0,
+      conflict: null,
     });
   }, []);
 
@@ -472,6 +558,9 @@ export function useSegmentationMask(): UseSegmentationMaskReturn {
     paintStroke,
     getSliceMask,
     saveMask,
+    overwriteSave,
+    discardAndReload,
+    dismissConflict,
     clearMask,
     getVoxel,
     isLoaded: maskRef.current !== null,

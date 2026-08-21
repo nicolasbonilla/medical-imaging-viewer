@@ -797,23 +797,37 @@ async def get_binary_mask(
 
         binary_data = header + mask_bytes
 
+        # A-2: the GCS object generation for the bytes we are returning. The client
+        # holds this as its OWN concurrency baseline and round-trips it as `If-Match`
+        # on save, so two tabs that loaded at different generations are told apart
+        # even when they share one instance's cache. None (local tier / unknown) ->
+        # header omitted, and the save falls back to the instance baseline.
+        generation = segmentation_service.get_generation(segmentation_id)
+
+        exposed = ["X-Mask-Depth", "X-Mask-Height", "X-Mask-Width", "Content-Length"]
+        resp_headers = {
+            "Content-Length": str(len(binary_data)),
+            "X-Mask-Depth": str(depth),
+            "X-Mask-Height": str(height),
+            "X-Mask-Width": str(width),
+            "Cache-Control": "no-cache",
+        }
+        if generation is not None:
+            resp_headers["X-Mask-Generation"] = str(generation)
+            exposed.append("X-Mask-Generation")
+        resp_headers["Access-Control-Expose-Headers"] = ", ".join(exposed)
+
         logger.info("Serving binary mask", extra={
             "segmentation_id": segmentation_id,
             "shape": (depth, height, width),
-            "size_bytes": len(binary_data)
+            "size_bytes": len(binary_data),
+            "gcs_generation": generation,
         })
 
         return Response(
             content=binary_data,
             media_type="application/octet-stream",
-            headers={
-                "Content-Length": str(len(binary_data)),
-                "X-Mask-Depth": str(depth),
-                "X-Mask-Height": str(height),
-                "X-Mask-Width": str(width),
-                "Cache-Control": "no-cache",
-                "Access-Control-Expose-Headers": "X-Mask-Depth, X-Mask-Height, X-Mask-Width, Content-Length"
-            }
+            headers=resp_headers,
         )
 
     except HTTPException:
@@ -902,12 +916,15 @@ async def upload_binary_mask(
             )
 
         # A-2 optimistic concurrency. A client that read the mask's GCS generation
-        # (X-Mask-Generation on GET) may round-trip it as `If-Match` so a save is
+        # (X-Mask-Generation on GET) round-trips it as `If-Match` so a save is
         # refused (409) instead of clobbering a newer version written by another
-        # session. `X-Overwrite: true` is the deliberate "overwrite anyway" escape
-        # hatch (the reconcile UI's explicit choice). No header => fall back to the
-        # generation THIS instance observed at load (still protects the common
-        # two-tab / two-instance case). (A-2)
+        # session — this is the authoritative guard and the shipped frontend ALWAYS
+        # sends it. `X-Overwrite: true` is the deliberate "overwrite anyway" escape
+        # hatch (the reconcile UI's explicit choice). With NO If-Match the write
+        # falls back to this instance's cached generation; note that `get_loaded`
+        # just above may have (re)loaded the CURRENT generation on a cold instance,
+        # so the tokenless path is best-effort only and does NOT by itself guarantee
+        # anti-clobber — hence the client token is required for the real guarantee. (A-2)
         if_match = request.headers.get("If-Match")
         overwrite = request.headers.get("X-Overwrite", "").strip().lower() in ("1", "true", "yes")
         persist_kwargs = {}
@@ -931,16 +948,15 @@ async def upload_binary_mask(
         try:
             durability = segmentation_service.persist(segmentation_id, **persist_kwargs)
         except ConflictException as ce:
-            # Roll back the in-cache overwrite so the stale mask we just installed
-            # does not linger to be served or re-saved; the durable (newer) version
-            # is untouched. The client reconciles (reload or deliberate overwrite).
-            if existing is not None:
-                seg_data["masks_3d"] = existing
-            else:
-                # No prior in-cache mask to restore -> evict so the next read
-                # reloads the authoritative durable version instead of the stale
-                # upload we just placed.
-                segmentation_service.segmentations_cache.pop(segmentation_id, None)
+            # Roll back by EVICTING all in-memory state (mask + A-2 generation
+            # baseline). Restoring `existing` (this instance's cached mask) is
+            # WRONG on a multi-instance deployment: if another instance advanced
+            # the durable object, `existing` is stale and would pin an old mask +
+            # stale generation, so the clinician's "reload the newer version" would
+            # show the OLD mask and loop on conflicts (A-2 Finding 1). Eviction
+            # makes the next read (incl. discard-and-reload) fetch the authoritative
+            # durable version. The durable object itself is untouched.
+            segmentation_service.discard_cached(segmentation_id)
             logger.warning("Binary mask save refused (concurrency conflict)", extra={
                 "segmentation_id": segmentation_id,
                 "expected_generation": ce.details.get("expected_generation") if ce.details else None,
@@ -985,6 +1001,11 @@ async def upload_binary_mask(
             "shape": {"depth": depth, "height": height, "width": width},
             "annotated_voxels": annotated_voxels,
             "message": message,
+            # A-2: the object generation AFTER this write. The client refreshes its
+            # baseline with this so its OWN next sequential save matches instead of
+            # false-conflicting against the generation it just advanced. None on the
+            # local tier (no durable GCS generation).
+            "generation": segmentation_service.get_generation(segmentation_id),
         }
 
     except HTTPException:

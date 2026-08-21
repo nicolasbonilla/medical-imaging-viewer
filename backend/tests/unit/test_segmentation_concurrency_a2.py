@@ -198,6 +198,24 @@ def test_persist_propagates_conflict_and_does_not_launder_to_local(tmp_path):
     assert svc.gcs_bucket.store[path] == (5, b"existing")
 
 
+def test_discard_cached_evicts_mask_and_generation(tmp_path):
+    """A-2 Finding 1: the 409 rollback must EVICT in-memory state (not restore the
+    instance's possibly-stale cached mask), so the next read reloads the
+    authoritative durable version and the reconcile 'reload' shows the newer work."""
+    svc = _svc(tmp_path)
+    sid = "seg-evict"
+    _seed(svc, sid)
+    svc._gcs_generations[sid] = 3
+    assert sid in svc.segmentations_cache and sid in svc._gcs_generations
+
+    svc.discard_cached(sid)
+
+    assert sid not in svc.segmentations_cache      # mask evicted
+    assert sid not in svc._gcs_generations          # stale baseline dropped
+    # Idempotent: safe to call again on an already-absent id.
+    svc.discard_cached(sid)
+
+
 def test_load_records_generation_baseline(tmp_path):
     """A real load through _load_masks_from_gcs must capture the generation so the
     subsequent save is conditioned on it (the end-to-end A-2 path)."""
