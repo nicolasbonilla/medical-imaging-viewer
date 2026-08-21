@@ -372,7 +372,9 @@ export default function ImageViewer3D() {
           nv.addVolume(zmVol);
         }
 
-        // Load longitudinal TP1 overlay (blue) — original NIfTI, already aligned
+        // Load longitudinal TP1 overlay (blue). NOTE: niivue composites by each volume's
+        // own affine — there is NO spatial registration between TP1 and TP2, so overlap is
+        // NOT verified alignment (Class C: treat any apparent change as a candidate).
         if (longTp1Buffer && longitudinalVisible) {
           const tp1Url = URL.createObjectURL(new Blob([longTp1Buffer]));
           blobUrls.push(tp1Url);
@@ -380,7 +382,8 @@ export default function ImageViewer3D() {
           nv.addVolume(tp1Vol);
         }
 
-        // Load longitudinal TP2 overlay (red) — backend aligns to current MRI via ref_file_id
+        // Load longitudinal TP2 overlay (hot). NO TP2->TP1 registration is performed (the
+        // load URL passes no ref_file_id); niivue only affine-composites. Change is a candidate.
         if (longTp2Buffer && longitudinalVisible) {
           const tp2Url = URL.createObjectURL(new Blob([longTp2Buffer]));
           blobUrls.push(tp2Url);
@@ -793,6 +796,13 @@ export default function ImageViewer3D() {
 
   return (
     <div className="relative h-full bg-black">
+      {/* Class C: the TP1/TP2 overlays are composited by niivue's per-volume affine with
+          NO spatial registration — apparent overlap/change is a candidate, not a finding. */}
+      {longitudinalVisible && (longTp1Buffer || longTp2Buffer) && (
+        <div className="pointer-events-none absolute left-1/2 top-2 z-20 -translate-x-1/2 rounded border border-amber-500/50 bg-amber-900/80 px-2 py-0.5 text-[10px] text-amber-100">
+          {t('longitudinal.overlayCaveat', 'TP1/TP2 overlay — NOT spatially registered; apparent change is a candidate.')}
+        </div>
+      )}
       <div ref={containerRef} className="absolute inset-0">
         {/* Volume mode: single canvas */}
         {render3DMode === 'volume' && (

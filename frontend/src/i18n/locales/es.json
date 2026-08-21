@@ -1095,6 +1095,13 @@
   "longitudinal": {
     "title": "Seguimiento Longitudinal",
     "candidateCaveat": "Candidatos de cambio sin adjudicar — registro espacial NO verificado. Dos timepoints con dimensiones iguales no están necesariamente alineados; un radiólogo debe revisar cada candidato antes de que informe un diagnóstico.",
+    "registrationVerified": "Timepoints co-registrados espacialmente — los cambios son espacialmente válidos (revise antes del diagnóstico).",
+    "candidateSuffix": "cand.",
+    "spacingFallback": "No se pudo resolver el espaciado de vóxel — los volúmenes (mL) son aproximados.",
+    "legendTp1": "TP1 solo (resuelta cand.)",
+    "legendBoth": "Ambos (estable)",
+    "legendTp2": "TP2 solo (NUEVA cand.)",
+    "overlayCaveat": "Superposición TP1/TP2 — SIN registro espacial; el cambio aparente es un candidato.",
     "tp1": "TP1 (Anterior)",
     "tp2": "TP2 (Posterior)",
     "select": "Seleccionar...",

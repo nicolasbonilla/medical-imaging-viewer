@@ -569,6 +569,17 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
           w2 = imageWidth; h2 = imageHeight;
         }
 
+        // Fail-closed (Class C) — mirrors the zone-map/conformal overlays: fuse ONLY when
+        // both timepoint slices resolve to the displayed grid AND the two masks share the
+        // SAME volume grid. The two masks are loaded independently and never re-checked, so
+        // an index-based fusion on mismatched grids would paint PHANTOM red "new" voxels
+        // (a false dissemination-in-time artefact). If it doesn't line up, paint nothing.
+        const longGridOk =
+          longTp1Dims.width === longTp2Dims.width &&
+          longTp1Dims.height === longTp2Dims.height &&
+          longTp1Dims.depth === longTp2Dims.depth &&
+          w1 === imageWidth && h1 === imageHeight && w2 === imageWidth && h2 === imageHeight;
+        if (longGridOk) {
         const longImgData = ctx.createImageData(imageWidth, imageHeight);
         const ld = longImgData.data;
         const opacity = Math.round(0.55 * 255);
@@ -594,6 +605,7 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
           tmpCtx.putImageData(longImgData, 0, 0);
           ctx.imageSmoothingEnabled = false;
           ctx.drawImage(tmpC, 0, 0, canvasSize.width, canvasSize.height);
+        }
         }
       }
     }

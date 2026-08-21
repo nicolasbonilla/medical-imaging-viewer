@@ -27,6 +27,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Niivue, NVImage, SLICE_TYPE, SHOW_RENDER } from '@niivue/niivue';
 import { useViewerStore } from '@/store/useViewerStore';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
+import { windowLevelToCalRange, sliceIndexToFraction } from '@/utils/niivueWindowLevel';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -50,14 +51,10 @@ function applyWindowLevel(nv: Niivue) {
   const vol = nv.volumes?.[0];
   if (!vol) return;
   const { windowCenter, windowWidth } = useViewerStore.getState();
-  if (windowWidth > 0) {
-    vol.cal_min = windowCenter - windowWidth / 2;
-    vol.cal_max = windowCenter + windowWidth / 2;
-  } else {
-    // Auto / full range — the volume's own intensity extent (fallback if not yet set).
-    vol.cal_min = vol.global_min ?? vol.cal_min;
-    vol.cal_max = vol.global_max ?? vol.cal_max;
-  }
+  const { calMin, calMax } = windowLevelToCalRange(
+    windowCenter, windowWidth, vol.global_min, vol.global_max, vol.cal_min ?? 0, vol.cal_max ?? 1);
+  vol.cal_min = calMin;
+  vol.cal_max = calMax;
   nv.updateGLVolume();
 }
 
@@ -66,10 +63,13 @@ function applyWindowLevel(nv: Niivue) {
 function applySlice(nv: Niivue) {
   const vol = nv.volumes?.[0];
   if (!vol) return;
-  const depth = vol.dims?.[3] ?? 0; // NIfTI dims [ndim, x, y, z, ...]; z = axial count
-  if (depth > 1 && nv.scene?.crosshairPos) {
-    const index = useViewerStore.getState().currentSliceIndex;
-    const frac = Math.min(0.999, Math.max(0, index / (depth - 1)));
+  // crosshairPos[2] addresses niivue's RAS SUPERIOR (axial) axis, whose length is
+  // dimsRAS[3] — NOT the raw storage k-axis dims[3] (they coincide only for an axial-RAS
+  // volume). Use dimsRAS so a permuted affine still scans the right anatomical axis.
+  // (Flip direction — index 0 = inferior vs superior — remains a browser-QA item.)
+  const depth = vol.dimsRAS?.[3] ?? vol.dims?.[3] ?? 0;
+  const frac = sliceIndexToFraction(useViewerStore.getState().currentSliceIndex, depth);
+  if (frac !== null && nv.scene?.crosshairPos) {
     nv.scene.crosshairPos = [0.5, 0.5, frac];
     nv.drawScene?.();
   }
@@ -117,6 +117,11 @@ export function NiivueViewer2D() {
           multiplanarShowRender: SHOW_RENDER.NEVER,
           isColorbar: false,
           isOrientCube: false,
+          // Class C (RC-023/CAPA-004): the app DELIBERATELY refuses to label laterality
+          // (ViewportSafetyOverlay shows "Laterality not labelled — confirm side against the
+          // source study"). niivue's orientation text defaults ON and would draw its own L/R
+          // from the affine — contradicting that banner. Turn it OFF.
+          isOrientationTextVisible: false,
           crosshairWidth: 0,
           loadingText: '',
           dragMode: 3, // DRAG_MODE.pan (NOT 1=contrast) — the store drives W/L, no drag-windowing

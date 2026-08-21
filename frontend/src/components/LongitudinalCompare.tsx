@@ -370,15 +370,15 @@ export function LongitudinalCompare({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] text-gray-500 dark:text-gray-400">
             <span className="flex items-center gap-1">
               <span className="inline-block h-2 w-2 rounded-sm" style={{ background: 'rgb(65,135,245)' }} />
-              {t('longitudinal.legendTp1', 'TP1 solo (resuelta cand.)')}
+              {t('longitudinal.legendTp1', 'TP1 only (resolved cand.)')}
             </span>
             <span className="flex items-center gap-1">
               <span className="inline-block h-2 w-2 rounded-sm" style={{ background: 'rgb(50,205,50)' }} />
-              {t('longitudinal.legendBoth', 'Ambos (estable)')}
+              {t('longitudinal.legendBoth', 'Both (stable)')}
             </span>
             <span className="flex items-center gap-1">
               <span className="inline-block h-2 w-2 rounded-sm" style={{ background: 'rgb(245,70,70)' }} />
-              {t('longitudinal.legendTp2', 'TP2 solo (NUEVA cand.)')}
+              {t('longitudinal.legendTp2', 'TP2 only (NEW cand.)')}
             </span>
           </div>
 
