@@ -345,10 +345,20 @@ def compute_lesion_detection_metrics(
     """
     from app.services.lesion_metrics import label_lesions, meets_min_volume
 
-    # Apply the SAME sub-noise-floor filter as the clinical lesion count (RC-030 /
-    # MIN_LESION_VOLUME_MM3) so these detection metrics count the same discrete lesions the
-    # app reports everywhere else. Without it, sub-3mm3 specks inflate n_pred -> a false LFPR
-    # / broken detection F1 (audit finding #5). Spacing None -> voxel-count floor (vol=1).
+    # ASYMMETRIC noise floor (audit finding #5, corrected). The floor exists to
+    # stop sub-3mm3 PREDICTION specks (segmenter noise) from being counted as
+    # false-positive lesions -> a false LFPR / broken detection F1. So it is
+    # applied to the PREDICTION only.
+    #
+    # The REFERENCE (expert ground truth) is NOT floored: adjudicated small
+    # lesions are real, and this metric's job is to reveal that small lesions are
+    # systematically missed (the FLAMeS small-lesion gap the size stratification
+    # reports via the dedicated "<3mm3 (sub-floor)" band). Flooring the reference
+    # would DELETE those ground-truth lesions from the LTPR denominator — hiding
+    # the miss and flattering the model, the opposite of a safety metric. A
+    # sub-floor reference lesion therefore counts as missed (FN) unless a
+    # floored (>=3mm3) predicted lesion actually covers it.
+    # Spacing None -> voxel-count floor (vol=1).
     _voxel_vol = (float(voxel_spacing[0]) * float(voxel_spacing[1]) * float(voxel_spacing[2])
                   if voxel_spacing is not None else 1.0)
 
@@ -361,8 +371,8 @@ def compute_lesion_detection_metrics(
                 out |= comp
         return out
 
-    pred_fg = _floored_fg(pred_mask)
-    ref_fg = _floored_fg(ref_mask)
+    pred_fg = _floored_fg(pred_mask)      # reject sub-floor prediction specks (noise FPs)
+    ref_fg = ref_mask > 0                 # keep the FULL expert reference (see above)
     pred_labels, n_pred = label_lesions(pred_fg)
     ref_labels, n_ref = label_lesions(ref_fg)
 
