@@ -145,6 +145,20 @@ export interface LongitudinalResult {
   burden_delta_mm3: number;
   burden_delta_percent: number;
   status_counts: Record<LesionChangeStatus, number>;
+  // ── Class C safety framing (the compare performs NO spatial registration) ──
+  // The backend always sends these; the UI must gate any "change/new-lesion" wording on
+  // them so a candidate is never presented as a verified finding (over-diagnosis hazard).
+  /** True only if TP2 was spatially co-registered to TP1. Currently ALWAYS false — equal
+   *  array dimensions are not voxel alignment. Do not assert change without this. */
+  registration_verified?: boolean;
+  /** True when a radiologist must adjudicate each candidate before it informs a diagnosis. */
+  adjudication_required?: boolean;
+  /** False when voxel spacing could not be resolved and fell back to (1,1,1) → volumes/mL are approximate. */
+  spacing_resolved?: boolean;
+  /** Human-readable alignment status, e.g. "equal array shape; NOT verified as spatially co-registered". */
+  alignment?: string;
+  /** The authoritative caveat string from the backend — prefer it over any hardcoded copy. */
+  caveat?: string;
 }
 
 // ============================================================================

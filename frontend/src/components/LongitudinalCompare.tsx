@@ -323,14 +323,28 @@ export function LongitudinalCompare({
             </div>
           </div>
 
-          {/* Safety caveat (Class C): these are UNADJUDICATED CANDIDATES, not findings —
-              the comparison performs NO spatial registration (equal array dimensions are not
-              voxel alignment), so counts can include misregistration artefacts. A radiologist
-              must review each before it informs a diagnosis / dissemination-in-time. */}
-          <div className="rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-[10px] leading-snug text-amber-700 dark:text-amber-300">
-            {t('longitudinal.candidateCaveat',
-              'Unadjudicated change candidates — spatial registration NOT verified. Two timepoints with equal dimensions are not necessarily aligned; a radiologist must review each candidate before it informs a diagnosis.')}
-          </div>
+          {/* Safety caveat (Class C) — DRIVEN by the backend's registration flag, not
+              hardcoded: until TP2 is spatially co-registered to TP1, every count is an
+              UNADJUDICATED CANDIDATE (equal array dimensions are not voxel alignment), so
+              counts can include misregistration artefacts. Prefer the backend's authoritative
+              `caveat` string. registration_verified is currently always false. */}
+          {result.registration_verified ? (
+            <div className="rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-1.5 text-[10px] leading-snug text-emerald-700 dark:text-emerald-300">
+              {t('longitudinal.registrationVerified',
+                'Timepoints spatially co-registered — changes are spatially valid (still review before diagnosis).')}
+            </div>
+          ) : (
+            <div className="rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-[10px] leading-snug text-amber-700 dark:text-amber-300">
+              {result.caveat || t('longitudinal.candidateCaveat',
+                'Unadjudicated change candidates — spatial registration NOT verified. Two timepoints with equal dimensions are not necessarily aligned; a radiologist must review each candidate before it informs a diagnosis.')}
+            </div>
+          )}
+          {result.spacing_resolved === false && (
+            <div className="rounded border border-orange-500/40 bg-orange-500/10 px-2 py-1 text-[10px] leading-snug text-orange-700 dark:text-orange-300">
+              {t('longitudinal.spacingFallback',
+                'Voxel spacing could not be resolved — volumes (mL) are approximate.')}
+            </div>
+          )}
 
           {/* Status Counts (candidates) */}
           <div className="flex flex-wrap gap-1.5">
@@ -343,10 +357,29 @@ export function LongitudinalCompare({
                   <span className={`w-1.5 h-1.5 rounded-full ${statusBg(status)}`} />
                   <span className={statusColor(status)}>
                     {count} {t(`longitudinal.${status}`, status)}
+                    {!result.registration_verified ? ` ${t('longitudinal.candidateSuffix', 'cand.')}` : ''}
                   </span>
                 </span>
               )
             ))}
+          </div>
+
+          {/* Legend for the fused TP1/TP2 overlay painted on the 2D viewport
+              (SegmentationCanvasLocal) — colors match the canvas exactly so the change map
+              is readable. Red = TP2-only = NEW lesion candidate. */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] text-gray-500 dark:text-gray-400">
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-2 w-2 rounded-sm" style={{ background: 'rgb(65,135,245)' }} />
+              {t('longitudinal.legendTp1', 'TP1 solo (resuelta cand.)')}
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-2 w-2 rounded-sm" style={{ background: 'rgb(50,205,50)' }} />
+              {t('longitudinal.legendBoth', 'Ambos (estable)')}
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-2 w-2 rounded-sm" style={{ background: 'rgb(245,70,70)' }} />
+              {t('longitudinal.legendTp2', 'TP2 solo (NUEVA cand.)')}
+            </span>
           </div>
 
           {/* Expandable Table */}
