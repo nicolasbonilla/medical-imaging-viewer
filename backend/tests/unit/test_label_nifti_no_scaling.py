@@ -39,6 +39,7 @@ def _source_mri_bytes(shape, slope, inter):
 class _FakeBlob:
     def __init__(self, bucket, name):
         self.bucket, self.name = bucket, name
+        self.generation = None
 
     def exists(self):
         return self.name == self.bucket.original_name
@@ -46,8 +47,14 @@ class _FakeBlob:
     def download_to_file(self, buf):
         buf.write(self.bucket.original_bytes)
 
-    def upload_from_file(self, buf, content_type=None):
+    # Accept the A-2 if_generation_match kwarg (and any future upload kwargs);
+    # this fake does not enforce preconditions, so writes always succeed.
+    def upload_from_file(self, buf, content_type=None, if_generation_match=None, **kwargs):
         self.bucket.uploaded[self.name] = buf.read()
+        self.generation = 1
+
+    def reload(self):
+        pass
 
 
 class _FakeBucket:

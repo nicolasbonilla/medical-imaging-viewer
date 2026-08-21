@@ -25,7 +25,14 @@ from google.cloud import storage as gcs_storage
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
-from app.core.exceptions import SegmentationException, NotFoundException, ValidationException
+from app.core.exceptions import SegmentationException, NotFoundException, ValidationException, ConflictException
+
+# Sentinel for _save_masks_to_gcs/_save_segmentation/persist: "no explicit
+# baseline supplied — derive the if_generation_match from the generation this
+# instance observed when it loaded the mask (stored in _gcs_generations)."
+# Distinct from an explicit None (which callers may legitimately want to mean
+# "the client sent no If-Match token"), so the two cases stay separable. (A-2)
+_GEN_FROM_CACHE = object()
 from app.core.interfaces.cache_interface import ICacheService
 from app.core.firebase import get_firestore_client
 from app.models.schemas import (
@@ -84,6 +91,13 @@ class SegmentationService:
 
         # In-memory cache: {segmentation_id: {metadata, masks_3d, dirty_slices}}
         self.segmentations_cache: Dict[str, Dict] = {}
+
+        # A-2 optimistic concurrency: the GCS object generation observed when THIS
+        # instance last loaded each mask. Used as the if_generation_match baseline
+        # so a stale whole-mask overwrite from a concurrent instance/tab 412s
+        # instead of silently clobbering newer work. None => no trustworthy
+        # baseline (create-only write). Populated by _load_masks_from_gcs.
+        self._gcs_generations: Dict[str, Optional[int]] = {}
 
         # Firestore client (lazy initialization)
         self._db = None
@@ -221,11 +235,26 @@ class SegmentationService:
         entry["masks_3d"] = mask
         return True
 
-    def persist(self, segmentation_id: str) -> Optional[str]:
+    def persist(
+        self,
+        segmentation_id: str,
+        *,
+        expected_generation=_GEN_FROM_CACHE,
+        force: bool = False,
+    ) -> Optional[str]:
         """Persist metadata + mask to durable storage (public form of
         _save_segmentation). Returns the durability tier: "gcs" (durable),
-        "local" (ephemeral fallback only), or None (nothing to persist)."""
-        return self._save_segmentation(segmentation_id)
+        "local" (ephemeral fallback only), or None (nothing to persist).
+
+        A-2 optimistic concurrency (defaults preserve pre-A-2 behavior):
+          - expected_generation: an int GCS generation the caller (client) is
+            writing against; omit to use the generation THIS instance observed at
+            load. Raises ConflictException (-> 409) if the durable object moved on.
+          - force: deliberate unconditional overwrite (clinician chose "overwrite").
+        """
+        return self._save_segmentation(
+            segmentation_id, expected_generation=expected_generation, force=force,
+        )
 
     def array_to_base64(self, array: np.ndarray) -> str:
         """Encode a 2D mask slice to a base64 PNG data string."""
@@ -715,7 +744,13 @@ class SegmentationService:
 
         return array_to_base64(overlay_image)
 
-    def _save_segmentation(self, segmentation_id: str) -> Optional[str]:
+    def _save_segmentation(
+        self,
+        segmentation_id: str,
+        *,
+        expected_generation=_GEN_FROM_CACHE,
+        force: bool = False,
+    ) -> Optional[str]:
         """Save segmentation to Firestore (metadata) and GCS (masks).
 
         This ensures persistence across Cloud Run instance restarts.
@@ -727,7 +762,12 @@ class SegmentationService:
                      which is EPHEMERAL on Cloud Run (lost on instance restart and
                      invisible to other instances). Not a durable save.
           - None:    nothing to save (segmentation not in cache).
-        Raises only if BOTH GCS and the local fallback fail.
+        Raises only if BOTH GCS and the local fallback fail, OR (A-2) if the GCS
+        write is refused as a stale overwrite — ConflictException propagates so the
+        route returns 409 instead of laundering the conflict into a "local" save.
+
+        expected_generation / force control the A-2 optimistic-concurrency baseline
+        (see _save_masks_to_gcs); defaults preserve the pre-A-2 same-instance flow.
         """
         if segmentation_id not in self.segmentations_cache:
             return None
@@ -756,13 +796,22 @@ class SegmentationService:
             # Firestore pointer. If GCS fails, the doc is never written, so a load
             # cannot later find a doc pointing at a non-existent mask and surface an
             # all-zero mask as the clinician's data (see the load path).
-            self._save_masks_to_gcs(segmentation_id, masks_3d)
+            self._save_masks_to_gcs(
+                segmentation_id, masks_3d,
+                expected_generation=expected_generation, force=force,
+            )
 
             doc_ref = self.db.collection(SEGMENTATIONS_COLLECTION).document(segmentation_id)
             doc_ref.set(metadata_dict)
             logger.info("Saved segmentation to GCS + Firestore", extra={"segmentation_id": segmentation_id})
             return "gcs"
 
+        except ConflictException:
+            # A-2: a stale-overwrite conflict must reach the route as 409. Do NOT
+            # fall through to the local fallback below — that would report a fake
+            # ephemeral "local" success while the durable GCS mask (another
+            # session's newer work) still stands, hiding the lost update.
+            raise
         except Exception as e:
             logger.error("Failed to save to GCS/Firestore, falling back to local", extra={"error": str(e)})
             # Fallback to local storage. NOTE: ephemeral on Cloud Run — the caller
@@ -816,7 +865,14 @@ class SegmentationService:
         except Exception:
             return False
 
-    def _save_masks_to_gcs(self, segmentation_id: str, masks_3d: np.ndarray):
+    def _save_masks_to_gcs(
+        self,
+        segmentation_id: str,
+        masks_3d: np.ndarray,
+        *,
+        expected_generation=_GEN_FROM_CACHE,
+        force: bool = False,
+    ):
         """Save mask data to Google Cloud Storage as NIfTI format (.nii.gz).
 
         The segmentation NIfTI will have the EXACT same affine, header, dimensions,
@@ -827,9 +883,14 @@ class SegmentationService:
         tagged with a header marker, so a directly-served overlay aligns. Masks
         without the marker are legacy (in-plane transposed on disk) and are read
         back with the legacy transpose for backward compatibility.
+
+        A-2: the write is conditioned on the GCS object generation (see the upload
+        block) so concurrent whole-mask overwrites cannot silently clobber. Raises
+        ConflictException (mapped to 409) on a generation mismatch.
         """
         import tempfile
         import os
+        from google.api_core.exceptions import PreconditionFailed
 
         try:
             # Get file_id from segmentation metadata to load original image
@@ -941,21 +1002,115 @@ class SegmentationService:
             # Upload to GCS as NIfTI
             blob_path = f"segmentations/{segmentation_id}/masks.nii.gz"
             blob = self.gcs_bucket.blob(blob_path)
-            blob.upload_from_file(buffer, content_type="application/gzip")
 
-            logger.info("Saved masks to GCS as NIfTI", extra={"segmentation_id": segmentation_id, "path": blob_path})
+            # A-2 OPTIMISTIC CONCURRENCY. Condition the write on the GCS object
+            # generation so a stale whole-mask overwrite from a concurrent
+            # instance/tab is REFUSED (412) rather than silently clobbering newer
+            # work. Precedence (never write unconditionally on an unknown baseline):
+            #   force=True            -> None: deliberate unconditional overwrite.
+            #   explicit int token    -> verbatim (client's round-tripped If-Match).
+            #   explicit None token   -> treated as UNKNOWN baseline (see below).
+            #   _GEN_FROM_CACHE       -> the generation THIS instance observed at load.
+            #   unknown baseline      -> 0 (create-only): creates if absent, 412s if a
+            #                            blob exists — so an unknown baseline can only
+            #                            ADD a conflict, never introduce a new clobber.
+            if force:
+                gen_match = None
+            elif expected_generation is not _GEN_FROM_CACHE:
+                if expected_generation is None:
+                    cached = self._gcs_generations.get(segmentation_id)
+                    gen_match = cached if cached is not None else 0
+                else:
+                    gen_match = expected_generation
+            else:
+                cached = self._gcs_generations.get(segmentation_id)
+                gen_match = cached if cached is not None else 0
+
+            upload_kwargs = {"content_type": "application/gzip"}
+            if gen_match is not None:
+                upload_kwargs["if_generation_match"] = gen_match
+
+            try:
+                blob.upload_from_file(buffer, **upload_kwargs)
+            except PreconditionFailed:
+                # 412: the object generation moved since our baseline — another
+                # session persisted a newer mask. Surface as a 409 the route maps
+                # to a reconcilable conflict; NEVER retry unconditionally here.
+                logger.warning(
+                    "Refused stale whole-mask overwrite (GCS generation mismatch)",
+                    extra={"segmentation_id": segmentation_id, "expected_generation": gen_match},
+                )
+                raise ConflictException(
+                    message=(
+                        "This segmentation was modified by another session since you "
+                        "loaded it. Your save was refused to avoid overwriting newer "
+                        "work. Reload to reconcile, or overwrite deliberately."
+                    ),
+                    error_code="SEGMENTATION_STALE_WRITE",
+                    details={"segmentation_id": segmentation_id, "expected_generation": gen_match},
+                )
+
+            # Record the new generation so the NEXT save from this instance matches
+            # (else a correct sequential save would self-412 against a stale baseline).
+            new_gen = getattr(blob, "generation", None)
+            if new_gen is None:
+                try:
+                    blob.reload()
+                    new_gen = getattr(blob, "generation", None)
+                except Exception:
+                    new_gen = None
+            self._gcs_generations[segmentation_id] = new_gen
+
+            logger.info("Saved masks to GCS as NIfTI", extra={
+                "segmentation_id": segmentation_id, "path": blob_path,
+                "if_generation_match": gen_match, "new_generation": new_gen,
+            })
+        except ConflictException:
+            # Concurrency conflict is a first-class outcome — propagate verbatim so
+            # the caller can map it to 409 and NOT to the generic "GCS save failed"
+            # path (which would try the local fallback and launder it into a fake
+            # ephemeral success, still losing the other session's work). (A-2)
+            raise
         except Exception as e:
             logger.error("Failed to save masks to GCS", extra={"error": str(e)})
             raise
 
+    def _get_blob_for_read(self, blob_path: str):
+        """Fetch a blob for reading, returning (blob_or_None, generation_or_None).
+
+        Prefers bucket.get_blob() — a SINGLE metadata GET that both proves
+        existence (None if absent) and carries the object .generation, so the
+        A-2 concurrency baseline costs no extra request over the .exists() GET it
+        replaces. Falls back to blob()+exists() for buckets/fakes without
+        get_blob(), in which case generation is reported as None (create-only
+        writes, still safe). Transient errors propagate to the caller. (A-2)
+        """
+        get_blob = getattr(self.gcs_bucket, "get_blob", None)
+        if callable(get_blob):
+            blob = get_blob(blob_path)
+            if blob is None:
+                return None, None
+            return blob, getattr(blob, "generation", None)
+        blob = self.gcs_bucket.blob(blob_path)
+        if not blob.exists():
+            return None, None
+        return blob, getattr(blob, "generation", None)
+
     def _load_masks_from_gcs(self, segmentation_id: str) -> Optional[np.ndarray]:
-        """Load mask data from Google Cloud Storage (NIfTI or NPZ format)."""
+        """Load mask data from Google Cloud Storage (NIfTI or NPZ format).
+
+        Side effect: records the loaded object's GCS generation in
+        self._gcs_generations[segmentation_id] (None if unavailable) so a later
+        save can condition its write on the same baseline (A-2). The return type
+        is intentionally unchanged (masks or None) so monkeypatched test doubles
+        of this method keep working.
+        """
         try:
             # First try NIfTI format (new format)
             nifti_blob_path = f"segmentations/{segmentation_id}/masks.nii.gz"
-            nifti_blob = self.gcs_bucket.blob(nifti_blob_path)
+            nifti_blob, nifti_generation = self._get_blob_for_read(nifti_blob_path)
 
-            if nifti_blob.exists():
+            if nifti_blob is not None:
                 # Load NIfTI format
                 buffer = io.BytesIO()
                 nifti_blob.download_to_file(buffer)
@@ -978,18 +1133,21 @@ class SegmentationService:
 
                 masks_3d = self._nifti_native_to_internal(nifti_data, oriented_v2)
 
+                # A-2: record the baseline generation for concurrency-safe writes.
+                self._gcs_generations[segmentation_id] = nifti_generation
                 logger.info("Loaded masks from GCS (NIfTI)", extra={
                     "segmentation_id": segmentation_id,
                     "shape": masks_3d.shape,
                     "rc031_v2": oriented_v2,
+                    "gcs_generation": nifti_generation,
                 })
                 return masks_3d
 
             # Fallback to NPZ format (legacy)
             npz_blob_path = f"segmentations/{segmentation_id}/masks.npz"
-            npz_blob = self.gcs_bucket.blob(npz_blob_path)
+            npz_blob, npz_generation = self._get_blob_for_read(npz_blob_path)
 
-            if npz_blob.exists():
+            if npz_blob is not None:
                 buffer = io.BytesIO()
                 npz_blob.download_to_file(buffer)
                 buffer.seek(0)
@@ -1000,9 +1158,18 @@ class SegmentationService:
                 # + a follow-up Save persisting corruption. The NIfTI branch already coerces.
                 masks_3d = np.asarray(data["masks"]).astype(np.uint8)
 
+                # A-2: NPZ is legacy; on the next save the mask is written as NIfTI
+                # at a DIFFERENT path, so this NPZ generation is not a valid baseline
+                # for that write. Record None => the save is create-only against the
+                # (absent) NIfTI object and never clobbers on an unknown baseline.
+                self._gcs_generations[segmentation_id] = None
                 logger.info("Loaded masks from GCS (NPZ legacy)", extra={"segmentation_id": segmentation_id, "shape": masks_3d.shape})
                 return masks_3d
 
+            # No mask object exists yet: clear any stale baseline so a subsequent
+            # save is create-only (if_generation_match=0), not conditioned on a
+            # generation that no longer applies. (A-2)
+            self._gcs_generations.pop(segmentation_id, None)
             logger.debug("No masks found in GCS", extra={"segmentation_id": segmentation_id})
             return None
         except Exception as e:

@@ -36,6 +36,7 @@ from app.core.interfaces.storage_interface import IStorageService
 from app.core.container import get_segmentation_service, get_imaging_service, get_storage_service
 from app.services.segmentation_service import SegmentationService
 from app.core.config import get_settings
+from app.core.exceptions import ConflictException
 
 settings = get_settings()
 
@@ -900,6 +901,26 @@ async def upload_binary_mask(
                         f"{tuple(known_shape)}; refusing to persist a dimension mismatch/swap."),
             )
 
+        # A-2 optimistic concurrency. A client that read the mask's GCS generation
+        # (X-Mask-Generation on GET) may round-trip it as `If-Match` so a save is
+        # refused (409) instead of clobbering a newer version written by another
+        # session. `X-Overwrite: true` is the deliberate "overwrite anyway" escape
+        # hatch (the reconcile UI's explicit choice). No header => fall back to the
+        # generation THIS instance observed at load (still protects the common
+        # two-tab / two-instance case). (A-2)
+        if_match = request.headers.get("If-Match")
+        overwrite = request.headers.get("X-Overwrite", "").strip().lower() in ("1", "true", "yes")
+        persist_kwargs = {}
+        if overwrite:
+            persist_kwargs["force"] = True
+        elif if_match is not None:
+            try:
+                persist_kwargs["expected_generation"] = int(if_match.strip().strip('"'))
+            except ValueError:
+                # Unparseable token -> ignore it and use the instance baseline
+                # (never silently downgrade to an unconditional overwrite).
+                pass
+
         # Update the mask in cache
         seg_data["masks_3d"] = masks_3d
         seg_data["metadata"].modified_at = datetime.utcnow()
@@ -907,7 +928,28 @@ async def upload_binary_mask(
         # Save to GCS (this is the ONLY time we save during editing). persist()
         # returns the durability tier so we don't claim an unqualified success when
         # only the ephemeral local fallback was written (audit P-4.3).
-        durability = segmentation_service.persist(segmentation_id)
+        try:
+            durability = segmentation_service.persist(segmentation_id, **persist_kwargs)
+        except ConflictException as ce:
+            # Roll back the in-cache overwrite so the stale mask we just installed
+            # does not linger to be served or re-saved; the durable (newer) version
+            # is untouched. The client reconciles (reload or deliberate overwrite).
+            if existing is not None:
+                seg_data["masks_3d"] = existing
+            else:
+                # No prior in-cache mask to restore -> evict so the next read
+                # reloads the authoritative durable version instead of the stale
+                # upload we just placed.
+                segmentation_service.segmentations_cache.pop(segmentation_id, None)
+            logger.warning("Binary mask save refused (concurrency conflict)", extra={
+                "segmentation_id": segmentation_id,
+                "expected_generation": ce.details.get("expected_generation") if ce.details else None,
+            })
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=ce.message,
+                headers={"X-Conflict": "segmentation-stale-write"},
+            )
         durable = durability == "gcs"
 
         # Count annotated voxels

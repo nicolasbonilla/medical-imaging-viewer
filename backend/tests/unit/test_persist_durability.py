@@ -55,7 +55,8 @@ def _seed(svc, sid):
 def test_returns_gcs_when_durable(svc):
     sid = "seg-gcs"
     _seed(svc, sid)
-    svc._save_masks_to_gcs = lambda segmentation_id, masks_3d: None  # succeed
+    # Accept the A-2 keyword args (expected_generation/force) persist now threads.
+    svc._save_masks_to_gcs = lambda segmentation_id, masks_3d, **kwargs: None  # succeed
     assert svc.persist(sid) == "gcs"
 
 
@@ -63,7 +64,7 @@ def test_returns_local_when_gcs_fails(svc):
     sid = "seg-local"
     _seed(svc, sid)
 
-    def _boom(segmentation_id, masks_3d):
+    def _boom(segmentation_id, masks_3d, **kwargs):
         raise RuntimeError("GCS unavailable")
 
     saved = {}
