@@ -266,6 +266,24 @@ async def compute_volumetry(
             )
 
         voxel_spacing = tuple(request.voxel_spacing)
+        # AUTHORITATIVE spacing (audit #1, Class C wrong-number + fabricated atrophy flag):
+        # the client default [1,1,1] gives wrong volumes/mL and a false atrophy/enlargement
+        # badge on any anisotropic (thick-slice) scan. When the request is default 1mm-iso
+        # (indistinguishable from "not provided"), resolve the real spacing from the mask's
+        # STORED NIfTI header, which was saved with the source MRI geometry. Volume =
+        # voxel_count * prod(spacing) is order-invariant, so header order is irrelevant here.
+        if all(abs(float(v) - 1.0) < 1e-6 for v in voxel_spacing):
+            try:
+                nifti_bytes = seg_service.get_segmentation_nifti(seg_id)
+                if nifti_bytes:
+                    from app.utils.nifti_utils import load_nifti_from_bytes
+                    _img, _ = load_nifti_from_bytes(nifti_bytes)
+                    zooms = _img.header.get_zooms()[:3]
+                    if len(zooms) == 3 and all(float(z) > 0 for z in zooms):
+                        voxel_spacing = tuple(float(z) for z in zooms)
+                        logger.info(f"[AI] resolved authoritative voxel spacing {voxel_spacing} from stored NIfTI")
+            except Exception as e:
+                logger.warning(f"[AI] authoritative spacing resolution failed, using request spacing: {e}")
 
         result = volumetry_service.compute_volumes(
             mask=mask,

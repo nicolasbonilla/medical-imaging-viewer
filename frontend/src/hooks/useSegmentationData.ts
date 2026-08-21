@@ -192,21 +192,15 @@ export function useSegmentationData({
    * No API call is made. The mask is only saved when the user clicks "Save".
    */
   const applyPaintStrokeLocal = useCallback((stroke: PaintStroke) => {
-    const localStroke: LocalPaintStroke = {
-      x: stroke.x,
-      y: stroke.y,
-      sliceIndex: stroke.slice_index,
-      brushSize: stroke.brush_size,
-      labelId: stroke.label_id,
-      erase: stroke.erase,
-    };
-
-    // Apply locally (instant!)
-    segmentationMask.paintStroke(localStroke);
-
-    // Notify caller that paint was applied (for UI refresh)
+    // AUDIT #3 (silent multi-label annotation destruction): SegmentationCanvasLocal ALREADY
+    // applied this stroke locally — honouring drawOverMode/drawOverLabel — before firing
+    // onPaintStroke -> here. Re-painting again without the mode (it defaults to 'all')
+    // overwrote a DIFFERENT clinician-drawn label that the first, protective paint had
+    // preserved (e.g. Draw-Over "Empty only"/"Active label only"). This callback must NOT
+    // paint a second time; it only notifies the data layer for UI refresh. isDirty is
+    // already set by the canvas's paint.
     onPaintComplete?.(stroke.slice_index);
-  }, [segmentationMask, onPaintComplete]);
+  }, [onPaintComplete]);
 
   // Legacy mutation object for compatibility (but now it's instant, no network)
   const paintStrokeMutation = {

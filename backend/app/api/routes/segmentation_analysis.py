@@ -190,7 +190,12 @@ async def compare_masks(
                 if resolved_spacing is None:
                     zooms = img.header.get_zooms()[:3]
                     if len(zooms) == 3 and all(float(z) > 0 for z in zooms):
-                        resolved_spacing = (float(zooms[2]), float(zooms[1]), float(zooms[0]))
+                        # Mask is transposed to internal (k,a0,a1) above, so spacing must be
+                        # (zk,za0,za1)=(zooms[2],zooms[0],zooms[1]) — NOT (zk,za1,za0). The
+                        # a0/a1 swap fed anisotropic in-plane spacing to distance_transform_edt
+                        # -> wrong Hausdorff/ASSD on non-square pixels (audit). Match the
+                        # canonical _voxel_spacing_from_source_image + the longitudinal branch.
+                        resolved_spacing = (float(zooms[2]), float(zooms[0]), float(zooms[1]))
             else:
                 raise HTTPException(status_code=400, detail=f"Unknown mask type: {mask_type}")
 

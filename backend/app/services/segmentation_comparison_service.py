@@ -343,13 +343,28 @@ def compute_lesion_detection_metrics(
     masks score F1 = 1.0 (they agree there are no lesions), while an empty-vs-
     populated pair scores F1 = 0.0.
     """
-    from app.services.lesion_metrics import label_lesions
+    from app.services.lesion_metrics import label_lesions, meets_min_volume
 
-    pred_labels, n_pred = label_lesions(pred_mask > 0)
-    ref_labels, n_ref = label_lesions(ref_mask > 0)
+    # Apply the SAME sub-noise-floor filter as the clinical lesion count (RC-030 /
+    # MIN_LESION_VOLUME_MM3) so these detection metrics count the same discrete lesions the
+    # app reports everywhere else. Without it, sub-3mm3 specks inflate n_pred -> a false LFPR
+    # / broken detection F1 (audit finding #5). Spacing None -> voxel-count floor (vol=1).
+    _voxel_vol = (float(voxel_spacing[0]) * float(voxel_spacing[1]) * float(voxel_spacing[2])
+                  if voxel_spacing is not None else 1.0)
 
-    pred_fg = pred_mask > 0
-    ref_fg = ref_mask > 0
+    def _floored_fg(mask: np.ndarray) -> np.ndarray:
+        labeled, n = label_lesions(mask > 0)
+        out = np.zeros(mask.shape, dtype=bool)
+        for lbl in range(1, n + 1):
+            comp = labeled == lbl
+            if meets_min_volume(int(comp.sum()), _voxel_vol):
+                out |= comp
+        return out
+
+    pred_fg = _floored_fg(pred_mask)
+    ref_fg = _floored_fg(ref_mask)
+    pred_labels, n_pred = label_lesions(pred_fg)
+    ref_labels, n_ref = label_lesions(ref_fg)
 
     # Voxel volume for size stratification (mm³). None spacing → count in voxels.
     voxel_volume_mm3 = (

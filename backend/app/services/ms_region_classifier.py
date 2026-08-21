@@ -528,14 +528,15 @@ def classify_from_zone_mask(
             region_id = 4
             confidence = 0.50
         else:
-            # Majority vote
-            region_id = max(zone_counts, key=zone_counts.get)
+            # MAGNIMS CONTACT criterion (NOT majority vote): a lesion that TOUCHES a more-
+            # specific region counts there. Priority IT>PV>JC>DWM on ANY overlap — matches
+            # the distance classifier (_classify_by_distance) and the McDonald criteria. A
+            # periventricular finger that is bulk-DWM must still count as PV, else DIS can
+            # flip met->not-met (false-negative MS diagnosis) — audit finding #2.
+            region_id = next((z for z in (3, 1, 2) if zone_counts.get(z)), 4)  # IT,PV,JC else DWM
             total_in_zones = sum(zone_counts.values())
-            confidence = zone_counts[region_id] / total_in_zones
-
-            # Boost confidence: atlas-based is inherently more accurate
-            # Scale from raw agreement (0.25-1.0) to (0.75-0.98)
-            confidence = 0.75 + 0.23 * min(1.0, confidence)
+            # Confidence reflects how much of the lesion lies in the assigned (contact) region.
+            confidence = 0.75 + 0.23 * min(1.0, zone_counts[region_id] / total_in_zones)
 
         region_name = REGION_NAMES.get(region_id, "Unknown")
         classified_mask[comp_mask] = region_id
