@@ -148,18 +148,26 @@ export function ConformalPanel({ probFileId: probFileIdProp }: Props) {
           {/* Guarantee scope / OOD-withheld state — prominent, always shown */}
           <div
             className={`rounded border px-2 py-1 text-[10px] leading-snug ${
-              summary.guarantee_applicable
-                ? 'border-amber-700/50 bg-amber-900/20 text-amber-200'
-                : 'border-red-600/60 bg-red-900/30 text-red-200'
+              summary.marginal_shift_flagged
+                ? 'border-red-600/60 bg-red-900/30 text-red-200'
+                : 'border-amber-700/50 bg-amber-900/20 text-amber-200'
             }`}
           >
-            {!summary.guarantee_applicable && (
-              <div className="mb-0.5 font-semibold">⚠ Garantía retirada (fuera de distribución validada)</div>
+            {summary.marginal_shift_flagged && (
+              <div className="mb-0.5 font-semibold">⚠ Alcance retirado (desviación marginal detectada)</div>
             )}
             {summary.guarantee_scope}
           </div>
-          {/* Additive candidate list (ordinal tiers; no probabilities, no "keep") */}
-          <div className="max-h-40 space-y-0.5 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600">
+          {/* Non-dismissible investigational disclaimer — always shown when there is a review */}
+          <div className="rounded border border-purple-800/50 bg-purple-950/30 px-2 py-1 text-[10px] leading-snug text-purple-200">
+            Ayuda de priorización de revisión a nivel poblacional (investigacional).
+            No es un diagnóstico autónomo ni una probabilidad por lesión.
+          </div>
+          {/* Additive candidate list (ordinal tiers; no probabilities, no "keep").
+              De-emphasised when the scope is withheld — tiers are an unguaranteed second look. */}
+          <div className={`max-h-40 space-y-0.5 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 ${
+            summary.marginal_shift_flagged ? 'opacity-50' : ''
+          }`}>
             {summary.lesions.map((l, i) => (
               <div key={i} className="flex items-center justify-between rounded bg-gray-800/60 px-2 py-0.5">
                 <span className="flex items-center gap-1.5">

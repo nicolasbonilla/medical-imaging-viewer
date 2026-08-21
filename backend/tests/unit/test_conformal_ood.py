@@ -85,9 +85,9 @@ def test_conformal_review_withholds_guarantee_on_ood_but_keeps_tiers():
         if n >= 30:
             break
     r = conformal_review(p, (1.0, 1.0, 1.0), "balanced")
-    assert r.guarantee_applicable is False           # guarantee withheld
+    assert r.marginal_shift_flagged is True          # gross marginal shift -> scope withheld
     assert r.guarantee_scope == WITHHELD_SCOPE
     assert r.ood is not None and r.ood.is_ood is True
     assert len(r.lesions) >= 1                        # additive: tiers still shown
     s = r.summary()
-    assert s["guarantee_applicable"] is False and s["ood"]["is_ood"] is True
+    assert s["marginal_shift_flagged"] is True and s["ood"]["is_ood"] is True

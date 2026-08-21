@@ -60,11 +60,12 @@ def test_conformal_review_rejects_non_finite():
 # ---- HAZ-CALM-6: bad null asset must fail closed at load -----------------------
 
 def _write_null(tmp, scores, base_model=EXPECTED_BASE_MODEL, grid=(182, 218, 182),
-                base_model_independent=True):
+                base_model_independent=True, null_kind="raw_pooled_probability", n_cases=115):
     prov = {
         "base_model": base_model, "version": "test", "threshold": 0.5,
         "min_volume_mm3": 3.0, "voxel_spacing": [1.0, 1.0, 1.0], "grid_shape": list(grid),
         "base_model_independent": base_model_independent,
+        "null_kind": null_kind, "n_cases": n_cases,
     }
     path = os.path.join(tmp, "null.npz")
     np.savez_compressed(path, null_scores=np.asarray(scores, dtype=np.float32),
@@ -131,6 +132,31 @@ def test_load_rejects_null_not_marked_base_model_independent():
         path2 = _write_null(tmp, good, base_model_independent=False)
         with pytest.raises(ConformalAssetError):
             load_null_asset(path2)
+
+
+def test_load_rejects_mismatched_null_kind():
+    """A null built with a statistic other than raw pooled probability must be refused
+    (the served code pools raw probability — a mismatched null yields invalid p-values)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        path = _write_null(tmp, np.linspace(0.1, 0.9, 200), null_kind="learned_score_v3")
+        with pytest.raises(ConformalAssetError):
+            load_null_asset(path)
+
+
+def test_load_rejects_infeasible_preset():
+    """A null whose n_cases cannot resolve the finest preset alpha (alpha < 1/(n+1))
+    must be refused (REQ-FUNC-CALM-008)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        # n_cases=2 -> floor 1/3 = 0.333 > high_sensitivity alpha 0.30 -> infeasible
+        path = _write_null(tmp, np.linspace(0.1, 0.9, 200), n_cases=2)
+        with pytest.raises(ConformalAssetError):
+            load_null_asset(path)
+
+
+def test_load_rejects_missing_asset_file():
+    """A missing asset file must fail closed (-> 503 at the route), never a void guarantee."""
+    with pytest.raises(ConformalAssetError):
+        load_null_asset(os.path.join(tempfile.gettempdir(), "definitely_not_here_calm.npz"))
 
 
 def test_shipped_provenance_is_honest_about_acquisition():

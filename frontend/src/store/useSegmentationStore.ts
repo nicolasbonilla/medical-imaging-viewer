@@ -61,8 +61,13 @@ export interface ConformalLesion {
 export interface ConformalSummary {
   preset: string;
   fdr_target: number;
-  /** False when the OOD monitor withholds the guarantee for this case. */
-  guarantee_applicable: boolean;
+  /**
+   * True when the OOD monitor detected a gross MARGINAL shift and withheld the scope.
+   * NOTE: False does NOT certify the guarantee applies — the monitor only sees the
+   * mixed candidate-score marginal, not the label-conditional exchangeability the
+   * guarantee needs (honest naming, adversarial review 2026-08-21).
+   */
+  marginal_shift_flagged: boolean;
   guarantee_scope: string;
   ood: { is_ood: boolean; distance: number; threshold: number; detail: string } | null;
   n_candidates: number;

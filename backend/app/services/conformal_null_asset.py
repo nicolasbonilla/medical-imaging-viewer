@@ -41,6 +41,11 @@ DEFAULT_PRESET = "high_sensitivity"
 # The null is valid ONLY for this base model. A null stamped with any other model
 # must be refused at load — the guarantee is model-specific (exchangeability).
 EXPECTED_BASE_MODEL = "FLAMeS"
+# The served path computes RAW pooled probability (extract_lesion_candidates pools the
+# raw prob map). The null MUST have been built with the SAME statistic — a null whose
+# `null_kind` is anything else (e.g. a learned score) scored against raw-pooled test
+# values yields nonsense p-values with no error. Bind statistic<->null at load.
+EXPECTED_NULL_KIND_PREFIX = "raw_pooled_probability"
 # A near-degenerate null (few distinct values / ~zero spread) maps every test score
 # to p ~ 1/(n+1) and selects everything, silently INVERTING the FDR control. Refuse.
 MIN_NULL_DISTINCT = 20
@@ -126,7 +131,7 @@ def load_null_asset(path: str = _ASSET_PATH) -> NullAsset:
         raise ConformalAssetError(f"CALM-MS null asset unreadable: {e}") from e
     if null.size == 0:
         raise ConformalAssetError("CALM-MS null asset is empty — refusing to serve a void guarantee")
-    for k in ("threshold", "min_volume_mm3", "voxel_spacing", "grid_shape", "base_model"):
+    for k in ("threshold", "min_volume_mm3", "voxel_spacing", "grid_shape", "base_model", "n_cases"):
         if k not in provenance:
             raise ConformalAssetError(f"CALM-MS null asset missing provenance field '{k}'")
     if provenance.get("base_model") != EXPECTED_BASE_MODEL:
@@ -146,6 +151,29 @@ def load_null_asset(path: str = _ASSET_PATH) -> NullAsset:
         raise ConformalAssetError(
             "CALM-MS null is degenerate (too few distinct values / near-zero spread) — "
             "it cannot produce calibrated p-values; refusing to serve")
+    # Statistic<->null binding: the served code pools RAW probability, so the null must
+    # have been built with the same statistic. Refuse a mismatched null_kind fail-closed.
+    # Exact leading-token match (not startswith) so a lookalike like
+    # "raw_pooled_probability_then_learned" cannot slip through.
+    null_kind = str(provenance.get("null_kind", ""))
+    if null_kind.split(" ", 1)[0] != EXPECTED_NULL_KIND_PREFIX:
+        raise ConformalAssetError(
+            f"CALM-MS null_kind {null_kind!r} != served statistic "
+            f"{EXPECTED_NULL_KIND_PREFIX!r} — the served path pools raw probability; a null "
+            "built with a different statistic would yield invalid p-values. Refusing.")
+    # Preset feasibility (REQ-FUNC-CALM-008): a preset alpha finer than the calibration
+    # can resolve (min conformal p = 1/(n+1)) is arithmetically unachievable. Refuse any
+    # such preset at load. NOTE: n_cases counts SCANS; the honest independent-cluster
+    # count is coarser (subjects) — but even 1/(n_subjects+1) stays below every preset, so
+    # this scan-level floor is the looser (still-sufficient) REQ-FUNC-CALM-008 check.
+    n_cases = int(provenance.get("n_cases", 0))
+    if n_cases > 0:
+        floor = 1.0 / (n_cases + 1)
+        for name, a in PRESETS.items():
+            if a < floor:
+                raise ConformalAssetError(
+                    f"CALM-MS preset {name!r} alpha={a} is below the coarsest resolvable "
+                    f"alpha 1/(n_cases+1)={floor:.4f} (n_cases={n_cases}); refusing.")
     return NullAsset(null_scores=null, provenance=provenance, ood_reference=ood_reference)
 
 

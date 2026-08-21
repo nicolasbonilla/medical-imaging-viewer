@@ -34,9 +34,11 @@ from app.services.conformal_null_asset import get_null_asset, resolve_preset, PR
 from app.services.conformal_ood import assess_ood, OODVerdict
 
 GUARANTEE_SCOPE = (
-    "Population-level lesion false-discovery control (marginal over an exchangeable "
-    "cohort). NOT a per-scan or per-lesion probability. Tiers rank review priority; "
-    "they are not a probability that a lesion is real."
+    "TARGET population-level lesion false-discovery control — valid ONLY WHEN this case's "
+    "false-candidate scores are exchangeable with the calibration cohort, which the monitor "
+    "cannot certify (it sees only the marginal, not the label-conditional distribution). "
+    "NOT a per-scan or per-lesion probability. Tiers rank review priority; they are not a "
+    "probability that a lesion is real."
 )
 WITHHELD_SCOPE = (
     "OUT OF VALIDATED DISTRIBUTION — the conformal FDR guarantee is WITHHELD for this "
@@ -79,7 +81,12 @@ class ConformalReview:
     lesions: list[LesionReview]
     status_mask: np.ndarray            # uint8: 1=high,2=medium,3=low per candidate (additive overlay)
     provenance: dict
-    guarantee_applicable: bool = True  # False when the OOD monitor withholds the guarantee
+    # HONEST NAMING (adversarial review 2026-08-21): this is NOT "guarantee_applicable".
+    # The OOD monitor sees only the MIXED candidate-score MARGINAL; it CANNOT certify the
+    # label-conditional exchangeability the guarantee needs. So `marginal_shift_flagged`
+    # =True means a gross marginal shift was detected (scope withheld); =False means only
+    # that NO gross marginal shift was seen — it does NOT certify the guarantee applies.
+    marginal_shift_flagged: bool = False   # True when the OOD monitor withholds the scope
     ood: OODVerdict | None = None
 
     def summary(self) -> dict:
@@ -89,7 +96,7 @@ class ConformalReview:
         return {
             "preset": self.preset,
             "fdr_target": self.fdr_target,
-            "guarantee_applicable": self.guarantee_applicable,
+            "marginal_shift_flagged": self.marginal_shift_flagged,
             "guarantee_scope": self.guarantee_scope,
             "ood": self.ood.as_dict() if self.ood is not None else None,
             "n_candidates": len(self.lesions),
@@ -155,9 +162,9 @@ def conformal_review(prob_map: np.ndarray, voxel_spacing, preset: str = DEFAULT_
                 label=c.label, centroid=c.centroid, volume_mm3=c.volume_mm3,
                 n_voxels=c.n_voxels, review_priority=t, in_fdr_set=bool(sel)))
 
-    applicable = not ood.is_ood
+    shift_flagged = ood.is_ood
     return ConformalReview(
         preset=preset, fdr_target=float(alpha),
-        guarantee_scope=(GUARANTEE_SCOPE if applicable else WITHHELD_SCOPE),
+        guarantee_scope=(WITHHELD_SCOPE if shift_flagged else GUARANTEE_SCOPE),
         lesions=lesions, status_mask=status, provenance=asset.provenance,
-        guarantee_applicable=applicable, ood=ood)
+        marginal_shift_flagged=shift_flagged, ood=ood)
