@@ -85,22 +85,54 @@ async def _load_source_intensity(file_id, storage_service, context: str):
     so it lines up voxel-for-voxel with the segmentation grid.
     """
     if not file_id:
-        return None, None
+        return None, None, None
     try:
         file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, file_id)
         img, data = load_nifti_from_bytes(file_data, normalize=False)
         data = np.asarray(data, dtype=np.float32)
         if data.ndim != 3:
-            return None, None
+            return None, None, None
         intensity = np.transpose(data, (2, 0, 1))  # native (a0,a1,k) -> internal (k,a0,a1)
         spacing = None
         zooms = img.header.get_zooms()[:3]
         if len(zooms) >= 3 and all(float(z) > 0 for z in zooms):
             spacing = (float(zooms[2]), float(zooms[0]), float(zooms[1]))
-        return intensity, spacing
+        return intensity, spacing, img  # img (with affine) enables MSMask atlas region mapping
     except Exception as e:  # noqa: BLE001 — advisory; never block the comparison
         logger.warning(f"[{context}] source intensity load failed; registration disabled: {e}")
-        return None, None
+        return None, None, None
+
+
+def _looks_mni(affine, shape) -> bool:
+    """Best-effort check that an image is in a standard MNI152 space, so the MSMask
+    atlas (which is MNI152) can be resampled onto it VALIDLY. The MSMask region map is
+    only meaningful on MNI-normalized data; on native/oblique clinical scans the atlas
+    resample degrades to a crude center-alignment and would mint CONFIDENTLY WRONG
+    per-region counts (adversarial Finding F1). This gate fails such inputs closed.
+
+    Two resolution-independent signals of MNI normalization: (1) the direction cosines
+    are near axis-aligned (MNI templates are axis-aligned; native oblique/tilted
+    acquisitions are not), and (2) the world-space FOV matches the ~181x217x181 mm
+    MNI152 brain box. It cannot certify true normalization (an axis-aligned native head
+    scan could still pass) — the region output is therefore ALSO labeled
+    candidate/atlas-based; this only rejects the obvious off-MNI cases.
+    """
+    try:
+        R = np.asarray(affine, dtype=float)[:3, :3]
+        vox = np.linalg.norm(R, axis=0)
+        if not np.all(vox > 1e-3):
+            return False
+        Rn = R / vox
+        # MNI templates are EXACTLY axis-aligned (normalization resamples onto the
+        # standard grid), so require near-zero rotation: any real native tilt (>~2.5deg)
+        # is rejected. cos(2.5deg)=0.999.
+        if any(np.abs(Rn[:, c]).max() < 0.999 for c in range(3)):
+            return False
+        extent = np.sort(np.abs(R @ (np.asarray(shape[:3], dtype=float) - 1.0)))
+        mni = np.sort(np.array([181.0, 217.0, 181.0]))
+        return bool(np.all(np.abs(extent - mni) / mni < 0.25))  # within 25%
+    except Exception:  # noqa: BLE001
+        return False
 
 
 def _require_comparable_grid(shape_tp1, shape_tp2) -> None:
@@ -590,17 +622,18 @@ async def compare_longitudinal(
                     raise HTTPException(status_code=404, detail=f"Segmentation {mask_id} not found")
                 spacing = None
                 intensity = None
+                nib_img = None
                 try:
                     meta = await segmentation_service.get_metadata(mask_id)
                     file_id = getattr(meta, "file_id", None)
-                    # One download resolves BOTH the spacing and the registration
-                    # intensities; both best-effort (must never 500 the comparison).
-                    intensity, spacing = await _load_source_intensity(
+                    # One download resolves the spacing, the registration intensities,
+                    # AND the nib image (for MSMask atlas region mapping); all best-effort.
+                    intensity, spacing, nib_img = await _load_source_intensity(
                         file_id, storage_service, f"longitudinal/{mask_id}"
                     )
                 except Exception:  # noqa: BLE001 — spacing is best-effort; a metadata/cache
-                    spacing, intensity = None, None  # error must not 500 (adversarial finding D5)
-                return _m, spacing, intensity
+                    spacing, intensity, nib_img = None, None, None  # must not 500 (finding D5)
+                return _m, spacing, intensity, nib_img
 
             elif mask_type == "instance":
                 # Lazy study-service resolution — see compare_masks (avoids a
@@ -625,12 +658,12 @@ async def compare_longitudinal(
                 # Instance-type input IS a binary mask image (data>0), not an
                 # intensity MRI, so it carries no FLAIR to register — disable
                 # registration for this timepoint (index-aligned fallback).
-                return mask, spacing, None
+                return mask, spacing, None, None
             else:
                 raise HTTPException(status_code=400, detail=f"Unknown mask type: {mask_type}")
 
-        mask_tp1, spacing_tp1, intensity_tp1 = await load_mask(tp1_spec)
-        mask_tp2, _spacing_tp2, intensity_tp2 = await load_mask(tp2_spec)
+        mask_tp1, spacing_tp1, intensity_tp1, img_tp1 = await load_mask(tp1_spec)
+        mask_tp2, _spacing_tp2, intensity_tp2, _img_tp2 = await load_mask(tp2_spec)
 
         logger.info("Longitudinal masks loaded", extra={
             "tp1_shape": str(mask_tp1.shape),
@@ -674,10 +707,41 @@ async def compare_longitudinal(
             and intensity_tp1.shape == mask_tp1_bin.shape
             and intensity_tp2.shape == mask_tp2_bin.shape
         )
+
+        # MAGNIMS region stratification (feature D): build a PV/JC/IT/DWM zone map on
+        # TP1's grid from the MSMask atlas (LST-AI/Wiltgen 2024, CPU-only). GATED:
+        # - only when the input is plausibly MNI-normalized (the atlas is MNI152; on
+        #   native/oblique data it would mint confidently-WRONG regions — Finding F1);
+        # - only on the REGISTERED path — applying a TP1 zone map to UN-registered TP2
+        #   lesions mis-assigns by the head-motion offset (Finding F2).
+        # Fail-soft: any failure → no region breakdown (never blocks / mis-assigns).
+        zone_mask = None
+        region_atlas_note = None
+        if img_tp1 is not None and can_register:
+            if _looks_mni(img_tp1.affine, img_tp1.shape):
+                try:
+                    from app.services.ms_region_classifier import generate_zone_map_atlas
+                    zres = generate_zone_map_atlas(img_tp1, spacing)
+                    zm_native = np.asarray(zres.get("zone_mask"))
+                    if zm_native.ndim == 3:
+                        zm_internal = np.transpose(zm_native, (2, 0, 1))  # native->internal
+                        if zm_internal.shape == mask_tp1_bin.shape:
+                            zone_mask = zm_internal.astype(np.uint8)
+                            region_atlas_note = (
+                                "MAGNIMS regions from the MSMask MNI152 atlas (LST-AI method) — "
+                                "CANDIDATE, atlas-based; assumes MNI-space input and is not "
+                                "lesion-scale certified. Radiologist adjudication required."
+                            )
+                except Exception as e:  # noqa: BLE001 — advisory; never block the comparison
+                    logger.warning(f"[longitudinal] zone-map region stratification skipped: {e}")
+            else:
+                logger.info("[longitudinal] region stratification skipped: TP1 not MNI-normalized")
+
         if can_register:
             from app.services.registration_service import registered_change_candidates
             result = registered_change_candidates(
-                intensity_tp1, intensity_tp2, mask_tp1_bin, mask_tp2_bin, spacing
+                intensity_tp1, intensity_tp2, mask_tp1_bin, mask_tp2_bin, spacing,
+                zone_mask=zone_mask,
             )
         else:
             result = compare_timepoints(mask_tp1_bin, mask_tp2_bin, voxel_spacing=spacing)
@@ -686,6 +750,8 @@ async def compare_longitudinal(
                 "source intensities unavailable for one or both timepoints; "
                 "index-aligned comparison"
             )
+        if region_atlas_note:
+            result["region_atlas_note"] = region_atlas_note
 
         registration_applied = bool(result.get("registration_applied"))
 

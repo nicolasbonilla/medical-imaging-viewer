@@ -442,6 +442,59 @@ export function LongitudinalCompare({
             </div>
           )}
 
+          {/* NEDA-3 MRI (T2-arm) CANDIDATE status — composes the new/enlarging counts
+              into the recognized monitoring construct, HONEST about what is not assessed
+              (Gd-enhancing lesions need post-contrast T1; relapses/EDSS are clinical). */}
+          {result.new_clinically_significant_count != null && (() => {
+            const t2Active = (result.new_clinically_significant_count ?? 0) + (result.enlarging_count ?? 0) >= 1;
+            return (
+              <div className={`rounded border px-2 py-1 text-[10px] leading-snug ${
+                t2Active
+                  ? 'border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300'
+                  : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+              }`}>
+                <span className="font-semibold">
+                  {t2Active
+                    ? t('longitudinal.nedaT2Active', 'NEDA-3 MRI (T2-arm): activity CANDIDATE')
+                    : t('longitudinal.nedaT2Clear', 'NEDA-3 MRI (T2-arm): no new/enlarging T2 candidate')}
+                </span>{' '}
+                {t('longitudinal.nedaNote',
+                  'T2 arm only — Gd-enhancing lesions (post-contrast T1) and clinical relapse/EDSS are NOT assessed here; full NEDA-3/NEDA-4 requires them. Candidate, not a determination.')}
+              </div>
+            );
+          })()}
+
+          {/* MAGNIMS region stratification (MSMask atlas) of new/enlarging candidates —
+              PV/JC/IT/DWM, what commercial tools report by McDonald region. Only shown
+              when a zone map was available (MNI-space data); candidate-quality. */}
+          {result.region_stratification && (() => {
+            const rows = Object.entries(result.region_stratification)
+              .filter(([, v]) => v.new > 0 || v.enlarging > 0);
+            if (rows.length === 0) return null;
+            return (
+              <div className="rounded border border-gray-200 dark:border-gray-800 px-2 py-1.5">
+                <div className="mb-1 text-[9px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  {t('longitudinal.byRegion', 'New / enlarging by MAGNIMS region (candidate)')}
+                </div>
+                {result.region_atlas_note && (
+                  <div className="mb-1 text-[9px] leading-snug text-gray-400">{result.region_atlas_note}</div>
+                )}
+                <div className="flex flex-col gap-0.5">
+                  {rows.map(([region, v]) => (
+                    <div key={region} className="flex items-center justify-between text-[10px]">
+                      <span className="text-gray-600 dark:text-gray-300">{region}</span>
+                      <span className="font-mono text-gray-500 dark:text-gray-400">
+                        {v.new > 0 && <span className="text-blue-500">{v.new} new</span>}
+                        {v.new > 0 && v.enlarging > 0 && ' · '}
+                        {v.enlarging > 0 && <span className="text-red-500">{v.enlarging} enl</span>}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Status Counts (candidates) */}
           <div className="flex flex-wrap gap-1.5">
             {Object.entries(result.status_counts).map(([status, count]) => (
@@ -511,6 +564,12 @@ export function LongitudinalCompare({
                           <span className={statusColor(change.status)}>
                             {t(`longitudinal.${change.status}`, change.status)}
                           </span>
+                          {change.region_id != null && (
+                            <span
+                              title={change.region_name ?? ''}
+                              className="ml-0.5 rounded bg-indigo-400/15 px-1 text-[8px] font-medium text-indigo-600 dark:text-indigo-300"
+                            >{({ 1: 'PV', 2: 'JC', 3: 'IT', 4: 'DWM' } as Record<number, string>)[change.region_id]}</span>
+                          )}
                           {/* FLAIR-subtraction confirmation badge (new candidates only) */}
                           {change.status === 'new' && change.clinically_significant === false && (
                             <span

@@ -227,7 +227,7 @@ def register_timepoints(fixed_img: np.ndarray, moving_img: np.ndarray,
 
 
 def registered_change_candidates(tp1_img, tp2_img, tp1_mask, tp2_mask, spacing,
-                                 iou_threshold: float = 0.3) -> dict:
+                                 iou_threshold: float = 0.3, zone_mask=None) -> dict:
     """SHADOW register-then-compare: register TP2->TP1 (rigid), resample the TP2 lesion mask
     into TP1 space, and run the longitudinal change comparison on the CO-REGISTERED masks —
     so change CANDIDATES are computed on truthfully aligned data (fewer misregistration
@@ -243,7 +243,7 @@ def registered_change_candidates(tp1_img, tp2_img, tp1_mask, tp2_mask, spacing,
     applied = bool(reg.registration_ok and reg.resampled_moving_mask is not None)
     tp2_for_compare = reg.resampled_moving_mask if applied else np.asarray(tp2_mask)
     result = compare_timepoints(np.asarray(tp1_mask), tp2_for_compare, tuple(float(s) for s in spacing),
-                                iou_threshold=iou_threshold)
+                                iou_threshold=iou_threshold, zone_mask=zone_mask)
     result["registration_applied"] = applied
     result["registration_verified"] = False        # invariant: never true in shadow
     result["registration_advisory_qc"] = reg.advisory_qc

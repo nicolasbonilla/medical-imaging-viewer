@@ -32,6 +32,29 @@ def _sphere_volume_mm3(diameter_mm: float) -> float:
     return (4.0 / 3.0) * np.pi * (diameter_mm / 2.0) ** 3
 
 
+# MAGNIMS region labels in the zone mask (LST-AI/Wiltgen 2024 convention).
+_REGION_NAMES = {1: "Periventricular", 2: "Juxtacortical", 3: "Infratentorial", 4: "Deep White Matter"}
+
+
+def _classify_region(zone_mask: Optional[np.ndarray], mask_indices: np.ndarray):
+    """Assign a lesion component to a MAGNIMS region by its zone-mask overlap, using
+    the LST-AI priority cascade IT > PV > JC else DWM (most-specific-first, matching
+    ms_region_classifier). Returns (region_id, region_name) or (None, None) when no
+    zone map is available or the component overlaps no labeled zone voxel."""
+    if zone_mask is None or mask_indices is None or len(mask_indices) == 0:
+        return None, None
+    try:
+        vals = zone_mask[mask_indices[:, 0], mask_indices[:, 1], mask_indices[:, 2]]
+    except Exception:  # noqa: BLE001 — shape/index mismatch must not break the compare
+        return None, None
+    counts = {z: int((vals == z).sum()) for z in (1, 2, 3, 4)}
+    counts = {z: c for z, c in counts.items() if c > 0}
+    if not counts:
+        return None, None
+    region_id = next((z for z in (3, 1, 2) if counts.get(z)), 4)  # IT>PV>JC else DWM
+    return region_id, _REGION_NAMES[region_id]
+
+
 def _extract_components(mask_3d: np.ndarray, voxel_spacing: tuple[float, float, float]):
     """
     Extract connected components from a binary mask.
@@ -125,6 +148,7 @@ def compare_timepoints(
     voxel_spacing: tuple[float, float, float],
     iou_threshold: float = 0.3,
     change_threshold: float = 0.20,
+    zone_mask: Optional[np.ndarray] = None,
 ) -> dict:
     """
     Compare lesion masks from two timepoints.
@@ -144,6 +168,13 @@ def compare_timepoints(
     """
     if mask_tp1.shape != mask_tp2.shape:
         raise ValueError(f"Mask shapes must match: {mask_tp1.shape} vs {mask_tp2.shape}")
+
+    # Region stratification only when the zone mask is on the SAME grid as the masks
+    # (fail-closed — a mismatched zone map would mis-assign regions).
+    if zone_mask is not None and tuple(zone_mask.shape) != tuple(mask_tp1.shape):
+        logger.warning("Zone mask grid %s != mask grid %s; region stratification disabled",
+                       zone_mask.shape, mask_tp1.shape)
+        zone_mask = None
 
     voxel_vol = float(np.prod(voxel_spacing))
 
@@ -168,6 +199,7 @@ def compare_timepoints(
         else:
             status = "stable"
 
+        region_id, region_name = _classify_region(zone_mask, cb["mask_indices"])
         changes.append({
             "centroid_z": round(cb["centroid"][0], 1),
             "centroid_y": round(cb["centroid"][1], 1),
@@ -180,11 +212,14 @@ def compare_timepoints(
             "change_percent": round(pct, 1),
             "status": status,
             "iou": round(iou, 3),
+            "region_id": region_id,
+            "region_name": region_name,
         })
 
     # New lesions
     new_min_volume = _sphere_volume_mm3(NEW_LESION_MIN_DIAMETER_MM)
     for cb in new_lesions:
+        region_id, region_name = _classify_region(zone_mask, cb["mask_indices"])
         changes.append({
             "centroid_z": round(cb["centroid"][0], 1),
             "centroid_y": round(cb["centroid"][1], 1),
@@ -200,10 +235,13 @@ def compare_timepoints(
             # MAGNIMS clinical size gate: only ≥3 mm-diameter new lesions are
             # clinically countable (below = likely non-actionable / subthreshold).
             "clinically_significant": bool(cb["volume_mm3"] >= new_min_volume),
+            "region_id": region_id,
+            "region_name": region_name,
         })
 
     # Resolved lesions
     for ca in resolved:
+        region_id, region_name = _classify_region(zone_mask, ca["mask_indices"])
         changes.append({
             "centroid_z": round(ca["centroid"][0], 1),
             "centroid_y": round(ca["centroid"][1], 1),
@@ -216,6 +254,8 @@ def compare_timepoints(
             "change_percent": -100.0,
             "status": "resolved",
             "iou": 0,
+            "region_id": region_id,
+            "region_name": region_name,
         })
 
     # Summary
@@ -240,6 +280,21 @@ def compare_timepoints(
     )
     enlarging = status_counts["enlarged"]
 
+    # MAGNIMS region stratification (PV/JC/IT/DWM) of NEW + ENLARGING candidates —
+    # what icobrain/Pixyl/NeuroQuant report by McDonald region. Only when a zone map
+    # was supplied; None otherwise. Counts are clinically-significant new + enlarging.
+    region_stratification = None
+    if zone_mask is not None:
+        region_stratification = {name: {"new": 0, "enlarging": 0}
+                                 for name in _REGION_NAMES.values()}
+        region_stratification["Unassigned"] = {"new": 0, "enlarging": 0}
+        for c in changes:
+            key = c.get("region_name") or "Unassigned"
+            if c["status"] == "new" and c.get("clinically_significant"):
+                region_stratification[key]["new"] += 1
+            elif c["status"] == "enlarged":
+                region_stratification[key]["enlarging"] += 1
+
     return {
         "changes": changes,
         "total_lesions_tp1": len(comps_a),
@@ -257,4 +312,5 @@ def compare_timepoints(
         "enlarging_count": enlarging,
         "dit_candidate": new_significant >= 1,
         "activity_candidate": (new_significant + enlarging) >= 2,
+        "region_stratification": region_stratification,
     }

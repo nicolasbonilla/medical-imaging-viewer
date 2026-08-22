@@ -75,6 +75,39 @@ def test_subthreshold_new_lesion_is_not_a_dit_candidate():
     assert res["dit_candidate"] is False
 
 
+def test_region_stratification_assigns_new_lesion_to_its_zone():
+    """A new lesion sitting entirely in the periventricular zone is classified PV and
+    counted in the region stratification (MSMask/LST-AI priority IT>PV>JC else DWM)."""
+    shp = (16, 16, 16)
+    zone = np.zeros(shp, np.uint8)
+    zone[:, :, :8] = 1     # left half = Periventricular (1)
+    zone[:, :, 8:] = 2     # right half = Juxtacortical (2)
+    tp1 = np.zeros(shp, np.uint8)
+    tp2 = np.zeros(shp, np.uint8)
+    tp2[7:10, 7:10, 2:5] = 1   # 27-voxel new lesion fully inside the PV (x<8) half
+
+    res = compare_timepoints(tp1, tp2, SPACING, zone_mask=zone)
+    new = next(c for c in res["changes"] if c["status"] == "new")
+    assert new["region_id"] == 1 and new["region_name"] == "Periventricular"
+    assert res["region_stratification"]["Periventricular"]["new"] == 1
+    assert res["region_stratification"]["Juxtacortical"]["new"] == 0
+
+
+def test_region_stratification_fails_closed_on_grid_mismatch():
+    """A zone mask on a different grid must be IGNORED (no region assignment), never
+    mis-applied — regions stay None and no stratification is produced."""
+    shp = (16, 16, 16)
+    tp1 = np.zeros(shp, np.uint8)
+    tp2 = np.zeros(shp, np.uint8)
+    tp2[7:10, 7:10, 7:10] = 1
+    wrong_zone = np.ones((8, 8, 8), np.uint8)   # mismatched grid
+
+    res = compare_timepoints(tp1, tp2, SPACING, zone_mask=wrong_zone)
+    new = next(c for c in res["changes"] if c["status"] == "new")
+    assert new["region_id"] is None and new["region_name"] is None
+    assert res["region_stratification"] is None
+
+
 def test_activity_candidate_needs_two_new_or_enlarging():
     shp = (48, 48, 48)
     tp1 = np.zeros(shp, np.uint8)

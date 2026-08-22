@@ -135,6 +135,12 @@ export interface LesionChange {
   /** For status==='new': false when the lesion is below the MAGNIMS ~3 mm-diameter
    *  clinical size gate (reported but excluded from activity/DIT candidate counts). */
   clinically_significant?: boolean;
+  /** MAGNIMS region id (1=PV, 2=JC, 3=IT, 4=DWM) from the MSMask atlas, or null when
+   *  no zone map was available (off-MNI input / atlas failure). Candidate-quality. */
+  region_id?: number | null;
+  /** Human-readable MAGNIMS region name (Periventricular / Juxtacortical /
+   *  Infratentorial / Deep White Matter), or null. */
+  region_name?: string | null;
   /** Advisory FLAIR-subtraction confirmation for status==='new' candidates: mean
    *  normalized subtraction signal (SD units) within the lesion. Positive = brighter
    *  at follow-up (supports a true new lesion). null when unavailable. */
@@ -171,6 +177,12 @@ export interface LongitudinalResult {
   dit_candidate?: boolean;
   /** ≥2 new/enlarging lesions → MAGNIMS active-disease signal (CANDIDATE only). */
   activity_candidate?: boolean;
+  /** MAGNIMS region stratification (MSMask atlas) of new + enlarging candidates by
+   *  McDonald region. null when no zone map was available (off-MNI / atlas failure). */
+  region_stratification?: Record<string, { new: number; enlarging: number }> | null;
+  /** Candidate/atlas-quality caveat for region_stratification (present only when
+   *  regions were computed): atlas-based, MNI-assumed, not lesion-scale certified. */
+  region_atlas_note?: string;
   // ── Class C safety framing (the compare performs NO spatial registration) ──
   // The backend always sends these; the UI must gate any "change/new-lesion" wording on
   // them so a candidate is never presented as a verified finding (over-diagnosis hazard).
