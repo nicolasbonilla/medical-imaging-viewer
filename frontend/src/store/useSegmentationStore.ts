@@ -226,6 +226,13 @@ interface SegmentationState {
   longitudinalTp2SegId: string | null;
   /** Whether longitudinal overlay is visible */
   longitudinalVisible: boolean;
+  /** FLAIR subtraction heatmap (co-registered TP1 grid, uint8: 128=0, >128=brighter
+   *  at follow-up=new signal, <128=darker). Diverging overlay for new-lesion review. */
+  longitudinalSubtractionVolume: Uint8Array | null;
+  longitudinalSubtractionDims: { depth: number; height: number; width: number } | null;
+  longitudinalSubtractionClipSd: number;
+  /** Whether the subtraction heatmap overlay is visible (separate toggle from masks). */
+  longitudinalSubtractionVisible: boolean;
 
   // =========================================================================
   // Selected Lesion (bounding box + centroid highlight)
@@ -326,6 +333,12 @@ interface SegmentationState {
     tp2: { mask: Uint8Array; dims: { depth: number; height: number; width: number }; segId: string } | null,
   ) => void;
   clearLongitudinalOverlay: () => void;
+  /** Set the FLAIR subtraction heatmap volume (co-registered TP1 grid) + show it. */
+  setLongitudinalSubtraction: (
+    sub: { volume: Uint8Array; dims: { depth: number; height: number; width: number }; clipSd: number } | null,
+  ) => void;
+  /** Toggle the subtraction heatmap overlay visibility. */
+  toggleLongitudinalSubtraction: () => void;
 
   // =========================================================================
   // Actions - Reset
@@ -417,6 +430,10 @@ const createInitialState = () => ({
   longitudinalTp2Dims: null as { depth: number; height: number; width: number } | null,
   longitudinalTp2SegId: null as string | null,
   longitudinalVisible: false,
+  longitudinalSubtractionVolume: null as Uint8Array | null,
+  longitudinalSubtractionDims: null as { depth: number; height: number; width: number } | null,
+  longitudinalSubtractionClipSd: 3.0,
+  longitudinalSubtractionVisible: false,
 });
 
 // ============================================================================
@@ -714,7 +731,18 @@ export const useSegmentationStore = create<SegmentationState>()(
           longitudinalTp1Mask: null, longitudinalTp1Dims: null, longitudinalTp1SegId: null,
           longitudinalTp2Mask: null, longitudinalTp2Dims: null, longitudinalTp2SegId: null,
           longitudinalVisible: false,
+          longitudinalSubtractionVolume: null, longitudinalSubtractionDims: null,
+          longitudinalSubtractionVisible: false,
         }),
+        setLongitudinalSubtraction: (sub) => set({
+          longitudinalSubtractionVolume: sub?.volume ?? null,
+          longitudinalSubtractionDims: sub?.dims ?? null,
+          longitudinalSubtractionClipSd: sub?.clipSd ?? 3.0,
+          longitudinalSubtractionVisible: sub != null,
+        }),
+        toggleLongitudinalSubtraction: () => set((s) => ({
+          longitudinalSubtractionVisible: !s.longitudinalSubtractionVisible,
+        })),
 
         // =====================================================================
         // Reset Actions

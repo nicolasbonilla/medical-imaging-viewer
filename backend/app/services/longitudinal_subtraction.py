@@ -17,6 +17,7 @@ and the candidate firewall are untouched. Requires the co-registered intensities
 """
 from __future__ import annotations
 
+import base64
 from typing import Optional
 
 import numpy as np
@@ -24,6 +25,13 @@ import numpy as np
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
+
+# Diverging-heatmap encoding: the normalized subtraction is clipped to ±SUB_CLIP_SD
+# and mapped to uint8 with 128 = zero, so the frontend can paint a blue↔red overlay.
+SUB_CLIP_SD = 3.0
+# Above this many voxels the inline base64 heatmap is omitted (too large for the
+# compare response); the per-candidate subtraction confirmation still ships.
+MAX_SUB_VOXELS = 12_000_000
 
 # A new candidate whose mean normalized subtraction (follow-up − baseline, in SD
 # units) reaches this is "subtraction-confirmed". 0.5 SD is a deliberately modest,
@@ -68,6 +76,40 @@ def subtraction_map(
     if nf is None or nm is None:
         return None
     return nm - nf
+
+
+def quantize_subtraction(
+    subtraction: np.ndarray,
+    brain_domain: Optional[np.ndarray] = None,
+    clip_sd: float = SUB_CLIP_SD,
+) -> np.ndarray:
+    """Map the normalized subtraction to uint8 for a diverging heatmap: 128 = 0,
+    255 = +clip_sd (brighter at follow-up), 0 = −clip_sd. Voxels OUTSIDE the brain
+    domain are set to 128 (neutral) so the overlay shows nothing where the
+    subtraction is not trustworthy."""
+    sub = np.asarray(subtraction, dtype=np.float32)
+    q = np.clip(sub / max(clip_sd, 1e-6), -1.0, 1.0)
+    u8 = np.round((q * 0.5 + 0.5) * 255.0).astype(np.uint8)
+    if brain_domain is not None:
+        u8 = np.where(np.asarray(brain_domain) > 0, u8, np.uint8(128)).astype(np.uint8)
+    return u8
+
+
+def encode_subtraction_volume(
+    subtraction: np.ndarray,
+    brain_domain: Optional[np.ndarray] = None,
+    clip_sd: float = SUB_CLIP_SD,
+    max_voxels: int = MAX_SUB_VOXELS,
+):
+    """Return (base64 uint8 volume, shape, clip_sd) for inline transport, or
+    (None, shape, clip_sd) when the volume exceeds max_voxels (heatmap omitted, the
+    per-candidate confirmation still ships). Shape is the fixed-space (k,a0,a1) grid."""
+    sub = np.asarray(subtraction)
+    if sub.size > max_voxels:
+        return None, list(sub.shape), clip_sd
+    u8 = quantize_subtraction(sub, brain_domain, clip_sd)
+    b64 = base64.b64encode(np.ascontiguousarray(u8).tobytes()).decode("ascii")
+    return b64, list(u8.shape), clip_sd
 
 
 def confirm_new_candidates(

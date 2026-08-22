@@ -9,7 +9,7 @@
  * @module components/LongitudinalCompare
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -138,6 +138,18 @@ export function LongitudinalCompare({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const subVisible = useSegmentationStore((s) => s.longitudinalSubtractionVisible);
+
+  // Invalidate a stale result: clearing the selection must also drop the on-canvas
+  // overlays (fused masks + subtraction heatmap), so a heatmap can never outlive the
+  // comparison it came from or persist after its toggle button disappears (Class C —
+  // no stale/misleading overlay over a now-different selection).
+  const invalidate = useCallback(() => {
+    setResult(null);
+    useSegmentationStore.getState().clearLongitudinalOverlay();
+  }, []);
+  // Also clear the overlays when this panel unmounts.
+  useEffect(() => () => useSegmentationStore.getState().clearLongitudinalOverlay(), []);
 
   // Fetch file_ids and segmentations for each selected study
   const { data: tp1FileIds = [] } = useStudyFileIds(tp1StudyId || null);
@@ -168,6 +180,23 @@ export function LongitudinalCompare({
         { mask: tp1MaskData.mask, dims: { depth: tp1MaskData.depth, height: tp1MaskData.height, width: tp1MaskData.width }, segId: tp1SegId },
         { mask: tp2MaskData.mask, dims: { depth: tp2MaskData.depth, height: tp2MaskData.height, width: tp2MaskData.width }, segId: tp2SegId },
       );
+
+      // Decode the FLAIR subtraction heatmap (co-registered TP1 grid) for the overlay.
+      if (data.subtraction_volume_b64 && data.subtraction_shape) {
+        try {
+          const bin = atob(data.subtraction_volume_b64);
+          const vol = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) vol[i] = bin.charCodeAt(i);
+          const [depth, height, width] = data.subtraction_shape;
+          useSegmentationStore.getState().setLongitudinalSubtraction({
+            volume: vol, dims: { depth, height, width }, clipSd: data.subtraction_clip_sd ?? 3,
+          });
+        } catch {
+          useSegmentationStore.getState().setLongitudinalSubtraction(null);
+        }
+      } else {
+        useSegmentationStore.getState().setLongitudinalSubtraction(null);
+      }
 
       setResult(data);
       setExpanded(true);
@@ -204,7 +233,7 @@ export function LongitudinalCompare({
         </label>
         <select
           value={tp1StudyId}
-          onChange={(e) => { setTp1StudyId(e.target.value); setTp1SegId(''); setResult(null); }}
+          onChange={(e) => { setTp1StudyId(e.target.value); setTp1SegId(''); invalidate(); }}
           className="w-full px-1.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded text-[10px] border border-gray-200 dark:border-gray-600"
         >
           <option value="">Select study...</option>
@@ -218,7 +247,7 @@ export function LongitudinalCompare({
         {tp1StudyId && tp1Segs.length > 0 && (
           <select
             value={tp1SegId}
-            onChange={(e) => { setTp1SegId(e.target.value); setResult(null); }}
+            onChange={(e) => { setTp1SegId(e.target.value); invalidate(); }}
             className="w-full px-1.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded text-[10px] border border-gray-200 dark:border-gray-600"
           >
             <option value="">Select segmentation...</option>
@@ -241,7 +270,7 @@ export function LongitudinalCompare({
         </label>
         <select
           value={tp2StudyId}
-          onChange={(e) => { setTp2StudyId(e.target.value); setTp2SegId(''); setResult(null); }}
+          onChange={(e) => { setTp2StudyId(e.target.value); setTp2SegId(''); invalidate(); }}
           className="w-full px-1.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded text-[10px] border border-gray-200 dark:border-gray-600"
         >
           <option value="">Select study...</option>
@@ -255,7 +284,7 @@ export function LongitudinalCompare({
         {tp2StudyId && tp2Segs.length > 0 && (
           <select
             value={tp2SegId}
-            onChange={(e) => { setTp2SegId(e.target.value); setResult(null); }}
+            onChange={(e) => { setTp2SegId(e.target.value); invalidate(); }}
             className="w-full px-1.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded text-[10px] border border-gray-200 dark:border-gray-600"
           >
             <option value="">Select segmentation...</option>
@@ -370,6 +399,30 @@ export function LongitudinalCompare({
                   'FLAIR subtraction: {{c}} of {{n}} new candidates confirmed brighter at follow-up',
                   { c: result.subtraction_summary.new_subtraction_confirmed, n: result.subtraction_summary.new_total })}
               </span>
+            </div>
+          )}
+          {/* FLAIR subtraction HEATMAP overlay toggle (red = brighter at follow-up /
+              new signal; blue = resolving). Rendered on the TP1-grid viewport. */}
+          {result.subtraction_volume_b64 && (
+            <button
+              type="button"
+              onClick={() => useSegmentationStore.getState().toggleLongitudinalSubtraction()}
+              className={`flex w-full items-center justify-between rounded border px-2 py-1 text-[10px] transition-colors ${
+                subVisible
+                  ? 'border-sky-500/50 bg-sky-500/10 text-sky-700 dark:text-sky-300'
+                  : 'border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-2 w-4 rounded-sm bg-gradient-to-r from-blue-500 via-transparent to-red-500" />
+                {t('longitudinal.subOverlayToggle', 'FLAIR subtraction heatmap')}
+              </span>
+              <span className="font-semibold">{subVisible ? t('common.on', 'ON') : t('common.off', 'OFF')}</span>
+            </button>
+          )}
+          {result.subtraction_volume_omitted && (
+            <div className="text-[9px] text-gray-400">
+              {t('longitudinal.subOmitted', 'Subtraction heatmap omitted (volume too large); confirmation flags still apply.')}
             </div>
           )}
 

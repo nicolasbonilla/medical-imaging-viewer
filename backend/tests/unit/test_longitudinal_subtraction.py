@@ -6,11 +6,14 @@ false positive where the FLAIR is unchanged) shows ~0 signal. These tests pin th
 discriminative behavior and the Class C invariant (subtraction NEVER certifies a
 candidate — registration_verified stays False).
 """
+import base64
+
 import numpy as np
 
 from app.services.registration_service import registered_change_candidates
 from app.services.longitudinal_subtraction import (
     normalize_intensity, subtraction_map, confirm_new_candidates,
+    quantize_subtraction, encode_subtraction_volume, SUB_CLIP_SD,
 )
 
 SPACING = (1.0, 1.0, 1.0)
@@ -47,6 +50,32 @@ def test_normalize_and_subtraction_basic():
     assert normalize_intensity(np.zeros((32, 32, 32), np.float32)) is None
 
 
+def test_quantize_and_encode_subtraction_volume():
+    """Diverging-heatmap quantization: 0→128, +clip→255, −clip→0, outside-domain→128;
+    and base64 round-trips to the original uint8 volume + shape."""
+    shp = (4, 5, 6)
+    sub = np.zeros(shp, np.float32)
+    sub[0] = SUB_CLIP_SD           # +clip → 255
+    sub[1] = -SUB_CLIP_SD          # −clip → 0
+    sub[2] = 0.0                   # zero → 128
+    domain = np.ones(shp, np.uint8)
+    domain[3] = 0                  # outside domain → forced neutral 128
+
+    u8 = quantize_subtraction(sub, domain)
+    assert u8[0].min() == 255 and u8[1].max() == 0
+    assert (u8[2] == 128).all()
+    assert (u8[3] == 128).all()    # neutral outside the domain regardless of value
+
+    b64, out_shape, clip = encode_subtraction_volume(sub, domain)
+    assert out_shape == list(shp) and clip == SUB_CLIP_SD
+    decoded = np.frombuffer(base64.b64decode(b64), dtype=np.uint8).reshape(out_shape)
+    assert np.array_equal(decoded, u8)
+
+    # Size guard: a volume above the cap omits the inline heatmap (returns None b64).
+    b64_big, _, _ = encode_subtraction_volume(np.zeros(shp, np.float32), max_voxels=10)
+    assert b64_big is None
+
+
 def test_bright_new_lesion_is_subtraction_confirmed():
     shp = (64, 64, 64)
     c = (32, 32, 24)
@@ -65,6 +94,11 @@ def test_bright_new_lesion_is_subtraction_confirmed():
     new_change = next(c for c in res["changes"] if c["status"] == "new")
     assert new_change["subtraction_confirmed"] is True
     assert new_change["subtraction_signal"] > 0.5
+    # The inline heatmap volume ships with the response (fixed/TP1 grid).
+    assert "subtraction_volume_b64" in res
+    assert res["subtraction_shape"] == list(tp1_img.shape)
+    decoded = np.frombuffer(base64.b64decode(res["subtraction_volume_b64"]), dtype=np.uint8)
+    assert decoded.size == int(np.prod(tp1_img.shape))
 
 
 def test_border_candidate_is_withheld_not_confirmed():

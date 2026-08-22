@@ -207,8 +207,19 @@ export interface LongitudinalResult {
   subtraction_summary?: {
     new_total: number;
     new_subtraction_confirmed: number;
+    new_withheld?: number;
     min_signal_sd: number;
   };
+  /** Base64 uint8 diverging heatmap of the FLAIR subtraction (co-registered TP1 grid,
+   *  internal (k,a0,a1)): 128=no change, >128=brighter at follow-up (new signal),
+   *  <128=darker. For the visual subtraction overlay. Omitted when too large. */
+  subtraction_volume_b64?: string;
+  /** Shape [depth,height,width] of the subtraction heatmap volume. */
+  subtraction_shape?: [number, number, number];
+  /** The ±SD clip used to build the heatmap (for the legend). */
+  subtraction_clip_sd?: number;
+  /** True when the inline heatmap volume was omitted for size (confirmation flags still ship). */
+  subtraction_volume_omitted?: boolean;
 }
 
 // ============================================================================

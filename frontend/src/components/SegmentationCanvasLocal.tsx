@@ -325,6 +325,10 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
   const longTp2Mask = useSegmentationStore((s) => s.longitudinalTp2Mask);
   const longTp2Dims = useSegmentationStore((s) => s.longitudinalTp2Dims);
   const longVisible = useSegmentationStore((s) => s.longitudinalVisible);
+  // FLAIR subtraction heatmap overlay (co-registered TP1 grid)
+  const longSubVol = useSegmentationStore((s) => s.longitudinalSubtractionVolume);
+  const longSubDims = useSegmentationStore((s) => s.longitudinalSubtractionDims);
+  const longSubVisible = useSegmentationStore((s) => s.longitudinalSubtractionVisible);
 
   // State
   const [isPainting, setIsPainting] = useState(false);
@@ -610,6 +614,66 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
       }
     }
 
+    // FLAIR subtraction heatmap overlay (diverging: red = brighter at follow-up /
+    // new-lesion signal, blue = darker / resolving). The heatmap is in the
+    // CO-REGISTERED TP1 grid; fail-closed exactly like the fused overlay — render
+    // ONLY when the heatmap slice resolves to the displayed grid, so a mis-gridded
+    // volume never paints a misaligned (misleading) heatmap.
+    if (longSubVisible && longSubVol && longSubDims) {
+      const subSliceSize = longSubDims.width * longSubDims.height;
+      const subOffset = sliceIndex * subSliceSize;
+      if (subOffset + subSliceSize <= longSubVol.length) {
+        let subSlice = longSubVol.subarray(subOffset, subOffset + subSliceSize);
+        let sw = longSubDims.width, sh = longSubDims.height;
+        if (sw !== imageWidth && sh === imageWidth && sw === imageHeight) {
+          subSlice = transposeSlice(subSlice, sh, sw);
+          sw = imageWidth; sh = imageHeight;
+        }
+        if (sw === imageWidth && sh === imageHeight) {
+          const subImg = ctx.createImageData(imageWidth, imageHeight);
+          const sd = subImg.data;
+          // Ignore |Δ| below ~0.4 SD (uint8 128±17) as noise; ramp alpha above it.
+          const NEUTRAL = 128, DEAD = 17, MAXA = 0.6 * 255;
+          for (let i = 0; i < imageWidth * imageHeight; i++) {
+            const v = subSlice[i] - NEUTRAL;
+            const pi = i * 4;
+            if (v > DEAD) {
+              // brighter at follow-up → red-orange (new-lesion signal)
+              const t = Math.min(1, (v - DEAD) / (127 - DEAD));
+              sd[pi] = 245; sd[pi + 1] = 130 - Math.round(60 * t); sd[pi + 2] = 40;
+              sd[pi + 3] = Math.round(MAXA * t);
+            } else if (v < -DEAD) {
+              // darker at follow-up → blue (resolving signal)
+              const t = Math.min(1, (-v - DEAD) / (128 - DEAD));
+              sd[pi] = 60; sd[pi + 1] = 130; sd[pi + 2] = 245;
+              sd[pi + 3] = Math.round(MAXA * t);
+            }
+          }
+          const stmp = document.createElement('canvas');
+          stmp.width = imageWidth; stmp.height = imageHeight;
+          const sctx = stmp.getContext('2d');
+          if (sctx) {
+            sctx.putImageData(subImg, 0, 0);
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(stmp, 0, 0, canvasSize.width, canvasSize.height);
+          }
+          // SAFETY CAPTION (Class C): the heatmap is in TP1/fixed space and is only
+          // spatially valid over the TP1 series. A smooth intensity heatmap reads as
+          // pixel-precise anatomy, so state its space explicitly — over any other
+          // series a rigid-transform displacement (see translation_mm) mislocates it.
+          ctx.save();
+          ctx.font = '10px system-ui, sans-serif';
+          const cap = 'TP1-space FLAIR subtraction — valid over TP1 only';
+          const cw = ctx.measureText(cap).width + 10;
+          ctx.fillStyle = 'rgba(2,6,23,0.72)';
+          ctx.fillRect(4, canvasSize.height - 17, cw, 14);
+          ctx.fillStyle = '#7dd3fc';
+          ctx.fillText(cap, 9, canvasSize.height - 7);
+          ctx.restore();
+        }
+      }
+    }
+
     // Draw mask from LOCAL MEMORY (instant!)
     if (showOverlay && segmentationMask.isLoaded) {
       const maskSlice = segmentationMask.getSliceMask(sliceIndex);
@@ -830,6 +894,7 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
     conformalStatusMask, conformalDims, conformalVisible,
     lesionOpacity, zoneMapOpacity, selectedLesion,
     longTp1Mask, longTp1Dims, longTp2Mask, longTp2Dims, longVisible,
+    longSubVol, longSubDims, longSubVisible,
   ]);
 
   // Re-render overlay when mask or slice changes

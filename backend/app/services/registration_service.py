@@ -259,7 +259,9 @@ def registered_change_candidates(tp1_img, tp2_img, tp1_mask, tp2_mask, spacing,
     result["subtraction_available"] = False
     if applied and reg.resampled_moving_image is not None:
         try:
-            from app.services.longitudinal_subtraction import subtraction_map, confirm_new_candidates
+            from app.services.longitudinal_subtraction import (
+                subtraction_map, confirm_new_candidates, encode_subtraction_volume,
+            )
             sub = subtraction_map(
                 np.asarray(tp1_img, dtype=np.float32), reg.resampled_moving_image,
                 brain_mask=reg.brain_domain,
@@ -270,6 +272,17 @@ def registered_change_candidates(tp1_img, tp2_img, tp1_mask, tp2_mask, spacing,
                 )
                 result["subtraction_available"] = True
                 result["subtraction_summary"] = summary
+                # Inline diverging-heatmap volume (fixed/TP1 space, internal (k,a0,a1))
+                # for the visual subtraction overlay. Stateless — travels with the
+                # response so no multi-instance server cache is needed. Omitted (with a
+                # flag) when too large; the confirmation flags still ship either way.
+                b64, shp, clip = encode_subtraction_volume(sub, reg.brain_domain)
+                if b64 is not None:
+                    result["subtraction_volume_b64"] = b64
+                    result["subtraction_shape"] = shp
+                    result["subtraction_clip_sd"] = clip
+                else:
+                    result["subtraction_volume_omitted"] = True
         except Exception as e:  # noqa: BLE001 — advisory; must never break the comparison
             logger.warning("[Subtraction] confirmation skipped", extra={"error": str(e)})
     return result
