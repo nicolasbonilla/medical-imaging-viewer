@@ -13,6 +13,7 @@ import type {
   DISAssessment,
   DISExternalEvidence,
   LongitudinalResult,
+  SELResult,
   RegionClassificationResult,
   ClassificationMethod,
   ZoneMapResult,
@@ -185,6 +186,22 @@ export const segmentationAPI = {
   ): Promise<LongitudinalResult> {
     const response = await apiClient.post<LongitudinalResult>(
       `${API_PREFIX}/segmentation/longitudinal/compare`,
+      { tp1, tp2 }
+    );
+    return response.data;
+  },
+
+  /**
+   * Detect Slowly-Expanding Lesion (SEL) CANDIDATES between two timepoints — the
+   * vanguard 'smoldering disease' biomarker (Elliott 2019), via the Jacobian of a
+   * deformable TP2→TP1 registration. On-demand (heavier than the rigid compare).
+   */
+  async detectSELs(
+    tp1: { type: 'segmentation'; id: string },
+    tp2: { type: 'segmentation'; id: string },
+  ): Promise<SELResult> {
+    const response = await apiClient.post<SELResult>(
+      `${API_PREFIX}/segmentation/longitudinal/sel`,
       { tp1, tp2 }
     );
     return response.data;

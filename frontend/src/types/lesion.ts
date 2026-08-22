@@ -154,6 +154,37 @@ export interface LesionChange {
   subtraction_note?: string;
 }
 
+/** A single Slowly-Expanding Lesion candidate (Jacobian expanding-fraction). */
+export interface SELCandidate {
+  centroid_z: number;
+  centroid_y: number;
+  centroid_x: number;
+  /** Baseline (TP1) lesion volume in mm³. */
+  baseline_volume_mm3: number;
+  /** Fraction of lesion voxels locally expanding (per-voxel Jacobian ≥ floor). */
+  expanding_fraction: number;
+  /** Mean Jacobian within the lesion (context only; >1 = expansion). */
+  mean_jacobian: number;
+}
+
+/** Result of SEL (slowly-expanding lesion) candidate detection. */
+export interface SELResult {
+  ok: boolean;
+  reason: string;
+  sels: SELCandidate[];
+  /** Number of pre-existing lesions examined. */
+  n_existing: number;
+  /** Number flagged as SEL candidates. */
+  n_sel: number;
+  /** Per-subject registration-noise floor (expanding fraction of normal tissue). */
+  background_expanding_fraction?: number;
+  voxel_expansion_floor?: number;
+  registration_verified?: boolean;
+  adjudication_required?: boolean;
+  method?: string;
+  caveat?: string;
+}
+
 export interface LongitudinalResult {
   changes: LesionChange[];
   total_lesions_tp1: number;

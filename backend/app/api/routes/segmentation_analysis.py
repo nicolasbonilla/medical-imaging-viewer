@@ -798,6 +798,98 @@ async def compare_longitudinal(
         raise HTTPException(status_code=500, detail=f"Longitudinal comparison failed: {str(e)}")
 
 
+@router.post("/longitudinal/sel")
+async def detect_slowly_expanding_lesions(
+    request: Request,
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    storage_service: IStorageService = Depends(get_storage_service),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Detect Slowly-Expanding Lesion (SEL) CANDIDATES between two timepoints.
+
+    SELs (Elliott et al. 2019) are the vanguard 'smoldering disease' biomarker — a
+    PRE-EXISTING lesion showing concentric expansion, found via the Jacobian
+    determinant of a DEFORMABLE (diffeomorphic-demons) TP2→TP1 registration. This is
+    an explicit, heavier on-demand analysis (deformable registration), separate from
+    the fast rigid change compare.
+
+    Class C: SINGLE-INTERVAL (2 timepoints) → CANDIDATES only; the published SEL
+    definition confirms monotonic expansion over ≥2 intervals (≥3 timepoints). Fail-
+    closed (no SELs, never false ones); a reader must adjudicate. Requires
+    segmentation-type inputs (SEL needs the source FLAIR intensities).
+    """
+    try:
+        body = await request.json()
+        tp1_spec = body.get("tp1")
+        tp2_spec = body.get("tp2")
+        if not tp1_spec or not tp2_spec:
+            raise HTTPException(status_code=400, detail="Both tp1 and tp2 are required")
+
+        async def _load(spec):
+            if spec.get("type") != "segmentation":
+                raise HTTPException(status_code=400,
+                                    detail="SEL detection requires segmentation-type inputs "
+                                           "(needs the source FLAIR intensities).")
+            mask = segmentation_service.get_mask(spec["id"])
+            if mask is None:
+                raise HTTPException(status_code=404, detail=f"Segmentation {spec['id']} not found")
+            meta = await segmentation_service.get_metadata(spec["id"])
+            intensity, spacing, _img = await _load_source_intensity(
+                getattr(meta, "file_id", None), storage_service, f"sel/{spec['id']}")
+            return (mask > 0).astype(np.uint8), spacing, intensity
+
+        mask_tp1, spacing_tp1, intensity_tp1 = await _load(tp1_spec)
+        mask_tp2, _sp2, intensity_tp2 = await _load(tp2_spec)
+
+        _require_comparable_grid(mask_tp1.shape, mask_tp2.shape)
+        if intensity_tp1 is None or intensity_tp2 is None:
+            raise HTTPException(status_code=422,
+                                detail="Source FLAIR intensities unavailable for one or both "
+                                       "timepoints; SEL detection needs them.")
+        if intensity_tp1.shape != mask_tp1.shape or intensity_tp2.shape != mask_tp2.shape:
+            raise HTTPException(status_code=422, detail="Intensity/mask grid mismatch.")
+
+        spacing = spacing_tp1 if spacing_tp1 is not None else (1.0, 1.0, 1.0)
+
+        from app.services.sel_detection_service import detect_sels
+        sel = detect_sels(intensity_tp1, intensity_tp2, mask_tp1, mask_tp2, spacing)
+
+        logger.info("SEL detection completed", extra={
+            "ok": sel.ok, "n_existing": sel.n_existing, "n_sel": sel.n_sel, "reason": sel.reason,
+        })
+        return {
+            "ok": sel.ok,
+            "reason": sel.reason,
+            "sels": sel.sels,
+            "n_existing": sel.n_existing,
+            "n_sel": sel.n_sel,
+            "background_expanding_fraction": sel.background_expanding_fraction,
+            "voxel_expansion_floor": sel.voxel_expansion_floor,
+            # Class C candidate firewall.
+            "registration_verified": False,
+            "adjudication_required": True,
+            "spacing_resolved": spacing_tp1 is not None,
+            "method": "rigid→diffeomorphic-demons Jacobian; expanding-fraction vs "
+                      "per-subject noise floor; single-interval (2 timepoints)",
+            "caveat": (
+                "SEL candidates are UNADJUDICATED and SINGLE-INTERVAL. The validated SEL "
+                "definition confirms MONOTONIC expansion across ≥2 intervals (≥3 timepoints); "
+                "a 2-timepoint Jacobian is a weaker candidate sensitive to deformable-"
+                "registration noise. The false-positive control is APPROXIMATE: the noise "
+                "floor is estimated from normal-appearing tissue, which under-represents "
+                "lesion-boundary registration noise and is biased downward by global brain "
+                "atrophy — it is not a guaranteed false-positive rate. A reader must "
+                "adjudicate before any clinical use."
+            ),
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("SEL detection failed", extra={"error": str(e)})
+        raise HTTPException(status_code=500, detail=f"SEL detection failed: {str(e)}")
+
+
 # =============================================================================
 # CVS / PRL Lesion Annotations (McDonald 2024 Biomarkers)
 # =============================================================================

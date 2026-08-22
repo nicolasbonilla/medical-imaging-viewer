@@ -28,7 +28,7 @@ import { segmentationAPI } from '@/api/segmentation';
 import { studyAPI } from '@/api/study';
 import { useViewerStore } from '@/store/useViewerStore';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
-import type { LongitudinalResult, LesionChange, StudySummary, SegmentationResponse } from '@/types';
+import type { LongitudinalResult, LesionChange, StudySummary, SegmentationResponse, SELResult } from '@/types';
 
 /** Names that indicate non-lesion segmentations (excluded from dropdowns) */
 const EXCLUDED_DESCRIPTIONS = ['magnims zone map', 'brain extraction', 'brain mask', 'synthseg', 'parcellation'];
@@ -140,12 +140,35 @@ export function LongitudinalCompare({
   const [expanded, setExpanded] = useState(false);
   const subVisible = useSegmentationStore((s) => s.longitudinalSubtractionVisible);
 
+  // SEL (slowly-expanding lesion) on-demand detection state
+  const [selResult, setSelResult] = useState<SELResult | null>(null);
+  const [selLoading, setSelLoading] = useState(false);
+
+  const handleDetectSELs = useCallback(async () => {
+    if (!tp1SegId || !tp2SegId) return;
+    setSelLoading(true);
+    setSelResult(null);
+    try {
+      const r = await segmentationAPI.detectSELs(
+        { type: 'segmentation', id: tp1SegId },
+        { type: 'segmentation', id: tp2SegId },
+      );
+      setSelResult(r);
+    } catch (err: any) {
+      setSelResult({ ok: false, reason: err?.response?.data?.detail || err?.message || 'SEL detection failed',
+        sels: [], n_existing: 0, n_sel: 0 });
+    } finally {
+      setSelLoading(false);
+    }
+  }, [tp1SegId, tp2SegId]);
+
   // Invalidate a stale result: clearing the selection must also drop the on-canvas
   // overlays (fused masks + subtraction heatmap), so a heatmap can never outlive the
   // comparison it came from or persist after its toggle button disappears (Class C —
   // no stale/misleading overlay over a now-different selection).
   const invalidate = useCallback(() => {
     setResult(null);
+    setSelResult(null);
     useSegmentationStore.getState().clearLongitudinalOverlay();
   }, []);
   // Also clear the overlays when this panel unmounts.
@@ -494,6 +517,65 @@ export function LongitudinalCompare({
               </div>
             );
           })()}
+
+          {/* SEL (slowly-expanding lesion) detection — vanguard smoldering-disease
+              biomarker, on-demand (deformable registration). CANDIDATE, single-interval. */}
+          <div className="rounded border border-fuchsia-500/30 bg-fuchsia-500/5 px-2 py-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-semibold text-fuchsia-700 dark:text-fuchsia-300">
+                {t('longitudinal.selTitle', 'Slowly-expanding lesions (SEL)')}
+              </span>
+              <button
+                type="button"
+                onClick={handleDetectSELs}
+                disabled={selLoading}
+                className="rounded bg-fuchsia-600 px-2 py-0.5 text-[10px] font-medium text-white hover:bg-fuchsia-500 disabled:opacity-50"
+              >
+                {selLoading ? t('longitudinal.selRunning', 'Analyzing…') : t('longitudinal.selDetect', 'Detect SELs')}
+              </button>
+            </div>
+            {selResult && (
+              <div className="mt-1 text-[10px] leading-snug">
+                {!selResult.ok ? (
+                  <span className="text-gray-500 dark:text-gray-400">
+                    {t('longitudinal.selUnavailable', 'SEL detection unavailable: {{r}}', { r: selResult.reason })}
+                  </span>
+                ) : (
+                  <>
+                    <span className="text-fuchsia-700 dark:text-fuchsia-300">
+                      {t('longitudinal.selSummary',
+                        '{{s}} SEL candidate(s) among {{e}} pre-existing lesions (vs {{bg}}% normal-tissue noise floor)',
+                        { s: selResult.n_sel, e: selResult.n_existing,
+                          bg: Math.round((selResult.background_expanding_fraction ?? 0) * 100) })}
+                    </span>
+                    {selResult.sels.length > 0 && (
+                      <div className="mt-0.5 flex flex-col gap-0.5">
+                        {selResult.sels.map((s, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => onNavigateToSlice?.(Math.round(s.centroid_z))}
+                            className="flex items-center justify-between rounded px-1 py-0.5 text-left hover:bg-fuchsia-500/10"
+                          >
+                            <span className="text-gray-600 dark:text-gray-300">
+                              {(s.baseline_volume_mm3 / 1000).toFixed(3)} mL {t('longitudinal.selBaseline', 'baseline')}
+                            </span>
+                            <span className="font-mono text-fuchsia-600 dark:text-fuchsia-400">
+                              {Math.round(s.expanding_fraction * 100)}% {t('longitudinal.selExpanding', 'expanding')}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <div className="mt-0.5 text-[9px] text-gray-400">
+                      {t('longitudinal.selCaveat',
+                        'CANDIDATE, single-interval (2 timepoints). The validated SEL definition needs ≥3 timepoints. The noise floor is estimated from normal tissue (approximate false-positive control, not a guaranteed rate). A radiologist must adjudicate.')}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Status Counts (candidates) */}
           <div className="flex flex-wrap gap-1.5">
