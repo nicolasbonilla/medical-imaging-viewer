@@ -1,0 +1,11 @@
+# Non-GPU parts of this pipeline (dataset_conversion, infer_to_candidates on a given
+# prob map, benchmark, tests) need only these — all present in the repo backend env:
+numpy>=1.24
+scipy>=1.10
+nibabel>=5.0
+
+# GPU training/prediction (train.md) additionally needs, on the free GPU host:
+#   nnunetv2        # pulls torch; Kaggle/Colab ship torch+CUDA preinstalled
+#
+# The CALM-MS conformal layer is imported from the repo backend (app.services.*),
+# NOT reinstalled here. Set CALM_MS_BACKEND if the repo backend/ is not at ../../backend.

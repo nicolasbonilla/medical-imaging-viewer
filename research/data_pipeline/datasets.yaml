@@ -1,0 +1,251 @@
+# =============================================================================
+# research/data_pipeline/datasets.yaml
+#
+# Manifest of PUBLIC multi-site MS MRI datasets for the CALM-MS pipeline.
+#
+# Each entry declares: how to GET it (download block), what it CONTAINS
+# (sequences / N / license / site), and how it MAPS to a CALM-MS use
+# (target_use). This file is the single source of truth for download.py,
+# preprocess.py and to_calm_calibration.py.
+#
+# `access`:        open   -> download.py can fetch it non-interactively
+#                  gated  -> needs registration/DUA; download.py prints steps + a stub
+# `download.method`:
+#   git      -> `git clone`/`pull` a repo whose NIfTI data lives in-tree
+#   zenodo   -> resolve files via https://zenodo.org/api/records/<id> (md5-checked)
+#   figshare -> resolve files via https://api.figshare.com/v2/articles/<id> (md5-checked)
+#   mendeley -> Mendeley Data zip cache URL (S3), optional sha256
+#   http     -> explicit direct URL(s), optional sha256
+#   manual   -> gated: exact human steps + where to drop the files
+# `target_use`:   seg_train | conformal_calibration | external_site_validation |
+#                 benchmark_protocol   (a list — a dataset can serve several)
+# `flames_clean`: true  -> NOT in the FLAMeS base-model training refs -> a valid
+#                          held-out conformal null / external test for a FLAMeS base
+#                 false -> contaminated for a FLAMeS base (usable only with a
+#                          leave-this-out / non-FLAMeS base). See data/registry.yaml.
+#
+# NUMBERS + CONTAMINATION flags are taken from the repo's vetted data/registry.yaml
+# (per-dataset deep read, 2026-08-17). URLs that still need a live-record check
+# before first ingest are flagged `verify:`.
+# =============================================================================
+
+version: 1
+
+datasets:
+
+  # ---------------------------------------------------------------- OPEN -----
+  mslesseg:
+    title: "MSLesSeg / ICPR-2024 (Nature Sci Data 2025)"
+    access: open
+    landing: "https://iplab.dmi.unict.it/mfs/ms-les-seg/"
+    code_repo: "https://github.com/alessiarondinella/MSLesSeg-2024"
+    license: "CC-BY-4.0"
+    sequences: [t1, t2, flair]
+    patients: 75            # 115 scans (93 train + 22 test), test masks INCLUDED
+    labeled: 115
+    space: MNI_1mm          # (182,218,182) 1mm binary — drop-in with open_ms_data
+    geometry: 3D_iso
+    site: "catania-1.5T"    # single-city (Catania); per-scanner IDs UNVERIFIED -> treat as ONE site
+    edss: false
+    flames_clean: true      # CLEAN: FLAMeS external-test only, not training
+    target_use: [seg_train, conformal_calibration]
+    download:
+      method: figshare
+      # The MSLesSeg release is hosted on Figshare (linked from the IPLab landing
+      # page + the GitHub repo). Set the article id once confirmed from the record.
+      article_id: null
+      verify: "Confirm the live Figshare article id from the landing/GitHub page and any DLA before ingest."
+    layout:
+      # Per timepoint folder: FLAIR + T1 + T2 + MASK (Pn/{T1,T2,T3}=timepoints).
+      pattern: "P*/T*/*.nii.gz"
+      mask_suffix: "_MASK"
+
+  ljubljana_3dmrms:
+    title: "3D-MR-MS — Ljubljana (Lesjak et al., Neuroinformatics 2018)"
+    access: open
+    landing: "https://lit.fe.uni-lj.si/en/research/resources/3D-MR-MS/"
+    license: "CC-BY"
+    sequences: [t1, t1gd, t2, flair]
+    patients: 30
+    labeled: 30
+    longitudinal: 20
+    space: MNI_1mm          # ships raw + coreg + 1mm + MNI
+    geometry: 3D_iso
+    site: "ljubljana-3T-siemens"   # single site, 3T Siemens
+    edss: false
+    flames_clean: false     # CONTAMINATED: this IS FLAMeS ref-13 training data (= open_ms_data)
+    target_use: [external_site_validation]   # for a FLAMeS base: NOT a valid null
+    download:
+      method: http
+      # Direct archive from the LIT resource page; confirm exact file name on the page.
+      urls:
+        - url: "https://lit.fe.uni-lj.si/tools/3D-MR-MS.zip"
+          sha256: null
+      verify: "Confirm the exact zip URL on the LIT page; it may be gated behind a click-through form."
+
+  open_ms_data:
+    title: "Open MS Data (muschellij2) — wraps Ljubljana cross-sectional + longitudinal"
+    access: open
+    landing: "https://github.com/muschellij2/open_ms_data"
+    license: "CC-BY"
+    sequences: [t1, t1gd, t2, flair]
+    patients: 30            # cross_sectional/ ; + 20 in longitudinal/
+    labeled: 30
+    longitudinal: 20
+    space: MNI_1mm          # ships raw + coreg + 1mm + MNI variants in-tree
+    geometry: 3D_iso
+    site: "ljubljana-3T-siemens"
+    edss: false
+    flames_clean: false     # same Ljubljana source as above (= Shifts dev_out) -> do NOT double-count
+    target_use: [external_site_validation]
+    download:
+      method: git
+      url: "https://github.com/muschellij2/open_ms_data.git"
+    layout:
+      pattern: "cross_sectional/*/*.nii.gz"
+      mask_glob: "*consensus*"     # FUSED 3-rater consensus mask
+
+  msmri_baghdad:
+    title: "Brain MRI MS consensus (Muslim et al., Data in Brief 2022) — Baghdad"
+    access: open
+    landing: "https://data.mendeley.com/datasets/8bctsm8jz7/1"
+    license: "CC-BY-4.0"
+    sequences: [t1, t2, flair]
+    patients: 60
+    labeled: 60
+    space: native
+    geometry: 2D_thick      # 2D FLAIR 1.5T, geometry unspecified -> NOT clean MNI-1mm
+    site: "baghdad-1.5T"    # multi-source acquisition (~20 sources) but uncontrolled
+    edss: true              # ships EDSS per patient (the value-add of this cohort)
+    flames_clean: true
+    target_use: [external_site_validation]   # cheap real-world robustness + EDSS probe
+    download:
+      method: mendeley
+      dataset_id: "8bctsm8jz7"
+      version: 1
+      # Mendeley Data serves a whole-dataset zip from its S3 cache:
+      zip_url: "https://prod-dcd-datasets-cache-zipfiles.s3.eu-west-1.amazonaws.com/8bctsm8jz7-1.zip"
+      sha256: null
+
+  shifts2_ms_part2:
+    title: "Shifts 2.0 White-Matter MS Lesion — Part 2 (dev/eval-out, Zenodo)"
+    access: open              # CC-BY-NC-SA on Zenodo; Part 1 is OFSEP-gated (see below)
+    landing: "https://zenodo.org/records/7051692"
+    license: "CC-BY-NC-SA-4.0"   # NON-COMMERCIAL
+    sequences: [t1, flair]
+    patients: "~O(100) labeled aggregated across the benchmark"
+    space: MNI_1mm
+    geometry: 3D_iso
+    site: "multi-site (Ljubljana/Best/Lausanne split)"
+    edss: false
+    flames_clean: false       # components are FLAMeS training data -> marginal-shift study only
+    commercial_use: prohibited
+    target_use: [benchmark_protocol, external_site_validation]
+    download:
+      method: zenodo
+      record_id: "7051692"    # md5-verified via the Zenodo API
+
+  # --------------------------------------------------------------- GATED -----
+  msseg2016:
+    title: "MSSEG-2016 (Commowick et al., Sci Rep 2018) — 7-rater LOP-STAPLE gold"
+    access: gated
+    landing: "https://portal.fli-iam.irisa.fr/msseg-challenge/"
+    license: "restricted (Shanoir account + free OFSEP DUA, non-commercial, 3yr)"
+    sequences: [t1, t1gd, t2, pd, flair]
+    patients: 53              # 15 train (public masks) / 38 test (server-side GT)
+    labeled: 15
+    space: native             # MNI-registerable via the Anima pipeline
+    geometry: 3D_iso
+    site: "4 centers / 4 scanners, 1.5T+3T, Siemens/Philips/GE"
+    edss: false
+    flames_clean: false       # FLAMeS ref-14 training data
+    commercial_use: prohibited
+    target_use: [external_site_validation]   # scanner-isolation anchor (with a non-FLAMeS base)
+    download:
+      method: manual
+      dropdir: "msseg2016"
+      steps:
+        - "Create a Shanoir account: https://shanoir.irisa.fr (or via the FLI-IAM portal)."
+        - "Open the MSSEG-2016 challenge on the FLI-IAM portal and accept the OFSEP DUA (non-commercial, 3-year term)."
+        - "Download the Training dataset (15 cases WITH the 7-rater consensus + per-rater masks)."
+        - "Unzip into <dest>/msseg2016/ preserving the per-center folder structure."
+        - "Test GT is NOT distributed (evaluation is server-side); do not expect test masks."
+
+  msseg2:
+    title: "MSSEG-2 (MICCAI 2021) — new-lesion, 15-scanner multi-site"
+    access: gated
+    landing: "https://portal.fli-iam.irisa.fr/msseg-2/"
+    license: "restricted (Shanoir account + free OFSEP DUA, non-commercial, 3yr)"
+    sequences: [flair]        # FLAIR-only (limits scorer features)
+    patients: 100             # 40 train (public masks) / 60 test, 2 timepoints
+    labeled: 40
+    space: native
+    geometry: 3D_iso
+    site: "15 scanners / 3 vendors, 1.5T+3T (strongest diversity)"
+    edss: false
+    flames_clean: true        # CLEAN: the load-bearing scanner-shift instrument for a FLAMeS base
+    commercial_use: prohibited
+    target_use: [conformal_calibration, external_site_validation]
+    download:
+      method: manual
+      dropdir: "msseg2"
+      steps:
+        - "Log in to Shanoir/FLI-IAM and open the MSSEG-2 challenge study."
+        - "Accept the OFSEP DUA (non-commercial, 3-year term)."
+        - "Download the Training set (40 subjects, 2 timepoints each, with the new-lesion consensus masks)."
+        - "Unzip into <dest>/msseg2/ ; note it is FLAIR-only (no T1) — plan features accordingly."
+
+  isbi2015:
+    title: "ISBI-2015 Longitudinal MS Lesion Challenge"
+    access: gated
+    landing: "https://smart-stats-tools.org/lesion-challenge-2015"
+    mirror: "https://www.nitrc.org/projects/msseg (registration-gated mirror)"
+    license: "open challenge terms (registration required)"
+    sequences: [t1, t2, pd, flair]
+    patients: 19
+    labeled: 19
+    space: MNI_1mm
+    geometry: 3D_iso
+    site: "single center (2 raters)"
+    edss: false
+    flames_clean: false       # FLAMeS ref-12 training data AND a Shifts component -> FORBIDDEN as a FLAMeS null
+    target_use: [seg_train]   # usable only with a base model provably not trained on it
+    download:
+      method: manual
+      dropdir: "isbi2015"
+      steps:
+        - "Register at https://smart-stats-tools.org/lesion-challenge-2015 (free)."
+        - "Download the training data (5 subjects, 4+ timepoints, both raters' masks)."
+        - "Unzip into <dest>/isbi2015/ preserving subject/timepoint folders."
+        - "CONTAMINATION: ISBI-2015 is FLAMeS training data — never use as a FLAMeS conformal null/test."
+
+  shifts_ms_part1:
+    title: "Shifts / Shifts 2.0 MS — Part 1 (in-domain, OFSEP-gated)"
+    access: gated
+    landing: "https://shifts.grand-challenge.org/medical-dataset/"
+    zenodo_part1: "https://zenodo.org/records/7051658"
+    license: "CC-BY-NC-SA-4.0 + OFSEP DUA (non-commercial, 3yr)"
+    sequences: [t1, flair]
+    patients: "~O(100) labeled aggregated"
+    space: MNI_1mm
+    geometry: 3D_iso
+    site: "Rennes/Bordeaux/Lyon (MSSEG-2016 in-domain split)"
+    edss: false
+    flames_clean: false
+    commercial_use: prohibited
+    target_use: [benchmark_protocol]
+    download:
+      method: manual
+      dropdir: "shifts_ms_part1"
+      steps:
+        - "Register on the Shifts grand-challenge page and request the MS dataset."
+        - "Sign the OFSEP DUA for the in-domain (Part 1) partition (MSSEG-2016-derived)."
+        - "Once approved, download from Zenodo record 7051658 and unzip into <dest>/shifts_ms_part1/."
+        - "Adopt its SPLITS + lesion-wise/retention METRICS even where the data itself is contaminated."
+
+  # ---------------------------------------------------------------------------
+  # Honest ceiling of what is PUBLICLY obtainable here — see README.md:
+  #   * ~500 labeled patients total (mostly single-rater or fused-consensus).
+  #   * NO public QSM / PRL / CVS advanced-imaging labels.
+  #   * NO public longitudinal cohort paired with EDSS (Baghdad has EDSS but is
+  #     single-timepoint 2D; ISBI/MSSEG-2 are longitudinal but carry no EDSS).
