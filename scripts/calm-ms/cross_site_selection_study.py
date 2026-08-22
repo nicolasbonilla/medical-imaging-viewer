@@ -26,7 +26,7 @@ the null uses OOF scores; the test site is scored by a scorer trained on all cal
 
     python scripts/calm-ms/cross_site_selection_study.py
 """
-import os, sys, json
+import os, sys, json, re
 
 import numpy as np
 
@@ -34,6 +34,15 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 _BACKEND = os.path.join(_HERE, "..", "..", "backend")
 if _BACKEND not in sys.path:
     sys.path.insert(0, _BACKEND)
+
+
+def _subject_of(case: str) -> str:
+    """Patient id for patient-level (leak-free) grouping. MSLesSeg cases are
+    `mslesseg_P<n>_T<k>`; a subject key groups a patient's timepoints so they never
+    split across the calibration slice and the eval set (the k-shot leak). openms is
+    single-timepoint → subject == case."""
+    m = re.match(r"mslesseg_(P\d+)(?:_|$)", str(case))
+    return "mslesseg_" + m.group(1) if m else str(case)
 
 _CACHE = os.path.join(_HERE, ".scorer_cache.npz")
 ALPHAS = (0.10, 0.20, 0.30)
@@ -80,20 +89,23 @@ def _ece(pfalse, isf, bins=10):
 def main():
     from sklearn.preprocessing import PolynomialFeatures
     from sklearn.linear_model import LogisticRegression
-    from sklearn.model_selection import StratifiedKFold
+    from sklearn.model_selection import StratifiedGroupKFold
 
     d = np.load(_CACHE, allow_pickle=True)
     X, y, sites, cases = d["X"], d["y"], d["sites"], d["cases"]
+    subjects = np.array([_subject_of(c) for c in cases])   # patient-level grouping key
     isf = y.astype(bool)
     pf = PolynomialFeatures(2, include_bias=False)
     rng = np.random.RandomState(SEED)
     out = {"alphas": list(ALPHAS), "pairs": {}}
 
-    def scorer_oof(Xc, yc):
-        """Cross-fit P(false) on the calib site -> honest OOF scores + a full-fit model."""
+    def scorer_oof(Xc, yc, groups):
+        """Cross-fit P(false) on the calib site -> honest OOF scores + a full-fit model.
+        Folds are SUBJECT-grouped (StratifiedGroupKFold) so a patient's timepoints never
+        span train/OOF — the OOF null is patient-clean, not just candidate-out-of-fold."""
         mu, sd = Xc.mean(0), Xc.std(0) + 1e-9
         oof = np.zeros(len(yc))
-        for tr, te in StratifiedKFold(5, shuffle=True, random_state=0).split(Xc, yc):
+        for tr, te in StratifiedGroupKFold(5, shuffle=True, random_state=0).split(Xc, yc, groups):
             m = LogisticRegression(max_iter=4000, C=0.5).fit(pf.fit_transform((Xc[tr] - mu) / sd), yc[tr])
             oof[te] = m.predict_proba(pf.transform((Xc[te] - mu) / sd))[:, 1]
         full = LogisticRegression(max_iter=4000, C=0.5).fit(pf.fit_transform((Xc - mu) / sd), yc)
@@ -101,7 +113,7 @@ def main():
 
     for calib, test in [("openms", "mslesseg"), ("mslesseg", "openms")]:
         c, t = sites == calib, sites == test
-        learned_oof, full, (mu, sd) = scorer_oof(X[c], y[c])
+        learned_oof, full, (mu, sd) = scorer_oof(X[c], y[c], subjects[c])
         def score(Xin): return 1.0 - full.predict_proba(pf.transform((Xin - mu) / sd))[:, 1]
         learned_te, fte = score(X[t]), isf[t]
         cf = isf[c]                                    # calib false mask
@@ -142,17 +154,20 @@ def main():
             pair["methods"][f"a={a}"] = {"naive_learned": {"fdr": round(naive[0], 3), "power": round(naive[1], 3)},
                                          "weighted_approx": {"fdr": round(wgt[0], 3), "power": round(wgt[1], 3)}}
 
-        # Q3: k-shot site-conditional (Mondrian) — sample k test CASES as the labelled slice,
-        # their false scores are the test null, select on the remaining test candidates.
-        test_cases = np.unique(cases[t])
+        # Q3: k-shot site-conditional (Mondrian) — sample k test SUBJECTS (patients) as the
+        # labelled slice, their false scores are the test null, select on the remaining
+        # test candidates. Sampling SUBJECTS (not cases) prevents a patient's T1 landing in
+        # the calibration slice while their T2 stays in the eval set (the k-shot leak).
+        sub_t = subjects[t]
+        test_subjects = np.unique(sub_t)
         kshot = {}
         for k in K_SHOTS:
-            if k >= len(test_cases):
+            if k >= len(test_subjects):
                 continue
             per_alpha = {a: {"fdr": [], "power": []} for a in ALPHAS}
             for _ in range(N_REPEAT):
-                slice_cases = set(rng.choice(test_cases, size=k, replace=False).tolist())
-                in_slice = np.array([cs in slice_cases for cs in cases[t]])
+                slice_subjects = set(rng.choice(test_subjects, size=k, replace=False).tolist())
+                in_slice = np.array([s in slice_subjects for s in sub_t])
                 null_k = learned_te[in_slice & fte]                 # labelled test-slice false scores
                 if null_k.size < 3:
                     continue

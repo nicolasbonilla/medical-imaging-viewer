@@ -25,7 +25,7 @@ FDR does not, F1 is real on real data AND site recalibration closes it.
 
     python scripts/calm-ms/site_recalibration_experiment.py
 """
-import os, sys, glob, json
+import os, sys, glob, json, re
 
 import numpy as np
 import nibabel as nib
@@ -42,6 +42,16 @@ THRESHOLD, MIN_VOL, SCORE, SPACING = 0.5, 3.0, "mean", (1.0, 1.0, 1.0)
 ALPHAS = (0.30, 0.20, 0.10)
 SITES = {"openms": "openms-flames", "mslesseg": "mslesseg-flames"}
 _CACHE = os.path.join(_HERE, ".site_cache.npz")
+
+
+def _subject_of(case: str) -> str:
+    """Patient id for leave-one-SUBJECT-out (leakage fix). MSLesSeg names are
+    `mslesseg_P<n>_T<k>`; excluding one CASE (timepoint) leaves the same patient's
+    other timepoints in the null → same-patient leakage (25/75 MSLesSeg patients have
+    ≥2 timepoints). Return the P<n> key so ALL of a patient's timepoints are excluded
+    together; openms cases are single-timepoint, so subject == case (no leak)."""
+    m = re.match(r"mslesseg_(P\d+)(?:_|$)", str(case))
+    return "mslesseg_" + m.group(1) if m else str(case)
 
 
 def _extract_all():
@@ -92,10 +102,12 @@ def _realized_fdr(test_cases, null_scores, alpha):
     return micro, macro, tot_sel
 
 
-def _site_null(cases, site, exclude_case=None):
-    return np.concatenate([c["scores"][c["is_false"]] for c in cases
-                           if c["site"] == site and c["case"] != exclude_case]) \
-        if any(c["site"] == site for c in cases) else np.array([])
+def _site_null(cases, site, exclude_subject=None):
+    """Site-conditional null of FALSE-candidate scores, leaving out an entire SUBJECT
+    (all its timepoints), not just one case — the leakage fix."""
+    arrs = [c["scores"][c["is_false"]] for c in cases
+            if c["site"] == site and _subject_of(c["case"]) != exclude_subject]
+    return np.concatenate(arrs) if arrs else np.array([])
 
 
 def main():
@@ -129,11 +141,12 @@ def main():
                 if null_site == "POOLED":
                     micro, macro, nsel = _realized_fdr(by_site[test_site], pooled_null, alpha)
                 elif null_site == test_site:
-                    # site-conditional, leave-one-case-out (honest diagonal)
+                    # site-conditional, leave-one-SUBJECT-out (honest diagonal — a whole
+                    # patient's timepoints leave the null, not just the one test case)
                     micros = []
                     tot_sel = tot_false = 0
                     for tc in by_site[test_site]:
-                        null = _site_null(cases, test_site, exclude_case=tc["case"])
+                        null = _site_null(cases, test_site, exclude_subject=_subject_of(tc["case"]))
                         p = conformal_pvalues(tc["scores"], null)
                         sel = benjamini_hochberg(p, alpha=alpha)
                         tot_sel += int(sel.sum()); tot_false += int((sel & tc["is_false"]).sum())
