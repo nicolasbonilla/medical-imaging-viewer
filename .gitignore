@@ -134,3 +134,4 @@ scripts/calm-ms/.scorer_cache.npz
 
 # calm-ms local caches
 scripts/calm-ms/.multisite_cache*.npz
+scripts/calm-ms/.multisite_adv_cache.npz

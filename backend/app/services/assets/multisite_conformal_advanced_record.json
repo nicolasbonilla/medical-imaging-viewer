@@ -1,0 +1,614 @@
+{
+  "config": {
+    "alphas": [
+      0.3,
+      0.2,
+      0.1
+    ],
+    "n_boot": 2000,
+    "n_perm": 2000,
+    "detection_iou": {
+      "lenient": 0.0,
+      "strict": 0.1
+    }
+  },
+  "site_gt": {
+    "openms": {
+      "scans": 30,
+      "gt_lesions_3mm3": 2892,
+      "gt_lesions_clinical_14mm3": 1737,
+      "candidates": 2358
+    },
+    "mslesseg": {
+      "scans": 115,
+      "gt_lesions_3mm3": 3344,
+      "gt_lesions_clinical_14mm3": 3082,
+      "candidates": 3866
+    }
+  },
+  "permutation_exchangeability": {
+    "obs_KS_D": 0.048,
+    "perm_p": 0.7101449275362319,
+    "n_perm": 2000,
+    "note": "scan-clustered; candidate-level KS p was 5e-4 and invalid"
+  },
+  "methods": {
+    "lenient_iou0|0.3|openms->mslesseg|ess": 84.2,
+    "lenient_iou0|0.3|openms->mslesseg": {
+      "conformal_bh": {
+        "micro_fdr": 0.1823,
+        "ci95": [
+          0.142,
+          0.219
+        ],
+        "n_sel": 938,
+        "recall_selection": 0.3046,
+        "recall_end_to_end": 0.2294,
+        "recall_clinical": 0.2472,
+        "perscan_fdp_median": 0.15,
+        "perscan_fdp_p90": 0.438,
+        "perscan_fdp_max": 1.0,
+        "frac_scans_exceed_alpha": 0.139
+      },
+      "wcs": {
+        "micro_fdr": 0.1455,
+        "ci95": [
+          0.103,
+          0.182
+        ],
+        "n_sel": 426,
+        "recall_selection": 0.1446,
+        "recall_end_to_end": 0.1089,
+        "recall_clinical": 0.1165,
+        "perscan_fdp_median": 0.077,
+        "perscan_fdp_p90": 0.4,
+        "perscan_fdp_max": 1.0,
+        "frac_scans_exceed_alpha": 0.087
+      },
+      "naive_threshold": {
+        "micro_fdr": 0.3487,
+        "ci95": [
+          0.309,
+          0.388
+        ],
+        "n_sel": 3866,
+        "recall_selection": 1.0,
+        "recall_end_to_end": 0.753,
+        "recall_clinical": 0.7904,
+        "perscan_fdp_median": 0.364,
+        "perscan_fdp_p90": 0.59,
+        "perscan_fdp_max": 0.8,
+        "frac_scans_exceed_alpha": 0.591
+      }
+    },
+    "lenient_iou0|0.2|openms->mslesseg|ess": 84.2,
+    "lenient_iou0|0.2|openms->mslesseg": {
+      "conformal_bh": {
+        "micro_fdr": 0.1606,
+        "ci95": [
+          0.12,
+          0.201
+        ],
+        "n_sel": 548,
+        "recall_selection": 0.1827,
+        "recall_end_to_end": 0.1376,
+        "recall_clinical": 0.148,
+        "perscan_fdp_median": 0.118,
+        "perscan_fdp_p90": 0.357,
+        "perscan_fdp_max": 0.588,
+        "frac_scans_exceed_alpha": 0.165
+      },
+      "wcs": {
+        "micro_fdr": 0.125,
+        "ci95": [
+          0.08,
+          0.172
+        ],
+        "n_sel": 200,
+        "recall_selection": 0.0695,
+        "recall_end_to_end": 0.0523,
+        "recall_clinical": 0.0568,
+        "perscan_fdp_median": 0.0,
+        "perscan_fdp_p90": 0.46,
+        "perscan_fdp_max": 1.0,
+        "frac_scans_exceed_alpha": 0.096
+      },
+      "naive_threshold": {
+        "micro_fdr": 0.3487,
+        "ci95": [
+          0.309,
+          0.389
+        ],
+        "n_sel": 3866,
+        "recall_selection": 1.0,
+        "recall_end_to_end": 0.753,
+        "recall_clinical": 0.7904,
+        "perscan_fdp_median": 0.364,
+        "perscan_fdp_p90": 0.59,
+        "perscan_fdp_max": 0.8,
+        "frac_scans_exceed_alpha": 0.809
+      }
+    },
+    "lenient_iou0|0.1|openms->mslesseg|ess": 84.2,
+    "lenient_iou0|0.1|openms->mslesseg": {
+      "conformal_bh": {
+        "micro_fdr": 0.0929,
+        "ci95": [
+          0.05,
+          0.141
+        ],
+        "n_sel": 183,
+        "recall_selection": 0.0659,
+        "recall_end_to_end": 0.0496,
+        "recall_clinical": 0.0539,
+        "perscan_fdp_median": 0.0,
+        "perscan_fdp_p90": 0.247,
+        "perscan_fdp_max": 1.0,
+        "frac_scans_exceed_alpha": 0.096
+      },
+      "wcs": {
+        "micro_fdr": 0.1744,
+        "ci95": [
+          0.088,
+          0.275
+        ],
+        "n_sel": 86,
+        "recall_selection": 0.0282,
+        "recall_end_to_end": 0.0212,
+        "recall_clinical": 0.023,
+        "perscan_fdp_median": 0.0,
+        "perscan_fdp_p90": 0.933,
+        "perscan_fdp_max": 1.0,
+        "frac_scans_exceed_alpha": 0.087
+      },
+      "naive_threshold": {
+        "micro_fdr": 0.1472,
+        "ci95": [
+          0.108,
+          0.184
+        ],
+        "n_sel": 326,
+        "recall_selection": 0.1104,
+        "recall_end_to_end": 0.0831,
+        "recall_clinical": 0.0899,
+        "perscan_fdp_median": 0.0,
+        "perscan_fdp_p90": 0.5,
+        "perscan_fdp_max": 1.0,
+        "frac_scans_exceed_alpha": 0.304
+      }
+    },
+    "lenient_iou0|0.3|mslesseg->openms|ess": 697.6,
+    "lenient_iou0|0.3|mslesseg->openms": {
+      "conformal_bh": {
+        "micro_fdr": 0.1603,
+        "ci95": [
+          0.099,
+          0.21
+        ],
+        "n_sel": 156,
+        "recall_selection": 0.0691,
+        "recall_end_to_end": 0.0453,
+        "recall_clinical": 0.0622,
+        "perscan_fdp_median": 0.1,
+        "perscan_fdp_p90": 0.278,
+        "perscan_fdp_max": 0.5,
+        "frac_scans_exceed_alpha": 0.033
+      },
+      "wcs": {
+        "micro_fdr": 0.1416,
+        "ci95": [
+          0.081,
+          0.205
+        ],
+        "n_sel": 226,
+        "recall_selection": 0.1023,
+        "recall_end_to_end": 0.0671,
+        "recall_clinical": 0.0956,
+        "perscan_fdp_median": 0.111,
+        "perscan_fdp_p90": 0.307,
+        "perscan_fdp_max": 0.375,
+        "frac_scans_exceed_alpha": 0.067
+      },
+      "naive_threshold": {
+        "micro_fdr": 0.1667,
+        "ci95": [
+          0.143,
+          0.197
+        ],
+        "n_sel": 2058,
+        "recall_selection": 0.9041,
+        "recall_end_to_end": 0.593,
+        "recall_clinical": 0.8066,
+        "perscan_fdp_median": 0.183,
+        "perscan_fdp_p90": 0.367,
+        "perscan_fdp_max": 0.458,
+        "frac_scans_exceed_alpha": 0.133
+      }
+    },
+    "lenient_iou0|0.2|mslesseg->openms|ess": 697.6,
+    "lenient_iou0|0.2|mslesseg->openms": {
+      "conformal_bh": {
+        "micro_fdr": 0.0886,
+        "ci95": [
+          0.02,
+          0.14
+        ],
+        "n_sel": 79,
+        "recall_selection": 0.038,
+        "recall_end_to_end": 0.0249,
+        "recall_clinical": 0.0345,
+        "perscan_fdp_median": 0.0,
+        "perscan_fdp_p90": 0.185,
+        "perscan_fdp_max": 0.214,
+        "frac_scans_exceed_alpha": 0.033
+      },
+      "wcs": {
+        "micro_fdr": 0.1391,
+        "ci95": [
+          0.088,
+          0.183
+        ],
+        "n_sel": 115,
+        "recall_selection": 0.0522,
+        "recall_end_to_end": 0.0342,
+        "recall_clinical": 0.0478,
+        "perscan_fdp_median": 0.1,
+        "perscan_fdp_p90": 0.233,
+        "perscan_fdp_max": 0.286,
+        "frac_scans_exceed_alpha": 0.067
+      },
+      "naive_threshold": {
+        "micro_fdr": 0.1278,
+        "ci95": [
+          0.1,
+          0.16
+        ],
+        "n_sel": 1072,
+        "recall_selection": 0.4929,
+        "recall_end_to_end": 0.3233,
+        "recall_clinical": 0.4715,
+        "perscan_fdp_median": 0.146,
+        "perscan_fdp_p90": 0.269,
+        "perscan_fdp_max": 0.375,
+        "frac_scans_exceed_alpha": 0.3
+      }
+    },
+    "lenient_iou0|0.1|mslesseg->openms|ess": 697.6,
+    "lenient_iou0|0.1|mslesseg->openms": {
+      "conformal_bh": {
+        "micro_fdr": 0.0513,
+        "ci95": [
+          0.0,
+          0.118
+        ],
+        "n_sel": 39,
+        "recall_selection": 0.0195,
+        "recall_end_to_end": 0.0128,
+        "recall_clinical": 0.0155,
+        "perscan_fdp_median": 0.0,
+        "perscan_fdp_p90": 0.162,
+        "perscan_fdp_max": 0.25,
+        "frac_scans_exceed_alpha": 0.067
+      },
+      "wcs": {
+        "micro_fdr": 0.0652,
+        "ci95": [
+          0.0,
+          0.125
+        ],
+        "n_sel": 46,
+        "recall_selection": 0.0227,
+        "recall_end_to_end": 0.0149,
+        "recall_clinical": 0.019,
+        "perscan_fdp_median": 0.0,
+        "perscan_fdp_p90": 0.183,
+        "perscan_fdp_max": 0.25,
+        "frac_scans_exceed_alpha": 0.1
+      },
+      "naive_threshold": {
+        "micro_fdr": 0.0,
+        "ci95": [
+          null,
+          null
+        ],
+        "n_sel": 0,
+        "recall_selection": 0.0,
+        "recall_end_to_end": 0.0,
+        "recall_clinical": 0.0,
+        "perscan_fdp_median": 0.0,
+        "perscan_fdp_p90": 0.0,
+        "perscan_fdp_max": 0.0,
+        "frac_scans_exceed_alpha": 0.0
+      }
+    },
+    "strict_iou0.10|0.3|openms->mslesseg|ess": 90.7,
+    "strict_iou0.10|0.3|openms->mslesseg": {
+      "conformal_bh": {
+        "micro_fdr": 0.1825,
+        "ci95": [
+          0.145,
+          0.221
+        ],
+        "n_sel": 915,
+        "recall_selection": 0.3047,
+        "recall_end_to_end": 0.2237,
+        "recall_clinical": 0.2411,
+        "perscan_fdp_median": 0.158,
+        "perscan_fdp_p90": 0.463,
+        "perscan_fdp_max": 1.0,
+        "frac_scans_exceed_alpha": 0.139
+      },
+      "wcs": {
+        "micro_fdr": 0.1492,
+        "ci95": [
+          0.112,
+          0.183
+        ],
+        "n_sel": 449,
+        "recall_selection": 0.1556,
+        "recall_end_to_end": 0.1142,
+        "recall_clinical": 0.1223,
+        "perscan_fdp_median": 0.071,
+        "perscan_fdp_p90": 0.4,
+        "perscan_fdp_max": 1.0,
+        "frac_scans_exceed_alpha": 0.087
+      },
+      "naive_threshold": {
+        "micro_fdr": 0.365,
+        "ci95": [
+          0.325,
+          0.405
+        ],
+        "n_sel": 3866,
+        "recall_selection": 1.0,
+        "recall_end_to_end": 0.7342,
+        "recall_clinical": 0.7703,
+        "perscan_fdp_median": 0.37,
+        "perscan_fdp_p90": 0.609,
+        "perscan_fdp_max": 0.8,
+        "frac_scans_exceed_alpha": 0.626
+      }
+    },
+    "strict_iou0.10|0.2|openms->mslesseg|ess": 90.7,
+    "strict_iou0.10|0.2|openms->mslesseg": {
+      "conformal_bh": {
+        "micro_fdr": 0.1636,
+        "ci95": [
+          0.12,
+          0.205
+        ],
+        "n_sel": 550,
+        "recall_selection": 0.1874,
+        "recall_end_to_end": 0.1376,
+        "recall_clinical": 0.148,
+        "perscan_fdp_median": 0.13,
+        "perscan_fdp_p90": 0.357,
+        "perscan_fdp_max": 0.588,
+        "frac_scans_exceed_alpha": 0.174
+      },
+      "wcs": {
+        "micro_fdr": 0.1336,
+        "ci95": [
+          0.082,
+          0.183
+        ],
+        "n_sel": 217,
+        "recall_selection": 0.0766,
+        "recall_end_to_end": 0.0562,
+        "recall_clinical": 0.061,
+        "perscan_fdp_median": 0.0,
+        "perscan_fdp_p90": 0.5,
+        "perscan_fdp_max": 1.0,
+        "frac_scans_exceed_alpha": 0.122
+      },
+      "naive_threshold": {
+        "micro_fdr": 0.3562,
+        "ci95": [
+          0.318,
+          0.395
+        ],
+        "n_sel": 3804,
+        "recall_selection": 0.9976,
+        "recall_end_to_end": 0.7324,
+        "recall_clinical": 0.7683,
+        "perscan_fdp_median": 0.37,
+        "perscan_fdp_p90": 0.603,
+        "perscan_fdp_max": 0.788,
+        "frac_scans_exceed_alpha": 0.835
+      }
+    },
+    "strict_iou0.10|0.1|openms->mslesseg|ess": 90.7,
+    "strict_iou0.10|0.1|openms->mslesseg": {
+      "conformal_bh": {
+        "micro_fdr": 0.1027,
+        "ci95": [
+          0.053,
+          0.158
+        ],
+        "n_sel": 185,
+        "recall_selection": 0.0676,
+        "recall_end_to_end": 0.0496,
+        "recall_clinical": 0.0539,
+        "perscan_fdp_median": 0.0,
+        "perscan_fdp_p90": 0.297,
+        "perscan_fdp_max": 1.0,
+        "frac_scans_exceed_alpha": 0.104
+      },
+      "wcs": {
+        "micro_fdr": 0.1667,
+        "ci95": [
+          0.079,
+          0.265
+        ],
+        "n_sel": 96,
+        "recall_selection": 0.0326,
+        "recall_end_to_end": 0.0239,
+        "recall_clinical": 0.026,
+        "perscan_fdp_median": 0.0,
+        "perscan_fdp_p90": 0.867,
+        "perscan_fdp_max": 1.0,
+        "frac_scans_exceed_alpha": 0.087
+      },
+      "naive_threshold": {
+        "micro_fdr": 0.1534,
+        "ci95": [
+          0.115,
+          0.193
+        ],
+        "n_sel": 326,
+        "recall_selection": 0.1124,
+        "recall_end_to_end": 0.0825,
+        "recall_clinical": 0.0892,
+        "perscan_fdp_median": 0.0,
+        "perscan_fdp_p90": 0.5,
+        "perscan_fdp_max": 1.0,
+        "frac_scans_exceed_alpha": 0.313
+      }
+    },
+    "strict_iou0.10|0.3|mslesseg->openms|ess": 739.7,
+    "strict_iou0.10|0.3|mslesseg->openms": {
+      "conformal_bh": {
+        "micro_fdr": 0.1592,
+        "ci95": [
+          0.097,
+          0.207
+        ],
+        "n_sel": 157,
+        "recall_selection": 0.0704,
+        "recall_end_to_end": 0.0456,
+        "recall_clinical": 0.0628,
+        "perscan_fdp_median": 0.1,
+        "perscan_fdp_p90": 0.276,
+        "perscan_fdp_max": 0.5,
+        "frac_scans_exceed_alpha": 0.033
+      },
+      "wcs": {
+        "micro_fdr": 0.1416,
+        "ci95": [
+          0.083,
+          0.202
+        ],
+        "n_sel": 226,
+        "recall_selection": 0.1035,
+        "recall_end_to_end": 0.0671,
+        "recall_clinical": 0.0956,
+        "perscan_fdp_median": 0.111,
+        "perscan_fdp_p90": 0.307,
+        "perscan_fdp_max": 0.375,
+        "frac_scans_exceed_alpha": 0.067
+      },
+      "naive_threshold": {
+        "micro_fdr": 0.1668,
+        "ci95": [
+          0.143,
+          0.196
+        ],
+        "n_sel": 1960,
+        "recall_selection": 0.8714,
+        "recall_end_to_end": 0.5647,
+        "recall_clinical": 0.7749,
+        "perscan_fdp_median": 0.183,
+        "perscan_fdp_p90": 0.352,
+        "perscan_fdp_max": 0.5,
+        "frac_scans_exceed_alpha": 0.133
+      }
+    },
+    "strict_iou0.10|0.2|mslesseg->openms|ess": 739.7,
+    "strict_iou0.10|0.2|mslesseg->openms": {
+      "conformal_bh": {
+        "micro_fdr": 0.0778,
+        "ci95": [
+          0.018,
+          0.128
+        ],
+        "n_sel": 90,
+        "recall_selection": 0.0443,
+        "recall_end_to_end": 0.0287,
+        "recall_clinical": 0.0409,
+        "perscan_fdp_median": 0.0,
+        "perscan_fdp_p90": 0.154,
+        "perscan_fdp_max": 0.214,
+        "frac_scans_exceed_alpha": 0.033
+      },
+      "wcs": {
+        "micro_fdr": 0.1391,
+        "ci95": [
+          0.082,
+          0.18
+        ],
+        "n_sel": 115,
+        "recall_selection": 0.0528,
+        "recall_end_to_end": 0.0342,
+        "recall_clinical": 0.0478,
+        "perscan_fdp_median": 0.1,
+        "perscan_fdp_p90": 0.233,
+        "perscan_fdp_max": 0.286,
+        "frac_scans_exceed_alpha": 0.067
+      },
+      "naive_threshold": {
+        "micro_fdr": 0.1287,
+        "ci95": [
+          0.101,
+          0.162
+        ],
+        "n_sel": 987,
+        "recall_selection": 0.4589,
+        "recall_end_to_end": 0.2974,
+        "recall_clinical": 0.4352,
+        "perscan_fdp_median": 0.144,
+        "perscan_fdp_p90": 0.286,
+        "perscan_fdp_max": 0.375,
+        "frac_scans_exceed_alpha": 0.3
+      }
+    },
+    "strict_iou0.10|0.1|mslesseg->openms|ess": 739.7,
+    "strict_iou0.10|0.1|mslesseg->openms": {
+      "conformal_bh": {
+        "micro_fdr": 0.093,
+        "ci95": [
+          0.026,
+          0.16
+        ],
+        "n_sel": 43,
+        "recall_selection": 0.0208,
+        "recall_end_to_end": 0.0135,
+        "recall_clinical": 0.0167,
+        "perscan_fdp_median": 0.0,
+        "perscan_fdp_p90": 0.267,
+        "perscan_fdp_max": 0.333,
+        "frac_scans_exceed_alpha": 0.133
+      },
+      "wcs": {
+        "micro_fdr": 0.0833,
+        "ci95": [
+          0.022,
+          0.138
+        ],
+        "n_sel": 48,
+        "recall_selection": 0.0235,
+        "recall_end_to_end": 0.0152,
+        "recall_clinical": 0.0196,
+        "perscan_fdp_median": 0.0,
+        "perscan_fdp_p90": 0.183,
+        "perscan_fdp_max": 0.25,
+        "frac_scans_exceed_alpha": 0.133
+      },
+      "naive_threshold": {
+        "micro_fdr": 0.0,
+        "ci95": [
+          null,
+          null
+        ],
+        "n_sel": 0,
+        "recall_selection": 0.0,
+        "recall_end_to_end": 0.0,
+        "recall_clinical": 0.0,
+        "perscan_fdp_median": 0.0,
+        "perscan_fdp_p90": 0.0,
+        "perscan_fdp_max": 0.0,
+        "frac_scans_exceed_alpha": 0.0
+      }
+    }
+  },
+  "per_scan_fdp": {}
+}

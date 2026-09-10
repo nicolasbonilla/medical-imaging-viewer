@@ -39,11 +39,20 @@ Realized micro-FDR (subject-level bootstrap 95% CI), cross-site and leave-one-si
 | 0.10 | 0.09 [0.05, 0.15] | 0.05 [0.00, 0.12] | 0.05 [0.00, 0.12] | 0.09 [0.05, 0.15] |
 
 Every clean cross-site cell is ≤ α at α ∈ {0.2, 0.3}; at α = 0.10 the CI upper edge grazes
-above 0.10. **This holds despite the FP-score law being non-exchangeable by KS** between the
-two sites (D = 0.15) — so the BH-on-conformal-p-value guarantee is more robust than its
-strict exchangeability assumption. The conclusion **survives a stricter ≥0.10-overlap TP rule**
-(openms→mslesseg FDR 0.153, mslesseg→openms 0.074 at α=0.20), i.e. it is not an artifact of the
-lenient any-voxel matching.
+above 0.10. The conclusion **survives a stricter ≥0.10-overlap TP rule** (openms→mslesseg
+FDR 0.153, mslesseg→openms 0.074 at α=0.20), i.e. it is not an artifact of the lenient
+any-voxel matching.
+
+**Why it transports — exchangeability, correctly measured (updated by the advanced pass).**
+A candidate-level KS test flags the two sites' FP-score laws as "non-exchangeable" (D=0.15,
+p≈5e-4), but that test is invalid (intra-scan clustering, n in the thousands). The rigorous
+replacement — a **scan-clustered permutation test under a TRUE one-to-one Hungarian matching**
+(see the advanced-pass section) — gives **D=0.048, p=0.71: the FP-score laws are NOT
+distinguishable at the scan level.** So conformal transports because the exchangeability
+assumption approximately *holds* here, not in spite of it; the apparent non-exchangeability was
+largely a labeling artifact of many-to-one any-voxel matching (which mislabels over-segmentation
+fragments as TP). This is a cleaner and more honest mechanism than the earlier "robust despite
+non-exchangeability" wording, which is retracted.
 
 **Baseline (why conformal, not a threshold):** a naive precision-matched global threshold
 calibrated on one site does **not** transport — calibrated on openms it is stuck at FDR ≈ 0.30
@@ -114,14 +123,66 @@ point.
 - ❌ "Mondrian recalibration restores control even under the LST-AI algorithm shift." That block
   was leaking and is removed.
 
+## Advanced pass — reviewer-completeness (one-to-one matching, WCS baseline, per-scan FDX, clustered exchangeability)
+
+Script: [`scripts/calm-ms/multisite_conformal_advanced.py`](../../scripts/calm-ms/multisite_conformal_advanced.py) →
+[`multisite_conformal_advanced_record.json`](../../backend/app/services/assets/multisite_conformal_advanced_record.json).
+Reviewed by 2 further adversarial agents (WCS/permutation statistics; matching/recall integrity);
+their findings were fixed and re-run. All on the clean FLAMeS patient axis (openms, mslesseg).
+
+- **True ONE-TO-ONE matching (Hungarian).** An earlier greedy version was many-to-one, mislabeling
+  over-segmentation fragments as TP and deflating FDR. Fixed: each GT lesion is claimed once,
+  surplus fragments are FP. This roughly doubled the FP set (openms 228→461 false candidates) and
+  slightly raised realized FDR (openms→mslesseg conformal α=0.3: 0.175→**0.182**, still ≤ α).
+- **Exchangeability, corrected.** Under the honest one-to-one FP labeling the scan-clustered
+  permutation test gives **D=0.048, p=0.71** — the two sites' FP-score laws are NOT distinguishable
+  (supersedes the invalid candidate-level KS and the earlier D=0.15). Conformal transports because
+  exchangeability approximately holds.
+- **Three honest recalls** (lesion-level, denominators consistent with the match): *selection*
+  (GT a candidate is matched to), *end-to-end* (all GT ≥3 mm³), *clinical* (GT ≥14.14 mm³ = 3 mm
+  diameter). Conformal openms→mslesseg at α=0.3: selection 0.30 / e2e 0.23 / clinical 0.25. Recall
+  stays **low** (0.01–0.30) across all cells — the honest cost of FDR control at this score AUC.
+- **Per-scan FDP, corrected denominator (over ALL scans).** An earlier version counted only
+  selecting scans, inflating the exceedance rate. Corrected: **conformal exceeds α on only 3–17 %
+  of scans**; the naive threshold on 30–84 %. So conformal's per-scan behavior is far better than
+  the earlier (buggy) 44–95 % suggested — a correction in the method's favor.
+- **WCS baseline (1.1), run not asserted.** Weighted conformal (marginal covariate-shift
+  approximation, domain-classifier density ratio on grid-invariant features) is **unstable and
+  does not reliably beat base BH**: it under-shoots in some cells and **over-shoots the level at
+  tight α** (openms→mslesseg α=0.1: FDR 0.174 > 0.10, per-scan FDP p90 0.93). Its extra recall,
+  where present, is partly bought by exceeding the FDR target. It carries no finite-sample
+  guarantee here (weighted p-values are not identically distributed; the PRDS argument for BH is
+  not re-established) and is fit transductively on the test features (optimistic). Honest verdict:
+  **WCS is not a fix for this problem.**
+- **Naive precision-matched threshold baseline.** Does not transport — calibrated on openms it
+  selects everything on mslesseg (FDR 0.35, blows α), calibrated on mslesseg it collapses recall
+  or (at strict IoU, α=0.1) selects nothing. Conformal is the better-behaved procedure.
+
+## Positioning vs the conformal-lesion literature (1.6)
+
+The wrapper is a faithful application of **Jin & Candès (2023, conformal selection)** + BH, and the
+few-shot recalibration is **Vovk Mondrian / Tibshirani et al. (2019) covariate-shift conformal** —
+neither is novel here. Adjacent published work: **npj Digital Medicine (2025)** applies conformal
+prediction for patient-level MS diagnosis (different granularity — patient, not lesion); **arXiv
+2510.17897** does conformal FNR/recall control for 3D lesion segmentation (controls the miss rate,
+the complementary error to our FDR/precision dial). Conformal FDR for *detection candidates* is
+established in the tumour/nodule imaging literature. **Our contribution is therefore not the method
+but the honest multi-site characterization on MS**: that the lesion-FDR guarantee transports across
+same-segmenter acquisition/population shift, is marginal (not per-scan), degrades under population
+(specificity) and segmenter (power) shift, that the few-shot Mondrian fix runs at low recall, and
+that neither WCS nor a naive threshold does better — all on reproducible public data with an
+auditable Class-C implementation.
+
 ## Honest bottom line
 
-Distribution-free conformal lesion-FDR is **more robust than its assumption** (it transports
-across real same-segmenter acquisition/population shift and beats a naive threshold), but its
-guarantee is **marginal** (per-scan FDP varies widely), and it degrades exactly where it matters
-clinically: **specificity under population shift** and **power under segmenter change** — with the
-few-shot fix running at **low recall**. That honest characterization, on reproducible public
-data with an auditable Class-C implementation, is the contribution — a MELBA / MICCAI-workshop
-scoped result, **not** a novel-method claim. The still-missing pieces a reviewer will demand:
-more than two real acquisition-shift sites, a run of weighted/label-conditional conformal (WCS)
-as a second baseline, and per-scan FDX control — all logged as future work.
+Distribution-free conformal lesion-FDR **transports** across real same-segmenter acquisition/
+population shift (its FP-score law is scan-level exchangeable there, and it controls FDR ≤ α while
+a naive threshold and WCS do not), but the guarantee is **marginal** (per-scan FDP exceeds α on
+3–17 % of scans), it comes at **low recall** (≤0.30 lesion-level), and it degrades where it matters
+clinically: **specificity under population shift** (controls) and **power under segmenter change**
+(LST-AI). This honest characterization — five adversarial-review iterations, reproducible on public
+data, on an auditable Class-C substrate — is the contribution: a **MELBA / MICCAI-workshop scoped
+result, not a novel method**. Genuinely still-missing (reviewer-demanded, needs more data): **>2
+real acquisition-shift sites** (needs a self-trained single segmenter over pooled public data — the
+nnU-Net GPU step) and a principled **per-scan FDX guarantee** (Katsevich–Ramdas) rather than the
+empirical characterization here.
