@@ -1,5 +1,10 @@
 # nnU-Net base lesion segmenter + CALM-MS conformal control
 
+> **🚀 Turnkey path:** open [`train_base_segmenter.ipynb`](train_base_segmenter.ipynb) in Colab
+> (or Kaggle) — one notebook chains data → convert → train (resumable across free-GPU sessions)
+> → predict-with-probabilities → CALM-MS cohort → multi-site conformal study. `train.md` below
+> is the same recipe as raw commands.
+
 A reproducible, GPU-ready **nnU-Net v2** MS-lesion segmenter (FLAIR ±T1 → binary lesion
 mask) that plugs **underneath** the repo's already-shipped, model-agnostic **CALM-MS**
 conformal precision-control layer. nnU-Net is the strong probabilistic *base*; CALM-MS is
