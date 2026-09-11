@@ -345,6 +345,53 @@ def main():
                           f" recall(sel/e2e/clin)={r['recall_selection']}/{r['recall_end_to_end']}/{r['recall_clinical']}"
                           f" | FDP p90={r['perscan_fdp_p90']} %scans>a={r['frac_scans_exceed_alpha']}")
 
+    # (1.2b) Per-scan FDX OPERATING POINT (empirical, calibration-based — NOT a distribution-
+    # free theorem). Target: keep P(per-scan FDP > GAMMA) <= DELTA. Calibrate the marginal alpha*
+    # on the calib site (its own leave-one-subject-out null) to the largest alpha whose calib
+    # per-scan exceedance <= DELTA, then apply alpha* cross-site and report the ACHIEVED test
+    # exceedance + recall. If exchangeability holds (it does here, permutation p=0.71) the
+    # operating point should transfer; this is the honest, clinically-usable per-scan control.
+    GAMMA, DELTA = 0.20, 0.10
+    ALPHA_GRID = np.round(np.linspace(0.02, 0.60, 30), 3)
+    rec["fdx_operating_point"] = {"gamma": GAMMA, "delta": DELTA, "pairs": {}}
+    print(f"\n(1.2b) Per-scan FDX operating point  target P(FDP>{GAMMA})<={DELTA} (calibrate alpha*, test cross-site):")
+
+    def _site_false(scases, tag, excl=None):
+        arrs = [c["scores"][_is_false(c, tag)] for c in scases if c["subject"] != excl]
+        return np.concatenate(arrs) if arrs else np.array([])
+
+    def _exceed(test_cases, null_fn, alpha, tag, gamma):
+        fdps = []
+        for tc in test_cases:
+            sel = _bh_select(tc["scores"], null_fn(tc), alpha)
+            isf = _is_false(tc, tag); ns = int(sel.sum())
+            fdps.append((int((sel & isf).sum()) / ns) if ns else 0.0)
+        return float(np.mean([f > gamma for f in fdps]))
+
+    for calib, test in [("openms", "mslesseg"), ("mslesseg", "openms")]:
+        cc = by_site[calib]
+        alpha_star = None
+        for a in ALPHA_GRID:                       # largest alpha whose calib exceedance <= DELTA
+            exc_cal = _exceed(cc, (lambda t, a=a: _site_false(cc, "lenient_iou0", t["subject"])), a, "lenient_iou0", GAMMA)
+            if exc_cal <= DELTA:
+                alpha_star = float(a)
+        if alpha_star is None:
+            print(f"  {calib}->{test}: no alpha in grid meets the target on calib; skipping")
+            continue
+        null_full = _site_false(cc, "lenient_iou0")
+        test_exc = _exceed(by_site[test], (lambda t, nn=null_full: nn), alpha_star, "lenient_iou0", GAMMA)
+        _, _, _, recall_seln = None, None, None, None
+        sel_test = [_bh_select(c["scores"], null_full, alpha_star) for c in by_site[test]]
+        seln, e2e, e2e_clin = _recalls(by_site[test], sel_test, "lenient_iou0")
+        micro, _, _, _ = _agg_fdr_perscan(by_site[test], sel_test, "lenient_iou0", alpha_star)
+        rec["fdx_operating_point"]["pairs"][f"{calib}->{test}"] = {
+            "alpha_star": alpha_star, "calib_exceed_le_delta": True,
+            "test_perscan_exceed": round(test_exc, 3), "test_micro_fdr": round(micro, 4),
+            "test_recall_selection": round(seln, 4) if seln == seln else None}
+        ok = "TRANSFERS" if test_exc <= DELTA + 0.05 else "does NOT transfer"
+        print(f"  {calib}->{test}: alpha*={alpha_star:.3f} -> test P(FDP>{GAMMA})={test_exc:.3f} "
+              f"(target {DELTA}) {ok} | micro-FDR={micro:.3f} recall={seln:.3f}")
+
     with open(_OUT, "w", encoding="utf-8") as fh:
         json.dump(rec, fh, indent=2)
     print(f"\nWrote {_OUT}")

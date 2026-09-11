@@ -610,5 +610,25 @@
       }
     }
   },
-  "per_scan_fdp": {}
+  "per_scan_fdp": {},
+  "fdx_operating_point": {
+    "gamma": 0.2,
+    "delta": 0.1,
+    "pairs": {
+      "openms->mslesseg": {
+        "alpha_star": 0.22,
+        "calib_exceed_le_delta": true,
+        "test_perscan_exceed": 0.217,
+        "test_micro_fdr": 0.1693,
+        "test_recall_selection": 0.2085
+      },
+      "mslesseg->openms": {
+        "alpha_star": 0.14,
+        "calib_exceed_le_delta": true,
+        "test_perscan_exceed": 0.0,
+        "test_micro_fdr": 0.0625,
+        "test_recall_selection": 0.0316
+      }
+    }
+  }
 }

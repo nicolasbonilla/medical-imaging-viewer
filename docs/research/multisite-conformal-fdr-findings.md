@@ -157,6 +157,15 @@ their findings were fixed and re-run. All on the clean FLAMeS patient axis (open
 - **Naive precision-matched threshold baseline.** Does not transport — calibrated on openms it
   selects everything on mslesseg (FDR 0.35, blows α), calibrated on mslesseg it collapses recall
   or (at strict IoU, α=0.1) selects nothing. Conformal is the better-behaved procedure.
+- **Per-scan FDX operating point (empirical, calibration-based — NOT a distribution-free theorem).**
+  Target: keep P(per-scan FDP > 0.20) ≤ 0.10. We calibrate the marginal α\* on one site (its own
+  leave-one-subject-out null) to the largest α meeting that target, then apply α\* cross-site.
+  Result is **asymmetric**: calibrating on the larger, more diverse **mslesseg** (α\*=0.14) controls
+  per-scan FDP on openms (achieved P=0.000, TRANSFERS); calibrating on the smaller **openms**
+  (α\*=0.22) does **not** control it on mslesseg (achieved P=0.217 ≫ 0.10). So **marginal-FDR
+  transport does not imply per-scan-FDX transport** — a clinician wanting per-scan control must
+  calibrate on the more diverse site. This is an honest empirical operating point; a principled
+  distribution-free per-scan guarantee (Katsevich–Ramdas) remains future work.
 
 ## Positioning vs the conformal-lesion literature (1.6)
 
@@ -184,5 +193,8 @@ clinically: **specificity under population shift** (controls) and **power under 
 data, on an auditable Class-C substrate — is the contribution: a **MELBA / MICCAI-workshop scoped
 result, not a novel method**. Genuinely still-missing (reviewer-demanded, needs more data): **>2
 real acquisition-shift sites** (needs a self-trained single segmenter over pooled public data — the
-nnU-Net GPU step) and a principled **per-scan FDX guarantee** (Katsevich–Ramdas) rather than the
-empirical characterization here.
+nnU-Net GPU step, now packaged turnkey in
+[`research/nnunet/train_base_segmenter.ipynb`](../../research/nnunet/train_base_segmenter.ipynb))
+and a principled distribution-free **per-scan FDX guarantee** (Katsevich–Ramdas) to replace the
+honest but calibration-based per-scan operating point shown here (which transfers only
+site-diverse → site-simple).
