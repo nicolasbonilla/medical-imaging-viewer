@@ -61,13 +61,13 @@ SEED = 20260823
 _CACHE = os.path.join(_HERE, ".multisite_cache_v2.npz")
 _OUT = os.path.join(_BACKEND, "app", "services", "assets", "multisite_conformal_record.json")
 
-SITES = {
-    "openms":   dict(sub="openms-flames",         seg="FLAMeS", kind="patients", null_source=True,  mondrian=True),
-    "mslesseg": dict(sub="mslesseg-flames",        seg="FLAMeS", kind="patients", null_source=True,  mondrian=True),
-    "sibbms":   dict(sub="sibbms-controls-flames", seg="FLAMeS", kind="controls", null_source=True,  mondrian=False),
-    "isbi":     dict(sub="isbi19-lstai",           seg="LST-AI", kind="patients", null_source=False, mondrian=False),
-}
-FLAMES_PAT = [s for s, m in SITES.items() if m["seg"] == "FLAMeS" and m["kind"] == "patients"]
+# Sites come from the leak-safe registry: the 4 vetted cohorts (fixed order) + any new
+# data/cohorts/<dir> that carries a cohort.json (e.g. an nnU-Net-segmented held-out cohort).
+if _HERE not in sys.path:
+    sys.path.insert(0, _HERE)
+from cohort_registry import discover_sites, subject_of, fingerprint, same_seg_patient_pairs  # noqa: E402
+
+SITES, _SKIPPED = discover_sites()
 
 
 def _acquired_scan_count(site):
@@ -80,18 +80,20 @@ def _acquired_scan_count(site):
 
 
 def _subject_of(site, case):
-    if site == "mslesseg":
-        m = re.match(r"mslesseg_(P\d+)(?:_|$)", case)
-        if not m:
-            raise ValueError(f"cannot parse MSLesSeg subject from {case!r}")
-        return "mslesseg_" + m.group(1)
-    return f"{site}:{case}"
+    return subject_of(site, case, SITES[site])
 
 
 def _extract_all():
+    fp = fingerprint(SITES)
     if os.path.exists(_CACHE):
         d = np.load(_CACHE, allow_pickle=True)
-        return list(d["cases"]), {k: int(v) for k, v in d["acq"].item().items()}
+        cached_fp = d["fingerprint"].tolist() if "fingerprint" in d.files else None
+        # Legacy caches (no fingerprint) are accepted only for the exact 4-cohort set they
+        # were built from; any added/removed cohort or prob map forces re-extraction.
+        legacy_ok = cached_fp is None and sorted(SITES) == sorted(["openms", "mslesseg", "sibbms", "isbi"])
+        if legacy_ok or cached_fp == [list(x) for x in fp]:
+            return list(d["cases"]), {k: int(v) for k, v in d["acq"].item().items()}
+        print("  cache fingerprint changed (cohorts added/removed) -> re-extracting")
     cases = []
     for site, meta in SITES.items():
         for prob_path in sorted(glob.glob(os.path.join("data", "cohorts", meta["sub"], "*_prob.nii.gz"))):
@@ -113,7 +115,8 @@ def _extract_all():
             print(f"  [{site}] {case}: {len(cands)} cand, {int(false0.sum())} false", end="\r")
     print()
     acq = {s: _acquired_scan_count(s) for s in SITES}
-    np.savez_compressed(_CACHE, cases=np.array(cases, dtype=object), acq=np.array(acq, dtype=object))
+    np.savez_compressed(_CACHE, cases=np.array(cases, dtype=object), acq=np.array(acq, dtype=object),
+                        fingerprint=np.array([list(x) for x in fp], dtype=object))
     return cases, acq
 
 
@@ -130,12 +133,26 @@ def _false_scores(cases, site, key, exclude_subject=None, exclude_site=None):
     return np.concatenate(arrs) if arrs else np.array([])
 
 
-def _pooled_null(cases, key, exclude_site):
-    """FLAMeS-patient FP scores, leave-one-SITE-out (fixes the in-sample POOLED leak)."""
+def _pooled_null(cases, key, exclude_site, seg):
+    """Patient FP scores from the SAME segmenter family `seg`, leave-one-SITE-out (fixes the
+    in-sample POOLED leak). Only trustworthy-grouping null sources contribute."""
     arrs = [c["scores"][c[key]] for c in cases
-            if SITES[c["site"]]["kind"] == "patients" and SITES[c["site"]]["seg"] == "FLAMeS"
-            and c["site"] != exclude_site]
+            if SITES[c["site"]]["kind"] == "patients" and SITES[c["site"]]["seg"] == seg
+            and SITES[c["site"]]["null_source"] and c["site"] != exclude_site]
     return np.concatenate(arrs) if arrs else np.array([])
+
+
+SHIPPED_SEG = "FLAMeS"   # the segmenter whose pooled null the app ships
+
+
+def _pooled_for(cases, key, target_site):
+    """POOLED null for `target_site`: same-segmenter patient null sources, leave-one-site-out.
+    If the target's segmenter has no other null source (e.g. a lone LST-AI or nnU-Net cohort),
+    fall back to the SHIPPED FLAMeS pool — i.e. the cross-segmenter transfer probe."""
+    nl = _pooled_null(cases, key, target_site, SITES[target_site]["seg"])
+    if nl.size == 0:
+        nl = _pooled_null(cases, key, target_site, SHIPPED_SEG)
+    return nl
 
 
 def _perscan(test_cases, null_fn, alpha, key):
@@ -237,7 +254,7 @@ def main():
         for nsrc in null_srcs + ["POOLED"]:
             for tsite in patient_test:
                 if nsrc == "POOLED":
-                    null_fn = (lambda t, xs=tsite: _pooled_null(cases, "is_false0", exclude_site=xs))
+                    null_fn = (lambda t, xs=tsite: _pooled_for(cases, "is_false0", xs))
                 elif nsrc == tsite:
                     null_fn = (lambda t: _false_scores(cases, t["site"], "is_false0", exclude_subject=t["subject"]))
                 else:
@@ -269,11 +286,8 @@ def main():
         k = np.max(np.where(ok)[0])
         return sc_o[k]
     for alpha in ALPHAS:
-        for nsrc in FLAMES_PAT:
-            tau = _tau_for(by_site[nsrc], alpha, "is_false0")
-            for tsite in FLAMES_PAT:
-                if tsite == nsrc:
-                    continue
+        for nsrc, tsite in same_seg_patient_pairs(SITES):
+                tau = _tau_for(by_site[nsrc], alpha, "is_false0")
                 sc = np.concatenate([c["scores"] for c in by_site[tsite]])
                 isf = np.concatenate([c["is_false0"] for c in by_site[tsite]])
                 sel = sc >= tau
@@ -294,7 +308,7 @@ def main():
             line = f"    a={alpha}: "
             for nsrc in null_srcs + ["POOLED"]:
                 if nsrc == "POOLED":
-                    null_fn = (lambda t: _pooled_null(cases, "is_false0", exclude_site=None))
+                    null_fn = (lambda t, xs=csite: _pooled_for(cases, "is_false0", xs))
                 elif nsrc == csite:
                     null_fn = (lambda t: _false_scores(cases, t["site"], "is_false0", exclude_subject=t["subject"]))
                 else:
@@ -341,10 +355,7 @@ def main():
 
     # ---- Robustness: does the cross-site conclusion survive a STRICTER TP rule? --------
     print("\nRobustness — same cells under >=0.10-overlap TP rule (a=0.20):")
-    for nsrc in FLAMES_PAT:
-        for tsite in FLAMES_PAT:
-            if tsite == nsrc:
-                continue
+    for nsrc, tsite in same_seg_patient_pairs(SITES):
             nl = _false_scores(cases, nsrc, "is_false1")
             rows = _perscan(by_site[tsite], (lambda t, nn=nl: nn), 0.20, "is_false1")
             micro, power, nsel, mfdp, _ = _agg(rows)
