@@ -3,7 +3,7 @@
 ## IEC 62304 Clause 5.2 Compliant Requirements Document
 
 **Document ID**: SRS-001
-**Version**: 1.0
+**Version**: 1.1 (2026-09-28 — REQ-SAFE-010 amended)
 **Effective Date**: April 12, 2026
 **Standard**: IEC 62304:2006+A1:2015 Clause 5.2
 **Software Safety Class**: IEC 62304 Class C
@@ -16,6 +16,7 @@
 | Version | Date | Author | Changes | Approved By |
 |---------|------|--------|---------|-------------|
 | 1.0 | 2026-04-12 | Development Team | Initial release | — |
+| 1.1 | 2026-09-28 | Development Team | REQ-SAFE-010 amended (audit #8): no per-lesion MAGNIMS confidence emitted or displayed; region evidence instead (RC-010 amended, HAZ-005) | TBA (human review) |
 
 ---
 
@@ -158,7 +159,7 @@ This SRS covers all software requirements for MSTool-AI version 2.0, including f
 | REQ-SAFE-007 | AI reports shall not be auto-committed to clinical record; clinician confirmation required for any export. | HAZ-003 | Must | Test |
 | REQ-SAFE-008 | Edge AI screening badge shall display confidence percentage and "assistive tool only, not diagnostic" disclaimer. | HAZ-004 | Must | Test + Inspection |
 | REQ-SAFE-009 | Edge AI screening shall be hidden when model file is not available (graceful degradation). | HAZ-004 | Must | Test |
-| REQ-SAFE-010 | MAGNIMS classification shall display per-lesion confidence scores. | HAZ-005 | Must | Test |
+| REQ-SAFE-010 | No MAGNIMS classification path shall emit (API or MCP) or display a per-lesion "confidence" — no path has a calibrated per-lesion probability. Each path shall expose its evidence under its own name — distances to landmarks in mm (parcellation; null when a landmark is absent), the share of lesion voxels in the assigned zone and in any white-matter zone (MSMask), and a flag when the lesion lies in no atlas white-matter zone and Deep White Matter was assigned by default — and the UI shall state that regions follow a deterministic MAGNIMS rule. *Amended 2026-09-28 (audit #8): the original wording ("shall display per-lesion confidence scores") required a number that cannot be produced honestly; the parcellation path met it with a distance linearly mapped onto 0.70–0.95, rendered as a colour-coded percentage.* | HAZ-005 | Must | Test |
 | REQ-SAFE-011 | Classification method (EDT/Atlas/Geometric) shall be displayed to the user. | HAZ-005 | Should | Inspection |
 | REQ-SAFE-012 | The system shall auto-detect and transpose axis mismatches between mask and image dimensions. | HAZ-006 | Must | Test |
 | REQ-SAFE-013 | The system shall validate NIfTI orientation headers on file upload and warn if non-standard. | HAZ-006 | Must | Test |

@@ -1,13 +1,14 @@
 # MSTool-AI: Instructions for Use
 
-**Document ID**: IFU-001 | **Version**: 1.0 | **Date**: April 12, 2026
+**Document ID**: IFU-001 | **Version**: 1.1 | **Date**: September 28, 2026
 **Standard**: EU MDR 2017/745 Annex I Chapter III, EN ISO 20417:2021
 
 ---
 
-| Version | Date | Author | Approved By |
-|---------|------|--------|-------------|
-| 1.0 | 2026-04-12 | Development Team | — |
+| Version | Date | Author | Approved By | Change |
+|---------|------|--------|-------------|--------|
+| 1.0 | 2026-04-12 | Development Team | — | Initial release |
+| 1.1 | 2026-09-28 | Development Team | — | MAGNIMS region classification: no per-lesion confidence is reported; region evidence and the "No WM zone — DWM by default" warning described (HAZ-005, REQ-SAFE-010 amended, RC-010 (amended)) |
 
 ---
 
@@ -74,6 +75,7 @@ MSTool-AI is **NOT** indicated for use in the following scenarios:
 - **Edge AI screening is assistive only.** The browser-based normal/abnormal triage classification is a rapid screening aid. It is not a diagnostic test and must not be used as the sole basis for clinical decisions.
 - **Report generation uses AI language models.** Generated reports may contain inaccuracies, hallucinations, or inappropriate conclusions. All generated reports must be reviewed and edited by a qualified radiologist before clinical use.
 - **MAGNIMS classification accuracy depends on segmentation quality.** Region classification results are directly dependent on the accuracy of the underlying brain parcellation and lesion segmentation.
+- **No per-lesion confidence for region classification.** Lesion regions are assigned by a deterministic MAGNIMS rule; MSTool-AI does not report a per-lesion confidence or probability for the assigned region. The accuracy of region assignment has not yet been measured against expert region labels (HAZ-005, residual risk undetermined). Verify the location of every lesion that contributes to Dissemination in Space (DIS) before using the DIS assessment.
 
 ### 6.2 Precautions
 
@@ -159,8 +161,9 @@ The standard clinical workflow follows these steps:
 1. Open the Lesion Dashboard
 2. Click "Analyze Lesions" to run connected-component analysis
 3. Click "Auto-Classify Regions" to apply MAGNIMS region classification
-4. Review DIS (Dissemination in Space) assessment
-5. For longitudinal studies: select baseline and follow-up segmentations for comparison
+4. Review the region assigned to each lesion and its evidence (see Section 10.3). Any lesion marked **"No WM zone — DWM by default"** must have its location verified on the images.
+5. Review DIS (Dissemination in Space) assessment only after the lesion locations it depends on have been verified
+6. For longitudinal studies: select baseline and follow-up segmentations for comparison
 
 ### 9.5 Step 4: Brain Volumetry
 
@@ -219,6 +222,20 @@ Classification thresholds per McDonald 2024 criteria:
 | Deep White Matter | DWM | Default (none of the above) |
 
 Two-tier classification: Tier 2 (SynthSeg parcellation + EDT distance transform) with Tier 1 (geometric heuristic) fallback. Priority cascade: IT > PV > JC > DWM.
+
+**Output (per lesion)**: the assigned region together with the evidence produced by the classification path that was used. No confidence score or probability is reported, because region assignment is a deterministic rule and no path has a calibrated per-lesion probability.
+
+| Classification path | Evidence shown |
+|---------------------|----------------|
+| Parcellation (distance transform) | Distances in mm to the ventricle, cortex and infratentorial landmarks ("-" when a landmark is absent) |
+| MSMask zone map | "Lesion % in zone" — fraction of all lesion voxels inside the assigned zone (e.g. "8% in PV"). Descriptive, not a probability; a low value is normal under the MAGNIMS contact rule |
+| Geometric (fallback) | Distance columns in mm, which here are heuristic proxies (e.g. distance from the brain centre), not distances to anatomical landmarks |
+
+The lesion table states: "Regions follow a deterministic MAGNIMS rule; no per-lesion confidence is reported."
+
+**"No WM zone — DWM by default" (amber warning)**: shown when no voxel of the lesion lies in any MSMask white-matter zone (the lesion may be cortical or intraventricular, or the atlas may be misaligned). Deep White Matter was then assigned **by default, not by the MAGNIMS rule**. If the atlas is misaligned, the lesion may in fact be periventricular, juxtacortical or infratentorial, which could lead to a false-negative DIS result. Verify its location on the images before using it for DIS.
+
+The accuracy of region assignment (any path) has not been measured against expert region labels; see Section 6.1.
 
 ### 10.4 Edge AI Screening
 

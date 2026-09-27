@@ -24,6 +24,7 @@ import {
   MapPin,
   Zap,
   Info,
+  AlertTriangle,
 } from 'lucide-react';
 import { segmentationAPI } from '@/api/segmentation';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
@@ -39,6 +40,7 @@ import {
   type CVSSummary,
   type PRLSummary,
 } from '@/types';
+import { regionEvidence, REGION_ABBREV } from '../utils/regionEvidence';
 
 
 interface LesionDashboardProps {
@@ -77,11 +79,6 @@ function regionBarWidth(vol: number, maxVol: number): string {
   return `${Math.max(4, (vol / maxVol) * 100)}%`;
 }
 
-function confidenceBadge(confidence: number): string {
-  if (confidence >= 0.85) return 'bg-green-900/40 text-green-300 border-green-700/50';
-  if (confidence >= 0.70) return 'bg-yellow-900/40 text-yellow-300 border-yellow-700/50';
-  return 'bg-red-900/40 text-red-300 border-red-700/50';
-}
 
 export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdated }: LesionDashboardProps) {
   const { t } = useTranslation();
@@ -492,16 +489,8 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
               ))}
             </div>
             {classification.lesions.length > 0 && (
-              <div className="text-[9px] text-gray-400">
-                {t('classify.avgConfidence', 'Avg confidence')}:{' '}
-                <span className="text-white font-mono">
-                  {(() => {
-                    const withConf = classification.lesions.filter(l => l.confidence != null);
-                    return withConf.length > 0
-                      ? `${(withConf.reduce((sum, l) => sum + (l.confidence ?? 0), 0) / withConf.length * 100).toFixed(0)}%`
-                      : 'N/A';
-                  })()}
-                </span>
+              <div className="text-[9px] text-gray-500" data-testid="classify-no-confidence">
+                {t('classify.noConfidence', 'Regions follow a deterministic MAGNIMS rule; no per-lesion confidence is reported.')}
               </div>
             )}
           </div>
@@ -784,7 +773,12 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                       <th className="text-right py-0.5 px-1">PV</th>
                       <th className="text-right py-0.5 px-1">JC</th>
                       <th className="text-right py-0.5 px-1">IT</th>
-                      <th className="text-center py-0.5 px-1">Conf.</th>
+                      <th
+                        className="text-center py-0.5 px-1"
+                        title={t('classify.inZoneTooltip', 'Fraction of the lesion inside the assigned MAGNIMS zone (MSMask). Descriptive, not a probability.')}
+                      >
+                        {t('classify.inZone', 'Lesion % in zone')}
+                      </th>
                       <th className="text-center py-0.5 px-1">CVS</th>
                       <th className="text-center py-0.5 px-1">PRL</th>
                     </tr>
@@ -811,13 +805,37 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                           {cl.distances_mm?.to_infratentorial?.toFixed(1) ?? '-'}
                         </td>
                         <td className="py-0.5 px-1 text-center">
-                          {cl.confidence != null ? (
-                            <span className={`px-1 py-0.5 rounded border text-[8px] font-mono ${confidenceBadge(cl.confidence)}`}>
-                              {(cl.confidence * 100).toFixed(0)}%
-                            </span>
-                          ) : (
-                            <span className="text-[8px] text-gray-600">N/A</span>
-                          )}
+                          {(() => {
+                            // RC-010 (amended): evidence, never a confidence (HAZ-005).
+                            const ev = regionEvidence(cl);
+                            if (ev.kind === 'outsideZones') {
+                              return (
+                                <span
+                                  className="inline-flex items-center gap-0.5 text-[8px] text-amber-300"
+                                  title={t('classify.outsideZonesTooltip', 'No voxel of this lesion lies in any MSMask white-matter zone (it may be cortical, intraventricular, or the atlas may be misaligned). Deep White Matter was assigned by default, not by the MAGNIMS rule. Verify the location before using it for DIS.')}
+                                  data-testid="region-evidence"
+                                >
+                                  <AlertTriangle className="w-2.5 h-2.5" aria-hidden="true" />
+                                  {t('classify.outsideZones', 'No WM zone — DWM by default')}
+                                </span>
+                              );
+                            }
+                            if (ev.kind === 'overlap') {
+                              return (
+                                <span
+                                  className="text-[8px] font-mono text-gray-400"
+                                  title={t('classify.inZoneTooltip', 'Fraction of the lesion inside the assigned MAGNIMS zone (MSMask). Descriptive, not a probability.')}
+                                  data-testid="region-evidence"
+                                >
+                                  {t('classify.inZoneValue', '{{pct}}% in {{zone}}', {
+                                    pct: Math.round(ev.value * 100),
+                                    zone: REGION_ABBREV[cl.region] ?? cl.region,
+                                  })}
+                                </span>
+                              );
+                            }
+                            return <span className="text-[8px] text-gray-600" data-testid="region-evidence">{'\u2014'}</span>;
+                          })()}
                         </td>
                         <td className="py-0.5 px-1 text-center">
                           <select

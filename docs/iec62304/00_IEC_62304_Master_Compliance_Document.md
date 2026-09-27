@@ -1133,11 +1133,13 @@ See Section 4.2 for the complete SOUP inventory. For each SOUP item, the followi
 | HAZ-002 | Volumetry shows percentile ranges | `BrainVolumetryPanel.tsx` normative comparison | Yes |
 | HAZ-003 | Report disclaimer: "requires physician review" | `brain_report_service.py` system prompt | Yes |
 | HAZ-004 | Edge AI confidence score displayed | `QuickScreenBadge.tsx` percentage + inference time | Yes |
-| HAZ-005 | Classification confidence scores shown | `LesionDashboard.tsx` per-lesion confidence | Yes |
+| HAZ-005 | RC-010 (amended 2026-09-28): region EVIDENCE is shown, never a per-lesion confidence. `confidence` is null on every path, in the API and in MCP. The UI states that regions follow a deterministic MAGNIMS rule. Information for safety only. | `ms_region_classifier.py` (`distances_mm`, `region_overlap_fraction`, `zone_coverage_fraction`, `atlas_coverage`); `LesionDashboard.tsx` "Lesion % in zone" column + "No WM zone — DWM by default" warning; `region_evidence.py` strips persisted confidence for MCP | Test-bound (UT-CLS-002, UI-RC010). **Residual risk UNDETERMINED**: region-assignment accuracy has not been measured against expert labels, so re-assessment is required |
 | HAZ-006 | Auto-transpose for axis mismatch | `SegmentationCanvasLocal.tsx` transposeSlice() | Yes |
 | HAZ-009 | Patient ID displayed prominently | `PatientBanner.tsx` MRN and name | Yes |
 | HAZ-010 | JWT authentication + WebAuthn | `auth.py`, `webauthn_service.py` | Yes |
 | HAZ-010 | RBAC with 4 roles, 15 permissions | `rbac.py` role hierarchy | Yes |
+
+> **Erratum 2026-09-28 (audit #8, HAZ-005)**: this table previously listed the HAZ-005 control as "Classification confidence scores shown — `LesionDashboard.tsx` per-lesion confidence — Yes". That claim is withdrawn. The scores were never calibrated: the parcellation path produced them by mapping distance linearly onto 0.70–0.95 (0.60–0.90 for DWM), and the MSMask path used the in-zone fraction, or a fixed 0.50 for a lesion in no zone. The UI showed them as colour-coded percentages and MCP forwarded them to an AI assistant. The row above now records the amended control (REQ-SAFE-010 amended 2026-09-28). See RMF-001 for the HAZ-005 residual risk.
 
 **Status**: 21 out of 22 risk controls verified (95%). RC-013 (penetration testing) remains PARTIAL — external security assessment not yet performed. All other controls have test evidence documented in the Verification & Validation Plan (VVP-001).
 

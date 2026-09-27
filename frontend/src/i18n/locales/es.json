@@ -1077,7 +1077,12 @@
     "methodParcellation": "Parcelación",
     "methodMSMask": "MSMask",
     "methodGeometric": "Geométrico",
-    "avgConfidence": "Confianza promedio",
+    "noConfidence": "Las regiones siguen una regla MAGNIMS determinista; no se reporta confianza por lesión.",
+    "inZone": "% de lesión en zona",
+    "inZoneValue": "{{pct}}% en {{zone}}",
+    "outsideZones": "Sin zona SB — SBP por defecto",
+    "outsideZonesTooltip": "Ningún vóxel de esta lesión está en una zona de sustancia blanca de MSMask (puede ser cortical, intraventricular o el atlas puede estar desalineado). Se asignó Sustancia Blanca Profunda por defecto, no por la regla MAGNIMS. Verifique la localización antes de usarla para DIS.",
+    "inZoneTooltip": "Fracción de la lesión dentro de la zona MAGNIMS asignada (MSMask). Descriptivo, no es una probabilidad.",
     "distanceDetails": "Distancias de Clasificación (mm)",
     "region": "Región"
   },

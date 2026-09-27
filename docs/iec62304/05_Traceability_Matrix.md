@@ -72,6 +72,18 @@
 > Code inspection recorded as prose, with no executed check, is precisely the
 > nonconformity CAPA-001 was raised for.
 
+> **Addendum 2026-09-28: REQ-SAFE-010 amended (audit #8, HAZ-005).** The REQ-SAFE-010 row above ("Classification confidence scores") is kept unedited as history but is **superseded**. Problems with the original control have been found:
+> - the parcellation path produced its "confidence" by mapping distance linearly onto 0.70–0.95 (0.60–0.90 for DWM);
+> - the MSMask path reported the in-zone fraction as its "confidence", and used a fixed 0.50 for lesions outside every zone.
+>
+> None of these values was calibrated. The amended control, RC-010 (amended), removes per-lesion confidence from every classification path, from the API, from MCP and from the UI, and shows each path's own evidence instead. It is bound to executed tests:
+>
+> | Req ID | Safety Requirement | Risk Control | HAZ ID | Design (DD) | Implementation | Test ID | Verified? |
+> |--------|-------------------|-------------|--------|-------------|----------------|---------|-----------|
+> | REQ-SAFE-010 (amended 2026-09-28) | Region evidence displayed; never a per-lesion confidence | RC-010 (amended) | HAZ-005 | DD-CLS-001 | `ms_region_classifier.py`, `region_evidence.py`, `LesionDashboard.tsx`, `utils/regionEvidence.ts`, `mcp/ms_clinical_server.py` | UT-CLS-002, UI-RC010 | TEST-BOUND (neg. control UT-CLS-002: 2/5, 1/6, 1/6, 1/6; UI-RC010: 1/6, 1/6) |
+>
+> This control provides information for safety only. The accuracy of region assignment has **not** been measured against expert region labels on any path, so the **HAZ-005 residual risk is UNDETERMINED** and must be re-assessed (RMF-001).
+
 ---
 
 ## Security Requirements Traceability — Object-Level Authorization (CAPA-002)
@@ -109,6 +121,8 @@ by `backend/tests/unit/test_risk_control_manifest.py`.
 | UT-SEG-001 | DICOM-SEG creation (single label) | REQ-FUNC-072 |
 | UT-SEG-002 | DICOM-SEG creation (multi label) | REQ-FUNC-072 |
 | UT-SEG-003 | DICOM-SEG creation (empty mask) | REQ-FUNC-072 |
+| UT-CLS-002 | No classification path emits a per-lesion confidence; evidence fields are honest (distances None when a landmark is absent, full-lesion overlap denominator, default-DWM flagged); MCP strips persisted confidence; region thresholds unchanged (added 2026-09-28) | REQ-SAFE-010 (amended), REQ-FUNC-053 |
+| UI-RC010 | LesionDashboard shows in-zone evidence and a default-DWM warning, never a confidence cell or average confidence; stale confidence values are ignored (added 2026-09-28) | REQ-SAFE-010 (amended) |
 
 ---
 
@@ -136,6 +150,7 @@ by `backend/tests/unit/test_risk_control_manifest.py`.
 | `test_brain_report_service.py` | UT-RPT-001 | REQ-FUNC-060 |
 | `test_lesion_analysis_service.py` | UT-LES-001, UT-DIS-001 | REQ-FUNC-050, REQ-FUNC-052 |
 | `test_ms_region_classifier.py` | UT-CLS-001 | REQ-FUNC-053 |
+| `test_region_confidence_haz005.py` | UT-CLS-002 | REQ-SAFE-010 (amended 2026-09-28), REQ-FUNC-053 (RC-010 (amended), HAZ-005) |
 | `test_nifti_utils.py` | UT-NII-001 | REQ-FUNC-001 |
 | `test_dicom_seg.py` | UT-SEG-001..008 | REQ-FUNC-072 |
 | `test_dicom_utils.py` | UT-DICOM-001..007 | REQ-FUNC-072, REQ-SAFE-013 | RC-016 | VERIFIED |

@@ -10,6 +10,7 @@ consensus (Barkhof et al., Lancet Neurology 2025; 24(10): 866-879).
 """
 
 from fastmcp import FastMCP
+from app.services.region_evidence import strip_region_confidence as _strip_region_confidence
 from typing import Optional
 
 mcp = FastMCP(
@@ -90,7 +91,7 @@ async def classify_lesions_magnims(
     or Deep White Matter (DWM).
 
     Methods:
-    - 'auto': Best available (MSMask atlas > geometric heuristics)
+    - 'auto': Best available (LST-AI zones > parcellation > MSMask atlas > geometric heuristics)
     - 'msmask': MSMask atlas-based classification (Wiltgen et al., 2024)
     - 'geometric': Geometric heuristics fallback
 
@@ -99,7 +100,10 @@ async def classify_lesions_magnims(
         method: Classification method ('auto', 'msmask', 'geometric')
 
     Returns:
-        Classification results with per-lesion regions, distances, and confidence
+        Classification results with per-lesion regions and their EVIDENCE (distances_mm for
+        parcellation; region_overlap_fraction / zone_coverage_fraction / atlas_coverage for
+        MSMask). `confidence` is always null (HAZ-005): region assignment is a deterministic
+        MAGNIMS rule with no calibrated probability — never report or estimate a confidence.
     """
     return await _api_post(
         f"/segmentation/{segmentation_id}/classify-regions",
@@ -253,7 +257,7 @@ async def generate_ms_report(
         seg = await _api_get(f"/segmentation/{segmentation_id}")
         analysis_data = seg.get("metadata", {}).get("analysis_data", {})
         if analysis_data.get("classification"):
-            findings["classification"] = analysis_data["classification"]
+            findings["classification"] = _strip_region_confidence(analysis_data["classification"])
         if analysis_data.get("cvs_summary"):
             findings["cvs_summary"] = analysis_data["cvs_summary"]
         if analysis_data.get("prl_summary"):

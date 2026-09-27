@@ -81,6 +81,22 @@ Criteria 3 and 4 were added as a result of this exercise; see §5.
 | RC-022 | VERIFIED — "confirmed by user … documented in project memory" | Recollection is not objective evidence. The code does not depend on the assumption: it silently defaults `voxel_spacing` to 1 mm — the harm HAZ-014 describes. | CA-1 CA-5 |
 | RC-007′ | VERIFIED (RCV-2026-04-12 wording) — de-identification before third-party API | No de-identification routine exists under `backend/app/`. Free-text fields are interpolated verbatim into the prompt. | CA-1 CA-4 |
 
+> **Erratum 2026-09-28 — RC-010 row above.** The row is retained as written; it is
+> incomplete. It examined only the **geometric** path. The **parcellation** path (live in
+> `auto` mode whenever a sibling segmentation held ≥ 3 FreeSurfer-range label values)
+> returned a distance linearly mapped onto 0.70–0.95 (DWM 0.60–0.90), and the **MSMask**
+> path put the in-zone fraction in `confidence` and a fixed 0.50 when the lesion lay in no
+> zone; the UI rendered these as coloured percentages with an "Avg confidence" and the MCP
+> clinical server forwarded them. "Deliberately absent" was therefore true of one path
+> only. Corrected under **RC-010 (amended)** (REQ-SAFE-010 amended 2026-09-28): no path
+> emits or displays a per-lesion confidence; evidence is reported as `distances_mm`,
+> `region_overlap_fraction`, `zone_coverage_fraction` and `atlas_coverage`. Test-bound to
+> UT-CLS-002 (`backend/tests/unit/test_region_confidence_haz005.py`) and UI-RC010
+> (`frontend/src/components/LesionDashboard.haz005.test.ts`), with negative controls
+> executed (see CAPA-001 §2.4 addendum). HAZ-005 residual risk remains **UNDETERMINED —
+> re-assessment required**: region-assignment accuracy has not been measured against
+> expert region labels. The §1 headline counts and §7 are not re-derived by this erratum.
+
 ---
 
 ## 4. Structural finding — the same ID denotes different controls

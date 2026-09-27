@@ -310,3 +310,18 @@ issues already logged (§4.6 AI output not read by the loader; §4.7 mindGlide e
 an all-zero mask when its package is missing), **the AI lesion path must not be
 enabled until: (a) LST-AI licensing is cleared, (b) the storage seam is closed, and
 (c) a missing model fails rather than returning empty.**
+
+## 8. Erratum 2026-09-28 — region-classification confidence (HAZ-005)
+
+§3 above states that "per-lesion confidence is emitted for the calibrated paths", and §5
+credits RC-010 for withholding it on the geometric path. Both statements are left as
+written but are incomplete: no region-classification path was ever calibrated. Audit #8
+found that the parcellation path mapped a distance linearly onto 0.70–0.95 (DWM
+0.60–0.90), and the MSMask path reported the in-zone fraction, or a fixed 0.50 when the
+lesion lay in no zone; the UI showed these as colour-coded percentages and the MCP
+clinical server forwarded them. Under REQ-SAFE-010 (amended 2026-09-28) and RC-010
+(amended), no path emits or displays a per-lesion confidence (`confidence` is always
+null); evidence is reported as `distances_mm`, `region_overlap_fraction`,
+`zone_coverage_fraction` and `atlas_coverage`. Region-assignment logic is unchanged.
+Verified by UT-CLS-002 and UI-RC010. The accuracy of region assignment has not been
+measured against expert region labels; the HAZ-005 residual risk remains UNDETERMINED.

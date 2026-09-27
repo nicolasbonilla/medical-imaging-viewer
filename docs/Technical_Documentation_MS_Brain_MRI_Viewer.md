@@ -343,15 +343,11 @@ $$\text{region}(C_k) = \begin{cases}
 
 where tau_IT = tau_PV = tau_JC = 1.5 mm (approximate cube diagonal for LST-AI dilation kernels).
 
-5. **Confidence scoring:**
+5. **Evidence reported (no per-lesion confidence):**
 
-$$\text{conf}(d, \tau) = \max\left(0.70, \ 0.95 - 0.25 \cdot \frac{d}{\tau}\right)$$
+No per-lesion "confidence" is emitted or displayed; `confidence` is always `null` (HAZ-005, REQ-SAFE-010, RC-010 (amended), 2026-09-28). Region assignment is a deterministic MAGNIMS rule with no calibrated probability behind it. The parcellation path reports the distances it used as evidence, `distances_mm` = (d_IT, d_PV, d_JC), with a distance set to `null` when the corresponding landmark is absent from the parcellation.
 
-For DWM (fallback):
-
-$$\text{conf}_{\text{DWM}} = \min\left(0.90, \ 0.60 + 0.30 \cdot \min\left(1.0, \frac{d_{\min} - \tau}{10}\right)\right)$$
-
-where d_min = min(d_IT, d_PV, d_JC).
+*Erratum 2026-09-28:* earlier revisions of this section documented a "confidence" obtained by linearly mapping the distance onto 0.70–0.95 (DWM: 0.60–0.90). That value was not calibrated against any reference and has been removed from the code, API, MCP server and UI.
 
 ### 5.3 Tier 1: MSMask Atlas-Based Classification
 
@@ -382,6 +378,8 @@ where d_min = min(d_IT, d_PV, d_JC).
      Z[Vent_dilated AND WM AND Z != 3] <- 1 (PV)
 5. Resample to patient native space if needed
 ```
+
+**Evidence reported per lesion (no per-lesion confidence, RC-010 (amended), 2026-09-28):** `region_overlap_fraction` (fraction of all lesion voxels inside the assigned zone), `zone_coverage_fraction` (fraction inside any white-matter zone) and `atlas_coverage` (`false` when the lesion lies in no white-matter zone — Deep White Matter is then assigned by default, not by the MAGNIMS rule, and the UI shows the data-quality warning "No WM zone — DWM by default"). `confidence` is always `null`. *Erratum:* earlier revisions of the code placed the in-zone fraction in `confidence` and a fixed 0.50 when the lesion lay in no zone; both are removed.
 
 ### 5.4 Zone Map Rendering
 

@@ -26,7 +26,7 @@
   ],
   "manifest_version": 1,
   "capa_reference": "CAPA-001, CAPA-002, CAPA-004, CAPA-005",
-  "last_updated": "2026-07-18",
+  "last_updated": "2026-09-28",
   "controls": {
     "RC-006": {
       "description": "AI-generated report carries a mandatory physician-review disclaimer",
@@ -58,13 +58,16 @@
       "note": "CAPA-001 §2.3 — no de-identification routine exists under backend/app/. Tracked as CAPA-001 CA-4. The RMF must not record this as VERIFIED."
     },
     "RC-010": {
-      "description": "Classification confidence displayed per lesion",
-      "hazard": "HAZ-006",
-      "status": "deliberately_absent",
-      "implementation": "backend/app/services/ms_region_classifier.py",
-      "tests": [],
-      "rationale": "CAPA-001 §2.4 — the geometric classification path sets confidence = None on purpose, because it has no empirically calibrated confidence. Emitting an uncalibrated number would be worse than emitting none. The code is more honest than the documentation was; the RMF row is what must change, not the code.",
-      "note": "Requires a test asserting confidence stays None on the geometric path, so the deliberate absence cannot be 'fixed' by accident. Tracked under CA-3."
+      "description": "RC-010 (amended 2026-09-28): MAGNIMS region classification emits (API/MCP) and displays region EVIDENCE — distances_mm, region_overlap_fraction, zone_coverage_fraction, default-DWM flag — never a per-lesion confidence",
+      "hazard": "HAZ-005",
+      "status": "implemented",
+      "implementation": "backend/app/services/ms_region_classifier.py (confidence=None on every path; evidence fields); backend/app/services/region_evidence.py + backend/app/mcp/ms_clinical_server.py (persisted confidences stripped before the MCP assistant); frontend/src/utils/regionEvidence.ts + frontend/src/components/LesionDashboard.tsx (neutral 'Lesion % in zone' column, amber default-DWM warning, no average confidence)",
+      "tests": [
+        "tests/unit/test_region_confidence_haz005.py",
+        "frontend/src/components/LesionDashboard.haz005.test.ts"
+      ],
+      "negative_control": "Executed 2026-09-28. Backend: numeric confidence + _distance_to_confidence restored on the parcellation path -> 2 failed, 5 passed; fixed 0.50 fallback restored -> 1 failed, 6 passed; total_in_zones denominator restored -> 1 failed, 6 passed; round(inf) distances restored -> 1 failed, 6 passed; restored module -> 7 passed. Frontend: confidence cell restored -> 1 failed, 6 passed; regionEvidence returns the confidence -> 1 failed, 6 passed; restored -> 7 passed.",
+      "note": "Supersedes the 2026-07-18 'deliberately_absent' entry (which also named the wrong hazard, HAZ-006): that finding examined only the geometric path, while the parcellation path emitted a distance mapped onto 0.70-0.95 and the MSMask path a fixed 0.50, rendered as colour-coded percentages and forwarded to the MCP assistant. This control is information-for-safety only; HAZ-005 residual stays UNDETERMINED (region-assignment accuracy unmeasured)."
     },
     "RC-022": {
       "description": "All images preprocessed to MNI 1 mm isotropic space",

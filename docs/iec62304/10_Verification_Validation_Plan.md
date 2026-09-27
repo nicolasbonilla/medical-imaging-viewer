@@ -48,6 +48,8 @@
 | Lesion Analysis | UT-LES-001 | pytest | Component count matches reference | DONE (test_lesion_analysis_service.py) |
 | DIS Criteria | UT-DIS-001 | pytest | DIS evaluation matches expert | DONE (test_lesion_analysis_service.py) |
 | MAGNIMS Classifier | UT-CLS-001 | pytest | Region assignment matches reference | DONE (test_ms_region_classifier.py) |
+| MAGNIMS Classifier — region evidence, no confidence (RC-010 (amended), HAZ-005, REQ-SAFE-010 amended 2026-09-28) | UT-CLS-002 | pytest | All 7 `test_rc010_*` tests pass: (1) the parcellation, MSMask and geometric paths all emit `confidence = None`, and the parcellation and MSMask paths also carry the matching `confidence_note`; (2) parcellation `distances_mm` are None, not 0.0, when a landmark is absent; (3) MSMask `region_overlap_fraction` uses all lesion voxels as the denominator, so a partially covered lesion is not reported as 1.0; (4) a lesion in no zone gets DWM with `atlas_coverage = false`, `region_overlap_fraction = None` and no fabricated 0.50; (5) the distance rule returns the region only and its 1.5 mm thresholds are unchanged; (6) MCP strips `confidence` from persisted classifications. Negative controls, executed: restoring numeric confidence gives 2 failed / 5 passed; restoring the 0.50 fallback gives 1/6; the old denominator gives 1/6; infinite distances give 1/6 | DONE 2026-09-28 (test_region_confidence_haz005.py) |
+| LesionDashboard — region evidence display (RC-010 (amended), HAZ-005, REQ-SAFE-010 amended 2026-09-28) | UI-RC010 | vitest | All 7 `rc010` tests pass: (1) `regionEvidence()` maps the MSMask `region_overlap_fraction` to an overlap value; the table displays it as "Lesion % in zone", e.g. "8% in PV"; (2) a default-DWM lesion (`atlas_coverage = false`) maps to `outsideZones`, and the dashboard renders it with the translated `classify.outsideZones` label and tooltip ("No WM zone — DWM by default"); (3) paths without zone evidence show nothing in that column; (4) a `confidence` sent by a stale backend or a persisted result is ignored; (5) the table never reads a lesion confidence; (6) the summary says no per-lesion confidence is reported and computes no average. Negative controls, executed: restoring the confidence cell gives 1 failed / 6 passed; having regionEvidence return confidence gives 1/6 | DONE 2026-09-28 (frontend/src/components/LesionDashboard.haz005.test.ts) |
 | DICOM-SEG | UT-SEG-001..008 | pytest | Valid DICOM-SEG structure | DONE (test_dicom_seg.py) |
 | DICOM Utils | UT-DICOM-001..007 | pytest | File meta, patient info, image info, spatial, pixel data, save, extract metadata, DICOM-SEG creation | DONE (test_dicom_utils.py — 250 lines) |
 | NIfTI Utils | UT-NII-001 | pytest | Load/transpose round-trip correct | DONE (test_nifti_utils.py) |
@@ -90,7 +92,7 @@ Per IEC 62366-1:2015+A1:2020:
 Per MDCG 2020-1:
 - AI segmentation performance on reference dataset
 - Volumetry accuracy against manual measurement
-- MAGNIMS classification agreement with expert consensus
+- MAGNIMS classification agreement with expert consensus. This is required to re-assess HAZ-005. UT-CLS-002 and UI-RC010 only verify that no uncalibrated confidence is emitted or displayed. They do not measure region-assignment accuracy on any path, so the HAZ-005 residual risk remains UNDETERMINED until this study is done (added 2026-09-28).
 - Report quality assessment by clinical reviewers
 
 **Status**: TO DO — requires clinical study (see Strategic Roadmap Phase 4).

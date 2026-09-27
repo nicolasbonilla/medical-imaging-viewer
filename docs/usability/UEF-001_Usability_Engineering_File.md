@@ -1,6 +1,6 @@
 # MSTool-AI: Usability Engineering File
 
-**Document ID**: UEF-001 | **Version**: 1.0 | **Date**: April 12, 2026
+**Document ID**: UEF-001 | **Version**: 1.1 | **Date**: September 28, 2026
 **Standard**: IEC 62366-1:2015+A1:2020
 
 ---
@@ -8,6 +8,7 @@
 | Version | Date | Author | Approved By |
 |---------|------|--------|-------------|
 | 1.0 | 2026-04-12 | Development Team | — |
+| 1.1 | 2026-09-28 | Development Team | — |
 
 ---
 
@@ -222,6 +223,11 @@ confidence.
 **Severity**: Moderate
 **Mitigation**: Confidence score displayed per lesion; low-confidence lesions highlighted
 differently; user can delete false positives with single click.
+**Addendum 2026-09-28 (HAZ-005, RC-010 (amended))**: the "confidence score displayed per
+lesion" and "low-confidence lesions highlighted differently" measures are **NOT IMPLEMENTED**.
+The only per-lesion "confidence" the lesion table ever showed was the MAGNIMS
+region-classification value (see H-09), which was not a segmentation confidence and has been
+removed. These two items shall not be credited as mitigation for H-08.
 
 ### H-09: Incorrect MAGNIMS Region Assignment
 
@@ -230,6 +236,19 @@ differently; user can delete false positives with single click.
 **Severity**: Serious
 **Mitigation**: Classification confidence displayed; distance to anatomical boundary
 shown; user can override region assignment; two-tier classification with fallback.
+**Addendum 2026-09-28 (HAZ-005, REQ-SAFE-010 amended, RC-010 (amended))**: "Classification
+confidence displayed" is **NOT IMPLEMENTED — removed**. No classification path has a calibrated
+per-lesion probability; the value previously shown as a colour-coded percentage was a mapped
+distance (parcellation) or an in-zone fraction / fixed 0.50 fallback (MSMask). The lesion table
+now shows, instead: (a) the evidence of the path used — distances in mm, or a neutral
+"Lesion % in zone" column (e.g. "8% in PV", descriptive, not a probability); (b) an amber
+data-quality warning "No WM zone — DWM by default" when a lesion lies in no white-matter zone
+and Deep White Matter was assigned by default, not by the MAGNIMS rule; (c) the statement
+"Regions follow a deterministic MAGNIMS rule; no per-lesion confidence is reported." These are
+information-for-safety only; the accuracy of region assignment has not been measured against
+expert region labels and the HAZ-005 residual risk remains undetermined (see RMF-001).
+Verified by UI-RC010 (frontend/src/components/LesionDashboard.haz005.test.ts) and UT-CLS-002
+(backend/tests/unit/test_region_confidence_haz005.py).
 
 ### H-10: Longitudinal Mismatch — Wrong Timepoint Comparison
 
@@ -328,7 +347,7 @@ and correct usability issues before summative testing.
 
 - **Participants**: 5 users (3 neuroradiologists, 2 neurologists)
 - **Method**: Think-aloud protocol with functional prototype (real MRI data)
-- **Focus**: Segmentation editing tools, volumetry interpretation, MAGNIMS classification, report generation
+- **Focus**: Segmentation editing tools, volumetry interpretation, MAGNIMS classification (incl. the "Lesion % in zone" column and the amber "No WM zone — DWM by default" warning, added 2026-09-28), report generation
 - **Duration**: 90 minutes per participant
 - **Output**: Updated usability findings, hazard-related use scenario validation
 
@@ -366,7 +385,7 @@ be used safely and effectively by the intended users in the intended use environ
 | Scenario | Description | Hazard-Related Scenarios Tested |
 |---|---|---|
 | S1 | Routine MS follow-up with AI segmentation review | H-01, H-02, H-07, H-08 |
-| S2 | New diagnosis workup with DIS assessment | H-05, H-09 |
+| S2 | New diagnosis workup with DIS assessment; includes at least one lesion carrying the amber "No WM zone — DWM by default" warning, to check that users verify its location before relying on DIS, and checks that users do not read "Lesion % in zone" as a confidence or probability (added 2026-09-28) | H-05, H-09 |
 | S3 | Longitudinal comparison (2 timepoints) | H-10, H-12 |
 | S4 | Report generation and review | H-04, H-11 |
 | S5 | Error recovery (network interruption simulation) | H-14 |
@@ -390,7 +409,7 @@ A standardized post-session questionnaire shall include:
 2. Custom MSTool-AI satisfaction questions (15 items):
    - Segmentation overlay clarity
    - Volumetry display comprehension
-   - MAGNIMS classification understandability
+   - MAGNIMS classification understandability (incl. "Lesion % in zone" column and "No WM zone — DWM by default" warning)
    - Report quality and completeness
    - Disclaimer visibility and comprehension
    - Confidence in AI output
@@ -414,7 +433,7 @@ From published usability literature on medical imaging AI tools:
 |---|---|---|
 | Automation bias — over-trust in AI output | Goddard et al. 2012, Cabitza et al. 2017 | High — addressed by H-01, H-07 |
 | Alert fatigue with excessive warnings | Ancker et al. 2017 | Moderate — disclaimer design balances visibility and fatigue |
-| Difficulty interpreting probability/confidence | Reyna et al. 2009 | High — confidence indicators must be intuitive |
+| Difficulty interpreting probability/confidence | Reyna et al. 2009 | High — confidence indicators must be intuitive. MAGNIMS region classification reports no per-lesion confidence (2026-09-28, RC-010 (amended)); the "Lesion % in zone" evidence must not be read as one (H-09) |
 | Inconsistent overlay rendering across displays | AAPM TG-270 | Moderate — minimum display requirements specified |
 | Confusion between different overlay types | Defined et al. 2019 | High — addressed by H-06, H-15 |
 
@@ -442,6 +461,31 @@ From published usability literature on medical imaging AI tools:
 - Medium confidence (60-80%) shown with solid outline
 - High confidence (> 80%) shown with bold outline
 - Classification confidence badge in lesion table
+
+**Addendum 2026-09-28 (HAZ-005, RC-010 (amended))**: none of the items in this section is
+implemented for the lesion table. The outline-by-confidence items are **NOT IMPLEMENTED**. The
+"classification confidence badge in lesion table" (green/yellow/red percentage and an
+"Avg confidence") was implemented for MAGNIMS region classification and has been **removed**,
+because no classification path has a calibrated per-lesion probability. It is replaced by the
+UI elements in Section 10.3.1.
+
+### 10.3.1 MAGNIMS Region Evidence (added 2026-09-28)
+
+UI elements in the Lesion Dashboard (LesionDashboard.tsx, utils/regionEvidence.ts) to be
+evaluated in formative (Section 7.3) and summative (Section 8.4, S2) testing:
+
+- **"Lesion % in zone" column** — neutral grey (not colour-coded) evidence for the MSMask path, e.g.
+  "8% in PV": the fraction of all lesion voxels inside the assigned zone. Tooltip states it is
+  descriptive, not a probability. A low value is normal under the MAGNIMS contact rule.
+- **Amber "No WM zone — DWM by default" warning** — data-quality flag when no lesion voxel lies
+  in any white-matter zone; Deep White Matter was assigned by default, not by the MAGNIMS rule.
+  Tooltip tells the user to verify the location before using it for DIS.
+- **Distance columns (mm)** — parcellation / geometric evidence; "-" when a landmark is absent.
+- **Summary line** — "Regions follow a deterministic MAGNIMS rule; no per-lesion confidence is
+  reported."
+
+Evaluation questions: do users verify flagged lesions before accepting the DIS result; do users
+misread "Lesion % in zone" as a confidence or probability.
 
 ### 10.4 General Principles
 
