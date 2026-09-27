@@ -1,0 +1,259 @@
+{
+  "gamma": 0.2,
+  "delta": 0.1,
+  "K": 29,
+  "results": [
+    {
+      "regime": "mslesseg_like",
+      "icc": 0.0,
+      "worlds": 1500,
+      "n": 1160,
+      "layer1": {
+        "curve_fail": 0.0827,
+        "curve_fail_se": 0.0071,
+        "fdx": 0.0147,
+        "fdx_se": 0.0031,
+        "power": 0.9654
+      },
+      "layer2": {
+        "curve_fail": 0.0513,
+        "curve_fail_se": 0.0057,
+        "fdx": 0.0093,
+        "fdx_se": 0.0025,
+        "power": 0.9472,
+        "abstain": 0.0
+      }
+    },
+    {
+      "regime": "mslesseg_like",
+      "icc": 0.09,
+      "worlds": 1500,
+      "n": 1160,
+      "layer1": {
+        "curve_fail": 0.0967,
+        "curve_fail_se": 0.0076,
+        "fdx": 0.04,
+        "fdx_se": 0.0051,
+        "power": 0.935
+      },
+      "layer2": {
+        "curve_fail": 0.0487,
+        "curve_fail_se": 0.0056,
+        "fdx": 0.0213,
+        "fdx_se": 0.0037,
+        "power": 0.893,
+        "abstain": 0.0
+      }
+    },
+    {
+      "regime": "mslesseg_like",
+      "icc": 0.23,
+      "worlds": 1500,
+      "n": 1160,
+      "layer1": {
+        "curve_fail": 0.104,
+        "curve_fail_se": 0.0079,
+        "fdx": 0.0627,
+        "fdx_se": 0.0063,
+        "power": 0.8546
+      },
+      "layer2": {
+        "curve_fail": 0.054,
+        "curve_fail_se": 0.0058,
+        "fdx": 0.0333,
+        "fdx_se": 0.0046,
+        "power": 0.7525,
+        "abstain": 0.0
+      }
+    },
+    {
+      "regime": "mslesseg_like",
+      "icc": 0.5,
+      "worlds": 1500,
+      "n": 1160,
+      "layer1": {
+        "curve_fail": 0.1653,
+        "curve_fail_se": 0.0096,
+        "fdx": 0.1187,
+        "fdx_se": 0.0084,
+        "power": 0.6458
+      },
+      "layer2": {
+        "curve_fail": 0.0753,
+        "curve_fail_se": 0.0068,
+        "fdx": 0.0487,
+        "fdx_se": 0.0056,
+        "power": 0.4234,
+        "abstain": 0.0
+      }
+    },
+    {
+      "regime": "tight_few_fp",
+      "icc": 0.0,
+      "worlds": 1500,
+      "n": 1160,
+      "layer1": {
+        "curve_fail": 0.1147,
+        "curve_fail_se": 0.0082,
+        "fdx": 0.0647,
+        "fdx_se": 0.0064,
+        "power": 0.9976
+      },
+      "layer2": {
+        "curve_fail": 0.05,
+        "curve_fail_se": 0.0056,
+        "fdx": 0.0253,
+        "fdx_se": 0.0041,
+        "power": 0.8937,
+        "abstain": 0.0
+      }
+    },
+    {
+      "regime": "tight_few_fp",
+      "icc": 0.09,
+      "worlds": 1500,
+      "n": 1160,
+      "layer1": {
+        "curve_fail": 0.0873,
+        "curve_fail_se": 0.0073,
+        "fdx": 0.048,
+        "fdx_se": 0.0055,
+        "power": 0.9923
+      },
+      "layer2": {
+        "curve_fail": 0.0367,
+        "curve_fail_se": 0.0049,
+        "fdx": 0.022,
+        "fdx_se": 0.0038,
+        "power": 0.8862,
+        "abstain": 0.0
+      }
+    },
+    {
+      "regime": "tight_few_fp",
+      "icc": 0.23,
+      "worlds": 1500,
+      "n": 1160,
+      "layer1": {
+        "curve_fail": 0.0893,
+        "curve_fail_se": 0.0074,
+        "fdx": 0.0553,
+        "fdx_se": 0.0059,
+        "power": 0.9788
+      },
+      "layer2": {
+        "curve_fail": 0.0307,
+        "curve_fail_se": 0.0045,
+        "fdx": 0.018,
+        "fdx_se": 0.0034,
+        "power": 0.8408,
+        "abstain": 0.0
+      }
+    },
+    {
+      "regime": "tight_few_fp",
+      "icc": 0.5,
+      "worlds": 1500,
+      "n": 1160,
+      "layer1": {
+        "curve_fail": 0.1027,
+        "curve_fail_se": 0.0078,
+        "fdx": 0.064,
+        "fdx_se": 0.0063,
+        "power": 0.8648
+      },
+      "layer2": {
+        "curve_fail": 0.048,
+        "curve_fail_se": 0.0055,
+        "fdx": 0.028,
+        "fdx_se": 0.0043,
+        "power": 0.6729,
+        "abstain": 0.0
+      }
+    },
+    {
+      "regime": "openms_like",
+      "icc": 0.0,
+      "worlds": 1500,
+      "n": 210,
+      "layer1": {
+        "curve_fail": 0.0793,
+        "curve_fail_se": 0.007,
+        "fdx": 0.0393,
+        "fdx_se": 0.005,
+        "power": 0.9343
+      },
+      "layer2": {
+        "curve_fail": 0.0367,
+        "curve_fail_se": 0.0049,
+        "fdx": 0.0193,
+        "fdx_se": 0.0036,
+        "power": 0.8526,
+        "abstain": 0.0
+      }
+    },
+    {
+      "regime": "openms_like",
+      "icc": 0.09,
+      "worlds": 1500,
+      "n": 210,
+      "layer1": {
+        "curve_fail": 0.092,
+        "curve_fail_se": 0.0075,
+        "fdx": 0.0433,
+        "fdx_se": 0.0053,
+        "power": 0.904
+      },
+      "layer2": {
+        "curve_fail": 0.044,
+        "curve_fail_se": 0.0053,
+        "fdx": 0.0213,
+        "fdx_se": 0.0037,
+        "power": 0.7859,
+        "abstain": 0.0
+      }
+    },
+    {
+      "regime": "openms_like",
+      "icc": 0.23,
+      "worlds": 1500,
+      "n": 210,
+      "layer1": {
+        "curve_fail": 0.1113,
+        "curve_fail_se": 0.0081,
+        "fdx": 0.07,
+        "fdx_se": 0.0066,
+        "power": 0.8084
+      },
+      "layer2": {
+        "curve_fail": 0.05,
+        "curve_fail_se": 0.0056,
+        "fdx": 0.0293,
+        "fdx_se": 0.0044,
+        "power": 0.6287,
+        "abstain": 0.0
+      }
+    },
+    {
+      "regime": "openms_like",
+      "icc": 0.5,
+      "worlds": 1500,
+      "n": 210,
+      "layer1": {
+        "curve_fail": 0.1447,
+        "curve_fail_se": 0.0091,
+        "fdx": 0.106,
+        "fdx_se": 0.0079,
+        "power": 0.6234
+      },
+      "layer2": {
+        "curve_fail": 0.0713,
+        "curve_fail_se": 0.0066,
+        "fdx": 0.0467,
+        "fdx_se": 0.0054,
+        "power": 0.3666,
+        "abstain": 0.0
+      }
+    }
+  ]
+}

@@ -28,8 +28,7 @@ shift — a patient-calibrated null yields 90–203 false detections per 100 hea
 under the controls' own null — and **power collapses** under a segmenter change; (iv) false-candidate
 scores carry a significant **scan-level random effect** (ICC 0.08–0.09, p = 0.0002), violating the
 candidate-level exchangeability assumed by recent simultaneous FDP bounds for conformal p-values.
-[§5 result sentence: per-scan FDX procedure with exact Pólya-urn calibration and a scan-level
-conformal layer — achieved per-scan exceedance vs δ, and its power cost.] All selection runs at low
+We therefore calibrate per-scan false-discovery exceedance at the level of the scan (subject), not the candidate: an exact lattice-path envelope under the conformal rank law, repaired by split-conformal calibration on the simultaneous event. In a pre-registered evaluation it kept the per-scan guarantee on every cohort (curve violation 3.0–7.5 % at δ = 10 %) and yields **certified dissemination in space**: on healthy controls it certified DIS in 0/200 scans (95 % CI ≤ 1.8 %), whereas the raw segmentation met the brain DIS pattern in 40/200 and BH-selected candidates in 17/200. All selection runs at low
 lesion-level recall (≤ 0.30), which we report as the honest cost of guaranteed precision at current
 score quality.
 
@@ -265,15 +264,67 @@ are recorded verbatim in the evaluation script.
 
 ### 5.6 Results
 
-*[Inserted from `calm_fdx_realdata_record.json` and `synthetic_icc_record.json`.]*
+**Synthetic worlds** (`synthetic_icc_study.py`; 1500 worlds per cell; K = 29 labelled scans; γ = 0.2,
+δ = 0.1; pool of clustered scans with the same marginal score law as the test scan — only the scan
+random effect varies). Entries: probability that the simultaneous curve is violated (the event every
+certificate relies on), with power in brackets.
+
+| regime | ICC | Layer 1 (candidate-level) | Layer 2 (scan-level) |
+|---|---:|---:|---:|
+| MSLesSeg-like (n = 1160, m₀≈8, m₁≈19) | 0.00 | 0.083 (0.97) | 0.051 (0.95) |
+| | 0.09 | 0.097 (0.94) | 0.049 (0.89) |
+| | 0.23 | 0.104 (0.86) | 0.054 (0.75) |
+| | 0.50 | **0.165** (0.65) | 0.075 (0.42) |
+| few false candidates (m₀≈2, m₁≈6) | 0.00 | 0.115* (1.00) | 0.050 (0.89) |
+| | 0.50 | 0.103 (0.87) | 0.048 (0.67) |
+| openms-like (n = 210, m₀≈5, m₁≈10) | 0.00 | 0.079 (0.93) | 0.037 (0.85) |
+| | 0.23 | 0.111 (0.81) | 0.050 (0.63) |
+| | 0.50 | **0.145** (0.62) | 0.071 (0.37) |
+
+Layer 1 breaks as the scan random effect grows (bold: exceeds δ by > 2 SE); Layer 2 holds in every cell
+(0.031–0.075) at a power cost that grows with the ICC. *The 0.115 under A1 is Monte Carlo noise: a
+20 000-world rerun of that cell gives 0.1019 ± 0.0021 against the exact prediction 0.0997, matching the
+exact crossing probability for every m₀ and never violating the proof invariant — in this regime the
+bound is attained, as theory predicts. With a strong synthetic signal (μ = 3–4) power is high; on real
+data it is not (below).
+
+**Real data** (pre-registered, commits c47c88d/3e27ee9; results 22d455b). Candidate-level
+exchangeability is rejected at both patient sites (Kruskal–Wallis of false scores across scans,
+permutation p = 0.0005 at openms and MSLesSeg). Primary template (HC), Layer 2 on the simultaneous
+event, 20 random subject splits per site (one scan per subject; γ = 0.2, δ = 0.1):
+
+| cohort (pool → labelled K / test) | curve violated | scans FDP > γ | false certified DIS | certified DIS on true-DIS scans | power | abstention |
+|---|---:|---:|---:|---:|---:|---:|
+| openms (MSLesSeg pool → 20 / 10) | 15/200 (7.5 %) | 0/200 | **0/200** | 13/200 | 0.011 | 81.5 % |
+| MSLesSeg (35-subject pool → 29 / 11) | 9/220 (4.1 %) | 1/220 | **0/220** | 11/195 | 0.022 | 91.8 % |
+| MSLesSeg, PAC (device) quantile | 3/220 | 0/220 | 0/220 | 1/195 | 0.003 | 99.1 % |
+| healthy controls (patient pool → 20 / 10) | 6/200 (3.0 %) | 0/200 | **0/200 [0, 1.8 %]** | — | — | 100 % |
+
+On the same healthy-control test scans, reading DIS off the raw segmentation met the brain pattern
+(≥ 1 candidate in ≥ 2 of PV/JC/IT) in **40/200** scans and off the BH-selected candidates in **17/200**;
+per-scan BH at γ exceeded FDP > γ on 151/200. Layer 1 with a patient-calibrated null on controls — the
+population-shift case — exceeded FDP > γ on 18/30 scans and wrongly certified an area on 16/30; Layer 2
+repairs it. The secondary (hybrid) template is also valid (Layer-2 curve violation ≤ 7.5 %) but less
+powerful.
+
+**The honest cost.** Certified DIS was reached in only ~6 % of patient scans that truly meet the
+pattern, and lesion-level power is 0.01–0.02. The guarantee is bought with abstention: at the score
+quality of the FLAMeS mean probability (candidate AUC ≈ 0.73; the top-ranked candidate is false in 16.5 %
+of MSLesSeg scans) no valid per-scan rule can select much. The envelope is not the bottleneck — the
+score is. With a strong score (synthetic μ = 3) the same Layer-2 procedure keeps 0.37–0.95 power.
 
 ## 6. Discussion
 
 ### 6.1 What a deployer can rely on
-[To finalize after §5.] Within a site and a segmenter, marginal lesion-FDR control is reliable and
-transports to a similar site; per-scan control requires [§5]. Calibration must be redone when the
-population (e.g. screening of healthy subjects) or the segmenter changes; in the latter case the
-failure mode is silence (no selections), not false reassurance.
+Within a site and a segmenter, marginal lesion-FDR control is reliable and transports to a similar
+site. Per-scan control — what a clinician reading one scan needs — requires calibrating at the level of
+the scan: candidate-level guarantees assume away a scan random effect that is present in MS MRI. With
+scan-level calibration, the certificate a deployer can rely on is one-sided and strong: a *certified*
+DIS or region count is wrong with probability ≤ δ, including on healthy subjects, where uncertified
+readings of the same segmentation call DIS in one scan in five. It is not a detector: most scans receive
+no certificate. Calibration must be redone with labelled subjects from the target population when the
+population (e.g. screening of healthy subjects) or the segmenter changes; with the segmenter the failure
+mode is silence (no selections), not false reassurance.
 
 ### 6.2 The cost: recall
 At the score quality of current models (candidate-level AUC ≈ 0.75–0.82), guaranteed precision is
