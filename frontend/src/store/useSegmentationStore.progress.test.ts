@@ -18,7 +18,7 @@ const seg = (labels = DEFAULT_LABEL_PRESETS.default): Segmentation => ({
   series_id: '',
   file_id: 'f1',
   name: 'S',
-  segmentation_type: 'manual',
+  segmentation_type: 'labelmap',
   status: 'in_progress',
   progress_percentage: 0,
   slices_annotated: 0,
