@@ -1,0 +1,40 @@
+A1 (candidate-level exchangeability) exact permutation test: {'openms': {'H': 72.99, 'perm_p': 0.0004997501249375312, 'scans': 29}, 'mslesseg': {'H': 281.44, 'perm_p': 0.0004997501249375312, 'scans': 114}}
+  (Layer 1 = EMPIRICAL only: A1 rejected; Layer 2 = the claimed guarantee)
+===== template=hc [PRIMARY] =====
+  L1 LOSO openms                     N= 30 | FDX  0/30 [0.0, 0.116] power 0.0227 abstain 0.733 curve-fail 2/30 | BH@g 2/30 pw 0.0538 | BH@gd 0/30 pw 0.0
+                                     DIS: certified 3/30 GT-DIS scans | FALSE certified 0/30 [0.0, 0.116] (area-wrong 0) | raw-seg false DIS 0/30 | BH false DIS 0/30
+  L1 LOSO mslesseg                   N=115 | FDX  4/115 [0.01, 0.087] power 0.0445 abstain 0.817 curve-fail 7/115 | BH@g 17/115 pw 0.1402 | BH@gd 1/115 pw 0.0012
+                                     DIS: certified 12/109 GT-DIS scans | FALSE certified 0/115 [0.0, 0.032] (area-wrong 0) | raw-seg false DIS 3/115 | BH false DIS 1/115
+  L1 controls, own LOSO null         N= 30 | FDX  3/30 [0.021, 0.265] power None abstain 0.9 curve-fail 3/30 | BH@g 6/30 pw None | BH@gd 0/30 pw None
+                                     DIS: certified 0/0 GT-DIS scans | FALSE certified 0/30 [0.0, 0.116] (area-wrong 2) | raw-seg false DIS 5/30 | BH false DIS 0/30
+  L1 controls, PATIENT null          N= 30 | FDX 18/30 [0.406, 0.773] power None abstain 0.4 curve-fail 18/30 | BH@g 22/30 pw None | BH@gd 8/30 pw None
+                                     DIS: certified 0/0 GT-DIS scans | FALSE certified 1/30 [0.001, 0.172] (area-wrong 16) | raw-seg false DIS 5/30 | BH false DIS 2/30
+  L2 simultaneous openms (20 splits) N=200 | FDX  0/200 [0.0, 0.018] power 0.0108 abstain 0.815 curve-fail 15/200 | BH@g 9/200 pw 0.0346 | BH@gd 0/200 pw 0.0022
+                                     DIS: certified 13/200 GT-DIS scans | FALSE certified 0/200 [0.0, 0.018] (area-wrong 0) | raw-seg false DIS 0/200 | BH false DIS 0/200
+  L2 simultaneous mslesseg (20 splits) N=220 | FDX  1/220 [0.0, 0.025] power 0.0224 abstain 0.918 curve-fail 9/220 | BH@g 42/220 pw 0.1446 | BH@gd 2/220 pw 0.0027
+                                     DIS: certified 11/195 GT-DIS scans | FALSE certified 0/220 [0.0, 0.017] (area-wrong 0) | raw-seg false DIS 8/220 | BH false DIS 1/220
+  L2 PAC (device) mslesseg           N=220 | FDX  0/220 [0.0, 0.017] power 0.0027 abstain 0.991 curve-fail 3/220 | BH@g 42/220 pw 0.1446 | BH@gd 2/220 pw 0.0027
+                                     DIS: certified 1/195 GT-DIS scans | FALSE certified 0/220 [0.0, 0.017] (area-wrong 0) | raw-seg false DIS 8/220 | BH false DIS 1/220
+  L2 simultaneous sibbms (20 splits) N=200 | FDX  0/200 [0.0, 0.018] power None abstain 1.0 curve-fail 6/200 | BH@g 151/200 pw None | BH@gd 55/200 pw None
+                                     DIS: certified 0/0 GT-DIS scans | FALSE certified 0/200 [0.0, 0.018] (area-wrong 0) | raw-seg false DIS 40/200 | BH false DIS 17/200
+  (Layer 1 = EMPIRICAL only: A1 rejected; Layer 2 = the claimed guarantee)
+===== template=hybrid [SECONDARY(exploratory)] =====
+  L1 LOSO openms                     N= 30 | FDX  1/30 [0.001, 0.172] power 0.009 abstain 0.733 curve-fail 2/30 | BH@g 2/30 pw 0.0538 | BH@gd 0/30 pw 0.0
+                                     DIS: certified 1/30 GT-DIS scans | FALSE certified 0/30 [0.0, 0.116] (area-wrong 0) | raw-seg false DIS 0/30 | BH false DIS 0/30
+  L1 LOSO mslesseg                   N=115 | FDX  3/115 [0.005, 0.074] power 0.0175 abstain 0.852 curve-fail 4/115 | BH@g 17/115 pw 0.1402 | BH@gd 1/115 pw 0.0012
+                                     DIS: certified 3/109 GT-DIS scans | FALSE certified 0/115 [0.0, 0.032] (area-wrong 0) | raw-seg false DIS 3/115 | BH false DIS 1/115
+  L1 controls, own LOSO null         N= 30 | FDX  3/30 [0.021, 0.265] power None abstain 0.9 curve-fail 3/30 | BH@g 6/30 pw None | BH@gd 0/30 pw None
+                                     DIS: certified 0/0 GT-DIS scans | FALSE certified 0/30 [0.0, 0.116] (area-wrong 2) | raw-seg false DIS 5/30 | BH false DIS 0/30
+  L1 controls, PATIENT null          N= 30 | FDX 17/30 [0.374, 0.745] power None abstain 0.433 curve-fail 17/30 | BH@g 22/30 pw None | BH@gd 8/30 pw None
+                                     DIS: certified 0/0 GT-DIS scans | FALSE certified 0/30 [0.0, 0.116] (area-wrong 15) | raw-seg false DIS 5/30 | BH false DIS 2/30
+  L2 simultaneous openms (20 splits) N=200 | FDX 15/200 [0.043, 0.121] power 0.0039 abstain 0.815 curve-fail 15/200 | BH@g 9/200 pw 0.0346 | BH@gd 0/200 pw 0.0022
+                                     DIS: certified 3/200 GT-DIS scans | FALSE certified 0/200 [0.0, 0.018] (area-wrong 0) | raw-seg false DIS 0/200 | BH false DIS 0/200
+  L2 simultaneous mslesseg (20 splits) N=220 | FDX  7/220 [0.013, 0.064] power 0.018 abstain 0.827 curve-fail 8/220 | BH@g 42/220 pw 0.1446 | BH@gd 2/220 pw 0.0027
+                                     DIS: certified 6/195 GT-DIS scans | FALSE certified 0/220 [0.0, 0.017] (area-wrong 0) | raw-seg false DIS 8/220 | BH false DIS 1/220
+  L2 PAC (device) mslesseg           N=220 | FDX  2/220 [0.001, 0.032] power 0.0042 abstain 0.964 curve-fail 2/220 | BH@g 42/220 pw 0.1446 | BH@gd 2/220 pw 0.0027
+                                     DIS: certified 1/195 GT-DIS scans | FALSE certified 0/220 [0.0, 0.017] (area-wrong 0) | raw-seg false DIS 8/220 | BH false DIS 1/220
+  L2 simultaneous sibbms (20 splits) N=200 | FDX  0/200 [0.0, 0.018] power None abstain 1.0 curve-fail 12/200 | BH@g 151/200 pw None | BH@gd 55/200 pw None
+                                     DIS: certified 0/0 GT-DIS scans | FALSE certified 0/200 [0.0, 0.018] (area-wrong 0) | raw-seg false DIS 40/200 | BH false DIS 17/200
+Wrote C:\Users\Nicolas\medical-imaging-viewer\scripts\calm-ms\..\..\backend\app\services\assets\calm_fdx_realdata_record.json
+
+[exited with code 0]
