@@ -146,3 +146,50 @@ def test_scan_level_quantile():
     assert cf.scan_level_theta(list(range(9)), 0.1) == 8          # K=9 -> max
     assert cf.scan_level_theta(list(range(8)), 0.1) is None       # K<9 -> abstain
     assert cf.scan_level_theta([0] * 29, 0.1) == 0
+
+
+def test_bstar_is_monotone_in_inflation():
+    fam = cf.EnvelopeFamily(0.1, "hc")
+    rng = np.random.default_rng(21)
+    for _ in range(40):
+        k, _ = _sim_scan(rng, 250, int(rng.integers(1, 25)), int(rng.integers(0, 25)), 3.0)
+        prev = None
+        for c in range(0, 8):
+            B = cf.simultaneous_bound(k, 250, fam, inflate=c)[0]
+            if prev is not None:
+                assert np.all(B >= prev)
+            prev = B
+
+
+def _clustered_scan(rng, n_fp, n_tp, tau, mu):
+    u = rng.normal(0, tau)                       # scan random intercept (violates A1)
+    s = np.r_[rng.normal(u, 1, n_fp), rng.normal(u + mu, 1, n_tp)]
+    return s, np.r_[np.ones(n_fp, bool), np.zeros(n_tp, bool)]
+
+
+def test_layer2_simultaneous_restores_curve_validity_under_scan_random_effect():
+    """Worlds with ICC 0.5 (tau=1): the pool is clustered, K=29 labelled scans + 1 test scan,
+    all exchangeable AT THE SCAN LEVEL only. Layer 2 calibrated on the simultaneous event must
+    keep P(exists k: V_k > B*_k(theta_hat)) <= delta on the test scan."""
+    rng = np.random.default_rng(2026)
+    fam = cf.EnvelopeFamily(0.1, "hc")
+    tau, mu, W, K = 1.0, 3.0, 400, 29
+    fails = abstain = 0
+    for _ in range(W):
+        pool = np.concatenate([_clustered_scan(rng, 10, 0, tau, mu)[0] for _ in range(30)])  # n=300
+        safes = []
+        scans = [_clustered_scan(rng, int(rng.integers(2, 9)), int(rng.integers(2, 12)), tau, mu)
+                 for _ in range(K + 1)]
+        for s, isf in scans[:K]:
+            k, n = cf.conformal_ranks(s, pool)
+            safes.append(cf.scan_safe_inflation_simultaneous(k, n, isf, fam))
+        theta = cf.scan_level_theta(safes, 0.1)
+        s, isf = scans[K]
+        k, n = cf.conformal_ranks(s, pool)
+        if theta is None:
+            abstain += 1
+            continue
+        B = cf.simultaneous_bound(k, n, fam, inflate=theta)[0]
+        V = np.cumsum(np.bincount(k[isf], minlength=n + 2))[1:n + 2]
+        fails += bool(np.any(V > B))
+    assert fails / W <= 0.1 + 3 * math.sqrt(0.09 / W), (fails, abstain)

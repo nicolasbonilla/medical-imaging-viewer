@@ -12,6 +12,21 @@ PRE-REGISTERED (fixed before this script was first run; do not tune on its outpu
   openms (30 subjects) cannot host pool + K>=9 + test at a useful n -> Layer 1 only, and its
   numbers are EMPIRICAL (the Polya gate fails there).
 
+AMENDMENT v2 (2026-09-27, made BEFORE any Layer-2 real-data output was observed; the v1 run was
+stopped unread). Reason: the adversarial validity review showed (a) A1 (candidate-level
+exchangeability) is rejected at every site by exact permutation tests, so Layer 1 is reported as
+EMPIRICAL only; (b) calibrating Layer 2 on the selected set's FDP covers only that selection, NOT
+the simultaneous curve or the region certificates -> Layer 2 is now calibrated on the
+SIMULTANEOUS event (V_k <= B*_k for all k), which covers selection + certified DIS; (c) the
+Layer-2 pool need not come from the target site (validity needs only the K labelled and the test
+subjects to be exchangeable GIVEN the pool), which makes Layer 2 feasible everywhere:
+    openms   : pool = all MSLesSeg false scores;                  K=20 / test=10 openms subjects
+    mslesseg : pool = 35 random MSLesSeg subjects;                K=29 / test=11 subjects
+    controls : pool = all patient false scores (openms+MSLesSeg); K=20 / test=10 controls
+  one random scan per subject in K and test; 20 random splits per site (seed 20260927 + site).
+  Layer 2 is the ONLY guarantee claimed on real data. Also added: exact permutation test of A1
+  (Kruskal-Wallis of false scores across scans, counts fixed, 2000 permutations).
+
 Reports per site: scans with FDP > gamma (Clopper-Pearson 95% CI), power (selection recall),
 abstention rate; baselines per-scan BH at gamma (marginal FDR) and at gamma*delta (Markov-
 valid FDX); DIS: certified-DIS rate on GT-DIS scans, FALSE certified DIS (a certified area with
@@ -96,7 +111,8 @@ def eval_scan(args):
     if m == 0:
         out.update(sel=0, fp=0, fdp=0.0, tp=0, dis_cert=False, dis_cert_false=False, cert_area_wrong=False,
                    dis_raw=False, dis_raw_false=False, dis_bh=False, dis_bh_false=False,
-                   bh_sel=0, bh_fp=0, bhm_sel=0, bhm_fp=0, lb={a: 0 for a in AREAS}, m0_hat=0)
+                   bh_sel=0, bh_fp=0, bhm_sel=0, bhm_fp=0, lb={a: 0 for a in AREAS}, m0_hat=0,
+                   curve_fail=False)
         return out
     k, n = cf.conformal_ranks(c["scores"], calib)
     sel, info = cf.select_fdx(k, n, GAMMA, fam, inflate=inflate)
@@ -107,6 +123,8 @@ def eval_scan(args):
     bhm = _bh(k, n, GAMMA * DELTA)
     raw_areas = [a for a in AREAS if np.any(c["region"] == a)]
     bh_areas = [a for a in AREAS if np.any(c["region"][bh] == a)]
+    V = np.cumsum(np.bincount(k[isf], minlength=n + 2))[1:n + 2]
+    out["curve_fail"] = bool(np.any(V > Bstar))
     ns = int(sel.sum()); nf = int((sel & isf).sum())
     out.update(sel=ns, fp=nf, fdp=(nf / ns) if ns else 0.0, tp=int((sel & ~isf).sum()),
                m0_hat=int(info["m0_hat"]), lb={int(a): int(v) for a, v in lb.items()},
@@ -134,6 +152,8 @@ def summarize(rows, label):
                       "ci95": _clopper(ex, N) if N else None,
                       "power": round(pw, 4) if pw is not None else None,
                       "abstain_rate": round(sum(r["sel"] == 0 for r in rows) / N, 3) if N else None},
+         "curve_fail": {"scans": sum(r["curve_fail"] for r in rows),
+                        "ci95": _clopper(sum(r["curve_fail"] for r in rows), N) if N else None},
          "bh_gamma": {"scans_fdp_gt_gamma": bh_ex, "rate": round(bh_ex / N, 3) if N else None,
                       "power": round(bh_pw, 4) if bh_pw is not None else None},
          "bh_gamma_delta": {"scans_fdp_gt_gamma": bhm_ex, "rate": round(bhm_ex / N, 3) if N else None,
@@ -150,7 +170,7 @@ def summarize(rows, label):
                  "bh_dis_false_rate": round(sum(r["dis_bh_false"] for r in rows) / N, 3) if N else None}}
     d = s["dis"]; f = s["calm_fdx"]
     print(f"  {label:34s} N={N:3d} | FDX {f['scans_fdp_gt_gamma']:2d}/{N} {f['ci95']} power {f['power']}"
-          f" abstain {f['abstain_rate']} | BH@g {s['bh_gamma']['scans_fdp_gt_gamma']}/{N} pw {s['bh_gamma']['power']}"
+          f" abstain {f['abstain_rate']} curve-fail {s['curve_fail']['scans']}/{N} | BH@g {s['bh_gamma']['scans_fdp_gt_gamma']}/{N} pw {s['bh_gamma']['power']}"
           f" | BH@gd {s['bh_gamma_delta']['scans_fdp_gt_gamma']}/{N} pw {s['bh_gamma_delta']['power']}")
     print(f"  {'':34s} DIS: certified {d['certified_on_gt_dis']}/{d['gt_dis_scans']} GT-DIS scans | "
           f"FALSE certified {d['certified_false']}/{N} {d['certified_false_ci95']} (area-wrong {d['certified_area_wrong']}) | "
@@ -169,32 +189,65 @@ def loso_jobs(cases, site, template, calib_from=None):
     return jobs
 
 
-def layer2_mslesseg(cases, template, pool):
-    rng = np.random.RandomState(SEED)
-    ms = [c for c in cases if c["site"] == "mslesseg"]
-    subj = sorted({c["subject"] for c in ms})
+def layer2(cases, site, template, pool, pool_from=None, n_pool_subj=0, K=20, T=10, splits=20):
+    """Layer 2 (scan-level, SIMULTANEOUS event). Subjects of `site` are split into K labelled and
+    T test (one random scan each). The pool is either the false scores of `pool_from` sites
+    (another source) or, if pool_from is None, of `n_pool_subj` random subjects of the same site."""
+    rng = np.random.RandomState(SEED + {"openms": 1, "mslesseg": 2, "sibbms": 3}[site])
+    tgt = [c for c in cases if c["site"] == site]
+    subj = sorted({c["subject"] for c in tgt})
+    ext_pool = (np.concatenate([c["scores"][_isf(c)] for c in cases if c["site"] in pool_from])
+                if pool_from else None)
     per_split, allrows = [], []
-    for split in range(20):
-        perm = rng.permutation(subj)
-        P, Ks, T = set(perm[:35]), list(perm[35:64]), list(perm[64:])
-        one = {s: [c for c in ms if c["subject"] == s] for s in Ks + T}
-        pick = {s: one[s][rng.randint(len(one[s]))] for s in Ks + T}
-        calib = np.concatenate([c["scores"][_isf(c)] for c in ms if c["subject"] in P])
+    for _ in range(splits):
+        perm = list(rng.permutation(subj))
+        P = set(perm[:n_pool_subj]); rest = perm[n_pool_subj:]
+        Ks, Ts = rest[:K], rest[K:K + T]
+        pick = {}
+        for sj in Ks + Ts:
+            cs = [c for c in tgt if c["subject"] == sj]
+            pick[sj] = cs[rng.randint(len(cs))]
+        calib = ext_pool if ext_pool is not None else np.concatenate(
+            [c["scores"][_isf(c)] for c in tgt if c["subject"] in P])
         fam = cf.EnvelopeFamily(DELTA, template)
         safe = []
-        for s in Ks:
-            c = pick[s]
+        for sj in Ks:
+            c = pick[sj]
             if c["scores"].size == 0:
-                safe.append(0); continue
+                safe.append(0)
+                continue
             k, n = cf.conformal_ranks(c["scores"], calib)
-            safe.append(cf.scan_safe_inflation(k, n, _isf(c), GAMMA, fam))
+            safe.append(cf.scan_safe_inflation_simultaneous(k, n, _isf(c), fam))
         theta = cf.scan_level_theta(safe, DELTA)
         infl = 10 ** 6 if theta is None else theta
-        rows = pool.map(eval_scan, [(pick[s], calib, template, infl) for s in T])
+        rows = pool.map(eval_scan, [(pick[sj], calib, template, infl) for sj in Ts])
         allrows += rows
         per_split.append({"theta_hat": theta, "n_pool": int(calib.size),
-                          "test_exceed": int(sum(r["sel"] > 0 and r["fdp"] > GAMMA for r in rows))})
+                          "test_curve_fail": int(sum(r["curve_fail"] for r in rows)),
+                          "test_fdx": int(sum(r["sel"] > 0 and r["fdp"] > GAMMA for r in rows))})
     return allrows, per_split
+
+
+def a1_permutation_test(cases, site, perms=2000):
+    """Exact test of candidate-level exchangeability: Kruskal-Wallis H of false scores across
+    scans vs its distribution when false scores are permuted across scans (counts fixed)."""
+    from scipy.stats import kruskal
+    groups = [c["scores"][_isf(c)] for c in cases if c["site"] == site]
+    groups = [g for g in groups if g.size >= 1]
+    sizes = [g.size for g in groups]
+    allv = np.concatenate(groups)
+    obs = kruskal(*groups).statistic
+    rng = np.random.RandomState(SEED)
+    ge = 0
+    for _ in range(perms):
+        p = rng.permutation(allv)
+        i = 0
+        gs = []
+        for z in sizes:
+            gs.append(p[i:i + z])
+            i += z
+        ge += kruskal(*gs).statistic >= obs
+    return {"H": round(float(obs), 2), "perm_p": (ge + 1) / (perms + 1), "scans": len(groups)}
 
 
 def main():
@@ -204,9 +257,12 @@ def main():
                                "secondary_template": "hybrid (exploratory)", "labels": "one-to-one lenient",
                                "dis_areas": "PV,JC,IT (>=2)", "layer2": "mslesseg 20 splits 35/29/11"},
            "results": {}}
+    rec["a1_permutation_test"] = {site: a1_permutation_test(cases, site) for site in ("openms", "mslesseg")}
+    print("A1 (candidate-level exchangeability) exact permutation test:", rec["a1_permutation_test"])
     with Pool(max(1, (os.cpu_count() or 2) - 2)) as pool:
         for template in ("hc", "hybrid"):
             tag = "PRIMARY" if template == "hc" else "SECONDARY(exploratory)"
+            print("  (Layer 1 = EMPIRICAL only: A1 rejected; Layer 2 = the claimed guarantee)")
             print(f"\n===== template={template} [{tag}] =====")
             R = rec["results"].setdefault(template, {})
             for site in ("openms", "mslesseg"):
@@ -217,9 +273,13 @@ def main():
             R["layer1_loso|sibbms(own null)"] = summarize(rows, "L1 controls, own LOSO null")
             rows = pool.map(eval_scan, loso_jobs(cases, "sibbms", template, calib_from=["openms", "mslesseg"]))
             R["layer1|sibbms(patient null)"] = summarize(rows, "L1 controls, PATIENT null")
-            rows, splits = layer2_mslesseg(cases, template, pool)
-            R["layer2|mslesseg"] = summarize(rows, "L2 scan-level mslesseg (20 splits)")
-            R["layer2|mslesseg"]["splits"] = splits
+            for site, kw in [("openms", dict(pool_from=["mslesseg"], K=20, T=10)),
+                             ("mslesseg", dict(n_pool_subj=35, K=29, T=11)),
+                             ("sibbms", dict(pool_from=["openms", "mslesseg"], K=20, T=10))]:
+                rows, splits = layer2(cases, site, template, pool, **kw)
+                key = f"layer2_simultaneous|{site}"
+                R[key] = summarize(rows, f"L2 simultaneous {site} (20 splits)")
+                R[key]["splits"] = splits
     with open(OUT, "w", encoding="utf-8") as fh:
         json.dump(rec, fh, indent=2)
     print(f"\nWrote {OUT}")

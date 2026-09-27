@@ -234,9 +234,40 @@ def certify_dis(regions, k, Bstar, areas=(1, 2, 3), min_areas=2):
 
 
 # ------------------------------------------------------------------ Layer 2: scan-level repair
+def scan_safe_inflation_simultaneous(k, n, is_false, fam, max_inflate=400):
+    """Smallest inflation c >= 0 such that the scan's TRUE null counts satisfy V_k <= B*_k(c)
+    for ALL k (the simultaneous event), hence for every c' >= c (B* is non-decreasing in c:
+    G+c grows -> m0_hat grows -> B grows -> B* grows). Calibrating Layer 2 on THIS statistic
+    covers the selection, any post-hoc threshold AND every interpolation bound (certified region
+    counts / certified DIS) under scan-level exchangeability — calibrating on the selected set's
+    FDP alone would cover only that one selection. Returns max_inflate+1 if never satisfied."""
+    k = np.asarray(k, np.int64)
+    is_false = np.asarray(is_false, bool)
+    if k.size == 0 or not is_false.any():
+        return 0
+    V = np.cumsum(np.bincount(k[is_false], minlength=n + 2))[1:n + 2]
+
+    def ok(c):
+        return bool(np.all(V <= simultaneous_bound(k, n, fam, inflate=c)[0]))
+
+    if ok(0):
+        return 0
+    if not ok(max_inflate):
+        return max_inflate + 1
+    lo, hi = 0, max_inflate                      # ok(lo) False, ok(hi) True
+    while hi - lo > 1:
+        mid = (lo + hi) // 2
+        if ok(mid):
+            hi = mid
+        else:
+            lo = mid
+    return hi
+
+
 def scan_safe_inflation(k, n, is_false, gamma, fam, max_inflate=200):
-    """Smallest inflation c >= 0 such that the scan's FDP <= gamma for EVERY c' >= c
-    (monotone statistic over the nested family). Needs the scan's ground truth."""
+    """SELECTION-ONLY variant (kept for comparison): smallest c such that the selected set's FDP
+    <= gamma for every c' >= c. Covers ONLY that selection — not the FDP curve, post-hoc
+    thresholds or region certificates. Prefer scan_safe_inflation_simultaneous."""
     is_false = np.asarray(is_false, bool)
     last_bad = -1
     for c in range(max_inflate, -1, -1):
