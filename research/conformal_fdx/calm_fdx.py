@@ -279,6 +279,21 @@ def scan_safe_inflation(k, n, is_false, gamma, fam, max_inflate=200):
     return last_bad + 1
 
 
+def scan_level_theta_pac(safe_values, delta, delta_L=0.05):
+    """Training-conditional (PAC) quantile for DEVICE claims (one fixed labelled set is shipped):
+    with probability >= 1 - delta_L over the labelled set, P(test curve violated | set) <= delta
+    (Vovk 2012 training-conditional split conformal). theta = the (K - j*)-th smallest safe value,
+    j* = max{j >= 0 : BinomCDF(j; K, delta) <= delta_L}; None if no j qualifies (K too small —
+    e.g. K=20 at delta=0.1, delta_L=0.05; K=29 gives theta = max)."""
+    from scipy.stats import binom
+    v = np.sort(np.asarray(safe_values, int))
+    K = v.size
+    js = [j for j in range(K) if binom.cdf(j, K, delta) <= delta_L]
+    if not js:
+        return None
+    return int(v[K - max(js) - 1])
+
+
 def scan_level_theta(safe_values, delta):
     """Split-conformal quantile over K exchangeable labelled scans: the ceil((K+1)(1-delta))-th
     smallest safe inflation, or None (= abstain on every test scan) if that index exceeds K."""

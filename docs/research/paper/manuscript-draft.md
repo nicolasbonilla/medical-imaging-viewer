@@ -191,15 +191,81 @@ built on it, is exact.
 
 ## 5. Per-scan false-discovery exceedance control under scan clustering
 
-*TODO — completed from the per-scan FDX study (theory workflow → implementation → adversarial Monte
-Carlo attack → real-data evaluation):*
-- *5.1 Layer 1: exact rank-based envelope — conformal ranks, universal Pólya-urn null law, exact DP
-  crossing probability (no Monte Carlo error), template, m₀ handling, selection rule; cite
-  Song–Jin–Candès 2026 and Gazin–Blanchard–Roquain 2024 for the construction.*
-- *5.2 Layer 2: scan-level conformal repair — exchangeable unit = subject/scan; guarantee
-  P(FDP_scan > γ) ≤ δ under scan-level exchangeability only.*
-- *5.3 Synthetic validation (incl. scan random effect τ ∈ {0, 0.3, 0.6}; adversarial configurations).*
-- *5.4 Real data: achieved per-scan exceedance (Clopper–Pearson CI), abstention rate, recall vs BH.*
+A radiologist reads one scan. The target is therefore false-discovery *exceedance* control per scan,
+P(FDP_scan > γ) ≤ δ, and — since clinical decisions are made per anatomical area — simultaneous
+lower bounds on the number of true lesions in any region, with **certified dissemination in space**
+as the clinically meaningful consequence.
+
+### 5.1 Layer 1: an exact envelope under the conformal rank law
+
+For a scan with m candidates, write k_j = (n+1)p_j ∈ {1,…,n+1} for the conformal ranks and let
+V_k (R_k) be the number of false (all) candidates with rank ≤ k. If the calibration false scores
+and the scan's m₀ false scores are jointly exchangeable (assumption A1), (V_1,…,V_{n+1}) follows a
+universal law P_{n,m₀}: all C(n+m₀, m₀) interleavings of calibration and false test scores are
+equally likely [Gazin, Blanchard & Roquain 2024]; the true candidates never enter a false
+candidate's p-value. We fix a non-decreasing integer envelope G^{(r)} per candidate null count r —
+a truncated higher-criticism shape G_k = min{r, max_{l≤k} ⌊r t_l + λ √(r t_l(1−t_l)(1+r/n))⌋} on
+t_k = k/(n+1) ≤ 0.5 (pre-registered on synthetic data only; a Simes-type template and an
+HC∧Simes hybrid are reported as secondary) — and choose λ as the smallest value whose **exact**
+crossing probability P_{n,r}(∃k: V_k > G_k) is ≤ δ. The crossing probability is computed exactly by
+a dynamic program over the anti-diagonals of the lattice path (state = calibration and test points
+consumed; a state is killed when the tests seen before the (i+1)-th calibration point exceed
+G_{i+1}); it matches brute-force enumeration of all interleavings to 10⁻¹² and carries no Monte
+Carlo error. Unknown m₀ is handled by the completion coupling (adding null test points can only
+increase V) and an m₀-adaptive closure over a geometric grid of r, and the bound is self-refined
+[Song, Jin & Candès 2026; Blanchard, Neuvial & Roquain 2020]. On the single event
+E = {V_k ≤ G^{(r*)}_k ∀k} (probability ≥ 1−δ) this yields B*_k ≥ V_k for all k at once, so the
+selection "largest k with B*_k ≤ γR_k" has FDP ≤ γ, and — by interpolation — for **any** subset S
+of candidates, #false(S) ≤ min_k(|S ∩ {rank > k}| + B*_k).
+
+A closed-form alternative is not available: the Katsevich–Ramdas constant, derived under
+independence, crosses its envelope with probability 0.118–0.136 > δ = 0.1 under the conformal
+dependence (exact computation; a regression test pins this).
+
+### 5.2 Layer 1 is not valid on MS data
+
+A1 is a statement about candidates, and it is false for MS MRI: false-candidate scores share a
+scan-level component (ICC 0.08–0.09, §4.5; exact permutation tests of cross-scan exchangeability
+reject at every site). In the tight regime (few false candidates, strong signal) Layer 1 has no slack,
+and a scan random effect of the measured size pushes realized FDX above δ [§5.4, synthetic study].
+We therefore report Layer 1 on real data as **empirical only**.
+
+### 5.3 Layer 2: scan-level calibration on the simultaneous event
+
+We index a nested family by an integer inflation c ≥ 0 added to every envelope (B* is
+non-decreasing in c, so selections shrink and bounds loosen as c grows). For each of K labelled
+subjects (one random scan each) we compute the smallest c such that the scan's true null counts
+satisfy V_k ≤ B*_k(c) for **all** k — the simultaneous event, not merely the FDP of one selection —
+and set ĉ to the ⌈(K+1)(1−δ)⌉-th smallest value (abstain if that index exceeds K). If the K labelled
+subjects and the test subject are exchangeable given the calibration pool, the split-conformal
+quantile lemma gives P(the test scan's curve is violated at ĉ) ≤ δ, which covers the selected set,
+any post-hoc threshold, and every region certificate at once [cf. Dunn, Wasserman & Ramdas 2023].
+Candidate-level exchangeability is no longer required. The pool may come from another site: only
+the labelled and test subjects must be exchangeable. (Calibrating Layer 2 on the selected set's FDP
+alone — an earlier design — covers only that selection and not the region certificates.)
+
+### 5.4 Certified dissemination in space
+
+Each candidate is assigned a MAGNIMS area with the application's own atlas-based zone map (LST-AI
+MSMask, periventricular / juxtacortical / infratentorial / deep white matter; per-lesion cascade
+IT > PV > JC, else DWM). For the brain McDonald areas a ∈ {PV, JC, IT}, the certified true-lesion
+count is L_a = |S_a| − min(|S_a|, min_k(|S_a ∩ {rank > k}| + B*_k)). DIS is **certified** when
+L_a ≥ 1 in at least two areas; on the good event every certified area truly contains a true lesion,
+so P(a certified DIS is false) ≤ δ. We compare with DIS read off the raw segmentation and off the
+BH-selected candidates, on patients and — decisively — on healthy controls, where every DIS call is
+false.
+
+### 5.5 Pre-registration
+
+Template, γ = 0.2, δ = 0.1, grids, labels and splits were fixed and committed to version control
+before the real-data run (commit c47c88d). One amendment (v2) was made before any Layer-2 real-data
+output was observed, after the adversarial validity review: Layer 2 moved to the simultaneous event
+and to pools from other sources; Layer 1 was demoted to empirical. The amendment and its reasons
+are recorded verbatim in the evaluation script.
+
+### 5.6 Results
+
+*[Inserted from `calm_fdx_realdata_record.json` and `synthetic_icc_record.json`.]*
 
 ## 6. Discussion
 

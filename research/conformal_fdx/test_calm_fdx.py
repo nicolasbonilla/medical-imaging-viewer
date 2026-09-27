@@ -193,3 +193,10 @@ def test_layer2_simultaneous_restores_curve_validity_under_scan_random_effect():
         V = np.cumsum(np.bincount(k[isf], minlength=n + 2))[1:n + 2]
         fails += bool(np.any(V > B))
     assert fails / W <= 0.1 + 3 * math.sqrt(0.09 / W), (fails, abstain)
+
+
+def test_scan_level_pac_quantile():
+    assert cf.scan_level_theta_pac(list(range(29)), 0.1, 0.05) == 28     # K=29 -> max
+    assert cf.scan_level_theta_pac(list(range(20)), 0.1, 0.05) is None   # K=20 infeasible
+    v = list(range(60))
+    assert cf.scan_level_theta_pac(v, 0.1, 0.05) >= cf.scan_level_theta(v, 0.1)  # PAC is stricter

@@ -27,6 +27,12 @@ subjects to be exchangeable GIVEN the pool), which makes Layer 2 feasible everyw
   Layer 2 is the ONLY guarantee claimed on real data. Also added: exact permutation test of A1
   (Kruskal-Wallis of false scores across scans, counts fixed, 2000 permutations).
 
+AMENDMENT v2.1 (2026-09-28, before any real-data output was observed; the first v2 run was
+stopped unread to add this): from the final adversarially-revised spec (CALM-FDX v1.1), a PAC
+(training-conditional) Layer-2 quantile for DEVICE claims, delta_L = 0.05: theta_PAC = the
+(K - j*)-th smallest safe value, j* = max{j : BinomCDF(j; K, delta) <= delta_L}. Feasible only
+for K >= 29 (MSLesSeg); reported alongside the marginal Layer-2 result on the SAME splits.
+
 Reports per site: scans with FDP > gamma (Clopper-Pearson 95% CI), power (selection recall),
 abstention rate; baselines per-scan BH at gamma (marginal FDR) and at gamma*delta (Markov-
 valid FDX); DIS: certified-DIS rate on GT-DIS scans, FALSE certified DIS (a certified area with
@@ -198,7 +204,7 @@ def layer2(cases, site, template, pool, pool_from=None, n_pool_subj=0, K=20, T=1
     subj = sorted({c["subject"] for c in tgt})
     ext_pool = (np.concatenate([c["scores"][_isf(c)] for c in cases if c["site"] in pool_from])
                 if pool_from else None)
-    per_split, allrows = [], []
+    per_split, allrows, pacrows = [], [], []
     for _ in range(splits):
         perm = list(rng.permutation(subj))
         P = set(perm[:n_pool_subj]); rest = perm[n_pool_subj:]
@@ -222,10 +228,15 @@ def layer2(cases, site, template, pool, pool_from=None, n_pool_subj=0, K=20, T=1
         infl = 10 ** 6 if theta is None else theta
         rows = pool.map(eval_scan, [(pick[sj], calib, template, infl) for sj in Ts])
         allrows += rows
-        per_split.append({"theta_hat": theta, "n_pool": int(calib.size),
+        theta_pac = cf.scan_level_theta_pac(safe, DELTA, 0.05)
+        if theta_pac is not None:
+            rows_pac = pool.map(eval_scan, [(pick[sj], calib, template, theta_pac) for sj in Ts])
+            pacrows += rows_pac
+        per_split.append({"theta_hat": theta, "theta_pac": theta_pac, "n_pool": int(calib.size),
+                          "safe_values": [int(x) for x in safe],
                           "test_curve_fail": int(sum(r["curve_fail"] for r in rows)),
                           "test_fdx": int(sum(r["sel"] > 0 and r["fdp"] > GAMMA for r in rows))})
-    return allrows, per_split
+    return allrows, per_split, pacrows
 
 
 def a1_permutation_test(cases, site, perms=2000):
@@ -255,7 +266,9 @@ def main():
     cases = list(d["cases"])
     rec = {"preregistration": {"gamma": GAMMA, "delta": DELTA, "primary_template": "hc",
                                "secondary_template": "hybrid (exploratory)", "labels": "one-to-one lenient",
-                               "dis_areas": "PV,JC,IT (>=2)", "layer2": "mslesseg 20 splits 35/29/11"},
+                               "dis_areas": "PV,JC,IT (>=2)",
+                               "layer2": "simultaneous; openms pool=mslesseg K20/T10; mslesseg 35/29/11; controls pool=patients K20/T10; 20 splits",
+                               "pac": "delta_L=0.05, K>=29 only"},
            "results": {}}
     rec["a1_permutation_test"] = {site: a1_permutation_test(cases, site) for site in ("openms", "mslesseg")}
     print("A1 (candidate-level exchangeability) exact permutation test:", rec["a1_permutation_test"])
@@ -276,10 +289,12 @@ def main():
             for site, kw in [("openms", dict(pool_from=["mslesseg"], K=20, T=10)),
                              ("mslesseg", dict(n_pool_subj=35, K=29, T=11)),
                              ("sibbms", dict(pool_from=["openms", "mslesseg"], K=20, T=10))]:
-                rows, splits = layer2(cases, site, template, pool, **kw)
+                rows, splits, pacrows = layer2(cases, site, template, pool, **kw)
                 key = f"layer2_simultaneous|{site}"
                 R[key] = summarize(rows, f"L2 simultaneous {site} (20 splits)")
                 R[key]["splits"] = splits
+                if pacrows:
+                    R[f"layer2_PAC|{site}"] = summarize(pacrows, f"L2 PAC (device) {site}")
     with open(OUT, "w", encoding="utf-8") as fh:
         json.dump(rec, fh, indent=2)
     print(f"\nWrote {OUT}")
