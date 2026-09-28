@@ -86,14 +86,20 @@ async def classify_lesions_magnims(
     """
     Classify MS lesions into MAGNIMS anatomical regions.
 
-    Uses brain parcellation + distance transform analysis to classify each
-    lesion as Periventricular (PV), Juxtacortical (JC), Infratentorial (IT),
-    or Deep White Matter (DWM).
+    Classifies each lesion as Periventricular (PV), Juxtacortical (JC), Infratentorial (IT)
+    or Deep White Matter (DWM) by the MAGNIMS contact rule. Region-assignment accuracy has
+    NOT been measured for any path (HAZ-005) — present regions as candidates to verify.
 
     Methods:
-    - 'auto': Best available (LST-AI zones > parcellation > MSMask atlas > geometric heuristics)
-    - 'msmask': MSMask atlas-based classification (Wiltgen et al., 2024)
-    - 'geometric': Geometric heuristics fallback
+    - 'auto': first APPLICABLE path, in order: LST-AI zones > parcellation of the same image >
+      MSMask atlas (MNI-grid images only; no registration is performed) > geometric heuristics
+      (axial inferior->superior images only). "auto" is an order, not a quality ranking.
+    - 'msmask': MSMask atlas (adapted from Wiltgen et al., 2024); HTTP 422 on a non-MNI image
+    - 'geometric': coordinate heuristics, not anatomical landmarks; HTTP 422 when the image's
+      orientation or grid does not allow them
+    The result says which path was used; `atlas_unavailable_reason` / `atlas_error` explain
+    why the atlas was not used. HTTP 422 = every applicable path refused the image (reasons
+    given); no regions are guessed (RC-032, CAPA-006).
 
     Args:
         segmentation_id: ID of the lesion segmentation to classify

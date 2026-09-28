@@ -308,9 +308,9 @@ def header_footer(canvas, doc):
     canvas.setFillColor(MED_GRAY)
     canvas.setFont('Helvetica', 7)
     canvas.drawString(LEFT_MARGIN, PAGE_HEIGHT - 20 * mm,
-                      'MS Brain MRI Viewer — Technical Documentation v2.0')
+                      'MS Brain MRI Viewer — Technical Documentation v2.1')
     canvas.drawRightString(PAGE_WIDTH - RIGHT_MARGIN, PAGE_HEIGHT - 20 * mm,
-                           'March 2026')
+                           'September 2026')
 
     # Footer
     canvas.setStrokeColor(BORDER_COLOR)
@@ -372,7 +372,7 @@ def cover_page(canvas, doc):
 
     canvas.setFont('Helvetica', 9)
     canvas.setFillColor(HexColor('#64748B'))
-    canvas.drawString(LEFT_MARGIN, PAGE_HEIGHT * 0.41, 'Version 2.0  |  March 2026')
+    canvas.drawString(LEFT_MARGIN, PAGE_HEIGHT * 0.41, 'Version 2.1  |  September 2026')
     canvas.drawString(LEFT_MARGIN, PAGE_HEIGHT * 0.38,
                       'Classification: Medical Imaging Software')
     canvas.drawString(LEFT_MARGIN, PAGE_HEIGHT * 0.35,
@@ -459,6 +459,10 @@ def build_pdf():
 
     def spacer(h=6):
         story.append(Spacer(1, h))
+
+    # ─── REVISION NOTE (CAPA-006) ───
+    small('<b>Revision 2.1 (2026-09-28, CAPA-006, HAZ-005, RC-030):</b> Section 5 corrected to the code. Version 2.0 (dated March 2026, committed 2026-04-02) described a Tier 2 (parcellation) / Tier 1 (MSMask atlas) hierarchy and a per-lesion "confidence"; it did not match the code when committed, which since 2026-03-14 has tried four paths in order (LST-AI zones, parcellation + EDT, MSMask atlas, geometric heuristics), and the confidence was uncalibrated and has been removed (RC-010 amended). Section 5 also states the CAPA-006 code changes of 2026-09-28: the MSMask atlas (adapted from LST-AI, not validated) is used only for images already registered to MNI152 that pass a five-condition grid check (no registration is performed; a stored zone map is never reused); the geometric heuristics are refused unless their image preconditions hold; when no path can be applied validly, no regions are assigned. Region-assignment accuracy has not been measured for any path. Section 6.1 corrected from 26-connectivity to 18-connectivity (RC-030).')
+    spacer()
 
     # ─── 1. ABSTRACT ───
     section('1', 'ABSTRACT')
@@ -601,8 +605,16 @@ def build_pdf():
     story.append(PageBreak())
     section('5', 'MAGNIMS REGION CLASSIFICATION')
 
-    subsection('5.1 Tier 2: Parcellation-Based EDT Classification')
-    body('The primary classification method uses the Euclidean Distance Transform (EDT) computed from SynthSeg/FreeSurfer parcellation volumes. For each anatomical reference structure, a binary mask is extracted from the parcellation using FreeSurfer label groups:')
+    # CAPA-006 (2026-09-28): the former "Tier 2 / Tier 1" headings did not match the code's
+    # four-path order (LST-AI zones -> parcellation -> MSMask atlas [MNI-space images only] -> geometric).
+    body('Criterion (MAGNIMS / McDonald 2024): PV = abutting the lateral ventricles, JC = abutting the cortex, IT = in or touching the brainstem/cerebellum, otherwise DWM. On the parcellation, MSMask and geometric paths the priority is IT &gt; PV &gt; JC &gt; DWM; the LST-AI path copies LST-AI\'s zones voxel by voxel. Only PV, JC and IT count towards brain DIS (spinal cord and optic nerve are not evaluated from the images; clinician-entered evidence for them is accepted by the DIS assessment). In <code>auto</code> mode the paths are tried in order and the first that applies is used; the path used is reported. If no path can be applied validly, the request is refused (HTTP 422) with the reasons and no regions are assigned. Region-assignment accuracy has not been measured for any path (HAZ-005 residual undetermined).')
+    bullet('<b>Path 1 — LST-AI zones:</b> only if another segmentation of the same image has a <code>validation_source</code> containing "lst-ai" (LST-AI integration disabled by default, <code>LSTAI_ENABLED=false</code>; not enabled by the deployment pipeline). Copies, voxel by voxel, the zone LST-AI assigned: no contact rule and no priority, so one lesion can receive more than one region; lesion voxels outside LST-AI\'s zones become DWM without a warning.')
+    bullet('<b>Path 2 — Parcellation + EDT</b> (Section 5.1): with an explicit <code>parcellation_id</code>, or when another segmentation of the same image looks like a FreeSurfer parcellation (at least 3 of the labels {2,3,4,7,8,10,16,41,42,43} and at least one of {16,41,42,43}, and not a MAGNIMS zone map; an explicit <code>parcellation_id</code> that fails the test is refused, HTTP 422). SynthSeg integration disabled by default (<code>SYNTHSEG_ENABLED=false</code>); when enabled it runs as a separate service at <code>SYNTHSEG_ENDPOINT</code>, not on Google Vertex AI.')
+    bullet('<b>Path 3 — MSMask atlas</b> (Section 5.3; adapted from LST-AI, not validated): only for images already registered to MNI152; no registration is performed. Native clinical scans normally fail its grid check and are then classified by path 4, or refused.')
+    bullet('<b>Path 4 — Geometric heuristics</b> (Section 5.4; least accurate; coordinate rules, not anatomical landmarks): refused unless its image preconditions hold.')
+    spacer()
+    subsection('5.1 Path 2: Parcellation-Based EDT Classification')
+    body('This path uses the Euclidean Distance Transform (EDT) computed from SynthSeg/FreeSurfer parcellation volumes of the same image. For each anatomical reference structure, a binary mask is extracted from the parcellation using FreeSurfer label groups:')
 
     story.append(make_table(
         ['Structure', 'FreeSurfer Labels', 'Role'],
@@ -625,6 +637,7 @@ def build_pdf():
     body('For each connected component C<sub>k</sub>, the minimum distance to each reference structure is computed, and classification follows a <b>priority cascade</b> (IT &gt; PV &gt; JC &gt; DWM):')
 
     code('IF d_IT <= 1.5 mm:     region = Infratentorial\nELIF d_PV <= 1.5 mm:  region = Periventricular\nELIF d_JC <= 1.5 mm:  region = Juxtacortical\nELSE:                 region = Deep White Matter')
+    body('Distances are between voxel centres. Limits of the 1.5 mm rule: with slices thicker than 1.5 mm, contact through the slice direction is not detected; at 1 mm voxels, diagonal (corner) neighbours at 1.73 mm are missed.')
 
     spacer()
     # HAZ-005 / RC-010 (amended), 2026-09-28: the former "5.2 Confidence Scoring" formulas
@@ -633,17 +646,22 @@ def build_pdf():
     subsection('5.2 Evidence Reported (No Per-Lesion Confidence)')
     body('No per-lesion confidence is emitted or displayed (<code>confidence</code> is always null; HAZ-005, REQ-SAFE-010, RC-010 (amended)). Region assignment is a deterministic MAGNIMS rule. The parcellation path reports <code>distances_mm</code> (d_IT, d_PV, d_JC; null when a landmark is absent) as evidence.')
 
-    subsection('5.3 Tier 1: MSMask Atlas Zone Map')
-    body('The atlas-based method (Wiltgen et al. 2024) uses the MSMask atlas in MNI152 space with binary dilation (3\u00d73\u00d73 structuring element) and priority cascade zone assignment:')
+    subsection('5.3 Path 3: MSMask Atlas Zone Map (MNI-space images only)')
+    body('The atlas-based method is adapted from LST-AI\'s MSMask atlas (Wiltgen et al. 2024); the adaptation used here has not been validated. The atlas is in MNI152 space and MSTool-AI performs no registration (the zone map is resampled onto the image grid only), so it is used only for images already registered to MNI152 whose grid passes all five conditions: (1) isotropic voxels (max/min spacing at most 1.05); (2) axes aligned with and not permuted relative to the world axes (within about 2.5°); (3) field of view within 25% of 181 × 217 × 181 mm on each axis; (4) grid centre within 10 mm of the MNI template centre (0, -18, 18) mm; (5) a spatial transform in the header (sform or qform code not 0). Otherwise it is refused (HAZ-005, RC-032): HTTP 422 for an explicit MSMask request; in <code>auto</code> the geometric heuristics are tried and the UI shows "Atlas regions not used: this image is not in MNI space, so the least accurate geometric fallback was applied. Verify every region before using it for DIS." The check cannot certify true normalization (an image resampled onto an MNI grid without registration passes). The zone map is generated fresh for every classification; a stored zone map is never reused. Zones: the atlas ventricle, cortex and infratentorial structures dilated by one voxel (3×3×3 cube on the 1 mm atlas) and intersected with atlas white matter, plus the infratentorial structures themselves; zone precedence IT &gt; PV &gt; JC:')
 
     code('zone_map[WM] = 4                                    # DWM default\nzone_map[IT or IT_dilated AND WM] = 3              # Infratentorial\nzone_map[Cortex_dilated AND WM AND zone != 3] = 2  # Juxtacortical\nzone_map[Vent_dilated AND WM AND zone != 3] = 1    # Periventricular')
-    body('Per-lesion evidence (no confidence): <code>region_overlap_fraction</code> (fraction of all lesion voxels inside the assigned zone), <code>zone_coverage_fraction</code> (fraction inside any white-matter zone) and <code>atlas_coverage</code> (false when the lesion lies in no white-matter zone: Deep White Matter is then assigned by default, not by the MAGNIMS rule, and flagged in the UI as "No WM zone — DWM by default").')
+    body('A lesion is assigned the highest-priority zone that any of its voxels lies in (IT &gt; PV &gt; JC &gt; DWM); a lesion with no voxel in any zone is Deep White Matter by default. Per-lesion evidence (no confidence): <code>region_overlap_fraction</code> (fraction of all lesion voxels inside the assigned zone), <code>zone_coverage_fraction</code> (fraction inside any white-matter zone) and <code>atlas_coverage</code> (false when the lesion lies in no white-matter zone: Deep White Matter is then assigned by default, not by the MAGNIMS rule, and flagged in the UI as "No WM zone — DWM by default").')
+
+    subsection('5.4 Path 4: Geometric Heuristics (least accurate)')
+    body('Coordinate rules, not anatomical landmarks. The path is refused (HTTP 422 for an explicit request; in <code>auto</code>, the request is refused with the reasons when no other path applies) unless the source image can be read, its orientation can be determined, its slice axis runs from inferior to superior (axial acquisition; sagittal, coronal or superior-to-inferior slice order is refused), it is 3-D, it is on the same grid as the lesion mask and it is not blank. Brain outline = Otsu threshold (x0.3) of the image intensities, holes filled (the head outline if the image is not skull-stripped). IT = lesion centroid in the lowest 25% of the outline\'s extent along the slice axis; PV = mean distance of the lesion\'s voxels from the brain centre (midpoint of the outline\'s slice extent and the in-plane array centre) below 35% of the largest such distance in the image array; JC = lesion within min(8 mm, 15% of the maximum depth of the outline) of the outline surface; otherwise DWM; priority IT &gt; PV &gt; JC &gt; DWM. Whenever regions come from this path the UI shows "Geometric heuristics: the least accurate method (coordinate rules, not anatomical landmarks). Verify every region before using it for DIS." (or the atlas warning above when the atlas was refused).')
 
     # ─── 6. LESION ANALYSIS AND DIS ───
     section('6', 'LESION ANALYSIS AND DIS ASSESSMENT')
 
     subsection('6.1 Connected Component Extraction')
-    body('Lesion components are extracted using <code>scipy.ndimage.label()</code> with 26-connectivity. For each component C<sub>k</sub>:')
+    # RC-030 (corrected in the CAPA-006 review, 2026-09-28): v2.0 stated 26-connectivity; the code
+    # labels lesions with 18-connectivity (faces + edges) via lesion_metrics.label_lesions.
+    body('Lesion components are extracted using <code>scipy.ndimage.label()</code> with 18-connectivity (faces + edges; RC-030). For each component C<sub>k</sub>:')
 
     formula('vol(C_k) = |C_k| \u00b7 \u0394x \u00b7 \u0394y \u00b7 \u0394z   [mm\u00b3]', 'Eq. 5')
     formula('\u0078\u0305_k = (1/|C_k|) \u2211_{x \u2208 C_k} x   [centroid]', 'Eq. 6')

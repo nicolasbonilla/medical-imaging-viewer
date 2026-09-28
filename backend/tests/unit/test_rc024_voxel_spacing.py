@@ -174,12 +174,23 @@ class TestRC024RoutesNoLongerAssume:
     def test_rc024_routes_resolve_spacing_through_the_control(self):
         from pathlib import Path
 
+        import ast
+
         backend_root = Path(__file__).resolve().parents[2]
         for rel in self.ROUTES:
-            source = (backend_root / rel).read_text(encoding="utf-8")
-            assert "resolve_voxel_spacing(" in source, (
-                f"{rel} no longer resolves spacing through RC-024"
-            )
+            tree = ast.parse((backend_root / rel).read_text(encoding="utf-8"))
+            # CAPA-006: SegmentationMetadata never carries spacing, so the routes resolve it
+            # from the SOURCE IMAGE header (_voxel_spacing_from_source_image raises
+            # VoxelSpacingUnavailableError when it is missing — RC-024 semantics). The former
+            # substring check passed on text alone: the region routes via calls that always
+            # raised, the analysis file via its docstring and the helper's own `def` line.
+            # Count real CALLS in the AST instead.
+            calls = [
+                n for n in ast.walk(tree)
+                if isinstance(n, ast.Call) and getattr(n.func, "id", getattr(n.func, "attr", None))
+                == "_voxel_spacing_from_source_image"
+            ]
+            assert calls, f"{rel} no longer resolves spacing through RC-024 (source-image geometry)"
 
 
 class TestRC024ServicesRefuseAnOmittedSpacing:

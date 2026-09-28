@@ -209,8 +209,8 @@ export const segmentationAPI = {
 
   /**
    * Auto-classify lesions into MAGNIMS regions (PV, JC, IT, DWM).
-   * Uses brain parcellation + EDT for high accuracy when available,
-   * falls back to geometric heuristics otherwise.
+   * Paths in order: LST-AI zones, parcellation + EDT, MSMask atlas (MNI-space images only),
+   * geometric heuristics; the path used is returned. Region accuracy is unmeasured (HAZ-005).
    * The segmentation mask is reclassified in-place on the server.
    */
   async classifyRegions(
@@ -256,7 +256,7 @@ export const segmentationAPI = {
   /**
    * Generate a MAGNIMS zone map for a brain MRI.
    * Creates a new segmentation where every brain voxel is classified into
-   * PV / JC / IT / DWM zones using parcellation + EDT.
+   * PV / JC / IT / DWM zones using a parcellation + EDT, or the MSMask atlas for MNI-space images.
    */
   async generateZoneMap(
     fileId: string,

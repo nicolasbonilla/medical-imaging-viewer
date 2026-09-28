@@ -13,9 +13,13 @@ import numpy as np
 from app.security import get_current_active_user
 from app.security.models import User
 from app.core.logging import get_logger
-from app.utils import resolve_voxel_spacing, VoxelSpacingUnavailableError
+from app.utils import VoxelSpacingUnavailableError
 from app.core.interfaces.storage_interface import IStorageService
 from app.core.container import get_segmentation_service, get_storage_service
+from app.core.container import get_patient_service as _patient_service
+# HAZ-010 / RC-029 (CAPA-006 review): these routes were split out of segmentation.py
+# (C3) after RC-029 was wired there, and never received object-level authorization.
+from app.security.resource_access import require_segmentation_access, authorize_file_scope
 from app.services.segmentation_service import SegmentationService
 from app.services.lesion_analysis_service import (
     analyze_lesions,
@@ -26,13 +30,28 @@ from app.services.ms_region_classifier import (
     classify_lesions_with_parcellation,
     classify_lesions_with_atlas,
     classify_lesions_geometric,
+    looks_mni,
+    NotMNISpaceError,
+    looks_like_freesurfer_parcellation,
+    ZONE_MAP_DESCRIPTION,
+    prepare_geometric_image,
+    GeometricPreconditionError,
     generate_zone_map,
     generate_zone_map_atlas,
 )
 from app.core.config import get_settings
 from app.utils import load_nifti_from_bytes
+# Same geometry source PR #23 gave lesion-analysis / DIS / compare: SegmentationMetadata
+# never carries spacing, so resolve_voxel_spacing(seg_metadata) ALWAYS raised and these
+# region routes returned 500 for every call (found 2026-09-28).
+from app.api.routes.segmentation_analysis import _voxel_spacing_from_source_image
 
 settings = get_settings()
+
+
+def _care_team_service():
+    from app.services.care_team_service import CareTeamService
+    return CareTeamService()
 
 router = APIRouter(prefix="/segmentation", tags=["segmentation"])
 logger = get_logger(__name__)
@@ -49,14 +68,20 @@ async def classify_regions(
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
     storage_service: IStorageService = Depends(get_storage_service),
     current_user: User = Depends(get_current_active_user),
+    # CAPA-002 RC-029 (CAPA-006 review): object-level authorization — this route rewrites
+    # the segmentation in place and persists it.
+    _authorized=Depends(require_segmentation_access),
 ):
     """
     Auto-classify lesions into MAGNIMS regions (PV, JC, IT, DWM).
 
-    Uses brain parcellation (SynthSeg/FreeSurfer labels) + Euclidean Distance
-    Transform for high-accuracy classification (~90%+ agreement with expert
-    neuroradiologists). Falls back to geometric heuristics when no parcellation
-    is available.
+    MAGNIMS contact criterion (IT > PV > JC > DWM). Region-assignment accuracy has
+    NOT been measured against expert region labels for any path (HAZ-005,
+    residual UNDETERMINED) — the former "~90%+ agreement with expert
+    neuroradiologists" claim had no evidence and is withdrawn (CAPA-006).
+    The MSMask atlas is MNI152 and no registration is performed, so it is used
+    only for MNI-space images (RC-032); otherwise "msmask" returns 422 and "auto"
+    falls back to geometric heuristics with `atlas_unavailable_reason` set.
 
     Request body:
     {
@@ -67,7 +92,7 @@ async def classify_regions(
     - method "auto" (default): tries lst-ai → parcellation → msmask → geometric
     - method "lst-ai": uses pre-computed LST-AI MAGNIMS zones (requires LST-AI segmentation)
     - method "parcellation": requires parcellation_id
-    - method "msmask": uses MSMask atlas (LST-AI validated, requires nilearn)
+    - method "msmask": uses the MSMask atlas (MNI-space images only, requires nilearn)
     - method "geometric": uses spatial heuristics only
 
     The segmentation mask is reclassified IN-PLACE (label values changed from
@@ -95,9 +120,24 @@ async def classify_regions(
         # present. Lesion volumes are voxel_count x product(spacing), so a 3 mm
         # study reported volumes understated 3x, with full apparent precision,
         # feeding the MAGNIMS lesion-size thresholds that determine DIS.
-        voxel_spacing = resolve_voxel_spacing(metadata, context=f"segmentation {segmentation_id}")
+        voxel_spacing = await _voxel_spacing_from_source_image(
+            metadata.file_id, storage_service, context=f"segmentation {segmentation_id}"
+        )
+        voxel_ml = float(np.prod(voxel_spacing)) / 1000.0
+        _source = {}
+
+        async def _source_image():
+            # Downloaded and decoded once per request, shared by the atlas and geometric paths.
+            if "img" not in _source:
+                raw = await storage_service.download_file(settings.GCS_BUCKET_NAME, metadata.file_id)
+                _source["img"], _source["data"] = load_nifti_from_bytes(raw, normalize=False)
+            return _source["img"], _source["data"]
 
         result = None
+        atlas_unavailable_reason = None   # the atlas REFUSED this image (not MNI)
+        atlas_error = None                # the atlas path FAILED (fault, not a refusal)
+        geometric_unavailable_reason = None
+        geometric_error = None
 
         # --- Try LST-AI pre-computed MAGNIMS zones ---
         if method in ("auto", "lst-ai"):
@@ -170,12 +210,34 @@ async def classify_regions(
                             detail=f"Parcellation {parcellation_id} not found",
                         )
                     logger.warning(
-                        "[ClassifyRegions] Parcellation %s not found, falling back to geometric",
+                        "[ClassifyRegions] Parcellation %s not found, falling back",
                         parcellation_id,
                     )
 
                 if parc_data is not None:
                     parcellation_mask = parc_data["masks_3d"]
+                    parc_meta = parc_data.get("metadata")
+                    parc_desc = getattr(parc_meta, "description", None)
+                    if (getattr(parc_meta, "file_id", None) != metadata.file_id
+                            or np.shape(parcellation_mask) != np.shape(lesion_mask)):
+                        # CAPA-006 review: a parcellation of ANOTHER image (e.g. another
+                        # timepoint on the same protocol grid) would be used unregistered.
+                        raise HTTPException(
+                            status_code=422,
+                            detail=f"Segmentation {parcellation_id} is not a parcellation of this "
+                                   "image (different image or grid); regions were not assigned.",
+                        )
+                    if not looks_like_freesurfer_parcellation(
+                        np.unique(parcellation_mask), parc_desc,
+                        foreground_ml=np.count_nonzero(parcellation_mask) * voxel_ml,
+                    ):
+                        # CAPA-006 / RC-032: a zone map or lesion mask is not a parcellation.
+                        raise HTTPException(
+                            status_code=422,
+                            detail=f"Segmentation {parcellation_id} is not a FreeSurfer-label "
+                                   "parcellation (a MAGNIMS zone map or a lesion mask cannot be "
+                                   "used as one); regions were not assigned.",
+                        )
 
                     result = classify_lesions_with_parcellation(
                         lesion_mask, parcellation_mask, voxel_spacing
@@ -209,10 +271,14 @@ async def classify_regions(
                     cand_entry = segmentation_service.get_loaded(cand_id)
                     if cand_entry is not None:
                         cand_mask = cand_entry["masks_3d"]
-                        unique_vals = set(int(v) for v in np.unique(cand_mask) if v > 0)
-                        # FreeSurfer labels include values like 2,3,4,7,8,10...
-                        freesurfer_check = unique_vals & {2, 3, 4, 7, 8, 10, 16, 41, 42, 43}
-                        if len(freesurfer_check) >= 3:
+                        # CAPA-006 / RC-032: the old test (>= 3 of {2,3,4,7,8,10,16,41,42,43})
+                        # accepted a MAGNIMS zone map (labels 1-4) and read its DWM label 4 as
+                        # the lateral ventricle -> DWM lesions reported Periventricular.
+                        cand_desc = getattr(cand_entry.get("metadata"), "description", None)
+                        if np.shape(cand_mask) == np.shape(lesion_mask) and looks_like_freesurfer_parcellation(
+                            np.unique(cand_mask), cand_desc,
+                            foreground_ml=np.count_nonzero(cand_mask) * voxel_ml,
+                        ):
                             logger.info(
                                 "[ClassifyRegions] Found parcellation candidate: %s",
                                 cand_id,
@@ -227,80 +293,82 @@ async def classify_regions(
         # --- MSMask atlas-based classification ---
         if result is None and method in ("auto", "msmask"):
             try:
-                from app.services.ms_region_classifier import classify_from_zone_mask
-
                 file_id = metadata.file_id
 
-                # Try reusing a persisted zone map first
-                zone_map_seg_id = (metadata.analysis_data or {}).get("zone_map_seg_id")
-                if zone_map_seg_id:
-                    zone_entry = segmentation_service.get_loaded(zone_map_seg_id)
-                    if zone_entry is not None:
-                        zone_mask = zone_entry["masks_3d"]
-                        result = classify_from_zone_mask(lesion_mask, zone_mask, voxel_spacing)
-                        result["method"] = "msmask"
-                        logger.info(
-                            "[ClassifyRegions] Reused persisted zone map %s",
-                            zone_map_seg_id,
-                            extra={"segmentation_id": segmentation_id},
-                        )
+                # HAZ-005 / RC-032: the MSMask atlas is MNI152 and nothing is registered, so the
+                # SOURCE image must be on an MNI grid (header checked on the image as loaded).
+                src_img, _ = await _source_image()
+                if not looks_mni(src_img.affine, src_img.shape, src_img.header):
+                    raise NotMNISpaceError(
+                        "Atlas-based (MSMask) region classification requires an image registered "
+                        "to MNI152 space; this image is not on an MNI grid (anisotropic or oblique "
+                        "voxels, non-MNI field of view or position, or no spatial transform). "
+                        "Regions were not assigned from the atlas."
+                    )
 
-                # If no cached zone map, generate fresh via atlas
-                if result is None:
-                    nifti_data = await storage_service.download_file(
-                        settings.GCS_BUCKET_NAME, file_id
-                    )
-                    nifti_img, _ = load_nifti_from_bytes(nifti_data, normalize=False)
-
-                    result = classify_lesions_with_atlas(
-                        lesion_mask, nifti_img, voxel_spacing
-                    )
-                    logger.info(
-                        "[ClassifyRegions] MSMask atlas classification applied (fresh)",
-                        extra={"segmentation_id": segmentation_id},
-                    )
+                # The zone map is always generated fresh (in the lesion mask's axis order, shape-
+                # checked). A PERSISTED zone map is never reused for classification (CAPA-006):
+                # generate-zone-map overwrote its blob without the RC-031 orientation marker, so
+                # after a reload it came back transposed ((k, a1, a0)) — an IndexError on MNI
+                # grids (silent geometric fallback) and silently transposed zones on square ones.
+                result = classify_lesions_with_atlas(
+                    lesion_mask, src_img, voxel_spacing
+                )
+                logger.info(
+                    "[ClassifyRegions] MSMask atlas classification applied (fresh)",
+                    extra={"segmentation_id": segmentation_id},
+                )
+            except NotMNISpaceError as e:
+                if method == "msmask":
+                    raise HTTPException(status_code=422, detail=str(e))
+                atlas_unavailable_reason = str(e)
+                logger.warning(
+                    "[ClassifyRegions] MSMask skipped (image not in MNI space) — falling back",
+                    extra={"segmentation_id": segmentation_id},
+                )
             except FileNotFoundError as e:
                 if method == "msmask":
                     raise HTTPException(status_code=400, detail=str(e))
-                logger.warning(
-                    "[ClassifyRegions] MSMask atlas not available: %s. Falling back.",
-                    str(e),
-                )
+                atlas_error = f"MSMask atlas not available: {e}"
+                logger.error("[ClassifyRegions] %s. Falling back.", atlas_error)
             except ImportError as e:
                 if method == "msmask":
                     raise HTTPException(
                         status_code=400,
                         detail=f"MSMask requires nilearn: {e}",
                     )
-                logger.warning(
-                    "[ClassifyRegions] nilearn not installed: %s. Falling back to geometric.",
-                    str(e),
-                )
+                atlas_error = f"MSMask requires nilearn: {e}"
+                logger.error("[ClassifyRegions] %s. Falling back.", atlas_error)
             except Exception as e:
                 if method == "msmask":
                     raise HTTPException(status_code=500, detail=str(e))
-                logger.warning(
+                # CAPA-006 review: a FAULT in the atlas path used to degrade silently to the
+                # geometric path (the finding-4 pattern); it is now reported with the result.
+                atlas_error = f"Atlas classification failed ({type(e).__name__})"
+                logger.error(
                     "[ClassifyRegions] MSMask classification failed: %s. Falling back.",
-                    str(e),
+                    str(e), exc_info=True,
                 )
 
         # --- Geometric fallback (no parcellation or atlas available) ---
         if result is None and method in ("auto", "geometric"):
             try:
-                # Load the original image data for intensity-based heuristics
-                image_data = None
-                file_id = metadata.file_id
+                # The original image: brain outline + orientation for the heuristics
+                geo_affine, geo_native = None, None
                 try:
-                    nifti_data = await storage_service.download_file(
-                        settings.GCS_BUCKET_NAME, file_id
-                    )
-                    _, image_data = load_nifti_from_bytes(nifti_data, normalize=False)
+                    geo_img, geo_native = await _source_image()
+                    geo_affine = geo_img.affine
                 except Exception as img_err:
                     logger.warning(
                         "[ClassifyRegions] Could not load image data for geometric: %s",
                         str(img_err),
                     )
 
+                # HAZ-005 / RC-032 (CAPA-006): image in the lesion mask's (k, a0, a1) order,
+                # axial inferior->superior slice axis, non-blank — or refuse. Before this the
+                # native-order image was silently dropped for a whole-volume "brain" on every
+                # non-cubic scan, and the IT rule ran on whatever axis 0 happened to be.
+                image_data = prepare_geometric_image(geo_affine, geo_native, lesion_mask.shape)
                 result = classify_lesions_geometric(
                     lesion_mask, image_data, voxel_spacing
                 )
@@ -308,18 +376,48 @@ async def classify_regions(
                     "[ClassifyRegions] Geometric classification applied (fallback)",
                     extra={"segmentation_id": segmentation_id},
                 )
-            except Exception as e:
+            except GeometricPreconditionError as e:
+                if method == "geometric":
+                    raise HTTPException(status_code=422, detail=str(e))
+                geometric_unavailable_reason = str(e)
                 logger.warning(
-                    "[ClassifyRegions] Geometric classification failed: %s",
+                    "[ClassifyRegions] Geometric heuristics not applicable — %s",
                     str(e),
+                    extra={"segmentation_id": segmentation_id},
                 )
+            except Exception as e:
+                geometric_error = f"Geometric classification failed ({type(e).__name__})"
+                logger.error(
+                    "[ClassifyRegions] Geometric classification failed: %s",
+                    str(e), exc_info=True,
+                )
+
+        # RC-032: tell the user WHY the atlas was not used (shown next to the method).
+        if result is not None and atlas_unavailable_reason:
+            result["atlas_unavailable_reason"] = atlas_unavailable_reason
+        if result is not None and atlas_error:
+            result["atlas_error"] = atlas_error
 
         # --- No method available ---
         if result is None:
+            reasons = [r for r in (atlas_unavailable_reason, geometric_unavailable_reason) if r]
+            errors = [r for r in (atlas_error, geometric_error) if r]
+            if errors:
+                # A path FAILED (fault) — not a refusal; never report it as the image's fault.
+                raise HTTPException(
+                    status_code=500,
+                    detail="Region classification failed. " + " ".join(errors + reasons),
+                )
+            if reasons:
+                # RC-032: every applicable path refused this image — say why, never guess.
+                raise HTTPException(
+                    status_code=422,
+                    detail="No region-classification method can be applied validly to this "
+                           "image. " + " ".join(reasons),
+                )
             raise HTTPException(
                 status_code=400,
-                detail="No classification method available. "
-                       "Ensure the segmentation has lesion voxels to classify.",
+                detail=f"No classification method available for method '{method}'.",
             )
 
         # --- Update the segmentation mask in place ---
@@ -417,6 +515,9 @@ async def classify_regions(
 
     except HTTPException:
         raise
+    except VoxelSpacingUnavailableError as e:
+        # The study's geometry cannot be read: a client-actionable condition, not a server fault.
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         logger.error(
             "[ClassifyRegions] Classification failed",
@@ -448,9 +549,11 @@ async def generate_zone_map_endpoint(
     the four MAGNIMS regions (Periventricular, Juxtacortical, Infratentorial,
     Deep White Matter).
 
-    Method selection:
-    - If a brain parcellation (SynthSeg) exists: uses EDT from anatomical landmarks (~90% accuracy)
-    - Fallback: loads MRI image, computes brain mask via Otsu thresholding, uses geometric heuristics (~70%)
+    Method selection (no accuracy figure has been measured for either — CAPA-006
+    withdrew the former "~90%" / "~70%" claims, which had no evidence):
+    - If a parcellation with FreeSurfer labels exists: EDT contact rule from its landmarks
+    - Otherwise: the MSMask atlas (MNI152), only for MNI-space images — a non-MNI
+      image is refused with 422 and no zone map is persisted (RC-032)
 
     Request body:
     {
@@ -469,19 +572,22 @@ async def generate_zone_map_endpoint(
                 detail="file_id is required",
             )
 
-        # --- Delete existing zone maps for this file (prevent duplicates) ---
-        all_existing = segmentation_service.list_segmentations(file_id=file_id)
-        for existing in all_existing:
-            eid = existing.segmentation_id
-            try:
-                eentry = segmentation_service.get_loaded(eid)
-                if eentry is not None:
-                    emeta = eentry.get("metadata")
-                    if emeta and getattr(emeta, 'description', '') == "MAGNIMS Zone Map":
-                        logger.info("[ZoneMap] Deleting old zone map: %s", eid)
-                        segmentation_service.delete_segmentation(eid)
-            except Exception:
-                pass
+        # HAZ-010 / RC-029 (CAPA-006 review): this route deletes and creates zone maps for the
+        # image — authorize the caller for the image's patient first (404 on denial).
+        await authorize_file_scope(
+            file_ids=[file_id], user=current_user,
+            patient_service=_patient_service(), care_team_service=_care_team_service(),
+        )
+
+        # RC-024 (CAPA-001 CA-5): voxel spacing is REQUIRED — generate_zone_map applies
+        # distances in millimetres. It comes from the source image header (the parcellation
+        # is on the same grid); SegmentationMetadata never carries it (CAPA-006: the old
+        # fallback also read undefined `metadata` / `segmentation_id` — a NameError, 500).
+        voxel_spacing = await _voxel_spacing_from_source_image(
+            file_id, storage_service, context=f"image {file_id}"
+        )
+
+        voxel_ml = float(np.prod(voxel_spacing)) / 1000.0
 
         # --- Find parcellation ---
         parcellation_mask = None
@@ -496,6 +602,25 @@ async def generate_zone_map_endpoint(
                     detail=f"Parcellation {parcellation_id} not found",
                 )
             parcellation_mask = parc_data["masks_3d"]
+            parc_meta = parc_data.get("metadata")
+            parc_desc = getattr(parc_meta, "description", None)
+            if getattr(parc_meta, "file_id", None) != file_id:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Segmentation {parcellation_id} is not a parcellation of this image; "
+                           "no zone map was generated.",
+                )
+            if not looks_like_freesurfer_parcellation(
+                np.unique(parcellation_mask), parc_desc,
+                foreground_ml=np.count_nonzero(parcellation_mask) * voxel_ml,
+            ):
+                # CAPA-006 / RC-032: a region-classified lesion mask's label 4 (DWM) would be
+                # read as the lateral ventricle and the wrong zone map persisted + propagated.
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Segmentation {parcellation_id} is not a FreeSurfer-label "
+                           "parcellation; no zone map was generated.",
+                )
             parc_source = parcellation_id
         else:
             # Auto-detect parcellation for this file
@@ -505,72 +630,52 @@ async def generate_zone_map_endpoint(
                 try:
                     cand_entry = segmentation_service.get_loaded(cand_id)
                     if cand_entry is not None:
-                        # Skip zone map segmentations (labels 1-4 overlap with FreeSurfer)
-                        cand_meta = cand_entry.get("metadata")
-                        if cand_meta and getattr(cand_meta, 'description', '') == "MAGNIMS Zone Map":
-                            continue
+                        # Same test as classify-regions (single source of truth, RC-032):
+                        # skips zone maps; requires hemispheric/brainstem FreeSurfer labels.
                         cand_mask = cand_entry["masks_3d"]
-                        unique_vals = set(int(v) for v in np.unique(cand_mask) if v > 0)
-                        # FreeSurfer parcellations have hemispheric labels (41-43)
-                        # and brainstem (16). Zone maps only have labels 1-4.
-                        # Require at least one high label to distinguish.
-                        freesurfer_check = unique_vals & {2, 3, 4, 7, 8, 10, 16, 41, 42, 43}
-                        has_high_labels = bool(unique_vals & {16, 41, 42, 43})
-                        if len(freesurfer_check) >= 3 and has_high_labels:
+                        cand_desc = getattr(cand_entry.get("metadata"), "description", None)
+                        if looks_like_freesurfer_parcellation(
+                            np.unique(cand_mask), cand_desc,
+                            foreground_ml=np.count_nonzero(cand_mask) * voxel_ml,
+                        ):
                             parcellation_mask = cand_mask
                             parc_source = cand_id
                             break
                 except Exception:
                     continue
 
-        # RC-024 (CAPA-001 CA-5): voxel spacing is REQUIRED — generate_zone_map
-        # applies distance thresholds in millimetres, so an assumed 1 mm
-        # isotropic geometry silently mislabels MAGNIMS zones on any study with
-        # a different slice thickness. Prefer the parcellation's geometry (it is
-        # the volume being partitioned); fall back to the segmentation's own
-        # metadata, and raise rather than assume if neither carries it.
-        parc_entry = segmentation_service.get_cached(parc_source) if parc_source else None
-        parc_meta = parc_entry.get("metadata") if parc_entry is not None else None
-        try:
-            voxel_spacing = resolve_voxel_spacing(
-                parc_meta, context=f"parcellation {parc_source}"
-            )
-        except VoxelSpacingUnavailableError:
-            voxel_spacing = resolve_voxel_spacing(
-                metadata, context=f"segmentation {segmentation_id}"
-            )
-
         # --- Generate zone map ---
-        # nifti_native_* hold the zone mask in NIfTI native (i,j,k) order
-        # plus the MRI affine/header, so we can save a correctly-oriented NIfTI
-        # to GCS after the standard save pipeline (which has a transpose bug).
-        nifti_native_data = None
-        nifti_native_affine = None
-        nifti_native_header = None
-
         if parcellation_mask is not None:
-            # Preferred method: parcellation-based (high accuracy)
+            # Parcellation-based contact rule (accuracy unmeasured, HAZ-005)
             logger.info("[ZoneMap] Using parcellation-based method (source=%s)", parc_source)
             result = generate_zone_map(parcellation_mask, voxel_spacing)
         else:
-            # MSMask-based method: LST-AI validated atlas (Wiltgen et al. 2024)
+            # MSMask atlas (Wiltgen et al. 2024) — MNI-space images only (RC-032)
             logger.info("[ZoneMap] No parcellation found, using MSMask method for file=%s", file_id)
             file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, file_id)
             img, data = load_nifti_from_bytes(file_data, normalize=False)
+            if not looks_mni(img.affine, img.shape, img.header):
+                # HAZ-005 / RC-032: never generate (or persist) an atlas zone map off-MNI.
+                raise HTTPException(
+                    status_code=422,
+                    detail="Atlas-based (MSMask) zone maps require an image registered to "
+                           "MNI152 space; this image is not on an MNI grid. No zone map "
+                           "was generated.",
+                )
             # Create in-memory NIfTI (the temp file from load_nifti_from_bytes is
             # already deleted, so img.dataobj is a dead file proxy; we need a new
             # image backed by the in-memory data array for resample_to_img to work)
             import nibabel as nib
             target_img = nib.Nifti1Image(data, img.affine, img.header)
-            result = generate_zone_map_atlas(target_img, voxel_spacing)
+            try:
+                result = generate_zone_map_atlas(target_img, voxel_spacing)
+            except NotMNISpaceError as e:
+                # HAZ-005 / RC-032: never persist an atlas zone map for a non-MNI image.
+                raise HTTPException(status_code=422, detail=str(e))
             # Transpose zone_mask from NIfTI native (i,j,k) to display-compatible
             # internal format (k,i,j) using transpose (2,0,1) for 2D overlay.
             zone_mask_raw = result["zone_mask"]
             if zone_mask_raw.ndim == 3:
-                # Preserve the NIfTI-native data for correct GCS save
-                nifti_native_data = zone_mask_raw.copy()
-                nifti_native_affine = img.affine.copy()
-                nifti_native_header = img.header.copy()
                 result["zone_mask"] = np.transpose(zone_mask_raw, (2, 0, 1))
 
         zone_mask = result["zone_mask"]
@@ -608,40 +713,25 @@ async def generate_zone_map_endpoint(
         # Save to GCS (metadata + masks via standard pipeline)
         segmentation_service.persist(new_seg_id)
 
-        # Overwrite GCS NIfTI with correctly-oriented zone map.
-        # The standard _save_masks_to_gcs transposes (2,1,0) assuming internal
-        # format (D,H,W)=(k,j,i), but the msmask path produces (k,i,j).
-        # This causes X/Y axis swap in the NIfTI. We fix it by saving the
-        # original NIfTI-native (i,j,k) data directly.
-        if nifti_native_data is not None and nifti_native_affine is not None:
+        # CAPA-006: no raw GCS overwrite here. persist() already stores the zone map MRI-native
+        # with the RC-031 v2 marker; the former overwrite dropped the marker (reloaded transposed).
+
+        # --- Replace existing zone maps for this file (prevent duplicates) ---
+        # Only after the new one is created AND persisted (CAPA-006 review: deleting first
+        # destroyed them on every refusal, and a persist failure left no zone map at all).
+        for existing in segmentation_service.list_segmentations(file_id=file_id):
+            eid = existing.segmentation_id
+            if eid == new_seg_id:
+                continue
             try:
-                import tempfile as _tmpmod
-                import os as _os
-                import nibabel as nib
-
-                nifti_native_header.set_data_dtype(np.uint8)
-                nifti_native_header.set_data_shape(nifti_native_data.shape)
-                zone_nifti = nib.Nifti1Image(
-                    nifti_native_data.astype(np.uint8),
-                    nifti_native_affine,
-                    nifti_native_header,
-                )
-                with _tmpmod.NamedTemporaryFile(suffix='.nii.gz', delete=False) as tmp:
-                    nib.save(zone_nifti, tmp.name)
-                    tmp_path = tmp.name
-                with open(tmp_path, 'rb') as f:
-                    nifti_bytes = f.read()
-                _os.unlink(tmp_path)
-
-                blob_path = f"segmentations/{new_seg_id}/masks.nii.gz"
-                blob = segmentation_service.gcs_bucket.blob(blob_path)
-                blob.upload_from_string(nifti_bytes, content_type="application/gzip")
-                logger.info(
-                    "[ZoneMap] Saved correctly-oriented NIfTI to GCS",
-                    extra={"path": blob_path, "shape": list(nifti_native_data.shape)},
-                )
-            except Exception as e:
-                logger.warning("[ZoneMap] Failed to save corrected NIfTI: %s", str(e))
+                eentry = segmentation_service.get_loaded(eid)
+                if eentry is not None:
+                    emeta = eentry.get("metadata")
+                    if emeta and getattr(emeta, "description", "") == ZONE_MAP_DESCRIPTION:
+                        logger.info("[ZoneMap] Deleting old zone map: %s", eid)
+                        segmentation_service.delete_segmentation(eid)
+            except Exception:
+                logger.warning("[ZoneMap] Could not delete old zone map %s", eid, exc_info=True)
 
         logger.info(
             "[ZoneMap] Zone map segmentation created",
@@ -686,6 +776,8 @@ async def generate_zone_map_endpoint(
 
     except HTTPException:
         raise
+    except VoxelSpacingUnavailableError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         logger.error(
             "[ZoneMap] Zone map generation failed",

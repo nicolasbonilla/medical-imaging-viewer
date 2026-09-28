@@ -309,11 +309,14 @@ Per Amendment 1 (2015), individual software items may be classified at a lower s
 | JWT Management | python-jose | 3.3.0 | SOUP-BE-017 |
 | Password Hashing | Argon2-cffi | 23.1.0 | SOUP-BE-018 |
 | HTTP Client | httpx | 0.28.1 | SOUP-BE-019 |
-| Brain Atlas | nilearn | 0.10.0+ | SOUP-BE-020 |
+| Atlas resampling (MSMask zone map; Class C, MAGNIMS) | nilearn | `>=0.10.0` — **not pinned** (CAPA-006 PA-6.5) | SOUP-BE-020 |
 | Visualization | matplotlib | 3.9.2 | SOUP-BE-021 |
 | Data Processing | pandas | 2.2.2 | SOUP-BE-022 |
 | Caching | Redis | 5.1.0 | SOUP-BE-023 |
 | ORM | SQLAlchemy | 2.0.25 | SOUP-BE-024 |
+| MAGNIMS atlas data (Class C) | MSMask atlas, LST-AI v1.1.0 (`backend/data/msmask/sub-mni152_space-mni_msmask.nii.gz`) | sha256 `2ad50b14…cdd0f` (full hash in SOUP-001) | SOUP-BE-025 |
+
+> **Erratum 2026-09-28 (CAPA-006, HAZ-005)**: this table listed nilearn as "Brain Atlas | nilearn | 0.10.0+". nilearn's only live use is `resample_to_img` in `ms_region_classifier.generate_zone_map_atlas`, which resamples the MSMask atlas zone map for a Class C function. It is `>=0.10.0` in `backend/requirements.txt`, so it is not pinned. The requirements comment "Harvard-Oxford via nilearn" refers to `atlas_provider.py`, which no module imports. The MSMask atlas data file had no SOUP entry. See SOUP-001 (SOUP-BE-020 now Class C, SOUP-BE-025 added). Pinning and a Class C SOUP review of nilearn are open under CAPA-006 PA-6.5.
 
 ### 4.3 Codebase Metrics
 
@@ -1134,6 +1137,7 @@ See Section 4.2 for the complete SOUP inventory. For each SOUP item, the followi
 | HAZ-003 | Report disclaimer: "requires physician review" | `brain_report_service.py` system prompt | Yes |
 | HAZ-004 | Edge AI confidence score displayed | `QuickScreenBadge.tsx` percentage + inference time | Yes |
 | HAZ-005 | RC-010 (amended 2026-09-28): region EVIDENCE is shown, never a per-lesion confidence. `confidence` is null on every path, in the API and in MCP. The UI states that regions follow a deterministic MAGNIMS rule. Information for safety only. | `ms_region_classifier.py` (`distances_mm`, `region_overlap_fraction`, `zone_coverage_fraction`, `atlas_coverage`); `LesionDashboard.tsx` "Lesion % in zone" column + "No WM zone — DWM by default" warning; `region_evidence.py` strips persisted confidence for MCP | Test-bound (UT-CLS-002, UI-RC010). **Residual risk UNDETERMINED**: region-assignment accuracy has not been measured against expert labels, so re-assessment is required |
+| HAZ-005 | RC-032 (added 2026-09-28, REQ-SAFE-021, CAPA-006): each region-classification path is used only when its precondition holds; otherwise it is refused, with the reason shown. (1) The MNI152 MSMask atlas is used only on MNI-like grids (no registration is performed). (2) A parcellation is used only if it is a FreeSurfer-label parcellation, so a zone map is never read as one. (3) The geometric heuristics are used only on a readable, non-blank, axial inferior-to-superior image in the lesion mask's axis order. (4) The atlas zone map is generated fresh, in the lesion mask's axis order, and shape-checked; a persisted zone map is never reused. (5) Voxel spacing comes from the source image. (6) HTTP 422 when no path applies | `ms_region_classifier.py` (`looks_mni`, `NotMNISpaceError`, `looks_like_freesurfer_parcellation`, `prepare_geometric_image`, shape checks); `segmentation_regions.py` (classify-regions, generate-zone-map); `LesionDashboard.tsx` amber atlas-unavailable and geometric warnings | Test-bound (UT-CLS-003: `test_rc032_region_atlas_guard.py`; UI-RC032: `LesionDashboard.rc032.test.ts`). Negative controls recorded in `records/risk_verification/RC-032_negative_controls_2026-09-28.json`. The grid gate cannot certify true normalisation, and region accuracy is still unmeasured: **residual risk UNDETERMINED** |
 | HAZ-006 | Auto-transpose for axis mismatch | `SegmentationCanvasLocal.tsx` transposeSlice() | Yes |
 | HAZ-009 | Patient ID displayed prominently | `PatientBanner.tsx` MRN and name | Yes |
 | HAZ-010 | JWT authentication + WebAuthn | `auth.py`, `webauthn_service.py` | Yes |

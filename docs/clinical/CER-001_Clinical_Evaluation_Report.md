@@ -1,6 +1,6 @@
 # MSTool-AI: Clinical Evaluation Report
 
-**Document ID**: CER-001 | **Version**: 1.1 | **Date**: September 28, 2026
+**Document ID**: CER-001 | **Version**: 1.2 | **Date**: September 28, 2026
 **Standard**: EU MDR 2017/745 Annex XIV Part A, MEDDEV 2.7/1 Rev 4
 
 ---
@@ -9,6 +9,9 @@
 |---------|------|--------|-------------|
 | 1.0 | 2026-04-12 | Development Team | — |
 | 1.1 | 2026-09-28 | Development Team | — |
+| 1.2 | 2026-09-28 | Development Team | — |
+
+*Version 1.2 (CAPA-006, HAZ-005)*: Section 3.2 corrected. Earlier versions attributed distance thresholds (PV within 3 mm of the ventricle wall, JC within 4 mm of the cortical surface) to the MAGNIMS consensus. MAGNIMS defines these regions by contact (abutting), not by distance thresholds, ~~and the 3/4 mm values matched an earlier software version (commit cf780f4, February 2026), not the current one (1.5 mm, direct contact)~~. They are withdrawn. *Correction (review 2026-09-28)*: the 3/4 mm values did not match the software when this report was issued. The code applied 3.0/4.0/3.0 mm only in commit cf780f4 (2026-02-22, with a Harvard-Oxford zone map); commit 67fa336 (2026-02-28) changed it to 1.5 mm and added the MSMask atlas, and the four-path order dates from commit a637cdf (2026-03-14). Version 1.0 was issued on 2026-04-12 (commit 9ac536d) already stating 3/4 mm, six weeks after the code had moved to 1.5 mm and on the day the DDS was issued stating 1.5 mm: the report was wrong when issued and had not been reviewed against the code or the DDS. The same review aligned Section 3.2 with the code: only PV, JC and IT are evaluated from the images; the limits of the 1.5 mm rule; the MSMask zones described as atlas white matter within the one-voxel dilation of the structures (v1.2 said "one-voxel atlas dilation"), adapted from LST-AI and not validated, used only for images already registered to MNI152; region-assignment accuracy not measured for any path.
 
 ---
 
@@ -68,7 +71,7 @@ The MAGNIMS-CMSC-NAIMS 2024 consensus (Barkhof et al.) provides standardized
 recommendations for MRI acquisition, analysis, and reporting in MS:
 
 - **Acquisition**: 3D FLAIR and 3D T1w at 3T recommended; minimum 2D FLAIR at 1.5T
-- **Region classification**: Periventricular (PV, within 3mm of ventricle wall), juxtacortical (JC, within 4mm of cortical surface), infratentorial (IT, brainstem and cerebellum), deep white matter (DWM, all other)
+- **Region classification**: Periventricular (PV, abutting the lateral ventricles), juxtacortical (JC, abutting the cortex), infratentorial (IT, in or touching the brainstem or cerebellum), deep white matter (DWM, all other); the criterion is contact, not a distance threshold (Filippi et al. 2019). MSTool-AI evaluates only PV, JC and IT from the images; the spinal cord and the optic nerve are not evaluated from the images (evidence for them entered by the clinician is accepted by the DIS assessment). On its parcellation path MSTool-AI implements contact as a minimum distance of 1.5 mm or less between lesion voxel centres and the lateral-ventricle, cortex or brainstem/cerebellum labels (with slices thicker than 1.5 mm, contact through the slice direction is not detected; at 1 mm voxels, diagonal neighbours at 1.73 mm are missed). On its MSMask path (adapted from LST-AI, Wiltgen et al. 2024; the adaptation has not been validated) a lesion takes the highest-priority zone (IT > PV > JC > DWM) that any of its voxels lies in (zones: atlas white matter within the one-voxel dilation of the ventricle, cortex or infratentorial structures, plus the infratentorial structures themselves); this path is used only for images already registered to MNI152, since no registration is performed. The other paths (LST-AI zones, geometric heuristics) are described in IFU-001 Section 10.3. Region-assignment accuracy has not been measured for any path (HAZ-005 residual risk undetermined)
 - **Volumetry**: Brain volume measurement recommended for longitudinal monitoring, with normative reference ranges stratified by age and sex
 - **Reporting**: Structured reporting with lesion counts per region, new/enlarging lesion identification, and brain volume trends
 
@@ -244,7 +247,8 @@ control RC-010 (amended), no region-classification path emits or displays a per-
 confidence. Each lesion is shown with its region and the evidence of the path used (distances in
 mm; or "Lesion % in zone", the fraction of lesion voxels inside the assigned zone), plus an amber
 "No WM zone — DWM by default" warning when Deep White Matter was assigned by default rather than
-by the MAGNIMS rule. The region-assignment logic itself is unchanged. Verification: UT-CLS-002,
+by the MAGNIMS rule. The region-assignment logic itself is unchanged by that amendment (CAPA-006, the same
+day, then added path preconditions — see §3.2). Verification: UT-CLS-002,
 UI-RC010.
 
 This control is information-for-safety only. The accuracy of region assignment (any path) has

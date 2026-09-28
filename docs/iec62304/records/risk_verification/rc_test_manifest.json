@@ -25,7 +25,7 @@
     "status here is 'implemented' or 'deliberately_absent'."
   ],
   "manifest_version": 1,
-  "capa_reference": "CAPA-001, CAPA-002, CAPA-004, CAPA-005",
+  "capa_reference": "CAPA-001, CAPA-002, CAPA-004, CAPA-005, CAPA-006",
   "last_updated": "2026-09-28",
   "controls": {
     "RC-006": {
@@ -316,6 +316,19 @@
       "negative_control": "revert label_lesions to scipy's default (6-connectivity) -> 3 failed",
       "requirement": "REQ-FUNC-050",
       "note": "Evidence: deep-research 2026-07-27, 22 claims confirmed. scipy.ndimage.label defaulted to 6-connectivity, which over-counts vs the two reference challenges that both use 18-connectivity. The 3.0 mm3 floor is re-anchored to MSSEG-2016's evaluation gate and explicitly NOT the 3 mm-DIAMETER (~14 mm3) diagnostic criterion (the old '~3 voxels' justification was conflatable and is removed); the duplicated literal is consolidated. Longitudinal tracking now applies the same noise floor. CHANGES REPORTED LESION COUNT and DIS region-presence — a risk-controlled clinical change. HONEST LIMITS: 18-conn is the challenge-EVALUATION standard, not a clinical consensus; CC labelling cannot separate confluent lesions, so count is inherently less reliable than volume/load (rho ~0.92-0.97 vs ~0.83-0.94). Class C modules changed (lesion_analysis, ms_region_classifier) — needs review."
+    },
+    "RC-032": {
+      "description": "RC-032 (CAPA-006): each MAGNIMS region-classification path is applied only when its precondition holds, otherwise refused with the reason stated — MSMask atlas (MNI152, no registration) only on MNI-like grids (isotropic, aligned and unpermuted axes, per-axis FOV, grid centre, header transform) with a fresh zone map in the lesion mask's (k, a0, a1) order (persisted zone maps never reused); parcellation only a genuine FreeSurfer-label parcellation; geometric heuristics only with the source image in lesion order, an inferior->superior slice axis and a non-blank image; spacing from the source image",
+      "hazard": "HAZ-005",
+      "status": "implemented",
+      "implementation": "backend/app/services/ms_region_classifier.py (looks_mni, NotMNISpaceError, classify_lesions_with_atlas transpose, classify_from_zone_mask shape check, looks_like_freesurfer_parcellation, prepare_geometric_image / GeometricPreconditionError, classify_lesions_geometric refuses a mismatched image); backend/app/api/routes/segmentation_regions.py (source image gated with header; zone map always fresh; marker-less raw GCS overwrite removed; parcellation identity check in both endpoints; geometric preconditions; 422 with reasons when no path applies; generate-zone-map validates before deleting; spacing via _voxel_spacing_from_source_image); frontend/src/components/LesionDashboard.tsx (amber alert when the atlas was not used; amber warning on every geometric result)",
+      "tests": [
+        "tests/unit/test_rc032_region_atlas_guard.py",
+        "frontend/src/components/LesionDashboard.rc032.test.ts"
+      ],
+      "negative_control": "Executed 2026-09-28 against the final code, one mutation at a time (application of each asserted), failing test names recorded in docs/iec62304/records/risk_verification/RC-032_negative_controls_2026-09-28.json. Backend (23 tests): A_service_gate_off -> 1 failed; B_classify_source_gate_off -> 0 failed; AB_service_and_classify_gates_off -> 6 failed; B2_zonemap_route_gate_off -> 0 failed; F_zonemap_route_gate_and_mapping_off -> 1 failed; C_spacing_from_seg_metadata -> 10 failed; E_zonemap_undefined_names -> 2 failed; D_atlas_transpose_off -> 4 failed; P_zone_mask_shape_check_off -> 1 failed; M_persisted_zone_map_reused -> 1 failed; N_raw_gcs_overwrite -> 1 failed; O_delete_before_validation -> 2 failed; G_old_parcellation_autodetect -> 1 failed; H_classify_explicit_parcellation_unchecked -> 1 failed; H2_zonemap_explicit_parcellation_unchecked -> 1 failed; I_native_order_image -> 6 failed; J_no_orientation_check -> 2 failed; K_silent_whole_volume_fallback -> 1 failed; L1_gate_no_isotropy -> 1 failed; L3_gate_no_centre -> 2 failed; L4_gate_no_header -> 1 failed; L5_gate_column_max_instead_of_diagonal -> 0 failed; restored -> 23 passed. Frontend (4 tests): FE1_atlas_alert_removed -> 1 failed; FE2_geometric_warning_removed -> 1 failed; FE3_best_restored -> 1 failed; restored -> 4 passed. B/B2 alone are 0 BY DESIGN (each route gate is covered by the service gate; AB and F detected). L5 (diagonal-dominance) is 0: redundant with the per-axis FOV condition, not independently tested.",
+      "requirement": "REQ-SAFE-021",
+      "note": "CAPA-006. Motivation measured (scripts/safety/haz005_atlas_misregistration_probe.py, docs/research/records/haz005_atlas_misregistration_output.txt run 2): moving the anatomy by up to 3 deg / 3 % / 5 mm inside an MNI grid changed the MAGNIMS region of 216/786 expert lesions (27.5 %) and brain DIS in 4/30 scans. HONEST LIMITS: the grid gate cannot certify registration (an image resampled onto an MNI grid without registration passes); the geometric heuristics remain coordinate rules; the UI part is verified by source-level tests, not a render test; the two MNI gates on the classify path are redundant by design (each alone is not independently detectable). Does not establish region-assignment accuracy; HAZ-005 residual stays UNDETERMINED. Class C module changed (ms_region_classifier) — needs human review."
     }
   },
   "unverified_controls_note": [

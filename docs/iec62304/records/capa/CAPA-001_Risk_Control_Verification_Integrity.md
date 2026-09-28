@@ -191,7 +191,7 @@ implementation 7 days · effectiveness verification 30 days.
 | **CA-2** | Corrective | Implement RC-017: authenticate all WebSocket endpoints; authorize `file_id` against the caller. | Automated test asserts an unauthenticated WS connection is rejected (close code 1008). | **AUTH DONE** (see §5.3) — authorization split to CAPA-002 |
 | **CA-3** | Corrective | Correct RC-006, RC-007, RC-010, RC-017, RC-022 rows in the RMF and RCV-SUMMARY to their true status, with linked evidence. Re-verify the remaining 17 controls by the same standard. | No row reads VERIFIED without a linked, executable test ID. | PENDING — *2026-09-28 progress:* RC-010 corrected under RC-010 (amended) and bound to UT-CLS-002 + UI-RC010 with executed negative controls (§2.4 addendum); HAZ-005 residual remains UNDETERMINED. Other rows outstanding. |
 | **CA-4** | Corrective | Implement RC-007 (de-identification) or restate the control to match reality and re-assess HAZ-003 residual risk. | De-identifier with an allow-list, tested with PHI present in the input. | PENDING |
-| **CA-5** | Corrective | Make `voxel_spacing` a required input; remove the silent 1 mm default (HAZ-014). | Raises when spacing is unavailable; test with 3 mm slice thickness. | **DONE** — new control RC-024. 4 route fallbacks and 14 Class C service defaults removed; refuses with HTTP 422 rather than assuming. 26 assertions incl. the 3 mm case; negative controls 17 failed / 1 failed. |
+| **CA-5** | Corrective | Make `voxel_spacing` a required input; remove the silent 1 mm default (HAZ-014). | Raises when spacing is unavailable; test with 3 mm slice thickness. | **DONE** — new control RC-024. 4 route fallbacks and 14 Class C service defaults removed; refuses with HTTP 422 rather than assuming. 26 assertions incl. the 3 mm case; negative controls 17 failed / 1 failed. ⚠ *Erratum 2026-09-28 (CAPA-006): see §8 — two of the four route sites returned HTTP 500 on every call.* |
 | **PA-1** | Preventive | Require every risk control to be bound to an **automated test** (`RC-xxx` referenced in the test name/docstring). Verification records must cite the test ID and commit SHA, not prose. | Verification template updated; no VERIFIED row without a test ID. | PENDING |
 | **PA-2** | Preventive | Add a CI gate that fails the build when any RC lacks a linked passing test; enable `--cov-fail-under`; run `tests/security/` in CI. | CI red on a deliberately removed control (see §5). | PENDING |
 | **PA-3** | Preventive | Require independent verification: the author of a risk control may not record its verification. | QP updated; RCV records name a verifier distinct from the implementer. | PENDING |
@@ -316,6 +316,30 @@ control that reports "all passed" is an inconclusive result, never a passing one
 - `docs/iec62304/records/risk_verification/RCV-SUMMARY_2026-04-12.md`
 - `docs/iec62304/08_Problem_Resolution_Procedure.md`
 - `docs/iec62304/10_Verification_Validation_Plan.md`
+
+---
+
+## 8. Erratum — CA-5 (recorded 2026-09-28 under CAPA-006, CA-6.12)
+
+The CA-5 entry above is retained unchanged; this section corrects it.
+
+- **What was recorded:** "4 route fallbacks … removed; refuses with HTTP 422 rather than assuming".
+- **What happened:** in `e39cdaa` (2026-07-18) the two MAGNIMS region routes resolved spacing
+  from `SegmentationMetadata`, which never carries it. Every call to
+  `POST /segmentation/{id}/classify-regions` raised `VoxelSpacingUnavailableError`, and the
+  route's generic handler turned it into **HTTP 500**, not 422. `e39cdaa` also made
+  `POST /segmentation/generate-zone-map` reference undefined names (`metadata`,
+  `segmentation_id`): a `NameError`, and 500 on every call. PR #23 (2026-08-14) fixed the same
+  defect in the three analysis routes; the two region routes stayed broken until the CAPA-006
+  branch.
+- **Why the evidence did not show it:** the RC-024 route check was source-level (it asserted
+  that `resolve_voxel_spacing(` appears in the file). The unit tests used mock metadata that
+  carried spacing. Neither could observe a route failing at runtime.
+- **Correction:**
+  - Spacing now comes from the source image header (`_voxel_spacing_from_source_image`).
+  - The routes are tested through the application (`test_rc032_region_atlas_guard.py`).
+  - The RC-024 source check now requires the source-image resolution.
+  - See CAPA-006 §3.
 
 ---
 
