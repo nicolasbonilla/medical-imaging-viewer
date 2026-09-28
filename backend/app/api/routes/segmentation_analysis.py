@@ -103,36 +103,8 @@ async def _load_source_intensity(file_id, storage_service, context: str):
         return None, None, None
 
 
-def _looks_mni(affine, shape) -> bool:
-    """Best-effort check that an image is in a standard MNI152 space, so the MSMask
-    atlas (which is MNI152) can be resampled onto it VALIDLY. The MSMask region map is
-    only meaningful on MNI-normalized data; on native/oblique clinical scans the atlas
-    resample degrades to a crude center-alignment and would mint CONFIDENTLY WRONG
-    per-region counts (adversarial Finding F1). This gate fails such inputs closed.
-
-    Two resolution-independent signals of MNI normalization: (1) the direction cosines
-    are near axis-aligned (MNI templates are axis-aligned; native oblique/tilted
-    acquisitions are not), and (2) the world-space FOV matches the ~181x217x181 mm
-    MNI152 brain box. It cannot certify true normalization (an axis-aligned native head
-    scan could still pass) — the region output is therefore ALSO labeled
-    candidate/atlas-based; this only rejects the obvious off-MNI cases.
-    """
-    try:
-        R = np.asarray(affine, dtype=float)[:3, :3]
-        vox = np.linalg.norm(R, axis=0)
-        if not np.all(vox > 1e-3):
-            return False
-        Rn = R / vox
-        # MNI templates are EXACTLY axis-aligned (normalization resamples onto the
-        # standard grid), so require near-zero rotation: any real native tilt (>~2.5deg)
-        # is rejected. cos(2.5deg)=0.999.
-        if any(np.abs(Rn[:, c]).max() < 0.999 for c in range(3)):
-            return False
-        extent = np.sort(np.abs(R @ (np.asarray(shape[:3], dtype=float) - 1.0)))
-        mni = np.sort(np.array([181.0, 217.0, 181.0]))
-        return bool(np.all(np.abs(extent - mni) / mni < 0.25))  # within 25%
-    except Exception:  # noqa: BLE001
-        return False
+# Single source of truth: the guard lives in the Class C classifier (HAZ-005, RC-032).
+from app.services.ms_region_classifier import looks_mni as _looks_mni  # noqa: E402
 
 
 def _require_comparable_grid(shape_tp1, shape_tp2) -> None:
@@ -728,7 +700,7 @@ async def compare_longitudinal(
                         if zm_internal.shape == mask_tp1_bin.shape:
                             zone_mask = zm_internal.astype(np.uint8)
                             region_atlas_note = (
-                                "MAGNIMS regions from the MSMask MNI152 atlas (LST-AI method) — "
+                                "MAGNIMS regions from the MSMask MNI152 atlas (adapted from LST-AI) — "
                                 "CANDIDATE, atlas-based; assumes MNI-space input and is not "
                                 "lesion-scale certified. Radiologist adjudication required."
                             )

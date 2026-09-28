@@ -1,6 +1,6 @@
 # MSTool-AI: General Safety and Performance Requirements
 
-**Document ID**: GSPR-001 | **Version**: 1.0 | **Date**: April 12, 2026
+**Document ID**: GSPR-001 | **Version**: 1.1 | **Date**: September 28, 2026
 **Standard**: EU MDR 2017/745 Annex I
 
 ---
@@ -8,6 +8,9 @@
 | Version | Date | Author | Approved By |
 |---------|------|--------|-------------|
 | 1.0 | 2026-04-12 | Development Team | — |
+| 1.1 | 2026-09-28 | Development Team | — |
+
+*Version 1.1 (CAPA-006, HAZ-005)*: GSPR 9 and GSPR 22 corrected. Version 1.0 stated that MAGNIMS classification "uses published distance thresholds (PV<=3mm, JC<=4mm, IT<=3mm) per McDonald 2024 criteria". Those values were never published MAGNIMS thresholds (MAGNIMS defines contact) ~~and described an earlier software version (commit cf780f4, February 2026)~~; they are withdrawn. *Correction (review 2026-09-28)*: they did not describe the software at issue. The code applied 3.0/4.0/3.0 mm only in commit cf780f4 (2026-02-22, with a Harvard-Oxford zone map); commit 67fa336 (2026-02-28) changed it to 1.5 mm and added the MSMask atlas, and the four-path order dates from commit a637cdf (2026-03-14). Version 1.0 was issued on 2026-04-12 (commit 9ac536d) already stating 3/4/3 mm, six weeks after the code had moved to 1.5 mm and on the day the DDS was issued stating 1.5 mm: this document was wrong when issued and had not been reviewed against the code or the DDS. Version 1.0 also stated under GSPR 9 that "MAGNIMS classification validated against expert annotations"; no such validation has been performed, so that statement is withdrawn and GSPR 9 and GSPR 22 are set to "Partially compliant" (region-assignment accuracy unmeasured, HAZ-005 residual undetermined). The GSPR 22 note now describes the MSMask path as dilated atlas structures (not zones), adapted from LST-AI and not validated, used only for images already registered to MNI152.
 
 ---
 
@@ -109,8 +112,8 @@ This document demonstrates compliance of MSTool-AI with the General Safety and P
 | **Requirement** | Devices designed with a measuring or diagnostic function shall provide sufficient accuracy and stability. |
 | **Standard Applied** | IEC 62304:2006+A1:2015, ISO 14971:2019 |
 | **Evidence** | VVP-001 (performance validation), SRS-001 (accuracy requirements) |
-| **Compliance Status** | Compliant |
-| **Notes** | Volumetric measurements use voxel counting with known voxel dimensions. MAGNIMS classification validated against expert annotations. |
+| **Compliance Status** | ~~Compliant~~ **Partially compliant** *(v1.1, CAPA-006)*: the accuracy of MAGNIMS region assignment has not been measured for any classification path (HAZ-005 residual risk undetermined) |
+| **Notes** | Volumetric measurements use voxel counting with known voxel dimensions. ~~MAGNIMS classification validated against expert annotations.~~ (Withdrawn v1.1, CAPA-006: region assignment has not been validated against expert annotations; HAZ-005 residual undetermined — see GSPR 22) |
 
 ---
 
@@ -243,8 +246,8 @@ This document demonstrates compliance of MSTool-AI with the General Safety and P
 | **Requirement** | Devices designed to measure shall provide sufficient accuracy and stability for their intended purpose. Measurement units shall be expressed in legal units of measurement. |
 | **Standard Applied** | ISO 14971:2019, IEC 62304:2006+A1:2015 |
 | **Evidence** | SRS-001 (volumetry accuracy requirements), VVP-001 (measurement validation), DD-001 (algorithm specifications) |
-| **Compliance Status** | Compliant |
-| **Notes** | Brain volumetry reports volumes in mL and mm3. MAGNIMS classification uses published distance thresholds (PV<=3mm, JC<=4mm, IT<=3mm) per McDonald 2024 criteria. Measurement uncertainty documented. |
+| **Compliance Status** | ~~Compliant~~ **Partially compliant** *(v1.1, CAPA-006)*: the accuracy of MAGNIMS region assignment has not been measured against expert region labels for any classification path (HAZ-005 residual risk undetermined) |
+| **Notes** | Brain volumetry reports volumes in mL and mm3. MAGNIMS classification applies the MAGNIMS / McDonald 2024 contact criterion (lesion abutting the lateral ventricles or cortex, or in or touching the brainstem/cerebellum); MAGNIMS defines contact, not distance thresholds. The software implements contact as a minimum distance <= 1.5 mm between lesion voxel centres and the reference labels on the parcellation path (contact through slices thicker than 1.5 mm is not detected), and on the MSMask path as lesion voxels lying in an atlas zone (atlas white matter within the one-voxel dilation of the MNI152 MSMask ventricle, cortex and infratentorial structures, plus the infratentorial structures themselves; adapted from LST-AI, not validated). The MSMask path is used only for images already registered to MNI152 (no registration is performed; native clinical scans normally fail its grid check). The least accurate geometric heuristics are refused unless the image is an axial, inferior-to-superior 3-D image on the lesion-mask grid, and are always flagged with an on-screen warning; when no path can be applied validly, no regions are assigned (IFU-001 Section 10.3). Region-assignment accuracy has not been measured against expert region labels (HAZ-005 residual risk undetermined). Measurement uncertainty documented. |
 
 ### GSPR 23: Protection Against Risks Posed by the Device to the Patient and User
 
@@ -282,7 +285,7 @@ This document demonstrates compliance of MSTool-AI with the General Safety and P
 | 6 | Usability | Yes | In Progress |
 | 7 | Lifecycle Risk Management | Yes | Compliant |
 | 8 | Interaction with Other Devices | Yes | Compliant |
-| 9 | Diagnostic/Measuring (General) | Yes | Compliant |
+| 9 | Diagnostic/Measuring (General) | Yes | ~~Compliant~~ Partially compliant (v1.1, CAPA-006: MAGNIMS region-assignment accuracy unmeasured) |
 | 10 | Chemical/Physical/Biological | No | N/A |
 | 11 | Infection/Microbial | No | N/A |
 | 12 | Substances | No | N/A |
@@ -295,7 +298,7 @@ This document demonstrates compliance of MSTool-AI with the General Safety and P
 | 19 | Active Implantable | No | N/A |
 | 20 | Mechanical/Thermal (Specific) | No | N/A |
 | 21 | Environmental | No | N/A |
-| 22 | Diagnostic/Measuring (Specific) | Yes | Compliant |
+| 22 | Diagnostic/Measuring (Specific) | Yes | ~~Compliant~~ Partially compliant (v1.1, CAPA-006: MAGNIMS region-assignment accuracy unmeasured) |
 | 23 | Information Supplied | Yes | Compliant |
 
 ---

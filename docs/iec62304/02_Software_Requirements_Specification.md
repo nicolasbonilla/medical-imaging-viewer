@@ -3,7 +3,7 @@
 ## IEC 62304 Clause 5.2 Compliant Requirements Document
 
 **Document ID**: SRS-001
-**Version**: 1.1 (2026-09-28 — REQ-SAFE-010 amended)
+**Version**: 1.2 (2026-09-28 — REQ-FUNC-053 corrected, REQ-SAFE-021 added, REQ-SAFE-020 marked not implemented; CAPA-006)
 **Effective Date**: April 12, 2026
 **Standard**: IEC 62304:2006+A1:2015 Clause 5.2
 **Software Safety Class**: IEC 62304 Class C
@@ -17,6 +17,7 @@
 |---------|------|--------|---------|-------------|
 | 1.0 | 2026-04-12 | Development Team | Initial release | — |
 | 1.1 | 2026-09-28 | Development Team | REQ-SAFE-010 amended (audit #8): no per-lesion MAGNIMS confidence emitted or displayed; region evidence instead (RC-010 amended, HAZ-005) | N. G. Bonilla Vargas — approved 2026-09-28 (PR #42) |
+| 1.2 | 2026-09-28 | Development Team | CAPA-006. REQ-FUNC-053 corrected: it stated "SynthSeg parcellation + EDT (Tier 2) with MSMask atlas fallback (Tier 1)", which never matched the code (four paths since a637cdf, 2026-03-14; SynthSeg and LST-AI disabled by default). REQ-SAFE-021 added: each MAGNIMS path is applied only when its precondition holds (RC-032, HAZ-005). REQ-SAFE-020 annotated NOT IMPLEMENTED (no registration to MNI exists; RC-022 not verified) — it contradicted REQ-SAFE-021 as written | *(pending — PR)* |
 
 ---
 
@@ -102,7 +103,7 @@ This SRS covers all software requirements for MSTool-AI version 2.0, including f
 | REQ-FUNC-050 | The system shall perform connected component analysis to identify individual lesions. | Must | C | Test | HAZ-005 |
 | REQ-FUNC-051 | The system shall compute per-lesion volume, centroid, and bounding box. | Must | C | Test | — |
 | REQ-FUNC-052 | The system shall evaluate McDonald 2024 DIS criteria across PV, JC, IT regions. | Must | C | Test | HAZ-008 |
-| REQ-FUNC-053 | The system shall classify lesions into MAGNIMS regions using SynthSeg parcellation + EDT (Tier 2) with MSMask atlas fallback (Tier 1). | Must | C | Test | HAZ-005 |
+| REQ-FUNC-053 | The system shall classify lesions into MAGNIMS regions (PV = abutting the lateral ventricles, JC = abutting the cortex, IT = in or touching the brainstem/cerebellum, otherwise DWM) using the first applicable path, in order: (1) LST-AI zones (voxel-wise copy of the zones of an LST-AI segmentation of the same image); (2) a FreeSurfer-label parcellation of the same image with a Euclidean-distance contact rule (minimum distance <= 1.5 mm); (3) the MSMask atlas (MNI-grid images only); (4) geometric heuristics (axial, inferior-to-superior images only). Paths 2-4 apply the priority IT > PV > JC > DWM. Each path is subject to REQ-SAFE-021. The path used shall be reported with the result. *(Corrected 2026-09-28, CAPA-006 — previous text: "using SynthSeg parcellation + EDT (Tier 2) with MSMask atlas fallback (Tier 1)".)* | Must | C | Test | HAZ-005 |
 | REQ-FUNC-054 | The system shall provide longitudinal tracking with IoU-based lesion matching (threshold >= 0.3). | Must | C | Test | HAZ-007 |
 | REQ-FUNC-055 | The system shall classify longitudinal lesion status: NEW, RESOLVED, ENLARGED (>20%), SHRUNK (<-20%), STABLE. | Must | C | Test | HAZ-007 |
 | REQ-FUNC-055a | Longitudinal new/enlarging counts shall be presented as UNADJUDICATED CANDIDATES, not confirmed findings: the comparison performs NO spatial registration (equal array shape is not voxel alignment), so the response shall carry `registration_verified=false` + `adjudication_required=true` + a false-positive caveat, and reports shall label them as candidates requiring radiologist review and shall NOT assert them as dissemination-in-time (DIT) evidence without reader adjudication. The comparison shall refuse (HTTP 400) non-comparable grids rather than silently re-aligning them. | Must | C | Test | HAZ-007 |
@@ -169,7 +170,8 @@ This SRS covers all software requirements for MSTool-AI version 2.0, including f
 | REQ-SAFE-017 | DICOM-SEG export shall use standard SOP Class UID and proper DICOM header structure. | HAZ-011 | Must | Test |
 | REQ-SAFE-018 | DICOMweb import shall display study/patient metadata for user confirmation before import. | HAZ-012 | Must | Test |
 | REQ-SAFE-019 | Report generation shall timeout after 30 seconds with user-visible error message if API fails. | HAZ-013 | Must | Test |
-| REQ-SAFE-020 | All images shall be preprocessed to MNI 1mm isotropic template before quantitative analysis. | HAZ-014 | Must | Inspection |
+| REQ-SAFE-020 | All images shall be preprocessed to MNI 1mm isotropic template before quantitative analysis. *(Status 2026-09-28, CAPA-006: NOT IMPLEMENTED — the software performs no registration to MNI; RC-022 is not verified (RMF §5.1). Quantitative analysis instead requires the image's own voxel spacing (RC-024), and atlas-based region classification is restricted to images already on an MNI grid (REQ-SAFE-021). Retire or restate — Safety Officer decision.)* | HAZ-014 | Must | Inspection |
+| REQ-SAFE-021 | Each MAGNIMS region-classification path shall be applied only when its precondition holds, and shall otherwise be refused (explicit request: an error; automatic mode: the next path) with the reason stated to the user: (a) MSMask atlas (MNI152, no registration performed) only on an image whose grid is MNI-like — isotropic voxels, axes aligned and not permuted, field of view within 25 % of 181 x 217 x 181 mm per axis, grid centre within 10 mm of the MNI template centre, a spatial transform in the header — with the zone map generated for the request in the lesion mask's axis order (a persisted zone map shall not be reused; a shape mismatch shall be refused, never broadcast); (b) parcellation only a genuine FreeSurfer-label parcellation (a MAGNIMS zone map or a region-classified lesion mask shall be refused); (c) geometric heuristics only with the source image in the lesion mask's axis order, a determinable orientation with the slice axis running inferior to superior, and a non-blank image. If no path applies, no regions shall be assigned. Region classification and zone-map generation shall take voxel spacing from the source image (RC-024). The user interface shall state when the atlas was not used and whenever regions come from the geometric heuristics. The grid check does not certify that an image is truly normalized. | HAZ-005 (HAZ-014 for spacing) | Must | Test |
 
 ---
 

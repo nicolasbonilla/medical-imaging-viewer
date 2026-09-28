@@ -1,6 +1,6 @@
 # MSTool-AI: Usability Engineering File
 
-**Document ID**: UEF-001 | **Version**: 1.1 | **Date**: September 28, 2026
+**Document ID**: UEF-001 | **Version**: 1.2 | **Date**: September 28, 2026
 **Standard**: IEC 62366-1:2015+A1:2020
 
 ---
@@ -9,6 +9,9 @@
 |---------|------|--------|-------------|
 | 1.0 | 2026-04-12 | Development Team | — |
 | 1.1 | 2026-09-28 | Development Team | — |
+| 1.2 | 2026-09-28 | Development Team | — |
+
+*Version 1.2 (CAPA-006, HAZ-005)*: H-09 addendum. The mitigation "two-tier classification with fallback" ~~described an earlier software version~~. *Correction (review 2026-09-28)*: it did not describe the software when this file was issued on 2026-04-12 (commit 9ac536d): the four-path order had been in the code since commit a637cdf (2026-03-14). The current four-path order, the MNI-space requirement for the atlas path (its five grid conditions and on-screen warning), the refusal preconditions and warning of the geometric path, and the refusal when no path applies are recorded in the addendum. In the H-09 mitigation, "distance to anatomical boundary shown" is marked as applying to the parcellation path only; Section 10.3.1 lists the two amber classification-method warnings for usability evaluation.
 
 ---
 
@@ -235,7 +238,7 @@ removed. These two items shall not be credited as mitigation for H-08.
 **Hazard**: Incorrect DIS assessment may affect diagnosis.
 **Severity**: Serious
 **Mitigation**: Classification confidence displayed; distance to anatomical boundary
-shown; user can override region assignment; two-tier classification with fallback.
+shown *(parcellation path only; CAPA-006)*; user can override region assignment; ~~two-tier classification with fallback~~ *(superseded — see the CAPA-006 addendum below)*.
 **Addendum 2026-09-28 (HAZ-005, REQ-SAFE-010 amended, RC-010 (amended))**: "Classification
 confidence displayed" is **NOT IMPLEMENTED — removed**. No classification path has a calibrated
 per-lesion probability; the value previously shown as a colour-coded percentage was a mapped
@@ -249,6 +252,27 @@ information-for-safety only; the accuracy of region assignment has not been meas
 expert region labels and the HAZ-005 residual risk remains undetermined (see RMF-001).
 Verified by UI-RC010 (frontend/src/components/LesionDashboard.haz005.test.ts) and UT-CLS-002
 (backend/tests/unit/test_region_confidence_haz005.py).
+**Addendum 2026-09-28 (CAPA-006, HAZ-005)**: "two-tier classification with fallback" is
+corrected. In automatic mode ("Auto"), classification tries four paths in this order and uses the
+first that applies: LST-AI zones (copied voxel by voxel, no contact rule and no priority),
+parcellation + distance transform (1.5 mm, direct contact), MSMask atlas, geometric heuristics.
+The path used is shown. The "distance to anatomical boundary" evidence exists on the
+parcellation path only; the geometric path shows heuristic distance proxies. The MSMask atlas is
+in MNI152 space and the image is not registered to it, so the atlas is used only for images
+already registered to MNI152 whose grid meets all five conditions (isotropic voxels; axes aligned
+with, and not permuted relative to, the world axes within about 2.5°; field of view within 25 %
+of 181 x 217 x 181 mm on each axis; grid centre within 10 mm of (0, -18, 18) mm; a spatial
+transform in the header). Native clinical scans normally fail them. The least accurate geometric
+heuristics are refused unless the image can be read, its orientation determined, its slice axis
+runs from inferior to superior (axial), it is 3-D, on the lesion-mask grid and not blank. When
+the atlas was refused and the geometric heuristics were used, an amber warning is shown: "Atlas
+regions not used: this image is not in MNI space, so the least accurate geometric fallback was
+applied. Verify every region before using it for DIS." Otherwise, whenever regions come from the
+geometric heuristics, an amber warning is shown: "Geometric heuristics: the least accurate
+method (coordinate rules, not anatomical landmarks). Verify every region before using it for
+DIS." If no path can be applied validly, the request is refused, the reasons are shown and no
+regions are assigned (IFU-001 Section 10.3). These are information-for-safety and fail-closed
+controls; region-assignment accuracy has not been measured for any path.
 
 ### H-10: Longitudinal Mismatch — Wrong Timepoint Comparison
 
@@ -483,6 +507,11 @@ evaluated in formative (Section 7.3) and summative (Section 8.4, S2) testing:
 - **Distance columns (mm)** — parcellation / geometric evidence; "-" when a landmark is absent.
 - **Summary line** — "Regions follow a deterministic MAGNIMS rule; no per-lesion confidence is
   reported."
+- **Amber classification-method warnings** (added 2026-09-28, CAPA-006) — "Atlas regions not
+  used: this image is not in MNI space, so the least accurate geometric fallback was applied.
+  Verify every region before using it for DIS." when the atlas was refused; otherwise, whenever
+  regions come from the geometric heuristics, "Geometric heuristics: the least accurate method
+  (coordinate rules, not anatomical landmarks). Verify every region before using it for DIS."
 
 Evaluation questions: do users verify flagged lesions before accepting the DIS result; do users
 misread "Lesion % in zone" as a confidence or probability.

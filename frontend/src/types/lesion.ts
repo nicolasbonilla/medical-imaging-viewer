@@ -301,7 +301,13 @@ export interface ClassifiedLesion {
 
 export interface RegionClassificationResult {
   segmentation_id: string;
-  method: 'parcellation' | 'geometric' | 'msmask';
+  method: 'parcellation' | 'geometric' | 'msmask' | 'lst-ai';
+  /** RC-032: set when the MNI-space MSMask atlas was NOT applied because the image is not in
+   *  MNI space (the geometric fallback was used instead). */
+  atlas_unavailable_reason?: string;
+  /** RC-032 (CAPA-006 review): the atlas path FAILED (a fault, not a refusal); the geometric
+   *  fallback was applied. */
+  atlas_error?: string;
   lesions: ClassifiedLesion[];
   total_classified: number;
   classification_summary: Record<string, number>;

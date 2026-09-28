@@ -425,7 +425,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
         </div>
         <p className="text-[9px] text-gray-400 leading-relaxed">
           {t('classify.description',
-            'Auto-classify lesions into Periventricular, Juxtacortical, Infratentorial, and Deep WM regions using brain parcellation (SynthSeg) + distance transform analysis.'
+            'Classify lesions into Periventricular, Juxtacortical, Infratentorial and Deep WM regions (MAGNIMS contact rule). The method used is shown with the result; verify every region before using it for DIS.'
           )}
         </p>
 
@@ -442,7 +442,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
               }`}
             >
               {m === 'auto'
-                ? t('classify.methodAuto', 'Auto (best)')
+                ? t('classify.methodAuto', 'Auto')
                 : m === 'msmask'
                 ? t('classify.methodMSMask', 'MSMask')
                 : t('classify.methodGeometric', 'Geometric')}
@@ -478,6 +478,42 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                 {classification.processing_time_ms}ms
               </span>
             </div>
+            {classification.atlas_unavailable_reason && (
+              <div
+                className="flex items-start gap-1 text-[9px] text-amber-300 bg-amber-900/20 border border-amber-700/40 rounded px-1.5 py-1"
+                role="alert"
+                data-testid="atlas-unavailable"
+              >
+                <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-px" aria-hidden="true" />
+                <span>
+                  {t('classify.atlasUnavailable', 'Atlas regions not used: this image is not in MNI space, so the geometric fallback (coordinate rules, not anatomical landmarks) was applied. Verify every region before using it for DIS.')}
+                </span>
+              </div>
+            )}
+            {classification.atlas_error && (
+              <div
+                className="flex items-start gap-1 text-[9px] text-amber-300 bg-amber-900/20 border border-amber-700/40 rounded px-1.5 py-1"
+                role="alert"
+                data-testid="atlas-error"
+              >
+                <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-px" aria-hidden="true" />
+                <span>
+                  {t('classify.atlasError', 'Atlas regions could not be computed (internal error), so the geometric fallback was applied. Verify every region before using it for DIS.')}
+                </span>
+              </div>
+            )}
+            {classification.method === 'geometric' && !classification.atlas_unavailable_reason && !classification.atlas_error && (
+              <div
+                className="flex items-start gap-1 text-[9px] text-amber-300 bg-amber-900/20 border border-amber-700/40 rounded px-1.5 py-1"
+                role="alert"
+                data-testid="geometric-warning"
+              >
+                <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-px" aria-hidden="true" />
+                <span>
+                  {t('classify.geometricWarning', 'Geometric heuristics: coordinate rules, not anatomical landmarks; their accuracy has not been measured. Verify every region before using it for DIS.')}
+                </span>
+              </div>
+            )}
             <div className="flex flex-wrap gap-x-2 gap-y-1">
               {Object.entries(classification.classification_summary).map(([region, count]) => (
                 <span key={region} className="flex items-center gap-1 text-[9px]">

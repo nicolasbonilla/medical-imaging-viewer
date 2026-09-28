@@ -3,8 +3,8 @@
 ## IEC 62304 Clause 5.3 — Software Architectural Design
 
 **Document ID**: SAD-001
-**Version**: 1.0
-**Effective Date**: April 12, 2026
+**Version**: 1.1
+**Effective Date**: September 28, 2026 (v1.0: April 12, 2026)
 **Software Safety Class**: IEC 62304 Class C
 **Confidentiality**: Restricted — Regulatory Audit Use Only
 
@@ -15,6 +15,7 @@
 | Version | Date | Author | Changes | Approved By |
 |---------|------|--------|---------|-------------|
 | 1.0 | 2026-04-12 | Development Team | Initial release | — |
+| 1.1 | 2026-09-28 | Development Team | CAPA-006 / REQ-SAFE-021 / RC-032 (HAZ-005). §3.2 BE-CLS: the description "EDT-based region classification" was incomplete. EDT is used by only one of four paths, and the MSMask atlas path is the usual one for MNI-space images. Replaced by the four-path MAGNIMS region classification with the RC-032 path preconditions (DD-001 DD-CLS-001). §5: SOUP count 37 → 38 (MSMask atlas data file added to SOUP-001 as SOUP-BE-025); nilearn (SOUP-BE-020, now Class C) and the MSMask atlas added to the key architectural SOUP table | — |
 
 ---
 
@@ -111,7 +112,7 @@ This document describes the software architecture of MSTool-AI, transforming sof
 | BE-VOL | Brain Volumetry | **C** | Volume computation, normative | `services/brain_volumetry_service.py` |
 | BE-RPT | Report Generation | **C** | Claude API integration | `services/brain_report_service.py` |
 | BE-LES | Lesion Analysis | **C** | Connected components, DIS | `services/lesion_analysis_service.py` |
-| BE-CLS | MAGNIMS Classifier | **C** | EDT-based region classification | `services/ms_region_classifier.py` |
+| BE-CLS | MAGNIMS Classifier | **C** | MAGNIMS region classification (contact criterion, IT > PV > JC > DWM). Four paths are tried in order in `auto`: LST-AI zones (disabled by default); FreeSurfer parcellation + EDT (<= 1.5 mm); MSMask atlas (MNI152, no registration); geometric heuristics (least accurate). RC-032 path preconditions: the atlas is used only on MNI-like grids (`looks_mni`); a parcellation only if it is a FreeSurfer-label parcellation; the geometric heuristics only on an axial inferior-to-superior 3-D image in the lesion mask's axis order. A refused path returns HTTP 422 or falls through with the reason shown; if no path applies, HTTP 422. The zone map is always generated fresh and shape-checked. Region accuracy is unmeasured (HAZ-005). *(v1.0: "EDT-based region classification"; corrected v1.1, CAPA-006)* | `services/ms_region_classifier.py`, `api/routes/segmentation_regions.py` |
 | BE-LONG | Longitudinal Tracking | B | IoU lesion matching | `services/longitudinal_tracking_service.py` |
 | BE-IMG | Imaging Service | B | NIfTI/DICOM processing | `services/imaging_service.py` |
 | BE-PACS | DICOMweb Service | B | PACS bridge | `services/dicomweb_service.py` |
@@ -168,7 +169,7 @@ This document describes the software architecture of MSTool-AI, transforming sof
 
 ## 5. SOUP Item Architecture (Clause 5.3.3, 5.3.4)
 
-See SOUP-001 for the complete Bill of Materials (37 items). Key architectural SOUP dependencies:
+See SOUP-001 for the complete Bill of Materials (38 items; 37 until 2026-09-28). Key architectural SOUP dependencies:
 
 | SOUP Item | Architectural Role | Failure Impact | Safety Class |
 |-----------|-------------------|---------------|-------------|
@@ -179,6 +180,8 @@ See SOUP-001 for the complete Bill of Materials (37 items). Key architectural SO
 | nibabel 5.3 | NIfTI file parsing | Cannot load brain images | C |
 | NumPy 1.26 | Volumetry computation | Wrong volume calculations | C |
 | SciPy 1.13 | EDT, connected components | Wrong region classification | C |
+| nilearn (`>=0.10.0`, not pinned; CAPA-006 PA-6.5) | Resamples the MSMask atlas zone map onto the image grid (`resample_to_img`) | Wrong region classification (MSMask path) | C |
+| MSMask atlas data (LST-AI, SOUP-BE-025) | MNI152 tissue labels from which the atlas zone map is built | Wrong region classification (MSMask path) | C |
 
 ---
 

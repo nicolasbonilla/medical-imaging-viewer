@@ -241,19 +241,24 @@ All these documents are automatically monitored by the QMS for freshness, comple
 
 ### 3.3 MAGNIMS Region Classification
 
-Two-tier classification system following the MAGNIMS-CMSC-NAIMS 2024 consensus guidelines:
+*CAPA-006 (2026-09-28)*: this section previously described a two-tier classification (parcellation primary, MSMask fallback) and, from 2026-02-28 until 2026-04-03, distance thresholds of 3/4/3 mm that the code no longer applied; the four-path order below is what the code does.
 
-- **Tier 2 (Primary)**: SynthSeg parcellation + Euclidean Distance Transform from FreeSurfer reference structures (ventricles {4,43}, cortex {3,42}, infratentorial {7,8,16,46,47}). Distance thresholds: PV ≤ 1.5mm, JC ≤ 1.5mm, IT ≤ 1.5mm.
-- **Tier 1 (Fallback)**: MSMask atlas (Wiltgen et al., 2024) with binary dilation and priority cascade zone assignment.
+Deterministic MAGNIMS contact rule (MAGNIMS / McDonald 2024; Filippi et al. 2019): PV = abutting the lateral ventricles, JC = abutting the cortex, IT = in or touching the brainstem/cerebellum, otherwise DWM. On the parcellation, MSMask and geometric paths the priority is IT > PV > JC > DWM; the LST-AI path copies LST-AI's zones voxel by voxel. Only PV, JC and IT count towards brain DIS (spinal cord and optic nerve are not evaluated from the images; clinician-entered evidence for them is accepted by the DIS assessment). In `auto` mode the paths are tried in this order, the first that applies is used, and the path used is reported. If no path can be applied validly, the request is refused (HTTP 422) with the reasons — no regions are guessed. Region-assignment accuracy has not been measured for any path (HAZ-005 residual risk undetermined).
+
+1. **LST-AI zones**: only if another segmentation of the same image was produced by LST-AI (`validation_source` contains `lst-ai`); LST-AI integration disabled by default (`LSTAI_ENABLED=false`, not enabled by the deployment pipeline). Copies, voxel by voxel, the zone LST-AI assigned: no contact rule and no priority, so one lesion can receive more than one region; lesion voxels outside LST-AI's zones become DWM without a warning.
+2. **Parcellation + Euclidean Distance Transform**: with an explicit `parcellation_id`, or when another segmentation of the same image looks like a FreeSurfer parcellation: ≥ 3 of the labels {2,3,4,7,8,10,16,41,42,43} and ≥ 1 of {16,41,42,43}, and not a MAGNIMS zone map (an explicit `parcellation_id` that fails this test is refused with HTTP 422). SynthSeg integration disabled by default (`SYNTHSEG_ENABLED=false`, not enabled by the deployment pipeline; when enabled it runs as a separate service at `SYNTHSEG_ENDPOINT`). Reference structures: lateral ventricles {4,43}, cortex {3,42}, brainstem/cerebellum {7,8,16,46,47}. "Abutting" = minimum distance between lesion voxel centres and the structure ≤ 1.5 mm (PV, JC, IT). With slices thicker than 1.5 mm, contact through the slice direction is not detected; at 1 mm voxels, diagonal (corner) neighbours at 1.73 mm are missed.
+3. **MSMask atlas** (adapted from LST-AI's MSMask, Wiltgen et al., 2024; the adaptation has not been validated). **Only for images already registered to MNI152**: no registration is performed, and the image grid must meet all of: isotropic voxels (max/min spacing ≤ 1.05); axes aligned with and not permuted relative to the world axes (within ~2.5°); field of view within 25 % of 181×217×181 mm on each axis; grid centre within 10 mm of the MNI template centre (0, −18, 18) mm; a spatial transform in the header (sform or qform code ≠ 0). Native clinical scans normally fail these conditions. The zone map is generated fresh for every classification (a stored zone map is never reused). Zones: the atlas ventricle, cortex and infratentorial structures dilated by one voxel (3×3×3 cube on the 1 mm atlas) and intersected with atlas white matter, plus the infratentorial structures themselves; zone precedence IT > PV > JC. A lesion takes the highest-priority zone that any of its voxels lies in (IT > PV > JC > DWM, the DWM zone being the remaining atlas white matter); a lesion with no voxel in any zone is DWM by default and flagged "No WM zone — DWM by default". If the grid check fails: HTTP 422 when `msmask` is requested explicitly; in `auto` the geometric path is tried and an amber "Atlas regions not used" warning is shown. The grid check cannot certify true normalization (an image resampled onto an MNI grid without registration passes).
+4. **Geometric heuristics** (least accurate; coordinate rules, not anatomical landmarks). Refused unless the source image can be read, its orientation can be determined, its slice axis runs from inferior to superior (axial; sagittal, coronal or superior-to-inferior slice order is refused), it is 3-D, it is on the same grid as the lesion mask and it is not blank. Brain outline = Otsu threshold (×0.3) of the image intensities, holes filled (the head outline if the image is not skull-stripped); IT = lesion centroid in the lowest 25 % of the outline's extent along the slice axis; PV = mean distance of the lesion's voxels from the brain centre < 35 % of the largest such distance in the image array; JC = lesion within min(8 mm, 15 % of the outline's maximum depth) of the outline surface; otherwise DWM. Whenever regions come from this path the UI shows an amber "Geometric heuristics: the least accurate method…" warning (or the atlas warning when the atlas was refused).
+
 - **Zone Map Overlay**: Semi-transparent background visualization of anatomical zones with independent opacity control.
 - **Region Evidence (no confidence score)**: Region assignment is a deterministic MAGNIMS rule; no per-lesion confidence is reported (REQ-SAFE-010, amended 2026-09-28; HAZ-005). Each lesion shows the evidence of the path used: distances to landmarks in mm (parcellation), or the fraction of lesion voxels inside the assigned zone ("Lesion % in zone", MSMask), with a "No WM zone — DWM by default" warning when Deep White Matter was assigned by default. Region-assignment accuracy has not yet been measured against expert region labels.
 
 ### 3.4 Lesion Analysis & DIS Assessment
 
-- **Connected Component Extraction**: `scipy.ndimage.label()` with 26-connectivity, noise filtering (< 3.0 mm³)
+- **Connected Component Extraction**: `scipy.ndimage.label()` with ~~26-connectivity~~ 18-connectivity (faces + edges, RC-030; corrected in the CAPA-006 review), noise filtering (< 3.0 mm³)
 - **McDonald 2024 DIS Criteria**: Automated assessment across periventricular, juxtacortical, and infratentorial regions
 - **Lesion Dashboard**: Interactive table with per-lesion volume, region, centroid, click-to-navigate, CSV export
-- **Auto-Classification**: One-click region reclassification with method selection (EDT vs. atlas)
+- **Auto-Classification**: One-click region reclassification with method selection (~~EDT vs. atlas~~ Auto, MSMask atlas or Geometric; CAPA-006 review)
 
 ### 3.5 Longitudinal Tracking
 
@@ -500,7 +505,7 @@ mstool-ai/
 │       │   └── fhir.py                         # HL7 FHIR R4 (ImagingStudy, Report, Patient)
 │       ├── services/
 │       │   ├── segmentation_service.py          # Mask I/O, NIfTI conversion (1464 lines)
-│       │   ├── ms_region_classifier.py          # MAGNIMS two-tier classification (1291 lines)
+│       │   ├── ms_region_classifier.py          # MAGNIMS region classification (4-path cascade)
 │       │   ├── imaging_service.py               # NIfTI/DICOM processing
 │       │   ├── brain_volumetry_service.py       # Volumetric computation
 │       │   ├── brain_report_service.py          # Claude API report generation
