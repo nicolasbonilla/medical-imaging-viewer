@@ -39,7 +39,7 @@
 |---------|------|--------|---------|-------------|
 | 1.0 | 2026-04-12 | Development Team | Initial release | — |
 | 1.1 | 2026-07-18 | Development Team | Verification column corrected under CAPA-001 CA-3 | — |
-| 1.2 | 2026-09-28 | Development Team | RC-010 amended (audit #8, region evidence not confidence), test-bound with executed negative controls; 2026-07-18 RC-010 row marked SUPERSEDED (original text retained); HAZ-005 residual updated | TBA (human review) |
+| 1.2 | 2026-09-28 | Development Team | RC-010 amended (audit #8, region evidence not confidence), test-bound with executed negative controls; 2026-07-18 RC-010 row marked SUPERSEDED (original text retained); HAZ-005 residual updated | N. G. Bonilla Vargas — approved 2026-09-28 (PR #42) |
 
 ---
 

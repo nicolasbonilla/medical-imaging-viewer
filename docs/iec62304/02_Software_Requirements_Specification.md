@@ -16,7 +16,7 @@
 | Version | Date | Author | Changes | Approved By |
 |---------|------|--------|---------|-------------|
 | 1.0 | 2026-04-12 | Development Team | Initial release | — |
-| 1.1 | 2026-09-28 | Development Team | REQ-SAFE-010 amended (audit #8): no per-lesion MAGNIMS confidence emitted or displayed; region evidence instead (RC-010 amended, HAZ-005) | TBA (human review) |
+| 1.1 | 2026-09-28 | Development Team | REQ-SAFE-010 amended (audit #8): no per-lesion MAGNIMS confidence emitted or displayed; region evidence instead (RC-010 amended, HAZ-005) | N. G. Bonilla Vargas — approved 2026-09-28 (PR #42) |
 
 ---
 
