@@ -281,7 +281,17 @@ export interface ClassifiedLesion {
   lesion_id: number;
   region_id: number;
   region: string;
-  confidence: number;
+  /** Always null (HAZ-005 / REQ-SAFE-010 amended): region assignment is a deterministic MAGNIMS
+   *  rule with no calibrated per-lesion probability. Never render a "confidence" for it. */
+  confidence: number | null;
+  confidence_note?: string;
+  /** MSMask path only: fraction of lesion voxels inside the assigned zone (descriptive). */
+  region_overlap_fraction?: number | null;
+  /** MSMask path only: fraction of lesion voxels inside ANY white-matter zone. */
+  zone_coverage_fraction?: number | null;
+  /** MSMask path only: false when no lesion voxel lies in any white-matter zone — Deep White
+   *  Matter was then assigned by DEFAULT, not by the MAGNIMS rule (possible DIS false negative). */
+  atlas_coverage?: boolean;
   volume_mm3: number;
   volume_ml: number;
   voxel_count: number;
@@ -291,7 +301,7 @@ export interface ClassifiedLesion {
 
 export interface RegionClassificationResult {
   segmentation_id: string;
-  method: 'parcellation' | 'geometric';
+  method: 'parcellation' | 'geometric' | 'msmask';
   lesions: ClassifiedLesion[];
   total_classified: number;
   classification_summary: Record<string, number>;

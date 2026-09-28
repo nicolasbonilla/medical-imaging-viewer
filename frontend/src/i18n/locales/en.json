@@ -1066,7 +1066,12 @@
     "methodParcellation": "Parcellation",
     "methodMSMask": "MSMask",
     "methodGeometric": "Geometric",
-    "avgConfidence": "Avg confidence",
+    "noConfidence": "Regions follow a deterministic MAGNIMS rule; no per-lesion confidence is reported.",
+    "inZone": "Lesion % in zone",
+    "inZoneValue": "{{pct}}% in {{zone}}",
+    "outsideZones": "No WM zone — DWM by default",
+    "outsideZonesTooltip": "No voxel of this lesion lies in any MSMask white-matter zone (it may be cortical, intraventricular, or the atlas may be misaligned). Deep White Matter was assigned by default, not by the MAGNIMS rule. Verify the location before using it for DIS.",
+    "inZoneTooltip": "Fraction of the lesion inside the assigned MAGNIMS zone (MSMask). Descriptive, not a probability.",
     "distanceDetails": "Classification Distances (mm)",
     "region": "Region"
   },

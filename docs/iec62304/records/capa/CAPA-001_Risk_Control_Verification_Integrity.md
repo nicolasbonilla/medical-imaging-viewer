@@ -75,6 +75,52 @@ is *more honest than its documentation*. The engineering judgement was correct
 (refusing to emit an uncalibrated confidence); the verification record failed to
 capture that the control is deliberately absent on the least reliable path.
 
+#### Addendum 2026-09-28 — the 2026-07-18 finding above was incomplete
+
+The finding above (and the RC-010 row of RCV-SUMMARY-2026-07-18) examined **only the
+geometric path**. It is left unchanged as the record of what was concluded at the time.
+Audit #8 (HAZ-005) established that the two other classification paths **did** emit
+per-lesion "confidence" values that no calibration supported:
+
+- **Parcellation path** — live in `auto` mode whenever any sibling segmentation contained
+  ≥ 3 FreeSurfer-range label values (a heuristic) — returned a distance linearly mapped
+  onto 0.70–0.95 (Deep White Matter 0.60–0.90).
+- **MSMask zone-map path** — put the in-zone fraction in `confidence`, and a fixed 0.50
+  when the lesion lay in no zone.
+
+`LesionDashboard.tsx` rendered these as green/yellow/red percentages with an
+"Avg confidence", and the MCP clinical server forwarded them to an AI assistant. The
+statement "the code is more honest than its documentation" therefore held for one path
+only; on the other two the code, too, presented fabricated certainty.
+
+**Correction — RC-010 (amended), REQ-SAFE-010 amended 2026-09-28.** No path emits (API/MCP)
+or displays a per-lesion confidence; `confidence` is always null. Evidence is exposed
+under honest names: parcellation → `distances_mm` (null when a landmark is absent);
+MSMask → `region_overlap_fraction`, `zone_coverage_fraction`, `atlas_coverage` (false =
+Deep White Matter assigned by default, shown in the UI as an amber data-quality warning).
+Classifications persisted before the fix are stripped of confidence before reaching the
+MCP server (`app/services/region_evidence.py::strip_region_confidence`). Region
+**assignment** logic is unchanged.
+
+The control is test-bound, with negative controls executed:
+
+| Test | Codebase state | Observed |
+|---|---|---|
+| UT-CLS-002 `backend/tests/unit/test_region_confidence_haz005.py` (7 tests) | Control present | 7 passed |
+| | Numeric confidence restored | 2 failed, 5 passed |
+| | 0.50 fallback restored | 1 failed, 6 passed |
+| | Old overlap denominator restored | 1 failed, 6 passed |
+| | Absent landmark reported as `inf` distance | 1 failed, 6 passed |
+| UI-RC010 `frontend/src/components/LesionDashboard.haz005.test.ts` (7 tests) | Control present | 7 passed |
+| | Confidence cell restored | 1 failed, 6 passed |
+| | `regionEvidence` returns confidence | 1 failed, 6 passed |
+
+**Limit of this correction.** RC-010 (amended) is information-for-safety only: it removes
+false certainty from what is displayed. The accuracy of region assignment (any path)
+has **not** been measured against expert region labels, so the HAZ-005 residual risk
+remains **UNDETERMINED — re-assessment required**. This addendum does not concern the
+Edge AI confidence (RC-008 / HAZ-004), which is a different feature.
+
 ### 2.5 Related observation — RC-022 verification method
 
 `03_Risk_Management_File.md:230` records RC-022 (all images preprocessed to MNI 1 mm)
@@ -143,7 +189,7 @@ implementation 7 days · effectiveness verification 30 days.
 |----|------|--------|--------------------|--------|
 | **CA-1** | Corrective | Implement RC-006: mandatory, non-removable AI/physician-review disclaimer in `brain_report_service.py` output **and** in the report UI. | Automated test asserts the disclaimer string is present in every generated report for all 5 templates and all 3 languages. | **BACKEND DONE** (see §5.1) — UI pending |
 | **CA-2** | Corrective | Implement RC-017: authenticate all WebSocket endpoints; authorize `file_id` against the caller. | Automated test asserts an unauthenticated WS connection is rejected (close code 1008). | **AUTH DONE** (see §5.3) — authorization split to CAPA-002 |
-| **CA-3** | Corrective | Correct RC-006, RC-007, RC-010, RC-017, RC-022 rows in the RMF and RCV-SUMMARY to their true status, with linked evidence. Re-verify the remaining 17 controls by the same standard. | No row reads VERIFIED without a linked, executable test ID. | PENDING |
+| **CA-3** | Corrective | Correct RC-006, RC-007, RC-010, RC-017, RC-022 rows in the RMF and RCV-SUMMARY to their true status, with linked evidence. Re-verify the remaining 17 controls by the same standard. | No row reads VERIFIED without a linked, executable test ID. | PENDING — *2026-09-28 progress:* RC-010 corrected under RC-010 (amended) and bound to UT-CLS-002 + UI-RC010 with executed negative controls (§2.4 addendum); HAZ-005 residual remains UNDETERMINED. Other rows outstanding. |
 | **CA-4** | Corrective | Implement RC-007 (de-identification) or restate the control to match reality and re-assess HAZ-003 residual risk. | De-identifier with an allow-list, tested with PHI present in the input. | PENDING |
 | **CA-5** | Corrective | Make `voxel_spacing` a required input; remove the silent 1 mm default (HAZ-014). | Raises when spacing is unavailable; test with 3 mm slice thickness. | **DONE** — new control RC-024. 4 route fallbacks and 14 Class C service defaults removed; refuses with HTTP 422 rather than assuming. 26 assertions incl. the 3 mm case; negative controls 17 failed / 1 failed. |
 | **PA-1** | Preventive | Require every risk control to be bound to an **automated test** (`RC-xxx` referenced in the test name/docstring). Verification records must cite the test ID and commit SHA, not prose. | Verification template updated; no VERIFIED row without a test ID. | PENDING |

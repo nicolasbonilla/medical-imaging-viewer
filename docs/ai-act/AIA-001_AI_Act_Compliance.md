@@ -1,6 +1,6 @@
 # MSTool-AI: AI Act Compliance Document
 
-**Document ID**: AIA-001 | **Version**: 1.0 | **Date**: April 12, 2026
+**Document ID**: AIA-001 | **Version**: 1.1 | **Date**: September 28, 2026
 **Standard**: EU AI Act — Regulation (EU) 2024/1689
 
 ---
@@ -8,6 +8,7 @@
 | Version | Date | Author | Approved By |
 |---------|------|--------|-------------|
 | 1.0 | 2026-04-12 | Development Team | — |
+| 1.1 | 2026-09-28 | Development Team | — |
 
 ---
 
@@ -54,7 +55,8 @@ MSTool-AI integrates four distinct AI/ML components:
 - Method: Euclidean Distance Transform with rule-based thresholds
 - Tier 2: SynthSeg parcellation + EDT (PV<=3mm ventricle, JC<=4mm cortex, IT<=3mm infratentorial)
 - Tier 1 fallback: Geometric heuristics (z-coordinate, center distance, surface distance)
-- Output: Per-lesion region label, confidence score, distance metadata
+- Output: Per-lesion region label, ~~confidence score~~, distance metadata
+- *Amended 2026-09-28 (REQ-SAFE-010 amended, RC-010 (amended), HAZ-005)*: no classification path emits or displays a per-lesion confidence (always null); region assignment is a deterministic rule with no calibrated per-lesion probability. Evidence is exposed under its own name: `distances_mm` (parcellation; each distance is null when its landmark is absent) or, for the MSMask zone-map path, `region_overlap_fraction`, `zone_coverage_fraction` and `atlas_coverage` (false = no white-matter zone, Deep White Matter assigned by default, shown as the warning "No WM zone — DWM by default"). Region-assignment logic unchanged.
 
 ---
 
@@ -88,7 +90,7 @@ None of the prohibited AI practices under Article 5 apply to MSTool-AI. The syst
 - AI-specific risks identified and controlled:
   - Segmentation false negatives (missed lesions) — mitigated by radiologist review requirement
   - Volumetric measurement errors — mitigated by validation against reference datasets
-  - MAGNIMS misclassification — mitigated by confidence scoring and Tier 1/Tier 2 transparency
+  - MAGNIMS misclassification — mitigated by ~~confidence scoring and~~ Tier 1/Tier 2 transparency. *2026-09-28*: confidence scoring removed as a mitigation (it was not a calibrated probability); replaced by per-lesion evidence display and the "No WM zone — DWM by default" warning (RC-010 (amended)), which are information-for-safety only. Region-assignment accuracy has not been measured against expert region labels; HAZ-005 residual risk is **undetermined** and requires re-assessment (RMF-001)
   - LLM hallucination in reports — mitigated by mandatory clinician review, disclaimer text
   - Edge AI false negatives — mitigated by "assistive only" labeling and disclaimer
 - Risk controls verified through VVP-001 (Verification & Validation Plan)
@@ -161,7 +163,7 @@ None of the prohibited AI practices under Article 5 apply to MSTool-AI. The syst
   - Edge AI badge: "assistive tool only, not diagnostic"
   - Report generation: "AI-generated report — must be reviewed and edited by qualified radiologist"
 - **Confidence Indicators**:
-  - MAGNIMS classification includes per-lesion confidence scores and distance metadata
+  - ~~MAGNIMS classification includes per-lesion confidence scores and distance metadata~~ — *superseded 2026-09-28*: MAGNIMS classification reports no per-lesion confidence; it shows each lesion's region with its evidence (distances in mm, or "Lesion % in zone"), an amber "No WM zone — DWM by default" warning, and the statement "Regions follow a deterministic MAGNIMS rule; no per-lesion confidence is reported." (REQ-SAFE-010 amended; verified by UT-CLS-002, UI-RC010)
   - Edge AI screening displays confidence percentage and inference time
 - **Limitations Documentation**: IFU-001 documents all known limitations, contraindications, and appropriate use conditions
 - **Classification Method Transparency**: MAGNIMS dashboard shows classification tier (Tier 1/Tier 2) and method used
@@ -192,7 +194,7 @@ None of the prohibited AI practices under Article 5 apply to MSTool-AI. The syst
 **Accuracy**:
 - Segmentation accuracy validated per VVP-001 (Dice coefficient against expert annotations)
 - Volumetric measurement accuracy validated against known phantoms
-- MAGNIMS classification validated against expert consensus
+- MAGNIMS classification validated against expert consensus — *status 2026-09-28: NOT yet performed*; region-assignment accuracy (any path) has not been measured against expert region labels (HAZ-005 residual undetermined)
 - Performance metrics documented and monitored post-market (PMS-001)
 
 **Robustness**:

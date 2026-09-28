@@ -246,7 +246,7 @@ Two-tier classification system following the MAGNIMS-CMSC-NAIMS 2024 consensus g
 - **Tier 2 (Primary)**: SynthSeg parcellation + Euclidean Distance Transform from FreeSurfer reference structures (ventricles {4,43}, cortex {3,42}, infratentorial {7,8,16,46,47}). Distance thresholds: PV ≤ 1.5mm, JC ≤ 1.5mm, IT ≤ 1.5mm.
 - **Tier 1 (Fallback)**: MSMask atlas (Wiltgen et al., 2024) with binary dilation and priority cascade zone assignment.
 - **Zone Map Overlay**: Semi-transparent background visualization of anatomical zones with independent opacity control.
-- **Confidence Scoring**: Per-lesion classification confidence based on distance-to-threshold ratio.
+- **Region Evidence (no confidence score)**: Region assignment is a deterministic MAGNIMS rule; no per-lesion confidence is reported (REQ-SAFE-010, amended 2026-09-28; HAZ-005). Each lesion shows the evidence of the path used: distances to landmarks in mm (parcellation), or the fraction of lesion voxels inside the assigned zone ("Lesion % in zone", MSMask), with a "No WM zone — DWM by default" warning when Deep White Matter was assigned by default. Region-assignment accuracy has not yet been measured against expert region labels.
 
 ### 3.4 Lesion Analysis & DIS Assessment
 
@@ -343,12 +343,6 @@ D_M(x) = min_{y ∈ M} ||x - y||₂ · diag(Δ)
 ```
 
 where Δ = (Δx, Δy, Δz) is the voxel spacing vector.
-
-### Confidence Scoring
-
-```
-conf(d, τ) = max(0.70, 0.95 − 0.25 · d/τ)
-```
 
 ### IoU-Based Lesion Matching
 

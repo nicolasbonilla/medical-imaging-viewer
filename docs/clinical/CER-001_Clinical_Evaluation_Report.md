@@ -1,6 +1,6 @@
 # MSTool-AI: Clinical Evaluation Report
 
-**Document ID**: CER-001 | **Version**: 1.0 | **Date**: April 12, 2026
+**Document ID**: CER-001 | **Version**: 1.1 | **Date**: September 28, 2026
 **Standard**: EU MDR 2017/745 Annex XIV Part A, MEDDEV 2.7/1 Rev 4
 
 ---
@@ -8,6 +8,7 @@
 | Version | Date | Author | Approved By |
 |---------|------|--------|-------------|
 | 1.0 | 2026-04-12 | Development Team | — |
+| 1.1 | 2026-09-28 | Development Team | — |
 
 ---
 
@@ -214,7 +215,7 @@ device has not yet been deployed in clinical settings.
 | False negative (missed lesion) | Serious | Low | AI is assistive only; clinician reviews all images; disclaimer displayed |
 | False positive (phantom lesion) | Moderate | Low | Clinician validates all segmentations; confidence indicators shown |
 | Incorrect volumetry | Moderate | Low | Normative comparison flags outliers; clinician correlates clinically |
-| Incorrect region classification | Moderate | Low | Classification shown with confidence score; clinician can override |
+| Incorrect region classification | Moderate | Low | ~~Classification shown with confidence score~~ (removed 2026-09-28, see 7.4); clinician can override |
 | Over-reliance on AI | Serious | Moderate | Prominent disclaimers; training materials; device labeled as decision support |
 | Wrong patient data loaded | Serious | Very low | Patient identification displayed; DICOM header verification |
 
@@ -232,6 +233,26 @@ purpose by qualified intended users.
 This conclusion is contingent upon successful completion of the validation studies
 defined in CEP-001 and will be updated in CER revision 2.0.
 
+### 7.4 Addendum 2026-09-28 — MAGNIMS Region Classification (HAZ-005)
+
+Audit #8 found that the per-lesion "confidence score" cited above as a mitigation for
+incorrect region classification (Section 7.2) and counted among the "confidence indicators" in
+Section 7.3 was not a calibrated probability: the parcellation path mapped a distance linearly
+onto 0.70-0.95 (DWM 0.60-0.90), and the MSMask zone-map path reported the in-zone voxel fraction,
+or a fixed 0.50 when the lesion lay in no zone. Under REQ-SAFE-010 (amended 2026-09-28) and risk
+control RC-010 (amended), no region-classification path emits or displays a per-lesion
+confidence. Each lesion is shown with its region and the evidence of the path used (distances in
+mm; or "Lesion % in zone", the fraction of lesion voxels inside the assigned zone), plus an amber
+"No WM zone — DWM by default" warning when Deep White Matter was assigned by default rather than
+by the MAGNIMS rule. The region-assignment logic itself is unchanged. Verification: UT-CLS-002,
+UI-RC010.
+
+This control is information-for-safety only. The accuracy of region assignment (any path) has
+not been measured against expert region labels, so the "Low" probability entered in Section 7.2
+for incorrect region classification is not supported by evidence; the HAZ-005 residual risk is
+**undetermined** and requires re-assessment (RMF-001). The benefit-risk conclusion in 7.3 does
+not rely on any confidence indicator for region classification.
+
 ## 8. Conclusions
 
 ### 8.1 Clinical Evidence Summary
@@ -247,7 +268,7 @@ defined in CEP-001 and will be updated in CER revision 2.0.
 
 1. **Segmentation validation**: No formal multi-center validation completed yet
 2. **Volumetry validation**: Pending comparison with FreeSurfer on external dataset
-3. **MAGNIMS classification**: Novel capability — limited comparator data in literature
+3. **MAGNIMS classification**: Novel capability — limited comparator data in literature. *(2026-09-28)*: region-assignment accuracy has not been measured against expert region labels on any path; no per-lesion confidence is reported (see 7.4); HAZ-005 residual undetermined pending the MAGNIMS classification study (Section 6.1, item 3)
 4. **Clinical utility**: No prospective study on impact on diagnostic confidence or reading time
 5. **Special populations**: No data on patients with comorbidities affecting brain MRI (e.g., small vessel disease, prior neurosurgery)
 

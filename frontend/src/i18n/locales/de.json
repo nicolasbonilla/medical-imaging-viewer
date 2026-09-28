@@ -1066,7 +1066,12 @@
     "methodParcellation": "Parzellierung",
     "methodMSMask": "MSMask",
     "methodGeometric": "Geometrisch",
-    "avgConfidence": "Durchschn. Konfidenz",
+    "noConfidence": "Regionen folgen einer deterministischen MAGNIMS-Regel; es wird keine Konfidenz pro Läsion angegeben.",
+    "inZone": "Läsion % in Zone",
+    "inZoneValue": "{{pct}}% in {{zone}}",
+    "outsideZones": "Keine WM-Zone — DWM als Standard",
+    "outsideZonesTooltip": "Kein Voxel dieser Läsion liegt in einer MSMask-Zone der weißen Substanz (sie kann kortikal oder intraventrikulär sein, oder der Atlas ist falsch ausgerichtet). Tiefe weiße Substanz wurde standardmäßig zugewiesen, nicht durch die MAGNIMS-Regel. Lage vor der Verwendung für DIS prüfen.",
+    "inZoneTooltip": "Anteil der Läsion innerhalb der zugewiesenen MAGNIMS-Zone (MSMask). Beschreibend, keine Wahrscheinlichkeit.",
     "distanceDetails": "Klassifikationsabstände (mm)",
     "region": "Region"
   },

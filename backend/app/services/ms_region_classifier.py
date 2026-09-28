@@ -35,6 +35,7 @@ References:
 @module services.ms_region_classifier
 """
 
+import math
 import time
 import numpy as np
 from app.utils.spacing_utils import SPACING_REQUIRED, require_spacing
@@ -93,6 +94,28 @@ IT_DISTANCE_THRESHOLD_MM = 1.5
 # (ISBI-2015 / MSSEG-2016), replacing a duplicated 3.0 literal.
 from app.services.lesion_metrics import MIN_LESION_VOLUME_MM3, label_lesions
 
+# HAZ-005 / REQ-SAFE-010 (amended 2026-09-28, audit #8): NO classification path emits a per-lesion
+# "confidence". Region assignment is a DETERMINISTIC MAGNIMS rule; there is no calibrated
+# probability to report, and an uncalibrated number rendered as "92%" is read by clinicians (and
+# by the MCP-connected assistant) as certainty. Each path instead exposes its real EVIDENCE,
+# labelled as such: distances_mm (parcellation), region_overlap_fraction + atlas_coverage
+# (MSMask zone map), nothing (geometric).
+CONFIDENCE_NOTE_DISTANCE = (
+    "Region assigned by a deterministic MAGNIMS distance rule (IT > PV > JC > DWM). No calibrated "
+    "per-lesion confidence exists; distances_mm is the evidence."
+)
+CONFIDENCE_NOTE_OVERLAP = (
+    "Region assigned by the MAGNIMS contact rule on the MSMask atlas zone map. No calibrated "
+    "per-lesion confidence exists; region_overlap_fraction is the fraction of the lesion's voxels "
+    "inside the assigned zone and zone_coverage_fraction the fraction inside any white-matter zone "
+    "(descriptive, not probabilities)."
+)
+CONFIDENCE_NOTE_DEFAULT_DWM = (
+    "Lesion lies in no MSMask white-matter zone (it may be cortical, intraventricular, or the "
+    "atlas may be misaligned); Deep White Matter was assigned by DEFAULT (fallback), not by the "
+    "MAGNIMS contact rule. Verify the location before using it for DIS."
+)
+
 
 def classify_lesions_with_parcellation(
     lesion_mask: np.ndarray,
@@ -118,8 +141,8 @@ def classify_lesions_with_parcellation(
         voxel_spacing: (dz, dy, dx) in mm.
 
     Returns:
-        Dict with classified_mask (MAGNIMS labels 1-4), per-lesion details,
-        classification summary, and confidence scores.
+        Dict with classified_mask (MAGNIMS labels 1-4), per-lesion details (with the
+        distance evidence; confidence is None — HAZ-005) and the classification summary.
     """
     # IEC 62304 Class C — Input validation (REQ-SAFE-005)
     if not isinstance(lesion_mask, np.ndarray) or lesion_mask.ndim != 3:
@@ -207,7 +230,7 @@ def classify_lesions_with_parcellation(
         min_dist_jc = float(dist_to_cortex[comp_voxels].min())
 
         # Priority cascade: IT -> PV -> JC -> DWM
-        region_id, region_name, confidence = _classify_by_distance(
+        region_id, region_name = _classify_by_distance(
             min_dist_it, min_dist_pv, min_dist_jc
         )
 
@@ -218,7 +241,8 @@ def classify_lesions_with_parcellation(
             "lesion_id": len(lesion_details) + 1,
             "region_id": region_id,
             "region": region_name,
-            "confidence": round(confidence, 3),
+            "confidence": None,  # HAZ-005: no calibrated confidence exists
+            "confidence_note": CONFIDENCE_NOTE_DISTANCE,
             "volume_mm3": round(volume_mm3, 2),
             "volume_ml": round(volume_mm3 / 1000, 4),
             "voxel_count": voxel_count,
@@ -227,10 +251,12 @@ def classify_lesions_with_parcellation(
                 "y": round(float(centroid[1]), 1),
                 "x": round(float(centroid[2]), 1),
             },
+            # A missing landmark gives an infinite distance; report None (the route's sanitiser
+            # would otherwise turn inf into 0.0, which reads as "touching" — HAZ-005 review).
             "distances_mm": {
-                "to_ventricle": round(min_dist_pv, 2),
-                "to_cortex": round(min_dist_jc, 2),
-                "to_infratentorial": round(min_dist_it, 2),
+                "to_ventricle": (round(min_dist_pv, 2) if math.isfinite(min_dist_pv) else None),
+                "to_cortex": (round(min_dist_jc, 2) if math.isfinite(min_dist_jc) else None),
+                "to_infratentorial": (round(min_dist_it, 2) if math.isfinite(min_dist_it) else None),
             },
         })
 
@@ -388,8 +414,9 @@ def classify_lesions_geometric(
         cz = float(centroid[0])
 
         # Geometric heuristics (priority cascade)
-        # NOTE: Geometric method has no empirically calibrated confidence scores.
-        # confidence=None indicates uncalibrated (use parcellation or MSMask for validated results).
+        # NOTE (HAZ-005): no classification path has a calibrated per-lesion confidence;
+        # confidence=None on every path. The geometric distances_mm are heuristic proxies
+        # (e.g. to_ventricle is the distance from the brain centre), not landmark distances.
         # 1. Infratentorial: z-coordinate below threshold
         if cz < it_z_threshold:
             region_id, region_name = 3, "Infratentorial"
@@ -415,7 +442,7 @@ def classify_lesions_geometric(
             "region_id": region_id,
             "region": region_name,
             "confidence": confidence,  # None — geometric method is not calibrated
-            "confidence_note": "Geometric method — not empirically calibrated. Use parcellation or MSMask for validated confidence.",
+            "confidence_note": "Region assigned by geometric heuristics (least accurate path). No calibrated per-lesion confidence exists on any path.",
             "volume_mm3": round(volume_mm3, 2),
             "volume_ml": round(volume_mm3 / 1000, 4),
             "voxel_count": voxel_count,
@@ -472,8 +499,9 @@ def classify_from_zone_mask(
     """
     Classify MS lesions into MAGNIMS regions using a pre-computed zone mask.
 
-    For each connected component in lesion_mask, counts overlapping zone voxels
-    and assigns the region with the majority vote. This function does NOT generate
+    For each connected component in lesion_mask, assigns a region by the MAGNIMS
+    CONTACT rule (any overlap, priority IT > PV > JC > DWM); a lesion with no voxel in
+    any zone defaults to DWM and is flagged (atlas_coverage=False). This function does NOT generate
     the zone mask — it expects one already computed (from atlas or parcellation).
 
     Args:
@@ -524,9 +552,13 @@ def classify_from_zone_mask(
                 zone_counts[z_id] = count
 
         if not zone_counts:
-            # Lesion falls entirely outside atlas coverage → DWM fallback
+            # Lesion falls entirely outside atlas coverage → DWM fallback. Previously a
+            # fabricated 0.50 "confidence" was attached; now the missing coverage is explicit.
             region_id = 4
-            confidence = 0.50
+            overlap = None
+            covered = False
+            coverage = 0.0
+            note = CONFIDENCE_NOTE_DEFAULT_DWM
         else:
             # MAGNIMS CONTACT criterion (NOT majority vote): a lesion that TOUCHES a more-
             # specific region counts there. Priority IT>PV>JC>DWM on ANY overlap — matches
@@ -535,13 +567,19 @@ def classify_from_zone_mask(
             # flip met->not-met (false-negative MS diagnosis) — audit finding #2.
             region_id = next((z for z in (3, 1, 2) if zone_counts.get(z)), 4)  # IT,PV,JC else DWM
             total_in_zones = sum(zone_counts.values())
-            # HONEST confidence (audit #8): report the RAW fraction of the lesion volume that
+            # Evidence (audit #8): the RAW fraction of the lesion volume that
             # lies in the assigned region — NOT the old fabricated `0.75 + 0.23*agreement`
             # rescale (which reported >=0.77 even for an 8%-contact assignment and was never
             # empirically calibrated). The assignment itself is a deterministic MAGNIMS contact
             # rule; this value is descriptive (fraction-in-region), not a calibrated probability
             # — the full breakdown is exposed in `zone_votes`.
-            confidence = round(zone_counts[region_id] / total_in_zones, 3)
+            # Denominator = ALL lesion voxels (not only those inside some zone): zone 0 holds
+            # cortical GM, ventricles/CSF and extra-brain voxels, and dropping them would show a
+            # sliver-contact assignment as "100 %" (HAZ-005 review, blocking finding 1).
+            overlap = round(zone_counts[region_id] / voxel_count, 3)
+            covered = True
+            coverage = round(total_in_zones / voxel_count, 3)
+            note = CONFIDENCE_NOTE_OVERLAP
 
         region_name = REGION_NAMES.get(region_id, "Unknown")
         classified_mask[comp_mask] = region_id
@@ -554,7 +592,11 @@ def classify_from_zone_mask(
             "lesion_id": len(lesion_details) + 1,
             "region_id": region_id,
             "region": region_name,
-            "confidence": round(confidence, 3),
+            "confidence": None,  # HAZ-005: no calibrated confidence exists
+            "confidence_note": note,
+            "region_overlap_fraction": overlap,
+            "zone_coverage_fraction": coverage,
+            "atlas_coverage": covered,
             "volume_mm3": round(volume_mm3, 2),
             "volume_ml": round(volume_mm3 / 1000, 4),
             "voxel_count": voxel_count,
@@ -1259,50 +1301,24 @@ def _classify_by_distance(
     dist_it: float,
     dist_pv: float,
     dist_jc: float,
-) -> tuple[int, str, float]:
+) -> tuple[int, str]:
     """
     Classify a single lesion by minimum distances to anatomical landmarks.
 
-    Priority cascade: IT -> PV -> JC -> DWM.
-    Returns (region_id, region_name, confidence).
+    Priority cascade: IT -> PV -> JC -> DWM. Returns (region_id, region_name).
 
-    Confidence is computed as inverse distance normalized:
-    - Closer to landmark = higher confidence
-    - Within threshold = high confidence (0.85-0.95)
-    - Marginally within threshold = moderate confidence (0.70-0.85)
+    HAZ-005 (audit #8): this rule used to also return a "confidence" produced by linearly
+    mapping distance onto 0.70-0.95 (DWM: 0.60-0.90). That number was never calibrated
+    against ground truth, yet the UI rendered it as a green/yellow per-lesion percentage.
+    It is removed; the distances themselves are the evidence and are reported per lesion.
     """
-    # Infratentorial (most specific)
     if dist_it <= IT_DISTANCE_THRESHOLD_MM:
-        confidence = _distance_to_confidence(dist_it, IT_DISTANCE_THRESHOLD_MM)
-        return 3, "Infratentorial", confidence
-
-    # Periventricular
+        return 3, "Infratentorial"
     if dist_pv <= PV_DISTANCE_THRESHOLD_MM:
-        confidence = _distance_to_confidence(dist_pv, PV_DISTANCE_THRESHOLD_MM)
-        return 1, "Periventricular", confidence
-
-    # Juxtacortical
+        return 1, "Periventricular"
     if dist_jc <= JC_DISTANCE_THRESHOLD_MM:
-        confidence = _distance_to_confidence(dist_jc, JC_DISTANCE_THRESHOLD_MM)
-        return 2, "Juxtacortical", confidence
-
-    # Deep White Matter (default)
-    # Confidence based on how far from other regions
-    min_other = min(dist_it, dist_pv, dist_jc)
-    max_threshold = max(IT_DISTANCE_THRESHOLD_MM, PV_DISTANCE_THRESHOLD_MM, JC_DISTANCE_THRESHOLD_MM)
-    confidence = min(0.90, 0.60 + 0.30 * min(1.0, (min_other - max_threshold) / 10.0))
-    return 4, "Deep White Matter", confidence
-
-
-def _distance_to_confidence(distance: float, threshold: float) -> float:
-    """
-    Convert distance to confidence score.
-    Distance=0 -> confidence=0.95, distance=threshold -> confidence=0.70.
-    """
-    if threshold == 0:
-        return 0.95
-    ratio = distance / threshold
-    return max(0.70, 0.95 - 0.25 * ratio)
+        return 2, "Juxtacortical"
+    return 4, "Deep White Matter"
 
 
 def _build_summary(lesion_details: list[dict]) -> dict[str, int]:

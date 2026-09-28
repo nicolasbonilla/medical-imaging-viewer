@@ -627,15 +627,17 @@ def build_pdf():
     code('IF d_IT <= 1.5 mm:     region = Infratentorial\nELIF d_PV <= 1.5 mm:  region = Periventricular\nELIF d_JC <= 1.5 mm:  region = Juxtacortical\nELSE:                 region = Deep White Matter')
 
     spacer()
-    subsection('5.2 Confidence Scoring')
-    formula('conf(d, \u03c4) = max(0.70,  0.95 - 0.25 \u00b7 d/\u03c4)', 'Eq. 3')
-    body('For DWM (fallback classification):')
-    formula('conf_DWM = min(0.90,  0.60 + 0.30 \u00b7 min(1.0, (d_min - \u03c4) / 10))', 'Eq. 4')
+    # HAZ-005 / RC-010 (amended), 2026-09-28: the former "5.2 Confidence Scoring" formulas
+    # (distance linearly mapped onto 0.70-0.95, DWM 0.60-0.90) were uncalibrated and have been
+    # removed from the code; the document now describes the evidence actually reported.
+    subsection('5.2 Evidence Reported (No Per-Lesion Confidence)')
+    body('No per-lesion confidence is emitted or displayed (<code>confidence</code> is always null; HAZ-005, REQ-SAFE-010, RC-010 (amended)). Region assignment is a deterministic MAGNIMS rule. The parcellation path reports <code>distances_mm</code> (d_IT, d_PV, d_JC; null when a landmark is absent) as evidence.')
 
     subsection('5.3 Tier 1: MSMask Atlas Zone Map')
     body('The atlas-based method (Wiltgen et al. 2024) uses the MSMask atlas in MNI152 space with binary dilation (3\u00d73\u00d73 structuring element) and priority cascade zone assignment:')
 
     code('zone_map[WM] = 4                                    # DWM default\nzone_map[IT or IT_dilated AND WM] = 3              # Infratentorial\nzone_map[Cortex_dilated AND WM AND zone != 3] = 2  # Juxtacortical\nzone_map[Vent_dilated AND WM AND zone != 3] = 1    # Periventricular')
+    body('Per-lesion evidence (no confidence): <code>region_overlap_fraction</code> (fraction of all lesion voxels inside the assigned zone), <code>zone_coverage_fraction</code> (fraction inside any white-matter zone) and <code>atlas_coverage</code> (false when the lesion lies in no white-matter zone: Deep White Matter is then assigned by default, not by the MAGNIMS rule, and flagged in the UI as "No WM zone — DWM by default").')
 
     # ─── 6. LESION ANALYSIS AND DIS ───
     section('6', 'LESION ANALYSIS AND DIS ASSESSMENT')

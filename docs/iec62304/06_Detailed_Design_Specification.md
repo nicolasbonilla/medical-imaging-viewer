@@ -281,22 +281,21 @@ FOR EACH connected component C_k in lesion_mask:
     d_PV = min(D_vent[C_k])
     d_JC = min(D_cortex[C_k])
 
-    // Priority cascade: IT > PV > JC > DWM
+    // Priority cascade: IT > PV > JC > DWM  (deterministic rule; returns region only)
     IF d_IT <= 1.5 mm:
         region = 3 (Infratentorial)
-        confidence = max(0.70, 0.95 - 0.25 * d_IT / 1.5)
     ELIF d_PV <= 1.5 mm:
         region = 1 (Periventricular)
-        confidence = max(0.70, 0.95 - 0.25 * d_PV / 1.5)
     ELIF d_JC <= 1.5 mm:
         region = 2 (Juxtacortical)
-        confidence = max(0.70, 0.95 - 0.25 * d_JC / 1.5)
     ELSE:
         region = 4 (Deep White Matter)
-        d_min = min(d_IT, d_PV, d_JC)
-        confidence = min(0.90, 0.60 + 0.30 * min(1.0, (d_min - 1.5) / 10))
 
     classified_mask[C_k] = region
+    lesion.confidence = None                     // HAZ-005: no calibrated confidence exists
+    lesion.confidence_note = CONFIDENCE_NOTE_DISTANCE
+    lesion.distances_mm = { to_ventricle: d_PV, to_cortex: d_JC, to_infratentorial: d_IT }
+                                                 // each rounded to 0.01 mm; None if not finite
 
 RETURN { classified_mask, lesions, classification_summary }
 ```
@@ -310,11 +309,27 @@ RETURN { classified_mask, lesions, classification_summary }
 - `IT_DISTANCE_THRESHOLD_MM = 1.5`
 - `MIN_LESION_VOLUME_MM3 = 3.0`
 
+**Per-lesion output: evidence, not confidence (RC-010 (amended), HAZ-005, REQ-SAFE-010 amended 2026-09-28)**:
+
+No classification path emits a per-lesion confidence. `confidence` is always `None` and `confidence_note` holds a plain-language statement of how the region was assigned. Each path reports its evidence under its own name instead:
+
+| Path | Function | Evidence fields | Meaning |
+|------|----------|-----------------|---------|
+| Parcellation (EDT) | `classify_lesions_with_parcellation` | `distances_mm.to_ventricle`, `.to_cortex`, `.to_infratentorial` | Minimum EDT distance (mm) from the lesion to each landmark, rounded to 0.01 mm. `None` when that landmark is absent from the parcellation (infinite distance). Without this, the route sanitiser would turn infinity into 0.0, which reads as "touching". |
+| MSMask zone map | `classify_from_zone_mask` | `region_overlap_fraction` | Fraction of ALL the lesion's voxels that lie inside the assigned zone. The denominator is the full lesion voxel count, so a lesion that only just touches a zone is not reported as 100 %. `None` when the lesion is in no zone. |
+| | | `zone_coverage_fraction` | Fraction of the lesion's voxels inside any white-matter zone (0.0 when the lesion is in no zone). |
+| | | `atlas_coverage` | `false` means the lesion lies in no MSMask white-matter zone, so Deep White Matter was assigned BY DEFAULT and not by the MAGNIMS contact rule. `confidence_note` then says so (`CONFIDENCE_NOTE_DEFAULT_DWM`), and the UI shows an amber data-quality warning ("No WM zone — DWM by default"). |
+| Geometric | `classify_lesions_geometric` | (heuristic `distances_mm` proxies only) | `confidence = None`; the geometric distances are heuristic proxies, not landmark distances. |
+
+Descriptive fractions and distances are not probabilities. The region assignment logic is unchanged: the IT > PV > JC > DWM priority, the 1.5 mm thresholds, and the MSMask contact rule (any overlap, priority IT > PV > JC, else DWM).
+
+> **Amendment 2026-09-28 (audit #8, HAZ-005)**: Version 1.0 of this section specified a per-lesion `confidence`. Inside the 1.5 mm threshold it was `max(0.70, 0.95 - 0.25 * d / 1.5)`, used for each of IT, PV and JC. For DWM it was `min(0.90, 0.60 + 0.30 * min(1.0, (d_min - 1.5) / 10))`. The MSMask zone-map path, which that version did not document, reported the in-zone fraction as `confidence`, or a fixed 0.50 when the lesion lay in no zone. None of these values was calibrated against ground truth. The formulas were removed from the code (`_distance_to_confidence` deleted; `_classify_by_distance` now returns `(region_id, region_name)`) and from the algorithm above. Verified by UT-CLS-002 (`backend/tests/unit/test_region_confidence_haz005.py`) and UI-RC010 (`frontend/src/components/LesionDashboard.haz005.test.ts`).
+
 **Error Handling**: ValueError if mask shapes don't match. Empty result if no lesions found.
 
-**Safety**: EDT-based classification is more robust than pixel-adjacency methods. Distance thresholds (1.5mm) match LST-AI dilation criteria. Priority cascade prevents ambiguous classification.
+**Safety**: EDT-based classification is more robust than pixel-adjacency methods. Distance thresholds (1.5mm) match LST-AI dilation criteria. Priority cascade prevents ambiguous classification. No per-lesion confidence is emitted (RC-010 (amended)). The accuracy of region assignment has NOT been measured against expert region labels on any path, so the HAZ-005 residual risk is UNDETERMINED (RMF-001).
 
-**Implements**: REQ-FUNC-053, REQ-SAFE-010, REQ-SAFE-011
+**Implements**: REQ-FUNC-053, REQ-SAFE-010 (amended 2026-09-28), REQ-SAFE-011
 
 ---
 
@@ -407,7 +422,7 @@ Output: { normal: number [0,1], abnormal: number [0,1], inferenceTimeMs: number 
 | DD-RPT-001 | REQ-FUNC-060, 061, 063, REQ-SAFE-006, 007, REQ-SEC-007 | RC-006, RC-007 |
 | DD-LES-001 | REQ-FUNC-050, 051 | RC-010 |
 | DD-LES-002 | REQ-FUNC-052, REQ-SAFE-015 | RC-015 |
-| DD-CLS-001 | REQ-FUNC-053, REQ-SAFE-010, 011 | RC-010, RC-011 |
+| DD-CLS-001 | REQ-FUNC-053, REQ-SAFE-010 (amended 2026-09-28), 011 | RC-010 (amended), RC-011 |
 | DD-NII-001 | REQ-DATA-001 | RC-012 |
 | DD-NII-002 | REQ-SAFE-012 | RC-012 |
 | DD-EDGE-001/002/003 | REQ-FUNC-033, REQ-SAFE-008, 009 | RC-008, RC-009 |
