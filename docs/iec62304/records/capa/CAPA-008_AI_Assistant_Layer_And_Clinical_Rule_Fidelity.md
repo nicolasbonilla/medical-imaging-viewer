@@ -6,7 +6,7 @@
 **Severity**: **CRITICAL**. Patient-safety risk (HAZ-003, HAZ-007, HAZ-008) and regulatory non-compliance (labelling contradicts the intended use; unsubstantiated compliance claim). QP-002 §5.
 **Owner**: *(to be assigned: Software Safety Officer / QMS Manager)*
 **Status**: OPEN.
-- Implemented on branch `fix/mcp-assistant-and-cvs-labelling-capa008`: CA-8.1 to CA-8.7, CA-8.10, PA-8.1, PA-8.2. **Awaiting human approval** (PR).
+- Implemented on branch `fix/mcp-assistant-and-cvs-labelling-capa008`: CA-8.1 to CA-8.7, CA-8.10, PA-8.1, PA-8.2. **Approved by N. G. Bonilla Vargas on 2026-10-17** (PR #46) and merged.
 - Pending: CA-8.8 (next PR), CA-8.9 (owner review), PA-8.3 (owner decision).
 - Effectiveness is not verified.
 
