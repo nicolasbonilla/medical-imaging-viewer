@@ -460,7 +460,7 @@ export function LongitudinalCompare({
                   : t('longitudinal.ditCandidate', 'Dissemination-in-time CANDIDATE')}
               </span>{' '}
               {t('longitudinal.magnimsCandidateBody',
-                '{{n}} new (≥{{d}} mm) + {{e}} enlarging. MAGNIMS: ≥2 new/enlarging suggests activity, ≥1 new supports DIT. This is an UNADJUDICATED candidate — a radiologist must confirm before it informs any diagnosis or treatment change.',
+                '{{n}} new (≥{{d}} mm) + {{e}} enlarging. MAGNIMS 2021: any new or enlarging T2 lesion marks activity; a new lesion supports DIT. This is an UNADJUDICATED candidate — a radiologist must confirm before it informs any diagnosis or treatment change.',
                 { n: result.new_clinically_significant_count ?? 0, e: result.enlarging_count ?? 0, d: result.new_lesion_min_diameter_mm ?? 3 })}
             </div>
           )}

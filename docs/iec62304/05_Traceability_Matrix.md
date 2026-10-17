@@ -2,12 +2,13 @@
 
 ## IEC 62304 Clause 5.1.1(e) — Bidirectional Traceability
 
-**Document ID**: TM-001 | **Version**: 1.1 | **Date**: September 28, 2026 (v1.0: April 12, 2026)
+**Document ID**: TM-001 | **Version**: 1.2 | **Date**: October 17, 2026 (v1.1: September 28, 2026; v1.0: April 12, 2026)
 
 | Version | Date | Author | Change | Approved By |
 |---------|------|--------|--------|-------------|
 | 1.0 | 2026-04-12 | Development Team | Initial release | — |
 | 1.1 | 2026-09-28 | Development Team | CAPA-006 (HAZ-005). (a) REQ-FUNC-053 row corrected in place. It was "MAGNIMS classification", tested by UT-CLS-001 only. It now reflects the corrected SRS text: contact criterion, four paths, MNI-only atlas. It adds UT-CLS-002/003 and UI-RC032, and the architecture reference, which was "SAD 3.5", a section that does not exist. (b) Addendum added for REQ-SAFE-021 → RC-032 and for the CAPA-006 PA-6.1 labelling gate. (c) REQ-SAFE-020 / RC-022 row: "VERIFIED (code inspection)" struck through. It is NOT IMPLEMENTED / NOT VERIFIED: no MNI preprocessing or registration to a template exists in the code. (d) New tests added to the backward and unit-test traceability tables. The 2026-09-28 RC-010 addendum below was entered without a version change; it is covered by this version | N. G. Bonilla Vargas — approved 2026-10-17 (PR #43) |
+| 1.2 | 2026-10-17 | Development Team | CAPA-008: REQ-SAFE-022/023/024 → RC-033/034/035 → UT-CAPA008, UT-LONG-RULES (addendum below; test rows added) | *pending approval (PR)* |
 
 ---
 
@@ -105,6 +106,14 @@
 >
 > RC-032 does not establish region-assignment accuracy, and the grid gate cannot certify true normalisation. The **HAZ-005 residual risk remains UNDETERMINED** (RMF-001).
 >
+> **Addendum 2026-10-17: REQ-SAFE-022/023/024 added, RC-033/034/035 (CAPA-008).**
+>
+> | Req ID | Safety Requirement | Risk Control | HAZ ID | Implementation | Test ID | Verified? |
+> |--------|-------------------|-------------|--------|----------------|---------|-----------|
+> | REQ-SAFE-022 | AI-assistant (MCP) layer read-only, STDIO only, identifiers removed, intended-use wording | RC-033 | HAZ-003, HAZ-010 | `app/mcp/_backend.py`, `imaging_server.py`, `ms_clinical_server.py`, `run_all.py` | UT-CAPA008 | VERIFIED 2026-10-17 (negative controls A1–A9 9/9) |
+> | REQ-SAFE-023 | No AI report draft without a device measurement; reason shown | RC-034 | HAZ-003 | `ai_report.py`, `AIReportPanel.tsx` | UT-CAPA008 | VERIFIED 2026-10-17 (R1–R2 2/2) |
+> | REQ-SAFE-024 | CVS/PRL readings attributed and counted per McDonald 2024; activity candidate per MAGNIMS 2021 | RC-035 | HAZ-007, HAZ-008 | `segmentation_analysis.py`, `LesionDashboard.tsx`, `longitudinal_tracking_service.py` | UT-CAPA008, UT-LONG-RULES | VERIFIED 2026-10-17 (C1–C6 6/6) |
+>
 > **REQ-SAFE-020 / RC-022 (HAZ-014)**: the row in the table above said "VERIFIED (code inspection)". It is struck through in place. Nothing in the code preprocesses images to the MNI 1 mm template or registers them to it; the only registration is longitudinal, intra-subject and rigid. Images are therefore **not** in MNI space by construction, which is why RC-032 must gate the MNI-space atlas. RMF-001 already records RC-022 as NOT VERIFIED (2026-07-18).
 
 ---
@@ -149,6 +158,8 @@ by `backend/tests/unit/test_risk_control_manifest.py`.
 | UT-CLS-003 | RC-032 path preconditions (36 `test_rc032_*`, 22 through the real app, added 2026-09-28). MNI gate accepts MNI grids and rejects oblique, clinical, permuted, off-centre, transform-less and non-MNI-FOV grids (the FOV condition tested on its own); the longitudinal compare route uses the same gate. Atlas zone map matches the orientation-consistent reference per lesion, including on a cubic grid; a zone map of another grid is refused; zone volumes use the voxel volume. Region routes alive with spacing from the source image. `msmask` off-MNI → 422; `auto` → fallback with reason. Persisted zone map never reused. generate-zone-map refuses non-MNI images, keeps existing zone maps on a refusal or a persist failure, and makes no raw upload. Parcellation: a zone map, an instance-labelled mask or another image's parcellation is never used; a genuine same-image parcellation is. Geometric path uses the brain outline and refuses sagittal, reversed, > 30° tilted, mismatched or blank images. An atlas fault is reported (`atlas_error`); a geometric fault is a 500. Object-level authorization: a caller without access to the patient gets 404 on both routes (RC-029) | REQ-SAFE-021, REQ-FUNC-053 (RC-032, HAZ-005); REQ-SEC-001 (RC-029, HAZ-010) for the two authorization tests |
 | UI-RC032 | LesionDashboard shows an amber alert whenever `atlas_unavailable_reason` is present, translated in every shipped locale and naming MNI space. An atlas fault has its own alert. Geometric regions always carry a warning, and no warning claims an unmeasured comparative accuracy. The panel no longer promises SynthSeg or a "best" automatic method (6 `rc032`, added 2026-09-28) | REQ-SAFE-021, REQ-FUNC-053 (RC-032) |
 | UT-LBL-001 | CAPA-006 PA-6.1 labelling gate (60 tests, added 2026-09-28). IFU §10.3 states each `*_DISTANCE_THRESHOLD_MM` and the MNI requirement. Withdrawn 3/4/3 mm values, a "two-tier" cascade, validation, "exact methodology" and MAGNIMS accuracy-% claims appear only next to a CAPA-006 withdrawal note in 19 listed documents, Class C source files, the MCP server and the UI locales. A missing listed file fails | REQ-FUNC-053, REQ-SAFE-021 (CAPA-006 PA-6.1) |
+| UT-CAPA008 | `test_capa008_assistant_read_only.py` (39 tests, added 2026-10-17): MCP layer read-only (exact server and tool sets, no direct HTTP client, POST only to compute-only routes, every GET mounted and object-authorized, compute-only routes store nothing, every field sent is read by its route), intended-use phrase ban, identifier removal; report route refuses requests without a measurement; CVS/PRL readings validated, attributed to the authenticated reader, counted without the 40 % rule; UI sources | REQ-SAFE-022, REQ-SAFE-023, REQ-SAFE-024 |
+| UT-LONG-RULES | `test_longitudinal_clinical_rules.py`: activity candidate raised by >=1 new or enlarging candidate (MAGNIMS 2021; CAPA-008 CA-8.10) | REQ-SAFE-024, REQ-FUNC-055a |
 
 ---
 
@@ -179,6 +190,8 @@ by `backend/tests/unit/test_risk_control_manifest.py`.
 | `test_region_confidence_haz005.py` | UT-CLS-002 | REQ-SAFE-010 (amended 2026-09-28), REQ-FUNC-053 (RC-010 (amended), HAZ-005) |
 | `test_rc032_region_atlas_guard.py` | UT-CLS-003 | REQ-SAFE-021, REQ-FUNC-053 (RC-032, HAZ-005; added 2026-09-28) |
 | `test_capa006_labelling_bound_to_code.py` | UT-LBL-001 | REQ-FUNC-053, REQ-SAFE-021 (CAPA-006 PA-6.1; added 2026-09-28) |
+| `test_capa008_assistant_read_only.py` | UT-CAPA008 | REQ-SAFE-022, REQ-SAFE-023, REQ-SAFE-024 (RC-033/034/035, HAZ-003/007/008/010; added 2026-10-17) |
+| `test_longitudinal_clinical_rules.py` | UT-LONG-RULES | REQ-SAFE-024, REQ-FUNC-055a (RC-035, HAZ-007) |
 | `test_nifti_utils.py` | UT-NII-001 | REQ-FUNC-001 |
 | `test_dicom_seg.py` | UT-SEG-001..008 | REQ-FUNC-072 |
 | `test_dicom_utils.py` | UT-DICOM-001..007 | REQ-FUNC-072, REQ-SAFE-013 | RC-016 | VERIFIED |

@@ -260,7 +260,10 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
               {/* Error */}
               {generateMutation.isError && (
                 <div className="p-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded text-xs text-red-700 dark:text-red-300">
-                  {(generateMutation.error as Error)?.message || t('report.generateError', 'Report generation failed')}
+                  {/* CAPA-008: a 422 means no measurement was available — say so instead of a generic error. */}
+                  {(generateMutation.error as any)?.response?.status === 422
+                    ? t('report.noMeasurements', 'No measurements are available for this study. Open a segmentation and run its analysis first: a report without measurements would be invented.')
+                    : (generateMutation.error as Error)?.message || t('report.generateError', 'Report generation failed')}
                 </div>
               )}
 

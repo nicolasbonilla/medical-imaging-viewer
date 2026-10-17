@@ -445,7 +445,10 @@ class BrainReportService:
     - Template-based report generation (general, ms_activity, ms_lesion_burden)
     - Integrates volumetry data when available
     - Multi-language support (en, es, de)
-    - HIPAA-compliant: de-identifies all patient data before API call
+
+    CAPA-008: this service does NOT de-identify. It forwards the supplied findings
+    (including age, sex and free text) to the model provider; callers must not send direct
+    identifiers. An earlier claim of HIPAA compliance here was unsubstantiated and is withdrawn.
     """
 
     def __init__(self):

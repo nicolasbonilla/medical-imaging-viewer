@@ -20,6 +20,15 @@ logger = get_logger(__name__)
 
 router = APIRouter(prefix="/ai/report", tags=["AI Report"])
 
+# CAPA-008 (HAZ-003): keys of `findings` that carry a MEASUREMENT computed by the device.
+# A request with none of them (and no volumetry) would make the language model write a
+# report from nothing — the assistant's MS report tool did exactly that for months, because
+# it sent its data under field names this route silently ignored. Such a request is refused.
+MEASUREMENT_FINDING_KEYS = frozenset({
+    "lesion_analysis", "dis_assessment", "longitudinal", "zone_stats",
+    "segmentation_labels", "anomalies",
+})
+
 
 # =============================================================================
 # Request/Response Models
@@ -85,20 +94,32 @@ def get_report_service():
     "/generate",
     response_model=ReportResponse,
     summary="Generate brain MRI report",
-    description="Generate a structured radiology report for a brain MRI study "
-                "using Claude API. Supports multiple templates (stroke, tumor, "
-                "dementia, general) and languages (en, es, de). "
-                "HIPAA compliant: only de-identified findings are sent to Claude.",
+    description="Generate a DRAFT structured brain MRI report from measurements computed by "
+                "the device, using the Claude API, for physician review. Templates: general, "
+                "ms_activity, ms_lesion_burden, ms_comprehensive, ms_longitudinal; languages "
+                "en, es, de. The findings are sent to the model provider: send no direct "
+                "patient identifiers. 422 when no measurement is supplied (CAPA-008).",
 )
 async def generate_report(
     request: ReportGenerateRequest,
     current_user: User = Depends(get_current_active_user),
 ):
-    """Generate a brain MRI report from clinical findings."""
+    """Generate a draft brain MRI report from measurements computed by the device."""
     logger.info(
         f"[Report] Generate request: template={request.template_type}, "
         f"lang={request.language}"
     )
+
+    # CAPA-008 (HAZ-003): never ask the model to write a report without a measurement.
+    if not any(request.findings.get(k) for k in MEASUREMENT_FINDING_KEYS) and not request.volumetry:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                "No measurement was supplied (lesion analysis, DIS assessment, longitudinal "
+                "comparison, zone statistics or volumetry). A report without measurements "
+                "would be invented; open a segmentation and run its analysis first."
+            ),
+        )
 
     try:
         service = get_report_service()

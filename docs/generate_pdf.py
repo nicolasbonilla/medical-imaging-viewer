@@ -867,20 +867,21 @@ def build_pdf():
     # ─── 15. MCP ───
     section('15', 'MODEL CONTEXT PROTOCOL')
 
-    body('Five MCP servers provide Claude with 22 specialized tools for medical imaging analysis:')
+    body('Two read-only MCP servers (CAPA-008, 2026-10-17) let an AI assistant read what the '
+         'operating clinician may read. Both reach the backend only through app/mcp/_backend.py: GET, '
+         'or POST to three compute-only routes; any other route is refused before sending; direct '
+         'identifiers are removed from every response; no tool writes a record; stdio transport only. '
+         'The segmentation, report and PACS servers were retired.')
 
     story.append(make_table(
         ['Server', 'Tools', 'Purpose'],
         [
-            ['imaging_server', '4', 'Image metadata, slice retrieval, matplotlib rendering'],
-            ['segmentation_server', '5', 'AI segmentation, volumetry, anomaly detection'],
-            ['report_server', '3 + 3 resources', 'Report generation, templates, differential diagnosis'],
-            ['ms_clinical_server', '6', 'MS-specific clinical data and assessment'],
-            ['pacs_server', '4', 'PACS / study data access'],
+            ['imaging_server', '5', 'Technical metadata (identifiers removed), slices, segmentation list'],
+            ['ms_clinical_server', '5 + 2 resources', 'Stored measurements, DIS items, comparison candidates, draft report from measurements'],
         ],
         col_widths=[35*mm, 28*mm, CONTENT_WIDTH - 63*mm]
     ))
-    caption('Table 15. MCP server architecture with tool counts.')
+    caption('Table 15. MCP servers (read-only) with tool counts.')
 
     # ─── 16. SECURITY ───
     story.append(PageBreak())

@@ -962,6 +962,7 @@
     "generate": "Generar Informe",
     "generating": "Generando...",
     "generateError": "Error al generar el informe",
+    "noMeasurements": "No hay mediciones disponibles para este estudio. Abra una segmentación y ejecute su análisis primero: un informe sin mediciones sería inventado.",
     "tokens": "Tokens",
     "copy": "Copiar",
     "copied": "Copiado!",
@@ -1065,6 +1066,9 @@
     "criterionNotMet": "No Cumplido",
     "active": "Activa",
     "blackHoles": "Agujeros Negros",
+    "markerReadingsTitle": "Lecturas de CVS / PRL (médico)",
+    "markerReadingsNote": "Se leen en resonancia sensible a la susceptibilidad. McDonald 2024 las usa como apoyo solo en situaciones concretas; son recuentos, no un criterio.",
+    "cvsPosNeg": "CVS+ {{pos}} · CVS− {{neg}}",
     "exportCSV": "Exportar CSV"
   },
   "classify": {

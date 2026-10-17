@@ -1,16 +1,16 @@
 {
-  "executed": "2026-10-17T12:23:19",
+  "executed": "2026-10-17T16:46:53",
   "method": "one mutation at a time; each target string asserted to occur exactly once before replacement",
   "hash_basis": "sha256 of the UTF-8 text as read by Python (universal newlines, LF); a raw CRLF working-tree hash differs",
   "source_sha256": {
     "backend/app/services/ms_region_classifier.py": "fa5a5cecdcfb67a5e00b1e0ffaa5bdee5695a3daa2a01b784977460a3cb07289",
     "backend/app/api/routes/segmentation_regions.py": "72f8f01b6990b21968747d36acbbb813f4cbbb56543e6e37491d5daf8d4706c5",
-    "backend/app/api/routes/segmentation_analysis.py": "889e2613dca5bf7ac5719b4352db2520d7a3a65e1900ff4abab0594e1b0529e7",
-    "backend/app/mcp/ms_clinical_server.py": "064a146dde62c7a8e5472b37c1f0b155389cdb88c31c8a203e4bac530cff9061",
-    "docs/mdr/IFU-001_Instructions_For_Use.md": "f170d051f2317396b48f37f2fd89b3f53909fa5c78c9f6c622497f18df29c0b4",
+    "backend/app/api/routes/segmentation_analysis.py": "008b39f5ceec1268694b00d479b92c18031a2f54b2d9535586e44aaa4d33e5ef",
+    "backend/app/mcp/ms_clinical_server.py": "450d32c6d7d6c42bf973948bfb3edbb71eff20be9ac8f9472424fd11b34409ae",
+    "docs/mdr/IFU-001_Instructions_For_Use.md": "9aeb21746eb4514f6b3847d5e5c722deb037516e97bad2b81e295b67bc4fdf76",
     "README.md": "3bf46de9f07f5360a3a8019d2bd979525fcfc8a580cfeffd5c3953c4931fc035",
-    "frontend/src/components/LesionDashboard.tsx": "2fb7378a880a59f00f3d6e667632794647144aa6ce8fbf3056ebe70b029e3468",
-    "frontend/src/i18n/locales/en.json": "6d973314f3206db5e969a33b89dae5a34d114283e0603b30c4ac068b8c1803cd"
+    "frontend/src/components/LesionDashboard.tsx": "df7fe3211d739fb68629ecc94f9f28632256960100a51aa6c53117d8fbb6312d",
+    "frontend/src/i18n/locales/en.json": "7a27cc26b5b44c71f25d1ad7521e7f1e5ab618500fd51a210c63ba489a77bc05"
   },
   "test_sha256": {
     "tests/unit/test_rc032_region_atlas_guard.py": "6e88f63f47a88bd95f49826b2d152ac2fea9c94c83afbf95d8c9f6ab92b0b8e7",

@@ -206,7 +206,7 @@ export interface LongitudinalResult {
   /** ≥1 significant new lesion → supports dissemination-in-time (CANDIDATE — a reader
    *  must confirm; the report builder is barred from asserting DIT). */
   dit_candidate?: boolean;
-  /** ≥2 new/enlarging lesions → MAGNIMS active-disease signal (CANDIDATE only). */
+  /** ≥1 new/enlarging lesion → MAGNIMS 2021 active-disease signal (CANDIDATE only; CAPA-008). */
   activity_candidate?: boolean;
   /** MAGNIMS region stratification (MSMask atlas) of new + enlarging candidates by
    *  McDonald region. null when no zone map was available (off-MNI / atlas failure). */
@@ -346,16 +346,19 @@ export interface LesionAnnotation {
   notes: string | null;
 }
 
+/** Counts of a clinician's CVS readings (CAPA-008: counts only, never "criteria met"). */
 export interface CVSSummary {
   total_evaluated: number;
   cvs_positive: number;
   cvs_negative: number;
-  meets_select6: boolean;     // McDonald 2024: >=6 CVS+ lesions
-  meets_40pct: boolean;       // McDonald 2024: >=40% CVS+ of evaluated
+  meets_select6: boolean;     // McDonald 2024 "select 6": >=6 lesions read CVS+
+  cvs_majority?: boolean;     // CVS+ outnumber CVS− (McDonald 2024: counts only if <10 WM lesions)
+  // The former "40% rule" is withdrawn (CAPA-008): it is not part of McDonald 2024.
 }
 
+/** Counts of a clinician's PRL readings. >=1 PRL is supportive only in specific situations. */
 export interface PRLSummary {
   total_evaluated: number;
   prl_positive: number;
-  meets_criteria: boolean;    // McDonald 2024: >=1 PRL
+  meets_criteria: boolean;    // >=1 lesion read PRL+ (not, by itself, a diagnostic criterion)
 }

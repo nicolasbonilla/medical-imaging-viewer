@@ -26,7 +26,7 @@
   ],
   "manifest_version": 1,
   "capa_reference": "CAPA-001, CAPA-002, CAPA-004, CAPA-005, CAPA-006, CAPA-007",
-  "last_updated": "2026-09-28",
+  "last_updated": "2026-10-17",
   "controls": {
     "RC-006": {
       "description": "AI-generated report carries a mandatory physician-review disclaimer",
@@ -327,9 +327,46 @@
         "tests/unit/test_rc032_region_atlas_guard.py",
         "frontend/src/components/LesionDashboard.rc032.test.ts"
       ],
-      "negative_control": "Executed 2026-10-17 against the final code by scripts/safety/rc032_negative_controls.py, one mutation at a time (application of each asserted), failing test names recorded in docs/iec62304/records/risk_verification/RC-032_negative_controls_2026-09-28.json. Backend 34 mutations, 31 detected; frontend 5/5; labelling (PA-6.1) 6/6. Restored: 36 / 6 / 60 passed. Not detected BY DESIGN (redundant sub-controls, stated in the record): the two route MNI gates (each covered by the service gate; detected together in AB and F) and the diagonal-dominance condition (covered by the per-axis FOV condition). No unexpected undetected mutation.",
+      "negative_control": "Executed 2026-10-17 against the final code by scripts/safety/rc032_negative_controls.py, one mutation at a time (application of each asserted), failing test names recorded in docs/iec62304/records/risk_verification/RC-032_negative_controls_2026-09-28.json. Backend 34 mutations, 31 detected; frontend 5/5; labelling (PA-6.1) 6/6. Restored: 36 / 6 / 60 passed. Not detected BY DESIGN (redundant sub-controls, stated in the record): the two route MNI gates (each covered by the service gate; detected together in AB and F) and the diagonal-dominance condition (covered by the per-axis FOV condition). No unexpected undetected mutation. Re-executed 2026-10-17 16:46 after CAPA-008 rewrote the assistant text (LAB6 anchor moved to the new get_region_classification docstring): 45 mutations, the same 3 redundant-by-design mutations undetected, LAB6 detected, restored 36 / 60 / 6 passed. The README assistant section was edited afterwards (not an RC-032 anchor), so the README hash in the record predates that edit.",
       "requirement": "REQ-SAFE-021",
       "note": "CAPA-006. Motivation measured (scripts/safety/haz005_atlas_misregistration_probe.py, docs/research/records/haz005_atlas_misregistration_output.txt run 2): moving the anatomy by up to 3 deg / 3 % / 5 mm inside an MNI grid changed the MAGNIMS region of 216/786 expert lesions (27.5 %) and brain DIS in 4/30 scans. HONEST LIMITS: the grid gate cannot certify registration (an image resampled onto an MNI grid without registration passes); the geometric heuristics remain coordinate rules; the UI part is verified by source-level tests, not a render test; the two MNI gates on the classify path are redundant by design (each alone is not independently detectable). Does not establish region-assignment accuracy; HAZ-005 residual stays UNDETERMINED. Class C module changed (ms_region_classifier) — needs human review."
+    },
+    "RC-033": {
+      "description": "RC-033 (CAPA-008): the AI-assistant (MCP) layer is read-only and bounded by the intended use — one client (app/mcp/_backend.py) allows GET and POST only to compute-only routes that authorize their objects, refusing any other route before a request is sent; no tool writes a record; STDIO only, authenticated as the operating clinician; direct identifiers removed from every response; texts never claim diagnosis, criteria met, disease activity or treatment response. Segmentation, report and PACS servers retired",
+      "hazard": "HAZ-003, HAZ-010",
+      "status": "implemented",
+      "implementation": "backend/app/mcp/_backend.py (COMPUTE_ONLY_POST_PATHS, check_compute_only, drop_direct_identifiers, api_get, api_post_compute); backend/app/mcp/imaging_server.py; backend/app/mcp/ms_clinical_server.py; backend/app/mcp/run_all.py (STDIO only); segmentation_server.py, report_server.py, pacs_server.py deleted",
+      "tests": [
+        "tests/unit/test_capa008_assistant_read_only.py"
+      ],
+      "negative_control": "Executed 2026-10-17 by scripts/safety/capa008_negative_controls.py, one mutation at a time (anchor asserted unique), failing test names in docs/iec62304/records/risk_verification/CAPA-008_negative_controls_2026-10-17.json. A1-A9 9/9 detected.",
+      "requirement": "REQ-SAFE-022",
+      "note": "CAPA-008. HONEST LIMITS: verified by parsing the MCP source and checking the mounted routes; fastmcp is not installed in the test environment, so no live assistant session was exercised. Free text (descriptions, notes) is not scrubbed of identifiers."
+    },
+    "RC-034": {
+      "description": "RC-034 (CAPA-008): the report route refuses (422, reason stated) a request carrying no device measurement; the report panel shows the reason",
+      "hazard": "HAZ-003",
+      "status": "implemented",
+      "implementation": "backend/app/api/routes/ai_report.py (MEASUREMENT_FINDING_KEYS + guard); frontend/src/components/AIReportPanel.tsx (422 message, i18n report.noMeasurements)",
+      "tests": [
+        "tests/unit/test_capa008_assistant_read_only.py"
+      ],
+      "negative_control": "Executed 2026-10-17 by scripts/safety/capa008_negative_controls.py; R1-R2 2/2 detected; record docs/iec62304/records/risk_verification/CAPA-008_negative_controls_2026-10-17.json.",
+      "requirement": "REQ-SAFE-023",
+      "note": "CAPA-008. Does not govern report CONTENT: the Class C templates still request items no code measures (CA-8.9 open)."
+    },
+    "RC-035": {
+      "description": "RC-035 (CAPA-008): CVS/PRL readings stored with the authenticated reader and validated statuses; summary counts per McDonald 2024 (select-6; CVS+ vs CVS-), the withdrawn 40% rule absent, >=1 PRL not shown as a criterion met; longitudinal activity candidate raised by >=1 new or enlarging candidate (MAGNIMS 2021)",
+      "hazard": "HAZ-007, HAZ-008",
+      "status": "implemented",
+      "implementation": "backend/app/api/routes/segmentation_analysis.py (LESION_MARKER_STATUSES, summarize_cvs_readings, annotate_lesions); frontend/src/components/LesionDashboard.tsx; frontend/src/types/lesion.ts; backend/app/services/longitudinal_tracking_service.py (activity_candidate >= 1)",
+      "tests": [
+        "tests/unit/test_capa008_assistant_read_only.py",
+        "tests/unit/test_longitudinal_clinical_rules.py"
+      ],
+      "negative_control": "Executed 2026-10-17 by scripts/safety/capa008_negative_controls.py; C1-C6 6/6 detected; record docs/iec62304/records/risk_verification/CAPA-008_negative_controls_2026-10-17.json.",
+      "requirement": "REQ-SAFE-024",
+      "note": "CAPA-008. Rule wording verified against open sources quoting Montalban et al. 2025 (Solomon et al., Neurology 2026; ECTRIMS 2025 deck slide 35) and MAGNIMS 2021 (author version); the paywalled Lancet full text was not read. The UI part is verified by source-level tests, not a render test."
     }
   },
   "unverified_controls_note": [

@@ -871,8 +871,37 @@ async def detect_slowly_expanding_lesions(
 
 
 # =============================================================================
-# CVS / PRL Lesion Annotations (McDonald 2024 Biomarkers)
+# CVS / PRL Lesion Annotations (clinician readings; McDonald 2024 supportive markers)
 # =============================================================================
+
+LESION_MARKER_STATUSES = (None, "positive", "negative", "indeterminate")
+
+
+def summarize_cvs_readings(annotations: list) -> dict:
+    """Count a clinician's central-vein-sign (CVS) readings (CAPA-008).
+
+    Reports counts only; it never states that a criterion is met for a patient.
+    McDonald 2024 CVS rule: ">=6 white matter lesions with CVS; or in cases with <10 white
+    matter lesions, lesions with CVS outnumbering lesions without CVS" (Montalban et al.,
+    Lancet Neurology 2025, as quoted by Solomon et al., Neurology 2026; ECTRIMS 2025 deck
+    slide 35: "select 6, or >50% if the number of lesions is <10").
+    - `meets_select6`: at least 6 lesions read CVS-positive.
+    - `cvs_majority`: CVS-positive readings outnumber CVS-negative ones — counts toward the
+      rule only when the scan has fewer than 10 white matter lesions, which the physician
+      judges; the device does not combine the two.
+    The former "40% rule" is withdrawn: it is an earlier research proposal (Cagol et al. 2024:
+    "previously proposed 40% CVS rule"), not part of McDonald 2024.
+    """
+    evaluated = [a for a in annotations if a.get("cvs_status") in ("positive", "negative")]
+    positive = sum(1 for a in evaluated if a.get("cvs_status") == "positive")
+    negative = len(evaluated) - positive
+    return {
+        "total_evaluated": len(evaluated),
+        "cvs_positive": positive,
+        "cvs_negative": negative,
+        "meets_select6": positive >= 6,
+        "cvs_majority": positive > negative,
+    }
 
 @router.post("/{segmentation_id}/lesion-annotations")
 async def annotate_lesions(
@@ -884,23 +913,39 @@ async def annotate_lesions(
     _authorized=Depends(require_segmentation_access),
 ):
     """
-    Save CVS/PRL annotations for individual lesions (McDonald 2024 biomarkers).
+    Save a clinician's CVS/PRL readings for individual lesions.
 
-    McDonald 2024 (Montalban et al., Lancet Neurology 2025) incorporates
-    Central Vein Sign (CVS) and Paramagnetic Rim Lesions (PRL) as diagnostic
-    biomarkers. CVS Select-6: >=6 CVS+ lesions. PRL: >=1 positive.
+    The central vein sign (CVS) and paramagnetic rim lesions (PRL) are read by a person on
+    susceptibility-sensitive MRI. McDonald 2024 (Montalban et al., Lancet Neurology 2025)
+    uses them as SUPPORTIVE evidence in specific situations only; this route records the
+    readings and counts them, it does not evaluate the criteria.
+
+    CAPA-008:
+    - `annotated_by` is the authenticated user, never a value sent by the client;
+    - a status other than positive / negative / indeterminate / null is refused (400);
+    - the former "40% rule" is withdrawn: it is not part of McDonald 2024.
 
     Body: { annotations: [{ lesion_id, cvs_status, prl_status, notes }] }
     """
     try:
+        annotations = body.get("annotations", [])
+        if not annotations:
+            raise HTTPException(status_code=400, detail="No annotations provided")
+        for ann in annotations:
+            if not isinstance(ann, dict) or not isinstance(ann.get("lesion_id"), int) \
+                    or isinstance(ann.get("lesion_id"), bool):
+                raise HTTPException(status_code=400, detail="Each annotation needs an integer lesion_id")
+            for field in ("cvs_status", "prl_status"):
+                if ann.get(field) not in LESION_MARKER_STATUSES:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"{field} must be one of positive, negative, indeterminate or null",
+                    )
+
         seg_data = segmentation_service.get_loaded(segmentation_id)
         if seg_data is None:
             raise HTTPException(status_code=404, detail=f"Segmentation {segmentation_id} not found")
         metadata = seg_data["metadata"]
-
-        annotations = body.get("annotations", [])
-        if not annotations:
-            raise HTTPException(status_code=400, detail="No annotations provided")
 
         from datetime import datetime
 
@@ -909,33 +954,23 @@ async def annotate_lesions(
         existing_map = {a.get("lesion_id"): a for a in existing if isinstance(a, dict)}
 
         for ann in annotations:
-            lesion_id = ann.get("lesion_id")
-            if lesion_id is None:
-                continue
+            lesion_id = ann["lesion_id"]
             existing_map[lesion_id] = {
                 "lesion_id": lesion_id,
                 "cvs_status": ann.get("cvs_status"),
                 "prl_status": ann.get("prl_status"),
-                "annotated_by": ann.get("annotated_by", "manual"),
+                # CAPA-008: provenance is the authenticated reader, not a client-supplied label.
+                "annotated_by": current_user.id,
                 "annotated_at": datetime.utcnow().isoformat(),
                 "notes": ann.get("notes"),
             }
 
         merged_annotations = list(existing_map.values())
 
-        # Compute CVS summary (McDonald 2024 Select-6 and 40% rule)
-        cvs_evaluated = [a for a in merged_annotations if a.get("cvs_status") in ("positive", "negative")]
-        cvs_positive = sum(1 for a in cvs_evaluated if a.get("cvs_status") == "positive")
-        total_cvs_evaluated = len(cvs_evaluated)
-        cvs_summary = {
-            "total_evaluated": total_cvs_evaluated,
-            "cvs_positive": cvs_positive,
-            "cvs_negative": total_cvs_evaluated - cvs_positive,
-            "meets_select6": cvs_positive >= 6,
-            "meets_40pct": (cvs_positive / total_cvs_evaluated >= 0.4) if total_cvs_evaluated > 0 else False,
-        }
+        cvs_summary = summarize_cvs_readings(merged_annotations)
 
-        # Compute PRL summary (McDonald 2024: >=1 PRL)
+        # PRL summary: counts of the clinician's readings. ">=1 PRL" is supportive evidence in
+        # McDonald 2024 only in the specific situation the criteria define.
         prl_evaluated = [a for a in merged_annotations if a.get("prl_status") in ("positive", "negative")]
         prl_positive = sum(1 for a in prl_evaluated if a.get("prl_status") == "positive")
         prl_summary = {
@@ -956,7 +991,7 @@ async def annotate_lesions(
         logger.info("Lesion annotations saved", extra={
             "segmentation_id": segmentation_id,
             "annotations_count": len(merged_annotations),
-            "cvs_positive": cvs_positive,
+            "cvs_positive": cvs_summary["cvs_positive"],
             "prl_positive": prl_positive,
         })
 

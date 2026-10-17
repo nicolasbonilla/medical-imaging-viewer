@@ -158,7 +158,7 @@ M = {  # name: (test target, [(file, old, new), ...], what the mutation restores
         "an unmeasured accuracy figure reappears in a Class C docstring"),
     "LAB5_validation_claim_in_ifu": (T_LAB, [(IFU, "**Output (per lesion)**", "MAGNIMS classification validated against expert annotations.\n\n**Output (per lesion)**")],
         "an unevidenced validation claim reappears in the IFU"),
-    "LAB6_accuracy_claim_for_assistant": (T_LAB, [(MCP, "    Classify MS lesions into MAGNIMS anatomical regions.\n", "    Classify MS lesions into MAGNIMS anatomical regions (~90% accuracy).\n")],
+    "LAB6_accuracy_claim_for_assistant": (T_LAB, [(MCP, "    Read the MAGNIMS region classification STORED for a lesion segmentation.\n", "    Read the MAGNIMS region classification STORED for a lesion segmentation (~90% accuracy).\n")],
         "an unmeasured accuracy figure reappears in the text the clinical assistant reads"),
     # ---- user interface
     "FE1_atlas_alert_removed": (T_FE, [(DASH, "{classification.atlas_unavailable_reason && (", "{false && (")],
