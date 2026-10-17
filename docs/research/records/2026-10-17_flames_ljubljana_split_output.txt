@@ -1,0 +1,64 @@
+  patient01: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [160, 363, 270] (mask grid [192, 512, 512])
+  patient02: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [173, 353, 271] (mask grid [192, 512, 512])
+  patient03: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [167, 328, 268] (mask grid [192, 512, 512])
+  patient04: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [176, 376, 278] (mask grid [192, 512, 512])
+  patient05: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [163, 359, 264] (mask grid [192, 512, 512])
+  patient06: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [178, 361, 270] (mask grid [192, 512, 512])
+  patient07: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [158, 324, 271] (mask grid [192, 512, 512])
+  patient08: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [172, 344, 256] (mask grid [192, 512, 512])
+  patient09: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [164, 327, 262] (mask grid [192, 512, 512])
+  patient10: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [165, 322, 296] (mask grid [192, 512, 512])
+  patient11: FLAIR dims [176, 512, 512] pixdim [0.9, 0.46875, 0.46875] | brain bbox [152, 351, 285] (mask grid [176, 512, 512])
+  patient12: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [157, 368, 284] (mask grid [192, 512, 512])
+  patient13: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [166, 347, 270] (mask grid [192, 512, 512])
+  patient14: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [168, 356, 272] (mask grid [192, 512, 512])
+  patient15: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [171, 344, 254] (mask grid [192, 512, 512])
+  patient16: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [172, 338, 244] (mask grid [192, 512, 512])
+  patient17: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [151, 355, 265] (mask grid [192, 512, 512])
+  patient18: FLAIR dims [192, 512, 512] pixdim [0.9, 0.46875, 0.46875] | brain bbox [150, 327, 271] (mask grid [192, 512, 512])
+  patient19: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [162, 313, 272] (mask grid [192, 512, 512])
+  patient20: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [164, 343, 258] (mask grid [192, 512, 512])
+  patient21: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [157, 377, 276] (mask grid [192, 512, 512])
+  patient22: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [169, 348, 273] (mask grid [192, 512, 512])
+  patient23: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [164, 376, 251] (mask grid [192, 512, 512])
+  patient24: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [177, 350, 307] (mask grid [192, 512, 512])
+  patient25: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [150, 366, 266] (mask grid [192, 512, 512])
+  patient26: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [154, 339, 249] (mask grid [192, 512, 512])
+  patient27: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [178, 339, 273] (mask grid [192, 512, 512])
+  patient28: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [168, 369, 265] (mask grid [192, 512, 512])
+  patient29: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [177, 362, 258] (mask grid [192, 512, 512])
+  patient30: FLAIR dims [192, 512, 512] pixdim [0.8, 0.46875, 0.46875] | brain bbox [169, 335, 259] (mask grid [192, 512, 512])
+
+Ljubljana raw FLAIR spacings (sitk order): [(0.4688, 0.4688, 0.8), (0.4688, 0.4688, 0.9)]
+fingerprint entries with a Ljubljana spacing: 22 -> indices [84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 137, 138]
+entries sharing a Ljubljana spacing but matching NO patient exactly (not Ljubljana): [137, 138]
+
+assignment (fingerprint entry -> patient, L1 voxels; best / second best):
+  idx  84 bbox [270, 363, 160] sp [0.4688, 0.4688, 0.8] -> patient01 L1=0 | best patient01 0, 2nd patient05 13
+  idx  85 bbox [271, 353, 173] sp [0.4688, 0.4688, 0.8] -> patient02 L1=0 | best patient02 0, 2nd patient14 9
+  idx  86 bbox [268, 328, 167] sp [0.4688, 0.4688, 0.8] -> patient03 L1=0 | best patient03 0, 2nd patient09 10
+  idx  87 bbox [278, 376, 176] sp [0.4688, 0.4688, 0.8] -> patient04 L1=0 | best patient04 0, 2nd patient21 22
+  idx  88 bbox [264, 359, 163] sp [0.4688, 0.4688, 0.8] -> patient05 L1=0 | best patient05 0, 2nd patient01 13
+  idx  89 bbox [270, 361, 178] sp [0.4688, 0.4688, 0.8] -> patient06 L1=0 | best patient06 0, 2nd patient02 14
+  idx  90 bbox [271, 324, 158] sp [0.4688, 0.4688, 0.8] -> patient07 L1=0 | best patient07 0, 2nd patient03 16
+  idx  91 bbox [256, 344, 172] sp [0.4688, 0.4688, 0.8] -> patient08 L1=0 | best patient08 0, 2nd patient15 3
+  idx  92 bbox [262, 327, 164] sp [0.4688, 0.4688, 0.8] -> patient09 L1=0 | best patient09 0, 2nd patient03 10
+  idx  93 bbox [296, 322, 165] sp [0.4688, 0.4688, 0.8] -> patient10 L1=0 | best patient10 0, 2nd patient07 34
+  idx  94 bbox [285, 351, 152] sp [0.4688, 0.4688, 0.9] -> patient11 L1=0 | best patient11 0, 2nd patient18 40
+  idx  95 bbox [284, 368, 157] sp [0.4688, 0.4688, 0.8] -> patient12 L1=0 | best patient12 0, 2nd patient21 17
+  idx  96 bbox [270, 347, 166] sp [0.4688, 0.4688, 0.8] -> patient13 L1=0 | best patient13 0, 2nd patient22 7
+  idx  97 bbox [272, 356, 168] sp [0.4688, 0.4688, 0.8] -> patient14 L1=0 | best patient14 0, 2nd patient02 9
+  idx  98 bbox [254, 344, 171] sp [0.4688, 0.4688, 0.8] -> patient15 L1=0 | best patient15 0, 2nd patient08 3
+  idx  99 bbox [276, 377, 157] sp [0.4688, 0.4688, 0.8] -> patient21 L1=0 | best patient21 0, 2nd patient12 17
+  idx 100 bbox [273, 348, 169] sp [0.4688, 0.4688, 0.8] -> patient22 L1=0 | best patient22 0, 2nd patient13 7
+  idx 101 bbox [251, 376, 164] sp [0.4688, 0.4688, 0.8] -> patient23 L1=0 | best patient23 0, 2nd patient28 25
+  idx 102 bbox [307, 350, 177] sp [0.4688, 0.4688, 0.8] -> patient24 L1=0 | best patient24 0, 2nd patient02 43
+  idx 103 bbox [266, 366, 150] sp [0.4688, 0.4688, 0.8] -> patient25 L1=0 | best patient25 0, 2nd patient17 13
+  idx 137 bbox [284, 349, 144] sp [0.4688, 0.4688, 0.9] -> patient18 L1=41 | best patient11 11, 2nd patient18 41
+  idx 138 bbox [296, 339, 155] sp [0.4688, 0.4688, 0.9] -> patient16 L1=1000000 | best patient11 26, 2nd patient18 42
+
+matched (trained) patients: ['patient01', 'patient02', 'patient03', 'patient04', 'patient05', 'patient06', 'patient07', 'patient08', 'patient09', 'patient10', 'patient11', 'patient12', 'patient13', 'patient14', 'patient15', 'patient21', 'patient22', 'patient23', 'patient24', 'patient25']
+monotone in anonymised id: True
+NOT matched (candidate held-out) patients: ['patient16', 'patient17', 'patient18', 'patient19', 'patient20', 'patient26', 'patient27', 'patient28', 'patient29', 'patient30']
+exact matches: 20; smallest second-best distance among them 3.0 voxels; between-patient box L1: min 3, median 43, exactly-equal pairs 0
+wrote docs/research/records/2026-10-17_flames_ljubljana_split.json
