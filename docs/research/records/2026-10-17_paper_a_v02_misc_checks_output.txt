@@ -1,0 +1,14 @@
+top-scored candidate is false: mslesseg   21/115 = 0.183
+top-scored candidate is false: openms_all 6/30 = 0.200
+top-scored candidate is false: heldout10  1/10 = 0.100
+top-scored candidate is false: trained20  5/20 = 0.250
+0/200: two-sided 95% [0.0, 0.0183]  one-sided 95% upper 0.0149
+0/30: two-sided 95% [0.0, 0.1157]  one-sided 95% upper 0.095
+0/27: two-sided 95% [0.0, 0.1277]  one-sided 95% upper 0.105
+0/10: two-sided 95% [0.0, 0.3085]  one-sided 95% upper 0.2589
+0/5: two-sided 95% [0.0, 0.5218]  one-sided 95% upper 0.4507
+5/30: two-sided 95% [0.0564, 0.3472]  one-sided 95% upper 0.319
+2/30: two-sided 95% [0.0082, 0.2207]  one-sided 95% upper 0.1953
+40/200: two-sided 95% [0.1469, 0.2622]  one-sided 95% upper 0.2522
+17/200: two-sided 95% [0.0503, 0.1326]  one-sided 95% upper 0.1248
+wrote C:\Users\Nicolas\medical-imaging-viewer\.claude\worktrees\agent-a326eb09a5f433bb1\docs\research\records\2026-10-17_paper_a_v02_misc_checks.json
