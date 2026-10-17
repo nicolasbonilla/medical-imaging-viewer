@@ -266,7 +266,7 @@
         "tests/unit/test_rc026_access_enforcement.py"
       ],
       "negative_control": "decision layer — 4 vectors (7/2/1/7 failed); enforcement layer — 3 vectors: guard removed from a route -> 1 failed; enforcement returns patient unconditionally -> 7 failed; 403 instead of 404 (enumeration leak) -> 1 failed",
-      "note": "ENFORCED on the PATIENT resource: all 6 patient-scoped routes (get/update/delete + 3 medical-history) plus care-team management now call require_patient_access, which denies with 404 (never 403) to prevent patient enumeration. Care-team assignment/revocation themselves require object access, so a clinician cannot add themselves to a team they are not on; ADMIN bootstraps. STILL OPEN under CAPA-002: imaging.py, studies.py and documents.py are NOT yet wired — they identify the patient indirectly (via file_id / study_id), which needs CA-2.3 (opaque IDs resolved server-side) first. CAPA-002 remains OPEN until those routes enforce access and CA-2.3 lands.",
+      "note": "ENFORCED on the PATIENT resource: all 6 patient-scoped routes (get/update/delete + 3 medical-history) plus care-team management now call require_patient_access, which denies with 404 (never 403) to prevent patient enumeration. Care-team assignment/revocation themselves require object access, so a clinician cannot add themselves to a team they are not on; ADMIN bootstraps. STILL OPEN under CAPA-002: imaging.py, studies.py and documents.py are NOT yet wired — they identify the patient indirectly (via file_id / study_id), which needs CA-2.3 (opaque IDs resolved server-side) first. CAPA-002 remains OPEN until those routes enforce access and CA-2.3 lands. ERRATUM 2026-10-17 (CAPA-009): the HTTP guard did not execute. require_patient_access was a plain def returning a coroutine that FastAPI never awaited; the enforcement tests matched source text and called the decision function directly, so they could not observe it. Fixed (async def) and bound by request to tests/unit/test_capa009_object_authorization_everywhere.py (RC-036).",
       "requirement": "REQ-SEC-014/015/018"
     },
     "RC-027": {
@@ -367,6 +367,18 @@
       "negative_control": "Executed 2026-10-17 by scripts/safety/capa008_negative_controls.py; C1-C6 6/6 detected; record docs/iec62304/records/risk_verification/CAPA-008_negative_controls_2026-10-17.json.",
       "requirement": "REQ-SAFE-024",
       "note": "CAPA-008. Rule wording verified against open sources quoting Montalban et al. 2025 (Solomon et al., Neurology 2026; ECTRIMS 2025 deck slide 35) and MAGNIMS 2021 (author version); the paywalled Lancet full text was not read. The UI part is verified by source-level tests, not a render test."
+    },
+    "RC-036": {
+      "description": "RC-036 (CAPA-009): every mounted route that references a patient-scoped object authorizes it before any data access; task/upload/import handles are initiator-only; PACS connection changes and websocket connection statistics are administrator-only; parsed, authorized storage paths only",
+      "hazard": "HAZ-010",
+      "status": "implemented",
+      "implementation": "app/security/patient_access_dependency.py (require_patient_access and require_imaging_access are async); app/security/resource_access.py (authorize_patient_id, authorize_study_id, authorize_document_id, require_version_access); app/security/ownership.py (InitiatorRegistry); routes: studies, documents, fhir, patients (by-mrn), ai_segmentation, clinical_tools, dicomweb, websocket, imaging (overlay), segmentation (nifti reference), conformal",
+      "tests": [
+        "tests/unit/test_capa009_object_authorization_everywhere.py"
+      ],
+      "negative_control": "Executed 2026-10-17 by scripts/safety/capa009_negative_controls.py, one mutation at a time (every anchor asserted unique), failing test names in docs/iec62304/records/risk_verification/CAPA-009_negative_controls_2026-10-17.json. 32 mutations, 32 detected (incl. P1: the un-awaited patient dependency re-introduced -> 7 failed). Restored 47 passed.",
+      "requirement": "REQ-SEC-014/015/016/019/020",
+      "note": "CAPA-009. Completes CAPA-007 PA-7.2. HONEST LIMITS: behaviour verified in-process with fake services and a fake care-team store; not verified in production (two real accounts needed); the initiator registry is in memory per instance, like the task and upload stores it guards, so a handle used on another instance is refused (fail closed)."
     }
   },
   "unverified_controls_note": [

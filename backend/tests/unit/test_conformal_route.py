@@ -70,7 +70,9 @@ class _Settings:
 
 
 def _client(monkeypatch, prob_bytes, enabled=True):
-    async def _noop_auth(file_id, current_user): return None
+    # Returns the reference the real check returns: CAPA-009 makes the route download the
+    # parsed, authorized path (ref.object_path) instead of the raw client string.
+    async def _noop_auth(file_id, current_user): return type("Ref", (), {"object_path": file_id})()
     monkeypatch.setattr("app.api.routes.conformal.require_imaging_access", _noop_auth)
     st = _Settings(); st.CALM_MS_RESEARCH_ENABLED = enabled
     monkeypatch.setattr("app.api.routes.conformal.get_settings", lambda: st)

@@ -7,7 +7,7 @@
 **Owner**: *(to be assigned: Software Safety Officer / QMS Manager)*
 **Status**: OPEN.
 - Implemented on branch `fix/mcp-assistant-and-cvs-labelling-capa008`: CA-8.1 to CA-8.7, CA-8.10, PA-8.1, PA-8.2. **Approved by N. G. Bonilla Vargas on 2026-10-17** (PR #46) and merged.
-- Pending: CA-8.8 (next PR), CA-8.9 (owner review), PA-8.3 (owner decision).
+- Pending: CA-8.9 (owner review), PA-8.3 (owner decision). CA-8.8 is superseded by CAPA-009.
 - Effectiveness is not verified.
 
 **Procedure**: QP-002 (`docs/qms/QP-002_CAPA_Procedure.md`) · SPR-001
@@ -50,7 +50,7 @@ likelihood, not severity.
 | **CA-8.5** | HIPAA claims withdrawn from the route description and the report service docstring; both now state that findings go to the model provider and must carry no direct identifiers | **DONE** (branch) |
 | **CA-8.6** | CVS/PRL: `annotated_by` = authenticated user; statuses validated (400, nothing stored); `summarize_cvs_readings` reports counts (select-6; CVS+ vs CVS−, with the McDonald 2024 wording and its "<10 lesions" condition in the docstring); 40 % rule withdrawn from API, types and UI; PRL count shown neutrally; UI states "clinician readings ... counts, not a criterion" (en/es/de) | **DONE** (branch) |
 | **CA-8.7** | STDIO only (`run_all.py`); credential documented as the operating clinician's own token; direct identifiers removed from every assistant response (`drop_direct_identifiers`) | **DONE** (branch) |
-| **CA-8.8** | Object-level authorization on the five `/ai/*` routes (CAPA-007 PA-7.2) | **PENDING** — next PR |
+| **CA-8.8** | Object-level authorization on the five `/ai/*` routes (CAPA-007 PA-7.2) | **SUPERSEDED by CAPA-009** (CA-9.5): the enumeration of all routers found ~40 routes, including these |
 | **CA-8.9** | Rewrite the Class C report templates to McDonald 2024 and to measured items only | **PENDING** — owner review (Class C clinical content) |
 | **CA-8.10** | Longitudinal `activity_candidate` raised by >=1 new or enlarging candidate (MAGNIMS 2021); code comment, UI text and types corrected | **DONE** (branch) |
 

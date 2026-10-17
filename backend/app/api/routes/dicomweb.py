@@ -11,7 +11,16 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
 
 from app.security import get_current_active_user
-from app.security.models import User
+from app.security.auth import require_role
+from app.security.models import User, UserRole
+from app.security.resource_access import authorize_patient_id
+from app.security.ownership import initiators
+
+# CAPA-009 (RC-036): PACS connections are system configuration. Any authenticated user could
+# create, delete and "test" a connection to any URL — the test makes the server send a request
+# to that URL (server-side request forgery). Creating, deleting and testing are now for
+# administrators; listing and reading stay open (credentials masked) so users can pick one.
+_admin = Depends(require_role(UserRole.ADMIN))
 from app.core.logging import get_logger
 from app.models.dicomweb_schemas import (
     PACSConnectionCreate, PACSConnectionResponse,
@@ -48,7 +57,7 @@ def _get_dicomweb_service():
 # ============================================================================
 
 @router.post("/connections", response_model=PACSConnectionResponse)
-async def create_connection(data: PACSConnectionCreate, current_user: User = Depends(get_current_active_user)):
+async def create_connection(data: PACSConnectionCreate, current_user: User = _admin):
     """Save a new PACS DICOMweb connection."""
     svc = _get_dicomweb_service()
     conn = await svc.save_connection(data.model_dump())
@@ -82,7 +91,7 @@ async def get_connection(connection_id: str, current_user: User = Depends(get_cu
 
 
 @router.delete("/connections/{connection_id}")
-async def delete_connection(connection_id: str, current_user: User = Depends(get_current_active_user)):
+async def delete_connection(connection_id: str, current_user: User = _admin):
     """Delete a PACS connection."""
     svc = _get_dicomweb_service()
     await svc.delete_connection(connection_id)
@@ -90,7 +99,7 @@ async def delete_connection(connection_id: str, current_user: User = Depends(get
 
 
 @router.post("/connections/{connection_id}/test")
-async def test_connection(connection_id: str, current_user: User = Depends(get_current_active_user)):
+async def test_connection(connection_id: str, current_user: User = _admin):
     """Test PACS connectivity."""
     svc = _get_dicomweb_service()
     result = await svc.test_connection(connection_id)
@@ -138,6 +147,8 @@ async def search_series(connection_id: str, study_instance_uid: str, current_use
 
 @router.post("/import")
 async def start_import(request: ImportRequest, current_user: User = Depends(get_current_active_user)):
+    # CAPA-009 (RC-036): import only into a patient the caller may access (HAZ-012, HAZ-010).
+    await authorize_patient_id(request.patient_id, current_user)
     """Start importing a DICOM series from PACS (async with job tracking)."""
     svc = _get_dicomweb_service()
     try:
@@ -148,6 +159,7 @@ async def start_import(request: ImportRequest, current_user: User = Depends(get_
             patient_id=request.patient_id,
             study_description=request.study_description,
         )
+        initiators.record("pacs-import", job_id, current_user)
         return {"job_id": job_id}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -158,6 +170,7 @@ async def start_import(request: ImportRequest, current_user: User = Depends(get_
 
 @router.get("/import/{job_id}")
 async def get_import_status(job_id: str, current_user: User = Depends(get_current_active_user)):
+    initiators.authorize("pacs-import", job_id, current_user, "Import job")   # CAPA-009
     """Poll import job status."""
     svc = _get_dicomweb_service()
     status = svc.get_import_status(job_id)
@@ -170,4 +183,9 @@ async def get_import_status(job_id: str, current_user: User = Depends(get_curren
 async def list_imports(current_user: User = Depends(get_current_active_user)):
     """List all import jobs."""
     svc = _get_dicomweb_service()
-    return list(svc._import_jobs.values())
+    # CAPA-009 (RC-036): administrators see every job; others only the jobs they started.
+    jobs = svc._import_jobs
+    if current_user.role == UserRole.ADMIN:
+        return list(jobs.values())
+    return [job for job_id, job in jobs.items()
+            if initiators.initiator("pacs-import", job_id) == str(current_user.id)]

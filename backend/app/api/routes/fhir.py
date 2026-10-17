@@ -17,6 +17,7 @@ from fastapi import APIRouter, HTTPException, Depends
 
 from app.security import get_current_active_user
 from app.security.models import User
+from app.security.resource_access import authorize_patient_id, authorize_study_id
 from app.core.logging import get_logger
 from app.core.config import get_settings
 
@@ -45,6 +46,7 @@ async def get_imaging_study(study_id: str, current_user: User = Depends(get_curr
     Returns a JSON FHIR resource conforming to:
     https://www.hl7.org/fhir/imagingstudy.html
     """
+    await authorize_study_id(study_id, current_user)   # CAPA-009 (RC-036): 404 unless entitled
     from app.core.firebase import get_firestore_client
 
     try:
@@ -182,6 +184,7 @@ async def get_patient(patient_id: str, current_user: User = Depends(get_current_
 
     Conforming to: https://www.hl7.org/fhir/patient.html
     """
+    await authorize_patient_id(patient_id, current_user)   # CAPA-009 (RC-036): 404 unless entitled
     from app.core.firebase import get_firestore_client
 
     try:

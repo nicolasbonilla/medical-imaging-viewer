@@ -7,7 +7,7 @@
 **Owner**: *(to be assigned: Software Safety Officer / QMS Manager)*
 **Status**: OPEN.
 - Implemented on branch `fix/analysis-routes-authorization-capa007`: CA-7.1 to CA-7.3 and PA-7.1. **Approved by N. G. Bonilla Vargas on 2026-10-17** (PR #45) and merged.
-- Pending: CA-7.4 and PA-7.2.
+- Pending: CA-7.4. PA-7.2 is implemented by CAPA-009 (PA-9.1), which found the patient check (RC-026) not executing and ~40 routes without object-level authorization.
 - Effectiveness is not verified.
 
 **Procedure**: QP-002 (`docs/qms/QP-002_CAPA_Procedure.md`) · SPR-001
@@ -62,7 +62,7 @@ These factors reduce the likelihood of exploitation, not the severity.
 | ID | Action | Status |
 |----|--------|--------|
 | **PA-7.1** | `test_rc029_analysis_routes_authorization.py` enumerates the routes the application **mounts**, not a file. Every `/segmentation` route with `{segmentation_id}` must depend on `require_segmentation_access`. Every other `/segmentation` route must be in a classified list, and its handler must call the matching scope authorization. A new, unclassified route fails the build. This implements the authorization half of CAPA-006 PA-6.2 | **DONE** (branch) |
-| **PA-7.2** | Extend the same mounted-route enumeration to every router (imaging, studies, documents, patients, AI) | **PENDING** |
+| **PA-7.2** | Extend the same mounted-route enumeration to every router (imaging, studies, documents, patients, AI) | **DONE by CAPA-009** (PA-9.1, branch `fix/object-authorization-everywhere-capa009`): every mounted route that references an object is enumerated, classified and tested by request |
 
 ## 4. Root Cause
 

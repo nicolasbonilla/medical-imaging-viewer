@@ -11,7 +11,8 @@ import uuid
 
 from app.core.logging import get_logger
 from app.core.container import get_imaging_service
-from app.security.auth import get_current_active_user
+from app.security.auth import get_current_active_user, require_role
+from app.security.models import UserRole
 from app.security.jwt_manager import TokenData, get_token_manager
 from app.services.websocket_service import WebSocketService, ConnectionManager
 from app.services.binary_protocol import CompressionType
@@ -232,7 +233,9 @@ async def get_websocket_stats(current_user=Depends(get_current_active_user)):
 @router.get("/connections/{connection_id}")
 async def get_connection_stats(
     connection_id: str,
-    current_user=Depends(get_current_active_user),
+    # CAPA-009 (RC-036): another user's connection statistics are operational data about
+    # them; administrators only.
+    current_user=Depends(require_role(UserRole.ADMIN)),
 ):
     """
     Get statistics for a specific connection.

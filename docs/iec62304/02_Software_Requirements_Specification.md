@@ -3,7 +3,7 @@
 ## IEC 62304 Clause 5.2 Compliant Requirements Document
 
 **Document ID**: SRS-001
-**Version**: 1.3 (2026-10-17 — REQ-SAFE-022/023/024 added; CAPA-008)
+**Version**: 1.4 (2026-10-17 — REQ-SEC-019/020 added; CAPA-009)
 **Effective Date**: April 12, 2026
 **Standard**: IEC 62304:2006+A1:2015 Clause 5.2
 **Software Safety Class**: IEC 62304 Class C
@@ -19,6 +19,7 @@
 | 1.1 | 2026-09-28 | Development Team | REQ-SAFE-010 amended (audit #8): no per-lesion MAGNIMS confidence emitted or displayed; region evidence instead (RC-010 amended, HAZ-005) | N. G. Bonilla Vargas — approved 2026-09-28 (PR #42) |
 | 1.2 | 2026-09-28 | Development Team | CAPA-006. REQ-FUNC-053 corrected: it stated "SynthSeg parcellation + EDT (Tier 2) with MSMask atlas fallback (Tier 1)", which never matched the code (four paths since a637cdf, 2026-03-14; SynthSeg and LST-AI disabled by default). REQ-SAFE-021 added: each MAGNIMS path is applied only when its precondition holds (RC-032, HAZ-005). REQ-SAFE-020 annotated NOT IMPLEMENTED (no registration to MNI exists; RC-022 not verified) — it contradicted REQ-SAFE-021 as written | N. G. Bonilla Vargas — approved 2026-10-17 (PR #43) |
 | 1.3 | 2026-10-17 | Development Team | CAPA-008. REQ-SAFE-022 (AI assistant layer read-only, STDIO only, no direct identifiers, intended-use wording), REQ-SAFE-023 (no AI report draft without a device measurement), REQ-SAFE-024 (CVS/PRL readings counted per McDonald 2024 and attributed to the authenticated reader; longitudinal activity candidate per MAGNIMS 2021) | N. G. Bonilla Vargas — approved 2026-10-17 (PR #46) |
+| 1.4 | 2026-10-17 | Development Team | CAPA-009. REQ-SEC-019 (task, upload and import handles usable only by their initiator or an administrator; unknown handles refused with 404), REQ-SEC-020 (configuration of outbound connections — PACS create, delete, test — administrator-only). REQ-SEC-014/015/016 unchanged; now implemented on every mounted route (RC-036) | N. G. Bonilla Vargas — approved 2026-10-17 (PR #47) |
 
 ---
 
@@ -203,6 +204,8 @@ This SRS covers all software requirements for MSTool-AI version 2.0, including f
 | REQ-SEC-016 | The system shall not accept a **raw storage path** as caller input for retrieving patient data. Imaging references shall be parsed against a fixed grammar and re-authorized to their owning patient; the storage key used shall be reconstructed server-side from validated components, never echoed from client input. | Must | Test | HAZ-010 |
 | REQ-SEC-017 | The system shall record the **creating user (provenance)** on every patient record at creation. Provenance shall not be inferred or backfilled. | Must | Test | HAZ-010 |
 | REQ-SEC-018 | Patient records lacking provenance and any care-team assignment (e.g. records created before REQ-SEC-017 was enforced) shall be **quarantined**: accessible only to an administrator for explicit triage, never auto-attributed to any user. | Must | Test | HAZ-010 |
+| REQ-SEC-019 | A handle returned by the system for later use (AI or clinical-tool task id, upload session id, PACS import job id) shall be usable only by the user who started it or by an administrator, after the patient object behind it was authorized; an unknown handle shall be refused with HTTP 404. | Must | Test (UT-CAPA009) |
+| REQ-SEC-020 | Configuration that makes the server contact an external address (PACS connection create, delete, test) shall be restricted to administrators; credentials shall never be returned. | Must | Test (UT-CAPA009) |
 
 **Note on REQ-SEC-014…018 (added 2026-07-19 under CAPA-002 CA-2.2).** These
 requirements did not exist in the 2026-04-12 baseline. CAPA-002 found that the

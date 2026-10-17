@@ -164,15 +164,17 @@ async def authorize_storage_ref(
     return ref
 
 
-def require_imaging_access(file_id: str, current_user: User):
+async def require_imaging_access(file_id: str, current_user: User):
     """Callable used inside imaging routes to authorize and validate a file_id.
 
     Not a bare FastAPI dependency because imaging routes declare `file_id` with a
     `{file_id:path}` converter and varied signatures; calling this explicitly at
     the top of each handler is clearer than threading a dependency, and keeps the
-    validated ref in scope for the download call.
+    validated ref in scope for the download call. Callers `await` it. CAPA-009: now
+    `async def` itself, so that wrapping it in Depends() can never silently skip it
+    (the defect that disabled require_patient_access).
     """
-    return _run_storage_authorization(file_id, current_user)
+    return await _run_storage_authorization(file_id, current_user)
 
 
 async def _run_storage_authorization(file_id: str, current_user: User):
@@ -194,7 +196,7 @@ def _created_by_of(patient) -> Optional[str]:
     return str(value) if value is not None else None
 
 
-def require_patient_access(
+async def require_patient_access(
     patient_id: UUID = Path(..., description="Patient UUID"),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -206,8 +208,14 @@ def require_patient_access(
 
     The dependency runs AFTER authentication and role checks and BEFORE the
     handler body, so an unentitled caller never reaches the data-returning code.
+
+    CAPA-009: this MUST be `async def` and await the authorization. It was a plain
+    `def` returning the coroutine of `_run_authorization`; FastAPI runs a plain-def
+    dependency in a thread pool and uses its return value without awaiting it, so the
+    authorization never executed and every caller with the role permission reached
+    every patient (RC-026 was verified by reading source text, not by a request).
     """
-    return _run_authorization(patient_id, current_user)
+    return await _run_authorization(patient_id, current_user)
 
 
 async def _run_authorization(patient_id: UUID, current_user: User):

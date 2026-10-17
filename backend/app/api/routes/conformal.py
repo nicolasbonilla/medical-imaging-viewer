@@ -64,8 +64,9 @@ async def conformal_select(
         raise HTTPException(status_code=422, detail=f"unknown preset; allowed: {sorted(PRESETS)}")
     try:
         # AUTH + object-level PHI authorization (normalised, patient-authorized ref).
-        await require_imaging_access(request.prob_file_id, current_user)
-        file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, request.prob_file_id)
+        # CAPA-009 (RC-027): download the parsed, authorized path, never the raw client string.
+        _ref = await require_imaging_access(request.prob_file_id, current_user)
+        file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, _ref.object_path)
         img, arr = load_nifti_from_bytes(file_data)
         zooms = img.header.get_zooms()[:3]
         spacing = tuple(float(z) for z in zooms)
@@ -102,8 +103,9 @@ async def conformal_status_mask(
     if request.preset not in PRESETS:
         raise HTTPException(status_code=422, detail=f"unknown preset; allowed: {sorted(PRESETS)}")
     try:
-        await require_imaging_access(request.prob_file_id, current_user)
-        file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, request.prob_file_id)
+        # CAPA-009 (RC-027): download the parsed, authorized path, never the raw client string.
+        _ref = await require_imaging_access(request.prob_file_id, current_user)
+        file_data = await storage_service.download_file(settings.GCS_BUCKET_NAME, _ref.object_path)
         img, arr = load_nifti_from_bytes(file_data)
         spacing = tuple(float(z) for z in img.header.get_zooms()[:3])
         review = await run_in_threadpool(conformal_review, arr.astype("float32"), spacing, request.preset)
