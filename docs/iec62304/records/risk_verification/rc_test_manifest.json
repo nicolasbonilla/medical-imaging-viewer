@@ -25,7 +25,7 @@
     "status here is 'implemented' or 'deliberately_absent'."
   ],
   "manifest_version": 1,
-  "capa_reference": "CAPA-001, CAPA-002, CAPA-004, CAPA-005, CAPA-006",
+  "capa_reference": "CAPA-001, CAPA-002, CAPA-004, CAPA-005, CAPA-006, CAPA-007",
   "last_updated": "2026-09-28",
   "controls": {
     "RC-006": {
@@ -297,12 +297,13 @@
       "description": "Object-level authorization on segmentation routes; create authorizes the target image; list is file-scoped",
       "hazard": "HAZ-010",
       "status": "implemented",
-      "implementation": "app/security/resource_access.py::resolve_segmentation_patient_id + authorize_file_scope (resolve via metadata.file_id -> extract_patient_id_from_path) + app/api/routes/segmentation.py (12 object routes + create + list)",
+      "implementation": "app/security/resource_access.py::resolve_segmentation_patient_id + authorize_file_scope (resolve via metadata.file_id -> extract_patient_id_from_path) + app/api/routes/segmentation.py (12 object routes + create + list); CAPA-007 (2026-10-17): app/security/resource_access.py::authorize_mask_specs (body-referenced segmentations and instances) + app/api/routes/segmentation_analysis.py (lesion-analysis, dis-assessment, lesion-annotations, export/dicom-seg depend on require_segmentation_access; compare, agreement-map, longitudinal/compare, longitudinal/sel call authorize_mask_specs; client gcs_path no longer used); the region routes (CAPA-006)",
       "tests": [
-        "tests/unit/test_rc029_segmentation_access.py"
+        "tests/unit/test_rc029_segmentation_access.py",
+        "tests/unit/test_rc029_analysis_routes_authorization.py"
       ],
-      "negative_control": "2 vectors, each in a single isolated run: resolver invents a patient for a non-patient file_id -> 2 failed; unscoped listing allowed for a non-admin -> 1 failed",
-      "note": "Last data surface of CAPA-002. A segmentation stores no patient_id — it stores the file_id of the image it segments, which is patient-scoped; the owning patient is extracted from that file_id (reusing RC-027). Non-patient or malformed file_ids fail closed to a 404. create authorizes request.file_id via the imaging guard (a caller may only segment an image they can access). list requires a file_id scope for non-admins and authorizes every referenced patient. With RC-026/027/028/029, all patient, imaging, study, document and segmentation data routes now enforce object-level access. ERRATUM 2026-09-28 (CAPA-006 Finding 10): the wiring test read segmentation.py only; the ten routes split out into segmentation_regions.py / segmentation_analysis.py by the C3 refactor (5ebe5f6, 2026-07-10) had authentication only. classify-regions and generate-zone-map are now authorized and tested in tests/unit/test_rc032_region_atlas_guard.py (CAPA-006); the eight analysis routes are open under CAPA-007.",
+      "negative_control": "2 vectors, each in a single isolated run: resolver invents a patient for a non-patient file_id -> 2 failed; unscoped listing allowed for a non-admin -> 1 failed; CAPA-007 (2026-10-17, scripts/safety/rc029_negative_controls.py): 11 mutations on the analysis routes, 11 detected; restored 12 passed (record docs/iec62304/records/risk_verification/RC-029_analysis_negative_controls_2026-10-17.json)",
+      "note": "Last data surface of CAPA-002. A segmentation stores no patient_id — it stores the file_id of the image it segments, which is patient-scoped; the owning patient is extracted from that file_id (reusing RC-027). Non-patient or malformed file_ids fail closed to a 404. create authorizes request.file_id via the imaging guard (a caller may only segment an image they can access). list requires a file_id scope for non-admins and authorizes every referenced patient. With RC-026/027/028/029, all patient, imaging, study, document and segmentation data routes now enforce object-level access. ERRATUM 2026-09-28 (CAPA-006 Finding 10): the wiring test read segmentation.py only; the ten routes split out into segmentation_regions.py / segmentation_analysis.py by the C3 refactor (5ebe5f6, 2026-07-10) had authentication only. classify-regions and generate-zone-map are now authorized and tested in tests/unit/test_rc032_region_atlas_guard.py (CAPA-006); the eight analysis routes are open under CAPA-007. CAPA-007 (2026-10-17): the eight analysis routes are now authorized; the authorization test enumerates the routes the APP MOUNTS (not a file), so a route moved by a refactor can no longer escape. Pending human approval before merge.",
       "requirement": "REQ-SEC-014/015"
     },
     "RC-030": {

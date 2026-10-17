@@ -271,6 +271,36 @@ async def require_segmentation_access(
     )
 
 
+async def authorize_mask_specs(specs, user) -> None:
+    """Authorize every mask a request BODY references (CAPA-007, HAZ-010, RC-029).
+
+    compare, agreement-map, longitudinal/compare and longitudinal/sel take their
+    objects from the body as {"type": "segmentation" | "instance", "id": ...}, so a
+    path dependency cannot protect them. Every referenced object must resolve to a
+    patient the caller may access; an unresolvable or foreign object raises the same
+    404 as a missing one (no enumeration oracle). Any client-supplied storage path
+    in a spec is ignored by the routes; only the authorized object's own path is used.
+    """
+    if not isinstance(specs, (list, tuple)) or not specs:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No masks referenced")
+    for spec in specs:
+        if not isinstance(spec, dict):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid mask reference")
+        kind, obj_id = spec.get("type"), spec.get("id")
+        if kind == "segmentation":
+            pid = await resolve_segmentation_patient_id(obj_id, _segmentation_service()) if obj_id else None
+            label = "Segmentation"
+        elif kind == "instance":
+            pid = await resolve_instance_patient_id(obj_id, _study_service()) if obj_id else None
+            label = "Instance"
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Unknown mask type: {kind}")
+        await authorize_resolved_patient(
+            patient_id=pid, resource_label=label, user=user,
+            patient_service=_patient_service(), care_team_service=_care_team_service(),
+        )
+
+
 # ---------------------------------------------------------------------------
 # List routes: authorize the patient scope of a listing.
 # ---------------------------------------------------------------------------

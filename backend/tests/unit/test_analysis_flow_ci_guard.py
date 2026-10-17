@@ -75,15 +75,27 @@ class _FakeStorage:
 
 
 @pytest.fixture
-def client():
+def client(monkeypatch):
+    # Object-level authorization (CAPA-007, RC-029) is exercised by
+    # test_capa007_analysis_routes_authorization.py; here it is passed through so this
+    # file keeps testing the ANALYSIS flow without a datastore.
+    from app.security.resource_access import require_segmentation_access
+    import app.api.routes.segmentation_analysis as analysis_routes
+
+    async def _authorized(specs, user):
+        return None
+
+    monkeypatch.setattr(analysis_routes, "authorize_mask_specs", _authorized)
     seg = _FakeSeg({"seg-a": _mask_with_lesion(), "seg-b": _mask_with_lesion()})
     app.dependency_overrides[get_current_active_user] = _admin
     app.dependency_overrides[get_segmentation_service] = lambda: seg
     app.dependency_overrides[get_storage_service] = lambda: _FakeStorage()
+    app.dependency_overrides[require_segmentation_access] = lambda: None
     try:
         yield TestClient(app)
     finally:
-        for dep in (get_current_active_user, get_segmentation_service, get_storage_service):
+        for dep in (get_current_active_user, get_segmentation_service, get_storage_service,
+                    require_segmentation_access):
             app.dependency_overrides.pop(dep, None)
 
 
