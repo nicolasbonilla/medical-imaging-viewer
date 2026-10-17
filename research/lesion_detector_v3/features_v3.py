@@ -86,6 +86,7 @@ class ScanContext:
         self.prob = prob
         self.has_flair = flair is not None
         self.has_t1 = t1 is not None and flair is not None
+        self.t1_status = "absent"
         # multi-threshold components of the probability map (F5)
         self.lab025, _ = ndi.label(prob >= 0.25, structure=CONN18)
         self.lab010, _ = ndi.label(prob >= 0.10, structure=CONN18)
@@ -116,7 +117,6 @@ class ScanContext:
         else:
             self.vent_vox = 0
             self.dvent = None
-        self.t1_status = "absent"
         if self.has_t1:
             if t1.shape != prob.shape:
                 raise ValueError(f"T1 grid {t1.shape} != prob grid {prob.shape}")
