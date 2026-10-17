@@ -669,12 +669,17 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
         </div>
       )}
 
-      {/* McDonald 2024 Biomarkers — CVS + PRL */}
+      {/* Clinician CVS/PRL readings — McDonald 2024 supportive markers (CAPA-008: counts only) */}
       {(cvsSummary || prlSummary) && (
-        <div className="bg-gray-900/60 rounded-lg p-2 space-y-1.5 border border-indigo-700/40">
+        <div className="bg-gray-900/60 rounded-lg p-2 space-y-1.5 border border-indigo-700/40" data-testid="cvs-prl-readings">
           <div className="flex items-center gap-1.5">
             <Activity className="w-3.5 h-3.5 text-indigo-400" />
-            <span className="text-xs font-semibold text-white">McDonald 2024 Biomarkers</span>
+            <span className="text-xs font-semibold text-white">
+              {t('lesions.markerReadingsTitle', 'CVS / PRL readings (clinician)')}
+            </span>
+          </div>
+          <div className="text-[8px] text-gray-400">
+            {t('lesions.markerReadingsNote', 'Read on susceptibility-sensitive MRI. McDonald 2024 uses them as supportive evidence only in specific situations; these are counts, not a criterion.')}
           </div>
 
           {cvsSummary && (
@@ -691,13 +696,8 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                   {cvsSummary.meets_select6 ? <CheckCircle2 className="w-2.5 h-2.5 inline mr-0.5" /> : <XCircle className="w-2.5 h-2.5 inline mr-0.5" />}
                   Select 6: {cvsSummary.cvs_positive}/{cvsSummary.total_evaluated} CVS+
                 </span>
-                <span className={`px-1.5 py-0.5 rounded border text-[9px] font-medium ${
-                  cvsSummary.meets_40pct
-                    ? 'bg-green-900/40 text-green-300 border-green-700/50'
-                    : 'bg-gray-800 text-gray-400 border-gray-700/50'
-                }`}>
-                  {cvsSummary.meets_40pct ? <CheckCircle2 className="w-2.5 h-2.5 inline mr-0.5" /> : <XCircle className="w-2.5 h-2.5 inline mr-0.5" />}
-                  40% rule: {cvsSummary.total_evaluated > 0 ? `${Math.round(cvsSummary.cvs_positive / cvsSummary.total_evaluated * 100)}%` : '0%'}
+                <span className="px-1.5 py-0.5 rounded border text-[9px] font-medium bg-gray-800 text-gray-300 border-gray-700/50">
+                  {t('lesions.cvsPosNeg', 'CVS+ {{pos}} · CVS− {{neg}}', { pos: cvsSummary.cvs_positive, neg: cvsSummary.cvs_negative })}
                 </span>
               </div>
             </div>
@@ -709,12 +709,8 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                 PRL (Paramagnetic Rim Lesions)
               </span>
               <div>
-                <span className={`px-1.5 py-0.5 rounded border text-[9px] font-medium ${
-                  prlSummary.meets_criteria
-                    ? 'bg-green-900/40 text-green-300 border-green-700/50'
-                    : 'bg-gray-800 text-gray-400 border-gray-700/50'
-                }`}>
-                  {prlSummary.meets_criteria ? <CheckCircle2 className="w-2.5 h-2.5 inline mr-0.5" /> : <XCircle className="w-2.5 h-2.5 inline mr-0.5" />}
+                {/* CAPA-008: neutral count — ">=1 PRL" is not, by itself, a criterion met. */}
+                <span className="px-1.5 py-0.5 rounded border text-[9px] font-medium bg-gray-800 text-gray-300 border-gray-700/50">
                   PRL: {prlSummary.prl_positive}/{prlSummary.total_evaluated} positive
                 </span>
               </div>

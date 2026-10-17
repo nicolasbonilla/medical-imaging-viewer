@@ -1,214 +1,163 @@
 """
-MS Clinical Analysis MCP Server.
+MS Clinical Analysis MCP Server (investigational decision support, read-only).
 
-Provides tools for Claude Desktop / Claude Code to run comprehensive
-MS clinical analysis per McDonald 2024 criteria (Montalban et al.,
-Lancet Neurology 2025; 24(10): 850-865) and 2024 MAGNIMS-CMSC-NAIMS
-consensus (Barkhof et al., Lancet Neurology 2025; 24(10): 866-879).
+Lets an AI assistant (Claude Desktop / Claude Code) READ the measurements the device has
+already computed for a lesion segmentation — lesion analysis, region classification, the
+brain-MRI dissemination-in-space (DIS) items of the McDonald 2024 criteria (Montalban et al.,
+Lancet Neurology 2025; 24(10): 850-865) — compare two timepoints, and draft a report from
+those measurements for physician review.
+
+CAPA-008: the assistant is read-only and is never a diagnostic tool.
+- Every backend call goes through ``app.mcp._backend`` (GET, or POST to a compute-only route).
+- No tool writes a record. Region classification and CVS/PRL readings are recorded by the
+  clinician in the application, never by the assistant.
+- Texts state what the device measures and nothing more; MS is diagnosed by a physician
+  with clinical, laboratory and imaging information the device does not have.
 
 @module mcp.ms_clinical_server
 """
 
 from fastmcp import FastMCP
+from app.mcp._backend import api_get, api_post_compute
 from app.services.region_evidence import strip_region_confidence as _strip_region_confidence
-from typing import Optional
 
 mcp = FastMCP(
     "ms-clinical-mcp",
     description=(
-        "MS Clinical Analysis MCP server. Complete McDonald 2024 diagnostic workflow: "
-        "MAGNIMS region classification, DIS assessment, CVS/PRL biomarkers, "
-        "longitudinal tracking, and clinical report generation."
+        "Investigational, read-only MS lesion measurements for physician review: lesion "
+        "analysis, MAGNIMS region classification, brain-MRI DIS items (McDonald 2024), "
+        "two-timepoint comparison candidates and draft reports. Not for diagnosis."
     ),
     instructions=(
-        "You are analyzing brain MRI for MS diagnosis per McDonald 2024 criteria "
-        "(Montalban et al., Lancet Neurology 2025; 24(10): 850-865).\n\n"
+        "You assist a physician who reviews brain MRI measurements computed by an "
+        "investigational device. The device is NOT intended for diagnosis: never state or "
+        "imply that a patient has or does not have MS, never state that diagnostic criteria "
+        "are met, and never recommend treatment. Present every number as a device "
+        "measurement that the physician must verify on the images.\n\n"
         "Typical workflow:\n"
-        "1. classify_lesions_magnims() — identify PV, JC, IT, DWM lesions\n"
-        "2. evaluate_mcdonald_2024() — DIS assessment + CVS/PRL evaluation\n"
-        "3. generate_ms_report() — comprehensive clinical report\n\n"
-        "Key criteria (McDonald 2024):\n"
-        "- DIS: >=2 of 5 regions (PV, JC, IT, spinal cord, optic nerve)\n"
-        "- DIS without DIT: >=4 of 5 regions with typical lesions\n"
-        "- CVS Select-6: >=6 CVS+ lesions supports MS diagnosis\n"
-        "- PRL: >=1 paramagnetic rim lesion supports MS diagnosis\n"
-        "- DWM is NOT a DIS region\n"
-        "- PV = abutting lateral ventricles only"
+        "1. get_region_classification() — the stored MAGNIMS region per lesion (candidates)\n"
+        "2. summarize_dis_items() — brain-MRI DIS items + clinician-recorded CVS/PRL readings\n"
+        "3. compare_longitudinal() — new/enlarging lesion CANDIDATES between two timepoints\n"
+        "4. generate_ms_report() — a DRAFT report from the measurements above\n\n"
+        "What the device can and cannot tell (McDonald 2024):\n"
+        "- DIS needs typical lesions in >=2 of 5 regions (periventricular, cortical/"
+        "juxtacortical, infratentorial, spinal cord, optic nerve). Brain MRI covers 3 of "
+        "them; spinal cord and optic nerve are NOT evaluable here — say 'not evaluable', "
+        "never 'absent'.\n"
+        "- Deep white matter is not a DIS region. Periventricular = abutting the lateral "
+        "ventricles.\n"
+        "- The central vein sign (CVS) and paramagnetic rim lesions (PRL) need "
+        "susceptibility-sensitive MRI and a human reading. They give supportive evidence "
+        "only in specific situations defined by the criteria; report the clinician-recorded "
+        "counts and never infer a CVS or PRL status yourself.\n"
+        "- New or enlarging lesions from compare_longitudinal() are unadjudicated "
+        "CANDIDATES (spatial registration not verified). Never call them disease activity "
+        "or dissemination in time."
     ),
 )
 
 
-def _get_api_base() -> str:
-    """Get the backend API base URL."""
-    import os
-    return os.environ.get("API_BASE_URL", "http://localhost:8000")
-
-
-def _get_headers() -> dict:
-    """Get auth headers for internal API calls."""
-    import os
-    token = os.environ.get("API_SERVICE_TOKEN", "")
-    if token:
-        return {"Authorization": f"Bearer {token}"}
-    return {}
-
-
-async def _api_get(path: str, params: Optional[dict] = None) -> dict:
-    """Make an authenticated GET request to the backend."""
-    import httpx
-    url = f"{_get_api_base()}/api/v1{path}"
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        response = await client.get(url, params=params, headers=_get_headers())
-        response.raise_for_status()
-        return response.json()
-
-
-async def _api_post(path: str, json_data: Optional[dict] = None) -> dict:
-    """Make an authenticated POST request to the backend."""
-    import httpx
-    url = f"{_get_api_base()}/api/v1{path}"
-    async with httpx.AsyncClient(timeout=120.0) as client:
-        response = await client.post(url, json=json_data, headers=_get_headers())
-        response.raise_for_status()
-        return response.json()
-
-
 # =============================================================================
-# Tools
+# Tools (read-only)
 # =============================================================================
 
 
 @mcp.tool()
-async def classify_lesions_magnims(
-    segmentation_id: str,
-    method: str = "auto",
-) -> dict:
+async def get_region_classification(segmentation_id: str) -> dict:
     """
-    Classify MS lesions into MAGNIMS anatomical regions.
+    Read the MAGNIMS region classification STORED for a lesion segmentation.
 
-    Classifies each lesion as Periventricular (PV), Juxtacortical (JC), Infratentorial (IT)
-    or Deep White Matter (DWM) by the MAGNIMS contact rule. Region-assignment accuracy has
-    NOT been measured for any path (HAZ-005) — present regions as candidates to verify.
-
-    Methods:
-    - 'auto': first APPLICABLE path, in order: LST-AI zones > parcellation of the same image >
-      MSMask atlas (MNI-grid images only; no registration is performed) > geometric heuristics
-      (axial inferior->superior images only). "auto" is an order, not a quality ranking.
-    - 'msmask': MSMask atlas (adapted from Wiltgen et al., 2024); HTTP 422 on a non-MNI image
-    - 'geometric': coordinate heuristics, not anatomical landmarks; HTTP 422 when the image's
-      orientation or grid does not allow them
-    The result says which path was used; `atlas_unavailable_reason` / `atlas_error` explain
-    why the atlas was not used. HTTP 422 = every applicable path refused the image (reasons
-    given); no regions are guessed (RC-032, CAPA-006).
-
-    Args:
-        segmentation_id: ID of the lesion segmentation to classify
-        method: Classification method ('auto', 'msmask', 'geometric')
-
-    Returns:
-        Classification results with per-lesion regions and their EVIDENCE (distances_mm for
-        parcellation; region_overlap_fraction / zone_coverage_fraction / atlas_coverage for
-        MSMask). `confidence` is always null (HAZ-005): region assignment is a deterministic
-        MAGNIMS rule with no calibrated probability — never report or estimate a confidence.
-    """
-    return await _api_post(
-        f"/segmentation/{segmentation_id}/classify-regions",
-        json_data={"method": method},
-    )
-
-
-@mcp.tool()
-async def evaluate_mcdonald_2024(
-    segmentation_id: str,
-    include_cvs: bool = True,
-    include_prl: bool = True,
-) -> dict:
-    """
-    Complete McDonald 2024 diagnostic evaluation for MS.
-
-    Evaluates:
-    - DIS (Dissemination in Space): >=2 of 5 regions with lesions
-      - Brain MRI evaluable: PV, JC, IT (3 of 5)
-      - Spinal cord and optic nerve require separate imaging
-    - CVS Select-6 rule (if annotations available): >=6 CVS+ lesions
-    - PRL criteria (if annotations available): >=1 PRL positive
-
-    Reference: Montalban et al., Lancet Neurology 2025; 24(10): 850-865
-
-    Args:
-        segmentation_id: ID of the classified lesion segmentation
-        include_cvs: Include CVS summary in evaluation (default: True)
-        include_prl: Include PRL summary in evaluation (default: True)
-
-    Returns:
-        Comprehensive McDonald 2024 assessment with DIS, CVS, PRL results
-    """
-    # Get DIS assessment
-    dis = await _api_get(f"/segmentation/{segmentation_id}/dis-assessment")
-
-    # Get lesion analysis
-    analysis = await _api_get(f"/segmentation/{segmentation_id}/lesion-analysis")
-
-    result = {
-        "mcdonald_2024_assessment": {
-            "dis": dis,
-            "lesion_analysis": analysis,
-            "criteria_version": "McDonald 2024 (Montalban et al., Lancet Neurology 2025)",
-        },
-    }
-
-    # Include CVS/PRL from cached analysis_data if available
-    seg = await _api_get(f"/segmentation/{segmentation_id}")
-    analysis_data = seg.get("metadata", {}).get("analysis_data", {})
-
-    if include_cvs and analysis_data.get("cvs_summary"):
-        result["mcdonald_2024_assessment"]["cvs_summary"] = analysis_data["cvs_summary"]
-    if include_prl and analysis_data.get("prl_summary"):
-        result["mcdonald_2024_assessment"]["prl_summary"] = analysis_data["prl_summary"]
-
-    return result
-
-
-@mcp.tool()
-async def analyze_lesions(
-    segmentation_id: str,
-) -> dict:
-    """
-    Analyze MS lesions using connected components.
-
-    Returns per-lesion statistics: volume (mm3, mL), centroid, size category,
-    region, and overall burden. Also computes DIS criteria.
+    The assistant never runs or overwrites a classification (CAPA-008): the clinician runs
+    it in the application, choosing the method. Each lesion's region is a deterministic
+    MAGNIMS rule applied by one path (LST-AI zones, parcellation of the same image, MSMask
+    atlas on MNI-grid images, or geometric heuristics); the stored result says which.
+    Region-assignment accuracy has NOT been measured for any path (HAZ-005): present the
+    regions as candidates to verify. `confidence` is always removed — there is no calibrated
+    probability; never report or estimate one.
 
     Args:
         segmentation_id: ID of the lesion segmentation
 
     Returns:
-        Lesion analysis with per-lesion stats, region summary, total burden
+        {"classification": stored result with per-lesion regions and evidence, or None,
+         "message": what to do when nothing is stored}
     """
-    return await _api_get(f"/segmentation/{segmentation_id}/lesion-analysis")
+    seg = await api_get(f"/segmentation/{segmentation_id}")
+    analysis_data = (seg.get("metadata") or {}).get("analysis_data") or {}
+    classification = analysis_data.get("classification")
+    if not classification:
+        return {
+            "classification": None,
+            "message": "No region classification is stored for this segmentation. Ask the "
+                       "physician to run the region classification in the application.",
+        }
+    return {"classification": _strip_region_confidence(classification)}
 
 
 @mcp.tool()
-async def compare_longitudinal(
-    baseline_id: str,
-    followup_id: str,
-) -> dict:
+async def summarize_dis_items(segmentation_id: str) -> dict:
     """
-    Compare two timepoint segmentations for longitudinal MS tracking.
+    Brain-MRI dissemination-in-space (DIS) items of McDonald 2024, as measured by the device.
 
-    Identifies new, enlarged, shrunk, resolved, and stable lesions
-    between baseline and follow-up. Returns burden delta and per-lesion changes.
+    Returns the device's DIS assessment and lesion analysis, plus the CVS and PRL counts
+    RECORDED BY A CLINICIAN in the application (if any). This is a summary of measurements
+    for physician review, not a diagnostic evaluation: spinal cord and optic nerve are not
+    evaluable from brain MRI, and CVS/PRL count only in the situations the criteria define.
+
+    Reference: Montalban et al., Lancet Neurology 2025; 24(10): 850-865
 
     Args:
-        baseline_id: Segmentation ID for baseline timepoint
-        followup_id: Segmentation ID for follow-up timepoint
+        segmentation_id: ID of the classified lesion segmentation
 
     Returns:
-        Longitudinal comparison with per-lesion status changes and burden delta
+        {"dis_assessment", "lesion_analysis", "clinician_recorded_cvs", "clinician_recorded_prl",
+         "criteria_version", "not_evaluable_from_brain_mri"}
     """
-    return await _api_post(
+    dis = await api_get(f"/segmentation/{segmentation_id}/dis-assessment")
+    analysis = await api_get(f"/segmentation/{segmentation_id}/lesion-analysis")
+    seg = await api_get(f"/segmentation/{segmentation_id}")
+    analysis_data = (seg.get("metadata") or {}).get("analysis_data") or {}
+    return {
+        "dis_assessment": dis,
+        "lesion_analysis": analysis,
+        "clinician_recorded_cvs": analysis_data.get("cvs_summary"),
+        "clinician_recorded_prl": analysis_data.get("prl_summary"),
+        "criteria_version": "McDonald 2024 (Montalban et al., Lancet Neurology 2025)",
+        "not_evaluable_from_brain_mri": ["spinal cord", "optic nerve"],
+    }
+
+
+@mcp.tool()
+async def analyze_lesions(segmentation_id: str) -> dict:
+    """
+    Lesion analysis of a segmentation (connected components).
+
+    Returns per-lesion volume (mm3, mL), centroid, size category and stored region, and the
+    total lesion burden. Volumes depend on the segmentation, which a physician must verify.
+
+    Args:
+        segmentation_id: ID of the lesion segmentation
+    """
+    return await api_get(f"/segmentation/{segmentation_id}/lesion-analysis")
+
+
+@mcp.tool()
+async def compare_longitudinal(baseline_id: str, followup_id: str) -> dict:
+    """
+    Compare two timepoint segmentations: new, enlarged, shrunk, resolved and stable lesion
+    CANDIDATES and the burden change.
+
+    The counts are unadjudicated candidates: a misregistration between the timepoints can
+    create false new or enlarging lesions. Never report them as disease activity or as
+    dissemination in time; a radiologist must confirm each on co-registered images.
+
+    Args:
+        baseline_id: Segmentation ID for the baseline timepoint
+        followup_id: Segmentation ID for the follow-up timepoint
+    """
+    return await api_post_compute(
         "/segmentation/longitudinal/compare",
-        json_data={
+        {
             "tp1": {"type": "segmentation", "id": baseline_id},
             "tp2": {"type": "segmentation", "id": followup_id},
         },
@@ -223,185 +172,129 @@ async def generate_ms_report(
     longitudinal_baseline_id: str = "",
 ) -> dict:
     """
-    Generate comprehensive MS clinical report per MAGNIMS-CMSC-NAIMS 2024 guidelines.
+    Draft a structured MS brain MRI report FROM THE DEVICE'S MEASUREMENTS, for physician
+    review. The report carries the mandatory AI-draft disclaimer (RC-006).
 
-    Combines lesion analysis, DIS assessment, classification results, and
-    optional longitudinal data into a structured clinical report.
-
-    Supports English, Spanish, and German output.
+    The measurements (lesion analysis, DIS assessment and, if requested, the longitudinal
+    comparison) are read first; if none can be read, no report is requested (CAPA-008:
+    a report without measurements would be invented). Read failures are returned, not hidden.
 
     Args:
-        segmentation_id: ID of the analyzed/classified segmentation
+        segmentation_id: ID of the analysed segmentation
         language: Report language ('en', 'es', 'de')
-        include_longitudinal: Include longitudinal comparison in report
-        longitudinal_baseline_id: Baseline segmentation ID for longitudinal
-
-    Returns:
-        Generated clinical report with structured findings and references
+        include_longitudinal: Include the longitudinal comparison
+        longitudinal_baseline_id: Baseline segmentation ID for the longitudinal comparison
     """
-    # Build clinical context for the report
-    findings = {}
-
-    # Get lesion analysis
+    findings, unavailable = {}, {}
     try:
-        findings["lesion_analysis"] = await _api_get(
-            f"/segmentation/{segmentation_id}/lesion-analysis"
-        )
-    except Exception:
-        pass
-
-    # Get DIS assessment
+        findings["lesion_analysis"] = await api_get(f"/segmentation/{segmentation_id}/lesion-analysis")
+    except Exception as exc:  # report what could not be read instead of hiding it
+        unavailable["lesion_analysis"] = str(exc)
     try:
-        findings["dis_assessment"] = await _api_get(
-            f"/segmentation/{segmentation_id}/dis-assessment"
-        )
-    except Exception:
-        pass
-
-    # Get segmentation metadata (includes classification + CVS/PRL)
-    try:
-        seg = await _api_get(f"/segmentation/{segmentation_id}")
-        analysis_data = seg.get("metadata", {}).get("analysis_data", {})
-        if analysis_data.get("classification"):
-            findings["classification"] = _strip_region_confidence(analysis_data["classification"])
-        if analysis_data.get("cvs_summary"):
-            findings["cvs_summary"] = analysis_data["cvs_summary"]
-        if analysis_data.get("prl_summary"):
-            findings["prl_summary"] = analysis_data["prl_summary"]
-    except Exception:
-        pass
-
-    # Get longitudinal data if requested
+        findings["dis_assessment"] = await api_get(f"/segmentation/{segmentation_id}/dis-assessment")
+    except Exception as exc:
+        unavailable["dis_assessment"] = str(exc)
     if include_longitudinal and longitudinal_baseline_id:
         try:
-            findings["longitudinal"] = await _api_post(
+            findings["longitudinal"] = await api_post_compute(
                 "/segmentation/longitudinal/compare",
-                json_data={
+                {
                     "tp1": {"type": "segmentation", "id": longitudinal_baseline_id},
                     "tp2": {"type": "segmentation", "id": segmentation_id},
                 },
             )
-        except Exception:
-            pass
+        except Exception as exc:
+            unavailable["longitudinal"] = str(exc)
 
-    # Generate report via Claude API
-    return await _api_post(
+    if not findings:
+        return {
+            "report": None,
+            "message": "No measurement could be read, so no report was drafted.",
+            "unavailable": unavailable,
+        }
+
+    # Field names are those of the report route's request model (ReportGenerateRequest);
+    # a test binds them, because unknown names are silently dropped by the backend.
+    report = await api_post_compute(
         "/ai/report/generate",
-        json_data={
-            "segmentation_id": segmentation_id,
-            "template": "ms_longitudinal" if include_longitudinal else "general",
+        {
+            "template_type": "ms_longitudinal" if "longitudinal" in findings else "general",
             "language": language,
-            "clinical_context": (
-                "MS clinical analysis per McDonald 2024 criteria "
-                "(Montalban et al., Lancet Neurology 2025)."
-            ),
-            "additional_findings": findings,
+            "findings": findings,
         },
     )
-
-
-@mcp.tool()
-async def annotate_cvs_prl(
-    segmentation_id: str,
-    annotations: list,
-) -> dict:
-    """
-    Save CVS (Central Vein Sign) and PRL (Paramagnetic Rim Lesion) annotations.
-
-    McDonald 2024 officially incorporates CVS and PRL as diagnostic biomarkers.
-    - CVS Select-6: >=6 CVS+ lesions supports MS diagnosis
-    - CVS 40% rule: >=40% of evaluated lesions are CVS+ supports MS diagnosis
-    - PRL: >=1 PRL positive supports MS diagnosis
-
-    Each annotation should contain:
-    - lesion_id: int
-    - cvs_status: 'positive' | 'negative' | 'indeterminate' | null
-    - prl_status: 'positive' | 'negative' | 'indeterminate' | null
-
-    Args:
-        segmentation_id: ID of the classified segmentation
-        annotations: List of per-lesion CVS/PRL annotation dicts
-
-    Returns:
-        Updated CVS summary (Select-6, 40% rule) and PRL summary
-    """
-    return await _api_post(
-        f"/segmentation/{segmentation_id}/lesion-annotations",
-        json_data={"annotations": annotations},
-    )
+    return {"report": report, "unavailable": unavailable}
 
 
 # =============================================================================
-# Workflow Prompts (resources for Claude)
+# Workflow prompts (resources for the assistant)
 # =============================================================================
 
 
-@mcp.resource("prompts://ms-diagnostic-workflow")
-def ms_diagnostic_workflow() -> str:
-    """Complete MS diagnostic workflow prompt per McDonald 2024."""
+@mcp.resource("prompts://ms-review-workflow")
+def ms_review_workflow() -> str:
+    """Review workflow for the device's MS lesion measurements (investigational, read-only)."""
     return """
-# MS Diagnostic Workflow — McDonald 2024
+# MS lesion measurement review — investigational device, not for diagnosis
 
-You are analyzing brain MRI for MS diagnosis per McDonald 2024 criteria
-(Montalban et al., Lancet Neurology 2025; 24(10): 850-865).
+You assist a physician reviewing measurements computed by the device. Never state or imply a
+diagnosis, never state that criteria are met, never recommend treatment.
 
 ## Steps
 
-1. **Classify Regions**: Run `classify_lesions_magnims(segmentation_id)` to identify
-   PV, JC, IT, DWM lesions using MAGNIMS region classification.
+1. **Regions**: `get_region_classification(segmentation_id)` — stored MAGNIMS region per
+   lesion (candidates; accuracy not measured, HAZ-005). If none is stored, ask the physician
+   to run the classification in the application.
 
-2. **Evaluate DIS**: Run `evaluate_mcdonald_2024(segmentation_id)` for complete
-   McDonald 2024 assessment including:
-   - DIS: >=2 of 5 regions (PV, JC, IT, spinal cord, optic nerve)
-   - Brain MRI only evaluates 3 of 5 regions
-   - DIS without DIT: >=4 of 5 regions with typical lesions
+2. **DIS items**: `summarize_dis_items(segmentation_id)` — brain-MRI DIS items of
+   McDonald 2024:
+   - DIS needs typical lesions in >=2 of 5 regions (periventricular, cortical/juxtacortical,
+     infratentorial, spinal cord, optic nerve)
+   - Brain MRI covers 3 of 5; spinal cord and optic nerve are "not evaluable", never "absent"
 
-3. **CVS/PRL Biomarkers** (if SWI/T2*/phase data available):
-   - Annotate CVS and PRL per lesion using `annotate_cvs_prl()`
-   - CVS Select-6: >=6 CVS+ lesions supports MS diagnosis
-   - PRL: >=1 paramagnetic rim lesion supports MS diagnosis
+3. **CVS / PRL**: only the counts a clinician recorded from susceptibility-sensitive MRI.
+   They give supportive evidence only in the specific situations the criteria define.
+   Never infer a CVS or PRL status yourself.
 
-4. **Generate Report**: Run `generate_ms_report(segmentation_id)` for a
-   comprehensive clinical report.
+4. **Draft report**: `generate_ms_report(segmentation_id)` — a draft from the measurements,
+   with the AI-draft disclaimer, for the physician to review, correct and sign.
 
-## Key References
+## Key references
 - Montalban et al., Lancet Neurol 2025; 24(10): 850-865 (McDonald 2024)
 - Barkhof et al., Lancet Neurol 2025; 24(10): 866-879 (MAGNIMS-CMSC-NAIMS 2024)
 - Filippi et al., Brain 2019; 142(7): 1858-1875 (practical MRI guidelines)
 
-## Important Notes
-- DWM is NOT a DIS region (common misconception)
-- PV = abutting lateral ventricles only (excludes 3rd/4th ventricle)
-- JC = directly abutting cortex (no WM between lesion and cortex)
-- Minimum lesion size: 3mm diameter (longest axis)
-- Spinal cord and optic nerve require separate imaging
+## Definitions used by the device
+- Deep white matter is NOT a DIS region
+- Periventricular = abutting the lateral ventricles (excludes 3rd/4th ventricle)
+- Juxtacortical = directly abutting the cortex (no white matter in between)
 """
 
 
 @mcp.resource("prompts://ms-longitudinal-workflow")
 def ms_longitudinal_workflow() -> str:
-    """Longitudinal MS tracking workflow prompt."""
+    """Two-timepoint comparison review workflow (candidates only)."""
     return """
-# MS Longitudinal Tracking Workflow
+# Two-timepoint lesion comparison — candidates for radiologist review
 
 ## Steps
 
-1. **Identify Timepoints**: Locate baseline and follow-up segmentations
-   for the same patient.
+1. **Identify timepoints**: baseline and follow-up segmentations of the same patient.
 
-2. **Compare**: Run `compare_longitudinal(baseline_id, followup_id)` to
-   identify new, enlarged, shrunk, resolved, and stable lesions.
+2. **Compare**: `compare_longitudinal(baseline_id, followup_id)` — new, enlarged, shrunk,
+   resolved and stable lesion CANDIDATES.
 
-3. **Assess Activity**: New or enlarging lesions indicate disease activity
-   per McDonald 2024. Combined with Gd+ enhancement = DIT evidence.
+3. **Present as candidates**: the comparison does not verify spatial registration, so a
+   misregistration can create false new or enlarging lesions. Never call the counts disease
+   activity or dissemination in time; a radiologist confirms each on co-registered images.
 
-4. **Generate Report**: Run `generate_ms_report(followup_id, include_longitudinal=True,
-   longitudinal_baseline_id=baseline_id)` for a longitudinal clinical report.
+4. **Draft report**: `generate_ms_report(followup_id, include_longitudinal=True,
+   longitudinal_baseline_id=baseline_id)`.
 
-## Disease Activity Categories
-- NEW: Lesion present in follow-up but not baseline
+## Candidate categories (device definitions)
+- NEW: present at follow-up, not at baseline
 - ENLARGED: >20% volume increase
 - SHRUNK: >20% volume decrease
-- RESOLVED: Lesion in baseline but absent in follow-up
-- STABLE: Within 20% volume change
+- RESOLVED: present at baseline, absent at follow-up
+- STABLE: within 20% volume change
 """

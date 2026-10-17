@@ -5,7 +5,10 @@ Pins:
     highest-IoU reciprocal pair, not whatever a greedy pass reaches first);
   * the ≥3 mm-diameter new-lesion size gate (clinically_significant);
   * the MAGNIMS candidate signals: dit_candidate (≥1 significant new) and
-    activity_candidate (≥2 new/enlarging). These are CANDIDATES, never findings.
+    activity_candidate (≥1 new/enlarging — MAGNIMS 2021: "New and/or enlarging (active)
+    T2 lesions are a reliable marker of active inflammatory disease"). CAPA-008 erratum:
+    the threshold was ≥2, the Canadian treatment-change threshold, mis-attributed to
+    MAGNIMS. These are CANDIDATES, never findings.
 """
 import numpy as np
 
@@ -59,7 +62,7 @@ def test_new_lesion_size_gate_and_dit_candidate():
     assert new_change["clinically_significant"] is True
     assert res["new_clinically_significant_count"] == 1
     assert res["dit_candidate"] is True
-    assert res["activity_candidate"] is False              # only one → not "active"
+    assert res["activity_candidate"] is True               # one new lesion is activity (MAGNIMS 2021)
 
 
 def test_subthreshold_new_lesion_is_not_a_dit_candidate():
@@ -108,12 +111,23 @@ def test_region_stratification_fails_closed_on_grid_mismatch():
     assert res["region_stratification"] is None
 
 
-def test_activity_candidate_needs_two_new_or_enlarging():
+def test_activity_candidate_counts_two_new_lesions():
     shp = (48, 48, 48)
     tp1 = np.zeros(shp, np.uint8)
-    # two well-separated suprathreshold new lesions → ≥2 → active candidate
     tp2 = _mask_with_blobs(shp, [(10, 10, 10, 2), (30, 30, 30, 2)])
     res = compare_timepoints(tp1, tp2, voxel_spacing=SPACING)
     assert res["new_clinically_significant_count"] == 2
     assert res["activity_candidate"] is True
     assert res["dit_candidate"] is True
+
+
+def test_rc035_a_single_enlarging_lesion_is_an_activity_candidate():
+    """With the former ">=2" rule a single enlarging lesion raised no signal at all."""
+    shp = (48, 48, 48)
+    tp1 = _mask_with_blobs(shp, [(24, 24, 24, 4)])
+    tp2 = _mask_with_blobs(shp, [(24, 24, 24, 5)])          # same lesion (IoU ~0.5), ~2x volume
+    res = compare_timepoints(tp1, tp2, voxel_spacing=SPACING)
+    assert res["status_counts"]["enlarged"] == 1, res["status_counts"]
+    assert res["new_clinically_significant_count"] == 0
+    assert res["activity_candidate"] is True
+    assert res["dit_candidate"] is False

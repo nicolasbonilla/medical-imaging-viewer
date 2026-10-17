@@ -120,7 +120,7 @@ This document describes the software architecture of MSTool-AI, transforming sof
 | BE-NIFTI | NIfTI Utilities | **C** | Coordinate transforms | `utils/nifti_utils.py` |
 | BE-DICOM | DICOM Utilities | **C** | DICOM parsing, DICOM-SEG | `utils/dicom_utils.py` |
 | BE-FHIR | FHIR Generation | B | HL7 FHIR R4 resources | `api/routes/fhir.py` |
-| BE-MCP | MCP Servers | A | Model Context Protocol | `mcp/*.py` |
+| BE-MCP | MCP Servers (read-only assistant layer; CAPA-008) | A — **under review (CAPA-008 PA-8.3; recommended C)**: classified without a hazard analysis; reads Class C outputs and requests report drafts | Model Context Protocol (STDIO only) | `mcp/_backend.py`, `mcp/imaging_server.py`, `mcp/ms_clinical_server.py`, `mcp/run_all.py` |
 
 ---
 

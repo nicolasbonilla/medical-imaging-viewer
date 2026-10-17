@@ -956,6 +956,7 @@
     "generate": "Generate Report",
     "generating": "Generating...",
     "generateError": "Report generation failed",
+    "noMeasurements": "No measurements are available for this study. Open a segmentation and run its analysis first: a report without measurements would be invented.",
     "tokens": "Tokens",
     "copy": "Copy",
     "copied": "Copied!",
@@ -1054,6 +1055,9 @@
     "criterionNotMet": "Not Met",
     "active": "Active",
     "blackHoles": "Black Holes",
+    "markerReadingsTitle": "CVS / PRL readings (clinician)",
+    "markerReadingsNote": "Read on susceptibility-sensitive MRI. McDonald 2024 uses them as supportive evidence only in specific situations; these are counts, not a criterion.",
+    "cvsPosNeg": "CVS+ {{pos}} · CVS− {{neg}}",
     "exportCSV": "Export CSV"
   },
   "classify": {

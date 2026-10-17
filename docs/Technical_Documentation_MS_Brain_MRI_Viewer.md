@@ -951,25 +951,33 @@ Global shortcut modal (press `?`) organized by context: Navigation, Segmentation
 
 ### 15.1 MCP Server Architecture
 
-Five MCP servers provide Claude with specialized tools for medical imaging analysis:
+*Revised 2026-10-17 (CAPA-008).* Two read-only MCP servers let an AI assistant read what the
+operating clinician may read. Both reach the backend only through `app/mcp/_backend.py`, which
+allows GET and POST to three compute-only routes (`/segmentation/compare`,
+`/segmentation/longitudinal/compare`, `/ai/report/generate`), refuses any other route before
+sending, and removes direct identifiers (patient name/ID, institution, dates, extra DICOM
+fields) from every response. No tool writes a record. The texts state the intended use:
+investigational, measurements for physician verification, not for diagnosis.
 
 | Server | Tools | Purpose |
 |--------|-------|---------|
-| `imaging_server` | 4 tools | Image metadata, slice retrieval, matplotlib rendering |
-| `segmentation_server` | 5 tools | AI segmentation, volumetry, anomaly detection |
-| `report_server` | 3 tools + 3 resources | Report generation, templates, differential diagnosis |
-| `ms_clinical_server` | 6 tools | MS-specific clinical data and assessment |
-| `pacs_server` | 4 tools | PACS/study data access |
+| `imaging_server` | 5 tools | Technical metadata (identifiers removed), slices, slice sample, segmentation list, matplotlib rendering |
+| `ms_clinical_server` | 5 tools + 2 resources | Stored region classification, brain-MRI DIS items with clinician-recorded CVS/PRL counts, lesion analysis, two-timepoint comparison candidates, draft report from measurements |
+
+Retired 2026-10-17: `segmentation_server` (AI routes without object-level authorization; anomaly
+detection outside the intended use), `report_server` (reports from free text without
+measurements; a "differential diagnosis" tool), `pacs_server` (called routes that do not exist;
+imported data into patient records). See CAPA-008.
 
 ### 15.2 Transport
 
 ```
-Modes:
-    1. stdio (default) — for Claude Code local integration
-    2. SSE (--sse --port 8001) — for remote HTTP clients
+Mode: stdio only (Claude Desktop / Claude Code start the process).
+      The former SSE mode had no authentication (CAPA-008).
+Credential: API_SERVICE_TOKEN = the operating clinician's own access token.
 
 Launch:
-    python -m app.mcp.run_all imaging|segmentation|report|ms_clinical|pacs
+    python -m app.mcp.run_all imaging|ms_clinical
 ```
 
 ---

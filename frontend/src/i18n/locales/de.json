@@ -949,6 +949,7 @@
     "generate": "Bericht Erstellen",
     "generating": "Wird erstellt...",
     "generateError": "Berichterstellung fehlgeschlagen",
+    "noMeasurements": "Für diese Untersuchung liegen keine Messwerte vor. Öffnen Sie zuerst eine Segmentierung und führen Sie deren Analyse aus: Ein Bericht ohne Messwerte wäre erfunden.",
     "tokens": "Tokens",
     "copy": "Kopieren",
     "copied": "Kopiert!",
@@ -1054,6 +1055,9 @@
     "criterionNotMet": "Nicht erfüllt",
     "active": "Aktiv",
     "blackHoles": "Black Holes",
+    "markerReadingsTitle": "CVS-/PRL-Befunde (ärztlich)",
+    "markerReadingsNote": "Auf suszeptibilitätsgewichteter MRT befundet. McDonald 2024 nutzt sie nur in bestimmten Situationen als unterstützenden Hinweis; dies sind Zählungen, kein Kriterium.",
+    "cvsPosNeg": "CVS+ {{pos}} · CVS− {{neg}}",
     "exportCSV": "CSV exportieren"
   },
   "classify": {

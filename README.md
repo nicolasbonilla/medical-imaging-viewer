@@ -302,15 +302,18 @@ Integration with the **Claude API** (Anthropic) for structured clinical report g
 
 ### 3.10 Model Context Protocol (MCP)
 
-Five MCP servers (FastMCP) providing Claude with 22 specialized tools:
+Two **read-only** MCP servers (FastMCP, STDIO only) let an AI assistant read what the operating
+clinician may read (CAPA-008). Both reach the backend through one client that allows GET and
+POST to three compute-only routes, refuses anything else before sending, and removes direct
+identifiers from every response. No tool writes a record; the texts state the intended use
+(investigational, not for diagnosis).
 
 | Server | Tools | Capabilities |
 |--------|-------|-------------|
-| Imaging | 4 | Metadata, slice retrieval, matplotlib rendering |
-| Segmentation | 5 | AI segmentation, volumetry, anomaly detection |
-| Report | 3 + 3 resources | Report generation, templates, differential diagnosis |
-| MS Clinical | 6 | MS-specific clinical data and assessment |
-| PACS | 4 | Study/series data access |
+| Imaging | 5 | Technical metadata (identifiers removed), slices, segmentation list, matplotlib rendering |
+| MS Clinical | 5 + 2 resources | Stored region classification, brain-MRI DIS items, lesion analysis, two-timepoint comparison candidates, draft report from measurements |
+
+The segmentation, report and PACS servers were retired on 2026-10-17 (CAPA-008).
 
 ### 3.11 Authentication & User Management
 
@@ -520,12 +523,11 @@ mstool-ai/
 │       │   ├── password.py                      # Argon2id hashing
 │       │   ├── rbac.py                          # Role-based access control
 │       │   └── user_storage.py                  # AES-256-GCM encrypted user storage
-│       ├── mcp/                                 # Model Context Protocol servers
+│       ├── mcp/                                 # Model Context Protocol servers (read-only)
+│       │   ├── _backend.py                      # The only backend client: GET + compute-only POST
 │       │   ├── imaging_server.py
-│       │   ├── segmentation_server.py
-│       │   ├── report_server.py
 │       │   ├── ms_clinical_server.py
-│       │   └── run_all.py                       # Unified launcher (stdio/SSE)
+│       │   └── run_all.py                       # Launcher (stdio only)
 │       ├── core/
 │       │   ├── config.py                        # Environment settings
 │       │   ├── security/                        # AES-256-GCM, rate limiting, TLS

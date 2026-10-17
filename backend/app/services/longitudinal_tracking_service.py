@@ -268,10 +268,13 @@ def compare_timepoints(
     for c in changes:
         status_counts[c["status"]] += 1
 
-    # MAGNIMS activity / DIT CANDIDATE signals (never findings). The clinical
-    # thresholds (2021/2024 MAGNIMS-CMSC-NAIMS): ≥1 new lesion supports
-    # dissemination-in-time; ≥2 new/enlarging lesions signals active disease. We
-    # count only clinically-significant (≥3 mm) new lesions. These are CANDIDATE
+    # MAGNIMS activity / DIT CANDIDATE signals (never findings). MAGNIMS-CMSC-NAIMS 2021
+    # (Wattjes et al., Lancet Neurol 2021): "New and/or enlarging (active) T2 lesions are a
+    # reliable marker of active inflammatory disease" — ONE is enough; McDonald: a new T2
+    # lesion on follow-up supports dissemination in time. CAPA-008 erratum: this used ">=2
+    # new/enlarging" and attributed it to MAGNIMS; ">=2" is the Canadian treatment-change
+    # threshold, not the definition of activity, and it hid a single new or enlarging
+    # candidate. We count only clinically-significant (>=3 mm) new lesions. These are CANDIDATE
     # flags — the route stamps registration_verified=False + adjudication_required,
     # and the report builder is barred from asserting DIT/active disease. They exist
     # to surface "worth a radiologist's attention", not to diagnose.
@@ -311,6 +314,6 @@ def compare_timepoints(
         "new_clinically_significant_count": new_significant,
         "enlarging_count": enlarging,
         "dit_candidate": new_significant >= 1,
-        "activity_candidate": (new_significant + enlarging) >= 2,
+        "activity_candidate": (new_significant + enlarging) >= 1,
         "region_stratification": region_stratification,
     }

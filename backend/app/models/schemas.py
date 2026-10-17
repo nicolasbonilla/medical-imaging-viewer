@@ -143,11 +143,11 @@ class LabelInfo(BaseModel):
 
 
 class LesionAnnotation(BaseModel):
-    """Per-lesion CVS and PRL annotations (McDonald 2024 biomarkers).
+    """Per-lesion CVS and PRL readings recorded by a clinician.
 
-    McDonald 2024 (Montalban et al., Lancet Neurology 2025) officially
-    incorporates Central Vein Sign (CVS) and Paramagnetic Rim Lesions (PRL)
-    as diagnostic biomarkers for MS.
+    Central vein sign (CVS) and paramagnetic rim lesions (PRL) are read on
+    susceptibility-sensitive MRI. McDonald 2024 (Montalban et al., Lancet Neurology 2025)
+    uses them as supportive evidence in specific situations only (CAPA-008).
     """
     lesion_id: int = Field(..., description="Lesion ID from classification results")
     cvs_status: Optional[str] = Field(
@@ -157,7 +157,7 @@ class LesionAnnotation(BaseModel):
         None, description="PRL status: 'positive', 'negative', 'indeterminate'"
     )
     annotated_by: Optional[str] = Field(
-        None, description="Annotation source: 'manual', 'cvs_net', 'deep_prl'"
+        None, description="ID of the authenticated user who recorded the reading (set by the server)"
     )
     annotated_at: Optional[datetime] = None
     notes: Optional[str] = None
