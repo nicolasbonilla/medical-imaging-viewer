@@ -1,0 +1,45 @@
+reproduction gate: {'M': {'candidates': 3866, 'false_lenient': 1348, 'scans': 115}, 'L10': {'candidates': 534, 'false_lenient': 94, 'scans': 10}, 'C': {'candidates': 83, 'false_lenient': 83, 'scans': 30}, 'matches_paper_a_v02_cohort_table': True}
+primary: pooled leave-one-cohort-out ...
+  RAW         pooled LOCO AUROC 0.7283 [0.7026, 0.7537]  dRAW None None
+  V3-LR       pooled LOCO AUROC 0.7423 [0.716, 0.7716]  dRAW 0.0139 [-0.0122, 0.0414]
+  V3-GB       pooled LOCO AUROC 0.6885 [0.6618, 0.7179]  dRAW -0.0399 [-0.0723, -0.0074]
+  V2-shipped  pooled LOCO AUROC 0.6386 [0.6111, 0.6675]  dRAW -0.0897 [-0.1246, -0.0541]
+  V2-LR       pooled LOCO AUROC 0.722 [0.6861, 0.7588]  dRAW -0.0063 [-0.041, 0.028]
+  V3P-LR      pooled LOCO AUROC 0.7143 [0.6851, 0.7477]  dRAW -0.014 [-0.0415, 0.012]
+  PRIMARY criterion met: False (statistically positive: False); H2 vs V2-shipped: True
+  A_M_to_L10: RAW 0.6981, V3-LR 0.779, V3-GB 0.7796, V2-shipped 0.7405, V2-LR 0.7475, V3P-LR 0.7456
+  B_L10_to_M: RAW 0.735, V3-LR 0.7709, V3-GB 0.7143, V2-shipped 0.6637, V2-LR 0.7791, V3P-LR 0.7588
+S1: within-cohort CV ...
+  M: RAW 0.735, V3-LR 0.8348, V3-GB 0.8458, V2-shipped 0.8221, V2-LR 0.7871, V3P-LR 0.7802
+  L10: RAW 0.6981, V3-LR 0.7697, V3-GB 0.7423, V2-shipped 0.6376, V2-LR 0.7216, V3P-LR 0.7126
+S5: controls ...
+  RAW 0.3706, V3P-LR 0.4287, V3P-GB 0.4831
+S3: conformal within MSLesSeg (three-way cross-fit) ...
+  bh|alpha=0.2: RAW power 0.137 FDR 0.1375 exc 0.1217, V3-LR power 0.4706 FDR 0.0778 exc 0.0696, V3-GB power 0.5095 FDR 0.0683 exc 0.0696, V2-shipped power 0.448 FDR 0.0844 exc 0.1304
+  fdx|alpha=0.2: RAW power 0.0481 FDR 0.1597 exc 0.0435, V3-LR power 0.2299 FDR 0.0524 exc 0.0174, V3-GB power 0.2847 FDR 0.0541 exc 0.0261, V2-shipped power 0.2017 FDR 0.0593 exc 0.0174
+S4/S5: conformal M -> L10 and controls (20 splits) ...
+  L10 bh|alpha=0.2: RAW power 0.0957 FDR 0.0956 exc 0.0, V3-LR power 0.1505 FDR 0.055 exc 0.03, V3-GB power 0.1132 FDR 0.0532 exc 0.05, V2-shipped power 0.1278 FDR 0.0044 exc 0.0
+  controls bh|alpha=0.2: RAW FD/100 135.33, V3P-LR FD/100 100.5
+  L10 fdx|alpha=0.2: RAW power 0.0303 FDR 0.1188 exc 0.035, V3-LR power 0.0867 FDR 0.028 exc 0.01, V3-GB power 0.0403 FDR 0.0247 exc 0.0, V2-shipped power 0.0343 FDR 0.0 exc 0.0
+  controls fdx|alpha=0.2: RAW FD/100 75.17, V3P-LR FD/100 74.17
+A1: shuffle-label null ...
+  {'pooled_loco_V3-LR': {'mean': 0.4677, 'min': 0.3211, 'max': 0.6002}, 'within_M_V3-LR': {'mean': 0.5167, 'min': 0.3801, 'max': 0.6148}, 'flag_if_mean_gt': 0.53, 'flagged': False}
+A3: site-identity probe ...
+  {'RAW(prob_mean)': 0.268, 'v2_prob': 0.3392, 'v2_morph': 0.6008, 'F1_contrast': 0.6191, 'F3_texture': 0.7091, 'F4_flair_boundary': 0.8274, 'F4_prob_boundary': 0.636, 'F5_persistence': 0.309, 'F6_location': 0.423, 'V3_all': 0.9824}
+A4: label definitions ...
+  strict: RAW 0.7385 d None None, V3-LR 0.762 d 0.0235 [-0.0004, 0.049], V2-shipped 0.6562 d -0.0823 [-0.1151, -0.0482]
+  anyvox: RAW 0.7297 d None None, V3-LR 0.7316 d 0.0019 [-0.0301, 0.0359], V2-shipped 0.6677 d -0.062 [-0.0943, -0.0262]
+  pure-false only: RAW 0.7391 d None, V3-LR 0.75 d 0.0109, V3-GB 0.6831 d -0.056, V2-shipped 0.6415 d -0.0975, V2-LR 0.7395 d 0.0004, V3P-LR 0.7175 d -0.0216
+A5: small-n optimism ...
+  {'train_10_M_patients_test_rest': {'auroc_mean': 0.8184, 'auroc_range': [0.7865, 0.8351], 'delta_vs_raw_mean': 0.0819, 'delta_range': [0.0531, 0.1059]}, 'events_per_variable': {'L10_false_per_feature': 2.24, 'M_false_per_feature': 32.1, 'n_features_V3': 42}, 'direction_B_refit_variance': {'n_refits': 50, 'auroc_mean': 0.7273, 'auroc_p2.5_p97.5': [0.6684, 0.7821], 'raw_auroc_on_M': 0.735, 'frac_refits_below_raw': 0.58}}
+A6: contamination reference ...
+  M -> L10: RAW 0.6981, V3-LR 0.779, V2-shipped 0.7405
+  M -> L12: RAW 0.7149, V3-LR 0.7851, V2-shipped 0.7409
+  M -> Ltr: RAW 0.6353, V3-LR 0.7414, V2-shipped 0.6767
+  M -> LALL: RAW 0.6501, V3-LR 0.7497, V2-shipped 0.6905
+A7: drop-one-family ablation ...
+  {'V3_minus_v2_prob': 0.7416, 'V3_minus_v2_morph': 0.751, 'V3_minus_F1_contrast': 0.7597, 'V3_minus_F3_texture': 0.7372, 'V3_minus_F4_flair_boundary': 0.7309, 'V3_minus_F4_prob_boundary': 0.7382, 'V3_minus_F5_persistence': 0.7467, 'V3_minus_F6_location': 0.749, 'V3_full': 0.7423}
+A8: intensity-preprocessing confound (KS M vs L10) ...
+E: exploratory ...
+  E1: RAW 0.735, V3-LR 0.8031, V2-shipped 0.6952
+  E2/E3: RAW 0.7283, V3+T1-LR 0.7459, V3+CTX-LR 0.7603, V3+MNI-LR 0.7355, NEW_ONLY-LR 0.7511, V3-LR 0.7423

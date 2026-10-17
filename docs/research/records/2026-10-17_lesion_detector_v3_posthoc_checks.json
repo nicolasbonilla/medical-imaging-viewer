@@ -1,0 +1,305 @@
+{
+ "status": "POST-HOC (not pre-registered); can only weaken claims",
+ "seed": 20261017,
+ "P1_v3_minus_v2_same_model": {
+  "pooled": {
+   "V3-LR": 0.7423,
+   "V2-LR": 0.722,
+   "delta": 0.0202,
+   "delta_ci95": [
+    -0.0037,
+    0.0465
+   ]
+  },
+  "A_M_to_L10": {
+   "V3-LR": 0.779,
+   "V2-LR": 0.7475,
+   "delta": 0.0315,
+   "delta_ci95": [
+    -0.0017,
+    0.079
+   ]
+  },
+  "B_L10_to_M": {
+   "V3-LR": 0.7709,
+   "V2-LR": 0.7791,
+   "delta": -0.0083,
+   "delta_ci95": [
+    -0.027,
+    0.0115
+   ]
+  },
+  "within_M_cv": {
+   "V3-LR": 0.8348,
+   "V2-LR": 0.7871,
+   "delta": 0.0477,
+   "delta_ci95": [
+    0.0301,
+    0.0646
+   ]
+  }
+ },
+ "P2_direction_A_refit_variance": {
+  "n_refits": 50,
+  "auroc_mean": 0.7683,
+  "auroc_p2.5_p97.5": [
+   0.7408,
+   0.7943
+  ],
+  "raw_auroc_on_L10": 0.6981,
+  "frac_refits_below_raw": 0.0
+ },
+ "P3_pooled_calibration_mismatch": {
+  "A_scores_on_L10": {
+   "mean_score_V3-LR": 0.6333,
+   "mean_score_RAW": 0.9189,
+   "false_rate": 0.176
+  },
+  "B_scores_on_M": {
+   "mean_score_V3-LR": 0.7868,
+   "mean_score_RAW": 0.917,
+   "false_rate": 0.3487
+  },
+  "note": "pooled AUROC also ranks candidates ACROSS the two directions; if the model used on the cohort with MORE false candidates outputs HIGHER scores on average, the pooled AUROC falls below both per-direction AUROCs. RAW has no training and is not affected this way."
+ },
+ "P4_bootstrap_seed_stability": {
+  "seed+1000": {
+   "delta": 0.0139,
+   "ci95": [
+    -0.0122,
+    0.0416
+   ]
+  },
+  "seed+2000": {
+   "delta": 0.0139,
+   "ci95": [
+    -0.0124,
+    0.0407
+   ]
+  },
+  "seed+3000": {
+   "delta": 0.0139,
+   "ci95": [
+    -0.0127,
+    0.0428
+   ]
+  }
+ },
+ "P5_descriptive": {
+  "univariate_auroc": {
+   "prob_mean": {
+    "M": 0.735,
+    "L10": 0.698
+   },
+   "prob_max": {
+    "M": 0.753,
+    "L10": 0.706
+   },
+   "prob_std": {
+    "M": 0.368,
+    "L10": 0.418
+   },
+   "prob_q90": {
+    "M": 0.758,
+    "L10": 0.705
+   },
+   "log_volume": {
+    "M": 0.719,
+    "L10": 0.67
+   },
+   "sphericity": {
+    "M": 0.299,
+    "L10": 0.341
+   },
+   "surf_to_vol": {
+    "M": 0.278,
+    "L10": 0.357
+   },
+   "elongation": {
+    "M": 0.437,
+    "L10": 0.292
+   },
+   "extent": {
+    "M": 0.394,
+    "L10": 0.424
+   },
+   "fl_z_mean": {
+    "M": 0.486,
+    "L10": 0.456
+   },
+   "fl_z_median": {
+    "M": 0.47,
+    "L10": 0.454
+   },
+   "fl_shell_z_mean": {
+    "M": 0.422,
+    "L10": 0.342
+   },
+   "fl_shell_z_std": {
+    "M": 0.399,
+    "L10": 0.455
+   },
+   "fl_contrast": {
+    "M": 0.555,
+    "L10": 0.543
+   },
+   "fl_cnr": {
+    "M": 0.688,
+    "L10": 0.574
+   },
+   "fl_frac_hyper": {
+    "M": 0.54,
+    "L10": 0.473
+   },
+   "fl_shell_valid_frac": {
+    "M": 0.576,
+    "L10": 0.621
+   },
+   "fl_tex_std": {
+    "M": 0.691,
+    "L10": 0.682
+   },
+   "fl_tex_iqr": {
+    "M": 0.693,
+    "L10": 0.693
+   },
+   "fl_tex_skew": {
+    "M": 0.667,
+    "L10": 0.531
+   },
+   "fl_tex_kurt": {
+    "M": 0.627,
+    "L10": 0.569
+   },
+   "fl_tex_entropy": {
+    "M": 0.685,
+    "L10": 0.679
+   },
+   "fl_tex_grad_interior": {
+    "M": 0.598,
+    "L10": 0.472
+   },
+   "fl_grad_boundary": {
+    "M": 0.543,
+    "L10": 0.531
+   },
+   "fl_grad_ratio": {
+    "M": 0.261,
+    "L10": 0.473
+   },
+   "fl_edge_step": {
+    "M": 0.588,
+    "L10": 0.621
+   },
+   "pm_grad_boundary": {
+    "M": 0.745,
+    "L10": 0.699
+   },
+   "pm_ring1_mean": {
+    "M": 0.404,
+    "L10": 0.389
+   },
+   "pm_ring3_mean": {
+    "M": 0.386,
+    "L10": 0.393
+   },
+   "ps_surv_075": {
+    "M": 0.684,
+    "L10": 0.61
+   },
+   "ps_surv_090": {
+    "M": 0.726,
+    "L10": 0.698
+   },
+   "ps_nsplit_075": {
+    "M": 0.514,
+    "L10": 0.518
+   },
+   "ps_nsplit_090": {
+    "M": 0.529,
+    "L10": 0.543
+   },
+   "ps_log_merge_025": {
+    "M": 0.342,
+    "L10": 0.34
+   },
+   "ps_log_merge_010": {
+    "M": 0.301,
+    "L10": 0.333
+   },
+   "ps_nmerge_025": {
+    "M": 0.496,
+    "L10": 0.477
+   },
+   "loc_depth_min_rel": {
+    "M": 0.493,
+    "L10": 0.445
+   },
+   "loc_depth_mean_rel": {
+    "M": 0.539,
+    "L10": 0.478
+   },
+   "loc_dvent_min_rel": {
+    "M": 0.496,
+    "L10": 0.54
+   },
+   "loc_csf_contact": {
+    "M": 0.478,
+    "L10": 0.435
+   },
+   "loc_outside_contact": {
+    "M": 0.478,
+    "L10": 0.495
+   },
+   "loc_log_rel_volume": {
+    "M": 0.722,
+    "L10": 0.666
+   }
+  },
+  "medians": {
+   "prob_mean": {
+    "controls": 0.957,
+    "L10_true": 0.941,
+    "L10_false": 0.889,
+    "M_false": 0.905
+   },
+   "log_volume": {
+    "controls": 3.178,
+    "L10_true": 3.045,
+    "L10_false": 2.138,
+    "M_false": 2.833
+   },
+   "sphericity": {
+    "controls": 1.756,
+    "L10_true": 1.829,
+    "L10_false": 2.371,
+    "M_false": 1.961
+   },
+   "pm_grad_boundary": {
+    "controls": 0.357,
+    "L10_true": 0.353,
+    "L10_false": 0.291,
+    "M_false": 0.333
+   },
+   "pm_ring1_mean": {
+    "controls": 0.013,
+    "L10_true": 0.018,
+    "L10_false": 0.023,
+    "M_false": 0.028
+   },
+   "ps_surv_090": {
+    "controls": 0.875,
+    "L10_true": 0.8,
+    "L10_false": 0.659,
+    "M_false": 0.698
+   },
+   "ps_log_merge_010": {
+    "controls": 0.136,
+    "L10_true": 0.182,
+    "L10_false": 0.304,
+    "M_false": 0.288
+   }
+  }
+ },
+ "runtime_s": 77.4
+}
