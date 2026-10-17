@@ -388,6 +388,16 @@ Two tests were added (a same-image zone map given explicitly), and the run was r
 **Full suites on the final code (2026-10-17).** Backend 1073 passed; frontend 15 files and 116
 tests; tsc clean; build OK. Before review round 2 the figures were 1048 and 114.
 
+**CI finding (2026-10-17).** The first CI run on PR #43 failed two jobs: Backend Pytest and Risk
+Control Verification. The generate-zone-map route tests built the real patient service for the
+authorization check, and that service needs cloud credentials. CI has none; the developer machine
+had them, which hid the dependency locally.
+
+The route fixture now substitutes the authorization services. The full backend suite was then
+re-run locally with no cloud credentials, and all 1073 tests passed. A check confirmed that the real
+service fails in that environment exactly as it does in CI. The negative controls were re-run
+against the corrected test file.
+
 **Effectiveness check** (pending, after deployment; needs authenticated access by the owner):
 - a native study gives geometric regions with the warning, or 422 with reasons;
 - an MNI study uses MSMask;

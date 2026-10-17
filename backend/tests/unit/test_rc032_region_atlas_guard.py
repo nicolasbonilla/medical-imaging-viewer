@@ -293,10 +293,25 @@ class _Storage:
         return img.to_bytes()
 
 
+class _NoAccessPatients:
+    """Stand-in patient service: no Firestore. The patient exists but is not the caller's."""
+    async def get_patient(self, patient_id):
+        return type("P", (), {"created_by": "someone-else"})()
+
+
+class _NoCareTeam:
+    def list_entitlements_for_user(self, user_id):
+        return []
+
+
 @pytest.fixture
-def route():
+def route(monkeypatch):
     if _APP_ERROR is not None:
         pytest.fail(f"FastAPI app not importable: {_APP_ERROR!r}")   # never a silent skip
+    # generate-zone-map builds its authorization services per request; never reach real
+    # Firestore from a unit test (CI has no cloud credentials — it failed there, 2026-10-17).
+    monkeypatch.setattr(regions_route, "_patient_service", lambda: _NoAccessPatients())
+    monkeypatch.setattr(regions_route, "_care_team_service", lambda: _NoCareTeam())
 
     def make(seg, storage, user=None, authorize=True):
         app.dependency_overrides[get_current_active_user] = user or _admin

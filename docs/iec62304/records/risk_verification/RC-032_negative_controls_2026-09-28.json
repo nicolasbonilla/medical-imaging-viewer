@@ -1,5 +1,5 @@
 {
-  "executed": "2026-10-17T11:43:30",
+  "executed": "2026-10-17T12:23:19",
   "method": "one mutation at a time; each target string asserted to occur exactly once before replacement",
   "hash_basis": "sha256 of the UTF-8 text as read by Python (universal newlines, LF); a raw CRLF working-tree hash differs",
   "source_sha256": {
@@ -13,7 +13,7 @@
     "frontend/src/i18n/locales/en.json": "6d973314f3206db5e969a33b89dae5a34d114283e0603b30c4ac068b8c1803cd"
   },
   "test_sha256": {
-    "tests/unit/test_rc032_region_atlas_guard.py": "ceeee78c94797f769b31cc93e0b82a08220d6cef961547850878abecbd9d902d",
+    "tests/unit/test_rc032_region_atlas_guard.py": "6e88f63f47a88bd95f49826b2d152ac2fea9c94c83afbf95d8c9f6ab92b0b8e7",
     "tests/unit/test_capa006_labelling_bound_to_code.py": "f924ec065ddc802e19782a4d380f3943e22a82f1f9a04b14a4bfa6fde9b0758d",
     "src/components/LesionDashboard.rc032.test.ts": "ceea6c081f622fc8573391f023eeb506f34be538c0173f99a1a4250c9df107d8"
   },
