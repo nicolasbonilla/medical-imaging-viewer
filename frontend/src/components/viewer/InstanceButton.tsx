@@ -1,4 +1,6 @@
 import { FileImage, FlaskConical } from 'lucide-react';
+import { twMerge } from 'tailwind-merge';
+import { detectSequence, SEQUENCE_INFO } from '@/utils/sequenceDetection';
 
 export interface InstanceButtonData {
   id: string;
@@ -14,32 +16,40 @@ interface InstanceButtonProps {
 }
 
 /**
- * A single study-instance row in the viewer sidebar. Extracted from two
- * byte-identical inline blocks in ViewerApp (Fase 2.2) that differed only by
- * icon/accent colour and the fallback label — now a single component keyed by
- * `variant`.
+ * A single study-instance row in the viewer sidebar (v2 tokens). `variant` keeps the
+ * original / preprocessed distinction (icon + fallback label); the detected MRI
+ * sequence is shown as a short chip so FLAIR vs T1 is readable at a glance.
  */
 export function InstanceButton({ instance, selected, onSelect, variant }: InstanceButtonProps) {
   const isOriginal = variant === 'original';
   const Icon = isOriginal ? FileImage : FlaskConical;
-  const selectedBg = isOriginal ? 'bg-blue-600' : 'bg-teal-600';
-  const iconColor = isOriginal ? 'text-blue-500' : 'text-teal-500';
   const fallbackName = isOriginal ? 'Image' : 'Preprocessed';
+  const seq = detectSequence(instance.original_filename || '');
 
   return (
     <button
+      type="button"
       onClick={() => onSelect(instance.id)}
-      className={`w-full text-left transition-colors ${
-        selected ? `${selectedBg} text-white` : 'bg-gray-800/60 hover:bg-gray-800 text-gray-300'
-      }`}
-      style={{ padding: '4px 8px', borderRadius: 6 }}
+      aria-pressed={selected}
+      className={twMerge(
+        'group w-full rounded-lg border px-2 py-1.5 text-left transition-colors',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60',
+        selected
+          ? 'border-brand-500/40 bg-brand-950/70 text-ink-base'
+          : 'border-transparent bg-surface-raised/50 text-ink-soft hover:bg-surface-raised hover:text-ink-base',
+      )}
     >
       <div className="flex items-center gap-2">
-        <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${selected ? 'text-white' : iconColor}`} />
-        <p className="text-[11px] font-medium truncate flex-1">
+        <Icon className={twMerge('h-4 w-4 shrink-0', selected ? 'text-brand-400' : 'text-ink-faint')} aria-hidden />
+        {seq !== 'unknown' && (
+          <span className="shrink-0 rounded bg-surface-hover px-1.5 py-0.5 text-xs font-semibold leading-none text-ink-soft">
+            {SEQUENCE_INFO[seq].shortLabel}
+          </span>
+        )}
+        <p className="min-w-0 flex-1 truncate text-xs font-medium" title={instance.original_filename || fallbackName}>
           {instance.original_filename || fallbackName}
         </p>
-        <span className={`text-[10px] ${selected ? 'text-white/70' : 'text-gray-400'}`}>
+        <span className="shrink-0 text-xs tabular-nums text-ink-faint">
           {(instance.file_size_bytes / 1024 / 1024).toFixed(1)}MB
         </span>
       </div>

@@ -167,4 +167,40 @@ describe('the overlay is wired into the viewer, not merely available', () => {
     const conditional = /[&?]\s*\n?\s*<ViewportSafetyOverlay/;
     expect(viewerSource).not.toMatch(conditional);
   });
+
+  it('rc016 the v3 in-browser path sits UNDER the same overlay (no second 2D path without it)', () => {
+    // The client viewport is a child of ImageViewer2D, which renders the overlay
+    // first and unconditionally; the viewport itself must not try to replace it.
+    expect(viewerSource).toContain('<ClientSliceViewport');
+    expect(viewerSource.indexOf('<ViewportSafetyOverlay')).toBeLessThan(viewerSource.indexOf('<ClientSliceViewport'));
+  });
+});
+
+describe('every other view mode also carries the overlay (v3: 3D and multi-panel)', () => {
+  // Same static-check rationale as above. Before v3 neither the 3D viewer nor the
+  // multi-panel grid showed patient identity in the viewport at all.
+  for (const file of ['ImageViewer3D.tsx', 'MultiPanelViewer.tsx']) {
+    const source = readFileSync(join(__dirname, file), 'utf-8');
+
+    it(`rc016 ${file} renders ViewportSafetyOverlay with identity`, () => {
+      expect(source).toContain('<ViewportSafetyOverlay');
+      expect(source).toMatch(/patientName=\{patientName\}/);
+      expect(source).toMatch(/patientMRN=\{patientMRN\}/);
+    });
+
+    it(`rc023 ${file} passes the anatomical orientation`, () => {
+      expect(source).toMatch(/anatomicalOrientation=\{/);
+    });
+
+    it(`rc016 ${file} does not render the overlay behind a conditional`, () => {
+      expect(source).not.toMatch(/[&?]\s*\n?\s*<ViewportSafetyOverlay/);
+    });
+  }
+
+  it('rc023 the 3D viewer draws no niivue laterality glyphs (orientation cube / edge text)', () => {
+    const source = readFileSync(join(__dirname, 'ImageViewer3D.tsx'), 'utf-8');
+    expect(source).toMatch(/isOrientCube:\s*false/);
+    expect(source).toMatch(/isOrientationTextVisible:\s*false/);
+    expect(source).not.toMatch(/isOrientCube:\s*sliceType/);
+  });
 });

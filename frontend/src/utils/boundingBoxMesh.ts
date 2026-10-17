@@ -3,18 +3,22 @@ import type { LesionBoundingBox } from '@/types';
 
 type Vec3 = [number, number, number];
 
-/** Transform 8 bbox corners from voxel space to mm via NIfTI affine */
-function voxelCornersToMM(bbox: LesionBoundingBox, affine: number[][]): Vec3[] {
-  const voxCorners: Vec3[] = [
-    [bbox.x_min, bbox.y_min, bbox.z_min], // 0: bottom-front-left
-    [bbox.x_max, bbox.y_min, bbox.z_min], // 1: bottom-front-right
-    [bbox.x_min, bbox.y_max, bbox.z_min], // 2: bottom-back-left
-    [bbox.x_max, bbox.y_max, bbox.z_min], // 3: bottom-back-right
-    [bbox.x_min, bbox.y_min, bbox.z_max], // 4: top-front-left
-    [bbox.x_max, bbox.y_min, bbox.z_max], // 5: top-front-right
-    [bbox.x_min, bbox.y_max, bbox.z_max], // 6: top-back-left
-    [bbox.x_max, bbox.y_max, bbox.z_max], // 7: top-back-right
-  ];
+/**
+ * Transform the 8 bbox corners to scanner mm via the NIfTI affine.
+ *
+ * The lesion analysis reports the box on the internal (k, a0, a1) mask: z = axis 0
+ * (k), y = axis 1 (a0 = NIfTI i), x = axis 2 (a1 = NIfTI j). The NIfTI voxel of a
+ * corner is therefore (i, j, k) = (y, x, z). Before v3 the corners were built as
+ * (x, y, z), which transposed the 3D box in-plane (drawn at the wrong place on any
+ * non-square slice) — see boundingBoxMesh.test.ts.
+ */
+export function voxelCornersToMM(bbox: LesionBoundingBox, affine: number[][]): Vec3[] {
+  const voxCorners: Vec3[] = [];
+  for (const z of [bbox.z_min, bbox.z_max]) {
+    for (const y of [bbox.y_min, bbox.y_max]) {
+      for (const x of [bbox.x_min, bbox.x_max]) voxCorners.push([y, x, z]);
+    }
+  }
 
   return voxCorners.map(([x, y, z]) => [
     affine[0][0] * x + affine[0][1] * y + affine[0][2] * z + affine[0][3],

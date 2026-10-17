@@ -14,10 +14,16 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Niivue, NVImage, SLICE_TYPE, SHOW_RENDER } from '@niivue/niivue';
-import { Loader2, AlertCircle, Box, ZoomIn, ZoomOut, Eye } from 'lucide-react';
+import { AlertCircle, Box, ZoomIn, ZoomOut, Eye } from 'lucide-react';
 import { useViewerStore } from '@/store/useViewerStore';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import { createBoundingBoxMZ3 } from '@/utils/boundingBoxMesh';
+import { COLORMAPS_3D } from '@/utils/colormaps3d';
+import { MAGNIMS_ZONE_RGB } from '@/utils/clinicalPalette';
+import { DISPLAY_CONVENTION } from '@/volume/sliceGeometry';
+import { maskZYXToVoxel } from '@/volume/maskPlane';
+import { voxelToWorld } from '@/volume/nifti';
+import { ViewportSafetyOverlay } from './ViewportSafetyOverlay';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -63,16 +69,6 @@ async function fetchWithProgress(
   return merged.buffer;
 }
 
-const COLORMAPS_3D = [
-  { id: 'gray', label: 'Gray' },
-  { id: 'hot', label: 'Hot' },
-  { id: 'bone', label: 'Bone' },
-  { id: 'winter', label: 'Winter' },
-  { id: 'viridis', label: 'Viridis' },
-  { id: 'cool', label: 'Cool' },
-  { id: 'ge_color', label: 'GE Color' },
-  { id: 'inferno', label: 'Inferno' },
-] as const;
 
 /** Panel labels for 2x2 grid */
 const PANEL_CONFIG = [
@@ -99,14 +95,13 @@ function registerZoneMapColormap(nv: Niivue): void {
   const I = new Array(256).fill(0);
   for (let i = 0; i < 256; i++) I[i] = i;
 
-  // PV: Red [255, 0, 0] — indices 32-95
-  for (let i = 32; i < 96; i++) { R[i] = 255; A[i] = 255; }
-  // JC: Green [0, 204, 0] — indices 96-159
-  for (let i = 96; i < 160; i++) { G[i] = 204; A[i] = 255; }
-  // IT: Blue [0, 102, 255] — indices 160-223
-  for (let i = 160; i < 224; i++) { G[i] = 102; B[i] = 255; A[i] = 255; }
-  // DWM: Yellow [255, 215, 0] — indices 224-255
-  for (let i = 224; i < 256; i++) { R[i] = 255; G[i] = 215; A[i] = 255; }
+  // Zone colours from the shared clinical palette (Okabe-Ito) so the 3D layer
+  // matches the 2D overlay and every legend. value v -> indices of band v.
+  const bands: Array<[number, number, number]> = [[32, 96, 1], [96, 160, 2], [160, 224, 3], [224, 256, 4]];
+  for (const [from, to, zone] of bands) {
+    const [r, g, b] = MAGNIMS_ZONE_RGB[zone];
+    for (let i = from; i < to; i++) { R[i] = r; G[i] = g; B[i] = b; A[i] = 255; }
+  }
 
   nv.addColormap('magnims_zones', { R, G, B, A, I });
 }
@@ -116,11 +111,16 @@ function createNvInstance(sliceType: number): Niivue {
   const nv = new Niivue({
     backColor: [0, 0, 0, 1],
     show3Dcrosshair: sliceType === SLICE_TYPE.RENDER,
-    isRadiologicalConvention: false,
+    // Same display convention as the 2D in-browser viewer (volume/sliceGeometry).
+    isRadiologicalConvention: DISPLAY_CONVENTION === 'radiological',
     sliceType,
     multiplanarShowRender: SHOW_RENDER.NEVER,
     isColorbar: sliceType === SLICE_TYPE.RENDER,
-    isOrientCube: sliceType === SLICE_TYPE.RENDER,
+    // RC-023 / CAPA-004 CA-4.3 open: no L/R/A/P glyphs (orientation cube or edge text)
+    // while laterality labelling is unverified — same stance as ViewportSafetyOverlay
+    // and NiivueViewer2D. The orientation is reported, as text, by the safety overlay.
+    isOrientCube: false,
+    isOrientationTextVisible: false,
     crosshairWidth: 1,
     crosshairColor: [1, 0, 0, 1],
     textHeight: 0.03,
@@ -130,7 +130,14 @@ function createNvInstance(sliceType: number): Niivue {
   return nv;
 }
 
-export default function ImageViewer3D() {
+interface ImageViewer3DProps {
+  /** RC-016: patient identity annotated on the 3D viewport too. */
+  patientName?: string;
+  patientMRN?: string;
+  studyDescription?: string;
+}
+
+export default function ImageViewer3D({ patientName, patientMRN, studyDescription }: ImageViewer3DProps = {}) {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -146,6 +153,8 @@ export default function ImageViewer3D() {
   const zoneMapVisible = useSegmentationStore((s) => s.zoneMapVisible);
   const zoneMapOpacity = useSegmentationStore((s) => s.zoneMapOpacity);
   const currentSliceIndex = useViewerStore((s) => s.currentSliceIndex);
+  // v3: the 3-D cursor shared with the in-browser 2D viewer (null on the server path).
+  const cursorVoxel = useViewerStore((s) => s.cursorVoxel);
 
   // Longitudinal overlay state
   const longTp1SegId = useSegmentationStore((s) => s.longitudinalTp1SegId);
@@ -346,14 +355,14 @@ export default function ImageViewer3D() {
 
         const mainUrl = URL.createObjectURL(new Blob([niftiBuffer]));
         blobUrls.push(mainUrl);
-        await nv.loadVolumes([{ url: mainUrl, colormap: colormap3D, opacity: 1 }]);
+        await nv.loadVolumes([{ url: mainUrl, name: 'volume.nii', colormap: colormap3D, opacity: 1 }]);
         nv.setRenderAzimuthElevation(0, 15);
 
         // Load segmentation overlay if available
         if (segBuffer) {
           const segUrl = URL.createObjectURL(new Blob([segBuffer]));
           blobUrls.push(segUrl);
-          const segVol = await NVImage.loadFromUrl({ url: segUrl, colormap: 'red', opacity: 0.5 });
+          const segVol = await NVImage.loadFromUrl({ url: segUrl, name: 'overlay.nii', colormap: 'red', opacity: 0.5 });
           nv.addVolume(segVol);
         }
 
@@ -364,6 +373,7 @@ export default function ImageViewer3D() {
           blobUrls.push(zmUrl);
           const zmVol = await NVImage.loadFromUrl({
             url: zmUrl,
+            name: 'overlay.nii',
             colormap: 'magnims_zones',
             cal_min: 0,
             cal_max: 4,
@@ -378,7 +388,7 @@ export default function ImageViewer3D() {
         if (longTp1Buffer && longitudinalVisible) {
           const tp1Url = URL.createObjectURL(new Blob([longTp1Buffer]));
           blobUrls.push(tp1Url);
-          const tp1Vol = await NVImage.loadFromUrl({ url: tp1Url, colormap: 'blue', opacity: 0.5 });
+          const tp1Vol = await NVImage.loadFromUrl({ url: tp1Url, name: 'overlay.nii', colormap: 'blue', opacity: 0.5 });
           nv.addVolume(tp1Vol);
         }
 
@@ -387,7 +397,7 @@ export default function ImageViewer3D() {
         if (longTp2Buffer && longitudinalVisible) {
           const tp2Url = URL.createObjectURL(new Blob([longTp2Buffer]));
           blobUrls.push(tp2Url);
-          const tp2Vol = await NVImage.loadFromUrl({ url: tp2Url, colormap: 'hot', opacity: 0.5 });
+          const tp2Vol = await NVImage.loadFromUrl({ url: tp2Url, name: 'overlay.nii', colormap: 'hot', opacity: 0.5 });
           nv.addVolume(tp2Vol);
         }
 
@@ -439,7 +449,7 @@ export default function ImageViewer3D() {
         for (let i = 0; i < 4; i++) {
           const url = URL.createObjectURL(new Blob([niftiBuffer]));
           blobUrls.push(url);
-          await nvInstances[i].loadVolumes([{ url, colormap: colormap3D, opacity: 1 }]);
+          await nvInstances[i].loadVolumes([{ url, name: 'volume.nii', colormap: colormap3D, opacity: 1 }]);
 
           // Load segmentation overlay
           if (segBuffer) {
@@ -447,6 +457,7 @@ export default function ImageViewer3D() {
             blobUrls.push(segUrl);
             const segVol = await NVImage.loadFromUrl({
               url: segUrl,
+              name: 'overlay.nii',
               colormap: 'red',
               opacity: i === 0 ? 0.5 : 0.3,
             });
@@ -461,6 +472,7 @@ export default function ImageViewer3D() {
             const initOpacity = zoneMapVisible ? zoneMapOpacity : 0;
             const zmVol = await NVImage.loadFromUrl({
               url: zmUrl,
+              name: 'overlay.nii',
               colormap: 'magnims_zones',
               cal_min: 0,
               cal_max: 4,
@@ -473,7 +485,7 @@ export default function ImageViewer3D() {
           if (longTp1Buffer && longitudinalVisible) {
             const tp1Url = URL.createObjectURL(new Blob([longTp1Buffer]));
             blobUrls.push(tp1Url);
-            const tp1Vol = await NVImage.loadFromUrl({ url: tp1Url, colormap: 'blue', opacity: i === 0 ? 0.5 : 0.3 });
+            const tp1Vol = await NVImage.loadFromUrl({ url: tp1Url, name: 'overlay.nii', colormap: 'blue', opacity: i === 0 ? 0.5 : 0.3 });
             nvInstances[i].addVolume(tp1Vol);
           }
 
@@ -481,7 +493,7 @@ export default function ImageViewer3D() {
           if (longTp2Buffer && longitudinalVisible) {
             const tp2Url = URL.createObjectURL(new Blob([longTp2Buffer]));
             blobUrls.push(tp2Url);
-            const tp2Vol = await NVImage.loadFromUrl({ url: tp2Url, colormap: 'hot', opacity: i === 0 ? 0.5 : 0.3 });
+            const tp2Vol = await NVImage.loadFromUrl({ url: tp2Url, name: 'overlay.nii', colormap: 'hot', opacity: i === 0 ? 0.5 : 0.3 });
             nvInstances[i].addVolume(tp2Vol);
           }
         }
@@ -613,7 +625,13 @@ export default function ImageViewer3D() {
     const ready = render3DMode === 'volume' ? volumeReady : mpReady;
     if (!nv || !ready || nv.volumes.length === 0) return;
 
-    const { x, y, z } = selectedLesion.centroid;
+    // Lesion analysis reports (z, y, x) on the internal (k, a0, a1) mask, i.e.
+    // voxel (i, j, k) = (y, x, z). Using (x, y, z) here drew the 3D crosshair
+    // transposed in-plane (wrong location on any non-square slice).
+    const [vx, vy, vz] = maskZYXToVoxel(
+      { layout: 'kij', dims: [0, 0, 0] },
+      selectedLesion.centroid.z, selectedLesion.centroid.y, selectedLesion.centroid.x,
+    );
     const vol = nv.volumes[0];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const va = vol as any;
@@ -624,16 +642,16 @@ export default function ImageViewer3D() {
     let frac: [number, number, number];
     if (affine) {
       const mm: [number, number, number] = [
-        affine[0][0] * x + affine[0][1] * y + affine[0][2] * z + affine[0][3],
-        affine[1][0] * x + affine[1][1] * y + affine[1][2] * z + affine[1][3],
-        affine[2][0] * x + affine[2][1] * y + affine[2][2] * z + affine[2][3],
+        affine[0][0] * vx + affine[0][1] * vy + affine[0][2] * vz + affine[0][3],
+        affine[1][0] * vx + affine[1][1] * vy + affine[1][2] * vz + affine[1][3],
+        affine[2][0] * vx + affine[2][1] * vy + affine[2][2] * vz + affine[2][3],
       ];
       frac = nv.mm2frac(mm, 0) as [number, number, number];
     } else if (dims && dims.length >= 4) {
       frac = [
-        x / Math.max(1, dims[1] - 1),
-        y / Math.max(1, dims[2] - 1),
-        z / Math.max(1, dims[3] - 1),
+        vx / Math.max(1, dims[1] - 1),
+        vy / Math.max(1, dims[2] - 1),
+        vz / Math.max(1, dims[3] - 1),
       ];
     } else {
       return;
@@ -660,6 +678,21 @@ export default function ImageViewer3D() {
     const ready = render3DMode === 'volume' ? volumeReady : mpReady;
     if (!nv || !ready || nv.volumes.length === 0) return;
 
+    // v3: with the in-browser 2D viewer the full 3-D cursor (i, j, k) is known — place
+    // the crosshair at exactly that voxel through the affine, for every plane.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const affine: number[][] | undefined = (nv.volumes[0] as any).hdr?.affine;
+    if (cursorVoxel && affine) {
+      const frac = nv.mm2frac(voxelToWorld(affine, ...cursorVoxel), 0) as [number, number, number];
+      const place = (nvInst: Niivue | null) => {
+        if (!nvInst || nvInst.volumes.length === 0) return;
+        nvInst.scene.crosshairPos = [...frac] as [number, number, number];
+        nvInst.drawScene();
+      };
+      if (render3DMode === 'volume') place(nv); else mpNvRefs.current.forEach(place);
+      return;
+    }
+
     const dims = nv.volumes[0].dims;
     const totalSlices = dims ? dims[3] : 0;
     if (totalSlices <= 1) return;
@@ -677,7 +710,7 @@ export default function ImageViewer3D() {
     } else {
       mpNvRefs.current.forEach(updateCrosshair);
     }
-  }, [currentSliceIndex, selectedLesion, render3DMode, volumeReady, mpReady]);
+  }, [currentSliceIndex, cursorVoxel, selectedLesion, render3DMode, volumeReady, mpReady]);
 
   // ─── EFFECT 9: 3D bounding box mesh for selected lesion ───
   useEffect(() => {
@@ -772,10 +805,10 @@ export default function ImageViewer3D() {
   // ─── Early returns for missing data ───
   if (!currentSeries) {
     return (
-      <div className="flex items-center justify-center h-full bg-black">
-        <div className="text-center text-gray-400">
-          <Box className="w-16 h-16 mx-auto mb-4 opacity-50" />
-          <p>{t('viewer.selectImageFor3D', 'Select an image for 3D viewing')}</p>
+      <div className="flex h-full items-center justify-center bg-black">
+        <div className="text-center text-ink-muted">
+          <Box className="mx-auto mb-4 h-14 w-14 opacity-40" aria-hidden />
+          <p className="text-sm">{t('viewer.selectImageFor3D', 'Select an image for 3D viewing')}</p>
         </div>
       </div>
     );
@@ -783,10 +816,10 @@ export default function ImageViewer3D() {
 
   if (!fileId) {
     return (
-      <div className="flex items-center justify-center h-full bg-black">
-        <div className="text-center text-gray-400">
-          <AlertCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
-          <p>{t('viewer.noFileId', 'No file available for 3D rendering')}</p>
+      <div className="flex h-full items-center justify-center bg-black">
+        <div className="text-center text-ink-muted">
+          <AlertCircle className="mx-auto mb-4 h-14 w-14 opacity-40" aria-hidden />
+          <p className="text-sm">{t('viewer.noFileId', 'No file available for 3D rendering')}</p>
         </div>
       </div>
     );
@@ -796,17 +829,25 @@ export default function ImageViewer3D() {
 
   return (
     <div className="relative h-full bg-black">
+      {/* RC-016 + RC-023: identity and orientation state on the 3D viewport too —
+          rendered first and unconditionally, above every canvas. */}
+      <ViewportSafetyOverlay
+        patientName={patientName}
+        patientMRN={patientMRN}
+        studyDescription={studyDescription}
+        anatomicalOrientation={currentSeries?.metadata?.anatomical_orientation}
+      />
       {/* Class C: the TP1/TP2 overlays are composited by niivue's per-volume affine with
           NO spatial registration — apparent overlap/change is a candidate, not a finding. */}
       {longitudinalVisible && (longTp1Buffer || longTp2Buffer) && (
-        <div className="pointer-events-none absolute left-1/2 top-2 z-20 -translate-x-1/2 rounded border border-amber-500/50 bg-amber-900/80 px-2 py-0.5 text-[10px] text-amber-100">
+        <div className="pointer-events-none absolute left-1/2 top-12 z-30 -translate-x-1/2 rounded-lg border border-clinical-warn/40 bg-surface-void/85 px-3 py-1 text-xs text-clinical-warn">
           {t('longitudinal.overlayCaveat', 'TP1/TP2 overlay — NOT spatially registered; apparent change is a candidate.')}
         </div>
       )}
       <div ref={containerRef} className="absolute inset-0">
         {/* Volume mode: single canvas */}
         {render3DMode === 'volume' && (
-          <div className="relative w-full h-full group/vol">
+          <div className="group/vol relative h-full w-full">
             <canvas
               ref={volumeCanvasRef}
               width={containerSize.width}
@@ -814,8 +855,8 @@ export default function ImageViewer3D() {
               style={{ width: '100%', height: '100%', display: 'block' }}
             />
             {volumeReady && (
-              <div className="absolute bottom-3 left-3 flex items-center gap-2 px-2 py-1 bg-black/60 rounded-lg opacity-0 group-hover/vol:opacity-100 transition-opacity z-10">
-                <Eye className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+              <div className="absolute bottom-10 right-3 z-10 flex items-center gap-2 rounded-lg border border-surface-border bg-surface-void/80 px-2.5 py-1.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover/vol:opacity-100">
+                <Eye className="h-3.5 w-3.5 shrink-0 text-ink-muted" aria-hidden />
                 <input
                   type="range"
                   min="0"
@@ -828,10 +869,11 @@ export default function ImageViewer3D() {
                     if (nv && nv.volumes.length > 0) nv.setOpacity(0, val);
                     setPanelOpacity((prev) => { const next = [...prev]; next[0] = val; return next; });
                   }}
-                  className="w-20 h-1 accent-blue-500 cursor-pointer"
+                  className="h-1 w-24 cursor-pointer accent-brand-500"
+                  aria-label={t('viewer3.volumeOpacity', 'Volume opacity')}
                   title={`Opacity ${Math.round(panelOpacity[0] * 100)}%`}
                 />
-                <span className="text-[10px] text-gray-400 w-8 text-right">{Math.round(panelOpacity[0] * 100)}%</span>
+                <span className="w-9 text-right text-xs tabular-nums text-ink-soft">{Math.round(panelOpacity[0] * 100)}%</span>
               </div>
             )}
           </div>
@@ -839,23 +881,23 @@ export default function ImageViewer3D() {
 
         {/* Multiplanar mode: 2x2 grid */}
         {render3DMode === 'multiplanar' && (
-          <div className="grid grid-cols-2 grid-rows-2 w-full h-full gap-px bg-gray-800">
+          <div className="grid h-full w-full grid-cols-2 grid-rows-2 gap-px bg-surface-border">
             {PANEL_CONFIG.map((panel, i) => (
-              <div key={panel.key} className="relative bg-black overflow-hidden group/panel">
+              <div key={panel.key} className="group/panel relative overflow-hidden bg-black">
                 <canvas
                   ref={setMpCanvasRef(i)}
                   width={Math.floor(containerSize.width / 2)}
                   height={Math.floor(containerSize.height / 2)}
                   style={{ width: '100%', height: '100%', display: 'block' }}
                 />
-                {/* Panel label */}
-                <div className="absolute top-1 left-2 text-[10px] font-bold text-gray-400 pointer-events-none uppercase tracking-wider">
+                {/* Panel label — bottom-left, clear of the identity / orientation corners */}
+                <div className="pointer-events-none absolute bottom-2 left-2 rounded bg-black/60 px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-ink-soft">
                   {panel.label}
                 </div>
                 {/* Per-panel controls */}
                 {mpReady && (
-                  <div className="absolute bottom-0 left-0 right-0 flex items-center gap-2 px-2 py-1 bg-black/60 opacity-0 group-hover/panel:opacity-100 transition-opacity z-10">
-                    <Eye className="w-3 h-3 text-gray-400 shrink-0" />
+                  <div className="absolute bottom-2 right-2 z-10 flex items-center gap-2 rounded-lg border border-surface-border bg-surface-void/80 px-2 py-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover/panel:opacity-100">
+                    <Eye className="h-3.5 w-3.5 shrink-0 text-ink-muted" aria-hidden />
                     <input
                       type="range"
                       min="0"
@@ -863,27 +905,30 @@ export default function ImageViewer3D() {
                       step="0.05"
                       value={panelOpacity[i]}
                       onChange={(e) => handlePanelOpacity(i, parseFloat(e.target.value))}
-                      className="w-16 h-1 accent-blue-500 cursor-pointer"
+                      className="h-1 w-16 cursor-pointer accent-brand-500"
+                      aria-label={`${panel.label} — ${t('viewer3.volumeOpacity', 'Volume opacity')}`}
                       title={`Opacity ${Math.round(panelOpacity[i] * 100)}%`}
                     />
-                    <span className="text-[9px] text-gray-400 w-7 text-right">{Math.round(panelOpacity[i] * 100)}%</span>
-                    <div className="ml-auto flex items-center gap-1">
-                      <button
-                        onClick={() => handlePanelZoom(i, -0.25)}
-                        className="p-0.5 text-gray-400 hover:text-white rounded hover:bg-white/10"
-                        title="Zoom out"
-                      >
-                        <ZoomOut className="w-3 h-3" />
-                      </button>
-                      <span className="text-[9px] text-gray-400 w-8 text-center">{Math.round(panelZoom[i] * 100)}%</span>
-                      <button
-                        onClick={() => handlePanelZoom(i, 0.25)}
-                        className="p-0.5 text-gray-400 hover:text-white rounded hover:bg-white/10"
-                        title="Zoom in"
-                      >
-                        <ZoomIn className="w-3 h-3" />
-                      </button>
-                    </div>
+                    <span className="w-9 text-right text-xs tabular-nums text-ink-soft">{Math.round(panelOpacity[i] * 100)}%</span>
+                    <button
+                      type="button"
+                      onClick={() => handlePanelZoom(i, -0.25)}
+                      className="rounded p-0.5 text-ink-muted hover:bg-surface-hover hover:text-ink-base focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60"
+                      title={t('viewer.zoomOut', 'Zoom out')}
+                      aria-label={`${panel.label} — ${t('viewer.zoomOut', 'Zoom out')}`}
+                    >
+                      <ZoomOut className="h-3.5 w-3.5" aria-hidden />
+                    </button>
+                    <span className="w-10 text-center text-xs tabular-nums text-ink-soft">{Math.round(panelZoom[i] * 100)}%</span>
+                    <button
+                      type="button"
+                      onClick={() => handlePanelZoom(i, 0.25)}
+                      className="rounded p-0.5 text-ink-muted hover:bg-surface-hover hover:text-ink-base focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60"
+                      title={t('viewer.zoomIn', 'Zoom in')}
+                      aria-label={`${panel.label} — ${t('viewer.zoomIn', 'Zoom in')}`}
+                    >
+                      <ZoomIn className="h-3.5 w-3.5" aria-hidden />
+                    </button>
                   </div>
                 )}
               </div>
@@ -894,35 +939,25 @@ export default function ImageViewer3D() {
 
       {/* Loading overlay */}
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-10">
-          <div className="flex flex-col items-center gap-4 w-72">
-            <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
-            <p className="text-white text-sm font-medium">
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/80" role="status" aria-live="polite">
+          <div className="flex w-72 flex-col items-center gap-3">
+            <p className="text-sm font-medium text-ink-base">
               {t('viewer.loading3D', 'Loading 3D volume...')}
             </p>
             <div className="w-full">
-              <div className="w-full h-2.5 bg-gray-700 rounded-full overflow-hidden">
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-hover">
                 {loadProgress >= 0 ? (
-                  <div
-                    className="h-full bg-blue-500 rounded-full transition-all duration-200"
-                    style={{ width: `${loadProgress}%` }}
-                  />
+                  <div className="h-full rounded-full bg-brand-500 transition-all duration-200" style={{ width: `${loadProgress}%` }} />
                 ) : (
-                  <div className="h-full bg-blue-500 rounded-full animate-pulse w-full opacity-40" />
+                  <div className="h-full w-full animate-pulse rounded-full bg-brand-500 opacity-40" />
                 )}
               </div>
-              <div className="flex justify-between mt-1.5">
-                <span className="text-gray-400 text-xs">
-                  {loadProgress >= 0 ? `${loadProgress}%` : t('viewer.downloading', 'Downloading...')}
-                </span>
-                {totalMB > 0 && (
-                  <span className="text-gray-400 text-xs">
-                    {loadedMB.toFixed(1)} / {totalMB.toFixed(1)} MB
-                  </span>
-                )}
+              <div className="mt-1.5 flex justify-between text-xs tabular-nums text-ink-muted">
+                <span>{loadProgress >= 0 ? `${loadProgress}%` : t('viewer.downloading', 'Downloading...')}</span>
+                {totalMB > 0 && <span>{loadedMB.toFixed(1)} / {totalMB.toFixed(1)} MB</span>}
               </div>
             </div>
-            <p className="text-gray-500 text-xs text-center">
+            <p className="text-center text-xs text-ink-faint">
               {loadProgress === 100
                 ? t('viewer.rendering3D', 'Initializing WebGL renderer...')
                 : t('viewer.loading3DDesc', 'Downloading NIfTI file for WebGL rendering')}
@@ -933,18 +968,18 @@ export default function ImageViewer3D() {
 
       {/* Error overlay */}
       {error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-10">
-          <div className="text-center p-6 max-w-sm">
-            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-            <p className="text-red-400 font-medium">{t('viewer.error3D', '3D rendering failed')}</p>
-            <p className="text-gray-400 text-sm mt-2 break-words">{error}</p>
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/80" role="alert">
+          <div className="max-w-sm p-6 text-center">
+            <AlertCircle className="mx-auto mb-3 h-10 w-10 text-clinical-crit" aria-hidden />
+            <p className="font-medium text-clinical-crit">{t('viewer.error3D', '3D rendering failed')}</p>
+            <p className="mt-2 break-words text-sm text-ink-muted">{error}</p>
           </div>
         </div>
       )}
 
       {/* Instructions (volume mode only) */}
       {isReady && !isLoading && render3DMode === 'volume' && (
-        <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 text-[10px] text-gray-400 space-y-0.5 z-10 pointer-events-none">
+        <div className="pointer-events-none absolute bottom-10 left-3 z-10 space-y-0.5 rounded-lg border border-surface-border bg-surface-void/70 px-3 py-2 text-xs text-ink-muted">
           <div>{t('viewer.3d.dragRotate', 'Left-click drag: Rotate')}</div>
           <div>{t('viewer.3d.scrollZoom', 'Scroll: Zoom')}</div>
           <div>{t('viewer.3d.rightPan', 'Right-click drag: Pan')}</div>
@@ -954,4 +989,5 @@ export default function ImageViewer3D() {
   );
 }
 
+// Re-exported for existing importers; the list lives in utils/colormaps3d.
 export { COLORMAPS_3D };

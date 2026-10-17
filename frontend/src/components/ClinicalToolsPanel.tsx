@@ -16,7 +16,16 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { clinicalToolsAPI } from '@/api/clinicalTools';
 import { useViewerStore } from '@/store/useViewerStore';
 import { detectSequence, type SequenceType, SEQUENCE_INFO } from '@/utils/sequenceDetection';
+import { Badge, Button, Skeleton } from '@/components/ui';
 import type { ClinicalToolInfo, ToolTaskResult, ToolTaskStatus } from '@/types';
+
+/** Shared styling for the compact file pickers inside the tool cards. */
+const SELECT_CLASS =
+  'w-full h-8 px-2 rounded-md border border-surface-border bg-surface-base text-xs text-ink-base ' +
+  'transition-colors hover:border-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60';
+
+/** Neutral tool card (FLAMeS overrides the border to mark it as recommended). */
+const CARD_CLASS = 'rounded-lg border bg-surface-base/60 p-3 space-y-2';
 
 interface ClinicalToolsPanelProps {
   fileId?: string;
@@ -176,10 +185,10 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
 
   const getStatusColor = (status: ToolTaskStatus): string => {
     switch (status) {
-      case 'completed': return 'text-green-400';
-      case 'failed': return 'text-red-400';
-      case 'processing': return 'text-yellow-400';
-      default: return 'text-blue-400';
+      case 'completed': return 'text-clinical-good';
+      case 'failed': return 'text-clinical-crit';
+      case 'processing': return 'text-clinical-warn';
+      default: return 'text-clinical-info';
     }
   };
 
@@ -209,8 +218,17 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
 
   if (toolsLoading) {
     return (
-      <div className="py-4 text-center text-gray-400 text-xs">
-        {t('clinical.loading', 'Loading tools...')}
+      <div className="py-2 space-y-3" role="status" aria-live="polite">
+        <span className="sr-only">{t('clinical.loading', 'Loading tools...')}</span>
+        <Skeleton className="h-8 w-full rounded-lg" />
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="rounded-lg border border-surface-border bg-surface-base/60 p-3 space-y-2">
+            <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-3 w-2/3" />
+            <Skeleton className="h-8 w-full" />
+          </div>
+        ))}
       </div>
     );
   }
@@ -218,42 +236,38 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
   return (
     <div className="py-2 space-y-3">
       {/* Research disclaimer */}
-      <div className="bg-yellow-900/30 border border-yellow-700/50 rounded p-2">
-        <p className="text-[10px] text-yellow-300/80">
+      <div className="rounded-lg border border-clinical-warn/30 bg-clinical-warn/10 px-2.5 py-2">
+        <p className="text-xs font-medium text-clinical-warn">
           {t('clinical.researchOnly', 'Research Use Only - Not FDA Cleared')}
         </p>
       </div>
 
       {/* FLAMeS Card — featured single-FLAIR SOTA segmenter */}
-      <div className="bg-surface-raised rounded-lg border border-brand-700/50 p-3 space-y-2 ring-1 ring-brand-500/20">
-        <div className="flex items-center justify-between">
+      <div className={`${CARD_CLASS} border-brand-500/30`}>
+        <div className="flex flex-wrap items-center justify-between gap-1.5">
           <div className="flex items-center gap-1.5">
-            <h4 className="text-xs font-semibold text-white">FLAMeS</h4>
-            <span className="text-[8px] uppercase tracking-wide px-1 py-0.5 rounded bg-brand-500/15 text-brand-400 border border-brand-500/30">
+            <h4 className="text-sm font-semibold text-ink-base">FLAMeS</h4>
+            <Badge tone="brand" className="text-xs">
               {t('clinical.recommended', 'Recommended')}
-            </span>
+            </Badge>
           </div>
-          <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-            flamesTool?.available
-              ? 'bg-green-900/50 text-green-400 border border-green-700/50'
-              : 'bg-gray-700 text-gray-500 border border-gray-600'
-          }`}>
+          <Badge tone={flamesTool?.available ? 'good' : 'neutral'} dot className="text-xs">
             {flamesTool?.available ? t('clinical.available', 'Available') : t('clinical.unavailable', 'Unavailable')}
-          </span>
+          </Badge>
         </div>
-        <p className="text-[10px] text-gray-400">
+        <p className="text-xs leading-relaxed text-ink-muted">
           {t('clinical.flamesDesc', 'One-click MS lesion segmentation from FLAIR alone. State-of-the-art nnU-Net (Dice 0.74), outperforms LST-AI / SAMSEG.')}
         </p>
-        <p className="text-[9px] text-gray-500 italic">
+        <p className="text-xs text-ink-faint italic">
           {t('clinical.requires', 'Requires')}: FLAIR
         </p>
 
-        <div className="space-y-1">
-          <label className="text-[10px] text-gray-300">FLAIR:</label>
+        <label className="block space-y-1">
+          <span className="block text-xs text-ink-soft">FLAIR:</span>
           <select
             value={flairFileId}
             onChange={(e) => setFlairFileId(e.target.value)}
-            className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-[10px] text-white"
+            className={SELECT_CLASS}
           >
             <option value="">{t('clinical.selectFile', 'Select file...')}</option>
             {allFileIds.map(fid => (
@@ -262,18 +276,20 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
               </option>
             ))}
           </select>
-        </div>
+        </label>
 
-        <button
+        <Button
+          variant="primary"
+          size="sm"
+          fullWidth
           onClick={handleRunFLAMeS}
           disabled={!flamesTool?.available || !flairFileId || (flamesTask?.status === 'processing' || flamesTask?.status === 'storing' || flamesTask?.status === 'downloading')}
-          className="w-full px-3 py-2 bg-brand-600 hover:bg-brand-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded text-xs font-medium transition-colors"
         >
           {flamesTask?.status === 'processing' || flamesTask?.status === 'storing' || flamesTask?.status === 'downloading'
             ? t('clinical.running', 'Running...')
             : t('clinical.runFLAMeS', 'Auto-segment MS lesions')
           }
-        </button>
+        </Button>
 
         {flamesTask && (
           <TaskProgress task={flamesTask} getStatusColor={getStatusColor} getStatusLabel={getStatusLabel} />
@@ -281,65 +297,67 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
       </div>
 
       {/* LST-AI Card */}
-      <div className="bg-gray-800 rounded border border-gray-700 p-3 space-y-2">
-        <div className="flex items-center justify-between">
-          <h4 className="text-xs font-semibold text-white">LST-AI</h4>
-          <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-            lstaiTool?.available
-              ? 'bg-green-900/50 text-green-400 border border-green-700/50'
-              : 'bg-gray-700 text-gray-500 border border-gray-600'
-          }`}>
+      <div className={`${CARD_CLASS} border-surface-border`}>
+        <div className="flex flex-wrap items-center justify-between gap-1.5">
+          <h4 className="text-sm font-semibold text-ink-base">LST-AI</h4>
+          <Badge tone={lstaiTool?.available ? 'good' : 'neutral'} dot className="text-xs">
             {lstaiTool?.available ? t('clinical.available', 'Available') : t('clinical.unavailable', 'Unavailable')}
-          </span>
+          </Badge>
         </div>
-        <p className="text-[10px] text-gray-400">
+        <p className="text-xs leading-relaxed text-ink-muted">
           {t('clinical.lstaiDesc', 'MS lesion segmentation + MAGNIMS zone classification')}
         </p>
-        <p className="text-[9px] text-gray-500 italic">
+        <p className="text-xs text-ink-faint italic">
           {t('clinical.requires', 'Requires')}: T1w + FLAIR
         </p>
 
         {/* File selection */}
-        <div className="space-y-1">
-          <label className="text-[10px] text-gray-300">T1-weighted:</label>
-          <select
-            value={t1FileId}
-            onChange={(e) => setT1FileId(e.target.value)}
-            className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-[10px] text-white"
-          >
-            <option value="">{t('clinical.selectFile', 'Select file...')}</option>
-            {allFileIds.map(fid => (
-              <option key={fid} value={fid}>
-                {fileSeqLabel(fid)} {shortName(fid)}
-              </option>
-            ))}
-          </select>
+        <div className="space-y-2">
+          <label className="block space-y-1">
+            <span className="block text-xs text-ink-soft">T1-weighted:</span>
+            <select
+              value={t1FileId}
+              onChange={(e) => setT1FileId(e.target.value)}
+              className={SELECT_CLASS}
+            >
+              <option value="">{t('clinical.selectFile', 'Select file...')}</option>
+              {allFileIds.map(fid => (
+                <option key={fid} value={fid}>
+                  {fileSeqLabel(fid)} {shortName(fid)}
+                </option>
+              ))}
+            </select>
+          </label>
 
-          <label className="text-[10px] text-gray-300">FLAIR:</label>
-          <select
-            value={flairFileId}
-            onChange={(e) => setFlairFileId(e.target.value)}
-            className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-[10px] text-white"
-          >
-            <option value="">{t('clinical.selectFile', 'Select file...')}</option>
-            {allFileIds.map(fid => (
-              <option key={fid} value={fid}>
-                {fileSeqLabel(fid)} {shortName(fid)}
-              </option>
-            ))}
-          </select>
+          <label className="block space-y-1">
+            <span className="block text-xs text-ink-soft">FLAIR:</span>
+            <select
+              value={flairFileId}
+              onChange={(e) => setFlairFileId(e.target.value)}
+              className={SELECT_CLASS}
+            >
+              <option value="">{t('clinical.selectFile', 'Select file...')}</option>
+              {allFileIds.map(fid => (
+                <option key={fid} value={fid}>
+                  {fileSeqLabel(fid)} {shortName(fid)}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
 
-        <button
+        <Button
+          variant="secondary"
+          size="sm"
+          fullWidth
           onClick={handleRunLSTAI}
           disabled={!lstaiTool?.available || !t1FileId || !flairFileId || (lstaiTask?.status === 'processing' || lstaiTask?.status === 'downloading')}
-          className="w-full px-3 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded text-xs font-medium transition-colors"
         >
           {lstaiTask?.status === 'processing' || lstaiTask?.status === 'downloading'
             ? t('clinical.running', 'Running...')
             : t('clinical.runLSTAI', 'Run LST-AI Segmentation')
           }
-        </button>
+        </Button>
 
         {/* Progress */}
         {lstaiTask && (
@@ -348,27 +366,23 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
       </div>
 
       {/* SynthSeg Card */}
-      <div className="bg-gray-800 rounded border border-gray-700 p-3 space-y-2">
-        <div className="flex items-center justify-between">
-          <h4 className="text-xs font-semibold text-white">SynthSeg</h4>
-          <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-            synthSegTool?.available
-              ? 'bg-green-900/50 text-green-400 border border-green-700/50'
-              : 'bg-gray-700 text-gray-500 border border-gray-600'
-          }`}>
+      <div className={`${CARD_CLASS} border-surface-border`}>
+        <div className="flex flex-wrap items-center justify-between gap-1.5">
+          <h4 className="text-sm font-semibold text-ink-base">SynthSeg</h4>
+          <Badge tone={synthSegTool?.available ? 'good' : 'neutral'} dot className="text-xs">
             {synthSegTool?.available ? t('clinical.available', 'Available') : t('clinical.unavailable', 'Unavailable')}
-          </span>
+          </Badge>
         </div>
-        <p className="text-[10px] text-gray-400">
+        <p className="text-xs leading-relaxed text-ink-muted">
           {t('clinical.synthsegDesc', 'Brain parcellation (30+ structures, any contrast)')}
         </p>
 
-        <div className="space-y-1">
-          <label className="text-[10px] text-gray-300">{t('clinical.inputImage', 'Input image')}:</label>
+        <label className="block space-y-1">
+          <span className="block text-xs text-ink-soft">{t('clinical.inputImage', 'Input image')}:</span>
           <select
             value={synthSegFileId}
             onChange={(e) => setSynthSegFileId(e.target.value)}
-            className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-[10px] text-white"
+            className={SELECT_CLASS}
           >
             <option value="">{t('clinical.selectFile', 'Select file...')}</option>
             {allFileIds.map(fid => (
@@ -377,18 +391,20 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
               </option>
             ))}
           </select>
-        </div>
+        </label>
 
-        <button
+        <Button
+          variant="secondary"
+          size="sm"
+          fullWidth
           onClick={handleRunSynthSeg}
           disabled={!synthSegTool?.available || !synthSegFileId || (synthSegTask?.status === 'processing' || synthSegTask?.status === 'downloading')}
-          className="w-full px-3 py-2 bg-teal-600 hover:bg-teal-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded text-xs font-medium transition-colors"
         >
           {synthSegTask?.status === 'processing' || synthSegTask?.status === 'downloading'
             ? t('clinical.running', 'Running...')
             : t('clinical.runSynthSeg', 'Run Brain Parcellation')
           }
-        </button>
+        </Button>
 
         {synthSegTask && (
           <TaskProgress task={synthSegTask} getStatusColor={getStatusColor} getStatusLabel={getStatusLabel} />
@@ -397,10 +413,10 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
 
       {/* Citation footer */}
       {(flamesTool || lstaiTool) && (
-        <div className="text-[8px] text-gray-600 leading-tight">
+        <div className="text-xs leading-snug text-ink-faint break-words">
           {flamesTool && <p>FLAMeS: {flamesTool.citation}</p>}
-          {lstaiTool && <p className="mt-0.5">LST-AI: {lstaiTool.citation}</p>}
-          {synthSegTool && <p className="mt-0.5">SynthSeg: {synthSegTool.citation}</p>}
+          {lstaiTool && <p className="mt-1">LST-AI: {lstaiTool.citation}</p>}
+          {synthSegTool && <p className="mt-1">SynthSeg: {synthSegTool.citation}</p>}
         </div>
       )}
     </div>
@@ -419,14 +435,14 @@ interface TaskProgressProps {
 
 const TaskProgress: React.FC<TaskProgressProps> = ({ task, getStatusColor, getStatusLabel }) => {
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       {/* Progress bar */}
-      <div className="w-full bg-gray-700 rounded-full h-1.5">
+      <div className="w-full bg-surface-hover rounded-full h-1.5 overflow-hidden">
         <div
           className={`h-1.5 rounded-full transition-all duration-500 ${
-            task.status === 'completed' ? 'bg-green-500'
-            : task.status === 'failed' ? 'bg-red-500'
-            : 'bg-blue-500'
+            task.status === 'completed' ? 'bg-clinical-good'
+            : task.status === 'failed' ? 'bg-clinical-crit'
+            : 'bg-brand-500'
           }`}
           style={{ width: `${Math.max(task.progress, 2)}%` }}
         />
@@ -434,33 +450,33 @@ const TaskProgress: React.FC<TaskProgressProps> = ({ task, getStatusColor, getSt
 
       {/* Status line */}
       <div className="flex items-center justify-between">
-        <span className={`text-[10px] font-medium ${getStatusColor(task.status)}`}>
+        <span className={`text-xs font-medium ${getStatusColor(task.status)}`}>
           {getStatusLabel(task.status)}
         </span>
-        <span className="text-[10px] text-gray-500">
+        <span className="text-xs tabular-nums text-ink-faint">
           {task.progress.toFixed(0)}%
         </span>
       </div>
 
       {/* Error message */}
       {task.status === 'failed' && task.error && (
-        <p className="text-[10px] text-red-400 bg-red-900/20 rounded p-1.5 break-words">
+        <p className="text-xs text-clinical-crit bg-clinical-crit/10 border border-clinical-crit/30 rounded-md p-1.5 break-words">
           {task.error}
         </p>
       )}
 
       {/* Completed result */}
       {task.status === 'completed' && (
-        <div className="bg-green-900/20 border border-green-700/30 rounded p-1.5">
-          <p className="text-[10px] text-green-400">
-            Segmentation ready: {task.segmentation_id?.slice(0, 8)}...
+        <div className="bg-clinical-good/10 border border-clinical-good/30 rounded-md p-1.5">
+          <p className="text-xs text-clinical-good">
+            Segmentation ready: <span className="font-mono">{task.segmentation_id?.slice(0, 8)}</span>...
           </p>
           {task.processing_time_ms && (
-            <p className="text-[9px] text-gray-500">
+            <p className="text-xs tabular-nums text-ink-faint">
               {(task.processing_time_ms / 1000).toFixed(1)}s
             </p>
           )}
-          <p className="text-[9px] text-gray-500 mt-0.5">
+          <p className="text-xs text-ink-faint mt-0.5 break-words">
             Source: {task.validation_source}
           </p>
         </div>

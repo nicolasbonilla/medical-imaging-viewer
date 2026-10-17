@@ -28,7 +28,7 @@ export function Badge({ tone = 'neutral', dot = false, className, children, ...r
   return (
     <span
       className={twMerge(
-        'inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium leading-none',
+        'inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium leading-none',
         t.chip, className,
       )}
       {...rest}

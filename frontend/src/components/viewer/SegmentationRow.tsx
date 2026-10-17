@@ -1,6 +1,8 @@
 import type { LucideIcon } from 'lucide-react';
-import { ChevronDown, ChevronRight, Eye, EyeOff, Loader2, Trash2 } from 'lucide-react';
+import { ChevronRight, Eye, EyeOff, Loader2, Trash2 } from 'lucide-react';
+import { twMerge } from 'tailwind-merge';
 import type { SegOrigin } from '../../utils/segmentationList';
+import { Badge } from '../ui';
 
 type Accent = 'emerald' | 'purple';
 
@@ -9,43 +11,34 @@ type Accent = 'emerald' | 'purple';
  * distinguish a human expert mask from a validated auto-segmenter from the legacy
  * over-segmenter (precision 0.22) without reading names. `ai-legacy` is styled as a
  * warning and labelled research-only; `zonemap`/`manual` render no badge (the zone
- * map has its own emerald identity; manual is the unremarkable default).
+ * map has its own identity; manual is the unremarkable default).
  */
-const PROVENANCE: Partial<Record<SegOrigin, { label: string; title: string; cls: string }>> = {
-  expert: {
-    label: 'Experto', title: 'Human expert ground truth',
-    cls: 'text-emerald-300 bg-emerald-900/50 border border-emerald-700/50',
-  },
-  ai: {
-    label: 'IA', title: 'Automatic segmentation (validated tool)',
-    cls: 'text-cyan-300 bg-cyan-900/40 border border-cyan-700/50',
-  },
+const PROVENANCE: Partial<Record<SegOrigin, { label: string; title: string; tone: 'good' | 'info' | 'warn' | 'neutral' }>> = {
+  expert: { label: 'Experto', title: 'Human expert ground truth', tone: 'good' },
+  ai: { label: 'IA', title: 'Automatic segmentation (validated tool)', tone: 'info' },
   'ai-legacy': {
-    label: 'IA · investigación', title: 'Legacy AI segmenter — research only (over-segments; precision 0.22)',
-    cls: 'text-amber-300 bg-amber-900/40 border border-amber-700/60',
+    label: 'IA · investigación',
+    title: 'Legacy AI segmenter — research only (over-segments; precision 0.22)',
+    tone: 'warn',
   },
   unknown: {
-    label: 'Sin verificar', title: 'Unverified provenance — origin recorded but not a recognised validated tool',
-    cls: 'text-gray-300 bg-gray-700/50 border border-gray-600',
+    label: 'Sin verificar',
+    title: 'Unverified provenance — origin recorded but not a recognised validated tool',
+    tone: 'neutral',
   },
 };
 
-const ACCENTS: Record<Accent, {
-  activeBg: string; chevron: string; iconBase: string; iconActive: string; overlayOn: string;
-}> = {
+/** emerald = MAGNIMS zone map layer, purple = lesion segmentation (v2 tokens). */
+const ACCENTS: Record<Accent, { active: string; icon: string; overlayOn: string }> = {
   emerald: {
-    activeBg: 'bg-emerald-900/40 border border-emerald-700',
-    chevron: 'text-emerald-400',
-    iconBase: 'text-emerald-500',
-    iconActive: 'text-emerald-500',
-    overlayOn: 'text-emerald-400 hover:text-emerald-300',
+    active: 'border-clinical-good/40 bg-clinical-good/10',
+    icon: 'text-clinical-good',
+    overlayOn: 'text-clinical-good',
   },
   purple: {
-    activeBg: 'bg-purple-900/50 border border-purple-700',
-    chevron: 'text-purple-400',
-    iconBase: 'text-purple-500',
-    iconActive: 'text-purple-400',
-    overlayOn: 'text-purple-400 hover:text-purple-300',
+    active: 'border-brand-500/40 bg-brand-950/70',
+    icon: 'text-brand-400',
+    overlayOn: 'text-brand-400',
   },
 };
 
@@ -68,11 +61,9 @@ interface SegmentationRowProps {
 }
 
 /**
- * The header row (chrome) of a sidebar segmentation card. Extracted from two
- * near-identical inline blocks in ViewerApp (Fase 2.2) — MAGNIMS zone map
- * (emerald) and regular segmentation (purple) — that shared this exact markup
- * and differed only by accent colour, icon, and handlers. Parent keeps the
- * card-specific click logic and the expanded content.
+ * The header row (chrome) of a sidebar segmentation card. The whole row is the
+ * primary action (open / expand) and is keyboard reachable; the overlay and delete
+ * controls are separate buttons that do not bubble to the row.
  */
 export function SegmentationRow({
   name, icon: Icon, accent, highlighted, expanded, overlayOn, isDeleting, origin,
@@ -81,44 +72,60 @@ export function SegmentationRow({
   const a = ACCENTS[accent];
   const prov = origin ? PROVENANCE[origin] : undefined;
   return (
+    // Mouse: the whole row opens it. Keyboard: the name button is the primary action;
+    // its click (Enter / Space) bubbles here. Overlay / delete stop propagation.
     <div
       onClick={onRowClick}
-      className={`cursor-pointer transition-colors ${
-        highlighted ? a.activeBg : 'bg-gray-800/60 hover:bg-gray-800 border border-transparent'
-      }`}
-      style={{ borderRadius: 6, padding: '4px 8px' }}
+      data-seg-row
+      className={twMerge(
+        'group flex cursor-pointer items-center gap-2 rounded-lg border px-2 py-2 transition-colors',
+        highlighted ? a.active : 'border-transparent bg-surface-raised/50 hover:bg-surface-raised',
+      )}
     >
-      <div className="flex items-center" style={{ gap: 6 }}>
-        {expanded
-          ? <ChevronDown className={`w-3 h-3 flex-shrink-0 ${a.chevron}`} />
-          : <ChevronRight className="w-3 h-3 flex-shrink-0 text-gray-400" />}
-        <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${highlighted ? a.iconActive : a.iconBase}`} />
-        <span className="text-[11px] font-medium truncate flex-1 text-white">{name}</span>
-        {prov && (
-          <span
-            className={`flex-shrink-0 text-[9px] leading-none font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded ${prov.cls}`}
-            title={prov.title}
-          >
-            {prov.label}
-          </span>
+      <button
+        type="button"
+        aria-expanded={expanded}
+        className="flex min-w-0 flex-1 items-start gap-2 rounded text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60"
+      >
+        <ChevronRight
+          className={twMerge('mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-faint transition-transform', expanded && 'rotate-90 text-ink-soft')}
+          aria-hidden
+        />
+        <Icon className={twMerge('mt-px h-4 w-4 shrink-0', highlighted ? a.icon : 'text-ink-muted')} aria-hidden />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-xs font-medium text-ink-base" title={name}>{name}</span>
+          {prov && (
+            // Provenance on its own line so the name is readable in a narrow rail.
+            <Badge tone={prov.tone} title={prov.title} className="mt-1 px-1.5 py-0.5">
+              {prov.label}
+            </Badge>
+          )}
+        </span>
+      </button>
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onToggleOverlay(e); }}
+        className={twMerge(
+          'shrink-0 rounded-md p-1 transition-colors hover:bg-surface-hover',
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60',
+          overlayOn ? a.overlayOn : 'text-ink-faint hover:text-ink-soft',
         )}
-        <button
-          onClick={onToggleOverlay}
-          className={`p-1 rounded transition-colors flex-shrink-0 ${
-            overlayOn ? a.overlayOn : 'text-gray-500 hover:text-gray-300'
-          }`}
-          title={overlayOn ? 'Hide overlay' : 'Show overlay'}
-        >
-          {overlayOn ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-        </button>
-        <button
-          onClick={onDelete}
-          disabled={isDeleting}
-          className="p-1 text-gray-500 hover:text-red-400 transition-colors flex-shrink-0"
-        >
-          {isDeleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
-        </button>
-      </div>
+        title={overlayOn ? 'Hide overlay' : 'Show overlay'}
+        aria-label={overlayOn ? 'Hide overlay' : 'Show overlay'}
+        aria-pressed={overlayOn}
+      >
+        {overlayOn ? <Eye className="h-3.5 w-3.5" aria-hidden /> : <EyeOff className="h-3.5 w-3.5" aria-hidden />}
+      </button>
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onDelete(e); }}
+        disabled={isDeleting}
+        className="shrink-0 rounded-md p-1 text-ink-faint transition-colors hover:bg-clinical-crit/10 hover:text-clinical-crit focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60 disabled:opacity-40"
+        title="Delete segmentation"
+        aria-label="Delete segmentation"
+      >
+        {isDeleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <Trash2 className="h-3.5 w-3.5" aria-hidden />}
+      </button>
     </div>
   );
 }

@@ -20,6 +20,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, X } from 'lucide-react';
+import { Button } from '@/components/ui';
 
 interface SegmentationConflictDialogProps {
   /** The conflict message from the server, or null when there is no conflict. */
@@ -72,7 +73,7 @@ export function SegmentationConflictDialog({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-surface-void/70 p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -81,18 +82,20 @@ export function SegmentationConflictDialog({
           aria-labelledby="seg-conflict-title"
         >
           <motion.div
-            className="w-full max-w-md rounded-lg bg-slate-800 shadow-xl ring-1 ring-amber-500/40"
+            className="w-full max-w-md rounded-xl border border-surface-border bg-surface-overlay shadow-2xl shadow-black/40"
             initial={{ scale: 0.95, y: 8 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.95, y: 8 }}
           >
-            <div className="flex items-start gap-3 border-b border-slate-700 p-4">
-              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" aria-hidden />
-              <div className="flex-1">
-                <h2 id="seg-conflict-title" className="text-sm font-semibold text-amber-200">
+            <div className="flex items-start gap-3 border-b border-surface-border p-4">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-clinical-warn/30 bg-clinical-warn/10">
+                <AlertTriangle className="h-4 w-4 text-clinical-warn" aria-hidden />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h2 id="seg-conflict-title" className="text-sm font-semibold text-ink-base">
                   Segmentation changed elsewhere
                 </h2>
-                <p className="mt-1 text-xs leading-relaxed text-slate-300">
+                <p className="mt-1 text-xs leading-relaxed text-ink-soft">
                   {conflict}
                 </p>
               </div>
@@ -100,68 +103,76 @@ export function SegmentationConflictDialog({
                 type="button"
                 onClick={handleDismiss}
                 disabled={busy}
-                className="rounded p-1 text-slate-400 hover:text-slate-200 disabled:opacity-50"
+                className="rounded-md p-1 text-ink-muted transition-colors hover:bg-surface-hover hover:text-ink-base focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60 disabled:opacity-50"
                 aria-label="Close"
+                title="Close"
               >
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4" aria-hidden />
               </button>
             </div>
 
-            <div className="space-y-2 p-4">
-              <p className="text-xs text-slate-400">
+            <div className="space-y-3 p-4">
+              <p className="text-xs text-ink-muted">
                 Your local edits are kept. Choose how to reconcile:
               </p>
 
               {!confirmingDiscard ? (
                 <div className="flex flex-col gap-2">
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
+                    fullWidth
                     onClick={handleDismiss}
                     disabled={busy}
-                    className="w-full rounded-md bg-slate-700 px-3 py-2 text-sm font-medium text-slate-100 hover:bg-slate-600 disabled:opacity-50"
                   >
                     Keep editing
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="secondary"
+                    fullWidth
                     onClick={once(onOverwrite)}
                     disabled={busy}
-                    className="w-full rounded-md bg-amber-600 px-3 py-2 text-sm font-medium text-white hover:bg-amber-500 disabled:opacity-50"
+                    className="border-clinical-warn/40 bg-clinical-warn/10 text-clinical-warn hover:bg-clinical-warn/20"
                   >
                     {busy ? 'Saving…' : 'Overwrite the newer version with my edits'}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="ghost"
+                    fullWidth
                     onClick={() => setConfirmingDiscard(true)}
                     disabled={busy}
-                    className="w-full rounded-md px-3 py-2 text-sm font-medium text-red-300 hover:bg-red-500/10 disabled:opacity-50"
+                    className="text-clinical-crit hover:bg-clinical-crit/10 hover:text-clinical-crit"
                   >
                     Discard my edits and reload…
-                  </button>
+                  </Button>
                 </div>
               ) : (
-                <div className="flex flex-col gap-2 rounded-md bg-red-500/10 p-3 ring-1 ring-red-500/30">
-                  <p className="text-xs font-medium text-red-200">
+                <div className="flex flex-col gap-3 rounded-lg border border-clinical-crit/30 bg-clinical-crit/10 p-3">
+                  <p className="text-xs font-medium leading-relaxed text-clinical-crit">
                     This permanently discards your local edits and undo history and
                     loads the other session's mask. This cannot be undone.
                   </p>
                   <div className="flex gap-2">
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
                       onClick={() => setConfirmingDiscard(false)}
                       disabled={busy}
-                      className="flex-1 rounded-md bg-slate-700 px-3 py-2 text-sm font-medium text-slate-100 hover:bg-slate-600 disabled:opacity-50"
+                      className="flex-1"
                     >
                       Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
+                      variant="primary"
                       onClick={once(onDiscardReload)}
                       disabled={busy}
-                      className="flex-1 rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-500 disabled:opacity-50"
+                      className="flex-1 bg-clinical-crit text-surface-void shadow-clinical-crit/20 hover:bg-clinical-crit/90"
                     >
                       {busy ? 'Reloading…' : 'Discard & reload'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}

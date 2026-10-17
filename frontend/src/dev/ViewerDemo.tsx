@@ -18,6 +18,7 @@ import ViewerApp from '@/ViewerApp';
 import { useViewerStore } from '@/store/useViewerStore';
 import { useMultiViewerStore } from '@/store/useMultiViewerStore';
 import { installDemoBackend, DEMO_IDS } from './demoBackend';
+import i18n from '@/i18n/config';
 
 installDemoBackend();
 
@@ -57,9 +58,16 @@ async function runStep(step: string): Promise<void> {
     case 'open-seg': {
       const row = await waitFor(() => findLeafByText('Expert Rater'));
       row?.click();
-      // Wait for the lesion table to arrive (rows are rendered by LesionDashboard).
-      await waitFor(() => document.querySelector('[data-lesion-row]') || findByText('table', 'mm'), 15000);
-      await sleep(1500);
+      await sleep(2000);
+      return;
+    }
+    case 'analyze': {
+      // Run the lesion analysis in the dashboard and wait for its table rows.
+      const btn = await waitFor(() => Array.from(document.querySelectorAll<HTMLElement>('button'))
+        .find((b) => /^\s*(Analyze|Re-analyze|Analizar)\s*$/i.test(b.textContent ?? '')) ?? null);
+      btn?.click();
+      await waitFor(() => document.querySelector('[data-lesion-row]'), 15000);
+      await sleep(800);
       return;
     }
     case 'plane':
@@ -85,15 +93,31 @@ async function runStep(step: string): Promise<void> {
       if (arg === 'mpr') viewer().setRender3DMode('multiplanar');
       await sleep(4000);
       return;
-    case 'multi':
-      useMultiViewerStore.getState().setLayout((arg as '1x2' | '2x2') ?? '1x2');
-      await sleep(2500);
+    case 'multi': {
+      // Prefer the real control (it auto-assigns sequences to panels).
+      const key = arg === '2x2' ? '2x2' : arg === 'single' ? 'single' : '1x2';
+      document.querySelector<HTMLElement>('[aria-label="Panel layout"]')?.click();
+      await sleep(300);
+      const item = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitemradio"]'))
+        .find((el) => (el.textContent ?? '').toLowerCase().includes(key));
+      if (item) item.click();
+      else useMultiViewerStore.getState().setLayout((arg as '1x2' | '2x2') ?? '1x2');
+      await sleep(3000);
       return;
+    }
     case 'click': {
       // click:<visible text>
       const el = await waitFor(() => findLeafByText(decodeURIComponent(arg ?? '')));
       el?.click();
       await sleep(600);
+      return;
+    }
+    case 'aria': {
+      // aria:<accessible name> — click the control with that aria-label
+      const name = decodeURIComponent(arg ?? '');
+      const el = await waitFor(() => document.querySelector<HTMLElement>(`[aria-label="${CSS.escape(name)}"]`));
+      el?.click();
+      await sleep(500);
       return;
     }
     case 'select-lesion': {
@@ -107,6 +131,10 @@ async function runStep(step: string): Promise<void> {
     }
     case 'wait':
       await sleep(Number(arg ?? 1000));
+      return;
+    case 'lang':
+      await i18n.changeLanguage(arg ?? 'en');
+      await sleep(400);
       return;
     default:
       console.warn('[ViewerDemo] unknown step', step);

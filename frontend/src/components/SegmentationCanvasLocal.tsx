@@ -17,6 +17,15 @@ import { useTranslation } from 'react-i18next';
 import type { UseSegmentationMaskReturn } from '@/hooks/useSegmentationMask';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import type { ClickPoint3D } from '@/types';
+import { CONFORMAL_TIER_RGB, LONGITUDINAL_RGB, MAGNIMS_ZONE_RGB } from '@/utils/clinicalPalette';
+
+/** Shared clinical palette (Okabe-Ito) -> RGBA with alpha, so this legacy canvas
+ *  paints the same colours as the legends and the v3 in-browser overlay. */
+function zoneRgba(alpha: number): Record<number, { r: number; g: number; b: number; a: number }> {
+  const out: Record<number, { r: number; g: number; b: number; a: number }> = {};
+  for (const [k, [r, g, b]] of Object.entries(MAGNIMS_ZONE_RGB)) out[Number(k)] = { r, g, b, a: alpha };
+  return out;
+}
 
 /** Methods exposed via ref for external control */
 export interface SegmentationCanvasLocalRef {
@@ -96,12 +105,7 @@ function transposeSlice(src: Uint8Array, srcH: number, srcW: number): Uint8Array
 }
 
 /** MAGNIMS zone colors at lesion opacity (60%) for zone-colorized rendering */
-const MAGNIMS_ZONE_COLORS_LESION: Record<number, ParsedColor> = {
-  1: { r: 255, g: 0,   b: 0,   a: 153 },  // PV - red
-  2: { r: 0,   g: 204, b: 0,   a: 153 },  // JC - green
-  3: { r: 0,   g: 102, b: 255, a: 153 },  // IT - blue
-  4: { r: 255, g: 215, b: 0,   a: 153 },  // DWM - yellow
-};
+const MAGNIMS_ZONE_COLORS_LESION: Record<number, ParsedColor> = zoneRgba(153);
 
 /**
  * Create a composite slice for MAGNIMS zone colorization.
@@ -505,12 +509,7 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
 
         // Use MAGNIMS colors with user-controlled opacity for background visualization
         const zmAlpha = Math.round(zoneMapOpacity * 255);
-        const zoneColors: Record<number, ParsedColor> = {
-          1: { r: 255, g: 0, b: 0, a: zmAlpha },      // PV - red
-          2: { r: 0, g: 204, b: 0, a: zmAlpha },       // JC - green
-          3: { r: 0, g: 102, b: 255, a: zmAlpha },     // IT - blue
-          4: { r: 255, g: 215, b: 0, a: zmAlpha },     // DWM - yellow
-        };
+        const zoneColors: Record<number, ParsedColor> = zoneRgba(zmAlpha);
         renderMaskToCanvas(
           ctx, zmSlice,
           zmRenderW, zmRenderH,
@@ -539,11 +538,8 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
         // must NOT be stretched onto the wrong anatomy (adversarial finding).
         if (cRenderW === imageWidth && cRenderH === imageHeight) {
           const a = 200;
-          const tierColors: Record<number, ParsedColor> = {
-            1: { r: 52, g: 211, b: 153, a },   // high  - emerald
-            2: { r: 251, g: 191, b: 36, a },   // medium - amber
-            3: { r: 148, g: 163, b: 184, a },  // low   - slate
-          };
+          const tierColors: Record<number, ParsedColor> = {};
+          for (const [k, [r, g, b]] of Object.entries(CONFORMAL_TIER_RGB)) tierColors[Number(k)] = { r, g, b, a };
           renderMaskToCanvas(ctx, cSlice, cRenderW, cRenderH, canvasSize.width, canvasSize.height, tierColors);
         }
       }
@@ -591,16 +587,9 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
           const inTp1 = tp1Slice[i] > 0;
           const inTp2 = tp2Slice[i] > 0;
           const pi = i * 4;
-          if (inTp1 && inTp2) {
-            // Overlap (persistent) = green
-            ld[pi] = 50; ld[pi+1] = 205; ld[pi+2] = 50; ld[pi+3] = opacity;
-          } else if (inTp1) {
-            // TP1 only (resolved) = blue
-            ld[pi] = 65; ld[pi+1] = 135; ld[pi+2] = 245; ld[pi+3] = opacity;
-          } else if (inTp2) {
-            // TP2 only (new) = red
-            ld[pi] = 245; ld[pi+1] = 70; ld[pi+2] = 70; ld[pi+3] = opacity;
-          }
+          // Colour-blind-safe and identical to the legend: persistent / resolved / new.
+          const c = inTp1 && inTp2 ? LONGITUDINAL_RGB.persistent : inTp1 ? LONGITUDINAL_RGB.resolved : inTp2 ? LONGITUDINAL_RGB.newLesion : null;
+          if (c) { ld[pi] = c[0]; ld[pi+1] = c[1]; ld[pi+2] = c[2]; ld[pi+3] = opacity; }
         }
         const tmpC = document.createElement('canvas');
         tmpC.width = imageWidth; tmpC.height = imageHeight;

@@ -44,7 +44,7 @@ const VARIANTS: Record<Variant, string> = {
   ghost:
     'bg-transparent hover:bg-surface-raised text-ink-soft hover:text-ink-base border-transparent',
   danger:
-    'bg-transparent hover:bg-error-500/10 text-error-400 hover:text-error-300 border-error-500/30',
+    'bg-transparent hover:bg-clinical-crit/10 text-clinical-crit border-clinical-crit/30',
 };
 
 const SIZES: Record<Size, string> = {

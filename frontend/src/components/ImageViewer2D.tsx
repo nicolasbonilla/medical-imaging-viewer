@@ -654,7 +654,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
 
       {/* Edge AI Quick Screen — bottom right, above the status corner */}
       {quickScreenUrl && (
-        <div className="absolute bottom-12 right-3 z-20">
+        <div className="absolute bottom-12 right-10 z-20">
           <QuickScreenBadge
             currentSliceBase64={quickScreenUrl}
             imageWidth={currentSeries.metadata.columns ?? 256}

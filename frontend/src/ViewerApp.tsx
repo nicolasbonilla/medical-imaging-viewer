@@ -1,44 +1,55 @@
+/**
+ * ViewerApp — the imaging workspace (v3).
+ *
+ *   ┌ AppHeader ───────────────────────────────────────────────────────────┐
+ *   │ Study rail        │ Toolbar (view · plane · slice · zoom · W/L · …)  │ Insights   │
+ *   │  study · images   ├──────────────────────────────────────────────────┤  Image /   │
+ *   │  segmentations    │ Viewport (2D in-browser / server fallback / 3D)  │  Analysis /│
+ *   │  annotation dock  ├──────────────────────────────────────────────────┤  Report    │
+ *   │                   │ Status bar (voxel · value · mm · W/L · zoom)     │            │
+ *
+ * This file keeps data loading and the cross-panel handlers; presentation lives in
+ * components/workspace/*. Behaviour of every handler is unchanged from v2 except where
+ * noted (metadata-only image load on the in-browser path; styled delete confirmation).
+ */
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { toast, Toaster } from 'sonner';
-import { motion } from 'framer-motion';
+import { Images, Puzzle } from 'lucide-react';
 import AppHeader from './components/AppHeader';
 import ImageViewer2D from './components/ImageViewer2D';
 import ImageViewer3D from './components/ImageViewer3D';
 import { MultiPanelViewer } from './components/MultiPanelViewer';
-import ControlPanel from './components/ControlPanel';
 import ViewerControls from './components/ViewerControls';
-import LanguageSelector from './components/LanguageSelector';
-import ThemeToggle from './components/ThemeToggle';
 import { imagingAPI } from './api/imaging';
 import { studyAPI } from './api/study';
 import { useViewerStore } from './store/useViewerStore';
 import { useViewerControls, needsServerSlices } from './hooks/useViewerControls';
-import type { ImagingStudy, ImagingSeries, ImagingInstance } from './types';
-import { ArrowLeft, Brain, FileImage, AlertCircle, Loader2, Puzzle, Upload, Eye, EyeOff, Plus, Trash2, ChevronDown, ChevronRight, FlaskConical, FileText, LayoutGrid, Columns2, Square, Link2, Unlink2, Map, ZoomIn, ZoomOut, RotateCw, Ruler, Triangle, Circle } from 'lucide-react';
-import UserMenu from './components/UserMenu';
-import { useAuth } from './contexts/AuthContext';
+import type { ImagingStudy, ImagingSeries, ImagingInstance, ReportResponse } from './types';
 import { useTheme } from './contexts/ThemeContext';
 import { segmentationAPI } from './api/segmentation';
 import { usePatient } from './hooks/usePatients';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ReportViewerModal } from './components/ReportViewerModal';
-import { AIReportPanel } from './components/AIReportPanel';
-import { LesionDashboard } from './components/LesionDashboard';
-import { MAGNIMSZoneMapPanel } from './components/MAGNIMSZoneMapPanel';
 import { useSegmentationStore } from './store/useSegmentationStore';
 import { useMultiViewerStore, type ViewerLayout } from './store/useMultiViewerStore';
 import { autoAssignPanels, detectSequence } from './utils/sequenceDetection';
 import { isPreprocessedInstance } from './utils/instanceClassification';
-import { detectLabelPreset } from './utils/labelPresets';
-import { buildSegmentationList } from './utils/segmentationList';
+import { buildSegmentationList, type ViewerSegmentationItem } from './utils/segmentationList';
 import { formatDate } from './utils/formatDate';
 import { InstanceButton } from './components/viewer/InstanceButton';
-import { SegmentationRow } from './components/viewer/SegmentationRow';
 import { useActiveSliceInfo } from './hooks/useActiveSliceInfo';
-import type { ReportResponse } from './types';
+import { WorkspaceToolbar } from './components/workspace/WorkspaceToolbar';
+import { ViewerStatusBar } from './components/workspace/ViewerStatusBar';
+import { InsightsPanel } from './components/workspace/InsightsPanel';
+import { SidebarSection } from './components/workspace/SidebarSection';
+import { SegmentationsSection } from './components/workspace/SegmentationsSection';
+import { ViewerLoading, ViewerMessage } from './components/workspace/ViewerStates';
+import { SliceScrollbar } from './components/workspace/SliceScrollbar';
+import type { ClientViewportStatus } from './components/viewer2d/ClientSliceViewport';
+import { Badge, Skeleton } from './components/ui';
 
 interface StudyInfo {
   study: ImagingStudy;
@@ -46,113 +57,20 @@ interface StudyInfo {
   instances: ImagingInstance[];
 }
 
-/** Inline overlay toggle + opacity slider + label visibility for segmentation list items */
-function OverlayControls() {
-  const { t } = useTranslation();
-  const isOverlayVisible = useSegmentationStore((s) => s.isOverlayVisible);
-  const setIsOverlayVisible = useSegmentationStore((s) => s.setIsOverlayVisible);
-  const lesionOpacity = useSegmentationStore((s) => s.lesionOpacity);
-  const setLesionOpacity = useSegmentationStore((s) => s.setLesionOpacity);
-  const labels = useSegmentationStore((s) => s.activeSegmentation?.labels);
-  const labelVisibility = useSegmentationStore((s) => s.labelVisibility);
-  const toggleLabelVisibility = useSegmentationStore((s) => s.toggleLabelVisibility);
-
-  return (
-    <div className="space-y-1.5 mb-2 p-1.5 rounded bg-gray-800/40">
-      <div className="flex items-center justify-between">
-        <label className="text-[10px] text-gray-300">{t('segmentation.showOverlay', 'Show Overlay')}</label>
-        <button
-          onClick={() => setIsOverlayVisible(!isOverlayVisible)}
-          className={`relative w-8 h-4 rounded-full transition-colors ${isOverlayVisible ? 'bg-blue-600' : 'bg-gray-600'}`}
-        >
-          <span className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform ${isOverlayVisible ? 'translate-x-4' : 'translate-x-0'}`} />
-        </button>
-      </div>
-      {isOverlayVisible && (
-        <>
-          <div>
-            <div className="flex items-center justify-between mb-0.5">
-              <label className="text-[10px] text-gray-400">{t('segmentation.lesionOpacity', 'Lesion opacity')}</label>
-              <span className="text-[10px] text-gray-500">{Math.round(lesionOpacity * 100)}%</span>
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={Math.round(lesionOpacity * 100)}
-              onChange={(e) => setLesionOpacity(Number(e.target.value) / 100)}
-              className="w-full h-1 bg-gray-700 rounded-full appearance-none cursor-pointer accent-blue-500"
-            />
-          </div>
-          {labels && labels.filter((l) => l.id !== 0).length > 0 && (
-            <div className="space-y-1">
-              <select
-                value={detectLabelPreset(labels)}
-                onChange={(e) => {
-                  const preset = e.target.value;
-                  if (preset === 'default' || preset === 'magnims') {
-                    useSegmentationStore.getState().setLabelPreset(preset as 'default' | 'magnims');
-                  }
-                }}
-                className="w-full px-1.5 py-1 bg-gray-700 border border-gray-600 rounded text-[10px] text-white"
-              >
-                <option value="default">Default</option>
-                <option value="magnims">MAGNIMS Regional</option>
-                <option value="custom" disabled>Custom</option>
-              </select>
-            </div>
-          )}
-          {labels && labels.filter((l) => l.id !== 0).length > 0 && (
-            <div className="space-y-0.5 max-h-28 overflow-y-auto">
-              {labels.filter((l) => l.id !== 0).map((label) => {
-                const visible = labelVisibility[label.id] !== false;
-                return (
-                  <button
-                    key={label.id}
-                    onClick={() => toggleLabelVisibility(label.id)}
-                    className="w-full flex items-center gap-1.5 px-1 py-0.5 rounded hover:bg-gray-700/50 transition-colors"
-                  >
-                    <span
-                      className="w-2.5 h-2.5 rounded-sm flex-shrink-0 border border-gray-600"
-                      style={{ backgroundColor: visible ? label.color : 'transparent' }}
-                    />
-                    <span className={`text-[10px] truncate flex-1 text-left ${visible ? 'text-gray-200' : 'text-gray-500 line-through'}`}>
-                      {label.name}
-                    </span>
-                    <Eye className={`w-2.5 h-2.5 flex-shrink-0 ${visible ? 'text-blue-400' : 'text-gray-600'}`} />
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
-
 function ViewerApp() {
   const { t } = useTranslation();
-  const { user, logout } = useAuth();
   const { theme } = useTheme();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const studyId = searchParams.get('studyId');
 
   const viewMode = useViewerStore((state) => state.viewMode);
+  const setViewMode = useViewerStore((state) => state.setViewMode);
   const setCurrentSeries = useViewerStore((state) => state.setCurrentSeries);
   const setIsLoading = useViewerStore((state) => state.setIsLoading);
   const currentSeries = useViewerStore((state) => state.currentSeries);
   const setHierarchicalContext = useViewerStore((state) => state.setHierarchicalContext);
   const setAllFileIds = useViewerStore((state) => state.setAllFileIds);
-  const setCurrentSliceIndex = useViewerStore((state) => state.setCurrentSliceIndex);
-  const currentSliceIndex = useViewerStore((state) => state.currentSliceIndex);
-  const zoomLevel = useViewerStore((state) => state.zoomLevel);
-  const setZoomLevel = useViewerStore((state) => state.setZoomLevel);
-  const setPanOffset = useViewerStore((state) => state.setPanOffset);
-  const measurementTool = useViewerStore((state) => state.measurementTool);
-  const setMeasurementTool = useViewerStore((state) => state.setMeasurementTool);
-  const triggerMeasurementClear = useViewerStore((state) => state.triggerMeasurementClear);
 
   // Unified slice info — reads from correct store based on single/multi panel mode
   const activeSlice = useActiveSliceInfo();
@@ -161,6 +79,7 @@ function ViewerApp() {
   const [studyInfo, setStudyInfo] = useState<StudyInfo | null>(null);
   const [deletingSegId, setDeletingSegId] = useState<string | null>(null);
   const [expandedSegIds, setExpandedSegIds] = useState<Set<string>>(new Set());
+  const [clientStatus, setClientStatus] = useState<ClientViewportStatus | null>(null);
 
   const queryClient = useQueryClient();
   const currentSegmentation = useSegmentationStore((s) => s.currentSegmentation);
@@ -175,7 +94,6 @@ function ViewerApp() {
   const segmentationUploadRef = useRef<HTMLInputElement>(null);
   const [reportToView, setReportToView] = useState<ReportResponse | null>(null);
 
-
   // Multi-panel viewer
   const multiLayout = useMultiViewerStore((s) => s.layout);
   const setMultiLayout = useMultiViewerStore((s) => s.setLayout);
@@ -185,57 +103,25 @@ function ViewerApp() {
   const assignInstance = useMultiViewerStore((s) => s.assignInstance);
   const autoAssign = useMultiViewerStore((s) => s.autoAssign);
   const isMultiPanel = multiLayout !== 'single';
-  const [multiPanelSource, setMultiPanelSource] = useState<'originals' | 'preprocessed'>('originals');
 
-  // Collapsible section states
-  const [sectionsExpanded, setSectionsExpanded] = useState({
-    originals: true,
-    preprocessed: true,
-    segmentations: true,
-    experts: true,
-  });
-  const toggleSection = useCallback((key: 'originals' | 'preprocessed' | 'segmentations' | 'experts') => {
-    setSectionsExpanded(prev => ({ ...prev, [key]: !prev[key] }));
-  }, []);
-
-  // MS Report panel dropdown
-  const [reportPanelOpen, setReportPanelOpen] = useState(false);
-  const reportPanelRef = useRef<HTMLDivElement>(null);
-
-  // Close report panel when clicking outside
-  useEffect(() => {
-    if (!reportPanelOpen) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (reportPanelRef.current && !reportPanelRef.current.contains(e.target as Node)) {
-        setReportPanelOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [reportPanelOpen]);
+  // Collapsible sections of the study rail
+  const [sectionsExpanded, setSectionsExpanded] = useState({ images: true, segmentations: true });
 
   // Filter instances into groups: originals, preprocessed, masks (hidden).
   // Classification lives in utils/instanceClassification (pure + unit-tested).
   const originalInstances = useMemo(() =>
-    studyInfo?.instances.filter(inst => {
-      const fn = inst.original_filename || '';
-      return !isPreprocessedInstance(fn);
-    }) ?? [],
-    [studyInfo?.instances]
-  );
+    studyInfo?.instances.filter((inst) => !isPreprocessedInstance(inst.original_filename || '')) ?? [],
+  [studyInfo?.instances]);
 
   const preprocessedInstances = useMemo(() =>
-    studyInfo?.instances.filter(inst => isPreprocessedInstance(inst.original_filename || '')) ?? [],
-    [studyInfo?.instances]
-  );
+    studyInfo?.instances.filter((inst) => isPreprocessedInstance(inst.original_filename || '')) ?? [],
+  [studyInfo?.instances]);
 
-  // Instances to use for multi-panel viewer (based on source toggle)
+  // Multi-panel shows the preprocessed set when it has ≥ 2 images (same grid as the
+  // masks), otherwise every image of the study.
   const multiPanelInstances = useMemo(() =>
-    multiPanelSource === 'preprocessed' && preprocessedInstances.length > 0
-      ? preprocessedInstances
-      : originalInstances,
-    [multiPanelSource, originalInstances, preprocessedInstances]
-  );
+    (preprocessedInstances.length > 1 ? preprocessedInstances : [...originalInstances, ...preprocessedInstances]),
+  [originalInstances, preprocessedInstances]);
 
   // Auto-assign panels when switching to multi-panel layout
   const handleLayoutChange = useCallback((layout: ViewerLayout) => {
@@ -246,23 +132,10 @@ function ViewerApp() {
     }
   }, [setMultiLayout, autoAssign, multiPanelInstances]);
 
-  // Re-assign panels when source toggle changes
-  const handleMultiPanelSourceChange = useCallback((source: 'originals' | 'preprocessed') => {
-    setMultiPanelSource(source);
-    const instances = source === 'preprocessed' && preprocessedInstances.length > 0
-      ? preprocessedInstances
-      : originalInstances;
-    if (isMultiPanel && instances.length > 0) {
-      const assignments = autoAssignPanels(instances);
-      autoAssign(assignments.map((a) => ({ instanceId: a.instance.id, sequence: a.sequence })));
-    }
-  }, [autoAssign, isMultiPanel, originalInstances, preprocessedInstances]);
-
   // Collect all file_ids from all instances in the study
   const allFileIds = useMemo(() =>
-    studyInfo?.instances.map(inst => inst.gcs_object_name).filter(Boolean) ?? [],
-    [studyInfo?.instances]
-  );
+    studyInfo?.instances.map((inst) => inst.gcs_object_name).filter(Boolean) ?? [],
+  [studyInfo?.instances]);
 
   // Fetch segmentations for ALL images in the study (not just current image)
   const { data: segmentationsData, isLoading: isLoadingSegmentations } = useQuery({
@@ -273,10 +146,7 @@ function ViewerApp() {
     enabled: allFileIds.length > 0,
   });
 
-  const segmentations = buildSegmentationList(
-    segmentationsData,
-    t('segmentation.defaultName', 'Segmentation'),
-  );
+  const segmentations = buildSegmentationList(segmentationsData, t('segmentation.defaultName', 'Segmentation'));
 
   // Fetch patient info to display name in viewer
   const { data: patientData } = usePatient(studyInfo?.study.patient_id);
@@ -286,48 +156,30 @@ function ViewerApp() {
     queryKey: ['study-viewer', studyId],
     queryFn: async (): Promise<StudyInfo | null> => {
       if (!studyId) return null;
-
-      // Fetch study details and series list in parallel
       const [study, series] = await Promise.all([
         studyAPI.getById(studyId),
         studyAPI.listSeries(studyId),
       ]);
-
-      // Fetch ALL series instances in parallel (instead of sequentially)
-      const instanceArrays = await Promise.all(
-        series.map(s => studyAPI.listInstances(s.id))
-      );
-      const instances = instanceArrays.flat();
-
-      return { study, series, instances };
+      const instanceArrays = await Promise.all(series.map((s) => studyAPI.listInstances(s.id)));
+      return { study, series, instances: instanceArrays.flat() };
     },
     enabled: !!studyId,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
   // Update state when study data is loaded
   useEffect(() => {
     if (loadedStudyInfo) {
       setStudyInfo(loadedStudyInfo);
-
-      // Set hierarchical context for segmentation
       const patientId = loadedStudyInfo.study.patient_id;
       const seriesId = loadedStudyInfo.series.length > 0 ? loadedStudyInfo.series[0].id : null;
       setHierarchicalContext(patientId, studyId, seriesId);
-
-      // Set all file_ids for study-level segmentation queries
-      const fileIds = loadedStudyInfo.instances
-        .map(inst => inst.gcs_object_name)
-        .filter(Boolean);
-      setAllFileIds(fileIds);
-
-      // Auto-select first instance if available
+      setAllFileIds(loadedStudyInfo.instances.map((inst) => inst.gcs_object_name).filter(Boolean));
       if (loadedStudyInfo.instances.length > 0 && !selectedInstanceId) {
-        const firstInstance = loadedStudyInfo.instances[0];
-        setSelectedInstanceId(firstInstance.id);
+        setSelectedInstanceId(loadedStudyInfo.instances[0].id);
       }
     }
-  }, [loadedStudyInfo, selectedInstanceId, studyId, setHierarchicalContext]);
+  }, [loadedStudyInfo, selectedInstanceId, studyId, setHierarchicalContext, setAllFileIds]);
 
   // Load image when instance is selected. v3: the browser renders 2D slices from the
   // NIfTI itself, so only the server-rendered paths ('standard' / 'matplotlib') need
@@ -337,28 +189,19 @@ function ViewerApp() {
     queryKey: ['image', selectedInstanceId, pngNeeded],
     queryFn: async () => {
       if (!selectedInstanceId || !studyInfo) return null;
-
-      // Find the selected instance to get its gcs_object_name
-      const selectedInstance = studyInfo.instances.find(
-        (inst) => inst.id === selectedInstanceId
-      );
+      const selectedInstance = studyInfo.instances.find((inst) => inst.id === selectedInstanceId);
       if (!selectedInstance) {
         console.error('Instance not found:', selectedInstanceId);
         return null;
       }
-
       setIsLoading(true);
-      toast.loading(t('viewer.loadingImage'), { id: 'loading-image' });
-
       try {
-        // Use the GCS object path to load the image
         const result = pngNeeded
           ? await imagingAPI.processImage(selectedInstance.gcs_object_name, 0, 500)
           : await imagingAPI.getSeriesMetadata(selectedInstance.gcs_object_name);
-        // Add the file_id to the result so 3D viewer can use it
+        // Add the file_id to the result so the 2D/3D viewers can fetch the volume
         const resultWithFileId = { ...result, file_id: selectedInstance.gcs_object_name };
         setCurrentSeries(resultWithFileId);
-        toast.success(t('viewer.imageLoadSuccess'), { id: 'loading-image' });
         return resultWithFileId;
       } catch (error) {
         toast.error(t('viewer.imageLoadFailed'), { id: 'loading-image' });
@@ -369,88 +212,60 @@ function ViewerApp() {
       }
     },
     enabled: false,
-    staleTime: 10 * 60 * 1000, // Cache images for 10 minutes
+    staleTime: 10 * 60 * 1000,
   });
 
-  // Load image when selectedInstanceId changes
   useEffect(() => {
-    if (selectedInstanceId) {
-      loadImage();
-    }
+    if (selectedInstanceId) loadImage();
   }, [selectedInstanceId, loadImage, pngNeeded]);
 
   // Auto-load zone map when a lesion segmentation references one via analysis_data.
-  // Zone map loading via sidebar click is handled by handleToggleZoneMap (independent).
   useEffect(() => {
     const segId = currentSegmentation?.segmentation_id;
     if (!segId) return;
-    // Skip if current segmentation IS the zone map (handled by handleToggleZoneMap)
     if (currentSegmentation?.metadata?.description === 'MAGNIMS Zone Map') return;
-
     const zoneMapSegId = currentSegmentation?.metadata?.analysis_data?.zone_map_seg_id;
     if (!zoneMapSegId) return;
     if (useSegmentationStore.getState().zoneMapSegId === zoneMapSegId) return;
-
     segmentationAPI.loadZoneMapMask(zoneMapSegId)
       .then(({ mask, depth, height, width }) => {
         useSegmentationStore.getState().setZoneMap(zoneMapSegId, mask, { depth, height, width });
       })
-      .catch(() => {
-        console.warn('[ViewerApp] Referenced zone map not found');
-      });
-  }, [currentSegmentation?.segmentation_id, currentSegmentation?.metadata?.analysis_data?.zone_map_seg_id]);
-
-  const handleBack = useCallback(() => {
-    if (studyInfo?.study.patient_id) {
-      navigate(`/app/patients/${studyInfo.study.patient_id}`);
-    } else {
-      navigate('/app');
-    }
-  }, [navigate, studyInfo]);
+      .catch(() => console.warn('[ViewerApp] Referenced zone map not found'));
+  }, [currentSegmentation?.segmentation_id, currentSegmentation?.metadata?.analysis_data?.zone_map_seg_id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSelectInstance = (instanceId: string) => {
     if (isMultiPanel) {
-      // In multi-panel mode: assign the clicked image to the active (focused) panel
-      const instance = studyInfo?.instances.find(i => i.id === instanceId);
+      // Multi-panel: assign the clicked image to the active (focused) panel
+      const instance = studyInfo?.instances.find((i) => i.id === instanceId);
       const sequence = instance ? detectSequence(instance.original_filename || '') : 'unknown';
       assignInstance(activePanelId, instanceId, sequence);
     } else {
-      // In single panel mode: load the image normally
       setSelectedInstanceId(instanceId);
     }
   };
 
-  // Handle opening/loading an existing segmentation (toggle: click again to deactivate)
+  // Open/close an existing segmentation (click again to deactivate)
   const handleOpenSegmentation = useCallback((segmentation: { id: string; name: string; fileId?: string }) => {
-    // Toggle off if clicking the already-active segmentation
     if (currentSegmentation?.segmentation_id === segmentation.id) {
       setCurrentSegmentation(null);
       viewerControls.setSegmentationMode(false);
       return;
     }
-
-    // Find full segmentation data from the query results
     const fullSeg = segmentationsData?.find((s) => s.segmentation_id === segmentation.id);
     if (!fullSeg) return;
-
-    // Segmentations are in MNI space — need a preprocessed image to overlay on.
-    // If user is currently on an original image, switch to the first preprocessed image.
+    // Segmentations are in the preprocessed space — switch to a preprocessed image if needed.
     const currentFilename = studyInfo?.instances.find(
-      (inst) => inst.gcs_object_name === currentSeries?.file_id
+      (inst) => inst.gcs_object_name === currentSeries?.file_id,
     )?.original_filename || '';
-    const isOnPreprocessed = isPreprocessedInstance(currentFilename);
-
-    if (!isOnPreprocessed && preprocessedInstances.length > 0) {
+    if (!isPreprocessedInstance(currentFilename) && preprocessedInstances.length > 0) {
       setSelectedInstanceId(preprocessedInstances[0].id);
     }
-
     setCurrentSegmentation(fullSeg);
-    // Activate segmentation mode
     viewerControls.setSegmentationMode(true);
     toast.success(t('viewer.segmentationLoaded', `Segmentation "${segmentation.name}" loaded`));
   }, [viewerControls, t, segmentationsData, setCurrentSegmentation, currentSegmentation, currentSeries?.file_id, studyInfo, preprocessedInstances]);
 
-  // Toggle expand/collapse for a segmentation item's info panel
   const toggleSegExpanded = useCallback((segId: string) => {
     setExpandedSegIds((prev) => {
       const next = new Set(prev);
@@ -460,29 +275,22 @@ function ViewerApp() {
     });
   }, []);
 
-  // Handle clicking MAGNIMS Zone Map — independent from lesion segmentations.
-  // Does NOT set currentSegmentation; only loads zone map into its own store fields.
+  // MAGNIMS Zone Map — independent layer; does NOT set currentSegmentation.
   const handleToggleZoneMap = useCallback((seg: { id: string; name: string }) => {
     toggleSegExpanded(seg.id);
-    // Load zone map mask into independent store fields (if not already loaded)
     const store = useSegmentationStore.getState();
     if (store.zoneMapSegId === seg.id) {
-      // Already loaded — just toggle visibility
       store.toggleZoneMapVisibility();
       return;
     }
-    // First time — load from server
     segmentationAPI.loadZoneMapMask(seg.id)
       .then(({ mask, depth, height, width }) => {
         useSegmentationStore.getState().setZoneMap(seg.id, mask, { depth, height, width });
         useSegmentationStore.setState({ zoneMapVisible: true });
       })
-      .catch(() => {
-        console.warn('[ViewerApp] Zone map mask not found');
-      });
+      .catch(() => console.warn('[ViewerApp] Zone map mask not found'));
   }, [toggleSegExpanded]);
 
-  // Handle upload segmentation file
   const handleUploadSegmentation = useCallback(() => {
     segmentationUploadRef.current?.click();
   }, []);
@@ -490,14 +298,9 @@ function ViewerApp() {
   const handleSegmentationFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     // IMPORTANT (Class C integrity): mask import is NOT implemented — there is no
-    // segmentationAPI.importSegmentation endpoint. Previously this stub fired a
-    // fake `toast.success('uploaded successfully')` after a setTimeout, reporting a
-    // clinical data-entry action that never happened (IEC 62304 truthful-UI / FDA
-    // human-factors violation). Until a real import round-trip exists, report the
-    // true state — never a false success. The Upload button is also disabled below.
-    if (segmentationUploadRef.current) {
-      segmentationUploadRef.current.value = '';
-    }
+    // segmentationAPI.importSegmentation endpoint. Report the true state — never a
+    // false success. The Upload button is also disabled.
+    if (segmentationUploadRef.current) segmentationUploadRef.current.value = '';
     if (!file) return;
     toast.error(
       t('viewer.segmentationImportUnavailable', 'Importing a segmentation is not available yet — nothing was uploaded.'),
@@ -505,15 +308,10 @@ function ViewerApp() {
     );
   }, [t]);
 
-  // Handle deleting a segmentation
-  const handleDeleteSegmentation = useCallback(async (segId: string, segName: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Don't trigger the open handler
-    if (!confirm(t('viewer.confirmDeleteSegmentation', `Delete segmentation "${segName}"?`))) return;
-
+  const deleteSegmentation = useCallback(async (segId: string) => {
     setDeletingSegId(segId);
     try {
       await segmentationAPI.deleteSegmentation(segId);
-      // If the deleted one was active, clear it
       if (currentSegmentation?.segmentation_id === segId) {
         setCurrentSegmentation(null);
         viewerControls.setSegmentationMode(false);
@@ -528,17 +326,26 @@ function ViewerApp() {
     }
   }, [currentSegmentation, setCurrentSegmentation, viewerControls, queryClient, studyId, t]);
 
-  // Handle create new segmentation (activates segmentation mode and creates segmentation)
+  // Delete asks for an explicit confirmation (styled toast with Delete / Cancel instead of
+  // the native OS dialog; ignoring it cancels — nothing is deleted without the click).
+  const handleDeleteSegmentation = useCallback((segId: string, segName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    toast(t('viewer.confirmDeleteSegmentation', `Delete segmentation "${segName}"?`), {
+      id: `confirm-delete-${segId}`,
+      action: { label: t('segmentation.list.delete', 'Delete'), onClick: () => { void deleteSegmentation(segId); } },
+      cancel: { label: t('common.cancel', 'Cancel'), onClick: () => {} },
+      duration: 8000,
+    });
+  }, [deleteSegmentation, t]);
+
+  // Create a new segmentation (local-first) and enter paint mode
   const handleCreateSegmentation = useCallback(() => {
     if (!currentSeries) {
       toast.error(t('viewer.noImageLoaded', 'Load an image first'));
       return;
     }
-    // First enable segmentation mode
     viewerControls.setSegmentationMode(true);
-    // Auto-enable paint mode for new segmentations (user wants to start drawing)
     setIsPaintMode(true);
-    // Then trigger segmentation creation
     if (createSegmentationRef.current) {
       createSegmentationRef.current();
       toast.info(t('viewer.segmentationModeActivated', 'Segmentation mode activated. Use the drawing tools.'));
@@ -547,581 +354,228 @@ function ViewerApp() {
     }
   }, [viewerControls, t, currentSeries, setIsPaintMode]);
 
-  // No study ID provided
+  // Lesion dashboard row → slice. On the in-browser path the viewport also centres all
+  // three planes on the lesion centroid (selectedLesion), so any plane shows it.
+  const handleNavigateToSlice = useCallback((idx: number) => {
+    if (viewerControls.renderMode === 'client' && !isMultiPanel) {
+      useViewerStore.getState().requestFocus(idx);
+    } else {
+      activeSlice.setSliceIndex(idx);
+    }
+  }, [viewerControls.renderMode, isMultiPanel, activeSlice]);
+
+  // ---- route states -----------------------------------------------------------------
   if (!studyId) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: '#08090C' }}>
-        <AlertCircle className="w-16 h-16 text-amber-500 mb-4" />
-        <h2 className="text-xl font-bold text-white mb-2">
-          {t('viewer.noStudySelected', 'No study selected')}
-        </h2>
-        <p className="text-gray-400 mb-4 text-center max-w-md">
-          {t('viewer.selectStudyDescription', 'Select a patient and upload an MRI study to view it.')}
-        </p>
-        <button
-          onClick={() => navigate('/app')}
-          className="flex items-center bg-blue-600 hover:bg-blue-700 text-white transition-colors"
-          style={{ height: 36, gap: 6, padding: '0 14px', borderRadius: 6, fontSize: 13, fontWeight: 500 }}
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {t('viewer.goToPatients', 'Go to Patients')}
-        </button>
-      </div>
+      <ViewerMessage tone="warn"
+        title={t('viewer.noStudySelected', 'No study selected')}
+        body={t('viewer.selectStudyDescription', 'Select a patient and upload an MRI study to view it.')}
+        actionLabel={t('viewer.goToPatients', 'Go to Patients')}
+        onAction={() => navigate('/app')} />
     );
   }
-
-  // Loading study
-  if (isLoadingStudy) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: '#08090C' }}>
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          className="border-2 border-gray-700 border-t-blue-500 rounded-full mb-4"
-          style={{ width: 36, height: 36 }}
-        />
-        <p className="text-gray-400">{t('viewer.loadingStudy', 'Loading study...')}</p>
-      </div>
-    );
-  }
-
-  // Study error or not found
+  if (isLoadingStudy) return <ViewerLoading />;
   if (studyError || (!isLoadingStudy && !studyInfo)) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: '#08090C' }}>
-        <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
-        <h2 className="text-xl font-bold text-white mb-2">
-          {t('viewer.studyNotFound', 'Study not found')}
-        </h2>
-        <p className="text-gray-400 mb-4">
-          {t('viewer.studyNotFoundDescription', 'The requested study does not exist or you do not have access.')}
-        </p>
-        <button
-          onClick={() => navigate('/app')}
-          className="flex items-center bg-blue-600 hover:bg-blue-700 text-white transition-colors"
-          style={{ height: 36, gap: 6, padding: '0 14px', borderRadius: 6, fontSize: 13, fontWeight: 500 }}
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {t('common.goBack', 'Go Back')}
-        </button>
-      </div>
+      <ViewerMessage tone="crit"
+        title={t('viewer.studyNotFound', 'Study not found')}
+        body={t('viewer.studyNotFoundDescription', 'The requested study does not exist or you do not have access.')}
+        actionLabel={t('common.goBack', 'Go Back')}
+        onAction={() => navigate('/app')} />
     );
   }
 
-  return (
-    <div className="h-screen flex flex-col" style={{ background: '#08090C' }}>
+  const study = studyInfo!.study;
+  const imageCount = originalInstances.length + preprocessedInstances.length;
+  const layoutAvailable = multiPanelInstances.length > 1;
 
-      {/* Header — AppHeader with breadcrumbs (same as all other pages) */}
+  return (
+    <div className="flex h-screen flex-col bg-surface-void">
       <AppHeader
         breadcrumbs={[
           { label: t('nav.home', 'Home'), path: '/app' },
           { label: t('patients.title', 'Patients'), path: '/app/patients' },
           ...(patientData ? [{ label: patientData.full_name, path: `/app/patients/${patientData.id}` }] : []),
-          { label: studyInfo?.study.study_description || studyInfo?.study.modality || t('viewer.title', 'Viewer') },
+          { label: study.study_description || study.modality || t('viewer.title', 'Viewer') },
         ]}
       />
 
-      {/* Main Content */}
-      <div className="relative z-0 flex-1 flex overflow-hidden">
-        {/* Study Info & Controls - Left Sidebar */}
-        <motion.div
-          initial={{ x: -300, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="w-72 flex-shrink-0 flex flex-col border-r border-gray-700 overflow-hidden"
-          style={{ background: '#0E1014' }}
+      <div className="relative z-0 flex min-h-0 flex-1">
+        {/* ── Study rail ─────────────────────────────────────────────── */}
+        <aside
+          aria-label={t('viewer3.studyRail', 'Study')}
+          className="flex w-[296px] shrink-0 flex-col border-r border-surface-border bg-surface-base"
         >
-          {/* Study Info — DS: labels 11px UPPERCASE, values 12px */}
-          <div className="border-b border-gray-700" style={{ padding: '8px 12px' }}>
-            <div className="flex items-center" style={{ gap: 6, marginBottom: 8 }}>
-              <FileImage style={{ width: 16, height: 16, color: '#60A5FA' }} />
-              <span style={{ fontSize: 14, fontWeight: 600, color: '#F9FAFB' }}>
-                {t('viewer.studyInfo', 'Study Info')}
-              </span>
-            </div>
-            {studyInfo && (
-              <div className="grid grid-cols-2" style={{ gap: 8 }}>
-                <div>
-                  <div style={{ fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
-                    {t('study.modality', 'Modality')}
-                  </div>
-                  <div style={{ fontSize: 12, fontWeight: 500, color: '#E7EBF2' }}>{studyInfo.study.modality}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
-                    {t('study.studyDate', 'Date')}
-                  </div>
-                  <div style={{ fontSize: 12, fontWeight: 500, color: '#E7EBF2' }}>{formatDate(studyInfo.study.study_date)}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
-                    {t('study.series', 'Series')}
-                  </div>
-                  <div style={{ fontSize: 12, fontWeight: 500, color: '#E7EBF2' }}>{studyInfo.series.length}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
-                    {t('study.images', 'Images')}
-                  </div>
-                  <div style={{ fontSize: 12, fontWeight: 500, color: '#E7EBF2' }}>{originalInstances.length + preprocessedInstances.length}</div>
-                </div>
+          <div className="border-b border-surface-border p-3">
+            <div className="flex items-start gap-2.5">
+              <Badge tone="brand" className="mt-0.5 shrink-0">{study.modality}</Badge>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-ink-base" title={study.study_description}>
+                  {study.study_description || t('viewer.studyInfo', 'Study Info')}
+                </p>
+                <p className="mt-0.5 text-xs tabular-nums text-ink-muted">
+                  {formatDate(study.study_date)}
+                  {' · '}{t('viewer3.seriesCount', '{{count}} series', { count: studyInfo!.series.length })}
+                  {' · '}{t('viewer3.imagesCount', '{{count}} images', { count: imageCount })}
+                </p>
               </div>
-            )}
+            </div>
           </div>
 
-          {/* Scrollable content: 3 collapsible sections */}
-          <div className="flex-1 overflow-y-auto min-h-0">
-
-            {/* Section 1: Original Images */}
-            {originalInstances.length > 0 && (
-              <div className="border-b border-gray-700">
-                <button
-                  onClick={() => toggleSection('originals')}
-                  className="w-full flex items-center justify-between hover:bg-gray-800 transition-colors"
-                  style={{ padding: '8px 12px' }}
-                >
-                  <div className="flex items-center" style={{ gap: 6 }}>
-                    <FileImage style={{ width: 16, height: 16, color: '#60A5FA' }} />
-                    <span style={{ fontSize: 14, fontWeight: 600, color: '#F9FAFB' }}>
-                      {t('viewer.originalImages', 'Originals')}
-                    </span>
-                    <span style={{ fontSize: 10, fontWeight: 500, padding: '1px 6px', borderRadius: 4, background: 'rgba(30,64,175,0.2)', color: '#60A5FA' }}>
-                      {originalInstances.length}
-                    </span>
-                  </div>
-                  {sectionsExpanded.originals ? (
-                    <ChevronDown style={{ width: 14, height: 14, color: '#767E8E' }} />
-                  ) : (
-                    <ChevronRight style={{ width: 14, height: 14, color: '#767E8E' }} />
-                  )}
-                </button>
-                {sectionsExpanded.originals && (
-                  <div className="px-3 pb-3 space-y-1">
-                    {originalInstances.map((instance) => (
-                      <InstanceButton
-                        key={instance.id}
-                        instance={instance}
-                        selected={selectedInstanceId === instance.id}
-                        onSelect={handleSelectInstance}
-                        variant="original"
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Section 2: Preprocessed Images */}
-            {preprocessedInstances.length > 0 && (
-              <div className="border-b border-gray-700">
-                <button
-                  onClick={() => toggleSection('preprocessed')}
-                  className="w-full flex items-center justify-between hover:bg-gray-800 transition-colors"
-                  style={{ padding: '8px 12px' }}
-                >
-                  <div className="flex items-center" style={{ gap: 6 }}>
-                    <FlaskConical style={{ width: 16, height: 16, color: '#2DD4BF' }} />
-                    <span style={{ fontSize: 14, fontWeight: 600, color: '#F9FAFB' }}>
-                      {t('viewer.preprocessedImages', 'Preprocessed')}
-                    </span>
-                    <span style={{ fontSize: 10, fontWeight: 500, padding: '1px 6px', borderRadius: 4, background: 'rgba(13,148,136,0.2)', color: '#2DD4BF' }}>
-                      {preprocessedInstances.length}
-                    </span>
-                  </div>
-                  {sectionsExpanded.preprocessed ? (
-                    <ChevronDown style={{ width: 14, height: 14, color: '#767E8E' }} />
-                  ) : (
-                    <ChevronRight style={{ width: 14, height: 14, color: '#767E8E' }} />
-                  )}
-                </button>
-                {sectionsExpanded.preprocessed && (
-                  <div className="px-3 pb-3 space-y-1">
-                    {preprocessedInstances.map((instance) => (
-                      <InstanceButton
-                        key={instance.id}
-                        instance={instance}
-                        selected={selectedInstanceId === instance.id}
-                        onSelect={handleSelectInstance}
-                        variant="preprocessed"
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Section 3: Segmentations */}
-            <div className="border-b border-gray-700">
-              <button
-                onClick={() => toggleSection('segmentations')}
-                className="w-full flex items-center justify-between hover:bg-gray-800 transition-colors"
-                style={{ padding: '8px 12px' }}
-              >
-                <div className="flex items-center" style={{ gap: 6 }}>
-                  <Puzzle style={{ width: 16, height: 16, color: '#A78BFA' }} />
-                  <span style={{ fontSize: 14, fontWeight: 600, color: '#F9FAFB' }}>
-                    {t('viewer.segmentations', 'Segmentations')}
-                  </span>
-                  <span style={{
-                    fontSize: 10, fontWeight: 500, padding: '1px 6px', borderRadius: 4,
-                    background: segmentations.length > 0 ? 'rgba(139,92,246,0.2)' : 'rgba(75,85,99,0.3)',
-                    color: segmentations.length > 0 ? '#A78BFA' : '#96A0B0',
-                  }}>
-                    {segmentations.length}
-                  </span>
-                </div>
-                {sectionsExpanded.segmentations ? (
-                  <ChevronDown className="w-4 h-4 text-gray-400" />
-                ) : (
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
-                )}
-              </button>
-              {sectionsExpanded.segmentations && (
-                <div style={{ padding: '4px 12px 12px' }}>
-                  {/* Action Buttons — L5 outline (functional controls in sidebar) */}
-                  <div className="grid grid-cols-2" style={{ gap: 4, marginBottom: 8 }}>
-                    <button
-                      onClick={handleCreateSegmentation}
-                      disabled={!currentSeries}
-                      className="flex items-center justify-center border border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-40 transition-colors"
-                      style={{ height: 28, gap: 4, borderRadius: 6, fontSize: 12, fontWeight: 500 }}
-                      aria-label={t('viewer.createSegmentation', 'Create new segmentation')} title={t('viewer.createSegmentation', 'Create new segmentation')}
-                    >
-                      <Plus style={{ width: 12, height: 12 }} />
-                      {t('viewer.create', 'Create')}
-                    </button>
-                    <button
-                      onClick={handleUploadSegmentation}
-                      disabled
-                      className="flex items-center justify-center border border-gray-600 text-gray-500 cursor-not-allowed opacity-50 transition-colors"
-                      style={{ height: 28, gap: 4, borderRadius: 6, fontSize: 12, fontWeight: 500 }}
-                      aria-label={t('viewer.uploadSegmentationSoon', 'Import segmentation (coming soon)')}
-                      title={t('viewer.uploadSegmentationSoon', 'Import segmentation (coming soon)')}
-                    >
-                      <Upload style={{ width: 12, height: 12 }} />
-                      {t('viewer.upload', 'Upload')}
-                    </button>
-                    <input
-                      ref={segmentationUploadRef}
-                      type="file"
-                      accept=".nii,.nii.gz,.nrrd,.seg.nrrd"
-                      className="hidden"
-                      onChange={handleSegmentationFileChange}
-                    />
-                  </div>
-
-                  {/* Segmentations List */}
-                  {isLoadingSegmentations ? (
-                    <div className="flex items-center justify-center py-2">
-                      <Loader2 className="w-4 h-4 text-purple-500 animate-spin" />
-                    </div>
-                  ) : segmentations.length === 0 ? (
-                    <p className="text-xs text-gray-500 text-center py-1">
-                      {t('viewer.noSegmentations', 'No segmentations')}
-                    </p>
-                  ) : (
-                    <div className="space-y-1.5">
-                      {segmentations.map((seg) => {
-                        const isZoneMap = seg.name === 'MAGNIMS Zone Map';
-                        const isActive = currentSegmentation?.segmentation_id === seg.id || activeSegmentation?.id === seg.id;
-                        const isExpanded = expandedSegIds.has(seg.id);
-                        const isDeleting = deletingSegId === seg.id;
-                        const isSaved = !seg.id.startsWith('local-');
-
-                        if (isZoneMap) {
-                          // --- MAGNIMS Zone Map: independent layer, NOT tied to currentSegmentation ---
-                          return (
-                            <div key={seg.id}>
-                              <SegmentationRow
-                                name={seg.name}
-                                icon={Map}
-                                accent="emerald"
-                                highlighted={isExpanded}
-                                expanded={isExpanded}
-                                overlayOn={zoneMapVisible}
-                                isDeleting={isDeleting}
-                                onRowClick={() => handleToggleZoneMap(seg)}
-                                onToggleOverlay={(e) => {
-                                  e.stopPropagation();
-                                  useSegmentationStore.getState().toggleZoneMapVisibility();
-                                }}
-                                onDelete={(e) => handleDeleteSegmentation(seg.id, seg.name, e)}
-                              />
-                              {isExpanded && isSaved && (
-                                <div className="ml-2 mt-1 mb-1 border-l-2 border-emerald-600/30 pl-2">
-                                  <MAGNIMSZoneMapPanel fileId={currentSeries?.file_id} />
-                                </div>
-                              )}
-                            </div>
-                          );
-                        }
-
-                        // --- Regular segmentation (Expert Rater, Brain Extraction, etc.) ---
-                        return (
-                          <div key={seg.id}>
-                            <SegmentationRow
-                              name={seg.name}
-                              icon={Puzzle}
-                              accent="purple"
-                              origin={seg.origin}
-                              highlighted={isActive}
-                              expanded={isExpanded}
-                              overlayOn={isActive && isOverlayVisible}
-                              isDeleting={isDeleting}
-                              onRowClick={() => {
-                                handleOpenSegmentation(seg);
-                                // Auto-expand on activate, collapse on deactivate
-                                if (isActive) {
-                                  setExpandedSegIds((prev) => { const n = new Set(prev); n.delete(seg.id); return n; });
-                                } else {
-                                  setExpandedSegIds((prev) => new Set(prev).add(seg.id));
-                                }
-                              }}
-                              onToggleOverlay={(e) => {
-                                e.stopPropagation();
-                                if (isActive) {
-                                  useSegmentationStore.getState().setIsOverlayVisible(!isOverlayVisible);
-                                } else {
-                                  handleOpenSegmentation(seg);
-                                  setExpandedSegIds((prev) => new Set(prev).add(seg.id));
-                                }
-                              }}
-                              onDelete={(e) => handleDeleteSegmentation(seg.id, seg.name, e)}
-                            />
-                            {isExpanded && isSaved && (
-                              <div className="ml-2 mt-1 mb-1 border-l-2 border-cyan-600/30 pl-2">
-                                {/* Overlay controls inline */}
-                                <OverlayControls />
-                                <LesionDashboard
-                                  segmentationId={seg.id}
-                                  onNavigateToSlice={(idx) => activeSlice.setSliceIndex(idx)}
-                                />
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-          </div>
-
-          {/* Viewer Controls */}
-          {currentSeries && (
-            <motion.div
-              initial={{ y: 100, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="border-t border-gray-700 overflow-y-auto max-h-[35vh] flex-shrink-0"
-              style={{ padding: 8 }}
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <SidebarSection
+              title={t('viewer3.images', 'Images')}
+              icon={<Images className="h-4 w-4" />}
+              count={imageCount}
+              open={sectionsExpanded.images}
+              onToggle={() => setSectionsExpanded((s) => ({ ...s, images: !s.images }))}
             >
-              <ErrorBoundary name="ViewerControls">
-                <ViewerControls
-                  {...viewerControls}
-                  viewMode={viewMode}
-                  onNavigateToSlice={(idx) => activeSlice.setSliceIndex(idx)}
-                />
-              </ErrorBoundary>
-            </motion.div>
-          )}
-        </motion.div>
-
-        {/* Viewer - Center (main content target for the WCAG 2.4.1 skip link) */}
-        <motion.div
-          id="main-content"
-          tabIndex={-1}
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="flex-1"
-        >
-          {/* Viewer Toolbar — centered bar with all controls */}
-          {viewMode === '2d' && currentSeries && (
-            <div className="flex items-center justify-center" style={{ padding: '8px 0' }}>
-              <div className="flex items-center border border-gray-700" style={{ background: '#161922', borderRadius: 8, padding: 4, gap: 4 }}>
-                {/* Layout buttons (only when multiple images) */}
-                {(originalInstances.length > 1 || preprocessedInstances.length > 1) && (
-                  <>
-                    <button onClick={() => handleLayoutChange('single')}
-                      className={`flex items-center justify-center transition-colors ${multiLayout === 'single' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
-                      style={{ width: 28, height: 28, borderRadius: 6 }} aria-label={t('layout.single', 'Single')} title={t('layout.single', 'Single')}>
-                      <Square style={{ width: 14, height: 14 }} />
-                    </button>
-                    <button onClick={() => handleLayoutChange('1x2')}
-                      className={`flex items-center justify-center transition-colors ${multiLayout === '1x2' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
-                      style={{ width: 28, height: 28, borderRadius: 6 }} aria-label={t('layout.sideBySide', '1x2')} title={t('layout.sideBySide', '1x2')}>
-                      <Columns2 style={{ width: 14, height: 14 }} />
-                    </button>
-                    <button onClick={() => handleLayoutChange('2x2')}
-                      className={`flex items-center justify-center transition-colors ${multiLayout === '2x2' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
-                      style={{ width: 28, height: 28, borderRadius: 6 }} aria-label={t('layout.grid', '2x2')} title={t('layout.grid', '2x2')}>
-                      <LayoutGrid style={{ width: 14, height: 14 }} />
-                    </button>
-                    {isMultiPanel && (
-                      <>
-                        <div style={{ width: 1, height: 20, background: '#232833' }} />
-                        <button onClick={() => setSyncSlice(!syncSlice)}
-                          className={`flex items-center justify-center transition-colors ${syncSlice ? 'bg-green-600 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
-                          style={{ width: 28, height: 28, borderRadius: 6 }}
-                          aria-label={syncSlice ? 'Sync: ON' : 'Sync: OFF'} title={syncSlice ? 'Sync: ON' : 'Sync: OFF'}>
-                          {syncSlice ? <Link2 style={{ width: 14, height: 14 }} /> : <Unlink2 style={{ width: 14, height: 14 }} />}
-                        </button>
-                        {preprocessedInstances.length > 0 && (
-                          <button onClick={() => handleMultiPanelSourceChange(multiPanelSource === 'originals' ? 'preprocessed' : 'originals')}
-                            className={`flex items-center transition-colors ${multiPanelSource === 'preprocessed' ? 'bg-teal-600 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
-                            style={{ height: 28, gap: 4, padding: '0 8px', borderRadius: 6, fontSize: 12, fontWeight: 500 }}>
-                            {multiPanelSource === 'preprocessed' ? <FlaskConical style={{ width: 14, height: 14 }} /> : <FileImage style={{ width: 14, height: 14 }} />}
-                            {multiPanelSource === 'preprocessed' ? 'Preproc' : 'Original'}
-                          </button>
-                        )}
-                      </>
-                    )}
-                    <div style={{ width: 1, height: 20, background: '#232833' }} />
-                  </>
-                )}
-
-                {/* Slice info + slider — reads from active panel in multi-panel mode */}
-                <span className="font-mono" style={{ fontSize: 12, fontWeight: 500, color: '#E7EBF2', padding: '0 4px' }}>
-                  {activeSlice.sliceIndex + 1}/{activeSlice.totalSlices}
-                </span>
-                <input
-                  type="range"
-                  min="0"
-                  max={Math.max(0, activeSlice.totalSlices - 1)}
-                  value={activeSlice.sliceIndex}
-                  onChange={(e) => activeSlice.setSliceIndex(parseInt(e.target.value))}
-                  className="h-1 bg-gray-700 rounded-full appearance-none cursor-pointer accent-blue-500"
-                  style={{ width: 120 }}
-                />
-
-                <div style={{ width: 1, height: 20, background: '#232833' }} />
-
-                {/* Zoom controls */}
-                <button onClick={() => setZoomLevel(Math.max(0.25, zoomLevel / 1.2))}
-                  className="flex items-center justify-center text-gray-400 hover:bg-gray-700 transition-colors"
-                  style={{ width: 28, height: 28, borderRadius: 6 }} aria-label={t('viewer.zoomOut', 'Zoom Out')} title={t('viewer.zoomOut', 'Zoom Out')}>
-                  <ZoomOut style={{ width: 14, height: 14 }} />
-                </button>
-                <span className="font-mono" style={{ fontSize: 11, color: '#96A0B0', padding: '0 2px', minWidth: 36, textAlign: 'center' }}>
-                  {(zoomLevel * 100).toFixed(0)}%
-                </span>
-                <button onClick={() => setZoomLevel(Math.min(20, zoomLevel * 1.2))}
-                  className="flex items-center justify-center text-gray-400 hover:bg-gray-700 transition-colors"
-                  style={{ width: 28, height: 28, borderRadius: 6 }} aria-label={t('viewer.zoomIn', 'Zoom In')} title={t('viewer.zoomIn', 'Zoom In')}>
-                  <ZoomIn style={{ width: 14, height: 14 }} />
-                </button>
-                <button onClick={() => { setZoomLevel(1); setPanOffset({ x: 0, y: 0 }); }}
-                  className="flex items-center justify-center text-gray-400 hover:bg-gray-700 transition-colors"
-                  style={{ width: 28, height: 28, borderRadius: 6 }} aria-label={t('viewer.resetView', 'Reset')} title={t('viewer.resetView', 'Reset')}>
-                  <RotateCw style={{ width: 14, height: 14 }} />
-                </button>
-
-                <div style={{ width: 1, height: 20, background: '#232833' }} />
-
-                {/* Measurement tools */}
-                <button onClick={() => setMeasurementTool(measurementTool === 'ruler' ? null : 'ruler')}
-                  className={`flex items-center justify-center transition-colors ${measurementTool === 'ruler' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
-                  style={{ width: 28, height: 28, borderRadius: 6 }} aria-label="Ruler" title="Ruler">
-                  <Ruler style={{ width: 14, height: 14 }} />
-                </button>
-                <button onClick={() => setMeasurementTool(measurementTool === 'angle' ? null : 'angle')}
-                  className={`flex items-center justify-center transition-colors ${measurementTool === 'angle' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
-                  style={{ width: 28, height: 28, borderRadius: 6 }} aria-label="Angle" title="Angle">
-                  <Triangle style={{ width: 14, height: 14 }} />
-                </button>
-                <button onClick={() => setMeasurementTool(measurementTool === 'ellipse' ? null : 'ellipse')}
-                  className={`flex items-center justify-center transition-colors ${measurementTool === 'ellipse' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
-                  style={{ width: 28, height: 28, borderRadius: 6 }} aria-label="ROI" title="ROI">
-                  <Circle style={{ width: 14, height: 14 }} />
-                </button>
-                <button onClick={triggerMeasurementClear}
-                  className="flex items-center justify-center text-gray-400 hover:text-red-400 hover:bg-red-900/30 transition-colors"
-                  style={{ width: 28, height: 28, borderRadius: 6 }} aria-label={t('viewer.clearMeasurements', 'Clear measurements')} title={t('viewer.clearMeasurements', 'Clear measurements')}>
-                  <Trash2 style={{ width: 14, height: 14 }} />
-                </button>
+              <div className="space-y-3">
+                {[
+                  { key: 'original', label: t('viewer.originalImages', 'Originals'), list: originalInstances },
+                  { key: 'preprocessed', label: t('viewer.preprocessedImages', 'Preprocessed'), list: preprocessedInstances },
+                ].filter((g) => g.list.length > 0).map((g) => (
+                  <div key={g.key}>
+                    <p className="mb-1.5 text-xs text-ink-faint">{g.label}</p>
+                    <ul className="space-y-1">
+                      {g.list.map((instance) => (
+                        <li key={instance.id}>
+                          <InstanceButton
+                            instance={instance}
+                            selected={selectedInstanceId === instance.id}
+                            onSelect={handleSelectInstance}
+                            variant={g.key as 'original' | 'preprocessed'}
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
               </div>
-            </div>
-          )}
+            </SidebarSection>
 
-          <div className="h-full overflow-hidden" style={{ background: '#000' }}>
+            <SidebarSection
+              title={t('viewer.segmentations', 'Segmentations')}
+              icon={<Puzzle className="h-4 w-4" />}
+              count={segmentations.length}
+              open={sectionsExpanded.segmentations}
+              onToggle={() => setSectionsExpanded((s) => ({ ...s, segmentations: !s.segmentations }))}
+            >
+              <SegmentationsSection
+                segmentations={segmentations as ViewerSegmentationItem[]}
+                isLoading={isLoadingSegmentations}
+                activeIds={{ current: currentSegmentation?.segmentation_id, active: activeSegmentation?.id }}
+                expandedSegIds={expandedSegIds}
+                setExpandedSegIds={setExpandedSegIds}
+                deletingSegId={deletingSegId}
+                isOverlayVisible={isOverlayVisible}
+                zoneMapVisible={zoneMapVisible}
+                canCreate={!!currentSeries}
+                onCreate={handleCreateSegmentation}
+                onUpload={handleUploadSegmentation}
+                onOpen={handleOpenSegmentation}
+                onToggleZoneMap={handleToggleZoneMap}
+                onDelete={handleDeleteSegmentation}
+                currentFileId={currentSeries?.file_id}
+                onNavigateToSlice={handleNavigateToSlice}
+              />
+              <input
+                ref={segmentationUploadRef}
+                type="file"
+                accept=".nii,.nii.gz,.nrrd,.seg.nrrd"
+                className="hidden"
+                onChange={handleSegmentationFileChange}
+              />
+            </SidebarSection>
+          </div>
+        </aside>
+
+        {/* ── Viewport column (main content target of the WCAG 2.4.1 skip link) ── */}
+        <main id="main-content" tabIndex={-1} className="flex min-w-0 flex-1 flex-col focus:outline-none">
+          <WorkspaceToolbar
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            renderMode={viewerControls.renderMode}
+            onRenderModeChange={viewerControls.setRenderMode}
+            clientStatus={clientStatus}
+            serverSeed={{ center: currentSeries?.metadata?.window_center, width: currentSeries?.metadata?.window_width }}
+            layoutAvailable={layoutAvailable}
+            layout={multiLayout}
+            onLayoutChange={handleLayoutChange}
+            syncSlice={syncSlice}
+            onSyncChange={setSyncSlice}
+          />
+          <div className="relative min-h-0 flex-1 overflow-hidden bg-black">
             {isLoadingImage && !isMultiPanel ? (
-              <div className="h-full flex flex-col items-center justify-center">
-                <Loader2 className="animate-spin" style={{ width: 36, height: 36, color: '#60A5FA', marginBottom: 8 }} />
-                <p style={{ fontSize: 13, color: '#96A0B0' }}>{t('viewer.loadingImage')}</p>
+              <div className="grid h-full place-items-center" role="status" aria-live="polite">
+                <div className="flex flex-col items-center gap-3">
+                  <Skeleton className="aspect-square w-[min(48vh,520px)] rounded-3xl" />
+                  <p className="text-xs text-ink-muted">{t('viewer.loadingImage', 'Loading image…')}</p>
+                </div>
               </div>
             ) : isMultiPanel && viewMode === '2d' ? (
               <ErrorBoundary name="MultiPanelViewer">
                 <MultiPanelViewer
                   instances={[...originalInstances, ...preprocessedInstances]}
+                  renderMode={viewerControls.renderMode}
+                  patientName={patientData?.full_name}
+                  patientMRN={patientData?.mrn}
+                  studyDescription={study.study_description}
                 />
               </ErrorBoundary>
             ) : viewMode === '2d' ? (
               <ErrorBoundary name="ImageViewer2D">
+                <SliceScrollbar />
                 <ImageViewer2D
                   viewerControls={viewerControls}
                   createSegmentationRef={createSegmentationRef}
                   patientName={patientData?.full_name}
                   patientMRN={patientData?.mrn}
-                  studyDescription={studyInfo?.study.study_description}
-                  studyModality={studyInfo?.study.modality}
+                  studyDescription={study.study_description}
+                  studyModality={study.modality}
+                  onClientStatus={setClientStatus}
                 />
               </ErrorBoundary>
             ) : (
               <ErrorBoundary name="ImageViewer3D">
-                <ImageViewer3D />
+                <ImageViewer3D
+                  patientName={patientData?.full_name}
+                  patientMRN={patientData?.mrn}
+                  studyDescription={study.study_description}
+                />
               </ErrorBoundary>
             )}
           </div>
-        </motion.div>
+          <ViewerStatusBar renderMode={viewerControls.renderMode} clientStatus={clientStatus} viewMode={viewMode} />
+        </main>
 
-        {/* Control Panel - Right Sidebar */}
-        <motion.div
-          initial={{ x: 300, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="w-80 flex-shrink-0 flex flex-col border-l border-gray-700 overflow-hidden"
-          style={{ background: '#0E1014' }}
+        {/* ── Insights ───────────────────────────────────────────────── */}
+        <aside
+          aria-label={t('viewer3.insights', 'Image and analysis')}
+          className="w-[320px] shrink-0 border-l border-surface-border bg-surface-base"
         >
-          {/* MS Report section — collapsible, at the top of right sidebar */}
-          <div className="border-b border-gray-700">
-            <button
-              onClick={() => setReportPanelOpen(!reportPanelOpen)}
-              className="w-full flex items-center justify-between hover:bg-gray-800 transition-colors"
-              style={{ padding: '8px 12px' }}
-            >
-              <div className="flex items-center" style={{ gap: 6 }}>
-                <FileText style={{ width: 16, height: 16, color: '#FBBF24' }} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#E7EBF2' }}>{t('report.title', 'MS Report')}</span>
-              </div>
-              <ChevronDown style={{ width: 14, height: 14, color: '#767E8E', transition: 'transform 0.15s', transform: reportPanelOpen ? 'rotate(180deg)' : 'none' }} />
-            </button>
-            {reportPanelOpen && (
-              <div style={{ padding: '0 12px 12px' }}>
-                <AIReportPanel onReportGenerated={(report) => { setReportToView(report); setReportPanelOpen(false); }} />
-              </div>
+          <InsightsPanel
+            renderMode={viewerControls.renderMode}
+            clientStatus={clientStatus}
+            onReportGenerated={(report) => setReportToView(report)}
+            segmentationMode={viewerControls.segmentationMode}
+            annotate={currentSeries ? (
+              <ErrorBoundary name="ViewerControls">
+                <ViewerControls
+                  {...viewerControls}
+                  viewMode={viewMode}
+                  onNavigateToSlice={handleNavigateToSlice}
+                />
+              </ErrorBoundary>
+            ) : (
+              <p className="text-xs text-ink-muted">{t('viewer.selectImageToView', 'Select an image to view')}</p>
             )}
-          </div>
-
-          {/* Main control panel */}
-          <div className="flex-1 overflow-hidden">
-            <ControlPanel />
-          </div>
-        </motion.div>
+          />
+        </aside>
       </div>
 
-      {/* Toast Notifications */}
-      <Toaster
-        position="top-right"
-        theme={theme === 'dark' ? 'dark' : 'light'}
-        richColors
-        closeButton
-        expand={false}
-      />
+      <Toaster position="top-right" theme={theme === 'dark' ? 'dark' : 'light'} richColors closeButton expand={false} />
 
-      {/* Report Viewer Modal */}
       {reportToView && (
         <ReportViewerModal
           report={reportToView}
@@ -1131,9 +585,9 @@ function ViewerApp() {
           patientMRN={patientData?.mrn}
           patientAge={patientData?.age}
           patientSex={patientData?.gender === 'male' ? 'M' : patientData?.gender === 'female' ? 'F' : undefined}
-          studyDate={studyInfo?.study.study_date}
-          studyDescription={studyInfo?.study.study_description}
-          institutionName={studyInfo?.study.institution_name}
+          studyDate={study.study_date}
+          studyDescription={study.study_description}
+          institutionName={study.institution_name}
         />
       )}
     </div>

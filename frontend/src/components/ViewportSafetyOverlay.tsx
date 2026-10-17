@@ -71,27 +71,27 @@ export function ViewportSafetyOverlay({
       data-testid="viewport-safety-overlay"
     >
       {/* Patient identity — top left, the DICOM convention */}
-      <div className="absolute top-2 left-2 max-w-[60%]">
+      <div className="absolute top-2 left-2 max-w-[52%]">
         {hasIdentity ? (
           <div
-            className="rounded bg-black/60 px-2 py-1 text-[11px] leading-tight text-gray-100 backdrop-blur-sm"
+            className="rounded-md bg-black/65 px-2 py-1 text-xs leading-snug text-ink-base backdrop-blur-sm"
             data-testid="viewport-patient-identity"
           >
             {patientName && (
               <div className="font-semibold tracking-wide">{patientName}</div>
             )}
             {patientMRN && (
-              <div className="text-gray-300">
+              <div className="tabular-nums text-ink-soft">
                 {t('viewer.mrn', 'MRN')}: {patientMRN}
               </div>
             )}
             {studyDescription && (
-              <div className="truncate text-gray-400">{studyDescription}</div>
+              <div className="truncate text-ink-muted">{studyDescription}</div>
             )}
           </div>
         ) : (
           <div
-            className="rounded bg-amber-500/20 px-2 py-1 text-[11px] font-semibold text-amber-200 ring-1 ring-amber-400/50"
+            className="rounded-md bg-clinical-warn/15 px-2 py-1 text-xs font-semibold text-clinical-warn ring-1 ring-clinical-warn/50 backdrop-blur-sm"
             data-testid="viewport-identity-missing"
             role="status"
           >
@@ -104,13 +104,13 @@ export function ViewportSafetyOverlay({
       </div>
 
       {/* Orientation state — top right */}
-      <div className="absolute top-2 right-2">
+      <div className="absolute top-2 right-2 max-w-[44%] text-right">
         {orientationKnown ? (
           <div
             className={
               orientationCanonical
-                ? 'rounded bg-black/60 px-2 py-1 text-[11px] text-gray-300 backdrop-blur-sm'
-                : 'rounded bg-amber-500/20 px-2 py-1 text-[11px] font-semibold text-amber-200 ring-1 ring-amber-400/50'
+                ? 'rounded-md bg-black/65 px-2 py-1 text-xs text-ink-soft backdrop-blur-sm'
+                : 'rounded-md bg-clinical-warn/15 px-2 py-1 text-xs font-semibold text-clinical-warn ring-1 ring-clinical-warn/50 backdrop-blur-sm'
             }
             data-testid="viewport-orientation"
             title={t(
@@ -127,7 +127,7 @@ export function ViewportSafetyOverlay({
           </div>
         ) : (
           <div
-            className="rounded bg-red-500/25 px-2 py-1 text-[11px] font-semibold text-red-200 ring-1 ring-red-400/60"
+            className="rounded-md bg-clinical-crit/20 px-2 py-1 text-xs font-semibold text-clinical-crit ring-1 ring-clinical-crit/60 backdrop-blur-sm"
             data-testid="viewport-orientation-unknown"
             role="alert"
           >
@@ -142,7 +142,7 @@ export function ViewportSafetyOverlay({
       {/* Standing caveat, bottom. Present in every view because the axis→screen
           mapping is unverified for every view. Remove only when CA-4.3 closes. */}
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2">
-        <div className="rounded bg-black/50 px-2 py-0.5 text-[10px] text-gray-400 backdrop-blur-sm">
+        <div className="rounded-md bg-black/60 px-2 py-0.5 text-xs text-ink-muted backdrop-blur-sm">
           {t(
             'viewer.lateralityNotLabelled',
             'Laterality not labelled — confirm side against the source study',

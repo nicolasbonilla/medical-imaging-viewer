@@ -12,12 +12,14 @@
  * @module components/AIReportPanel
  */
 
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { Loader2 } from 'lucide-react';
 import { aiReportAPI } from '@/api/aiReport';
 import { segmentationAPI } from '@/api/segmentation';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
+import { Button, Input } from '@/components/ui';
 import type {
   ReportTemplateType,
   ReportGenerateRequest,
@@ -31,6 +33,14 @@ interface AIReportPanelProps {
   patientSex?: 'M' | 'F';
   onReportGenerated?: (report: ReportResponse) => void;
 }
+
+/** Shared styles (design-system v2 tokens). */
+const FIELD_LABEL = 'mb-1.5 block text-xs font-medium text-ink-muted';
+const FOCUS_RING = 'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60';
+/** Segmented option buttons (template / language): tinted brand selection, neutral otherwise. */
+const OPTION_BASE = `rounded-lg border text-xs font-medium transition-colors ${FOCUS_RING}`;
+const OPTION_ON = 'border-brand-500/30 bg-brand-950 text-brand-400';
+const OPTION_OFF = 'border-surface-border bg-surface-raised text-ink-soft hover:bg-surface-hover hover:text-ink-base';
 
 export const AIReportPanel: React.FC<AIReportPanelProps> = ({
   volumetry,
@@ -46,6 +56,10 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
   const [observations, setObservations] = useState('');
   const [report, setReport] = useState<ReportResponse | null>(null);
   const [copied, setCopied] = useState(false);
+  // Element ids that tie each visible label to its control (a11y only).
+  const templateLabelId = useId();
+  const languageLabelId = useId();
+  const observationsId = useId();
 
   // Fetch available templates
   const { data: templates } = useQuery({
@@ -137,10 +151,10 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
             <>
               {/* Template selection */}
               <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                <span id={templateLabelId} className={FIELD_LABEL}>
                   {t('report.template', 'Template')}
-                </label>
-                <div className="grid grid-cols-2 gap-1">
+                </span>
+                <div className="grid grid-cols-2 gap-1.5" role="group" aria-labelledby={templateLabelId}>
                   {(templates ?? [
                     { id: 'general', name: t('report.templates.general', 'General'), description: '' },
                     { id: 'ms_activity', name: t('report.templates.ms_activity', 'MS Activity'), description: '' },
@@ -148,15 +162,15 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
                   ] as ReportTemplateInfo[]).map((tmpl) => (
                     <button
                       key={tmpl.id}
+                      type="button"
+                      aria-pressed={template === tmpl.id}
                       onClick={() => setTemplate(tmpl.id)}
-                      className={`px-2 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                        template === tmpl.id
-                          ? 'bg-amber-500 text-white shadow-sm'
-                          : 'bg-white/60 dark:bg-gray-800/60 hover:bg-white dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200/50 dark:border-gray-700/50'
+                      className={`${OPTION_BASE} flex min-h-8 items-center gap-1.5 px-2 py-1.5 text-left ${
+                        template === tmpl.id ? OPTION_ON : OPTION_OFF
                       }`}
                       title={tmpl.description}
                     >
-                      <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={templateIcons[tmpl.id] || templateIcons.general} />
                       </svg>
                       <span className="truncate">{tmpl.name}</span>
@@ -167,10 +181,10 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
 
               {/* Language selection */}
               <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                <span id={languageLabelId} className={FIELD_LABEL}>
                   {t('report.language', 'Language')}
-                </label>
-                <div className="flex gap-1">
+                </span>
+                <div className="flex gap-1.5" role="group" aria-labelledby={languageLabelId}>
                   {[
                     { code: 'en', label: 'EN' },
                     { code: 'es', label: 'ES' },
@@ -178,11 +192,11 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
                   ].map((lang) => (
                     <button
                       key={lang.code}
+                      type="button"
+                      aria-pressed={language === lang.code}
                       onClick={() => setLanguage(lang.code)}
-                      className={`flex-1 px-2 py-1 rounded text-xs transition-colors ${
-                        language === lang.code
-                          ? 'bg-amber-500 text-white'
-                          : 'bg-white/60 dark:bg-gray-800/60 hover:bg-white dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200/50 dark:border-gray-700/50'
+                      className={`${OPTION_BASE} h-8 flex-1 px-2 ${
+                        language === lang.code ? OPTION_ON : OPTION_OFF
                       }`}
                     >
                       {lang.label}
@@ -192,54 +206,47 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
               </div>
 
               {/* Clinical indication */}
-              <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-                  {t('report.indication', 'Clinical Indication')}
-                </label>
-                <input
-                  type="text"
-                  value={indication}
-                  onChange={(e) => setIndication(e.target.value)}
-                  placeholder={t('report.indicationPlaceholder', 'e.g., Headache, rule out mass')}
-                  className="w-full px-2 py-1.5 bg-white/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-amber-500"
-                />
-              </div>
+              <Input
+                label={t('report.indication', 'Clinical Indication')}
+                type="text"
+                value={indication}
+                onChange={(e) => setIndication(e.target.value)}
+                placeholder={t('report.indicationPlaceholder', 'e.g., Headache, rule out mass')}
+                className="h-8 text-xs"
+              />
 
               {/* Technique */}
-              <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-                  {t('report.technique', 'Technique/Sequences')}
-                </label>
-                <input
-                  type="text"
-                  value={technique}
-                  onChange={(e) => setTechnique(e.target.value)}
-                  placeholder={t('report.techniquePlaceholder', 'e.g., T1, T2, FLAIR, DWI, Gd+')}
-                  className="w-full px-2 py-1.5 bg-white/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-amber-500"
-                />
-              </div>
+              <Input
+                label={t('report.technique', 'Technique/Sequences')}
+                type="text"
+                value={technique}
+                onChange={(e) => setTechnique(e.target.value)}
+                placeholder={t('report.techniquePlaceholder', 'e.g., T1, T2, FLAIR, DWI, Gd+')}
+                className="h-8 text-xs"
+              />
 
               {/* Additional observations */}
               <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                <label htmlFor={observationsId} className={FIELD_LABEL}>
                   {t('report.observations', 'Additional Observations')}
                 </label>
                 <textarea
+                  id={observationsId}
                   value={observations}
                   onChange={(e) => setObservations(e.target.value)}
                   placeholder={t('report.observationsPlaceholder', 'Any additional findings or context...')}
                   rows={2}
-                  className="w-full px-2 py-1.5 bg-white/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-amber-500 resize-none"
+                  className={`w-full resize-none rounded-lg border border-surface-border bg-surface-base px-3 py-2 text-xs text-ink-base placeholder-ink-faint transition-colors hover:border-surface-hover ${FOCUS_RING}`}
                 />
               </div>
 
               {/* Active segmentation indicator — lesion data will be auto-collected */}
               {useSegmentationStore.getState().currentSegmentation && (
-                <div className="flex items-center gap-1.5 px-2 py-1.5 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded">
-                  <svg className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex items-center gap-1.5 rounded-lg border border-clinical-info/30 bg-clinical-info/10 px-2.5 py-2">
+                  <svg className="h-3.5 w-3.5 shrink-0 text-clinical-info" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
-                  <span className="text-xs text-blue-700 dark:text-blue-300">
+                  <span className="text-xs text-clinical-info">
                     {t('report.lesionDataIncluded', 'Lesion analysis data will be auto-collected')}
                   </span>
                 </div>
@@ -247,11 +254,11 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
 
               {/* Volumetry indicator */}
               {volumetry && (
-                <div className="flex items-center gap-1.5 px-2 py-1.5 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 rounded">
-                  <svg className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex items-center gap-1.5 rounded-lg border border-clinical-info/30 bg-clinical-info/10 px-2.5 py-2">
+                  <svg className="h-3.5 w-3.5 shrink-0 text-clinical-info" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
-                  <span className="text-xs text-purple-700 dark:text-purple-300">
+                  <span className="text-xs text-clinical-info">
                     {t('report.volumetryIncluded', 'Volumetry data will be included')}
                   </span>
                 </div>
@@ -259,7 +266,7 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
 
               {/* Error */}
               {generateMutation.isError && (
-                <div className="p-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded text-xs text-red-700 dark:text-red-300">
+                <div className="rounded-lg border border-clinical-crit/30 bg-clinical-crit/10 px-2.5 py-2 text-xs leading-snug text-clinical-crit">
                   {/* CAPA-008: a 422 means no measurement was available — say so instead of a generic error. */}
                   {(generateMutation.error as any)?.response?.status === 422
                     ? t('report.noMeasurements', 'No measurements are available for this study. Open a segmentation and run its analysis first: a report without measurements would be invented.')
@@ -268,25 +275,28 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
               )}
 
               {/* Generate button */}
-              <button
+              <Button
+                variant="primary"
+                size="md"
+                fullWidth
                 onClick={handleGenerate}
                 disabled={generateMutation.isPending}
-                className="w-full px-3 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 shadow-sm"
+                aria-busy={generateMutation.isPending || undefined}
               >
                 {generateMutation.isPending ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                     <span>{t('report.generating', 'Generating...')}</span>
                   </>
                 ) : (
                   <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                     <span>{t('report.generate', 'Generate Report')}</span>
                   </>
                 )}
-              </button>
+              </Button>
             </>
           )}
 
@@ -294,57 +304,65 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
           {report && (
             <>
               {/* Success indicator */}
-              <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700/50 rounded-lg p-3 text-center">
-                <svg className="w-6 h-6 text-green-500 dark:text-green-400 mx-auto mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="rounded-lg border border-clinical-good/30 bg-clinical-good/10 p-3 text-center">
+                <svg className="mx-auto mb-1.5 h-6 w-6 text-clinical-good" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <p className="text-sm text-green-700 dark:text-green-300 font-medium">
+                <p className="text-sm font-medium text-clinical-good">
                   {t('reportViewer.reportReady', 'Report generated successfully')}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <p className="mt-1 text-xs tabular-nums text-ink-muted">
                   {report.template_type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} | {report.language.toUpperCase()} | {report.processing_time_ms}ms
                 </p>
               </div>
 
               {/* Action buttons */}
               <div className="space-y-1.5">
-                <button
+                <Button
+                  variant="primary"
+                  size="md"
+                  fullWidth
                   onClick={() => onReportGenerated?.(report)}
-                  className="w-full px-3 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 shadow-sm"
+                  leftIcon={
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  }
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
                   {t('reportViewer.viewFullReport', 'View Full Report')}
-                </button>
+                </Button>
                 <div className="flex gap-1.5">
-                  <button
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="flex-1 gap-1"
                     onClick={handleCopy}
-                    className="flex-1 px-3 py-1.5 bg-white/60 dark:bg-gray-800/60 hover:bg-white dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200/50 dark:border-gray-700/50 rounded text-xs transition-colors flex items-center justify-center gap-1"
                   >
                     {copied ? (
                       <>
-                        <svg className="w-3.5 h-3.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="h-3.5 w-3.5 text-clinical-good" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                         {t('report.copied', 'Copied!')}
                       </>
                     ) : (
                       <>
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                         </svg>
                         {t('report.copy', 'Copy')}
                       </>
                     )}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="flex-1"
                     onClick={handleReset}
-                    className="flex-1 px-3 py-1.5 bg-white/60 dark:bg-gray-800/60 hover:bg-white dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200/50 dark:border-gray-700/50 rounded text-xs transition-colors"
                   >
                     {t('report.newReport', 'New Report')}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </>

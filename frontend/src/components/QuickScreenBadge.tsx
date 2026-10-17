@@ -15,7 +15,9 @@
 
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Loader2 } from 'lucide-react';
 import { useEdgeAI, type ScreeningResult } from '@/hooks/useEdgeAI';
+import { Button } from '@/components/ui';
 
 interface QuickScreenBadgeProps {
   /** Current slice pixel data as base64 PNG string (data:image/png;base64,...) */
@@ -99,16 +101,18 @@ export const QuickScreenBadge: React.FC<QuickScreenBadgeProps> = ({
       {result && <ResultBadge result={result} onDismiss={reset} t={t} />}
 
       {/* Quick Screen button */}
-      <button
+      <Button
+        variant="secondary"
+        size="sm"
         onClick={handleScreen}
         disabled={isProcessing}
-        className="flex items-center gap-1.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-white border border-gray-600 transition-colors"
-        style={{ height: 28, padding: '0 10px', borderRadius: 6, fontSize: 12, fontWeight: 500 }}
+        aria-busy={isProcessing || undefined}
+        className="h-7 gap-1.5 bg-surface-raised/95 px-2.5"
         title={t('edgeAI.quickScreen', 'Quick Screen')}
       >
         {isProcessing ? (
           <>
-            <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
             <span>
               {isModelLoading
                 ? t('edgeAI.loadingModel', 'Loading model...')
@@ -117,7 +121,7 @@ export const QuickScreenBadge: React.FC<QuickScreenBadgeProps> = ({
           </>
         ) : (
           <>
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -128,7 +132,7 @@ export const QuickScreenBadge: React.FC<QuickScreenBadgeProps> = ({
             <span>{t('edgeAI.quickScreen', 'Quick Screen')}</span>
           </>
         )}
-      </button>
+      </Button>
 
       {/* RC-008 — risk control for HAZ-004 (CAPA-004 CA-4.4).
           Rendered UNCONDITIONALLY whenever a result is on screen or being
@@ -139,7 +143,7 @@ export const QuickScreenBadge: React.FC<QuickScreenBadgeProps> = ({
           The toggle is deliberately gone: a limitation the user must opt into is
           not a risk control, and a control that can be dismissed will be. */}
       {(result || isProcessing) && (
-        <div data-testid="edge-ai-disclaimer" className="border border-yellow-700/50 rounded text-[10px] text-yellow-300/80 leading-tight" style={{ maxWidth: 240, padding: 8, background: '#0E1014', borderRadius: 6 }}>
+        <div data-testid="edge-ai-disclaimer" className="max-w-[240px] rounded-lg border border-clinical-warn/40 bg-surface-base/95 p-2 text-xs leading-snug text-clinical-warn">
           {t(
             'edgeAI.disclaimerText',
             'This is an assistive screening tool only. Results are NOT diagnostic and must be confirmed by a qualified radiologist. All processing runs locally in your browser — no patient data is transmitted.',
@@ -149,7 +153,7 @@ export const QuickScreenBadge: React.FC<QuickScreenBadgeProps> = ({
 
       {/* Error */}
       {error && (
-        <div className="max-w-[200px] p-1.5 bg-red-900/60 border border-red-800/50 rounded text-[10px] text-red-300">
+        <div className="max-w-[240px] rounded-lg border border-clinical-crit/40 bg-surface-base/95 p-2 text-xs leading-snug text-clinical-crit">
           {error}
         </div>
       )}
@@ -175,20 +179,19 @@ function ResultBadge({
 
   return (
     <div
-      className={`flex items-center border ${
+      className={`flex items-center gap-2 rounded-lg border bg-surface-base/95 py-1.5 pl-3 pr-1.5 ${
         isNormal
-          ? 'bg-green-900/70 border-green-700 text-green-200'
-          : 'bg-red-900/70 border-red-700 text-red-200'
+          ? 'border-clinical-good/40 text-clinical-good'
+          : 'border-clinical-crit/40 text-clinical-crit'
       }`}
-      style={{ gap: 8, padding: '6px 12px', borderRadius: 6 }}
     >
       {/* Icon */}
       {isNormal ? (
-        <svg className="w-4 h-4 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="h-4 w-4 flex-shrink-0 text-clinical-good" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ) : (
-        <svg className="w-4 h-4 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="h-4 w-4 flex-shrink-0 text-clinical-crit" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
       )}
@@ -199,18 +202,20 @@ function ResultBadge({
             ? t('edgeAI.resultNormal', 'Normal')
             : t('edgeAI.resultAbnormal', 'Review Recommended')}
         </span>
-        <span className="text-[10px] opacity-70">
+        <span className="text-xs tabular-nums text-ink-muted">
           {confidence}% | {result.inferenceTimeMs}ms
         </span>
       </div>
 
       {/* Dismiss */}
       <button
+        type="button"
         onClick={onDismiss}
-        className="ml-1 p-0.5 hover:bg-white/10 rounded"
+        className="ml-1 rounded-md p-1 text-ink-muted transition-colors hover:bg-surface-hover hover:text-ink-base focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60"
         title={t('common.close', 'Close')}
+        aria-label={t('common.close', 'Close')}
       >
-        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>

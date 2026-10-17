@@ -1,9 +1,18 @@
+/**
+ * ViewerControls — the annotation dock at the bottom of the study rail (v3).
+ * Segmentation editing on/off, the paint-tool panel and (parcellations only) brain
+ * volumetry. Render path and window/level moved to the workspace toolbar / image
+ * panel; the matplotlib-only colour-map and axis-limit options stay here, shown only
+ * when that server render path is active. Props unchanged.
+ */
 import { useTranslation } from 'react-i18next';
-import { useViewerStore } from '@/store/useViewerStore';
+import { PenTool } from 'lucide-react';
 import { SegmentationPanel } from './SegmentationPanel';
 import { BrainVolumetryPanel } from './BrainVolumetryPanel';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
+import { useViewerStore } from '@/store/useViewerStore';
 import type { RenderMode } from '@/hooks/useViewerControls';
+import { Button, Switch } from './ui';
 
 interface ViewerControlsProps {
   renderMode: RenderMode;
@@ -33,166 +42,40 @@ interface ViewerControlsProps {
   viewMode?: '2d' | '3d';
 }
 
+const fieldCls =
+  'h-8 w-full rounded-md border border-surface-border bg-surface-raised px-2 text-xs tabular-nums text-ink-base ' +
+  'placeholder-ink-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60';
+
 export default function ViewerControls({
   renderMode,
-  setRenderMode,
   colormap,
   setColormap,
   segmentationMode,
   setSegmentationMode,
-  xMin,
-  setXMin,
-  xMax,
-  setXMax,
-  yMin,
-  setYMin,
-  yMax,
-  setYMax,
-  appliedXMin,
-  setAppliedXMin,
-  appliedXMax,
-  setAppliedXMax,
-  appliedYMin,
-  setAppliedYMin,
-  appliedYMax,
-  setAppliedYMax,
-  onNavigateToSlice,
+  xMin, setXMin, xMax, setXMax, yMin, setYMin, yMax, setYMax,
+  setAppliedXMin, setAppliedXMax, setAppliedYMin, setAppliedYMax,
   viewMode = '2d',
 }: ViewerControlsProps) {
   const { t } = useTranslation();
-  const { currentSeries, currentPatientId, currentStudyId, currentSeriesId } = useViewerStore();
-  const windowCenter = useViewerStore((s) => s.windowCenter);
-  const windowWidth = useViewerStore((s) => s.windowWidth);
-  const setWindowLevel = useViewerStore((s) => s.setWindowLevel);
+  const currentSeries = useViewerStore((s) => s.currentSeries);
   const activeSegmentation = useSegmentationStore((s) => s.activeSegmentation);
 
   if (!currentSeries) return null;
 
-  // Window/Level (real DICOM VOI-LUT, matplotlib mode). windowWidth>0 = a window is
-  // active (server re-renders from raw intensities); 0 = full-range default (unchanged).
-  // Seed reference comes from the per-series DICOM tag (MRI has no standardized units, so
-  // there are NO fixed T1/T2/FLAIR presets — the correct seed is this scan's own tag).
-  const dicomWC = currentSeries.metadata?.window_center;
-  const dicomWW = currentSeries.metadata?.window_width;
-  const wlActive = windowWidth > 0;
-  const wlCenterStr = wlActive ? String(Math.round(windowCenter)) : '';
-  const wlWidthStr = wlActive ? String(Math.round(windowWidth)) : '';
-  const hasSeed = dicomWC != null && dicomWW != null && dicomWW > 0;
-  const applyCenter = (raw: string) => {
-    const c = parseFloat(raw);
-    if (Number.isNaN(c)) return;
-    // Pair the center with an ALREADY-VALID width — the active one, else the seed.
-    // Never fabricate width=1 (a degenerate window that blanks the slice). With no
-    // valid width available, typing a center alone is a no-op; the user seeds first.
-    const w = wlActive ? windowWidth : (hasSeed ? (dicomWW as number) : null);
-    if (w != null && w > 0) setWindowLevel(c, w);
-  };
-  const applyWidth = (raw: string) => {
-    const w = parseFloat(raw);
-    if (!Number.isNaN(w) && w > 0) setWindowLevel(wlActive ? windowCenter : (dicomWC ?? 0), w);
-  };
+  // Only show volumetry for parcellations (FreeSurfer labels have IDs > 6);
+  // lesion / MAGNIMS masks use labels 0-6 only.
+  const hasFreeSurferLabels = !!activeSegmentation?.labels?.some((l) => l.id > 6);
 
   return (
-    <div style={{ background: '#0E1014', borderRadius: 8, padding: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {/* 2D-only: Render mode toggle and matplotlib controls */}
-      {viewMode === '2d' && (
-      <div>
-        <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{t('viewer.renderMode')}</label>
-        <div className="grid grid-cols-3" style={{ gap: 4 }}>
-          <button
-            onClick={() => setRenderMode('standard')}
-            className={`flex items-center justify-center transition-colors ${
-              renderMode === 'standard' ? 'bg-gray-700 text-white border border-gray-600' : 'bg-gray-800 text-gray-400 hover:bg-gray-700 border border-transparent'
-            }`}
-            style={{ height: 28, borderRadius: 6, fontSize: 12, fontWeight: 500 }}
-          >
-            {t('viewer.standard')}
-          </button>
-          <button
-            onClick={() => setRenderMode('matplotlib')}
-            className={`flex items-center justify-center transition-colors ${
-              renderMode === 'matplotlib' ? 'bg-gray-700 text-white border border-gray-600' : 'bg-gray-800 text-gray-400 hover:bg-gray-700 border border-transparent'
-            }`}
-            style={{ height: 28, borderRadius: 6, fontSize: 12, fontWeight: 500 }}
-          >
-            {t('viewer.matplotlib')}
-          </button>
-          <button
-            onClick={() => setRenderMode('niivue')}
-            title={t('viewer.niivueHint', 'Ventana/nivel instantáneo por GPU (solo visualización)')}
-            className={`flex items-center justify-center transition-colors ${
-              renderMode === 'niivue' ? 'bg-gray-700 text-white border border-gray-600' : 'bg-gray-800 text-gray-400 hover:bg-gray-700 border border-transparent'
-            }`}
-            style={{ height: 28, borderRadius: 6, fontSize: 12, fontWeight: 500 }}
-          >
-            {t('viewer.niivueFast', 'W/L GPU')}
-          </button>
-        </div>
-      </div>
-      )}
-
-      {viewMode === '2d' && (renderMode === 'matplotlib' || renderMode === 'niivue') && (
-        <>
-          {/* Window / Level — real DICOM VOI-LUT. In 'matplotlib' the server re-renders
-              from raw intensities (a round-trip per change); in 'niivue' (W/L GPU) it is
-              an instant GPU cal_min/cal_max update — the same C/W numbers drive both. */}
-          <div>
-            <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
-              <label style={{ fontSize: 11, fontWeight: 500, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                {t('viewer.windowLevel', 'Window / Level')}
-              </label>
-              <span style={{ fontSize: 10, color: wlActive ? '#57C7D4' : '#5C6472', fontVariantNumeric: 'tabular-nums' }}>
-                {wlActive ? `C ${Math.round(windowCenter)} · A ${Math.round(windowWidth)}` : t('viewer.wlAuto', 'Auto (full range)')}
-              </span>
-            </div>
-            <div className="flex" style={{ gap: 4 }}>
-              <input
-                type="number" inputMode="numeric" value={wlCenterStr}
-                onChange={(e) => applyCenter(e.target.value)}
-                placeholder={dicomWC != null ? String(Math.round(dicomWC)) : t('viewer.wlCenter', 'Center')}
-                aria-label={t('viewer.wlCenter', 'Window center')}
-                className="w-full border border-gray-600 focus:ring-1 focus:ring-blue-500 outline-none"
-                style={{ height: 28, padding: '0 8px', borderRadius: 6, background: '#161922', color: '#E7EBF2', fontSize: 12, fontVariantNumeric: 'tabular-nums' }}
-              />
-              <input
-                type="number" inputMode="numeric" min={1} value={wlWidthStr}
-                onChange={(e) => applyWidth(e.target.value)}
-                placeholder={dicomWW != null ? String(Math.round(dicomWW)) : t('viewer.wlWidth', 'Width')}
-                aria-label={t('viewer.wlWidth', 'Window width')}
-                className="w-full border border-gray-600 focus:ring-1 focus:ring-blue-500 outline-none"
-                style={{ height: 28, padding: '0 8px', borderRadius: 6, background: '#161922', color: '#E7EBF2', fontSize: 12, fontVariantNumeric: 'tabular-nums' }}
-              />
-            </div>
-            <div className="grid grid-cols-2" style={{ gap: 4, marginTop: 4 }}>
-              <button
-                onClick={() => { if (hasSeed) setWindowLevel(dicomWC as number, dicomWW as number); }}
-                disabled={!hasSeed}
-                className="flex items-center justify-center bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed border border-gray-600 transition-colors"
-                style={{ height: 26, borderRadius: 6, fontSize: 11, fontWeight: 500 }}
-                title={t('viewer.wlOptimalHint', 'Apply the optimal window (DICOM tag, or auto percentile)')}
-              >
-                {t('viewer.wlOptimal', 'Optimal')}
-              </button>
-              <button
-                onClick={() => setWindowLevel(0, 0)}
-                disabled={!wlActive}
-                className="flex items-center justify-center bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed border border-gray-600 transition-colors"
-                style={{ height: 26, borderRadius: 6, fontSize: 11, fontWeight: 500 }}
-                title={t('viewer.wlResetHint', 'Reset to full-range auto')}
-              >
-                {t('viewer.wlReset', 'Full range')}
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{t('viewer.colormap')}</label>
-            <select
-              value={colormap}
-              onChange={(e) => setColormap(e.target.value)}
-              className="w-full border border-gray-600 focus:ring-1 focus:ring-blue-500 outline-none"
-              style={{ height: 28, padding: '0 8px', borderRadius: 6, background: '#161922', color: '#E7EBF2', fontSize: 12 }}
-            >
+    <div className="space-y-3">
+      {viewMode === '2d' && renderMode === 'matplotlib' && (
+        <section className="space-y-2.5 rounded-lg border border-surface-border bg-surface-base p-3">
+          <h3 className="text-xs font-medium uppercase tracking-wide text-ink-faint">
+            {t('viewer3.serverRender', 'Server render options')}
+          </h3>
+          <label className="block">
+            <span className="mb-1 block text-xs text-ink-muted">{t('viewer.colormap', 'Colormap')}</span>
+            <select value={colormap} onChange={(e) => setColormap(e.target.value)} className={fieldCls}>
               <option value="gray">{t('viewer.gray')}</option>
               <option value="viridis">{t('viewer.viridis')}</option>
               <option value="plasma">{t('viewer.plasma')}</option>
@@ -202,90 +85,44 @@ export default function ViewerControls({
               <option value="cool">{t('viewer.cool')}</option>
               <option value="jet">{t('viewer.jet')}</option>
             </select>
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            <input type="number" aria-label={`${t('viewer.xAxis')} ${t('viewer.min')}`} placeholder={`${t('viewer.xAxis')} ${t('viewer.min')}`} value={xMin} onChange={(e) => setXMin(e.target.value)} className={fieldCls} />
+            <input type="number" aria-label={`${t('viewer.xAxis')} ${t('viewer.max')}`} placeholder={`${t('viewer.xAxis')} ${t('viewer.max')}`} value={xMax} onChange={(e) => setXMax(e.target.value)} className={fieldCls} />
+            <input type="number" aria-label={`${t('viewer.yAxis')} ${t('viewer.min')}`} placeholder={`${t('viewer.yAxis')} ${t('viewer.min')}`} value={yMin} onChange={(e) => setYMin(e.target.value)} className={fieldCls} />
+            <input type="number" aria-label={`${t('viewer.yAxis')} ${t('viewer.max')}`} placeholder={`${t('viewer.yAxis')} ${t('viewer.max')}`} value={yMax} onChange={(e) => setYMax(e.target.value)} className={fieldCls} />
           </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{t('viewer.xAxis')}</label>
-            <div className="flex" style={{ gap: 4 }}>
-              <input type="number" placeholder={t('viewer.min')} value={xMin} onChange={(e) => setXMin(e.target.value)}
-                className="border border-gray-600 outline-none focus:ring-1 focus:ring-blue-500"
-                style={{ width: 64, height: 28, padding: '0 6px', borderRadius: 6, background: '#161922', color: '#E7EBF2', fontSize: 12 }} />
-              <input type="number" placeholder={t('viewer.max')} value={xMax} onChange={(e) => setXMax(e.target.value)}
-                className="border border-gray-600 outline-none focus:ring-1 focus:ring-blue-500"
-                style={{ width: 64, height: 28, padding: '0 6px', borderRadius: 6, background: '#161922', color: '#E7EBF2', fontSize: 12 }} />
-            </div>
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{t('viewer.yAxis')}</label>
-            <div className="flex" style={{ gap: 4 }}>
-              <input type="number" placeholder={t('viewer.min')} value={yMin} onChange={(e) => setYMin(e.target.value)}
-                className="border border-gray-600 outline-none focus:ring-1 focus:ring-blue-500"
-                style={{ width: 64, height: 28, padding: '0 6px', borderRadius: 6, background: '#161922', color: '#E7EBF2', fontSize: 12 }} />
-              <input type="number" placeholder={t('viewer.max')} value={yMax} onChange={(e) => setYMax(e.target.value)}
-                className="border border-gray-600 outline-none focus:ring-1 focus:ring-blue-500"
-                style={{ width: 64, height: 28, padding: '0 6px', borderRadius: 6, background: '#161922', color: '#E7EBF2', fontSize: 12 }} />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2" style={{ gap: 4 }}>
-            <button
-              onClick={() => { setAppliedXMin(xMin); setAppliedXMax(xMax); setAppliedYMin(yMin); setAppliedYMax(yMax); }}
-              className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white transition-colors"
-              style={{ height: 28, borderRadius: 6, fontSize: 12, fontWeight: 500 }}
-            >
+          <div className="grid grid-cols-2 gap-2">
+            <Button size="sm" variant="primary"
+              onClick={() => { setAppliedXMin(xMin); setAppliedXMax(xMax); setAppliedYMin(yMin); setAppliedYMax(yMax); }}>
               {t('viewer.apply')}
-            </button>
-            <button
-              onClick={() => { setXMin(''); setXMax(''); setYMin(''); setYMax(''); setAppliedXMin(''); setAppliedXMax(''); setAppliedYMin(''); setAppliedYMax(''); }}
-              className="flex items-center justify-center bg-gray-800 hover:bg-gray-700 text-gray-300 transition-colors"
-              style={{ height: 28, borderRadius: 6, fontSize: 12, fontWeight: 500 }}
-            >
+            </Button>
+            <Button size="sm" variant="secondary"
+              onClick={() => { setXMin(''); setXMax(''); setYMin(''); setYMax(''); setAppliedXMin(''); setAppliedXMax(''); setAppliedYMin(''); setAppliedYMax(''); }}>
               {t('viewer.reset')}
-            </button>
+            </Button>
           </div>
-        </>
+        </section>
       )}
 
-      {/* Segmentation Toggle — 28px (sm), radius 6 */}
-      <div className="border-t border-gray-700" style={{ paddingTop: 8 }}>
-        <button
-          onClick={() => setSegmentationMode(!segmentationMode)}
-          className={`w-full flex items-center justify-center transition-colors ${
-            segmentationMode
-              ? 'bg-green-900/30 border border-green-700 text-green-400'
-              : 'bg-gray-800 hover:bg-gray-700 text-gray-300 border border-transparent'
-          }`}
-          style={{ height: 28, borderRadius: 6, fontSize: 12, fontWeight: 500 }}
-        >
-          {segmentationMode ? `✓ ${t('viewer.segmentationMode')}` : t('viewer.activateSegmentation')}
-        </button>
+      <div className="rounded-lg border border-surface-border bg-surface-base px-3 py-2.5">
+        <Switch
+          checked={segmentationMode}
+          onChange={setSegmentationMode}
+          label={
+            <span className="inline-flex items-center gap-2 text-xs font-medium text-ink-base">
+              <PenTool className="h-3.5 w-3.5 text-ink-muted" aria-hidden />
+              {segmentationMode ? t('viewer.segmentationMode') : t('viewer.activateSegmentation')}
+            </span>
+          }
+        />
       </div>
 
-      {/* Segmentation Panel */}
-      {segmentationMode && (
-        <div className="pt-2 border-t border-gray-700">
-          <SegmentationPanel />
-        </div>
+      {segmentationMode && <SegmentationPanel />}
+
+      {segmentationMode && activeSegmentation && hasFreeSurferLabels && (
+        <BrainVolumetryPanel segmentationId={activeSegmentation.id} />
       )}
-
-      {/* Brain Volumetry Panel (visible only for parcellation segmentations, not lesion masks) */}
-      {segmentationMode && activeSegmentation && (() => {
-        // Only show volumetry for parcellations (FreeSurfer labels have IDs > 6)
-        // Lesion/MAGNIMS masks use labels 0-6 only
-        const hasFreeSurferLabels = activeSegmentation.labels?.some(
-          (l) => l.id > 6
-        );
-        return hasFreeSurferLabels;
-      })() && (
-        <div className="pt-2 border-t border-gray-700">
-          <BrainVolumetryPanel
-            segmentationId={activeSegmentation.id}
-          />
-        </div>
-      )}
-
-
     </div>
   );
 }

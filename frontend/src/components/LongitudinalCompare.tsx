@@ -9,7 +9,8 @@
  * @module components/LongitudinalCompare
  */
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useId } from 'react';
+import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -28,6 +29,9 @@ import { segmentationAPI } from '@/api/segmentation';
 import { studyAPI } from '@/api/study';
 import { useViewerStore } from '@/store/useViewerStore';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
+import { Badge, Button } from '@/components/ui';
+import { LONGITUDINAL_RGB, MAGNIMS_ZONE_RGB, regionRgb, rgbCss } from '@/utils/clinicalPalette';
+import type { RGB } from '@/utils/clinicalPalette';
 import type { LongitudinalResult, LesionChange, StudySummary, SegmentationResponse, SELResult } from '@/types';
 
 /** Names that indicate non-lesion segmentations (excluded from dropdowns) */
@@ -43,38 +47,95 @@ interface LongitudinalCompareProps {
   studies?: StudySummary[];
 }
 
+/** Shared control styles (design-system v2 tokens). */
+const SELECT_CLS =
+  'h-8 w-full rounded-lg border border-surface-border bg-surface-base px-2 text-xs text-ink-base ' +
+  'transition-colors hover:border-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60';
+const FOCUS_RING = 'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60';
+const OVERLINE = 'text-xs font-medium uppercase tracking-wide text-ink-faint';
+/** Compact status pill sizing for the dense change table (Badge primitive, 12px text). */
+const TABLE_PILL = 'px-1.5 py-0 text-xs leading-4';
+
+/**
+ * Status colours. NEW and RESOLVED are the two classes painted on the fused overlay, so
+ * they take the shared clinical palette (LONGITUDINAL_RGB: new = vermillion, resolved =
+ * sky blue) — chips, table and legend must agree with the picture. Before v3 this panel
+ * coloured new = blue and resolved = green while the overlay painted new = red, a
+ * legend/picture disagreement. The remaining statuses use UI semantic tokens.
+ */
+function statusRgb(status: string): RGB | null {
+  switch (status) {
+    case 'new': return LONGITUDINAL_RGB.newLesion;
+    case 'resolved': return LONGITUDINAL_RGB.resolved;
+    default: return null;
+  }
+}
+
+/** Inline text colour for the data-coloured statuses (undefined for token-coloured ones). */
+function statusTextStyle(status: string): CSSProperties | undefined {
+  const c = statusRgb(status);
+  return c ? { color: rgbCss(c) } : undefined;
+}
+
+/** Inline dot colour for the data-coloured statuses (undefined for token-coloured ones). */
+function statusDotStyle(status: string): CSSProperties | undefined {
+  const c = statusRgb(status);
+  return c ? { backgroundColor: rgbCss(c) } : undefined;
+}
+
 function statusIcon(status: string) {
   switch (status) {
-    case 'new': return <Plus className="w-3 h-3 text-blue-400" />;
-    case 'resolved': return <Minus className="w-3 h-3 text-green-400" />;
-    case 'enlarged': return <ArrowUpRight className="w-3 h-3 text-red-400" />;
-    case 'shrunk': return <ArrowDownRight className="w-3 h-3 text-teal-400" />;
-    case 'stable': return <Equal className="w-3 h-3 text-gray-400" />;
+    case 'new': return <Plus className="h-3 w-3 shrink-0" style={statusTextStyle(status)} aria-hidden />;
+    case 'resolved': return <Minus className="h-3 w-3 shrink-0" style={statusTextStyle(status)} aria-hidden />;
+    case 'enlarged': return <ArrowUpRight className="h-3 w-3 shrink-0 text-clinical-crit" aria-hidden />;
+    case 'shrunk': return <ArrowDownRight className="h-3 w-3 shrink-0 text-ink-soft" aria-hidden />;
+    case 'stable': return <Equal className="h-3 w-3 shrink-0 text-ink-muted" aria-hidden />;
     default: return null;
   }
 }
 
 function statusColor(status: string): string {
   switch (status) {
-    case 'new': return 'text-blue-400';
-    case 'resolved': return 'text-green-400';
-    case 'enlarged': return 'text-red-400';
-    case 'shrunk': return 'text-teal-400';
-    case 'stable': return 'text-gray-400';
-    default: return 'text-gray-400';
+    case 'new':
+    case 'resolved': return ''; // data colour applied inline (statusTextStyle)
+    case 'enlarged': return 'text-clinical-crit';
+    case 'shrunk': return 'text-ink-soft';
+    case 'stable': return 'text-ink-muted';
+    default: return 'text-ink-muted';
   }
 }
 
 function statusBg(status: string): string {
   switch (status) {
-    case 'new': return 'bg-blue-500';
-    case 'resolved': return 'bg-green-500';
-    case 'enlarged': return 'bg-red-500';
-    case 'shrunk': return 'bg-teal-500';
-    case 'stable': return 'bg-gray-500';
-    default: return 'bg-gray-500';
+    case 'new':
+    case 'resolved': return ''; // data colour applied inline (statusDotStyle)
+    case 'enlarged': return 'bg-clinical-crit';
+    case 'shrunk': return 'bg-ink-soft';
+    case 'stable': return 'bg-ink-faint';
+    default: return 'bg-ink-faint';
   }
 }
+
+/** MAGNIMS region pill colour from the shared zone palette (same as the zone-map overlay). */
+function zoneBadgeStyle(regionId: number): CSSProperties | undefined {
+  const c = MAGNIMS_ZONE_RGB[regionId];
+  return c ? { color: rgbCss(c), backgroundColor: rgbCss(c, 0.15) } : undefined;
+}
+
+/** Region-row swatch (null for "Unassigned" / unknown names). */
+function regionSwatchStyle(region: string): CSSProperties | undefined {
+  const c = regionRgb(region);
+  return c ? { backgroundColor: rgbCss(c) } : undefined;
+}
+
+/**
+ * Legend swatch for the FLAIR subtraction heat map — the SAME endpoint colours as the
+ * overlay ramp (volume/overlayPaint.subtractionRGBA and the legacy 2D canvas):
+ * blue = darker / resolving, orange-red = brighter at follow-up / new signal.
+ */
+const SUBTRACTION_SWATCH_STYLE: CSSProperties = {
+  background: 'linear-gradient(to right, rgb(60, 130, 245), transparent, rgb(245, 70, 40))',
+};
 
 function formatStudyDate(dateStr: string): string {
   try {
@@ -118,6 +179,11 @@ export function LongitudinalCompare({
 }: LongitudinalCompareProps) {
   const { t } = useTranslation();
   const currentStudyId = useViewerStore((s) => s.currentStudyId);
+  // Label ids so each timepoint's selects are announced with their TP label (a11y only).
+  const tp1LabelId = useId();
+  const tp2LabelId = useId();
+  const tp1SelectId = useId();
+  const tp2SelectId = useId();
 
   // Sort studies oldest first (TP1 = earlier, TP2 = later)
   const sortedStudies = useMemo(() =>
@@ -243,21 +309,22 @@ export function LongitudinalCompare({
     <div className="space-y-3">
       {/* Header */}
       <div className="flex items-center gap-2">
-        <TrendingUp className="w-3.5 h-3.5 text-indigo-400" />
-        <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+        <TrendingUp className="h-4 w-4 text-brand-400" aria-hidden />
+        <span className="text-sm font-semibold text-ink-base">
           {t('longitudinal.title', 'Longitudinal Tracking')}
         </span>
       </div>
 
       {/* TP1: Study + Segmentation */}
-      <div className="space-y-1">
-        <label className="text-[9px] text-gray-500 block font-medium">
+      <div className="space-y-1.5">
+        <label id={tp1LabelId} htmlFor={tp1SelectId} className="block text-xs font-medium text-ink-muted">
           {t('longitudinal.tp1', 'TP1 (Earlier)')}
         </label>
         <select
+          id={tp1SelectId}
           value={tp1StudyId}
           onChange={(e) => { setTp1StudyId(e.target.value); setTp1SegId(''); invalidate(); }}
-          className="w-full px-1.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded text-[10px] border border-gray-200 dark:border-gray-600"
+          className={SELECT_CLS}
         >
           <option value="">Select study...</option>
           {sortedStudies.map((s) => (
@@ -269,9 +336,10 @@ export function LongitudinalCompare({
         </select>
         {tp1StudyId && tp1Segs.length > 0 && (
           <select
+            aria-labelledby={tp1LabelId}
             value={tp1SegId}
             onChange={(e) => { setTp1SegId(e.target.value); invalidate(); }}
-            className="w-full px-1.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded text-[10px] border border-gray-200 dark:border-gray-600"
+            className={SELECT_CLS}
           >
             <option value="">Select segmentation...</option>
             {tp1Segs.map((s) => (
@@ -282,19 +350,20 @@ export function LongitudinalCompare({
           </select>
         )}
         {tp1StudyId && tp1Segs.length === 0 && tp1FileIds.length > 0 && (
-          <p className="text-[9px] text-gray-500 italic">No lesion segmentations found</p>
+          <p className="text-xs italic text-ink-muted">No lesion segmentations found</p>
         )}
       </div>
 
       {/* TP2: Study + Segmentation */}
-      <div className="space-y-1">
-        <label className="text-[9px] text-gray-500 block font-medium">
+      <div className="space-y-1.5">
+        <label id={tp2LabelId} htmlFor={tp2SelectId} className="block text-xs font-medium text-ink-muted">
           {t('longitudinal.tp2', 'TP2 (Later)')}
         </label>
         <select
+          id={tp2SelectId}
           value={tp2StudyId}
           onChange={(e) => { setTp2StudyId(e.target.value); setTp2SegId(''); invalidate(); }}
-          className="w-full px-1.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded text-[10px] border border-gray-200 dark:border-gray-600"
+          className={SELECT_CLS}
         >
           <option value="">Select study...</option>
           {sortedStudies.map((s) => (
@@ -306,9 +375,10 @@ export function LongitudinalCompare({
         </select>
         {tp2StudyId && tp2Segs.length > 0 && (
           <select
+            aria-labelledby={tp2LabelId}
             value={tp2SegId}
             onChange={(e) => { setTp2SegId(e.target.value); invalidate(); }}
-            className="w-full px-1.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded text-[10px] border border-gray-200 dark:border-gray-600"
+            className={SELECT_CLS}
           >
             <option value="">Select segmentation...</option>
             {tp2Segs.map((s) => (
@@ -319,57 +389,55 @@ export function LongitudinalCompare({
           </select>
         )}
         {tp2StudyId && tp2Segs.length === 0 && tp2FileIds.length > 0 && (
-          <p className="text-[9px] text-gray-500 italic">No lesion segmentations found</p>
+          <p className="text-xs italic text-ink-muted">No lesion segmentations found</p>
         )}
       </div>
 
       {/* Compare Button */}
-      <button
+      <Button
+        variant="primary"
+        size="sm"
+        fullWidth
         onClick={handleCompare}
         disabled={!canCompare || isLoading}
-        className="w-full flex items-center justify-center border border-blue-500 text-blue-400 hover:bg-blue-900/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-        style={{ height: 28, borderRadius: 6, fontSize: 12, fontWeight: 500 }}
+        loading={isLoading}
       >
-        {isLoading ? (
-          <Loader2 className="w-3 h-3 animate-spin mx-auto" />
-        ) : (
-          t('longitudinal.compare', 'Compare Timepoints')
-        )}
-      </button>
+        {t('longitudinal.compare', 'Compare Timepoints')}
+      </Button>
 
       {error && (
-        <div className="flex items-center gap-1 text-red-400 text-[10px]">
-          <AlertCircle className="w-3 h-3" />
-          <span className="truncate">{error}</span>
+        <div className="flex items-start gap-1.5 text-xs text-clinical-crit">
+          <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden />
+          <span className="min-w-0 break-words">{error}</span>
         </div>
       )}
 
       {result && (
         <>
           {/* Burden Summary */}
-          <div className="bg-gray-100 dark:bg-gray-900/50 rounded-lg p-2 space-y-1.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-gray-500 dark:text-gray-400">
+          <div className="space-y-1.5 rounded-lg border border-surface-border bg-surface-raised p-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs text-ink-muted">
                 {t('longitudinal.burden', 'Lesion Burden')}
               </span>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-gray-400 dark:text-gray-500">{result.burden_tp1_ml.toFixed(2)} mL</span>
-                <span className="text-[10px] text-gray-400">&rarr;</span>
-                <span className="text-xs font-mono font-bold text-gray-800 dark:text-white">{result.burden_tp2_ml.toFixed(2)} mL</span>
+              <div className="flex items-center gap-1.5 tabular-nums">
+                <span className="text-xs text-ink-muted">{result.burden_tp1_ml.toFixed(2)} mL</span>
+                <span className="text-xs text-ink-faint" aria-hidden>&rarr;</span>
+                <span className="text-sm font-semibold text-ink-base">{result.burden_tp2_ml.toFixed(2)} mL</span>
               </div>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-gray-500 dark:text-gray-400">{t('longitudinal.change', 'Change')}</span>
-              <span className={`text-xs font-mono font-bold ${
-                result.burden_delta_percent > 5 ? 'text-red-400' :
-                result.burden_delta_percent < -5 ? 'text-green-400' : 'text-gray-500 dark:text-gray-300'
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs text-ink-muted">{t('longitudinal.change', 'Change')}</span>
+              <span className={`text-sm font-semibold tabular-nums ${
+                result.burden_delta_percent > 5 ? 'text-clinical-crit' :
+                result.burden_delta_percent < -5 ? 'text-clinical-good' : 'text-ink-soft'
               }`}>
                 {result.burden_delta_percent > 0 ? '+' : ''}{result.burden_delta_percent.toFixed(1)}%
               </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-gray-500 dark:text-gray-400">{t('longitudinal.lesionCount', 'Lesion Count')}</span>
-              <span className="text-[10px] text-gray-600 dark:text-gray-300">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs text-ink-muted">{t('longitudinal.lesionCount', 'Lesion Count')}</span>
+              <span className="text-xs tabular-nums text-ink-soft">
                 {result.total_lesions_tp1} &rarr; {result.total_lesions_tp2}
               </span>
             </div>
@@ -381,18 +449,18 @@ export function LongitudinalCompare({
               counts can include misregistration artefacts. Prefer the backend's authoritative
               `caveat` string. registration_verified is currently always false. */}
           {result.registration_verified ? (
-            <div className="rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-1.5 text-[10px] leading-snug text-emerald-700 dark:text-emerald-300">
+            <div className="rounded-lg border border-clinical-good/30 bg-clinical-good/10 px-2.5 py-2 text-xs leading-snug text-clinical-good">
               {t('longitudinal.registrationVerified',
                 'Timepoints spatially co-registered — changes are spatially valid (still review before diagnosis).')}
             </div>
           ) : (
-            <div className="rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-[10px] leading-snug text-amber-700 dark:text-amber-300">
+            <div className="rounded-lg border border-clinical-warn/30 bg-clinical-warn/10 px-2.5 py-2 text-xs leading-snug text-clinical-warn">
               {result.caveat || t('longitudinal.candidateCaveat',
                 'Unadjudicated change candidates — spatial registration NOT verified. Two timepoints with equal dimensions are not necessarily aligned; a radiologist must review each candidate before it informs a diagnosis.')}
             </div>
           )}
           {result.spacing_resolved === false && (
-            <div className="rounded border border-orange-500/40 bg-orange-500/10 px-2 py-1 text-[10px] leading-snug text-orange-700 dark:text-orange-300">
+            <div className="rounded-lg border border-clinical-warn/30 bg-clinical-warn/10 px-2.5 py-1.5 text-xs leading-snug text-clinical-warn">
               {t('longitudinal.spacingFallback',
                 'Voxel spacing could not be resolved — volumes (mL) are approximate.')}
             </div>
@@ -401,10 +469,10 @@ export function LongitudinalCompare({
               misregistration false positives; it is NOT lesion-scale certification
               (registration_verified stays false). Transparent method disclosure — a
               gap most commercial tools leave as a black box. */}
-          <div className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-400">
-            <span className={`w-1.5 h-1.5 rounded-full ${result.registration_applied ? 'bg-sky-500' : 'bg-gray-400'}`} />
+          <div className="flex items-start gap-1.5 text-xs leading-snug text-ink-muted">
+            <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${result.registration_applied ? 'bg-clinical-info' : 'bg-ink-faint'}`} aria-hidden />
             {result.registration_applied ? (
-              <span>
+              <span className="tabular-nums">
                 {t('longitudinal.coregistered', 'Rigidly co-registered (TP2→TP1, advisory)')}
                 {typeof result.registration_advisory_qc?.translation_mm === 'number' &&
                   ` · ${result.registration_advisory_qc.translation_mm.toFixed(1)} mm, ${(result.registration_advisory_qc.rotation_deg ?? 0).toFixed(1)}°`}
@@ -415,9 +483,9 @@ export function LongitudinalCompare({
           </div>
           {/* FLAIR subtraction confirmation summary (advisory new-lesion filter). */}
           {result.subtraction_available && result.subtraction_summary && result.subtraction_summary.new_total > 0 && (
-            <div className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-sky-500" />
-              <span>
+            <div className="flex items-start gap-1.5 text-xs leading-snug text-ink-muted">
+              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-clinical-info" aria-hidden />
+              <span className="tabular-nums">
                 {t('longitudinal.subSummary',
                   'FLAIR subtraction: {{c}} of {{n}} new candidates confirmed brighter at follow-up',
                   { c: result.subtraction_summary.new_subtraction_confirmed, n: result.subtraction_summary.new_total })}
@@ -429,22 +497,23 @@ export function LongitudinalCompare({
           {result.subtraction_volume_b64 && (
             <button
               type="button"
+              aria-pressed={subVisible}
               onClick={() => useSegmentationStore.getState().toggleLongitudinalSubtraction()}
-              className={`flex w-full items-center justify-between rounded border px-2 py-1 text-[10px] transition-colors ${
+              className={`flex w-full items-center justify-between rounded-lg border px-2.5 py-1.5 text-xs transition-colors ${FOCUS_RING} ${
                 subVisible
-                  ? 'border-sky-500/50 bg-sky-500/10 text-sky-700 dark:text-sky-300'
-                  : 'border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  ? 'border-brand-500/30 bg-brand-950 text-brand-400'
+                  : 'border-surface-border text-ink-soft hover:bg-surface-hover'
               }`}
             >
               <span className="flex items-center gap-1.5">
-                <span className="inline-block h-2 w-4 rounded-sm bg-gradient-to-r from-blue-500 via-transparent to-red-500" />
+                <span className="inline-block h-2 w-4 rounded-sm" style={SUBTRACTION_SWATCH_STYLE} aria-hidden />
                 {t('longitudinal.subOverlayToggle', 'FLAIR subtraction heatmap')}
               </span>
               <span className="font-semibold">{subVisible ? t('common.on', 'ON') : t('common.off', 'OFF')}</span>
             </button>
           )}
           {result.subtraction_volume_omitted && (
-            <div className="text-[9px] text-gray-400">
+            <div className="text-xs leading-snug text-ink-muted">
               {t('longitudinal.subOmitted', 'Subtraction heatmap omitted (volume too large); confirmation flags still apply.')}
             </div>
           )}
@@ -453,7 +522,7 @@ export function LongitudinalCompare({
               Gated on the same candidate framing: presented as "candidate", requires
               radiologist adjudication, never asserts active disease or DIT. */}
           {(result.activity_candidate || result.dit_candidate) && (
-            <div className="rounded border border-purple-500/40 bg-purple-500/10 px-2 py-1.5 text-[10px] leading-snug text-purple-700 dark:text-purple-300">
+            <div className="rounded-lg border border-clinical-warn/30 bg-clinical-warn/10 px-2.5 py-2 text-xs leading-snug text-clinical-warn">
               <span className="font-semibold">
                 {result.activity_candidate
                   ? t('longitudinal.activityCandidate', 'Active-disease CANDIDATE')
@@ -471,10 +540,10 @@ export function LongitudinalCompare({
           {result.new_clinically_significant_count != null && (() => {
             const t2Active = (result.new_clinically_significant_count ?? 0) + (result.enlarging_count ?? 0) >= 1;
             return (
-              <div className={`rounded border px-2 py-1 text-[10px] leading-snug ${
+              <div className={`rounded-lg border px-2.5 py-2 text-xs leading-snug ${
                 t2Active
-                  ? 'border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300'
-                  : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                  ? 'border-clinical-warn/30 bg-clinical-warn/10 text-clinical-warn'
+                  : 'border-clinical-good/30 bg-clinical-good/10 text-clinical-good'
               }`}>
                 <span className="font-semibold">
                   {t2Active
@@ -489,27 +558,35 @@ export function LongitudinalCompare({
 
           {/* MAGNIMS region stratification (MSMask atlas) of new/enlarging candidates —
               PV/JC/IT/DWM, what commercial tools report by McDonald region. Only shown
-              when a zone map was available (MNI-space data); candidate-quality. */}
+              when a zone map was available (MNI-space data); candidate-quality.
+              Region swatches use the shared MAGNIMS zone palette (same as the zone map). */}
           {result.region_stratification && (() => {
             const rows = Object.entries(result.region_stratification)
               .filter(([, v]) => v.new > 0 || v.enlarging > 0);
             if (rows.length === 0) return null;
             return (
-              <div className="rounded border border-gray-200 dark:border-gray-800 px-2 py-1.5">
-                <div className="mb-1 text-[9px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <div className="rounded-lg border border-surface-border px-2.5 py-2">
+                <div className={`mb-1 ${OVERLINE}`}>
                   {t('longitudinal.byRegion', 'New / enlarging by MAGNIMS region (candidate)')}
                 </div>
                 {result.region_atlas_note && (
-                  <div className="mb-1 text-[9px] leading-snug text-gray-400">{result.region_atlas_note}</div>
+                  <div className="mb-1.5 text-xs leading-snug text-ink-muted">{result.region_atlas_note}</div>
                 )}
-                <div className="flex flex-col gap-0.5">
+                <div className="flex flex-col gap-1">
                   {rows.map(([region, v]) => (
-                    <div key={region} className="flex items-center justify-between text-[10px]">
-                      <span className="text-gray-600 dark:text-gray-300">{region}</span>
-                      <span className="font-mono text-gray-500 dark:text-gray-400">
-                        {v.new > 0 && <span className="text-blue-500">{v.new} new</span>}
+                    <div key={region} className="flex items-center justify-between gap-2 text-xs">
+                      <span className="flex min-w-0 items-center gap-1.5 text-ink-soft">
+                        <span
+                          className="inline-block h-2 w-2 shrink-0 rounded-sm bg-ink-faint"
+                          style={regionSwatchStyle(region)}
+                          aria-hidden
+                        />
+                        <span className="truncate">{region}</span>
+                      </span>
+                      <span className="shrink-0 tabular-nums text-ink-muted">
+                        {v.new > 0 && <span style={statusTextStyle('new')}>{v.new} new</span>}
                         {v.new > 0 && v.enlarging > 0 && ' · '}
-                        {v.enlarging > 0 && <span className="text-red-500">{v.enlarging} enl</span>}
+                        {v.enlarging > 0 && <span className="text-clinical-crit">{v.enlarging} enl</span>}
                       </span>
                     </div>
                   ))}
@@ -520,54 +597,56 @@ export function LongitudinalCompare({
 
           {/* SEL (slowly-expanding lesion) detection — vanguard smoldering-disease
               biomarker, on-demand (deformable registration). CANDIDATE, single-interval. */}
-          <div className="rounded border border-fuchsia-500/30 bg-fuchsia-500/5 px-2 py-1.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold text-fuchsia-700 dark:text-fuchsia-300">
+          <div className="rounded-lg border border-surface-border bg-surface-raised px-2.5 py-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold text-ink-base">
                 {t('longitudinal.selTitle', 'Slowly-expanding lesions (SEL)')}
               </span>
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="sm"
+                className="h-7 shrink-0 px-2"
                 onClick={handleDetectSELs}
                 disabled={selLoading}
-                className="rounded bg-fuchsia-600 px-2 py-0.5 text-[10px] font-medium text-white hover:bg-fuchsia-500 disabled:opacity-50"
+                leftIcon={selLoading ? <Loader2 className="h-3 w-3 animate-spin" aria-hidden /> : undefined}
               >
                 {selLoading ? t('longitudinal.selRunning', 'Analyzing…') : t('longitudinal.selDetect', 'Detect SELs')}
-              </button>
+              </Button>
             </div>
             {selResult && (
-              <div className="mt-1 text-[10px] leading-snug">
+              <div className="mt-1.5 text-xs leading-snug">
                 {!selResult.ok ? (
-                  <span className="text-gray-500 dark:text-gray-400">
+                  <span className="text-ink-muted">
                     {t('longitudinal.selUnavailable', 'SEL detection unavailable: {{r}}', { r: selResult.reason })}
                   </span>
                 ) : (
                   <>
-                    <span className="text-fuchsia-700 dark:text-fuchsia-300">
+                    <span className="tabular-nums text-ink-soft">
                       {t('longitudinal.selSummary',
                         '{{s}} SEL candidate(s) among {{e}} pre-existing lesions (vs {{bg}}% normal-tissue noise floor)',
                         { s: selResult.n_sel, e: selResult.n_existing,
                           bg: Math.round((selResult.background_expanding_fraction ?? 0) * 100) })}
                     </span>
                     {selResult.sels.length > 0 && (
-                      <div className="mt-0.5 flex flex-col gap-0.5">
+                      <div className="mt-1 flex flex-col gap-0.5">
                         {selResult.sels.map((s, i) => (
                           <button
                             key={i}
                             type="button"
                             onClick={() => onNavigateToSlice?.(Math.round(s.centroid_z))}
-                            className="flex items-center justify-between rounded px-1 py-0.5 text-left hover:bg-fuchsia-500/10"
+                            className={`flex items-center justify-between gap-2 rounded-md px-1.5 py-1 text-left transition-colors hover:bg-surface-hover ${FOCUS_RING}`}
                           >
-                            <span className="text-gray-600 dark:text-gray-300">
+                            <span className="tabular-nums text-ink-soft">
                               {(s.baseline_volume_mm3 / 1000).toFixed(3)} mL {t('longitudinal.selBaseline', 'baseline')}
                             </span>
-                            <span className="font-mono text-fuchsia-600 dark:text-fuchsia-400">
+                            <span className="tabular-nums font-medium text-ink-base">
                               {Math.round(s.expanding_fraction * 100)}% {t('longitudinal.selExpanding', 'expanding')}
                             </span>
                           </button>
                         ))}
                       </div>
                     )}
-                    <div className="mt-0.5 text-[9px] text-gray-400">
+                    <div className="mt-1 text-xs leading-snug text-ink-muted">
                       {t('longitudinal.selCaveat',
                         'CANDIDATE, single-interval (2 timepoints). The validated SEL definition needs ≥3 timepoints. The noise floor is estimated from normal tissue (approximate false-positive control, not a guaranteed rate). A radiologist must adjudicate.')}
                     </div>
@@ -581,112 +660,135 @@ export function LongitudinalCompare({
           <div className="flex flex-wrap gap-1.5">
             {Object.entries(result.status_counts).map(([status, count]) => (
               count > 0 && (
-                <span
+                <Badge
                   key={status}
-                  className="flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 dark:bg-gray-900/60 rounded text-[9px]"
+                  tone="neutral"
+                  className="gap-1 px-2 py-1 text-xs tabular-nums"
                 >
-                  <span className={`w-1.5 h-1.5 rounded-full ${statusBg(status)}`} />
-                  <span className={statusColor(status)}>
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${statusBg(status)}`}
+                    style={statusDotStyle(status)}
+                    aria-hidden
+                  />
+                  <span className={statusColor(status)} style={statusTextStyle(status)}>
                     {count} {t(`longitudinal.${status}`, status)}
                     {!result.registration_verified ? ` ${t('longitudinal.candidateSuffix', 'cand.')}` : ''}
                   </span>
-                </span>
+                </Badge>
               )
             ))}
           </div>
 
-          {/* Legend for the fused TP1/TP2 overlay painted on the 2D viewport
-              (SegmentationCanvasLocal) — colors match the canvas exactly so the change map
-              is readable. Red = TP2-only = NEW lesion candidate. */}
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] text-gray-500 dark:text-gray-400">
-            <span className="flex items-center gap-1">
-              <span className="inline-block h-2 w-2 rounded-sm" style={{ background: 'rgb(65,135,245)' }} />
+          {/* Legend for the fused TP1/TP2 overlay painted on the 2D viewport — colours come
+              from the shared clinical palette (LONGITUDINAL_RGB), the same values the overlay
+              renderer paints, so the change map is readable and colour-blind safe.
+              Vermillion = TP2-only = NEW lesion candidate. */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: rgbCss(LONGITUDINAL_RGB.resolved) }} aria-hidden />
               {t('longitudinal.legendTp1', 'TP1 only (resolved cand.)')}
             </span>
-            <span className="flex items-center gap-1">
-              <span className="inline-block h-2 w-2 rounded-sm" style={{ background: 'rgb(50,205,50)' }} />
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: rgbCss(LONGITUDINAL_RGB.persistent) }} aria-hidden />
               {t('longitudinal.legendBoth', 'Both (stable)')}
             </span>
-            <span className="flex items-center gap-1">
-              <span className="inline-block h-2 w-2 rounded-sm" style={{ background: 'rgb(245,70,70)' }} />
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: rgbCss(LONGITUDINAL_RGB.newLesion) }} aria-hidden />
               {t('longitudinal.legendTp2', 'TP2 only (NEW cand.)')}
             </span>
           </div>
 
           {/* Expandable Table */}
           <button
+            type="button"
+            aria-expanded={expanded}
             onClick={() => setExpanded(!expanded)}
-            className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-gray-200 transition-colors"
+            className={`flex items-center gap-1 rounded text-xs font-medium text-ink-muted transition-colors hover:text-ink-base ${FOCUS_RING}`}
           >
-            {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-            {t('longitudinal.changeTable', 'Change Table')} ({result.changes.length})
+            {expanded ? <ChevronUp className="h-3.5 w-3.5" aria-hidden /> : <ChevronDown className="h-3.5 w-3.5" aria-hidden />}
+            {t('longitudinal.changeTable', 'Change Table')} <span className="tabular-nums">({result.changes.length})</span>
           </button>
 
           {expanded && result.changes.length > 0 && (
-            <div className="max-h-48 overflow-y-auto">
-              <table className="w-full text-[9px]">
-                <thead>
-                  <tr className="text-gray-500 border-b border-gray-300 dark:border-gray-700">
-                    <th className="text-center py-0.5 px-1">{t('longitudinal.statusCol', 'Status')}</th>
-                    <th className="text-right py-0.5 px-1">TP1</th>
-                    <th className="text-right py-0.5 px-1">TP2</th>
-                    <th className="text-right py-0.5 px-1">&Delta;%</th>
+            <div className="max-h-48 overflow-y-auto rounded-lg border border-surface-border">
+              <table className="w-full text-xs tabular-nums">
+                <thead className="sticky top-0 bg-surface-base">
+                  <tr className="border-b border-surface-border text-ink-faint">
+                    <th className="px-1.5 py-1 text-left font-medium">{t('longitudinal.statusCol', 'Status')}</th>
+                    <th className="px-1.5 py-1 text-right font-medium">TP1</th>
+                    <th className="px-1.5 py-1 text-right font-medium">TP2</th>
+                    <th className="px-1.5 py-1 text-right font-medium">&Delta;%</th>
                   </tr>
                 </thead>
                 <tbody>
                   {result.changes.map((change, i) => (
                     <tr
                       key={i}
+                      tabIndex={0}
                       onClick={() => handleLesionClick(change)}
-                      className="cursor-pointer border-b border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleLesionClick(change);
+                        }
+                      }}
+                      className="cursor-pointer border-b border-surface-border/60 transition-colors last:border-b-0 hover:bg-surface-hover focus:outline-none focus-visible:bg-surface-hover focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-1 focus-visible:outline-brand-500/60"
                     >
-                      <td className="py-0.5 px-1 text-center">
-                        <span className="flex items-center justify-center gap-0.5">
+                      <td className="px-1.5 py-1 text-left">
+                        <span className="flex flex-wrap items-center gap-1">
                           {statusIcon(change.status)}
-                          <span className={statusColor(change.status)}>
+                          <span className={statusColor(change.status)} style={statusTextStyle(change.status)}>
                             {t(`longitudinal.${change.status}`, change.status)}
                           </span>
                           {change.region_id != null && (
                             <span
                               title={change.region_name ?? ''}
-                              className="ml-0.5 rounded bg-indigo-400/15 px-1 text-[8px] font-medium text-indigo-600 dark:text-indigo-300"
+                              className="rounded bg-surface-hover px-1 text-xs font-medium leading-4 text-ink-soft"
+                              style={zoneBadgeStyle(change.region_id)}
                             >{({ 1: 'PV', 2: 'JC', 3: 'IT', 4: 'DWM' } as Record<number, string>)[change.region_id]}</span>
                           )}
                           {/* FLAIR-subtraction confirmation badge (new candidates only) */}
                           {change.status === 'new' && change.clinically_significant === false && (
-                            <span
+                            <Badge
+                              tone="neutral"
                               title={t('longitudinal.subthresholdTip', 'Below the ~3 mm clinical size gate — not counted toward activity/DIT')}
-                              className="ml-0.5 rounded bg-gray-400/15 px-1 text-[8px] font-medium text-gray-500 dark:text-gray-400"
-                            >&lt;3mm</span>
+                              className={TABLE_PILL}
+                            >&lt;3mm</Badge>
                           )}
                           {change.status === 'new' && change.subtraction_confirmed === true && (
-                            <span
+                            <Badge
+                              tone="info"
                               title={t('longitudinal.subConfirmedTip', 'FLAIR brighter at follow-up (signal {{s}} SD) — supports a genuine new lesion', { s: (change.subtraction_signal ?? 0).toFixed(1) })}
-                              className="ml-0.5 rounded bg-sky-500/15 px-1 text-[8px] font-semibold text-sky-600 dark:text-sky-300"
-                            >✓sub</span>
+                              className={TABLE_PILL}
+                            >✓sub</Badge>
                           )}
                           {change.status === 'new' && change.subtraction_confirmed === false && (
-                            <span
+                            <Badge
+                              tone="neutral"
                               title={t('longitudinal.subUnconfirmedTip', 'No follow-up brightening on FLAIR subtraction — review for artifact')}
-                              className="ml-0.5 rounded bg-gray-400/15 px-1 text-[8px] font-semibold text-gray-500 dark:text-gray-400"
-                            >○sub</span>
+                              className={TABLE_PILL}
+                            >○sub</Badge>
                           )}
                           {change.status === 'new' && change.subtraction_confirmed == null &&
                             result.subtraction_available && change.subtraction_note === 'border' && (
-                            <span
+                            <Badge
+                              tone="warn"
                               title={t('longitudinal.subWithheldTip', 'At brain/FOV edge — subtraction verdict withheld (unreliable at the boundary)')}
-                              className="ml-0.5 rounded bg-amber-400/15 px-1 text-[8px] font-semibold text-amber-600 dark:text-amber-400"
-                            >◌sub</span>
+                              className={TABLE_PILL}
+                            >◌sub</Badge>
                           )}
                         </span>
                       </td>
-                      <td className="py-0.5 px-1 text-right font-mono text-gray-600 dark:text-gray-300">
+                      <td className="px-1.5 py-1 text-right text-ink-soft">
                         {change.volume_tp1_ml > 0 ? `${change.volume_tp1_ml.toFixed(3)}` : '\u2014'}
                       </td>
-                      <td className="py-0.5 px-1 text-right font-mono text-gray-800 dark:text-white">
+                      <td className="px-1.5 py-1 text-right text-ink-base">
                         {change.volume_tp2_ml > 0 ? `${change.volume_tp2_ml.toFixed(3)}` : '\u2014'}
                       </td>
-                      <td className={`py-0.5 px-1 text-right font-mono ${statusColor(change.status)}`}>
+                      <td
+                        className={`px-1.5 py-1 text-right ${statusColor(change.status)}`}
+                        style={statusTextStyle(change.status)}
+                      >
                         {change.status === 'new' ? '+new' :
                          change.status === 'resolved' ? 'gone' :
                          `${change.change_percent > 0 ? '+' : ''}${change.change_percent.toFixed(1)}%`}

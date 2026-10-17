@@ -14,6 +14,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ChevronDown, Loader2, Plus, X } from 'lucide-react';
+import { Badge, Button, Input } from '@/components/ui';
 import { SegmentationList } from './SegmentationList';
 import { useSegmentationStore, type PaintTool, type BrushShape, type DrawOverMode } from '@/store/useSegmentationStore';
 import { useViewerStore } from '@/store/useViewerStore';
@@ -27,6 +29,23 @@ import type { LabelInfo, Segmentation, SegmentationResponse } from '@/types';
 // ============================================================================
 
 type TabType = 'load' | 'new' | 'tools' | 'paint';
+
+// ============================================================================
+// Styling (design-system v2 tokens; presentation only)
+// ============================================================================
+
+const FOCUS_RING = 'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60';
+
+/** Segmented-control / tool toggle: tinted brand fill when selected. */
+const toggleClass = (selected: boolean) =>
+  `border transition-colors ${FOCUS_RING} ${
+    selected
+      ? 'border-brand-500/30 bg-brand-950 text-brand-400'
+      : 'border-transparent text-ink-muted hover:bg-surface-hover hover:text-ink-base'
+  }`;
+
+const KBD_CLASS =
+  'inline-block min-w-[1.25rem] rounded border border-surface-border bg-surface-base px-1 text-center font-mono text-ink-soft';
 
 interface SegmentationPanelProps {
   /** Callback when overlay visibility changes */
@@ -63,7 +82,7 @@ const LabelPalette: React.FC<LabelPaletteProps> = ({
   const { t } = useTranslation();
 
   return (
-    <div className="space-y-1 max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
+    <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
       {labels
         .filter((label) => label.id !== 0) // Skip background
         .map((label) => {
@@ -71,23 +90,35 @@ const LabelPalette: React.FC<LabelPaletteProps> = ({
           return (
             <div
               key={label.id}
+              role="button"
+              tabIndex={0}
+              aria-pressed={activeLabel === label.id}
               onClick={() => onSelectLabel(label.id)}
+              onKeyDown={(e) => {
+                // Ignore keys bubbling up from the visibility toggle inside the row.
+                if (e.target !== e.currentTarget) return;
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSelectLabel(label.id);
+                }
+              }}
               className={`
-                flex items-center gap-2 p-2 rounded cursor-pointer transition-colors group
+                flex items-center gap-2 p-2 rounded-md border cursor-pointer transition-colors group ${FOCUS_RING}
                 ${
                   activeLabel === label.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-700 hover:bg-gray-600 text-gray-200'
+                    ? 'border-brand-500/30 bg-brand-950 text-ink-base'
+                    : 'border-transparent bg-surface-base/60 hover:bg-surface-hover text-ink-soft'
                 }
               `}
             >
               {/* Color swatch */}
               <div
-                className="w-4 h-4 rounded border border-gray-500 flex-shrink-0"
+                className="w-4 h-4 rounded border border-white/20 flex-shrink-0"
                 style={{
                   backgroundColor: label.color,
                   opacity: label.opacity,
                 }}
+                aria-hidden
               />
 
               {/* Label name */}
@@ -100,11 +131,11 @@ const LabelPalette: React.FC<LabelPaletteProps> = ({
                   onToggleVisibility(label.id);
                 }}
                 className={`
-                  p-1 rounded transition-opacity
+                  p-1 rounded text-ink-muted transition-opacity hover:bg-surface-hover hover:text-ink-base ${FOCUS_RING}
                   ${isVisible ? 'opacity-100' : 'opacity-50'}
-                  ${activeLabel === label.id ? 'hover:bg-blue-700' : 'hover:bg-gray-500'}
                 `}
                 title={isVisible ? t('segmentation.hideLabel') : t('segmentation.showLabel')}
+                aria-label={isVisible ? t('segmentation.hideLabel') : t('segmentation.showLabel')}
               >
                 {isVisible ? (
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -119,7 +150,7 @@ const LabelPalette: React.FC<LabelPaletteProps> = ({
               </button>
 
               {/* Label ID */}
-              <span className="text-xs opacity-70 hidden group-hover:inline">#{label.id}</span>
+              <span className="text-xs tabular-nums text-ink-faint hidden group-hover:inline">#{label.id}</span>
             </div>
           );
         })}
@@ -179,20 +210,18 @@ const PaintToolbar: React.FC<PaintToolbarProps> = ({
   return (
     <div className="space-y-3">
       {/* Tool buttons */}
-      <div className="flex gap-1">
+      <div className="flex gap-1 rounded-lg border border-surface-border bg-surface-base p-1">
         {tools.map((tool) => (
           <button
             key={tool.id}
             onClick={() => onToolChange(tool.id)}
             className={`
-              flex-1 px-2 py-1.5 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1
-              ${
-                paintTool === tool.id
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-              }
+              flex-1 h-8 rounded-md text-xs font-medium flex items-center justify-center gap-1
+              ${toggleClass(paintTool === tool.id)}
             `}
             title={tool.label}
+            aria-label={tool.label}
+            aria-pressed={paintTool === tool.id}
           >
             {tool.icon}
           </button>
@@ -201,8 +230,9 @@ const PaintToolbar: React.FC<PaintToolbarProps> = ({
 
       {/* Brush size */}
       <div>
-        <label className="block text-xs text-gray-300 mb-1">
-          {t('segmentation.brushSize')}: {brushSize}×{brushSize} {t('segmentation.voxels')}
+        <label className="flex items-baseline justify-between text-xs text-ink-soft mb-1.5">
+          <span>{t('segmentation.brushSize')}:</span>
+          <span className="tabular-nums text-ink-base">{brushSize}×{brushSize} {t('segmentation.voxels')}</span>
         </label>
         <input
           type="range"
@@ -210,26 +240,29 @@ const PaintToolbar: React.FC<PaintToolbarProps> = ({
           max="30"
           value={brushSize}
           onChange={(e) => onBrushSizeChange(Number(e.target.value))}
-          className="w-full h-1.5 bg-gray-700 rounded-full appearance-none cursor-pointer accent-blue-500"
+          aria-label={t('segmentation.brushSize')}
+          className={`w-full h-1.5 bg-surface-hover rounded-full appearance-none cursor-pointer accent-brand-500 ${FOCUS_RING}`}
         />
       </div>
 
       {/* Brush shape */}
-      <div className="flex gap-1">
+      <div className="flex gap-1 rounded-lg border border-surface-border bg-surface-base p-1">
         <button
           onClick={() => onBrushShapeChange('circle')}
+          aria-pressed={brushShape === 'circle'}
           className={`
-            flex-1 px-2 py-1 rounded text-xs transition-colors
-            ${brushShape === 'circle' ? 'bg-blue-600 text-white' : 'bg-gray-700 hover:bg-gray-600 text-gray-300'}
+            flex-1 px-2 py-1 rounded-md text-xs font-medium
+            ${toggleClass(brushShape === 'circle')}
           `}
         >
           ○ {t('segmentation.circle')}
         </button>
         <button
           onClick={() => onBrushShapeChange('square')}
+          aria-pressed={brushShape === 'square'}
           className={`
-            flex-1 px-2 py-1 rounded text-xs transition-colors
-            ${brushShape === 'square' ? 'bg-blue-600 text-white' : 'bg-gray-700 hover:bg-gray-600 text-gray-300'}
+            flex-1 px-2 py-1 rounded-md text-xs font-medium
+            ${toggleClass(brushShape === 'square')}
           `}
         >
           □ {t('segmentation.square')}
@@ -423,36 +456,51 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
   const hasContext = !!fileId;
 
   return (
-    <div style={{ background: '#161922', borderRadius: 8 }}>
+    <div className="rounded-lg border border-surface-border bg-surface-raised">
       {/* Header */}
       <div
-        className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-700 transition-colors"
+        role="button"
+        tabIndex={0}
+        aria-expanded={expanded}
+        className={`flex items-center justify-between p-3 cursor-pointer transition-colors hover:bg-surface-hover/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500/60 ${
+          expanded ? 'rounded-t-lg' : 'rounded-lg'
+        }`}
         onClick={() => setExpanded(!expanded)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setExpanded(!expanded);
+          }
+        }}
       >
-        <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-          <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <h3 className="text-sm font-semibold text-ink-base flex items-center gap-2">
+          <svg className="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
           </svg>
           {t('segmentation.manualSegmentation')}
           {segmentations.length > 0 && (
-            <span className="ml-1 px-1.5 py-0.5 bg-blue-600 rounded-full text-xs">
+            <Badge tone="brand" className="ml-1 px-1.5 text-xs tabular-nums">
               {segmentations.length}
-            </span>
+            </Badge>
           )}
         </h3>
-        <span className="text-gray-400 text-sm">{expanded ? '▼' : '▶'}</span>
+        <ChevronDown
+          className={`h-4 w-4 text-ink-muted transition-transform duration-150 ${expanded ? '' : '-rotate-90'}`}
+          aria-hidden
+        />
       </div>
 
       {expanded && (
-        <div className="p-3 space-y-3 border-t border-gray-700">
+        <div className="p-3 space-y-3 border-t border-surface-border">
           {/* No context warning */}
           {!hasContext && (
-            <div className="text-center py-4 text-gray-400">
+            <div className="text-center py-4 text-ink-muted">
               <svg
-                className="w-8 h-8 mx-auto mb-2 text-gray-600"
+                className="w-8 h-8 mx-auto mb-2 text-ink-faint"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+                aria-hidden
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
@@ -466,15 +514,12 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
           {hasContext && (
             <>
               {/* Tab Headers */}
-              <div className="flex gap-1 bg-gray-900 p-1 rounded">
+              <div className="flex gap-1 rounded-lg border border-surface-border bg-surface-base p-1">
                 {!activeSegmentation && (
                 <button
                   onClick={() => setActiveTab('load')}
-                  className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                    activeTab === 'load'
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-400 hover:text-white hover:bg-gray-700'
-                  }`}
+                  aria-pressed={activeTab === 'load'}
+                  className={`flex-1 px-2 py-1.5 rounded-md text-xs font-medium tabular-nums ${toggleClass(activeTab === 'load')}`}
                 >
                   {t('segmentation.open')} ({segmentations.length})
                 </button>
@@ -482,11 +527,8 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                 {!activeSegmentation && !is3D && (
                 <button
                   onClick={() => setActiveTab('new')}
-                  className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                    activeTab === 'new'
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-400 hover:text-white hover:bg-gray-700'
-                  }`}
+                  aria-pressed={activeTab === 'new'}
+                  className={`flex-1 px-2 py-1.5 rounded-md text-xs font-medium ${toggleClass(activeTab === 'new')}`}
                 >
                   {t('segmentation.new')}
                 </button>
@@ -494,22 +536,16 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                 {activeSegmentation && (
                 <button
                   onClick={() => setActiveTab('paint')}
-                  className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                    activeTab === 'paint'
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-400 hover:text-white hover:bg-gray-700'
-                  }`}
+                  aria-pressed={activeTab === 'paint'}
+                  className={`flex-1 px-2 py-1.5 rounded-md text-xs font-medium ${toggleClass(activeTab === 'paint')}`}
                 >
                   {t('segmentation.edit', 'Edit')}
                 </button>
                 )}
                 <button
                   onClick={() => setActiveTab('tools')}
-                  className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                    activeTab === 'tools'
-                      ? 'bg-purple-600 text-white'
-                      : 'text-gray-400 hover:text-white hover:bg-gray-700'
-                  }`}
+                  aria-pressed={activeTab === 'tools'}
+                  className={`flex-1 px-2 py-1.5 rounded-md text-xs font-medium ${toggleClass(activeTab === 'tools')}`}
                 >
                   {t('clinical.tools', 'Tools')}
                 </button>
@@ -530,32 +566,30 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                 )}
 
                 {!activeSegmentation && activeTab === 'new' && (
-                  <div className="py-4 space-y-4">
+                  <div className="py-3 space-y-3">
                     {/* Name input */}
-                    <div>
-                      <label className="block text-xs text-gray-300 mb-1">
-                        {t('segmentation.name')}
-                      </label>
-                      <input
-                        type="text"
-                        value={newSegmentationName}
-                        onChange={(e) => setNewSegmentationName(e.target.value)}
-                        placeholder={t('segmentation.namePlaceholder')}
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-sm text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-                      />
-                    </div>
+                    <Input
+                      type="text"
+                      label={t('segmentation.name')}
+                      value={newSegmentationName}
+                      onChange={(e) => setNewSegmentationName(e.target.value)}
+                      placeholder={t('segmentation.namePlaceholder')}
+                      className="h-8 rounded-md"
+                    />
 
                     {/* Create button */}
-                    <button
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      fullWidth
                       onClick={handleCreateSegmentation}
                       disabled={!createCallback}
-                      className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                      leftIcon={<Plus className="h-4 w-4" aria-hidden />}
                     >
-                      <span>+</span>
-                      <span>{t('segmentation.newSegmentation')}</span>
-                    </button>
+                      {t('segmentation.newSegmentation')}
+                    </Button>
 
-                    <p className="text-xs text-gray-400 text-center">
+                    <p className="text-xs text-ink-muted text-center">
                       {t('segmentation.createNewEmpty')}
                     </p>
                   </div>
@@ -564,7 +598,7 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                 {activeTab === 'tools' && (
                   <div className="space-y-3">
                     <ClinicalToolsPanel fileId={fileId} />
-                    <div className="border-t border-gray-700 pt-2">
+                    <div className="border-t border-surface-border pt-3">
                       <ConformalPanel />
                     </div>
                   </div>
@@ -578,21 +612,21 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
           {activeSegmentation && activeTab === 'paint' && (
             <>
               {/* Segmentation info header */}
-              <div className="bg-gray-700/50 rounded p-2 border border-gray-600">
+              <div className="rounded-lg border border-surface-border bg-surface-base/60 p-2.5">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-xs font-medium text-white truncate">
+                      <p className="text-sm font-medium text-ink-base truncate">
                         {activeSegmentation.name}
                       </p>
                       {isDirty && (
-                        <span className="text-xs text-yellow-400" title={t('segmentation.unsavedChanges')}>
+                        <span className="text-xs text-clinical-warn" title={t('segmentation.unsavedChanges')}>
                           •
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-gray-400 flex items-center gap-1">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <p className="text-xs text-ink-muted flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
                       {activeSegmentation.created_by_name || activeSegmentation.created_by}
@@ -600,30 +634,31 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                   </div>
                   <button
                     onClick={handleCloseSegmentation}
-                    className="ml-2 px-2 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-600 rounded transition-colors"
+                    className={`ml-2 rounded-md p-1 text-ink-muted transition-colors hover:bg-surface-hover hover:text-ink-base ${FOCUS_RING}`}
                     title={t('segmentation.closeSegmentation')}
+                    aria-label={t('segmentation.closeSegmentation')}
                   >
-                    ✕
+                    <X className="h-4 w-4" aria-hidden />
                   </button>
                 </div>
 
                 {/* Progress bar */}
                 <div className="mt-2">
-                  <div className="flex justify-between text-xs text-gray-400 mb-1">
+                  <div className="flex justify-between text-xs text-ink-muted mb-1">
                     <span>{t('segmentation.progress.annotated')}</span>
-                    <span>
+                    <span className="tabular-nums">
                       {activeSegmentation.slices_annotated}/{activeSegmentation.total_slices} (
                       {activeSegmentation.progress_percentage}%)
                     </span>
                   </div>
-                  <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-surface-hover rounded-full overflow-hidden">
                     <div
                       className="h-full bg-brand-500 transition-all duration-300"
                       style={{ width: `${activeSegmentation.progress_percentage}%` }}
                     />
                   </div>
                   {activeSegmentation.slices_annotated === 0 && activeSegmentation.total_slices > 0 && !activeSegmentation.id.startsWith('local-') && (
-                    <p className="text-xs text-yellow-400 mt-1">
+                    <p className="text-xs text-clinical-warn mt-1.5">
                       {t('segmentation.emptyMask', 'Mask is empty — no annotated voxels found')}
                     </p>
                   )}
@@ -634,8 +669,8 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
 
               {/* Paint Tools — 2D only (painting not supported in 3D) */}
               {!is3D && (
-              <div className="border-t border-gray-700 pt-3">
-                <label className="block text-xs text-gray-300 mb-2">{t('segmentation.paintTools')}</label>
+              <div className="border-t border-surface-border pt-3">
+                <label className="block text-xs font-medium uppercase tracking-wide text-ink-faint mb-2">{t('segmentation.paintTools')}</label>
                 <PaintToolbar
                   paintTool={paintTool.tool}
                   brushSize={paintTool.brushSize}
@@ -650,13 +685,14 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
               {/* Draw-Over Mode — 2D only */}
               {!is3D && (
               <div>
-                <label className="block text-xs text-gray-300 mb-1">
+                <label className="block text-xs text-ink-soft mb-1">
                   {t('segmentation.drawOver', 'Draw Over')}
                 </label>
                 <select
                   value={drawOverMode}
                   onChange={(e) => setDrawOverMode(e.target.value as DrawOverMode)}
-                  className="w-full px-2 py-1.5 bg-gray-700 border border-gray-600 rounded text-xs text-white focus:outline-none focus:border-blue-500"
+                  aria-label={t('segmentation.drawOver', 'Draw Over')}
+                  className={`w-full h-8 px-2 rounded-md border border-surface-border bg-surface-base text-xs text-ink-base transition-colors hover:border-surface-hover ${FOCUS_RING}`}
                 >
                   <option value="all">{t('segmentation.drawOverAll', 'All labels')}</option>
                   <option value="emptyOnly">{t('segmentation.drawOverEmpty', 'Empty only')}</option>
@@ -667,49 +703,47 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
 
               {/* Save Button — 2D only */}
               {!is3D && (
-              <button
+              <Button
+                variant="primary"
+                size="sm"
+                fullWidth
                 onClick={handleSaveSegmentation}
                 disabled={isSaving || !isDirty}
-                className="w-full px-3 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded text-sm font-medium transition-colors flex items-center justify-center gap-2"
-              >
-                {isSaving ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                    <span>{t('segmentation.saving')}</span>
-                  </>
+                aria-busy={isSaving || undefined}
+                leftIcon={isSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                 ) : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                    </svg>
-                    <span>{t('segmentation.saveSegmentation')}</span>
-                  </>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                  </svg>
                 )}
-              </button>
+              >
+                {isSaving ? t('segmentation.saving') : t('segmentation.saveSegmentation')}
+              </Button>
               )}
 
               {/* Instructions & Shortcuts — 2D only */}
               {!is3D && (
-              <div className="pt-2 border-t border-gray-700 space-y-2">
-                <p className="text-xs text-gray-400">
-                  <strong>{t('segmentation.instructions.title')}</strong>
+              <div className="pt-3 border-t border-surface-border space-y-2">
+                <p className="text-xs leading-relaxed text-ink-muted">
+                  <strong className="font-medium text-ink-soft">{t('segmentation.instructions.title')}</strong>
                   <br />• {t('segmentation.instructions.clickDrag')}
                   <br />• {t('segmentation.instructions.selectLabel')}
                   <br />• {t('segmentation.instructions.adjustBrush')}
                   <br />• {t('segmentation.instructions.eraseMode')}
                 </p>
-                <details className="text-xs text-gray-400">
-                  <summary className="cursor-pointer hover:text-gray-300 font-medium">
+                <details className="text-xs text-ink-muted">
+                  <summary className={`cursor-pointer rounded font-medium hover:text-ink-soft ${FOCUS_RING}`}>
                     {t('segmentation.shortcuts.title', 'Keyboard shortcuts')}
                   </summary>
-                  <div className="mt-1 space-y-0.5 pl-2">
-                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">Ctrl+Z</kbd> {t('segmentation.shortcuts.undo', 'Undo')}</p>
-                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">Ctrl+Y</kbd> {t('segmentation.shortcuts.redo', 'Redo')}</p>
-                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">E</kbd> {t('segmentation.shortcuts.toggleEraser', 'Toggle eraser')}</p>
-                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">B</kbd> {t('segmentation.shortcuts.brush', 'Brush')}</p>
-                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">S</kbd> {t('segmentation.shortcuts.toggleOverlay', 'Toggle overlay')}</p>
-                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">+</kbd> / <kbd className="px-1 bg-gray-700 rounded text-gray-300">-</kbd> {t('segmentation.shortcuts.brushSize', 'Brush size')}</p>
-                    <p><kbd className="px-1 bg-gray-700 rounded text-gray-300">1-9</kbd> {t('segmentation.shortcuts.selectLabel', 'Select label')}</p>
+                  <div className="mt-1.5 space-y-1 pl-2">
+                    <p><kbd className={KBD_CLASS}>Ctrl+Z</kbd> {t('segmentation.shortcuts.undo', 'Undo')}</p>
+                    <p><kbd className={KBD_CLASS}>Ctrl+Y</kbd> {t('segmentation.shortcuts.redo', 'Redo')}</p>
+                    <p><kbd className={KBD_CLASS}>E</kbd> {t('segmentation.shortcuts.toggleEraser', 'Toggle eraser')}</p>
+                    <p><kbd className={KBD_CLASS}>B</kbd> {t('segmentation.shortcuts.brush', 'Brush')}</p>
+                    <p><kbd className={KBD_CLASS}>S</kbd> {t('segmentation.shortcuts.toggleOverlay', 'Toggle overlay')}</p>
+                    <p><kbd className={KBD_CLASS}>+</kbd> / <kbd className={KBD_CLASS}>-</kbd> {t('segmentation.shortcuts.brushSize', 'Brush size')}</p>
+                    <p><kbd className={KBD_CLASS}>1-9</kbd> {t('segmentation.shortcuts.selectLabel', 'Select label')}</p>
                   </div>
                 </details>
               </div>

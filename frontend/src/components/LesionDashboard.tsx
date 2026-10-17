@@ -10,6 +10,7 @@
  */
 
 import { useState, useCallback, useEffect, useRef } from 'react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
@@ -28,6 +29,8 @@ import {
 } from 'lucide-react';
 import { segmentationAPI } from '@/api/segmentation';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
+import { Badge, Button, SkeletonRows } from '@/components/ui';
+import { regionRgb, rgbCss } from '@/utils/clinicalPalette';
 import {
   MAGNIMS_LESION_LABELS,
   type LesionAnalysisResult,
@@ -50,34 +53,55 @@ interface LesionDashboardProps {
   onMaskUpdated?: () => void;
 }
 
-// MAGNIMS region legend uses the Okabe-Ito colour-blind-safe categorical palette.
-// The previous red(Periventricular)/green(Juxtacortical) pairing was indistinguishable
-// for the ~8% of males with red-green deficiency — a clinical-safety defect, since these
-// are the two most common lesion zones and sit adjacent in the legend and table.
-const REGION_COLORS: Record<string, string> = {
-  Periventricular: 'bg-[#E69F00]',       // orange
-  Juxtacortical: 'bg-[#56B4E9]',         // sky blue
-  Infratentorial: 'bg-[#009E73]',        // bluish green
-  'Deep White Matter': 'bg-[#CC79A7]',   // reddish purple
-};
+// MAGNIMS region colours come from the shared clinical palette (Okabe-Ito, colour-blind
+// safe) — the SAME colours the image overlay and the zone-map legend use, so a region
+// never reads as one colour in the table and another on the picture. The previous
+// red(Periventricular)/green(Juxtacortical) pairing was indistinguishable for the ~8% of
+// males with red-green deficiency — a clinical-safety defect.
+function regionColor(region: string): string | undefined {
+  const rgb = regionRgb(region);
+  return rgb ? rgbCss(rgb) : undefined;
+}
 
-const REGION_TEXT_COLORS: Record<string, string> = {
-  Periventricular: 'text-[#F0A800]',
-  Juxtacortical: 'text-[#7FC7F0]',
-  Infratentorial: 'text-[#2DBF97]',
-  'Deep White Matter': 'text-[#DB93BC]',
-};
+/** Legend dot for a MAGNIMS region (data colour); unknown regions get a neutral dot. */
+function RegionDot({ region, className = 'h-2 w-2' }: { region: string; className?: string }) {
+  const color = regionColor(region);
+  return (
+    <span
+      aria-hidden="true"
+      className={`shrink-0 rounded-full bg-ink-faint ${className}`}
+      style={color ? { backgroundColor: color } : undefined}
+    />
+  );
+}
+
+/** Region name / value tinted with the region's data colour. */
+function RegionText({ region, className = '', children }: { region: string; className?: string; children: ReactNode }) {
+  const color = regionColor(region);
+  return (
+    <span className={`text-ink-soft ${className}`} style={color ? { color } : undefined}>
+      {children}
+    </span>
+  );
+}
 
 function sizeColor(cat: string): string {
-  if (cat === 'large') return 'text-red-400';
-  if (cat === 'medium') return 'text-yellow-400';
-  return 'text-gray-400';
+  if (cat === 'large') return 'text-clinical-crit';
+  if (cat === 'medium') return 'text-clinical-warn';
+  return 'text-ink-muted';
 }
 
 function regionBarWidth(vol: number, maxVol: number): string {
   if (maxVol === 0) return '0%';
   return `${Math.max(4, (vol / maxVol) * 100)}%`;
 }
+
+/** Shared class strings (design-system v2). */
+const CARD = 'rounded-lg border border-surface-border bg-surface-base';
+const OVERLINE = 'text-xs font-medium uppercase tracking-wide text-ink-faint';
+const FOCUS_RING = 'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60';
+const WARN_BOX =
+  'flex items-start gap-1.5 rounded-md border border-clinical-warn/30 bg-clinical-warn/10 px-2 py-1.5 text-xs leading-snug text-clinical-warn';
 
 
 export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdated }: LesionDashboardProps) {
@@ -318,39 +342,43 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
     : 1;
 
   return (
-    <div style={{ background: '#161922', borderRadius: 8, padding: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div className="flex flex-col gap-3 rounded-lg border border-surface-border bg-surface-raised p-3">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Activity className="w-4 h-4 text-amber-400" />
-          <span className="text-sm font-semibold text-white">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <Activity className="h-4 w-4 shrink-0 text-brand-400" aria-hidden="true" />
+          <span className="truncate text-sm font-semibold text-ink-base">
             {t('lesions.title', 'Lesion Analysis')}
           </span>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex shrink-0 items-center gap-1.5">
           {isAnalysisStale && (
-            <span className="flex items-center gap-0.5 text-[9px] text-amber-400" title="Mask was edited since last analysis">
-              <AlertCircle className="w-3 h-3" /> Outdated
-            </span>
+            <Badge tone="warn" className="text-xs" title="Mask was edited since last analysis">
+              <AlertCircle className="h-3 w-3" aria-hidden="true" /> Outdated
+            </Badge>
           )}
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={handleAnalyze}
-            disabled={isLoading}
-            className="px-2 py-1 bg-amber-600 hover:bg-amber-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded text-xs text-white transition-colors"
+            loading={isLoading}
           >
-            {isLoading ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
-            ) : (
-              t('lesions.analyze', 'Analyze')
-            )}
-          </button>
+            {t('lesions.analyze', 'Analyze')}
+          </Button>
         </div>
       </div>
 
       {error && (
-        <div className="flex items-center gap-1 text-red-400 text-xs">
-          <AlertCircle className="w-3 h-3" />
-          <span>{error}</span>
+        <div className="flex items-start gap-1.5 rounded-md border border-clinical-crit/30 bg-clinical-crit/10 px-2 py-1.5 text-xs text-clinical-crit">
+          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <span className="min-w-0 break-words">{error}</span>
+        </div>
+      )}
+
+      {/* First analysis in flight: table-shaped placeholder instead of a blank gap */}
+      {isLoading && !analysis && (
+        <div className={`${CARD} p-2.5`}>
+          <SkeletonRows rows={4} cols={4} />
         </div>
       )}
 
@@ -358,51 +386,62 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       {/* LESION TABLE — Primary view, always visible when analysis exists */}
       {/* ================================================================ */}
       {analysis && analysis.lesions.length > 0 && (
-        <div className="bg-gray-900/60 rounded-lg p-2.5 border border-gray-700/50">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-semibold text-white">
+        <div className={`${CARD} p-2.5`}>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <span className={OVERLINE}>
               {t('lesions.lesionTable', 'Lesion Table')}
             </span>
-            <span className="text-[10px] text-gray-400 font-mono">
+            <span className="text-xs tabular-nums text-ink-muted">
               {analysis.total_count} {t('lesions.totalCount', 'lesions')} &middot; {analysis.total_burden_ml.toFixed(2)} mL
             </span>
           </div>
           <div className="max-h-72 overflow-y-auto">
-            <table className="w-full text-[10px]">
-              <thead className="sticky top-0 bg-gray-900/95 z-10">
-                <tr className="text-gray-400 border-b border-gray-600">
-                  <th className="text-left py-1 px-1.5">#</th>
-                  <th className="text-left py-1 px-1.5">{t('lesions.region', 'Region')}</th>
-                  <th className="text-right py-1 px-1.5">mm&sup3;</th>
-                  <th className="text-right py-1 px-1.5">mL</th>
-                  <th className="text-center py-1 px-1.5">{t('lesions.size', 'Size')}</th>
+            <table className="w-full text-xs">
+              <thead className="sticky top-0 z-10 bg-surface-base">
+                <tr className="border-b border-surface-border text-ink-faint">
+                  <th className="px-1.5 py-1.5 text-left font-medium">#</th>
+                  <th className="px-1.5 py-1.5 text-left font-medium">{t('lesions.region', 'Region')}</th>
+                  <th className="px-1.5 py-1.5 text-right font-medium">mm&sup3;</th>
+                  <th className="px-1.5 py-1.5 text-right font-medium">mL</th>
+                  <th className="px-1.5 py-1.5 text-center font-medium">{t('lesions.size', 'Size')}</th>
                 </tr>
               </thead>
               <tbody>
                 {analysis.lesions.map((lesion) => (
                   <tr
                     key={lesion.id}
+                    data-lesion-row
+                    tabIndex={0}
+                    aria-current={highlightedLesion === lesion.id ? 'true' : undefined}
                     onClick={() => handleLesionClick(lesion)}
-                    className={`cursor-pointer border-b border-gray-800 transition-colors ${
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleLesionClick(lesion);
+                      }
+                    }}
+                    className={`cursor-pointer border-b border-surface-border/60 transition-colors focus:outline-none focus-visible:bg-surface-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500/60 ${
                       highlightedLesion === lesion.id
-                        ? 'bg-amber-900/40'
-                        : 'hover:bg-gray-700/50'
+                        ? 'bg-brand-950'
+                        : 'hover:bg-surface-hover'
                     }`}
                   >
-                    <td className="py-1 px-1.5 text-gray-400">{lesion.id}</td>
-                    <td className="py-1 px-1.5">
-                      <span className="flex items-center gap-1">
-                        <span className={`w-2 h-2 rounded-full ${REGION_COLORS[lesion.region] ?? 'bg-gray-500'}`} />
-                        <span className="text-gray-200">{lesion.region}</span>
+                    <td className={`px-1.5 py-1 tabular-nums ${highlightedLesion === lesion.id ? 'font-medium text-brand-400' : 'text-ink-muted'}`}>
+                      {lesion.id}
+                    </td>
+                    <td className="px-1.5 py-1">
+                      <span className="flex items-center gap-1.5">
+                        <RegionDot region={lesion.region} />
+                        <span className="text-ink-soft">{lesion.region}</span>
                       </span>
                     </td>
-                    <td className="py-1 px-1.5 text-right font-mono text-gray-300">
+                    <td className="px-1.5 py-1 text-right tabular-nums text-ink-soft">
                       {lesion.volume_mm3.toLocaleString()}
                     </td>
-                    <td className="py-1 px-1.5 text-right font-mono text-white font-medium">
+                    <td className="px-1.5 py-1 text-right font-medium tabular-nums text-ink-base">
                       {lesion.volume_ml.toFixed(3)}
                     </td>
-                    <td className={`py-1 px-1.5 text-center font-medium ${sizeColor(lesion.size_category)}`}>
+                    <td className={`px-1.5 py-1 text-center font-medium ${sizeColor(lesion.size_category)}`}>
                       {lesion.size_category === 'small' ? 'S' : lesion.size_category === 'medium' ? 'M' : 'L'}
                     </td>
                   </tr>
@@ -416,29 +455,35 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       {/* ================================================================ */}
       {/* Auto-Classify Regions (MAGNIMS) */}
       {/* ================================================================ */}
-      <div className="bg-gray-900/60 rounded-lg p-2 space-y-2 border border-gray-700/50">
-        <div className="flex items-center gap-1.5">
-          <MapPin className="w-3.5 h-3.5 text-cyan-400" />
-          <span className="text-xs font-semibold text-white">
+      <div className={`${CARD} space-y-2.5 p-3`}>
+        <div className="flex items-center gap-2">
+          <MapPin className="h-3.5 w-3.5 shrink-0 text-ink-muted" aria-hidden="true" />
+          <span className="text-xs font-semibold text-ink-base">
             {t('classify.title', 'MAGNIMS Region Classification')}
           </span>
         </div>
-        <p className="text-[9px] text-gray-400 leading-relaxed">
+        <p className="text-xs leading-relaxed text-ink-muted">
           {t('classify.description',
             'Classify lesions into Periventricular, Juxtacortical, Infratentorial and Deep WM regions (MAGNIMS contact rule). The method used is shown with the result; verify every region before using it for DIS.'
           )}
         </p>
 
         {/* Method selector */}
-        <div className="flex gap-1">
+        <div
+          className="flex gap-0.5 rounded-lg border border-surface-border bg-surface-raised p-0.5"
+          role="group"
+          aria-label={t('classify.method', 'Method')}
+        >
           {(['auto', 'msmask', 'geometric'] as const).map((m) => (
             <button
               key={m}
+              type="button"
               onClick={() => setClassifyMethod(m)}
-              className={`flex-1 px-1.5 py-1 rounded text-[10px] transition-colors ${
+              aria-pressed={classifyMethod === m}
+              className={`flex-1 rounded-md border px-1.5 py-1 text-xs font-medium transition-colors ${FOCUS_RING} ${
                 classifyMethod === m
-                  ? 'bg-cyan-600 text-white'
-                  : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                  ? 'border-brand-500/30 bg-brand-950 text-brand-400'
+                  : 'border-transparent text-ink-muted hover:bg-surface-hover hover:text-ink-soft'
               }`}
             >
               {m === 'auto'
@@ -450,41 +495,39 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
           ))}
         </div>
 
-        <button
+        <Button
+          variant="primary"
+          size="sm"
+          fullWidth
           onClick={handleClassifyRegions}
           disabled={isClassifying}
-          className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded text-xs text-white font-medium transition-colors"
+          aria-busy={isClassifying || undefined}
+          leftIcon={isClassifying
+            ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+            : <Zap className="h-3.5 w-3.5" aria-hidden="true" />}
         >
-          {isClassifying ? (
-            <>
-              <Loader2 className="w-3 h-3 animate-spin" />
-              {t('classify.classifying', 'Classifying...')}
-            </>
-          ) : (
-            <>
-              <Zap className="w-3 h-3" />
-              {t('classify.classify', 'Auto-Classify Regions')}
-            </>
-          )}
-        </button>
+          {isClassifying
+            ? t('classify.classifying', 'Classifying...')
+            : t('classify.classify', 'Auto-Classify Regions')}
+        </Button>
 
         {classification && (
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-[9px]">
-              <span className="text-gray-400">
-                {t('classify.method', 'Method')}: <span className="text-cyan-300 font-medium">{classification.method}</span>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2 text-xs">
+              <span className="text-ink-muted">
+                {t('classify.method', 'Method')}: <span className="font-medium text-ink-base">{classification.method}</span>
               </span>
-              <span className="text-gray-400">
+              <span className="tabular-nums text-ink-faint">
                 {classification.processing_time_ms}ms
               </span>
             </div>
             {classification.atlas_unavailable_reason && (
               <div
-                className="flex items-start gap-1 text-[9px] text-amber-300 bg-amber-900/20 border border-amber-700/40 rounded px-1.5 py-1"
+                className={WARN_BOX}
                 role="alert"
                 data-testid="atlas-unavailable"
               >
-                <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-px" aria-hidden="true" />
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 <span>
                   {t('classify.atlasUnavailable', 'Atlas regions not used: this image is not in MNI space, so the geometric fallback (coordinate rules, not anatomical landmarks) was applied. Verify every region before using it for DIS.')}
                 </span>
@@ -492,11 +535,11 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
             )}
             {classification.atlas_error && (
               <div
-                className="flex items-start gap-1 text-[9px] text-amber-300 bg-amber-900/20 border border-amber-700/40 rounded px-1.5 py-1"
+                className={WARN_BOX}
                 role="alert"
                 data-testid="atlas-error"
               >
-                <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-px" aria-hidden="true" />
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 <span>
                   {t('classify.atlasError', 'Atlas regions could not be computed (internal error), so the geometric fallback was applied. Verify every region before using it for DIS.')}
                 </span>
@@ -504,28 +547,28 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
             )}
             {classification.method === 'geometric' && !classification.atlas_unavailable_reason && !classification.atlas_error && (
               <div
-                className="flex items-start gap-1 text-[9px] text-amber-300 bg-amber-900/20 border border-amber-700/40 rounded px-1.5 py-1"
+                className={WARN_BOX}
                 role="alert"
                 data-testid="geometric-warning"
               >
-                <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-px" aria-hidden="true" />
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 <span>
                   {t('classify.geometricWarning', 'Geometric heuristics: coordinate rules, not anatomical landmarks; their accuracy has not been measured. Verify every region before using it for DIS.')}
                 </span>
               </div>
             )}
-            <div className="flex flex-wrap gap-x-2 gap-y-1">
+            <div className="flex flex-wrap gap-x-3 gap-y-1">
               {Object.entries(classification.classification_summary).map(([region, count]) => (
-                <span key={region} className="flex items-center gap-1 text-[9px]">
-                  <span className={`w-2 h-2 rounded-full ${REGION_COLORS[region] ?? 'bg-gray-500'}`} />
-                  <span className={REGION_TEXT_COLORS[region] ?? 'text-gray-300'}>
+                <span key={region} className="flex items-center gap-1.5 text-xs">
+                  <RegionDot region={region} />
+                  <RegionText region={region} className="tabular-nums">
                     {region}: {count}
-                  </span>
+                  </RegionText>
                 </span>
               ))}
             </div>
             {classification.lesions.length > 0 && (
-              <div className="text-[9px] text-gray-500" data-testid="classify-no-confidence">
+              <div className="text-xs text-ink-muted" data-testid="classify-no-confidence">
                 {t('classify.noConfidence', 'Regions follow a deterministic MAGNIMS rule; no per-lesion confidence is reported.')}
               </div>
             )}
@@ -535,31 +578,31 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
 
       {/* DIS Badge — McDonald 2024 */}
       {dis ? (
-        <div className={`flex items-center gap-2 p-2 rounded-lg ${
-          (dis.dis_met_brain ?? dis.dis_met) ? 'bg-green-900/30 border border-green-700/50' : 'bg-red-900/30 border border-red-700/50'
+        <div className={`flex items-start gap-2 rounded-lg border p-2.5 ${
+          (dis.dis_met_brain ?? dis.dis_met) ? 'border-clinical-good/30 bg-clinical-good/10' : 'border-clinical-crit/30 bg-clinical-crit/10'
         }`}>
           {(dis.dis_met_brain ?? dis.dis_met) ? (
-            <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
+            <CheckCircle2 className="mt-px h-4 w-4 shrink-0 text-clinical-good" aria-hidden="true" />
           ) : (
-            <XCircle className="w-4 h-4 text-red-400 shrink-0" />
+            <XCircle className="mt-px h-4 w-4 shrink-0 text-clinical-crit" aria-hidden="true" />
           )}
-          <div className="flex-1 min-w-0">
-            <div className={`text-xs font-bold ${(dis.dis_met_brain ?? dis.dis_met) ? 'text-green-300' : 'text-red-300'}`}>
+          <div className="min-w-0 flex-1">
+            <div className={`text-xs font-semibold tabular-nums ${(dis.dis_met_brain ?? dis.dis_met) ? 'text-clinical-good' : 'text-clinical-crit'}`}>
               DIS (Brain MRI): {dis.brain_regions_with_lesions ?? dis.regions_with_lesions}/{dis.brain_regions_evaluated ?? 3} {t('lesions.regions', 'regions')}
               {(dis.dis_met_brain ?? dis.dis_met) ? ` \u2014 ${t('lesions.criterionMet', 'Criterion Met')}` : ` \u2014 ${t('lesions.criterionNotMet', 'Not Met')}`}
             </div>
-            <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-1">
+            <div className="mt-1.5 flex flex-wrap gap-x-2.5 gap-y-1">
               {Object.entries(dis.region_details).map(([name, detail]) => (
-                <span key={name} className="flex items-center gap-0.5 text-[9px]">
+                <span key={name} className="flex items-center gap-1 text-xs">
                   {detail.present ? (
-                    <CheckCircle2 className="w-2.5 h-2.5 text-green-400" />
+                    <CheckCircle2 className="h-3 w-3 shrink-0 text-clinical-good" aria-hidden="true" />
                   ) : (
-                    <XCircle className="w-2.5 h-2.5 text-gray-600" />
+                    <XCircle className="h-3 w-3 shrink-0 text-ink-faint" aria-hidden="true" />
                   )}
-                  <span className={detail.present ? 'text-green-300' : 'text-gray-500'}>{name}</span>
+                  <span className={detail.present ? 'text-clinical-good' : 'text-ink-muted'}>{name}</span>
                   {typeof detail.qualifying_lesion_count === 'number' && (
                     <span
-                      className={detail.present ? 'text-green-400/80' : 'text-gray-600'}
+                      className={`tabular-nums ${detail.present ? 'text-clinical-good/80' : 'text-ink-muted'}`}
                       title={t(
                         'lesions.qualifyingLesionsTooltip',
                         'Lesions in this region meeting the MAGNIMS size/location criteria; a region counts toward DIS when this is ≥ 1',
@@ -572,17 +615,17 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
               ))}
             </div>
             {dis.note && (
-              <div className="text-[8px] text-gray-500 mt-1 italic">{dis.note}</div>
+              <div className="mt-1.5 text-xs italic leading-snug text-ink-muted">{dis.note}</div>
             )}
             {dis.dis_criteria_version && (
-              <div className="text-[7px] text-gray-600 mt-0.5">{dis.dis_criteria_version}</div>
+              <div className="mt-1 text-xs text-ink-faint">{dis.dis_criteria_version}</div>
             )}
           </div>
         </div>
       ) : !classification && analysis && (
-        <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-800/50 border border-gray-700/50">
-          <Info className="w-4 h-4 text-gray-500 shrink-0" />
-          <span className="text-[10px] text-gray-400">
+        <div className={`${CARD} flex items-center gap-2 p-2.5`}>
+          <Info className="h-4 w-4 shrink-0 text-ink-faint" aria-hidden="true" />
+          <span className="text-xs text-ink-muted">
             {t('lesions.classifyFirst', 'Classify regions first to evaluate DIS criteria')}
           </span>
         </div>
@@ -591,19 +634,19 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       {/* McDonald 2024: five-topography integration + external evidence.
           Decision support only — never a diagnosis (CMSC guidance). */}
       {dis && (
-        <div className="p-2 rounded-lg bg-indigo-950/30 border border-indigo-800/40 flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-semibold text-indigo-200">
+        <div className={`${CARD} flex flex-col gap-2.5 p-3`}>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-semibold text-ink-base">
               {t('lesions.mcdonald2024', 'McDonald 2024 · 5 topographies')}
             </span>
-            <span className="text-[10px] text-indigo-100 font-bold">
+            <span className="font-display text-sm font-semibold tabular-nums text-ink-base">
               {dis.total_topographies_involved}/5
-              {disEvidenceLoading && <span className="ml-1 text-indigo-400 animate-pulse">…</span>}
+              {disEvidenceLoading && <span className="ml-1 animate-pulse text-brand-400">…</span>}
             </span>
           </div>
 
           {dis.dit_waiver_supported && (
-            <div className="text-[9px] text-emerald-300 bg-emerald-900/20 border border-emerald-800/40 rounded px-1.5 py-1">
+            <div className="rounded-md border border-clinical-good/30 bg-clinical-good/10 px-2 py-1.5 text-xs leading-snug text-clinical-good">
               {t(
                 'lesions.ditWaiver',
                 '≥4 of 5 topographies — dissemination in time may be waived (2024). Clinical correlation required.',
@@ -612,7 +655,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
           )}
 
           {/* External evidence the brain MRI can't supply */}
-          <div className="flex flex-wrap gap-x-3 gap-y-1">
+          <div className="flex flex-wrap gap-x-3 gap-y-1.5">
             {([
               ['optic_nerve_involved', t('lesions.opticNerve', 'Optic nerve')],
               ['spinal_cord_involved', t('lesions.spinalCord', 'Spinal cord')],
@@ -620,10 +663,13 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
               ['prl_present', t('lesions.prl', 'Paramagnetic rim')],
               ['csf_specific', t('lesions.csf', 'CSF-specific (OCB/kFLC)')],
             ] as [keyof DISExternalEvidence, string][]).map(([key, label]) => (
-              <label key={key} className="flex items-center gap-1 text-[9px] text-gray-300 cursor-pointer select-none">
+              <label
+                key={key}
+                className="flex cursor-pointer select-none items-center gap-1.5 text-xs text-ink-soft has-[:disabled]:cursor-wait has-[:disabled]:opacity-60"
+              >
                 <input
                   type="checkbox"
-                  className="w-3 h-3 accent-indigo-500"
+                  className={`h-3.5 w-3.5 cursor-pointer rounded accent-brand-500 ${FOCUS_RING}`}
                   checked={!!disEvidence[key]}
                   disabled={disEvidenceLoading}
                   onChange={() => toggleDisEvidence(key)}
@@ -634,12 +680,12 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
           </div>
 
           {dis.specificity_marker_present && (
-            <div className="text-[9px] text-indigo-300">
+            <div className="text-xs text-clinical-info">
               {t('lesions.specificityPresent', 'Supportive specificity marker present (adds diagnostic specificity).')}
             </div>
           )}
 
-          <div className="text-[8px] text-gray-500 italic">
+          <div className="border-t border-surface-border pt-2 text-xs italic leading-snug text-ink-muted">
             {t(
               'lesions.decisionSupport',
               'Radiological decision support only — not a diagnosis. Requires clinical correlation by a neurologist.',
@@ -650,74 +696,70 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
 
       {/* Additional badges (DWM, active, black holes) */}
       {dis && (dis.dwm_lesion_count > 0 || dis.has_active_lesions || dis.has_black_holes) && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5">
           {dis.dwm_lesion_count > 0 && (
-            <span className="px-1.5 py-0.5 bg-yellow-900/40 border border-yellow-700/50 rounded text-[9px] text-yellow-300">
+            <Badge tone="warn" className="text-xs tabular-nums">
               DWM: {dis.dwm_lesion_count} lesions (not a DIS region)
-            </span>
+            </Badge>
           )}
           {dis.has_active_lesions && (
-            <span className="px-1.5 py-0.5 bg-fuchsia-900/40 border border-fuchsia-700/50 rounded text-[9px] text-fuchsia-300">
+            <Badge tone="crit" className="text-xs">
               Gd+ {t('lesions.active', 'Active')}
-            </span>
+            </Badge>
           )}
           {dis.has_black_holes && (
-            <span className="px-1.5 py-0.5 bg-purple-900/40 border border-purple-700/50 rounded text-[9px] text-purple-300">
+            <Badge tone="neutral" className="text-xs">
               T1 {t('lesions.blackHoles', 'Black Holes')}
-            </span>
+            </Badge>
           )}
         </div>
       )}
 
       {/* Clinician CVS/PRL readings — McDonald 2024 supportive markers (CAPA-008: counts only) */}
       {(cvsSummary || prlSummary) && (
-        <div className="bg-gray-900/60 rounded-lg p-2 space-y-1.5 border border-indigo-700/40" data-testid="cvs-prl-readings">
-          <div className="flex items-center gap-1.5">
-            <Activity className="w-3.5 h-3.5 text-indigo-400" />
-            <span className="text-xs font-semibold text-white">
+        <div className={`${CARD} space-y-2 p-3`} data-testid="cvs-prl-readings">
+          <div className="flex items-center gap-2">
+            <Activity className="h-3.5 w-3.5 shrink-0 text-ink-muted" aria-hidden="true" />
+            <span className="text-xs font-semibold text-ink-base">
               {t('lesions.markerReadingsTitle', 'CVS / PRL readings (clinician)')}
             </span>
           </div>
-          <div className="text-[8px] text-gray-400">
+          <div className="text-xs leading-relaxed text-ink-muted">
             {t('lesions.markerReadingsNote', 'Read on susceptibility-sensitive MRI. McDonald 2024 uses them as supportive evidence only in specific situations; these are counts, not a criterion.')}
           </div>
 
           {cvsSummary && (
             <div className="space-y-1">
-              <span className="text-[9px] text-gray-400 font-medium">
+              <span className="block text-xs font-medium text-ink-muted">
                 CVS (Central Vein Sign)
               </span>
               <div className="flex flex-wrap gap-1.5">
-                <span className={`px-1.5 py-0.5 rounded border text-[9px] font-medium ${
-                  cvsSummary.meets_select6
-                    ? 'bg-green-900/40 text-green-300 border-green-700/50'
-                    : 'bg-gray-800 text-gray-400 border-gray-700/50'
-                }`}>
-                  {cvsSummary.meets_select6 ? <CheckCircle2 className="w-2.5 h-2.5 inline mr-0.5" /> : <XCircle className="w-2.5 h-2.5 inline mr-0.5" />}
+                <Badge tone={cvsSummary.meets_select6 ? 'good' : 'neutral'} className="text-xs tabular-nums">
+                  {cvsSummary.meets_select6 ? <CheckCircle2 className="h-3 w-3" aria-hidden="true" /> : <XCircle className="h-3 w-3" aria-hidden="true" />}
                   Select 6: {cvsSummary.cvs_positive}/{cvsSummary.total_evaluated} CVS+
-                </span>
-                <span className="px-1.5 py-0.5 rounded border text-[9px] font-medium bg-gray-800 text-gray-300 border-gray-700/50">
+                </Badge>
+                <Badge tone="neutral" className="text-xs tabular-nums">
                   {t('lesions.cvsPosNeg', 'CVS+ {{pos}} · CVS− {{neg}}', { pos: cvsSummary.cvs_positive, neg: cvsSummary.cvs_negative })}
-                </span>
+                </Badge>
               </div>
             </div>
           )}
 
           {prlSummary && (
             <div className="space-y-1">
-              <span className="text-[9px] text-gray-400 font-medium">
+              <span className="block text-xs font-medium text-ink-muted">
                 PRL (Paramagnetic Rim Lesions)
               </span>
               <div>
                 {/* CAPA-008: neutral count — ">=1 PRL" is not, by itself, a criterion met. */}
-                <span className="px-1.5 py-0.5 rounded border text-[9px] font-medium bg-gray-800 text-gray-300 border-gray-700/50">
+                <Badge tone="neutral" className="text-xs tabular-nums">
                   PRL: {prlSummary.prl_positive}/{prlSummary.total_evaluated} positive
-                </span>
+                </Badge>
               </div>
             </div>
           )}
 
-          <div className="text-[7px] text-gray-600">
+          <div className="text-xs text-ink-faint">
             Montalban et al., Lancet Neurology 2025; 24(10): 850-865
           </div>
         </div>
@@ -726,56 +768,56 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       {analysis && (
         <>
           {/* Total Burden + Size Distribution */}
-          <div className="bg-gray-900/50 rounded-lg p-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-gray-400">
+          <div className={`${CARD} p-3`}>
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-xs text-ink-muted">
                 {t('lesions.totalBurden', 'T2 Lesion Load')}
               </span>
-              <span className="text-sm font-mono font-bold text-white">
-                {analysis.total_burden_ml.toFixed(2)} mL
+              <span className="font-display text-lg font-semibold tabular-nums text-ink-base">
+                {analysis.total_burden_ml.toFixed(2)} <span className="text-xs font-normal text-ink-muted">mL</span>
               </span>
             </div>
-            <div className="flex items-center justify-between mt-1">
-              <span className="text-[10px] text-gray-400">
+            <div className="mt-1 flex items-baseline justify-between gap-2">
+              <span className="text-xs text-ink-muted">
                 {t('lesions.totalCount', 'Total Lesions')}
               </span>
-              <span className="text-xs font-mono text-white">
+              <span className="text-sm font-medium tabular-nums text-ink-base">
                 {analysis.total_count}
               </span>
             </div>
-            <div className="flex gap-2 text-[10px] mt-1.5 pt-1.5 border-t border-gray-700/50">
-              <span className="text-gray-400">
-                {t('lesions.small', 'Small')}: <span className="text-gray-300">{analysis.size_distribution.small}</span>
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 border-t border-surface-border pt-2 text-xs tabular-nums">
+              <span className="text-ink-muted">
+                {t('lesions.small', 'Small')}: <span className="text-ink-soft">{analysis.size_distribution.small}</span>
               </span>
-              <span className="text-yellow-400">
-                {t('lesions.medium', 'Medium')}: <span className="text-yellow-300">{analysis.size_distribution.medium}</span>
+              <span className="text-clinical-warn">
+                {t('lesions.medium', 'Medium')}: <span className="font-medium">{analysis.size_distribution.medium}</span>
               </span>
-              <span className="text-red-400">
-                {t('lesions.large', 'Large')}: <span className="text-red-300">{analysis.size_distribution.large}</span>
+              <span className="text-clinical-crit">
+                {t('lesions.large', 'Large')}: <span className="font-medium">{analysis.size_distribution.large}</span>
               </span>
             </div>
           </div>
 
           {/* Region Summary Bars */}
-          <div className="space-y-1">
-            <label className="text-[10px] text-gray-400 block">
+          <div className="space-y-1.5">
+            <label className={`block ${OVERLINE}`}>
               {t('lesions.byRegion', 'By Region')}
             </label>
             {Object.entries(analysis.regions).map(([name, region]) => (
-              <div key={name} className="space-y-0.5">
-                <div className="flex items-center justify-between text-[9px]">
-                  <span className="flex items-center gap-1">
-                    <span className={`w-1.5 h-1.5 rounded-full ${REGION_COLORS[name] ?? 'bg-gray-500'}`} />
-                    <span className="text-gray-300">{name}</span>
+              <div key={name} className="space-y-1">
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <RegionDot region={name} />
+                    <span className="truncate text-ink-soft">{name}</span>
                   </span>
-                  <span className="text-gray-400">
-                    {region.lesion_count} \u2014 {region.total_volume_ml.toFixed(2)} mL
+                  <span className="shrink-0 tabular-nums text-ink-muted">
+                    {region.lesion_count} {'\u2014'} {region.total_volume_ml.toFixed(2)} mL
                   </span>
                 </div>
-                <div className="w-full h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-hover">
                   <div
-                    className="h-full bg-amber-500 rounded-full transition-all"
-                    style={{ width: regionBarWidth(region.total_volume_mm3, maxRegionVol) }}
+                    className="h-full rounded-full bg-ink-muted transition-all"
+                    style={{ width: regionBarWidth(region.total_volume_mm3, maxRegionVol), backgroundColor: regionColor(name) }}
                   />
                 </div>
               </div>
@@ -784,70 +826,72 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
 
           {/* Classification details (expandable) */}
           <button
+            type="button"
             onClick={() => setExpanded(!expanded)}
-            className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-gray-200 transition-colors"
+            aria-expanded={expanded}
+            className={`flex items-center gap-1 rounded text-xs text-ink-muted transition-colors hover:text-ink-soft ${FOCUS_RING}`}
           >
-            {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-            {t('classify.distanceDetails', 'Classification Distances')} ({analysis.total_count})
+            {expanded ? <ChevronUp className="h-3.5 w-3.5" aria-hidden="true" /> : <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />}
+            {t('classify.distanceDetails', 'Classification Distances')} (<span className="tabular-nums">{analysis.total_count}</span>)
           </button>
 
           {classification && classification.lesions.length > 0 && expanded && (
-            <div className="mt-2">
-              <label className="text-[10px] text-gray-400 block mb-1">
+            <div>
+              <label className={`mb-1.5 block ${OVERLINE}`}>
                 {t('classify.distanceDetails', 'Classification Distances (mm)')}
               </label>
-              <div className="max-h-36 overflow-y-auto">
-                <table className="w-full text-[9px]">
-                  <thead>
-                    <tr className="text-gray-500 border-b border-gray-700">
-                      <th className="text-left py-0.5 px-1">#</th>
-                      <th className="text-left py-0.5 px-1">{t('classify.region', 'Region')}</th>
-                      <th className="text-right py-0.5 px-1">PV</th>
-                      <th className="text-right py-0.5 px-1">JC</th>
-                      <th className="text-right py-0.5 px-1">IT</th>
+              <div className={`${CARD} max-h-48 overflow-auto`}>
+                <table className="w-full text-xs">
+                  <thead className="sticky top-0 z-10 bg-surface-base">
+                    <tr className="border-b border-surface-border text-ink-faint">
+                      <th className="whitespace-nowrap px-1.5 py-1.5 text-left font-medium">#</th>
+                      <th className="whitespace-nowrap px-1.5 py-1.5 text-left font-medium">{t('classify.region', 'Region')}</th>
+                      <th className="whitespace-nowrap px-1.5 py-1.5 text-right font-medium">PV</th>
+                      <th className="whitespace-nowrap px-1.5 py-1.5 text-right font-medium">JC</th>
+                      <th className="whitespace-nowrap px-1.5 py-1.5 text-right font-medium">IT</th>
                       <th
-                        className="text-center py-0.5 px-1"
+                        className="whitespace-nowrap px-1.5 py-1.5 text-center font-medium"
                         title={t('classify.inZoneTooltip', 'Fraction of the lesion inside the assigned MAGNIMS zone (MSMask). Descriptive, not a probability.')}
                       >
                         {t('classify.inZone', 'Lesion % in zone')}
                       </th>
-                      <th className="text-center py-0.5 px-1">CVS</th>
-                      <th className="text-center py-0.5 px-1">PRL</th>
+                      <th className="whitespace-nowrap px-1.5 py-1.5 text-center font-medium">CVS</th>
+                      <th className="whitespace-nowrap px-1.5 py-1.5 text-center font-medium">PRL</th>
                     </tr>
                   </thead>
                   <tbody>
                     {classification.lesions.map((cl) => (
-                      <tr key={cl.lesion_id} className="border-b border-gray-800">
-                        <td className="py-0.5 px-1 text-gray-400">{cl.lesion_id}</td>
-                        <td className="py-0.5 px-1">
-                          <span className="flex items-center gap-1">
-                            <span className={`w-1.5 h-1.5 rounded-full ${REGION_COLORS[cl.region] ?? 'bg-gray-500'}`} />
-                            <span className={REGION_TEXT_COLORS[cl.region] ?? 'text-gray-300'}>
+                      <tr key={cl.lesion_id} className="border-b border-surface-border/60 last:border-b-0">
+                        <td className="px-1.5 py-1 tabular-nums text-ink-muted">{cl.lesion_id}</td>
+                        <td className="px-1.5 py-1">
+                          <span className="flex items-center gap-1.5 whitespace-nowrap">
+                            <RegionDot region={cl.region} />
+                            <RegionText region={cl.region}>
                               {cl.region}
-                            </span>
+                            </RegionText>
                           </span>
                         </td>
-                        <td className="py-0.5 px-1 text-right font-mono text-gray-400">
+                        <td className="px-1.5 py-1 text-right tabular-nums text-ink-muted">
                           {cl.distances_mm?.to_ventricle?.toFixed(1) ?? '-'}
                         </td>
-                        <td className="py-0.5 px-1 text-right font-mono text-gray-400">
+                        <td className="px-1.5 py-1 text-right tabular-nums text-ink-muted">
                           {cl.distances_mm?.to_cortex?.toFixed(1) ?? '-'}
                         </td>
-                        <td className="py-0.5 px-1 text-right font-mono text-gray-400">
+                        <td className="px-1.5 py-1 text-right tabular-nums text-ink-muted">
                           {cl.distances_mm?.to_infratentorial?.toFixed(1) ?? '-'}
                         </td>
-                        <td className="py-0.5 px-1 text-center">
+                        <td className="px-1.5 py-1 text-center">
                           {(() => {
                             // RC-010 (amended): evidence, never a confidence (HAZ-005).
                             const ev = regionEvidence(cl);
                             if (ev.kind === 'outsideZones') {
                               return (
                                 <span
-                                  className="inline-flex items-center gap-0.5 text-[8px] text-amber-300"
+                                  className="inline-flex items-center gap-1 whitespace-nowrap text-xs text-clinical-warn"
                                   title={t('classify.outsideZonesTooltip', 'No voxel of this lesion lies in any MSMask white-matter zone (it may be cortical, intraventricular, or the atlas may be misaligned). Deep White Matter was assigned by default, not by the MAGNIMS rule. Verify the location before using it for DIS.')}
                                   data-testid="region-evidence"
                                 >
-                                  <AlertTriangle className="w-2.5 h-2.5" aria-hidden="true" />
+                                  <AlertTriangle className="h-3 w-3 shrink-0" aria-hidden="true" />
                                   {t('classify.outsideZones', 'No WM zone — DWM by default')}
                                 </span>
                               );
@@ -855,7 +899,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                             if (ev.kind === 'overlap') {
                               return (
                                 <span
-                                  className="text-[8px] font-mono text-gray-400"
+                                  className="whitespace-nowrap text-xs tabular-nums text-ink-muted"
                                   title={t('classify.inZoneTooltip', 'Fraction of the lesion inside the assigned MAGNIMS zone (MSMask). Descriptive, not a probability.')}
                                   data-testid="region-evidence"
                                 >
@@ -866,14 +910,15 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                                 </span>
                               );
                             }
-                            return <span className="text-[8px] text-gray-600" data-testid="region-evidence">{'\u2014'}</span>;
+                            return <span className="text-xs text-ink-faint" data-testid="region-evidence">{'\u2014'}</span>;
                           })()}
                         </td>
-                        <td className="py-0.5 px-1 text-center">
+                        <td className="px-1.5 py-1 text-center">
                           <select
                             value={lesionAnnotations[cl.lesion_id]?.cvs_status ?? ''}
                             onChange={(e) => handleAnnotationChange(cl.lesion_id, 'cvs_status', e.target.value || null)}
-                            className="bg-gray-800 text-[8px] text-gray-300 border border-gray-700 rounded px-0.5 py-0 w-10"
+                            aria-label={`CVS #${cl.lesion_id}`}
+                            className={`w-12 rounded border border-surface-border bg-surface-raised px-1 py-0.5 text-xs text-ink-soft ${FOCUS_RING}`}
                           >
                             <option value="">{'\u2014'}</option>
                             <option value="positive">+</option>
@@ -881,11 +926,12 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                             <option value="indeterminate">?</option>
                           </select>
                         </td>
-                        <td className="py-0.5 px-1 text-center">
+                        <td className="px-1.5 py-1 text-center">
                           <select
                             value={lesionAnnotations[cl.lesion_id]?.prl_status ?? ''}
                             onChange={(e) => handleAnnotationChange(cl.lesion_id, 'prl_status', e.target.value || null)}
-                            className="bg-gray-800 text-[8px] text-gray-300 border border-gray-700 rounded px-0.5 py-0 w-10"
+                            aria-label={`PRL #${cl.lesion_id}`}
+                            className={`w-12 rounded border border-surface-border bg-surface-raised px-1 py-0.5 text-xs text-ink-soft ${FOCUS_RING}`}
                           >
                             <option value="">{'\u2014'}</option>
                             <option value="positive">+</option>
@@ -901,44 +947,48 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
             </div>
           )}
 
-          {/* Export CSV */}
-          <button
-            onClick={handleExportCSV}
-            className="flex items-center gap-1 px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-[10px] text-gray-300 transition-colors"
-          >
-            <Download className="w-3 h-3" />
-            {t('lesions.exportCSV', 'Export CSV')}
-          </button>
+          {/* Export CSV / DICOM-SEG */}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleExportCSV}
+              leftIcon={<Download className="h-3.5 w-3.5" aria-hidden="true" />}
+            >
+              {t('lesions.exportCSV', 'Export CSV')}
+            </Button>
 
-          {/* Export DICOM-SEG */}
-          <button
-            onClick={() => {
-              const url = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/v1/segmentation/${segmentationId}/export/dicom-seg`;
-              const token = localStorage.getItem('access_token');
-              const toastId = toast.loading(t('lesions.exportingSeg', 'Exporting DICOM-SEG…'));
-              fetch(url, { headers: { Authorization: `Bearer ${token}` } })
-                .then(res => {
-                  if (!res.ok) throw new Error(`Export failed (${res.status})`);
-                  return res.blob();
-                })
-                .then(blob => {
-                  const a = document.createElement('a');
-                  a.href = URL.createObjectURL(blob);
-                  a.download = `${segmentationId}_seg.dcm`;
-                  a.click();
-                  URL.revokeObjectURL(a.href);
-                  toast.success(t('lesions.exportSegOk', 'DICOM-SEG exported'), { id: toastId });
-                })
-                // A clinical data export must NEVER fail silently (Class C): surface it.
-                .catch((e) => toast.error(
-                  t('lesions.exportSegFail', 'DICOM-SEG export failed') +
-                  (e?.message ? `: ${e.message}` : ''), { id: toastId }));
-            }}
-            className="flex items-center gap-1 px-2 py-1 bg-blue-700/50 hover:bg-blue-600/50 rounded text-[10px] text-blue-300 transition-colors"
-          >
-            <Download className="w-3 h-3" />
-            DICOM-SEG
-          </button>
+            {/* Export DICOM-SEG */}
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                const url = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/v1/segmentation/${segmentationId}/export/dicom-seg`;
+                const token = localStorage.getItem('access_token');
+                const toastId = toast.loading(t('lesions.exportingSeg', 'Exporting DICOM-SEG…'));
+                fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+                  .then(res => {
+                    if (!res.ok) throw new Error(`Export failed (${res.status})`);
+                    return res.blob();
+                  })
+                  .then(blob => {
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `${segmentationId}_seg.dcm`;
+                    a.click();
+                    URL.revokeObjectURL(a.href);
+                    toast.success(t('lesions.exportSegOk', 'DICOM-SEG exported'), { id: toastId });
+                  })
+                  // A clinical data export must NEVER fail silently (Class C): surface it.
+                  .catch((e) => toast.error(
+                    t('lesions.exportSegFail', 'DICOM-SEG export failed') +
+                    (e?.message ? `: ${e.message}` : ''), { id: toastId }));
+              }}
+              leftIcon={<Download className="h-3.5 w-3.5" aria-hidden="true" />}
+            >
+              DICOM-SEG
+            </Button>
+          </div>
         </>
       )}
     </div>

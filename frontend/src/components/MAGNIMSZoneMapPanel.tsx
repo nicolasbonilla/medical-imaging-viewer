@@ -24,21 +24,18 @@ import {
 } from 'lucide-react';
 import { segmentationAPI } from '@/api/segmentation';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
+import { Button } from '@/components/ui';
+import { MAGNIMS_ZONE_NAMES, MAGNIMS_ZONE_RGB, regionRgb, rgbCss } from '@/utils/clinicalPalette';
 import type { ZoneMapResult } from '@/types';
 
-const REGION_COLORS: Record<string, string> = {
-  Periventricular: 'bg-red-500',
-  Juxtacortical: 'bg-green-500',
-  Infratentorial: 'bg-blue-500',
-  'Deep White Matter': 'bg-yellow-500',
-};
-
-const REGION_TEXT_COLORS: Record<string, string> = {
-  Periventricular: 'text-red-400',
-  Juxtacortical: 'text-green-400',
-  Infratentorial: 'text-blue-400',
-  'Deep White Matter': 'text-yellow-400',
-};
+// Zone colours come from the shared clinical palette (Okabe-Ito) — the same table the
+// image overlay paints with — so this legend can never disagree with the picture or
+// with the lesion dashboard. (It used to be red/green/blue/yellow here while the
+// dashboard used Okabe-Ito: the same region read as two different colours.)
+function zoneColor(region: string): string | undefined {
+  const rgb = regionRgb(region);
+  return rgb ? rgbCss(rgb) : undefined;
+}
 
 const ZONE_LABEL_NAMES: Record<number, string> = {
   1: 'Periventricular',
@@ -46,6 +43,10 @@ const ZONE_LABEL_NAMES: Record<number, string> = {
   3: 'Infratentorial',
   4: 'Deep White Matter',
 };
+
+/** Selected state for the icon toggles (tinted brand selection, design-system v2). */
+const TOGGLE_ON = 'border-brand-500/30 bg-brand-950 text-brand-400 hover:bg-brand-950 hover:text-brand-400';
+const TOGGLE_OFF = 'text-ink-muted hover:text-ink-soft';
 
 interface MAGNIMSZoneMapPanelProps {
   fileId: string | undefined;
@@ -135,19 +136,19 @@ export function MAGNIMSZoneMapPanel({ fileId }: MAGNIMSZoneMapPanelProps) {
   }, []);
 
   return (
-    <div className="bg-gray-800/80 rounded-xl p-3 space-y-2">
+    <div className="space-y-2.5 rounded-lg border border-surface-border bg-surface-raised p-3">
       <div className="flex items-center gap-2">
-        <Map className="w-4 h-4 text-emerald-400" />
-        <span className="text-sm font-semibold text-white">
+        <Map className="h-4 w-4 shrink-0 text-brand-400" aria-hidden="true" />
+        <span className="text-sm font-semibold text-ink-base">
           {t('zoneMap.title', 'MAGNIMS Zone Map')}
         </span>
         {isGenerated && (
-          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+          <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-clinical-good" />
         )}
       </div>
 
       {!isGenerated && (
-        <p className="text-[9px] text-gray-400 leading-relaxed">
+        <p className="text-xs leading-relaxed text-ink-muted">
           {t('zoneMap.description',
             'Visualize anatomical zone boundaries (PV, JC, IT, DWM) as a semi-transparent background overlay. Requires brain parcellation (SynthSeg).'
           )}
@@ -155,82 +156,87 @@ export function MAGNIMSZoneMapPanel({ fileId }: MAGNIMSZoneMapPanelProps) {
       )}
 
       {error && (
-        <div className="flex items-center gap-1 text-red-400 text-[10px]">
-          <AlertCircle className="w-3 h-3" />
-          <span>{error}</span>
+        <div className="flex items-start gap-1.5 rounded-md border border-clinical-crit/30 bg-clinical-crit/10 px-2 py-1.5 text-xs text-clinical-crit">
+          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <span className="min-w-0 break-words">{error}</span>
         </div>
       )}
 
       <div className="flex gap-1.5">
         {/* Generate / Regenerate */}
-        <button
+        <Button
+          variant={isGenerated ? 'secondary' : 'primary'}
+          size="sm"
+          className="flex-1"
           onClick={handleGenerate}
           disabled={isGenerating || !fileId}
-          className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded text-xs text-white font-medium transition-colors"
+          aria-busy={isGenerating || undefined}
+          leftIcon={isGenerating
+            ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+            : <Map className="h-3.5 w-3.5" aria-hidden="true" />}
         >
-          {isGenerating ? (
-            <>
-              <Loader2 className="w-3 h-3 animate-spin" />
-              {t('zoneMap.generating', 'Generating...')}
-            </>
-          ) : (
-            <>
-              <Map className="w-3 h-3" />
-              {isGenerated ? t('zoneMap.regenerate', 'Regenerate') : t('zoneMap.generate', 'Generate')}
-            </>
-          )}
-        </button>
+          {isGenerating
+            ? t('zoneMap.generating', 'Generating...')
+            : isGenerated ? t('zoneMap.regenerate', 'Regenerate') : t('zoneMap.generate', 'Generate')}
+        </Button>
 
         {/* Toggle overlay visibility */}
         {isGenerated && (
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={handleToggleVisibility}
-            className={`px-2 py-1.5 rounded text-xs font-medium transition-colors ${
-              zoneMapVisible
-                ? 'bg-emerald-600 text-white'
-                : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
-            }`}
+            className={`w-8 px-0 ${zoneMapVisible ? TOGGLE_ON : TOGGLE_OFF}`}
             title={zoneMapVisible ? t('zoneMap.hide', 'Hide zones') : t('zoneMap.show', 'Show zones')}
+            aria-label={zoneMapVisible ? t('zoneMap.hide', 'Hide zones') : t('zoneMap.show', 'Show zones')}
           >
-            {zoneMapVisible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-          </button>
+            {zoneMapVisible ? <Eye className="h-3.5 w-3.5" aria-hidden="true" /> : <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />}
+          </Button>
         )}
 
         {/* Toggle zone colorization */}
         {isGenerated && (
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={handleToggleColorize}
-            className={`px-2 py-1.5 rounded text-xs font-medium transition-colors ${
-              zoneColorizeEnabled
-                ? 'bg-amber-600 text-white'
-                : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
-            }`}
+            className={`w-8 px-0 ${zoneColorizeEnabled ? TOGGLE_ON : TOGGLE_OFF}`}
             title={zoneColorizeEnabled
               ? t('zoneMap.colorizeOff', 'Normal label colors')
               : t('zoneMap.colorizeOn', 'Colorize lesions by zone')
             }
+            aria-label={zoneColorizeEnabled
+              ? t('zoneMap.colorizeOff', 'Normal label colors')
+              : t('zoneMap.colorizeOn', 'Colorize lesions by zone')
+            }
           >
-            <Palette className="w-3 h-3" />
-          </button>
+            <Palette className="h-3.5 w-3.5" aria-hidden="true" />
+          </Button>
         )}
       </div>
 
-      {/* Zone colorization legend */}
+      {/* Zone colorization legend — same palette as the image overlay */}
       {isGenerated && (
-        <div className="flex items-center gap-2 text-[9px] text-gray-300">
-          <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-red-500" />PV</span>
-          <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-green-500" />JC</span>
-          <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-blue-500" />IT</span>
-          <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-yellow-500" />DWM</span>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-soft">
+          {Object.entries(MAGNIMS_ZONE_NAMES).map(([id, zone]) => (
+            <span key={id} className="flex items-center gap-1">
+              <span
+                aria-hidden="true"
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: rgbCss(MAGNIMS_ZONE_RGB[Number(id)]) }}
+              />
+              {zone.abbrev}
+            </span>
+          ))}
         </div>
       )}
 
       {/* Zone map opacity */}
       {isGenerated && zoneMapVisible && (
         <div>
-          <div className="flex items-center justify-between mb-0.5">
-            <label className="text-[9px] text-gray-400">{t('segmentation.zoneMapOpacity', 'Zone map opacity')}</label>
-            <span className="text-[9px] text-gray-500">{Math.round(zoneMapOpacity * 100)}%</span>
+          <div className="mb-1 flex items-center justify-between">
+            <label className="text-xs text-ink-muted">{t('segmentation.zoneMapOpacity', 'Zone map opacity')}</label>
+            <span className="text-xs tabular-nums text-ink-soft">{Math.round(zoneMapOpacity * 100)}%</span>
           </div>
           <input
             type="range"
@@ -238,25 +244,33 @@ export function MAGNIMSZoneMapPanel({ fileId }: MAGNIMSZoneMapPanelProps) {
             max="100"
             value={Math.round(zoneMapOpacity * 100)}
             onChange={(e) => setZoneMapOpacity(Number(e.target.value) / 100)}
-            className="w-full h-1 bg-gray-700 rounded-full appearance-none cursor-pointer accent-emerald-500"
+            aria-label={t('segmentation.zoneMapOpacity', 'Zone map opacity')}
+            className="h-1 w-full cursor-pointer appearance-none rounded-full bg-surface-hover accent-brand-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60"
           />
         </div>
       )}
 
       {/* Zone map stats */}
       {computedStats && (
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-[9px] text-gray-400">
+        <div className="space-y-1.5 border-t border-surface-border pt-2">
+          <div className="flex items-center justify-between text-xs tabular-nums text-ink-muted">
             {computedStats.processing_time_ms > 0 && (
               <span>{computedStats.processing_time_ms}ms</span>
             )}
             <span>{computedStats.total_brain_voxels.toLocaleString()} {t('zoneMap.brainVoxels', 'brain voxels')}</span>
           </div>
-          <div className="flex flex-wrap gap-x-2 gap-y-1">
+          <div className="flex flex-wrap gap-x-3 gap-y-1">
             {Object.entries(computedStats.zone_stats).map(([region, stat]) => (
-              <span key={region} className="flex items-center gap-1 text-[9px]">
-                <span className={`w-2 h-2 rounded-full ${REGION_COLORS[region] ?? 'bg-gray-500'}`} />
-                <span className={REGION_TEXT_COLORS[region] ?? 'text-gray-300'}>
+              <span key={region} className="flex items-center gap-1.5 text-xs">
+                <span
+                  aria-hidden="true"
+                  className="h-2 w-2 shrink-0 rounded-full bg-ink-faint"
+                  style={zoneColor(region) ? { backgroundColor: zoneColor(region) } : undefined}
+                />
+                <span
+                  className="tabular-nums text-ink-soft"
+                  style={zoneColor(region) ? { color: zoneColor(region) } : undefined}
+                >
                   {region}: {stat.percentage}%
                 </span>
               </span>

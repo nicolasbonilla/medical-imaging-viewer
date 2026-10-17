@@ -27,6 +27,8 @@ export interface PanelState {
   } | null;
   /** Whether this panel is currently loading */
   isLoading: boolean;
+  /** RC-023: axis codes of this panel's image (from the server metadata). */
+  orientation?: string;
 }
 
 interface MultiViewerState {
@@ -43,7 +45,9 @@ interface MultiViewerState {
   setLayout: (layout: ViewerLayout) => void;
   setSliceIndex: (panelId: string, index: number) => void;
   assignInstance: (panelId: string, instanceId: string, sequence: SequenceType) => void;
-  setPanelImageData: (panelId: string, imageData: string, metadata: { rows: number; columns: number; slices: number }) => void;
+  setPanelImageData: (panelId: string, imageData: string, metadata: { rows: number; columns: number; slices: number }, orientation?: string) => void;
+  /** v3 in-browser panels: grid of the panel's active view (drives slice range). */
+  setPanelMetadata: (panelId: string, metadata: { rows: number; columns: number; slices: number }, orientation?: string) => void;
   setPanelLoading: (panelId: string, loading: boolean) => void;
   setActivePanelId: (panelId: string) => void;
   setSyncSlice: (sync: boolean) => void;
@@ -98,10 +102,17 @@ export const useMultiViewerStore = create<MultiViewerState>()((set, get) => ({
       ),
     })),
 
-  setPanelImageData: (panelId, imageData, metadata) =>
+  setPanelImageData: (panelId, imageData, metadata, orientation) =>
     set((state) => ({
       panels: state.panels.map((p) =>
-        p.id === panelId ? { ...p, imageData, metadata, isLoading: false } : p
+        p.id === panelId ? { ...p, imageData, metadata, orientation: orientation ?? p.orientation, isLoading: false } : p
+      ),
+    })),
+
+  setPanelMetadata: (panelId, metadata, orientation) =>
+    set((state) => ({
+      panels: state.panels.map((p) =>
+        p.id === panelId ? { ...p, metadata, orientation: orientation ?? p.orientation } : p
       ),
     })),
 
