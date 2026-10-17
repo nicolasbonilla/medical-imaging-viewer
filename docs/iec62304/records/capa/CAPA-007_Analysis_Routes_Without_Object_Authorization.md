@@ -6,7 +6,7 @@
 **Severity**: **CRITICAL**. Any authenticated user could read another patient's lesion analysis, DIS assessment, comparisons and DICOM-SEG export, write lesion annotations, and read any stored object through a client-supplied storage path (HAZ-010; OWASP API1:2023 and API3:2023; GDPR Art. 32; MDR Annex I §17.4). QP-002 §5.
 **Owner**: *(to be assigned: Software Safety Officer / QMS Manager)*
 **Status**: OPEN.
-- Implemented on branch `fix/analysis-routes-authorization-capa007`: CA-7.1 to CA-7.3 and PA-7.1. They need human approval before merge and deployment.
+- Implemented on branch `fix/analysis-routes-authorization-capa007`: CA-7.1 to CA-7.3 and PA-7.1. **Approved by N. G. Bonilla Vargas on 2026-10-17** (PR #45) and merged.
 - Pending: CA-7.4 and PA-7.2.
 - Effectiveness is not verified.
 
