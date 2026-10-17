@@ -3,7 +3,7 @@
 ## IEC 62304 Clause 5.1 Compliant Development Lifecycle
 
 **Document ID**: SDP-001
-**Version**: 1.0
+**Version**: 1.1 (2026-10-17 — AI coding agent declared as a development tool, §4.2, §4.4, §9)
 **Effective Date**: April 12, 2026
 **Software Safety Class**: IEC 62304 Class C
 
@@ -93,6 +93,7 @@ Iteration N:
 | Docker | Backend containerization | Latest |
 | Cloud Build | Backend CI/CD | Google Cloud |
 | Firebase CLI | Frontend deployment | Latest |
+| Claude Code (Anthropic) — AI coding agent | Drafts code, tests, lifecycle documents and CAPA records under the owner's direction (§4.4). Holds no approval authority | Model recorded per commit in the `Co-Authored-By` trailer (e.g. Claude Opus 5.5) |
 
 ### 4.3 Programming Languages
 
@@ -100,6 +101,42 @@ Iteration N:
 |----------|-----------|
 | TypeScript 5.6 | Type safety, React ecosystem, WebGL/WebGPU access |
 | Python 3.11 | Scientific computing ecosystem (NumPy, SciPy, nibabel), FastAPI async performance |
+
+### 4.4 AI-Assisted Development (declared 2026-10-17)
+
+**Why this section exists.** IEC 62304 §5.1.4 requires the plan to state the methods and tools used
+to develop Class C software. An AI coding agent has written most of this repository: on
+2026-10-17, 327 of 388 commits carried its `Co-Authored-By` trailer. Until v1.1 the plan did not
+say so.
+
+**Scope.** The agent drafts source code, tests, negative-control scripts, design and lifecycle
+documents, and CAPA records. It does not approve, merge or release anything.
+
+**Controls applied to agent output:**
+1. **Human approval.** No change reaches `main` or production without the owner's explicit
+   approval, recorded in the controlled documents with the PR number. Class C modules are flagged
+   in every PR.
+2. **Verification that can fail.** Every risk control is bound to tests that exercise behaviour,
+   preferably real requests. Negative controls (deliberate mutations, one at a time, with every
+   anchor asserted unique) must show that the tests detect the removal of each sub-control. The
+   records are kept under `records/risk_verification/`.
+3. **Adversarial review.** Separate review agents try to refute each change before the owner
+   decides. Their findings are recorded, including withdrawn claims.
+4. **Operational guards.**
+   - The backend is deployed only through `scripts/deploy_backend.sh`, which always targets the
+     `brain-mri-476110` project; `cloudbuild.yaml` refuses any other project (PR #44).
+   - The agent never changes the global cloud configuration.
+5. **Attribution.** Each commit carries the agent's trailer, so its contribution can be measured.
+
+**Failure modes observed, and the control that now catches each:**
+- Verification that read source text instead of observing behaviour (CAPA-001, -006, -007, -009).
+  It let an inert authorization dependency pass as VERIFIED. Control 2 now catches this.
+- Inaccurate self-reports in drafted records. Caught by controls 2 and 3.
+- A deployment to the wrong cloud project (2026-10-17). Caught by control 4.
+
+**Known limitation.** Review agents are not independent of the authoring agent, in the sense of
+IEC 62304 §5.5.x and ISO 13485 §7.3.5. An **independent human reviewer for Class C changes**
+remains a gap; it must be closed before any regulatory submission.
 
 ---
 
@@ -183,6 +220,7 @@ Per RMF-001:
 | **QA** | Integration/system testing, traceability verification |
 | **Clinical Advisor** | Clinical risk assessment, intended use validation |
 | **Regulatory Affairs** | Standard compliance, audit preparation |
+| *AI coding agent (tool, §4.4)* | *Drafts code, tests and documents. Not a role holder: no review independence, no approval authority* |
 
 ---
 
