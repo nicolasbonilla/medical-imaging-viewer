@@ -26,7 +26,7 @@ export function ViewerLoading() {
       <span className="sr-only">{t('viewer.loadingStudy', 'Loading study...')}</span>
       <div className="h-[92px] shrink-0 border-b border-surface-border bg-surface-base" />
       <div className="flex min-h-0 flex-1">
-        <div className="w-[296px] shrink-0 space-y-3 border-r border-surface-border bg-surface-base p-3">
+        <div className="w-[316px] shrink-0 space-y-3 border-r border-surface-border bg-surface-base p-3">
           <Skeleton className="h-16 w-full rounded-lg" />
           <Skeleton className="h-3 w-24" />
           <Skeleton className="h-8 w-full" />
@@ -41,7 +41,7 @@ export function ViewerLoading() {
           </div>
           <div className="h-8 shrink-0 border-t border-surface-border bg-surface-base" />
         </div>
-        <div className="w-[320px] shrink-0 space-y-3 border-l border-surface-border bg-surface-base p-3">
+        <div className="w-[300px] shrink-0 space-y-3 border-l border-surface-border bg-surface-base p-3">
           <Skeleton className="h-8 w-full" />
           <Skeleton className="h-40 w-full rounded-lg" />
           <Skeleton className="h-28 w-full rounded-lg" />

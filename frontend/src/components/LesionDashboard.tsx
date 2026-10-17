@@ -399,11 +399,11 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
             <table className="w-full text-xs">
               <thead className="sticky top-0 z-10 bg-surface-base">
                 <tr className="border-b border-surface-border text-ink-faint">
-                  <th className="px-1.5 py-1.5 text-left font-medium">#</th>
-                  <th className="px-1.5 py-1.5 text-left font-medium">{t('lesions.region', 'Region')}</th>
-                  <th className="px-1.5 py-1.5 text-right font-medium">mm&sup3;</th>
-                  <th className="px-1.5 py-1.5 text-right font-medium">mL</th>
-                  <th className="px-1.5 py-1.5 text-center font-medium">{t('lesions.size', 'Size')}</th>
+                  <th className="px-1 py-1.5 text-left font-medium">#</th>
+                  <th className="px-1 py-1.5 text-left font-medium">{t('lesions.region', 'Region')}</th>
+                  <th className="px-1 py-1.5 text-right font-medium">mm&sup3;</th>
+                  <th className="px-1 py-1.5 text-right font-medium">mL</th>
+                  <th className="px-1 py-1.5 text-center font-medium">{t('lesions.size', 'Size')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -426,22 +426,22 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                         : 'hover:bg-surface-hover'
                     }`}
                   >
-                    <td className={`px-1.5 py-1 tabular-nums ${highlightedLesion === lesion.id ? 'font-medium text-brand-400' : 'text-ink-muted'}`}>
+                    <td className={`px-1 py-1 tabular-nums ${highlightedLesion === lesion.id ? 'font-medium text-brand-400' : 'text-ink-muted'}`}>
                       {lesion.id}
                     </td>
-                    <td className="px-1.5 py-1">
+                    <td className="px-1 py-1">
                       <span className="flex items-center gap-1.5">
                         <RegionDot region={lesion.region} />
                         <span className="text-ink-soft">{lesion.region}</span>
                       </span>
                     </td>
-                    <td className="px-1.5 py-1 text-right tabular-nums text-ink-soft">
+                    <td className="px-1 py-1 text-right tabular-nums text-ink-soft">
                       {lesion.volume_mm3.toLocaleString()}
                     </td>
-                    <td className="px-1.5 py-1 text-right font-medium tabular-nums text-ink-base">
+                    <td className="px-1 py-1 text-right font-medium tabular-nums text-ink-base">
                       {lesion.volume_ml.toFixed(3)}
                     </td>
-                    <td className={`px-1.5 py-1 text-center font-medium ${sizeColor(lesion.size_category)}`}>
+                    <td className={`px-1 py-1 text-center font-medium ${sizeColor(lesion.size_category)}`}>
                       {lesion.size_category === 'small' ? 'S' : lesion.size_category === 'medium' ? 'M' : 'L'}
                     </td>
                   </tr>

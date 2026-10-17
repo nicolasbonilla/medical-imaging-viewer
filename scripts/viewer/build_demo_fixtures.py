@@ -24,6 +24,8 @@ served only by the Vite dev server — see frontend/vite.config.ts).
 from __future__ import annotations
 
 import asyncio
+import base64
+import io
 import json
 import os
 import shutil
@@ -33,6 +35,7 @@ from pathlib import Path
 
 import numpy as np
 import nibabel as nib
+from PIL import Image
 
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "backend"))
@@ -77,6 +80,13 @@ def main(external: Path):
         }))
         series = asyncio.run(svc.process_image(raw, f"{key}.nii.gz", (0, 500)))
         (OUT / f"process-{key}.json").write_text(series.model_dump_json())
+        # Decoded server PNG pixels (uint8, slice after slice, rows x cols each) for the
+        # real-case parity test (frontend/src/volume/parity.realcase.test.ts).
+        with open(OUT / f"server-slices-{key}.u8", "wb") as fh:
+            for s in series.slices:
+                px = np.array(Image.open(io.BytesIO(base64.b64decode(s.image_data))))
+                assert px.dtype == np.uint8 and px.shape == (s.height, s.width)
+                fh.write(px.tobytes())
         print(f"{key}: {meta.rows}x{meta.columns}x{meta.slices} orient={meta.anatomical_orientation}")
 
     gold = nib.load(str(OUT / "gold.nii.gz"))

@@ -90,7 +90,7 @@ export function SegmentationsSection({
                     onDelete={(e) => onDelete(seg.id, seg.name, e)}
                   />
                   {isExpanded && isSaved && (
-                    <div className="mt-2 border-l-2 border-clinical-good/30 pl-2.5">
+                    <div className="mt-2">
                       <MAGNIMSZoneMapPanel fileId={currentFileId} />
                     </div>
                   )}
@@ -131,7 +131,7 @@ export function SegmentationsSection({
                   onDelete={(e) => onDelete(seg.id, seg.name, e)}
                 />
                 {isExpanded && isSaved && (
-                  <div className="mt-2 space-y-2.5 border-l-2 border-brand-500/30 pl-2.5">
+                  <div className="mt-2 space-y-2.5">
                     <OverlayControls />
                     <LesionDashboard segmentationId={seg.id} onNavigateToSlice={onNavigateToSlice} />
                   </div>

@@ -53,6 +53,8 @@ interface ViewerState {
   sliceNormalAxis: 0 | 1 | 2;
   sliceCount: number | null;
   setActiveSliceGeometry: (normalAxis: 0 | 1 | 2, depth: number) => void;
+  /** Back to the legacy single k-plane geometry (server render paths). */
+  resetSliceGeometry: () => void;
   /** Anatomical (affine) or voxel (array order, = legacy server layout) display. */
   orientationMode: OrientationMode;
   setOrientationMode: (mode: OrientationMode) => void;
@@ -203,6 +205,12 @@ export const useViewerStore = create<ViewerState>((set) => ({
       currentSliceIndex: Math.max(0, Math.min(depth - 1, idx)),
     };
   }),
+
+  resetSliceGeometry: () => set((s) => ({
+    sliceNormalAxis: 2,
+    sliceCount: null,
+    currentSliceIndex: s.cursorVoxel ? s.cursorVoxel[2] : s.currentSliceIndex,
+  })),
 
   setOrientationMode: (mode) => set({ orientationMode: mode }),
   setSmoothDisplay: (on) => set({ smoothDisplay: on }),

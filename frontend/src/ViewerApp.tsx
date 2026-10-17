@@ -404,7 +404,7 @@ function ViewerApp() {
         {/* ── Study rail ─────────────────────────────────────────────── */}
         <aside
           aria-label={t('viewer3.studyRail', 'Study')}
-          className="flex w-[296px] shrink-0 flex-col border-r border-surface-border bg-surface-base"
+          className="flex w-[316px] shrink-0 flex-col border-r border-surface-border bg-surface-base"
         >
           <div className="border-b border-surface-border p-3">
             <div className="flex items-start gap-2.5">
@@ -552,7 +552,7 @@ function ViewerApp() {
         {/* ── Insights ───────────────────────────────────────────────── */}
         <aside
           aria-label={t('viewer3.insights', 'Image and analysis')}
-          className="w-[320px] shrink-0 border-l border-surface-border bg-surface-base"
+          className="w-[300px] shrink-0 border-l border-surface-border bg-surface-base"
         >
           <InsightsPanel
             renderMode={viewerControls.renderMode}

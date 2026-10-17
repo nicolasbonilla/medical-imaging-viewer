@@ -194,6 +194,12 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
     setRenderMode('standard');
   }, [setRenderMode, t]);
 
+  // The server paths only have the k plane: restore that geometry when leaving the
+  // in-browser path (otherwise a sagittal slice index would be read as a k index).
+  useEffect(() => {
+    if (!isClient) useViewerStore.getState().resetSliceGeometry();
+  }, [isClient]);
+
   // DICOM series are not read by the browser renderer — straight to the server path.
   useEffect(() => {
     if (isClient && currentSeries && currentSeries.format !== 'nifti') {
