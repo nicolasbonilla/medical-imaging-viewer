@@ -17,6 +17,9 @@ import struct
 
 from app.security import get_current_active_user
 from app.security.models import User
+# HAZ-010 / RC-029 (CAPA-007): these routes were split out of segmentation.py (C3,
+# 2026-07-10) after RC-029 was wired there, and never received object-level authorization.
+from app.security.resource_access import require_segmentation_access, authorize_mask_specs
 from app.core.logging import get_logger
 from app.utils import resolve_voxel_spacing, VoxelSpacingUnavailableError
 from app.core.interfaces.storage_interface import IStorageService
@@ -172,6 +175,7 @@ async def compare_masks(
 
         if len(mask_specs) < 2:
             raise HTTPException(status_code=400, detail="At least 2 masks required")
+        await authorize_mask_specs(mask_specs, current_user)   # CAPA-007 RC-029
 
         # Load all masks
         loaded_masks = []
@@ -204,15 +208,12 @@ async def compare_masks(
                         pass
 
             elif mask_type == "instance":
-                # Load NIfTI from instance — prefer gcs_path (fast) over instance lookup (slow)
-                gcs_path = spec.get("gcs_path")
-                if not gcs_path:
-                    # Lazy: only resolve the study service when an instance mask
-                    # actually needs a GCS path (avoids a Firestore client init —
-                    # and ADC requirement — for segmentation-only comparisons).
-                    from app.core.container import get_study_service
-                    instance = await get_study_service().get_instance(mask_id)
-                    gcs_path = instance.gcs_object_name
+                # CAPA-007 (RC-027 class): a client-supplied "gcs_path" was used directly as
+                # the storage key — any authenticated caller could read any stored object.
+                # Only the authorized instance's own object path is used now.
+                from app.core.container import get_study_service
+                instance = await get_study_service().get_instance(mask_id)
+                gcs_path = instance.gcs_object_name
                 file_data = await storage_service.download_file(
                     settings.GCS_BUCKET_NAME, gcs_path
                 )
@@ -304,6 +305,7 @@ async def get_agreement_map(
 
         if len(mask_specs) < 2:
             raise HTTPException(status_code=400, detail="At least 2 masks required")
+        await authorize_mask_specs(mask_specs, current_user)   # CAPA-007 RC-029
 
         loaded_masks = []
         for spec in mask_specs:
@@ -362,6 +364,8 @@ async def get_lesion_analysis(
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
     storage_service: IStorageService = Depends(get_storage_service),
     current_user: User = Depends(get_current_active_user),
+    # CAPA-007 RC-029: object-level authorization (404 if not the caller's patient).
+    _authorized=Depends(require_segmentation_access),
 ):
     """
     Analyze lesions in a segmentation using connected components.
@@ -445,6 +449,8 @@ async def get_dis_assessment(
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
     storage_service: IStorageService = Depends(get_storage_service),
     current_user: User = Depends(get_current_active_user),
+    # CAPA-007 RC-029: object-level authorization (404 if not the caller's patient).
+    _authorized=Depends(require_segmentation_access),
     # 2024 McDonald external evidence the brain MRI cannot supply. None = not
     # assessed (default; identical to prior behavior and cacheable).
     spinal_cord_involved: Optional[bool] = None,
@@ -579,6 +585,7 @@ async def compare_longitudinal(
 
         if not tp1_spec or not tp2_spec:
             raise HTTPException(status_code=400, detail="Both tp1 and tp2 are required")
+        await authorize_mask_specs([tp1_spec, tp2_spec], current_user)   # CAPA-007 RC-029
 
         async def load_mask(spec):
             """Return (mask, voxel_spacing, source_intensity) — spacing resolved from
@@ -796,6 +803,7 @@ async def detect_slowly_expanding_lesions(
         tp2_spec = body.get("tp2")
         if not tp1_spec or not tp2_spec:
             raise HTTPException(status_code=400, detail="Both tp1 and tp2 are required")
+        await authorize_mask_specs([tp1_spec, tp2_spec], current_user)   # CAPA-007 RC-029
 
         async def _load(spec):
             if spec.get("type") != "segmentation":
@@ -872,6 +880,8 @@ async def annotate_lesions(
     body: dict,
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
     current_user: User = Depends(get_current_active_user),
+    # CAPA-007 RC-029: object-level authorization (404 if not the caller's patient).
+    _authorized=Depends(require_segmentation_access),
 ):
     """
     Save CVS/PRL annotations for individual lesions (McDonald 2024 biomarkers).
@@ -973,6 +983,8 @@ async def export_dicom_seg(
     segmentation_id: str,
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
     current_user: User = Depends(get_current_active_user),
+    # CAPA-007 RC-029: object-level authorization (404 if not the caller's patient).
+    _authorized=Depends(require_segmentation_access),
 ):
     """
     Export a segmentation as a DICOM Segmentation (DICOM-SEG) object.

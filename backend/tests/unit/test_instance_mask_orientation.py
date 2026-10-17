@@ -82,7 +82,26 @@ class _FakeStorage:
 
 
 @pytest.fixture
-def client():
+def client(monkeypatch):
+    # Object-level authorization (CAPA-007, RC-029) is exercised by
+    # test_capa007_analysis_routes_authorization.py; passed through here so this file keeps
+    # testing ORIENTATION without a datastore.
+    import app.api.routes.segmentation_analysis as analysis_routes
+
+    async def _authorized(specs, user):
+        return None
+
+    monkeypatch.setattr(analysis_routes, "authorize_mask_specs", _authorized)
+
+    # CAPA-007: the route no longer trusts a client "gcs_path"; it resolves the instance's
+    # own object path through the study service (a fake here, no datastore).
+    import app.core.container as container
+
+    class _Studies:
+        async def get_instance(self, instance_id):
+            return type("Instance", (), {"gcs_object_name": INSTANCE_PATH})()
+
+    monkeypatch.setattr(container, "get_study_service", lambda: _Studies())
     m = _seg_internal_mask()
     app.dependency_overrides[get_current_active_user] = _admin
     app.dependency_overrides[get_segmentation_service] = lambda: _FakeSeg(m)
