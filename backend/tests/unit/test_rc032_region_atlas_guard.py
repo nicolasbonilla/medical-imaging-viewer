@@ -421,9 +421,18 @@ class TestRC032Route:
         _, storage = _clinical_case()
         zone = np.full((60, 120, 140), 4, np.uint8)
         zone[0, 0, :3] = (1, 2, 3)
-        r = route(_Seg({"zone": zone}), storage).post(
+        # same image, so it is the IDENTITY check (not the same-image check) that must refuse it
+        r = route(_Seg({"zone": zone}, file_ids={"zone": "img-x"}), storage).post(
             "/api/v1/segmentation/generate-zone-map", json={"file_id": "img-x", "parcellation_id": "zone"})
-        assert r.status_code == 422 and "parcellation" in r.text
+        assert r.status_code == 422 and "not a FreeSurfer-label parcellation" in r.text
+
+    def test_rc032_generate_zone_map_refuses_another_images_parcellation(self, route):
+        _, storage = _clinical_case()
+        seg = _Seg({"parc": _parcellation_internal()}, file_ids={"parc": "img-other"})
+        r = route(seg, storage).post(
+            "/api/v1/segmentation/generate-zone-map", json={"file_id": "img-x", "parcellation_id": "parc"})
+        assert r.status_code == 422 and "not a parcellation of this image" in r.text
+        assert seg.created is None
 
     # ------------------------------------------------ path preconditions (parcellation / geometric)
     def test_rc032_geometric_uses_the_brain_outline(self, route):
@@ -451,9 +460,10 @@ class TestRC032Route:
         mask, storage = _clinical_case()
         zone = np.full_like(mask, 4)
         zone[0, 0, :3] = (1, 2, 3)
-        r = _post(route(_Seg({"les": mask, "zone": zone}), storage),
-                  method="parcellation", parcellation_id="zone")
-        assert r.status_code == 422 and "parcellation" in r.text
+        # same image, so it is the IDENTITY check (not the same-image check) that must refuse it
+        seg = _Seg({"les": mask, "zone": zone}, file_ids={"les": "img-1", "zone": "img-1"})
+        r = _post(route(seg, storage), method="parcellation", parcellation_id="zone")
+        assert r.status_code == 422 and "not a FreeSurfer-label parcellation" in r.text
 
     def test_rc032_geometric_refused_on_sagittal_and_reversed_slices(self, route):
         sagittal = np.array([[0, 0, 2.0, 0], [1.0, 0, 0, 0], [0, 1.0, 0, 0], [0, 0, 0, 1]])  # k -> R

@@ -262,16 +262,12 @@ in MNI152 space and the image is not registered to it, so the atlas is used only
 already registered to MNI152 whose grid meets all five conditions (isotropic voxels; axes aligned
 with, and not permuted relative to, the world axes within about 2.5°; field of view within 25 %
 of 181 x 217 x 181 mm on each axis; grid centre within 10 mm of (0, -18, 18) mm; a spatial
-transform in the header). Native clinical scans normally fail them. The least accurate geometric
+transform in the header). Native clinical scans normally fail them. The geometric
 heuristics are refused unless the image can be read, its orientation determined, its slice axis
-runs from inferior to superior (axial), it is 3-D, on the lesion-mask grid and not blank. When
-the atlas was refused and the geometric heuristics were used, an amber warning is shown: "Atlas
-regions not used: this image is not in MNI space, so the least accurate geometric fallback was
-applied. Verify every region before using it for DIS." Otherwise, whenever regions come from the
-geometric heuristics, an amber warning is shown: "Geometric heuristics: the least accurate
-method (coordinate rules, not anatomical landmarks). Verify every region before using it for
-DIS." If no path can be applied validly, the request is refused, the reasons are shown and no
-regions are assigned (IFU-001 Section 10.3). These are information-for-safety and fail-closed
+runs from inferior to superior (axial) and is tilted no more than 30°, it is 3-D, on the lesion-mask grid and not blank. A parcellation is used only if it is a whole-brain parcellation of the same image. When
+the atlas was refused and the geometric heuristics were used, an amber warning is shown: "Atlas regions not used: this image is not in MNI space, so the geometric fallback (coordinate rules, not anatomical landmarks) was applied. Verify every region before using it for DIS." Otherwise, whenever regions come from the
+geometric heuristics, an amber warning is shown: "Geometric heuristics: coordinate rules, not anatomical landmarks; their accuracy has not been measured. Verify every region before using it for DIS." If the atlas fails with an internal error, a separate amber alert is shown: "Atlas regions could not be computed (internal error), so the geometric fallback was applied. Verify every region before using it for DIS." If every path that could apply refuses the image, the request is refused, the reasons are shown and no
+regions are assigned; an internal error is reported as an error, not as a refusal (IFU-001 Section 10.3). These are information-for-safety and fail-closed
 controls; region-assignment accuracy has not been measured for any path.
 
 ### H-10: Longitudinal Mismatch — Wrong Timepoint Comparison
@@ -507,11 +503,8 @@ evaluated in formative (Section 7.3) and summative (Section 8.4, S2) testing:
 - **Distance columns (mm)** — parcellation / geometric evidence; "-" when a landmark is absent.
 - **Summary line** — "Regions follow a deterministic MAGNIMS rule; no per-lesion confidence is
   reported."
-- **Amber classification-method warnings** (added 2026-09-28, CAPA-006) — "Atlas regions not
-  used: this image is not in MNI space, so the least accurate geometric fallback was applied.
-  Verify every region before using it for DIS." when the atlas was refused; otherwise, whenever
-  regions come from the geometric heuristics, "Geometric heuristics: the least accurate method
-  (coordinate rules, not anatomical landmarks). Verify every region before using it for DIS."
+- **Amber classification-method warnings** (added 2026-09-28, CAPA-006) — "Atlas regions not used: this image is not in MNI space, so the geometric fallback (coordinate rules, not anatomical landmarks) was applied. Verify every region before using it for DIS." when the atlas was refused; otherwise, whenever
+  regions come from the geometric heuristics, "Geometric heuristics: coordinate rules, not anatomical landmarks; their accuracy has not been measured. Verify every region before using it for DIS."; and, when the atlas failed with an internal error, "Atlas regions could not be computed (internal error), so the geometric fallback was applied. Verify every region before using it for DIS."
 
 Evaluation questions: do users verify flagged lesions before accepting the DIS result; do users
 misread "Lesion % in zone" as a confidence or probability.

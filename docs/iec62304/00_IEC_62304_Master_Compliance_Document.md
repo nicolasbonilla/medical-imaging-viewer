@@ -3,7 +3,7 @@
 ## Medical Device Software Lifecycle Processes — Full Compliance Assessment and Implementation
 
 **Document ID**: IEC62304-MASTER-001
-**Version**: 1.0
+**Version**: 1.1 (2026-09-28)
 **Classification**: IEC 62304 Software Safety Class C
 **Effective Date**: April 12, 2026
 **Author**: MSTool-AI Development Team
@@ -17,6 +17,7 @@
 | Version | Date | Author | Changes | Approved By |
 |---------|------|--------|---------|-------------|
 | 1.0 | 2026-04-12 | Development Team | Initial release | — |
+| 1.1 | 2026-09-28 | Development Team | §10.2: HAZ-005 RC-010 (amended) row and erratum (PR #42, approved 2026-09-28; added then without a version entry — recorded here) and RC-032 row (CAPA-006). §4.2 SOUP: nilearn (SOUP-BE-020) corrected to Class C, version not pinned (CAPA-006 PA-6.5); MSMask atlas data file added (SOUP-BE-025), with erratum (CAPA-006) | *(pending — PR #43)* |
 
 ---
 

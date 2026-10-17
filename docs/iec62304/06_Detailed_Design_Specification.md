@@ -3,15 +3,14 @@
 ## IEC 62304 Clause 5.4 — Class C Software Unit Design
 
 **Document ID**: DD-001
-**Version**: 1.2
+**Version**: 1.1
 **Effective Date**: September 28, 2026 (v1.0: April 12, 2026)
 **Software Safety Class**: IEC 62304 Class C
 
 | Version | Date | Author | Approved By | Change |
 |---------|------|--------|-------------|--------|
 | 1.0 | 2026-04-12 | Development Team | — | Initial release |
-| 1.1 | 2026-09-28 | Development Team | — | DD-CLS-001 amended. (a) Audit #8 (HAZ-005, REQ-SAFE-010 amended): per-lesion confidence removed; see the amendment note in DD-CLS-001, which was entered on this date under the v1.0 header. (b) CAPA-006: DD-CLS-001 described only the parcellation path. It now also specifies the four-path order used by `method="auto"`, the MSMask atlas path, the MNI grid gate (`looks_mni`, `NotMNISpaceError` in `generate_zone_map_atlas`, HAZ-005 / RC-032) and the zone-map reorientation and shape check in `classify_lesions_with_atlas`. The 1.5 mm thresholds are unchanged. The 3 mm / 4 mm / 3 mm thresholds and two-tier cascade stated in IFU-001, AIA-001, CER-001 and GSPR-001 ~~described an earlier software version (commit cf780f4, February 2026)~~ were wrong when those documents were issued on 2026-04-12 (corrected in v1.2) and are withdrawn there |
-| 1.2 | 2026-09-28 | Development Team | — | CAPA-006 / RC-032 / REQ-SAFE-021, DD-CLS-001 brought in line with the final code. (a) Correction of the v1.1 row: it said the 3 mm / 4 mm / 3 mm labelling "described an earlier software version". Not true: the code moved to 1.5 mm on 2026-02-28 (67fa336); IFU-001, AIA-001, CER-001 and GSPR-001 were issued on 2026-04-12 already stating 3 / 4 / 3 mm, while DD-001 v1.0, issued the same day, stated 1.5 mm. (b) A persisted zone map is never reused for classification (v1.1 said the route checked the image before reusing one); the atlas zone map is always generated fresh. (c) The `looks_mni` gate is now specified as implemented: isotropy, unpermuted axis alignment, per-axis field of view, grid centre, header transform. v1.1 described sorted extents and axis alignment only. (d) Added: parcellation detection (`looks_like_freesurfer_parcellation`), geometric preconditions (`prepare_geometric_image`, `GeometricPreconditionError`), the shape check in `classify_from_zone_mask`, the generate-zone-map ordering (delete old zone maps only after a new one exists; `persist()` only, no raw overwrite), and HTTP 422 when no path applies. (e) LST-AI path described as voxel-wise, with no contact rule and no priority. (f) Unit renamed from "MAGNIMS Region Classifier (EDT)": EDT is used by one of four paths only. (g) Withdrawn from the Safety paragraph: "EDT-based classification is more robust than pixel-adjacency methods" (no evidence). Also withdrawn: "Distance thresholds (1.5mm) match LST-AI dilation criteria" (inexact; restated). (h) Implements / traceability now list REQ-SAFE-021 |
+| 1.1 | 2026-09-28 | Development Team | *(pending — PR)* | DD-CLS-001 amended. (a) Audit #8 (HAZ-005, REQ-SAFE-010 amended, PR #42): per-lesion confidence removed. The amendment note in DD-CLS-001 was entered on 2026-09-28 under the v1.0 header; it is covered by this version. (b) CAPA-006 / RC-032 / REQ-SAFE-021: v1.0 described only the parcellation path. DD-CLS-001 now also specifies: the four-path order used by `method="auto"`; the LST-AI path as a voxel-wise copy with no contact rule and no priority; the MSMask atlas path; the MNI grid gate (`looks_mni`: isotropy, unpermuted axis alignment, per-axis field of view, grid centre, header transform; `NotMNISpaceError`) and its limits (SPM12 default bounding box refused; a well-behaved native 3D isotropic axial scan can pass); the zone-map reorientation and shape checks (`classify_lesions_with_atlas`, `classify_from_zone_mask`); that a persisted zone map is never reused for classification; parcellation identity (`looks_like_freesurfer_parcellation`: all of {2, 3, 4, 16, 41, 42, 43}, not a zone map, >= 500 mL; same image and grid); the geometric preconditions (`prepare_geometric_image`, `GeometricPreconditionError`, slice axis within 30° of inferior-superior); refusal (HTTP 422) versus fault (HTTP 500, `atlas_error`) handling; object-level authorization of both region routes (RC-029); the generate-zone-map order (authorize, validate, create and persist, then delete older zone maps); zone-map volumes from the image voxel volume; and the longitudinal compare route's use of the same gate. The 1.5 mm thresholds are unchanged; v1.0 already stated them. The 3 mm / 4 mm / 3 mm thresholds and two-tier cascade stated in IFU-001, AIA-001, CER-001 and GSPR-001 were wrong when those documents were issued on 2026-04-12 (the code had applied 1.5 mm since 2026-02-28, commit 67fa336, while DD-001 v1.0, issued the same day, stated 1.5 mm); they are withdrawn there. (c) Unit renamed from "MAGNIMS Region Classifier (EDT)": EDT is used by one of four paths only. (d) Withdrawn from the Safety paragraph (v1.0 text, quoted there): "EDT-based classification is more robust than pixel-adjacency methods" (no evidence) and "Distance thresholds (1.5mm) match LST-AI dilation criteria" (inexact; restated). (e) Implements / traceability now list REQ-SAFE-021, RC-032 and RC-029 |
 
 ---
 
@@ -31,7 +30,7 @@ This document provides the detailed design for all Class C software units in MST
 | DD-RPT-001 | Report Generation | `brain_report_service.py` | C | HAZ-003 |
 | DD-LES-001 | Lesion Analysis — analyze_lesions | `lesion_analysis_service.py` | C | HAZ-005 |
 | DD-LES-002 | Lesion Analysis — compute_dis_criteria | `lesion_analysis_service.py` | C | HAZ-008 |
-| DD-CLS-001 | MAGNIMS Region Classifier (four paths; renamed v1.2, was "(EDT)") | `ms_region_classifier.py` | C | HAZ-005 |
+| DD-CLS-001 | MAGNIMS Region Classifier (four paths; renamed v1.1, was "(EDT)") | `ms_region_classifier.py` | C | HAZ-005 |
 | DD-NII-001 | NIfTI Loader | `nifti_utils.py` | C | HAZ-006 |
 | DD-NII-002 | NIfTI Transpose Utilities | `nifti_utils.py` | C | HAZ-006 |
 | DD-EDGE-001 | Edge AI Worker — preprocessSlice | `edgeAI.worker.ts` | C | HAZ-004 |
@@ -264,18 +263,32 @@ RETURN { dis_met_brain, brain_regions_with_lesions, region_details, ... }
 | Order | `method` | Function | Used when | "Abutting" implemented as |
 |-------|----------|----------|-----------|---------------------------|
 | 1 | `lst-ai` | route (inline) | Another segmentation of the same file has a `validation_source` containing `lst-ai`. The LST-AI integration is disabled by default. | Voxel-wise copy: each lesion voxel takes the LST-AI zone value at that voxel, and lesion voxels in no zone get DWM. There is no per-lesion contact rule, no IT > PV > JC priority and no minimum volume, so one lesion can receive several regions |
-| 2 | `parcellation` | `classify_lesions_with_parcellation` | An explicit `parcellation_id` that passes `looks_like_freesurfer_parcellation` (otherwise HTTP 422, also in `auto`). Or, without `parcellation_id`, another segmentation of the same file that passes it (auto-detection, below). The SynthSeg integration is disabled in the current configuration. | Minimum EDT distance from the lesion to the ventricle / cortex / infratentorial labels <= 1.5 mm (algorithm below) |
-| 3 | `msmask` | `classify_lesions_with_atlas` (zone map generated fresh in every call) | The source image, as loaded with its header, passes the MNI grid gate (`looks_mni`, below). This is the usual path for MNI-space images, because LST-AI and SynthSeg are disabled. A persisted zone map is never reused for classification. | Any lesion voxel in an atlas zone. The zones are the MSMask ventricle / cortex / infratentorial masks dilated by one voxel (3x3x3 cube, as in LST-AI), within atlas white matter, plus the infratentorial label itself |
-| 4 | `geometric` | `classify_lesions_geometric` | None of the paths above produced a result, and `prepare_geometric_image` accepts the source image (below). Least accurate. | Coordinate heuristics, not anatomical landmarks: centroid in the lowest 25 % of the brain's extent along array axis 0, which `prepare_geometric_image` requires to be the slice axis pointing superior = IT; mean distance from the brain centre < 35 % of the maximum = PV; minimum distance to the brain surface < min(8 mm, 15 % of the brain radius) = JC |
+| 2 | `parcellation` | `classify_lesions_with_parcellation` | An explicit `parcellation_id` of the same image (`metadata.file_id`) and grid that passes `looks_like_freesurfer_parcellation` (otherwise HTTP 422, also in `auto`). Or, without `parcellation_id`, another segmentation of the same file, on the lesion mask's grid, that passes it (auto-detection, below). The SynthSeg integration is disabled in the current configuration. | Minimum EDT distance from the lesion to the ventricle / cortex / infratentorial labels <= 1.5 mm (algorithm below) |
+| 3 | `msmask` | `classify_lesions_with_atlas` (zone map generated fresh in every call) | The source image, as loaded with its header, passes the MNI grid gate (`looks_mni`, below). On an MNI-grid image this path is used unless an LST-AI segmentation or a parcellation of the image exists (the LST-AI and SynthSeg integrations are disabled by default). A persisted zone map is never reused for classification. | Any lesion voxel in an atlas zone. The zones are the MSMask ventricle / cortex / infratentorial masks dilated by one voxel (3x3x3 cube; adapted from LST-AI, which dilates the lesion instead), within atlas white matter, plus the infratentorial label itself |
+| 4 | `geometric` | `classify_lesions_geometric` | None of the paths above produced a result, and `prepare_geometric_image` accepts the source image (below). Accuracy not measured. | Coordinate heuristics, not anatomical landmarks: centroid in the lowest 25 % of the brain's extent along array axis 0, which `prepare_geometric_image` requires to be the slice axis pointing superior = IT; mean distance from the brain centre < 35 % of the maximum = PV; minimum distance to the brain surface < min(8 mm, 15 % of the brain radius) = JC |
 
 With an explicit `method`, a path that cannot run is an error rather than a fall-through:
 - `lst-ai` without an LST-AI segmentation: HTTP 400.
 - `parcellation` with an unknown `parcellation_id`: HTTP 404. In `auto`, an unknown `parcellation_id` falls through to the next path.
-- A `parcellation_id` that is not a FreeSurfer parcellation: HTTP 422, with `parcellation` or `auto`.
-- `msmask` on a non-MNI image: HTTP 422. Atlas file or nilearn missing: 400. Other failure: 500.
-- `geometric` whose preconditions fail: HTTP 422.
+- `parcellation` without a `parcellation_id` when no parcellation is auto-detected: HTTP 400 ("No classification method available").
+- A `parcellation_id` of another image or grid, or one that is not a FreeSurfer parcellation: HTTP 422, with `parcellation` or `auto`.
+- `parcellation` whose classification raises: HTTP 500.
+- `msmask` on a non-MNI image: HTTP 422 (refusal). Atlas file or nilearn missing: HTTP 400. Any other failure: HTTP 500.
+- `geometric` whose preconditions fail: HTTP 422 (refusal). A fault in the heuristics: HTTP 500.
+- An unknown `method`: HTTP 400.
 
-In `auto`, a refused atlas or geometric path falls through to the next path. A non-FreeSurfer `parcellation_id` does not fall through; it gets HTTP 422. If no path produces a result and the atlas and/or geometric path was refused, the route returns HTTP 422 "No region-classification method can be applied validly to this image", followed by the reasons. If no path applied and none was refused, the route returns HTTP 400.
+In `auto`, a **refusal** and a **fault** are kept apart (REQ-SAFE-021):
+- The atlas path refused (`NotMNISpaceError`): the geometric path is tried, and the reason is returned as `atlas_unavailable_reason`.
+- The atlas path faulted (atlas file missing, nilearn missing, any other exception): the geometric path is tried, and the fault is returned as `atlas_error` with the geometric result. It is not reported as a refusal.
+- The geometric path refused (`GeometricPreconditionError`): its reason is kept.
+- If no path produced a result and the atlas or geometric path **faulted**: HTTP 500 "Region classification failed", with the fault and any refusal reasons.
+- If no path produced a result and every applicable path **refused**: HTTP 422 "No region-classification method can be applied validly to this image", followed by the reasons.
+- A non-FreeSurfer or foreign `parcellation_id` does not fall through; it gets HTTP 422.
+- An exception inside the parcellation path is logged and the next path is tried. It is not returned in the response (unlike `atlas_error`); the auto-detection loop likewise skips a candidate whose check raises.
+
+Either route: source-image geometry that cannot be read (`VoxelSpacingUnavailableError`) gives HTTP 422; any other unhandled exception gives HTTP 500.
+
+**Authorization (HAZ-010, RC-029; CAPA-006 finding 10)**: `classify-regions` depends on `require_segmentation_access` and `generate-zone-map` calls `authorize_file_scope` for the requested `file_id` before anything else. A caller who may not access the patient of the image gets HTTP 404 (REQ-SEC-014/015). Both routes were split out of `segmentation.py` by the C3 decomposition (2026-07-10) after RC-029 had been wired there, and had authentication only until 2026-09-28. Verified by `test_rc032_classify_route_enforces_object_level_access` and `test_rc032_zone_map_route_enforces_image_access`.
 
 **Interface (path 2, parcellation)**:
 ```
@@ -333,8 +346,9 @@ RETURN { classified_mask, lesions, classification_summary }
 - `IT_DISTANCE_THRESHOLD_MM = 1.5`
 - `MIN_LESION_VOLUME_MM3 = 3.0`
 - `MSMASK_PATH = "/app/data/msmask/sub-mni152_space-mni_msmask.nii.gz"` (MSMask labels: 1 CSF, 2 GM/cortex, 3 WM, 4 ventricles, 5 infratentorial)
-- `looks_mni`: `MNI_ISOTROPY_TOLERANCE = 1.05` (max/min voxel size); axis alignment |Rn[c,c]| >= 0.999 (about 2.5°); `MNI_REFERENCE_FOV_MM = (181, 217, 181)`; `MNI_FOV_TOLERANCE = 0.25` (per axis); `MNI_REFERENCE_CENTRE_MM = (0, -18, 18)`; `MNI_CENTRE_TOLERANCE_MM = 10.0`. The first version (v1.1) was "|cos| >= 0.999; MNI152 box (181, 217, 181) mm; extent tolerance 25 %" with sorted extents; tightened 2026-09-28 (CAPA-006 review)
-- `FREESURFER_PARCELLATION_LABELS = {2, 3, 4, 7, 8, 10, 16, 41, 42, 43}`; `FREESURFER_HIGH_LABELS = {16, 41, 42, 43}`; `ZONE_MAP_DESCRIPTION = "MAGNIMS Zone Map"`
+- `looks_mni`: `MNI_ISOTROPY_TOLERANCE = 1.05` (max/min voxel size); axis alignment |Rn[c,c]| >= 0.999 (about 2.5°); `MNI_REFERENCE_FOV_MM = (181, 217, 181)`; `MNI_FOV_TOLERANCE = 0.25` (per axis); `MNI_REFERENCE_CENTRE_MM = (0, -18, 18)`; `MNI_CENTRE_TOLERANCE_MM = 10.0`. The longitudinal compare route's former private `_looks_mni` (commit f208149, 2026-08-22) used |cos| >= 0.999 in any permutation and sorted extents within 25 % of the MNI152 box, with no isotropy, centre or header condition; it is replaced by this gate (below)
+- `FREESURFER_REQUIRED_LABELS = {2, 3, 4, 16, 41, 42, 43}`; `MIN_PARCELLATION_FOREGROUND_ML = 500.0`; `ZONE_MAP_DESCRIPTION = "MAGNIMS Zone Map"`
+- `GEOMETRIC_MAX_SLICE_TILT_DEG = 30.0`
 
 **Algorithm (path 3, MSMask atlas, `generate_zone_map_atlas` + `classify_lesions_with_atlas`)**:
 ```
@@ -342,7 +356,8 @@ RETURN { classified_mask, lesions, classification_summary }
 IF NOT looks_mni(target_img.affine, target_img.shape):
     RAISE NotMNISpaceError                      // HAZ-005 / RC-032: fail closed, before the atlas is loaded
 atlas = MSMask (MNI152 space)
-S = ones(3,3,3)                                 // one-voxel dilation, as in LST-AI
+S = ones(3,3,3)                                 // one-voxel dilation of the atlas structures, adapted from
+                                                // LST-AI (LST-AI dilates the lesion instead)
 zone[WM] = 4                                    // DWM
 zone[Infratentorial OR (dilate(Infratentorial, S) AND WM)] = 3      // IT
 zone[dilate(GM, S) AND WM AND zone != 3] = 2                         // JC
@@ -353,6 +368,8 @@ IF |centre(target grid) - centre(atlas)| >= 30 mm:                   // e.g. ori
     // retained from before RC-032. An image that passes looks_mni has its grid centre within
     // 10 mm of (0, -18, 18), which is the MSMask grid centre (193x229x193, 1 mm)
 zone = resample_to_img(zone, target grid with ref_affine, nearest)   // nilearn; grid resampling only; NO registration
+zone_stats[z].volume_mm3 = count(zone == z) * prod(|voxel_spacing|)  // image voxel volume (RC-024); assumed
+                                                // 1 mm^3 before 2026-09-28, understating a 2 mm grid 8x
 RETURN zone                                     // NIfTI-native order (a0, a1, k)
 
 // classify_lesions_with_atlas(lesion_mask (k, a0, a1), target_img, voxel_spacing)
@@ -366,7 +383,7 @@ result = classify_from_zone_mask(lesion_mask, zone, voxel_spacing)
 result.method = "msmask"
 ```
 
-The `classify-regions` route always calls `classify_lesions_with_atlas`, so the zone map used for classification is generated fresh in every call. **A persisted zone map is never reused for classification** (CAPA-006). The zone map written by `generate-zone-map` came back transposed ((k, a1, a0)) after a GCS reload, because that route overwrote the blob without the RC-031 orientation marker. On MNI grids this raised an IndexError, which `auto` swallowed into a silent geometric fallback; on grids with a square in-plane matrix the zones were silently transposed. The overwrite has been removed (below). v1.1 of this document described a reuse path guarded by `looks_mni`; that path no longer exists.
+The `classify-regions` route always calls `classify_lesions_with_atlas`, so the zone map used for classification is generated fresh in every call. **A persisted zone map is never reused for classification** (CAPA-006). The zone map written by `generate-zone-map` came back transposed ((k, a1, a0)) after a GCS reload, because that route overwrote the blob without the RC-031 orientation marker. On MNI grids this raised an IndexError, which `auto` swallowed into a silent geometric fallback; on grids with a square in-plane matrix the zones were silently transposed. The overwrite has been removed (below). Before 2026-09-28 the route reused the zone map linked in `zone_map_seg_id` whenever one existed; that reuse path no longer exists.
 
 **MNI grid gate (HAZ-005, RC-032, CAPA-006)**: the MSMask atlas is in MNI152 space and the software performs no registration, so the atlas is only valid on images that are already in MNI152 space.
 - `looks_mni(affine, shape, header=None)` returns True only if every one of these holds:
@@ -376,34 +393,55 @@ The `classify-regions` route always calls `classify_lesions_with_atlas`, so the 
   4. Grid centre within 10 mm of the MNI152 template centre (0, -18, 18).
   5. If a header is given, a spatial transform is set (sform or qform code != 0).
 
-  Any exception returns False (fail closed). v1.1 of this document specified the first version of the gate: sorted extents, axis alignment in any permutation, no isotropy, centre or header condition. That version accepted native 2D FLAIR, e.g. 240x240x48 at 0.94x0.94x3 mm (CAPA-006 review, 2026-09-28).
+  Any exception returns False (fail closed). The longitudinal route's former private gate (below) compared sorted extents, accepted axis alignment in any permutation and had no isotropy, centre or header condition; it accepted native 2D FLAIR, e.g. 240x240x48 at 0.94x0.94x3 mm (CAPA-006 review, 2026-09-28).
+
+  Conditions 2 and 3 overlap for permuted axes: a permuted affine has near-zero diagonal terms, so its per-axis field of view also fails. Condition 2 alone rejects an oblique grid (more than about 2.5°). Condition 3 is also tested on its own, on an isotropic, axis-aligned grid centred like MNI (`test_rc032_rejects_a_centred_isotropic_native_scan_by_field_of_view`).
 - `generate_zone_map_atlas` raises `NotMNISpaceError` (a `ValueError` subclass) when `looks_mni(affine, shape)` is False.
-- `classify-regions` route: loads the original source image and checks it with `looks_mni(affine, shape, header)` before calling `classify_lesions_with_atlas`. With `method="msmask"` the request is refused with HTTP 422. With `method="auto"` the route falls through to the geometric path and returns `atlas_unavailable_reason`. `LesionDashboard` then shows the amber warning `classify.atlasUnavailable` ("Atlas regions not used: this image is not in MNI space, so the least accurate geometric fallback was applied. Verify every region before using it for DIS."). Whenever the method is `geometric` and no `atlas_unavailable_reason` is set, it shows the amber warning `classify.geometricWarning` ("Geometric heuristics: the least accurate method (coordinate rules, not anatomical landmarks). Verify every region before using it for DIS.").
+- `classify-regions` route: loads the original source image and checks it with `looks_mni(affine, shape, header)` before calling `classify_lesions_with_atlas`. With `method="msmask"` the request is refused with HTTP 422. With `method="auto"` the route falls through to the geometric path and returns `atlas_unavailable_reason`. `LesionDashboard` then shows the amber alert `classify.atlasUnavailable` ("Atlas regions not used: this image is not in MNI space, so the geometric fallback (coordinate rules, not anatomical landmarks) was applied. Verify every region before using it for DIS."). When the response carries `atlas_error` (an atlas fault in `auto`), it shows the amber alert `classify.atlasError` ("Atlas regions could not be computed (internal error), so the geometric fallback was applied. Verify every region before using it for DIS."). Whenever the method is `geometric` and neither `atlas_unavailable_reason` nor `atlas_error` is set, it shows the amber warning `classify.geometricWarning` ("Geometric heuristics: coordinate rules, not anatomical landmarks; their accuracy has not been measured. Verify every region before using it for DIS.").
 - `generate-zone-map` route: see "Zone-map generation" below. The route returns HTTP 422 and generates or persists nothing for a non-MNI image.
-- Limitation: the gate checks only the grid. It cannot certify that an image is truly normalised: an image resampled onto an MNI grid without being registered to it, or an imperfectly normalised image, can pass. Rationale for the gate: in a controlled experiment without registration (30 MSLesSeg scans with expert lesions, 2026-09-28), moving the anatomy by 3° / 3 % / 5 mm inside an MNI grid changed the region of 28 % of expert lesions (62 % at 15° / 10 % / 20 mm) and flipped brain DIS in up to 13 % of scans.
+- Longitudinal compare route (`segmentation_analysis.py`, MAGNIMS region stratification of new lesions): imports the classifier's `looks_mni` as `_looks_mni`, so one gate decides wherever the atlas is applied (REQ-SAFE-021 (a)). From commit f208149 (2026-08-22) until 2026-09-28 this route had its own weaker `_looks_mni` (sorted extents, no isotropy, centre or header condition), deployed in production, deciding whether new lesions were stratified by region with the MSMask atlas. The route calls the gate with the affine and shape only, so condition 5 (header transform) is not checked there. Verified by `test_rc032_longitudinal_route_uses_the_same_gate`.
+- Limitations (the gate checks only the grid; it is not a registration check):
+  - It cannot certify that an image is truly normalised. An image resampled onto an MNI grid without being registered to it, an imperfectly normalised image, or a well-behaved native 3D isotropic axial scan whose field of view and position happen to be MNI-like (e.g. a 1 mm 3D T1 or FLAIR positioned near the scanner isocentre) can pass.
+  - Conversely, images normalised with SPM12's default "Normalise: Write" bounding box ([-78 -112 -70; 78 76 85]) are refused: their grid centre, (0, -18, 7.5) mm, is about 10.5 mm from (0, -18, 18). This is fail-safe: the atlas is not used, and in `auto` the geometric fallback runs with its warning.
+- Rationale for the gate: in a controlled experiment without registration (30 MNI-registered MSLesSeg scans with expert lesions, 2026-09-28; `scripts/safety/haz005_atlas_misregistration_probe.py`, run 2, which uses the product's region rule), moving the anatomy inside the MNI grid by a random amount **up to** 3° / 3 % / 5 mm changed the region of 216 of 786 expert lesions (27.5 %); up to 8° / 7 % / 10 mm, 338 of 786 (43.0 %); up to 15° / 10 % / 20 mm, 433 of 785 (55.2 %). Brain DIS changed in 4, 1 and 3 of the 30 scans respectively.
 
 **Atlas path orientation (`classify_lesions_with_atlas`)**: `generate_zone_map_atlas` returns the zone map in NIfTI-native (a0, a1, k) order, while lesion masks are internal (k, a0, a1). The function transposes the zone map with (2, 0, 1) and raises `ValueError` if the result does not have the lesion mask's shape. Before 2026-09-28 the transpose was missing: the path failed with a shape error on non-cubic volumes and would have applied rotated zones on cubic ones. The `generate-zone-map` route applies the same (2, 0, 1) transpose. `classify_from_zone_mask` itself also raises `ValueError` when the zone map's shape differs from the lesion mask's. Before this check a mismatch surfaced as an IndexError, which `auto` turned into a silent geometric fallback. A zone map of the same shape but transposed (square in-plane grid) cannot be detected there, so callers must supply the zone map in (k, a0, a1) order.
 
-**Parcellation detection (`looks_like_freesurfer_parcellation(label_values, description)`, RC-032, CAPA-006)**: returns True only if the segmentation contains >= 3 of `FREESURFER_PARCELLATION_LABELS` **and** >= 1 of `FREESURFER_HIGH_LABELS` {16, 41, 42, 43}, and its description is not "MAGNIMS Zone Map". Both routes use it for an explicit `parcellation_id` (HTTP 422 if it fails) and for auto-detection of a sibling segmentation. Before 2026-09-28 the test was ">= 3 of the ten labels" only. A MAGNIMS zone map (labels 1-4) passed it, and its label 4 (Deep White Matter) was read as the FreeSurfer lateral ventricle (label 4), so DWM lesions were reported as Periventricular. A zone map or a region-classified lesion mask never carries labels 16 or 41-43.
+**Parcellation identity (`looks_like_freesurfer_parcellation(label_values, description=None, foreground_ml=None)`, RC-032, CAPA-006)**: returns True only if all of these hold:
+1. the segmentation contains **every** label of `FREESURFER_REQUIRED_LABELS` = {2, 3, 4, 16, 41, 42, 43}: cerebral white matter, cortex and lateral ventricles in both hemispheres, and the brainstem;
+2. its description is not "MAGNIMS Zone Map" (`ZONE_MAP_DESCRIPTION`);
+3. when the caller passes the labelled volume, it is at least `MIN_PARCELLATION_FOREGROUND_ML` = 500 mL (a whole-brain parcellation covers about 1-1.6 L; a lesion mask covers a few mL). Both routes pass it, computed with the source image's voxel volume.
+
+A MAGNIMS zone map (labels 1-4), a region-classified lesion mask (1-6), an instance-labelled lesion mask (1..N), and an aparc+aseg whose cortex labels (1000+/2000+) cannot be read as 3/42 all fail.
+
+In addition, the route checks where the parcellation comes from:
+- `classify-regions`: an explicit `parcellation_id` must belong to the same image (`metadata.file_id`) and have the lesion mask's shape, else HTTP 422 ("not a parcellation of this image"); this check comes before the label test. A parcellation of another image, e.g. another timepoint on the same protocol grid, would otherwise be used unregistered. An auto-detected candidate (a segmentation listed for the same file) must have the lesion mask's shape.
+- `generate-zone-map`: an explicit `parcellation_id` must belong to the requested image (HTTP 422); auto-detection lists the segmentations of that image.
+
+History: before 2026-09-28 the test was ">= 3 of {2, 3, 4, 7, 8, 10, 16, 41, 42, 43}". A MAGNIMS zone map (labels 1-4) passed it, and its label 4 (Deep White Matter) was read as the FreeSurfer lateral ventricle (label 4), so DWM lesions were reported as Periventricular. An instance-labelled lesion mask with 20 lesions also passed it, and so did a parcellation without cortex labels, on which JC could never be assigned. Verified by `test_rc032_parcellation_test_rejects_zone_maps_and_lesion_masks`, `test_rc032_instance_labelled_mask_is_not_read_as_a_parcellation`, `test_rc032_foreign_image_parcellation_is_refused` and `test_rc032_same_image_parcellation_is_used`.
 
 **Geometric preconditions (`prepare_geometric_image(affine, native_image, lesion_shape)`, RC-032, CAPA-006)**: returns the source image in the lesion mask's (k, a0, a1) order. It raises `GeometricPreconditionError` (a `ValueError` subclass) when:
 - the image cannot be read;
 - the orientation is indeterminate (affine not 4x4, not finite, or singular);
+- the slice axis (native axis k) is tilted more than `GEOMETRIC_MAX_SLICE_TILT_DEG` = 30° from the inferior-superior axis (`aff2axcodes` alone would accept up to 45°);
 - the slice axis (native axis k) does not point Superior (`nib.aff2axcodes(affine)[2] != "S"`), as in sagittal, coronal or superior-to-inferior acquisitions;
-- the image is not 3-D;
+- the image is not 3-D after trailing singleton dimensions are dropped (an (x, y, z, 1) image is accepted as (x, y, z));
 - the reordered image does not match the lesion mask's shape;
 - the image is blank.
 
 `classify_lesions_geometric` raises `ValueError` when `image_data` does not match the lesion mask's shape. Before 2026-09-28 the route passed the image in native order, and the heuristics silently replaced it with the whole array as "brain" on every non-cubic volume (JC then meant "near the array corner"). The IT rule also ran on whatever axis 0 happened to be. The heuristics themselves are unchanged coordinate rules.
 
-**Zone-map generation (`POST /segmentation/generate-zone-map`, RC-032, CAPA-006)**: zone maps are for display only; `classify-regions` never reads them (see above).
-1. Voxel spacing comes from the source image header (`_voxel_spacing_from_source_image`). The former fallback read the undefined names `metadata` / `segmentation_id` (NameError, HTTP 500).
-2. An explicit `parcellation_id` must exist (404) and pass `looks_like_freesurfer_parcellation` (422). Otherwise a sibling segmentation that passes it is auto-detected.
-3. With a parcellation: `generate_zone_map` (EDT, 1.5 mm).
-4. Without a parcellation: MSMask. The original loaded image, including its header, must pass `looks_mni` (else HTTP 422). A `NotMNISpaceError` from `generate_zone_map_atlas` also gives HTTP 422. The result is transposed (2, 0, 1) to (k, a0, a1).
+**Zone-map generation (`POST /segmentation/generate-zone-map`, RC-032, CAPA-006)**: zone maps are for display only; `classify-regions` never reads them (see above). The route runs in this order:
+1. `file_id` is required (HTTP 400). The caller is authorized for the image's patient with `authorize_file_scope` before anything else (HTTP 404 on denial; RC-029).
+2. Voxel spacing comes from the source image header (`_voxel_spacing_from_source_image`). The former fallback read the undefined names `metadata` / `segmentation_id` (NameError, HTTP 500).
+3. Find and validate the parcellation. An explicit `parcellation_id` must exist (HTTP 404), belong to this image (HTTP 422) and pass `looks_like_freesurfer_parcellation` (HTTP 422). Without one, a segmentation of the file that passes the test is auto-detected.
+4. Generate. With a parcellation: `generate_zone_map` (EDT, 1.5 mm). Without one: MSMask. The original loaded image, including its header, must pass `looks_mni` (else HTTP 422). A `NotMNISpaceError` from `generate_zone_map_atlas` also gives HTTP 422. The result is transposed (2, 0, 1) to (k, a0, a1).
 5. An empty zone map gives HTTP 400.
-6. Existing "MAGNIMS Zone Map" segmentations of the file are deleted only after the new zone map has been generated. They used to be deleted first, which destroyed them on every refusal and left `zone_map_seg_id` dangling.
-7. The new zone map is persisted only through `persist()` (MRI-native, RC-031 v2 marker). The former raw GCS overwrite, which dropped the marker, has been removed.
+6. Create the "MAGNIMS Zone Map" segmentation, write the mask (`set_mask`) and persist it through `persist()` only (MRI-native, RC-031 v2 marker). The former raw GCS overwrite, which dropped the marker, has been removed.
+7. **Only then** delete the file's older "MAGNIMS Zone Map" segmentations, excluding the new one. A failure to delete one is logged. Before 2026-09-28 they were deleted first, which destroyed them on every refusal and left `zone_map_seg_id` dangling. Now a refusal, or a failure to create or persist the new zone map (HTTP 500), leaves the existing zone maps in place (`test_rc032_generate_zone_map_refuses_non_mni_and_keeps_existing_zone_maps`, `test_rc032_zone_map_replacement_is_atomic`).
+8. Propagate `zone_map_seg_id` to the file's other segmentations.
+
+Zone statistics (`zone_stats`) of the atlas zone map use the image voxel volume, the product of the voxel spacing (RC-024). Before 2026-09-28 `generate_zone_map_atlas` assumed 1 mm³, which understated a 2 mm MNI grid 8x (`test_rc032_zone_volumes_use_the_voxel_volume`). The parcellation zone map (`generate_zone_map`) already used the voxel spacing.
 
 **Per-lesion output: evidence, not confidence (RC-010 (amended), HAZ-005, REQ-SAFE-010 amended 2026-09-28)**:
 
@@ -423,15 +461,17 @@ Descriptive fractions and distances are not probabilities. The region assignment
 
 **Error Handling**:
 - `ValueError` if mask shapes don't match: parcellation, the atlas zone map after reorientation (`classify_lesions_with_atlas` and `classify_from_zone_mask`), and the geometric image.
-- `NotMNISpaceError` when the image grid is not MNI-like: HTTP 422 for `method="msmask"` and for `generate-zone-map`; for `method="auto"`, the next path with `atlas_unavailable_reason`.
-- `GeometricPreconditionError` when the geometric heuristics cannot be applied validly: HTTP 422 for `method="geometric"`; in `auto` the reason is kept.
-- HTTP 422 for a `parcellation_id` that is not a FreeSurfer parcellation.
-- HTTP 422 "No region-classification method can be applied validly to this image" plus the reasons, when every applicable path refused.
+- `NotMNISpaceError` when the image grid is not MNI-like (a refusal): HTTP 422 for `method="msmask"` and for `generate-zone-map`; for `method="auto"`, the geometric path with `atlas_unavailable_reason`.
+- An atlas fault (atlas file or nilearn missing, or any other exception in the atlas path): HTTP 400 (file / nilearn) or HTTP 500 for `method="msmask"`; for `method="auto"`, the geometric path with `atlas_error`. A fault is never reported as a refusal.
+- `GeometricPreconditionError` when the geometric heuristics cannot be applied validly (a refusal): HTTP 422 for `method="geometric"`; in `auto` the reason is kept. A fault in the heuristics: HTTP 500.
+- HTTP 422 for a `parcellation_id` of another image or grid, or one that is not a FreeSurfer parcellation.
+- When no path produced a result: HTTP 500 if a path faulted; HTTP 422 "No region-classification method can be applied validly to this image" plus the reasons if every applicable path refused; HTTP 400 for an unknown `method` or when an explicitly requested path has nothing to run on (no LST-AI segmentation, no parcellation).
+- HTTP 404 when the caller may not access the image's patient (RC-029).
 - Empty result if no lesions found.
 
-**Safety**: Each path is used only when its precondition holds (RC-032): the MNI-space atlas only on MNI-like grids, a parcellation only if it is a FreeSurfer-label parcellation, and the geometric heuristics only on a readable, non-blank, axial inferior-to-superior 3-D image in the lesion mask's axis order. Otherwise the path is refused. If no path remains, the request fails with the reasons. The atlas zone map is generated fresh, reoriented and shape-checked; a persisted zone map is never reused. The grid gate cannot certify true normalisation. The 1.5 mm distance thresholds approximate LST-AI's one-voxel (3x3x3) dilation at 1 mm isotropic: face- and edge-adjacent voxels (1.0 and 1.41 mm) count as contact, corner-adjacent voxels (1.73 mm) do not. *(v1.0/v1.1 text withdrawn in v1.2, CAPA-006: "EDT-based classification is more robust than pixel-adjacency methods" (no evidence); "Distance thresholds (1.5mm) match LST-AI dilation criteria" (inexact).)* The priority cascade makes the assignment deterministic. No per-lesion confidence is emitted (RC-010 (amended)). The accuracy of region assignment has NOT been measured against expert region labels on any path, so the HAZ-005 residual risk is UNDETERMINED (RMF-001).
+**Safety**: Each path is used only when its precondition holds (RC-032): the MNI-space atlas only on MNI-like grids; a parcellation only if it is a whole-brain FreeSurfer-label parcellation of the same image and grid; the geometric heuristics only on a readable, non-blank, axial inferior-to-superior 3-D image in the lesion mask's axis order, with the slice axis within 30° of inferior-superior. Otherwise the path is refused. A fault is reported as a fault (HTTP 500, or `atlas_error` with the geometric result in `auto`), never as a refusal and never silently. If no path remains, the request fails with the reasons. The atlas zone map is generated fresh, reoriented and shape-checked; a persisted zone map is never reused. The grid gate cannot certify true normalisation (see its limitations above). The 1.5 mm distance thresholds approximate LST-AI's one-voxel (3x3x3) dilation at 1 mm isotropic: face- and edge-adjacent voxels (1.0 and 1.41 mm) count as contact, corner-adjacent voxels (1.73 mm) do not. *(v1.0 text withdrawn in v1.1, CAPA-006: "EDT-based classification is more robust than pixel-adjacency methods" (no evidence); "Distance thresholds (1.5mm) match LST-AI dilation criteria" (inexact).)* The priority cascade makes the assignment deterministic. No per-lesion confidence is emitted (RC-010 (amended)). The accuracy of region assignment has NOT been measured against expert region labels on any path, so the HAZ-005 residual risk is UNDETERMINED (RMF-001).
 
-**Implements**: REQ-FUNC-053, REQ-SAFE-010 (amended 2026-09-28), REQ-SAFE-011, REQ-SAFE-021 (RC-032, CAPA-006)
+**Implements**: REQ-FUNC-053, REQ-SAFE-010 (amended 2026-09-28), REQ-SAFE-011, REQ-SAFE-021 (RC-032, CAPA-006); the region routes also implement REQ-SEC-014/015 (RC-029)
 
 ---
 
@@ -524,7 +564,7 @@ Output: { normal: number [0,1], abnormal: number [0,1], inferenceTimeMs: number 
 | DD-RPT-001 | REQ-FUNC-060, 061, 063, REQ-SAFE-006, 007, REQ-SEC-007 | RC-006, RC-007 |
 | DD-LES-001 | REQ-FUNC-050, 051 | RC-010 |
 | DD-LES-002 | REQ-FUNC-052, REQ-SAFE-015 | RC-015 |
-| DD-CLS-001 | REQ-FUNC-053, REQ-SAFE-010 (amended 2026-09-28), 011, 021 | RC-010 (amended), RC-011, RC-032 (path preconditions: MNI grid gate, parcellation check, geometric preconditions; CAPA-006) |
+| DD-CLS-001 | REQ-FUNC-053, REQ-SAFE-010 (amended 2026-09-28), 011, 021, REQ-SEC-014/015 (region routes) | RC-010 (amended), RC-011, RC-032 (path preconditions: MNI grid gate, also on the longitudinal compare route; parcellation identity; geometric preconditions; refusal vs fault; CAPA-006), RC-029 (object-level authorization of classify-regions and generate-zone-map; CAPA-006) |
 | DD-NII-001 | REQ-DATA-001 | RC-012 |
 | DD-NII-002 | REQ-SAFE-012 | RC-012 |
 | DD-EDGE-001/002/003 | REQ-FUNC-033, REQ-SAFE-008, 009 | RC-008, RC-009 |
