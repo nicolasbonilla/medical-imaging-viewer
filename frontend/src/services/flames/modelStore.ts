@@ -2,7 +2,7 @@
  * Download + integrity check + persistent caching of the FLAMeS ONNX model in the browser.
  *
  * - The model is pinned by SHA-256 and byte length (plan.ts). Any mismatch FAILS CLOSED:
- *   the bytes are discarded and the job ends with an error (RC-F1 in CHANGE-PROPOSAL.md).
+ *   the bytes are discarded and the job ends with an error (RC-040 in CHANGE-PROPOSAL.md).
  * - The verified bytes are kept in Cache Storage (per origin, survives reloads) so a workstation
  *   downloads the 62 MB model once per model version. A cached copy is re-verified on every use.
  * - Works in a Web Worker (caches, fetch and crypto.subtle are available there).

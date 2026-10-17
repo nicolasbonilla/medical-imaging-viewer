@@ -27,6 +27,99 @@ export interface NiftiVolume {
   datatype: number;
   sformCode: number;
   qformCode: number;
+  /**
+   * Free-text header evidence about the acquisition (FLAIR contrast gate, RC-049): descrip, aux_file,
+   * intent_name, db_name and printable text found in NIfTI header extensions. Never used to accept
+   * an image, only to refuse one whose header names another contrast.
+   */
+  headerText: string[];
+  /** DICOM attributes found in a NIfTI DICOM extension (ecode 2), if any. */
+  dicom: DicomEvidence;
+}
+
+export interface DicomEvidence {
+  inversionTimeMs?: number;
+  seriesDescription?: string;
+  protocolName?: string;
+  sequenceName?: string;
+  scanningSequence?: string;
+}
+
+function cString(bytes: Uint8Array, offset: number, length: number): string {
+  let s = '';
+  for (let n = 0; n < length; n++) {
+    const c = bytes[offset + n];
+    if (c === 0) break;
+    s += c >= 32 && c < 127 ? String.fromCharCode(c) : ' ';
+  }
+  return s.trim();
+}
+
+/** Printable ASCII runs (>= 4 chars) of a binary payload, capped. */
+function printableRuns(bytes: Uint8Array, cap = 65536): string[] {
+  const out: string[] = [];
+  let cur = '';
+  const n = Math.min(bytes.length, cap);
+  for (let i = 0; i < n; i++) {
+    const c = bytes[i];
+    if (c >= 32 && c < 127) cur += String.fromCharCode(c);
+    else {
+      if (cur.trim().length >= 4) out.push(cur.trim());
+      cur = '';
+    }
+  }
+  if (cur.trim().length >= 4) out.push(cur.trim());
+  return out;
+}
+
+/** Read one DICOM attribute (little endian, explicit or implicit VR) from a DICOM extension payload. */
+function dicomString(p: Uint8Array, group: number, element: number): string | undefined {
+  const g0 = group & 0xff;
+  const g1 = group >> 8;
+  const e0 = element & 0xff;
+  const e1 = element >> 8;
+  const view = new DataView(p.buffer, p.byteOffset, p.byteLength);
+  for (let i = 0; i + 8 <= p.length; i++) {
+    if (p[i] !== g0 || p[i + 1] !== g1 || p[i + 2] !== e0 || p[i + 3] !== e1) continue;
+    const vr = String.fromCharCode(p[i + 4], p[i + 5]);
+    let len: number;
+    let start: number;
+    if (/^[A-Z]{2}$/.test(vr)) {
+      len = view.getUint16(i + 6, true);
+      start = i + 8;
+    } else {
+      len = view.getUint32(i + 4, true);
+      start = i + 8;
+    }
+    if (len > 0 && len < 1024 && start + len <= p.length) return cString(p, start, len);
+  }
+  return undefined;
+}
+
+function readExtensions(bytes: Uint8Array, view: DataView, le: boolean, voxOffset: number): { text: string[]; dicom: DicomEvidence } {
+  const text: string[] = [];
+  const dicom: DicomEvidence = {};
+  if (bytes.byteLength < 352 || bytes[348] === 0) return { text, dicom };
+  let o = 352;
+  const end = Math.min(voxOffset, bytes.byteLength);
+  while (o + 8 <= end) {
+    const esize = view.getInt32(o, le);
+    const ecode = view.getInt32(o + 4, le);
+    if (esize < 16 || esize % 16 !== 0 || o + esize > end) break;
+    const payload = bytes.subarray(o + 8, o + esize);
+    if (ecode === 2) {
+      const ti = dicomString(payload, 0x0018, 0x0082);
+      if (ti !== undefined && Number.isFinite(parseFloat(ti))) dicom.inversionTimeMs = parseFloat(ti);
+      dicom.seriesDescription = dicomString(payload, 0x0008, 0x103e);
+      dicom.protocolName = dicomString(payload, 0x0018, 0x1030);
+      dicom.sequenceName = dicomString(payload, 0x0018, 0x0024);
+      dicom.scanningSequence = dicomString(payload, 0x0018, 0x0020);
+    } else {
+      text.push(...printableRuns(payload));
+    }
+    o += esize;
+  }
+  return { text, dicom };
 }
 
 /** Hard ceiling so a malformed or huge file cannot exhaust the tab (DESIGN.md §7). */
@@ -173,5 +266,13 @@ export function parseNifti(bytes: Uint8Array): NiftiVolume {
   for (let n = 0; n < voxels; n++) {
     if (!Number.isFinite(data[n])) throw new Error('The FLAIR contains non-finite voxel values (NaN/Inf).');
   }
-  return { dims, spacing, affine, data, datatype, sformCode, qformCode };
+  const ext = readExtensions(bytes, view, le, voxOffset);
+  const headerText = [
+    cString(bytes, 148, 80), // descrip
+    cString(bytes, 228, 24), // aux_file
+    cString(bytes, 328, 16), // intent_name
+    cString(bytes, 14, 18), // db_name
+    ...ext.text,
+  ].filter((s) => s.length > 0);
+  return { dims, spacing, affine, data, datatype, sformCode, qformCode, headerText, dicom: ext.dicom };
 }

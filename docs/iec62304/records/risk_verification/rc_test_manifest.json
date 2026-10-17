@@ -379,6 +379,183 @@
       "negative_control": "Executed 2026-10-17 by scripts/safety/capa009_negative_controls.py, one mutation at a time (every anchor asserted unique), failing test names in docs/iec62304/records/risk_verification/CAPA-009_negative_controls_2026-10-17.json. 32 mutations, 32 detected (incl. P1: the un-awaited patient dependency re-introduced -> 7 failed). Restored 47 passed.",
       "requirement": "REQ-SEC-014/015/016/019/020",
       "note": "CAPA-009. Completes CAPA-007 PA-7.2. HONEST LIMITS: behaviour verified in-process with fake services and a fake care-team store; not verified in production (two real accounts needed); the initiator registry is in memory per instance, like the task and upload stores it guards, so a handle used on another instance is refused (fail closed)."
+    },
+    "RC-040": {
+      "hazard": "HAZ-001",
+      "status": "implemented",
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, PENDING owner approval; feature flag OFF)",
+      "description": "In-browser FLAMeS: only the model whose size and SHA-256 equal the pin runs, on download and when served from Cache Storage",
+      "implementation": "frontend/src/services/flames/modelStore.ts (verifyModel, loadVerifiedModel); plan.ts FLAMES_FOLD0_MODEL",
+      "tests": [
+        "frontend/src/services/flames/__tests__/modelStore.test.ts",
+        "frontend/src/services/flames/__tests__/draft-model.test.ts"
+      ],
+      "requirement": "REQ-SAFE-031",
+      "negative_control": "Executed 2026-10-17 by research/flames_in_browser/negative_controls_v2.py (one mutation at a time, anchors asserted unique, files hash-verified after restore); results in docs/iec62304/records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json (I1, I2; I1-old/I2-old show the pre-fix tests did not detect them)"
+    },
+    "RC-041": {
+      "hazard": "HAZ-001",
+      "status": "implemented",
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, PENDING owner approval; feature flag OFF)",
+      "description": "nnU-Net-faithful port (crop, z-score, resampling, sliding window, logits resampling) verified against nnunetv2/scipy/skimage fixtures and end-to-end parity (Dice >= 0.99)",
+      "implementation": "frontend/src/services/flames/preprocess.ts, slidingWindow.ts, pipeline.ts",
+      "tests": [
+        "frontend/src/services/flames/__tests__/preprocess.test.ts",
+        "frontend/src/services/flames/__tests__/slidingWindow.test.ts",
+        "frontend/src/services/flames/__tests__/pipeline.test.ts"
+      ],
+      "requirement": "REQ-FUNC-094",
+      "negative_control": "2026-10-17 research/flames_in_browser/negative_controls.py M1, M3, M5-M8 (docs/research/flames-in-browser/evidence/negative-controls.json)",
+      "note": "Parity harness (opt-in, public data): Dice 0.99940 / 0.99934 vs nnUNetv2_predict (DESIGN.md §0)."
+    },
+    "RC-042": {
+      "hazard": "HAZ-006",
+      "status": "implemented",
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, PENDING owner approval; feature flag OFF)",
+      "description": "Axis-order control NIfTI (i,j,k) -> nnU-Net (i,k,j) -> app (k,i,j), tested against SimpleITK and the backend convention",
+      "implementation": "frontend/src/services/flames/axes.ts",
+      "tests": [
+        "frontend/src/services/flames/__tests__/axes-nifti.test.ts",
+        "frontend/src/services/flames/__tests__/pipeline.test.ts"
+      ],
+      "requirement": "REQ-FUNC-095",
+      "negative_control": "2026-10-17 negative_controls.py M2, M4, M10"
+    },
+    "RC-043": {
+      "hazard": "HAZ-001",
+      "status": "implemented",
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, PENDING owner approval; feature flag OFF)",
+      "description": "Skull-stripped input gate: border nonzero <= 2 %, filled region 500-2600 mL, skull clues (<= 1 % voxels > 1.5x tissue mode within 6 mm of the region edge = scalp fat; <= 20 % voxels < 0.25x inside the region), also with a zero background; before the model download",
+      "implementation": "frontend/src/services/flames/pipeline.ts (checkInputGates, GATES), contrastGate.ts (rimBrightFraction, headDarkFraction)",
+      "tests": [
+        "frontend/src/services/flames/__tests__/inputGates.test.ts",
+        "frontend/src/services/flames/__tests__/pipeline.test.ts"
+      ],
+      "requirement": "REQ-SAFE-033",
+      "negative_control": "Executed 2026-10-17 by research/flames_in_browser/negative_controls_v2.py (one mutation at a time, anchors asserted unique, files hash-verified after restore); results in docs/iec62304/records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json (G5, G5b) and negative_controls.py M11",
+      "note": "Validated on public data: docs/research/flames-in-browser/FLAIR-GATE-VALIDATION.md (only 6 with-skull subjects available)."
+    },
+    "RC-044": {
+      "hazard": "HAZ-001",
+      "status": "implemented",
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, PENDING owner approval; feature flag OFF)",
+      "description": "Numerical/output guard: NaN/Inf or constant scores => error; WebGPU failure restarts the whole job on WebAssembly; lesions > 25 % of brain discarded",
+      "implementation": "frontend/src/services/flames/slidingWindow.ts, pipeline.ts, workers/flamesInBrowser.worker.ts",
+      "tests": [
+        "frontend/src/services/flames/__tests__/slidingWindow.test.ts",
+        "frontend/src/services/flames/__tests__/pipeline.test.ts"
+      ],
+      "requirement": "REQ-SAFE-029",
+      "negative_control": "Executed 2026-10-17 by research/flames_in_browser/negative_controls_v2.py (one mutation at a time, anchors asserted unique, files hash-verified after restore); results in docs/iec62304/records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json (G9: implausible-output discard removed)"
+    },
+    "RC-045": {
+      "hazard": "HAZ-001",
+      "status": "implemented",
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, PENDING owner approval; feature flag OFF)",
+      "description": "One terminal message per job (result or error), no partial-result message; worker terminated on cancel/crash",
+      "implementation": "frontend/src/services/flames/protocol.ts, hooks/useBrowserFlames.ts",
+      "tests": [
+        "frontend/src/hooks/useBrowserFlames.cancel.test.tsx"
+      ],
+      "requirement": "REQ-SAFE-029",
+      "negative_control": "Executed 2026-10-17 by research/flames_in_browser/negative_controls_v2.py (one mutation at a time, anchors asserted unique, files hash-verified after restore); results in docs/iec62304/records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json (H10)"
+    },
+    "RC-046": {
+      "hazard": "HAZ-006",
+      "status": "implemented",
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, PENDING owner approval; feature flag OFF)",
+      "description": "Draft opened only over the same file with identical rows/columns/slices; importMask refuses any mismatch",
+      "implementation": "frontend/src/services/flames/draft.ts (checkDraftGrid), hooks/useSegmentationMask.ts (importMask)",
+      "tests": [
+        "frontend/src/services/flames/__tests__/draft-model.test.ts"
+      ],
+      "requirement": "REQ-FUNC-095",
+      "negative_control": "2026-10-17 negative_controls.py M9"
+    },
+    "RC-047": {
+      "hazard": "HAZ-001",
+      "status": "implemented",
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, PENDING owner approval; feature flag OFF)",
+      "description": "AI draft: orange 'AI draft, unreviewed' label and persistent banner; never saved by save-on-unload; saved only explicitly WITH ai_provenance (model, version, SHA-256, fold, pipeline, runtime) as segmentation_type automatic, refused if the server does not record it; stored 'unreviewed' whatever the client sends; confirmed only by a radiologist (who/when recorded)",
+      "implementation": "frontend/src/hooks/useSegmentationData.ts, components/AiDraftBanner.tsx, SegmentationPanel.tsx, services/flames/draft.ts; backend/app/models/schemas.py (AIProvenance), services/segmentation_service.py (create_segmentation), api/routes/segmentation.py (create, ai-review/confirm)",
+      "tests": [
+        "frontend/src/hooks/useSegmentationData.flamesDraft.test.tsx",
+        "frontend/src/components/BrowserFlamesCard.test.tsx",
+        "tests/unit/test_rc047_ai_draft_provenance.py"
+      ],
+      "requirement": "REQ-SAFE-030",
+      "negative_control": "Executed 2026-10-17 by research/flames_in_browser/negative_controls_v2.py (one mutation at a time, anchors asserted unique, files hash-verified after restore); results in docs/iec62304/records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json (H1-H4, B1-B5)",
+      "note": "Partially reconciles RC-001 for this path only (RMF §5.1). Usability of the labelling (IEC 62366) not evaluated. The confirm route is also classified in tests/unit/test_capa009_object_authorization_everywhere.py (RC-036)."
+    },
+    "RC-048": {
+      "hazard": "HAZ-001",
+      "status": "implemented",
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, PENDING owner approval; feature flag OFF)",
+      "description": "Feature flag VITE_ENABLE_BROWSER_FLAMES OFF by default; nothing loaded when off",
+      "implementation": "frontend/src/config/features.ts, components/ClinicalToolsPanel.tsx (lazy card)",
+      "tests": [
+        "frontend/src/config/features.flames.test.ts"
+      ],
+      "requirement": "REQ-FUNC-093",
+      "negative_control": "Executed 2026-10-17 by research/flames_in_browser/negative_controls_v2.py (one mutation at a time, anchors asserted unique, files hash-verified after restore); results in docs/iec62304/records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json (F1: flag default turned ON)"
+    },
+    "RC-049": {
+      "hazard": "HAZ-001",
+      "status": "implemented",
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, PENDING owner approval; feature flag OFF)",
+      "description": "FLAIR contrast gate: header evidence (inversion time < 1400 ms or another sequence named) can only refuse; image content must look like FLAIR (white matter not brighter than cortex after local normalisation; CSF not bright); the file name is never used",
+      "implementation": "frontend/src/services/flames/headerEvidence.ts, contrastGate.ts, nifti.ts (headerText, DICOM extension), pipeline.ts (checkInputGates), workers/flamesInBrowser.worker.ts",
+      "tests": [
+        "frontend/src/services/flames/__tests__/inputGates.test.ts",
+        "frontend/src/services/flames/__tests__/niftiHeader.test.ts",
+        "frontend/src/services/flames/__tests__/pipeline.test.ts"
+      ],
+      "requirement": "REQ-SAFE-033",
+      "negative_control": "Executed 2026-10-17 by research/flames_in_browser/negative_controls_v2.py (one mutation at a time, anchors asserted unique, files hash-verified after restore); results in docs/iec62304/records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json (G1-G4, G6-G8)",
+      "note": "Sensitivity/specificity on public data: docs/research/flames-in-browser/FLAIR-GATE-VALIDATION.md. Not a sequence classifier with a guaranteed error rate."
+    },
+    "RC-050": {
+      "hazard": "HAZ-001",
+      "status": "implemented",
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, PENDING owner approval; feature flag OFF)",
+      "description": "Opening an AI draft never discards unsaved work: nothing changes until the user saves first or explicitly chooses to discard",
+      "implementation": "frontend/src/hooks/useSegmentationData.ts (createSegmentationFromMask), components/BrowserFlamesCard.tsx",
+      "tests": [
+        "frontend/src/hooks/useSegmentationData.flamesDraft.test.tsx",
+        "frontend/src/components/BrowserFlamesCard.test.tsx"
+      ],
+      "requirement": "REQ-SAFE-032",
+      "negative_control": "Executed 2026-10-17 by research/flames_in_browser/negative_controls_v2.py (one mutation at a time, anchors asserted unique, files hash-verified after restore); results in docs/iec62304/records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json (H5, H6; BEFORE-2/3 = the reviewed code fails the tests)"
+    },
+    "RC-051": {
+      "hazard": "HAZ-001",
+      "status": "implemented",
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, PENDING owner approval; feature flag OFF)",
+      "description": "Empty in-browser result: explicit warning (not a lesion-free result), opening requires acknowledgement; annotated voxel count 0 in the provenance",
+      "implementation": "frontend/src/components/BrowserFlamesCard.tsx, services/flames/draft.ts",
+      "tests": [
+        "frontend/src/components/BrowserFlamesCard.test.tsx"
+      ],
+      "requirement": "REQ-FUNC-036",
+      "negative_control": "Executed 2026-10-17 by research/flames_in_browser/negative_controls_v2.py (one mutation at a time, anchors asserted unique, files hash-verified after restore); results in docs/iec62304/records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json (H7, H8)"
+    },
+    "RC-052": {
+      "description": "Clinical-accuracy configuration: 5-fold ensemble (+ mirroring) as default before any clinical use",
+      "hazard": "HAZ-001",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, PENDING owner approval; feature flag OFF)",
+      "note": "NOT IMPLEMENTED. Open action CA-FLAMES-1 (CP-FLAMES-BROWSER-001, owner): export folds 1-4, make the 5-fold ensemble (+ mirroring) the default, parity for both, before any clinical use. Single fold without mirroring over-segments vs the ensemble (Neurodesk, MSLesSeg n=22). Feature must stay OFF."
+    },
+    "RC-053": {
+      "description": "Device gate: refuse weak devices / warn and offer server path; WebGPU only when the adapter suffices",
+      "hazard": "HAZ-001",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, PENDING owner approval; feature flag OFF)",
+      "note": "NOT IMPLEMENTED. Open action CA-FLAMES-2 (CP-FLAMES-BROWSER-001, owner): device gate (memory, cores, WebGPU adapter limits) and COOP/COEP as a separate tested change (COOP-COEP-IMPACT.md). Interim: honest duration estimate + cancel (REQ-FUNC-096)."
     }
   },
   "unverified_controls_note": [

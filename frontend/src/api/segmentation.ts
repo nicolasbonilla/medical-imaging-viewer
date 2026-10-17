@@ -4,6 +4,7 @@
 
 import { apiClient } from '@/services/apiClient';
 import type {
+  AIProvenance,
   CreateSegmentationRequest,
   SegmentationResponse,
   PaintStroke,
@@ -34,6 +35,16 @@ export const segmentationAPI = {
       request
     );
     return response.data;
+  },
+
+  /**
+   * Record the clinician's explicit review of a saved AI draft (REQ-SAFE-030). Radiologists only.
+   */
+  async confirmAiReview(segmentationId: string): Promise<AIProvenance> {
+    const response = await apiClient.post<{ success: boolean; ai_provenance: AIProvenance }>(
+      `${API_PREFIX}/segmentation/${segmentationId}/ai-review/confirm`,
+    );
+    return response.data.ai_provenance;
   },
 
   /**

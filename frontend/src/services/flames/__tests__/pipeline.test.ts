@@ -10,6 +10,7 @@ import { niftiToApp, type Dims3 } from '../axes';
 import { FlamesInputError, segmentFlairVolume, type FlamesVolume } from '../pipeline';
 import { FLAMES_PLAN } from '../plan';
 import type { RunPatch } from '../slidingWindow';
+import { makePhantom } from './phantoms';
 
 const PATCH_VOX = FLAMES_PLAN.patchSize[0] * FLAMES_PLAN.patchSize[1] * FLAMES_PLAN.patchSize[2];
 
@@ -48,11 +49,11 @@ function centroid(mask: Uint8Array, dims: Dims3): number[] {
 }
 
 describe('segmentFlairVolume (fake network)', () => {
-  it('returns the blob at its NIfTI location through anisotropic (separate-z) resampling', async () => {
+  it('rc042 returns the blob at its NIfTI location through anisotropic (separate-z) resampling', async () => {
     const dims: Dims3 = [40, 36, 24];
     const blob: Dims3 = [27, 12, 15];
     const vol: FlamesVolume = { dims, spacing: [1.1, 1.0, 3.5], data: brainWithBlob(dims, [16, 14, 10], blob, 3) };
-    const r = await segmentFlairVolume(vol, { runPatch: thresholdNet, skullStripGate: false });
+    const r = await segmentFlairVolume(vol, { runPatch: thresholdNet, skullStripGate: false, contrastGate: false });
     expect(r.summary.lesionCount).toBe(1);
     const cen = centroid(r.maskNifti, dims);
     expect(Math.abs(cen[0] - blob[0])).toBeLessThan(1);
@@ -63,11 +64,11 @@ describe('segmentFlairVolume (fake network)', () => {
     expect(r.diagnostics.windows).toBe(1);
   });
 
-  it('isotropic input, asymmetric blob near a corner of the brain', async () => {
+  it('rc041 isotropic input, asymmetric blob near a corner of the brain', async () => {
     const dims: Dims3 = [30, 34, 28];
     const blob: Dims3 = [8, 22, 19];
     const vol: FlamesVolume = { dims, spacing: [1, 1, 1], data: brainWithBlob(dims, [13, 15, 12], blob, 2.5) };
-    const r = await segmentFlairVolume(vol, { runPatch: thresholdNet, skullStripGate: false, returnProbability: true });
+    const r = await segmentFlairVolume(vol, { runPatch: thresholdNet, skullStripGate: false, contrastGate: false, returnProbability: true });
     const cen = centroid(r.maskNifti, dims);
     [0, 1, 2].forEach((a) => expect(Math.abs(cen[a] - blob[a])).toBeLessThan(1));
     expect(r.probabilityNifti!.length).toBe(r.maskNifti.length);
@@ -75,7 +76,7 @@ describe('segmentFlairVolume (fake network)', () => {
 });
 
 describe('fail-closed gates', () => {
-  it('refuses a FLAIR that is not skull-stripped (nonzero border)', async () => {
+  it('rc043 refuses a FLAIR that is not skull-stripped (nonzero border)', async () => {
     const dims: Dims3 = [32, 32, 32];
     const data = Float32Array.from({ length: 32 ** 3 }, (_, i) => 50 + (i % 13));
     await expect(segmentFlairVolume({ dims, spacing: [4, 4, 4], data }, { runPatch: thresholdNet })).rejects.toThrow(
@@ -94,11 +95,29 @@ describe('fail-closed gates', () => {
   it('accepts a plausible stripped brain and runs', async () => {
     const dims: Dims3 = [36, 40, 32];
     const data = brainWithBlob(dims, [14, 16, 12], [20, 30, 16], 1.5);
-    const r = await segmentFlairVolume({ dims, spacing: [4, 4, 4], data }, { runPatch: thresholdNet });
+    // 4 mm synthetic blob: no cortex band to measure, so only the skull-strip gate is exercised here
+    const r = await segmentFlairVolume({ dims, spacing: [4, 4, 4], data }, { runPatch: thresholdNet, contrastGate: false });
     expect(r.diagnostics.brainVolumeMl).toBeGreaterThan(500);
   });
 
-  it('discards an implausible output instead of returning it', async () => {
+  it('rc049 runs a FLAIR-like brain through every gate, and refuses a T1-like one before any network call', async () => {
+    let calls = 0;
+    const counting: RunPatch = async (tile) => {
+      calls++;
+      return thresholdNet(tile);
+    };
+    const flair = makePhantom({ contrast: 'FLAIR', spacing: 3 });
+    const r = await segmentFlairVolume(flair, { runPatch: counting });
+    expect(calls).toBeGreaterThan(0);
+    expect(r.maskNifti.length).toBe(flair.data.length);
+    calls = 0;
+    await expect(segmentFlairVolume(makePhantom({ contrast: 'T1', spacing: 3 }), { runPatch: counting })).rejects.toThrow(
+      /white matter is brighter than the cortex/,
+    );
+    expect(calls).toBe(0);
+  });
+
+  it('rc044 discards an implausible output instead of returning it', async () => {
     const everything: RunPatch = async (tile) => {
       const out = new Float32Array(2 * PATCH_VOX);
       for (let t = 0; t < PATCH_VOX; t++) out[PATCH_VOX + t] = 5 + 0.001 * (t % 3) + 0 * tile[t];
@@ -106,9 +125,9 @@ describe('fail-closed gates', () => {
     };
     const dims: Dims3 = [36, 40, 32];
     const data = brainWithBlob(dims, [14, 16, 12], [20, 30, 16], 1.5);
-    await expect(segmentFlairVolume({ dims, spacing: [4, 4, 4], data }, { runPatch: everything })).rejects.toThrow(
-      /Implausible output/,
-    );
+    await expect(
+      segmentFlairVolume({ dims, spacing: [4, 4, 4], data }, { runPatch: everything, contrastGate: false }),
+    ).rejects.toThrow(/Implausible output/);
   });
 
   it('refuses unsupported geometry', async () => {

@@ -33,9 +33,11 @@ import {
   type ZScoreStats,
 } from './preprocess';
 import { predictLogitDifference, type RunPatch } from './slidingWindow';
+import { computeContrastFeatures, decideFlairContrast, type ContrastAssessment, type ContrastFeatures } from './contrastGate';
+import type { HeaderEvidence } from './headerEvidence';
 import { probabilityFromLogitDiff, summariseLesions, thresholdLogitDiff, type LesionSummary } from './postprocess';
 
-/** Gate thresholds. Heuristics, documented as such in CHANGE-PROPOSAL.md (RC-F3/RC-F4); to be validated. */
+/** Gate thresholds. Heuristics, documented as such in CHANGE-PROPOSAL.md (RC-042/RC-043); to be validated. */
 export const GATES = Object.freeze({
   minSpacingMm: 0.1,
   maxSpacingMm: 6.0,
@@ -45,14 +47,24 @@ export const GATES = Object.freeze({
   maxBrainMl: 2600,
   /** fraction of voxels on the six faces of the FOV allowed to be nonzero (a stripped brain does not touch the FOV) */
   maxBorderNonzeroFraction: 0.02,
+  /**
+   * RC-043 skull clues (validated on public data, FLAIR-GATE-VALIDATION.md):
+   * max share of very dark voxels (< 0.25 x tissue mode) inside the hole-filled nonzero region (headDarkFraction) …
+   */
+  maxHeadDarkFraction: 0.2,
+  /** … and max share of very bright voxels (> 1.5 x tissue mode) within 6 mm of its edge (rimBrightFraction, scalp fat) */
+  maxRimBrightFraction: 0.01,
   /** a lesion mask covering more than this fraction of the brain is treated as a failure, not a result */
   maxLesionFractionOfBrain: 0.25,
 });
 
 export class FlamesInputError extends Error {
-  constructor(message: string) {
+  /** the contrast-gate measurements, when the refusal came from (or after) that gate */
+  readonly contrast?: ContrastAssessment;
+  constructor(message: string, contrast?: ContrastAssessment) {
     super(message);
     this.name = 'FlamesInputError';
+    this.contrast = contrast;
   }
 }
 
@@ -72,6 +84,10 @@ export interface FlamesPipelineOptions {
   mirrorAxes?: readonly number[];
   /** enforce the skull-stripped plausibility gate (default true). Only unit tests on synthetic data disable it. */
   skullStripGate?: boolean;
+  /** enforce the FLAIR contrast gate (default true). Only unit tests on synthetic data disable it. */
+  contrastGate?: boolean;
+  /** header evidence about the sequence (headerEvidence.ts); can only refuse, never accept */
+  headerEvidence?: HeaderEvidence;
   returnProbability?: boolean;
   onProgress?: (stage: string, fraction: number) => void;
   signal?: AbortSignal;
@@ -117,6 +133,85 @@ export function borderNonzeroFraction(data: Float32Array, dims: Dims3): number {
   return total ? nonzero / total : 0;
 }
 
+export interface InputGateReport {
+  borderNonzeroFraction: number;
+  brainVolumeMl: number;
+  contrast: ContrastAssessment | null;
+}
+
+/**
+ * Input gates (fail closed, run BEFORE any inference): skull-stripped plausibility (RC-043) and the
+ * FLAIR contrast gate (RC-049: header evidence can only refuse; image content must look like FLAIR).
+ * Throws FlamesInputError with a user-readable reason; returns the measurements otherwise.
+ */
+export function checkInputGates(
+  vol: FlamesVolume,
+  opts: { skullStripGate?: boolean; contrastGate?: boolean; headerEvidence?: HeaderEvidence } = {},
+): InputGateReport {
+  const { dims, spacing, data } = vol;
+  const border = borderNonzeroFraction(data, dims);
+  const nonzero = nonzeroMaskFilled(data, [dims[2], dims[1], dims[0]]);
+  let brainVoxels = 0;
+  for (let i = 0; i < nonzero.length; i++) brainVoxels += nonzero[i];
+  const brainVolumeMl = (brainVoxels * spacing[0] * spacing[1] * spacing[2]) / 1000;
+
+  if (opts.skullStripGate !== false) {
+    if (border > GATES.maxBorderNonzeroFraction) {
+      throw new FlamesInputError(
+        `This image does not look skull-stripped: ${(border * 100).toFixed(1)}% of the image border is nonzero. ` +
+          'FLAMeS requires a skull-stripped FLAIR; no segmentation was produced.',
+      );
+    }
+    if (brainVolumeMl < GATES.minBrainMl || brainVolumeMl > GATES.maxBrainMl) {
+      throw new FlamesInputError(
+        `The nonzero region measures ${brainVolumeMl.toFixed(0)} mL, outside the plausible range for a ` +
+          `skull-stripped adult brain (${GATES.minBrainMl}-${GATES.maxBrainMl} mL). No segmentation was produced.`,
+      );
+    }
+  }
+
+  let contrast: ContrastAssessment | null = null;
+  if (opts.contrastGate !== false || opts.skullStripGate !== false) {
+    const header = opts.headerEvidence ?? { verdict: 'none' as const, reasons: [] };
+    let features: ContrastFeatures;
+    try {
+      features = computeContrastFeatures(data, dims, spacing);
+    } catch (e) {
+      throw new FlamesInputError(
+        `The image could not be checked (${e instanceof Error ? e.message : String(e)}). No segmentation was produced.`,
+      );
+    }
+    contrast = decideFlairContrast(features, header);
+    const reasons: string[] = [];
+    // RC-043: skull clues that also work when the background was set to zero and the head fits the
+    // border/volume limits above: bright scalp fat at the edge of the region, or a large dark share
+    // (bone, air, background noise enclosed by the head).
+    if (opts.skullStripGate !== false) {
+      if (features.rimBrightFraction > GATES.maxRimBrightFraction) {
+        reasons.push(
+          `This image does not look skull-stripped: ${(100 * features.rimBrightFraction).toFixed(1)}% of its outer 6 mm is ` +
+            'very bright (scalp fat), as when the skull and scalp are still present.',
+        );
+      }
+      if (features.darkFraction > GATES.maxHeadDarkFraction) {
+        reasons.push(
+          `This image does not look skull-stripped: ${(100 * features.darkFraction).toFixed(0)}% of the head region is ` +
+            'very dark (bone, air or background).',
+        );
+      }
+    }
+    if (opts.contrastGate !== false && !contrast.ok) reasons.push(contrast.reason ?? 'The image does not look like a FLAIR.');
+    if (reasons.length) {
+      const tail = reasons.some((r) => /skull-stripped/.test(r)) ? ' FLAMeS requires a skull-stripped FLAIR.' : '';
+      throw new FlamesInputError(
+        `${reasons.join(' ')}${tail}${/no segmentation was produced/i.test(reasons.join(' ')) ? '' : ' No segmentation was produced.'}`,
+        contrast,
+      );
+    }
+  }
+  return { borderNonzeroFraction: border, brainVolumeMl, contrast };
+}
+
 export function validateGeometry(vol: FlamesVolume): void {
   const { dims, spacing, data } = vol;
   if (data.length !== product(dims)) throw new FlamesInputError('Voxel count does not match the image dimensions.');
@@ -143,31 +238,21 @@ export async function segmentFlairVolume(vol: FlamesVolume, opts: FlamesPipeline
     data = Float32Array.from(data, (v, i) => (opts.brainMask![i] ? v : 0));
   }
 
-  const border = borderNonzeroFraction(data, dims);
+  progress('preprocess', 0);
+  // Fail closed BEFORE any inference: skull-stripped plausibility (RC-043) + FLAIR contrast (RC-049).
+  const gates = checkInputGates(
+    { data, dims, spacing },
+    { skullStripGate: opts.skullStripGate, contrastGate: opts.contrastGate, headerEvidence: opts.headerEvidence },
+  );
+  const border = gates.borderNonzeroFraction;
+  const brainVolumeMl = gates.brainVolumeMl;
+  opts.signal?.throwIfAborted();
   const netShape = networkShape(dims) as Shape3;
   const netSpacing = networkSpacing(spacing) as Shape3;
-  progress('preprocess', 0);
   const net = niftiToNetwork(data, dims);
   const nonzero = nonzeroMaskFilled(net, netShape);
   let brainVoxels = 0;
   for (let i = 0; i < nonzero.length; i++) brainVoxels += nonzero[i];
-  const voxelMl = (spacing[0] * spacing[1] * spacing[2]) / 1000;
-  const brainVolumeMl = brainVoxels * voxelMl;
-
-  if (opts.skullStripGate !== false) {
-    if (border > GATES.maxBorderNonzeroFraction) {
-      throw new FlamesInputError(
-        `This FLAIR does not look skull-stripped: ${(border * 100).toFixed(1)}% of the image border is nonzero. ` +
-          'FLAMeS requires a skull-stripped FLAIR; no segmentation was produced.',
-      );
-    }
-    if (brainVolumeMl < GATES.minBrainMl || brainVolumeMl > GATES.maxBrainMl) {
-      throw new FlamesInputError(
-        `The nonzero region measures ${brainVolumeMl.toFixed(0)} mL, outside the plausible range for a ` +
-          `skull-stripped adult brain (${GATES.minBrainMl}-${GATES.maxBrainMl} mL). No segmentation was produced.`,
-      );
-    }
-  }
 
   const box = boundingBox(nonzero, netShape);
   const cropped = cropTo(net, netShape, box);

@@ -19,6 +19,8 @@ export interface FlamesSegmentRequest {
   preferWebGPU: boolean;
   /** nnU-Net default test-time mirroring (8x slower). Off by default in the prototype. */
   mirror: boolean;
+  /** Series description the app holds for this file (header evidence for the FLAIR gate; never the file name). */
+  seriesDescription?: string | null;
 }
 
 export type FlamesWorkerRequest = FlamesSegmentRequest;
@@ -38,6 +40,8 @@ export interface FlamesProvenance {
   seconds: number;
   fallbackReason?: string;
   generatedAt: string;
+  /** FLAIR contrast gate outcome (RC-049): header verdict and image-content score. */
+  contrastGate?: { header: 'supports' | 'none'; score: number; threshold: number };
 }
 
 export type FlamesWorkerResponse =

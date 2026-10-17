@@ -14,7 +14,8 @@ import * as ort from 'onnxruntime-web/webgpu';
 import wasmUrl from 'onnxruntime-web/ort-wasm-simd-threaded.asyncify.wasm?url';
 import wasmModuleUrl from 'onnxruntime-web/ort-wasm-simd-threaded.asyncify.mjs?url';
 import { readNifti } from '@/services/flames/nifti';
-import { FlamesInputError, segmentFlairVolume } from '@/services/flames/pipeline';
+import { checkInputGates, FlamesInputError, segmentFlairVolume } from '@/services/flames/pipeline';
+import { headerContrastEvidence } from '@/services/flames/headerEvidence';
 import { FLAMES_PIPELINE_VERSION, FLAMES_PLAN } from '@/services/flames/plan';
 import { loadVerifiedModel, ModelIntegrityError } from '@/services/flames/modelStore';
 import type { FlamesBackend, FlamesWorkerRequest, FlamesWorkerResponse, FlamesStage } from '@/services/flames/protocol';
@@ -54,12 +55,17 @@ self.onmessage = async (event: MessageEvent<FlamesWorkerRequest>) => {
   let session: ort.InferenceSession | null = null;
 
   try {
-    progress('model', 0, 'Loading the FLAMeS model…');
-    const modelBytes = await loadVerifiedModel(job.model, (f) => progress('model', f, 'Downloading the FLAMeS model…'));
-
     progress('read', 0, 'Reading the FLAIR…');
     const flair = await readNifti(job.nifti);
+    progress('read', 0.5, `Checking that the image is a skull-stripped FLAIR (${flair.dims.join(' × ')} voxels)…`);
+    // RC-043 / RC-049: refuse a non-skull-stripped or non-FLAIR image BEFORE the model download.
+    // Header evidence (never the file name) can only refuse; the image content must look like FLAIR.
+    const headerEvidence = headerContrastEvidence(flair.headerText, flair.dicom, job.seriesDescription ?? null);
+    const gate = checkInputGates({ data: flair.data, dims: flair.dims, spacing: flair.spacing }, { headerEvidence });
     progress('read', 1, `FLAIR ${flair.dims.join(' × ')} voxels, ${flair.spacing.map((s) => s.toFixed(2)).join(' × ')} mm`);
+
+    progress('model', 0, 'Loading the FLAMeS model…');
+    const modelBytes = await loadVerifiedModel(job.model, (f) => progress('model', f, 'Downloading the FLAMeS model…'));
 
     const attempt = async (backend: FlamesBackend) => {
       session = await createSession(modelBytes, backend);
@@ -69,6 +75,7 @@ self.onmessage = async (event: MessageEvent<FlamesWorkerRequest>) => {
       return segmentFlairVolume(
         { data: flair.data, dims: flair.dims, spacing: flair.spacing },
         {
+          headerEvidence,
           mirrorAxes: job.mirror ? FLAMES_PLAN.mirrorAxes : [],
           runPatch: async (tile) => {
             const input = new ort.Tensor('float32', tile, [1, 1, ...FLAMES_PLAN.patchSize]);
@@ -135,6 +142,9 @@ self.onmessage = async (event: MessageEvent<FlamesWorkerRequest>) => {
           seconds,
           fallbackReason,
           generatedAt: new Date().toISOString(),
+          contrastGate: gate.contrast
+            ? { header: headerEvidence.verdict === 'supports' ? 'supports' : 'none', score: gate.contrast.score, threshold: gate.contrast.threshold }
+            : undefined,
         },
       },
       [result.maskApp.buffer],

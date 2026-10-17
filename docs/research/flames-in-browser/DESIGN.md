@@ -4,7 +4,7 @@
 |---|---|
 | Status | **PROTOTYPE — research only, not for clinical use.** Behind `VITE_ENABLE_BROWSER_FLAMES` (default **OFF**). Not deployed. |
 | Branch | `feat/flames-in-browser` |
-| Safety class | Touches IEC 62304 **Class C** behaviour (lesion segmentation, HAZ-001; orientation, HAZ-006). Change proposal: [CHANGE-PROPOSAL.md](CHANGE-PROPOSAL.md). Controlled documents (SRS-001, RMF-001, …) are **not** edited by this branch. |
+| Safety class | Touches IEC 62304 **Class C** behaviour (lesion segmentation, HAZ-001; orientation, HAZ-006). Change proposal: [CHANGE-PROPOSAL.md](CHANGE-PROPOSAL.md). Since the 2026-10-17 review fixes ([REVIEW-RESPONSE.md](REVIEW-RESPONSE.md)) the controlled documents carry DRAFT entries (SRS 1.7, RMF 1.9, TM 1.6, SOUP 1.2, CMP 1.1), every approval field PENDING owner approval. |
 | Date | 2026-10-17 |
 
 ## 0. Summary
@@ -211,8 +211,9 @@ Reference timings on the same machine (Ryzen 7 5800H, 8 threads): `nnUNetv2_pred
 
 * **Not in git.** `frontend/public/models/flames/` is ignored. The artefact is a release asset identified by its
   SHA-256; the build/release step copies it to `frontend/public/models/flames/flames-fold0-2a10bb9d.onnx`
-  (content-addressed name) after checking the hash. Proposed store for the artefact: a release attachment or the
-  existing project bucket (no new service).
+  (content-addressed name) after checking the hash (`research/flames_in_browser/stage_model.py`). Archive, hash pin
+  and release step: CMP-001 §6 (`docs/iec62304/07_Configuration_Management_Plan.md`) — research bucket
+  `gs://mstool-research-data` (proposed, not created) + release attachment; Git LFS rejected.
 * **Served same-origin by Firebase Hosting** under the app (no CORS, no COEP issues, no third-party dependency at
   run time). `VITE_FLAMES_MODEL_URL` can point elsewhere; the SHA-256 pin is enforced regardless.
 * Proposed `firebase.json` header (not applied in this branch):
@@ -252,7 +253,7 @@ Reference timings on the same machine (Ryzen 7 5800H, 8 threads): `nnUNetv2_pred
 Consequences: (1) the WebAssembly path works in a real browser with the expected time; (2) **WebGPU needs a SOUP
 upgrade of ONNX Runtime Web to ≥ 1.29** (Class C SOUP change, also affects `edgeAI.worker.ts`) **and** a GPU with
 enough memory — on integrated GPUs it should not even be attempted (check `adapter.limits`/`info` first); (3) the
-fail-closed fallback (RC-F5) was exercised for real twice and behaved as designed.
+fail-closed fallback (RC-044) was exercised for real twice and behaved as designed.
 
 Memory: the largest activation of one 112×128×160 patch is 64 channels × 2.29 M voxels × 4 B ≈ **587 MB** (decoder
 concat); the worker's WebAssembly heap peaks at roughly 2.5–3.5 GB (estimate; the 32-bit wasm ceiling is 4 GB). On
@@ -262,12 +263,13 @@ session at a time and **terminates the worker after each job** to return the hea
 | Class | Expectation |
 |---|---|
 | Desktop/laptop ≥ 16 GB RAM, ≥ 8 cores, Chrome/Edge, app cross-origin isolated | supported (3–5 min WebAssembly; faster with WebGPU) |
-| Same, app NOT cross-origin isolated (current hosting headers) | works but 1 thread — unacceptable wait; UI must warn (not yet implemented) |
+| Same, app NOT cross-origin isolated (current hosting headers) | works but 1 thread (estimated 20–42 min); since 2026-10-17 the card states the expected duration before the run, shows the elapsed time and can be cancelled without touching the open segmentation (REQ-FUNC-096) |
 | ≤ 8 GB RAM, tablets, phones | not supported — should be refused up front with `navigator.deviceMemory` (next step) |
 
 Cross-origin isolation (needed for WebAssembly threads, not for WebGPU) requires `Cross-Origin-Opener-Policy:
 same-origin` + `Cross-Origin-Embedder-Policy: require-corp` (or `credentialless`) on the app's HTML. That can break
-cross-origin resources (fonts, images from signed URLs, OAuth pop-ups) and must be its own tested change.
+cross-origin resources and must be its own tested change. Impact analysis: [COOP-COEP-IMPACT.md](COOP-COEP-IMPACT.md)
+(the app has no OAuth pop-ups; the real breakage is the document preview of GCS signed URLs).
 
 ## 8. Failure handling — fail closed
 
@@ -278,13 +280,17 @@ A job ends with exactly one message: a **complete, gated** result or an error. T
 | Model bytes differ from the pin (size or SHA-256), download error | `ModelIntegrityError` / error, nothing runs; corrupted cache entry deleted |
 | Not NIfTI-1, NIfTI-2, 4D, unsupported datatype, truncated, NaN/Inf voxels, invalid spacing, > 96 M voxels | reader error, nothing runs |
 | Spacing outside 0.1–6 mm, any dim < 16 | `FlamesInputError` |
-| Not skull-stripped: > 2 % of the FOV border nonzero, or filled nonzero region outside 500–2600 mL | `FlamesInputError` (heuristic gate, to be validated — RC-F4) |
+| Not skull-stripped: > 2 % of the FOV border nonzero, filled nonzero region outside 500–2600 mL, or a skull clue: > 1 % of the outer 6 mm very bright (scalp fat) or > 20 % of the filled region very dark (also with a zero background) | `FlamesInputError` before the model download (RC-043; validated on public data, [FLAIR-GATE-VALIDATION.md](FLAIR-GATE-VALIDATION.md)) |
+| Not a FLAIR: header names another sequence or an inversion time < 1400 ms (header can only refuse); or image content with white matter brighter than cortex (T1) or bright CSF (T2/PD); contrast not measurable | `FlamesInputError` before the model download (RC-049; [FLAIR-GATE-VALIDATION.md](FLAIR-GATE-VALIDATION.md)) |
 | Network returns NaN/Inf or the same score everywhere (known WebGPU failure mode), wrong output size | error; if on WebGPU, the **whole** job restarts on WebAssembly (backends never mixed); provenance records the fallback reason |
 | Lesions > 25 % of the brain | result discarded as implausible |
 | Worker crash / `onerror`, user cancel | worker terminated, no result |
 | Result for a different file than the one on screen, or rows/columns/slices differ | the draft cannot be opened (`checkDraftGrid`) |
 | `importMask` with mismatched dimensions | refused, local draft removed |
-| Save | unchanged path: create + PUT with `If-Match` (A-2) and durability check (P-4.3); AI provenance stored as description |
+| Empty result (0 voxels) | explicit warning, never a plain "0 lesions"; the draft opens only after the user acknowledges it (RC-051, REQ-FUNC-036) |
+| Open draft while the open segmentation has unsaved changes | nothing changes; the user chooses "keep my work" or "discard my unsaved changes and open the draft" (RC-050) |
+| Tab closed / reloaded with an AI draft open | browser warning only — an AI segmentation is never saved by the save-on-unload of manual work (RC-047) |
+| Save | explicit only: create **with `ai_provenance`** (server stores `segmentation_type = automatic`, `review_status = unreviewed`), refused and the record removed if the server does not echo the provenance; then PUT with `If-Match` (A-2) and durability check (P-4.3) (RC-047) |
 
 ## 9. How the output enters the app
 
@@ -294,9 +300,14 @@ A job ends with exactly one message: a **complete, gated** result or an error. T
 4. `importDraftCallback` → `createSegmentationFromMask`: a `local-{uuid}` segmentation (same path as a manual new
    segmentation), label 1 = **"Lesion (AI draft, unreviewed)"**, orange, description = provenance stamp
    (`AI DRAFT (unreviewed) — FLAMeS fold 0 …, model sha256 2a10bb9d72dc, WebAssembly x8, N lesions, V mL, timestamp`),
-   `isDirty = true`, undo history reset.
-5. The clinician reviews/edits with the normal tools; **Save** persists it through the unchanged save path. Manual
-   segmentations keep exactly the previous request body (the description is only sent when it is not the default).
+   `isDirty = true`, undo history reset, `metadata.ai_provenance` = model name/version/SHA-256/fold/pipeline/runtime/
+   lesion count/annotated voxels, `review_status = unreviewed`. **If the open segmentation has unsaved changes nothing
+   happens** until the user explicitly chooses (RC-050). An empty result needs an explicit acknowledgement (RC-051).
+5. The clinician reviews/edits with the normal tools; only an explicit **Save** persists it, with its provenance (never
+   the save-on-unload). Manual segmentations keep exactly the previous request body.
+6. A persistent banner "AI draft — UNREVIEWED" is shown wherever the segmentation is open, saved or not; the saved list
+   names it `[AI draft — UNREVIEWED] FLAMeS fold 0`. A radiologist can confirm the review
+   (`POST /segmentation/{id}/ai-review/confirm`, reviewer + time recorded) (RC-047).
 
 ## 10. Verification done in this branch
 
@@ -311,6 +322,9 @@ A job ends with exactly one message: a **complete, gated** result or an error. T
   7 kB lazy chunk; nothing loaded when the flag is off).
 * **Real browser** (§7.1): built worker in headless Edge, 3 runs, masks identical, fallback exercised.
 * **Full frontend suite**: 171 passed, 1 skipped (the opt-in parity test).
+* **After the 2026-10-17 review fixes** ([REVIEW-RESPONSE.md](REVIEW-RESPONSE.md)): full frontend suite 218 passed, 3 skipped
+  (opt-in parity, gate-validation and replay harnesses); backend unit suite 1302 passed; review negative controls 28/28;
+  input-gate validation on 495 public volumes ([FLAIR-GATE-VALIDATION.md](FLAIR-GATE-VALIDATION.md)).
 * Not done: visual QA in the real app with a logged-in study; clinical accuracy study; WebGPU on a discrete GPU;
   5-fold ensemble parity; mirroring parity.
 
@@ -332,7 +346,7 @@ A job ends with exactly one message: a **complete, gated** result or an error. T
 
 ### Skull stripping — constraint and options
 FLAMeS expects a skull-stripped FLAIR (authors recommend SynthStrip `--no-csf`). The prototype therefore **accepts only
-skull-stripped input** and refuses anything that does not look stripped (gate RC-F4). Options, in order of preference:
+skull-stripped input** and refuses anything that does not look stripped (gate RC-043, extended 2026-10-17 with a skull-presence clue). Options, in order of preference:
 1. **SynthStrip weights (MIT) + a clean-room browser implementation of its pre/post-processing written from the
    paper** (Hoopes et al., NeuroImage 2022), with legal sign-off on the FreeSurfer licence question; ≈ 10 MB model.
 2. HD-BET (Apache-2.0 code) after verifying its weight licence; heavier.

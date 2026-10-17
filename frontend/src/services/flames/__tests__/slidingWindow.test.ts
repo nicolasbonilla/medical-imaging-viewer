@@ -67,7 +67,7 @@ describe('helpers', () => {
     const f0 = flipAxes(d, shape, [0]);
     expect(f0[0]).toBe(12);
   });
-  it('checkLogits rejects constant and non-finite outputs (fail closed)', () => {
+  it('rc044 checkLogits rejects constant and non-finite outputs (fail closed)', () => {
     expect(() => checkLogits(new Float32Array(10))).toThrow(/same score/);
     expect(() => checkLogits(Float32Array.from([1, 2, NaN]))).toThrow(/non-finite/);
     expect(() => checkLogits(Float32Array.from([1, 2, 3]))).not.toThrow();
@@ -113,7 +113,7 @@ describe('predictLogitDifference', () => {
     expect(worst).toBeLessThan(1e-5);
   });
 
-  it('position-dependent network: equals a brute-force Gaussian-weighted average', async () => {
+  it('rc041 position-dependent network: equals a brute-force Gaussian-weighted average', async () => {
     const shape: Shape3 = [13, 15, 20];
     const img = ramp(shape);
     // output depends on the position inside the patch, so stitching weights matter

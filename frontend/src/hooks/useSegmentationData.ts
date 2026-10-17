@@ -14,7 +14,9 @@ import { segmentationAPI } from '@/api/segmentation';
 import { useViewerStore } from '@/store/useViewerStore';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import { useSegmentationMask, type LocalPaintStroke } from './useSegmentationMask';
-import type { PaintStroke, ImageShape, Segmentation, SegmentationResponse } from '@/types';
+import type { AIProvenance, PaintStroke, ImageShape, Segmentation, SegmentationResponse } from '@/types';
+import type { ImportDraftResult } from '@/store/useSegmentationStore';
+import { isAiSegmentation, provenanceRecorded } from '@/services/flames/draft';
 
 interface UseSegmentationDataProps {
   /** Called when a paint stroke completes - receives the slice index for cache management */
@@ -107,6 +109,9 @@ export function useSegmentationData({
           { id: 0, name: 'Background', color: '#000000', opacity: 0, visible: false },
           { id: 1, name: 'Lesion', color: '#FF0000', opacity: 0.5, visible: true },
         ];
+        // Origin is taken from the stored provenance, never assumed: an AI draft (local or saved)
+        // is 'automatic' and carries its provenance; only segmentations without it are 'manual'.
+        const aiProvenance = currentSegmentation.metadata?.ai_provenance ?? null;
         const synced: Segmentation = {
           id: segId,
           patient_id: '',
@@ -114,7 +119,8 @@ export function useSegmentationData({
           series_id: currentSeries?.file_id || '',
           file_id: currentSegmentation.file_id,
           name: currentSegmentation.metadata?.description || 'Segmentation',
-          segmentation_type: 'manual' as Segmentation['segmentation_type'],
+          segmentation_type: aiProvenance ? 'automatic' : 'manual',
+          ai_provenance: aiProvenance,
           status: 'in_progress' as Segmentation['status'],
           progress_percentage: progressPct,
           slices_annotated: slicesAnnotated,
@@ -175,22 +181,43 @@ export function useSegmentationData({
     segmentationMask.initEmptyMask(imageShape.slices, imageShape.rows, imageShape.columns);
   }, [setCurrentSegmentation, segmentationMask]);
 
+  // Unsaved work in the open segmentation: edits not yet saved, or edits kept after a refused (409)
+  // save. Read through a ref so a callback registered in the store never sees a stale value.
+  const unsavedWorkRef = useRef(false);
+  unsavedWorkRef.current = Boolean(
+    currentSegmentation && (segmentationMask.state.isDirty || segmentationMask.state.conflict != null),
+  );
+
   /**
    * Create a LOCAL segmentation pre-filled with an externally computed mask (in-browser FLAMeS
    * prototype). Same local-first path as createSegmentation: nothing reaches the server until the
-   * clinician reviews and clicks Save. Returns false (and leaves no draft behind) on any shape mismatch.
+   * clinician reviews and clicks Save.
+   *
+   * Never discards unsaved work (REQ-SAFE-032): if the open segmentation has unsaved changes, NOTHING
+   * is touched and { ok: false, reason: 'unsaved-work' } is returned so the UI can ask the clinician.
+   * Only an explicit `discardUnsavedWork: true` (after that question) replaces it.
+   * On a grid mismatch nothing is touched either.
    */
   const createSegmentationFromMask = useCallback(
     (
       fileId: string,
       imageShape: ImageShape,
       mask: Uint8Array,
-      meta: { description: string; labels?: typeof defaultLabels },
-    ): boolean => {
+      meta: { description: string; labels?: typeof defaultLabels; aiProvenance: AIProvenance },
+      options: { discardUnsavedWork?: boolean } = {},
+    ): ImportDraftResult => {
       const expected = imageShape.slices * imageShape.rows * imageShape.columns;
       if (mask.length !== expected) {
         console.error('[SegmentationData] Draft mask size does not match the image grid', { expected, got: mask.length });
-        return false;
+        return { ok: false, reason: 'grid-mismatch' };
+      }
+      if (unsavedWorkRef.current && !options.discardUnsavedWork) {
+        const open = currentSegmentationRef.current;
+        return {
+          ok: false,
+          reason: 'unsaved-work',
+          openSegmentationName: open?.metadata?.description || 'Segmentation',
+        };
       }
       const tempId = `local-${crypto.randomUUID()}`;
       const now = new Date().toISOString();
@@ -199,7 +226,15 @@ export function useSegmentationData({
         segmentation_id: tempId,
         file_id: fileId,
         total_slices: imageShape.slices,
-        metadata: { file_id: fileId, description: meta.description, labels, created_at: now, modified_at: now },
+        metadata: {
+          file_id: fileId,
+          description: meta.description,
+          labels,
+          created_at: now,
+          modified_at: now,
+          segmentation_type: 'automatic',
+          ai_provenance: { ...meta.aiProvenance, review_status: 'unreviewed', reviewed_by: null, reviewed_at: null },
+        },
       });
       segmentationMask.initEmptyMask(imageShape.slices, imageShape.rows, imageShape.columns);
       const ok = segmentationMask.importMask(mask, {
@@ -210,8 +245,9 @@ export function useSegmentationData({
       if (!ok) {
         setCurrentSegmentation(null);
         segmentationMask.clearMask();
+        return { ok: false, reason: 'grid-mismatch' };
       }
-      return ok;
+      return { ok: true };
     },
     [setCurrentSegmentation, segmentationMask],
   );
@@ -279,6 +315,7 @@ export function useSegmentationData({
         // Provenance: only non-default descriptions (e.g. the in-browser AI draft stamp) are sent,
         // so manual segmentations keep exactly the previous request body.
         const localDescription = currentSegmentation.metadata?.description;
+        const aiProvenance = currentSegmentation.metadata?.ai_provenance ?? undefined;
         serverSeg = await segmentationAPI.createSegmentation({
           file_id: currentSegmentation.file_id,
           image_shape: {
@@ -288,7 +325,20 @@ export function useSegmentationData({
           },
           labels: currentSegmentation.metadata?.labels ?? defaultLabels,
           ...(localDescription && localDescription !== 'Segmentation' ? { description: localDescription } : {}),
+          ...(aiProvenance ? { ai_provenance: aiProvenance } : {}),
         });
+
+        // REQ-SAFE-030: an AI draft is stored ONLY with its AI provenance. A server that did not
+        // record it (e.g. an older backend that ignores the field) would store it as manual work:
+        // remove that record and fail the save instead (fail closed).
+        if (aiProvenance && !provenanceRecorded(aiProvenance, serverSeg.metadata?.ai_provenance)) {
+          const orphan = serverSeg.segmentation_id;
+          serverSeg = null;
+          await segmentationAPI.deleteSegmentation(orphan).catch((e: unknown) =>
+            console.error('[SegmentationData] Could not remove a record created without AI provenance:', e),
+          );
+          throw new Error('The server did not record the AI provenance; the AI draft was NOT saved.');
+        }
 
         // Update mask hook with the real server ID (ref only — no React state change yet)
         segmentationMask.updateSegmentationId(serverSeg.segmentation_id);
@@ -368,14 +418,18 @@ export function useSegmentationData({
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (currentSegmentation && segmentationMask.state.isDirty) {
-        // Best-effort save through the UNIFIED path. The low-level
-        // `segmentationMask.saveMask()` NO-OPS on a `local-` (never-persisted) id —
-        // it has no server id to upload to — so using it here silently saved nothing
-        // for brand-new segmentations (audit F-1.2). `saveSegmentation` instead
-        // create-then-uploads a local id. NOTE: browsers do not await `beforeunload`,
-        // so this is genuinely best-effort — the RELIABLE protection against losing
-        // unsaved work is the native confirmation dialog triggered below.
-        saveSegmentation().catch(err => console.error('Failed to save on unload:', err));
+        // REQ-SAFE-030: an AI segmentation (unreviewed draft or saved AI result) is NEVER saved
+        // without an explicit clinician action. Only the native "leave page?" warning is shown.
+        if (!isAiSegmentation(currentSegmentation.metadata)) {
+          // Best-effort save through the UNIFIED path. The low-level
+          // `segmentationMask.saveMask()` NO-OPS on a `local-` (never-persisted) id —
+          // it has no server id to upload to — so using it here silently saved nothing
+          // for brand-new segmentations (audit F-1.2). `saveSegmentation` instead
+          // create-then-uploads a local id. NOTE: browsers do not await `beforeunload`,
+          // so this is genuinely best-effort — the RELIABLE protection against losing
+          // unsaved work is the native confirmation dialog triggered below.
+          saveSegmentation().catch(err => console.error('Failed to save on unload:', err));
+        }
         e.preventDefault();
         e.returnValue = '';
       }

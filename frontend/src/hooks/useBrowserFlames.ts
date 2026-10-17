@@ -29,6 +29,7 @@ export function useBrowserFlames() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<BrowserFlamesResult | null>(null);
+  const [startedAt, setStartedAt] = useState<number | null>(null);
   const workerRef = useRef<Worker | null>(null);
   const jobRef = useRef<string | null>(null);
 
@@ -41,10 +42,11 @@ export function useBrowserFlames() {
   useEffect(() => terminate, [terminate]);
 
   const run = useCallback(
-    async (fileId: string, options: { mirror?: boolean; webgpu?: boolean } = {}) => {
+    async (fileId: string, options: { mirror?: boolean; webgpu?: boolean; seriesDescription?: string | null } = {}) => {
       terminate();
       const jobId = crypto.randomUUID();
       jobRef.current = jobId;
+      setStartedAt(Date.now());
       setStatus('running');
       setResult(null);
       setError(null);
@@ -94,7 +96,15 @@ export function useBrowserFlames() {
         // convolutions on WebGPU, and with 1.29 an integrated GPU lost the device (DESIGN.md §7.1). The worker
         // keeps the WebGPU path (with a whole-job WebAssembly restart) for when the SOUP upgrade is approved.
         worker.postMessage(
-          { type: 'segment', jobId, nifti, model, preferWebGPU: Boolean(options.webgpu), mirror: Boolean(options.mirror) },
+          {
+            type: 'segment',
+            jobId,
+            nifti,
+            model,
+            preferWebGPU: Boolean(options.webgpu),
+            mirror: Boolean(options.mirror),
+            seriesDescription: options.seriesDescription ?? null,
+          },
           [nifti],
         );
       } catch (err) {
@@ -104,11 +114,16 @@ export function useBrowserFlames() {
     [terminate],
   );
 
+  /**
+   * Cancel: terminates the worker and forgets the job. It never touches the segmentation store,
+   * so the clinician's open segmentation (saved or not) is unaffected.
+   */
   const cancel = useCallback(() => {
     terminate();
     setStatus('idle');
     setStage(null);
     setMessage('');
+    setStartedAt(null);
   }, [terminate]);
 
   const reset = useCallback(() => {
@@ -120,5 +135,5 @@ export function useBrowserFlames() {
     setResult(null);
   }, [terminate]);
 
-  return { status, stage, fraction, message, error, result, run, cancel, reset };
+  return { status, stage, fraction, message, error, result, startedAt, run, cancel, reset };
 }

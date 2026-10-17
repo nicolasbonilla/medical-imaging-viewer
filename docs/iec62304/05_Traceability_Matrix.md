@@ -2,7 +2,7 @@
 
 ## IEC 62304 Clause 5.1.1(e) — Bidirectional Traceability
 
-**Document ID**: TM-001 | **Version**: 1.3 | **Date**: October 17, 2026 (v1.2 and v1.3 same day; v1.1: September 28, 2026; v1.0: April 12, 2026)
+**Document ID**: TM-001 | **Version**: 1.6 DRAFT (CP-FLAMES-BROWSER-001, PENDING owner approval; merge after #52 (v1.4) and #51 (v1.5)) — last approved: 1.3 | **Date**: October 17, 2026 (v1.2 and v1.3 same day; v1.1: September 28, 2026; v1.0: April 12, 2026)
 
 | Version | Date | Author | Change | Approved By |
 |---------|------|--------|--------|-------------|
@@ -10,6 +10,7 @@
 | 1.1 | 2026-09-28 | Development Team | CAPA-006 (HAZ-005). (a) REQ-FUNC-053 row corrected in place. It was "MAGNIMS classification", tested by UT-CLS-001 only. It now reflects the corrected SRS text: contact criterion, four paths, MNI-only atlas. It adds UT-CLS-002/003 and UI-RC032, and the architecture reference, which was "SAD 3.5", a section that does not exist. (b) Addendum added for REQ-SAFE-021 → RC-032 and for the CAPA-006 PA-6.1 labelling gate. (c) REQ-SAFE-020 / RC-022 row: "VERIFIED (code inspection)" struck through. It is NOT IMPLEMENTED / NOT VERIFIED: no MNI preprocessing or registration to a template exists in the code. (d) New tests added to the backward and unit-test traceability tables. The 2026-09-28 RC-010 addendum below was entered without a version change; it is covered by this version | N. G. Bonilla Vargas — approved 2026-10-17 (PR #43) |
 | 1.2 | 2026-10-17 | Development Team | CAPA-008: REQ-SAFE-022/023/024 → RC-033/034/035 → UT-CAPA008, UT-LONG-RULES (addendum below; test rows added) | N. G. Bonilla Vargas — approved 2026-10-17 (PR #46) |
 | 1.3 | 2026-10-17 | Development Team | CAPA-009: REQ-SEC-014/015/016/019/020 → RC-036 → UT-CAPA009 | N. G. Bonilla Vargas — approved 2026-10-17 (PR #47) |
+| 1.6 (draft) | 2026-10-17 | Development Team | CP-FLAMES-BROWSER-001 (in-browser FLAMeS, flag OFF): REQ-FUNC-034/036 (amended), REQ-FUNC-093..097, REQ-SAFE-029..033 → RC-040..RC-051 (RC-052/053 not implemented) → UT-FLAMES-*, UI-FLAMES-*, UT-RC047, VAL-FLAMES-* (addendum below; test rows added). Versions 1.4 and 1.5 are reserved by open PRs #52 and #51 | **PENDING owner approval** |
 
 ---
 
@@ -35,6 +36,13 @@
 | REQ-FUNC-071 | WADO-RS import | SAD 3.7 | — | `dicomweb_service.py` | — | IT-PACS-002 | ST-FUNC-071 | HAZ-012 |
 | REQ-FUNC-072 | DICOM-SEG export | SAD 3.7 | — | `dicom_utils.py` | UT-SEG-001 | — | ST-FUNC-072 | HAZ-011 |
 | REQ-FUNC-073 | FHIR resources | SAD 3.7 | — | `fhir.py` | — | IT-FHIR-001 | ST-FUNC-073 | — |
+| REQ-FUNC-034 (amended, draft) | FLAMeS auto-segmentation: GPU worker (not deployed) or in-browser (flag OFF) | — | DESIGN.md (flames-in-browser) | `tool_runner_service.py`; `services/flames/*`, `flamesInBrowser.worker.ts` | UT-FLAMES-PORT | — | VAL-FLAMES-PARITY | HAZ-001 |
+| REQ-FUNC-036 (amended, draft) | Fail closed; empty result explicit (browser: warning + acknowledgement) | — | DESIGN.md §8 | `BrowserFlamesCard.tsx`, `draft.ts` | UI-FLAMES-CARD | — | — | HAZ-001 (RC-051) |
+| REQ-FUNC-093 (draft) | FLAMeS computed in the browser (flag OFF) | — | DESIGN.md §2 | `services/flames/*`, `flamesInBrowser.worker.ts`, `useBrowserFlames.ts` | UT-FLAMES-PORT | — | VAL-FLAMES-PARITY | HAZ-001, HAZ-006 (RC-048) |
+| REQ-FUNC-094 (draft) | nnU-Net parity (Dice >= 0.99) | — | DESIGN.md §3 | `preprocess.ts`, `slidingWindow.ts`, `pipeline.ts` | UT-FLAMES-PORT | — | VAL-FLAMES-PARITY | HAZ-001 (RC-041) |
+| REQ-FUNC-095 (draft) | Result on the FLAIR's grid in RC-031 order; opened only over the same file/grid | — | DESIGN.md §3.1, §9 | `axes.ts`, `draft.ts`, `useSegmentationMask.ts` | UT-FLAMES-PORT, UT-FLAMES-MODEL | — | — | HAZ-006 (RC-042, RC-046) |
+| REQ-FUNC-096 (draft) | Expected duration, elapsed time, cancel without touching the open segmentation | — | COOP-COEP-IMPACT.md | `runtimeEstimate.ts`, `BrowserFlamesCard.tsx`, `useBrowserFlames.ts` | UI-FLAMES-CANCEL, UI-FLAMES-CARD | — | — | — |
+| REQ-FUNC-097 (draft) | Licence/attribution notices reachable in the app | — | DESIGN.md §11 | `notices.ts`, `BrowserFlamesCard.tsx`, `public/licenses/*` | UI-FLAMES-CARD | — | — | — |
 
 ---
 
@@ -115,6 +123,26 @@
 > | REQ-SAFE-023 | No AI report draft without a device measurement; reason shown | RC-034 | HAZ-003 | `ai_report.py`, `AIReportPanel.tsx` | UT-CAPA008 | VERIFIED 2026-10-17 (R1–R2 2/2) |
 > | REQ-SAFE-024 | CVS/PRL readings attributed and counted per McDonald 2024; activity candidate per MAGNIMS 2021 | RC-035 | HAZ-007, HAZ-008 | `segmentation_analysis.py`, `LesionDashboard.tsx`, `longitudinal_tracking_service.py` | UT-CAPA008, UT-LONG-RULES | VERIFIED 2026-10-17 (C1–C6 6/6) |
 >
+> **Addendum 2026-10-17 (DRAFT, PENDING owner approval): REQ-SAFE-029..033, RC-040..RC-053 (CP-FLAMES-BROWSER-001, in-browser FLAMeS, flag OFF).**
+> Negative controls: `records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json` (and the 2026-10-17 prototype set M1-M12, `docs/research/flames-in-browser/evidence/negative-controls.json`).
+>
+> | Req ID | Safety Requirement | Risk Control | HAZ ID | Implementation | Test ID | Verified? |
+> |--------|-------------------|-------------|--------|----------------|---------|-----------|
+> | REQ-SAFE-031 | Only the pinned model runs (download and cache) | RC-040 | HAZ-001 | `modelStore.ts`, `plan.ts` | UT-FLAMES-MODEL | TEST-BOUND on branch (I1, I2 detected; the pre-fix tests missed both) |
+> | REQ-FUNC-094 | nnU-Net-faithful port | RC-041 | HAZ-001 | `preprocess.ts`, `slidingWindow.ts`, `pipeline.ts` | UT-FLAMES-PORT, VAL-FLAMES-PARITY | TEST-BOUND on branch (M1, M3, M5-M8) |
+> | REQ-FUNC-095 | Axis order NIfTI → nnU-Net → app (RC-031) | RC-042 | HAZ-006 | `axes.ts` | UT-FLAMES-PORT | TEST-BOUND on branch (M2, M4, M10) |
+> | REQ-SAFE-033 (a) | Skull-stripped gate incl. skull clue (zero-background heads) | RC-043 | HAZ-001 | `pipeline.ts`, `contrastGate.ts` | UT-FLAMES-GATE, VAL-FLAMES-GATE | TEST-BOUND on branch (G5, G5b, M11); with-skull FLAIRs refused 12/12 (6 subjects only) |
+> | REQ-SAFE-029 | Fail closed: numerical/output guard | RC-044 | HAZ-001 | `slidingWindow.ts`, `pipeline.ts`, worker | UT-FLAMES-PORT | TEST-BOUND on branch (G9) |
+> | REQ-SAFE-029 | One terminal message, worker terminated on cancel | RC-045 | HAZ-001 | `protocol.ts`, `useBrowserFlames.ts` | UI-FLAMES-CANCEL | TEST-BOUND on branch (H10) |
+> | REQ-FUNC-095 | Draft only over the same file and grid | RC-046 | HAZ-006 | `draft.ts`, `useSegmentationMask.importMask` | UT-FLAMES-MODEL | TEST-BOUND on branch (M9) |
+> | REQ-SAFE-030 | AI draft labelled, never autosaved, saved only with provenance, unreviewed until a radiologist confirms | RC-047 | HAZ-001 | `useSegmentationData.ts`, `AiDraftBanner.tsx`, `SegmentationPanel.tsx`, `draft.ts`; backend `schemas.py`, `segmentation_service.py`, `segmentation.py` | UT-FLAMES-HANDOFF, UI-FLAMES-CARD, UT-RC047 | TEST-BOUND on branch (H1-H4, B1-B5); usability not evaluated |
+> | REQ-FUNC-093 | Feature flag OFF by default | RC-048 | HAZ-001 | `features.ts`, `ClinicalToolsPanel.tsx` | UT-FLAMES-FLAG | TEST-BOUND on branch (F1) |
+> | REQ-SAFE-033 (b) | FLAIR contrast gate (header can only refuse; content must look like FLAIR) | RC-049 | HAZ-001 | `headerEvidence.ts`, `contrastGate.ts`, `nifti.ts`, `pipeline.ts`, worker | UT-FLAMES-GATE, VAL-FLAMES-GATE | TEST-BOUND on branch (G1-G4, G6-G8); sensitivity/specificity in FLAIR-GATE-VALIDATION.md |
+> | REQ-SAFE-032 | Never discard unsaved work when opening a draft | RC-050 | HAZ-001 | `useSegmentationData.ts`, `BrowserFlamesCard.tsx` | UT-FLAMES-HANDOFF, UI-FLAMES-CARD | TEST-BOUND on branch (H5, H6; the reviewed code fails these tests) |
+> | REQ-FUNC-036 | Empty result explicit | RC-051 | HAZ-001 | `BrowserFlamesCard.tsx`, `draft.ts` | UI-FLAMES-CARD | TEST-BOUND on branch (H7, H8) |
+> | — | 5-fold ensemble default before clinical use | RC-052 | HAZ-001 | — | — | **NOT IMPLEMENTED** (CA-FLAMES-1) |
+> | — | Device gate / cross-origin isolation | RC-053 | HAZ-001 | — | — | **NOT IMPLEMENTED** (CA-FLAMES-2) |
+>
 > **REQ-SAFE-020 / RC-022 (HAZ-014)**: the row in the table above said "VERIFIED (code inspection)". It is struck through in place. Nothing in the code preprocesses images to the MNI 1 mm template or registers them to it; the only registration is longitudinal, intra-subject and rigid. Images are therefore **not** in MNI space by construction, which is why RC-032 must gate the MNI-space atlas. RMF-001 already records RC-022 as NOT VERIFIED (2026-07-18).
 
 ---
@@ -162,6 +190,16 @@ by `backend/tests/unit/test_risk_control_manifest.py`.
 | UT-CAPA008 | `test_capa008_assistant_read_only.py` (39 tests, added 2026-10-17): MCP layer read-only (exact server and tool sets, no direct HTTP client, POST only to compute-only routes, every GET mounted and object-authorized, compute-only routes store nothing, every field sent is read by its route), intended-use phrase ban, identifier removal; report route refuses requests without a measurement; CVS/PRL readings validated, attributed to the authenticated reader, counted without the 40 % rule; UI sources | REQ-SAFE-022, REQ-SAFE-023, REQ-SAFE-024 |
 | UT-LONG-RULES | `test_longitudinal_clinical_rules.py`: activity candidate raised by >=1 new or enlarging candidate (MAGNIMS 2021; CAPA-008 CA-8.10) | REQ-SAFE-024, REQ-FUNC-055a |
 | UT-CAPA009 | `test_capa009_object_authorization_everywhere.py` (47 tests, added 2026-10-17): every mounted route referencing an object classified and re-derived; path dependencies match the path; no dependency can skip itself (async guards); 33 requests by an unentitled user → 404 before any data service; 4 administrator-only routes → 403; positive controls; overlay/reference-image authorization; tool inputs from one patient; initiator registry | REQ-SEC-014, REQ-SEC-015, REQ-SEC-016, REQ-SEC-019, REQ-SEC-020 |
+| UT-FLAMES-PORT (draft) | `frontend/src/services/flames/__tests__/{preprocess,slidingWindow,axes-nifti,pipeline}.test.ts`: nnU-Net arithmetic vs nnunetv2/scipy/skimage/SimpleITK fixtures, axis order, blob localisation, fail-closed output guards (`rc041`, `rc042`, `rc043`, `rc044`, `rc049`) | REQ-FUNC-093/094/095, REQ-SAFE-029 (RC-041, RC-042, RC-044) |
+| UT-FLAMES-MODEL (draft) | `modelStore.test.ts` (download and Cache Storage paths, `rc040`), `draft-model.test.ts` (pin, CM pin = committed manifest, grid gate `rc046`) | REQ-SAFE-031, REQ-FUNC-095 (RC-040, RC-046) |
+| UT-FLAMES-GATE (draft) | `inputGates.test.ts` (synthetic FLAIR/T1/T2 phantoms, bias field, header can only refuse, skull with zero background, `rc043`/`rc049`), `niftiHeader.test.ts` (descrip, extensions, DICOM InversionTime), `pipeline.test.ts` (T1 refused before any network call) | REQ-SAFE-033 (RC-043, RC-049) |
+| UT-FLAMES-HANDOFF (draft) | `useSegmentationData.flamesDraft.test.tsx`: no save-on-unload for AI drafts, provenance sent and echo-checked, automatic not manual, unsaved work never discarded (`rc047`, `rc050`) | REQ-SAFE-030, REQ-SAFE-032 (RC-047, RC-050) |
+| UI-FLAMES-CARD (draft) | `BrowserFlamesCard.test.tsx`: empty-result warning + acknowledgement (`rc051`), unsaved-work question (`rc050`), provenance hand-over (`rc047`), duration text, licence panel and shipped licence texts | REQ-FUNC-036, REQ-SAFE-030, REQ-SAFE-032, REQ-FUNC-096, REQ-FUNC-097 |
+| UI-FLAMES-CANCEL (draft) | `useBrowserFlames.cancel.test.tsx`: cancel terminates the worker, ignores late results, never touches the open segmentation (`rc045`); duration estimate | REQ-FUNC-096, REQ-SAFE-029 (RC-045) |
+| UT-FLAMES-FLAG (draft) | `features.flames.test.ts`: flag OFF unless 'true'/'1'; card only behind the flag, lazy (`rc048`) | REQ-FUNC-093 (RC-048) |
+| UT-RC047 (draft) | `backend/tests/unit/test_rc047_ai_draft_provenance.py`: provenance schema, service forces 'unreviewed' + automatic, create route passes provenance, confirm route (radiologist only, 409 for manual work) | REQ-SAFE-030 (RC-047) |
+| VAL-FLAMES-GATE (draft) | `gateValidation.flames.test.ts` (opt-in) on public MSLesSeg / open_ms_data volumes incl. with-skull FLAIRs; results in `docs/research/flames-in-browser/evidence/gate-validation-*.json`, FLAIR-GATE-VALIDATION.md | REQ-SAFE-033 (RC-043, RC-049) |
+| VAL-FLAMES-PARITY (draft) | `parity.flames.test.ts` (opt-in) vs `nnUNetv2_predict` on public FLAIR (DESIGN.md §0) | REQ-FUNC-094 (RC-041) |
 
 ---
 
@@ -195,6 +233,7 @@ by `backend/tests/unit/test_risk_control_manifest.py`.
 | `test_capa008_assistant_read_only.py` | UT-CAPA008 | REQ-SAFE-022, REQ-SAFE-023, REQ-SAFE-024 (RC-033/034/035, HAZ-003/007/008/010; added 2026-10-17) |
 | `test_longitudinal_clinical_rules.py` | UT-LONG-RULES | REQ-SAFE-024, REQ-FUNC-055a (RC-035, HAZ-007) |
 | `test_capa009_object_authorization_everywhere.py` | UT-CAPA009 | REQ-SEC-014/015/016/019/020 (RC-036, HAZ-010; added 2026-10-17) |
+| `test_rc047_ai_draft_provenance.py` (draft) | UT-RC047 | REQ-SAFE-030 (RC-047, HAZ-001; added 2026-10-17, CP-FLAMES-BROWSER-001) |
 | `test_nifti_utils.py` | UT-NII-001 | REQ-FUNC-001 |
 | `test_dicom_seg.py` | UT-SEG-001..008 | REQ-FUNC-072 |
 | `test_dicom_utils.py` | UT-DICOM-001..007 | REQ-FUNC-072, REQ-SAFE-013 | RC-016 | VERIFIED |

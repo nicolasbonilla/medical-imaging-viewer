@@ -42,7 +42,7 @@ describe('axis order conversions (synthetic, asymmetric)', () => {
   const dims: Dims3 = [3, 4, 5];
   const data = synthetic(dims);
 
-  it('network order is (i, k, j) C-order', () => {
+  it('rc042 network order is (i, k, j) C-order', () => {
     const net = niftiToNetwork(data, dims);
     const [s0, s1, s2] = networkShape(dims);
     expect([s0, s1, s2]).toEqual([3, 5, 4]);
@@ -51,7 +51,7 @@ describe('axis order conversions (synthetic, asymmetric)', () => {
     }
   });
 
-  it('app order is (k, i, j) C-order = RC-031 transpose(2, 0, 1)', () => {
+  it('rc042 app order is (k, i, j) C-order = RC-031 transpose(2, 0, 1)', () => {
     const app = niftiToApp(data, dims);
     const { depth, height, width } = appShape(dims);
     expect([depth, height, width]).toEqual([5, 3, 4]);

@@ -1,0 +1,9 @@
+{
+  "date": "2026-10-18",
+  "command": "npx vite build (frontend/, .env.production, no VITE_ENABLE_BROWSER_FLAMES set), output to a scratch directory",
+  "result": "built",
+  "env_object_in_bundle": "{BASE_URL:\"/\",DEV:!1,MODE:\"production\",PROD:!0,SSR:!1,VITE_API_BASE_URL:\"https://brain-mri-7bp6oqdu7a-uc.a.run.app\"}",
+  "flag_code_in_bundle": "function En(t,s){const n=vr[`VITE_${t}`];return n===void 0?s:n===\"true\"||n===\"1\"} ... BROWSER_FLAMES:En(\"ENABLE_BROWSER_FLAMES\",!1)",
+  "conclusion": "VITE_ENABLE_BROWSER_FLAMES is absent from the bundled env object, so FEATURES.BROWSER_FLAMES evaluates to false: the card is never rendered and its lazy chunk (BrowserFlamesCard-*.js, with the worker) is never requested. No model file is present in dist/ (models/ absent). dist/licenses/ contains Apache-2.0.txt, onnxruntime-web-MIT.txt, flames-NOTICE.txt.",
+  "unit_test": "frontend/src/config/features.flames.test.ts (rc048)"
+}

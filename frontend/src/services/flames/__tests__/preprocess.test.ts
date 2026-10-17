@@ -44,7 +44,7 @@ describe('compute_new_shape', () => {
 });
 
 describe('crop_to_nonzero (create_nonzero_mask + binary_fill_holes + bbox)', () => {
-  it('fills enclosed cavities, keeps border-connected ones, same bbox', () => {
+  it('rc041 fills enclosed cavities, keeps border-connected ones, same bbox', () => {
     const c = F.crop;
     const shape = c.shape as Shape3;
     const mask = nonzeroMaskFilled(Float32Array.from(c.input), shape);
@@ -62,7 +62,7 @@ describe('crop_to_nonzero (create_nonzero_mask + binary_fill_holes + bbox)', () 
 });
 
 describe('ZScoreNormalization(use_mask_for_norm=True)', () => {
-  it('matches nnU-Net', () => {
+  it('rc041 matches nnU-Net', () => {
     const c = F.zscore;
     const { image, stats } = zscoreInMask(Float32Array.from(c.input), Uint8Array.from(c.mask));
     expect(maxAbs(image, c.expected)).toBeLessThan(2e-5);

@@ -36,6 +36,7 @@ _GEN_FROM_CACHE = object()
 from app.core.interfaces.cache_interface import ICacheService
 from app.core.firebase import get_firestore_client
 from app.models.schemas import (
+    AIProvenance,
     LabelInfo,
     SegmentationMetadata,
     PaintStroke,
@@ -134,7 +135,8 @@ class SegmentationService:
         image_shape: Tuple[int, int, int],
         labels: Optional[List[LabelInfo]] = None,
         description: Optional[str] = None,
-        source_format: str = "nifti"  # "nifti" or "dicom"
+        source_format: str = "nifti",  # "nifti" or "dicom"
+        ai_provenance: Optional[AIProvenance] = None,
     ) -> SegmentationResponse:
         """
         Create a new segmentation for an image file.
@@ -144,6 +146,9 @@ class SegmentationService:
             image_shape: (height, width, depth) of the image
             labels: Label definitions
             description: Optional description
+            ai_provenance: AI draft provenance (in-browser FLAMeS). When given, the segmentation is
+                recorded as 'automatic' with its model identity and ALWAYS as 'unreviewed'
+                (REQ-SAFE-030), whatever review state the client sent.
 
         Returns:
             SegmentationResponse with new segmentation ID
@@ -157,13 +162,25 @@ class SegmentationService:
                 LabelInfo(id=1, name="Lesion", color="#FF0000", opacity=0.5, visible=True)
             ]
 
+        provenance = None
+        if ai_provenance is not None:
+            provenance = ai_provenance.model_copy(
+                update={"review_status": "unreviewed", "reviewed_by": None, "reviewed_at": None}
+            )
+
         # Create metadata
         metadata = SegmentationMetadata(
             file_id=file_id,
             created_at=datetime.utcnow(),
             modified_at=datetime.utcnow(),
             labels=labels,
-            description=description
+            description=description,
+            segmentation_type="automatic" if provenance else None,
+            validation_source=(
+                f"{provenance.model_name.lower()}-browser-fold{provenance.fold}-{provenance.model_sha256[:12]}"
+                if provenance else None
+            ),
+            ai_provenance=provenance,
         )
 
         # Initialize empty 3D mask using medical imaging convention (depth, height, width)

@@ -197,10 +197,10 @@
     {
       "type": "library",
       "name": "onnxruntime-web",
-      "version": "1.21.0",
-      "purl": "pkg:npm/onnxruntime-web@1.21.0",
+      "version": "1.24.1",
+      "purl": "pkg:npm/onnxruntime-web@1.24.1",
       "scope": "required",
-      "properties": [{ "name": "iec62304:safety-class", "value": "C" }, { "name": "iec62304:soup-id", "value": "SOUP-FE-006" }]
+      "properties": [{ "name": "iec62304:safety-class", "value": "C" }, { "name": "iec62304:soup-id", "value": "SOUP-FE-008" }]
     },
     {
       "type": "library",

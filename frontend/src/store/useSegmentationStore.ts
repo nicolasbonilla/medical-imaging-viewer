@@ -23,6 +23,7 @@ import type {
   OverlaySettings,
   OverlayMode,
   LesionInfo,
+  AIProvenance,
 } from '@/types';
 import { DEFAULT_LABEL_PRESETS } from '@/types';
 
@@ -31,16 +32,29 @@ import { DEFAULT_LABEL_PRESETS } from '@/types';
 // ============================================================================
 
 /**
+ * Result of handing an AI draft to the segmentation flow (in-browser FLAMeS prototype).
+ * 'unsaved-work': the open segmentation has unsaved changes; NOTHING was touched and the caller
+ * must ask the clinician (REQ-SAFE-032). 'grid-mismatch': the mask does not fit the image grid.
+ */
+export type ImportDraftResult =
+  | { ok: true }
+  | { ok: false; reason: 'unsaved-work'; openSegmentationName: string }
+  | { ok: false; reason: 'grid-mismatch' };
+
+/**
  * Creates a LOCAL (unsaved, `local-*`) segmentation for `fileId` pre-filled with `mask`
  * (app order: depth=slices, height=rows, width=columns; RC-031). Used by the in-browser
- * FLAMeS prototype. The clinician must review and explicitly Save; nothing is persisted here.
+ * FLAMeS prototype. The clinician must review and explicitly Save; nothing is persisted here,
+ * and unsaved work in the open segmentation is never discarded unless `discardUnsavedWork`
+ * is passed after the clinician explicitly chose to discard it.
  */
 export type ImportDraftCallback = (
   fileId: string,
   imageShape: { rows: number; columns: number; slices: number },
   mask: Uint8Array,
-  meta: { description: string; labels?: LabelInfo[] },
-) => boolean;
+  meta: { description: string; labels?: LabelInfo[]; aiProvenance: AIProvenance },
+  options?: { discardUnsavedWork?: boolean },
+) => ImportDraftResult;
 
 /**
  * Paint tool types available for segmentation.

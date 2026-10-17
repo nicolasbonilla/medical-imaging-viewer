@@ -1,9 +1,11 @@
 // @vitest-environment node
 /**
  * Hand-over gates of the in-browser FLAMeS draft (HAZ-006 grid/file gate, HAZ-001 provenance)
- * and the model integrity pin (RC-F1).
+ * and the model integrity pin (RC-040).
  */
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { checkDraftGrid, draftDescription, DRAFT_LABELS } from '../draft';
 import { ModelIntegrityError, sha256Hex, verifyModel } from '../modelStore';
 import { FLAMES_FOLD0_MODEL, type FlamesModelAsset } from '../plan';
@@ -16,11 +18,11 @@ const series = (file_id: string, rows: number, columns: number, slices: number) 
 });
 
 describe('checkDraftGrid', () => {
-  it('accepts the same file with rows=dim1, columns=dim2, slices=dim3', () => {
+  it('rc046 accepts the same file with rows=dim1, columns=dim2, slices=dim3', () => {
     const r = checkDraftGrid('p/s/flair.nii.gz', [182, 218, 160], series('p/s/flair.nii.gz', 182, 218, 160));
     expect(r).toEqual({ ok: true, shape: { rows: 182, columns: 218, slices: 160 } });
   });
-  it('refuses another file, a missing viewer, and swapped in-plane dims', () => {
+  it('rc046 refuses another file, a missing viewer, and swapped in-plane dims', () => {
     expect(checkDraftGrid('a', [10, 12, 14], series('b', 10, 12, 14)).ok).toBe(false);
     expect(checkDraftGrid('a', [10, 12, 14], null).ok).toBe(false);
     expect(checkDraftGrid('a', [10, 12, 14], series('a', 12, 10, 14)).ok).toBe(false);
@@ -55,7 +57,7 @@ describe('draft provenance', () => {
 });
 
 describe('model integrity pin', () => {
-  it('accepts bytes with the pinned size and SHA-256, rejects any change', async () => {
+  it('rc040 accepts bytes with the pinned size and SHA-256, rejects any change', async () => {
     const bytes = new TextEncoder().encode('not a real model, just pinned bytes');
     const asset: FlamesModelAsset = { ...FLAMES_FOLD0_MODEL, bytes: bytes.length, sha256: await sha256Hex(bytes) };
     await expect(verifyModel(bytes, asset)).resolves.toBeUndefined();
@@ -68,5 +70,15 @@ describe('model integrity pin', () => {
     expect(FLAMES_FOLD0_MODEL.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(FLAMES_FOLD0_MODEL.bytes).toBe(61642305);
     expect(FLAMES_FOLD0_MODEL.url).toContain(FLAMES_FOLD0_MODEL.sha256.slice(0, 8));
+  });
+  it('CM: the pin equals the committed export manifest (CMP-001 §6), the model binary is not in git', () => {
+    const repo = join(__dirname, '..', '..', '..', '..', '..');
+    const manifest = JSON.parse(
+      readFileSync(join(repo, 'docs/research/flames-in-browser/evidence/export-fold0-manifest.json'), 'utf-8'),
+    );
+    expect(manifest.sha256).toBe(FLAMES_FOLD0_MODEL.sha256);
+    expect(manifest.bytes).toBe(FLAMES_FOLD0_MODEL.bytes);
+    expect(manifest.source_checkpoint_sha256).toBe(FLAMES_FOLD0_MODEL.sourceCheckpointSha256);
+    expect(readFileSync(join(repo, '.gitignore'), 'utf-8')).toMatch(/^frontend\/public\/models\/flames\/$/m);
   });
 });

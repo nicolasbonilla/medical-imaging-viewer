@@ -97,7 +97,9 @@ async def create_segmentation(
             image_shape=image_shape,
             labels=request.labels,
             description=request.description,
-            source_format=source_format
+            source_format=source_format,
+            # REQ-SAFE-030: an AI draft keeps its provenance and is stored as 'unreviewed'.
+            ai_provenance=request.ai_provenance,
         )
 
         return segmentation
@@ -603,6 +605,51 @@ async def update_labels(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update labels: {str(e)}"
         )
+
+
+@router.post("/{segmentation_id}/ai-review/confirm")
+async def confirm_ai_review(
+    segmentation_id: str,
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-029 - object-level authorization.
+    _authorized=Depends(require_segmentation_access),
+):
+    """Record that a clinician reviewed an AI-draft segmentation (REQ-SAFE-030, RC-047).
+
+    Only segmentations stored with AI provenance can be confirmed; manual work has nothing to
+    confirm (409). Only a radiologist may confirm (403). The reviewer and time are recorded; the
+    model identity is never changed. Idempotent for an already confirmed draft.
+    """
+    from app.security.models import UserRole
+
+    if getattr(current_user, "role", None) != UserRole.RADIOLOGIST:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only a radiologist can confirm the review of an AI draft.",
+        )
+    # Mutate the authoritative in-memory entry (get_metadata may return a cached copy).
+    entry = segmentation_service.get_loaded(segmentation_id)
+    if entry is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Segmentation not found")
+    metadata = entry["metadata"]
+    provenance = metadata.ai_provenance
+    if provenance is None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This segmentation has no AI provenance; there is no AI draft to confirm.",
+        )
+    if provenance.review_status != "confirmed":
+        metadata.ai_provenance = provenance.model_copy(update={
+            "review_status": "confirmed",
+            "reviewed_by": current_user.username,
+            "reviewed_at": datetime.utcnow().isoformat() + "Z",
+        })
+        metadata.modified_at = datetime.utcnow()
+        segmentation_service.persist(segmentation_id)
+        if getattr(segmentation_service, "cache", None):
+            await segmentation_service.cache.delete(f"seg:metadata:{segmentation_id}")
+    return {"success": True, "ai_provenance": metadata.ai_provenance.model_dump()}
 
 
 @router.get("/{segmentation_id}/nifti")

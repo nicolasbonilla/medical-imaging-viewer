@@ -1,6 +1,6 @@
 # MSTool-AI: Configuration Management Plan
 
-**Document ID**: CMP-001 | **Version**: 1.0 | **Date**: April 12, 2026
+**Document ID**: CMP-001 | **Version**: 1.1 DRAFT (2026-10-17, §6 model artefacts added, §5 observation; PENDING owner approval) — last approved: 1.0 | **Date**: April 12, 2026
 
 ---
 
@@ -15,7 +15,7 @@
 | CI/CD pipeline | .github/workflows/ci.yml | Git |
 | Test scripts | test_endpoints.sh, backend/tests/ | Git |
 | Documentation | docs/ directory | Git |
-| AI models | Filename + version (brain_screening.onnx) | GCS / public/ |
+| AI models | Filename + version (brain_screening.onnx); in-browser FLAMeS: SHA-256 pin in `plan.ts` + committed manifest (§6) | GCS / public/; FLAMeS: archive per §6 (not Git) |
 | Deployment artifacts | Cloud Run revision ID, Firebase deploy version | Cloud console |
 | Environment config | env.yaml (not in Git), .env.production | Local / Git |
 
@@ -82,6 +82,24 @@ Code review responsibility is enforced via `.github/CODEOWNERS`:
 - All SOUP versions pinned (no `^` or `~` in production)
 - Version updates require: impact analysis + regression testing
 - Vulnerability scanning: monthly (npm audit + pip-audit)
+- *Observation 2026-10-17 (CP-FLAMES-BROWSER-001):* `frontend/package.json` still declares most dependencies with `^`;
+  the lockfile is what pins them. The Class C runtime `onnxruntime-web` is now pinned exactly (`1.24.1`); the other
+  ranges are an open item for the owner.
+
+## 6. Binary model artefacts not stored in Git (added 2026-10-17, DRAFT — PENDING owner approval)
+
+Applies to the in-browser FLAMeS model (SOUP-FE-014). The 62 MB file is **not committed to Git**
+(`frontend/public/models/flames/` is git-ignored).
+
+| Aspect | Rule |
+|---|---|
+| Identity | Content address = SHA-256. Fold 0: `flames-fold0.onnx`, 61,642,305 B, sha256 `2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae`, exported from Zenodo 10.5281/zenodo.17955359 v2.0 checkpoint sha256 `4fc7db24…3fdf861` by `research/flames_in_browser/export_onnx.py` (torch 2.14.1, opset 17). |
+| Pin (in Git) | `frontend/src/services/flames/plan.ts` → `FLAMES_FOLD0_MODEL` (`sha256`, `bytes`, content-addressed URL `/models/flames/flames-fold0-2a10bb9d.onnx`). The browser refuses any other bytes, downloaded or cached (RC-040, REQ-SAFE-031). |
+| Provenance record (in Git) | `docs/research/flames-in-browser/evidence/export-fold0-manifest.json` (hash, size, source checkpoint, versions, export checks). A CI-safe test (`draft-model.test.ts`, "CM: the pin equals the committed export manifest") fails if the pin and the manifest disagree or if the model folder stops being git-ignored. |
+| Archive (proposed, not yet created — no cloud command was run) | Primary: `gs://mstool-research-data/models/flames/v2.0/flames-fold0-2a10bb9d72dc.onnx` + the manifest next to it, bucket in the research project `mstool-research`, object versioning on, retention lock after approval. Storage cost ≈ 0.06 GB × Standard ≈ USD 0.001/month (inside the research credit). Secondary: attach the same file to the GitHub release that ships it (release assets need no LFS quota). |
+| Rejected option | Git LFS: GitHub's free LFS quota (1 GB storage, 1 GB/month transfer) would be consumed by ~16 CI checkouts of a 62 MB file per month, i.e. a recurring cost or failing CI. |
+| Release step | Fetch the archived file, then `python -I research/flames_in_browser/stage_model.py <file>`: verifies size + SHA-256 against `plan.ts` **and** the committed manifest, copies it to `frontend/public/models/flames/<content-addressed name>`, re-hashes the copy; exit ≠ 0 stops the release. Then `vite build`. |
+| Change | A new model (other fold, ensemble, re-export) is a new artefact with a new hash and a new pin: a Class C change (CP + SRS/RMF/TM update + parity evidence, DESIGN.md §5). Never overwrite an archived object. |
 
 ---
 
