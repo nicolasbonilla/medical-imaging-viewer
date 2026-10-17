@@ -31,7 +31,8 @@ export function useActiveSliceInfo(): ActiveSliceInfo {
   // Single-panel state
   const singleSliceIndex = useViewerStore((s) => s.currentSliceIndex);
   const singleSetSlice = useViewerStore((s) => s.setCurrentSliceIndex);
-  const singleTotalSlices = useViewerStore((s) => s.currentSeries?.total_slices ?? 0);
+  // v3 client viewer publishes the active plane's depth; legacy = k-slice count.
+  const singleTotalSlices = useViewerStore((s) => s.sliceCount ?? s.currentSeries?.total_slices ?? 0);
 
   if (isMultiPanel) {
     const activePanel = panels.find((p) => p.id === activePanelId);

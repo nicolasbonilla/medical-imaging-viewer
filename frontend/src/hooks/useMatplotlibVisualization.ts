@@ -22,6 +22,12 @@ interface UseMatplotlibVisualizationProps {
   segmentationId?: string;
   /** Opacity for the segmentation overlay (0-1) */
   overlayOpacity?: number;
+  /**
+   * Only query when the matplotlib render mode is actually showing. Before v3 this
+   * hook fetched a server-rendered slice on EVERY scroll in every 2D mode (needless
+   * round-trips + Cloud Run load) even though only the matplotlib mode displays it.
+   */
+  enabled?: boolean;
 }
 
 // Debounce delay in ms - prevents server overload when scrolling
@@ -35,6 +41,7 @@ export function useMatplotlibVisualization({
   appliedYMax,
   segmentationId,
   overlayOpacity,
+  enabled = true,
 }: UseMatplotlibVisualizationProps) {
   const { currentSeries, currentSliceIndex, windowCenter, windowWidth } = useViewerStore();
 
@@ -104,7 +111,7 @@ export function useMatplotlibVisualization({
 
       return result;
     },
-    enabled: !!currentSeries?.file_id,
+    enabled: enabled && !!currentSeries?.file_id,
     staleTime: 5 * 60 * 1000, // 5 minutes - cache results to avoid redundant requests
     gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache longer
     placeholderData: keepPreviousData, // Keep showing previous image while new query loads (prevents black screen)

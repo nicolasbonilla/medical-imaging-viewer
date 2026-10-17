@@ -13,6 +13,11 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { apiClient } from '@/services/apiClient';
+import {
+  gatherPlane, paintPlaneStroke, scatterPlane,
+  type BrushShape, type MaskGrid,
+} from '@/volume/maskPlane';
+import type { SliceView } from '@/volume/sliceGeometry';
 
 const API_BASE = '/api/v1/segmentation';
 const MAX_UNDO = 50;
@@ -53,10 +58,29 @@ export interface SegmentationMaskState {
   conflict: string | null;
 }
 
-interface UndoEntry {
+/**
+ * Undo entries. `kslice` = the legacy k-plane snapshot (server PNG path).
+ * `plane` = v3 client viewer: a snapshot of whichever plane (axial / coronal /
+ * sagittal, any orientation) the stroke was painted in, gathered and restored
+ * through the same SliceView geometry used to draw it (volume/maskPlane.ts).
+ */
+type UndoEntry =
+  | { kind?: 'kslice'; sliceIndex: number; previousData: Uint8Array }
+  | { kind: 'plane'; grid: MaskGrid; view: SliceView; sliceIndex: number; previousData: Uint8Array };
+
+/** One brush dab of the v3 client viewer, in display coordinates of `view`. */
+export interface PlanePaintStroke {
+  grid: MaskGrid;
+  view: SliceView;
   sliceIndex: number;
-  /** Copy of the full H*W slice BEFORE the stroke was applied */
-  previousData: Uint8Array;
+  r: number;
+  c: number;
+  brushSize: number;
+  brushShape: BrushShape;
+  labelId: number;
+  erase: boolean;
+  drawOverMode?: DrawOverMode;
+  drawOverLabel?: number;
 }
 
 export interface UseSegmentationMaskReturn {
@@ -93,6 +117,26 @@ export interface UseSegmentationMaskReturn {
   redo: () => boolean;
   canUndo: boolean;
   canRedo: boolean;
+  /** v3: the whole in-memory mask (internal layout) — read-only use by renderers. */
+  getMaskArray: () => Uint8Array | null;
+  /** v3: snapshot the plane about to be painted (call on mousedown). */
+  beginPlaneStroke: (grid: MaskGrid, view: SliceView, sliceIndex: number) => void;
+  /** v3: paint one brush dab through a view. Returns the number of voxels changed. */
+  paintPlane: (stroke: PlanePaintStroke) => number;
+  /** v3: monotonically increasing on every in-memory mask change (render key). */
+  revision: number;
+}
+
+/** Draw-over predicate shared by the k-slice and plane paths (same rules). */
+function drawOverPredicate(
+  mode: DrawOverMode | undefined, erase: boolean, labelId: number, drawOverLabel?: number,
+): ((v: number) => boolean) | undefined {
+  if (mode === 'emptyOnly') return (v) => v === 0 || (erase && v === labelId);
+  if (mode === 'activeLabel') {
+    const target = drawOverLabel ?? labelId;
+    return (v) => v === 0 || v === target;
+  }
+  return undefined; // 'all': overwrite everything
 }
 
 // ---------------------------------------------------------------------------
@@ -162,6 +206,8 @@ export function useSegmentationMask(): UseSegmentationMaskReturn {
   const redoStackRef = useRef<UndoEntry[]>([]);
   // Counter to trigger re-renders when undo/redo availability changes
   const [undoVersion, setUndoVersion] = useState(0);
+  // v3: bumps on every in-memory mask content change (load, paint, undo, redo)
+  const [revision, setRevision] = useState(0);
 
   // -----------------------------------------------------------------------
   // Load
@@ -202,6 +248,7 @@ export function useSegmentationMask(): UseSegmentationMaskReturn {
       undoStackRef.current = [];
       redoStackRef.current = [];
       setUndoVersion(0);
+      setRevision(r => r + 1);
 
       let annotated = 0;
       for (let i = 0; i < maskData.length; i++) {
@@ -244,6 +291,7 @@ export function useSegmentationMask(): UseSegmentationMaskReturn {
     undoStackRef.current = [];
     redoStackRef.current = [];
     setUndoVersion(0);
+    setRevision(r => r + 1);
 
     setState({
       isLoading: false,
@@ -288,25 +336,35 @@ export function useSegmentationMask(): UseSegmentationMaskReturn {
     // Currently a no-op marker; could be used for stroke batching in the future
   }, []);
 
+  /**
+   * Swap an entry's snapshot with the mask's current content (undo and redo are the
+   * same operation in opposite directions) and return the entry for the other stack.
+   */
+  const swapEntry = (mask: Uint8Array, dims: { height: number; width: number }, entry: UndoEntry): UndoEntry => {
+    if (entry.kind === 'plane') {
+      const current = gatherPlane(mask, entry.grid, entry.view, entry.sliceIndex);
+      scatterPlane(mask, entry.grid, entry.view, entry.sliceIndex, entry.previousData);
+      return { ...entry, previousData: current };
+    }
+    const { sliceIndex, previousData } = entry;
+    const sliceOffset = sliceIndex * dims.height * dims.width;
+    const current = mask.slice(sliceOffset, sliceOffset + dims.height * dims.width);
+    mask.set(previousData, sliceOffset);
+    return { sliceIndex, previousData: current };
+  };
+
   const undo = useCallback((): boolean => {
     const mask = maskRef.current;
     const dims = dimensionsRef.current;
     if (!mask || !dims || undoStackRef.current.length === 0) return false;
 
     const entry = undoStackRef.current.pop()!;
-    const { sliceIndex, previousData } = entry;
-    const { height, width } = dims;
-    const sliceOffset = sliceIndex * height * width;
-
-    // Save current state to redo stack
-    const currentSlice = mask.slice(sliceOffset, sliceOffset + height * width);
-    redoStackRef.current.push({ sliceIndex, previousData: currentSlice });
-
-    // Restore the previous state
-    mask.set(previousData, sliceOffset);
+    // Save current state to redo stack, restore the previous state.
+    redoStackRef.current.push(swapEntry(mask, dims, entry));
 
     setState(prev => ({ ...prev, isDirty: true }));
     setUndoVersion(v => v + 1);
+    setRevision(r => r + 1);
     return true;
   }, []);
 
@@ -316,21 +374,58 @@ export function useSegmentationMask(): UseSegmentationMaskReturn {
     if (!mask || !dims || redoStackRef.current.length === 0) return false;
 
     const entry = redoStackRef.current.pop()!;
-    const { sliceIndex, previousData } = entry;
-    const { height, width } = dims;
-    const sliceOffset = sliceIndex * height * width;
-
-    // Save current state to undo stack
-    const currentSlice = mask.slice(sliceOffset, sliceOffset + height * width);
-    undoStackRef.current.push({ sliceIndex, previousData: currentSlice });
-
-    // Restore the redo state
-    mask.set(previousData, sliceOffset);
+    // Save current state to undo stack, restore the redo state.
+    undoStackRef.current.push(swapEntry(mask, dims, entry));
 
     setState(prev => ({ ...prev, isDirty: true }));
     setUndoVersion(v => v + 1);
+    setRevision(r => r + 1);
     return true;
   }, []);
+
+  // -----------------------------------------------------------------------
+  // v3 client viewer: plane-aware painting (any plane, any orientation)
+  // -----------------------------------------------------------------------
+
+  const beginPlaneStroke = useCallback((grid: MaskGrid, view: SliceView, sliceIndex: number): void => {
+    const mask = maskRef.current;
+    if (!mask) return;
+    undoStackRef.current.push({
+      kind: 'plane', grid, view, sliceIndex,
+      previousData: gatherPlane(mask, grid, view, sliceIndex),
+    });
+    if (undoStackRef.current.length > MAX_UNDO) undoStackRef.current.shift();
+    redoStackRef.current = [];
+    setUndoVersion(v => v + 1);
+  }, []);
+
+  const paintPlane = useCallback((s: PlanePaintStroke): number => {
+    const mask = maskRef.current;
+    const dims = dimensionsRef.current;
+    if (!mask || !dims) {
+      console.warn('[useSegmentationMask] Cannot paint: mask not loaded');
+      return 0;
+    }
+    // The grid must still describe THIS mask (fail closed on a stale view).
+    const [n0, n1, n2] = s.grid.dims;
+    const ok = dims.depth === n2 && (
+      (s.grid.layout === 'kij' && dims.height === n0 && dims.width === n1) ||
+      (s.grid.layout === 'kji' && dims.height === n1 && dims.width === n0));
+    if (!ok) return 0;
+    const changed = paintPlaneStroke(mask, s.grid, {
+      view: s.view, slice: s.sliceIndex, r: s.r, c: s.c,
+      brushSize: s.brushSize, brushShape: s.brushShape,
+      value: s.erase ? 0 : s.labelId,
+      canOverwrite: drawOverPredicate(s.drawOverMode, s.erase, s.labelId, s.drawOverLabel),
+    });
+    if (changed > 0) {
+      setState(prev => (prev.isDirty ? prev : { ...prev, isDirty: true }));
+      setRevision(r => r + 1);
+    }
+    return changed;
+  }, []);
+
+  const getMaskArray = useCallback((): Uint8Array | null => maskRef.current, []);
 
   // -----------------------------------------------------------------------
   // Paint
@@ -366,6 +461,7 @@ export function useSegmentationMask(): UseSegmentationMaskReturn {
     // 'all' (default): no predicate → overwrites everything
 
     applyCircularBrush(sliceData, width, height, x, y, brushSize, value, canOverwrite);
+    setRevision(r => r + 1);
 
     setState(prev => ({ ...prev, isDirty: true }));
   }, []);
@@ -531,6 +627,7 @@ export function useSegmentationMask(): UseSegmentationMaskReturn {
     undoStackRef.current = [];
     redoStackRef.current = [];
     setUndoVersion(0);
+    setRevision(r => r + 1);
     setState({
       isLoading: false,
       isDirty: false,
@@ -571,6 +668,10 @@ export function useSegmentationMask(): UseSegmentationMaskReturn {
     redo,
     canUndo: undoStackRef.current.length > 0,
     canRedo: redoStackRef.current.length > 0,
+    getMaskArray,
+    beginPlaneStroke,
+    paintPlane,
+    revision,
   };
 }
 

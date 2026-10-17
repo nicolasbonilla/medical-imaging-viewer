@@ -87,7 +87,7 @@ async function main() {
   const vite = spawn(process.execPath, [join(frontendDir, 'node_modules/vite/bin/vite.js'), '--port', String(PORT), '--strictPort', '--host', '127.0.0.1'], {
     cwd: frontendDir, stdio: ['ignore', 'pipe', 'pipe'],
   });
-  vite.stdout.on('data', () => {});
+  vite.stdout.on('data', (d) => { const s = String(d); if (/optimiz|reload/i.test(s)) process.stderr.write(`[vite] ${s}`); });
   vite.stderr.on('data', (d) => process.stderr.write(`[vite] ${d}`));
   const profile = mkdtempSync(join(tmpdir(), 'mstool-edge-'));
   let edge;
@@ -106,7 +106,7 @@ async function main() {
 
     // Warm-up: Vite pre-bundles dependencies on the first visit and then forces a full
     // reload; do that once off-camera so the first real shot is not mid-reload.
-    shots.unshift({ name: null, steps: '' });
+    shots.unshift({ name: null, steps: 'open-seg,plane:coronal,multi:1x2,multi:single,3d:mpr' });
     for (const shot of shots) {
       const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
       const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
@@ -130,8 +130,9 @@ async function main() {
       console.log(`${ready ? 'ok  ' : 'TIMEOUT'} ${file}`);
       await cdp.send('Target.closeTarget', { targetId });
     }
-    const errs = cdp.events.filter((e) => e.method === 'Runtime.exceptionThrown' || e.params?.type === 'error');
-    for (const e of errs.slice(0, 20)) {
+    const verbose = process.env.SHOT_CONSOLE === '1';
+    const errs = cdp.events.filter((e) => verbose || e.method === 'Runtime.exceptionThrown' || e.params?.type === 'error');
+    for (const e of errs.slice(0, verbose ? 400 : 20)) {
       const p = e.params;
       console.log('[page]', p.exceptionDetails?.exception?.description?.split('\n')[0] ?? p.args?.map((a) => a.value ?? a.description).join(' '));
     }

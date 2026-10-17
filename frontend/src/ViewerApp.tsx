@@ -15,7 +15,7 @@ import ThemeToggle from './components/ThemeToggle';
 import { imagingAPI } from './api/imaging';
 import { studyAPI } from './api/study';
 import { useViewerStore } from './store/useViewerStore';
-import { useViewerControls } from './hooks/useViewerControls';
+import { useViewerControls, needsServerSlices } from './hooks/useViewerControls';
 import type { ImagingStudy, ImagingSeries, ImagingInstance } from './types';
 import { ArrowLeft, Brain, FileImage, AlertCircle, Loader2, Puzzle, Upload, Eye, EyeOff, Plus, Trash2, ChevronDown, ChevronRight, FlaskConical, FileText, LayoutGrid, Columns2, Square, Link2, Unlink2, Map, ZoomIn, ZoomOut, RotateCw, Ruler, Triangle, Circle } from 'lucide-react';
 import UserMenu from './components/UserMenu';
@@ -329,9 +329,12 @@ function ViewerApp() {
     }
   }, [loadedStudyInfo, selectedInstanceId, studyId, setHierarchicalContext]);
 
-  // Load image when instance is selected
+  // Load image when instance is selected. v3: the browser renders 2D slices from the
+  // NIfTI itself, so only the server-rendered paths ('standard' / 'matplotlib') need
+  // the per-slice PNG payload of /imaging/process; the default path fetches metadata only.
+  const pngNeeded = needsServerSlices(viewerControls.renderMode);
   const { refetch: loadImage, isLoading: isLoadingImage } = useQuery({
-    queryKey: ['image', selectedInstanceId],
+    queryKey: ['image', selectedInstanceId, pngNeeded],
     queryFn: async () => {
       if (!selectedInstanceId || !studyInfo) return null;
 
@@ -349,7 +352,9 @@ function ViewerApp() {
 
       try {
         // Use the GCS object path to load the image
-        const result = await imagingAPI.processImage(selectedInstance.gcs_object_name, 0, 500);
+        const result = pngNeeded
+          ? await imagingAPI.processImage(selectedInstance.gcs_object_name, 0, 500)
+          : await imagingAPI.getSeriesMetadata(selectedInstance.gcs_object_name);
         // Add the file_id to the result so 3D viewer can use it
         const resultWithFileId = { ...result, file_id: selectedInstance.gcs_object_name };
         setCurrentSeries(resultWithFileId);
@@ -372,7 +377,7 @@ function ViewerApp() {
     if (selectedInstanceId) {
       loadImage();
     }
-  }, [selectedInstanceId, loadImage]);
+  }, [selectedInstanceId, loadImage, pngNeeded]);
 
   // Auto-load zone map when a lesion segmentation references one via analysis_data.
   // Zone map loading via sidebar click is handled by handleToggleZoneMap (independent).

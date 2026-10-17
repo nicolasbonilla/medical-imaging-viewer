@@ -134,6 +134,9 @@ export default function ViewerDemo() {
     (async () => {
       // Let the study + first image load before scripted interaction.
       await waitFor(() => useViewerStore.getState().currentSeries, 30000);
+      // v3 client viewport: wait until the volume is parsed and drawn.
+      await waitFor(() => document.querySelector('[data-testid="client-slice-viewport"][data-ready="1"]')
+        || document.querySelector('canvas'), 30000);
       await sleep(1500);
       for (const s of steps) {
         if (cancelled) return;

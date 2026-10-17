@@ -11,7 +11,6 @@
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Ruler, Triangle, Circle, Trash2, X } from 'lucide-react';
 import { useViewerStore } from '@/store/useViewerStore';
 
 interface Point { x: number; y: number }
@@ -22,6 +21,42 @@ interface Measurement {
   points: Point[];
   value?: string;
   sliceIndex: number;
+  planeKey?: string;
+}
+
+/** image px -> overlay px:  overlay = origin + p * scale  (per axis). */
+export interface MeasurementMapping {
+  originX: number;
+  originY: number;
+  scaleX: number;
+  scaleY: number;
+}
+
+/**
+ * Mapping for the legacy server-PNG canvas, whose image is drawn with
+ * translate(center + pan) · scale(zoom) · translate(-center) inside a canvas of
+ * canvasWidth × canvasHeight. Before v3 the overlay ignored zoom and pan, so at
+ * zoom 2 a ruler reported TWICE the true length (Class C measurement defect).
+ */
+export function legacyMeasurementMapping(
+  canvasWidth: number, canvasHeight: number, imageWidth: number, imageHeight: number,
+  zoom: number, pan: { x: number; y: number },
+): MeasurementMapping {
+  const s0x = canvasWidth / imageWidth;
+  const s0y = canvasHeight / imageHeight;
+  return {
+    scaleX: s0x * zoom,
+    scaleY: s0y * zoom,
+    originX: (canvasWidth / 2) * (1 - zoom) + pan.x,
+    originY: (canvasHeight / 2) * (1 - zoom) + pan.y,
+  };
+}
+
+/** Physical distance (mm) between two image points: x = column, y = row. */
+export function measureDistanceMm(p1: Point, p2: Point, pixelSpacing: [number, number]): number {
+  const dx = (p2.x - p1.x) * pixelSpacing[1];
+  const dy = (p2.y - p1.y) * pixelSpacing[0];
+  return Math.sqrt(dx * dx + dy * dy);
 }
 
 interface MeasurementOverlayProps {
@@ -33,6 +68,10 @@ interface MeasurementOverlayProps {
   zoomLevel: number;
   panOffset: { x: number; y: number };
   pixelSpacing?: [number, number]; // mm per pixel [row, col], default [1,1]
+  /** v3: explicit image->overlay mapping (the client viewport's transform). */
+  mapping?: MeasurementMapping;
+  /** v3: measurements belong to a plane as well as a slice index. */
+  planeKey?: string;
 }
 
 export default function MeasurementOverlay({
@@ -44,6 +83,8 @@ export default function MeasurementOverlay({
   zoomLevel,
   panOffset,
   pixelSpacing = [1, 1],
+  mapping,
+  planeKey,
 }: MeasurementOverlayProps) {
   const activeTool = useViewerStore((s) => s.measurementTool);
   const setActiveTool = useViewerStore((s) => s.setMeasurementTool);
@@ -62,19 +103,18 @@ export default function MeasurementOverlay({
     }
   }, [clearSignal]);
 
-  // Scale factors: image coords → canvas coords
-  const scaleX = canvasWidth / imageWidth;
-  const scaleY = canvasHeight / imageHeight;
+  // image coords <-> overlay coords, zoom/pan aware (see legacyMeasurementMapping).
+  const m = mapping ?? legacyMeasurementMapping(canvasWidth, canvasHeight, imageWidth, imageHeight, zoomLevel, panOffset);
 
   const toCanvas = useCallback((p: Point): Point => ({
-    x: p.x * scaleX,
-    y: p.y * scaleY,
-  }), [scaleX, scaleY]);
+    x: m.originX + p.x * m.scaleX,
+    y: m.originY + p.y * m.scaleY,
+  }), [m.originX, m.originY, m.scaleX, m.scaleY]);
 
   const toImage = useCallback((canvasX: number, canvasY: number): Point => ({
-    x: canvasX / scaleX,
-    y: canvasY / scaleY,
-  }), [scaleX, scaleY]);
+    x: (canvasX - m.originX) / m.scaleX,
+    y: (canvasY - m.originY) / m.scaleY,
+  }), [m.originX, m.originY, m.scaleX, m.scaleY]);
 
   const getMousePos = useCallback((e: React.MouseEvent): Point => {
     const svg = svgRef.current;
@@ -84,23 +124,21 @@ export default function MeasurementOverlay({
   }, [toImage]);
 
   // Distance in mm
-  const calcDistance = useCallback((p1: Point, p2: Point): number => {
-    const dx = (p2.x - p1.x) * pixelSpacing[1];
-    const dy = (p2.y - p1.y) * pixelSpacing[0];
-    return Math.sqrt(dx * dx + dy * dy);
-  }, [pixelSpacing]);
+  const calcDistance = useCallback((p1: Point, p2: Point): number =>
+    measureDistanceMm(p1, p2, pixelSpacing), [pixelSpacing]);
 
   // Angle in degrees
   const calcAngle = useCallback((p1: Point, p2: Point, p3: Point): number => {
-    const v1 = { x: p1.x - p2.x, y: p1.y - p2.y };
-    const v2 = { x: p3.x - p2.x, y: p3.y - p2.y };
+    // In physical space: on anisotropic pixels an angle in pixel units is wrong.
+    const v1 = { x: (p1.x - p2.x) * pixelSpacing[1], y: (p1.y - p2.y) * pixelSpacing[0] };
+    const v2 = { x: (p3.x - p2.x) * pixelSpacing[1], y: (p3.y - p2.y) * pixelSpacing[0] };
     const dot = v1.x * v2.x + v1.y * v2.y;
     const mag1 = Math.sqrt(v1.x * v1.x + v1.y * v1.y);
     const mag2 = Math.sqrt(v2.x * v2.x + v2.y * v2.y);
     if (mag1 === 0 || mag2 === 0) return 0;
     const cos = Math.max(-1, Math.min(1, dot / (mag1 * mag2)));
     return Math.acos(cos) * (180 / Math.PI);
-  }, []);
+  }, [pixelSpacing]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (!activeTool) return;
@@ -142,6 +180,7 @@ export default function MeasurementOverlay({
         points: [p1, pos],
         value: `${dist.toFixed(1)} mm`,
         sliceIndex,
+        planeKey,
       };
       setMeasurements(prev => [...prev, m]);
       setCurrentPoints([]);
@@ -158,6 +197,7 @@ export default function MeasurementOverlay({
           points: [currentPoints[0], currentPoints[1], pos],
           value: `${angle.toFixed(1)}°`,
           sliceIndex,
+          planeKey,
         };
         setMeasurements(prev => [...prev, m]);
         setCurrentPoints([]);
@@ -174,12 +214,13 @@ export default function MeasurementOverlay({
         points: [p1, pos],
         value: `${area.toFixed(1)} mm²`,
         sliceIndex,
+        planeKey,
       };
       setMeasurements(prev => [...prev, m]);
       setCurrentPoints([]);
       setIsDrawing(false);
     }
-  }, [isDrawing, activeTool, currentPoints, sliceIndex, calcDistance, calcAngle, pixelSpacing, getMousePos]);
+  }, [isDrawing, activeTool, currentPoints, sliceIndex, planeKey, calcDistance, calcAngle, pixelSpacing, getMousePos]);
 
   const deleteMeasurement = useCallback((id: string) => {
     setMeasurements(prev => prev.filter(m => m.id !== id));
@@ -192,7 +233,7 @@ export default function MeasurementOverlay({
   }, []);
 
   // Filter measurements for current slice
-  const visibleMeasurements = measurements.filter(m => m.sliceIndex === sliceIndex);
+  const visibleMeasurements = measurements.filter(m => m.sliceIndex === sliceIndex && m.planeKey === planeKey);
 
   // Toolbar moved to ViewerApp toolbar bar — only render SVG overlay when needed
   if (!activeTool && visibleMeasurements.length === 0) {

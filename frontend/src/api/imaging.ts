@@ -193,6 +193,31 @@ export const imagingAPI = {
     const { data } = await apiClient.get(`/api/v1/imaging/metadata/${fileId}`);
     return data;
   },
+
+  /**
+   * v3 client 2D path: the series header WITHOUT the per-slice PNGs. The browser
+   * renders slices itself from /imaging/nifti, so the (large, 8-bit) base64 slice
+   * payload of /imaging/process is not downloaded at all. The server metadata is
+   * still fetched because the client cross-checks its own reading of the file
+   * against it (grid, spacing, orientation — fail closed on disagreement).
+   */
+  getSeriesMetadata: async (fileId: string): Promise<ImageSeriesResponse> => {
+    const data = await getWithRetry<{ format: 'dicom' | 'nifti'; metadata: ImageSeriesResponse['metadata'] }>(
+      `/api/v1/imaging/metadata/${fileId}`,
+      {},
+      { retries: 2, timeoutMs: 120_000, label: `metadata/${fileId}` },
+    );
+    const name = fileId.split('/').pop() ?? fileId;
+    return {
+      id: name,
+      name,
+      format: data.format,
+      metadata: data.metadata,
+      total_slices: data.metadata?.slices ?? 1,
+      slices: [],
+      file_id: fileId,
+    };
+  },
 };
 
 // Health check

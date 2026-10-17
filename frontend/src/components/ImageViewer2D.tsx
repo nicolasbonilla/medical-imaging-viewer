@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState, memo, useCallback, lazy, Suspense } from 'react';
+import { useEffect, useRef, useState, memo, useCallback, useMemo, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Maximize2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { Eye, Maximize2, PenLine, Save, Check, X } from 'lucide-react';
 import { useViewerStore } from '@/store/useViewerStore';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import { usePanZoom } from '@/hooks/usePanZoom';
@@ -9,11 +10,9 @@ import { useSegmentationData } from '@/hooks/useSegmentationData';
 import { useSliceNavigation } from '@/hooks/useSliceNavigation';
 import { useCanvasRendering } from '@/hooks/useCanvasRendering';
 import { useSegmentationShortcuts } from '@/hooks/useSegmentationShortcuts';
-import { ViewerToolbar } from './viewer/ViewerToolbar';
-import { SliceInfo } from './viewer/SliceInfo';
-import { SliceSlider } from './viewer/SliceSlider';
-import { MetadataPanel } from './viewer/MetadataPanel';
 import { SegmentationCanvasLocal, type SegmentationCanvasLocalRef } from './SegmentationCanvasLocal';
+import { ClientSliceViewport, type ClientViewportStatus } from './viewer2d/ClientSliceViewport';
+import { useParitySliceDataUrl } from './viewer2d/useParitySliceDataUrl';
 // Lazy — niivue (~heavy WebGL lib) loads only when the user opts into the 'niivue'
 // fast-W/L mode, keeping the default 2D viewer bundle light.
 const NiivueViewer2D = lazy(() =>
@@ -24,6 +23,8 @@ import { VoxelValueOverlay } from './VoxelValueOverlay';
 import MeasurementOverlay from './MeasurementOverlay';
 import { SegmentationConflictDialog } from './SegmentationConflictDialog';
 import { ViewportSafetyOverlay } from './ViewportSafetyOverlay';
+import { ErrorBoundary } from './ErrorBoundary';
+import { Button } from './ui';
 
 interface ImageViewer2DProps {
   viewerControls: ReturnType<typeof import('../hooks/useViewerControls').useViewerControls>;
@@ -32,9 +33,11 @@ interface ImageViewer2DProps {
   patientMRN?: string;
   studyDescription?: string;
   studyModality?: string;
+  /** v3: volume / view state of the client viewport, for the surrounding toolbar. */
+  onClientStatus?: (status: ClientViewportStatus) => void;
 }
 
-function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, patientMRN, studyDescription, studyModality }: ImageViewer2DProps) {
+function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, patientMRN, studyDescription, onClientStatus }: ImageViewer2DProps) {
   const { t } = useTranslation();
 
   // Refs
@@ -49,6 +52,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
   // Viewer controls from props
   const {
     renderMode,
+    setRenderMode,
     colormap,
     segmentationMode,
     appliedXMin,
@@ -56,10 +60,10 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
     appliedYMin,
     appliedYMax,
   } = viewerControls;
+  const isClient = renderMode === 'client';
 
   // Segmentation: which segmentation is active (from Zustand — single source of truth)
   const currentSegmentation = useSegmentationStore((s) => s.currentSegmentation);
-  const setCurrentSegmentation = useSegmentationStore((s) => s.setCurrentSegmentation);
 
   // Paint settings from Zustand store (single source of truth, shared with SegmentationPanel)
   const paintTool = useSegmentationStore((s) => s.paintTool);
@@ -80,7 +84,8 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
   const showOverlay = isOverlayVisible;
 
   // Store state
-  const { currentSeries, currentSliceIndex, setCurrentSliceIndex, zoomLevel, panOffset, brightness, contrast, setCursorInfo } = useViewerStore();
+  const { currentSeries, currentSliceIndex, zoomLevel, panOffset, brightness, contrast, setCursorInfo } = useViewerStore();
+  const cursorVoxel = useViewerStore((s) => s.cursorVoxel);
 
   // Custom hooks
   const panZoomHandlers = usePanZoom();
@@ -106,6 +111,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
     appliedYMax,
     segmentationId: matplotlibSegId,
     overlayOpacity: effectiveOverlayOpacity,
+    enabled: renderMode === 'matplotlib',
   });
 
   // If matplotlib query with segmentation overlay failed, fall back to local canvas overlay
@@ -171,6 +177,38 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
     };
   }, [currentSeries, createSegmentation, createSegmentationRef]);
 
+  // ---- v3 client path ------------------------------------------------------------
+  const [clientStatus, setClientStatus] = useState<ClientViewportStatus | null>(null);
+  const handleClientStatus = useCallback((s: ClientViewportStatus) => {
+    setClientStatus(s);
+    onClientStatus?.(s);
+  }, [onClientStatus]);
+
+  // Fail closed to the server PNG path, and say so (never a silent switch).
+  const handleClientFallback = useCallback((reason: string) => {
+    console.warn('[ImageViewer2D] client rendering refused, using server PNG path:', reason);
+    toast.warning(t('viewer3.fallbackTitle', 'Showing server-rendered images'), {
+      id: 'client-fallback',
+      description: t('viewer3.fallbackBody', 'This image could not be verified for in-browser display ({{reason}}). The previous server rendering is used instead.', { reason }),
+    });
+    setRenderMode('standard');
+  }, [setRenderMode, t]);
+
+  // DICOM series are not read by the browser renderer — straight to the server path.
+  useEffect(() => {
+    if (isClient && currentSeries && currentSeries.format !== 'nifti') {
+      handleClientFallback(t('viewer3.dicomNotClient', 'DICOM series'));
+    }
+  }, [isClient, currentSeries, handleClientFallback, t]);
+
+  // Edge-AI quick screen keeps receiving exactly what it was designed on: the
+  // server-equivalent 8-bit slice of the k plane (bit-identical, see parity tests).
+  const clientQuickScreenUrl = useParitySliceDataUrl(
+    isClient ? clientStatus?.volume ?? null : null,
+    cursorVoxel?.[2] ?? null,
+  );
+
+  // ---- legacy server paths (fallback) --------------------------------------------
   // Matplotlib image state for segmentation overlay
   const [matplotlibBbox, setMatplotlibBbox] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
 
@@ -179,7 +217,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
 
   // Calculate render dimensions to match Standard mode exactly
   useEffect(() => {
-    if (!containerRef.current || !currentSeries) {
+    if (!containerRef.current || !currentSeries || isClient) {
       setRenderDimensions(null);
       return;
     }
@@ -210,7 +248,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
     calculateDimensions();
     window.addEventListener('resize', calculateDimensions);
     return () => window.removeEventListener('resize', calculateDimensions);
-  }, [currentSeries]);
+  }, [currentSeries, isClient]);
 
   // Capture matplotlib image dimensions and bbox when it loads
   useEffect(() => {
@@ -325,12 +363,18 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
     setCursorInfo(null);
   }, [setCursorInfo]);
 
+  const legacyQuickScreenUrl = useMemo(() => {
+    const data = currentSeries?.slices?.[currentSliceIndex]?.image_data;
+    return data ? `data:image/png;base64,${data}` : null;
+  }, [currentSeries, currentSliceIndex]);
+  const quickScreenUrl = isClient ? clientQuickScreenUrl : legacyQuickScreenUrl;
+
   if (!currentSeries) {
     return (
-      <div className="flex items-center justify-center h-full bg-black">
-        <div className="text-center text-gray-400">
-          <Maximize2 className="w-16 h-16 mx-auto mb-4 opacity-50" />
-          <p>{t('viewer.selectImageToView')}</p>
+      <div className="flex h-full items-center justify-center bg-black">
+        <div className="text-center text-ink-muted">
+          <Maximize2 className="mx-auto mb-4 h-14 w-14 opacity-40" aria-hidden />
+          <p className="text-sm">{t('viewer.selectImageToView')}</p>
         </div>
       </div>
     );
@@ -348,18 +392,37 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
         studyDescription={studyDescription}
         anatomicalOrientation={currentSeries?.metadata?.anatomical_orientation}
       />
+
+      {/* v3 default: browser rendering from the NIfTI (full bit depth, 3 planes).
+          Sits below the z-20 safety overlay. Any disagreement with the server's
+          metadata hands over to the server PNG path below (handleClientFallback). */}
+      {isClient && (
+        <ErrorBoundary name="ClientSliceViewport">
+          <ClientSliceViewport
+            segmentationMask={segmentationMask}
+            segmentationMode={segmentationMode}
+            aiClickPoints={aiSeg.aiMode === 'interactive' ? aiSeg.clickPoints : undefined}
+            aiInteractiveMode={aiSeg.aiMode === 'interactive'}
+            onAIClick={aiSeg.handleCanvasClick}
+            onFallback={handleClientFallback}
+            onStatus={handleClientStatus}
+          />
+        </ErrorBoundary>
+      )}
+
       {/* niivue fast-W/L mode (view-only GPU window/level). Sits below the z-20 safety
           overlay so patient identity stays visible, and above the (empty in this mode)
           standard/matplotlib viewport. Painting is intentionally NOT available here —
           it stays in the standard/matplotlib modes (no wrong-location hazard). */}
       {renderMode === 'niivue' && (
         <div className="absolute inset-0 z-10">
-          <Suspense fallback={<div className="flex h-full w-full items-center justify-center text-xs text-gray-400">Cargando visor GPU…</div>}>
+          <Suspense fallback={<div className="flex h-full w-full items-center justify-center text-xs text-ink-muted">Cargando visor GPU…</div>}>
             <NiivueViewer2D />
           </Suspense>
         </div>
       )}
-      {/* Canvas or Matplotlib Image */}
+      {/* Legacy server paths: canvas (standard) or matplotlib image */}
+      {!isClient && (
       <div
         ref={scrollableRef}
         className="absolute inset-0 overflow-auto cursor-move"
@@ -448,7 +511,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
               )}
             </div>
           ) : renderMode === 'matplotlib' && matplotlibLoading ? (
-            <div className="text-white">{t('viewer.loadingMatplotlib')}</div>
+            <div className="text-sm text-ink-muted">{t('viewer.loadingMatplotlib')}</div>
           ) : renderMode === 'standard' ? (
             <div className="relative">
               <canvas ref={canvasRef} style={{ filter: imageFilter }} />
@@ -519,116 +582,81 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
           />
         )}
       </div>
+      )}
 
-      {/* Segmentation Mode Indicator - positioned top center to not overlap controls */}
+      {/* Segmentation edit bar — top centre, clear of identity (left) and orientation (right). */}
       {segmentationMode && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
-          {isCreatingSegmentation ? (
-            <div className="flex items-center gap-2 bg-yellow-500 text-black px-3 py-1.5 text-xs font-medium">
-              <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-              {t('viewer.creatingSegmentation', 'Creating segmentation...')}
-            </div>
-          ) : currentSegmentation ? (
-            <>
-              {/* View/Edit mode indicator */}
-              {isPaintMode ? (
-                <div className="flex items-center gap-2 bg-green-500 text-white px-3 py-1.5 text-xs font-medium">
-                  <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                  {t('viewer.editingSegmentation', 'Editing')}
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 bg-blue-500 text-white px-3 py-1.5 text-xs font-medium">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                  {t('viewer.viewingSegmentation', 'Viewing')}
-                </div>
-              )}
-              {/* Edit toggle button */}
-              <button
-                onClick={() => setIsPaintMode(!isPaintMode)}
-                className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium transition-colors ${
-                  isPaintMode
-                    ? 'bg-yellow-500 hover:bg-yellow-600 text-black'
-                    : 'bg-green-600 hover:bg-green-700 text-white'
-                }`}
-                title={isPaintMode ? t('viewer.switchToView', 'Switch to view mode') : t('viewer.switchToEdit', 'Switch to edit mode')}
-              >
-                {isPaintMode ? (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    {t('viewer.viewMode', 'View')}
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                    {t('viewer.editMode', 'Edit')}
-                  </>
-                )}
-              </button>
-              {/* Save button - only visible in edit mode */}
-              {isPaintMode && (
-                <button
-                  onClick={saveSegmentation}
-                  disabled={isSaving}
-                  className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-3 py-1.5 text-xs font-medium transition-colors"
-                  title={t('viewer.saveSegmentation', 'Save segmentation')}
+        <div className="absolute left-1/2 top-3 z-30 -translate-x-1/2">
+          <div className="flex items-center gap-1.5 rounded-xl border border-surface-border bg-surface-raised/90 p-1 shadow-lg shadow-black/40 backdrop-blur">
+            {isCreatingSegmentation ? (
+              <span className="flex items-center gap-2 px-2.5 py-1 text-xs font-medium text-clinical-warn">
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-clinical-warn border-t-transparent" aria-hidden />
+                {t('viewer.creatingSegmentation', 'Creating segmentation...')}
+              </span>
+            ) : currentSegmentation ? (
+              <>
+                <span
+                  className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium ${
+                    isPaintMode ? 'bg-brand-950 text-brand-400' : 'text-ink-soft'
+                  }`}
+                  role="status"
                 >
-                  {isSaving ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  {isPaintMode ? (
+                    <><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-400" aria-hidden />{t('viewer.editingSegmentation', 'Editing')}</>
                   ) : (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                    </svg>
+                    <><Eye className="h-3.5 w-3.5" aria-hidden />{t('viewer.viewingSegmentation', 'Viewing')}</>
                   )}
-                  {t('viewer.save', 'Save')}
-                </button>
-              )}
-              {/* Save status indicator */}
-              {saveStatus === 'saving' && (
-                <div className="flex items-center gap-1 bg-yellow-500 text-black px-2 py-1 rounded text-xs font-medium animate-pulse">
-                  <div className="w-3 h-3 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                  {t('viewer.autoSaving', 'Saving...')}
-                </div>
-              )}
-              {saveStatus === 'saved' && (
-                <div className="flex items-center gap-1 bg-green-600 text-white px-2 py-1 rounded text-xs font-medium ">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  {t('viewer.saved', 'Saved')}
-                </div>
-              )}
-              {saveStatus === 'error' && (
-                <div className="flex items-center gap-1 bg-red-600 text-white px-2 py-1 rounded text-xs font-medium ">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  {t('viewer.saveError', 'Save error')}
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="flex items-center gap-2 bg-red-500 text-white px-3 py-1.5 text-xs font-medium">
-              {t('viewer.noSegmentation', 'No segmentation')}
-            </div>
-          )}
+                </span>
+                <Button
+                  size="sm"
+                  variant={isPaintMode ? 'ghost' : 'secondary'}
+                  onClick={() => setIsPaintMode(!isPaintMode)}
+                  leftIcon={isPaintMode ? <Eye className="h-3.5 w-3.5" aria-hidden /> : <PenLine className="h-3.5 w-3.5" aria-hidden />}
+                  aria-label={isPaintMode ? t('viewer.switchToView', 'Switch to view mode') : t('viewer.switchToEdit', 'Switch to edit mode')}
+                  className="h-7"
+                >
+                  {isPaintMode ? t('viewer.viewMode', 'View') : t('viewer.editMode', 'Edit')}
+                </Button>
+                {isPaintMode && (
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    onClick={saveSegmentation}
+                    loading={isSaving}
+                    leftIcon={<Save className="h-3.5 w-3.5" aria-hidden />}
+                    className="h-7"
+                  >
+                    {t('viewer.save', 'Save')}
+                  </Button>
+                )}
+                {saveStatus === 'saving' && (
+                  <span className="px-2 text-xs text-clinical-warn" role="status">{t('viewer.autoSaving', 'Saving...')}</span>
+                )}
+                {saveStatus === 'saved' && (
+                  <span className="flex items-center gap-1 px-2 text-xs text-clinical-good" role="status">
+                    <Check className="h-3.5 w-3.5" aria-hidden />{t('viewer.saved', 'Saved')}
+                  </span>
+                )}
+                {saveStatus === 'error' && (
+                  <span className="flex items-center gap-1 px-2 text-xs text-clinical-crit" role="alert">
+                    <X className="h-3.5 w-3.5" aria-hidden />{t('viewer.saveError', 'Save error')}
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className="px-2.5 py-1 text-xs font-medium text-ink-muted">
+                {t('viewer.noSegmentation', 'No segmentation')}
+              </span>
+            )}
+          </div>
         </div>
       )}
 
-      {/* Zoom controls moved to ViewerApp toolbar bar above the image */}
-
-      {/* Edge AI Quick Screen — bottom right above slice slider */}
-      {currentSeries?.slices?.[currentSliceIndex]?.image_data && (
-        <div className="absolute bottom-20 right-4 z-20">
+      {/* Edge AI Quick Screen — bottom right, above the status corner */}
+      {quickScreenUrl && (
+        <div className="absolute bottom-12 right-3 z-20">
           <QuickScreenBadge
-            currentSliceBase64={`data:image/png;base64,${currentSeries.slices[currentSliceIndex].image_data}`}
+            currentSliceBase64={quickScreenUrl}
             imageWidth={currentSeries.metadata.columns ?? 256}
             imageHeight={currentSeries.metadata.rows ?? 256}
           />
