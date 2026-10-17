@@ -2,7 +2,7 @@
 
 ## IEC 62304 Clause 5.1.1(e) — Bidirectional Traceability
 
-**Document ID**: TM-001 | **Version**: 1.4 (PENDING owner approval) | **Date**: October 17, 2026 (v1.2 to v1.4 same day; v1.1: September 28, 2026; v1.0: April 12, 2026)
+**Document ID**: TM-001 | **Version**: 1.5 (PENDING owner approval) | **Date**: October 17, 2026 (v1.2 to v1.5 same day; v1.1: September 28, 2026; v1.0: April 12, 2026)
 
 | Version | Date | Author | Change | Approved By |
 |---------|------|--------|--------|-------------|
@@ -11,6 +11,7 @@
 | 1.2 | 2026-10-17 | Development Team | CAPA-008: REQ-SAFE-022/023/024 → RC-033/034/035 → UT-CAPA008, UT-LONG-RULES (addendum below; test rows added) | N. G. Bonilla Vargas — approved 2026-10-17 (PR #46) |
 | 1.3 | 2026-10-17 | Development Team | CAPA-009: REQ-SEC-014/015/016/019/020 → RC-036 → UT-CAPA009 | N. G. Bonilla Vargas — approved 2026-10-17 (PR #47) |
 | 1.4 | 2026-10-17 | Development Team | CAPA-010: REQ-SAFE-016 (amended), REQ-SAFE-025/026/027 → RC-016, RC-023, RC-037, RC-038 → UI-CAPA010-3D, UI-CAPA010-MPV, UI-CAPA010-APP, UI-RC038 (addendum below; test rows added) | **PENDING owner approval** |
+| 1.5 | 2026-10-17 | Development Team | CAPA-011: REQ-SAFE-028 → RC-039 → UT-RC039 (addendum below; test rows added) | PENDING owner approval |
 
 ---
 
@@ -128,6 +129,12 @@
 > Negative-control record: `records/risk_verification/CAPA-010_negative_controls_2026-10-17.json`. Tests on the `main` sources (25 of 27 fail for the stated reason; the 2 that pass are expected to): `records/risk_verification/CAPA-010_tests_on_main_2026-10-17.json`.
 >
 > **REQ-SAFE-020 / RC-022 (HAZ-014)**: the row in the table above said "VERIFIED (code inspection)". It is struck through in place. Nothing in the code preprocesses images to the MNI 1 mm template or registers them to it; the only registration is longitudinal, intra-subject and rigid. Images are therefore **not** in MNI space by construction, which is why RC-032 must gate the MNI-space atlas. RMF-001 already records RC-022 as NOT VERIFIED (2026-07-18).
+>
+> **Addendum 2026-10-17: REQ-SAFE-028 added, RC-039 (CAPA-011).**
+>
+> | Req ID | Safety Requirement | Risk Control | HAZ ID | Implementation | Test ID | Verified? |
+> |--------|-------------------|-------------|--------|----------------|---------|-----------|
+> | REQ-SAFE-028 | A clinical-tool mask (FLAMeS, LST-AI, SynthSeg, mindGlide) loads back at the voxel and scanner position where the tool placed it; the orientation marker only on files in the image's own voxel order; not stored (stated error) when that position cannot be established | RC-039 | HAZ-006, HAZ-001, HAZ-005 | `tool_runner_service.py` (`_orient_mask_for_storage`, `_store_nifti_as_segmentation`) | UT-RC039 | VERIFIED BY ITS AUTHOR 2026-10-17 (round-trip cases fail on `main`, fail-closed cases on the first fix; negative controls D0–D4, D6, L1, F1–F5, T1–T5 17/17); owner approval PENDING |
 
 ---
 
@@ -179,6 +186,7 @@ by `backend/tests/unit/test_risk_control_manifest.py`.
 | UI-CAPA010-MPV | `frontend/src/components/MultiPanelViewer.capa010.test.tsx` (6 tests, added 2026-10-17): identity and missing-identity warning on every panel; each panel shows its own image's orientation, keeps it on slice change and clears it on reassignment; caveat on every panel | REQ-SAFE-016, REQ-SAFE-025 (RC-016, RC-023) |
 | UI-CAPA010-APP | `frontend/src/ViewerApp.capa010.test.tsx` (5 tests, added 2026-10-17): the REAL viewer page (mocked backend) puts the loaded identity on 2D, multi-panel, 3D volume and 3D multiplanar; the rendered page with the app's real CSS, measured in a real headless browser at 1366x768, 1600x900, 1920x1080, shows every caveat in full (fails in CI if no browser) | REQ-SAFE-016, REQ-SAFE-025 (RC-016, RC-023) |
 | UI-RC038 | `frontend/src/components/MeasurementOverlay.rc038.test.tsx` (10 tests, added 2026-10-17/18): simulated clicks on the real component — ruler true length at zoom 2, same length at zoom 1/2/4 with pan, ROI true area at zoom 2, ruler follows the anatomy on zoom and on pan, angle in millimetres on 2 mm x 1 mm pixels; on a non-square image and canvas with 3 mm x 0.9 mm pixels at zoom 1/2/4: ruler, ROI area, angle, and the ruler redrawn where the canvas draws its end points | REQ-SAFE-027, REQ-FUNC-090/091/092 (RC-038) |
+| UT-RC039 | `test_rc039_tool_runner_mask_axes.py` (21 test cases, added 2026-10-17): a clinical-tool mask goes through the real store path and the real load path (`SegmentationService.get_mask`) and comes back at the same voxel (a0, a1, k), the same scanner position and the same slice layout, and the stored file served to viewers places it at the same position; non-cubic asymmetric volume with a flipped anisotropic affine; cubic silent case; tool output in another voxel order; LST-AI types mask; marker/order contract; every tool end to end (FLAMeS, LST-AI, SynthSeg, mindGlide lesion and structure masks); fail closed (no / missing / unreadable reference, indeterminate affine → nothing stored; each tool's run with an unreadable reference → FAILED, nothing stored) | REQ-SAFE-028, REQ-FUNC-034, REQ-FUNC-035 |
 
 ---
 
@@ -212,6 +220,7 @@ by `backend/tests/unit/test_risk_control_manifest.py`.
 | `test_capa008_assistant_read_only.py` | UT-CAPA008 | REQ-SAFE-022, REQ-SAFE-023, REQ-SAFE-024 (RC-033/034/035, HAZ-003/007/008/010; added 2026-10-17) |
 | `test_longitudinal_clinical_rules.py` | UT-LONG-RULES | REQ-SAFE-024, REQ-FUNC-055a (RC-035, HAZ-007) |
 | `test_capa009_object_authorization_everywhere.py` | UT-CAPA009 | REQ-SEC-014/015/016/019/020 (RC-036, HAZ-010; added 2026-10-17) |
+| `test_rc039_tool_runner_mask_axes.py` | UT-RC039 | REQ-SAFE-028, REQ-FUNC-034, REQ-FUNC-035 (RC-039, HAZ-006/001/005; added 2026-10-17) |
 | `test_nifti_utils.py` | UT-NII-001 | REQ-FUNC-001 |
 | `test_dicom_seg.py` | UT-SEG-001..008 | REQ-FUNC-072 |
 | `test_dicom_utils.py` | UT-DICOM-001..007 | REQ-FUNC-072, REQ-SAFE-013 | RC-016 | VERIFIED |

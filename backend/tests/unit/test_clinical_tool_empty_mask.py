@@ -72,12 +72,15 @@ def _capture(monkeypatch):
 async def test_empty_mask_is_stored_but_flagged(tmp_path, _capture):
     svc, sink, warnings_seen = _capture
     mask_path = _write_nifti(tmp_path / "empty.nii.gz", np.zeros((4, 5, 3), dtype=np.uint8))
+    # RC-039 (CAPA-011): the image the tool ran on is required (fail closed).
+    mri_path = _write_nifti(tmp_path / "mri.nii.gz", np.zeros((4, 5, 3), dtype=np.uint8))
 
     seg_id = await svc._store_nifti_as_segmentation(
         mask_path=mask_path,
         file_id="file-xyz",
         description="mindGlide MS lesion segmentation",
         validation_source="mindglide-v1.0",
+        reference_mri_path=mri_path,
     )
 
     assert isinstance(seg_id, str) and seg_id  # still stored (not rejected)
@@ -101,12 +104,14 @@ async def test_nonempty_mask_records_true_count_and_no_warning(tmp_path, _captur
     arr[1, 2, 1] = 1
     arr[2, 3, 2] = 1  # 3 lesion voxels
     mask_path = _write_nifti(tmp_path / "lesions.nii.gz", arr)
+    mri_path = _write_nifti(tmp_path / "mri.nii.gz", np.zeros_like(arr))   # RC-039: required
 
     seg_id = await svc._store_nifti_as_segmentation(
         mask_path=mask_path,
         file_id="file-abc",
         description="mindGlide MS lesion segmentation",
         validation_source="mindglide-v1.0",
+        reference_mri_path=mri_path,
     )
 
     assert isinstance(seg_id, str) and seg_id
