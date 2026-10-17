@@ -1,0 +1,1535 @@
+{
+"url": "https://ai.nsu.ru/files/sibbms/sibbms.zip",
+"zip_bytes": 10971922363,
+"read_utc": "2026-10-17",
+"etag": "\"28dfa3fbb-63b86c4486840\"",
+"last_modified": "Mon, 04 Aug 2025 09:31:05 GMT",
+"note": "Central-directory entries of Output/Norm (healthy controls) only; read by HTTP range requests, no member data.",
+"entries": [
+{
+"name": "Output/Norm/sub-001/ses-001/anat/sub-001_ses-001_FLAIR.nii.gz",
+"size": 6884826,
+"crc": 474780752
+},
+{
+"name": "Output/Norm/sub-001/ses-001/anat/sub-001_ses-001_T1w.nii.gz",
+"size": 6880748,
+"crc": 1169859277
+},
+{
+"name": "Output/Norm/sub-001/ses-001/anat/sub-001_ses-001_T2w.nii.gz",
+"size": 8639357,
+"crc": 2048687685
+},
+{
+"name": "Output/Norm/sub-002/ses-001/anat/sub-002_ses-001_FLAIR.nii.gz",
+"size": 6885376,
+"crc": 3585884833
+},
+{
+"name": "Output/Norm/sub-002/ses-001/anat/sub-002_ses-001_T1w.nii.gz",
+"size": 6963593,
+"crc": 1533519070
+},
+{
+"name": "Output/Norm/sub-002/ses-001/anat/sub-002_ses-001_T2w.nii.gz",
+"size": 8337654,
+"crc": 627229222
+},
+{
+"name": "Output/Norm/sub-003/ses-001/anat/sub-003_ses-001_FLAIR.nii.gz",
+"size": 6736526,
+"crc": 393789952
+},
+{
+"name": "Output/Norm/sub-003/ses-001/anat/sub-003_ses-001_T1w.nii.gz",
+"size": 6883623,
+"crc": 2737454450
+},
+{
+"name": "Output/Norm/sub-003/ses-001/anat/sub-003_ses-001_T2w.nii.gz",
+"size": 7317520,
+"crc": 295500036
+},
+{
+"name": "Output/Norm/sub-004/ses-001/anat/sub-004_ses-001_FLAIR.nii.gz",
+"size": 6779323,
+"crc": 711719973
+},
+{
+"name": "Output/Norm/sub-004/ses-001/anat/sub-004_ses-001_T1w.nii.gz",
+"size": 6958901,
+"crc": 1177272021
+},
+{
+"name": "Output/Norm/sub-004/ses-001/anat/sub-004_ses-001_T2w.nii.gz",
+"size": 8553042,
+"crc": 3224049924
+},
+{
+"name": "Output/Norm/sub-005/ses-001/anat/sub-005_ses-001_FLAIR.nii.gz",
+"size": 6734395,
+"crc": 189591758
+},
+{
+"name": "Output/Norm/sub-005/ses-001/anat/sub-005_ses-001_T1w.nii.gz",
+"size": 6837267,
+"crc": 898903297
+},
+{
+"name": "Output/Norm/sub-005/ses-001/anat/sub-005_ses-001_T2w.nii.gz",
+"size": 8088329,
+"crc": 2640123380
+},
+{
+"name": "Output/Norm/sub-006/ses-001/anat/sub-006_ses-001_FLAIR.nii.gz",
+"size": 6851330,
+"crc": 3242049953
+},
+{
+"name": "Output/Norm/sub-006/ses-001/anat/sub-006_ses-001_T1w.nii.gz",
+"size": 6962398,
+"crc": 1830976898
+},
+{
+"name": "Output/Norm/sub-006/ses-001/anat/sub-006_ses-001_T2w.nii.gz",
+"size": 7485849,
+"crc": 3177185998
+},
+{
+"name": "Output/Norm/sub-007/ses-001/anat/sub-007_ses-001_FLAIR.nii.gz",
+"size": 6846439,
+"crc": 549733762
+},
+{
+"name": "Output/Norm/sub-007/ses-001/anat/sub-007_ses-001_T1w.nii.gz",
+"size": 7038664,
+"crc": 2435205472
+},
+{
+"name": "Output/Norm/sub-007/ses-001/anat/sub-007_ses-001_T2w.nii.gz",
+"size": 8440662,
+"crc": 43788541
+},
+{
+"name": "Output/Norm/sub-008/ses-001/anat/sub-008_ses-001_FLAIR.nii.gz",
+"size": 6728426,
+"crc": 622506587
+},
+{
+"name": "Output/Norm/sub-008/ses-001/anat/sub-008_ses-001_T1w.nii.gz",
+"size": 6873540,
+"crc": 2846624512
+},
+{
+"name": "Output/Norm/sub-008/ses-001/anat/sub-008_ses-001_T2w.nii.gz",
+"size": 7473531,
+"crc": 1405375488
+},
+{
+"name": "Output/Norm/sub-009/ses-001/anat/sub-009_ses-001_FLAIR.nii.gz",
+"size": 6736538,
+"crc": 958341546
+},
+{
+"name": "Output/Norm/sub-009/ses-001/anat/sub-009_ses-001_T1w.nii.gz",
+"size": 6879628,
+"crc": 1702383304
+},
+{
+"name": "Output/Norm/sub-009/ses-001/anat/sub-009_ses-001_T2w.nii.gz",
+"size": 2712273,
+"crc": 4069984908
+},
+{
+"name": "Output/Norm/sub-010/ses-001/anat/sub-010_ses-001_FLAIR.nii.gz",
+"size": 6822362,
+"crc": 3041058082
+},
+{
+"name": "Output/Norm/sub-010/ses-001/anat/sub-010_ses-001_T1w.nii.gz",
+"size": 1768169,
+"crc": 2448343794
+},
+{
+"name": "Output/Norm/sub-010/ses-001/anat/sub-010_ses-001_T2w.nii.gz",
+"size": 2508279,
+"crc": 2505377947
+},
+{
+"name": "Output/Norm/sub-011/ses-001/anat/sub-011_ses-001_FLAIR.nii.gz",
+"size": 6717730,
+"crc": 2372852456
+},
+{
+"name": "Output/Norm/sub-011/ses-001/anat/sub-011_ses-001_T1w.nii.gz",
+"size": 3882718,
+"crc": 1042768250
+},
+{
+"name": "Output/Norm/sub-011/ses-001/anat/sub-011_ses-001_T2w.nii.gz",
+"size": 7969710,
+"crc": 840574157
+},
+{
+"name": "Output/Norm/sub-012/ses-001/anat/sub-012_ses-001_FLAIR.nii.gz",
+"size": 6954183,
+"crc": 557965209
+},
+{
+"name": "Output/Norm/sub-012/ses-001/anat/sub-012_ses-001_T1w.nii.gz",
+"size": 7100142,
+"crc": 1539644962
+},
+{
+"name": "Output/Norm/sub-012/ses-001/anat/sub-012_ses-001_T2w.nii.gz",
+"size": 8077378,
+"crc": 2360238959
+},
+{
+"name": "Output/Norm/sub-013/ses-001/anat/sub-013_ses-001_FLAIR.nii.gz",
+"size": 6947870,
+"crc": 107392724
+},
+{
+"name": "Output/Norm/sub-013/ses-001/anat/sub-013_ses-001_T1w.nii.gz",
+"size": 7099174,
+"crc": 502359477
+},
+{
+"name": "Output/Norm/sub-013/ses-001/anat/sub-013_ses-001_T2w.nii.gz",
+"size": 8056977,
+"crc": 2401748219
+},
+{
+"name": "Output/Norm/sub-014/ses-001/anat/sub-014_ses-001_FLAIR.nii.gz",
+"size": 6905639,
+"crc": 3124429798
+},
+{
+"name": "Output/Norm/sub-014/ses-001/anat/sub-014_ses-001_T1w.nii.gz",
+"size": 7028388,
+"crc": 1316861855
+},
+{
+"name": "Output/Norm/sub-014/ses-001/anat/sub-014_ses-001_T2w.nii.gz",
+"size": 8034932,
+"crc": 1367021285
+},
+{
+"name": "Output/Norm/sub-015/ses-001/anat/sub-015_ses-001_FLAIR.nii.gz",
+"size": 6873216,
+"crc": 2285345766
+},
+{
+"name": "Output/Norm/sub-015/ses-001/anat/sub-015_ses-001_T1w.nii.gz",
+"size": 6912743,
+"crc": 1991353801
+},
+{
+"name": "Output/Norm/sub-015/ses-001/anat/sub-015_ses-001_T2w.nii.gz",
+"size": 7801927,
+"crc": 4205684237
+},
+{
+"name": "Output/Norm/sub-016/ses-001/anat/sub-016_ses-001_FLAIR.nii.gz",
+"size": 6937432,
+"crc": 2406713255
+},
+{
+"name": "Output/Norm/sub-016/ses-001/anat/sub-016_ses-001_T1w.nii.gz",
+"size": 7058747,
+"crc": 1979435347
+},
+{
+"name": "Output/Norm/sub-016/ses-001/anat/sub-016_ses-001_T2w.nii.gz",
+"size": 8442784,
+"crc": 2465939038
+},
+{
+"name": "Output/Norm/sub-017/ses-001/anat/sub-017_ses-001_FLAIR.nii.gz",
+"size": 6916986,
+"crc": 1978743330
+},
+{
+"name": "Output/Norm/sub-017/ses-001/anat/sub-017_ses-001_T1w.nii.gz",
+"size": 6977437,
+"crc": 2983216916
+},
+{
+"name": "Output/Norm/sub-017/ses-001/anat/sub-017_ses-001_T2w.nii.gz",
+"size": 7691329,
+"crc": 3839232291
+},
+{
+"name": "Output/Norm/sub-018/ses-001/anat/sub-018_ses-001_FLAIR.nii.gz",
+"size": 6921824,
+"crc": 3006552634
+},
+{
+"name": "Output/Norm/sub-018/ses-001/anat/sub-018_ses-001_T1w.nii.gz",
+"size": 6979563,
+"crc": 3610066591
+},
+{
+"name": "Output/Norm/sub-018/ses-001/anat/sub-018_ses-001_T2w.nii.gz",
+"size": 7657846,
+"crc": 3995211785
+},
+{
+"name": "Output/Norm/sub-019/ses-001/anat/sub-019_ses-001_FLAIR.nii.gz",
+"size": 6754100,
+"crc": 3320002597
+},
+{
+"name": "Output/Norm/sub-019/ses-001/anat/sub-019_ses-001_T1w.nii.gz",
+"size": 6995996,
+"crc": 3028269486
+},
+{
+"name": "Output/Norm/sub-019/ses-001/anat/sub-019_ses-001_T2w.nii.gz",
+"size": 7146035,
+"crc": 1705623903
+},
+{
+"name": "Output/Norm/sub-020/ses-001/anat/sub-020_ses-001_FLAIR.nii.gz",
+"size": 6768250,
+"crc": 3786123921
+},
+{
+"name": "Output/Norm/sub-020/ses-001/anat/sub-020_ses-001_T1w.nii.gz",
+"size": 2964510,
+"crc": 2339281481
+},
+{
+"name": "Output/Norm/sub-020/ses-001/anat/sub-020_ses-001_T2w.nii.gz",
+"size": 8258366,
+"crc": 1612791330
+},
+{
+"name": "Output/Norm/sub-021/ses-001/anat/sub-021_ses-001_FLAIR.nii.gz",
+"size": 6753729,
+"crc": 439145749
+},
+{
+"name": "Output/Norm/sub-021/ses-001/anat/sub-021_ses-001_T1w.nii.gz",
+"size": 6813583,
+"crc": 2399862814
+},
+{
+"name": "Output/Norm/sub-021/ses-001/anat/sub-021_ses-001_T2w.nii.gz",
+"size": 7801638,
+"crc": 515457041
+},
+{
+"name": "Output/Norm/sub-022/ses-001/anat/sub-022_ses-001_FLAIR.nii.gz",
+"size": 6885074,
+"crc": 2721052155
+},
+{
+"name": "Output/Norm/sub-022/ses-001/anat/sub-022_ses-001_T1w.nii.gz",
+"size": 6929943,
+"crc": 3078252020
+},
+{
+"name": "Output/Norm/sub-022/ses-001/anat/sub-022_ses-001_T2w.nii.gz",
+"size": 8347632,
+"crc": 3928636694
+},
+{
+"name": "Output/Norm/sub-023/ses-001/anat/sub-023_ses-001_ce-GAD_T1w.nii.gz",
+"size": 6465974,
+"crc": 3924146291
+},
+{
+"name": "Output/Norm/sub-023/ses-001/anat/sub-023_ses-001_FLAIR.nii.gz",
+"size": 6778520,
+"crc": 883694507
+},
+{
+"name": "Output/Norm/sub-023/ses-001/anat/sub-023_ses-001_T1w.nii.gz",
+"size": 6846487,
+"crc": 2245565079
+},
+{
+"name": "Output/Norm/sub-023/ses-001/anat/sub-023_ses-001_T2w.nii.gz",
+"size": 7316499,
+"crc": 1969510322
+},
+{
+"name": "Output/Norm/sub-024/ses-001/anat/sub-024_ses-001_FLAIR.nii.gz",
+"size": 6545870,
+"crc": 2152940050
+},
+{
+"name": "Output/Norm/sub-024/ses-001/anat/sub-024_ses-001_T1w.nii.gz",
+"size": 6839106,
+"crc": 3157228705
+},
+{
+"name": "Output/Norm/sub-024/ses-001/anat/sub-024_ses-001_T2w.nii.gz",
+"size": 7880925,
+"crc": 634752554
+},
+{
+"name": "Output/Norm/sub-025/ses-001/anat/sub-025_ses-001_FLAIR.nii.gz",
+"size": 6946903,
+"crc": 3575635449
+},
+{
+"name": "Output/Norm/sub-025/ses-001/anat/sub-025_ses-001_T1w.nii.gz",
+"size": 7017353,
+"crc": 617311229
+},
+{
+"name": "Output/Norm/sub-025/ses-001/anat/sub-025_ses-001_T2w.nii.gz",
+"size": 8448093,
+"crc": 1401536960
+},
+{
+"name": "Output/Norm/sub-026/ses-001/anat/sub-026_ses-001_FLAIR.nii.gz",
+"size": 6889572,
+"crc": 1310317987
+},
+{
+"name": "Output/Norm/sub-026/ses-001/anat/sub-026_ses-001_T1w.nii.gz",
+"size": 6947362,
+"crc": 2744004257
+},
+{
+"name": "Output/Norm/sub-026/ses-001/anat/sub-026_ses-001_T2w.nii.gz",
+"size": 8611635,
+"crc": 407369347
+},
+{
+"name": "Output/Norm/sub-027/ses-001/anat/sub-027_ses-001_FLAIR.nii.gz",
+"size": 6542959,
+"crc": 751224079
+},
+{
+"name": "Output/Norm/sub-027/ses-001/anat/sub-027_ses-001_T1w.nii.gz",
+"size": 6693123,
+"crc": 3079946648
+},
+{
+"name": "Output/Norm/sub-027/ses-001/anat/sub-027_ses-001_T2w.nii.gz",
+"size": 8268779,
+"crc": 2896039636
+},
+{
+"name": "Output/Norm/sub-028/ses-001/anat/sub-028_ses-001_FLAIR.nii.gz",
+"size": 6790589,
+"crc": 187929592
+},
+{
+"name": "Output/Norm/sub-028/ses-001/anat/sub-028_ses-001_T1w.nii.gz",
+"size": 6910611,
+"crc": 3774532776
+},
+{
+"name": "Output/Norm/sub-028/ses-001/anat/sub-028_ses-001_T2w.nii.gz",
+"size": 8318805,
+"crc": 2006035184
+},
+{
+"name": "Output/Norm/sub-029/ses-001/anat/sub-029_ses-001_FLAIR.nii.gz",
+"size": 6789661,
+"crc": 3809386247
+},
+{
+"name": "Output/Norm/sub-029/ses-001/anat/sub-029_ses-001_T1w.nii.gz",
+"size": 6901975,
+"crc": 871747465
+},
+{
+"name": "Output/Norm/sub-029/ses-001/anat/sub-029_ses-001_T2w.nii.gz",
+"size": 8357554,
+"crc": 2412833394
+},
+{
+"name": "Output/Norm/sub-030/ses-001/anat/sub-030_ses-001_FLAIR.nii.gz",
+"size": 6586868,
+"crc": 3116915544
+},
+{
+"name": "Output/Norm/sub-030/ses-001/anat/sub-030_ses-001_T1w.nii.gz",
+"size": 4028895,
+"crc": 1436946606
+},
+{
+"name": "Output/Norm/sub-030/ses-001/anat/sub-030_ses-001_T2w.nii.gz",
+"size": 7625392,
+"crc": 1051856407
+},
+{
+"name": "Output/Norm/sub-031/ses-001/anat/sub-031_ses-001_FLAIR.nii.gz",
+"size": 6742296,
+"crc": 3124568014
+},
+{
+"name": "Output/Norm/sub-031/ses-001/anat/sub-031_ses-001_T1w.nii.gz",
+"size": 6941544,
+"crc": 1840202312
+},
+{
+"name": "Output/Norm/sub-031/ses-001/anat/sub-031_ses-001_T2w.nii.gz",
+"size": 7890328,
+"crc": 1740527506
+},
+{
+"name": "Output/Norm/sub-032/ses-001/anat/sub-032_ses-001_FLAIR.nii.gz",
+"size": 6687950,
+"crc": 1356626030
+},
+{
+"name": "Output/Norm/sub-032/ses-001/anat/sub-032_ses-001_T1w.nii.gz",
+"size": 6942100,
+"crc": 3506659947
+},
+{
+"name": "Output/Norm/sub-032/ses-001/anat/sub-032_ses-001_T2w.nii.gz",
+"size": 7925411,
+"crc": 3150873203
+},
+{
+"name": "Output/Norm/sub-033/ses-001/anat/sub-033_ses-001_FLAIR.nii.gz",
+"size": 6931345,
+"crc": 1188909564
+},
+{
+"name": "Output/Norm/sub-033/ses-001/anat/sub-033_ses-001_T1w.nii.gz",
+"size": 6956498,
+"crc": 1423207768
+},
+{
+"name": "Output/Norm/sub-033/ses-001/anat/sub-033_ses-001_T2w.nii.gz",
+"size": 8469545,
+"crc": 3726421913
+},
+{
+"name": "Output/Norm/sub-034/ses-001/anat/sub-034_ses-001_FLAIR.nii.gz",
+"size": 6757575,
+"crc": 2256893
+},
+{
+"name": "Output/Norm/sub-034/ses-001/anat/sub-034_ses-001_T1w.nii.gz",
+"size": 7035828,
+"crc": 1836769398
+},
+{
+"name": "Output/Norm/sub-034/ses-001/anat/sub-034_ses-001_T2w.nii.gz",
+"size": 7738189,
+"crc": 3712009781
+},
+{
+"name": "Output/Norm/sub-035/ses-001/anat/sub-035_ses-001_FLAIR.nii.gz",
+"size": 6791007,
+"crc": 1623503092
+},
+{
+"name": "Output/Norm/sub-035/ses-001/anat/sub-035_ses-001_T1w.nii.gz",
+"size": 6904387,
+"crc": 894735227
+},
+{
+"name": "Output/Norm/sub-035/ses-001/anat/sub-035_ses-001_T2w.nii.gz",
+"size": 7761690,
+"crc": 3696889231
+},
+{
+"name": "Output/Norm/sub-036/ses-001/anat/sub-036_ses-001_FLAIR.nii.gz",
+"size": 6791279,
+"crc": 2944791599
+},
+{
+"name": "Output/Norm/sub-036/ses-001/anat/sub-036_ses-001_T1w.nii.gz",
+"size": 6991276,
+"crc": 3483596651
+},
+{
+"name": "Output/Norm/sub-036/ses-001/anat/sub-036_ses-001_T2w.nii.gz",
+"size": 7336491,
+"crc": 1888573092
+},
+{
+"name": "Output/Norm/sub-037/ses-001/anat/sub-037_ses-001_FLAIR.nii.gz",
+"size": 6778628,
+"crc": 2679421110
+},
+{
+"name": "Output/Norm/sub-037/ses-001/anat/sub-037_ses-001_T1w.nii.gz",
+"size": 3222346,
+"crc": 3736262954
+},
+{
+"name": "Output/Norm/sub-037/ses-001/anat/sub-037_ses-001_T2w.nii.gz",
+"size": 7213875,
+"crc": 4181580471
+},
+{
+"name": "Output/Norm/sub-038/ses-001/anat/sub-038_ses-001_FLAIR.nii.gz",
+"size": 6820002,
+"crc": 1165785816
+},
+{
+"name": "Output/Norm/sub-038/ses-001/anat/sub-038_ses-001_T1w.nii.gz",
+"size": 4087618,
+"crc": 3569678171
+},
+{
+"name": "Output/Norm/sub-038/ses-001/anat/sub-038_ses-001_T2w.nii.gz",
+"size": 7983725,
+"crc": 787623924
+},
+{
+"name": "Output/Norm/sub-039/ses-001/anat/sub-039_ses-001_FLAIR.nii.gz",
+"size": 6931128,
+"crc": 260245159
+},
+{
+"name": "Output/Norm/sub-039/ses-001/anat/sub-039_ses-001_T1w.nii.gz",
+"size": 6962596,
+"crc": 299913777
+},
+{
+"name": "Output/Norm/sub-039/ses-001/anat/sub-039_ses-001_T2w.nii.gz",
+"size": 8186095,
+"crc": 54509902
+},
+{
+"name": "Output/Norm/sub-040/ses-001/anat/sub-040_ses-001_FLAIR.nii.gz",
+"size": 6621361,
+"crc": 1199245896
+},
+{
+"name": "Output/Norm/sub-040/ses-001/anat/sub-040_ses-001_T1w.nii.gz",
+"size": 6818639,
+"crc": 2531781841
+},
+{
+"name": "Output/Norm/sub-040/ses-001/anat/sub-040_ses-001_T2w.nii.gz",
+"size": 7751364,
+"crc": 4225176819
+},
+{
+"name": "Output/Norm/sub-041/ses-001/anat/sub-041_ses-001_FLAIR.nii.gz",
+"size": 6810350,
+"crc": 2463273056
+},
+{
+"name": "Output/Norm/sub-041/ses-001/anat/sub-041_ses-001_T1w.nii.gz",
+"size": 7043001,
+"crc": 2201077870
+},
+{
+"name": "Output/Norm/sub-041/ses-001/anat/sub-041_ses-001_T2w.nii.gz",
+"size": 8198818,
+"crc": 2877068676
+},
+{
+"name": "Output/Norm/sub-042/ses-001/anat/sub-042_ses-001_FLAIR.nii.gz",
+"size": 6752019,
+"crc": 4033578181
+},
+{
+"name": "Output/Norm/sub-042/ses-001/anat/sub-042_ses-001_T1w.nii.gz",
+"size": 7011897,
+"crc": 3474358536
+},
+{
+"name": "Output/Norm/sub-042/ses-001/anat/sub-042_ses-001_T2w.nii.gz",
+"size": 8114897,
+"crc": 1943117131
+},
+{
+"name": "Output/Norm/sub-043/ses-001/anat/sub-043_ses-001_FLAIR.nii.gz",
+"size": 6861531,
+"crc": 1954601600
+},
+{
+"name": "Output/Norm/sub-043/ses-001/anat/sub-043_ses-001_T1w.nii.gz",
+"size": 7108119,
+"crc": 3202836475
+},
+{
+"name": "Output/Norm/sub-043/ses-001/anat/sub-043_ses-001_T2w.nii.gz",
+"size": 8285868,
+"crc": 4158717340
+},
+{
+"name": "Output/Norm/sub-044/ses-001/anat/sub-044_ses-001_FLAIR.nii.gz",
+"size": 6814141,
+"crc": 877652972
+},
+{
+"name": "Output/Norm/sub-044/ses-001/anat/sub-044_ses-001_T1w.nii.gz",
+"size": 7039297,
+"crc": 3231901802
+},
+{
+"name": "Output/Norm/sub-044/ses-001/anat/sub-044_ses-001_T2w.nii.gz",
+"size": 7531647,
+"crc": 1889727858
+},
+{
+"name": "Output/Norm/sub-045/ses-001/anat/sub-045_ses-001_FLAIR.nii.gz",
+"size": 6801049,
+"crc": 3881395024
+},
+{
+"name": "Output/Norm/sub-045/ses-001/anat/sub-045_ses-001_T1w.nii.gz",
+"size": 6936421,
+"crc": 779499402
+},
+{
+"name": "Output/Norm/sub-045/ses-001/anat/sub-045_ses-001_T2w.nii.gz",
+"size": 8005304,
+"crc": 3252378910
+},
+{
+"name": "Output/Norm/sub-046/ses-001/anat/sub-046_ses-001_FLAIR.nii.gz",
+"size": 6862414,
+"crc": 4039650617
+},
+{
+"name": "Output/Norm/sub-046/ses-001/anat/sub-046_ses-001_T1w.nii.gz",
+"size": 6850126,
+"crc": 760983025
+},
+{
+"name": "Output/Norm/sub-046/ses-001/anat/sub-046_ses-001_T2w.nii.gz",
+"size": 7353348,
+"crc": 1069192493
+},
+{
+"name": "Output/Norm/sub-047/ses-001/anat/sub-047_ses-001_FLAIR.nii.gz",
+"size": 6785138,
+"crc": 1122604209
+},
+{
+"name": "Output/Norm/sub-047/ses-001/anat/sub-047_ses-001_T1w.nii.gz",
+"size": 7058830,
+"crc": 284348065
+},
+{
+"name": "Output/Norm/sub-047/ses-001/anat/sub-047_ses-001_T2w.nii.gz",
+"size": 7588393,
+"crc": 193657727
+},
+{
+"name": "Output/Norm/sub-048/ses-001/anat/sub-048_ses-001_FLAIR.nii.gz",
+"size": 6789197,
+"crc": 3949113792
+},
+{
+"name": "Output/Norm/sub-048/ses-001/anat/sub-048_ses-001_T1w.nii.gz",
+"size": 6864569,
+"crc": 1326945597
+},
+{
+"name": "Output/Norm/sub-048/ses-001/anat/sub-048_ses-001_T2w.nii.gz",
+"size": 8346440,
+"crc": 586145102
+},
+{
+"name": "Output/Norm/sub-049/ses-001/anat/sub-049_ses-001_FLAIR.nii.gz",
+"size": 6830528,
+"crc": 2405892823
+},
+{
+"name": "Output/Norm/sub-049/ses-001/anat/sub-049_ses-001_T1w.nii.gz",
+"size": 6961132,
+"crc": 2122935640
+},
+{
+"name": "Output/Norm/sub-049/ses-001/anat/sub-049_ses-001_T2w.nii.gz",
+"size": 8237450,
+"crc": 4118250014
+},
+{
+"name": "Output/Norm/sub-050/ses-001/anat/sub-050_ses-001_FLAIR.nii.gz",
+"size": 6782004,
+"crc": 712763249
+},
+{
+"name": "Output/Norm/sub-050/ses-001/anat/sub-050_ses-001_T1w.nii.gz",
+"size": 7038689,
+"crc": 3916157236
+},
+{
+"name": "Output/Norm/sub-050/ses-001/anat/sub-050_ses-001_T2w.nii.gz",
+"size": 5203396,
+"crc": 547589097
+},
+{
+"name": "Output/Norm/sub-051/ses-001/anat/sub-051_ses-001_ce-GAD_T1w.nii.gz",
+"size": 7023690,
+"crc": 1202809292
+},
+{
+"name": "Output/Norm/sub-051/ses-001/anat/sub-051_ses-001_FLAIR.nii.gz",
+"size": 6638047,
+"crc": 2772254810
+},
+{
+"name": "Output/Norm/sub-051/ses-001/anat/sub-051_ses-001_T1w.nii.gz",
+"size": 6943656,
+"crc": 547539608
+},
+{
+"name": "Output/Norm/sub-051/ses-001/anat/sub-051_ses-001_T2w.nii.gz",
+"size": 7637950,
+"crc": 140584385
+},
+{
+"name": "Output/Norm/sub-052/ses-001/anat/sub-052_ses-001_FLAIR.nii.gz",
+"size": 7251331,
+"crc": 2968462580
+},
+{
+"name": "Output/Norm/sub-052/ses-001/anat/sub-052_ses-001_T1w.nii.gz",
+"size": 7315859,
+"crc": 4170788486
+},
+{
+"name": "Output/Norm/sub-052/ses-001/anat/sub-052_ses-001_T2w.nii.gz",
+"size": 8805785,
+"crc": 4128873253
+},
+{
+"name": "Output/Norm/sub-053/ses-001/anat/sub-053_ses-001_FLAIR.nii.gz",
+"size": 6946933,
+"crc": 3202201497
+},
+{
+"name": "Output/Norm/sub-053/ses-001/anat/sub-053_ses-001_T1w.nii.gz",
+"size": 6997207,
+"crc": 1427533936
+},
+{
+"name": "Output/Norm/sub-053/ses-001/anat/sub-053_ses-001_T2w.nii.gz",
+"size": 8321105,
+"crc": 2059136595
+},
+{
+"name": "Output/Norm/sub-054/ses-001/anat/sub-054_ses-001_FLAIR.nii.gz",
+"size": 6922957,
+"crc": 2007406998
+},
+{
+"name": "Output/Norm/sub-054/ses-001/anat/sub-054_ses-001_T1w.nii.gz",
+"size": 6846325,
+"crc": 3580381169
+},
+{
+"name": "Output/Norm/sub-054/ses-001/anat/sub-054_ses-001_T2w.nii.gz",
+"size": 7366477,
+"crc": 2833662996
+},
+{
+"name": "Output/Norm/sub-055/ses-001/anat/sub-055_ses-001_FLAIR.nii.gz",
+"size": 6787652,
+"crc": 1420212478
+},
+{
+"name": "Output/Norm/sub-055/ses-001/anat/sub-055_ses-001_T1w.nii.gz",
+"size": 7163471,
+"crc": 2111789928
+},
+{
+"name": "Output/Norm/sub-055/ses-001/anat/sub-055_ses-001_T2w.nii.gz",
+"size": 7774628,
+"crc": 2163020090
+},
+{
+"name": "Output/Norm/sub-056/ses-001/anat/sub-056_ses-001_FLAIR.nii.gz",
+"size": 6744445,
+"crc": 3805049869
+},
+{
+"name": "Output/Norm/sub-056/ses-001/anat/sub-056_ses-001_T1w.nii.gz",
+"size": 6934305,
+"crc": 162551906
+},
+{
+"name": "Output/Norm/sub-056/ses-001/anat/sub-056_ses-001_T2w.nii.gz",
+"size": 7806294,
+"crc": 906040378
+},
+{
+"name": "Output/Norm/sub-057/ses-001/anat/sub-057_ses-001_FLAIR.nii.gz",
+"size": 6788858,
+"crc": 700670877
+},
+{
+"name": "Output/Norm/sub-057/ses-001/anat/sub-057_ses-001_T1w.nii.gz",
+"size": 6926248,
+"crc": 2130858534
+},
+{
+"name": "Output/Norm/sub-057/ses-001/anat/sub-057_ses-001_T2w.nii.gz",
+"size": 8180222,
+"crc": 3860560893
+},
+{
+"name": "Output/Norm/sub-058/ses-001/anat/sub-058_ses-001_FLAIR.nii.gz",
+"size": 6794425,
+"crc": 4016762511
+},
+{
+"name": "Output/Norm/sub-058/ses-001/anat/sub-058_ses-001_T1w.nii.gz",
+"size": 6921120,
+"crc": 3295450931
+},
+{
+"name": "Output/Norm/sub-058/ses-001/anat/sub-058_ses-001_T2w.nii.gz",
+"size": 8190664,
+"crc": 790720831
+},
+{
+"name": "Output/Norm/sub-059/ses-001/anat/sub-059_ses-001_FLAIR.nii.gz",
+"size": 6837813,
+"crc": 2877146564
+},
+{
+"name": "Output/Norm/sub-059/ses-001/anat/sub-059_ses-001_T1w.nii.gz",
+"size": 7057469,
+"crc": 3216852328
+},
+{
+"name": "Output/Norm/sub-059/ses-001/anat/sub-059_ses-001_T2w.nii.gz",
+"size": 8348830,
+"crc": 1012038489
+},
+{
+"name": "Output/Norm/sub-060/ses-001/anat/sub-060_ses-001_FLAIR.nii.gz",
+"size": 6779371,
+"crc": 1702805683
+},
+{
+"name": "Output/Norm/sub-060/ses-001/anat/sub-060_ses-001_T1w.nii.gz",
+"size": 6867930,
+"crc": 816246148
+},
+{
+"name": "Output/Norm/sub-060/ses-001/anat/sub-060_ses-001_T2w.nii.gz",
+"size": 8545550,
+"crc": 1123272695
+},
+{
+"name": "Output/Norm/sub-061/ses-001/anat/sub-061_ses-001_FLAIR.nii.gz",
+"size": 6786200,
+"crc": 2284325083
+},
+{
+"name": "Output/Norm/sub-061/ses-001/anat/sub-061_ses-001_T1w.nii.gz",
+"size": 6872416,
+"crc": 3817865760
+},
+{
+"name": "Output/Norm/sub-061/ses-001/anat/sub-061_ses-001_T2w.nii.gz",
+"size": 8525306,
+"crc": 1112279877
+},
+{
+"name": "Output/Norm/sub-062/ses-001/anat/sub-062_ses-001_FLAIR.nii.gz",
+"size": 6885212,
+"crc": 4287207519
+},
+{
+"name": "Output/Norm/sub-062/ses-001/anat/sub-062_ses-001_T1w.nii.gz",
+"size": 7232229,
+"crc": 73743214
+},
+{
+"name": "Output/Norm/sub-062/ses-001/anat/sub-062_ses-001_T2w.nii.gz",
+"size": 8811884,
+"crc": 1100062972
+},
+{
+"name": "Output/Norm/sub-063/ses-001/anat/sub-063_ses-001_FLAIR.nii.gz",
+"size": 6784852,
+"crc": 1583761409
+},
+{
+"name": "Output/Norm/sub-063/ses-001/anat/sub-063_ses-001_T1w.nii.gz",
+"size": 7029689,
+"crc": 460593475
+},
+{
+"name": "Output/Norm/sub-063/ses-001/anat/sub-063_ses-001_T2w.nii.gz",
+"size": 7909179,
+"crc": 9032581
+},
+{
+"name": "Output/Norm/sub-064/ses-001/anat/sub-064_ses-001_FLAIR.nii.gz",
+"size": 6720965,
+"crc": 3219902023
+},
+{
+"name": "Output/Norm/sub-064/ses-001/anat/sub-064_ses-001_T1w.nii.gz",
+"size": 7011298,
+"crc": 1752044871
+},
+{
+"name": "Output/Norm/sub-064/ses-001/anat/sub-064_ses-001_T2w.nii.gz",
+"size": 8572392,
+"crc": 1710813220
+},
+{
+"name": "Output/Norm/sub-065/ses-001/anat/sub-065_ses-001_FLAIR.nii.gz",
+"size": 6774405,
+"crc": 1137640191
+},
+{
+"name": "Output/Norm/sub-065/ses-001/anat/sub-065_ses-001_T1w.nii.gz",
+"size": 7024552,
+"crc": 1869630897
+},
+{
+"name": "Output/Norm/sub-065/ses-001/anat/sub-065_ses-001_T2w.nii.gz",
+"size": 7556865,
+"crc": 2725301076
+},
+{
+"name": "Output/Norm/sub-066/ses-001/anat/sub-066_ses-001_FLAIR.nii.gz",
+"size": 6817803,
+"crc": 571534081
+},
+{
+"name": "Output/Norm/sub-066/ses-001/anat/sub-066_ses-001_T1w.nii.gz",
+"size": 6991404,
+"crc": 2726943546
+},
+{
+"name": "Output/Norm/sub-066/ses-001/anat/sub-066_ses-001_T2w.nii.gz",
+"size": 7122339,
+"crc": 1395036560
+},
+{
+"name": "Output/Norm/sub-067/ses-001/anat/sub-067_ses-001_FLAIR.nii.gz",
+"size": 6830210,
+"crc": 3988535298
+},
+{
+"name": "Output/Norm/sub-067/ses-001/anat/sub-067_ses-001_T1w.nii.gz",
+"size": 7075969,
+"crc": 250586945
+},
+{
+"name": "Output/Norm/sub-067/ses-001/anat/sub-067_ses-001_T2w.nii.gz",
+"size": 8032040,
+"crc": 1905866222
+},
+{
+"name": "Output/Norm/sub-068/ses-001/anat/sub-068_ses-001_FLAIR.nii.gz",
+"size": 6972400,
+"crc": 3390107612
+},
+{
+"name": "Output/Norm/sub-068/ses-001/anat/sub-068_ses-001_T1w.nii.gz",
+"size": 7341310,
+"crc": 2365759141
+},
+{
+"name": "Output/Norm/sub-068/ses-001/anat/sub-068_ses-001_T2w.nii.gz",
+"size": 8438516,
+"crc": 253769655
+},
+{
+"name": "Output/Norm/sub-069/ses-001/anat/sub-069_ses-001_FLAIR.nii.gz",
+"size": 6848000,
+"crc": 1640183316
+},
+{
+"name": "Output/Norm/sub-069/ses-001/anat/sub-069_ses-001_T1w.nii.gz",
+"size": 6993199,
+"crc": 1847255897
+},
+{
+"name": "Output/Norm/sub-069/ses-001/anat/sub-069_ses-001_T2w.nii.gz",
+"size": 8416764,
+"crc": 588692170
+},
+{
+"name": "Output/Norm/sub-070/ses-001/anat/sub-070_ses-001_FLAIR.nii.gz",
+"size": 6721565,
+"crc": 4130086913
+},
+{
+"name": "Output/Norm/sub-070/ses-001/anat/sub-070_ses-001_T1w.nii.gz",
+"size": 6770460,
+"crc": 1075547056
+},
+{
+"name": "Output/Norm/sub-070/ses-001/anat/sub-070_ses-001_T2w.nii.gz",
+"size": 7824558,
+"crc": 2946919874
+},
+{
+"name": "Output/Norm/sub-071/ses-001/anat/sub-071_ses-001_FLAIR.nii.gz",
+"size": 6854670,
+"crc": 2704964870
+},
+{
+"name": "Output/Norm/sub-071/ses-001/anat/sub-071_ses-001_T1w.nii.gz",
+"size": 6967566,
+"crc": 4104673670
+},
+{
+"name": "Output/Norm/sub-071/ses-001/anat/sub-071_ses-001_T2w.nii.gz",
+"size": 7512038,
+"crc": 1945901305
+},
+{
+"name": "Output/Norm/sub-072/ses-001/anat/sub-072_ses-001_FLAIR.nii.gz",
+"size": 6843914,
+"crc": 523890970
+},
+{
+"name": "Output/Norm/sub-072/ses-001/anat/sub-072_ses-001_T1w.nii.gz",
+"size": 2219019,
+"crc": 1549871157
+},
+{
+"name": "Output/Norm/sub-072/ses-001/anat/sub-072_ses-001_T2w.nii.gz",
+"size": 6550019,
+"crc": 1616338159
+},
+{
+"name": "Output/Norm/sub-073/ses-001/anat/sub-073_ses-001_ce-GAD_T1w.nii.gz",
+"size": 7253150,
+"crc": 4056385913
+},
+{
+"name": "Output/Norm/sub-073/ses-001/anat/sub-073_ses-001_FLAIR.nii.gz",
+"size": 6833718,
+"crc": 3875295535
+},
+{
+"name": "Output/Norm/sub-073/ses-001/anat/sub-073_ses-001_T1w.nii.gz",
+"size": 7126542,
+"crc": 3972746937
+},
+{
+"name": "Output/Norm/sub-073/ses-001/anat/sub-073_ses-001_T2w.nii.gz",
+"size": 7813295,
+"crc": 3119200901
+},
+{
+"name": "Output/Norm/sub-074/ses-001/anat/sub-074_ses-001_FLAIR.nii.gz",
+"size": 6929395,
+"crc": 2358320261
+},
+{
+"name": "Output/Norm/sub-074/ses-001/anat/sub-074_ses-001_T1w.nii.gz",
+"size": 7061357,
+"crc": 3003605647
+},
+{
+"name": "Output/Norm/sub-074/ses-001/anat/sub-074_ses-001_T2w.nii.gz",
+"size": 8275514,
+"crc": 2421111031
+},
+{
+"name": "Output/Norm/sub-075/ses-001/anat/sub-075_ses-001_FLAIR.nii.gz",
+"size": 9501659,
+"crc": 3650247052
+},
+{
+"name": "Output/Norm/sub-075/ses-001/anat/sub-075_ses-001_T1w.nii.gz",
+"size": 7627737,
+"crc": 3626179791
+},
+{
+"name": "Output/Norm/sub-075/ses-001/anat/sub-075_ses-001_T2w.nii.gz",
+"size": 11434250,
+"crc": 3241856049
+},
+{
+"name": "Output/Norm/sub-076/ses-001/anat/sub-076_ses-001_FLAIR.nii.gz",
+"size": 6641778,
+"crc": 1201556806
+},
+{
+"name": "Output/Norm/sub-076/ses-001/anat/sub-076_ses-001_T1w.nii.gz",
+"size": 7015233,
+"crc": 448076982
+},
+{
+"name": "Output/Norm/sub-076/ses-001/anat/sub-076_ses-001_T2w.nii.gz",
+"size": 7114544,
+"crc": 278105178
+},
+{
+"name": "Output/Norm/sub-077/ses-001/anat/sub-077_ses-001_FLAIR.nii.gz",
+"size": 6746224,
+"crc": 2266749472
+},
+{
+"name": "Output/Norm/sub-077/ses-001/anat/sub-077_ses-001_T1w.nii.gz",
+"size": 6810760,
+"crc": 1633390353
+},
+{
+"name": "Output/Norm/sub-077/ses-001/anat/sub-077_ses-001_T2w.nii.gz",
+"size": 7535816,
+"crc": 3009539313
+},
+{
+"name": "Output/Norm/sub-078/ses-001/anat/sub-078_ses-001_FLAIR.nii.gz",
+"size": 6753543,
+"crc": 2409662226
+},
+{
+"name": "Output/Norm/sub-078/ses-001/anat/sub-078_ses-001_T1w.nii.gz",
+"size": 6845496,
+"crc": 2341118562
+},
+{
+"name": "Output/Norm/sub-078/ses-001/anat/sub-078_ses-001_T2w.nii.gz",
+"size": 7530194,
+"crc": 2057435324
+},
+{
+"name": "Output/Norm/sub-079/ses-001/anat/sub-079_ses-001_FLAIR.nii.gz",
+"size": 6754997,
+"crc": 1497070904
+},
+{
+"name": "Output/Norm/sub-079/ses-001/anat/sub-079_ses-001_T1w.nii.gz",
+"size": 6890215,
+"crc": 859740843
+},
+{
+"name": "Output/Norm/sub-079/ses-001/anat/sub-079_ses-001_T2w.nii.gz",
+"size": 7780611,
+"crc": 261306915
+},
+{
+"name": "Output/Norm/sub-080/ses-001/anat/sub-080_ses-001_FLAIR.nii.gz",
+"size": 6869628,
+"crc": 2967743647
+},
+{
+"name": "Output/Norm/sub-080/ses-001/anat/sub-080_ses-001_T1w.nii.gz",
+"size": 6862464,
+"crc": 3481849626
+},
+{
+"name": "Output/Norm/sub-080/ses-001/anat/sub-080_ses-001_T2w.nii.gz",
+"size": 7815838,
+"crc": 2456768615
+},
+{
+"name": "Output/Norm/sub-081/ses-001/anat/sub-081_ses-001_FLAIR.nii.gz",
+"size": 6829753,
+"crc": 2405640899
+},
+{
+"name": "Output/Norm/sub-081/ses-001/anat/sub-081_ses-001_T1w.nii.gz",
+"size": 7038412,
+"crc": 689660180
+},
+{
+"name": "Output/Norm/sub-081/ses-001/anat/sub-081_ses-001_T2w.nii.gz",
+"size": 7894791,
+"crc": 2677324078
+},
+{
+"name": "Output/Norm/sub-082/ses-001/anat/sub-082_ses-001_FLAIR.nii.gz",
+"size": 6852746,
+"crc": 2338496981
+},
+{
+"name": "Output/Norm/sub-082/ses-001/anat/sub-082_ses-001_T1w.nii.gz",
+"size": 6988154,
+"crc": 2084498088
+},
+{
+"name": "Output/Norm/sub-082/ses-001/anat/sub-082_ses-001_T2w.nii.gz",
+"size": 8349651,
+"crc": 3463019011
+},
+{
+"name": "Output/Norm/sub-083/ses-001/anat/sub-083_ses-001_FLAIR.nii.gz",
+"size": 6819001,
+"crc": 684461735
+},
+{
+"name": "Output/Norm/sub-083/ses-001/anat/sub-083_ses-001_T1w.nii.gz",
+"size": 6878405,
+"crc": 786015970
+},
+{
+"name": "Output/Norm/sub-083/ses-001/anat/sub-083_ses-001_T2w.nii.gz",
+"size": 8299839,
+"crc": 3070091460
+},
+{
+"name": "Output/Norm/sub-084/ses-001/anat/sub-084_ses-001_FLAIR.nii.gz",
+"size": 6684436,
+"crc": 2730525050
+},
+{
+"name": "Output/Norm/sub-084/ses-001/anat/sub-084_ses-001_T1w.nii.gz",
+"size": 6928461,
+"crc": 718653589
+},
+{
+"name": "Output/Norm/sub-084/ses-001/anat/sub-084_ses-001_T2w.nii.gz",
+"size": 8199839,
+"crc": 2747524720
+},
+{
+"name": "Output/Norm/sub-085/ses-001/anat/sub-085_ses-001_FLAIR.nii.gz",
+"size": 6691998,
+"crc": 2322006468
+},
+{
+"name": "Output/Norm/sub-085/ses-001/anat/sub-085_ses-001_T1w.nii.gz",
+"size": 6966921,
+"crc": 2606273114
+},
+{
+"name": "Output/Norm/sub-085/ses-001/anat/sub-085_ses-001_T2w.nii.gz",
+"size": 7381692,
+"crc": 4193837375
+},
+{
+"name": "Output/Norm/sub-086/ses-001/anat/sub-086_ses-001_ce-GAD_T1w.nii.gz",
+"size": 6900781,
+"crc": 758532452
+},
+{
+"name": "Output/Norm/sub-086/ses-001/anat/sub-086_ses-001_FLAIR.nii.gz",
+"size": 6813674,
+"crc": 2418237554
+},
+{
+"name": "Output/Norm/sub-086/ses-001/anat/sub-086_ses-001_T1w.nii.gz",
+"size": 6905660,
+"crc": 3662146215
+},
+{
+"name": "Output/Norm/sub-086/ses-001/anat/sub-086_ses-001_T2w.nii.gz",
+"size": 7649068,
+"crc": 754017683
+},
+{
+"name": "Output/Norm/sub-087/ses-001/anat/sub-087_ses-001_ce-GAD_T1w.nii.gz",
+"size": 6917530,
+"crc": 2359921768
+},
+{
+"name": "Output/Norm/sub-087/ses-001/anat/sub-087_ses-001_FLAIR.nii.gz",
+"size": 6827226,
+"crc": 3522158329
+},
+{
+"name": "Output/Norm/sub-087/ses-001/anat/sub-087_ses-001_T1w.nii.gz",
+"size": 6904880,
+"crc": 1957996116
+},
+{
+"name": "Output/Norm/sub-087/ses-001/anat/sub-087_ses-001_T2w.nii.gz",
+"size": 7663473,
+"crc": 1434430464
+},
+{
+"name": "Output/Norm/sub-088/ses-001/anat/sub-088_ses-001_FLAIR.nii.gz",
+"size": 6720145,
+"crc": 3432913707
+},
+{
+"name": "Output/Norm/sub-088/ses-001/anat/sub-088_ses-001_T1w.nii.gz",
+"size": 3719094,
+"crc": 1048370699
+},
+{
+"name": "Output/Norm/sub-088/ses-001/anat/sub-088_ses-001_T2w.nii.gz",
+"size": 7638625,
+"crc": 3078006479
+},
+{
+"name": "Output/Norm/sub-089/ses-001/anat/sub-089_ses-001_FLAIR.nii.gz",
+"size": 6771457,
+"crc": 133808048
+},
+{
+"name": "Output/Norm/sub-089/ses-001/anat/sub-089_ses-001_T1w.nii.gz",
+"size": 6828187,
+"crc": 60972952
+},
+{
+"name": "Output/Norm/sub-089/ses-001/anat/sub-089_ses-001_T2w.nii.gz",
+"size": 8458312,
+"crc": 1097748598
+},
+{
+"name": "Output/Norm/sub-090/ses-001/anat/sub-090_ses-001_FLAIR.nii.gz",
+"size": 6847837,
+"crc": 1692129815
+},
+{
+"name": "Output/Norm/sub-090/ses-001/anat/sub-090_ses-001_T1w.nii.gz",
+"size": 6939423,
+"crc": 1875844058
+},
+{
+"name": "Output/Norm/sub-090/ses-001/anat/sub-090_ses-001_T2w.nii.gz",
+"size": 8295200,
+"crc": 3167256504
+},
+{
+"name": "Output/Norm/sub-091/ses-001/anat/sub-091_ses-001_FLAIR.nii.gz",
+"size": 6812460,
+"crc": 2395873693
+},
+{
+"name": "Output/Norm/sub-091/ses-001/anat/sub-091_ses-001_T1w.nii.gz",
+"size": 6848424,
+"crc": 981710084
+},
+{
+"name": "Output/Norm/sub-091/ses-001/anat/sub-091_ses-001_T2w.nii.gz",
+"size": 7648400,
+"crc": 4208478675
+},
+{
+"name": "Output/Norm/sub-092/ses-001/anat/sub-092_ses-001_FLAIR.nii.gz",
+"size": 6726070,
+"crc": 3022872586
+},
+{
+"name": "Output/Norm/sub-092/ses-001/anat/sub-092_ses-001_T1w.nii.gz",
+"size": 6801763,
+"crc": 207344740
+},
+{
+"name": "Output/Norm/sub-092/ses-001/anat/sub-092_ses-001_T2w.nii.gz",
+"size": 7575963,
+"crc": 1502854625
+},
+{
+"name": "Output/Norm/sub-093/ses-001/anat/sub-093_ses-001_FLAIR.nii.gz",
+"size": 6692554,
+"crc": 1620834450
+},
+{
+"name": "Output/Norm/sub-093/ses-001/anat/sub-093_ses-001_T1w.nii.gz",
+"size": 6870849,
+"crc": 996092610
+},
+{
+"name": "Output/Norm/sub-093/ses-001/anat/sub-093_ses-001_T2w.nii.gz",
+"size": 7403935,
+"crc": 2823357715
+},
+{
+"name": "Output/Norm/sub-094/ses-001/anat/sub-094_ses-001_FLAIR.nii.gz",
+"size": 6938037,
+"crc": 992751444
+},
+{
+"name": "Output/Norm/sub-094/ses-001/anat/sub-094_ses-001_T1w.nii.gz",
+"size": 6970554,
+"crc": 2508371172
+},
+{
+"name": "Output/Norm/sub-094/ses-001/anat/sub-094_ses-001_T2w.nii.gz",
+"size": 7848626,
+"crc": 2845832196
+},
+{
+"name": "Output/Norm/sub-095/ses-001/anat/sub-095_ses-001_FLAIR.nii.gz",
+"size": 6741878,
+"crc": 1565892066
+},
+{
+"name": "Output/Norm/sub-095/ses-001/anat/sub-095_ses-001_T1w.nii.gz",
+"size": 6906832,
+"crc": 2936433682
+},
+{
+"name": "Output/Norm/sub-095/ses-001/anat/sub-095_ses-001_T2w.nii.gz",
+"size": 7556702,
+"crc": 1890577057
+},
+{
+"name": "Output/Norm/sub-096/ses-001/anat/sub-096_ses-001_FLAIR.nii.gz",
+"size": 6731233,
+"crc": 549091661
+},
+{
+"name": "Output/Norm/sub-096/ses-001/anat/sub-096_ses-001_T1w.nii.gz",
+"size": 6901362,
+"crc": 3541151544
+},
+{
+"name": "Output/Norm/sub-096/ses-001/anat/sub-096_ses-001_T2w.nii.gz",
+"size": 7519176,
+"crc": 1294609772
+},
+{
+"name": "Output/Norm/sub-097/ses-001/anat/sub-097_ses-001_FLAIR.nii.gz",
+"size": 6859250,
+"crc": 907746862
+},
+{
+"name": "Output/Norm/sub-097/ses-001/anat/sub-097_ses-001_T1w.nii.gz",
+"size": 7117625,
+"crc": 1124569731
+},
+{
+"name": "Output/Norm/sub-097/ses-001/anat/sub-097_ses-001_T2w.nii.gz",
+"size": 7901541,
+"crc": 174711139
+},
+{
+"name": "Output/Norm/sub-098/ses-001/anat/sub-098_ses-001_FLAIR.nii.gz",
+"size": 6772649,
+"crc": 2039272002
+},
+{
+"name": "Output/Norm/sub-098/ses-001/anat/sub-098_ses-001_T1w.nii.gz",
+"size": 6818089,
+"crc": 171551372
+},
+{
+"name": "Output/Norm/sub-098/ses-001/anat/sub-098_ses-001_T2w.nii.gz",
+"size": 8449559,
+"crc": 13878104
+},
+{
+"name": "Output/Norm/sub-099/ses-001/anat/sub-099_ses-001_FLAIR.nii.gz",
+"size": 6881560,
+"crc": 3203367704
+},
+{
+"name": "Output/Norm/sub-099/ses-001/anat/sub-099_ses-001_T1w.nii.gz",
+"size": 7085502,
+"crc": 2498347838
+},
+{
+"name": "Output/Norm/sub-099/ses-001/anat/sub-099_ses-001_T2w.nii.gz",
+"size": 8275191,
+"crc": 2445795218
+},
+{
+"name": "Output/Norm/sub-100/ses-001/anat/sub-100_ses-001_FLAIR.nii.gz",
+"size": 6777489,
+"crc": 3185479394
+},
+{
+"name": "Output/Norm/sub-100/ses-001/anat/sub-100_ses-001_T1w.nii.gz",
+"size": 6945661,
+"crc": 2243246548
+},
+{
+"name": "Output/Norm/sub-100/ses-001/anat/sub-100_ses-001_T2w.nii.gz",
+"size": 8495135,
+"crc": 4097527712
+}
+]
+}

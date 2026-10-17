@@ -80,5 +80,29 @@
  "local-rc032-negative-controls": {
   "purpose_es": "Prueba de seguridad: batería de mutaciones RC-032",
   "notes_es": "Aproximado (unos 50 min, no cronometrado). Mismo resultado: 3 mutaciones no detectadas por diseño."
+ },
+ "sibbms-ctl-pilot": {
+  "purpose_es": "Piloto controles sanos SibBMS: 2 controles (sub-001 de agosto y sub-021 nuevo), HD-BET + FLAMeS 5 modelos"
+ },
+ "sibbms-ctl-a": {
+  "purpose_es": "Controles sanos SibBMS, bloque A (sub-001 a sub-034): imágenes sin cráneo + FLAMeS 5 modelos"
+ },
+ "sibbms-ctl-b": {
+  "purpose_es": "Controles sanos SibBMS, bloque B (sub-035 a sub-067): imágenes sin cráneo + FLAMeS 5 modelos"
+ },
+ "sibbms-ctl-c": {
+  "purpose_es": "Controles sanos SibBMS, bloque C (sub-068 a sub-100): imágenes sin cráneo + FLAMeS 5 modelos"
+ },
+ "lstai-pilot": {
+  "purpose_es": "Piloto LST-AI v1.2.0: 2 casos (MSLesSeg P10_T1 y control sub-001) + comprobación de que P49_T2 se salta"
+ },
+ "lstai-a": {
+  "purpose_es": "Mapas de probabilidad LST-AI, bloque A (MSLesSeg, 81 casos)"
+ },
+ "lstai-b": {
+  "purpose_es": "Mapas de probabilidad LST-AI, bloque B (33 MSLesSeg + 30 Ljubljana + 19 controles)"
+ },
+ "lstai-c": {
+  "purpose_es": "Mapas de probabilidad LST-AI, bloque C (81 controles sanos SibBMS)"
  }
 }

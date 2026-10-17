@@ -2,8 +2,8 @@
 
 Sources (nothing is estimated where a measurement exists):
   * Cloud runs in mstool-research — gs://mstool-research-data/runs/<run>/{plan,vm,runinfo}.json
-    (written by launch_vm.py and by the job itself), flames-ensemble/cost/<run>.txt and
-    flames-ensemble/manifests/<run>.json (per case timings, software versions, checksums).
+    (written by launch_vm.py and by the job itself), {flames-ensemble,controls,lstai}/cost/<run>.txt
+    and {flames-ensemble,lstai}/manifests/<run>.json (per case timings, software versions, checksums).
   * August 2026 runs in brain-mri-476110 — docs/calm-ms/cost-ledger.csv (as recorded then).
   * Local computer runs — docs/research/compute-ledger/local_runs.csv (hand-kept, with timings).
   * Human notes per run (parity checks, failure causes) — docs/research/compute-ledger/annotations.json.
@@ -89,10 +89,18 @@ def parse_machine(text):
 
 
 def fetch_bucket(tmp):
-    for sub in ("runs", "flames-ensemble/cost", "flames-ensemble/manifests"):
-        dst = os.path.join(tmp, sub.replace("/", "_"))
+    # Every job writes cost/<run>.txt and manifests/<run>.json under its own prefix; they are merged
+    # here (run ids are unique). controls/manifests holds the HD-BET step of a controls run whose
+    # per-item timings live in the FLAMeS manifest (flames-ensemble/manifests/<run>.json), so it is
+    # not merged.
+    sources = {"runs": ["runs"],
+               "flames-ensemble_cost": ["flames-ensemble/cost", "controls/cost", "lstai/cost"],
+               "flames-ensemble_manifests": ["flames-ensemble/manifests", "lstai/manifests"]}
+    for local, subs in sources.items():
+        dst = os.path.join(tmp, local)
         os.makedirs(dst, exist_ok=True)
-        sh(f'gcloud storage cp -r "{BUCKET}/{sub}/*" "{dst}/" --quiet')
+        for sub in subs:
+            sh(f'gcloud storage cp -r "{BUCKET}/{sub}/*" "{dst}/" --quiet')
     return tmp
 
 
