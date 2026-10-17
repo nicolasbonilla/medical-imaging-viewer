@@ -931,7 +931,11 @@ function ViewerApp() {
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="flex-1"
+          // RC-023 (CAPA-010): a flex column, so the viewport below takes the height LEFT by
+          // the toolbar. It was a block with the toolbar on top of an `h-full` viewport, which
+          // pushed the bottom of the viewport (the laterality caveat and the bottom of the
+          // image) under the overflow-hidden frame.
+          className="flex flex-1 flex-col"
         >
           {/* Viewer Toolbar — centered bar with all controls */}
           {viewMode === '2d' && currentSeries && (
@@ -1041,7 +1045,7 @@ function ViewerApp() {
             </div>
           )}
 
-          <div className="h-full overflow-hidden" style={{ background: '#000' }}>
+          <div className="min-h-0 flex-1 overflow-hidden" style={{ background: '#000' }}>
             {isLoadingImage && !isMultiPanel ? (
               <div className="h-full flex flex-col items-center justify-center">
                 <Loader2 className="animate-spin" style={{ width: 36, height: 36, color: '#60A5FA', marginBottom: 8 }} />
@@ -1051,6 +1055,9 @@ function ViewerApp() {
               <ErrorBoundary name="MultiPanelViewer">
                 <MultiPanelViewer
                   instances={[...originalInstances, ...preprocessedInstances]}
+                  patientName={patientData?.full_name}
+                  patientMRN={patientData?.mrn}
+                  studyDescription={studyInfo?.study.study_description}
                 />
               </ErrorBoundary>
             ) : viewMode === '2d' ? (
@@ -1066,7 +1073,11 @@ function ViewerApp() {
               </ErrorBoundary>
             ) : (
               <ErrorBoundary name="ImageViewer3D">
-                <ImageViewer3D />
+                <ImageViewer3D
+                  patientName={patientData?.full_name}
+                  patientMRN={patientData?.mrn}
+                  studyDescription={studyInfo?.study.study_description}
+                />
               </ErrorBoundary>
             )}
           </div>

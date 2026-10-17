@@ -215,7 +215,7 @@ claimed*, because the hazard was never framed in terms a control could address.
 | ID | Type | Action | Acceptance criteria | Status |
 |----|------|--------|--------------------|--------|
 | **CA-4.1** | Corrective | Canonicalise orientation on load: read the affine, convert to a known orientation (e.g. `nib.as_closest_canonical`), and **refuse to display** a volume whose orientation cannot be determined rather than guessing. | Test: an LAS volume and an RAS volume of the same subject render identically; a volume with an unusable affine raises rather than rendering. | PENDING |
-| **CA-4.2** | Corrective | Render persistent L/R (and A/P, S/I) laterality labels on every 2D viewport, and patient name + MRN as a persistent viewport annotation in 2D, 3D and multi-panel. | Test: labels present in the rendered output for every view mode; identity annotation survives maximise and is included in any export. | **2D IDENTITY + ORIENTATION DONE** (see §9) — L/R labels deferred to CA-4.3; 3D and multi-panel outstanding |
+| **CA-4.2** | Corrective | Render persistent L/R (and A/P, S/I) laterality labels on every 2D viewport, and patient name + MRN as a persistent viewport annotation in 2D, 3D and multi-panel. | Test: labels present in the rendered output for every view mode; identity annotation survives maximise and is included in any export. | **2D IDENTITY + ORIENTATION DONE** (see §9) — L/R labels deferred to CA-4.3; 3D and multi-panel outstanding. *2026-10-17: 3D and multi-panel implemented under CAPA-010 on branch, PENDING owner approval; export burn-in still open* |
 | **CA-4.3** | Corrective | Replace RC-012's dimensional heuristic with affine-derived axis order, so detection does not degenerate on square volumes. | Test: a transposed 256×256 mask is detected. | PENDING |
 | **CA-4.4** | Corrective | Render the Edge AI disclaimer unconditionally (RC-008); remove the false "always shown" comment. | Test asserts the disclaimer renders without user interaction. | **DONE** — disclaimer now shares the result's visibility condition, toggle removed, header comment corrected. Bound to `QuickScreenBadge.test.tsx`; negative control: toggle restored → 2 failed. |
 | **CA-4.5** | Corrective | Enforce permissions on clinical routes (RC-018), coordinated with CAPA-002 CA-2.1 so authentication, authorization and role enforcement are designed together rather than in three passes. | Test: a VIEWER receives 403 on delete/generate routes. | PENDING |
@@ -313,6 +313,15 @@ executes** — this generalises CAPA-003's PA-3.1 from directories to path filte
 - 3D (`ImageViewer3D`) and multi-panel (`MultiPanelViewer`) receive **no patient
   props at all** and remain unannotated.
 - Identity is not burned into exported images.
+
+> **2026-10-17 — CAPA-010 (branch `fix/viewer-safety-capa010`, PENDING owner approval).**
+> The 3D view and every multi-panel cell now render the overlay (identity, orientation of
+> their own image, caveat). CAPA-010 also found that the §9 evidence could not see two
+> failures: the standing caveat was **clipped off-screen** in the 2D page at every window
+> size (jsdom has no layout), and the 3D view drew niivue's orientation cube and default
+> slice letters (§9.1's "no L/R labels" held in 2D only). Both are fixed and now verified
+> on the rendered page in a real browser and through niivue's own drawing routines. Exported
+> images still carry no identity.
 
 ---
 

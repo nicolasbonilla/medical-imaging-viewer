@@ -17,7 +17,8 @@ import { Niivue, NVImage, SLICE_TYPE, SHOW_RENDER } from '@niivue/niivue';
 import { Loader2, AlertCircle, Box, ZoomIn, ZoomOut, Eye } from 'lucide-react';
 import { useViewerStore } from '@/store/useViewerStore';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
-import { createBoundingBoxMZ3 } from '@/utils/boundingBoxMesh';
+import { createBoundingBoxMZ3, lesionVoxelToNifti } from '@/utils/boundingBoxMesh';
+import { ViewportSafetyOverlay } from './ViewportSafetyOverlay';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -120,7 +121,12 @@ function createNvInstance(sliceType: number): Niivue {
     sliceType,
     multiplanarShowRender: SHOW_RENDER.NEVER,
     isColorbar: sliceType === SLICE_TYPE.RENDER,
-    isOrientCube: sliceType === SLICE_TYPE.RENDER,
+    // RC-023 (HAZ-006, CAPA-010): no laterality glyph in 3D. The orientation cube carries
+    // L/R/A/P/S/I letters and niivue draws L/R/A/P/S/I slice letters by DEFAULT
+    // (isOrientationTextVisible defaults to true), while laterality labelling is not
+    // verified (CAPA-004 CA-4.3). The orientation is reported as text by the safety overlay.
+    isOrientCube: false,
+    isOrientationTextVisible: false,
     crosshairWidth: 1,
     crosshairColor: [1, 0, 0, 1],
     textHeight: 0.03,
@@ -130,7 +136,14 @@ function createNvInstance(sliceType: number): Niivue {
   return nv;
 }
 
-export default function ImageViewer3D() {
+interface ImageViewer3DProps {
+  /** RC-016 (CAPA-010): patient identity annotated on the 3D viewport, as in 2D. */
+  patientName?: string;
+  patientMRN?: string;
+  studyDescription?: string;
+}
+
+export default function ImageViewer3D({ patientName, patientMRN, studyDescription }: ImageViewer3DProps = {}) {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -613,7 +626,10 @@ export default function ImageViewer3D() {
     const ready = render3DMode === 'volume' ? volumeReady : mpReady;
     if (!nv || !ready || nv.volumes.length === 0) return;
 
-    const { x, y, z } = selectedLesion.centroid;
+    // RC-037: the centroid is (z, y, x) on the (k, a0, a1) mask -> NIfTI voxel (y, x, z).
+    const [i, j, k] = lesionVoxelToNifti(
+      selectedLesion.centroid.z, selectedLesion.centroid.y, selectedLesion.centroid.x,
+    );
     const vol = nv.volumes[0];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const va = vol as any;
@@ -624,16 +640,16 @@ export default function ImageViewer3D() {
     let frac: [number, number, number];
     if (affine) {
       const mm: [number, number, number] = [
-        affine[0][0] * x + affine[0][1] * y + affine[0][2] * z + affine[0][3],
-        affine[1][0] * x + affine[1][1] * y + affine[1][2] * z + affine[1][3],
-        affine[2][0] * x + affine[2][1] * y + affine[2][2] * z + affine[2][3],
+        affine[0][0] * i + affine[0][1] * j + affine[0][2] * k + affine[0][3],
+        affine[1][0] * i + affine[1][1] * j + affine[1][2] * k + affine[1][3],
+        affine[2][0] * i + affine[2][1] * j + affine[2][2] * k + affine[2][3],
       ];
       frac = nv.mm2frac(mm, 0) as [number, number, number];
     } else if (dims && dims.length >= 4) {
       frac = [
-        x / Math.max(1, dims[1] - 1),
-        y / Math.max(1, dims[2] - 1),
-        z / Math.max(1, dims[3] - 1),
+        i / Math.max(1, dims[1] - 1),
+        j / Math.max(1, dims[2] - 1),
+        k / Math.max(1, dims[3] - 1),
       ];
     } else {
       return;
@@ -796,6 +812,14 @@ export default function ImageViewer3D() {
 
   return (
     <div className="relative h-full bg-black">
+      {/* RC-016 + RC-023 (CAPA-010): patient identity, orientation state and the standing
+          laterality caveat on the 3D viewport too — rendered first and unconditionally. */}
+      <ViewportSafetyOverlay
+        patientName={patientName}
+        patientMRN={patientMRN}
+        studyDescription={studyDescription}
+        anatomicalOrientation={currentSeries?.metadata?.anatomical_orientation}
+      />
       {/* Class C: the TP1/TP2 overlays are composited by niivue's per-volume affine with
           NO spatial registration — apparent overlap/change is a candidate, not a finding. */}
       {longitudinalVisible && (longTp1Buffer || longTp2Buffer) && (

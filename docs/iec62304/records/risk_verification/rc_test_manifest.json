@@ -25,7 +25,7 @@
     "status here is 'implemented' or 'deliberately_absent'."
   ],
   "manifest_version": 1,
-  "capa_reference": "CAPA-001, CAPA-002, CAPA-004, CAPA-005, CAPA-006, CAPA-007",
+  "capa_reference": "CAPA-001, CAPA-002, CAPA-004, CAPA-005, CAPA-006, CAPA-007, CAPA-010",
   "last_updated": "2026-10-17",
   "controls": {
     "RC-006": {
@@ -177,15 +177,19 @@
       "note": "3 of 5 McDonald 2024 regions, correctly and honestly disclosed. Counts are returned and typed but rendered by no component. CA-3."
     },
     "RC-016": {
-      "description": "Patient name and MRN rendered in the image viewport itself",
+      "description": "Patient name and MRN rendered in the image viewport itself, in every view mode (2D, every multi-panel cell, 3D volume and multiplanar)",
       "hazard": "HAZ-009",
       "status": "implemented",
-      "implementation": "frontend/src/components/ViewportSafetyOverlay.tsx, rendered unconditionally by ImageViewer2D.tsx",
+      "implementation": "frontend/src/components/ViewportSafetyOverlay.tsx, rendered unconditionally by ImageViewer2D.tsx and, since CAPA-010, by ImageViewer3D.tsx and every MultiPanelViewer.tsx cell; identity passed by ViewerApp.tsx",
       "tests": [
-        "frontend/src/components/ViewportSafetyOverlay.test.tsx"
+        "frontend/src/components/ViewportSafetyOverlay.test.tsx",
+        "frontend/src/components/ImageViewer3D.capa010.test.tsx",
+        "frontend/src/components/MultiPanelViewer.capa010.test.tsx",
+        "frontend/src/ViewerApp.capa010.test.tsx"
       ],
-      "negative_control": "CAPA-004 CA-4.2 — three vectors: identity block removed → 1 failed; overlay unwired from ImageViewer2D → 1 failed; orientation warning silenced → 2 failed",
-      "note": "Covers the 2D viewer. 3D and multi-panel views still receive no patient props and remain uncovered — tracked under CAPA-004 CA-4.2. Tests assert what is RENDERED, not what is passed: the original defect was a dead prop that looked correct at the call site."
+      "negative_control": "CAPA-004 CA-4.2 — three vectors: identity block removed → 1 failed; overlay unwired from ImageViewer2D → 1 failed; orientation warning silenced → 2 failed; CAPA-010 (2026-10-17, scripts/safety/capa010_negative_controls.py, record docs/iec62304/records/risk_verification/CAPA-010_negative_controls_2026-10-17.json): I1 3D overlay removed -> 7 failed; I2 3D identity not passed -> 2 failed; I3 panel overlay removed -> 7 failed; I4 multi-panel identity not passed -> 1 failed; I5 dead identity prop in panels -> 2 failed; restored 43 passed",
+      "note": "Tests assert what is RENDERED, not what is passed: the original defect was a dead prop that looked correct at the call site. CAPA-010 (2026-10-17, PENDING owner approval): the 3D and multi-panel views had no identity (CA-4.2 open since 2026-07-18) and now render the overlay; ViewerApp.capa010.test.tsx renders the REAL viewer page in every view mode and checks the identity it loaded, which replaces the static source checks of ViewportSafetyOverlay.test.tsx as wiring evidence. Identity is not burned into exported images (CA-4.2 remainder).",
+      "requirement": "REQ-SAFE-016 (amended 2026-10-17, CAPA-010)"
     },
     "RC-018": {
       "description": "RBAC: 4 roles, 15 granular permissions",
@@ -222,16 +226,20 @@
       "note": "No timeout exists anywhere in the report path; no CLAUDE_TIMEOUT setting. Also a synchronous call inside an async handler blocks the worker. CA-3."
     },
     "RC-023": {
-      "description": "Anatomical orientation is determinable from the affine, and is never guessed when indeterminate",
+      "description": "Anatomical orientation is determinable from the affine, is never guessed when indeterminate, and is reported in every viewport as text: no laterality glyph (edge letters or orientation cube) in any view, each viewport reports its own image, and the standing caveat is visible on the page",
       "hazard": "HAZ-006",
       "status": "implemented",
-      "implementation": "backend/app/utils/nifti_utils.py::get_orientation_codes / canonicalize_orientation",
+      "implementation": "backend/app/utils/nifti_utils.py::get_orientation_codes / canonicalize_orientation; viewport side (CAPA-010): frontend/src/components/ImageViewer3D.tsx (niivue isOrientCube false, isOrientationTextVisible false), MultiPanelViewer.tsx + store/useMultiViewerStore.ts (per-panel orientation), ViewerApp.tsx (flex centre column so the caveat is not clipped)",
       "tests": [
         "tests/unit/test_rc023_orientation.py",
-        "frontend/src/components/ViewportSafetyOverlay.test.tsx"
+        "frontend/src/components/ViewportSafetyOverlay.test.tsx",
+        "frontend/src/components/ImageViewer3D.capa010.test.tsx",
+        "frontend/src/components/MultiPanelViewer.capa010.test.tsx",
+        "frontend/src/ViewerApp.capa010.test.tsx"
       ],
-      "negative_control": "CAPA-004 CA-4.1 — fixed RAS return → 9 failed; canonicalisation neutralised → 2 failed. CA-4.2 — orientation warning silenced in the viewport → 2 failed",
-      "note": "NEW control created by CAPA-004 CA-4.1; MUST be added to the Risk Management File §5.1 (tracked). It provides the primitives only. RC-013 — orientation VALIDATION ON UPLOAD — remains not_implemented because canonicalisation is deliberately opt-in: image and mask load through separate calls, so transforming one and not the other would misalign them and create a worse hazard than the one being fixed. Migrating to canonical-by-default must convert both together in one change, with a matched-pair correspondence test. The viewport now REPORTS the orientation and warns when it is UNKNOWN or non-canonical, but deliberately renders NO L/R edge labels: volumes are not canonicalised on load and imaging_service transposes with fixed axis tuples presuming RAS, so the axis-to-screen mapping is unverified. A test asserts that absence. Labels may only be added under CA-4.3, after verification against a phantom of known laterality."
+      "negative_control": "CAPA-004 CA-4.1 — fixed RAS return → 9 failed; canonicalisation neutralised → 2 failed. CA-4.2 — orientation warning silenced in the viewport → 2 failed; CAPA-010 (2026-10-17, record docs/iec62304/records/risk_verification/CAPA-010_negative_controls_2026-10-17.json): O1 orientation not stored -> 2 failed; O2 lost on slice change -> 1; O3 stale on reassignment -> 1; O4 stale on auto-assignment -> 1; G1 orientation cube restored -> 2; G2 niivue default slice letters -> 2; L1 layout as on main -> 1; L3 column back to a block -> 1; L2 (viewport h-full inside the flex column) equivalent by design, not detected, stated in the record; restored 43 passed",
+      "note": "NEW control created by CAPA-004 CA-4.1; MUST be added to the Risk Management File §5.1 (tracked). It provides the primitives only. RC-013 — orientation VALIDATION ON UPLOAD — remains not_implemented because canonicalisation is deliberately opt-in: image and mask load through separate calls, so transforming one and not the other would misalign them and create a worse hazard than the one being fixed. Migrating to canonical-by-default must convert both together in one change, with a matched-pair correspondence test. The viewport now REPORTS the orientation and warns when it is UNKNOWN or non-canonical, but deliberately renders NO L/R edge labels: volumes are not canonicalised on load and imaging_service transposes with fixed axis tuples presuming RAS, so the axis-to-screen mapping is unverified. A test asserts that absence. Labels may only be added under CA-4.3, after verification against a phantom of known laterality. CAPA-010 (2026-10-17, PENDING owner approval): the viewport side held in 2D only. The 3D view drew the niivue orientation cube and, in its multiplanar slice panels, niivue default slice letters (A top, L left); the 2D caveat was clipped off-screen at every window size since 2026-07-18 (jsdom tests could not see it). Now verified on the rendered page in a real headless browser (ViewerApp.capa010.test.tsx; fails in CI without a browser) and by feeding the effective niivue options to the real niivue drawing routines (ImageViewer3D.capa010.test.tsx).",
+      "requirement": "REQ-SAFE-013, REQ-SAFE-025 (added 2026-10-17, CAPA-010)"
     },
     "RC-024": {
       "description": "Voxel spacing is required for every quantitative measurement; never assumed",
@@ -379,6 +387,30 @@
       "negative_control": "Executed 2026-10-17 by scripts/safety/capa009_negative_controls.py, one mutation at a time (every anchor asserted unique), failing test names in docs/iec62304/records/risk_verification/CAPA-009_negative_controls_2026-10-17.json. 32 mutations, 32 detected (incl. P1: the un-awaited patient dependency re-introduced -> 7 failed). Restored 47 passed.",
       "requirement": "REQ-SEC-014/015/016/019/020",
       "note": "CAPA-009. Completes CAPA-007 PA-7.2. HONEST LIMITS: behaviour verified in-process with fake services and a fake care-team store; not verified in production (two real accounts needed); the initiator registry is in memory per instance, like the task and upload stores it guards, so a handle used on another instance is refused (fail closed)."
+    },
+    "RC-037": {
+      "description": "RC-037 (CAPA-010): the crosshair and bounding box of a lesion selected from the lesion analysis are drawn in every view, including 3D, at the voxel the analysis reported: (z, y, x) on the (k, a0, a1) mask is NIfTI (i, j, k) = (y, x, z)",
+      "hazard": "HAZ-006",
+      "status": "implemented",
+      "implementation": "frontend/src/utils/boundingBoxMesh.ts::lesionVoxelToNifti used by createBoundingBoxMZ3 and by the 3D crosshair in frontend/src/components/ImageViewer3D.tsx; the 2D canvas already applied the rule (audit F-2.1, PR #22)",
+      "tests": [
+        "frontend/src/components/ImageViewer3D.capa010.test.tsx"
+      ],
+      "negative_control": "Executed 2026-10-17 by scripts/safety/capa010_negative_controls.py (record docs/iec62304/records/risk_verification/CAPA-010_negative_controls_2026-10-17.json): M1 crosshair read as (x, y, z) -> 2 failed; M2 box read as (x, y, z) -> 1 failed; M3 shared mapping wrong -> 3 failed; restored 43 passed",
+      "requirement": "REQ-SAFE-026",
+      "note": "CAPA-010, PENDING owner approval. On main the 3D crosshair and box were transposed in-plane (voxel (j, i) instead of (i, j)), possibly across the midline, while 2D was correct. HONEST LIMITS: niivue is replaced by a recording stand-in in the tests (jsdom has no WebGL); the mm point aimed at and the mesh vertices are checked, not the pixels drawn. Not checked on a real study in a browser."
+    },
+    "RC-038": {
+      "description": "RC-038 (CAPA-010): the 2D distance, area and angle tools map screen to image through the same zoom/pan transform that draws the slice, compute in millimetres per axis (angles included), and keep a drawn measurement on the anatomy when the view is zoomed or panned",
+      "hazard": "HAZ-014, HAZ-008",
+      "status": "implemented",
+      "implementation": "frontend/src/components/MeasurementOverlay.tsx (scale s0*zoom, origin centre*(1-zoom)+pan; angle arms scaled by the row/column spacing)",
+      "tests": [
+        "frontend/src/components/MeasurementOverlay.rc038.test.tsx"
+      ],
+      "negative_control": "Executed 2026-10-17 by scripts/safety/capa010_negative_controls.py (record docs/iec62304/records/risk_verification/CAPA-010_negative_controls_2026-10-17.json): R1 zoom and pan ignored (as on main) -> 5 failed; R2 zoom ignored -> 5 failed; R3 pan ignored -> 1 failed; R4 angle in pixel units -> 1 failed; restored 43 passed",
+      "requirement": "REQ-SAFE-027",
+      "note": "CAPA-010, PENDING owner approval. On main a 10 mm segment read 20.0 mm at zoom x2 (x4 at zoom 4), an ROI x4 its area, and a 63.4 deg angle on 2 mm x 1 mm pixels read 45.0 deg. OPEN: the angle tool cannot place a three-point angle with normal clicks (CA-10.6); without pixel spacing in the header the tools still assume 1 mm (CA-10.7)."
     }
   },
   "unverified_controls_note": [

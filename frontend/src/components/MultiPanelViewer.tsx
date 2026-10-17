@@ -17,8 +17,16 @@ import { useMultiViewerStore, getPanelCount, type PanelState } from '@/store/use
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import { SEQUENCE_INFO } from '@/utils/sequenceDetection';
 import type { ImagingInstance } from '@/types';
+import { ViewportSafetyOverlay } from './ViewportSafetyOverlay';
 
-interface MultiPanelViewerProps {
+/** RC-016 (CAPA-010): patient identity shown on every panel. */
+interface PatientIdentity {
+  patientName?: string;
+  patientMRN?: string;
+  studyDescription?: string;
+}
+
+interface MultiPanelViewerProps extends PatientIdentity {
   instances: ImagingInstance[];
   /** Segmentation mask from useSegmentationMask (shared across panels) */
   segmentationMask?: {
@@ -37,11 +45,13 @@ function ViewerPanel({
   isActive,
   onActivate,
   segmentationMask,
+  identity,
 }: {
   panel: PanelState;
   isActive: boolean;
   onActivate: () => void;
   segmentationMask?: { mask: Uint8Array | null; depth: number; height: number; width: number };
+  identity: PatientIdentity;
 }) {
   const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -131,8 +141,17 @@ function ViewerPanel({
       onClick={onActivate}
       onWheel={handleWheel}
     >
-      {/* Sequence badge */}
-      <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5">
+      {/* RC-016 + RC-023 (CAPA-010): identity, this panel's own orientation and the
+          standing laterality caveat on EVERY panel — rendered first and unconditionally. */}
+      <ViewportSafetyOverlay
+        patientName={identity.patientName}
+        patientMRN={identity.patientMRN}
+        studyDescription={identity.studyDescription}
+        anatomicalOrientation={panel.orientation}
+      />
+
+      {/* Sequence badge — bottom-left, above the caveat, clear of the identity corner */}
+      <div className="absolute bottom-8 left-2 z-10 flex items-center gap-1.5">
         <span
           className="px-2 py-0.5 rounded text-xs font-bold text-white shadow"
           style={{ backgroundColor: seqInfo.color }}
@@ -214,7 +233,7 @@ function renderSegOverlayOnCtx(
  * Main multi-panel viewer component.
  * Renders a CSS grid of ViewerPanel components.
  */
-export function MultiPanelViewer({ instances, segmentationMask }: MultiPanelViewerProps) {
+export function MultiPanelViewer({ instances, segmentationMask, patientName, patientMRN, studyDescription }: MultiPanelViewerProps) {
   const { t } = useTranslation();
   const layout = useMultiViewerStore((s) => s.layout);
   const panels = useMultiViewerStore((s) => s.panels);
@@ -261,7 +280,7 @@ export function MultiPanelViewer({ instances, segmentationMask }: MultiPanelView
               rows: result.metadata.rows ?? 0,
               columns: result.metadata.columns ?? 0,
               slices: result.metadata.slices ?? 0,
-            });
+            }, result.metadata.anatomical_orientation); // RC-023: this panel's own image
           }
           panelSlicesRef.current.set(panel.id, result.slices || []);
         })
@@ -282,7 +301,7 @@ export function MultiPanelViewer({ instances, segmentationMask }: MultiPanelView
       if (slice) {
         const newImage = `data:image/png;base64,${slice.image_data}`;
         if (newImage !== panel.imageData) {
-          setPanelImageData(panel.id, newImage, panel.metadata);
+          setPanelImageData(panel.id, newImage, panel.metadata, panel.orientation);
         }
       }
     }
@@ -306,6 +325,7 @@ export function MultiPanelViewer({ instances, segmentationMask }: MultiPanelView
           isActive={panel.id === activePanelId}
           onActivate={() => setActivePanelId(panel.id)}
           segmentationMask={segmentationMask}
+          identity={{ patientName, patientMRN, studyDescription }}
         />
       ))}
     </div>

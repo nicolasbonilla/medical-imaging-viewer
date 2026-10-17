@@ -3,7 +3,7 @@
 ## IEC 62304 Clause 5.2 Compliant Requirements Document
 
 **Document ID**: SRS-001
-**Version**: 1.4 (2026-10-17 — REQ-SEC-019/020 added; CAPA-009)
+**Version**: 1.5 (2026-10-17 — REQ-SAFE-016 amended, REQ-SAFE-025/026/027 added; CAPA-010; PENDING owner approval)
 **Effective Date**: April 12, 2026
 **Standard**: IEC 62304:2006+A1:2015 Clause 5.2
 **Software Safety Class**: IEC 62304 Class C
@@ -20,6 +20,7 @@
 | 1.2 | 2026-09-28 | Development Team | CAPA-006. REQ-FUNC-053 corrected: it stated "SynthSeg parcellation + EDT (Tier 2) with MSMask atlas fallback (Tier 1)", which never matched the code (four paths since a637cdf, 2026-03-14; SynthSeg and LST-AI disabled by default). REQ-SAFE-021 added: each MAGNIMS path is applied only when its precondition holds (RC-032, HAZ-005). REQ-SAFE-020 annotated NOT IMPLEMENTED (no registration to MNI exists; RC-022 not verified) — it contradicted REQ-SAFE-021 as written | N. G. Bonilla Vargas — approved 2026-10-17 (PR #43) |
 | 1.3 | 2026-10-17 | Development Team | CAPA-008. REQ-SAFE-022 (AI assistant layer read-only, STDIO only, no direct identifiers, intended-use wording), REQ-SAFE-023 (no AI report draft without a device measurement), REQ-SAFE-024 (CVS/PRL readings counted per McDonald 2024 and attributed to the authenticated reader; longitudinal activity candidate per MAGNIMS 2021) | N. G. Bonilla Vargas — approved 2026-10-17 (PR #46) |
 | 1.4 | 2026-10-17 | Development Team | CAPA-009. REQ-SEC-019 (task, upload and import handles usable only by their initiator or an administrator; unknown handles refused with 404), REQ-SEC-020 (configuration of outbound connections — PACS create, delete, test — administrator-only). REQ-SEC-014/015/016 unchanged; now implemented on every mounted route (RC-036) | N. G. Bonilla Vargas — approved 2026-10-17 (PR #47) |
+| 1.5 | 2026-10-17 | Development Team | CAPA-010 (viewer). REQ-SAFE-016 amended: identity in the image viewport in every view mode (2D, every multi-panel cell, 3D volume and multiplanar), verified by test (was "viewer header", inspection). REQ-SAFE-025 (no laterality glyph in any viewport; per-image orientation and a visible laterality caveat; RC-023), REQ-SAFE-026 (selected-lesion markers at the reported voxel in 3D; RC-037), REQ-SAFE-027 (measurements zoom/pan invariant, in millimetres per axis; RC-038) | **PENDING owner approval** |
 
 ---
 
@@ -168,7 +169,7 @@ This SRS covers all software requirements for MSTool-AI version 2.0, including f
 | REQ-SAFE-013 | The system shall validate NIfTI orientation headers on file upload and warn if non-standard. | HAZ-006 | Must | Test |
 | REQ-SAFE-014 | Longitudinal comparison shall display tri-color overlay for visual verification of lesion matching. | HAZ-007 | Must | Test |
 | REQ-SAFE-015 | DIS assessment shall display per-region detail with qualifying lesion counts. | HAZ-008 | Must | Test |
-| REQ-SAFE-016 | Patient name and MRN shall be prominently displayed in the viewer header at all times. | HAZ-009 | Must | Inspection |
+| REQ-SAFE-016 | Patient name and MRN shall be displayed in the image viewport itself in every view mode — 2D, every cell of the 2D multi-panel view, and the 3D view in volume and multiplanar mode — and an explicit "patient not identified" warning shall be shown when the identity is absent. *(Amended 2026-10-17, CAPA-010, PENDING owner approval — previous text: "Patient name and MRN shall be prominently displayed in the viewer header at all times.", verification "Inspection". The 3D and multi-panel views showed no identity.)* | HAZ-009 | Must | Test (UI-CAPA010-3D, UI-CAPA010-MPV, UI-CAPA010-APP) |
 | REQ-SAFE-017 | DICOM-SEG export shall use standard SOP Class UID and proper DICOM header structure. | HAZ-011 | Must | Test |
 | REQ-SAFE-018 | DICOMweb import shall display study/patient metadata for user confirmation before import. | HAZ-012 | Must | Test |
 | REQ-SAFE-019 | Report generation shall timeout after 30 seconds with user-visible error message if API fails. | HAZ-013 | Must | Test |
@@ -177,6 +178,9 @@ This SRS covers all software requirements for MSTool-AI version 2.0, including f
 | REQ-SAFE-022 | The AI-assistant (MCP) layer shall be read-only and bounded by the intended use: (a) it shall reach the backend only through one client that allows GET and POST to an explicit list of compute-only routes that authorize every object they reference (any other route refused before a request is sent); (b) it shall expose no tool that writes a record; (c) it shall run over STDIO only, authenticated as the operating clinician; (d) direct identifiers (patient name/ID, institution, dates, extra DICOM fields) shall be removed from every response; (e) its texts shall not claim or imply diagnosis, criteria met, disease activity or treatment response. | Must | C | Test (UT-CAPA008) | HAZ-003, HAZ-010 |
 | REQ-SAFE-023 | The report route shall refuse (422, reason stated) a request that carries no device measurement (lesion analysis, DIS assessment, longitudinal comparison, zone statistics, segmentation labels, anomalies or volumetry); the UI shall show that reason. | Must | C | Test (UT-CAPA008) | HAZ-003 |
 | REQ-SAFE-024 | CVS and PRL readings shall be stored with the authenticated reader as `annotated_by` and only with the statuses positive / negative / indeterminate / null; the summary shall report counts (select-6 count; CVS+ vs CVS−) and shall not present the withdrawn 40 % rule or >=1 PRL as a criterion met. The longitudinal activity candidate shall be raised by >=1 new or enlarging candidate (MAGNIMS 2021). | Must | C | Test (UT-CAPA008, UT-LONG-RULES) | HAZ-007, HAZ-008 |
+| REQ-SAFE-025 | No viewport (2D, multi-panel or 3D) shall draw a laterality glyph — L/R/A/P/S/I edge letters or an orientation cube — while the axis-to-screen mapping is unverified (CAPA-004 CA-4.3). Each viewport shall instead report the orientation codes read from ITS OWN image (UNKNOWN when indeterminate or not yet known) and carry the caveat "Laterality not labelled — confirm side against the source study", fully inside the visible area at window sizes 1366 x 768, 1600 x 900 and 1920 x 1080. *(Added 2026-10-17, CAPA-010, PENDING owner approval.)* | HAZ-006 | Must | Test (UI-CAPA010-3D, UI-CAPA010-MPV, UI-CAPA010-APP incl. a real-browser layout check) |
+| REQ-SAFE-026 | The crosshair and bounding box of a lesion selected from the lesion analysis shall be drawn, in every view including 3D, at the voxel the analysis reported: the analysis reports (z, y, x) on the (k, a0, a1) segmentation mask, i.e. NIfTI voxel (i, j, k) = (y, x, z). *(Added 2026-10-17, CAPA-010, PENDING owner approval.)* | HAZ-006 | Must | Test (UI-CAPA010-3D) |
+| REQ-SAFE-027 | The 2D distance, area and angle tools shall convert screen positions to image positions through the same zoom and pan transform used to draw the image, compute lengths, areas AND angles in millimetres using the row and column pixel spacing, and keep a drawn measurement on the anatomy it measured when the view is zoomed or panned. *(Added 2026-10-17, CAPA-010, PENDING owner approval.)* | HAZ-014 (HAZ-008 downstream: lesion size) | Must | Test (UI-RC038) |
 
 ---
 

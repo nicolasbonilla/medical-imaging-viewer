@@ -2,7 +2,7 @@
 
 ## IEC 62304 Clause 5.1.1(e) — Bidirectional Traceability
 
-**Document ID**: TM-001 | **Version**: 1.3 | **Date**: October 17, 2026 (v1.2 and v1.3 same day; v1.1: September 28, 2026; v1.0: April 12, 2026)
+**Document ID**: TM-001 | **Version**: 1.4 (PENDING owner approval) | **Date**: October 17, 2026 (v1.2 to v1.4 same day; v1.1: September 28, 2026; v1.0: April 12, 2026)
 
 | Version | Date | Author | Change | Approved By |
 |---------|------|--------|--------|-------------|
@@ -10,6 +10,7 @@
 | 1.1 | 2026-09-28 | Development Team | CAPA-006 (HAZ-005). (a) REQ-FUNC-053 row corrected in place. It was "MAGNIMS classification", tested by UT-CLS-001 only. It now reflects the corrected SRS text: contact criterion, four paths, MNI-only atlas. It adds UT-CLS-002/003 and UI-RC032, and the architecture reference, which was "SAD 3.5", a section that does not exist. (b) Addendum added for REQ-SAFE-021 → RC-032 and for the CAPA-006 PA-6.1 labelling gate. (c) REQ-SAFE-020 / RC-022 row: "VERIFIED (code inspection)" struck through. It is NOT IMPLEMENTED / NOT VERIFIED: no MNI preprocessing or registration to a template exists in the code. (d) New tests added to the backward and unit-test traceability tables. The 2026-09-28 RC-010 addendum below was entered without a version change; it is covered by this version | N. G. Bonilla Vargas — approved 2026-10-17 (PR #43) |
 | 1.2 | 2026-10-17 | Development Team | CAPA-008: REQ-SAFE-022/023/024 → RC-033/034/035 → UT-CAPA008, UT-LONG-RULES (addendum below; test rows added) | N. G. Bonilla Vargas — approved 2026-10-17 (PR #46) |
 | 1.3 | 2026-10-17 | Development Team | CAPA-009: REQ-SEC-014/015/016/019/020 → RC-036 → UT-CAPA009 | N. G. Bonilla Vargas — approved 2026-10-17 (PR #47) |
+| 1.4 | 2026-10-17 | Development Team | CAPA-010: REQ-SAFE-016 (amended), REQ-SAFE-025/026/027 → RC-016, RC-023, RC-037, RC-038 → UI-CAPA010-3D, UI-CAPA010-MPV, UI-CAPA010-APP, UI-RC038 (addendum below; test rows added) | **PENDING owner approval** |
 
 ---
 
@@ -115,6 +116,17 @@
 > | REQ-SAFE-023 | No AI report draft without a device measurement; reason shown | RC-034 | HAZ-003 | `ai_report.py`, `AIReportPanel.tsx` | UT-CAPA008 | VERIFIED 2026-10-17 (R1–R2 2/2) |
 > | REQ-SAFE-024 | CVS/PRL readings attributed and counted per McDonald 2024; activity candidate per MAGNIMS 2021 | RC-035 | HAZ-007, HAZ-008 | `segmentation_analysis.py`, `LesionDashboard.tsx`, `longitudinal_tracking_service.py` | UT-CAPA008, UT-LONG-RULES | VERIFIED 2026-10-17 (C1–C6 6/6) |
 >
+> **Addendum 2026-10-17: REQ-SAFE-016 amended, REQ-SAFE-025/026/027 added, RC-016/RC-023 extended, RC-037/RC-038 added (CAPA-010, PENDING owner approval).**
+>
+> | Req ID | Safety Requirement | Risk Control | HAZ ID | Implementation | Test ID | Verified? |
+> |--------|-------------------|-------------|--------|----------------|---------|-----------|
+> | REQ-SAFE-016 (amended) | Identity in the image viewport in every view mode (2D, every multi-panel cell, 3D volume and multiplanar); "not identified" warning when absent | RC-016 (extended) | HAZ-009 | `ViewportSafetyOverlay.tsx`; `ImageViewer2D.tsx`, `ImageViewer3D.tsx`, `MultiPanelViewer.tsx`; identity passed by `ViewerApp.tsx` | UI-RC016-023 (existing), UI-CAPA010-3D, UI-CAPA010-MPV, UI-CAPA010-APP | TEST-BOUND on branch (negative controls I1–I5) — PENDING owner approval |
+> | REQ-SAFE-025 | No laterality glyph in any viewport; orientation of each viewport's own image reported; standing caveat fully visible on the page | RC-023 (extended) | HAZ-006 | `ImageViewer3D.tsx` (niivue `isOrientCube: false`, `isOrientationTextVisible: false`), `MultiPanelViewer.tsx` + `useMultiViewerStore.ts` (per-panel orientation), `ViewerApp.tsx` (flex centre column) | UI-CAPA010-3D, UI-CAPA010-MPV, UI-CAPA010-APP (real-browser layout) | TEST-BOUND on branch (O1–O4, G1–G2, L1, L3 detected; L2 equivalent by design) — PENDING owner approval |
+> | REQ-SAFE-026 | Selected-lesion crosshair and box at the reported voxel in 3D: (z, y, x) → (i, j, k) = (y, x, z) | RC-037 | HAZ-006 | `utils/boundingBoxMesh.ts::lesionVoxelToNifti`, `ImageViewer3D.tsx` | UI-CAPA010-3D | TEST-BOUND on branch (M1–M3) — PENDING owner approval |
+> | REQ-SAFE-027 | Distance, area and angle tools zoom/pan invariant, in millimetres per axis, attached to the anatomy | RC-038 | HAZ-014 (HAZ-008) | `MeasurementOverlay.tsx` | UI-RC038 | TEST-BOUND on branch (R1–R4) — PENDING owner approval |
+>
+> Negative-control record: `records/risk_verification/CAPA-010_negative_controls_2026-10-17.json`. Tests on the `main` sources (25 of 27 fail for the stated reason; the 2 that pass are expected to): `records/risk_verification/CAPA-010_tests_on_main_2026-10-17.json`.
+>
 > **REQ-SAFE-020 / RC-022 (HAZ-014)**: the row in the table above said "VERIFIED (code inspection)". It is struck through in place. Nothing in the code preprocesses images to the MNI 1 mm template or registers them to it; the only registration is longitudinal, intra-subject and rigid. Images are therefore **not** in MNI space by construction, which is why RC-032 must gate the MNI-space atlas. RMF-001 already records RC-022 as NOT VERIFIED (2026-07-18).
 
 ---
@@ -162,6 +174,11 @@ by `backend/tests/unit/test_risk_control_manifest.py`.
 | UT-CAPA008 | `test_capa008_assistant_read_only.py` (39 tests, added 2026-10-17): MCP layer read-only (exact server and tool sets, no direct HTTP client, POST only to compute-only routes, every GET mounted and object-authorized, compute-only routes store nothing, every field sent is read by its route), intended-use phrase ban, identifier removal; report route refuses requests without a measurement; CVS/PRL readings validated, attributed to the authenticated reader, counted without the 40 % rule; UI sources | REQ-SAFE-022, REQ-SAFE-023, REQ-SAFE-024 |
 | UT-LONG-RULES | `test_longitudinal_clinical_rules.py`: activity candidate raised by >=1 new or enlarging candidate (MAGNIMS 2021; CAPA-008 CA-8.10) | REQ-SAFE-024, REQ-FUNC-055a |
 | UT-CAPA009 | `test_capa009_object_authorization_everywhere.py` (47 tests, added 2026-10-17): every mounted route referencing an object classified and re-derived; path dependencies match the path; no dependency can skip itself (async guards); 33 requests by an unentitled user → 404 before any data service; 4 administrator-only routes → 403; positive controls; overlay/reference-image authorization; tool inputs from one patient; initiator registry | REQ-SEC-014, REQ-SEC-015, REQ-SEC-016, REQ-SEC-019, REQ-SEC-020 |
+| UI-RC016-023 | `frontend/src/components/ViewportSafetyOverlay.test.tsx` (CAPA-004): the overlay renders identity, missing-identity warning, orientation, UNKNOWN alert, no L/R glyph, caveat | REQ-SAFE-016, REQ-SAFE-013 (RC-016, RC-023) |
+| UI-CAPA010-3D | `frontend/src/components/ImageViewer3D.capa010.test.tsx` (10 tests, added 2026-10-17): the real 3D viewer with a recording niivue stand-in — identity and missing-identity warning in volume and multiplanar mode; the effective options of every 3D niivue instance fed to the REAL niivue drawing routines draw no orientation cube and no slice letters; orientation and caveat on the 3D viewport; lesion crosshair (volume, four multiplanar panels) and box at affine · (y, x, z) | REQ-SAFE-016, REQ-SAFE-025, REQ-SAFE-026 (RC-016, RC-023, RC-037) |
+| UI-CAPA010-MPV | `frontend/src/components/MultiPanelViewer.capa010.test.tsx` (6 tests, added 2026-10-17): identity and missing-identity warning on every panel; each panel shows its own image's orientation, keeps it on slice change and clears it on reassignment; caveat on every panel | REQ-SAFE-016, REQ-SAFE-025 (RC-016, RC-023) |
+| UI-CAPA010-APP | `frontend/src/ViewerApp.capa010.test.tsx` (5 tests, added 2026-10-17): the REAL viewer page (mocked backend) puts the loaded identity on 2D, multi-panel, 3D volume and 3D multiplanar; the rendered page with the app's real CSS, measured in a real headless browser at 1366x768, 1600x900, 1920x1080, shows every caveat in full (fails in CI if no browser) | REQ-SAFE-016, REQ-SAFE-025 (RC-016, RC-023) |
+| UI-RC038 | `frontend/src/components/MeasurementOverlay.rc038.test.tsx` (6 tests, added 2026-10-17): simulated clicks on the real component — ruler true length at zoom 2, same length at zoom 1/2/4 with pan, ROI true area at zoom 2, ruler follows the anatomy on zoom and on pan, angle in millimetres on 2 mm x 1 mm pixels | REQ-SAFE-027, REQ-FUNC-090/091/092 (RC-038) |
 
 ---
 
