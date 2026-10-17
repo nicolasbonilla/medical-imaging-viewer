@@ -50,6 +50,8 @@ def main():
     ap.add_argument("--meta", nargs="*", default=[], help='k=v pairs (values may contain spaces if quoted)')
     a = ap.parse_args()
 
+    if b"\r" in open(a.startup, "rb").read():          # bash on the VM fails on Windows line endings
+        raise SystemExit(f"{a.startup} has CRLF line endings; convert to LF before launching")
     region = a.zone.rsplit("-", 1)[0]
     price = pricing.price(a.machine_type, region, spot=a.spot, gpu=a.gpu, disk_gb=a.disk_gb)
     meta = dict(kv.split("=", 1) for kv in a.meta)
