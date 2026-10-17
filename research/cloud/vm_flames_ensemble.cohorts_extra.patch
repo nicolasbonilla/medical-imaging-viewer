@@ -1,0 +1,70 @@
+--- a/research/cloud/vm_flames_ensemble.sh
++++ b/research/cloud/vm_flames_ensemble.sh
+@@ -13,6 +13,10 @@
+ # Metadata (all optional):
+ #   folds="0 1 2 3 4"   case-offset=0   case-limit=0 (0 = all)   datasets="openms mslesseg"
+ #   hourly-rate=0.08    machine-desc=n2-standard-8   max-hours=15
++# Extra cohorts (docs/research/cohorts-extra.md): datasets may also list "ms3seg muslim pedims".
++#   They need the fetcher passed as metadata, e.g.
++#   --metadata-from-file=startup-script=vm_flames_ensemble.sh,cohorts-extra-py=cohorts_extra.py
++#   MS3SEG and Muslim FLAIRs keep the skull -> HD-BET v2 (CPU, no TTA) strips the selected cases.
+ exec > /var/log/flames.log 2>&1
+ set -x
+ MD="http://metadata/computeMetadata/v1/instance"
+@@ -53,6 +57,14 @@
+ pip install -q torch torchvision --index-url https://download.pytorch.org/whl/cpu 2>&1 | tail -2
+ pip install -q nnunetv2 nibabel 2>&1 | tail -2
+ python3 -c "import numpy,torch,nibabel;print('deps ok', numpy.__version__, torch.__version__, 'threads', torch.get_num_threads())" || exit 1
++EXTRA=""; for d in ms3seg muslim pedims; do case " $DATASETS " in *" $d "*) EXTRA="$EXTRA $d";; esac; done
++if [ -n "$EXTRA" ]; then
++  meta attributes/cohorts-extra-py > $W/cohorts_extra.py
++  python3 -c "import sys; sys.path.insert(0, '$W'); import cohorts_extra as c; print('cohorts_extra ok', sorted(c.FETCHERS))" \
++    || { echo "cohorts_extra.py missing or broken (metadata cohorts-extra-py)"; exit 1; }
++  pip install -q "hd-bet==2.0.1" 2>&1 | tail -2
++  which hd-bet || exit 1
++fi
+ log
+ 
+ echo "=== [2/5] FLAMeS weights (Zenodo 17955359) ==="
+@@ -91,13 +103,41 @@
+             else:
+                 fl = glob.glob(f"{pat}/*FLAIR*.nii.gz"); gt = glob.glob(f"{pat}/*MASK*.nii.gz")
+                 if fl and gt: add(f"mslesseg_{os.path.basename(pat)}", fl[0], gt[0])
++# Extra cohorts (research/cloud/cohorts_extra.py): FLAIR + binary lesion mask on the same grid.
++EXTRA = [d for d in ("ms3seg", "muslim", "pedims") if d in DATASETS]
++pending = {}   # case -> (FLAIR with skull, gt): skull-stripped below, only if selected
++if EXTRA:
++    sys.path.insert(0, W)
++    import cohorts_extra as cx
++    for name in EXTRA:
++        try:
++            got = cx.FETCHERS[name](f"{W}/extra")
++        except Exception as e:  # one unreachable source must not kill the whole run
++            print("FETCH FAILED", name, repr(e)); continue
++        print("FETCHED", name, len(got))
++        for cid, fl, gt, strip in got:
++            if strip:
++                pending[cid] = (fl, gt); gt_map[cid] = gt
++            else:
++                add(cid, fl, gt)
+ cases = sorted(gt_map)
+ cases = cases[OFF:] if LIMIT <= 0 else cases[OFF:OFF + LIMIT]
++sel = [c for c in cases if c in pending]
++if sel:  # HD-BET once (folder mode) on the selected cases; brain = raw * mask on the ORIGINAL grid
++    brains = cx.hdbet_strip({c: pending[c][0] for c in sel}, f"{W}/extra/hdbet",
++                            gts={c: pending[c][1] for c in sel}, device="cpu", tta=False)
++    for c in sel:
++        if c in brains: add(c, brains[c], pending[c][1])
++        else: print("HD-BET FAILED -> dropped", c)
++    cases = [c for c in cases if c not in pending or c in brains]
+ for f in glob.glob(f"{IN}/*_0000.nii.gz"):
+     if os.path.basename(f)[:-len("_0000.nii.gz")] not in cases: os.remove(f)
+ json.dump({c: gt_map[c] for c in cases}, open(f"{W}/gt_map.json", "w"))
+ print("ASSEMBLED", len(cases), "cases:", cases[:3], "...", cases[-3:])
+ PY
++for q in $W/extra/*/manifest.json $W/extra/hdbet/hdbet_qc.json; do
++  [ -f "$q" ] && gcloud storage cp "$q" "$BK/extra_qc/$NAME/$(basename "$(dirname "$q")")_$(basename "$q")" --quiet 2>/dev/null || true
++done
+ log
+ 
+ echo "=== [4/5] ground truth pairs -> bucket ==="
