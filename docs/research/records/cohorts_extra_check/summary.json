@@ -1,0 +1,101 @@
+[
+ {
+  "case_id": "ms3seg_001",
+  "flair": "ms3seg_001_flair.nii.gz",
+  "mask": "ms3seg_001_lesion.nii.gz",
+  "needs_skull_strip": true,
+  "shape": [
+   256,
+   256,
+   20
+  ],
+  "zooms_mm": [
+   0.8984,
+   0.8984,
+   6.8
+  ],
+  "axcodes": "LAS",
+  "same_shape": true,
+  "same_affine": true,
+  "mask_binary": true,
+  "mask_dtype": "uint8",
+  "lesion_voxels": 973,
+  "lesion_ml": 5.34,
+  "inplane_zooms_plausible": true,
+  "slice_spacing_plausible": true,
+  "lesion_to_ring_median_ratio": 1.259,
+  "extent_lr_mm": 161.7,
+  "extent_ap_mm": 192.3,
+  "ap_longer_than_lr": true,
+  "hdbet_same_affine": true,
+  "hdbet_brain_fraction": 0.1973,
+  "hdbet_lesion_outside_brain_frac": 0.0,
+  "pass": true,
+  "cohort": "ms3seg"
+ },
+ {
+  "case_id": "muslim_01",
+  "flair": "muslim_01_flair.nii.gz",
+  "mask": "muslim_01_lesion.nii.gz",
+  "needs_skull_strip": true,
+  "shape": [
+   256,
+   256,
+   23
+  ],
+  "zooms_mm": [
+   0.8599,
+   0.8599,
+   5.5
+  ],
+  "axcodes": "LAS",
+  "same_shape": true,
+  "same_affine": true,
+  "mask_binary": true,
+  "mask_dtype": "uint8",
+  "lesion_voxels": 776,
+  "lesion_ml": 3.156,
+  "inplane_zooms_plausible": true,
+  "slice_spacing_plausible": true,
+  "lesion_to_ring_median_ratio": 1.237,
+  "extent_lr_mm": 163.4,
+  "extent_ap_mm": 187.5,
+  "ap_longer_than_lr": true,
+  "hdbet_same_affine": true,
+  "hdbet_brain_fraction": 0.1882,
+  "hdbet_lesion_outside_brain_frac": 0.0,
+  "pass": true,
+  "cohort": "muslim"
+ },
+ {
+  "case_id": "pedims_P1_T1",
+  "flair": "pedims_P1_T1_flair.nii.gz",
+  "mask": "pedims_P1_T1_lesion.nii.gz",
+  "needs_skull_strip": false,
+  "shape": [
+   290,
+   320,
+   40
+  ],
+  "zooms_mm": [
+   0.75,
+   0.75,
+   3.9
+  ],
+  "axcodes": "LAS",
+  "same_shape": true,
+  "same_affine": true,
+  "mask_binary": true,
+  "mask_dtype": "uint8",
+  "lesion_voxels": 1060,
+  "lesion_ml": 2.325,
+  "inplane_zooms_plausible": true,
+  "slice_spacing_plausible": true,
+  "lesion_to_ring_median_ratio": 1.363,
+  "extent_lr_mm": 130.5,
+  "extent_ap_mm": 165.0,
+  "ap_longer_than_lr": true,
+  "pass": true,
+  "cohort": "pedims"
+ }
+]
