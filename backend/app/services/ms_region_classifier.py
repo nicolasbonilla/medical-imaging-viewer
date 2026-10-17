@@ -16,12 +16,13 @@ DWM is NOT a DIS region. Spinal cord and optic nerve require separate imaging.
 Two methods are provided:
 
   - **Parcellation-based** (generate_zone_map): Uses SynthSeg/FreeSurfer labels
-    with Euclidean Distance Transforms (EDT). Higher accuracy when parcellation
-    is available.
+    with Euclidean Distance Transforms (EDT). Landmark-based, but its accuracy has not
+    been measured (HAZ-005; the former "higher accuracy" claim is withdrawn, CAPA-006).
 
   - **MSMask-based** (generate_zone_map_atlas): Uses LST-AI's MSMask atlas
     with binary dilation (Wiltgen et al., NeuroImage: Clinical 2024).
-    The only published, validated method for MAGNIMS zone classification.
+    Adapted from LST-AI's published MAGNIMS zone method (CAPA-006: the former "only
+    published, validated method" wording overstated it; this adaptation is not validated).
 
 Priority cascade: IT -> PV -> JC -> DWM (most specific first).
 
@@ -71,7 +72,8 @@ WHITE_MATTER_LABELS = {2, 41}  # L/R Cerebral White Matter
 # =============================================================================
 
 # The MSMask is a manually-labeled MNI152 atlas included in LST-AI.
-# It is the ONLY published, validated atlas for MAGNIMS zone classification.
+# Published with LST-AI (Wiltgen et al. 2024). Its use here is an adaptation whose region
+# accuracy has not been measured (HAZ-005); it is MNI152 and applied only on MNI grids (RC-032).
 MSMASK_PATH = "/app/data/msmask/sub-mni152_space-mni_msmask.nii.gz"
 MSMASK_LABELS = {"CSF": 1, "GM": 2, "WM": 3, "Ventricles": 4, "Infratentorial": 5}
 
@@ -125,7 +127,7 @@ def classify_lesions_with_parcellation(
     """
     Classify MS lesions into MAGNIMS regions using brain parcellation + EDT.
 
-    This is the high-accuracy method. Requires a brain parcellation with
+    Landmark-based contact rule (accuracy unmeasured, HAZ-005). Requires a brain parcellation with
     FreeSurfer/SynthSeg labels for the same image.
 
     Algorithm:
@@ -304,8 +306,12 @@ def classify_lesions_geometric(
       - Juxtacortical: near brain surface (distance from brain edge)
       - Deep White Matter: everything else
 
-    Less accurate than parcellation-based method (~70% vs ~90+% agreement
-    with expert classification), but requires no additional data.
+    Coordinate heuristics, not anatomical landmarks; requires no additional data.
+    No accuracy figure has been measured for this or any other path (the former
+    "~70% vs ~90+% agreement" claim had no evidence — withdrawn, CAPA-006).
+    "Lower 25%" is along array axis 0, so IT is only meaningful for axial slices ordered
+    inferior -> superior: callers must hand the image over via prepare_geometric_image(),
+    which refuses any other orientation (CAPA-006 CA-6.6).
 
     Args:
         lesion_mask: 3D binary lesion mask (D, H, W), values > 0 = lesion.
@@ -337,7 +343,15 @@ def classify_lesions_geometric(
     depth, height, width = lesion_mask.shape
 
     # --- Estimate brain mask (all non-zero in lesion or image) ---
-    if image_data is not None and image_data.shape == lesion_mask.shape:
+    # CAPA-006: a mismatched image used to be dropped SILENTLY for a whole-volume "brain"
+    # (juxtacortical then meant "near the array corner"). Refuse instead; callers use
+    # prepare_geometric_image() to hand the image over in the lesion mask's (k, a0, a1) order.
+    if image_data is not None and image_data.shape != lesion_mask.shape:
+        raise ValueError(
+            f"image_data {image_data.shape} does not match lesion_mask {lesion_mask.shape}; "
+            "pass the image in the lesion mask's axis order (prepare_geometric_image)"
+        )
+    if image_data is not None:
         # Use Otsu threshold to get brain mask
         from skimage.filters import threshold_otsu
         try:
@@ -442,7 +456,7 @@ def classify_lesions_geometric(
             "region_id": region_id,
             "region": region_name,
             "confidence": confidence,  # None — geometric method is not calibrated
-            "confidence_note": "Region assigned by geometric heuristics (least accurate path). No calibrated per-lesion confidence exists on any path.",
+            "confidence_note": "Region assigned by geometric heuristics (coordinate rules, not anatomical landmarks; accuracy not measured). No calibrated per-lesion confidence exists on any path.",
             "volume_mm3": round(volume_mm3, 2),
             "volume_ml": round(volume_mm3 / 1000, 4),
             "voxel_count": voxel_count,
@@ -513,6 +527,16 @@ def classify_from_zone_mask(
         Dict with classified_mask, lesions list, summary, processing time.
     """
     from scipy.ndimage import label as scipy_label
+
+    # RC-032 (CAPA-006): zones and lesions must share one grid and axis order. A mismatch used
+    # to surface as an IndexError deep inside (swallowed by `auto` -> silent geometric fallback),
+    # and a same-shape but transposed zone map (square in-plane grids) is undetectable here —
+    # callers must hand over zone maps in the lesion mask's (k, a0, a1) order.
+    if np.shape(zone_mask) != np.shape(lesion_mask):
+        raise ValueError(
+            f"zone map {np.shape(zone_mask)} does not match the lesion mask "
+            f"{np.shape(lesion_mask)}; refusing to classify on a mismatched grid"
+        )
 
     start_time = time.time()
 
@@ -673,6 +697,18 @@ def classify_lesions_with_atlas(
         zone_gen_ms,
     )
 
+    # generate_zone_map_atlas returns the zone map in NIfTI-native (a0, a1, k) order, but the
+    # app's lesion masks are internal (D, H, W) = (k, a0, a1) (RC-031). Without this transpose
+    # the MSMask path raised a shape error on every non-cubic MNI volume (500, found
+    # 2026-09-28) — and on a cubic volume it would have applied the zones silently ROTATED.
+    # The zone-map endpoint already applied the same (2, 0, 1) transpose.
+    zone_mask = np.transpose(zone_mask, (2, 0, 1))
+    if zone_mask.shape != lesion_mask.shape:
+        raise ValueError(
+            f"zone map {zone_mask.shape} does not match the lesion mask {lesion_mask.shape} "
+            "after reorientation to (k, a0, a1); refusing to classify on a mismatched grid"
+        )
+
     # 2. Classify using the generated zone mask
     result = classify_from_zone_mask(lesion_mask, zone_mask, voxel_spacing)
 
@@ -822,6 +858,179 @@ def generate_zone_map(
     }
 
 
+# ─── Path preconditions (HAZ-005, RC-032, CAPA-006) ─────────────────────────────
+# Each classification path is only valid under a precondition. These helpers make the
+# preconditions checkable instead of assumed; callers must fail closed when they do not hold.
+
+# Every landmark the parcellation path needs, in BOTH hemispheres: cerebral white matter
+# (2/41), cortex (3/42), lateral ventricles (4/43) and brainstem (16). A FreeSurfer aseg or a
+# SynthSeg parcellation carries all of them; a MAGNIMS zone map (1-4), a region-classified
+# lesion mask (1-6) or an instance-labelled lesion mask (1..N) does not, and neither does an
+# aparc+aseg whose cortex labels (1000+/2000+) cannot be read as 3/42.
+FREESURFER_REQUIRED_LABELS = frozenset({2, 3, 4, 16, 41, 42, 43})
+# A whole-brain parcellation covers the brain (~1-1.6 L); lesion masks cover a few mL.
+MIN_PARCELLATION_FOREGROUND_ML = 500.0
+ZONE_MAP_DESCRIPTION = "MAGNIMS Zone Map"
+
+
+def looks_like_freesurfer_parcellation(label_values, description=None, foreground_ml=None) -> bool:
+    """True if a segmentation can be read as a whole-brain FreeSurfer-label parcellation.
+
+    CAPA-006 (finding 6): classify-regions accepted any sibling segmentation with >= 3 of
+    {2,3,4,7,8,10,16,41,42,43}. A MAGNIMS zone map (labels 1-4) passed, and its label 4 (Deep
+    White Matter) was read as the lateral ventricle — DWM lesions came out Periventricular.
+    Review round 2 showed that "one hemispheric/brainstem label" was still not enough (an
+    instance-labelled lesion mask 1..20 passed; a parcellation without cortex labels passed,
+    so JC could never be assigned). Now: every required landmark label present, not a zone
+    map, and — when the caller knows the voxel volume — a brain-sized labelled volume.
+    """
+    if description == ZONE_MAP_DESCRIPTION:
+        return False
+    labels = {int(v) for v in label_values if int(v) > 0}
+    if not FREESURFER_REQUIRED_LABELS <= labels:
+        return False
+    if foreground_ml is not None and foreground_ml < MIN_PARCELLATION_FOREGROUND_ML:
+        return False
+    return True
+
+
+GEOMETRIC_MAX_SLICE_TILT_DEG = 30.0
+
+
+class GeometricPreconditionError(ValueError):
+    """The geometric heuristics cannot be applied validly to this image (HAZ-005, RC-032).
+    Raised by prepare_geometric_image; callers must fail closed."""
+
+
+def prepare_geometric_image(affine, image_data_native, lesion_shape) -> np.ndarray:
+    """Return the source image in the lesion mask's internal (k, a0, a1) order, or raise.
+
+    classify_lesions_geometric derives the brain outline from the image and reads
+    "infratentorial" as the lowest 25 % of that outline along array axis 0. CAPA-006 found
+    both assumptions unenforced: the route passed the image in NIfTI-native (a0, a1, k)
+    order, so on every non-cubic volume the outline was discarded for the whole array
+    (juxtacortical then meant "near the array corner"), and axis 0 was never checked to be
+    the inferior->superior axis (wrong IT on sagittal/coronal or reversed acquisitions).
+    """
+    if affine is None or image_data_native is None:
+        raise GeometricPreconditionError(
+            "The geometric region heuristics need the source image (brain outline and "
+            "orientation); it could not be read, so regions were not assigned."
+        )
+    import nibabel as nib
+
+    A = np.asarray(affine, dtype=float)
+    if A.shape != (4, 4) or not np.all(np.isfinite(A)) or abs(np.linalg.det(A[:3, :3])) < 1e-8:
+        raise GeometricPreconditionError(
+            "The image orientation cannot be determined, so the geometric region heuristics "
+            "(which need to know which way is superior) were not applied."
+        )
+    codes = nib.aff2axcodes(A)
+    # Obliquity of the slice axis: the "lowest 25 %" rule is a coordinate heuristic, so a
+    # strongly tilted slice axis is refused rather than trusted (aff2axcodes alone would
+    # accept up to 45 deg).
+    k_dir = A[:3, 2] / np.linalg.norm(A[:3, 2])
+    tilt_deg = float(np.degrees(np.arccos(min(1.0, abs(k_dir[2])))))
+    if codes[2] == "S" and tilt_deg > GEOMETRIC_MAX_SLICE_TILT_DEG:
+        raise GeometricPreconditionError(
+            f"The image's slice axis is tilted {tilt_deg:.0f} degrees from the inferior-superior "
+            f"axis (more than {GEOMETRIC_MAX_SLICE_TILT_DEG:.0f}); the geometric region heuristics "
+            "were not applied."
+        )
+    if codes[2] != "S":
+        raise GeometricPreconditionError(
+            "The geometric region heuristics need axial slices ordered from inferior to "
+            f"superior; this image's slice axis points {codes[2]} (orientation "
+            f"{''.join(str(c) for c in codes)}), so regions were not assigned."
+        )
+    data = np.asarray(image_data_native)
+    while data.ndim > 3 and data.shape[-1] == 1:        # (x, y, z, 1) -> (x, y, z)
+        data = data[..., 0]
+    if data.ndim != 3:
+        raise GeometricPreconditionError(
+            f"The source image is {data.ndim}-D; the geometric region heuristics need a 3-D image."
+        )
+    internal = np.transpose(data, (2, 0, 1))
+    if internal.shape != tuple(lesion_shape):
+        raise GeometricPreconditionError(
+            f"The source image {internal.shape} does not match the lesion mask "
+            f"{tuple(lesion_shape)} in (k, a0, a1) order; refusing to classify on a mismatched grid."
+        )
+    if not np.any(internal > 0):
+        raise GeometricPreconditionError(
+            "The source image is blank, so no brain outline can be derived for the geometric "
+            "region heuristics."
+        )
+    return internal
+
+
+class NotMNISpaceError(ValueError):
+    """The image grid is not MNI152-like, so the MNI-space MSMask atlas cannot be applied to it
+    validly (HAZ-005, RC-032). Raised by generate_zone_map_atlas; callers must fail closed."""
+
+
+# World-space field of view (x L-R, y P-A, z I-S) and grid centre of the standard MNI152
+# templates: FSL 1 mm (182x218x182) and 2 mm (91x109x91), ICBM 2009c (193x229x193) all have
+# their grid centre within 1 mm of (0, -18, 18).
+MNI_REFERENCE_FOV_MM = np.array([181.0, 217.0, 181.0])
+MNI_REFERENCE_CENTRE_MM = np.array([0.0, -18.0, 18.0])
+MNI_FOV_TOLERANCE = 0.25
+MNI_CENTRE_TOLERANCE_MM = 10.0
+MNI_ISOTROPY_TOLERANCE = 1.05
+
+
+def looks_mni(affine, shape, header=None) -> bool:
+    """Best-effort check that an image is on a standard MNI152 grid, so the MSMask atlas
+    (MNI152) can be resampled onto it VALIDLY. No registration is performed anywhere, so on a
+    native scan the atlas zones would sit where MNI says, not where the anatomy is. Measured
+    2026-09-28 (scripts/safety/haz005_atlas_misregistration_probe.py): moving the anatomy by up
+    to 3 deg / 3 % / 5 mm inside an MNI grid already changes the MAGNIMS region of a large
+    share of expert lesions and can flip brain DIS (CAPA-006 §4).
+
+    Every condition must hold (MNI templates satisfy all of them; typical native scans fail
+    at least one):
+      1. isotropic voxels (max/min spacing <= 1.05) — 2D clinical acquisitions are not;
+      2. axis-aligned AND not permuted: voxel axis c runs along world axis c within ~2.5 deg
+         (generate_zone_map_atlas reads the spacing from the affine diagonal);
+      3. field of view within 25 % of 181 x 217 x 181 mm, PER world axis (not sorted);
+      4. grid centre within 10 mm of the MNI template centre (0, -18, 18) — so the atlas is
+         never silently re-centred on a gated image;
+      5. when the header is given: a spatial transform is set (sform or qform code != 0).
+    Review 2026-09-28 (CAPA-006): the first version compared SORTED extents with no isotropy
+    or centre condition and accepted native 2D FLAIR (e.g. 240x240x48 at 0.94x0.94x3 mm).
+
+    It still cannot certify true normalization: an image resampled onto an MNI grid without
+    being registered to it passes. Region accuracy stays unmeasured (HAZ-005).
+    """
+    try:
+        A = np.asarray(affine, dtype=float)
+        if A.shape != (4, 4) or not np.all(np.isfinite(A)):
+            return False
+        R = A[:3, :3]
+        vox = np.linalg.norm(R, axis=0)
+        if not np.all(vox > 1e-3) or vox.max() / vox.min() > MNI_ISOTROPY_TOLERANCE:
+            return False
+        Rn = R / vox
+        if any(abs(Rn[c, c]) < 0.999 for c in range(3)):
+            return False
+        shp = np.asarray(shape[:3], dtype=float)
+        extent = np.abs(np.diag(R)) * (shp - 1.0)
+        if np.any(np.abs(extent - MNI_REFERENCE_FOV_MM) / MNI_REFERENCE_FOV_MM >= MNI_FOV_TOLERANCE):
+            return False
+        centre = R @ ((shp - 1.0) / 2.0) + A[:3, 3]
+        if np.linalg.norm(centre - MNI_REFERENCE_CENTRE_MM) > MNI_CENTRE_TOLERANCE_MM:
+            return False
+        if header is not None:
+            try:
+                if int(header["sform_code"]) == 0 and int(header["qform_code"]) == 0:
+                    return False
+            except (KeyError, TypeError, ValueError):
+                pass
+        return True
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def generate_zone_map_atlas(
     target_img,
     voxel_spacing: tuple[float, float, float],
@@ -829,14 +1038,16 @@ def generate_zone_map_atlas(
     """
     Generate a 3D MAGNIMS zone map using LST-AI's MSMask atlas.
 
-    Uses the exact methodology from LST-AI (Wiltgen et al., NeuroImage:
-    Clinical 2024), the ONLY published and validated tool for MAGNIMS zone
-    classification:
+    Adapted from the zone method of LST-AI (Wiltgen et al., NeuroImage:
+    Clinical 2024), a published tool for MAGNIMS zone classification. The
+    adaptation (structure dilation on the atlas, contact rule on the lesion) has
+    not been validated (CAPA-006: the former "exact methodology" wording is withdrawn):
 
     1. Load MSMask atlas (manually-labeled MNI152, 5 tissue classes)
     2. Extract anatomical masks from MSMask labels
     3. Binary dilation (3x3x3 cube) of ventricles and cortex for "abutting"
-    4. Classify WM voxels: PV > JC > IT > DWM (LST-AI priority order)
+    4. Classify WM voxels: IT > PV > JC > DWM (IT set first and never overridden; PV
+       overrides JC) — CAPA-006: the former "PV > JC > IT" line contradicted the code
     5. Resample zone map to patient image grid via corrected affine
 
     MSMask labels (from LST-AI source):
@@ -869,6 +1080,14 @@ def generate_zone_map_atlas(
     start_time = time.time()
 
     # ── 1. Load MSMask atlas ──
+    # HAZ-005 / RC-032: never apply the MNI atlas to an image that is not in MNI space.
+    if not looks_mni(target_img.affine, target_img.shape):
+        raise NotMNISpaceError(
+            "Atlas-based (MSMask) region classification requires an image registered to MNI152 "
+            "space; this image's grid is not MNI-like (oblique axes or non-MNI field of view), so "
+            "the atlas would be applied without registration and assign wrong regions."
+        )
+
     msmask_path = Path(MSMASK_PATH)
     if not msmask_path.exists():
         # Fallback: check relative to module
@@ -909,7 +1128,7 @@ def generate_zone_map_atlas(
         int(wm.sum()), int(infratentorial.sum()),
     )
 
-    # ── 3. Binary dilation (LST-AI exact methodology) ──
+    # ── 3. Binary dilation (adapted from LST-AI, which dilates the lesion instead) ──
     # LST-AI uses a 3x3x3 cube structuring element for "abutting" criterion.
     # At 1mm isotropic this captures structures within ~1.73mm (cube diagonal).
     # We dilate ALL reference masks: ventricles, cortex, AND infratentorial.
@@ -964,6 +1183,9 @@ def generate_zone_map_atlas(
 
     center_distance = float(np.linalg.norm(target_center_mni - atlas_center_mni))
 
+    # RC-032: an image that passed looks_mni has its grid centre within 10 mm of the MNI
+    # template centre (which is this atlas's grid centre), so the re-centring branch below
+    # is not reached for gated images; it is kept only as a defensive fallback.
     if center_distance < 30.0:
         # Target affine is plausible for MNI space — use it directly
         logger.info(
@@ -1002,14 +1224,17 @@ def generate_zone_map_atlas(
 
     # ── 6. Compute zone statistics ──
     total_classified = int((zone_final > 0).sum())
+    # RC-024 (CAPA-006 review): volumes use the image's voxel volume — they assumed 1 mm^3,
+    # understating a 2 mm MNI grid 8x.
+    zone_voxel_mm3 = float(np.prod(np.abs(np.asarray(voxel_spacing, dtype=float))))
     zone_stats = {}
     for zone_id, zone_name in REGION_NAMES.items():
         count = int((zone_final == zone_id).sum())
         zone_stats[zone_name] = {
             "zone_id": zone_id,
             "voxel_count": count,
-            "volume_mm3": round(count * 1.0, 1),
-            "volume_ml": round(count / 1000, 3),
+            "volume_mm3": round(count * zone_voxel_mm3, 1),
+            "volume_ml": round(count * zone_voxel_mm3 / 1000, 3),
             "percentage": round(count / max(total_classified, 1) * 100, 1),
         }
 
@@ -1226,11 +1451,11 @@ def generate_zone_map_geometric(
     it_zone = brain_mask & (z_grid < it_z_threshold)
     zone_mask[it_zone] = 3
 
-    # 2. Periventricular: within 3mm of ventricles (MAGNIMS clinical threshold)
+    # 2. Periventricular: within PV_DISTANCE_THRESHOLD_MM (1.5 mm, contact) of the ventricles
     pv_zone = brain_mask & ~it_zone & (dist_to_ventricle <= PV_DISTANCE_THRESHOLD_MM)
     zone_mask[pv_zone] = 1
 
-    # 3. Juxtacortical: within 4mm of brain surface (MAGNIMS clinical threshold)
+    # 3. Juxtacortical: within JC_DISTANCE_THRESHOLD_MM (1.5 mm, contact) of the brain surface
     jc_zone = brain_mask & ~it_zone & ~pv_zone & (
         dist_from_cortex <= JC_DISTANCE_THRESHOLD_MM
     )

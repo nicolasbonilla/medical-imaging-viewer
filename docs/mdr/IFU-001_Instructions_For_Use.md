@@ -1,6 +1,6 @@
 # MSTool-AI: Instructions for Use
 
-**Document ID**: IFU-001 | **Version**: 1.1 | **Date**: September 28, 2026
+**Document ID**: IFU-001 | **Version**: 1.2 | **Date**: September 28, 2026
 **Standard**: EU MDR 2017/745 Annex I Chapter III, EN ISO 20417:2021
 
 ---
@@ -9,6 +9,7 @@
 |---------|------|--------|-------------|--------|
 | 1.0 | 2026-04-12 | Development Team | — | Initial release |
 | 1.1 | 2026-09-28 | Development Team | — | MAGNIMS region classification: no per-lesion confidence is reported; region evidence and the "No WM zone — DWM by default" warning described (HAZ-005, REQ-SAFE-010 amended, RC-010 (amended)) |
+| 1.2 | 2026-09-28 | Development Team | N. G. Bonilla Vargas — approved 2026-10-17 (PR #43) | CAPA-006, HAZ-005: Section 10.3 method description corrected. Versions 1.0–1.1 stated distance thresholds of 3 mm (PV), 4 mm (JC) and 3 mm (IT) and a two-tier cascade (parcellation, geometric fallback). These were wrong when this document was issued and are withdrawn. The code applied 3.0/4.0/3.0 mm only in commit cf780f4 (2026-02-22, with a Harvard-Oxford zone map); commit 67fa336 (2026-02-28) changed it to 1.5 mm and added the MSMask atlas, and the four-path order dates from commit a637cdf (2026-03-14). Version 1.0 of this document was issued on 2026-04-12 (commit 9ac536d) already stating 3/4/3 mm, six weeks after the code had moved to 1.5 mm and on the day the DDS was issued stating 1.5 mm: the labelling had not been reviewed against the code or the DDS. The 3/4/3 mm values were never published MAGNIMS thresholds. Section 10.3 now gives: (a) the MAGNIMS contact criterion and the priority used by each path; (b) the four classification paths in the order used, including that the LST-AI path copies LST-AI's zones voxel by voxel with no contact rule and no priority; (c) the parcellation test (a whole-brain FreeSurfer-label parcellation of the same image) and the limits of the 1.5 mm rule; (d) the five MNI grid conditions of the atlas path and the limits of that check; (e) the geometric path's preconditions; (f) the on-screen warnings; (g) the difference between a refusal and an internal error. It also gives the figures of the misalignment experiment. Spinal cord and optic nerve: "not evaluated from the images". Section 6.1: replaced sentence marked; bullet on MNI-registered images added. Sections 9.3 and 10.1: SynthSeg "disabled by default (not enabled by the deployment pipeline)"; "Segmentation model hosted on Google Vertex AI" withdrawn. MNI and LST-AI added to Section 11 |
 
 ---
 
@@ -74,7 +75,8 @@ MSTool-AI is **NOT** indicated for use in the following scenarios:
 - **Not for standalone diagnosis.** MSTool-AI is a clinical decision-support tool. It does not replace professional medical judgment.
 - **Edge AI screening is assistive only.** The browser-based normal/abnormal triage classification is a rapid screening aid. It is not a diagnostic test and must not be used as the sole basis for clinical decisions.
 - **Report generation uses AI language models.** Generated reports may contain inaccuracies, hallucinations, or inappropriate conclusions. All generated reports must be reviewed and edited by a qualified radiologist before clinical use.
-- **MAGNIMS classification accuracy depends on segmentation quality.** Region classification results are directly dependent on the accuracy of the underlying brain parcellation and lesion segmentation.
+- **MAGNIMS classification accuracy depends on segmentation quality.** ~~Region classification results are directly dependent on the accuracy of the underlying brain parcellation and lesion segmentation.~~ *(Replaced v1.2, CAPA-006: a parcellation is only one of the anatomical references used.)* Region classification results are directly dependent on the accuracy of the lesion segmentation and of the anatomical reference used (LST-AI zones, parcellation, MNI atlas or geometric heuristics — see §10.3).
+- **Atlas-based regions require an MNI-registered image.** The MSMask atlas is in MNI152 space and MSTool-AI performs no registration. It is used only for images already registered to MNI152 whose grid passes the MNI grid check (§10.3); native clinical scans normally fail the check. Otherwise the atlas is refused. In automatic mode the geometric heuristics are then used, if their own preconditions hold, with an amber warning on screen. These are coordinate rules, not anatomical landmarks, and their accuracy has not been measured. If they cannot be applied either, no regions are assigned. The grid check cannot prove that an image is truly normalized: some native scans can pass it (§10.3).
 - **No per-lesion confidence for region classification.** Lesion regions are assigned by a deterministic MAGNIMS rule; MSTool-AI does not report a per-lesion confidence or probability for the assigned region. The accuracy of region assignment has not yet been measured against expert region labels (HAZ-005, residual risk undetermined). Verify the location of every lesion that contributes to Dissemination in Space (DIS) before using the DIS assessment.
 
 ### 6.2 Precautions
@@ -150,7 +152,7 @@ The standard clinical workflow follows these steps:
 
 1. Open the Segmentation Panel (sidebar)
 2. Select segmentation mode:
-   - **Auto mode**: Automated brain parcellation using SynthSeg model
+   - **Auto mode**: Automated brain parcellation using SynthSeg model — *available only when the SynthSeg integration is enabled; it is disabled by default (not enabled by the deployment pipeline) (CAPA-006)*
    - **Interactive mode**: Click-based segmentation with positive/negative points
    - **Manual mode**: Brush/eraser painting tools with label presets
 3. Review and refine the segmentation mask
@@ -201,8 +203,8 @@ Press `?` to display the keyboard shortcuts modal. Key shortcuts include:
 
 ### 10.1 AI Segmentation
 
-- Brain parcellation: 33 FreeSurfer structures (SynthSeg-based)
-- Segmentation model hosted on Google Vertex AI
+- Brain parcellation: 33 FreeSurfer structures (SynthSeg-based) — *available only when the SynthSeg integration is enabled; it is disabled by default (not enabled by the deployment pipeline). When enabled, SynthSeg runs as a separate service at a configured endpoint (CAPA-006)*
+- ~~Segmentation model hosted on Google Vertex AI~~ *(Withdrawn v1.2, CAPA-006: no segmentation model is hosted on Google Vertex AI; the Vertex AI endpoints were never deployed and SynthSeg, when enabled, does not run on Vertex AI.)*
 
 ### 10.2 Brain Volumetry
 
@@ -212,16 +214,43 @@ Press `?` to display the keyboard shortcuts modal. Key shortcuts include:
 
 ### 10.3 MAGNIMS Region Classification
 
-Classification thresholds per McDonald 2024 criteria:
+**Criterion** (MAGNIMS consensus, Filippi et al. 2019; McDonald 2024 criteria):
 
-| Region | Abbreviation | Distance Threshold |
-|--------|-------------|-------------------|
-| Periventricular | PV | <= 3 mm from ventricle |
-| Juxtacortical | JC | <= 4 mm from cortex |
-| Infratentorial | IT | <= 3 mm from infratentorial structures |
-| Deep White Matter | DWM | Default (none of the above) |
+| Region | Abbreviation | A lesion is assigned to this region when it |
+|--------|-------------|---------------------------------------------|
+| Infratentorial | IT | lies in or touches the brainstem or cerebellum |
+| Periventricular | PV | abuts (is in contact with) the lateral ventricles |
+| Juxtacortical | JC | abuts the cortex |
+| Deep White Matter | DWM | meets none of the above |
 
-Two-tier classification: Tier 2 (SynthSeg parcellation + EDT distance transform) with Tier 1 (geometric heuristic) fallback. Priority cascade: IT > PV > JC > DWM.
+On the parcellation, MSMask and geometric paths the priority is IT > PV > JC > DWM; the LST-AI path copies LST-AI's zones voxel by voxel (see the table below). Only PV, JC and IT count towards Dissemination in Space (DIS) in the brain. MSTool-AI does not evaluate the spinal cord or the optic nerve from the images; evidence for these regions entered by the clinician is accepted by the DIS assessment.
+
+**Classification paths**: in automatic mode ("Auto"), MSTool-AI tries the paths in the order below and uses the first one that applies. The result states which path was used. **If every path that could apply refuses your image, the request is refused, the reasons are shown and no regions are assigned.** A refusal means that a path's preconditions do not hold for your image. It is different from an internal error, which is reported as an error ("Region classification failed") and not as a refusal. Only the atlas path has a partial exception: if it fails with an internal error in automatic mode, the geometric path is applied and the atlas-fault alert below is shown.
+
+| Order | Path | Used when | How "abutting" is implemented |
+|-------|------|-----------|-------------------------------|
+| 1 | LST-AI zones | Another segmentation of the same image was produced by LST-AI (its validation source contains "lst-ai"). The LST-AI integration is disabled by default (not enabled by the deployment pipeline). | Voxel by voxel: each lesion voxel takes the zone that LST-AI assigned at that voxel. No contact rule and no priority are applied, so one lesion can receive more than one region. Lesion voxels outside LST-AI's zones become DWM without a warning |
+| 2 | Parcellation + Euclidean distance transform | A whole-brain FreeSurfer-label parcellation **of the same image** is given explicitly, or is found among the other segmentations of the same image. To be accepted, it must meet all of these: it contains all of the labels {2, 3, 4, 16, 41, 42, 43} (cerebral white matter, cortex and lateral ventricles of both hemispheres, and the brainstem); it covers at least 500 mL; it is on the same voxel grid as the lesion mask; and it is not a MAGNIMS zone map. A MAGNIMS zone map, a lesion mask or a segmentation of another image, e.g. another timepoint, is never used as a parcellation. An explicitly given parcellation that fails these conditions, or belongs to another image, is refused (HTTP 422) and no regions are assigned. The SynthSeg integration is disabled by default (not enabled by the deployment pipeline). | Minimum distance between the lesion voxel centres and the lateral-ventricle (4, 43), cortex (3, 42) or brainstem/cerebellum (7, 8, 16, 46, 47) labels of 1.5 mm or less (direct contact). Limits: with slices thicker than 1.5 mm, contact through the slice direction is not detected; at 1 mm voxels, diagonal (corner) neighbours at 1.73 mm are missed |
+| 3 | MSMask atlas (LST-AI MSMask, Wiltgen et al. 2024; used here in an adapted form that has not been validated) | Used only for images already registered to MNI152: MSTool-AI performs no registration, and the image must pass all five grid conditions below. Native clinical scans normally fail these conditions; they are then classified by path 4, or refused if path 4 cannot be applied. | The zone map is generated fresh for every classification; a stored zone map is never reused. Zones: the atlas ventricle, cortex and infratentorial structures dilated by one voxel (3 x 3 x 3 cube on the 1 mm atlas; adapted from LST-AI, which dilates the lesion instead) and intersected with atlas white matter, plus the infratentorial structures themselves; zone precedence IT > PV > JC; the remaining atlas white matter is the DWM zone. A lesion is assigned the highest-priority zone that any of its voxels lies in (IT > PV > JC > DWM). A lesion with no voxel in any zone is DWM by default and flagged "No WM zone — DWM by default" |
+| 4 | Geometric heuristics (coordinate rules, not anatomical landmarks; accuracy not measured) | None of the paths above applies, and all of these hold: the source image can be read; its orientation can be determined; its slice axis runs from inferior to superior (axial acquisition) and is tilted no more than 30° from that axis; it is 3-D (a fourth dimension of size 1 is accepted); it is on the same grid as the lesion mask; it is not blank. Otherwise this path is refused: sagittal or coronal acquisitions, slices ordered from superior to inferior, and slices tilted more than 30° are not classified by it. | Brain outline = Otsu threshold (x 0.3) of the image intensities, holes filled (this is the head outline if the image is not skull-stripped). IT = lesion centroid in the lowest 25 % of the outline's extent along the slice axis; PV = mean distance of the lesion's voxels from the brain centre (midpoint of the outline's slice extent and the in-plane array centre) below 35 % of the largest such distance in the image array; JC = lesion within min(8 mm, 15 % of the maximum depth of the outline) of the outline surface; otherwise DWM. Priority IT > PV > JC > DWM. Whenever regions come from this path, an amber warning is shown: "Geometric heuristics: coordinate rules, not anatomical landmarks; their accuracy has not been measured. Verify every region before using it for DIS." When the atlas was refused or failed, the atlas warning or the atlas-fault alert below is shown instead |
+
+**Atlas-based regions require an MNI-registered image.** The MSMask atlas is in MNI152 space, and MSTool-AI does **not** register your image to it. The atlas path is therefore used only for images already registered to MNI152, and only when the image grid meets all of these conditions:
+
+1. isotropic voxels (largest / smallest voxel spacing at most 1.05);
+2. axes aligned with, and not permuted relative to, the world axes (within about 2.5°);
+3. field of view within 25 % of 181 x 217 x 181 mm on each axis;
+4. grid centre within 10 mm of the MNI template centre (0, -18, 18) mm;
+5. a spatial transform in the image header (sform or qform code not 0).
+
+Native clinical scans normally fail these conditions; they are then classified by path 4, if its preconditions hold. For any image that fails, the atlas is not used:
+
+- If the MSMask method was requested explicitly, the request is refused (HTTP 422) and no regions are assigned.
+- In automatic mode, the geometric heuristics (path 4) are used and an amber warning is shown: "Atlas regions not used: this image is not in MNI space, so the geometric fallback (coordinate rules, not anatomical landmarks) was applied. Verify every region before using it for DIS." If path 4 is refused as well, the request is refused with both reasons and no regions are assigned.
+- If the atlas path fails with an internal error (not a refusal) in automatic mode, the geometric heuristics are applied and a separate amber alert is shown: "Atlas regions could not be computed (internal error), so the geometric fallback was applied. Verify every region before using it for DIS." An internal error in the geometric path is reported as an error ("Region classification failed"), never as a refusal.
+
+This check looks only at the image grid. It cannot confirm that an image which passes it has actually been normalized to MNI152: an image resampled onto an MNI grid without being registered to it, or an imperfectly normalized one, passes. Use atlas-based regions only on images you know were registered to MNI152. Small misalignments matter: in a controlled experiment on 30 MNI-registered scans with expert-annotated lesions (MSLesSeg), moving the anatomy inside the MNI grid by up to 3°, 3 % and 5 mm changed the region of 216 of 786 lesions (27.5 %); by up to 8°, 7 % and 10 mm, 338 of 786 (43.0 %); by up to 15°, 10 % and 20 mm, 433 of 785 (55.2 %). The brain DIS result changed in 4, 1 and 3 of the 30 scans respectively (up to 13 %).
+
+> **Withdrawn (CAPA-006, 2026-09-28)**: versions 1.0–1.1 of this section stated distance thresholds of 3 mm (PV), 4 mm (JC) and 3 mm (IT) and a two-tier classification (parcellation with a geometric fallback). ~~These described an earlier software version.~~ *Correction (review 2026-09-28)*: they were wrong when this document was issued on 2026-04-12 — the code had applied 1.5 mm since 2026-02-28 (commit 67fa336) and the four-path order since 2026-03-14 (commit a637cdf); 3/4/3 mm had been applied only in commit cf780f4 (2026-02-22). They are withdrawn. The 3/4/3 mm values are not published thresholds: MAGNIMS defines these regions by contact.
 
 **Output (per lesion)**: the assigned region together with the evidence produced by the classification path that was used. No confidence score or probability is reported, because region assignment is a deterministic rule and no path has a calibrated per-lesion probability.
 
@@ -257,7 +286,9 @@ The accuracy of region assignment (any path) has not been measured against exper
 | FLAIR | Fluid-Attenuated Inversion Recovery |
 | IT | Infratentorial |
 | JC | Juxtacortical |
+| LST-AI | Lesion Segmentation Tool - AI (Wiltgen et al. 2024), source of the MSMask atlas |
 | MAGNIMS | Magnetic Resonance Imaging in MS |
+| MNI152 | Standard brain space of the Montreal Neurological Institute (MNI) |
 | MRI | Magnetic Resonance Imaging |
 | MS | Multiple Sclerosis |
 | NIfTI | Neuroimaging Informatics Technology Initiative |

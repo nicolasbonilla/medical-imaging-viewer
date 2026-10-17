@@ -1,0 +1,18 @@
+# HAZ-005 / CAPA-006 §4 — MSMask atlas misregistration probe
+# Command: backend/venv/Scripts/python scripts/safety/haz005_atlas_misregistration_probe.py
+# Data: 30 MSLesSeg scans (public, MNI-registered), expert lesion masks; seed 20260928.
+# Perturbation per scan and level: random rotation up to +/-deg about a random axis, scale up to
+# +/-pct, translation up to +/-mm per axis (uniform draws) — "up to", not "exactly".
+
+## Run 2 (2026-09-28, CURRENT) — region rule identical to the product (classify_from_zone_mask):
+## contact, IT > PV > JC, and a lesion in no zone is Deep White Matter by default.
+small (3 deg, 3%, 5 mm)     : lesions whose region changed 216/786 (27.5%) | brain-DIS flipped in 4/30 scans
+moderate (8 deg, 7%, 10 mm) : lesions whose region changed 338/786 (43.0%) | brain-DIS flipped in 1/30 scans
+large (15 deg, 10%, 20 mm)  : lesions whose region changed 433/785 (55.2%) | brain-DIS flipped in 3/30 scans
+
+## Run 1 (2026-09-28, SUPERSEDED) — used longitudinal_tracking_service._classify_region, which returns
+## "no region" (0) for a lesion in no zone where the product assigns DWM; the DWM<->none transitions
+## inflated the lesion figures (review finding S8). DIS flips were unaffected.
+small (3 deg, 3%, 5 mm)     : lesions whose region changed 221/786 (28.1%) | brain-DIS flipped in 4/30 scans
+moderate (8 deg, 7%, 10 mm) : lesions whose region changed 352/786 (44.8%) | brain-DIS flipped in 1/30 scans
+large (15 deg, 10%, 20 mm)  : lesions whose region changed 487/785 (62.0%) | brain-DIS flipped in 3/30 scans
