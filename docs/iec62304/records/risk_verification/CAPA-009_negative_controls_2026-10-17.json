@@ -1,5 +1,5 @@
 {
-  "executed": "2026-10-17T17:25:43",
+  "executed": "2026-10-17T17:46:07",
   "method": "one mutation at a time; each anchor asserted to occur exactly once",
   "hash_basis": "sha256 of the UTF-8 text with LF line endings",
   "source_sha256": {

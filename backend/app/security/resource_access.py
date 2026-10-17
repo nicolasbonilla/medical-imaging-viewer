@@ -421,30 +421,49 @@ async def require_document_list_scope(
 # CAPA-009: authorization of objects referenced in a request BODY or found by a
 # lookup (not by a path parameter). Same resolve-then-authorize rule, same 404.
 # ---------------------------------------------------------------------------
+def _services_or_deny(resource_label: str, *factories):
+    """Build the datastore services, or deny with the same 404.
+
+    The resolvers already turn a datastore error into "not found" (fail closed, no
+    enumeration signal). Building the services can fail the same way (no credentials,
+    datastore unreachable); that must also be a 404, never an unhandled 500.
+    """
+    try:
+        return [f() for f in factories]
+    except Exception:
+        logger.warning("Authorization datastore unavailable", extra={"resource": resource_label})
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"{resource_label} not found")
+
+
 async def authorize_patient_id(patient_id, user, resource_label: str = "Patient") -> None:
     """Authorize a patient referenced in a request body or query (404 when denied)."""
+    patients, care_team = _services_or_deny(resource_label, _patient_service, _care_team_service)
     await authorize_resolved_patient(
         patient_id=str(patient_id) if patient_id else None, resource_label=resource_label,
-        user=user, patient_service=_patient_service(), care_team_service=_care_team_service(),
+        user=user, patient_service=patients, care_team_service=care_team,
     )
 
 
 async def authorize_study_id(study_id, user) -> Optional[str]:
     """Authorize a study referenced outside the path; return its owning patient_id."""
-    pid = await resolve_study_patient_id(study_id, _study_service()) if study_id else None
+    studies, patients, care_team = _services_or_deny(
+        "Study", _study_service, _patient_service, _care_team_service)
+    pid = await resolve_study_patient_id(study_id, studies) if study_id else None
     await authorize_resolved_patient(
         patient_id=pid, resource_label="Study", user=user,
-        patient_service=_patient_service(), care_team_service=_care_team_service(),
+        patient_service=patients, care_team_service=care_team,
     )
     return pid
 
 
 async def authorize_document_id(document_id, user) -> Optional[str]:
     """Authorize a document referenced outside the path; return its owning patient_id."""
-    pid = await resolve_document_patient_id(document_id, _document_service()) if document_id else None
+    documents, patients, care_team = _services_or_deny(
+        "Document", _document_service, _patient_service, _care_team_service)
+    pid = await resolve_document_patient_id(document_id, documents) if document_id else None
     await authorize_resolved_patient(
         patient_id=pid, resource_label="Document", user=user,
-        patient_service=_patient_service(), care_team_service=_care_team_service(),
+        patient_service=patients, care_team_service=care_team,
     )
     return pid
 
@@ -454,13 +473,15 @@ async def require_version_access(
     current_user: User = Depends(get_current_active_user),
 ) -> None:
     """A document version belongs to its document, which belongs to a patient."""
+    documents, patients, care_team = _services_or_deny(
+        "Version", _document_service, _patient_service, _care_team_service)
     try:
-        version = await _document_service().get_version(version_id)
+        version = await documents.get_version(version_id)
         document_id = getattr(version, "document_id", None)
     except Exception:
         document_id = None
-    pid = await resolve_document_patient_id(document_id, _document_service()) if document_id else None
+    pid = await resolve_document_patient_id(document_id, documents) if document_id else None
     await authorize_resolved_patient(
         patient_id=pid, resource_label="Version", user=current_user,
-        patient_service=_patient_service(), care_team_service=_care_team_service(),
+        patient_service=patients, care_team_service=care_team,
     )

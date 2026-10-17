@@ -122,6 +122,9 @@ These reduce likelihood, not severity.
   - after the fix: it ran once and the response was 404.
 - `backend/tests/unit/test_capa009_object_authorization_everywhere.py`: 47 passed.
 - Full backend unit suite with CAPA-008 + CAPA-009: **1200 passed**, without cloud credentials as in CI.
+- Integration tests as run in CI (`tests/integration`, no cloud credentials): the first CI run failed 3 FHIR
+  tests because building the datastore service raised outside any handler. The new helpers now deny with
+  the same 404 when the services cannot be built (fail closed, consistent with the resolvers).
 - Adapted test: `test_conformal_route.py`. Its fake image check now returns a reference, as the
   real one does, because the route downloads `ref.object_path`.
 - **Negative controls** (`docs/iec62304/records/risk_verification/CAPA-009_negative_controls_2026-10-17.json`):
