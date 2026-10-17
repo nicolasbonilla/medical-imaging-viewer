@@ -136,3 +136,6 @@ scripts/calm-ms/.scorer_cache.npz
 scripts/calm-ms/.multisite_cache*.npz
 scripts/calm-ms/.multisite_adv_cache.npz
 scripts/calm-ms/.region_cache.npz
+
+# research/cloud price snapshots (re-fetchable)
+research/cloud/.price_cache/

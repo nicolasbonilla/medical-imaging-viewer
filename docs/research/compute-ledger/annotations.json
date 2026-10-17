@@ -1,0 +1,84 @@
+{
+ "phase1-lstai": {
+  "purpose_es": "Fase 1: mapas de probabilidad de LST-AI en 19 casos ISBI"
+ },
+ "flames-pilot": {
+  "purpose_es": "FLAMeS, piloto 1 de agosto: 3 casos de principio a fin",
+  "notes_es": "Encontró 4 fallos de entorno (falta unzip, metadatos, ruta de conda, numpy); se validaron el registro de coste y el borrado automático."
+ },
+ "flames-pilot2": {
+  "purpose_es": "FLAMeS, piloto 2 de agosto",
+  "notes_es": "Faltaba pip en la imagen del sistema; corregido."
+ },
+ "flames-pilot3": {
+  "purpose_es": "FLAMeS, piloto 3 de agosto",
+  "notes_es": "Fallo torch/torchvision incompatibles (el mismo que reapareció el 17-10 en flames-v2-pilot)."
+ },
+ "flames-pilot4-gpu": {
+  "purpose_es": "FLAMeS, piloto 4 de agosto con tarjeta gráfica NVIDIA P4",
+  "notes_es": "La tarjeta P4 no fue visible para torch; se pasó a solo procesador."
+ },
+ "flames-pilot5-cpu": {
+  "purpose_es": "FLAMeS, piloto 5 de agosto solo con procesador (validado)",
+  "notes_es": "Cadena validada; se corrigió la orientación de los mapas (transposición 2,1,0)."
+ },
+ "flames-full": {
+  "purpose_es": "FLAMeS completo de agosto: mapas de 145 casos (30 Ljubljana + 115 MSLesSeg)",
+  "notes_es": "Los mapas de agosto existen, pero el registro de agosto no anotó el tiempo real de esta fila."
+ },
+ "flames-controls": {
+  "purpose_es": "FLAMeS en 100 controles sanos SibBMS (planificada en agosto)"
+ },
+ "sibbms-pilot": {
+  "purpose_es": "Piloto SibBMS: 3 controles sanos (sustituida por sibbms-pilots)"
+ },
+ "flames-backfill": {
+  "purpose_es": "MSLesSeg: los 22 casos de prueba que faltaban"
+ },
+ "sibbms-pilots": {
+  "purpose_es": "Validación de la cadena de controles sanos SibBMS (2 pilotos)"
+ },
+ "sibbms-full": {
+  "purpose_es": "Controles sanos SibBMS en 4 máquinas en paralelo",
+  "notes_es": "30 de 40 controles; una máquina Spot fue interrumpida por Google. Las horas de máquina son la suma de las 4."
+ },
+ "flames-pilot-1": {
+  "date_utc": "2026-10-17",
+  "purpose": "Pilot v1 (old script, Spot): FLAMeS fold 0 on Ljubljana cases, parity check against the Aug-2026 maps",
+  "purpose_es": "Piloto v1 en la nube de investigación (Spot): FLAMeS modelo 0 en casos de Ljubljana, comparado con agosto",
+  "paper_or_feature": "A",
+  "status": "ok",
+  "machine_type": "n2-standard-8",
+  "spot": true,
+  "zone": "us-central1-a",
+  "notes": "Reproduced the Aug-2026 maps (Dice 1.0; max difference 0.002 = storage rounding). Old script: CPU platform and stage times not recorded; its recorded rate 0.08 USD/h was an under-estimate.",
+  "notes_es": "Reprodujo los mapas de agosto (mismas lesiones; diferencia máxima 0,002 por redondeo). El guion antiguo no anotaba procesador ni etapas, y su tarifa de 0,08 USD/h era una estimación por debajo del precio real de lista."
+ },
+ "flames-v2-pilot": {
+  "purpose": "Pilot v2 (standard VM, cached inputs): 2 Ljubljana cases, fold 0",
+  "purpose_es": "Piloto v2 (máquina estándar, datos guardados en el cubo): 2 casos de Ljubljana, modelo 0",
+  "paper_or_feature": "A",
+  "status": "failed (software environment)",
+  "notes": "Failed before the first case: PyPI torchvision built for another torch. Fix: torch + torchvision from the same CPU index and an environment self-test.",
+  "notes_es": "Falló antes del primer caso: torchvision de otra versión de torch. Corregido instalando ambos del mismo origen y con una autoprueba del entorno que para todo antes de gastar."
+ },
+ "flames-v2-pilot2": {
+  "purpose_es": "Piloto v2 corregido: 2 casos de Ljubljana, modelo 0, comparado con agosto",
+  "notes_es": "Comparación SUPERADA: mapas idénticos a los de agosto (Dice 1,0; diferencia máxima 0,002 por redondeo). 66 s por caso y modelo con 4 procesadores."
+ },
+ "flames-full-a": {
+  "purpose_es": "FLAMeS, 5 modelos por separado, bloque A (casos 1 a 49 de 145)"
+ },
+ "flames-full-b": {
+  "purpose_es": "FLAMeS, 5 modelos por separado, bloque B (casos 50 a 97 de 145)"
+ },
+ "flames-full-c": {
+  "purpose_es": "FLAMeS, 5 modelos por separado, bloque C (casos 98 a 145)",
+  "notes_es": "No recalculó 4 mapas del modelo 0 que ya estaban en el cubo (Ljubljana 01 y 02 del piloto v1; 03 y 04 del piloto v2), ambos verificados contra agosto.",
+  "notes": "Skipped 4 fold-0 maps already in the bucket (openms 01-02 from flames-pilot-1, 03-04 from flames-v2-pilot2), both parity-verified against Aug-2026."
+ },
+ "local-rc032-negative-controls": {
+  "purpose_es": "Prueba de seguridad: batería de mutaciones RC-032",
+  "notes_es": "Aproximado (unos 50 min, no cronometrado). Mismo resultado: 3 mutaciones no detectadas por diseño."
+ }
+}

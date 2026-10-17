@@ -1,0 +1,2 @@
+run_id,date_utc,purpose,paper_or_feature,status,machine_type,vcpus,memory_gb,cpu_platform,cpu_model,gpu,wall_seconds,notes
+local-rc032-negative-controls,2026-10-17,"Safety check: RC-032 mutation suite (negative controls) re-run",app (IEC 62304),ok,ASUS Vivobook M3500QA (portátil),16,15.4,AMD Zen 3,AMD Ryzen 7 5800H (8 núcleos / 16 hilos),AMD Radeon integrada (no usada),3000,"Approximate (~50 min, not timed by a script). Result unchanged: 3 by-design undetected mutations."
