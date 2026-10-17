@@ -1,2 +1,4 @@
 # PDFs are binary: never convert line endings (core.autocrlf would corrupt xref offsets).
 *.pdf binary
+# Shell scripts must keep LF line endings (bash fails on CRLF).
+*.sh text eol=lf
