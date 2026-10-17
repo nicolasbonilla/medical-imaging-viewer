@@ -20,6 +20,7 @@
 | 1.2 | 2026-09-28 | Development Team | CAPA-006. REQ-FUNC-053 corrected: it stated "SynthSeg parcellation + EDT (Tier 2) with MSMask atlas fallback (Tier 1)", which never matched the code (four paths since a637cdf, 2026-03-14; SynthSeg and LST-AI disabled by default). REQ-SAFE-021 added: each MAGNIMS path is applied only when its precondition holds (RC-032, HAZ-005). REQ-SAFE-020 annotated NOT IMPLEMENTED (no registration to MNI exists; RC-022 not verified) — it contradicted REQ-SAFE-021 as written | N. G. Bonilla Vargas — approved 2026-10-17 (PR #43) |
 | 1.3 | 2026-10-17 | Development Team | CAPA-008. REQ-SAFE-022 (AI assistant layer read-only, STDIO only, no direct identifiers, intended-use wording), REQ-SAFE-023 (no AI report draft without a device measurement), REQ-SAFE-024 (CVS/PRL readings counted per McDonald 2024 and attributed to the authenticated reader; longitudinal activity candidate per MAGNIMS 2021) | N. G. Bonilla Vargas — approved 2026-10-17 (PR #46) |
 | 1.4 | 2026-10-17 | Development Team | CAPA-009. REQ-SEC-019 (task, upload and import handles usable only by their initiator or an administrator; unknown handles refused with 404), REQ-SEC-020 (configuration of outbound connections — PACS create, delete, test — administrator-only). REQ-SEC-014/015/016 unchanged; now implemented on every mounted route (RC-036) | N. G. Bonilla Vargas — approved 2026-10-17 (PR #47) |
+| 1.5 (proposed) | 2026-10-17 | Development Team | Viewer v3 (branch feat/viewer-v3). REQ-FUNC-001a added (2D slices rendered in the browser from the stored intensities, fail-closed agreement with the server metadata, server-rendered fallback). REQ-FUNC-005a amended (window/level on raw stored intensities is applied in the browser on the default path, server-side on the matplotlib path). REQ-FUNC-023 amended (undo/redo snapshots of the plane painted, any of the three planes). REQ-SAFE-016 annotated (identity also annotated in the 3D and multi-panel viewports). Evidence: docs/research/viewer-v3/PARITY.md | **PENDING owner approval** |
 
 ---
 
@@ -53,11 +54,12 @@ This SRS covers all software requirements for MSTool-AI version 2.0, including f
 | ID | Requirement | Priority | Safety Class | Verification | Risk Ref |
 |----|-------------|----------|-------------|-------------|----------|
 | REQ-FUNC-001 | The system shall load NIfTI (.nii, .nii.gz) files and display them as navigable 2D slices. | Must | B | Test | — |
+| REQ-FUNC-001a | *(Proposed, SRS 1.5 — pending approval.)* By default the system shall render NIfTI 2D slices in the browser from the file's stored intensities after header scaling, in axial, coronal and sagittal planes derived from the image affine, with the segmentation and every other overlay drawn and edited through the same voxel-to-screen mapping as the image. Before rendering, the browser's reading of the file shall be checked against the server metadata: a grid or voxel-spacing disagreement, a DICOM series or an unsupported encoding shall switch to server-rendered slices with a visible notice; an indeterminate orientation, a header without sform/qform, or an orientation that differs from the server's shall be shown in voxel order without anatomical plane names. Overlays on a different grid shall not be drawn. | Must | B | Test | HAZ-006, HAZ-001 |
 | REQ-FUNC-002 | The system shall load DICOM files and display them as navigable 2D slices. | Must | B | Test | — |
 | REQ-FUNC-003 | The system shall provide 3D volume rendering of loaded NIfTI files using WebGL2. | Must | B | Test | — |
 | REQ-FUNC-004 | The system shall provide multiplanar reconstruction (axial, coronal, sagittal) with synchronized crosshairs. | Must | B | Test | — |
 | REQ-FUNC-005 | The system shall support windowing (brightness/contrast) adjustment for 2D slices. | Must | B | Test | — |
-| REQ-FUNC-005a | The system shall provide true DICOM window/level (VOI-LUT applied to raw stored intensities server-side, not a cosmetic post-render filter) for 2D slices, seeded from the per-series DICOM WindowCenter/WindowWidth tag with a reset to full-range auto. This is display-fidelity for lesion conspicuity (esp. FLAIR); it operates on the same slice grid the segmentation overlay uses and does not alter mask geometry. | Must | B | Test | HAZ-001 |
+| REQ-FUNC-005a | The system shall provide true DICOM window/level (VOI-LUT applied to raw stored intensities — in the browser on the default 2D path, server-side on the matplotlib path — not a cosmetic post-render filter) for 2D slices, seeded from the per-series DICOM WindowCenter/WindowWidth tag with a reset to full-range auto. This is display-fidelity for lesion conspicuity (esp. FLAIR); it operates on the same slice grid the segmentation overlay uses and does not alter mask geometry. *(Proposed amendment, SRS 1.5 — pending approval; previous text: "VOI-LUT applied to raw stored intensities server-side".)* | Must | B | Test | HAZ-001 |
 | REQ-FUNC-006 | The system shall support zoom (0.25x to 20x) and pan in 2D view. | Should | A | Test | — |
 | REQ-FUNC-007 | The system shall provide a clip plane tool for 3D volume slicing with axial/coronal/sagittal options. | Should | B | Test | — |
 | REQ-FUNC-008 | The system shall support multiple colormaps (Gray, Hot, Bone, Viridis, Inferno, etc.). | Should | A | Test | — |
@@ -71,7 +73,7 @@ This SRS covers all software requirements for MSTool-AI version 2.0, including f
 | REQ-FUNC-020 | The system shall provide brush painting tools (circle/square) with configurable size (1-50 voxels). | Must | B | Test | — |
 | REQ-FUNC-021 | The system shall provide an eraser tool that sets voxels to background (label 0). | Must | B | Test | — |
 | REQ-FUNC-022 | The system shall provide flood fill (BFS, 4-connectivity) and threshold-based region growing. | Should | B | Test | — |
-| REQ-FUNC-023 | The system shall support undo/redo for segmentation operations with slice-level snapshots. | Must | B | Test | — |
+| REQ-FUNC-023 | The system shall support undo/redo for segmentation operations with snapshots of the plane painted (axial, coronal or sagittal). *(Proposed amendment, SRS 1.5 — pending approval; previous text: "with slice-level snapshots".)* | Must | B | Test | — |
 | REQ-FUNC-024 | The system shall store segmentation masks as 3D Uint8Array in browser memory (local-first architecture). | Must | B | Test | — |
 | REQ-FUNC-025 | The system shall save segmentation masks to server storage on explicit user action only. | Must | B | Test | — |
 | REQ-FUNC-026 | The system shall support two label presets: Default (4 labels) and MAGNIMS Regional (6 labels). | Must | B | Test | — |
@@ -168,7 +170,7 @@ This SRS covers all software requirements for MSTool-AI version 2.0, including f
 | REQ-SAFE-013 | The system shall validate NIfTI orientation headers on file upload and warn if non-standard. | HAZ-006 | Must | Test |
 | REQ-SAFE-014 | Longitudinal comparison shall display tri-color overlay for visual verification of lesion matching. | HAZ-007 | Must | Test |
 | REQ-SAFE-015 | DIS assessment shall display per-region detail with qualifying lesion counts. | HAZ-008 | Must | Test |
-| REQ-SAFE-016 | Patient name and MRN shall be prominently displayed in the viewer header at all times. | HAZ-009 | Must | Inspection |
+| REQ-SAFE-016 | Patient name and MRN shall be prominently displayed in the viewer header at all times. *(Proposed note, SRS 1.5 — pending approval: implemented additionally as an annotation inside the 2D, 3D and every multi-panel viewport, RC-016.)* | HAZ-009 | Must | Inspection |
 | REQ-SAFE-017 | DICOM-SEG export shall use standard SOP Class UID and proper DICOM header structure. | HAZ-011 | Must | Test |
 | REQ-SAFE-018 | DICOMweb import shall display study/patient metadata for user confirmation before import. | HAZ-012 | Must | Test |
 | REQ-SAFE-019 | Report generation shall timeout after 30 seconds with user-visible error message if API fails. | HAZ-013 | Must | Test |

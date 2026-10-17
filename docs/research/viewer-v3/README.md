@@ -1,6 +1,6 @@
 # Viewer v3 — in-browser 2D rendering and workspace redesign
 
-Branch `feat/viewer-v3` (4 commits on top of `6209131`). Not pushed, not deployed.
+Branch `feat/viewer-v3`, on top of `6209131`. Not pushed, not deployed. QMS impact: [QMS_IMPACT.md](QMS_IMPACT.md).
 
 ## 1. In-browser 2D rendering (audit P0)
 
