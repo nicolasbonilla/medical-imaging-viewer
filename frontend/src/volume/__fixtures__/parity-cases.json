@@ -1,0 +1,1038 @@
+{
+ "generator": "scripts/viewer/build_parity_fixture.py",
+ "nibabel": "5.3.0",
+ "numpy": "1.26.4",
+ "cases": [
+  {
+   "name": "int16_LAS_scaled_sform",
+   "gzipped": false,
+   "nifti_b64": "XAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMABwAFAAQAAQABAAEAAQAAAAAAAAAAAAAAAAAAAAQAEAAAAAAAgL9mZmY/zcyMPwAAQEAAAIA/AACAPwAAgD8AAIA/AACwQwAAIEAAACDBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQABAAAAAAAAAIA/AAAAAAAA8EEAACDCAACgwWZmZr8AAAAAAAAAAAAA8EEAAAAAzcyMPwAAAAAAACDCAAAAAAAAAAAAAEBAAACgwQAAAAAAAAAAAAAAAAAAAABuKzEAAAAAAAAAAQACAAMABAAFAAYACwAMAA0ADgAPABAAEQAWABcAGAAZABoAGwAcACEAIgAjACQAJQAmACcALAAtAC4ALwAwADEAMgCDAIQAhQCGAIcAiACJAI4AjwCQAJEAkgCTAJQAmQCaAJsAnACdAJ4AnwCkAKUApgCnAKgAqQCqAK8AsACxALIAswC0ALUABgEHAQgBCQEKAQsBDAERARIBEwEUARUBFgEXARwBHQEeAR8BIAEhASIBJwEoASkBKgErASwBLQEyATMBNAE1ATYBNwE4AYkBigGLAYwBjQGOAY8BlAGVAZYBlwGYAZkBmgGfAaABoQGiAaMBpAGlAaoBqwGsAa0BrgGvAbABtQG2AbcBuAG5AboBuwE=",
+   "shape": [
+    7,
+    5,
+    4
+   ],
+   "server_metadata": {
+    "patient_id": null,
+    "patient_name": null,
+    "study_date": null,
+    "study_description": null,
+    "series_description": null,
+    "modality": "MRI",
+    "manufacturer": null,
+    "institution_name": null,
+    "rows": 7,
+    "columns": 5,
+    "slices": 4,
+    "pixel_spacing": [
+     0.8999999761581421,
+     1.100000023841858
+    ],
+    "slice_thickness": 3.0,
+    "anatomical_orientation": "LAS",
+    "window_center": 127.0,
+    "window_width": 252.0,
+    "extra_fields": null
+   },
+   "server_total_slices": 4,
+   "server_slices_uint8_b64": [
+    "AAYMEhkABg0TGQEHDRQaAQgOFBsCCA4VGwIJDxUcAwkQFhw=",
+    "S1FYXmRLUlheZUxSWV9lTVNZYGZNVFpgZ05UWmFnTlVbYWg=",
+    "lp2jqbCXnaSqsJeepKqxmJ6lq7GZn6WsspmgpqyzmqCmrbM=",
+    "4uju9fvi6e/1/OPp8Pb84+rw9v3k6vH3/eXr8fj+5ezy+P8="
+   ],
+   "nibabel_axcodes": [
+    "L",
+    "A",
+    "S"
+   ],
+   "nibabel_affine": [
+    [
+     -0.8999999761581421,
+     0.0,
+     0.0,
+     30.0
+    ],
+    [
+     0.0,
+     1.100000023841858,
+     0.0,
+     -40.0
+    ],
+    [
+     0.0,
+     0.0,
+     3.0,
+     -20.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "nibabel_zooms": [
+    0.8999999761581421,
+    1.100000023841858,
+    3.0
+   ],
+   "scaled_min": -10.0,
+   "scaled_max": 1097.5,
+   "probe_voxels": [
+    {
+     "ijk": [
+      0,
+      0,
+      0
+     ],
+     "value": -10.0
+    },
+    {
+     "ijk": [
+      1,
+      2,
+      1
+     ],
+     "value": 375.0
+    },
+    {
+     "ijk": [
+      6,
+      4,
+      3
+     ],
+     "value": 1097.5
+    }
+   ]
+  },
+  {
+   "name": "float32_RAS_gz",
+   "gzipped": true,
+   "nifti_b64": "H4sIAAAAAAAE/8WRTUgUcRjGx6SiIajDXrq4QRcXw7KN8NDo/B+D3UOZuwURTPRFSxCUW0igVCoumh3GPsBmk4I08DQEHRor23GXUFMp7TBlHzgJou4etHJJ69BTebGDeOs/zGHe9/+87+95RsuRVnRypTXSOilXyll8loo2Spv/FGpLJWm592HZ3/5S9f/7WrXM6t8+/j0rrUnS2YKiRXGnnc1vszOhFtutbrDNQNSOG4dtRW5N+LT9CTPgPvdpenfcMEq8sYLS1Fyx6rRXqJnQaZVZqbJzTfWYrWrY+qRq+rQaiWRVKy9HKPJakZpbL9zq7SIS2SUyod0iqkBk84OixlMu4kZUeGMXRUflJeEx64TT3sBao/BpBu+2CTNwj/fvC7//ATWdIpbuEkH3mZCdhBgaTAo9+UKErT7OH+WMj9wxRu04tRPUTvHuVvi0QsjONmRCRRga3AEzsBPZfAVOewmsPBVxQ6DGUwZN34OOyn2IpcsRiVQg6IaoPUDtQYStI/D7j8JjHqP2BLUnqT0FJgi3+hxSc5XUnqf2ArVV3HEZevIKrLu1nFGH+KZ6zqlnvRHe1U3sNUGqvYqo0gx3oRmxMzrntiAy0cLZ1xE8foPzb5KpFUN7b0ORDZi9BryxOHTcYf8x+xZ8Hyzyd0E+9IQenrKfYN8mVw+i3T1kSyJcnEK2s5dcfXC29NNXP7lekmuAebyC0vyaXMPkGiHXCLneoGPGode35HpHrlFyjZLrPXeMITM8Ri6XXJ/JNU6uce6YZAaT8D+aYg7T8BSmmUWaO2bofZbeZ1Fz6wv/wVdoG75xx3d6n6f3eWa7gFTVD+b7E78Ai4fRQOgDAAA=",
+   "shape": [
+    6,
+    9,
+    3
+   ],
+   "server_metadata": {
+    "patient_id": null,
+    "patient_name": null,
+    "study_date": null,
+    "study_description": null,
+    "series_description": null,
+    "modality": "MRI",
+    "manufacturer": null,
+    "institution_name": null,
+    "rows": 6,
+    "columns": 9,
+    "slices": 3,
+    "pixel_spacing": [
+     1.0,
+     1.0
+    ],
+    "slice_thickness": 1.0,
+    "anatomical_orientation": "RAS",
+    "window_center": 127.0,
+    "window_width": 250.0,
+    "extra_fields": null
+   },
+   "server_total_slices": 3,
+   "server_slices_uint8_b64": [
+    "AAcPFx8nLzc/AAgQGCAoMDg/AQkRGSEoMDhAAgoRGSEpMTlBAgoSGiIqMjpCAwsTGyMrMzpC",
+    "XmZtdX2FjZWdXmZudn6GjpaeX2dvd3+HjpaeYGhwd3+Hj5efYGhweICIkJigYWlxeYGJkZig",
+    "vMTM09vj6/P7vMTM1Nzk7PT8vcXN1d3l7fT8vsbO1t3l7fX9v8bO1t7m7vb+v8fP19/n7/f/"
+   ],
+   "nibabel_axcodes": [
+    "R",
+    "A",
+    "S"
+   ],
+   "nibabel_affine": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "nibabel_zooms": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "scaled_min": -5.25,
+   "scaled_max": 126.0999984741211,
+   "probe_voxels": [
+    {
+     "ijk": [
+      0,
+      0,
+      0
+     ],
+     "value": -5.25
+    },
+    {
+     "ijk": [
+      1,
+      2,
+      1
+     ],
+     "value": 51.72999954223633
+    },
+    {
+     "ijk": [
+      5,
+      8,
+      2
+     ],
+     "value": 126.0999984741211
+    }
+   ]
+  },
+  {
+   "name": "uint8_PSL_qform_only",
+   "gzipped": false,
+   "nifti_b64": "XAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMABQAEAAYAAQABAAEAAQAAAAAAAAAAAAAAAAAAAAIACAAAAAAAgD/NzEw/AADAP5qZmT8AAIA/AACAPwAAgD8AAIA/AACwQwAAgD8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAD8AAAC/AAAAvwAAIEEAAKBAAABAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABuKzEAAAAAAAABAgMECwwNDg8WFxgZGiEiIyQlg4SFhoeOj5CRkpmam5ydpKWmp6gGBwgJChESExQVHB0eHyAnKCkqK4mKi4yNlJWWl5ifoKGio6qrrK2uDA0ODxAXGBkaGyIjJCUmLS4vMDGPkJGSk5qbnJ2epaanqKmwsbKztA==",
+   "shape": [
+    5,
+    4,
+    6
+   ],
+   "server_metadata": {
+    "patient_id": null,
+    "patient_name": null,
+    "study_date": null,
+    "study_description": null,
+    "series_description": null,
+    "modality": "MRI",
+    "manufacturer": null,
+    "institution_name": null,
+    "rows": 5,
+    "columns": 4,
+    "slices": 6,
+    "pixel_spacing": [
+     0.800000011920929,
+     1.5
+    ],
+    "slice_thickness": 1.2000000476837158,
+    "anatomical_orientation": "PSL",
+    "window_center": 127.0,
+    "window_width": 248.48000000000002,
+    "extra_fields": null
+   },
+   "server_total_slices": 6,
+   "server_slices_uint8_b64": [
+    "AA8fLgERIDACEiIxBBMjMwUVJDQ=",
+    "ucnY6LvK2um8zNvrvc3d7L/O3u4=",
+    "CBgnNwkZKTgLGio6DBwrOw4dLTw=",
+    "wtHh8MPT4vLE1OTzxtXl9cfX5vY=",
+    "ESAwPxIiMUETIzNCFSQ0RBYmNUU=",
+    "ytrp+czb6/rN3ez8zt7u/dDf7/8="
+   ],
+   "nibabel_axcodes": [
+    "P",
+    "S",
+    "L"
+   ],
+   "nibabel_affine": [
+    [
+     0.0,
+     0.0,
+     -1.2000000476837158,
+     10.0
+    ],
+    [
+     -0.800000011920929,
+     0.0,
+     0.0,
+     5.0
+    ],
+    [
+     0.0,
+     1.5,
+     0.0,
+     -3.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "nibabel_zooms": [
+    0.800000011920929,
+    1.5,
+    1.2000000476837158
+   ],
+   "scaled_min": 0.0,
+   "scaled_max": 180.0,
+   "probe_voxels": [
+    {
+     "ijk": [
+      0,
+      0,
+      0
+     ],
+     "value": 0.0
+    },
+    {
+     "ijk": [
+      1,
+      2,
+      1
+     ],
+     "value": 154.0
+    },
+    {
+     "ijk": [
+      4,
+      3,
+      5
+     ],
+     "value": 180.0
+    }
+   ]
+  },
+  {
+   "name": "float64_oblique30",
+   "gzipped": false,
+   "nifti_b64": "XAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMABAAGAAUAAQABAAEAAQAAAAAAAAAAAAAAAAAAAEAAQAAAAAAAgD8AAIA/AAAAQAAAgD8AAIA/AACAPwAAgD8AAIA/AACwQwAAgD8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAA7oOEPgAAAAAAAAAAAAAAANezXT8AAIC/AAAAAAAAAAAAAAA/17PdPwAAAAAAAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAAABuKzEAAAAAAAAAAAAAAAAAAAAAAAAA+D8AAAAAAAAIQAAAAAAAABJAAAAAAACAMEAAAAAAAAAyQAAAAAAAgDNAAAAAAAAANUAAAAAAAIBAQAAAAAAAQEFAAAAAAAAAQkAAAAAAAMBCQAAAAAAAwEhAAAAAAACASUAAAAAAAEBKQAAAAAAAAEtAAAAAAACAUEAAAAAAAOBQQAAAAAAAQFFAAAAAAACgUUAAAAAAAKBUQAAAAAAAAFVAAAAAAABgVUAAAAAAAMBVQAAAAAAAkGhAAAAAAADAaEAAAAAAAPBoQAAAAAAAIGlAAAAAAACgakAAAAAAANBqQAAAAAAAAGtAAAAAAAAwa0AAAAAAALBsQAAAAAAA4GxAAAAAAAAQbUAAAAAAAEBtQAAAAAAAwG5AAAAAAADwbkAAAAAAACBvQAAAAAAAUG9AAAAAAABocEAAAAAAAIBwQAAAAAAAmHBAAAAAAACwcEAAAAAAAHBxQAAAAAAAiHFAAAAAAACgcUAAAAAAALhxQAAAAAAAkHhAAAAAAACoeEAAAAAAAMB4QAAAAAAA2HhAAAAAAACYeUAAAAAAALB5QAAAAAAAyHlAAAAAAADgeUAAAAAAAKB6QAAAAAAAuHpAAAAAAADQekAAAAAAAOh6QAAAAAAAqHtAAAAAAADAe0AAAAAAANh7QAAAAAAA8HtAAAAAAACwfEAAAAAAAMh8QAAAAAAA4HxAAAAAAAD4fEAAAAAAALh9QAAAAAAA0H1AAAAAAADofUAAAAAAAAB+QAAAAAAAbIJAAAAAAAB4gkAAAAAAAISCQAAAAAAAkIJAAAAAAADwgkAAAAAAAPyCQAAAAAAACINAAAAAAAAUg0AAAAAAAHSDQAAAAAAAgINAAAAAAACMg0AAAAAAAJiDQAAAAAAA+INAAAAAAAAEhEAAAAAAABCEQAAAAAAAHIRAAAAAAAB8hEAAAAAAAIiEQAAAAAAAlIRAAAAAAACghEAAAAAAAACFQAAAAAAADIVAAAAAAAAYhUAAAAAAACSFQAAAAAAAkIhAAAAAAACciEAAAAAAAKiIQAAAAAAAtIhAAAAAAAAUiUAAAAAAACCJQAAAAAAALIlAAAAAAAA4iUAAAAAAAJiJQAAAAAAApIlAAAAAAACwiUAAAAAAALyJQAAAAAAAHIpAAAAAAAAoikAAAAAAADSKQAAAAAAAQIpAAAAAAACgikAAAAAAAKyKQAAAAAAAuIpAAAAAAADEikAAAAAAACSLQAAAAAAAMItAAAAAAAA8i0AAAAAAAEiLQA==",
+   "shape": [
+    4,
+    6,
+    5
+   ],
+   "server_metadata": {
+    "patient_id": null,
+    "patient_name": null,
+    "study_date": null,
+    "study_description": null,
+    "series_description": null,
+    "modality": "MRI",
+    "manufacturer": null,
+    "institution_name": null,
+    "rows": 4,
+    "columns": 6,
+    "slices": 5,
+    "pixel_spacing": [
+     1.0,
+     2.0
+    ],
+    "slice_thickness": 1.0,
+    "anatomical_orientation": "RAS",
+    "window_center": 127.0,
+    "window_width": 253.24,
+    "extra_fields": null
+   },
+   "server_total_slices": 5,
+   "server_slices_uint8_b64": [
+    "AAQJDhMYAAUKDhMYAAUKDxQYAQYKDxQZ",
+    "OT5DR0xROT5DSE1ROj9DSE1SOj9ESU1S",
+    "cnd8gYaKc3h8gYaLc3h9goaLdHh9goeM",
+    "rLG1ur/ErLG2u7/ErbG2u8DFrbK3u8DF",
+    "5erv9Pj95urv9Pn+5uvw9Pn+5uvw9fr/"
+   ],
+   "nibabel_axcodes": [
+    "R",
+    "A",
+    "S"
+   ],
+   "nibabel_affine": [
+    [
+     0.8660253882408142,
+     -1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.5,
+     1.7320507764816284,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "nibabel_zooms": [
+    1.0,
+    2.0,
+    1.0
+   ],
+   "scaled_min": 0.0,
+   "scaled_max": 873.0,
+   "probe_voxels": [
+    {
+     "ijk": [
+      0,
+      0,
+      0
+     ],
+     "value": 0.0
+    },
+    {
+     "ijk": [
+      1,
+      2,
+      1
+     ],
+     "value": 231.0
+    },
+    {
+     "ijk": [
+      3,
+      5,
+      4
+     ],
+     "value": 873.0
+    }
+   ]
+  },
+  {
+   "name": "int16_bigendian_LPS",
+   "gzipped": false,
+   "nifti_b64": "AAABXAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAUABwADAAEAAQABAAEAAAAAAAAAAAAAAAAAAAAEABAAAD+AAAA/gAAAP4AAAD+AAAA/gAAAP4AAAD+AAAA/gAAAQ7AAAD+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAP4AAAAAAAAAAAAAAAAAAAL+AAAAAAAAAAAAAAAAAAAAAAAAAv4AAAAAAAAAAAAAAAAAAAAAAAAA/gAAAAAAAAAAAAAAAAAAAAAAAAAAAAABuKzEAAAAAAAAAAAEAAgADAAQACwAMAA0ADgAPABYAFwAYABkAGgAhACIAIwAkACUALAAtAC4ALwAwADcAOAA5ADoAOwBCAEMARABFAEYAgwCEAIUAhgCHAI4AjwCQAJEAkgCZAJoAmwCcAJ0ApAClAKYApwCoAK8AsACxALIAswC6ALsAvAC9AL4AxQDGAMcAyADJAQYBBwEIAQkBCgERARIBEwEUARUBHAEdAR4BHwEgAScBKAEpASoBKwEyATMBNAE1ATYBPQE+AT8BQAFBAUgBSQFKAUsBTA==",
+   "shape": [
+    5,
+    7,
+    3
+   ],
+   "server_metadata": {
+    "patient_id": null,
+    "patient_name": null,
+    "study_date": null,
+    "study_description": null,
+    "series_description": null,
+    "modality": "MRI",
+    "manufacturer": null,
+    "institution_name": null,
+    "rows": 5,
+    "columns": 7,
+    "slices": 3,
+    "pixel_spacing": [
+     1.0,
+     1.0
+    ],
+    "slice_thickness": 1.0,
+    "anatomical_orientation": "LPS",
+    "window_center": 127.00000000000001,
+    "window_width": 251.84,
+    "extra_fields": null
+   },
+   "server_total_slices": 3,
+   "server_slices_uint8_b64": [
+    "AAgQGSEqMgAJERoiKzMBCRIaIys0AgoTGyQsNAMLExwkLTU=",
+    "ZG11fYaOl2Vtdn6Hj5hmbnd/h5CYZm93gIiRmWdweIGJkZo=",
+    "ydHa4uvz+8rS2uPr9PzK09vk7PX9y9Pc5O31/szU3eXu9v8="
+   ],
+   "nibabel_axcodes": [
+    "L",
+    "P",
+    "S"
+   ],
+   "nibabel_affine": [
+    [
+     -1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     -1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "nibabel_zooms": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "scaled_min": 0.0,
+   "scaled_max": 332.0,
+   "probe_voxels": [
+    {
+     "ijk": [
+      0,
+      0,
+      0
+     ],
+     "value": 0.0
+    },
+    {
+     "ijk": [
+      1,
+      2,
+      1
+     ],
+     "value": 154.0
+    },
+    {
+     "ijk": [
+      4,
+      6,
+      2
+     ],
+     "value": 332.0
+    }
+   ]
+  },
+  {
+   "name": "int16_singular_affine",
+   "gzipped": false,
+   "nifti_b64": "XAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMABAADAAUAAQABAAEAAQAAAAAAAAAAAAAAAAAAAAQAEAAAAAAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACwQwAAgD8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABuKzEAAAAAAAAAAQACAAMACwAMAA0ADgAWABcAGAAZAIMAhACFAIYAjgCPAJAAkQCZAJoAmwCcAAYBBwEIAQkBEQESARMBFAEcAR0BHgEfAYkBigGLAYwBlAGVAZYBlwGfAaABoQGiAQwCDQIOAg8CFwIYAhkCGgIiAiMCJAIlAg==",
+   "shape": [
+    4,
+    3,
+    5
+   ],
+   "server_metadata": {
+    "patient_id": null,
+    "patient_name": null,
+    "study_date": null,
+    "study_description": null,
+    "series_description": null,
+    "modality": "MRI",
+    "manufacturer": null,
+    "institution_name": null,
+    "rows": 4,
+    "columns": 3,
+    "slices": 5,
+    "pixel_spacing": [
+     1.0,
+     1.0
+    ],
+    "slice_thickness": 1.0,
+    "anatomical_orientation": "UNKNOWN",
+    "window_center": 127.0,
+    "window_width": 254.0,
+    "extra_fields": null
+   },
+   "server_total_slices": 5,
+   "server_slices_uint8_b64": [
+    "AAUKAAUKAAYLAQYL",
+    "PEFHPUJHPUJHPkNI",
+    "eX6Den+Een+Ee4CF",
+    "trvAt7zBt7zBt73C",
+    "8/j98/j+9Pn+9Pn/"
+   ],
+   "nibabel_axcodes": null,
+   "nibabel_affine": [
+    [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "nibabel_zooms": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "scaled_min": 0.0,
+   "scaled_max": 549.0,
+   "probe_voxels": [
+    {
+     "ijk": [
+      0,
+      0,
+      0
+     ],
+     "value": 0.0
+    },
+    {
+     "ijk": [
+      1,
+      2,
+      1
+     ],
+     "value": 154.0
+    },
+    {
+     "ijk": [
+      3,
+      2,
+      4
+     ],
+     "value": 549.0
+    }
+   ]
+  },
+  {
+   "name": "uint16_RAS",
+   "gzipped": false,
+   "nifti_b64": "XAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAAwAEAAUAAQABAAEAAQAAAAAAAAAAAAAAAAAAAAACEAAAAAAAgD8AAABAAAAAQAAAAEAAAIA/AACAPwAAgD8AAIA/AACwQwAAgD8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAABuKzEAAAAAAAAAYQDCACsEjATtBFYItwgYCYEM4gxDDaMxBDJlMs41LzaQNvk5Wjq7OiQ+hT7mPkZjp2MIZHFn0mczaJxr/WtebMdvKHCJcOmUSpWrlRSZdZnWmT+doJ0Bnmqhy6EsoozG7cZOx7fKGMt5y+LOQ8+kzw3TbtPP0w==",
+   "shape": [
+    3,
+    4,
+    5
+   ],
+   "server_metadata": {
+    "patient_id": null,
+    "patient_name": null,
+    "study_date": null,
+    "study_description": null,
+    "series_description": null,
+    "modality": "MRI",
+    "manufacturer": null,
+    "institution_name": null,
+    "rows": 3,
+    "columns": 4,
+    "slices": 5,
+    "pixel_spacing": [
+     2.0,
+     2.0
+    ],
+    "slice_thickness": 2.0,
+    "anatomical_orientation": "RAS",
+    "window_center": 127.0,
+    "window_width": 254.0,
+    "extra_fields": null
+   },
+   "server_total_slices": 5,
+   "server_slices_uint8_b64": [
+    "AAUKDwAFCg8ABQoP",
+    "O0BFSjxBRks8QUZL",
+    "d3yBhnd8god4fYKH",
+    "s7i9wrO4vcK0ub7D",
+    "7/T5/u/0+f7v9Pn/"
+   ],
+   "nibabel_axcodes": [
+    "R",
+    "A",
+    "S"
+   ],
+   "nibabel_affine": [
+    [
+     2.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     2.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     2.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "nibabel_zooms": [
+    2.0,
+    2.0,
+    2.0
+   ],
+   "scaled_min": 0.0,
+   "scaled_max": 54223.0,
+   "probe_voxels": [
+    {
+     "ijk": [
+      0,
+      0,
+      0
+     ],
+     "value": 0.0
+    },
+    {
+     "ijk": [
+      1,
+      2,
+      1
+     ],
+     "value": 14938.0
+    },
+    {
+     "ijk": [
+      2,
+      3,
+      4
+     ],
+     "value": 54223.0
+    }
+   ]
+  },
+  {
+   "name": "int8_oblique50",
+   "gzipped": false,
+   "nifti_b64": "XAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAAwAFAAQAAQABAAEAAQAAAAAAAAAAAAAAAAAAAAABCAAAAAAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACwQwAAgD8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAbGHYPgAAAAAAAAAAAAAAALuNJD99G0S/AAAAAAAAAAB9G0Q/u40kPwAAAAAAAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAAABuKzEAAAAAAAABAgsMDRYXGCEiIywtLoOEhY6PkJmam6Slpq+wsQYHCBESExwdHicoKTIzNImKi5SVlp+goaqrrLW2tw==",
+   "shape": [
+    3,
+    5,
+    4
+   ],
+   "server_metadata": {
+    "patient_id": null,
+    "patient_name": null,
+    "study_date": null,
+    "study_description": null,
+    "series_description": null,
+    "modality": "MRI",
+    "manufacturer": null,
+    "institution_name": null,
+    "rows": 3,
+    "columns": 5,
+    "slices": 4,
+    "pixel_spacing": [
+     1.0,
+     1.0
+    ],
+    "slice_thickness": 1.0,
+    "anatomical_orientation": "ALS",
+    "window_center": 127.0,
+    "window_width": 251.64,
+    "extra_fields": null
+   },
+   "server_total_slices": 4,
+   "server_slices_uint8_b64": [
+    "tMPT4/O1xdXl9LbG1ub2",
+    "AA8fLz8BESEwQAISIjJC",
+    "vMzc7Py+zt3t/b/P3+//",
+    "CBgoOEgKGSk5SQsbKztK"
+   ],
+   "nibabel_axcodes": [
+    "A",
+    "L",
+    "S"
+   ],
+   "nibabel_affine": [
+    [
+     0.6427876353263855,
+     -0.7660444378852844,
+     0.0,
+     0.0
+    ],
+    [
+     0.7660444378852844,
+     0.6427876353263855,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "nibabel_zooms": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "scaled_min": -125.0,
+   "scaled_max": 52.0,
+   "probe_voxels": [
+    {
+     "ijk": [
+      0,
+      0,
+      0
+     ],
+     "value": 0.0
+    },
+    {
+     "ijk": [
+      1,
+      2,
+      1
+     ],
+     "value": -102.0
+    },
+    {
+     "ijk": [
+      2,
+      4,
+      3
+     ],
+     "value": -73.0
+    }
+   ]
+  },
+  {
+   "name": "float32_sheared",
+   "gzipped": false,
+   "nifti_b64": "XAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMABAADAAYAAQABAAEAAQAAAAAAAAAAAAAAAAAAABAAIAAAAAAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACwQwAAgD8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgD8zM3M/AAAAAAAAAAAAAAAAAACAP5qZmT4AAAAAzcxMPgAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAAABuKzEAAAAAAAAAAAAAAIA/AAAAQAAAQEAAADBBAABAQQAAUEEAAGBBAACwQQAAuEEAAMBBAADIQQAAA0MAAARDAAAFQwAABkMAAA5DAAAPQwAAEEMAABFDAAAZQwAAGkMAABtDAAAcQwAAg0MAgINDAACEQwCAhEMAgIhDAACJQwCAiUMAAIpDAACOQwCAjkMAAI9DAICPQwCAxEMAAMVDAIDFQwAAxkMAAMpDAIDKQwAAy0MAgMtDAIDPQwAA0EMAgNBDAADRQwAAA0QAQANEAIADRADAA0QAwAVEAAAGRABABkQAgAZEAIAIRADACEQAAAlEAEAJRADAI0QAACREAEAkRACAJEQAgCZEAMAmRAAAJ0QAQCdEAEApRACAKUQAwClEAAAqRA==",
+   "shape": [
+    4,
+    3,
+    6
+   ],
+   "server_metadata": {
+    "patient_id": null,
+    "patient_name": null,
+    "study_date": null,
+    "study_description": null,
+    "series_description": null,
+    "modality": "MRI",
+    "manufacturer": null,
+    "institution_name": null,
+    "rows": 4,
+    "columns": 3,
+    "slices": 6,
+    "pixel_spacing": [
+     1.0,
+     1.0
+    ],
+    "slice_thickness": 1.0,
+    "anatomical_orientation": "RAS",
+    "window_center": 127.0,
+    "window_width": 254.0,
+    "extra_fields": null
+   },
+   "server_total_slices": 6,
+   "server_slices_uint8_b64": [
+    "AAQIAAQIAAQJAQUJ",
+    "MTU5MTU5MTY6MjY6",
+    "YmZqYmZqY2drY2dr",
+    "k5ebk5eclJiclJic",
+    "xMjMxMnNxcnNxcnN",
+    "9fn99vr+9vr+9vr/"
+   ],
+   "nibabel_axcodes": [
+    "R",
+    "A",
+    "S"
+   ],
+   "nibabel_affine": [
+    [
+     1.0,
+     0.949999988079071,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.30000001192092896,
+     0.0
+    ],
+    [
+     0.20000000298023224,
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "nibabel_zooms": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "scaled_min": 0.0,
+   "scaled_max": 680.0,
+   "probe_voxels": [
+    {
+     "ijk": [
+      0,
+      0,
+      0
+     ],
+     "value": 0.0
+    },
+    {
+     "ijk": [
+      1,
+      2,
+      1
+     ],
+     "value": 154.0
+    },
+    {
+     "ijk": [
+      3,
+      2,
+      5
+     ],
+     "value": 680.0
+    }
+   ]
+  },
+  {
+   "name": "int16_oblique3d_exclusion",
+   "gzipped": false,
+   "nifti_b64": "XAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMABQADAAQAAQABAAEAAQAAAAAAAAAAAAAAAAAAAAQAEAAAAAAAgD8AAKA/AACgPwAAoD8AAIA/AACAPwAAgD8AAIA/AACwQwAAgD8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAHZ9nb6tj7i+5mUmPgAAAAAAAAAAAAAAAGzwWz88W5i9s6dnvwAAAACb+CA/wItyP+DjBD8AAAAA7awnPwTeT7/ESDA/AAAAAAAAAAAAAAAAAAAAAAAAAABuKzEAAAAAAAAAAQACAAMABAALAAwADQAOAA8AFgAXABgAGQAaAIMAhACFAIYAhwCOAI8AkACRAJIAmQCaAJsAnACdAAYBBwEIAQkBCgERARIBEwEUARUBHAEdAR4BHwEgAYkBigGLAYwBjQGUAZUBlgGXAZgBnwGgAaEBogGjAQ==",
+   "shape": [
+    5,
+    3,
+    4
+   ],
+   "server_metadata": {
+    "patient_id": null,
+    "patient_name": null,
+    "study_date": null,
+    "study_description": null,
+    "series_description": null,
+    "modality": "MRI",
+    "manufacturer": null,
+    "institution_name": null,
+    "rows": 5,
+    "columns": 3,
+    "slices": 4,
+    "pixel_spacing": [
+     1.25,
+     1.25
+    ],
+    "slice_thickness": 1.25,
+    "anatomical_orientation": "RAS",
+    "window_center": 127.0,
+    "window_width": 253.64,
+    "extra_fields": null
+   },
+   "server_total_slices": 4,
+   "server_slices_uint8_b64": [
+    "AAYNAAcNAQcOAQgPAgkP",
+    "T1ZdUFddUFdeUVheUlhf",
+    "n6asoKatoKeuoaeuoaiv",
+    "7/X87/b98Pf98ff+8fj/"
+   ],
+   "nibabel_axcodes": [
+    "R",
+    "A",
+    "S"
+   ],
+   "nibabel_affine": [
+    [
+     0.8591372966766357,
+     -0.07439276576042175,
+     -0.9049026370048523,
+     0.0
+    ],
+    [
+     0.6287934184074402,
+     0.9474449157714844,
+     0.5191020965576172,
+     0.0
+    ],
+    [
+     0.6549823880195618,
+     -0.8119814395904541,
+     0.688610315322876,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "nibabel_zooms": [
+    1.25,
+    1.25,
+    1.25
+   ],
+   "scaled_min": 0.0,
+   "scaled_max": 419.0,
+   "probe_voxels": [
+    {
+     "ijk": [
+      0,
+      0,
+      0
+     ],
+     "value": 0.0
+    },
+    {
+     "ijk": [
+      1,
+      2,
+      1
+     ],
+     "value": 154.0
+    },
+    {
+     "ijk": [
+      4,
+      2,
+      3
+     ],
+     "value": 419.0
+    }
+   ]
+  }
+ ]
+}

@@ -30,6 +30,12 @@ const ViewerApp = lazy(loadViewer);
 const PACSBrowserPage = lazy(loadPACS);
 const ProfilePage = lazy(loadProfile);
 
+// DEV-ONLY viewer demo harness (public sample case, no backend, no login) used for
+// visual verification + headless screenshots. `import.meta.env.DEV` is the literal
+// `false` in production builds, so this branch — and the dynamic import with it — is
+// eliminated from the shipped bundle.
+const ViewerDemo = import.meta.env.DEV ? lazy(() => import('./dev/ViewerDemo')) : null;
+
 /** Minimal route-transition fallback, dark-theme matched. */
 function RouteFallback() {
   return (
@@ -179,6 +185,8 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+
+              {ViewerDemo && <Route path="/dev/viewer-demo" element={<ViewerDemo />} />}
 
               {/* Default Route - Redirect to app (will redirect to login if not authenticated) */}
               <Route path="/" element={<Navigate to="/app" replace />} />
