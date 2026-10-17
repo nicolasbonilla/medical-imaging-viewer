@@ -471,7 +471,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--cache", default=os.path.join(HERE, ".cache", "features_v3.npz"))
     ap.add_argument("--tag", default="2026-10-17")
-    ap.add_argument("--quick", action="store_true", help="debug: B=200, fewer splits, no FDX")
+    ap.add_argument("--quick", action="store_true", help="debug: B=200, fewer splits")
+    ap.add_argument("--debug-no-gate", action="store_true", help="debug on synthetic caches only")
+    ap.add_argument("--records-dir", default=RECORDS)
     a = ap.parse_args()
     global N_BOOT, N_SPLITS_XCOHORT, N_SHUFFLE, N_SMALLN
     if a.quick:
@@ -500,7 +502,7 @@ def main():
     gate["matches_paper_a_v02_cohort_table"] = bool(ok)
     rec["reproduction_gate"] = gate
     say(f"reproduction gate: {gate}")
-    if not ok:
+    if not ok and not a.debug_no_gate:
         raise SystemExit("candidate/label counts do not reproduce paper A — stop (PROTOCOL §4)")
     rec["base_rates"] = {k: {"false_rate": _r(float((D.sets[k] & ~y).sum() / max(D.sets[k].sum(), 1))),
                              "fragment_false_share": _r(float((D.sets[k] & ~y & D.labels['anyvox']).sum() / max((D.sets[k] & ~y).sum(), 1)))}
@@ -561,7 +563,7 @@ def main():
     say("  " + ", ".join(f"{k} {ctrl['auroc_L10true_vs_control'][k]['auroc']}" for k in scores_c))
 
     # ---------------- S3 / S4 conformal
-    if not a.quick:
+    if True:  # conformal analyses always run (quick mode only shrinks splits/bootstrap)
         say("S3: conformal within MSLesSeg (three-way cross-fit) ...")
         rec["S3_conformal_within_M"] = conformal_within_M(D, ("V3-LR", "V3-GB", "V2-shipped"), y)
         for key in ("bh|alpha=0.2", "fdx|alpha=0.2"):
@@ -605,7 +607,8 @@ def main():
     say("A3: site-identity probe ...")
     ML = D.sets["M"] | D.sets["L10"]
     site = (D.cohort == "openms").astype(int)
-    folds = patient_folds(D, ML, 5, SEED + 9)
+    # folds stratified by cohort (PROTOCOL §11 D4): each fold has the same M / L10 patient mix
+    folds = {**patient_folds(D, D.sets["M"], 5, SEED + 9), **patient_folds(D, D.sets["L10"], 5, SEED + 10)}
     fo = np.array([folds.get(p, -1) for p in D.patient])
     idxML = np.nonzero(ML)[0]
     a3 = {}
@@ -733,8 +736,8 @@ def main():
 
     rec["runtime_s"] = round(time.time() - t0, 1)
     tag = a.tag + ("_quick" if a.quick else "")
-    os.makedirs(RECORDS, exist_ok=True)
-    out = os.path.join(RECORDS, f"{tag}_lesion_detector_v3_evaluation.json")
+    os.makedirs(a.records_dir, exist_ok=True)
+    out = os.path.join(a.records_dir, f"{tag}_lesion_detector_v3_evaluation.json")
     with open(out, "w", encoding="utf-8") as fh:
         json.dump(rec, fh, indent=1)
     with open(out.replace(".json", "_output.txt"), "w", encoding="utf-8") as fh:

@@ -118,7 +118,34 @@ def _load(path, ref_img=None):
     return img, np.asarray(img.get_fdata(dtype=np.float32))
 
 
+def _code_digest():
+    """Per-scan results are cached under a digest of the feature/build code, so any code change
+    invalidates them (no stale features can leak into a run)."""
+    h = hashlib.sha256()
+    for f in ("features_v3.py", "build_features.py"):
+        h.update(open(os.path.join(HERE, f), "rb").read())
+    return h.hexdigest()[:16]
+
+
 def process(job):
+    """Cached wrapper around _process (own derived data, local, gitignored)."""
+    import pickle
+    s, opts = job
+    d = os.path.join(CACHE_DIR, "scans_" + opts["code_digest"] + ("_folds" if opts.get("folds_dir") else "")
+                     + ("_lstai" if opts.get("lstai_dir") else "") + ("_cflair" if opts.get("control_flair_dir") else ""))
+    os.makedirs(d, exist_ok=True)
+    f = os.path.join(d, s["case"] + ".pkl")
+    if os.path.exists(f):
+        with open(f, "rb") as fh:
+            return pickle.load(fh)
+    res = _process(job)
+    with open(f + ".tmp", "wb") as fh:
+        pickle.dump(res, fh)
+    os.replace(f + ".tmp", f)
+    return res
+
+
+def _process(job):
     s, opts = job
     t0 = time.time()
     pimg, P = _load(s["prob"])
@@ -205,7 +232,8 @@ def main():
             by.setdefault(s["cohort"], []).append(s)
         scans = [s for v in by.values() for s in v[:a.limit]]
     print(f"{len(scans)} scans: " + ", ".join(f"{c} {sum(s['cohort'] == c for s in scans)}" for c in ("mslesseg", "openms", "sibbms")))
-    opts = {"folds_dir": a.folds_dir, "lstai_dir": a.lstai_dir}
+    opts = {"folds_dir": a.folds_dir, "lstai_dir": a.lstai_dir, "control_flair_dir": a.control_flair_dir,
+            "code_digest": _code_digest()}
     t0 = time.time()
     results = []
     with Pool(a.workers) as pool:

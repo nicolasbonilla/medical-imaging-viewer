@@ -116,13 +116,24 @@ class ScanContext:
         else:
             self.vent_vox = 0
             self.dvent = None
+        self.t1_status = "absent"
         if self.has_t1:
             if t1.shape != prob.shape:
                 raise ValueError(f"T1 grid {t1.shape} != prob grid {prob.shape}")
-            self.zt1 = robust_z(t1, ref)
+            # T1 feeds only the EXPLORATORY family F2: a broken T1 (e.g. MSLesSeg P49_T2 ships an
+            # almost empty T1) disables F2 for that scan instead of aborting (PROTOCOL §11 D3).
+            coverage = float((t1[self.brain] != 0).mean())
+            try:
+                if coverage < 0.5:
+                    raise ValueError("T1 covers < 50 % of the FLAIR brain mask")
+                self.zt1 = robust_z(t1, ref)
+                self.t1_status = "ok"
+            except ValueError as e:
+                self.has_t1 = False
+                self.t1_status = f"disabled: {e} (coverage {coverage:.3f})"
 
     def summary(self) -> dict:
-        out = {"has_flair": self.has_flair, "has_t1": self.has_t1}
+        out = {"has_flair": self.has_flair, "has_t1": self.has_t1, "t1_status": self.t1_status}
         if self.has_flair:
             out.update({"brain_vox": self.brain_vox, "dmax_mm": round(self.dmax, 2),
                         "r_b_mm": round(self.r_b, 2), "ventricle_proxy_vox": self.vent_vox,

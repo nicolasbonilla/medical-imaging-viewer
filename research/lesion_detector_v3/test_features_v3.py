@@ -149,6 +149,16 @@ def test_lstai_placeholder():
         _feats(prob, lstai=np.zeros((5, 5, 5), np.float32))
 
 
+def test_broken_t1_disables_only_the_exploratory_family():
+    prob, flair, t1 = _scene()
+    empty_t1 = np.zeros_like(t1)
+    empty_t1[:3, :3, :3] = 50.0                    # like MSLesSeg P49_T2: almost no T1 signal
+    f, _ = _feats(prob, flair, empty_t1)
+    assert not any(k in f for k in fv.F2)
+    assert all(k in f for k in fv.F1 + fv.F3 + fv.F6)
+    assert fv.ScanContext(prob, flair, empty_t1).t1_status.startswith("disabled")
+
+
 def test_grid_mismatch_is_refused():
     prob, flair, _ = _scene()
     with pytest.raises(ValueError):

@@ -226,3 +226,16 @@ lesion_detector_v3_*.json` + `_output.txt`. Report: `docs/research/lesion-detect
 * **D2 (2026-10-17, added BEFORE any outcome was seen).** Extra check A5b: the bootstrap CIs hold
   the fitted model fixed (§7); direction B trains on 10 patients, so V3-LR is refitted on 50
   patient-bootstrap resamples of L10 and scored on M to expose model-refit variance.
+* **D3 (2026-10-17, data integrity, BEFORE any outcome).** The public MSLesSeg T1 of P49_T2 is
+  essentially empty (6994 non-zero voxels, none inside the FLAIR brain), which aborted the feature
+  build. T1 feeds only the exploratory family F2, so a T1 covering < 50 % of the FLAIR brain (or with
+  a degenerate intensity spread) now disables F2 for that scan (NaN, imputed) instead of aborting;
+  the FLAIR path stays fail-closed. Primary analysis unaffected.
+* **D4 (2026-10-17, BEFORE any outcome; found in a dry run on a synthetic random-feature cache).**
+  A3 (site-identity probe) used patient folds not stratified by cohort; pooled out-of-fold AUROC with
+  fold-varying class balance is biased below 0.5 for uninformative features (0.31 on random data).
+  A3 folds are now assigned per cohort (M patients and L10 patients each split into 5 folds) so
+  every fold has the same cohort mix. The same mechanism makes the pre-registered pooled-LOCO
+  endpoint penalise any learned model whose two directions are calibrated to different base rates
+  (RAW has no training and is immune); the endpoint is kept as pre-registered and the per-direction
+  AUROCs (S2) are reported alongside.
