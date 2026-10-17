@@ -172,9 +172,12 @@ export function ClientSliceViewport({
     st.setWindowLevel(0, 0);
   }, [volume]);
 
-  // Publish the active view geometry (slider range, wheel, keyboard).
+  // Publish the active view geometry (slider range, wheel, keyboard). A hover pixel of
+  // the previous view means nothing in the new one — drop it (no stale brush outline).
   useEffect(() => {
     if (view) useViewerStore.getState().setActiveSliceGeometry(view.normal, view.depth);
+    setHover(null);
+    useViewerStore.getState().setCursorInfo(null);
   }, [view]);
 
   const slice = view && cursorVoxel ? clampSlice(view, cursorVoxel[view.normal]) : 0;
@@ -534,6 +537,7 @@ export function ClientSliceViewport({
       data-plane={slicePlane}
       data-slice={slice}
       data-ready={volume && view ? '1' : '0'}
+      data-transform={import.meta.env.DEV && transform ? JSON.stringify(transform) : undefined}
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
       onMouseUp={endDrag}

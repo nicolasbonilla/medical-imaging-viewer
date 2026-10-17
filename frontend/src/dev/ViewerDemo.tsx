@@ -17,6 +17,7 @@ import { useSearchParams } from 'react-router-dom';
 import ViewerApp from '@/ViewerApp';
 import { useViewerStore } from '@/store/useViewerStore';
 import { useMultiViewerStore } from '@/store/useMultiViewerStore';
+import { useSegmentationStore } from '@/store/useSegmentationStore';
 import { installDemoBackend, DEMO_IDS } from './demoBackend';
 import i18n from '@/i18n/config';
 
@@ -129,6 +130,38 @@ async function runStep(step: string): Promise<void> {
       await sleep(600);
       return;
     }
+    case 'stroke': {
+      // stroke:r0,c0,r1,c1 — drag the mouse over IMAGE pixels of the current view, through
+      // the real viewport handlers (same path as a clinician's brush stroke).
+      const vp = document.querySelector<HTMLElement>('[data-testid="client-slice-viewport"]');
+      const tr = vp?.dataset.transform ? JSON.parse(vp.dataset.transform) : null;
+      if (!vp || !tr) return;
+      const [r0, c0, r1, c1] = (arg ?? '').split('_').map(Number);
+      const rect = vp.getBoundingClientRect();
+      const at = (r: number, c: number) => ({
+        clientX: rect.left + tr.originX + (c + 0.5) * tr.scaleX,
+        clientY: rect.top + tr.originY + (r + 0.5) * tr.scaleY,
+      });
+      const fire = (type: string, p: { clientX: number; clientY: number }) =>
+        vp.dispatchEvent(new MouseEvent(type, { bubbles: true, button: 0, buttons: 1, ...p }));
+      fire('mousedown', at(r0, c0));
+      const steps = 24;
+      for (let s = 1; s <= steps; s++) {
+        fire('mousemove', at(r0 + ((r1 - r0) * s) / steps, c0 + ((c1 - c0) * s) / steps));
+        await sleep(15);
+      }
+      fire('mouseup', at(r1, c1));
+      await sleep(500);
+      return;
+    }
+    case 'brush':
+      useSegmentationStore.getState().setBrushSize(Number(arg ?? 3));
+      await sleep(200);
+      return;
+    case 'undo':
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, bubbles: true }));
+      await sleep(500);
+      return;
     case 'wait':
       await sleep(Number(arg ?? 1000));
       return;
