@@ -24,6 +24,7 @@ RATE=$(meta attributes/hourly-rate);     RATE=${RATE:-0.39}
 MACHINE=$(meta attributes/machine-desc); MACHINE=${MACHINE:-n2-standard-8}
 MAXH=$(meta attributes/max-hours);       MAXH=${MAXH:-24}
 TTA=$(meta attributes/tta);              TTA=${TTA:-0}
+CASE_IDS=$(meta attributes/case-ids)     # optional explicit case list (pilots); overrides offset/limit
 BKT="mstool-research-data"; BK="gs://$BKT"; PFX="flames-ensemble"
 START=$(date +%s)
 
@@ -103,6 +104,17 @@ else
   pip freeze > $W/requirements.lock && gcloud storage cp $W/requirements.lock "$BK/env/requirements.lock" --quiet
 fi
 python3 -c "import torch,torchvision,nnunetv2,nibabel; from google.cloud import storage; from torchvision.ops import nms; from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor; nms(torch.zeros((1,4)), torch.zeros(1), 0.5); print('env ok', torch.__version__, torchvision.__version__)" || { gcloud storage rm "$BK/env/requirements.lock" --quiet 2>/dev/null; exit 1; }
+# Extra public cohorts (MS3SEG, Muslim 2022, PediMS; docs/research/cohorts-extra.md) need the fetchers
+# and HD-BET. HD-BET is installed with every frozen version as a CONSTRAINT, so torch / nnU-Net /
+# numpy stay exactly as in the lock (HD-BET 2.0.1 only adds scikit-image).
+EXTRA=""; for d in ms3seg muslim pedims; do case " $DATASETS " in *" $d "*) EXTRA="$EXTRA $d";; esac; done
+if [ -n "$EXTRA" ]; then
+  for f in cohorts_extra.py extra_cohorts_stage.py; do gcloud storage cp "$BK/$PFX/code/$f" "$W/$f" --quiet || exit 1; done
+  pip freeze > $W/constraints.txt
+  pip install -q -c $W/constraints.txt "hd-bet==2.0.1" --extra-index-url https://download.pytorch.org/whl/cpu 2>&1 | tail -2
+  python3 -c "import torch,torchvision,nnunetv2; from torchvision.ops import nms; nms(torch.zeros((1,4)), torch.zeros(1), 0.5); import sys; sys.path.insert(0,'$W'); import cohorts_extra as c; print('extra env ok', torch.__version__, nnunetv2.__file__, sorted(c.FETCHERS))" || exit 1
+  which hd-bet || exit 1
+fi
 log
 
 stage weights_start; echo "=== [2/5] FLAMeS weights (cached mirror of Zenodo 17955359) ==="
@@ -121,14 +133,26 @@ case " $DATASETS " in *" mslesseg "*)
   cache_get mslesseg_52771814.zip 'curl -sL -o /w/cache/mslesseg_52771814.zip https://ndownloader.figshare.com/files/52771814' || exit 1
   mkdir -p $W/data/mslesseg && unzip -q -o $W/cache/mslesseg_52771814.zip -d $W/data/mslesseg && rm -f $W/cache/mslesseg_52771814.zip ;;
 esac
+if [ -n "$EXTRA" ]; then
+  # All three cohorts fetched once (streaming range reads), cached as one tarball with its SHA-256.
+  cache_get extra_cohorts_raw_v1.tar.gz "python3 $W/extra_cohorts_stage.py build-raw --out $W/extra_raw --cohorts ms3seg muslim pedims && tar -czf $W/cache/extra_cohorts_raw_v1.tar.gz -C $W extra_raw" || exit 1
+  [ -d $W/extra_raw ] || tar -xzf $W/cache/extra_cohorts_raw_v1.tar.gz -C $W
+  rm -f $W/cache/extra_cohorts_raw_v1.tar.gz
+  for m in $W/extra_raw/*/manifest.json; do gcloud storage cp "$m" "$BK/extra_qc/$(basename "$(dirname "$m")")_manifest.json" --quiet --no-clobber 2>/dev/null || true; done
+fi
 log
 
 stage cases_start; echo "=== [4/5] case list + ground truth ==="
-python3 - "$OFFSET" "$LIMIT" <<'PY'
-import glob, json, os, sys
+python3 - "$OFFSET" "$LIMIT" "$DATASETS" "$BK" "$CASE_IDS" <<'PY'
+import glob, json, os, subprocess, sys
 import nibabel as nib, numpy as np
-OFF, LIMIT = int(sys.argv[1]), int(sys.argv[2])
+OFF, LIMIT, DATASETS, BK, CASE_IDS = int(sys.argv[1]), int(sys.argv[2]), sys.argv[3].split(), sys.argv[4], sys.argv[5].split()
 cases = {}
+extra = {}
+if os.path.exists("/w/extra_raw/cases_extra.json"):
+    extra = {c: v for c, v in json.load(open("/w/extra_raw/cases_extra.json")).items() if v["cohort"] in DATASETS}
+    for c, v in extra.items():
+        cases[c] = {"flair": None, "gt": os.path.join("/w/extra_raw", v["gt"])}   # FLAIR set after stripping
 for pat in sorted(glob.glob("/w/data/open_ms_data/cross_sectional/MNI/patient*")):
     fl = glob.glob(f"{pat}/FLAIR*regtoMNI.nii.gz"); gt = glob.glob(f"{pat}/GOLD_STANDARD*regtoMNI.nii.gz")
     if fl and gt: cases["openms_" + os.path.basename(pat)] = {"flair": fl[0], "gt": gt[0]}
@@ -141,6 +165,21 @@ for split in glob.glob("/w/data/mslesseg/**/train", recursive=True) + glob.glob(
             if fl and gt: cases[cid] = {"flair": fl[0], "gt": gt[0]}
 ids = sorted(cases)
 ids = ids[OFF:] if LIMIT <= 0 else ids[OFF:OFF + LIMIT]
+if CASE_IDS:
+    missing = [c for c in CASE_IDS if c not in cases]
+    if missing:
+        sys.exit(f"case-ids not found: {missing}")
+    ids = sorted(CASE_IDS)
+sel_extra = [c for c in ids if c in extra]
+if sel_extra:   # skull-strip only the selected extra cases (reusing brains already in the bucket)
+    subprocess.run([sys.executable, "/w/extra_cohorts_stage.py", "strip", "--raw", "/w/extra_raw", "--cases", *sel_extra,
+                    "--bucket-prefix", f"{BK}/inputs/extra_stripped", "--out", "/w/extra_brain",
+                    "--result", "/w/extra_selected.json"], check=True)
+    got = json.load(open("/w/extra_selected.json"))
+    for c in sel_extra:
+        if c in got:
+            cases[c]["flair"] = got[c]["flair"]
+    ids = [c for c in ids if cases[c]["flair"]]
 sel = {c: cases[c] for c in ids}
 os.makedirs("/w/gt", exist_ok=True)
 for c, v in sel.items():

@@ -3,7 +3,7 @@
 Research use only (not part of the medical device). Prepared 2026-10-17 on branch
 `research/cohorts-extra`. Code: `research/cloud/cohorts_extra.py` (fetchers + HD-BET helper),
 `research/cloud/check_cohorts_extra.py` (local one-case-per-cohort check),
-`research/cloud/vm_flames_ensemble.cohorts_extra.patch` (job patch). Check outputs:
+`research/cloud/extra_cohorts_stage.py` + `vm_flames_ensemble_v2.sh` (cloud job, section 6). Check outputs:
 `docs/research/records/cohorts_extra_check/`.
 
 ## 1. Summary
@@ -161,85 +161,28 @@ selected cases, a simulated outage of one source does not stop the run).
 - Every fetched case gets a lesion-vs-surrounding FLAIR ratio in manifest.json (cloud run: copied to
   $BK/extra_qc/). A ratio <= 1.0 means the mask is not on hyperintense tissue: inspect before using it.
 
-## 6. Job patch (`research/cloud/vm_flames_ensemble.sh`)
+## 6. Cloud job integration (v2 job script)
 
-Apply in the main checkout (`git apply research/cloud/vm_flames_ensemble.cohorts_extra.patch` or
-`patch -p1 < …`). Base file sha256 `f531040f044037cd5b6d911f74b97dac2f0c229b9f493e01d619a811e7e1e8fc`.
-Launch with the module passed as metadata (no push needed), e.g. `datasets="ms3seg muslim pedims"` and
-`--metadata-from-file=startup-script=research/cloud/vm_flames_ensemble.sh,cohorts-extra-py=research/cloud/cohorts_extra.py`.
-HD-BET on CPU takes about 1–2 min per scan without test-time augmentation (151 scans need it), so
-shard with `case-offset`/`case-limit` (cases are sorted by id across cohorts). Manifests and HD-BET QC
-are copied to `$BK/extra_qc/<vm-name>/`.
+The v1 patch prepared on `research/cohorts-extra` was superseded: the cohorts are wired into
+`research/cloud/vm_flames_ensemble_v2.sh` through `research/cloud/extra_cohorts_stage.py`.
 
-```diff
---- a/research/cloud/vm_flames_ensemble.sh
-+++ b/research/cloud/vm_flames_ensemble.sh
-@@ -13,6 +13,10 @@
- # Metadata (all optional):
- #   folds="0 1 2 3 4"   case-offset=0   case-limit=0 (0 = all)   datasets="openms mslesseg"
- #   hourly-rate=0.08    machine-desc=n2-standard-8   max-hours=15
-+# Extra cohorts (docs/research/cohorts-extra.md): datasets may also list "ms3seg muslim pedims".
-+#   They need the fetcher passed as metadata, e.g.
-+#   --metadata-from-file=startup-script=vm_flames_ensemble.sh,cohorts-extra-py=cohorts_extra.py
-+#   MS3SEG and Muslim FLAIRs keep the skull -> HD-BET v2 (CPU, no TTA) strips the selected cases.
- exec > /var/log/flames.log 2>&1
- set -x
- MD="http://metadata/computeMetadata/v1/instance"
-@@ -53,6 +57,14 @@
- pip install -q torch torchvision --index-url https://download.pytorch.org/whl/cpu 2>&1 | tail -2
- pip install -q nnunetv2 nibabel 2>&1 | tail -2
- python3 -c "import numpy,torch,nibabel;print('deps ok', numpy.__version__, torch.__version__, 'threads', torch.get_num_threads())" || exit 1
-+EXTRA=""; for d in ms3seg muslim pedims; do case " $DATASETS " in *" $d "*) EXTRA="$EXTRA $d";; esac; done
-+if [ -n "$EXTRA" ]; then
-+  meta attributes/cohorts-extra-py > $W/cohorts_extra.py
-+  python3 -c "import sys; sys.path.insert(0, '$W'); import cohorts_extra as c; print('cohorts_extra ok', sorted(c.FETCHERS))" \
-+    || { echo "cohorts_extra.py missing or broken (metadata cohorts-extra-py)"; exit 1; }
-+  pip install -q "hd-bet==2.0.1" 2>&1 | tail -2
-+  which hd-bet || exit 1
-+fi
- log
- 
- echo "=== [2/5] FLAMeS weights (Zenodo 17955359) ==="
-@@ -91,13 +103,41 @@
-             else:
-                 fl = glob.glob(f"{pat}/*FLAIR*.nii.gz"); gt = glob.glob(f"{pat}/*MASK*.nii.gz")
-                 if fl and gt: add(f"mslesseg_{os.path.basename(pat)}", fl[0], gt[0])
-+# Extra cohorts (research/cloud/cohorts_extra.py): FLAIR + binary lesion mask on the same grid.
-+EXTRA = [d for d in ("ms3seg", "muslim", "pedims") if d in DATASETS]
-+pending = {}   # case -> (FLAIR with skull, gt): skull-stripped below, only if selected
-+if EXTRA:
-+    sys.path.insert(0, W)
-+    import cohorts_extra as cx
-+    for name in EXTRA:
-+        try:
-+            got = cx.FETCHERS[name](f"{W}/extra")
-+        except Exception as e:  # one unreachable source must not kill the whole run
-+            print("FETCH FAILED", name, repr(e)); continue
-+        print("FETCHED", name, len(got))
-+        for cid, fl, gt, strip in got:
-+            if strip:
-+                pending[cid] = (fl, gt); gt_map[cid] = gt
-+            else:
-+                add(cid, fl, gt)
- cases = sorted(gt_map)
- cases = cases[OFF:] if LIMIT <= 0 else cases[OFF:OFF + LIMIT]
-+sel = [c for c in cases if c in pending]
-+if sel:  # HD-BET once (folder mode) on the selected cases; brain = raw * mask on the ORIGINAL grid
-+    brains = cx.hdbet_strip({c: pending[c][0] for c in sel}, f"{W}/extra/hdbet",
-+                            gts={c: pending[c][1] for c in sel}, device="cpu", tta=False)
-+    for c in sel:
-+        if c in brains: add(c, brains[c], pending[c][1])
-+        else: print("HD-BET FAILED -> dropped", c)
-+    cases = [c for c in cases if c not in pending or c in brains]
- for f in glob.glob(f"{IN}/*_0000.nii.gz"):
-     if os.path.basename(f)[:-len("_0000.nii.gz")] not in cases: os.remove(f)
- json.dump({c: gt_map[c] for c in cases}, open(f"{W}/gt_map.json", "w"))
- print("ASSEMBLED", len(cases), "cases:", cases[:3], "...", cases[-3:])
- PY
-+for q in $W/extra/*/manifest.json $W/extra/hdbet/hdbet_qc.json; do
-+  [ -f "$q" ] && gcloud storage cp "$q" "$BK/extra_qc/$NAME/$(basename "$(dirname "$q")")_$(basename "$q")" --quiet 2>/dev/null || true
-+done
- log
- 
- echo "=== [4/5] ground truth pairs -> bucket ==="
+- `datasets` may list `ms3seg muslim pedims` (alone or with `openms mslesseg`). The VM copies
+  `cohorts_extra.py` and `extra_cohorts_stage.py` from `gs://mstool-research-data/flames-ensemble/code/`.
+- HD-BET 2.0.1 is installed with every frozen package version as a pip constraint, so torch,
+  torchvision, nnU-Net and numpy stay exactly as in `env/requirements.lock` (HD-BET only adds
+  scikit-image); an environment self-test runs before any work.
+- `build-raw` fetches all three cohorts once and caches them as `inputs/extra_cohorts_raw_v1.tar.gz`
+  (+ `.sha256`); later runs only download the tarball.
+- `case-offset` / `case-limit` apply to the sorted list of ALL selected datasets; only the selected
+  cases that still have a skull go through HD-BET (CPU, no TTA), one case at a time. Each brain is
+  uploaded at once to `inputs/extra_stripped/{case}_flair_brain.nii.gz` (QC to `.../qc/`) and reused by
+  every later run, so HD-BET runs once per case.
+- FLAMeS then runs per fold exactly like the other cohorts (`flames_ensemble_driver.py`).
+
+Launch (pilot: one case per cohort, fold 0; `case-ids` overrides offset/limit):
+
+```
+python research/cloud/launch_vm.py --name flames-extra-pilot --machine-type n2d-standard-4 \
+    --startup research/cloud/vm_flames_ensemble_v2.sh --purpose "Extra cohorts pilot" --paper A \
+    --max-hours 2 --meta "datasets=ms3seg muslim pedims" "case-ids=ms3seg_001 muslim_01 pedims_P1_T1" folds=0
 ```
