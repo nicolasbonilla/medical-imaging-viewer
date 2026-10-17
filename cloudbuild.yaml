@@ -1,4 +1,22 @@
 steps:
+  # PROJECT GUARD (2026-10-17): this app may only be built and deployed in its own
+  # project. A deploy launched with another default gcloud project created a failing
+  # `brain-mri` service in an unrelated project. This step fails the build before
+  # anything is built, pushed or deployed. (It cannot stop `gcloud builds submit` from
+  # uploading the source to the wrong project's bucket — use scripts/deploy_backend.sh,
+  # which always passes --project.)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'project-guard'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        if [ "$PROJECT_ID" != "brain-mri-476110" ]; then
+          echo "REFUSED: brain-mri belongs to project brain-mri-476110, not $PROJECT_ID. Nothing was built or deployed."
+          exit 1
+        fi
+        echo "project guard OK: $PROJECT_ID"
+
   # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
     args:
