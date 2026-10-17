@@ -628,6 +628,17 @@ def main():
         t = auc_table(D, s_, i_, yl, [D.sets["M"], D.sets["L10"]], seed=SEED + 4)
         a4[lab] = t
         say(f"  {lab}: " + ", ".join(f"{k} {t[k]['auroc']} d {t[k].get('delta_vs_RAW')} {t[k].get('delta_vs_RAW_ci95')}" for k in s_))
+    # A4b (added before any outcome was seen, PROTOCOL §11 D1): under one-to-one labels surplus
+    # FRAGMENTS of a real lesion are FALSE. A detector could win by flagging fragments, which is
+    # not removing false lesions. Re-score the primary pooled LOCO predictions with fragment-false
+    # candidates (FALSE but overlapping GT) removed: TRUE vs PURE-false only.
+    pure = ~(~y & D.labels["anyvox"])
+    keep = pure[idx]
+    sc_pure = {k: v[keep] for k, v in sc.items()}
+    a4["pure_false_only_primary_predictions"] = auc_table(D, sc_pure, idx[keep], y, [D.sets["M"], D.sets["L10"]],
+                                                          ref="RAW", ref2="V2-shipped", seed=SEED + 13)
+    say("  pure-false only: " + ", ".join(f"{k} {a4['pure_false_only_primary_predictions'][k]['auroc']} "
+                                           f"d {a4['pure_false_only_primary_predictions'][k].get('delta_vs_RAW')}" for k in sc_pure))
     rec["A4_label_definitions"] = a4
 
     say("A5: small-n optimism ...")
@@ -649,6 +660,25 @@ def main():
                                                            "delta_range": [_r(min(deltas)), _r(max(deltas))]},
                          "events_per_variable": {"L10_false_per_feature": _r((D.sets["L10"] & ~y).sum() / nfeat, 2),
                                                  "M_false_per_feature": _r((D.sets["M"] & ~y).sum() / nfeat, 2), "n_features_V3": nfeat}}
+    # A5b (added before any outcome was seen, PROTOCOL §11 D2): the bootstrap CIs hold the fitted
+    # model fixed. Direction B trains on only 10 patients, so add model-refit variance: refit V3-LR
+    # on 50 patient-bootstrap resamples of L10 and score M.
+    L10p = np.array(sorted(set(D.patient[D.sets["L10"]])))
+    te = D.sets["M"]
+    refit = []
+    for r in range(50):
+        rng = np.random.RandomState(SEED + 700 + r)
+        pick = rng.choice(L10p, len(L10p), replace=True)
+        rows_ = np.concatenate([np.nonzero(D.sets["L10"] & (D.patient == p))[0] for p in pick])
+        fset, fitter = MODELS["V3-LR"]
+        if len(set(y[rows_])) < 2:
+            continue
+        f = fitter(D.X[rows_][:, [D.col[c] for c in FEATURE_SETS[fset]]], y[rows_].astype(int))
+        refit.append(auroc(f(D.F(fset, te)), y[te]))
+    raw_M = auroc(D.raw[te], y[te])
+    rec["A5_small_n"]["direction_B_refit_variance"] = {
+        "n_refits": len(refit), "auroc_mean": _r(np.mean(refit)), "auroc_p2.5_p97.5": ci(refit),
+        "raw_auroc_on_M": _r(raw_M), "frac_refits_below_raw": _r(np.mean(np.array(refit) < raw_M))}
     say(f"  {rec['A5_small_n']}")
 
     say("A6: contamination reference ...")

@@ -217,3 +217,12 @@ lesion_detector_v3_*.json` + `_output.txt`. Report: `docs/research/lesion-detect
 ## 11. Deviations log
 
 (none at pre-registration)
+
+* **D1 (2026-10-17, added BEFORE any outcome was seen; feature cache still building).** Extra
+  adversarial check A4b: under one-to-one labels, surplus fragments of a real lesion are FALSE, so a
+  detector could "win" by flagging fragments (e.g. via `ps_nmerge_025`) without removing any false
+  lesion. The primary pooled-LOCO predictions are re-scored with fragment-false candidates (FALSE but
+  overlapping GT) removed — TRUE vs pure-false only. Does not change the primary endpoint.
+* **D2 (2026-10-17, added BEFORE any outcome was seen).** Extra check A5b: the bootstrap CIs hold
+  the fitted model fixed (§7); direction B trains on 10 patients, so V3-LR is refitted on 50
+  patient-bootstrap resamples of L10 and scored on M to expose model-refit variance.
