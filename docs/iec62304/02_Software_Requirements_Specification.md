@@ -17,7 +17,7 @@
 |---------|------|--------|---------|-------------|
 | 1.0 | 2026-04-12 | Development Team | Initial release | — |
 | 1.1 | 2026-09-28 | Development Team | REQ-SAFE-010 amended (audit #8): no per-lesion MAGNIMS confidence emitted or displayed; region evidence instead (RC-010 amended, HAZ-005) | N. G. Bonilla Vargas — approved 2026-09-28 (PR #42) |
-| 1.2 | 2026-09-28 | Development Team | CAPA-006. REQ-FUNC-053 corrected: it stated "SynthSeg parcellation + EDT (Tier 2) with MSMask atlas fallback (Tier 1)", which never matched the code (four paths since a637cdf, 2026-03-14; SynthSeg and LST-AI disabled by default). REQ-SAFE-021 added: each MAGNIMS path is applied only when its precondition holds (RC-032, HAZ-005). REQ-SAFE-020 annotated NOT IMPLEMENTED (no registration to MNI exists; RC-022 not verified) — it contradicted REQ-SAFE-021 as written | *(pending — PR #43)* |
+| 1.2 | 2026-09-28 | Development Team | CAPA-006. REQ-FUNC-053 corrected: it stated "SynthSeg parcellation + EDT (Tier 2) with MSMask atlas fallback (Tier 1)", which never matched the code (four paths since a637cdf, 2026-03-14; SynthSeg and LST-AI disabled by default). REQ-SAFE-021 added: each MAGNIMS path is applied only when its precondition holds (RC-032, HAZ-005). REQ-SAFE-020 annotated NOT IMPLEMENTED (no registration to MNI exists; RC-022 not verified) — it contradicted REQ-SAFE-021 as written | N. G. Bonilla Vargas — approved 2026-10-17 (PR #43) |
 
 ---
 

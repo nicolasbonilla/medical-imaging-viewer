@@ -15,7 +15,7 @@
 | Version | Date | Author | Changes | Approved By |
 |---------|------|--------|---------|-------------|
 | 1.0 | 2026-04-12 | Development Team | Initial release | — |
-| 1.1 | 2026-09-28 | Development Team | CAPA-006 / REQ-SAFE-021 / RC-032 (HAZ-005). §3.2 BE-CLS: the description "EDT-based region classification" was incomplete. EDT is used by only one of four paths, and the MSMask atlas path is the usual one for MNI-space images. Replaced by the four-path MAGNIMS region classification with the RC-032 path preconditions (DD-001 DD-CLS-001). §5: SOUP count 37 → 38 (MSMask atlas data file added to SOUP-001 as SOUP-BE-025); nilearn (SOUP-BE-020, now Class C) and the MSMask atlas added to the key architectural SOUP table | — |
+| 1.1 | 2026-09-28 | Development Team | CAPA-006 / REQ-SAFE-021 / RC-032 (HAZ-005). §3.2 BE-CLS: the description "EDT-based region classification" was incomplete. EDT is used by only one of four paths, and the MSMask atlas path is the usual one for MNI-space images. Replaced by the four-path MAGNIMS region classification with the RC-032 path preconditions (DD-001 DD-CLS-001). §5: SOUP count 37 → 38 (MSMask atlas data file added to SOUP-001 as SOUP-BE-025); nilearn (SOUP-BE-020, now Class C) and the MSMask atlas added to the key architectural SOUP table | N. G. Bonilla Vargas — approved 2026-10-17 (PR #43) |
 
 ---
 

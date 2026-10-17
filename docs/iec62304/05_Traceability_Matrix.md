@@ -4,10 +4,10 @@
 
 **Document ID**: TM-001 | **Version**: 1.1 | **Date**: September 28, 2026 (v1.0: April 12, 2026)
 
-| Version | Date | Author | Change |
-|---------|------|--------|--------|
-| 1.0 | 2026-04-12 | Development Team | Initial release |
-| 1.1 | 2026-09-28 | Development Team | CAPA-006 (HAZ-005). (a) REQ-FUNC-053 row corrected in place. It was "MAGNIMS classification", tested by UT-CLS-001 only. It now reflects the corrected SRS text: contact criterion, four paths, MNI-only atlas. It adds UT-CLS-002/003 and UI-RC032, and the architecture reference, which was "SAD 3.5", a section that does not exist. (b) Addendum added for REQ-SAFE-021 → RC-032 and for the CAPA-006 PA-6.1 labelling gate. (c) REQ-SAFE-020 / RC-022 row: "VERIFIED (code inspection)" struck through. It is NOT IMPLEMENTED / NOT VERIFIED: no MNI preprocessing or registration to a template exists in the code. (d) New tests added to the backward and unit-test traceability tables. The 2026-09-28 RC-010 addendum below was entered without a version change; it is covered by this version |
+| Version | Date | Author | Change | Approved By |
+|---------|------|--------|--------|-------------|
+| 1.0 | 2026-04-12 | Development Team | Initial release | — |
+| 1.1 | 2026-09-28 | Development Team | CAPA-006 (HAZ-005). (a) REQ-FUNC-053 row corrected in place. It was "MAGNIMS classification", tested by UT-CLS-001 only. It now reflects the corrected SRS text: contact criterion, four paths, MNI-only atlas. It adds UT-CLS-002/003 and UI-RC032, and the architecture reference, which was "SAD 3.5", a section that does not exist. (b) Addendum added for REQ-SAFE-021 → RC-032 and for the CAPA-006 PA-6.1 labelling gate. (c) REQ-SAFE-020 / RC-022 row: "VERIFIED (code inspection)" struck through. It is NOT IMPLEMENTED / NOT VERIFIED: no MNI preprocessing or registration to a template exists in the code. (d) New tests added to the backward and unit-test traceability tables. The 2026-09-28 RC-010 addendum below was entered without a version change; it is covered by this version | N. G. Bonilla Vargas — approved 2026-10-17 (PR #43) |
 
 ---
 

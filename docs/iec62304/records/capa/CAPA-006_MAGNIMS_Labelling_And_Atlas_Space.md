@@ -6,7 +6,7 @@
 **Severity**: **CRITICAL**. A wrong MAGNIMS region can change Dissemination in Space (DIS), a McDonald 2024 diagnostic criterion (HAZ-005). The labelling described a method the device did not run (MDR Annex I §23.4). QP-002 §5.
 **Owner**: *(to be assigned: Software Safety Officer / QMS Manager)*
 **Status**: OPEN.
-- Implemented in PR #43 (branch `docs/labelling-magnims-method-capa006`), pending human Class C approval: CA-6.1 to CA-6.8, CA-6.12 and PA-6.1.
+- Implemented in PR #43, **approved by N. G. Bonilla Vargas on 2026-10-17** (human Class C approval) and merged: CA-6.1 to CA-6.8, CA-6.12 and PA-6.1.
 - Partial: PA-6.3, PA-6.5 and PA-6.7.
 - Pending: CA-6.9 to CA-6.11, PA-6.2, PA-6.4, PA-6.6 and PA-6.8.
 - Effectiveness is not verified.

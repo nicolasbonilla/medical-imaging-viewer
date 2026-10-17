@@ -11,7 +11,7 @@
 | Version | Date | Author | Changes | Approved By |
 |---------|------|--------|---------|-------------|
 | 1.0 | 2026-04-12 | Development Team | Initial release | — |
-| 1.1 | 2026-09-28 | Development Team | §1.5 rows added: RC-010 (amended) region-evidence rows (PR #42, approved 2026-09-28; added then without a version entry — recorded here); UT-CLS-003 (RC-032 path preconditions), UI-RC032 (UI warnings) and UT-LBL-001 (CAPA-006 PA-6.1 labelling gate) (CAPA-006, HAZ-005, REQ-SAFE-021) | *(pending — PR #43)* |
+| 1.1 | 2026-09-28 | Development Team | §1.5 rows added: RC-010 (amended) region-evidence rows (PR #42, approved 2026-09-28; added then without a version entry — recorded here); UT-CLS-003 (RC-032 path preconditions), UI-RC032 (UI warnings) and UT-LBL-001 (CAPA-006 PA-6.1 labelling gate) (CAPA-006, HAZ-005, REQ-SAFE-021) | N. G. Bonilla Vargas — approved 2026-10-17 (PR #43) |
 
 ---
 

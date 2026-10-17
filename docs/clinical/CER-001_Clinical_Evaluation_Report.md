@@ -9,7 +9,7 @@
 |---------|------|--------|-------------|
 | 1.0 | 2026-04-12 | Development Team | — |
 | 1.1 | 2026-09-28 | Development Team | — |
-| 1.2 | 2026-09-28 | Development Team | — |
+| 1.2 | 2026-09-28 | Development Team | N. G. Bonilla Vargas — approved 2026-10-17 (PR #43) |
 
 *Version 1.2 (CAPA-006, HAZ-005)*: Section 3.2 corrected. Earlier versions attributed distance thresholds (PV within 3 mm of the ventricle wall, JC within 4 mm of the cortical surface) to the MAGNIMS consensus. MAGNIMS defines these regions by contact (abutting), not by distance thresholds, ~~and the 3/4 mm values matched an earlier software version (commit cf780f4, February 2026), not the current one (1.5 mm, direct contact)~~. They are withdrawn. *Correction (review 2026-09-28)*: the 3/4 mm values did not match the software when this report was issued. The code applied 3.0/4.0/3.0 mm only in commit cf780f4 (2026-02-22, with a Harvard-Oxford zone map); commit 67fa336 (2026-02-28) changed it to 1.5 mm and added the MSMask atlas, and the four-path order dates from commit a637cdf (2026-03-14). Version 1.0 was issued on 2026-04-12 (commit 9ac536d) already stating 3/4 mm, six weeks after the code had moved to 1.5 mm and on the day the DDS was issued stating 1.5 mm: the report was wrong when issued and had not been reviewed against the code or the DDS. The same review aligned Section 3.2 with the code: only PV, JC and IT are evaluated from the images; the limits of the 1.5 mm rule; the MSMask zones described as atlas white matter within the one-voxel dilation of the structures (v1.2 said "one-voxel atlas dilation"), adapted from LST-AI and not validated, used only for images already registered to MNI152; region-assignment accuracy not measured for any path.
 

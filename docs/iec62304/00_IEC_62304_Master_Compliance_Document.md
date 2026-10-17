@@ -17,7 +17,7 @@
 | Version | Date | Author | Changes | Approved By |
 |---------|------|--------|---------|-------------|
 | 1.0 | 2026-04-12 | Development Team | Initial release | — |
-| 1.1 | 2026-09-28 | Development Team | §10.2: HAZ-005 RC-010 (amended) row and erratum (PR #42, approved 2026-09-28; added then without a version entry — recorded here) and RC-032 row (CAPA-006). §4.2 SOUP: nilearn (SOUP-BE-020) corrected to Class C, version not pinned (CAPA-006 PA-6.5); MSMask atlas data file added (SOUP-BE-025), with erratum (CAPA-006) | *(pending — PR #43)* |
+| 1.1 | 2026-09-28 | Development Team | §10.2: HAZ-005 RC-010 (amended) row and erratum (PR #42, approved 2026-09-28; added then without a version entry — recorded here) and RC-032 row (CAPA-006). §4.2 SOUP: nilearn (SOUP-BE-020) corrected to Class C, version not pinned (CAPA-006 PA-6.5); MSMask atlas data file added (SOUP-BE-025), with erratum (CAPA-006) | N. G. Bonilla Vargas — approved 2026-10-17 (PR #43) |
 
 ---
 

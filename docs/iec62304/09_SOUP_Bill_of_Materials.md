@@ -4,10 +4,10 @@
 
 **Document ID**: SOUP-001 | **Version**: 1.1 | **Date**: September 28, 2026 (v1.0: April 12, 2026)
 
-| Version | Date | Author | Change |
-|---------|------|--------|--------|
-| 1.0 | 2026-04-12 | Development Team | Initial release |
-| 1.1 | 2026-09-28 | Development Team | CAPA-006 (HAZ-005). (a) SOUP-BE-020 nilearn reclassified B → **C**. It resamples the MSMask atlas zone map for the Class C MAGNIMS region classifier. Purpose was "Brain atlas"; version was "0.10.0+". Recorded as not pinned (`>=0.10.0`), with open action CAPA-006 PA-6.5; `backend/requirements.txt` not changed. (b) SOUP-BE-025 added: the MSMask atlas data file, a Class C input that had no SOUP or provenance entry. (c) Summary recounted from the tables. v1.0 stated Class B 20 / Class A 10; the tables held 21 / 9. |
+| Version | Date | Author | Change | Approved By |
+|---------|------|--------|--------|-------------|
+| 1.0 | 2026-04-12 | Development Team | Initial release | — |
+| 1.1 | 2026-09-28 | Development Team | CAPA-006 (HAZ-005). (a) SOUP-BE-020 nilearn reclassified B → **C**. It resamples the MSMask atlas zone map for the Class C MAGNIMS region classifier. Purpose was "Brain atlas"; version was "0.10.0+". Recorded as not pinned (`>=0.10.0`), with open action CAPA-006 PA-6.5; `backend/requirements.txt` not changed. (b) SOUP-BE-025 added: the MSMask atlas data file, a Class C input that had no SOUP or provenance entry. (c) Summary recounted from the tables. v1.0 stated Class B 20 / Class A 10; the tables held 21 / 9. | N. G. Bonilla Vargas — approved 2026-10-17 (PR #43) |
 
 ---
 

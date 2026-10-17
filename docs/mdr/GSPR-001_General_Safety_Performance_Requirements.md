@@ -8,7 +8,7 @@
 | Version | Date | Author | Approved By |
 |---------|------|--------|-------------|
 | 1.0 | 2026-04-12 | Development Team | — |
-| 1.1 | 2026-09-28 | Development Team | — |
+| 1.1 | 2026-09-28 | Development Team | N. G. Bonilla Vargas — approved 2026-10-17 (PR #43) |
 
 *Version 1.1 (CAPA-006, HAZ-005)*: GSPR 9 and GSPR 22 corrected. Version 1.0 stated that MAGNIMS classification "uses published distance thresholds (PV<=3mm, JC<=4mm, IT<=3mm) per McDonald 2024 criteria". Those values were never published MAGNIMS thresholds (MAGNIMS defines contact) ~~and described an earlier software version (commit cf780f4, February 2026)~~; they are withdrawn. *Correction (review 2026-09-28)*: they did not describe the software at issue. The code applied 3.0/4.0/3.0 mm only in commit cf780f4 (2026-02-22, with a Harvard-Oxford zone map); commit 67fa336 (2026-02-28) changed it to 1.5 mm and added the MSMask atlas, and the four-path order dates from commit a637cdf (2026-03-14). Version 1.0 was issued on 2026-04-12 (commit 9ac536d) already stating 3/4/3 mm, six weeks after the code had moved to 1.5 mm and on the day the DDS was issued stating 1.5 mm: this document was wrong when issued and had not been reviewed against the code or the DDS. Version 1.0 also stated under GSPR 9 that "MAGNIMS classification validated against expert annotations"; no such validation has been performed, so that statement is withdrawn and GSPR 9 and GSPR 22 are set to "Partially compliant" (region-assignment accuracy unmeasured, HAZ-005 residual undetermined). The GSPR 22 note now describes the MSMask path as dilated atlas structures (not zones), adapted from LST-AI and not validated, used only for images already registered to MNI152.
 

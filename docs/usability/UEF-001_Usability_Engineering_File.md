@@ -9,7 +9,7 @@
 |---------|------|--------|-------------|
 | 1.0 | 2026-04-12 | Development Team | — |
 | 1.1 | 2026-09-28 | Development Team | — |
-| 1.2 | 2026-09-28 | Development Team | — |
+| 1.2 | 2026-09-28 | Development Team | N. G. Bonilla Vargas — approved 2026-10-17 (PR #43) |
 
 *Version 1.2 (CAPA-006, HAZ-005)*: H-09 addendum. The mitigation "two-tier classification with fallback" ~~described an earlier software version~~. *Correction (review 2026-09-28)*: it did not describe the software when this file was issued on 2026-04-12 (commit 9ac536d): the four-path order had been in the code since commit a637cdf (2026-03-14). The current four-path order, the MNI-space requirement for the atlas path (its five grid conditions and on-screen warning), the refusal preconditions and warning of the geometric path, and the refusal when no path applies are recorded in the addendum. In the H-09 mitigation, "distance to anatomical boundary shown" is marked as applying to the parcellation path only; Section 10.3.1 lists the two amber classification-method warnings for usability evaluation.
 
