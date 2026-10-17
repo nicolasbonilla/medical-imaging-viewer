@@ -31,6 +31,18 @@ import { DEFAULT_LABEL_PRESETS } from '@/types';
 // ============================================================================
 
 /**
+ * Creates a LOCAL (unsaved, `local-*`) segmentation for `fileId` pre-filled with `mask`
+ * (app order: depth=slices, height=rows, width=columns; RC-031). Used by the in-browser
+ * FLAMeS prototype. The clinician must review and explicitly Save; nothing is persisted here.
+ */
+export type ImportDraftCallback = (
+  fileId: string,
+  imageShape: { rows: number; columns: number; slices: number },
+  mask: Uint8Array,
+  meta: { description: string; labels?: LabelInfo[] },
+) => boolean;
+
+/**
  * Paint tool types available for segmentation.
  */
 export type PaintTool = 'brush' | 'eraser' | 'fill' | 'polygon' | 'threshold';
@@ -122,6 +134,13 @@ interface SegmentationState {
 
   /** Reload mask callback — allows LesionDashboard to trigger mask reload after auto-classify */
   reloadMaskCallback: (() => Promise<void>) | null;
+
+  /**
+   * Import-draft callback set by useSegmentationData — creates a LOCAL (unsaved) segmentation
+   * pre-filled with an externally computed mask (in-browser FLAMeS prototype). Returns false
+   * (and imports nothing) if the mask does not match the image grid.
+   */
+  importDraftCallback: ImportDraftCallback | null;
 
   /** Last save timestamp */
   lastSavedAt: string | null;
@@ -268,6 +287,7 @@ interface SegmentationState {
   setSaveCallback: (fn: (() => Promise<void>) | null) => void;
   setCreateCallback: (fn: ((fileId: string, imageShape: { rows: number; columns: number; slices: number }) => void) | null) => void;
   setReloadMaskCallback: (fn: (() => Promise<void>) | null) => void;
+  setImportDraftCallback: (fn: ImportDraftCallback | null) => void;
 
   // =========================================================================
   // Actions - Labels
@@ -383,6 +403,7 @@ const createInitialState = () => ({
   saveCallback: null as (() => Promise<void>) | null,
   createCallback: null as ((fileId: string, imageShape: { rows: number; columns: number; slices: number }) => void) | null,
   reloadMaskCallback: null as (() => Promise<void>) | null,
+  importDraftCallback: null as ImportDraftCallback | null,
   lastSavedAt: null as string | null,
 
   // List
@@ -496,6 +517,8 @@ export const useSegmentationStore = create<SegmentationState>()(
         setCreateCallback: (fn) => set({ createCallback: fn }),
 
         setReloadMaskCallback: (fn) => set({ reloadMaskCallback: fn }),
+
+        setImportDraftCallback: (fn) => set({ importDraftCallback: fn }),
 
         // =====================================================================
         // Label Actions

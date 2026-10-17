@@ -1,0 +1,79 @@
+{
+ "detected": 12,
+ "total": 12,
+ "restored_ok": true,
+ "results": [
+  {
+   "mutation": "M1 Math.round instead of half-to-even (np.round)",
+   "detected": true,
+   "summary": "Tests  4 failed | 51 passed (55)",
+   "seconds": 10
+  },
+  {
+   "mutation": "M2 network spacing not permuted (sx, sy, sz)",
+   "detected": true,
+   "summary": "Tests  4 failed | 51 passed (55)",
+   "seconds": 9
+  },
+  {
+   "mutation": "M3 nonzero mask without binary_fill_holes",
+   "detected": true,
+   "summary": "Tests  1 failed | 54 passed (55)",
+   "seconds": 10
+  },
+  {
+   "mutation": "M4 network order (i, j, k) instead of transpose_forward (i, k, j)",
+   "detected": true,
+   "summary": "Tests  7 failed | 48 passed (55)",
+   "seconds": 10
+  },
+  {
+   "mutation": "M5 no clipping to the input range after cubic resampling",
+   "detected": true,
+   "summary": "Tests  2 failed | 53 passed (55)",
+   "seconds": 7
+  },
+  {
+   "mutation": "M6 nearest neighbour along z rounds down (floor) instead of to nearest",
+   "detected": true,
+   "summary": "Tests  4 failed | 51 passed (55)",
+   "seconds": 8
+  },
+  {
+   "mutation": "M7 Gaussian sigma doubled",
+   "detected": true,
+   "summary": "Tests  2 failed | 53 passed (55)",
+   "seconds": 8
+  },
+  {
+   "mutation": "M8 mirrored predictions not flipped back",
+   "detected": true,
+   "summary": "Tests  1 failed | 54 passed (55)",
+   "seconds": 9
+  },
+  {
+   "mutation": "M9 draft grid gate compares rows with columns",
+   "detected": true,
+   "summary": "Tests  2 failed | 53 passed (55)",
+   "seconds": 10
+  },
+  {
+   "mutation": "M10 app order = NIfTI order (RC-031 transpose dropped)",
+   "detected": true,
+   "summary": "Tests  6 failed | 49 passed (55)",
+   "seconds": 10
+  },
+  {
+   "mutation": "M11 skull-strip border gate disabled",
+   "detected": true,
+   "summary": "Tests  1 failed | 54 passed (55)",
+   "seconds": 17
+  },
+  {
+   "mutation": "M12 model integrity check skipped",
+   "detected": true,
+   "summary": "Tests  1 failed | 54 passed (55)",
+   "seconds": 14
+  }
+ ]
+}

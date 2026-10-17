@@ -175,6 +175,47 @@ export function useSegmentationData({
     segmentationMask.initEmptyMask(imageShape.slices, imageShape.rows, imageShape.columns);
   }, [setCurrentSegmentation, segmentationMask]);
 
+  /**
+   * Create a LOCAL segmentation pre-filled with an externally computed mask (in-browser FLAMeS
+   * prototype). Same local-first path as createSegmentation: nothing reaches the server until the
+   * clinician reviews and clicks Save. Returns false (and leaves no draft behind) on any shape mismatch.
+   */
+  const createSegmentationFromMask = useCallback(
+    (
+      fileId: string,
+      imageShape: ImageShape,
+      mask: Uint8Array,
+      meta: { description: string; labels?: typeof defaultLabels },
+    ): boolean => {
+      const expected = imageShape.slices * imageShape.rows * imageShape.columns;
+      if (mask.length !== expected) {
+        console.error('[SegmentationData] Draft mask size does not match the image grid', { expected, got: mask.length });
+        return false;
+      }
+      const tempId = `local-${crypto.randomUUID()}`;
+      const now = new Date().toISOString();
+      const labels = meta.labels ?? defaultLabels;
+      setCurrentSegmentation({
+        segmentation_id: tempId,
+        file_id: fileId,
+        total_slices: imageShape.slices,
+        metadata: { file_id: fileId, description: meta.description, labels, created_at: now, modified_at: now },
+      });
+      segmentationMask.initEmptyMask(imageShape.slices, imageShape.rows, imageShape.columns);
+      const ok = segmentationMask.importMask(mask, {
+        depth: imageShape.slices,
+        height: imageShape.rows,
+        width: imageShape.columns,
+      });
+      if (!ok) {
+        setCurrentSegmentation(null);
+        segmentationMask.clearMask();
+      }
+      return ok;
+    },
+    [setCurrentSegmentation, segmentationMask],
+  );
+
   // Placeholder for backward compatibility (no longer an actual mutation)
   const createSegmentationMutation = {
     mutate: ({ fileId, imageShape }: { fileId: string; imageShape: ImageShape }) =>
@@ -235,6 +276,9 @@ export function useSegmentationData({
     if (isLocal) {
       try {
         const dims = segmentationMask.state.dimensions;
+        // Provenance: only non-default descriptions (e.g. the in-browser AI draft stamp) are sent,
+        // so manual segmentations keep exactly the previous request body.
+        const localDescription = currentSegmentation.metadata?.description;
         serverSeg = await segmentationAPI.createSegmentation({
           file_id: currentSegmentation.file_id,
           image_shape: {
@@ -243,6 +287,7 @@ export function useSegmentationData({
             slices: dims?.depth ?? 1,
           },
           labels: currentSegmentation.metadata?.labels ?? defaultLabels,
+          ...(localDescription && localDescription !== 'Segmentation' ? { description: localDescription } : {}),
         });
 
         // Update mask hook with the real server ID (ref only — no React state change yet)
@@ -299,6 +344,12 @@ export function useSegmentationData({
     useSegmentationStore.getState().setCreateCallback(createSegmentation);
     return () => useSegmentationStore.getState().setCreateCallback(null);
   }, [createSegmentation]);
+
+  // Register import-draft callback so the (feature-flagged) in-browser FLAMeS button can hand over its mask
+  useEffect(() => {
+    useSegmentationStore.getState().setImportDraftCallback(createSegmentationFromMask);
+    return () => useSegmentationStore.getState().setImportDraftCallback(null);
+  }, [createSegmentationFromMask]);
 
   // Register reload-mask callback so LesionDashboard can reload after auto-classify
   const reloadCurrentMask = useCallback(async () => {

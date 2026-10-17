@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FLAMeS worker smoke</title>
+</head>
+<body>
+<pre id="out">running…</pre>
+<script type="module">
+// Drives the BUILT flamesInBrowser.worker exactly as useBrowserFlames does, and reports back to serve.py.
+const params = new URLSearchParams(location.search);
+const preferWebGPU = params.get('webgpu') === '1';
+const post = (path, body) => fetch(path, { method: 'POST', body });
+const log = (m) => { document.getElementById('out').textContent += '\n' + m; return post('/log', String(m)); };
+
+let adapterInfo = 'none';
+try {
+  const adapter = navigator.gpu ? await navigator.gpu.requestAdapter() : null;
+  if (adapter) adapterInfo = JSON.stringify(adapter.info || {});
+} catch (e) { adapterInfo = 'error: ' + e.message; }
+await log(`isolated=${self.crossOriginIsolated} threads=${navigator.hardwareConcurrency} deviceMemory=${navigator.deviceMemory} webgpu=${!!navigator.gpu} adapter=${adapterInfo} preferWebGPU=${preferWebGPU}`);
+await log(`ua=${navigator.userAgent}`);
+
+const flair = await (await fetch('/flair.nii.gz')).arrayBuffer();
+const worker = new Worker(params.get('worker'), { type: 'module' });
+const t0 = performance.now();
+let lastStage = '';
+worker.onerror = (e) => post('/result', JSON.stringify({ error: { type: 'onerror', message: e.message } }));
+worker.onmessage = async (event) => {
+  const m = event.data;
+  if (m.type === 'progress') {
+    const key = m.stage + ':' + Math.floor(m.fraction * 8);
+    if (key !== lastStage) { lastStage = key; await log(`${((performance.now() - t0) / 1000).toFixed(1)}s ${m.stage} ${(m.fraction * 100).toFixed(0)}% ${m.message}`); }
+  } else if (m.type === 'log') {
+    await log('worker: ' + m.message);
+  } else if (m.type === 'result') {
+    await post('/mask', m.maskApp);
+    const { componentVolumesMl, ...summary } = m.summary;
+    await post('/result', JSON.stringify({ dims: m.dims, spacing: m.spacing, summary, provenance: m.provenance,
+      wallSeconds: (performance.now() - t0) / 1000, isolated: self.crossOriginIsolated,
+      hardwareConcurrency: navigator.hardwareConcurrency, adapter: adapterInfo, ua: navigator.userAgent }));
+    await log('DONE');
+  } else if (m.type === 'error') {
+    await post('/result', JSON.stringify({ error: m, wallSeconds: (performance.now() - t0) / 1000 }));
+    await log('ERROR ' + m.message);
+  }
+};
+worker.postMessage({
+  type: 'segment', jobId: 'smoke', nifti: flair, preferWebGPU, mirror: false,
+  model: { url: '/models/flames/flames-fold0-2a10bb9d.onnx', sha256: '2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae',
+           bytes: 61642305, fold: 0, sourceCheckpointSha256: '4fc7db24e7c1541b59023df2a2f498a964eb629fe38f4eaec763297dd3fdf861',
+           inputName: 'input', outputName: 'logits' },
+}, [flair]);
+</script>
+</body>
+</html>

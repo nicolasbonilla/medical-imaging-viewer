@@ -66,6 +66,12 @@ export interface UseSegmentationMaskReturn {
   initEmptyMask: (depth: number, height: number, width: number) => void;
   /** Update the segmentation ID after server-side creation. */
   updateSegmentationId: (id: string) => void;
+  /**
+   * Replace the WHOLE local mask with externally computed data (in-browser AI draft).
+   * Must match the dimensions set by initEmptyMask exactly; otherwise nothing changes and
+   * false is returned (fail closed). Marks the mask dirty and resets undo/redo.
+   */
+  importMask: (data: Uint8Array, dims: { depth: number; height: number; width: number }) => boolean;
   paintStroke: (stroke: LocalPaintStroke) => void;
   getSliceMask: (sliceIndex: number) => Uint8Array | null;
   /** Save the mask. On a 409 conflict returns false and sets state.conflict
@@ -259,6 +265,39 @@ export function useSegmentationMask(): UseSegmentationMaskReturn {
   const updateSegmentationId = useCallback((id: string): void => {
     segmentationIdRef.current = id;
   }, []);
+
+  const importMask = useCallback(
+    (data: Uint8Array, dims: { depth: number; height: number; width: number }): boolean => {
+      const current = dimensionsRef.current;
+      const expected = dims.depth * dims.height * dims.width;
+      if (
+        !maskRef.current ||
+        !current ||
+        current.depth !== dims.depth ||
+        current.height !== dims.height ||
+        current.width !== dims.width ||
+        data.length !== expected ||
+        maskRef.current.length !== expected
+      ) {
+        console.error('[useSegmentationMask] importMask refused: dimensions do not match the open mask', {
+          current,
+          dims,
+          length: data.length,
+        });
+        return false;
+      }
+      const copy = new Uint8Array(data); // never alias the caller's buffer
+      let annotated = 0;
+      for (let i = 0; i < copy.length; i++) if (copy[i] > 0) annotated++;
+      maskRef.current = copy;
+      undoStackRef.current = [];
+      redoStackRef.current = [];
+      setUndoVersion(0);
+      setState(prev => ({ ...prev, isDirty: true, annotatedVoxels: annotated, error: null }));
+      return true;
+    },
+    [],
+  );
 
   // -----------------------------------------------------------------------
   // Undo / Redo
@@ -555,6 +594,7 @@ export function useSegmentationMask(): UseSegmentationMaskReturn {
     loadMask,
     initEmptyMask,
     updateSegmentationId,
+    importMask,
     paintStroke,
     getSliceMask,
     saveMask,
