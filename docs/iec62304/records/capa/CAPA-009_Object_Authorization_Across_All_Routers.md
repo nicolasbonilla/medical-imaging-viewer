@@ -6,7 +6,7 @@
 **Severity**: **CRITICAL**. Any authenticated user could read or change other patients' records and imaging (HAZ-010; OWASP API1:2023 Broken Object Level Authorization, API5:2023 Broken Function Level Authorization, API7:2023 Server-Side Request Forgery; GDPR Art. 32; MDR Annex I §17.4). QP-002 §5.
 **Owner**: *(to be assigned: Software Safety Officer / QMS Manager)*
 **Status**: OPEN.
-- Implemented on branch `fix/object-authorization-everywhere-capa009` (stacked on CAPA-008, PR #46): CA-9.1 to CA-9.8, PA-9.1, PA-9.2. **Awaiting human approval** (PR).
+- Implemented on branch `fix/object-authorization-everywhere-capa009` (stacked on CAPA-008, PR #46): CA-9.1 to CA-9.8, PA-9.1, PA-9.2. **Approved by N. G. Bonilla Vargas on 2026-10-17** (PR #47) and merged.
 - Pending: PA-9.3, PA-9.4 and the access-log review (owner decisions).
 - Effectiveness is not verified.
 
