@@ -15,6 +15,9 @@ from typing import List, Dict, Any
 
 from app.security import get_current_active_user
 from app.security.models import User
+from app.security.patient_access_dependency import require_imaging_access
+from app.security.resource_access import authorize_patient_id, authorize_study_id
+from app.security.ownership import initiators
 from app.core.logging import get_logger
 from app.core.container import get_tool_runner_service
 from app.core.interfaces.ai_interface import (
@@ -27,6 +30,30 @@ from app.core.interfaces.ai_interface import (
 logger = get_logger(__name__)
 
 router = APIRouter(prefix="/clinical", tags=["Clinical Tools"])
+
+
+async def _authorized_inputs(file_ids, patient_id, study_id, user: User):
+    """CAPA-009 (RC-036): every input image must belong to a patient the caller may access,
+    and to ONE patient; a given patient_id / study_id must be that same patient. Returns the
+    parsed, patient-authorized storage paths (RC-027) to use instead of the raw client ids."""
+    from app.security.storage_access import extract_patient_id_from_path
+
+    paths, owners = [], set()
+    for fid in file_ids:
+        ref = await require_imaging_access(fid, user)
+        paths.append(ref.object_path)
+        owners.add(extract_patient_id_from_path(ref.object_path))
+    if len(owners) != 1:
+        raise HTTPException(status_code=400, detail="All input images must belong to one patient")
+    owner = owners.pop()
+    if patient_id:
+        await authorize_patient_id(patient_id, user)
+        if str(patient_id) != str(owner):
+            raise HTTPException(status_code=400, detail="patient_id does not match the input images")
+    if study_id:
+        if str(await authorize_study_id(study_id, user)) != str(owner):
+            raise HTTPException(status_code=400, detail="study_id does not belong to the images' patient")
+    return paths
 
 
 @router.get("/tools", response_model=List[Dict[str, Any]])
@@ -69,12 +96,15 @@ async def run_lstai_segmentation(
         Wiltgen T, et al. LST-AI: a deep learning ensemble for accurate
         MS lesion segmentation. NeuroImage: Clinical 2024;42:103611.
     """
+    t1_path, flair_path = await _authorized_inputs(
+        [request.t1_file_id, request.flair_file_id], request.patient_id, request.study_id, current_user)
     task_id = await tool_runner.run_lstai(
-        t1_file_id=request.t1_file_id,
-        flair_file_id=request.flair_file_id,
+        t1_file_id=t1_path,
+        flair_file_id=flair_path,
         patient_id=request.patient_id,
         study_id=request.study_id,
     )
+    initiators.record("clinical-task", task_id, current_user)   # CAPA-009
 
     task = await tool_runner.get_task_status(task_id)
     return task
@@ -101,15 +131,19 @@ async def run_flames_segmentation(
     autonomous diagnosis.
 
     Reference:
-        Ballerini A, et al. FLAMeS: a robust deep learning model for automated
-        multiple sclerosis lesion segmentation. J Neuroimaging 2025
-        (medRxiv 2025.05.19.25327707). Weights CC-BY-4.0, Zenodo 17955359.
+        Dereskewicz E, et al. FLAMeS: a robust deep learning model for automated
+        multiple sclerosis lesion segmentation. J Neuroimaging 2025;35(5)
+        (doi:10.1111/jon.70085; medRxiv 2025.05.19.25327707). Weights CC-BY-4.0,
+        Zenodo 17955359. (CAPA-009: first author corrected; was "Ballerini A".)
     """
+    (flair_path,) = await _authorized_inputs(
+        [request.flair_file_id], request.patient_id, request.study_id, current_user)
     task_id = await tool_runner.run_flames(
-        flair_file_id=request.flair_file_id,
+        flair_file_id=flair_path,
         patient_id=request.patient_id,
         study_id=request.study_id,
     )
+    initiators.record("clinical-task", task_id, current_user)   # CAPA-009
 
     task = await tool_runner.get_task_status(task_id)
     return task
@@ -135,11 +169,14 @@ async def run_synthseg_parcellation(
         contrast and resolution without retraining.
         Medical Image Analysis 2023;83:102789.
     """
+    (image_path,) = await _authorized_inputs(
+        [request.file_id], request.patient_id, request.study_id, current_user)
     task_id = await tool_runner.run_synthseg(
-        file_id=request.file_id,
+        file_id=image_path,
         patient_id=request.patient_id,
         study_id=request.study_id,
     )
+    initiators.record("clinical-task", task_id, current_user)   # CAPA-009
 
     task = await tool_runner.get_task_status(task_id)
     return task
@@ -160,6 +197,7 @@ async def get_task_status(
     When status is 'completed', the segmentation_id field contains the ID
     of the resulting segmentation (loadable via standard segmentation endpoints).
     """
+    initiators.authorize("clinical-task", task_id, current_user, "Task")   # CAPA-009
     task = await tool_runner.get_task_status(task_id)
     return task
 
@@ -178,6 +216,7 @@ async def get_task_result(
 
     Raises 404 if task not found, 400 if task not yet completed.
     """
+    initiators.authorize("clinical-task", task_id, current_user, "Task")   # CAPA-009
     task = await tool_runner.get_task_status(task_id)
 
     if task.status.value == "failed" and task.error == "Task not found":

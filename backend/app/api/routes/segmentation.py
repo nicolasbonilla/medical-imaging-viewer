@@ -634,8 +634,10 @@ async def get_segmentation_nifti(
             if not existing_bytes:
                 raise HTTPException(status_code=404, detail=f"Segmentation NIfTI not found for {segmentation_id}")
 
-            # Load reference MRI NIfTI
-            ref_blob = segmentation_service.gcs_bucket.blob(ref_file_id)
+            # CAPA-009 (RC-036, RC-027): the reference image is a client-supplied storage path.
+            # Parse and authorize it; never use the raw client string as a bucket key.
+            _ref = await require_imaging_access(ref_file_id, current_user)
+            ref_blob = segmentation_service.gcs_bucket.blob(_ref.object_path)
             if not ref_blob.exists():
                 # Fallback: serve original NIfTI as-is
                 nifti_data = existing_bytes

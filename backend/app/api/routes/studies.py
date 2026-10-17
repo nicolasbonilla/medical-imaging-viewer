@@ -19,8 +19,10 @@ from app.core.config import get_settings
 from app.security import get_current_active_user
 from app.security.resource_access import (
     require_study_access, require_series_access, require_instance_access,
-    require_study_list_scope,
+    require_study_list_scope, authorize_patient_id, authorize_study_id,
 )
+from app.security.patient_access_dependency import require_patient_access
+from app.security.ownership import initiators
 from app.security.models import User
 from app.core.container import get_study_service, get_storage_service
 from app.core.interfaces.study_interface import IStudyService
@@ -62,10 +64,11 @@ async def create_study(
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    Create a new imaging study.
+    Create a new imaging study for a patient the caller may access.
 
-    Requires STUDY_CREATE permission.
+    CAPA-009 (RC-036): the patient in the body is authorized first (404 otherwise).
     """
+    await authorize_patient_id(data.patient_id, current_user)
     return await study_service.create_study(data)
 
 
@@ -142,6 +145,8 @@ async def get_study_by_accession(
     study = await study_service.get_study_by_accession(accession_number)
     if not study:
         raise HTTPException(status_code=404, detail="Study not found")
+    # CAPA-009 (RC-036): a lookup by accession number must not bypass the patient check.
+    await authorize_study_id(getattr(study, "id", None), current_user)
     return study
 
 
@@ -336,7 +341,9 @@ async def get_instance_mask_data(
     instance_id: UUID,
     study_service: IStudyService = Depends(get_study_service),
     storage_service: IStorageService = Depends(get_storage_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-009 (RC-036): expert masks are patient data.
+    _authorized=Depends(require_instance_access),
 ):
     """
     Download a NIfTI instance as binary mask data.
@@ -409,7 +416,12 @@ async def init_upload(
 
     Requires STUDY_UPLOAD permission.
     """
-    return await study_service.init_upload(request)
+    # CAPA-009 (RC-036): upload only into a study of a patient the caller may access, and
+    # remember who started the upload so only they can complete it.
+    await authorize_study_id(request.study_id, current_user)
+    result = await study_service.init_upload(request)
+    initiators.record("study-upload", getattr(result, "upload_id", None), current_user)
+    return result
 
 
 @router.post("/upload/complete", response_model=UploadCompleteResponse)
@@ -425,6 +437,7 @@ async def complete_upload(
 
     Requires STUDY_UPLOAD permission.
     """
+    initiators.authorize("study-upload", request.upload_id, current_user, "Upload")   # CAPA-009
     return await study_service.complete_upload(request)
 
 
@@ -437,12 +450,11 @@ async def get_instance_download_url(
     instance_id: UUID,
     expiration_minutes: int = Query(60, ge=5, le=1440, description="URL expiration in minutes"),
     study_service: IStudyService = Depends(get_study_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    _authorized=Depends(require_instance_access),   # CAPA-009 (RC-036)
 ):
     """
-    Get a signed download URL for an instance.
-
-    Requires STUDY_VIEW permission.
+    Get a signed download URL for an instance of a patient the caller may access.
     """
     url = await study_service.get_download_url(instance_id, expiration_minutes)
     return {"url": url}
@@ -453,12 +465,11 @@ async def get_study_download_urls(
     study_id: UUID,
     expiration_minutes: int = Query(60, ge=5, le=1440, description="URL expiration in minutes"),
     study_service: IStudyService = Depends(get_study_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    _authorized=Depends(require_study_access),   # CAPA-009 (RC-036)
 ):
     """
-    Get download URLs for all instances in a study.
-
-    Requires STUDY_VIEW permission.
+    Get download URLs for all instances in a study of a patient the caller may access.
     """
     from datetime import datetime, timedelta
 
@@ -480,12 +491,11 @@ async def list_patient_studies(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     study_service: IStudyService = Depends(get_study_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    _authorized=Depends(require_patient_access),   # CAPA-009 (RC-036)
 ):
     """
-    List all studies for a patient.
-
-    Requires STUDY_VIEW permission.
+    List all studies of a patient the caller may access.
     """
     studies, total = await study_service.list_patient_studies(patient_id, page, page_size)
 

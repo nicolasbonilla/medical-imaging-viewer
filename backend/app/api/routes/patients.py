@@ -190,6 +190,10 @@ async def get_patient_by_mrn(
             error_code="PATIENT_NOT_FOUND",
             details={"mrn": mrn}
         )
+    # CAPA-009 (RC-036): an MRN lookup must not bypass the care-team check. MRNs are often
+    # sequential, so without it any PATIENT_VIEW user could enumerate every patient.
+    from app.security.resource_access import authorize_patient_id
+    await authorize_patient_id(getattr(patient, "id", None), current_user)
     return patient
 
 

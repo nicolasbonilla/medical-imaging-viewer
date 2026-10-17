@@ -410,6 +410,11 @@ async def get_matplotlib_2d_slice(
         # normalised, patient-authorized path — never the raw client input.
         _ref = await require_imaging_access(file_id, current_user)
         file_id = _ref.object_path
+        # CAPA-009 (RC-036): an overlay segmentation must also belong to a patient the caller
+        # may access; otherwise another patient's mask is drawn onto this image.
+        if segmentation_id:
+            from app.security.resource_access import authorize_mask_specs
+            await authorize_mask_specs([{"type": "segmentation", "id": segmentation_id}], current_user)
         # Log received parameters
         logger.debug(
             "Matplotlib 2D visualization request",

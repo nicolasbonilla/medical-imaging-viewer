@@ -17,6 +17,9 @@ from pydantic import BaseModel, Field
 
 from app.security import get_current_active_user
 from app.security.models import User
+from app.security.patient_access_dependency import require_imaging_access
+from app.security.resource_access import authorize_mask_specs, authorize_patient_id
+from app.security.ownership import initiators
 
 from app.core.logging import get_logger
 from app.core.interfaces.ai_interface import (
@@ -41,6 +44,16 @@ def get_ai_service():
     return container.ai_segmentation_service()
 
 
+async def _authorized_image_request(request, current_user: User):
+    """CAPA-009 (RC-036): authorize the image (and any mask) a request names, and replace
+    the raw client file_id by the parsed, patient-authorized storage path (RC-027)."""
+    ref = await require_imaging_access(request.file_id, current_user)
+    mask_id = getattr(request, "current_mask_id", None)
+    if mask_id:
+        await authorize_mask_specs([{"type": "segmentation", "id": mask_id}], current_user)
+    return request.model_copy(update={"file_id": ref.object_path})
+
+
 # =============================================================================
 # Interactive Segmentation
 # =============================================================================
@@ -58,12 +71,14 @@ async def segment_interactive(
     current_user: User = Depends(get_current_active_user),
 ):
     """Interactive segmentation: click points → 3D mask."""
+    request = await _authorized_image_request(request, current_user)   # CAPA-009
     logger.info(
         f"[AI] Interactive segmentation requested: "
         f"file_id={request.file_id}, model={request.model}, "
         f"clicks={len(request.click_points)}"
     )
     result = await ai_service.segment_interactive(request)
+    initiators.record("ai-task", getattr(result, "task_id", None), current_user)
     return result
 
 
@@ -84,11 +99,13 @@ async def segment_auto(
     current_user: User = Depends(get_current_active_user),
 ):
     """Auto segmentation: file_id → full brain labelmap."""
+    request = await _authorized_image_request(request, current_user)   # CAPA-009
     logger.info(
         f"[AI] Auto segmentation requested: "
         f"file_id={request.file_id}, model={request.model}"
     )
     result = await ai_service.segment_auto(request)
+    initiators.record("ai-task", getattr(result, "task_id", None), current_user)
     return result
 
 
@@ -110,6 +127,7 @@ async def detect_anomalies(
     current_user: User = Depends(get_current_active_user),
 ):
     """Anomaly detection: file_id → heatmap + anomaly list."""
+    request = await _authorized_image_request(request, current_user)   # CAPA-009
     logger.info(
         f"[AI] Anomaly detection requested: "
         f"file_id={request.file_id}, sensitivity={request.sensitivity}"
@@ -134,7 +152,8 @@ async def get_task_status(
     ai_service=Depends(get_ai_service),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Poll async AI task: task_id → status + result."""
+    """Poll async AI task: task_id → status + result (initiator or administrator only)."""
+    initiators.authorize("ai-task", task_id, current_user, "Task")   # CAPA-009
     result = await ai_service.get_task_status(task_id)
     return result
 
@@ -235,6 +254,8 @@ async def compute_volumetry(
     current_user: User = Depends(get_current_active_user),
 ):
     """Volumetry: segmentation_id → per-structure volumes in mm3 and mL."""
+    # CAPA-009 (RC-036): the segmentation must belong to a patient the caller may access.
+    await authorize_mask_specs([{"type": "segmentation", "id": request.segmentation_id}], current_user)
     logger.info(
         f"[AI] Volumetry requested: "
         f"segmentation_id={request.segmentation_id}, "
@@ -321,6 +342,7 @@ async def compare_volumetry(
     current_user: User = Depends(get_current_active_user),
 ):
     """Longitudinal comparison: timepoints → change percentages + trends."""
+    await authorize_patient_id(request.patient_id, current_user)   # CAPA-009 (RC-036)
     logger.info(
         f"[AI] Volumetry comparison requested: "
         f"patient_id={request.patient_id}, timepoints={len(request.timepoints)}"

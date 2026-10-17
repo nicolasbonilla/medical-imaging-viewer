@@ -13,9 +13,11 @@ import math
 
 from app.security import get_current_active_user
 from app.security.resource_access import (
-    require_document_access, require_document_list_scope,
+    require_document_access, require_document_list_scope, require_study_access,
+    require_version_access, authorize_patient_id, authorize_study_id, authorize_document_id,
 )
 from app.security.patient_access_dependency import require_patient_access
+from app.security.ownership import initiators
 from app.security.models import User
 from app.core.logging import get_logger
 from app.core.exceptions import NotFoundException, ValidationException
@@ -124,9 +126,10 @@ async def list_study_documents(
     page_size: int = Query(20, ge=1, le=100),
     document_service: IDocumentService = Depends(get_document_service),
     current_user: User = Depends(get_current_active_user),
+    _authorized=Depends(require_study_access),   # CAPA-009 (RC-036)
 ):
     """
-    List all documents linked to a specific study.
+    List all documents linked to a study of a patient the caller may access.
     """
     documents, total = await document_service.list_study_documents(
         study_id, page, page_size
@@ -219,9 +222,10 @@ async def get_version(
     version_id: UUID,
     document_service: IDocumentService = Depends(get_document_service),
     current_user: User = Depends(get_current_active_user),
+    _authorized=Depends(require_version_access),   # CAPA-009 (RC-036)
 ):
     """
-    Get a specific version by ID.
+    Get a specific version of a document of a patient the caller may access.
     """
     try:
         return await document_service.get_version(version_id)
@@ -245,8 +249,17 @@ async def init_upload(
     Returns a signed URL for direct upload to Google Cloud Storage.
     After uploading to the signed URL, call /upload/complete to finalize.
     """
+    # CAPA-009 (RC-036): the patient must be one the caller may access, and a linked
+    # study must belong to that same patient.
+    await authorize_patient_id(request.patient_id, current_user)
+    if request.study_id is not None:
+        study_patient = await authorize_study_id(request.study_id, current_user)
+        if str(study_patient) != str(request.patient_id):
+            raise HTTPException(status_code=400, detail="The study does not belong to this patient")
     try:
-        return await document_service.init_upload(request)
+        result = await document_service.init_upload(request)
+        initiators.record("document-upload", getattr(result, "upload_id", None), current_user)
+        return result
     except ValidationException as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -262,6 +275,7 @@ async def complete_upload(
 
     Verifies the checksum and creates the document record.
     """
+    initiators.authorize("document-upload", request.upload_id, current_user, "Upload")   # CAPA-009
     try:
         return await document_service.complete_upload(request)
     except ValidationException as e:
@@ -279,8 +293,11 @@ async def init_version_upload(
 
     Returns a signed URL for uploading the new version.
     """
+    await authorize_document_id(request.document_id, current_user)   # CAPA-009 (RC-036)
     try:
-        return await document_service.init_version_upload(request)
+        result = await document_service.init_version_upload(request)
+        initiators.record("version-upload", getattr(result, "upload_id", None), current_user)
+        return result
     except NotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
     except ValidationException as e:
@@ -298,6 +315,7 @@ async def complete_version_upload(
 
     Creates the new version and updates the document.
     """
+    initiators.authorize("version-upload", request.upload_id, current_user, "Upload")   # CAPA-009
     try:
         return await document_service.complete_version_upload(request)
     except ValidationException as e:
@@ -315,9 +333,10 @@ async def get_download_url(
     expiration_minutes: int = Query(60, ge=1, le=1440),
     document_service: IDocumentService = Depends(get_document_service),
     current_user: User = Depends(get_current_active_user),
+    _authorized=Depends(require_document_access),   # CAPA-009 (RC-036)
 ):
     """
-    Get a signed download URL for a document.
+    Get a signed download URL for a document of a patient the caller may access.
 
     Optionally specify a version number to download a specific version.
     """
@@ -337,9 +356,10 @@ async def get_patient_download_urls(
     expiration_minutes: int = Query(60, ge=1, le=1440),
     document_service: IDocumentService = Depends(get_document_service),
     current_user: User = Depends(get_current_active_user),
+    _authorized=Depends(require_patient_access),   # CAPA-009 (RC-036)
 ):
     """
-    Get download URLs for all documents of a patient.
+    Get download URLs for all documents of a patient the caller may access.
     """
     return await document_service.get_patient_documents_urls(
         patient_id, expiration_minutes=expiration_minutes

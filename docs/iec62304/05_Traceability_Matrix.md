@@ -2,13 +2,14 @@
 
 ## IEC 62304 Clause 5.1.1(e) — Bidirectional Traceability
 
-**Document ID**: TM-001 | **Version**: 1.2 | **Date**: October 17, 2026 (v1.1: September 28, 2026; v1.0: April 12, 2026)
+**Document ID**: TM-001 | **Version**: 1.3 | **Date**: October 17, 2026 (v1.2 and v1.3 same day; v1.1: September 28, 2026; v1.0: April 12, 2026)
 
 | Version | Date | Author | Change | Approved By |
 |---------|------|--------|--------|-------------|
 | 1.0 | 2026-04-12 | Development Team | Initial release | — |
 | 1.1 | 2026-09-28 | Development Team | CAPA-006 (HAZ-005). (a) REQ-FUNC-053 row corrected in place. It was "MAGNIMS classification", tested by UT-CLS-001 only. It now reflects the corrected SRS text: contact criterion, four paths, MNI-only atlas. It adds UT-CLS-002/003 and UI-RC032, and the architecture reference, which was "SAD 3.5", a section that does not exist. (b) Addendum added for REQ-SAFE-021 → RC-032 and for the CAPA-006 PA-6.1 labelling gate. (c) REQ-SAFE-020 / RC-022 row: "VERIFIED (code inspection)" struck through. It is NOT IMPLEMENTED / NOT VERIFIED: no MNI preprocessing or registration to a template exists in the code. (d) New tests added to the backward and unit-test traceability tables. The 2026-09-28 RC-010 addendum below was entered without a version change; it is covered by this version | N. G. Bonilla Vargas — approved 2026-10-17 (PR #43) |
 | 1.2 | 2026-10-17 | Development Team | CAPA-008: REQ-SAFE-022/023/024 → RC-033/034/035 → UT-CAPA008, UT-LONG-RULES (addendum below; test rows added) | *pending approval (PR)* |
+| 1.3 | 2026-10-17 | Development Team | CAPA-009: REQ-SEC-014/015/016/019/020 → RC-036 → UT-CAPA009 | *pending approval (PR)* |
 
 ---
 
@@ -160,6 +161,7 @@ by `backend/tests/unit/test_risk_control_manifest.py`.
 | UT-LBL-001 | CAPA-006 PA-6.1 labelling gate (60 tests, added 2026-09-28). IFU §10.3 states each `*_DISTANCE_THRESHOLD_MM` and the MNI requirement. Withdrawn 3/4/3 mm values, a "two-tier" cascade, validation, "exact methodology" and MAGNIMS accuracy-% claims appear only next to a CAPA-006 withdrawal note in 19 listed documents, Class C source files, the MCP server and the UI locales. A missing listed file fails | REQ-FUNC-053, REQ-SAFE-021 (CAPA-006 PA-6.1) |
 | UT-CAPA008 | `test_capa008_assistant_read_only.py` (39 tests, added 2026-10-17): MCP layer read-only (exact server and tool sets, no direct HTTP client, POST only to compute-only routes, every GET mounted and object-authorized, compute-only routes store nothing, every field sent is read by its route), intended-use phrase ban, identifier removal; report route refuses requests without a measurement; CVS/PRL readings validated, attributed to the authenticated reader, counted without the 40 % rule; UI sources | REQ-SAFE-022, REQ-SAFE-023, REQ-SAFE-024 |
 | UT-LONG-RULES | `test_longitudinal_clinical_rules.py`: activity candidate raised by >=1 new or enlarging candidate (MAGNIMS 2021; CAPA-008 CA-8.10) | REQ-SAFE-024, REQ-FUNC-055a |
+| UT-CAPA009 | `test_capa009_object_authorization_everywhere.py` (47 tests, added 2026-10-17): every mounted route referencing an object classified and re-derived; path dependencies match the path; no dependency can skip itself (async guards); 33 requests by an unentitled user → 404 before any data service; 4 administrator-only routes → 403; positive controls; overlay/reference-image authorization; tool inputs from one patient; initiator registry | REQ-SEC-014, REQ-SEC-015, REQ-SEC-016, REQ-SEC-019, REQ-SEC-020 |
 
 ---
 
@@ -192,6 +194,7 @@ by `backend/tests/unit/test_risk_control_manifest.py`.
 | `test_capa006_labelling_bound_to_code.py` | UT-LBL-001 | REQ-FUNC-053, REQ-SAFE-021 (CAPA-006 PA-6.1; added 2026-09-28) |
 | `test_capa008_assistant_read_only.py` | UT-CAPA008 | REQ-SAFE-022, REQ-SAFE-023, REQ-SAFE-024 (RC-033/034/035, HAZ-003/007/008/010; added 2026-10-17) |
 | `test_longitudinal_clinical_rules.py` | UT-LONG-RULES | REQ-SAFE-024, REQ-FUNC-055a (RC-035, HAZ-007) |
+| `test_capa009_object_authorization_everywhere.py` | UT-CAPA009 | REQ-SEC-014/015/016/019/020 (RC-036, HAZ-010; added 2026-10-17) |
 | `test_nifti_utils.py` | UT-NII-001 | REQ-FUNC-001 |
 | `test_dicom_seg.py` | UT-SEG-001..008 | REQ-FUNC-072 |
 | `test_dicom_utils.py` | UT-DICOM-001..007 | REQ-FUNC-072, REQ-SAFE-013 | RC-016 | VERIFIED |
