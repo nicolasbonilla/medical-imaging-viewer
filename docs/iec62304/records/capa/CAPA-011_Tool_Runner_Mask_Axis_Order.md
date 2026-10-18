@@ -6,7 +6,7 @@
 **Severity**: **CRITICAL**. A lesion mask or parcellation produced by a clinical tool is shown, and used for region classification, at a different voxel than the one the tool segmented (HAZ-006 orientation error; HAZ-001 lesion delineation; HAZ-005 MAGNIMS region, and through it HAZ-008 DIS). On cubic volumes the error is silent. QP-002 §5.
 **Owner**: *(to be assigned: Software Safety Officer / QMS Manager)*
 **Status**: OPEN.
-- Implemented on branch `fix/tool-runner-mask-axes-capa011` (PR #51, draft, based on `fix/viewer-safety-capa010`; **merge after PR #52 / CAPA-010**): CA-11.1 to CA-11.4, PA-11.1. **Owner approval: PENDING owner approval.**
+- Implemented on branch `fix/tool-runner-mask-axes-capa011` (PR #51, draft, based on `fix/viewer-safety-capa010`; **merge after PR #52 / CAPA-010**): CA-11.1 to CA-11.5, PA-11.1. **Owner approval: PENDING owner approval.**
 - Identifiers: **RC-039** and **REQ-SAFE-028**, renumbered on 2026-10-17 from RC-038 / REQ-SAFE-025, which CAPA-010 (merged first) uses. The document versions follow CAPA-010's: SRS 1.6, RMF 1.8, TM 1.5.
 - Pending: PA-11.2 (data check, owner decision), PA-11.4, PA-11.5 (development environment writes to production, owner decision).
 - Effectiveness is not verified.
@@ -111,6 +111,20 @@ Searched every NIfTI writer in `backend/app` and `flames-worker`, and every use 
    pending), so no bound test enforced its storage contract.
 4. **Cubic test volumes hide it.** The shape is unchanged; only the voxel position reveals it.
 
+### Finding 8 — A mask on another grid was stored (pre-merge review, 2026-10-18)
+
+The reorientation (RC-031) only permutes and flips axes; nothing checked that the tool's mask,
+after reorientation, is on the **same grid** as the image it was computed on. The pre-merge review
+reproduced it: a 20 × 20 × 30 mask at 1 mm over a 40 × 40 × 10 study was stored silently and the
+task ended "completed". SynthSeg returns its parcellation at 1 mm, so any study not acquired at
+1 mm would hit this; the overlay, regions and volumes would then be computed on a grid that does
+not match the image. REQ-SAFE-028 already promised that a mask whose position cannot be
+established is not stored. Now refused (CA-11.5).
+
+Consequence for the owner: until a sidecar returns its result on the input image's own grid (for
+SynthSeg, resampling the parcellation back to the input grid), its results on such studies are
+refused, not stored (PA-11.4).
+
 ### Finding 7 — OPEN (owner): the local development setup writes to production storage
 
 `docker-compose.yml` turns on three of the four clinical tools (`LSTAI_ENABLED`,
@@ -145,6 +159,7 @@ defect they carry, such as this CAPA's) would appear in clinicians' patient reco
 | **CA-11.2** | The stored affine is the affine of the reoriented array (the tool's affine composed with the same axis permutation/flips). It equals the MRI's affine when the tool kept the MRI grid | **DONE** (branch) |
 | **CA-11.3** | The internal mask used for counts and shape is computed through the loader's own decode (`SegmentationService._nifti_native_to_internal`), and the marker comes from the shared constant, so ingest and load cannot diverge again | **DONE** (branch) |
 | **CA-11.4** | **Fail closed** (follow-up requested during review, consistent with the project's fail-closed rule, e.g. CAPA-009's 404 when it cannot decide). When the reference image is not passed, missing or unreadable, or the mask cannot be placed on it (indeterminate affine), nothing is stored: no mask object, no segmentation record. The error is logged (`[RC-039] Clinical-tool mask NOT stored`) and raised as `SegmentationException` (`TOOL_MASK_REFERENCE_UNAVAILABLE`); the tool's task ends **FAILED** with the message "The tool's segmentation was not stored: … its position in the image cannot be established (RC-039). Re-run the tool." The legacy-order fallback is removed. Existing tests adapted: `test_rc031_ingest_orientation_fix.py` (`TestFailsSafeToLegacy` → `TestFailsClosed`, 3 tests now expect the refusal); `test_flames_integration.py` and `test_clinical_tool_empty_mask.py` now pass the reference image, which is required | **DONE** (branch) |
+| **CA-11.5** | **Same grid required** (pre-merge review, Finding 8). After reorientation the mask must have the image's array shape and a voxel-to-scanner transform equal to the image's within `_GRID_TOLERANCE` = 0.001 in every element (mm per voxel, mm): float rounding of a re-written header passes, a sub-millimetre shift or another voxel size does not. Otherwise nothing is stored, the refusal is logged and raised as `SegmentationException` `TOOL_MASK_GRID_MISMATCH` ("… it is not on the grid of the image it was computed on (mask … voxels, image …) … The tool must return its result on the image's own grid."), and the tool's task ends FAILED | **DONE** (branch) |
 
 No Class C module listed in `CLAUDE.md` was modified. `tool_runner_service.py` and
 `segmentation_service.py` are not on that list; `segmentation_service.py` is unchanged.
@@ -153,10 +168,10 @@ No Class C module listed in `CLAUDE.md` was modified. `tool_runner_service.py` a
 
 | ID | Action | Status |
 |----|--------|--------|
-| **PA-11.1** | `test_rc039_tool_runner_mask_axes.py` (21 `test_rc039_*` cases), bound to RC-039 in `rc_test_manifest.json`. Real store path and real load path (`SegmentationService.get_mask`), on a non-cubic asymmetric volume with a flipped, anisotropic, translated affine and one marked voxel; asserts the same voxel (a0, a1, k), the same scanner position, the same slice layout, and the same position in the stored file served to the 3D viewer. Also: the cubic silent case; a tool writing another voxel order; the LST-AI types mask; the marker/order contract; **every tool end to end** through its real `_execute_*` method (FLAMeS, LST-AI, SynthSeg, mindGlide lesion and structure masks), each in the MRI's grid and in another voxel order; **fail closed** — no reference, missing file, unreadable file, indeterminate affine → error, no mask object, no record; and each of the four tools end to end with an unreadable reference → task FAILED with a clear error, nothing stored. Negative controls: `scripts/safety/capa011_negative_controls.py` | **DONE** (branch) |
+| **PA-11.1** | `test_rc039_tool_runner_mask_axes.py` (28 `test_rc039_*` cases), bound to RC-039 in `rc_test_manifest.json`. Real store path and real load path (`SegmentationService.get_mask`), on a non-cubic asymmetric volume with a flipped, anisotropic, translated affine and one marked voxel; asserts the same voxel (a0, a1, k), the same scanner position, the same slice layout, and the same position in the stored file served to the 3D viewer. Also: the cubic silent case; a tool writing another voxel order; the LST-AI types mask; the marker/order contract; **every tool end to end** through its real `_execute_*` method (FLAMeS, LST-AI, SynthSeg, mindGlide lesion and structure masks), each in the MRI's grid and in another voxel order; **fail closed** — no reference, missing file, unreadable file, indeterminate affine → error, no mask object, no record; and each of the four tools end to end with an unreadable reference → task FAILED with a clear error, nothing stored; **same grid** (pre-merge review) — a different array shape, a 0.5 mm shift, and a SynthSeg-like 1 mm output over a 0.5 × 0.5 × 3 mm study are refused with nothing stored, the SynthSeg run end to end with a 1 mm output ends FAILED with nothing stored, and a transform differing only by float rounding is accepted (positive control); **stored record** — `image_shape` = [a0, a1, k] of the image, `annotated_voxels`, and agreement with the loaded mask's dimensions. Negative controls: `scripts/safety/capa011_negative_controls.py` | **DONE** (branch) |
 | **PA-11.2** | Read-only data check for masks already stored with swapped axes (procedure in §6). No data migrated | **PENDING** — owner decision |
 | **PA-11.3** | Decide whether the legacy fallback should refuse instead | **SUPERSEDED** by CA-11.4 (implemented on branch; PENDING owner approval) |
-| **PA-11.4** | Before any tool is enabled anywhere: run each real sidecar once and confirm, with this round-trip check, that its output is on the input image's grid (for example, whether SynthSeg returns its parcellation at 1 mm). Not examined by this CAPA | **PENDING** |
+| **PA-11.4** | Before any tool is enabled anywhere: run each real sidecar once and confirm, with this round-trip check, that its output is on the input image's grid. Since CA-11.5 an output on another grid is refused rather than stored; SynthSeg returns 1 mm, so its sidecar must resample the parcellation back to the input grid (nearest neighbour) or its results on non-1 mm studies will be refused. Not examined with real sidecars by this CAPA | **PENDING** |
 | **PA-11.5** | Separate the development environment from production storage (Finding 7: separate project/bucket and credentials via environment variables, start-up guard, no production defaults). Not implemented in this PR | **PENDING** — owner decision |
 
 CAPA-006 PA-6.6 (register RC-031 in RMF §5.1 and the manifest) remains open. RC-039 covers only
@@ -171,8 +186,12 @@ the clinical-tool part of RC-031's storage contract.
    second writer without its paired transform.
 3. **An unregistered risk control.** RC-031 had no bound test, so changing a writer could not turn
    CI red.
+4. **Reorientation taken for placement** (Finding 8, found in the pre-merge review of this CAPA):
+   permuting axes was assumed to put the mask on the image's grid; the precondition (same grid)
+   was neither stated nor checked, and the first version of this CAPA's tests used tool outputs
+   on the image's grid only.
 
-## 5. Verification Evidence (executed 2026-10-17)
+## 5. Verification Evidence (executed 2026-10-17; grid check 2026-10-18)
 
 - **Reproduced on `main` (before the fix):** the round-trip tests (then named `test_rc038_*`, now
   `test_rc039_tool_runner_mask_axes.py`) → **14 failed**.
@@ -189,34 +208,45 @@ the clinical-tool part of RC-031's storage contract.
   durable record): **8 failed** — 3 store-path cases "DID NOT RAISE"
   (the mask was stored), the indeterminate-affine case crashed inside the NIfTI library ("Could not
   decompose affine", not a clear refusal), and the 4 tool runs ended COMPLETED with a mask stored.
-  With CA-11.4: all 21 cases pass.
+  With CA-11.4: all 21 cases passed.
+- **Same grid (CA-11.5, pre-merge review, 2026-10-18):** the 7 new cases were first run against
+  the code before CA-11.5: the **4 grid cases failed** — shape mismatch, 0.5 mm shift and 1 mm
+  resampled output "DID NOT RAISE" (the mask was stored), and the SynthSeg run with a 1 mm output
+  ended COMPLETED. The 2 stored-record cases and the float-rounding positive control passed
+  before and after, as designed (they guard against mutation M1 and an over-strict tolerance).
+  With CA-11.5: all 28 cases pass.
 - **Negative controls** (`docs/iec62304/records/risk_verification/CAPA-011_negative_controls_2026-10-17.json`,
-  re-run after CA-11.4): 17 mutations, one at a time, every anchor asserted unique; **17 of 17
-  detected**; restored 21 passed.
+  re-run 2026-10-18 after CA-11.5): 22 mutations, one at a time, every anchor asserted unique; **22 of 22 detected**; restored 28 passed. G2 is detected only by the shape-mismatch case, G3 and G4 only by the 0.5 mm shift case (the 1 mm resampled cases are refused on shape as well); each sub-check therefore rests on one test.
 
-  | Mutation | Re-introduces | Failed (of 21) |
+  | Mutation | Re-introduces | Failed (of 28) |
   |---|---|---|
-  | D0 | The pre-fix store block, byte for byte | 13 (every case that stores) |
-  | D1 | Internal array under the marker (affine and marker otherwise correct) | 13 |
-  | D2 | In-plane swap (a1, a0, k) under the marker | 13 |
-  | D3 | Tool's affine after reorientation | 5 (every "another voxel order" case) |
-  | D4 | Reorientation skipped | 5 |
-  | D6 | Marker never set | 13 |
-  | L1 | Loader ignores the marker | 12 |
-  | F1 | **The former fallback** (legacy (2,1,0) order) instead of the refusal | 8 |
-  | F2 | Fallback storing the tool's array as-is | 8 |
+  | D0 | The pre-fix store block, byte for byte | 16 |
+  | D1 | Internal array under the marker (affine and marker otherwise correct) | 16 |
+  | D2 | In-plane swap (a1, a0, k) under the marker | 16 |
+  | D3 | Tool's affine after reorientation | 5 |
+  | D4 | Reorientation skipped | 6 |
+  | D6 | Marker never set | 16 |
+  | L1 | Loader ignores the marker | 15 |
+  | F1 | **The former fallback** (legacy (2,1,0) order) instead of the refusal | 12 |
+  | F2 | Fallback storing the tool's array as-is | 12 |
   | F3 | Fallback only for a missing / absent reference | 2 |
   | F4 | Fallback only for an unreadable reference / indeterminate affine | 6 |
-  | F5 | Store path catches the refusal and stores anyway | 8 |
-  | T1–T5 | Reference MRI dropped at the LST-AI, FLAMeS, SynthSeg, mindGlide-lesion, mindGlide-structure call site | 2 each (that tool's two tests) |
+  | F5 | Store path catches the refusal and stores anyway | 12 |
+  | G1 | **Grid check removed** (the defect the pre-merge review reproduced) | 4 |
+  | G2 | Shape check removed (transform only) | 1 |
+  | G3 | Transform check removed (shape only) | 1 |
+  | G4 | Grid tolerance loosened to 1 mm | 1 |
+  | M1 | Stored record computed from the mask read in the legacy order | 2 |
+  | T1–T5 | Reference MRI dropped at the LST-AI, FLAMeS, SynthSeg, mindGlide-lesion, mindGlide-structure call site | 2, 2, 3, 2, 2 |
 
-  The first run (before CA-11.4, 13 mutations incl. "marker always set on the fail-safe file") was
-  13/13 detected; that mutation no longer applies because no fail-safe file exists.
-- **Full backend suite** (no cloud credentials, as in CI), after the rebase onto CAPA-010 and
-  the renumbering:
-  - `tests/unit`: **1242 passed**, 0 failed (the 21 RC-039 cases included);
-  - risk-control manifest gate: 222 passed; `-k test_rc` gate: 419 passed;
-  - negative controls re-run on the rebased code: 17 of 17 detected, restored 21 passed;
+  Earlier runs: before CA-11.4, 13 mutations (incl. "marker always set on the fail-safe file", which
+  no longer applies), 13/13 detected; after CA-11.4, 17/17. The pre-merge review found that a
+  mutation reading the internal mask in the old order survived, because no test checked the
+  dimensions written to the stored record; it is now mutation M1, covered by the stored-record
+  test.
+- **Full backend suite** (no cloud credentials, as in CI), after CA-11.5:
+  - `tests/unit`: **1249 passed**, 0 failed (the 28 RC-039 cases included);
+  - risk-control manifest gate: 222 passed; `-k test_rc` gate: 426 passed;
   - `tests/integration` (CI filter): 25 passed, 1 failed —
     `test_auth_endpoints.py::TestWebAuthnEndpoints::test_webauthn_credentials_endpoint_exists`, because
     the local environment lacks the `webauthn` package. Local only, unrelated to this change; not

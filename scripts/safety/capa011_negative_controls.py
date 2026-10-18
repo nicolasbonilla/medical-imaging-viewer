@@ -4,7 +4,10 @@ Each mutation re-introduces the CAPA-011 defect (a clinical-tool mask stored in 
 internal axis order under the RC-031 v2 marker, so the loader transposes it twice) or a
 variant of it — or, F1-F5, re-introduces the former fallback that stored a mask whose
 position could not be established (no / missing / unreadable reference image, or an
-indeterminate affine) instead of refusing it — in the real source, one at a time. The script asserts every anchor occurs
+indeterminate affine) instead of refusing it — or, G1-G4, removes or loosens the check that the
+mask is on the image's own grid (shape and voxel-to-scanner transform), or, M1, computes the
+stored record's dimensions from the mask read in the legacy order — in the real source, one at a
+time. The script asserts every anchor occurs
 exactly once (the sabotage really was applied), runs the bound tests, records the failing
 test names and restores the exact original bytes.
 
@@ -52,6 +55,9 @@ REFUSAL = "        logger.error(\n            \"[RC-039] Clinical-tool mask NOT 
 # The former fallback's result: legacy (2,1,0) internal order. Stored as (a1,a0,k) under the
 # v2 marker, the loader's (2,0,1) yields exactly mask^(2,1,0), as the fallback did.
 OLD_FALLBACK = "return np.transpose(mask_native, (1, 0, 2)), source_affine"
+SHAPE_CHECK = "                if tuple(aligned.shape[:3]) != ref_shape:\n"
+AFFINE_CHECK = ("                elif not np.allclose(aligned_affine, ref_affine, rtol=0.0, "
+                "atol=self._GRID_TOLERANCE):\n")
 STORE_CALL = (
     "        stored_data, stored_affine = self._orient_mask_for_storage(\n"
     "            mask_data, source_affine, reference_mri_path\n"
@@ -102,6 +108,19 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                         "        except SegmentationException:\n"
                                         "            stored_data, stored_affine = np.transpose(mask_data, (1, 0, 2)), source_affine\n")],
                                       "the store path catches the refusal and stores the legacy-order mask anyway"),
+    "G1_grid_check_removed": ([(TR, SHAPE_CHECK, "                if False:\n"), (TR, AFFINE_CHECK, "                elif False:\n")],
+                              "a mask on another grid (other shape or transform, e.g. resampled to 1 mm) is "
+                              "stored after axis reorientation only, as the review reproduced"),
+    "G2_shape_check_removed": ([(TR, SHAPE_CHECK, "                if False:\n")],
+                               "only the transform is compared: a mask with another array shape is stored"),
+    "G3_transform_check_removed": ([(TR, AFFINE_CHECK, "                elif False:\n")],
+                                   "only the shape is compared: a mask shifted or with other voxel sizes is stored"),
+    "G4_tolerance_of_a_millimetre": ([(TR, "    _GRID_TOLERANCE = 1e-3\n", "    _GRID_TOLERANCE = 1.0\n")],
+                                     "a grid tolerance of 1 mm accepts sub-millimetre misplacement"),
+    "M1_record_from_mask_in_legacy_order": ([(TR, "        mask_data = SegmentationService._nifti_native_to_internal(stored_data, True)\n",
+                                              "        mask_data = SegmentationService._nifti_native_to_internal(stored_data, False)\n")],
+                                            "the record's dimensions (image_shape) computed from the mask read in the "
+                                            "legacy axis order"),
     "L1_loader_transposes_v2_with_legacy_order": ([(SEG, "        return np.transpose(nifti_data, (2, 0, 1) if oriented_v2 else (2, 1, 0))\n",
                                                     "        return np.transpose(nifti_data, (2, 1, 0))\n")],
                                                   "the load side ignores the marker (v2 file read with the legacy transpose)"),

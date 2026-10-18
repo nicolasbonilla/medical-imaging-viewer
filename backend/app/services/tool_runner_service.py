@@ -843,9 +843,14 @@ class ToolRunnerService:
         tool kept the MRI grid). The loader applies (2,0,1) once -> (k, a0, a1).
 
         FAILS CLOSED: if the reference MRI is missing or unreadable, or the mask
-        cannot be placed on it (indeterminate affine), nothing is returned — a
+        cannot be placed on it (indeterminate affine), or — after reorientation —
+        the mask is not on the image's grid (different array shape, or a
+        voxel-to-scanner transform differing by more than `_GRID_TOLERANCE` in any
+        element, e.g. a tool output resampled to 1 mm), nothing is returned — a
         SegmentationException is raised, so the caller stores no mask and no
-        record. A mask whose position cannot be established is never stored.
+        record. Reorientation only permutes/flips axes; it cannot place a mask
+        sampled on another grid voxel for voxel. A mask whose position cannot be
+        established is never stored.
 
         The defect this replaces stored the already-transposed internal (k, a0, a1)
         array under the v2 marker, so the loader transposed it a second time and
@@ -855,6 +860,7 @@ class ToolRunnerService:
         from nibabel.orientations import inv_ornt_aff, io_orientation, ornt_transform
         from app.utils.nifti_utils import reorient_array_to_reference
 
+        error_code, remedy = "TOOL_MASK_REFERENCE_UNAVAILABLE", "Re-run the tool."
         try:
             if reference_mri_path is None or not Path(reference_mri_path).exists():
                 reason = "the image it was computed on is missing"
@@ -872,21 +878,37 @@ class ToolRunnerService:
                 aligned_affine = np.asarray(source_affine, dtype=float) @ inv_ornt_aff(
                     transform, mask_native.shape
                 )
-                return aligned, aligned_affine
+                ref_shape = tuple(int(n) for n in ref_img.shape[:3])
+                ref_affine = np.asarray(ref_img.affine, dtype=float)
+                if tuple(aligned.shape[:3]) != ref_shape:
+                    error_code, remedy = "TOOL_MASK_GRID_MISMATCH", "The tool must return its result on the image's own grid."
+                    reason = (f"it is not on the grid of the image it was computed on "
+                              f"(mask {tuple(aligned.shape[:3])} voxels, image {ref_shape})")
+                elif not np.allclose(aligned_affine, ref_affine, rtol=0.0, atol=self._GRID_TOLERANCE):
+                    error_code, remedy = "TOOL_MASK_GRID_MISMATCH", "The tool must return its result on the image's own grid."
+                    reason = (f"it is not on the grid of the image it was computed on (voxel-to-scanner "
+                              f"transforms differ by up to {np.abs(aligned_affine - ref_affine).max():.3g})")
+                else:
+                    return aligned, aligned_affine
         except Exception as e:  # noqa: BLE001 — any failure to place the mask refuses it
             reason = f"the image it was computed on could not be read or the mask could not be placed on it ({e})"
         logger.error(
             "[RC-039] Clinical-tool mask NOT stored: %s", reason,
-            extra={"reference_mri_path": str(reference_mri_path)},
+            extra={"reference_mri_path": str(reference_mri_path), "error_code": error_code},
         )
         raise SegmentationException(
             message=(
                 f"The tool's segmentation was not stored: {reason}, so its position "
-                "in the image cannot be established (RC-039). Re-run the tool."
+                f"in the image cannot be established (RC-039). {remedy}"
             ),
-            error_code="TOOL_MASK_REFERENCE_UNAVAILABLE",
+            error_code=error_code,
             details={"reference_mri_path": str(reference_mri_path)},
         )
+
+    # RC-039: two voxel-to-scanner transforms describe the same grid when every
+    # element agrees within this tolerance (mm per voxel, mm) — float rounding of
+    # a re-written header passes; a sub-millimetre shift or another voxel size does not.
+    _GRID_TOLERANCE = 1e-3
 
     async def _store_nifti_as_segmentation(
         self,

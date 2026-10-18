@@ -341,6 +341,90 @@ class TestStorePathRoundTrip:
         assert np.array_equal(np.asarray(stored.dataobj), expected)
         np.testing.assert_allclose(stored.affine, MRI_AFFINE, atol=1e-5)
 
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("orientation", ["mri_grid", "reoriented"])
+    async def test_rc039_stored_record_dimensions_match_the_image(self, env, orientation):
+        """The segmentation record carries the dimensions of the image the mask
+        belongs to — image_shape = [height, width, depth] = [a0, a1, k], the
+        convention of SegmentationService.create_segmentation — consistent with
+        the mask the viewer loads ((depth, height, width) = (k, a0, a1)), and
+        the true annotated-voxel count. Guards against computing the record from
+        the mask read in another axis order."""
+        expected = _expected_native()
+        src_data, src_affine = _tool_output(expected, MRI_AFFINE, orientation)
+        mri = _write(env.tmp / "mri.nii.gz", np.zeros(MRI_SHAPE), MRI_AFFINE, np.float32)
+        src = _write(env.tmp / "mask.nii.gz", src_data, src_affine)
+
+        seg_id = await env.runner._store_nifti_as_segmentation(
+            mask_path=src, file_id="flair-1", description="tool mask",
+            validation_source="flames-v1.0", reference_mri_path=mri,
+        )
+
+        doc = env.store.docs[("segmentations", seg_id)]
+        A0, A1, K = MRI_SHAPE
+        assert doc["image_shape"] == [A0, A1, K], (
+            f"record dimensions {doc['image_shape']} do not describe the image grid {[A0, A1, K]}"
+        )
+        assert doc["annotated_voxels"] == 1
+        assert doc["gcs_path"] == f"segmentations/{seg_id}/masks.nii.gz"
+        loaded = env.seg.get_mask(seg_id)
+        h, w, d = doc["image_shape"]
+        assert loaded.shape == (d, h, w), "record dimensions and loaded mask must agree"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("case", ["shape_mismatch", "affine_mismatch", "resampled_1mm"])
+    async def test_rc039_mask_not_on_the_image_grid_is_not_stored(self, env, case):
+        """Fail closed when the tool's mask, after axis reorientation, is NOT on
+        the grid of the image it was computed on — reordering axes cannot place
+        it voxel for voxel. Cases: a different array shape on the same transform;
+        the same shape shifted by half a millimetre; and a SynthSeg-like output
+        resampled to 1 mm over a 0.5 x 0.5 x 3 mm study (same field of view)."""
+        if case == "resampled_1mm":
+            mri_shape, mri_affine = (40, 40, 10), np.diag([0.5, 0.5, 3.0, 1.0])
+            mask = np.zeros((20, 20, 30), dtype=np.uint8)
+            mask[10, 10, 15] = 17
+            mask_affine = np.eye(4)                      # 1 mm, same origin and field of view
+        else:
+            mri_shape, mri_affine = MRI_SHAPE, MRI_AFFINE
+            if case == "shape_mismatch":
+                mask = np.zeros((6, 9, 5), dtype=np.uint8)
+                mask[4, 7, 1] = 1
+                mask_affine = MRI_AFFINE
+            else:
+                mask = _expected_native()
+                mask_affine = MRI_AFFINE.copy()
+                mask_affine[0, 3] += 0.5                 # half a millimetre off the image grid
+        mri = _write(env.tmp / "mri.nii.gz", np.zeros(mri_shape), mri_affine, np.float32)
+        src = _write(env.tmp / "mask.nii.gz", mask, mask_affine)
+
+        with pytest.raises(SegmentationException) as exc:
+            await env.runner._store_nifti_as_segmentation(
+                mask_path=src, file_id="flair-1", description="tool mask",
+                validation_source="synthseg-v2.0", reference_mri_path=mri,
+            )
+
+        assert exc.value.error_code == "TOOL_MASK_GRID_MISMATCH"
+        assert "not stored" in str(exc.value) and "grid" in str(exc.value)
+        assert [n for n in env.store.objects if n.startswith("segmentations/")] == [], "no mask may be uploaded"
+        assert [k for k in env.store.docs if k[0] == "segmentations"] == [], "no segmentation record may be written"
+
+    @pytest.mark.asyncio
+    async def test_rc039_same_grid_up_to_float_rounding_is_accepted(self, env):
+        """Positive control for the grid check: a transform that differs from the
+        image's only by float rounding (as when a tool re-writes the header) is
+        the same grid and must be stored, at the same voxel."""
+        expected = _expected_native()
+        mri = _write(env.tmp / "mri.nii.gz", np.zeros(MRI_SHAPE), MRI_AFFINE, np.float32)
+        rounded = MRI_AFFINE + np.array([[1e-6, 0, 0, 2e-5], [0, -1e-6, 0, -2e-5], [0, 0, 1e-6, 1e-5], [0, 0, 0, 0]])
+        src = _write(env.tmp / "mask.nii.gz", expected, rounded)
+
+        seg_id = await env.runner._store_nifti_as_segmentation(
+            mask_path=src, file_id="flair-1", description="tool mask",
+            validation_source="flames-v1.0", reference_mri_path=mri,
+        )
+
+        _assert_same_voxel_and_position(env, seg_id, expected, MRI_AFFINE, _world(MRI_AFFINE, LESION))
+
 
 # --------------------------------------------------------------------------- #
 # Every tool that uses this path, end to end through its real `_execute_*`
@@ -497,5 +581,30 @@ async def test_rc039_tool_run_with_unreadable_reference_fails_and_stores_nothing
     assert task.status == ToolTaskStatus.FAILED
     assert task.segmentation_id is None
     assert "not stored" in (task.error or ""), task.error
+    assert [n for n in env.store.objects if n.startswith("segmentations/")] == [], "no mask may be uploaded"
+    assert [k for k in env.store.docs if k[0] == "segmentations"] == [], "no segmentation record may be written"
+
+
+@pytest.mark.asyncio
+async def test_rc039_synthseg_1mm_output_on_a_non_1mm_study_fails_and_stores_nothing(env, monkeypatch):
+    """End to end, the case the pre-merge review reproduced: SynthSeg returns its
+    parcellation resampled to 1 mm (20 x 20 x 30) for a 0.5 x 0.5 x 3 mm study
+    (40 x 40 x 10, same field of view). The task must FAIL with a clear message
+    and leave no mask object and no segmentation record behind."""
+    mri_affine = np.diag([0.5, 0.5, 3.0, 1.0])
+    parcellation = np.zeros((20, 20, 30), dtype=np.uint8)
+    parcellation[10, 10, 15] = 17
+    bucket = tool_runner_service.settings.GCS_BUCKET_NAME
+    monkeypatch.setattr(tool_runner_service.httpx, "AsyncClient",
+                        _fake_sidecars(env.store, {"synthseg": (parcellation, np.eye(4))}, bucket))
+    env.store.objects["flair-file"] = gzip.compress(_nifti_bytes(np.zeros((40, 40, 10)), mri_affine, np.float32))
+    task_id = _seed_task(env.runner, "synthseg", "synthseg-v2.0")
+
+    await env.runner._execute_synthseg(task_id, "flair-file", "patient-1", "study-1")
+
+    task = env.runner._tasks[task_id]
+    assert task.status == ToolTaskStatus.FAILED
+    assert task.segmentation_id is None
+    assert "not stored" in (task.error or "") and "grid" in (task.error or ""), task.error
     assert [n for n in env.store.objects if n.startswith("segmentations/")] == [], "no mask may be uploaded"
     assert [k for k in env.store.docs if k[0] == "segmentations"] == [], "no segmentation record may be written"
