@@ -120,3 +120,75 @@ describe('RC-038 — measurements are zoom/pan invariant and use the real spacin
     expect(container.querySelector('text')?.textContent).toBe('63.4°');
   });
 });
+
+/**
+ * Non-square image, non-square canvas, anisotropic voxels, zoom 1/2/4 with pan.
+ * Square fixtures cannot tell the horizontal from the vertical axis (a centre or a scale
+ * taken from the wrong dimension gives the same numbers), so every axis-specific term of
+ * the transform is exercised here. s0x = 300/120 = 2.5 and s0y = 160/80 = 2 differ on
+ * purpose; rows are 3 mm and columns 0.9 mm.
+ */
+describe('RC-038 — measurements on a non-square image and canvas with anisotropic voxels', () => {
+  const NS = { imageWidth: 120, imageHeight: 80, canvasWidth: 300, canvasHeight: 160, sliceIndex: 0 };
+  const SPACING: [number, number] = [3, 0.9]; // [row mm, column mm]
+  const ZOOMS = [[1, { x: 0, y: 0 }], [2, { x: 25, y: -15 }], [4, { x: -40, y: 30 }]] as const;
+  // Where the standard canvas draws image point (x, y) — useCanvasRendering, per axis.
+  const drawnAt = (x: number, y: number, zoom: number, pan: { x: number; y: number }): [number, number] => [
+    (x * 2.5 - 150) * zoom + 150 + pan.x,
+    (y * 2 - 80) * zoom + 80 + pan.y,
+  ];
+  const A = [30, 20] as const;
+  const B = [70, 50] as const;
+
+  function measure(tool: 'ruler' | 'ellipse' | 'angle', points: Array<readonly [number, number]>, zoom: number, pan: { x: number; y: number }) {
+    useViewerStore.setState({ measurementTool: tool });
+    const { container, unmount } = render(
+      <MeasurementOverlay {...NS} zoomLevel={zoom} panOffset={pan} pixelSpacing={SPACING} />,
+    );
+    drag(container.querySelector('svg')!, points.map(([x, y]) => drawnAt(x, y, zoom, pan)));
+    const label = container.querySelector('text')?.textContent;
+    unmount();
+    return label;
+  }
+
+  it('rc038 non-square: a diagonal ruler reads the same millimetres at zoom 1, 2 and 4', () => {
+    // 40 columns x 0.9 mm = 36 mm, 30 rows x 3 mm = 90 mm -> 96.9 mm.
+    const labels = ZOOMS.map(([zoom, pan]) => measure('ruler', [A, B], zoom, pan));
+    expect(labels).toEqual(['96.9 mm', '96.9 mm', '96.9 mm']);
+  });
+
+  it('rc038 non-square: an elliptical ROI reads the same area at zoom 1, 2 and 4', () => {
+    // rx = 36 mm, ry = 90 mm -> pi * 36 * 90 = 10178.8 mm2.
+    const labels = ZOOMS.map(([zoom, pan]) => measure('ellipse', [A, B], zoom, pan));
+    expect(labels).toEqual(['10178.8 mm²', '10178.8 mm²', '10178.8 mm²']);
+  });
+
+  it('rc038 non-square: an angle is computed in millimetres at zoom 1, 2 and 4', () => {
+    // Vertex (50, 40); arms +30 columns (27 mm) and (+30 columns, +20 rows) = (27, 60) mm
+    // -> atan(60 / 27) = 65.8 deg (it would read 33.7 deg in pixel units).
+    const labels = ZOOMS.map(([zoom, pan]) => measure('angle', [[80, 40], [50, 40], [80, 60]], zoom, pan));
+    expect(labels).toEqual(['65.8°', '65.8°', '65.8°']);
+  });
+
+  it('rc038 non-square: a ruler drawn at zoom 2 is redrawn exactly where the canvas draws its end points at zoom 1 and 4', () => {
+    useViewerStore.setState({ measurementTool: 'ruler' });
+    const [, pan2] = ZOOMS[1];
+    const { container, rerender } = render(
+      <MeasurementOverlay {...NS} zoomLevel={2} panOffset={pan2} pixelSpacing={SPACING} />,
+    );
+    drag(container.querySelector('svg')!, [drawnAt(...A, 2, pan2), drawnAt(...B, 2, pan2)]);
+    useViewerStore.setState({ measurementTool: null });
+
+    for (const [zoom, pan] of [ZOOMS[0], ZOOMS[2]]) {
+      rerender(<MeasurementOverlay {...NS} zoomLevel={zoom} panOffset={pan} pixelSpacing={SPACING} />);
+      const line = container.querySelector('line')!;
+      const [ax, ay] = drawnAt(...A, zoom, pan);
+      const [bx, by] = drawnAt(...B, zoom, pan);
+      expect(Number(line.getAttribute('x1'))).toBeCloseTo(ax, 6);
+      expect(Number(line.getAttribute('y1'))).toBeCloseTo(ay, 6);
+      expect(Number(line.getAttribute('x2'))).toBeCloseTo(bx, 6);
+      expect(Number(line.getAttribute('y2'))).toBeCloseTo(by, 6);
+      expect(container.querySelector('text')?.textContent).toBe('96.9 mm');
+    }
+  });
+});

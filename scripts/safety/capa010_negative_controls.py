@@ -138,6 +138,23 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "R4_angle_in_pixels": ([(MEAS, MEAS_ANGLE,
                              "    const v1 = { x: p1.x - p2.x, y: p1.y - p2.y };\n    const v2 = { x: p3.x - p2.x, y: p3.y - p2.y };\n")],
                            "the angle computed in pixel units on anisotropic pixels (the defect as found)"),
+    # Axis mix-ups that square fixtures cannot see (added 2026-10-18 after the pre-merge review of PR #52).
+    "R5_vertical_centre_from_width": ([(MEAS, "  const originY = (canvasHeight / 2) * (1 - zoomLevel) + panOffset.y;\n",
+                                        "  const originY = (canvasWidth / 2) * (1 - zoomLevel) + panOffset.y;\n")],
+                                      "the vertical zoom centre taken from the canvas WIDTH (found by the PR #52 review)"),
+    "R6_horizontal_centre_from_height": ([(MEAS, "  const originX = (canvasWidth / 2) * (1 - zoomLevel) + panOffset.x;\n",
+                                           "  const originX = (canvasHeight / 2) * (1 - zoomLevel) + panOffset.x;\n")],
+                                         "the horizontal zoom centre taken from the canvas HEIGHT"),
+    "R7_vertical_scale_from_width": ([(MEAS, "  const scaleY = (canvasHeight / imageHeight) * zoomLevel;\n",
+                                       "  const scaleY = (canvasWidth / imageWidth) * zoomLevel;\n")],
+                                     "the vertical scale taken from the horizontal axis"),
+    "R8_angle_spacing_swapped": ([(MEAS, MEAS_ANGLE,
+                                   "    const v1 = { x: (p1.x - p2.x) * pixelSpacing[0], y: (p1.y - p2.y) * pixelSpacing[1] };\n"
+                                   "    const v2 = { x: (p3.x - p2.x) * pixelSpacing[0], y: (p3.y - p2.y) * pixelSpacing[1] };\n")],
+                                 "row and column spacing swapped in the angle"),
+    "R9_distance_spacing_swapped": ([(MEAS, "    const dx = (p2.x - p1.x) * pixelSpacing[1];\n    const dy = (p2.y - p1.y) * pixelSpacing[0];\n",
+                                      "    const dx = (p2.x - p1.x) * pixelSpacing[0];\n    const dy = (p2.y - p1.y) * pixelSpacing[1];\n")],
+                                    "row and column spacing swapped in lengths"),
 }
 
 
