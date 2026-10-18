@@ -67,15 +67,17 @@
   "notes_es": "Comparación SUPERADA: mapas idénticos a los de agosto (Dice 1,0; diferencia máxima 0,002 por redondeo). 66 s por caso y modelo con 4 procesadores."
  },
  "flames-full-a": {
-  "purpose_es": "FLAMeS, 5 modelos por separado, bloque A (casos 1 a 49 de 145)"
+  "purpose_es": "FLAMeS, 5 modelos por separado, bloque A (casos 1 a 49 de 145)",
+  "notes_es": "Sin errores. Resultado conjunto (725 mapas, 145 por modelo): ver docs/research/records/2026-10-18_flames_5fold_ensemble_check.txt."
  },
  "flames-full-b": {
-  "purpose_es": "FLAMeS, 5 modelos por separado, bloque B (casos 50 a 97 de 145)"
+  "purpose_es": "FLAMeS, 5 modelos por separado, bloque B (casos 50 a 97 de 145)",
+  "notes_es": "Sin errores. Un caso tardó 156 s (resto 68–72 s)."
  },
  "flames-full-c": {
   "purpose_es": "FLAMeS, 5 modelos por separado, bloque C (casos 98 a 145)",
-  "notes_es": "No recalculó 4 mapas del modelo 0 que ya estaban en el cubo (Ljubljana 01 y 02 del piloto v1; 03 y 04 del piloto v2), ambos verificados contra agosto.",
-  "notes": "Skipped 4 fold-0 maps already in the bucket (openms 01-02 from flames-pilot-1, 03-04 from flames-v2-pilot2), both parity-verified against Aug-2026."
+  "notes_es": "No recalculó 6 mapas que ya estaban en el cubo de los pilotos: modelo 0 de Ljubljana 01–04 y modelo 1 de Ljubljana 01–02 (piloto v1, mismo modelo y ajustes; su modelo 0 coincidió con agosto).",
+  "notes": "Skipped 6 maps already in the bucket from the pilots: fold 0 of openms 01-04 and fold 1 of openms 01-02 (flames-pilot-1, same model and settings; its fold 0 matched Aug-2026)."
  },
  "local-rc032-negative-controls": {
   "purpose_es": "Prueba de seguridad: batería de mutaciones RC-032",
@@ -94,7 +96,8 @@
   "purpose_es": "Controles sanos SibBMS, bloque C (sub-068 a sub-100): imágenes sin cráneo + FLAMeS 5 modelos"
  },
  "lstai-pilot": {
-  "purpose_es": "Piloto LST-AI v1.2.0: 2 casos (MSLesSeg P10_T1 y control sub-001) + comprobación de que P49_T2 se salta"
+  "purpose_es": "Piloto LST-AI v1.2.0: MSLesSeg P10_T1, P49_T2 (T1 vacía, debe saltarse) y Ljubljana 01",
+  "notes_es": "Superado: 2 casos en 140 s cada uno, memoria máxima 10,7 GB sin intercambio; P49_T2 saltado (T1 vacía). Mapas en la rejilla de FLAMeS (error de guardado 0,002). La versión de código no se pudo leer en la imagen (sin python ni git); identidad comprobada por huella de la imagen y de los 3 modelos. Comprobación corregida después."
  },
  "lstai-a": {
   "purpose_es": "Mapas de probabilidad LST-AI, bloque A (MSLesSeg, 81 casos)"
@@ -104,5 +107,18 @@
  },
  "lstai-c": {
   "purpose_es": "Mapas de probabilidad LST-AI, bloque C (81 controles sanos SibBMS)"
+ },
+ "flames-extra-pilot": {
+  "purpose_es": "Piloto de colecciones nuevas: un caso de MS3SEG, Bagdad y PediMS; HD-BET + FLAMeS modelo 0",
+  "notes_es": "Superado: 179 casos descargados una vez y guardados; HD-BET en 2 casos; FLAMeS 3/3 sin errores. Coincidencia con el experto (modelo 0): MS3SEG 0,59 · Bagdad 0,40 · PediMS 0,80."
+ },
+ "flames-extra-a": {
+  "purpose_es": "Colecciones nuevas, bloque A (casos 1 a 90 de 179): HD-BET + FLAMeS 5 modelos"
+ },
+ "flames-extra-b": {
+  "purpose_es": "Colecciones nuevas, bloque B (casos 91 a 179): HD-BET + FLAMeS 5 modelos"
+ },
+ "lstai-full-a": {
+  "purpose_es": "LST-AI v1.2.0: todo MSLesSeg (P49_T2 saltado) + 30 Ljubljana; controles cuando llegue el permiso de SibBMS"
  }
 }

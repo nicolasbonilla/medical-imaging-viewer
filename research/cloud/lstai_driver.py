@@ -44,6 +44,10 @@ import job_common as jc  # noqa: E402
 DEFAULT_IMAGE_REF = "jqmcginnis/lst-ai@sha256:2b2a0d6454e6efff60a350df3c650ae9584f1926338dec7842f9e71912cc6c85"
 EXPECTED_IMAGE_CONFIG = "sha256:959900db7261e847c0825c0fc3f34727a96b6d54fc3dfb398bdcf2300f98547e"   # = image Id
 EXPECTED_LSTAI_COMMIT = "4d930aa4cb9efbc31b060668f46998da9a5b77c7"
+# U-Net weights (mdlA/B/C) inside the pinned image, recorded by the 2026-10-17 pilot (lstai-pilot manifest).
+EXPECTED_MODEL_SHA256 = ("30b8055a97b2729a98f71e4a2075dcbf0260389e1c75898bf9a3ef9f53173793",
+                         "1bf9da46e6438bef3c7dd07018dbdf97fa054f92a046e3642a15fa7430e68363",
+                         "6b8abb76acf042149c6a8db075e2526c3967c77fe894a397338916195eaf071e")
 LJ_FLAIR = "FLAIR_N4_noneck_reduced_winsor_regtoFLAIR_brain_N4_regtoMNI.nii.gz"
 LJ_T1 = "T1_N4_noneck_reduced_winsor_regtoFLAIR_brain_N4_regtoMNI.nii.gz"      # not T1POST_ (gadolinium)
 ENS = "sub-X_ses-Y_space-FLAIR_seg-lst_prob.nii.gz"
@@ -144,15 +148,19 @@ def image_provenance(image, image_ref):
         out.update({"image_id": d.get("Id"), "repo_digests": d.get("RepoDigests"), "created": d.get("Created"),
                     "size_bytes": d.get("Size")})
     script = r"""
-L=$(python -c "import LST_AI,os;print(os.path.dirname(LST_AI.__file__))" 2>/dev/null)
+PY=$(command -v python3 || command -v python)
+L=$($PY -c "import LST_AI,os;print(os.path.dirname(LST_AI.__file__))" 2>/dev/null)
+[ -z "$L" ] && L=$(dirname "$(dirname "$(find / -xdev -name 'UNet3D_MS_final_mdlA.h5' 2>/dev/null | head -1)")")
 echo "LST_AI_DIR=$L"
 find / -xdev -name 'UNet3D_MS_final_mdl*.h5' 2>/dev/null | sort | xargs -r sha256sum
 find / -xdev -path '*LST_AI/atlas/*.nii.gz' 2>/dev/null | sort | xargs -r sha256sum
-echo "GIT_HEAD=$(git -C "$L/.." rev-parse HEAD 2>/dev/null)"
+G="$L/../.git"; H=$(git -C "$L/.." rev-parse HEAD 2>/dev/null)
+if [ -z "$H" ] && [ -f "$G/HEAD" ]; then R=$(sed -n 's/^ref: //p' "$G/HEAD"); H=$([ -n "$R" ] && cat "$G/$R" 2>/dev/null || cat "$G/HEAD"); fi
+echo "GIT_HEAD=$H"
 echo "GIT_DESCRIBE=$(git -C "$L/.." describe --tags --always 2>/dev/null)"
 echo "PIP_VERSION=$(pip show LST_AI 2>/dev/null | sed -n 's/^Version: //p')"
-echo "TF_VERSION=$(python -c 'import tensorflow as tf;print(tf.__version__)' 2>/dev/null)"
-echo "PYTHON=$(python --version 2>&1)"
+echo "TF_VERSION=$($PY -c 'import tensorflow as tf;print(tf.__version__)' 2>/dev/null)"
+echo "PYTHON=$($PY --version 2>&1)"
 echo "GREEDY=$(greedy -version 2>&1 | head -1)"
 """
     r = subprocess.run(["docker", "run", "--rm", "--entrypoint", "bash", image, "-c", script],
@@ -170,7 +178,10 @@ echo "GREEDY=$(greedy -version 2>&1 | head -1)"
     out["help_has_flags"] = {f: f in h.stdout for f in ("--probability_map", "--stripped", "--segment_only", "--threads")}
     # classic Docker store: Id = config digest; containerd store: Id = manifest digest. Either proves it.
     out["matches_expected"] = {"image_id": out.get("image_id") in (EXPECTED_IMAGE_CONFIG, DEFAULT_IMAGE_REF.split("@")[1]),
-                               "lstai_commit": out.get("git_head") == EXPECTED_LSTAI_COMMIT}
+                               # None = no git metadata inside the image (not verifiable); the image digest and
+                               # the three model checksums below are then the identity evidence.
+                               "lstai_commit": (out.get("git_head") == EXPECTED_LSTAI_COMMIT) if out.get("git_head") else None,
+                               "model_sha256": sorted(models.values()) == sorted(EXPECTED_MODEL_SHA256)}
     return out
 
 
