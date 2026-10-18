@@ -103,13 +103,13 @@ RC-023 records that the viewer "deliberately renders NO L/R edge labels" until t
 ## 5. Verification Evidence (executed 2026-10-17)
 
 - **Tests on the `main` sources** (the six fixed files restored from `main` at `6209131`, final tests kept): 27 tests, **25 failed for the stated reason, 2 passed** as expected (2D identity; the niivue-default check). Record with every failure message: `records/risk_verification/CAPA-010_tests_on_main_2026-10-17.json`.
-- **After the fix**: the 27 pass. Full frontend suite: **19 files, 143 tests passed** (`npx vitest run --pool=threads`; before: 15 files, 116 tests). `npx tsc --noEmit`: clean. `npm run build`: OK, and the test helpers are not in the production bundle. Backend `tests/unit/test_risk_control_manifest.py` (the manifest changed): 215 passed.
+- **After the fix**: the 27 pass, plus 4 added on 2026-10-18 after the pre-merge review of PR #52 (non-square image and canvas, anisotropic voxels — not run against `main`). Full frontend suite: **19 files, 147 tests passed** (`npx vitest run --pool=threads`; before: 15 files, 116 tests). `npx tsc --noEmit`: clean. `npm run build`: OK, and the test helpers are not in the production bundle. Backend `tests/unit/test_risk_control_manifest.py` (the manifest changed): 215 passed.
 - **Real application, before / after** (headless Edge, synthetic study): caveat visible fraction 0.00 → 1.00 in 2D at three sizes; image cut 20/14/5 px → 0; identities in multi-panel 0 → 2, in 3D 0 → 1; orientation cube gone from the 3D view. On `main` one of the eight page loads timed out on a first pass (1920x1080, a load timing issue of the probe); the recorded run is the complete second pass.
-- **Negative controls**: `records/risk_verification/CAPA-010_negative_controls_2026-10-17.json` — **21 mutations, 20 detected, 1 equivalent by design (stated)**; restored: 43 passed, 0 failed, 0 skipped. Details: §5.1.
+- **Negative controls**: `records/risk_verification/CAPA-010_negative_controls_2026-10-17.json` — **26 mutations, 25 detected, 1 equivalent by design (stated)**; restored: 47 passed, 0 failed, 0 skipped (re-executed 2026-10-18). Details: §5.1.
 
 ### 5.1 Negative controls
 
-Executed 2026-10-17 by `scripts/safety/capa010_negative_controls.py` against the final code, one mutation at a time, every anchor asserted to occur once; bound tests: the four CAPA-010 files and `ViewportSafetyOverlay.test.tsx` (43 tests). "Failed" = tests that turned red.
+Executed 2026-10-17 by `scripts/safety/capa010_negative_controls.py` against the final code, one mutation at a time, every anchor asserted to occur once; bound tests: the four CAPA-010 files and `ViewportSafetyOverlay.test.tsx` (43 tests). **Re-executed 2026-10-18** (47 tests) after the pre-merge review of PR #52 found that a vertical zoom centre computed from the canvas WIDTH was not detected — every measurement test used a square image on a square canvas. Checked by hand first: with that mutation the previous 6 `rc038` tests pass and the new redraw test fails. Counts below are from the 2026-10-18 run; R1–R4 counts rose because the new tests also catch them. "Failed" = tests that turned red.
 
 | Mutation | Re-introduces | Failed |
 |---|---|---|
@@ -130,10 +130,15 @@ Executed 2026-10-17 by `scripts/safety/capa010_negative_controls.py` against the
 | M1 crosshair read as (x, y, z) | the defect as found | 2 |
 | M2 box read as (x, y, z) | the defect as found | 1 |
 | M3 shared mapping wrong | both markers | 3 |
-| R1 zoom and pan ignored | the defect as found | 5 |
-| R2 zoom ignored | — | 5 |
-| R3 pan ignored | rulers detached on pan | 1 |
-| R4 angle in pixel units | the defect as found | 1 |
+| R1 zoom and pan ignored | the defect as found | 8 |
+| R2 zoom ignored | — | 8 |
+| R3 pan ignored | rulers detached on pan | 2 |
+| R4 angle in pixel units | the defect as found | 2 |
+| R5 vertical zoom centre from the canvas width | found by the PR #52 review; undetected by square fixtures | 1 |
+| R6 horizontal zoom centre from the canvas height | — | 1 |
+| R7 vertical scale from the horizontal axis | — | 4 |
+| R8 row/column spacing swapped in the angle | — | 2 |
+| R9 row/column spacing swapped in lengths | — | 2 |
 
 Failing test names per mutation and the SHA-256 of every mutated source and test file are in the record.
 

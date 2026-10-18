@@ -1,5 +1,5 @@
 {
-  "executed": "2026-10-17T23:12:58",
+  "executed": "2026-10-18T18:57:12",
   "method": "one mutation at a time; each anchor asserted to occur exactly once; vitest JSON reporter",
   "hash_basis": "sha256 of the UTF-8 text with LF line endings",
   "source_sha256": {
@@ -13,7 +13,7 @@
   "test_sha256": {
     "src/components/ImageViewer3D.capa010.test.tsx": "9abc97964d71320ca5293e0978ab3e6288f5dbcb576ae9b503f56151a2cbda1f",
     "src/components/MultiPanelViewer.capa010.test.tsx": "72eaa55d12c16b9536f5710fb6c908dfff67220dad19224ae4879739e758ad89",
-    "src/components/MeasurementOverlay.rc038.test.tsx": "1aa9959724e4d2f635e17fad1850d7cbb74eaa40f5a97951775ac828050c9e73",
+    "src/components/MeasurementOverlay.rc038.test.tsx": "6de558f71539cb19078bc6b02137020c5cad362067bc07e42a029859303f89ae",
     "src/ViewerApp.capa010.test.tsx": "f6765559fa49df218056450f57fbfd3c21649d5ef71283612a9f727d46ba6fe5",
     "src/components/ViewportSafetyOverlay.test.tsx": "599678382b2c019763fdeecd14b1e32fc864ab65f2e01bf536a059dc6bdf9bf0"
   },
@@ -27,7 +27,7 @@
   "mutations": {
     "I1_3d_overlay_removed": {
       "failed": 7,
-      "passed": 36,
+      "passed": 40,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -45,7 +45,7 @@
     },
     "I2_3d_identity_not_passed": {
       "failed": 2,
-      "passed": 41,
+      "passed": 45,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -58,7 +58,7 @@
     },
     "I3_panel_overlay_removed": {
       "failed": 7,
-      "passed": 36,
+      "passed": 40,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -76,7 +76,7 @@
     },
     "I4_multipanel_identity_not_passed": {
       "failed": 1,
-      "passed": 42,
+      "passed": 46,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -88,7 +88,7 @@
     },
     "I5_panel_identity_dropped": {
       "failed": 2,
-      "passed": 41,
+      "passed": 45,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -101,7 +101,7 @@
     },
     "O1_panel_orientation_not_stored": {
       "failed": 2,
-      "passed": 41,
+      "passed": 45,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -114,7 +114,7 @@
     },
     "O2_orientation_lost_on_slice_change": {
       "failed": 1,
-      "passed": 42,
+      "passed": 46,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -126,7 +126,7 @@
     },
     "O3_stale_orientation_on_assign": {
       "failed": 1,
-      "passed": 42,
+      "passed": 46,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -138,7 +138,7 @@
     },
     "O4_stale_orientation_on_autoassign": {
       "failed": 1,
-      "passed": 42,
+      "passed": 46,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -150,7 +150,7 @@
     },
     "G1_orientation_cube_restored": {
       "failed": 2,
-      "passed": 41,
+      "passed": 45,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -163,7 +163,7 @@
     },
     "G2_slice_letters_by_default": {
       "failed": 2,
-      "passed": 41,
+      "passed": 45,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -176,7 +176,7 @@
     },
     "L1_layout_as_main": {
       "failed": 1,
-      "passed": 42,
+      "passed": 46,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -188,7 +188,7 @@
     },
     "L2_viewport_full_height_only": {
       "failed": 0,
-      "passed": 43,
+      "passed": 47,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [],
@@ -198,7 +198,7 @@
     },
     "L3_column_block_only": {
       "failed": 1,
-      "passed": 42,
+      "passed": 46,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -210,7 +210,7 @@
     },
     "M1_crosshair_xyz": {
       "failed": 2,
-      "passed": 41,
+      "passed": 45,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -223,7 +223,7 @@
     },
     "M2_bbox_xyz": {
       "failed": 1,
-      "passed": 42,
+      "passed": 46,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -235,7 +235,7 @@
     },
     "M3_mapping_xyz": {
       "failed": 3,
-      "passed": 40,
+      "passed": 44,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -248,8 +248,8 @@
       "applied": true
     },
     "R1_zoom_and_pan_ignored": {
-      "failed": 5,
-      "passed": 38,
+      "failed": 8,
+      "passed": 39,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -257,15 +257,18 @@
         "rc038 a ruler measures the same length at zoom 1, zoom 2 and zoom 4 with pan",
         "rc038 an elliptical ROI at zoom 2 reports the true area, not four times it",
         "rc038 a ruler stays on the anatomy it measured when the zoom changes",
-        "rc038 a ruler stays on the anatomy it measured when the image is panned"
+        "rc038 a ruler stays on the anatomy it measured when the image is panned",
+        "rc038 non-square: a diagonal ruler reads the same millimetres at zoom 1, 2 and 4",
+        "rc038 non-square: an elliptical ROI reads the same area at zoom 1, 2 and 4",
+        "rc038 non-square: a ruler drawn at zoom 2 is redrawn exactly where the canvas draws its end points at zoom 1 and 4"
       ],
       "error_files": [],
       "reintroduces": "the ruler ignores zoom and pan: x2 length at zoom 2 (the defect as found)",
       "applied": true
     },
     "R2_zoom_ignored_in_scale": {
-      "failed": 5,
-      "passed": 38,
+      "failed": 8,
+      "passed": 39,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -273,40 +276,110 @@
         "rc038 a ruler measures the same length at zoom 1, zoom 2 and zoom 4 with pan",
         "rc038 an elliptical ROI at zoom 2 reports the true area, not four times it",
         "rc038 a ruler stays on the anatomy it measured when the zoom changes",
-        "rc038 a ruler stays on the anatomy it measured when the image is panned"
+        "rc038 a ruler stays on the anatomy it measured when the image is panned",
+        "rc038 non-square: a diagonal ruler reads the same millimetres at zoom 1, 2 and 4",
+        "rc038 non-square: an elliptical ROI reads the same area at zoom 1, 2 and 4",
+        "rc038 non-square: a ruler drawn at zoom 2 is redrawn exactly where the canvas draws its end points at zoom 1 and 4"
       ],
       "error_files": [],
       "reintroduces": "lengths scaled by the zoom factor",
       "applied": true
     },
     "R3_pan_ignored": {
-      "failed": 1,
-      "passed": 42,
+      "failed": 2,
+      "passed": 45,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
-        "rc038 a ruler stays on the anatomy it measured when the image is panned"
+        "rc038 a ruler stays on the anatomy it measured when the image is panned",
+        "rc038 non-square: a ruler drawn at zoom 2 is redrawn exactly where the canvas draws its end points at zoom 1 and 4"
       ],
       "error_files": [],
       "reintroduces": "measurements detached from the anatomy when the image is panned",
       "applied": true
     },
     "R4_angle_in_pixels": {
-      "failed": 1,
-      "passed": 42,
+      "failed": 2,
+      "passed": 45,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
-        "rc038 the angle is computed in millimetres on anisotropic pixels (2 mm rows, 1 mm columns)"
+        "rc038 the angle is computed in millimetres on anisotropic pixels (2 mm rows, 1 mm columns)",
+        "rc038 non-square: an angle is computed in millimetres at zoom 1, 2 and 4"
       ],
       "error_files": [],
       "reintroduces": "the angle computed in pixel units on anisotropic pixels (the defect as found)",
+      "applied": true
+    },
+    "R5_vertical_centre_from_width": {
+      "failed": 1,
+      "passed": 46,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc038 non-square: a ruler drawn at zoom 2 is redrawn exactly where the canvas draws its end points at zoom 1 and 4"
+      ],
+      "error_files": [],
+      "reintroduces": "the vertical zoom centre taken from the canvas WIDTH (found by the PR #52 review)",
+      "applied": true
+    },
+    "R6_horizontal_centre_from_height": {
+      "failed": 1,
+      "passed": 46,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc038 non-square: a ruler drawn at zoom 2 is redrawn exactly where the canvas draws its end points at zoom 1 and 4"
+      ],
+      "error_files": [],
+      "reintroduces": "the horizontal zoom centre taken from the canvas HEIGHT",
+      "applied": true
+    },
+    "R7_vertical_scale_from_width": {
+      "failed": 4,
+      "passed": 43,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc038 non-square: a diagonal ruler reads the same millimetres at zoom 1, 2 and 4",
+        "rc038 non-square: an elliptical ROI reads the same area at zoom 1, 2 and 4",
+        "rc038 non-square: an angle is computed in millimetres at zoom 1, 2 and 4",
+        "rc038 non-square: a ruler drawn at zoom 2 is redrawn exactly where the canvas draws its end points at zoom 1 and 4"
+      ],
+      "error_files": [],
+      "reintroduces": "the vertical scale taken from the horizontal axis",
+      "applied": true
+    },
+    "R8_angle_spacing_swapped": {
+      "failed": 2,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc038 the angle is computed in millimetres on anisotropic pixels (2 mm rows, 1 mm columns)",
+        "rc038 non-square: an angle is computed in millimetres at zoom 1, 2 and 4"
+      ],
+      "error_files": [],
+      "reintroduces": "row and column spacing swapped in the angle",
+      "applied": true
+    },
+    "R9_distance_spacing_swapped": {
+      "failed": 2,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc038 non-square: a diagonal ruler reads the same millimetres at zoom 1, 2 and 4",
+        "rc038 non-square: a ruler drawn at zoom 2 is redrawn exactly where the canvas draws its end points at zoom 1 and 4"
+      ],
+      "error_files": [],
+      "reintroduces": "row and column spacing swapped in lengths",
       "applied": true
     }
   },
   "restored": {
     "failed": 0,
-    "passed": 43,
+    "passed": 47,
     "skipped": 0,
     "errors": 0,
     "failing_tests": [],
