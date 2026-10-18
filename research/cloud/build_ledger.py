@@ -135,6 +135,8 @@ def cloud_rows(tmp, notes, price_cache):
         if key not in price_cache:
             price_cache[key] = pricing.price(mt, key[1], spot=spot, gpu=key[3], disk_gb=50)
         p = price_cache[key]
+        if plan.get("list_price", {}).get("usd_per_hour"):     # exact price snapshot taken at launch (real disk size)
+            p = plan["list_price"]
         cases = man.get("cases", [])
         per = [c["seconds"] for c in cases if c.get("ok")]
         status = n.get("status") or ("running" if not wall else
@@ -156,7 +158,7 @@ def cloud_rows(tmp, notes, price_cache):
             "usd_per_hour_list": p["usd_per_hour"],
             "cost_usd_list": round(wall / 3600 * p["usd_per_hour"], 4) if wall else "",
             "cost_usd_recorded": cost.get("cost_usd_compute_estimate") or cost.get("cost_usd", ""),
-            "price_basis": f"Cloud Billing catalog list price {p['date_utc'][:10]} (cores+RAM+50 GB pd-balanced)",
+            "price_basis": f"Cloud Billing catalog list price {p['date_utc'][:10]} (cores+RAM+boot disk)",
             "notes": n.get("notes", ""),
         })
         rows[-1]["_record"] = {"plan": plan, "runinfo": info, "price": p, "cost_record": cost,
@@ -316,7 +318,7 @@ def summary(rows, usd_per_eur, ecb_day, storage_gb, built):
     L.append("## Cómo se mide\n")
     L.append("- **Duración**: reloj de la propia máquina, desde que arranca hasta que se borra sola (`runinfo.json`), con marca de hora por etapa: preparación del entorno, pesos del modelo, datos, lista de casos, cálculo y final.\n"
              "- **Procesador**: el que Google asigna (`cpuPlatform`) y el modelo que ve el sistema (`lscpu`). Las corridas de agosto no lo registraron.\n"
-             "- **Coste**: segundos × precio de lista por hora (núcleos + memoria + disco de arranque de 50 GB). No incluye almacenamiento ni red, que van en su propia línea. La red de entrada es gratis y los datos no salen de la región.\n"
+             "- **Coste**: segundos × precio de lista por hora (núcleos + memoria + disco de arranque con su tamaño real, 50 o 100 GB, según el precio guardado al lanzar cada máquina). No incluye almacenamiento ni red, que van en su propia línea. La red de entrada es gratis y los datos no salen de la región.\n"
              "- **Agosto**: copiado tal cual de `docs/calm-ms/cost-ledger.csv`; allí la tarifa era una estimación, por eso se recalcula también a precio de lista. Las horas de máquina se derivan de coste ÷ tarifa registrados.\n"
              "- **Comprobación**: cada mapa lleva su huella SHA-256 de entrada y de pesos en el manifiesto de la corrida; el piloto 2 reprodujo los mapas de agosto (mismas lesiones, diferencia máx. 0,002 por redondeo).\n")
     return "\n".join(L) + "\n"

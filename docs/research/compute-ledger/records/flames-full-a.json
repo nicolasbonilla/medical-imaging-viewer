@@ -5,32 +5,32 @@
   "project": "mstool-research",
   "purpose": "FLAMeS 5-fold probability maps, chunk A (cases 0-48 of 145: openms 30 + MSLesSeg 115), no TTA",
   "paper_or_feature": "A,C,app",
-  "status": "running",
+  "status": "ok",
   "machine_type": "n2d-standard-4",
   "vcpus": 4,
   "memory_gb": 16.0,
   "cpu_platform": "AMD Milan",
-  "cpu_model": "not recorded",
+  "cpu_model": "AMD EPYC 7B13",
   "gpu": "",
   "provisioning": "STANDARD",
   "zone": "us-central1-c",
-  "start_utc": "2026-10-17T18:37:45Z",
-  "end_utc": "",
-  "wall_seconds": "",
-  "vm_hours": "",
-  "setup_seconds": "",
-  "compute_seconds": "",
-  "items_ok": 20,
+  "start_utc": "2026-10-17T18:38:31Z",
+  "end_utc": "2026-10-17T23:25:23Z",
+  "wall_seconds": 17212,
+  "vm_hours": 4.7811,
+  "setup_seconds": 244,
+  "compute_seconds": 16967,
+  "items_ok": 245,
   "items_failed": 0,
-  "median_seconds_per_item": 69.3,
+  "median_seconds_per_item": 69.1,
   "usd_per_hour_list": 0.17583,
-  "cost_usd_list": "",
-  "cost_usd_recorded": "",
-  "price_basis": "Cloud Billing catalog list price 2026-10-17 (cores+RAM+50 GB pd-balanced)",
+  "cost_usd_list": 0.8407,
+  "cost_usd_recorded": "0.8407",
+  "price_basis": "Cloud Billing catalog list price 2026-10-17 (cores+RAM+boot disk)",
   "notes": "",
   "machines": 1,
   "purpose_es": "FLAMeS, 5 modelos por separado, bloque A (casos 1 a 49 de 145)",
-  "notes_es": ""
+  "notes_es": "Sin errores. Resultado conjunto (725 mapas, 145 por modelo): ver docs/research/records/2026-10-18_flames_5fold_ensemble_check.txt."
  },
  "plan": {
   "run_id": "flames-full-a",
@@ -91,9 +91,37 @@
   "startup_script": "vm_flames_ensemble_v2.sh",
   "git_commit": "6209131"
  },
- "runinfo": {},
+ "runinfo": {
+  "run_id": "flames-full-a",
+  "wall_seconds": 17212,
+  "rate_usd_per_h_metadata": "0.17583",
+  "cost_usd_estimate_metadata": "0.8407",
+  "hardware": {
+   "cpu_platform": "AMD Milan",
+   "cpu_model": "AMD EPYC 7B13",
+   "vcpus": "4",
+   "threads_per_core": "2",
+   "memory_gb": "15",
+   "gpu": "",
+   "os": "Ubuntu 22.04.5 LTS",
+   "kernel": "6.8.0-1070-gcp",
+   "machine_type": "n2d-standard-4",
+   "zone": "us-central1-c",
+   "provisioning": ""
+  },
+  "stages_utc": {
+   "boot": "2026-10-17T18:38:31Z",
+   "env_start": "2026-10-17T18:38:53Z",
+   "weights_start": "2026-10-17T18:40:23Z",
+   "datasets_start": "2026-10-17T18:40:50Z",
+   "cases_start": "2026-10-17T18:42:20Z",
+   "inference_start": "2026-10-17T18:42:35Z",
+   "inference_end": "2026-10-17T23:25:22Z",
+   "end": "2026-10-17T23:25:23Z"
+  }
+ },
  "price": {
-  "date_utc": "2026-10-17T19:08:55Z",
+  "date_utc": "2026-10-17T18:37:06Z",
   "machine_type": "n2d-standard-4",
   "region": "us-central1",
   "spot": false,
@@ -126,7 +154,13 @@
    }
   }
  },
- "cost_record": {},
+ "cost_record": {
+  "run_id": "flames-full-a",
+  "machine": "n2d-standard-4",
+  "seconds": "17212",
+  "rate_usd_per_h": "0.17583",
+  "cost_usd_compute_estimate": "0.8407"
+ },
  "manifest_summary": {
   "versions": {
    "python": "3.10.12",
@@ -153,7 +187,7 @@
   },
   "errors": [],
   "started_utc": "2026-10-17T18:42:39Z",
-  "finished_utc": null
+  "finished_utc": "2026-10-17T23:25:21Z"
  },
  "vm": {
   "cpuPlatform": "AMD Milan",

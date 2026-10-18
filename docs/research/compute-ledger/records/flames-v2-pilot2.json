@@ -26,7 +26,7 @@
   "usd_per_hour_list": 0.20109,
   "cost_usd_list": 0.0165,
   "cost_usd_recorded": "0.0165",
-  "price_basis": "Cloud Billing catalog list price 2026-10-17 (cores+RAM+50 GB pd-balanced)",
+  "price_basis": "Cloud Billing catalog list price 2026-10-17 (cores+RAM+boot disk)",
   "notes": "",
   "machines": 1,
   "purpose_es": "Piloto v2 corregido: 2 casos de Ljubljana, modelo 0, comparado con agosto",
@@ -121,7 +121,7 @@
   }
  },
  "price": {
-  "date_utc": "2026-10-17T19:08:56Z",
+  "date_utc": "2026-10-17T18:18:44Z",
   "machine_type": "n2-standard-4",
   "region": "us-central1",
   "spot": false,

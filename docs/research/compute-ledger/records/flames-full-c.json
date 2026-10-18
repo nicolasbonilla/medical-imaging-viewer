@@ -5,32 +5,32 @@
   "project": "mstool-research",
   "purpose": "FLAMeS 5-fold probability maps, chunk C (offset 97, rest of 145 cases), no TTA",
   "paper_or_feature": "A,C,app",
-  "status": "running",
+  "status": "ok",
   "machine_type": "n2-standard-4",
   "vcpus": 4,
   "memory_gb": 16.0,
   "cpu_platform": "Intel Cascade Lake",
-  "cpu_model": "not recorded",
+  "cpu_model": "Intel(R) Xeon(R) CPU @ 2.80GHz",
   "gpu": "",
   "provisioning": "STANDARD",
   "zone": "us-central1-a",
-  "start_utc": "2026-10-17T18:47:03Z",
-  "end_utc": "",
-  "wall_seconds": "",
-  "vm_hours": "",
-  "setup_seconds": "",
-  "compute_seconds": "",
-  "items_ok": 10,
+  "start_utc": "2026-10-17T18:47:59Z",
+  "end_utc": "2026-10-17T23:14:52Z",
+  "wall_seconds": 16013,
+  "vm_hours": 4.4481,
+  "setup_seconds": 251,
+  "compute_seconds": 15761,
+  "items_ok": 234,
   "items_failed": 0,
-  "median_seconds_per_item": 70.2,
+  "median_seconds_per_item": 68.5,
   "usd_per_hour_list": 0.20109,
-  "cost_usd_list": "",
-  "cost_usd_recorded": "",
-  "price_basis": "Cloud Billing catalog list price 2026-10-17 (cores+RAM+50 GB pd-balanced)",
-  "notes": "Skipped 4 fold-0 maps already in the bucket (openms 01-02 from flames-pilot-1, 03-04 from flames-v2-pilot2), both parity-verified against Aug-2026.",
+  "cost_usd_list": 0.8945,
+  "cost_usd_recorded": "0.8945",
+  "price_basis": "Cloud Billing catalog list price 2026-10-17 (cores+RAM+boot disk)",
+  "notes": "Skipped 6 maps already in the bucket from the pilots: fold 0 of openms 01-04 and fold 1 of openms 01-02 (flames-pilot-1, same model and settings; its fold 0 matched Aug-2026).",
   "machines": 1,
   "purpose_es": "FLAMeS, 5 modelos por separado, bloque C (casos 98 a 145)",
-  "notes_es": "No recalcul\u00f3 4 mapas del modelo 0 que ya estaban en el cubo (Ljubljana 01 y 02 del piloto v1; 03 y 04 del piloto v2), ambos verificados contra agosto."
+  "notes_es": "No recalcul\u00f3 6 mapas que ya estaban en el cubo de los pilotos: modelo 0 de Ljubljana 01\u201304 y modelo 1 de Ljubljana 01\u201302 (piloto v1, mismo modelo y ajustes; su modelo 0 coincidi\u00f3 con agosto)."
  },
  "plan": {
   "run_id": "flames-full-c",
@@ -91,9 +91,37 @@
   "startup_script": "vm_flames_ensemble_v2.sh",
   "git_commit": "6209131"
  },
- "runinfo": {},
+ "runinfo": {
+  "run_id": "flames-full-c",
+  "wall_seconds": 16013,
+  "rate_usd_per_h_metadata": "0.20109",
+  "cost_usd_estimate_metadata": "0.8945",
+  "hardware": {
+   "cpu_platform": "Intel Cascade Lake",
+   "cpu_model": "Intel(R) Xeon(R) CPU @ 2.80GHz",
+   "vcpus": "4",
+   "threads_per_core": "2",
+   "memory_gb": "15",
+   "gpu": "",
+   "os": "Ubuntu 22.04.5 LTS",
+   "kernel": "6.8.0-1070-gcp",
+   "machine_type": "n2-standard-4",
+   "zone": "us-central1-a",
+   "provisioning": ""
+  },
+  "stages_utc": {
+   "boot": "2026-10-17T18:47:59Z",
+   "env_start": "2026-10-17T18:49:14Z",
+   "weights_start": "2026-10-17T18:51:04Z",
+   "datasets_start": "2026-10-17T18:51:35Z",
+   "cases_start": "2026-10-17T18:51:59Z",
+   "inference_start": "2026-10-17T18:52:10Z",
+   "inference_end": "2026-10-17T23:14:51Z",
+   "end": "2026-10-17T23:14:52Z"
+  }
+ },
  "price": {
-  "date_utc": "2026-10-17T19:08:56Z",
+  "date_utc": "2026-10-17T18:46:50Z",
   "machine_type": "n2-standard-4",
   "region": "us-central1",
   "spot": false,
@@ -126,7 +154,13 @@
    }
   }
  },
- "cost_record": {},
+ "cost_record": {
+  "run_id": "flames-full-c",
+  "machine": "n2-standard-4",
+  "seconds": "16013",
+  "rate_usd_per_h": "0.20109",
+  "cost_usd_compute_estimate": "0.8945"
+ },
  "manifest_summary": {
   "versions": {
    "python": "3.10.12",
@@ -153,7 +187,7 @@
   },
   "errors": [],
   "started_utc": "2026-10-17T18:52:15Z",
-  "finished_utc": null
+  "finished_utc": "2026-10-17T23:14:49Z"
  },
  "vm": {
   "cpuPlatform": "Intel Cascade Lake",
