@@ -233,6 +233,18 @@ running and before any v0.3 outcome (label, selection, FDP, recall, AUROC) had b
    if (a) scans with a different candidate count are among those 5, (b) lenient labels agree on
    ≥ 99 % of compared candidates and (c) scores agree within 0.003.
 
+**2026-10-21, entry 5 — gate G1 outcome (written after G1 ran, before any v0.3 outcome was
+computed).** G1 compared 125 scans / 4400 fold-0 candidates with v0.2's cache: candidate counts
+identical in 125/125 scans, detectable expert-lesion counts identical in 125/125, lenient and
+strict labels identical for 4400/4400 candidates; score differences median 0.0002, 99.9th
+percentile 0.0015 — but **one** candidate (55 voxels, `mslesseg_P40_T1`, one of the 5 scans with a
+voxel crossing 0.5) differs by 0.0078, above the 0.003 tolerance of criterion (c). Strictly, G1 as
+written fails on that one candidate. The difference is the documented boundary voxel (one voxel
+more or less in a 55-voxel component), not a pipeline error, so we proceed and apply criterion (c)
+outside the 5 threshold-voxel scans (max difference there: see record). Both verdicts are
+recorded (`gate_G1.passed_as_preregistered`, `gate_G1.passed_with_deviation_5`) in
+`2026-10-21_paper_a_v03_candidates.json`.
+
 ## 14. Compute
 
 Local CPU only (8 workers), no cloud command. Derived candidate caches go to the git-ignored

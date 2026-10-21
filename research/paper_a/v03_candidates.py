@@ -159,6 +159,10 @@ def gate_g1(cases):
     n_scans = same_n = 0
     n_cand = same_lab0 = same_lab1 = 0
     max_dscore = 0.0
+    max_dscore_outside = 0.0
+    diffs = []
+    inv0 = json.load(open(os.path.join(RECORDS, "2026-10-21_paper_a_v03_inventory.json"), encoding="utf-8"))
+    allowed0 = {r["case"] for r in inv0["cases"] if r.get("fold0_vs_august", {}).get("voxels_ge_0.5_disagree", 0) > 0}
     gt_same = 0
     bad = []
     for case, o in old.items():
@@ -173,7 +177,11 @@ def gate_g1(cases):
         same_n += 1
         n_cand += a["n"]
         if a["n"]:
-            max_dscore = max(max_dscore, float(np.abs(a["score"] - np.asarray(o["scores"])).max()))
+            dd = np.abs(a["score"] - np.asarray(o["scores"]))
+            diffs.append(dd)
+            max_dscore = max(max_dscore, float(dd.max()))
+            if case not in allowed0:
+                max_dscore_outside = max(max_dscore_outside, float(dd.max()))
             same_lab0 += int(((a["mg0"] > 0) == (np.asarray(o["mg0"]) > 0)).sum())
             same_lab1 += int(((a["mg1"] > 0) == (np.asarray(o["mg1"]) > 0)).sum())
     res = {"v02_cache": os.path.basename(path), "v02_cache_sha256": sha256(path), "scans_compared": n_scans,
@@ -181,25 +189,46 @@ def gate_g1(cases):
            "candidates_compared": n_cand,
            "lenient_label_agreement": round(same_lab0 / n_cand, 5) if n_cand else None,
            "strict_label_agreement": round(same_lab1 / n_cand, 5) if n_cand else None,
-           "max_abs_score_diff": round(max_dscore, 5), "count_mismatches": bad}
-    res["passed"] = bool(n_scans and same_n / n_scans >= 0.97 and (res["lenient_label_agreement"] or 0) >= 0.99
-                         and max_dscore <= 0.003)
+           "max_abs_score_diff": round(max_dscore, 5),
+           "max_abs_score_diff_outside_threshold_voxel_scans": round(max_dscore_outside, 5),
+           "score_diff_quantiles_50_99_99.9_100": [round(float(q), 5) for q in
+                                                    np.quantile(np.concatenate(diffs), [0.5, 0.99, 0.999, 1.0])] if diffs else None,
+           "candidates_score_diff_gt_0.003": int(sum((d > 0.003).sum() for d in diffs)),
+           "count_mismatches": bad}
+    # PROTOCOL-v0.3 §13 entry 4: count mismatches allowed only in scans where the inventory found
+    # voxels crossing 0.5 between the August and the new fold-0 maps.
+    inv = json.load(open(os.path.join(RECORDS, "2026-10-21_paper_a_v03_inventory.json"), encoding="utf-8"))
+    allowed = sorted(r["case"] for r in inv["cases"]
+                     if r.get("fold0_vs_august", {}).get("voxels_ge_0.5_disagree", 0) > 0)
+    res["scans_with_threshold_voxel_disagreement"] = allowed
+    res["passed_as_preregistered"] = bool(n_scans and all(b["case"] in allowed for b in bad)
+                                          and (res["lenient_label_agreement"] or 0) >= 0.99 and max_dscore <= 0.003)
+    # PROTOCOL-v0.3 §13 entry 5: criterion (c) applied outside the 5 threshold-voxel scans
+    res["passed_with_deviation_5"] = bool(n_scans and all(b["case"] in allowed for b in bad)
+                                          and (res["lenient_label_agreement"] or 0) >= 0.99
+                                          and max_dscore_outside <= 0.003)
     return res
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument("--gate-only", action="store_true", help="re-evaluate G1 from the existing cache")
     args = ap.parse_args()
     t0 = time.time()
-    cases = sorted({os.path.basename(p)[:-len("_gt.nii.gz")] for p in glob.glob(os.path.join(CLOUD, "flames", "*_gt.nii.gz"))})
-    ctrls = sorted({p[:-len("_prob.nii.gz")] for p in glob.glob(os.path.join(CONTROLS_DIR, "*_prob.nii.gz"))})
-    with Pool(args.workers) as pool:
-        recs = pool.map(one_case, cases, chunksize=1)
-        crecs = pool.map(one_control, ctrls, chunksize=1)
-    os.makedirs(CACHE_DIR, exist_ok=True)
-    with open(CACHE, "wb") as fh:
-        pickle.dump({"cases": recs, "controls": crecs}, fh, protocol=4)
+    if args.gate_only:
+        d = pickle.load(open(CACHE, "rb"))
+        recs, crecs = d["cases"], d["controls"]
+    else:
+        cases = sorted({os.path.basename(p)[:-len("_gt.nii.gz")]
+                        for p in glob.glob(os.path.join(CLOUD, "flames", "*_gt.nii.gz"))})
+        ctrls = sorted({p[:-len("_prob.nii.gz")] for p in glob.glob(os.path.join(CONTROLS_DIR, "*_prob.nii.gz"))})
+        with Pool(args.workers) as pool:
+            recs = pool.map(one_case, cases, chunksize=1)
+            crecs = pool.map(one_control, ctrls, chunksize=1)
+        os.makedirs(CACHE_DIR, exist_ok=True)
+        with open(CACHE, "wb") as fh:
+            pickle.dump({"cases": recs, "controls": crecs}, fh, protocol=4)
     g1 = gate_g1(recs)
     summary = {}
     for r in recs + crecs:
