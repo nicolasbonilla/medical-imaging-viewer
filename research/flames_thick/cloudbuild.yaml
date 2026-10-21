@@ -1,0 +1,18 @@
+# Cloud Build for the FLAMeS-thick training image — project mstool-research ONLY.
+# Submitted from the minimal context written by make_build_context.py (RUNBOOK.md §1):
+#   gcloud builds submit <ctx> --project=mstool-research --region=us-central1 \
+#     --config=<ctx>/cloudbuild.yaml --substitutions=_TAG=<git-sha>
+steps:
+  - id: refuse-other-projects
+    name: gcr.io/cloud-builders/gcloud
+    entrypoint: bash
+    args: ["-c", "[ \"$PROJECT_ID\" = \"mstool-research\" ] || { echo \"refusing project $PROJECT_ID\"; exit 1; }"]
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args: ["build", "-t", "us-central1-docker.pkg.dev/mstool-research/mstool-research-images/flames-thick:${_TAG}", "."]
+images:
+  - us-central1-docker.pkg.dev/mstool-research/mstool-research-images/flames-thick:${_TAG}
+substitutions:
+  _TAG: manual
+# Default worker pool machine (e2-standard-2): inside Cloud Build's monthly free build-minutes.
+timeout: "3600s"

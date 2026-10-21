@@ -93,9 +93,13 @@ def fetch_bucket(tmp):
     # here (run ids are unique). controls/manifests holds the HD-BET step of a controls run whose
     # per-item timings live in the FLAMeS manifest (flames-ensemble/manifests/<run>.json), so it is
     # not merged.
+    # flames-thick: Vertex AI training jobs (flames-thick/{cost,manifests}) and the CPU evaluation VMs
+    # (flames-thick/eval/{cost,manifests}); research/flames_thick/vertex_entry.py, vm_flames_thick_eval.sh.
     sources = {"runs": ["runs"],
-               "flames-ensemble_cost": ["flames-ensemble/cost", "controls/cost", "lstai/cost"],
-               "flames-ensemble_manifests": ["flames-ensemble/manifests", "lstai/manifests"]}
+               "flames-ensemble_cost": ["flames-ensemble/cost", "controls/cost", "lstai/cost",
+                                        "flames-thick/cost", "flames-thick/eval/cost"],
+               "flames-ensemble_manifests": ["flames-ensemble/manifests", "lstai/manifests",
+                                             "flames-thick/manifests", "flames-thick/eval/manifests"]}
     for local, subs in sources.items():
         dst = os.path.join(tmp, local)
         os.makedirs(dst, exist_ok=True)
@@ -130,17 +134,24 @@ def cloud_rows(tmp, notes, price_cache):
                 or ("SPOT" if spot else "STANDARD"))
         spot = prov == "SPOT"
         zone = plan.get("zone") or hw.get("zone") or vm.get("zone", "").rsplit("/", 1)[-1] or n.get("zone", "us-central1-a")
-        wall = int(info.get("wall_seconds") or cost.get("seconds") or 0) or ""
-        key = (mt, zone.rsplit("-", 1)[0], spot, plan.get("gpu"))
-        if key not in price_cache:
-            price_cache[key] = pricing.price(mt, key[1], spot=spot, gpu=key[3], disk_gb=50)
-        p = price_cache[key]
+        vertex = plan.get("platform") == "vertex-ai-customjob" or info.get("platform") == "vertex-ai-customjob"
+        # Vertex AI jobs: billed time = sum over Spot attempts + start-up allowance (vertex_entry.py / budget.py)
+        wall = int(float((info.get("billed_seconds_estimate") if vertex else None) or info.get("wall_seconds")
+                         or cost.get("seconds") or 0)) or ""
         if plan.get("list_price", {}).get("usd_per_hour"):     # exact price snapshot taken at launch (real disk size)
             p = plan["list_price"]
+        else:
+            region = plan.get("region") or zone.rsplit("-", 1)[0]
+            key = (mt, region, spot, plan.get("gpu"))
+            if key not in price_cache:
+                price_cache[key] = pricing.price(mt, key[1], spot=spot, gpu=key[3], disk_gb=50)
+            p = price_cache[key]
         cases = man.get("cases", [])
         per = [c["seconds"] for c in cases if c.get("ok")]
-        status = n.get("status") or ("running" if not wall else
-                                     ("failed" if man.get("errors") or (man and not per) else "ok"))
+        run_status = info.get("status") or man.get("status")
+        status = n.get("status") or ("running" if not wall or run_status == "running" else
+                                     ("failed" if run_status == "failed" or man.get("errors") or (man and not per)
+                                      else ("stopped by cost guard" if run_status == "budget_stop" else "ok")))
         rows.append({
             "run_id": rid, "date_utc": (plan.get("created_utc") or st.get("boot") or man.get("started_utc") or "")[:10],
             "project": "mstool-research", "purpose": plan.get("purpose") or n.get("purpose", ""),
@@ -151,15 +162,19 @@ def cloud_rows(tmp, notes, price_cache):
             "provisioning": prov, "zone": zone, "start_utc": st.get("boot", plan.get("created_utc", "")),
             "end_utc": st.get("end", ""), "wall_seconds": wall,
             "vm_hours": round(wall / 3600, 4) if wall else "",
-            "setup_seconds": secs(st.get("boot"), st.get("inference_start")),
-            "compute_seconds": secs(st.get("inference_start"), st.get("inference_end")),
+            "setup_seconds": secs(st.get("boot"), st.get("inference_start") or st.get("train_start")),
+            "compute_seconds": secs(st.get("inference_start") or st.get("train_start"),
+                                    st.get("inference_end") or st.get("train_end")),
             "items_ok": len(per) if man else "", "items_failed": len(man.get("errors", [])) if man else "",
             "median_seconds_per_item": round(statistics.median(per), 1) if per else "",
             "usd_per_hour_list": p["usd_per_hour"],
             "cost_usd_list": round(wall / 3600 * p["usd_per_hour"], 4) if wall else "",
             "cost_usd_recorded": cost.get("cost_usd_compute_estimate") or cost.get("cost_usd", ""),
-            "price_basis": f"Cloud Billing catalog list price {p['date_utc'][:10]} (cores+RAM+boot disk)",
+            "price_basis": (f"Cloud Billing catalog list price {p['date_utc'][:10]} (cores+RAM+boot disk)"
+                            + (" + GPU, Compute Engine Spot SKUs (Vertex AI Spot training); time = Spot attempts "
+                               "+ 5 min start-up each" if vertex else "")),
             "notes": n.get("notes", ""),
+            "_kind": man.get("kind", "inference") if man else ("training" if vertex else "inference"),
         })
         rows[-1]["_record"] = {"plan": plan, "runinfo": info, "price": p, "cost_record": cost,
                                "manifest_summary": {k: man.get(k) for k in ("versions", "threads", "tta", "folds",
@@ -226,7 +241,8 @@ def bucket_storage():
 ES = {"not recorded": "no registrado", "ok": "correcta", "running": "en curso", "SPOT": "Spot (interrumpible)",
       "STANDARD": "estándar", "own hardware": "equipo propio", "no run time recorded": "sin tiempo registrado",
       "failed (pilot bugs fixed)": "fallida (errores del piloto corregidos)",
-      "failed (software environment)": "fallida (entorno de software)", "failed": "fallida"}
+      "failed (software environment)": "fallida (entorno de software)", "failed": "fallida",
+      "stopped by cost guard": "detenida por el tope de coste"}
 
 
 def es(v):
@@ -294,7 +310,16 @@ def summary(rows, usd_per_eur, ecb_day, storage_gb, built):
                  f"| {r['items_ok'] if r['items_ok'] != '' else '—'} / {r['items_failed'] if r['items_failed'] != '' else '—'} "
                  f"| {r['median_seconds_per_item'] or '—'} | {money(r['cost_usd_list'])} | {money(r['cost_usd_recorded'])} | {es(r['status'])} |")
     L.append("")
-    perf = [r for r in research if r["median_seconds_per_item"] not in ("", None)]
+    train = [r for r in research if r.get("_kind") == "training"]
+    if train:
+        L.append("## Entrenamiento en tarjeta gráfica (Vertex AI, Spot)\n")
+        L.append("| Corrida | Máquina | Tarjeta | Épocas | Mediana s por época | USD por época (lista) | Coste lista USD | Estado |\n|---|---|---|---|---|---|---|---|")
+        for r in train:
+            per = r["median_seconds_per_item"]
+            L.append(f"| {r['run_id']} | {r['machine_type']} | {r['gpu'] or '—'} | {r['items_ok'] or '—'} | {per or '—'} "
+                     f"| {(float(per) / 3600 * float(r['usd_per_hour_list'])) if per else 0:.4f} | {money(r['cost_usd_list'])} | {es(r['status'])} |")
+        L.append("")
+    perf = [r for r in research if r["median_seconds_per_item"] not in ("", None) and r.get("_kind") != "training"]
     if perf:
         L.append("## Rendimiento medido (FLAMeS, un modelo, un caso, sin TTA)\n")
         L.append("| Corrida | Máquina | Procesador | Mediana s por caso-modelo | USD por caso-modelo (lista) |\n|---|---|---|---|---|")
