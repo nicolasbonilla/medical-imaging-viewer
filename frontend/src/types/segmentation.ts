@@ -29,7 +29,37 @@ export type SegmentationStatus =
 export type SegmentationType =
   | 'binary'      // One label per segment (0 or 1)
   | 'labelmap'    // Multiple labels (ITK-SNAP style, 0-255)
-  | 'fractional'; // Probability values (AI predictions)
+  | 'fractional'  // Probability values (AI predictions)
+  | 'manual'      // Origin: drawn by a clinician (local-first flow)
+  | 'automatic';  // Origin: produced by an algorithm (server tools, in-browser FLAMeS draft)
+
+/**
+ * Provenance of an AI-produced segmentation (in-browser FLAMeS draft, CP-FLAMES-BROWSER-001,
+ * REQ-SAFE-030). Persisted with the segmentation so an AI draft can never be mistaken for manual
+ * work. `review_status` is 'unreviewed' when stored; the server forces it, whatever the client sends.
+ */
+export interface AIProvenance {
+  kind: 'ai_draft';
+  model_name: string;
+  model_version: string;
+  model_sha256: string;
+  fold: number;
+  source_checkpoint_sha256: string;
+  pipeline_version: string;
+  runtime: string;
+  generated_at: string;
+  lesion_count: number;
+  annotated_voxels: number;
+  review_status: 'unreviewed' | 'confirmed';
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
+  /** SHA-256 of the exact stored mask the review was confirmed for (server-set; reset on any mask change) */
+  reviewed_mask_sha256?: string | null;
+  /** RC-049: positive evidence that the input was a FLAIR */
+  sequence_evidence: 'header' | 'clinician';
+  /** server-set: the authenticated user who confirmed the sequence */
+  sequence_confirmed_by?: string | null;
+}
 
 /**
  * Overlay rendering mode.
@@ -88,6 +118,8 @@ export interface Segmentation {
   name: string;
   description?: string;
   segmentation_type: SegmentationType;
+  /** Present only for AI-produced segmentations (never on manual work). */
+  ai_provenance?: AIProvenance | null;
 
   // Status and progress
   status: SegmentationStatus;
@@ -370,6 +402,11 @@ export interface SegmentationMetadata {
   labels: LabelInfo[];
   description?: string;
   analysis_data?: SegmentationAnalysisData | null;
+  /** 'automatic' for algorithm output (server tools, in-browser AI draft); absent/'manual' otherwise. */
+  segmentation_type?: string | null;
+  validation_source?: string | null;
+  /** AI provenance (in-browser FLAMeS draft). Absent on manual segmentations. */
+  ai_provenance?: AIProvenance | null;
 }
 
 /**
@@ -398,6 +435,8 @@ export interface CreateSegmentationRequest {
   file_id: string;
   image_shape: ImageShape;
   description?: string;
+  /** Only for an AI draft explicitly saved by the clinician (REQ-SAFE-030). */
+  ai_provenance?: AIProvenance;
   labels?: LabelInfo[];
 }
 

@@ -1,0 +1,9 @@
+{
+ "backend": "torch",
+ "fold": 0,
+ "mirror": false,
+ "seconds": 124.4,
+ "threads": 8,
+ "flair": "P57_FLAIR_thick4mm.nii.gz",
+ "onnx": null
+}

@@ -19,6 +19,10 @@ export interface FeatureFlags {
 
   // Development/Debug
   DEBUG_PERFORMANCE: boolean;
+
+  // PROTOTYPE (IEC 62304 Class C change proposal, docs/research/flames-in-browser/):
+  // FLAMeS MS-lesion segmentation running inside the browser. OFF unless VITE_ENABLE_BROWSER_FLAMES=true.
+  BROWSER_FLAMES: boolean;
 }
 
 /**
@@ -49,6 +53,9 @@ export const FEATURES: FeatureFlags = {
 
   // Debug
   DEBUG_PERFORMANCE: getFeatureFlag('DEBUG_PERFORMANCE', false),
+
+  // Prototype — must stay OFF in production until the Class C change is approved
+  BROWSER_FLAMES: getFeatureFlag('ENABLE_BROWSER_FLAMES', false),
 };
 
 /**

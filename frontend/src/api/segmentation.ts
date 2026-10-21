@@ -4,6 +4,7 @@
 
 import { apiClient } from '@/services/apiClient';
 import type {
+  AIProvenance,
   CreateSegmentationRequest,
   SegmentationResponse,
   PaintStroke,
@@ -34,6 +35,18 @@ export const segmentationAPI = {
       request
     );
     return response.data;
+  },
+
+  /**
+   * Record the clinician's explicit review of a saved AI draft (REQ-SAFE-030). Radiologists only. Bound to the
+   * exact stored mask: `maskSha256` is the SHA-256 of the mask the clinician reviewed (409 if it differs).
+   */
+  async confirmAiReview(segmentationId: string, maskSha256: string): Promise<AIProvenance> {
+    const response = await apiClient.post<{ success: boolean; ai_provenance: AIProvenance }>(
+      `${API_PREFIX}/segmentation/${segmentationId}/ai-review/confirm`,
+      { mask_sha256: maskSha256 },
+    );
+    return response.data.ai_provenance;
   },
 
   /**

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Literal
 from datetime import datetime
 from enum import Enum
 
@@ -163,6 +163,37 @@ class LesionAnnotation(BaseModel):
     notes: Optional[str] = None
 
 
+class AIProvenance(BaseModel):
+    """Provenance of an AI-produced segmentation draft (in-browser FLAMeS, CP-FLAMES-BROWSER-001).
+
+    REQ-SAFE-030 / RC-047: an AI draft is stored only with this record so it can never be
+    mistaken for manual work. ``review_status`` is forced to "unreviewed" on creation (whatever
+    the client sends) and only the confirm-review route can set it to "confirmed".
+    """
+    kind: Literal["ai_draft"] = "ai_draft"
+    model_name: str = Field(..., min_length=1, max_length=100)
+    model_version: str = Field(..., min_length=1, max_length=200)
+    model_sha256: str = Field(..., pattern=r"^[0-9a-f]{64}$")
+    fold: int = Field(..., ge=0, le=4)
+    source_checkpoint_sha256: str = Field(..., pattern=r"^[0-9a-f]{64}$")
+    pipeline_version: str = Field(..., min_length=1, max_length=100)
+    runtime: str = Field(..., min_length=1, max_length=200)
+    generated_at: str = Field(..., min_length=1, max_length=40)
+    lesion_count: int = Field(..., ge=0)
+    annotated_voxels: int = Field(..., ge=0)
+    review_status: Literal["unreviewed", "confirmed"] = "unreviewed"
+    reviewed_by: Optional[str] = None
+    reviewed_at: Optional[str] = None
+    # RC-047: a confirmation is bound to the exact mask that was reviewed (SHA-256 of the stored
+    # (depth, height, width) uint8 mask). Any later mask change resets the review (server-side).
+    reviewed_mask_sha256: Optional[str] = Field(None, pattern=r"^[0-9a-f]{64}$")
+    # RC-049: positive evidence that the input was a FLAIR — the file header said so ("header"),
+    # or the clinician explicitly confirmed the sequence before the run ("clinician", recorded with
+    # the authenticated user by the server).
+    sequence_evidence: Literal["header", "clinician"]
+    sequence_confirmed_by: Optional[str] = None
+
+
 class SegmentationMetadata(BaseModel):
     """Metadata for a segmentation."""
     file_id: str = Field(..., description="Associated image file ID")
@@ -182,6 +213,14 @@ class SegmentationMetadata(BaseModel):
             "'zone_map_seg_id', 'analysis_mask_modified_at', "
             "'lesion_annotations', 'cvs_summary', 'prl_summary'."
         )
+    )
+    segmentation_type: Optional[str] = Field(
+        None,
+        description="'automatic' for algorithm output (server tools, in-browser AI draft); absent for manual work",
+    )
+    ai_provenance: Optional[AIProvenance] = Field(
+        None,
+        description="AI draft provenance (REQ-SAFE-030). Absent on manual segmentations.",
     )
 
 
@@ -234,6 +273,10 @@ class CreateSegmentationRequest(BaseModel):
     file_id: str
     image_shape: ImageShape = Field(..., description="Image dimensions (rows, columns, slices)")
     description: Optional[str] = None
+    ai_provenance: Optional[AIProvenance] = Field(
+        None,
+        description="Only for an AI draft explicitly saved by the clinician; stored as 'unreviewed'.",
+    )
     labels: List[LabelInfo] = Field(
         default_factory=lambda: [
             LabelInfo(id=0, name="Background", color="#000000", opacity=0.0, visible=False),

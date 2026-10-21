@@ -1,0 +1,66 @@
+{
+ "flair": "P57_FLAIR.nii.gz",
+ "dims": [
+  182,
+  218,
+  182
+ ],
+ "spacing": [
+  1,
+  1,
+  1
+ ],
+ "runtime": "onnxruntime-web 1.24.1 wasm, 8 threads, Node v24.16.0",
+ "seconds": 266.4,
+ "windows": 8,
+ "meanPatchSeconds": 32.5,
+ "resampledShape": [
+  142,
+  174,
+  200
+ ],
+ "bbox": {
+  "lo": [
+   18,
+   0,
+   19
+  ],
+  "hi": [
+   160,
+   157,
+   199
+  ],
+  "shape": [
+   142,
+   157,
+   180
+  ]
+ },
+ "browser": {
+  "voxels": 38892,
+  "lesions": 85,
+  "volumeMl": 38.892
+ },
+ "comparisons": {
+  "torch": {
+   "dice": 0.9993954439628006,
+   "differingVoxels": 47,
+   "refVoxels": 38851,
+   "refLesions": 85,
+   "refVolumeMl": 38.851
+  },
+  "onnx": {
+   "dice": 0.999459807073955,
+   "differingVoxels": 42,
+   "refVoxels": 38858,
+   "refLesions": 85,
+   "refVolumeMl": 38.858000000000004
+  }
+ },
+ "expert": {
+  "diceVsExpert": 0.7675762439807383,
+  "expertVoxels": 42098,
+  "expertLesions": 104,
+  "expertVolumeMl": 42.098
+ }
+}
