@@ -120,5 +120,29 @@
  },
  "lstai-full-a": {
   "purpose_es": "LST-AI v1.2.0: todo MSLesSeg (P49_T2 saltado) + 30 Ljubljana; controles cuando llegue el permiso de SibBMS"
+ },
+ "toolbench-pilot": {
+  "purpose_es": "Artículo F, piloto: MindGlide, WMH-SynthSeg y SAMSEG en 3 estudios (MS3SEG 001 y PediMS P1 T1 de cortes gruesos, MSLesSeg P10 T1)"
+ },
+ "toolbench-wmh": {
+  "purpose_es": "Artículo F: WMH-SynthSeg (FreeSurfer 8.2.0) en los 324 estudios"
+ },
+ "toolbench-mg-a": {
+  "purpose_es": "Artículo F: MindGlide 1.3.0, estudios 1 a 162 de 324"
+ },
+ "toolbench-mg-b": {
+  "purpose_es": "Artículo F: MindGlide 1.3.0, estudios 163 a 324"
+ },
+ "toolbench-samseg-a": {
+  "purpose_es": "Artículo F: SAMSEG con lesiones, bloque 1 de 3 (según el nivel decidido tras el piloto)"
+ },
+ "toolbench-samseg-b": {
+  "purpose_es": "Artículo F: SAMSEG con lesiones, bloque 2 de 3"
+ },
+ "toolbench-samseg-c": {
+  "purpose_es": "Artículo F: SAMSEG con lesiones, bloque 3 de 3"
+ },
+ "toolbench-mgraw": {
+  "purpose_es": "Artículo F, brazo secundario: MindGlide 1.3.0 con la FLAIR original (sin quitar el cráneo) en MS3SEG, Bagdad y PediMS (179 estudios)"
  }
 }

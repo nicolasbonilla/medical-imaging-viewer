@@ -73,6 +73,57 @@ def to_grid(img, ref_img, order=1):
                  "src_shape": list(img.shape[:3]), "src_affine": np.round(img.affine, 6).tolist()}
 
 
+def footprint_to_grid(data, src_affine, ref_shape, ref_affine, max_sub=16):
+    """Mean of `data` over the FOOTPRINT of every reference voxel (partial-volume fraction).
+
+    Plain trilinear resampling samples one point per reference voxel; when the reference voxel is
+    much larger than the source voxel (1 mm tool output onto a 6-8 mm FLAIR slice) that point
+    misses most of the slice. Here every reference voxel is split into n0 x n1 x n2 sub-points
+    (n_i = ceil of the voxel edge length measured in source voxels, capped at max_sub), the source
+    is sampled trilinearly at each sub-point and the samples are averaged. A binary mask becomes the
+    lesion fraction of each reference voxel; a probability map becomes its footprint mean. With
+    n = (1, 1, 1) this is exactly resample_to_grid. Returns (array float32, record).
+    """
+    from scipy.ndimage import affine_transform
+    m = np.linalg.inv(np.asarray(src_affine, float)) @ np.asarray(ref_affine, float)
+    m3, t = m[:3, :3], m[:3, 3]
+    n = [int(min(max_sub, max(1, np.ceil(np.linalg.norm(m3[:, i]) - 1e-6)))) for i in range(3)]
+    src = np.asarray(data, np.float32)
+    out = np.zeros(tuple(ref_shape[:3]), np.float32)
+    offs = [((np.arange(k) + 0.5) / k - 0.5) for k in n]
+    for o0 in offs[0]:
+        for o1 in offs[1]:
+            for o2 in offs[2]:
+                o = np.array([o0, o1, o2])
+                out += affine_transform(src, m3, offset=t + m3 @ o, output_shape=out.shape,
+                                        order=1, mode="constant", cval=0.0)
+    out /= float(np.prod(n))
+    return out, {"kind": "footprint-mean" if np.prod(n) > 1 else "trilinear", "subsamples": n,
+                 "ref_vox_to_src_vox": np.round(m, 8).tolist()}
+
+
+def to_grid_footprint(img, ref_img, binary=False):
+    """Tool output on the reference grid: identity when the grids match, else footprint mean.
+
+    binary=True: `img` is a 0/1 mask; the result is (fraction >= 0.5) as uint8 (majority of the
+    reference voxel volume), and the fraction itself is returned in the record as summary stats.
+    """
+    data = np.asarray(img.get_fdata(dtype=np.float32))
+    if data.ndim == 4 and data.shape[3] == 1:
+        data = data[..., 0]
+    if same_grid(img.shape, img.affine, ref_img.shape, ref_img.affine):
+        out, rec = data, {"kind": "identity", "max_affine_diff": float(np.abs(img.affine - ref_img.affine).max())}
+    else:
+        out, rec = footprint_to_grid(data, img.affine, ref_img.shape, ref_img.affine)
+        rec.update({"src_shape": list(img.shape[:3]), "src_affine": np.round(img.affine, 6).tolist()})
+    if binary:
+        frac = out
+        out = (frac >= 0.5 - 1e-6).astype(np.uint8)
+        rec["voxels_fraction_gt_0"] = int((frac > 1e-6).sum())
+        rec["voxels_after_majority"] = int(out.sum())
+    return out, rec
+
+
 def save_prob(arr, ref_img, out_path, dtype="uint8"):
     """Probability map in [0, 1] saved on the reference grid (affine + header of ref_img).
 

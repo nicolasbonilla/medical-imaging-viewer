@@ -807,6 +807,46 @@ def fetch_pedims(workdir: str, ids=None, flair_kind: str = "brain_FLAIR.nii.gz")
     return cases
 
 
+def fetch_pedims_raw(workdir: str, ids=None) -> Dict[str, str]:
+    """PediMS RAW FLAIR (``raw/defaced_FLAIR.nii.gz``: defaced, skull present), byte-identical to Figshare.
+
+    Same scans and ids as ``fetch_pedims`` (pedims_P1_T1 ...). The raw FLAIR shares shape and affine with
+    ``processed/brain_FLAIR.nii.gz`` (header check of all 28, docs/research/cohorts-extra.md 3.3); the paper F
+    driver re-checks every grid against the FLAMeS input before use. Figshare's computed MD5 is verified.
+    Returns ``{case_id: path}``.
+    """
+    import hashlib
+    out = os.path.join(workdir, "pedims_raw")
+    os.makedirs(out, exist_ok=True)
+    want = _norm_ids(ids, lambda s: s.upper().replace("PEDIMS_", ""))
+    art = _figshare_files(PEDIMS_ARTICLE)
+    fs = art.get("folder_structure") or {}
+    got: Dict[str, str] = {}
+    for f in art["files"]:
+        m = re.fullmatch(r"PediMS/(P\d+)/(T\d+)/raw", fs.get(str(f["id"]), ""))
+        if not m or f["name"] != "defaced_FLAIR.nii.gz":
+            continue
+        tag = f"{m.group(1)}_{m.group(2)}"
+        if want is not None and tag not in want:
+            continue
+        dest = os.path.join(out, f"pedims_{tag}_flair_raw.nii.gz")
+        if not os.path.exists(dest):
+            _download(f["download_url"], dest)
+        md5 = f.get("computed_md5") or f.get("supplied_md5")
+        if md5:
+            h = hashlib.md5()
+            with open(dest, "rb") as fh:
+                for b in iter(lambda: fh.read(1 << 20), b""):
+                    h.update(b)
+            if h.hexdigest() != md5:
+                os.remove(dest)
+                _log(f"pedims_{tag}: raw FLAIR MD5 mismatch -> skipped")
+                continue
+        got[f"pedims_{tag}"] = dest
+    _log(f"PediMS raw FLAIR: {len(got)} files")
+    return dict(sorted(got.items()))
+
+
 FETCHERS: Dict[str, Callable[..., List[Case]]] = {
     "ms3seg": fetch_ms3seg,
     "muslim": fetch_muslim,

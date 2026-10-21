@@ -40,6 +40,16 @@ def build_raw(out, cohorts):
     return 0 if cases else 1
 
 
+def pedims_raw(out):
+    """PediMS raw (defaced, not skull-stripped) FLAIR for the paper F raw-input arm, cached as one
+    tarball: OUT/pedims_raw/*.nii.gz + OUT/cases_pedims_raw.json ({case: path relative to OUT})."""
+    got = cx.fetch_pedims_raw(out)
+    json.dump({c: os.path.relpath(p, out).replace(os.sep, "/") for c, p in got.items()},
+              open(os.path.join(out, "cases_pedims_raw.json"), "w"), indent=1)
+    print("PEDIMS RAW", len(got), flush=True)
+    return 0 if got else 1
+
+
 def gs_cp(src, dst):
     return subprocess.run(["gcloud", "storage", "cp", src, dst, "--quiet"], capture_output=True).returncode == 0
 
@@ -90,9 +100,13 @@ def main():
     s.add_argument("--bucket-prefix", required=True)
     s.add_argument("--out", required=True)
     s.add_argument("--result", required=True)
+    r = sub.add_parser("pedims-raw")
+    r.add_argument("--out", required=True)
     a = ap.parse_args()
     if a.cmd == "build-raw":
         return build_raw(a.out, a.cohorts)
+    if a.cmd == "pedims-raw":
+        return pedims_raw(a.out)
     return strip(a.raw, a.cases, a.bucket_prefix, a.out, a.result)
 
 
