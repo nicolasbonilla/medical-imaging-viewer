@@ -1,0 +1,645 @@
+{
+  "$comment": [
+    "RQ2 coding sheet (PROTOCOL.md §4-§6). One entry per verification-failure episode.",
+    "Coder: the AI agent under study (Claude Opus 5.5), 2026-10-21. A second, human coder is required before submission.",
+    "Every quote is checked verbatim (whitespace-normalised) against the cited file at the cited ref, or against the commit message when 'commit_message' is true: python -m pytest research/paper_h/tests -q",
+    "class: P prose/self-attested; N never executed or could never fail; S wrong locus; I environment could not observe; M negative control invalid or blind; R false statement in an agent-drafted record; C clinical/labelling content not traced to source.",
+    "channel: AR adversarial review by separate agent sessions; BP behaviour probe; SA systematic sweep (static analysis or route enumeration); CI continuous-integration run; IM noticed while implementing a related action; EX external research; OW the human owner; SC self-check within the authoring session (SC added post hoc, see RESULTS.md).",
+    "introduced.commit: the commit that introduced the defective evidence or claim (null when it never reached a commit). detected.commit: the first commit that records the failure.",
+    "stage (added post hoc, checked against git ancestry by failures.stage_problems): 'escaped' = the defective evidence landed on main before the failure was recorded; 'contained' = caught before it landed (or it never reached a commit)."
+  ],
+  "episodes": [
+    {
+      "id": "E01",
+      "title": "Risk-control verification summary recorded 21/22 controls VERIFIED and 'Failed 0'; adversarial re-verification found 4/22 verified and 12 overstated or not implemented",
+      "capa": ["CAPA-001"],
+      "class": "P",
+      "secondary_classes": ["S"],
+      "channel": "AR",
+      "channel_note": "Re-verification by four auditors 'briefed to falsify'; the record itself states it was produced by the same process it criticises (not independent).",
+      "stage": "escaped",
+      "introduced": {"commit": "b6be6e7", "what": "RCV-SUMMARY-2026-04-12 created"},
+      "detected": {"commit": "213efdf", "what": "RCV-SUMMARY-2026-07-18; 2026-04-12 record withdrawn in place"},
+      "items": 12,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "main", "path": "docs/iec62304/records/risk_verification/RCV-SUMMARY_2026-07-18.md", "quote": "| Verified | 21 / 22 (95.5 %) | **4 / 22 (18 %)** |"},
+        {"ref": "main", "path": "docs/iec62304/records/risk_verification/RCV-SUMMARY_2026-07-18.md", "quote": "conducted by four independent auditors briefed to *falsify* each claim"},
+        {"ref": "main", "path": "docs/iec62304/records/risk_verification/RCV-SUMMARY_2026-07-18.md", "quote": "It was produced by the same process it criticises"},
+        {"ref": "main", "path": "docs/iec62304/records/risk_verification/RCV-SUMMARY_2026-04-12.md", "quote": "**Verified By**: Development Team (code inspection)"}
+      ]
+    },
+    {
+      "id": "E02",
+      "title": "Security test suite never executed: every module imported a module that has never existed, so not one assertion was ever evaluated",
+      "capa": ["CAPA-003"],
+      "class": "N",
+      "secondary_classes": [],
+      "channel": "IM",
+      "channel_note": "Found while adding tests/security/ to CI under CAPA-001 PA-2.",
+      "stage": "escaped",
+      "introduced": {"commit": "d62cc37", "what": "initial commit (tests/security/ added)"},
+      "detected": {"commit": "80da053", "what": "CAPA-003 opened"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-003_Security_Test_Suite_Never_Executed.md", "quote": "Every one of these modules therefore failed at **collection**."},
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-003_Security_Test_Suite_Never_Executed.md", "quote": "Not a single assertion in `tests/security/` has ever been evaluated."},
+        {"ref": "80da053", "commit_message": true, "quote": "63 failed, 9 passed, 43 errors."}
+      ]
+    },
+    {
+      "id": "E03",
+      "title": "CI syntax check could never fail (find -exec does not propagate the exit code)",
+      "capa": ["CAPA-001"],
+      "class": "N",
+      "secondary_classes": [],
+      "channel": "IM",
+      "channel_note": "Found while making the pipeline able to contradict the record (CAPA-001 PA-2).",
+      "stage": "escaped",
+      "introduced": {"commit": "b8a7065", "what": "CI pipeline created with the find-based syntax check"},
+      "detected": {"commit": "80da053", "what": "check rewritten; failure demonstrated on a malformed file"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "80da053", "commit_message": true, "quote": "syntax-check COULD NEVER FAIL"},
+        {"ref": "80da053", "commit_message": true, "quote": "find does not propagate the exit code of -exec."}
+      ]
+    },
+    {
+      "id": "E04",
+      "title": "Frontend CI ran only src/services and src/utils, so every component test, including risk-control tests, was invisible to CI",
+      "capa": ["CAPA-004"],
+      "class": "N",
+      "secondary_classes": [],
+      "channel": "IM",
+      "channel_note": "Found while adding the RC-016/RC-023 viewport tests (CAPA-004 CA-4.2).",
+      "stage": "escaped",
+      "introduced": {"commit": "bc79f1b", "what": "frontend CI step restricted to two directories"},
+      "detected": {"commit": "6947213", "what": "CI step runs the whole suite; PA-4.3 opened"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-004_Laterality_And_Patient_Identity_In_Viewport.md", "quote": "A test outside the runner's path filter is documentation, not verification."},
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-004_Laterality_And_Patient_Identity_In_Viewport.md", "quote": "third occurrence of one pattern in this audit"}
+      ]
+    },
+    {
+      "id": "E05",
+      "title": "First RC-006 negative control silently not applied (patch did not match); the green suite would have been recorded as confirmation",
+      "capa": ["CAPA-001"],
+      "class": "M",
+      "secondary_classes": [],
+      "channel": "SC",
+      "channel_note": "Caught because the sabotage was re-checked (grep for the marker) before the result was trusted.",
+      "stage": "contained",
+      "introduced": null,
+      "detected": {"commit": "ccc8d70", "what": "CAPA-001 record created with §5.3"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-001_Risk_Control_Verification_Integrity.md", "quote": "first attempted with a string-substitution patch that **silently did not match**."},
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-001_Risk_Control_Verification_Integrity.md", "quote": "A negative control that reports \"all passed\" is an inconclusive result, never a passing one."}
+      ]
+    },
+    {
+      "id": "E06",
+      "title": "Shell-based minimum-test-count gate reported 0 while 28 tests were collected; removed before commit",
+      "capa": ["CAPA-001"],
+      "class": "M",
+      "secondary_classes": ["N"],
+      "channel": "SC",
+      "channel_note": "Written and removed within the same session before the commit.",
+      "stage": "contained",
+      "introduced": null,
+      "detected": {"commit": "80da053", "what": "reported in the commit message"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "80da053", "commit_message": true, "quote": "reported 0 while 28 tests were in fact collected under pytest 9."}
+      ]
+    },
+    {
+      "id": "E07",
+      "title": "RC-024 (spacing never assumed) verified by a unit test whose mock carried spacing and by a route check that passed on source text, while all four route sites returned HTTP 500",
+      "capa": ["CAPA-001", "CAPA-006"],
+      "class": "I",
+      "secondary_classes": ["S"],
+      "channel": "BP",
+      "channel_note": "Live requests to the deployed service returned 500 (PR #23); the full extent (all four sites) was recorded under CAPA-006.",
+      "stage": "escaped",
+      "introduced": {"commit": "e39cdaa", "what": "CAPA-001 CA-5 change and its tests"},
+      "detected": {"commit": "8006e7b", "what": "PR #23 fix for lesion-analysis/dis-assessment/compare; region routes recorded under CAPA-006 (4347d73)"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "8006e7b", "commit_message": true, "quote": "The RC-024 unit test used a mock object WITH extra_fields, so it never exercised the real metadata"},
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-001_Risk_Control_Verification_Integrity.md", "quote": "the RC-024 route check was source-level, and every route file contained the string"}
+      ]
+    },
+    {
+      "id": "E08",
+      "title": "CAPA-001 recorded that the spacing change 'refuses with HTTP 422'; every call actually returned HTTP 500 (erratum 72 days later)",
+      "capa": ["CAPA-001", "CAPA-006"],
+      "class": "R",
+      "secondary_classes": [],
+      "channel": "BP",
+      "channel_note": "The behaviour was observed by the live requests of E07 (2026-08-14); the record was corrected on 2026-09-28.",
+      "stage": "escaped",
+      "introduced": {"commit": "e39cdaa", "what": "CA-5 status written into CAPA-001"},
+      "detected": {"commit": "4347d73", "what": "CAPA-001 §8 erratum"},
+      "items": 1,
+      "overlaps": ["E07"],
+      "evidence": [
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-001_Risk_Control_Verification_Integrity.md", "quote": "refuses with HTTP 422 rather than assuming"},
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-001_Risk_Control_Verification_Integrity.md", "quote": "Every call therefore raised, and the generic handlers turned it into **HTTP 500**, not 422"}
+      ]
+    },
+    {
+      "id": "E09",
+      "title": "The corrective re-verification itself was incomplete: RC-010 recorded 'deliberately absent' after examining only the geometric path; two other paths emitted uncalibrated confidences",
+      "capa": ["CAPA-001"],
+      "class": "S",
+      "secondary_classes": ["R"],
+      "channel": "AR",
+      "channel_note": "Audit #8 (HAZ-005) of the region classifier.",
+      "stage": "escaped",
+      "introduced": {"commit": "213efdf", "what": "RCV-SUMMARY-2026-07-18 RC-010 row"},
+      "detected": {"commit": "bcc8761", "what": "RC-010 amended (PR #42)"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-001_Risk_Control_Verification_Integrity.md", "quote": "examined **only the geometric path**."},
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-001_Risk_Control_Verification_Integrity.md", "quote": "on the other two the code, too, presented fabricated certainty."}
+      ]
+    },
+    {
+      "id": "E10",
+      "title": "RC-029 (segmentation object authorization) verified by a wiring test that read one source file; a refactor had already moved ten routes elsewhere, which kept authentication only",
+      "capa": ["CAPA-006", "CAPA-007"],
+      "class": "S",
+      "secondary_classes": [],
+      "channel": "AR",
+      "channel_note": "Region routes found during CAPA-006; the eight analysis routes raised as 'BLOCKER (deploy)' by the CAPA-006 review round 2 (CAPA-007).",
+      "stage": "escaped",
+      "introduced": {"commit": "cba3962", "what": "RC-029 enforcement and its wiring test"},
+      "detected": {"commit": "4347d73", "what": "CAPA-006 Finding 10; full extent CAPA-007 (b6a3edd)"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-007_Analysis_Routes_Without_Object_Authorization.md", "quote": "by a test that read **only `segmentation.py`**, so the moved routes kept authentication only."},
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-007_Analysis_Routes_Without_Object_Authorization.md", "quote": "Verification checked **a file instead of the system**."},
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-007_Analysis_Routes_Without_Object_Authorization.md", "quote": "CAPA-006 review round 2 (code reviewer, finding \"BLOCKER (deploy)\")"}
+      ]
+    },
+    {
+      "id": "E11",
+      "title": "MNI-space gate too weak (accepted native 2D FLAIR): first version of the CAPA-006 fix copied a gate that had been live in production since 2026-08-22",
+      "capa": ["CAPA-006"],
+      "class": "I",
+      "secondary_classes": [],
+      "channel": "AR",
+      "channel_note": "Code review before merge of PR #43.",
+      "stage": "escaped",
+      "introduced": {"commit": "f208149", "what": "_looks_mni in the longitudinal compare route"},
+      "detected": {"commit": "4347d73", "what": "CAPA-006 Findings 8 and 9"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-006_MAGNIMS_Labelling_And_Atlas_Space.md", "quote": "It accepted native axial 2D FLAIR"},
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-006_MAGNIMS_Labelling_And_Atlas_Space.md", "quote": "The code review found it before merge."},
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-006_MAGNIMS_Labelling_And_Atlas_Space.md", "quote": "where it has been live in production ever since"}
+      ]
+    },
+    {
+      "id": "E12",
+      "title": "Negative-control run found the explicit-parcellation identity check undetected (another check refused the fixture first); tests added and the run repeated",
+      "capa": ["CAPA-006"],
+      "class": "M",
+      "secondary_classes": [],
+      "channel": "SC",
+      "channel_note": "The authoring session's own negative-control run.",
+      "stage": "contained",
+      "introduced": null,
+      "detected": {"commit": "aad36c9", "what": "CAPA-006 §16 (review round 2 revision)"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-006_MAGNIMS_Labelling_And_Atlas_Space.md", "quote": "A first run of the final series found that removing the identity check of an explicitly supplied parcellation went undetected"}
+      ]
+    },
+    {
+      "id": "E13",
+      "title": "Route tests silently depended on cloud credentials present on the developer machine; CI (no credentials) failed",
+      "capa": ["CAPA-006"],
+      "class": "I",
+      "secondary_classes": [],
+      "channel": "CI",
+      "channel_note": "First CI run on PR #43 failed two jobs.",
+      "stage": "contained",
+      "introduced": {"commit": "aad36c9", "what": "generate-zone-map route tests built the real patient service"},
+      "detected": {"commit": "004f7f5", "what": "route fixture substitutes the authorization services"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-006_MAGNIMS_Labelling_And_Atlas_Space.md", "quote": "CI has none; the developer machine had them, which hid the dependency locally."}
+      ]
+    },
+    {
+      "id": "E14",
+      "title": "Agent-drafted CAPA-006 record contained false or overstated statements (history, commit, path, quotation, attributions, outage count, verification scope); the first draft omitted Findings 5-11",
+      "capa": ["CAPA-006"],
+      "class": "R",
+      "secondary_classes": [],
+      "channel": "AR",
+      "channel_note": "Five adversarial reviews in two rounds before first issue.",
+      "stage": "contained",
+      "introduced": null,
+      "detected": {"commit": "4347d73", "what": "CAPA-006 §19 'Revision of this record'"},
+      "items": 10,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-006_MAGNIMS_Labelling_And_Atlas_Space.md", "quote": "Independent reviews found the following false or overstated statements in earlier drafts, all corrected above:"},
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-006_MAGNIMS_Labelling_And_Atlas_Space.md", "quote": "The first draft also omitted Findings 5–11."},
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-006_MAGNIMS_Labelling_And_Atlas_Space.md", "quote": "\"Every sub-control was mutated\": the per-axis FOV condition was not"}
+      ]
+    },
+    {
+      "id": "E15",
+      "title": "Issued labelling (IFU, AIA, GSPR, CER) stated 3/4/3 mm MAGNIMS thresholds the code had not applied for six weeks, a misdescribed cascade and unevidenced validation/accuracy claims",
+      "capa": ["CAPA-006"],
+      "class": "C",
+      "secondary_classes": ["R"],
+      "channel": "AR",
+      "channel_note": "Internal 'world-vanguard gap review', finding #3.",
+      "stage": "escaped",
+      "introduced": {"commit": "9ac536d", "what": "IFU-001, AIA-001, GSPR-001, CER-001 issued"},
+      "detected": {"commit": "4347d73", "what": "CAPA-006 Finding 1; labelling bound to code (PA-6.1)"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-006_MAGNIMS_Labelling_And_Atlas_Space.md", "quote": "IFU, AIA and GSPR were **issued stating 3 / 4 / 3 mm** thresholds"},
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-006_MAGNIMS_Labelling_And_Atlas_Space.md", "quote": "Labelling authored and issued without verification against design outputs"}
+      ]
+    },
+    {
+      "id": "E16",
+      "title": "Normative volumetry table with no provenance (recorded as VERIFIED percentile control), and the feature path never executed",
+      "capa": ["CAPA-005"],
+      "class": "C",
+      "secondary_classes": ["P"],
+      "channel": "AR",
+      "channel_note": "Same adversarial re-verification as E01 (RC-004/RC-005 rows).",
+      "stage": "escaped",
+      "introduced": {"commit": "236d80e", "what": "brain volumetry service with the hardcoded table"},
+      "detected": {"commit": "213efdf", "what": "CAPA-005 opened"},
+      "items": 1,
+      "overlaps": ["E01"],
+      "evidence": [
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-005_Unsourced_Normative_Reference_Data.md", "quote": "That table has no traceable provenance."},
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-005_Unsourced_Normative_Reference_Data.md", "quote": "**never executes** in the product as wired."}
+      ]
+    },
+    {
+      "id": "E17",
+      "title": "A '40 % CVS rule' (an earlier research proposal) presented in API, UI and assistant as McDonald 2024",
+      "capa": ["CAPA-008"],
+      "class": "C",
+      "secondary_classes": [],
+      "channel": "EX",
+      "channel_note": "Publication-strategy research and its source-verification round.",
+      "stage": "escaped",
+      "introduced": {"commit": "a637cdf", "what": "McDonald 2024 audit + CVS/PRL biomarkers"},
+      "detected": {"commit": "4d7b9a0", "what": "CAPA-008"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-008_AI_Assistant_Layer_And_Clinical_Rule_Fidelity.md", "quote": "A \"40 % CVS rule\" was presented as McDonald 2024"},
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-008_AI_Assistant_Layer_And_Clinical_Rule_Fidelity.md", "quote": "were written without reading the source text, and then attributed to it."}
+      ]
+    },
+    {
+      "id": "E18",
+      "title": "Longitudinal activity signal required >=2 new/enlarging lesions and attributed this to MAGNIMS (MAGNIMS 2021: one suffices)",
+      "capa": ["CAPA-008"],
+      "class": "C",
+      "secondary_classes": [],
+      "channel": "EX",
+      "channel_note": "Publication-strategy research and its source-verification round.",
+      "stage": "escaped",
+      "introduced": {"commit": "8ffa4fd", "what": "MAGNIMS clinical candidate rules"},
+      "detected": {"commit": "4d7b9a0", "what": "CAPA-008 CA-8.10"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-008_AI_Assistant_Layer_And_Clinical_Rule_Fidelity.md", "quote": "required >=2 new/enlarging lesions and the code and UI attributed this to MAGNIMS"}
+      ]
+    },
+    {
+      "id": "E19",
+      "title": "RC-026 patient check never executed (plain-def FastAPI dependency returned an un-awaited coroutine) although recorded VERIFIED with 7 negative-control vectors",
+      "capa": ["CAPA-009"],
+      "class": "S",
+      "secondary_classes": ["M"],
+      "channel": "BP",
+      "channel_note": "In-process request probe: authorization ran 0 times before the fix, once after.",
+      "stage": "escaped",
+      "introduced": {"commit": "7567411", "what": "RC-026 HTTP guard and its tests"},
+      "detected": {"commit": "bbbaa6d", "what": "CAPA-009 Finding 1"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-009_Object_Authorization_Across_All_Routers.md", "quote": "No test sent a request, so nothing could observe that the dependency was inert."},
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-009_Object_Authorization_Across_All_Routers.md", "quote": "the authorization function ran **0 times**"},
+        {"ref": "main", "path": "docs/iec62304/records/risk_verification/rc_test_manifest.json", "quote": "decision layer — 4 vectors (7/2/1/7 failed); enforcement layer — 3 vectors"}
+      ]
+    },
+    {
+      "id": "E20",
+      "title": "Record stated that every data-returning route was object-authorized; enumeration of mounted routes found about 40 that authorized no object",
+      "capa": ["CAPA-002", "CAPA-009"],
+      "class": "R",
+      "secondary_classes": ["S"],
+      "channel": "SA",
+      "channel_note": "Enumeration of every mounted route that references an object (CAPA-007 PA-7.2), plus request tests.",
+      "stage": "escaped",
+      "introduced": {"commit": "cba3962", "what": "CAPA-002 §12.1 coverage statement"},
+      "detected": {"commit": "bbbaa6d", "what": "CAPA-009 Finding 2"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-002_Broken_Object_Level_Authorization.md", "quote": "Every data-returning route now resolves the requested object to an owning patient"},
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-009_Object_Authorization_Across_All_Routers.md", "quote": "The CAPA-007 route enumeration covered `/segmentation` only."},
+        {"ref": "main", "path": "docs/iec62304/records/capa_register.md", "quote": "~40 more routes authorized no object"}
+      ]
+    },
+    {
+      "id": "E21",
+      "title": "Authorization helpers raised outside any handler when the datastore could not be built; hidden locally, first CI run failed 3 FHIR tests",
+      "capa": ["CAPA-009"],
+      "class": "I",
+      "secondary_classes": [],
+      "channel": "CI",
+      "channel_note": "Integration tests as run in CI, without cloud credentials.",
+      "stage": "contained",
+      "introduced": {"commit": "bbbaa6d", "what": "CAPA-009 helpers"},
+      "detected": {"commit": "521bf5d", "what": "deny with 404 when the datastore cannot be built"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-009_Object_Authorization_Across_All_Routers.md", "quote": "the first CI run failed 3 FHIR tests because building the datastore service raised outside any handler."}
+      ]
+    },
+    {
+      "id": "E22",
+      "title": "'Laterality not labelled' caveat rendered off-screen in 2D at every window size; its tests ran in jsdom, which has no layout engine",
+      "capa": ["CAPA-010"],
+      "class": "I",
+      "secondary_classes": [],
+      "channel": "BP",
+      "channel_note": "Reported by the viewer-redesign branch, reproduced on main with a real headless browser (visible fraction 0.00).",
+      "stage": "escaped",
+      "introduced": {"commit": "6947213", "what": "CAPA-004 CA-4.2 overlay and its jsdom tests"},
+      "detected": {"commit": "c15a959", "what": "CAPA-010 Finding 4"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "capa010", "path": "docs/iec62304/records/capa/CAPA-010_Viewer_Identity_Laterality_Markers_And_Measurements.md", "quote": "CAPA-004's tests rendered the overlay in jsdom, which has no layout engine: they could not observe that the caveat was outside the visible page."},
+        {"ref": "capa010", "path": "docs/iec62304/records/capa/CAPA-010_Viewer_Identity_Laterality_Markers_And_Measurements.md", "quote": "caveat visible fraction **0.00** at 1366x768, 1600x900 and 1920x1080"}
+      ]
+    },
+    {
+      "id": "E23",
+      "title": "RC-023 ('no laterality glyphs') held in 2D only: the 3D view drew an orientation cube and a library's default slice letters",
+      "capa": ["CAPA-010"],
+      "class": "S",
+      "secondary_classes": [],
+      "channel": "BP",
+      "channel_note": "Real-browser probe and tests that feed the effective options to the real rendering library.",
+      "stage": "escaped",
+      "introduced": {"commit": "6947213", "what": "RC-023 viewport claim and 2D tests"},
+      "detected": {"commit": "c15a959", "what": "CAPA-010 Finding 5"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "capa010", "path": "docs/iec62304/records/capa/CAPA-010_Viewer_Identity_Laterality_Markers_And_Measurements.md", "quote": "That held in 2D only"},
+        {"ref": "capa010", "path": "docs/iec62304/records/capa/CAPA-010_Viewer_Identity_Laterality_Markers_And_Measurements.md", "quote": "niivue's default `isOrientationTextVisible` is `true` and the viewer never switched it off"}
+      ]
+    },
+    {
+      "id": "E24",
+      "title": "RC-024 ('spacing required for every quantitative measurement') did not cover the 2D measurement tools, which label values in mm assuming 1 mm when spacing is absent",
+      "capa": ["CAPA-010"],
+      "class": "S",
+      "secondary_classes": [],
+      "channel": "BP",
+      "channel_note": "Found while reproducing the ruler defect (CAPA-010 CA-10.7, recorded, not fixed).",
+      "stage": "escaped",
+      "introduced": {"commit": "e39cdaa", "what": "RC-024 scope statement"},
+      "detected": {"commit": "c15a959", "what": "CAPA-010 CA-10.7"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "main", "path": "docs/iec62304/records/risk_verification/rc_test_manifest.json", "quote": "Voxel spacing is required for every quantitative measurement; never assumed"},
+        {"ref": "capa010", "path": "docs/iec62304/records/capa/CAPA-010_Viewer_Identity_Laterality_Markers_And_Measurements.md", "quote": "the 2D measurement tools still label values in \"mm\" assuming 1 mm (contrary to RC-024's principle)"}
+      ]
+    },
+    {
+      "id": "E25",
+      "title": "CAPA-010 negative control O4 first looked at the emptied panel instead of the reassigned one",
+      "capa": ["CAPA-010"],
+      "class": "M",
+      "secondary_classes": [],
+      "channel": "SC",
+      "channel_note": "The authoring session's first negative-control run.",
+      "stage": "contained",
+      "introduced": null,
+      "detected": {"commit": "c15a959", "what": "CAPA-010 §5.1"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "capa010", "path": "docs/iec62304/records/capa/CAPA-010_Viewer_Identity_Laterality_Markers_And_Measurements.md", "quote": "detected after the test was corrected: a first run looked at the emptied panel only"}
+      ]
+    },
+    {
+      "id": "E26",
+      "title": "Measurement tests used only square images on square canvases; a zoom centre computed from the wrong axis went undetected",
+      "capa": ["CAPA-010"],
+      "class": "M",
+      "secondary_classes": ["I"],
+      "channel": "AR",
+      "channel_note": "Pre-merge review of PR #52.",
+      "stage": "contained",
+      "introduced": {"commit": "c15a959", "what": "CAPA-010 measurement tests"},
+      "detected": {"commit": "db4f1af", "what": "non-square tests and mutations R5-R9"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "capa010", "path": "docs/iec62304/records/capa/CAPA-010_Viewer_Identity_Laterality_Markers_And_Measurements.md", "quote": "every measurement test used a square image on a square canvas"},
+        {"ref": "capa010", "path": "docs/iec62304/records/capa/CAPA-010_Viewer_Identity_Laterality_Markers_And_Measurements.md", "quote": "found by the PR #52 review; undetected by square fixtures"}
+      ]
+    },
+    {
+      "id": "E27",
+      "title": "Clinical-tool masks transposed twice (store then load); each half of the round trip was tested alone, and cubic fixtures hide the error",
+      "capa": ["CAPA-011"],
+      "class": "I",
+      "secondary_classes": [],
+      "channel": "AR",
+      "channel_note": "Independent code review, confirmed by the reviewer with a local test.",
+      "stage": "escaped",
+      "introduced": {"commit": "7fcf1cd", "what": "tool runner stores the internal array under the v2 marker"},
+      "detected": {"commit": "21c8d6b", "what": "CAPA-011"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "capa011", "path": "docs/iec62304/records/capa/CAPA-011_Tool_Runner_Mask_Axis_Order.md", "quote": "No round trip was tested."},
+        {"ref": "capa011", "path": "docs/iec62304/records/capa/CAPA-011_Tool_Runner_Mask_Axis_Order.md", "quote": "Cubic test volumes hide it."},
+        {"ref": "capa011", "path": "docs/iec62304/records/capa/CAPA-011_Tool_Runner_Mask_Axis_Order.md", "quote": "Independent code review, confirmed by the reviewer with a local test"}
+      ]
+    },
+    {
+      "id": "E28",
+      "title": "First CAPA-011 fix tested tool outputs on the image's own grid only; a mask on another grid was stored silently",
+      "capa": ["CAPA-011"],
+      "class": "I",
+      "secondary_classes": [],
+      "channel": "AR",
+      "channel_note": "Pre-merge review of PR #51 reproduced it (blocker).",
+      "stage": "contained",
+      "introduced": {"commit": "21c8d6b", "what": "first CAPA-011 fix and tests"},
+      "detected": {"commit": "86f19f2", "what": "CAPA-011 Finding 8, CA-11.5"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "capa011", "path": "docs/iec62304/records/capa/CAPA-011_Tool_Runner_Mask_Axis_Order.md", "quote": "the first version of this CAPA's tests used tool outputs on the image's grid only."},
+        {"ref": "capa011", "path": "docs/iec62304/records/capa/CAPA-011_Tool_Runner_Mask_Axis_Order.md", "quote": "was stored silently and the task ended \"completed\""}
+      ]
+    },
+    {
+      "id": "E29",
+      "title": "A mutation reading the internal mask in the old order survived the CAPA-011 tests (no test checked the stored record's dimensions)",
+      "capa": ["CAPA-011"],
+      "class": "M",
+      "secondary_classes": [],
+      "channel": "AR",
+      "channel_note": "Pre-merge review of PR #51.",
+      "stage": "contained",
+      "introduced": {"commit": "21c8d6b", "what": "first CAPA-011 tests"},
+      "detected": {"commit": "86f19f2", "what": "mutation M1 and the stored-record test"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "capa011", "path": "docs/iec62304/records/capa/CAPA-011_Tool_Runner_Mask_Axis_Order.md", "quote": "The pre-merge review found that a mutation reading the internal mask in the old order survived"}
+      ]
+    },
+    {
+      "id": "E30",
+      "title": "In-browser FLAMeS: a skull-stripped T1 passed every input gate and returned '0 lesions' as a normal result; tests used synthetic phantoms",
+      "capa": ["CP-FLAMES-BROWSER-001"],
+      "class": "I",
+      "secondary_classes": [],
+      "channel": "AR",
+      "channel_note": "First adversarial review of PR #53 ('do not approve yet').",
+      "stage": "contained",
+      "introduced": {"commit": "d81cb78", "what": "prototype as first reviewed"},
+      "detected": {"commit": "c838bb1", "what": "review fixes"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "flames", "path": "docs/research/flames-in-browser/REVIEW-RESPONSE.md", "quote": "A skull-stripped T1 passed every gate and returned \"0 lesions\" as a normal result"}
+      ]
+    },
+    {
+      "id": "E31",
+      "title": "In-browser FLAMeS: removing the model SHA-256 check (download or cache path) broke no pre-fix test",
+      "capa": ["CP-FLAMES-BROWSER-001"],
+      "class": "I",
+      "secondary_classes": ["M"],
+      "channel": "AR",
+      "channel_note": "First adversarial review of PR #53; confirmed by running the mutations against the pre-fix tests (0/2 detected).",
+      "stage": "contained",
+      "introduced": {"commit": "d81cb78", "what": "prototype tests"},
+      "detected": {"commit": "c838bb1", "what": "modelStore tests; I1/I2 detected, I1-old/I2-old not"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "flames", "path": "docs/iec62304/records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json", "quote": "the first review found that removing the SHA-256 check broke no test"}
+      ]
+    },
+    {
+      "id": "E32",
+      "title": "In-browser FLAMeS: the PR quoted '136/151 FLAIR accepted' for the whole gate; that was the contrast part alone (full gate 112/151)",
+      "capa": ["CP-FLAMES-BROWSER-001"],
+      "class": "R",
+      "secondary_classes": [],
+      "channel": "AR",
+      "channel_note": "Re-review 2 of PR #53 ('do not merge yet').",
+      "stage": "contained",
+      "introduced": {"commit": "c838bb1", "what": "PR description and validation text"},
+      "detected": {"commit": "7cce845", "what": "re-review 2 fixes"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "flames", "path": "docs/research/flames-in-browser/REVIEW-RESPONSE.md", "quote": "was quoted in the PR for the gate as a whole; that is the contrast part alone."}
+      ]
+    },
+    {
+      "id": "E33",
+      "title": "In-browser FLAMeS: the FLAIR gate, fitted on two public datasets, accepted 10 of 19 skull-stripped T1 from an unseen scanner (ISBI-2015)",
+      "capa": ["CP-FLAMES-BROWSER-001"],
+      "class": "I",
+      "secondary_classes": [],
+      "channel": "AR",
+      "channel_note": "Re-review 2 of PR #53; confirmed by leave-one-dataset-out.",
+      "stage": "contained",
+      "introduced": {"commit": "c838bb1", "what": "flair-gate/1"},
+      "detected": {"commit": "7cce845", "what": "flair-gate/2 (fail closed, positive evidence required)"},
+      "items": 1,
+      "overlaps": [],
+      "evidence": [
+        {"ref": "flames", "path": "docs/research/flames-in-browser/REVIEW-RESPONSE.md", "quote": "gate accepted 10 of 19 ISBI-2015 skull-stripped T1."},
+        {"ref": "flames", "path": "docs/research/flames-in-browser/REVIEW-RESPONSE.md", "quote": "**Content alone cannot guarantee it.**"}
+      ]
+    }
+  ],
+  "verified_then_ineffective": {
+    "$comment": "Controls recorded as implemented/verified (with negative controls) that were later found not to work as recorded. 'erratum' = flagged ERRATUM in the manifest (protocol metric 10); others are added post hoc from the records.",
+    "controls": [
+      {"rc": "RC-024", "source": "erratum", "episode": "E07",
+       "evidence": {"ref": "main", "path": "docs/iec62304/records/risk_verification/rc_test_manifest.json", "quote": "ERRATUM 2026-09-28 (CAPA-006 §3, CA-6.12): all four route sites introduced by e39cdaa returned HTTP 500"}},
+      {"rc": "RC-026", "source": "erratum", "episode": "E19",
+       "evidence": {"ref": "main", "path": "docs/iec62304/records/risk_verification/rc_test_manifest.json", "quote": "ERRATUM 2026-10-17 (CAPA-009): the HTTP guard did not execute."}},
+      {"rc": "RC-029", "source": "erratum", "episode": "E10",
+       "evidence": {"ref": "main", "path": "docs/iec62304/records/risk_verification/rc_test_manifest.json", "quote": "ERRATUM"}},
+      {"rc": "RC-023", "source": "post hoc (CAPA-010 note)", "episode": "E22",
+       "evidence": {"ref": "capa010", "path": "docs/iec62304/records/risk_verification/rc_test_manifest.json", "quote": "the viewport side held in 2D only."}},
+      {"rc": "RC-010", "source": "post hoc (2026-07-18 entry superseded)", "episode": "E09",
+       "evidence": {"ref": "main", "path": "docs/iec62304/records/risk_verification/rc_test_manifest.json", "quote": "Supersedes the 2026-07-18 'deliberately_absent' entry"}}
+    ]
+  },
+  "capas": [
+    {"id": "CAPA-001", "severity": "Critical", "channel": "AR", "opened_commit": "ccc8d70",
+     "evidence": {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-001_Risk_Control_Verification_Integrity.md", "quote": "**Source**: Internal audit finding (code inspection of the Class C codebase"}},
+    {"id": "CAPA-002", "severity": "Critical", "channel": "IM", "opened_commit": "ef7c7c5",
+     "evidence": {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-002_Broken_Object_Level_Authorization.md", "quote": "**Source**: Internal code audit, discovered while implementing CAPA-001 CA-2"}},
+    {"id": "CAPA-003", "severity": "Major", "channel": "IM", "opened_commit": "80da053",
+     "evidence": {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-003_Security_Test_Suite_Never_Executed.md", "quote": "**Source**: Internal code audit, discovered while implementing CAPA-001 PA-2"}},
+    {"id": "CAPA-004", "severity": "Critical", "channel": "AR", "opened_commit": "213efdf",
+     "evidence": {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-004_Laterality_And_Patient_Identity_In_Viewport.md", "quote": "**Source**: Internal code audit (CAPA-001 CA-3, re-verification of all 22 risk controls)"}},
+    {"id": "CAPA-005", "severity": "Critical", "channel": "AR", "opened_commit": "213efdf",
+     "evidence": {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-005_Unsourced_Normative_Reference_Data.md", "quote": "**Source**: Internal code audit (CAPA-001 CA-3, re-verification of all 22 risk controls)"}},
+    {"id": "CAPA-006", "severity": "Critical", "channel": "AR", "opened_commit": "4347d73",
+     "evidence": {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-006_MAGNIMS_Labelling_And_Atlas_Space.md", "quote": "five independent adversarial reviews of the correction"}},
+    {"id": "CAPA-007", "severity": "Critical", "channel": "AR", "opened_commit": "b6a3edd",
+     "evidence": {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-007_Analysis_Routes_Without_Object_Authorization.md", "quote": "**Source**: CAPA-006 review round 2 (code reviewer, finding \"BLOCKER (deploy)\")"}},
+    {"id": "CAPA-008", "severity": "Critical", "channel": "EX", "opened_commit": "4d7b9a0",
+     "evidence": {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-008_AI_Assistant_Layer_And_Clinical_Rule_Fidelity.md", "quote": "**Source**: Publication-strategy research"}},
+    {"id": "CAPA-009", "severity": "Critical", "channel": "BP", "opened_commit": "bbbaa6d",
+     "evidence": {"ref": "main", "path": "docs/iec62304/records/capa/CAPA-009_Object_Authorization_Across_All_Routers.md", "quote": "and an in-process request probe"}},
+    {"id": "CAPA-010", "severity": "Critical", "channel": "BP", "opened_commit": "c15a959",
+     "evidence": {"ref": "capa010", "path": "docs/iec62304/records/capa/CAPA-010_Viewer_Identity_Laterality_Markers_And_Measurements.md", "quote": "with the real application in a real browser"}},
+    {"id": "CAPA-011", "severity": "Critical", "channel": "AR", "opened_commit": "21c8d6b",
+     "evidence": {"ref": "capa011", "path": "docs/iec62304/records/capa/CAPA-011_Tool_Runner_Mask_Axis_Order.md", "quote": "**Source**: Independent code review, confirmed by the reviewer with a local test"}}
+  ]
+}
