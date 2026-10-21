@@ -408,7 +408,9 @@ def main():
                 rec.update(pm.record())
                 rec["log_tail"] = (r.stdout + r.stderr)[-600:]
                 if r.returncode != 0:
-                    raise RuntimeError(f"{tool} exit {r.returncode}: {(r.stderr or r.stdout)[-800:]}")
+                    # Both streams: progress bars go to stderr, so stderr alone hid the real error (pilot 2026-10-21).
+                    raise RuntimeError(f"{tool} exit {r.returncode}: STDOUT[-1500:]={r.stdout[-1500:]!r} "
+                                       f"STDERR[-1500:]={r.stderr[-1500:]!r}")
                 outs = find_outputs(tool, os.path.join(d, "out"))
                 if not outs["seg"]:
                     raise FileNotFoundError(f"no segmentation; out has {sorted(os.listdir(os.path.join(d, 'out')))}")
