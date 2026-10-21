@@ -1,0 +1,152 @@
+{
+ "status": "POST-HOC, not pre-registered",
+ "cache_sha256": "2096109e4da247aeaf03db43f4f5be02a14f95a450f711bb349e4942b9a6f4ec",
+ "ens|P2_threshold_1mm_calibrated": 0.965,
+ "ens|mslesseg": {
+  "first_scans": 75,
+  "safe_threshold_equal_at_gamma_0.1_and_0.2": 0.387,
+  "safe_threshold_above_top_false_candidate_gamma_0.2": 0.347,
+  "scans_with_false_candidate_above_1mm_P2_threshold": 0.061,
+  "patient_q90_of_max_false_score": 0.9617,
+  "false_candidates_score_ge_0.95": 0.0263,
+  "false_candidates": 1257
+ },
+ "ens|openms": {
+  "first_scans": 10,
+  "safe_threshold_equal_at_gamma_0.1_and_0.2": 0.4,
+  "safe_threshold_above_top_false_candidate_gamma_0.2": 0.3,
+  "scans_with_false_candidate_above_1mm_P2_threshold": 0.1,
+  "patient_q90_of_max_false_score": 0.9651,
+  "false_candidates_score_ge_0.95": 0.0366,
+  "false_candidates": 82
+ },
+ "ens|ms3seg": {
+  "first_scans": 100,
+  "safe_threshold_equal_at_gamma_0.1_and_0.2": 0.3,
+  "safe_threshold_above_top_false_candidate_gamma_0.2": 0.28,
+  "scans_with_false_candidate_above_1mm_P2_threshold": 0.24,
+  "patient_q90_of_max_false_score": 0.9803,
+  "false_candidates_score_ge_0.95": 0.0637,
+  "false_candidates": 1162
+ },
+ "ens|muslim": {
+  "first_scans": 51,
+  "safe_threshold_equal_at_gamma_0.1_and_0.2": 0.569,
+  "safe_threshold_above_top_false_candidate_gamma_0.2": 0.51,
+  "scans_with_false_candidate_above_1mm_P2_threshold": 0.294,
+  "patient_q90_of_max_false_score": 0.9792,
+  "false_candidates_score_ge_0.95": 0.044,
+  "false_candidates": 568
+ },
+ "ens|pedims": {
+  "first_scans": 9,
+  "safe_threshold_equal_at_gamma_0.1_and_0.2": 0.333,
+  "safe_threshold_above_top_false_candidate_gamma_0.2": 0.222,
+  "scans_with_false_candidate_above_1mm_P2_threshold": 0.071,
+  "patient_q90_of_max_false_score": 0.9649,
+  "false_candidates_score_ge_0.95": 0.0467,
+  "false_candidates": 321
+ },
+ "f0|P2_threshold_1mm_calibrated": 0.983,
+ "f0|mslesseg": {
+  "first_scans": 75,
+  "safe_threshold_equal_at_gamma_0.1_and_0.2": 0.547,
+  "safe_threshold_above_top_false_candidate_gamma_0.2": 0.507,
+  "scans_with_false_candidate_above_1mm_P2_threshold": 0.07,
+  "patient_q90_of_max_false_score": 0.9801,
+  "false_candidates_score_ge_0.95": 0.1914,
+  "false_candidates": 1348
+ },
+ "f0|openms": {
+  "first_scans": 10,
+  "safe_threshold_equal_at_gamma_0.1_and_0.2": 0.6,
+  "safe_threshold_above_top_false_candidate_gamma_0.2": 0.5,
+  "scans_with_false_candidate_above_1mm_P2_threshold": 0.1,
+  "patient_q90_of_max_false_score": 0.9834,
+  "false_candidates_score_ge_0.95": 0.1809,
+  "false_candidates": 94
+ },
+ "f0|ms3seg": {
+  "first_scans": 100,
+  "safe_threshold_equal_at_gamma_0.1_and_0.2": 0.56,
+  "safe_threshold_above_top_false_candidate_gamma_0.2": 0.56,
+  "scans_with_false_candidate_above_1mm_P2_threshold": 0.65,
+  "patient_q90_of_max_false_score": 0.9969,
+  "false_candidates_score_ge_0.95": 0.3223,
+  "false_candidates": 1396
+ },
+ "f0|muslim": {
+  "first_scans": 51,
+  "safe_threshold_equal_at_gamma_0.1_and_0.2": 0.608,
+  "safe_threshold_above_top_false_candidate_gamma_0.2": 0.588,
+  "scans_with_false_candidate_above_1mm_P2_threshold": 0.157,
+  "patient_q90_of_max_false_score": 0.9888,
+  "false_candidates_score_ge_0.95": 0.1625,
+  "false_candidates": 683
+ },
+ "f0|pedims": {
+  "first_scans": 9,
+  "safe_threshold_equal_at_gamma_0.1_and_0.2": 0.222,
+  "safe_threshold_above_top_false_candidate_gamma_0.2": 0.222,
+  "scans_with_false_candidate_above_1mm_P2_threshold": 0.179,
+  "patient_q90_of_max_false_score": 0.9869,
+  "false_candidates_score_ge_0.95": 0.245,
+  "false_candidates": 404
+ },
+ "lesions|mslesseg": {
+  "per_scan_median": 23.0,
+  "volume_mm3_median": 68.0,
+  "volume_mm3_q25_q75": [
+   34.0,
+   156.0
+  ]
+ },
+ "lesions|openms": {
+  "per_scan_median": 40.0,
+  "volume_mm3_median": 20.0,
+  "volume_mm3_q25_q75": [
+   9.0,
+   51.0
+  ]
+ },
+ "lesions|ms3seg": {
+  "per_scan_median": 30.5,
+  "volume_mm3_median": 107.5,
+  "volume_mm3_q25_q75": [
+   57.7,
+   249.9
+  ]
+ },
+ "lesions|muslim": {
+  "per_scan_median": 28.0,
+  "volume_mm3_median": 117.2,
+  "volume_mm3_q25_q75": [
+   57.2,
+   279.3
+  ]
+ },
+ "lesions|pedims": {
+  "per_scan_median": 26.5,
+  "volume_mm3_median": 79.0,
+  "volume_mm3_q25_q75": [
+   35.1,
+   184.3
+  ]
+ },
+ "thickness_gradient|ms3seg|D2|P1|0.2": {
+  "spearman_rho_slice_vs_scan_fdp": 0.032,
+  "perm_p_two_sided": 0.7495,
+  "mean_fdp_slice_le_6.5": 0.1031,
+  "mean_fdp_slice_gt_6.5": 0.121,
+  "scans_le_6.5": 31,
+  "scans_gt_6.5": 69
+ },
+ "thickness_gradient|muslim|D2|P1|0.2": {
+  "spearman_rho_slice_vs_scan_fdp": 0.303,
+  "perm_p_two_sided": 0.0352,
+  "mean_fdp_slice_le_6.5": 0.0995,
+  "mean_fdp_slice_gt_6.5": 0.1019,
+  "scans_le_6.5": 45,
+  "scans_gt_6.5": 6
+ }
+}
