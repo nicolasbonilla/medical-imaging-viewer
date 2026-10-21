@@ -186,7 +186,9 @@ def process(job):
     s, opts = job
     d = os.path.join(CACHE_DIR, "scans_" + opts["code_digest"] + ("_folds" if opts.get("folds_dir") else "")
                      + ("_lstai" if opts.get("lstai_dir") else "") + ("_cflair" if opts.get("control_flair_dir") else "")
-                     + ("_cloud" if opts.get("cloud_root") else ""))
+                     + ("_cloud" if opts.get("cloud_root") else "")
+                     + ("_mean5" if opts.get("candidate_map") == "mean5" else "")
+                     + ("_noimg" if opts.get("no_images") else ""))
     os.makedirs(d, exist_ok=True)
     f = os.path.join(d, s["case"] + ".pkl")
     if os.path.exists(f):
@@ -203,6 +205,12 @@ def _process(job):
     s, opts = job
     t0 = time.time()
     pimg, P = _load(s["prob"])
+    mean5 = opts.get("candidate_map") == "mean5"
+    if mean5:
+        # POST-HOC (v3.1 RESULTS P1): candidates from the 5-fold MEAN map, as FLAMeS is deployed
+        if not s.get("folds"):
+            raise ValueError(f"{s['case']}: --candidate-map mean5 needs the 5 fold maps")
+        P = np.mean([_load(p, pimg)[1] for p in s["folds"]], axis=0).astype(np.float32)
     zooms = tuple(float(z) for z in pimg.header.get_zooms()[:3])
     if s["status"] != "external" and not np.allclose(zooms, 1.0, atol=1e-3):
         raise ValueError(f"{s['case']}: non-1mm voxels {zooms}")
@@ -213,8 +221,9 @@ def _process(job):
     _, G = _load(s["gt"], pimg)
     gt = G > 0
     del G
-    flair = _load(s["flair"], pimg)[1] if s["flair"] else None
-    t1 = _load(s["t1"], pimg)[1] if s["t1"] else None
+    no_img = bool(opts.get("no_images"))
+    flair = _load(s["flair"], pimg)[1] if s["flair"] and not no_img else None
+    t1 = _load(s["t1"], pimg)[1] if s["t1"] and not no_img else None
 
     labeled, cands = extract_lesion_candidates(P, THRESHOLD, spacing, min_volume_mm3=MIN_VOL, score=SCORE)
     gt_labeled, n_gt_raw = label_lesions(gt.astype(np.uint8))
@@ -236,11 +245,12 @@ def _process(job):
     fold_maps, fold0_dev = None, None
     if s.get("folds"):
         fold_maps = [_load(p, pimg)[1] for p in s["folds"]]
-        fold0_dev = float(np.abs(fold_maps[0] - P).max())
-        if fold0_dev > FOLD0_TOL:
-            raise ValueError(f"{s['case']}: fold-0 map deviates from the cohort prob map by {fold0_dev}")
+        if not mean5:
+            fold0_dev = float(np.abs(fold_maps[0] - P).max())
+            if fold0_dev > FOLD0_TOL:
+                raise ValueError(f"{s['case']}: fold-0 map deviates from the cohort prob map by {fold0_dev}")
     lst, lst_models = None, None
-    if s.get("lstai"):
+    if s.get("lstai") and not no_img:
         lst = _load(s["lstai"], pimg)[1]
         if lst.min() < -1e-4 or lst.max() > 1 + 1e-4:
             raise ValueError(f"{s['case']}: LST-AI map outside [0, 1]")
@@ -277,6 +287,9 @@ def main():
     ap.add_argument("--lstai-dir", default=None)
     ap.add_argument("--control-flair-dir", default=None)
     ap.add_argument("--cloud-root", default=None)
+    ap.add_argument("--candidate-map", choices=("fold0", "mean5"), default="fold0",
+                    help="post-hoc: define candidates on the 5-fold mean map (needs fold maps)")
+    ap.add_argument("--no-images", action="store_true", help="skip FLAIR/T1/LST-AI (probability-map families only)")
     ap.add_argument("--workers", type=int, default=3)
     ap.add_argument("--limit", type=int, default=0, help="debug: first N scans per cohort")
     ap.add_argument("--out", default=os.path.join(CACHE_DIR, "features_v3.npz"))
@@ -294,7 +307,11 @@ def main():
     cohorts = sorted({s["cohort"] for s in scans})
     print(f"{len(scans)} scans: " + ", ".join(f"{c} {sum(s['cohort'] == c for s in scans)}" for c in cohorts))
     opts = {"folds_dir": a.folds_dir, "lstai_dir": a.lstai_dir, "control_flair_dir": a.control_flair_dir,
-            "cloud_root": a.cloud_root, "code_digest": _code_digest()}
+            "cloud_root": a.cloud_root, "candidate_map": a.candidate_map, "no_images": a.no_images,
+            "code_digest": _code_digest()}
+    if a.candidate_map == "mean5":
+        scans = [s for s in scans if s.get("folds")]          # controls have no fold maps
+        print(f"mean5: {len(scans)} scans with 5 fold maps")
     t0 = time.time()
     results = []
     with Pool(a.workers) as pool:
@@ -343,7 +360,8 @@ def main():
     meta = {"created": time.strftime("%Y-%m-%d %H:%M:%S"), "data_root": a.data_root, "n_scans": len(results),
             "n_candidates": int(X.shape[0]), "feature_names": names,
             "options": {"folds_dir": a.folds_dir, "lstai_dir": a.lstai_dir, "control_flair_dir": a.control_flair_dir,
-                        "cloud_root": a.cloud_root, "fold0_tolerance": FOLD0_TOL},
+                        "cloud_root": a.cloud_root, "fold0_tolerance": FOLD0_TOL,
+                        "candidate_map": a.candidate_map, "no_images": a.no_images},
             "candidate_definition": {"threshold": THRESHOLD, "min_volume_mm3": MIN_VOL, "score": SCORE,
                                      "connectivity": 18, "labels": "Hungarian one-to-one IoU>0 (mg0), IoU>0.10 (mg1), any-voxel"},
             "inputs_combined_sha256": digest, "inputs_sha256": hashes,

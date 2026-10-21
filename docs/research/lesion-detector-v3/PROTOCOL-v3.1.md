@@ -137,3 +137,9 @@ Report: `docs/research/lesion-detector-v3/RESULTS-v3.1.md`.
 ## 10. Deviations log
 
 (none at pre-registration)
+
+* **None to the pre-registered analyses** (evaluate_v31.py ran unchanged from commit 0d339b1).
+* **Post-hoc additions, made AFTER the outcomes were seen (2026-10-21), labelled as such:**
+  `build_features.py --candidate-map mean5 --no-images` and `posthoc_checks_v31.py` (P1–P3): the
+  candidates re-defined on the 5-fold mean map, to test whether the registered gain is simply the
+  effect of ensembling FLAMeS. They can only weaken the primary claim and are reported next to it.
