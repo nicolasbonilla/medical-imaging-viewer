@@ -42,6 +42,9 @@ could not be recomputed are marked "not re-verified". Research code, not the med
    to rewording overclaims of the first v0.3 text (§7.3, items 4–8), one added post-hoc analysis
    (low-lesion-load scans, §5.1) and the disclosure of a 3-case pilot that preceded the protocol
    (protocol §13 entry 7). All post-hoc analyses are marked **[post hoc]**.
+8. **MSLesSeg is not natively 1 mm** (2026-10-21): its acquisition table lists 2–5 mm FLAIR slices,
+   resampled to MNI 1 mm in the public release. "1-mm sites" now means "delivered on a 1-mm grid";
+   only Ljubljana is natively thin. Labels, §3.1, §5.2 and the limitations are corrected.
 
 *The v0.1 → v0.2 changelog is kept in Appendix A.*
 
@@ -53,9 +56,9 @@ Conformal selection gives lesion detectors a distribution-free *precision dial*:
 lesions so that the expected false-discovery proportion (FDR) per scan is at most α. Whether the
 dial survives the shifts of real multiple-sclerosis (MS) imaging — other sites, thick-slice 2D
 FLAIR, another segmenter — and whether it is evaluated on data the segmenter never saw, is
-untested. In a pre-registered audit of five public cohorts (304 scans, 245 patients; 1-mm 3D/MNI
-data from Italy and Slovenia and 2D FLAIR with 3.9–8.3 mm slices from Iran, Iraq and a paediatric
-cohort), segmented by the five folds of FLAMeS, we excluded the 20 Ljubljana scans FLAMeS trained
+untested. In a pre-registered audit of five public cohorts (304 scans, 245 patients; data
+delivered on a 1-mm MNI grid from Slovenia (native 3D, 0.8 mm) and Italy (native 2–5 mm, resampled)
+and natively stored 2D FLAIR with 3.9–8.3 mm slices from Iran, Iraq and a paediatric cohort), segmented by the five folds of FLAMeS, we excluded the 20 Ljubljana scans FLAMeS trained
 on and used patients, never scans, as the unit of splitting and resampling. For conformal
 Benjamini–Hochberg selection (P1) no violation was detected in 16 held-out-site comparisons, but
 this is weaker than validity: on one thick-slice site the result at α = 0.1 is undecided (Muslim
@@ -149,14 +152,17 @@ overlap; we make no stronger novelty claim.
 
 | cohort | scans / patients | native FLAIR (slice spacing) | detectable expert lesions | candidates (false) | candidate AUROC: 5-fold ensemble [95 % CI] | fold 0 |
 |---|---|---|---:|---|---|---|
-| MSLesSeg [Rondinella et al. 2025] | 115 / 75 | 1.5 T, ~3 scanners; delivered in MNI 1 mm | 3344 | 3788 (1257) | 0.818 [0.798, 0.837] | 0.735 [0.708, 0.761] |
+| MSLesSeg [Rondinella et al. 2025] | 115 / 75 | 8 scanner models (Philips, GE, Siemens); **native 2–5 mm** (2–2.3 mm: 43, 3 mm: 52, 4–5 mm: 15, unknown: 5), resampled to MNI 1 mm | 3344 | 3788 (1257) | 0.818 [0.798, 0.837] | 0.735 [0.708, 0.761] |
 | Ljubljana, FLAMeS-clean (16–20, 26–30) [Lesjak et al. 2018] | 10 / 10 | 3 T 3D FLAIR; MNI 1 mm | 667 | 517 (82) | 0.802 [0.729, 0.883] | 0.698 [0.625, 0.773] |
 | MS3SEG [Bawil et al. 2026] | 100 / 100 | Toshiba 1.5 T 2D (6.0–8.1 mm, median 7.2) | 3354 | 3402 (1162) | 0.802 [0.786, 0.816] | 0.720 [0.701, 0.737] |
 | Muslim 2022 [Muslim et al. 2022] | 51 / 51 | ~20 centres, 1.5 T 2D (4.86–8.3 mm); in-plane pixel **estimated** | 1819 | 1540 (568) | 0.784 [0.741, 0.822] | 0.746 [0.710, 0.782] |
 | PediMS [Popa et al. 2025] | 28 / 9 (children) | Siemens 3 T 2D (3.9 mm) | 1104 | 1110 (321) | 0.801 [0.774, 0.864] | 0.698 [0.679, 0.768] |
 | SibBMS healthy controls [Tuchinov et al. 2025, *verify*] | 30 / 30 | 1 mm (fold 0 only) | 0 | 83 (83) | — | — |
 
-MS3SEG and Muslim were skull-stripped with HD-BET 2.0.1 (CPU, no TTA); PediMS is distributed
+Native MSLesSeg geometry comes from the dataset's acquisition table
+(`info_dataset/patient_scanners_info/patient_scanners_info_FLAIR.csv`); throughout, "1-mm sites"
+means sites *delivered* on a 1-mm grid, of which only Ljubljana is natively thin. MS3SEG and Muslim
+were skull-stripped with HD-BET 2.0.1 (CPU, no TTA); PediMS is distributed
 stripped. Maps are on each scan's native grid for the thick-slice cohorts (voxels 2.2–6.5 mm³) and
 on the MNI 1-mm grid for MSLesSeg and Ljubljana. LST-AI v1.2.0 maps exist for MSLesSeg (114; one
 scan skipped for a blank T1) and all 30 Ljubljana scans. Expert masks: MS3SEG's MS-lesion class
@@ -301,12 +307,15 @@ sensitivity 0.010 vs 0.102 within-site).
 
 | band | scans / patients | P1 α = 0.2: realised FDR [CI] | scans with FDP > 0.1 | sensitivity [CI] | false / true lesions per scan | P2 γ = 0.1: FDX [CI] |
 |---|---|---|---:|---|---|---|
-| ≤ 1.5 mm | 125 / 85 | 0.018 [0.004, 0.040] | 6 % | 0.094 [0.053, 0.141] | 0.13 / 3.0 | 0.016 [0.002, 0.057] (abstention) |
+| ≤ 1.5 mm grid (110 of 125 natively 2–5 mm) | 125 / 85 | 0.018 [0.004, 0.040] | 6 % | 0.094 [0.053, 0.141] | 0.13 / 3.0 | 0.016 [0.002, 0.057] (abstention) |
 | 3.9 mm | 28 / 9 | 0.050 [0.016, 0.093] | 14 % | 0.164 [0.042, 0.440] | 0.50 / 6.5 | 0.000 [0, 0.12] (abstention) |
 | 4.5–6.5 mm | 76 / 76 | 0.101 [0.063, 0.145] | 30 % | 0.236 [0.180, 0.298] | 0.88 / 7.9 | 0.158 [0.079, 0.260] |
 | > 6.5 mm | 75 / 75 | 0.120 [0.093, 0.152] | 49 % | 0.355 [0.310, 0.402] | 1.73 / 12.4 | 0.173 [0.093, 0.278] |
 
-No violation is detected in any band; across bands the slack shrinks and per-scan variability
+The first band is not natively thin: 110 of its 125 scans (MSLesSeg) were acquired at 2–5 mm and
+resampled to 1 mm. **[post hoc]** Within MSLesSeg, raw detection of 14–50 mm³ lesions falls with
+native thickness (0.74 at 2–2.3 mm, 0.65 at 3 mm, 0.39 at 4–5 mm; 43 / 52 / 15 scans), a within-site
+gradient in detection, confounded with scanner and patient. No violation is detected in any band; across bands the slack shrinks and per-scan variability
 grows, and the pooled design gives the same ordering. **This gradient is confounded with site**:
 each band is one or two sites, and within a site it is small (MS3SEG 4.5–6.5 → > 6.5 mm: 0.103 →
 0.121; Muslim 0.099 → 0.102 with 6 scans above 6.5 mm; **[post hoc]** within MS3SEG, Spearman
@@ -319,7 +328,7 @@ band is penalised by the foreign null.
 
 | band | [3, 14) mm³ | [14, 50) | [50, 150) | [150, 500) | ≥ 500 | raw ≥ 80 % from | raw ≥ 50 % from |
 |---|---|---|---|---|---|---|---|
-| ≤ 1.5 mm | 0.36 / 0.02 | 0.72 / 0.04 | 0.81 / 0.09 | 0.87 / 0.20 | 0.90 / 0.21 | 50 mm³ | 14 mm³ |
+| ≤ 1.5 mm grid | 0.36 / 0.02 | 0.72 / 0.04 | 0.81 / 0.09 | 0.87 / 0.20 | 0.90 / 0.21 | 50 mm³ | 14 mm³ |
 | 3.9 mm | 0.37 / 0.03 | 0.67 / 0.08 | 0.76 / 0.19 | 0.77 / 0.22 | 0.80 / 0.33 | not reached | 14 mm³ |
 | 4.5–6.5 mm | 0.13 / 0.00 | 0.45 / 0.10 | 0.59 / 0.23 | 0.66 / 0.30 | 0.76 / 0.38 | not reached | 50 mm³ |
 | > 6.5 mm | 0.21 / 0.06 | 0.43 / 0.10 | 0.69 / 0.32 | 0.72 / 0.48 | 0.70 / 0.56 | not reached | 50 mm³ |
@@ -462,7 +471,10 @@ across MS site shift" (refuted by our own same-segmenter axis).
 - **Healthy controls: fold 0 only and 30 scans**; the ensemble arm is untested on healthy brains.
 - Site, thickness, scanner, population and annotation protocol are confounded; MS3SEG's protocol
   counts FLAMeS hits on "normal" periventricular hyperintensities as false.
-- MSLesSeg's native FLAIR geometry is not published in the sources we accessed.
+- **MSLesSeg is not natively 1 mm**: acquired at 2–5 mm and resampled to MNI 1 mm (dataset
+  acquisition table), so the "1-mm" band mixes 10 natively thin and 110 resampled scans, which
+  further confounds the thickness comparison. (v0.3's first text wrongly called the native geometry
+  unpublished.)
 - 3D components on 4–8 mm slices can merge or split lesions; lesion counts across grids are not
   comparable.
 - The "holds" rule tolerates realised values up to α + 0.05 at the CI upper bound; "holds" means

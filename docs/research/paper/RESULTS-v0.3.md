@@ -19,6 +19,9 @@
   ("no violation detected" instead of "held"; per-scan failure intervals; thickness confounded with
   site; the ensemble's effect on validity is mixed; recalibration of the per-scan promise works by
   near-abstention). One post-hoc check was added (§2, scans with many false candidates).
+- **Terminology correction (2026-10-21):** "1-mm sites" / band "≤ 1.5 mm" means *delivered on a
+  1-mm grid*. MSLesSeg was acquired with 2–5 mm FLAIR slices and resampled to MNI 1 mm; only
+  Ljubljana is natively thin (§3, note on MSLesSeg).
 - Arms: **ens** = 5-fold FLAMeS mean probability (primary); **f0** = fold 0 alone (= the v0.1/v0.2
   pipeline). P1 = conformal BH (FDR target α); P2 = scan-conformal FDX threshold (target
   P(FDP > γ) ≤ δ = 0.1). "Realised FDR" = mean per-scan FDP; "FDX" = share of test scans with
@@ -54,7 +57,8 @@
    comparisons; when calibration patients are re-drawn too (two-level bootstrap) the MS3SEG lower
    bound falls to 0.10, i.e. no longer a detected violation. Verdict Q1/P2 by the pre-registered
    rule: **refuted** (on the strength of Muslim; MS3SEG is borderline).
-3. **Slice thickness: a gradient, confounded with site.** Under leave-one-site-out calibration,
+3. **Slice thickness: a gradient, confounded with site** — and the thin band is not natively thin:
+   MSLesSeg (110 of its 125 scans) was acquired at 2–5 mm and resampled to 1 mm. Under leave-one-site-out calibration,
    realised FDR at α = 0.2 is 0.018 (≤ 1.5 mm), 0.050 (3.9 mm), 0.101 (4.5–6.5 mm), 0.120 (> 6.5 mm)
    and the share of scans with FDP > 0.1 is 6 %, 14 %, 30 %, 49 %. Each band is essentially one or
    two sites, and within a site the gradient is small (MS3SEG 4.5–6.5 → > 6.5 mm: 0.103 → 0.121;
@@ -102,8 +106,8 @@ failed on that candidate, deviation 5 logged before any outcome.
 
 | site | scans / patients | slice spacing (mm) | candidates | false | candidate precision | detectable expert lesions | raw lesion sensitivity | AUROC ens [95 % CI] | AUROC fold 0 |
 |---|---|---|---:|---:|---:|---:|---:|---|---|
-| MSLesSeg | 115 / 75 | 1 (MNI) | 3788 | 1257 | 0.668 | 3344 | 0.757 | 0.818 [0.798, 0.837] | 0.735 [0.708, 0.761] |
-| Ljubljana clean 10 | 10 / 10 | 1 (MNI) | 517 | 82 | 0.841 | 667 | 0.652 | 0.802 [0.729, 0.883] | 0.698 [0.625, 0.773] |
+| MSLesSeg | 115 / 75 | MNI 1 mm; native 2–5 mm | 3788 | 1257 | 0.668 | 3344 | 0.757 | 0.818 [0.798, 0.837] | 0.735 [0.708, 0.761] |
+| Ljubljana clean 10 | 10 / 10 | MNI 1 mm; native 3D 0.8 mm | 517 | 82 | 0.841 | 667 | 0.652 | 0.802 [0.729, 0.883] | 0.698 [0.625, 0.773] |
 | MS3SEG | 100 / 100 | 6.0–8.1 (med. 7.2) | 3402 | 1162 | 0.658 | 3354 | 0.668 | 0.802 [0.786, 0.816] | 0.720 [0.701, 0.737] |
 | Muslim | 51 / 51 | 4.86–8.3 (med. 6.0) | 1540 | 568 | 0.631 | 1819 | 0.534 | 0.784 [0.741, 0.822] | 0.746 [0.710, 0.782] |
 | PediMS | 28 / 9 | 3.9 | 1110 | 321 | 0.711 | 1104 | 0.715 | 0.801 [0.774, 0.864] | 0.698 [0.679, 0.768] |
@@ -184,10 +188,26 @@ null. The guarantee is safe there, but useless.
 
 | band (slice spacing) | scans / patients (sites) | P1 α = 0.1: FDR · sens. | P1 α = 0.2: FDR [CI] · scans FDP > 0.1 · sens. [CI] · false / true lesions per scan | P2 γ = 0.1: FDX [CI] · sens. |
 |---|---|---|---|---|
-| B1 ≤ 1.5 mm | 125 / 85 (MSLesSeg, Ljubljana) | 0.008 · 0.010 (uninf.) | 0.018 [0.004, 0.040] · 6 % · 0.094 [0.053, 0.141] · 0.13 / 3.0 | 0.016 [0.002, 0.057] · 0.002 (uninf.) |
+| B1 ≤ 1.5 mm grid (native: 10 at 0.8 mm, 110 at 2–5 mm, 5 unknown) | 125 / 85 (MSLesSeg, Ljubljana) | 0.008 · 0.010 (uninf.) | 0.018 [0.004, 0.040] · 6 % · 0.094 [0.053, 0.141] · 0.13 / 3.0 | 0.016 [0.002, 0.057] · 0.002 (uninf.) |
 | B2 3.9 mm | 28 / 9 (PediMS) | 0.007 · 0.064 | 0.050 [0.016, 0.093] · 14 % · 0.164 [0.042, 0.440] · 0.50 / 6.5 | 0.000 [0, 0.12] · 0.025 (uninf.) |
 | B3 4.5–6.5 mm | 76 / 76 (Muslim 45, MS3SEG 31) | 0.084 · 0.112 | 0.101 [0.063, 0.145] · 30 % · 0.236 [0.180, 0.298] · 0.88 / 7.9 | 0.158 [0.079, 0.260] · 0.047 (inconcl.) |
 | B4 > 6.5 mm | 75 / 75 (MS3SEG 69, Muslim 6) | 0.087 · 0.170 | 0.120 [0.093, 0.152] · 49 % · 0.355 [0.310, 0.402] · 1.73 / 12.4 | 0.173 [0.093, 0.278] · 0.077 (inconcl.) |
+
+**MSLesSeg is not natively 1 mm (correction, 2026-10-21, post hoc).** The dataset's own
+acquisition table (`info_dataset/patient_scanners_info/patient_scanners_info_FLAIR.csv`, distributed
+with the public MSLesSeg release [Rondinella/Guarnera et al., Sci Data 2025]; SHA-256 958ca1e9…)
+lists native FLAIR slice thicknesses of 2–2.3 mm (43 of our 115 scans), 3 mm (52), 4–5 mm (15) and
+unknown (5), on 8 scanner models (Philips, GE, Siemens), with both long-TR (8000–11000 ms, 2D-type)
+and short-TR/long-TE (4800 ms, ~300 ms, 3D-type) sequences. The public images are registered and
+resampled to MNI 1 mm. The "≤ 1.5 mm" band (B1) is therefore **"delivered on a 1-mm grid"**: only the
+10 Ljubljana scans are natively thin (3D FLAIR 0.47 × 0.47 × 0.8 mm); 110 of the 125 B1 scans were
+acquired at 2–5 mm. Throughout these documents "1-mm sites" means "sites delivered on a 1-mm grid".
+This further confounds the thickness analysis: B1 vs B2–B4 compares resampled 2–5 mm (plus 10 thin)
+acquisitions with natively stored 3.9–8.3 mm acquisitions. **[post hoc]** Within MSLesSeg, raw
+detection of 14–50 mm³ lesions falls with native thickness — 0.74 (2–2.3 mm, 43 scans), 0.65 (3 mm,
+52), 0.39 (4–5 mm, 15); lesions ≥ 50 mm³: 0.86–0.98, 0.77–0.86, 0.71–0.82 — a within-site gradient
+in detection (confounded with scanner and patient), recorded in
+`2026-10-21_paper_a_v03_mslesseg_native.json` (`research/paper_a/v03_mslesseg_native.py`).
 
 No P1 band cell shows a detected violation; the slack shrinks across bands and the per-scan
 exceedance grows. **This ordering is confounded with site**: B1 is MSLesSeg + Ljubljana, B2 is
@@ -206,7 +226,7 @@ no selection; "at guarantee" = selected by P1 α = 0.2, D2). Bins: [3, 14), [14,
 
 | band | lesions per bin | raw sensitivity | at guarantee | smallest bin from which raw ≥ 0.8 / ≥ 0.5 | at guarantee ≥ 0.5 |
 |---|---|---|---|---|---|
-| B1 ≤ 1.5 mm | 531 / 1217 / 1327 / 610 / 326 | 0.36 / 0.72 / 0.81 / 0.87 / 0.90 | 0.02 / 0.04 / 0.09 / 0.20 / 0.21 | **50 mm³** / 14 mm³ | never |
+| B1 ≤ 1.5 mm grid (mostly 2–5 mm native) | 531 / 1217 / 1327 / 610 / 326 | 0.36 / 0.72 / 0.81 / 0.87 / 0.90 | 0.02 / 0.04 / 0.09 / 0.20 / 0.21 | **50 mm³** / 14 mm³ | never |
 | B2 3.9 mm | 75 / 324 / 378 / 234 / 93 | 0.37 / 0.67 / 0.76 / 0.77 / 0.80 (0.796) | 0.03 / 0.08 / 0.19 / 0.22 / 0.33 | **never** / 14 mm³ | never |
 | B3 4.5–6.5 mm | 48 / 514 / 976 / 673 / 343 | 0.13 / 0.45 / 0.59 / 0.66 / 0.76 | 0.00 / 0.10 / 0.23 / 0.30 / 0.38 | **never** / 50 mm³ | never |
 | B4 > 6.5 mm | 34 / 455 / 1074 / 713 / 343 | 0.21 / 0.43 / 0.69 / 0.72 / 0.70 | 0.06 / 0.10 / 0.32 / 0.48 / 0.56 | **never** / 50 mm³ | 500 mm³ |
@@ -365,8 +385,9 @@ must come from the segmenter version that is deployed.
 - **Site, thickness, scanner, population and annotation protocol are confounded** (e.g. MS3SEG
   excludes periventricular "normal" hyperintensities from its lesion class, so FLAMeS hits there
   count as false). Bands are sites, not controlled thickness experiments.
-- MSLesSeg's native FLAIR geometry is not published in the sources we could access; it is used as
-  delivered (MNI 1 mm).
+- **MSLesSeg is not natively 1 mm**: its FLAIRs were acquired at 2–5 mm (dataset acquisition table)
+  and resampled to MNI 1 mm, so the "1-mm" band mixes 10 natively thin scans with 110 resampled
+  2–5 mm scans; an earlier version of this file wrongly said the native geometry was unpublished.
 - 3D connected components on 4–8 mm slices can merge or split lesions; candidate and expert-lesion
   rules are identical, but lesion counts are not comparable to 1-mm counts.
 - The "holds" rule tolerates realised values up to α + 0.05 at the CI upper bound; "holds" cells
@@ -387,6 +408,7 @@ must come from the segmenter version that is deployed.
 | input hashes, grids, fold-0 reproduction | `research/paper_a/v03_inventory.py` | `2026-10-21_paper_a_v03_inventory.json` |
 | candidates, labels, gate G1 | `research/paper_a/v03_candidates.py` | `2026-10-21_paper_a_v03_candidates.json` (cache SHA-256 2096109e…) |
 | Tables 1–7, §2–§7 | `research/paper_a/v03_analysis.py` (+ `v03_metrics.py`, `v03_data.py`) | `2026-10-21_paper_a_v03_results.json` |
+| MSLesSeg native slice thickness (post hoc) | `research/paper_a/v03_mslesseg_native.py` | `2026-10-21_paper_a_v03_mslesseg_native.json` |
 | post-hoc explanations (labelled; item 5 = low-lesion-load scans, added after the independent review) | `research/paper_a/v03_posthoc.py` | `2026-10-21_paper_a_v03_posthoc.json` |
 | metric/procedure tests | `research/paper_a/test_v03_metrics.py` (33 pass) | — |
 

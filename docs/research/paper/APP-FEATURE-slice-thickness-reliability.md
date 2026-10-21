@@ -25,8 +25,8 @@ withholds the false-lesion dial where the evidence does not support it.
 
 | slice spacing (from the header) | lesion overlay | "high-confidence lesions" view with a false-lesion figure | per-scan promise |
 |---|---|---|---|
-| ≤ 1.5 mm (3D) | shown, with the detection note of §3 | shown **only if** calibrated on patients from this site, or from 1-mm sites, with the same segmenter version | not offered (finds < 5 % of lesions) |
-| > 1.5 mm, or unknown | shown, with the thick-slice detection warning of §3 | **"Not reliable for this slice thickness" — not shown**, unless the site has its own calibration (§4) | not offered |
+| ≤ 1.5 mm **native** (3D acquisition, verified from the acquisition metadata) | shown, with the detection note of §3 | shown **only if** calibrated on patients from this site, or from 1-mm sites, with the same segmenter version | not offered (finds < 5 % of lesions) |
+| > 1.5 mm native, **resampled/registered images whose native thickness is unknown**, or unknown | shown, with the thick-slice detection warning of §3 | **"Not reliable for this slice thickness" — not shown**, unless the site has its own calibration (§4) | not offered |
 
 Rationale (v0.3): calibrated on thin-slice sites, the average false-lesion rate on thick-slice
 sites was 2.6–3.2× the value obtained with local calibration (at a 10 % target: 10.7 % and 12.2 % vs
@@ -35,11 +35,20 @@ thick-slice scans with many false candidates it was 19.6 % [12.0, 28.2] — twic
 No violation was *detected* on average, but that is not enough to display a guarantee to a reader.
 The ≈ 4 mm band rests on 9 children from one site and is treated as thick.
 
+**Read the native thickness, not the grid.** A FLAIR acquired at 3–5 mm and resampled to 1 mm (as
+in MSLesSeg, the largest "1-mm" cohort of the study) shows 1-mm spacing in its header. The band must
+come from the acquisition metadata (DICOM Slice Thickness / Spacing Between Slices of the original
+series); if the image was resampled or registered and the original value is not available, treat it
+as unknown (thick).
+
 ## 3. Detection note (no guarantee — observed detection of expert-marked lesions, before selection)
 
 | slice spacing | lesions 3–14 mm³ | 14–50 mm³ (≈ 3–4.6 mm across) | 50–150 mm³ | 150–500 mm³ | ≥ 500 mm³ | evidence |
 |---|---|---|---|---|---|---|
-| ≤ 1.5 mm | 36 % | 72 % | 81 % | 87 % | 90 % | 125 scans, 2 sites |
+| ≤ 1.5 mm grid — **mostly 2–5 mm native, resampled** | 36 % | 72 % | 81 % | 87 % | 90 % | 125 scans, 2 sites (only 10 natively thin) |
+| of which MSLesSeg native 2–2.3 mm **[post hoc]** | 37 % | 74 % | 86 % | 91 % | 98 % | 43 scans |
+| of which MSLesSeg native 3 mm **[post hoc]** | 29 % | 65 % | 77 % | 83 % | 86 % | 52 scans |
+| of which MSLesSeg native 4–5 mm **[post hoc]** | 16 % | 39 % | 73 % | 82 % | 71 % | 15 scans |
 | ≈ 4 mm | 37 % | 67 % | 76 % | 77 % | 80 % | 28 scans of 9 children, 1 site |
 | 4.5–6.5 mm | 13 % | 45 % | 59 % | 66 % | 76 % | 76 scans, 2 sites |
 | > 6.5 mm | 21 % | 43 % | 69 % | 72 % | 70 % | 75 scans, mostly 1 site |
@@ -47,7 +56,9 @@ The ≈ 4 mm band rests on 9 children from one site and is treated as thick.
 Wording for thick slices: *"On scans with slices thicker than 4.5 mm, about 6–7 in 10 lesions of
 50 mm³ or more (≈ 4.6 mm across) and fewer than half of smaller lesions are found automatically. No
 lesion size is found 8 times in 10. An empty or short list does not mean an absence of lesions."*
-These rows differ between sites as much as between thicknesses (bands are sites), so they describe
+Within MSLesSeg alone, detection of 14–50 mm³ lesions falls from 74 % (2–2.3 mm) to 39 % (4–5 mm)
+**[post hoc]**, so thickness matters even inside the "1-mm" band. These rows differ between sites as
+much as between thicknesses (bands are sites), so they describe
 the research data, not a calibrated property of the reader's scanner. For Muslim-like data without
 reliable pixel size, the size thresholds move by about one bin (50 vs 150 mm³).
 

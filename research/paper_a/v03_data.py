@@ -41,9 +41,10 @@ OPENMS_CLEAN = (16, 17, 18, 19, 20, 26, 27, 28, 29, 30)
 # Site acquisition class, fixed from the dataset descriptions (docs/research/cohorts-extra.md on
 # branch research/cloud-compute-ledger; data/registry.yaml), NOT from the analysis data.
 SITE_INFO = {
-    "mslesseg": {"label": "MSLesSeg (Catania, 1.5 T, ~3 scanners)", "acq": "1mm",
-                 "note": "delivered co-registered to MNI 1 mm; native FLAIR geometry not published "
-                         "in the sources we could access"},
+    "mslesseg": {"label": "MSLesSeg (Catania; 8 scanner models in its acquisition table)", "acq": "1mm",
+                 "note": "delivered co-registered to MNI 1 mm; NATIVE FLAIR slices 2-5 mm per the "
+                         "release's patient_scanners_info_FLAIR.csv (corrected 2026-10-21, protocol "
+                         "entry 9; 'acq' = grid as delivered)"},
     "openms": {"label": "Ljubljana open_ms_data (3 T Siemens), FLAMeS-clean 10", "acq": "1mm",
                "note": "3D FLAIR 0.47 x 0.47 x 0.8 mm native, MNI 1 mm here"},
     "ms3seg": {"label": "MS3SEG (Iran, Toshiba 1.5 T)", "acq": "2d_thick",

@@ -55,7 +55,8 @@ scans are LST-AI-clean; analyses that pair LST-AI with FLAMeS use only the 10 FL
 **Thickness bands** (from header slice spacing, fixed here from the inventory, before outcomes):
 B1 ≤ 1.5 mm (MSLesSeg, Ljubljana; 125 scans) · B2 (1.5, 4.5] mm (PediMS; 28) · B3 (4.5, 6.5] mm
 (Muslim 45, MS3SEG 31; 76) · B4 > 6.5 mm (MS3SEG 69, Muslim 6; 75). Bands are confounded with site;
-every band result is also reported per site × band.
+every band result is also reported per site × band. *(Entry 9: B1 is "≤ 1.5 mm as delivered";
+MSLesSeg's native slices are 2–5 mm.)*
 
 ## 3. Candidates and lesion matching (v0.2 rule, unchanged)
 
@@ -280,3 +281,14 @@ number changed.
 Local CPU only (8 workers), no cloud command. Derived candidate caches go to the git-ignored
 `research/paper_a/.cache/`; their SHA-256 and the SHA-256 of every input file are written into
 the records. Code: `research/paper_a/v03_*.py`; tests `research/paper_a/test_v03_metrics.py`.
+
+**2026-10-21, entry 9 — correction of a site description (after the results).** §2 described
+MSLesSeg as "delivered co-registered to MNI 1 mm; native FLAIR geometry not published in the sources
+we could access". The geometry *is* published with the data: the release's acquisition table
+(`info_dataset/patient_scanners_info/patient_scanners_info_FLAIR.csv`) lists native FLAIR slice
+thicknesses of 2–5 mm (2–2.3 mm: 43 of our 115 scans; 3 mm: 52; 4–5 mm: 15; unknown: 5). The
+pre-registered bands were defined from the header spacing of the files analysed, so band B1 is
+"≤ 1.5 mm *as delivered*" and contains 110 resampled 2–5 mm acquisitions plus the 10 natively thin
+Ljubljana scans. No pre-registered number changes; the labels and limitations of the result
+documents are corrected, and a post-hoc stratification of MSLesSeg by native thickness is recorded
+(`v03_mslesseg_native.py`).
