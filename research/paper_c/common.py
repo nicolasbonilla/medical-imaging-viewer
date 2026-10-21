@@ -112,6 +112,7 @@ def truth_from_two_masks(mask_a, mask_b, voxvol):
     vol_a = {c["id"]: c["volume_mm3"] for c in comps_a}
     lab_b, comps_b = components(B, voxvol, DETECT_MM3)
     region = np.zeros(A.shape, dtype=bool)
+    lesion_map = np.zeros(A.shape, dtype=np.int32)      # countable truth lesions (sensitivity)
     items = []
     for c in comps_b:
         sl = c["slice"]
@@ -119,6 +120,8 @@ def truth_from_two_masks(mask_a, mask_b, voxvol):
         if not (cm & a_dil[sl]).any():
             kind = "new"
             region[sl] |= cm
+            if c["volume_mm3"] >= CLIN_MM3:
+                lesion_map[sl][cm] = int(lesion_map.max()) + 1   # contiguous ids 1..L
         else:
             # A components touching the component or its 1-voxel shell
             shell = ndimage.binary_dilation(np.pad(cm, 1), structure=STRUCT18)[1:-1, 1:-1, 1:-1]
@@ -129,6 +132,7 @@ def truth_from_two_masks(mask_a, mask_b, voxvol):
             if c["volume_mm3"] >= ENLARGE_REL * va and growth >= ENLARGE_ABS_MM3:
                 kind = "enlarging"
                 region[sl] |= cm & ~A[sl]
+                lesion_map[sl][cm & ~A[sl]] = int(lesion_map.max()) + 1   # contiguous ids 1..L
             else:
                 kind = "persistent"
         items.append({"kind": kind, "volume_mm3": round(c["volume_mm3"], 2)})
@@ -137,7 +141,7 @@ def truth_from_two_masks(mask_a, mask_b, voxvol):
     n_enl = sum(1 for it in items if it["kind"] == "enlarging")
     return {"items": items, "n_new_clinical": n_new_clin, "n_new_detectable": n_new_any,
             "n_enlarging": n_enl, "active": bool(n_new_clin + n_enl >= 1),
-            "active_lenient": bool(n_new_any + n_enl >= 1)}, region
+            "active_lenient": bool(n_new_any + n_enl >= 1)}, region, lesion_map
 
 
 def truth_from_change_mask(gt, sub, domain, voxvol):
@@ -149,6 +153,7 @@ def truth_from_change_mask(gt, sub, domain, voxvol):
     lab, comps = components(gt > 0, voxvol, DETECT_MM3)
     region_any = np.zeros(gt.shape, dtype=bool)
     region_pos = np.zeros(gt.shape, dtype=bool)
+    lesion_map = np.zeros(gt.shape, dtype=np.int32)      # positive components >= 14.14 mm3
     items = []
     for c in comps:
         sl = c["slice"]
@@ -159,10 +164,12 @@ def truth_from_change_mask(gt, sub, domain, voxvol):
         region_any[sl] |= cm
         if pos:
             region_pos[sl] |= cm
+            if c["volume_mm3"] >= CLIN_MM3:
+                lesion_map[sl][cm] = int(lesion_map.max()) + 1   # contiguous ids 1..L
         items.append({"volume_mm3": round(c["volume_mm3"], 2), "mean_sub": round(mean_d, 3), "positive": pos})
     n_pos_clin = sum(1 for it in items if it["positive"] and it["volume_mm3"] >= CLIN_MM3)
     return {"items": items, "n_components": len(items), "n_positive": sum(it["positive"] for it in items),
-            "n_positive_clinical": n_pos_clin, "active": bool(n_pos_clin >= 1)}, region_any, region_pos
+            "n_positive_clinical": n_pos_clin, "active": bool(n_pos_clin >= 1)}, region_any, region_pos, lesion_map
 
 
 # ----------------------------------------------------------------------------- datasets
@@ -220,13 +227,13 @@ def load_mslesseg_tp(p, t, with_prob=True):
     out = {"flair": np.asarray(fl.dataobj, dtype=np.float32), "mask": np.asarray(mk.dataobj) > 0,
            "voxvol": voxel_volume(fl), "affine": fl.affine, "shape": fl.shape[:3]}
     if with_prob:
-        probs = []
+        acc = np.zeros(fl.shape[:3], dtype=np.float32)       # running mean (memory-light)
         for k in range(5):
             pi = nib.load(os.path.join(FLAMES, f"mslesseg_{p}_{t}_f{k}_prob.nii.gz"))
             if pi.shape[:3] != fl.shape[:3] or np.abs(pi.affine - fl.affine).max() > 1e-3:
                 raise ValueError(f"{p}_{t} fold {k}: grid mismatch with FLAIR")
-            probs.append(pi.get_fdata(dtype=np.float32))
-        out["prob"] = np.mean(probs, axis=0)
+            acc += pi.get_fdata(dtype=np.float32)
+        out["prob"] = acc / 5.0
     return out
 
 

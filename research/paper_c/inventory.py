@@ -47,7 +47,7 @@ def main():
             rec["input_sha256"][f"oms_long/{pid}/{os.path.basename(p)}"] = sha(p)
         s = subtraction(x["flair_a"], x["flair_b"], x["brain"])
         d = s[0]
-        t, _, _ = C.truth_from_change_mask(x["gt"], d, x["brain"], x["voxvol"])
+        t = C.truth_from_change_mask(x["gt"], d, x["brain"], x["voxvol"])[0]
         r = {"shape": list(x["flair_a"].shape), "zooms": [round(z, 3) for z in x["zooms"]],
              "days_between": int(info[pid]["days_between_studies"]), "ms_type": info[pid]["ms_type"],
              "n_change_components": t["n_components"], "n_positive": t["n_positive"],
@@ -80,7 +80,7 @@ def main():
             for k in range(5):
                 h = nib.load(os.path.join(C.FLAMES, f"mslesseg_{p}_{b}_f{k}_prob.nii.gz"))
                 assert h.shape[:3] == xb["shape"]
-            t, _ = C.truth_from_two_masks(xa["mask"], xb["mask"], xa["voxvol"])
+            t = C.truth_from_two_masks(xa["mask"], xb["mask"], xa["voxvol"])[0]
             qa, qb = acq.get((p, a), {}), acq.get((p, b), {})
             same_scanner = bool(qa and qb and qa["scanner"] == qb["scanner"] and qa["manufacturer"] == qb["manufacturer"])
             interval = (ages.get((p, b), np.nan) - ages.get((p, a), np.nan))

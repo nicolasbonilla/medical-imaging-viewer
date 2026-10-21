@@ -200,7 +200,15 @@ other patients' pairs are all used for calibration); MSLesSeg same-scanner first
 
 ## 12. Deviations log
 
-*(empty at the protocol commit)*
+*(empty at the protocol commit 6233b4b)*
+
+**2026-10-21, entry 1 — implementation clarifications, written before any detector output had
+been displayed.** (a) Truth lesions for sensitivity get contiguous ids (an implementation detail of
+`common.py`; the truth rules of §2 are unchanged). (b) The app's functions are imported read-only
+from `backend/app/services/` (`compare_timepoints`, `_extract_components`, `_match_components`,
+`normalize_intensity`, `subtraction_map`); Python must not run in isolated mode (`-I`) because the
+backend's logging import needs user site-packages. (c) Arm A2b (score S_dp) has no B-fixed
+baseline (the 0.5 SD bar is defined on S_sub only).
 
 ## 13. Compute and records
 
