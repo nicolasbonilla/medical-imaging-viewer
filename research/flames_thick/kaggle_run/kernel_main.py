@@ -122,7 +122,7 @@ def unpack_code(work):
     code = os.path.join(work, "code")
     shutil.rmtree(code, ignore_errors=True)
     with tarfile.open(fileobj=io.BytesIO(blob), mode="r:gz") as t:
-        t.extractall(code)
+        t.extractall(code, **({"filter": "data"} if hasattr(tarfile, "data_filter") else {}))
     return code
 
 
@@ -237,6 +237,8 @@ def launch(py, code, work, flames_dir, mzip, mprov, run, deadline):
         return None
     env = {k: v for k, v in os.environ.items() if not k.startswith(("nnUNet_", "FT_"))}
     env.update({
+        "PATH": os.path.dirname(py) + os.pathsep + env.get("PATH", ""),      # nnUNetv2_* console scripts of the venv
+        "VIRTUAL_ENV": os.path.dirname(os.path.dirname(py)),
         "PYTHONPATH": code, "nnUNet_extTrainer": os.path.join(code, "flames_thick", "nnunet_ext"),
         "nnUNet_compile": "f", "CUDA_VISIBLE_DEVICES": str(run["gpu"]), "PYTHONUNBUFFERED": "1",
         "FT_RUN_ID": run["run_id"], "FT_ARM": run["arm"], "FT_STORE": "local:" + STORE,
