@@ -181,6 +181,29 @@ tool and FLAMeS) for scans where FLAMeS lesion F1 < 0.5, per tool and band; E2 "
 confirmed by the tool" (FLAMeS components overlapping the tool) vs FLAMeS alone: Δ F1 and Δ false
 lesions. Labelled exploratory in every report.
 
+7.6 **Secondary arm "MindGlide on its intended input"** (added 2026-10-22 before any full-run output
+was examined, section 12; the primary arm and 7.1–7.5 are unchanged). MindGlide's README says "Feed it
+raw NIfTI files. No skull-stripping, no bias correction, no registration, no reorienting needed", and it
+was trained on images with skull; the identical-input rule (4.1) may handicap it. This arm gives
+MindGlide the FLAIR **before skull stripping**, same command, label, grid rule and outcomes; outputs
+`{case}_mindglide-raw_seg.nii.gz`.
+- MS3SEG (100) and Muslim (51): the FLAIR in `inputs/extra_cohorts_raw_v1.tar.gz`, i.e. the file HD-BET
+  was run on. The FLAMeS input is that image × the HD-BET mask saved with the same shape and affine
+  (`cohorts_extra.hdbet_strip`), so both share the grid by construction.
+- PediMS (28): `raw/defaced_FLAIR.nii.gz` from the PediMS Figshare record (defaced, skull present;
+  Figshare MD5 checked; cached as `inputs/pedims_raw_flair_v1.tar.gz`), same shape and affine as the
+  `processed/brain_FLAIR.nii.gz` FLAMeS input for all 28 (header check, cohorts-extra.md 3.3).
+- On the VM every raw file's shape and affine are re-checked against the FLAMeS grid
+  (`flames_inputs.json`, 1e-4 mm); a mismatch excludes the case and is reported.
+- Not in this arm: MSLesSeg (public only as skull-stripped MNI images) and Ljubljana (a raw FLAIR exists
+  in open_ms_data `cross_sectional/raw`, but not on the MNI grid of the FLAMeS maps and no transform is
+  shipped; a new registration would add its own error). The arm therefore covers the **thick band**
+  (179 scans).
+- Comparisons, own Holm family (4 tests, thick band, inference as in 7.1): R1/R2 Δ F1 and Δ false
+  lesions, MindGlide-raw − FLAMeS ("each tool on its intended input"; FLAMeS keeps the skull-stripped
+  FLAIR it was run on); R3/R4 the same, MindGlide-raw − MindGlide on the skull-stripped input ("what
+  skull stripping costs MindGlide"). Implemented as `secondary_raw_arm` in `evaluate.py`.
+
 ## 8. Precision (no formal power claim)
 
 Thick band: 179 scans, 160 independent patients (PediMS: 9 children). Assuming a per-scan SD of 0.15
@@ -213,12 +236,15 @@ on the full outputs; the commit hash of the code used is written into the result
 - LST-AI pilot sanity Dice on MSLesSeg P10_T1 (WARN threshold only).
 - MindGlide's published external test on Ljubljana + ISBI (median Dice 0.606).
 - No output of MindGlide, WMH-SynthSeg or SAMSEG on any of our scans; no LST-AI vs FLAMeS comparison.
+- Added 2026-10-22: the MindGlide pilot (stripped input, 3 scans) was seen before 7.6 was registered —
+  see the section 12 row of that date.
 
 ## 12. Deviations log
 
 | Date | Change | Reason | Seen results before? |
 |---|---|---|---|
 | 2026-10-21 | 4.2: wording only — states that MindGlide's largest-component cleanup acts on the whole label map (checked in its source), not per label | clarification; no rule changed | no (nothing launched) |
+| 2026-10-22 | Added the secondary arm 7.6 (MindGlide on the FLAIR before skull stripping; MS3SEG, Muslim, PediMS) with its own Holm family R1–R4; primary arm, outcomes and all other comparisons unchanged and running as registered | MindGlide's README asks for raw, non-skull-stripped input; the identical-input rule may handicap it | Only the MindGlide pilot (3 scans, stripped input): timings (~84 s/scan, peak 5.5 GB) and one plausibility volume — mslesseg_P10_T1: MindGlide 17.0 mL vs expert 3.0 mL (FLAMeS 3.1 mL). No full-run output had been examined; no raw-input output existed |
 
 ## References (tools)
 
