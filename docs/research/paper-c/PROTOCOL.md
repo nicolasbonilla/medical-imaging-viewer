@@ -210,6 +210,16 @@ from `backend/app/services/` (`compare_timepoints`, `_extract_components`, `_mat
 backend's logging import needs user site-packages. (c) Arm A2b (score S_dp) has no B-fixed
 baseline (the 0.5 SD bar is defined on S_sub only).
 
+**2026-10-21, entry 2 — run disclosures and post-hoc material (after the results).** (a) Two
+candidate-extraction runs stopped on out-of-memory errors caused by other jobs on the machine; the
+extractor was made resumable per unit (`.cache/units/`) and finished in-process; units are
+deterministic, so no number depends on this. (b) Drive C: fell below 3 GB free; the 40 open_ms
+FLAIRs (0.29 GB) were deleted after the candidates were cached; `extract_candidates.py --stream`
+re-fetches one patient at a time for arm A4. (c) `posthoc.py` (score/volume by label, per-patient
+ranking ceiling, tail of the largest false scores) was written after the results and is labelled
+post hoc in RESULTS.md. (d) `verify_primary.py` recomputes the 4 primary cells by a separate code
+path (identical). No pre-registered analysis was changed.
+
 ## 13. Compute and records
 
 Local CPU only. Code: `research/paper_c/*.py`; tests `research/paper_c/test_paper_c.py`.

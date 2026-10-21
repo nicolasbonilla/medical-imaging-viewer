@@ -1,0 +1,5 @@
+﻿A1: score true q50 1.98 vs false q50 2.07; volume true 51 vs false 27 mm3; best true outranks all false in 5/20 patients; share of true scores above the 80th pct of patient max-false 0.00
+A2: score true q50 0.58 vs false q50 0.30; volume true 64 vs false 50 mm3; best true outranks all false in 15/25 patients; share of true scores above the 80th pct of patient max-false 0.14; kinds {'new_false': 161, 'new_true': 88, 'enlarged_false': 47, 'enlarged_true': 31}
+A2b: score true q50 0.74 vs false q50 0.55; volume true 64 vs false 50 mm3; best true outranks all false in 14/25 patients; share of true scores above the 80th pct of patient max-false 0.22; kinds {'new_false': 161, 'new_true': 88, 'enlarged_false': 47, 'enlarged_true': 31}
+A3: score true q50 1.97 vs false q50 1.96; volume true 112 vs false 30 mm3; best true outranks all false in 4/25 patients; share of true scores above the 80th pct of patient max-false 0.04
+wrote docs\research\records\2026-10-21_paper_c_posthoc.json

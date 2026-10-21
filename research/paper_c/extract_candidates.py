@@ -121,8 +121,30 @@ def _cached(kind, arg):
     return u
 
 
+STREAM = {"on": False}
+
+
 def _oms(pid):
-    return _cached("oms", pid)
+    """With --stream, a patient's two FLAIRs (~20 MB) are fetched just before use and deleted
+    right after (low-disk mode); cached units are never refetched."""
+    if not STREAM["on"]:
+        return _cached("oms", pid)
+    import fetch_open_ms_longitudinal as F
+    dest = os.path.dirname(os.path.dirname(C.OMS_LONG))
+    fl = [os.path.join(C.OMS_LONG, pid, f"study{s}_FLAIR.nii.gz") for s in (1, 2)]
+    had = all(os.path.exists(f) for f in fl)
+    path = os.path.join(UNITS, f"oms_{pid}.json")
+    needs = not os.path.exists(path) or ("dseg" not in json.load(open(path)) and os.path.exists(
+        os.path.join(C.OMS_LONG_FLAMES, f"openmslong_{pid}_s2_f4_prob.nii.gz")))
+    if needs and not had:
+        F.fetch(dest, flair=True, patient=pid)
+    try:
+        return _cached("oms", pid)
+    finally:
+        if needs and not had:
+            for f in fl:
+                if os.path.exists(f):
+                    os.remove(f)
 
 
 def _msl(pair):
@@ -132,16 +154,25 @@ def _msl(pair):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--workers", type=int, default=2)
+    ap.add_argument("--stream", action="store_true",
+                    help="low-disk mode: fetch each open_ms patient's FLAIRs just before use, delete after")
     args = ap.parse_args()
+    STREAM["on"] = args.stream
+    if args.stream:
+        args.workers = 1
     os.makedirs(UNITS, exist_ok=True)
     t0 = time.time()
     pairs = []
     for p, tl in C.mslesseg_timepoints().items():
         for i in range(len(tl) - 1):
             pairs.append((p, tl[i], tl[i + 1], i == 0))
-    with ProcessPoolExecutor(max_workers=args.workers) as ex:
-        oms = list(ex.map(_oms, C.oms_long_patients()))
-        msl = list(ex.map(_msl, pairs))
+    if args.workers <= 1:                     # in-process (lowest memory)
+        oms = [_oms(p) for p in C.oms_long_patients()]
+        msl = [_msl(p) for p in pairs]
+    else:
+        with ProcessPoolExecutor(max_workers=args.workers) as ex:
+            oms = list(ex.map(_oms, C.oms_long_patients()))
+            msl = list(ex.map(_msl, pairs))
     for o in oms:
         print(f"open_ms {o['unit']}: active {o['active']} burden {o['burden']} truth lesions {o['n_truth_lesions']} "
               f"D-sub cands {len(o['dsub']['1.5'])} | {o['seconds']} s" + (" | FLAMeS present" if "dseg" in o else ""))

@@ -76,9 +76,14 @@ gcloud storage cp "gs://mstool-research-data/flames-openms-long/cohort/*_prob.ni
 
 ## After the download (no analysis change)
 
+Disk note (2026-10-21): drive C: had < 3 GB free, so the 40 co-registered FLAIRs (0.29 GB) were
+deleted after the local candidates were cached. `--stream` re-fetches each patient's two FLAIRs
+(~20 MB) just before use and deletes them right after; the maps themselves are ≈ 0.1–0.2 GB —
+download them only with ≥ 1 GB free.
+
 ```bash
-python research/paper_c/extract_candidates.py --workers 4   # adds D-seg to every open_ms patient
-python research/paper_c/run_pilot.py                        # arms A4 / A4b are filled in automatically
+python research/paper_c/extract_candidates.py --stream   # adds D-seg to every open_ms patient
+python research/paper_c/run_pilot.py                     # arms A4 / A4b are filled in automatically
 ```
 
 A4 and A4b are pre-registered in PROTOCOL.md §6 (analysed exactly like A2/A2b). Register the run in

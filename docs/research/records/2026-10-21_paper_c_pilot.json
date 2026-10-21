@@ -1,0 +1,3819 @@
+{
+ "cache_sha256": "82a02d4b64390ae4724356bffef2b86e36391cc5a7ad9e1564e9af54a12b49a1",
+ "params": {
+  "T_SUB": 1.5,
+  "T_FU": 1.0,
+  "dsub_thresholds": [
+   1.5,
+   1.0,
+   2.0
+  ],
+  "CLIN_MM3": 14.137166941154067,
+  "APP_CONFIRM_SD": 0.5
+ },
+ "code_commit": "c1b9a07fa63ffadb70447c4ba7f2258ae5fbc2ca",
+ "arms": {
+  "A1": {
+   "describe": {
+    "candidates_per_unit_median": 23.0,
+    "candidates_per_unit_iqr": [
+     9.75,
+     33.25
+    ],
+    "candidates_total": 476,
+    "false_candidates_total": 291,
+    "true_candidates_total": 185,
+    "units_with_false_candidate": 19,
+    "max_false_score_quartiles": [
+     2.5047190189361572,
+     3.2238388061523438,
+     3.7860231399536133
+    ],
+    "auroc": 0.40306492059069376,
+    "auroc_boot95": [
+     0.33816065477230567,
+     0.46024039095020025
+    ],
+    "q4_spearman_maxfalse_vs_burden": 0.039171444227178505,
+    "q4_perm_p": 0.8694130586941305,
+    "stable_units": 0
+   },
+   "fixed": {
+    "B_all": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.95,
+     "fwer_x": 19,
+     "fwer_cp95": [
+      0.7512672372279723,
+      0.9987349105020502
+     ],
+     "fwer_cluster_boot95": [
+      0.85,
+      1.0
+     ],
+     "true_flag_active": 0.95,
+     "true_flag_x": 19,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.7512672372279723,
+      0.9987349105020502
+     ],
+     "any_flag": 1.0,
+     "abstained": 0,
+     "lesion_sensitivity": 0.37668161434977576,
+     "lesion_sensitivity_boot95": [
+      0.2850553868143648,
+      0.46586281622981934
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 14.55,
+     "false_calls_per_unit_boot95": [
+      9.8,
+      19.9
+     ]
+    }
+   },
+   "loo": {
+    "marginal_a0.1": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.1,
+     "fwer_x": 2,
+     "fwer_cp95": [
+      0.012348527170294813,
+      0.31698271401908235
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.25
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "any_flag": 0.1,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 0.2,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.55
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.055302619934082
+    },
+    "pac_a0.1": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.0,
+     "fwer_x": 0,
+     "fwer_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.0
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "any_flag": 0.0,
+     "abstained": 20,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 0.0,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.0
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": null
+    },
+    "plugin_a0.1": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.1,
+     "fwer_x": 2,
+     "fwer_cp95": [
+      0.012348527170294813,
+      0.31698271401908235
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.25
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "any_flag": 0.1,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 0.2,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.55
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.055302619934082
+    },
+    "marginal_a0.2": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.2,
+     "fwer_x": 4,
+     "fwer_cp95": [
+      0.057333997050032774,
+      0.43661400299666825
+     ],
+     "fwer_cluster_boot95": [
+      0.05,
+      0.4
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "any_flag": 0.2,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 0.3,
+     "false_calls_per_unit_boot95": [
+      0.05,
+      0.7
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 3.89174485206604
+    },
+    "pac_a0.2": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.1,
+     "fwer_x": 2,
+     "fwer_cp95": [
+      0.012348527170294813,
+      0.31698271401908235
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.25
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "any_flag": 0.1,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 0.2,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.55
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.055302619934082
+    },
+    "plugin_a0.2": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.2,
+     "fwer_x": 4,
+     "fwer_cp95": [
+      0.057333997050032774,
+      0.43661400299666825
+     ],
+     "fwer_cluster_boot95": [
+      0.05,
+      0.4
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "any_flag": 0.2,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 0.3,
+     "false_calls_per_unit_boot95": [
+      0.05,
+      0.7
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 3.89174485206604
+    }
+   }
+  },
+  "A2": {
+   "describe": {
+    "candidates_per_unit_median": 11.0,
+    "candidates_per_unit_iqr": [
+     9.0,
+     17.0
+    ],
+    "candidates_total": 327,
+    "false_candidates_total": 208,
+    "true_candidates_total": 119,
+    "units_with_false_candidate": 25,
+    "max_false_score_quartiles": [
+     0.5074570178985596,
+     0.8621775507926941,
+     1.1719661951065063
+    ],
+    "auroc": 0.7024149465611488,
+    "auroc_boot95": [
+     0.626836851834686,
+     0.7749887904958483
+    ],
+    "q4_spearman_maxfalse_vs_burden": -0.030858374067853776,
+    "q4_perm_p": 0.8823117688231177,
+    "stable_units": 0
+   },
+   "fixed": {
+    "B_all": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 1.0,
+     "fwer_x": 25,
+     "fwer_cp95": [
+      0.8628148284692875,
+      1.0
+     ],
+     "fwer_cluster_boot95": [
+      1.0,
+      1.0
+     ],
+     "true_flag_active": 0.96,
+     "true_flag_x": 24,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.796483086077586,
+      0.9989878003006891
+     ],
+     "any_flag": 1.0,
+     "abstained": 0,
+     "lesion_sensitivity": 0.4728682170542636,
+     "lesion_sensitivity_boot95": [
+      0.38910412000950867,
+      0.5544276212509295
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 8.24,
+     "false_calls_per_unit_boot95": [
+      6.28,
+      10.4
+     ]
+    },
+    "B_app_sub": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 1.0,
+     "fwer_x": 25,
+     "fwer_cp95": [
+      0.8628148284692875,
+      1.0
+     ],
+     "fwer_cluster_boot95": [
+      1.0,
+      1.0
+     ],
+     "true_flag_active": 0.84,
+     "true_flag_x": 21,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.6391715455407279,
+      0.9546205476282904
+     ],
+     "any_flag": 1.0,
+     "abstained": 0,
+     "lesion_sensitivity": 0.35658914728682173,
+     "lesion_sensitivity_boot95": [
+      0.2718778801843318,
+      0.44117992267329464
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 3.68,
+     "false_calls_per_unit_boot95": [
+      2.839,
+      4.56
+     ]
+    },
+    "B_fixed_0.5SD": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.76,
+     "fwer_x": 19,
+     "fwer_cp95": [
+      0.5487119821833135,
+      0.9064355606682571
+     ],
+     "fwer_cluster_boot95": [
+      0.6,
+      0.92
+     ],
+     "true_flag_active": 0.8,
+     "true_flag_x": 20,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.5929625677213228,
+      0.931688535987516
+     ],
+     "any_flag": 0.96,
+     "abstained": 0,
+     "lesion_sensitivity": 0.29069767441860467,
+     "lesion_sensitivity_boot95": [
+      0.20175167857916396,
+      0.38755093296251975
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 2.52,
+     "false_calls_per_unit_boot95": [
+      1.64,
+      3.44
+     ]
+    }
+   },
+   "loo": {
+    "marginal_a0.1": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.08,
+     "fwer_x": 2,
+     "fwer_cp95": [
+      0.009839590018797513,
+      0.2603058421052141
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.2
+     ],
+     "true_flag_active": 0.04,
+     "true_flag_x": 1,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.0010121996993108454,
+      0.20351691392241403
+     ],
+     "any_flag": 0.12,
+     "abstained": 0,
+     "lesion_sensitivity": 0.003875968992248062,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.012048192771084338
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.16,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.4
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.896335601806641
+    },
+    "pac_a0.1": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.04,
+     "fwer_x": 1,
+     "fwer_cp95": [
+      0.0010121996993108454,
+      0.20351691392241403
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.12
+     ],
+     "true_flag_active": 0.04,
+     "true_flag_x": 1,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.0010121996993108454,
+      0.20351691392241403
+     ],
+     "any_flag": 0.08,
+     "abstained": 0,
+     "lesion_sensitivity": 0.003875968992248062,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.012048192771084338
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.08,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.24
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 5.3418121337890625
+    },
+    "plugin_a0.1": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.12,
+     "fwer_x": 3,
+     "fwer_cp95": [
+      0.0254653966477332,
+      0.31219030728623537
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.24099999999999452
+     ],
+     "true_flag_active": 0.12,
+     "true_flag_x": 3,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.0254653966477332,
+      0.31219030728623537
+     ],
+     "any_flag": 0.2,
+     "abstained": 0,
+     "lesion_sensitivity": 0.03875968992248062,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.09009009009009009
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.28,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.64
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 2.5304622650146484
+    },
+    "marginal_a0.2": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.2,
+     "fwer_x": 5,
+     "fwer_cp95": [
+      0.06831146401248402,
+      0.40703743227867717
+     ],
+     "fwer_cluster_boot95": [
+      0.04,
+      0.36
+     ],
+     "true_flag_active": 0.2,
+     "true_flag_x": 5,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.06831146401248402,
+      0.40703743227867717
+     ],
+     "any_flag": 0.36,
+     "abstained": 0,
+     "lesion_sensitivity": 0.06976744186046512,
+     "lesion_sensitivity_boot95": [
+      0.011949829141930303,
+      0.13551599873277362
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.36,
+     "false_calls_per_unit_boot95": [
+      0.08,
+      0.68
+     ],
+     "classification": "no violation detected",
+     "informative": "intermediate",
+     "threshold_median": 1.4845387935638428
+    },
+    "pac_a0.2": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.08,
+     "fwer_x": 2,
+     "fwer_cp95": [
+      0.009839590018797513,
+      0.2603058421052141
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.2
+     ],
+     "true_flag_active": 0.04,
+     "true_flag_x": 1,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.0010121996993108454,
+      0.20351691392241403
+     ],
+     "any_flag": 0.12,
+     "abstained": 0,
+     "lesion_sensitivity": 0.003875968992248062,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.012048192771084338
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.16,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.4
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.896335601806641
+    },
+    "plugin_a0.2": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.2,
+     "fwer_x": 5,
+     "fwer_cp95": [
+      0.06831146401248402,
+      0.40703743227867717
+     ],
+     "fwer_cluster_boot95": [
+      0.04,
+      0.36
+     ],
+     "true_flag_active": 0.2,
+     "true_flag_x": 5,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.06831146401248402,
+      0.40703743227867717
+     ],
+     "any_flag": 0.36,
+     "abstained": 0,
+     "lesion_sensitivity": 0.06976744186046512,
+     "lesion_sensitivity_boot95": [
+      0.011949829141930303,
+      0.13551599873277362
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.36,
+     "false_calls_per_unit_boot95": [
+      0.08,
+      0.68
+     ],
+     "classification": "no violation detected",
+     "informative": "intermediate",
+     "threshold_median": 1.4845387935638428
+    }
+   },
+   "app_activity_rate": 1.0,
+   "app_subconfirmed_activity_rate": 1.0
+  },
+  "A2b": {
+   "describe": {
+    "candidates_per_unit_median": 11.0,
+    "candidates_per_unit_iqr": [
+     9.0,
+     17.0
+    ],
+    "candidates_total": 327,
+    "false_candidates_total": 208,
+    "true_candidates_total": 119,
+    "units_with_false_candidate": 25,
+    "max_false_score_quartiles": [
+     0.8113411664962769,
+     0.8529836535453796,
+     0.8991196751594543
+    ],
+    "auroc": 0.7211134453781513,
+    "auroc_boot95": [
+     0.6331915821636416,
+     0.7954599240492648
+    ],
+    "q4_spearman_maxfalse_vs_burden": 0.12189057756802243,
+    "q4_perm_p": 0.5522447755224478,
+    "stable_units": 0
+   },
+   "fixed": {
+    "B_all": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 1.0,
+     "fwer_x": 25,
+     "fwer_cp95": [
+      0.8628148284692875,
+      1.0
+     ],
+     "fwer_cluster_boot95": [
+      1.0,
+      1.0
+     ],
+     "true_flag_active": 0.96,
+     "true_flag_x": 24,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.796483086077586,
+      0.9989878003006891
+     ],
+     "any_flag": 1.0,
+     "abstained": 0,
+     "lesion_sensitivity": 0.4728682170542636,
+     "lesion_sensitivity_boot95": [
+      0.38910412000950867,
+      0.5544276212509295
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 8.32,
+     "false_calls_per_unit_boot95": [
+      6.36,
+      10.48
+     ]
+    },
+    "B_app_sub": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 1.0,
+     "fwer_x": 25,
+     "fwer_cp95": [
+      0.8628148284692875,
+      1.0
+     ],
+     "fwer_cluster_boot95": [
+      1.0,
+      1.0
+     ],
+     "true_flag_active": 0.84,
+     "true_flag_x": 21,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.6391715455407279,
+      0.9546205476282904
+     ],
+     "any_flag": 1.0,
+     "abstained": 0,
+     "lesion_sensitivity": 0.35658914728682173,
+     "lesion_sensitivity_boot95": [
+      0.2718778801843318,
+      0.44117992267329464
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 3.68,
+     "false_calls_per_unit_boot95": [
+      2.839,
+      4.56
+     ]
+    },
+    "B_fixed_0.5SD": null
+   },
+   "loo": {
+    "marginal_a0.1": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.08,
+     "fwer_x": 2,
+     "fwer_cp95": [
+      0.009839590018797513,
+      0.2603058421052141
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.2
+     ],
+     "true_flag_active": 0.28,
+     "true_flag_x": 7,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.12071668850406664,
+      0.49387682180625553
+     ],
+     "any_flag": 0.28,
+     "abstained": 0,
+     "lesion_sensitivity": 0.031007751937984496,
+     "lesion_sensitivity_boot95": [
+      0.012656898202318903,
+      0.051190234596963986
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.08,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.2
+     ],
+     "classification": "no violation detected",
+     "informative": "intermediate",
+     "threshold_median": 0.9465377926826477
+    },
+    "pac_a0.1": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.04,
+     "fwer_x": 1,
+     "fwer_cp95": [
+      0.0010121996993108454,
+      0.20351691392241403
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.12
+     ],
+     "true_flag_active": 0.2,
+     "true_flag_x": 5,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.06831146401248402,
+      0.40703743227867717
+     ],
+     "any_flag": 0.2,
+     "abstained": 0,
+     "lesion_sensitivity": 0.01937984496124031,
+     "lesion_sensitivity_boot95": [
+      0.005023875596889923,
+      0.03361344537815126
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.04,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.12
+     ],
+     "classification": "no violation detected",
+     "informative": "intermediate",
+     "threshold_median": 0.9564438462257385
+    },
+    "plugin_a0.1": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.12,
+     "fwer_x": 3,
+     "fwer_cp95": [
+      0.0254653966477332,
+      0.31219030728623537
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.24099999999999452
+     ],
+     "true_flag_active": 0.28,
+     "true_flag_x": 7,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.12071668850406664,
+      0.49387682180625553
+     ],
+     "any_flag": 0.28,
+     "abstained": 0,
+     "lesion_sensitivity": 0.050387596899224806,
+     "lesion_sensitivity_boot95": [
+      0.020335558979626776,
+      0.08594070184426228
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.12,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.24099999999999452
+     ],
+     "classification": "no violation detected",
+     "informative": "intermediate",
+     "threshold_median": 0.9419608116149902
+    },
+    "marginal_a0.2": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.2,
+     "fwer_x": 5,
+     "fwer_cp95": [
+      0.06831146401248402,
+      0.40703743227867717
+     ],
+     "fwer_cluster_boot95": [
+      0.04,
+      0.36
+     ],
+     "true_flag_active": 0.4,
+     "true_flag_x": 10,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.21125480646514208,
+      0.6133465037431601
+     ],
+     "any_flag": 0.4,
+     "abstained": 0,
+     "lesion_sensitivity": 0.10465116279069768,
+     "lesion_sensitivity_boot95": [
+      0.048029280258877156,
+      0.16666666666666666
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.2,
+     "false_calls_per_unit_boot95": [
+      0.04,
+      0.36
+     ],
+     "classification": "no violation detected",
+     "informative": "intermediate",
+     "threshold_median": 0.90352863073349
+    },
+    "pac_a0.2": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.08,
+     "fwer_x": 2,
+     "fwer_cp95": [
+      0.009839590018797513,
+      0.2603058421052141
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.2
+     ],
+     "true_flag_active": 0.28,
+     "true_flag_x": 7,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.12071668850406664,
+      0.49387682180625553
+     ],
+     "any_flag": 0.28,
+     "abstained": 0,
+     "lesion_sensitivity": 0.031007751937984496,
+     "lesion_sensitivity_boot95": [
+      0.012656898202318903,
+      0.051190234596963986
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.08,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.2
+     ],
+     "classification": "no violation detected",
+     "informative": "intermediate",
+     "threshold_median": 0.9465377926826477
+    },
+    "plugin_a0.2": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.2,
+     "fwer_x": 5,
+     "fwer_cp95": [
+      0.06831146401248402,
+      0.40703743227867717
+     ],
+     "fwer_cluster_boot95": [
+      0.04,
+      0.36
+     ],
+     "true_flag_active": 0.4,
+     "true_flag_x": 10,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.21125480646514208,
+      0.6133465037431601
+     ],
+     "any_flag": 0.4,
+     "abstained": 0,
+     "lesion_sensitivity": 0.10465116279069768,
+     "lesion_sensitivity_boot95": [
+      0.048029280258877156,
+      0.16666666666666666
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.2,
+     "false_calls_per_unit_boot95": [
+      0.04,
+      0.36
+     ],
+     "classification": "no violation detected",
+     "informative": "intermediate",
+     "threshold_median": 0.90352863073349
+    }
+   },
+   "app_activity_rate": 1.0,
+   "app_subconfirmed_activity_rate": 1.0
+  },
+  "A3": {
+   "describe": {
+    "candidates_per_unit_median": 31.0,
+    "candidates_per_unit_iqr": [
+     13.0,
+     76.0
+    ],
+    "candidates_total": 1264,
+    "false_candidates_total": 1208,
+    "true_candidates_total": 56,
+    "units_with_false_candidate": 24,
+    "max_false_score_quartiles": [
+     2.266095995903015,
+     2.6848318576812744,
+     3.476961314678192
+    ],
+    "auroc": 0.554162724692526,
+    "auroc_boot95": [
+     0.39488003188904736,
+     0.6885448093466009
+    ],
+    "q4_spearman_maxfalse_vs_burden": -0.11224733567181813,
+    "q4_perm_p": 0.5888411158884111,
+    "stable_units": 0
+   },
+   "fixed": {
+    "B_all": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.96,
+     "fwer_x": 24,
+     "fwer_cp95": [
+      0.796483086077586,
+      0.9989878003006891
+     ],
+     "fwer_cluster_boot95": [
+      0.88,
+      1.0
+     ],
+     "true_flag_active": 0.52,
+     "true_flag_x": 13,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.31305704445703236,
+      0.7220319903300534
+     ],
+     "any_flag": 0.96,
+     "abstained": 0,
+     "lesion_sensitivity": 0.1821705426356589,
+     "lesion_sensitivity_boot95": [
+      0.08763208037415555,
+      0.2874549387166546
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 48.32,
+     "false_calls_per_unit_boot95": [
+      28.398,
+      75.40499999999997
+     ]
+    }
+   },
+   "loo": {
+    "marginal_a0.1": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.08,
+     "fwer_x": 2,
+     "fwer_cp95": [
+      0.009839590018797513,
+      0.2603058421052141
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.2
+     ],
+     "true_flag_active": 0.04,
+     "true_flag_x": 1,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.0010121996993108454,
+      0.20351691392241403
+     ],
+     "any_flag": 0.08,
+     "abstained": 0,
+     "lesion_sensitivity": 0.003875968992248062,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.012048192771084338
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.32,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.88
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.629858493804932
+    },
+    "pac_a0.1": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.04,
+     "fwer_x": 1,
+     "fwer_cp95": [
+      0.0010121996993108454,
+      0.20351691392241403
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.12
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.0,
+      0.1371851715307125
+     ],
+     "any_flag": 0.04,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.16,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.48
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.870644569396973
+    },
+    "plugin_a0.1": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.12,
+     "fwer_x": 3,
+     "fwer_cp95": [
+      0.0254653966477332,
+      0.31219030728623537
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.24
+     ],
+     "true_flag_active": 0.04,
+     "true_flag_x": 1,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.0010121996993108454,
+      0.20351691392241403
+     ],
+     "any_flag": 0.12,
+     "abstained": 0,
+     "lesion_sensitivity": 0.003875968992248062,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.012048192771084338
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.48,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      1.16
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.310183525085449
+    },
+    "marginal_a0.2": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.2,
+     "fwer_x": 5,
+     "fwer_cp95": [
+      0.06831146401248402,
+      0.40703743227867717
+     ],
+     "fwer_cluster_boot95": [
+      0.08,
+      0.36
+     ],
+     "true_flag_active": 0.04,
+     "true_flag_x": 1,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.0010121996993108454,
+      0.20351691392241403
+     ],
+     "any_flag": 0.2,
+     "abstained": 0,
+     "lesion_sensitivity": 0.007751937984496124,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.024096385542168676
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.76,
+     "false_calls_per_unit_boot95": [
+      0.12,
+      1.68
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.069809436798096
+    },
+    "pac_a0.2": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.08,
+     "fwer_x": 2,
+     "fwer_cp95": [
+      0.009839590018797513,
+      0.2603058421052141
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.2
+     ],
+     "true_flag_active": 0.04,
+     "true_flag_x": 1,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.0010121996993108454,
+      0.20351691392241403
+     ],
+     "any_flag": 0.08,
+     "abstained": 0,
+     "lesion_sensitivity": 0.003875968992248062,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.012048192771084338
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.32,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.88
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.629858493804932
+    },
+    "plugin_a0.2": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.2,
+     "fwer_x": 5,
+     "fwer_cp95": [
+      0.06831146401248402,
+      0.40703743227867717
+     ],
+     "fwer_cluster_boot95": [
+      0.08,
+      0.36
+     ],
+     "true_flag_active": 0.04,
+     "true_flag_x": 1,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.0010121996993108454,
+      0.20351691392241403
+     ],
+     "any_flag": 0.2,
+     "abstained": 0,
+     "lesion_sensitivity": 0.007751937984496124,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.024096385542168676
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.76,
+     "false_calls_per_unit_boot95": [
+      0.12,
+      1.68
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.069809436798096
+    }
+   }
+  },
+  "A1_truthpos": {
+   "describe": {
+    "candidates_per_unit_median": 23.0,
+    "candidates_per_unit_iqr": [
+     9.75,
+     33.25
+    ],
+    "candidates_total": 476,
+    "false_candidates_total": 296,
+    "true_candidates_total": 180,
+    "units_with_false_candidate": 19,
+    "max_false_score_quartiles": [
+     2.5047190189361572,
+     3.2238388061523438,
+     3.7860231399536133
+    ],
+    "auroc": 0.40694444444444444,
+    "auroc_boot95": [
+     0.34343731269061795,
+     0.4616197054067741
+    ],
+    "q4_spearman_maxfalse_vs_burden": 0.039171444227178505,
+    "q4_perm_p": 0.8694130586941305,
+    "stable_units": 0
+   },
+   "fixed": {
+    "B_all": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.95,
+     "fwer_x": 19,
+     "fwer_cp95": [
+      0.7512672372279723,
+      0.9987349105020502
+     ],
+     "fwer_cluster_boot95": [
+      0.85,
+      1.0
+     ],
+     "true_flag_active": 0.95,
+     "true_flag_x": 19,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.7512672372279723,
+      0.9987349105020502
+     ],
+     "any_flag": 1.0,
+     "abstained": 0,
+     "lesion_sensitivity": 0.37668161434977576,
+     "lesion_sensitivity_boot95": [
+      0.2850553868143648,
+      0.46586281622981934
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 14.8,
+     "false_calls_per_unit_boot95": [
+      10.04875,
+      20.1
+     ]
+    }
+   },
+   "loo": {
+    "marginal_a0.1": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.1,
+     "fwer_x": 2,
+     "fwer_cp95": [
+      0.012348527170294813,
+      0.31698271401908235
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.25
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "any_flag": 0.1,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 0.2,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.55
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.055302619934082
+    },
+    "pac_a0.1": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.0,
+     "fwer_x": 0,
+     "fwer_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.0
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "any_flag": 0.0,
+     "abstained": 20,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 0.0,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.0
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": null
+    },
+    "plugin_a0.1": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.1,
+     "fwer_x": 2,
+     "fwer_cp95": [
+      0.012348527170294813,
+      0.31698271401908235
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.25
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "any_flag": 0.1,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 0.2,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.55
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.055302619934082
+    },
+    "marginal_a0.2": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.2,
+     "fwer_x": 4,
+     "fwer_cp95": [
+      0.057333997050032774,
+      0.43661400299666825
+     ],
+     "fwer_cluster_boot95": [
+      0.05,
+      0.4
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "any_flag": 0.2,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 0.3,
+     "false_calls_per_unit_boot95": [
+      0.05,
+      0.7
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 3.89174485206604
+    },
+    "pac_a0.2": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.1,
+     "fwer_x": 2,
+     "fwer_cp95": [
+      0.012348527170294813,
+      0.31698271401908235
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.25
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "any_flag": 0.1,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 0.2,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.55
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.055302619934082
+    },
+    "plugin_a0.2": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.2,
+     "fwer_x": 4,
+     "fwer_cp95": [
+      0.057333997050032774,
+      0.43661400299666825
+     ],
+     "fwer_cluster_boot95": [
+      0.05,
+      0.4
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "any_flag": 0.2,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 0.3,
+     "false_calls_per_unit_boot95": [
+      0.05,
+      0.7
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 3.89174485206604
+    }
+   }
+  },
+  "A1_t1.0": {
+   "describe": {
+    "candidates_per_unit_median": 57.0,
+    "candidates_per_unit_iqr": [
+     39.0,
+     71.5
+    ],
+    "candidates_total": 1172,
+    "false_candidates_total": 875,
+    "true_candidates_total": 297,
+    "units_with_false_candidate": 20,
+    "max_false_score_quartiles": [
+     2.329034447669983,
+     2.8299556970596313,
+     3.576626718044281
+    ],
+    "auroc": 0.5998730158730159,
+    "auroc_boot95": [
+     0.5161394171592983,
+     0.666372443999558
+    ],
+    "q4_spearman_maxfalse_vs_burden": -0.07005662140630002,
+    "q4_perm_p": 0.7721227877212279,
+    "stable_units": 0
+   },
+   "fixed": {
+    "B_all": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 1.0,
+     "fwer_x": 20,
+     "fwer_cp95": [
+      0.8315665290169146,
+      1.0
+     ],
+     "fwer_cluster_boot95": [
+      1.0,
+      1.0
+     ],
+     "true_flag_active": 1.0,
+     "true_flag_x": 20,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.8315665290169146,
+      1.0
+     ],
+     "any_flag": 1.0,
+     "abstained": 0,
+     "lesion_sensitivity": 0.6121076233183856,
+     "lesion_sensitivity_boot95": [
+      0.5199885057471264,
+      0.6859521905269707
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 43.75,
+     "false_calls_per_unit_boot95": [
+      32.197500000000005,
+      58.55499999999997
+     ]
+    }
+   },
+   "loo": {
+    "marginal_a0.1": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.1,
+     "fwer_x": 2,
+     "fwer_cp95": [
+      0.012348527170294813,
+      0.31698271401908235
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.25
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "any_flag": 0.1,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 0.15,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.4
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.055302619934082
+    },
+    "pac_a0.1": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.0,
+     "fwer_x": 0,
+     "fwer_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.0
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "any_flag": 0.0,
+     "abstained": 20,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 0.0,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.0
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": null
+    },
+    "plugin_a0.1": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.1,
+     "fwer_x": 2,
+     "fwer_cp95": [
+      0.012348527170294813,
+      0.31698271401908235
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.25
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "any_flag": 0.1,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 0.15,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.4
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.055302619934082
+    },
+    "marginal_a0.2": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.2,
+     "fwer_x": 4,
+     "fwer_cp95": [
+      0.057333997050032774,
+      0.43661400299666825
+     ],
+     "fwer_cluster_boot95": [
+      0.05,
+      0.4
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "any_flag": 0.2,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 0.45,
+     "false_calls_per_unit_boot95": [
+      0.1,
+      0.9
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 3.7845091819763184
+    },
+    "pac_a0.2": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.1,
+     "fwer_x": 2,
+     "fwer_cp95": [
+      0.012348527170294813,
+      0.31698271401908235
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.25
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "any_flag": 0.1,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 0.15,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.4
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.055302619934082
+    },
+    "plugin_a0.2": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.2,
+     "fwer_x": 4,
+     "fwer_cp95": [
+      0.057333997050032774,
+      0.43661400299666825
+     ],
+     "fwer_cluster_boot95": [
+      0.05,
+      0.4
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "any_flag": 0.2,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 0.45,
+     "false_calls_per_unit_boot95": [
+      0.1,
+      0.9
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 3.7845091819763184
+    }
+   }
+  },
+  "A1_t2.0": {
+   "describe": {
+    "candidates_per_unit_median": 10.0,
+    "candidates_per_unit_iqr": [
+     6.5,
+     16.0
+    ],
+    "candidates_total": 263,
+    "false_candidates_total": 156,
+    "true_candidates_total": 107,
+    "units_with_false_candidate": 18,
+    "max_false_score_quartiles": [
+     2.777458667755127,
+     3.5245319604873657,
+     4.060277819633484
+    ],
+    "auroc": 0.27204648933620895,
+    "auroc_boot95": [
+     0.20018700551426516,
+     0.33227944919351166
+    ],
+    "q4_spearman_maxfalse_vs_burden": 0.05388099563472035,
+    "q4_perm_p": 0.8211178882111789,
+    "stable_units": 0
+   },
+   "fixed": {
+    "B_all": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.9,
+     "fwer_x": 18,
+     "fwer_cp95": [
+      0.6830172859809176,
+      0.9876514728297052
+     ],
+     "fwer_cluster_boot95": [
+      0.75,
+      1.0
+     ],
+     "true_flag_active": 0.85,
+     "true_flag_x": 17,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.6210731734546859,
+      0.9679290628145363
+     ],
+     "any_flag": 1.0,
+     "abstained": 0,
+     "lesion_sensitivity": 0.21973094170403587,
+     "lesion_sensitivity_boot95": [
+      0.15167766209669106,
+      0.29896992841730313
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 7.8,
+     "false_calls_per_unit_boot95": [
+      4.898750000000001,
+      11.25
+     ]
+    }
+   },
+   "loo": {
+    "marginal_a0.1": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.1,
+     "fwer_x": 2,
+     "fwer_cp95": [
+      0.012348527170294813,
+      0.31698271401908235
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.25
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "any_flag": 0.1,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 0.3,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.8
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 5.057592391967773
+    },
+    "pac_a0.1": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.0,
+     "fwer_x": 0,
+     "fwer_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.0
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "any_flag": 0.0,
+     "abstained": 20,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 0.0,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.0
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": null
+    },
+    "plugin_a0.1": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.1,
+     "fwer_x": 2,
+     "fwer_cp95": [
+      0.012348527170294813,
+      0.31698271401908235
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.25
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "any_flag": 0.1,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 0.3,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.8
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 5.057592391967773
+    },
+    "marginal_a0.2": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.2,
+     "fwer_x": 4,
+     "fwer_cp95": [
+      0.057333997050032774,
+      0.43661400299666825
+     ],
+     "fwer_cluster_boot95": [
+      0.05,
+      0.4
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "any_flag": 0.2,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 0.5,
+     "false_calls_per_unit_boot95": [
+      0.05,
+      1.2
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.233665466308594
+    },
+    "pac_a0.2": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.1,
+     "fwer_x": 2,
+     "fwer_cp95": [
+      0.012348527170294813,
+      0.31698271401908235
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.25
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "any_flag": 0.1,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 0.3,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.8
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 5.057592391967773
+    },
+    "plugin_a0.2": {
+     "units": 20,
+     "patients": 20,
+     "fwer": 0.2,
+     "fwer_x": 4,
+     "fwer_cp95": [
+      0.057333997050032774,
+      0.43661400299666825
+     ],
+     "fwer_cluster_boot95": [
+      0.05,
+      0.4
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 20,
+     "true_flag_cp95": [
+      0.0,
+      0.1684334709830853
+     ],
+     "any_flag": 0.2,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 446,
+     "false_calls_per_unit": 0.5,
+     "false_calls_per_unit_boot95": [
+      0.05,
+      1.2
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.233665466308594
+    }
+   }
+  },
+  "A3_t1.0": {
+   "describe": {
+    "candidates_per_unit_median": 60.0,
+    "candidates_per_unit_iqr": [
+     31.0,
+     180.0
+    ],
+    "candidates_total": 2726,
+    "false_candidates_total": 2639,
+    "true_candidates_total": 87,
+    "units_with_false_candidate": 25,
+    "max_false_score_quartiles": [
+     1.8397115468978882,
+     2.386836051940918,
+     3.027710437774658
+    ],
+    "auroc": 0.5443807084710771,
+    "auroc_boot95": [
+     0.45536696400735216,
+     0.6434178348655473
+    ],
+    "q4_spearman_maxfalse_vs_burden": -0.15004884390493897,
+    "q4_perm_p": 0.47035296470352966,
+    "stable_units": 0
+   },
+   "fixed": {
+    "B_all": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 1.0,
+     "fwer_x": 25,
+     "fwer_cp95": [
+      0.8628148284692875,
+      1.0
+     ],
+     "fwer_cluster_boot95": [
+      1.0,
+      1.0
+     ],
+     "true_flag_active": 0.72,
+     "true_flag_x": 18,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.5061231781937445,
+      0.8792833114959333
+     ],
+     "any_flag": 1.0,
+     "abstained": 0,
+     "lesion_sensitivity": 0.3333333333333333,
+     "lesion_sensitivity_boot95": [
+      0.2099127266692816,
+      0.4576396426484094
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 105.56,
+     "false_calls_per_unit_boot95": [
+      66.912,
+      150.003
+     ]
+    }
+   },
+   "loo": {
+    "marginal_a0.1": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.08,
+     "fwer_x": 2,
+     "fwer_cp95": [
+      0.009839590018797513,
+      0.2603058421052141
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.2
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.0,
+      0.1371851715307125
+     ],
+     "any_flag": 0.08,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.24,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.64
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.629858493804932
+    },
+    "pac_a0.1": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.04,
+     "fwer_x": 1,
+     "fwer_cp95": [
+      0.0010121996993108454,
+      0.20351691392241403
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.12
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.0,
+      0.1371851715307125
+     ],
+     "any_flag": 0.04,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.08,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.24
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.870644569396973
+    },
+    "plugin_a0.1": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.12,
+     "fwer_x": 3,
+     "fwer_cp95": [
+      0.0254653966477332,
+      0.31219030728623537
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.24
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.0,
+      0.1371851715307125
+     ],
+     "any_flag": 0.12,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.44,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      1.04
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.309035301208496
+    },
+    "marginal_a0.2": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.2,
+     "fwer_x": 5,
+     "fwer_cp95": [
+      0.06831146401248402,
+      0.40703743227867717
+     ],
+     "fwer_cluster_boot95": [
+      0.08,
+      0.36
+     ],
+     "true_flag_active": 0.04,
+     "true_flag_x": 1,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.0010121996993108454,
+      0.20351691392241403
+     ],
+     "any_flag": 0.2,
+     "abstained": 0,
+     "lesion_sensitivity": 0.007751937984496124,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.024096385542168676
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.8,
+     "false_calls_per_unit_boot95": [
+      0.16,
+      1.64
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 3.9484894275665283
+    },
+    "pac_a0.2": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.08,
+     "fwer_x": 2,
+     "fwer_cp95": [
+      0.009839590018797513,
+      0.2603058421052141
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.2
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.0,
+      0.1371851715307125
+     ],
+     "any_flag": 0.08,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.24,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.64
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.629858493804932
+    },
+    "plugin_a0.2": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.2,
+     "fwer_x": 5,
+     "fwer_cp95": [
+      0.06831146401248402,
+      0.40703743227867717
+     ],
+     "fwer_cluster_boot95": [
+      0.08,
+      0.36
+     ],
+     "true_flag_active": 0.04,
+     "true_flag_x": 1,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.0010121996993108454,
+      0.20351691392241403
+     ],
+     "any_flag": 0.2,
+     "abstained": 0,
+     "lesion_sensitivity": 0.007751937984496124,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.024096385542168676
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.8,
+     "false_calls_per_unit_boot95": [
+      0.16,
+      1.64
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 3.9484894275665283
+    }
+   }
+  },
+  "A3_t2.0": {
+   "describe": {
+    "candidates_per_unit_median": 15.0,
+    "candidates_per_unit_iqr": [
+     6.0,
+     36.0
+    ],
+    "candidates_total": 592,
+    "false_candidates_total": 551,
+    "true_candidates_total": 41,
+    "units_with_false_candidate": 21,
+    "max_false_score_quartiles": [
+     2.6946651935577393,
+     3.1098666191101074,
+     3.7602732181549072
+    ],
+    "auroc": 0.46987738479925634,
+    "auroc_boot95": [
+     0.35060289695336844,
+     0.5855001526577941
+    ],
+    "q4_spearman_maxfalse_vs_burden": -0.15381649691546256,
+    "q4_perm_p": 0.45555444455554445,
+    "stable_units": 0
+   },
+   "fixed": {
+    "B_all": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.84,
+     "fwer_x": 21,
+     "fwer_cp95": [
+      0.6391715455407279,
+      0.9546205476282904
+     ],
+     "fwer_cluster_boot95": [
+      0.68,
+      0.96
+     ],
+     "true_flag_active": 0.4,
+     "true_flag_x": 10,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.21125480646514208,
+      0.6133465037431601
+     ],
+     "any_flag": 0.88,
+     "abstained": 0,
+     "lesion_sensitivity": 0.12790697674418605,
+     "lesion_sensitivity_boot95": [
+      0.05497811043637904,
+      0.2149579253081133
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 22.04,
+     "false_calls_per_unit_boot95": [
+      12.799000000000001,
+      34.60199999999999
+     ]
+    }
+   },
+   "loo": {
+    "marginal_a0.1": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.08,
+     "fwer_x": 2,
+     "fwer_cp95": [
+      0.009839590018797513,
+      0.2603058421052141
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.2
+     ],
+     "true_flag_active": 0.04,
+     "true_flag_x": 1,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.0010121996993108454,
+      0.20351691392241403
+     ],
+     "any_flag": 0.08,
+     "abstained": 0,
+     "lesion_sensitivity": 0.003875968992248062,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.012048192771084338
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.28,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.76
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.629858493804932
+    },
+    "pac_a0.1": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.04,
+     "fwer_x": 1,
+     "fwer_cp95": [
+      0.0010121996993108454,
+      0.20351691392241403
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.12
+     ],
+     "true_flag_active": 0.04,
+     "true_flag_x": 1,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.0010121996993108454,
+      0.20351691392241403
+     ],
+     "any_flag": 0.04,
+     "abstained": 0,
+     "lesion_sensitivity": 0.003875968992248062,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.012048192771084338
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.16,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.48
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.908083915710449
+    },
+    "plugin_a0.1": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.12,
+     "fwer_x": 3,
+     "fwer_cp95": [
+      0.0254653966477332,
+      0.31219030728623537
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.24
+     ],
+     "true_flag_active": 0.04,
+     "true_flag_x": 1,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.0010121996993108454,
+      0.20351691392241403
+     ],
+     "any_flag": 0.12,
+     "abstained": 0,
+     "lesion_sensitivity": 0.007751937984496124,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.024096385542168676
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.48,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      1.2
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.366549491882324
+    },
+    "marginal_a0.2": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.2,
+     "fwer_x": 5,
+     "fwer_cp95": [
+      0.06831146401248402,
+      0.40703743227867717
+     ],
+     "fwer_cluster_boot95": [
+      0.08,
+      0.36
+     ],
+     "true_flag_active": 0.04,
+     "true_flag_x": 1,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.0010121996993108454,
+      0.20351691392241403
+     ],
+     "any_flag": 0.2,
+     "abstained": 0,
+     "lesion_sensitivity": 0.011627906976744186,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.03614457831325301
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.72,
+     "false_calls_per_unit_boot95": [
+      0.12,
+      1.64
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.134343147277832
+    },
+    "pac_a0.2": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.08,
+     "fwer_x": 2,
+     "fwer_cp95": [
+      0.009839590018797513,
+      0.2603058421052141
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.2
+     ],
+     "true_flag_active": 0.04,
+     "true_flag_x": 1,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.0010121996993108454,
+      0.20351691392241403
+     ],
+     "any_flag": 0.08,
+     "abstained": 0,
+     "lesion_sensitivity": 0.003875968992248062,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.012048192771084338
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.28,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.76
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.629858493804932
+    },
+    "plugin_a0.2": {
+     "units": 25,
+     "patients": 25,
+     "fwer": 0.2,
+     "fwer_x": 5,
+     "fwer_cp95": [
+      0.06831146401248402,
+      0.40703743227867717
+     ],
+     "fwer_cluster_boot95": [
+      0.08,
+      0.36
+     ],
+     "true_flag_active": 0.04,
+     "true_flag_x": 1,
+     "n_active": 25,
+     "true_flag_cp95": [
+      0.0010121996993108454,
+      0.20351691392241403
+     ],
+     "any_flag": 0.2,
+     "abstained": 0,
+     "lesion_sensitivity": 0.011627906976744186,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.03614457831325301
+     ],
+     "lesions_total": 258,
+     "false_calls_per_unit": 0.72,
+     "false_calls_per_unit_boot95": [
+      0.12,
+      1.64
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.134343147277832
+    }
+   }
+  },
+  "A2_allpairs": {
+   "describe": {
+    "candidates_per_unit_median": 11.0,
+    "candidates_per_unit_iqr": [
+     8.0,
+     15.5
+    ],
+    "candidates_total": 499,
+    "false_candidates_total": 328,
+    "true_candidates_total": 171,
+    "units_with_false_candidate": 39,
+    "max_false_score_quartiles": [
+     0.545353353023529,
+     0.8621775507926941,
+     1.152468979358673
+    ],
+    "auroc": 0.6424212705677237,
+    "auroc_boot95": [
+     0.5626906805602502,
+     0.7247064571805842
+    ],
+    "q4_spearman_maxfalse_vs_burden": 0.11693367358093798,
+    "q4_perm_p": 0.47165283471652836,
+    "stable_units": 1
+   },
+   "fixed": {
+    "B_all": {
+     "units": 40,
+     "patients": 25,
+     "fwer": 0.975,
+     "fwer_x": 39,
+     "fwer_cp95": [
+      0.8684141415172343,
+      0.9993672550679505
+     ],
+     "fwer_cluster_boot95": [
+      0.9210526315789473,
+      1.0
+     ],
+     "true_flag_active": 0.9487179487179487,
+     "true_flag_x": 37,
+     "n_active": 39,
+     "true_flag_cp95": [
+      0.8267552186263942,
+      0.9937280279043096
+     ],
+     "any_flag": 0.975,
+     "abstained": 0,
+     "lesion_sensitivity": 0.44919786096256686,
+     "lesion_sensitivity_boot95": [
+      0.38603865424339645,
+      0.514378148808061
+     ],
+     "lesions_total": 374,
+     "false_calls_per_unit": 8.05,
+     "false_calls_per_unit_boot95": [
+      6.35,
+      9.853745644599302
+     ]
+    },
+    "B_app_sub": {
+     "units": 40,
+     "patients": 25,
+     "fwer": 0.95,
+     "fwer_x": 38,
+     "fwer_cp95": [
+      0.8308031360405824,
+      0.9938863534006491
+     ],
+     "fwer_cluster_boot95": [
+      0.8421052631578947,
+      1.0
+     ],
+     "true_flag_active": 0.8205128205128205,
+     "true_flag_x": 32,
+     "n_active": 39,
+     "true_flag_cp95": [
+      0.6646504388730692,
+      0.924649522683347
+     ],
+     "any_flag": 0.95,
+     "abstained": 0,
+     "lesion_sensitivity": 0.3181818181818182,
+     "lesion_sensitivity_boot95": [
+      0.2578568121310337,
+      0.39216669475813243
+     ],
+     "lesions_total": 374,
+     "false_calls_per_unit": 3.675,
+     "false_calls_per_unit_boot95": [
+      2.826059782608696,
+      4.568697478991596
+     ]
+    },
+    "B_fixed_0.5SD": {
+     "units": 40,
+     "patients": 25,
+     "fwer": 0.775,
+     "fwer_x": 31,
+     "fwer_cp95": [
+      0.6154883226965773,
+      0.891603361015928
+     ],
+     "fwer_cluster_boot95": [
+      0.631578947368421,
+      0.9143009118541032
+     ],
+     "true_flag_active": 0.717948717948718,
+     "true_flag_x": 28,
+     "n_active": 39,
+     "true_flag_cp95": [
+      0.551263676605079,
+      0.8499858695294793
+     ],
+     "any_flag": 0.9,
+     "abstained": 0,
+     "lesion_sensitivity": 0.24331550802139038,
+     "lesion_sensitivity_boot95": [
+      0.17633331929469903,
+      0.3321595169352753
+     ],
+     "lesions_total": 374,
+     "false_calls_per_unit": 2.475,
+     "false_calls_per_unit_boot95": [
+      1.7777083333333332,
+      3.263196594427244
+     ]
+    }
+   },
+   "loo": {
+    "marginal_a0.1": {
+     "units": 40,
+     "patients": 25,
+     "fwer": 0.075,
+     "fwer_x": 3,
+     "fwer_cp95": [
+      0.015742179851041534,
+      0.20386474873289892
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.1794871794871795
+     ],
+     "true_flag_active": 0.02564102564102564,
+     "true_flag_x": 1,
+     "n_active": 39,
+     "true_flag_cp95": [
+      0.0006489638954819458,
+      0.1347639215594979
+     ],
+     "any_flag": 0.1,
+     "abstained": 0,
+     "lesion_sensitivity": 0.00267379679144385,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.009116025021685906
+     ],
+     "lesions_total": 374,
+     "false_calls_per_unit": 0.15,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.358974358974359
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.896335601806641
+    },
+    "pac_a0.1": {
+     "units": 40,
+     "patients": 25,
+     "fwer": 0.05,
+     "fwer_x": 2,
+     "fwer_cp95": [
+      0.006113646599350838,
+      0.16919686395941758
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.13157894736842105
+     ],
+     "true_flag_active": 0.02564102564102564,
+     "true_flag_x": 1,
+     "n_active": 39,
+     "true_flag_cp95": [
+      0.0006489638954819458,
+      0.1347639215594979
+     ],
+     "any_flag": 0.075,
+     "abstained": 0,
+     "lesion_sensitivity": 0.00267379679144385,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.009116025021685906
+     ],
+     "lesions_total": 374,
+     "false_calls_per_unit": 0.1,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.2631578947368421
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 5.3418121337890625
+    },
+    "plugin_a0.1": {
+     "units": 40,
+     "patients": 25,
+     "fwer": 0.1,
+     "fwer_x": 4,
+     "fwer_cp95": [
+      0.027925415294219314,
+      0.2366373998760999
+     ],
+     "fwer_cluster_boot95": [
+      0.022727272727272728,
+      0.20012820512820445
+     ],
+     "true_flag_active": 0.02564102564102564,
+     "true_flag_x": 1,
+     "n_active": 39,
+     "true_flag_cp95": [
+      0.0006489638954819458,
+      0.1347639215594979
+     ],
+     "any_flag": 0.125,
+     "abstained": 0,
+     "lesion_sensitivity": 0.00267379679144385,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.009116025021685906
+     ],
+     "lesions_total": 374,
+     "false_calls_per_unit": 0.2,
+     "false_calls_per_unit_boot95": [
+      0.045454545454545456,
+      0.4002564102564089
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.284067630767822
+    },
+    "marginal_a0.2": {
+     "units": 40,
+     "patients": 25,
+     "fwer": 0.175,
+     "fwer_x": 7,
+     "fwer_cp95": [
+      0.07338272935208522,
+      0.3277901333615858
+     ],
+     "fwer_cluster_boot95": [
+      0.05714285714285714,
+      0.3142857142857143
+     ],
+     "true_flag_active": 0.1794871794871795,
+     "true_flag_x": 7,
+     "n_active": 39,
+     "true_flag_cp95": [
+      0.07535047731665302,
+      0.3353495611269308
+     ],
+     "any_flag": 0.275,
+     "abstained": 0,
+     "lesion_sensitivity": 0.053475935828877004,
+     "lesion_sensitivity_boot95": [
+      0.014891255454095633,
+      0.10265478623743812
+     ],
+     "lesions_total": 374,
+     "false_calls_per_unit": 0.325,
+     "false_calls_per_unit_boot95": [
+      0.10526315789473684,
+      0.5715045592705162
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 1.4845387935638428
+    },
+    "pac_a0.2": {
+     "units": 40,
+     "patients": 25,
+     "fwer": 0.125,
+     "fwer_x": 5,
+     "fwer_cp95": [
+      0.0418596261386167,
+      0.2680329173617204
+     ],
+     "fwer_cluster_boot95": [
+      0.023255813953488372,
+      0.2631578947368421
+     ],
+     "true_flag_active": 0.05128205128205128,
+     "true_flag_x": 2,
+     "n_active": 39,
+     "true_flag_cp95": [
+      0.006271972095690417,
+      0.17324478137360572
+     ],
+     "any_flag": 0.175,
+     "abstained": 0,
+     "lesion_sensitivity": 0.013368983957219251,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.03470412124390015
+     ],
+     "lesions_total": 374,
+     "false_calls_per_unit": 0.225,
+     "false_calls_per_unit_boot95": [
+      0.046511627906976744,
+      0.46153846153846156
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 2.5304622650146484
+    },
+    "plugin_a0.2": {
+     "units": 40,
+     "patients": 25,
+     "fwer": 0.2,
+     "fwer_x": 8,
+     "fwer_cp95": [
+      0.09052240939999069,
+      0.35647801867923473
+     ],
+     "fwer_cluster_boot95": [
+      0.08108108108108109,
+      0.3333333333333333
+     ],
+     "true_flag_active": 0.1794871794871795,
+     "true_flag_x": 7,
+     "n_active": 39,
+     "true_flag_cp95": [
+      0.07535047731665302,
+      0.3353495611269308
+     ],
+     "any_flag": 0.3,
+     "abstained": 0,
+     "lesion_sensitivity": 0.053475935828877004,
+     "lesion_sensitivity_boot95": [
+      0.014891255454095633,
+      0.10265478623743812
+     ],
+     "lesions_total": 374,
+     "false_calls_per_unit": 0.35,
+     "false_calls_per_unit_boot95": [
+      0.12901157981803144,
+      0.5919217687074825
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 1.4845387935638428
+    }
+   },
+   "app_activity_rate": 0.975,
+   "app_subconfirmed_activity_rate": 0.95
+  },
+  "A2b_allpairs": {
+   "describe": {
+    "candidates_per_unit_median": 11.0,
+    "candidates_per_unit_iqr": [
+     8.0,
+     15.5
+    ],
+    "candidates_total": 499,
+    "false_candidates_total": 328,
+    "true_candidates_total": 171,
+    "units_with_false_candidate": 39,
+    "max_false_score_quartiles": [
+     0.7795665860176086,
+     0.8362690210342407,
+     0.8924950361251831
+    ],
+    "auroc": 0.7064434460134075,
+    "auroc_boot95": [
+     0.6392632760621282,
+     0.7645938093756511
+    ],
+    "q4_spearman_maxfalse_vs_burden": 0.24440360737190414,
+    "q4_perm_p": 0.12718728127187282,
+    "stable_units": 1
+   },
+   "fixed": {
+    "B_all": {
+     "units": 40,
+     "patients": 25,
+     "fwer": 0.975,
+     "fwer_x": 39,
+     "fwer_cp95": [
+      0.8684141415172343,
+      0.9993672550679505
+     ],
+     "fwer_cluster_boot95": [
+      0.9210526315789473,
+      1.0
+     ],
+     "true_flag_active": 0.9487179487179487,
+     "true_flag_x": 37,
+     "n_active": 39,
+     "true_flag_cp95": [
+      0.8267552186263942,
+      0.9937280279043096
+     ],
+     "any_flag": 0.975,
+     "abstained": 0,
+     "lesion_sensitivity": 0.44919786096256686,
+     "lesion_sensitivity_boot95": [
+      0.38603865424339645,
+      0.514378148808061
+     ],
+     "lesions_total": 374,
+     "false_calls_per_unit": 8.2,
+     "false_calls_per_unit_boot95": [
+      6.439024390243903,
+      10.11471804511278
+     ]
+    },
+    "B_app_sub": {
+     "units": 40,
+     "patients": 25,
+     "fwer": 0.95,
+     "fwer_x": 38,
+     "fwer_cp95": [
+      0.8308031360405824,
+      0.9938863534006491
+     ],
+     "fwer_cluster_boot95": [
+      0.8421052631578947,
+      1.0
+     ],
+     "true_flag_active": 0.8205128205128205,
+     "true_flag_x": 32,
+     "n_active": 39,
+     "true_flag_cp95": [
+      0.6646504388730692,
+      0.924649522683347
+     ],
+     "any_flag": 0.95,
+     "abstained": 0,
+     "lesion_sensitivity": 0.3181818181818182,
+     "lesion_sensitivity_boot95": [
+      0.2578568121310337,
+      0.39216669475813243
+     ],
+     "lesions_total": 374,
+     "false_calls_per_unit": 3.675,
+     "false_calls_per_unit_boot95": [
+      2.826059782608696,
+      4.568697478991596
+     ]
+    },
+    "B_fixed_0.5SD": null
+   },
+   "loo": {
+    "marginal_a0.1": {
+     "units": 40,
+     "patients": 25,
+     "fwer": 0.1,
+     "fwer_x": 4,
+     "fwer_cp95": [
+      0.027925415294219314,
+      0.2366373998760999
+     ],
+     "fwer_cluster_boot95": [
+      0.022222222222222223,
+      0.2
+     ],
+     "true_flag_active": 0.2564102564102564,
+     "true_flag_x": 10,
+     "n_active": 39,
+     "true_flag_cp95": [
+      0.13037679923558726,
+      0.42127388437856983
+     ],
+     "any_flag": 0.25,
+     "abstained": 0,
+     "lesion_sensitivity": 0.06149732620320856,
+     "lesion_sensitivity_boot95": [
+      0.02355298708017763,
+      0.10954063604240283
+     ],
+     "lesions_total": 374,
+     "false_calls_per_unit": 0.1,
+     "false_calls_per_unit_boot95": [
+      0.022222222222222223,
+      0.2
+     ],
+     "classification": "no violation detected",
+     "informative": "intermediate",
+     "threshold_median": 0.9419608116149902
+    },
+    "pac_a0.1": {
+     "units": 40,
+     "patients": 25,
+     "fwer": 0.025,
+     "fwer_x": 1,
+     "fwer_cp95": [
+      0.0006327449320494195,
+      0.1315858584827657
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.08577731092436941
+     ],
+     "true_flag_active": 0.1794871794871795,
+     "true_flag_x": 7,
+     "n_active": 39,
+     "true_flag_cp95": [
+      0.07535047731665302,
+      0.3353495611269308
+     ],
+     "any_flag": 0.175,
+     "abstained": 0,
+     "lesion_sensitivity": 0.01871657754010695,
+     "lesion_sensitivity_boot95": [
+      0.007729499488470922,
+      0.03283582089552239
+     ],
+     "lesions_total": 374,
+     "false_calls_per_unit": 0.025,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.08577731092436941
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 0.9465377926826477
+    },
+    "plugin_a0.1": {
+     "units": 40,
+     "patients": 25,
+     "fwer": 0.1,
+     "fwer_x": 4,
+     "fwer_cp95": [
+      0.027925415294219314,
+      0.2366373998760999
+     ],
+     "fwer_cluster_boot95": [
+      0.022222222222222223,
+      0.2
+     ],
+     "true_flag_active": 0.28205128205128205,
+     "true_flag_x": 11,
+     "n_active": 39,
+     "true_flag_cp95": [
+      0.15001413047052076,
+      0.448736323394921
+     ],
+     "any_flag": 0.275,
+     "abstained": 0,
+     "lesion_sensitivity": 0.06951871657754011,
+     "lesion_sensitivity_boot95": [
+      0.03005402943927534,
+      0.11842815221507
+     ],
+     "lesions_total": 374,
+     "false_calls_per_unit": 0.1,
+     "false_calls_per_unit_boot95": [
+      0.022222222222222223,
+      0.2
+     ],
+     "classification": "no violation detected",
+     "informative": "intermediate",
+     "threshold_median": 0.9152858853340149
+    },
+    "marginal_a0.2": {
+     "units": 40,
+     "patients": 25,
+     "fwer": 0.2,
+     "fwer_x": 8,
+     "fwer_cp95": [
+      0.09052240939999069,
+      0.35647801867923473
+     ],
+     "fwer_cluster_boot95": [
+      0.07142857142857142,
+      0.34210526315789475
+     ],
+     "true_flag_active": 0.3333333333333333,
+     "true_flag_x": 13,
+     "n_active": 39,
+     "true_flag_cp95": [
+      0.19088097904634613,
+      0.5021722646989096
+     ],
+     "any_flag": 0.4,
+     "abstained": 0,
+     "lesion_sensitivity": 0.08823529411764706,
+     "lesion_sensitivity_boot95": [
+      0.041553810899776666,
+      0.14671327374070298
+     ],
+     "lesions_total": 374,
+     "false_calls_per_unit": 0.225,
+     "false_calls_per_unit_boot95": [
+      0.075,
+      0.39473684210526316
+     ],
+     "classification": "no violation detected",
+     "informative": "intermediate",
+     "threshold_median": 0.8941276669502258
+    },
+    "pac_a0.2": {
+     "units": 40,
+     "patients": 25,
+     "fwer": 0.125,
+     "fwer_x": 5,
+     "fwer_cp95": [
+      0.0418596261386167,
+      0.2680329173617204
+     ],
+     "fwer_cluster_boot95": [
+      0.02631578947368421,
+      0.24242424242424243
+     ],
+     "true_flag_active": 0.3076923076923077,
+     "true_flag_x": 12,
+     "n_active": 39,
+     "true_flag_cp95": [
+      0.1701959029646946,
+      0.4756913915416844
+     ],
+     "any_flag": 0.3,
+     "abstained": 0,
+     "lesion_sensitivity": 0.08021390374331551,
+     "lesion_sensitivity_boot95": [
+      0.03695135894606309,
+      0.1346215012722646
+     ],
+     "lesions_total": 374,
+     "false_calls_per_unit": 0.125,
+     "false_calls_per_unit_boot95": [
+      0.02631578947368421,
+      0.24242424242424243
+     ],
+     "classification": "no violation detected",
+     "informative": "intermediate",
+     "threshold_median": 0.90352863073349
+    },
+    "plugin_a0.2": {
+     "units": 40,
+     "patients": 25,
+     "fwer": 0.2,
+     "fwer_x": 8,
+     "fwer_cp95": [
+      0.09052240939999069,
+      0.35647801867923473
+     ],
+     "fwer_cluster_boot95": [
+      0.07142857142857142,
+      0.34210526315789475
+     ],
+     "true_flag_active": 0.3333333333333333,
+     "true_flag_x": 13,
+     "n_active": 39,
+     "true_flag_cp95": [
+      0.19088097904634613,
+      0.5021722646989096
+     ],
+     "any_flag": 0.4,
+     "abstained": 0,
+     "lesion_sensitivity": 0.08823529411764706,
+     "lesion_sensitivity_boot95": [
+      0.041553810899776666,
+      0.14671327374070298
+     ],
+     "lesions_total": 374,
+     "false_calls_per_unit": 0.225,
+     "false_calls_per_unit_boot95": [
+      0.075,
+      0.39473684210526316
+     ],
+     "classification": "no violation detected",
+     "informative": "intermediate",
+     "threshold_median": 0.8941276669502258
+    }
+   },
+   "app_activity_rate": 0.975,
+   "app_subconfirmed_activity_rate": 0.95
+  },
+  "A3_allpairs": {
+   "describe": {
+    "candidates_per_unit_median": 20.0,
+    "candidates_per_unit_iqr": [
+     3.0,
+     60.25
+    ],
+    "candidates_total": 1579,
+    "false_candidates_total": 1518,
+    "true_candidates_total": 61,
+    "units_with_false_candidate": 38,
+    "max_false_score_quartiles": [
+     2.065902292728424,
+     2.4997812509536743,
+     3.1460670828819275
+    ],
+    "auroc": 0.5370202380180997,
+    "auroc_boot95": [
+     0.38806620191850705,
+     0.6642663056395072
+    ],
+    "q4_spearman_maxfalse_vs_burden": 0.025965573443574225,
+    "q4_perm_p": 0.8729127087291271,
+    "stable_units": 1
+   },
+   "fixed": {
+    "B_all": {
+     "units": 40,
+     "patients": 25,
+     "fwer": 0.95,
+     "fwer_x": 38,
+     "fwer_cp95": [
+      0.8308031360405824,
+      0.9938863534006491
+     ],
+     "fwer_cluster_boot95": [
+      0.8717948717948718,
+      1.0
+     ],
+     "true_flag_active": 0.4358974358974359,
+     "true_flag_x": 17,
+     "n_active": 39,
+     "true_flag_cp95": [
+      0.27810762967640934,
+      0.6037919829857288
+     ],
+     "any_flag": 0.95,
+     "abstained": 0,
+     "lesion_sensitivity": 0.13903743315508021,
+     "lesion_sensitivity_boot95": [
+      0.07196057536674504,
+      0.2259759304207119
+     ],
+     "lesions_total": 374,
+     "false_calls_per_unit": 37.95,
+     "false_calls_per_unit_boot95": [
+      24.793764705882353,
+      56.4885135135135
+     ]
+    }
+   },
+   "loo": {
+    "marginal_a0.1": {
+     "units": 40,
+     "patients": 25,
+     "fwer": 0.1,
+     "fwer_x": 4,
+     "fwer_cp95": [
+      0.027925415294219314,
+      0.2366373998760999
+     ],
+     "fwer_cluster_boot95": [
+      0.023809523809523808,
+      0.2
+     ],
+     "true_flag_active": 0.02564102564102564,
+     "true_flag_x": 1,
+     "n_active": 39,
+     "true_flag_cp95": [
+      0.0006489638954819458,
+      0.1347639215594979
+     ],
+     "any_flag": 0.1,
+     "abstained": 0,
+     "lesion_sensitivity": 0.00267379679144385,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.009116025021685906
+     ],
+     "lesions_total": 374,
+     "false_calls_per_unit": 0.35,
+     "false_calls_per_unit_boot95": [
+      0.05,
+      0.8158492822966503
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.47002100944519
+    },
+    "pac_a0.1": {
+     "units": 40,
+     "patients": 25,
+     "fwer": 0.05,
+     "fwer_x": 2,
+     "fwer_cp95": [
+      0.006113646599350838,
+      0.16919686395941758
+     ],
+     "fwer_cluster_boot95": [
+      0.0,
+      0.1282051282051282
+     ],
+     "true_flag_active": 0.0,
+     "true_flag_x": 0,
+     "n_active": 39,
+     "true_flag_cp95": [
+      0.0,
+      0.0902511009603343
+     ],
+     "any_flag": 0.05,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.0
+     ],
+     "lesions_total": 374,
+     "false_calls_per_unit": 0.15,
+     "false_calls_per_unit_boot95": [
+      0.0,
+      0.4091200466200465
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.801893711090088
+    },
+    "plugin_a0.1": {
+     "units": 40,
+     "patients": 25,
+     "fwer": 0.1,
+     "fwer_x": 4,
+     "fwer_cp95": [
+      0.027925415294219314,
+      0.2366373998760999
+     ],
+     "fwer_cluster_boot95": [
+      0.023809523809523808,
+      0.2
+     ],
+     "true_flag_active": 0.02564102564102564,
+     "true_flag_x": 1,
+     "n_active": 39,
+     "true_flag_cp95": [
+      0.0006489638954819458,
+      0.1347639215594979
+     ],
+     "any_flag": 0.1,
+     "abstained": 0,
+     "lesion_sensitivity": 0.00267379679144385,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.009116025021685906
+     ],
+     "lesions_total": 374,
+     "false_calls_per_unit": 0.425,
+     "false_calls_per_unit_boot95": [
+      0.06519985974754558,
+      0.9250457317073169
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.310183525085449
+    },
+    "marginal_a0.2": {
+     "units": 40,
+     "patients": 25,
+     "fwer": 0.175,
+     "fwer_x": 7,
+     "fwer_cp95": [
+      0.07338272935208522,
+      0.3277901333615858
+     ],
+     "fwer_cluster_boot95": [
+      0.07495426829268292,
+      0.30303030303030304
+     ],
+     "true_flag_active": 0.02564102564102564,
+     "true_flag_x": 1,
+     "n_active": 39,
+     "true_flag_cp95": [
+      0.0006489638954819458,
+      0.1347639215594979
+     ],
+     "any_flag": 0.175,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0053475935828877,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.018232050043371813
+     ],
+     "lesions_total": 374,
+     "false_calls_per_unit": 0.75,
+     "false_calls_per_unit_boot95": [
+      0.21049571603427172,
+      1.5
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 3.554474115371704
+    },
+    "pac_a0.2": {
+     "units": 40,
+     "patients": 25,
+     "fwer": 0.125,
+     "fwer_x": 5,
+     "fwer_cp95": [
+      0.0418596261386167,
+      0.2680329173617204
+     ],
+     "fwer_cluster_boot95": [
+      0.04,
+      0.24324324324324326
+     ],
+     "true_flag_active": 0.02564102564102564,
+     "true_flag_x": 1,
+     "n_active": 39,
+     "true_flag_cp95": [
+      0.0006489638954819458,
+      0.1347639215594979
+     ],
+     "any_flag": 0.125,
+     "abstained": 0,
+     "lesion_sensitivity": 0.00267379679144385,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.009116025021685906
+     ],
+     "lesions_total": 374,
+     "false_calls_per_unit": 0.45,
+     "false_calls_per_unit_boot95": [
+      0.09084224598930482,
+      0.9428571428571428
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 4.134343147277832
+    },
+    "plugin_a0.2": {
+     "units": 40,
+     "patients": 25,
+     "fwer": 0.2,
+     "fwer_x": 8,
+     "fwer_cp95": [
+      0.09052240939999069,
+      0.35647801867923473
+     ],
+     "fwer_cluster_boot95": [
+      0.09520089285714285,
+      0.3333333333333333
+     ],
+     "true_flag_active": 0.02564102564102564,
+     "true_flag_x": 1,
+     "n_active": 39,
+     "true_flag_cp95": [
+      0.0006489638954819458,
+      0.1347639215594979
+     ],
+     "any_flag": 0.2,
+     "abstained": 0,
+     "lesion_sensitivity": 0.0053475935828877,
+     "lesion_sensitivity_boot95": [
+      0.0,
+      0.018232050043371813
+     ],
+     "lesions_total": 374,
+     "false_calls_per_unit": 0.775,
+     "false_calls_per_unit_boot95": [
+      0.23242600422832982,
+      1.5128378378378378
+     ],
+     "classification": "no violation detected",
+     "informative": "bought by abstention",
+     "threshold_median": 3.554474115371704
+    }
+   }
+  },
+  "A4": {
+   "status": "pending: FLAMeS maps for open_ms longitudinal not present (CLOUD-JOB.md)"
+  },
+  "A4b": {
+   "status": "pending: FLAMeS maps for open_ms longitudinal not present (CLOUD-JOB.md)"
+  }
+ },
+ "transport_dsub": {
+  "open_ms->MSLesSeg_a0.1": {
+   "units": 25,
+   "patients": 25,
+   "fwer": 0.2,
+   "fwer_x": 5,
+   "fwer_cp95": [
+    0.06831146401248402,
+    0.40703743227867717
+   ],
+   "fwer_cluster_boot95": [
+    0.08,
+    0.36
+   ],
+   "true_flag_active": 0.04,
+   "true_flag_x": 1,
+   "n_active": 25,
+   "true_flag_cp95": [
+    0.0010121996993108454,
+    0.20351691392241403
+   ],
+   "any_flag": 0.2,
+   "abstained": 0,
+   "lesion_sensitivity": 0.003875968992248062,
+   "lesion_sensitivity_boot95": [
+    0.0,
+    0.012048192771084338
+   ],
+   "lesions_total": 258,
+   "false_calls_per_unit": 0.56,
+   "false_calls_per_unit_boot95": [
+    0.08,
+    1.2009999999999945
+   ],
+   "classification": "no violation detected",
+   "informative": "bought by abstention",
+   "threshold": 4.055302619934082
+  },
+  "open_ms->MSLesSeg_a0.2": {
+   "units": 25,
+   "patients": 25,
+   "fwer": 0.2,
+   "fwer_x": 5,
+   "fwer_cp95": [
+    0.06831146401248402,
+    0.40703743227867717
+   ],
+   "fwer_cluster_boot95": [
+    0.08,
+    0.36
+   ],
+   "true_flag_active": 0.04,
+   "true_flag_x": 1,
+   "n_active": 25,
+   "true_flag_cp95": [
+    0.0010121996993108454,
+    0.20351691392241403
+   ],
+   "any_flag": 0.2,
+   "abstained": 0,
+   "lesion_sensitivity": 0.003875968992248062,
+   "lesion_sensitivity_boot95": [
+    0.0,
+    0.012048192771084338
+   ],
+   "lesions_total": 258,
+   "false_calls_per_unit": 0.6,
+   "false_calls_per_unit_boot95": [
+    0.08,
+    1.32
+   ],
+   "classification": "no violation detected",
+   "informative": "bought by abstention",
+   "threshold": 3.89174485206604
+  },
+  "MSLesSeg->open_ms_a0.1": {
+   "units": 20,
+   "patients": 20,
+   "fwer": 0.0,
+   "fwer_x": 0,
+   "fwer_cp95": [
+    0.0,
+    0.1684334709830853
+   ],
+   "fwer_cluster_boot95": [
+    0.0,
+    0.0
+   ],
+   "true_flag_active": 0.0,
+   "true_flag_x": 0,
+   "n_active": 20,
+   "true_flag_cp95": [
+    0.0,
+    0.1684334709830853
+   ],
+   "any_flag": 0.0,
+   "abstained": 0,
+   "lesion_sensitivity": 0.0,
+   "lesion_sensitivity_boot95": [
+    0.0,
+    0.0
+   ],
+   "lesions_total": 446,
+   "false_calls_per_unit": 0.0,
+   "false_calls_per_unit_boot95": [
+    0.0,
+    0.0
+   ],
+   "classification": "no violation detected",
+   "informative": "bought by abstention",
+   "threshold": 4.629858493804932
+  },
+  "MSLesSeg->open_ms_a0.2": {
+   "units": 20,
+   "patients": 20,
+   "fwer": 0.05,
+   "fwer_x": 1,
+   "fwer_cp95": [
+    0.0012650894979498047,
+    0.24873276277202766
+   ],
+   "fwer_cluster_boot95": [
+    0.0,
+    0.15
+   ],
+   "true_flag_active": 0.0,
+   "true_flag_x": 0,
+   "n_active": 20,
+   "true_flag_cp95": [
+    0.0,
+    0.1684334709830853
+   ],
+   "any_flag": 0.05,
+   "abstained": 0,
+   "lesion_sensitivity": 0.0,
+   "lesion_sensitivity_boot95": [
+    0.0,
+    0.0
+   ],
+   "lesions_total": 446,
+   "false_calls_per_unit": 0.15,
+   "false_calls_per_unit_boot95": [
+    0.0,
+    0.45
+   ],
+   "classification": "no violation detected",
+   "informative": "bought by abstention",
+   "threshold": 4.069809436798096
+  }
+ }
+}
