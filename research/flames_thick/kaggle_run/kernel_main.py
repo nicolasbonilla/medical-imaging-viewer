@@ -264,6 +264,22 @@ def launch(py, code, work, flames_dir, mzip, mprov, run, deadline):
     return p, lf
 
 
+def gpu_sanity(py, code, flames_dir, mzip):
+    """Unchanged FLAMeS fold 0 on one MSLesSeg-train scan, on GPU 0 (compared locally with the CPU reference map)."""
+    out = os.path.join(OUT, "gpu_sanity")
+    os.makedirs(out, exist_ok=True)
+    env = dict(os.environ, PYTHONPATH=code, CUDA_VISIBLE_DEVICES="0", PYTHONUNBUFFERED="1",
+               PATH=os.path.dirname(py) + os.pathsep + os.environ.get("PATH", ""))
+    try:
+        r = subprocess.run([py, os.path.join(code, "flames_thick", "kaggle_run", "gpu_sanity.py"), flames_dir, mzip,
+                            CONFIG["gpu_sanity"], out], env=env, capture_output=True, text=True, timeout=1800)
+        REC["gpu_sanity"] = (json.loads(r.stdout.strip().splitlines()[-1]) if r.returncode == 0
+                             else {"error": (r.stdout[-1500:] + r.stderr[-2500:])})
+    except Exception as exc:
+        REC["gpu_sanity"] = {"error": repr(exc)[:1000]}
+    log("gpu sanity:", REC["gpu_sanity"])
+
+
 def kill_all():
     for sig in ("TERM", "KILL"):
         subprocess.run(["pkill", f"-{sig}", "-f", "flames_thick.vertex_entry"], capture_output=True)
@@ -320,6 +336,9 @@ def main():
         flames_dir, mzip, mprov = inputs(work)
         stage("restore")
         restore()
+        if CONFIG.get("gpu_sanity"):
+            stage("gpu_sanity")
+            gpu_sanity(py, code, flames_dir, mzip)
         stage("train")
         for run in CONFIG["runs"]:
             x = launch(py, code, work, flames_dir, mzip, mprov, run, soft)

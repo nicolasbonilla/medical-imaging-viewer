@@ -60,6 +60,7 @@ def session_config(session, epochs=None):
             common["FT_PAUSE_AFTER_EPOCH"] = 1
         thick = dict(common, **({"FT_KILL_TEST_AFTER_EPOCH": 0} if first else {}))
         return {**base, "accelerator": "NvidiaTeslaT4", "soft_hours": 1.0, "hard_hours": 1.25, "nproc": 2,
+                "gpu_sanity": None if first else "mslesseg_P2_T1",
                 "purpose": "FLAMeS-thick Kaggle pilot: 2 MSLesSeg-train scans, short epochs, kill + session "
                            "hand-over resume, timing of both arms side by side on the 2 T4",
                 "runs": [{"run_id": "kaggle-pilot-thick", "arm": "thick", "gpu": 0, "gpu_label": "NVIDIA Tesla T4 (GPU 0 of 2)",
@@ -71,6 +72,7 @@ def session_config(session, epochs=None):
             raise SystemExit("full sessions need --epochs (PROTOCOL §5.2 / §14)")
         env = {"FT_EPOCHS": int(epochs)}
         return {**base, "accelerator": "NvidiaTeslaT4", "soft_hours": 11.0, "hard_hours": 11.6, "nproc": 2,
+                "gpu_sanity": "mslesseg_P2_T1" if first else None,
                 "purpose": f"FLAMeS-thick full run, both arms side by side ({epochs} epochs each, PROTOCOL §5)",
                 "runs": [{"run_id": "flames-thick-a", "arm": "thick", "gpu": 0, "gpu_label": "NVIDIA Tesla T4 (GPU 0 of 2)",
                           "purpose": f"FLAMeS-thick arm A: fold-0 init, MSLesSeg-train, thick-slice augmentation, {epochs} epochs",
