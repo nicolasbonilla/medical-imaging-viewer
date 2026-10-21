@@ -116,8 +116,12 @@ def api():
     return a
 
 
-def build(session, previous, epochs, allow_dirty, folder):
+def build(session, previous, epochs, allow_dirty, folder, soft_hours=None):
     cfg = session_config(session, epochs)
+    if soft_hours:                     # e.g. a short first full session to look at real-scale timing early
+        if not 0.5 <= soft_hours <= 11.0:
+            raise SystemExit("--soft-hours must be within 0.5-11 (Kaggle sessions end at 12 h)")
+        cfg["soft_hours"], cfg["hard_hours"] = soft_hours, round(soft_hours + 0.6, 2)
     blob, sha, commit = code_bundle(allow_dirty)
     cfg.update({"kernel": f"{OWNER}/{slug(session)}", "previous_kernel": f"{OWNER}/{slug(previous)}" if previous else None,
                 "git_commit": commit, "code_sha256": sha, "code_bytes": len(blob)})
@@ -138,10 +142,11 @@ def build(session, previous, epochs, allow_dirty, folder):
 
 def cmd_push(a):
     folder = a.folder or tempfile.mkdtemp(prefix=f"kaggle-{a.session}-")
-    cfg, meta = build(a.session, a.previous, a.epochs, a.allow_dirty, folder)
+    cfg, meta = build(a.session, a.previous, a.epochs, a.allow_dirty, folder, a.soft_hours)
     print(json.dumps({"folder": folder, "kernel": meta["id"], "gpu": meta["enable_gpu"],
                       "machine_shape": meta.get("machine_shape"), "sources": meta["dataset_sources"] + meta["kernel_sources"],
                       "git_commit": cfg["git_commit"], "code_sha256": cfg["code_sha256"],
+                      "soft_hours": cfg["soft_hours"], "hard_hours": cfg["hard_hours"], "gpu_sanity": cfg.get("gpu_sanity"),
                       "runs": [(r["run_id"], r["arm"], r["gpu"], r["env"]) for r in cfg["runs"]]}, indent=1))
     if a.dry_run:
         return 0
@@ -201,6 +206,7 @@ def main(argv=None):
     p.add_argument("--previous")
     p.add_argument("--epochs", type=int)
     p.add_argument("--folder")
+    p.add_argument("--soft-hours", type=float, help="shorter session (training pauses after this many hours)")
     p.add_argument("--timeout", help="session timeout in seconds (Kaggle's own maximum applies)")
     p.add_argument("--allow-dirty", action="store_true")
     p.add_argument("--dry-run", action="store_true")
