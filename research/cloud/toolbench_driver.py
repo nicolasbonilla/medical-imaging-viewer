@@ -392,6 +392,9 @@ def main():
             shutil.rmtree(d, ignore_errors=True)
             for sub in ("in", "out"):
                 os.makedirs(os.path.join(d, sub))
+                # Containers may run as a non-root user (MindGlide does): the root-created mount must be
+                # writable for it, or saving fails after segmenting ("Permission denied", pilot 2026-10-22).
+                os.chmod(os.path.join(d, sub), 0o777)
             rec = {"case": cid, "tool": tool, "cohort": c["cohort"], "flair_sha256": c["flair_sha256"], "ok": False}
             try:
                 shutil.copyfile(c["flair"], os.path.join(d, "in", "flair.nii.gz"))
