@@ -141,5 +141,8 @@
  },
  "toolbench-samseg-c": {
   "purpose_es": "Artículo F: SAMSEG con lesiones, bloque 3 de 3"
+ },
+ "toolbench-mgraw": {
+  "purpose_es": "Artículo F, brazo secundario: MindGlide 1.3.0 con la FLAIR original (sin quitar el cráneo) en MS3SEG, Bagdad y PediMS (179 estudios)"
  }
 }

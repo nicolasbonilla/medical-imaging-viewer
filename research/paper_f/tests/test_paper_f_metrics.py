@@ -133,6 +133,8 @@ def make_cohort(root):
             nii(str(fl / f"{case}_f{k}_prob.nii.gz"), blob(shape, (10, 10, 5), 4) * 0.9, zooms=z)
         nii(str(tb / f"{case}_mindglide_seg.nii.gz"), gt, zooms=z, dtype=np.uint8)        # perfect
         nii(str(tb / f"{case}_wmhsynthseg_seg.nii.gz"), gt | blob(shape, (30, 8, 6), 3), zooms=z, dtype=np.uint8)
+        if case.startswith(("ms3seg", "muslim")):                                          # raw-input arm (7.6)
+            nii(str(tb / f"{case}_mindglide-raw_seg.nii.gz"), blob(shape, (10, 10, 5), 4), zooms=z, dtype=np.uint8)
         if case.startswith(("mslesseg", "openms")):
             nii(str(ls / f"{case}_lstai_prob.nii.gz"), gt * 0.8, zooms=z)
     return {"flames": str(fl), "tool": str(tb), "lstai": str(ls)}, list(cases)
@@ -161,6 +163,11 @@ def test_evaluate_end_to_end(tmp_path):
     assert p[("mindglide", "f1")]["n_scans"] == 2
     iso = [r for r in res["secondary"] if r.get("band") == "iso" and r["tool"] == "lstai" and r["outcome"] == "f1"][0]
     assert iso["n_scans"] == 1                                       # contaminated Ljubljana case dropped (FLAMeS)
+    raw = {(r["vs"], r["outcome"]): r for r in res["secondary_raw_arm"]}
+    assert len(raw) == 4 and all("p_holm" in r for r in raw.values())
+    assert raw[("flames", "f1")]["n_scans"] == 2 and raw[("flames", "f1")]["estimate"] == pytest.approx(0.0)
+    assert raw[("mindglide", "f1")]["estimate"] == pytest.approx(2 / 3 - 1)            # raw finds 1 of 2 lesions
+    assert prim[("mslesseg_P1_T1", "mindglide-raw")]["status"] == "missing"
     sens = {(r["analysis"], r["tool"], r["outcome"]): r for r in res["sensitivity"]}
     assert p[("samseg", "f1")]["n_scans"] == 1                                       # failure scored as empty
     assert sens[("S4_complete_case", "samseg", "f1")]["n_scans"] == 0                # ... or dropped

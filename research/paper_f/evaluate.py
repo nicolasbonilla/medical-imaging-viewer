@@ -35,7 +35,8 @@ sys.path.insert(0, HERE)
 import metrics as M  # noqa: E402
 
 NEW_TOOLS = ("mindglide", "wmhsynthseg", "samseg")
-TOOLS = ("flames", "lstai") + NEW_TOOLS
+RAW_ARM = ("mindglide-raw",)            # secondary arm 7.6: MindGlide on the FLAIR before skull stripping
+TOOLS = ("flames", "lstai") + NEW_TOOLS + RAW_ARM
 GRID_ATOL = 1e-4
 
 # Contamination (PROTOCOL.md section 3): (tool, case) cells excluded from every comparison involving
@@ -261,7 +262,8 @@ def degradation(rows, tool, ref_tool, outcome, n_boot=M.BOOT_N):
 
 def prestated(rows, n_boot=M.BOOT_N):
     """All comparisons fixed in PROTOCOL.md section 7, in protocol order."""
-    out = {"primary": [], "secondary": [], "sensitivity": [], "descriptive": [], "exploratory": []}
+    out = {"primary": [], "secondary": [], "secondary_raw_arm": [], "sensitivity": [], "descriptive": [],
+           "exploratory": []}
     for tool in NEW_TOOLS:                                       # P1-P6
         out["primary"].append(compare(rows, tool, "flames", "f1", "thick", M.EQUIV_MARGIN_F1, n_boot=n_boot))
         out["primary"].append(compare(rows, tool, "flames", "false_lesions", "thick", M.EQUIV_MARGIN_FP, n_boot=n_boot))
@@ -276,6 +278,13 @@ def prestated(rows, n_boot=M.BOOT_N):
     for r, p in zip(sec, M.holm([r.get("p_two_sided") for r in sec])):
         r["p_holm"] = p
     out["secondary"] = sec
+    raw = []                                                     # R1-R4: raw-input arm, thick band (7.6)
+    for ref in ("flames", "mindglide"):
+        raw.append(compare(rows, "mindglide-raw", ref, "f1", "thick", M.EQUIV_MARGIN_F1, n_boot=n_boot))
+        raw.append(compare(rows, "mindglide-raw", ref, "false_lesions", "thick", M.EQUIV_MARGIN_FP, n_boot=n_boot))
+    for r, p in zip(raw, M.holm([r["p_two_sided"] for r in raw])):
+        r["p_holm"] = p
+    out["secondary_raw_arm"] = raw
     out["sensitivity"] = sensitivity(rows, n_boot)
     for tool in TOOLS:                                           # D: per cohort / band, every outcome
         for cohort in ("mslesseg", "openms", "ms3seg", "muslim", "pedims"):

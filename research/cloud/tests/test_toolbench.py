@@ -81,6 +81,57 @@ def test_verify_inputs_refuses_other_bytes(tmp_path):
     assert not ok and all("no FLAMeS checksum" in b["reason"] for b in bad)
 
 
+# ------------------------------------------------------------------ raw-input arm (PROTOCOL.md 7.6)
+def make_raw_tree(root):
+    """MS3SEG/Muslim raw FLAIRs in extra_raw (as cases_extra.json lists them) + PediMS raw via its own list."""
+    roots = make_tree(root)
+    pr = os.path.join(root, "pedims_raw")
+    nii(os.path.join(pr, "pedims_raw", "pedims_P1_T1_flair_raw.nii.gz"), brain(seed=5))
+    json.dump({"pedims_P1_T1": "pedims_raw/pedims_P1_T1_flair_raw.nii.gz"}, open(os.path.join(pr, "cases_pedims_raw.json"), "w"))
+    roots["pedims_raw"] = pr
+    return roots
+
+
+def test_raw_arm_uses_the_pre_skull_strip_flair_and_says_why_cohorts_are_missing(tmp_path):
+    roots = make_raw_tree(str(tmp_path))
+    c, notes = tb.enumerate_raw_cases(roots, list(tb.COHORTS))
+    assert list(c) == ["ms3seg_001", "muslim_01", "pedims_P1_T1"]
+    assert c["ms3seg_001"]["flair"].endswith(os.path.join("ms3seg", "ms3seg_001_flair.nii.gz"))      # not the brain
+    assert c["pedims_P1_T1"]["flair"].endswith("pedims_P1_T1_flair_raw.nii.gz")
+    assert {n["cohort"] for n in notes} == {"mslesseg", "openms"}
+    del roots["pedims_raw"]
+    c, notes = tb.enumerate_raw_cases(roots, ["pedims"])
+    assert not c and "no PediMS raw FLAIR list" in notes[0]["reason"]
+    assert tb.output_tag("mindglide", "raw") == "mindglide-raw" and tb.output_tag("mindglide", "flames") == "mindglide"
+
+
+def test_raw_inputs_must_share_the_flames_grid(tmp_path):
+    roots = make_raw_tree(str(tmp_path))
+    c, _ = tb.enumerate_raw_cases(roots, ["ms3seg", "pedims"])
+    exp = {"ms3seg_001": {"shape": [12, 10, 8], "affine": np.eye(4).tolist()},
+           "pedims_P1_T1": {"shape": [12, 10, 8], "affine": np.diag([0.75, 0.75, 3.9, 1]).tolist()}}
+    ok, bad = tb.verify_raw_inputs(c, exp)
+    assert list(ok) == ["ms3seg_001"] and len(ok["ms3seg_001"]["flair_sha256"]) == 64
+    assert bad[0]["case"] == "pedims_P1_T1" and "grid differs" in bad[0]["reason"]
+
+
+def test_pedims_raw_fetch_checks_md5_and_keeps_bytes(tmp_path, monkeypatch):
+    import hashlib
+    import cohorts_extra as cx
+    import extra_cohorts_stage as st
+    payload = {"u1": b"raw-flair-1", "u2": b"raw-flair-2", "u3": b"brain"}
+    files = [{"id": 1, "name": "defaced_FLAIR.nii.gz", "download_url": "u1", "computed_md5": hashlib.md5(b"raw-flair-1").hexdigest()},
+             {"id": 2, "name": "defaced_FLAIR.nii.gz", "download_url": "u2", "computed_md5": "0" * 32},   # corrupted
+             {"id": 3, "name": "brain_FLAIR.nii.gz", "download_url": "u3"}]
+    fs = {"1": "PediMS/P1/T1/raw", "2": "PediMS/P2/T1/raw", "3": "PediMS/P1/T1/processed"}
+    monkeypatch.setattr(cx, "_figshare_files", lambda art: {"files": files, "folder_structure": fs})
+    monkeypatch.setattr(cx, "_download", lambda url, dest: open(dest, "wb").write(payload[url]) and dest)
+    got = cx.fetch_pedims_raw(str(tmp_path))
+    assert list(got) == ["pedims_P1_T1"] and open(got["pedims_P1_T1"], "rb").read() == b"raw-flair-1"
+    assert st.pedims_raw(str(tmp_path)) == 0
+    assert json.load(open(tmp_path / "cases_pedims_raw.json")) == {"pedims_P1_T1": "pedims_raw/pedims_P1_T1_flair_raw.nii.gz"}
+
+
 def test_thick_slice_cases_run_first():
     exp = {"ms3seg_001": {"band": "thick"}, "mslesseg_P10_T1": {"band": "iso"}, "pedims_P1_T1": {"band": "thick"}}
     sel = {c: {} for c in sorted(exp)}
@@ -246,6 +297,7 @@ def test_vm_script_is_safe_to_launch():
     assert "FS_IMAGE_DEFAULT" not in s and "FS_CHECK" not in s                # placeholders filled
     assert re.search(r"freesurfer/freesurfer@sha256:[0-9a-f]{64}", s)
     assert re.search(r"mindglide@sha256:[0-9a-f]{64}", s)
+    assert "input-variant" in s and '--input-variant "$VARIANT"' in s and "pedims_raw=$W/pedims_raw" in s
 
 
 def test_ledger_reads_toolbench_cost_and_manifests():

@@ -15,13 +15,17 @@
 #           case-offset=0  case-limit=0  cases=""(explicit ids)  timeout-min=45  wmh-crop=0
 #           mindglide-image=<ref@digest>  fs-image=<ref@digest>  hourly-rate  machine-desc  max-hours=12
 #           max-minutes (optional, overrides max-hours for the in-VM guard)
+#           input-variant=flames (primary arm: the FLAMeS skull-stripped FLAIR) | raw (secondary arm,
+#           PROTOCOL.md 7.6: FLAIR before skull stripping, MS3SEG/Muslim/PediMS only; outputs {tool}-raw)
 exec > /var/log/job.log 2>&1
 set -x
 MD="http://metadata/computeMetadata/v1/instance"
 meta(){ curl -sf -H "Metadata-Flavor: Google" "$MD/$1" 2>/dev/null || true; }
 NAME=$(meta name); ZONE=$(meta zone | awk -F/ '{print $NF}')
 TOOLS=$(meta attributes/tools);          TOOLS=${TOOLS:-wmhsynthseg mindglide samseg}
-DATASETS=$(meta attributes/datasets);    DATASETS=${DATASETS:-mslesseg openms ms3seg muslim pedims}
+VARIANT=$(meta attributes/input-variant); VARIANT=${VARIANT:-flames}   # flames (primary) | raw (PROTOCOL 7.6)
+DATASETS=$(meta attributes/datasets)
+if [ "$VARIANT" = "raw" ]; then DATASETS=${DATASETS:-ms3seg muslim pedims}; else DATASETS=${DATASETS:-mslesseg openms ms3seg muslim pedims}; fi
 OFFSET=$(meta attributes/case-offset);   OFFSET=${OFFSET:-0}
 LIMIT=$(meta attributes/case-limit);     LIMIT=${LIMIT:-0}
 CASES=$(meta attributes/cases)
@@ -196,10 +200,29 @@ EXTRA=""; for d in ms3seg muslim pedims; do case " $DATASETS " in *" $d "*) EXTR
 if [ -n "$EXTRA" ]; then
   cache_get extra_cohorts_raw_v1.tar.gz || exit 1
   tar -xzf $W/cache/extra_cohorts_raw_v1.tar.gz -C $W && rm -f $W/cache/extra_cohorts_raw_v1.tar.gz
-  # The HD-BET brains the FLAMeS runs used (MS3SEG, Muslim); PediMS ships skull-stripped.
-  gcloud storage cp "$BK/inputs/extra_stripped/*_flair_brain.nii.gz" $W/extra_brain/ --quiet || exit 1
-  ls $W/extra_brain | wc -l
+  if [ "$VARIANT" = "flames" ]; then
+    # The HD-BET brains the FLAMeS runs used (MS3SEG, Muslim); PediMS ships skull-stripped.
+    gcloud storage cp "$BK/inputs/extra_stripped/*_flair_brain.nii.gz" $W/extra_brain/ --quiet || exit 1
+    ls $W/extra_brain | wc -l
+  fi
 fi
+# Raw-input arm: MS3SEG/Muslim raw FLAIRs are in the tarball above (the files HD-BET was run on).
+# PediMS raw = raw/defaced_FLAIR.nii.gz from Figshare, fetched once (MD5 checked) and cached as a tarball.
+if [ "$VARIANT" = "raw" ]; then case " $DATASETS " in *" pedims "*)
+  P=pedims_raw_flair_v1.tar.gz
+  if gcloud storage cp "$BK/inputs/$P" "$BK/inputs/$P.sha256" $W/cache/ --quiet 2>/dev/null; then
+    [ "$(sha256sum $W/cache/$P | awk '{print $1}')" = "$(cat $W/cache/$P.sha256)" ] || { echo "PediMS raw tarball checksum mismatch"; exit 1; }
+  else
+    gcloud storage cp "$BK/$PFX/code/cohorts_extra.py" "$BK/$PFX/code/extra_cohorts_stage.py" $W/ --quiet \
+      && python3 $W/extra_cohorts_stage.py pedims-raw --out $W/pedims_raw_build \
+      && tar -czf $W/cache/$P -C $W/pedims_raw_build . \
+      && sha256sum $W/cache/$P | awk '{print $1}' > $W/cache/$P.sha256 \
+      && gcloud storage cp $W/cache/$P $W/cache/$P.sha256 "$BK/inputs/" --quiet \
+      || echo "WARNING: PediMS raw FLAIR unavailable; PediMS is reported as an input problem"
+  fi
+  mkdir -p $W/pedims_raw && [ -s $W/cache/$P ] && tar -xzf $W/cache/$P -C $W/pedims_raw && rm -f $W/cache/$P
+  ls $W/pedims_raw/pedims_raw 2>/dev/null | wc -l ;;
+esac; fi
 log
 
 stage code_start; echo "=== [5/6] code (uploaded by the coordinator before launch) ==="
@@ -210,7 +233,8 @@ log
 stage inference_start; echo "=== [6/6] tools per case (tool-major), per-case upload, resumable ==="
 ( while sleep 600; do log; done ) &
 python3 $W/toolbench_driver.py --bucket $BKT --prefix $PFX --run-id "$NAME" --tools $TOOLS --datasets $DATASETS \
-  --roots mslesseg=$W/data/mslesseg openms=$W/data/open_ms_data/cross_sectional/MNI extra_raw=$W/extra_raw extra_brain=$W/extra_brain \
+  --roots mslesseg=$W/data/mslesseg openms=$W/data/open_ms_data/cross_sectional/MNI extra_raw=$W/extra_raw extra_brain=$W/extra_brain pedims_raw=$W/pedims_raw \
+  --input-variant "$VARIANT" \
   --expected $W/flames_inputs.json --offset "$OFFSET" --limit "$LIMIT" --cases "$CASES" --timeout-min "$TMIN" \
   --images mindglide=mindglide:bench fs=freesurfer:bench --image-refs mindglide="$MGIMG" fs="$FSIMG" \
   ${LIC:+--fs-license "$LIC"} ${WMH:+--wmh-model "$WMH"} --wmh-crop "$WMHCROP" --work $W/run

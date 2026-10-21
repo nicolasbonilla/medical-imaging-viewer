@@ -28,6 +28,11 @@ probability becomes its footprint mean. Every transform is recorded per output.
 Order: TOOL-MAJOR (all cases with the first tool, then the next), cheapest first, so a wall-clock stop
 still leaves complete tools. Resumable: a (case, tool) whose _seg is in the bucket is skipped.
 
+Input variants (--input-variant): "flames" (default, primary arm) = the FLAMeS FLAIR, SHA-256 checked;
+"raw" (secondary arm, PROTOCOL.md 7.6) = the FLAIR BEFORE skull stripping, only for MS3SEG, Muslim and
+PediMS, grid checked against the FLAMeS grid; outputs and manifest entries are then named {tool}-raw
+(e.g. {case}_mindglide-raw_seg.nii.gz).
+
     python toolbench_driver.py --bucket mstool-research-data --run-id <vm> --tools wmhsynthseg mindglide samseg \
         --datasets mslesseg openms ms3seg muslim pedims --roots mslesseg=/w/data/mslesseg \
         openms=/w/data/open_ms_data/cross_sectional/MNI extra_raw=/w/extra_raw extra_brain=/w/extra_brain \
@@ -113,6 +118,67 @@ def enumerate_cases(roots, datasets):
                   else os.path.join(raw, v["flair"]))
             out[cid] = {"cohort": v["cohort"], "flair": fl}
     return dict(sorted(out.items()))
+
+
+# Secondary arm "raw input" (PROTOCOL.md 7.6): the tool gets the FLAIR BEFORE skull stripping, on the
+# same grid as the FLAMeS input, and its outputs are named {case}_{tool}-raw_*.
+RAW_COHORTS = ("ms3seg", "muslim", "pedims")
+NO_RAW = {
+    "mslesseg": "MSLesSeg is public only as skull-stripped MNI-registered images: no raw FLAIR",
+    "openms": "Ljubljana raw FLAIR exists (open_ms_data cross_sectional/raw) but not on the MNI grid of the "
+              "FLAMeS maps and no transform is shipped: excluded rather than re-registered",
+}
+
+
+def enumerate_raw_cases(roots, datasets):
+    """({case: {"cohort", "flair"}}, notes) for the raw-input arm.
+
+    ms3seg, muslim  <extra_raw>/cases_extra.json "flair" = the FLAIR BEFORE HD-BET; the FLAMeS input is
+                    raw x HD-BET mask saved with the raw affine (cohorts_extra.hdbet_strip), so same grid.
+    pedims          <pedims_raw>/cases_pedims_raw.json = raw/defaced_FLAIR.nii.gz (skull present).
+    The grid of every file is re-checked against the FLAMeS grid by verify_raw_inputs.
+    """
+    out, notes = {}, [{"cohort": d, "reason": NO_RAW[d]} for d in datasets if d in NO_RAW]
+    wanted = [d for d in datasets if d in ("ms3seg", "muslim")]
+    if wanted:
+        raw = roots["extra_raw"]
+        for cid, v in json.load(open(os.path.join(raw, "cases_extra.json"))).items():
+            if v["cohort"] in wanted:
+                out[cid] = {"cohort": v["cohort"], "flair": os.path.join(raw, v["flair"])}
+    if "pedims" in datasets:
+        p = os.path.join(roots.get("pedims_raw", ""), "cases_pedims_raw.json")
+        if os.path.exists(p):
+            for cid, rel in json.load(open(p)).items():
+                out[cid] = {"cohort": "pedims", "flair": os.path.join(roots["pedims_raw"], rel)}
+        else:
+            notes.append({"cohort": "pedims", "reason": f"no PediMS raw FLAIR list at {p}"})
+    return dict(sorted(out.items())), notes
+
+
+def verify_raw_inputs(cases, expected):
+    """Keep raw FLAIRs whose shape and affine equal the FLAMeS grid (flames_inputs.json, 1e-4 mm)."""
+    import nibabel as nib
+    ok, problems = {}, []
+    for cid, c in cases.items():
+        exp = expected.get(cid)
+        if not os.path.exists(c["flair"]):
+            problems.append({"case": cid, "reason": f"raw FLAIR missing: {c['flair']}"})
+            continue
+        if exp is None:
+            problems.append({"case": cid, "reason": "case not in the FLAMeS inputs"})
+            continue
+        img = nib.load(c["flair"])
+        if not jc.same_grid(img.shape, img.affine, exp["shape"], np.asarray(exp["affine"], float)):
+            problems.append({"case": cid, "reason": "raw FLAIR grid differs from the FLAMeS grid",
+                             "shape": list(img.shape[:3]), "flames_shape": exp["shape"]})
+            continue
+        ok[cid] = {**c, "flair_sha256": jc.sha256(c["flair"]), "grid_check": "same shape and affine as the FLAMeS input"}
+    return ok, problems
+
+
+def output_tag(tool, input_variant):
+    """Name used in output files and manifests: mindglide (FLAMeS input) or mindglide-raw (raw input)."""
+    return tool if input_variant == "flames" else f"{tool}-{input_variant}"
 
 
 def verify_inputs(cases, expected):
@@ -314,6 +380,8 @@ def main():
     ap.add_argument("--wmh-crop", type=int, default=0, help="1 = mri_WMHsynthseg --crop (pre-stated memory fallback)")
     ap.add_argument("--threads", type=int, default=os.cpu_count())
     ap.add_argument("--timeout-min", type=float, default=45.0, help="per case-tool hard stop")
+    ap.add_argument("--input-variant", choices=["flames", "raw"], default="flames",
+                    help="flames = FLAMeS (skull-stripped) FLAIR; raw = FLAIR before skull stripping (7.6)")
     ap.add_argument("--work", default="/w/run")
     a = ap.parse_args()
 
@@ -337,9 +405,16 @@ def main():
                "crop": bool(a.wmh_crop)}
 
     expected = json.load(open(a.expected))
-    cands = enumerate_cases(roots, a.datasets)
-    ids = jc.select_ids(list(cands), a.offset, a.limit, jc.split_ids(a.cases))
-    sel, problems = verify_inputs({c: cands[c] for c in ids}, expected)
+    if a.input_variant == "raw":
+        cands, cohort_notes = enumerate_raw_cases(roots, a.datasets)
+        ids = jc.select_ids(list(cands), a.offset, a.limit, jc.split_ids(a.cases))
+        sel, problems = verify_raw_inputs({c: cands[c] for c in ids}, expected)
+        problems = cohort_notes + problems
+    else:
+        cands = enumerate_cases(roots, a.datasets)
+        ids = jc.select_ids(list(cands), a.offset, a.limit, jc.split_ids(a.cases))
+        sel, problems = verify_inputs({c: cands[c] for c in ids}, expected)
+    tags = {t: output_tag(t, a.input_variant) for t in order}
     done = {os.path.basename(b.name) for b in bucket.list_blobs(prefix=f"{a.prefix}/cohort/")}
     print(f"TOOLBENCH: {len(sel)} cases ok, {len(problems)} input problems: {problems}", flush=True)
 
@@ -360,6 +435,7 @@ def main():
     manifest = {
         "run_id": a.run_id, "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "host": platform.node(), "cpu_count": os.cpu_count(), "threads": a.threads, "tools": order,
+        "input_variant": a.input_variant, "output_tags": tags,
         "images": prov, "fs_license_present": bool(a.fs_license and os.path.exists(a.fs_license)),
         "wmh_model": wmh, "samseg_seed": SAMSEG_SEED, "timeout_min": a.timeout_min,
         "commands": {t: " ".join(docker_cmd(t, "<case_dir>")) for t in order},
@@ -382,23 +458,24 @@ def main():
 
     flush()
     for tool in order:
-        spec = TOOLS[tool]
+        spec, tag = TOOLS[tool], tags[tool]
         for cid, c in thick_first(sel, expected):
-            if f"{cid}_{tool}_seg.nii.gz" in done:
-                print(f"[{tool}] {cid} already in the bucket", flush=True)
+            if f"{cid}_{tag}_seg.nii.gz" in done:
+                print(f"[{tag}] {cid} already in the bucket", flush=True)
                 continue
             t0 = time.time()
-            d = os.path.join(a.work, f"{cid}_{tool}")
+            d = os.path.join(a.work, f"{cid}_{tag}")
             shutil.rmtree(d, ignore_errors=True)
             for sub in ("in", "out"):
                 os.makedirs(os.path.join(d, sub))
                 # Containers may run as a non-root user (MindGlide does): the root-created mount must be
                 # writable for it, or saving fails after segmenting ("Permission denied", pilot 2026-10-22).
                 os.chmod(os.path.join(d, sub), 0o777)
-            rec = {"case": cid, "tool": tool, "cohort": c["cohort"], "flair_sha256": c["flair_sha256"], "ok": False}
+            rec = {"case": cid, "tool": tag, "base_tool": tool, "input_variant": a.input_variant,
+                   "cohort": c["cohort"], "flair": c["flair"], "flair_sha256": c["flair_sha256"], "ok": False}
             try:
                 shutil.copyfile(c["flair"], os.path.join(d, "in", "flair.nii.gz"))
-                cname = container_name(a.run_id, cid, tool)
+                cname = container_name(a.run_id, cid, tag)
                 cmd = docker_cmd(tool, d, cname)
                 ts = time.time()
                 try:
@@ -422,27 +499,27 @@ def main():
                 ref = nib.load(c["flair"])
                 seg, prob, info = to_reference(tool, outs, ref)
                 rec.update(info)
-                seg_local = os.path.join(d, f"{cid}_{tool}_seg.nii.gz")
+                seg_local = os.path.join(d, f"{cid}_{tag}_seg.nii.gz")
                 jc.save_like(seg, ref, seg_local, np.uint8)
                 rec["seg_sha256"], rec["lesion_voxels"] = jc.sha256(seg_local), int(seg.sum())
                 if prob is not None:
-                    prob_local = os.path.join(d, f"{cid}_{tool}_prob.nii.gz")
+                    prob_local = os.path.join(d, f"{cid}_{tag}_prob.nii.gz")
                     rec["prob_storage_max_abs_error"] = round(jc.save_prob(prob, ref, prob_local, "uint8"), 6)
                     rec["prob_sha256"] = jc.sha256(prob_local)
-                    bucket.blob(f"{a.prefix}/cohort/{cid}_{tool}_prob.nii.gz").upload_from_filename(prob_local)
+                    bucket.blob(f"{a.prefix}/cohort/{cid}_{tag}_prob.nii.gz").upload_from_filename(prob_local)
                 for suffix, p in outs["aux"].items():
                     if p and os.path.exists(p):
-                        bucket.blob(f"{a.prefix}/aux/{tool}/{cid}_{suffix}").upload_from_filename(p)
-                bucket.blob(f"{a.prefix}/cohort/{cid}_{tool}_seg.nii.gz").upload_from_filename(seg_local)   # last
+                        bucket.blob(f"{a.prefix}/aux/{tag}/{cid}_{suffix}").upload_from_filename(p)
+                bucket.blob(f"{a.prefix}/cohort/{cid}_{tag}_seg.nii.gz").upload_from_filename(seg_local)   # last
                 rec.update(ok=True, seconds=round(time.time() - t0, 1))
-                print(f"[{tool}] {cid} done in {rec['seconds']:.0f}s (tool {rec['seconds_tool']:.0f}s, peak "
+                print(f"[{tag}] {cid} done in {rec['seconds']:.0f}s (tool {rec['seconds_tool']:.0f}s, peak "
                       f"{rec.get('peak_mem_used_gb')} GB, {info['seg_transform']['kind']}, {rec['lesion_voxels']} lesion voxels)",
                       flush=True)
                 manifest["cases"].append(rec)
             except Exception as exc:                                     # record and continue; never silent
-                manifest["errors"].append({"case": cid, "tool": tool, "error": repr(exc)[:800],
+                manifest["errors"].append({"case": cid, "tool": tag, "base_tool": tool, "error": repr(exc)[:3500],
                                            "seconds": round(time.time() - t0, 1)})
-                print(f"[{tool}] {cid} FAILED: {exc!r}", flush=True)
+                print(f"[{tag}] {cid} FAILED: {exc!r}", flush=True)
             shutil.rmtree(d, ignore_errors=True)
             flush()
     manifest["finished_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())

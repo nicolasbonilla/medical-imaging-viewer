@@ -182,6 +182,31 @@ for k in 1 2 3; do
 done
 ```
 
+**Secondary arm — MindGlide on the raw (non-skull-stripped) FLAIR** (PROTOCOL.md 7.6; MS3SEG, Muslim,
+PediMS = 179 scans; MSLesSeg and Ljubljana have no raw FLAIR on the FLAMeS grid). Upload the updated
+code first (the driver gained `--input-variant`; the two cohort files fetch the PediMS raw FLAIR once):
+
+```bash
+export CLOUDSDK_CONFIG="C:/Users/Nicolas/.gcloud-mstool"; B=gs://mstool-research-data
+gcloud storage cp research/cloud/toolbench_driver.py research/cloud/job_common.py research/paper_f/flames_inputs.json \
+    research/cloud/cohorts_extra.py research/cloud/extra_cohorts_stage.py $B/toolbench/code/
+python research/cloud/launch_vm.py --name toolbench-mgraw --machine-type n2-standard-4 --disk-gb 100 \
+  --startup research/cloud/vm_toolbench.sh --paper F --max-hours 10 \
+  --purpose "Paper F secondary arm 7.6: MindGlide 1.3.0 on raw (non-skull-stripped) FLAIR, MS3SEG + Muslim + PediMS" \
+  --meta tools=mindglide input-variant=raw "datasets=ms3seg muslim pedims"
+```
+
+Use `--machine-type n2d-standard-4` instead if fewer than 4 N2D vCPUs are in use (quota: ≤ 8 N2D, 12
+total). Cost: 179 scans × 1.2–2.5 min (pilot: ~84 s per stripped scan; the skull enlarges the volume) +
+~0.2 h setup ≈ 3.8–7.7 h → **0.79–1.60 USD on n2-standard-4, expected ≈ 1.0 USD**; ceiling 11 h →
+2.29 USD. The first run also fetches the 28 PediMS raw FLAIRs from Figshare and caches them.
+
+Pass/fail: log has `TOOLS AFTER CHECKS: mindglide` and no `TOOL DROPPED`; manifest
+`input_variant` = `raw`, `output_tags.mindglide` = `mindglide-raw`, 179 cases ok and `input_problems`
+only the two cohort notes (MSLesSeg, Ljubljana) — any "grid differs" entry means the raw and FLAMeS
+grids disagree for that case (excluded, report it); then
+`python research/paper_f/evaluate.py check --tool-dir <D> --flames-dir data/cohorts/cloud-2026-10/flames --tools mindglide-raw --cases <the 179 thick ids>`.
+
 **After the runs** (local; no cloud commands except the downloads):
 
 ```bash
@@ -268,6 +293,8 @@ Training data and overlap with our cohorts (details in PROTOCOL.md section 3):
   SAMSEG atlas README warns registration "may fail if the input image does not have extra-cerebral
   structures"; MindGlide was trained with skull. A failure or a nonsensical result in the pilot is
   reported as such (tool not suitable for skull-stripped input), not fixed by changing inputs mid-study.
+  For MindGlide this was addressed **additively** on 2026-10-22: the primary arm stays as registered and
+  the secondary arm 7.6 adds MindGlide on the raw FLAIR (thick band only).
 - **WMH-SynthSeg memory**: "about 32 GB"; the 32 GB machine plus 16 GB swap should hold; `--crop` is the
   pre-stated fallback.
 - **WMH-SynthSeg labels white-matter hyperintensities**, not MS lesions specifically; MS3SEG labels
