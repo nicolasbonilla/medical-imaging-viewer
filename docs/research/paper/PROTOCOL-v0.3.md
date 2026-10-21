@@ -255,6 +255,26 @@ gradient) are in `v03_posthoc.py` / `2026-10-21_paper_a_v03_posthoc.json` and ar
 hoc wherever cited. (c) Observation on the classification rule: "holds" admits point estimates
 above nominal (upper bound ≤ nominal + 0.05); such cells are flagged in RESULTS-v0.3.md.
 
+**2026-10-21, entry 7 — disclosure: a thick-slice pilot preceded this protocol.** On 2026-10-18
+(run `flames-extra-pilot`, manifest `data/cohorts/cloud-2026-10/manifests/flames-extra-pilot.json`)
+FLAMeS fold 0 was run on one scan each of MS3SEG (`ms3seg_001`), Muslim (`muslim_01`) and PediMS
+(`pedims_P1_T1`) to test the processing chain, and the cohort preparation checked one case per
+cohort (`docs/research/cohorts-extra.md`, overlays and lesion/brain ratios). Those three scans are
+part of the v0.3 data. The analyst who wrote this protocol did not inspect the pilot's maps or any
+lesion-level outcome, and §"What had been seen" omitted the pilot only because it was not looked
+at; but the pilot was run in the same project before pre-registration, so the protocol is not
+blind to its existence. Three of 179 thick-slice scans; no analysis choice in this protocol
+refers to them.
+
+**2026-10-21, entry 8 — after an independent re-implementation (post hoc).** An independent
+re-implementation reproduced the candidates and primary rates to three decimals and found no
+leakage. Following its review, one explanatory analysis was added to `v03_posthoc.py` (item 5:
+realised FDR on thick-slice scans with ≥ 40 % / ≥ 50 % false candidates, 1-mm vs within-site
+calibration, and α·π0), and the result documents were reworded ("no violation detected" instead of
+"held"; intervals for the per-scan failures; site confounding of the thickness gradient; mixed
+validity effect of the ensemble; sensitivity cost of per-scan recalibration). No pre-registered
+number changed.
+
 ## 14. Compute
 
 Local CPU only (8 workers), no cloud command. Derived candidate caches go to the git-ignored

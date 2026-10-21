@@ -4,18 +4,28 @@
 
 - Protocol: `docs/research/paper/PROTOCOL-v0.3.md` — committed before any outcome (9951494);
   implementation clarifications 1–4 (c0c5fa1) and the gate-G1 deviation 5 (50c9b08) were logged
-  before any outcome was computed. No later deviation.
+  before any outcome was computed; entry 6 (transparency, after results) and entry 7 (a 3-case
+  thick-slice pilot of 2026-10-18 that preceded the protocol) are disclosed there.
 - Records: `docs/research/records/2026-10-21_paper_a_v03_*.json` (+ `_output.txt`): inventory
-  (input SHA-256), candidates (cache SHA-256, gate G1), results (all numbers below), post-hoc
-  (explanatory checks written **after** the results were seen — labelled as such wherever used).
+  (input SHA-256), candidates (cache SHA-256, gate G1), results (all pre-registered numbers below),
+  post-hoc (explanatory checks written **after** the results were seen — every use below is marked
+  **[post hoc]**).
 - Code: `research/paper_a/v03_{data,inventory,candidates,metrics,analysis,posthoc}.py`; tests
   `research/paper_a/test_v03_metrics.py` (33 pass).
+- **Revision 2026-10-21 (after an independent re-implementation).** A separate re-implementation
+  reproduced the candidates (e.g. MS3SEG 3402 candidates / 1162 false) and every primary rate to
+  three decimals and found no leakage between calibration and test patients. It also showed that
+  several statements in the first version of this file overclaimed; they are corrected below
+  ("no violation detected" instead of "held"; per-scan failure intervals; thickness confounded with
+  site; the ensemble's effect on validity is mixed; recalibration of the per-scan promise works by
+  near-abstention). One post-hoc check was added (§2, scans with many false candidates).
 - Arms: **ens** = 5-fold FLAMeS mean probability (primary); **f0** = fold 0 alone (= the v0.1/v0.2
   pipeline). P1 = conformal BH (FDR target α); P2 = scan-conformal FDX threshold (target
   P(FDP > γ) ≤ δ = 0.1). "Realised FDR" = mean per-scan FDP; "FDX" = share of test scans with
   FDP > γ. Intervals are 95 % patient-cluster bootstrap (FDX: union with exact Clopper–Pearson).
   Cell classes (protocol §9): *violated* = CI lower bound > nominal; *holds* = CI upper bound ≤
-  nominal + 0.05 (**note: a "holds" cell may have a point estimate slightly above nominal**);
+  nominal + 0.05 (**a "holds" cell may have a point estimate above nominal; "holds" means "no
+  violation detected and the upper bound is within the margin", not "the guarantee is proven"**);
   otherwise *inconclusive*; "uninf." = holds only through abstention (< 10 selections or
   end-to-end sensitivity < 0.05).
 
@@ -23,35 +33,55 @@
 
 ## 0. Bottom line
 
-1. **Marginal lesion-FDR control (P1) was not violated in any of the 16 held-out-site cells**
-   (1-mm → thick-slice and leave-one-site-out), but it is not "established" everywhere: on Muslim
-   at α = 0.1 the realised FDR was 0.122 [0.062, 0.197] (inconclusive), and on MS3SEG at α = 0.1 it
-   was 0.107 [0.074, 0.145] (point estimate above nominal, within the pre-registered margin).
+1. **No violation of marginal lesion-FDR control (P1) was detected in the 16 held-out-site
+   cells** (1-mm → thick-slice and leave-one-site-out). That is weaker than "the guarantee held":
+   on Muslim at α = 0.1 the result is undecided (0.122 [0.062, 0.197]); 3 of the 16 cells pass only
+   because almost nothing is selected (MSLesSeg, Ljubljana and Muslim at α = 0.1, leave-one-site-out);
+   PediMS (9 patients) and Ljubljana (10) are underpowered; on MS3SEG at α = 0.1 the estimate
+   (0.107 [0.074, 0.145]) is above nominal and passes only through the pre-registered margin.
+   **The calibration does not transfer as such**: on the two large thick-slice sites the realised
+   FDR at α = 0.1 is 2.6–3.2× the within-site value (MS3SEG 0.107 vs 0.041; Muslim 0.122 vs 0.038),
+   which itself sits near α·π0 **[post hoc]** (π0 = share of false candidates, 0.34–0.37), as
+   conformal BH predicts under exchangeability. Exchangeability is broken; the average bound survives because lesion-rich
+   scans (many true candidates) dilute the false selections. **[post hoc]** On the third of
+   MS3SEG + Muslim scans with ≥ 40 % false candidates (51 of 151), realised FDR at α = 0.1 is
+   0.196 [0.120, 0.282] with 1-mm calibration vs 0.050 [0.011, 0.103] with within-site calibration.
    Pre-registered verdict for Q1/P1: **inconclusive**.
 2. **Per-scan exceedance control (P2) does not transport from 1-mm to thick-slice sites**: with a
-   threshold calibrated on MSLesSeg + Ljubljana, 21 % of MS3SEG scans (γ = 0.1) and 29 % / 27 % of
-   Muslim scans (γ = 0.1 / 0.2) had FDP above γ, against a 10 % budget. Verdict Q1/P2: **refuted**.
-3. **Thickness matters, mostly through power and slack, not through outright violation.** Under
-   leave-one-site-out calibration, realised FDR at α = 0.2 rises with slice thickness — 0.018
-   (≤ 1.5 mm), 0.050 (3.9 mm), 0.101 (4.5–6.5 mm), 0.120 (> 6.5 mm) — and the share of scans with
-   FDP > 0.1 rises from 6 % to 49 %. Raw lesion detection falls: no lesion size reaches 80 %
-   detection on thick-slice scans, and 50 % detection needs ≥ 50 mm³ (≈ 4.6 mm diameter) on
-   4.5–8.3 mm slices versus ≥ 14 mm³ (≈ 3 mm) on 1-mm and 3.9-mm scans.
-4. **The 5-fold ensemble is the largest effect in this study.** Candidate AUROC rises from
-   0.67–0.76 (any single fold) to 0.78–0.82 (ensemble) at every site; at the guarantee
-   (P1, α = 0.2) end-to-end lesion sensitivity doubles (leave-one-site-out 0.203 vs 0.102,
-   Δ = +0.10 [0.07, 0.13]; 1-mm → thick 0.341 vs 0.194, Δ = +0.15 [0.12, 0.18]) and realised FDR
-   falls. **With fold 0 alone — the v0.2 pipeline — MS3SEG is violated** (P1 α = 0.1: 0.201
-   [0.166, 0.242]); the ensemble removes 5 violated cells and adds 2 (Muslim, P2). Pre-registered
-   verdict Q3: "helps on power, but with new violated cells".
-5. **Per-site recalibration works for P1 at any size and for P2 only site-only with ≥ 10
-   patients.** Within-site P1 stayed below α on average at every calibration size; 10 target
-   patients reach ~90 % of full within-site power on MS3SEG and Muslim. P2 needs ≥ 9 site patients (δ = 0.1) and is restored on MS3SEG
-   (k = 10: FDX 0.075) and, by near-total abstention, on Muslim; adding the 1-mm pool to the site
-   patients never restored P2 (FDX 0.16–0.28 for k ≤ 40).
-6. **Paired segmenter shift (same MSLesSeg images, FLAMeS vs LST-AI) breaks validity in one
-   direction**: LST-AI-calibrated selection on FLAMeS candidates gave realised FDR 0.207
-   [0.175, 0.240] at α = 0.1; the other direction selected nothing.
+   threshold calibrated on MSLesSeg + Ljubljana, 21 % [13, 30] of MS3SEG scans (γ = 0.1) and
+   29 % [17, 44] / 27 % [16, 42] of Muslim scans (γ = 0.1 / 0.2) had FDP above γ, against a 10 %
+   budget. Only the Muslim γ = 0.1 cell remains violated after correction for the 32 primary
+   comparisons; when calibration patients are re-drawn too (two-level bootstrap) the MS3SEG lower
+   bound falls to 0.10, i.e. no longer a detected violation. Verdict Q1/P2 by the pre-registered
+   rule: **refuted** (on the strength of Muslim; MS3SEG is borderline).
+3. **Slice thickness: a gradient, confounded with site.** Under leave-one-site-out calibration,
+   realised FDR at α = 0.2 is 0.018 (≤ 1.5 mm), 0.050 (3.9 mm), 0.101 (4.5–6.5 mm), 0.120 (> 6.5 mm)
+   and the share of scans with FDP > 0.1 is 6 %, 14 %, 30 %, 49 %. Each band is essentially one or
+   two sites, and within a site the gradient is small (MS3SEG 4.5–6.5 → > 6.5 mm: 0.103 → 0.121;
+   Muslim 0.099 → 0.102 with only 6 scans above 6.5 mm), so this is mostly a between-site
+   difference, not a demonstrated thickness effect. Raw detection on thick slices: lesions
+   ≥ 50 mm³ (≈ 4.6 mm across) are found 59–76 % of the time depending on size bin; smaller lesions
+   (14–50 mm³) 43–45 %; no size reaches 80 %. On 1-mm scans 80 % is reached from 50 mm³.
+4. **The 5-fold ensemble: a large power gain, a mixed effect on validity.** Candidate AUROC rises
+   from 0.67–0.76 (any single fold) to 0.78–0.82 at every site; at α = 0.2 end-to-end sensitivity
+   doubles (leave-one-site-out 0.102 → 0.203, Δ +0.10 [0.075, 0.129]; 1-mm → thick 0.194 → 0.341).
+   At α = 0.1 the leave-one-site-out gain is only about 3 points (0.053 → 0.082, Δ +0.028
+   [0.016, 0.042]). Validity is **not** uniformly better: the ensemble removes the fold-0
+   violations on MS3SEG (fold 0, 1-mm → thick, α = 0.1: 0.201 [0.166, 0.242]) but **raises** realised
+   FDR on Muslim (1-mm → thick, α = 0.1: 0.122 vs 0.051, Δ +0.070 [0.012, 0.143]; fold 0 there
+   selects almost nothing) and creates 2 new violated cells (Muslim, P2). Pre-registered verdict Q3:
+   "helps on power, but with new violated cells".
+5. **Per-site recalibration restores validity — for the per-scan promise mostly by abstaining.**
+   Within-site P1 stayed below α on average at every calibration size, and 10 local patients reach
+   ~90 % of the within-site power (α = 0.2: sensitivity 0.18 on MS3SEG, 0.15 on Muslim). P2 needs
+   ≥ 9 local patients (δ = 0.1); with 10 its FDX is 0.075 on MS3SEG and 0.092 on Muslim, **but it then
+   finds 3.8 % (MS3SEG) and 0.6 % (Muslim) of lesions** — validity restored by near-abstention.
+   Adding the local patients to the 1-mm pool never restored P2 (FDX 0.16–0.28 for k ≤ 40).
+6. **Segmenter swap (same MSLesSeg images, FLAMeS vs LST-AI)**: LST-AI-calibrated selection on
+   FLAMeS candidates gave realised FDR 0.207 [0.175, 0.240] at α = 0.1; the other direction selected
+   nothing. This was expected — the two segmenters' scores live on different scales (mean false-
+   candidate score 0.65 for LST-AI vs 0.76 for FLAMeS) — and it was tested on one site only; it
+   illustrates the rule "calibrate with the deployed segmenter" rather than adding a new finding.
 7. **Power remains the cost**: at the guarantee, end-to-end lesion sensitivity is 0.01–0.40
    depending on site, design and α; per-scan (P2) selection finds 0.1–12 % of lesions.
 
@@ -102,15 +132,31 @@ sensitivity; selections.
   cells only Muslim γ = 0.1 stays *violated* (Bonferroni CI [0.12, 0.52]).
 - **Two-level bootstrap** (calibration and test patients resampled — the marginal view):
   D3 MS3SEG P1 α = 0.1 0.101 [0.070, 0.136]; Muslim P1 α = 0.1 0.104 [0.042, 0.182]; MS3SEG P2
-  γ = 0.1 0.20 [0.10, 0.30]; Muslim P2 γ = 0.1 / 0.2 0.27 [0.12, 0.41] / 0.25 [0.12, 0.37]. Same
-  conclusions.
-- **Verdicts (protocol §10):** P1 — *inconclusive* (no violated cell; MS3SEG holds; Muslim α = 0.1
-  inconclusive). P2 — *refuted* (MS3SEG γ = 0.1 and Muslim γ = 0.1, 0.2 violated).
-- **Why P2 fails and P1 does not (post-hoc explanation).** P2 is a single threshold (0.965 when
+  γ = 0.1 0.20 [0.10, 0.30]; Muslim P2 γ = 0.1 / 0.2 0.27 [0.12, 0.41] / 0.25 [0.12, 0.37]. The
+  MS3SEG P2 lower bound falls to the nominal 0.10, so in this marginal view the MS3SEG violation is
+  no longer detected; the Muslim P2 violations remain.
+- **Verdicts (protocol §10):** P1 — *inconclusive* (no violation detected; MS3SEG within margin
+  with a point estimate above α; Muslim α = 0.1 undecided; 3 of 16 cells pass only by abstention;
+  Ljubljana-10 and PediMS-9 underpowered). P2 — *refuted* (MS3SEG γ = 0.1 and Muslim γ = 0.1, 0.2
+  violated; only Muslim γ = 0.1 survives Bonferroni; MS3SEG borderline in the two-level view).
+- **The calibration does not transfer as such.** With within-site calibration (D1) the realised
+  FDR at α = 0.1 is 0.041 (MS3SEG) and 0.038 (Muslim), close to **[post hoc]** α·π0 = 0.034 / 0.037
+  (π0 = share of false candidates; conformal BH attains α·π0 under exchangeability). With 1-mm calibration it is
+  0.107 and 0.122, i.e. 2.6–3.2× higher: the false-candidate scores of thick-slice scans are not
+  exchangeable with the 1-mm null, and the average bound survives only because many scans are
+  lesion-rich, so their false selections are diluted by true ones. **[post hoc]** Restricting to
+  the third of MS3SEG + Muslim scans with ≥ 40 % false candidates (51 of 151 scans, mean π0 0.52):
+  realised FDR at α = 0.1 is **0.196 [0.120, 0.282]** with 1-mm calibration vs 0.050 [0.011, 0.103]
+  with within-site calibration (α = 0.2: 0.169 [0.119, 0.229] vs 0.125 [0.071, 0.192]); with ≥ 50 %
+  false candidates (24 scans): 0.225 [0.101, 0.366] at α = 0.1. The guarantee is a mixture
+  statement over scans; on low-lesion-load thick-slice scans the 1-mm calibration does not deliver
+  it. (The independent re-implementation, with a different within-site fold split, found the same
+  pattern: ≈ 0.20 vs ≈ 0.07.)
+- **Why P2 fails and P1 does not [post hoc].** P2 is a single threshold (0.965 when
   calibrated on the 1-mm sites). The share of scans with a false candidate above 0.965 is 6 %
   (MSLesSeg) and 10 % (Ljubljana) but 24 % (MS3SEG) and 29 % (Muslim) — the realised FDX almost
-  exactly. Thick-slice sites produce more very-confident false candidates (scan-clustered KS test
-  of the false-score law vs the 1-mm sites: MS3SEG D = 0.107, p = 0.0005; Muslim D = 0.094,
+  exactly. Thick-slice sites produce more very-confident false candidates (pre-registered
+  scan-clustered KS test of the false-score law vs the 1-mm sites: MS3SEG D = 0.107, p = 0.0005; Muslim D = 0.094,
   p = 0.025; PediMS D = 0.057, p = 0.51). P1 calibrates on the whole false-score law and controls
   only the expected FDP, which absorbs the shift with less slack lost.
 - **Strict matching (IoU ≥ 0.10) and PediMS without patient P9** leave every primary class
@@ -119,7 +165,7 @@ sensitivity; selections.
   [0.08, 0.22], inconclusive), at a modest power cost (D3, α = 0.2: sensitivity 0.296 vs 0.341).
   This is a sensitivity analysis, not the primary result.
 
-**Baselines in D3 (α = 0.1 / 0.2; realised FDR).** Precision-matched threshold (B1): MS3SEG
+**Baselines in D3 (α = 0.1 / 0.2; realised FDR; pre-registered).** Precision-matched threshold (B1): MS3SEG
 0.164 [0.136, 0.196] / 0.230 [0.206, 0.255] — **violated at both**; Muslim 0.144 [0.107, 0.180]
 — **violated** / 0.235; PediMS 0.106 / 0.197. Conformal risk control (B2): MS3SEG 0.072 / 0.129;
 **Muslim 0.180 [0.103, 0.265] at α = 0.1 — violated**; PediMS 0.069 / 0.098. Learn-then-Test (B3):
@@ -143,12 +189,16 @@ null. The guarantee is safe there, but useless.
 | B3 4.5–6.5 mm | 76 / 76 (Muslim 45, MS3SEG 31) | 0.084 · 0.112 | 0.101 [0.063, 0.145] · 30 % · 0.236 [0.180, 0.298] · 0.88 / 7.9 | 0.158 [0.079, 0.260] · 0.047 (inconcl.) |
 | B4 > 6.5 mm | 75 / 75 (MS3SEG 69, Muslim 6) | 0.087 · 0.170 | 0.120 [0.093, 0.152] · 49 % · 0.355 [0.310, 0.402] · 1.73 / 12.4 | 0.173 [0.093, 0.278] · 0.077 (inconcl.) |
 
-Every P1 cell holds; the slack shrinks monotonically with thickness, and the per-scan
-exceedance grows. Power grows with thickness too — thick-slice expert lesions are larger (median
-108–117 mm³ vs 68 mm³ on MSLesSeg and 20 mm³ on Ljubljana; post-hoc record) and the 1-mm band is
-penalised by the foreign null. Within MS3SEG, per-scan FDP does not trend with slice spacing
-(6.0–8.1 mm; Spearman ρ = 0.03, p = 0.75); within Muslim ρ = 0.30, p = 0.035, but only 6 scans
-exceed 6.5 mm (post hoc).
+No P1 band cell shows a detected violation; the slack shrinks across bands and the per-scan
+exceedance grows. **This ordering is confounded with site**: B1 is MSLesSeg + Ljubljana, B2 is
+PediMS alone, B3/B4 are MS3SEG and Muslim. Within a site the gradient is small (pre-registered
+site × band cells, α = 0.2: MS3SEG 4.5–6.5 mm → > 6.5 mm 0.103 → 0.121; Muslim 0.099 → 0.102, with
+only 6 Muslim scans above 6.5 mm), and **[post hoc]** per-scan FDP does not trend with slice
+spacing within MS3SEG (6.0–8.1 mm; Spearman ρ = 0.03, p = 0.75; Muslim ρ = 0.30, p = 0.035 on 6
+scans above 6.5 mm). The band table therefore describes these sites, not a controlled thickness
+effect. Power grows across bands too — **[post hoc]** thick-slice expert lesions are larger
+(median 108–117 mm³ vs 68 mm³ on MSLesSeg and 20 mm³ on Ljubljana) — and the 1-mm band is
+penalised by the foreign null.
 
 **Table 4. Expert-lesion sensitivity by lesion volume and band** (raw = matched by any candidate,
 no selection; "at guarantee" = selected by P1 α = 0.2, D2). Bins: [3, 14), [14, 50), [50, 150),
@@ -161,7 +211,10 @@ no selection; "at guarantee" = selected by P1 α = 0.2, D2). Bins: [3, 14), [14,
 | B3 4.5–6.5 mm | 48 / 514 / 976 / 673 / 343 | 0.13 / 0.45 / 0.59 / 0.66 / 0.76 | 0.00 / 0.10 / 0.23 / 0.30 / 0.38 | **never** / 50 mm³ | never |
 | B4 > 6.5 mm | 34 / 455 / 1074 / 713 / 343 | 0.21 / 0.43 / 0.69 / 0.72 / 0.70 | 0.06 / 0.10 / 0.32 / 0.48 / 0.56 | **never** / 50 mm³ | 500 mm³ |
 
-Muslim's estimated pixel size moves its own 50 %-detection size: 50 mm³ at nominal and × 0.9
+Reading the raw column correctly: on thick slices lesions ≥ 50 mm³ are found **59–76 %** of the
+time (by bin), lesions of 14–50 mm³ 43–45 %, lesions < 14 mm³ 13–21 %; "≥ 50 mm³" is where detection
+first exceeds one half, not where it is one half. Muslim's estimated pixel size moves its own
+50 %-detection size: 50 mm³ at nominal and × 0.9
 volumes, 150 mm³ at × 1.1 (the 50–150 mm³ bin falls to 0.487). The PediMS 3.9-mm band misses
 0.8 by 0.004 on 93 lesions — read it as "about 80 % for lesions ≥ 500 mm³".
 
@@ -179,14 +232,24 @@ volumes, 150 mm³ at × 1.1 (the 50–150 mm³ bin falls to 0.487). The PediMS 3
 | D1 · all sites (within-site) | 0.061 / 0.085 [−0.045, −0.004] | 0.219 / 0.078 [+0.108, +0.178] |
 | D4 · all sites (pooled) | 0.063 / 0.070 [−0.025, +0.011] | 0.196 / 0.069 [+0.096, +0.157] |
 
+- **At α = 0.1 the power gain is small and validity moves both ways** (same paired bootstrap):
+  leave-one-site-out, all sites: sensitivity 0.082 vs 0.053 (Δ +0.028 [0.016, 0.042], about 3
+  points), realised FDR 0.046 vs 0.068; 1-mm → thick, all thick sites: sensitivity 0.187 vs 0.111
+  (Δ +0.076 [0.050, 0.106]), FDR 0.101 vs 0.136. **On Muslim the ensemble raises realised FDR**:
+  1-mm → thick α = 0.1, 0.122 vs 0.051 (Δ +0.070 [0.012, 0.143]); leave-one-site-out α = 0.1, 0.082
+  vs 0.020 (Δ [0.017, 0.121]) and α = 0.2, 0.100 vs 0.044 (Δ [0.006, 0.116]) — fold 0 there selects
+  almost nothing (sensitivity 0.002–0.035), so its low FDR is partly abstention, but the ensemble
+  is not "safer" on that site.
 - **Fold-0 primary cells** (same 32 cells, record `q3.f0_primary_cells`): MS3SEG is violated in
   D3 P1 α = 0.1 (0.201 [0.166, 0.242]), D2 P1 α = 0.1 (0.176 [0.139, 0.216]) and in every MS3SEG
-  P2 cell (FDX 0.39–0.62); D3 P1 α = 0.2 is 0.225 [0.193, 0.260]. The ensemble removes these 5
-  violations and adds 2 (Muslim P2, D3; fold 0 there: FDX 0.16 / 0.12, inconclusive, at
-  sensitivity 0.024). Pre-registered verdict: **"helps on power, but with new violated cell(s)"**.
+  P2 cell (FDX 0.39–0.62; D3 γ = 0.1 is violated with both arms); D3 P1 α = 0.2 is 0.225
+  [0.193, 0.260]. The ensemble removes 5 violated cells (all MS3SEG) and **creates 2 new ones**
+  (Muslim P2, D3; fold 0 there: FDX 0.16 / 0.12, inconclusive, at sensitivity 0.024).
+  Pre-registered verdict: **"helps on power, but with new violated cell(s)"** — the ensemble is a
+  large power improvement, not a validity fix.
 - Folds 1–4 behave like fold 0 (D3, P1 α = 0.2: realised FDR 0.157–0.176, sensitivity 0.19–0.25),
   so fold 0 is typical, and the gain comes from averaging.
-- Mechanism (post hoc): the share of false candidates scoring ≥ 0.95 drops from 16–32 % (fold 0)
+- Mechanism **[post hoc]**: the share of false candidates scoring ≥ 0.95 drops from 16–32 % (fold 0)
   to 3–6 % (ensemble) at every site (MS3SEG 32 % → 6 %); the ICC of false-candidate scores within
   scans drops too (fold 0 0.05–0.19, ensemble −0.01–0.10).
 - LST-AI replicates the direction but not the mechanism: its 3-model ensemble does not rank better
@@ -216,8 +279,12 @@ volumes, 150 mm³ at × 1.1 (the 50–150 mm³ bin falls to 0.487). The PediMS 3
 | Ljubljana · P1 α = 0.2, site-only (k ≤ 5) | 0.025, 0.124 | — | — | 2 / 1 |
 
 Pre-registered Q4 verdict (record `q4.verdict`): the three violated cells (MS3SEG P2 γ = 0.1;
-Muslim P2 γ = 0.1, 0.2) are **restored by site-only recalibration with k* = 10 patients** — on
-Muslim only through near-total abstention (sensitivity 0.004–0.006). Augmenting a large foreign
+Muslim P2 γ = 0.1, 0.2) are formally **restored by site-only recalibration with k* = 10
+patients**, but at a large sensitivity cost: with 10 local patients the per-scan procedure finds
+**3.8 % of lesions on MS3SEG and 0.6 % on Muslim** (vs 12.1 % and 3.6 % when, invalidly, calibrated
+on the 1-mm sites). In plain terms, validity is restored by near-abstention; and the k* criterion
+is met trivially when the within-site power it is compared to is itself near zero (Muslim D1 P2
+sensitivity 0.004). Augmenting a large foreign
 pool with site patients never restored P2 and kept P1 at α = 0.1 on the edge, because the
 quantile/null is dominated by the 85 foreign patients.
 
@@ -255,18 +322,28 @@ sensitivity:
 
 v0.2 could only show the safe direction (power collapse, confounded with site). With the same
 images, a calibration set from a less confident segmenter makes the more confident segmenter's
-false candidates look significant: **segmenter shift violates the guarantee.** Calibration must
-come from the segmenter that is deployed.
+false candidates look significant, and the guarantee is violated. **This was expected, not a
+discovery**: LST-AI's scores sit on a lower scale (mean false-candidate score 0.65 vs 0.76 for the
+FLAMeS ensemble on MSLesSeg), so any null from one segmenter is miscalibrated for the other. It was
+tested on one site (MSLesSeg) only. Its value is to make the deployment rule concrete: calibration
+must come from the segmenter version that is deployed.
 
 ## 8. Negative and unexpected results (stated plainly)
 
 - The per-scan FDX procedure does not transport to thick-slice sites; recalibration restores it
-  only with ≥ 10 site patients and, at Muslim, only by abstaining.
-- Marginal FDR control on Muslim at α = 0.1 is not established (CI to 0.197).
+  only with ≥ 10 site patients, and then finds 3.8 % (MS3SEG) and 0.6 % (Muslim) of lesions.
+- Marginal FDR control on Muslim at α = 0.1 is not established (CI to 0.197); "no violation
+  detected" in the other cells includes 3 abstention cells and two underpowered sites.
+- 1-mm calibration does not transfer as such to thick slices: realised FDR is 2.6–3.2× the
+  within-site value, and **[post hoc]** 0.196 [0.120, 0.282] at α = 0.1 on the third of thick-slice
+  scans with ≥ 40 % false candidates.
+- The ensemble raises realised FDR on Muslim (0.122 vs 0.051 at α = 0.1) and adds 2 violated cells;
+  its power gain at α = 0.1 (leave-one-site-out) is about 3 points.
+- The thickness gradient across bands is largely a between-site difference.
 - At γ ≤ 0.2 the FDX threshold is almost insensitive to γ (identical γ = 0.1 / 0.2 selections in
   most cells): 22–51 % (ensemble; fold 0: 22–59 %) of calibration scans need a threshold above
   their top false candidate, so the procedure largely behaves like "no false lesion above the
-  threshold in 90 % of patients" (post hoc).
+  threshold in 90 % of patients" **[post hoc]**.
 - Foreign or pooled calibration makes the 1-mm sites nearly silent (sensitivity ≤ 0.01 at α = 0.1).
 - v0.2's whole pipeline (fold 0) would have violated the guarantee on MS3SEG.
 - Thickness-specific minimum lesion sizes rest on one site per band (B2: 9 children; B3/B4:
@@ -292,8 +369,15 @@ come from the segmenter that is deployed.
   delivered (MNI 1 mm).
 - 3D connected components on 4–8 mm slices can merge or split lesions; candidate and expert-lesion
   rules are identical, but lesion counts are not comparable to 1-mm counts.
-- The "holds" rule tolerates realised values up to α + 0.05 at the CI upper bound; three "holds"
-  cells have point estimates slightly above α (ensemble D3 MS3SEG α = 0.1: 0.107).
+- The "holds" rule tolerates realised values up to α + 0.05 at the CI upper bound; "holds" cells
+  with point estimates above α: ensemble D3 MS3SEG α = 0.1 (0.107) and fold-0 D2 MS3SEG α = 0.2
+  (0.208). "Holds" means no violation detected, not proof of validity.
+- **A 3-case thick-slice pilot preceded the protocol** (2026-10-18: one scan each of MS3SEG,
+  Muslim and PediMS, FLAMeS fold 0, run to test the processing chain). Its maps are among the v0.3
+  inputs. The analyst who wrote the protocol did not inspect pilot outcomes, but the pilot was run
+  in the same project before pre-registration; disclosed in protocol §13 entry 7.
+- The independent re-implementation used a different within-site fold split; its within-site
+  numbers differ from ours in the second decimal (e.g. MS3SEG α = 0.1: 0.047 vs 0.041).
 - Layer-1/Layer-2 region certificates of v0.2 §5 were not re-run on the new sites.
 
 ## 10. Reproducibility
@@ -303,7 +387,7 @@ come from the segmenter that is deployed.
 | input hashes, grids, fold-0 reproduction | `research/paper_a/v03_inventory.py` | `2026-10-21_paper_a_v03_inventory.json` |
 | candidates, labels, gate G1 | `research/paper_a/v03_candidates.py` | `2026-10-21_paper_a_v03_candidates.json` (cache SHA-256 2096109e…) |
 | Tables 1–7, §2–§7 | `research/paper_a/v03_analysis.py` (+ `v03_metrics.py`, `v03_data.py`) | `2026-10-21_paper_a_v03_results.json` |
-| post-hoc explanations (labelled) | `research/paper_a/v03_posthoc.py` | `2026-10-21_paper_a_v03_posthoc.json` |
+| post-hoc explanations (labelled; item 5 = low-lesion-load scans, added after the independent review) | `research/paper_a/v03_posthoc.py` | `2026-10-21_paper_a_v03_posthoc.json` |
 | metric/procedure tests | `research/paper_a/test_v03_metrics.py` (33 pass) | — |
 
 Runtime on the local CPU: candidates 18 min (7 workers), analysis 6 min, post hoc < 1 min.

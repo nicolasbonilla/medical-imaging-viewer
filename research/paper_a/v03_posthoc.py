@@ -11,6 +11,8 @@ result of PROTOCOL-v0.3.
   3. Expert-lesion counts and sizes per site (context for power).
   4. Within-site slice-thickness gradient (MS3SEG, Muslim): per-scan FDP of P1 (alpha = 0.2,
      leave-one-site-out calibration) vs slice spacing, Spearman rho and a patient-permutation p.
+  5. (added after an independent review) P1 realised FDR on thick-slice scans with many false
+     candidates (share false >= 0.4 / 0.5), 1-mm vs within-site calibration, and alpha * pi0.
 
     python research/paper_a/v03_posthoc.py
 """
@@ -82,6 +84,26 @@ def main():
             "mean_fdp_slice_le_6.5": round(float(fdp[z <= 6.5].mean()), 4) if (z <= 6.5).any() else None,
             "mean_fdp_slice_gt_6.5": round(float(fdp[z > 6.5].mean()), 4) if (z > 6.5).any() else None,
             "scans_le_6.5": int((z <= 6.5).sum()), "scans_gt_6.5": int((z > 6.5).sum())}
+    # 5 (added 2026-10-21 after the independent review): realised FDR of P1 on thick-slice scans
+    #   with a high share of false candidates (pi0 = false / candidates), 1-mm calibration (D3) vs
+    #   within-site calibration (D1); alpha * pi0 is the value conformal BH attains under
+    #   exchangeability (Benjamini-Hochberg: FDR = alpha * m0 / m).
+    sel_d3, _ = A.run_design(arms["ens"], "D3", [("P1", 0.1), ("P1", 0.2)])
+    sel_d1, _ = A.run_design(arms["ens"], "D1", [("P1", 0.1), ("P1", 0.2)])
+    thick = [s for s in arms["ens"] if s["site"] in ("ms3seg", "muslim")]
+    pi0 = {s["case"]: (s["isf"].mean() if s["isf"].size else 0.0) for s in thick}
+    for site in ("ms3seg", "muslim", "pedims"):
+        ss = [s for s in arms["ens"] if s["site"] == site]
+        rec[f"alpha_pi0|{site}"] = {"mean_pi0": round(float(np.mean([s["isf"].mean() for s in ss if s["isf"].size])), 4)}
+    for a in (0.1, 0.2):
+        for lo in (0.0, 0.4, 0.5):
+            sub = [s for s in thick if s["isf"].size and pi0[s["case"]] >= lo]
+            cell = {"scans": len(sub), "mean_pi0": round(float(np.mean([pi0[s["case"]] for s in sub])), 3),
+                    "alpha_times_mean_pi0": round(a * float(np.mean([pi0[s["case"]] for s in sub])), 4)}
+            for dname, sels in (("D3_1mm_calibrated", sel_d3), ("D1_within_site", sel_d1)):
+                sm = A.summarize(sub, sels[("P1", a)])
+                cell[dname] = {"realised_fdr": sm["mean_fdp"], "ci95": sm["mean_fdp_ci"], "sens_e2e": sm["sens_e2e"]}
+            rec[f"pi0_subset|ms3seg+muslim|P1|{a}|pi0>={lo}"] = cell
     with open(OUT, "w", encoding="utf-8") as fh:
         json.dump(rec, fh, indent=1, default=float)
     print(json.dumps(rec, indent=1, default=float))

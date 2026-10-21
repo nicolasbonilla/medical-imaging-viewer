@@ -2,11 +2,13 @@
 
 > **UPDATE 2026-10-21 (v0.3, read first).** A pre-registered five-cohort re-analysis with the
 > FLAMeS 5-fold ensemble and three thick-slice 2D-FLAIR cohorts supersedes the numbers below:
-> `docs/research/paper/RESULTS-v0.3.md` (protocol `PROTOCOL-v0.3.md`). In short: conformal BH was
-> not violated on any held-out site (not established on one site at α = 0.1); a per-scan FDX
-> threshold did not transport from 1-mm to thick slices; the single-fold (fold-0) pipeline used
-> below violates the guarantee on a thick-slice site and the 5-fold ensemble does not; a same-image
-> segmenter swap (LST-AI-calibrated, FLAMeS-tested) violates it.
+> `docs/research/paper/RESULTS-v0.3.md` (protocol `PROTOCOL-v0.3.md`). In short: no violation of
+> conformal BH was detected on held-out sites, but it is undecided on one site at α = 0.1 and 1-mm
+> calibration gives 2.6–3.2× the within-site false-discovery rate on thick slices; a per-scan FDX
+> threshold did not transport from 1-mm to thick slices (local recalibration restores it only by
+> near-abstention); the single-fold (fold-0) pipeline used below violates the guarantee on one
+> thick-slice site, while the 5-fold ensemble doubles power but raises the false rate on another;
+> a same-image segmenter swap violates it (expected from the different score scales).
 >
 > **CORRECTION 2026-10-17.** The `openms` cohort is largely FLAMeS TRAINING data:
 > FLAMeS trained on Ljubljana patients 01–15 and 21–25 (identified exactly from the released
