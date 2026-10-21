@@ -213,7 +213,25 @@ size-bin table; PediMS without patient P9 (Baló's concentric sclerosis); α = 0
 
 ## 13. Deviations log
 
-*(empty at commit time)*
+*(empty at the protocol commit 9951494)*
+
+**2026-10-21, entries 1–4 — implementation clarifications, written while candidate extraction was
+running and before any v0.3 outcome (label, selection, FDP, recall, AUROC) had been displayed.**
+
+1. *FDX interval.* The percentile bootstrap of a scan proportion degenerates to [0, 0] when no
+   scan exceeds γ (0/10 would be classified "holds" with upper bound 0, whereas the exact upper
+   bound is 0.31). FDX cells are therefore classified with the **union** (wider envelope) of the
+   patient-cluster bootstrap interval and the exact Clopper–Pearson interval over scans. FDR
+   (mean per-scan FDP) cells keep the bootstrap interval; their small-site intervals (Ljubljana
+   10, PediMS 9 patients) under-cover and are flagged as such.
+2. *Bonferroni intervals* (§9) use 20 000 bootstrap resamples (2000 leave ~1.6 resamples beyond
+   the 0.078 % tails).
+3. *Muslim ±10 % volume sensitivity* rescales expert-lesion volumes for the size-bin table only;
+   the 3 mm³ eligibility floor and the candidate set stay as extracted at the nominal pixel size.
+4. *Gate G1 tolerance.* The inventory showed 6 voxels in 5 scans crossing 0.5 between the August
+   and the new fold-0 maps, so candidate counts may legitimately differ in those scans. G1 passes
+   if (a) scans with a different candidate count are among those 5, (b) lenient labels agree on
+   ≥ 99 % of compared candidates and (c) scores agree within 0.003.
 
 ## 14. Compute
 
