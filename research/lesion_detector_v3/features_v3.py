@@ -49,10 +49,12 @@ F6 = ("loc_depth_min_rel", "loc_depth_mean_rel", "loc_dvent_min_rel", "loc_csf_c
 F7 = ("ctx_log_ncand", "ctx_log_totvol", "ctx_rank_prob")
 F8 = ("ens_mean", "ens_std", "ens_frac_detect", "ens_voxvar_mean", "ens_mi")
 F9 = ("lst_mean", "lst_max", "lst_frac_ge05", "lst_detect", "lst_local_dice")
+F9B = ("lst_mstd",)                 # v3.1: across-model SD over LST-AI's 3 U-Nets
+FVOL = ("log_volume_mm3",)          # v3.1: physical volume (grid-aware; = log_volume at 1 mm)
 
 FAMILIES = {"F1": F1, "F2": F2, "F3": F3, "F4_FLAIR": F4_FLAIR, "F4_PROB": F4_PROB, "F5": F5,
-            "F6": F6, "F7": F7, "F8": F8, "F9": F9}
-NEW_FEATURE_NAMES = F1 + F2 + F3 + F4_FLAIR + F4_PROB + F5 + F6 + F7 + F8 + F9
+            "F6": F6, "F7": F7, "F8": F8, "F9": F9, "F9B": F9B, "FVOL": FVOL}
+NEW_FEATURE_NAMES = F1 + F2 + F3 + F4_FLAIR + F4_PROB + F5 + F6 + F7 + F8 + F9 + F9B + FVOL
 
 
 # ------------------------------------------------------------------ per-scan context
@@ -171,16 +173,19 @@ def _bin_entropy(p):
 
 # ------------------------------------------------------------------ main entry
 def candidate_features_v3(prob, labeled, cands, ctx: ScanContext,
-                          fold_maps=None, lstai=None) -> dict:
+                          fold_maps=None, lstai=None, lstai_models=None, voxel_volume=1.0) -> dict:
     """Dict name -> float array (len(cands)) for every NEW family whose inputs are available.
 
     prob: base-model probability map; labeled/cands: from extract_lesion_candidates on `prob`;
     ctx: ScanContext of the same scan; fold_maps: optional list of K >= 2 per-fold probability maps
-    (F8); lstai: optional LST-AI probability map on the same grid (F9). No ground truth.
+    (F8); lstai: optional LST-AI probability map on the same grid (F9); lstai_models: optional list of
+    the LST-AI sub-model maps (F9B); voxel_volume: mm^3 per voxel (FVOL). No ground truth.
     """
     n = len(cands)
     objs = ndi.find_objects(labeled)
-    out = {k: np.full(n, np.nan) for k in F4_PROB + F5 + F7}
+    if not voxel_volume > 0:
+        raise ValueError("voxel_volume must be > 0")
+    out = {k: np.full(n, np.nan) for k in F4_PROB + F5 + F7 + FVOL}
     if ctx.has_flair:
         for k in F1 + F3 + F4_FLAIR + F6:
             out[k] = np.full(n, np.nan)
@@ -201,6 +206,11 @@ def candidate_features_v3(prob, labeled, cands, ctx: ScanContext,
         lst_lab, _ = ndi.label(lstai >= 0.5, structure=CONN18)
         lst_size = np.bincount(lst_lab.ravel())
         for k in F9:
+            out[k] = np.full(n, np.nan)
+    if lstai_models is not None:
+        if len(lstai_models) < 2 or any(m.shape != prob.shape for m in lstai_models):
+            raise ValueError("LST-AI sub-model maps: need >= 2 on the prob grid")
+        for k in F9B:
             out[k] = np.full(n, np.nan)
 
     # F5 merge bookkeeping: 0.25-component of every candidate
@@ -244,6 +254,7 @@ def candidate_features_v3(prob, labeled, cands, ctx: ScanContext,
         c010 = int(ctx.lab010[sl][C][0])
         out["ps_log_merge_010"][i] = float(np.log(ctx.size010[c010] / nC))
         out["ps_nmerge_025"][i] = float((comp025 == comp025[i]).sum() - 1)
+        out["log_volume_mm3"][i] = float(np.log(nC * voxel_volume))
 
         # ---- F7 scan context (exploratory)
         out["ctx_log_ncand"][i] = float(np.log1p(n))
@@ -333,4 +344,6 @@ def candidate_features_v3(prob, labeled, cands, ctx: ScanContext,
                 out["lst_local_dice"][i] = 2.0 * inter / (nC + u)
             else:
                 out["lst_local_dice"][i] = 0.0
+        if lstai_models is not None:
+            out["lst_mstd"][i] = float(np.std([float(m[sl][C].mean()) for m in lstai_models]))
     return out

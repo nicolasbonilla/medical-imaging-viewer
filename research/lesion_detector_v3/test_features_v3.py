@@ -102,7 +102,7 @@ def test_ventricle_and_depth_proxies():
 def test_prob_only_families_without_flair():
     prob, _, _ = _scene()
     f, _ = _feats(prob)
-    assert set(f) == set(fv.F4_PROB + fv.F5 + fv.F7)
+    assert set(f) == set(fv.F4_PROB + fv.F5 + fv.F7 + fv.FVOL)
 
 
 def test_persistence_merge_and_split():
@@ -157,6 +157,26 @@ def test_broken_t1_disables_only_the_exploratory_family():
     assert not any(k in f for k in fv.F2)
     assert all(k in f for k in fv.F1 + fv.F3 + fv.F6)
     assert fv.ScanContext(prob, flair, empty_t1).t1_status.startswith("disabled")
+
+
+def test_v31_lstai_model_spread_and_physical_volume():
+    prob, _, _ = _scene()
+    f, cands = _feats(prob, lstai=prob.copy(), lstai_models=[prob.copy() for _ in range(3)], voxel_volume=5.6)
+    assert np.allclose(f["lst_mstd"], 0)
+    np.testing.assert_allclose(f["log_volume_mm3"], np.log([c.n_voxels * 5.6 for c in cands]))
+    f, _ = _feats(prob, lstai=prob.copy(), lstai_models=[prob, prob * 0.5, prob * 0.0])
+    assert np.all(f["lst_mstd"] > 0.1)
+    with pytest.raises(ValueError):
+        _feats(prob, voxel_volume=0.0)
+
+
+def test_v31_external_patient_ids():
+    import build_features as bf
+    assert bf._external_patient("pedims_P3_T5") == "pedims_P3"
+    assert bf._external_patient("ms3seg_007") == "ms3seg_007"
+    assert bf._external_patient("muslim_12") == "muslim_12"
+    with pytest.raises(ValueError):
+        bf._external_patient("mslesseg_P1_T1")
 
 
 def test_grid_mismatch_is_refused():
