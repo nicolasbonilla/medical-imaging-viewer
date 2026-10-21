@@ -187,11 +187,22 @@ def test_anatomical_axes_mslesseg_las_with_flames_transpose():
     assert ts.anatomical_axes(d, [0, 1, 2]) == {"sagittal": 2, "coronal": 1, "axial": 0}
 
 
-def test_anatomical_axes_rejects_45_degree_oblique():
-    c, s = np.cos(np.pi / 4), np.sin(np.pi / 4)
-    d = np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]]).ravel()
+def _rot_z(deg):
+    c, s = np.cos(np.radians(deg)), np.sin(np.radians(deg))
+    return np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]]).ravel()
+
+
+@pytest.mark.parametrize("deg", [45.0, 44.0, 46.0, 40.0])
+def test_anatomical_axes_rejects_near_45_degree_oblique(deg):
+    # Must not depend on an exact floating-point tie (cos/sin of 45 degrees differ by 1 ulp on some
+    # Linux builds, which made the old argmax-only test pass silently inside the image).
     with pytest.raises(ValueError):
-        ts.anatomical_axes(d, [0, 1, 2])
+        ts.anatomical_axes(_rot_z(deg), [0, 1, 2])
+
+
+@pytest.mark.parametrize("deg", [0.0, 15.0, 30.0])
+def test_anatomical_axes_accepts_moderate_obliquity(deg):
+    assert ts.anatomical_axes(_rot_z(deg), [0, 1, 2]) == ts.anatomical_axes(_rot_z(0.0), [0, 1, 2])
 
 
 def test_simulate_volume_shape_and_mean():

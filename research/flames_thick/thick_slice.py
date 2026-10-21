@@ -157,6 +157,9 @@ def apply_params(img, params):
                    params["phase_mm"], params["profile"], params["resample"])
 
 
+AXIS_MARGIN = 0.2
+
+
 def anatomical_axes(direction, transpose_forward):
     """Map anatomical slice orientations to nnU-Net patch axes.
 
@@ -170,7 +173,13 @@ def anatomical_axes(direction, transpose_forward):
     cols = [d[:, 2 - tf[a]] for a in range(3)]                  # world direction of each patch axis
     out = {}
     for name, w in WORLD_AXIS.items():
-        comp = [abs(c[w]) for c in cols]
+        comp = np.array([abs(c[w]) for c in cols])
+        top, second = np.sort(comp)[::-1][:2]
+        # An exact-tie test is platform dependent (cos/sin of 45 degrees differ in the last bit on some
+        # builds), so require a clear winner: margin 0.2 accepts obliquity up to ~37 degrees.
+        if top - second < AXIS_MARGIN:
+            raise ValueError(f"ambiguous orientation (oblique by ~45 degrees?): margin {top - second:.3f} "
+                             f"for {name} from {d.tolist()}")
         out[name] = int(np.argmax(comp))
     if len(set(out.values())) != 3:
         raise ValueError(f"ambiguous orientation (oblique by ~45 degrees?): {out} from {d.tolist()}")
