@@ -179,8 +179,14 @@ proportions are reported with their denominators.
 A focused literature search is re-run and logged in `RESULTS.md` §0 before the manuscript is
 drafted. Known neighbours to position against: Ferris & Bonilla, arXiv 2610.08651 (Claude
 Code, healthcare platform, not a device); Wang et al., JACMP 2026 (Claude Code, clinical
-in-house tool, not a device). The surname coincidence with the first neighbour's second author
-is flagged for the owner; nothing is assumed about it.
+in-house tool, not a device). Conflict-of-interest checks concerning cited authors are handled by
+the owner outside this public document (amendment 1).
+
+## Amendments
+
+1. 2026-10-21, after the analysis: one sentence of §8 about a conflict-of-interest check concerning a
+   cited author was removed from this public document; the check is handled privately by the owner.
+   No research question, data source, definition or metric changed.
 
 ## 9. Ethics
 

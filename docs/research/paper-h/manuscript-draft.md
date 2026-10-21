@@ -360,7 +360,7 @@ first.
 
 - **Funding.** None. **[TODO: confirm]**
 - **Conflict of interest.** The author owns the product studied and operated the agent. **[TODO:
-  state any relationship with the authors of arXiv:2610.08651 — see RESULTS.md §0.]**
+  declare any relationship with authors of cited works.]**
 - **Ethics.** No human participants, patient data or personal data beyond the author's name.
 - **Data availability.** Scripts, coding sheet and GitHub snapshot: `research/paper_h/`; records and
   history: the project repository at the pinned SHAs. **[TODO: archive on Zenodo with a DOI; decide

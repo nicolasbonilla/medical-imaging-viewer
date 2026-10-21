@@ -54,9 +54,8 @@ unread; the field moves weekly (the closest preprint was 15 days old at the time
 the ICSE-SEIP / FSE / RE / SAFECOMP 2026 industry tracks were not searched directly. **Re-run the
 search before submission.**
 
-**Flag for the owner (no assumption made).** The second author of arXiv:2610.08651 is *Sierra
-Bonilla* (University College London). The surname coincides with the owner's. The owner should
-state whether any relationship exists; if one does, it must be disclosed in the manuscript.
+**Conflicts of interest with cited authors** are to be declared by the owner before submission;
+that check is handled outside this public document.
 
 ---
 
