@@ -315,7 +315,12 @@ def main():
     with ProcessPoolExecutor(max_workers=args.workers) as ex:
         futs = {ex.submit(process_scan, s, cache, out): s for s in todo}
         for i, f in enumerate(as_completed(futs), 1):
-            res = f.result()
+            try:
+                res = f.result()
+            except Exception as exc:  # noqa: BLE001 — e.g. out of memory on a shared machine; rerun resumes
+                print(f"[{i}/{len(todo)}] {futs[f].case} FAILED (will be retried on rerun): "
+                      f"{type(exc).__name__}: {str(exc)[:120]}", flush=True)
+                continue
             record["scans"][res["case"]] = res
             bad = [k for k, v in res["device_checks"].items() if not v["equal"]] + \
                   ([] if res["zone_map_equals_device"] else ["zone_map"])

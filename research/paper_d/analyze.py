@@ -384,7 +384,8 @@ def main():
     out_dir = experiments_dir(root)
     df, lesions, record = load(out_dir)
     meta = record["scan_meta"]
-    done = sorted(set(df.case))
+    done = sorted(set(df.case) & set(record["scans"]))   # a scan file may land before its record
+    df = df[df.case.isin(done)]
     checks = [v for c in done for v in record["scans"][c]["device_checks"].values()]
     clean = [c for c in done if not meta[c]["flames_in_sample"]]
     result = {"protocol": "docs/research/paper-d/PROTOCOL.md v1.0",
@@ -412,13 +413,16 @@ def main():
     s6["c_pv_at_least_3"] = core(df, clean, pats, col="dis_pv3")[0]
     for ds in ("mslesseg", "ljubljana"):
         cs = [c for c in clean if meta[c]["dataset"] == ds]
-        s6[f"d_{ds}_only"] = core(df, cs, [meta[c]["patient"] for c in cs])[0]
+        if cs:
+            s6[f"d_{ds}_only"] = core(df, cs, [meta[c]["patient"] for c in cs])[0]
     reg = json.loads((cache_dir(root) / "warped" / "registration_record.json").read_text())
     qc = reg.get("qc", {})
     bad = [c for c in clean if qc.get(c, {}).get("dice_brain_warped_vs_t1", 1.0) < 0.70]
-    s6["e_g1_qc"] = {"dice_brain_warped_vs_t1": {"median": float(np.median([qc[c]["dice_brain_warped_vs_t1"] for c in clean if c in qc])),
-                                                 "min": float(np.min([qc[c]["dice_brain_warped_vs_t1"] for c in clean if c in qc]))},
-                     "dice_ventricles_warped_vs_g0_median": float(np.median([qc[c]["dice_ventricles_warped_vs_g0"] for c in clean if c in qc])),
+    dq = [qc[c]["dice_brain_warped_vs_t1"] for c in clean if c in qc]
+    s6["e_g1_qc"] = {"n_with_qc": len(dq),
+                     "dice_brain_warped_vs_t1": ({"median": float(np.median(dq)), "min": float(np.min(dq))} if dq else None),
+                     "dice_brain_g0_vs_t1_median": (float(np.median([qc[c]["dice_brain_g0_vs_t1"] for c in clean if c in qc])) if dq else None),
+                     "dice_ventricles_warped_vs_g0_median": (float(np.median([qc[c]["dice_ventricles_warped_vs_g0"] for c in clean if c in qc])) if dq else None),
                      "below_0_70": bad}
     if bad:
         keep = [c for c in clean if c not in bad]
