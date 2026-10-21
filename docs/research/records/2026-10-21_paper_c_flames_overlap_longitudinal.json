@@ -1,0 +1,610 @@
+{
+ "n_fingerprint_entries": 668,
+ "scans": {
+  "patient01_study1": {
+   "dims": [
+    320,
+    320,
+    36
+   ],
+   "pixdim": [
+    0.7187,
+    0.7188,
+    4.0
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient01_study2": {
+   "dims": [
+    320,
+    320,
+    46
+   ],
+   "pixdim": [
+    0.7188,
+    0.7187,
+    3.0
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient02_study1": {
+   "dims": [
+    256,
+    256,
+    46
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9985
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient02_study2": {
+   "dims": [
+    256,
+    256,
+    44
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9986
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient03_study1": {
+   "dims": [
+    306,
+    384,
+    39
+   ],
+   "pixdim": [
+    0.5729,
+    0.5729,
+    3.3
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient03_study2": {
+   "dims": [
+    320,
+    320,
+    48
+   ],
+   "pixdim": [
+    0.7187,
+    0.7188,
+    3.0
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient04_study1": {
+   "dims": [
+    320,
+    320,
+    48
+   ],
+   "pixdim": [
+    0.7188,
+    0.7187,
+    3.0
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient04_study2": {
+   "dims": [
+    256,
+    256,
+    44
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9985
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient05_study1": {
+   "dims": [
+    256,
+    256,
+    44
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9985
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient05_study2": {
+   "dims": [
+    256,
+    256,
+    44
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9986
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient06_study1": {
+   "dims": [
+    256,
+    256,
+    44
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9985
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient06_study2": {
+   "dims": [
+    256,
+    256,
+    50
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9986
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient07_study1": {
+   "dims": [
+    256,
+    256,
+    44
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9986
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient07_study2": {
+   "dims": [
+    256,
+    256,
+    48
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9985
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient08_study1": {
+   "dims": [
+    256,
+    256,
+    46
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9985
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient08_study2": {
+   "dims": [
+    256,
+    256,
+    50
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9985
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient09_study1": {
+   "dims": [
+    256,
+    256,
+    44
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9985
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient09_study2": {
+   "dims": [
+    306,
+    384,
+    39
+   ],
+   "pixdim": [
+    0.5729,
+    0.5729,
+    3.3
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient10_study1": {
+   "dims": [
+    256,
+    256,
+    44
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    3.1008
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient10_study2": {
+   "dims": [
+    256,
+    256,
+    48
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9986
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient11_study1": {
+   "dims": [
+    256,
+    256,
+    46
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9985
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient11_study2": {
+   "dims": [
+    256,
+    256,
+    46
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9985
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient12_study1": {
+   "dims": [
+    320,
+    320,
+    48
+   ],
+   "pixdim": [
+    0.7188,
+    0.7187,
+    3.0
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient12_study2": {
+   "dims": [
+    320,
+    320,
+    48
+   ],
+   "pixdim": [
+    0.7187,
+    0.7187,
+    3.0
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient13_study1": {
+   "dims": [
+    256,
+    256,
+    44
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9985
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient13_study2": {
+   "dims": [
+    256,
+    256,
+    44
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9985
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient14_study1": {
+   "dims": [
+    256,
+    256,
+    44
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9985
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient14_study2": {
+   "dims": [
+    256,
+    256,
+    44
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9986
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient15_study1": {
+   "dims": [
+    256,
+    256,
+    44
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9985
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient15_study2": {
+   "dims": [
+    256,
+    256,
+    48
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9986
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient16_study1": {
+   "dims": [
+    256,
+    256,
+    44
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9985
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient16_study2": {
+   "dims": [
+    256,
+    256,
+    44
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9985
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient17_study1": {
+   "dims": [
+    256,
+    256,
+    47
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9985
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient17_study2": {
+   "dims": [
+    256,
+    256,
+    46
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9985
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient18_study1": {
+   "dims": [
+    256,
+    256,
+    44
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9986
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient18_study2": {
+   "dims": [
+    256,
+    256,
+    44
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9985
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient19_study1": {
+   "dims": [
+    306,
+    384,
+    39
+   ],
+   "pixdim": [
+    0.5729,
+    0.5729,
+    3.3
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient19_study2": {
+   "dims": [
+    320,
+    320,
+    48
+   ],
+   "pixdim": [
+    0.7187,
+    0.7187,
+    3.0
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient20_study1": {
+   "dims": [
+    256,
+    256,
+    44
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9985
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  },
+  "patient20_study2": {
+   "dims": [
+    256,
+    256,
+    44
+   ],
+   "pixdim": [
+    0.8984,
+    0.8984,
+    2.9985
+   ],
+   "fingerprint_hits": [],
+   "hit_shapes_after_crop": []
+  }
+ },
+ "matches": [],
+ "n_fingerprint_entries_1mm_iso": 319,
+ "distinct_raw_spacings": [
+  [
+   0.5729,
+   0.5729,
+   3.3
+  ],
+  [
+   0.7187,
+   0.7187,
+   3.0
+  ],
+  [
+   0.7187,
+   0.7188,
+   3.0
+  ],
+  [
+   0.7187,
+   0.7188,
+   4.0
+  ],
+  [
+   0.7188,
+   0.7187,
+   3.0
+  ],
+  [
+   0.8984,
+   0.8984,
+   2.9985
+  ],
+  [
+   0.8984,
+   0.8984,
+   2.9986
+  ],
+  [
+   0.8984,
+   0.8984,
+   3.1008
+  ]
+ ],
+ "verdict": "no fingerprint entry has the raw spacing of any longitudinal FLAIR"
+}
