@@ -142,3 +142,19 @@ def test_decide_stops_before_exceeding_cost_or_hours():
     assert budget.decide(a, now, 0.43, 100.0, 12.1, 250).startswith("max_hours")
     s = budget.summary(a, now, 0.43)
     assert s["cost_usd_guard_estimate"] > s["cost_usd_list_estimate"] > 0
+
+
+# ------------------------------------------------------------------ Kaggle session deadline (pause, not stop)
+def test_session_decide_pauses_only_when_the_next_epoch_and_hand_over_do_not_fit():
+    now = budget.parse("2026-11-01T10:00:00Z")
+    assert budget.session_decide(now, None, 300, False) is None                     # Vertex: no session limit
+    dl = budget.parse("2026-11-01T10:20:00Z")                                       # 20 min left
+    assert budget.session_decide(now, dl, 300, False, 1800, 600) is None            # 5 + 10 min fit
+    r = budget.session_decide(now, dl, 700, False, 1800, 600)                       # 11.7 + 10 min do not
+    assert r.startswith(budget.PAUSE_PREFIX) and "session deadline" in r
+    # before the LAST epoch the final validation + export reserve (30 min) is needed instead of 10 min
+    assert budget.session_decide(now, dl, 300, True, 1800, 600).startswith(budget.PAUSE_PREFIX)
+    assert budget.session_decide(now, budget.parse("2026-11-01T11:00:00Z"), 300, True, 1800, 600) is None
+    # a guard stop is never a pause (it must not be resumed automatically)
+    a = [att("2026-11-01T00:00:00Z", live=True)]
+    assert not budget.decide(a, now, 0.43, 1.0, 36, 250).startswith(budget.PAUSE_PREFIX)

@@ -1,4 +1,4 @@
-"""Cost / wall-time guard across Spot attempts (pure functions, unit-tested).
+"""Cost / wall-time guard across Spot attempts and Kaggle sessions (pure functions, unit-tested).
 
 Vertex AI bills a Spot job while its VM runs (not while queued or preempted); after a preemption
 the job restarts on a new VM up to six times. Each container start registers an *attempt*
@@ -57,6 +57,27 @@ def decide(attempts, now, rate_usd_per_h, max_cost_usd, max_hours, next_epoch_s,
                 f"{max_cost_usd:.2f} USD (billed so far {billed / 3600:.2f} h)")
     if projected / 3600.0 > max_hours:
         return f"max_hours: projected {projected / 3600:.2f} h > {max_hours:.2f} h"
+    return None
+
+
+PAUSE_PREFIX = "session_pause"
+
+
+def session_decide(now, deadline, next_epoch_s, next_is_last, reserve_s=1800.0, session_reserve_s=600.0):
+    """None, or the reason to PAUSE (resumable, not a stop) before starting another epoch in this session.
+
+    Kaggle sessions end after at most 12 h; the runner gives each session a soft deadline. Another
+    epoch starts only if it and the work after it fit before that deadline: the nnU-Net final
+    validation + export (reserve_s) when the next epoch is the last one, else the short hand-over
+    (session_reserve_s: records, copying the store to the kernel output).
+    """
+    if deadline is None:
+        return None
+    need = max(0.0, next_epoch_s) + (reserve_s if next_is_last else session_reserve_s)
+    left = (deadline - now).total_seconds()
+    if need > left:
+        return (f"{PAUSE_PREFIX}: session deadline {to_s(deadline)}, {left / 60:.1f} min left < "
+                f"{need / 60:.1f} min needed (next epoch{' + final validation' if next_is_last else ''})")
     return None
 
 

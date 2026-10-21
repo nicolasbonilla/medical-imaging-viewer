@@ -20,8 +20,13 @@ Configuration (environment; written by research/cloud/launch_vertex.py):
   FT_ATTEMPT_OVERHEAD_S (300), FT_RESERVE_S (1800), FT_CASE_IDS (pilot subset), FT_KILL_TEST_AFTER_EPOCH,
   FT_DEVICE (cuda), FT_WORKDIR (/w), FT_NPROC (8), FT_MACHINE_TYPE, FT_GPU, FT_IMAGE, FT_GIT_COMMIT,
   FT_PURPOSE, FT_EPOCHS/FT_ITERS/FT_VAL_ITERS/FT_SAVE_EVERY/FT_INITIAL_LR/FT_WARMUP_EPOCHS (trainer).
-Exit codes: 0 completed (or budget stop recorded), 1 failure, 143 terminated (Spot preemption).
+  Kaggle (kaggle_run/kernel_main.py): FT_INPUTS=dir with FT_FLAMES_DIR, FT_MSLESSEG_ZIP,
+  FT_MSLESSEG_PROVENANCE; FT_PLATFORM, FT_PROVISIONING; FT_SESSION_DEADLINE_UTC + FT_SESSION_RESERVE_S
+  (the run PAUSES, status "paused", and the next session resumes it); FT_PAUSE_AFTER_EPOCH (pilot).
+Exit codes: 0 completed (or budget stop / session pause recorded), 1 failure, 143 terminated (Spot
+preemption). Worker: 3 budget stop, 4 session pause.
 """
+import hashlib
 import json
 import os
 import platform
@@ -74,6 +79,22 @@ class Cfg:
         self.image = e("FT_IMAGE", "")
         self.git = e("FT_GIT_COMMIT", "")
         self.purpose = e("FT_PURPOSE", "")
+        # Kaggle (research/flames_thick/kaggle_run): inputs from mounted folders instead of the bucket
+        # mirrors, a soft per-session deadline that PAUSES the run (resumable in the next session) and,
+        # in the pilot only, a forced pause after a given epoch.
+        self.inputs_mode = e("FT_INPUTS", "store")
+        if self.inputs_mode not in ("store", "dir"):
+            sys.exit("FT_INPUTS must be 'store' or 'dir'")
+        self.flames_dir = e("FT_FLAMES_DIR", "")
+        self.mslesseg_zip = e("FT_MSLESSEG_ZIP", "")
+        self.mslesseg_provenance = e("FT_MSLESSEG_PROVENANCE", "")
+        self.platform = e("FT_PLATFORM", "vertex-ai-customjob")
+        self.provisioning = e("FT_PROVISIONING", "SPOT (Vertex AI)")
+        dl = e("FT_SESSION_DEADLINE_UTC", "").strip()
+        self.session_deadline = budget.parse(dl) if dl else None
+        self.session_reserve_s = float(e("FT_SESSION_RESERVE_S", "600"))
+        p = e("FT_PAUSE_AFTER_EPOCH", "").strip()
+        self.pause_after = int(p) if p else None
         self.root = f"{self.prefix}/train/{self.run_id}"
         self.remote_fold = f"{self.root}/fold_0"
         self.state = os.path.join(self.work, "state")
@@ -142,8 +163,8 @@ def hardware(cfg):
             "gpu": sh("nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv,noheader"),
             "cpu_model": sh("lscpu | sed -n 's/^Model name:[[:space:]]*//p' | head -1") or platform.processor(),
             "vcpus": os.cpu_count(), "memory_gb": mem, "zone": md("instance/zone").rsplit("/", 1)[-1],
-            "cpu_platform": md("instance/cpu-platform"), "provisioning": "SPOT (Vertex AI)",
-            "os": platform.platform()}
+            "cpu_platform": md("instance/cpu-platform"), "provisioning": cfg.provisioning,
+            "os": platform.platform(), "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES")}
 
 
 def gpu_selftest(device):
@@ -243,9 +264,15 @@ def worker():
 
     def guard(trainer, finished_epoch):
         secs = [r["seconds"] for r in trainer.epoch_records if "seconds" in r][-10:]
-        return budget.decide(prev_attempts + [dict(this_attempt, live=True)], budget.utcnow(), cfg.rate,
-                             cfg.max_cost, cfg.max_hours, statistics.median(secs) if secs else 0.0,
-                             cfg.reserve_s, cfg.overhead_s, cfg.safety)
+        next_s = statistics.median(secs) if secs else 0.0
+        reason = budget.decide(prev_attempts + [dict(this_attempt, live=True)], budget.utcnow(), cfg.rate,
+                               cfg.max_cost, cfg.max_hours, next_s, cfg.reserve_s, cfg.overhead_s, cfg.safety)
+        if reason:
+            return reason
+        if cfg.pause_after is not None and finished_epoch == cfg.pause_after:
+            return f"{budget.PAUSE_PREFIX}: forced pause after epoch {finished_epoch} (pilot: session hand-over test)"
+        return budget.session_decide(budget.utcnow(), cfg.session_deadline, next_s,
+                                     finished_epoch + 1 >= trainer.num_epochs - 1, cfg.reserve_s, cfg.session_reserve_s)
 
     tr.checkpoint_callbacks.append(on_checkpoint)
     if this_attempt:
@@ -254,14 +281,16 @@ def worker():
         try:
             tr.run_training()
         except BudgetStop as stop:
-            write_state(cfg, "stop.json", {"reason": str(stop), "epoch": int(tr.current_epoch)})
+            pause = str(stop).startswith(budget.PAUSE_PREFIX)
+            write_state(cfg, "pause.json" if pause else "stop.json",
+                        {"reason": str(stop), "epoch": int(tr.current_epoch), "utc": now_s()})
             for dl in (tr.dataloader_train, tr.dataloader_val):
                 try:
                     dl._finish()
                 except Exception:
                     pass
             sys.stdout.flush()
-            os._exit(3)
+            os._exit(4 if pause else 3)
     if tr.thick_info:
         write_state(cfg, "thick_info.json", tr.thick_info)
     elif read_state(cfg, "thick_info.json") is None and store.exists(f"{cfg.remote_fold}/thick_augmentation.json"):
@@ -314,7 +343,7 @@ class Supervisor:
         b = budget.summary(self.all_attempts(), now, cfg.rate, cfg.overhead_s, cfg.safety)
         measured = sum(budget.attempt_seconds(a, now) for a in self.all_attempts())
         epochs = read_state(cfg, "epochs.json", []) or []
-        runinfo = {"run_id": cfg.run_id, "platform": "vertex-ai-customjob", "wall_seconds": int(measured),
+        runinfo = {"run_id": cfg.run_id, "platform": cfg.platform, "wall_seconds": int(measured),
                    "billed_seconds_estimate": b["billed_seconds_estimate"],
                    "rate_usd_per_h_metadata": cfg.rate, "cost_usd_estimate_metadata": b["cost_usd_list_estimate"],
                    "hardware": self.hw, "stages_utc": self.stages, "attempts": self.all_attempts(live=False),
@@ -326,11 +355,12 @@ class Supervisor:
                     "split": read_state(cfg, "split.json"), "schedule": self.schedule(),
                     "thick_augmentation": read_state(cfg, "thick_info.json"),
                     "init_source": read_state(cfg, "init_source.json"), "stop": read_state(cfg, "stop.json"),
+                    "pause": read_state(cfg, "pause.json"), "platform": cfg.platform,
                     "kill_test": self.kill_test, "budget": b, "attempts": self.all_attempts(live=False),
                     "cases": [{"case": f"epoch_{r['epoch']:04d}", "seconds": r.get("seconds"), "ok": True}
                               for r in epochs if r.get("seconds") is not None],
                     "epochs": epochs, "errors": self.errors}
-        cost = (f"COST_RECORD,run_id={cfg.run_id},machine={cfg.machine}+{cfg.gpu} spot (Vertex AI),"
+        cost = (f"COST_RECORD,run_id={cfg.run_id},machine={cfg.machine}+{cfg.gpu} {cfg.provisioning.lower()},"
                 f"seconds={int(b['billed_seconds_estimate'])},rate_usd_per_h={cfg.rate},"
                 f"cost_usd_compute_estimate={b['cost_usd_list_estimate']}\n")
         return runinfo, manifest, cost
@@ -391,7 +421,59 @@ class Supervisor:
             os._exit(143)
 
     # ---------------------------------------------------------------- stages
+    def fetch_inputs_dir(self):
+        """Kaggle: FLAMeS fold-0 files and the MSLesSeg-train zip from mounted (read-only) folders.
+
+        Every FLAMeS file and every zip member is checked against the PROVENANCE.json written by
+        kaggle_run/prepare_datasets.py (publisher size + md5 of the source zips, SHA-256 of each file).
+        """
+        cfg, w = self.cfg, self.cfg.work
+        self.stage("weights_start")
+        prov = json.load(open(os.path.join(cfg.flames_dir, "PROVENANCE.json"), encoding="utf-8"))
+        for m in FLAMES_MEMBERS:
+            flat = m.replace("/", "__")
+            src = os.path.join(cfg.flames_dir, flat)
+            if not os.path.isfile(src):
+                src = os.path.join(cfg.flames_dir, *m.split("/"))
+            dst = os.path.join(w, "flames", *m.split("/"))
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            shutil.copyfile(src, dst)
+            want = prov["files"][flat]["sha256"]
+            if dp.sha256_file(dst) != want:
+                raise RuntimeError(f"FLAMeS {m}: SHA-256 differs from PROVENANCE.json")
+        got = dp.sha256_file(os.path.join(w, "flames", "fold_0", "checkpoint_final.pth"))
+        if got != dp.FLAMES_FOLD0_SHA256:
+            raise RuntimeError(f"FLAMeS fold-0 checkpoint SHA-256 {got} != {dp.FLAMES_FOLD0_SHA256}")
+        self.inputs["flames_fold0_checkpoint_sha256"] = got
+        self.inputs["flames_weights_zip"] = {"object": "kaggle dataset (fold-0 files of the Zenodo zip)",
+                                             "source": prov["source"], "files_sha256_checked": True}
+        self.stage("datasets_start")
+        mp = json.load(open(cfg.mslesseg_provenance, encoding="utf-8"))
+        z = os.path.join(w, "cache", "mslesseg_train.zip")
+        os.makedirs(os.path.dirname(z), exist_ok=True)
+        shutil.copyfile(cfg.mslesseg_zip, z)          # prepare() deletes its copy; the mounted file stays
+        with zipfile.ZipFile(z) as zf:
+            names = sorted(n for n in zf.namelist() if not n.endswith("/"))
+            if names != sorted(mp["members"]):
+                raise RuntimeError("MSLesSeg zip members differ from PROVENANCE.json")
+            for n in names:
+                with zf.open(n) as f:
+                    h = hashlib.sha256()
+                    for b in iter(lambda: f.read(1 << 22), b""):
+                        h.update(b)
+                if h.hexdigest() != mp["members"][n]["sha256"]:
+                    raise RuntimeError(f"MSLesSeg {n}: SHA-256 differs from PROVENANCE.json")
+        src = mp["source"]
+        self.inputs["mslesseg_zip"] = {"object": "kaggle dataset (MSLesSeg train split of the Figshare zip)",
+                                       "sha256": dp.sha256_file(z), "bytes": os.path.getsize(z),
+                                       "members_sha256_checked": len(names), "source": src,
+                                       "matches_figshare_size": src.get("bytes") == dp.MSLESSEG_ZIP_BYTES
+                                       and src.get("md5") == src.get("md5_publisher")}
+        return z
+
     def fetch_inputs(self):
+        if self.cfg.inputs_mode == "dir":
+            return self.fetch_inputs_dir()
         w = self.cfg.work
         self.stage("weights_start")
         z = os.path.join(w, "cache", "flames_weights.zip")
@@ -466,6 +548,8 @@ class Supervisor:
                 return "completed"
             if rc == 3:
                 return "budget_stop"
+            if rc == 4:
+                return "paused"                    # session deadline: resumable in the next session
             restarts += 1
             self.errors.append({"worker": n, "returncode": rc, "utc": now_s()})
             if restarts > 1:
@@ -548,9 +632,10 @@ class Supervisor:
             if self.kill_test is not None and not self.kill_test.get("ok"):
                 self.errors.append({"kill_test": "worker did not resume from the uploaded checkpoint"})
                 status = "failed"
-            extra = {"stop": read_state(cfg, "stop.json")} if status == "budget_stop" else {}
+            extra = ({"stop": read_state(cfg, "stop.json")} if status == "budget_stop" else
+                     {"pause": read_state(cfg, "pause.json")} if status == "paused" else {})
             self.set_status(status, **extra)
-            return 0 if status in ("completed", "budget_stop") else 1
+            return 0 if status in ("completed", "budget_stop", "paused") else 1
         except Exception as exc:
             import traceback
             self.errors.append({"error": repr(exc)[:2000], "trace": traceback.format_exc()[-4000:]})

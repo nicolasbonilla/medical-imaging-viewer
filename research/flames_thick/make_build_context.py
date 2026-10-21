@@ -36,7 +36,7 @@ def main(dst):
 
 
 def eval_code(out):
-    skip = SKIP | {"tests", "Dockerfile", "requirements-gpu.lock", "cloudbuild.yaml"}
+    skip = SKIP | {"tests", "kaggle_run", "Dockerfile", "requirements-gpu.lock", "cloudbuild.yaml"}
     with tarfile.open(out, "w:gz") as t:
         for d, dirs, files in os.walk(HERE):
             dirs[:] = sorted(x for x in dirs if x not in skip)

@@ -6,6 +6,8 @@ Sources (nothing is estimated where a measurement exists):
     and {flames-ensemble,lstai}/manifests/<run>.json (per case timings, software versions, checksums).
   * August 2026 runs in brain-mri-476110 — docs/calm-ms/cost-ledger.csv (as recorded then).
   * Local computer runs — docs/research/compute-ledger/local_runs.csv (hand-kept, with timings).
+  * Kaggle sessions (free GPU quota, 0 USD) — docs/research/compute-ledger/kaggle_runs.csv, written from the
+    session records by research/flames_thick/kaggle_run/ledger_rows.py.
   * Human notes per run (parity checks, failure causes) — docs/research/compute-ledger/annotations.json.
 
 Prices: official LIST prices (USD) from the Cloud Billing catalog via pricing.py, looked up on the
@@ -232,6 +234,31 @@ def local_rows():
     return rows
 
 
+KAGGLE_PROJECT = "kaggle (free GPU quota)"
+
+
+def kaggle_rows():
+    """Kaggle sessions (one kernel each) from kaggle_runs.csv, written by kaggle_run/ledger_rows.py.
+
+    Kaggle is free: 0 USD. vm_hours = session hours = hours charged to the weekly GPU quota (a
+    "T4 x2" session holds both GPUs for the whole session; GPU-device hours are twice that).
+    """
+    path = os.path.join(OUT, "kaggle_runs.csv")
+    if not os.path.exists(path):
+        return []
+    rows = []
+    for r in csv.DictReader(open(path, encoding="utf-8")):
+        w = int(float(r["wall_seconds"])) if r["wall_seconds"].strip() else ""
+        rows.append({**{f: "" for f in FIELDS}, **{k: r[k] for k in r if k in FIELDS},
+                     "project": KAGGLE_PROJECT, "provisioning": "Kaggle free quota", "machines": 1, "zone": "",
+                     "wall_seconds": w, "vm_hours": round(w / 3600, 4) if w != "" else "",
+                     "items_ok": r.get("epochs", ""), "median_seconds_per_item": r.get("median_seconds_per_epoch", ""),
+                     "usd_per_hour_list": 0, "cost_usd_list": 0, "cost_usd_recorded": 0,
+                     "price_basis": "Kaggle free weekly GPU quota (account nicolasbonilna): 0 USD",
+                     "_kind": "training"})
+    return rows
+
+
 def bucket_storage():
     out = sh(f"gcloud storage du -s {BUCKET}").stdout.split()
     gb = int(out[0]) / 1e9 if out and out[0].isdigit() else None
@@ -240,6 +267,8 @@ def bucket_storage():
 
 ES = {"not recorded": "no registrado", "ok": "correcta", "running": "en curso", "SPOT": "Spot (interrumpible)",
       "STANDARD": "estándar", "own hardware": "equipo propio", "no run time recorded": "sin tiempo registrado",
+      "Kaggle free quota": "cuota gratuita de Kaggle", "paused": "en pausa (sigue en la próxima sesión)",
+      "completed": "terminada",
       "failed (pilot bugs fixed)": "fallida (errores del piloto corregidos)",
       "failed (software environment)": "fallida (entorno de software)", "failed": "fallida",
       "stopped by cost guard": "detenida por el tope de coste"}
@@ -289,6 +318,10 @@ def summary(rows, usd_per_eur, ecb_day, storage_gb, built):
                  f"(tope propio {CREDIT_TARGET_EUR:.0f} EUR; caduca {CREDIT_EXPIRES}) — quedan ≈ {CREDIT_TARGET_EUR - used_eur:.2f} EUR |")
     L.append(f"| Horas de máquina, agosto (proyecto de la app) | {tot(aug, 'vm_hours'):.2f} h · registrado {tot(aug, 'cost_usd_recorded'):.2f} USD"
              f" · a precio de lista de hoy {tot(aug, 'cost_usd_list'):.2f} USD (pagado por la cuenta de la app, no por el crédito) |")
+    kag = [r for r in done if r["project"] == KAGGLE_PROJECT]
+    if kag:
+        L.append(f"| Horas de tarjeta gráfica en Kaggle (cuota gratuita semanal) | {tot(kag, 'vm_hours'):.2f} h de cuota en "
+                 f"{len(kag)} sesiones · 0 USD |")
     L.append("")
     L.append("## Máquinas usadas\n")
     L.append("| Máquina | Procesador | vCPU | Memoria (GB) | Tarjeta gráfica | Modalidad | USD/hora (lista) |\n|---|---|---|---|---|---|---|")
@@ -318,6 +351,14 @@ def summary(rows, usd_per_eur, ecb_day, storage_gb, built):
             per = r["median_seconds_per_item"]
             L.append(f"| {r['run_id']} | {r['machine_type']} | {r['gpu'] or '—'} | {r['items_ok'] or '—'} | {per or '—'} "
                      f"| {(float(per) / 3600 * float(r['usd_per_hour_list'])) if per else 0:.4f} | {money(r['cost_usd_list'])} | {es(r['status'])} |")
+        L.append("")
+    if kag:
+        L.append("## Entrenamiento en Kaggle (tarjetas gráficas gratuitas)\n")
+        L.append("| Fecha | Sesión | Para qué | Tarjeta | Horas de cuota | Épocas en la sesión (por brazo) | Mediana s por época | Coste USD | Estado |\n"
+                 "|---|---|---|---|---|---|---|---|---|")
+        for r in kag:
+            L.append(f"| {r['date_utc']} | {r['run_id']} | {r['purpose_es']} | {r['gpu']} | {float(r['vm_hours']):.2f} "
+                     f"| {r['items_ok'] or '—'} | {r['median_seconds_per_item'] or '—'} | 0 | {es(r['status'])} |")
         L.append("")
     perf = [r for r in research if r["median_seconds_per_item"] not in ("", None) and r.get("_kind") != "training"]
     if perf:
@@ -361,7 +402,7 @@ def main():
         rows = cloud_rows(fetch_bucket(tmp), notes, price_cache)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
-    rows = august_rows(price_cache) + rows + local_rows()
+    rows = august_rows(price_cache) + rows + local_rows() + kaggle_rows()
     for r in rows:                                   # human annotations: Spanish text, dates, verified results
         a = notes.get(r["run_id"], {})
         r["machines"] = int(r.get("machines") or 1)

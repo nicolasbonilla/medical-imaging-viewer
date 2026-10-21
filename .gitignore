@@ -121,6 +121,8 @@ phase2.json
 /data/cohorts/*
 /data/experiments/*
 /data/cache/*
+# Research model weights (e.g. FLAMeS-thick fine-tunes); their SHA-256 are recorded in docs/research/
+/data/models/*
 !/data/external/.gitkeep
 !/data/cohorts/.gitkeep
 !/data/experiments/.gitkeep
