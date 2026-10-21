@@ -127,6 +127,8 @@ def cloud_rows(tmp, notes, price_cache):
         info = load(os.path.join(runs_dir, rid, "runinfo.json"))
         man = load(os.path.join(man_dir, f"{rid}.json"))
         cost = kv_cost(os.path.join(cost_dir, f"{rid}.txt")) if os.path.exists(os.path.join(cost_dir, f"{rid}.txt")) else {}
+        if "kaggle-kernel" in (info.get("platform"), man.get("platform"), plan.get("platform")):
+            continue                 # Kaggle runs are counted per session from kaggle_runs.csv (0 USD), not here
         hw, st = info.get("hardware", {}), info.get("stages_utc", {})
         n = notes.get(rid, {})
         mt = (plan.get("machine_type") or hw.get("machine_type") or (vm.get("machineType", "").rsplit("/", 1)[-1])

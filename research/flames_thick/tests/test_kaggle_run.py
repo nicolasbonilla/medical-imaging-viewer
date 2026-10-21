@@ -101,6 +101,16 @@ def test_session_record_becomes_a_zero_cost_kaggle_ledger_row(tmp_path, monkeypa
     assert r["provisioning"] == "Kaggle free quota" and r["_kind"] == "training"
     rec["runs"]["flames-thick-a"]["state_at_end"] = "failed"
     assert lr.row(rec)["status"] == "failed"
+    # a Kaggle run's records uploaded to the bucket must not become a (priced) cloud row as well
+    rid = "flames-thick-a"
+    for d in ("runs/" + rid, "flames-ensemble_cost", "flames-ensemble_manifests"):
+        os.makedirs(tmp_path / "bucket" / d, exist_ok=True)
+    json.dump({"run_id": rid, "platform": "kaggle-kernel", "wall_seconds": 100, "status": "completed"},
+              open(tmp_path / "bucket" / "runs" / rid / "runinfo.json", "w"))
+    open(tmp_path / "bucket" / "flames-ensemble_cost" / f"{rid}.txt", "w").write(
+        f"COST_RECORD,run_id={rid},machine=kaggle-NvidiaTeslaT4+T4 kaggle free gpu quota,seconds=100,rate_usd_per_h=0.0,"
+        f"cost_usd_compute_estimate=0.0\n")
+    assert bl.cloud_rows(str(tmp_path / "bucket"), {}, {}) == []
 
 
 def test_manifest_reference_hashes_must_agree(tmp_path):
