@@ -66,34 +66,47 @@ def _atlas_space():
     return _ATLAS
 
 
+_G0_CACHE = {}
+_DEVICE_ZONE = {}
+
+
 def atlas_maps(scan, shape, affine, cache: Path, levels=G_LEVELS) -> dict:
     """Per-G zone maps (for the zone rules), LST-AI touch masks and the ventricle masks used to
-    attribute PV contacts (third vs lateral ventricle), all on the scan grid."""
+    attribute PV contacts (third vs lateral ventricle), all on the scan grid.
+
+    G0 is identical for every scan on the same grid and is cached. The secondary rule APP-3MM is
+    built at G0 only (it is analysed one factor at a time from the device default, which is at G0).
+    """
     at = _atlas_space()
     out = {}
     for G in levels:
+        key = (tuple(shape), tuple(np.round(np.asarray(affine), 4).ravel()))
+        if G == "G0" and key in _G0_CACHE:
+            out[G] = _G0_CACHE[key]
+            continue
         if G == "G1":
             w = cache / "warped"
             orig = np.asarray(nib.load(str(w / f"{scan.case}_msmask.nii.gz")).dataobj).astype(np.int16)
             split = np.asarray(nib.load(str(w / f"{scan.case}_msmask_split3v.nii.gz")).dataobj).astype(np.int16)
             lab_lat = A.ventricle_variant(split, "lateral")
-            zone = {"APP": A.device_zone_map(orig), "APP-LV": A.device_zone_map(lab_lat),
-                    "APP-3MM": A.device_zone_map(orig, mode="distance")}
+            zone = {"APP": A.device_zone_map(orig), "APP-LV": A.device_zone_map(lab_lat)}
             lab_all_s, lab_lat_s = orig, lab_lat
             third_s, lateral_s = split == A.THIRD_VENT, split == A.VENT
         else:
             src_aff = at["affine"] if G == "G0" else A.perturbation_matrix(A.case_seed(scan.case)) @ at["affine"]
             rs = lambda m: A.resample_nearest(m, src_aff, shape, affine)  # noqa: E731
-            zone = {k: rs(at["zone"][k]) for k in ("APP", "APP-LV", "APP-3MM")}
+            zone = {k: rs(at["zone"][k]) for k in (("APP", "APP-LV", "APP-3MM") if G == "G0" else ("APP", "APP-LV"))}
             lab_all_s, lab_lat_s = rs(at["lab_all"]), rs(at["lab_lat"])
             third_s, lateral_s = rs(at["third"]) > 0, rs(at["lateral"]) > 0
         zone["APP-MAJ"] = zone["APP"]
         out[G] = {
             "zone": zone,
             "touch": {"LSTAI": RL.lstai_touch_masks(lab_all_s), "LSTAI-LV": RL.lstai_touch_masks(lab_lat_s)},
-            "touch_third": A.ndi.binary_dilation(third_s, structure=A.CUBE),
-            "touch_lateral": A.ndi.binary_dilation(lateral_s, structure=A.CUBE),
+            "touch_third": A.dilate_cube(third_s),
+            "touch_lateral": A.dilate_cube(lateral_s),
         }
+        if G == "G0":
+            _G0_CACHE[key] = out[G]
     return out
 
 
@@ -141,27 +154,41 @@ def probability(source: str, arr):
 
 
 def evaluate_mask(mask, prob, maps, keep_lesions: bool):
-    """Rows for one binary mask under every G x R x M, plus optional lesion-level tables."""
-    lab18, n18 = RL.label(mask, 18)
-    lab26, n26 = RL.label(mask, 26)
-    f18 = RL.lesion_features(lab18, n18, prob=prob)
-    f26 = RL.lesion_features(lab26, n26, prob=prob)
-    vox = np.flatnonzero(mask)
+    """Rows for one binary mask under every G x R x M, plus optional lesion-level tables.
+
+    Work is done on the mask's bounding box (+1 voxel), which leaves every connected component,
+    every lesion voxel and every map value at those voxels unchanged."""
+    nz = np.argwhere(mask)
+    if len(nz):
+        lo, hi = np.maximum(nz.min(0) - 1, 0), nz.max(0) + 2
+        sl = tuple(slice(a, b) for a, b in zip(lo, hi))
+    else:
+        sl = tuple(slice(0, 1) for _ in mask.shape)
+    m = mask[sl]
+    p = prob[sl] if prob is not None else None
+    lab18, n18 = RL.label(m, 18)
+    lab26, n26 = RL.label(m, 26)
+    f18 = RL.lesion_features(lab18, n18, prob=p)
+    f26 = RL.lesion_features(lab26, n26, prob=p)
+    vox = np.flatnonzero(m)
     l18, l26 = lab18.ravel()[vox], lab26.ravel()[vox]
-    keeps18 = {m: RL.keep_by_min_size(f18, m) for m in RL.MIN_SIZE_RULES}
-    keeps26 = {m: RL.keep_by_min_size(f26, m) for m in RL.MIN_SIZE_RULES}
+    keeps18 = {k: RL.keep_by_min_size(f18, k) for k in RL.MIN_SIZE_RULES}
+    keeps26 = {k: RL.keep_by_min_size(f26, k) for k in RL.MIN_SIZE_RULES}
+    at_vox = lambda arr: arr[sl].ravel()[vox]  # noqa: E731
     rows, lesions = [], []
     for G, mp in maps.items():
         regs = {}
         zcs = {}
         for R in ZONE_RULES:
-            z = mp["zone"][R].ravel()[vox]
+            if R not in mp["zone"]:
+                continue
+            z = at_vox(mp["zone"][R])
             zc = np.bincount(l18.astype(np.int64) * 5 + z, minlength=(n18 + 1) * 5).reshape(n18 + 1, 5)[1:]
             zcs[R] = zc
             regs[R] = RL.regions_majority(zc) if R == "APP-MAJ" else RL.regions_contact(zc)
         hits = {}
         for R in LSTAI_RULES:
-            h = {L: np.bincount(l26, weights=mp["touch"][R][L].ravel()[vox].astype(np.float64),
+            h = {L: np.bincount(l26, weights=at_vox(mp["touch"][R][L]).astype(np.float64),
                                 minlength=n26 + 1)[1:] > 0 for L in (4, 2, 5)}
             hits[R] = h
             reg = np.full(n26, RL.DWM, dtype=np.int8)
@@ -182,16 +209,16 @@ def evaluate_mask(mask, prob, maps, keep_lesions: bool):
                 rows.append((G, R, M, *c.tolist(), int(keep.sum()), float(feat["volume_mm3"][keep].sum()),
                              int(RL.dis_brain(c)), int(RL.dis_brain(c, pv_min=3))))
         if keep_lesions:
-            t3 = {k: np.bincount(l, weights=mp["touch_third"].ravel()[vox].astype(np.float64), minlength=n + 1)[1:] > 0
+            t3 = {k: np.bincount(l, weights=at_vox(mp["touch_third"]).astype(np.float64), minlength=n + 1)[1:] > 0
                   for k, l, n in (("18", l18, n18), ("26", l26, n26))}
-            tl = {k: np.bincount(l, weights=mp["touch_lateral"].ravel()[vox].astype(np.float64), minlength=n + 1)[1:] > 0
+            tl = {k: np.bincount(l, weights=at_vox(mp["touch_lateral"]).astype(np.float64), minlength=n + 1)[1:] > 0
                   for k, l, n in (("18", l18, n18), ("26", l26, n26))}
             for i in range(n18):
                 lesions.append({"G": G, "conn": 18, "id": i + 1, "volume_mm3": float(f18["volume_mm3"][i]),
                                 "long_axis_mm": float(f18["long_axis_mm"][i]),
                                 "mean_prob": (float(f18["mean_prob"][i]) if prob is not None else None),
                                 "APP": int(regs["APP"][i]), "APP-LV": int(regs["APP-LV"][i]),
-                                "APP-3MM": int(regs["APP-3MM"][i]), "APP-MAJ": int(regs["APP-MAJ"][i]),
+                                "APP-3MM": (int(regs["APP-3MM"][i]) if "APP-3MM" in regs else None), "APP-MAJ": int(regs["APP-MAJ"][i]),
                                 "zone_vox": zcs["APP"][i].tolist(), "zone_vox_lv": zcs["APP-LV"][i].tolist(),
                                 "touch_third": bool(t3["18"][i]), "touch_lateral": bool(tl["18"][i])})
             for i in range(n26):
@@ -229,7 +256,10 @@ def process_scan(scan, cache: Path, out_dir: Path) -> dict:
     t1img = nib.load(scan.t1)
     _check_grid(gt_img, t1img, scan.t1)
     maps = atlas_maps(scan, gt_img.shape, gt_img.affine, cache)
-    zdev = generate_zone_map_atlas(gt_img, (1.0, 1.0, 1.0))["zone_mask"]
+    key = (gt_img.shape, tuple(np.round(gt_img.affine, 4).ravel()))
+    if key not in _DEVICE_ZONE:   # the device's own zone map, once per grid
+        _DEVICE_ZONE[key] = generate_zone_map_atlas(gt_img, (1.0, 1.0, 1.0))["zone_mask"]
+    zdev = _DEVICE_ZONE[key]
     zone_equal = bool(np.array_equal(zdev, maps["G0"]["zone"]["APP"]))
     zdev_kij = np.transpose(zdev, (2, 0, 1))
     rows, lesion_tables, checks = [], {}, {}
@@ -258,6 +288,7 @@ def main():
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--cases", nargs="*")
+    ap.add_argument("--only-registered", action="store_true")
     args = ap.parse_args()
     root = data_root(args.data_root)
     cache = cache_dir(root)
@@ -266,8 +297,11 @@ def main():
     if sha256(DEVICE_MSMASK) != MSMASK_SHA256:
         raise RuntimeError("MSMask hash mismatch")
     scans = enumerate_scans(root, include_contaminated=True)
+    all_meta = {s.case: s.as_dict() for s in scans}
     if args.cases:
         scans = [s for s in scans if s.case in set(args.cases)]
+    if args.only_registered:   # run while the G1 registration is still going
+        scans = [s for s in scans if (cache / "warped" / f"{s.case}_msmask_split3v.nii.gz").exists()]
     if args.limit:
         scans = scans[: args.limit]
     todo = [s for s in scans if not (out / "scans" / f"{s.case}.json.gz").exists()]
@@ -277,7 +311,7 @@ def main():
                    "sources_secondary": SECONDARY_SOURCES, "rules": ZONE_RULES + LSTAI_RULES + ("LSTAI-ORD2",),
                    "min_size": RL.MIN_SIZE_RULES, "registration": G_LEVELS, "default": DEFAULT,
                    "reference": REFERENCE, "columns": COLUMNS,
-                   "scan_meta": {s.case: s.as_dict() for s in scans}})
+                   "scan_meta": all_meta})
     with ProcessPoolExecutor(max_workers=args.workers) as ex:
         futs = {ex.submit(process_scan, s, cache, out): s for s in todo}
         for i, f in enumerate(as_completed(futs), 1):

@@ -23,6 +23,12 @@ CSF, GM, WM, VENT, INFRA, THIRD_VENT = 1, 2, 3, 4, 5, 6
 CUBE = np.ones((3, 3, 3), dtype=bool)
 
 
+def dilate_cube(mask: np.ndarray) -> np.ndarray:
+    """Binary dilation by the 3x3x3 cube, computed as a separable maximum filter (identical to
+    ndi.binary_dilation(mask, structure=CUBE), border 0; ~10x faster)."""
+    return ndi.maximum_filter(np.asarray(mask, dtype=np.uint8), size=3, mode="constant", cval=0) > 0
+
+
 def load_labels(path):
     import nibabel as nib
     img = nib.load(str(path))
@@ -111,9 +117,9 @@ def device_zone_map(labels: np.ndarray, mode: str = "contact",
     wm = labels == WM
     infratentorial = labels == INFRA
     if mode == "contact":
-        ventricles_d = ndi.binary_dilation(ventricles, structure=CUBE)
-        cortex_d = ndi.binary_dilation(cortex, structure=CUBE)
-        infra_d = ndi.binary_dilation(infratentorial, structure=CUBE)
+        ventricles_d = dilate_cube(ventricles)
+        cortex_d = dilate_cube(cortex)
+        infra_d = dilate_cube(infratentorial)
     elif mode == "distance":
         ventricles_d = ndi.distance_transform_edt(~ventricles) <= d_pv
         cortex_d = ndi.distance_transform_edt(~cortex) <= d_jc

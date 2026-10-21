@@ -78,29 +78,33 @@ def run_case(scan, cache: Path, greedy_python: str, threads: int) -> dict:
     secs = time.time() - t0
     if r.returncode != 0 or not (tmp / "w_msmask.nii.gz").exists():
         return {"case": scan.case, "error": f"greedy exit {r.returncode}", "log": str(tmp / 'greedy.log')}
-    # QC: warped atlas brain vs scan brain (T1 > 0) and vs the world-coordinate (G0) atlas
     t1 = nib.load(str(tmp / "t1.nii.gz"))
-    w = np.asarray(nib.load(str(tmp / "w_msmask.nii.gz")).dataobj).astype(np.int16)
-    ws = np.asarray(nib.load(str(tmp / "w_split.nii.gz")).dataobj).astype(np.int16)
+    for src, dst in (("w_msmask.nii.gz", o1), ("w_split.nii.gz", o2)):
+        w = np.asarray(nib.load(str(tmp / src)).dataobj).astype(np.uint8)
+        nib.save(nib.Nifti1Image(w, t1.affine), str(dst))
+    shutil.rmtree(tmp, ignore_errors=True)
+    return {"case": scan.case, "seconds": round(secs, 1)}
+
+
+def qc_case(scan, cache: Path) -> dict:
+    """Warped atlas brain vs the scan's brain (T1 > 0) and vs the world-coordinate (G0) atlas."""
+    w = np.asarray(nib.load(str(cache / "warped" / f"{scan.case}_msmask.nii.gz")).dataobj).astype(np.int16)
+    ws = np.asarray(nib.load(str(cache / "warped" / f"{scan.case}_msmask_split3v.nii.gz")).dataobj).astype(np.int16)
+    t1 = nib.load(scan.t1)
     labels, aff = A.load_labels(DEVICE_MSMASK)
     g0 = A.resample_nearest(labels, aff, t1.shape, t1.affine)
     brain = np.asarray(t1.dataobj) > 0
-    wb, gb = w > 0, g0 > 0
 
     def dice(a, b):
         return float(2 * (a & b).sum() / max(a.sum() + b.sum(), 1))
-    qc = {
-        "dice_brain_warped_vs_t1": dice(wb, brain),
-        "dice_brain_g0_vs_t1": dice(gb, brain),
+    return {
+        "dice_brain_warped_vs_t1": dice(w > 0, brain),
+        "dice_brain_g0_vs_t1": dice(g0 > 0, brain),
         "dice_ventricles_warped_vs_g0": dice(w == 4, g0 == 4),
         "ventricle_ml_warped": float((w == 4).sum() / 1000.0),
         "ventricle_ml_g0": float((g0 == 4).sum() / 1000.0),
         "split_union_equals_original": float(np.mean(((ws == 4) | (ws == 6)) == (w == 4))),
     }
-    nib.save(nib.Nifti1Image(w.astype(np.uint8), t1.affine), str(o1))
-    nib.save(nib.Nifti1Image(ws.astype(np.uint8), t1.affine), str(o2))
-    shutil.rmtree(tmp, ignore_errors=True)
-    return {"case": scan.case, "seconds": round(secs, 1), **qc}
 
 
 def main():
@@ -121,18 +125,26 @@ def main():
                          capture_output=True, text=True).stdout.strip()
     record = {"tool": f"picsl_greedy {ver}", "deformable": GREEDY_DEFORMABLE, "reslice": GREEDY_RESLICE,
               "atlas_t1_sha256": ATLAS_T1_SHA256, "msmask_sha256": MSMASK_SHA256,
-              "third_ventricle_split": info, "cases": []}
+              "third_ventricle_split": info, "workers": args.workers, "threads": args.threads}
+    rec_path = cache / "warped" / "registration_record.json"
+    (cache / "warped").mkdir(exist_ok=True)
+    timing = {}
+    if rec_path.exists():
+        timing = json.loads(rec_path.read_text()).get("timing", {})
     with ThreadPoolExecutor(max_workers=args.workers) as ex:
         futs = {ex.submit(run_case, s, cache, args.greedy_python, args.threads): s for s in scans}
         for i, f in enumerate(as_completed(futs), 1):
             res = f.result()
-            record["cases"].append(res)
+            if "seconds" in res:
+                timing[res["case"]] = res["seconds"]
             print(f"[{i}/{len(scans)}] {json.dumps(res)}", flush=True)
-    old = cache / "warped" / "registration_record.json"
-    if old.exists():   # keep QC of cases registered in an earlier (interrupted) run
-        prev = {c["case"]: c for c in json.loads(old.read_text())["cases"] if "skipped" not in c}
-        record["cases"] = [prev.get(c["case"], c) if "skipped" in c else c for c in record["cases"]]
-    old.write_text(json.dumps(record, indent=1))
+            record["timing"] = timing
+            rec_path.write_text(json.dumps(record, indent=1))
+    record["qc"] = {s.case: qc_case(s, cache) for s in scans
+                    if (cache / "warped" / f"{s.case}_msmask_split3v.nii.gz").exists()}
+    record["missing"] = [s.case for s in scans if s.case not in record["qc"]]
+    rec_path.write_text(json.dumps(record, indent=1))
+    print(f"done: {len(record['qc'])} registered; missing {record['missing']}", flush=True)
 
 
 if __name__ == "__main__":

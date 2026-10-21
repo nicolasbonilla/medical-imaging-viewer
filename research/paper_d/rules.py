@@ -98,7 +98,8 @@ def regions_majority(zc: np.ndarray) -> np.ndarray:
 def lstai_touch_masks(labels: np.ndarray) -> dict:
     """Dilated MSMask structures: a 3x3x3-dilated lesion touches label L  <=>  the lesion touches
     the 3x3x3-dilated label L (the cube is symmetric)."""
-    return {L: ndi.binary_dilation(labels == L, structure=CUBE) for L in (4, 2, 5)}
+    from research.paper_d.atlas import dilate_cube
+    return {L: dilate_cube(labels == L) for L in (4, 2, 5)}
 
 
 def regions_lstai(lab26: np.ndarray, n26: int, touch: dict) -> np.ndarray:
