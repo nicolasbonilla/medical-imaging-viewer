@@ -1,0 +1,13 @@
+P2 {"M": {"fold0": {"candidates": 3866, "false": 1348, "true": 2518}, "mean5": {"candidates": 3788, "false": 1257, "true": 2531}}, "L10": {"fold0": {"candidates": 534, "false": 94, "true": 440}, "mean5": {"candidates": 517, "false": 82, "true": 435}}, "ms3seg": {"fold0": {"candidates": 3635, "false": 1396, "true": 2239}, "mean5": {"candidates": 3402, "false": 1162, "true": 2240}}, "muslim": {"fold0": {"candidates": 1649, "false": 683, "true": 966}, "mean5": {"candidates": 1540, "false": 568, "true": 972}}, "pedims": {"fold0": {"candidates": 1209, "false": 404, "true": 805}, "mean5": {"candidates": 1110, "false": 321, "true": 789}}}
+P1 pooled_external: RAW 0.7962 dRAW None None, GR-LR 0.8092 dRAW 0.013 [0.0082, 0.0179], GR-noENS-LR 0.8078 dRAW 0.0116 [0.0068, 0.0166], ENS-only-LR 0.7996 dRAW 0.0034 [0.002, 0.0048] | {'candidates': 6052, 'true': 4001, 'false': 2051, 'patients': 160}
+P1 ms3seg: RAW 0.8015 dRAW None None, GR-LR 0.812 dRAW 0.0105 [0.0049, 0.0166], GR-noENS-LR 0.8115 dRAW 0.01 [0.0044, 0.0162], ENS-only-LR 0.8048 dRAW 0.0033 [0.0017, 0.0049] | {'candidates': 3402, 'true': 2240, 'false': 1162, 'patients': 100}
+P1 muslim: RAW 0.7838 dRAW None None, GR-LR 0.8001 dRAW 0.0163 [0.0059, 0.0279], GR-noENS-LR 0.7978 dRAW 0.014 [0.0038, 0.0256], ENS-only-LR 0.7892 dRAW 0.0053 [0.0032, 0.0076] | {'candidates': 1540, 'true': 972, 'false': 568, 'patients': 51}
+P1 pedims: RAW 0.8007 dRAW None None, GR-LR 0.8195 dRAW 0.0188 [0.0003, 0.0308], GR-noENS-LR 0.8179 dRAW 0.0172 [-0.0007, 0.0308], ENS-only-LR 0.8005 dRAW -0.0001 [-0.007, 0.0067] | {'candidates': 1110, 'true': 789, 'false': 321, 'patients': 9}
+P1 M_to_L10: RAW 0.8024 dRAW None None, GR-LR 0.819 dRAW 0.0166 [-0.0158, 0.0421] | {'candidates': 517, 'true': 435, 'false': 82, 'patients': 10}
+P3 conformal external with 5-fold-mean candidates ...
+  ms3seg bh a=0.1: RAW power 0.3714 FDR 0.0947 exc 0.3455, GR-LR power 0.4925 FDR 0.0919 exc 0.3495
+  ms3seg bh a=0.2: RAW power 0.6019 FDR 0.1245 exc 0.175, GR-LR power 0.6492 FDR 0.1269 exc 0.2125
+  muslim bh a=0.1: RAW power 0.1581 FDR 0.1025 exc 0.2186, GR-LR power 0.3203 FDR 0.0741 exc 0.2353
+  muslim bh a=0.2: RAW power 0.4314 FDR 0.0929 exc 0.1637, GR-LR power 0.5194 FDR 0.098 exc 0.1627
+  pedims bh a=0.1: RAW power 0.1633 FDR 0.0629 exc 0.1661, GR-LR power 0.2525 FDR 0.0581 exc 0.1839
+  pedims bh a=0.2: RAW power 0.4773 FDR 0.0963 exc 0.0661, GR-LR power 0.5596 FDR 0.0939 exc 0.075

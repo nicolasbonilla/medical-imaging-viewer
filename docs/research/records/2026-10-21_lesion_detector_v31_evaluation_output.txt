@@ -1,0 +1,40 @@
+gate: {"M": {"scans": 115, "patients": 75, "candidates": 3866, "false": 1348, "false_rate": 0.3487, "ens_features_missing": 0}, "L10": {"scans": 10, "patients": 10, "candidates": 534, "false": 94, "false_rate": 0.176, "ens_features_missing": 0}, "ms3seg": {"scans": 100, "patients": 100, "candidates": 3635, "false": 1396, "false_rate": 0.384, "ens_features_missing": 0, "single_voxel_candidate_share": 0.0443}, "muslim": {"scans": 51, "patients": 51, "candidates": 1649, "false": 683, "false_rate": 0.4142, "ens_features_missing": 0, "single_voxel_candidate_share": 0.04}, "pedims": {"scans": 28, "patients": 9, "candidates": 1209, "false": 404, "false_rate": 0.3342, "ens_features_missing": 0, "single_voxel_candidate_share": 0.0}, "M_L10_match_v3": true}
+primary: pooled external (MS3SEG + Muslim + PediMS), trained on M + L10 ...
+  RAW          AUROC 0.721 [0.703, 0.7404]  dRAW None None  dENS -0.0677 [-0.0841, -0.0506]
+  ENS-RAW      AUROC 0.7887 [0.7738, 0.8021]  dRAW 0.0677 [0.0506, 0.0841]  dENS None None
+  GR-LR        AUROC 0.8322 [0.8183, 0.8456]  dRAW 0.1112 [0.0962, 0.1248]  dENS 0.0435 [0.0367, 0.0507]
+  GR-noENS-LR  AUROC 0.7586 [0.7392, 0.7803]  dRAW 0.0376 [0.0294, 0.0475]  dENS -0.0301 [-0.0469, -0.0116]
+  ENS-only-LR  AUROC 0.8155 [0.8019, 0.8282]  dRAW 0.0946 [0.0768, 0.1109]  dENS 0.0269 [0.0225, 0.031]
+  GR-GB        AUROC 0.8211 [0.8068, 0.8354]  dRAW 0.1001 [0.0845, 0.115]  dENS 0.0324 [0.0236, 0.0423]
+  criteria: {"primary_rule": "delta(GR-LR - RAW) >= 0.05 AND paired 95% CI lower bound > 0 (pooled external)", "primary_delta": 0.1112, "primary_ci95": [0.0962, 0.1248], "primary_met": true, "primary_statistically_positive": true, "H2_delta_vs_ENS_RAW": 0.0435, "H2_ci95": [0.0367, 0.0507], "H2_met": true, "H3_delta_vs_GR_noENS": 0.0736, "H3_ci95": [0.06, 0.0868], "H3_met": true}
+  ms3seg: RAW 0.7202, ENS-RAW 0.7978, GR-LR 0.8388, GR-noENS-LR 0.7604, ENS-only-LR 0.8256, GR-GB 0.82 | n {'candidates': 3635, 'true': 2239, 'false': 1396, 'patients': 100}
+  muslim: RAW 0.7459, ENS-RAW 0.7625, GR-LR 0.8228, GR-noENS-LR 0.7764, ENS-only-LR 0.7915, GR-GB 0.8196 | n {'candidates': 1649, 'true': 966, 'false': 683, 'patients': 51}
+  pedims: RAW 0.698, ENS-RAW 0.7946, GR-LR 0.8254, GR-noENS-LR 0.7405, ENS-only-LR 0.8148, GR-GB 0.8236 | n {'candidates': 1209, 'true': 805, 'false': 404, 'patients': 9}
+H4: site signature (M vs L10) ...
+  {"site_identity_auroc": {"F1_flair_contrast": 0.7002, "F3_flair_texture": 0.7555, "F4_flair_boundary": 0.8545, "F8_fold_disagreement": 0.5015, "F9_lstai_agreement": 0.6368, "v2_prob": 0.4452, "F5_persistence": 0.4341, "GR-noENS": 0.6384}, "separability": {"F1_flair_contrast": 0.2002, "F3_flair_texture": 0.2555, "F4_flair_boundary": 0.3545, "F8_fold_disagreement": 0.0015, "F9_lstai_agreement": 0.1368, "v2_prob": 0.0548, "F5_persistence": 0.0659, "GR-noENS": 0.1384}, "paired_separability_differences": {"F8_fold_disagreement_minus_F1_flair_contrast": {"delta": -0.1986, "ci95": [-0.2296, -0.0301], "less_site_specific": true}, "F8_fold_disagreement_minus_F3_flair_texture": {"delta": -0.254, "ci95": [-0.2772, -0.0906], "less_site_specific": true}, "F8_fold_disagreement_minus_F4_flair_boundary": {"delta": -0.353, "ci95": [-0.3711, -0.1884], "less_site_specific": true}, "F9_lstai_agreement_minus_F1_flair_contrast": {"delta": -0.0633, "ci95": [-0.1538, 0.0185], "less_site_specific": false}, "F9_lstai_agreement_minus_F3_flair_texture": {"delta": -0.1186, "ci95": [-0.2291, -0.0331], "less_site_specific": true}, "F9_lstai_agreement_minus_F4_flair_boundary": {"delta": -0.2177, "ci95": [-0.32, -0.1316], "less_site_specific": true}}, "H4_met_F8": true, "H4_met_F9": false}
+H4b: site signature (M vs each new site) ...
+  ms3seg: {"site_identity_auroc": {"F8_fold_disagreement": 0.5241, "GR-noENS": 0.6994, "v2_prob": 0.6431, "persistence_GR": 0.5023, "log_volume_mm3": 0.5975}, "F8_minus_GRnoENS_separability": {"delta": -0.1752, "ci95": [-0.2025, -0.1285]}, "F8_less_site_specific": true}
+  muslim: {"site_identity_auroc": {"F8_fold_disagreement": 0.5773, "GR-noENS": 0.6654, "v2_prob": 0.5203, "persistence_GR": 0.523, "log_volume_mm3": 0.5421}, "F8_minus_GRnoENS_separability": {"delta": -0.0881, "ci95": [-0.132, -0.0458]}, "F8_less_site_specific": true}
+  pedims: {"site_identity_auroc": {"F8_fold_disagreement": 0.2413, "GR-noENS": 0.2797, "v2_prob": 0.291, "persistence_GR": 0.2236, "log_volume_mm3": 0.2629}, "F8_minus_GRnoENS_separability": {"delta": 0.0383, "ci95": [-0.0986, 0.0898]}, "F8_less_site_specific": false}
+M <-> L10 (re-uses v3 data; not confirmatory) ...
+  pooled_loco: RAW 0.7283, V3-LR 0.7423, V31-LR 0.7596, V3P+ENS+LST-LR 0.7986, GR-LR 0.7861, V3P-LR 0.7143, ENS-RAW 0.7697
+  A_M_to_L10: RAW 0.6981, V3-LR 0.779, V31-LR 0.793, V3P+ENS+LST-LR 0.8152, GR-LR 0.7907, V3P-LR 0.7456, ENS-RAW 0.7796
+  B_L10_to_M: RAW 0.735, V3-LR 0.7709, V31-LR 0.7775, V3P+ENS+LST-LR 0.8161, GR-LR 0.8159, V3P-LR 0.7588, ENS-RAW 0.7709
+  within_M_cv: RAW 0.735, V3-LR 0.8348, V31-LR 0.8625, V3P+ENS+LST-LR 0.8498, GR-LR 0.8217, V3P-LR 0.7802, ENS-RAW 0.7709
+external conformal (20 splits) ...
+  ms3seg bh a=0.2: RAW power 0.404 FDR 0.2231 exc 0.4865, ENS-RAW power 0.2272 FDR 0.1312 exc 0.1765, GR-LR power 0.5977 FDR 0.1185 exc 0.181
+  muslim bh a=0.2: RAW power 0.1408 FDR 0.1558 exc 0.1873, ENS-RAW power 0.077 FDR 0.2065 exc 0.15, GR-LR power 0.4061 FDR 0.0837 exc 0.0931
+  pedims bh a=0.2: RAW power 0.146 FDR 0.1941 exc 0.2554, ENS-RAW power 0.1409 FDR 0.1007 exc 0.1554, GR-LR power 0.4079 FDR 0.0908 exc 0.1054
+B1 shuffle-label null ...
+  {'mean': 0.5061, 'min': 0.316, 'max': 0.6382}
+B4 label definitions ...
+  strict: RAW 0.727 dRAW None None, ENS-RAW 0.7902 dRAW 0.0632 [0.0442, 0.0803], GR-LR 0.8363 dRAW 0.1093 [0.0946, 0.1229]
+  anyvox: RAW 0.7098 dRAW None None, ENS-RAW 0.8057 dRAW 0.0959 [0.0714, 0.1169], GR-LR 0.8377 dRAW 0.1279 [0.1074, 0.1445]
+B5 refit variance ...
+  {'auroc_mean': 0.8307, 'p2.5_p97.5': [0.8277, 0.8324], 'raw_auroc': 0.721, 'frac_refits_below_raw': 0.0}
+B6 contamination reference ...
+  M -> L10: RAW 0.6981, ENS-RAW 0.7796, GR-LR 0.7907
+  M -> Ltr: RAW 0.6353, ENS-RAW 0.6671, GR-LR 0.7198
+B7 KS (M vs each site, GR features) ...
+B8 resolution: candidates with >= 3 voxels ...
+  RAW 0.7003 dRAW None, ENS-RAW 0.779 dRAW 0.0788, GR-LR 0.8222 dRAW 0.1219, GR-noENS-LR 0.7368 dRAW 0.0366, ENS-only-LR 0.8059 dRAW 0.1056, GR-GB 0.8097 dRAW 0.1094
