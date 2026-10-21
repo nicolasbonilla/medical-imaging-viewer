@@ -245,6 +245,16 @@ outside the 5 threshold-voxel scans (max difference there: see record). Both ver
 recorded (`gate_G1.passed_as_preregistered`, `gate_G1.passed_with_deviation_5`) in
 `2026-10-21_paper_a_v03_candidates.json`.
 
+**2026-10-21, entry 6 — after the results (transparency note, not a change of analysis).**
+(a) The first full run of `v03_analysis.py` did not classify the fold-0 arm's primary cells,
+which the Q3 criterion ("without a new violated cell", §10) needs; that classification and the
+Q3/Q4 verdict blocks were added and the whole analysis re-run — every previously printed number
+was reproduced identically (deterministic seeds). (b) Explanatory analyses written after seeing
+the results (P2 threshold degeneracy, false-score upper tail, lesion sizes, within-site thickness
+gradient) are in `v03_posthoc.py` / `2026-10-21_paper_a_v03_posthoc.json` and are labelled post
+hoc wherever cited. (c) Observation on the classification rule: "holds" admits point estimates
+above nominal (upper bound ≤ nominal + 0.05); such cells are flagged in RESULTS-v0.3.md.
+
 ## 14. Compute
 
 Local CPU only (8 workers), no cloud command. Derived candidate caches go to the git-ignored

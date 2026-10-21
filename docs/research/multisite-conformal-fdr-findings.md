@@ -1,6 +1,14 @@
 # Multi-site conformal lesion-FDR under real MS shift — honest characterization
 
-> **CORRECTION 2026-10-17 (read first).** The `openms` cohort is largely FLAMeS TRAINING data:
+> **UPDATE 2026-10-21 (v0.3, read first).** A pre-registered five-cohort re-analysis with the
+> FLAMeS 5-fold ensemble and three thick-slice 2D-FLAIR cohorts supersedes the numbers below:
+> `docs/research/paper/RESULTS-v0.3.md` (protocol `PROTOCOL-v0.3.md`). In short: conformal BH was
+> not violated on any held-out site (not established on one site at α = 0.1); a per-scan FDX
+> threshold did not transport from 1-mm to thick slices; the single-fold (fold-0) pipeline used
+> below violates the guarantee on a thick-slice site and the 5-fold ensemble does not; a same-image
+> segmenter swap (LST-AI-calibrated, FLAMeS-tested) violates it.
+>
+> **CORRECTION 2026-10-17.** The `openms` cohort is largely FLAMeS TRAINING data:
 > FLAMeS trained on Ljubljana patients 01–15 and 21–25 (identified exactly from the released
 > nnU-Net fingerprint; `docs/research/records/2026-10-17_flames_ljubljana_split.json`), and the
 > fold-0 weights that produced our maps trained on 18 of the 30. Every `openms` number below is
