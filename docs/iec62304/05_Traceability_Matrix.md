@@ -2,7 +2,7 @@
 
 ## IEC 62304 Clause 5.1.1(e) — Bidirectional Traceability
 
-**Document ID**: TM-001 | **Version**: 1.3 | **Date**: October 17, 2026 (v1.2 and v1.3 same day; v1.1: September 28, 2026; v1.0: April 12, 2026)
+**Document ID**: TM-001 | **Version**: 1.7 DRAFT (CP-SLICE-THICKNESS-001, PENDING owner approval; merge after #52, #51 and #53, which hold versions 1.4, 1.5 and 1.6) — last approved: 1.3 | **Date**: October 17, 2026 (v1.2 and v1.3 same day; v1.1: September 28, 2026; v1.0: April 12, 2026)
 
 | Version | Date | Author | Change | Approved By |
 |---------|------|--------|--------|-------------|
@@ -10,6 +10,7 @@
 | 1.1 | 2026-09-28 | Development Team | CAPA-006 (HAZ-005). (a) REQ-FUNC-053 row corrected in place. It was "MAGNIMS classification", tested by UT-CLS-001 only. It now reflects the corrected SRS text: contact criterion, four paths, MNI-only atlas. It adds UT-CLS-002/003 and UI-RC032, and the architecture reference, which was "SAD 3.5", a section that does not exist. (b) Addendum added for REQ-SAFE-021 → RC-032 and for the CAPA-006 PA-6.1 labelling gate. (c) REQ-SAFE-020 / RC-022 row: "VERIFIED (code inspection)" struck through. It is NOT IMPLEMENTED / NOT VERIFIED: no MNI preprocessing or registration to a template exists in the code. (d) New tests added to the backward and unit-test traceability tables. The 2026-09-28 RC-010 addendum below was entered without a version change; it is covered by this version | N. G. Bonilla Vargas — approved 2026-10-17 (PR #43) |
 | 1.2 | 2026-10-17 | Development Team | CAPA-008: REQ-SAFE-022/023/024 → RC-033/034/035 → UT-CAPA008, UT-LONG-RULES (addendum below; test rows added) | N. G. Bonilla Vargas — approved 2026-10-17 (PR #46) |
 | 1.3 | 2026-10-17 | Development Team | CAPA-009: REQ-SEC-014/015/016/019/020 → RC-036 → UT-CAPA009 | N. G. Bonilla Vargas — approved 2026-10-17 (PR #47) |
+| 1.7 (draft) | 2026-10-21 | Development Team | CP-SLICE-THICKNESS-001 (reliability by slice thickness, flag OFF): REQ-FUNC-098/099, REQ-SAFE-034/035/036 → RC-054..RC-058 → UT-RC054, UT-STC-LOGIC, UI-STC-CARD, UT-STC-FLAG (addendum below; test rows added). Versions 1.4, 1.5 and 1.6 are reserved by open PRs #52, #51 and #53 | **PENDING owner approval** |
 
 ---
 
@@ -35,6 +36,8 @@
 | REQ-FUNC-071 | WADO-RS import | SAD 3.7 | — | `dicomweb_service.py` | — | IT-PACS-002 | ST-FUNC-071 | HAZ-012 |
 | REQ-FUNC-072 | DICOM-SEG export | SAD 3.7 | — | `dicom_utils.py` | UT-SEG-001 | — | ST-FUNC-072 | HAZ-011 |
 | REQ-FUNC-073 | FHIR resources | SAD 3.7 | — | `fhir.py` | — | IT-FHIR-001 | ST-FUNC-073 | — |
+| REQ-FUNC-098 (draft) | Reliability-by-slice-thickness card next to the lesion results (flag OFF) | — | spec `APP-FEATURE-slice-thickness-reliability.md` (PR #54, research input) | `SliceThicknessReliabilityCard.tsx`, `utils/sliceThicknessReliability.ts`, `config/sliceThicknessReliability.v1.json`, `LesionDashboard.tsx`, `ViewerApp.tsx`, `config/features.ts` | UT-STC-LOGIC, UI-STC-CARD, UT-STC-FLAG | — | — | HAZ-015, HAZ-001 (RC-055..RC-058) |
+| REQ-FUNC-099 (draft) | Acquisition geometry per image (state, effective mm, source, reason), Class C utilities wrapped | — | `acquisition_geometry.py` module docstring | `acquisition_geometry.py`, `imaging_service.py`, `schemas.py` | UT-RC054 | — | — | HAZ-015 (RC-054) |
 
 ---
 
@@ -115,6 +118,17 @@
 > | REQ-SAFE-023 | No AI report draft without a device measurement; reason shown | RC-034 | HAZ-003 | `ai_report.py`, `AIReportPanel.tsx` | UT-CAPA008 | VERIFIED 2026-10-17 (R1–R2 2/2) |
 > | REQ-SAFE-024 | CVS/PRL readings attributed and counted per McDonald 2024; activity candidate per MAGNIMS 2021 | RC-035 | HAZ-007, HAZ-008 | `segmentation_analysis.py`, `LesionDashboard.tsx`, `longitudinal_tracking_service.py` | UT-CAPA008, UT-LONG-RULES | VERIFIED 2026-10-17 (C1–C6 6/6) |
 >
+> **Addendum 2026-10-21 (DRAFT, PENDING owner approval): REQ-SAFE-034/035/036, RC-054..RC-058 (CP-SLICE-THICKNESS-001, reliability by slice thickness, flag OFF).**
+> Negative controls and provenance re-derivation: `records/risk_verification/CP-SLICE-THICKNESS-001_negative_controls_2026-10-21.json`.
+>
+> | Req ID | Safety Requirement | Risk Control | HAZ ID | Implementation | Test ID | Verified? |
+> |--------|-------------------|-------------|--------|----------------|---------|-----------|
+> | REQ-SAFE-034, REQ-FUNC-099 | Acquisition thickness read from the file, never assumed (native only from an ORIGINAL DICOM with spacing or 3D; NIfTI at most a lower bound > 1.5 mm; otherwise not determinable with a reason; total) | RC-054 | HAZ-015, HAZ-001 | `acquisition_geometry.py`, `imaging_service.py`, `schemas.py` | UT-RC054 | TEST-BOUND on branch (B1-B12) |
+> | REQ-SAFE-034 | Strict parse; the segmentation's own image or the single original FLAIR of a processed image, named; thicker source wins; legacy `slice_thickness` never read | RC-055 | HAZ-015 | `sliceThicknessReliability.ts`, `SliceThicknessReliabilityCard.tsx`, `LesionDashboard.tsx`, `ViewerApp.tsx` | UT-STC-LOGIC, UI-STC-CARD | TEST-BOUND on branch (P1-P8) |
+> | REQ-SAFE-035 | No false-lesion rate at any thickness in this version; asset with a site calibration refused | RC-056 | HAZ-015 | `sliceThicknessReliability.ts`, `sliceThicknessReliability.v1.json`, card | UT-STC-LOGIC, UI-STC-CARD | TEST-BOUND on branch (R1-R3) |
+> | REQ-SAFE-036, REQ-FUNC-098 | Detection note from the versioned, source-bound asset; evidence size and post-hoc marker; worst case; empty-list warning; 3D FLAIR recommendation | RC-057 | HAZ-001, HAZ-015 | `sliceThicknessReliability.v1.json`, `sliceThicknessReliability.ts`, card | UT-STC-LOGIC, UI-STC-CARD | TEST-BOUND on branch (D1-D9; every asset figure re-derived from the records at `cabb99d`) |
+> | REQ-FUNC-098 | Feature flag OFF by default; card lazy and only behind the flag | RC-058 | HAZ-015 | `features.ts`, `LesionDashboard.tsx` | UT-STC-FLAG | TEST-BOUND on branch (F1-F3); production build checked with the flag absent |
+>
 > **REQ-SAFE-020 / RC-022 (HAZ-014)**: the row in the table above said "VERIFIED (code inspection)". It is struck through in place. Nothing in the code preprocesses images to the MNI 1 mm template or registers them to it; the only registration is longitudinal, intra-subject and rigid. Images are therefore **not** in MNI space by construction, which is why RC-032 must gate the MNI-space atlas. RMF-001 already records RC-022 as NOT VERIFIED (2026-07-18).
 
 ---
@@ -162,6 +176,10 @@ by `backend/tests/unit/test_risk_control_manifest.py`.
 | UT-CAPA008 | `test_capa008_assistant_read_only.py` (39 tests, added 2026-10-17): MCP layer read-only (exact server and tool sets, no direct HTTP client, POST only to compute-only routes, every GET mounted and object-authorized, compute-only routes store nothing, every field sent is read by its route), intended-use phrase ban, identifier removal; report route refuses requests without a measurement; CVS/PRL readings validated, attributed to the authenticated reader, counted without the 40 % rule; UI sources | REQ-SAFE-022, REQ-SAFE-023, REQ-SAFE-024 |
 | UT-LONG-RULES | `test_longitudinal_clinical_rules.py`: activity candidate raised by >=1 new or enlarging candidate (MAGNIMS 2021; CAPA-008 CA-8.10) | REQ-SAFE-024, REQ-FUNC-055a |
 | UT-CAPA009 | `test_capa009_object_authorization_everywhere.py` (47 tests, added 2026-10-17): every mounted route referencing an object classified and re-derived; path dependencies match the path; no dependency can skip itself (async guards); 33 requests by an unentitled user → 404 before any data service; 4 administrator-only routes → 403; positive controls; overlay/reference-image authorization; tool inputs from one patient; initiator registry | REQ-SEC-014, REQ-SEC-015, REQ-SEC-016, REQ-SEC-019, REQ-SEC-020 |
+| UT-RC054 (draft) | `backend/tests/unit/test_rc054_acquisition_geometry.py` (`test_rc054_*`, added 2026-10-21): DICOM native/lower-bound/not-determinable rules (ORIGINAL + spacing or 3D, gap counted, derived/untyped never native, missing/invalid never defaulted, enhanced multi-frame), NIfTI never native (thick grid = lower bound on any axis and rotated affine; fine and MNI grids not determinable; pixdim/affine contradiction; units), totality on garbage, exposure by the image loaders and the process response, legacy default never leaks, Class C utilities untouched, every reason has a card message | REQ-FUNC-099, REQ-SAFE-034 (RC-054) |
+| UT-STC-LOGIC (draft) | `frontend/src/utils/sliceThicknessReliability.test.ts` (`rc055`, `rc056`, `rc057`): strict parse, source image and original-FLAIR location, thicker source wins, MSLesSeg-like grid never thin; no false-lesion figure in any state, calibrated asset refused; asset equals the paper, bound to its record, worst-case sizes per band, band edges, lower bound over thicker bands | REQ-SAFE-034, REQ-SAFE-035, REQ-SAFE-036 (RC-055, RC-056, RC-057) |
+| UI-STC-CARD (draft) | `frontend/src/components/SliceThicknessReliabilityCard.test.tsx` (`rc055`, `rc056`, `rc057`): rendered card — image binding, legacy value never shown, original FLAIR named, request failure not determinable; no percentage next to the false-lesion statement; figures with evidence size and post-hoc marker, empty-list warning, 3D FLAIR recommendation, provenance; Spanish wording | REQ-FUNC-098, REQ-SAFE-034, REQ-SAFE-035, REQ-SAFE-036 |
+| UT-STC-FLAG (draft) | `frontend/src/config/features.sliceThickness.test.ts` (`rc058`): flag OFF unless 'true'/'1'; card only behind the flag, lazy; nothing else imports the card, its logic or its asset | REQ-FUNC-098 (RC-058) |
 
 ---
 
@@ -195,6 +213,7 @@ by `backend/tests/unit/test_risk_control_manifest.py`.
 | `test_capa008_assistant_read_only.py` | UT-CAPA008 | REQ-SAFE-022, REQ-SAFE-023, REQ-SAFE-024 (RC-033/034/035, HAZ-003/007/008/010; added 2026-10-17) |
 | `test_longitudinal_clinical_rules.py` | UT-LONG-RULES | REQ-SAFE-024, REQ-FUNC-055a (RC-035, HAZ-007) |
 | `test_capa009_object_authorization_everywhere.py` | UT-CAPA009 | REQ-SEC-014/015/016/019/020 (RC-036, HAZ-010; added 2026-10-17) |
+| `test_rc054_acquisition_geometry.py` | UT-RC054 | REQ-FUNC-099, REQ-SAFE-034 (RC-054, HAZ-015; added 2026-10-21, draft) |
 | `test_nifti_utils.py` | UT-NII-001 | REQ-FUNC-001 |
 | `test_dicom_seg.py` | UT-SEG-001..008 | REQ-FUNC-072 |
 | `test_dicom_utils.py` | UT-DICOM-001..007 | REQ-FUNC-072, REQ-SAFE-013 | RC-016 | VERIFIED |

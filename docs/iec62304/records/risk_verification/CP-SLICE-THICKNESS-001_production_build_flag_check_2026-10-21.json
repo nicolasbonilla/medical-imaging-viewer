@@ -1,0 +1,13 @@
+{
+  "change": "CP-SLICE-THICKNESS-001 (DRAFT, PENDING owner approval; feature flag OFF)",
+  "risk_control": "RC-058",
+  "date": "2026-10-21",
+  "command": "npx vite build --outDir <scratch directory> --emptyOutDir (frontend/, with .env.production; VITE_ENABLE_SLICE_THICKNESS_RELIABILITY not set in the environment nor in .env.production)",
+  "result": "built",
+  "env_object_in_bundle": "{BASE_URL:\"/\",DEV:!1,MODE:\"production\",PROD:!0,SSR:!1,VITE_API_BASE_URL:\"https://brain-mri-7bp6oqdu7a-uc.a.run.app\"}",
+  "flag_code_in_bundle": "function En(t,s){const n=yr[`VITE_${t}`];return n===void 0?s:n===\"true\"||n===\"1\"} ... SLICE_THICKNESS_RELIABILITY:En(\"ENABLE_SLICE_THICKNESS_RELIABILITY\",!1)",
+  "render_gate_in_bundle": "Yo=g.lazy(()=>is(()=>import(\"./SliceThicknessReliabilityCard-BFVWrc40.js\"),...)) ... ws.SLICE_THICKNESS_RELIABILITY&&e.jsx(g.Suspense,{fallback:null,children:e.jsx(Yo,{sourceFil...",
+  "separate_chunk": "assets/SliceThicknessReliabilityCard-BFVWrc40.js (28,342 bytes) holds the card, its logic and the evidence asset; the asset strings (asset id, research commit, card title) occur in no other chunk",
+  "conclusion": "VITE_ENABLE_SLICE_THICKNESS_RELIABILITY is absent from the bundled env object, so FEATURES.SLICE_THICKNESS_RELIABILITY evaluates to false: the card is never rendered and its lazy chunk is never requested. No backend or network change is needed for the flag to be OFF.",
+  "unit_test": "frontend/src/config/features.sliceThickness.test.ts (rc058)"
+}

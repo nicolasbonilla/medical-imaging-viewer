@@ -1,0 +1,271 @@
+{
+  "asset_id": "slice-thickness-reliability",
+  "asset_version": "1.0.0",
+  "status": "DRAFT - PENDING owner approval (CP-SLICE-THICKNESS-001). Research evidence, not validated for any site or for the deployed segmenter version. Feature flag VITE_ENABLE_SLICE_THICKNESS_RELIABILITY is OFF by default.",
+  "requirements": ["REQ-FUNC-098", "REQ-SAFE-034", "REQ-SAFE-035", "REQ-SAFE-036"],
+  "risk_controls": ["RC-055", "RC-056", "RC-057", "RC-058"],
+  "source": {
+    "paper": "Paper A v0.3 - pre-registered five-cohort audit of conformal lesion-FDR control",
+    "pull_request": 54,
+    "branch": "research/paper-a-v0.3",
+    "commit": "cabb99d2e17dd595bd9e189dad6b28e6246a5b04",
+    "spec": "docs/research/paper/APP-FEATURE-slice-thickness-reliability.md (sections 2, 3, 5, 6)",
+    "results": "docs/research/paper/RESULTS-v0.3.md (Table 4; section 3, note on MSLesSeg)",
+    "records": [
+      {
+        "path": "docs/research/records/2026-10-21_paper_a_v03_results.json",
+        "sha256": "972bb3ef62d8b497809863a777aa65769f9bf83f9b483ba6619fafbdefcbdc43",
+        "fields": "thickness.size_bins['B1|D2|P1|0.2' .. 'B4|D2|P1|0.2'].sens_raw and .n_lesions",
+        "post_hoc": false
+      },
+      {
+        "path": "docs/research/records/2026-10-21_paper_a_v03_mslesseg_native.json",
+        "sha256": "77b63f6d8dea02f2ff2d3720e34608018c238554d38f708498e944f03fa1e5b2",
+        "fields": "'group|2-2.3 mm', 'group|3 mm', 'group|4-5 mm': raw_sensitivity_by_size_bin, lesions_by_size_bin, scans, patients",
+        "post_hoc": true
+      }
+    ],
+    "sha256_basis": "SHA-256 of the file as stored in git at the commit above (git show <commit>:<path>)",
+    "segmenter": "FLAMeS (nnU-Net v2, Dataset004_WML), 5-fold ensemble (mean probability), research CPU pipeline",
+    "detection_definition": "Raw lesion sensitivity: share of expert-marked lesions matched one-to-one (lenient) by any automatic candidate, before any selection. Not a calibrated property of any scanner: thickness bands are confounded with site, scanner, population and annotation protocol."
+  },
+  "thin_limit_mm": 1.5,
+  "plausible_max_mm": 20,
+  "reliable_fraction": 0.8,
+  "half_fraction": 0.5,
+  "size_bins_note": "Equivalent-sphere diameters: d = (6V/pi)^(1/3); bin edges as in the paper (3, 14.14, 50, 150, 500 mm3).",
+  "size_bins": [
+    { "min_mm3": 3, "max_mm3": 14.14, "min_diameter_mm": 1.8, "max_diameter_mm": 3 },
+    { "min_mm3": 14.14, "max_mm3": 50, "min_diameter_mm": 3, "max_diameter_mm": 4.6 },
+    { "min_mm3": 50, "max_mm3": 150, "min_diameter_mm": 4.6, "max_diameter_mm": 6.6 },
+    { "min_mm3": 150, "max_mm3": 500, "min_diameter_mm": 6.6, "max_diameter_mm": 9.8 },
+    { "min_mm3": 500, "max_mm3": null, "min_diameter_mm": 9.8, "max_diameter_mm": null }
+  ],
+  "evidence_rows": {
+    "B1_grid": {
+      "record_key": "thickness.size_bins['B1|D2|P1|0.2']",
+      "scans": 125, "patients": 85, "sites": 2, "post_hoc": false,
+      "detection": [0.3616, 0.7165, 0.8139, 0.8672, 0.8988],
+      "lesions": [531, 1217, 1327, 610, 326],
+      "label": {
+        "en": "Scans delivered on a 1-mm grid (MSLesSeg, Ljubljana): only 10 of 125 natively thin, most acquired at 2-5 mm and resampled",
+        "es": "Estudios entregados en rejilla de 1 mm (MSLesSeg, Liubliana): solo 10 de 125 adquiridos realmente finos; la mayoría a 2-5 mm y remuestreados",
+        "de": "Auf 1-mm-Raster gelieferte Aufnahmen (MSLesSeg, Ljubljana): nur 10 von 125 nativ dünn, die meisten mit 2-5 mm aufgenommen und umgerechnet"
+      }
+    },
+    "MSL_2": {
+      "record_key": "mslesseg_native['group|2-2.3 mm']",
+      "scans": 43, "patients": 39, "sites": 1, "post_hoc": true,
+      "detection": [0.3688, 0.7445, 0.8552, 0.9051, 0.9778],
+      "lesions": [141, 587, 594, 274, 135],
+      "label": {
+        "en": "MSLesSeg acquired at 2-2.3 mm (analysed after resampling to 1 mm)",
+        "es": "MSLesSeg adquirido a 2-2,3 mm (analizado tras remuestrear a 1 mm)",
+        "de": "MSLesSeg, aufgenommen mit 2-2,3 mm (ausgewertet nach Umrechnung auf 1 mm)"
+      }
+    },
+    "MSL_3": {
+      "record_key": "mslesseg_native['group|3 mm']",
+      "scans": 52, "patients": 28, "sites": 1, "post_hoc": true,
+      "detection": [0.2872, 0.6525, 0.7747, 0.8286, 0.8561],
+      "lesions": [94, 305, 435, 210, 132],
+      "label": {
+        "en": "MSLesSeg acquired at 3 mm (analysed after resampling to 1 mm)",
+        "es": "MSLesSeg adquirido a 3 mm (analizado tras remuestrear a 1 mm)",
+        "de": "MSLesSeg, aufgenommen mit 3 mm (ausgewertet nach Umrechnung auf 1 mm)"
+      }
+    },
+    "MSL_45": {
+      "record_key": "mslesseg_native['group|4-5 mm']",
+      "scans": 15, "patients": 15, "sites": 1, "post_hoc": true,
+      "detection": [0.16, 0.3898, 0.7343, 0.8169, 0.7143],
+      "lesions": [25, 59, 143, 71, 35],
+      "label": {
+        "en": "MSLesSeg acquired at 4-5 mm (analysed after resampling to 1 mm)",
+        "es": "MSLesSeg adquirido a 4-5 mm (analizado tras remuestrear a 1 mm)",
+        "de": "MSLesSeg, aufgenommen mit 4-5 mm (ausgewertet nach Umrechnung auf 1 mm)"
+      }
+    },
+    "B2": {
+      "record_key": "thickness.size_bins['B2|D2|P1|0.2']",
+      "scans": 28, "patients": 9, "sites": 1, "post_hoc": false,
+      "detection": [0.3733, 0.6728, 0.7619, 0.7735, 0.7957],
+      "lesions": [75, 324, 378, 234, 93],
+      "label": {
+        "en": "About 4 mm (PediMS: 9 children, one site)",
+        "es": "Unos 4 mm (PediMS: 9 niños, un centro)",
+        "de": "Etwa 4 mm (PediMS: 9 Kinder, ein Zentrum)"
+      }
+    },
+    "B3": {
+      "record_key": "thickness.size_bins['B3|D2|P1|0.2']",
+      "scans": 76, "patients": 76, "sites": 2, "post_hoc": false,
+      "detection": [0.125, 0.4494, 0.5932, 0.6553, 0.7551],
+      "lesions": [48, 514, 976, 673, 343],
+      "label": {
+        "en": "4.5-6.5 mm (Muslim, MS3SEG)",
+        "es": "4,5-6,5 mm (Muslim, MS3SEG)",
+        "de": "4,5-6,5 mm (Muslim, MS3SEG)"
+      }
+    },
+    "B4": {
+      "record_key": "thickness.size_bins['B4|D2|P1|0.2']",
+      "scans": 75, "patients": 75, "sites": 2, "post_hoc": false,
+      "detection": [0.2059, 0.433, 0.689, 0.7167, 0.7026],
+      "lesions": [34, 455, 1074, 713, 343],
+      "label": {
+        "en": "More than 6.5 mm (mostly MS3SEG)",
+        "es": "Más de 6,5 mm (sobre todo MS3SEG)",
+        "de": "Über 6,5 mm (überwiegend MS3SEG)"
+      }
+    }
+  },
+  "bands": [
+    { "id": "T0", "min_mm": 0, "max_mm": 1.5, "thick": false, "rows": ["B1_grid"], "label": { "en": "1.5 mm or less", "es": "1,5 mm o menos", "de": "1,5 mm oder weniger" } },
+    { "id": "T1", "min_mm": 1.5, "max_mm": 2.5, "thick": true, "rows": ["MSL_2"], "label": { "en": "1.5-2.5 mm", "es": "1,5-2,5 mm", "de": "1,5-2,5 mm" } },
+    { "id": "T2", "min_mm": 2.5, "max_mm": 3.5, "thick": true, "rows": ["MSL_3"], "label": { "en": "2.5-3.5 mm", "es": "2,5-3,5 mm", "de": "2,5-3,5 mm" } },
+    { "id": "T3", "min_mm": 3.5, "max_mm": 4.5, "thick": true, "rows": ["B2", "MSL_45"], "label": { "en": "3.5-4.5 mm", "es": "3,5-4,5 mm", "de": "3,5-4,5 mm" } },
+    { "id": "T4", "min_mm": 4.5, "max_mm": 6.5, "thick": true, "rows": ["B3", "MSL_45"], "label": { "en": "4.5-6.5 mm", "es": "4,5-6,5 mm", "de": "4,5-6,5 mm" } },
+    { "id": "T5", "min_mm": 6.5, "max_mm": 20, "thick": true, "rows": ["B4"], "label": { "en": "more than 6.5 mm", "es": "más de 6,5 mm", "de": "über 6,5 mm" } }
+  ],
+  "false_lesion_figure": {
+    "shown": false,
+    "site_calibration": null,
+    "min_site_calibration_patients": 10,
+    "rule": "Spec section 2 and rule 3: thick or unknown thickness -> no false-lesion figure without the site's own calibration (>= 10 patients with expert masks, same protocol, deployed segmenter version). No such calibration exists, and showing a calibrated figure is not implemented in this version, so no false-lesion figure is shown at any thickness."
+  },
+  "messages": {
+    "en": {
+      "title": "Slice thickness and automatic lesion detection",
+      "badge": "Research evidence - not validated for this site",
+      "loading": "Reading the slice thickness...",
+      "thickness": "Slice thickness",
+      "native": "{mm} mm, from the acquisition header of {file}",
+      "at_least": "at least {mm} mm, from {file}; the original acquisition thickness is not recorded and may be thicker",
+      "not_determinable": "Not determinable",
+      "source_original": "read from the original series {file}, taken as the source of this processed image",
+      "band": "Thickness band",
+      "band_at_least": "{label} or thicker",
+      "reliable": "Found at least 8 times in 10",
+      "reliable_from": "lesions of {mm3} mm³ or more (about {diameter} across)",
+      "reliable_none": "no lesion size is found 8 times in 10 at this thickness",
+      "half": "Found at least half of the time",
+      "half_from": "lesions of {mm3} mm³ or more",
+      "half_none": "no lesion size is found half of the time",
+      "table_title": "Share of expert-marked lesions found automatically, by lesion size (diameter)",
+      "evidence": "{scans} scans, {patients} patients, {sites} site(s)",
+      "post_hoc": "analysis added after the results were seen",
+      "empty_list": "An empty or short lesion list does not mean that there are no lesions.",
+      "recommend_3d": "To look for small lesions, a 3D FLAIR with slices of 1.5 mm or less is recommended.",
+      "not_determinable_guidance": "Read the automatic lesion list as if the scan had thick slices: small lesions may be missed. Check the slice thickness of the original series.",
+      "false_lesion": "False-lesion rate: not shown.",
+      "false_lesion_thick": "At this slice thickness it is not reliable without a calibration on at least 10 patients from this site, and none exists.",
+      "false_lesion_thin": "No calibration exists at this site for the segmenter that produced this list.",
+      "scope": "Figures from public research data (Paper A v0.3), FLAMeS 5-fold ensemble. They describe the research data, not this scanner, and were not derived for the segmenter that produced this list. Not a diagnosis; not for counting lesions for the McDonald criteria; no statement for healthy or screening populations.",
+      "provenance": "Evidence {version} - {commit} - {records}",
+      "reasons": {
+        "missing": "the image header does not record the slice thickness",
+        "invalid": "the slice thickness in the image header is not a valid value",
+        "inconsistent_header": "the image header contradicts itself about the voxel size",
+        "derived_image": "the image is derived (reformatted or resampled); the original slice thickness is not recorded",
+        "thin_without_3d_or_spacing": "a thin slice thickness is recorded, but neither a 3D acquisition nor the spacing between slices",
+        "fine_grid_no_acquisition_metadata": "the image is on a fine grid but does not record how it was acquired; it may have been resampled from a thicker acquisition",
+        "template_grid": "the image was registered to a template grid (for example MNI 1 mm); the original slice thickness is not recorded",
+        "not_a_volume": "the image is not a 3D volume",
+        "unreadable": "the image header could not be read",
+        "malformed": "the slice-thickness information received is incomplete",
+        "no_source_image": "the image this segmentation was drawn on is not known",
+        "original_missing": "this is a processed image and the study has no original FLAIR to read the acquisition from",
+        "original_ambiguous": "this is a processed image and the study has more than one original FLAIR, so its source cannot be identified"
+      }
+    },
+    "es": {
+      "title": "Grosor de corte y detección automática de lesiones",
+      "badge": "Evidencia de investigación - no validada para este centro",
+      "loading": "Leyendo el grosor de corte...",
+      "thickness": "Grosor de corte",
+      "native": "{mm} mm, de la cabecera de adquisición de {file}",
+      "at_least": "al menos {mm} mm, según {file}; el grosor de la adquisición original no está registrado y puede ser mayor",
+      "not_determinable": "No se puede determinar",
+      "source_original": "leído de la serie original {file}, tomada como origen de esta imagen procesada",
+      "band": "Rango de grosor",
+      "band_at_least": "{label} o más grueso",
+      "reliable": "Se encuentran al menos 8 de cada 10",
+      "reliable_from": "lesiones de {mm3} mm³ o más (unos {diameter} de diámetro)",
+      "reliable_none": "con este grosor ningún tamaño de lesión se encuentra 8 de cada 10 veces",
+      "half": "Se encuentran al menos la mitad de las veces",
+      "half_from": "lesiones de {mm3} mm³ o más",
+      "half_none": "ningún tamaño de lesión se encuentra la mitad de las veces",
+      "table_title": "Parte de las lesiones marcadas por expertos que se encontraron automáticamente, por tamaño (diámetro)",
+      "evidence": "{scans} estudios, {patients} pacientes, {sites} centro(s)",
+      "post_hoc": "análisis añadido después de ver los resultados",
+      "empty_list": "Una lista de lesiones vacía o corta no significa que no haya lesiones.",
+      "recommend_3d": "Para buscar lesiones pequeñas se recomienda un FLAIR 3D con cortes de 1,5 mm o menos.",
+      "not_determinable_guidance": "Lea la lista automática de lesiones como si el estudio tuviera cortes gruesos: pueden faltar lesiones pequeñas. Compruebe el grosor de corte de la serie original.",
+      "false_lesion": "Tasa de lesiones falsas: no se muestra.",
+      "false_lesion_thick": "Con este grosor de corte no es fiable sin una calibración con al menos 10 pacientes de este centro, y no existe ninguna.",
+      "false_lesion_thin": "No existe en este centro una calibración para el segmentador que produjo esta lista.",
+      "scope": "Cifras de datos públicos de investigación (Artículo A v0.3), conjunto de 5 modelos FLAMeS. Describen los datos de investigación, no este equipo, y no se obtuvieron para el segmentador que produjo esta lista. No es un diagnóstico; no sirve para contar lesiones para los criterios de McDonald; nada se afirma para personas sanas ni para cribado.",
+      "provenance": "Evidencia {version} - {commit} - {records}",
+      "reasons": {
+        "missing": "la cabecera de la imagen no registra el grosor de corte",
+        "invalid": "el grosor de corte de la cabecera no es un valor válido",
+        "inconsistent_header": "la cabecera de la imagen se contradice sobre el tamaño del vóxel",
+        "derived_image": "la imagen es derivada (reformateada o remuestreada); el grosor de corte original no está registrado",
+        "thin_without_3d_or_spacing": "se registra un grosor fino, pero ni una adquisición 3D ni la distancia entre cortes",
+        "fine_grid_no_acquisition_metadata": "la imagen está en una rejilla fina pero no registra cómo se adquirió; puede venir de una adquisición más gruesa remuestreada",
+        "template_grid": "la imagen se registró a una rejilla de plantilla (por ejemplo MNI 1 mm); el grosor de corte original no está registrado",
+        "not_a_volume": "la imagen no es un volumen 3D",
+        "unreadable": "no se pudo leer la cabecera de la imagen",
+        "malformed": "la información de grosor recibida está incompleta",
+        "no_source_image": "no se sabe sobre qué imagen se dibujó esta segmentación",
+        "original_missing": "es una imagen procesada y el estudio no tiene un FLAIR original del que leer la adquisición",
+        "original_ambiguous": "es una imagen procesada y el estudio tiene más de un FLAIR original, así que no se puede saber cuál es su origen"
+      }
+    },
+    "de": {
+      "title": "Schichtdicke und automatische Läsionserkennung",
+      "badge": "Forschungsevidenz - für diesen Standort nicht validiert",
+      "loading": "Schichtdicke wird gelesen...",
+      "thickness": "Schichtdicke",
+      "native": "{mm} mm, aus dem Aufnahme-Header von {file}",
+      "at_least": "mindestens {mm} mm, aus {file}; die Schichtdicke der Originalaufnahme ist nicht gespeichert und kann größer sein",
+      "not_determinable": "Nicht bestimmbar",
+      "source_original": "aus der Originalserie {file} gelesen, die als Quelle dieses verarbeiteten Bildes angenommen wird",
+      "band": "Dickenbereich",
+      "band_at_least": "{label} oder dicker",
+      "reliable": "Mindestens 8 von 10 gefunden",
+      "reliable_from": "Läsionen ab {mm3} mm³ (etwa {diameter} Durchmesser)",
+      "reliable_none": "bei dieser Schichtdicke wird keine Läsionsgröße 8 von 10 Mal gefunden",
+      "half": "Mindestens in der Hälfte der Fälle gefunden",
+      "half_from": "Läsionen ab {mm3} mm³",
+      "half_none": "keine Läsionsgröße wird in der Hälfte der Fälle gefunden",
+      "table_title": "Anteil der von Experten markierten Läsionen, die automatisch gefunden wurden, nach Größe (Durchmesser)",
+      "evidence": "{scans} Aufnahmen, {patients} Patienten, {sites} Zentrum/Zentren",
+      "post_hoc": "Analyse nach Kenntnis der Ergebnisse ergänzt",
+      "empty_list": "Eine leere oder kurze Läsionsliste bedeutet nicht, dass keine Läsionen vorhanden sind.",
+      "recommend_3d": "Für die Suche nach kleinen Läsionen wird ein 3D-FLAIR mit Schichten von 1,5 mm oder weniger empfohlen.",
+      "not_determinable_guidance": "Lesen Sie die automatische Läsionsliste so, als hätte die Aufnahme dicke Schichten: kleine Läsionen können fehlen. Prüfen Sie die Schichtdicke der Originalserie.",
+      "false_lesion": "Rate falscher Läsionen: nicht angezeigt.",
+      "false_lesion_thick": "Bei dieser Schichtdicke ist sie ohne eine Kalibrierung mit mindestens 10 Patienten dieses Standorts nicht verlässlich, und es gibt keine.",
+      "false_lesion_thin": "Für den Segmentierer, der diese Liste erzeugt hat, gibt es an diesem Standort keine Kalibrierung.",
+      "scope": "Zahlen aus öffentlichen Forschungsdaten (Paper A v0.3), FLAMeS-Ensemble aus 5 Modellen. Sie beschreiben die Forschungsdaten, nicht dieses Gerät, und wurden nicht für den Segmentierer dieser Liste ermittelt. Keine Diagnose; nicht zum Zählen von Läsionen für die McDonald-Kriterien; keine Aussage für Gesunde oder Screening.",
+      "provenance": "Evidenz {version} - {commit} - {records}",
+      "reasons": {
+        "missing": "der Bild-Header enthält keine Schichtdicke",
+        "invalid": "die Schichtdicke im Bild-Header ist kein gültiger Wert",
+        "inconsistent_header": "der Bild-Header widerspricht sich bei der Voxelgröße",
+        "derived_image": "das Bild ist abgeleitet (reformatiert oder umgerechnet); die ursprüngliche Schichtdicke ist nicht gespeichert",
+        "thin_without_3d_or_spacing": "eine dünne Schichtdicke ist gespeichert, aber weder eine 3D-Aufnahme noch der Schichtabstand",
+        "fine_grid_no_acquisition_metadata": "das Bild liegt auf einem feinen Raster, speichert aber nicht, wie es aufgenommen wurde; es kann aus einer dickeren Aufnahme umgerechnet sein",
+        "template_grid": "das Bild wurde auf ein Vorlagenraster registriert (z. B. MNI 1 mm); die ursprüngliche Schichtdicke ist nicht gespeichert",
+        "not_a_volume": "das Bild ist kein 3D-Volumen",
+        "unreadable": "der Bild-Header konnte nicht gelesen werden",
+        "malformed": "die empfangene Information zur Schichtdicke ist unvollständig",
+        "no_source_image": "es ist nicht bekannt, auf welchem Bild diese Segmentierung erstellt wurde",
+        "original_missing": "es ist ein verarbeitetes Bild, und die Studie enthält kein Original-FLAIR, aus dem die Aufnahme gelesen werden kann",
+        "original_ambiguous": "es ist ein verarbeitetes Bild, und die Studie enthält mehr als ein Original-FLAIR, daher ist seine Quelle nicht bestimmbar"
+      }
+    }
+  }
+}
