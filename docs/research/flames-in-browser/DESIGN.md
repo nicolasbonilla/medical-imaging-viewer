@@ -281,7 +281,7 @@ A job ends with exactly one message: a **complete, gated** result or an error. T
 | Not NIfTI-1, NIfTI-2, 4D, unsupported datatype, truncated, NaN/Inf voxels, invalid spacing, > 96 M voxels | reader error, nothing runs |
 | Spacing outside 0.1–6 mm, any dim < 16 | `FlamesInputError` |
 | Not skull-stripped: > 2 % of the FOV border nonzero, filled nonzero region outside 500–2600 mL, or a skull clue: > 1 % of the outer 6 mm very bright (scalp fat) or > 20 % of the filled region very dark (also with a zero background) | `FlamesInputError` before the model download (RC-043; validated on public data, [FLAIR-GATE-VALIDATION.md](FLAIR-GATE-VALIDATION.md)) |
-| Not a FLAIR: header names another sequence or an inversion time < 1400 ms (header can only refuse); or image content with white matter brighter than cortex (T1) or bright CSF (T2/PD); contrast not measurable | `FlamesInputError` before the model download (RC-049; [FLAIR-GATE-VALIDATION.md](FLAIR-GATE-VALIDATION.md)) |
+| Not a FLAIR (`flair-gate/2`): header names another sequence or an inversion time < 1400 ms; image content with white matter brighter than cortex or a large darker grey-matter class (T1), or bright CSF (T2/PD); contrast not measurable; **or no positive evidence** — neither the clinician's per-file confirmation of the sequence (checkbox before the run, recorded with the draft) nor a header with a FLAIR inversion time (a "FLAIR" label alone is not proof) | `FlamesInputError` before the model download (RC-049; [FLAIR-GATE-VALIDATION.md](FLAIR-GATE-VALIDATION.md)) |
 | Network returns NaN/Inf or the same score everywhere (known WebGPU failure mode), wrong output size | error; if on WebGPU, the **whole** job restarts on WebAssembly (backends never mixed); provenance records the fallback reason |
 | Lesions > 25 % of the brain | result discarded as implausible |
 | Worker crash / `onerror`, user cancel | worker terminated, no result |
@@ -290,11 +290,13 @@ A job ends with exactly one message: a **complete, gated** result or an error. T
 | Empty result (0 voxels) | explicit warning, never a plain "0 lesions"; the draft opens only after the user acknowledges it (RC-051, REQ-FUNC-036) |
 | Open draft while the open segmentation has unsaved changes | nothing changes; the user chooses "keep my work" or "discard my unsaved changes and open the draft" (RC-050) |
 | Tab closed / reloaded with an AI draft open | browser warning only — an AI segmentation is never saved by the save-on-unload of manual work (RC-047) |
-| Save | explicit only: create **with `ai_provenance`** (server stores `segmentation_type = automatic`, `review_status = unreviewed`), refused and the record removed if the server does not echo the provenance; then PUT with `If-Match` (A-2) and durability check (P-4.3) (RC-047) |
+| Save | explicit only: create **with `ai_provenance`** incl. `sequence_evidence` (server stores `segmentation_type = automatic`, `review_status = unreviewed`, `sequence_confirmed_by` = authenticated user), refused and the record removed unless the server echoes exactly the provenance sent, still unreviewed; then PUT with `If-Match` (A-2) and durability check (P-4.3) (RC-047) |
+| Mask changed after a confirmed review (any path) | the review is reset to "unreviewed" at the service's single save point (`enforce_review_binding`); after saving corrections the app re-reads the provenance (RC-047) |
 
 ## 9. How the output enters the app
 
-1. `BrowserFlamesCard` (only with the flag) → `useBrowserFlames.run(flairFileId)`.
+1. `BrowserFlamesCard` (only with the flag): the clinician ticks "I confirm that the selected image is a skull-stripped
+   T2-FLAIR …" for **this** file (cleared when the file changes) → `useBrowserFlames.run(flairFileId, { clinicianConfirmedFlair: true })`.
 2. On result, the card shows count / volume / time / backend. **Nothing is displayed on the image yet.**
 3. "Open as AI draft for review" is enabled only when the viewer shows **that** FLAIR with the **same** grid.
 4. `importDraftCallback` → `createSegmentationFromMask`: a `local-{uuid}` segmentation (same path as a manual new
@@ -307,7 +309,10 @@ A job ends with exactly one message: a **complete, gated** result or an error. T
    the save-on-unload). Manual segmentations keep exactly the previous request body.
 6. A persistent banner "AI draft — UNREVIEWED" is shown wherever the segmentation is open, saved or not; the saved list
    names it `[AI draft — UNREVIEWED] FLAMeS fold 0`. A radiologist can confirm the review
-   (`POST /segmentation/{id}/ai-review/confirm`, reviewer + time recorded) (RC-047).
+   (`POST /segmentation/{id}/ai-review/confirm`, reviewer + time recorded) (RC-047) — only with no unsaved corrections
+   (no button otherwise), and only for the exact stored mask: the client sends the SHA-256 of the mask on screen, the
+   server refuses (409) unless it equals the stored mask, and records it as `reviewed_mask_sha256`. Any later change of
+   the mask resets the review to "unreviewed".
 
 ## 10. Verification done in this branch
 
@@ -325,6 +330,10 @@ A job ends with exactly one message: a **complete, gated** result or an error. T
 * **After the 2026-10-17 review fixes** ([REVIEW-RESPONSE.md](REVIEW-RESPONSE.md)): full frontend suite 218 passed, 3 skipped
   (opt-in parity, gate-validation and replay harnesses); backend unit suite 1302 passed; review negative controls 28/28;
   input-gate validation on 495 public volumes ([FLAIR-GATE-VALIDATION.md](FLAIR-GATE-VALIDATION.md)).
+* **After re-review 2** (2026-10-18/21): full frontend suite 236 passed, 3 skipped; backend unit suite 1307 passed; type
+  check clean; production build with the flag absent; negative controls 45/46 (G6 not detectable with phantoms), reviewed
+  code fails the new tests 6/6; FLAIR gate `flair-gate/2` validated on 533 public volumes incl. ISBI-2015 with
+  leave-one-dataset-out ([FLAIR-GATE-VALIDATION.md](FLAIR-GATE-VALIDATION.md)).
 * Not done: visual QA in the real app with a logged-in study; clinical accuracy study; WebGPU on a discrete GPU;
   5-fold ensemble parity; mirroring parity.
 

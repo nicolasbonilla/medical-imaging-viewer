@@ -1,12 +1,23 @@
 {
- "record": "CP-FLAMES-BROWSER-001 negative controls (review fixes)",
- "dates": "2026-10-17/18",
+ "record": "CP-FLAMES-BROWSER-001 negative controls (review fixes + re-review 2)",
+ "dates": "2026-10-17/18 (all controls re-run 2026-10-18 on the re-review-2 code)",
  "script": "research/flames_in_browser/negative_controls_v2.py (one mutation at a time; every anchor asserted unique; files snapshotted, restored and SHA-256-checked)",
  "restored_ok": true,
  "summary": {
-  "mutations_detected": "28/28",
-  "same_defects_against_pre_fix_tests_detected": "0/2 (expected 0: the review found that removing the SHA-256 check broke no test)",
-  "reviewed_code_fails_new_tests": "2/2"
+  "mutations_detected": "45/46",
+  "not_detected": [
+   "G6"
+  ],
+  "not_detected_explained": {
+   "G6": "Local 15 mm normalisation removed: not detectable with the synthetic phantoms (the statistic barely changes); its value is shown only on public data (FLAIR-GATE-VALIDATION.md). Recorded honestly as not test-bound."
+  },
+  "same_defects_against_pre_fix_tests_detected": "0/2 (expected 0: the first review found that removing the SHA-256 check broke no test)",
+  "reviewed_code_fails_new_tests": "6/6 (d81cb78 = first review, c838bb1 = re-review 2)",
+  "re_run_after_strengthening_a_test": [
+   "B1",
+   "B10",
+   "BEFORE-R2b"
+  ]
  },
  "results": [
   {
@@ -18,12 +29,25 @@
    ],
    "detected": true,
    "failing_tests": [
-    "[",
-    "tests/unit/test_rc047_ai_draft_provenance.py::test_rc047_create_route_passes_the_provenance_to_the_service",
     "tests/unit/test_rc047_ai_draft_provenance.py::test_rc047_service_stores_provenance_as_automatic_and_forces_unreviewed"
    ],
-   "summary": "=================== 2 failed, 5 passed, 5 warnings in 4.25s ===================",
-   "seconds": 31
+   "summary": "================== 1 failed, 11 passed, 5 warnings in 5.39s ===================",
+   "seconds": 37
+  },
+  {
+   "id": "B10",
+   "mutation": "B10 sequence confirmer not taken from the authenticated user",
+   "file": "backend/app/services/segmentation_service.py",
+   "tests": [
+    "backend/tests/unit/test_rc047_ai_draft_provenance.py"
+   ],
+   "detected": true,
+   "failing_tests": [
+    "tests/unit/test_rc047_ai_draft_provenance.py::test_rc047_create_route_passes_the_provenance_to_the_service",
+    "tests/unit/test_rc047_ai_draft_provenance.py::test_rc049_who_confirmed_the_sequence_is_the_authenticated_user_never_the_client"
+   ],
+   "summary": "================== 2 failed, 10 passed, 5 warnings in 5.22s ===================",
+   "seconds": 36
   },
   {
    "id": "B2",
@@ -34,12 +58,11 @@
    ],
    "detected": true,
    "failing_tests": [
-    "[",
     "tests/unit/test_rc047_ai_draft_provenance.py::test_rc047_create_route_passes_the_provenance_to_the_service",
     "tests/unit/test_rc047_ai_draft_provenance.py::test_rc047_service_stores_provenance_as_automatic_and_forces_unreviewed"
    ],
-   "summary": "=================== 2 failed, 5 passed, 5 warnings in 3.77s ===================",
-   "seconds": 29
+   "summary": "=================== 2 failed, 9 passed, 5 warnings in 3.19s ===================",
+   "seconds": 24
   },
   {
    "id": "B3",
@@ -52,8 +75,8 @@
    "failing_tests": [
     "tests/unit/test_rc047_ai_draft_provenance.py::test_rc047_create_route_passes_the_provenance_to_the_service"
    ],
-   "summary": "=================== 1 failed, 6 passed, 5 warnings in 3.68s ===================",
-   "seconds": 28
+   "summary": "================== 1 failed, 10 passed, 5 warnings in 3.31s ===================",
+   "seconds": 25
   },
   {
    "id": "B4",
@@ -66,8 +89,8 @@
    "failing_tests": [
     "tests/unit/test_rc047_ai_draft_provenance.py::test_rc047_only_a_radiologist_can_confirm"
    ],
-   "summary": "=================== 1 failed, 6 passed, 5 warnings in 3.88s ===================",
-   "seconds": 27
+   "summary": "================== 1 failed, 10 passed, 5 warnings in 3.31s ===================",
+   "seconds": 24
   },
   {
    "id": "B5",
@@ -80,12 +103,71 @@
    "failing_tests": [
     "tests/unit/test_rc047_ai_draft_provenance.py::test_rc047_manual_work_has_nothing_to_confirm"
    ],
-   "summary": "================== 1 failed, 6 passed, 10 warnings in 4.15s ===================",
-   "seconds": 28
+   "summary": "================== 1 failed, 10 passed, 5 warnings in 3.43s ===================",
+   "seconds": 24
+  },
+  {
+   "id": "B6",
+   "mutation": "B6 persist does not enforce the review binding",
+   "file": "backend/app/services/segmentation_service.py",
+   "tests": [
+    "backend/tests/unit/test_rc047_ai_draft_provenance.py"
+   ],
+   "detected": true,
+   "failing_tests": [
+    "tests/unit/test_rc047_ai_draft_provenance.py::test_rc047_persist_resets_a_confirmation_whatever_path_changed_the_mask"
+   ],
+   "summary": "================== 1 failed, 10 passed, 5 warnings in 3.20s ===================",
+   "seconds": 24
+  },
+  {
+   "id": "B7",
+   "mutation": "B7 mask upload does not reset the review",
+   "file": "backend/app/api/routes/segmentation.py",
+   "tests": [
+    "backend/tests/unit/test_rc047_ai_draft_provenance.py"
+   ],
+   "detected": true,
+   "failing_tests": [
+    "tests/unit/test_rc047_ai_draft_provenance.py::test_rc047_replacing_the_mask_after_confirmation_resets_the_review"
+   ],
+   "summary": "================== 1 failed, 10 passed, 5 warnings in 3.18s ===================",
+   "seconds": 23
+  },
+  {
+   "id": "B8",
+   "mutation": "B8 confirmation accepted for any mask",
+   "file": "backend/app/api/routes/segmentation.py",
+   "tests": [
+    "backend/tests/unit/test_rc047_ai_draft_provenance.py"
+   ],
+   "detected": true,
+   "failing_tests": [
+    "tests/unit/test_rc047_ai_draft_provenance.py::test_rc047_confirm_refuses_a_mask_other_than_the_one_reviewed"
+   ],
+   "summary": "================== 1 failed, 10 passed, 5 warnings in 3.31s ===================",
+   "seconds": 24
+  },
+  {
+   "id": "B9",
+   "mutation": "B9 confirmation does not record which mask",
+   "file": "backend/app/api/routes/segmentation.py",
+   "tests": [
+    "backend/tests/unit/test_rc047_ai_draft_provenance.py"
+   ],
+   "detected": true,
+   "failing_tests": [
+    "tests/unit/test_rc047_ai_draft_provenance.py::test_rc047_confirm_binds_the_review_to_the_exact_mask",
+    "tests/unit/test_rc047_ai_draft_provenance.py::test_rc047_re_uploading_the_identical_mask_keeps_the_review",
+    "tests/unit/test_rc047_ai_draft_provenance.py::test_rc047_replacing_the_mask_after_confirmation_resets_the_review"
+   ],
+   "summary": "=================== 3 failed, 8 passed, 5 warnings in 3.28s ===================",
+   "seconds": 24
   },
   {
    "id": "BEFORE-1",
    "mutation": "BEFORE-1 gates: pipeline.ts as reviewed (d81cb78) — T1 phantom",
+   "commit": "d81cb78",
    "files": [
     "frontend/src/services/flames/pipeline.ts"
    ],
@@ -97,11 +179,12 @@
     "rc049 runs a FLAIR-like brain through every gate, and refuses a T1-like one before any network call"
    ],
    "summary": "Tests 1 failed | 7 passed (8)",
-   "seconds": 13
+   "seconds": 8
   },
   {
    "id": "BEFORE-2/3",
    "mutation": "BEFORE-2/3 hand-off: useSegmentationData.ts + BrowserFlamesCard.tsx as reviewed (d81cb78)",
+   "commit": "d81cb78",
    "files": [
     "frontend/src/hooks/useSegmentationData.ts",
     "frontend/src/components/BrowserFlamesCard.tsx"
@@ -113,12 +196,19 @@
    "detected": true,
    "failing_tests": [
     "licence and attribution notices are reachable in the card, with the licence texts shipped",
+    "rc047 a server echo with an already \"confirmed\" review is refused (orphan removed, mask not uploaded)",
+    "rc047 a server echo with another fold is refused (orphan removed, mask not uploaded)",
+    "rc047 a server echo with another model hash is refused (orphan removed, mask not uploaded)",
     "rc047 a server that does not record the provenance gets no draft (orphan removed, mask not uploaded)",
     "rc047 an edited AI draft is not autosaved either",
     "rc047 an explicit Save stores the draft WITH its AI provenance (model, version, SHA-256, fold, unreviewed)",
     "rc047 closing or reloading the tab never saves an opened AI draft (only warns)",
     "rc047 hands the draft over with its AI provenance (model, version, SHA-256, fold, unreviewed)",
+    "rc047 if the provenance cannot be re-read after a save, the review is shown as NOT confirmed (fail safe)",
+    "rc047 saving corrections to a confirmed AI segmentation re-reads the provenance: the review shows as reset",
+    "rc047 the banner gets the unsaved-changes flag and the SHA-256 of the exact mask bytes on screen",
     "rc047 while open the draft is \"automatic\" with its provenance, never \"manual\"",
+    "rc049 the run stays disabled until the clinician confirms this file is a FLAIR; the confirmation is passed on",
     "rc050 asks before replacing unsaved work and only discards after an explicit choice",
     "rc050 opening a draft never discards unsaved work in a new manual segmentation",
     "rc050 unsaved edits in a SAVED segmentation are protected too; explicit discard replaces them",
@@ -126,8 +216,193 @@
     "rc051 shows an explicit warning and blocks opening until the clinician acknowledges it",
     "states the expected duration before the run"
    ],
-   "summary": "Tests 13 failed | 2 passed (15)",
-   "seconds": 9
+   "summary": "Tests 20 failed | 2 passed (22)",
+   "seconds": 5
+  },
+  {
+   "id": "BEFORE-R1",
+   "mutation": "BEFORE-R1 FLAIR gate as re-reviewed (c838bb1): contrastGate.ts + pipeline.ts",
+   "commit": "c838bb1",
+   "files": [
+    "frontend/src/services/flames/contrastGate.ts",
+    "frontend/src/services/flames/pipeline.ts"
+   ],
+   "tests": [
+    "frontend/src/services/flames/__tests__/inputGates.test.ts",
+    "frontend/src/services/flames/__tests__/pipeline.test.ts"
+   ],
+   "detected": true,
+   "failing_tests": [
+    "rc049 a header with a FLAIR inversion time is positive evidence; a \"FLAIR\" label alone is not",
+    "rc049 accepts a skull-stripped FLAIR-like brain when the clinician confirmed the sequence",
+    "rc049 refuses a T1 whose cortex forms a large darker class even when white matter is not brighter",
+    "rc049 refuses even a FLAIR-looking image without positive evidence (fail closed)",
+    "rc049 tolerates mild centre shading; stronger shading refuses a FLAIR (safe failure)"
+   ],
+   "summary": "Tests 5 failed | 18 passed (23)",
+   "seconds": 19
+  },
+  {
+   "id": "BEFORE-R2a",
+   "mutation": "BEFORE-R2a review binding, frontend as re-reviewed (c838bb1): AiDraftBanner.tsx + useSegmentationData.ts",
+   "commit": "c838bb1",
+   "files": [
+    "frontend/src/components/AiDraftBanner.tsx",
+    "frontend/src/hooks/useSegmentationData.ts"
+   ],
+   "tests": [
+    "frontend/src/components/AiDraftBanner.test.tsx",
+    "frontend/src/hooks/useSegmentationData.flamesDraft.test.tsx"
+   ],
+   "detected": true,
+   "failing_tests": [
+    "rc047 a confirmed review names the saved mask it covers and warns that saving changes cancels it",
+    "rc047 if the open mask cannot be hashed nothing is sent",
+    "rc047 if the provenance cannot be re-read after a save, the review is shown as NOT confirmed (fail safe)",
+    "rc047 on the saved mask the confirmation sends the SHA-256 of the mask on screen",
+    "rc047 saving corrections to a confirmed AI segmentation re-reads the provenance: the review shows as reset",
+    "rc047 the banner gets the unsaved-changes flag and the SHA-256 of the exact mask bytes on screen",
+    "rc047 with unsaved corrections there is no confirm button — only \"save first\""
+   ],
+   "summary": "Tests 7 failed | 13 passed (20)",
+   "seconds": 7
+  },
+  {
+   "id": "BEFORE-R2b",
+   "mutation": "BEFORE-R2b review binding, backend as re-reviewed (c838bb1): service + route + schemas",
+   "commit": "c838bb1",
+   "files": [
+    "backend/app/services/segmentation_service.py",
+    "backend/app/api/routes/segmentation.py",
+    "backend/app/models/schemas.py"
+   ],
+   "tests": [
+    "backend/tests/unit/test_rc047_ai_draft_provenance.py"
+   ],
+   "detected": true,
+   "failing_tests": [
+    "[",
+    "[100%]",
+    "tests/unit/test_rc047_ai_draft_provenance.py::test_rc047_confirm_binds_the_review_to_the_exact_mask",
+    "tests/unit/test_rc047_ai_draft_provenance.py::test_rc047_confirm_refuses_a_mask_other_than_the_one_reviewed",
+    "tests/unit/test_rc047_ai_draft_provenance.py::test_rc047_create_route_passes_the_provenance_to_the_service",
+    "tests/unit/test_rc047_ai_draft_provenance.py::test_rc047_manual_work_has_nothing_to_confirm",
+    "tests/unit/test_rc047_ai_draft_provenance.py::test_rc047_only_a_radiologist_can_confirm",
+    "tests/unit/test_rc047_ai_draft_provenance.py::test_rc047_persist_resets_a_confirmation_whatever_path_changed_the_mask",
+    "tests/unit/test_rc047_ai_draft_provenance.py::test_rc047_re_uploading_the_identical_mask_keeps_the_review",
+    "tests/unit/test_rc047_ai_draft_provenance.py::test_rc047_replacing_the_mask_after_confirmation_resets_the_review",
+    "tests/unit/test_rc047_ai_draft_provenance.py::test_rc047_schema_rejects_a_malformed_hash_and_requires_sequence_evidence",
+    "tests/unit/test_rc047_ai_draft_provenance.py::test_rc047_service_stores_provenance_as_automatic_and_forces_unreviewed",
+    "tests/unit/test_rc047_ai_draft_provenance.py::test_rc049_who_confirmed_the_sequence_is_the_authenticated_user_never_the_client"
+   ],
+   "summary": "================== 11 failed, 1 passed, 5 warnings in 3.93s ===================",
+   "seconds": 26
+  },
+  {
+   "id": "BEFORE-R3",
+   "mutation": "BEFORE-R3 provenance echo as re-reviewed (c838bb1): draft.ts",
+   "commit": "c838bb1",
+   "files": [
+    "frontend/src/services/flames/draft.ts"
+   ],
+   "tests": [
+    "frontend/src/services/flames/__tests__/draft-model.test.ts"
+   ],
+   "detected": true,
+   "failing_tests": [
+    "rc047 accepts only an exact, still-unreviewed echo of the provenance that was sent",
+    "rc049 records the positive evidence of the sequence with the draft"
+   ],
+   "summary": "Tests 2 failed | 6 passed (8)",
+   "seconds": 4
+  },
+  {
+   "id": "E1",
+   "mutation": "E1 positive evidence not required",
+   "file": "frontend/src/services/flames/contrastGate.ts",
+   "tests": [
+    "frontend/src/services/flames/__tests__/inputGates.test.ts",
+    "frontend/src/services/flames/__tests__/pipeline.test.ts"
+   ],
+   "detected": true,
+   "failing_tests": [
+    "rc049 a header with a FLAIR inversion time is positive evidence; a \"FLAIR\" label alone is not",
+    "rc049 refuses even a FLAIR-looking image without positive evidence (fail closed)"
+   ],
+   "summary": "Tests 2 failed | 21 passed (23)",
+   "seconds": 19
+  },
+  {
+   "id": "E2",
+   "mutation": "E2 grey-matter class rule (second T1 rule) disabled",
+   "file": "frontend/src/services/flames/contrastGate.ts",
+   "tests": [
+    "frontend/src/services/flames/__tests__/inputGates.test.ts",
+    "frontend/src/services/flames/__tests__/pipeline.test.ts"
+   ],
+   "detected": true,
+   "failing_tests": [
+    "rc049 refuses a T1 whose cortex forms a large darker class even when white matter is not brighter"
+   ],
+   "summary": "Tests 1 failed | 22 passed (23)",
+   "seconds": 19
+  },
+  {
+   "id": "E3",
+   "mutation": "E3 a \"FLAIR\" header label alone counts as proof",
+   "file": "frontend/src/services/flames/contrastGate.ts",
+   "tests": [
+    "frontend/src/services/flames/__tests__/inputGates.test.ts",
+    "frontend/src/services/flames/__tests__/pipeline.test.ts"
+   ],
+   "detected": true,
+   "failing_tests": [
+    "rc049 a header with a FLAIR inversion time is positive evidence; a \"FLAIR\" label alone is not"
+   ],
+   "summary": "Tests 1 failed | 22 passed (23)",
+   "seconds": 19
+  },
+  {
+   "id": "E4",
+   "mutation": "E4 run allowed without the sequence confirmation",
+   "file": "frontend/src/components/BrowserFlamesCard.tsx",
+   "tests": [
+    "frontend/src/components/BrowserFlamesCard.test.tsx"
+   ],
+   "detected": true,
+   "failing_tests": [
+    "rc049 the run stays disabled until the clinician confirms this file is a FLAIR; the confirmation is passed on"
+   ],
+   "summary": "Tests 1 failed | 6 passed (7)",
+   "seconds": 6
+  },
+  {
+   "id": "E5",
+   "mutation": "E5 hook always claims the clinician confirmed",
+   "file": "frontend/src/hooks/useBrowserFlames.ts",
+   "tests": [
+    "frontend/src/hooks/useBrowserFlames.cancel.test.tsx"
+   ],
+   "detected": true,
+   "failing_tests": [
+    "rc049 the sequence confirmation reaches the worker only when the clinician gave it"
+   ],
+   "summary": "Tests 1 failed | 4 passed (5)",
+   "seconds": 5
+  },
+  {
+   "id": "E6",
+   "mutation": "E6 confirmation carried over to another file",
+   "file": "frontend/src/components/BrowserFlamesCard.tsx",
+   "tests": [
+    "frontend/src/components/BrowserFlamesCard.test.tsx"
+   ],
+   "detected": true,
+   "failing_tests": [
+    "rc049 the run stays disabled until the clinician confirms this file is a FLAIR; the confirmation is passed on"
+   ],
+   "summary": "Tests 1 failed | 6 passed (7)",
+   "seconds": 6
   },
   {
    "id": "F1",
@@ -141,7 +416,7 @@
     "rc048 is OFF when the variable is not set"
    ],
    "summary": "Tests 1 failed | 3 passed (4)",
-   "seconds": 5
+   "seconds": 4
   },
   {
    "id": "G1",
@@ -153,14 +428,14 @@
    ],
    "detected": true,
    "failing_tests": [
-    "rc049 a centre-bright FLAIR (receive-field shading) is not mistaken for a T1",
     "rc049 header evidence can refuse a FLAIR-looking image but can never accept a T1-looking one",
     "rc049 is robust to a smooth bias field (+-30 % across the head)",
-    "rc049 refuses a skull-stripped T1 (white matter brighter than cortex) — the reviewer case",
-    "rc049 runs a FLAIR-like brain through every gate, and refuses a T1-like one before any network call"
+    "rc049 refuses a skull-stripped T1 (white matter brighter than cortex) even if \"confirmed\" — the reviewer case",
+    "rc049 runs a FLAIR-like brain through every gate, and refuses a T1-like one before any network call",
+    "rc049 tolerates mild centre shading; stronger shading refuses a FLAIR (safe failure)"
    ],
-   "summary": "Tests 5 failed | 15 passed (20)",
-   "seconds": 19
+   "summary": "Tests 5 failed | 18 passed (23)",
+   "seconds": 20
   },
   {
    "id": "G2",
@@ -172,10 +447,10 @@
    ],
    "detected": true,
    "failing_tests": [
-    "rc049 refuses a T2 (bright CSF)"
+    "rc049 refuses a T2 (bright CSF) even if \"confirmed\""
    ],
-   "summary": "Tests 1 failed | 19 passed (20)",
-   "seconds": 18
+   "summary": "Tests 1 failed | 22 passed (23)",
+   "seconds": 19
   },
   {
    "id": "G3",
@@ -187,10 +462,11 @@
    ],
    "detected": true,
    "failing_tests": [
+    "rc049 a header with a FLAIR inversion time is positive evidence; a \"FLAIR\" label alone is not",
     "rc049 header evidence can refuse a FLAIR-looking image but can never accept a T1-looking one"
    ],
-   "summary": "Tests 1 failed | 19 passed (20)",
-   "seconds": 18
+   "summary": "Tests 2 failed | 21 passed (23)",
+   "seconds": 19
   },
   {
    "id": "G4",
@@ -204,8 +480,8 @@
    "failing_tests": [
     "rc049 header evidence can refuse a FLAIR-looking image but can never accept a T1-looking one"
    ],
-   "summary": "Tests 1 failed | 19 passed (20)",
-   "seconds": 20
+   "summary": "Tests 1 failed | 22 passed (23)",
+   "seconds": 19
   },
   {
    "id": "G5",
@@ -219,8 +495,8 @@
    "failing_tests": [
     "rc043 a head with a signal-free bone shell is refused by the dark clue"
    ],
-   "summary": "Tests 1 failed | 19 passed (20)",
-   "seconds": 18
+   "summary": "Tests 1 failed | 22 passed (23)",
+   "seconds": 19
   },
   {
    "id": "G5b",
@@ -234,7 +510,7 @@
    "failing_tests": [
     "rc043 a head with bright scalp fat is refused by the rim clue"
    ],
-   "summary": "Tests 1 failed | 19 passed (20)",
+   "summary": "Tests 1 failed | 22 passed (23)",
    "seconds": 18
   },
   {
@@ -245,12 +521,10 @@
     "frontend/src/services/flames/__tests__/inputGates.test.ts",
     "frontend/src/services/flames/__tests__/pipeline.test.ts"
    ],
-   "detected": true,
-   "failing_tests": [
-    "rc049 a centre-bright FLAIR (receive-field shading) is not mistaken for a T1"
-   ],
-   "summary": "Tests 1 failed | 19 passed (20)",
-   "seconds": 21
+   "detected": false,
+   "failing_tests": [],
+   "summary": "Tests 23 passed (23)",
+   "seconds": 20
   },
   {
    "id": "G7",
@@ -262,15 +536,17 @@
    ],
    "detected": true,
    "failing_tests": [
-    "rc049 a centre-bright FLAIR (receive-field shading) is not mistaken for a T1",
+    "rc049 a header with a FLAIR inversion time is positive evidence; a \"FLAIR\" label alone is not",
     "rc049 header evidence can refuse a FLAIR-looking image but can never accept a T1-looking one",
     "rc049 is robust to a smooth bias field (+-30 % across the head)",
-    "rc049 refuses a T2 (bright CSF)",
-    "rc049 refuses a skull-stripped T1 (white matter brighter than cortex) — the reviewer case",
-    "rc049 runs a FLAIR-like brain through every gate, and refuses a T1-like one before any network call"
+    "rc049 refuses a T2 (bright CSF) even if \"confirmed\"",
+    "rc049 refuses a skull-stripped T1 (white matter brighter than cortex) even if \"confirmed\" — the reviewer case",
+    "rc049 refuses even a FLAIR-looking image without positive evidence (fail closed)",
+    "rc049 runs a FLAIR-like brain through every gate, and refuses a T1-like one before any network call",
+    "rc049 tolerates mild centre shading; stronger shading refuses a FLAIR (safe failure)"
    ],
-   "summary": "Tests 6 failed | 14 passed (20)",
-   "seconds": 31
+   "summary": "Tests 8 failed | 15 passed (23)",
+   "seconds": 20
   },
   {
    "id": "G8",
@@ -284,8 +560,8 @@
    "failing_tests": [
     "rc049 refuses when the contrast cannot be measured (no cortex band at this resolution)"
    ],
-   "summary": "Tests 1 failed | 19 passed (20)",
-   "seconds": 23
+   "summary": "Tests 1 failed | 22 passed (23)",
+   "seconds": 20
   },
   {
    "id": "G9",
@@ -299,8 +575,8 @@
    "failing_tests": [
     "rc044 discards an implausible output instead of returning it"
    ],
-   "summary": "Tests 1 failed | 19 passed (20)",
-   "seconds": 21
+   "summary": "Tests 1 failed | 22 passed (23)",
+   "seconds": 20
   },
   {
    "id": "H1",
@@ -314,8 +590,8 @@
     "rc047 an edited AI draft is not autosaved either",
     "rc047 closing or reloading the tab never saves an opened AI draft (only warns)"
    ],
-   "summary": "Tests 2 failed | 7 passed (9)",
-   "seconds": 41
+   "summary": "Tests 2 failed | 13 passed (15)",
+   "seconds": 6
   },
   {
    "id": "H10",
@@ -328,8 +604,8 @@
    "failing_tests": [
     "rc045 cancel terminates the worker, ignores late results and never touches the open segmentation"
    ],
-   "summary": "Tests 1 failed | 3 passed (4)",
-   "seconds": 6
+   "summary": "Tests 1 failed | 4 passed (5)",
+   "seconds": 5
   },
   {
    "id": "H2",
@@ -342,8 +618,8 @@
    "failing_tests": [
     "rc047 an explicit Save stores the draft WITH its AI provenance (model, version, SHA-256, fold, unreviewed)"
    ],
-   "summary": "Tests 1 failed | 8 passed (9)",
-   "seconds": 7
+   "summary": "Tests 1 failed | 14 passed (15)",
+   "seconds": 5
   },
   {
    "id": "H3",
@@ -354,10 +630,13 @@
    ],
    "detected": true,
    "failing_tests": [
+    "rc047 a server echo with an already \"confirmed\" review is refused (orphan removed, mask not uploaded)",
+    "rc047 a server echo with another fold is refused (orphan removed, mask not uploaded)",
+    "rc047 a server echo with another model hash is refused (orphan removed, mask not uploaded)",
     "rc047 a server that does not record the provenance gets no draft (orphan removed, mask not uploaded)"
    ],
-   "summary": "Tests 1 failed | 8 passed (9)",
-   "seconds": 7
+   "summary": "Tests 4 failed | 11 passed (15)",
+   "seconds": 6
   },
   {
    "id": "H4",
@@ -370,8 +649,8 @@
    "failing_tests": [
     "rc047 while open the draft is \"automatic\" with its provenance, never \"manual\""
    ],
-   "summary": "Tests 1 failed | 8 passed (9)",
-   "seconds": 8
+   "summary": "Tests 1 failed | 14 passed (15)",
+   "seconds": 5
   },
   {
    "id": "H5",
@@ -385,8 +664,8 @@
     "rc050 opening a draft never discards unsaved work in a new manual segmentation",
     "rc050 unsaved edits in a SAVED segmentation are protected too; explicit discard replaces them"
    ],
-   "summary": "Tests 2 failed | 7 passed (9)",
-   "seconds": 7
+   "summary": "Tests 2 failed | 13 passed (15)",
+   "seconds": 5
   },
   {
    "id": "H6",
@@ -399,8 +678,8 @@
    "failing_tests": [
     "rc050 asks before replacing unsaved work and only discards after an explicit choice"
    ],
-   "summary": "Tests 1 failed | 5 passed (6)",
-   "seconds": 8
+   "summary": "Tests 1 failed | 6 passed (7)",
+   "seconds": 6
   },
   {
    "id": "H7",
@@ -413,8 +692,8 @@
    "failing_tests": [
     "rc051 shows an explicit warning and blocks opening until the clinician acknowledges it"
    ],
-   "summary": "Tests 1 failed | 5 passed (6)",
-   "seconds": 9
+   "summary": "Tests 1 failed | 6 passed (7)",
+   "seconds": 5
   },
   {
    "id": "H8",
@@ -427,8 +706,8 @@
    "failing_tests": [
     "rc051 shows an explicit warning and blocks opening until the clinician acknowledges it"
    ],
-   "summary": "Tests 1 failed | 5 passed (6)",
-   "seconds": 8
+   "summary": "Tests 1 failed | 6 passed (7)",
+   "seconds": 5
   },
   {
    "id": "H9",
@@ -441,8 +720,8 @@
    "failing_tests": [
     "licence and attribution notices are reachable in the card, with the licence texts shipped"
    ],
-   "summary": "Tests 1 failed | 5 passed (6)",
-   "seconds": 8
+   "summary": "Tests 1 failed | 6 passed (7)",
+   "seconds": 5
   },
   {
    "id": "I1",
@@ -457,7 +736,7 @@
     "rc040 never returns a cached copy whose SHA-256 differs: it is deleted and the model re-downloaded"
    ],
    "summary": "Tests 2 failed | 4 passed (6)",
-   "seconds": 6
+   "seconds": 4
   },
   {
    "id": "I1-old",
@@ -468,8 +747,8 @@
    ],
    "detected": false,
    "failing_tests": [],
-   "summary": "Tests 6 passed (6)",
-   "seconds": 5
+   "summary": "Tests 8 passed (8)",
+   "seconds": 4
   },
   {
    "id": "I2",
@@ -485,7 +764,7 @@
     "rc040 refuses downloaded bytes whose SHA-256 differs from the pin, and does not cache them"
    ],
    "summary": "Tests 3 failed | 3 passed (6)",
-   "seconds": 7
+   "seconds": 4
   },
   {
    "id": "I2-old",
@@ -496,7 +775,110 @@
    ],
    "detected": false,
    "failing_tests": [],
-   "summary": "Tests 6 passed (6)",
+   "summary": "Tests 8 passed (8)",
+   "seconds": 4
+  },
+  {
+   "id": "P1",
+   "mutation": "P1 echo with another model hash accepted",
+   "file": "frontend/src/services/flames/draft.ts",
+   "tests": [
+    "frontend/src/services/flames/__tests__/draft-model.test.ts",
+    "frontend/src/hooks/useSegmentationData.flamesDraft.test.tsx"
+   ],
+   "detected": true,
+   "failing_tests": [
+    "rc047 a server echo with another model hash is refused (orphan removed, mask not uploaded)",
+    "rc047 accepts only an exact, still-unreviewed echo of the provenance that was sent"
+   ],
+   "summary": "Tests 2 failed | 21 passed (23)",
+   "seconds": 5
+  },
+  {
+   "id": "P2",
+   "mutation": "P2 echo already \"confirmed\" accepted",
+   "file": "frontend/src/services/flames/draft.ts",
+   "tests": [
+    "frontend/src/services/flames/__tests__/draft-model.test.ts",
+    "frontend/src/hooks/useSegmentationData.flamesDraft.test.tsx"
+   ],
+   "detected": true,
+   "failing_tests": [
+    "rc047 a server echo with an already \"confirmed\" review is refused (orphan removed, mask not uploaded)",
+    "rc047 accepts only an exact, still-unreviewed echo of the provenance that was sent"
+   ],
+   "summary": "Tests 2 failed | 21 passed (23)",
+   "seconds": 6
+  },
+  {
+   "id": "U1",
+   "mutation": "U1 confirm button shown with unsaved corrections",
+   "file": "frontend/src/components/AiDraftBanner.tsx",
+   "tests": [
+    "frontend/src/components/AiDraftBanner.test.tsx"
+   ],
+   "detected": true,
+   "failing_tests": [
+    "rc047 with unsaved corrections there is no confirm button — only \"save first\""
+   ],
+   "summary": "Tests 1 failed | 4 passed (5)",
+   "seconds": 5
+  },
+  {
+   "id": "U2",
+   "mutation": "U2 confirmation not bound to the mask on screen",
+   "file": "frontend/src/components/AiDraftBanner.tsx",
+   "tests": [
+    "frontend/src/components/AiDraftBanner.test.tsx"
+   ],
+   "detected": true,
+   "failing_tests": [
+    "rc047 on the saved mask the confirmation sends the SHA-256 of the mask on screen"
+   ],
+   "summary": "Tests 1 failed | 4 passed (5)",
+   "seconds": 5
+  },
+  {
+   "id": "U3",
+   "mutation": "U3 no provenance refresh after saving corrections",
+   "file": "frontend/src/hooks/useSegmentationData.ts",
+   "tests": [
+    "frontend/src/hooks/useSegmentationData.flamesDraft.test.tsx"
+   ],
+   "detected": true,
+   "failing_tests": [
+    "rc047 if the provenance cannot be re-read after a save, the review is shown as NOT confirmed (fail safe)",
+    "rc047 saving corrections to a confirmed AI segmentation re-reads the provenance: the review shows as reset"
+   ],
+   "summary": "Tests 2 failed | 13 passed (15)",
+   "seconds": 5
+  },
+  {
+   "id": "U4",
+   "mutation": "U4 stale \"confirmed\" kept when the refresh fails",
+   "file": "frontend/src/hooks/useSegmentationData.ts",
+   "tests": [
+    "frontend/src/hooks/useSegmentationData.flamesDraft.test.tsx"
+   ],
+   "detected": true,
+   "failing_tests": [
+    "rc047 if the provenance cannot be re-read after a save, the review is shown as NOT confirmed (fail safe)"
+   ],
+   "summary": "Tests 1 failed | 14 passed (15)",
+   "seconds": 5
+  },
+  {
+   "id": "U5",
+   "mutation": "U5 unsaved flag not published to the banner",
+   "file": "frontend/src/hooks/useSegmentationData.ts",
+   "tests": [
+    "frontend/src/hooks/useSegmentationData.flamesDraft.test.tsx"
+   ],
+   "detected": true,
+   "failing_tests": [
+    "rc047 the banner gets the unsaved-changes flag and the SHA-256 of the exact mask bytes on screen"
+   ],
+   "summary": "Tests 1 failed | 14 passed (15)",
    "seconds": 5
   }
  ]

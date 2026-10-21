@@ -5,8 +5,10 @@
  * text in NIfTI extensions, DICOM attributes in a DICOM extension, and the series description the app
  * holds for the same file). The file NAME is never used.
  *
- * Header evidence can only REFUSE an image (it names another contrast, or an inversion time that is
- * not a FLAIR's). It can never accept one: the image-content check (contrastGate.ts) is always run.
+ * Header evidence REFUSES an image when it names another contrast, or an inversion time that is not a FLAIR's.
+ * It can count as positive evidence (flair-gate/2) only when it carries a FLAIR inversion time
+ * (contrastGate.headerProvesFlair); a "FLAIR" label alone is supporting information, not proof. The
+ * image-content check (contrastGate.ts) is always run as well, and can still refuse.
  */
 import type { DicomEvidence } from './nifti';
 

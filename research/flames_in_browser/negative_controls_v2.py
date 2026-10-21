@@ -2,10 +2,12 @@
 
 Every mutation re-introduces one defect the adversarial review found (or removes one new control); the named
 tests must FAIL. "BEFORE" entries restore whole files from the commit the review was made on (d81cb78) and
-show that the new tests fail on the old code. All files are snapshotted and restored, and their SHA-256 is
-checked afterwards.
+show that the new tests fail on the old code. Re-review 2 (2026-10-18) adds the controls P*, U*, E*, B6-B10 and
+"BEFORE-R*" runs against the commit that re-review was made on (c838bb1). All files are snapshotted and restored,
+and their SHA-256 is checked afterwards.
 
     python -I research/flames_in_browser/negative_controls_v2.py <repo root> --out <results.json> [--only PREFIX]
+    python -I research/flames_in_browser/negative_controls_v2.py <repo root> --out x.json --check-anchors
 """
 import argparse
 import hashlib
@@ -24,6 +26,8 @@ T_MODEL_OLD = [FE + 'src/services/flames/__tests__/draft-model.test.ts']
 T_GATES = [FE + 'src/services/flames/__tests__/inputGates.test.ts', FE + 'src/services/flames/__tests__/pipeline.test.ts']
 T_CANCEL = [FE + 'src/hooks/useBrowserFlames.cancel.test.tsx']
 T_BACKEND = ['backend/tests/unit/test_rc047_ai_draft_provenance.py']
+T_BANNER = [FE + 'src/components/AiDraftBanner.test.tsx']
+T_DRAFT = [FE + 'src/services/flames/__tests__/draft-model.test.ts']
 
 SD = FE + 'src/hooks/useSegmentationData.ts'
 CARD = FE + 'src/components/BrowserFlamesCard.tsx'
@@ -31,6 +35,11 @@ MS = FE + 'src/services/flames/modelStore.ts'
 CG = FE + 'src/services/flames/contrastGate.ts'
 PL = FE + 'src/services/flames/pipeline.ts'
 UBF = FE + 'src/hooks/useBrowserFlames.ts'
+DRAFT = FE + 'src/services/flames/draft.ts'
+BANNER = FE + 'src/components/AiDraftBanner.tsx'
+SVC = 'backend/app/services/segmentation_service.py'
+ROUTE = 'backend/app/api/routes/segmentation.py'
+SCHEMAS = 'backend/app/models/schemas.py'
 
 MUTATIONS = [
     # point 2 — AI draft never autosaved, stored with provenance, never "manual"
@@ -69,8 +78,10 @@ MUTATIONS = [
      "BROWSER_FLAMES: getFeatureFlag('ENABLE_BROWSER_FLAMES', false),", "BROWSER_FLAMES: getFeatureFlag('ENABLE_BROWSER_FLAMES', true),",
      [FE + 'src/config/features.flames.test.ts']),
     # backend (point 2)
-    ('B1 client can store a pre-confirmed draft', 'backend/app/services/segmentation_service.py',
-     'update={"review_status": "unreviewed", "reviewed_by": None, "reviewed_at": None}', 'update={}', T_BACKEND),
+    ('B1 client can store a pre-confirmed draft', SVC,
+     '                "review_status": "unreviewed", "reviewed_by": None, "reviewed_at": None,\n'
+     '                "reviewed_mask_sha256": None,\n                # RC-049: who confirmed',
+     '                # RC-049: who confirmed', T_BACKEND),
     ('B2 AI draft not typed automatic', 'backend/app/services/segmentation_service.py',
      'segmentation_type="automatic" if provenance else None,', 'segmentation_type=None,', T_BACKEND),
     ('B3 create route drops the provenance', 'backend/app/api/routes/segmentation.py',
@@ -78,11 +89,54 @@ MUTATIONS = [
     ('B4 any role can confirm', 'backend/app/api/routes/segmentation.py',
      'if getattr(current_user, "role", None) != UserRole.RADIOLOGIST:', 'if False:', T_BACKEND),
     ('B5 manual work can be "confirmed"', 'backend/app/api/routes/segmentation.py', '    if provenance is None:', '    if False:', T_BACKEND),
+    # re-review 2, point 2 — the confirmation is bound to the exact mask; any change resets it
+    ('B6 persist does not enforce the review binding', SVC, '        self.enforce_review_binding(seg_data)\n', '', T_BACKEND),
+    ('B7 mask upload does not reset the review', ROUTE,
+     'review_reset = segmentation_service.enforce_review_binding(seg_data)', 'review_reset = False', T_BACKEND),
+    ('B8 confirmation accepted for any mask', ROUTE, '    if reviewed != current:\n', '    if False:\n', T_BACKEND),
+    ('B9 confirmation does not record which mask', ROUTE, '            "reviewed_mask_sha256": current,\n', '', T_BACKEND),
+    ('B10 sequence confirmer not taken from the authenticated user', SVC,
+     '"sequence_confirmed_by": created_by if ai_provenance.sequence_evidence == "clinician" else None,', '', T_BACKEND),
+    ('U1 confirm button shown with unsaved corrections', BANNER, ') : unreviewed && hasUnsavedChanges ? (', ') : false ? (', T_BANNER),
+    ('U2 confirmation not bound to the mask on screen', BANNER, 'confirmAiReview(segmentationId, digest)',
+     'confirmAiReview(segmentationId, provenance.model_sha256)', T_BANNER),
+    ('U3 no provenance refresh after saving corrections', SD, 'if (!serverSeg && currentSegmentation.metadata?.ai_provenance) {',
+     'if (false) {', T_HANDOFF),
+    ('U4 stale "confirmed" kept when the refresh fails', SD,
+     "? { ...seg.metadata.ai_provenance, review_status: 'unreviewed', reviewed_by: null, reviewed_at: null, reviewed_mask_sha256: null }",
+     '? seg.metadata.ai_provenance', T_HANDOFF),
+    ('U5 unsaved flag not published to the banner', SD, 'useSegmentationStore.getState().setHasUnsavedMaskChanges(unsavedMask);',
+     'useSegmentationStore.getState().setHasUnsavedMaskChanges(false);', T_HANDOFF),
+    # re-review 2, point 3 — the server echo must be exact and unreviewed
+    ('P1 echo with another model hash accepted', DRAFT, '    echoed.model_sha256 === sent.model_sha256 &&\n', '', T_DRAFT + T_HANDOFF),
+    ('P2 echo already "confirmed" accepted', DRAFT,
+     "    echoed.review_status === 'unreviewed' && !echoed.reviewed_by && !echoed.reviewed_at && !echoed.reviewed_mask_sha256;",
+     '    true;', T_DRAFT + T_HANDOFF),
+    # re-review 2, point 1 — positive evidence of the sequence, fail closed
+    ('E1 positive evidence not required', CG,
+     "opts.clinicianConfirmedFlair === true ? 'clinician' : headerProvesFlair(header) ? 'header' : undefined;",
+     "opts.clinicianConfirmedFlair === true ? 'clinician' : 'header';", T_GATES),
+    ('E2 grey-matter class rule (second T1 rule) disabled', CG, 'if (features.frac45to80 > FLAIR_GATE.maxGreyClassFraction) {',
+     'if (false) {', T_GATES),
+    ('E3 a "FLAIR" header label alone counts as proof', CG,
+     "    header.verdict === 'supports' &&\n    header.inversionTimeMs !== undefined &&",
+     "    header.verdict === 'supports' ||\n    header.inversionTimeMs !== undefined &&", T_GATES),
+    ('E4 run allowed without the sequence confirmation', CARD, 'disabled={!flairFileId || !sequenceConfirmed}',
+     'disabled={!flairFileId}', T_CARD),
+    ('E5 hook always claims the clinician confirmed', UBF, 'clinicianConfirmedFlair: options.clinicianConfirmedFlair === true,',
+     'clinicianConfirmedFlair: true,', T_CANCEL),
+    ('E6 confirmation carried over to another file', CARD, 'useEffect(() => setSequenceConfirmed(false), [flairFileId]);', '', T_CARD),
 ]
 
 BEFORE = [
-    ('BEFORE-2/3 hand-off: useSegmentationData.ts + BrowserFlamesCard.tsx as reviewed (d81cb78)', [SD, CARD], T_HANDOFF + T_CARD),
-    ('BEFORE-1 gates: pipeline.ts as reviewed (d81cb78) — T1 phantom', [PL], [FE + 'src/services/flames/__tests__/pipeline.test.ts']),
+    ('BEFORE-2/3 hand-off: useSegmentationData.ts + BrowserFlamesCard.tsx as reviewed (d81cb78)', 'd81cb78', [SD, CARD], T_HANDOFF + T_CARD),
+    ('BEFORE-1 gates: pipeline.ts as reviewed (d81cb78) — T1 phantom', 'd81cb78', [PL], [FE + 'src/services/flames/__tests__/pipeline.test.ts']),
+    # re-review 2 was made on c838bb1
+    ('BEFORE-R1 FLAIR gate as re-reviewed (c838bb1): contrastGate.ts + pipeline.ts', 'c838bb1', [CG, PL], T_GATES),
+    ('BEFORE-R2a review binding, frontend as re-reviewed (c838bb1): AiDraftBanner.tsx + useSegmentationData.ts', 'c838bb1',
+     [BANNER, SD], T_BANNER + T_HANDOFF),
+    ('BEFORE-R2b review binding, backend as re-reviewed (c838bb1): service + route + schemas', 'c838bb1', [SVC, ROUTE, SCHEMAS], T_BACKEND),
+    ('BEFORE-R3 provenance echo as re-reviewed (c838bb1): draft.ts', 'c838bb1', [DRAFT], T_DRAFT),
 ]
 
 
@@ -113,8 +167,17 @@ def main():
     ap.add_argument('repo', type=Path)
     ap.add_argument('--out', type=Path, required=True)
     ap.add_argument('--only', default='')
+    ap.add_argument('--check-anchors', action='store_true', help='only assert that every anchor occurs exactly once')
     a = ap.parse_args()
-    files = {m[1] for m in MUTATIONS} | {f for _, fs, _ in BEFORE for f in fs}
+    if a.check_anchors:
+        bad = []
+        for name, rel, old, _new, _tests in MUTATIONS:
+            text = (a.repo / rel).read_bytes().decode('utf-8').replace('\r\n', '\n')
+            if text.count(old) != 1:
+                bad.append(f'{name}: {text.count(old)} in {rel}')
+        print('\n'.join(bad) or f'all {len(MUTATIONS)} anchors unique')
+        return
+    files = {m[1] for m in MUTATIONS} | {f for _, _, fs, _ in BEFORE for f in fs}
     snap = {f: (a.repo / f).read_bytes() for f in files}
     digests = {f: sha(a.repo / f) for f in files}
     results = []
@@ -133,17 +196,17 @@ def main():
             results.append({'id': name.split()[0], 'mutation': name, 'file': rel, 'tests': tests, 'detected': detected,
                             'failing_tests': failed, 'summary': summary, 'seconds': round(time.time() - t)})
             print(json.dumps(results[-1]), flush=True)
-        for name, rels, tests in BEFORE:
+        for name, commit, rels, tests in BEFORE:
             if a.only and not name.startswith(a.only):
                 continue
             for rel in rels:
-                old = subprocess.run(['git', 'show', f'd81cb78:{rel}'], cwd=a.repo, capture_output=True, check=True).stdout
+                old = subprocess.run(['git', 'show', f'{commit}:{rel}'], cwd=a.repo, capture_output=True, check=True).stdout
                 (a.repo / rel).write_bytes(old)
             t = time.time()
             detected, failed, summary = run(a.repo, tests)
             for rel in rels:
                 (a.repo / rel).write_bytes(snap[rel])
-            results.append({'id': name.split()[0], 'mutation': name, 'files': rels, 'tests': tests, 'detected': detected,
+            results.append({'id': name.split()[0], 'mutation': name, 'commit': commit, 'files': rels, 'tests': tests, 'detected': detected,
                             'failing_tests': failed, 'summary': summary, 'seconds': round(time.time() - t)})
             print(json.dumps(results[-1]), flush=True)
     finally:

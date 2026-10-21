@@ -107,11 +107,13 @@ describe('fail-closed gates', () => {
       return thresholdNet(tile);
     };
     const flair = makePhantom({ contrast: 'FLAIR', spacing: 3 });
-    const r = await segmentFlairVolume(flair, { runPatch: counting });
+    const r = await segmentFlairVolume(flair, { runPatch: counting, clinicianConfirmedFlair: true });
     expect(calls).toBeGreaterThan(0);
     expect(r.maskNifti.length).toBe(flair.data.length);
     calls = 0;
-    await expect(segmentFlairVolume(makePhantom({ contrast: 'T1', spacing: 3 }), { runPatch: counting })).rejects.toThrow(
+    await expect(
+      segmentFlairVolume(makePhantom({ contrast: 'T1', spacing: 3 }), { runPatch: counting, clinicianConfirmedFlair: true }),
+    ).rejects.toThrow(
       /white matter is brighter than the cortex/,
     );
     expect(calls).toBe(0);

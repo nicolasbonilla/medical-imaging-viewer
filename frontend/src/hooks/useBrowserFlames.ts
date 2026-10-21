@@ -42,7 +42,10 @@ export function useBrowserFlames() {
   useEffect(() => terminate, [terminate]);
 
   const run = useCallback(
-    async (fileId: string, options: { mirror?: boolean; webgpu?: boolean; seriesDescription?: string | null } = {}) => {
+    async (
+      fileId: string,
+      options: { mirror?: boolean; webgpu?: boolean; seriesDescription?: string | null; clinicianConfirmedFlair?: boolean } = {},
+    ) => {
       terminate();
       const jobId = crypto.randomUUID();
       jobRef.current = jobId;
@@ -104,6 +107,7 @@ export function useBrowserFlames() {
             preferWebGPU: Boolean(options.webgpu),
             mirror: Boolean(options.mirror),
             seriesDescription: options.seriesDescription ?? null,
+            clinicianConfirmedFlair: options.clinicianConfirmedFlair === true,
           },
           [nifti],
         );

@@ -296,6 +296,9 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
     reset,
   } = useSegmentationStore();
 
+  // RC-047: the review can only be confirmed on the saved mask (no unsaved corrections).
+  const hasUnsavedMaskChanges = useSegmentationStore((s) => s.hasUnsavedMaskChanges);
+
   // Fetch segmentations list for ALL images in the study (same cache key as ViewerApp)
   const { data: segmentationsList, isLoading: isLoadingList } = useQuery({
     queryKey: ['segmentations', 'study', currentStudyId],
@@ -614,6 +617,7 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                       <AiDraftBanner
                         provenance={activeSegmentation.ai_provenance}
                         segmentationId={activeSegmentation.id}
+                        hasUnsavedChanges={hasUnsavedMaskChanges}
                         onConfirmed={handleAiReviewConfirmed}
                       />
                     )}

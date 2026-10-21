@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { checkDraftGrid, draftDescription, DRAFT_LABELS } from '../draft';
+import { buildAiProvenance, checkDraftGrid, draftDescription, DRAFT_LABELS, provenanceRecorded } from '../draft';
 import { ModelIntegrityError, sha256Hex, verifyModel } from '../modelStore';
 import { FLAMES_FOLD0_MODEL, type FlamesModelAsset } from '../plan';
 import type { FlamesProvenance } from '../protocol';
@@ -45,6 +45,7 @@ describe('draft provenance', () => {
     resampledShape: [142, 174, 200],
     seconds: 266,
     generatedAt: '2026-10-17T20:00:00.000Z',
+    sequenceEvidence: 'clinician',
   };
   it('marks the result as an unreviewed AI draft with model identity, within 1000 chars', () => {
     const d = draftDescription(p, { lesionCount: 85, lesionVoxels: 38892, lesionVolumeMl: 38.892, componentVolumesMl: [] });
@@ -53,6 +54,35 @@ describe('draft provenance', () => {
     expect(d).toContain('85 lesions');
     expect(d.length).toBeLessThanOrEqual(1000);
     expect(DRAFT_LABELS[1].name).toMatch(/AI draft/);
+  });
+
+  const summary = { lesionCount: 3, lesionVoxels: 120, lesionVolumeMl: 0.12, componentVolumesMl: [] };
+  it('rc049 records the positive evidence of the sequence with the draft', () => {
+    const sent = buildAiProvenance(p, summary, 0);
+    expect(sent.sequence_evidence).toBe('clinician');
+    expect(sent.review_status).toBe('unreviewed');
+    expect(sent.reviewed_mask_sha256).toBeNull();
+  });
+
+  it('rc047 accepts only an exact, still-unreviewed echo of the provenance that was sent', () => {
+    const sent = buildAiProvenance(p, summary, 0);
+    const echo = { ...sent, sequence_confirmed_by: 'dr_rev' };
+    expect(provenanceRecorded(sent, echo)).toBe(true);
+    expect(provenanceRecorded(sent, null)).toBe(false);
+    expect(provenanceRecorded(sent, { ...echo, kind: 'manual' as never })).toBe(false);
+    // another model / weights / fold / pipeline / evidence — the record would not describe what produced the mask
+    expect(provenanceRecorded(sent, { ...echo, model_sha256: 'f'.repeat(64) })).toBe(false);
+    expect(provenanceRecorded(sent, { ...echo, source_checkpoint_sha256: 'e'.repeat(64) })).toBe(false);
+    expect(provenanceRecorded(sent, { ...echo, fold: 1 })).toBe(false);
+    expect(provenanceRecorded(sent, { ...echo, model_version: 'other' })).toBe(false);
+    expect(provenanceRecorded(sent, { ...echo, model_name: 'other' })).toBe(false);
+    expect(provenanceRecorded(sent, { ...echo, pipeline_version: 'other' })).toBe(false);
+    expect(provenanceRecorded(sent, { ...echo, sequence_evidence: 'header' })).toBe(false);
+    // already "confirmed" (or carrying any reviewer trace) — a draft must never arrive pre-confirmed
+    expect(provenanceRecorded(sent, { ...echo, review_status: 'confirmed' })).toBe(false);
+    expect(provenanceRecorded(sent, { ...echo, reviewed_by: 'dr_rev' })).toBe(false);
+    expect(provenanceRecorded(sent, { ...echo, reviewed_at: '2026-10-18T10:00:00Z' })).toBe(false);
+    expect(provenanceRecorded(sent, { ...echo, reviewed_mask_sha256: 'a'.repeat(64) })).toBe(false);
   });
 });
 

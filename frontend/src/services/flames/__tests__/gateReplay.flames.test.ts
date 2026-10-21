@@ -7,6 +7,9 @@
  * ships without recomputing the features. Border/volume refusals are carried over unchanged (they do not
  * depend on these thresholds). Writes per-case decisions and a summary per dataset / contrast / variant.
  *
+ * FLAMES_GATE_REPLAY_EVIDENCE: 'clinician' (default — every case replayed as if the clinician confirmed it is a
+ * FLAIR, the most permissive legal input) or 'none' (no positive evidence: flair-gate/2 must refuse every case).
+ *
  *   FLAMES_GATE_REPLAY_IN="a.json,b.json" FLAMES_GATE_REPLAY_OUT=out.json \
  *     npx vitest run src/services/flames/__tests__/gateReplay.flames.test.ts --pool=threads
  */
@@ -32,7 +35,11 @@ interface Row {
 
 describe.skipIf(!env.FLAMES_GATE_REPLAY_IN)('replay gate decisions', () => {
   it('replays', () => {
-    const rows: Row[] = env.FLAMES_GATE_REPLAY_IN!.split(',').flatMap((f) => JSON.parse(readFileSync(f, 'utf-8')));
+    // accepts the raw harness output (an array) or a committed evidence file ({ rows: [...] })
+    const rows: Row[] = env.FLAMES_GATE_REPLAY_IN!.split(',').flatMap((f) => {
+      const j = JSON.parse(readFileSync(f, 'utf-8'));
+      return Array.isArray(j) ? j : j.rows;
+    });
     const decisions = rows.map((r) => {
       let decision: 'accepted' | 'refused-error' | 'refused-border-volume' | 'refused-skull' | 'refused-contrast';
       let reason = '';
@@ -48,7 +55,9 @@ describe.skipIf(!env.FLAMES_GATE_REPLAY_IN)('replay gate decisions', () => {
       ) {
         decision = 'refused-skull';
       } else {
-        const c = decideFlairContrast(r.features, r.header ?? { verdict: 'none', reasons: [] });
+        const c = decideFlairContrast(r.features, r.header ?? { verdict: 'none', reasons: [] }, {
+          clinicianConfirmedFlair: (env.FLAMES_GATE_REPLAY_EVIDENCE ?? 'clinician') === 'clinician',
+        });
         decision = c.ok ? 'accepted' : 'refused-contrast';
         reason = c.reason ?? '';
       }
@@ -63,6 +72,7 @@ describe.skipIf(!env.FLAMES_GATE_REPLAY_IN)('replay gate decisions', () => {
       summary[k].byDecision[d.decision] = (summary[k].byDecision[d.decision] ?? 0) + 1;
     }
     const out = {
+      evidence: env.FLAMES_GATE_REPLAY_EVIDENCE ?? 'clinician',
       gate: {
         ...FLAIR_GATE,
         maxHeadDarkFraction: GATES.maxHeadDarkFraction,

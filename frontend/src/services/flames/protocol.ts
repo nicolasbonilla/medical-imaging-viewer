@@ -21,6 +21,8 @@ export interface FlamesSegmentRequest {
   mirror: boolean;
   /** Series description the app holds for this file (header evidence for the FLAIR gate; never the file name). */
   seriesDescription?: string | null;
+  /** RC-049: the clinician explicitly confirmed that this file is a skull-stripped T2-FLAIR (positive evidence). */
+  clinicianConfirmedFlair: boolean;
 }
 
 export type FlamesWorkerRequest = FlamesSegmentRequest;
@@ -42,6 +44,8 @@ export interface FlamesProvenance {
   generatedAt: string;
   /** FLAIR contrast gate outcome (RC-049): header verdict and image-content score. */
   contrastGate?: { header: 'supports' | 'none'; score: number; threshold: number };
+  /** RC-049: positive evidence the input was a FLAIR — header, or explicit clinician confirmation */
+  sequenceEvidence: 'header' | 'clinician';
 }
 
 export type FlamesWorkerResponse =

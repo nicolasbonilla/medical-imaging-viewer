@@ -39,10 +39,10 @@ onnxruntime-web 1.24.1. Backend (non-Class-C files): `models/schemas.py` (`AIPro
 | REQ-FUNC-096 | Expected duration, elapsed time, cancel without touching the open segmentation | B | Test | — |
 | REQ-FUNC-097 | Licence/attribution notices reachable in the app | A | Test | — |
 | REQ-SAFE-029 | Fail closed (no partial result; reason shown) | C | Test | HAZ-001 |
-| REQ-SAFE-030 | AI draft labelled; never autosaved; saved only explicitly with provenance; unreviewed until a radiologist confirms; never shown as manual | C | Test + usability (not done) | HAZ-001 |
+| REQ-SAFE-030 | AI draft labelled; never autosaved; saved only explicitly with provenance (server echo must match exactly); unreviewed until a radiologist confirms **the exact saved mask** (SHA-256 bound; any mask change resets it; no confirmation with unsaved corrections); never shown as manual | C | Test + usability (not done) | HAZ-001 |
 | REQ-SAFE-031 | Only the pinned model runs (download and cache) | C | Test | HAZ-001 |
 | REQ-SAFE-032 | Opening a draft never discards unsaved work | C | Test | HAZ-001 |
-| REQ-SAFE-033 | Only a skull-stripped FLAIR: image-content skull gate + FLAIR contrast gate (header can only refuse); measured sensitivity/specificity documented | C | Test + validation | HAZ-001 |
+| REQ-SAFE-033 | Only a skull-stripped FLAIR: image-content skull gate + FLAIR content check (refusal only) + **positive evidence of the sequence** (clinician's per-file confirmation recorded with the draft, or a header with a FLAIR inversion time) — fail closed; leave-one-dataset-out sensitivity/specificity documented | C | Test + validation | HAZ-001 |
 
 Full texts: `docs/iec62304/02_Software_Requirements_Specification.md`.
 
@@ -64,9 +64,9 @@ of **HAZ-006** (axis order; wrong image/grid).
 | RC-044 (RC-F5) | Numerical/output guard, WebGPU → WebAssembly whole-job restart | test-bound |
 | RC-045 (RC-F6) | One terminal message; worker terminated on cancel/crash | test-bound |
 | RC-046 (RC-F7) | Same file + same grid | test-bound |
-| RC-047 (RC-F8, extended) | AI-draft labelling + persistent banner; **no save-on-unload**; saved only with provenance, refused if not echoed; server forces "unreviewed"; radiologist confirmation | test-bound; usability not evaluated |
+| RC-047 (RC-F8, extended) | AI-draft labelling + persistent banner; **no save-on-unload**; saved only with provenance, refused unless echoed exactly and unreviewed; server forces "unreviewed"; radiologist confirmation **bound to the SHA-256 of the stored mask, reset on any mask change**, not offered with unsaved corrections | test-bound; usability not evaluated |
 | RC-048 (RC-F9) | Flag OFF by default | test-bound; production build checked |
-| RC-049 (new) | FLAIR contrast gate (header can only refuse; content must look like FLAIR) | test-bound; validated on public data |
+| RC-049 (new; `flair-gate/2` after re-review 2) | FLAIR gate: header can refuse; content can only refuse; acceptance needs positive evidence (clinician confirmation recorded with who confirmed, or a FLAIR inversion time) — fail closed | test-bound; leave-one-dataset-out validation on MSLesSeg, open_ms_data, ISBI-2015 (content alone does not generalise — hence the positive evidence) |
 | RC-050 (new) | Never discard unsaved work | test-bound |
 | RC-051 (new) | Empty result explicit + acknowledgement | test-bound |
 | RC-052 (RC-F10) | 5-fold ensemble (+ mirroring) default before clinical use | **NOT IMPLEMENTED** (CA-FLAMES-1) |
@@ -79,13 +79,13 @@ provides its own labelling (RC-047) — reconciled in RMF §5.1.
 
 | # | Activity | Acceptance | Status (2026-10-18) |
 |---|---|---|---|
-| V1 | Unit tests (`src/services/flames/__tests__`, hand-off, card, cancel, flag; backend `test_rc047_*`) | all pass in CI | **pass locally 2026-10-18**: frontend 218 passed, 3 skipped (opt-in harnesses), type check clean, production build OK (flag absent); backend unit suite 1302 passed |
-| V2 | Negative controls: prototype set M1–M12 + review set (H1–H10, I1–I2, G1–G9 + G5b, F1, B1–B5) and BEFORE runs | every mutation detected; pre-fix code fails the new tests | **28/28 detected**; the same SHA-256 removals against the pre-fix tests: 0/2 detected (the review's point); reviewed code fails the new tests 2/2 — `records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json` |
+| V1 | Unit tests (`src/services/flames/__tests__`, hand-off, card, cancel, flag; backend `test_rc047_*`) | all pass in CI | **pass locally 2026-10-21 (after re-review 2)**: frontend 236 passed, 3 skipped (opt-in harnesses), type check clean, production build OK (flag absent); backend unit suite 1307 passed |
+| V2 | Negative controls: prototype set M1–M12 + review set (H1–H10, I1–I2, G1–G9 + G5b, F1, B1–B10, U1–U5, P1–P2, E1–E6) and BEFORE runs on both reviewed commits | every mutation detected; reviewed code fails the new tests | **45/46 detected** (all re-run 2026-10-18 on the re-review-2 code; G6 — local normalisation removed — not detectable with phantoms, recorded); the same SHA-256 removals against the pre-fix tests: 0/2 detected (the first review's point); reviewed code (d81cb78, c838bb1) fails the new tests 6/6 — `records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json` |
 | V3/V4 | Parity on public P57 1 mm / 4 mm | Dice >= 0.99 | 0.99940 / 0.99934 (prototype) |
 | V5 | Real-browser smoke | completes, Dice >= 0.99 | WebAssembly pass; WebGPU fails on this machine (DESIGN.md §7.1) |
 | V6 | Ensemble ± mirroring parity | Dice >= 0.99 | not done (CA-FLAMES-1) |
 | V7 | >= 10 more public cases, other scanners | Dice >= 0.99 each | not done |
-| V8 | Input-gate validation (skull + contrast) on public data | 0 with-skull accepted; T1/T2 refused; stripped FLAIR sensitivity reported | **done on available data** — FLAIR-GATE-VALIDATION.md; native clinical data and more with-skull cases pending (CA-FLAMES-3) |
+| V8 | Input-gate validation (skull + contrast) on public data, leave-one-dataset-out | 0 accepted without positive evidence; content barrier reported per held-out dataset | **done on available data** (533 volumes, 3 datasets) — without evidence 0/521 accepted; held-out content barrier refuses 18/19 (ISBI-2015), 229/230 (MSLesSeg), 102/102 (open_ms_data); FLAIR availability 87/170 — FLAIR-GATE-VALIDATION.md; native clinical data pending (CA-FLAMES-3) |
 | V9 | In-app QA (flag on, staging) incl. save → reload → confirm review | identical mask; provenance shown | not done |
 | V10 | Usability (IEC 62366): draft recognised as unreviewed AI output | per plan | not done (CA-FLAMES-4) |
 | V11 | Performance on device classes | documented | partial; duration shown to the user |
@@ -93,7 +93,9 @@ provides its own labelling (RC-047) — reconciled in RMF §5.1.
 ## 6. Residual-risk view
 
 With RC-040…RC-051 the software-level causes are controlled; cause (f) (single fold) is not (RC-052), and the gates are
-heuristics validated on public data only. The HAZ-001 residual risk for this path is **UNDETERMINED**; the feature must
+heuristics validated on public data only. The FLAIR gate's acceptance rests on a human confirmation (or a header
+inversion time); the content check is a second barrier that leave-one-dataset-out shows is not guaranteed on an unseen
+scanner (one T1 let through on ISBI-2015). The HAZ-001 residual risk for this path is **UNDETERMINED**; the feature must
 stay **OFF** until V6, V7, V9, V10 and CA-FLAMES-1..5 are closed and the owner approves.
 
 ## 7. Other findings (recorded for triage)

@@ -59,9 +59,15 @@ self.onmessage = async (event: MessageEvent<FlamesWorkerRequest>) => {
     const flair = await readNifti(job.nifti);
     progress('read', 0.5, `Checking that the image is a skull-stripped FLAIR (${flair.dims.join(' × ')} voxels)…`);
     // RC-043 / RC-049: refuse a non-skull-stripped or non-FLAIR image BEFORE the model download.
-    // Header evidence (never the file name) can only refuse; the image content must look like FLAIR.
+    // flair-gate/2: header evidence (never the file name) and image content can only refuse; acceptance also needs
+    // positive evidence — the clinician's confirmation for this file, or a header with a FLAIR inversion time.
     const headerEvidence = headerContrastEvidence(flair.headerText, flair.dicom, job.seriesDescription ?? null);
-    const gate = checkInputGates({ data: flair.data, dims: flair.dims, spacing: flair.spacing }, { headerEvidence });
+    const gate = checkInputGates(
+      { data: flair.data, dims: flair.dims, spacing: flair.spacing },
+      { headerEvidence, clinicianConfirmedFlair: job.clinicianConfirmedFlair === true },
+    );
+    const sequenceEvidence = gate.contrast?.sequenceEvidence;
+    if (!sequenceEvidence) throw new FlamesInputError('The sequence is not confirmed as FLAIR. No segmentation was produced.');
     progress('read', 1, `FLAIR ${flair.dims.join(' × ')} voxels, ${flair.spacing.map((s) => s.toFixed(2)).join(' × ')} mm`);
 
     progress('model', 0, 'Loading the FLAMeS model…');
@@ -76,6 +82,7 @@ self.onmessage = async (event: MessageEvent<FlamesWorkerRequest>) => {
         { data: flair.data, dims: flair.dims, spacing: flair.spacing },
         {
           headerEvidence,
+          clinicianConfirmedFlair: job.clinicianConfirmedFlair === true,
           mirrorAxes: job.mirror ? FLAMES_PLAN.mirrorAxes : [],
           runPatch: async (tile) => {
             const input = new ort.Tensor('float32', tile, [1, 1, ...FLAMES_PLAN.patchSize]);
@@ -145,6 +152,7 @@ self.onmessage = async (event: MessageEvent<FlamesWorkerRequest>) => {
           contrastGate: gate.contrast
             ? { header: headerEvidence.verdict === 'supports' ? 'supports' : 'none', score: gate.contrast.score, threshold: gate.contrast.threshold }
             : undefined,
+          sequenceEvidence,
         },
       },
       [result.maskApp.buffer],

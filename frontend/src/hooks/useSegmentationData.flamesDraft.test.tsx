@@ -8,12 +8,17 @@
  *     'unreviewed'); a server that does not record the provenance gets no draft (the orphan is removed);
  *  3. while open it is 'automatic' with its provenance, never 'manual';
  *  4. opening a draft never discards unsaved work: nothing is touched unless the clinician explicitly
- *     chooses to discard (discardUnsavedWork).
+ *     chooses to discard (discardUnsavedWork);
+ *  5. the server echo must be EXACTLY the provenance sent and still unreviewed (another model hash, or an
+ *     already "confirmed" record, is refused);
+ *  6. a confirmed review is bound to the saved mask: after saving changed voxels the provenance is re-read
+ *     (the server resets it to unreviewed), and the banner gets the unsaved flag and the mask digest.
  *
  * Negative controls (recorded in docs/research/flames-in-browser/evidence/handoff-negative-controls.json):
  * restore the d81cb78 versions of useSegmentationData.ts and these tests fail.
  */
 import React from 'react';
+import { createHash } from 'node:crypto';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -26,10 +31,12 @@ vi.mock('@/services/apiClient', () => ({
 
 const createSegmentation = vi.fn();
 const deleteSegmentation = vi.fn();
+const getSegmentation = vi.fn();
 vi.mock('@/api/segmentation', () => ({
   segmentationAPI: {
     createSegmentation: (...a: unknown[]) => createSegmentation(...a),
     deleteSegmentation: (...a: unknown[]) => deleteSegmentation(...a),
+    getSegmentation: (...a: unknown[]) => getSegmentation(...a),
     listSegmentationsByFileIds: vi.fn().mockResolvedValue([]),
   },
 }));
@@ -58,6 +65,8 @@ const PROVENANCE: AIProvenance = {
   review_status: 'unreviewed',
   reviewed_by: null,
   reviewed_at: null,
+  reviewed_mask_sha256: null,
+  sequence_evidence: 'clinician',
 };
 
 function draftMask(): Uint8Array {
@@ -72,7 +81,7 @@ function wrapper({ children }: { children: React.ReactNode }) {
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 
-function serverEcho(withProvenance: boolean) {
+function serverEcho(withProvenance: boolean, override: Partial<AIProvenance> = {}) {
   return (req: { file_id: string; description?: string; labels?: unknown; ai_provenance?: AIProvenance }) =>
     Promise.resolve({
       segmentation_id: 'server-1',
@@ -85,7 +94,7 @@ function serverEcho(withProvenance: boolean) {
         labels: req.labels ?? [],
         description: req.description,
         ...(withProvenance && req.ai_provenance
-          ? { segmentation_type: 'automatic', ai_provenance: { ...req.ai_provenance, review_status: 'unreviewed' } }
+          ? { segmentation_type: 'automatic', ai_provenance: { ...req.ai_provenance, review_status: 'unreviewed', ...override } }
           : {}),
       },
     });
@@ -114,6 +123,7 @@ describe('FLAMeS AI draft hand-off (REQ-SAFE-030, REQ-SAFE-032)', () => {
     apiPut.mockReset();
     createSegmentation.mockReset();
     deleteSegmentation.mockReset();
+    getSegmentation.mockReset();
     deleteSegmentation.mockResolvedValue(undefined);
     apiPut.mockResolvedValue({ data: { durable: true, generation: 1 } });
     useSegmentationStore.getState().reset?.();
@@ -221,6 +231,115 @@ describe('FLAMeS AI draft hand-off (REQ-SAFE-030, REQ-SAFE-032)', () => {
     expect(apiPut).not.toHaveBeenCalled();
     expect(result.current.saveStatus).toBe('error');
     expect(result.current.hasUnsavedChanges).toBe(true); // the draft stays on screen, unsaved
+  });
+
+  it.each([
+    ['another model hash', { model_sha256: 'f'.repeat(64) }],
+    ['another fold', { fold: 1 }],
+    ['an already "confirmed" review', { review_status: 'confirmed' as const, reviewed_by: 'someone' }],
+  ])('rc047 a server echo with %s is refused (orphan removed, mask not uploaded)', async (_label, override) => {
+    createSegmentation.mockImplementation(serverEcho(true, override as Partial<AIProvenance>));
+    const { result } = renderHook(() => useSegmentationData({}), { wrapper });
+    act(() => {
+      importDraft();
+    });
+    await act(async () => {
+      await result.current.saveSegmentation();
+    });
+    expect(deleteSegmentation).toHaveBeenCalledWith('server-1');
+    expect(apiPut).not.toHaveBeenCalled();
+    expect(result.current.saveStatus).toBe('error');
+  });
+
+  function maskBuffer(): ArrayBuffer {
+    const buf = new ArrayBuffer(12 + N);
+    const dv = new DataView(buf);
+    dv.setUint32(0, SHAPE.slices, true);
+    dv.setUint32(4, SHAPE.rows, true);
+    dv.setUint32(8, SHAPE.columns, true);
+    new Uint8Array(buf, 12).set(draftMask());
+    return buf;
+  }
+
+  const CONFIRMED: AIProvenance = {
+    ...PROVENANCE,
+    review_status: 'confirmed',
+    reviewed_by: 'dr_rev',
+    reviewed_at: '2026-10-18T09:00:00Z',
+    reviewed_mask_sha256: createHash('sha256').update(draftMask()).digest('hex'),
+  };
+
+  async function openSavedAiSegmentation() {
+    apiGet.mockResolvedValue({ data: maskBuffer(), headers: {} });
+    const hook = renderHook(() => useSegmentationData({}), { wrapper });
+    await act(async () => {
+      useSegmentationStore.getState().setCurrentSegmentation({
+        segmentation_id: 'saved-ai-9',
+        file_id: FILE,
+        total_slices: SHAPE.slices,
+        metadata: {
+          file_id: FILE,
+          created_at: 'x',
+          modified_at: 'x',
+          labels: [],
+          description: 'AI draft',
+          segmentation_type: 'automatic',
+          ai_provenance: CONFIRMED,
+        },
+      });
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    return hook;
+  }
+
+  it('rc047 saving corrections to a confirmed AI segmentation re-reads the provenance: the review shows as reset', async () => {
+    const { result } = await openSavedAiSegmentation();
+    expect(useSegmentationStore.getState().currentSegmentation?.metadata.ai_provenance?.review_status).toBe('confirmed');
+    getSegmentation.mockResolvedValue({
+      segmentation_id: 'saved-ai-9',
+      metadata: {
+        ai_provenance: { ...CONFIRMED, review_status: 'unreviewed', reviewed_by: null, reviewed_at: null, reviewed_mask_sha256: null },
+      },
+    });
+    act(() => {
+      result.current.segmentationMask.paintStroke({ x: 0, y: 0, sliceIndex: 0, brushSize: 1, labelId: 1, erase: false });
+    });
+    await act(async () => {
+      await result.current.saveSegmentation();
+    });
+    expect(apiPut).toHaveBeenCalledTimes(1);
+    expect(getSegmentation).toHaveBeenCalledWith('saved-ai-9');
+    const prov = useSegmentationStore.getState().currentSegmentation?.metadata.ai_provenance;
+    expect(prov?.review_status).toBe('unreviewed');
+    expect(prov?.reviewed_by).toBeNull();
+  });
+
+  it('rc047 if the provenance cannot be re-read after a save, the review is shown as NOT confirmed (fail safe)', async () => {
+    const { result } = await openSavedAiSegmentation();
+    getSegmentation.mockRejectedValue(new Error('network down'));
+    act(() => {
+      result.current.segmentationMask.paintStroke({ x: 0, y: 0, sliceIndex: 0, brushSize: 1, labelId: 1, erase: false });
+    });
+    await act(async () => {
+      await result.current.saveSegmentation();
+    });
+    const prov = useSegmentationStore.getState().currentSegmentation?.metadata.ai_provenance;
+    expect(prov?.review_status).toBe('unreviewed');
+    expect(prov?.reviewed_mask_sha256).toBeNull();
+  });
+
+  it('rc047 the banner gets the unsaved-changes flag and the SHA-256 of the exact mask bytes on screen', async () => {
+    const { result } = await openSavedAiSegmentation();
+    const digest = useSegmentationStore.getState().maskDigestCallback!;
+    expect(await digest()).toBe(CONFIRMED.reviewed_mask_sha256); // same bytes as the server hashes
+    expect(useSegmentationStore.getState().hasUnsavedMaskChanges).toBe(false);
+    act(() => {
+      result.current.segmentationMask.paintStroke({ x: 0, y: 0, sliceIndex: 0, brushSize: 1, labelId: 1, erase: false });
+    });
+    expect(useSegmentationStore.getState().hasUnsavedMaskChanges).toBe(true);
+    expect(await digest()).not.toBe(CONFIRMED.reviewed_mask_sha256);
   });
 
   it('rc050 opening a draft never discards unsaved work in a new manual segmentation', () => {

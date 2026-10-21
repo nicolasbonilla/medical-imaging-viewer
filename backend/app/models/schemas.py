@@ -184,6 +184,14 @@ class AIProvenance(BaseModel):
     review_status: Literal["unreviewed", "confirmed"] = "unreviewed"
     reviewed_by: Optional[str] = None
     reviewed_at: Optional[str] = None
+    # RC-047: a confirmation is bound to the exact mask that was reviewed (SHA-256 of the stored
+    # (depth, height, width) uint8 mask). Any later mask change resets the review (server-side).
+    reviewed_mask_sha256: Optional[str] = Field(None, pattern=r"^[0-9a-f]{64}$")
+    # RC-049: positive evidence that the input was a FLAIR — the file header said so ("header"),
+    # or the clinician explicitly confirmed the sequence before the run ("clinician", recorded with
+    # the authenticated user by the server).
+    sequence_evidence: Literal["header", "clinician"]
+    sequence_confirmed_by: Optional[str] = None
 
 
 class SegmentationMetadata(BaseModel):

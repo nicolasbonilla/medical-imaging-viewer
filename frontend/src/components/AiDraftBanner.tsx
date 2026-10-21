@@ -4,16 +4,21 @@
  *
  * Shown wherever the segmentation is open, whether it is a local draft or a saved AI segmentation,
  * so an AI result can never be mistaken for manual work. A saved, unreviewed draft can be confirmed
- * only by an explicit clinician action (button + confirmation dialog); the server records who and when.
+ * only by an explicit clinician action (button + confirmation dialog), only when there are NO unsaved
+ * corrections, and the confirmation is bound to the exact saved mask: the SHA-256 of the mask on screen
+ * is sent and must equal the stored one; any later change of the mask resets the review (server-side).
  */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AIProvenance } from '@/types';
 import { segmentationAPI } from '@/api/segmentation';
+import { useSegmentationStore } from '@/store/useSegmentationStore';
 
 interface AiDraftBannerProps {
   provenance: AIProvenance;
   segmentationId: string;
+  /** the open mask has unsaved corrections: the review cannot be confirmed until they are saved */
+  hasUnsavedChanges?: boolean;
   /** Called with the server's updated provenance after a confirmed review. */
   onConfirmed?: (provenance: AIProvenance) => void;
 }
@@ -24,7 +29,7 @@ export function aiStatusText(p: AIProvenance): string {
     : 'AI draft — UNREVIEWED';
 }
 
-export const AiDraftBanner: React.FC<AiDraftBannerProps> = ({ provenance, segmentationId, onConfirmed }) => {
+export const AiDraftBanner: React.FC<AiDraftBannerProps> = ({ provenance, segmentationId, hasUnsavedChanges, onConfirmed }) => {
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,17 +37,20 @@ export const AiDraftBanner: React.FC<AiDraftBannerProps> = ({ provenance, segmen
   const unreviewed = provenance.review_status !== 'confirmed';
 
   const confirmReview = async () => {
+    if (hasUnsavedChanges) return;
     const ok = window.confirm(
       t(
         'segmentation.aiDraft.confirmQuestion',
-        'Confirm that you have reviewed (and corrected where needed) this AI draft on every slice? Your name and the time will be recorded.',
+        'Confirm that you have reviewed (and corrected where needed) this AI draft on every slice? Your name, the time and the exact saved mask will be recorded; any later change of the mask cancels this confirmation.',
       ),
     );
     if (!ok) return;
     setBusy(true);
     setError(null);
     try {
-      const updated = await segmentationAPI.confirmAiReview(segmentationId);
+      const digest = await useSegmentationStore.getState().maskDigestCallback?.();
+      if (!digest) throw new Error('The open mask could not be read; reload the segmentation and try again.');
+      const updated = await segmentationAPI.confirmAiReview(segmentationId, digest);
       onConfirmed?.(updated);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -64,11 +72,24 @@ export const AiDraftBanner: React.FC<AiDraftBannerProps> = ({ provenance, segmen
         {provenance.model_name} {t('segmentation.aiDraft.fold', 'fold')} {provenance.fold} · sha256 {provenance.model_sha256.slice(0, 12)} ·{' '}
         {provenance.pipeline_version}
       </p>
+      {!unreviewed && provenance.reviewed_mask_sha256 && (
+        <p>
+          {t('segmentation.aiDraft.boundTo', 'Confirmed for the saved mask')} {provenance.reviewed_mask_sha256.slice(0, 12)}
+          {hasUnsavedChanges ? ` — ${t('segmentation.aiDraft.willReset', 'saving your changes will cancel this confirmation')}` : ''}
+        </p>
+      )}
       {isLocal ? (
         <p>
           {t(
             'segmentation.aiDraft.notSaved',
             'Not saved. It is never saved automatically: review and correct it, then press Save; it will be stored as an unreviewed AI draft.',
+          )}
+        </p>
+      ) : unreviewed && hasUnsavedChanges ? (
+        <p data-testid="ai-draft-save-first">
+          {t(
+            'segmentation.aiDraft.saveFirst',
+            'Unsaved corrections: save them first. The review can only be confirmed on the saved mask.',
           )}
         </p>
       ) : unreviewed ? (

@@ -90,6 +90,8 @@ export function buildAiProvenance(p: FlamesProvenance, s: LesionSummary, fold: n
     review_status: 'unreviewed',
     reviewed_by: null,
     reviewed_at: null,
+    reviewed_mask_sha256: null,
+    sequence_evidence: p.sequenceEvidence,
   };
 }
 
@@ -98,13 +100,22 @@ export function isAiSegmentation(meta: { ai_provenance?: AIProvenance | null } |
   return Boolean(meta?.ai_provenance && meta.ai_provenance.kind === 'ai_draft');
 }
 
-/** The server's echo of a saved draft must carry the same model identity and stay 'unreviewed'. */
+/**
+ * The server's echo of a saved draft must carry EXACTLY the model identity that was sent and must still be
+ * 'unreviewed' with no reviewer and no reviewed-mask hash; anything else (another model hash, another fold,
+ * an already "confirmed" record) is rejected and the save fails closed (REQ-SAFE-030).
+ */
 export function provenanceRecorded(sent: AIProvenance, echoed: AIProvenance | null | undefined): boolean {
-  return Boolean(
-    echoed &&
-      echoed.kind === 'ai_draft' &&
-      echoed.model_sha256 === sent.model_sha256 &&
-      echoed.fold === sent.fold &&
-      echoed.review_status === 'unreviewed',
-  );
+  if (!echoed || echoed.kind !== 'ai_draft') return false;
+  const sameModel =
+    echoed.model_name === sent.model_name &&
+    echoed.model_version === sent.model_version &&
+    echoed.model_sha256 === sent.model_sha256 &&
+    echoed.fold === sent.fold &&
+    echoed.source_checkpoint_sha256 === sent.source_checkpoint_sha256 &&
+    echoed.pipeline_version === sent.pipeline_version &&
+    echoed.sequence_evidence === sent.sequence_evidence;
+  const stillUnreviewed =
+    echoed.review_status === 'unreviewed' && !echoed.reviewed_by && !echoed.reviewed_at && !echoed.reviewed_mask_sha256;
+  return sameModel && stillUnreviewed;
 }

@@ -10,6 +10,10 @@
  *     npx vitest run src/services/flames/__tests__/gateValidation.flames.test.ts --pool=threads
  *
  * cases.json: [{ "id", "dataset", "contrast", "variant", "file", "mask"? }]  (mask: multiply by mask > 0)
+ *
+ * flair-gate/2: acceptance needs positive evidence (header or clinician confirmation). The harness runs every
+ * case AS IF the clinician had confirmed it is a FLAIR — the most permissive input the app accepts — so the
+ * recorded decisions measure what the content check still refuses when a user confirms the wrong file.
  */
 import { describe, it } from 'vitest';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -55,7 +59,10 @@ describe.skipIf(!enabled)('FLAMeS input gates on public data', () => {
           row.dims = vol.dims;
           row.spacing = vol.spacing;
           try {
-            const report = checkInputGates({ data, dims: vol.dims, spacing: vol.spacing }, { headerEvidence: header });
+            const report = checkInputGates(
+              { data, dims: vol.dims, spacing: vol.spacing },
+              { headerEvidence: header, clinicianConfirmedFlair: true },
+            );
             row.accepted = true;
             row.borderNonzeroFraction = report.borderNonzeroFraction;
             row.brainVolumeMl = report.brainVolumeMl;

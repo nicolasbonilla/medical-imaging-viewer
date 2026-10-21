@@ -72,6 +72,8 @@ export interface UseSegmentationMaskReturn {
    * false is returned (fail closed). Marks the mask dirty and resets undo/redo.
    */
   importMask: (data: Uint8Array, dims: { depth: number; height: number; width: number }) => boolean;
+  /** The current local mask bytes (depth, height, width) — read-only use, e.g. hashing for a review binding. */
+  getMaskSnapshot: () => Uint8Array | null;
   paintStroke: (stroke: LocalPaintStroke) => void;
   getSliceMask: (sliceIndex: number) => Uint8Array | null;
   /** Save the mask. On a 409 conflict returns false and sets state.conflict
@@ -298,6 +300,8 @@ export function useSegmentationMask(): UseSegmentationMaskReturn {
     },
     [],
   );
+
+  const getMaskSnapshot = useCallback((): Uint8Array | null => maskRef.current, []);
 
   // -----------------------------------------------------------------------
   // Undo / Redo
@@ -595,6 +599,7 @@ export function useSegmentationMask(): UseSegmentationMaskReturn {
     initEmptyMask,
     updateSegmentationId,
     importMask,
+    getMaskSnapshot,
     paintStroke,
     getSliceMask,
     saveMask,

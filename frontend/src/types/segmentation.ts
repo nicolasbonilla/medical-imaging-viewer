@@ -53,6 +53,12 @@ export interface AIProvenance {
   review_status: 'unreviewed' | 'confirmed';
   reviewed_by?: string | null;
   reviewed_at?: string | null;
+  /** SHA-256 of the exact stored mask the review was confirmed for (server-set; reset on any mask change) */
+  reviewed_mask_sha256?: string | null;
+  /** RC-049: positive evidence that the input was a FLAIR */
+  sequence_evidence: 'header' | 'clinician';
+  /** server-set: the authenticated user who confirmed the sequence */
+  sequence_confirmed_by?: string | null;
 }
 
 /**

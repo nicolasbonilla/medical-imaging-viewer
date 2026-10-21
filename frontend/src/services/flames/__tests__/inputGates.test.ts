@@ -30,38 +30,63 @@ describe('FLAIR contrast gate (RC-049)', () => {
   const flair = makePhantom({ contrast: 'FLAIR' });
   const t1 = makePhantom({ contrast: 'T1' });
   const t2 = makePhantom({ contrast: 'T2' });
+  const CONFIRMED = { clinicianConfirmedFlair: true };
 
-  it('rc049 accepts a skull-stripped FLAIR-like brain', () => {
-    const r = checkInputGates(flair, {});
+  it('rc049 accepts a skull-stripped FLAIR-like brain when the clinician confirmed the sequence', () => {
+    const r = checkInputGates(flair, CONFIRMED);
     expect(r.contrast?.ok).toBe(true);
+    expect(r.contrast?.sequenceEvidence).toBe('clinician');
     expect(r.contrast!.score).toBeLessThanOrEqual(FLAIR_GATE.maxDeepOverCortex);
   });
 
-  it('rc049 refuses a skull-stripped T1 (white matter brighter than cortex) — the reviewer case', () => {
-    expect(refusal(() => checkInputGates(t1, {}))).toMatch(/white matter is brighter than the cortex/);
+  it('rc049 refuses even a FLAIR-looking image without positive evidence (fail closed)', () => {
+    // Re-review: content alone let 10 of 19 skull-stripped T1 of an unseen scanner (ISBI-2015) pass.
+    expect(refusal(() => checkInputGates(flair, {}))).toMatch(/not confirmed as FLAIR/);
   });
 
-  it('rc049 refuses a T2 (bright CSF)', () => {
-    expect(refusal(() => checkInputGates(t2, {}))).toMatch(/fluid \(CSF\) is bright/);
+  it('rc049 a header with a FLAIR inversion time is positive evidence; a "FLAIR" label alone is not', () => {
+    const header = headerContrastEvidence(['AX T2 FLAIR'], { inversionTimeMs: 2500 }, null);
+    expect(checkInputGates(flair, { headerEvidence: header }).contrast?.sequenceEvidence).toBe('header');
+    const labelOnly = headerContrastEvidence(['2020601_flair1_clo'], {}, null); // ISBI-2015 style descrip text
+    expect(labelOnly.verdict).toBe('supports');
+    expect(refusal(() => checkInputGates(flair, { headerEvidence: labelOnly }))).toMatch(/not confirmed as FLAIR/);
+    // when the clinician confirmed, that confirmation (which names a person) is what is recorded
+    expect(checkInputGates(flair, { headerEvidence: header, clinicianConfirmedFlair: true }).contrast?.sequenceEvidence).toBe(
+      'clinician',
+    );
+  });
+
+  it('rc049 refuses a skull-stripped T1 (white matter brighter than cortex) even if "confirmed" — the reviewer case', () => {
+    expect(refusal(() => checkInputGates(t1, CONFIRMED))).toMatch(/white matter is brighter than the cortex/);
+  });
+
+  it('rc049 refuses a T1 whose cortex forms a large darker class even when white matter is not brighter', () => {
+    // ISBI-2015 T1 pattern: deepOverCortex 0.91-0.94 but a grey-matter class of 27-33 % of the brain.
+    const f = computeContrastFeatures(flair.data, flair.dims, flair.spacing);
+    const t1Like = { ...f, locDeepOverNearP75: 0.9, frac45to80: 0.3 };
+    const d = decideFlairContrast(t1Like, NONE, CONFIRMED);
+    expect(d.ok).toBe(false);
+    expect(d.reason).toMatch(/darker grey-matter class/);
+  });
+
+  it('rc049 refuses a T2 (bright CSF) even if "confirmed"', () => {
+    expect(refusal(() => checkInputGates(t2, CONFIRMED))).toMatch(/fluid \(CSF\) is bright/);
   });
 
   it('rc049 is robust to a smooth bias field (+-30 % across the head)', () => {
-    expect(checkInputGates(makePhantom({ contrast: 'FLAIR', bias: 0.3 }), {}).contrast?.ok).toBe(true);
-    expect(() => checkInputGates(makePhantom({ contrast: 'T1', bias: 0.3 }), {})).toThrow(FlamesInputError);
+    expect(checkInputGates(makePhantom({ contrast: 'FLAIR', bias: 0.3 }), CONFIRMED).contrast?.ok).toBe(true);
+    expect(() => checkInputGates(makePhantom({ contrast: 'T1', bias: 0.3 }), CONFIRMED)).toThrow(FlamesInputError);
   });
 
-  it('rc049 a centre-bright FLAIR (receive-field shading) is not mistaken for a T1', () => {
-    // 35 % centre shading: tolerated thanks to the 15 mm local normalisation (without it the statistic crosses the
-    // T1 threshold, negative control G6). Stronger shading (~40 %) makes a FLAIR fail the gate: a safe refusal.
-    const shaded = makePhantom({ contrast: 'FLAIR', centreBias: 0.35 });
-    expect(checkInputGates(shaded, {}).contrast?.ok).toBe(true);
-    expect(() => checkInputGates(makePhantom({ contrast: 'T1', centreBias: 0.35 }), {})).toThrow(/white matter is brighter/);
+  it('rc049 tolerates mild centre shading; stronger shading refuses a FLAIR (safe failure)', () => {
+    expect(checkInputGates(makePhantom({ contrast: 'FLAIR', centreBias: 0.1 }), CONFIRMED).contrast?.ok).toBe(true);
+    expect(() => checkInputGates(makePhantom({ contrast: 'FLAIR', centreBias: 0.3 }), CONFIRMED)).toThrow(/white matter is brighter/);
   });
 
   it('rc049 header evidence can refuse a FLAIR-looking image but can never accept a T1-looking one', () => {
     const t1Header = headerContrastEvidence(['Sag T1 MPRAGE'], {}, null);
     expect(t1Header.verdict).toBe('contradicts');
-    expect(refusal(() => checkInputGates(flair, { headerEvidence: t1Header }))).toMatch(/header indicates this is not a FLAIR/);
+    expect(refusal(() => checkInputGates(flair, { headerEvidence: t1Header, ...CONFIRMED }))).toMatch(/header indicates this is not a FLAIR/);
     const flairHeader = headerContrastEvidence(['AX T2 FLAIR'], { inversionTimeMs: 2500 }, null);
     expect(flairHeader.verdict).toBe('supports');
     expect(() => checkInputGates(t1, { headerEvidence: flairHeader })).toThrow(/white matter is brighter/);
@@ -69,8 +94,8 @@ describe('FLAIR contrast gate (RC-049)', () => {
 
   it('rc049 refuses when the contrast cannot be measured (no cortex band at this resolution)', () => {
     const f = computeContrastFeatures(flair.data, flair.dims, flair.spacing);
-    expect(decideFlairContrast({ ...f, nearVoxels: 10 }, NONE).ok).toBe(false);
-    expect(decideFlairContrast({ ...f, locDeepOverNearP75: NaN }, NONE).ok).toBe(false);
+    expect(decideFlairContrast({ ...f, nearVoxels: 10 }, NONE, CONFIRMED).ok).toBe(false);
+    expect(decideFlairContrast({ ...f, locDeepOverNearP75: NaN }, NONE, CONFIRMED).ok).toBe(false);
   });
 });
 
@@ -104,6 +129,7 @@ describe('skull-stripped gate (RC-043): FLAIR with skull and zero background', (
   it('rc043 the stripped brain stays below both skull-clue limits', () => {
     const flair = makePhantom({ contrast: 'FLAIR' });
     const f = computeContrastFeatures(flair.data, flair.dims, flair.spacing);
+    expect(checkInputGates(flair, { clinicianConfirmedFlair: true }).contrast?.ok).toBe(true);
     expect(f.darkFraction).toBeLessThan(GATES.maxHeadDarkFraction);
     expect(f.rimBrightFraction).toBeLessThan(GATES.maxRimBrightFraction);
   });

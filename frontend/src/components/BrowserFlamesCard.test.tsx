@@ -5,12 +5,14 @@
  *    (REQ-SAFE-032, RC-050);
  *  - the draft is handed over WITH its AI provenance (REQ-SAFE-030);
  *  - the expected duration is stated before the run;
+ *  - a run needs the clinician's explicit confirmation that the file is a skull-stripped T2-FLAIR, and that
+ *    positive evidence is recorded with the draft (REQ-SAFE-033, RC-049);
  *  - licence and attribution notices are reachable (FLAMeS CC BY 4.0, Neurodesk/nnU-Net Apache-2.0).
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 
 const flamesState: Record<string, unknown> = {};
 vi.mock('@/hooks/useBrowserFlames', () => ({ useBrowserFlames: () => flamesState }));
@@ -35,6 +37,7 @@ const provenance = {
   resampledShape: [1, 1, 1],
   seconds: 1200,
   generatedAt: '2026-10-17T20:00:00.000Z',
+  sequenceEvidence: 'clinician' as const,
 };
 
 function setResult(lesionCount: number, lesionVoxels: number) {
@@ -76,7 +79,7 @@ describe('empty result (REQ-FUNC-036)', () => {
     expect(screen.queryByText(/AI draft ready/)).not.toBeInTheDocument();
     const open = screen.getByRole('button', { name: /Open as AI draft/ });
     expect(open).toBeDisabled();
-    fireEvent.click(screen.getByRole('checkbox'));
+    fireEvent.click(within(screen.getByTestId('browser-flames-empty')).getByRole('checkbox'));
     expect(open).toBeEnabled();
     fireEvent.click(open);
     expect(importDraft).toHaveBeenCalledTimes(1);
@@ -133,9 +136,37 @@ describe('unsaved work (REQ-SAFE-032)', () => {
       model_sha256: FLAMES_FOLD0_MODEL.sha256,
       fold: 0,
       review_status: 'unreviewed',
+      sequence_evidence: 'clinician',
     });
     expect(String(meta.aiProvenance.model_version)).toMatch(/17955359 v2\.0/);
     expect(meta.labels[1].name).toMatch(/AI draft, unreviewed/);
+  });
+});
+
+describe('sequence confirmation (REQ-SAFE-033, RC-049)', () => {
+  it('rc049 the run stays disabled until the clinician confirms this file is a FLAIR; the confirmation is passed on', () => {
+    const run = vi.fn();
+    Object.assign(flamesState, { status: 'idle', result: null, run, cancel: vi.fn() });
+    const { rerender } = render(<BrowserFlamesCard flairFileId={FILE} />);
+    const start = screen.getByRole('button', { name: /Segment in this browser/ });
+    expect(start).toBeDisabled();
+    fireEvent.click(start);
+    expect(run).not.toHaveBeenCalled();
+
+    const confirm = screen.getByTestId('browser-flames-confirm-sequence');
+    expect(confirm).toHaveTextContent(/skull-stripped T2-FLAIR/);
+    expect(confirm).toHaveTextContent('flair.nii.gz');
+    fireEvent.click(within(confirm).getByRole('checkbox'));
+    expect(start).toBeEnabled();
+    fireEvent.click(start);
+    expect(run).toHaveBeenCalledTimes(1);
+    expect(run.mock.calls[0][0]).toBe(FILE);
+    expect(run.mock.calls[0][1]).toMatchObject({ clinicianConfirmedFlair: true });
+
+    // choosing another file clears the confirmation: it is given per file, never carried over
+    rerender(<BrowserFlamesCard flairFileId="patients/p/studies/s/t1.nii.gz" />);
+    expect(within(screen.getByTestId('browser-flames-confirm-sequence')).getByRole('checkbox')).not.toBeChecked();
+    expect(screen.getByRole('button', { name: /Segment in this browser/ })).toBeDisabled();
   });
 });
 

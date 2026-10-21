@@ -100,6 +100,7 @@ async def create_segmentation(
             source_format=source_format,
             # REQ-SAFE-030: an AI draft keeps its provenance and is stored as 'unreviewed'.
             ai_provenance=request.ai_provenance,
+            created_by=current_user.username,
         )
 
         return segmentation
@@ -610,6 +611,7 @@ async def update_labels(
 @router.post("/{segmentation_id}/ai-review/confirm")
 async def confirm_ai_review(
     segmentation_id: str,
+    body: dict = Body(..., description='{"mask_sha256": "<SHA-256 of the mask the clinician reviewed>"}'),
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
     current_user: User = Depends(get_current_active_user),
     # CAPA-002 CA-2.1 RC-029 - object-level authorization.
@@ -619,7 +621,9 @@ async def confirm_ai_review(
 
     Only segmentations stored with AI provenance can be confirmed; manual work has nothing to
     confirm (409). Only a radiologist may confirm (403). The reviewer and time are recorded; the
-    model identity is never changed. Idempotent for an already confirmed draft.
+    model identity is never changed. The confirmation is bound to the exact stored mask: the client
+    sends the SHA-256 of the mask it reviewed and it must equal the stored mask (409 otherwise —
+    unsaved corrections, or another session changed the mask); any later mask change resets it.
     """
     from app.security.models import UserRole
 
@@ -639,11 +643,20 @@ async def confirm_ai_review(
             status_code=status.HTTP_409_CONFLICT,
             detail="This segmentation has no AI provenance; there is no AI draft to confirm.",
         )
-    if provenance.review_status != "confirmed":
+    reviewed = str((body or {}).get("mask_sha256", "")).strip().lower()
+    current = segmentation_service.mask_sha256(entry["masks_3d"])
+    if reviewed != current:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=("The stored mask is not the one you reviewed (unsaved corrections, or the mask changed "
+                    "since you opened it). Save or reload, check it again, then confirm."),
+        )
+    if provenance.review_status != "confirmed" or provenance.reviewed_mask_sha256 != current:
         metadata.ai_provenance = provenance.model_copy(update={
             "review_status": "confirmed",
             "reviewed_by": current_user.username,
             "reviewed_at": datetime.utcnow().isoformat() + "Z",
+            "reviewed_mask_sha256": current,
         })
         metadata.modified_at = datetime.utcnow()
         segmentation_service.persist(segmentation_id)
@@ -990,6 +1003,8 @@ async def upload_binary_mask(
         # Update the mask in cache
         seg_data["masks_3d"] = masks_3d
         seg_data["metadata"].modified_at = datetime.utcnow()
+        # RC-047: a changed mask voids a confirmed AI review (also enforced again in persist()).
+        review_reset = segmentation_service.enforce_review_binding(seg_data)
 
         # Save to GCS (this is the ONLY time we save during editing). persist()
         # returns the durability tier so we don't claim an unqualified success when
@@ -1019,6 +1034,9 @@ async def upload_binary_mask(
 
         # Count annotated voxels
         annotated_voxels = int(np.sum(masks_3d > 0))
+        provenance = getattr(seg_data["metadata"], "ai_provenance", None)
+        if provenance is not None and getattr(segmentation_service, "cache", None):
+            await segmentation_service.cache.delete(f"seg:metadata:{segmentation_id}")
 
         logger.info("Binary mask uploaded and saved", extra={
             "segmentation_id": segmentation_id,
@@ -1055,6 +1073,9 @@ async def upload_binary_mask(
             # false-conflicting against the generation it just advanced. None on the
             # local tier (no durable GCS generation).
             "generation": segmentation_service.get_generation(segmentation_id),
+            # RC-047: current AI provenance (a confirmed review is reset when the mask changed).
+            "ai_provenance": provenance.model_dump() if provenance is not None else None,
+            "ai_review_reset": bool(review_reset),
         }
 
     except HTTPException:

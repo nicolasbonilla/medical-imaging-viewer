@@ -476,15 +476,17 @@
       "hazard": "HAZ-001",
       "status": "implemented",
       "change": "CP-FLAMES-BROWSER-001 (DRAFT, PENDING owner approval; feature flag OFF)",
-      "description": "AI draft: orange 'AI draft, unreviewed' label and persistent banner; never saved by save-on-unload; saved only explicitly WITH ai_provenance (model, version, SHA-256, fold, pipeline, runtime) as segmentation_type automatic, refused if the server does not record it; stored 'unreviewed' whatever the client sends; confirmed only by a radiologist (who/when recorded)",
-      "implementation": "frontend/src/hooks/useSegmentationData.ts, components/AiDraftBanner.tsx, SegmentationPanel.tsx, services/flames/draft.ts; backend/app/models/schemas.py (AIProvenance), services/segmentation_service.py (create_segmentation), api/routes/segmentation.py (create, ai-review/confirm)",
+      "description": "AI draft: orange 'AI draft, unreviewed' label and persistent banner; never saved by save-on-unload; saved only explicitly WITH ai_provenance as segmentation_type automatic, refused unless the server echoes exactly that provenance still unreviewed; stored 'unreviewed' whatever the client sends; confirmed only by a radiologist, bound to the SHA-256 of the exact stored mask (409 otherwise; no confirm button with unsaved corrections); any later mask change resets the review to unreviewed (service save point)",
+      "implementation": "frontend/src/hooks/useSegmentationData.ts, hooks/useSegmentationMask.ts, store/useSegmentationStore.ts, components/AiDraftBanner.tsx, SegmentationPanel.tsx, services/flames/draft.ts, api/segmentation.ts; backend/app/models/schemas.py (AIProvenance), services/segmentation_service.py (create_segmentation, mask_sha256, enforce_review_binding, _save_segmentation), api/routes/segmentation.py (create, ai-review/confirm, mask PUT)",
       "tests": [
         "frontend/src/hooks/useSegmentationData.flamesDraft.test.tsx",
+        "frontend/src/components/AiDraftBanner.test.tsx",
+        "frontend/src/services/flames/__tests__/draft-model.test.ts",
         "frontend/src/components/BrowserFlamesCard.test.tsx",
         "tests/unit/test_rc047_ai_draft_provenance.py"
       ],
       "requirement": "REQ-SAFE-030",
-      "negative_control": "Executed 2026-10-17 by research/flames_in_browser/negative_controls_v2.py (one mutation at a time, anchors asserted unique, files hash-verified after restore); results in docs/iec62304/records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json (H1-H4, B1-B5)",
+      "negative_control": "Executed 2026-10-17/18 by research/flames_in_browser/negative_controls_v2.py (one mutation at a time, anchors asserted unique, files hash-verified after restore); results in docs/iec62304/records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json (H1-H4, B1-B9, U1-U5, P1-P2; BEFORE-R2a, BEFORE-R2b, BEFORE-R3)",
       "note": "Partially reconciles RC-001 for this path only (RMF §5.1). Usability of the labelling (IEC 62366) not evaluated. The confirm route is also classified in tests/unit/test_capa009_object_authorization_everywhere.py (RC-036)."
     },
     "RC-048": {
@@ -503,16 +505,19 @@
       "hazard": "HAZ-001",
       "status": "implemented",
       "change": "CP-FLAMES-BROWSER-001 (DRAFT, PENDING owner approval; feature flag OFF)",
-      "description": "FLAIR contrast gate: header evidence (inversion time < 1400 ms or another sequence named) can only refuse; image content must look like FLAIR (white matter not brighter than cortex after local normalisation; CSF not bright); the file name is never used",
-      "implementation": "frontend/src/services/flames/headerEvidence.ts, contrastGate.ts, nifti.ts (headerText, DICOM extension), pipeline.ts (checkInputGates), workers/flamesInBrowser.worker.ts",
+      "description": "FLAIR gate flair-gate/2: the header (inversion time < 1400 ms or another sequence named) and the image content (white matter vs cortex, grey-matter class, bright CSF) can only refuse; acceptance requires positive evidence — the clinician's explicit per-file confirmation of the sequence (recorded with the draft; the server records who) or a header with a FLAIR inversion time — fail closed; the file name is never used",
+      "implementation": "frontend/src/services/flames/headerEvidence.ts, contrastGate.ts (decideFlairContrast, headerProvesFlair), nifti.ts, pipeline.ts (checkInputGates), workers/flamesInBrowser.worker.ts, components/BrowserFlamesCard.tsx, hooks/useBrowserFlames.ts; backend/app/services/segmentation_service.py (sequence_confirmed_by)",
       "tests": [
         "frontend/src/services/flames/__tests__/inputGates.test.ts",
         "frontend/src/services/flames/__tests__/niftiHeader.test.ts",
-        "frontend/src/services/flames/__tests__/pipeline.test.ts"
+        "frontend/src/services/flames/__tests__/pipeline.test.ts",
+        "frontend/src/components/BrowserFlamesCard.test.tsx",
+        "frontend/src/hooks/useBrowserFlames.cancel.test.tsx",
+        "tests/unit/test_rc047_ai_draft_provenance.py"
       ],
       "requirement": "REQ-SAFE-033",
-      "negative_control": "Executed 2026-10-17 by research/flames_in_browser/negative_controls_v2.py (one mutation at a time, anchors asserted unique, files hash-verified after restore); results in docs/iec62304/records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json (G1-G4, G6-G8)",
-      "note": "Sensitivity/specificity on public data: docs/research/flames-in-browser/FLAIR-GATE-VALIDATION.md. Not a sequence classifier with a guaranteed error rate."
+      "negative_control": "Executed 2026-10-17/18 by research/flames_in_browser/negative_controls_v2.py; results in docs/iec62304/records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json (G1-G4, G7, G8, E1-E6, B10; G6 not detected; BEFORE-R1)",
+      "note": "Validation incl. leave-one-dataset-out on MSLesSeg, open_ms_data and ISBI-2015: docs/research/flames-in-browser/FLAIR-GATE-VALIDATION.md. Content alone does not generalise to an unseen scanner, hence the positive-evidence requirement; acceptance relies on a human confirmation. Not a sequence classifier with a guaranteed error rate."
     },
     "RC-050": {
       "hazard": "HAZ-001",

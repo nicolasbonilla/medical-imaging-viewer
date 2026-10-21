@@ -1,4 +1,4 @@
-# Response to the adversarial review ("do not approve yet") — CP-FLAMES-BROWSER-001
+# Response to the adversarial reviews ("do not approve yet", "do not merge yet") — CP-FLAMES-BROWSER-001
 
 | | |
 |---|---|
@@ -6,6 +6,7 @@
 | Branch | `feat/flames-in-browser` (flag `VITE_ENABLE_BROWSER_FLAMES` still **OFF** by default; nothing deployed) |
 | Records | SRS 1.7, RMF 1.9, TM 1.6, SOUP 1.2, CMP 1.1 — all **DRAFT, PENDING owner approval** (versions 1.5/1.6, 1.7/1.8, 1.4/1.5 are reserved by open PRs #52 and #51: merge this after them) |
 | Negative controls | `docs/iec62304/records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json` (script `research/flames_in_browser/negative_controls_v2.py`) |
+| Re-review 2 | 2026-10-18, made on commit `c838bb1` ("do not merge yet"): see **§8** — FLAIR gate redesigned (positive evidence, fail closed), review confirmation bound to the exact mask, stricter provenance echo |
 
 Each finding below: what was wrong, what changed, the behavioural test, and the evidence that the test fails
 before the fix and passes after.
@@ -25,12 +26,14 @@ before the fix and passes after.
 * Empty result: explicit warning ("does NOT show that the scan is free of lesions"), opening the draft requires an
   acknowledgement, the description says "EMPTY RESULT", 0 annotated voxels stored in the provenance.
 
-**Validation on public data** (`FLAIR-GATE-VALIDATION.md`; 495 volumes; the harness runs the shipped TypeScript):
-* contrast gate alone: T1 refused **151/151**, T1 post-contrast 30/30, T2 149/151 → specificity 0.994 [0.978–0.998];
-  genuine stripped FLAIRs accepted 136/151 → sensitivity 0.901 [0.843–0.939] (open_ms 36/36, MSLesSeg 100/115);
-* complete input gate: non-FLAIR refused 343/344; stripped FLAIRs accepted 112/151 (0.742) — most extra refusals are
-  FLAIRs whose skull stripping left bright orbital/skull-base tissue (9 of 9 inspected visually); with-skull FLAIRs
-  refused 12/12.
+**Validation on public data, as first reported (gate `flair-gate/1`; 495 volumes; superseded — see §8):**
+* contrast part **alone**: T1 refused 151/151, T1 post-contrast 30/30, T2 149/151; stripped FLAIRs accepted 136/151.
+  *Correction (re-review 2): "accepts 136/151 good FLAIR" was quoted in the PR for the gate as a whole; that is the
+  contrast part alone.*
+* **complete** input gate: stripped FLAIRs accepted **112/151** (0.742 [0.667–0.805]); non-FLAIR refused 343/344 (MSLesSeg
+  `P71_T2` accepted); with-skull FLAIRs refused 12/12.
+* Not known then: on ISBI-2015 (an unseen scanner) the complete `flair-gate/1` gate accepted **10 of 19 skull-stripped
+  T1** as FLAIR. Hence §8.1.
 
 **Tests.** `inputGates.test.ts` (synthetic FLAIR/T1/T2 phantoms, bias field, header can only refuse, skull with zero
 background), `niftiHeader.test.ts`, `pipeline.test.ts` ("refuses a T1-like one before any network call"),
@@ -114,3 +117,57 @@ or need a manual merge): `.gitignore`, `docs/iec62304/02_Software_Requirements_S
 proposes an SRS 1.5), `frontend/src/components/ClinicalToolsPanel.tsx`, `frontend/src/components/SegmentationPanel.tsx`,
 `frontend/src/hooks/useSegmentationMask.ts`. Semantic dependencies without textual conflict: `useViewerStore`
 (`currentSeries`, used by the card's grid check) and `useSegmentationData`'s callers in `ImageViewer2D.tsx`.
+
+## 8. Re-review 2 (2026-10-18, on `c838bb1`): "do not merge yet"
+
+### 8.1 "The FLAIR gate does not generalise" — confirmed; redesigned to fail closed (RC-049, REQ-SAFE-033)
+
+* Confirmed on the recorded rows: the complete `flair-gate/1` gate accepted 10 of 19 ISBI-2015 skull-stripped T1.
+* **Leave-one-dataset-out** (MSLesSeg, open_ms_data, ISBI-2015 — every local public set with image volumes;
+  `research/flames_in_browser/gate_lodo.py`): fitting on two sets and testing on the third, the content check refuses
+  18/19 (ISBI-2015), 229/230 (MSLesSeg) and 102/102 (open_ms_data) non-FLAIR volumes with the full gate; content alone
+  lets 1 T1 (ISBI `case007`) and 33 T2 (MSLesSeg) through. **Content alone cannot guarantee it.**
+* **`flair-gate/2`:** content is refusal-only (re-fitted: T1 rule 0.915, new grey-matter-class T1 rule 27 %, T2 rule
+  2.5 %); acceptance needs **positive evidence** — the clinician's explicit per-file confirmation of the sequence
+  (recorded with the draft as `sequence_evidence = clinician`, the server records `sequence_confirmed_by` from the
+  authenticated user), or a header with a FLAIR inversion time (≥ 1400 ms). A "FLAIR" text label alone is not proof.
+  Without evidence nothing is accepted: **0/170 FLAIR, 0/351 non-FLAIR** on the 533 public volumes.
+* With the clinician's confirmation (most permissive input), apparent: FLAIR 87/170 accepted (ISBI 12/19, MSLesSeg
+  40/115, open_ms 35/36), non-FLAIR 351/351 refused, with skull 12/12 refused. About half of genuine FLAIRs are refused —
+  a safe failure, recorded as a usability limit.
+* Full tables, per held-out dataset with Wilson intervals: `FLAIR-GATE-VALIDATION.md` §3–§5; evidence
+  `evidence/gate-flair-gate-2-2026-10-18.json`, `evidence/gate-validation-isbi2015-2026-10-18.json`.
+
+**Tests.** `inputGates.test.ts` (no evidence → refused; a FLAIR label alone → refused; header with inversion time →
+accepted; T1/T2 refused even when "confirmed"; grey-class rule), `pipeline.test.ts`, `BrowserFlamesCard.test.tsx` (run
+disabled until the clinician ticks the confirmation; cleared when the file changes), `useBrowserFlames.cancel.test.tsx`
+(confirmation forwarded only when given), backend `test_rc047_ai_draft_provenance.py` (`sequence_confirmed_by` from
+the authenticated user). Negative controls E1–E6, B10; BEFORE-R1 (the re-reviewed `contrastGate.ts` + `pipeline.ts`)
+fails the new tests.
+
+### 8.2 "Radiologist confirmation is not bound to the mask" — confirmed; fixed (RC-047, REQ-SAFE-030)
+
+* The confirmation now records `reviewed_mask_sha256`: the SHA-256 of the exact stored mask (depth × height × width
+  bytes; identical on the client and the server). The confirm route requires the client to send the SHA-256 of the mask
+  on screen and refuses (409) unless it equals the stored mask.
+* **Any mask change resets the review to "unreviewed".** Enforced at the single save point of the service
+  (`_save_segmentation` → `enforce_review_binding`), so every path that changes the mask (full upload, slice edits,
+  tools) is covered; the mask upload route also reports `ai_review_reset`.
+* The banner has **no confirm button while there are unsaved corrections** ("save them first"); after saving
+  corrections the app re-reads the provenance from the server (and shows "unreviewed" if that fails). A confirmed
+  review names the saved mask it covers.
+
+**Tests (fail before, pass after).** Backend `test_rc047_ai_draft_provenance.py`: confirm binds the hash; a mismatched
+hash is refused; the reviewer's scenario (radiologist confirms, technician replaces the whole mask → unreviewed);
+identical re-upload keeps the confirmation; any persist path resets. Frontend `AiDraftBanner.test.tsx` (no button with
+unsaved corrections; the digest of the mask on screen is sent; refusal shown), `useSegmentationData.flamesDraft.test.tsx`
+(provenance re-read after saving corrections; fail-safe "unreviewed"; unsaved flag and digest published). Negative
+controls B6–B9, U1–U5; BEFORE-R2a (frontend) and BEFORE-R2b (backend) fail the new tests.
+
+### 8.3 "`provenanceRecorded` accepts another model hash or an already confirmed echo" — fixed
+
+The server echo must carry exactly the model name, version, SHA-256, fold, source checkpoint, pipeline version and
+sequence evidence that were sent, with `review_status = unreviewed` and no reviewer, review time or reviewed-mask hash;
+otherwise the record is deleted and the save fails. Tests: `draft-model.test.ts` (every field mutated),
+`useSegmentationData.flamesDraft.test.tsx` (another hash, another fold, "confirmed" → refused, orphan deleted). Negative
+controls P1, P2; BEFORE-R3 fails.

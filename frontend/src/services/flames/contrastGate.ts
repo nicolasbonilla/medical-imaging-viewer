@@ -12,13 +12,13 @@
  *    dividing by a 15 mm local tissue mean so that smooth bias fields (common on 3 T FLAIR) cancel.
  *  - CSF brightness (T2/PD rule): on T2/PD, CSF is the brightest structure; on FLAIR it is suppressed.
  *    Measured as the share of brain voxels brighter than 1.6x the dominant tissue intensity.
- * Two fixed thresholds (FLAIR_GATE), chosen on public data for specificity first and reported with their
- * measured sensitivity/specificity per dataset (docs/research/flames-in-browser/FLAIR-GATE-VALIDATION.md).
- * The other features are recorded for the audit trail only. A protective heuristic, not a sequence
- * classifier with a guaranteed error rate. A refused FLAIR is a safe failure (no result, reason shown).
+ *  - Grey-matter class (second T1 rule): on T1 the cortex forms a large darker class (0.45-0.8 x the tissue mode).
+ * Fixed thresholds (FLAIR_GATE). Leave-one-dataset-out validation (FLAIR-GATE-VALIDATION.md) shows content alone
+ * lets T1/T2 volumes of an unseen scanner through, so the content check can only REFUSE: acceptance also needs
+ * positive evidence (header, or explicit clinician confirmation). A refused FLAIR is a safe failure.
  */
 import type { Dims3 } from './axes';
-import type { HeaderEvidence } from './headerEvidence';
+import { MIN_FLAIR_TI_MS, type HeaderEvidence } from './headerEvidence';
 import { nonzeroMaskFilled } from './preprocess';
 
 export interface ContrastFeatures {
@@ -348,15 +348,20 @@ export function computeContrastFeatures(data0: Float32Array, dims0: Dims3, spaci
 }
 
 /**
- * Fixed thresholds (chosen on public data, specificity first; FLAIR-GATE-VALIDATION.md).
- * FLAIR  <=>  deepOverCortex <= maxDeepOverCortex  AND  fracAbove1p6 <= maxBrightFraction.
+ * Content thresholds, fitted on ALL local public data (MSLesSeg, open_ms_data, ISBI-2015) for 100 % refusal of the
+ * T1 / T1-post / T2 volumes (specificity first; FLAIR-GATE-VALIDATION.md). Leave-one-dataset-out validation shows
+ * that content alone does NOT guarantee this on an unseen scanner, so a FLAIR is accepted only with POSITIVE
+ * evidence as well (header, or an explicit clinician confirmation recorded with the draft) — fail closed.
+ *   content says FLAIR  <=>  deepOverCortex <= 0.915 AND frac45to80 <= 0.27 AND fracAbove1p6 <= 0.025
  */
 export const FLAIR_GATE = Object.freeze({
-  version: 'flair-gate/1',
-  /** T1 rule: white matter clearly brighter than cortex (locally normalised) => not FLAIR */
-  maxDeepOverCortex: 0.96,
+  version: 'flair-gate/2',
+  /** T1 rule 1: white matter clearly brighter than cortex (locally normalised) => not FLAIR */
+  maxDeepOverCortex: 0.915,
+  /** T1 rule 2: a large darker grey-matter class (0.45-0.8 x the tissue mode), as on T1-weighted images */
+  maxGreyClassFraction: 0.27,
   /** T2/PD rule: too many voxels brighter than 1.6x the tissue mode (bright CSF) => not FLAIR */
-  maxBrightFraction: 0.035,
+  maxBrightFraction: 0.025,
   /** minimum voxels in each band for the measurement to count */
   minBandVoxels: 500,
 });
@@ -366,17 +371,45 @@ export function flairScore(f: ContrastFeatures): number {
   return f.locDeepOverNearP75;
 }
 
+export type SequenceEvidence = 'header' | 'clinician';
+
 export interface ContrastAssessment {
   ok: boolean;
   score: number;
   threshold: number;
   header: HeaderEvidence;
   features: ContrastFeatures | null;
+  /** positive evidence that made the input acceptable (only when ok) */
+  sequenceEvidence?: SequenceEvidence;
   reason?: string;
 }
 
-/** Header evidence can only refuse; the image content must always look like a FLAIR. */
-export function decideFlairContrast(features: ContrastFeatures, header: HeaderEvidence): ContrastAssessment {
+/**
+ * True only when the file itself proves an inversion-recovery FLAIR: an inversion time >= MIN_FLAIR_TI_MS and
+ * nothing in the header naming another sequence. A free-text label such as "flair" alone is NOT proof (any
+ * converter or user can write it); it is kept as supporting information only.
+ */
+export function headerProvesFlair(header: HeaderEvidence): boolean {
+  return (
+    header.verdict === 'supports' &&
+    header.inversionTimeMs !== undefined &&
+    Number.isFinite(header.inversionTimeMs) &&
+    header.inversionTimeMs >= MIN_FLAIR_TI_MS
+  );
+}
+
+/**
+ * RC-049 (flair-gate/2). Header evidence that contradicts FLAIR refuses. The image content must look like a FLAIR,
+ * but content is REFUSAL-ONLY: leave-one-dataset-out validation showed that no content threshold keeps every T1/T2
+ * of an unseen scanner out. Acceptance therefore also needs POSITIVE evidence, fail closed: the clinician explicitly
+ * confirmed the sequence of this file before the run (recorded with the draft, with the confirming user), or the
+ * file proves an inversion-recovery FLAIR (long inversion time). Neither => refused.
+ */
+export function decideFlairContrast(
+  features: ContrastFeatures,
+  header: HeaderEvidence,
+  opts: { clinicianConfirmedFlair?: boolean } = {},
+): ContrastAssessment {
   const score = flairScore(features);
   const base = { score, threshold: FLAIR_GATE.maxDeepOverCortex, header, features };
   if (header.verdict === 'contradicts') {
@@ -389,6 +422,7 @@ export function decideFlairContrast(features: ContrastFeatures, header: HeaderEv
   const measurable =
     Number.isFinite(score) &&
     Number.isFinite(features.fracAbove1p6) &&
+    Number.isFinite(features.frac45to80) &&
     features.nearVoxels >= FLAIR_GATE.minBandVoxels &&
     features.deepVoxels >= FLAIR_GATE.minBandVoxels;
   if (!measurable) {
@@ -407,6 +441,14 @@ export function decideFlairContrast(features: ContrastFeatures, header: HeaderEv
         'image. FLAMeS works only on FLAIR; no segmentation was produced.',
     };
   }
+  if (features.frac45to80 > FLAIR_GATE.maxGreyClassFraction) {
+    return {
+      ok: false,
+      ...base,
+      reason: 'The image does not look like a FLAIR: it has a large, darker grey-matter class, as on a T1-weighted ' +
+        'image. FLAMeS works only on FLAIR; no segmentation was produced.',
+    };
+  }
   if (features.fracAbove1p6 > FLAIR_GATE.maxBrightFraction) {
     return {
       ok: false,
@@ -415,9 +457,28 @@ export function decideFlairContrast(features: ContrastFeatures, header: HeaderEv
         'FLAMeS works only on FLAIR; no segmentation was produced.',
     };
   }
-  return { ok: true, ...base };
+  // The clinician's confirmation is recorded first (it names a person); the header alone suffices only with a
+  // long inversion time.
+  const sequenceEvidence: SequenceEvidence | undefined =
+    opts.clinicianConfirmedFlair === true ? 'clinician' : headerProvesFlair(header) ? 'header' : undefined;
+  if (!sequenceEvidence) {
+    return {
+      ok: false,
+      ...base,
+      reason: 'The sequence is not confirmed as FLAIR: the file does not prove it (no FLAIR inversion time) and the image ' +
+        'content alone cannot prove it. Confirm that the selected image is a skull-stripped T2-FLAIR, then run again. ' +
+        'No segmentation was produced.',
+    };
+  }
+  return { ok: true, ...base, sequenceEvidence };
 }
 
-export function assessFlairContrast(data: Float32Array, dims: Dims3, spacing: Dims3, header: HeaderEvidence): ContrastAssessment {
-  return decideFlairContrast(computeContrastFeatures(data, dims, spacing), header);
+export function assessFlairContrast(
+  data: Float32Array,
+  dims: Dims3,
+  spacing: Dims3,
+  header: HeaderEvidence,
+  opts: { clinicianConfirmedFlair?: boolean } = {},
+): ContrastAssessment {
+  return decideFlairContrast(computeContrastFeatures(data, dims, spacing), header, opts);
 }

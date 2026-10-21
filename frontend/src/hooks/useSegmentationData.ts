@@ -252,6 +252,29 @@ export function useSegmentationData({
     [setCurrentSegmentation, segmentationMask],
   );
 
+  /** RC-047: refresh the AI provenance of an open segmentation from the server after a mask save. */
+  const refreshAiProvenance = useCallback(
+    async (segmentationId: string, seg: SegmentationResponse) => {
+      let provenance: AIProvenance | null | undefined;
+      try {
+        provenance = (await segmentationAPI.getSegmentation(segmentationId)).metadata?.ai_provenance;
+      } catch {
+        provenance = seg.metadata.ai_provenance
+          ? { ...seg.metadata.ai_provenance, review_status: 'unreviewed', reviewed_by: null, reviewed_at: null, reviewed_mask_sha256: null }
+          : null;
+      }
+      const store = useSegmentationStore.getState();
+      const cur = store.currentSegmentation;
+      if (cur && cur.segmentation_id === segmentationId) {
+        store.setCurrentSegmentation({ ...cur, metadata: { ...cur.metadata, ai_provenance: provenance ?? null } });
+      }
+      if (store.activeSegmentation && store.activeSegmentation.id === segmentationId) {
+        store.setActiveSegmentation({ ...store.activeSegmentation, ai_provenance: provenance ?? null });
+      }
+    },
+    [],
+  );
+
   // Placeholder for backward compatibility (no longer an actual mutation)
   const createSegmentationMutation = {
     mutate: ({ fileId, imageShape }: { fileId: string; imageShape: ImageShape }) =>
@@ -362,6 +385,12 @@ export function useSegmentationData({
         skipNextLoadRef.current = true;
         setCurrentSegmentation(serverSeg);
       }
+      // RC-047: the server resets a confirmed AI review when the mask changed; never keep showing a
+      // stale "confirmed" locally — re-read the provenance (fail safe: mark unreviewed if that fails).
+      const savedId = serverSeg?.segmentation_id ?? currentSegmentation.segmentation_id;
+      if (!serverSeg && currentSegmentation.metadata?.ai_provenance) {
+        await refreshAiProvenance(savedId, currentSegmentation);
+      }
       setSaveStatus('saved');
       setLastSaveTime(new Date());
       // Refresh the list so the saved segmentation appears in the sidebar
@@ -372,7 +401,7 @@ export function useSegmentationData({
       setSaveStatus('error');
       setTimeout(() => setSaveStatus('idle'), 5000);
     }
-  }, [currentSegmentation, segmentationMask, setCurrentSegmentation, queryClient]);
+  }, [currentSegmentation, segmentationMask, setCurrentSegmentation, queryClient, refreshAiProvenance]);
 
   // Legacy save mutation for compatibility
   const saveSegmentationMutation = {
@@ -400,6 +429,24 @@ export function useSegmentationData({
     useSegmentationStore.getState().setImportDraftCallback(createSegmentationFromMask);
     return () => useSegmentationStore.getState().setImportDraftCallback(null);
   }, [createSegmentationFromMask]);
+
+  // RC-047: expose the digest of the open mask (bound to a review confirmation) and its unsaved state.
+  const getMaskSnapshot = segmentationMask.getMaskSnapshot;
+  useEffect(() => {
+    const digest = async (): Promise<string | null> => {
+      const bytes = getMaskSnapshot();
+      if (!bytes) return null;
+      const buf = await crypto.subtle.digest('SHA-256', bytes as unknown as ArrayBuffer);
+      return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, '0')).join('');
+    };
+    useSegmentationStore.getState().setMaskDigestCallback(digest);
+    return () => useSegmentationStore.getState().setMaskDigestCallback(null);
+  }, [getMaskSnapshot]);
+
+  const unsavedMask = Boolean(segmentationMask.state.isDirty || segmentationMask.state.conflict != null);
+  useEffect(() => {
+    useSegmentationStore.getState().setHasUnsavedMaskChanges(unsavedMask);
+  }, [unsavedMask]);
 
   // Register reload-mask callback so LesionDashboard can reload after auto-classify
   const reloadCurrentMask = useCallback(async () => {

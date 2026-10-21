@@ -68,6 +68,20 @@ describe('useBrowserFlames cancel', () => {
     expect(useSegmentationStore.getState().currentSegmentation).toBe(open);
     expect(importSpy).not.toHaveBeenCalled();
   });
+
+  it('rc049 the sequence confirmation reaches the worker only when the clinician gave it', async () => {
+    const { result } = renderHook(() => useBrowserFlames());
+    await act(async () => {
+      await result.current.run('f', {});
+    });
+    expect((FakeWorker.last!.posted[0] as { clinicianConfirmedFlair: boolean }).clinicianConfirmedFlair).toBe(false);
+    act(() => result.current.cancel());
+    await act(async () => {
+      await result.current.run('f', { clinicianConfirmedFlair: true });
+    });
+    expect((FakeWorker.last!.posted[0] as { clinicianConfirmedFlair: boolean }).clinicianConfirmedFlair).toBe(true);
+    act(() => result.current.cancel());
+  });
 });
 
 describe('runtime estimate', () => {

@@ -156,6 +156,12 @@ interface SegmentationState {
    */
   importDraftCallback: ImportDraftCallback | null;
 
+  /** RC-047: SHA-256 (hex) of the mask currently open, as the server would hash it; null when none. */
+  maskDigestCallback: (() => Promise<string | null>) | null;
+
+  /** RC-047: the open mask has unsaved changes (mirrors the local-first mask state). */
+  hasUnsavedMaskChanges: boolean;
+
   /** Last save timestamp */
   lastSavedAt: string | null;
 
@@ -302,6 +308,8 @@ interface SegmentationState {
   setCreateCallback: (fn: ((fileId: string, imageShape: { rows: number; columns: number; slices: number }) => void) | null) => void;
   setReloadMaskCallback: (fn: (() => Promise<void>) | null) => void;
   setImportDraftCallback: (fn: ImportDraftCallback | null) => void;
+  setMaskDigestCallback: (fn: (() => Promise<string | null>) | null) => void;
+  setHasUnsavedMaskChanges: (value: boolean) => void;
 
   // =========================================================================
   // Actions - Labels
@@ -418,6 +426,8 @@ const createInitialState = () => ({
   createCallback: null as ((fileId: string, imageShape: { rows: number; columns: number; slices: number }) => void) | null,
   reloadMaskCallback: null as (() => Promise<void>) | null,
   importDraftCallback: null as ImportDraftCallback | null,
+  maskDigestCallback: null as (() => Promise<string | null>) | null,
+  hasUnsavedMaskChanges: false,
   lastSavedAt: null as string | null,
 
   // List
@@ -533,6 +543,10 @@ export const useSegmentationStore = create<SegmentationState>()(
         setReloadMaskCallback: (fn) => set({ reloadMaskCallback: fn }),
 
         setImportDraftCallback: (fn) => set({ importDraftCallback: fn }),
+
+        setMaskDigestCallback: (fn) => set({ maskDigestCallback: fn }),
+
+        setHasUnsavedMaskChanges: (value) => set({ hasUnsavedMaskChanges: value }),
 
         // =====================================================================
         // Label Actions

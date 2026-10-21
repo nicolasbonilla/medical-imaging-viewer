@@ -42,6 +42,9 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
   const [pendingDiscard, setPendingDiscard] = useState<string | null>(null);
   const [emptyAcknowledged, setEmptyAcknowledged] = useState(false);
   const [now, setNow] = useState(() => Date.now());
+  // RC-049: the clinician must confirm the sequence of THIS file before each run (positive evidence, recorded).
+  const [sequenceConfirmed, setSequenceConfirmed] = useState(false);
+  useEffect(() => setSequenceConfirmed(false), [flairFileId]);
 
   const running = flames.status === 'running';
   const estimate = useMemo(() => estimateDuration(currentEnvironment()), []);
@@ -62,7 +65,8 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
     // Header evidence for the FLAIR gate: the series description the app holds for THIS file only.
     const seriesDescription =
       currentSeries?.file_id === flairFileId ? currentSeries?.metadata?.series_description ?? null : null;
-    void flames.run(flairFileId, { seriesDescription });
+    if (!sequenceConfirmed) return;
+    void flames.run(flairFileId, { seriesDescription, clinicianConfirmedFlair: true });
   };
 
   const openDraft = (discardUnsavedWork: boolean) => {
@@ -117,9 +121,24 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
             {t('clinical.browserFlames.expected', 'Expected duration')}: {estimate.text}{' '}
             {t('clinical.browserFlames.keepWorking', 'You can keep working and cancel at any time; cancelling never changes your segmentation.')}
           </p>
+          <label className="flex items-start gap-1 text-[9px] text-amber-100" data-testid="browser-flames-confirm-sequence">
+            <input
+              type="checkbox"
+              checked={sequenceConfirmed}
+              onChange={(e) => setSequenceConfirmed(e.target.checked)}
+              disabled={!flairFileId}
+            />
+            <span>
+              {t(
+                'clinical.browserFlames.confirmSequence',
+                'I confirm that the selected image is a skull-stripped T2-FLAIR (not T1, T2, PD or post-contrast). This confirmation is recorded with the result.',
+              )}{' '}
+              <span className="text-gray-400 break-all">{flairFileId ? `(${flairFileId.split('/').pop()})` : ''}</span>
+            </span>
+          </label>
           <button
             onClick={handleRun}
-            disabled={!flairFileId}
+            disabled={!flairFileId || !sequenceConfirmed}
             className="w-full px-3 py-1.5 bg-amber-700 hover:bg-amber-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded text-[11px] font-medium transition-colors"
           >
             {t('clinical.browserFlames.run', 'Segment in this browser')}

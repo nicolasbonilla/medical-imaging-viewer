@@ -137,6 +137,7 @@ class SegmentationService:
         description: Optional[str] = None,
         source_format: str = "nifti",  # "nifti" or "dicom"
         ai_provenance: Optional[AIProvenance] = None,
+        created_by: Optional[str] = None,
     ) -> SegmentationResponse:
         """
         Create a new segmentation for an image file.
@@ -164,9 +165,12 @@ class SegmentationService:
 
         provenance = None
         if ai_provenance is not None:
-            provenance = ai_provenance.model_copy(
-                update={"review_status": "unreviewed", "reviewed_by": None, "reviewed_at": None}
-            )
+            provenance = ai_provenance.model_copy(update={
+                "review_status": "unreviewed", "reviewed_by": None, "reviewed_at": None,
+                "reviewed_mask_sha256": None,
+                # RC-049: who confirmed the sequence is the authenticated user, never a client claim.
+                "sequence_confirmed_by": created_by if ai_provenance.sequence_evidence == "clinician" else None,
+            })
 
         # Create metadata
         metadata = SegmentationMetadata(
@@ -264,6 +268,29 @@ class SegmentationService:
         """Return the 3D mask array (D, H, W), loading if needed. None if absent."""
         entry = self.get_loaded(segmentation_id)
         return entry["masks_3d"] if entry else None
+
+    @staticmethod
+    def mask_sha256(masks_3d: np.ndarray) -> str:
+        """SHA-256 of the (depth, height, width) uint8 mask bytes, C order — the same bytes the
+        frontend holds (index = slice*H*W + row*W + col), so a client digest can be compared."""
+        return hashlib.sha256(np.ascontiguousarray(masks_3d, dtype=np.uint8).tobytes()).hexdigest()
+
+    def enforce_review_binding(self, seg_data: dict) -> bool:
+        """RC-047: a confirmed AI review is bound to the exact mask that was reviewed. If the mask now
+        differs from the confirmed one, the review is reset to 'unreviewed' (returns True)."""
+        metadata = seg_data.get("metadata")
+        provenance = getattr(metadata, "ai_provenance", None)
+        if provenance is None or provenance.review_status != "confirmed":
+            return False
+        if provenance.reviewed_mask_sha256 == self.mask_sha256(seg_data["masks_3d"]):
+            return False
+        metadata.ai_provenance = provenance.model_copy(update={
+            "review_status": "unreviewed", "reviewed_by": None, "reviewed_at": None,
+            "reviewed_mask_sha256": None,
+        })
+        logger.warning("AI review reset: the mask changed after the review was confirmed",
+                       extra={"previous_reviewer": provenance.reviewed_by})
+        return True
 
     def set_mask(self, segmentation_id: str, mask: np.ndarray) -> bool:
         """Replace the in-memory 3D mask for a cached segmentation.
@@ -826,6 +853,11 @@ class SegmentationService:
         masks_3d = seg_data["masks_3d"]
         metadata = seg_data["metadata"]
         source_format = seg_data.get("source_format", "nifti")
+
+        # RC-047: never persist a confirmation that no longer matches the mask (single choke point:
+        # every mask write — upload, paint, save — goes through here).
+        self.enforce_review_binding(seg_data)
+        metadata = seg_data["metadata"]
 
         # Prepare metadata dict for Firestore
         metadata_dict = metadata.model_dump(mode='json')

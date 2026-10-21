@@ -86,8 +86,10 @@ export interface FlamesPipelineOptions {
   skullStripGate?: boolean;
   /** enforce the FLAIR contrast gate (default true). Only unit tests on synthetic data disable it. */
   contrastGate?: boolean;
-  /** header evidence about the sequence (headerEvidence.ts); can only refuse, never accept */
+  /** header evidence about the sequence (headerEvidence.ts); refuses, or counts as positive evidence */
   headerEvidence?: HeaderEvidence;
+  /** RC-049 positive evidence: explicit clinician confirmation that the input is a skull-stripped T2-FLAIR */
+  clinicianConfirmedFlair?: boolean;
   returnProbability?: boolean;
   onProgress?: (stage: string, fraction: number) => void;
   signal?: AbortSignal;
@@ -141,12 +143,18 @@ export interface InputGateReport {
 
 /**
  * Input gates (fail closed, run BEFORE any inference): skull-stripped plausibility (RC-043) and the
- * FLAIR contrast gate (RC-049: header evidence can only refuse; image content must look like FLAIR).
+ * FLAIR gate (RC-049, flair-gate/2: header and image content can only refuse; acceptance needs positive evidence).
  * Throws FlamesInputError with a user-readable reason; returns the measurements otherwise.
  */
 export function checkInputGates(
   vol: FlamesVolume,
-  opts: { skullStripGate?: boolean; contrastGate?: boolean; headerEvidence?: HeaderEvidence } = {},
+  opts: {
+    skullStripGate?: boolean;
+    contrastGate?: boolean;
+    headerEvidence?: HeaderEvidence;
+    /** RC-049 positive evidence: the clinician explicitly confirmed this file is a skull-stripped T2-FLAIR */
+    clinicianConfirmedFlair?: boolean;
+  } = {},
 ): InputGateReport {
   const { dims, spacing, data } = vol;
   const border = borderNonzeroFraction(data, dims);
@@ -181,7 +189,7 @@ export function checkInputGates(
         `The image could not be checked (${e instanceof Error ? e.message : String(e)}). No segmentation was produced.`,
       );
     }
-    contrast = decideFlairContrast(features, header);
+    contrast = decideFlairContrast(features, header, { clinicianConfirmedFlair: opts.clinicianConfirmedFlair });
     const reasons: string[] = [];
     // RC-043: skull clues that also work when the background was set to zero and the head fits the
     // border/volume limits above: bright scalp fat at the edge of the region, or a large dark share
@@ -242,7 +250,12 @@ export async function segmentFlairVolume(vol: FlamesVolume, opts: FlamesPipeline
   // Fail closed BEFORE any inference: skull-stripped plausibility (RC-043) + FLAIR contrast (RC-049).
   const gates = checkInputGates(
     { data, dims, spacing },
-    { skullStripGate: opts.skullStripGate, contrastGate: opts.contrastGate, headerEvidence: opts.headerEvidence },
+    {
+      skullStripGate: opts.skullStripGate,
+      contrastGate: opts.contrastGate,
+      headerEvidence: opts.headerEvidence,
+      clinicianConfirmedFlair: opts.clinicianConfirmedFlair,
+    },
   );
   const border = gates.borderNonzeroFraction;
   const brainVolumeMl = gates.brainVolumeMl;
