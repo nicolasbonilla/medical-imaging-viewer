@@ -87,8 +87,9 @@ flags listed in 4.2. CPU only, 4 vCPU per job, containers pinned by digest and r
 
 4.2 **Commands** (recorded verbatim in each run manifest):
 - MindGlide: `-i flair -o seg --device cpu` (defaults: RAS reorientation, 1 mm internal grid, sliding
-  window, largest-component cleanup; output label map on the input grid; **lesion = label 18**; no
-  probability map).
+  window, largest-component cleanup — applied to the whole non-zero label map, `ndimage.label(seg > 0)`
+  in `transforms.py`, so lesions inside the brain are kept; output label map on the input grid;
+  **lesion = label 18**; no probability map).
 - WMH-SynthSeg: `mri_WMHsynthseg --i flair --o seg --csv_vols vols --device cpu --threads 4
   --save_lesion_probabilities` (output on its own 1 mm grid; **WMH = label 77**; probability map
   `<out>.lesion_probs`). Pre-stated memory fallback: `--crop` if the pilot shows > 30 GB peak or an
@@ -217,7 +218,7 @@ on the full outputs; the commit hash of the code used is written into the result
 
 | Date | Change | Reason | Seen results before? |
 |---|---|---|---|
-| — | none | — | — |
+| 2026-10-21 | 4.2: wording only — states that MindGlide's largest-component cleanup acts on the whole label map (checked in its source), not per label | clarification; no rule changed | no (nothing launched) |
 
 ## References (tools)
 
