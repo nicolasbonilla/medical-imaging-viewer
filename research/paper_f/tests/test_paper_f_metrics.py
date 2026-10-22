@@ -176,6 +176,24 @@ def test_evaluate_end_to_end(tmp_path):
     assert ("S3_inplane_8conn", "wmhsynthseg", "false_lesions") in sens
 
 
+def test_interim_tables_bound_incomplete_families(tmp_path):
+    import summarize as sm
+    dirs, cases = make_cohort(tmp_path)
+    rows = ev.per_scan_rows(cases, dirs, {})                        # SAMSEG never ran -> family incomplete
+    ev.write_csv(rows, str(tmp_path / "per_scan.csv"))
+    comp = ev.prestated(rows, n_boot=100)
+    md, data = sm.tables(sm.load_rows(str(tmp_path / "per_scan.csv")), comp, n_boot=100)
+    prim = [c for c in data["comparisons"] if c["family"] == "primary"]
+    assert prim and all(c["adjustment"].startswith("Bonferroni bound x6") for c in prim)
+    mg = [c for c in prim if c["tool"] == "mindglide" and c["outcome"] == "f1"][0]
+    assert mg["p_adjusted"] == min(1.0, 6 * mg["p_two_sided"])
+    raw = [c for c in data["comparisons"] if c["family"] == "secondary_raw_arm"]
+    assert len(raw) == 4 and all(c["adjustment"] == "Holm" for c in raw)
+    assert "samseg" not in data["tools_with_outputs"] and "Table 4" in md
+    b = [x for x in data["size_bins"] if x["tool"] == "mindglide" and x["band"] == "thick" and x["n_ref"]]
+    assert b and all(x["estimate"] == 1.0 for x in b)                  # the perfect tool detects every lesion
+
+
 def test_check_flags_wrong_grid_and_non_binary(tmp_path):
     dirs, _ = make_cohort(tmp_path)
     r = ev.check_case("ms3seg_001", dirs["tool"], dirs["flames"], tools=("mindglide",))

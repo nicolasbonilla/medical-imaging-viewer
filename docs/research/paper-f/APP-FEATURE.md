@@ -58,7 +58,22 @@ until then: MindGlide ~1–5 min and < 16 GB; WMH-SynthSeg ~1–4 min but ~32 GB
 maximum); SAMSEG ~6–15+ min. Any server-side use would be pay-per-use CPU (no idle cost), in line with
 the no-recurring-cost rule.
 
-## 5. Traceability to open
+## 5. Interim reading against section 2 (2026-10-22; MindGlide and LST-AI only — RESULTS-interim.md)
+
+WMH-SynthSeg and SAMSEG are still pending (FreeSurfer licence), so no row is final. With what exists:
+
+| Row of section 2 | Interim evidence | Interim reading |
+|---|---|---|
+| A CPU tool outperforms FLAMeS on thick slices | MindGlide lesion F1 −0.170 (−0.206 to −0.136) vs FLAMeS on 179 thick scans; false lesions +0.6 (−0.9 to +2.2); MindGlide on raw FLAIR is no better (−0.016 vs stripped) | **Not met** by MindGlide: no thickness-aware routing to MindGlide |
+| Equivalent | not equivalent (F1 90% CI −0.200 to −0.141) | not met |
+| FLAMeS best, but worse on thick than on 1 mm | FLAMeS F1 0.724 thick vs 0.765 iso; false lesions 6.9 vs 3.8 per scan; small lesions (14–50 mm³) found 49% vs 56% | **Applies so far** → candidate wording for a thick-slice notice: "on studies with slices > 3 mm (179 public research scans) automatic lesion detection reached F1 0.72 with about 7 false lesions per study; small lesions are often missed" — numbers to be frozen only with the final results |
+| Disagreement predicts poor FLAMeS scans | MindGlide–FLAMeS disagreement: AUROC 0.78 on thick slices with 14 poor scans (criterion: ≥ 0.75 with ≥ 10 poor scans) | **Criterion met (exploratory)** → worth building and validating a second-opinion flag on a cohort not used here; MindGlide itself cannot ship (weights licence not stated), so the second model must be licence-clean |
+| Confirmed-lesions review aid | FLAMeS ∩ MindGlide: −3.8 false lesions per thick scan but F1 −0.074 | **Not met** (F1 drops) → not proposed |
+
+Product consequence today: keep FLAMeS as the only segmenter; prepare (not ship) the thick-slice
+notice and a second-opinion design, both to be confirmed when the FreeSurfer tools are in.
+
+## 6. Traceability to open
 
 When a result triggers a row of section 2: create the requirement in SRS-001 (new REQ id, "to be
 assigned"), add the hazards it touches in RMF-001 (missed lesions and false lesions on thick-slice

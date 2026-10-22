@@ -1,0 +1,4721 @@
+{
+ "primary": [
+  {
+   "tool": "mindglide",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "primary",
+   "n_scans": 179,
+   "n_clusters": 160,
+   "estimate": -0.17047524290511043,
+   "ci95": [
+    -0.20620500335775124,
+    -0.13602223615327927
+   ],
+   "ci90": [
+    -0.2004073979759165,
+    -0.14053043702161325
+   ],
+   "p_two_sided": 0.0,
+   "equivalent_within_margin": false,
+   "margin": 0.05,
+   "p_holm": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "vs": "flames",
+   "outcome": "false_lesions",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "primary",
+   "n_scans": 179,
+   "n_clusters": 160,
+   "estimate": 0.5685527544351073,
+   "ci95": [
+    -0.8908411683513985,
+    2.211624011007911
+   ],
+   "ci90": [
+    -0.6604297385620915,
+    1.966755991285402
+   ],
+   "p_two_sided": 0.4496,
+   "equivalent_within_margin": false,
+   "margin": 1.0,
+   "p_holm": 0.4496
+  },
+  {
+   "tool": "wmhsynthseg",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "primary",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null,
+   "p_holm": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "vs": "flames",
+   "outcome": "false_lesions",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "primary",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null,
+   "p_holm": null
+  },
+  {
+   "tool": "samseg",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "primary",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null,
+   "p_holm": null
+  },
+  {
+   "tool": "samseg",
+   "vs": "flames",
+   "outcome": "false_lesions",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "primary",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null,
+   "p_holm": null
+  }
+ ],
+ "secondary": [
+  {
+   "tool": "mindglide",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "iso",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "primary",
+   "n_scans": 125,
+   "n_clusters": 85,
+   "estimate": -0.27223190064929614,
+   "ci95": [
+    -0.31914757921133596,
+    -0.22912266242054868
+   ],
+   "ci90": [
+    -0.310939090333431,
+    -0.23572474545343852
+   ],
+   "p_two_sided": 0.0,
+   "equivalent_within_margin": false,
+   "margin": 0.05,
+   "p_holm": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "vs": "flames",
+   "outcome": "false_lesions",
+   "band": "iso",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "primary",
+   "n_scans": 125,
+   "n_clusters": 85,
+   "estimate": 3.0652173913043477,
+   "ci95": [
+    1.7820618731939486,
+    4.315811403508771
+   ],
+   "ci90": [
+    1.978546365914787,
+    4.1173989321128905
+   ],
+   "p_two_sided": 0.0,
+   "equivalent_within_margin": false,
+   "margin": 1.0,
+   "p_holm": 0.0
+  },
+  {
+   "tool": "wmhsynthseg",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "iso",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "primary",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null,
+   "p_holm": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "vs": "flames",
+   "outcome": "false_lesions",
+   "band": "iso",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "primary",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null,
+   "p_holm": null
+  },
+  {
+   "tool": "samseg",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "iso",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "primary",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null,
+   "p_holm": null
+  },
+  {
+   "tool": "samseg",
+   "vs": "flames",
+   "outcome": "false_lesions",
+   "band": "iso",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "primary",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null,
+   "p_holm": null
+  },
+  {
+   "tool": "lstai",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "iso",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "primary",
+   "n_scans": 124,
+   "n_clusters": 85,
+   "estimate": -0.18020056785016533,
+   "ci95": [
+    -0.21242798216552577,
+    -0.14974505571252603
+   ],
+   "ci90": [
+    -0.20765991384836754,
+    -0.15453223272094457
+   ],
+   "p_two_sided": 0.0,
+   "equivalent_within_margin": false,
+   "margin": 0.05,
+   "p_holm": 0.0
+  },
+  {
+   "tool": "lstai",
+   "vs": "flames",
+   "outcome": "false_lesions",
+   "band": "iso",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "primary",
+   "n_scans": 124,
+   "n_clusters": 85,
+   "estimate": 3.789473684210526,
+   "ci95": [
+    2.528558362369338,
+    4.945299803407601
+   ],
+   "ci90": [
+    2.734978632478633,
+    4.773592101055325
+   ],
+   "p_two_sided": 0.0,
+   "equivalent_within_margin": false,
+   "margin": 1.0,
+   "p_holm": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "vs": "flames",
+   "outcome": "f1",
+   "contrast": "(tool-ref)_thick - (tool-ref)_iso",
+   "n_scans": 304,
+   "n_clusters": 245,
+   "estimate": 0.10175665774418571,
+   "ci95": [
+    0.04694353212745771,
+    0.1600017212924537
+   ],
+   "ci90": [
+    0.05513395248937921,
+    0.15104046492552187
+   ],
+   "p_two_sided": 0.0,
+   "p_holm": 0.0
+  },
+  {
+   "tool": "wmhsynthseg",
+   "vs": "flames",
+   "outcome": "f1",
+   "contrast": "thick minus iso",
+   "estimate": null,
+   "p_holm": null
+  },
+  {
+   "tool": "samseg",
+   "vs": "flames",
+   "outcome": "f1",
+   "contrast": "thick minus iso",
+   "estimate": null,
+   "p_holm": null
+  }
+ ],
+ "secondary_raw_arm": [
+  {
+   "tool": "mindglide-raw",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "primary",
+   "n_scans": 179,
+   "n_clusters": 160,
+   "estimate": -0.18611926077473687,
+   "ci95": [
+    -0.22243648438788258,
+    -0.1503709982805306
+   ],
+   "ci90": [
+    -0.21704678296907476,
+    -0.1553747476210645
+   ],
+   "p_two_sided": 0.0,
+   "equivalent_within_margin": false,
+   "margin": 0.05,
+   "p_holm": 0.0
+  },
+  {
+   "tool": "mindglide-raw",
+   "vs": "flames",
+   "outcome": "false_lesions",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "primary",
+   "n_scans": 179,
+   "n_clusters": 160,
+   "estimate": 0.37781512605042017,
+   "ci95": [
+    -0.9400485036119711,
+    1.881428921568627
+   ],
+   "ci90": [
+    -0.7335470395054573,
+    1.653276072747938
+   ],
+   "p_two_sided": 0.56,
+   "equivalent_within_margin": false,
+   "margin": 1.0,
+   "p_holm": 0.9856
+  },
+  {
+   "tool": "mindglide-raw",
+   "vs": "mindglide",
+   "outcome": "f1",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "primary",
+   "n_scans": 179,
+   "n_clusters": 160,
+   "estimate": -0.015644017869626433,
+   "ci95": [
+    -0.027680791268958473,
+    -0.003817259518260337
+   ],
+   "ci90": [
+    -0.025568414260361882,
+    -0.005550344271267718
+   ],
+   "p_two_sided": 0.0122,
+   "equivalent_within_margin": true,
+   "margin": 0.05,
+   "p_holm": 0.0366
+  },
+  {
+   "tool": "mindglide-raw",
+   "vs": "mindglide",
+   "outcome": "false_lesions",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "primary",
+   "n_scans": 179,
+   "n_clusters": 160,
+   "estimate": -0.1907376283846872,
+   "ci95": [
+    -0.7514460784313726,
+    0.3187219684975439
+   ],
+   "ci90": [
+    -0.6485059937953674,
+    0.2346780048889579
+   ],
+   "p_two_sided": 0.4928,
+   "equivalent_within_margin": true,
+   "margin": 1.0,
+   "p_holm": 0.9856
+  }
+ ],
+ "sensitivity": [
+  {
+   "tool": "mindglide",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "thick",
+   "variant": "S1_no_size_filter",
+   "weighting": "cohort",
+   "analysis": "S1_no_size_filter",
+   "n_scans": 179,
+   "n_clusters": 160,
+   "estimate": -0.18823301870842638,
+   "ci95": [
+    -0.21715106445914437,
+    -0.16038143450002537
+   ],
+   "ci90": [
+    -0.21281787851094974,
+    -0.164554075433463
+   ],
+   "p_two_sided": 0.0,
+   "equivalent_within_margin": false,
+   "margin": 0.05
+  },
+  {
+   "tool": "mindglide",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "thick",
+   "variant": "S2_min_3mm3",
+   "weighting": "cohort",
+   "analysis": "S2_min_3mm3",
+   "n_scans": 179,
+   "n_clusters": 160,
+   "estimate": -0.18377486734603407,
+   "ci95": [
+    -0.21686836577882315,
+    -0.15230336106490633
+   ],
+   "ci90": [
+    -0.21187466694033077,
+    -0.15682290901760623
+   ],
+   "p_two_sided": 0.0,
+   "equivalent_within_margin": false,
+   "margin": 0.05
+  },
+  {
+   "tool": "mindglide",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "thick",
+   "variant": "S3_inplane_8conn",
+   "weighting": "cohort",
+   "analysis": "S3_inplane_8conn",
+   "n_scans": 179,
+   "n_clusters": 160,
+   "estimate": -0.15330700471457573,
+   "ci95": [
+    -0.18195021497629507,
+    -0.12728036715280455
+   ],
+   "ci90": [
+    -0.17786371331291626,
+    -0.1311990511416153
+   ],
+   "p_two_sided": 0.0,
+   "equivalent_within_margin": false,
+   "margin": 0.05
+  },
+  {
+   "tool": "mindglide",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "S4_complete_case",
+   "n_scans": 179,
+   "n_clusters": 160,
+   "estimate": -0.17047524290511043,
+   "ci95": [
+    -0.20620500335775124,
+    -0.13602223615327927
+   ],
+   "ci90": [
+    -0.2004073979759165,
+    -0.14053043702161325
+   ],
+   "p_two_sided": 0.0,
+   "equivalent_within_margin": false,
+   "margin": 0.05
+  },
+  {
+   "tool": "mindglide",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "S6_thick_without_muslim",
+   "n_scans": 128,
+   "n_clusters": 109,
+   "estimate": -0.19399351959817834,
+   "ci95": [
+    -0.24485650593660088,
+    -0.14492269167726216
+   ],
+   "ci90": [
+    -0.23769920089327298,
+    -0.15164839861707136
+   ],
+   "p_two_sided": 0.0,
+   "equivalent_within_margin": false,
+   "margin": 0.05
+  },
+  {
+   "tool": "mindglide",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "scan",
+   "analysis": "S7_scan_weighted",
+   "n_scans": 179,
+   "n_clusters": 160,
+   "estimate": -0.16116818617970324,
+   "ci95": [
+    -0.1837094023702011,
+    -0.14017060671899376
+   ],
+   "ci90": [
+    -0.17971007537789868,
+    -0.14309599483033533
+   ],
+   "p_two_sided": 0.0,
+   "equivalent_within_margin": false,
+   "margin": 0.05
+  },
+  {
+   "tool": "mindglide",
+   "vs": "flames",
+   "outcome": "false_lesions",
+   "band": "thick",
+   "variant": "S1_no_size_filter",
+   "weighting": "cohort",
+   "analysis": "S1_no_size_filter",
+   "n_scans": 179,
+   "n_clusters": 160,
+   "estimate": 2.4183380018674137,
+   "ci95": [
+    0.10366380718954249,
+    5.063963606654781
+   ],
+   "ci90": [
+    0.4525672268907566,
+    4.722580510992275
+   ],
+   "p_two_sided": 0.0406,
+   "equivalent_within_margin": false,
+   "margin": 1.0
+  },
+  {
+   "tool": "mindglide",
+   "vs": "flames",
+   "outcome": "false_lesions",
+   "band": "thick",
+   "variant": "S2_min_3mm3",
+   "weighting": "cohort",
+   "analysis": "S2_min_3mm3",
+   "n_scans": 179,
+   "n_clusters": 160,
+   "estimate": 1.929542483660131,
+   "ci95": [
+    -0.11769930954838066,
+    4.290754289215686
+   ],
+   "ci90": [
+    0.19563037495700036,
+    3.9643208514887434
+   ],
+   "p_two_sided": 0.065,
+   "equivalent_within_margin": false,
+   "margin": 1.0
+  },
+  {
+   "tool": "mindglide",
+   "vs": "flames",
+   "outcome": "false_lesions",
+   "band": "thick",
+   "variant": "S3_inplane_8conn",
+   "weighting": "cohort",
+   "analysis": "S3_inplane_8conn",
+   "n_scans": 179,
+   "n_clusters": 160,
+   "estimate": 8.089243697478992,
+   "ci95": [
+    4.505614732637695,
+    12.350173534147956
+   ],
+   "ci90": [
+    5.053581699346405,
+    11.729953964194374
+   ],
+   "p_two_sided": 0.0,
+   "equivalent_within_margin": false,
+   "margin": 1.0
+  },
+  {
+   "tool": "mindglide",
+   "vs": "flames",
+   "outcome": "false_lesions",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "S4_complete_case",
+   "n_scans": 179,
+   "n_clusters": 160,
+   "estimate": 0.5685527544351073,
+   "ci95": [
+    -0.8908411683513985,
+    2.211624011007911
+   ],
+   "ci90": [
+    -0.6604297385620915,
+    1.966755991285402
+   ],
+   "p_two_sided": 0.4496,
+   "equivalent_within_margin": false,
+   "margin": 1.0
+  },
+  {
+   "tool": "mindglide",
+   "vs": "flames",
+   "outcome": "false_lesions",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "S6_thick_without_muslim",
+   "n_scans": 128,
+   "n_clusters": 109,
+   "estimate": 0.6371428571428571,
+   "ci95": [
+    -1.4043612637362635,
+    2.95735119047619
+   ],
+   "ci90": [
+    -1.0712045454545451,
+    2.6164707792207786
+   ],
+   "p_two_sided": 0.5354,
+   "equivalent_within_margin": false,
+   "margin": 1.0
+  },
+  {
+   "tool": "mindglide",
+   "vs": "flames",
+   "outcome": "false_lesions",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "scan",
+   "analysis": "S7_scan_weighted",
+   "n_scans": 179,
+   "n_clusters": 160,
+   "estimate": 0.8491620111731844,
+   "ci95": [
+    -0.3443205104321907,
+    2.011565793947637
+   ],
+   "ci90": [
+    -0.1574052352142239,
+    1.8245614035087718
+   ],
+   "p_two_sided": 0.1582,
+   "equivalent_within_margin": false,
+   "margin": 1.0
+  },
+  {
+   "tool": "wmhsynthseg",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "thick",
+   "variant": "S1_no_size_filter",
+   "weighting": "cohort",
+   "analysis": "S1_no_size_filter",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "thick",
+   "variant": "S2_min_3mm3",
+   "weighting": "cohort",
+   "analysis": "S2_min_3mm3",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "thick",
+   "variant": "S3_inplane_8conn",
+   "weighting": "cohort",
+   "analysis": "S3_inplane_8conn",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "S4_complete_case",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "S6_thick_without_muslim",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "scan",
+   "analysis": "S7_scan_weighted",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "vs": "flames",
+   "outcome": "false_lesions",
+   "band": "thick",
+   "variant": "S1_no_size_filter",
+   "weighting": "cohort",
+   "analysis": "S1_no_size_filter",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "vs": "flames",
+   "outcome": "false_lesions",
+   "band": "thick",
+   "variant": "S2_min_3mm3",
+   "weighting": "cohort",
+   "analysis": "S2_min_3mm3",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "vs": "flames",
+   "outcome": "false_lesions",
+   "band": "thick",
+   "variant": "S3_inplane_8conn",
+   "weighting": "cohort",
+   "analysis": "S3_inplane_8conn",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "vs": "flames",
+   "outcome": "false_lesions",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "S4_complete_case",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "vs": "flames",
+   "outcome": "false_lesions",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "S6_thick_without_muslim",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "vs": "flames",
+   "outcome": "false_lesions",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "scan",
+   "analysis": "S7_scan_weighted",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "thick",
+   "variant": "S1_no_size_filter",
+   "weighting": "cohort",
+   "analysis": "S1_no_size_filter",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "thick",
+   "variant": "S2_min_3mm3",
+   "weighting": "cohort",
+   "analysis": "S2_min_3mm3",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "thick",
+   "variant": "S3_inplane_8conn",
+   "weighting": "cohort",
+   "analysis": "S3_inplane_8conn",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "S4_complete_case",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "S6_thick_without_muslim",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "scan",
+   "analysis": "S7_scan_weighted",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "vs": "flames",
+   "outcome": "false_lesions",
+   "band": "thick",
+   "variant": "S1_no_size_filter",
+   "weighting": "cohort",
+   "analysis": "S1_no_size_filter",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "vs": "flames",
+   "outcome": "false_lesions",
+   "band": "thick",
+   "variant": "S2_min_3mm3",
+   "weighting": "cohort",
+   "analysis": "S2_min_3mm3",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "vs": "flames",
+   "outcome": "false_lesions",
+   "band": "thick",
+   "variant": "S3_inplane_8conn",
+   "weighting": "cohort",
+   "analysis": "S3_inplane_8conn",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "vs": "flames",
+   "outcome": "false_lesions",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "S4_complete_case",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "vs": "flames",
+   "outcome": "false_lesions",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "S6_thick_without_muslim",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "vs": "flames",
+   "outcome": "false_lesions",
+   "band": "thick",
+   "variant": "primary",
+   "weighting": "scan",
+   "analysis": "S7_scan_weighted",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "mindglide",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "iso",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "S5_iso_with_flames_training_cases",
+   "n_scans": 145,
+   "n_clusters": 105,
+   "estimate": -0.25755992810629824,
+   "ci95": [
+    -0.28591769497646674,
+    -0.23068312932590282
+   ],
+   "ci90": [
+    -0.28157734538887746,
+    -0.2350118846380131
+   ],
+   "p_two_sided": 0.0,
+   "equivalent_within_margin": false,
+   "margin": 0.05
+  },
+  {
+   "tool": "wmhsynthseg",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "iso",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "S5_iso_with_flames_training_cases",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "iso",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "S5_iso_with_flames_training_cases",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "lstai",
+   "vs": "flames",
+   "outcome": "f1",
+   "band": "iso",
+   "variant": "primary",
+   "weighting": "cohort",
+   "analysis": "S5_iso_with_flames_training_cases",
+   "n_scans": 144,
+   "n_clusters": 105,
+   "estimate": -0.1555068713898063,
+   "ci95": [
+    -0.17980677850652949,
+    -0.1325955116409843
+   ],
+   "ci90": [
+    -0.17563609567170277,
+    -0.13627922299740605
+   ],
+   "p_two_sided": 0.0,
+   "equivalent_within_margin": false,
+   "margin": 0.05
+  }
+ ],
+ "descriptive": [
+  {
+   "tool": "flames",
+   "cohort": "mslesseg",
+   "outcome": "f1",
+   "n_scans": 115,
+   "n_clusters": 75,
+   "estimate": 0.7687943302124238,
+   "ci95": [
+    0.7462910322569068,
+    0.7907961606010432
+   ],
+   "ci90": [
+    0.7503660060251829,
+    0.7875631368718712
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "mslesseg",
+   "outcome": "false_lesions",
+   "n_scans": 115,
+   "n_clusters": 75,
+   "estimate": 4.765217391304348,
+   "ci95": [
+    3.876188369152971,
+    5.669495308716708
+   ],
+   "ci90": [
+    4.0091701417848205,
+    5.523386737872719
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "mslesseg",
+   "outcome": "dice",
+   "n_scans": 115,
+   "n_clusters": 75,
+   "estimate": 0.6530139002638281,
+   "ci95": [
+    0.6094278265395227,
+    0.6928995862370738
+   ],
+   "ci90": [
+    0.6165877072583316,
+    0.6869252490520404
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "mslesseg",
+   "outcome": "recall",
+   "n_scans": 115,
+   "n_clusters": 75,
+   "estimate": 0.7920455049546449,
+   "ci95": [
+    0.7646161480734165,
+    0.8183386653025453
+   ],
+   "ci90": [
+    0.769054782881943,
+    0.8138745193424685
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "mslesseg",
+   "outcome": "precision",
+   "n_scans": 115,
+   "n_clusters": 75,
+   "estimate": 0.7757349609101363,
+   "ci95": [
+    0.7437376186331931,
+    0.8089031185142506
+   ],
+   "ci90": [
+    0.7488728026012744,
+    0.803710066173762
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "mslesseg",
+   "outcome": "vol_pred_ml",
+   "n_scans": 115,
+   "n_clusters": 75,
+   "estimate": 15.509191304347826,
+   "ci95": [
+    11.590749665376553,
+    19.43263861566485
+   ],
+   "ci90": [
+    12.222822464932786,
+    18.781364391891895
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "openms",
+   "outcome": "f1",
+   "n_scans": 10,
+   "n_clusters": 10,
+   "estimate": 0.7603799176111623,
+   "ci95": [
+    0.6910845741005015,
+    0.8238068830444982
+   ],
+   "ci90": [
+    0.7024762500789812,
+    0.8143958825652667
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "openms",
+   "outcome": "false_lesions",
+   "n_scans": 10,
+   "n_clusters": 10,
+   "estimate": 2.9,
+   "ci95": [
+    1.2,
+    5.0
+   ],
+   "ci90": [
+    1.4,
+    4.6
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "openms",
+   "outcome": "dice",
+   "n_scans": 10,
+   "n_clusters": 10,
+   "estimate": 0.6605230657691343,
+   "ci95": [
+    0.570139264703416,
+    0.750295043076033
+   ],
+   "ci90": [
+    0.5843062542801021,
+    0.7370581114184513
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "openms",
+   "outcome": "recall",
+   "n_scans": 10,
+   "n_clusters": 10,
+   "estimate": 0.6883889985465379,
+   "ci95": [
+    0.6320608905938989,
+    0.7450018959051216
+   ],
+   "ci90": [
+    0.6406235720151697,
+    0.7360086140731302
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "openms",
+   "outcome": "precision",
+   "n_scans": 10,
+   "n_clusters": 10,
+   "estimate": 0.8615640619153841,
+   "ci95": [
+    0.7583982550857123,
+    0.9489904797846735
+   ],
+   "ci90": [
+    0.7763085738578913,
+    0.9370351709715967
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "openms",
+   "outcome": "vol_pred_ml",
+   "n_scans": 10,
+   "n_clusters": 10,
+   "estimate": 9.332899999999999,
+   "ci95": [
+    2.8700125000000005,
+    18.30788999999999
+   ],
+   "ci90": [
+    3.4762850000000003,
+    16.841534999999993
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "ms3seg",
+   "outcome": "f1",
+   "n_scans": 100,
+   "n_clusters": 100,
+   "estimate": 0.7493597302827226,
+   "ci95": [
+    0.7240271552124974,
+    0.7722792101723691
+   ],
+   "ci90": [
+    0.7281609241463199,
+    0.7687165643261145
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "ms3seg",
+   "outcome": "false_lesions",
+   "n_scans": 100,
+   "n_clusters": 100,
+   "estimate": 8.33,
+   "ci95": [
+    7.24,
+    9.5
+   ],
+   "ci90": [
+    7.39,
+    9.31
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "ms3seg",
+   "outcome": "dice",
+   "n_scans": 100,
+   "n_clusters": 100,
+   "estimate": 0.6752444652428639,
+   "ci95": [
+    0.6526971112461806,
+    0.6967865842278178
+   ],
+   "ci90": [
+    0.6565557493567994,
+    0.693608120031955
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "ms3seg",
+   "outcome": "recall",
+   "n_scans": 100,
+   "n_clusters": 100,
+   "estimate": 0.8259362323411544,
+   "ci95": [
+    0.7992636231237322,
+    0.8496321123395634
+   ],
+   "ci90": [
+    0.8038332130029758,
+    0.8464066824643812
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "ms3seg",
+   "outcome": "precision",
+   "n_scans": 100,
+   "n_clusters": 100,
+   "estimate": 0.7069123586614576,
+   "ci95": [
+    0.676682910110979,
+    0.7356284120575975
+   ],
+   "ci90": [
+    0.6820014015304863,
+    0.7312307798618813
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "ms3seg",
+   "outcome": "vol_pred_ml",
+   "n_scans": 100,
+   "n_clusters": 100,
+   "estimate": 17.240264627936007,
+   "ci95": [
+    14.399407637915752,
+    20.248256497135074
+   ],
+   "ci90": [
+    14.80660637790696,
+    19.779454190495326
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "muslim",
+   "outcome": "f1",
+   "n_scans": 51,
+   "n_clusters": 51,
+   "estimate": 0.6386363332448471,
+   "ci95": [
+    0.5936514736979335,
+    0.6820089232420826
+   ],
+   "ci90": [
+    0.6011425597973561,
+    0.6747277523571444
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "muslim",
+   "outcome": "false_lesions",
+   "n_scans": 51,
+   "n_clusters": 51,
+   "estimate": 6.470588235294118,
+   "ci95": [
+    5.1568627450980395,
+    7.901960784313726
+   ],
+   "ci90": [
+    5.372549019607843,
+    7.666666666666667
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "muslim",
+   "outcome": "dice",
+   "n_scans": 51,
+   "n_clusters": 51,
+   "estimate": 0.5674756296490262,
+   "ci95": [
+    0.5229216776283256,
+    0.6085471660222823
+   ],
+   "ci90": [
+    0.530669758279065,
+    0.602494804157785
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "muslim",
+   "outcome": "recall",
+   "n_scans": 51,
+   "n_clusters": 51,
+   "estimate": 0.651930300815463,
+   "ci95": [
+    0.5896009623295432,
+    0.712703329238015
+   ],
+   "ci90": [
+    0.599604420924897,
+    0.7028486004664861
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "muslim",
+   "outcome": "precision",
+   "n_scans": 51,
+   "n_clusters": 51,
+   "estimate": 0.7225950047927095,
+   "ci95": [
+    0.6701404388335807,
+    0.7714792262431283
+   ],
+   "ci90": [
+    0.6793673005127278,
+    0.7637129281243812
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "muslim",
+   "outcome": "vol_pred_ml",
+   "n_scans": 51,
+   "n_clusters": 51,
+   "estimate": 18.391665821280153,
+   "ci95": [
+    13.857750962945918,
+    23.302330362952222
+   ],
+   "ci90": [
+    14.474735369909336,
+    22.458937305288377
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "pedims",
+   "outcome": "f1",
+   "n_scans": 28,
+   "n_clusters": 9,
+   "estimate": 0.7851278645376489,
+   "ci95": [
+    0.7431707627390197,
+    0.8244144261325235
+   ],
+   "ci90": [
+    0.7509840861692213,
+    0.8185924726820335
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "pedims",
+   "outcome": "false_lesions",
+   "n_scans": 28,
+   "n_clusters": 9,
+   "estimate": 5.928571428571429,
+   "ci95": [
+    3.681772727272727,
+    7.694474637681159
+   ],
+   "ci90": [
+    4.0,
+    7.421052631578948
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "pedims",
+   "outcome": "dice",
+   "n_scans": 28,
+   "n_clusters": 9,
+   "estimate": 0.6842920877643562,
+   "ci95": [
+    0.6189369796993501,
+    0.735500069465201
+   ],
+   "ci90": [
+    0.6301415490203403,
+    0.7276657136422379
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "pedims",
+   "outcome": "recall",
+   "n_scans": 28,
+   "n_clusters": 9,
+   "estimate": 0.7957158535038594,
+   "ci95": [
+    0.763414075365831,
+    0.8265929699757043
+   ],
+   "ci90": [
+    0.7681586798850605,
+    0.8216339068798256
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "pedims",
+   "outcome": "precision",
+   "n_scans": 28,
+   "n_clusters": 9,
+   "estimate": 0.7855753573317081,
+   "ci95": [
+    0.7155138968211517,
+    0.8563683905076207
+   ],
+   "ci90": [
+    0.7255693396658088,
+    0.8461948710449773
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "flames",
+   "cohort": "pedims",
+   "outcome": "vol_pred_ml",
+   "n_scans": 28,
+   "n_clusters": 9,
+   "estimate": 13.107656197495759,
+   "ci95": [
+    4.271893163832488,
+    24.160970568057746
+   ],
+   "ci90": [
+    4.858145421934168,
+    22.313308652506688
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "lstai",
+   "cohort": "mslesseg",
+   "outcome": "f1",
+   "n_scans": 114,
+   "n_clusters": 75,
+   "estimate": 0.5546769751358568,
+   "ci95": [
+    0.5082836109434526,
+    0.5964016397726428
+   ],
+   "ci90": [
+    0.5163668371904094,
+    0.5903317453342254
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "lstai",
+   "cohort": "mslesseg",
+   "outcome": "false_lesions",
+   "n_scans": 114,
+   "n_clusters": 75,
+   "estimate": 8.859649122807017,
+   "ci95": [
+    7.381806625577812,
+    10.425747158049138
+   ],
+   "ci90": [
+    7.6032289914429905,
+    10.138953790238837
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "lstai",
+   "cohort": "mslesseg",
+   "outcome": "dice",
+   "n_scans": 114,
+   "n_clusters": 75,
+   "estimate": 0.3932610455964108,
+   "ci95": [
+    0.3428538589705281,
+    0.44272844136724615
+   ],
+   "ci90": [
+    0.351552344548114,
+    0.43497743854509213
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "lstai",
+   "cohort": "mslesseg",
+   "outcome": "recall",
+   "n_scans": 114,
+   "n_clusters": 75,
+   "estimate": 0.5307502189661846,
+   "ci95": [
+    0.4849899212085552,
+    0.5750519929510176
+   ],
+   "ci90": [
+    0.49272733858112255,
+    0.5672088437950573
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "lstai",
+   "cohort": "mslesseg",
+   "outcome": "precision",
+   "n_scans": 114,
+   "n_clusters": 75,
+   "estimate": 0.6277304067341244,
+   "ci95": [
+    0.5730534443956529,
+    0.67768353665525
+   ],
+   "ci90": [
+    0.5822405371491838,
+    0.6697406688178856
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "lstai",
+   "cohort": "mslesseg",
+   "outcome": "vol_pred_ml",
+   "n_scans": 114,
+   "n_clusters": 75,
+   "estimate": 9.57665789473684,
+   "ci95": [
+    7.115878378378379,
+    12.279421171802053
+   ],
+   "ci90": [
+    7.499187402144315,
+    11.789930960663632
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "lstai",
+   "cohort": "openms",
+   "outcome": "f1",
+   "n_scans": 30,
+   "n_clusters": 30,
+   "estimate": 0.6846491691387765,
+   "ci95": [
+    0.6398153760470077,
+    0.7261078960124929
+   ],
+   "ci90": [
+    0.6472211403654782,
+    0.7197289935185885
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "lstai",
+   "cohort": "openms",
+   "outcome": "false_lesions",
+   "n_scans": 30,
+   "n_clusters": 30,
+   "estimate": 8.033333333333333,
+   "ci95": [
+    6.166666666666667,
+    10.3
+   ],
+   "ci90": [
+    6.433333333333334,
+    9.866666666666667
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "lstai",
+   "cohort": "openms",
+   "outcome": "dice",
+   "n_scans": 30,
+   "n_clusters": 30,
+   "estimate": 0.6463234958636546,
+   "ci95": [
+    0.5698180186554058,
+    0.7157469709709565
+   ],
+   "ci90": [
+    0.581968551408185,
+    0.7069687856046901
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "lstai",
+   "cohort": "openms",
+   "outcome": "recall",
+   "n_scans": 30,
+   "n_clusters": 30,
+   "estimate": 0.647147540953446,
+   "ci95": [
+    0.6076237186068005,
+    0.6852234720383252
+   ],
+   "ci90": [
+    0.6139191597446044,
+    0.6792592916673978
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "lstai",
+   "cohort": "openms",
+   "outcome": "precision",
+   "n_scans": 30,
+   "n_clusters": 30,
+   "estimate": 0.751428484319027,
+   "ci95": [
+    0.6863492163041569,
+    0.8110215935675024
+   ],
+   "ci90": [
+    0.6982667954212152,
+    0.8022334532302658
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "lstai",
+   "cohort": "openms",
+   "outcome": "vol_pred_ml",
+   "n_scans": 30,
+   "n_clusters": 30,
+   "estimate": 15.744533333333333,
+   "ci95": [
+    10.969563333333332,
+    20.77003416666667
+   ],
+   "ci90": [
+    11.641985,
+    19.930358333333334
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "lstai",
+   "cohort": "ms3seg",
+   "outcome": "f1",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "lstai",
+   "cohort": "ms3seg",
+   "outcome": "false_lesions",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "lstai",
+   "cohort": "ms3seg",
+   "outcome": "dice",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "lstai",
+   "cohort": "ms3seg",
+   "outcome": "recall",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "lstai",
+   "cohort": "ms3seg",
+   "outcome": "precision",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "lstai",
+   "cohort": "ms3seg",
+   "outcome": "vol_pred_ml",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "lstai",
+   "cohort": "muslim",
+   "outcome": "f1",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "lstai",
+   "cohort": "muslim",
+   "outcome": "false_lesions",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "lstai",
+   "cohort": "muslim",
+   "outcome": "dice",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "lstai",
+   "cohort": "muslim",
+   "outcome": "recall",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "lstai",
+   "cohort": "muslim",
+   "outcome": "precision",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "lstai",
+   "cohort": "muslim",
+   "outcome": "vol_pred_ml",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "lstai",
+   "cohort": "pedims",
+   "outcome": "f1",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "lstai",
+   "cohort": "pedims",
+   "outcome": "false_lesions",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "lstai",
+   "cohort": "pedims",
+   "outcome": "dice",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "lstai",
+   "cohort": "pedims",
+   "outcome": "recall",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "lstai",
+   "cohort": "pedims",
+   "outcome": "precision",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "lstai",
+   "cohort": "pedims",
+   "outcome": "vol_pred_ml",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "mslesseg",
+   "outcome": "f1",
+   "n_scans": 115,
+   "n_clusters": 75,
+   "estimate": 0.5418462104973278,
+   "ci95": [
+    0.5137912234434414,
+    0.5689120493476568
+   ],
+   "ci90": [
+    0.5179600878470624,
+    0.5644144061440247
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "mslesseg",
+   "outcome": "false_lesions",
+   "n_scans": 115,
+   "n_clusters": 75,
+   "estimate": 8.095652173913043,
+   "ci95": [
+    7.290307506783238,
+    9.0
+   ],
+   "ci90": [
+    7.419613095238095,
+    8.84485893416928
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "mslesseg",
+   "outcome": "dice",
+   "n_scans": 115,
+   "n_clusters": 75,
+   "estimate": 0.37502162583627613,
+   "ci95": [
+    0.3176362777706749,
+    0.4311132537365288
+   ],
+   "ci90": [
+    0.32618548648689755,
+    0.421613699258953
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "mslesseg",
+   "outcome": "recall",
+   "n_scans": 115,
+   "n_clusters": 75,
+   "estimate": 0.7218346039183182,
+   "ci95": [
+    0.6822056649502419,
+    0.7583131893881596
+   ],
+   "ci90": [
+    0.689148550795444,
+    0.7525493687981941
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "mslesseg",
+   "outcome": "precision",
+   "n_scans": 115,
+   "n_clusters": 75,
+   "estimate": 0.4797512862424514,
+   "ci95": [
+    0.44466601560673596,
+    0.515539654968897
+   ],
+   "ci90": [
+    0.44982433039624664,
+    0.5095867922853905
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "mslesseg",
+   "outcome": "vol_pred_ml",
+   "n_scans": 115,
+   "n_clusters": 75,
+   "estimate": 28.41105217391304,
+   "ci95": [
+    24.312563441757018,
+    32.915128883647796
+   ],
+   "ci90": [
+    24.872736234658806,
+    32.123120510292125
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "openms",
+   "outcome": "f1",
+   "n_scans": 30,
+   "n_clusters": 30,
+   "estimate": 0.49383981576543345,
+   "ci95": [
+    0.4461783885184525,
+    0.5405333506227874
+   ],
+   "ci90": [
+    0.453914471430351,
+    0.5334292160437665
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "openms",
+   "outcome": "false_lesions",
+   "n_scans": 30,
+   "n_clusters": 30,
+   "estimate": 4.5,
+   "ci95": [
+    3.466666666666667,
+    5.5674999999999875
+   ],
+   "ci90": [
+    3.6333333333333333,
+    5.4
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "openms",
+   "outcome": "dice",
+   "n_scans": 30,
+   "n_clusters": 30,
+   "estimate": 0.46093665763782976,
+   "ci95": [
+    0.37171335404273737,
+    0.5463713248363793
+   ],
+   "ci90": [
+    0.38664764406600227,
+    0.5323205149039497
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "openms",
+   "outcome": "recall",
+   "n_scans": 30,
+   "n_clusters": 30,
+   "estimate": 0.47622794156302456,
+   "ci95": [
+    0.40750204053851646,
+    0.5439118135987013
+   ],
+   "ci90": [
+    0.41966076781092243,
+    0.5330161514441436
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "openms",
+   "outcome": "precision",
+   "n_scans": 30,
+   "n_clusters": 30,
+   "estimate": 0.6591937071908007,
+   "ci95": [
+    0.5766760577609413,
+    0.7388888314205514
+   ],
+   "ci90": [
+    0.5906243654079316,
+    0.7259631923956487
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "openms",
+   "outcome": "vol_pred_ml",
+   "n_scans": 30,
+   "n_clusters": 30,
+   "estimate": 22.7573,
+   "ci95": [
+    18.269283333333334,
+    27.403818333333334
+   ],
+   "ci90": [
+    18.921485000000004,
+    26.670033333333333
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "ms3seg",
+   "outcome": "f1",
+   "n_scans": 100,
+   "n_clusters": 100,
+   "estimate": 0.5869972988493727,
+   "ci95": [
+    0.5600662157727813,
+    0.6124365150904901
+   ],
+   "ci90": [
+    0.5647624165578415,
+    0.6084553468653561
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "ms3seg",
+   "outcome": "false_lesions",
+   "n_scans": 100,
+   "n_clusters": 100,
+   "estimate": 9.64,
+   "ci95": [
+    8.8,
+    10.49
+   ],
+   "ci90": [
+    8.92,
+    10.350499999999993
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "ms3seg",
+   "outcome": "dice",
+   "n_scans": 100,
+   "n_clusters": 100,
+   "estimate": 0.5126224336605145,
+   "ci95": [
+    0.4789895226265793,
+    0.5447379338412899
+   ],
+   "ci90": [
+    0.4847767645581426,
+    0.5395848921745209
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "ms3seg",
+   "outcome": "recall",
+   "n_scans": 100,
+   "n_clusters": 100,
+   "estimate": 0.6743924144630219,
+   "ci95": [
+    0.6436613790326923,
+    0.7038064128038434
+   ],
+   "ci90": [
+    0.6488097815931848,
+    0.6991686889460894
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "ms3seg",
+   "outcome": "precision",
+   "n_scans": 100,
+   "n_clusters": 100,
+   "estimate": 0.5690403755458904,
+   "ci95": [
+    0.5313089556805575,
+    0.6062395117134614
+   ],
+   "ci90": [
+    0.5376999263022898,
+    0.6002009304165229
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "ms3seg",
+   "outcome": "vol_pred_ml",
+   "n_scans": 100,
+   "n_clusters": 100,
+   "estimate": 18.283881371500893,
+   "ci95": [
+    15.75884364444313,
+    21.006414196428732
+   ],
+   "ci90": [
+    16.111196508916386,
+    20.552712786666582
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "muslim",
+   "outcome": "f1",
+   "n_scans": 51,
+   "n_clusters": 51,
+   "estimate": 0.5151976437258724,
+   "ci95": [
+    0.4763998146204921,
+    0.5536797308297395
+   ],
+   "ci90": [
+    0.48322126219645445,
+    0.547419301429893
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "muslim",
+   "outcome": "false_lesions",
+   "n_scans": 51,
+   "n_clusters": 51,
+   "estimate": 6.901960784313726,
+   "ci95": [
+    6.0588235294117645,
+    7.764705882352941
+   ],
+   "ci90": [
+    6.176470588235294,
+    7.627450980392157
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "muslim",
+   "outcome": "dice",
+   "n_scans": 51,
+   "n_clusters": 51,
+   "estimate": 0.4677739182365011,
+   "ci95": [
+    0.42129068928825225,
+    0.5136801401040976
+   ],
+   "ci90": [
+    0.4290074583225139,
+    0.5063355671676902
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "muslim",
+   "outcome": "recall",
+   "n_scans": 51,
+   "n_clusters": 51,
+   "estimate": 0.5333129737131486,
+   "ci95": [
+    0.4776350612995201,
+    0.5906298219766647
+   ],
+   "ci90": [
+    0.4867335597062449,
+    0.5812277132407664
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "muslim",
+   "outcome": "precision",
+   "n_scans": 51,
+   "n_clusters": 51,
+   "estimate": 0.5792346669990248,
+   "ci95": [
+    0.5291195577516795,
+    0.6300960264392429
+   ],
+   "ci90": [
+    0.5371408754608843,
+    0.6221939620338548
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "muslim",
+   "outcome": "vol_pred_ml",
+   "n_scans": 51,
+   "n_clusters": 51,
+   "estimate": 19.934894882306185,
+   "ci95": [
+    15.953652085152198,
+    24.312296412479107
+   ],
+   "ci90": [
+    16.510003210068334,
+    23.508526268889153
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "pedims",
+   "outcome": "f1",
+   "n_scans": 28,
+   "n_clusters": 9,
+   "estimate": 0.5595032567746421,
+   "ci95": [
+    0.4602902166541767,
+    0.65804297706617
+   ],
+   "ci90": [
+    0.47605507858527507,
+    0.6434772718402506
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "pedims",
+   "outcome": "false_lesions",
+   "n_scans": 28,
+   "n_clusters": 9,
+   "estimate": 5.892857142857143,
+   "ci95": [
+    3.7804200542005417,
+    8.571428571428571
+   ],
+   "ci90": [
+    4.081081081081081,
+    8.160064516129031
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "pedims",
+   "outcome": "dice",
+   "n_scans": 28,
+   "n_clusters": 9,
+   "estimate": 0.4972225826782916,
+   "ci95": [
+    0.39019949448521446,
+    0.5641932207678069
+   ],
+   "ci90": [
+    0.4085602891483786,
+    0.5552706464491892
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "pedims",
+   "outcome": "recall",
+   "n_scans": 28,
+   "n_clusters": 9,
+   "estimate": 0.5718951049796951,
+   "ci95": [
+    0.4057116792327679,
+    0.7250627939378526
+   ],
+   "ci90": [
+    0.42929236377032526,
+    0.7064770089159139
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "pedims",
+   "outcome": "precision",
+   "n_scans": 28,
+   "n_clusters": 9,
+   "estimate": 0.652019963977387,
+   "ci95": [
+    0.5029720292249317,
+    0.7883132875189212
+   ],
+   "ci90": [
+    0.5245094336818684,
+    0.7673349421648039
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide",
+   "cohort": "pedims",
+   "outcome": "vol_pred_ml",
+   "n_scans": 28,
+   "n_clusters": 9,
+   "estimate": 12.468256435709339,
+   "ci95": [
+    5.887488588198861,
+    19.353126128269665
+   ],
+   "ci90": [
+    6.510829668807904,
+    18.25744024686933
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "mslesseg",
+   "outcome": "f1",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "mslesseg",
+   "outcome": "false_lesions",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "mslesseg",
+   "outcome": "dice",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "mslesseg",
+   "outcome": "recall",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "mslesseg",
+   "outcome": "precision",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "mslesseg",
+   "outcome": "vol_pred_ml",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "openms",
+   "outcome": "f1",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "openms",
+   "outcome": "false_lesions",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "openms",
+   "outcome": "dice",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "openms",
+   "outcome": "recall",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "openms",
+   "outcome": "precision",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "openms",
+   "outcome": "vol_pred_ml",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "ms3seg",
+   "outcome": "f1",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "ms3seg",
+   "outcome": "false_lesions",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "ms3seg",
+   "outcome": "dice",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "ms3seg",
+   "outcome": "recall",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "ms3seg",
+   "outcome": "precision",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "ms3seg",
+   "outcome": "vol_pred_ml",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "muslim",
+   "outcome": "f1",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "muslim",
+   "outcome": "false_lesions",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "muslim",
+   "outcome": "dice",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "muslim",
+   "outcome": "recall",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "muslim",
+   "outcome": "precision",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "muslim",
+   "outcome": "vol_pred_ml",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "pedims",
+   "outcome": "f1",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "pedims",
+   "outcome": "false_lesions",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "pedims",
+   "outcome": "dice",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "pedims",
+   "outcome": "recall",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "pedims",
+   "outcome": "precision",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "wmhsynthseg",
+   "cohort": "pedims",
+   "outcome": "vol_pred_ml",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "mslesseg",
+   "outcome": "f1",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "mslesseg",
+   "outcome": "false_lesions",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "mslesseg",
+   "outcome": "dice",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "mslesseg",
+   "outcome": "recall",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "mslesseg",
+   "outcome": "precision",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "mslesseg",
+   "outcome": "vol_pred_ml",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "openms",
+   "outcome": "f1",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "openms",
+   "outcome": "false_lesions",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "openms",
+   "outcome": "dice",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "openms",
+   "outcome": "recall",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "openms",
+   "outcome": "precision",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "openms",
+   "outcome": "vol_pred_ml",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "ms3seg",
+   "outcome": "f1",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "ms3seg",
+   "outcome": "false_lesions",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "ms3seg",
+   "outcome": "dice",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "ms3seg",
+   "outcome": "recall",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "ms3seg",
+   "outcome": "precision",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "ms3seg",
+   "outcome": "vol_pred_ml",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "muslim",
+   "outcome": "f1",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "muslim",
+   "outcome": "false_lesions",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "muslim",
+   "outcome": "dice",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "muslim",
+   "outcome": "recall",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "muslim",
+   "outcome": "precision",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "muslim",
+   "outcome": "vol_pred_ml",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "pedims",
+   "outcome": "f1",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "pedims",
+   "outcome": "false_lesions",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "pedims",
+   "outcome": "dice",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "pedims",
+   "outcome": "recall",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "pedims",
+   "outcome": "precision",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "samseg",
+   "cohort": "pedims",
+   "outcome": "vol_pred_ml",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "mslesseg",
+   "outcome": "f1",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "mslesseg",
+   "outcome": "false_lesions",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "mslesseg",
+   "outcome": "dice",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "mslesseg",
+   "outcome": "recall",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "mslesseg",
+   "outcome": "precision",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "mslesseg",
+   "outcome": "vol_pred_ml",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "openms",
+   "outcome": "f1",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "openms",
+   "outcome": "false_lesions",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "openms",
+   "outcome": "dice",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "openms",
+   "outcome": "recall",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "openms",
+   "outcome": "precision",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "openms",
+   "outcome": "vol_pred_ml",
+   "n_scans": 0,
+   "n_clusters": 0,
+   "estimate": null,
+   "ci95": [
+    null,
+    null
+   ],
+   "ci90": [
+    null,
+    null
+   ],
+   "p_two_sided": null
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "ms3seg",
+   "outcome": "f1",
+   "n_scans": 100,
+   "n_clusters": 100,
+   "estimate": 0.5840302508766627,
+   "ci95": [
+    0.5567136024021471,
+    0.6102091690884925
+   ],
+   "ci90": [
+    0.561428514321985,
+    0.6061912927788815
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "ms3seg",
+   "outcome": "false_lesions",
+   "n_scans": 100,
+   "n_clusters": 100,
+   "estimate": 8.35,
+   "ci95": [
+    7.61,
+    9.11
+   ],
+   "ci90": [
+    7.73,
+    8.99
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "ms3seg",
+   "outcome": "dice",
+   "n_scans": 100,
+   "n_clusters": 100,
+   "estimate": 0.538683815448361,
+   "ci95": [
+    0.5060989398809559,
+    0.5696351249491198
+   ],
+   "ci90": [
+    0.5121213924902333,
+    0.564695888147094
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "ms3seg",
+   "outcome": "recall",
+   "n_scans": 100,
+   "n_clusters": 100,
+   "estimate": 0.6260191429382578,
+   "ci95": [
+    0.5952994677767287,
+    0.6561615918930823
+   ],
+   "ci90": [
+    0.6000421249757386,
+    0.6516038758672585
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "ms3seg",
+   "outcome": "precision",
+   "n_scans": 100,
+   "n_clusters": 100,
+   "estimate": 0.596868759884169,
+   "ci95": [
+    0.5607539244315154,
+    0.6331286710867373
+   ],
+   "ci90": [
+    0.5665047967053901,
+    0.6275591781541503
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "ms3seg",
+   "outcome": "vol_pred_ml",
+   "n_scans": 100,
+   "n_clusters": 100,
+   "estimate": 16.356759995519173,
+   "ci95": [
+    13.612569279363862,
+    19.312027869239888
+   ],
+   "ci90": [
+    14.03405686277908,
+    18.7934917596267
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "muslim",
+   "outcome": "f1",
+   "n_scans": 51,
+   "n_clusters": 51,
+   "estimate": 0.49682783838954836,
+   "ci95": [
+    0.4559203794114737,
+    0.5373146240748009
+   ],
+   "ci90": [
+    0.4626206838574198,
+    0.5313087681748354
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "muslim",
+   "outcome": "false_lesions",
+   "n_scans": 51,
+   "n_clusters": 51,
+   "estimate": 6.9411764705882355,
+   "ci95": [
+    6.235294117647059,
+    7.627450980392157
+   ],
+   "ci90": [
+    6.352941176470588,
+    7.529411764705882
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "muslim",
+   "outcome": "dice",
+   "n_scans": 51,
+   "n_clusters": 51,
+   "estimate": 0.4736776198139498,
+   "ci95": [
+    0.4278388187984851,
+    0.5188153582805115
+   ],
+   "ci90": [
+    0.4359290420855987,
+    0.511517645484393
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "muslim",
+   "outcome": "recall",
+   "n_scans": 51,
+   "n_clusters": 51,
+   "estimate": 0.4936154389276692,
+   "ci95": [
+    0.4369583127621774,
+    0.5517370176127893
+   ],
+   "ci90": [
+    0.44676869888085663,
+    0.5421770207176456
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "muslim",
+   "outcome": "precision",
+   "n_scans": 51,
+   "n_clusters": 51,
+   "estimate": 0.5838259074979383,
+   "ci95": [
+    0.533661798584818,
+    0.6334761773976515
+   ],
+   "ci90": [
+    0.5421180837244844,
+    0.6257732778812686
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "muslim",
+   "outcome": "vol_pred_ml",
+   "n_scans": 51,
+   "n_clusters": 51,
+   "estimate": 17.562126509755046,
+   "ci95": [
+    13.24620993964896,
+    22.37131731208371
+   ],
+   "ci90": [
+    13.909291526176492,
+    21.50777905176841
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "pedims",
+   "outcome": "f1",
+   "n_scans": 28,
+   "n_clusters": 9,
+   "estimate": 0.5339080564747968,
+   "ci95": [
+    0.4377253796895831,
+    0.6268553687404919
+   ],
+   "ci90": [
+    0.45280018234898634,
+    0.6135306782647096
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "pedims",
+   "outcome": "false_lesions",
+   "n_scans": 28,
+   "n_clusters": 9,
+   "estimate": 6.571428571428571,
+   "ci95": [
+    4.896551724137931,
+    8.607181677018634
+   ],
+   "ci90": [
+    5.142857142857143,
+    8.304347826086957
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "pedims",
+   "outcome": "dice",
+   "n_scans": 28,
+   "n_clusters": 9,
+   "estimate": 0.5121043697624833,
+   "ci95": [
+    0.41220145148624354,
+    0.5720120226533588
+   ],
+   "ci90": [
+    0.4292591437527098,
+    0.5651833733441644
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "pedims",
+   "outcome": "recall",
+   "n_scans": 28,
+   "n_clusters": 9,
+   "estimate": 0.5266398918938803,
+   "ci95": [
+    0.37407659913112357,
+    0.6633325090233727
+   ],
+   "ci90": [
+    0.39693818062309666,
+    0.6489308516660789
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "pedims",
+   "outcome": "precision",
+   "n_scans": 28,
+   "n_clusters": 9,
+   "estimate": 0.6368979051021061,
+   "ci95": [
+    0.5089803371451571,
+    0.7535092278375953
+   ],
+   "ci90": [
+    0.5276732000333973,
+    0.7347846046126634
+   ],
+   "p_two_sided": 0.0
+  },
+  {
+   "tool": "mindglide-raw",
+   "cohort": "pedims",
+   "outcome": "vol_pred_ml",
+   "n_scans": 28,
+   "n_clusters": 9,
+   "estimate": 9.799089474181512,
+   "ci95": [
+    4.0352292140327055,
+    16.13335150174689
+   ],
+   "ci90": [
+    4.551014353914815,
+    15.088734518240697
+   ],
+   "p_two_sided": 0.0
+  }
+ ],
+ "exploratory": [
+  {
+   "analysis": "disagreement flags FLAMeS lesion F1 < 0.5",
+   "tool": "mindglide",
+   "band": "iso",
+   "n_scans": 125,
+   "n_poor": 2,
+   "auroc": 0.8130081300813008
+  },
+  {
+   "analysis": "FLAMeS lesions confirmed by tool vs FLAMeS alone",
+   "tool": "mindglide",
+   "band": "iso",
+   "f1": {
+    "n_scans": 125,
+    "n_clusters": 85,
+    "estimate": -0.10583161459787097,
+    "ci95": [
+     -0.15225448847552717,
+     -0.0650722414280536
+    ],
+    "ci90": [
+     -0.143990208817403,
+     -0.07086851222134706
+    ],
+    "p_two_sided": 0.0
+   },
+   "false_lesions": {
+    "n_scans": 125,
+    "n_clusters": 85,
+    "estimate": -1.5739130434782607,
+    "ci95": [
+     -2.4448330226778503,
+     -0.9285681520314548
+    ],
+    "ci90": [
+     -2.2831862125381126,
+     -0.9959610215053765
+    ],
+    "p_two_sided": 0.0
+   }
+  },
+  {
+   "analysis": "disagreement flags FLAMeS lesion F1 < 0.5",
+   "tool": "mindglide",
+   "band": "thick",
+   "n_scans": 179,
+   "n_poor": 14,
+   "auroc": 0.7785714285714286
+  },
+  {
+   "analysis": "FLAMeS lesions confirmed by tool vs FLAMeS alone",
+   "tool": "mindglide",
+   "band": "thick",
+   "f1": {
+    "n_scans": 179,
+    "n_clusters": 160,
+    "estimate": -0.07360718404058735,
+    "ci95": [
+     -0.11121187352214396,
+     -0.039927610208513126
+    ],
+    "ci90": [
+     -0.10478703737695208,
+     -0.04374205763407541
+    ],
+    "p_two_sided": 0.0
+   },
+   "false_lesions": {
+    "n_scans": 179,
+    "n_clusters": 160,
+    "estimate": -3.752268907563025,
+    "ci95": [
+     -4.688583333333334,
+     -2.835210550887022
+    ],
+    "ci90": [
+     -4.527329773576097,
+     -2.9550155228758173
+    ],
+    "p_two_sided": 0.0
+   }
+  },
+  {
+   "analysis": "disagreement flags FLAMeS lesion F1 < 0.5",
+   "tool": "wmhsynthseg",
+   "band": "iso",
+   "n_scans": 0,
+   "n_poor": 0,
+   "auroc": null
+  },
+  {
+   "analysis": "FLAMeS lesions confirmed by tool vs FLAMeS alone",
+   "tool": "wmhsynthseg",
+   "band": "iso",
+   "f1": {
+    "n_scans": 0,
+    "n_clusters": 0,
+    "estimate": null,
+    "ci95": [
+     null,
+     null
+    ],
+    "ci90": [
+     null,
+     null
+    ],
+    "p_two_sided": null
+   },
+   "false_lesions": {
+    "n_scans": 0,
+    "n_clusters": 0,
+    "estimate": null,
+    "ci95": [
+     null,
+     null
+    ],
+    "ci90": [
+     null,
+     null
+    ],
+    "p_two_sided": null
+   }
+  },
+  {
+   "analysis": "disagreement flags FLAMeS lesion F1 < 0.5",
+   "tool": "wmhsynthseg",
+   "band": "thick",
+   "n_scans": 0,
+   "n_poor": 0,
+   "auroc": null
+  },
+  {
+   "analysis": "FLAMeS lesions confirmed by tool vs FLAMeS alone",
+   "tool": "wmhsynthseg",
+   "band": "thick",
+   "f1": {
+    "n_scans": 0,
+    "n_clusters": 0,
+    "estimate": null,
+    "ci95": [
+     null,
+     null
+    ],
+    "ci90": [
+     null,
+     null
+    ],
+    "p_two_sided": null
+   },
+   "false_lesions": {
+    "n_scans": 0,
+    "n_clusters": 0,
+    "estimate": null,
+    "ci95": [
+     null,
+     null
+    ],
+    "ci90": [
+     null,
+     null
+    ],
+    "p_two_sided": null
+   }
+  },
+  {
+   "analysis": "disagreement flags FLAMeS lesion F1 < 0.5",
+   "tool": "samseg",
+   "band": "iso",
+   "n_scans": 0,
+   "n_poor": 0,
+   "auroc": null
+  },
+  {
+   "analysis": "FLAMeS lesions confirmed by tool vs FLAMeS alone",
+   "tool": "samseg",
+   "band": "iso",
+   "f1": {
+    "n_scans": 0,
+    "n_clusters": 0,
+    "estimate": null,
+    "ci95": [
+     null,
+     null
+    ],
+    "ci90": [
+     null,
+     null
+    ],
+    "p_two_sided": null
+   },
+   "false_lesions": {
+    "n_scans": 0,
+    "n_clusters": 0,
+    "estimate": null,
+    "ci95": [
+     null,
+     null
+    ],
+    "ci90": [
+     null,
+     null
+    ],
+    "p_two_sided": null
+   }
+  },
+  {
+   "analysis": "disagreement flags FLAMeS lesion F1 < 0.5",
+   "tool": "samseg",
+   "band": "thick",
+   "n_scans": 0,
+   "n_poor": 0,
+   "auroc": null
+  },
+  {
+   "analysis": "FLAMeS lesions confirmed by tool vs FLAMeS alone",
+   "tool": "samseg",
+   "band": "thick",
+   "f1": {
+    "n_scans": 0,
+    "n_clusters": 0,
+    "estimate": null,
+    "ci95": [
+     null,
+     null
+    ],
+    "ci90": [
+     null,
+     null
+    ],
+    "p_two_sided": null
+   },
+   "false_lesions": {
+    "n_scans": 0,
+    "n_clusters": 0,
+    "estimate": null,
+    "ci95": [
+     null,
+     null
+    ],
+    "ci90": [
+     null,
+     null
+    ],
+    "p_two_sided": null
+   }
+  },
+  {
+   "analysis": "disagreement flags FLAMeS lesion F1 < 0.5",
+   "tool": "lstai",
+   "band": "iso",
+   "n_scans": 124,
+   "n_poor": 2,
+   "auroc": 0.8032786885245902
+  },
+  {
+   "analysis": "FLAMeS lesions confirmed by tool vs FLAMeS alone",
+   "tool": "lstai",
+   "band": "iso",
+   "f1": {
+    "n_scans": 124,
+    "n_clusters": 85,
+    "estimate": -0.03338582637479303,
+    "ci95": [
+     -0.05723540734682982,
+     -0.014647921750699368
+    ],
+    "ci90": [
+     -0.05255658314448169,
+     -0.0167712274162154
+    ],
+    "p_two_sided": 0.0
+   },
+   "false_lesions": {
+    "n_scans": 124,
+    "n_clusters": 85,
+    "estimate": -1.7561403508771931,
+    "ci95": [
+     -2.303715277777778,
+     -1.315735153256705
+    ],
+    "ci90": [
+     -2.210277570326114,
+     -1.371193181818182
+    ],
+    "p_two_sided": 0.0
+   }
+  },
+  {
+   "analysis": "disagreement flags FLAMeS lesion F1 < 0.5",
+   "tool": "lstai",
+   "band": "thick",
+   "n_scans": 0,
+   "n_poor": 0,
+   "auroc": null
+  },
+  {
+   "analysis": "FLAMeS lesions confirmed by tool vs FLAMeS alone",
+   "tool": "lstai",
+   "band": "thick",
+   "f1": {
+    "n_scans": 0,
+    "n_clusters": 0,
+    "estimate": null,
+    "ci95": [
+     null,
+     null
+    ],
+    "ci90": [
+     null,
+     null
+    ],
+    "p_two_sided": null
+   },
+   "false_lesions": {
+    "n_scans": 0,
+    "n_clusters": 0,
+    "estimate": null,
+    "ci95": [
+     null,
+     null
+    ],
+    "ci90": [
+     null,
+     null
+    ],
+    "p_two_sided": null
+   }
+  }
+ ]
+}
