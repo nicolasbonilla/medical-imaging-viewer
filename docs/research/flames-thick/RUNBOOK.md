@@ -372,8 +372,45 @@ pseudo-Dice bar of §3d failed for a known reason (single-scan fine-tuning; PROT
 the GPU sanity map and the early-look rule (stop if an arm's internal pseudo-Dice < 0.5 after the short
 first session, or arm A's epoch > 300 s).
 
-**Evaluation hand-off.** Kaggle does not evaluate. The exported `model.tar.gz` (+ `.sha256`) of each arm is
-downloaded, its SHA-256 recorded in `docs/research/flames-thick/kaggle/models.json`, kept locally under
-`data/models/flames-thick/` (gitignored) and uploaded by the coordinator to
-`gs://mstool-research-data/flames-thick/train/flames-thick-{a,b}/` together with the run manifests, so §3c/§5
-run unchanged.
+**Full runs (done, 2026-10-21 → 2026-10-22).** Three sessions, both arms side by side, 300 epochs each:
+`full-s1` (short early look, 1.32 quota h; A 0→18, B 0→16), `full-s2` (10.82 h; A →180, B →191), `full-s3`
+(8.57 h; both → 300, final validation, export). 20.7 quota hours for the study, 21.0 h with the pilot (0 USD).
+Arm A median 232 s/epoch, arm B 219 s. Internal pseudo-Dice stayed 0.80–0.85 throughout (no forgetting);
+nnU-Net final validation on the 15 internal scans: A 0.737, B 0.757 (≥ 0.5: pass; unchanged FLAMeS on the
+same scans 0.689 without mirroring — internal, in-domain numbers, not study outcomes). Both runs `completed`,
+epochs 0–299 contiguous, 3 attempts (one per session), training code identical in all sessions (the bundles
+differ only by a unit-test file). A DNS outage on 2026-10-22 stopped the local watcher (fixed in `push.py`),
+which only delayed `full-s3` by ≈ 8.5 h; the runs were paused cleanly and resumed. Records:
+`docs/research/flames-thick/kaggle/{models.json,runs/,sessions/}`, ledger `kaggle_runs.csv`.
+
+| arm | run | model.tar.gz SHA-256 | bytes |
+|---|---|---|---|
+| A (thick) | `flames-thick-a` | `54448dd08e447acec55635655bc097a284cabaa87404bc1b25f13ec78b8ef8cc` | 233 935 096 |
+| B (control) | `flames-thick-b` | `9b2aab1d7a5a05603042b4fdc87c86503637edaf9dc9f535d2de4e30ebe71c62` | 233 888 774 |
+
+Local copies (gitignored): `data/models/flames-thick/flames-thick-{a,b}/` (`model.tar.gz`, `.sha256`, the
+run manifest). Checkpoints and logs stay in the output of the Kaggle kernel `mstool-research-flames-thick-full-s3`.
+
+**Evaluation hand-off (coordinator; §3c and §5 then run unchanged).**
+```bash
+export CLOUDSDK_CONFIG="C:/Users/Nicolas/.gcloud-mstool"; P=mstool-research; B=gs://mstool-research-data
+M=C:/Users/Nicolas/medical-imaging-viewer/data/models/flames-thick
+# 0. read-only: the bucket mirrors must be the zips verified for Kaggle
+gcloud storage cat $B/inputs/flames_weights.zip.sha256 $B/inputs/mslesseg_52771814.zip.sha256
+#    expect 943f49d4997fc752322f0892b4aa6dcfce64f99a8a8c445d38785f54af09c277 and 7a32c86090c1663e11f8c65642de36c77653c3cfce6284162740bbe092fb4db5
+# 1. the two models (+ sidecars: the evaluation VM checks them) and the training manifests (records only;
+#    NOT under runs/ or flames-thick/cost/ — Kaggle is counted from kaggle_runs.csv)
+gcloud storage cp $M/flames-thick-a/model.tar.gz $M/flames-thick-a/model.tar.gz.sha256 $B/flames-thick/train/flames-thick-a/
+gcloud storage cp $M/flames-thick-b/model.tar.gz $M/flames-thick-b/model.tar.gz.sha256 $B/flames-thick/train/flames-thick-b/
+gcloud storage cp $M/flames-thick-a/flames-thick-a.manifest.json $M/flames-thick-b/flames-thick-b.manifest.json $B/flames-thick/kaggle/
+# 2. evaluation code (§1)
+python research/flames_thick/make_build_context.py --eval-code C:/tmp/flames_thick.tar.gz
+gcloud storage cp research/cloud/flames_ensemble_driver.py research/cloud/cohorts_extra.py \
+    research/cloud/extra_cohorts_stage.py C:/tmp/flames_thick.tar.gz $B/flames-thick/code/
+# 3. evaluation pilot (§3c) with arm A under the pilot tag ftP (5 scans, one per site), then the §3d checks
+python research/cloud/launch_vm.py --name flames-thick-eval-pilot --machine-type n2d-standard-4 \
+  --startup research/cloud/vm_flames_thick_eval.sh --paper flames-thick --max-hours 1 \
+  --purpose "FLAMeS-thick evaluation pilot: 5 scans (one per site), arm A model trained on Kaggle" \
+  --meta "models=ftP=flames-thick/train/flames-thick-a/model.tar.gz" \
+         "case-ids=mslesseg_P54 openms_patient16 ms3seg_001 muslim_01 pedims_P1_T1"
+# 4. full evaluation (§5): the two VMs exactly as written there (models=ftA=... ftB=...), then the analysis
