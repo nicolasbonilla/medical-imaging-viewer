@@ -1124,7 +1124,7 @@
     "noLesionSegs": "Keine Läsionssegmentierungen gefunden",
     "coregistered": "Rigide koregistriert (Untersuchung 2 → 1, orientierend)",
     "indexAligned": "Indexbasiert ausgerichtet (kein Quellbild zur Registrierung)",
-    "abstainedTitle": "Keine automatischen Veränderungskandidaten für dieses Paar",
+    "abstainedTitle": "Keine automatischen Veränderungskandidaten und kein Vergleich der Läsionslast für dieses Paar",
     "abstainedDiffers": "Die Aufnahmetechnik unterscheidet sich zwischen den beiden Untersuchungen:",
     "abstainedUnknown": "Die Aufnahmetechnik der beiden Untersuchungen ließ sich nicht feststellen. Es fehlt:",
     "abstainedWhy": "Automatische neue oder vergrößerte Kandidaten sind bei einem Wechsel von Gerät oder Protokoll nicht zuverlässig, ebenso wenn ein solcher Wechsel nicht ausgeschlossen werden kann.",
@@ -1149,7 +1149,7 @@
     "candidatesNoStatement": "Die Software trifft aus diesen Kandidaten keine Aussage über den Krankheitsverlauf; nur die Bestätigung durch einen Radiologen zählt.",
     "decisionsVoided": "Frühere Entscheidungen wurden zu inzwischen geänderten Segmentierungen erfasst; sie gelten nicht mehr.",
     "reviewUnavailable": "Entscheidungen können nur zwischen zwei gespeicherten Segmentierungen erfasst werden.",
-    "evidence": "In einem öffentlichen Test mit von Experten markierten Veränderungen ({{patients}} Patienten, {{segmenter}}) schlug diese Regel im Mittel {{mean}} falsche neue oder vergrößerte Kandidaten pro Patient vor (95-%-KI {{lo}}–{{hi}}); {{meanSub}} nach der Subtraktionsprüfung. Die meisten Kandidaten können falsch sein. Stabile Patienten wurden nicht untersucht. Quelle: {{source}}, {{date}}.",
+    "evidence": "In einem öffentlichen Test mit von Experten markierten Veränderungen ({{patients}} Patienten, {{segmenter}}) schlug diese Regel im Mittel {{mean}} falsche neue oder vergrößerte Kandidaten pro Patient vor (95-%-KI {{lo}}–{{hi}}), {{pct}} % aller vorgeschlagenen Kandidaten; {{meanSub}} nach der Subtraktionsprüfung. Stabile Patienten wurden nicht untersucht. Quelle: {{source}}, {{date}}.",
     "evidenceMissing": "Für diese Regel liegt keine gemessene Rate falscher Kandidaten vor: jeden Kandidaten als unbestätigt behandeln.",
     "readerConfirmed": "MRT-Aktivität von einem Radiologen bestätigt: {{n}} neue und {{e}} vergrößerte Läsion(en), bestätigt von {{who}} ({{when}}).",
     "readerConfirmedRule": "MAGNIMS 2021: eine neue oder vergrößerte T2-Läsion zeigt MRT-Aktivität an. Dies ist die Bestätigung des Radiologen, kein Ergebnis der Software; unbestätigte Kandidaten zählen nicht.",
@@ -1213,7 +1213,11 @@
     "selSummary": "{{s}} SEL-Kandidat(en) unter {{e}} vorbestehenden Läsionen (gegenüber {{bg}} % Rauschniveau im Normalgewebe)",
     "selBaseline": "Ausgangswert",
     "selExpanding": "expandierend",
-    "selCaveat": "KANDIDAT, ein Intervall (2 Untersuchungen). Die validierte SEL-Definition erfordert ≥3 Untersuchungen. Das Rauschniveau wird im Normalgewebe geschätzt (ungefähre Kontrolle falsch-positiver Befunde, keine garantierte Rate). Ein Radiologe muss beurteilen."
+    "selCaveat": "KANDIDAT, ein Intervall (2 Untersuchungen). Die validierte SEL-Definition erfordert ≥3 Untersuchungen. Das Rauschniveau wird im Normalgewebe geschätzt (ungefähre Kontrolle falsch-positiver Befunde, keine garantierte Rate). Ein Radiologe muss beurteilen.",
+    "abstainedVisitUnknown": "Die Daten der beiden Untersuchungen ließen sich nicht feststellen, daher ist ihre Reihenfolge unbekannt.",
+    "decisionsUnavailable": "Die für dieses Paar erfassten Entscheidungen des Radiologen konnten nicht gelesen werden. Behandeln Sie die Kandidaten nicht als ungeprüft: Vergleichen Sie erneut; bis sie gelesen werden, kann keine Entscheidung erfasst werden.",
+    "visitSame": "Wählen Sie zwei verschiedene Untersuchungen: Untersuchung 1 und 2 sind dieselbe Studie.",
+    "visitOrder": "Untersuchung 2 muss später als Untersuchung 1 sein."
   },
   "edgeAI": {
     "quickScreen": "Schnell-Screening",

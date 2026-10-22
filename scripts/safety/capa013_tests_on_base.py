@@ -8,7 +8,12 @@ added — tests excepted — runs the two CAPA-013 test files, records which tes
 Run from the repository root (needs backend/venv or the current Python with the backend
 requirements, and frontend/node_modules):
     python scripts/safety/capa013_tests_on_base.py
-Output: docs/iec62304/records/risk_verification/CAPA-013_tests_on_base_2026-10-22.json
+        -> PR #62 (2018277); docs/iec62304/records/risk_verification/CAPA-013_tests_on_base_2026-10-22.json
+    python scripts/safety/capa013_tests_on_base.py --base ad144ba \
+        --out docs/iec62304/records/risk_verification/CAPA-013_review1_tests_on_pr63_2026-10-23.json \
+        --label "ad144ba (PR #63 head before the independent review fixes)"
+The source files (backend/app, frontend/src; tests excepted) that differ from the base commit are
+taken from git: put back at their base version, or removed when the base did not have them.
 NEVER run this while anything else edits the files it swaps (it restores a snapshot).
 """
 import datetime
@@ -22,34 +27,36 @@ import tempfile
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 os.chdir(ROOT)
-BASE = "2018277"
+def _arg(name, default):
+    return sys.argv[sys.argv.index(name) + 1] if name in sys.argv else default
+
+
+BASE = _arg("--base", "2018277")
+LABEL = _arg("--label", "2018277 (qms/capa012-and-problem-reports, PR #62)")
 PY = os.path.join(ROOT, "backend", "venv", "Scripts", "python.exe")
 if not os.path.exists(PY):
     PY = sys.executable
-OUT = "docs/iec62304/records/risk_verification/CAPA-013_tests_on_base_2026-10-22.json"
+OUT = _arg("--out", "docs/iec62304/records/risk_verification/CAPA-013_tests_on_base_2026-10-22.json")
 BACKEND_TEST = "tests/unit/test_capa013_longitudinal_candidates.py"
 FRONTEND_TEST = "src/components/LongitudinalCompare.capa013.test.tsx"
 
-# Source files CAPA-013 changed (restored to BASE) or added (removed for the run).
-CHANGED = [
-    "backend/app/api/routes/ai_report.py",
-    "backend/app/api/routes/segmentation_analysis.py",
-    "backend/app/mcp/_backend.py",
-    "backend/app/mcp/ms_clinical_server.py",
-    "backend/app/services/brain_report_service.py",
-    "backend/app/services/dicomweb_service.py",
-    "frontend/src/api/segmentation.ts",
-    "frontend/src/components/LongitudinalCompare.tsx",
-    "frontend/src/i18n/locales/de.json",
-    "frontend/src/i18n/locales/en.json",
-    "frontend/src/i18n/locales/es.json",
-    "frontend/src/types/lesion.ts",
-]
-ADDED = [
-    "backend/app/services/longitudinal_candidate_safety.py",
-    "backend/app/services/assets/longitudinal_false_candidate_evidence.json",
-    "frontend/src/components/LongitudinalResultPanel.tsx",
-]
+def _is_test(path):
+    return "/tests/" in path or ".test." in path or "__tests__" in path
+
+
+def source_files():
+    """(changed, added): source files that differ from BASE — at their BASE version, or new since."""
+    names = subprocess.run(["git", "diff", "--name-only", BASE, "--", "backend/app", "frontend/src"],
+                           capture_output=True, text=True, check=True).stdout.split()
+    names += subprocess.run(["git", "ls-files", "--others", "--exclude-standard", "--", "backend/app", "frontend/src"],
+                            capture_output=True, text=True, check=True).stdout.split()
+    changed, added = [], []
+    for n in sorted(set(names)):
+        if _is_test(n) or not os.path.exists(n):
+            continue
+        in_base = subprocess.run(["git", "cat-file", "-e", f"{BASE}:{n}"], capture_output=True).returncode == 0
+        (changed if in_base else added).append(n)
+    return changed, added
 
 
 def base_bytes(path):
@@ -86,6 +93,7 @@ def run_frontend():
 
 
 def main():
+    CHANGED, ADDED = source_files()
     snapshot = {p: open(p, "rb").read() for p in CHANGED + ADDED}
     try:
         for p in CHANGED:
@@ -100,15 +108,17 @@ def main():
         assert open(p, "rb").read() == b, p
     rec = {
         "executed": datetime.datetime.now().isoformat(timespec="seconds"),
-        "base": f"{BASE} (qms/capa012-and-problem-reports, PR #62)",
-        "method": "source files changed by CAPA-013 restored to the base commit, files it added removed; the "
-                  "CAPA-013 test files run unchanged; working tree restored byte for byte",
+        "base": LABEL,
+        "method": "source files that differ from the base commit restored to it, files it did not have removed; "
+                  "the CAPA-013 test files run unchanged; working tree restored byte for byte",
+        "swapped": {"restored_to_base": CHANGED, "removed": ADDED},
         "test_sha256": {t: hashlib.sha256(open(t, encoding="utf-8").read().replace("\r\n", "\n").encode("utf-8")).hexdigest()
                         for t in ("backend/" + BACKEND_TEST, "frontend/" + FRONTEND_TEST)},
         "backend": backend,
         "frontend": frontend,
-        "note": "test_rc060_assistant_cannot_record_a_decision passes on the base too: it is a regression guard "
-                "(the review route must never join the assistant's compute-only list), not a defect detector.",
+        "note": _arg("--note", "test_rc060_assistant_cannot_record_a_decision passes on the base too: it is a "
+                               "regression guard (the review route must never join the assistant's compute-only "
+                               "list), not a defect detector."),
     }
     json.dump(rec, open(OUT, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
     print("base: backend", backend["passed"], "passed /", backend["failed"], "failed /", backend["errors"],

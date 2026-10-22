@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { segmentationAPI } from '@/api/segmentation';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
-import type { LongitudinalResult, LesionChange, LongitudinalAcquisitionCheck } from '@/types';
+import type { LongitudinalResult, LesionChange } from '@/types';
 
 const REGION_CODES: Record<string, string> = {
   Periventricular: 'pv',
@@ -100,6 +100,13 @@ export function LongitudinalResultPanel({
   const cc = result.change_candidates;
   const evidence = result.false_candidate_evidence;
   const confirmedBox = result.reader_confirmed_activity;
+  // Share of all proposed candidates that were false in the source record (review of PR #63:
+  // stated as measured, not as "most"). Without it no rate is shown.
+  const falseSharePct = (() => {
+    const share = evidence?.false_share_of_candidates
+      ?? (evidence?.false_candidates != null && evidence?.all_candidates ? evidence.false_candidates / evidence.all_candidates : undefined);
+    return typeof share === 'number' && Number.isFinite(share) ? Math.round(share * 100) : null;
+  })();
 
   const sendDecision = useCallback(async (change: LesionChange, decision: 'confirmed' | 'rejected') => {
     if (!result.review_binding || !change.candidate_key) return;
@@ -129,13 +136,15 @@ export function LongitudinalResultPanel({
     : typeof v === 'number' ? num(v, 2) : String(v ?? '—'));
   const visitLabel = (tp: string) => (tp === 'tp1' ? t('longitudinal.visit1') : t('longitudinal.visit2'));
 
-  const abstentionBox = (check: LongitudinalAcquisitionCheck | undefined) => (
+  const check = result.acquisition_check;
+  const abstentionBox = () => (
     <div
       data-testid="longitudinal-abstained"
       className="rounded border border-orange-500/50 bg-orange-500/10 px-2 py-1.5 text-[10px] leading-snug text-orange-800 dark:text-orange-200 space-y-1"
     >
       <p className="font-semibold">{t('longitudinal.abstainedTitle')}</p>
-      {check?.status === 'differs' ? (
+      {result.visit_check?.status === 'unknown' && <p>{t('longitudinal.abstainedVisitUnknown')}</p>}
+      {check?.status === 'differs' && (
         <>
           <p>{t('longitudinal.abstainedDiffers')}</p>
           <ul className="list-disc pl-4">
@@ -146,7 +155,8 @@ export function LongitudinalResultPanel({
             ))}
           </ul>
         </>
-      ) : (
+      )}
+      {check?.status === 'not_established' && (
         <>
           <p>{t('longitudinal.abstainedUnknown')}</p>
           <ul className="list-disc pl-4">
@@ -166,9 +176,10 @@ export function LongitudinalResultPanel({
 
   return (
     <>
-      {/* Lesion burden of each visit (a property of each segmentation). The change is shown only
-          when the comparison did not abstain (RC-062). */}
-      <div className="bg-gray-100 dark:bg-gray-900/50 rounded-lg p-2 space-y-1.5">
+      {/* Lesion load and count of the two visits — never when the comparison abstains (RC-062;
+          review of PR #63, blocker 2: they were still shown side by side). */}
+      {!abstained && (
+      <div data-testid="longitudinal-burden" className="bg-gray-100 dark:bg-gray-900/50 rounded-lg p-2 space-y-1.5">
         <div className="flex items-center justify-between">
           <span className="text-[10px] text-gray-500 dark:text-gray-400">{t('longitudinal.burden')}</span>
           <div className="flex items-center gap-2">
@@ -177,7 +188,7 @@ export function LongitudinalResultPanel({
             <span className="text-xs font-mono font-bold text-gray-800 dark:text-white">{num(result.burden_tp2_ml, 2)} mL</span>
           </div>
         </div>
-        {!abstained && typeof result.burden_delta_percent === 'number' && (
+        {typeof result.burden_delta_percent === 'number' && (
           <div className="flex items-center justify-between">
             <span className="text-[10px] text-gray-500 dark:text-gray-400">{t('longitudinal.change')}</span>
             <span className="text-xs font-mono font-bold text-gray-500 dark:text-gray-300">
@@ -192,6 +203,7 @@ export function LongitudinalResultPanel({
           </span>
         </div>
       </div>
+      )}
 
       {/* Standing caveat, localised (the backend's English caveat is for API consumers). */}
       {result.registration_verified ? (
@@ -221,7 +233,7 @@ export function LongitudinalResultPanel({
         )}
       </div>
 
-      {abstained ? abstentionBox(result.acquisition_check) : (
+      {abstained ? abstentionBox() : (
         <>
           {/* RC-060 + RC-061: unconfirmed candidates, the review state and the measured rate. */}
           <div
@@ -233,16 +245,22 @@ export function LongitudinalResultPanel({
                 total: cc?.total ?? 0, n: cc?.new ?? 0, e: cc?.enlarging ?? 0, d: result.new_lesion_min_diameter_mm ?? 3,
               })}
             </p>
-            <p>
-              {t('longitudinal.candidatesReview', {
-                awaiting: cc?.awaiting_review ?? 0, confirmed: cc?.confirmed ?? 0, rejected: cc?.rejected ?? 0,
-              })}
-            </p>
+            {cc?.decisions_unavailable ? (
+              <p data-testid="longitudinal-decisions-unavailable" className="font-semibold text-red-600 dark:text-red-400">
+                {t('longitudinal.decisionsUnavailable')}
+              </p>
+            ) : (
+              <p>
+                {t('longitudinal.candidatesReview', {
+                  awaiting: cc?.awaiting_review ?? 0, confirmed: cc?.confirmed ?? 0, rejected: cc?.rejected ?? 0,
+                })}
+              </p>
+            )}
             <p>{t('longitudinal.candidatesNoStatement')}</p>
             {cc?.earlier_decisions_voided && <p>{t('longitudinal.decisionsVoided')}</p>}
-            {!result.review_binding && <p>{t('longitudinal.reviewUnavailable')}</p>}
+            {!result.review_binding && !cc?.decisions_unavailable && <p>{t('longitudinal.reviewUnavailable')}</p>}
             <p data-testid="longitudinal-evidence" className="text-[9px] text-amber-900/80 dark:text-amber-100/80">
-              {evidence
+              {evidence && falseSharePct != null
                 ? t('longitudinal.evidence', {
                   patients: evidence.patients,
                   segmenter: evidence.segmenter,
@@ -250,6 +268,7 @@ export function LongitudinalResultPanel({
                   lo: num(evidence.false_candidates_per_patient_ci95?.[0], 1),
                   hi: num(evidence.false_candidates_per_patient_ci95?.[1], 1),
                   meanSub: num(evidence.after_subtraction_per_patient, 1),
+                  pct: falseSharePct,
                   source: evidence.source,
                   date: evidence.measured_on,
                 })

@@ -136,8 +136,16 @@ export function LongitudinalCompare({
   const { data: tp1Segs = [] } = useStudyLesionSegs(tp1FileIds, tp1StudyId || null);
   const { data: tp2Segs = [] } = useStudyLesionSegs(tp2FileIds, tp2StudyId || null);
 
-  // Auto-select first segmentation when list loads
-  const canCompare = tp1SegId && tp2SegId;
+  // Review of PR #63: visit 2 must be a different, later visit than visit 1 (the backend refuses
+  // otherwise; here the Compare button stays disabled and says why).
+  const visitOrderProblem = useMemo(() => {
+    if (!tp1StudyId || !tp2StudyId) return null;
+    if (tp1StudyId === tp2StudyId) return 'visitSame';
+    const d1 = new Date(sortedStudies.find((s) => s.id === tp1StudyId)?.study_date ?? '').getTime();
+    const d2 = new Date(sortedStudies.find((s) => s.id === tp2StudyId)?.study_date ?? '').getTime();
+    return Number.isFinite(d1) && Number.isFinite(d2) && d2 > d1 ? null : 'visitOrder';
+  }, [tp1StudyId, tp2StudyId, sortedStudies]);
+  const canCompare = Boolean(tp1SegId && tp2SegId && !visitOrderProblem);
 
   const handleCompare = useCallback(async () => {
     if (!canCompare) return;
@@ -288,6 +296,12 @@ export function LongitudinalCompare({
         )}
       </button>
 
+      {visitOrderProblem && (
+        <p data-testid="longitudinal-visit-order" className="text-[10px] text-orange-600 dark:text-orange-300">
+          {t(`longitudinal.${visitOrderProblem}`)}
+        </p>
+      )}
+
       {error && (
         <div className="flex items-center gap-1 text-red-400 text-[10px]">
           <AlertCircle className="w-3 h-3" />
@@ -306,7 +320,9 @@ export function LongitudinalCompare({
           />
 
           {/* SEL (slowly-expanding lesion) detection — vanguard smoldering-disease
-              biomarker, on-demand (deformable registration). CANDIDATE, single-interval. */}
+              biomarker, on-demand (deformable registration). CANDIDATE, single-interval.
+              Not offered when the comparison abstains (review of PR #63). */}
+          {!result.abstained && (
           <div className="rounded border border-fuchsia-500/30 bg-fuchsia-500/5 px-2 py-1.5">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-semibold text-fuchsia-700 dark:text-fuchsia-300">
@@ -361,6 +377,7 @@ export function LongitudinalCompare({
               </div>
             )}
           </div>
+          )}
         </>
       )}
     </div>

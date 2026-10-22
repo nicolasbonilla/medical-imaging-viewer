@@ -1135,7 +1135,7 @@
     "noLesionSegs": "No hay segmentaciones de lesiones",
     "coregistered": "Registro rígido (visita 2 → visita 1, orientativo)",
     "indexAligned": "Alineado por índice (sin imagen de origen para registrar)",
-    "abstainedTitle": "Sin candidatos automáticos de cambio para este par",
+    "abstainedTitle": "Sin candidatos automáticos de cambio ni comparación de la carga lesional para este par",
     "abstainedDiffers": "La adquisición es distinta entre las dos visitas:",
     "abstainedUnknown": "No se pudo establecer la adquisición de las dos visitas. Falta:",
     "abstainedWhy": "Los candidatos automáticos nuevos o agrandados no son fiables si cambia el equipo o el protocolo, o si ese cambio no se puede descartar.",
@@ -1160,7 +1160,7 @@
     "candidatesNoStatement": "El programa no hace ninguna afirmación sobre la evolución de la enfermedad a partir de estos candidatos; solo cuenta la confirmación de un radiólogo.",
     "decisionsVoided": "Había decisiones registradas sobre segmentaciones que han cambiado; ya no se aplican.",
     "reviewUnavailable": "Solo se pueden registrar decisiones entre dos segmentaciones guardadas.",
-    "evidence": "En una prueba pública con cambios marcados por expertos ({{patients}} pacientes, {{segmenter}}), esta regla propuso de media {{mean}} candidatos nuevos o agrandados falsos por paciente (IC 95 % {{lo}}–{{hi}}); {{meanSub}} tras la comprobación por sustracción. La mayoría de los candidatos pueden ser falsos. No se estudiaron pacientes estables. Fuente: {{source}}, {{date}}.",
+    "evidence": "En una prueba pública con cambios marcados por expertos ({{patients}} pacientes, {{segmenter}}), esta regla propuso de media {{mean}} candidatos nuevos o agrandados falsos por paciente (IC 95 % {{lo}}–{{hi}}), el {{pct}} % de todos los candidatos que propuso; {{meanSub}} tras la comprobación por sustracción. No se estudiaron pacientes estables. Fuente: {{source}}, {{date}}.",
     "evidenceMissing": "No hay una tasa medida de candidatos falsos para esta regla: trate cada candidato como no confirmado.",
     "readerConfirmed": "Actividad en RM confirmada por un radiólogo: {{n}} lesiones nuevas y {{e}} agrandadas, confirmadas por {{who}} ({{when}}).",
     "readerConfirmedRule": "MAGNIMS 2021: una lesión T2 nueva o agrandada indica actividad en RM. Es la confirmación del radiólogo, no un resultado del programa; los candidatos sin confirmar no cuentan.",
@@ -1224,7 +1224,11 @@
     "selSummary": "{{s}} candidato(s) SEL entre {{e}} lesiones previas (frente a un ruido de fondo del {{bg}} % en tejido normal)",
     "selBaseline": "inicial",
     "selExpanding": "en expansión",
-    "selCaveat": "CANDIDATO, un solo intervalo (2 visitas). La definición validada de SEL necesita ≥3 visitas. El ruido de fondo se estima en tejido normal (control aproximado de falsos positivos, no una tasa garantizada). Un radiólogo debe valorarlo."
+    "selCaveat": "CANDIDATO, un solo intervalo (2 visitas). La definición validada de SEL necesita ≥3 visitas. El ruido de fondo se estima en tejido normal (control aproximado de falsos positivos, no una tasa garantizada). Un radiólogo debe valorarlo.",
+    "abstainedVisitUnknown": "No se pudieron establecer las fechas de las dos visitas, así que no se conoce su orden.",
+    "decisionsUnavailable": "No se pudieron leer las decisiones del radiólogo registradas para este par. No trate los candidatos como no revisados: vuelva a comparar; no se puede registrar ninguna decisión hasta poder leerlas.",
+    "visitSame": "Elija dos visitas distintas: la visita 1 y la visita 2 son el mismo estudio.",
+    "visitOrder": "La visita 2 debe ser posterior a la visita 1."
   },
   "overlay": {
     "mode": "Modo de Overlay",

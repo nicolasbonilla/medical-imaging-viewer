@@ -386,10 +386,10 @@ REPORT_TEMPLATES: Dict[str, str] = {
         "the two timepoints are not verified as co-registered at lesion scale. You MUST (a) "
         "list them only as 'unconfirmed change candidates awaiting radiologist review', never "
         "as new or enlarging lesions; (b) NOT assert dissemination in time from them; (c) NOT "
-        "classify the disease course from them; (d) state a disease-course conclusion ONLY from "
-        "the radiologist-confirmed lesions supplied in the data, as the radiologist's "
-        "confirmation; (e) when the data say the change candidates were NOT computed "
-        "(acquisition differs or could not be established), report no count and state that the "
+        "classify the disease course from them; (d) state no reader decision: the radiologist's "
+        "decisions on the candidates are recorded in the application, not in this draft; (e) when "
+        "the data say the change candidates were NOT computed (acquisition or visit order not "
+        "established as comparable), report no count and no lesion load and state that the "
         "change must be assessed visually by the radiologist. The FLAIR subtraction is a "
         "signal, never a confirmation.\n\n"
         "Generate the report with these exact sections:\n\n"
@@ -404,25 +404,24 @@ REPORT_TEMPLATES: Dict[str, str] = {
         "### Change Candidates (unconfirmed)\n"
         "- Number of unconfirmed new and enlarging change candidates awaiting radiologist review; "
         "approximate locations if centroid data provided\n\n"
-        "### Radiologist-Confirmed Changes\n"
-        "- Only the new or enlarging lesions the data list as confirmed by a radiologist, with "
-        "who confirmed them and when; otherwise write 'none confirmed yet'\n\n"
+        "### Radiologist Decisions\n"
+        "- Write: 'The radiologist's decisions on these candidates are recorded in the "
+        "application and are not part of this draft.'\n\n"
         "### Resolved/Shrunk and Stable Candidates\n"
         "- Counts, labelled as unconfirmed candidates\n\n"
         "## LESION BURDEN TRAJECTORY\n"
-        "- Total T2 lesion load: prior vs. current (mL or mm³)\n"
+        "- Total T2 lesion load: prior vs. current (mL or mm³), only if supplied\n"
         "- Percentage change in total burden (only if supplied)\n\n"
         "## DIS ASSESSMENT\n"
         "- Present DIS data from provided analysis\n"
         "- Lesion presence across 4 MAGNIMS regions with checkmarks\n\n"
         "## INTERVAL CHANGE STATUS\n"
-        "- If radiologist-confirmed new or enlarging lesions are supplied: report them as the "
-        "radiologist's confirmation (MAGNIMS 2021: one new or enlarging T2 lesion suffices).\n"
-        "- Otherwise: 'Not determined by the software — N unconfirmed change candidates await "
-        "radiologist review.' Never infer a conclusion from unconfirmed candidates.\n\n"
+        "- Write: 'Not determined by the software — N unconfirmed change candidates for "
+        "radiologist review; the radiologist's decisions are recorded in the application.' Never "
+        "infer a conclusion from the candidates.\n\n"
         "## IMPRESSION\n"
         "Numbered summary:\n"
-        "1. Unconfirmed change candidates awaiting review, and radiologist-confirmed changes if any\n"
+        "1. Unconfirmed change candidates for radiologist review\n"
         "2. Burden trajectory with quantitative delta (if supplied)\n"
         "3. DIS status (X/4 regions)\n"
         "4. Interval change status as above\n"
@@ -609,19 +608,20 @@ class BrainReportService:
             # caller-provided registration_verified=true (adversarial finding D4), and never
             # pass an activity or DIT flag: the candidates are unconfirmed (CAPA-013, RC-060).
             parts.append(f"\nLongitudinal comparison data:")
-            parts.append(f"  TP1 burden: {lng.get('burden_tp1_ml') or 0:.3f} mL "
-                         f"({lng.get('total_lesions_tp1') or 0} lesions)")
-            parts.append(f"  TP2 burden: {lng.get('burden_tp2_ml') or 0:.3f} mL "
-                         f"({lng.get('total_lesions_tp2') or 0} lesions)")
             if lng.get("abstained"):
-                # RC-062: acquisition differs or not established — no change result at all.
+                # RC-062: acquisition or visit order not established as comparable — no change
+                # result and no lesion load or count of either visit (review of PR #63, blocker 2).
                 parts.append(
                     "  Automatic change candidates were NOT computed: the acquisition of the two "
-                    "visits differs or could not be established. Report no new, enlarging or "
-                    "resolved figure; state that the change between the visits must be assessed "
-                    "visually by the radiologist."
+                    "visits, or their order, could not be established as comparable. Report no new, "
+                    "enlarging or resolved figure and no lesion load of either visit; state that the "
+                    "change between the visits must be assessed visually by the radiologist."
                 )
             else:
+                parts.append(f"  TP1 burden: {lng.get('burden_tp1_ml') or 0:.3f} mL "
+                             f"({lng.get('total_lesions_tp1') or 0} lesions)")
+                parts.append(f"  TP2 burden: {lng.get('burden_tp2_ml') or 0:.3f} mL "
+                             f"({lng.get('total_lesions_tp2') or 0} lesions)")
                 if lng.get("burden_delta_percent") is not None:
                     parts.append(f"  Burden delta: {lng.get('burden_delta_percent'):.1f}%")
                 sc = lng.get("status_counts") or {}
@@ -638,20 +638,12 @@ class BrainReportService:
                 parts.append(f"  Resolved candidates (unconfirmed): {sc.get('resolved', 0)}")
                 parts.append(f"  Shrunk candidates (unconfirmed): {sc.get('shrunk', 0)}")
                 parts.append(f"  Stable candidates (unconfirmed): {sc.get('stable', 0)}")
-                rc = lng.get("reader_confirmed_activity")
-                if isinstance(rc, dict) and rc.get("confirmed_by") and rc.get("last_confirmed_at") \
-                        and int(rc.get("confirmed_new") or 0) + int(rc.get("confirmed_enlarging") or 0) >= 1:
-                    who = ", ".join(str(x) for x in rc["confirmed_by"])
-                    parts.append(f"  Radiologist-confirmed new lesions: {int(rc.get('confirmed_new') or 0)}")
-                    parts.append(f"  Radiologist-confirmed enlarging lesions: "
-                                 f"{int(rc.get('confirmed_enlarging') or 0)}")
-                    parts.append(
-                        f"  These were confirmed by the radiologist {who} on {rc['last_confirmed_at']}; "
-                        "report them as the radiologist's confirmation (MAGNIMS 2021: one new or "
-                        "enlarging T2 lesion indicates MRI activity)."
-                    )
-                else:
-                    parts.append("  No change candidate has been confirmed by a radiologist yet.")
+                # Review of PR #63, blocker 1: findings come from the request and a reader decision
+                # in them cannot be verified here, so none is ever passed to the model.
+                parts.append(
+                    "  Radiologist decisions on these candidates are recorded in the application and "
+                    "are not part of this draft: state none."
+                )
 
         # Zone map statistics (from MSMask atlas)
         if findings.get("zone_stats"):
@@ -794,8 +786,8 @@ class BrainReportService:
                 "id": "ms_longitudinal",
                 "name": "MS Longitudinal Comparison",
                 "description": (
-                    "Interval change report with per-lesion tracking (new/enlarged/resolved), "
-                    "burden trajectory, DIS assessment, and NEDA-3 evaluation."
+                    "Interval change report: unconfirmed change candidates (new/enlarged/resolved) "
+                    "for radiologist review, burden trajectory and DIS assessment."
                 ),
             },
         ]

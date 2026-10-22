@@ -206,6 +206,15 @@ export interface LongitudinalCandidateSummary {
   awaiting_review: number;
   /** True when decisions existed for other (since changed) masks and were not applied. */
   earlier_decisions_voided?: boolean;
+  /** True when the stored decisions could not be read: the counts above are null, nothing may be
+   *  shown as "awaiting review" and no decision may be recorded (review of PR #63). */
+  decisions_unavailable?: boolean;
+}
+
+export interface LongitudinalVisitCheck {
+  status: 'ok' | 'same_visit' | 'wrong_order' | 'unknown';
+  tp1_study_date?: string | null;
+  tp2_study_date?: string | null;
 }
 
 export interface LongitudinalReaderConfirmed {
@@ -245,6 +254,10 @@ export interface LongitudinalFalseCandidateEvidence {
   false_candidates_per_patient_ci95: [number, number] | number[];
   after_subtraction_per_patient: number;
   after_subtraction_per_patient_ci95?: [number, number] | number[];
+  /** False candidates and all candidates in the source record, and their ratio (review of PR #63). */
+  false_candidates?: number;
+  all_candidates?: number;
+  false_share_of_candidates?: number;
   source: string;
   source_record?: string;
   source_commit?: string;
@@ -252,12 +265,13 @@ export interface LongitudinalFalseCandidateEvidence {
 
 export interface LongitudinalResult {
   changes: LesionChange[];
-  total_lesions_tp1: number;
-  total_lesions_tp2: number;
-  burden_tp1_mm3: number;
-  burden_tp2_mm3: number;
-  burden_tp1_ml: number;
-  burden_tp2_ml: number;
+  /** null when the comparison abstained (RC-062): no quantity of either visit is compared. */
+  total_lesions_tp1: number | null;
+  total_lesions_tp2: number | null;
+  burden_tp1_mm3: number | null;
+  burden_tp2_mm3: number | null;
+  burden_tp1_ml: number | null;
+  burden_tp2_ml: number | null;
   /** null when the comparison abstained (RC-062). */
   burden_delta_mm3: number | null;
   burden_delta_percent: number | null;
@@ -279,6 +293,8 @@ export interface LongitudinalResult {
   /** RC-062: true when the acquisition of the two visits differs or could not be established. */
   abstained?: boolean;
   acquisition_check?: LongitudinalAcquisitionCheck;
+  /** Visit 2 later than visit 1 and a different visit; "unknown" makes the comparison abstain. */
+  visit_check?: LongitudinalVisitCheck;
   /** RC-061: the measured false-candidate rate (versioned asset), or null when not available. */
   false_candidate_evidence?: LongitudinalFalseCandidateEvidence | null;
   /** MAGNIMS region stratification (MSMask atlas) of new + enlarging candidates by

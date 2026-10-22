@@ -11,6 +11,7 @@ from fastapi import APIRouter, HTTPException, Depends, Request
 from fastapi.responses import Response
 from datetime import datetime
 from typing import Optional
+import inspect
 import numpy as np
 
 import struct
@@ -113,6 +114,48 @@ def _source_acquisition(file_id):
     Read from the image's instance record (written from the DICOM header at PACS import).
     None — no record, no source image, unreadable — makes the comparison abstain."""
     return lcs.read_source_acquisition(file_id)
+
+
+def _source_visit(file_id):
+    """Review of PR #63: the study (visit) and study date of a segmentation's source image, or None.
+    Returns an awaitable in production (study service); tests may return the record directly."""
+    return lcs.read_source_visit(file_id)
+
+
+async def _visit_check(spec_tp1, spec_tp2, source_tp1, source_tp2) -> dict:
+    """Visit 2 must be a different, later visit than visit 1. Same visit or wrong order: the
+    comparison is refused (400). Unknown dates: the result abstains (RC-062)."""
+    if spec_tp1.get("id") == spec_tp2.get("id") or (source_tp1 and source_tp1 == source_tp2):
+        raise HTTPException(status_code=400, detail="Choose two different visits: both timepoints are the same.")
+
+    async def visit(file_id):
+        if not file_id:
+            return None
+        v = _source_visit(file_id)
+        return await v if inspect.isawaitable(v) else v
+
+    check = lcs.check_visit_order(await visit(source_tp1), await visit(source_tp2))
+    if check["status"] == "same_visit":
+        raise HTTPException(status_code=400, detail="Choose two different visits: both segmentations belong to the same visit.")
+    if check["status"] == "wrong_order":
+        raise HTTPException(status_code=400, detail="Visit 2 must be later than visit 1.")
+    return check
+
+
+def _stored_review(segmentation_service, tp1_id, tp2_id):
+    """Review of PR #63: the reader decisions stored for this pair, or None when none were recorded.
+    Raises when they cannot be read — the caller reports it instead of showing 'awaiting review'."""
+    entry = segmentation_service.get_loaded(tp2_id)
+    if entry is None:
+        raise RuntimeError("follow-up segmentation not loaded")
+    analysis = getattr(entry["metadata"], "analysis_data", None) or {}
+    reviews = analysis.get("longitudinal_reviews") or {}
+    if not isinstance(reviews, dict):
+        raise RuntimeError("stored decisions are not readable")
+    record = reviews.get(tp1_id)
+    if record is not None and not isinstance(record, dict):
+        raise RuntimeError("stored decisions for this pair are not readable")
+    return record
 
 
 # Single source of truth: the guard lives in the Class C classifier (HAZ-005, RC-032).
@@ -668,6 +711,7 @@ async def compare_longitudinal(
         # permutation (the old behavior) silently mis-aligned square/permuted
         # volumes — audit A-3. Fail loud on any grid mismatch instead.
         _require_comparable_grid(mask_tp1.shape, mask_tp2.shape)
+        visit_check = await _visit_check(tp1_spec, tp2_spec, source_tp1, source_tp2)   # review of PR #63
 
         # Binarize masks (labels > 0 → 1) for comparison
         mask_tp1_bin = (mask_tp1 > 0).astype(np.uint8)
@@ -772,16 +816,19 @@ async def compare_longitudinal(
         )
         both_saved = tp1_spec.get("type") == "segmentation" and tp2_spec.get("type") == "segmentation"
         binding = lcs.mask_binding(mask_tp1, mask_tp2) if both_saved else None
-        stored_review = None
+        stored_review, review_read_failed = None, False
         if both_saved:
-            entry_tp2 = segmentation_service.get_loaded(tp2_spec.get("id"))
-            analysis = getattr(entry_tp2["metadata"], "analysis_data", None) if entry_tp2 else None
-            stored_review = ((analysis or {}).get("longitudinal_reviews") or {}).get(tp1_spec.get("id"))
+            try:
+                stored_review = _stored_review(segmentation_service, tp1_spec.get("id"), tp2_spec.get("id"))
+            except Exception as e:  # noqa: BLE001 — reported in the response, never silently "unreviewed"
+                logger.error("Stored longitudinal decisions could not be read", extra={"error": str(e)})
+                review_read_failed = True
         status_counts = result.get("status_counts") or {}
         result = lcs.present_comparison(
             result, acquisition_check=acquisition_check,
             evidence=lcs.load_false_candidate_evidence(),
             binding=binding, stored_review=stored_review,
+            visit_check=visit_check, review_read_failed=review_read_failed,
         )
 
         logger.info("Longitudinal comparison completed (unconfirmed candidates, registration unverified)", extra={
@@ -858,22 +905,30 @@ async def review_longitudinal_candidates(
             "review the candidates, then record your decision."))
 
     metadata = entry_tp2["metadata"]
+    try:
+        record = _stored_review(segmentation_service, tp1_id, tp2_id)
+    except Exception as e:  # noqa: BLE001 — never overwrite decisions that could not be read
+        raise HTTPException(status_code=500, detail=(
+            "The decisions already recorded for this pair could not be read; nothing was recorded. "
+            "Try again.")) from e
     analysis = dict(metadata.analysis_data or {})
     reviews = dict(analysis.get("longitudinal_reviews") or {})
-    record = reviews.get(tp1_id)
-    if not isinstance(record, dict) or record.get("tp1_mask_sha256") != current["tp1_mask_sha256"] \
-            or record.get("tp2_mask_sha256") != current["tp2_mask_sha256"]:
-        record = {**current, "decisions": {}}          # decisions for other masks never carry over
-    decisions = dict(record.get("decisions") or {})
+    record = dict(record or {})
+    history = list(record.get("history") or [])      # append-only: every decision ever recorded
+    same_masks = (record.get("tp1_mask_sha256") == current["tp1_mask_sha256"]
+                  and record.get("tp2_mask_sha256") == current["tp2_mask_sha256"])
+    decisions = dict(record.get("decisions") or {}) if same_masks else {}   # other masks never carry over
     now = datetime.utcnow().isoformat() + "Z"
     for d in body["decisions"]:
-        decisions[d["candidate_key"]] = {
+        entry = {
             "decision": d["decision"],
             "reviewed_by": current_user.username,
             "reviewed_by_id": current_user.id,
             "reviewed_at": now,
         }
-    reviews[tp1_id] = {**current, "decisions": decisions}
+        decisions[d["candidate_key"]] = entry
+        history.append({"candidate_key": d["candidate_key"], **entry, **current})
+    reviews[tp1_id] = {**current, "decisions": decisions, "history": history}
     metadata.analysis_data = {**analysis, "longitudinal_reviews": reviews}
     metadata.modified_at = datetime.utcnow()
     segmentation_service.persist(tp2_id)
@@ -922,14 +977,31 @@ async def detect_slowly_expanding_lesions(
             if mask is None:
                 raise HTTPException(status_code=404, detail=f"Segmentation {spec['id']} not found")
             meta = await segmentation_service.get_metadata(spec["id"])
+            file_id = getattr(meta, "file_id", None)
             intensity, spacing, _img = await _load_source_intensity(
-                getattr(meta, "file_id", None), storage_service, f"sel/{spec['id']}")
-            return (mask > 0).astype(np.uint8), spacing, intensity
+                file_id, storage_service, f"sel/{spec['id']}")
+            return (mask > 0).astype(np.uint8), spacing, intensity, file_id
 
-        mask_tp1, spacing_tp1, intensity_tp1 = await _load(tp1_spec)
-        mask_tp2, _sp2, intensity_tp2 = await _load(tp2_spec)
+        mask_tp1, spacing_tp1, intensity_tp1, source_tp1 = await _load(tp1_spec)
+        mask_tp2, _sp2, intensity_tp2, source_tp2 = await _load(tp2_spec)
 
         _require_comparable_grid(mask_tp1.shape, mask_tp2.shape)
+        # Review of PR #63: the SEL search is withheld exactly when the change candidates are
+        # (different or unknown acquisition, unknown visit order; same visit / wrong order refused).
+        visit_check = await _visit_check(tp1_spec, tp2_spec, source_tp1, source_tp2)
+        acquisition_check = lcs.compare_acquisitions(
+            _source_acquisition(source_tp1) if source_tp1 else None,
+            _source_acquisition(source_tp2) if source_tp2 else None,
+            spacing_tp1, _sp2,
+        )
+        if acquisition_check["status"] != "same" or visit_check["status"] != "ok":
+            return {
+                "ok": False, "abstained": True,
+                "reason": lcs._abstention_caveat(acquisition_check, visit_check),
+                "sels": [], "n_existing": 0, "n_sel": 0,
+                "acquisition_check": acquisition_check, "visit_check": visit_check,
+                "registration_verified": False, "adjudication_required": True,
+            }
         if intensity_tp1 is None or intensity_tp2 is None:
             raise HTTPException(status_code=422,
                                 detail="Source FLAIR intensities unavailable for one or both "

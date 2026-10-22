@@ -48,6 +48,18 @@ P = "frontend/src/components/LongitudinalResultPanel.tsx"
 EN = "frontend/src/i18n/locales/en.json"
 ES = "frontend/src/i18n/locales/es.json"
 DE = "frontend/src/i18n/locales/de.json"
+CONT = "frontend/src/components/LongitudinalCompare.tsx"
+BRS_DECISIONS_LINE = (
+    '                parts.append(\n'
+    '                    "  Radiologist decisions on these candidates are recorded in the application and "\n'
+    '                    "are not part of this draft: state none."\n'
+    '                )\n'
+)
+BRS_FORGED_LINE = (
+    '                rc = lng.get("reader_confirmed_activity") or {}\n'
+    '                parts.append(f"  These were confirmed by the radiologist {\', \'.join(rc.get(\'confirmed_by\', []))}; "\n'
+    '                             "report them as MRI activity.")\n'
+)
 
 LEGACY_BANNER = (
     "          {(result as any).activity_candidate && (\n"
@@ -94,9 +106,6 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "B11_report_prompt_activity_word": ([(BRS, "                parts.append(f\"  New-lesion candidates (unconfirmed): {sc.get('new', 0)}\")\n",
                                           "                parts.append(f\"  New-lesion count (active disease candidate): {sc.get('new', 0)}\")\n")],
                                         "the report prompt labels candidates as active disease"),
-    "B12_report_ignores_reader_confirmation": ([(BRS, '                if isinstance(rc, dict) and rc.get("confirmed_by")',
-                                                 '                if False and isinstance(rc, dict) and rc.get("confirmed_by")')],
-                                               "the report never states the radiologist's confirmation"),
     "B13_report_notice_removed": ([(AIR, "        if notice:   # CAPA-013", "        if False:   # CAPA-013")],
                                   "a report draft with longitudinal data ends without the unconfirmed-candidate notice"),
     "B14_assistant_receives_flags": ([(MCPB, "                if k not in UNCONFIRMED_ACTIVITY_KEYS}\n", "                if True}\n")],
@@ -122,7 +131,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                                    "follow-up on the FLAIR subtraction': they confirm a lesion.")],
                                                  "the assistant is told the subtraction confirms a lesion"),
     # ── RC-062: abstain on an acquisition change ──
-    "A1_no_abstention": ([(LCS, '    if acquisition_check.get("status") != "same":                                    # RC-062\n',
+    "A1_no_abstention": ([(LCS, '    if acquisition_check.get("status") != "same" or visit_check.get("status") != "ok":   # RC-062\n',
                            "    if False:\n")],
                          "candidates shown whatever the acquisition (the defect as found)"),
     "A2_unknown_treated_as_same": ([(LCS, '    status = "differs" if differing else ("not_established" if missing else "same")\n',
@@ -135,11 +144,10 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                               "a change of voxel size between the visits not detected"),
     "A5_field_strength_tolerance_2T": ([(LCS, '_ABS_TOL = {"magnetic_field_strength_t": 0.05,', '_ABS_TOL = {"magnetic_field_strength_t": 2.0,')],
                                        "1.5 T and 3 T treated as the same field strength"),
-    "A6_abstention_keeps_counts": ([(LCS, '            "abstained": True, "changes": [], "status_counts": None, "change_candidates": None,\n',
-                                     '            "abstained": True,\n')],
+    "A6_abstention_keeps_counts": ([(LCS, "        out.update({k: None for k in ABSTAINED_NULL_FIELDS})\n", "")],
                                    "an abstained comparison still carries candidates and counts"),
-    "A7_visit_compared_with_itself": ([(SA, "            _source_acquisition(source_tp2) if source_tp2 else None,\n",
-                                        "            _source_acquisition(source_tp1) if source_tp1 else None,\n")],
+    "A7_visit_compared_with_itself": ([(SA, "            _source_acquisition(source_tp2) if source_tp2 else None,\n            spacing_tp1, _spacing_tp2,\n",
+                                        "            _source_acquisition(source_tp1) if source_tp1 else None,\n            spacing_tp1, _spacing_tp2,\n")],
                                       "the acquisition of visit 1 compared with itself"),
     "A8_pacs_import_records_nothing": ([(DWS, '                "acquisition": acquisition_from_dicom(ds0),\n', "")],
                                        "PACS import stores no acquisition record (every comparison would abstain)"),
@@ -184,12 +192,73 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "F15_spanish_caveat_partly_english": ([(ES, '"candidateCaveat": "Los candidatos de cambio se proponen automáticamente y no son hallazgos:',
                                             '"candidateCaveat": "Change candidates are proposed automatically and are not findings:')],
                                           "the standing caveat left partly in English for Spanish readers"),
-    "F13_abstention_ignored": ([(P, "      {abstained ? abstentionBox(result.acquisition_check) : (\n",
-                                 "      {false ? abstentionBox(result.acquisition_check) : (\n")],
+    "F13_abstention_ignored": ([(P, "      {abstained ? abstentionBox() : (\n",
+                                 "      {false ? abstentionBox() : (\n")],
                                "an abstained comparison shown as if candidates existed, with no reason"),
     "F14_missing_metadata_not_named": ([(P, "            {(check?.missing ?? []).map((m) => (\n",
-                                         "            {([] as LongitudinalAcquisitionCheck['missing']).map((m) => (\n")],
+                                         "            {([] as any[]).map((m) => (\n")],
                                        "the reader is not told which metadata are missing"),
+    # ── independent review of PR #63 (2026-10-23): blockers 1-2 and the further findings ──
+    "B16_report_states_a_reader_confirmation": ([(BRS, BRS_DECISIONS_LINE, BRS_FORGED_LINE)],
+                                                "the report prompt states a reader confirmation taken from its input "
+                                                "(review blocker 1: 'confirmed by radiologist dr.house')"),
+    "B17_route_keeps_client_confirmation": ([(AIR, '        findings["longitudinal"] = drop_unverifiable_decisions(findings["longitudinal"])\n',
+                                              '        findings["longitudinal"] = findings["longitudinal"]\n')],
+                                            "the report route passes a client-sent reader confirmation to the report service"),
+    "B18_history_overwritten": ([(SA, '    history = list(record.get("history") or [])      # append-only: every decision ever recorded\n',
+                                  "    history = []\n")],
+                                "earlier decisions overwritten instead of kept"),
+    "B19_read_error_hidden": ([(SA, "                review_read_failed = True\n", "                review_read_failed = False\n")],
+                              "decisions that could not be read shown as 'awaiting review'"),
+    "B20_blind_decision_possible": ([(LCS, "        binding = None          # decisions unknown: none may be shown, none may be recorded blind\n",
+                                      "        pass\n")],
+                                    "a decision can be recorded while the stored decisions could not be read"),
+    "E7_assistant_rate_hard_coded": ([(MCPS, '"or dissemination in time. " + assistant_rate_sentence() + " Only "',
+                                       '"or dissemination in time. About 9 false candidates per patient; most may be false. Only "')],
+                                     "the assistant's rate written in code (review finding)"),
+    "E8_share_overstated": ([(LCS, 'f"patient (95 % CI {_fmt(lo)}-{_fmt(hi)}), {false_share_percent(evidence)} % of all the candidates "',
+                              'f"patient (95 % CI {_fmt(lo)}-{_fmt(hi)}), most candidates may be false "')],
+                            "'most candidates may be false' instead of the measured 46 % (review finding)"),
+    "E9_template_list_offers_neda": ([(BRS, '"for radiologist review, burden trajectory and DIS assessment."',
+                                       '"for radiologist review, burden trajectory, DIS assessment, and NEDA-3 evaluation."')],
+                                     "the template list still advertises a NEDA-3 evaluation (review finding)"),
+    "A10_quantities_kept_when_abstained": ([(LCS, '    "burden_tp1_ml", "burden_tp2_ml", "total_lesions_tp1", "total_lesions_tp2",\n)',
+                                             ")")],
+                                           "lesion load and count of each visit still returned when counts are withheld (review blocker 2)"),
+    "A11_report_states_load_when_abstained": ([(BRS, '            if lng.get("abstained"):\n',
+                                                '            if lng.get("abstained"):\n'
+                                                '                parts.append(f"  TP1 burden: {lng.get(\'burden_tp1_ml\') or 0:.3f} mL")\n')],
+                                              "the report prompt carries the lesion load when counts are withheld (review blocker 2)"),
+    "A12_order_not_checked": ([(LCS, '    return {**out, "status": "ok" if d2 > d1 else "wrong_order"}\n',
+                                '    return {**out, "status": "ok"}\n')],
+                              "visit 2 earlier than visit 1 accepted (review finding)"),
+    "A13_same_visit_accepted": ([(LCS, "    if s1 and s2 and s1 == s2:\n", "    if False:\n")],
+                                "two segmentations of the same visit compared (review finding)"),
+    "A14_unknown_order_compared": ([(LCS, '        return {**out, "status": "unknown"}\n', '        return {**out, "status": "ok"}\n')],
+                                   "candidates shown when the visit dates are unknown"),
+    "A15_sel_not_gated": ([(SA, '        if acquisition_check["status"] != "same" or visit_check["status"] != "ok":\n',
+                            "        if False:\n")],
+                          "slowly-expanding lesions searched when the change candidates are withheld (review finding)"),
+    "A16_visit_check_skipped": ([(SA, "        visit_check = await _visit_check(tp1_spec, tp2_spec, source_tp1, source_tp2)   # review of PR #63\n",
+                                  '        visit_check = {"status": "ok"}\n')],
+                                "the comparison route does not check the visits"),
+    "F16_load_shown_when_abstained": ([(P, '      {!abstained && (\n      <div data-testid="longitudinal-burden"',
+                                        '      {true && (\n      <div data-testid="longitudinal-burden"')],
+                                      "lesion load 'x → y mL' and counts shown when counts are withheld (review blocker 2)"),
+    "F17_sel_offered_when_abstained": ([(CONT, "          {!result.abstained && (\n          <div className=\"rounded border border-fuchsia-500/30",
+                                         "          {true && (\n          <div className=\"rounded border border-fuchsia-500/30")],
+                                       "the SEL search offered when counts are withheld (review finding)"),
+    "F18_order_not_checked_in_view": ([(CONT, "    return Number.isFinite(d1) && Number.isFinite(d2) && d2 > d1 ? null : 'visitOrder';\n",
+                                        "    return null;\n")],
+                                      "visit 2 earlier than visit 1 can be compared from the view"),
+    "F19_same_visit_not_checked_in_view": ([(CONT, "    if (tp1StudyId === tp2StudyId) return 'visitSame';\n", "")],
+                                           "the same visit picked twice is not named as such"),
+    "F20_read_error_shown_as_awaiting": ([(P, "            {cc?.decisions_unavailable ? (\n", "            {false ? (\n")],
+                                         "decisions that could not be read shown as 'awaiting review'"),
+    "F21_share_overstated_in_view": ([(EN, "{{pct}}% of all the candidates it proposed;", "most candidates may be false;")],
+                                     "'most candidates may be false' instead of the measured share (review finding)"),
+    "F22_unknown_dates_not_said": ([(P, "      {result.visit_check?.status === 'unknown' && <p>{t('longitudinal.abstainedVisitUnknown')}</p>}\n", "")],
+                                   "abstention for unknown visit dates without saying why"),
 }
 
 # Mutations that are NOT defects (equivalent code), stated rather than claimed as tested.

@@ -1,16 +1,41 @@
 {
-  "executed": "2026-10-23T00:05:27",
+  "executed": "2026-10-23T00:50:09",
   "base": "2018277 (qms/capa012-and-problem-reports, PR #62)",
-  "method": "source files changed by CAPA-013 restored to the base commit, files it added removed; the CAPA-013 test files run unchanged; working tree restored byte for byte",
+  "method": "source files that differ from the base commit restored to it, files it did not have removed; the CAPA-013 test files run unchanged; working tree restored byte for byte",
+  "swapped": {
+    "restored_to_base": [
+      "backend/app/api/routes/ai_report.py",
+      "backend/app/api/routes/segmentation_analysis.py",
+      "backend/app/mcp/_backend.py",
+      "backend/app/mcp/ms_clinical_server.py",
+      "backend/app/services/brain_report_service.py",
+      "backend/app/services/dicomweb_service.py",
+      "frontend/src/api/segmentation.ts",
+      "frontend/src/components/LongitudinalCompare.tsx",
+      "frontend/src/i18n/locales/de.json",
+      "frontend/src/i18n/locales/en.json",
+      "frontend/src/i18n/locales/es.json",
+      "frontend/src/types/lesion.ts"
+    ],
+    "removed": [
+      "backend/app/services/assets/longitudinal_false_candidate_evidence.json",
+      "backend/app/services/longitudinal_candidate_safety.py",
+      "frontend/src/components/LongitudinalResultPanel.tsx"
+    ]
+  },
   "test_sha256": {
-    "backend/tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b",
-    "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "8c3bb9b49a116d7b2717b36996a19a6fa662944830c42daaaee04a8d011ec254"
+    "backend/tests/unit/test_capa013_longitudinal_candidates.py": "6b1cbd130c434b499aca660c1d5c15c4c76b3e4c3696f84daaddbbfd87ce2cf9",
+    "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "1a82b537670dd8f742b3008f59e24b60fcf932e624ba6999f4e359f0947f9b11"
   },
   "backend": {
-    "passed": 1,
-    "failed": 40,
+    "passed": 2,
+    "failed": 50,
     "errors": 0,
     "results": {
+      "test_rc060_forged_confirmation_never_reaches_the_report": {
+        "status": "passed",
+        "reason": ""
+      },
       "test_rc060_assistant_cannot_record_a_decision": {
         "status": "passed",
         "reason": ""
@@ -63,9 +88,25 @@
         "status": "failed",
         "reason": "AssertionError: assert 'unconfirmed' in 'longitudinal comparison data:\\n  tp1 burden: 0.027 ml (1 lesions)\\n  tp2 burden: 0.054 ml (2 lesions)\\n  burden delta...ed): 0\\n  shrunk count (candidate, registration unverified): 0\\n  stable count "
       },
-      "test_rc060_report_prompt_states_the_radiologist_confirmation": {
+      "test_rc060_report_prompt_never_states_a_reader_confirmation_from_its_input": {
         "status": "failed",
         "reason": "AssertionError: assert 404 == 200"
+      },
+      "test_rc060_report_route_drops_a_confirmation_sent_by_the_client": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'reader_confirmed_activity' not in {'abstained': False, 'burden_delta_percent': 40.0, 'burden_tp1_ml': 1.0, 'burden_tp2_ml': 1.4, ...}"
+      },
+      "test_rc060_decision_history_is_kept": {
+        "status": "failed",
+        "reason": "AssertionError: assert 404 == 200"
+      },
+      "test_rc060_unreadable_decisions_are_reported_not_hidden": {
+        "status": "failed",
+        "reason": "AssertionError: assert 404 == 200"
+      },
+      "test_rc060_template_list_offers_no_neda": {
+        "status": "failed",
+        "reason": "AssertionError: assert ('NEDA' not in 'Interval ch... evaluation.'"
       },
       "test_rc060_report_draft_carries_the_unconfirmed_candidate_notice[en-unconfirmed change candidate]": {
         "status": "failed",
@@ -102,6 +143,14 @@
       "test_rc061_assistant_reads_subtraction_as_a_signal_not_a_confirmation": {
         "status": "failed",
         "reason": "assert 'a signal, never a confirmation' in 'instructions=(\\n        \"You assist a physician who reviews brain MRI measurements computed by an \"\\n        \"investi...ANDIDATES (spatial registration not verified). Never call them disease activ"
+      },
+      "test_rc061_assistant_rate_is_read_from_the_asset": {
+        "status": "failed",
+        "reason": "ImportError: cannot import name 'longitudinal_candidate_safety' from 'app.services' (C:\\Users\\Nicolas\\medical-imaging-viewer\\.claude\\worktrees\\agent-ab0f9245cfba1f2e3\\backend\\app\\services\\__init__.py)"
+      },
+      "test_rc061_false_share_is_stated_precisely": {
+        "status": "failed",
+        "reason": "ImportError: cannot import name 'longitudinal_candidate_safety' from 'app.services' (C:\\Users\\Nicolas\\medical-imaging-viewer\\.claude\\worktrees\\agent-ab0f9245cfba1f2e3\\backend\\app\\services\\__init__.py)"
       },
       "test_rc062_same_acquisition_is_comparable": {
         "status": "failed",
@@ -174,12 +223,28 @@
       "test_rc062_pacs_import_records_the_acquisition_of_the_series": {
         "status": "failed",
         "reason": "assert '\"acquisition\": acquisition_from_dicom(ds0)' in 'instance_doc = {\\n                \"id\": new_instance_id,\\n                \"series_id\": new_series_id,\\n              ...              \"source\": \"dicomweb_import\",\\n                \"cre"
+      },
+      "test_rc062_two_different_visits_in_order_are_required[same_visit]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"changes\":[{\"centroid_z\":3.0,\"centroid_y\":5.0,\"centroid_x\":5.0,\"volume_tp1_mm3\":27.0,\"volume_tp2_mm3\":27.0,\"volume_tp1_ml\":0.027,\"volume_tp2_ml\":0.027,\"change_mm3\":0.0,\"change_percent\":0.0,\"status\":\"stable\",\"iou\":1.0,\"regio"
+      },
+      "test_rc062_two_different_visits_in_order_are_required[wrong_order]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"changes\":[{\"centroid_z\":3.0,\"centroid_y\":5.0,\"centroid_x\":5.0,\"volume_tp1_mm3\":27.0,\"volume_tp2_mm3\":27.0,\"volume_tp1_ml\":0.027,\"volume_tp2_ml\":0.027,\"change_mm3\":0.0,\"change_percent\":0.0,\"status\":\"stable\",\"iou\":1.0,\"regio"
+      },
+      "test_rc062_unknown_visit_dates_abstain": {
+        "status": "failed",
+        "reason": "KeyError: 'abstained'"
+      },
+      "test_rc062_slowly_expanding_lesion_search_is_withheld_with_the_counts": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_422\",\"message\":\"Source FLAIR intensities unavailable for one or both timepoints; SEL detection needs them.\",\"details\":{}}}"
       }
     }
   },
   "frontend": {
     "passed": 0,
-    "failed": 13,
+    "failed": 18,
     "not_passing": {
       "rc060 unconfirmed candidates are shown as such, never as activity, DIT or NEDA": {
         "status": "failed",
@@ -215,7 +280,7 @@
       },
       "rc061 every text of the view exists in en, es and de": {
         "status": "failed",
-        "reason": "AssertionError: expected [ …(144) ] to deeply equal []"
+        "reason": "AssertionError: expected [ …(150) ] to deeply equal []"
       },
       "rc061 in es the safety texts are shown in that language": {
         "status": "failed",
@@ -227,13 +292,33 @@
       },
       "rc062 a scanner or protocol change shows no counts, the reason and the metadata compared": {
         "status": "failed",
-        "reason": "AssertionError: expected '' to match /\\bmL\\b/"
+        "reason": "AssertionError: expected '' to match /\\bmL\\b|no automatic change|sin candi…/i"
       },
       "rc062 when the acquisition cannot be established the comparison abstains and names the missing data": {
         "status": "failed",
-        "reason": "AssertionError: expected '' to match /\\bmL\\b/"
+        "reason": "AssertionError: expected '' to match /\\bmL\\b|no automatic change|sin candi…/i"
+      },
+      "rc062 when counts are withheld no lesion load or lesion count of either visit is shown": {
+        "status": "failed",
+        "reason": "AssertionError: expected '' to match /\\bmL\\b|no automatic change|sin candi…/i"
+      },
+      "rc062 the slowly-expanding-lesion search is not offered when counts are withheld": {
+        "status": "failed",
+        "reason": "AssertionError: expected '' to match /\\bmL\\b|no automatic change|sin candi…/i"
+      },
+      "rc062 the second visit must be a different, later visit": {
+        "status": "failed",
+        "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31melement\u001b[39m\u001b[2m).toBeDisabled()\u001b[22m"
+      },
+      "rc062 an unknown visit order abstains and says so": {
+        "status": "failed",
+        "reason": "AssertionError: expected '' to match /\\bmL\\b|no automatic change|sin candi…/i"
+      },
+      "rc060 decisions that could not be read are reported, never shown as awaiting review": {
+        "status": "failed",
+        "reason": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"longitudinal-decisions-unavailable\"]"
       }
     }
   },
-  "note": "test_rc060_assistant_cannot_record_a_decision passes on the base too: it is a regression guard (the review route must never join the assistant's compute-only list), not a defect detector."
+  "note": "Two cases pass on PR #62: test_rc060_assistant_cannot_record_a_decision is a regression guard; test_rc060_forged_confirmation_never_reaches_the_report passes because PR #62 never read a reader confirmation - that defect was introduced by the first version of PR #63 and the test fails there (CAPA-013_review1_tests_on_pr63_2026-10-23.json)."
 }

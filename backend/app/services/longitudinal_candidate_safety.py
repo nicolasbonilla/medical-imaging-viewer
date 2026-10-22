@@ -121,10 +121,14 @@ def load_false_candidate_evidence(path: Optional[Path] = None) -> Optional[Dict[
             "source_record": str(src["record"]),
             "source_commit": str(src["commit"]),
         }
+        n_false, n_all = (int(x) for x in m["false_candidates_of_all_candidates"])
+        out.update({"false_candidates": n_false, "all_candidates": n_all,
+                    "false_share_of_candidates": n_false / n_all})
     except Exception as e:  # noqa: BLE001 — incomplete asset: no rate rather than a wrong one
         logger.warning(f"[RC-061] evidence asset incomplete: {e}")
         return None
     if out["patients"] <= 0 or out["false_candidates_per_patient_ci95"] is None \
+            or not 0 <= out["false_candidates"] <= out["all_candidates"] \
             or out["after_subtraction_per_patient_ci95"] is None \
             or not all(math.isfinite(out[k]) and out[k] >= 0
                        for k in ("false_candidates_per_patient", "after_subtraction_per_patient")):
@@ -137,8 +141,16 @@ def _fmt(x: float) -> str:
     return f"{x:g}"
 
 
+def false_share_percent(evidence: Dict[str, Any]) -> int:
+    """Share of all proposed candidates that were false in the source record, in whole percent."""
+    return round(100 * evidence["false_share_of_candidates"])
+
+
 def evidence_sentence(evidence: Optional[Dict[str, Any]]) -> str:
-    """English sentence for API consumers (the view renders its own, localised text)."""
+    """English sentence for API consumers (the view renders its own, localised text).
+
+    States the measured figures as measured (review of PR #63: "most candidates may be false"
+    overstated a 46 % share)."""
     if not evidence:
         return ("No measured false-candidate rate is available for this rule: treat every candidate "
                 "as unconfirmed. ")
@@ -146,9 +158,23 @@ def evidence_sentence(evidence: Optional[Dict[str, Any]]) -> str:
     return (f"In a public test with expert-marked change ({evidence['patients']} patients, "
             f"{evidence['segmenter']}; {evidence['source']}, {evidence['measured_on']}) this rule proposed on "
             f"average {_fmt(evidence['false_candidates_per_patient'])} false new or enlarging candidates per "
-            f"patient (95 % CI {_fmt(lo)}-{_fmt(hi)}), "
-            f"{_fmt(evidence['after_subtraction_per_patient'])} after the subtraction check: most candidates "
-            f"may be false. No stable patients were studied. ")
+            f"patient (95 % CI {_fmt(lo)}-{_fmt(hi)}), {false_share_percent(evidence)} % of all the candidates "
+            f"it proposed ({evidence['false_candidates']} of {evidence['all_candidates']}); "
+            f"{_fmt(evidence['after_subtraction_per_patient'])} after the subtraction check. No stable patients "
+            f"were studied. ")
+
+
+def assistant_rate_sentence() -> str:
+    """The measured rate for the AI assistant's standing instructions, read from the versioned asset
+    (review of PR #63: the instructions hard-coded the figure)."""
+    ev = load_false_candidate_evidence()
+    if not ev:
+        return ("No measured false-candidate rate is available for this rule: treat every candidate as "
+                "unconfirmed.")
+    return (f"In a public test with expert-marked change ({ev['patients']} patients) this rule proposed on "
+            f"average {_fmt(ev['false_candidates_per_patient'])} false candidates per patient, "
+            f"{false_share_percent(ev)} % of all the candidates it proposed ({ev['source']}, "
+            f"{ev['measured_on']}; the response's `false_candidate_evidence` gives the figures).")
 
 
 # =============================================================================
@@ -292,6 +318,56 @@ def compare_acquisitions(acq_tp1: Optional[dict], acq_tp2: Optional[dict],
 _FILE_ID_RE = re.compile(r"patients/[^/]+/studies/([^/]+)/series/([^/]+)/[^/]+")
 
 
+def _parse_when(v):
+    """A study date as a naive datetime, or None (ISO date/datetime, DICOM YYYYMMDD, datetime)."""
+    from datetime import datetime as _dt
+    if v is None:
+        return None
+    if isinstance(v, _dt):
+        return v.replace(tzinfo=None)
+    s_ = str(v).strip()
+    for parse in (lambda x: _dt.fromisoformat(x.replace("Z", "+00:00")), lambda x: _dt.strptime(x[:8], "%Y%m%d")):
+        try:
+            return parse(s_).replace(tzinfo=None)
+        except Exception:  # noqa: BLE001
+            continue
+    return None
+
+
+def check_visit_order(visit_tp1: Optional[dict], visit_tp2: Optional[dict]) -> Dict[str, Any]:
+    """Visit 2 must be a different, later visit than visit 1 (review of PR #63).
+
+    status "ok"; "same_visit" or "wrong_order" (the route refuses the comparison); "unknown" when a
+    study or date is missing or the two dates are equal (the comparison abstains)."""
+    s1 = (visit_tp1 or {}).get("study_id")
+    s2 = (visit_tp2 or {}).get("study_id")
+    d1, d2 = _parse_when((visit_tp1 or {}).get("study_date")), _parse_when((visit_tp2 or {}).get("study_date"))
+    out = {"tp1_study_date": d1.isoformat() if d1 else None, "tp2_study_date": d2.isoformat() if d2 else None}
+    if s1 and s2 and s1 == s2:
+        return {**out, "status": "same_visit"}
+    if not (s1 and s2 and d1 and d2) or d1 == d2:
+        return {**out, "status": "unknown"}
+    return {**out, "status": "ok" if d2 > d1 else "wrong_order"}
+
+
+async def read_source_visit(file_id, study_service=None) -> Optional[Dict[str, Any]]:
+    """Study (visit) and study date of a segmentation's source image, or None. Never raises."""
+    from uuid import UUID
+    m = _FILE_ID_RE.fullmatch(str(file_id or ""))
+    if not m:
+        return None
+    try:
+        if study_service is None:
+            from app.core.container import get_study_service
+            study_service = get_study_service()
+        study = await study_service.get_study(UUID(m.group(1)))
+        when = getattr(study, "study_date", None)
+        return {"study_id": m.group(1), "study_date": when.isoformat() if hasattr(when, "isoformat") else when}
+    except Exception as e:  # noqa: BLE001 — unknown visit: the comparison abstains
+        logger.warning(f"[RC-062] visit of a source image unreadable: {e}")
+        return None
+
+
 def read_source_acquisition(file_id, study_service=None) -> Optional[Dict[str, Any]]:
     """The acquisition record stored with a source image (instance document), or None. Never raises."""
     m = _FILE_ID_RE.fullmatch(str(file_id or ""))
@@ -356,36 +432,51 @@ def _registration_sentence(result: dict) -> str:
             "array dimensions are not necessarily voxel-aligned. ")
 
 
-def _abstention_caveat(check: dict) -> str:
+def _abstention_caveat(check: dict, visit_check: Optional[dict] = None) -> str:
+    reasons = []
+    if (visit_check or {}).get("status") == "unknown":
+        reasons.append("the dates of the two visits could not be established, so their order is not known")
     if check["status"] == "differs":
-        what = "differs between the two visits (" + ", ".join(d["field"] for d in check["differing"]) + ")"
-    else:
-        what = "could not be established (" + ", ".join(
-            f"{d['field']} missing for {'/'.join(d['timepoints'])}" for d in check["missing"]) + ")"
-    return (f"No automatic change candidates for this pair: the acquisition {what}. Automatic new or "
-            "enlarging candidates are not reliable across a change of scanner or protocol, or when it cannot "
-            "be excluded. Compare the images visually with the overlay.")
+        reasons.append("the acquisition differs between the two visits ("
+                       + ", ".join(d["field"] for d in check["differing"]) + ")")
+    elif check["status"] == "not_established":
+        reasons.append("the acquisition could not be established (" + ", ".join(
+            f"{d['field']} missing for {'/'.join(d['timepoints'])}" for d in check["missing"]) + ")")
+    return ("No automatic change candidates and no lesion load or count comparison for this pair: "
+            + "; ".join(reasons) + ". Automatic results are not reliable across a change of scanner or "
+            "protocol, or when it cannot be excluded. Compare the images visually with the overlay.")
+
+
+# Every quantity withheld when the comparison abstains (RC-062; review of PR #63, blocker 2: the
+# lesion load and count of each visit were still shown and passed to the report).
+ABSTAINED_NULL_FIELDS = (
+    "status_counts", "change_candidates", "burden_delta_mm3", "burden_delta_percent", "region_stratification",
+    "region_atlas_note", "subtraction_summary", "review_binding", "burden_tp1_mm3", "burden_tp2_mm3",
+    "burden_tp1_ml", "burden_tp2_ml", "total_lesions_tp1", "total_lesions_tp2",
+)
 
 
 def present_comparison(result: dict, *, acquisition_check: dict, evidence: Optional[dict],
-                       binding: Optional[Dict[str, str]], stored_review: Optional[dict]) -> dict:
+                       binding: Optional[Dict[str, str]], stored_review: Optional[dict],
+                       visit_check: Optional[dict] = None, review_read_failed: bool = False) -> dict:
     """What the view, the report generator and the assistant receive (RC-060, RC-061, RC-062)."""
     out = {k: v for k, v in result.items() if k not in LEGACY_FLAG_KEYS}
+    visit_check = visit_check or {"status": "unknown"}
     out["acquisition_check"] = acquisition_check
+    out["visit_check"] = visit_check
     out["false_candidate_evidence"] = evidence
 
-    if acquisition_check.get("status") != "same":                                    # RC-062
-        out.update({
-            "abstained": True, "changes": [], "status_counts": None, "change_candidates": None,
-            "burden_delta_mm3": None, "burden_delta_percent": None, "region_stratification": None,
-            "region_atlas_note": None, "subtraction_summary": None, "review_binding": None,
-        })
-        out["caveat"] = _abstention_caveat(acquisition_check)
+    if acquisition_check.get("status") != "same" or visit_check.get("status") != "ok":   # RC-062
+        out.update({"abstained": True, "changes": []})
+        out.update({k: None for k in ABSTAINED_NULL_FIELDS})
+        out["caveat"] = _abstention_caveat(acquisition_check, visit_check)
         return out
 
     decisions: Dict[str, dict] = {}
     voided = False
-    if binding and isinstance(stored_review, dict):
+    if review_read_failed:
+        binding = None          # decisions unknown: none may be shown, none may be recorded blind
+    elif binding and isinstance(stored_review, dict):
         if stored_review.get("tp1_mask_sha256") == binding["tp1_mask_sha256"] \
                 and stored_review.get("tp2_mask_sha256") == binding["tp2_mask_sha256"]:
             decisions = stored_review.get("decisions") or {}
@@ -420,10 +511,13 @@ def present_comparison(result: dict, *, acquisition_check: dict, evidence: Optio
         "change_candidates": {
             "new": n_new, "enlarging": n_enl, "total": total, "confirmed": confirmed, "rejected": rejected,
             "awaiting_review": total - confirmed - rejected, "earlier_decisions_voided": voided,
+            "decisions_unavailable": review_read_failed,
             "presentation": "unconfirmed change candidates, to be reviewed one by one by a radiologist",
         },
         "review_binding": binding,
     })
+    if review_read_failed:   # review of PR #63: a read error must not look like "awaiting review"
+        out["change_candidates"].update({"confirmed": None, "rejected": None, "awaiting_review": None})
     if confirmed >= MAGNIMS_2021_MIN_NEW_OR_ENLARGING:
         out["reader_confirmed_activity"] = {
             "rule": "MAGNIMS-CMSC-NAIMS 2021: one new or enlarging T2 lesion indicates MRI activity; "
@@ -439,6 +533,8 @@ def present_comparison(result: dict, *, acquisition_check: dict, evidence: Optio
         "radiologist's confirmation counts. " + evidence_sentence(evidence) + _registration_sentence(result)
         + "The FLAIR subtraction result is a signal, not a confirmation. A reader must adjudicate each "
           "candidate before it informs dissemination in time or any diagnostic conclusion."
+        + (" The radiologist decisions recorded for this pair could not be read: do not treat the candidates "
+           "as unreviewed; compare again." if review_read_failed else "")
     )
     return out
 

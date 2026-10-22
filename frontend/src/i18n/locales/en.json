@@ -1124,7 +1124,7 @@
     "noLesionSegs": "No lesion segmentations found",
     "coregistered": "Rigidly co-registered (visit 2 → visit 1, advisory)",
     "indexAligned": "Index-aligned (no source image to register)",
-    "abstainedTitle": "No automatic change candidates for this pair",
+    "abstainedTitle": "No automatic change candidates and no lesion load comparison for this pair",
     "abstainedDiffers": "The acquisition differs between the two visits:",
     "abstainedUnknown": "The acquisition of the two visits could not be established. Missing:",
     "abstainedWhy": "Automatic new or enlarging candidates are not reliable across a change of scanner or protocol, or when such a change cannot be excluded.",
@@ -1149,7 +1149,7 @@
     "candidatesNoStatement": "The software makes no statement about the course of the disease from these candidates; only a radiologist's confirmation counts.",
     "decisionsVoided": "Earlier decisions were recorded on segmentations that have changed since; they no longer apply.",
     "reviewUnavailable": "Decisions can be recorded only between two saved segmentations.",
-    "evidence": "In a public test with expert-marked change ({{patients}} patients, {{segmenter}}), this rule proposed on average {{mean}} false new or enlarging candidates per patient (95% CI {{lo}}–{{hi}}); {{meanSub}} after the subtraction check. Most candidates may be false. No stable patients were studied. Source: {{source}}, {{date}}.",
+    "evidence": "In a public test with expert-marked change ({{patients}} patients, {{segmenter}}), this rule proposed on average {{mean}} false new or enlarging candidates per patient (95% CI {{lo}}–{{hi}}), {{pct}}% of all the candidates it proposed; {{meanSub}} after the subtraction check. No stable patients were studied. Source: {{source}}, {{date}}.",
     "evidenceMissing": "No measured false-candidate rate is available for this rule: treat every candidate as unconfirmed.",
     "readerConfirmed": "MRI activity confirmed by a radiologist: {{n}} new and {{e}} enlarging lesion(s), confirmed by {{who}} ({{when}}).",
     "readerConfirmedRule": "MAGNIMS 2021: one new or enlarging T2 lesion indicates MRI activity. This is the radiologist's confirmation, not a software result; unconfirmed candidates are not counted.",
@@ -1213,7 +1213,11 @@
     "selSummary": "{{s}} SEL candidate(s) among {{e}} pre-existing lesions (vs {{bg}}% normal-tissue noise floor)",
     "selBaseline": "baseline",
     "selExpanding": "expanding",
-    "selCaveat": "CANDIDATE, single interval (2 visits). The validated SEL definition needs ≥3 visits. The noise floor is estimated from normal tissue (approximate false-positive control, not a guaranteed rate). A radiologist must adjudicate."
+    "selCaveat": "CANDIDATE, single interval (2 visits). The validated SEL definition needs ≥3 visits. The noise floor is estimated from normal tissue (approximate false-positive control, not a guaranteed rate). A radiologist must adjudicate.",
+    "abstainedVisitUnknown": "The dates of the two visits could not be established, so their order is not known.",
+    "decisionsUnavailable": "The radiologist decisions recorded for this pair could not be read. Do not treat the candidates as unreviewed: compare again; no decision can be recorded until they are read.",
+    "visitSame": "Choose two different visits: visit 1 and visit 2 are the same study.",
+    "visitOrder": "Visit 2 must be later than visit 1."
   },
   "overlay": {
     "mode": "Overlay Mode",
