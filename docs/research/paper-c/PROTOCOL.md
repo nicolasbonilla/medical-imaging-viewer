@@ -220,6 +220,17 @@ ranking ceiling, tail of the largest false scores) was written after the results
 post hoc in RESULTS.md. (d) `verify_primary.py` recomputes the 4 primary cells by a separate code
 path (identical). No pre-registered analysis was changed.
 
+**2026-10-22, entry 3 — arm A4 inputs (written and committed BEFORE any A4 candidate or outcome
+was computed).** The owner's cloud job ran (runs `paperc-oml-pilot`: patient16 s1/s2 fold 0, and
+`paperc-oml-full`: the other 198 case-folds; 0 errors, 0.69 USD). The 200 `_prob` maps (6.3 MB)
+were downloaded read-only from `gs://mstool-research-data/flames-openms-long/cohort/` into
+`data/cohorts/openms-longitudinal-flames/`; their SHA-256 go into the candidate cache. A4/A4b are
+run exactly as pre-registered (§3 D-seg, §6, §7, §8; domain = supplied brain mask; truth §2.1 with
+any expert change component as primary). The FLAIRs are re-fetched one patient at a time
+(`--stream`) for the subtraction score and deleted after use. `run_pilot.py` re-runs every arm;
+the A1–A3 numbers must reproduce the 2026-10-21 record exactly (checked and reported). No
+analysis change.
+
 ## 13. Compute and records
 
 Local CPU only. Code: `research/paper_c/*.py`; tests `research/paper_c/test_paper_c.py`.
