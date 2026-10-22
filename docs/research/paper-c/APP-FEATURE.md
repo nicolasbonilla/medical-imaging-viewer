@@ -17,6 +17,14 @@ paper C pilot (`RESULTS.md`).*
 > de verdad (MSSEG-2). Lo que sí deja claro: la regla actual de la aplicación, aplicada a las
 > lesiones que dibuja FLAMeS, propone al menos una lesión nueva o agrandada falsa en todos los pacientes estudiados
 > (25 de 25, unas 8 por paciente), así que el aviso de hoy no debe leerse como fiable sin revisión.
+>
+> **Actualización 22-10-2026.** Con las imágenes de Ljubljana, revisadas por expertos, se confirma
+> lo mismo: la regla actual mete al menos una lesión falsa en 20 de 20 pacientes (unas 9 por
+> paciente). Y aquí la garantía sí sirve: con la misma regla y la misma puntuación de la
+> aplicación, el aviso falso queda en 2 de 20 pacientes, y los 20 siguen avisados por un cambio
+> real (se conservan unas 3 de cada 10 lesiones nuevas). Es la primera señal de que la función es
+> viable, pero solo con imágenes de un mismo equipo bien alineadas, y falta probarla en pacientes
+> estables.
 
 ## 1. What exists today (read-only analysis of the code)
 
@@ -30,8 +38,8 @@ paper C pilot (`RESULTS.md`).*
   the mean normalised FLAIR subtraction (`subtraction_signal`, SD units) and an advisory
   `subtraction_confirmed` at a fixed 0.5 SD; border candidates withheld.
 - **No statement of how often `activity_candidate` is wrong in a stable patient.** The pilot
-  measures, for the app's rule on FLAMeS masks (MSLesSeg, approximate truth), the per-patient rate
-  of ≥ 1 false new/enlarging candidate: see RESULTS.md §2 (baseline "B-all" of arm A2).
+  measures, for the app's rule on FLAMeS masks, the per-patient rate of ≥ 1 false new/enlarging
+  candidate: RESULTS.md §3 (MSLesSeg, approximate truth) and §2b (open_ms, expert truth).
 
 ## 2. What the research says (pilot, public data)
 
@@ -47,6 +55,16 @@ per-patient rate of ≥ 1 false new/enlarging call):
   (lesion sensitivity 0.004 and 0.07). On FLAMeS probability change instead: 7/25 and 10/25.
 - Pre-registered verdict: **NO-GO** for building the feature on the current score; the guarantee
   works, the score is too weak, and the stable-patient transfer is untested.
+- **Update 2026-10-22, arm A4 (expert change masks, open_ms, FLAMeS 5-fold, app rule, app
+  `subtraction_signal` as score):** the app's rule has ≥ 1 false new/enlarging candidate in
+  **20/20 patients** [0.83, 1.00] (8.9 per patient; 5.4 with the subtraction confirmation). With
+  the conformal threshold (≈ 1.1 SD on `subtraction_signal`, versus the app's 0.5 SD bar) the
+  per-patient false-call rate is 0.10 [0.01, 0.32] (α = 0.1) and 0.20 [0.06, 0.44] (α = 0.2),
+  **20/20 patients stay flagged by a real change**, and 28 % [18, 38] of expert lesions are kept.
+  This is the configuration to carry forward: segmenter-based rule + subtraction score, calibrated
+  per acquisition condition. It is a secondary arm on 20 highly active patients; it does not
+  overturn the NO-GO, and in MSLesSeg (scanner changes, MNI resampling) the same configuration was
+  bought by abstention — which is exactly why condition matching and abstention (§3) are mandatory.
 
 **What can be used now, without new claims:** the finding that the current `activity_candidate`
 almost always rests on at least one false candidate supports keeping (and stating in the UI) the

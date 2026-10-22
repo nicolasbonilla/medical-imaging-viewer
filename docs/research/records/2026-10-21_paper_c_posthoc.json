@@ -183,6 +183,96 @@
     4.871
    ],
    "true_scores_above_80pct_of_patient_maxfalse": 0.03571428571428571
+  },
+  "A4": {
+   "score_true_q25_50_75": [
+    0.7338180541992188,
+    1.1535242795944214,
+    1.5732865035533905
+   ],
+   "score_false_q25_50_75": [
+    0.16929585114121437,
+    0.3632463067770004,
+    0.583440974354744
+   ],
+   "volume_true_median_mm3": 99.99,
+   "volume_false_median_mm3": 40.724999999999994,
+   "patients_best_true_outranks_all_false": 19,
+   "patients": 20,
+   "max_false_score_sorted": [
+    -0.151,
+    0.204,
+    0.437,
+    0.677,
+    0.68,
+    0.73,
+    0.746,
+    0.8,
+    0.833,
+    0.866,
+    0.867,
+    0.884,
+    0.917,
+    0.965,
+    0.967,
+    1.007,
+    1.054,
+    1.075,
+    1.136,
+    1.213
+   ],
+   "true_scores_above_80pct_of_patient_maxfalse": 0.5801886792452831,
+   "candidate_kinds": {
+    "new_false": 106,
+    "new_true": 176,
+    "enlarged_false": 72,
+    "enlarged_true": 36
+   }
+  },
+  "A4b": {
+   "score_true_q25_50_75": [
+    0.7404068410396576,
+    0.8731249272823334,
+    0.9342022985219955
+   ],
+   "score_false_q25_50_75": [
+    0.44456662237644196,
+    0.6571548879146576,
+    0.775114580988884
+   ],
+   "volume_true_median_mm3": 99.99,
+   "volume_false_median_mm3": 40.724999999999994,
+   "patients_best_true_outranks_all_false": 18,
+   "patients": 20,
+   "max_false_score_sorted": [
+    -0.031,
+    0.618,
+    0.665,
+    0.682,
+    0.703,
+    0.792,
+    0.839,
+    0.846,
+    0.849,
+    0.852,
+    0.872,
+    0.874,
+    0.886,
+    0.908,
+    0.908,
+    0.917,
+    0.919,
+    0.922,
+    0.928,
+    0.931
+   ],
+   "true_scores_above_80pct_of_patient_maxfalse": 0.32075471698113206,
+   "candidate_kinds": {
+    "new_false": 106,
+    "new_true": 176,
+    "enlarged_false": 72,
+    "enlarged_true": 36
+   }
   }
  }
 }

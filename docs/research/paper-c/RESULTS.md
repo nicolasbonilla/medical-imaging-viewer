@@ -3,7 +3,9 @@
 *Research code and research findings, not the medical device. Date: 2026-10-21.*
 
 - Protocol: `PROTOCOL.md`, committed before any detector output (6233b4b); entry 1 (implementation
-  clarifications) before outcomes; entry 2 (run disclosures, post-hoc checks) after.
+  clarifications) before outcomes; entry 2 (run disclosures, post-hoc checks) after; entry 3 (arm
+  A4 inputs) committed before A4 was computed (efb203f). The 2026-10-22 re-run reproduced every
+  A1–A3 number and the transport analysis identically.
 - Records: `docs/research/records/2026-10-21_paper_c_{inventory,flames_overlap_longitudinal,pilot,
   verify_primary,posthoc}.json|_output.txt`. Candidate cache SHA-256 is in the pilot record.
 - Code: `research/paper_c/` (11 synthetic tests pass, including validity simulations of the
@@ -20,6 +22,25 @@
 ---
 
 ## 0. Bottom line
+
+**Update 2026-10-22 — arm A4 (FLAMeS maps from the cloud job; inputs logged in protocol entry 3
+before analysis; A1–A3 re-ran identically).** On the open_ms patients with **expert** change
+masks, the app's own rule on FLAMeS plus the app's own subtraction score gives:
+- the conformal threshold keeps the per-patient false-call rate on target — **0.10 (2/20)
+  [0.01, 0.32] at α = 0.1 and 0.20 (4/20) [0.06, 0.44] at α = 0.2** — while **20/20 patients
+  [0.83, 1.00] are still flagged by a real change** and **28 % [18, 38] of the expert-marked
+  new/enlarging lesions** (≥ 3 mm) are kept at α = 0.1 (31 % [19, 41] at α = 0.2); false calls
+  drop from 8.9 to 0.15 per patient. Candidate AUROC 0.84 [0.75, 0.90].
+- **The app's current rule, against expert masks:** ≥ 1 false new/enlarging candidate in
+  **20/20 patients [0.83, 1.00]**, 8.9 [5.8, 12.6] per patient; with the app's subtraction
+  confirmation 19/20 [0.75, 1.00], 5.4 [3.5, 7.7] per patient. This confirms the MSLesSeg finding
+  (25/25) with real expert change masks.
+- Caveats: A4 is a pre-registered *secondary* arm, so the pre-registered go/no-go (primary cells
+  A1/A2) stays **NO-GO**; the reading "the method works with the FLAMeS rule when acquisitions are
+  consistent" is an interpretation, not a pre-registered test. All 20 patients are highly active
+  (446 expert lesions ≥ 3 mm), so "20/20 flagged" is easy; for a patient with a single new lesion
+  the lesion-level figure (~0.3) is the better guide. No stable patients, n = 20, wide intervals.
+  See §2b.
 
 1. **No stable patients could be studied.** All 20 open_ms longitudinal patients have
    expert-marked change, and 25/25 MSLesSeg first pairs are active under the approximate truth.
@@ -55,7 +76,8 @@
 | A2 | MSLesSeg first pairs, 25, approx. truth | app rule on FLAMeS / S_sub | 327 (119) | 11 | 25/25 | 0.70 [0.63, 0.78] |
 | A2b | same | app rule on FLAMeS / S_dp | 327 (119) | 11 | 25/25 | 0.72 [0.63, 0.80] |
 | A3 | same | D-sub / S_sub | 1264 (56) | 31 | 24/25 | 0.55 [0.40, 0.69] |
-| A4 | open_ms, app rule on FLAMeS | — | — | — | — | **pending cloud job** (CLOUD-JOB.md) |
+| A4 | open_ms longitudinal, 20, expert change | app rule on FLAMeS / S_sub | 390 (212) | 14 | 20/20 | **0.84** [0.75, 0.90] |
+| A4b | same | app rule on FLAMeS / S_dp | 390 (212) | 14 | 20/20 | 0.76 [0.67, 0.82] |
 
 Truth: open_ms 835 expert change components (500 brighter at follow-up); MSLesSeg first pairs:
 every pair active (inventory record).
@@ -71,6 +93,34 @@ every pair active (inventory record).
 
 All four cells are "bought by abstention" or "intermediate" (A2, α = 0.2: 0.20 exactly) under the
 pre-registered usefulness rule; none is informative (≥ 0.5).
+
+## 2b. Arm A4 — the app's rule on FLAMeS, expert change truth (added 2026-10-22)
+
+FLAMeS 5-fold maps of the 40 co-registered FLAIRs (runs `paperc-oml-pilot` + `paperc-oml-full`,
+0.69 USD); gate G1 passed (the reconstruction reproduced the app's counts in 20/20 patients).
+
+| procedure (A4, score S_sub) | per-patient false-call rate [CP 95 %] | flagged by a true change | lesion sensitivity [boot 95 %] | false calls / patient | median threshold |
+|---|---|---|---|---|---|
+| app rule, every candidate (`activity_candidate`) | **1.00 (20/20) [0.83, 1.00]** | 20/20 | 0.52 [0.40, 0.61] | 8.90 [5.8, 12.6] | — |
+| app rule + subtraction confirmation (new ≥ 0.5 SD) | 0.95 (19/20) [0.75, 1.00] | 20/20 | 0.49 [0.38, 0.59] | 5.40 [3.5, 7.7] | — |
+| fixed bar S_sub > 0.5 SD on all candidates | 0.85 (17/20) [0.62, 0.97] | 20/20 | 0.46 [0.34, 0.56] | 3.15 | 0.5 SD |
+| **CF-M, α = 0.1** | **0.10 (2/20) [0.01, 0.32]** — no violation detected | **20/20 [0.83, 1.00]** | **0.28 [0.18, 0.38]** | 0.15 [0.0, 0.4] | 1.14 SD |
+| **CF-M, α = 0.2** | **0.20 (4/20) [0.06, 0.44]** — no violation detected | 20/20 | 0.31 [0.19, 0.41] | 0.25 | 1.05 SD |
+| CF-PAC, α = 0.1 | abstains 20/20 (n = 19 < 22) | — | — | — | — |
+| CF-PAC, α = 0.2 | 0.10 (2/20) [0.01, 0.32] | 20/20 | 0.28 | 0.15 | 1.14 SD |
+| A4b (score S_dp), CF-M α = 0.1 / 0.2 | 0.10 / 0.20 | 14/20 [0.46, 0.88] / 15/20 [0.51, 0.91] | 0.13 / 0.16 | 0.10 / 0.20 | 0.93 / 0.92 |
+
+Q4: ρ = 0.15 (p 0.53) for S_sub, −0.09 (p 0.71) for S_dp. Under the pre-registered usefulness rule
+every A4 CF-M cell is **informative**. Unlike MSLesSeg, the subtraction score works better than the
+FLAMeS probability change here.
+
+**[post hoc, after the A4 results]** Why A4 works and A2 does not: on open_ms the largest false
+S_sub per patient ranges −0.15 to 1.21 SD (no outlier), true candidates have median S_sub 1.15
+vs 0.36 for false ones, and in 19/20 patients the best true candidate outranks every false one;
+on MSLesSeg two patients carry false candidates at 4.9 and 5.3 SD (scanner changes and MNI
+resampling are plausible causes, not shown). Of the app-rule candidates on open_ms, 106/282 "new"
+and 72/108 "enlarged" are false against the expert masks — "enlarged" is the weaker part of the
+rule.
 
 ## 3. Baselines and the app's rule (MSLesSeg first pairs, D-seg; A1 for D-sub)
 
@@ -136,8 +186,12 @@ would produce false activity in a stable patient.
    alignment; the app's own rigid registration (and its failures) are outside this pilot.
 5. **open_ms longitudinal is 2D 3-mm FLAIR** (paper A: guarantees and power degrade on thick
    slices); expert change masks do not encode direction (sign inferred from the subtraction).
-6. **FLAMeS on open_ms is pending** (A4); FLAMeS training overlap: no raw-spacing match, but the
-   same people may appear in the cross-sectional Ljubljana training scans (unknowable).
+6. **A4 is a secondary arm with n = 20 highly active patients** (446 expert lesions ≥ 3 mm); its
+   good result cannot change the pre-registered verdict, and "flagged by a true change" is easy at
+   this disease burden. FLAMeS ran on 2D 3-mm FLAIR (outside its 3D training majority). FLAMeS
+   training overlap: no raw-spacing match, but the same people may appear in the cross-sectional
+   Ljubljana training scans (unknowable). Expert change masks are themselves imperfect; a "false"
+   candidate may be a change the experts did not mark.
 7. The subtraction thresholds (1.5 / 1.0 SD) and the score definitions were fixed a priori without
    tuning; a better detector could change the utility conclusion entirely — that is the point of
    the NO-GO.
@@ -147,10 +201,14 @@ would produce false activity in a stable patient.
 
 ## 7. What is needed next
 
-1. Launch the prepared FLAMeS job (≈ 0.7 USD) → arm A4 (app rule on expert truth, pre-registered).
-2. Pre-register a v2 score (size-aware subtraction and/or FLAMeS probability change combined; or
+1. ~~Launch the prepared FLAMeS job~~ — done 2026-10-22 (0.69 USD), A4 in §2b.
+2. For MSSEG-2, pre-register the A4 configuration (app rule on FLAMeS 5-fold + subtraction score,
+   stable-conditional calibration primary) as the primary arm, and look at the two MSLesSeg
+   outlier patients (scanner change / registration) before deciding whether the scanner-change
+   pairs need their own calibration or abstention.
+3. Pre-register a v2 score (size-aware subtraction and/or FLAMeS probability change combined; or
    a small learned change classifier with patient-level cross-fitting) on this pilot's data as
    development data, then test it on MSSEG-2.
-3. MSSEG-2 access (Shanoir + OFSEP agreement; non-commercial): 28 stable patients make the
+4. MSSEG-2 access (Shanoir + OFSEP agreement; non-commercial): 28 stable patients make the
    stable-conditional calibration and the direct false-activity measurement possible. FLAMeS saw
    14 MSSEG-2 cases only as *test* data (FLAMeS paper), so it is usable there.

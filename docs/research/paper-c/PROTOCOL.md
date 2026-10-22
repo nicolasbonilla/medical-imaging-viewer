@@ -231,6 +231,11 @@ any expert change component as primary). The FLAIRs are re-fetched one patient a
 the A1–A3 numbers must reproduce the 2026-10-21 record exactly (checked and reported). No
 analysis change.
 
+**2026-10-22, entry 4 — after the A4 results.** A1–A3 and the transport analysis reproduced
+identically; gate G1 passed on all 20 open_ms patients. `posthoc.py` was extended to A4/A4b
+(post hoc, labelled as such in RESULTS.md §2b). The pre-registered go/no-go (primary cells A1/A2)
+is unchanged; A4's informative result is reported as a secondary, pre-registered arm.
+
 ## 13. Compute and records
 
 Local CPU only. Code: `research/paper_c/*.py`; tests `research/paper_c/test_paper_c.py`.

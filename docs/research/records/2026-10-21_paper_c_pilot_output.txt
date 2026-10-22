@@ -129,9 +129,30 @@
    pac_a0.2       FWER 0.12 (5/40) CP[0.04,0.27] | true-flag 0.03 (1/39) | lesion sens 0.003 [0.000,0.009] | false/unit 0.45 | abstain 0 | no violation detected, bought by abstention | thr~4.134343147277832
    plugin_a0.2    FWER 0.20 (8/40) CP[0.09,0.36] | true-flag 0.03 (1/39) | lesion sens 0.005 [0.000,0.018] | false/unit 0.78 | abstain 0 | no violation detected, bought by abstention | thr~3.554474115371704
 
-=== A4: PENDING (cloud job)
+=== A4: 20 units, 390 candidates (212 true), median 14/unit, units with >=1 false cand 20, stable units 0
+   AUROC 0.841 [0.752,0.903] | Q4 rho(maxfalse, burden) 0.15 p=0.531
+   B_all          FWER 1.00 (20/20) CP[0.83,1.00] | true-flag 1.00 (20/20) | lesion sens 0.516 [0.399,0.612] | false/unit 8.90 | abstain 0
+   B_app_sub      FWER 0.95 (19/20) CP[0.75,1.00] | true-flag 1.00 (20/20) | lesion sens 0.493 [0.379,0.587] | false/unit 5.40 | abstain 0
+   B_fixed_0.5SD  FWER 0.85 (17/20) CP[0.62,0.97] | true-flag 1.00 (20/20) | lesion sens 0.457 [0.344,0.557] | false/unit 3.15 | abstain 0
+   app activity_candidate rate 1.00; subtraction-confirmed 1.00
+   marginal_a0.1  FWER 0.10 (2/20) CP[0.01,0.32] | true-flag 1.00 (20/20) | lesion sens 0.278 [0.176,0.375] | false/unit 0.15 | abstain 0 | no violation detected, informative | thr~1.136121153831482
+   pac_a0.1       FWER 0.00 (0/20) CP[0.00,0.17] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.00 | abstain 20 | no violation detected, bought by abstention | thr~None
+   plugin_a0.1    FWER 0.10 (2/20) CP[0.01,0.32] | true-flag 1.00 (20/20) | lesion sens 0.278 [0.176,0.375] | false/unit 0.15 | abstain 0 | no violation detected, informative | thr~1.136121153831482
+   marginal_a0.2  FWER 0.20 (4/20) CP[0.06,0.44] | true-flag 1.00 (20/20) | lesion sens 0.305 [0.192,0.411] | false/unit 0.25 | abstain 0 | no violation detected, informative | thr~1.0538311004638672
+   pac_a0.2       FWER 0.10 (2/20) CP[0.01,0.32] | true-flag 1.00 (20/20) | lesion sens 0.278 [0.176,0.375] | false/unit 0.15 | abstain 0 | no violation detected, informative | thr~1.136121153831482
+   plugin_a0.2    FWER 0.20 (4/20) CP[0.06,0.44] | true-flag 1.00 (20/20) | lesion sens 0.305 [0.192,0.411] | false/unit 0.25 | abstain 0 | no violation detected, informative | thr~1.0538311004638672
 
-=== A4b: PENDING (cloud job)
+=== A4b: 20 units, 390 candidates (212 true), median 14/unit, units with >=1 false cand 20, stable units 0
+   AUROC 0.764 [0.671,0.821] | Q4 rho(maxfalse, burden) -0.09 p=0.711
+   B_all          FWER 1.00 (20/20) CP[0.83,1.00] | true-flag 1.00 (20/20) | lesion sens 0.516 [0.399,0.612] | false/unit 8.90 | abstain 0
+   B_app_sub      FWER 0.95 (19/20) CP[0.75,1.00] | true-flag 1.00 (20/20) | lesion sens 0.493 [0.379,0.587] | false/unit 5.40 | abstain 0
+   app activity_candidate rate 1.00; subtraction-confirmed 1.00
+   marginal_a0.1  FWER 0.10 (2/20) CP[0.01,0.32] | true-flag 0.70 (14/20) | lesion sens 0.132 [0.069,0.184] | false/unit 0.10 | abstain 0 | no violation detected, informative | thr~0.9283169507980347
+   pac_a0.1       FWER 0.00 (0/20) CP[0.00,0.17] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.00 | abstain 20 | no violation detected, bought by abstention | thr~None
+   plugin_a0.1    FWER 0.10 (2/20) CP[0.01,0.32] | true-flag 0.70 (14/20) | lesion sens 0.132 [0.069,0.184] | false/unit 0.10 | abstain 0 | no violation detected, informative | thr~0.9283169507980347
+   marginal_a0.2  FWER 0.20 (4/20) CP[0.06,0.44] | true-flag 0.75 (15/20) | lesion sens 0.155 [0.084,0.212] | false/unit 0.20 | abstain 0 | no violation detected, informative | thr~0.9188233017921448
+   pac_a0.2       FWER 0.10 (2/20) CP[0.01,0.32] | true-flag 0.70 (14/20) | lesion sens 0.132 [0.069,0.184] | false/unit 0.10 | abstain 0 | no violation detected, informative | thr~0.9283169507980347
+   plugin_a0.2    FWER 0.20 (4/20) CP[0.06,0.44] | true-flag 0.75 (15/20) | lesion sens 0.155 [0.084,0.212] | false/unit 0.20 | abstain 0 | no violation detected, informative | thr~0.9188233017921448
    transport open_ms->MSLesSeg a=0.1: thr 4.055 FWER 0.20 (5/25) CP[0.07,0.41] | true-flag 0.04 (1/25) | lesion sens 0.004 [0.000,0.012] | false/unit 0.56 | abstain 0 | no violation detected
    transport open_ms->MSLesSeg a=0.2: thr 3.892 FWER 0.20 (5/25) CP[0.07,0.41] | true-flag 0.04 (1/25) | lesion sens 0.004 [0.000,0.012] | false/unit 0.60 | abstain 0 | no violation detected
    transport MSLesSeg->open_ms a=0.1: thr 4.630 FWER 0.00 (0/20) CP[0.00,0.17] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.00 | abstain 0 | no violation detected

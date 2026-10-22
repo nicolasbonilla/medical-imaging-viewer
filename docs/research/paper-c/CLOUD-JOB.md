@@ -1,6 +1,8 @@
 # Paper C — cloud job to launch: FLAMeS on the open_ms longitudinal scans (arm A4)
 
-Prepared 2026-10-21 on branch `research/paper-c-pilot`. **Nothing has been launched.**
+Prepared 2026-10-21 on branch `research/paper-c-pilot`. **Launched by the owner and finished
+2026-10-22:** runs `paperc-oml-pilot` (2 maps) and `paperc-oml-full` (198 maps), 0 errors,
+0.69 USD; maps downloaded (6.3 MB) and analysed as arm A4 (RESULTS.md §2b).
 Project `mstool-research` and bucket `gs://mstool-research-data` only (isolated gcloud configuration
 `C:/Users/Nicolas/.gcloud-mstool`). No command here touches any other project.
 

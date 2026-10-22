@@ -34,13 +34,13 @@ def q(v, p):
 def main():
     cache = json.load(open(R.CACHE))
     rec = {"note": "POST HOC (after results)", "arms": {}}
-    for arm in ("A1", "A2", "A2b", "A3"):
+    for arm in ("A1", "A2", "A2b", "A3", "A4", "A4b"):   # A4/A4b added 2026-10-22, after the A4 results (post hoc)
         units = R.units_for(arm, cache)
         raw_key = {"A1": None, "A3": None}.get(arm)
         st = [c["score"] for u in units for c in u["cands"] if c["true"]]
         sf = [c["score"] for u in units for c in u["cands"] if not c["true"]]
         # volumes from the raw cache
-        src = cache["open_ms"] if arm == "A1" else [u for u in cache["mslesseg"] if u["first_pair"]]
+        src = cache["open_ms"] if arm in ("A1", "A4", "A4b") else [u for u in cache["mslesseg"] if u["first_pair"]]
         raw = [u["dsub"]["1.5"] if arm in ("A1", "A3") else u["dseg"] for u in src]
         vt = [c["volume_mm3"] for r in raw for c in r if c["true"]]
         vf = [c["volume_mm3"] for r in raw for c in r if not c["true"]]
@@ -57,7 +57,7 @@ def main():
              "patients_best_true_outranks_all_false": ceiling, "patients": len(units),
              "max_false_score_sorted": [round(x, 3) if math.isfinite(x) else None for x in mf],
              "true_scores_above_80pct_of_patient_maxfalse": float(np.mean([s > q(mf, 80) for s in st])) if st else None}
-        if raw_key is None and arm in ("A2", "A2b"):
+        if raw_key is None and arm in ("A2", "A2b", "A4", "A4b"):
             kinds = {}
             for r in raw:
                 for c in r:
