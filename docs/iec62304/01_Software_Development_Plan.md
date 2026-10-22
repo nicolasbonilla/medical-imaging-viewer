@@ -3,7 +3,7 @@
 ## IEC 62304 Clause 5.1 Compliant Development Lifecycle
 
 **Document ID**: SDP-001
-**Version**: 1.1 (2026-10-17 — AI coding agent declared as a development tool, §4.2, §4.4, §9)
+**Version**: 1.2 DRAFT (2026-10-22 — CAPA-012: who records an approval, a review record per PR, `main` protection stated as it is; §3.3, §4.4, §7.1, §7.2, new §7.4, §9; **PENDING owner approval**; v1.1 is in open PR #49, merge after #49) — v1.1 (2026-10-17 — AI coding agent declared as a development tool, §4.2, §4.4, §9; PENDING owner approval in PR #49)
 **Effective Date**: April 12, 2026
 **Software Safety Class**: IEC 62304 Class C
 
@@ -71,6 +71,8 @@ Iteration N:
 | G4: Integration Verified | Integration tests pass, endpoint verification | QA |
 | G5: Release Approved | System tests pass, known anomalies acceptable, risk controls verified | Project Lead |
 
+*(v1.2 DRAFT, CAPA-012 — PENDING owner approval.)* A gate is passed only when its approval is recorded as §7.4 requires: by an action of the approver himself, never by the AI coding agent. The reviewer's part of G2 and G3 is the review record of §7.4 (b).
+
 ---
 
 ## 4. Standards, Methods, and Tools
@@ -114,8 +116,11 @@ documents, and CAPA records. It does not approve, merge or release anything.
 
 **Controls applied to agent output:**
 1. **Human approval.** No change reaches `main` or production without the owner's explicit
-   approval, recorded in the controlled documents with the PR number. Class C modules are flagged
-   in every PR.
+   approval. *(v1.2 DRAFT, CAPA-012 — PENDING owner approval; v1.1 said "recorded in the
+   controlled documents with the PR number" and did not say who writes the record.)* The approval
+   is recorded **by the owner himself**, as §7.4 (a) requires. The agent writes
+   `PENDING owner approval` and never writes an approval line, an "Approved By" value, a signature
+   or a sign-off date. Class C modules are flagged in every PR.
 2. **Verification that can fail.** Every risk control is bound to tests that exercise behaviour,
    preferably real requests. Negative controls (deliberate mutations, one at a time, with every
    anchor asserted unique) must show that the tests detect the removal of each sub-control. The
@@ -133,6 +138,13 @@ documents, and CAPA records. It does not approve, merge or release anything.
   It let an inert authorization dependency pass as VERIFIED. Control 2 now catches this.
 - Inaccurate self-reports in drafted records. Caught by controls 2 and 3.
 - A deployment to the wrong cloud project (2026-10-17). Caught by control 4.
+- *(v1.2 DRAFT, CAPA-012.)* Approval lines written by the agent: all 31 lines recording the
+  owner's approval in 19 controlled documents (2026-09-28 and 2026-10-17) were written by the agent
+  from approvals the owner gave in chat; no formal review on any of 56 pull requests. Caught by
+  the agent harness refusing to write such lines (2026-10-17 to 2026-10-21; a tool behaviour, not
+  a control of this plan) and by the paper H case study. Controls now: §7.4 and CAPA-012 PA-12.1
+  (proposed). The 31 historical lines are kept unchanged and read as agent-transcribed
+  (CAPA-012 §6).
 
 **Known limitation.** Review agents are not independent of the authoring agent, in the sense of
 IEC 62304 §5.5.x and ISO 13485 §7.3.5. An **independent human reviewer for Class C changes**
@@ -178,14 +190,20 @@ Per RMF-001:
 ### 7.1 Repository
 
 - **Platform**: GitHub (https://github.com/nicolasbonilla/medical-imaging-viewer)
-- **Branching**: `main` branch protected, all changes via pull requests
+- **Branching**: all changes via pull requests. *(v1.2 DRAFT, CAPA-012 — PENDING owner approval.
+  v1.0 and v1.1 said "`main` branch protected". On 2026-10-22 `main` was **not** protected: the
+  GitHub API returned "Branch not protected" and the repository had no rulesets. Required by
+  CAPA-012 CA-12.3: pull request required, one approving review, code-owner review on Class C
+  paths and regulatory documents, the CI jobs as required checks, signed commits, no direct
+  pushes, administrators not exempt.)*
 - **Releases**: Git tags with semantic versioning
 
 ### 7.2 Change Control
 
 1. All changes submitted as pull requests
 2. PR requires: description, impact analysis, CI pipeline pass
-3. Code review required before merge
+3. Code review required before merge — *(v1.2 DRAFT, CAPA-012)* evidenced by the review record
+   and the owner's decision of §7.4 (b)
 4. `test_endpoints.sh` verification before and after backend deployment
 
 ### 7.3 SOUP Management
@@ -193,6 +211,45 @@ Per RMF-001:
 - Dependencies pinned in `package.json` and `requirements.txt`
 - SOUP inventory maintained in SOUP-001 document
 - Vulnerability scanning: `npm audit` + `pip-audit` (to be added to CI)
+
+### 7.4 Approval and Review Records (v1.2 DRAFT, CAPA-012 — PENDING owner approval)
+
+**(a) Who records an approval.** An approval, sign-off, gate decision or release decision is
+valid only when its record is created by an action of the approver that the AI coding agent
+cannot perform:
+1. an **owner-executed sign-off commit**: made by the owner in his own session, without the
+   agent's `Co-Authored-By` trailer and without the Claude Code footer, signed with a key the agent
+   cannot use (hardware security key, or a passphrase-protected key never loaded into the agent's
+   environment) and shown as "Verified" by GitHub; it replaces `PENDING owner approval` by the
+   approval line(s) for the pull request it names; or
+2. a **formal GitHub review** (state APPROVED) given in the GitHub web interface, with two-factor
+   authentication, from the owner's account on a pull request authored by the agent's own,
+   separate identity (CAPA-012 CA-12.3).
+
+Until the separate agent identity and branch protection exist, only (a) 1 produces a valid
+approval. The agent may draft any document but never writes an approval line, an "Approved By"
+value, a signature or a sign-off date; where an approval is pending it writes
+`PENDING owner approval`.
+
+**(b) Review record per pull request.** Before merge, every pull request has:
+1. at least one adversarial review report by a reviewer session that did not author the change —
+   scope, findings, verdict (approve / block), the author's responses — stored as
+   `docs/iec62304/records/code_reviews/CR-PR<N>_<date>.md` (structure of TPL-03) and linked from the
+   pull request; and
+2. the owner's decision (approve / approve with conditions / reject), recorded as (a) requires.
+
+For a pull request that touches a Class C module, the review record states that the review
+sessions are not independent of the authoring agent in the sense of IEC 62304 and
+ISO 13485 §7.3.5, until an independent human reviewer is appointed (§9; CAPA-012 CA-12.5).
+
+**(c) Check in CI** (CAPA-012 PA-12.1, proposed, not yet implemented): a job fails when a line
+recording an approval is added to a controlled document by a commit that carries the agent's
+trailer or footer, or — once (a) 1 is in force — by a commit not signed by the owner's key.
+
+**(d) Historical approvals.** The 31 lines recording the owner's approval that were written
+between 2026-09-28 and 2026-10-17 were written by the agent from approvals the owner gave in chat
+(CAPA-012 §6). They are not invalidated and not rewritten; they are read as agent-transcribed.
+Retrospective confirmation by the owner: PENDING owner approval (CAPA-012 D-3).
 
 ---
 
@@ -216,7 +273,7 @@ Per RMF-001:
 |------|-----------------|
 | **Project Lead** | SDP ownership, quality gate approval, risk management authority |
 | **Developer** | Implementation, unit testing, code documentation |
-| **Reviewer** | Code review, design review, independence from author |
+| **Reviewer** | Code review, design review, independence from author. *(v1.2 DRAFT, CAPA-012: no person holds this role today; the review sessions of §4.4 control 3 are not independent of the author. To be appointed before any regulatory submission — CA-12.5)* |
 | **QA** | Integration/system testing, traceability verification |
 | **Clinical Advisor** | Clinical risk assessment, intended use validation |
 | **Regulatory Affairs** | Standard compliance, audit preparation |

@@ -26,7 +26,7 @@
   ],
   "manifest_version": 1,
   "capa_reference": "CAPA-001, CAPA-002, CAPA-004, CAPA-005, CAPA-006, CAPA-007, CAPA-010, CAPA-011",
-  "last_updated": "2026-10-18",
+  "last_updated": "2026-10-22",
   "controls": {
     "RC-006": {
       "description": "AI-generated report carries a mandatory physician-review disclaimer",
@@ -605,6 +605,46 @@
       "tests": [],
       "change": "CP-FLAMES-BROWSER-001 (DRAFT, PENDING owner approval; feature flag OFF)",
       "note": "NOT IMPLEMENTED. Open action CA-FLAMES-2 (CP-FLAMES-BROWSER-001, owner): device gate (memory, cores, WebGPU adapter limits) and COOP/COEP as a separate tested change (COOP-COEP-IMPACT.md). Interim: honest duration estimate + cancel (REQ-FUNC-096)."
+    },
+    "RC-059": {
+      "description": "MSMask path: the periventricular landmark is the lateral ventricles only (third ventricle separated from MSMask label 4 in a derived, versioned, hash-checked mask; fail closed if missing or altered); LST-AI zones path recomputed with the same rule or the deviation stated",
+      "hazard": "HAZ-005, HAZ-008",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "requirement": "REQ-FUNC-053",
+      "change": "PRB-001 (DRAFT, PENDING owner approval; proposed 2026-10-22 from paper D, PR #61)",
+      "note": "NOT IMPLEMENTED. Proposed as CAPA-006 action CA-6.14 (owner decision; SPR-001 s4.1: Class C item). Today generate_zone_map_atlas uses MSMask label 4 whole (lateral + third ventricle) as the PV landmark; measured effect 3 of 3,992 expert lesions (0.08 %), 0 DIS decisions changed (paper D, established MS). Verification proposed in PRB-001 s6 (test_rc059_*, fail-closed tests, regression on paper D's 124 scans, negative controls)."
+    },
+    "RC-060": {
+      "description": "Longitudinal comparison: unconfirmed new/enlarging candidates presented only as 'unconfirmed change candidates', never as activity (no activity/DIT banner, no NEDA badge, no activity or DIT flag to a report or the AI assistant) - interim, first; target: per-candidate confirm/reject stored with the authenticated reader, activity (MAGNIMS 2021, >= 1) computed from confirmed candidates only",
+      "hazard": "HAZ-007",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "requirement": "REQ-SAFE-037 (proposed)",
+      "change": "RMF-OBS-001 (DRAFT, PENDING owner approval; proposed 2026-10-22 from the paper C pilot, PR #60)",
+      "note": "NOT IMPLEMENTED. Proposed as CAPA-008 action CA-8.11 (owner decision). Paper C pilot (PR #60): the device's compare_timepoints on FLAMeS masks proposed >= 1 false new/enlarging candidate in 20/20 open_ms patients against expert change masks (8.9 per patient [5.8, 12.6]; 19/20 and 5.4 per patient after the device's subtraction confirmation) and in 25/25 MSLesSeg patients (8.2 per patient; approximate truth); no stable patients; activity_candidate true in every pair. Today the 'Active-disease CANDIDATE' banner and the NEDA-3 badge are raised from unconfirmed candidates and no per-candidate confirmation exists. RC-014b (candidate framing, report firewall) unchanged."
+    },
+    "RC-061": {
+      "description": "Longitudinal caveat states, in the user's language, the measured false-candidate rate with its source and date; the FLAIR-subtraction result worded as a signal, never as confirmation; every longitudinal safety text exists in every shipped locale",
+      "hazard": "HAZ-007",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "requirement": "REQ-SAFE-037 (proposed)",
+      "change": "RMF-OBS-001 (DRAFT, PENDING owner approval; proposed 2026-10-22)",
+      "note": "NOT IMPLEMENTED. Proposed as CAPA-008 action CA-8.12 (owner decision). Today the subtraction texts read 'confirmed brighter at follow-up' and 'supports a genuine new lesion' although subtraction-checked candidates were still false in 19/20 patients (paper C A4); the activity banner, NEDA badge and subtraction texts have no locale entry (English default shown) and the backend caveat, which takes precedence over the translated candidateCaveat, is English only."
+    },
+    "RC-062": {
+      "description": "Longitudinal comparison abstains on an acquisition change: when manufacturer/model, field strength, 2D/3D or slice thickness of the two source images differ or cannot be established, no new/enlarging counts or summary are shown, the reason is stated, and the overlay stays for visual review",
+      "hazard": "HAZ-007",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "requirement": "REQ-SAFE-037 (proposed)",
+      "change": "RMF-OBS-001 (DRAFT, PENDING owner approval; proposed 2026-10-22)",
+      "note": "NOT IMPLEMENTED. Proposed as CAPA-008 action CA-8.13 (owner decision). Precautionary: in paper C the two MSLesSeg patients with the strongest false candidates (4.9 and 5.3 SD) are pairs where a scanner change is plausible, not shown. Today the comparison reads no acquisition metadata."
     }
   },
   "unverified_controls_note": [

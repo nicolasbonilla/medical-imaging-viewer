@@ -2,7 +2,7 @@
 
 ## IEC 62304 Clause 5.1.1(e) — Bidirectional Traceability
 
-**Document ID**: TM-001 | **Version**: 1.6 DRAFT (CP-FLAMES-BROWSER-001, PENDING owner approval; merge after #52 (v1.4) and #51 (v1.5)) — last approved: 1.3 | **Date**: October 17, 2026 (v1.2 to v1.5 same day; v1.1: September 28, 2026; v1.0: April 12, 2026)
+**Document ID**: TM-001 | **Version**: 1.8 DRAFT (RMF-OBS-001, PRB-001, PENDING owner approval; merge after #52, #51, #53 and #59, which hold versions 1.4, 1.5, 1.6 and 1.7) — last approved: 1.3 | **Date**: October 17, 2026 (v1.2 to v1.5 same day; v1.1: September 28, 2026; v1.0: April 12, 2026)
 
 | Version | Date | Author | Change | Approved By |
 |---------|------|--------|--------|-------------|
@@ -13,6 +13,7 @@
 | 1.4 | 2026-10-17 | Development Team | CAPA-010: REQ-SAFE-016 (amended), REQ-SAFE-025/026/027 → RC-016, RC-023, RC-037, RC-038 → UI-CAPA010-3D, UI-CAPA010-MPV, UI-CAPA010-APP, UI-RC038 (addendum below; test rows added) | **PENDING owner approval** |
 | 1.5 | 2026-10-17 | Development Team | CAPA-011: REQ-SAFE-028 → RC-039 → UT-RC039 (addendum below; test rows added) | PENDING owner approval |
 | 1.6 (draft) | 2026-10-17/18 | Development Team | CP-FLAMES-BROWSER-001 (in-browser FLAMeS, flag OFF). Re-review 2 (2026-10-18): REQ-SAFE-030 / RC-047 and REQ-SAFE-033 / RC-049 rows updated; UI-FLAMES-BANNER added. Original entry: REQ-FUNC-034/036 (amended), REQ-FUNC-093..097, REQ-SAFE-029..033 → RC-040..RC-051 (RC-052/053 not implemented) → UT-FLAMES-*, UI-FLAMES-*, UT-RC047, VAL-FLAMES-* (addendum below; test rows added). Versions 1.4 and 1.5 are reserved by open PRs #52 and #51 | **PENDING owner approval** |
+| 1.8 (draft) | 2026-10-22 | Development Team | RMF-OBS-001 and PRB-001: REQ-FUNC-053 row annotated with the known nonconformity of the MSMask and LST-AI zones paths (PRB-001 → RC-059, proposed); REQ-FUNC-054 row annotated (RMF-OBS-001); REQ-SAFE-037 (proposed) → RC-060, RC-061, RC-062 (proposed); RC-059..RC-062 NOT IMPLEMENTED, no test (addendum below). Version 1.7 is reserved by open PR #59 | **PENDING owner approval** |
 
 ---
 
@@ -31,8 +32,8 @@
 | REQ-FUNC-042 | Abnormality flags | SAD 3.4 | DD-VOL-001 | `brain_volumetry_service.py` | UT-VOL-003 | — | ST-FUNC-042 | HAZ-002 |
 | REQ-FUNC-050 | Connected component analysis | SAD 3.5 | DD-LES-001 | `lesion_analysis_service.py` | UT-LES-001 | IT-LES-001 | ST-FUNC-050 | HAZ-005 |
 | REQ-FUNC-052 | McDonald 2024 DIS | SAD 3.5 | DD-LES-002 | `lesion_analysis_service.py` | UT-DIS-001 | — | ST-FUNC-052 | HAZ-008 |
-| REQ-FUNC-053 | MAGNIMS classification by the contact criterion via four paths (LST-AI zones, parcellation + EDT <= 1.5 mm, MSMask atlas on MNI-space images only, geometric fallback); path reported *(corrected 2026-09-28, CAPA-006; was "MAGNIMS classification", SAD 3.5, UT-CLS-001 only)* | SAD 3.2 (BE-CLS) | DD-CLS-001 | `ms_region_classifier.py`, `segmentation_regions.py` | UT-CLS-001, UT-CLS-002, UT-CLS-003, UI-RC032, UT-LBL-001 | IT-CLS-001 | ST-FUNC-053 | HAZ-005 (RC-010 (amended), RC-032) |
-| REQ-FUNC-054 | Longitudinal tracking | SAD 3.5 | — | `longitudinal_tracking_service.py` | UT-LONG-001 | IT-LONG-001 | ST-FUNC-054 | HAZ-007 |
+| REQ-FUNC-053 | MAGNIMS classification by the contact criterion via four paths (LST-AI zones, parcellation + EDT <= 1.5 mm, MSMask atlas on MNI-space images only, geometric fallback); path reported *(corrected 2026-09-28, CAPA-006; was "MAGNIMS classification", SAD 3.5, UT-CLS-001 only)* | SAD 3.2 (BE-CLS) | DD-CLS-001 | `ms_region_classifier.py`, `segmentation_regions.py` | UT-CLS-001, UT-CLS-002, UT-CLS-003, UI-RC032, UT-LBL-001 | IT-CLS-001 | ST-FUNC-053 | HAZ-005 (RC-010 (amended), RC-032). *Known nonconformity (2026-10-22, draft): the MSMask path, and the LST-AI zones path by inheritance, use the third ventricle as a PV landmark — PRB-001, RC-059 proposed, NOT IMPLEMENTED, no test* |
+| REQ-FUNC-054 | Longitudinal tracking | SAD 3.5 | — | `longitudinal_tracking_service.py` | UT-LONG-001 | IT-LONG-001 | ST-FUNC-054 | HAZ-007 *(2026-10-22, draft: RMF-OBS-001 — on automatic masks >= 1 false new/enlarging candidate in 20/20 patients against expert change masks, about 9 per patient; REQ-SAFE-037, RC-060..RC-062 proposed)* |
 | REQ-FUNC-060 | AI report generation | SAD 3.6 | DD-RPT-001 | `brain_report_service.py` | UT-RPT-001 | IT-RPT-001 | ST-FUNC-060 | HAZ-003 |
 | REQ-FUNC-070 | QIDO-RS search | SAD 3.7 | — | `dicomweb_service.py` | — | IT-PACS-001 | ST-FUNC-070 | — |
 | REQ-FUNC-071 | WADO-RS import | SAD 3.7 | — | `dicomweb_service.py` | — | IT-PACS-002 | ST-FUNC-071 | HAZ-012 |
@@ -163,6 +164,15 @@
 > | REQ-FUNC-036 | Empty result explicit | RC-051 | HAZ-001 | `BrowserFlamesCard.tsx`, `draft.ts` | UI-FLAMES-CARD | TEST-BOUND on branch (H7, H8) |
 > | — | 5-fold ensemble default before clinical use | RC-052 | HAZ-001 | — | — | **NOT IMPLEMENTED** (CA-FLAMES-1) |
 > | — | Device gate / cross-origin isolation | RC-053 | HAZ-001 | — | — | **NOT IMPLEMENTED** (CA-FLAMES-2) |
+>
+> **Addendum 2026-10-22 (DRAFT, PENDING owner approval): RC-059 (PRB-001), REQ-SAFE-037 → RC-060/RC-061/RC-062 (RMF-OBS-001).** All four controls are proposed and NOT IMPLEMENTED; no test exists. Records: `records/problem_reports/PRB-001_MSMask_Third_Ventricle_Counted_Periventricular.md`; RMF-001 §3.5. RC-054..RC-058 and REQ-SAFE-034..036 are reserved by open PR #59.
+>
+> | Req ID | Safety Requirement | Risk Control | HAZ ID | Implementation | Test ID | Verified? |
+> |--------|-------------------|-------------|--------|----------------|---------|-----------|
+> | REQ-FUNC-053 | MSMask path: PV landmark = lateral ventricles only (derived, versioned, hash-checked mask; fail closed); LST-AI zones path recomputed with the same rule or deviation stated | RC-059 | HAZ-005 (HAZ-008) | — | — (proposed: `test_rc059_*`, PRB-001 §6 V1–V7) | **NOT IMPLEMENTED** (proposed CAPA-006 CA-6.14) |
+> | REQ-SAFE-037 (a)–(c) (proposed) | Unconfirmed candidates never presented as activity (interim, first); no activity/DIT flag to reports or the assistant; per-candidate confirmation by the reader; activity from confirmed candidates only | RC-060 | HAZ-007 | — | — | **NOT IMPLEMENTED** (proposed CAPA-008 CA-8.11) |
+> | REQ-SAFE-037 (d) (proposed) | Measured false-candidate rate stated to the reader in the user's language; subtraction never worded as confirmation; longitudinal safety texts in every shipped locale | RC-061 | HAZ-007 | — | — | **NOT IMPLEMENTED** (proposed CAPA-008 CA-8.12) |
+> | REQ-SAFE-037 (e) (proposed) | No new/enlarging counts when the acquisition differs between visits or cannot be established; reason stated; overlay kept | RC-062 | HAZ-007 | — | — | **NOT IMPLEMENTED** (proposed CAPA-008 CA-8.13) |
 
 ---
 
