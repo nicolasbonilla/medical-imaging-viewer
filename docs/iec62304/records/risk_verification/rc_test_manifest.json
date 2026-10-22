@@ -25,7 +25,7 @@
     "status here is 'implemented' or 'deliberately_absent'."
   ],
   "manifest_version": 1,
-  "capa_reference": "CAPA-001, CAPA-002, CAPA-004, CAPA-005, CAPA-006, CAPA-007, CAPA-010, CAPA-011",
+  "capa_reference": "CAPA-001, CAPA-002, CAPA-004, CAPA-005, CAPA-006, CAPA-007, CAPA-010, CAPA-011, CAPA-013",
   "last_updated": "2026-10-22",
   "controls": {
     "RC-006": {
@@ -374,7 +374,7 @@
       ],
       "negative_control": "Executed 2026-10-17 by scripts/safety/capa008_negative_controls.py; C1-C6 6/6 detected; record docs/iec62304/records/risk_verification/CAPA-008_negative_controls_2026-10-17.json.",
       "requirement": "REQ-SAFE-024",
-      "note": "CAPA-008. Rule wording verified against open sources quoting Montalban et al. 2025 (Solomon et al., Neurology 2026; ECTRIMS 2025 deck slide 35) and MAGNIMS 2021 (author version); the paywalled Lancet full text was not read. The UI part is verified by source-level tests, not a render test."
+      "note": "CAPA-008. Rule wording verified against open sources quoting Montalban et al. 2025 (Solomon et al., Neurology 2026; ECTRIMS 2025 deck slide 35) and MAGNIMS 2021 (author version); the paywalled Lancet full text was not read. The UI part is verified by source-level tests, not a render test. 2026-10-22 (CAPA-013, draft): the service flag activity_candidate is still computed (this test) but no longer leaves the backend; the activity statement shown is reader_confirmed_activity, the same >= 1 rule applied to radiologist-confirmed candidates only (RC-060)."
     },
     "RC-036": {
       "description": "RC-036 (CAPA-009): every mounted route that references a patient-scoped object authorizes it before any data access; task/upload/import handles are initiator-only; PACS connection changes and websocket connection statistics are administrator-only; parsed, authorized storage paths only",
@@ -617,34 +617,46 @@
       "note": "NOT IMPLEMENTED. Proposed as CAPA-006 action CA-6.14 (owner decision; SPR-001 s4.1: Class C item). Today generate_zone_map_atlas uses MSMask label 4 whole (lateral + third ventricle) as the PV landmark; measured effect 3 of 3,992 expert lesions (0.08 %), 0 DIS decisions changed (paper D, established MS). Verification proposed in PRB-001 s6 (test_rc059_*, fail-closed tests, regression on paper D's 124 scans, negative controls)."
     },
     "RC-060": {
-      "description": "Longitudinal comparison: unconfirmed new/enlarging candidates presented only as 'unconfirmed change candidates', never as activity (no activity/DIT banner, no NEDA badge, no activity or DIT flag to a report or the AI assistant) - interim, first; target: per-candidate confirm/reject stored with the authenticated reader, activity (MAGNIMS 2021, >= 1) computed from confirmed candidates only",
-      "hazard": "HAZ-007",
-      "status": "not_implemented",
-      "implementation": null,
-      "tests": [],
-      "requirement": "REQ-SAFE-037 (proposed)",
-      "change": "RMF-OBS-001 (DRAFT, PENDING owner approval; proposed 2026-10-22 from the paper C pilot, PR #60)",
-      "note": "NOT IMPLEMENTED. Proposed as CAPA-008 action CA-8.11 (owner decision). Paper C pilot (PR #60): the device's compare_timepoints on FLAMeS masks proposed >= 1 false new/enlarging candidate in 20/20 open_ms patients against expert change masks (8.9 per patient [5.8, 12.6]; 19/20 and 5.4 per patient after the device's subtraction confirmation) and in 25/25 MSLesSeg patients (8.2 per patient; approximate truth); no stable patients; activity_candidate true in every pair. Today the 'Active-disease CANDIDATE' banner and the NEDA-3 badge are raised from unconfirmed candidates and no per-candidate confirmation exists. RC-014b (candidate framing, report firewall) unchanged."
+      "description": "Longitudinal comparison: new/enlarging results are unconfirmed change candidates, never activity — no activity_candidate / dit_candidate / 'clinically significant' count in any response, no activity/DIT banner or NEDA badge, flags dropped by the assistant client, report template without an Active/Not active class, fixed localised notice on report drafts; (a) radiologist confirm/reject recorded with reader and time, bound to the SHA-256 of both masks; (c) reader_confirmed_activity (MAGNIMS 2021, >= 1) only from confirmed candidates",
+      "hazard": "HAZ-007, HAZ-003",
+      "status": "implemented",
+      "implementation": "backend/app/services/longitudinal_candidate_safety.py (present_comparison, candidate_key, mask_binding, validate_decisions, validate_binding); backend/app/api/routes/segmentation_analysis.py (compare_longitudinal, review_longitudinal_candidates); backend/app/mcp/_backend.py (drop_unconfirmed_activity_flags); backend/app/mcp/ms_clinical_server.py (instructions); backend/app/services/brain_report_service.py (ms_longitudinal template, longitudinal prompt block — Class C, CAPA-013 s6); backend/app/api/routes/ai_report.py (longitudinal_notice); frontend/src/components/LongitudinalResultPanel.tsx; frontend/src/components/LongitudinalCompare.tsx; frontend/src/api/segmentation.ts; frontend/src/types/lesion.ts",
+      "tests": [
+        "tests/unit/test_capa013_longitudinal_candidates.py",
+        "frontend/src/components/LongitudinalCompare.capa013.test.tsx"
+      ],
+      "requirement": "REQ-SAFE-037 (a)-(c)",
+      "change": "CAPA-013 (DRAFT, PENDING owner approval; branch fix/longitudinal-activity-display-capa013; merge after #52, #51, #53, #59, #49, #62)",
+      "negative_control": "Executed 2026-10-22 by scripts/safety/capa013_negative_controls.py (45 mutations, 45 detected; the first run left F12 (German rate partly in English) undetected, so the language test was strengthened and F15 added; all mutations re-executed against the final test files (per-mutation time and test SHA-256 in the record); one mutation at a time, anchors asserted unique, files restored byte for byte); record docs/iec62304/records/risk_verification/CAPA-013_negative_controls_2026-10-22.json. Tests written before the fix, re-run on the PR #62 code by scripts/safety/capa013_tests_on_base.py (backend 40 of 41 cases fail, frontend 13 of 13; the passing backend case is a regression guard); record CAPA-013_tests_on_base_2026-10-22.json. RC-060 mutations: B1-B15, F1-F5.",
+      "note": "Proposed by RMF-OBS-001 (PR #62) as CAPA-008 CA-8.11; implemented by CAPA-013 (CA-13.1-13.3) instead (owner decision D-2). The interim text avoids any activity word; the word appears only in the radiologist-confirmed statement. Only the latest decision per candidate is kept (PA-13.4). The report body is written by a language model: prompt and template constrained, notice appended in code, body not filtered. Owner approval PENDING."
     },
     "RC-061": {
-      "description": "Longitudinal caveat states, in the user's language, the measured false-candidate rate with its source and date; the FLAIR-subtraction result worded as a signal, never as confirmation; every longitudinal safety text exists in every shipped locale",
+      "description": "Longitudinal view states the measured false-candidate rate, in the reader's language, with source and date, from a versioned asset bound to the rule parameters (withheld when the rule differs or the asset is unusable); FLAIR subtraction worded as a signal, never a confirmation; every text of the view in en/es/de, no English default, backend English caveat not shown",
       "hazard": "HAZ-007",
-      "status": "not_implemented",
-      "implementation": null,
-      "tests": [],
-      "requirement": "REQ-SAFE-037 (proposed)",
-      "change": "RMF-OBS-001 (DRAFT, PENDING owner approval; proposed 2026-10-22)",
-      "note": "NOT IMPLEMENTED. Proposed as CAPA-008 action CA-8.12 (owner decision). Today the subtraction texts read 'confirmed brighter at follow-up' and 'supports a genuine new lesion' although subtraction-checked candidates were still false in 19/20 patients (paper C A4); the activity banner, NEDA badge and subtraction texts have no locale entry (English default shown) and the backend caveat, which takes precedence over the translated candidateCaveat, is English only."
+      "status": "implemented",
+      "implementation": "backend/app/services/assets/longitudinal_false_candidate_evidence.json (v1.0.0, source record docs/research/records/2026-10-21_paper_c_pilot.json @ 0501bd1, SHA-256 recorded); backend/app/services/longitudinal_candidate_safety.py (current_rule_parameters, load_false_candidate_evidence, evidence_sentence); frontend/src/components/LongitudinalResultPanel.tsx; frontend/src/components/LongitudinalCompare.tsx; frontend/src/i18n/locales/{en,es,de}.json; backend/app/api/routes/ai_report.py; backend/app/mcp/ms_clinical_server.py",
+      "tests": [
+        "tests/unit/test_capa013_longitudinal_candidates.py",
+        "frontend/src/components/LongitudinalCompare.capa013.test.tsx"
+      ],
+      "requirement": "REQ-SAFE-037 (d)",
+      "change": "CAPA-013 (DRAFT, PENDING owner approval; branch fix/longitudinal-activity-display-capa013; merge after #52, #51, #53, #59, #49, #62)",
+      "negative_control": "Executed 2026-10-22 by scripts/safety/capa013_negative_controls.py (45 mutations, 45 detected; the first run left F12 (German rate partly in English) undetected, so the language test was strengthened and F15 added; all mutations re-executed against the final test files (per-mutation time and test SHA-256 in the record); one mutation at a time, anchors asserted unique, files restored byte for byte); record docs/iec62304/records/risk_verification/CAPA-013_negative_controls_2026-10-22.json. Tests written before the fix, re-run on the PR #62 code by scripts/safety/capa013_tests_on_base.py (backend 40 of 41 cases fail, frontend 13 of 13; the passing backend case is a regression guard); record CAPA-013_tests_on_base_2026-10-22.json. RC-061 mutations: E1-E6, F6-F12, F15.",
+      "note": "Proposed by RMF-OBS-001 as CAPA-008 CA-8.12; implemented by CAPA-013 (CA-13.4, CA-13.5). The rate is research evidence on highly active patients (paper C A4, 20 patients, FLAMeS 5-fold); no stable patients. Wording in es/de awaits radiologist review (CAPA-013 D-4). Owner approval PENDING."
     },
     "RC-062": {
-      "description": "Longitudinal comparison abstains on an acquisition change: when manufacturer/model, field strength, 2D/3D or slice thickness of the two source images differ or cannot be established, no new/enlarging counts or summary are shown, the reason is stated, and the overlay stays for visual review",
+      "description": "Longitudinal comparison abstains when the acquisition of the two visits differs or cannot be established (manufacturer, model, field strength, 2D/3D, slice thickness; repetition/echo/inversion time and slice spacing when recorded; voxel size): no candidate, count, burden change or decision; reason and compared metadata stated; overlay kept. PACS import stores the acquisition record",
       "hazard": "HAZ-007",
-      "status": "not_implemented",
-      "implementation": null,
-      "tests": [],
-      "requirement": "REQ-SAFE-037 (proposed)",
-      "change": "RMF-OBS-001 (DRAFT, PENDING owner approval; proposed 2026-10-22)",
-      "note": "NOT IMPLEMENTED. Proposed as CAPA-008 action CA-8.13 (owner decision). Precautionary: in paper C the two MSLesSeg patients with the strongest false candidates (4.9 and 5.3 SD) are pairs where a scanner change is plausible, not shown. Today the comparison reads no acquisition metadata."
+      "status": "implemented",
+      "implementation": "backend/app/services/longitudinal_candidate_safety.py (compare_acquisitions, acquisition_from_dicom, read_source_acquisition, present_comparison); backend/app/api/routes/segmentation_analysis.py (_source_acquisition, compare_longitudinal); backend/app/services/dicomweb_service.py (instance 'acquisition'); frontend/src/components/LongitudinalResultPanel.tsx",
+      "tests": [
+        "tests/unit/test_capa013_longitudinal_candidates.py",
+        "frontend/src/components/LongitudinalCompare.capa013.test.tsx"
+      ],
+      "requirement": "REQ-SAFE-037 (e)",
+      "change": "CAPA-013 (DRAFT, PENDING owner approval; branch fix/longitudinal-activity-display-capa013; merge after #52, #51, #53, #59, #49, #62)",
+      "negative_control": "Executed 2026-10-22 by scripts/safety/capa013_negative_controls.py (45 mutations, 45 detected; the first run left F12 (German rate partly in English) undetected, so the language test was strengthened and F15 added; all mutations re-executed against the final test files (per-mutation time and test SHA-256 in the record); one mutation at a time, anchors asserted unique, files restored byte for byte); record docs/iec62304/records/risk_verification/CAPA-013_negative_controls_2026-10-22.json. Tests written before the fix, re-run on the PR #62 code by scripts/safety/capa013_tests_on_base.py (backend 40 of 41 cases fail, frontend 13 of 13; the passing backend case is a regression guard); record CAPA-013_tests_on_base_2026-10-22.json. RC-062 mutations: A1-A9, F13-F14.",
+      "note": "Proposed by RMF-OBS-001 as CAPA-008 CA-8.13; implemented by CAPA-013 (CA-13.6). Images uploaded as NIfTI carry no acquisition record, so their comparisons abstain (CAPA-013 D-3, PA-13.3). The Firestore lookup and the PACS import field are verified by unit and source tests only. Owner approval PENDING."
     }
   },
   "unverified_controls_note": [

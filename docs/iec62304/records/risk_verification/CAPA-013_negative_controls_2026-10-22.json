@@ -1,0 +1,858 @@
+{
+  "executed": "2026-10-22T23:36:09",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once; the bound tests of the mutated side are run (backend pytest, frontend vitest JSON reporter)",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/api/routes/ai_report.py": "455fd32e29a01134ae39cbf9ffca6b940f9d7e4b5d5b2d5a901567967633781c",
+    "backend/app/api/routes/segmentation_analysis.py": "1e87d633d295ac9bae5a647ee6e5cc7b1849ed06515d92c45f7e7c269c086a6a",
+    "backend/app/mcp/_backend.py": "7a4f16029b060cfa046a88ad6bcf67153ac31a5659b5e935a5170caa451bf110",
+    "backend/app/mcp/ms_clinical_server.py": "2dc9da2cd5907b95f6c3a5179b543d370668f1af97578212f7afea9eba77470c",
+    "backend/app/services/assets/longitudinal_false_candidate_evidence.json": "671ae7da040c50fc25cbb728bcbbede109e7cc94f0a639e544729026ff4869e0",
+    "backend/app/services/brain_report_service.py": "6488b92ebb9c41645c1ad0f313c251a0a032c0530690106fc6e37116f001374b",
+    "backend/app/services/dicomweb_service.py": "b0cb838499e9b084ec4bf932d443d12f82af6b02e15792eb5d26589c8efb9c2b",
+    "backend/app/services/longitudinal_candidate_safety.py": "453bf8801c02690d2b065c201f72a7758e994044ecb81856e6159b84b8e0fc98",
+    "frontend/src/components/LongitudinalResultPanel.tsx": "564ea518227c7f3ab089734a4cfbd4cf20db6c3320063e0c968dc2219d5e874a",
+    "frontend/src/i18n/locales/de.json": "f467050e9af755f1051312deb1e49023fcbf9a3a91f4d5d36ecc8dd1952100fd",
+    "frontend/src/i18n/locales/en.json": "c6bd5988fccf7d3fbe7ef246af3dd2055446f44a06af7c44ed67f3a87b771a9f",
+    "frontend/src/i18n/locales/es.json": "f5193191b0cf6e5bae291f0145d2bf197b0a02bfb2b7a2a1537a887d27e927c9"
+  },
+  "test_sha256": {
+    "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b",
+    "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "8c3bb9b49a116d7b2717b36996a19a6fa662944830c42daaaee04a8d011ec254"
+  },
+  "tests": [
+    "tests/unit/test_capa013_longitudinal_candidates.py",
+    "frontend/src/components/LongitudinalCompare.capa013.test.tsx"
+  ],
+  "mutations": {
+    "B1_legacy_flags_returned": {
+      "suite": "backend",
+      "failed": 4,
+      "passed": 37,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc060_compare_response_carries_no_activity_or_dit_flag",
+        "test_rc060_rejected_candidates_never_raise_activity",
+        "test_rc062_comparison_abstains_without_counts[differs]",
+        "test_rc062_comparison_abstains_without_counts[not_established]"
+      ],
+      "reintroduces": "activity_candidate / dit_candidate reach the view, the report and the assistant (the defect as found)",
+      "applied": true,
+      "executed": "2026-10-22T23:37:11",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "B2_presentation_bypassed": {
+      "suite": "backend",
+      "failed": 11,
+      "passed": 30,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc060_a_changed_mask_voids_earlier_decisions",
+        "test_rc060_a_decision_for_a_candidate_that_does_not_exist_counts_for_nothing",
+        "test_rc060_compare_response_carries_no_activity_or_dit_flag",
+        "test_rc060_confirmation_stored_with_reader_and_time_then_activity_from_confirmed_only",
+        "test_rc060_decision_is_bound_to_the_compared_masks",
+        "test_rc060_rejected_candidates_never_raise_activity",
+        "test_rc060_report_prompt_states_the_radiologist_confirmation",
+        "test_rc061_comparison_serves_the_rate_from_the_asset_not_from_code",
+        "test_rc062_comparison_abstains_without_counts[differs]",
+        "test_rc062_comparison_abstains_without_counts[not_established]",
+        "test_rc062_report_prompt_for_an_abstained_comparison_has_no_counts"
+      ],
+      "reintroduces": "the route returns the raw comparison (as on PR #62)",
+      "applied": true,
+      "executed": "2026-10-22T23:38:03",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "B3_activity_from_unconfirmed": {
+      "suite": "backend",
+      "failed": 17,
+      "passed": 24,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc060_a_changed_mask_voids_earlier_decisions",
+        "test_rc060_a_decision_for_a_candidate_that_does_not_exist_counts_for_nothing",
+        "test_rc060_compare_response_carries_no_activity_or_dit_flag",
+        "test_rc060_confirmation_stored_with_reader_and_time_then_activity_from_confirmed_only",
+        "test_rc060_decision_is_bound_to_the_compared_masks",
+        "test_rc060_only_a_radiologist_can_record_a_decision",
+        "test_rc060_rejected_candidates_never_raise_activity",
+        "test_rc060_report_draft_carries_the_unconfirmed_candidate_notice[de-unbest\\xe4tigte",
+        "test_rc060_report_draft_carries_the_unconfirmed_candidate_notice[en-unconfirmed",
+        "test_rc060_report_draft_carries_the_unconfirmed_candidate_notice[es-candidatos",
+        "test_rc060_report_prompt_has_no_activity_wording_from_unconfirmed_candidates",
+        "test_rc060_report_prompt_states_the_radiologist_confirmation",
+        "test_rc060_unknown_decision_is_refused[None]",
+        "test_rc060_unknown_decision_is_refused[]",
+        "test_rc060_unknown_decision_is_refused[confirm]",
+        "test_rc060_unknown_decision_is_refused[probable]",
+        "test_rc061_comparison_serves_the_rate_from_the_asset_not_from_code"
+      ],
+      "reintroduces": "the activity statement computed from unconfirmed candidates",
+      "applied": true,
+      "executed": "2026-10-22T23:38:54",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "B4_rejection_counts_as_confirmation": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 40,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc060_rejected_candidates_never_raise_activity"
+      ],
+      "reintroduces": "a rejected candidate counted as confirmed",
+      "applied": true,
+      "executed": "2026-10-22T23:39:44",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "B5_any_role_may_decide": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 40,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc060_only_a_radiologist_can_record_a_decision"
+      ],
+      "reintroduces": "any authenticated user records a confirmation",
+      "applied": true,
+      "executed": "2026-10-22T23:40:34",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "B6_decision_not_bound_to_masks": {
+      "suite": "backend",
+      "failed": 3,
+      "passed": 38,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc060_decision_is_bound_to_the_compared_masks",
+        "test_rc062_comparison_abstains_without_counts[differs]",
+        "test_rc062_comparison_abstains_without_counts[not_established]"
+      ],
+      "reintroduces": "a decision recorded for masks other than those compared",
+      "applied": true,
+      "executed": "2026-10-22T23:41:24",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "B7_decisions_survive_a_mask_change": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 40,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc060_a_changed_mask_voids_earlier_decisions"
+      ],
+      "reintroduces": "decisions kept after either segmentation changed",
+      "applied": true,
+      "executed": "2026-10-22T23:42:15",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "B8_reader_not_recorded": {
+      "suite": "backend",
+      "failed": 2,
+      "passed": 39,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc060_confirmation_stored_with_reader_and_time_then_activity_from_confirmed_only",
+        "test_rc060_report_prompt_states_the_radiologist_confirmation"
+      ],
+      "reintroduces": "a decision stored without the authenticated reader",
+      "applied": true,
+      "executed": "2026-10-22T23:43:06",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "B9_decision_values_not_checked": {
+      "suite": "backend",
+      "failed": 4,
+      "passed": 37,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc060_unknown_decision_is_refused[None]",
+        "test_rc060_unknown_decision_is_refused[]",
+        "test_rc060_unknown_decision_is_refused[confirm]",
+        "test_rc060_unknown_decision_is_refused[probable]"
+      ],
+      "reintroduces": "any decision value accepted",
+      "applied": true,
+      "executed": "2026-10-22T23:43:56",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "B10_report_template_activity_classification": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 40,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc060_report_prompt_has_no_activity_wording_from_unconfirmed_candidates"
+      ],
+      "reintroduces": "the report template asks for an Active/Not active classification (the defect as found)",
+      "applied": true,
+      "executed": "2026-10-22T23:44:48",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "B11_report_prompt_activity_word": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 40,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc060_report_prompt_has_no_activity_wording_from_unconfirmed_candidates"
+      ],
+      "reintroduces": "the report prompt labels candidates as active disease",
+      "applied": true,
+      "executed": "2026-10-22T23:45:39",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "B12_report_ignores_reader_confirmation": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 40,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc060_report_prompt_states_the_radiologist_confirmation"
+      ],
+      "reintroduces": "the report never states the radiologist's confirmation",
+      "applied": true,
+      "executed": "2026-10-22T23:46:29",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "B13_report_notice_removed": {
+      "suite": "backend",
+      "failed": 3,
+      "passed": 38,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc060_report_draft_carries_the_unconfirmed_candidate_notice[de-unbest\\xe4tigte",
+        "test_rc060_report_draft_carries_the_unconfirmed_candidate_notice[en-unconfirmed",
+        "test_rc060_report_draft_carries_the_unconfirmed_candidate_notice[es-candidatos"
+      ],
+      "reintroduces": "a report draft with longitudinal data ends without the unconfirmed-candidate notice",
+      "applied": true,
+      "executed": "2026-10-22T23:47:20",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "B14_assistant_receives_flags": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 40,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc060_assistant_never_receives_an_activity_or_dit_flag"
+      ],
+      "reintroduces": "the assistant receives activity / DIT flags",
+      "applied": true,
+      "executed": "2026-10-22T23:48:12",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "B15_assistant_may_record_decisions": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 40,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc060_assistant_cannot_record_a_decision"
+      ],
+      "reintroduces": "the read-only assistant can record a radiologist decision",
+      "applied": true,
+      "executed": "2026-10-22T23:49:03",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "E1_rate_hard_coded": {
+      "suite": "backend",
+      "failed": 2,
+      "passed": 39,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc061_comparison_serves_the_rate_from_the_asset_not_from_code",
+        "test_rc061_unreadable_or_incomplete_asset_gives_no_rate"
+      ],
+      "reintroduces": "the rate written in code instead of read from the asset",
+      "applied": true,
+      "executed": "2026-10-22T23:49:54",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "E2_rule_binding_removed": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 40,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc061_the_rate_is_withheld_when_the_rule_is_no_longer_the_measured_one"
+      ],
+      "reintroduces": "the rate served for a rule it was not measured on",
+      "applied": true,
+      "executed": "2026-10-22T23:50:44",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "E3_incomplete_asset_accepted": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 40,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc061_unreadable_or_incomplete_asset_gives_no_rate"
+      ],
+      "reintroduces": "an asset without the figure served as a rate of 0",
+      "applied": true,
+      "executed": "2026-10-22T23:51:36",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "E4_caveat_without_rate": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 40,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc061_comparison_serves_the_rate_from_the_asset_not_from_code"
+      ],
+      "reintroduces": "the API caveat (assistant, other consumers) omits the measured rate",
+      "applied": true,
+      "executed": "2026-10-22T23:52:27",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "E5_asset_figure_not_the_source": {
+      "suite": "backend",
+      "failed": 5,
+      "passed": 36,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc060_report_draft_carries_the_unconfirmed_candidate_notice[de-unbest\\xe4tigte",
+        "test_rc060_report_draft_carries_the_unconfirmed_candidate_notice[en-unconfirmed",
+        "test_rc060_report_draft_carries_the_unconfirmed_candidate_notice[es-candidatos",
+        "test_rc061_comparison_serves_the_rate_from_the_asset_not_from_code",
+        "test_rc061_evidence_asset_is_versioned_bound_to_the_rule_and_to_its_source"
+      ],
+      "reintroduces": "the asset states a figure that is not the one in its source record",
+      "applied": true,
+      "executed": "2026-10-22T23:53:18",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "E6_assistant_subtraction_as_confirmation": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 40,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc061_assistant_reads_subtraction_as_a_signal_not_a_confirmation"
+      ],
+      "reintroduces": "the assistant is told the subtraction confirms a lesion",
+      "applied": true,
+      "executed": "2026-10-22T23:54:11",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "A1_no_abstention": {
+      "suite": "backend",
+      "failed": 3,
+      "passed": 38,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc062_comparison_abstains_without_counts[differs]",
+        "test_rc062_comparison_abstains_without_counts[not_established]",
+        "test_rc062_report_prompt_for_an_abstained_comparison_has_no_counts"
+      ],
+      "reintroduces": "candidates shown whatever the acquisition (the defect as found)",
+      "applied": true,
+      "executed": "2026-10-22T23:55:04",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "A2_unknown_treated_as_same": {
+      "suite": "backend",
+      "failed": 6,
+      "passed": 35,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc062_comparison_abstains_without_counts[not_established]",
+        "test_rc062_missing_metadata_means_not_established[None-tp20-missing0]",
+        "test_rc062_missing_metadata_means_not_established[tp11-tp21-missing1]",
+        "test_rc062_missing_metadata_means_not_established[tp12-tp22-missing2]",
+        "test_rc062_missing_metadata_means_not_established[tp13-tp23-missing3]",
+        "test_rc062_report_prompt_for_an_abstained_comparison_has_no_counts"
+      ],
+      "reintroduces": "missing metadata treated as the same acquisition",
+      "applied": true,
+      "executed": "2026-10-22T23:55:55",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "A3_sequence_parameters_ignored": {
+      "suite": "backend",
+      "failed": 3,
+      "passed": 38,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc062_a_scanner_or_protocol_change_is_detected[echo_time_ms-120.0]",
+        "test_rc062_a_scanner_or_protocol_change_is_detected[inversion_time_ms-2500.0]",
+        "test_rc062_missing_metadata_means_not_established[tp13-tp23-missing3]"
+      ],
+      "reintroduces": "repetition / echo / inversion time and slice spacing not compared",
+      "applied": true,
+      "executed": "2026-10-22T23:56:47",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "A4_voxel_size_ignored": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 40,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc062_voxel_size_change_is_detected"
+      ],
+      "reintroduces": "a change of voxel size between the visits not detected",
+      "applied": true,
+      "executed": "2026-10-22T23:57:40",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "A5_field_strength_tolerance_2T": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 40,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc062_a_scanner_or_protocol_change_is_detected[magnetic_field_strength_t-1.5]"
+      ],
+      "reintroduces": "1.5 T and 3 T treated as the same field strength",
+      "applied": true,
+      "executed": "2026-10-22T23:58:31",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "A6_abstention_keeps_counts": {
+      "suite": "backend",
+      "failed": 2,
+      "passed": 39,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc062_comparison_abstains_without_counts[differs]",
+        "test_rc062_comparison_abstains_without_counts[not_established]"
+      ],
+      "reintroduces": "an abstained comparison still carries candidates and counts",
+      "applied": true,
+      "executed": "2026-10-22T23:59:20",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "A7_visit_compared_with_itself": {
+      "suite": "backend",
+      "failed": 3,
+      "passed": 38,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc062_comparison_abstains_without_counts[differs]",
+        "test_rc062_comparison_abstains_without_counts[not_established]",
+        "test_rc062_report_prompt_for_an_abstained_comparison_has_no_counts"
+      ],
+      "reintroduces": "the acquisition of visit 1 compared with itself",
+      "applied": true,
+      "executed": "2026-10-23T00:00:13",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "A8_pacs_import_records_nothing": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 40,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc062_pacs_import_records_the_acquisition_of_the_series"
+      ],
+      "reintroduces": "PACS import stores no acquisition record (every comparison would abstain)",
+      "applied": true,
+      "executed": "2026-10-23T00:01:10",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "A9_dicom_numbers_as_text": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 40,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc062_acquisition_read_from_a_dicom_header_as_plain_values"
+      ],
+      "reintroduces": "acquisition numbers stored as text (field strength '3' never equals 3.0)",
+      "applied": true,
+      "executed": "2026-10-23T00:02:04",
+      "test_sha256": {
+        "tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b"
+      }
+    },
+    "F1_activity_banner_restored": {
+      "suite": "frontend",
+      "failed": 5,
+      "passed": 8,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc060 unconfirmed candidates are shown as such, never as activity, DIT or NEDA",
+        "rc060 a refused decision is shown and nothing is recorded as confirmed",
+        "rc061 every text of the view exists in en, es and de",
+        "rc061 in es the safety texts are shown in that language",
+        "rc061 in de the safety texts are shown in that language"
+      ],
+      "error_files": [],
+      "reintroduces": "the 'Active-disease CANDIDATE' / NEDA banner from the legacy flag (the defect as found)",
+      "applied": true,
+      "executed": "2026-10-22T22:52:08",
+      "test_sha256": {
+        "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "8c3bb9b49a116d7b2717b36996a19a6fa662944830c42daaaee04a8d011ec254"
+      }
+    },
+    "F2_activity_box_from_unconfirmed": {
+      "suite": "frontend",
+      "failed": 4,
+      "passed": 9,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc060 unconfirmed candidates are shown as such, never as activity, DIT or NEDA",
+        "rc060 a refused decision is shown and nothing is recorded as confirmed",
+        "rc061 in es the safety texts are shown in that language",
+        "rc061 in de the safety texts are shown in that language"
+      ],
+      "error_files": [],
+      "reintroduces": "the activity box shown from unconfirmed candidates",
+      "applied": true,
+      "executed": "2026-10-22T22:52:26",
+      "test_sha256": {
+        "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "8c3bb9b49a116d7b2717b36996a19a6fa662944830c42daaaee04a8d011ec254"
+      }
+    },
+    "F3_review_buttons_removed": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 11,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc060 a radiologist decision is sent bound to the compared masks, then the comparison is refreshed",
+        "rc060 a refused decision is shown and nothing is recorded as confirmed"
+      ],
+      "error_files": [],
+      "reintroduces": "no way for the radiologist to record a decision (review stated, not recorded)",
+      "applied": true,
+      "executed": "2026-10-22T22:52:49",
+      "test_sha256": {
+        "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "8c3bb9b49a116d7b2717b36996a19a6fa662944830c42daaaee04a8d011ec254"
+      }
+    },
+    "F4_decision_not_bound": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 12,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc060 a radiologist decision is sent bound to the compared masks, then the comparison is refreshed"
+      ],
+      "error_files": [],
+      "reintroduces": "the decision sent without the masks it was given for",
+      "applied": true,
+      "executed": "2026-10-22T22:53:06",
+      "test_sha256": {
+        "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "8c3bb9b49a116d7b2717b36996a19a6fa662944830c42daaaee04a8d011ec254"
+      }
+    },
+    "F5_no_refresh_after_decision": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 12,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc060 a radiologist decision is sent bound to the compared masks, then the comparison is refreshed"
+      ],
+      "error_files": [],
+      "reintroduces": "the panel keeps showing the state before the decision",
+      "applied": true,
+      "executed": "2026-10-22T22:53:23",
+      "test_sha256": {
+        "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "8c3bb9b49a116d7b2717b36996a19a6fa662944830c42daaaee04a8d011ec254"
+      }
+    },
+    "F6_rate_hard_coded_in_view": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 12,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc061 the figures come from the configuration asset, not from the component"
+      ],
+      "error_files": [],
+      "reintroduces": "the rate written in the component instead of the asset",
+      "applied": true,
+      "executed": "2026-10-22T22:53:40",
+      "test_sha256": {
+        "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "8c3bb9b49a116d7b2717b36996a19a6fa662944830c42daaaee04a8d011ec254"
+      }
+    },
+    "F7_rate_not_shown": {
+      "suite": "frontend",
+      "failed": 5,
+      "passed": 8,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc061 the measured false-candidate rate is shown from the response, with its source and date",
+        "rc061 the figures come from the configuration asset, not from the component",
+        "rc061 without a measured rate the panel says so and still treats every candidate as unconfirmed",
+        "rc061 in es the safety texts are shown in that language",
+        "rc061 in de the safety texts are shown in that language"
+      ],
+      "error_files": [],
+      "reintroduces": "the measured rate not shown",
+      "applied": true,
+      "executed": "2026-10-22T22:53:57",
+      "test_sha256": {
+        "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "8c3bb9b49a116d7b2717b36996a19a6fa662944830c42daaaee04a8d011ec254"
+      }
+    },
+    "F8_backend_english_caveat_preferred": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 11,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc061 in es the safety texts are shown in that language",
+        "rc061 in de the safety texts are shown in that language"
+      ],
+      "error_files": [],
+      "reintroduces": "the English backend caveat shown in every language (the defect as found)",
+      "applied": true,
+      "executed": "2026-10-22T22:54:14",
+      "test_sha256": {
+        "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "8c3bb9b49a116d7b2717b36996a19a6fa662944830c42daaaee04a8d011ec254"
+      }
+    },
+    "F9_subtraction_worded_as_confirmation": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 12,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc061 the subtraction is worded as a signal, never as a confirmation"
+      ],
+      "error_files": [],
+      "reintroduces": "'confirmed brighter at follow-up' (the defect as found)",
+      "applied": true,
+      "executed": "2026-10-22T22:54:31",
+      "test_sha256": {
+        "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "8c3bb9b49a116d7b2717b36996a19a6fa662944830c42daaaee04a8d011ec254"
+      }
+    },
+    "F10_subtraction_supports_new_lesion": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 12,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc061 the subtraction is worded as a signal, never as a confirmation"
+      ],
+      "error_files": [],
+      "reintroduces": "'supports a genuine new lesion' (the defect as found)",
+      "applied": true,
+      "executed": "2026-10-22T22:54:48",
+      "test_sha256": {
+        "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "8c3bb9b49a116d7b2717b36996a19a6fa662944830c42daaaee04a8d011ec254"
+      }
+    },
+    "F11_spanish_summary_missing": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 11,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc061 every text of the view exists in en, es and de",
+        "rc061 in es the safety texts are shown in that language"
+      ],
+      "error_files": [],
+      "reintroduces": "a safety text without a Spanish entry (English shown, the defect as found)",
+      "applied": true,
+      "executed": "2026-10-22T22:55:05",
+      "test_sha256": {
+        "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "8c3bb9b49a116d7b2717b36996a19a6fa662944830c42daaaee04a8d011ec254"
+      }
+    },
+    "F12_german_rate_in_english": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 11,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc061 every text of the view exists in en, es and de",
+        "rc061 in de the safety texts are shown in that language"
+      ],
+      "error_files": [],
+      "reintroduces": "the measured rate shown in English to German readers",
+      "applied": true,
+      "executed": "2026-10-22T22:55:22",
+      "test_sha256": {
+        "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "8c3bb9b49a116d7b2717b36996a19a6fa662944830c42daaaee04a8d011ec254"
+      }
+    },
+    "F15_spanish_caveat_partly_english": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 11,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc061 every text of the view exists in en, es and de",
+        "rc061 in es the safety texts are shown in that language"
+      ],
+      "error_files": [],
+      "reintroduces": "the standing caveat left partly in English for Spanish readers",
+      "applied": true,
+      "executed": "2026-10-22T22:55:40",
+      "test_sha256": {
+        "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "8c3bb9b49a116d7b2717b36996a19a6fa662944830c42daaaee04a8d011ec254"
+      }
+    },
+    "F13_abstention_ignored": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 11,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc062 a scanner or protocol change shows no counts, the reason and the metadata compared",
+        "rc062 when the acquisition cannot be established the comparison abstains and names the missing data"
+      ],
+      "error_files": [],
+      "reintroduces": "an abstained comparison shown as if candidates existed, with no reason",
+      "applied": true,
+      "executed": "2026-10-22T22:55:57",
+      "test_sha256": {
+        "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "8c3bb9b49a116d7b2717b36996a19a6fa662944830c42daaaee04a8d011ec254"
+      }
+    },
+    "F14_missing_metadata_not_named": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 12,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc062 when the acquisition cannot be established the comparison abstains and names the missing data"
+      ],
+      "error_files": [],
+      "reintroduces": "the reader is not told which metadata are missing",
+      "applied": true,
+      "executed": "2026-10-22T22:56:13",
+      "test_sha256": {
+        "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "8c3bb9b49a116d7b2717b36996a19a6fa662944830c42daaaee04a8d011ec254"
+      }
+    }
+  },
+  "partial_rerun": "re-executed from 2026-10-22T23:36:09: every mutation whose bound tests changed since its previous execution (all backend mutations, after one backend test became a native async test); the frontend mutations are kept from their run of 2026-10-22T22:51 with the same test hashes (wording of this field corrected after the run; the script now writes it)",
+  "restored": {
+    "backend": {
+      "suite": "backend",
+      "failed": 0,
+      "passed": 41,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": []
+    },
+    "frontend": {
+      "suite": "frontend",
+      "failed": 0,
+      "passed": 13,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [],
+      "error_files": []
+    }
+  },
+  "expected_undetected": {},
+  "undetected": [],
+  "unexpected_undetected": []
+}

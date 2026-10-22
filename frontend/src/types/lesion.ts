@@ -133,8 +133,13 @@ export interface LesionChange {
   status: LesionChangeStatus;
   iou: number;
   /** For status==='new': false when the lesion is below the MAGNIMS ~3 mm-diameter
-   *  clinical size gate (reported but excluded from activity/DIT candidate counts). */
+   *  size gate (reported but not counted as a change candidate). */
   clinically_significant?: boolean;
+  /** CAPA-013 (RC-060): key of a reviewable candidate (new >= 3 mm or enlarged) for the masks
+   *  compared — what a radiologist's decision is recorded against. */
+  candidate_key?: string;
+  /** CAPA-013 (RC-060): the radiologist's decision on this candidate, if any, for these masks. */
+  reader_review?: LongitudinalReaderReview;
   /** MAGNIMS region id (1=PV, 2=JC, 3=IT, 4=DWM) from the MSMask atlas, or null when
    *  no zone map was available (off-MNI input / atlas failure). Candidate-quality. */
   region_id?: number | null;
@@ -145,8 +150,9 @@ export interface LesionChange {
    *  normalized subtraction signal (SD units) within the lesion. Positive = brighter
    *  at follow-up (supports a true new lesion). null when unavailable. */
   subtraction_signal?: number | null;
-  /** True when the new candidate's subtraction signal clears the advisory bar (likely
-   *  a genuine new lesion, not a segmentation/registration artifact). null/absent for
+  /** True when the new candidate is brighter at follow-up on the FLAIR subtraction (signal at or
+   *  above the advisory bar). A SIGNAL, never a confirmation: in paper C (PR #60) candidates
+   *  passing this check were still false in 19 of 20 patients (CAPA-013, RC-061). null/absent for
    *  non-new changes or when subtraction was unavailable/withheld. NEVER a diagnostic verdict. */
   subtraction_confirmed?: boolean | null;
   /** Why the subtraction verdict is what it is: 'assessed' | 'border' | 'unmatched' |
@@ -185,6 +191,65 @@ export interface SELResult {
   caveat?: string;
 }
 
+export interface LongitudinalReaderReview {
+  decision: 'confirmed' | 'rejected';
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+}
+
+export interface LongitudinalCandidateSummary {
+  new: number;
+  enlarging: number;
+  total: number;
+  confirmed: number;
+  rejected: number;
+  awaiting_review: number;
+  /** True when decisions existed for other (since changed) masks and were not applied. */
+  earlier_decisions_voided?: boolean;
+}
+
+export interface LongitudinalReaderConfirmed {
+  rule: string;
+  confirmed_new: number;
+  confirmed_enlarging: number;
+  confirmed_by: string[];
+  first_confirmed_at: string;
+  last_confirmed_at: string;
+}
+
+export type LongitudinalAcquisitionField =
+  | 'manufacturer' | 'manufacturer_model_name' | 'magnetic_field_strength_t' | 'mr_acquisition_type'
+  | 'slice_thickness_mm' | 'voxel_spacing_mm' | 'repetition_time_ms' | 'echo_time_ms'
+  | 'inversion_time_ms' | 'spacing_between_slices_mm';
+
+export interface LongitudinalAcquisitionCheck {
+  status: 'same' | 'differs' | 'not_established';
+  comparable?: boolean;
+  required_fields: LongitudinalAcquisitionField[];
+  fields_compared: LongitudinalAcquisitionField[];
+  differing: { field: LongitudinalAcquisitionField; tp1: unknown; tp2: unknown }[];
+  missing: { field: LongitudinalAcquisitionField; timepoints: ('tp1' | 'tp2')[] }[];
+  source?: string;
+}
+
+export interface LongitudinalFalseCandidateEvidence {
+  asset: string;
+  version: string;
+  measured_on: string;
+  dataset: string;
+  segmenter: string;
+  patients: number;
+  stable_patients: number;
+  patients_with_false_candidate: number;
+  false_candidates_per_patient: number;
+  false_candidates_per_patient_ci95: [number, number] | number[];
+  after_subtraction_per_patient: number;
+  after_subtraction_per_patient_ci95?: [number, number] | number[];
+  source: string;
+  source_record?: string;
+  source_commit?: string;
+}
+
 export interface LongitudinalResult {
   changes: LesionChange[];
   total_lesions_tp1: number;
@@ -193,21 +258,29 @@ export interface LongitudinalResult {
   burden_tp2_mm3: number;
   burden_tp1_ml: number;
   burden_tp2_ml: number;
-  burden_delta_mm3: number;
-  burden_delta_percent: number;
-  status_counts: Record<LesionChangeStatus, number>;
-  // ── MAGNIMS clinical CANDIDATE signals (advisory — never a diagnosis) ──
-  /** The ~3 mm-diameter minimum used to count a "clinically significant" new lesion. */
+  /** null when the comparison abstained (RC-062). */
+  burden_delta_mm3: number | null;
+  burden_delta_percent: number | null;
+  /** null when the comparison abstained (RC-062). */
+  status_counts: Record<LesionChangeStatus, number> | null;
+  /** The ~3 mm-diameter minimum for a new candidate to be counted. */
   new_lesion_min_diameter_mm?: number;
-  /** Count of new lesions clearing the ≥3 mm size gate. */
-  new_clinically_significant_count?: number;
-  /** Count of enlarging lesions. */
-  enlarging_count?: number;
-  /** ≥1 significant new lesion → supports dissemination-in-time (CANDIDATE — a reader
-   *  must confirm; the report builder is barred from asserting DIT). */
-  dit_candidate?: boolean;
-  /** ≥1 new/enlarging lesion → MAGNIMS 2021 active-disease signal (CANDIDATE only; CAPA-008). */
-  activity_candidate?: boolean;
+  // ── CAPA-013 (RC-060/061/062, HAZ-007). The former activity_candidate / dit_candidate flags
+  //    and the "clinically significant" count names are no longer sent: unconfirmed candidates
+  //    are never an activity or dissemination-in-time statement. ──
+  /** Unconfirmed change candidates (new >= 3 mm, enlarged) and the reader decisions on them.
+   *  null when the comparison abstained. */
+  change_candidates?: LongitudinalCandidateSummary | null;
+  /** Present ONLY when a radiologist confirmed at least one candidate for the masks compared:
+   *  MAGNIMS 2021 (>= 1 new or enlarging T2 lesion) applied to the confirmed candidates. */
+  reader_confirmed_activity?: LongitudinalReaderConfirmed;
+  /** SHA-256 of both stored masks; a decision is recorded against it. null = no decision possible. */
+  review_binding?: { tp1_mask_sha256: string; tp2_mask_sha256: string } | null;
+  /** RC-062: true when the acquisition of the two visits differs or could not be established. */
+  abstained?: boolean;
+  acquisition_check?: LongitudinalAcquisitionCheck;
+  /** RC-061: the measured false-candidate rate (versioned asset), or null when not available. */
+  false_candidate_evidence?: LongitudinalFalseCandidateEvidence | null;
   /** MAGNIMS region stratification (MSMask atlas) of new + enlarging candidates by
    *  McDonald region. null when no zone map was available (off-MNI / atlas failure). */
   region_stratification?: Record<string, { new: number; enlarging: number }> | null;

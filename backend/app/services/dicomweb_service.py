@@ -25,6 +25,7 @@ import nibabel as nib
 
 from app.core.logging import get_logger
 from app.core.config import get_settings
+from app.services.longitudinal_candidate_safety import acquisition_from_dicom
 
 logger = get_logger(__name__)
 settings = get_settings()
@@ -358,6 +359,9 @@ class DICOMwebService:
                 "dicom_series_uid": series_uid,
                 "dicom_study_uid": study_uid,
                 "source": "dicomweb_import",
+                # CAPA-013 RC-062: scanner and protocol of the series, read by the longitudinal
+                # comparison to abstain when two visits were acquired differently.
+                "acquisition": acquisition_from_dicom(ds0),
                 "created_at": datetime.utcnow().isoformat(),
             }
             self.db.collection("studies").document(new_study_id).collection("series").document(new_series_id).collection("instances").document(new_instance_id).set(instance_doc)

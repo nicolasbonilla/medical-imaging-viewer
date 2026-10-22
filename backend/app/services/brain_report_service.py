@@ -379,59 +379,54 @@ REPORT_TEMPLATES: Dict[str, str] = {
         "Follow MAGNIMS-CMSC-NAIMS 2021 consensus, RSNA format, and 2017 McDonald criteria.\n\n"
         "The user will provide quantitative data from automated lesion comparison between "
         "two timepoints including: per-lesion volume changes, new/resolved/enlarged/stable "
-        "counts, total burden delta, and DIS assessment.\n\n"
-        "CRITICAL SAFETY CONSTRAINT (overrides any directness instruction): these automated "
-        "interval-change counts are produced WITHOUT verified spatial co-registration of the "
-        "two timepoints and are UNADJUDICATED CANDIDATES that may include misregistration "
-        "artefacts. You MUST (a) label new/enlarging counts as 'candidate (registration "
-        "unverified)'; (b) NOT assert dissemination in time from them; (c) in DISEASE ACTIVITY "
-        "CLASSIFICATION, state that activity status CANNOT be confirmed from unregistered "
-        "candidates and requires radiologist review of co-registered images — never output a "
-        "bare 'Active' conclusion based on these counts; (d) present the numbers as candidates "
-        "for review, not confirmed findings.\n\n"
+        "change candidates, total burden delta, and DIS assessment.\n\n"
+        "CRITICAL SAFETY CONSTRAINT (overrides any directness instruction; CAPA-013, HAZ-007): "
+        "the automated new/enlarging results are UNCONFIRMED CHANGE CANDIDATES. In a public test "
+        "with expert-marked change this rule proposed several false candidates per patient, and "
+        "the two timepoints are not verified as co-registered at lesion scale. You MUST (a) "
+        "list them only as 'unconfirmed change candidates awaiting radiologist review', never "
+        "as new or enlarging lesions; (b) NOT assert dissemination in time from them; (c) NOT "
+        "classify the disease course from them; (d) state a disease-course conclusion ONLY from "
+        "the radiologist-confirmed lesions supplied in the data, as the radiologist's "
+        "confirmation; (e) when the data say the change candidates were NOT computed "
+        "(acquisition differs or could not be established), report no count and state that the "
+        "change must be assessed visually by the radiologist. The FLAIR subtraction is a "
+        "signal, never a confirmation.\n\n"
         "Generate the report with these exact sections:\n\n"
         "## CLINICAL INDICATION\n"
         "Restate indication, noting longitudinal comparison purpose.\n\n"
         "## TECHNIQUE\n"
-        "MRI technique per MAGNIMS MS protocol. Note standardized acquisition for comparison.\n\n"
+        "MRI technique per MAGNIMS MS protocol; note whether the acquisition of the two visits "
+        "was established as the same (as supplied in the data).\n\n"
         "## COMPARISON\n"
         "Reference the prior timepoint study with specific comparison data provided.\n\n"
         "## INTERVAL CHANGES\n"
-        "### New Lesions\n"
-        "- Exact count of new T2/FLAIR lesions, approximate locations if centroid data provided\n"
-        "- Clinical significance: evidence of ongoing inflammatory activity\n\n"
-        "### Enlarging Lesions\n"
-        "- Count and percentage volume increase for each\n"
-        "- Distinguish between definite enlargement (>20%) and borderline change\n\n"
-        "### Resolved/Shrunk Lesions\n"
-        "- Count and interpretation (treatment response, natural resolution)\n\n"
-        "### Stable Lesions\n"
-        "- Count of unchanged lesions\n\n"
+        "### Change Candidates (unconfirmed)\n"
+        "- Number of unconfirmed new and enlarging change candidates awaiting radiologist review; "
+        "approximate locations if centroid data provided\n\n"
+        "### Radiologist-Confirmed Changes\n"
+        "- Only the new or enlarging lesions the data list as confirmed by a radiologist, with "
+        "who confirmed them and when; otherwise write 'none confirmed yet'\n\n"
+        "### Resolved/Shrunk and Stable Candidates\n"
+        "- Counts, labelled as unconfirmed candidates\n\n"
         "## LESION BURDEN TRAJECTORY\n"
         "- Total T2 lesion load: prior vs. current (mL or mm³)\n"
-        "- Percentage change in total burden\n"
-        "- Trajectory classification: **improving**, **stable**, or **worsening**\n"
-        "- Annualized new lesion rate if calculable\n\n"
+        "- Percentage change in total burden (only if supplied)\n\n"
         "## DIS ASSESSMENT\n"
         "- Present DIS data from provided analysis\n"
         "- Lesion presence across 4 MAGNIMS regions with checkmarks\n\n"
-        "## DISEASE ACTIVITY CLASSIFICATION\n"
-        "Per MAGNIMS 2021 framework:\n"
-        "- **Active**: new enhancing or new/enlarging T2 lesions since prior\n"
-        "- **Not Active**: no new or enlarging lesions\n"
-        "- **Progression**: worsening disability independent of relapses (PIRA)\n"
-        "- Assessment of treatment efficacy: expected response vs. breakthrough activity\n"
-        "- Consider NEDA-3 criteria if data supports (no relapses, no disability worsening, "
-        "no MRI activity)\n\n"
+        "## INTERVAL CHANGE STATUS\n"
+        "- If radiologist-confirmed new or enlarging lesions are supplied: report them as the "
+        "radiologist's confirmation (MAGNIMS 2021: one new or enlarging T2 lesion suffices).\n"
+        "- Otherwise: 'Not determined by the software — N unconfirmed change candidates await "
+        "radiologist review.' Never infer a conclusion from unconfirmed candidates.\n\n"
         "## IMPRESSION\n"
         "Numbered summary:\n"
-        "1. Interval change summary: N new, N enlarged, N resolved lesions\n"
-        "2. Burden trajectory with quantitative delta\n"
+        "1. Unconfirmed change candidates awaiting review, and radiologist-confirmed changes if any\n"
+        "2. Burden trajectory with quantitative delta (if supplied)\n"
         "3. DIS status (X/4 regions)\n"
-        "4. Activity classification (active/not active)\n"
-        "5. Treatment efficacy assessment\n"
-        "6. Evidence of PIRA if applicable\n"
-        "7. Recommended follow-up interval per MAGNIMS guidelines\n"
+        "4. Interval change status as above\n"
+        "5. Recommended follow-up interval per MAGNIMS guidelines\n"
         + _FORMAT_INSTRUCTIONS
     ),
 }
@@ -609,31 +604,54 @@ class BrainReportService:
         # instruct the report generator not to assert them as findings.
         if findings.get("longitudinal"):
             lng = findings["longitudinal"]
-            # No spatial registration exists anywhere in the system, and `findings` can be
+            # No spatial registration is verified anywhere in the system, and `findings` can be
             # supplied straight from the client (/ai/report/generate). So NEVER trust a
-            # caller-provided registration_verified=true — always candidate-frame until a
-            # validated registration service ships. (Adversarial finding D4.)
-            verified = False
+            # caller-provided registration_verified=true (adversarial finding D4), and never
+            # pass an activity or DIT flag: the candidates are unconfirmed (CAPA-013, RC-060).
             parts.append(f"\nLongitudinal comparison data:")
-            parts.append(f"  TP1 burden: {lng.get('burden_tp1_ml', 0):.3f} mL "
-                         f"({lng.get('total_lesions_tp1', 0)} lesions)")
-            parts.append(f"  TP2 burden: {lng.get('burden_tp2_ml', 0):.3f} mL "
-                         f"({lng.get('total_lesions_tp2', 0)} lesions)")
-            parts.append(f"  Burden delta: {lng.get('burden_delta_percent', 0):.1f}%")
-            sc = lng.get("status_counts", {})
-            if not verified:
+            parts.append(f"  TP1 burden: {lng.get('burden_tp1_ml') or 0:.3f} mL "
+                         f"({lng.get('total_lesions_tp1') or 0} lesions)")
+            parts.append(f"  TP2 burden: {lng.get('burden_tp2_ml') or 0:.3f} mL "
+                         f"({lng.get('total_lesions_tp2') or 0} lesions)")
+            if lng.get("abstained"):
+                # RC-062: acquisition differs or not established — no change result at all.
                 parts.append(
-                    "  NOTE: the following are UNADJUDICATED CHANGE CANDIDATES from a "
-                    "comparison that did NOT verify spatial registration. Do NOT report them "
-                    "as confirmed new/enlarging lesions or use them to assert dissemination "
-                    "in time; present them only as candidates requiring radiologist review."
+                    "  Automatic change candidates were NOT computed: the acquisition of the two "
+                    "visits differs or could not be established. Report no new, enlarging or "
+                    "resolved figure; state that the change between the visits must be assessed "
+                    "visually by the radiologist."
                 )
-            label = (lambda k: k) if verified else (lambda k: f"{k} (candidate, registration unverified)")
-            parts.append(f"  New-lesion {label('count')}: {sc.get('new', 0)}")
-            parts.append(f"  Enlarging {label('count')}: {sc.get('enlarged', 0)}")
-            parts.append(f"  Resolved {label('count')}: {sc.get('resolved', 0)}")
-            parts.append(f"  Shrunk {label('count')}: {sc.get('shrunk', 0)}")
-            parts.append(f"  Stable {label('count')}: {sc.get('stable', 0)}")
+            else:
+                if lng.get("burden_delta_percent") is not None:
+                    parts.append(f"  Burden delta: {lng.get('burden_delta_percent'):.1f}%")
+                sc = lng.get("status_counts") or {}
+                parts.append(
+                    "  NOTE: the following are UNCONFIRMED CHANGE CANDIDATES produced automatically, "
+                    "without spatial registration verified at lesion scale. In a public test with "
+                    "expert-marked change this rule proposed several false candidates per patient. "
+                    "Do NOT report them as new or enlarging lesions, do NOT classify the disease "
+                    "course from them, do NOT use them for dissemination in time; list them only as "
+                    "unconfirmed candidates awaiting radiologist review."
+                )
+                parts.append(f"  New-lesion candidates (unconfirmed): {sc.get('new', 0)}")
+                parts.append(f"  Enlarging candidates (unconfirmed): {sc.get('enlarged', 0)}")
+                parts.append(f"  Resolved candidates (unconfirmed): {sc.get('resolved', 0)}")
+                parts.append(f"  Shrunk candidates (unconfirmed): {sc.get('shrunk', 0)}")
+                parts.append(f"  Stable candidates (unconfirmed): {sc.get('stable', 0)}")
+                rc = lng.get("reader_confirmed_activity")
+                if isinstance(rc, dict) and rc.get("confirmed_by") and rc.get("last_confirmed_at") \
+                        and int(rc.get("confirmed_new") or 0) + int(rc.get("confirmed_enlarging") or 0) >= 1:
+                    who = ", ".join(str(x) for x in rc["confirmed_by"])
+                    parts.append(f"  Radiologist-confirmed new lesions: {int(rc.get('confirmed_new') or 0)}")
+                    parts.append(f"  Radiologist-confirmed enlarging lesions: "
+                                 f"{int(rc.get('confirmed_enlarging') or 0)}")
+                    parts.append(
+                        f"  These were confirmed by the radiologist {who} on {rc['last_confirmed_at']}; "
+                        "report them as the radiologist's confirmation (MAGNIMS 2021: one new or "
+                        "enlarging T2 lesion indicates MRI activity)."
+                    )
+                else:
+                    parts.append("  No change candidate has been confirmed by a radiologist yet.")
 
         # Zone map statistics (from MSMask atlas)
         if findings.get("zone_stats"):

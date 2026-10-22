@@ -124,6 +124,7 @@ ROUTE_AUTH = {
     ("GET", "/segmentation/list"): "call:authorize_file_scope",
     ("POST", "/segmentation/longitudinal/compare"): "call:authorize_mask_specs",
     ("POST", "/segmentation/longitudinal/sel"): "call:authorize_mask_specs",
+    ("POST", "/segmentation/longitudinal/review"): "call:authorize_mask_specs",   # CAPA-013 RC-060
     ("DELETE", "/segmentation/{segmentation_id}"): "dep:require_segmentation_access",
     ("GET", "/segmentation/{segmentation_id}"): "dep:require_segmentation_access",
     # CP-FLAMES-BROWSER-001 (RC-047): confirm the review of an AI draft

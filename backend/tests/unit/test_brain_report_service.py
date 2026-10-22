@@ -483,12 +483,13 @@ class TestBrainReportService:
             }
         }
         prompt = self.service._build_findings_prompt(findings, language="en")
-        # Longitudinal counts are candidate-framed (no spatial registration is performed),
-        # so they carry the "candidate, registration unverified" label + a NOTE telling the
-        # generator not to assert them as confirmed new/enlarging lesions or DIT evidence.
-        assert "New-lesion count (candidate, registration unverified): 3" in prompt
-        assert "Enlarging count (candidate, registration unverified): 1" in prompt
-        assert "UNADJUDICATED CHANGE CANDIDATES" in prompt
+        # Longitudinal results are UNCONFIRMED change candidates (CAPA-013, RC-060; was
+        # "candidate, registration unverified"), with a NOTE telling the generator not to report
+        # them as new/enlarging lesions, classify the disease course from them or use them for DIT.
+        assert "New-lesion candidates (unconfirmed): 3" in prompt
+        assert "Enlarging candidates (unconfirmed): 1" in prompt
+        assert "UNCONFIRMED CHANGE CANDIDATES" in prompt
+        assert "No change candidate has been confirmed by a radiologist yet." in prompt
         assert "25.0%" in prompt
 
     # =========================================================================

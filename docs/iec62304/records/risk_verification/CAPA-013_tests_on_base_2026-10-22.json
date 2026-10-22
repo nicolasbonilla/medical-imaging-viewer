@@ -1,0 +1,239 @@
+{
+  "executed": "2026-10-23T00:05:27",
+  "base": "2018277 (qms/capa012-and-problem-reports, PR #62)",
+  "method": "source files changed by CAPA-013 restored to the base commit, files it added removed; the CAPA-013 test files run unchanged; working tree restored byte for byte",
+  "test_sha256": {
+    "backend/tests/unit/test_capa013_longitudinal_candidates.py": "c01e1651833090961fa32dd2897349d1cc116a7169679223db665e6f141dd53b",
+    "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "8c3bb9b49a116d7b2717b36996a19a6fa662944830c42daaaee04a8d011ec254"
+  },
+  "backend": {
+    "passed": 1,
+    "failed": 40,
+    "errors": 0,
+    "results": {
+      "test_rc060_assistant_cannot_record_a_decision": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc060_compare_response_carries_no_activity_or_dit_flag": {
+        "status": "failed",
+        "reason": "AssertionError: the comparison still returns activity_candidate"
+      },
+      "test_rc060_only_a_radiologist_can_record_a_decision": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_404\",\"message\":\"Not Found\",\"details\":{}}}"
+      },
+      "test_rc060_decision_is_bound_to_the_compared_masks": {
+        "status": "failed",
+        "reason": "KeyError: 'review_binding'"
+      },
+      "test_rc060_unknown_decision_is_refused[probable]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_404\",\"message\":\"Not Found\",\"details\":{}}}"
+      },
+      "test_rc060_unknown_decision_is_refused[]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_404\",\"message\":\"Not Found\",\"details\":{}}}"
+      },
+      "test_rc060_unknown_decision_is_refused[None]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_404\",\"message\":\"Not Found\",\"details\":{}}}"
+      },
+      "test_rc060_unknown_decision_is_refused[confirm]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_404\",\"message\":\"Not Found\",\"details\":{}}}"
+      },
+      "test_rc060_confirmation_stored_with_reader_and_time_then_activity_from_confirmed_only": {
+        "status": "failed",
+        "reason": "KeyError: 'candidate_key'"
+      },
+      "test_rc060_rejected_candidates_never_raise_activity": {
+        "status": "failed",
+        "reason": "AssertionError: assert 404 == 200"
+      },
+      "test_rc060_a_changed_mask_voids_earlier_decisions": {
+        "status": "failed",
+        "reason": "AssertionError: assert 404 == 200"
+      },
+      "test_rc060_a_decision_for_a_candidate_that_does_not_exist_counts_for_nothing": {
+        "status": "failed",
+        "reason": "AssertionError: assert 404 == 200"
+      },
+      "test_rc060_report_prompt_has_no_activity_wording_from_unconfirmed_candidates": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'unconfirmed' in 'longitudinal comparison data:\\n  tp1 burden: 0.027 ml (1 lesions)\\n  tp2 burden: 0.054 ml (2 lesions)\\n  burden delta...ed): 0\\n  shrunk count (candidate, registration unverified): 0\\n  stable count "
+      },
+      "test_rc060_report_prompt_states_the_radiologist_confirmation": {
+        "status": "failed",
+        "reason": "AssertionError: assert 404 == 200"
+      },
+      "test_rc060_report_draft_carries_the_unconfirmed_candidate_notice[en-unconfirmed change candidate]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'unconfirmed change candidate' in ''"
+      },
+      "test_rc060_report_draft_carries_the_unconfirmed_candidate_notice[es-candidatos de cambio sin confirmar]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'candidatos de cambio sin confirmar' in ''"
+      },
+      "test_rc060_report_draft_carries_the_unconfirmed_candidate_notice[de-unbest\\xe4tigte Ver\\xe4nderungskandidaten]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'unbestätigte Veränderungskandidaten' in ''"
+      },
+      "test_rc060_assistant_never_receives_an_activity_or_dit_flag": {
+        "status": "failed",
+        "reason": "assert ('activity_candidate' not in '{\"status_co...ate\": true}}'"
+      },
+      "test_rc061_evidence_asset_is_versioned_bound_to_the_rule_and_to_its_source": {
+        "status": "failed",
+        "reason": "ImportError: cannot import name 'longitudinal_candidate_safety' from 'app.services' (C:\\Users\\Nicolas\\medical-imaging-viewer\\.claude\\worktrees\\agent-ab0f9245cfba1f2e3\\backend\\app\\services\\__init__.py)"
+      },
+      "test_rc061_the_rate_is_withheld_when_the_rule_is_no_longer_the_measured_one": {
+        "status": "failed",
+        "reason": "ImportError: cannot import name 'longitudinal_candidate_safety' from 'app.services' (C:\\Users\\Nicolas\\medical-imaging-viewer\\.claude\\worktrees\\agent-ab0f9245cfba1f2e3\\backend\\app\\services\\__init__.py)"
+      },
+      "test_rc061_comparison_serves_the_rate_from_the_asset_not_from_code": {
+        "status": "failed",
+        "reason": "ImportError: cannot import name 'longitudinal_candidate_safety' from 'app.services' (C:\\Users\\Nicolas\\medical-imaging-viewer\\.claude\\worktrees\\agent-ab0f9245cfba1f2e3\\backend\\app\\services\\__init__.py)"
+      },
+      "test_rc061_unreadable_or_incomplete_asset_gives_no_rate": {
+        "status": "failed",
+        "reason": "ImportError: cannot import name 'longitudinal_candidate_safety' from 'app.services' (C:\\Users\\Nicolas\\medical-imaging-viewer\\.claude\\worktrees\\agent-ab0f9245cfba1f2e3\\backend\\app\\services\\__init__.py)"
+      },
+      "test_rc061_assistant_reads_subtraction_as_a_signal_not_a_confirmation": {
+        "status": "failed",
+        "reason": "assert 'a signal, never a confirmation' in 'instructions=(\\n        \"You assist a physician who reviews brain MRI measurements computed by an \"\\n        \"investi...ANDIDATES (spatial registration not verified). Never call them disease activ"
+      },
+      "test_rc062_same_acquisition_is_comparable": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.longitudinal_candidate_safety'"
+      },
+      "test_rc062_a_scanner_or_protocol_change_is_detected[manufacturer-GE MEDICAL SYSTEMS]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.longitudinal_candidate_safety'"
+      },
+      "test_rc062_a_scanner_or_protocol_change_is_detected[manufacturer_model_name-Skyra]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.longitudinal_candidate_safety'"
+      },
+      "test_rc062_a_scanner_or_protocol_change_is_detected[magnetic_field_strength_t-1.5]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.longitudinal_candidate_safety'"
+      },
+      "test_rc062_a_scanner_or_protocol_change_is_detected[mr_acquisition_type-2D]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.longitudinal_candidate_safety'"
+      },
+      "test_rc062_a_scanner_or_protocol_change_is_detected[slice_thickness_mm-3.0]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.longitudinal_candidate_safety'"
+      },
+      "test_rc062_a_scanner_or_protocol_change_is_detected[echo_time_ms-120.0]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.longitudinal_candidate_safety'"
+      },
+      "test_rc062_a_scanner_or_protocol_change_is_detected[inversion_time_ms-2500.0]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.longitudinal_candidate_safety'"
+      },
+      "test_rc062_voxel_size_change_is_detected": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.longitudinal_candidate_safety'"
+      },
+      "test_rc062_missing_metadata_means_not_established[None-tp20-missing0]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.longitudinal_candidate_safety'"
+      },
+      "test_rc062_missing_metadata_means_not_established[tp11-tp21-missing1]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.longitudinal_candidate_safety'"
+      },
+      "test_rc062_missing_metadata_means_not_established[tp12-tp22-missing2]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.longitudinal_candidate_safety'"
+      },
+      "test_rc062_missing_metadata_means_not_established[tp13-tp23-missing3]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.longitudinal_candidate_safety'"
+      },
+      "test_rc062_comparison_abstains_without_counts[differs]": {
+        "status": "failed",
+        "reason": "KeyError: 'abstained'"
+      },
+      "test_rc062_comparison_abstains_without_counts[not_established]": {
+        "status": "failed",
+        "reason": "KeyError: 'abstained'"
+      },
+      "test_rc062_report_prompt_for_an_abstained_comparison_has_no_counts": {
+        "status": "failed",
+        "reason": "AssertionError: assert ('candidates (unconfirmed)' not in 'Longitudina...verified): 1'"
+      },
+      "test_rc062_acquisition_read_from_a_dicom_header_as_plain_values": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.longitudinal_candidate_safety'"
+      },
+      "test_rc062_pacs_import_records_the_acquisition_of_the_series": {
+        "status": "failed",
+        "reason": "assert '\"acquisition\": acquisition_from_dicom(ds0)' in 'instance_doc = {\\n                \"id\": new_instance_id,\\n                \"series_id\": new_series_id,\\n              ...              \"source\": \"dicomweb_import\",\\n                \"cre"
+      }
+    }
+  },
+  "frontend": {
+    "passed": 0,
+    "failed": 13,
+    "not_passing": {
+      "rc060 unconfirmed candidates are shown as such, never as activity, DIT or NEDA": {
+        "status": "failed",
+        "reason": "AssertionError: expected 'Longitudinal TrackingTP1 (Earlier)Sel…' not to match /activ|aktiv/i"
+      },
+      "rc060 the word activity appears only with a radiologist confirmation, naming who and when": {
+        "status": "failed",
+        "reason": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"longitudinal-reader-confirmed\"]"
+      },
+      "rc060 a radiologist decision is sent bound to the compared masks, then the comparison is refreshed": {
+        "status": "failed",
+        "reason": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name `/confirm/i`"
+      },
+      "rc060 a refused decision is shown and nothing is recorded as confirmed": {
+        "status": "failed",
+        "reason": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name `/reject/i`"
+      },
+      "rc061 the measured false-candidate rate is shown from the response, with its source and date": {
+        "status": "failed",
+        "reason": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"longitudinal-evidence\"]"
+      },
+      "rc061 the figures come from the configuration asset, not from the component": {
+        "status": "failed",
+        "reason": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"longitudinal-evidence\"]"
+      },
+      "rc061 without a measured rate the panel says so and still treats every candidate as unconfirmed": {
+        "status": "failed",
+        "reason": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"longitudinal-evidence\"]"
+      },
+      "rc061 the subtraction is worded as a signal, never as a confirmation": {
+        "status": "failed",
+        "reason": "AssertionError: expected 'Longitudinal TrackingTP1 (Earlier)Sel…' not to match /confirmed brighter|supports a genuin…/i"
+      },
+      "rc061 every text of the view exists in en, es and de": {
+        "status": "failed",
+        "reason": "AssertionError: expected [ …(144) ] to deeply equal []"
+      },
+      "rc061 in es the safety texts are shown in that language": {
+        "status": "failed",
+        "reason": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"longitudinal-candidates\"]"
+      },
+      "rc061 in de the safety texts are shown in that language": {
+        "status": "failed",
+        "reason": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"longitudinal-candidates\"]"
+      },
+      "rc062 a scanner or protocol change shows no counts, the reason and the metadata compared": {
+        "status": "failed",
+        "reason": "AssertionError: expected '' to match /\\bmL\\b/"
+      },
+      "rc062 when the acquisition cannot be established the comparison abstains and names the missing data": {
+        "status": "failed",
+        "reason": "AssertionError: expected '' to match /\\bmL\\b/"
+      }
+    }
+  },
+  "note": "test_rc060_assistant_cannot_record_a_decision passes on the base too: it is a regression guard (the review route must never join the assistant's compute-only list), not a defect detector."
+}

@@ -35,6 +35,7 @@ from app.services.lesion_analysis_service import (
     MAGNIMS_REGIONS,
 )
 from app.services.longitudinal_tracking_service import compare_timepoints
+from app.services import longitudinal_candidate_safety as lcs
 from app.core.config import get_settings
 from app.utils import load_nifti_from_bytes
 
@@ -104,6 +105,14 @@ async def _load_source_intensity(file_id, storage_service, context: str):
     except Exception as e:  # noqa: BLE001 — advisory; never block the comparison
         logger.warning(f"[{context}] source intensity load failed; registration disabled: {e}")
         return None, None, None
+
+
+def _source_acquisition(file_id):
+    """RC-062 (CAPA-013): acquisition record of a segmentation's source image, or None.
+
+    Read from the image's instance record (written from the DICOM header at PACS import).
+    None — no record, no source image, unreadable — makes the comparison abstain."""
+    return lcs.read_source_acquisition(file_id)
 
 
 # Single source of truth: the guard lives in the Class C classifier (HAZ-005, RC-032).
@@ -588,10 +597,11 @@ async def compare_longitudinal(
         await authorize_mask_specs([tp1_spec, tp2_spec], current_user)   # CAPA-007 RC-029
 
         async def load_mask(spec):
-            """Return (mask, voxel_spacing, source_intensity) — spacing resolved from
-            the SOURCE IMAGE (never the segmentation metadata, RC-024), None if
-            unavailable. source_intensity is the FLAIR/MRI volume in internal order
-            for optional longitudinal registration, or None (registration disabled)."""
+            """Return (mask, voxel_spacing, source_intensity, nib_img, source_file_id) —
+            spacing resolved from the SOURCE IMAGE (never the segmentation metadata,
+            RC-024), None if unavailable. source_intensity is the FLAIR/MRI volume in
+            internal order for optional longitudinal registration, or None (registration
+            disabled). source_file_id locates the acquisition record (RC-062)."""
             mask_type = spec.get("type")
             mask_id = spec.get("id")
 
@@ -602,6 +612,7 @@ async def compare_longitudinal(
                 spacing = None
                 intensity = None
                 nib_img = None
+                file_id = None
                 try:
                     meta = await segmentation_service.get_metadata(mask_id)
                     file_id = getattr(meta, "file_id", None)
@@ -612,7 +623,7 @@ async def compare_longitudinal(
                     )
                 except Exception:  # noqa: BLE001 — spacing is best-effort; a metadata/cache
                     spacing, intensity, nib_img = None, None, None  # must not 500 (finding D5)
-                return _m, spacing, intensity, nib_img
+                return _m, spacing, intensity, nib_img, file_id
 
             elif mask_type == "instance":
                 # Lazy study-service resolution — see compare_masks (avoids a
@@ -636,13 +647,14 @@ async def compare_longitudinal(
                     spacing = None
                 # Instance-type input IS a binary mask image (data>0), not an
                 # intensity MRI, so it carries no FLAIR to register — disable
-                # registration for this timepoint (index-aligned fallback).
-                return mask, spacing, None, None
+                # registration for this timepoint (index-aligned fallback). It has no
+                # source image either, so its acquisition cannot be established (RC-062).
+                return mask, spacing, None, None, None
             else:
                 raise HTTPException(status_code=400, detail=f"Unknown mask type: {mask_type}")
 
-        mask_tp1, spacing_tp1, intensity_tp1, img_tp1 = await load_mask(tp1_spec)
-        mask_tp2, _spacing_tp2, intensity_tp2, _img_tp2 = await load_mask(tp2_spec)
+        mask_tp1, spacing_tp1, intensity_tp1, img_tp1, source_tp1 = await load_mask(tp1_spec)
+        mask_tp2, _spacing_tp2, intensity_tp2, _img_tp2, source_tp2 = await load_mask(tp2_spec)
 
         logger.info("Longitudinal masks loaded", extra={
             "tp1_shape": str(mask_tp1.shape),
@@ -748,24 +760,37 @@ async def compare_longitudinal(
             if registration_applied
             else "equal array shape; NOT spatially co-registered (index-aligned)"
         )
-        result["caveat"] = (
-            "New/enlarging/resolved counts are UNADJUDICATED CANDIDATES. "
-            + ("Timepoints were rigidly co-registered, but registration is advisory and "
-               "NOT verified at lesion scale — a residual misalignment can still mint a "
-               "phantom new/enlarging lesion. "
-               if registration_applied else
-               "This comparison did NOT perform spatial registration (source intensities "
-               "unavailable); equal array dimensions are not necessarily voxel-aligned. ")
-            + "A reader must adjudicate each candidate before it informs "
-              "dissemination-in-time or any diagnostic conclusion."
+
+        # CAPA-013 (HAZ-007). RC-062: abstain when the acquisition of the two visits differs or
+        # cannot be established. RC-060: unconfirmed candidates only — the legacy activity/DIT
+        # flags are removed and reader decisions apply only to the masks they were given for.
+        # RC-061: the measured false-candidate rate from the versioned asset.
+        acquisition_check = lcs.compare_acquisitions(
+            _source_acquisition(source_tp1) if source_tp1 else None,
+            _source_acquisition(source_tp2) if source_tp2 else None,
+            spacing_tp1, _spacing_tp2,
+        )
+        both_saved = tp1_spec.get("type") == "segmentation" and tp2_spec.get("type") == "segmentation"
+        binding = lcs.mask_binding(mask_tp1, mask_tp2) if both_saved else None
+        stored_review = None
+        if both_saved:
+            entry_tp2 = segmentation_service.get_loaded(tp2_spec.get("id"))
+            analysis = getattr(entry_tp2["metadata"], "analysis_data", None) if entry_tp2 else None
+            stored_review = ((analysis or {}).get("longitudinal_reviews") or {}).get(tp1_spec.get("id"))
+        status_counts = result.get("status_counts") or {}
+        result = lcs.present_comparison(
+            result, acquisition_check=acquisition_check,
+            evidence=lcs.load_false_candidate_evidence(),
+            binding=binding, stored_review=stored_review,
         )
 
-        logger.info("Longitudinal comparison completed (candidates, registration unverified)", extra={
-            "new": result["status_counts"]["new"],
-            "resolved": result["status_counts"]["resolved"],
-            "enlarged": result["status_counts"]["enlarged"],
+        logger.info("Longitudinal comparison completed (unconfirmed candidates, registration unverified)", extra={
+            "new": status_counts.get("new"),
+            "resolved": status_counts.get("resolved"),
+            "enlarged": status_counts.get("enlarged"),
             "spacing_resolved": result["spacing_resolved"],
             "registration_applied": registration_applied,
+            "acquisition_check": acquisition_check["status"],
         })
 
         return result
@@ -775,6 +800,89 @@ async def compare_longitudinal(
     except Exception as e:
         logger.error("Longitudinal comparison failed", extra={"error": str(e)})
         raise HTTPException(status_code=500, detail=f"Longitudinal comparison failed: {str(e)}")
+
+
+@router.post("/longitudinal/review")
+async def review_longitudinal_candidates(
+    request: Request,
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Record a radiologist's decision on longitudinal change candidates (CAPA-013, RC-060).
+
+    Body: {"tp1": {"type": "segmentation", "id"}, "tp2": {...},
+           "review_binding": {"tp1_mask_sha256", "tp2_mask_sha256"} (from the comparison),
+           "decisions": [{"candidate_key": "c_<16 hex>", "decision": "confirmed" | "rejected"}]}
+
+    - every referenced segmentation is authorized first (RC-029; 404 otherwise);
+    - only a radiologist may decide (403) — as for the AI-draft review (RC-047);
+    - the decision is bound to the masks the reader compared: the binding must equal the SHA-256
+      of both stored masks now (409 otherwise); decisions recorded for other masks are discarded;
+    - stored on the follow-up segmentation with the authenticated reader and the time; a
+      candidate key that matches no candidate of the comparison counts for nothing.
+    Writes a record: deliberately NOT on the AI assistant's compute-only list (RC-033).
+    """
+    from app.security.models import UserRole
+
+    body = await request.json()
+    if not isinstance(body, dict):
+        raise HTTPException(status_code=400, detail="Invalid request body")
+    tp1_spec, tp2_spec = body.get("tp1"), body.get("tp2")
+    if not isinstance(tp1_spec, dict) or not isinstance(tp2_spec, dict):
+        raise HTTPException(status_code=400, detail="Both tp1 and tp2 are required")
+    await authorize_mask_specs([tp1_spec, tp2_spec], current_user)   # CAPA-007 RC-029
+    if getattr(current_user, "role", None) != UserRole.RADIOLOGIST:
+        raise HTTPException(status_code=403,
+                            detail="Only a radiologist can confirm or reject a change candidate.")
+    if tp1_spec.get("type") != "segmentation" or tp2_spec.get("type") != "segmentation":
+        raise HTTPException(status_code=400,
+                            detail="Decisions can be recorded only between two saved segmentations.")
+    error = lcs.validate_decisions(body.get("decisions"))
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+    binding = lcs.validate_binding(body.get("review_binding"))
+    if binding is None:
+        raise HTTPException(status_code=409, detail=(
+            "No comparison to bind the decision to (no candidates were shown for this pair). "
+            "Compare the visits again."))
+
+    tp1_id, tp2_id = tp1_spec.get("id"), tp2_spec.get("id")
+    entry_tp1 = segmentation_service.get_loaded(tp1_id)
+    entry_tp2 = segmentation_service.get_loaded(tp2_id)
+    if entry_tp1 is None or entry_tp2 is None:
+        raise HTTPException(status_code=404, detail="Segmentation not found")
+    current = lcs.mask_binding(entry_tp1["masks_3d"], entry_tp2["masks_3d"])
+    if binding != current:
+        raise HTTPException(status_code=409, detail=(
+            "The segmentations changed since this comparison was shown. Compare the visits again, "
+            "review the candidates, then record your decision."))
+
+    metadata = entry_tp2["metadata"]
+    analysis = dict(metadata.analysis_data or {})
+    reviews = dict(analysis.get("longitudinal_reviews") or {})
+    record = reviews.get(tp1_id)
+    if not isinstance(record, dict) or record.get("tp1_mask_sha256") != current["tp1_mask_sha256"] \
+            or record.get("tp2_mask_sha256") != current["tp2_mask_sha256"]:
+        record = {**current, "decisions": {}}          # decisions for other masks never carry over
+    decisions = dict(record.get("decisions") or {})
+    now = datetime.utcnow().isoformat() + "Z"
+    for d in body["decisions"]:
+        decisions[d["candidate_key"]] = {
+            "decision": d["decision"],
+            "reviewed_by": current_user.username,
+            "reviewed_by_id": current_user.id,
+            "reviewed_at": now,
+        }
+    reviews[tp1_id] = {**current, "decisions": decisions}
+    metadata.analysis_data = {**analysis, "longitudinal_reviews": reviews}
+    metadata.modified_at = datetime.utcnow()
+    segmentation_service.persist(tp2_id)
+    if getattr(segmentation_service, "cache", None):
+        await segmentation_service.cache.delete(f"seg:metadata:{tp2_id}")
+    logger.info("Longitudinal candidate decisions recorded", extra={
+        "segmentation_id": tp2_id, "decisions": len(body["decisions"]),
+    })
+    return {"success": True, "recorded": len(body["decisions"]), "review_binding": current}
 
 
 @router.post("/longitudinal/sel")

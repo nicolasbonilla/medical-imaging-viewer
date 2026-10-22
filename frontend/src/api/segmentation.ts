@@ -205,6 +205,24 @@ export const segmentationAPI = {
   },
 
   /**
+   * Record a radiologist's decision on longitudinal change candidates (CAPA-013, RC-060).
+   * Radiologists only (403 otherwise). Bound to the masks compared: `review_binding` is the one the
+   * comparison returned; 409 if either segmentation changed since.
+   */
+  async reviewLongitudinalCandidates(body: {
+    tp1: { type: 'segmentation'; id: string };
+    tp2: { type: 'segmentation'; id: string };
+    review_binding: { tp1_mask_sha256: string; tp2_mask_sha256: string };
+    decisions: { candidate_key: string; decision: 'confirmed' | 'rejected' }[];
+  }): Promise<{ success: boolean; recorded: number }> {
+    const response = await apiClient.post<{ success: boolean; recorded: number }>(
+      `${API_PREFIX}/segmentation/longitudinal/review`,
+      body,
+    );
+    return response.data;
+  },
+
+  /**
    * Detect Slowly-Expanding Lesion (SEL) CANDIDATES between two timepoints — the
    * vanguard 'smoldering disease' biomarker (Elliott 2019), via the Jacobian of a
    * deformable TP2→TP1 registration. On-demand (heavier than the rigid compare).
