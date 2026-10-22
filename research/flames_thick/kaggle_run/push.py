@@ -174,7 +174,8 @@ def cmd_wait(a):
         if st != last:
             print(time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), a.session, st, msg or "", flush=True)
             last = st
-        if any(x in st for x in ("complete", "error", "cancel")):
+        # "api_error" is our own marker for a failed status call (network): keep watching
+        if st != "api_error" and any(x in st for x in ("complete", "error", "cancel")):
             return 0 if "complete" in st else 1
         if a.max_hours and time.time() - t0 > a.max_hours * 3600:
             print("wait: max hours reached, still", st, flush=True)
