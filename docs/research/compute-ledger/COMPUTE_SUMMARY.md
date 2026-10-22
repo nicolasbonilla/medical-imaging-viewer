@@ -1,27 +1,28 @@
 # Registro de cómputo de la investigación MSTool-AI
 
-Generado el 2026-10-18 16:24 UTC con `research/cloud/build_ledger.py`. Precios: **precio oficial de lista de Google Cloud en USD** (Cloud Billing Catalog API, consultado el mismo día, con el código SKU de cada parte en `records/`). Cambio: 1 EUR = 1.1253 USD (tipo de referencia del BCE del 2026-10-16). Google factura en EUR con su propio cambio; la cifra exacta se cruza después con el informe de facturación.
+Generado el 2026-10-22 18:58 UTC con `research/cloud/build_ledger.py`. Precios: **precio oficial de lista de Google Cloud en USD** (Cloud Billing Catalog API, consultado el mismo día, con el código SKU de cada parte en `records/`). Cambio: 1 EUR = 1.1205 USD (tipo de referencia del BCE del 2026-10-22). Google factura en EUR con su propio cambio; la cifra exacta se cruza después con el informe de facturación.
 
 ## Resumen
 
 | Concepto | Valor |
 |---|---|
-| Corridas en la nube con tiempo medido | 11 en mstool-research · 9 en agosto (brain-mri-476110) |
-| Horas de máquina, proyecto de investigación | 41.38 h |
-| Coste a precio de lista, proyecto de investigación | 7.55 USD ≈ 6.71 EUR |
-| Almacenamiento en el cubo (hoy) | 4.96 GB ≈ 0.099 USD/mes |
-| Crédito gratuito usado (estimado) | 6.80 EUR de 264 EUR (tope propio 240 EUR; caduca 2027-01-15) — quedan ≈ 233.20 EUR |
-| Horas de máquina, agosto (proyecto de la app) | 7.50 h · registrado 0.86 USD · a precio de lista de hoy 1.70 USD (pagado por la cuenta de la app, no por el crédito) |
+| Corridas en la nube con tiempo medido | 20 en mstool-research · 9 en agosto (brain-mri-476110) |
+| Horas de máquina, proyecto de investigación | 65.84 h |
+| Coste a precio de lista, proyecto de investigación | 11.60 USD ≈ 10.35 EUR |
+| Almacenamiento en el cubo (hoy) | 5.37 GB ≈ 0.107 USD/mes |
+| Crédito gratuito usado (estimado) | 10.45 EUR de 264 EUR (tope propio 240 EUR; caduca 2027-01-15) — quedan ≈ 229.55 EUR |
+| Horas de máquina, agosto (proyecto de la app) | 7.50 h · registrado 0.86 USD · a precio de lista de hoy 1.69 USD (pagado por la cuenta de la app, no por el crédito) |
 
 ## Máquinas usadas
 
 | Máquina | Procesador | vCPU | Memoria (GB) | Tarjeta gráfica | Modalidad | USD/hora (lista) |
 |---|---|---|---|---|---|---|
 | e2-standard-8 | no registrado | 8 | 32.0 | — | Spot (interrumpible) | 0.1614 |
-| n1-standard-4 | no registrado | 4 | 15.0 | nvidia-tesla-p4:1 | Spot (interrumpible) | 0.36268 |
+| n1-standard-4 | no registrado | 4 | 15.0 | nvidia-tesla-p4:1 | Spot (interrumpible) | 0.34452 |
 | n2-standard-8 | no registrado | 8 | 32.0 | — | Spot (interrumpible) | 0.23987 |
 | n2d-standard-4 | AMD Milan — AMD EPYC 7B13 | 4 | 16.0 | — | estándar | 0.17583 |
 | n2-standard-4 | Intel Cascade Lake — Intel(R) Xeon(R) CPU @ 2.80GHz | 4 | 16.0 | — | estándar | 0.20109 |
+| e2-standard-4 | Intel Broadwell — Intel(R) Xeon(R) CPU @ 2.20GHz | 4 | 16.0 | — | estándar | 0.14772 |
 
 ## Todas las corridas
 
@@ -31,7 +32,7 @@ Generado el 2026-10-18 16:24 UTC con `research/cloud/build_ledger.py`. Precios: 
 | 2026-08-17 | flames-pilot | FLAMeS, piloto 1 de agosto: 3 casos de principio a fin | e2-standard-8 | no registrado | Spot (interrumpible) | 0:17:33 | — / — | — / — | — | 0.0471 | 0.0292 | fallida (errores del piloto corregidos) |
 | 2026-08-17 | flames-pilot2 | FLAMeS, piloto 2 de agosto | e2-standard-8 | no registrado | Spot (interrumpible) | 0:12:42 | — / — | — / — | — | 0.0342 | 0.0212 | fallida (errores del piloto corregidos) |
 | 2026-08-17 | flames-pilot3 | FLAMeS, piloto 3 de agosto | e2-standard-8 | no registrado | Spot (interrumpible) | 0:22:19 | — / — | — / — | — | 0.0600 | 0.0372 | fallida (errores del piloto corregidos) |
-| 2026-08-17 | flames-pilot4-gpu | FLAMeS, piloto 4 de agosto con tarjeta gráfica NVIDIA P4 | n1-standard-4 | no registrado | Spot (interrumpible) | 0:25:49 | — / — | — / — | — | 0.1561 | 0.0947 | fallida (errores del piloto corregidos) |
+| 2026-08-17 | flames-pilot4-gpu | FLAMeS, piloto 4 de agosto con tarjeta gráfica NVIDIA P4 | n1-standard-4 | no registrado | Spot (interrumpible) | 0:25:49 | — / — | — / — | — | 0.1483 | 0.0947 | fallida (errores del piloto corregidos) |
 | 2026-08-17 | flames-pilot5-cpu | FLAMeS, piloto 5 de agosto solo con procesador (validado) | e2-standard-8 | no registrado | Spot (interrumpible) | 0:26:06 | — / — | — / — | — | 0.0702 | 0.0435 | correcta |
 | 2026-08-17 | flames-full | FLAMeS completo de agosto: mapas de 145 casos (30 Ljubljana + 115 MSLesSeg) | n1-standard-4 | no registrado | Spot (interrumpible) | — | — / — | — / — | — | — | — | sin tiempo registrado |
 | 2026-08-17 | flames-controls | FLAMeS en 100 controles sanos SibBMS (planificada en agosto) | n1-standard-8 | no registrado | Spot (interrumpible) | — | — / — | — / — | — | — | — | sin tiempo registrado |
@@ -51,6 +52,15 @@ Generado el 2026-10-18 16:24 UTC con `research/cloud/build_ledger.py`. Precios: 
 | 2026-10-18 | flames-extra-a | Colecciones nuevas, bloque A (casos 1 a 90 de 179): HD-BET + FLAMeS 5 modelos | n2d-standard-4 | AMD Milan | estándar | 11:46:50 | 3:28:29 / 8:18:20 | 449 / 0 | 67.5 | 2.0714 | 2.0714 | correcta |
 | 2026-10-18 | flames-extra-b | Colecciones nuevas, bloque B (casos 91 a 179): HD-BET + FLAMeS 5 modelos | n2d-standard-4 | AMD Milan | estándar | 10:00:17 | 2:09:06 / 7:51:10 | 443 / 0 | 68.2 | 1.7591 | 1.7591 | correcta |
 | 2026-10-18 | lstai-full-a | LST-AI v1.2.0: todo MSLesSeg (P49_T2 saltado) + 30 Ljubljana; controles cuando llegue el permiso de SibBMS | n2-standard-4 | Intel Cascade Lake | estándar | 4:02:49 | 0:05:21 / 3:57:26 | 142 / 0 | 99.6 | 0.8415 | 0.8415 | correcta |
+| 2026-10-21 | paperc-oml-full | Artículo C: FLAMeS 5 modelos en las 40 imágenes de Ljubljana con dos visitas (cambios marcados por expertos) | n2d-standard-4 | AMD Milan | estándar | 3:54:19 | 0:02:29 / 3:51:48 | 198 / 0 | 69.0 | 0.6867 | 0.6867 | correcta |
+| 2026-10-21 | paperc-oml-pilot | Artículo C, piloto: FLAMeS modelo 0 en Ljubljana con dos visitas (paciente 16) | n2d-standard-4 | AMD Milan | estándar | 0:06:06 | 0:03:38 / 0:02:27 | 2 / 0 | 69.0 | 0.0179 | 0.0179 | correcta |
+| 2026-10-21 | toolbench-mindglide-a | Artículo F: MindGlide, brazo principal (misma imagen que FLAMeS), mitad A | n2d-standard-4 | AMD Milan | estándar | 3:33:37 | 0:06:47 / 3:26:49 | 160 / 0 | 84.3 | 0.6504 | 0.6504 | correcta |
+| 2026-10-21 | toolbench-mindglide-b | Artículo F: MindGlide, brazo principal (misma imagen que FLAMeS), mitad B | n2-standard-4 | Intel Cascade Lake | estándar | 3:12:56 | 0:07:46 / 3:05:09 | 161 / 0 | 77.2 | 0.6686 | 0.6686 | correcta |
+| 2026-10-21 | toolbench-pilot-mindglide | Artículo F, piloto 1 de MindGlide (3 estudios) | e2-standard-4 | Intel Broadwell | estándar | 0:13:27 | 0:07:27 / 0:05:58 | 0 / 3 | — | 0.0331 | 0.0331 | fallida (entorno de software) |
+| 2026-10-21 | toolbench-pilot-mindglide-2 | Artículo F, piloto 2 de MindGlide (1 estudio, error completo) | e2-standard-4 | Intel Broadwell | estándar | 0:10:41 | 0:08:25 / 0:02:13 | 0 / 1 | — | 0.0263 | 0.0263 | fallida (entorno de software) |
+| 2026-10-21 | toolbench-pilot-mindglide-3 | Artículo F, piloto 3 de MindGlide con permisos corregidos (3 estudios) | n2d-standard-4 | AMD Milan | estándar | 0:12:15 | 0:07:54 / 0:04:18 | 3 / 0 | 84.2 | 0.0373 | 0.0373 | correcta |
+| 2026-10-22 | toolbench-mgraw | Artículo F: MindGlide con la imagen original (MS3SEG, Bagdad, PediMS) | e2-standard-4 | Intel Broadwell | estándar | 10:00:01 | 0:08:57 / — | 143 / 3 | 252.8 | 1.4772 | 1.4772 | fallida |
+| 2026-10-22 | toolbench-mgraw-2 | Artículo F: MindGlide con la imagen original, casos restantes (36) | e2-standard-4 | Intel Broadwell | estándar | 3:04:22 | 0:08:16 / 2:56:04 | 36 / 0 | 286.1 | 0.4539 | 0.4539 | correcta |
 
 ## Rendimiento medido (FLAMeS, un modelo, un caso, sin TTA)
 
@@ -65,6 +75,13 @@ Generado el 2026-10-18 16:24 UTC con `research/cloud/build_ledger.py`. Precios: 
 | flames-extra-a | n2d-standard-4 | AMD Milan | 67.5 | 0.00330 |
 | flames-extra-b | n2d-standard-4 | AMD Milan | 68.2 | 0.00333 |
 | lstai-full-a | n2-standard-4 | Intel Cascade Lake | 99.6 | 0.00575 |
+| paperc-oml-full | n2d-standard-4 | AMD Milan | 69.0 | 0.00337 |
+| paperc-oml-pilot | n2d-standard-4 | AMD Milan | 69.0 | 0.00337 |
+| toolbench-mindglide-a | n2d-standard-4 | AMD Milan | 84.3 | 0.00428 |
+| toolbench-mindglide-b | n2-standard-4 | Intel Cascade Lake | 77.2 | 0.00446 |
+| toolbench-pilot-mindglide-3 | n2d-standard-4 | AMD Milan | 84.2 | 0.00427 |
+| toolbench-mgraw | e2-standard-4 | Intel Broadwell | 252.8 | 0.01037 |
+| toolbench-mgraw-2 | e2-standard-4 | Intel Broadwell | 286.1 | 0.01174 |
 
 ## Computador local
 
@@ -89,6 +106,11 @@ Generado el 2026-10-18 16:24 UTC con `research/cloud/build_ledger.py`. Precios: 
 - **flames-v2-pilot**: Falló antes del primer caso: torchvision de otra versión de torch. Corregido instalando ambos del mismo origen y con una autoprueba del entorno que para todo antes de gastar.
 - **flames-v2-pilot2**: Comparación SUPERADA: mapas idénticos a los de agosto (Dice 1,0; diferencia máxima 0,002 por redondeo). 66 s por caso y modelo con 4 procesadores.
 - **lstai-pilot**: Superado: 2 casos en 140 s cada uno, memoria máxima 10,7 GB sin intercambio; P49_T2 saltado (T1 vacía). Mapas en la rejilla de FLAMeS (error de guardado 0,002). La versión de código no se pudo leer en la imagen (sin python ni git); identidad comprobada por huella de la imagen y de los 3 modelos. Comprobación corregida después.
+- **flames-extra-a**: 449 mapas sin errores; HD-BET en los casos con cráneo, cada cerebro guardado para reutilizarlo.
+- **toolbench-pilot-mindglide**: Fallo en los 3 estudios tras segmentar: solo se guardaba la salida de errores, que escondía la causa real.
+- **toolbench-pilot-mindglide-2**: Causa encontrada: MindGlide funciona sin permisos de administrador y no podía escribir en la carpeta de salida.
+- **toolbench-pilot-mindglide-3**: Superado: 3/3, unos 84 s por estudio y 5,5 GB de memoria; etiqueta 18 = lesión (documentación oficial).
+- **toolbench-mgraw**: Llegó a su tope de 10 h en una máquina E2 lenta (143 hechos, 3 cortados); el resto se terminó en toolbench-mgraw-2.
 
 ## Cómo se mide
 

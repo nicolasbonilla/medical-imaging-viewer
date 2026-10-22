@@ -94,8 +94,10 @@ def fetch_bucket(tmp):
     # per-item timings live in the FLAMeS manifest (flames-ensemble/manifests/<run>.json), so it is
     # not merged.
     sources = {"runs": ["runs"],
-               "flames-ensemble_cost": ["flames-ensemble/cost", "controls/cost", "lstai/cost"],
-               "flames-ensemble_manifests": ["flames-ensemble/manifests", "lstai/manifests"]}
+               "flames-ensemble_cost": ["flames-ensemble/cost", "controls/cost", "lstai/cost", "toolbench/cost",
+                                        "flames-openms-long/cost"],
+               "flames-ensemble_manifests": ["flames-ensemble/manifests", "lstai/manifests", "toolbench/manifests",
+                                             "flames-openms-long/manifests"]}
     for local, subs in sources.items():
         dst = os.path.join(tmp, local)
         os.makedirs(dst, exist_ok=True)

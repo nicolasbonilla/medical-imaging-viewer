@@ -113,12 +113,46 @@
   "notes_es": "Superado: 179 casos descargados una vez y guardados; HD-BET en 2 casos; FLAMeS 3/3 sin errores. Coincidencia con el experto (modelo 0): MS3SEG 0,59 · Bagdad 0,40 · PediMS 0,80."
  },
  "flames-extra-a": {
-  "purpose_es": "Colecciones nuevas, bloque A (casos 1 a 90 de 179): HD-BET + FLAMeS 5 modelos"
+  "purpose_es": "Colecciones nuevas, bloque A (casos 1 a 90 de 179): HD-BET + FLAMeS 5 modelos",
+  "notes_es": "449 mapas sin errores; HD-BET en los casos con cráneo, cada cerebro guardado para reutilizarlo."
  },
  "flames-extra-b": {
   "purpose_es": "Colecciones nuevas, bloque B (casos 91 a 179): HD-BET + FLAMeS 5 modelos"
  },
  "lstai-full-a": {
   "purpose_es": "LST-AI v1.2.0: todo MSLesSeg (P49_T2 saltado) + 30 Ljubljana; controles cuando llegue el permiso de SibBMS"
+ },
+ "paperc-oml-pilot": {
+  "purpose_es": "Artículo C, piloto: FLAMeS modelo 0 en Ljubljana con dos visitas (paciente 16)"
+ },
+ "paperc-oml-full": {
+  "purpose_es": "Artículo C: FLAMeS 5 modelos en las 40 imágenes de Ljubljana con dos visitas (cambios marcados por expertos)"
+ },
+ "toolbench-pilot-mindglide": {
+  "purpose_es": "Artículo F, piloto 1 de MindGlide (3 estudios)",
+  "status": "failed (software environment)",
+  "notes_es": "Fallo en los 3 estudios tras segmentar: solo se guardaba la salida de errores, que escondía la causa real."
+ },
+ "toolbench-pilot-mindglide-2": {
+  "purpose_es": "Artículo F, piloto 2 de MindGlide (1 estudio, error completo)",
+  "status": "failed (software environment)",
+  "notes_es": "Causa encontrada: MindGlide funciona sin permisos de administrador y no podía escribir en la carpeta de salida."
+ },
+ "toolbench-pilot-mindglide-3": {
+  "purpose_es": "Artículo F, piloto 3 de MindGlide con permisos corregidos (3 estudios)",
+  "notes_es": "Superado: 3/3, unos 84 s por estudio y 5,5 GB de memoria; etiqueta 18 = lesión (documentación oficial)."
+ },
+ "toolbench-mindglide-a": {
+  "purpose_es": "Artículo F: MindGlide, brazo principal (misma imagen que FLAMeS), mitad A"
+ },
+ "toolbench-mindglide-b": {
+  "purpose_es": "Artículo F: MindGlide, brazo principal (misma imagen que FLAMeS), mitad B"
+ },
+ "toolbench-mgraw": {
+  "purpose_es": "Artículo F: MindGlide con la imagen original (MS3SEG, Bagdad, PediMS)",
+  "notes_es": "Llegó a su tope de 10 h en una máquina E2 lenta (143 hechos, 3 cortados); el resto se terminó en toolbench-mgraw-2."
+ },
+ "toolbench-mgraw-2": {
+  "purpose_es": "Artículo F: MindGlide con la imagen original, casos restantes (36)"
  }
 }
