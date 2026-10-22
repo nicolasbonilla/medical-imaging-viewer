@@ -1,0 +1,5 @@
+﻿A1 a=0.1: independent false-call 2/20, true-flag 0 | record 2/20, 0 -> MATCH
+A1 a=0.2: independent false-call 4/20, true-flag 0 | record 4/20, 0 -> MATCH
+A2 a=0.1: independent false-call 2/25, true-flag 1 | record 2/25, 1 -> MATCH
+A2 a=0.2: independent false-call 5/25, true-flag 5 | record 5/25, 5 -> MATCH
+ALL PRIMARY CELLS REPRODUCED
