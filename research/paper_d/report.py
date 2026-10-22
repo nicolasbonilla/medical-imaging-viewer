@@ -106,7 +106,21 @@ def main(path):
             continue
         print(core_table(v, k))
         print()
-    print("#### Criteria\n")
+    print("#### Post hoc indicators (NOT pre-specified)\n")
+    for name, v in r.get("posthoc_indicators", {}).items():
+        if name.startswith("_"):
+            continue
+        for oname, m in v.items():
+            print(f"**{name} → {oname}**: flagged {ci(m['flagged'])}; P(outcome | flag) {ci(m['p_outcome_if_flagged'])}; "
+                  f"P(outcome | no flag) {ci(m['p_outcome_if_not_flagged'])}; sens {ci(m['sensitivity'])}; "
+                  f"spec {ci(m['specificity'])}; counts {m['counts']}\n")
+    print("#### Post hoc: scans where the device default differs from the reference\n")
+    for c in r.get("posthoc_default_flip_cases", []):
+        print(f"- {c}")
+    print("\nRegion presence flips of the default (direction):\n")
+    for k, v in r["S2_regions"].items():
+        print(f"- {k}: {v.get('presence_flip_default_direction')}")
+    print("\n#### Criteria\n")
     for k, v in r["criteria"].items():
         print(f"- {k}: {v}")
 

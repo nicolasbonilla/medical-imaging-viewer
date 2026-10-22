@@ -277,3 +277,4 @@ Code: `research/paper_d/` (`common.py`, `atlas.py`, `rules.py`, `register_atlas_
 | Date | Change | Reason | Affects |
 |---|---|---|---|
 | 2026-10-21 | v1.0 | first issue | — |
+| 2026-10-22 | none to the protocol; implementation deviations and post hoc analyses are listed in RESULTS.md §12 (APP-3MM built at G0 only; fewer parallel workers; 21 scans recomputed, identical; post hoc stability signals labelled as such) | after the run | secondary rule APP-3MM only |

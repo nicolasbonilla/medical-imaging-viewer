@@ -278,6 +278,9 @@ def regions(df, cases, D, ref, boot):
         out[r] = {
             "presence_flip_grid_mean": boot.mean(pres_flip),
             "presence_flip_default": boot.mean((dfl[r] >= 1) != (refc[r] >= 1)),
+            # descriptive split of the default's presence flips (post hoc, not a separate outcome)
+            "presence_flip_default_direction": {"ref_present_default_absent": int(((refc[r] >= 1) & (dfl[r] == 0)).sum()),
+                                                "ref_absent_default_present": int(((refc[r] == 0) & (dfl[r] >= 1)).sum())},
             "icc_a1_default_vs_ref": index_boot(boot, lambda idx: icc_a1(x[idx], y[idx])),
             "bland_altman_default_minus_ref": {"bias": boot.mean(diff), "sd": round(float(diff.std(ddof=1)), 3),
                                                "loa": [round(float(diff.mean() - 1.96 * diff.std(ddof=1)), 2),
@@ -402,6 +405,35 @@ def main():
     result["S3_strata"], margin, ntot = strata(df, clean, D, E, ref, pats)
     result["S4_ventricles"] = ventricle_audit(df, lesions, clean, boot)
     result["S5_indicator"] = indicator(df, clean, D, ref, boot)
+    # POST HOC (not pre-specified; written after seeing that the pre-specified internal-variant flag
+    # never fired): candidate stability signals that track where the grid's fragility comes from.
+    # In-sample and descriptive only — hypotheses for a future pre-registered validation.
+    def at(k):
+        return cell(df, clean, k)
+    seg = np.stack([at((s, 0.5, "v3", "APP", "G0")) for s in ("F0", "FENS", "LENS")], 1)
+    cross_seg = (seg.min(1) != seg.max(1))
+    cross_reg = at(("F0", 0.5, "v3", "APP", "G0")) != at(("F0", 0.5, "v3", "APP", "G1"))
+    cnt = np.stack([cell(df, clean, DEFAULT, r) for r in ("n_pv", "n_jc", "n_it")], 1)
+    present = cnt >= 1
+    minp = np.where(present, cnt, 10 ** 6).min(1)
+    thin = ((present.sum(1) == 2) & (minp <= 2)) | (present.sum(1) <= 1)
+    A_out = D[DEFAULT].to_numpy() != ref
+    B_out = instability(D.to_numpy())["not_unanimous"].astype(bool)
+    result["posthoc_indicators"] = {
+        "_note": "POST HOC, in-sample, descriptive; not a pre-specified outcome",
+        **{name: {"vs_default_differs_from_reference": flag_metrics(boot, f, A_out),
+                  "vs_not_unanimous_in_primary_grid": flag_metrics(boot, f, B_out)}
+           for name, f in (("cross_segmenter_F0_FENS_LENS", cross_seg), ("cross_registration_G0_G1", cross_reg),
+                           ("thin_margin", thin), ("thin_margin_or_cross_segmenter", thin | cross_seg),
+                           ("any_of_three", thin | cross_seg | cross_reg))}}
+    # post hoc description (not a pre-specified outcome): the scans the device default gets wrong
+    dflt = D[DEFAULT].to_numpy()
+    result["posthoc_default_flip_cases"] = [
+        {"case": c, "reference_counts_pv_jc_it_dwm": [int(cell(df, [c], REF, k)[0]) for k in REGIONS],
+         "default_counts_pv_jc_it_dwm": [int(cell(df, [c], DEFAULT, k)[0]) for k in REGIONS],
+         "reference_dis": int(ref[i]), "default_dis": int(dflt[i]),
+         "share_of_automated_grid_met": round(float(D.iloc[i].mean()), 3)}
+        for i, c in enumerate(clean) if dflt[i] != ref[i]]
 
     # S6 sensitivity analyses
     s6 = {}

@@ -1,6 +1,6 @@
 # How fragile is an automated dissemination-in-space decision? A multiverse analysis of brain-MRI DIS in multiple sclerosis
 
-*Manuscript skeleton v0.1 (2026-10-21). Numbers are frozen from `records/results_v1.json` and
+*Manuscript skeleton v0.1 (2026-10-22). Numbers are frozen from `records/results_v1.json` and
 `RESULTS.md`; the protocol was committed before any result (`PROTOCOL.md`). **This version has no
 radiologist reads; the final version requires three neuroradiologists (§2.7, §5).***
 
@@ -26,11 +26,27 @@ automated pipelines plus 32 pipelines on the expert mask. Reference: the device'
 the expert mask. Primary outcomes: DIS flip rate vs reference, and the share of scans whose decision
 is not unanimous across pipelines, with patient-clustered bootstrap intervals.
 
-**Results.** [P1, P2 with CIs; biggest driver; expert-mask fragility; ventricle finding; stratum
-where fragility concentrates.]
+**Results.** The reference met brain DIS in 95.2 % of scans. The device's automated default
+disagreed with it in 3.2 % (95 % CI 0.8–6.8), LST-AI as shipped in 8.1 % (3.3–13.8), and the average
+plausible pipeline in 5.3 % (2.9–8.5). The decision was not unanimous across the 1,120 automated
+pipelines in 38.7 % of scans (29.1–49.2) and contested (10–90 % of pipelines) in 9.7 % (5.0–15.4);
+in the lowest lesion-count tertile, 65.1 % and 23.3 %. The segmenter was the largest driver (7.3 %
+disagreement between pipelines differing only in segmenter; 3.3 points, 1.2–5.6, above registration),
+then registration (4.0 %), FLAMeS fold (2.9 %), threshold (1.9 %), lesion size (1.1 %) and region rule
+(0.9 %). With the expert mask, only registration mattered (4.8 % of scans not unanimous, 1.5–9.2).
+Infratentorial presence was the least stable output (it differed from the reference in 33 % of scans for the average pipeline).
+LST-AI's atlas, also used by the device, counts lesions touching the third ventricle as
+periventricular, against guidelines; this changed 0.08 % of expert lesions and no decision. A
+pre-registered stability indicator based on threshold, size and ventricle variations was nearly blind
+(fired in 1 of 124 scans); post hoc, disagreement between two segmenters flagged 11 % of scans,
+including 3 of the 4 default errors.
 
-**Conclusions.** [One sentence on fragility; one on the third-ventricle rule; one on the stability
-indicator.]
+**Conclusions.** Automated brain-DIS decisions in established MS usually agree with the expert-mask
+decision, but more than a third are not robust to equally plausible pipeline choices, mostly the
+choice of segmenter, and fragility concentrates in low-burden scans where the decision matters. The
+third-ventricle rule is a guideline error with negligible effect here. A useful stability signal must
+vary the segmenter, not the post-processing; this needs pre-registered validation against
+neuroradiologists.
 
 ---
 
@@ -99,13 +115,31 @@ expert-mask decisions are then compared with it.
 
 ## 3. Results
 
-See RESULTS.md (§3.1 cohort; §3.2 P1; §3.3 P2; §3.4 drivers; §3.5 regions; §3.6 strata;
-§3.7 ventricles; §3.8 indicator; §3.9 sensitivity).
+Full tables in RESULTS.md (§1 cohort; §2 P1; §3 P2; §4 drivers; §5 regions; §6 strata;
+§7 ventricles; §8 indicator; §9 sensitivity; §10 criteria). Planned figures: (1) per-scan share of
+pipelines saying "met", sorted, coloured by lesion-count tertile; (2) factor disagreement with
+intervals; (3) region-presence instability by region; (4) the four default errors with their
+pipeline distributions.
 
-## 4. Discussion
+## 4. Discussion (draft points; to be finalised after the reader study)
 
-[To be written from RESULTS.md after the reader study; key points listed in RESULTS.md §Discussion
-notes.]
+1. **Agreement on average, fragility at the margin.** A 3–8 % flip rate vs the expert-mask decision
+   sounds reassuring, but 39 % of scans have at least one plausible pipeline that says otherwise, and
+   in the lowest-burden third two in three scans are not unanimous. A per-scan report of a single DIS
+   answer hides this.
+2. **The segmenter, not the post-processing, decides.** Threshold, size floor and region rule — the
+   knobs vendors and users tune — matter least; which network produced the mask matters most, then the
+   atlas registration. This argues for multi-model agreement as the uncertainty signal, not for
+   threshold sweeps (the pre-registered threshold/size indicator was nearly blind).
+3. **Infratentorial lesions are the weak link** (presence differed from the reference in a third of scans for the average pipeline), consistent
+   with lower human agreement for infratentorial lesions (κ 0.56, Mahmoudi 2026).
+4. **Rule audits matter even when the effect is small.** LST-AI's and the device's inclusion of the
+   third ventricle is a definitional error with negligible effect in these cohorts; the device's former
+   majority rule would have flipped 16 % of expert-mask decisions — rule choices can be large when they
+   are wrong in the "wrong" direction.
+5. **Contamination is not a detail**: on FLAMeS's own training scans only 15 % of decisions were not unanimous, vs 39 % on clean scans.
+6. **Human baseline.** Reported inter-reader DIS κ is 0.58–0.66; how automated fragility compares with
+   reader disagreement on the same scans is the question the reader study will answer.
 
 ## 5. Limitations
 
@@ -126,7 +160,10 @@ notes.]
 
 ## 6. Conclusion
 
-[After results.]
+An automated brain-DIS decision should be reported with its stability. In established MS most
+decisions agree with the expert-mask decision, but more than a third change under some equally
+plausible pipeline, driven mainly by the segmenter, and the fragile decisions are the low-burden ones.
+Whether these fragile decisions are also the ones neuroradiologists disagree on is the next study.
 
 ## Data and code availability
 
