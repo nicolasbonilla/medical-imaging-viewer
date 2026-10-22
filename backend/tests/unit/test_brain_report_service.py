@@ -489,7 +489,7 @@ class TestBrainReportService:
         assert "New-lesion candidates (unconfirmed): 3" in prompt
         assert "Enlarging candidates (unconfirmed): 1" in prompt
         assert "UNCONFIRMED CHANGE CANDIDATES" in prompt
-        assert "No change candidate has been confirmed by a radiologist yet." in prompt
+        assert "Radiologist decisions on these candidates are recorded in the application" in prompt
         assert "25.0%" in prompt
 
     # =========================================================================

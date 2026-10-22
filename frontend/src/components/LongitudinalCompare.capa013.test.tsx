@@ -11,7 +11,7 @@
  * API calls. They were written before the fix and fail on the code of PR #62.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act, cleanup } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -59,6 +59,9 @@ const EVIDENCE = {
   false_candidates_per_patient_ci95: [5.8, 12.6],
   after_subtraction_per_patient: 5.4,
   after_subtraction_per_patient_ci95: [3.45, 7.7],
+  false_candidates: 178,
+  all_candidates: 390,
+  false_share_of_candidates: 178 / 390,
   source: 'Paper C pilot, arm A4 (PR #60)',
 };
 const ACQ_SAME = {
@@ -139,7 +142,8 @@ async function renderAndCompare(payload: unknown) {
   fireEvent.change(screen.getAllByRole('combobox')[3], { target: { value: 'seg2' } });
   fireEvent.click(screen.getByRole('button', { name: /compare|comparar|vergleichen/i }));
   await waitFor(() => expect(compareLongitudinal).toHaveBeenCalled());
-  await waitFor(() => expect(view.container.textContent).toMatch(/\bmL\b/));
+  await waitFor(() => expect(view.container.textContent)
+    .toMatch(/\bmL\b|no automatic change|sin candidatos autom|keine automatischen/i));
   return view;
 }
 
@@ -250,7 +254,8 @@ describe('CAPA-013 — measured false-candidate rate, in the reader language (RC
     expect(ev).toHaveTextContent(/5\.4/);
     expect(ev).toHaveTextContent(/Paper C pilot, arm A4 \(PR #60\)/);
     expect(ev).toHaveTextContent(/2026-10-22/);
-    expect(ev).toHaveTextContent(/most candidates may be false/i);
+    expect(ev).toHaveTextContent(/46\s?% of all the candidates/);
+    expect(ev.textContent).not.toMatch(/most candidates may be false/i);
   });
 
   it('rc061 the figures come from the configuration asset, not from the component', async () => {
@@ -287,6 +292,8 @@ describe('CAPA-013 — measured false-candidate rate, in the reader language (RC
     for (const f of ['manufacturer', 'manufacturer_model_name', 'magnetic_field_strength_t', 'mr_acquisition_type',
       'slice_thickness_mm', 'voxel_spacing_mm', 'repetition_time_ms', 'echo_time_ms', 'inversion_time_ms',
       'spacing_between_slices_mm']) keys.add(`longitudinal.field.${f}`);
+    keys.add('longitudinal.visitSame');
+    keys.add('longitudinal.visitOrder');
     for (const r of ['pv', 'jc', 'it', 'dwm', 'unassigned']) keys.add(`longitudinal.region.${r}`);
     for (const r of ['pv', 'jc', 'it', 'dwm']) keys.add(`longitudinal.regionShort.${r}`);
     expect(keys.size).toBeGreaterThan(40);
@@ -352,3 +359,68 @@ describe('CAPA-013 — abstention on a scanner or protocol change (RC-062)', () 
     expect(screen.queryByTestId('longitudinal-candidates')).not.toBeInTheDocument();
   });
 });
+
+/** Pick the two visits (study + segmentation) without comparing. */
+async function pickVisits(first: string, second: string) {
+  compareLongitudinal.mockResolvedValue(result());
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const view = render(
+    <QueryClientProvider client={qc}>
+      <LongitudinalCompare studies={STUDIES} />
+    </QueryClientProvider>,
+  );
+  fireEvent.change(screen.getAllByRole('combobox')[0], { target: { value: first } });
+  await waitFor(() => expect(screen.getAllByRole('combobox')).toHaveLength(3));
+  fireEvent.change(screen.getAllByRole('combobox')[1], { target: { value: first === 'st1' ? 'seg1' : 'seg2' } });
+  fireEvent.change(screen.getAllByRole('combobox')[2], { target: { value: second } });
+  await waitFor(() => expect(screen.getAllByRole('combobox')).toHaveLength(4));
+  fireEvent.change(screen.getAllByRole('combobox')[3], { target: { value: second === 'st1' ? 'seg1' : 'seg2' } });
+  return view;
+}
+
+describe('CAPA-013 — independent review of PR #63', () => {
+  it('rc062 when counts are withheld no lesion load or lesion count of either visit is shown', async () => {
+    const { container } = await renderAndCompare(ABSTAINED('differs'));
+    expect(screen.getByTestId('longitudinal-abstained')).toBeInTheDocument();
+    expect(screen.queryByTestId('longitudinal-burden')).not.toBeInTheDocument();
+    expect(container.textContent).not.toMatch(/\bmL\b/);
+    expect(container.textContent).not.toMatch(/2\s*→\s*4/);
+  });
+
+  it('rc062 the slowly-expanding-lesion search is not offered when counts are withheld', async () => {
+    await renderAndCompare(ABSTAINED('not_established'));
+    expect(screen.queryByRole('button', { name: /SEL/ })).not.toBeInTheDocument();
+  });
+
+  it('rc062 the second visit must be a different, later visit', async () => {
+    await pickVisits('st2', 'st1');
+    expect(screen.getByRole('button', { name: /compare/i })).toBeDisabled();
+    expect(screen.getByTestId('longitudinal-visit-order')).toHaveTextContent(/visit 2 must be later than visit 1/i);
+    cleanupAll();
+    await pickVisits('st1', 'st1');
+    expect(screen.getByRole('button', { name: /compare/i })).toBeDisabled();
+    expect(screen.getByTestId('longitudinal-visit-order')).toHaveTextContent(/two different visits/i);
+    expect(compareLongitudinal).not.toHaveBeenCalled();
+  });
+
+  it('rc062 an unknown visit order abstains and says so', async () => {
+    await renderAndCompare({ ...ABSTAINED('same' as any), visit_check: { status: 'unknown' } });
+    expect(screen.getByTestId('longitudinal-abstained')).toHaveTextContent(/dates of the two visits could not be established/i);
+  });
+
+  it('rc060 decisions that could not be read are reported, never shown as awaiting review', async () => {
+    const { container } = await renderAndCompare(result({
+      change_candidates: { new: 2, enlarging: 1, total: 3, confirmed: 0, rejected: 0, awaiting_review: 3, decisions_unavailable: true },
+      review_binding: null,
+    }));
+    expandTable();
+    expect(screen.getByTestId('longitudinal-decisions-unavailable')).toHaveTextContent(/could not be read/i);
+    expect(container.textContent).not.toMatch(/Awaiting review/);
+    expect(screen.queryByRole('button', { name: /^confirm$/i })).not.toBeInTheDocument();
+  });
+});
+
+function cleanupAll() {
+  cleanup();
+}
+
