@@ -10,7 +10,7 @@ the owner (as CAPA-006 did); the agent did not raise one.*
 **Reporter**: Paper D research analysis (PR #61, branch `research/paper-d-dis-fragility`, `docs/research/paper-d/RESULTS.md` §7 and §11, record `docs/research/paper-d/records/results_v1.json` key `S4_ventricles`); record drafted by the AI coding agent
 **Date**: 2026-10-22
 **Version**: `main` @ `6209131`; `backend/app/services/ms_region_classifier.py` is identical on this branch's base (`af3fc32`). Present since the MSMask ventricle rule was introduced (`67fa336`, 2026-02-28)
-**Severity**: **Critical — safety-related** (proposed; SPR-001 §2 classes a problem with a safety impact as Critical; raised from Minor on 2026-10-23 after the independent review of PR #62; rationale in §5). **PENDING owner approval.**
+**Severity**: **Critical — safety-related** (proposed; SPR-001 §2 classes a problem with a safety impact as Critical; raised from Minor on 2026-10-23 after the independent review of PR #62; rationale in §5). **approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63).**
 **Status**: OPEN — DRAFT. Fix proposed, **not implemented** (`ms_region_classifier.py` is a Class C module; CLAUDE.md requires a code review before any change).
 
 **Description**: REQ-FUNC-053 defines periventricular (PV) as "abutting the **lateral** ventricles", as do the module docstring (`ms_region_classifier.py` line 8), DD-CLS-001 (DDS-001 §DD-CLS-001), IFU-001 §10.3, CER-001 and GSPR-001, following Filippi et al. 2019 ("lesions touching the third and fourth ventricles … should not be counted as periventricular"). On the MSMask atlas path (REQ-FUNC-053 path 3), the PV landmark is the whole of MSMask label 4 "Ventricles", which holds the lateral **and the third** ventricle. White matter abutting the third ventricle therefore becomes PV zone, and a lesion touching only the third ventricle can be classified **periventricular**: in paper D, of the 6 expert lesions that touched only the third ventricle (dataset MNI placement, G0), the device classified **3** as periventricular and 3 not; with the LST-AI registration (G1), 4 of 4 *(stated exactly 2026-10-23 after the independent review of PR #62; the first draft said every such lesion is classified periventricular)*. The rule is inherited from LST-AI v1 (the atlas and its annotation rule).
@@ -136,4 +136,4 @@ Resolution description, verification evidence, commit SHA of the fix, affected a
 ---
 
 **Prepared by**: internal audit from paper D (drafted by the AI coding agent, Claude Code), 2026-10-22.
-**Approval**: PENDING owner approval — severity, CAPA linkage (CA-6.14 under CAPA-006, or a new CAPA) and the proposed fix. No approval is recorded here.
+**Approval**: approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63) — severity, CAPA linkage (CA-6.14 under CAPA-006, or a new CAPA) and the proposed fix. No approval is recorded here.

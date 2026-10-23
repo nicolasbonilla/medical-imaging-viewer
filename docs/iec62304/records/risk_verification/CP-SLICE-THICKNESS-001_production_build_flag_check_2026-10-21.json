@@ -1,5 +1,5 @@
 {
-  "change": "CP-SLICE-THICKNESS-001 (DRAFT, PENDING owner approval; feature flag OFF)",
+  "change": "CP-SLICE-THICKNESS-001 (DRAFT, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); feature flag OFF)",
   "risk_control": "RC-058",
   "date": "2026-10-21",
   "command": "npx vite build --outDir <scratch directory> --emptyOutDir (frontend/, with .env.production; VITE_ENABLE_SLICE_THICKNESS_RELIABILITY not set in the environment nor in .env.production)",

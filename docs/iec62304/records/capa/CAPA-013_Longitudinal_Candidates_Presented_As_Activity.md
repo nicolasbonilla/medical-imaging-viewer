@@ -1,11 +1,11 @@
 # CAPA-013 — Longitudinal Comparison: Unconfirmed Change Candidates Presented as Disease Activity
 
 **CAPA ID**: CAPA-013
-**Date Opened**: 2026-10-22 (DRAFT — opening, severity and actions **PENDING owner approval**)
+**Date Opened**: 2026-10-22 (DRAFT — opening, severity and actions N. G. Bonilla Vargas — approved 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63))
 **Source**: RMF-OBS-001 (RMF-001 §3.5, PR #62), from the paper C pilot (PR #60, branch `research/paper-c-pilot` @ `0501bd1`: `docs/research/paper-c/RESULTS.md` §0, §2b; record `docs/research/records/2026-10-21_paper_c_pilot.json`, keys `arms.A4.fixed.B_all` / `B_app_sub`, SHA-256 `3cbf0b53…af27b`). Every finding below was re-checked in the code of PR #62 (`qms/capa012-and-problem-reports` @ `2018277`) on 2026-10-22 and reproduced by tests written before the fix (§5).
 **Severity**: **CRITICAL, safety-related** (proposed, as RMF-OBS-001; QP-002 §5: patient safety risk / SPR-001 §2: safety impact; raised from Major on 2026-10-23 together with RMF-OBS-001 after the independent review of PR #62). The first draft proposed Major because the device is not in clinical use, the counts were labelled candidates, and harm needs a reader to accept a false candidate; those facts lower the probability of harm, not the class.
 **Owner**: *(to be assigned — a person; the AI coding agent cannot own a CAPA)*
-**Status**: DRAFT. Interim controls implemented on branch `fix/longitudinal-activity-display-capa013` (draft PR #63, based on PR #62; **merge after #52, #51, #53, #59, #49 and #62**). Nothing merged, nothing deployed. **Owner approval: PENDING owner approval.** Effectiveness is not verified.
+**Status**: DRAFT. Interim controls implemented on branch `fix/longitudinal-activity-display-capa013` (draft PR #63, based on PR #62; **merge after #52, #51, #53, #59, #49 and #62**). Nothing merged, nothing deployed. **Owner approval: approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63).** Effectiveness is not verified.
 **Identifiers**: RC-060, RC-061, RC-062 and REQ-SAFE-037 are the identifiers PR #62 reserved for exactly these controls (proposed there, NOT IMPLEMENTED). They are implemented here under those identifiers rather than renumbered, so each control keeps one identifier. The next free identifiers after PR #62 were checked on every open branch on 2026-10-22 (RC-063, REQ-SAFE-038, REQ-FUNC-100, CAPA-013: unused; RC-054..058, REQ-SAFE-034..036, REQ-FUNC-098/099 are reserved by PR #59) — none is needed. Document versions follow PR #62's: **SRS 1.10, RMF 1.12, TM 1.9** (drafts).
 **CAPA linkage**: PR #62 proposed these controls as CAPA-008 actions CA-8.11–CA-8.13. CAPA-008 addresses a different problem (assistant layer, clinical-rule fidelity; its approved actions were implemented in PR #46); a dedicated CAPA is proposed instead (decision D-2).
 **Procedure**: QP-002 (`docs/qms/QP-002_CAPA_Procedure.md`) · SPR-001
@@ -57,7 +57,7 @@ Of the 40 `longitudinal.*` keys the view used, **24 had no entry** in `es.json` 
 4. No test checked that the view's texts exist in every shipped language; the component carried English defaults, which hid the missing entries.
 5. Acquisition harmonisation between visits was never specified, and no import path recorded the acquisition.
 
-## 3. Corrections and corrective actions (implemented on the branch — PENDING owner approval)
+## 3. Corrections and corrective actions (implemented on the branch — approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63))
 
 | ID | Action | Control | Where |
 |---|---|---|---|
@@ -82,7 +82,7 @@ Of the 40 `longitudinal.*` keys the view used, **24 had no entry** in `es.json` 
 
 **Consequence today:** images uploaded as NIfTI (all research datasets now in the app) carry no acquisition record, so every comparison between them **abstains** — the view shows the overlay and the explanation, no automatic counts. Only series imported from a PACS after this change carry the record. This is the fail-closed behaviour REQ-SAFE-037 (e) asks for; whether it is acceptable until another capture path exists is decision D-3.
 
-## 4. Preventive actions (proposed — PENDING owner approval)
+## 4. Preventive actions (proposed — approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63))
 
 | ID | Action |
 |---|---|
@@ -116,7 +116,7 @@ Of the 40 `longitudinal.*` keys the view used, **24 had no entry** in `es.json` 
 7. `activity_candidate` is still computed inside `longitudinal_tracking_service.py` (RC-035 test, CAPA-008 negative control C6) but never leaves the backend; REQ-SAFE-024's last sentence now applies to confirmed candidates (REQ-SAFE-037).
 8. HAZ-007 determination stays as proposed in PR #62 (UNDETERMINED) until the stable-patient measurement.
 
-## 10. Independent review of PR #63 (2026-10-23) — findings and corrections (PENDING owner approval)
+## 10. Independent review of PR #63 (2026-10-23) — findings and corrections (approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63))
 
 An independent review of the first version of this PR (head `ad144ba`) asked for two blockers and six further corrections before any merge. All are corrected on the same branch; each has a behavioural test written first and failing on `ad144ba` (record `records/risk_verification/CAPA-013_review1_tests_on_pr63_2026-10-23.json`: backend 15 of 52 cases fail, frontend 7 of 18) and new negative controls.
 
@@ -133,7 +133,7 @@ An independent review of the first version of this PR (head `ad144ba`) asked for
 
 Verification after the corrections: CAPA-013 files 52/52 and 18/18; whole backend tree 1622 passed, 1 failed (the local-only WebAuthn test, as on PR #62); frontend 288 tests, 285 passed, 3 skipped, 0 failed; type check clean; production build passes. Negative controls (full re-run 2026-10-23, all mutations against the final tests): **66 mutations, 66 detected** (B12 retired; B16–B20, E7–E9, A10–A16, F16–F22 added for the review findings). On PR #62 the tests now fail 50 of 52 (backend) and 18 of 18 (frontend) — `CAPA-013_tests_on_base_2026-10-22.json` (re-run 2026-10-23 with the final tests).
 
-## 8. Owner decisions (PENDING owner approval)
+## 8. Owner decisions (approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63))
 
 | ID | Decision |
 |---|---|
@@ -148,9 +148,9 @@ Verification after the corrections: CAPA-013 files 52/52 and 18/18; whole backen
 
 | Role | Name | Decision | Date |
 |---|---|---|---|
-| CAPA owner | *(to be assigned)* | PENDING owner approval | — |
-| Owner / Project Lead | — | PENDING owner approval | — |
-| Code review (Class C, D-5) | — | PENDING owner approval | — |
-| Effectiveness check | — | PENDING owner approval | — |
+| CAPA owner | *(to be assigned)* | approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63) | — |
+| Owner / Project Lead | — | approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63) | — |
+| Code review (Class C, D-5) | — | approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63) | — |
+| Effectiveness check | — | approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63) | — |
 
 *Drafted by the AI coding agent (development tool, SDP-001 §5.1.4). No approval is recorded in this document; approvals are to be recorded by the owner (CAPA-012).*

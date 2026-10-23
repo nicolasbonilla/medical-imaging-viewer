@@ -6,7 +6,7 @@
 **Severity**: **CRITICAL**. Presentation hazards in the primary clinical workflow: wrong patient (HAZ-009), wrong side or wrong place (HAZ-006), wrong size (HAZ-014; HAZ-008 downstream through the lesion-size criterion). QP-002 §5.
 **Owner**: *(to be assigned: Software Safety Officer / QMS Manager)*
 **Status**: OPEN.
-- Implemented on branch `fix/viewer-safety-capa010`: CA-10.1 to CA-10.5, PA-10.1 to PA-10.3. **PENDING owner approval.** Not merged, not deployed.
+- Implemented on branch `fix/viewer-safety-capa010`: CA-10.1 to CA-10.5, PA-10.1 to PA-10.3. **Approved by N. G. Bonilla Vargas on 2026-10-23** (PR #52/#51/#53/#59/#49/#62/#63) and merged.
 - Pending: CA-10.6 to CA-10.8, PA-10.4.
 - Effectiveness is not verified (needs deployment and a clinician's check on real studies).
 
@@ -76,11 +76,11 @@ RC-023 records that the viewer "deliberately renders NO L/R edge labels" until t
 
 | ID | Action | Status |
 |----|--------|--------|
-| **CA-10.1** | `ImageViewer3D` and every `MultiPanelViewer` cell render `ViewportSafetyOverlay` first and unconditionally; `ViewerApp` passes the identity it already loads. Each panel reports the orientation of ITS OWN image (`PanelState.orientation`, from the server metadata; cleared when a panel is reassigned, kept on slice changes). The sequence badge of a panel moved to bottom-left so the identity does not cover it | **DONE** (branch) — PENDING owner approval |
-| **CA-10.2** | One mapping for lesion markers: `lesionVoxelToNifti(z, y, x) = (y, x, z)` (`utils/boundingBoxMesh.ts`), used by the 3D crosshair and the 3D box | **DONE** (branch) — PENDING owner approval |
-| **CA-10.3** | Measurement overlay maps through the canvas transform (`scale = s0 · zoom`, `origin = centre · (1 − zoom) + pan`); the angle uses millimetres per axis | **DONE** (branch) — PENDING owner approval |
-| **CA-10.4** | The viewer's centre column is a flex column; the viewport takes the height left by the toolbar (`min-h-0 flex-1`) | **DONE** (branch) — PENDING owner approval |
-| **CA-10.5** | Every 3D niivue instance: `isOrientCube: false`, `isOrientationTextVisible: false` | **DONE** (branch) — PENDING owner approval |
+| **CA-10.1** | `ImageViewer3D` and every `MultiPanelViewer` cell render `ViewportSafetyOverlay` first and unconditionally; `ViewerApp` passes the identity it already loads. Each panel reports the orientation of ITS OWN image (`PanelState.orientation`, from the server metadata; cleared when a panel is reassigned, kept on slice changes). The sequence badge of a panel moved to bottom-left so the identity does not cover it | **DONE** — approved 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63) |
+| **CA-10.2** | One mapping for lesion markers: `lesionVoxelToNifti(z, y, x) = (y, x, z)` (`utils/boundingBoxMesh.ts`), used by the 3D crosshair and the 3D box | **DONE** — approved 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63) |
+| **CA-10.3** | Measurement overlay maps through the canvas transform (`scale = s0 · zoom`, `origin = centre · (1 − zoom) + pan`); the angle uses millimetres per axis | **DONE** — approved 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63) |
+| **CA-10.4** | The viewer's centre column is a flex column; the viewport takes the height left by the toolbar (`min-h-0 flex-1`) | **DONE** — approved 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63) |
+| **CA-10.5** | Every 3D niivue instance: `isOrientCube: false`, `isOrientationTextVisible: false` | **DONE** — approved 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63) |
 | **CA-10.6** | The angle tool cannot place a three-point angle with normal clicks: every mouse-down restarts it, and in a single drag the vertex is the first mouse-move sample. Found here, not fixed (needs an interaction decision) | **PENDING** |
 | **CA-10.7** | When the image header has no pixel spacing, the 2D measurement tools still label values in "mm" assuming 1 mm (contrary to RC-024's principle). Found here, not fixed | **PENDING** |
 | **CA-10.8** | Cosmetic, from the fix: in 3D volume mode the caveat overlaps the middle of niivue's colour bar; in 3D multiplanar mode the identity block covers the "3D" panel label | **PENDING** (cosmetic) |
@@ -89,9 +89,9 @@ RC-023 records that the viewer "deliberately renders NO L/R edge labels" until t
 
 | ID | Action | Status |
 |----|--------|--------|
-| **PA-10.1** | Page-level tests: `ViewerApp.capa010.test.tsx` renders the REAL viewer page (real viewers, mocked backend) in 2D, multi-panel, 3D volume and 3D multiplanar, and checks the loaded identity on every view. The same rendered page, with the app's real Tailwind CSS, is measured in a real headless browser (Edge or Chrome) at 1366x768, 1600x900, 1920x1080: every caveat must be fully visible. In CI a missing browser fails the test instead of skipping it | **DONE** (branch) — PENDING owner approval |
-| **PA-10.2** | Third-party defaults cannot silently re-enable glyphs: the tests feed each 3D instance's effective options to the REAL niivue drawing routines; one test pins that niivue's default WOULD draw letters | **DONE** (branch) — PENDING owner approval |
-| **PA-10.3** | Negative controls: `scripts/safety/capa010_negative_controls.py`, one mutation at a time, every anchor asserted unique | **DONE** (branch) — PENDING owner approval |
+| **PA-10.1** | Page-level tests: `ViewerApp.capa010.test.tsx` renders the REAL viewer page (real viewers, mocked backend) in 2D, multi-panel, 3D volume and 3D multiplanar, and checks the loaded identity on every view. The same rendered page, with the app's real Tailwind CSS, is measured in a real headless browser (Edge or Chrome) at 1366x768, 1600x900, 1920x1080: every caveat must be fully visible. In CI a missing browser fails the test instead of skipping it | **DONE** — approved 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63) |
+| **PA-10.2** | Third-party defaults cannot silently re-enable glyphs: the tests feed each 3D instance's effective options to the REAL niivue drawing routines; one test pins that niivue's default WOULD draw letters | **DONE** — approved 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63) |
+| **PA-10.3** | Negative controls: `scripts/safety/capa010_negative_controls.py`, one mutation at a time, every anchor asserted unique | **DONE** — approved 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63) |
 | **PA-10.4** | Re-verify the other presentation controls at page level in a real browser (e.g. RC-008 badge, RC-014 overlay legends): a component test in jsdom cannot see clipping or overlap. Owner to prioritise | **PENDING** |
 
 ## 4. Root Cause (preliminary — to be confirmed by the Safety Officer)
@@ -152,4 +152,4 @@ Failing test names per mutation and the SHA-256 of every mutated source and test
 ---
 
 **Prepared by**: internal audit, 2026-10-17.
-**Requires**: human approval before merge and deployment. **PENDING owner approval** — no approval is recorded here.
+**Requires**: human approval before merge and deployment. **Approved by N. G. Bonilla Vargas on 2026-10-23** (PR #52/#51/#53/#59/#49/#62/#63, written authorisation of the owner).

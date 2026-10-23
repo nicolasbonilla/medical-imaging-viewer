@@ -2,12 +2,12 @@
 
 ## Software of Unknown Provenance — Complete Inventory
 
-**Document ID**: SOUP-001 | **Version**: 1.2 DRAFT (2026-10-17, PENDING owner approval) — last approved: 1.1 | **Date**: September 28, 2026 (v1.0: April 12, 2026)
+**Document ID**: SOUP-001 | **Version**: 1.2 DRAFT (2026-10-17, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63)) — last approved: 1.1 | **Date**: September 28, 2026 (v1.0: April 12, 2026)
 
 | Version | Date | Author | Change | Approved By |
 |---------|------|--------|--------|-------------|
 | 1.0 | 2026-04-12 | Development Team | Initial release | — |
-| 1.2 (draft) | 2026-10-17 | Development Team | CP-FLAMES-BROWSER-001. (a) SOUP-FE-008 ONNX Runtime Web corrected 1.21.0 → **1.24.1**: v1.0 recorded the declared minimum (`^1.21.0` in `package.json`), not the version actually built; `package-lock.json` resolved 1.24.1 (`npm ls`, 2026-10-17). `package.json` now pins `1.24.1` exactly (CMP-001 §5: no `^` for production SOUP). Known anomaly added. (b) SOUP-FE-014 added: FLAMeS model weights (data, Class C). (c) SOUP-FE-015 added: Neurodesk white-matter-lesions code ported to TypeScript (Apache-2.0). (d) SBOM: onnxruntime-web version and its SOUP id (was SOUP-FE-006, the NiiVue id) corrected | **PENDING owner approval** |
+| 1.2 (draft) | 2026-10-17 | Development Team | CP-FLAMES-BROWSER-001. (a) SOUP-FE-008 ONNX Runtime Web corrected 1.21.0 → **1.24.1**: v1.0 recorded the declared minimum (`^1.21.0` in `package.json`), not the version actually built; `package-lock.json` resolved 1.24.1 (`npm ls`, 2026-10-17). `package.json` now pins `1.24.1` exactly (CMP-001 §5: no `^` for production SOUP). Known anomaly added. (b) SOUP-FE-014 added: FLAMeS model weights (data, Class C). (c) SOUP-FE-015 added: Neurodesk white-matter-lesions code ported to TypeScript (Apache-2.0). (d) SBOM: onnxruntime-web version and its SOUP id (was SOUP-FE-006, the NiiVue id) corrected | N. G. Bonilla Vargas — approved 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63) |
 | 1.1 | 2026-09-28 | Development Team | CAPA-006 (HAZ-005). (a) SOUP-BE-020 nilearn reclassified B → **C**. It resamples the MSMask atlas zone map for the Class C MAGNIMS region classifier. Purpose was "Brain atlas"; version was "0.10.0+". Recorded as not pinned (`>=0.10.0`), with open action CAPA-006 PA-6.5; `backend/requirements.txt` not changed. (b) SOUP-BE-025 added: the MSMask atlas data file, a Class C input that had no SOUP or provenance entry. (c) Summary recounted from the tables. v1.0 stated Class B 20 / Class A 10; the tables held 21 / 9. | N. G. Bonilla Vargas — approved 2026-10-17 (PR #43) |
 
 ---

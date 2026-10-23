@@ -1,6 +1,6 @@
 # MSTool-AI: Configuration Management Plan
 
-**Document ID**: CMP-001 | **Version**: 1.1 DRAFT (2026-10-17, §6 model artefacts added, §5 observation; PENDING owner approval) — last approved: 1.0 | **Date**: April 12, 2026
+**Document ID**: CMP-001 | **Version**: 1.1 DRAFT (2026-10-17, §6 model artefacts added, §5 observation; approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63)) — last approved: 1.0 | **Date**: April 12, 2026
 
 ---
 
@@ -86,7 +86,7 @@ Code review responsibility is enforced via `.github/CODEOWNERS`:
   the lockfile is what pins them. The Class C runtime `onnxruntime-web` is now pinned exactly (`1.24.1`); the other
   ranges are an open item for the owner.
 
-## 6. Binary model artefacts not stored in Git (added 2026-10-17, DRAFT — PENDING owner approval)
+## 6. Binary model artefacts not stored in Git (added 2026-10-17, DRAFT — approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63))
 
 Applies to the in-browser FLAMeS model (SOUP-FE-014). The 62 MB file is **not committed to Git**
 (`frontend/public/models/flames/` is git-ignored).

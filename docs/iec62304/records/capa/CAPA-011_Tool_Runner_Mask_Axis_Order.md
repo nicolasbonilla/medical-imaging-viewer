@@ -6,7 +6,7 @@
 **Severity**: **CRITICAL**. A lesion mask or parcellation produced by a clinical tool is shown, and used for region classification, at a different voxel than the one the tool segmented (HAZ-006 orientation error; HAZ-001 lesion delineation; HAZ-005 MAGNIMS region, and through it HAZ-008 DIS). On cubic volumes the error is silent. QP-002 §5.
 **Owner**: *(to be assigned: Software Safety Officer / QMS Manager)*
 **Status**: OPEN.
-- Implemented on branch `fix/tool-runner-mask-axes-capa011` (PR #51, draft, based on `fix/viewer-safety-capa010`; **merge after PR #52 / CAPA-010**): CA-11.1 to CA-11.5, PA-11.1. **Owner approval: PENDING owner approval.**
+- Implemented on branch `fix/tool-runner-mask-axes-capa011` (PR #51, draft, based on `fix/viewer-safety-capa010`; **merge after PR #52 / CAPA-010**): CA-11.1 to CA-11.5, PA-11.1. **Owner approval: approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63).**
 - Identifiers: **RC-039** and **REQ-SAFE-028**, renumbered on 2026-10-17 from RC-038 / REQ-SAFE-025, which CAPA-010 (merged first) uses. The document versions follow CAPA-010's: SRS 1.6, RMF 1.8, TM 1.5.
 - Pending: PA-11.2 (data check, owner decision), PA-11.4, PA-11.5 (development environment writes to production, owner decision).
 - Effectiveness is not verified.
@@ -170,7 +170,7 @@ No Class C module listed in `CLAUDE.md` was modified. `tool_runner_service.py` a
 |----|--------|--------|
 | **PA-11.1** | `test_rc039_tool_runner_mask_axes.py` (28 `test_rc039_*` cases), bound to RC-039 in `rc_test_manifest.json`. Real store path and real load path (`SegmentationService.get_mask`), on a non-cubic asymmetric volume with a flipped, anisotropic, translated affine and one marked voxel; asserts the same voxel (a0, a1, k), the same scanner position, the same slice layout, and the same position in the stored file served to the 3D viewer. Also: the cubic silent case; a tool writing another voxel order; the LST-AI types mask; the marker/order contract; **every tool end to end** through its real `_execute_*` method (FLAMeS, LST-AI, SynthSeg, mindGlide lesion and structure masks), each in the MRI's grid and in another voxel order; **fail closed** — no reference, missing file, unreadable file, indeterminate affine → error, no mask object, no record; and each of the four tools end to end with an unreadable reference → task FAILED with a clear error, nothing stored; **same grid** (pre-merge review) — a different array shape, a 0.5 mm shift, and a SynthSeg-like 1 mm output over a 0.5 × 0.5 × 3 mm study are refused with nothing stored, the SynthSeg run end to end with a 1 mm output ends FAILED with nothing stored, and a transform differing only by float rounding is accepted (positive control); **stored record** — `image_shape` = [a0, a1, k] of the image, `annotated_voxels`, and agreement with the loaded mask's dimensions. Negative controls: `scripts/safety/capa011_negative_controls.py` | **DONE** (branch) |
 | **PA-11.2** | Read-only data check for masks already stored with swapped axes (procedure in §6). No data migrated | **PENDING** — owner decision |
-| **PA-11.3** | Decide whether the legacy fallback should refuse instead | **SUPERSEDED** by CA-11.4 (implemented on branch; PENDING owner approval) |
+| **PA-11.3** | Decide whether the legacy fallback should refuse instead | **SUPERSEDED** by CA-11.4 (implemented on branch; approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63)) |
 | **PA-11.4** | Before any tool is enabled anywhere: run each real sidecar once and confirm, with this round-trip check, that its output is on the input image's grid. Since CA-11.5 an output on another grid is refused rather than stored; SynthSeg returns 1 mm, so its sidecar must resample the parcellation back to the input grid (nearest neighbour) or its results on non-1 mm studies will be refused. Not examined with real sidecars by this CAPA | **PENDING** |
 | **PA-11.5** | Separate the development environment from production storage (Finding 7: separate project/bucket and credentials via environment variables, start-up guard, no production defaults). Not implemented in this PR | **PENDING** — owner decision |
 
@@ -281,4 +281,4 @@ one-off rewrite. No data was migrated by this CAPA.
 ---
 
 **Prepared by**: internal audit, 2026-10-17.
-**Approval**: PENDING owner approval (required before merge and deployment).
+**Approval**: approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63) (required before merge and deployment).

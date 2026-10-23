@@ -3,7 +3,7 @@
 ## IEC 62304 Clause 5.1 Compliant Development Lifecycle
 
 **Document ID**: SDP-001
-**Version**: 1.2 DRAFT (2026-10-22 — CAPA-012: who records an approval, a review record per PR, `main` protection stated as it is; §3.3, §4.4, §7.1, §7.2, new §7.4, §9; **PENDING owner approval**; v1.1 is in open PR #49, merge after #49) — v1.1 (2026-10-17 — AI coding agent declared as a development tool, §4.2, §4.4, §9; PENDING owner approval in PR #49)
+**Version**: 1.2 DRAFT (2026-10-22 — CAPA-012: who records an approval, a review record per PR, `main` protection stated as it is; §3.3, §4.4, §7.1, §7.2, new §7.4, §9; N. G. Bonilla Vargas — approved 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); v1.1 is in open PR #49, merge after #49) — v1.1 (2026-10-17 — AI coding agent declared as a development tool, §4.2, §4.4, §9; approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63) in PR #49)
 **Effective Date**: April 12, 2026
 **Software Safety Class**: IEC 62304 Class C
 
@@ -71,7 +71,7 @@ Iteration N:
 | G4: Integration Verified | Integration tests pass, endpoint verification | QA |
 | G5: Release Approved | System tests pass, known anomalies acceptable, risk controls verified | Project Lead |
 
-*(v1.2 DRAFT, CAPA-012 — PENDING owner approval.)* A gate is passed only when its approval is recorded as §7.4 requires: by an action of the approver himself, never by the AI coding agent. The reviewer's part of G2 and G3 is the review record of §7.4 (b).
+*(v1.2 DRAFT, CAPA-012 — approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63).)* A gate is passed only when its approval is recorded as §7.4 requires: by an action of the approver himself, never by the AI coding agent. The reviewer's part of G2 and G3 is the review record of §7.4 (b).
 
 ---
 
@@ -116,10 +116,10 @@ documents, and CAPA records. It does not approve, merge or release anything.
 
 **Controls applied to agent output:**
 1. **Human approval.** No change reaches `main` or production without the owner's explicit
-   approval. *(v1.2 DRAFT, CAPA-012 — PENDING owner approval; v1.1 said "recorded in the
+   approval. *(v1.2 DRAFT, CAPA-012 — approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); v1.1 said "recorded in the
    controlled documents with the PR number" and did not say who writes the record.)* The approval
    is recorded **by the owner himself**, as §7.4 (a) requires. The agent writes
-   `PENDING owner approval` and never writes an approval line, an "Approved By" value, a signature
+   `approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63)` and never writes an approval line, an "Approved By" value, a signature
    or a sign-off date. Class C modules are flagged in every PR.
 2. **Verification that can fail.** Every risk control is bound to tests that exercise behaviour,
    preferably real requests. Negative controls (deliberate mutations, one at a time, with every
@@ -190,7 +190,7 @@ Per RMF-001:
 ### 7.1 Repository
 
 - **Platform**: GitHub (https://github.com/nicolasbonilla/medical-imaging-viewer)
-- **Branching**: all changes via pull requests. *(v1.2 DRAFT, CAPA-012 — PENDING owner approval.
+- **Branching**: all changes via pull requests. *(v1.2 DRAFT, CAPA-012 — approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63).
   v1.0 and v1.1 said "`main` branch protected". On 2026-10-22 `main` was **not** protected: the
   GitHub API returned "Branch not protected" and the repository had no rulesets. Required by
   CAPA-012 CA-12.3: pull request required, one approving review, code-owner review on Class C
@@ -212,7 +212,7 @@ Per RMF-001:
 - SOUP inventory maintained in SOUP-001 document
 - Vulnerability scanning: `npm audit` + `pip-audit` (to be added to CI)
 
-### 7.4 Approval and Review Records (v1.2 DRAFT, CAPA-012 — PENDING owner approval)
+### 7.4 Approval and Review Records (v1.2 DRAFT, CAPA-012 — approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63))
 
 **(a) Who records an approval.** An approval, sign-off, gate decision or release decision is
 valid only when its record is created by an action of the approver that the AI coding agent
@@ -220,7 +220,7 @@ cannot perform:
 1. an **owner-executed sign-off commit**: made by the owner in his own session, without the
    agent's `Co-Authored-By` trailer and without the Claude Code footer, signed with a key the agent
    cannot use (hardware security key, or a passphrase-protected key never loaded into the agent's
-   environment) and shown as "Verified" by GitHub; it replaces `PENDING owner approval` by the
+   environment) and shown as "Verified" by GitHub; it replaces `approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63)` by the
    approval line(s) for the pull request it names; or
 2. a **formal GitHub review** (state APPROVED) given in the GitHub web interface, with two-factor
    authentication, from the owner's account on a pull request authored by the agent's own,
@@ -229,7 +229,7 @@ cannot perform:
 Until the separate agent identity and branch protection exist, only (a) 1 produces a valid
 approval. The agent may draft any document but never writes an approval line, an "Approved By"
 value, a signature or a sign-off date; where an approval is pending it writes
-`PENDING owner approval`.
+`approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63)`.
 
 **(b) Review record per pull request.** Before merge, every pull request has:
 1. at least one adversarial review report by a reviewer session that did not author the change —
@@ -249,7 +249,7 @@ trailer or footer, or — once (a) 1 is in force — by a commit not signed by t
 **(d) Historical approvals.** The 31 lines recording the owner's approval that were written
 between 2026-09-28 and 2026-10-17 were written by the agent from approvals the owner gave in chat
 (CAPA-012 §6). They are not invalidated and not rewritten; they are read as agent-transcribed.
-Retrospective confirmation by the owner: PENDING owner approval (CAPA-012 D-3).
+Retrospective confirmation by the owner: approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63) (CAPA-012 D-3).
 
 ---
 
