@@ -606,6 +606,73 @@
       "change": "CP-FLAMES-BROWSER-001 (DRAFT, PENDING owner approval; feature flag OFF)",
       "note": "NOT IMPLEMENTED. Open action CA-FLAMES-2 (CP-FLAMES-BROWSER-001, owner): device gate (memory, cores, WebGPU adapter limits) and COOP/COEP as a separate tested change (COOP-COEP-IMPACT.md). Interim: honest duration estimate + cancel (REQ-FUNC-096)."
     },
+    "RC-054": {
+      "description": "Acquisition slice thickness read from the file, never assumed: native only from an ORIGINAL DICOM with the spacing between slices or a 3D acquisition (gap counted); NIfTI grid / derived DICOM / 2D DICOM without spacing = lower bound above 1.5 mm at most; fine grid without acquisition metadata, missing/invalid/contradictory/unreadable = not determinable with a reason; never a default; total; Class C utilities wrapped, not modified",
+      "hazard": "HAZ-015",
+      "status": "implemented",
+      "change": "CP-SLICE-THICKNESS-001 (DRAFT, PENDING owner approval; feature flag OFF)",
+      "implementation": "app/services/acquisition_geometry.py; app/services/imaging_service.py (load_dicom, load_nifti -> ImageMetadata.acquisition_geometry); app/models/schemas.py (AcquisitionGeometry)",
+      "tests": [
+        "tests/unit/test_rc054_acquisition_geometry.py"
+      ],
+      "requirement": "REQ-SAFE-034, REQ-FUNC-099",
+      "negative_control": "Executed 2026-10-21 by scripts/safety/slice_thickness_negative_controls.py (one mutation at a time, every anchor asserted unique, original bytes restored and hash-checked); failing test names in docs/iec62304/records/risk_verification/CP-SLICE-THICKNESS-001_negative_controls_2026-10-21.json. B mutations (backend): 12/12 detected (B1, B2, B3, B4, B5, B6, B7, B8, B9, B10, B11, B12). Restored: backend 34 passed / 0 failed; frontend 42 passed / 0 failed.",
+      "note": "Also HAZ-001. HONEST LIMITS: a NIfTI can never be 'native' (no acquisition metadata) and the PACS import drops the original DICOM header, so most studies stored today read 'at least' or 'not determinable' (open item in RMF-001 §7.2)."
+    },
+    "RC-055": {
+      "description": "The card reads only a strictly parsed acquisition_geometry (native only from a DICOM header; lower bound only above 1.5 mm; legacy slice_thickness never read) of the segmentation's own image (the image on screen only when it is that image) or, for a processed image, of the study's single original FLAIR (masks excluded), named on the card; none or several -> not determinable; the thicker source wins",
+      "hazard": "HAZ-015",
+      "status": "implemented",
+      "change": "CP-SLICE-THICKNESS-001 (DRAFT, PENDING owner approval; feature flag OFF)",
+      "implementation": "frontend/src/utils/sliceThicknessReliability.ts (parseGeometry, locateSource, resolveThickness); frontend/src/components/SliceThicknessReliabilityCard.tsx; LesionDashboard.tsx and ViewerApp.tsx pass the source image and the study instances",
+      "tests": [
+        "frontend/src/utils/sliceThicknessReliability.test.ts",
+        "frontend/src/components/SliceThicknessReliabilityCard.test.tsx"
+      ],
+      "requirement": "REQ-SAFE-034",
+      "negative_control": "Executed 2026-10-21 by scripts/safety/slice_thickness_negative_controls.py (one mutation at a time, every anchor asserted unique, original bytes restored and hash-checked); failing test names in docs/iec62304/records/risk_verification/CP-SLICE-THICKNESS-001_negative_controls_2026-10-21.json. P mutations: 8/8 detected (P1, P2, P3, P4, P5, P6, P7, P8). Restored: backend 34 passed / 0 failed; frontend 42 passed / 0 failed.",
+      "note": "Original vs processed and FLAIR rely on the viewer's existing filename conventions; a misnamed file can only yield 'not determinable' or the single FLAIR-named original, which the card names for the reader to check."
+    },
+    "RC-056": {
+      "description": "No false-lesion rate on the card at any thickness in this version (thick or unknown: not reliable without a >= 10-patient site calibration, none exists; thin: no calibration for the deployed segmenter); an evidence asset carrying a site calibration or shown=true is refused",
+      "hazard": "HAZ-015",
+      "status": "implemented",
+      "change": "CP-SLICE-THICKNESS-001 (DRAFT, PENDING owner approval; feature flag OFF)",
+      "implementation": "frontend/src/utils/sliceThicknessReliability.ts (validateAsset, assessReliability); frontend/src/config/sliceThicknessReliability.v1.json (false_lesion_figure); SliceThicknessReliabilityCard.tsx",
+      "tests": [
+        "frontend/src/utils/sliceThicknessReliability.test.ts",
+        "frontend/src/components/SliceThicknessReliabilityCard.test.tsx"
+      ],
+      "requirement": "REQ-SAFE-035",
+      "negative_control": "Executed 2026-10-21 by scripts/safety/slice_thickness_negative_controls.py (one mutation at a time, every anchor asserted unique, original bytes restored and hash-checked); failing test names in docs/iec62304/records/risk_verification/CP-SLICE-THICKNESS-001_negative_controls_2026-10-21.json. R mutations: 3/3 detected (R1, R2, R3). Restored: backend 34 passed / 0 failed; frontend 42 passed / 0 failed.",
+      "note": "The separate CALM-MS panel (research-only, dark) still shows FDR targets in its preset hints regardless of thickness; it must apply this control before it is ever enabled (RMF-001 §7.2)."
+    },
+    "RC-057": {
+      "description": "Detection note from the versioned evidence asset (v1.0.0) bound to its source record (commit cabb99d, SHA-256 of both records); evidence size and post-hoc marker on every row; 'found 8 in 10 / half of the time from size X' = worst case over every row of the band (and every thicker band for a lower bound); empty-list warning always; 3D FLAIR recommendation on thick or unknown thickness; scope statement",
+      "hazard": "HAZ-001",
+      "status": "implemented",
+      "change": "CP-SLICE-THICKNESS-001 (DRAFT, PENDING owner approval; feature flag OFF)",
+      "implementation": "frontend/src/config/sliceThicknessReliability.v1.json; frontend/src/utils/sliceThicknessReliability.ts (smallestBinFrom, assessReliability); SliceThicknessReliabilityCard.tsx",
+      "tests": [
+        "frontend/src/utils/sliceThicknessReliability.test.ts",
+        "frontend/src/components/SliceThicknessReliabilityCard.test.tsx"
+      ],
+      "requirement": "REQ-SAFE-036, REQ-FUNC-098",
+      "negative_control": "Executed 2026-10-21 by scripts/safety/slice_thickness_negative_controls.py (one mutation at a time, every anchor asserted unique, original bytes restored and hash-checked); failing test names in docs/iec62304/records/risk_verification/CP-SLICE-THICKNESS-001_negative_controls_2026-10-21.json. D mutations: 9/9 detected (D1, D2, D3, D4, D5, D6, D7, D8, D9). Provenance: every figure, lesion, scan and patient count of the evidence asset re-derived from the research records at commit cabb99d (SHA-256 of both records match). Restored: backend 34 passed / 0 failed; frontend 42 passed / 0 failed.",
+      "note": "Also HAZ-015. Figures are research data for one segmenter (FLAMeS 5-fold ensemble), not re-derived for the deployed segmenter; bands are confounded with site; three MSLesSeg rows are post hoc. Usability not evaluated."
+    },
+    "RC-058": {
+      "description": "Feature flag VITE_ENABLE_SLICE_THICKNESS_RELIABILITY OFF by default; the card, its logic and the evidence asset are reachable only through it and loaded lazily",
+      "hazard": "HAZ-015",
+      "status": "implemented",
+      "change": "CP-SLICE-THICKNESS-001 (DRAFT, PENDING owner approval; feature flag OFF)",
+      "implementation": "frontend/src/config/features.ts; frontend/src/components/LesionDashboard.tsx (lazy card behind the flag)",
+      "tests": [
+        "frontend/src/config/features.sliceThickness.test.ts"
+      ],
+      "requirement": "REQ-FUNC-098",
+      "negative_control": "Executed 2026-10-21 by scripts/safety/slice_thickness_negative_controls.py (one mutation at a time, every anchor asserted unique, original bytes restored and hash-checked); failing test names in docs/iec62304/records/risk_verification/CP-SLICE-THICKNESS-001_negative_controls_2026-10-21.json. F mutations: 3/3 detected (F1, F2, F3). Production build checked with the flag absent: docs/iec62304/records/risk_verification/CP-SLICE-THICKNESS-001_production_build_flag_check_2026-10-21.json. Restored: backend 34 passed / 0 failed; frontend 42 passed / 0 failed."
+    },
     "RC-059": {
       "description": "MSMask path: the periventricular landmark is the lateral ventricles only (third ventricle separated from MSMask label 4 in a derived, versioned, hash-checked mask; fail closed if missing or altered); LST-AI zones path recomputed with the same rule or the deviation stated",
       "hazard": "HAZ-005, HAZ-008",

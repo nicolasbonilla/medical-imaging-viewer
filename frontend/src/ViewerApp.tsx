@@ -890,6 +890,8 @@ function ViewerApp() {
                                 <LesionDashboard
                                   segmentationId={seg.id}
                                   onNavigateToSlice={(idx) => activeSlice.setSliceIndex(idx)}
+                                  sourceFileId={seg.fileId}
+                                  studyInstances={studyInfo?.instances}
                                 />
                               </div>
                             )}

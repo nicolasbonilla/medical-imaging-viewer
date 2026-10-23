@@ -6,6 +6,11 @@
  */
 
 export interface FeatureFlags {
+  // CLASS C CHANGE PROPOSAL CP-SLICE-THICKNESS-001 (DRAFT, PENDING owner approval; RC-058):
+  // "reliability by slice thickness" card next to the lesion results (Paper A v0.3, PR #54).
+  // OFF unless VITE_ENABLE_SLICE_THICKNESS_RELIABILITY is 'true' or '1'.
+  SLICE_THICKNESS_RELIABILITY: boolean;
+
   // FASE 2: Binary Protocol & WebSocket
   BINARY_PROTOCOL: boolean;
   WEBSOCKET: boolean;
@@ -40,6 +45,9 @@ function getFeatureFlag(key: string, defaultValue: boolean): boolean {
  * Defaults are set for FASE 1 (Quick Wins) - safe, low-risk optimizations
  */
 export const FEATURES: FeatureFlags = {
+  // Class C draft (RC-058) — must stay OFF in production until the change is approved
+  SLICE_THICKNESS_RELIABILITY: getFeatureFlag('ENABLE_SLICE_THICKNESS_RELIABILITY', false),
+
   // FASE 2: Disabled by default (requires backend WebSocket support)
   BINARY_PROTOCOL: getFeatureFlag('ENABLE_BINARY_PROTOCOL', false),
   WEBSOCKET: getFeatureFlag('ENABLE_WEBSOCKET', false),

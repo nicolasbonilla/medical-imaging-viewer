@@ -13,6 +13,7 @@
 | 1.4 | 2026-10-17 | Development Team | CAPA-010: REQ-SAFE-016 (amended), REQ-SAFE-025/026/027 → RC-016, RC-023, RC-037, RC-038 → UI-CAPA010-3D, UI-CAPA010-MPV, UI-CAPA010-APP, UI-RC038 (addendum below; test rows added) | **PENDING owner approval** |
 | 1.5 | 2026-10-17 | Development Team | CAPA-011: REQ-SAFE-028 → RC-039 → UT-RC039 (addendum below; test rows added) | PENDING owner approval |
 | 1.6 (draft) | 2026-10-17/18 | Development Team | CP-FLAMES-BROWSER-001 (in-browser FLAMeS, flag OFF). Re-review 2 (2026-10-18): REQ-SAFE-030 / RC-047 and REQ-SAFE-033 / RC-049 rows updated; UI-FLAMES-BANNER added. Original entry: REQ-FUNC-034/036 (amended), REQ-FUNC-093..097, REQ-SAFE-029..033 → RC-040..RC-051 (RC-052/053 not implemented) → UT-FLAMES-*, UI-FLAMES-*, UT-RC047, VAL-FLAMES-* (addendum below; test rows added). Versions 1.4 and 1.5 are reserved by open PRs #52 and #51 | **PENDING owner approval** |
+| 1.7 (draft) | 2026-10-21 | Development Team | CP-SLICE-THICKNESS-001 (reliability by slice thickness, flag OFF): REQ-FUNC-098/099, REQ-SAFE-034/035/036 → RC-054..RC-058 → UT-RC054, UT-STC-LOGIC, UI-STC-CARD, UT-STC-FLAG (addendum below; test rows added). Versions 1.4, 1.5 and 1.6 are reserved by open PRs #52, #51 and #53 | **PENDING owner approval** |
 | 1.8 (draft) | 2026-10-22 | Development Team | RMF-OBS-001 and PRB-001: REQ-FUNC-053 row annotated with the known nonconformity of the MSMask and LST-AI zones paths (PRB-001 → RC-059, proposed); REQ-FUNC-054 row annotated (RMF-OBS-001); REQ-SAFE-037 (proposed) → RC-060, RC-061, RC-062 (proposed); RC-059..RC-062 NOT IMPLEMENTED, no test (addendum below). Version 1.7 is reserved by open PR #59 | **PENDING owner approval** |
 | 1.9 (draft) | 2026-10-22 | Development Team | CAPA-013: REQ-SAFE-037 → RC-060/RC-061/RC-062 implemented on branch → UT-CAPA013, UI-CAPA013 (addendum below supersedes the three REQ-SAFE-037 rows of the 1.8 addendum; test rows added; REQ-FUNC-054 row annotated). Versions 1.4 to 1.8 are held by open PRs #52, #51, #53, #59 and #62 | **PENDING owner approval** |
 
@@ -47,6 +48,8 @@
 | REQ-FUNC-095 (draft) | Result on the FLAIR's grid in RC-031 order; opened only over the same file/grid | — | DESIGN.md §3.1, §9 | `axes.ts`, `draft.ts`, `useSegmentationMask.ts` | UT-FLAMES-PORT, UT-FLAMES-MODEL | — | — | HAZ-006 (RC-042, RC-046) |
 | REQ-FUNC-096 (draft) | Expected duration, elapsed time, cancel without touching the open segmentation | — | COOP-COEP-IMPACT.md | `runtimeEstimate.ts`, `BrowserFlamesCard.tsx`, `useBrowserFlames.ts` | UI-FLAMES-CANCEL, UI-FLAMES-CARD | — | — | — |
 | REQ-FUNC-097 (draft) | Licence/attribution notices reachable in the app | — | DESIGN.md §11 | `notices.ts`, `BrowserFlamesCard.tsx`, `public/licenses/*` | UI-FLAMES-CARD | — | — | — |
+| REQ-FUNC-098 (draft) | Reliability-by-slice-thickness card next to the lesion results (flag OFF) | — | spec `APP-FEATURE-slice-thickness-reliability.md` (PR #54, research input) | `SliceThicknessReliabilityCard.tsx`, `utils/sliceThicknessReliability.ts`, `config/sliceThicknessReliability.v1.json`, `LesionDashboard.tsx`, `ViewerApp.tsx`, `config/features.ts` | UT-STC-LOGIC, UI-STC-CARD, UT-STC-FLAG | — | — | HAZ-015, HAZ-001 (RC-055..RC-058) |
+| REQ-FUNC-099 (draft) | Acquisition geometry per image (state, effective mm, source, reason), Class C utilities wrapped | — | `acquisition_geometry.py` module docstring | `acquisition_geometry.py`, `imaging_service.py`, `schemas.py` | UT-RC054 | — | — | HAZ-015 (RC-054) |
 
 ---
 
@@ -166,6 +169,17 @@
 > | — | 5-fold ensemble default before clinical use | RC-052 | HAZ-001 | — | — | **NOT IMPLEMENTED** (CA-FLAMES-1) |
 > | — | Device gate / cross-origin isolation | RC-053 | HAZ-001 | — | — | **NOT IMPLEMENTED** (CA-FLAMES-2) |
 >
+> **Addendum 2026-10-21 (DRAFT, PENDING owner approval): REQ-SAFE-034/035/036, RC-054..RC-058 (CP-SLICE-THICKNESS-001, reliability by slice thickness, flag OFF).**
+> Negative controls and provenance re-derivation: `records/risk_verification/CP-SLICE-THICKNESS-001_negative_controls_2026-10-21.json`.
+>
+> | Req ID | Safety Requirement | Risk Control | HAZ ID | Implementation | Test ID | Verified? |
+> |--------|-------------------|-------------|--------|----------------|---------|-----------|
+> | REQ-SAFE-034, REQ-FUNC-099 | Acquisition thickness read from the file, never assumed (native only from an ORIGINAL DICOM with spacing or 3D; NIfTI at most a lower bound > 1.5 mm; otherwise not determinable with a reason; total) | RC-054 | HAZ-015, HAZ-001 | `acquisition_geometry.py`, `imaging_service.py`, `schemas.py` | UT-RC054 | TEST-BOUND on branch (B1-B12) |
+> | REQ-SAFE-034 | Strict parse; the segmentation's own image or the single original FLAIR of a processed image, named; thicker source wins; legacy `slice_thickness` never read | RC-055 | HAZ-015 | `sliceThicknessReliability.ts`, `SliceThicknessReliabilityCard.tsx`, `LesionDashboard.tsx`, `ViewerApp.tsx` | UT-STC-LOGIC, UI-STC-CARD | TEST-BOUND on branch (P1-P8) |
+> | REQ-SAFE-035 | No false-lesion rate at any thickness in this version; asset with a site calibration refused | RC-056 | HAZ-015 | `sliceThicknessReliability.ts`, `sliceThicknessReliability.v1.json`, card | UT-STC-LOGIC, UI-STC-CARD | TEST-BOUND on branch (R1-R3) |
+> | REQ-SAFE-036, REQ-FUNC-098 | Detection note from the versioned, source-bound asset; evidence size and post-hoc marker; worst case; empty-list warning; 3D FLAIR recommendation | RC-057 | HAZ-001, HAZ-015 | `sliceThicknessReliability.v1.json`, `sliceThicknessReliability.ts`, card | UT-STC-LOGIC, UI-STC-CARD | TEST-BOUND on branch (D1-D9; every asset figure re-derived from the records at `cabb99d`) |
+> | REQ-FUNC-098 | Feature flag OFF by default; card lazy and only behind the flag | RC-058 | HAZ-015 | `features.ts`, `LesionDashboard.tsx` | UT-STC-FLAG | TEST-BOUND on branch (F1-F3); production build checked with the flag absent |
+>
 > **Addendum 2026-10-22 (DRAFT, PENDING owner approval): RC-059 (PRB-001), REQ-SAFE-037 → RC-060/RC-061/RC-062 (RMF-OBS-001).** All four controls are proposed and NOT IMPLEMENTED; no test exists. Records: `records/problem_reports/PRB-001_MSMask_Third_Ventricle_Counted_Periventricular.md`; RMF-001 §3.5. RC-054..RC-058 and REQ-SAFE-034..036 are reserved by open PR #59.
 >
 > | Req ID | Safety Requirement | Risk Control | HAZ ID | Implementation | Test ID | Verified? |
@@ -247,6 +261,10 @@ by `backend/tests/unit/test_risk_control_manifest.py`.
 | UT-RC047 (draft) | `backend/tests/unit/test_rc047_ai_draft_provenance.py`: provenance schema (sequence evidence required), service forces 'unreviewed' + automatic and records who confirmed the sequence, create route passes provenance, confirm route (radiologist only, 409 for manual work, binds the SHA-256 of the stored mask, 409 on a different mask), any mask change after a confirmation resets it (mask upload and every persist path), identical re-upload keeps it | REQ-SAFE-030, REQ-SAFE-033 (RC-047, RC-049) |
 | VAL-FLAMES-GATE (draft) | `gateValidation.flames.test.ts` + `gateReplay.flames.test.ts` (opt-in) on public MSLesSeg / open_ms_data / ISBI-2015 volumes incl. with-skull FLAIRs; leave-one-dataset-out by `research/flames_in_browser/gate_lodo.py`; results in `docs/research/flames-in-browser/evidence/gate-*.json`, FLAIR-GATE-VALIDATION.md | REQ-SAFE-033 (RC-043, RC-049) |
 | VAL-FLAMES-PARITY (draft) | `parity.flames.test.ts` (opt-in) vs `nnUNetv2_predict` on public FLAIR (DESIGN.md §0) | REQ-FUNC-094 (RC-041) |
+| UT-RC054 (draft) | `backend/tests/unit/test_rc054_acquisition_geometry.py` (`test_rc054_*`, added 2026-10-21): DICOM native/lower-bound/not-determinable rules (ORIGINAL + spacing or 3D, gap counted, derived/untyped never native, missing/invalid never defaulted, enhanced multi-frame), NIfTI never native (thick grid = lower bound on any axis and rotated affine; fine and MNI grids not determinable; pixdim/affine contradiction; units), totality on garbage, exposure by the image loaders and the process response, legacy default never leaks, Class C utilities untouched, every reason has a card message | REQ-FUNC-099, REQ-SAFE-034 (RC-054) |
+| UT-STC-LOGIC (draft) | `frontend/src/utils/sliceThicknessReliability.test.ts` (`rc055`, `rc056`, `rc057`): strict parse, source image and original-FLAIR location, thicker source wins, MSLesSeg-like grid never thin; no false-lesion figure in any state, calibrated asset refused; asset equals the paper, bound to its record, worst-case sizes per band, band edges, lower bound over thicker bands | REQ-SAFE-034, REQ-SAFE-035, REQ-SAFE-036 (RC-055, RC-056, RC-057) |
+| UI-STC-CARD (draft) | `frontend/src/components/SliceThicknessReliabilityCard.test.tsx` (`rc055`, `rc056`, `rc057`): rendered card — image binding, legacy value never shown, original FLAIR named, request failure not determinable; no percentage next to the false-lesion statement; figures with evidence size and post-hoc marker, empty-list warning, 3D FLAIR recommendation, provenance; Spanish wording | REQ-FUNC-098, REQ-SAFE-034, REQ-SAFE-035, REQ-SAFE-036 |
+| UT-STC-FLAG (draft) | `frontend/src/config/features.sliceThickness.test.ts` (`rc058`): flag OFF unless 'true'/'1'; card only behind the flag, lazy; nothing else imports the card, its logic or its asset | REQ-FUNC-098 (RC-058) |
 
 ---
 
@@ -283,6 +301,7 @@ by `backend/tests/unit/test_risk_control_manifest.py`.
 | `test_rc039_tool_runner_mask_axes.py` | UT-RC039 | REQ-SAFE-028, REQ-FUNC-034, REQ-FUNC-035 (RC-039, HAZ-006/001/005; added 2026-10-17) |
 | `test_capa013_longitudinal_candidates.py` (draft) | UT-CAPA013 | REQ-SAFE-037 (RC-060/061/062, HAZ-007; added 2026-10-22, CAPA-013; exercises the Class C `brain_report_service.py` prompt) |
 | `test_rc047_ai_draft_provenance.py` (draft) | UT-RC047 | REQ-SAFE-030 (RC-047, HAZ-001; added 2026-10-17, CP-FLAMES-BROWSER-001) |
+| `test_rc054_acquisition_geometry.py` | UT-RC054 | REQ-FUNC-099, REQ-SAFE-034 (RC-054, HAZ-015; added 2026-10-21, draft) |
 | `test_nifti_utils.py` | UT-NII-001 | REQ-FUNC-001 |
 | `test_dicom_seg.py` | UT-SEG-001..008 | REQ-FUNC-072 |
 | `test_dicom_utils.py` | UT-DICOM-001..007 | REQ-FUNC-072, REQ-SAFE-013 | RC-016 | VERIFIED |

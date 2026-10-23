@@ -18,6 +18,37 @@ class ImageOrientation(str, Enum):
     CORONAL = "coronal"
 
 
+class AcquisitionGeometry(BaseModel):
+    """Slice thickness / spacing of the ORIGINAL acquisition, as far as the file shows it.
+
+    REQ-FUNC-099 / REQ-SAFE-034, risk control RC-054 (CP-SLICE-THICKNESS-001 — DRAFT,
+    PENDING owner approval). Produced by app.services.acquisition_geometry, never by a
+    default. Three states:
+
+    - ``native``: read from the acquisition metadata of an ORIGINAL DICOM image
+      (with the spacing between slices, or a 3D acquisition). ``effective_mm`` is
+      max(SliceThickness, SpacingBetweenSlices).
+    - ``at_least``: only a lower bound (> 1.5 mm) is known — the stored grid of a
+      NIfTI, or a derived DICOM. The acquisition may have been thicker still.
+    - ``not_determinable``: nothing reliable (``reason`` says why). A fine grid without
+      acquisition metadata is NOT evidence of a thin acquisition: a 2-5 mm FLAIR
+      resampled to 1 mm looks exactly like it (Paper A v0.3, MSLesSeg).
+
+    ``ImageMetadata.slice_thickness`` is unrelated legacy display data (it defaults to
+    1.0 mm for a DICOM without the tag) and must never be used for this purpose.
+    """
+    state: str  # "native" | "at_least" | "not_determinable"
+    effective_mm: Optional[float] = None
+    source: str = "none"  # "dicom_header" | "nifti_grid" | "none"
+    reason: Optional[str] = None
+    slice_thickness_mm: Optional[float] = None
+    spacing_between_slices_mm: Optional[float] = None
+    grid_spacing_mm: Optional[List[float]] = None
+    mr_acquisition_type: Optional[str] = None
+    image_type: Optional[List[str]] = None
+    method_version: str = "acq-geometry/1"
+
+
 class ImageMetadata(BaseModel):
     """Medical image metadata."""
     patient_id: Optional[str] = None
@@ -48,6 +79,11 @@ class ImageMetadata(BaseModel):
     # justify. A plausible-looking wrong L/R marker is more dangerous than none,
     # because it turns an obvious absence into a confident error.
     anatomical_orientation: Optional[str] = None
+
+    # Slice thickness of the original acquisition with its source and state
+    # (RC-054, CP-SLICE-THICKNESS-001 — DRAFT). None only for responses produced
+    # before this field existed; the client treats None as "not determinable".
+    acquisition_geometry: Optional[AcquisitionGeometry] = None
 
     # Window/Level
     window_center: Optional[float] = None
