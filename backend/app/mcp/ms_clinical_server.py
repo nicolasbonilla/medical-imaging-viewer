@@ -20,6 +20,7 @@ CAPA-008: the assistant is read-only and is never a diagnostic tool.
 from fastmcp import FastMCP
 from app.mcp._backend import api_get, api_post_compute
 from app.services.region_evidence import strip_region_confidence as _strip_region_confidence
+from app.services.longitudinal_candidate_safety import assistant_rate_sentence
 
 mcp = FastMCP(
     "ms-clinical-mcp",
@@ -50,9 +51,16 @@ mcp = FastMCP(
         "susceptibility-sensitive MRI and a human reading. They give supportive evidence "
         "only in specific situations defined by the criteria; report the clinician-recorded "
         "counts and never infer a CVS or PRL status yourself.\n"
-        "- New or enlarging lesions from compare_longitudinal() are unadjudicated "
+        "- New or enlarging lesions from compare_longitudinal() are unconfirmed change "
         "CANDIDATES (spatial registration not verified). Never call them disease activity "
-        "or dissemination in time."
+        "or dissemination in time. " + assistant_rate_sentence() + " Only "
+        "`reader_confirmed_activity`, present when a radiologist confirmed candidates in the "
+        "application, may be reported — as the radiologist's confirmation, naming them.\n"
+        "- `subtraction_confirmed` / `new_subtraction_confirmed` mean only 'brighter at "
+        "follow-up on the FLAIR subtraction': a signal, never a confirmation of a lesion.\n"
+        "- When the response says `abstained: true`, the acquisition of the two visits differs or "
+        "could not be established: report no change count; say the images must be compared "
+        "visually."
     ),
 )
 
@@ -147,9 +155,13 @@ async def compare_longitudinal(baseline_id: str, followup_id: str) -> dict:
     Compare two timepoint segmentations: new, enlarged, shrunk, resolved and stable lesion
     CANDIDATES and the burden change.
 
-    The counts are unadjudicated candidates: a misregistration between the timepoints can
-    create false new or enlarging lesions. Never report them as disease activity or as
-    dissemination in time; a radiologist must confirm each on co-registered images.
+    The counts are unconfirmed change candidates: the measured false-candidate rate of the rule is
+    in the response (`false_candidate_evidence`), and a misregistration between the timepoints can
+    create more. Never report them as disease
+    activity or as dissemination in time; a radiologist confirms or rejects each one in the
+    application (`reader_confirmed_activity` is present only after a confirmation). The FLAIR
+    subtraction flag is a signal, never a confirmation of a lesion. When `abstained` is true the
+    acquisition of the two visits differs or could not be established and no count is given.
 
     Args:
         baseline_id: Segmentation ID for the baseline timepoint
@@ -284,9 +296,12 @@ def ms_longitudinal_workflow() -> str:
 2. **Compare**: `compare_longitudinal(baseline_id, followup_id)` — new, enlarged, shrunk,
    resolved and stable lesion CANDIDATES.
 
-3. **Present as candidates**: the comparison does not verify spatial registration, so a
-   misregistration can create false new or enlarging lesions. Never call the counts disease
-   activity or dissemination in time; a radiologist confirms each on co-registered images.
+3. **Present as unconfirmed candidates**: the measured false-candidate rate of the rule is in the
+   response (`false_candidate_evidence`), and the comparison does not verify spatial registration. Never call the counts disease activity or dissemination in time;
+   a radiologist confirms or rejects each one in the application. Report
+   `reader_confirmed_activity` only as the radiologist's confirmation. The FLAIR subtraction is a
+   signal, never a confirmation. If `abstained` is true, report no count: the acquisition of the
+   two visits differs or could not be established — the images must be compared visually.
 
 4. **Draft report**: `generate_ms_report(followup_id, include_longitudinal=True,
    longitudinal_baseline_id=baseline_id)`.

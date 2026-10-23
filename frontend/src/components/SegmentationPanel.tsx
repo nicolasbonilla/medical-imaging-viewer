@@ -20,7 +20,8 @@ import { useViewerStore } from '@/store/useViewerStore';
 import { segmentationAPI } from '@/api/segmentation';
 import { ClinicalToolsPanel } from './ClinicalToolsPanel';
 import { ConformalPanel } from './ConformalPanel';
-import type { LabelInfo, Segmentation, SegmentationResponse } from '@/types';
+import { AiDraftBanner, aiStatusText } from './AiDraftBanner';
+import type { AIProvenance, LabelInfo, Segmentation, SegmentationResponse } from '@/types';
 
 // ============================================================================
 // Types
@@ -295,6 +296,9 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
     reset,
   } = useSegmentationStore();
 
+  // RC-047: the review can only be confirmed on the saved mask (no unsaved corrections).
+  const hasUnsavedMaskChanges = useSegmentationStore((s) => s.hasUnsavedMaskChanges);
+
   // Fetch segmentations list for ALL images in the study (same cache key as ViewerApp)
   const { data: segmentationsList, isLoading: isLoadingList } = useQuery({
     queryKey: ['segmentations', 'study', currentStudyId],
@@ -318,7 +322,10 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
   // Map SegmentationResponse[] to minimal SegmentationSummary-like objects for the list
   const segmentations = (segmentationsList ?? []).map((seg: SegmentationResponse) => ({
     id: seg.segmentation_id,
-    name: seg.metadata?.description || t('segmentation.defaultName', 'Segmentation'),
+    // REQ-SAFE-030: a saved AI draft is named by its review status first, never like manual work.
+    name: seg.metadata?.ai_provenance
+      ? `[${aiStatusText(seg.metadata.ai_provenance)}] ${seg.metadata.ai_provenance.model_name} fold ${seg.metadata.ai_provenance.fold}`
+      : seg.metadata?.description || t('segmentation.defaultName', 'Segmentation'),
     status: 'saved' as const,
     progress_percentage: 0,
     slices_annotated: 0,
@@ -379,6 +386,14 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
       console.error('Failed to delete segmentation:', error);
     }
   }, [deleteSegmentationMutation]);
+
+  const handleAiReviewConfirmed = useCallback((provenance: AIProvenance) => {
+    const store = useSegmentationStore.getState();
+    if (store.activeSegmentation) store.setActiveSegmentation({ ...store.activeSegmentation, ai_provenance: provenance });
+    const cur = store.currentSegmentation;
+    if (cur) setCurrentSegmentation({ ...cur, metadata: { ...cur.metadata, ai_provenance: provenance } });
+    queryClient.invalidateQueries({ queryKey: ['segmentations', 'study', currentStudyId] });
+  }, [setCurrentSegmentation, queryClient, currentStudyId]);
 
   const handleSaveSegmentation = useCallback(async () => {
     if (!saveCallback) return;
@@ -597,6 +612,15 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                       </svg>
                       {activeSegmentation.created_by_name || activeSegmentation.created_by}
                     </p>
+                    {/* REQ-SAFE-030: an AI segmentation is always labelled as such, saved or not. */}
+                    {activeSegmentation.ai_provenance && (
+                      <AiDraftBanner
+                        provenance={activeSegmentation.ai_provenance}
+                        segmentationId={activeSegmentation.id}
+                        hasUnsavedChanges={hasUnsavedMaskChanges}
+                        onConfirmed={handleAiReviewConfirmed}
+                      />
+                    )}
                   </div>
                   <button
                     onClick={handleCloseSegmentation}

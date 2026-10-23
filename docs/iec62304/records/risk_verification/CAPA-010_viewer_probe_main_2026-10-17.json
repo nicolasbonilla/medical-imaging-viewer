@@ -1,0 +1,471 @@
+{
+  "executed": "2026-10-17T21:09:59.303Z",
+  "method": "real ViewerApp in headless Edge; backend answered by CDP request interception with a synthetic study; visible fraction = intersection with the window and every overflow-clipping ancestor",
+  "runs": [
+    {
+      "layout": "single",
+      "size": "1366x768",
+      "ready": true,
+      "unknownRequests": [
+        "http://127.0.0.1:5181/api/v1/patients/11111111-1111-4111-8111-111111111111/history?active_only=false",
+        "http://127.0.0.1:5181/api/v1/studies/patient/11111111-1111-4111-8111-111111111111?page=1&page_size=20",
+        "http://127.0.0.1:5181/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444444/sub-01_FLAIR.nii.gz/0?colormap=gray&minimal=true&overlay_opacity=0.6"
+      ],
+      "window": {
+        "innerWidth": 1366,
+        "innerHeight": 768
+      },
+      "overlays": 1,
+      "identitiesShown": 1,
+      "caveats": [
+        {
+          "rect": {
+            "top": 795,
+            "bottom": 814,
+            "left": 511.609375,
+            "right": 822.390625,
+            "height": 19,
+            "width": 310.78125
+          },
+          "clip": {
+            "top": 146,
+            "left": 288,
+            "bottom": 768,
+            "right": 1046
+          },
+          "visibleFraction": 0,
+          "hiddenBelowPx": 46
+        }
+      ],
+      "images": [
+        {
+          "rect": {
+            "top": 180,
+            "bottom": 788,
+            "left": 413.5,
+            "right": 920.5,
+            "height": 608,
+            "width": 507
+          },
+          "clip": {
+            "top": 146,
+            "left": 288,
+            "bottom": 768,
+            "right": 1046
+          },
+          "visibleFraction": 0.9671052631578947,
+          "hiddenBelowPx": 20
+        }
+      ]
+    },
+    {
+      "layout": "single",
+      "size": "1600x900",
+      "ready": true,
+      "unknownRequests": [
+        "http://127.0.0.1:5181/api/v1/patients/11111111-1111-4111-8111-111111111111/history?active_only=false",
+        "http://127.0.0.1:5181/api/v1/studies/patient/11111111-1111-4111-8111-111111111111?page=1&page_size=20",
+        "http://127.0.0.1:5181/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444444/sub-01_FLAIR.nii.gz/0?colormap=gray&minimal=true&overlay_opacity=0.6"
+      ],
+      "window": {
+        "innerWidth": 1600,
+        "innerHeight": 900
+      },
+      "overlays": 1,
+      "identitiesShown": 1,
+      "caveats": [
+        {
+          "rect": {
+            "top": 927,
+            "bottom": 946,
+            "left": 628.609375,
+            "right": 939.390625,
+            "height": 19,
+            "width": 310.78125
+          },
+          "clip": {
+            "top": 146,
+            "left": 288,
+            "bottom": 900,
+            "right": 1280
+          },
+          "visibleFraction": 0,
+          "hiddenBelowPx": 46
+        }
+      ],
+      "images": [
+        {
+          "rect": {
+            "top": 186.5,
+            "bottom": 913.5,
+            "left": 480.5,
+            "right": 1087.5,
+            "height": 727,
+            "width": 607
+          },
+          "clip": {
+            "top": 146,
+            "left": 288,
+            "bottom": 900,
+            "right": 1280
+          },
+          "visibleFraction": 0.9814305364511692,
+          "hiddenBelowPx": 13.5
+        }
+      ]
+    },
+    {
+      "layout": "single",
+      "size": "1920x1080",
+      "ready": true,
+      "unknownRequests": [
+        "http://127.0.0.1:5181/api/v1/patients/11111111-1111-4111-8111-111111111111/history?active_only=false",
+        "http://127.0.0.1:5181/api/v1/studies/patient/11111111-1111-4111-8111-111111111111?page=1&page_size=20",
+        "http://127.0.0.1:5181/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444444/sub-01_FLAIR.nii.gz/0?colormap=gray&minimal=true&overlay_opacity=0.6"
+      ],
+      "window": {
+        "innerWidth": 1920,
+        "innerHeight": 1080
+      },
+      "overlays": 1,
+      "identitiesShown": 1,
+      "caveats": [
+        {
+          "rect": {
+            "top": 1107,
+            "bottom": 1126,
+            "left": 788.609375,
+            "right": 1099.390625,
+            "height": 19,
+            "width": 310.78125
+          },
+          "clip": {
+            "top": 146,
+            "left": 288,
+            "bottom": 1080,
+            "right": 1600
+          },
+          "visibleFraction": 0,
+          "hiddenBelowPx": 46
+        }
+      ],
+      "images": [
+        {
+          "rect": {
+            "top": 195.5,
+            "bottom": 1084.5,
+            "left": 573,
+            "right": 1315,
+            "height": 889,
+            "width": 742
+          },
+          "clip": {
+            "top": 146,
+            "left": 288,
+            "bottom": 1080,
+            "right": 1600
+          },
+          "visibleFraction": 0.9949381327334084,
+          "hiddenBelowPx": 4.5
+        }
+      ]
+    },
+    {
+      "layout": "1x2",
+      "size": "1366x768",
+      "ready": true,
+      "unknownRequests": [
+        "http://127.0.0.1:5181/api/v1/patients/11111111-1111-4111-8111-111111111111/history?active_only=false",
+        "http://127.0.0.1:5181/api/v1/studies/patient/11111111-1111-4111-8111-111111111111?page=1&page_size=20",
+        "http://127.0.0.1:5181/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444444/sub-01_FLAIR.nii.gz/0?colormap=gray&minimal=true&overlay_opacity=0.6"
+      ],
+      "window": {
+        "innerWidth": 1366,
+        "innerHeight": 768
+      },
+      "overlays": 0,
+      "identitiesShown": 0,
+      "caveats": [],
+      "images": [
+        {
+          "rect": {
+            "top": 258.5,
+            "bottom": 709.5,
+            "left": 288,
+            "right": 665,
+            "height": 451,
+            "width": 377
+          },
+          "clip": {
+            "top": 146,
+            "left": 288,
+            "bottom": 768,
+            "right": 665
+          },
+          "visibleFraction": 1,
+          "hiddenBelowPx": 0
+        },
+        {
+          "rect": {
+            "top": 258.5,
+            "bottom": 709.5,
+            "left": 669,
+            "right": 1046,
+            "height": 451,
+            "width": 377
+          },
+          "clip": {
+            "top": 146,
+            "left": 669,
+            "bottom": 768,
+            "right": 1046
+          },
+          "visibleFraction": 1,
+          "hiddenBelowPx": 0
+        }
+      ]
+    },
+    {
+      "layout": "1x2",
+      "size": "1600x900",
+      "ready": true,
+      "unknownRequests": [
+        "http://127.0.0.1:5181/api/v1/patients/11111111-1111-4111-8111-111111111111/history?active_only=false",
+        "http://127.0.0.1:5181/api/v1/studies/patient/11111111-1111-4111-8111-111111111111?page=1&page_size=20",
+        "http://127.0.0.1:5181/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444444/sub-01_FLAIR.nii.gz/0?colormap=gray&minimal=true&overlay_opacity=0.6"
+      ],
+      "window": {
+        "innerWidth": 1600,
+        "innerHeight": 900
+      },
+      "overlays": 0,
+      "identitiesShown": 0,
+      "caveats": [],
+      "images": [
+        {
+          "rect": {
+            "top": 254.5,
+            "bottom": 845.5,
+            "left": 288,
+            "right": 782,
+            "height": 591,
+            "width": 494
+          },
+          "clip": {
+            "top": 146,
+            "left": 288,
+            "bottom": 900,
+            "right": 782
+          },
+          "visibleFraction": 1,
+          "hiddenBelowPx": 0
+        },
+        {
+          "rect": {
+            "top": 254.5,
+            "bottom": 845.5,
+            "left": 786,
+            "right": 1280,
+            "height": 591,
+            "width": 494
+          },
+          "clip": {
+            "top": 146,
+            "left": 786,
+            "bottom": 900,
+            "right": 1280
+          },
+          "visibleFraction": 1,
+          "hiddenBelowPx": 0
+        }
+      ]
+    },
+    {
+      "layout": "1x2",
+      "size": "1920x1080",
+      "ready": true,
+      "unknownRequests": [
+        "http://127.0.0.1:5181/api/v1/patients/11111111-1111-4111-8111-111111111111/history?active_only=false",
+        "http://127.0.0.1:5181/api/v1/studies/patient/11111111-1111-4111-8111-111111111111?page=1&page_size=20",
+        "http://127.0.0.1:5181/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444444/sub-01_FLAIR.nii.gz/0?colormap=gray&minimal=true&overlay_opacity=0.6"
+      ],
+      "window": {
+        "innerWidth": 1920,
+        "innerHeight": 1080
+      },
+      "overlays": 0,
+      "identitiesShown": 0,
+      "caveats": [],
+      "images": [
+        {
+          "rect": {
+            "top": 248.5,
+            "bottom": 1031.5,
+            "left": 288,
+            "right": 942,
+            "height": 783,
+            "width": 654
+          },
+          "clip": {
+            "top": 146,
+            "left": 288,
+            "bottom": 1080,
+            "right": 942
+          },
+          "visibleFraction": 1,
+          "hiddenBelowPx": 0
+        },
+        {
+          "rect": {
+            "top": 248.5,
+            "bottom": 1031.5,
+            "left": 946,
+            "right": 1600,
+            "height": 783,
+            "width": 654
+          },
+          "clip": {
+            "top": 146,
+            "left": 946,
+            "bottom": 1080,
+            "right": 1600
+          },
+          "visibleFraction": 1,
+          "hiddenBelowPx": 0
+        }
+      ]
+    },
+    {
+      "layout": "3d-volume",
+      "size": "1366x768",
+      "ready": true,
+      "unknownRequests": [
+        "http://127.0.0.1:5181/api/v1/patients/11111111-1111-4111-8111-111111111111/history?active_only=false",
+        "http://127.0.0.1:5181/api/v1/studies/patient/11111111-1111-4111-8111-111111111111?page=1&page_size=20",
+        "http://127.0.0.1:5181/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444444/sub-01_FLAIR.nii.gz/0?colormap=gray&minimal=true&overlay_opacity=0.6"
+      ],
+      "window": {
+        "innerWidth": 1366,
+        "innerHeight": 768
+      },
+      "overlays": 0,
+      "identitiesShown": 0,
+      "caveats": [],
+      "images": [
+        {
+          "rect": {
+            "top": 92,
+            "bottom": 768,
+            "left": 288,
+            "right": 1046,
+            "height": 676,
+            "width": 758
+          },
+          "clip": {
+            "top": 92,
+            "left": 288,
+            "bottom": 768,
+            "right": 1046
+          },
+          "visibleFraction": 1,
+          "hiddenBelowPx": 0
+        }
+      ]
+    },
+    {
+      "layout": "3d-mpr",
+      "size": "1366x768",
+      "ready": true,
+      "unknownRequests": [
+        "http://127.0.0.1:5181/api/v1/patients/11111111-1111-4111-8111-111111111111/history?active_only=false",
+        "http://127.0.0.1:5181/api/v1/studies/patient/11111111-1111-4111-8111-111111111111?page=1&page_size=20",
+        "http://127.0.0.1:5181/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444444/sub-01_FLAIR.nii.gz/0?colormap=gray&minimal=true&overlay_opacity=0.6"
+      ],
+      "window": {
+        "innerWidth": 1366,
+        "innerHeight": 768
+      },
+      "overlays": 0,
+      "identitiesShown": 0,
+      "caveats": [],
+      "images": [
+        {
+          "rect": {
+            "top": 92,
+            "bottom": 429.5,
+            "left": 288,
+            "right": 666.5,
+            "height": 337.5,
+            "width": 378.5
+          },
+          "clip": {
+            "top": 92,
+            "left": 288,
+            "bottom": 429.5,
+            "right": 666.5
+          },
+          "visibleFraction": 1,
+          "hiddenBelowPx": 0
+        },
+        {
+          "rect": {
+            "top": 92,
+            "bottom": 429.5,
+            "left": 667.5,
+            "right": 1046,
+            "height": 337.5,
+            "width": 378.5
+          },
+          "clip": {
+            "top": 92,
+            "left": 667.5,
+            "bottom": 429.5,
+            "right": 1046
+          },
+          "visibleFraction": 1,
+          "hiddenBelowPx": 0
+        },
+        {
+          "rect": {
+            "top": 430.5,
+            "bottom": 768,
+            "left": 288,
+            "right": 666.5,
+            "height": 337.5,
+            "width": 378.5
+          },
+          "clip": {
+            "top": 430.5,
+            "left": 288,
+            "bottom": 768,
+            "right": 666.5
+          },
+          "visibleFraction": 1,
+          "hiddenBelowPx": 0
+        },
+        {
+          "rect": {
+            "top": 430.5,
+            "bottom": 768,
+            "left": 667.5,
+            "right": 1046,
+            "height": 337.5,
+            "width": 378.5
+          },
+          "clip": {
+            "top": 430.5,
+            "left": 667.5,
+            "bottom": 768,
+            "right": 1046
+          },
+          "visibleFraction": 1,
+          "hiddenBelowPx": 0
+        }
+      ]
+    }
+  ],
+  "pageExceptions": [],
+  "allCaveatsFullyVisible": false,
+  "noImageCutAtBottom": false,
+  "identityInEveryView": false
+}

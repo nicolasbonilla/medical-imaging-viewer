@@ -43,7 +43,29 @@ export interface ImageMetadata {
    * warn instead of drawing a laterality label it cannot justify.
    */
   anatomical_orientation?: string;
+  /**
+   * Slice thickness of the ORIGINAL acquisition with its source and state
+   * (RC-054, CP-SLICE-THICKNESS-001 — DRAFT). Not `slice_thickness` above, which is a
+   * legacy display value (1.0 mm by default for a DICOM without the tag). Absent on
+   * responses from before this field existed: the client treats that as not determinable.
+   */
+  acquisition_geometry?: AcquisitionGeometry | null;
   extra_fields?: Record<string, any>;
+}
+
+/** Backend `AcquisitionGeometry` (app/models/schemas.py). Parsed strictly by
+ *  utils/sliceThicknessReliability.parseGeometry before any use. */
+export interface AcquisitionGeometry {
+  state: string; // 'native' | 'at_least' | 'not_determinable'
+  effective_mm?: number | null;
+  source?: string; // 'dicom_header' | 'nifti_grid' | 'none'
+  reason?: string | null;
+  slice_thickness_mm?: number | null;
+  spacing_between_slices_mm?: number | null;
+  grid_spacing_mm?: number[] | null;
+  mr_acquisition_type?: string | null;
+  image_type?: string[] | null;
+  method_version?: string;
 }
 
 export interface ImageSlice {

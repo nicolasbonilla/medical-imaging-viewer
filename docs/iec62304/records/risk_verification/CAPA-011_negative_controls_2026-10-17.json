@@ -1,0 +1,373 @@
+{
+  "executed": "2026-10-18T18:57:53",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/services/segmentation_service.py": "03c30977ebf2936a5fc885cfe49e7ea35babccd847b4a7051021b8aeb3eb4c88",
+    "backend/app/services/tool_runner_service.py": "9c87e3b887ff41f190cba87c1ccfd5389e162f9c25a4eacbe81ee46d447301c0"
+  },
+  "tests": [
+    "tests/unit/test_rc039_tool_runner_mask_axes.py"
+  ],
+  "mutations": {
+    "D0_original_defect": {
+      "failed": 16,
+      "passed": 12,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc039_non_cubic_mask_returns_to_same_voxel_and_position",
+        "test_rc039_cubic_mask_is_not_silently_moved",
+        "test_rc039_tool_output_in_other_voxel_order_lands_at_same_physical_position",
+        "test_rc039_lstai_types_mask_returns_to_same_voxel",
+        "test_rc039_stored_voxel_order_matches_its_marker",
+        "test_rc039_stored_record_dimensions_match_the_image[mri_grid]",
+        "test_rc039_stored_record_dimensions_match_the_image[reoriented]",
+        "test_rc039_same_grid_up_to_float_rounding_is_accepted",
+        "test_rc039_flames[mri_grid]",
+        "test_rc039_flames[reoriented]",
+        "test_rc039_lstai[mri_grid]",
+        "test_rc039_lstai[reoriented]",
+        "test_rc039_synthseg[mri_grid]",
+        "test_rc039_synthseg[reoriented]",
+        "test_rc039_mindglide_lesion_and_structure_masks[mri_grid]",
+        "test_rc039_mindglide_lesion_and_structure_masks[reoriented]"
+      ],
+      "reintroduces": "the CAPA-011 defect exactly as on main: the internal (k,a0,a1) array stored under the v2 marker with the tool's affine, so the loader transposes it twice",
+      "applied": true
+    },
+    "D1_internal_array_under_marker": {
+      "failed": 16,
+      "passed": 12,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc039_non_cubic_mask_returns_to_same_voxel_and_position",
+        "test_rc039_cubic_mask_is_not_silently_moved",
+        "test_rc039_tool_output_in_other_voxel_order_lands_at_same_physical_position",
+        "test_rc039_lstai_types_mask_returns_to_same_voxel",
+        "test_rc039_stored_voxel_order_matches_its_marker",
+        "test_rc039_stored_record_dimensions_match_the_image[mri_grid]",
+        "test_rc039_stored_record_dimensions_match_the_image[reoriented]",
+        "test_rc039_same_grid_up_to_float_rounding_is_accepted",
+        "test_rc039_flames[mri_grid]",
+        "test_rc039_flames[reoriented]",
+        "test_rc039_lstai[mri_grid]",
+        "test_rc039_lstai[reoriented]",
+        "test_rc039_synthseg[mri_grid]",
+        "test_rc039_synthseg[reoriented]",
+        "test_rc039_mindglide_lesion_and_structure_masks[mri_grid]",
+        "test_rc039_mindglide_lesion_and_structure_masks[reoriented]"
+      ],
+      "reintroduces": "only the array: the internal order stored, affine and marker otherwise correct",
+      "applied": true
+    },
+    "D2_in_plane_swap_under_marker": {
+      "failed": 16,
+      "passed": 12,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc039_non_cubic_mask_returns_to_same_voxel_and_position",
+        "test_rc039_cubic_mask_is_not_silently_moved",
+        "test_rc039_tool_output_in_other_voxel_order_lands_at_same_physical_position",
+        "test_rc039_lstai_types_mask_returns_to_same_voxel",
+        "test_rc039_stored_voxel_order_matches_its_marker",
+        "test_rc039_stored_record_dimensions_match_the_image[mri_grid]",
+        "test_rc039_stored_record_dimensions_match_the_image[reoriented]",
+        "test_rc039_same_grid_up_to_float_rounding_is_accepted",
+        "test_rc039_flames[mri_grid]",
+        "test_rc039_flames[reoriented]",
+        "test_rc039_lstai[mri_grid]",
+        "test_rc039_lstai[reoriented]",
+        "test_rc039_synthseg[mri_grid]",
+        "test_rc039_synthseg[reoriented]",
+        "test_rc039_mindglide_lesion_and_structure_masks[mri_grid]",
+        "test_rc039_mindglide_lesion_and_structure_masks[reoriented]"
+      ],
+      "reintroduces": "the RC-031 legacy in-plane swap (a1,a0,k) stored under the v2 marker",
+      "applied": true
+    },
+    "D3_tool_affine_after_reorientation": {
+      "failed": 5,
+      "passed": 23,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc039_tool_output_in_other_voxel_order_lands_at_same_physical_position",
+        "test_rc039_flames[reoriented]",
+        "test_rc039_lstai[reoriented]",
+        "test_rc039_synthseg[reoriented]",
+        "test_rc039_mindglide_lesion_and_structure_masks[reoriented]"
+      ],
+      "reintroduces": "the reoriented array stored with the tool's own affine (wrong physical position in the directly served file when the tool used another voxel order)",
+      "applied": true
+    },
+    "D4_reorientation_skipped": {
+      "failed": 6,
+      "passed": 22,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc039_tool_output_in_other_voxel_order_lands_at_same_physical_position",
+        "test_rc039_stored_record_dimensions_match_the_image[reoriented]",
+        "test_rc039_flames[reoriented]",
+        "test_rc039_lstai[reoriented]",
+        "test_rc039_synthseg[reoriented]",
+        "test_rc039_mindglide_lesion_and_structure_masks[reoriented]"
+      ],
+      "reintroduces": "the tool's array stored as if it were in the MRI's voxel order (no affine alignment)",
+      "applied": true
+    },
+    "D6_marker_never_set": {
+      "failed": 16,
+      "passed": 12,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc039_non_cubic_mask_returns_to_same_voxel_and_position",
+        "test_rc039_cubic_mask_is_not_silently_moved",
+        "test_rc039_tool_output_in_other_voxel_order_lands_at_same_physical_position",
+        "test_rc039_lstai_types_mask_returns_to_same_voxel",
+        "test_rc039_stored_voxel_order_matches_its_marker",
+        "test_rc039_stored_record_dimensions_match_the_image[mri_grid]",
+        "test_rc039_stored_record_dimensions_match_the_image[reoriented]",
+        "test_rc039_same_grid_up_to_float_rounding_is_accepted",
+        "test_rc039_flames[mri_grid]",
+        "test_rc039_flames[reoriented]",
+        "test_rc039_lstai[mri_grid]",
+        "test_rc039_lstai[reoriented]",
+        "test_rc039_synthseg[mri_grid]",
+        "test_rc039_synthseg[reoriented]",
+        "test_rc039_mindglide_lesion_and_structure_masks[mri_grid]",
+        "test_rc039_mindglide_lesion_and_structure_masks[reoriented]"
+      ],
+      "reintroduces": "a correctly ordered file stored without its marker, so the loader applies the legacy order",
+      "applied": true
+    },
+    "F1_legacy_fallback_restored": {
+      "failed": 12,
+      "passed": 16,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc039_mask_without_a_usable_reference_is_not_stored[no_reference]",
+        "test_rc039_mask_without_a_usable_reference_is_not_stored[missing_file]",
+        "test_rc039_mask_without_a_usable_reference_is_not_stored[unreadable_file]",
+        "test_rc039_mask_without_a_usable_reference_is_not_stored[indeterminate_affine]",
+        "test_rc039_mask_not_on_the_image_grid_is_not_stored[shape_mismatch]",
+        "test_rc039_mask_not_on_the_image_grid_is_not_stored[affine_mismatch]",
+        "test_rc039_mask_not_on_the_image_grid_is_not_stored[resampled_1mm]",
+        "test_rc039_tool_run_with_unreadable_reference_fails_and_stores_nothing[flames]",
+        "test_rc039_tool_run_with_unreadable_reference_fails_and_stores_nothing[lst-ai]",
+        "test_rc039_tool_run_with_unreadable_reference_fails_and_stores_nothing[synthseg]",
+        "test_rc039_tool_run_with_unreadable_reference_fails_and_stores_nothing[mindglide]",
+        "test_rc039_synthseg_1mm_output_on_a_non_1mm_study_fails_and_stores_nothing"
+      ],
+      "reintroduces": "the former fallback: with no usable reference image the mask is stored in the legacy (2,1,0) order, known to be in-plane transposed, instead of being refused",
+      "applied": true
+    },
+    "F2_fallback_stores_tool_array_as_is": {
+      "failed": 12,
+      "passed": 16,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc039_mask_without_a_usable_reference_is_not_stored[no_reference]",
+        "test_rc039_mask_without_a_usable_reference_is_not_stored[missing_file]",
+        "test_rc039_mask_without_a_usable_reference_is_not_stored[unreadable_file]",
+        "test_rc039_mask_without_a_usable_reference_is_not_stored[indeterminate_affine]",
+        "test_rc039_mask_not_on_the_image_grid_is_not_stored[shape_mismatch]",
+        "test_rc039_mask_not_on_the_image_grid_is_not_stored[affine_mismatch]",
+        "test_rc039_mask_not_on_the_image_grid_is_not_stored[resampled_1mm]",
+        "test_rc039_tool_run_with_unreadable_reference_fails_and_stores_nothing[flames]",
+        "test_rc039_tool_run_with_unreadable_reference_fails_and_stores_nothing[lst-ai]",
+        "test_rc039_tool_run_with_unreadable_reference_fails_and_stores_nothing[synthseg]",
+        "test_rc039_tool_run_with_unreadable_reference_fails_and_stores_nothing[mindglide]",
+        "test_rc039_synthseg_1mm_output_on_a_non_1mm_study_fails_and_stores_nothing"
+      ],
+      "reintroduces": "with no usable reference image the tool's array is stored as if it were in the image's voxel order",
+      "applied": true
+    },
+    "F3_missing_reference_accepted": {
+      "failed": 2,
+      "passed": 26,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc039_mask_without_a_usable_reference_is_not_stored[no_reference]",
+        "test_rc039_mask_without_a_usable_reference_is_not_stored[missing_file]"
+      ],
+      "reintroduces": "only the missing / absent reference falls back instead of refusing",
+      "applied": true
+    },
+    "F4_unreadable_reference_accepted": {
+      "failed": 6,
+      "passed": 22,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc039_mask_without_a_usable_reference_is_not_stored[unreadable_file]",
+        "test_rc039_mask_without_a_usable_reference_is_not_stored[indeterminate_affine]",
+        "test_rc039_tool_run_with_unreadable_reference_fails_and_stores_nothing[flames]",
+        "test_rc039_tool_run_with_unreadable_reference_fails_and_stores_nothing[lst-ai]",
+        "test_rc039_tool_run_with_unreadable_reference_fails_and_stores_nothing[synthseg]",
+        "test_rc039_tool_run_with_unreadable_reference_fails_and_stores_nothing[mindglide]"
+      ],
+      "reintroduces": "only an unreadable reference / indeterminate affine falls back instead of refusing",
+      "applied": true
+    },
+    "F5_refusal_swallowed_by_store": {
+      "failed": 12,
+      "passed": 16,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc039_mask_without_a_usable_reference_is_not_stored[no_reference]",
+        "test_rc039_mask_without_a_usable_reference_is_not_stored[missing_file]",
+        "test_rc039_mask_without_a_usable_reference_is_not_stored[unreadable_file]",
+        "test_rc039_mask_without_a_usable_reference_is_not_stored[indeterminate_affine]",
+        "test_rc039_mask_not_on_the_image_grid_is_not_stored[shape_mismatch]",
+        "test_rc039_mask_not_on_the_image_grid_is_not_stored[affine_mismatch]",
+        "test_rc039_mask_not_on_the_image_grid_is_not_stored[resampled_1mm]",
+        "test_rc039_tool_run_with_unreadable_reference_fails_and_stores_nothing[flames]",
+        "test_rc039_tool_run_with_unreadable_reference_fails_and_stores_nothing[lst-ai]",
+        "test_rc039_tool_run_with_unreadable_reference_fails_and_stores_nothing[synthseg]",
+        "test_rc039_tool_run_with_unreadable_reference_fails_and_stores_nothing[mindglide]",
+        "test_rc039_synthseg_1mm_output_on_a_non_1mm_study_fails_and_stores_nothing"
+      ],
+      "reintroduces": "the store path catches the refusal and stores the legacy-order mask anyway",
+      "applied": true
+    },
+    "G1_grid_check_removed": {
+      "failed": 4,
+      "passed": 24,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc039_mask_not_on_the_image_grid_is_not_stored[shape_mismatch]",
+        "test_rc039_mask_not_on_the_image_grid_is_not_stored[affine_mismatch]",
+        "test_rc039_mask_not_on_the_image_grid_is_not_stored[resampled_1mm]",
+        "test_rc039_synthseg_1mm_output_on_a_non_1mm_study_fails_and_stores_nothing"
+      ],
+      "reintroduces": "a mask on another grid (other shape or transform, e.g. resampled to 1 mm) is stored after axis reorientation only, as the review reproduced",
+      "applied": true
+    },
+    "G2_shape_check_removed": {
+      "failed": 1,
+      "passed": 27,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc039_mask_not_on_the_image_grid_is_not_stored[shape_mismatch]"
+      ],
+      "reintroduces": "only the transform is compared: a mask with another array shape is stored",
+      "applied": true
+    },
+    "G3_transform_check_removed": {
+      "failed": 1,
+      "passed": 27,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc039_mask_not_on_the_image_grid_is_not_stored[affine_mismatch]"
+      ],
+      "reintroduces": "only the shape is compared: a mask shifted or with other voxel sizes is stored",
+      "applied": true
+    },
+    "G4_tolerance_of_a_millimetre": {
+      "failed": 1,
+      "passed": 27,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc039_mask_not_on_the_image_grid_is_not_stored[affine_mismatch]"
+      ],
+      "reintroduces": "a grid tolerance of 1 mm accepts sub-millimetre misplacement",
+      "applied": true
+    },
+    "M1_record_from_mask_in_legacy_order": {
+      "failed": 2,
+      "passed": 26,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc039_stored_record_dimensions_match_the_image[mri_grid]",
+        "test_rc039_stored_record_dimensions_match_the_image[reoriented]"
+      ],
+      "reintroduces": "the record's dimensions (image_shape) computed from the mask read in the legacy axis order",
+      "applied": true
+    },
+    "L1_loader_transposes_v2_with_legacy_order": {
+      "failed": 15,
+      "passed": 13,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc039_non_cubic_mask_returns_to_same_voxel_and_position",
+        "test_rc039_cubic_mask_is_not_silently_moved",
+        "test_rc039_tool_output_in_other_voxel_order_lands_at_same_physical_position",
+        "test_rc039_lstai_types_mask_returns_to_same_voxel",
+        "test_rc039_stored_record_dimensions_match_the_image[mri_grid]",
+        "test_rc039_stored_record_dimensions_match_the_image[reoriented]",
+        "test_rc039_same_grid_up_to_float_rounding_is_accepted",
+        "test_rc039_flames[mri_grid]",
+        "test_rc039_flames[reoriented]",
+        "test_rc039_lstai[mri_grid]",
+        "test_rc039_lstai[reoriented]",
+        "test_rc039_synthseg[mri_grid]",
+        "test_rc039_synthseg[reoriented]",
+        "test_rc039_mindglide_lesion_and_structure_masks[mri_grid]",
+        "test_rc039_mindglide_lesion_and_structure_masks[reoriented]"
+      ],
+      "reintroduces": "the load side ignores the marker (v2 file read with the legacy transpose)",
+      "applied": true
+    },
+    "T1_lstai_reference_not_passed": {
+      "failed": 2,
+      "passed": 26,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc039_lstai[mri_grid]",
+        "test_rc039_lstai[reoriented]"
+      ],
+      "reintroduces": "LST-AI call site passes no reference MRI (its run must now be refused)",
+      "applied": true
+    },
+    "T2_flames_reference_not_passed": {
+      "failed": 2,
+      "passed": 26,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc039_flames[mri_grid]",
+        "test_rc039_flames[reoriented]"
+      ],
+      "reintroduces": "FLAMeS call site passes no reference MRI (its run must now be refused)",
+      "applied": true
+    },
+    "T3_synthseg_reference_not_passed": {
+      "failed": 3,
+      "passed": 25,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc039_synthseg[mri_grid]",
+        "test_rc039_synthseg[reoriented]",
+        "test_rc039_synthseg_1mm_output_on_a_non_1mm_study_fails_and_stores_nothing"
+      ],
+      "reintroduces": "SynthSeg call site passes no reference MRI (its run must now be refused)",
+      "applied": true
+    },
+    "T4_mindglide_lesion_reference_not_passed": {
+      "failed": 2,
+      "passed": 26,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc039_mindglide_lesion_and_structure_masks[mri_grid]",
+        "test_rc039_mindglide_lesion_and_structure_masks[reoriented]"
+      ],
+      "reintroduces": "mindGlide lesion-mask call site passes no reference MRI (its run must now be refused)",
+      "applied": true
+    },
+    "T5_mindglide_structure_reference_not_passed": {
+      "failed": 2,
+      "passed": 26,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc039_mindglide_lesion_and_structure_masks[mri_grid]",
+        "test_rc039_mindglide_lesion_and_structure_masks[reoriented]"
+      ],
+      "reintroduces": "mindGlide structure-mask call site passes no reference MRI (its run must now be refused)",
+      "applied": true
+    }
+  },
+  "restored": {
+    "failed": 0,
+    "passed": 28,
+    "errors": 0,
+    "failing_tests": []
+  },
+  "undetected": []
+}

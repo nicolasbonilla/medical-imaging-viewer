@@ -813,34 +813,102 @@ class ToolRunnerService:
         the property five prior fixed-transpose attempts lacked), then apply the
         (2,0,1) display transpose.
 
-        Fails SAFE: if the reference MRI or a determinate affine is unavailable it
-        falls back to the legacy (2,1,0), so behaviour never regresses below the
-        current baseline.
+        Fails CLOSED (RC-039, CAPA-011): without a readable reference MRI and a
+        determinate affine the mask's position cannot be established, so it is
+        refused (SegmentationException) — the former legacy (2,1,0) fallback
+        produced a mask known to be in-plane transposed on that path.
+
+        RC-039 (CAPA-011): derived from `_orient_mask_for_storage` through the
+        loader's own decode, so the internal mask computed at ingest is, by
+        construction, the mask the viewer loads back from what is stored.
+        """
+        from app.services.segmentation_service import SegmentationService
+
+        stored, _affine = self._orient_mask_for_storage(
+            mask_native, source_affine, reference_mri_path
+        )
+        return SegmentationService._nifti_native_to_internal(stored, True)
+
+    def _orient_mask_for_storage(
+        self,
+        mask_native: np.ndarray,
+        source_affine: np.ndarray,
+        reference_mri_path: Optional[Path],
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """RC-039 (CAPA-011, HAZ-006): the array and affine to STORE (under the
+        RC-031 v2 marker) for a clinical-tool mask, honouring the loader's contract
+        (`SegmentationService._nifti_native_to_internal`): the mask reoriented onto
+        the reference MRI's own voxel order (a0, a1, k) by affine (RC-031), with
+        the affine of that reoriented array (equal to the MRI's affine when the
+        tool kept the MRI grid). The loader applies (2,0,1) once -> (k, a0, a1).
+
+        FAILS CLOSED: if the reference MRI is missing or unreadable, or the mask
+        cannot be placed on it (indeterminate affine), or — after reorientation —
+        the mask is not on the image's grid (different array shape, or a
+        voxel-to-scanner transform differing by more than `_GRID_TOLERANCE` in any
+        element, e.g. a tool output resampled to 1 mm), nothing is returned — a
+        SegmentationException is raised, so the caller stores no mask and no
+        record. Reorientation only permutes/flips axes; it cannot place a mask
+        sampled on another grid voxel for voxel. A mask whose position cannot be
+        established is never stored.
+
+        The defect this replaces stored the already-transposed internal (k, a0, a1)
+        array under the v2 marker, so the loader transposed it a second time and
+        the axes came back swapped (silently on cubic volumes).
         """
         import nibabel as nib
+        from nibabel.orientations import inv_ornt_aff, io_orientation, ornt_transform
         from app.utils.nifti_utils import reorient_array_to_reference
 
-        DISPLAY_TRANSPOSE = (2, 0, 1)
-        LEGACY_TRANSPOSE = (2, 1, 0)
+        error_code, remedy = "TOOL_MASK_REFERENCE_UNAVAILABLE", "Re-run the tool."
         try:
-            if reference_mri_path is not None and Path(reference_mri_path).exists():
+            if reference_mri_path is None or not Path(reference_mri_path).exists():
+                reason = "the image it was computed on is missing"
+            else:
                 ref_img = nib.load(str(reference_mri_path))
                 aligned = reorient_array_to_reference(
                     mask_native, source_affine, ref_img.affine
                 )
-                return np.transpose(aligned, DISPLAY_TRANSPOSE)
-            logger.warning(
-                "[RC-031] No reference MRI for orientation (%s); using legacy "
-                "(2,1,0) transpose — overlay/classification may be in-plane "
-                "transposed on this mask.",
-                reference_mri_path,
-            )
-        except Exception as e:  # noqa: BLE001 — fail safe, never block ingest
-            logger.warning(
-                "[RC-031] Affine reorientation failed (%s); using legacy "
-                "(2,1,0) transpose.", e,
-            )
-        return np.transpose(mask_native, LEGACY_TRANSPOSE)
+                # Affine of the reoriented array (same permutation/flips the
+                # primitive applied), so the stored file is physically exact.
+                transform = ornt_transform(
+                    io_orientation(np.asarray(source_affine, dtype=float)),
+                    io_orientation(np.asarray(ref_img.affine, dtype=float)),
+                )
+                aligned_affine = np.asarray(source_affine, dtype=float) @ inv_ornt_aff(
+                    transform, mask_native.shape
+                )
+                ref_shape = tuple(int(n) for n in ref_img.shape[:3])
+                ref_affine = np.asarray(ref_img.affine, dtype=float)
+                if tuple(aligned.shape[:3]) != ref_shape:
+                    error_code, remedy = "TOOL_MASK_GRID_MISMATCH", "The tool must return its result on the image's own grid."
+                    reason = (f"it is not on the grid of the image it was computed on "
+                              f"(mask {tuple(aligned.shape[:3])} voxels, image {ref_shape})")
+                elif not np.allclose(aligned_affine, ref_affine, rtol=0.0, atol=self._GRID_TOLERANCE):
+                    error_code, remedy = "TOOL_MASK_GRID_MISMATCH", "The tool must return its result on the image's own grid."
+                    reason = (f"it is not on the grid of the image it was computed on (voxel-to-scanner "
+                              f"transforms differ by up to {np.abs(aligned_affine - ref_affine).max():.3g})")
+                else:
+                    return aligned, aligned_affine
+        except Exception as e:  # noqa: BLE001 — any failure to place the mask refuses it
+            reason = f"the image it was computed on could not be read or the mask could not be placed on it ({e})"
+        logger.error(
+            "[RC-039] Clinical-tool mask NOT stored: %s", reason,
+            extra={"reference_mri_path": str(reference_mri_path), "error_code": error_code},
+        )
+        raise SegmentationException(
+            message=(
+                f"The tool's segmentation was not stored: {reason}, so its position "
+                f"in the image cannot be established (RC-039). {remedy}"
+            ),
+            error_code=error_code,
+            details={"reference_mri_path": str(reference_mri_path)},
+        )
+
+    # RC-039: two voxel-to-scanner transforms describe the same grid when every
+    # element agrees within this tolerance (mm per voxel, mm) — float rounding of
+    # a re-written header passes; a sub-millimetre shift or another voxel size does not.
+    _GRID_TOLERANCE = 1e-3
 
     async def _store_nifti_as_segmentation(
         self,
@@ -861,8 +929,8 @@ class ToolRunnerService:
         Uploads to GCS and creates Firestore metadata.
 
         reference_mri_path: the MRI the tool ran on. Used to orient the mask into
-        the app's display convention by affine (RC-031); if omitted, falls back
-        to the legacy fixed transpose.
+        the app's display convention by affine (RC-031). If omitted, missing or
+        unreadable, the mask is refused and nothing is stored (RC-039, fail closed).
         """
         import nibabel as nib
 
@@ -881,11 +949,17 @@ class ToolRunnerService:
         if mask_data.ndim == 4:
             mask_data = mask_data[:, :, :, 0]
 
-        # RC-031: orient into the app's display convention by AFFINE, not a blind
-        # transpose (fails safe to the legacy (2,1,0) when no reference MRI).
-        mask_data = self._orient_mask_to_display(
+        # RC-031: orient by AFFINE, not a blind transpose. RC-039 (CAPA-011): STORE
+        # the array in the voxel order its marker declares; `mask_data` (internal
+        # (k, a0, a1), used for the counts and shape below) is the loader's decode
+        # of exactly that. Fails CLOSED: raises — nothing uploaded, no record —
+        # when the reference MRI is missing/unreadable or the affine indeterminate.
+        from app.services.segmentation_service import SegmentationService
+
+        stored_data, stored_affine = self._orient_mask_for_storage(
             mask_data, source_affine, reference_mri_path
         )
+        mask_data = SegmentationService._nifti_native_to_internal(stored_data, True)
 
         depth, height, width = mask_data.shape
 
@@ -913,15 +987,17 @@ class ToolRunnerService:
         # code wrote the app's raw .bin protocol to `segmentations/clinical-tools/{id}/
         # mask.bin`, but `_load_masks_from_gcs` only reads `segmentations/{id}/masks.nii.gz`
         # (or .npz) — so an auto-segmentation appeared in the Firestore list but 404'd in
-        # the viewer. Match `_save_masks_to_gcs`: uint8 NIfTI with the source affine, the
-        # RC-031 v2 orient marker, and slope/inter reset so labels are verbatim.
+        # the viewer. Match `_save_masks_to_gcs`: uint8 NIfTI, slope/inter reset so
+        # labels are verbatim, and — RC-039 (CAPA-011) — the array in the MRI's own
+        # voxel order (a0, a1, k) with its affine under the RC-031 v2 marker.
+        # The previous code wrote the INTERNAL (k, a0, a1) array under the v2 marker,
+        # so the loader transposed it a second time (axes swapped; silent on cubes).
         import nibabel as nib
         import tempfile as _tempfile
-        affine = source_affine if source_affine is not None else np.eye(4)
-        nifti_img = nib.Nifti1Image(mask_data.astype(np.uint8), affine)
+        nifti_img = nib.Nifti1Image(stored_data.astype(np.uint8), stored_affine)
         nifti_img.header.set_data_dtype(np.uint8)
         nifti_img.header.set_slope_inter(1.0, 0.0)
-        nifti_img.header["descrip"] = b"RC031-ORIENT-V2"   # matches segmentation_service._RC031_ORIENT_MARKER
+        nifti_img.header["descrip"] = SegmentationService._RC031_ORIENT_MARKER
         with _tempfile.NamedTemporaryFile(suffix=".nii.gz", delete=False) as _tmp:
             _tmp_path = _tmp.name
         try:

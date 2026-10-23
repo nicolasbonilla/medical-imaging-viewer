@@ -1,0 +1,275 @@
+{
+  "executed": "2026-10-23T00:46:15",
+  "base": "ad144ba (PR #63 head before the fixes for the independent review of 2026-10-23)",
+  "method": "source files that differ from the base commit restored to it, files it did not have removed; the CAPA-013 test files run unchanged; working tree restored byte for byte",
+  "swapped": {
+    "restored_to_base": [
+      "backend/app/api/routes/ai_report.py",
+      "backend/app/api/routes/segmentation_analysis.py",
+      "backend/app/mcp/ms_clinical_server.py",
+      "backend/app/services/brain_report_service.py",
+      "backend/app/services/longitudinal_candidate_safety.py",
+      "frontend/src/components/LongitudinalCompare.tsx",
+      "frontend/src/components/LongitudinalResultPanel.tsx",
+      "frontend/src/i18n/locales/de.json",
+      "frontend/src/i18n/locales/en.json",
+      "frontend/src/i18n/locales/es.json",
+      "frontend/src/types/lesion.ts"
+    ],
+    "removed": []
+  },
+  "test_sha256": {
+    "backend/tests/unit/test_capa013_longitudinal_candidates.py": "6b1cbd130c434b499aca660c1d5c15c4c76b3e4c3696f84daaddbbfd87ce2cf9",
+    "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "1a82b537670dd8f742b3008f59e24b60fcf932e624ba6999f4e359f0947f9b11"
+  },
+  "backend": {
+    "passed": 37,
+    "failed": 15,
+    "errors": 0,
+    "results": {
+      "test_rc060_compare_response_carries_no_activity_or_dit_flag": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc060_only_a_radiologist_can_record_a_decision": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc060_decision_is_bound_to_the_compared_masks": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc060_unknown_decision_is_refused[probable]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc060_unknown_decision_is_refused[]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc060_unknown_decision_is_refused[None]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc060_unknown_decision_is_refused[confirm]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc060_confirmation_stored_with_reader_and_time_then_activity_from_confirmed_only": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc060_rejected_candidates_never_raise_activity": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc060_a_changed_mask_voids_earlier_decisions": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc060_a_decision_for_a_candidate_that_does_not_exist_counts_for_nothing": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc060_report_prompt_has_no_activity_wording_from_unconfirmed_candidates": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc060_report_draft_carries_the_unconfirmed_candidate_notice[en-unconfirmed change candidate]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc060_report_draft_carries_the_unconfirmed_candidate_notice[es-candidatos de cambio sin confirmar]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc060_report_draft_carries_the_unconfirmed_candidate_notice[de-unbest\\xe4tigte Ver\\xe4nderungskandidaten]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc060_assistant_never_receives_an_activity_or_dit_flag": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc060_assistant_cannot_record_a_decision": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc061_evidence_asset_is_versioned_bound_to_the_rule_and_to_its_source": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc061_the_rate_is_withheld_when_the_rule_is_no_longer_the_measured_one": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc061_comparison_serves_the_rate_from_the_asset_not_from_code": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc061_unreadable_or_incomplete_asset_gives_no_rate": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc061_assistant_reads_subtraction_as_a_signal_not_a_confirmation": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc062_same_acquisition_is_comparable": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc062_a_scanner_or_protocol_change_is_detected[manufacturer-GE MEDICAL SYSTEMS]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc062_a_scanner_or_protocol_change_is_detected[manufacturer_model_name-Skyra]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc062_a_scanner_or_protocol_change_is_detected[magnetic_field_strength_t-1.5]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc062_a_scanner_or_protocol_change_is_detected[mr_acquisition_type-2D]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc062_a_scanner_or_protocol_change_is_detected[slice_thickness_mm-3.0]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc062_a_scanner_or_protocol_change_is_detected[echo_time_ms-120.0]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc062_a_scanner_or_protocol_change_is_detected[inversion_time_ms-2500.0]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc062_voxel_size_change_is_detected": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc062_missing_metadata_means_not_established[None-tp20-missing0]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc062_missing_metadata_means_not_established[tp11-tp21-missing1]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc062_missing_metadata_means_not_established[tp12-tp22-missing2]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc062_missing_metadata_means_not_established[tp13-tp23-missing3]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc062_acquisition_read_from_a_dicom_header_as_plain_values": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc062_pacs_import_records_the_acquisition_of_the_series": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc060_report_prompt_never_states_a_reader_confirmation_from_its_input": {
+        "status": "failed",
+        "reason": "AssertionError: assert ('dr_rev' not in 'Longitudina...I activity).'"
+      },
+      "test_rc060_forged_confirmation_never_reaches_the_report": {
+        "status": "failed",
+        "reason": "AssertionError: assert ('dr.house' not in 'Generate th...I activity).'"
+      },
+      "test_rc060_report_route_drops_a_confirmation_sent_by_the_client": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'reader_confirmed_activity' not in {'abstained': False, 'burden_delta_percent': 40.0, 'burden_tp1_ml': 1.0, 'burden_tp2_ml': 1.4, ...}"
+      },
+      "test_rc060_decision_history_is_kept": {
+        "status": "failed",
+        "reason": "KeyError: 'history'"
+      },
+      "test_rc060_unreadable_decisions_are_reported_not_hidden": {
+        "status": "failed",
+        "reason": "KeyError: 'decisions_unavailable'"
+      },
+      "test_rc060_template_list_offers_no_neda": {
+        "status": "failed",
+        "reason": "AssertionError: assert ('NEDA' not in 'Interval ch... evaluation.'"
+      },
+      "test_rc061_assistant_rate_is_read_from_the_asset": {
+        "status": "failed",
+        "reason": "assert 'assistant_rate_sentence()' in 'instructions=(\\n        \"You assist a physician who reviews brain MRI measurements computed by an \"\\n        \"investi...r \"\\n        \"could not be established: report no change count; say the images mu"
+      },
+      "test_rc061_false_share_is_stated_precisely": {
+        "status": "failed",
+        "reason": "KeyError: 'false_candidates'"
+      },
+      "test_rc062_comparison_abstains_without_counts[differs]": {
+        "status": "failed",
+        "reason": "AssertionError: burden_tp1_ml"
+      },
+      "test_rc062_comparison_abstains_without_counts[not_established]": {
+        "status": "failed",
+        "reason": "AssertionError: burden_tp1_ml"
+      },
+      "test_rc062_report_prompt_for_an_abstained_comparison_has_no_counts": {
+        "status": "failed",
+        "reason": "AssertionError: assert ('burden' not in 'longitudina...radiologist.'"
+      },
+      "test_rc062_two_different_visits_in_order_are_required[same_visit]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"changes\":[{\"centroid_z\":3.0,\"centroid_y\":5.0,\"centroid_x\":5.0,\"volume_tp1_mm3\":27.0,\"volume_tp2_mm3\":27.0,\"volume_tp1_ml\":0.027,\"volume_tp2_ml\":0.027,\"change_mm3\":0.0,\"change_percent\":0.0,\"status\":\"stable\",\"iou\":1.0,\"regio"
+      },
+      "test_rc062_two_different_visits_in_order_are_required[wrong_order]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"changes\":[{\"centroid_z\":3.0,\"centroid_y\":5.0,\"centroid_x\":5.0,\"volume_tp1_mm3\":27.0,\"volume_tp2_mm3\":27.0,\"volume_tp1_ml\":0.027,\"volume_tp2_ml\":0.027,\"change_mm3\":0.0,\"change_percent\":0.0,\"status\":\"stable\",\"iou\":1.0,\"regio"
+      },
+      "test_rc062_unknown_visit_dates_abstain": {
+        "status": "failed",
+        "reason": "assert (False is True)"
+      },
+      "test_rc062_slowly_expanding_lesion_search_is_withheld_with_the_counts": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_422\",\"message\":\"Source FLAIR intensities unavailable for one or both timepoints; SEL detection needs them.\",\"details\":{}}}"
+      }
+    }
+  },
+  "frontend": {
+    "passed": 11,
+    "failed": 7,
+    "not_passing": {
+      "rc061 the measured false-candidate rate is shown from the response, with its source and date": {
+        "status": "failed",
+        "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31melement\u001b[39m\u001b[2m).toHaveTextContent()\u001b[22m"
+      },
+      "rc061 every text of the view exists in en, es and de": {
+        "status": "failed",
+        "reason": "AssertionError: expected [ 'en:longitudinal.visitSame', …(5) ] to deeply equal []"
+      },
+      "rc062 when counts are withheld no lesion load or lesion count of either visit is shown": {
+        "status": "failed",
+        "reason": "AssertionError: expected 'Longitudinal comparisonVisit 1 (earli…' not to match /\\bmL\\b/"
+      },
+      "rc062 the slowly-expanding-lesion search is not offered when counts are withheld": {
+        "status": "failed",
+        "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31melement\u001b[39m\u001b[2m).not.toBeInTheDocument()\u001b[22m"
+      },
+      "rc062 the second visit must be a different, later visit": {
+        "status": "failed",
+        "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31melement\u001b[39m\u001b[2m).toBeDisabled()\u001b[22m"
+      },
+      "rc062 an unknown visit order abstains and says so": {
+        "status": "failed",
+        "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31melement\u001b[39m\u001b[2m).toHaveTextContent()\u001b[22m"
+      },
+      "rc060 decisions that could not be read are reported, never shown as awaiting review": {
+        "status": "failed",
+        "reason": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"longitudinal-decisions-unavailable\"]"
+      }
+    }
+  },
+  "note": "Cases that pass on ad144ba test controls that already existed before the review; the failing ones are the review findings."
+}

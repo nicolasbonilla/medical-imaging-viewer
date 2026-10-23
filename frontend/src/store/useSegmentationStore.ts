@@ -23,12 +23,38 @@ import type {
   OverlaySettings,
   OverlayMode,
   LesionInfo,
+  AIProvenance,
 } from '@/types';
 import { DEFAULT_LABEL_PRESETS } from '@/types';
 
 // ============================================================================
 // Types
 // ============================================================================
+
+/**
+ * Result of handing an AI draft to the segmentation flow (in-browser FLAMeS prototype).
+ * 'unsaved-work': the open segmentation has unsaved changes; NOTHING was touched and the caller
+ * must ask the clinician (REQ-SAFE-032). 'grid-mismatch': the mask does not fit the image grid.
+ */
+export type ImportDraftResult =
+  | { ok: true }
+  | { ok: false; reason: 'unsaved-work'; openSegmentationName: string }
+  | { ok: false; reason: 'grid-mismatch' };
+
+/**
+ * Creates a LOCAL (unsaved, `local-*`) segmentation for `fileId` pre-filled with `mask`
+ * (app order: depth=slices, height=rows, width=columns; RC-031). Used by the in-browser
+ * FLAMeS prototype. The clinician must review and explicitly Save; nothing is persisted here,
+ * and unsaved work in the open segmentation is never discarded unless `discardUnsavedWork`
+ * is passed after the clinician explicitly chose to discard it.
+ */
+export type ImportDraftCallback = (
+  fileId: string,
+  imageShape: { rows: number; columns: number; slices: number },
+  mask: Uint8Array,
+  meta: { description: string; labels?: LabelInfo[]; aiProvenance: AIProvenance },
+  options?: { discardUnsavedWork?: boolean },
+) => ImportDraftResult;
 
 /**
  * Paint tool types available for segmentation.
@@ -122,6 +148,19 @@ interface SegmentationState {
 
   /** Reload mask callback — allows LesionDashboard to trigger mask reload after auto-classify */
   reloadMaskCallback: (() => Promise<void>) | null;
+
+  /**
+   * Import-draft callback set by useSegmentationData — creates a LOCAL (unsaved) segmentation
+   * pre-filled with an externally computed mask (in-browser FLAMeS prototype). Returns false
+   * (and imports nothing) if the mask does not match the image grid.
+   */
+  importDraftCallback: ImportDraftCallback | null;
+
+  /** RC-047: SHA-256 (hex) of the mask currently open, as the server would hash it; null when none. */
+  maskDigestCallback: (() => Promise<string | null>) | null;
+
+  /** RC-047: the open mask has unsaved changes (mirrors the local-first mask state). */
+  hasUnsavedMaskChanges: boolean;
 
   /** Last save timestamp */
   lastSavedAt: string | null;
@@ -268,6 +307,9 @@ interface SegmentationState {
   setSaveCallback: (fn: (() => Promise<void>) | null) => void;
   setCreateCallback: (fn: ((fileId: string, imageShape: { rows: number; columns: number; slices: number }) => void) | null) => void;
   setReloadMaskCallback: (fn: (() => Promise<void>) | null) => void;
+  setImportDraftCallback: (fn: ImportDraftCallback | null) => void;
+  setMaskDigestCallback: (fn: (() => Promise<string | null>) | null) => void;
+  setHasUnsavedMaskChanges: (value: boolean) => void;
 
   // =========================================================================
   // Actions - Labels
@@ -383,6 +425,9 @@ const createInitialState = () => ({
   saveCallback: null as (() => Promise<void>) | null,
   createCallback: null as ((fileId: string, imageShape: { rows: number; columns: number; slices: number }) => void) | null,
   reloadMaskCallback: null as (() => Promise<void>) | null,
+  importDraftCallback: null as ImportDraftCallback | null,
+  maskDigestCallback: null as (() => Promise<string | null>) | null,
+  hasUnsavedMaskChanges: false,
   lastSavedAt: null as string | null,
 
   // List
@@ -496,6 +541,12 @@ export const useSegmentationStore = create<SegmentationState>()(
         setCreateCallback: (fn) => set({ createCallback: fn }),
 
         setReloadMaskCallback: (fn) => set({ reloadMaskCallback: fn }),
+
+        setImportDraftCallback: (fn) => set({ importDraftCallback: fn }),
+
+        setMaskDigestCallback: (fn) => set({ maskDigestCallback: fn }),
+
+        setHasUnsavedMaskChanges: (value) => set({ hasUnsavedMaskChanges: value }),
 
         // =====================================================================
         // Label Actions

@@ -124,8 +124,11 @@ ROUTE_AUTH = {
     ("GET", "/segmentation/list"): "call:authorize_file_scope",
     ("POST", "/segmentation/longitudinal/compare"): "call:authorize_mask_specs",
     ("POST", "/segmentation/longitudinal/sel"): "call:authorize_mask_specs",
+    ("POST", "/segmentation/longitudinal/review"): "call:authorize_mask_specs",   # CAPA-013 RC-060
     ("DELETE", "/segmentation/{segmentation_id}"): "dep:require_segmentation_access",
     ("GET", "/segmentation/{segmentation_id}"): "dep:require_segmentation_access",
+    # CP-FLAMES-BROWSER-001 (RC-047): confirm the review of an AI draft
+    ("POST", "/segmentation/{segmentation_id}/ai-review/confirm"): "dep:require_segmentation_access",
     ("POST", "/segmentation/{segmentation_id}/classify-regions"): "dep:require_segmentation_access",
     ("GET", "/segmentation/{segmentation_id}/dis-assessment"): "dep:require_segmentation_access",
     ("GET", "/segmentation/{segmentation_id}/export/dicom-seg"): "dep:require_segmentation_access",
@@ -417,6 +420,7 @@ DENIED = [  # (method, path, json) -> 404 for a caller without access, before an
     ("post", "/dicomweb/import", {"connection_id": "c", "study_instance_uid": "1", "series_instance_uid": "2",
                                   "patient_id": PATIENT}),
     ("get", "/dicomweb/import/j-1", None),
+    ("post", f"/segmentation/{OBJ}/ai-review/confirm", None),  # CP-FLAMES-BROWSER-001 (RC-047)
 ]
 ADMIN_ONLY = [
     ("post", "/dicomweb/connections", {"name": "x", "url": "http://169.254.169.254/"}),

@@ -30,6 +30,108 @@ MEASUREMENT_FINDING_KEYS = frozenset({
 })
 
 
+# CAPA-013 (RC-060, RC-061, RC-062; HAZ-007): a draft that received a longitudinal comparison
+# ends with this notice, written by code in the report language — whatever the model wrote.
+# The measured false-candidate rate comes from the server's versioned asset, never from the
+# request. No wording here may present unconfirmed candidates as a statement on the disease.
+LONGITUDINAL_NOTICE: Dict[str, Dict[str, str]] = {
+    "en": {
+        "candidates": "**Automatic change candidates (unconfirmed).** The software proposed {total} "
+                      "unconfirmed change candidate(s) ({new} new, {enl} enlarging), to be reviewed one "
+                      "by one by a radiologist. They are not findings. The radiologist's decisions are "
+                      "recorded in the application, not in this draft.",
+        "evidence": "In a public test with expert-marked change ({patients} patients) this rule proposed "
+                    "on average {mean} false candidates per patient, {pct} % of all the candidates it "
+                    "proposed ({source}, {date}).",
+        "no_evidence": "No measured false-candidate rate is available for this rule.",
+        "abstained": "**No automatic change candidates.** The acquisition of the two visits differs or "
+                     "could not be established; the change between the visits must be assessed visually.",
+    },
+    "es": {
+        "candidates": "**Candidatos automáticos de cambio (sin confirmar).** El programa propuso {total} "
+                      "candidatos de cambio sin confirmar ({new} nuevos, {enl} agrandados), que un radiólogo "
+                      "debe revisar uno a uno. No son hallazgos. Las decisiones del radiólogo constan en la "
+                      "aplicación, no en este borrador.",
+        "evidence": "En una prueba pública con cambios marcados por expertos ({patients} pacientes), esta "
+                    "regla propuso de media {mean} candidatos falsos por paciente, el {pct} % de todos los "
+                    "candidatos que propuso ({source}, {date}).",
+        "no_evidence": "No hay una tasa medida de candidatos falsos para esta regla.",
+        "abstained": "**Sin candidatos automáticos de cambio.** La adquisición de las dos visitas es "
+                     "distinta o no se pudo establecer; el cambio entre las visitas debe valorarse "
+                     "visualmente.",
+    },
+    "de": {
+        "candidates": "**Automatische Veränderungskandidaten (unbestätigt).** Die Software schlug {total} "
+                      "unbestätigte Veränderungskandidaten vor ({new} neu, {enl} vergrößert), die ein "
+                      "Radiologe einzeln prüft. Sie sind keine Befunde. Die Entscheidungen des Radiologen "
+                      "sind in der Anwendung erfasst, nicht in diesem Entwurf.",
+        "evidence": "In einem öffentlichen Test mit von Experten markierten Veränderungen ({patients} "
+                    "Patienten) schlug diese Regel im Mittel {mean} falsche Kandidaten pro Patient vor, "
+                    "{pct} % aller vorgeschlagenen Kandidaten ({source}, {date}).",
+        "no_evidence": "Für diese Regel liegt keine gemessene Rate falscher Kandidaten vor.",
+        "abstained": "**Keine automatischen Veränderungskandidaten.** Die Aufnahmetechnik der beiden "
+                     "Untersuchungen unterscheidet sich oder ließ sich nicht feststellen; die Veränderung "
+                     "muss visuell beurteilt werden.",
+    },
+}
+
+
+def _int(v) -> int:
+    try:
+        return max(0, int(v))
+    except Exception:  # noqa: BLE001
+        return 0
+
+
+# Review of PR #63, blocker 1: a report request is client data. A reader decision in it cannot be
+# verified (the route has no stored decision to check it against), so it is removed before the
+# findings reach the report service; the report states that decisions are kept in the application.
+UNVERIFIABLE_DECISION_FIELDS = ("reader_confirmed_activity",)
+UNVERIFIABLE_CANDIDATE_COUNTS = ("confirmed", "rejected", "awaiting_review", "decisions_unavailable")
+
+
+def drop_unverifiable_decisions(longitudinal: Any) -> Any:
+    """A copy of a client-supplied longitudinal block without any reader decision or decision count."""
+    if not isinstance(longitudinal, dict):
+        return longitudinal
+    out = {k: v for k, v in longitudinal.items() if k not in UNVERIFIABLE_DECISION_FIELDS}
+    if isinstance(out.get("changes"), list):
+        out["changes"] = [{k: v for k, v in c.items() if k != "reader_review"} if isinstance(c, dict) else c
+                          for c in out["changes"]]
+    if isinstance(out.get("change_candidates"), dict):
+        out["change_candidates"] = {k: v for k, v in out["change_candidates"].items()
+                                    if k not in UNVERIFIABLE_CANDIDATE_COUNTS}
+    return out
+
+
+def longitudinal_notice(longitudinal: Any, language: str) -> Optional[str]:
+    """The fixed notice for a draft that received a longitudinal comparison, or None."""
+    if not isinstance(longitudinal, dict) or not longitudinal:
+        return None
+    from app.services.longitudinal_candidate_safety import load_false_candidate_evidence
+
+    texts = LONGITUDINAL_NOTICE.get(language, LONGITUDINAL_NOTICE["en"])
+    if longitudinal.get("abstained"):
+        return texts["abstained"]
+    cc = longitudinal.get("change_candidates")
+    if isinstance(cc, dict):
+        new, enl = _int(cc.get("new")), _int(cc.get("enlarging"))
+    else:  # a payload without the candidate block: count what the rule counts
+        sc = longitudinal.get("status_counts") or {}
+        new, enl = _int(sc.get("new")), _int(sc.get("enlarged"))
+    lines = [texts["candidates"].format(total=new + enl, new=new, enl=enl)]
+    from app.services.longitudinal_candidate_safety import false_share_percent
+    ev = load_false_candidate_evidence()
+    if ev:
+        mean = f"{ev['false_candidates_per_patient']:g}"
+        lines.append(texts["evidence"].format(
+            patients=ev["patients"], mean=mean if language == "en" else mean.replace(".", ","),
+            pct=false_share_percent(ev), source=ev["source"], date=ev["measured_on"]))
+    else:
+        lines.append(texts["no_evidence"])
+    return " ".join(lines)
+
+
 # =============================================================================
 # Request/Response Models
 # =============================================================================
@@ -121,14 +223,21 @@ async def generate_report(
             ),
         )
 
+    findings = dict(request.findings)
+    if "longitudinal" in findings:   # CAPA-013, review of PR #63 (blocker 1)
+        findings["longitudinal"] = drop_unverifiable_decisions(findings["longitudinal"])
+
     try:
         service = get_report_service()
         result = await service.generate_report(
             template_type=request.template_type,
-            findings=request.findings,
+            findings=findings,
             volumetry=request.volumetry,
             language=request.language,
         )
+        notice = longitudinal_notice(request.findings.get("longitudinal"), request.language)
+        if notice:   # CAPA-013: appended in code, after the model, in the report language
+            result = {**result, "content": f"{result['content']}\n\n---\n\n> {notice}"}
         return ReportResponse(**result)
 
     except RuntimeError as e:

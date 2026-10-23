@@ -17,6 +17,10 @@ import { clinicalToolsAPI } from '@/api/clinicalTools';
 import { useViewerStore } from '@/store/useViewerStore';
 import { detectSequence, type SequenceType, SEQUENCE_INFO } from '@/utils/sequenceDetection';
 import type { ClinicalToolInfo, ToolTaskResult, ToolTaskStatus } from '@/types';
+import { FEATURES } from '@/config/features';
+
+// Prototype, code-split: with the flag OFF this chunk (and ONNX Runtime WebGPU) is never downloaded.
+const BrowserFlamesCard = React.lazy(() => import('./BrowserFlamesCard'));
 
 interface ClinicalToolsPanelProps {
   fileId?: string;
@@ -277,6 +281,13 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
 
         {flamesTask && (
           <TaskProgress task={flamesTask} getStatusColor={getStatusColor} getStatusLabel={getStatusLabel} />
+        )}
+
+        {/* PROTOTYPE: in-browser FLAMeS (no GPU server). Hidden unless VITE_ENABLE_BROWSER_FLAMES=true. */}
+        {FEATURES.BROWSER_FLAMES && (
+          <React.Suspense fallback={null}>
+            <BrowserFlamesCard flairFileId={flairFileId} />
+          </React.Suspense>
         )}
       </div>
 

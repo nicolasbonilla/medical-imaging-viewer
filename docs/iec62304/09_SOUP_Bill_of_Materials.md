@@ -2,11 +2,12 @@
 
 ## Software of Unknown Provenance — Complete Inventory
 
-**Document ID**: SOUP-001 | **Version**: 1.1 | **Date**: September 28, 2026 (v1.0: April 12, 2026)
+**Document ID**: SOUP-001 | **Version**: 1.2 DRAFT (2026-10-17, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63)) — last approved: 1.1 | **Date**: September 28, 2026 (v1.0: April 12, 2026)
 
 | Version | Date | Author | Change | Approved By |
 |---------|------|--------|--------|-------------|
 | 1.0 | 2026-04-12 | Development Team | Initial release | — |
+| 1.2 (draft) | 2026-10-17 | Development Team | CP-FLAMES-BROWSER-001. (a) SOUP-FE-008 ONNX Runtime Web corrected 1.21.0 → **1.24.1**: v1.0 recorded the declared minimum (`^1.21.0` in `package.json`), not the version actually built; `package-lock.json` resolved 1.24.1 (`npm ls`, 2026-10-17). `package.json` now pins `1.24.1` exactly (CMP-001 §5: no `^` for production SOUP). Known anomaly added. (b) SOUP-FE-014 added: FLAMeS model weights (data, Class C). (c) SOUP-FE-015 added: Neurodesk white-matter-lesions code ported to TypeScript (Apache-2.0). (d) SBOM: onnxruntime-web version and its SOUP id (was SOUP-FE-006, the NiiVue id) corrected | N. G. Bonilla Vargas — approved 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63) |
 | 1.1 | 2026-09-28 | Development Team | CAPA-006 (HAZ-005). (a) SOUP-BE-020 nilearn reclassified B → **C**. It resamples the MSMask atlas zone map for the Class C MAGNIMS region classifier. Purpose was "Brain atlas"; version was "0.10.0+". Recorded as not pinned (`>=0.10.0`), with open action CAPA-006 PA-6.5; `backend/requirements.txt` not changed. (b) SOUP-BE-025 added: the MSMask atlas data file, a Class C input that had no SOUP or provenance entry. (c) Summary recounted from the tables. v1.0 stated Class B 20 / Class A 10; the tables held 21 / 9. | N. G. Bonilla Vargas — approved 2026-10-17 (PR #43) |
 
 ---
@@ -22,12 +23,14 @@
 | SOUP-FE-005 | TanStack React Query | 5.56.2 | Tanner Linsley | MIT | B | Server state caching | None known |
 | SOUP-FE-006 | NiiVue | 0.67.0 | NiiVue Contributors | BSD-2 | B | WebGL2 NIfTI volume rendering | None known |
 | SOUP-FE-007 | Three.js | 0.169.0 | Three.js Contributors | MIT | B | 3D WebGL scene management | None known |
-| SOUP-FE-008 | ONNX Runtime Web | 1.21.0 | Microsoft | MIT | **C** | Browser AI inference (WebGPU/WASM) | None known |
+| SOUP-FE-008 | ONNX Runtime Web | **1.24.1** (pinned exactly since 2026-10-17; v1.0–1.1 recorded "1.21.0", the declared minimum `^1.21.0`, not the built version) | Microsoft | MIT | **C** | Browser AI inference (WebGPU/WASM): Edge-AI screening (`edgeAI.worker.ts`) and the in-browser FLAMeS prototype (`flamesInBrowser.worker.ts`, flag OFF) | 1.24.1: the WebGPU backend has no 3D convolution ("Only Conv1d and Conv2d are supported") — FLAMeS therefore runs on WebAssembly only (WebGPU attempt restarts the whole job on WebAssembly, RC-044); 1.29.0 adds 3D convolution but an integrated GPU lost the device (DESIGN.md §7.1). WebAssembly multi-threading requires a cross-origin-isolated page (not the case on app.mstool-ai.com, COOP-COEP-IMPACT.md) |
 | SOUP-FE-009 | Axios | 1.7.7 | Matt Zabriskie | MIT | B | HTTP client | None known |
 | SOUP-FE-010 | Tailwind CSS | 3.4.13 | Tailwind Labs | MIT | A | Styling | None known |
 | SOUP-FE-011 | Framer Motion | 12.23 | Framer | MIT | A | UI animation | None known |
 | SOUP-FE-012 | i18next | 25.6.3 | i18next contributors | MIT | A | Internationalization | None known |
 | SOUP-FE-013 | Lucide React | 0.447.0 | Lucide contributors | ISC | A | Icons | None known |
+| SOUP-FE-014 | FLAMeS model weights, fold 0, converted to ONNX (data; added 2026-10-17, draft) | Zenodo 10.5281/zenodo.17955359 **v2.0** (Dataset004_WML, checkpoint sha256 `4fc7db24e7c1541b59023df2a2f498a964eb629fe38f4eaec763297dd3fdf861`) → `flames-fold0.onnx`, 61,642,305 B, sha256 `2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae` (pinned in `plan.ts`; not in git — CMP-001 §6) | Dereskewicz, La Rosa et al. (J Neuroimaging 2025;35(5):e70085) | **CC BY 4.0** (Zenodo record licence; attribution + changes shown in the app, REQ-FUNC-097) | **C** | MS-lesion segmentation model executed in the browser (REQ-FUNC-093) | Single fold without mirroring over-segments relative to the 5-fold ensemble (Neurodesk, MSLesSeg test n = 22: Dice 0.608 vs 0.647, AVD 84 % vs 45 %); trained on FLAIR only and skull-stripped input (RC-043, RC-049); clinical accuracy on our population not measured |
+| SOUP-FE-015 | Neurodesk webapps — `packages/white-matter-lesions` (portions ported to TypeScript), `apps/white-matter-lesions/scripts/export_model.py` (adapted) (added 2026-10-17, draft) | `main`, read 2026-10-17 | Neurodesk | **Apache-2.0** (per-package `LICENSE`) | **C** (ported code runs in the Class C path) | Resampling kernels and sliding-window structure (`preprocess.ts`, `slidingWindow.ts`); ONNX export | Ported code is verified against nnunetv2/scipy fixtures, not against Neurodesk; see `services/flames/NOTICE.md` for the changes |
 
 ## Backend SOUP Items
 
@@ -63,8 +66,8 @@
 
 | Category | Count |
 |----------|-------|
-| Total SOUP items | 38 (v1.0: 37) |
-| Safety Class C | 9 (ONNX, nibabel, pydicom, NumPy, SciPy, Anthropic, Google AI, nilearn, MSMask atlas) (v1.0: 7) |
+| Total SOUP items | 40 (v1.1: 38; v1.0: 37) — v1.2 draft adds SOUP-FE-014, SOUP-FE-015 |
+| Safety Class C | 11 (ONNX, nibabel, pydicom, NumPy, SciPy, Anthropic, Google AI, nilearn, MSMask atlas, FLAMeS weights, Neurodesk-derived code) (v1.1: 9; v1.0: 7) |
 | Safety Class B | 20 (v1.0 stated 20; the v1.0 tables held 21, nilearn now C) |
 | Safety Class A | 9 (v1.0 stated 10; the v1.0 tables held 9) |
 

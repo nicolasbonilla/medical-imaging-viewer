@@ -25,8 +25,8 @@
     "status here is 'implemented' or 'deliberately_absent'."
   ],
   "manifest_version": 1,
-  "capa_reference": "CAPA-001, CAPA-002, CAPA-004, CAPA-005, CAPA-006, CAPA-007",
-  "last_updated": "2026-10-17",
+  "capa_reference": "CAPA-001, CAPA-002, CAPA-004, CAPA-005, CAPA-006, CAPA-007, CAPA-010, CAPA-011, CAPA-013",
+  "last_updated": "2026-10-22",
   "controls": {
     "RC-006": {
       "description": "AI-generated report carries a mandatory physician-review disclaimer",
@@ -177,15 +177,19 @@
       "note": "3 of 5 McDonald 2024 regions, correctly and honestly disclosed. Counts are returned and typed but rendered by no component. CA-3."
     },
     "RC-016": {
-      "description": "Patient name and MRN rendered in the image viewport itself",
+      "description": "Patient name and MRN rendered in the image viewport itself, in every view mode (2D, every multi-panel cell, 3D volume and multiplanar)",
       "hazard": "HAZ-009",
       "status": "implemented",
-      "implementation": "frontend/src/components/ViewportSafetyOverlay.tsx, rendered unconditionally by ImageViewer2D.tsx",
+      "implementation": "frontend/src/components/ViewportSafetyOverlay.tsx, rendered unconditionally by ImageViewer2D.tsx and, since CAPA-010, by ImageViewer3D.tsx and every MultiPanelViewer.tsx cell; identity passed by ViewerApp.tsx",
       "tests": [
-        "frontend/src/components/ViewportSafetyOverlay.test.tsx"
+        "frontend/src/components/ViewportSafetyOverlay.test.tsx",
+        "frontend/src/components/ImageViewer3D.capa010.test.tsx",
+        "frontend/src/components/MultiPanelViewer.capa010.test.tsx",
+        "frontend/src/ViewerApp.capa010.test.tsx"
       ],
-      "negative_control": "CAPA-004 CA-4.2 — three vectors: identity block removed → 1 failed; overlay unwired from ImageViewer2D → 1 failed; orientation warning silenced → 2 failed",
-      "note": "Covers the 2D viewer. 3D and multi-panel views still receive no patient props and remain uncovered — tracked under CAPA-004 CA-4.2. Tests assert what is RENDERED, not what is passed: the original defect was a dead prop that looked correct at the call site."
+      "negative_control": "CAPA-004 CA-4.2 — three vectors: identity block removed → 1 failed; overlay unwired from ImageViewer2D → 1 failed; orientation warning silenced → 2 failed; CAPA-010 (2026-10-17, scripts/safety/capa010_negative_controls.py, record docs/iec62304/records/risk_verification/CAPA-010_negative_controls_2026-10-17.json): I1 3D overlay removed -> 7 failed; I2 3D identity not passed -> 2 failed; I3 panel overlay removed -> 7 failed; I4 multi-panel identity not passed -> 1 failed; I5 dead identity prop in panels -> 2 failed; restored 43 passed; re-executed 2026-10-18 with the same counts, restored 47 passed",
+      "note": "Tests assert what is RENDERED, not what is passed: the original defect was a dead prop that looked correct at the call site. CAPA-010 (2026-10-17, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63)): the 3D and multi-panel views had no identity (CA-4.2 open since 2026-07-18) and now render the overlay; ViewerApp.capa010.test.tsx renders the REAL viewer page in every view mode and checks the identity it loaded, which replaces the static source checks of ViewportSafetyOverlay.test.tsx as wiring evidence. Identity is not burned into exported images (CA-4.2 remainder).",
+      "requirement": "REQ-SAFE-016 (amended 2026-10-17, CAPA-010)"
     },
     "RC-018": {
       "description": "RBAC: 4 roles, 15 granular permissions",
@@ -222,16 +226,20 @@
       "note": "No timeout exists anywhere in the report path; no CLAUDE_TIMEOUT setting. Also a synchronous call inside an async handler blocks the worker. CA-3."
     },
     "RC-023": {
-      "description": "Anatomical orientation is determinable from the affine, and is never guessed when indeterminate",
+      "description": "Anatomical orientation is determinable from the affine, is never guessed when indeterminate, and is reported in every viewport as text: no laterality glyph (edge letters or orientation cube) in any view, each viewport reports its own image, and the standing caveat is visible on the page",
       "hazard": "HAZ-006",
       "status": "implemented",
-      "implementation": "backend/app/utils/nifti_utils.py::get_orientation_codes / canonicalize_orientation",
+      "implementation": "backend/app/utils/nifti_utils.py::get_orientation_codes / canonicalize_orientation; viewport side (CAPA-010): frontend/src/components/ImageViewer3D.tsx (niivue isOrientCube false, isOrientationTextVisible false), MultiPanelViewer.tsx + store/useMultiViewerStore.ts (per-panel orientation), ViewerApp.tsx (flex centre column so the caveat is not clipped)",
       "tests": [
         "tests/unit/test_rc023_orientation.py",
-        "frontend/src/components/ViewportSafetyOverlay.test.tsx"
+        "frontend/src/components/ViewportSafetyOverlay.test.tsx",
+        "frontend/src/components/ImageViewer3D.capa010.test.tsx",
+        "frontend/src/components/MultiPanelViewer.capa010.test.tsx",
+        "frontend/src/ViewerApp.capa010.test.tsx"
       ],
-      "negative_control": "CAPA-004 CA-4.1 — fixed RAS return → 9 failed; canonicalisation neutralised → 2 failed. CA-4.2 — orientation warning silenced in the viewport → 2 failed",
-      "note": "NEW control created by CAPA-004 CA-4.1; MUST be added to the Risk Management File §5.1 (tracked). It provides the primitives only. RC-013 — orientation VALIDATION ON UPLOAD — remains not_implemented because canonicalisation is deliberately opt-in: image and mask load through separate calls, so transforming one and not the other would misalign them and create a worse hazard than the one being fixed. Migrating to canonical-by-default must convert both together in one change, with a matched-pair correspondence test. The viewport now REPORTS the orientation and warns when it is UNKNOWN or non-canonical, but deliberately renders NO L/R edge labels: volumes are not canonicalised on load and imaging_service transposes with fixed axis tuples presuming RAS, so the axis-to-screen mapping is unverified. A test asserts that absence. Labels may only be added under CA-4.3, after verification against a phantom of known laterality."
+      "negative_control": "CAPA-004 CA-4.1 — fixed RAS return → 9 failed; canonicalisation neutralised → 2 failed. CA-4.2 — orientation warning silenced in the viewport → 2 failed; CAPA-010 (2026-10-17, record docs/iec62304/records/risk_verification/CAPA-010_negative_controls_2026-10-17.json): O1 orientation not stored -> 2 failed; O2 lost on slice change -> 1; O3 stale on reassignment -> 1; O4 stale on auto-assignment -> 1; G1 orientation cube restored -> 2; G2 niivue default slice letters -> 2; L1 layout as on main -> 1; L3 column back to a block -> 1; L2 (viewport h-full inside the flex column) equivalent by design, not detected, stated in the record; restored 43 passed; re-executed 2026-10-18 with the same counts, restored 47 passed",
+      "note": "NEW control created by CAPA-004 CA-4.1; MUST be added to the Risk Management File §5.1 (tracked). It provides the primitives only. RC-013 — orientation VALIDATION ON UPLOAD — remains not_implemented because canonicalisation is deliberately opt-in: image and mask load through separate calls, so transforming one and not the other would misalign them and create a worse hazard than the one being fixed. Migrating to canonical-by-default must convert both together in one change, with a matched-pair correspondence test. The viewport now REPORTS the orientation and warns when it is UNKNOWN or non-canonical, but deliberately renders NO L/R edge labels: volumes are not canonicalised on load and imaging_service transposes with fixed axis tuples presuming RAS, so the axis-to-screen mapping is unverified. A test asserts that absence. Labels may only be added under CA-4.3, after verification against a phantom of known laterality. CAPA-010 (2026-10-17, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63)): the viewport side held in 2D only. The 3D view drew the niivue orientation cube and, in its multiplanar slice panels, niivue default slice letters (A top, L left); the 2D caveat was clipped off-screen at every window size since 2026-07-18 (jsdom tests could not see it). Now verified on the rendered page in a real headless browser (ViewerApp.capa010.test.tsx; fails in CI without a browser) and by feeding the effective niivue options to the real niivue drawing routines (ImageViewer3D.capa010.test.tsx).",
+      "requirement": "REQ-SAFE-013, REQ-SAFE-025 (added 2026-10-17, CAPA-010)"
     },
     "RC-024": {
       "description": "Voxel spacing is required for every quantitative measurement; never assumed",
@@ -366,7 +374,7 @@
       ],
       "negative_control": "Executed 2026-10-17 by scripts/safety/capa008_negative_controls.py; C1-C6 6/6 detected; record docs/iec62304/records/risk_verification/CAPA-008_negative_controls_2026-10-17.json.",
       "requirement": "REQ-SAFE-024",
-      "note": "CAPA-008. Rule wording verified against open sources quoting Montalban et al. 2025 (Solomon et al., Neurology 2026; ECTRIMS 2025 deck slide 35) and MAGNIMS 2021 (author version); the paywalled Lancet full text was not read. The UI part is verified by source-level tests, not a render test."
+      "note": "CAPA-008. Rule wording verified against open sources quoting Montalban et al. 2025 (Solomon et al., Neurology 2026; ECTRIMS 2025 deck slide 35) and MAGNIMS 2021 (author version); the paywalled Lancet full text was not read. The UI part is verified by source-level tests, not a render test. 2026-10-22 (CAPA-013, draft): the service flag activity_candidate is still computed (this test) but no longer leaves the backend; the activity statement shown is reader_confirmed_activity, the same >= 1 rule applied to radiologist-confirmed candidates only (RC-060)."
     },
     "RC-036": {
       "description": "RC-036 (CAPA-009): every mounted route that references a patient-scoped object authorizes it before any data access; task/upload/import handles are initiator-only; PACS connection changes and websocket connection statistics are administrator-only; parsed, authorized storage paths only",
@@ -379,6 +387,343 @@
       "negative_control": "Executed 2026-10-17 by scripts/safety/capa009_negative_controls.py, one mutation at a time (every anchor asserted unique), failing test names in docs/iec62304/records/risk_verification/CAPA-009_negative_controls_2026-10-17.json. 32 mutations, 32 detected (incl. P1: the un-awaited patient dependency re-introduced -> 7 failed). Restored 47 passed.",
       "requirement": "REQ-SEC-014/015/016/019/020",
       "note": "CAPA-009. Completes CAPA-007 PA-7.2. HONEST LIMITS: behaviour verified in-process with fake services and a fake care-team store; not verified in production (two real accounts needed); the initiator registry is in memory per instance, like the task and upload stores it guards, so a handle used on another instance is refused (fail closed)."
+    },
+    "RC-037": {
+      "description": "RC-037 (CAPA-010): the crosshair and bounding box of a lesion selected from the lesion analysis are drawn in every view, including 3D, at the voxel the analysis reported: (z, y, x) on the (k, a0, a1) mask is NIfTI (i, j, k) = (y, x, z)",
+      "hazard": "HAZ-006",
+      "status": "implemented",
+      "implementation": "frontend/src/utils/boundingBoxMesh.ts::lesionVoxelToNifti used by createBoundingBoxMZ3 and by the 3D crosshair in frontend/src/components/ImageViewer3D.tsx; the 2D canvas already applied the rule (audit F-2.1, PR #22)",
+      "tests": [
+        "frontend/src/components/ImageViewer3D.capa010.test.tsx"
+      ],
+      "negative_control": "Executed 2026-10-17 by scripts/safety/capa010_negative_controls.py (record docs/iec62304/records/risk_verification/CAPA-010_negative_controls_2026-10-17.json): M1 crosshair read as (x, y, z) -> 2 failed; M2 box read as (x, y, z) -> 1 failed; M3 shared mapping wrong -> 3 failed; restored 43 passed; re-executed 2026-10-18 with the same counts, restored 47 passed",
+      "requirement": "REQ-SAFE-026",
+      "note": "CAPA-010, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63). On main the 3D crosshair and box were transposed in-plane (voxel (j, i) instead of (i, j)), possibly across the midline, while 2D was correct. HONEST LIMITS: niivue is replaced by a recording stand-in in the tests (jsdom has no WebGL); the mm point aimed at and the mesh vertices are checked, not the pixels drawn. Not checked on a real study in a browser."
+    },
+    "RC-038": {
+      "description": "RC-038 (CAPA-010): the 2D distance, area and angle tools map screen to image through the same zoom/pan transform that draws the slice, compute in millimetres per axis (angles included), and keep a drawn measurement on the anatomy when the view is zoomed or panned",
+      "hazard": "HAZ-014, HAZ-008",
+      "status": "implemented",
+      "implementation": "frontend/src/components/MeasurementOverlay.tsx (scale s0*zoom, origin centre*(1-zoom)+pan; angle arms scaled by the row/column spacing)",
+      "tests": [
+        "frontend/src/components/MeasurementOverlay.rc038.test.tsx"
+      ],
+      "negative_control": "Executed 2026-10-17 by scripts/safety/capa010_negative_controls.py (record docs/iec62304/records/risk_verification/CAPA-010_negative_controls_2026-10-17.json): re-executed 2026-10-18 after the PR #52 review added non-square / anisotropic tests: R1 zoom and pan ignored (as on main) -> 8 failed; R2 zoom ignored -> 8; R3 pan ignored -> 2; R4 angle in pixel units -> 2; R5 vertical zoom centre from the canvas width -> 1 (undetected by the square-only tests: checked by hand, 6 passed); R6 horizontal centre from the height -> 1; R7 vertical scale from the horizontal axis -> 4; R8 angle spacing swapped -> 2; R9 length spacing swapped -> 2; restored 47 passed",
+      "requirement": "REQ-SAFE-027",
+      "note": "CAPA-010, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63). On main a 10 mm segment read 20.0 mm at zoom x2 (x4 at zoom 4), an ROI x4 its area, and a 63.4 deg angle on 2 mm x 1 mm pixels read 45.0 deg. OPEN: the angle tool cannot place a three-point angle with normal clicks (CA-10.6); without pixel spacing in the header the tools still assume 1 mm (CA-10.7). 2026-10-18 (PR #52 review): square fixtures could not tell the axes apart; four tests now use a 120x80 image on a 300x160 canvas (different scale per axis), 3 mm x 0.9 mm pixels, zoom 1/2/4 with pan."
+    },
+    "RC-039": {
+      "description": "RC-039 (CAPA-011): a clinical-tool mask (FLAMeS, LST-AI, SynthSeg, mindGlide) is stored in the voxel order its RC-031 orientation marker declares, so the loader's single transpose returns every voxel to the image voxel (a0, a1, k) and scanner position where the tool placed it: the mask reoriented onto the reference MRI's own voxel order by affine, stored with the affine of that array, under the v2 marker; the internal mask computed at ingest is the loader's own decode of the stored array. Fails closed: when the reference image is not passed, missing or unreadable, the mask cannot be placed on it (indeterminate affine), or after reorientation it is not on the image's own grid (different array shape, or voxel-to-scanner transforms differing by more than 0.001 in any element, e.g. a tool output resampled to 1 mm), nothing is stored (no mask object, no segmentation record), the refusal is logged and the task ends FAILED with a stated reason (the RC-031 legacy-order fallback is removed)",
+      "hazard": "HAZ-006, HAZ-001, HAZ-005",
+      "status": "implemented",
+      "implementation": "backend/app/services/tool_runner_service.py (_orient_mask_for_storage, which raises SegmentationException TOOL_MASK_REFERENCE_UNAVAILABLE or TOOL_MASK_GRID_MISMATCH (shape + transform within _GRID_TOLERANCE = 1e-3) instead of any fallback; _store_nifti_as_segmentation stores the marker-consistent array and affine and derives the internal mask through SegmentationService._nifti_native_to_internal; _orient_mask_to_display derived from the same helper); loader contract in backend/app/services/segmentation_service.py (_nifti_native_to_internal, _RC031_ORIENT_MARKER; unchanged)",
+      "tests": [
+        "tests/unit/test_rc039_tool_runner_mask_axes.py"
+      ],
+      "negative_control": "Executed 2026-10-18 by scripts/safety/capa011_negative_controls.py (re-run after the grid check, CA-11.5), one mutation at a time (every anchor asserted unique), failing test names in docs/iec62304/records/risk_verification/CAPA-011_negative_controls_2026-10-17.json. 22 mutations, 22 detected: D0 the pre-fix store code byte-for-byte -> 16 failed; internal array under the marker; in-plane swap under the marker; tool affine after reorientation; reorientation skipped; marker never set; loader ignoring the marker; F1 the former legacy fallback restored -> 12 failed; F2-F5 fallback variants; G1 grid check removed -> 4 failed; G2 shape check removed; G3 transform check removed; G4 tolerance of 1 mm; M1 record computed from the mask in the legacy order -> 2 failed; reference MRI dropped at each of the five tool call sites. Restored 28 passed. The 14 round-trip cases also fail on main; the 8 fail-closed cases fail on the first fix (pre-rebase commit a623671; re-created by F1); the 4 grid cases fail before CA-11.5.",
+      "requirement": "REQ-SAFE-028",
+      "note": "CAPA-011. Erratum to RC-031 (itself not yet registered, CAPA-006 PA-6.6): from 2026-08-19 (7fcf1cd) the tool runner stored the internal (k, a0, a1) array under the v2 marker, so the loader transposed it twice (silent on cubic volumes); its legacy-order fallback stored masks whose position could not be established. HONEST LIMITS: verified in-process with faked sidecar HTTP calls, storage and Firestore; real sidecar outputs never run (tools off in production); masks possibly already stored with swapped axes not checked (CAPA-011 PA-11.2, owner decision); the local docker-compose setup writes to production storage by default (CAPA-011 Finding 7, PA-11.5, owner decision). Owner approval PENDING. Renumbered 2026-10-17 from RC-038 / REQ-SAFE-025 (IDs taken by CAPA-010, merged first)."
+    },
+    "RC-040": {
+      "hazard": "HAZ-001",
+      "status": "implemented",
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); feature flag OFF)",
+      "description": "In-browser FLAMeS: only the model whose size and SHA-256 equal the pin runs, on download and when served from Cache Storage",
+      "implementation": "frontend/src/services/flames/modelStore.ts (verifyModel, loadVerifiedModel); plan.ts FLAMES_FOLD0_MODEL",
+      "tests": [
+        "frontend/src/services/flames/__tests__/modelStore.test.ts",
+        "frontend/src/services/flames/__tests__/draft-model.test.ts"
+      ],
+      "requirement": "REQ-SAFE-031",
+      "negative_control": "Executed 2026-10-17 by research/flames_in_browser/negative_controls_v2.py (one mutation at a time, anchors asserted unique, files hash-verified after restore); results in docs/iec62304/records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json (I1, I2; I1-old/I2-old show the pre-fix tests did not detect them)"
+    },
+    "RC-041": {
+      "hazard": "HAZ-001",
+      "status": "implemented",
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); feature flag OFF)",
+      "description": "nnU-Net-faithful port (crop, z-score, resampling, sliding window, logits resampling) verified against nnunetv2/scipy/skimage fixtures and end-to-end parity (Dice >= 0.99)",
+      "implementation": "frontend/src/services/flames/preprocess.ts, slidingWindow.ts, pipeline.ts",
+      "tests": [
+        "frontend/src/services/flames/__tests__/preprocess.test.ts",
+        "frontend/src/services/flames/__tests__/slidingWindow.test.ts",
+        "frontend/src/services/flames/__tests__/pipeline.test.ts"
+      ],
+      "requirement": "REQ-FUNC-094",
+      "negative_control": "2026-10-17 research/flames_in_browser/negative_controls.py M1, M3, M5-M8 (docs/research/flames-in-browser/evidence/negative-controls.json)",
+      "note": "Parity harness (opt-in, public data): Dice 0.99940 / 0.99934 vs nnUNetv2_predict (DESIGN.md §0)."
+    },
+    "RC-042": {
+      "hazard": "HAZ-006",
+      "status": "implemented",
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); feature flag OFF)",
+      "description": "Axis-order control NIfTI (i,j,k) -> nnU-Net (i,k,j) -> app (k,i,j), tested against SimpleITK and the backend convention",
+      "implementation": "frontend/src/services/flames/axes.ts",
+      "tests": [
+        "frontend/src/services/flames/__tests__/axes-nifti.test.ts",
+        "frontend/src/services/flames/__tests__/pipeline.test.ts"
+      ],
+      "requirement": "REQ-FUNC-095",
+      "negative_control": "2026-10-17 negative_controls.py M2, M4, M10"
+    },
+    "RC-043": {
+      "hazard": "HAZ-001",
+      "status": "implemented",
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); feature flag OFF)",
+      "description": "Skull-stripped input gate: border nonzero <= 2 %, filled region 500-2600 mL, skull clues (<= 1 % voxels > 1.5x tissue mode within 6 mm of the region edge = scalp fat; <= 20 % voxels < 0.25x inside the region), also with a zero background; before the model download",
+      "implementation": "frontend/src/services/flames/pipeline.ts (checkInputGates, GATES), contrastGate.ts (rimBrightFraction, headDarkFraction)",
+      "tests": [
+        "frontend/src/services/flames/__tests__/inputGates.test.ts",
+        "frontend/src/services/flames/__tests__/pipeline.test.ts"
+      ],
+      "requirement": "REQ-SAFE-033",
+      "negative_control": "Executed 2026-10-17 by research/flames_in_browser/negative_controls_v2.py (one mutation at a time, anchors asserted unique, files hash-verified after restore); results in docs/iec62304/records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json (G5, G5b) and negative_controls.py M11",
+      "note": "Validated on public data: docs/research/flames-in-browser/FLAIR-GATE-VALIDATION.md (only 6 with-skull subjects available)."
+    },
+    "RC-044": {
+      "hazard": "HAZ-001",
+      "status": "implemented",
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); feature flag OFF)",
+      "description": "Numerical/output guard: NaN/Inf or constant scores => error; WebGPU failure restarts the whole job on WebAssembly; lesions > 25 % of brain discarded",
+      "implementation": "frontend/src/services/flames/slidingWindow.ts, pipeline.ts, workers/flamesInBrowser.worker.ts",
+      "tests": [
+        "frontend/src/services/flames/__tests__/slidingWindow.test.ts",
+        "frontend/src/services/flames/__tests__/pipeline.test.ts"
+      ],
+      "requirement": "REQ-SAFE-029",
+      "negative_control": "Executed 2026-10-17 by research/flames_in_browser/negative_controls_v2.py (one mutation at a time, anchors asserted unique, files hash-verified after restore); results in docs/iec62304/records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json (G9: implausible-output discard removed)"
+    },
+    "RC-045": {
+      "hazard": "HAZ-001",
+      "status": "implemented",
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); feature flag OFF)",
+      "description": "One terminal message per job (result or error), no partial-result message; worker terminated on cancel/crash",
+      "implementation": "frontend/src/services/flames/protocol.ts, hooks/useBrowserFlames.ts",
+      "tests": [
+        "frontend/src/hooks/useBrowserFlames.cancel.test.tsx"
+      ],
+      "requirement": "REQ-SAFE-029",
+      "negative_control": "Executed 2026-10-17 by research/flames_in_browser/negative_controls_v2.py (one mutation at a time, anchors asserted unique, files hash-verified after restore); results in docs/iec62304/records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json (H10)"
+    },
+    "RC-046": {
+      "hazard": "HAZ-006",
+      "status": "implemented",
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); feature flag OFF)",
+      "description": "Draft opened only over the same file with identical rows/columns/slices; importMask refuses any mismatch",
+      "implementation": "frontend/src/services/flames/draft.ts (checkDraftGrid), hooks/useSegmentationMask.ts (importMask)",
+      "tests": [
+        "frontend/src/services/flames/__tests__/draft-model.test.ts"
+      ],
+      "requirement": "REQ-FUNC-095",
+      "negative_control": "2026-10-17 negative_controls.py M9"
+    },
+    "RC-047": {
+      "hazard": "HAZ-001",
+      "status": "implemented",
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); feature flag OFF)",
+      "description": "AI draft: orange 'AI draft, unreviewed' label and persistent banner; never saved by save-on-unload; saved only explicitly WITH ai_provenance as segmentation_type automatic, refused unless the server echoes exactly that provenance still unreviewed; stored 'unreviewed' whatever the client sends; confirmed only by a radiologist, bound to the SHA-256 of the exact stored mask (409 otherwise; no confirm button with unsaved corrections); any later mask change resets the review to unreviewed (service save point)",
+      "implementation": "frontend/src/hooks/useSegmentationData.ts, hooks/useSegmentationMask.ts, store/useSegmentationStore.ts, components/AiDraftBanner.tsx, SegmentationPanel.tsx, services/flames/draft.ts, api/segmentation.ts; backend/app/models/schemas.py (AIProvenance), services/segmentation_service.py (create_segmentation, mask_sha256, enforce_review_binding, _save_segmentation), api/routes/segmentation.py (create, ai-review/confirm, mask PUT)",
+      "tests": [
+        "frontend/src/hooks/useSegmentationData.flamesDraft.test.tsx",
+        "frontend/src/components/AiDraftBanner.test.tsx",
+        "frontend/src/services/flames/__tests__/draft-model.test.ts",
+        "frontend/src/components/BrowserFlamesCard.test.tsx",
+        "tests/unit/test_rc047_ai_draft_provenance.py"
+      ],
+      "requirement": "REQ-SAFE-030",
+      "negative_control": "Executed 2026-10-17/18 by research/flames_in_browser/negative_controls_v2.py (one mutation at a time, anchors asserted unique, files hash-verified after restore); results in docs/iec62304/records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json (H1-H4, B1-B9, U1-U5, P1-P2; BEFORE-R2a, BEFORE-R2b, BEFORE-R3)",
+      "note": "Partially reconciles RC-001 for this path only (RMF §5.1). Usability of the labelling (IEC 62366) not evaluated. The confirm route is also classified in tests/unit/test_capa009_object_authorization_everywhere.py (RC-036)."
+    },
+    "RC-048": {
+      "hazard": "HAZ-001",
+      "status": "implemented",
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); feature flag OFF)",
+      "description": "Feature flag VITE_ENABLE_BROWSER_FLAMES OFF by default; nothing loaded when off",
+      "implementation": "frontend/src/config/features.ts, components/ClinicalToolsPanel.tsx (lazy card)",
+      "tests": [
+        "frontend/src/config/features.flames.test.ts"
+      ],
+      "requirement": "REQ-FUNC-093",
+      "negative_control": "Executed 2026-10-17 by research/flames_in_browser/negative_controls_v2.py (one mutation at a time, anchors asserted unique, files hash-verified after restore); results in docs/iec62304/records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json (F1: flag default turned ON)"
+    },
+    "RC-049": {
+      "hazard": "HAZ-001",
+      "status": "implemented",
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); feature flag OFF)",
+      "description": "FLAIR gate flair-gate/2: the header (inversion time < 1400 ms or another sequence named) and the image content (white matter vs cortex, grey-matter class, bright CSF) can only refuse; acceptance requires positive evidence — the clinician's explicit per-file confirmation of the sequence (recorded with the draft; the server records who) or a header with a FLAIR inversion time — fail closed; the file name is never used",
+      "implementation": "frontend/src/services/flames/headerEvidence.ts, contrastGate.ts (decideFlairContrast, headerProvesFlair), nifti.ts, pipeline.ts (checkInputGates), workers/flamesInBrowser.worker.ts, components/BrowserFlamesCard.tsx, hooks/useBrowserFlames.ts; backend/app/services/segmentation_service.py (sequence_confirmed_by)",
+      "tests": [
+        "frontend/src/services/flames/__tests__/inputGates.test.ts",
+        "frontend/src/services/flames/__tests__/niftiHeader.test.ts",
+        "frontend/src/services/flames/__tests__/pipeline.test.ts",
+        "frontend/src/components/BrowserFlamesCard.test.tsx",
+        "frontend/src/hooks/useBrowserFlames.cancel.test.tsx",
+        "tests/unit/test_rc047_ai_draft_provenance.py"
+      ],
+      "requirement": "REQ-SAFE-033",
+      "negative_control": "Executed 2026-10-17/18 by research/flames_in_browser/negative_controls_v2.py; results in docs/iec62304/records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json (G1-G4, G7, G8, E1-E6, B10; G6 not detected; BEFORE-R1)",
+      "note": "Validation incl. leave-one-dataset-out on MSLesSeg, open_ms_data and ISBI-2015: docs/research/flames-in-browser/FLAIR-GATE-VALIDATION.md. Content alone does not generalise to an unseen scanner, hence the positive-evidence requirement; acceptance relies on a human confirmation. Not a sequence classifier with a guaranteed error rate."
+    },
+    "RC-050": {
+      "hazard": "HAZ-001",
+      "status": "implemented",
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); feature flag OFF)",
+      "description": "Opening an AI draft never discards unsaved work: nothing changes until the user saves first or explicitly chooses to discard",
+      "implementation": "frontend/src/hooks/useSegmentationData.ts (createSegmentationFromMask), components/BrowserFlamesCard.tsx",
+      "tests": [
+        "frontend/src/hooks/useSegmentationData.flamesDraft.test.tsx",
+        "frontend/src/components/BrowserFlamesCard.test.tsx"
+      ],
+      "requirement": "REQ-SAFE-032",
+      "negative_control": "Executed 2026-10-17 by research/flames_in_browser/negative_controls_v2.py (one mutation at a time, anchors asserted unique, files hash-verified after restore); results in docs/iec62304/records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json (H5, H6; BEFORE-2/3 = the reviewed code fails the tests)"
+    },
+    "RC-051": {
+      "hazard": "HAZ-001",
+      "status": "implemented",
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); feature flag OFF)",
+      "description": "Empty in-browser result: explicit warning (not a lesion-free result), opening requires acknowledgement; annotated voxel count 0 in the provenance",
+      "implementation": "frontend/src/components/BrowserFlamesCard.tsx, services/flames/draft.ts",
+      "tests": [
+        "frontend/src/components/BrowserFlamesCard.test.tsx"
+      ],
+      "requirement": "REQ-FUNC-036",
+      "negative_control": "Executed 2026-10-17 by research/flames_in_browser/negative_controls_v2.py (one mutation at a time, anchors asserted unique, files hash-verified after restore); results in docs/iec62304/records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json (H7, H8)"
+    },
+    "RC-052": {
+      "description": "Clinical-accuracy configuration: 5-fold ensemble (+ mirroring) as default before any clinical use",
+      "hazard": "HAZ-001",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); feature flag OFF)",
+      "note": "NOT IMPLEMENTED. Open action CA-FLAMES-1 (CP-FLAMES-BROWSER-001, owner): export folds 1-4, make the 5-fold ensemble (+ mirroring) the default, parity for both, before any clinical use. Single fold without mirroring over-segments vs the ensemble (Neurodesk, MSLesSeg n=22). Feature must stay OFF."
+    },
+    "RC-053": {
+      "description": "Device gate: refuse weak devices / warn and offer server path; WebGPU only when the adapter suffices",
+      "hazard": "HAZ-001",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "change": "CP-FLAMES-BROWSER-001 (DRAFT, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); feature flag OFF)",
+      "note": "NOT IMPLEMENTED. Open action CA-FLAMES-2 (CP-FLAMES-BROWSER-001, owner): device gate (memory, cores, WebGPU adapter limits) and COOP/COEP as a separate tested change (COOP-COEP-IMPACT.md). Interim: honest duration estimate + cancel (REQ-FUNC-096)."
+    },
+    "RC-054": {
+      "description": "Acquisition slice thickness read from the file, never assumed: native only from an ORIGINAL DICOM with the spacing between slices or a 3D acquisition (gap counted); NIfTI grid / derived DICOM / 2D DICOM without spacing = lower bound above 1.5 mm at most; fine grid without acquisition metadata, missing/invalid/contradictory/unreadable = not determinable with a reason; a SpacingBetweenSlices without a SliceThickness = not determinable, never taken as the thickness (amended 2026-10-23 after the independent review of PR #59); never a default; total; Class C utilities wrapped, not modified",
+      "hazard": "HAZ-015",
+      "status": "implemented",
+      "change": "CP-SLICE-THICKNESS-001 (DRAFT, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); feature flag OFF)",
+      "implementation": "app/services/acquisition_geometry.py; app/services/imaging_service.py (load_dicom, load_nifti -> ImageMetadata.acquisition_geometry); app/models/schemas.py (AcquisitionGeometry)",
+      "tests": [
+        "tests/unit/test_rc054_acquisition_geometry.py"
+      ],
+      "requirement": "REQ-SAFE-034, REQ-FUNC-099",
+      "negative_control": "Executed 2026-10-21 by scripts/safety/slice_thickness_negative_controls.py (one mutation at a time, every anchor asserted unique, original bytes restored and hash-checked); failing test names in docs/iec62304/records/risk_verification/CP-SLICE-THICKNESS-001_negative_controls_2026-10-21.json. B mutations (backend): 12/12 detected (B1, B2, B3, B4, B5, B6, B7, B8, B9, B10, B11, B12). Restored: backend 34 passed / 0 failed; frontend 42 passed / 0 failed. Re-executed 2026-10-23 on branch release/owner-signoff-2026-10 after the independent review of PR #59 (all 38 mutations, 38 detected; provenance ok: True): B mutations 13/13 detected (B1, B2, B3, B4, B5, B6, B7, B8, B9, B10, B11, B12, B13). Restored: backend 39 passed / 0 failed; frontend 46 passed / 0 failed. Record: docs/iec62304/records/risk_verification/CP-SLICE-THICKNESS-001_negative_controls_2026-10-23.json.",
+      "note": "Also HAZ-001. HONEST LIMITS: a NIfTI can never be 'native' (no acquisition metadata) and the PACS import drops the original DICOM header, so most studies stored today read 'at least' or 'not determinable' (open item in RMF-001 §7.2)."
+    },
+    "RC-055": {
+      "description": "The card reads only a strictly parsed acquisition_geometry (native only from a DICOM header; lower bound only above 1.5 mm; legacy slice_thickness never read) of the segmentation's own image (the image on screen only when it is that image) or, for a processed image, of the study's single original FLAIR (masks excluded), named on the card; none or several -> not determinable; the thicker source wins",
+      "hazard": "HAZ-015",
+      "status": "implemented",
+      "change": "CP-SLICE-THICKNESS-001 (DRAFT, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); feature flag OFF)",
+      "implementation": "frontend/src/utils/sliceThicknessReliability.ts (parseGeometry, locateSource, resolveThickness); frontend/src/components/SliceThicknessReliabilityCard.tsx; LesionDashboard.tsx and ViewerApp.tsx pass the source image and the study instances",
+      "tests": [
+        "frontend/src/utils/sliceThicknessReliability.test.ts",
+        "frontend/src/components/SliceThicknessReliabilityCard.test.tsx"
+      ],
+      "requirement": "REQ-SAFE-034",
+      "negative_control": "Executed 2026-10-21 by scripts/safety/slice_thickness_negative_controls.py (one mutation at a time, every anchor asserted unique, original bytes restored and hash-checked); failing test names in docs/iec62304/records/risk_verification/CP-SLICE-THICKNESS-001_negative_controls_2026-10-21.json. P mutations: 8/8 detected (P1, P2, P3, P4, P5, P6, P7, P8). Restored: backend 34 passed / 0 failed; frontend 42 passed / 0 failed. Re-executed 2026-10-23 on branch release/owner-signoff-2026-10 after the independent review of PR #59 (all 38 mutations, 38 detected; provenance ok: True): P mutations 8/8 detected (P1, P2, P3, P4, P5, P6, P7, P8). Restored: backend 39 passed / 0 failed; frontend 46 passed / 0 failed. Record: docs/iec62304/records/risk_verification/CP-SLICE-THICKNESS-001_negative_controls_2026-10-23.json.",
+      "note": "Original vs processed and FLAIR rely on the viewer's existing filename conventions; a misnamed file can only yield 'not determinable' or the single FLAIR-named original, which the card names for the reader to check."
+    },
+    "RC-056": {
+      "description": "No false-lesion rate on the card at any thickness in this version (thick or unknown: not reliable without a >= 10-patient site calibration, none exists; thin: no calibration for the deployed segmenter); an evidence asset carrying a site calibration or shown=true is refused",
+      "hazard": "HAZ-015",
+      "status": "implemented",
+      "change": "CP-SLICE-THICKNESS-001 (DRAFT, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); feature flag OFF)",
+      "implementation": "frontend/src/utils/sliceThicknessReliability.ts (validateAsset, assessReliability); frontend/src/config/sliceThicknessReliability.v2.json (false_lesion_figure); SliceThicknessReliabilityCard.tsx",
+      "tests": [
+        "frontend/src/utils/sliceThicknessReliability.test.ts",
+        "frontend/src/components/SliceThicknessReliabilityCard.test.tsx"
+      ],
+      "requirement": "REQ-SAFE-035",
+      "negative_control": "Executed 2026-10-21 by scripts/safety/slice_thickness_negative_controls.py (one mutation at a time, every anchor asserted unique, original bytes restored and hash-checked); failing test names in docs/iec62304/records/risk_verification/CP-SLICE-THICKNESS-001_negative_controls_2026-10-21.json. R mutations: 3/3 detected (R1, R2, R3). Restored: backend 34 passed / 0 failed; frontend 42 passed / 0 failed. Re-executed 2026-10-23 on branch release/owner-signoff-2026-10 after the independent review of PR #59 (all 38 mutations, 38 detected; provenance ok: True): R mutations 3/3 detected (R1, R2, R3). Restored: backend 39 passed / 0 failed; frontend 46 passed / 0 failed. Record: docs/iec62304/records/risk_verification/CP-SLICE-THICKNESS-001_negative_controls_2026-10-23.json.",
+      "note": "The separate CALM-MS panel (research-only, dark) still shows FDR targets in its preset hints regardless of thickness; it must apply this control before it is ever enabled (RMF-001 §7.2)."
+    },
+    "RC-057": {
+      "description": "Detection note from the versioned evidence asset (v2.0.0) bound to its source record (commit cabb99d, SHA-256 of the record); only the thickness bands pre-registered in the Paper A v0.3 protocol, an asset with a post-hoc row or record refused (amended 2026-10-23 after the independent review of PR #59; v1.0.0 used post-hoc rows); evidence size on every row; 'found 8 in 10 / half of the time from size X' = worst case over every row of the band (and every thicker band for a lower bound); empty-list warning always; 3D FLAIR recommendation on thick or unknown thickness; scope statement",
+      "hazard": "HAZ-001",
+      "status": "implemented",
+      "change": "CP-SLICE-THICKNESS-001 (DRAFT, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); feature flag OFF)",
+      "implementation": "frontend/src/config/sliceThicknessReliability.v2.json; frontend/src/utils/sliceThicknessReliability.ts (validateAsset, smallestBinFrom, assessReliability); SliceThicknessReliabilityCard.tsx",
+      "tests": [
+        "frontend/src/utils/sliceThicknessReliability.test.ts",
+        "frontend/src/components/SliceThicknessReliabilityCard.test.tsx"
+      ],
+      "requirement": "REQ-SAFE-036, REQ-FUNC-098",
+      "negative_control": "Executed 2026-10-21 by scripts/safety/slice_thickness_negative_controls.py (one mutation at a time, every anchor asserted unique, original bytes restored and hash-checked); failing test names in docs/iec62304/records/risk_verification/CP-SLICE-THICKNESS-001_negative_controls_2026-10-21.json. D mutations: 9/9 detected (D1, D2, D3, D4, D5, D6, D7, D8, D9). Provenance: every figure, lesion, scan and patient count of the evidence asset re-derived from the research records at commit cabb99d (SHA-256 of both records match). Restored: backend 34 passed / 0 failed; frontend 42 passed / 0 failed. Re-executed 2026-10-23 on branch release/owner-signoff-2026-10 after the independent review of PR #59 (all 38 mutations, 38 detected; provenance ok: True): D mutations 11/11 detected (D1, D2, D3, D4, D5, D6, D7, D8, D9, D10, D11). Restored: backend 39 passed / 0 failed; frontend 46 passed / 0 failed. Record: docs/iec62304/records/risk_verification/CP-SLICE-THICKNESS-001_negative_controls_2026-10-23.json.",
+      "note": "Also HAZ-015. Figures are research data for one segmenter (FLAMeS 5-fold ensemble), not re-derived for the deployed segmenter; bands are confounded with site; the 1.5-4.5 mm band rests on one site (PediMS); the three post-hoc MSLesSeg rows of v1 are removed (asset v2). Usability not evaluated."
+    },
+    "RC-058": {
+      "description": "Feature flag VITE_ENABLE_SLICE_THICKNESS_RELIABILITY OFF by default; the card, its logic and the evidence asset are reachable only through it and loaded lazily",
+      "hazard": "HAZ-015",
+      "status": "implemented",
+      "change": "CP-SLICE-THICKNESS-001 (DRAFT, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); feature flag OFF)",
+      "implementation": "frontend/src/config/features.ts; frontend/src/components/LesionDashboard.tsx (lazy card behind the flag)",
+      "tests": [
+        "frontend/src/config/features.sliceThickness.test.ts"
+      ],
+      "requirement": "REQ-FUNC-098",
+      "negative_control": "Executed 2026-10-21 by scripts/safety/slice_thickness_negative_controls.py (one mutation at a time, every anchor asserted unique, original bytes restored and hash-checked); failing test names in docs/iec62304/records/risk_verification/CP-SLICE-THICKNESS-001_negative_controls_2026-10-21.json. F mutations: 3/3 detected (F1, F2, F3). Production build checked with the flag absent: docs/iec62304/records/risk_verification/CP-SLICE-THICKNESS-001_production_build_flag_check_2026-10-21.json. Restored: backend 34 passed / 0 failed; frontend 42 passed / 0 failed. Re-executed 2026-10-23 on branch release/owner-signoff-2026-10 after the independent review of PR #59 (all 38 mutations, 38 detected; provenance ok: True): F mutations 3/3 detected (F1, F2, F3). Restored: backend 39 passed / 0 failed; frontend 46 passed / 0 failed. Record: docs/iec62304/records/risk_verification/CP-SLICE-THICKNESS-001_negative_controls_2026-10-23.json."
+    },
+    "RC-059": {
+      "description": "MSMask path: the periventricular landmark is the lateral ventricles only (third ventricle separated from MSMask label 4 in a derived, versioned, hash-checked mask; fail closed if missing or altered); LST-AI zones path recomputed with the same rule or the deviation stated",
+      "hazard": "HAZ-005, HAZ-008",
+      "status": "not_implemented",
+      "implementation": null,
+      "tests": [],
+      "requirement": "REQ-FUNC-053",
+      "change": "PRB-001 (DRAFT, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); proposed 2026-10-22 from paper D, PR #61)",
+      "note": "NOT IMPLEMENTED. Proposed as CAPA-006 action CA-6.14 (owner decision; SPR-001 s4.1: Class C item). Today generate_zone_map_atlas uses MSMask label 4 whole (lateral + third ventricle) as the PV landmark; measured effect 3 of 3,992 expert lesions (0.08 %), 0 DIS decisions changed (paper D, established MS). Verification proposed in PRB-001 s6 (test_rc059_*, fail-closed tests, regression on paper D's 124 scans, negative controls)."
+    },
+    "RC-060": {
+      "description": "Longitudinal comparison: new/enlarging results are unconfirmed change candidates, never activity — no activity_candidate / dit_candidate / 'clinically significant' count in any response, no activity/DIT banner or NEDA badge, flags dropped by the assistant client, report template without an Active/Not active class, fixed localised notice on report drafts; (a) radiologist confirm/reject recorded with reader and time, bound to the SHA-256 of both masks, appended to an append-only history, read errors reported (never shown as awaiting review); (c) reader_confirmed_activity (MAGNIMS 2021, >= 1) only from confirmed candidates, in the view only - no reader decision ever reaches a report draft (review of PR #63)",
+      "hazard": "HAZ-007, HAZ-003",
+      "status": "implemented",
+      "implementation": "backend/app/services/longitudinal_candidate_safety.py (present_comparison, candidate_key, mask_binding, validate_decisions, validate_binding); backend/app/api/routes/segmentation_analysis.py (compare_longitudinal, review_longitudinal_candidates); backend/app/mcp/_backend.py (drop_unconfirmed_activity_flags); backend/app/mcp/ms_clinical_server.py (instructions); backend/app/services/brain_report_service.py (ms_longitudinal template, longitudinal prompt block — Class C, CAPA-013 s6); backend/app/api/routes/ai_report.py (longitudinal_notice); frontend/src/components/LongitudinalResultPanel.tsx; frontend/src/components/LongitudinalCompare.tsx; frontend/src/api/segmentation.ts; frontend/src/types/lesion.ts",
+      "tests": [
+        "tests/unit/test_capa013_longitudinal_candidates.py",
+        "frontend/src/components/LongitudinalCompare.capa013.test.tsx"
+      ],
+      "requirement": "REQ-SAFE-037 (a)-(c)",
+      "change": "CAPA-013 (DRAFT, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); branch fix/longitudinal-activity-display-capa013; merge after #52, #51, #53, #59, #49, #62)",
+      "negative_control": "Executed 2026-10-22 by scripts/safety/capa013_negative_controls.py (66 mutations, 66 detected, full run 2026-10-23 against the final tests, incl. B16-B20, E7-E9, A10-A16, F16-F22 for the independent review of PR #63; the first run (2026-10-22) had left F12 undetected, which led to the stronger language test; one mutation at a time, anchors asserted unique, files restored byte for byte); record docs/iec62304/records/risk_verification/CAPA-013_negative_controls_2026-10-22.json. Tests written before the fix, re-run on the PR #62 code by scripts/safety/capa013_tests_on_base.py (on PR #62: backend 50 of 52 fail, frontend 18 of 18; on ad144ba (PR #63 before the review fixes): backend 15 of 52, frontend 7 of 18 - records CAPA-013_tests_on_base_2026-10-22.json and CAPA-013_review1_tests_on_pr63_2026-10-23.json); record CAPA-013_tests_on_base_2026-10-22.json. RC-060 mutations: B1-B11, B13-B20, F1-F5, F20.",
+      "note": "Proposed by RMF-OBS-001 (PR #62) as CAPA-008 CA-8.11; implemented by CAPA-013 (CA-13.1-13.3) instead (owner decision D-2). The interim text avoids any activity word; the word appears only in the radiologist-confirmed statement. Only the latest decision per candidate is kept (PA-13.4). The report body is written by a language model: prompt and template constrained, notice appended in code, body not filtered. Independent review of PR #63 (2026-10-23): a forged confirmation reached the prompt in the first version (blocker 1) - now removed by the route and never stated by the builder; tests fail on ad144ba (CAPA-013_review1_tests_on_pr63_2026-10-23.json). Owner approval PENDING."
+    },
+    "RC-061": {
+      "description": "Longitudinal view states the measured false-candidate rate, in the reader's language, with source and date, from a versioned asset bound to the rule parameters (withheld when the rule differs or the asset is unusable), stated as measured (8.9 per patient, 46 % of all candidates - never 'most'); the assistant's text reads it from the asset; FLAIR subtraction worded as a signal, never a confirmation; every text of the view in en/es/de, no English default or English phrase, backend English caveat not shown",
+      "hazard": "HAZ-007",
+      "status": "implemented",
+      "implementation": "backend/app/services/assets/longitudinal_false_candidate_evidence.json (v1.0.0, source record docs/research/records/2026-10-21_paper_c_pilot.json @ 0501bd1, SHA-256 recorded); backend/app/services/longitudinal_candidate_safety.py (current_rule_parameters, load_false_candidate_evidence, evidence_sentence); frontend/src/components/LongitudinalResultPanel.tsx; frontend/src/components/LongitudinalCompare.tsx; frontend/src/i18n/locales/{en,es,de}.json; backend/app/api/routes/ai_report.py; backend/app/mcp/ms_clinical_server.py",
+      "tests": [
+        "tests/unit/test_capa013_longitudinal_candidates.py",
+        "frontend/src/components/LongitudinalCompare.capa013.test.tsx"
+      ],
+      "requirement": "REQ-SAFE-037 (d)",
+      "change": "CAPA-013 (DRAFT, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); branch fix/longitudinal-activity-display-capa013; merge after #52, #51, #53, #59, #49, #62)",
+      "negative_control": "Executed 2026-10-22 by scripts/safety/capa013_negative_controls.py (66 mutations, 66 detected, full run 2026-10-23 against the final tests, incl. B16-B20, E7-E9, A10-A16, F16-F22 for the independent review of PR #63; the first run (2026-10-22) had left F12 undetected, which led to the stronger language test; one mutation at a time, anchors asserted unique, files restored byte for byte); record docs/iec62304/records/risk_verification/CAPA-013_negative_controls_2026-10-22.json. Tests written before the fix, re-run on the PR #62 code by scripts/safety/capa013_tests_on_base.py (on PR #62: backend 50 of 52 fail, frontend 18 of 18; on ad144ba (PR #63 before the review fixes): backend 15 of 52, frontend 7 of 18 - records CAPA-013_tests_on_base_2026-10-22.json and CAPA-013_review1_tests_on_pr63_2026-10-23.json); record CAPA-013_tests_on_base_2026-10-22.json. RC-061 mutations: E1-E9, F6-F12, F15, F21.",
+      "note": "Proposed by RMF-OBS-001 as CAPA-008 CA-8.12; implemented by CAPA-013 (CA-13.4, CA-13.5). The rate is research evidence on highly active patients (paper C A4, 20 patients, FLAMeS 5-fold); no stable patients. Wording in es/de awaits radiologist review (CAPA-013 D-4). Owner approval PENDING."
+    },
+    "RC-062": {
+      "description": "Longitudinal comparison abstains when the acquisition of the two visits differs or cannot be established (manufacturer, model, field strength, 2D/3D, slice thickness; repetition/echo/inversion time and slice spacing when recorded; voxel size) or the visit order is unknown: no candidate, count, lesion load or count of either visit, burden change, SEL search or decision (view, API, report); reason and compared metadata stated; overlay kept. Same visit or visit 2 not later: refused. PACS import stores the acquisition record",
+      "hazard": "HAZ-007",
+      "status": "implemented",
+      "implementation": "backend/app/services/longitudinal_candidate_safety.py (compare_acquisitions, acquisition_from_dicom, read_source_acquisition, present_comparison); backend/app/api/routes/segmentation_analysis.py (_source_acquisition, compare_longitudinal); backend/app/services/dicomweb_service.py (instance 'acquisition'); frontend/src/components/LongitudinalResultPanel.tsx",
+      "tests": [
+        "tests/unit/test_capa013_longitudinal_candidates.py",
+        "frontend/src/components/LongitudinalCompare.capa013.test.tsx"
+      ],
+      "requirement": "REQ-SAFE-037 (e)",
+      "change": "CAPA-013 (DRAFT, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); branch fix/longitudinal-activity-display-capa013; merge after #52, #51, #53, #59, #49, #62)",
+      "negative_control": "Executed 2026-10-22 by scripts/safety/capa013_negative_controls.py (66 mutations, 66 detected, full run 2026-10-23 against the final tests, incl. B16-B20, E7-E9, A10-A16, F16-F22 for the independent review of PR #63; the first run (2026-10-22) had left F12 undetected, which led to the stronger language test; one mutation at a time, anchors asserted unique, files restored byte for byte); record docs/iec62304/records/risk_verification/CAPA-013_negative_controls_2026-10-22.json. Tests written before the fix, re-run on the PR #62 code by scripts/safety/capa013_tests_on_base.py (on PR #62: backend 50 of 52 fail, frontend 18 of 18; on ad144ba (PR #63 before the review fixes): backend 15 of 52, frontend 7 of 18 - records CAPA-013_tests_on_base_2026-10-22.json and CAPA-013_review1_tests_on_pr63_2026-10-23.json); record CAPA-013_tests_on_base_2026-10-22.json. RC-062 mutations: A1-A16, F13-F14, F16-F19, F22.",
+      "note": "Proposed by RMF-OBS-001 as CAPA-008 CA-8.13; implemented by CAPA-013 (CA-13.6). Images uploaded as NIfTI carry no acquisition record, so their comparisons abstain (CAPA-013 D-3, PA-13.3). The Firestore lookup and the PACS import field are verified by unit and source tests only. Owner approval PENDING."
     }
   },
   "unverified_controls_note": [

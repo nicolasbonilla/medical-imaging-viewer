@@ -32,6 +32,12 @@ from app.utils import (
     extract_nifti_metadata,
     describe_orientation,
 )
+# RC-054 (CP-SLICE-THICKNESS-001, DRAFT): acquisition slice thickness with its source and
+# state. Wraps — does not modify — the Class C nifti/dicom utilities; total (never raises).
+from app.services.acquisition_geometry import (
+    derive_from_dicom_dataset,
+    derive_from_nifti_image,
+)
 
 logger = get_logger(__name__)
 
@@ -117,7 +123,9 @@ class ImagingService(IImagingService):
                 pixel_spacing=[float(x) for x in ds.get('PixelSpacing', [1.0, 1.0])],
                 slice_thickness=float(ds.get('SliceThickness', 1.0)),
                 window_center=float(ds.get('WindowCenter', 0)) if 'WindowCenter' in ds else None,
-                window_width=float(ds.get('WindowWidth', 0)) if 'WindowWidth' in ds else None
+                window_width=float(ds.get('WindowWidth', 0)) if 'WindowWidth' in ds else None,
+                # RC-054: NOT the slice_thickness above (which defaults to 1.0 mm).
+                acquisition_geometry=derive_from_dicom_dataset(ds),
             )
 
             return pixel_array, metadata
@@ -175,6 +183,9 @@ class ImagingService(IImagingService):
                 # the viewport can label laterality. describe_orientation returns
                 # "UNKNOWN" rather than guessing when the affine is unusable.
                 anatomical_orientation=describe_orientation(img),
+                # RC-054: a NIfTI grid is at most a lower bound of the acquisition
+                # thickness (never "native"); a fine grid is "not determinable".
+                acquisition_geometry=derive_from_nifti_image(img),
             )
 
             return data, metadata

@@ -1,0 +1,67 @@
+{
+  "$comment": [
+    "Versioned evidence asset for RC-061 (CAPA-013, REQ-SAFE-037 (d), HAZ-007).",
+    "The measured false-candidate rate of the device's longitudinal new/enlarging rule, with its source record.",
+    "Read by backend/app/services/longitudinal_candidate_safety.py (load_false_candidate_evidence), served with",
+    "every longitudinal comparison, rendered by the view (LongitudinalResultPanel.tsx) in the reader's language",
+    "and by the report notice (ai_report.py). No component holds these numbers.",
+    "applies_to_rule must equal the rule in force (current_rule_parameters()); otherwise the rate is withheld",
+    "and the view says that no measured rate is available. Change the figures only with a new source record,",
+    "and bump 'version'."
+  ],
+  "asset_id": "LONG-FCE",
+  "version": "1.0.0",
+  "status": "DRAFT - PENDING owner approval (CAPA-013)",
+  "applies_to_rule": {
+    "new_lesion_min_diameter_mm": 3.0,
+    "enlarged_change_threshold": 0.2,
+    "match_iou_threshold": 0.3,
+    "subtraction_signal_sd": 0.5
+  },
+  "measurement": {
+    "measured_on": "2026-10-22",
+    "dataset": "open_ms longitudinal (public), expert-marked change masks",
+    "segmenter": "FLAMeS 5-fold ensemble",
+    "patients": 20,
+    "stable_patients": 0,
+    "patients_with_false_candidate": 20,
+    "patients_with_false_candidate_ci95": [0.83, 1.0],
+    "false_candidates_per_patient": 8.9,
+    "false_candidates_per_patient_ci95": [5.8, 12.6],
+    "patients_with_false_candidate_after_subtraction": 19,
+    "after_subtraction_per_patient": 5.4,
+    "after_subtraction_per_patient_ci95": [3.45, 7.7],
+    "false_candidates_of_all_candidates": [178, 390],
+    "lesion_sensitivity_of_candidate_set": 0.52,
+    "intervals": "patients: exact Clopper-Pearson 95 %; per patient: patient-cluster bootstrap 95 %"
+  },
+  "secondary_measurement": {
+    "dataset": "MSLesSeg first pairs (public), approximate truth (independently drawn masks, resampled to MNI)",
+    "patients": 25,
+    "patients_with_false_candidate": 25,
+    "false_candidates_per_patient": 8.24,
+    "false_candidates_per_patient_ci95": [6.28, 10.4],
+    "patients_with_false_candidate_after_subtraction": 25,
+    "after_subtraction_per_patient": 3.68,
+    "record_keys": "arms.A2.fixed.B_all, arms.A2.fixed.B_app_sub"
+  },
+  "source": {
+    "study": "Paper C pilot, pre-registered (protocol commit 6233b4b; arm A4 inputs logged before analysis, efb203f); arm A4 is a pre-registered secondary arm",
+    "record": "docs/research/records/2026-10-21_paper_c_pilot.json, keys arms.A4.fixed.B_all and arms.A4.fixed.B_app_sub",
+    "record_sha256": "3cbf0b531468caa44a84719b3917dcc6317a8a0e27494a0bfa9ed0300c5af27b",
+    "output": "docs/research/records/2026-10-21_paper_c_pilot_output.txt (=== A4 block: B_all, B_app_sub)",
+    "output_sha256": "df7bcae6fcb9478d3b3398a0adf9af932c621bbcc7ab3e510fdca220355f4168",
+    "results": "docs/research/paper-c/RESULTS.md sections 0 and 2b",
+    "branch": "research/paper-c-pilot (PR #60)",
+    "commit": "0501bd1",
+    "risk_file": "RMF-001 section 3.5, RMF-OBS-001",
+    "display": "Paper C pilot, arm A4 (PR #60)"
+  },
+  "limits": [
+    "No stable patients were studied: the rate of a false statement in a patient without real change is not measured.",
+    "All 20 open_ms patients had many expert-marked changes (446 expert lesions >= 3 mm); 2D 3-mm FLAIR.",
+    "Measured on FLAMeS masks; in production the comparison runs on whatever segmentations exist (manual, imported, other tools).",
+    "The device's own rigid registration was not exercised (the providers' co-registration was used).",
+    "n = 20 and 25; wide intervals."
+  ]
+}

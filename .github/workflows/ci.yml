@@ -69,8 +69,17 @@ jobs:
       # Belt and braces, matching the backend gate: the viewport safety
       # annotation is a risk control, so its absence must turn CI red rather
       # than simply reducing the test count.
-      - name: Risk-control tests must be present (RC-016 / RC-023)
-        run: npx vitest run --reporter=verbose src/components/ViewportSafetyOverlay.test.tsx
+      # CAPA-010: the viewer-level tests (3D, multi-panel, the real page, measurements) are
+      # risk-control tests too. The page test measures the layout in a real headless Chrome
+      # (present on ubuntu-latest) and FAILS in CI if no browser is found.
+      - name: Risk-control tests must be present (RC-016 / RC-023 / RC-037 / RC-038)
+        run: >-
+          npx vitest run --reporter=verbose
+          src/components/ViewportSafetyOverlay.test.tsx
+          src/components/ImageViewer3D.capa010.test.tsx
+          src/components/MultiPanelViewer.capa010.test.tsx
+          src/components/MeasurementOverlay.rc038.test.tsx
+          src/ViewerApp.capa010.test.tsx
 
   backend-tests:
     name: Backend Pytest (Class C Unit Verification)

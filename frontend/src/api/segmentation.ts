@@ -4,6 +4,7 @@
 
 import { apiClient } from '@/services/apiClient';
 import type {
+  AIProvenance,
   CreateSegmentationRequest,
   SegmentationResponse,
   PaintStroke,
@@ -34,6 +35,18 @@ export const segmentationAPI = {
       request
     );
     return response.data;
+  },
+
+  /**
+   * Record the clinician's explicit review of a saved AI draft (REQ-SAFE-030). Radiologists only. Bound to the
+   * exact stored mask: `maskSha256` is the SHA-256 of the mask the clinician reviewed (409 if it differs).
+   */
+  async confirmAiReview(segmentationId: string, maskSha256: string): Promise<AIProvenance> {
+    const response = await apiClient.post<{ success: boolean; ai_provenance: AIProvenance }>(
+      `${API_PREFIX}/segmentation/${segmentationId}/ai-review/confirm`,
+      { mask_sha256: maskSha256 },
+    );
+    return response.data.ai_provenance;
   },
 
   /**
@@ -187,6 +200,24 @@ export const segmentationAPI = {
     const response = await apiClient.post<LongitudinalResult>(
       `${API_PREFIX}/segmentation/longitudinal/compare`,
       { tp1, tp2 }
+    );
+    return response.data;
+  },
+
+  /**
+   * Record a radiologist's decision on longitudinal change candidates (CAPA-013, RC-060).
+   * Radiologists only (403 otherwise). Bound to the masks compared: `review_binding` is the one the
+   * comparison returned; 409 if either segmentation changed since.
+   */
+  async reviewLongitudinalCandidates(body: {
+    tp1: { type: 'segmentation'; id: string };
+    tp2: { type: 'segmentation'; id: string };
+    review_binding: { tp1_mask_sha256: string; tp2_mask_sha256: string };
+    decisions: { candidate_key: string; decision: 'confirmed' | 'rejected' }[];
+  }): Promise<{ success: boolean; recorded: number }> {
+    const response = await apiClient.post<{ success: boolean; recorded: number }>(
+      `${API_PREFIX}/segmentation/longitudinal/review`,
+      body,
     );
     return response.data;
   },

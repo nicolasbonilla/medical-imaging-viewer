@@ -71,6 +71,10 @@ frontend/dist/
 frontend/build/
 *.tsbuildinfo
 
+# In-browser AI model binaries (62 MB each) are release artefacts pinned by SHA-256,
+# never committed: docs/research/flames-in-browser/DESIGN.md §6
+frontend/public/models/flames/
+
 # Firebase
 .firebase/
 firebase-debug.log

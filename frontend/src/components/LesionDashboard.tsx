@@ -9,7 +9,7 @@
  * @module components/LesionDashboard
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
@@ -41,6 +41,11 @@ import {
   type PRLSummary,
 } from '@/types';
 import { regionEvidence, REGION_ABBREV } from '../utils/regionEvidence';
+import { FEATURES } from '../config/features';
+
+// CP-SLICE-THICKNESS-001 (DRAFT, RC-058): only reachable through the flag, loaded lazily so that
+// nothing of it (component, logic, evidence asset) is fetched while the flag is OFF.
+const SliceThicknessReliabilityCard = lazy(() => import('./SliceThicknessReliabilityCard'));
 
 
 interface LesionDashboardProps {
@@ -48,6 +53,10 @@ interface LesionDashboardProps {
   onNavigateToSlice?: (sliceIndex: number) => void;
   /** Called after auto-classify updates the mask on the server — parent should reload mask */
   onMaskUpdated?: () => void;
+  /** Storage key of the image this segmentation was drawn on (slice-thickness card, RC-055). */
+  sourceFileId?: string;
+  /** Instances of the current study (slice-thickness card: original FLAIR of a processed image). */
+  studyInstances?: ReadonlyArray<{ gcs_object_name: string; original_filename?: string }>;
 }
 
 // MAGNIMS region legend uses the Okabe-Ito colour-blind-safe categorical palette.
@@ -80,7 +89,7 @@ function regionBarWidth(vol: number, maxVol: number): string {
 }
 
 
-export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdated }: LesionDashboardProps) {
+export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdated, sourceFileId, studyInstances }: LesionDashboardProps) {
   const { t } = useTranslation();
   const reloadMaskCallback = useSegmentationStore((s) => s.reloadMaskCallback);
   const currentSegmentation = useSegmentationStore((s) => s.currentSegmentation);
@@ -352,6 +361,14 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
           <AlertCircle className="w-3 h-3" />
           <span>{error}</span>
         </div>
+      )}
+
+      {/* Reliability by slice thickness (CP-SLICE-THICKNESS-001, DRAFT, flag OFF) — placed
+          before the lesion table so it is read with the list, not after it. */}
+      {FEATURES.SLICE_THICKNESS_RELIABILITY && (
+        <Suspense fallback={null}>
+          <SliceThicknessReliabilityCard sourceFileId={sourceFileId} studyInstances={studyInstances} />
+        </Suspense>
       )}
 
       {/* ================================================================ */}

@@ -3,23 +3,34 @@ import type { LesionBoundingBox } from '@/types';
 
 type Vec3 = [number, number, number];
 
+/**
+ * RC-037 (CAPA-010, HAZ-006): NIfTI voxel (i, j, k) of a point reported by the lesion
+ * analysis.
+ *
+ * The analysis runs on the internal (k, a0, a1) segmentation mask (RC-031): its z is axis 0
+ * (= NIfTI k), y is axis 1 (= NIfTI i), x is axis 2 (= NIfTI j). The NIfTI voxel is
+ * therefore (y, x, z). Reading it as (x, y, z) swapped i and j and drew the 3D crosshair
+ * and box at the wrong place (possibly across the midline). The 2D canvas follows the same
+ * rule: y = image row (i), x = image column (j).
+ */
+export function lesionVoxelToNifti(z: number, y: number, x: number): Vec3 {
+  return [y, x, z];
+}
+
 /** Transform 8 bbox corners from voxel space to mm via NIfTI affine */
 function voxelCornersToMM(bbox: LesionBoundingBox, affine: number[][]): Vec3[] {
-  const voxCorners: Vec3[] = [
-    [bbox.x_min, bbox.y_min, bbox.z_min], // 0: bottom-front-left
-    [bbox.x_max, bbox.y_min, bbox.z_min], // 1: bottom-front-right
-    [bbox.x_min, bbox.y_max, bbox.z_min], // 2: bottom-back-left
-    [bbox.x_max, bbox.y_max, bbox.z_min], // 3: bottom-back-right
-    [bbox.x_min, bbox.y_min, bbox.z_max], // 4: top-front-left
-    [bbox.x_max, bbox.y_min, bbox.z_max], // 5: top-front-right
-    [bbox.x_min, bbox.y_max, bbox.z_max], // 6: top-back-left
-    [bbox.x_max, bbox.y_max, bbox.z_max], // 7: top-back-right
-  ];
+  // Corner bit layout used by BOX_EDGES: bit0 = x (j), bit1 = y (i), bit2 = z (k).
+  const voxCorners: Vec3[] = [];
+  for (const z of [bbox.z_min, bbox.z_max]) {
+    for (const y of [bbox.y_min, bbox.y_max]) {
+      for (const x of [bbox.x_min, bbox.x_max]) voxCorners.push(lesionVoxelToNifti(z, y, x));
+    }
+  }
 
-  return voxCorners.map(([x, y, z]) => [
-    affine[0][0] * x + affine[0][1] * y + affine[0][2] * z + affine[0][3],
-    affine[1][0] * x + affine[1][1] * y + affine[1][2] * z + affine[1][3],
-    affine[2][0] * x + affine[2][1] * y + affine[2][2] * z + affine[2][3],
+  return voxCorners.map(([i, j, k]) => [
+    affine[0][0] * i + affine[0][1] * j + affine[0][2] * k + affine[0][3],
+    affine[1][0] * i + affine[1][1] * j + affine[1][2] * k + affine[1][3],
+    affine[2][0] * i + affine[2][1] * j + affine[2][2] * k + affine[2][3],
   ]);
 }
 
@@ -111,8 +122,8 @@ const BOX_EDGES: [number, number][] = [
 
 /**
  * Create an MZ3 ArrayBuffer containing a wireframe bounding box mesh.
- * The box is defined by the lesion's bounding box in voxel space,
- * transformed to mm via the NIfTI affine matrix.
+ * The box is defined by the lesion's bounding box in the analysis' (z, y, x) voxel order,
+ * converted to NIfTI (i, j, k) and transformed to mm via the NIfTI affine matrix.
  */
 export function createBoundingBoxMZ3(
   bbox: LesionBoundingBox,
