@@ -453,7 +453,10 @@ def main():
 
     def flush():
         p = os.path.join(os.path.dirname(a.work.rstrip("/")) or ".", f"toolbench_manifest_{a.run_id}.json")
-        json.dump(manifest, open(p, "w"), indent=1)
+        # numpy scalars (e.g. int32 counts from the SAMSEG record) are not JSON serialisable: write them as
+        # plain numbers (pilot 2026-10-23 crashed here after the first SAMSEG case).
+        json.dump(manifest, open(p, "w"), indent=1,
+                  default=lambda o: o.item() if hasattr(o, "item") else str(o))
         bucket.blob(f"{a.prefix}/manifests/{a.run_id}.json").upload_from_filename(p)
 
     flush()
