@@ -10,6 +10,8 @@
  *    is refused.
  *  - RC-057: detection figures only from the versioned asset, equal to Paper A v0.3 Table 4 /
  *    spec section 3; the "found 8 in 10" size is the worst case over the band's evidence.
+ *    Asset v2 (2026-10-23, independent review of PR #59): only the pre-registered thickness
+ *    bands of the Paper A v0.3 protocol; post-hoc rows are refused.
  *
  * Negative controls: scripts/safety/slice_thickness_negative_controls.py.
  */
@@ -204,21 +206,51 @@ describe('RC-057 — detection figures from the versioned asset, worst case', ()
   });
 
   it('rc057 the asset is bound to its source record (PR #54, commit, SHA-256 of each record)', () => {
+    expect(ASSET.asset_version).toBe('2.0.0');
     expect(ASSET.source.pull_request).toBe(54);
     expect(ASSET.source.commit).toMatch(/^[0-9a-f]{40}$/);
-    expect(ASSET.source.records).toHaveLength(2);
-    for (const r of ASSET.source.records) expect(r.sha256).toMatch(/^[0-9a-f]{64}$/);
-    // The MSLesSeg native-thickness rows are post hoc, and say so.
-    for (const id of ['MSL_2', 'MSL_3', 'MSL_45']) expect(ASSET.evidence_rows[id].post_hoc).toBe(true);
-    for (const id of ['B1_grid', 'B2', 'B3', 'B4']) expect(ASSET.evidence_rows[id].post_hoc).toBe(false);
+    // Only the pre-registered record; the post-hoc MSLesSeg stratification stays in the research record.
+    expect(ASSET.source.records).toHaveLength(1);
+    for (const r of ASSET.source.records) {
+      expect(r.sha256).toMatch(/^[0-9a-f]{64}$/);
+      expect(r.post_hoc).toBe(false);
+    }
+    expect(Object.keys(ASSET.evidence_rows).sort()).toEqual(['B1_grid', 'B2', 'B3', 'B4']);
+    for (const row of Object.values(ASSET.evidence_rows)) expect(row.post_hoc).toBe(false);
+  });
+
+  it('rc057 only the pre-registered bands of the protocol (B1 <= 1.5, B2 (1.5, 4.5], B3 (4.5, 6.5], B4 > 6.5 mm)', () => {
+    expect(ASSET.bands.map((b) => [b.id, b.min_mm, b.max_mm, b.rows])).toEqual([
+      ['B1', 0, 1.5, ['B1_grid']],
+      ['B2', 1.5, 4.5, ['B2']],
+      ['B3', 4.5, 6.5, ['B3']],
+      ['B4', 6.5, 20, ['B4']],
+    ]);
+  });
+
+  it('rc057 an asset carrying a post-hoc evidence row or record is refused (no figures at all)', () => {
+    const withPostHoc = {
+      ...ASSET,
+      evidence_rows: { ...ASSET.evidence_rows, MSL_2: { ...ASSET.evidence_rows.B2, post_hoc: true } },
+      bands: ASSET.bands.map((b) => (b.id === 'B2' ? { ...b, rows: ['MSL_2'] } : b)),
+    } as ReliabilityAsset;
+    expect(validateAsset(withPostHoc).length).toBeGreaterThan(0);
+    expect(assessReliability({ kind: 'band', basis: 'native', mm: 2, file: 'f', viaOriginal: false }, withPostHoc).kind).toBe('unavailable');
+    const postHocRecord = { ...ASSET, source: { ...ASSET.source, records: [{ ...ASSET.source.records[0], post_hoc: true }] } } as ReliabilityAsset;
+    expect(validateAsset(postHocRecord).length).toBeGreaterThan(0);
+  });
+
+  it('rc057 a natively 2 mm study is not told "8 in 10 from 50 mm3" (post-hoc row): no size, as pre-registered', () => {
+    const v = nativeBand(2.0);
+    expect(v.bands.map((b) => b.id)).toEqual(['B2']);
+    expect(v.rows).toEqual(['B2']);
+    expect(v.reliableBin).toBeNull();
+    expect(v.halfBin).toBe(1);
   });
 
   it('rc057 the asset reproduces the paper (spec section 3, rounded %)', () => {
     const pct = (id: string) => ASSET.evidence_rows[id].detection.map((d) => Math.round(d * 100));
     expect(pct('B1_grid')).toEqual([36, 72, 81, 87, 90]);
-    expect(pct('MSL_2')).toEqual([37, 74, 86, 91, 98]);
-    expect(pct('MSL_3')).toEqual([29, 65, 77, 83, 86]);
-    expect(pct('MSL_45')).toEqual([16, 39, 73, 82, 71]);
     expect(pct('B2')).toEqual([37, 67, 76, 77, 80]);
     expect(pct('B3')).toEqual([13, 45, 59, 66, 76]);
     expect(pct('B4')).toEqual([21, 43, 69, 72, 70]);
@@ -241,35 +273,35 @@ describe('RC-057 — detection figures from the versioned asset, worst case', ()
       const v = nativeBand(mm);
       return [v.bands.map((b) => b.id).join(','), v.reliableBin, v.halfBin];
     };
-    expect(at(1.0)).toEqual(['T0', 2, 1]); //  >= 50 mm3 (8 in 10), >= 14 mm3 (half)
-    expect(at(2.0)).toEqual(['T1', 2, 1]);
-    expect(at(3.0)).toEqual(['T2', 3, 1]); //  >= 150 mm3
-    expect(at(3.9)).toEqual(['T3', null, 2]); // PediMS half from 14, MSLesSeg 4-5 from 50 -> 50
-    expect(at(5.0)).toEqual(['T4', null, 2]);
-    expect(at(7.2)).toEqual(['T5', null, 2]);
+    expect(at(1.0)).toEqual(['B1', 2, 1]); //  >= 50 mm3 (8 in 10), >= 14 mm3 (half)
+    expect(at(2.0)).toEqual(['B2', null, 1]); // PediMS: no size 8 in 10, half from 14 mm3
+    expect(at(3.0)).toEqual(['B2', null, 1]);
+    expect(at(3.9)).toEqual(['B2', null, 1]);
+    expect(at(5.0)).toEqual(['B3', null, 2]);
+    expect(at(7.2)).toEqual(['B4', null, 2]);
   });
 
   it('rc057 band edges: 1.5 is thin, anything above is thick', () => {
     const ids = (mm: number) => nativeBand(mm).bands.map((b) => b.id);
-    expect(ids(1.5)).toEqual(['T0']);
-    expect(ids(1.51)).toEqual(['T1']);
-    expect(ids(4.5)).toEqual(['T3']);
-    expect(ids(4.51)).toEqual(['T4']);
-    expect(ids(6.5)).toEqual(['T4']);
-    expect(ids(6.51)).toEqual(['T5']);
-    expect(ids(20)).toEqual(['T5']);
+    expect(ids(1.5)).toEqual(['B1']);
+    expect(ids(1.51)).toEqual(['B2']);
+    expect(ids(4.5)).toEqual(['B2']);
+    expect(ids(4.51)).toEqual(['B3']);
+    expect(ids(6.5)).toEqual(['B3']);
+    expect(ids(6.51)).toEqual(['B4']);
+    expect(ids(20)).toEqual(['B4']);
     expect(nativeBand(1.5).thick).toBe(false);
     expect(nativeBand(1.51).thick).toBe(true);
   });
 
   it('rc057 a lower bound uses its band and every thicker band', () => {
     const v = lowerBand(2.0);
-    expect(v.bands.map((b) => b.id)).toEqual(['T1', 'T2', 'T3', 'T4', 'T5']);
+    expect(v.bands.map((b) => b.id)).toEqual(['B2', 'B3', 'B4']);
     expect(v.reliableBin).toBeNull();
     expect(v.halfBin).toBe(2);
     expect(v.thick).toBe(true);
-    expect(lowerBand(6.0).bands.map((b) => b.id)).toEqual(['T4', 'T5']);
-    expect(lowerBand(6.0).rows).toEqual(['B3', 'MSL_45', 'B4']);
+    expect(lowerBand(6.0).bands.map((b) => b.id)).toEqual(['B3', 'B4']);
+    expect(lowerBand(6.0).rows).toEqual(['B3', 'B4']);
   });
 
   it('rc057 not determinable shows no band and no figure', () => {

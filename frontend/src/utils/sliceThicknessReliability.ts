@@ -15,13 +15,15 @@
  *    this version (thick or unknown: not reliable without a >= 10-patient site calibration,
  *    none exists; thin: no calibration for the deployed segmenter).
  *  - RC-057: detection figures come only from the versioned asset
- *    `config/sliceThicknessReliability.v1.json` (bound to its source record); the smallest
+ *    `config/sliceThicknessReliability.v2.json` (bound to its source record); the smallest
  *    size "found 8 times in 10" is computed, worst case over every evidence row of the band
- *    (and, for a lower bound, of every thicker band).
+ *    (and, for a lower bound, of every thicker band). Only the thickness bands pre-registered
+ *    in the Paper A v0.3 protocol are used: an asset with a post-hoc row or record is refused
+ *    (v2, independent review of PR #59, 2026-10-23).
  *
  * @module utils/sliceThicknessReliability
  */
-import ASSET_JSON from '../config/sliceThicknessReliability.v1.json';
+import ASSET_JSON from '../config/sliceThicknessReliability.v2.json';
 import { isPreprocessedInstance } from './instanceClassification';
 import { detectSequence } from './sequenceDetection';
 
@@ -84,7 +86,10 @@ export function validateAsset(a: ReliabilityAsset): string[] {
     problems.push('site_calibration must be null: displaying a calibrated figure is not implemented');
   }
   if (!(a.false_lesion_figure?.min_site_calibration_patients >= 10)) problems.push('min site calibration < 10');
+  // Only pre-registered evidence may reach a clinician: post-hoc rows or records are refused.
+  if (!a.source?.records?.length || a.source.records.some((r) => r.post_hoc !== false)) problems.push('post-hoc source record');
   for (const [id, row] of Object.entries(a.evidence_rows ?? {})) {
+    if (row.post_hoc !== false) problems.push(`${id}: post-hoc evidence row`);
     if (row.detection?.length !== nBins || row.lesions?.length !== nBins) problems.push(`${id}: bin count`);
     if (!row.detection?.every((d) => Number.isFinite(d) && d >= 0 && d <= 1)) problems.push(`${id}: detection range`);
     if (!(row.scans > 0 && row.patients > 0 && row.sites > 0)) problems.push(`${id}: evidence size`);

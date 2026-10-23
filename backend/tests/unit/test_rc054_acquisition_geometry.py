@@ -42,7 +42,7 @@ from app.services.imaging_service import ImagingService
 
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
 REPO_ROOT = BACKEND_ROOT.parent
-ASSET = REPO_ROOT / "frontend" / "src" / "config" / "sliceThicknessReliability.v1.json"
+ASSET = REPO_ROOT / "frontend" / "src" / "config" / "sliceThicknessReliability.v2.json"
 
 
 # ─── fixtures ─────────────────────────────────────────────────────────────────────────

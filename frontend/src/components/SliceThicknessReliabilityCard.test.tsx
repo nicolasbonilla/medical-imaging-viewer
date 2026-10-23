@@ -148,13 +148,14 @@ describe('RC-057 — detection note from the versioned evidence', () => {
     await card();
     expect(screen.getByTestId('stc-reliable').textContent).toMatch(/no lesion size is found 8 times in 10/);
     expect(screen.getByTestId('stc-half').textContent).toMatch(/50 mm³ or more/);
-    // Evidence rows of the 4.5-6.5 mm band, with their size and the post-hoc marker.
+    // Evidence row of the pre-registered 4.5-6.5 mm band, with its size; no post-hoc row (asset v2).
     expect(screen.getByTestId('stc-row-B3').textContent).toMatch(/76 scans, 76 patients, 2 site/);
     expect(screen.getByTestId('stc-row-B3').textContent).toContain('13 %');
-    expect(screen.getByTestId('stc-row-MSL_45').textContent).toMatch(/after the results were seen/);
+    expect(screen.queryByTestId('stc-row-MSL_45')).toBeNull();
+    expect(screen.getByTestId('stc-table').textContent).not.toMatch(/after the results were seen/);
     expect(screen.getByTestId('stc-guidance').textContent).toMatch(/does not mean that there are no lesions/);
     expect(screen.getByTestId('stc-recommend-3d').textContent).toMatch(/3D FLAIR/);
-    expect(screen.getByTestId('stc-provenance').textContent).toMatch(/v1\.0\.0.*PR #54 cabb99d/);
+    expect(screen.getByTestId('stc-provenance').textContent).toMatch(/v2\.0\.0.*PR #54 cabb99d/);
     expect(screen.getByTestId('stc-card').textContent).toMatch(/not validated for this site/);
   });
 
@@ -164,9 +165,24 @@ describe('RC-057 — detection note from the versioned evidence', () => {
     await card();
     expect(screen.getByTestId('stc-thickness').dataset.state).toBe('at_least');
     expect(screen.getByTestId('stc-thickness').textContent).toMatch(/at least 3 mm/);
-    expect(screen.getByTestId('stc-band').textContent).toBe('2.5-3.5 mm or thicker');
+    expect(screen.getByTestId('stc-band').textContent).toBe('1.5-4.5 mm or thicker');
     expect(screen.getByTestId('stc-reliable').textContent).toMatch(/no lesion size/);
     expect(screen.getByTestId('stc-row-B4')).toBeTruthy();
+    expect(screen.getByTestId('stc-recommend-3d')).toBeTruthy();
+  });
+
+  it('rc057 natively 2 mm: the pre-registered 1.5-4.5 mm band says no size 8 in 10 (no post-hoc "from 50 mm³")', async () => {
+    // Independent review of PR #59: v1 showed "8 times in 10 from 50 mm³" here, from a row added
+    // after the results were seen; the pre-registered band (PediMS, about 4 mm) reaches 0.8 at no size.
+    useViewerStore.setState({ currentSeries: series(ORIG, { acquisition_geometry: dicomNative(2) }) });
+    renderCard({ sourceFileId: ORIG, studyInstances: INSTANCES });
+    await card();
+    expect(screen.getByTestId('stc-band').textContent).toBe('1.5-4.5 mm');
+    expect(screen.getByTestId('stc-reliable').textContent).toMatch(/no lesion size is found 8 times in 10/);
+    expect(screen.getByTestId('stc-reliable').textContent).not.toMatch(/50 mm³/);
+    expect(screen.getByTestId('stc-half').textContent).toMatch(/14 mm³ or more/);
+    expect(screen.getByTestId('stc-row-B2')).toBeTruthy();
+    expect(screen.queryByTestId('stc-row-MSL_2')).toBeNull();
     expect(screen.getByTestId('stc-recommend-3d')).toBeTruthy();
   });
 

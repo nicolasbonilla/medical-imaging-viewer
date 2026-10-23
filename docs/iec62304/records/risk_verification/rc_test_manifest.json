@@ -638,7 +638,7 @@
       "hazard": "HAZ-015",
       "status": "implemented",
       "change": "CP-SLICE-THICKNESS-001 (DRAFT, PENDING owner approval; feature flag OFF)",
-      "implementation": "frontend/src/utils/sliceThicknessReliability.ts (validateAsset, assessReliability); frontend/src/config/sliceThicknessReliability.v1.json (false_lesion_figure); SliceThicknessReliabilityCard.tsx",
+      "implementation": "frontend/src/utils/sliceThicknessReliability.ts (validateAsset, assessReliability); frontend/src/config/sliceThicknessReliability.v2.json (false_lesion_figure); SliceThicknessReliabilityCard.tsx",
       "tests": [
         "frontend/src/utils/sliceThicknessReliability.test.ts",
         "frontend/src/components/SliceThicknessReliabilityCard.test.tsx"
@@ -648,18 +648,18 @@
       "note": "The separate CALM-MS panel (research-only, dark) still shows FDR targets in its preset hints regardless of thickness; it must apply this control before it is ever enabled (RMF-001 §7.2)."
     },
     "RC-057": {
-      "description": "Detection note from the versioned evidence asset (v1.0.0) bound to its source record (commit cabb99d, SHA-256 of both records); evidence size and post-hoc marker on every row; 'found 8 in 10 / half of the time from size X' = worst case over every row of the band (and every thicker band for a lower bound); empty-list warning always; 3D FLAIR recommendation on thick or unknown thickness; scope statement",
+      "description": "Detection note from the versioned evidence asset (v2.0.0) bound to its source record (commit cabb99d, SHA-256 of the record); only the thickness bands pre-registered in the Paper A v0.3 protocol, an asset with a post-hoc row or record refused (amended 2026-10-23 after the independent review of PR #59; v1.0.0 used post-hoc rows); evidence size on every row; 'found 8 in 10 / half of the time from size X' = worst case over every row of the band (and every thicker band for a lower bound); empty-list warning always; 3D FLAIR recommendation on thick or unknown thickness; scope statement",
       "hazard": "HAZ-001",
       "status": "implemented",
       "change": "CP-SLICE-THICKNESS-001 (DRAFT, PENDING owner approval; feature flag OFF)",
-      "implementation": "frontend/src/config/sliceThicknessReliability.v1.json; frontend/src/utils/sliceThicknessReliability.ts (smallestBinFrom, assessReliability); SliceThicknessReliabilityCard.tsx",
+      "implementation": "frontend/src/config/sliceThicknessReliability.v2.json; frontend/src/utils/sliceThicknessReliability.ts (validateAsset, smallestBinFrom, assessReliability); SliceThicknessReliabilityCard.tsx",
       "tests": [
         "frontend/src/utils/sliceThicknessReliability.test.ts",
         "frontend/src/components/SliceThicknessReliabilityCard.test.tsx"
       ],
       "requirement": "REQ-SAFE-036, REQ-FUNC-098",
       "negative_control": "Executed 2026-10-21 by scripts/safety/slice_thickness_negative_controls.py (one mutation at a time, every anchor asserted unique, original bytes restored and hash-checked); failing test names in docs/iec62304/records/risk_verification/CP-SLICE-THICKNESS-001_negative_controls_2026-10-21.json. D mutations: 9/9 detected (D1, D2, D3, D4, D5, D6, D7, D8, D9). Provenance: every figure, lesion, scan and patient count of the evidence asset re-derived from the research records at commit cabb99d (SHA-256 of both records match). Restored: backend 34 passed / 0 failed; frontend 42 passed / 0 failed.",
-      "note": "Also HAZ-015. Figures are research data for one segmenter (FLAMeS 5-fold ensemble), not re-derived for the deployed segmenter; bands are confounded with site; three MSLesSeg rows are post hoc. Usability not evaluated."
+      "note": "Also HAZ-015. Figures are research data for one segmenter (FLAMeS 5-fold ensemble), not re-derived for the deployed segmenter; bands are confounded with site; the 1.5-4.5 mm band rests on one site (PediMS); the three post-hoc MSLesSeg rows of v1 are removed (asset v2). Usability not evaluated."
     },
     "RC-058": {
       "description": "Feature flag VITE_ENABLE_SLICE_THICKNESS_RELIABILITY OFF by default; the card, its logic and the evidence asset are reachable only through it and loaded lazily",

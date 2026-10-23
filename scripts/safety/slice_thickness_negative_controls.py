@@ -14,7 +14,8 @@ patient count of the asset against the record.
 Run from the repository root with the backend virtual environment's Python (needs
 frontend/node_modules and the research commit object in the local git store):
     backend/venv/Scripts/python.exe scripts/safety/slice_thickness_negative_controls.py
-Output: docs/iec62304/records/risk_verification/CP-SLICE-THICKNESS-001_negative_controls_2026-10-21.json
+Output: docs/iec62304/records/risk_verification/CP-SLICE-THICKNESS-001_negative_controls_2026-10-23.json
+(re-run after the independent review of PR #59; the 2026-10-21 record is kept as history)
 NEVER run this while anything else edits the files it mutates (it restores a snapshot).
 """
 import datetime
@@ -28,7 +29,7 @@ import xml.etree.ElementTree as ET
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 os.chdir(ROOT)
-OUT = "docs/iec62304/records/risk_verification/CP-SLICE-THICKNESS-001_negative_controls_2026-10-21.json"
+OUT = "docs/iec62304/records/risk_verification/CP-SLICE-THICKNESS-001_negative_controls_2026-10-23.json"
 
 BACKEND_TESTS = ["tests/unit/test_rc054_acquisition_geometry.py"]
 FRONTEND_TESTS = [
@@ -44,7 +45,7 @@ FLAGS = F + "config/features.ts"
 DASH = F + "components/LesionDashboard.tsx"
 CARD = F + "components/SliceThicknessReliabilityCard.tsx"
 LOGIC = F + "utils/sliceThicknessReliability.ts"
-ASSET = F + "config/sliceThicknessReliability.v1.json"
+ASSET = F + "config/sliceThicknessReliability.v2.json"
 
 NIFTI_TRY = (
     "    try:\n"
@@ -134,8 +135,10 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
                                      "an 'at least' thickness read as exactly that thickness", "frontend"),
     "D4_asset_figure_changed": ([(ASSET, '"detection": [0.125, 0.4494, 0.5932, 0.6553, 0.7551],', '"detection": [0.125, 0.4494, 0.8932, 0.8553, 0.8551],')],
                                 "an evidence figure no longer equal to the paper", "frontend"),
-    "D5_post_hoc_marker_dropped": ([(CARD, "{row.post_hoc ? ` · ${m.post_hoc}` : ''}", "{''}")],
-                                   "post-hoc rows not marked as such", "frontend"),
+    # D5 (v1: post-hoc marker dropped) replaced 2026-10-23: asset v2 holds no post-hoc row and the
+    # logic refuses one (independent review of PR #59); D5, D10 and D11 test that refusal and the bands.
+    "D5_post_hoc_row_accepted": ([(LOGIC, "    if (row.post_hoc !== false) problems.push(`${id}: post-hoc evidence row`);\n", "")],
+                                 "an evidence row added after the results were seen accepted in the clinical asset", "frontend"),
     "D6_evidence_size_dropped": ([(CARD, "                        {fill(m.evidence, { scans: row.scans, patients: row.patients, sites: row.sites })}\n", "")],
                                  "figures shown without their evidence size", "frontend"),
     "D7_empty_list_warning_dropped": ([(CARD, "        <p>{m.empty_list}</p>\n", "")],
@@ -145,6 +148,11 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "D9_unknown_guessed_thin": ([(LOGIC, "    return { kind: 'not_determinable', thick: true, ...empty, reasons: res.reasons, falseLesionFigure: { shown: false, reason: 'thick_or_unknown' } };\n",
                                   "    return assessReliability({ kind: 'band', basis: 'native', mm: 1, file: '', viaOriginal: false }, a);\n")],
                                 "an unknown thickness shown as a thin-slice band (a guess)", "frontend"),
+    "D10_post_hoc_record_accepted": ([(LOGIC, "  if (!a.source?.records?.length || a.source.records.some((r) => r.post_hoc !== false)) problems.push('post-hoc source record');\n", "")],
+                                     "a post-hoc research record accepted as a source of the clinical asset", "frontend"),
+    "D11_band_not_preregistered": ([(ASSET, '{ "id": "B2", "min_mm": 1.5, "max_mm": 4.5, "thick": true, "rows": ["B2"],',
+                                     '{ "id": "B2", "min_mm": 1.5, "max_mm": 4.5, "thick": true, "rows": ["B1_grid"],')],
+                                   "a thickness band fed by evidence that is not its pre-registered band (v1 used post-hoc rows at 1.5-3.5 mm)", "frontend"),
     # ── RC-058: feature flag ──
     "F1_flag_default_on": ([(FLAGS, "getFeatureFlag('ENABLE_SLICE_THICKNESS_RELIABILITY', false)", "getFeatureFlag('ENABLE_SLICE_THICKNESS_RELIABILITY', true)")],
                            "the card ON by default", "frontend"),

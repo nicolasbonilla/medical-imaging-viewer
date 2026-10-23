@@ -11,7 +11,8 @@
  *    — never the legacy `slice_thickness` field and never a default;
  *  - the thickness band, and from which lesion size research data found lesions 8 times in 10
  *    and half of the time, worst case over the band's evidence rows (RC-057), with the evidence
- *    size, a post-hoc marker and the source record of every number;
+ *    size and the source record of every number (pre-registered bands only; post-hoc evidence
+ *    is refused by the asset check);
  *  - plain guidance: an empty or short list does not mean no lesions; on thick or unknown
  *    thickness, a 3D FLAIR is recommended for small lesions;
  *  - NO false-lesion rate, at any thickness (RC-056).
@@ -209,7 +210,6 @@ function CardBody({ view, m, lang }: { view: ReliabilityView; m: Messages; lang:
                       {row.label[lang]}
                       <span className="block text-gray-500">
                         {fill(m.evidence, { scans: row.scans, patients: row.patients, sites: row.sites })}
-                        {row.post_hoc ? ` · ${m.post_hoc}` : ''}
                       </span>
                     </th>
                     {row.detection.map((d, i) => (
