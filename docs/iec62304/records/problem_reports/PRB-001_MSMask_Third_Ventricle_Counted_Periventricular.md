@@ -10,7 +10,7 @@ the owner (as CAPA-006 did); the agent did not raise one.*
 **Reporter**: Paper D research analysis (PR #61, branch `research/paper-d-dis-fragility`, `docs/research/paper-d/RESULTS.md` §7 and §11, record `docs/research/paper-d/records/results_v1.json` key `S4_ventricles`); record drafted by the AI coding agent
 **Date**: 2026-10-22
 **Version**: `main` @ `6209131`; `backend/app/services/ms_region_classifier.py` is identical on this branch's base (`af3fc32`). Present since the MSMask ventricle rule was introduced (`67fa336`, 2026-02-28)
-**Severity**: **Minor — safety-related** (proposed; rationale in §5). **PENDING owner approval.**
+**Severity**: **Critical — safety-related** (proposed; SPR-001 §2 classes a problem with a safety impact as Critical; raised from Minor on 2026-10-23 after the independent review of PR #62; rationale in §5). **PENDING owner approval.**
 **Status**: OPEN — DRAFT. Fix proposed, **not implemented** (`ms_region_classifier.py` is a Class C module; CLAUDE.md requires a code review before any change).
 
 **Description**: REQ-FUNC-053 defines periventricular (PV) as "abutting the **lateral** ventricles", as do the module docstring (`ms_region_classifier.py` line 8), DD-CLS-001 (DDS-001 §DD-CLS-001), IFU-001 §10.3, CER-001 and GSPR-001, following Filippi et al. 2019 ("lesions touching the third and fourth ventricles … should not be counted as periventricular"). On the MSMask atlas path (REQ-FUNC-053 path 3), the PV landmark is the whole of MSMask label 4 "Ventricles", which holds the lateral **and the third** ventricle. White matter abutting the third ventricle therefore becomes PV zone, and a lesion touching only the third ventricle is classified **periventricular**. The rule is inherited from LST-AI v1 (the atlas and its annotation rule).
@@ -52,7 +52,7 @@ Measured in paper D (3,992 expert lesions >= 3 mm³, 124 scans, 85 patients; MSL
 ## 1. Triage (SPR-001 §3.1)
 
 - **Reproducible**: yes, by construction (the code reads label 4 whole) and measured with the device's own functions in paper D.
-- **Severity**: proposed Minor, safety-related (§5).
+- **Severity**: proposed Critical, safety-related (§5; raised from Minor on 2026-10-23 after the independent review of PR #62).
 - **Assigned to**: *(to be assigned — Class C change; owner decision)*.
 
 ## 2. Root Cause (SPR-001 §3.2)
@@ -96,7 +96,7 @@ Paper D §11 recommends problem reports for two more items. They are recorded he
 
 ## 5. Severity Rationale (SPR-001 §2)
 
-SPR-001 has three levels: Critical (safety impact, data corruption, complete failure), Major (significant functional loss, no workaround), Minor (minor inconvenience, workaround available). None fits a low-frequency nonconformity in a safety-related function exactly. Proposed: **Minor, flagged safety-related**, because:
+SPR-001 has three levels: Critical (safety impact, data corruption, complete failure), Major (significant functional loss, no workaround), Minor (minor inconvenience, workaround available). This problem has a safety impact (it can contribute to HAZ-005 and, through the PV count, HAZ-008), so SPR-001 §2 classes it **Critical**. Proposed: **Critical, safety-related** (raised from Minor on 2026-10-23 after the independent review of PR #62; the first draft proposed Minor because no level fits a low-frequency nonconformity exactly). The facts that argued for Minor bear on the probability and urgency of harm, not on the class:
 - the effect measured with the device's own code is small: 3 of 3,992 lesions (0.08 %) change region, and 0 of 124 DIS decisions change, under two different atlas placements;
 - a workaround exists: every region comes with its contact evidence (RC-010 amended), and the region classification is decision support that a radiologist reviews (intended use);
 - the path is used only on MNI-grid images (RC-032).

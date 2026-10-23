@@ -3,7 +3,7 @@
 **CAPA ID**: CAPA-013
 **Date Opened**: 2026-10-22 (DRAFT — opening, severity and actions **PENDING owner approval**)
 **Source**: RMF-OBS-001 (RMF-001 §3.5, PR #62), from the paper C pilot (PR #60, branch `research/paper-c-pilot` @ `0501bd1`: `docs/research/paper-c/RESULTS.md` §0, §2b; record `docs/research/records/2026-10-21_paper_c_pilot.json`, keys `arms.A4.fixed.B_all` / `B_app_sub`, SHA-256 `3cbf0b53…af27b`). Every finding below was re-checked in the code of PR #62 (`qms/capa012-and-problem-reports` @ `2018277`) on 2026-10-22 and reproduced by tests written before the fix (§5).
-**Severity**: **MAJOR, safety-related** (proposed, as RMF-OBS-001; QP-002 §5 / SPR-001 §2). To be treated as **Critical before any clinical use** of the longitudinal comparison. Not proposed as Critical now because the device is not in clinical use, the counts were labelled candidates, and harm needs a reader to accept a false candidate.
+**Severity**: **CRITICAL, safety-related** (proposed, as RMF-OBS-001; QP-002 §5: patient safety risk / SPR-001 §2: safety impact; raised from Major on 2026-10-23 together with RMF-OBS-001 after the independent review of PR #62). The first draft proposed Major because the device is not in clinical use, the counts were labelled candidates, and harm needs a reader to accept a false candidate; those facts lower the probability of harm, not the class.
 **Owner**: *(to be assigned — a person; the AI coding agent cannot own a CAPA)*
 **Status**: DRAFT. Interim controls implemented on branch `fix/longitudinal-activity-display-capa013` (draft PR #63, based on PR #62; **merge after #52, #51, #53, #59, #49 and #62**). Nothing merged, nothing deployed. **Owner approval: PENDING owner approval.** Effectiveness is not verified.
 **Identifiers**: RC-060, RC-061, RC-062 and REQ-SAFE-037 are the identifiers PR #62 reserved for exactly these controls (proposed there, NOT IMPLEMENTED). They are implemented here under those identifiers rather than renumbered, so each control keeps one identifier. The next free identifiers after PR #62 were checked on every open branch on 2026-10-22 (RC-063, REQ-SAFE-038, REQ-FUNC-100, CAPA-013: unused; RC-054..058, REQ-SAFE-034..036, REQ-FUNC-098/099 are reserved by PR #59) — none is needed. Document versions follow PR #62's: **SRS 1.10, RMF 1.12, TM 1.9** (drafts).
@@ -137,7 +137,7 @@ Verification after the corrections: CAPA-013 files 52/52 and 18/18; whole backen
 
 | ID | Decision |
 |---|---|
-| D-1 | Severity: Major, safety-related (proposed); Critical before clinical use |
+| D-1 | Severity: Critical, safety-related (proposed; raised from Major on 2026-10-23 with RMF-OBS-001) |
 | D-2 | Linkage: CAPA-013 instead of CAPA-008 CA-8.11–8.13 (PR #62) |
 | D-3 | Accept that comparisons of uploaded NIfTI images abstain until an acquisition capture path exists (PA-13.3) |
 | D-4 | Wording of the interim texts in en/es/de (radiologist review of the translations) |

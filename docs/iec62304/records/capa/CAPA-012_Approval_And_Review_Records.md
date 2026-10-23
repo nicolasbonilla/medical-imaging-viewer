@@ -3,7 +3,7 @@
 **CAPA ID**: CAPA-012
 **Date Opened**: 2026-10-22 (DRAFT — opening, severity and action plan **PENDING owner approval**)
 **Source**: Paper H case study (PR #57, branch `research/paper-h-case-study`: `docs/research/paper-h/RESULTS.md` §4 and `research/paper_h/out/results.json` key `rq4_governance`; computed 2026-10-21 from `main` @ `6209131` and a read-only GitHub snapshot retrieved 2026-10-21T20:24:04Z). Re-checked for this record on 2026-10-22 with read-only commands (§7).
-**Severity**: **MAJOR** (proposed). QP-002 §5: a significant, systemic quality-system deviation — 56 of 56 pull requests without a formal review; 31 of 31 approval lines in controlled documents written by the AI coding agent. Not proposed as Critical because no product defect and no patient exposure follows from it directly, the approvals themselves were given by the owner (in chat), and the device is not on the market or in clinical use. QP-002 §5 also lists "regulatory non-compliance" under Critical (ISO 13485 §4.2.4, §4.2.5, §7.3.5); the owner may raise the severity (decision D-1, §5).
+**Severity**: **CRITICAL** (proposed; raised from Major on 2026-10-23 after the independent review of PR #62). QP-002 §5: "Critical CAPAs involve patient safety risk or regulatory non-compliance" — this is a regulatory non-compliance (ISO 13485 §4.2.4, §4.2.5, §7.3.5; IEC 62304 §5.1): 56 of 56 pull requests without a formal review; 31 of 31 approval lines in controlled documents written by the AI coding agent. CAPA-001, of the same family (records describing an intended process), is Critical. The first draft proposed Major because no product defect and no patient exposure follows from it directly, the approvals themselves were given by the owner (in chat), and the device is not on the market or in clinical use; QP-002 does not make those conditions part of the definition. The owner confirms the severity (decision D-1, §5).
 **Owner**: *(to be assigned: QMS Manager / Project Lead — a person; the AI coding agent cannot own a CAPA)*
 **Status**: DRAFT. Nothing is implemented. Every action below is a proposal, **PENDING owner approval**.
 **Clauses**: IEC 62304:2006+A1:2015 §5.1 (§5.1.1 plan, §5.1.4 methods and tools), §9 (problem resolution: records, §9.8 test documentation of changes); ISO 13485:2016 §4.2.4 (approval of documents before issue), §4.2.5 (control of records), §7.3 (§7.3.2 planning, §7.3.5 design review records with participants).
@@ -102,7 +102,7 @@ No code is modified by this CAPA's PR. No Class C module is touched.
 
 | ID | Decision |
 |----|----------|
-| D-1 | Confirm the severity (**Major**, proposed) or raise it to Critical (QP-002 §5 lists regulatory non-compliance under Critical) |
+| D-1 | Confirm the severity (**Critical**, proposed — QP-002 §5 lists regulatory non-compliance under Critical; raised from Major on 2026-10-23 after the independent review of PR #62), or record why another class applies |
 | D-2 | Choose the approval mechanism for CA-12.1: signed owner sign-off commits (a), a separate agent identity with formal GitHub reviews (b), or both (recommended: both; (a) works today, (b) needs CA-12.3) |
 | D-3 | Whether to confirm the 31 historical approvals retrospectively (§6) by one owner-executed sign-off record listing them, or to leave them as agent-transcribed records |
 | D-4 | Whether and when to appoint an independent human reviewer for Class C changes (CA-12.5) |
