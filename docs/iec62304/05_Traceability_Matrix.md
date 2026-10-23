@@ -170,7 +170,7 @@
 > | — | Device gate / cross-origin isolation | RC-053 | HAZ-001 | — | — | **NOT IMPLEMENTED** (CA-FLAMES-2) |
 >
 > **Addendum 2026-10-21 (DRAFT, PENDING owner approval): REQ-SAFE-034/035/036, RC-054..RC-058 (CP-SLICE-THICKNESS-001, reliability by slice thickness, flag OFF).**
-> Negative controls and provenance re-derivation: `records/risk_verification/CP-SLICE-THICKNESS-001_negative_controls_2026-10-21.json`.
+> Negative controls and provenance re-derivation: `records/risk_verification/CP-SLICE-THICKNESS-001_negative_controls_2026-10-21.json`. Re-executed 2026-10-23 after the independent review of PR #59 (B13, D10, D11 added, D5 redefined): `records/risk_verification/CP-SLICE-THICKNESS-001_negative_controls_2026-10-23.json` — 38/38 detected, provenance re-derived.
 >
 > | Req ID | Safety Requirement | Risk Control | HAZ ID | Implementation | Test ID | Verified? |
 > |--------|-------------------|-------------|--------|----------------|---------|-----------|
