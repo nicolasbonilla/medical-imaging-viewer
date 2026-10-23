@@ -8,8 +8,9 @@ Research input: Paper A v0.3 (PR #54). A FLAIR acquired at 2-5 mm and resampled 
 acquisition; detection of small lesions falls with the ORIGINAL slice thickness.
 
 What these tests pin down:
-  * DICOM: ``native`` only for an ORIGINAL image whose spacing between slices is recorded or
-    whose acquisition is 3D; the effective value counts the gap (max of thickness and spacing).
+  * DICOM: ``native`` only for an ORIGINAL image that records its slice thickness and whose
+    spacing between slices is recorded or whose acquisition is 3D; the effective value counts
+    the gap (max of thickness and spacing). A spacing without a thickness is not determinable.
     Derived images and 2D images without the spacing give a lower bound (thick) or nothing.
   * NIfTI: never ``native``; a grid coarser than 1.5 mm is a lower bound; a fine grid is
     ``not_determinable`` (template grid named when recognisable).
@@ -138,6 +139,30 @@ def test_rc054_derived_or_untyped_dicom_is_never_native():
 
 def test_rc054_missing_thickness_is_not_determinable_never_a_default():
     g = derive_from_dicom_dataset(_ds(ImageType=ORIGINAL, MRAcquisitionType="2D"))
+    assert (g.state, g.effective_mm, g.reason) == ("not_determinable", None, "missing")
+
+
+@pytest.mark.parametrize("image_type, acq", [(ORIGINAL, "2D"), (ORIGINAL, "3D"), (ORIGINAL, None), (DERIVED, "2D")])
+def test_rc054_spacing_without_thickness_is_not_determinable(image_type, acq):
+    """Independent review of PR #59: SpacingBetweenSlices is the distance between slice
+    centres, not the thickness of a slice (slices may overlap). Without SliceThickness the
+    acquisition thickness is missing -> not determinable (REQ-SAFE-034 (c)), never the spacing."""
+    tags = dict(ImageType=image_type, SpacingBetweenSlices="2.5")
+    if acq is not None:
+        tags["MRAcquisitionType"] = acq
+    g = derive_from_dicom_dataset(_ds(**tags))
+    assert (g.state, g.effective_mm, g.reason) == ("not_determinable", None, "missing")
+    assert g.spacing_between_slices_mm == pytest.approx(2.5)  # read and reported, not used as a thickness
+    thick = derive_from_dicom_dataset(_ds(**{**tags, "SpacingBetweenSlices": "6"}))
+    assert (thick.state, thick.effective_mm) == ("not_determinable", None)
+
+
+def test_rc054_loader_never_reports_the_spacing_as_the_thickness():
+    """The reviewer's case through the real DICOM loader: an original 2D image with
+    SpacingBetweenSlices 2.5 mm and no SliceThickness is not '2.5 mm, from the header'."""
+    svc = ImagingService(cache_service=None)
+    _, meta = svc.load_dicom(_dicom_bytes(ImageType=ORIGINAL, MRAcquisitionType="2D", SpacingBetweenSlices="2.5"))
+    g = meta.acquisition_geometry
     assert (g.state, g.effective_mm, g.reason) == ("not_determinable", None, "missing")
 
 

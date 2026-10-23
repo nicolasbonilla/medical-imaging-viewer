@@ -84,6 +84,10 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "B12_legacy_value_exposed": ([(IMG, "                acquisition_geometry=derive_from_dicom_dataset(ds),\n",
                                    "                acquisition_geometry={'state': 'native', 'effective_mm': float(ds.get('SliceThickness', 1.0)), 'source': 'dicom_header'},\n")],
                                  "the legacy slice_thickness (1.0 mm default) exposed as the native thickness", "backend"),
+    # Added 2026-10-23 after the independent review of PR #59 (release/owner-signoff-2026-10).
+    "B13_spacing_taken_as_thickness": ([(GEO, '        return _not_determinable("invalid" if thickness is not None else "missing", source="dicom_header", **fields)\n',
+                                         "        pass\n")],
+                                       "a SpacingBetweenSlices without SliceThickness reported as the thickness ('2.5 mm, from the header')", "backend"),
     # ── RC-055: the card reads the right image, strictly ──
     "P1_native_from_any_source": ([(LOGIC, "    if (!plausible || g.source !== 'dicom_header') return ND('malformed');\n",
                                     "    if (!plausible) return ND('malformed');\n")],

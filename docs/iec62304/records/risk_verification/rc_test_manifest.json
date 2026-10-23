@@ -607,7 +607,7 @@
       "note": "NOT IMPLEMENTED. Open action CA-FLAMES-2 (CP-FLAMES-BROWSER-001, owner): device gate (memory, cores, WebGPU adapter limits) and COOP/COEP as a separate tested change (COOP-COEP-IMPACT.md). Interim: honest duration estimate + cancel (REQ-FUNC-096)."
     },
     "RC-054": {
-      "description": "Acquisition slice thickness read from the file, never assumed: native only from an ORIGINAL DICOM with the spacing between slices or a 3D acquisition (gap counted); NIfTI grid / derived DICOM / 2D DICOM without spacing = lower bound above 1.5 mm at most; fine grid without acquisition metadata, missing/invalid/contradictory/unreadable = not determinable with a reason; never a default; total; Class C utilities wrapped, not modified",
+      "description": "Acquisition slice thickness read from the file, never assumed: native only from an ORIGINAL DICOM with the spacing between slices or a 3D acquisition (gap counted); NIfTI grid / derived DICOM / 2D DICOM without spacing = lower bound above 1.5 mm at most; fine grid without acquisition metadata, missing/invalid/contradictory/unreadable = not determinable with a reason; a SpacingBetweenSlices without a SliceThickness = not determinable, never taken as the thickness (amended 2026-10-23 after the independent review of PR #59); never a default; total; Class C utilities wrapped, not modified",
       "hazard": "HAZ-015",
       "status": "implemented",
       "change": "CP-SLICE-THICKNESS-001 (DRAFT, PENDING owner approval; feature flag OFF)",

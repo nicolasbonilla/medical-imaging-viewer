@@ -16,9 +16,12 @@ States (``AcquisitionGeometry.state``)
 --------------------------------------
 ``native``
     The thickness of the original acquisition, from the acquisition metadata of an
-    ORIGINAL DICOM image, when either the spacing between slices is recorded or the
-    acquisition is 3D (so the slices are contiguous). ``effective_mm`` =
-    max(SliceThickness, SpacingBetweenSlices) — a gap between slices counts.
+    ORIGINAL DICOM image that records a valid SliceThickness, when either the spacing
+    between slices is recorded or the acquisition is 3D (so the slices are contiguous).
+    ``effective_mm`` = max(SliceThickness, SpacingBetweenSlices) — a gap between slices
+    counts. A spacing between slices without a SliceThickness is never used as the
+    thickness (it is the distance between slice centres): such an image is
+    ``not_determinable`` (reason ``missing``).
 ``at_least``
     Only a LOWER bound is known and it is above ``THIN_LIMIT_MM``: the stored grid of a
     NIfTI (an image cannot carry detail finer than its grid), a derived/reformatted
@@ -209,6 +212,11 @@ def _derive_from_dicom_dataset(ds: Any) -> AcquisitionGeometry:
     if not thickness_ok and not spacing_ok:
         present = thickness is not None or spacing is not None
         return _not_determinable("invalid" if present else "missing", source="dicom_header", **fields)
+    if not thickness_ok:
+        # The spacing between slices is the distance between slice centres, not the thickness
+        # of a slice (slices may overlap): without a valid SliceThickness the acquisition
+        # thickness is missing or invalid, whatever the spacing (REQ-SAFE-034 (c)).
+        return _not_determinable("invalid" if thickness is not None else "missing", source="dicom_header", **fields)
 
     effective = max(v for v, ok in ((thickness, thickness_ok), (spacing, spacing_ok)) if ok)
     original = bool(image_type) and image_type[0] == "ORIGINAL"
