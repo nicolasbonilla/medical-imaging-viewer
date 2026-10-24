@@ -285,7 +285,7 @@ class SegmentationService:
     def _enforce_clinician_review_binding(self, seg_data: dict) -> bool:
         """RC-071 (PRB-003): remove a DIS confirmation that no longer matches the stored mask or label scheme,
         and record the voiding in the append-only history (review of PR #68, findings 5 and 6)."""
-        from app.services.dis_review_gate import labels_sha256   # lazy: the gate imports this module
+        from app.services.dis_review_gate import capped_history, labels_sha256   # lazy: the gate imports this module
         from app.models.schemas import ClinicianReviewEvent
 
         metadata = seg_data.get("metadata")
@@ -299,22 +299,30 @@ class SegmentationService:
         else:
             return False
         metadata.clinician_review = None
-        metadata.clinician_review_history = [*(metadata.clinician_review_history or []), ClinicianReviewEvent(
+        metadata.clinician_review_history = capped_history([*(metadata.clinician_review_history or []), ClinicianReviewEvent(
             event="voided", at=datetime.utcnow().isoformat() + "Z", reason=reason,
             mask_sha256=review.reviewed_mask_sha256, labels_sha256=review.reviewed_labels_sha256,
-            previous_reviewer=review.reviewed_by)]
+            previous_reviewer=review.reviewed_by)])
         logger.warning("DIS confirmation removed: the mask or its labels changed after it was confirmed",
                        extra={"previous_reviewer": review.reviewed_by, "reason": reason})
         return True
 
+    REVIEW_FIELDS = ("clinician_review", "clinician_review_history")
+
     def persist_metadata(self, segmentation_id: str) -> Optional[str]:
-        """Write ONLY the metadata document (PRB-003, RC-071; review of PR #68, finding 5).
+        """Write ONLY the DIS review fields of the metadata document (PRB-003, RC-071; review of PR #68, finding 5
+        and second review, N6).
 
         A review record must not rewrite the unchanged mask object: that advanced its storage generation
-        and made the clinician's next save a 409. The review binding is enforced first (single choke point,
-        as in `_save_segmentation`). Raises ConflictException when the stored mask is no longer the one this
-        instance holds (another session saved a newer mask). Returns "firestore" when the document was
-        stored durably, None otherwise — there is no local fallback for a review record."""
+        and made the clinician's next save a 409. Nor may it rewrite the rest of the metadata document from this
+        instance's cached copy (labels, analysis, names saved meanwhile by another instance would be lost): it is
+        a field update of `clinician_review` and `clinician_review_history` only. The stored history is read
+        first and merged (events written meanwhile by another instance are kept; the most recent 50), and the
+        update carries the read document's update time as precondition: a change in between gives a conflict.
+        The review binding is enforced first (single choke point, as in `_save_segmentation`). Raises
+        ConflictException when the stored mask is no longer the one this instance holds (another session saved a
+        newer mask) or the document changed between the read and the update. Returns "firestore" when the fields
+        were stored durably, None otherwise — there is no local fallback for a review record."""
         seg_data = self.segmentations_cache.get(segmentation_id)
         if seg_data is None:
             return None
@@ -337,16 +345,48 @@ class SegmentationService:
                     error_code="SEGMENTATION_STALE_WRITE",
                     details={"segmentation_id": segmentation_id, "expected_generation": known},
                 )
-        metadata_dict = metadata.model_dump(mode="json")
-        metadata_dict["source_format"] = seg_data.get("source_format", "nifti")
-        metadata_dict["segmentation_id"] = segmentation_id
-        metadata_dict["mask_shape"] = list(seg_data["masks_3d"].shape)
+        from app.services.dis_review_gate import capped_history   # lazy: the gate imports this module
+        from app.models.schemas import ClinicianReviewEvent
         try:
-            self.db.collection(SEGMENTATIONS_COLLECTION).document(segmentation_id).set(metadata_dict)
+            doc_ref = self.db.collection(SEGMENTATIONS_COLLECTION).document(segmentation_id)
+            snapshot = doc_ref.get()
+            if not getattr(snapshot, "exists", False):
+                logger.error("Review record not stored: the metadata document does not exist",
+                             extra={"segmentation_id": segmentation_id})
+                return None
+            stored = snapshot.to_dict() or {}
+            ours = [e.model_dump(mode="json") for e in (metadata.clinician_review_history or [])]
+            merged, seen = [], set()
+            for event in [*(stored.get("clinician_review_history") or []), *ours]:
+                key = json.dumps(event, sort_keys=True, default=str)
+                if isinstance(event, dict) and key not in seen:
+                    seen.add(key)
+                    merged.append(event)
+            merged.sort(key=lambda e: str(e.get("at") or ""))
+            history = [ClinicianReviewEvent(**e) for e in capped_history(merged)]
+            fields = {
+                "clinician_review": (metadata.clinician_review.model_dump(mode="json")
+                                     if metadata.clinician_review is not None else None),
+                "clinician_review_history": [e.model_dump(mode="json") for e in history],
+            }
+            update_time = getattr(snapshot, "update_time", None)
+            if update_time is not None:
+                doc_ref.update(fields, option=self.db.write_option(last_update_time=update_time))
+            else:
+                doc_ref.update(fields)
         except Exception as e:  # noqa: BLE001
+            from google.api_core.exceptions import FailedPrecondition   # the update-time precondition failed
+            if isinstance(e, FailedPrecondition):
+                raise ConflictException(
+                    message=("This segmentation was changed by another session while the confirmation was being "
+                             "recorded. Reload it, check it again, then confirm."),
+                    error_code="SEGMENTATION_STALE_WRITE",
+                    details={"segmentation_id": segmentation_id},
+                )
             logger.error("Review record not stored durably", extra={"segmentation_id": segmentation_id,
                                                                    "error": str(e)})
             return None
+        metadata.clinician_review_history = history
         return "firestore"
 
     def _enforce_ai_review_binding(self, seg_data: dict) -> bool:

@@ -87,12 +87,23 @@ REGIONS_ARE_NOT_DIS = (
 )
 
 
-def only_evaluated_dis(dis):
-    """The DIS block unchanged when the backend evaluated it; otherwise the 'not evaluated' state only."""
-    if isinstance(dis, dict) and dis.get("evaluation_status") == "evaluated":
+def _without_reviewer_names(dis: dict) -> dict:
+    """Second review of PR #68, N5: the assistant gets the confirmer's role and time, never the person."""
+    review = dis.get("segmentation_review")
+    if not isinstance(review, dict):
         return dis
+    kept = {k: v for k, v in review.items() if k not in ("reviewed_by", "reviewed_by_id")}
+    if review.get("reviewed_by") and not kept.get("reviewed_by_role"):
+        kept["reviewed_by_role"] = "radiologist"
+    return {**dis, "segmentation_review": kept}
+
+
+def only_evaluated_dis(dis):
+    """The DIS block (without reviewer names) when the backend evaluated it; otherwise the 'not evaluated' state."""
+    if isinstance(dis, dict) and dis.get("evaluation_status") == "evaluated":
+        return _without_reviewer_names(dis)
     kept = {k: v for k, v in (dis or {}).items() if k not in DIS_CONCLUSION_KEYS} if isinstance(dis, dict) else {}
-    return {**kept, "evaluation_status": "not_evaluated", "message": NOT_EVALUATED_DIS_MESSAGE}
+    return _without_reviewer_names({**kept, "evaluation_status": "not_evaluated", "message": NOT_EVALUATED_DIS_MESSAGE})
 
 
 # =============================================================================

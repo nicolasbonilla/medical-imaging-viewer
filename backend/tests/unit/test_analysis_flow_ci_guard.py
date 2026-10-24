@@ -70,8 +70,8 @@ class _FakeSeg:
             "masks_3d": mask,
             "metadata": SegmentationMetadata(
                 file_id=f"img-{sid}", labels=labels,
-                analysis_data={"classification": {"classified_lesion_footprint_sha256": gate.footprint_sha256(mask),
-                                                  "classified_mask_sha256": SegmentationService.mask_sha256(mask)}},
+                # the record classify-regions writes (second review of PR #68, N1: with each lesion's region)
+                analysis_data={"classification": gate.classification_record(mask)},
                 clinician_review={"reviewed_by": "dr_rev", "reviewed_at": "2026-10-24T10:00:00Z",
                                   "reviewed_mask_sha256": SegmentationService.mask_sha256(mask),
                                   "reviewed_labels_sha256": gate.labels_sha256(labels)},

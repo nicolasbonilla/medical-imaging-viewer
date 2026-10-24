@@ -91,6 +91,11 @@ function regionBarWidth(vol: number, maxVol: number): string {
 }
 
 
+/** Interpolates {{name}} placeholders left by `t` (also when no i18n instance is initialised, e.g. in tests). */
+function fill(text: string, values: Record<string, unknown>): string {
+  return text.replace(/{{\s*(\w+)\s*}}/g, (m, k) => (k in values ? String(values[k]) : m));
+}
+
 export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdated, sourceFileId, studyInstances }: LesionDashboardProps) {
   const { t } = useTranslation();
   const reloadMaskCallback = useSegmentationStore((s) => s.reloadMaskCallback);
@@ -111,6 +116,10 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
   const disSeq = useRef(0);
   const [confirmBusy, setConfirmBusy] = useState(false);
   const [confirmError, setConfirmError] = useState<string | null>(null);
+  // Second review of PR #68 (N1): the radiologist acknowledges the region corrections listed (exactly these).
+  const [ackedCorrections, setAckedCorrections] = useState<string | null>(null);
+  const pendingRegions = disPending && 'regions' in disPending ? disPending.regions ?? null : null;
+  const correctionsDigest = pendingRegions?.correction_count ? pendingRegions.corrections_sha256 ?? null : null;
   const [classification, setClassification] = useState<RegionClassificationResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isClassifying, setIsClassifying] = useState(false);
@@ -246,11 +255,29 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
     const state = useSegmentationStore.getState();
     // Finding 7: the digest is that of the OPEN mask — never confirm another segmentation with it.
     if (state.hasUnsavedMaskChanges || state.currentSegmentation?.segmentation_id !== segmentationId) return;
+    // N1: region corrections by hand are listed in the dialog and must have been acknowledged in the card.
+    if (correctionsDigest && ackedCorrections !== correctionsDigest) return;
+    const listed = (pendingRegions?.corrections ?? []).map((c) => fill(t('disReview.correctionItem', {
+      defaultValue: 'Lesion {{n}} (slice {{slice}}, {{voxels}} voxels): {{from}} → {{to}}',
+      n: c.lesion, slice: c.slice + 1, voxels: c.voxels, from: c.classified_region_name, to: c.current_region_name,
+    }), {
+      defaultValue: 'Lesion {{n}} (slice {{slice}}, {{voxels}} voxels): {{from}} → {{to}}',
+      n: c.lesion, slice: c.slice + 1, voxels: c.voxels, from: c.classified_region_name, to: c.current_region_name,
+    }));
+    const question = t(
+      'disReview.confirmQuestion',
+      'Confirm that you have checked every lesion and its region on every slice of this saved segmentation? Your name, the time and the exact saved mask will be recorded; any later change of the mask cancels this confirmation.',
+    );
     const ok = window.confirm(
-      t(
-        'disReview.confirmQuestion',
-        'Confirm that you have checked every lesion and its region on every slice of this saved segmentation? Your name, the time and the exact saved mask will be recorded; any later change of the mask cancels this confirmation.',
-      ),
+      correctionsDigest
+        ? `${question}\n\n${fill(t('disReview.confirmCorrections', {
+          defaultValue: 'You also confirm these {{count}} region correction(s) made by hand after the region classification:',
+          count: pendingRegions?.correction_count ?? listed.length,
+        }), {
+          defaultValue: 'You also confirm these {{count}} region correction(s) made by hand after the region classification:',
+          count: pendingRegions?.correction_count ?? listed.length,
+        })}\n${listed.join('\n')}`
+        : question,
     );
     if (!ok) return;
     setConfirmBusy(true);
@@ -260,7 +287,9 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       if (!digest) {
         throw new Error(t('disReview.maskUnreadable', 'The open mask could not be read; reload the segmentation and try again.'));
       }
-      const review = await segmentationAPI.confirmSegmentationReview(segmentationId, digest);
+      const review = correctionsDigest
+        ? await segmentationAPI.confirmSegmentationReview(segmentationId, digest, correctionsDigest)
+        : await segmentationAPI.confirmSegmentationReview(segmentationId, digest);
       const store = useSegmentationStore.getState();
       const cur = store.currentSegmentation;
       if (cur && cur.segmentation_id === segmentationId) {
@@ -268,11 +297,12 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       }
       await refreshDis();
     } catch (e: any) {
-      setConfirmError(e?.response?.data?.detail || e?.message || String(e));
+      // The server's reason (409: classification missing, lesions without one region, corrections not acknowledged).
+      setConfirmError(e?.response?.data?.error?.message || e?.response?.data?.detail || e?.message || String(e));
     } finally {
       setConfirmBusy(false);
     }
-  }, [segmentationId, refreshDis, t]);
+  }, [segmentationId, refreshDis, t, correctionsDigest, ackedCorrections, pendingRegions]);
 
   // Stale check: mask was edited after analysis was computed
   const isAnalysisStale = !!(
@@ -710,6 +740,26 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                   <p className="text-[10px] text-amber-100/80" data-testid="dis-regions-not-classified">
                     {t('disReview.reasonRegionsNotClassified', 'The lesions have no MAGNIMS regions from the region classification (or lesions changed since). Run the MAGNIMS region classification, check every region, then confirm.')}
                   </p>
+                ) : reason === 'lesion_labels_invalid' ? (
+                  <div className="text-[10px] text-amber-100/80" data-testid="dis-lesion-labels-invalid">
+                    <p>{t('disReview.reasonLesionLabelsInvalid', 'Every connected lesion must carry exactly one region (periventricular, juxtacortical, infratentorial or deep white matter); Active (Gd+) and Black Hole (T1) are not regions. Correct these lesions, or run the region classification again:')}</p>
+                    <ul className="list-disc pl-4">
+                      {(pendingRegions?.invalid_lesions ?? []).map((les) => (
+                        <li key={les.lesion} data-testid="dis-invalid-lesion">
+                          {fill(t('disReview.invalidLesionItem', {
+                            defaultValue: 'Lesion {{n}} (slice {{slice}}, {{voxels}} voxels): {{labels}}',
+                            n: les.lesion, slice: les.slice + 1, voxels: les.voxels, labels: les.label_names.join(' + '),
+                          }), {
+                            defaultValue: 'Lesion {{n}} (slice {{slice}}, {{voxels}} voxels): {{labels}}',
+                            n: les.lesion, slice: les.slice + 1, voxels: les.voxels, labels: les.label_names.join(' + '),
+                          })}
+                        </li>
+                      ))}
+                    </ul>
+                    {(pendingRegions?.invalid_lesion_count ?? 0) > (pendingRegions?.invalid_lesions?.length ?? 0) && (
+                      <p>{fill(t('disReview.moreLesions', { defaultValue: '… and {{count}} more', count: (pendingRegions?.invalid_lesion_count ?? 0) - (pendingRegions?.invalid_lesions?.length ?? 0) }), { defaultValue: '… and {{count}} more', count: (pendingRegions?.invalid_lesion_count ?? 0) - (pendingRegions?.invalid_lesions?.length ?? 0) })}</p>
+                    )}
+                  </div>
                 ) : reason === 'ai_review_missing' ? (
                   <p className="text-[10px] text-amber-100/80">
                     {t('disReview.reasonAiReviewMissing', 'This AI draft must first confirm its own review (AI draft banner in the segmentation panel) for the current mask.')}
@@ -731,6 +781,40 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                     : t('disReview.sourceUnrecorded', 'The origin of this segmentation is not recorded (drawn here or uploaded from another program).')}
                 </p>
                 {lesionTool && <AutomaticMarkingNotice />}
+                {pendingRegions?.edited_after_classification && (
+                  <p className="text-[10px] text-amber-100/80" data-testid="dis-edited-after-classification">
+                    {t('disReview.editedAfterClassification', 'Region labels were changed by hand after the region classification.')}
+                  </p>
+                )}
+                {!!pendingRegions?.correction_count && (
+                  <div className="text-[10px] text-amber-100" data-testid="dis-region-corrections">
+                    <p className="font-semibold">
+                      {fill(t('disReview.correctionsTitle', {
+                        defaultValue: '{{count}} lesion region(s) differ from the region classification (corrected by hand):',
+                        count: pendingRegions.correction_count,
+                      }), {
+                        defaultValue: '{{count}} lesion region(s) differ from the region classification (corrected by hand):',
+                        count: pendingRegions.correction_count,
+                      })}
+                    </p>
+                    <ul className="list-disc pl-4">
+                      {(pendingRegions.corrections ?? []).map((c) => (
+                        <li key={c.lesion} data-testid="dis-region-correction">
+                          {fill(t('disReview.correctionItem', {
+                            defaultValue: 'Lesion {{n}} (slice {{slice}}, {{voxels}} voxels): {{from}} → {{to}}',
+                            n: c.lesion, slice: c.slice + 1, voxels: c.voxels, from: c.classified_region_name, to: c.current_region_name,
+                          }), {
+                            defaultValue: 'Lesion {{n}} (slice {{slice}}, {{voxels}} voxels): {{from}} → {{to}}',
+                            n: c.lesion, slice: c.slice + 1, voxels: c.voxels, from: c.classified_region_name, to: c.current_region_name,
+                          })}
+                        </li>
+                      ))}
+                    </ul>
+                    {pendingRegions.correction_count > (pendingRegions.corrections?.length ?? 0) && (
+                      <p>{fill(t('disReview.moreLesions', { defaultValue: '… and {{count}} more', count: pendingRegions.correction_count - (pendingRegions.corrections?.length ?? 0) }), { defaultValue: '… and {{count}} more', count: pendingRegions.correction_count - (pendingRegions.corrections?.length ?? 0) })}</p>
+                    )}
+                  </div>
+                )}
                 {confirmable && (
                   !isOpen ? (
                     <p className="text-[10px] text-amber-300" data-testid="dis-open-to-confirm">
@@ -741,13 +825,26 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                       {t('disReview.saveFirst', 'Unsaved changes: save them first. Only the saved mask can be confirmed.')}
                     </p>
                   ) : (
-                    <button
-                      onClick={confirmSegmentation}
-                      disabled={confirmBusy}
-                      className="self-start mt-0.5 px-2 py-0.5 rounded bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-[10px] text-white"
-                    >
-                      {t('disReview.confirm', 'I have checked every lesion and region — confirm this segmentation')}
-                    </button>
+                    <>
+                      {correctionsDigest && (
+                        <label className="flex items-start gap-1 text-[10px] text-amber-100">
+                          <input
+                            type="checkbox"
+                            data-testid="dis-ack-corrections"
+                            checked={ackedCorrections === correctionsDigest}
+                            onChange={(e) => setAckedCorrections(e.target.checked ? correctionsDigest : null)}
+                          />
+                          <span>{t('disReview.acknowledgeCorrections', 'I have checked these region corrections and confirm them as mine.')}</span>
+                        </label>
+                      )}
+                      <button
+                        onClick={confirmSegmentation}
+                        disabled={confirmBusy || (!!correctionsDigest && ackedCorrections !== correctionsDigest)}
+                        className="self-start mt-0.5 px-2 py-0.5 rounded bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-[10px] text-white"
+                      >
+                        {t('disReview.confirm', 'I have checked every lesion and region — confirm this segmentation')}
+                      </button>
+                    </>
                   )
                 )}
               </>
@@ -795,9 +892,22 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
             {disOk.note && (
               <div className="text-[8px] text-gray-500 mt-1 italic">{disOk.note}</div>
             )}
-            {disOk.segmentation_review?.reviewed_by && (
+            {disOk.segmentation_review && (
               <div className="text-[8px] text-green-200/80 mt-0.5" data-testid="dis-confirmed-by">
-                {t('disReview.confirmedBy', 'Segmentation confirmed by')} {disOk.segmentation_review.reviewed_by}
+                {disOk.segmentation_review.reviewed_by
+                  ? `${t('disReview.confirmedBy', 'Segmentation confirmed by')} ${disOk.segmentation_review.reviewed_by}`
+                  : t('disReview.confirmedByRadiologist', 'Segmentation confirmed by a radiologist')}
+              </div>
+            )}
+            {!!disOk.regions?.correction_count && (
+              <div className="text-[8px] text-green-200/80" data-testid="dis-confirmed-corrections">
+                {fill(t('disReview.confirmedCorrections', {
+                  defaultValue: 'Including {{count}} region correction(s) made by hand and acknowledged in the confirmation.',
+                  count: disOk.regions.correction_count,
+                }), {
+                  defaultValue: 'Including {{count}} region correction(s) made by hand and acknowledged in the confirmation.',
+                  count: disOk.regions.correction_count,
+                })}
               </div>
             )}
             {disOk.dis_criteria_version && (

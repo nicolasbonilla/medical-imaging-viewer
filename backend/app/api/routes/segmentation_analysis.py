@@ -502,6 +502,39 @@ async def get_lesion_analysis(
         raise HTTPException(status_code=500, detail=f"Lesion analysis failed: {str(e)}")
 
 
+def _label_map(labels) -> dict:
+    """Label id -> name of a segmentation's label scheme (MAGNIMS names when none is defined)."""
+    label_map = {}
+    for lbl in labels or []:
+        if hasattr(lbl, 'id') and hasattr(lbl, 'name'):
+            label_map[lbl.id] = lbl.name
+        elif isinstance(lbl, dict):
+            label_map[lbl.get("id", 0)] = lbl.get("name", f"Label {lbl.get('id', 0)}")
+    if not label_map or all(lid == 0 for lid in label_map):
+        label_map = MAGNIMS_REGIONS
+    return label_map
+
+
+async def lesion_table(segmentation_id, segmentation_service, storage_service) -> dict:
+    """The lesion measurements of a STORED segmentation, computed on the server and storing nothing.
+
+    PRB-003 (second review of PR #68, N7): the AI report never takes a lesion table from the client — it is derived
+    here for the report's own segmentation, so a table of another segmentation (with or without its
+    `segmentation_id`) can never be put next to this segmentation's DIS state. Compute-only (RC-033)."""
+    seg_data = segmentation_service.get_loaded(segmentation_id)
+    if seg_data is None:
+        raise HTTPException(status_code=404, detail=f"Segmentation {segmentation_id} not found")
+    masks_3d = np.array(seg_data["masks_3d"], dtype=np.uint8, copy=True)   # a copy of the stored mask
+    metadata = seg_data["metadata"]
+    label_map = _label_map(list(metadata.labels or []))
+    voxel_spacing = await _voxel_spacing_from_source_image(
+        metadata.file_id, storage_service, context=f"segmentation {segmentation_id}"
+    )
+    result = analyze_lesions(masks_3d, voxel_spacing, label_map)
+    result["segmentation_id"] = segmentation_id
+    return result
+
+
 async def assess_dis(segmentation_id, segmentation_service, storage_service,
                      external_evidence: Optional[dict] = None, *, store: bool = True) -> dict:
     """The DIS assessment of a stored segmentation — evaluated only on classified, confirmed regions.
@@ -632,7 +665,10 @@ async def get_dis_assessment(
             "prl_present": prl_present,
             "csf_specific": csf_specific,
         }
-        return await assess_dis(segmentation_id, segmentation_service, storage_service, external_evidence)
+        # Second review of PR #68, N5: who confirmed is shown to radiologists and administrators only.
+        return dis_gate.dis_for_viewer(
+            await assess_dis(segmentation_id, segmentation_service, storage_service, external_evidence),
+            current_user)
 
     except HTTPException:
         raise

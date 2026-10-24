@@ -120,10 +120,41 @@ _RULE4_NOT_EVALUATED = ("4. Per CMSC Task Force guidance, **never write** 'McDon
                         "was not evaluated: " + DIS_NOT_EVALUATED_LINE)
 
 
+# Second review of PR #68, N4: without an evaluated DIS the regions are not confirmed and are not sent to the
+# model, so no template may ask for a per-region section, a region column or a regional distribution either.
+_REGION_SECTION = re.compile(r"^### (?:Periventricular|Cortical / Juxtacortical|Infratentorial|Deep White Matter|"
+                             r"Regional Distribution)[^\n]*\n.*?(?=^#{2,3} |\Z)", re.MULTILINE | re.DOTALL)
+REGIONS_NOT_CONFIRMED_SECTION = (
+    "### White Matter Lesions\n"
+    "- Lesion count, total volume and size distribution as measured. The lesions' anatomical regions were not "
+    "confirmed by a radiologist and are not given: do not assign, count or tabulate lesions by region.\n\n")
+_REGION_LINE_EDITS = (
+    (re.compile(r"^Detailed lesion inventory by anatomical region:\n", re.MULTILINE), ""),
+    (re.compile(r"^\| # \| Region \| ", re.MULTILINE), "| # | "),
+    (re.compile(r"^\|---\|--------\|", re.MULTILINE), "|---|"),
+    (re.compile(r"^\| Region \| Count \| Change vs\. Prior \|$", re.MULTILINE),
+     "| Measure | Value | Change vs. Prior |"),
+    (re.compile(r" \(region\) \|"), " |"),
+    (re.compile(r"^\d+\. \*\*Distribution pattern\*\*:[^\n]*\n", re.MULTILINE), ""),
+    (re.compile(r"extensive periventricular confluency"), "extensive confluency"),
+    (re.compile(r",? and (?:reference )?(?:the )?2017 McDonald(?: diagnostic)? criteria"), ""),
+)
+
+
 def dis_not_evaluated_template(system_prompt: str) -> str:
-    """The template without any DIS instruction, for a draft whose DIS was not evaluated (RC-070)."""
+    """The template without any DIS instruction and without any per-region section, for a draft whose DIS was
+    not evaluated (RC-070; review of PR #68, finding 4; second review, N4)."""
     text = _DIS_SECTION.sub(lambda m: f"{m.group(1)} Dissemination in Space (DIS) Assessment\n"
                                       f"{DIS_NOT_EVALUATED_LINE}\n\n", system_prompt)
+    removed = []
+
+    def _one_section(_match):          # the per-region sections become ONE section without regions
+        removed.append(_match)
+        return REGIONS_NOT_CONFIRMED_SECTION if len(removed) == 1 else ""
+
+    text = _REGION_SECTION.sub(_one_section, text)
+    for pattern, replacement in _REGION_LINE_EDITS:
+        text = pattern.sub(replacement, text)
     kept = []
     for line in text.split("\n"):
         if _DIS_INSTRUCTION.search(line) and "not evaluated" not in line and not line.startswith("#"):

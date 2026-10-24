@@ -1056,7 +1056,17 @@
     "openToConfirm": "Öffnen Sie diese Segmentierung, um sie zu bestätigen: Die Bestätigung gilt für die angezeigte Maske.",
     "reasonAiReviewMissing": "Für diesen KI-Entwurf muss zuerst seine eigene Prüfung (KI-Entwurfshinweis im Segmentierungsbereich) für die aktuelle Maske bestätigt werden.",
     "reasonRegionsNotClassified": "Die Läsionen haben keine MAGNIMS-Regionen aus der Regionenklassifikation (oder die Läsionen haben sich seitdem geändert). Führen Sie die MAGNIMS-Regionenklassifikation aus, prüfen Sie jede Region und bestätigen Sie dann.",
-    "automaticMarkingNotice": "Die automatische Läsionsmarkierung markiert auch in den meisten gesunden Gehirnen Stellen, vor allem neben den Ventrikeln. Eine markierte Stelle ist kein Nachweis einer Multiplen Sklerose; jede Stelle muss fachärztlich geprüft werden."
+    "automaticMarkingNotice": "Die automatische Läsionsmarkierung markiert auch in den meisten gesunden Gehirnen Stellen, vor allem neben den Ventrikeln. Eine markierte Stelle ist kein Nachweis einer Multiplen Sklerose; jede Stelle muss fachärztlich geprüft werden.",
+    "reasonLesionLabelsInvalid": "Jede zusammenhängende Läsion muss genau eine Region tragen (periventrikulär, juxtakortikal, infratentoriell oder tiefe weiße Substanz); Aktiv (Gd+) und Black Hole (T1) sind keine Regionen. Korrigieren Sie diese Läsionen oder führen Sie die Regionenklassifikation erneut aus:",
+    "invalidLesionItem": "Läsion {{n}} (Schicht {{slice}}, {{voxels}} Voxel): {{labels}}",
+    "moreLesions": "… und {{count}} weitere",
+    "editedAfterClassification": "Regionsbeschriftungen wurden nach der Regionenklassifikation von Hand geändert.",
+    "correctionsTitle": "{{count}} Läsionsregion(en) weichen von der Regionenklassifikation ab (von Hand korrigiert):",
+    "correctionItem": "Läsion {{n}} (Schicht {{slice}}, {{voxels}} Voxel): {{from}} → {{to}}",
+    "acknowledgeCorrections": "Ich habe diese Regionskorrekturen geprüft und bestätige sie als meine.",
+    "confirmCorrections": "Sie bestätigen auch diese {{count}} von Hand nach der Regionenklassifikation vorgenommene(n) Regionskorrektur(en):",
+    "confirmedByRadiologist": "Segmentierung von einem Radiologen bestätigt",
+    "confirmedCorrections": "Einschließlich {{count}} von Hand vorgenommener und in der Bestätigung anerkannter Regionskorrektur(en)."
   },
   "lesions": {
     "title": "Läsionsanalyse",

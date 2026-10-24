@@ -1067,7 +1067,17 @@
     "openToConfirm": "Abra esta segmentación para confirmarla: la confirmación queda ligada a la máscara en pantalla.",
     "reasonAiReviewMissing": "Este borrador de IA debe confirmar primero su propia revisión (aviso del borrador de IA en el panel de segmentación) para la máscara actual.",
     "reasonRegionsNotClassified": "Las lesiones no tienen regiones MAGNIMS de la clasificación por regiones (o las lesiones cambiaron después). Ejecute la clasificación por regiones MAGNIMS, revise cada región y después confirme.",
-    "automaticMarkingNotice": "La marcación automática de lesiones también marca manchas en la mayoría de los cerebros sanos, sobre todo junto a los ventrículos. Una mancha marcada no es prueba de esclerosis múltiple; cada mancha requiere la revisión de un experto."
+    "automaticMarkingNotice": "La marcación automática de lesiones también marca manchas en la mayoría de los cerebros sanos, sobre todo junto a los ventrículos. Una mancha marcada no es prueba de esclerosis múltiple; cada mancha requiere la revisión de un experto.",
+    "reasonLesionLabelsInvalid": "Cada lesión conectada debe llevar exactamente una región (periventricular, yuxtacortical, infratentorial o sustancia blanca profunda); Activa (Gd+) y Agujero negro (T1) no son regiones. Corrija estas lesiones o vuelva a ejecutar la clasificación de regiones:",
+    "invalidLesionItem": "Lesión {{n}} (corte {{slice}}, {{voxels}} vóxeles): {{labels}}",
+    "moreLesions": "… y {{count}} más",
+    "editedAfterClassification": "Las etiquetas de región se cambiaron a mano después de la clasificación de regiones.",
+    "correctionsTitle": "{{count}} región(es) de lesión difieren de la clasificación de regiones (corregidas a mano):",
+    "correctionItem": "Lesión {{n}} (corte {{slice}}, {{voxels}} vóxeles): {{from}} → {{to}}",
+    "acknowledgeCorrections": "He revisado estas correcciones de región y las confirmo como mías.",
+    "confirmCorrections": "También confirma estas {{count}} corrección(es) de región hechas a mano después de la clasificación de regiones:",
+    "confirmedByRadiologist": "Segmentación confirmada por un radiólogo",
+    "confirmedCorrections": "Incluye {{count}} corrección(es) de región hechas a mano y reconocidas en la confirmación."
   },
   "lesions": {
     "title": "Analisis de Lesiones",

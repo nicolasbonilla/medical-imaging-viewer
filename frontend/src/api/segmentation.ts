@@ -54,11 +54,19 @@ export const segmentationAPI = {
    * PRB-003 (RC-071): record a radiologist's confirmation of a saved segmentation WITHOUT AI provenance (drawn here,
    * from a server tool, or uploaded). Bound to the exact stored mask: `maskSha256` is the SHA-256 of the mask the
    * radiologist checked (409 if it differs; 403 for other roles; 409 for an AI draft, which has its own review).
+   * `regionCorrectionsSha256` acknowledges the region corrections by hand listed in the DIS state (409 without it
+   * when there are any; second review of PR #68, N1).
    */
-  async confirmSegmentationReview(segmentationId: string, maskSha256: string): Promise<ClinicianReview> {
+  async confirmSegmentationReview(
+    segmentationId: string,
+    maskSha256: string,
+    regionCorrectionsSha256?: string | null,
+  ): Promise<ClinicianReview> {
     const response = await apiClient.post<{ success: boolean; clinician_review: ClinicianReview }>(
       `${API_PREFIX}/segmentation/${segmentationId}/review/confirm`,
-      { mask_sha256: maskSha256 },
+      regionCorrectionsSha256
+        ? { mask_sha256: maskSha256, region_corrections_sha256: regionCorrectionsSha256 }
+        : { mask_sha256: maskSha256 },
     );
     return response.data.clinician_review;
   },

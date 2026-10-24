@@ -80,7 +80,9 @@ export interface DISSupportiveMarkers {
 export interface DISSegmentationReview {
   status: 'confirmed' | 'unconfirmed' | 'outdated';
   source: 'ai_draft' | 'automatic_tool' | 'origin_not_recorded';
+  /** Shown to radiologists and administrators only; null for other roles (second review of PR #68, N5). */
   reviewed_by: string | null;
+  reviewed_by_role?: string | null;
   reviewed_at: string | null;
   reviewed_mask_sha256: string | null;
   current_mask_sha256: string;
@@ -93,8 +95,8 @@ export interface DISSegmentationReview {
 export interface DISNotEvaluated {
   segmentation_id: string | null;
   evaluation_status: 'not_evaluated';
-  not_evaluated_reason: 'regions_not_classified' | 'ai_review_missing' | 'segmentation_not_confirmed'
-    | 'confirmation_outdated' | 'segmentation_not_identified' | 'assessment_failed';
+  not_evaluated_reason: 'regions_not_classified' | 'lesion_labels_invalid' | 'ai_review_missing'
+    | 'segmentation_not_confirmed' | 'confirmation_outdated' | 'segmentation_not_identified' | 'assessment_failed';
   message: string;
   reason_detail?: string;
   segmentation_review: DISSegmentationReview | null;
@@ -104,12 +106,45 @@ export interface DISNotEvaluated {
   regions?: DISRegionsState | null;
 }
 
-/** Review of PR #68: whether the labels are MAGNIMS regions assigned by the classification to these lesions. */
+/** A lesion that carries no MAGNIMS region or more than one (second review of PR #68, N1). */
+export interface DISInvalidLesion {
+  lesion: number;
+  /** 0-based slice index of the lesion's first voxel (the viewer shows slice + 1). */
+  slice: number;
+  first_voxel: [number, number, number];
+  voxels: number;
+  labels: number[];
+  label_names: string[];
+}
+
+/** A lesion whose region differs from the classifier's: a correction by hand (second review of PR #68, N1). */
+export interface DISRegionCorrection {
+  lesion: number;
+  slice: number;
+  first_voxel: [number, number, number];
+  voxels: number;
+  classified_region: number;
+  classified_region_name: string;
+  current_region: number;
+  current_region_name: string;
+}
+
+/** Review of PR #68: whether the labels are MAGNIMS regions assigned by the classification to these lesions —
+ *  one region per lesion — and which regions were changed by hand since (second review, N1). */
 export interface DISRegionsState {
   classified: boolean;
   label_scheme: 'magnims' | 'other';
   edited_after_classification?: boolean | null;
   method?: string | null;
+  lesion_count?: number | null;
+  lesions_valid?: boolean | null;
+  invalid_lesions?: DISInvalidLesion[];
+  invalid_lesion_count?: number;
+  corrections?: DISRegionCorrection[];
+  correction_count?: number;
+  /** Digest the radiologist sends to acknowledge exactly these corrections in the confirmation. */
+  corrections_sha256?: string | null;
+  listed_limit?: number;
 }
 
 /** A DIS state from the server: evaluated (on a confirmed segmentation) or explicitly not evaluated. */

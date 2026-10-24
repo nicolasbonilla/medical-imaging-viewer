@@ -414,10 +414,14 @@ export interface SegmentationMetadata {
 
 /** PRB-003 (RC-071): set only by the server's review/confirm route; removed by any later change of the mask. */
 export interface ClinicianReview {
-  reviewed_by: string;
+  /** Radiologists and administrators only; null for other roles (second review of PR #68, N5). */
+  reviewed_by: string | null;
   reviewed_by_id?: string | null;
+  reviewed_by_role?: string | null;
   reviewed_at: string;
   reviewed_mask_sha256: string;
+  /** Region corrections by hand the radiologist acknowledged (second review of PR #68, N1). */
+  region_correction_count?: number;
 }
 
 /**

@@ -1056,7 +1056,17 @@
     "openToConfirm": "Open this segmentation to confirm it: the confirmation is bound to the mask on screen.",
     "reasonAiReviewMissing": "This AI draft must first confirm its own review (AI draft banner in the segmentation panel) for the current mask.",
     "reasonRegionsNotClassified": "The lesions have no MAGNIMS regions from the region classification (or lesions changed since). Run the MAGNIMS region classification, check every region, then confirm.",
-    "automaticMarkingNotice": "Automatic lesion marking also marks spots in most healthy brains, mostly next to the ventricles. A marked spot is not evidence of multiple sclerosis; every spot needs expert review."
+    "automaticMarkingNotice": "Automatic lesion marking also marks spots in most healthy brains, mostly next to the ventricles. A marked spot is not evidence of multiple sclerosis; every spot needs expert review.",
+    "reasonLesionLabelsInvalid": "Every connected lesion must carry exactly one region (periventricular, juxtacortical, infratentorial or deep white matter); Active (Gd+) and Black Hole (T1) are not regions. Correct these lesions, or run the region classification again:",
+    "invalidLesionItem": "Lesion {{n}} (slice {{slice}}, {{voxels}} voxels): {{labels}}",
+    "moreLesions": "… and {{count}} more",
+    "editedAfterClassification": "Region labels were changed by hand after the region classification.",
+    "correctionsTitle": "{{count}} lesion region(s) differ from the region classification (corrected by hand):",
+    "correctionItem": "Lesion {{n}} (slice {{slice}}, {{voxels}} voxels): {{from}} → {{to}}",
+    "acknowledgeCorrections": "I have checked these region corrections and confirm them as mine.",
+    "confirmCorrections": "You also confirm these {{count}} region correction(s) made by hand after the region classification:",
+    "confirmedByRadiologist": "Segmentation confirmed by a radiologist",
+    "confirmedCorrections": "Including {{count}} region correction(s) made by hand and acknowledged in the confirmation."
   },
   "lesions": {
     "title": "Lesion Analysis",

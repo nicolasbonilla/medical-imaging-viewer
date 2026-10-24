@@ -151,11 +151,14 @@ DIS_NOT_EVALUATED_NOTICE: Dict[str, str] = {
           "in der aktuellen Fassung der Segmentierung bestätigt; die Software hat die räumliche Dissemination daher "
           "nicht beurteilt, und dieser Entwurf darf nicht als Aussage zur räumlichen Dissemination gelesen werden.",
 }
+# Second review of PR #68, N3: counted per statement (sentence, clause, table row or region heading).
 DIS_LINES_REPLACED: Dict[str, str] = {
-    "en": "{n} line(s) of the drafting model's text that stated something on dissemination in space were replaced.",
-    "es": "Se sustituyeron {n} línea(s) del texto del modelo de redacción que afirmaban algo sobre la diseminación "
-          "en el espacio.",
-    "de": "{n} Zeile(n) des Modelltextes mit einer Aussage zur räumlichen Dissemination wurden ersetzt.",
+    "en": "{n} statement(s) of the drafting model's text on dissemination in space or on lesion regions were "
+          "replaced or removed.",
+    "es": "Se sustituyeron o eliminaron {n} afirmación(es) del texto del modelo de redacción sobre la diseminación "
+          "en el espacio o sobre las regiones de las lesiones.",
+    "de": "{n} Aussage(n) des Modelltextes zur räumlichen Dissemination oder zu den Regionen der Läsionen wurden "
+          "ersetzt oder entfernt.",
 }
 
 
@@ -186,6 +189,27 @@ async def server_dis_assessment(segmentation_id: Optional[str], current_user: Us
     except Exception as e:  # noqa: BLE001 — a failed assessment is "not evaluated", never "not met"
         logger.error(f"[Report] DIS assessment failed for the report: {e}")
         return gate.not_evaluated(segmentation_id, None, reason=gate.REASON_FAILED)
+
+
+async def server_lesion_table(segmentation_id: str) -> Dict[str, Any]:
+    """The lesion measurements a report may use, derived on the server for the report's own segmentation (N7).
+
+    The caller's right to read it was checked by the route (RC-029). A table that cannot be computed is refused
+    (422) — the client's table is never used instead."""
+    from app.api.routes.segmentation_analysis import lesion_table
+
+    segmentation_service, storage_service = _dis_services()
+    try:
+        return await lesion_table(segmentation_id, segmentation_service, storage_service)
+    except HTTPException:
+        raise
+    except Exception as e:  # noqa: BLE001
+        logger.error(f"[Report] Lesion measurements could not be computed for the report: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(f"The lesion measurements of segmentation {segmentation_id} could not be computed on the server "
+                    "(the source image or its voxel geometry could not be read); nothing was sent."),
+        )
 
 
 def dis_notice(findings: Dict[str, Any], language: str, replaced: int = 0) -> Optional[str]:
@@ -233,8 +257,9 @@ class ReportGenerateRequest(BaseModel):
     segmentation_id: Optional[str] = Field(
         None,
         max_length=200,
-        description=("The segmentation the findings were measured on (PRB-003): the DIS state is derived for it on "
-                     "the server; lesion measurements or a DIS block of another segmentation are refused (409)."),
+        description=("The segmentation the findings were measured on (PRB-003): the DIS state and the lesion table "
+                     "are derived for it on the server (the client's are not used); lesion measurements or a DIS "
+                     "block naming another segmentation are refused (409)."),
     )
 
 
@@ -319,8 +344,14 @@ async def generate_report(
                 detail=(f"The {key.replace('_', ' ')} belongs to another segmentation than this report "
                         "(segmentation_id differs); nothing was sent."),
             )
+    if report_sid and "lesion_analysis" in findings:
+        # Second review of PR #68, N7: the lesion table is derived on the server for the report's own segmentation
+        # — a client table (with, without or with another `segmentation_id`) never reaches the model.
+        findings["lesion_analysis"] = await server_lesion_table(report_sid)
     if "dis_assessment" in findings or (report_sid and "lesion_analysis" in findings):
-        findings["dis_assessment"] = await server_dis_assessment(report_sid, current_user)
+        # N5: the model gets the confirmer's role and time, never the person.
+        findings["dis_assessment"] = gate.without_reviewer_identity(
+            await server_dis_assessment(report_sid, current_user))
         others = any(findings.get(k) for k in MEASUREMENT_FINDING_KEYS if k != "dis_assessment")
         if not (others or request.volumetry or gate.is_evaluated(findings["dis_assessment"])):
             # A "not evaluated" DIS state is not a measurement: the model would draft from nothing (RC-034).
@@ -344,11 +375,15 @@ async def generate_report(
             language=request.language,
         )
         replaced = 0
-        if not dis_evaluated:   # finding 4: a DIS statement written by the model is replaced, in code
+        # Finding 4 / N3: a DIS statement written by the model is replaced, in code — a BACKSTOP; the main controls
+        # are the earlier layers (no regions sent, the system safety rule, no DIS or per-region template section).
+        # Merge note (PR #67): this check runs on the model's text only, BEFORE `assemble_draft` adds the
+        # clinician's typed entry, which it must never touch.
+        if not dis_evaluated:
             content, replaced = gate.scrub_unevaluated_dis(result["content"], request.language)
             if replaced:
                 logger.warning("[Report] DIS statements written by the model were replaced",
-                               extra={"replaced_lines": replaced})
+                               extra={"replaced_statements": replaced})
             result = {**result, "content": content}
         notice = longitudinal_notice(request.findings.get("longitudinal"), request.language)
         if notice:   # CAPA-013: appended in code, after the model, in the report language

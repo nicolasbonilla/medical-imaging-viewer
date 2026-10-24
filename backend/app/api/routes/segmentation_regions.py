@@ -468,10 +468,10 @@ async def classify_regions(
 
         response_data = _sanitize(response_data)
         if classified_mask is not None:
-            # PRB-003 (review of PR #68, blocker 1): the lesions these regions were assigned to. DIS is evaluated
-            # only while the stored lesions (footprint) are these and the labels are the MAGNIMS scheme.
-            response_data["classified_lesion_footprint_sha256"] = dis_gate.footprint_sha256(classified_mask)
-            response_data["classified_mask_sha256"] = SegmentationService.mask_sha256(classified_mask)
+            # PRB-003 (review of PR #68, blocker 1; second review, N1): the lesions these regions were assigned to,
+            # and each lesion's region. DIS is evaluated only while the stored lesions are these, each carries one
+            # region, and a region changed by hand since is acknowledged in the radiologist's confirmation.
+            response_data.update(dis_gate.classification_record(classified_mask))
 
         # --- Auto-compute and persist ALL analysis data ---
         if classified_mask is not None:
