@@ -300,7 +300,9 @@ def test_rc064_the_payload_itself_holds_only_known_fields_and_no_marker():
     findings, vol = _marked()
     payload = provider_payload(findings, vol)
     assert set(payload.findings) <= {"lesion_analysis", "dis_assessment", "longitudinal", "zone_stats",
-                                     "segmentation_labels", "anomalies", "patient_age", "patient_sex"}
+                                     "segmentation_labels", "anomalies", "patient_age", "patient_sex",
+                                     "clinician_entry"}
+    assert payload.findings.get("clinician_entry") in (None, True)     # a flag only (second review, N6)
     assert MARK not in json.dumps([payload.findings, payload.volumetry]).casefold()
     assert payload.withheld["free_text_fields"] == 3 and payload.withheld["unknown_fields"] == 3
 
@@ -875,9 +877,19 @@ def _legit_review_prompt():
 
 
 @pytest.mark.unit
-@pytest.mark.parametrize("mrn", ["123456", "1234567", "1456789", "12345678"])
+@pytest.mark.parametrize("mrn", ["123456", "104523", "1234567", "12345678", "MRN-1234567"])
 def test_n8_all_digit_record_numbers_do_not_refuse_legitimate_measurements(mrn):
+    # the review's collisions: "12345.67 mm³" (a decimal number), "123456 voxels" and "1234567 voxels" (a unit)
     _guard(_legit_review_prompt(), _ids(mrn=mrn))
+
+
+@pytest.mark.unit
+def test_n8_what_remains_a_whole_number_equal_to_the_record_number_still_refuses():
+    # "Total classified brain voxels: 1456789" — a bare number equal to the record number cannot be told
+    # from it; the check refuses (fail closed). Documented in CAPA-014 §8.
+    from app.services.report_payload_guard import IdentifierInPrompt
+    with pytest.raises(IdentifierInPrompt, match="record_number"):
+        _guard(_legit_review_prompt(), _ids(mrn="1456789"))
 
 
 # N9: no generator can write the withdrawn RC-007 statement again; the model name is the configured one.

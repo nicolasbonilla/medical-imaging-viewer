@@ -7,6 +7,8 @@ using Claude API, listing templates, and exporting reports.
 @module api.routes.ai_report
 """
 
+import re
+
 from fastapi import APIRouter, HTTPException, status, Depends
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field
@@ -37,7 +39,9 @@ SUBJECT_REQUIRED_DETAIL = (
 NOT_SENT_DETAIL = "The request was not sent to the AI service ({reason}). Nothing was sent."
 
 # CAPA-014 (RC-066): the clinician's typed text is added to the draft here, after the model returns;
-# it is never sent. Headings in the report language.
+# it is never sent. It is quoted exactly as typed (no Markdown in it is rendered) and closed, and the model's
+# text always follows under its own fixed heading, so typed text can never look like part of the AI draft
+# or the AI draft like the clinician's entry (second review, N1). Headings in the report language.
 CLINICIAN_ENTRY: Dict[str, Dict[str, str]] = {
     "en": {"heading": "Clinician's entry (added in the application; not sent to the AI service)",
            "clinical_indication": "Clinical indication", "technique": "Technique",
@@ -49,26 +53,59 @@ CLINICIAN_ENTRY: Dict[str, Dict[str, str]] = {
            "clinical_indication": "Klinische Fragestellung", "technique": "Technik",
            "additional_observations": "Weitere Beobachtungen"},
 }
+AI_DRAFT_HEADING: Dict[str, str] = {
+    "en": "AI draft (from measurements only)",
+    "es": "Borrador de IA (solo a partir de las mediciones)",
+    "de": "KI-Entwurf (nur aus den Messwerten)",
+}
+# Labels outside the device's vocabulary (e.g. a label the clinician renamed) reach the model as numbered
+# placeholders; the draft names them for the clinician, here only.
+UNLISTED_NOTE: Dict[str, str] = {
+    "en": "Labels outside the device's vocabulary were sent to the AI service as numbered placeholders; "
+          "their names were not sent:",
+    "es": "Las etiquetas fuera del vocabulario del dispositivo se enviaron al servicio de IA como marcadores "
+          "numerados; sus nombres no se enviaron:",
+    "de": "Bezeichnungen außerhalb des Vokabulars des Geräts wurden als nummerierte Platzhalter an den "
+          "KI-Dienst gesendet; ihre Namen wurden nicht gesendet:",
+}
 MAX_TYPED_CHARS = 5000
+MAX_LABEL_CHARS = 200
+
+
+def quoted(text: str) -> str:
+    """`text` exactly as written, in a fenced block longer than any run of backticks inside it: nothing in
+    it is rendered as Markdown (heading, image, link, HTML) and nothing in it can close the block."""
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    fence = "`" * max(3, 1 + max((len(run) for run in re.findall(r"`+", text)), default=0))
+    return f"{fence}text\n{text}\n{fence}"
 
 
 def clinician_entry(findings: Dict[str, Any], language: str) -> Optional[str]:
-    """The clinician's typed text as a block for the draft, or None when nothing was typed."""
+    """The clinician's typed text as a closed block for the draft, or None when nothing was typed."""
     texts = CLINICIAN_ENTRY.get(language, CLINICIAN_ENTRY["en"])
-    lines = [f"**{texts[key]}:** {findings[key].strip()[:MAX_TYPED_CHARS]}"
-             for key in FREE_TEXT_FIELDS if isinstance(findings.get(key), str) and findings[key].strip()]
-    return f"### {texts['heading']}\n\n" + "\n\n".join(lines) if lines else None
+    blocks = [f"**{texts[key]}:**\n\n{quoted(findings[key].strip()[:MAX_TYPED_CHARS])}"
+              for key in FREE_TEXT_FIELDS if isinstance(findings.get(key), str) and findings[key].strip()]
+    return f"### {texts['heading']}\n\n" + "\n\n".join(blocks) + "\n\n---" if blocks else None
 
 
-def with_clinician_entry(content: str, entry: Optional[str], language: str) -> str:
-    """Insert the entry right after the RC-006 disclaimer, which stays first."""
-    if not entry:
-        return content
+def unlisted_note(unlisted: Any, language: str) -> Optional[str]:
+    """Which label each numbered placeholder stands for, quoted, or None when every label was listed."""
+    if not isinstance(unlisted, dict) or not unlisted:
+        return None
+    lines = [f"{placeholder} = {' '.join(str(written).split())[:MAX_LABEL_CHARS]}"
+             for placeholder, written in unlisted.items()]
+    return UNLISTED_NOTE.get(language, UNLISTED_NOTE["en"]) + "\n\n" + quoted("\n".join(lines))
+
+
+def assemble_draft(content: str, language: str, entry: Optional[str], note: Optional[str]) -> str:
+    """The RC-006 disclaimer first, then the clinician's entry (quoted, closed), then the model's text under
+    its own fixed heading, preceded by the note on unlisted labels."""
     from app.services.brain_report_service import REPORT_DISCLAIMER_EN, REPORT_DISCLAIMERS
     disclaimer = REPORT_DISCLAIMERS.get(language, REPORT_DISCLAIMER_EN)
-    if content.startswith(disclaimer):
-        return f"{disclaimer}\n\n{entry}\n\n{content[len(disclaimer):].lstrip()}"
-    return f"{entry}\n\n{content}"
+    has_disclaimer = content.startswith(disclaimer)
+    body = content[len(disclaimer):].lstrip() if has_disclaimer else content
+    heading = f"### {AI_DRAFT_HEADING.get(language, AI_DRAFT_HEADING['en'])}"
+    return "\n\n".join(part for part in (disclaimer if has_disclaimer else None, entry, heading, note, body) if part)
 
 
 def _patient_service():
@@ -329,9 +366,12 @@ async def generate_report(
             language=request.language,
             identifiers=identifiers,
         )
-        # CAPA-014 (RC-066): the typed text joins the draft here, after the model; it was never sent.
-        result = {**result, "content": with_clinician_entry(
-            result["content"], clinician_entry(request.findings, request.language), request.language)}
+        # CAPA-014 (RC-066): the typed text and the names of unlisted labels join the draft here, after the
+        # model; they were never sent.
+        unlisted = result.pop("unlisted_labels", None)
+        result = {**result, "content": assemble_draft(
+            result["content"], request.language, clinician_entry(request.findings, request.language),
+            unlisted_note(unlisted, request.language))}
         notice = longitudinal_notice(request.findings.get("longitudinal"), request.language)
         if notice:   # CAPA-013: appended in code, after the model, in the report language
             result = {**result, "content": f"{result['content']}\n\n---\n\n> {notice}"}

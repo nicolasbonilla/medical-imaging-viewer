@@ -737,7 +737,8 @@ Measurements  -->  Structured payload  -->  Prompt Assembly  -->  Identifier che
 Report Template  ---------------------------------->  |
                                                       v
                                               Claude API Call
-                                              (claude-3-5-sonnet)
+                                              (claude-sonnet-4-5-20250929,
+                                               settings CLAUDE_MODEL)
                                                       |
                                                       v
                                               Structured Report
@@ -760,7 +761,14 @@ Report Template  ---------------------------------->  |
 - DIS assessment results
 - Longitudinal change statistics
 
-Labels only from the device's fixed vocabulary (MAGNIMS regions, structures, size classes).
+Labels only from the device's fixed vocabulary (MAGNIMS regions, structures, size classes, the label
+names the application ships). Any other label is sent as a numbered placeholder ("[unlisted label 2]");
+its name is shown to the clinician in the draft only. A value that is not a number is sent as "not
+available"; a number outside the physical range of its field stops the request (nothing is sent).
+
+**Draft layout:** the disclaimer, then the clinician's entry (quoted exactly as typed, not rendered as
+Markdown, and closed by a rule), then the model's text under the fixed heading "AI draft (from
+measurements only)".
 
 **Never transmitted:**
 - Any free text: clinical indication, technique, observations (added to the draft in the application after the model returns)

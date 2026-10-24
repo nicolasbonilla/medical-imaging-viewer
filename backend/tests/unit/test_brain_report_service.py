@@ -365,10 +365,11 @@ class TestBrainReportService:
 
     def test_build_findings_prompt_clinical_indication(self):
         """CAPA-014 (RC-064): the clinical indication is free text and is never sent (was: included);
-        the route adds it to the draft after the model returns."""
-        prompt = self.service._build_findings_prompt(
-            {"clinical_indication": "Known MS, annual follow-up"}, language="en"
-        )
+        the route adds it to the draft after the model returns. The model is told so only when something
+        was typed (CAPA-014 second review, N6)."""
+        from app.services.report_payload_guard import provider_payload
+        payload = provider_payload({"clinical_indication": "Known MS, annual follow-up"}, None)
+        prompt = self.service._build_findings_prompt(payload.findings, language="en")
         assert "Known MS, annual follow-up" not in prompt
         assert "added to the draft by the application" in prompt
 

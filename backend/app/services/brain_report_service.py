@@ -12,9 +12,10 @@ Templates: general, ms_activity, ms_lesion_burden, ms_longitudinal.
 
 Data sent to the model provider (CAPA-014; RC-064, RC-065, RC-066; HAZ-016):
 - Measurements only. The prompt is built from a structured payload (`report_payload_guard`): the
-  device's measurements, labels from the device's fixed vocabulary, sex (M/F) and a 5-year age band.
-  No free-text or user-typed field is sent; the clinician's text is added to the draft by the route
-  after the model returns. The system prompt is a fixed template.
+  device's measurements, labels from the device's fixed vocabulary (any other label as a numbered
+  placeholder), sex (M/F) and a 5-year age band. No free-text or user-typed field is sent; the
+  clinician's text is added to the draft by the route after the model returns. The system prompt is a
+  fixed template.
 - Before the call, a detection-only check of the final prompt (the patient's own identifiers from
   the patient record, and generic identifier patterns) refuses to send on any finding; without the
   patient's record nothing is sent (fail closed).
@@ -498,8 +499,10 @@ class BrainReportService:
         lang_map = {"en": "English", "es": "Spanish", "de": "German"}
         lang_name = lang_map.get(language, "English")
         parts.append(f"Generate the report in {lang_name}.")
-        # CAPA-014 (RC-064): no free text is sent; the route adds the clinician's text to the draft.
-        parts.append(CLINICIAN_TEXT_INSTRUCTION)
+        # CAPA-014 (RC-064): no free text is sent; when the clinician typed some, the route adds it to the
+        # draft and the model is told so (only then).
+        if findings.get("clinician_entry") is True:
+            parts.append(CLINICIAN_TEXT_INSTRUCTION)
 
         if findings.get("patient_age"):
             # CAPA-014 (RC-064): the 5-year band of the structured payload, never the exact age
@@ -774,6 +777,8 @@ class BrainReportService:
                     "input": message.usage.input_tokens,
                     "output": message.usage.output_tokens,
                 },
+                # CAPA-014: placeholder -> label as written, for the clinician's draft only (never sent)
+                "unlisted_labels": payload.unlisted,
             }
 
         except Exception as e:
@@ -830,8 +835,10 @@ class BrainReportService:
 
 # ─────────────────────────────────────────────────────────────────────────────
 # CAPA-014 (RC-065): the device's own words — the tripwire never reports one of them on its own, so a
-# patient named White does not stop "Deep White Matter". Derived from the fixed templates and from the
-# prompt builder itself on synthetic payloads covering every label and branch, so it follows the code.
+# patient named White does not stop "Deep White Matter", nor two of them in the order the device's text has
+# them ("Deep White"). Derived only from what can appear in the user prompt — the prompt builder itself on
+# synthetic payloads covering every label and branch — not from the system templates, which are never
+# checked (second review, N5).
 # ─────────────────────────────────────────────────────────────────────────────
 def _synthetic_payloads():
     labels = sorted(set(label_vocabulary().values()))
@@ -839,6 +846,7 @@ def _synthetic_payloads():
     lesions = [{"id": i + 1, "region": n, "volume_mm3": 1.0, "volume_ml": 0.001, "size_category": "small",
                 "centroid": {"z": 1, "y": 1, "x": 1}} for i, n in enumerate(labels)]
     base = {
+        "clinician_entry": True,
         "patient_age": "45-49", "patient_sex": "M", "segmentation_labels": labels + [UNLISTED],
         "anomalies": [{"type": n, "location": n, "confidence": 0.5, "volume_mm3": 1.0} for n in labels],
         "lesion_analysis": {"total_count": 1, "total_burden_mm3": 1.0, "total_burden_ml": 0.001, "regions": regions,
@@ -856,18 +864,36 @@ def _synthetic_payloads():
                           "burden_delta_percent": 1.0, "status_counts": {"new": 1}}, {"abstained": True}):
         yield {**base, "longitudinal": longitudinal}, volumetry
     yield {**base, "patient_sex": "F", "patient_age": "90 or older"}, volumetry
+    # every value missing: what "not available" looks like in each block
+    sparse = provider_payload({"lesion_analysis": {"regions": {"Lesion": {}}, "size_distribution": {"small": None},
+                                                   "lesions": [{}]},
+                               "dis_assessment": {"has_active_lesions": True, "has_black_holes": True},
+                               "zone_stats": {"zones": {"Lesion": {}}}, "longitudinal": {"status_counts": {}}}, None)
+    yield sparse.findings, None
+
+
+@lru_cache(maxsize=1)
+def _fixed_prompt_word_lists() -> tuple:
+    builder = BrainReportService.__new__(BrainReportService)
+    texts = [UNLISTED, "Structure Label"]
+    for findings, volumetry in _synthetic_payloads():
+        for language in ("en", "es", "de"):
+            texts.append(builder._build_findings_prompt(findings, volumetry, language))
+    return tuple(tuple(words_of(text)) for text in texts)
 
 
 @lru_cache(maxsize=1)
 def fixed_prompt_words() -> frozenset:
-    builder = BrainReportService.__new__(BrainReportService)
-    texts = list(REPORT_TEMPLATES.values()) + [UNLISTED, "Structure Label"]
-    for findings, volumetry in _synthetic_payloads():
-        for language in ("en", "es", "de"):
-            texts.append(builder._build_findings_prompt(findings, volumetry, language))
-    return frozenset(w for text in texts for w in words_of(text))
+    """Words the device's own text can put in the user prompt."""
+    return frozenset(w for words in _fixed_prompt_word_lists() for w in words)
+
+
+@lru_cache(maxsize=1)
+def fixed_prompt_pairs() -> frozenset:
+    """Two such words in the order the device's own text has them, e.g. ("deep", "white")."""
+    return frozenset(pair for words in _fixed_prompt_word_lists() for pair in zip(words, words[1:]))
 
 
 def assert_prompt_carries_no_identifier(user_prompt: str, identifiers: PatientIdentifiers) -> None:
     """RC-065: the tripwire on the final prompt (raises IdentifierInPrompt; never edits the text)."""
-    assert_no_identifiers(user_prompt, identifiers, fixed_prompt_words())
+    assert_no_identifiers(user_prompt, identifiers, fixed_prompt_words(), fixed_prompt_pairs())

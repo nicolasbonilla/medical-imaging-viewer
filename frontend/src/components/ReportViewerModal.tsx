@@ -286,6 +286,17 @@ export function ReportViewerModal({
                           {children}
                         </blockquote>
                       ),
+                      // CAPA-014 (RC-066): the clinician's entry arrives quoted in a fenced block — shown
+                      // exactly as typed, wrapped so that it prints in full.
+                      pre: ({ children }) => (
+                        <pre className="whitespace-pre-wrap break-words text-[13px] text-gray-800 bg-gray-50 border border-gray-200 rounded px-3 py-2 mb-3 font-mono">
+                          {children}
+                        </pre>
+                      ),
+                      // CAPA-014: a draft never loads an image, on screen or in print — only its description.
+                      img: ({ alt }) => (
+                        <span className="text-gray-500">[image: {alt || '-'}]</span>
+                      ),
                     }}
                   >
                     {report.content}

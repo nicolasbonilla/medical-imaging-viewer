@@ -343,7 +343,8 @@ def test_rc060_forged_confirmation_never_reaches_the_report(monkeypatch):
     prompt = captured.calls[0]["messages"][0]["content"]
     assert "dr.house" not in prompt and "confirmed by" not in prompt.lower()
     assert not ACTIVITY_WORDS.search(prompt[prompt.index("Longitudinal comparison data"):])
-    notice = r.json()["content"][len("Draft body"):]
+    content = r.json()["content"]
+    notice = content[content.index("Draft body") + len("Draft body"):]   # CAPA-014: the AI heading comes first
     assert "2 confirmed" not in notice and "dr.house" not in notice
 
 
@@ -446,8 +447,8 @@ def test_rc060_report_draft_carries_the_unconfirmed_candidate_notice(env, report
                                  "findings": {"longitudinal": longitudinal}})
     assert r.status_code == 200, r.text
     content = r.json()["content"]
-    assert content.startswith("draft body")
-    notice = content[len("draft body"):]
+    assert "draft body" in content          # CAPA-014 (second review, N1): under the fixed "AI draft" heading
+    notice = content[content.index("draft body") + len("draft body"):]
     assert phrase in notice
     assert "8" in notice and "20" in notice           # the measured rate and its sample, from the asset
     assert not ACTIVITY_WORDS.search(notice)
@@ -600,7 +601,8 @@ def test_rc061_false_share_is_stated_precisely(env, report_client):
     r = report_client.post("/api/v1/ai/report/generate",
                            json={"template_type": "ms_longitudinal", "language": "en", "segmentation_id": "seg-2",
                                  "findings": {"longitudinal": res}})
-    notice = r.json()["content"][len("draft body"):]
+    content = r.json()["content"]
+    notice = content[content.index("draft body") + len("draft body"):]
     assert "46 %" in notice and "most candidates may be false" not in notice.lower()
 
 
