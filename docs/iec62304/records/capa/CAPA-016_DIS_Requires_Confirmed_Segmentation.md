@@ -126,8 +126,10 @@ anchor asserted unique, bytes restored: see §5a.
 
 **Not verified.** No test in a real browser (jsdom only); no run against Firestore, GCS or the real model provider;
 no usability evaluation (IEC 62366) of the confirmation step; effectiveness in clinical use not measurable (not in use).
-The report's protection against a model that writes a DIS statement anyway rests on the prompt rule and the fixed
-notice after the draft — the model's text itself is not checked.
+The report's protection against a model that writes a DIS statement anyway rests on the earlier layers (no region sent,
+the system safety rule, no DIS or per-region template section) and the fixed notice after the draft; the output check on
+the model's text (per sentence, en/es/de wordings) is a backstop and cannot recognise every paraphrase (second review,
+N3).
 
 ### 5a. Results
 
@@ -140,6 +142,10 @@ notice after the draft — the model's text itself is not checked.
 | Frontend suite (vitest `--pool=threads`) | 343 passed, 3 skipped (FLAMeS tests needing local research data), 0 failed | — |
 | `tsc --noEmit`, production build | clean / passes | — |
 | Anchors of the existing negative-control scripts | 236 checked, all still unique | — |
+| Second review of PR #68 at `29abe29` — tests on the base | backend 46 of 51, frontend 6 of 6 fail | `records/risk_verification/PRB-003_review2_tests_on_29abe29_2026-10-24.json` |
+| Second review — tests on the corrections | 51 backend, 6 frontend pass | — |
+| Negative controls after the second review | **112 mutations, 112 detected** (G/C/R/A/S/N/F of the previous runs, anchors updated; W1-W35 and WF1-WF8 for the second review) | `records/risk_verification/PRB-003_negative_controls_2026-10-24.json` |
+| Regression after the second review | backend 1858 passed, 5 xfailed, 1 failed (webauthn, known); frontend 365 passed, 3 skipped; tsc clean; build passes; 353 anchors unique | — |
 
 ## 6. Class C module modified — justification (CLAUDE.md)
 
@@ -149,7 +155,10 @@ report route from the stored segmentation); otherwise the prompt says NOT EVALUA
 lesion counts or regions. Before, a missing `dis_met` printed "NOT MET". (2) *Added after the review of PR #68 (finding
 4):* `dis_not_evaluated_template()` and three lines in `generate_report`: without an evaluated DIS the template's DIS
 sections are replaced by "not evaluated", every other line asking for DIS is removed, format rule 4 keeps only its CMSC
-prohibition, and a safety rule heads the system prompt. The template texts themselves are unchanged.
+prohibition, and a safety rule heads the system prompt. (3) *Added after the second review (N4):* in the same function,
+the per-region sections become one section without regions, and the region column, "by anatomical region", "(region)",
+the "distribution pattern" item, "periventricular confluency" and the McDonald reference of the introduction are removed.
+The template texts themselves are unchanged.
 `lesion_analysis_service.py` and `ms_region_classifier.py` are **not modified**. The new gate module decides whether
 `compute_dis_criteria` may run; proposed for the Class C list (PA-16.4). **Code review required before merge.**
 
@@ -157,9 +166,13 @@ prohibition, and a safety rule heads the system prompt. The template texts thems
 
 - A radiologist can confirm a segmentation without checking it; the confirmation records who and for which mask, and
   the dialog states what is confirmed. Usability evaluation (IEC 62366) open.
-- The report model may still write a DIS sentence despite the rule and the adapted template; every line naming DIS (en/es/de
-  keywords) is replaced in code and the notice says how many — a statement worded without those keywords would pass
-  (line-based check).
+- The report model may still write a DIS sentence despite the rule and the adapted template; the output check replaces
+  statements per sentence (en/es/de wordings, markup and hyphens normalised, region tables and headings removed) and the
+  notice says how many — a paraphrase it does not recognise would pass. It is a backstop (second review, N3).
+- A radiologist can acknowledge a region correction without looking (second review, N1); a lesion relabelled Active (Gd+) /
+  Black Hole (T1) blocks DIS until corrected (PRB-003 §8.12).
+- Until PR #67 is merged, a report request without a segmentation uses the client's lesion counts (no regions, DIS not
+  evaluated) (second review, N7).
 - Regions of an unconfirmed segmentation stay visible to the radiologist (lesion table, region bars, lesion analysis,
   assistant region tools), caveated "not a DIS assessment"; the report model receives none (review of PR #68, finding 3).
 - Stored DIS blocks written before the fix stay in the records (no longer served). Read-only check of production data
@@ -179,11 +192,12 @@ prohibition, and a safety rule heads the system prompt. The template texts thems
 | D-4 | Production checks (read-only): stored `dis_assessment` blocks and automatic-source segmentations; values of the AI tool flags. |
 | D-5 | SibBMS licence before any number is quoted in product text. |
 | D-6 | IFU-001 / CER-001 wording (PA-16.5). |
-| D-7 | Merge order with PR #67. *(Corrected 2026-10-24 after the review of PR #68.)* #67's `report_payload_guard.dis_assessment()` drops `evaluation_status`, so after a merge a CONFIRMED DIS would print NOT EVALUATED (not "NOT MET" as first written). The #67 agent was asked to keep the state and print "not evaluated" when it is missing; `test_rc070_r2_e2e_*` fails on a merge that drops it. PR #65: document version rows, RMF §3.6 vs §3.7, and `ROUTE_ACTIONS` must map `POST /segmentation/{id}/review/confirm` to `CLINICAL_SEGMENTATION_CONFIRM`. |
+| D-7 | Merge order with PR #67. *(Corrected 2026-10-24 after the review of PR #68.)* #67's `report_payload_guard.dis_assessment()` drops `evaluation_status`, so after a merge a CONFIRMED DIS would print NOT EVALUATED (not "NOT MET" as first written). The #67 agent was asked to keep the state and print "not evaluated" when it is missing; `test_rc070_r2_e2e_*` fails on a merge that drops it. PR #65: document version rows, RMF §3.6 vs §3.7, and `ROUTE_ACTIONS` must map `POST /segmentation/{id}/review/confirm` to `CLINICAL_SEGMENTATION_CONFIRM`. **Merge instructions (second review, N2):** keep #68's DIS block (NOT EVALUATED when there is no state); run #68's output check on the model's text BEFORE #67's `assemble_draft` (never on the clinician's typed entry); unify the two `segmentation_id` request fields into one; the end-to-end fixture already stubs #67's patient checks — run `test_prb003_*` on the merged tree. |
 | D-8 | The word "most" in the information-for-safety text rests on the CC BY-NC-SA control data (as the numbers do). |
 | D-9 | Deploy the frontend before the backend (DEPLOYMENT_CHECKLIST.md). |
-| D-10 | Accept the binding of the region classification to the classified lesions (footprint), so a radiologist can correct a region label before confirming (§10, B1). |
+| D-10 | Region corrections by hand (revised after the second review, N1): one region per lesion; a correction is listed and must be acknowledged in the confirmation, which records it; labels 5 / 6 on a lesion block DIS until corrected (PRB-003 §8.12). |
 | D-11 | Label definitions changeable by radiologists and technicians only (403 for viewers and administrators). |
+| D-12 | Who confirmed (names, ids, history) shown to radiologists and administrators only; others: role and time; history capped at 50 events (second review, N5). |
 
 ## 10. Independent review of PR #68 (2026-10-24, at `4c601f2`) — findings and corrections (PENDING owner approval)
 
@@ -212,6 +226,22 @@ without an evaluated DIS, the template as written with one); `test_capa009_*` (t
 segmentation, authorized with `authorize_mask_specs`, 404 for a stranger); the integration characterisation (reason
 `regions_not_classified`; the evaluated contract is pinned by the CI-run `test_analysis_flow_ci_guard`); the source-text
 panel check replaced by a behavioural test.
+
+## 11. Second independent review of PR #68 (2026-10-24, at `29abe29`) — findings and corrections (PENDING owner approval)
+
+The second review closed M5 and m6-m11 and found B1, M3 and M4 only partly closed. Every finding was answered on the same branch with the same process: tests written before the corrections — they fail on `29abe29` (backend 46 of 51, frontend 6 of 6; `records/risk_verification/PRB-003_review2_tests_on_29abe29_2026-10-24.json`) — then the corrections, then the negative controls re-run in full: 112 mutations, 112 detected (the 69 of the previous run with anchors updated and 43 for the second review; bound tests green after byte-exact restore) — `records/risk_verification/PRB-003_negative_controls_2026-10-24.json`. A first full run left one mutation undetected (C6: the new per-lesion check also refused lesions that were never classified, so removing the classification check changed nothing visible); the per-lesion check now reads classified lesions only, a test asserts the reason of each refusal (and the card shows the server's reason), the record of the tests on `29abe29` was produced again with the final test files, and the whole set was re-run.
+
+| # | Finding (second review of PR #68 at `29abe29`) | Correction on this branch | Verified by |
+|---|---|---|---|
+| N1 | **Major.** Label edits after the classification were trusted: `regions_state` checked only that the lesion voxels were unchanged, so — each after a radiologist's confirmation — one connected lesion classified periventricular with half of it painted juxtacortical gave a false MET, a periventricular lesion painted Active (Gd+) a false NOT MET, and a classified mask flattened back to label 1 (for example by "overwrite" in the stale-save dialog) a false NOT MET; `edited_after_classification` was computed but never shown | classify-regions records each lesion's region (`classified_lesion_regions`: first voxel, voxel count, region; 18-connectivity, the classifier's own, RC-030). The gate requires every connected lesion to carry exactly ONE region 1-4 — no lesion split between regions, no Active (Gd+) / Black Hole (T1) label in a mask whose DIS is evaluated (reason `lesion_labels_invalid`, the lesions listed with slice and labels; the confirmation is refused, 409). A lesion whose region differs from the classifier's is a correction by hand: listed (lesion, slice, voxels, classifier's region → current region) in the DIS state, in the card and in the confirm dialog; the radiologist ticks an acknowledgement and the digest of exactly these corrections is sent (409 without it, or for another set); the confirmation records them (`region_corrections`, count, digest) and is bound to them. "Region labels were changed by hand after the region classification" is shown; an evaluated result says it includes acknowledged corrections. Consequences: §8.12 | `test_rc070_n1_*`, `test_rc071_n1_*` (each probe of the review: split lesion, Active (Gd+), flattened mask, relabelled regions), `rc070/rc071 review2` (frontend); mutations W1-W9, WF1-WF7, G12, G14 |
+| N2 | Coordination with PR #67: its pushed head still drops the evaluated state (its local `6040905` / `9a8393e` fix it) | Merge instructions written in the PR description and in CAPA-016 D-7: keep #68's DIS block (NOT EVALUATED when there is no state); run #68's output check on the model's text BEFORE #67's `assemble_draft`, so it never touches the clinician's typed entry; unify the two `segmentation_id` request fields into one (#67's is required, #68's derives the DIS state and the lesion table); the end-to-end fixture of `test_prb003_review1_findings.py` now also stubs #67's report-segmentation and patient checks (`authorize_segmentation_id`, `_patient_service`) when they exist, so the same tests drive the merged route | `test_rc070_r2_e2e_*` (fixture); inspection |
+| N3 | The output check on the model's text was overstated: it missed "spatial dissemination", "disseminated in space", "dissemination in **space**", "≥2 of the McDonald 2024 topographies", "Spatial distribution meets McDonald criteria", "diseminación espacial", "3 de las 4 regiones características", "räumliche Streuung", "örtliche Dissemination", region table rows, lines that also say "not evaluated", sentences wrapped over two lines — and removed whole paragraph lines | Rewritten: per sentence and per ';' clause, across wrapped lines, on text with markup, accents and hyphens normalised; terms added in en/es/de (dissemination / disseminated in space, spatial dissemination / distribution, D.I.S., McDonald, topographies, typical / characteristic regions or locations, counts of regions, two or more DIS regions named, one DIS region with a presence or a number); a sentence saying "not evaluated" AND claiming something is replaced; region tables and per-region headings are removed; only the statement is replaced, the rest of the paragraph is kept; the notice states the number of statements replaced or removed. **The M4 claim is corrected:** the main controls are the earlier layers — no region is sent to the model, the system prompt opens with the not-evaluated safety rule, no template asks for DIS or for a per-region section (N4); the output check is a BACKSTOP for common wordings and cannot recognise every paraphrase | `test_rc070_n3_*` (every wording of the review's probe and the kept-text cases); mutations W10-W21 |
+| N4 | The not-evaluated templates still asked for per-region sections (`general`, `ms_lesion_burden`, `ms_comprehensive`) | Without an evaluated DIS (Class C `dis_not_evaluated_template`): the per-region sections (Periventricular / Cortical-Juxtacortical / Infratentorial / Deep White Matter / Regional Distribution) become ONE "White Matter Lesions" section that says the regions were not confirmed and are not given; the region column of the lesion inventory, "Detailed lesion inventory by anatomical region", "(region)", the "distribution pattern" item, "periventricular confluency" and the McDonald reference of the introduction are removed. The template texts themselves are unchanged | `test_rc070_n4_*` (prints each template in that state); mutations W22, W23 |
+| N5 | The confirmation history (names, ids, times) went to every role with patient access, without a size limit; the AI assistant received the confirmer's user name | Names, ids and the history are returned to radiologists and administrators only (`GET /segmentation/{id}`, `/list`, the DIS state); other roles get the confirmation with the role and the time and the history's length (`clinician_review_history_count`); the card then reads "Segmentation confirmed by a radiologist". The history keeps the most recent 50 events (every event is also in the server log). The AI assistant and the report model get the role and the time, never the person | `test_rc071_n5_*`, `test_rc070_n5_*`, `rc071 review2` (frontend); mutations W24-W29, WF8 |
+| N6 | `persist_metadata` could overwrite newer metadata written by another instance (whole-document set from the cached copy) | A Firestore field update of `clinician_review` and `clinician_review_history` only; the stored history is read and merged (events of another instance kept); the update carries the read document's update time as precondition — a change in between gives 409 and the cached entry is discarded; a missing document is not durable (503) | `test_rc071_n6_*`; mutations W30-W33 |
+| N7 | Removing `segmentation_id` from the client lesion block bypassed the 409 binding | With a report segmentation the lesion table is derived on the server for it (`segmentation_analysis.lesion_table`, compute-only, nothing stored); a client table — with, without or with another `segmentation_id` — never reaches the model; a table that cannot be computed gives 422. Without a report segmentation (possible only until #67, which makes it mandatory, is merged) the client's counts are used without regions and DIS is not evaluated | `test_rc070_n7_*`; mutations W34, W35 |
+
+Existing tests changed with the corrected contract (stated, not hidden): `test_rc070_r1_a_region_corrected_after_classification_keeps_the_classification` (a correction now needs the acknowledgement), `test_rc070_assistant_receives_an_evaluated_assessment_unchanged` (unchanged except the confirmer, given by role), the test helpers (`_classification` / `_classify` record each lesion's region, computed in the test with scipy, independently of the code under test; `_FakeDB` supports field updates with an update-time precondition; `_seed` stores the metadata document as production has it), `test_analysis_flow_ci_guard.py` (the classification record classify-regions writes) and the end-to-end fixture (N2).
 
 ## 9. Approvals
 
