@@ -30,6 +30,10 @@ logger = get_logger(__name__)
 # Firestore collection for encrypted auth user records.
 AUTH_USERS_COLLECTION = "auth_users"
 
+
+class UserStoreUnavailable(Exception):
+    """The user store could not be read (distinct from "no such user"). CAPA-015 review m6."""
+
 # Datetime fields on the User model that are serialized as ISO strings.
 _USER_DATETIME_FIELDS = ("created_at", "updated_at", "last_login", "last_password_change", "locked_until")
 
@@ -260,8 +264,24 @@ class SecureUserStorage:
             )
             raise
 
+    def lookup_user(self, user_id: str) -> Optional[User]:
+        """Strict lookup (CAPA-015 review m6): None ONLY when the user does not exist; a read or
+        decryption error raises UserStoreUnavailable. A session decision must never treat "the
+        store could not be read" as "the account is gone" (that revoked live sessions)."""
+        try:
+            blob = self._read_profile_blob(user_id)
+        except Exception as e:
+            raise UserStoreUnavailable(f"user store read failed: {type(e).__name__}") from e
+        if blob is None:
+            return None
+        try:
+            return self._revive_user(self._decrypt(blob))
+        except Exception as e:
+            raise UserStoreUnavailable(f"user record unreadable: {type(e).__name__}") from e
+
     def get_user_by_id(self, user_id: str) -> Optional[User]:
-        """Retrieve and decrypt a user by ID (ISO 27001 A.10.1.1)."""
+        """Retrieve and decrypt a user by ID (ISO 27001 A.10.1.1). Lenient: None on any error —
+        use lookup_user() where "not found" and "could not read" must be told apart."""
         try:
             blob = self._read_profile_blob(user_id)
             if blob is None:

@@ -435,7 +435,29 @@
     "hipaaNotice": "Zum Schutz der Patientengesundheitsinformationen (PHI) werden Sitzungen nach 15 Minuten Inaktivität automatisch beendet.",
     "keyboardHint": "Drücken Sie Enter, um angemeldet zu bleiben, oder Escape, um sich abzumelden",
     "expired": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
-    "extendedSuccess": "Sitzung erfolgreich verlängert"
+    "extendedSuccess": "Sitzung erfolgreich verlängert",
+    "reauthTitle": "Zum Fortfahren erneut anmelden",
+    "reauthMessage": "Zu Ihrer Sicherheit wurde die Sitzung beendet. Melden Sie sich erneut an, um fortzufahren: Ihre nicht gespeicherte Arbeit bleibt auf diesem Bildschirm erhalten.",
+    "reauthUnsaved": "Sie haben nicht gespeicherte Änderungen an der Segmentierung. Sie bleiben erhalten und können nach der Anmeldung gespeichert werden.",
+    "reauthSignedInAs": "Angemeldet als {{username}}",
+    "reauthPassword": "Passwort",
+    "reauthSubmit": "Anmelden",
+    "reauthPasskey": "Passkey verwenden",
+    "reauthSignOut": "Abmelden",
+    "reauthSignOutWarning": "Wenn Sie sich jetzt abmelden, werden die nicht gespeicherten Änderungen auf diesem Bildschirm verworfen.",
+    "reauthSignOutConfirm": "Änderungen verwerfen und abmelden",
+    "reauthCancel": "Zurück",
+    "reauthWrongUser": "Nur {{username}} kann diese Arbeit fortsetzen. Eine andere Person muss zuerst diese Sitzung beenden und ihre eigene öffnen; eine Abmeldung hier verwirft die nicht gespeicherten Änderungen.",
+    "reauthFailed": "Anmeldung fehlgeschlagen. Prüfen Sie das Passwort und versuchen Sie es erneut.",
+    "reauthCaptcha": "Zu viele Versuche: Geben Sie die angezeigten Ziffern ein, um fortzufahren.",
+    "reauthCaptchaLabel": "Sicherheitsprüfung"
+  },
+  "audit": {
+    "statusTitle": "Audit-Protokoll",
+    "statusFailing": "Der Server kann das Audit-Protokoll nicht dauerhaft speichern ({{count}} Einträge warten). Die Einträge bleiben im Serverprotokoll erhalten; wenden Sie sich an die Systemadministration.",
+    "statusDegraded": "Das Speichern des Audit-Protokolls wird wiederholt ({{count}} Einträge warten).",
+    "statusNotDurable": "Das Audit-Protokoll wird auf diesem Server nicht dauerhaft gespeichert.",
+    "statusLastError": "Letzter Fehler: {{error}}"
   },
   "patient": {
     "title": "Patienten",

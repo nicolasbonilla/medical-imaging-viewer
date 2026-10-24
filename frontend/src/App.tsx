@@ -4,6 +4,8 @@ import { MotionConfig } from 'framer-motion';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { SessionManager } from './components/SessionManager';
+import { SessionExpiredDialog } from './components/SessionExpiredDialog';
+import { AuditStatusBanner } from './components/AuditStatusBanner';
 import { SkipLink } from './components/SkipLink';
 import LoginPage from './pages/LoginPage';   // eager: first paint, keep the login bundle tiny
 import ProtectedRoute from './components/ProtectedRoute';
@@ -108,6 +110,10 @@ function App() {
           {/* WCAG 2.4.1: Skip navigation link for keyboard users */}
           <SkipLink mainContentId="main-content" />
           <KeyboardShortcutsModal />
+
+          {/* CAPA-015: re-login without leaving the page (RC-069); admin audit indicator (RC-067) */}
+          <SessionExpiredDialog />
+          <AuditStatusBanner />
 
           {/* HIPAA-compliant session timeout management (15 minutes) */}
           <SessionManager timeoutMinutes={15} warningMinutes={2}>

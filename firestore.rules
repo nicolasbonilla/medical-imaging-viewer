@@ -23,9 +23,19 @@ service cloud.firestore {
     }
 
     // Audit logs - read only for admins
+    // CAPA-015 (RC-067): append-only, written only by the backend service account
+    // (document(event_id).create); no client may create, change or delete a record.
     match /audit_logs/{logId} {
       allow read: if request.auth != null && request.auth.token.admin == true;
       allow write: if false; // Only backend can write
+    }
+
+    // CAPA-015 (RC-068): refresh-token hashes and session families — backend only, never a client.
+    match /refresh_tokens/{tokenHash} {
+      allow read, write: if false;
+    }
+    match /refresh_token_families/{familyId} {
+      allow read, write: if false;
     }
   }
 }

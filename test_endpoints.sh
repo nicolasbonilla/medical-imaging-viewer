@@ -4,9 +4,8 @@
 # Usage: bash test_endpoints.sh
 
 BASE="${MSTOOL_API_BASE:-https://brain-mri-7bp6oqdu7a-uc.a.run.app/api/v1}"
-# Never hardcode the production admin password. Require it from the environment
-# and fail fast if it is not set.
-ADMIN_PASSWORD="${ADMIN_DEFAULT_PASSWORD:?ADMIN_DEFAULT_PASSWORD must be set (export it before running; do not hardcode the production admin password)}"
+# CAPA-015: the auth routes are also served on the app's own origin (Firebase Hosting rewrite).
+APP_ORIGIN="${MSTOOL_APP_ORIGIN:-https://app.mstool-ai.com}"
 PASS=0
 FAIL=0
 
@@ -26,6 +25,30 @@ check() {
 echo "=== MSTool-AI Endpoint Verification ==="
 echo "Base: $BASE"
 echo ""
+
+# 0. Hosting rewrite of /api/v1/auth/** (CAPA-015 RC-068) — needs NO password.
+# Without a cookie, POST /refresh must reach FastAPI and answer its 401 JSON — not index.html
+# (rewrite missing) and not 404/405 (backend older than the change).
+echo "[0] Session refresh through the app origin ($APP_ORIGIN)..."
+REFRESH_OUT=$(curl -s -o /tmp/mstool_refresh_body.$$ -w "%{http_code} %{content_type}" -X POST "$APP_ORIGIN/api/v1/auth/refresh")
+REFRESH_CODE="${REFRESH_OUT%% *}"
+REFRESH_TYPE="${REFRESH_OUT#* }"
+if [ "$REFRESH_CODE" = "401" ] && echo "$REFRESH_TYPE" | grep -qi "application/json" && grep -q '"detail"' /tmp/mstool_refresh_body.$$; then
+    echo "  PASS: POST /api/v1/auth/refresh without cookie -> 401 JSON from the API"
+    PASS=$((PASS + 1))
+else
+    echo "  FAIL: POST /api/v1/auth/refresh without cookie -> $REFRESH_CODE ($REFRESH_TYPE); expected 401 application/json with \"detail\""
+    FAIL=$((FAIL + 1))
+fi
+rm -f /tmp/mstool_refresh_body.$$
+if [ "${1:-}" = "--hosting-only" ]; then
+    echo "=== Results: $PASS passed, $FAIL failed ==="
+    [ "$FAIL" -gt 0 ] && exit 1 || exit 0
+fi
+
+# Never hardcode the production admin password. Require it from the environment
+# and fail fast if it is not set (checks below need it; check [0] above does not).
+ADMIN_PASSWORD="${ADMIN_DEFAULT_PASSWORD:?ADMIN_DEFAULT_PASSWORD must be set (export it before running; do not hardcode the production admin password)}"
 
 # 1. Health check
 echo "[1/8] Health check..."
@@ -88,6 +111,17 @@ fi
 echo "[8/8] CAPTCHA..."
 STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/auth/captcha" -X POST -H "Content-Type: application/json" -d '{"difficulty":"medium"}')
 check "POST /auth/captcha" "200" "$STATUS"
+
+# 9. Login through the app origin sets the refresh cookie (CAPA-015 RC-068)
+echo "[9] Login on $APP_ORIGIN sets the __session cookie..."
+COOKIE_HDR=$(curl -s -D - -o /dev/null "$APP_ORIGIN/api/v1/auth/login" -X POST -H "Content-Type: application/json" --data-raw "{\"username\":\"admin\",\"password\":\"$ADMIN_PASSWORD\"}" | grep -i '^set-cookie: __session=' | tr 'A-Z' 'a-z')
+if echo "$COOKIE_HDR" | grep -q "httponly" && echo "$COOKIE_HDR" | grep -q "secure" && echo "$COOKIE_HDR" | grep -q "samesite=strict"; then
+    echo "  PASS: Set-Cookie __session (HttpOnly; Secure; SameSite=Strict)"
+    PASS=$((PASS + 1))
+else
+    echo "  FAIL: no __session cookie with HttpOnly, Secure, SameSite=Strict on login through $APP_ORIGIN"
+    FAIL=$((FAIL + 1))
+fi
 
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
