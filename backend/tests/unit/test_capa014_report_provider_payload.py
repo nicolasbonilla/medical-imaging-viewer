@@ -988,12 +988,14 @@ def test_r1_clinician_entry_and_app_notes_are_separate_response_fields(route):
     assert entry["heading"] == "Clinician's entry (added in the application; not sent to the AI service)"
     assert entry["fields"] == [{"key": "technique", "label": "Technique", "text": "3T", "truncated": False}]
     assert body["ai_draft_heading"] == "AI draft (from measurements only)"
-    assert body["app_notes"] == [{"kind": "unlisted_labels", "text": UNLISTED_NOTE_EN, "lines": ["[unlisted label 1] = My A"]}]
+    assert body["app_notes"] == [{"kind": "unlisted_labels", "heading": APP_NOTE_HEADING_EN, "text": UNLISTED_NOTE_EN,
+                                  "lines": ["[unlisted label 1] = My A"]}]
     assert body["ai_text"] == "Model text."
     content = body["content"]
     assert content.startswith(REPORT_DISCLAIMERS["en"])
     order = [content.index(x) for x in ("### Clinician's entry", "```text\n3T\n```", "### AI draft",
-                                        "```text\n[unlisted label 1] = My A\n```", "Model text.")]
+                                        "#### " + APP_NOTE_HEADING_EN, "```text\n[unlisted label 1] = My A\n```",
+                                        "Model text.")]
     assert order == sorted(order)
 
 
@@ -1079,6 +1081,7 @@ def test_r3_a_rounding_error_at_a_range_edge_does_not_refuse_the_report(route):
 
 
 # ============================================================================= final check (fourth review)
+APP_NOTE_HEADING_EN = "Application note (written by the application, not by the AI service)"
 UNLISTED_NOTE_EN = ("Labels outside the device's vocabulary were sent to the AI service as numbered placeholders; "
                     "their names were not sent:")
 FORGERIES = {   # the reviewer's e4.py: model output trying to produce the boxes or the application's headings
@@ -1128,7 +1131,7 @@ def test_r1_legitimate_model_text_is_not_altered(route, text):
 def test_r1_every_format_character_is_removed_from_the_model_text(route):
     route.provider.text = "Soft\u00adhyphen, zero\u200bwidth, joiner\u200d, BOM\ufeff and \u202ebidi\u202c."
     body = _post(route, _measurements()).json()
-    assert body["ai_text"] == "Softhyphen, zerowidth, joiner, BOM and bidi."
+    assert body["ai_text"] == "Softhyphen, zero width, joiner, BOM and bidi."
 
 
 # Cosmetic: a value that is not available is printed without a unit sign.
@@ -1142,4 +1145,54 @@ def test_not_available_is_printed_without_a_percent_sign(route):
     prompt = route.provider.prompt()
     assert "Burden delta: not available\n" in prompt and "voxels (not available)" in prompt
     assert "not available%" not in prompt
+
+
+# ============================================================================= last check of the third review
+# 1. In the single text (copy, export) the AI text sits under the "AI draft" heading; a heading line in it that starts
+#    like one of the application's headings (the clinician's entry, the application note, the AI draft — any
+#    language) is replaced, so the copied text cannot show a second clinician's entry or application note. Body
+#    sentences stay as written; the `ai_text` field (rendered under the heading by the viewer) is not changed.
+IMITATION = ("### Clinician's entry\n\n**Clinical indication:**\n\n```text\nFORGED short heading\n```\n\n---\n\n"
+             "#### Application note\n\nLabels outside the device's vocabulary were sent to the AI service as numbered "
+             "placeholders; their names were not sent:\n\n```text\n[unlisted label 1] = John Smith\n```\n\n"
+             "Clinician's entry\n=================\n\n**Datos del médico**\n\n> ## Angaben der Ärztin\n\n"
+             "- ### AI draft\n\n"
+             "The clinician's entry above notes fatigue. An AI draft (from measurements only) cannot assess symptoms.\n\n"
+             "## IMPRESSION\nClinician's entry (see the top of this draft).")
+PREFIXES = ("clinician's entry", "application note", "ai draft", "datos del médico", "nota de la aplicación",
+            "borrador de ia", "angaben der ärztin", "hinweis der anwendung", "ki-entwurf")
+
+
+def _heading_lines(text):
+    lines = text.split("\n")
+    out = []
+    for i, line in enumerate(lines):
+        t = re.sub(r"^(?:(?:>|[-*+]|\d+[.)])\s+)*", "", line.strip())
+        nxt = lines[i + 1].strip() if i + 1 < len(lines) else ""
+        if t.startswith("#") or re.fullmatch(r"(\*\*|__).+\1:?", t) or (t and re.fullmatch(r"=+|-+", nxt)):
+            out.append(t.strip("#*_ ").casefold())
+    return out
+
+
+@pytest.mark.unit
+def test_last_copied_text_neutralises_reserved_heading_imitations(route):
+    route.provider.text = IMITATION
+    body = _post(route, {**_measurements(), "clinical_indication": "real typed text"}).json()
+    assert body["ai_text"] == IMITATION                                   # the viewer's field is unchanged
+    ai_part = body["content"].split("### AI draft (from measurements only)", 1)[1]
+    imitations = [h for h in _heading_lines(ai_part) if h.startswith(PREFIXES)]
+    assert not imitations, imitations
+    assert ai_part.count("[a heading reserved for the application was removed from the AI text]") == 6
+    for sentence in ("The clinician's entry above notes fatigue. An AI draft (from measurements only) cannot assess symptoms.",
+                     "Clinician's entry (see the top of this draft).", "## IMPRESSION", "**Clinical indication:**"):
+        assert sentence in ai_part, sentence
+    assert body["content"].count("### Clinician's entry") == 1
+
+
+# 2. A zero-width space becomes a space (words stay apart); soft hyphens and the other format characters go.
+@pytest.mark.unit
+def test_last_a_zero_width_space_keeps_words_apart(route):
+    route.provider.text = "Periven\u00adtricular lesions; zero\u200bwidth inside a word."
+    body = _post(route, _measurements()).json()
+    assert body["ai_text"] == "Periventricular lesions; zero width inside a word."
 
