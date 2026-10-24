@@ -13,6 +13,7 @@ comprehensive security controls.
 from typing import Optional
 from fastapi import APIRouter, HTTPException, status, Request, Depends, Response
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, EmailStr, Field
 
 from app.core.config import get_settings
@@ -137,19 +138,10 @@ attempt_tracker = LoginAttemptTracker()
 
 
 def get_client_ip(request: Request) -> str:
-    """Get client IP address from request."""
-    # Check X-Forwarded-For header first (for proxies)
-    forwarded_for = request.headers.get("X-Forwarded-For")
-    if forwarded_for:
-        return forwarded_for.split(",")[0].strip()
-
-    # Check X-Real-IP header
-    real_ip = request.headers.get("X-Real-IP")
-    if real_ip:
-        return real_ip
-
-    # Fall back to direct client host
-    return request.client.host if request.client else "unknown"
+    """Client IP: the right-most untrusted X-Forwarded-For hop (CAPA-015 review m9; the first entry,
+    used before, is whatever the client sends — it also keyed the CAPTCHA binding)."""
+    from app.core.client_ip import client_ip
+    return client_ip(request) or "unknown"
 
 
 _F = AuditOutcome.FAILURE
@@ -166,17 +158,20 @@ def _audit_login(http_request: Request, event_type: AuditEventType, outcome: Aud
                details=details, severity=severity)
 
 
-def start_session(response: Response, user, refresh_store: RefreshTokenStore) -> None:
+def start_session(response: Response, user, refresh_store: RefreshTokenStore) -> Optional[int]:
     """CAPA-015 (RC-068): a sign-in starts a refresh-token family; the token travels only in an
     HttpOnly, Secure, SameSite=Strict cookie scoped to /api/v1/auth. Responses carrying tokens are
     never cached. A failure of the store does not refuse the sign-in: the user simply gets no
     silent continuation (and is asked to sign in again when the access token expires)."""
     no_store(response)
     try:
-        set_refresh_cookie(response, refresh_store.issue(user.id))
+        issued = refresh_store.issue(user.id)
+        set_refresh_cookie(response, issued)
+        return issued.max_age_seconds
     except Exception as e:  # noqa: BLE001
         logger.error("REFRESH_STORE_UNAVAILABLE could not start a refresh session",
                      extra={"error_type": type(e).__name__, "user_id": user.id})
+        return None
 
 
 @router.post(
@@ -548,7 +543,7 @@ async def login_user(
         username=user.username,
         role=user.role
     )
-    start_session(response, user, refresh_store)       # CAPA-015 RC-068
+    token.refresh_expires_in = await run_in_threadpool(start_session, response, user, refresh_store)   # CAPA-015 RC-068
 
     logger.info(
         "Login successful",
@@ -614,17 +609,24 @@ async def refresh_session(
         audit(AuditOutcome.DENIED, reason="no_session")
         return _refused(status.HTTP_401_UNAUTHORIZED, "No session. Please sign in.")
 
-    # The account is checked BEFORE the token is consumed, so a transient error never burns it.
-    try:
-        owner_id, family_id = refresh_store.peek_owner(token)
-        user = user_storage.get_user_by_id(owner_id) if owner_id else None
-    except Exception as e:  # noqa: BLE001 — store unavailable: nothing consumed, try again later
+    def unavailable(e: Exception) -> JSONResponse:
+        # Store unreachable: nothing is revoked, the cookie is kept; the client tries again later.
         logger.error("REFRESH_STORE_UNAVAILABLE refresh refused", extra={"error_type": type(e).__name__})
         audit(AuditOutcome.FAILURE, reason="store_unavailable")
         resp = JSONResponse(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                             content={"detail": "Session service temporarily unavailable."})
         no_store(resp)
         return resp
+
+    # The account is checked BEFORE the token is consumed, and a store ERROR (as opposed to "no such
+    # user") answers 503 without revoking anything, so a transient error never burns the session
+    # (review m6: the lookup used to return None on any error, which revoked the family).
+    # Store calls run in the thread pool, off the event loop (review m8).
+    try:
+        owner_id, family_id = await run_in_threadpool(refresh_store.peek_owner, token)
+        user = await run_in_threadpool(user_storage.lookup_user, owner_id) if owner_id else None
+    except Exception as e:  # noqa: BLE001
+        return unavailable(e)
     if owner_id:
         reason = None
         if user is None:
@@ -634,12 +636,15 @@ async def refresh_session(
         elif user.is_locked and (user.locked_until is None or datetime.utcnow() < user.locked_until):
             reason = "user_locked"
         if reason:
-            refresh_store.revoke_family(family_id, reason)
+            try:
+                await run_in_threadpool(refresh_store.revoke_family, family_id, reason)
+            except Exception as e:  # noqa: BLE001
+                return unavailable(e)
             audit(AuditOutcome.DENIED, user=user, user_id=owner_id, reason=reason)
             return _refused(status.HTTP_401_UNAUTHORIZED, "Session ended. Please sign in again.")
 
     try:
-        issued = refresh_store.rotate(token)
+        issued = await run_in_threadpool(refresh_store.rotate, token)
     except RefreshError as e:
         if e.reuse:
             audit(AuditOutcome.DENIED, user_id=e.user_id, reason="reuse_detected",
@@ -647,15 +652,15 @@ async def refresh_session(
         else:
             audit(AuditOutcome.DENIED, user_id=e.user_id, reason=e.reason)
         return _refused(status.HTTP_401_UNAUTHORIZED, "Session expired. Please sign in again.")
-    except Exception as e:  # noqa: BLE001 — store unavailable: fail closed, the client asks to sign in
-        logger.error("REFRESH_STORE_UNAVAILABLE refresh refused", extra={"error_type": type(e).__name__})
-        audit(AuditOutcome.FAILURE, reason="store_unavailable")
-        return _refused(status.HTTP_401_UNAUTHORIZED, "Session could not be continued. Please sign in again.")
+    except Exception as e:  # noqa: BLE001 — an ambiguous commit is recovered by the grace window (review m5)
+        return unavailable(e)
 
     access = token_manager.create_access_token(user_id=user.id, username=user.username, role=user.role)
+    access.refresh_expires_in = issued.max_age_seconds
     set_refresh_cookie(response, issued)
     no_store(response)
-    audit(AuditOutcome.SUCCESS, user=user, details={"rotation_count": issued.rotation_count})
+    audit(AuditOutcome.SUCCESS, user=user, reason="grace_replay" if issued.grace_replay else None,
+          details={"rotation_count": issued.rotation_count})
     return LoginResponse(user=user, token=access)
 
 

@@ -12,7 +12,7 @@ import secrets
 import warnings
 from typing import List, Union
 from functools import lru_cache
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -30,6 +30,9 @@ class SecuritySettings(BaseSettings):
     # long after sign-in (absolute). Justification in refresh_tokens.py; owner decision D-2.
     REFRESH_TOKEN_IDLE_MINUTES: int = Field(default=30, ge=16, le=720)
     REFRESH_TOKEN_ABSOLUTE_HOURS: int = Field(default=12, ge=1, le=168)
+    # Review m5: the immediately previous refresh token, presented again within this many seconds
+    # while its successor is unused, gets the same successor (lost response / two tabs).
+    REFRESH_TOKEN_REUSE_GRACE_SECONDS: int = Field(default=30, ge=0, le=120)
 
     # Password Policy (ISO 27001 A.9.4.3)
     PASSWORD_MIN_LENGTH: int = Field(default=12, ge=8, le=128)
@@ -62,6 +65,18 @@ class SecuritySettings(BaseSettings):
         if len(v) < 32:
             raise ValueError("JWT_SECRET_KEY must be at least 32 characters long")
         return v
+
+    @model_validator(mode="after")
+    def refresh_idle_outlives_access_token(self):
+        """CAPA-015 review M1: the client renews ~2 min before the access token expires; a refresh
+        session that dies earlier would end every session at the first renewal. Refuse to start
+        (Cloud Run then keeps the previous revision) instead of running with that configuration."""
+        if self.REFRESH_TOKEN_IDLE_MINUTES <= self.JWT_ACCESS_TOKEN_EXPIRE_MINUTES + 2:
+            raise ValueError(
+                f"REFRESH_TOKEN_IDLE_MINUTES ({self.REFRESH_TOKEN_IDLE_MINUTES}) must be longer than "
+                f"JWT_ACCESS_TOKEN_EXPIRE_MINUTES ({self.JWT_ACCESS_TOKEN_EXPIRE_MINUTES}) + 2 minutes"
+            )
+        return self
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True, extra="ignore")
 

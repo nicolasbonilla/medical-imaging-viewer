@@ -13,8 +13,10 @@ import {
   installSessionListeners,
   refreshAccessToken,
   scheduleProactiveRefresh,
+  setSessionUser,
   storeSession,
   subscribeSession,
+  tryResumeFromSharedSession,
 } from '@/services/session';
 
 /**
@@ -55,6 +57,8 @@ export interface Token {
   access_token: string;
   token_type: string;
   expires_in: number;
+  /** Seconds until the refresh session ends (CAPA-015 review M1). */
+  refresh_expires_in?: number | null;
 }
 
 /** Raised when someone other than the signed-in user authenticates in the re-login dialog. */
@@ -86,6 +90,8 @@ interface AuthContextType {
   /** Re-login of the SAME user from the dialog; unsaved work stays in memory. */
   reauthenticate: (password: string, captcha?: CaptchaAnswer) => Promise<void>;
   reauthenticateWithPasskey: () => Promise<void>;
+  /** "Sign out" from the re-login dialog: resumes instead if another tab already recovered the session. */
+  signOutFromDialog: () => void;
 }
 
 // Registration data interface
@@ -150,14 +156,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [sessionExpired, setSessionExpired] = useState(getSessionStatus() === 'expired');
 
   // Keep React state in step with the session service (silent refresh, re-login, other tabs).
+  // CAPA-015 review M2: a token cleared or replaced by ANOTHER tab never clears this tab's state —
+  // that unmounted the viewer through ProtectedRoute's <Navigate to="/login"> and lost unsaved
+  // work; the session service opens the re-login dialog instead. Only this tab's own logout
+  // (performLogout) signs this tab out.
   useEffect(() => subscribeSession(() => {
     setSessionExpired(getSessionStatus() === 'expired');
-    setToken(getAccessToken());
+    const current = getAccessToken();
+    if (current) setToken(current);
   }), []);
 
   // Logout function - defined early so other effects can use it
   const performLogout = useCallback(() => {
     clearAuthData();
+    setSessionUser(null);
     setToken(null);
     setUser(null);
   }, []);
@@ -169,7 +181,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const acceptSession = useCallback((data: { token: Token; user: User }) => {
     const { token: tokenData, user: userData } = data;
-    storeSession(tokenData.access_token, tokenData.expires_in);
+    setSessionUser(userData.id);
+    storeSession(tokenData.access_token, tokenData.expires_in, tokenData.refresh_expires_in ?? null);
     localStorage.setItem('user', JSON.stringify(userData));
     setToken(tokenData.access_token);
     setUser(userData);
@@ -182,13 +195,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         try {
-          setUser(JSON.parse(storedUser));
+          const parsed = JSON.parse(storedUser);
+          setUser(parsed);
+          setSessionUser(parsed?.id ?? null);
           let stored = getAccessToken();
           const exp = getAccessTokenExpiry();
           if (!stored || (exp !== null && exp <= Date.now())) stored = await refreshAccessToken();
           setToken(stored);
           const me = await loadMe();
           setUser(me);
+          setSessionUser(me.id);
           localStorage.setItem('user', JSON.stringify(me));
           setToken(getAccessToken());
           scheduleProactiveRefresh();
@@ -267,7 +283,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
-    completeReauthentication(tokenData.access_token, tokenData.expires_in);
+    completeReauthentication(tokenData.access_token, tokenData.expires_in, tokenData.refresh_expires_in ?? null);
     setToken(tokenData.access_token);
   }, [user]);
 
@@ -286,6 +302,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (!user) throw new WrongUserError();
     await finishReauthentication(await passkeyLogin(user.username));
   }, [user, finishReauthentication]);
+
+  const signOutFromDialog = useCallback((): void => {
+    // Review M2: another tab may have signed the same user in again (this tab missed it) — then
+    // "sign out" here would end the session that tab recovered. Resume instead.
+    if (tryResumeFromSharedSession()) return;
+    logout();
+  }, [logout]);
 
   // Refresh user data
   const refreshUser = useCallback(async (): Promise<void> => {
@@ -313,6 +336,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     refreshUser,
     reauthenticate,
     reauthenticateWithPasskey,
+    signOutFromDialog,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

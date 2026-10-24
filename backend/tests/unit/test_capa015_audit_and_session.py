@@ -622,6 +622,7 @@ def test_rc068_firestore_repository_stores_hashes_and_rotates_in_one_transaction
     assert issued.token not in json.dumps({**tokens, **db.docs("refresh_token_families")}, default=str)
     nxt = store.rotate(issued.token)
     assert len(db.transactions) >= 1 and db.transactions[-1].writes, "rotation must run in a transaction"
+    clock.advance(seconds=31)                  # past the reuse grace window (review m5)
     with pytest.raises(rt.RefreshError) as e:
         store.rotate(issued.token)
     assert e.value.reuse is True

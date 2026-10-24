@@ -24,9 +24,11 @@ string, no description text, no image data; identifiers only, file names hashed.
 import ipaddress
 import json
 import hashlib
+import hmac
 import os
 import re
 import sys
+import threading
 import uuid
 from contextvars import ContextVar
 from datetime import datetime, timezone
@@ -59,6 +61,8 @@ class AuditEventType(str, Enum):
     AUTH_ACCOUNT_UNLOCKED = "auth.account.unlocked"
     AUTH_TOKEN_INVALID = "auth.token.invalid"                # CAPA-015: refused for a missing/expired token
     AUTH_TOKEN_REUSE_DETECTED = "auth.token.reuse_detected"  # CAPA-015: a rotated refresh token was replayed
+    AUTH_CREDENTIAL_REGISTER = "auth.credential.register"    # CAPA-015 review M3: passkey registration
+    AUTH_CREDENTIAL_DELETE = "auth.credential.delete"        # CAPA-015 review M3: passkey deletion
 
     # Authorization Events (A.9.4.1)
     AUTHZ_ACCESS_GRANTED = "authz.access.granted"
@@ -202,7 +206,7 @@ class AuditEvent:
     resource_ids: Dict[str, str] = field(default_factory=dict)
     reason: Optional[str] = None
     details: Dict[str, Any] = field(default_factory=dict)
-    attempted_identifier_sha256: Optional[str] = None
+    attempted_identifier_hmac: Optional[str] = None
     source: str = "explicit"          # "explicit" (emitted by the code that acted) | "middleware"
 
     def __post_init__(self):
@@ -285,12 +289,62 @@ _METHODS = {"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
 # Keys of `details`: short codes, counts and flags only — never free text.
 DETAIL_KEYS = frozenset({
     "template_type", "language", "decisions", "failed_attempts", "fields_changed", "new_role",
-    "revoked_sessions", "rotation_count", "deduplicated_window_s", "role",
+    "revoked_sessions", "rotation_count", "deduplicated_window_s", "role", "durable_suppressed",
 })
 
+# Review m10: identifiers that must not be stored (typed login names, file names, MRNs, accession
+# numbers) are reduced to HMAC-SHA-256 with a secret key — a plain SHA-256 of a small space (an MRN,
+# a username) is reversible by trying every value. Key: AUDIT_HASH_KEY if set, otherwise derived
+# from the server secret as HMAC-SHA-256(JWT_SECRET_KEY, "mstool-audit-identifier-hash-v1")
+# (the JWT key itself is never used raw). Rotating the source secret changes every value, so
+# records written before and after a rotation can no longer be matched — set AUDIT_HASH_KEY to
+# keep values stable across a JWT-secret rotation.
+_HASH_KEY: Optional[bytes] = None
 
-def sha256_prefix(value: str, length: int = 16) -> str:
-    return hashlib.sha256(str(value).encode("utf-8")).hexdigest()[:length]
+
+def _hash_key() -> bytes:
+    global _HASH_KEY
+    if _HASH_KEY is None:
+        explicit = os.environ.get("AUDIT_HASH_KEY")
+        if explicit:
+            _HASH_KEY = explicit.encode("utf-8")
+        else:
+            secret = os.environ.get("JWT_SECRET_KEY", "")
+            if not secret:
+                try:
+                    from app.core.config import get_settings
+                    secret = get_settings().SECRET_KEY
+                except Exception:  # pragma: no cover
+                    secret = ""
+            _HASH_KEY = hmac.new(secret.encode("utf-8"), b"mstool-audit-identifier-hash-v1", hashlib.sha256).digest()
+    return _HASH_KEY
+
+
+def reset_audit_hash_key() -> None:
+    """Forget the cached key (tests; after changing AUDIT_HASH_KEY)."""
+    global _HASH_KEY
+    _HASH_KEY = None
+
+
+def keyed_hash(value: str, length: int = 16) -> str:
+    return hmac.new(_hash_key(), str(value).encode("utf-8"), hashlib.sha256).hexdigest()[:length]
+
+
+_UA_BROWSERS = (("edg/", "edge"), ("opr/", "opera"), ("firefox/", "firefox"), ("chrome/", "chrome"),
+                ("safari/", "safari"), ("curl/", "curl"), ("python", "python"), ("testclient", "testclient"))
+_UA_OS = (("windows", "windows"), ("android", "android"), ("iphone", "ios"), ("ipad", "ios"),
+          ("mac os", "mac"), ("linux", "linux"))
+
+
+def classify_user_agent(ua: Optional[str]) -> Optional[str]:
+    """Review m10: a coarse class ("chrome/windows"), never the full string (which can carry a
+    device name or other identifying text)."""
+    if not ua:
+        return None
+    low = str(ua).lower()
+    browser = next((name for key, name in _UA_BROWSERS if key in low), "other")
+    os_name = next((name for key, name in _UA_OS if key in low), "other")
+    return f"{browser}/{os_name}"
 
 
 def _code(value) -> Optional[str]:
@@ -313,7 +367,7 @@ def _safe_ids(ids: Optional[Dict[str, Any]]) -> Dict[str, str]:
         if not _CODE.match(str(k)) or v is None:
             continue
         s = str(v)
-        out[str(k)] = s if _IDENT.match(s) else "sha256:" + sha256_prefix(s)
+        out[str(k)] = s if _IDENT.match(s) else "hmac:" + keyed_hash(s)
     return out
 
 
@@ -350,9 +404,9 @@ def build_audit_record(event: AuditEvent) -> Dict[str, Any]:
         "actor_user_id": event.user_id if event.user_id and _IDENT.match(str(event.user_id)) else None,
         "actor_username": event.username if event.username and _USERNAME.match(str(event.username)) else None,
         "actor_role": _code(str(role).lower()) if role else None,
-        "attempted_identifier_sha256": _code(event.attempted_identifier_sha256),
+        "attempted_identifier_hmac": _code(event.attempted_identifier_hmac),
         "ip_address": _ip(event.ip_address),
-        "user_agent": str(event.user_agent)[:200] if event.user_agent else None,
+        "user_agent": classify_user_agent(event.user_agent),
         "request_id": _code(event.request_id),
         "trace_id": _code(event.trace_id),
         "method": event.method if event.method in _METHODS else None,
@@ -367,6 +421,43 @@ def build_audit_record(event: AuditEvent) -> Dict[str, Any]:
         "checksum": event.checksum,
     }
     return {k: v for k, v in record.items() if v not in (None, {}, [])}
+
+
+# Review m9 — per-source budget for durable records that a stranger can cause at will: failed or
+# denied outcomes, and anything without an authenticated actor. AUDIT_SOURCE_BUDGET records per
+# AUDIT_SOURCE_WINDOW_S seconds per source IP (defaults 30 per 60 s, per instance); beyond it the
+# record goes to the server log only, flagged durable_suppressed. Successful actions of an
+# authenticated user (clinical actions, sign-ins) are never suppressed.
+_BUDGET_LOCK = threading.Lock()
+_BUDGET: Dict[str, tuple] = {}
+
+
+def _needs_budget(record: Dict[str, Any]) -> bool:
+    return record.get("outcome") != "success" or not record.get("actor_user_id")
+
+
+def _take_budget(source: str) -> bool:
+    import time as _time
+    limit = int(os.environ.get("AUDIT_SOURCE_BUDGET", "30"))
+    window = float(os.environ.get("AUDIT_SOURCE_WINDOW_S", "60"))
+    now = _time.monotonic()
+    with _BUDGET_LOCK:
+        start, count = _BUDGET.get(source, (now, 0))
+        if now - start >= window:
+            start, count = now, 0
+        if count >= limit:
+            _BUDGET[source] = (start, count)
+            return False
+        _BUDGET[source] = (start, count + 1)
+        if len(_BUDGET) > 50_000:
+            _BUDGET.clear()
+        return True
+
+
+def reset_audit_budget() -> None:
+    """Forget the per-source budgets (tests)."""
+    with _BUDGET_LOCK:
+        _BUDGET.clear()
 
 
 # Per-request audit context (set by AuditMiddleware): the durable writes a request produced
@@ -396,12 +487,9 @@ def end_request_audit(token) -> None:
 
 
 def client_ip(request) -> Optional[str]:
-    if request is None:
-        return None
-    forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.client.host if getattr(request, "client", None) else None
+    """The right-most untrusted X-Forwarded-For hop (review m9) — see app/core/client_ip.py."""
+    from app.core.client_ip import client_ip as _client_ip
+    return _client_ip(request)
 
 
 def trace_id_of(request) -> Optional[str]:
@@ -450,7 +538,7 @@ def emit_audit(
             resource_ids=dict(resource_ids or {}),
             reason=reason,
             details=dict(details or {}),
-            attempted_identifier_sha256=sha256_prefix(attempted_identifier) if attempted_identifier else None,
+            attempted_identifier_hmac=keyed_hash(attempted_identifier) if attempted_identifier else None,
             trace_id=trace_id_of(request),
             source="explicit",
         )
@@ -524,6 +612,11 @@ class AuditLogger:
             if event.request_id is None:
                 event.request_id = get_request_id()
             record = build_audit_record(event)
+            if durable and _needs_budget(record) and not _take_budget(record.get("ip_address") or "unknown"):
+                # Review m9: a flood of failed or anonymous requests from one source cannot fill the
+                # durable queue; every record still reaches the server log.
+                durable = False
+                record["details"] = {**record.get("details", {}), "durable_suppressed": True}
 
             if self.stdout:
                 self._write_stdout(record, event)

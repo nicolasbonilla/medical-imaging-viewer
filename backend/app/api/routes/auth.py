@@ -19,6 +19,7 @@ All endpoints include audit logging per ISO 27001 A.12.4.1.
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Response, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from starlette.concurrency import run_in_threadpool
 
 from app.security import (
     AuthService,
@@ -113,11 +114,9 @@ auth_service = AuthService(
 
 # Helper functions
 def _get_client_ip(request: Request) -> str:
-    """Extract client IP address from request."""
-    forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.client.host if request.client else "unknown"
+    """Client IP: the right-most untrusted X-Forwarded-For hop (CAPA-015 review m9)."""
+    from app.core.client_ip import client_ip
+    return client_ip(request) or "unknown"
 
 
 def _get_user_agent(request: Request) -> str:
@@ -178,26 +177,31 @@ async def logout(
             auth_service.logout(credentials.credentials)
         except Exception:  # expired or invalid access token: the cookie may still end the session
             actor = None
-    family = None
+    family = owner = None
+    store_error = False
     cookie = request.cookies.get(REFRESH_COOKIE_NAME)
     if cookie:
-        try:
-            owner, family = refresh_store.peek_owner(cookie)
+        try:   # store calls off the event loop (review m8)
+            owner, family = await run_in_threadpool(refresh_store.peek_owner, cookie)
             if family:
-                refresh_store.revoke_family(family, "logout")
-            if actor is None and owner:
-                emit_audit(AuditEventType.AUTH_LOGOUT, AuditOutcome.SUCCESS, request=request, user_id=owner,
-                           reason="refresh_cookie")
+                await run_in_threadpool(refresh_store.revoke_family, family, "logout")
         except Exception as e:  # noqa: BLE001
+            store_error = True
             logger.error("REFRESH_STORE_UNAVAILABLE logout could not revoke the session",
                          extra={"error_type": type(e).__name__})
     clear_refresh_cookie(response)
-    if actor is not None or not cookie:
-        emit_audit(AuditEventType.AUTH_LOGOUT, AuditOutcome.SUCCESS if actor else AuditOutcome.FAILURE,
-                   request=request, user_id=getattr(actor, "user_id", None),
-                   username=getattr(actor, "username", None), role=getattr(actor, "role", None),
-                   reason=None if actor else "no_session")
-    logger.info("Logout", extra={"user_id": getattr(actor, "user_id", None), "session_revoked": bool(family)})
+    # Exactly one audit record per logout (review M3: an unknown cookie without a bearer left none).
+    user_id = getattr(actor, "user_id", None) or owner
+    if actor is not None or owner:
+        outcome, reason = AuditOutcome.SUCCESS, (None if actor else "refresh_cookie")
+        if store_error:
+            outcome, reason = AuditOutcome.PARTIAL, "session_not_revoked"
+    else:
+        outcome = AuditOutcome.FAILURE
+        reason = "store_unavailable" if store_error else ("unknown_session" if cookie else "no_session")
+    emit_audit(AuditEventType.AUTH_LOGOUT, outcome, request=request, user_id=user_id,
+               username=getattr(actor, "username", None), role=getattr(actor, "role", None), reason=reason)
+    logger.info("Logout", extra={"user_id": user_id, "session_revoked": bool(family)})
 
 
 
@@ -363,7 +367,7 @@ async def change_password(
         # CAPA-015 (RC-068): a new password ends every session of the user, everywhere.
         revoked = 0
         try:
-            revoked = refresh_store.revoke_all_for_user(current_user.id, "password_change")
+            revoked = await run_in_threadpool(refresh_store.revoke_all_for_user, current_user.id, "password_change")
         except Exception as e:  # noqa: BLE001 — logged and audited; the change itself stands
             logger.error("REFRESH_STORE_UNAVAILABLE sessions not revoked after a password change",
                          extra={"error_type": type(e).__name__, "user_id": current_user.id})
@@ -943,7 +947,7 @@ async def webauthn_login_complete(
             "username": user.username,
             "ip": _get_client_ip(request),
         })
-        start_session(response, user, refresh_store)     # CAPA-015 RC-068
+        refresh_expires_in = await run_in_threadpool(start_session, response, user, refresh_store)   # CAPA-015 RC-068
         emit_audit(AuditEventType.AUTH_LOGIN_SUCCESS, AuditOutcome.SUCCESS, request=request,
                    user_id=user.id, username=user.username, role=user.role, reason="passkey")
 
@@ -952,6 +956,7 @@ async def webauthn_login_complete(
                 "access_token": token_obj.access_token,
                 "token_type": "bearer",
                 "expires_in": token_obj.expires_in,
+                "refresh_expires_in": refresh_expires_in,
             },
             "user": {
                 "id": user.id,

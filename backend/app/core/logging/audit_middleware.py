@@ -16,9 +16,10 @@ CAPA-015 (RC-067, REQ-SEC-024; HAZ-010) — one audit record per API request:
 - OUTCOME: from the HTTP status (success / failure / denied) and the status code.
 - CORRELATION: the request id (`X-Request-ID`) and the Cloud trace id.
 
-Authentication routes (`/api/v1/auth/*`) record their own, richer events (login success,
-failure with a reason code, lock-out, refresh, reuse, logout, password change, admin changes);
-for them this middleware adds a record only for a 401/403 nobody else recorded.
+Authentication routes (`/api/v1/auth/*`) that record their own, richer event (login success,
+failure with a reason code, lock-out, refresh, reuse, logout, password change, admin changes)
+get no second record — unless the response is a 5xx. Every other `/auth` request (passkey
+registration and deletion, user list and detail reads, CAPTCHA) is recorded here (review M3).
 
 Durable (Firestore) policy: every record goes to stdout; Firestore receives every state-changing
 request, every clinical action, every 401/403, and reads of patient data once per actor, route
@@ -51,7 +52,7 @@ from app.core.logging.audit import (
     end_request_audit,
     client_ip,
     trace_id_of,
-    sha256_prefix,
+    keyed_hash,
 )
 from app.core.logging.config import get_logger
 
@@ -86,7 +87,15 @@ ROUTE_ACTIONS: Dict[Tuple[str, str], Tuple[AuditEventType, str]] = {
     ("GET", "/api/v1/segmentation/{segmentation_id}/export/dicom-seg"): (E.DATA_EXPORT, "segmentation"),
     ("POST", "/api/v1/patients/{patient_id}/care-team"): (E.ADMIN_CARE_TEAM_CHANGED, "patient"),
     ("DELETE", "/api/v1/patients/{patient_id}/care-team/{assignment_id}"): (E.ADMIN_CARE_TEAM_CHANGED, "patient"),
+    # review M3: passkey (WebAuthn) credentials are sign-in factors
+    ("POST", "/api/v1/auth/webauthn/register/begin"): (E.AUTH_CREDENTIAL_REGISTER, "credential"),
+    ("POST", "/api/v1/auth/webauthn/register/complete"): (E.AUTH_CREDENTIAL_REGISTER, "credential"),
+    ("DELETE", "/api/v1/auth/webauthn/credentials/{credential_id}"): (E.AUTH_CREDENTIAL_DELETE, "credential"),
 }
+
+# Recorded on the server log only (unless they fail with 5xx): a CAPTCHA challenge is anonymous,
+# can be requested at will and changes nothing of record.
+STDOUT_ONLY_ROUTES = frozenset({("POST", "/api/v1/auth/captcha")})
 
 # Small JSON routes whose BODY names the objects acted on (read only up to 64 KiB, ids only).
 BODY_ID_ROUTES = frozenset({
@@ -106,9 +115,9 @@ _PATH_ID_KEYS = {
     "instance_id": "instance_id", "document_id": "document_id", "segmentation_id": "segmentation_id",
     "version_id": "version_id", "task_id": "task_id", "job_id": "job_id",
     "assignment_id": "assignment_id", "connection_id": "connection_id", "history_id": "history_id",
-    "user_id": "target_user_id",
+    "user_id": "target_user_id", "credential_id": "credential_id",
 }
-_HASHED_PATH_KEYS = {"accession_number": "accession_sha256", "mrn": "mrn_sha256"}
+_HASHED_PATH_KEYS = {"accession_number": "accession_hmac", "mrn": "mrn_hmac"}
 
 _READ_DEDUP_SECONDS = float(os.environ.get("AUDIT_READ_DEDUP_SECONDS", "300"))
 _FLUSH_WAIT_S = float(os.environ.get("AUDIT_FLUSH_WAIT_MS", "500")) / 1000.0
@@ -139,7 +148,7 @@ def _seen_recently(key: Tuple) -> bool:
 def file_ref_ids(file_id: str) -> Dict[str, str]:
     """Identifiers of an imaging storage reference: patient/study/series ids from the RC-027
     grammar, and a hash of the file name (file names are free text and may contain a name)."""
-    out: Dict[str, str] = {"file_sha256": sha256_prefix(file_id)}
+    out: Dict[str, str] = {"file_hmac": keyed_hash(file_id)}
     try:
         from app.security.storage_access import parse_patient_storage_ref
         ref = parse_patient_storage_ref(file_id)
@@ -190,7 +199,7 @@ def _path_ids(path_params: Dict[str, Any]) -> Dict[str, str]:
         elif name in _PATH_ID_KEYS:
             ids[_PATH_ID_KEYS[name]] = str(value)
         elif name in _HASHED_PATH_KEYS:
-            ids[_HASHED_PATH_KEYS[name]] = sha256_prefix(str(value))
+            ids[_HASHED_PATH_KEYS[name]] = keyed_hash(str(value))
     return ids
 
 
@@ -302,10 +311,10 @@ class AuditMiddleware(BaseHTTPMiddleware):
         template = getattr(route, "path", None)
         user_id, username, role = actor
 
-        if path.startswith(AUTH_PREFIX):
-            # authentication routes record their own events; add one only for an unrecorded 401/403
-            if ctx.explicit or status not in (401, 403):
-                return None, False
+        if path.startswith(AUTH_PREFIX) and ctx.explicit and status < 500:
+            # the route recorded its own, richer event (review M3: every OTHER /auth request — passkey
+            # registration and deletion, user list and detail reads, any 5xx — is recorded below)
+            return None, False
 
         mapped = ROUTE_ACTIONS.get((method, template)) if template else None
         if mapped:
@@ -325,6 +334,8 @@ class AuditMiddleware(BaseHTTPMiddleware):
         durable = True
         if template is None and status not in (401, 403):
             durable = False                     # matched no route: stdout only
+        elif (method, template) in STDOUT_ONLY_ROUTES and status < 500:
+            durable = False                     # anonymous, high-volume, no state of record
         elif event_type == E.DATA_ACCESS_READ:
             key = (user_id or client_ip(request), template, tuple(sorted(ids.items())), status // 100)
             durable = not _seen_recently(key)

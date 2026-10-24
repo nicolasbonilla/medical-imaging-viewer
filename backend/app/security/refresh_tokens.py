@@ -27,9 +27,16 @@ THE CONTROL
   log-off. 30 minutes is twice the client's inactivity limit, enough for the silent refresh
   (every ~13 minutes while the app is open) to survive background-tab timer throttling.
   Both values are configurable; the owner decides (CAPA-015 decision D-2).
-- Revocation: on logout (the family of the presented cookie), on password change (every family
-  of the user), and at refresh time when the user no longer exists, is inactive or is locked.
-  The new access token carries the role stored NOW, not the role at sign-in.
+- Revocation: on logout (the family of the presented cookie), on password change (every LIVE
+  family of the user — revoked and expired families are left alone, review m8), and at refresh
+  time when the user no longer exists, is inactive or is locked. The new access token carries the
+  role stored NOW, not the role at sign-in. Access tokens already issued are NOT revoked across
+  instances: they stay valid until they expire (at most JWT_ACCESS_TOKEN_EXPIRE_MINUTES).
+- Grace window (review m5): presenting the IMMEDIATELY previous token within
+  REFRESH_TOKEN_REUSE_GRACE_SECONDS (default 30) of its use, while its successor has not been used
+  yet, returns that same successor (a lost response, or two tabs refreshing at once); for that
+  window the successor is kept sealed (AES-GCM, key derived from the server secret) and the seal is
+  cleared once the successor is used. Any other replay is reuse and revokes the family.
 
 Backends: Firestore (production; transactions keep rotation atomic across Cloud Run instances)
 and memory (tests; local runs without cloud credentials). When Firestore is unavailable in
@@ -39,7 +46,9 @@ keeping unsaved work (RC-069).
 @module security.refresh_tokens
 """
 
+import base64
 import hashlib
+import hmac
 import os
 import secrets
 import threading
@@ -96,6 +105,7 @@ class IssuedRefreshToken:
     family_expires_at: datetime
     rotation_count: int = 0
     issued_at: Optional[datetime] = None
+    grace_replay: bool = False
 
     @property
     def max_age_seconds(self) -> int:
@@ -147,9 +157,12 @@ class MemoryRefreshRepo:
         with self._lock:
             return fn(_MemoryTx(self))
 
-    def families_of(self, user_id: str):
+    def families_of(self, user_id: str, now: Optional[datetime] = None):
+        """LIVE families of a user: not revoked and not past their absolute expiry."""
         with self._lock:
-            return [fid for fid, f in self.families.items() if f.get("user_id") == user_id and not f.get("revoked")]
+            return [fid for fid, f in self.families.items()
+                    if f.get("user_id") == user_id and not f.get("revoked")
+                    and (now is None or _aware(f.get("absolute_expires_at")) > now)]
 
     def dump(self) -> Dict[str, Any]:
         with self._lock:
@@ -202,24 +215,63 @@ class FirestoreRefreshRepo:
             return fn(_FirestoreTx(self.db, txn))
         return _in_txn(self.db.transaction())
 
-    def families_of(self, user_id: str):
+    def families_of(self, user_id: str, now: Optional[datetime] = None):
+        """LIVE families of a user (two equality filters need no composite index; the absolute
+        expiry is checked here)."""
+        coll = self.db.collection(FAMILIES_COLLECTION)
         try:
             from google.cloud.firestore_v1.base_query import FieldFilter
-            q = self.db.collection(FAMILIES_COLLECTION).where(filter=FieldFilter("user_id", "==", user_id))
+            q = coll.where(filter=FieldFilter("user_id", "==", user_id)).where(
+                filter=FieldFilter("revoked", "==", False))
         except Exception:  # pragma: no cover
-            q = self.db.collection(FAMILIES_COLLECTION).where("user_id", "==", user_id)
-        return [s.id for s in q.stream() if not (s.to_dict() or {}).get("revoked")]
+            q = coll.where("user_id", "==", user_id).where("revoked", "==", False)
+        out = []
+        for snap in q.stream():
+            f = snap.to_dict() or {}
+            if f.get("revoked"):
+                continue
+            if now is not None and _aware(f.get("absolute_expires_at")) <= now:
+                continue
+            out.append(snap.id)
+        return out
 
 
 # --------------------------------------------------------------------------- store
 
+def _derived_key(label: bytes) -> bytes:
+    """A key derived from the server secret for one purpose (never the JWT key used raw)."""
+    secret = os.environ.get("JWT_SECRET_KEY", "")
+    if not secret:
+        try:
+            from app.core.config import get_settings
+            secret = get_settings().SECRET_KEY
+        except Exception:  # pragma: no cover
+            secret = ""
+    return hmac.new(secret.encode("utf-8"), label, hashlib.sha256).digest()
+
+
 class RefreshTokenStore:
     def __init__(self, repo=None, idle: Optional[timedelta] = None, absolute: Optional[timedelta] = None,
-                 clock: Optional[Callable[[], datetime]] = None):
+                 clock: Optional[Callable[[], datetime]] = None, grace: Optional[timedelta] = None,
+                 seal_key: Optional[bytes] = None):
         self.repo = repo if repo is not None else MemoryRefreshRepo()
         self.idle = idle or timedelta(minutes=int(os.environ.get("REFRESH_TOKEN_IDLE_MINUTES", "30")))
         self.absolute = absolute or timedelta(hours=int(os.environ.get("REFRESH_TOKEN_ABSOLUTE_HOURS", "12")))
         self.clock = clock or _utcnow
+        self.grace = grace if grace is not None else timedelta(
+            seconds=int(os.environ.get("REFRESH_TOKEN_REUSE_GRACE_SECONDS", "30")))
+        self._seal_key = seal_key or _derived_key(b"mstool-refresh-grace-seal-v1")
+
+    def _seal(self, token: str, family_id: str) -> str:
+        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+        nonce = secrets.token_bytes(12)
+        ct = AESGCM(self._seal_key).encrypt(nonce, token.encode("utf-8"), family_id.encode("utf-8"))
+        return base64.urlsafe_b64encode(nonce + ct).decode("ascii")
+
+    def _unseal(self, sealed: str, family_id: str) -> str:
+        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+        raw = base64.urlsafe_b64decode(sealed.encode("ascii"))
+        return AESGCM(self._seal_key).decrypt(raw[:12], raw[12:], family_id.encode("utf-8")).decode("utf-8")
 
     def _new_token_doc(self, family_id, user_id, now, rotation):
         return {"family_id": family_id, "user_id": user_id, "created_at": now,
@@ -258,6 +310,16 @@ class RefreshTokenStore:
             if fam.get("revoked"):
                 return ("error", "revoked", t.get("user_id"), t["family_id"])
             if t.get("used"):
+                succ_hash = t.get("replaced_by")
+                succ = tx.get_token(succ_hash) if succ_hash else None
+                used_at = _aware(t.get("used_at"))
+                if (self.grace and used_at is not None and now - used_at <= self.grace and succ is not None
+                        and not succ.get("used") and t.get("successor_sealed")
+                        and now < _aware(fam["absolute_expires_at"])):
+                    # the immediately previous token, within the window, its successor still unused
+                    return ("grace", t["successor_sealed"], t["user_id"], t["family_id"],
+                            _aware(fam["absolute_expires_at"]), _aware(succ["expires_at"]),
+                            int(fam.get("rotation_count") or 0))
                 tx.update_family(t["family_id"], {"revoked": True, "revoked_reason": "reuse_detected",
                                                   "revoked_at": now})
                 return ("reuse", "reuse_detected", t.get("user_id"), t["family_id"])
@@ -267,8 +329,15 @@ class RefreshTokenStore:
                 return ("error", "idle_expired", t.get("user_id"), t["family_id"])
             rotation = int(fam.get("rotation_count") or 0) + 1
             new_hash = hash_refresh_token(new_token)
-            tx.update_token(token_hash, {"used": True, "used_at": now, "replaced_by": new_hash})
-            tx.create_token(new_hash, self._new_token_doc(t["family_id"], t["user_id"], now, rotation))
+            # read before any write (Firestore transactions); a predecessor already deleted (TTL) is skipped
+            pred = tx.get_token(t["predecessor"]) if t.get("predecessor") else None
+            tx.update_token(token_hash, {"used": True, "used_at": now, "replaced_by": new_hash,
+                                         "successor_sealed": self._seal(new_token, t["family_id"])})
+            new_doc = self._new_token_doc(t["family_id"], t["user_id"], now, rotation)
+            new_doc["predecessor"] = token_hash
+            tx.create_token(new_hash, new_doc)
+            if pred is not None and pred.get("successor_sealed"):   # this token is used: drop the sealed copy
+                tx.update_token(t["predecessor"], {"successor_sealed": None})
             tx.update_family(t["family_id"], {"rotation_count": rotation, "last_rotated_at": now})
             return ("ok", rotation, t["user_id"], t["family_id"], _aware(fam["absolute_expires_at"]))
 
@@ -276,6 +345,10 @@ class RefreshTokenStore:
         if result[0] == "ok":
             _, rotation, user_id, family_id, family_expires = result
             return IssuedRefreshToken(new_token, family_id, user_id, now + self.idle, family_expires, rotation, now)
+        if result[0] == "grace":
+            _, sealed, user_id, family_id, family_expires, succ_expires, rotation = result
+            return IssuedRefreshToken(self._unseal(sealed, family_id), family_id, user_id, succ_expires,
+                                      family_expires, rotation, now, grace_replay=True)
         _, reason, user_id, family_id = result[:4]
         raise RefreshError(reason, user_id=user_id, family_id=family_id, reuse=result[0] == "reuse")
 
@@ -303,7 +376,7 @@ class RefreshTokenStore:
         return family_id
 
     def revoke_all_for_user(self, user_id: str, reason: str) -> int:
-        families = self.repo.families_of(user_id)
+        families = self.repo.families_of(user_id, self.clock())
         for family_id in families:
             self.revoke_family(family_id, reason)
         return len(families)
@@ -318,11 +391,12 @@ def _default_store() -> RefreshTokenStore:
     sec = SecuritySettings()
     idle = timedelta(minutes=sec.REFRESH_TOKEN_IDLE_MINUTES)
     absolute = timedelta(hours=sec.REFRESH_TOKEN_ABSOLUTE_HOURS)
+    grace = timedelta(seconds=sec.REFRESH_TOKEN_REUSE_GRACE_SECONDS)
     backend = (os.environ.get("REFRESH_TOKEN_BACKEND") or "firestore").strip().lower()
     if backend == "firestore":
         try:
             from app.core.firebase import get_firestore_client
-            return RefreshTokenStore(repo=FirestoreRefreshRepo(get_firestore_client()), idle=idle, absolute=absolute)
+            return RefreshTokenStore(repo=FirestoreRefreshRepo(get_firestore_client()), idle=idle, absolute=absolute, grace=grace)
         except Exception as e:  # noqa: BLE001
             logger.error(
                 "REFRESH_STORE_UNAVAILABLE Firestore unavailable for refresh tokens — using a "
@@ -330,7 +404,7 @@ def _default_store() -> RefreshTokenStore:
                 "sign-in when another instance answers",
                 extra={"error_type": type(e).__name__},
             )
-    return RefreshTokenStore(repo=MemoryRefreshRepo(), idle=idle, absolute=absolute)
+    return RefreshTokenStore(repo=MemoryRefreshRepo(), idle=idle, absolute=absolute, grace=grace)
 
 
 def get_refresh_token_store() -> RefreshTokenStore:

@@ -9,6 +9,7 @@ Run from the repository root (needs backend/venv — or BACKEND_PYTHON — and f
 No cloud service is contacted (GOOGLE_APPLICATION_CREDENTIALS points at a file that does not exist):
     python scripts/safety/capa015_tests_on_base.py
         -> docs/iec62304/records/risk_verification/CAPA-015_tests_on_base_2026-10-24.json
+    python scripts/safety/capa015_tests_on_base.py --base 2c618ec         --label "2c618ec (PR #65 head before the independent review fixes)"         --backend-tests tests/unit/test_capa015_review_fixes.py,tests/unit/test_capa015_audit_and_session.py         --frontend-tests src/services/session.capa015.review.test.tsx         --out docs/iec62304/records/risk_verification/CAPA-015_review1_tests_on_pr65_2026-10-24.json
 NEVER run this while anything else edits the files it swaps (it restores a snapshot).
 """
 import datetime
@@ -34,9 +35,13 @@ PY = os.environ.get("BACKEND_PYTHON") or os.path.join(ROOT, "backend", "venv", "
 if not os.path.exists(PY):
     PY = sys.executable
 OUT = _arg("--out", "docs/iec62304/records/risk_verification/CAPA-015_tests_on_base_2026-10-24.json")
-BACKEND_TEST = "tests/unit/test_capa015_audit_and_session.py"
-FRONTEND_TEST = "src/services/session.capa015.test.tsx"
+BACKEND_TESTS = _arg("--backend-tests", "tests/unit/test_capa015_audit_and_session.py").split(",")
+FRONTEND_TESTS = _arg("--frontend-tests", "src/services/session.capa015.test.tsx").split(",")
+# PRB-002: no cloud credentials, an empty gcloud configuration and a project that does not exist.
+_EMPTY_GCLOUD = os.path.join(tempfile.gettempdir(), "capa015-empty-gcloud-config")
+os.makedirs(_EMPTY_GCLOUD, exist_ok=True)
 NO_CLOUD = {"GOOGLE_APPLICATION_CREDENTIALS": os.path.join(tempfile.gettempdir(), "capa015-no-cloud-credentials.json"),
+            "CLOUDSDK_CONFIG": _EMPTY_GCLOUD, "GOOGLE_CLOUD_PROJECT": "mstool-offline-tests",
             "AUDIT_SINK_BACKEND": "memory", "REFRESH_TOKEN_BACKEND": "memory", "COLUMNS": "400"}
 
 
@@ -64,7 +69,7 @@ def base_bytes(path):
 
 
 def run_backend():
-    r = subprocess.run([PY, "-m", "pytest", BACKEND_TEST, "-q", "-p", "no:cacheprovider", "-o", "log_cli=false",
+    r = subprocess.run([PY, "-m", "pytest", *BACKEND_TESTS, "-q", "-p", "no:cacheprovider", "-o", "log_cli=false",
                         "--tb=short", "-rA"], cwd="backend", capture_output=True, text=True, encoding="utf-8",
                        errors="replace", env={**os.environ, **NO_CLOUD})
     tests = {}
@@ -81,7 +86,7 @@ def run_frontend():
     out = os.path.join(tempfile.gettempdir(), "capa015_base_vitest.json")
     if os.path.exists(out):
         os.remove(out)
-    subprocess.run(f"npx vitest run {FRONTEND_TEST} --pool=threads --reporter=json --outputFile={out}",
+    subprocess.run(f"npx vitest run {' '.join(FRONTEND_TESTS)} --pool=threads --reporter=json --outputFile={out}",
                    cwd="frontend", shell=True, capture_output=True, text=True, encoding="utf-8", errors="replace")
     d = json.load(open(out, encoding="utf-8"))
     res = [a for f in d["testResults"] for a in f["assertionResults"]]
@@ -113,7 +118,7 @@ def main():
                   "the CAPA-015 test files run unchanged, without cloud credentials; working tree restored byte for byte",
         "swapped": {"restored_to_base": CHANGED, "removed": ADDED},
         "test_sha256": {t: hashlib.sha256(open(t, encoding="utf-8").read().replace("\r\n", "\n").encode("utf-8")).hexdigest()
-                        for t in ("backend/" + BACKEND_TEST, "frontend/" + FRONTEND_TEST)},
+                        for t in ["backend/" + b for b in BACKEND_TESTS] + ["frontend/" + f for f in FRONTEND_TESTS]},
         "backend": backend,
         "frontend": frontend,
     }

@@ -29,7 +29,7 @@ function errorDetail(err: any): string {
 
 export function SessionExpiredDialog() {
   const { t } = useTranslation();
-  const { user, sessionExpired, reauthenticate, reauthenticateWithPasskey, logout } = useAuth();
+  const { user, sessionExpired, reauthenticate, reauthenticateWithPasskey, signOutFromDialog } = useAuth();
   const hasUnsaved = useSegmentationStore((s) => s.hasUnsavedMaskChanges);
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -178,7 +178,7 @@ export function SessionExpiredDialog() {
           <div className="mt-4 rounded-md border border-red-500/40 bg-red-500/10 p-3 text-sm">
             <p className="mb-2 text-red-200">{t('session.reauthSignOutWarning')}</p>
             <div className="flex gap-2">
-              <button type="button" onClick={() => logout()} className="rounded-md bg-red-600 px-3 py-1.5 text-xs text-white">
+              <button type="button" onClick={() => signOutFromDialog()} className="rounded-md bg-red-600 px-3 py-1.5 text-xs text-white">
                 {t('session.reauthSignOutConfirm')}
               </button>
               <button type="button" onClick={() => setConfirmSignOut(false)} className="rounded-md border border-white/15 px-3 py-1.5 text-xs">

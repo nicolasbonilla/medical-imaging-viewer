@@ -16,7 +16,7 @@
  * Two tabs are simulated the way a browser does it: the other tab writes localStorage and this
  * tab receives a `storage` event. Written before the fixes; they fail on the PR #65 head (2c618ec).
  */
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi, type Mock } from 'vitest';
 import { render, screen, fireEvent, waitFor, act, cleanup, renderHook } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import i18n from '@/i18n/config';
@@ -67,13 +67,13 @@ async function network(routes: Route_[]) {
 }
 const ok = (data: unknown): Out => ({ status: 200, data });
 
-let hrefSet: ReturnType<typeof vi.fn>;
+let hrefSet: Mock<(v: string) => void>;
 const realLocation = window.location;
 beforeEach(async () => {
   vi.resetModules();
   calls = [];
   localStorage.clear();
-  hrefSet = vi.fn();
+  hrefSet = vi.fn<(v: string) => void>();
   const origin = realLocation.origin;
   Object.defineProperty(window, 'location', {
     configurable: true,
@@ -218,6 +218,8 @@ describe('RC-069 review — another tab never wipes this tab (M2)', () => {
     const { useSessionTimeout } = await import('@/hooks/useSessionTimeout');
     const onTimeout = vi.fn();
     renderHook(() => useSessionTimeout({ timeoutDuration: 15 * 60_000, warningDuration: 2 * 60_000, onTimeout, enabled: true }));
+    // this tab's own activity is shared with the others
+    expect(Number(localStorage.getItem('mstool_last_activity'))).toBe(Date.now());
     for (let i = 0; i < 5; i++) {                   // 20 minutes of work in another tab
       await act(async () => { await vi.advanceTimersByTimeAsync(4 * 60_000); });
       act(() => otherTabWrites('mstool_last_activity', String(Date.now())));

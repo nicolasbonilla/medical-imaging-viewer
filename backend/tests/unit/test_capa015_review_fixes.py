@@ -317,7 +317,7 @@ def test_rc067_identifiers_are_hashed_with_a_secret_key(env, monkeypatch):
     env.client.get(f"/api/v1/studies/accession/{acc}", headers=env.bearer(env.rad))
     rec = [r for r in env.records() if "accession" in (r.get("endpoint") or "")][0]
     assert rec["resource_ids"].get("accession_hmac") == keyed(acc), rec["resource_ids"]
-    assert hashlib.sha256(acc.encode()).hexdigest()[:16] not in json.dumps(rec)
+    assert hashlib.sha256(acc.encode()).hexdigest()[:16] not in json.dumps(rec, default=str)
     aud = _mod("app.core.logging.audit")
     monkeypatch.setenv("AUDIT_HASH_KEY", "a-separate-audit-hash-key-for-this-deployment")
     try:
@@ -339,4 +339,4 @@ def test_rc067_the_user_agent_is_reduced_to_a_coarse_class(env):
                     headers={"User-Agent": ua})
     rec = env.records("auth.login.success")[-1]
     assert rec.get("user_agent") == "chrome/windows", rec.get("user_agent")
-    assert "Workstation-RAD-17" not in json.dumps(rec)
+    assert "Workstation-RAD-17" not in json.dumps(rec, default=str)

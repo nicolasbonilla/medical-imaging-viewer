@@ -22,8 +22,14 @@ Writes never block or break the clinical request: records are queued and written
 threads; a failed write is logged loudly (`AUDIT_SINK_WRITE_FAILED`) and retried with
 exponential back-off. If the bounded queue overflows, or a record exhausts its retries, the
 record is written in full to the server log at CRITICAL (`AUDIT_RECORD_DROPPED`) and counted,
-and the sink reports `failing` until the instance restarts. `status()` is what the administrator
-indicator shows. The middleware waits a bounded time (AUDIT_FLUSH_WAIT_MS) for a request's
+and the sink reports `failing` for `drop_window_s` (15 min) after the last drop (review m9: it used
+to stay red until a restart). `status()` is what the administrator indicator shows.
+
+What "append-only" means here (review m11): this code only ever calls `create()` on
+`audit_logs` and the security rules refuse every client write — a convention enforced by code
+and rules, not by the database. Anyone holding the service account (Admin SDK) can still edit or
+delete a record, and the `checksum` field is a plain SHA-256 that can be recomputed, not a seal.
+Tamper evidence would need an external, write-once copy (e.g. a locked log bucket) — not built. The middleware waits a bounded time (AUDIT_FLUSH_WAIT_MS) for a request's
 records while the sink is healthy, because Cloud Run throttles the CPU of an instance between
 requests (`--cpu-throttling`); records still pending are written on the next request or by the
 shutdown flush.
@@ -35,6 +41,7 @@ reported as `not_durable`), "off".
 """
 
 import heapq
+from collections import deque
 import itertools
 import json
 import os
@@ -100,6 +107,9 @@ class DurableAuditSink:
     max_attempts: int = 50
     workers: int = 2
     failing_after: int = 3
+    # Review m9: a dropped record turns the indicator red for this long, not until the next restart.
+    drop_window_s: float = 900.0
+    clock: Callable[[], float] = time.monotonic
 
     written_total: int = field(default=0, init=False)
     dropped_total: int = field(default=0, init=False)
@@ -120,6 +130,7 @@ class DurableAuditSink:
         self._seq = itertools.count()
         self._threads: List[threading.Thread] = []
         self._closed = False
+        self._drop_times: deque = deque()
         self._client = None
 
     # ------------------------------------------------------------------ public
@@ -140,6 +151,7 @@ class DurableAuditSink:
             dropped = self._closed or pending >= self.max_queue
             if dropped:
                 self.dropped_total += 1
+                self._drop_times.append(self.clock())
             else:
                 self._ready.append(_Item(dict(record), fut))
                 self._cond.notify()
@@ -158,8 +170,16 @@ class DurableAuditSink:
             self._client = self.client_factory()
         return self._client
 
+    def _recent_drops(self) -> int:
+        cutoff = self.clock() - self.drop_window_s
+        while self._drop_times and self._drop_times[0] < cutoff:
+            self._drop_times.popleft()
+        return len(self._drop_times)
+
     def is_healthy(self) -> bool:
-        return self.backend == "firestore" and self.consecutive_failures == 0 and self.dropped_total == 0
+        with self._cond:
+            recent = self._recent_drops()
+        return self.backend == "firestore" and self.consecutive_failures == 0 and recent == 0
 
     def flush(self, timeout: float = 5.0, retry_now: bool = False) -> bool:
         """Wait until every queued record is written (or given up). True when drained."""
@@ -179,11 +199,12 @@ class DurableAuditSink:
     def status(self) -> Dict[str, Any]:
         with self._cond:
             depth = len(self._ready) + len(self._waiting) + self._inflight
+            recent = self._recent_drops()
             if self.backend == "off":
                 state = "off"
             elif self.backend == "memory":
                 state = "not_durable"
-            elif self.dropped_total > 0 or self.consecutive_failures >= self.failing_after:
+            elif recent > 0 or self.consecutive_failures >= self.failing_after:
                 state = "failing"
             elif self.consecutive_failures > 0:
                 state = "degraded"
@@ -198,6 +219,8 @@ class DurableAuditSink:
                 "failed_writes_total": self.failed_writes_total,
                 "written_total": self.written_total if self.backend == "firestore" else len(self.memory_records),
                 "dropped_total": self.dropped_total,
+                "dropped_recent": recent,
+                "dropped_window_s": self.drop_window_s,
                 "last_success_at": self.last_success_at,
                 "last_failure_at": self.last_failure_at,
                 "last_error": self.last_error,
@@ -255,6 +278,7 @@ class DurableAuditSink:
                     item.attempt += 1
                     if item.attempt >= self.max_attempts:
                         self.dropped_total += 1
+                        self._drop_times.append(self.clock())
                         give_up = True
                     else:
                         delay = min(self.max_backoff_s, self.base_backoff_s * (2 ** (item.attempt - 1)))
