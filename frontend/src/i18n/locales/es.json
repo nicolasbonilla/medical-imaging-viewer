@@ -1077,7 +1077,10 @@
     "acknowledgeCorrections": "He revisado estas correcciones de región y las confirmo como mías.",
     "confirmCorrections": "También confirma estas {{count}} corrección(es) de región hechas a mano después de la clasificación de regiones:",
     "confirmedByRadiologist": "Segmentación confirmada por un radiólogo",
-    "confirmedCorrections": "Incluye {{count}} corrección(es) de región hechas a mano y reconocidas en la confirmación."
+    "confirmedCorrections": "Incluye {{count}} corrección(es) de región hechas a mano y reconocidas en la confirmación.",
+    "lesionPart": "Lesión {{n}} (corte {{slice}}, {{voxels}} vóxeles): {{label}}",
+    "smallComponentPart": "Componente pequeño ({{voxels}} vóxeles, corte {{slice}}): {{label}}",
+    "smallComponentCorrection": "Componente pequeño ({{voxels}} vóxeles, corte {{slice}}): {{from}} → {{to}}"
   },
   "lesions": {
     "title": "Analisis de Lesiones",

@@ -33,6 +33,8 @@ import {
   type LesionAnalysisResult,
   type DISAssessment,
   type DISExternalEvidence,
+  type DISLesionPart,
+  type DISRegionCorrection,
   type LesionInfo,
   type RegionClassificationResult,
   type ClassificationMethod,
@@ -120,6 +122,20 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
   const [ackedCorrections, setAckedCorrections] = useState<string | null>(null);
   const pendingRegions = disPending && 'regions' in disPending ? disPending.regions ?? null : null;
   const correctionsDigest = pendingRegions?.correction_count ? pendingRegions.corrections_sha256 ?? null : null;
+  // Third review of PR #68 (m-1): every list names a lesion as the lesion table does (its number and the slice its row
+  // opens); a component below the lesion-size floor, which the table leaves out, is a "small component".
+  const correctionText = useCallback((c: DISRegionCorrection) => {
+    const v = { n: c.lesion, slice: c.slice + 1, voxels: c.voxels, from: c.classified_region_name, to: c.current_region_name };
+    return c.small_component
+      ? fill(t('disReview.smallComponentCorrection', { defaultValue: 'Small component ({{voxels}} voxels, slice {{slice}}): {{from}} → {{to}}', ...v }), v)
+      : fill(t('disReview.correctionItem', { defaultValue: 'Lesion {{n}} (slice {{slice}}, {{voxels}} voxels): {{from}} → {{to}}', ...v }), v);
+  }, [t]);
+  const partText = useCallback((p: DISLesionPart) => {
+    const v = { n: p.lesion, slice: p.slice + 1, voxels: p.voxels, label: p.label_name };
+    return p.small_component
+      ? fill(t('disReview.smallComponentPart', { defaultValue: 'Small component ({{voxels}} voxels, slice {{slice}}): {{label}}', ...v }), v)
+      : fill(t('disReview.lesionPart', { defaultValue: 'Lesion {{n}} (slice {{slice}}, {{voxels}} voxels): {{label}}', ...v }), v);
+  }, [t]);
   const [classification, setClassification] = useState<RegionClassificationResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isClassifying, setIsClassifying] = useState(false);
@@ -257,13 +273,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
     if (state.hasUnsavedMaskChanges || state.currentSegmentation?.segmentation_id !== segmentationId) return;
     // N1: region corrections by hand are listed in the dialog and must have been acknowledged in the card.
     if (correctionsDigest && ackedCorrections !== correctionsDigest) return;
-    const listed = (pendingRegions?.corrections ?? []).map((c) => fill(t('disReview.correctionItem', {
-      defaultValue: 'Lesion {{n}} (slice {{slice}}, {{voxels}} voxels): {{from}} → {{to}}',
-      n: c.lesion, slice: c.slice + 1, voxels: c.voxels, from: c.classified_region_name, to: c.current_region_name,
-    }), {
-      defaultValue: 'Lesion {{n}} (slice {{slice}}, {{voxels}} voxels): {{from}} → {{to}}',
-      n: c.lesion, slice: c.slice + 1, voxels: c.voxels, from: c.classified_region_name, to: c.current_region_name,
-    }));
+    const listed = (pendingRegions?.corrections ?? []).map(correctionText);
     const question = t(
       'disReview.confirmQuestion',
       'Confirm that you have checked every lesion and its region on every slice of this saved segmentation? Your name, the time and the exact saved mask will be recorded; any later change of the mask cancels this confirmation.',
@@ -302,7 +312,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
     } finally {
       setConfirmBusy(false);
     }
-  }, [segmentationId, refreshDis, t, correctionsDigest, ackedCorrections, pendingRegions]);
+  }, [segmentationId, refreshDis, t, correctionsDigest, ackedCorrections, pendingRegions, correctionText]);
 
   // Stale check: mask was edited after analysis was computed
   const isAnalysisStale = !!(
@@ -745,14 +755,15 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                     <p>{t('disReview.reasonLesionLabelsInvalid', 'Every connected lesion must carry exactly one region (periventricular, juxtacortical, infratentorial or deep white matter); Active (Gd+) and Black Hole (T1) are not regions. Correct these lesions, or run the region classification again:')}</p>
                     <ul className="list-disc pl-4">
                       {(pendingRegions?.invalid_lesions ?? []).map((les) => (
-                        <li key={les.lesion} data-testid="dis-invalid-lesion">
-                          {fill(t('disReview.invalidLesionItem', {
+                        <li key={les.first_voxel.join('-')} data-testid="dis-invalid-lesion">
+                          {les.parts?.length ? (
+                            les.parts.map((p, i) => (
+                              <div key={i} data-testid="dis-invalid-lesion-part">{partText(p)}</div>
+                            ))
+                          ) : fill(t('disReview.invalidLesionItem', {
                             defaultValue: 'Lesion {{n}} (slice {{slice}}, {{voxels}} voxels): {{labels}}',
                             n: les.lesion, slice: les.slice + 1, voxels: les.voxels, labels: les.label_names.join(' + '),
-                          }), {
-                            defaultValue: 'Lesion {{n}} (slice {{slice}}, {{voxels}} voxels): {{labels}}',
-                            n: les.lesion, slice: les.slice + 1, voxels: les.voxels, labels: les.label_names.join(' + '),
-                          })}
+                          }), { n: les.lesion, slice: les.slice + 1, voxels: les.voxels, labels: les.label_names.join(' + ') })}
                         </li>
                       ))}
                     </ul>
@@ -799,14 +810,8 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                     </p>
                     <ul className="list-disc pl-4">
                       {(pendingRegions.corrections ?? []).map((c) => (
-                        <li key={c.lesion} data-testid="dis-region-correction">
-                          {fill(t('disReview.correctionItem', {
-                            defaultValue: 'Lesion {{n}} (slice {{slice}}, {{voxels}} voxels): {{from}} → {{to}}',
-                            n: c.lesion, slice: c.slice + 1, voxels: c.voxels, from: c.classified_region_name, to: c.current_region_name,
-                          }), {
-                            defaultValue: 'Lesion {{n}} (slice {{slice}}, {{voxels}} voxels): {{from}} → {{to}}',
-                            n: c.lesion, slice: c.slice + 1, voxels: c.voxels, from: c.classified_region_name, to: c.current_region_name,
-                          })}
+                        <li key={c.first_voxel.join('-')} data-testid="dis-region-correction">
+                          {correctionText(c)}
                         </li>
                       ))}
                     </ul>

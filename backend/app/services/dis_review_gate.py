@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import re
 import unicodedata
 from typing import Any, Dict, Iterable, List, Optional, Tuple
@@ -165,7 +166,7 @@ def is_lesion_detection_source(validation_source: Optional[str]) -> bool:
 # ──────────────────────────────────────────────────────────── lesions and their regions (second review, N1)
 def _lesions(masks_3d) -> List[Dict[str, Any]]:
     """The 18-connected lesions of the footprint (RC-030: the connectivity the region classifier uses), in raster
-    order of their first voxel: first flat index, voxel count and the labels the lesion carries."""
+    order of their first voxel: component id, first flat index, voxel count and the labels the lesion carries."""
     from app.services.lesion_metrics import label_lesions
 
     mask = np.ascontiguousarray(masks_3d, dtype=np.uint8)
@@ -184,14 +185,53 @@ def _lesions(masks_3d) -> List[Dict[str, Any]]:
     out = []
     for a, b, lo, hi in zip(starts, stops, low, high):
         labels = [int(lo)] if lo == hi else [int(v) for v in np.unique(values[a:b])]
-        out.append({"first": int(where[a]), "voxels": int(b - a), "labels": labels})
+        out.append({"component": int(ids[a]), "first": int(where[a]), "voxels": int(b - a), "labels": labels})
     out.sort(key=lambda les: les["first"])
     return out
 
 
-def classification_record(classified_mask) -> Dict[str, Any]:
+def _table_entries(masks_3d, voxel_volume_mm3: float) -> List[Dict[str, Any]]:
+    """The lesion table's entries, numbered as the lesion table numbers them (third review of PR #68, m-1).
+
+    Same construction as `lesion_analysis_service.analyze_lesions` (Class C, not modified): the 18-connected
+    components of each label, label by label (ids ascending, components in raster order), centroids from the same
+    `center_of_mass` call, then sorted largest first (stable) and numbered 1..n. A component below the lesion-size
+    floor is left out of the table: here it is kept, unnumbered, as a "small component". `slice` is the slice the
+    viewer opens for a table row (`Math.round` of the centroid z rounded to 0.1, 0-based)."""
+    from scipy.ndimage import center_of_mass
+    from app.services.lesion_metrics import label_lesions, meets_min_volume
+
+    mask = np.ascontiguousarray(masks_3d, dtype=np.uint8)
+    entries: List[Dict[str, Any]] = []
+    for label in (int(v) for v in np.unique(mask) if v > 0):
+        binary = (mask == label).astype(np.uint8)
+        components, count = label_lesions(binary)
+        if count == 0:
+            continue
+        ids = list(range(1, count + 1))
+        centroids = center_of_mass(binary, components, ids)
+        flat = np.asarray(components).ravel()
+        voxels = np.bincount(flat, minlength=count + 1)
+        where = np.flatnonzero(flat)
+        firsts, positions = np.unique(flat[where], return_index=True)
+        first_of = dict(zip(firsts.tolist(), where[positions].tolist()))
+        for comp, centroid in zip(ids, centroids):
+            entries.append({"label": label, "voxels": int(voxels[comp]), "first": int(first_of[comp]),
+                            "slice": int(math.floor(round(float(centroid[0]), 1) + 0.5))})
+    entries.sort(key=lambda e: -e["voxels"])            # stable, as the table's sort by volume
+    number = 0
+    for e in entries:
+        e["small_component"] = not meets_min_volume(e["voxels"], voxel_volume_mm3)
+        if not e["small_component"]:
+            number += 1
+        e["lesion"] = None if e["small_component"] else number
+    return entries
+
+
+def classification_record(classified_mask, voxel_spacing) -> Dict[str, Any]:
     """What classify-regions records about the lesions it classified (review of PR #68, blocker 1 and N1): the
-    lesion footprint, the classified mask and, per lesion, its first voxel, voxel count and region."""
+    lesion footprint, the classified mask and, per lesion, its first voxel, voxel count and region; and the voxel
+    volume (third review, m-1), so that lesions are named as the lesion table names them."""
     return {
         "classified_lesion_footprint_sha256": footprint_sha256(classified_mask),
         "classified_mask_sha256": SegmentationService.mask_sha256(classified_mask),
@@ -199,12 +239,18 @@ def classification_record(classified_mask) -> Dict[str, Any]:
             [les["first"], les["voxels"], les["labels"][0] if len(les["labels"]) == 1 else 0]
             for les in _lesions(classified_mask)],
         "lesion_connectivity": 18,
+        "voxel_volume_mm3": float(np.prod(voxel_spacing)),
     }
 
 
-def _place(first: int, shape) -> Dict[str, Any]:
-    z, y, x = (int(v) for v in np.unravel_index(first, tuple(shape)))
-    return {"slice": z, "first_voxel": [z, y, x]}
+def _first_voxel(first: int, shape) -> List[int]:
+    return [int(v) for v in np.unravel_index(first, tuple(shape))]
+
+
+def _part(entry: Dict[str, Any]) -> Dict[str, Any]:
+    return {"lesion": entry["lesion"], "small_component": entry["small_component"], "label": entry["label"],
+            "label_name": MAGNIMS_REGIONS.get(entry["label"], f"label {entry['label']}"),
+            "voxels": entry["voxels"], "slice": entry["slice"]}
 
 
 def corrections_sha256(corrections: List[Dict[str, Any]]) -> str:
@@ -235,6 +281,9 @@ def regions_state(metadata: Any, masks_3d) -> Dict[str, Any]:
         "corrections": [], "correction_count": 0, "corrections_sha256": None, "listed_limit": LESION_LIST_CAP,
     }
     recorded = record.get("classified_lesion_regions")
+    voxel_volume = record.get("voxel_volume_mm3")
+    if not (isinstance(voxel_volume, (int, float)) and not isinstance(voxel_volume, bool) and voxel_volume > 0):
+        return out                                     # m-1: a record without it cannot name lesions as the table
     if not (in_scheme and isinstance(recorded, list)
             and record.get("classified_lesion_footprint_sha256") == footprint_sha256(masks_3d)):
         return out
@@ -247,13 +296,26 @@ def regions_state(metadata: Any, masks_3d) -> Dict[str, Any]:
                                             for les in lesions):
         return out                                     # a record that does not describe these lesions
     shape = np.shape(masks_3d)
+    # Third review of PR #68, m-1: every list names a lesion as the lesion table does (number, slice), its parts
+    # in table order; a component below the lesion-size floor is a "small component".
+    footprint = None
+    parts_of: Dict[int, List[Dict[str, Any]]] = {}
+    if lesions:
+        from app.services.lesion_metrics import label_lesions
+        footprint = np.asarray(label_lesions(np.asarray(masks_3d) > 0)[0]).ravel()
+        for entry in _table_entries(masks_3d, float(voxel_volume)):
+            parts_of.setdefault(int(footprint[entry["first"]]), []).append(entry)
     invalid, corrections = [], []
-    for number, les in enumerate(lesions, start=1):
+    for les in lesions:
         classified_region = by_first[les["first"]][1]
-        where = {"lesion": number, **_place(les["first"], shape), "voxels": les["voxels"]}
+        parts = parts_of[les["component"]]
+        head = parts[0]                                # its largest part, as the table orders them
+        where = {"lesion": head["lesion"], "small_component": head["small_component"], "slice": head["slice"],
+                 "first_voxel": _first_voxel(les["first"], shape), "voxels": les["voxels"]}
         if len(les["labels"]) != 1 or les["labels"][0] not in DIS_REGION_IDS:
             invalid.append({**where, "labels": les["labels"],
-                            "label_names": [MAGNIMS_REGIONS.get(v, f"label {v}") for v in les["labels"]]})
+                            "label_names": [MAGNIMS_REGIONS.get(v, f"label {v}") for v in les["labels"]],
+                            "parts": [_part(e) for e in parts]})
         elif les["labels"][0] != classified_region:
             corrections.append({**where, "classified_region": classified_region,
                                 "classified_region_name": MAGNIMS_REGIONS.get(classified_region, "none"),

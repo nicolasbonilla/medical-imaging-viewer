@@ -71,7 +71,7 @@ class _FakeSeg:
             "metadata": SegmentationMetadata(
                 file_id=f"img-{sid}", labels=labels,
                 # the record classify-regions writes (second review of PR #68, N1: with each lesion's region)
-                analysis_data={"classification": gate.classification_record(mask)},
+                analysis_data={"classification": gate.classification_record(mask, (3.0, 1.0, 1.0))},
                 clinician_review={"reviewed_by": "dr_rev", "reviewed_at": "2026-10-24T10:00:00Z",
                                   "reviewed_mask_sha256": SegmentationService.mask_sha256(mask),
                                   "reviewed_labels_sha256": gate.labels_sha256(labels)},

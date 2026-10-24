@@ -106,20 +106,38 @@ export interface DISNotEvaluated {
   regions?: DISRegionsState | null;
 }
 
+/** One label of a lesion, named as the lesion table names it (third review of PR #68, m-1): its table number, or a
+ *  "small component" below the lesion-size floor, which the table leaves out. */
+export interface DISLesionPart {
+  lesion: number | null;
+  small_component: boolean;
+  label: number;
+  label_name: string;
+  voxels: number;
+  /** 0-based slice the viewer opens for the table row (rounded centroid); the viewer shows slice + 1. */
+  slice: number;
+}
+
 /** A lesion that carries no MAGNIMS region or more than one (second review of PR #68, N1). */
 export interface DISInvalidLesion {
-  lesion: number;
-  /** 0-based slice index of the lesion's first voxel (the viewer shows slice + 1). */
+  /** The table number of its largest part (third review, m-1); null for a small component. */
+  lesion: number | null;
+  small_component?: boolean;
+  /** 0-based slice of its largest part, as the lesion table (the viewer shows slice + 1). */
   slice: number;
   first_voxel: [number, number, number];
   voxels: number;
   labels: number[];
   label_names: string[];
+  /** Its labels part by part, in table order (third review, m-1). */
+  parts?: DISLesionPart[];
 }
 
 /** A lesion whose region differs from the classifier's: a correction by hand (second review of PR #68, N1). */
 export interface DISRegionCorrection {
-  lesion: number;
+  /** The lesion table's number (third review of PR #68, m-1); null for a small component. */
+  lesion: number | null;
+  small_component?: boolean;
   slice: number;
   first_voxel: [number, number, number];
   voxels: number;

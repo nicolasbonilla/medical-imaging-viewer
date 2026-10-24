@@ -1066,7 +1066,10 @@
     "acknowledgeCorrections": "Ich habe diese Regionskorrekturen geprüft und bestätige sie als meine.",
     "confirmCorrections": "Sie bestätigen auch diese {{count}} von Hand nach der Regionenklassifikation vorgenommene(n) Regionskorrektur(en):",
     "confirmedByRadiologist": "Segmentierung von einem Radiologen bestätigt",
-    "confirmedCorrections": "Einschließlich {{count}} von Hand vorgenommener und in der Bestätigung anerkannter Regionskorrektur(en)."
+    "confirmedCorrections": "Einschließlich {{count}} von Hand vorgenommener und in der Bestätigung anerkannter Regionskorrektur(en).",
+    "lesionPart": "Läsion {{n}} (Schicht {{slice}}, {{voxels}} Voxel): {{label}}",
+    "smallComponentPart": "Kleine Komponente ({{voxels}} Voxel, Schicht {{slice}}): {{label}}",
+    "smallComponentCorrection": "Kleine Komponente ({{voxels}} Voxel, Schicht {{slice}}): {{from}} → {{to}}"
   },
   "lesions": {
     "title": "Läsionsanalyse",

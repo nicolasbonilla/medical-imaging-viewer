@@ -741,8 +741,11 @@ async def confirm_segmentation_review(
                     "space is evaluated only on lesions with classified regions."),
         )
     if regions["lesions_valid"] is False:   # second review of PR #68, N1: one region (1-4) per classified lesion
-        listed = "; ".join(f"lesion {les['lesion']} (slice {les['slice'] + 1}): {' + '.join(les['label_names'])}"
-                           for les in regions["invalid_lesions"][:5])
+        # Third review of PR #68, m-1: each part named as the lesion table names it.
+        listed = "; ".join(" + ".join(
+            (f"small component ({p['voxels']} voxels, slice {p['slice'] + 1}): {p['label_name']}" if p['small_component']
+             else f"lesion {p['lesion']} (slice {p['slice'] + 1}): {p['label_name']}") for p in les["parts"])
+            for les in regions["invalid_lesions"][:5])
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=(f"{regions['invalid_lesion_count']} lesion(s) carry no MAGNIMS region or more than one ({listed}). "
