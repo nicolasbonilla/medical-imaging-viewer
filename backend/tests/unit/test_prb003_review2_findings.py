@@ -115,7 +115,7 @@ def test_rc070_n1_a_mask_flattened_to_one_label_needs_the_correction_acknowledge
     assert regions["edited_after_classification"] is True and regions["correction_count"] == 1
     c = regions["corrections"][0]
     assert (c["lesion"], c["slice"], c["classified_region_name"], c["current_region_name"]) == (
-        2, 6, "Juxtacortical", "Periventricular")
+        2, 7, "Juxtacortical", "Periventricular")              # third review, m-1: the table's number and slice
     assert _confirm(client, _sha(flat)).status_code == 409          # no acknowledgement
     _review(entry)                                                    # a record of mask + labels only
     body = _dis(client_for(svc))
@@ -159,7 +159,8 @@ def test_rc071_n1_each_refusal_gives_its_own_reason(client_for):
     entry["masks_3d"] = split
     r = _confirm(client_for(svc), _sha(split))
     assert r.status_code == 409, r.text[:300]
-    assert "lesion 1 (slice 3): Periventricular + Juxtacortical" in r.json()["error"]["message"]
+    # third review, m-1: named as the lesion table does (number by size, slice of the centroid; parts listed)
+    assert "lesion 2 (slice 4): Periventricular + lesion 3 (slice 3): Juxtacortical" in r.json()["error"]["message"]
 
 
 @pytest.mark.unit

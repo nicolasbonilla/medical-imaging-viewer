@@ -52,11 +52,11 @@ def _gate():
     return dis_review_gate
 
 
-def _classify(entry, mask=None):
+def _classify(entry, mask=None, voxel_volume_mm3=3.0):
     """Record a region classification for the lesions of `mask` (default: the stored mask)."""
     m = entry["masks_3d"] if mask is None else mask
     meta = entry["metadata"]
-    meta.analysis_data = {**(meta.analysis_data or {}), **_classification(m)}   # N1: with each lesion's region
+    meta.analysis_data = {**(meta.analysis_data or {}), **_classification(m, voxel_volume_mm3)}   # N1, m-1
 
 
 def _review(entry, by="dr_rev"):

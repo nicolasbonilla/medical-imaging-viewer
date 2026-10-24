@@ -1,0 +1,47 @@
+{
+  "executed": "2026-10-24T22:25:35",
+  "base": "2e20b8a (PR #68 after the second review, before the third-review correction m-1)",
+  "method": "source files that differ from the base commit restored to it, files it did not have removed; the PRB-003 test files run unchanged; working tree restored byte for byte",
+  "swapped": {
+    "restored_to_base": [],
+    "removed": []
+  },
+  "test_sha256": {
+    "backend/tests/unit/test_prb003_review3_findings.py": "2c128457eaf88c4b469c47bb89afb8ccc6a1e8a653a302d65626669b411f12e6",
+    "frontend/src/components/LesionDashboard.prb003.review3.test.tsx": "3738c4bc5cdc88fce4b28f36a374cc19eecaee26893bda10e7fdd1e8a9ee91ef"
+  },
+  "backend": {
+    "passed": 0,
+    "failed": 3,
+    "errors": 0,
+    "results": {
+      "test_rc070_m1_a_correction_names_the_lesion_as_the_lesion_table_does": {
+        "status": "failed",
+        "reason": "assert 2 == 1"
+      },
+      "test_rc070_m1_a_lesion_with_two_labels_names_its_parts_as_the_table_does": {
+        "status": "failed",
+        "reason": "assert 2 == 1"
+      },
+      "test_rc071_m1_the_refused_confirmation_names_lesions_as_the_table_does": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'lesion 1 (slice 6): Periventricular' in '1 lesion(s) carry no MAGNIMS region or more than one (lesion 2 (slice 6): Periventricular + Juxtacortical). Every con...iventricular, juxtacortical, infratentorial or deep whi"
+      }
+    }
+  },
+  "frontend": {
+    "passed": 0,
+    "failed": 2,
+    "not_passing": {
+      "rc070 review3 a lesion with two labels is listed part by part, with the table number and small components": {
+        "status": "failed",
+        "reason": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"dis-invalid-lesion-part\"]"
+      },
+      "rc071 review3 a correction of a small component says so": {
+        "status": "failed",
+        "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31melement\u001b[39m\u001b[2m).toHaveTextContent()\u001b[22m"
+      }
+    }
+  },
+  "note": "Third independent review of PR #68 at 2e20b8a, finding m-1 (lesion numbering of the DIS card vs the lesion table). Every test fails on the base."
+}

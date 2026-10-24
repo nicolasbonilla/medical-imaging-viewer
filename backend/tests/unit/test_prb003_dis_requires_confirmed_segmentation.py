@@ -104,13 +104,14 @@ def _lesion_regions(mask):
     return sorted(out)
 
 
-def _classification(mask):
+def _classification(mask, voxel_volume_mm3=3.0):
     """The record classify-regions stores for the lesions of `mask` (review of PR #68, blocker 1; second review,
-    N1: with each lesion's region)."""
+    N1: with each lesion's region; third review, m-1: with the voxel volume, default that of `_Storage`)."""
     from app.services import dis_review_gate as gate
     return {"classification": {"method": "geometric", "classified_lesion_footprint_sha256": gate.footprint_sha256(mask),
                                "classified_mask_sha256": _sha(mask),
-                               "classified_lesion_regions": _lesion_regions(mask), "lesion_connectivity": 18}}
+                               "classified_lesion_regions": _lesion_regions(mask), "lesion_connectivity": 18,
+                               "voxel_volume_mm3": voxel_volume_mm3}}
 
 
 class _FakeDB:
