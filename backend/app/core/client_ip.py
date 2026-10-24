@@ -26,11 +26,13 @@ the first address that is not an egress address.
 THE LIST (EGRESS_CIDRS)
 -----------------------
 Source: Fastly's published public IP list, EGRESS_SOURCE_URL (JSON keys "addresses" and
-"ipv6_addresses"); Firebase Hosting has been served through Fastly. Transcribed on EGRESS_LIST_DATE
-from the list as known to the author — it could NOT be re-fetched during the change (no network
-access to cloud services was allowed), so it must be refreshed before go-live.
+"ipv6_addresses"); Firebase Hosting has been served through Fastly (an assumption the preview-channel
+check below confirms). Fetched from EGRESS_SOURCE_URL on EGRESS_LIST_DATE (2026-10-24) by the
+coordinating agent; EGRESS_CIDRS matches it exactly (21 + 3 ranges). The list changes from time to
+time, so it must still be refreshed before go-live.
 Update procedure: (1) open EGRESS_SOURCE_URL; (2) replace EGRESS_CIDRS with "addresses" +
-"ipv6_addresses" and set EGRESS_LIST_DATE; (3) run tests/unit/test_capa015_review2_fixes.py;
+"ipv6_addresses" and set EGRESS_LIST_DATE; (3) update the pinned count and addresses in
+tests/unit/test_capa015_review2_fixes.py and run it;
 (4) at deployment, confirm the real `X-Forwarded-For` through a Firebase Hosting PREVIEW channel
 (DEPLOYMENT_CHECKLIST.md). Without a rebuild, the list can be replaced by the Cloud Run setting
 TRUSTED_PROXY_CIDRS (comma-separated CIDRs). Local runs without a proxy: TRUST_FORWARDED_FOR=0.
@@ -46,13 +48,14 @@ from typing import Optional, Tuple
 EGRESS_SOURCE_URL = "https://api.fastly.com/public-ip-list"
 EGRESS_LIST_DATE = "2026-10-24"
 EGRESS_CIDRS: Tuple[str, ...] = (
-    # "addresses"
-    "23.235.32.0/20", "43.249.72.0/22", "103.244.50.0/24", "103.245.222.0/23", "103.245.224.0/24",
-    "104.156.80.0/20", "140.248.64.0/18", "140.248.128.0/17", "146.75.0.0/17", "151.101.0.0/16",
-    "157.52.64.0/18", "167.82.0.0/17", "167.82.128.0/20", "167.82.160.0/20", "167.82.224.0/20",
-    "172.111.64.0/18", "185.31.16.0/22", "199.27.72.0/21", "199.232.0.0/16",
-    # "ipv6_addresses"
-    "2a04:4e40::/32", "2a04:4e42::/32",
+    # "addresses" (21)
+    "23.235.32.0/20", "43.249.72.0/22", "90.98.0.0/17", "90.98.128.0/18", "103.244.50.0/24",
+    "103.245.222.0/23", "103.245.224.0/24", "104.156.80.0/20", "140.248.64.0/18", "140.248.128.0/17",
+    "146.75.0.0/17", "151.101.0.0/16", "157.52.64.0/18", "167.82.0.0/17", "167.82.128.0/20",
+    "167.82.160.0/20", "167.82.224.0/20", "172.111.64.0/18", "185.31.16.0/22", "199.27.72.0/21",
+    "199.232.0.0/16",
+    # "ipv6_addresses" (3)
+    "2a04:4e40::/32", "2a04:4e42::/31", "2a04:4e44::/32",
 )
 _MAX_STEPS = 3
 

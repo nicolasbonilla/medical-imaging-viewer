@@ -333,6 +333,11 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "R30_developer_env_breaks_suite": ([(CONFTEST, "os.environ['JWT_ACCESS_TOKEN_EXPIRE_MINUTES'] = '15'\nos.environ['REFRESH_TOKEN_IDLE_MINUTES'] = '30'\n"
                                                    "os.environ['REFRESH_TOKEN_ABSOLUTE_HOURS'] = '12'\n", "")],
                                        "a developer backend/.env with old session lifetimes stops the test suite (N2, as found)"),
+    "R31_egress_list_incomplete": ([(CIP, '    "23.235.32.0/20", "43.249.72.0/22", "90.98.0.0/17", "90.98.128.0/18", "103.244.50.0/24",\n',
+                                     '    "23.235.32.0/20", "43.249.72.0/22", "103.244.50.0/24",\n'),
+                                    (CIP, '    "2a04:4e40::/32", "2a04:4e42::/31", "2a04:4e44::/32",\n', '    "2a04:4e40::/32", "2a04:4e42::/32",\n')],
+                                   "the egress list as first transcribed: two IPv4 ranges and one IPv6 range missing, one IPv6 range "
+                                   "too narrow — users behind those Hosting addresses share one rate-limit key (N1b, as found)"),
     "FR1_client_ignores_refresh_deadline": ([(SESS, "  const deadline = accessExp && sessionExp ? Math.min(accessExp, sessionExp) : accessExp;\n",
                                               "  const deadline = accessExp;\n")],
                                             "the renewal waits for the access token although the refresh session ends first (M1)"),

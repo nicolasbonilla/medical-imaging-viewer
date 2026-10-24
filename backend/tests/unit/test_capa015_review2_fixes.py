@@ -78,8 +78,12 @@ def test_rc067_the_egress_list_is_the_published_fastly_list(monkeypatch):
     monkeypatch.delenv("TRUST_FORWARDED_FOR", raising=False)
     mod = importlib.import_module("app.core.client_ip")
     assert len(mod.EGRESS_CIDRS) == 24 and len(set(mod.EGRESS_CIDRS)) == 24, "21 IPv4 + 3 IPv6 ranges"
-    for egress in ("90.98.1.1", "90.98.200.1", "2a04:4e43::1", "2a04:4e44::1"):
+    # one address from each previously missing range (90.98.128.0/18 ends at 90.98.191.255)
+    for egress in ("90.98.1.1", "90.98.150.1", "2a04:4e43::1", "2a04:4e44::1"):
         assert mod.client_ip(_req(f"203.0.113.7, {egress}")) == "203.0.113.7", egress
+    # just outside the published ranges: not an egress address, so it is the client
+    for outside in ("90.98.200.1", "2a04:4e45::1"):
+        assert mod.client_ip(_req(f"203.0.113.7, {outside}")) == outside, outside
 
 
 @pytest.mark.unit
