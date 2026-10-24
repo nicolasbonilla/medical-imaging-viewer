@@ -224,4 +224,16 @@ Data stay outside the repository (scratch; deleted after the run).
 
 ## 11. Deviations log
 
-(none at pre-registration)
+(none at pre-registration, commit 3c24977)
+
+* **D1 (2026-10-24, BEFORE any control feature or outcome; found in the dry run on a synthetic
+  random-feature cache).** Pooling the out-of-fold scores of 5 different models adds fold-specific
+  offsets, which biases a pooled AUROC **below 0.5** when the signal is weak (the v3 D4 mechanism,
+  still present with cohort-stratified folds because candidates per patient vary). On 12 synthetic
+  random-feature caches the K2 probe gave pooled AUROC 0.470 (GR), 0.440 (F8), 0.419 (`prob_mean`),
+  versus 0.502 / 0.492 / 0.498 for the **mean of the within-fold AUROCs**. A downward bias makes the
+  K2 reading "≤ 0.70 = no more identifiable than a site" too easy to pass, so **the K2 decision uses
+  the fold-wise mean AUROC** (cluster bootstrap, clusters keep their fold); the pooled value is
+  reported next to it. For H1 and K3 the same bias works *against* the learned models (conservative),
+  so the pre-registered pooled endpoints are kept unchanged and the fold-wise versions are added as
+  sensitivity analyses (K10 for H1; K3 fold-wise). No other change.

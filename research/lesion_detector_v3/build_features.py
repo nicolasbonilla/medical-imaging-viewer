@@ -83,12 +83,19 @@ def attach_inputs(scans, folds_dir=None, lstai_dir=None, cloud_root=None):
     for s in scans:
         c = s["case"]
         folds = None
-        if cloud_root:
+        if s.get("ctl_root"):                       # v3.2: the 100 SibBMS controls (own folder)
+            folds = [os.path.join(s["ctl_root"], "flames", f"{c}_f{k}_prob.nii.gz") for k in range(N_FOLDS)]
+        elif cloud_root:
             folds = [os.path.join(cloud_root, "flames", f"{c}_f{k}_prob.nii.gz") for k in range(N_FOLDS)]
         elif folds_dir:
             folds = [os.path.join(folds_dir, f"{c}_prob_f{k}.nii.gz") for k in range(N_FOLDS)]
         s["folds"] = folds if folds and all(os.path.exists(p) for p in folds) else None
-        ldir = os.path.join(cloud_root, "lstai") if cloud_root else lstai_dir
+        if s.get("ctl_root") and s["folds"] is None:
+            raise FileNotFoundError(f"{c}: missing control fold maps")
+        if s.get("ctl_root"):
+            ldir = os.path.join(s["ctl_root"], "lstai")
+        else:
+            ldir = os.path.join(cloud_root, "lstai") if cloud_root else lstai_dir
         s["lstai"], s["lstai_models"] = None, None
         if ldir:
             p = os.path.join(ldir, f"{c}_lstai_prob.nii.gz")
@@ -116,7 +123,27 @@ def enumerate_external(cloud_root: str):
     return out
 
 
-def enumerate_scans(data_root: str, control_flair_dir: str | None = None):
+def enumerate_controls_v32(controls_root: str):
+    """v3.2 (PROTOCOL-v3.2.md): the 100 SibBMS controls, R/flames/sub-XXX_f{k}_prob.nii.gz +
+    sub-XXX_gt.nii.gz (all-zero) and R/lstai/sub-XXX_lstai_prob[_m1..3].nii.gz. Fail-closed."""
+    fd = os.path.join(controls_root, "flames")
+    out = []
+    for f in sorted(os.listdir(fd)):
+        m = re.fullmatch(r"(sub-\d{3})_f0_prob\.nii\.gz", f)
+        if not m:
+            continue
+        case = m.group(1)
+        s = {"case": case, "cohort": "sibbms", "patient": "sibbms_" + case, "status": "control",
+             "prob": os.path.join(fd, f), "gt": os.path.join(fd, case + "_gt.nii.gz"),
+             "flair": None, "t1": None, "ctl_root": controls_root}
+        for k in ("prob", "gt"):
+            if not os.path.exists(s[k]):
+                raise FileNotFoundError(f"{case}: missing {k}")
+        out.append(s)
+    return out
+
+
+def enumerate_scans(data_root: str, control_flair_dir: str | None = None, controls_root: str | None = None):
     coh = os.path.join(data_root, "cohorts")
     ms_root = os.path.join(data_root, "external", "mslesseg", "MSLesSeg Dataset")
     lj_root = os.path.join(data_root, "external", "open_ms_data", "cross_sectional", "MNI")
@@ -144,7 +171,9 @@ def enumerate_scans(data_root: str, control_flair_dir: str | None = None):
                       "prob": os.path.join(coh, "openms-flames", f), "gt": os.path.join(coh, "openms-flames", case + "_gt.nii.gz"),
                       "flair": os.path.join(d, "FLAIR_N4_noneck_reduced_winsor_regtoFLAIR_brain_N4_regtoMNI.nii.gz"),
                       "t1": os.path.join(d, "T1_N4_noneck_reduced_winsor_regtoFLAIR_brain_N4_regtoMNI.nii.gz")})
-    for f in sorted(os.listdir(os.path.join(coh, "sibbms-controls-flames"))):
+    if controls_root:          # v3.2: the 100 cloud controls replace the 30 August fold-0 controls
+        scans += enumerate_controls_v32(controls_root)
+    for f in sorted(os.listdir(os.path.join(coh, "sibbms-controls-flames"))) if not controls_root else []:
         if not f.endswith("_prob.nii.gz"):
             continue
         case = f[:-len("_prob.nii.gz")]
@@ -188,7 +217,8 @@ def process(job):
                      + ("_lstai" if opts.get("lstai_dir") else "") + ("_cflair" if opts.get("control_flair_dir") else "")
                      + ("_cloud" if opts.get("cloud_root") else "")
                      + ("_mean5" if opts.get("candidate_map") == "mean5" else "")
-                     + ("_noimg" if opts.get("no_images") else ""))
+                     + ("_noimg" if opts.get("no_images") else "")
+                     + ("_noflair" if opts.get("no_flair") else "") + ("_ctl100" if opts.get("controls_root") else ""))
     os.makedirs(d, exist_ok=True)
     f = os.path.join(d, s["case"] + ".pkl")
     if os.path.exists(f):
@@ -290,12 +320,21 @@ def main():
     ap.add_argument("--candidate-map", choices=("fold0", "mean5"), default="fold0",
                     help="post-hoc: define candidates on the 5-fold mean map (needs fold maps)")
     ap.add_argument("--no-images", action="store_true", help="skip FLAIR/T1/LST-AI (probability-map families only)")
+    ap.add_argument("--no-flair", action="store_true",
+                    help="v3.2: skip FLAIR/T1 (no FLAIR families) but keep LST-AI and fold maps")
+    ap.add_argument("--controls-root", default=None,
+                    help="v3.2: folder with flames/ and lstai/ of the 100 SibBMS controls (replaces the August 30)")
     ap.add_argument("--workers", type=int, default=3)
     ap.add_argument("--limit", type=int, default=0, help="debug: first N scans per cohort")
     ap.add_argument("--out", default=os.path.join(CACHE_DIR, "features_v3.npz"))
     a = ap.parse_args()
 
-    scans = enumerate_scans(a.data_root, a.control_flair_dir)
+    scans = enumerate_scans(a.data_root, a.control_flair_dir, a.controls_root)
+    if a.controls_root and sum(s["cohort"] == "sibbms" for s in scans) != 100:
+        raise SystemExit("v3.2 needs exactly 100 controls")
+    if a.no_flair:
+        for s in scans:
+            s["flair"], s["t1"] = None, None
     if a.cloud_root:
         scans += enumerate_external(a.cloud_root)
     attach_inputs(scans, a.folds_dir, a.lstai_dir, a.cloud_root)
@@ -308,7 +347,7 @@ def main():
     print(f"{len(scans)} scans: " + ", ".join(f"{c} {sum(s['cohort'] == c for s in scans)}" for c in cohorts))
     opts = {"folds_dir": a.folds_dir, "lstai_dir": a.lstai_dir, "control_flair_dir": a.control_flair_dir,
             "cloud_root": a.cloud_root, "candidate_map": a.candidate_map, "no_images": a.no_images,
-            "code_digest": _code_digest()}
+            "no_flair": a.no_flair, "controls_root": a.controls_root, "code_digest": _code_digest()}
     if a.candidate_map == "mean5":
         scans = [s for s in scans if s.get("folds")]          # controls have no fold maps
         print(f"mean5: {len(scans)} scans with 5 fold maps")
@@ -361,7 +400,8 @@ def main():
             "n_candidates": int(X.shape[0]), "feature_names": names,
             "options": {"folds_dir": a.folds_dir, "lstai_dir": a.lstai_dir, "control_flair_dir": a.control_flair_dir,
                         "cloud_root": a.cloud_root, "fold0_tolerance": FOLD0_TOL,
-                        "candidate_map": a.candidate_map, "no_images": a.no_images},
+                        "candidate_map": a.candidate_map, "no_images": a.no_images,
+                        "no_flair": a.no_flair, "controls_root": a.controls_root},
             "candidate_definition": {"threshold": THRESHOLD, "min_volume_mm3": MIN_VOL, "score": SCORE,
                                      "connectivity": 18, "labels": "Hungarian one-to-one IoU>0 (mg0), IoU>0.10 (mg1), any-voxel"},
             "inputs_combined_sha256": digest, "inputs_sha256": hashes,
