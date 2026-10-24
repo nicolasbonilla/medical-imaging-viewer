@@ -7,7 +7,7 @@
  * - Professional medical document typography (serif body, sans headings)
  * - Print support (window.print + @media print CSS for A4)
  * - Copy to clipboard
- * - HIPAA compliance disclaimer
+ * - What was sent to the AI service: measurements only (CAPA-014, RC-066)
  *
  * Follows MAGNIMS/RSNA/McDonald 2017 standards for MS MRI reporting.
  *
@@ -310,7 +310,7 @@ export function ReportViewerModal({
                     )}
                   </div>
                   <p className="text-center text-[9px] text-gray-400 mt-4 leading-relaxed font-sans">
-                    {t('reportViewer.hipaaNote')}
+                    {t('reportViewer.aiDataNote')}
                   </p>
                 </div>
               </div>

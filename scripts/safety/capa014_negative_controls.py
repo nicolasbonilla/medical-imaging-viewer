@@ -1,23 +1,25 @@
-"""Negative controls for CAPA-014 — de-identification of the AI report draft (RC-064, RC-065, RC-066; HAZ-016).
+"""Negative controls for CAPA-014 (redesign) — no free text leaves the application (RC-064, RC-065, RC-066; HAZ-016).
 
-Each mutation re-introduces ONE defect CAPA-014 removed (the removal step bypassed — the defect as
-found —, one removal rule disabled, accents or German spellings not matched, measurements removed
-as numbers, the exact age sent, a request sent without a patient reference, without authorization
-or with an unreadable or incomplete record, the residual check or one of its categories removed,
-the payload logged, the false header claim back, the panel note or its translations missing, the
-segmentation not sent by the panel or the assistant) — in the real source, one at a time. The script
-asserts every anchor occurs exactly once (the sabotage really was applied), runs the bound tests of
-the side it mutated (backend: pytest; frontend: vitest, JSON reporter), records the failing test
-names and restores the exact original bytes.
+Each mutation re-introduces ONE defect the redesign removes, or disables one sub-control, in the real source,
+one at a time: the structured payload bypassed or leaking (free text, unlisted labels, non-numbers, exact age,
+"90 or older" missing, sex other than M/F, payload in the system prompt); the tripwire removed or blind to one
+identifier form (names, names written together, pairs of the device's own words, particle surnames, record
+numbers with separators, birth date, phone, e-mail, generic patterns, format characters, look-alike letters,
+German spellings, the length cap, a quadratic pattern) or over-blocking (the device's own words); fail closed
+undone (no segmentation, no authorization, unreadable or incomplete record, service without identifiers,
+assistant without segmentation); the typed text not merged, merged before the disclaimer, the model not told;
+the payload or prompt logged, no counts; false claims back (service header, README, API client, viewer
+footer); the panel note missing, untranslated or away from the button. The script asserts every anchor occurs
+exactly once, runs the bound tests of the mutated side (backend pytest; frontend vitest JSON reporter),
+records the failing test names and restores the exact original bytes.
 
-Run from the repository root (needs backend/venv or the current Python with the backend
-requirements, and frontend/node_modules):
+Run from the repository root (backend/venv or the current Python with the backend requirements, and
+frontend/node_modules). PRB-002: run with GOOGLE_APPLICATION_CREDENTIALS pointing to a missing file,
+CLOUDSDK_CONFIG to an empty folder, GOOGLE_CLOUD_PROJECT=mstool-offline-tests and ANTHROPIC_API_KEY unset;
+the script also sets these for the test processes it starts.
     python scripts/safety/capa014_negative_controls.py            # every mutation
-    python scripts/safety/capa014_negative_controls.py --only D   # re-run the mutations whose name
-                                                                  # starts with D; others kept from
-                                                                  # the existing record
+    python scripts/safety/capa014_negative_controls.py --only T   # re-run mutations starting with T
 Output: docs/iec62304/records/risk_verification/CAPA-014_negative_controls_2026-10-24.json
-(each mutation carries the time it was executed and the SHA-256 of the tests it ran).
 NEVER run this while anything else edits the files it mutates (it restores a snapshot).
 """
 import datetime
@@ -35,110 +37,123 @@ PY = os.path.join(ROOT, "backend", "venv", "Scripts", "python.exe")
 if not os.path.exists(PY):
     PY = sys.executable
 OUT = "docs/iec62304/records/risk_verification/CAPA-014_negative_controls_2026-10-24.json"
-BACKEND_TESTS = ["tests/unit/test_capa014_report_deidentification.py",
+BACKEND_TESTS = ["tests/unit/test_capa014_report_provider_payload.py",
                  "tests/unit/test_capa009_object_authorization_everywhere.py",
                  "tests/unit/test_capa008_assistant_read_only.py",
                  "tests/unit/test_brain_report_service.py"]
 FRONTEND_TESTS = ["src/components/AIReportPanel.capa014.test.tsx"]
+EMPTY = os.path.join(tempfile.gettempdir(), "capa014-empty-gcloud")
+os.makedirs(EMPTY, exist_ok=True)
+OFFLINE = {**os.environ, "GOOGLE_APPLICATION_CREDENTIALS": os.path.join(EMPTY, "missing.json"),
+           "CLOUDSDK_CONFIG": EMPTY, "GOOGLE_CLOUD_PROJECT": "mstool-offline-tests"}
+OFFLINE.pop("ANTHROPIC_API_KEY", None)
 
-DI = "backend/app/services/report_deidentification.py"
+G = "backend/app/services/report_payload_guard.py"
 BRS = "backend/app/services/brain_report_service.py"
 AIR = "backend/app/api/routes/ai_report.py"
 MCPS = "backend/app/mcp/ms_clinical_server.py"
+README = "README.md"
 PANEL = "frontend/src/components/AIReportPanel.tsx"
+VIEWER = "frontend/src/components/ReportViewerModal.tsx"
 CLIENT = "frontend/src/api/aiReport.ts"
 EN = "frontend/src/i18n/locales/en.json"
 ES = "frontend/src/i18n/locales/es.json"
 DE = "frontend/src/i18n/locales/de.json"
 
 
-def _note_line(path):
-    lines = [ln for ln in open(path, encoding="utf-8").read().replace("\r\n", "\n").split("\n")
-             if ln.startswith('    "deidentificationNote": ')]
-    assert len(lines) == 1, path
+def _line(path, prefix):
+    lines = [ln for ln in open(path, encoding="utf-8").read().replace("\r\n", "\n").split("\n") if ln.startswith(prefix)]
+    assert len(lines) == 1, (path, prefix)
     return lines[0] + "\n"
 
 
-EN_NOTE, ES_NOTE, DE_NOTE = _note_line(EN), _note_line(ES), _note_line(DE)
+EN_NOTE, ES_NOTE, DE_NOTE = (_line(p, '    "deidentificationNote": ') for p in (EN, ES, DE))
+SKIP_GENERIC = ("    for category, pattern in _GENERIC.items():\n        if pattern.search(norm):\n")
+
+
+def skip_generic(*names):
+    cond = " and ".join(f'category != "{n}"' for n in names)
+    return (G, SKIP_GENERIC, f"    for category, pattern in _GENERIC.items():\n        if {cond} and pattern.search(norm):\n")
+
 
 M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
-    # ── RC-064: the single removal step and its rules ──
-    "D1_removal_step_and_residual_check_bypassed": (
-        [(BRS, "        clean = deidentify_report_input(findings, volumetry, identifiers)\n",
-          "        clean = type('C', (), {'findings': findings, 'volumetry': volumetry, 'redactions': {}})()\n"),
-         (BRS, "        assert_no_residual_identifiers(user_prompt, identifiers)\n", "")],
-        "the findings forwarded verbatim (the defect as found)"),
-    "D2_removal_step_bypassed": (
-        [(BRS, "        clean = deidentify_report_input(findings, volumetry, identifiers)\n",
-          "        clean = type('C', (), {'findings': findings, 'volumetry': volumetry, 'redactions': {}})()\n")],
-        "no removal step (only the residual check left)"),
-    "D3_names_rule_removed": ([(DI, '        if c.names:\n            s = _substitute(s, c.names, _fixed(NAME, "name"), n)\n', "")],
-                              "the patient's names from the record not removed"),
-    "D4_accents_and_case_not_folded": ([(DI, '    return "".join(c for c in decomposed if not unicodedata.combining(c)).casefold()\n',
-                                         "    return ch\n")],
-                                       "matching sensitive to case and accents ('PÉREZ' != 'Perez')"),
-    "D5_no_german_spellings": ([(DI, '                fold(low.replace("ä", "ae").replace("ö", "oe").replace("ü", "ue").replace("ß", "ss")),\n'
-                                     '                fold(low).replace("ae", "a").replace("oe", "o").replace("ue", "u")}\n',
-                                 "                }\n")],
-                               "'Müller' not matched as 'Mueller'"),
-    "D6_particles_removed_alone": ([(DI, "            if len(fold(t)) >= 2 and fold(t) not in NAME_PARTICLES:\n",
-                                     "            if len(fold(t)) >= 2:\n")],
-                                   "'de', 'la' removed everywhere for a compound surname (clinical text damaged)"),
-    "D7_record_numbers_rule_removed": ([(DI, '        if c.record_numbers:\n            s = _substitute(s, c.record_numbers, _fixed(RECORD_NUMBER, "record_number"), n)\n', "")],
-                                       "the record number from the record not removed"),
-    "D8_record_number_separators_required": ([(DI, '    return r"[\\s\\-/_#:]{0,2}".join(re.escape(c) for c in chars)\n',
-                                               '    return "".join(re.escape(c) for c in chars)\n')],
-                                             "'mrn 2025 0042' / 'PAT 77123' not matched"),
-    "D9_record_phone_rule_removed": ([(DI, '        if c.phones:\n            s = _substitute(s, c.phones, _fixed(PHONE, "phone"), n)\n', "")],
-                                     "the record's phone numbers not removed in formats the pattern misses"),
-    "D10_record_address_rule_removed": ([(DI, '        if c.address:\n            s = _substitute(s, c.address, _fixed(ADDRESS, "address"), n)\n', "")],
-                                        "address, city and postal code from the record not removed"),
-    "D11_birth_date_not_recognised": ([(DI, '        if _is_birth_date(precision, d, self.ids.birth_date):\n            return BIRTH_DATE, "birth_date"\n', "")],
-                                      "the birth date treated as an ordinary date"),
-    "D12_birth_context_rule_removed": ([(DI, '        s = _substitute(s, BIRTH_CONTEXT_RE, _fixed(BIRTH_DATE, "birth_date"), n, group="when")\n', "")],
-                                       "'DOB: 1978' kept"),
-    "D13_dates_kept": ([(DI, "        s = _substitute(s, DATE_RE, self._date, n)\n", "")], "exact dates sent"),
-    "D14_dates_not_intervals": ([(DI, '        return f"[date {index} = date 1 {sign} {amount} {unit}]"\n',
-                                  "        return DATE_REMOVED\n")],
-                                "dates removed without the interval the report needs"),
-    "D15_email_rule_removed": ([(DI, '        s = _substitute(s, EMAIL_RE, _fixed(EMAIL, "email"), n)\n', "")], "e-mail addresses sent"),
-    "D16_phone_pattern_removed": ([(DI, "        s = _substitute(s, PHONE_RE, self._phone, n)\n", "")], "phone numbers not in the record sent"),
-    "D17_id_word_rule_removed": ([(DI, '        s = _substitute(s, ID_WORD_RE, self._id_word, n, group="val")\n', "")],
-                                 "short numbers after MRN / Fallnummer / NHC sent"),
-    "D18_id_number_rule_removed": ([(DI, "        s = _substitute(s, ID_TOKEN_RE, self._id_token, n)\n", "")],
-                                   "long ID-like numbers (accession, UID) sent"),
-    "D19_measurements_removed_as_ids": ([(DI, "        if sum(ch.isdigit() for ch in token) < 6 or _UNIT_AHEAD.match(m.string, m.end()):\n",
-                                          "        if sum(ch.isdigit() for ch in token) < 6:\n")],
-                                        "a measurement with its unit removed as an ID number (clinical content lost)"),
-    "D20_exact_age_sent": ([(DI, "                cleaned[key] = (key, band)\n", "                cleaned[key] = (key, value)\n")],
-                           "the exact age sent instead of the 5-year band"),
-    "D21_own_age_in_text_kept": ([(DI, '        if c.age:\n            s = _substitute(s, c.age, self._age, n, group="age")\n', "")],
-                                 "'48 years' (the patient's own age) kept"),
-    "D22_age_phrases_kept": ([(DI, '        s = _substitute(s, AGE_PHRASE_RE, self._age, n, group="age")\n', "")],
-                             "'47 años de edad' kept"),
-    "D23_keys_not_scrubbed": ([(DI, "            return {self.text(k) if isinstance(k, str) else k: self.value(x) for k, x in v.items()}\n",
-                                "            return {k: self.value(x) for k, x in v.items()}\n")],
-                              "identifiers in dictionary keys (region names) sent"),
-    "D24_titled_names_kept": ([(DI, '        s = _substitute(s, TITLED_PERSON_RE, _fixed(PERSON, "person_name"), n, folded=False)\n', "")],
-                              "'Dr. Gregory House' sent"),
-    "D25_institutions_kept": ([(DI, '        s = _substitute(s, INSTITUTION_AFTER_RE, _fixed(INSTITUTION, "institution"), n, folded=False)\n', "")],
-                              "'Hospital Universitario San Ignacio' sent"),
-    "D26_streets_kept": ([(DI, '        s = _substitute(s, STREET_RE, _fixed(ADDRESS, "address"), n, folded=False)\n', "")],
-                         "street addresses not in the record sent"),
-    # Added after the first (dry) run: over-removal guards and the rules it showed untested.
-    "D27_year_ranges_removed_as_ids": ([(DI, '        if _YEARS_ONLY.fullmatch(token):\n            return None                        # a year range ("2019-2021"): clinical history\n', "")],
-                                       "'2019-2021' (treatment period) removed as an ID number"),
-    "D28_year_lists_removed_as_phones": ([(DI, '        if _YEARS_ONLY.fullmatch(s.strip()):\n            return None                        # a list of years: clinical history\n', "")],
-                                         "'MRI 2019 2020 2021' removed as a phone number"),
-    "D29_german_nie_as_id_word": ([(DI, "pid|dni|c\\.c\\.|cc|", "pid|dni|nie|nif|c\\.c\\.|cc|")],
-                                  "German 'nie' (never) read as an ID word, the following number removed"),
-    "D30_clinical_ring_as_street": ([(DI, "(?:straße|strasse|str\\.|weg|allee|platz|gasse)", "(?:straße|strasse|str\\.|weg|allee|platz|gasse|ring|damm)")],
-                                    "'Kontrastmittelring 5 mm' removed as a street address"),
-    "D31_institution_before_rule_removed": ([(DI, '        s = _substitute(s, INSTITUTION_BEFORE_RE, _fixed(INSTITUTION, "institution"), n, folded=False)\n', "")],
-                                            "'Mayo Clinic' sent"),
-    "D32_phone_inside_a_token": ([(DI, 'PHONE_RE = re.compile(r"(?<![\\w+.\\-])', 'PHONE_RE = re.compile(r"(?<![\\w+])')],
-                                 "part of an ID ('A-20251012-0042') read as a phone, the rest sent"),
-    # ── RC-065: fail closed ──
+    # ── RC-064: structured payload only ──
+    "P1_payload_bypassed": ([(BRS, "        payload = provider_payload(findings, volumetry)\n",
+                              "        payload = type(\"P\", (), {\"findings\": findings, \"volumetry\": volumetry, \"withheld\": {}})()\n")],
+                            "the request's findings go to the prompt builder as received"),
+    "P2_builder_prints_free_text": ([(BRS, "        parts.append(CLINICIAN_TEXT_INSTRUCTION)\n",
+                                      "        parts.append(CLINICIAN_TEXT_INSTRUCTION)\n        if findings.get(\"clinical_indication\"):\n"
+                                      "            parts.append(f\"Clinical indication: {findings['clinical_indication']}\")\n")],
+                                    "the prompt builder prints the clinical indication again"),
+    "P3_payload_copies_free_text": ([(G, '    if f.get("patient_sex") in ("M", "F"):\n        out["patient_sex"] = f["patient_sex"]\n',
+                                      '    if f.get("patient_sex") in ("M", "F"):\n        out["patient_sex"] = f["patient_sex"]\n'
+                                      '    out.update({k: f[k] for k in FREE_TEXT_FIELDS if k in f})\n')],
+                                    "the free-text fields copied into the payload"),
+    "P4_any_label_accepted": ([(G, '    """The canonical label when `value` is one of the device\'s labels, otherwise None."""\n',
+                                '    """The canonical label when `value` is one of the device\'s labels, otherwise None."""\n'
+                                '    return value if isinstance(value, str) else None\n')],
+                              "labels outside the device's vocabulary sent"),
+    "P5_counts_not_coerced": ([(G, "def _count(value: Any) -> Optional[int]:\n    n = _number(value)\n"
+                                   "    return int(n) if n is not None and n >= 0 else None\n",
+                                "def _count(value: Any) -> Optional[int]:\n    return value\n")],
+                              "any value printed where a count is expected (free text through number fields)"),
+    "P6_any_sex_sent": ([(G, '    if f.get("patient_sex") in ("M", "F"):\n', '    if f.get("patient_sex"):\n'),
+                         (BRS, '        if findings.get("patient_sex") in ("M", "F"):\n', '        if findings.get("patient_sex"):\n')],
+                        "any sex value sent, shown as Female"),
+    "P7_exact_age_sent": ([(G, '        out["patient_age"] = band\n', '        out["patient_age"] = f.get("patient_age")\n')],
+                          "the exact age sent instead of the 5-year band"),
+    "P8_no_90_or_older": ([(G, '    if years >= 90:\n        return "90 or older"\n', "")],
+                          "ages of 90 and over sent in 5-year bands (93 -> 90-94)"),
+    "P9_payload_in_system_prompt": ([(BRS, "                system=system_prompt,\n", "                system=system_prompt + user_prompt,\n")],
+                                    "the system prompt no longer the fixed template"),
+    # ── RC-065: detection-only tripwire and fail closed ──
+    "T1_tripwire_removed": ([(BRS, "        assert_prompt_carries_no_identifier(user_prompt, identifiers)\n", "")],
+                            "no check of the final prompt"),
+    "T2_name_check_removed": ([(G, "            if s in unique or (len(s) >= 4 and any(s in w for w in unique if w not in safe_words)):\n",
+                                "            if False:\n")],
+                              "the patient's names, contact, city and street not looked for"),
+    "T3_names_written_together_missed": ([(G, "            if s in unique or (len(s) >= 4 and any(s in w for w in unique if w not in safe_words)):\n",
+                                           "            if s in unique:\n")],
+                                         "'Fuentemüller', 'delaFuente' not found"),
+    "T4_device_words_reported": ([(G, "            if s in safe_words:\n                continue\n", "")],
+                                 "a patient named White blocks every draft ('Deep White Matter')"),
+    "T5_pair_check_removed": ([(G, '    if "name" not in found and (any(w in joined for w in unique)\n'
+                                   '                                or any((a, b) in pairs for a, b in zip(words, words[1:]))):\n'
+                                   '        found.append("name")\n', "")],
+                              "names made only of the device's words ('Black White') not found"),
+    "T6_record_number_check_removed": ([(G, '        if pattern and pattern.search(norm):\n            found.append("record_number")\n',
+                                         '        if False:\n            found.append("record_number")\n')],
+                                       "the record number not looked for"),
+    "T7_record_number_separators_required": ([(G, '    return re.compile(r"(?<![a-z0-9])" + r"[\\s\\-./_#:]{0,3}".join(re.escape(c) for c in chars) + r"(?![a-z0-9])")\n',
+                                               '    return re.compile(r"(?<![a-z0-9])" + "".join(re.escape(c) for c in chars) + r"(?![a-z0-9])")\n')],
+                                             "'H C 7 7 8 8 1 2', 'MRN 2025 0042' not found"),
+    "T8_birth_date_check_removed": ([(G, '    if any(p.search(norm) for p in _birth_patterns(ids.birth_date)):\n        found.append("birth_date")\n', "")],
+                                    "'geb. 9.11.', \"born '75\" not found"),
+    "T9_record_phone_check_removed": ([(G, '    if ids.phones and any(p in digits for digits in runs for p in ids.phones):\n        found.append("phone")\n', "")],
+                                      "the patient's short phone forms ('01 40400') not found"),
+    "T10_email_checks_removed": ([(G, '    if any(e in norm for e in ids.emails):\n        found.append("email")\n', ""),
+                                  skip_generic("email")], "e-mail addresses not found"),
+    "T11_generic_email_removed": ([skip_generic("email")], "other people's e-mail addresses not found"),
+    "T12_generic_date_removed": ([skip_generic("date")], "dates with a year not found"),
+    "T13_generic_plus_phone_removed": ([skip_generic("phone")], "'+1 555 0100' not found"),
+    "T14_long_number_removed": ([(G, '        if digits >= 9 and (len(groups) == 1 or len(groups) >= 3 or run.startswith("0")):\n',
+                                  "        if False:\n")], "long and phone-like numbers not found"),
+    "T15_id_like_number_removed": ([(G, '            found.append("id_like_number")\n', "            pass\n")],
+                                   "'X1234567L' not found"),
+    "T16_titled_name_removed": ([skip_generic("titled_name")], "'Dr. Smith' not found"),
+    "T17_format_characters_kept": ([(G, '    t = "".join(ch for ch in t if unicodedata.category(ch) != "Cf")\n', "")],
+                                   "a soft hyphen or zero-width character hides a name"),
+    "T18_look_alikes_kept": ([(G, "    t = t.translate(_CONFUSABLES)\n", "")], "a Cyrillic 'о' hides a name"),
+    "T19_no_german_spellings": ([(G, '    return {s for s in (base, normalise(expanded), base.replace("ae", "a").replace("oe", "o").replace("ue", "u")) if s}\n',
+                                  "    return {base}\n")], "'Muenchen', 'MUELLER' not found"),
+    "T20_particle_surname_dropped": ([(G, "    return kept or parts\n", "    return kept\n")],
+                                     "a surname such as Do or Le never looked for"),
+    "T21_length_cap_removed": ([(G, '    if len(text) > MAX_SCANNED_CHARS:\n        return ["text_too_long_to_check"]\n', "")],
+                               "no cap on the scanned text"),
+    "T22_quadratic_email_pattern": ([(G, '    "email": re.compile(r"(?<![a-z0-9._%+\\-])[a-z0-9._%+\\-]{1,64}@[a-z0-9\\-]{1,63}(?:\\.[a-z0-9\\-]{1,63}){0,8}"\n'
+                                         '                        r"\\.[a-z]{2,24}(?![a-z])"),\n',
+                                      '    "email": re.compile(r"[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,}"),\n')],
+                                    "the e-mail pattern of the first version (quadratic time)"),
     "F1_route_needs_no_segmentation": ([(AIR, "    if not request.segmentation_id:\n        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=SUBJECT_REQUIRED_DETAIL)\n", "")],
                                        "a request without patient reference reaches the provider"),
     "F2_route_does_not_authorize": ([(AIR, "    patient_id = await authorize_segmentation_id(request.segmentation_id, current_user)\n",
@@ -149,40 +164,38 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                        "    return PatientIdentifiers.from_record(record or {'mrn': 'NONE', 'given_name': 'x', "
                                        "'family_name': 'y', 'birth_date': '1900-01-01'})\n")],
                                      "the provider is called although the patient record could not be read"),
-    "F4_incomplete_record_accepted": ([(DI, "        if not (mrn and given and family and isinstance(birth, date)):\n",
+    "F4_incomplete_record_accepted": ([(G, "        if not (mrn and given and family and isinstance(birth, date)):\n",
                                         "        if not (mrn or given or family):\n")],
                                       "a record without record number, name or birth date accepted"),
-    "F5_service_sends_without_identifiers": ([(BRS, "        if not isinstance(identifiers, PatientIdentifiers):\n", "        if False:\n"),
-                                              (DI, "    if not isinstance(identifiers, PatientIdentifiers):\n", "    if False:\n")],
-                                             "the service builds and sends a prompt without identifiers"),
-    "F6_residual_check_removed": ([(BRS, "        assert_no_residual_identifiers(user_prompt, identifiers)\n", "")],
-                                  "no check of the final prompt"),
-    "F7_residual_name_check_removed": ([(DI, '    if c.residual_name and c.residual_name.search(folded):\n        found.append("name")\n', "")],
-                                       "the residual check misses the patient's name"),
-    "F8_residual_record_number_check_removed": ([(DI, '    if c.residual_record_numbers and c.residual_record_numbers.search(folded):\n        found.append("record_number")\n', "")],
-                                                "the residual check misses the record number"),
-    "F9_residual_birth_date_check_removed": ([(DI, '    if any(_is_birth_date(p, d, identifiers.birth_date) for p, d in find_dates(text) if p != "noyear"):\n        found.append("birth_date")\n', "")],
-                                             "the residual check misses the birth date"),
-    "F10_residual_email_check_removed": ([(DI, '    if any(fold(e) in folded for e in identifiers.emails):\n        found.append("email")\n', "")],
-                                         "the residual check misses the e-mail address"),
-    "F11_residual_phone_check_removed": ([(DI, '    if c.phones and c.phones.search(folded):\n        found.append("phone")\n', "")],
-                                         "the residual check misses the phone number"),
-    "F12_assistant_omits_segmentation": ([(MCPS, '            "segmentation_id": segmentation_id,\n', "")],
-                                         "the assistant's report tool sends no segmentation (every draft refused)"),
-    # ── RC-066: records and disclosure ──
-    "L1_raw_findings_logged": ([(BRS, '                   "redactions": dict(clean.redactions)},\n',
-                                 '                   "redactions": dict(clean.redactions), "findings": findings},\n')],
-                               "the raw findings written to the log"),
-    "L2_prompt_logged": ([(BRS, '                   "redactions": dict(clean.redactions)},\n',
-                           '                   "redactions": dict(clean.redactions), "prompt": user_prompt},\n')],
-                         "the prompt (clinical free text) written to the log"),
-    "L3_counts_not_logged": ([(BRS, '                   "redactions": dict(clean.redactions)},\n',
-                               '                   "redactions": {}},\n')],
-                             "no record of what was removed"),
-    "L4_false_header_claim": ([(BRS, "Data sent to the model provider (CAPA-014; RC-064, RC-065, RC-066; HAZ-016):\n",
-                                "HIPAA Compliance:\n- No names, IDs, or dates are sent to the external API\n"
+    "F5_service_sends_without_identifiers": ([(BRS, "        if not isinstance(identifiers, PatientIdentifiers):\n", "        if False:\n")],
+                                             "the service builds and sends a prompt without the patient's identifiers"),
+    "F6_assistant_omits_segmentation": ([(MCPS, '            "segmentation_id": segmentation_id,\n', "")],
+                                        "the assistant's report tool sends no segmentation (every draft refused)"),
+    # ── RC-066: typed text merged locally; records; claims; screen texts ──
+    "M1_typed_text_not_merged": ([(AIR, '        result = {**result, "content": with_clinician_entry(\n'
+                                        '            result["content"], clinician_entry(request.findings, request.language), request.language)}\n', "")],
+                                 "the clinician's typed text missing from the draft"),
+    "M2_entry_before_disclaimer": ([(AIR, "    if content.startswith(disclaimer):\n", "    if False:\n")],
+                                   "the typed text placed before the RC-006 disclaimer"),
+    "M3_model_not_told": ([(BRS, "        parts.append(CLINICIAN_TEXT_INSTRUCTION)\n", "")],
+                          "the model is not told that the clinician's text is added by the application"),
+    "L1_raw_findings_logged": ([(BRS, '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld},\n',
+                                 '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld, "findings": findings},\n')],
+                               "the request's findings written to the log"),
+    "L2_prompt_logged": ([(BRS, '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld},\n',
+                           '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld, "prompt": user_prompt},\n')],
+                         "the prompt written to the log"),
+    "L3_counts_not_logged": ([(BRS, '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld},\n',
+                               '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": {}},\n')],
+                             "no record of what was withheld"),
+    "C1_false_header_claim": ([(BRS, "Data sent to the model provider (CAPA-014; RC-064, RC-065, RC-066; HAZ-016):\n",
+                                "HIPAA compliance: patient data is de-identified before sending to Claude API.\n"
                                 "Data sent to the model provider (CAPA-014; RC-064, RC-065, RC-066; HAZ-016):\n")],
-                              "the service header claims again what it did not do"),
+                              "the service header claims de-identification again"),
+    "C2_readme_badge_back": ([(README, '  <img src="https://img.shields.io/badge/WebAuthn-passkeys-orange" alt="WebAuthn">\n',
+                               '  <img src="https://img.shields.io/badge/HIPAA-compliant-green" alt="HIPAA">\n'
+                               '  <img src="https://img.shields.io/badge/WebAuthn-passkeys-orange" alt="WebAuthn">\n')],
+                             "the README's 'HIPAA compliant' badge back"),
     "U1_note_not_shown": ([(PANEL, "                {t('report.deidentificationNote')}\n", "                {''}\n")],
                           "no note next to the draft button"),
     "U2_note_english_in_spanish": ([(ES, ES_NOTE, '    "deidentificationNote": ' + EN_NOTE.split(": ", 1)[1])],
@@ -195,6 +208,9 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "U6_client_claims_hipaa": ([(CLIENT, "   * Generate a structured brain MRI report using Claude API.\n",
                                  "   * Generate a structured brain MRI report using Claude API.\n   * HIPAA compliant: only de-identified findings are sent.\n")],
                                "the API client claims HIPAA compliance again"),
+    "U7_viewer_footer_claim_back": ([(VIEWER, "                    {t('reportViewer.aiDataNote')}\n",
+                                      "                    {t('reportViewer.hipaaNote', 'HIPAA Compliant — Only de-identified clinical findings were used.')}\n")],
+                                    "the report viewer footer claims HIPAA compliance again"),
 }
 
 # Mutations that are NOT defects (equivalent code), stated rather than claimed as tested.
@@ -203,8 +219,7 @@ EXPECTED_UNDETECTED = {}
 
 def run_backend():
     r = subprocess.run([PY, "-m", "pytest", *BACKEND_TESTS, "-q", "-p", "no:cacheprovider", "-o", "log_cli=false"],
-                       cwd="backend", capture_output=True, text=True, encoding="utf-8", errors="replace",
-                       env=dict(os.environ))
+                       cwd="backend", capture_output=True, text=True, encoding="utf-8", errors="replace", env=OFFLINE)
     f = re.search(r"(\d+) failed", r.stdout)
     p = re.search(r"(\d+) passed", r.stdout)
     e = re.search(r"(\d+) error", r.stdout)
@@ -254,8 +269,10 @@ def main():
                             encoding="utf-8").read().replace("\r\n", "\n")) for t in tests}
     previous = json.load(open(OUT, encoding="utf-8")) if only and os.path.exists(OUT) else {"mutations": {}}
     res = {"executed": datetime.datetime.now().isoformat(timespec="seconds"),
+           "design": "redesign after the independent review of PR #67: structured payload only, typed text merged "
+                     "locally, detection-only tripwire (the scrubbing module of the first version was removed)",
            "method": "one mutation at a time; each anchor asserted to occur exactly once; the bound tests of the "
-                     "mutated side are run (backend pytest, frontend vitest JSON reporter)",
+                     "mutated side are run (backend pytest offline per PRB-002, frontend vitest JSON reporter)",
            "hash_basis": "sha256 of the UTF-8 text with LF line endings",
            "source_sha256": {p: sha(text[p]) for p in files},
            "test_sha256": test_sha,
@@ -269,7 +286,7 @@ def main():
             if only and not name.startswith(only) and name in previous["mutations"]:
                 kept = dict(previous["mutations"][name])
                 current = {t: test_sha[t] for t in kept.get("test_sha256", {}) if t in test_sha}
-                if current == kept.get("test_sha256") and current:   # same tests as now: the result still holds
+                if current == kept.get("test_sha256") and current:
                     res["mutations"][name] = kept
                     continue
             touched = {}

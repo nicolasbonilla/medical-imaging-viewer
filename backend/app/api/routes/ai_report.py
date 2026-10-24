@@ -14,10 +14,11 @@ from pydantic import BaseModel, Field
 from app.security import get_current_active_user
 from app.security.models import User
 from app.security.resource_access import authorize_segmentation_id
-from app.services.report_deidentification import (
-    DeidentificationError,
-    DeidentificationUnavailable,
+from app.services.report_payload_guard import (
+    FREE_TEXT_FIELDS,
     PatientIdentifiers,
+    PatientRecordUnavailable,
+    ProviderGuardError,
 )
 
 from app.core.logging import get_logger
@@ -26,16 +27,48 @@ logger = get_logger(__name__)
 
 router = APIRouter(prefix="/ai/report", tags=["AI Report"])
 
-# CAPA-014 (RC-065, HAZ-016): the draft is written by an external model provider. The server removes
-# the patient's identifiers first, using the record of the patient the analysed segmentation belongs
-# to; without that record nothing is sent. Error texts name no identifier.
+# CAPA-014 (RC-065, HAZ-016): the draft is written by an external model provider from measurements only.
+# Before the call the final prompt is checked against the record of the patient the analysed
+# segmentation belongs to; without that record nothing is sent. Error texts name no identifier.
 SUBJECT_REQUIRED_DETAIL = (
-    "The analysed segmentation (segmentation_id) is required: the patient's identifiers are removed "
-    "with that patient's record before anything is sent to the AI provider. Nothing was sent."
+    "The analysed segmentation (segmentation_id) is required: the request to the AI service is checked "
+    "against that patient's record before it is sent. Nothing was sent."
 )
-DEIDENTIFICATION_UNAVAILABLE_DETAIL = (
-    "The patient's identifiers could not be removed ({reason}). Nothing was sent to the AI provider."
-)
+NOT_SENT_DETAIL = "The request was not sent to the AI service ({reason}). Nothing was sent."
+
+# CAPA-014 (RC-066): the clinician's typed text is added to the draft here, after the model returns;
+# it is never sent. Headings in the report language.
+CLINICIAN_ENTRY: Dict[str, Dict[str, str]] = {
+    "en": {"heading": "Clinician's entry (added in the application; not sent to the AI service)",
+           "clinical_indication": "Clinical indication", "technique": "Technique",
+           "additional_observations": "Additional observations"},
+    "es": {"heading": "Datos del médico (añadidos en la aplicación; no enviados al servicio de IA)",
+           "clinical_indication": "Indicación clínica", "technique": "Técnica",
+           "additional_observations": "Observaciones adicionales"},
+    "de": {"heading": "Angaben der Ärztin / des Arztes (in der Anwendung ergänzt; nicht an den KI-Dienst gesendet)",
+           "clinical_indication": "Klinische Fragestellung", "technique": "Technik",
+           "additional_observations": "Weitere Beobachtungen"},
+}
+MAX_TYPED_CHARS = 5000
+
+
+def clinician_entry(findings: Dict[str, Any], language: str) -> Optional[str]:
+    """The clinician's typed text as a block for the draft, or None when nothing was typed."""
+    texts = CLINICIAN_ENTRY.get(language, CLINICIAN_ENTRY["en"])
+    lines = [f"**{texts[key]}:** {findings[key].strip()[:MAX_TYPED_CHARS]}"
+             for key in FREE_TEXT_FIELDS if isinstance(findings.get(key), str) and findings[key].strip()]
+    return f"### {texts['heading']}\n\n" + "\n\n".join(lines) if lines else None
+
+
+def with_clinician_entry(content: str, entry: Optional[str], language: str) -> str:
+    """Insert the entry right after the RC-006 disclaimer, which stays first."""
+    if not entry:
+        return content
+    from app.services.brain_report_service import REPORT_DISCLAIMER_EN, REPORT_DISCLAIMERS
+    disclaimer = REPORT_DISCLAIMERS.get(language, REPORT_DISCLAIMER_EN)
+    if content.startswith(disclaimer):
+        return f"{disclaimer}\n\n{entry}\n\n{content[len(disclaimer):].lstrip()}"
+    return f"{entry}\n\n{content}"
 
 
 def _patient_service():
@@ -46,8 +79,8 @@ def _patient_service():
 async def read_patient_identifiers(patient_id: str) -> PatientIdentifiers:
     """The authorized patient's own identifiers, read from the record the server holds (RC-065).
 
-    Raises DeidentificationUnavailable when the record cannot be read or lacks a field the removal
-    needs; the caller must then send nothing.
+    Raises PatientRecordUnavailable when the record cannot be read or lacks a field the check needs;
+    the caller must then send nothing.
     """
     try:
         record = await _patient_service().get_patient(patient_id)
@@ -187,8 +220,9 @@ class ReportGenerateRequest(BaseModel):
         default_factory=dict,
         description="Clinical findings. Keys: clinical_indication, technique, patient_age, "
                     "patient_sex, segmentation_labels, anomalies, additional_observations, "
-                    "lesion_analysis, dis_assessment, longitudinal, zone_stats. The server removes "
-                    "identifiers before sending (CAPA-014); the age is sent as a 5-year band.",
+                    "lesion_analysis, dis_assessment, longitudinal, zone_stats. Only measurements, "
+                    "labels of the device's vocabulary, sex and a 5-year age band are sent to the AI "
+                    "service; the typed text fields are added to the draft here, never sent (CAPA-014).",
     )
     volumetry: Optional[Dict[str, Any]] = Field(
         None,
@@ -197,9 +231,9 @@ class ReportGenerateRequest(BaseModel):
     segmentation_id: Optional[str] = Field(
         None,
         max_length=200,
-        description="The analysed segmentation the draft is for. Required (400 without it): its "
-                    "patient's record lets the server remove that patient's identifiers before "
-                    "anything is sent to the model provider (CAPA-014).",
+        description="The analysed segmentation the draft is for. Required (400 without it): the "
+                    "request to the AI service is checked against its patient's record before it "
+                    "is sent (CAPA-014).",
     )
 
 
@@ -242,11 +276,12 @@ def get_report_service():
     description="Generate a DRAFT structured brain MRI report from measurements computed by "
                 "the device, using the Claude API, for physician review. Templates: general, "
                 "ms_activity, ms_lesion_burden, ms_comprehensive, ms_longitudinal; languages "
-                "en, es, de. Before anything is sent to the model provider the server removes the "
-                "patient's identifiers, using the record of the patient of `segmentation_id` "
-                "(CAPA-014). 422 when no measurement is supplied (CAPA-008); 400 when no segmentation is; "
-                "404 when the caller may not access the segmentation; 503 when the identifiers "
-                "cannot be removed (nothing is sent).",
+                "en, es, de. Only the measurements, labels of the device's vocabulary, sex and a "
+                "5-year age band are sent to the model provider; the typed text is added to the "
+                "draft here. The request is checked against the record of the patient of "
+                "`segmentation_id` before it is sent (CAPA-014). 422 when no measurement is supplied "
+                "(CAPA-008); 400 when no segmentation is; 404 when the caller may not access the "
+                "segmentation; 503 when the check cannot run or finds an identifier (nothing is sent).",
 )
 async def generate_report(
     request: ReportGenerateRequest,
@@ -269,17 +304,17 @@ async def generate_report(
             ),
         )
 
-    # CAPA-014 (RC-065, HAZ-016): the patient whose identifiers must be removed — authorized for
-    # this caller (404 otherwise, as every object route) and read from the server's own record.
+    # CAPA-014 (RC-065, HAZ-016): the patient the prompt is checked against — authorized for this
+    # caller (404 otherwise, as every object route) and read from the server's own record.
     # 400, not 422: the report panel reads every 422 as "no measurements" (CAPA-008).
     if not request.segmentation_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=SUBJECT_REQUIRED_DETAIL)
     patient_id = await authorize_segmentation_id(request.segmentation_id, current_user)
     try:
         identifiers = await read_patient_identifiers(patient_id)
-    except DeidentificationUnavailable as e:
+    except PatientRecordUnavailable as e:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                            detail=DEIDENTIFICATION_UNAVAILABLE_DETAIL.format(reason=str(e)))
+                            detail=NOT_SENT_DETAIL.format(reason=str(e)))
 
     findings = dict(request.findings)
     if "longitudinal" in findings:   # CAPA-013, review of PR #63 (blocker 1)
@@ -294,17 +329,20 @@ async def generate_report(
             language=request.language,
             identifiers=identifiers,
         )
+        # CAPA-014 (RC-066): the typed text joins the draft here, after the model; it was never sent.
+        result = {**result, "content": with_clinician_entry(
+            result["content"], clinician_entry(request.findings, request.language), request.language)}
         notice = longitudinal_notice(request.findings.get("longitudinal"), request.language)
         if notice:   # CAPA-013: appended in code, after the model, in the report language
             result = {**result, "content": f"{result['content']}\n\n---\n\n> {notice}"}
         return ReportResponse(**result)
 
-    except DeidentificationError as e:
-        # CAPA-014 (RC-065): the service refused to send; the message names a category, no identifier.
-        logger.warning("[Report] Not sent: de-identification could not be assured",
-                       extra={"deidentification": "refused"})
+    except ProviderGuardError as e:
+        # CAPA-014 (RC-065): the service refused to send; the message names categories, no identifier.
+        logger.warning("[Report] Not sent: the identifier check refused the request",
+                       extra={"privacy_check": "refused"})
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                            detail=DEIDENTIFICATION_UNAVAILABLE_DETAIL.format(reason=str(e)))
+                            detail=NOT_SENT_DETAIL.format(reason=str(e)))
     except RuntimeError as e:
         # ANTHROPIC_API_KEY not configured
         raise HTTPException(

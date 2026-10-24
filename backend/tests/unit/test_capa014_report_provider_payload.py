@@ -224,9 +224,12 @@ def test_rc064_the_clinicians_typed_text_is_never_sent(route):
     r = _post(route, {**_measurements(), **TYPED}, VOLUMETRY)
     assert r.status_code == 200, r.text
     sent = _fold(route.provider.sent_text())
+    for word in ("juan", "perez", "lucia", "san ignacio", "300 123 4567", "15/03/1978", "05/04/2024", "mrn-2025-0042"):
+        assert word not in sent, word
+    prompt = route.provider.prompt()
     for typed in TYPED.values():
-        for word in ("juan", "perez", "rrms", "edss", "flair", "san ignacio", "lucia", "300 123 4567", "1978"):
-            assert word not in sent, word
+        assert typed not in prompt and typed.split(",")[0] not in prompt
+    assert "EDSS 3.5" not in prompt and "known RRMS" not in prompt
 
 
 @pytest.mark.unit
@@ -291,6 +294,17 @@ def test_rc064_system_prompt_is_the_fixed_template(route):
 
 
 @pytest.mark.unit
+def test_rc064_the_payload_itself_holds_only_known_fields_and_no_marker():
+    from app.services.report_payload_guard import provider_payload
+    findings, vol = _marked()
+    payload = provider_payload(findings, vol)
+    assert set(payload.findings) <= {"lesion_analysis", "dis_assessment", "longitudinal", "zone_stats",
+                                     "segmentation_labels", "anomalies", "patient_age", "patient_sex"}
+    assert MARK not in json.dumps([payload.findings, payload.volumetry]).casefold()
+    assert payload.withheld["free_text_fields"] == 3 and payload.withheld["unknown_fields"] == 3
+
+
+@pytest.mark.unit
 def test_rc064_the_prompt_builder_prints_no_free_text_even_when_called_directly():
     from app.services.brain_report_service import BrainReportService
     prompt = BrainReportService()._build_findings_prompt(
@@ -300,7 +314,7 @@ def test_rc064_the_prompt_builder_prints_no_free_text_even_when_called_directly(
 
 COLLISION_PATIENTS = [("Thomas", "White"), ("Sarah", "Black"), ("Ann", "Small"), ("Jordi", "Pons"),
                       ("Blanca", "Ruiz"), ("May", "Ortiz"), ("Minh", "Do"), ("Anne", "Le"), ("Wei", "Du"),
-                      ("Blanca", "Pons"), ("Rose", "Matter"), ("Max", "Brain")]
+                      ("Blanca", "Pons"), ("Rose", "Matter"), ("Max", "Brain"), ("Black", "White"), ("Black", "Do")]
 
 
 @pytest.mark.unit
@@ -347,6 +361,11 @@ FRANCE = dict(mrn="FR-123456", given_name="Luc", middle_name=None, family_name="
 VIETNAM = dict(mrn="VN-554433", given_name="Minh", middle_name=None, family_name="Do", full_name="Minh Do",
                emergency_contact_name=None)
 SPAIN2 = dict(SPAIN, given_name="María José", family_name="de la Fuente-Müller", full_name="María José de la Fuente-Müller")
+PAIR = dict(given_name="Black", middle_name=None, family_name="White", full_name="Black White",
+            emergency_contact_name=None)
+PARTICLE = dict(given_name="Black", middle_name=None, family_name="Do", full_name="Black Do",
+                emergency_contact_name=None)
+AUSTRIA = dict(phone_mobile="+43 1 4040 0")
 
 LEAKS = [  # (record, text that must make the tripwire refuse) — the review's forms, and more
     (SPAIN, "612 34 56 78"), (SPAIN, "0034 612 345 678"), (SPAIN, "+34 612 345 678"), (SPAIN, "612345678"),
@@ -369,7 +388,10 @@ LEAKS = [  # (record, text that must make the tripwire refuse) — the review's 
     # generic patterns (no link to the record)
     ({}, "write to a.b@c.de"), ({}, "seen 12.03.2025"), ({}, "seen 2025-03-12"), ({}, "seen 12 March 2025"),
     ({}, "call +49 89 1234567"), ({}, "call 0170 1234567"), ({}, "ref 1234567890"), ({}, "id X1234567L"),
-    ({}, "uid 1.2.840.113619.2.55"), ({}, "by Dr. Smith"), ({}, "by prof. huber"),
+    ({}, "uid 1.2.840.113619.2.55"), ({}, "by Dr. Smith"), ({}, "by prof. huber"), ({}, "call +1 555 0100"),
+    # names made only of the device's own words are found next to each other (and particle surnames kept)
+    (PAIR, "Black White"), (PAIR, "White, Black"), (PAIR, "BlackWhite"), (PARTICLE, "Black Do"),
+    (AUSTRIA, "01 40400"),
 ]
 
 
@@ -410,15 +432,24 @@ def test_rc065_tripwire_caps_the_text_it_scans():
 @pytest.mark.unit
 @pytest.mark.parametrize("kind", ["1-", "1.", "a.", "a@", "Dr. ", "+1 ", "9 11 ", "Aa ", "x" * 63 + "@"])
 def test_rc065_tripwire_runs_in_linear_time(kind):
-    """The review measured 27 s on 80 KB for the e-mail rule of the first version (quadratic)."""
+    """The review measured 27 s on 80 KB for the e-mail rule of the first version (quadratic). The check
+    runs in a daemon thread with a deadline, so a super-linear pattern fails the test instead of hanging it."""
+    import threading
     from app.services.report_payload_guard import IdentifierInPrompt, MAX_SCANNED_CHARS
     text = (kind * (MAX_SCANNED_CHARS // len(kind)))[:MAX_SCANNED_CHARS]
-    started = time.perf_counter()
-    try:
-        _guard(text, _ids(**SPAIN))
-    except IdentifierInPrompt:
-        pass
-    assert time.perf_counter() - started < 3.0
+    ids = _ids(**SPAIN)
+    _guard("warm-up", ids)
+
+    def _run():
+        try:
+            _guard(text, ids)
+        except IdentifierInPrompt:
+            pass
+
+    worker = threading.Thread(target=_run, daemon=True)
+    worker.start()
+    worker.join(timeout=3.0)
+    assert not worker.is_alive(), f"the tripwire took more than 3 s on {len(text)} characters of {kind!r}"
 
 
 @pytest.mark.unit
@@ -586,19 +617,21 @@ def test_rc066_logs_say_the_check_ran_with_counts_never_the_payload(route):
 # Statements that the AI path is HIPAA compliant or that no identifiable data is sent. They were false;
 # the true statement is "measurements only". Historical records keep the old wording as evidence.
 CLAIMS = re.compile(
-    r"hipaa[- ]?(compliant|konform)[^.\n]{0,100}(report|claude|anthropic|ai\b|llm|de-?identif|findings)"
-    r"|(report|claude|anthropic|de-?identif)[^.\n]{0,100}hipaa[- ]?(compliant|konform|compliance)"
-    r"|compatible con hipaa"
-    r"|no (protected health information|phi)\b[^.\n]{0,60}(transmitted|sent)"
-    r"|only de-?identified (clinical )?(findings|data)"
+    r"hipaa[- ]?(compliant|konform)[^\n]{0,100}(report|claude|anthropic|ai\b|llm|de-?identif|findings|pipeline)"
+    r"|(report|claude|anthropic|de-?identif)[^\n]{0,100}hipaa[- ]?(compliant|konform|compliance)"
+    r"|badge/hipaa-compliant|compatible con hipaa|hipaa de-?identification"
+    r"|no (protected health information|phi|patient identifiers?)\b[^.\n]{0,60}(transmitted|sent)"
+    r"|only de-?identified|de-?identified (findings|data|clinical data|clinical findings|volumetry data)"
     r"|de-?identified[^.\n]{0,40}(before|prior to)[^.\n]{0,40}(claude|ai api|external api|sending)"
-    r"|stripped before ai api"
+    r"|(phi|identifiers?)\s+(stripped|removed)\s+before\s+(the\s+)?(ai|claude|llm)"
+    r"|de-?identification (for|before) (the\s+)?(ai|claude|llm)"
     r"|no se transmiti[oó] informaci[oó]n de salud protegida"
     r"|keine gesch[uü]tzten gesundheitsinformationen"
     r"|nur entidentifizierte"
     r"|solo se utilizaron hallazgos cl[ií]nicos desidentificados",
     re.IGNORECASE)
-ALLOWED_PREFIXES = ("docs/iec62304/records/", "backend/tests/", "frontend/node_modules/")
+# Historical records keep the old wording as evidence; tests and negative-control scripts quote it.
+ALLOWED_PREFIXES = ("docs/iec62304/records/", "backend/tests/", "frontend/node_modules/", "scripts/safety/")
 
 
 @pytest.mark.unit
@@ -614,6 +647,8 @@ def test_rc066_no_false_ai_privacy_claim_anywhere_in_the_repository():
         except (UnicodeDecodeError, FileNotFoundError):
             continue
         for n, line in enumerate(text.splitlines(), 1):
-            if CLAIMS.search(line) and "~~" not in line and "withdrawn" not in line.lower():
+            # a requirement ("shall") is not a claim; a struck-through or withdrawn statement is not one
+            if CLAIMS.search(line) and "~~" not in line and "withdrawn" not in line.lower() \
+                    and " shall " not in line:
                 hits.append(f"{rel}:{n}: {line.strip()[:140]}")
     assert not hits, "\n".join(hits)

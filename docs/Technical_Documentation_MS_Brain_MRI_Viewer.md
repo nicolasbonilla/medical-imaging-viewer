@@ -729,10 +729,10 @@ IF W_m != W_i AND H_m == W_i AND W_m == H_i:
 
 ### 12.1 Architecture
 
-The report generation system integrates with the Claude API (Anthropic SDK v0.44.0) through a HIPAA-compliant pipeline:
+The report generation system integrates with the Claude API (Anthropic SDK v0.44.0). Only a structured payload is sent (CAPA-014, RC-064/RC-065):
 
 ```
-Clinical Findings  -->  De-identification  -->  Prompt Assembly
+Measurements  -->  Structured payload  -->  Prompt Assembly  -->  Identifier check
                                                       |
 Report Template  ---------------------------------->  |
                                                       v
@@ -752,17 +752,18 @@ Report Template  ---------------------------------->  |
 | `ms_lesion_burden` | 6,144 | Quantitative lesion inventory |
 | `ms_comprehensive` | 8,192 | Publication-quality comprehensive report |
 
-### 12.3 De-Identification Protocol
+### 12.3 Data Sent to the AI Service (CAPA-014)
 
 **Transmitted to Claude:**
-- Patient age (integer), sex (M/F)
-- Clinical indication (free text)
-- Technical parameters (field strength, sequences)
+- 5-year age band, sex (M/F)
 - Numerical findings (lesion counts, volumes, regions)
 - DIS assessment results
 - Longitudinal change statistics
 
+Labels only from the device's fixed vocabulary (MAGNIMS regions, structures, size classes).
+
 **Never transmitted:**
+- Any free text: clinical indication, technique, observations (added to the draft in the application after the model returns)
 - Patient name, date of birth, medical record number
 - Study date, institution name
 - Referring/performing physician names
@@ -999,7 +1000,7 @@ Launch:
 ### 16.3 HIPAA Compliance
 
 - **Audit logging:** All data access recorded with user, action, resource, timestamp
-- **De-identification:** PHI stripped before AI API calls
+- **AI report data:** measurements only are sent to the AI service — no names, dates of birth, record numbers or free text; identifier check before sending (CAPA-014)
 - **Access control:** Role-based with Firebase custom claims
 - **Transport:** TLS 1.3 enforced for all communications
 - **Data at rest:** GCS server-side encryption (AES-256)

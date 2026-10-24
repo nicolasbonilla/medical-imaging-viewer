@@ -9,8 +9,11 @@ Run from the repository root (needs backend/venv or the current Python with the 
 requirements, and frontend/node_modules):
     python scripts/safety/capa014_tests_on_base.py
         -> main (70cc5c7); docs/iec62304/records/risk_verification/CAPA-014_tests_on_base_2026-10-24.json
+    python scripts/safety/capa014_tests_on_base.py --base 4bfdd7e --label "4bfdd7e (PR #67 head)" \
+        --out docs/iec62304/records/risk_verification/CAPA-014_review1_tests_on_pr67_2026-10-24.json
 The source files (backend/app, frontend/src; tests excepted) that differ from the base commit are
-taken from git: put back at their base version, or removed when the base did not have them.
+taken from git: put back at their base version, removed when the base did not have them, or put back
+for the run when they were deleted since (and removed again). Test processes run offline (PRB-002).
 NEVER run this while anything else edits the files it swaps (it restores a snapshot).
 """
 import datetime
@@ -35,8 +38,14 @@ LABEL = _arg("--label", "70cc5c7 (main, merge of PR #64)")
 PY = os.path.join(ROOT, "backend", "venv", "Scripts", "python.exe")
 if not os.path.exists(PY):
     PY = sys.executable
+# PRB-002: a local test run must never reach a cloud project with the machine's credentials.
+EMPTY = os.path.join(tempfile.gettempdir(), "capa014-empty-gcloud")
+os.makedirs(EMPTY, exist_ok=True)
+OFFLINE = {**os.environ, "GOOGLE_APPLICATION_CREDENTIALS": os.path.join(EMPTY, "missing.json"),
+           "CLOUDSDK_CONFIG": EMPTY, "GOOGLE_CLOUD_PROJECT": "mstool-offline-tests", "COLUMNS": "400"}
+OFFLINE.pop("ANTHROPIC_API_KEY", None)
 OUT = _arg("--out", "docs/iec62304/records/risk_verification/CAPA-014_tests_on_base_2026-10-24.json")
-BACKEND_TEST = "tests/unit/test_capa014_report_deidentification.py"
+BACKEND_TEST = "tests/unit/test_capa014_report_provider_payload.py"
 FRONTEND_TEST = "src/components/AIReportPanel.capa014.test.tsx"
 
 
@@ -45,18 +54,23 @@ def _is_test(path):
 
 
 def source_files():
-    """(changed, added): source files that differ from BASE — at their BASE version, or new since."""
+    """(changed, added, deleted): source files that differ from BASE — at their BASE version, new since,
+    or deleted since (put back for the run and removed again afterwards)."""
     names = subprocess.run(["git", "diff", "--name-only", BASE, "--", "backend/app", "frontend/src"],
                            capture_output=True, text=True, check=True).stdout.split()
     names += subprocess.run(["git", "ls-files", "--others", "--exclude-standard", "--", "backend/app", "frontend/src"],
                             capture_output=True, text=True, check=True).stdout.split()
-    changed, added = [], []
+    changed, added, deleted = [], [], []
     for n in sorted(set(names)):
-        if _is_test(n) or not os.path.exists(n):
+        if _is_test(n):
             continue
         in_base = subprocess.run(["git", "cat-file", "-e", f"{BASE}:{n}"], capture_output=True).returncode == 0
+        if not os.path.exists(n):
+            if in_base:
+                deleted.append(n)
+            continue
         (changed if in_base else added).append(n)
-    return changed, added
+    return changed, added, deleted
 
 
 def base_bytes(path):
@@ -66,7 +80,7 @@ def base_bytes(path):
 def run_backend():
     r = subprocess.run([PY, "-m", "pytest", BACKEND_TEST, "-q", "-p", "no:cacheprovider", "-o", "log_cli=false",
                         "--tb=short", "-rA"], cwd="backend", capture_output=True, text=True, encoding="utf-8",
-                       errors="replace", env={**os.environ, "COLUMNS": "400"})
+                       errors="replace", env=OFFLINE)
     tests = {}
     for m in re.finditer(r"^(FAILED|ERROR|PASSED) [^:\s]+::(.+?)(?: - (.*))?$", r.stdout, re.M):
         tests[m.group(2)] = {"status": m.group(1).lower(), "reason": (m.group(3) or "")[:240]}
@@ -93,10 +107,10 @@ def run_frontend():
 
 
 def main():
-    changed, added = source_files()
+    changed, added, deleted = source_files()
     snapshot = {p: open(p, "rb").read() for p in changed + added}
     try:
-        for p in changed:
+        for p in changed + deleted:
             open(p, "wb").write(base_bytes(p))
         for p in added:
             os.remove(p)
@@ -104,6 +118,9 @@ def main():
     finally:
         for p, b in snapshot.items():
             open(p, "wb").write(b)
+        for p in deleted:
+            if os.path.exists(p):
+                os.remove(p)
     for p, b in snapshot.items():
         assert open(p, "rb").read() == b, p
     rec = {
@@ -111,15 +128,14 @@ def main():
         "base": LABEL,
         "method": "source files that differ from the base commit restored to it, files it did not have removed; "
                   "the CAPA-014 test files run unchanged; working tree restored byte for byte",
-        "swapped": {"restored_to_base": changed, "removed": added},
+        "swapped": {"restored_to_base": changed, "removed": added, "put_back_from_base": deleted},
         "test_sha256": {t: hashlib.sha256(open(t, encoding="utf-8").read().replace("\r\n", "\n").encode("utf-8")).hexdigest()
                         for t in ("backend/" + BACKEND_TEST, "frontend/" + FRONTEND_TEST)},
         "backend": backend,
         "frontend": frontend,
-        "note": _arg("--note", "test_rc064_system_prompt_is_the_fixed_template and "
-                               "test_rc064_clinical_content_and_measurements_are_kept pass on the base too: they are "
-                               "regression guards (no patient data in the system prompt; measurement lines unchanged), "
-                               "not defect detectors."),
+        "note": _arg("--note", "Cases that pass on the base are regression guards (fixed system prompt, measurement "
+                               "lines, age bands the base already sent as bands, fail-closed controls already present, "
+                               "names that do not occur in the prompt), not defect detectors."),
     }
     json.dump(rec, open(OUT, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
     print("base: backend", backend["passed"], "passed /", backend["failed"], "failed /", backend["errors"],

@@ -3,7 +3,7 @@ Unit tests for BrainReportService — IEC 62304 Class C.
 
 Tests verify report generation, template handling and prompt construction
 per DD-RPT-001. De-identification of what is sent to the provider (CAPA-014,
-REQ-SEC-021..023) is tested in test_capa014_report_deidentification.py.
+REQ-SEC-021..023) is tested in test_capa014_report_provider_payload.py.
 
 Requirement traceability:
   - REQ-FUNC-045: AI-assisted report generation
@@ -16,7 +16,7 @@ from datetime import date
 from unittest.mock import MagicMock, patch, AsyncMock
 
 # CAPA-014 (RC-065): the service sends nothing without the patient's identifiers.
-from app.services.report_deidentification import PatientIdentifiers
+from app.services.report_payload_guard import PatientIdentifiers
 
 TEST_IDENTIFIERS = PatientIdentifiers.from_record({
     "mrn": "MRN-TEST-0001", "given_name": "Testgiven", "family_name": "Testfamily",
@@ -360,19 +360,21 @@ class TestBrainReportService:
         assert "English" in user_msg
 
     # =========================================================================
-    # Findings prompt construction (what is removed before sending: test_capa014_report_deidentification.py)
+    # Findings prompt construction (what may be sent: test_capa014_report_provider_payload.py)
     # =========================================================================
 
     def test_build_findings_prompt_clinical_indication(self):
-        """Clinical indication is included in the prompt."""
+        """CAPA-014 (RC-064): the clinical indication is free text and is never sent (was: included);
+        the route adds it to the draft after the model returns."""
         prompt = self.service._build_findings_prompt(
             {"clinical_indication": "Known MS, annual follow-up"}, language="en"
         )
-        assert "Known MS, annual follow-up" in prompt
+        assert "Known MS, annual follow-up" not in prompt
+        assert "added to the draft by the application" in prompt
 
     def test_build_findings_prompt_patient_age(self):
-        """CAPA-014 (RC-064): the age reaches the prompt as the 5-year band set by the
-        de-identification step (was: the exact age)."""
+        """CAPA-014 (RC-064): the age reaches the prompt as the 5-year band of the structured
+        payload (was: the exact age)."""
         prompt = self.service._build_findings_prompt(
             {"patient_age": "40-44"}, language="en"
         )

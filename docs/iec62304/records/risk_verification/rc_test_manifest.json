@@ -726,45 +726,45 @@
       "note": "Proposed by RMF-OBS-001 as CAPA-008 CA-8.13; implemented by CAPA-013 (CA-13.6). Images uploaded as NIfTI carry no acquisition record, so their comparisons abstain (CAPA-013 D-3, PA-13.3). The Firestore lookup and the PACS import field are verified by unit and source tests only. Owner approval PENDING."
     },
     "RC-064": {
-      "description": "AI report draft: one de-identification step for everything sent to the model provider — the patient's own names, record and insurance numbers, phones, e-mail, address, city, postal code and birth date from the patient record (case- and accent-insensitive, German spellings, particles not removed alone) and, by pattern, e-mail, phone numbers, numbers after identifier words, other numbers of >= 6 digits without a unit, titled person names, institution names, street addresses; exact dates replaced by intervals to the first date; age as a 5-year band; measurement numbers never altered; fixed system prompt; unused fields never sent",
-      "hazard": "HAZ-016, HAZ-003",
-      "status": "implemented",
-      "implementation": "backend/app/services/report_deidentification.py (deidentify_report_input, PatientIdentifiers, age_band); backend/app/services/brain_report_service.py (generate_report, age line of _build_findings_prompt — Class C, CAPA-014 s7)",
-      "tests": [
-        "tests/unit/test_capa014_report_deidentification.py"
-      ],
-      "requirement": "REQ-SEC-021 (refines REQ-SEC-007 for the report path)",
-      "change": "CAPA-014 (DRAFT, PENDING owner approval; branch fix/ai-report-deidentification-capa014)",
-      "negative_control": "Executed 2026-10-24 by scripts/safety/capa014_negative_controls.py (54 mutations, 54 detected; one mutation at a time, anchors asserted unique, files restored byte for byte); record docs/iec62304/records/risk_verification/CAPA-014_negative_controls_2026-10-24.json. Tests written before the fix (commit 2964063), re-run on the 70cc5c7 source by scripts/safety/capa014_tests_on_base.py: backend 53 of 55 fail, frontend 6 of 6 (record CAPA-014_tests_on_base_2026-10-24.json). RC-064 mutations: D1, D2, D3, D4, D5, D6, D7, D8, D9, D10, D11, D12, D13, D14, D15, D16, D17, D18, D19, D20, D21, D22, D23, D24, D25, D26, D27, D28, D29, D30, D31, D32.",
-      "note": "Implements CAPA-001 CA-4 (RC-007' recorded absent since 2026-07-18). Rules for en/es/de only; removal and over-removal not measured on real clinical texts (CAPA-014 PA-14.3). Owner approval PENDING."
-    },
-    "RC-065": {
-      "description": "AI report draft fails closed: the route requires the analysed segmentation (400), authorizes it for the caller (404, RC-036 rule), reads its patient's record (unreadable, missing or without record number, given name, family name or birth date: 503); the service refuses to build a prompt without identifiers; a residual check on the final prompt (given and family name, record number, birth date, e-mail, phone) stops the call (503); errors name no identifier and say that nothing was sent; the panel and the assistant's report tool send the segmentation",
+      "description": "AI report draft, inherent safety by design: the request to the model provider is built only from a structured payload - measurements as numbers, labels of the device's fixed vocabulary (others -> '[unlisted label]'), sex M/F, a 5-year age band ('90 or older' from 90); no free-text or user-typed field and no unknown field; fixed system prompt; the clinician's typed text is added to the draft by the route after the model returns and is never sent",
       "hazard": "HAZ-016",
       "status": "implemented",
-      "implementation": "backend/app/api/routes/ai_report.py (generate_report, read_patient_identifiers); backend/app/security/resource_access.py (authorize_segmentation_id); backend/app/services/brain_report_service.py (generate_report); backend/app/services/report_deidentification.py (PatientIdentifiers.from_record, assert_no_residual_identifiers); frontend/src/components/AIReportPanel.tsx; backend/app/mcp/ms_clinical_server.py (generate_ms_report)",
+      "implementation": "backend/app/services/report_payload_guard.py (provider_payload, label_vocabulary, age_band); backend/app/services/brain_report_service.py (prompt builder without free text, generate_report - Class C, CAPA-014 s7); backend/app/api/routes/ai_report.py (clinician_entry, with_clinician_entry)",
       "tests": [
-        "tests/unit/test_capa014_report_deidentification.py",
+        "tests/unit/test_capa014_report_provider_payload.py"
+      ],
+      "requirement": "REQ-SEC-021 (refines REQ-SEC-007 for the report path)",
+      "change": "CAPA-014 (DRAFT, PENDING owner approval; branch fix/ai-report-deidentification-capa014; redesign after the review of PR #67)",
+      "negative_control": "PENDING: negative controls and tests-on-base to be executed on the redesign. RC-064 mutations: -.",
+      "note": "Implements CAPA-001 CA-4 by design rather than by removal: no free text leaves the application. The first version (regex scrubbing of free text, PR #67 before the review) was removed. Owner approval PENDING."
+    },
+    "RC-065": {
+      "description": "AI report draft fails closed: segmentation required (400) and authorized (404, RC-036 rule), patient record readable and complete (503), service refuses without identifiers; a detection-only tripwire on the final prompt (NFKC, format characters removed, look-alikes and accents mapped) refuses to send (503) on the patient's own name (alone, written together, German spellings, pairs of the device's own words), record number (any separators), birth date (numeric, month-name, Roman; partial after a birth word), phone (with/without country code and trunk 0), e-mail, contact, city, street, and on generic e-mail, dated text, phone-like/long/ID-like numbers and titled names; never edits text; never fires on the device's own words alone; capped at 400000 characters; linear time; the panel and the assistant's report tool send the segmentation",
+      "hazard": "HAZ-016",
+      "status": "implemented",
+      "implementation": "backend/app/services/report_payload_guard.py (PatientIdentifiers, find_identifiers, assert_no_identifiers, normalise); backend/app/services/brain_report_service.py (assert_prompt_carries_no_identifier, fixed_prompt_words); backend/app/api/routes/ai_report.py (generate_report, read_patient_identifiers); backend/app/security/resource_access.py (authorize_segmentation_id); frontend/src/components/AIReportPanel.tsx; backend/app/mcp/ms_clinical_server.py (generate_ms_report)",
+      "tests": [
+        "tests/unit/test_capa014_report_provider_payload.py",
         "frontend/src/components/AIReportPanel.capa014.test.tsx"
       ],
       "requirement": "REQ-SEC-022",
-      "change": "CAPA-014 (DRAFT, PENDING owner approval; branch fix/ai-report-deidentification-capa014)",
-      "negative_control": "Executed 2026-10-24 by scripts/safety/capa014_negative_controls.py (54 mutations, 54 detected; one mutation at a time, anchors asserted unique, files restored byte for byte); record docs/iec62304/records/risk_verification/CAPA-014_negative_controls_2026-10-24.json. Tests written before the fix (commit 2964063), re-run on the 70cc5c7 source by scripts/safety/capa014_tests_on_base.py: backend 53 of 55 fail, frontend 6 of 6 (record CAPA-014_tests_on_base_2026-10-24.json). RC-065 mutations: F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, U5.",
-      "note": "The panel shows its generic error when a draft is refused (server reason not displayed; CAPA-014 PA-14.4). Firestore lookup verified with fakes only. The route is also classified in tests/unit/test_capa009_object_authorization_everywhere.py (call:authorize_segmentation_id, 404 probe for a caller without access; test_rc036_* names). Owner approval PENDING."
+      "change": "CAPA-014 (DRAFT, PENDING owner approval; branch fix/ai-report-deidentification-capa014; redesign after the review of PR #67)",
+      "negative_control": "PENDING: negative controls and tests-on-base to be executed on the redesign. RC-065 mutations: -.",
+      "note": "Detection only, protective; the inherent control is RC-064. Limits: a name that is also one of the device's words is found only next to the other name; all-digit record numbers under 6 digits are not checked. The route is also classified in tests/unit/test_capa009_object_authorization_everywhere.py (call:authorize_segmentation_id, 404 probe; test_rc036_* names). Owner approval PENDING."
     },
     "RC-066": {
-      "description": "AI report draft records and disclosure: the log states that de-identification ran and the count per category, never the payload, the prompt or a removed identifier; false de-identification claims withdrawn (service header, API client, route description, CSA-001 rows annotated); a note directly above the draft button in en/es/de states what is sent and what is removed first and that other names may not be recognised; data categories still sent recorded for the data-processing agreement (CAPA-014 s6)",
+      "description": "AI report draft records and disclosure: the typed text merged into the draft locally after the RC-006 disclaimer and the model told so; the log states that the check ran and counts what was withheld, never the payload; the panel note and the report viewer footer (en/es/de) state that only measurements, sex and a 5-year age range are sent; false HIPAA / de-identification claims corrected everywhere and a repository test fails on any new one (historical records excepted); data categories recorded for the data-processing agreement (CAPA-014 s6)",
       "hazard": "HAZ-016",
       "status": "implemented",
-      "implementation": "backend/app/services/brain_report_service.py (module header, generate_report log); frontend/src/components/AIReportPanel.tsx; frontend/src/i18n/locales/{en,es,de}.json (report.deidentificationNote); frontend/src/api/aiReport.ts; docs/iec62304/records/capa/CAPA-014_AI_Report_Deidentification.md s6",
+      "implementation": "backend/app/api/routes/ai_report.py (with_clinician_entry); backend/app/services/brain_report_service.py (module header, generate_report log); frontend/src/components/AIReportPanel.tsx; frontend/src/components/ReportViewerModal.tsx; frontend/src/i18n/locales/{en,es,de}.json (report.deidentificationNote, reportViewer.aiDataNote); frontend/src/api/aiReport.ts; docs/iec62304/records/capa/CAPA-014_AI_Report_Deidentification.md s6",
       "tests": [
-        "tests/unit/test_capa014_report_deidentification.py",
+        "tests/unit/test_capa014_report_provider_payload.py",
         "frontend/src/components/AIReportPanel.capa014.test.tsx"
       ],
       "requirement": "REQ-SEC-023",
-      "change": "CAPA-014 (DRAFT, PENDING owner approval; branch fix/ai-report-deidentification-capa014)",
-      "negative_control": "Executed 2026-10-24 by scripts/safety/capa014_negative_controls.py (54 mutations, 54 detected; one mutation at a time, anchors asserted unique, files restored byte for byte); record docs/iec62304/records/risk_verification/CAPA-014_negative_controls_2026-10-24.json. Tests written before the fix (commit 2964063), re-run on the 70cc5c7 source by scripts/safety/capa014_tests_on_base.py: backend 53 of 55 fail, frontend 6 of 6 (record CAPA-014_tests_on_base_2026-10-24.json). RC-066 mutations: L1, L2, L3, L4, U1-U4, U6.",
-      "note": "The data-processing agreement itself is an owner action (CAPA-014 D-3); wording of the es/de note awaits review. Known gap: the footer of every displayed and printed draft (reportViewer.hipaaNote) still claims 'HIPAA Compliant ... No PHI was transmitted' - UI text left unchanged pending owner decision CAPA-014 D-9. Owner approval PENDING."
+      "change": "CAPA-014 (DRAFT, PENDING owner approval; branch fix/ai-report-deidentification-capa014; redesign after the review of PR #67)",
+      "negative_control": "PENDING: negative controls and tests-on-base to be executed on the redesign. RC-066 mutations: -.",
+      "note": "The data-processing agreement itself is an owner action (CAPA-014 D-3); wording of the es/de texts awaits review (D-9). Owner approval PENDING."
     }
   },
   "unverified_controls_note": [

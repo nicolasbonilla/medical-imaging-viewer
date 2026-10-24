@@ -11,33 +11,33 @@ focused on Multiple Sclerosis evaluation following international standards:
 Templates: general, ms_activity, ms_lesion_burden, ms_longitudinal.
 
 Data sent to the model provider (CAPA-014; RC-064, RC-065, RC-066; HAZ-016):
-- Before anything is sent, one de-identification step (`report_deidentification`) removes the
-  patient's own name, record number, birth date, phone, e-mail and address (taken from the patient
-  record the server holds) and, by pattern, other dates (turned into intervals), phone numbers,
-  e-mail addresses, ID-like numbers, titled person names and institution names, from every string
-  of the findings; the age is sent as a 5-year band. The system prompt is a fixed template.
-- Without the patient's identifiers, or when one of them remains in the final prompt, the provider
-  is not called (fail closed).
-- What still reaches the provider: the measurements, sex, the age band and the clinician's text after
-  that removal — pseudonymised health data, not anonymous data (CAPA-014 §6).
-- An earlier version of this header stated that patient data was de-identified and that names, IDs
-  and dates were never sent; nothing de-identified then (CAPA-001 §2.3, CAPA-008 finding 4). That
-  statement is withdrawn.
+- Measurements only. The prompt is built from a structured payload (`report_payload_guard`): the
+  device's measurements, labels from the device's fixed vocabulary, sex (M/F) and a 5-year age band.
+  No free-text or user-typed field is sent; the clinician's text is added to the draft by the route
+  after the model returns. The system prompt is a fixed template.
+- Before the call, a detection-only check of the final prompt (the patient's own identifiers from
+  the patient record, and generic identifier patterns) refuses to send on any finding; without the
+  patient's record nothing is sent (fail closed).
+- An earlier header stated that patient data was de-identified and that names, IDs and dates were never sent; nothing did that then (CAPA-001 §2.3, CAPA-008 finding 4) — statement withdrawn.
 
 @module services.brain_report_service
 """
 
 import time
 import uuid
+from functools import lru_cache
 from typing import Optional, List, Dict, Any
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
-from app.services.report_deidentification import (
-    DeidentificationUnavailable,
+from app.services.report_payload_guard import (
+    UNLISTED,
     PatientIdentifiers,
-    assert_no_residual_identifiers,
-    deidentify_report_input,
+    PatientRecordUnavailable,
+    assert_no_identifiers,
+    label_vocabulary,
+    provider_payload,
+    words_of,
 )
 
 logger = get_logger(__name__)
@@ -99,6 +99,14 @@ def _apply_disclaimer(content: str, language: str) -> str:
     if body.startswith(disclaimer):
         return body
     return f"{disclaimer}\n\n{body}"
+
+
+# CAPA-014 (RC-064): the model never receives the clinician's text; the route adds it to the draft.
+CLINICIAN_TEXT_INSTRUCTION = (
+    "The clinical indication, the technique and the clinician's notes are not provided to you: they are "
+    "added to the draft by the application. Under CLINICAL INDICATION and TECHNIQUE write only: "
+    "\"See the clinician's entry at the top of this draft.\""
+)
 
 
 # Shared formatting instructions for all templates
@@ -455,10 +463,9 @@ class BrainReportService:
     - Integrates volumetry data when available
     - Multi-language support (en, es, de)
 
-    CAPA-014: every report is generated for one patient, whose identifiers (read from the patient
-    record by the caller) are removed from the findings before the prompt is built; without them
-    no request is sent (see the module docstring). CAPA-008 had recorded that this service did not
-    de-identify; that was true until CAPA-014.
+    CAPA-014: the prompt is built from a structured payload only (measurements, fixed labels, sex,
+    age band) and checked against the patient's own identifiers before any call; without the
+    patient's record no request is sent (see the module docstring).
     """
 
     def __init__(self):
@@ -491,19 +498,14 @@ class BrainReportService:
         lang_map = {"en": "English", "es": "Spanish", "de": "German"}
         lang_name = lang_map.get(language, "English")
         parts.append(f"Generate the report in {lang_name}.")
-
-        # Clinical context (de-identified)
-        if findings.get("clinical_indication"):
-            parts.append(f"Clinical indication: {findings['clinical_indication']}")
-
-        if findings.get("technique"):
-            parts.append(f"Technique/Sequences: {findings['technique']}")
+        # CAPA-014 (RC-064): no free text is sent; the route adds the clinician's text to the draft.
+        parts.append(CLINICIAN_TEXT_INSTRUCTION)
 
         if findings.get("patient_age"):
-            # CAPA-014 (RC-064): a 5-year band set by the de-identification step, never the exact age
+            # CAPA-014 (RC-064): the 5-year band of the structured payload, never the exact age
             parts.append(f"Patient age band: {findings['patient_age']} (years)")
 
-        if findings.get("patient_sex"):
+        if findings.get("patient_sex") in ("M", "F"):
             sex_label = "Male" if findings["patient_sex"] == "M" else "Female"
             parts.append(f"Patient sex: {sex_label}")
 
@@ -673,10 +675,6 @@ class BrainReportService:
                     f"({info.get('percentage', 0):.1f}%)"
                 )
 
-        # Additional observations
-        if findings.get("additional_observations"):
-            parts.append(f"\nAdditional observations: {findings['additional_observations']}")
-
         return "\n".join(parts)
 
     async def generate_report(
@@ -692,16 +690,16 @@ class BrainReportService:
 
         Args:
             template_type: Report template (general, ms_activity, ms_lesion_burden)
-            findings: Clinical findings dict (identifiers are removed here, CAPA-014)
+            findings: Clinical findings dict (only the structured payload is sent, CAPA-014)
             volumetry: Volumetry results dict (optional)
             language: Report language (en, es, de)
-            identifiers: The patient's own identifiers, from the patient record (required)
+            identifiers: The patient's own identifiers, from the patient record (required, for the check)
 
         Returns:
             Dict with report_id, content, template_type, language, processing_time_ms
 
         Raises:
-            DeidentificationError: no identifiers, or one remained in the prompt — nothing was sent
+            ProviderGuardError: no identifiers, or the check found one in the prompt — nothing was sent
         """
         start_time = time.time()
         report_id = str(uuid.uuid4())
@@ -713,22 +711,21 @@ class BrainReportService:
         if template_type not in REPORT_TEMPLATES:
             template_type = "general"
 
-        # CAPA-014 (RC-065, HAZ-016): no patient identifiers, no request to the provider.
+        # CAPA-014 (RC-065, HAZ-016): without the patient's identifiers there is nothing to check
+        # against, so no request is sent.
         if not isinstance(identifiers, PatientIdentifiers):
-            raise DeidentificationUnavailable(
-                "The patient's identifiers are needed to remove them before sending; nothing was sent")
+            raise PatientRecordUnavailable("the patient's identifiers were not supplied")
 
         system_prompt = REPORT_TEMPLATES[template_type]      # fixed text: carries no patient data
-        # RC-064: the single de-identification step — everything the prompt is built from passes it.
-        clean = deidentify_report_input(findings, volumetry, identifiers)
-        user_prompt = self._build_findings_prompt(clean.findings, clean.volumetry, language)
-        # RC-065: defence in depth — the patient's own identifiers must not remain in the final prompt.
-        assert_no_residual_identifiers(user_prompt, identifiers)
-        # RC-066: record that the removal ran and how many items of each kind — never the payload.
+        # RC-064: structured payload only — measurements, fixed labels, sex, age band; no free text.
+        payload = provider_payload(findings, volumetry)
+        user_prompt = self._build_findings_prompt(payload.findings, payload.volumetry, language)
+        # RC-065: detection-only tripwire on the final prompt; refuses to send on any finding.
+        assert_prompt_carries_no_identifier(user_prompt, identifiers)
+        # RC-066: record that the check ran and what was withheld (counts) — never the payload.
         logger.info(
-            "[Report] De-identification applied before the model provider call",
-            extra={"report_id": report_id, "deidentification": "applied",
-                   "redactions": dict(clean.redactions)},
+            "[Report] Structured payload checked before the model provider call",
+            extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld},
         )
 
         logger.info(
@@ -829,3 +826,48 @@ class BrainReportService:
             },
         ]
         return templates
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CAPA-014 (RC-065): the device's own words — the tripwire never reports one of them on its own, so a
+# patient named White does not stop "Deep White Matter". Derived from the fixed templates and from the
+# prompt builder itself on synthetic payloads covering every label and branch, so it follows the code.
+# ─────────────────────────────────────────────────────────────────────────────
+def _synthetic_payloads():
+    labels = sorted(set(label_vocabulary().values()))
+    regions = {n: {"lesion_count": 1, "total_volume_mm3": 1.0, "total_volume_ml": 0.001} for n in labels}
+    lesions = [{"id": i + 1, "region": n, "volume_mm3": 1.0, "volume_ml": 0.001, "size_category": "small",
+                "centroid": {"z": 1, "y": 1, "x": 1}} for i, n in enumerate(labels)]
+    base = {
+        "patient_age": "45-49", "patient_sex": "M", "segmentation_labels": labels + [UNLISTED],
+        "anomalies": [{"type": n, "location": n, "confidence": 0.5, "volume_mm3": 1.0} for n in labels],
+        "lesion_analysis": {"total_count": 1, "total_burden_mm3": 1.0, "total_burden_ml": 0.001, "regions": regions,
+                            "size_distribution": {"small": 1, "medium": 1, "large": 1}, "lesions": lesions},
+        "dis_assessment": {"dis_met": True, "regions_with_lesions": 1, "total_dis_regions": 5,
+                           "region_details": {n: {"present": True} for n in labels}, "has_active_lesions": True,
+                           "active_voxels": 1, "has_black_holes": True, "black_hole_voxels": 1},
+        "zone_stats": {"total_brain_voxels": 1, "zones": {n: {"voxel_count": 1, "percentage": 1.0} for n in labels}},
+    }
+    volumetry = {"total_brain_volume_ml": 1.0, "intracranial_volume_ml": 1.0, "structures":
+                 [{"structure_name": n, "volume_ml": 1.0, "is_abnormal": True, "normative_percentile": 1,
+                   "abnormality_type": "atrophy"} for n in labels]
+                 + [{"structure_name": n, "volume_ml": 1.0, "is_abnormal": False} for n in labels]}
+    for longitudinal in ({"burden_tp1_ml": 1.0, "burden_tp2_ml": 1.0, "total_lesions_tp1": 1, "total_lesions_tp2": 1,
+                          "burden_delta_percent": 1.0, "status_counts": {"new": 1}}, {"abstained": True}):
+        yield {**base, "longitudinal": longitudinal}, volumetry
+    yield {**base, "patient_sex": "F", "patient_age": "90 or older"}, volumetry
+
+
+@lru_cache(maxsize=1)
+def fixed_prompt_words() -> frozenset:
+    builder = BrainReportService.__new__(BrainReportService)
+    texts = list(REPORT_TEMPLATES.values()) + [UNLISTED, "Structure Label"]
+    for findings, volumetry in _synthetic_payloads():
+        for language in ("en", "es", "de"):
+            texts.append(builder._build_findings_prompt(findings, volumetry, language))
+    return frozenset(w for text in texts for w in words_of(text))
+
+
+def assert_prompt_carries_no_identifier(user_prompt: str, identifiers: PatientIdentifiers) -> None:
+    """RC-065: the tripwire on the final prompt (raises IdentifierInPrompt; never edits the text)."""
+    assert_no_identifiers(user_prompt, identifiers, fixed_prompt_words())
