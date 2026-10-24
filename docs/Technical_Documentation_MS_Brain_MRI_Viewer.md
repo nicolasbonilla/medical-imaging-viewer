@@ -764,7 +764,8 @@ Report Template  ---------------------------------->  |
 Labels only from the device's fixed vocabulary (MAGNIMS regions, structures, size classes, the label
 names the application ships). Any other label is sent as a numbered placeholder ("[unlisted label 2]");
 its name is shown to the clinician in the draft only. A value that is not a number is sent as "not
-available"; a number outside the physical range of its field stops the request (nothing is sent).
+available"; a dissemination-in-space result that is missing or not evaluated is sent as "not evaluated",
+never "not met"; a number outside the physical range of its field stops the request (nothing is sent).
 
 **Draft layout:** the disclaimer, then the clinician's entry (quoted exactly as typed, not rendered as
 Markdown, and closed by a rule), then the model's text under the fixed heading "AI draft (from

@@ -78,6 +78,8 @@ class NotAvailable(str):
 
 
 NOT_AVAILABLE = NotAvailable("not available")
+# The DIS evaluation states of PR #68 (PRB-003, `dis_review_gate.EVALUATED` / `NOT_EVALUATED`).
+DIS_EVALUATED, DIS_NOT_EVALUATED = "evaluated", "not_evaluated"
 
 # Physical range of each number that is printed. Counts stay below 7 digits; voxel counts below 16 million
 # (a brain imaged at 0.46 mm isotropic), which also excludes every date written YYYYMMDD from 1900 on;
@@ -254,6 +256,12 @@ class _Projector:
         return o
 
     def dis_assessment(self, dis: dict) -> dict:
+        """The DIS block, with its evaluation state kept (PR #68, PRB-003). Not evaluated, an unknown state or no
+        yes/no conclusion: only the state "not_evaluated" — no conclusion, region presence or count — so the
+        model is never told "NOT MET" for a DIS that was not evaluated (as "not available", never 0)."""
+        state = dis.get("evaluation_status")
+        if state not in (None, DIS_EVALUATED) or not isinstance(dis.get("dis_met"), bool):
+            return {"evaluation_status": DIS_NOT_EVALUATED}
         o: dict = {"dis_met": dis.get("dis_met") is True,
                    "regions_with_lesions": self.count(dis.get("regions_with_lesions"), "regions_with_lesions"),
                    "total_dis_regions": self.count(dis.get("total_dis_regions"), "total_dis_regions")}
@@ -264,6 +272,8 @@ class _Projector:
         o["active_voxels"] = self.count(dis.get("active_voxels"), "active_voxels", _VOXELS_MAX)
         o["has_black_holes"] = dis.get("has_black_holes") is True
         o["black_hole_voxels"] = self.count(dis.get("black_hole_voxels"), "black_hole_voxels", _VOXELS_MAX)
+        if state == DIS_EVALUATED:
+            o["evaluation_status"] = DIS_EVALUATED     # kept as received; never invented for a block without it
         return o
 
     def longitudinal(self, lng: dict) -> dict:

@@ -16,7 +16,8 @@ numbered per occurrence, their names not shown in the draft; "not available" pri
 range; the instruction sent although nothing was typed; the system templates' words exempt; the numeric
 record number matched inside measurements; the digits of a prefixed record number not checked; pairs and
 joined words of the device's own text reported; the RC-007 claim back in the record generator; the stale
-model name back in the technical documentation. The script asserts every anchor occurs
+model name back in the technical documentation; the DIS evaluation state dropped, or a DIS not evaluated
+sent as "NOT MET" (coordination with PR #68). The script asserts every anchor occurs
 exactly once, runs the bound tests of the mutated side (backend pytest; frontend vitest JSON reporter),
 records the failing test names and restores the exact original bytes.
 
@@ -132,6 +133,16 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                           "a value that is not a number reported as 0"),
     "P14_no_plausibility_range": ([(G, "        if not low <= n <= high:\n", "        if False:\n")],
                                   "dates, record numbers and phone numbers in number fields sent"),
+    # coordination with PR #68 (PRB-003): the DIS evaluation state
+    "P15_dis_not_evaluated_as_not_met": ([(G, '        if state not in (None, DIS_EVALUATED) or not isinstance(dis.get("dis_met"), bool):\n',
+                                           "        if False:\n")],
+                                         "a DIS not evaluated or without a conclusion sent as 'NOT MET'"),
+    "P16_dis_evaluated_state_dropped": ([(G, "            o[\"evaluation_status\"] = DIS_EVALUATED     # kept as received; never invented for a block without it\n",
+                                          "            pass\n")],
+                                        "the 'evaluated' DIS state lost in the payload (every DIS not evaluated after PR #68)"),
+    "P17_builder_prints_not_evaluated_as_not_met": ([(BRS, '        if (findings.get("dis_assessment") or {}).get("evaluation_status") == "not_evaluated":\n',
+                                                      '        if False:\n')],
+                                                    "the prompt builder prints 'NOT MET' for a DIS not evaluated"),
     # ── RC-065: detection-only tripwire and fail closed ──
     "T1_tripwire_removed": ([(BRS, "        assert_prompt_carries_no_identifier(user_prompt, identifiers)\n", "")],
                             "no check of the final prompt"),

@@ -601,8 +601,13 @@ class BrainReportService:
                         f"z={ctr.get('z', 0):.0f}, y={ctr.get('y', 0):.0f}, x={ctr.get('x', 0):.0f}"
                     )
 
-        # DIS assessment data
-        if findings.get("dis_assessment"):
+        # DIS assessment data. CAPA-014 (coordination with PR #68, PRB-003): a DIS that was not evaluated or
+        # has no yes/no conclusion arrives as {"evaluation_status": "not_evaluated"} and is never "NOT MET".
+        if (findings.get("dis_assessment") or {}).get("evaluation_status") == "not_evaluated":
+            parts.append("\nDIS Assessment: NOT EVALUATED — no dissemination-in-space result is available. "
+                         "Do not state or imply whether dissemination in space is met; write only that it was "
+                         "not evaluated.")
+        elif findings.get("dis_assessment"):
             dis = findings["dis_assessment"]
             met = "MET" if dis.get("dis_met") else "NOT MET"
             parts.append(f"\nDIS Assessment: {met} "
