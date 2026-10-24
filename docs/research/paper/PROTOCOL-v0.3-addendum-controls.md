@@ -222,4 +222,22 @@ The app modules are imported read-only, in a process with the offline test envir
 
 ## 11. Deviations log
 
-*(empty at the addendum commit)*
+*(empty at the addendum commit caa47e7)*
+
+**2026-10-24, entry 1 — execution notes (written after the run; no analysis choice changed).**
+(a) A first run of `v03c_controls.py` was interrupted by a session restart before it printed
+anything. (b) The second run stopped after candidate extraction on a rounding helper that did not
+accept arrays (no number had been printed). (c) The third run printed the raw-candidate, primary and
+reproduction lines and then stopped in the DIS step because the app's `compute_dis_criteria`
+returns its per-region table as `region_details`, not `region_presence` as the script assumed. Both
+were plain coding errors; the fixes touch only those two lines, and the fourth run reproduced every
+previously printed number. (d) The independent re-implementation (§7) matched the main analysis
+exactly: same candidate count in 100/100 controls for both arms, same number of reported lesions per
+control at all four primary operating points, same counts (record
+`2026-10-24_paper_a_v03c_controls_check.json`).
+
+**2026-10-24, entry 2 — post-hoc checks (labelled [post hoc] wherever used).** Written after the
+results: (a) a visual check of the top-scoring false candidate of four controls (sub-053, sub-079,
+sub-043, sub-062) on their FLAIRs (images kept outside the repository: CC BY-NC-SA data); (b) the
+FLAIR intensity of those candidates relative to the brain; (c) a Fisher test comparing the 30
+controls analysed before with the 70 new ones (S5 showed 1/30 vs 13/70 at P1 α = 0.1).
