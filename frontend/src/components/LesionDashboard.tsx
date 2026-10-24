@@ -42,6 +42,7 @@ import {
 } from '@/types';
 import { regionEvidence, REGION_ABBREV } from '../utils/regionEvidence';
 import { FEATURES } from '../config/features';
+import { fetchWithSession } from '../services/session';
 
 // CP-SLICE-THICKNESS-001 (DRAFT, RC-058): only reachable through the flag, loaded lazily so that
 // nothing of it (component, logic, evidence asset) is fetched while the flag is OFF.
@@ -931,9 +932,8 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
           <button
             onClick={() => {
               const url = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/v1/segmentation/${segmentationId}/export/dicom-seg`;
-              const token = localStorage.getItem('access_token');
               const toastId = toast.loading(t('lesions.exportingSeg', 'Exporting DICOM-SEG…'));
-              fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+              fetchWithSession(url)   // CAPA-015 RC-069: silent refresh / re-login on 401
                 .then(res => {
                   if (!res.ok) throw new Error(`Export failed (${res.status})`);
                   return res.blob();

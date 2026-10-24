@@ -145,6 +145,20 @@ def _install_no_cloud_guard() -> None:
 
 _install_no_cloud_guard()
 
+# CAPA-015: the audit trail and the refresh-token store use their in-memory backends in the test
+# suite. Forced (not setdefault), like the PRB-002 layers above, so a developer's environment or
+# backend/.env cannot select the Firestore backends. Tests that need a store install an in-memory
+# stand-in explicitly. (Release 2026-10-25 integration: CAPA-015's own setdefault credentials line
+# is dropped; PRB-002 layer 1 above forces the credentials file.)
+os.environ['AUDIT_SINK_BACKEND'] = 'memory'
+os.environ['REFRESH_TOKEN_BACKEND'] = 'memory'
+# CAPA-015 re-review N2: the session lifetimes are set explicitly, so a developer's backend/.env
+# (e.g. an old JWT_ACCESS_TOKEN_EXPIRE_MINUTES=60, which the start-up check refuses) cannot stop the
+# app from importing in the test suite. Environment variables take precedence over .env.
+os.environ['JWT_ACCESS_TOKEN_EXPIRE_MINUTES'] = '15'
+os.environ['REFRESH_TOKEN_IDLE_MINUTES'] = '30'
+os.environ['REFRESH_TOKEN_ABSOLUTE_HOURS'] = '12'
+
 # Lazy imports — only load heavy app dependencies when integration/security tests need them.
 # Unit tests import services directly and don't need the full FastAPI app.
 try:

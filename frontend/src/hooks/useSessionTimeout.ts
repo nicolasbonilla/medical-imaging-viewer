@@ -12,9 +12,15 @@
  * - Touch events
  * - Scroll events
  * - Click events
+ *
+ * CAPA-015 review M2: activity is SHARED across the tabs of the app (localStorage key
+ * `mstool_last_activity` + the `storage` event). Each tab used to run its own timer, so a tab left
+ * in the background logged the user out — ending the session of the tab where they were working.
+ * Now the warning and the log-off happen only when the user has been inactive in EVERY tab.
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { ACTIVITY_KEY } from '@/services/session';
 
 interface SessionTimeoutConfig {
   /** Session timeout duration in milliseconds (default: 15 minutes = 900000ms) */
@@ -59,6 +65,15 @@ const ACTIVITY_EVENTS = [
   'wheel',
 ] as const;
 
+function readSharedActivity(): number {
+  try {
+    const v = Number(localStorage.getItem(ACTIVITY_KEY));
+    return Number.isFinite(v) ? v : 0;
+  } catch {
+    return 0;
+  }
+}
+
 export function useSessionTimeout({
   timeoutDuration = DEFAULT_TIMEOUT,
   warningDuration = DEFAULT_WARNING,
@@ -76,6 +91,12 @@ export function useSessionTimeout({
   const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
   const lastActivityRef = useRef<number>(Date.now());
+  const showWarningRef = useRef(false);
+  const handleWarningRef = useRef<() => void>(() => undefined);
+  const handleTimeoutRef = useRef<() => void>(() => undefined);
+
+  /** The latest activity in ANY tab of the app. */
+  const lastAnyTab = useCallback(() => Math.max(lastActivityRef.current, readSharedActivity()), []);
 
   // Clear all timers
   const clearAllTimers = useCallback(() => {
@@ -93,13 +114,30 @@ export function useSessionTimeout({
     }
   }, []);
 
+  /** Schedule warning and log-off counted from `base` (the latest activity in any tab). */
+  const scheduleFrom = useCallback((base: number) => {
+    clearAllTimers();
+    showWarningRef.current = false;
+    setShowWarning(false);
+    const now = Date.now();
+    warningTimeoutRef.current = setTimeout(() => handleWarningRef.current(),
+      Math.max(0, base + timeoutDuration - warningDuration - now));
+    timeoutRef.current = setTimeout(() => handleTimeoutRef.current(), Math.max(0, base + timeoutDuration - now));
+  }, [clearAllTimers, timeoutDuration, warningDuration]);
+
   // Handle session timeout
   const handleTimeout = useCallback(() => {
+    const base = lastAnyTab();
+    if (Date.now() - base < timeoutDuration) {   // the user is working in another tab
+      scheduleFrom(base);
+      return;
+    }
     clearAllTimers();
     setIsActive(false);
+    showWarningRef.current = false;
     setShowWarning(false);
     onTimeout?.();
-  }, [clearAllTimers, onTimeout]);
+  }, [clearAllTimers, lastAnyTab, onTimeout, scheduleFrom, timeoutDuration]);
 
   // Start countdown when warning is shown
   const startCountdown = useCallback(() => {
@@ -115,37 +153,37 @@ export function useSessionTimeout({
         if (countdownRef.current) {
           clearInterval(countdownRef.current);
         }
-        handleTimeout();
+        handleTimeoutRef.current();
       }
     }, 1000);
-  }, [warningDuration, onWarning, handleTimeout]);
+  }, [warningDuration, onWarning]);
 
   // Show warning before timeout
   const handleWarning = useCallback(() => {
+    const base = lastAnyTab();
+    if (Date.now() - base < timeoutDuration - warningDuration) {   // active in another tab
+      scheduleFrom(base);
+      return;
+    }
+    showWarningRef.current = true;
     setShowWarning(true);
     startCountdown();
-  }, [startCountdown]);
+  }, [lastAnyTab, scheduleFrom, startCountdown, timeoutDuration, warningDuration]);
 
-  // Reset the session timer
+  handleWarningRef.current = handleWarning;
+  handleTimeoutRef.current = handleTimeout;
+
+  // Reset the session timer (activity in THIS tab: shared with the other tabs)
   const resetTimer = useCallback(() => {
     if (!enabled) return;
 
-    lastActivityRef.current = Date.now();
-    setLastActivity(new Date());
-    setShowWarning(false);
+    const now = Date.now();
+    lastActivityRef.current = now;
+    try { localStorage.setItem(ACTIVITY_KEY, String(now)); } catch { /* storage unavailable */ }
+    setLastActivity(new Date(now));
     setIsActive(true);
-    clearAllTimers();
-
-    // Set warning timer (fires before timeout)
-    warningTimeoutRef.current = setTimeout(() => {
-      handleWarning();
-    }, timeoutDuration - warningDuration);
-
-    // Set final timeout (backup in case warning countdown fails)
-    timeoutRef.current = setTimeout(() => {
-      handleTimeout();
-    }, timeoutDuration);
-  }, [enabled, timeoutDuration, warningDuration, clearAllTimers, handleWarning, handleTimeout]);
+    scheduleFrom(now);
+  }, [enabled, scheduleFrom]);
 
   // Extend session (user acknowledged warning)
   const extendSession = useCallback(() => {
@@ -189,14 +227,26 @@ export function useSessionTimeout({
     };
   }, [enabled, handleActivity, resetTimer, clearAllTimers]);
 
+  // Activity in another tab: hide this tab's warning and count from that activity
+  useEffect(() => {
+    if (!enabled) return undefined;
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== ACTIVITY_KEY) return;
+      setIsActive(true);
+      scheduleFrom(lastAnyTab());
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [enabled, lastAnyTab, scheduleFrom]);
+
   // Handle visibility change (user switches tabs)
   useEffect(() => {
     if (!enabled) return;
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        // Check if session should have expired while tab was hidden
-        const elapsed = Date.now() - lastActivityRef.current;
+        // Check if session should have expired while tab was hidden (activity in any tab counts)
+        const elapsed = Date.now() - lastAnyTab();
         if (elapsed >= timeoutDuration) {
           handleTimeout();
         } else if (elapsed >= timeoutDuration - warningDuration) {
@@ -211,7 +261,7 @@ export function useSessionTimeout({
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [enabled, timeoutDuration, warningDuration, handleTimeout, handleWarning]);
+  }, [enabled, timeoutDuration, warningDuration, handleTimeout, handleWarning, lastAnyTab]);
 
   return {
     showWarning,

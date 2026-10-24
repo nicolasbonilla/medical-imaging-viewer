@@ -17,8 +17,9 @@ All endpoints include audit logging per ISO 27001 A.12.4.1.
 """
 
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Response, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from starlette.concurrency import run_in_threadpool
 
 from app.security import (
     AuthService,
@@ -43,6 +44,13 @@ from app.security.models import (
     AuditLog,
 )
 from app.core.logging import get_logger
+from app.core.logging.audit import emit_audit, AuditEventType, AuditOutcome, AuditSeverity
+from app.security.refresh_tokens import (
+    REFRESH_COOKIE_NAME,
+    RefreshTokenStore,
+    clear_refresh_cookie,
+    get_refresh_token_store,
+)
 
 logger = get_logger(__name__)
 
@@ -58,6 +66,7 @@ router = APIRouter(
 )
 
 security = HTTPBearer()
+optional_bearer = HTTPBearer(auto_error=False)
 
 
 # Initialize services with secure configuration from environment
@@ -87,12 +96,11 @@ password_policy = PasswordPolicy(
 # Initialize password manager
 password_manager = PasswordManager(policy=password_policy)
 
-# Initialize token manager with secrets from environment
-token_manager = TokenManager(
-    secret_key=settings.SECRET_KEY,  # Loaded from JWT_SECRET_KEY env var
-    algorithm=settings.ALGORITHM,
-    access_token_expire_minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES,
-)
+# Token manager: the SAME process-wide instance the authentication dependency uses
+# (get_current_user -> get_token_manager). CAPA-015: a second instance here meant that a token
+# revoked at logout was revoked in a list nobody checked.
+from app.security.jwt_manager import get_token_manager
+token_manager = get_token_manager()
 
 # Initialize authentication service
 auth_service = AuthService(
@@ -106,11 +114,9 @@ auth_service = AuthService(
 
 # Helper functions
 def _get_client_ip(request: Request) -> str:
-    """Extract client IP address from request."""
-    forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.client.host if request.client else "unknown"
+    """Client IP: the right-most untrusted X-Forwarded-For hop (CAPA-015 review m9)."""
+    from app.core.client_ip import client_ip
+    return client_ip(request) or "unknown"
 
 
 def _get_user_agent(request: Request) -> str:
@@ -147,61 +153,55 @@ def _get_user_agent(request: Request) -> str:
 )
 async def logout(
     request: Request,
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    current_user: User = Depends(get_current_active_user),
+    response: Response,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_bearer),
+    refresh_store: RefreshTokenStore = Depends(get_refresh_token_store),
 ) -> None:
     """
-    Logout user and revoke JWT token.
+    Logout: revoke the access token (if presented and valid), revoke the refresh-token family of
+    the session cookie, and clear the cookie (CAPA-015, RC-068).
 
-    Args:
-        request: FastAPI request object
-        credentials: Bearer token credentials
-        current_user: Current authenticated user
-
-    Returns:
-        None (204 No Content)
+    The access token is optional so that a user whose access token has already expired can still
+    end the session held by the refresh cookie (the cookie is SameSite=Strict: a cross-site page
+    cannot send it). Always 204 — logging out twice is not an error.
 
     Example:
         POST /api/v1/auth/logout
-        Authorization: Bearer <token>
+        Authorization: Bearer <token>   (optional)
+        Cookie: __session=<refresh token>
     """
-    try:
-        token = credentials.credentials
-
-        logger.info(
-            f"Logout: {current_user.username}",
-            extra={
-                "user_id": current_user.id,
-                "username": current_user.username,
-                "ip_address": _get_client_ip(request),
-            }
-        )
-
-        auth_service.logout(token)
-
-        logger.info(
-            f"Logout successful: {current_user.username}",
-            extra={
-                "user_id": current_user.id,
-                "username": current_user.username,
-            }
-        )
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Logout failed: {str(e)}",
-            extra={
-                "user_id": current_user.id,
-                "error": str(e),
-            },
-            exc_info=True
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Logout failed"
-        )
+    actor = None
+    if credentials is not None:
+        try:
+            actor = token_manager.decode_token_data(credentials.credentials)
+            auth_service.logout(credentials.credentials)
+        except Exception:  # expired or invalid access token: the cookie may still end the session
+            actor = None
+    family = owner = None
+    store_error = False
+    cookie = request.cookies.get(REFRESH_COOKIE_NAME)
+    if cookie:
+        try:   # store calls off the event loop (review m8)
+            owner, family = await run_in_threadpool(refresh_store.peek_owner, cookie)
+            if family:
+                await run_in_threadpool(refresh_store.revoke_family, family, "logout")
+        except Exception as e:  # noqa: BLE001
+            store_error = True
+            logger.error("REFRESH_STORE_UNAVAILABLE logout could not revoke the session",
+                         extra={"error_type": type(e).__name__})
+    clear_refresh_cookie(response)
+    # Exactly one audit record per logout (review M3: an unknown cookie without a bearer left none).
+    user_id = getattr(actor, "user_id", None) or owner
+    if actor is not None or owner:
+        outcome, reason = AuditOutcome.SUCCESS, (None if actor else "refresh_cookie")
+        if store_error:
+            outcome, reason = AuditOutcome.PARTIAL, "session_not_revoked"
+    else:
+        outcome = AuditOutcome.FAILURE
+        reason = "store_unavailable" if store_error else ("unknown_session" if cookie else "no_session")
+    emit_audit(AuditEventType.AUTH_LOGOUT, outcome, request=request, user_id=user_id,
+               username=getattr(actor, "username", None), role=getattr(actor, "role", None), reason=reason)
+    logger.info("Logout", extra={"user_id": user_id, "session_revoked": bool(family)})
 
 
 
@@ -323,7 +323,9 @@ async def update_current_user(
 async def change_password(
     password_change: PasswordChange,
     request: Request,
+    response: Response,
     current_user: User = Depends(get_current_active_user),
+    refresh_store: RefreshTokenStore = Depends(get_refresh_token_store),
 ) -> None:
     """
     Change current user password.
@@ -361,6 +363,19 @@ async def change_password(
             user_id=current_user.id,
             password_change=password_change,
         )
+
+        # CAPA-015 (RC-068): a new password ends every session of the user, everywhere.
+        revoked = 0
+        try:
+            revoked = await run_in_threadpool(refresh_store.revoke_all_for_user, current_user.id, "password_change")
+        except Exception as e:  # noqa: BLE001 — logged and audited; the change itself stands
+            logger.error("REFRESH_STORE_UNAVAILABLE sessions not revoked after a password change",
+                         extra={"error_type": type(e).__name__, "user_id": current_user.id})
+        clear_refresh_cookie(response)
+        emit_audit(AuditEventType.AUTH_TOKEN_REVOKED, AuditOutcome.SUCCESS, request=request,
+                   user_id=current_user.id, username=current_user.username, role=current_user.role,
+                   reason="password_change", details={"revoked_sessions": revoked},
+                   severity=AuditSeverity.MEDIUM)
 
         logger.info(
             f"Password changed successfully: {current_user.username}",
@@ -710,80 +725,74 @@ async def delete_user(
 
 @router.get(
     "/audit-logs",
-    response_model=List[AuditLog],
     summary="Get audit logs",
     description="""
-    Get security audit logs (admin/radiologist only).
+    Read the durable audit trail (Firestore `audit_logs`), newest first — administrators only.
 
-    ISO 27001: A.12.4.1 (Event logging)
+    ISO 27001: A.12.4.1 (Event logging). CAPA-015 (RC-067, REQ-SEC-024): was an in-memory list
+    lost on every restart, readable by radiologists.
 
-    Returns audit trail of authentication and authorization events.
-    Supports filtering by user, action, date range.
+    Pagination: pass `next_page_token` from the previous page as `page_token`.
+    Filters: `user_id` (actor), `event_type`, `outcome`. Reading the trail is itself recorded.
+    The response also carries `sink_status` (is audit writing working on this instance).
     """,
     responses={
-        200: {"description": "Audit logs"},
+        200: {"description": "A page of audit records"},
+        400: {"description": "Invalid page token"},
         401: {"description": "Invalid or expired token"},
-        403: {"description": "Insufficient permissions"},
+        403: {"description": "Administrators only"},
+        503: {"description": "The durable audit trail is unavailable or not configured"},
     },
 )
 async def get_audit_logs(
-    limit: int = 100,
-    offset: int = 0,
-    user_id: Optional[str] = None,
-    action: Optional[str] = None,
-    current_user: User = Depends(require_permission(Permission.AUDIT_VIEW)),
-) -> List[AuditLog]:
-    """
-    Get security audit logs.
+    request: Request,
+    limit: int = Query(50, ge=1, le=200),
+    page_token: Optional[str] = Query(None, max_length=64),
+    user_id: Optional[str] = Query(None, max_length=128),
+    event_type: Optional[str] = Query(None, max_length=64),
+    outcome: Optional[str] = Query(None, max_length=16),
+    current_user: User = Depends(require_role(UserRole.ADMIN)),
+):
+    """Read a page of the durable audit trail (CAPA-015, RC-067)."""
+    from starlette.concurrency import run_in_threadpool
+    from app.core.logging.audit_sink import get_durable_audit_sink, query_audit_records
 
-    Args:
-        limit: Maximum number of logs to return
-        offset: Offset for pagination
-        user_id: Filter by user ID
-        action: Filter by action type
-        current_user: Current authenticated user with AUDIT_VIEW permission
-
-    Returns:
-        List of audit log entries
-
-    Example:
-        GET /api/v1/auth/audit-logs?limit=50&user_id=550e8400-e29b-41d4-a716-446655440000
-        Authorization: Bearer <token>
-    """
-    try:
-        logger.info(
-            f"Audit logs request by {current_user.username}",
-            extra={
-                "user_id": current_user.id,
-                "limit": limit,
-                "offset": offset,
-                "filter_user_id": user_id,
-                "filter_action": action,
-            }
-        )
-
-        audit_logs = auth_service.get_audit_logs(
-            limit=limit,
-            offset=offset,
-            user_id=user_id,
-            action=action,
-        )
-
-        return audit_logs
-
-    except Exception as e:
-        logger.error(
-            f"Get audit logs failed: {str(e)}",
-            extra={
-                "user_id": current_user.id,
-                "error": str(e),
-            },
-            exc_info=True
-        )
+    sink = get_durable_audit_sink()
+    sink_status = sink.status()
+    if sink.backend != "firestore":
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to retrieve audit logs"
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"The audit trail is not stored durably on this server (backend: {sink.backend}).",
         )
+    try:
+        client = await run_in_threadpool(sink.client)
+        items, next_token = await run_in_threadpool(
+            query_audit_records, client, limit=limit, page_token=page_token,
+            actor_user_id=user_id, event_type=event_type, outcome=outcome,
+        )
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid page token")
+    except Exception as e:  # noqa: BLE001
+        logger.error("Audit trail could not be read", extra={"error_type": type(e).__name__}, exc_info=True)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                            detail="The audit trail could not be read. Try again later.")
+
+    emit_audit(AuditEventType.AUDIT_LOG_READ, AuditOutcome.SUCCESS, request=request,
+               user_id=current_user.id, username=current_user.username, role=current_user.role,
+               resource_ids={"target_user_id": user_id} if user_id else None,
+               severity=AuditSeverity.MEDIUM)
+    return {"items": items, "next_page_token": next_token, "sink_status": sink_status}
+
+
+@router.get(
+    "/audit-status",
+    summary="Audit trail writing status",
+    description="Whether this server instance is writing the audit trail durably (state ok / degraded / "
+                "failing / not_durable / off), queue depth, failures. Administrators only (CAPA-015, RC-067).",
+)
+async def get_audit_status(current_user: User = Depends(require_role(UserRole.ADMIN))):
+    from app.core.logging.audit_sink import get_durable_audit_sink
+    return get_durable_audit_sink().status()
 
 
 # =============================================================================
@@ -878,8 +887,22 @@ async def webauthn_login_begin(request: Request):
 
 
 @router.post("/webauthn/login/complete")
-async def webauthn_login_complete(request: Request):
-    """Complete WebAuthn authentication and issue JWT token."""
+async def webauthn_login_complete(
+    request: Request,
+    response: Response,
+    refresh_store: RefreshTokenStore = Depends(get_refresh_token_store),
+):
+    """Complete WebAuthn authentication and issue JWT token (and, CAPA-015, a refresh session)."""
+    from app.api.routes.authentication import start_session
+
+    def audit_failure(reason, user=None, username=None):
+        emit_audit(AuditEventType.AUTH_LOGIN_FAILED, AuditOutcome.FAILURE, request=request,
+                   user_id=getattr(user, "id", None), username=getattr(user, "username", None),
+                   role=getattr(user, "role", None), reason=reason,
+                   attempted_identifier=username if user is None else None)
+
+    user = None
+    username = ""
     try:
         body = await request.json()
         username = body.get('username', '')
@@ -887,11 +910,14 @@ async def webauthn_login_complete(request: Request):
 
         user = auth_service._find_user_by_username_or_email(username)
         if not user:
+            audit_failure("passkey_user_not_found", username=username)
             raise HTTPException(status_code=401, detail="Invalid credentials")
 
         if not user.is_active:
+            audit_failure("account_inactive", user)
             raise HTTPException(status_code=403, detail="Account is disabled")
         if user.is_locked:
+            audit_failure("account_locked", user)
             raise HTTPException(status_code=403, detail="Account is locked")
 
         wa = _get_webauthn_service()
@@ -921,11 +947,16 @@ async def webauthn_login_complete(request: Request):
             "username": user.username,
             "ip": _get_client_ip(request),
         })
+        refresh_expires_in = await run_in_threadpool(start_session, response, user, refresh_store)   # CAPA-015 RC-068
+        emit_audit(AuditEventType.AUTH_LOGIN_SUCCESS, AuditOutcome.SUCCESS, request=request,
+                   user_id=user.id, username=user.username, role=user.role, reason="passkey")
 
         return {
             "token": {
                 "access_token": token_obj.access_token,
                 "token_type": "bearer",
+                "expires_in": token_obj.expires_in,
+                "refresh_expires_in": refresh_expires_in,
             },
             "user": {
                 "id": user.id,
@@ -944,9 +975,11 @@ async def webauthn_login_complete(request: Request):
     except HTTPException:
         raise
     except ValueError as e:
+        audit_failure("passkey_invalid", user, username)
         raise HTTPException(status_code=401, detail=str(e))
     except Exception as e:
         logger.error("WebAuthn login complete failed", extra={"error": str(e)})
+        audit_failure("passkey_error", user, username)
         raise HTTPException(status_code=401, detail="Authentication failed")
 
 

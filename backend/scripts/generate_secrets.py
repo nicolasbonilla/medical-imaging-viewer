@@ -115,7 +115,9 @@ LOG_LEVEL={log_level}
 # Auto-generated with secrets.token_urlsafe(64) - 512 bits entropy
 JWT_SECRET_KEY={jwt_secret}
 JWT_ALGORITHM=HS256
-JWT_ACCESS_TOKEN_EXPIRE_MINUTES=60
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES=15
+REFRESH_TOKEN_IDLE_MINUTES=30
+REFRESH_TOKEN_ABSOLUTE_HOURS=12
 JWT_REFRESH_TOKEN_EXPIRE_DAYS=7
 
 # ============================================================================

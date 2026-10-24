@@ -11,18 +11,34 @@ Provides comprehensive audit trail for security-critical events including:
 - Security incidents
 - Administrative actions
 
+CAPA-015 (RC-067, REQ-SEC-024; HAZ-010): every record is (1) written at once as one structured
+JSON line on stdout for Cloud Logging and (2) queued for the append-only Firestore collection
+`audit_logs` (see audit_sink.py). The local file is kept only outside Cloud Run, where it is a
+developer convenience — on Cloud Run the disk is per-instance memory that vanishes on restart.
+Records are built by `build_audit_record`: an allow-list of fields — no request body, no query
+string, no description text, no image data; identifiers only, file names hashed.
+
 @module core.logging.audit
 """
 
+import ipaddress
 import json
 import hashlib
+import hmac
+import os
+import re
+import sys
+import threading
+import uuid
+from contextvars import ContextVar
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional, Dict, Any, List
 from pathlib import Path
 from dataclasses import dataclass, asdict, field
 
-from app.core.logging import get_logger
+from app.core.logging.config import get_logger
+from app.core.logging.context import get_request_id
 
 logger = get_logger(__name__)
 
@@ -43,6 +59,11 @@ class AuditEventType(str, Enum):
     AUTH_PASSWORD_RESET = "auth.password.reset"
     AUTH_ACCOUNT_LOCKED = "auth.account.locked"
     AUTH_ACCOUNT_UNLOCKED = "auth.account.unlocked"
+    AUTH_TOKEN_INVALID = "auth.token.invalid"                # CAPA-015: refused for a missing/expired token
+    AUTH_TOKEN_REUSE_DETECTED = "auth.token.reuse_detected"  # CAPA-015: a rotated refresh token was replayed
+    AUTH_CREDENTIAL_REGISTER = "auth.credential.register"    # CAPA-015 review M3: passkey registration
+    AUTH_CREDENTIAL_REGISTER_BEGIN = "auth.credential.register_begin"  # re-review: a registration only started
+    AUTH_CREDENTIAL_DELETE = "auth.credential.delete"        # CAPA-015 review M3: passkey deletion
 
     # Authorization Events (A.9.4.1)
     AUTHZ_ACCESS_GRANTED = "authz.access.granted"
@@ -58,6 +79,18 @@ class AuditEventType(str, Enum):
     DATA_EXPORT = "data.export"
     DATA_DELETE = "data.delete"
     DATA_MODIFY = "data.modify"
+    DATA_ACCESS_READ = "data.access.read"          # CAPA-015: read of patient-scoped data (deduplicated)
+
+    # Clinical Events (CAPA-015, RC-067) — actions that create, change or decide on clinical data
+    CLINICAL_SEGMENTATION_CREATE = "clinical.segmentation.create"
+    CLINICAL_SEGMENTATION_SAVE = "clinical.segmentation.save"
+    CLINICAL_SEGMENTATION_MODIFY = "clinical.segmentation.modify"
+    CLINICAL_SEGMENTATION_DELETE = "clinical.segmentation.delete"
+    CLINICAL_SEGMENTATION_CONFIRM = "clinical.segmentation.confirm"
+    CLINICAL_LESION_ANNOTATION = "clinical.lesion.annotation"
+    CLINICAL_LONGITUDINAL_REVIEW = "clinical.longitudinal.review"
+    CLINICAL_AI_REPORT_GENERATE = "clinical.ai_report.generate"
+    CLINICAL_AI_RUN = "clinical.ai.run"
 
     # System Events (A.12.4.1)
     SYSTEM_STARTUP = "system.startup"
@@ -83,6 +116,10 @@ class AuditEventType(str, Enum):
     ADMIN_ROLE_CREATED = "admin.role.created"
     ADMIN_ROLE_DELETED = "admin.role.deleted"
     ADMIN_PERMISSION_MODIFIED = "admin.permission.modified"
+    ADMIN_CARE_TEAM_CHANGED = "admin.care_team.changed"   # CAPA-015
+
+    # Audit trail access (CAPA-015): reading the trail is itself recorded
+    AUDIT_LOG_READ = "audit.log.read"
 
     # Compliance Events (A.18.1.1)
     COMPLIANCE_AUDIT_STARTED = "compliance.audit.started"
@@ -120,10 +157,9 @@ class AuditEvent:
     severity: AuditSeverity
     outcome: AuditOutcome
 
-    # Event identification (with defaults)
-    event_id: str = field(default_factory=lambda: hashlib.sha256(
-        f"{datetime.now(timezone.utc).isoformat()}{id(object())}".encode()
-    ).hexdigest()[:16])
+    # Event identification (with defaults). CAPA-015: a random UUID — it is the record's
+    # Firestore document id, so it must never collide (the former time + id() hash could).
+    event_id: str = field(default_factory=lambda: uuid.uuid4().hex)
 
     # Temporal information
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
@@ -163,6 +199,16 @@ class AuditEvent:
 
     # Integrity protection
     checksum: Optional[str] = None
+
+    # CAPA-015 (RC-067): request correlation and structured, identifier-only context
+    request_id: Optional[str] = None
+    trace_id: Optional[str] = None
+    status_code: Optional[int] = None
+    resource_ids: Dict[str, str] = field(default_factory=dict)
+    reason: Optional[str] = None
+    details: Dict[str, Any] = field(default_factory=dict)
+    attempted_identifier_hmac: Optional[str] = None
+    source: str = "explicit"          # "explicit" (emitted by the code that acted) | "middleware"
 
     def __post_init__(self):
         """Calculate checksum for tamper detection."""
@@ -219,6 +265,294 @@ class AuditEvent:
         return json.dumps(self.to_dict(), default=str)
 
 
+# =============================================================================
+# CAPA-015 (RC-067): the audit RECORD — what reaches stdout and Firestore.
+# An allow-list: fields not built here never leave the process. No description text, no
+# request body, no query string, no image data. Identifiers are kept only when they look like
+# identifiers; anything else (a typed login name, a file name) is reduced to a SHA-256 prefix.
+# =============================================================================
+
+RECORD_SCHEMA_VERSION = 1
+
+_CLOUD_SEVERITY = {
+    AuditSeverity.LOW: "INFO",
+    AuditSeverity.MEDIUM: "NOTICE",
+    AuditSeverity.HIGH: "WARNING",
+    AuditSeverity.CRITICAL: "CRITICAL",
+}
+
+_CODE = re.compile(r"^[A-Za-z0-9_.:-]{1,64}$")
+_IDENT = re.compile(r"^[A-Za-z0-9_.:-]{1,128}$")
+_USERNAME = re.compile(r"^[A-Za-z0-9_.@-]{1,100}$")
+_ENDPOINT = re.compile(r"^/[A-Za-z0-9_./{}:-]{0,200}$")
+_METHODS = {"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
+
+# Keys of `details`: short codes, counts and flags only — never free text.
+DETAIL_KEYS = frozenset({
+    "template_type", "language", "decisions", "failed_attempts", "fields_changed", "new_role",
+    "revoked_sessions", "rotation_count", "deduplicated_window_s", "role", "durable_suppressed",
+})
+
+# Review m10: identifiers that must not be stored (typed login names, file names, MRNs, accession
+# numbers) are reduced to HMAC-SHA-256 with a secret key — a plain SHA-256 of a small space (an MRN,
+# a username) is reversible by trying every value. Key: AUDIT_HASH_KEY if set, otherwise derived
+# from the server secret as HMAC-SHA-256(JWT_SECRET_KEY, "mstool-audit-identifier-hash-v1")
+# (the JWT key itself is never used raw). Rotating the source secret changes every value, so
+# records written before and after a rotation can no longer be matched — set AUDIT_HASH_KEY to
+# keep values stable across a JWT-secret rotation.
+_HASH_KEY: Optional[bytes] = None
+
+
+def _hash_key() -> bytes:
+    global _HASH_KEY
+    if _HASH_KEY is None:
+        explicit = os.environ.get("AUDIT_HASH_KEY")
+        if explicit:
+            _HASH_KEY = explicit.encode("utf-8")
+        else:
+            secret = os.environ.get("JWT_SECRET_KEY", "")
+            if not secret:
+                try:
+                    from app.core.config import get_settings
+                    secret = get_settings().SECRET_KEY
+                except Exception:  # pragma: no cover
+                    secret = ""
+            _HASH_KEY = hmac.new(secret.encode("utf-8"), b"mstool-audit-identifier-hash-v1", hashlib.sha256).digest()
+    return _HASH_KEY
+
+
+def reset_audit_hash_key() -> None:
+    """Forget the cached key (tests; after changing AUDIT_HASH_KEY)."""
+    global _HASH_KEY
+    _HASH_KEY = None
+
+
+def keyed_hash(value: str, length: int = 16) -> str:
+    return hmac.new(_hash_key(), str(value).encode("utf-8"), hashlib.sha256).hexdigest()[:length]
+
+
+_UA_BROWSERS = (("edg/", "edge"), ("opr/", "opera"), ("firefox/", "firefox"), ("chrome/", "chrome"),
+                ("safari/", "safari"), ("curl/", "curl"), ("python", "python"), ("testclient", "testclient"))
+_UA_OS = (("windows", "windows"), ("android", "android"), ("iphone", "ios"), ("ipad", "ios"),
+          ("mac os", "mac"), ("linux", "linux"))
+
+
+def classify_user_agent(ua: Optional[str]) -> Optional[str]:
+    """Review m10: a coarse class ("chrome/windows"), never the full string (which can carry a
+    device name or other identifying text)."""
+    if not ua:
+        return None
+    low = str(ua).lower()
+    browser = next((name for key, name in _UA_BROWSERS if key in low), "other")
+    os_name = next((name for key, name in _UA_OS if key in low), "other")
+    return f"{browser}/{os_name}"
+
+
+def _code(value) -> Optional[str]:
+    if value is None:
+        return None
+    s = value.value if isinstance(value, Enum) else str(value)
+    return s if _CODE.match(s) else None
+
+
+def _ip(value) -> Optional[str]:
+    try:
+        return str(ipaddress.ip_address(str(value).strip())) if value else None
+    except ValueError:
+        return None
+
+
+def _safe_ids(ids: Optional[Dict[str, Any]]) -> Dict[str, str]:
+    out: Dict[str, str] = {}
+    for k, v in (ids or {}).items():
+        if not _CODE.match(str(k)) or v is None:
+            continue
+        s = str(v)
+        out[str(k)] = s if _IDENT.match(s) else "hmac:" + keyed_hash(s)
+    return out
+
+
+def _safe_details(details: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    out: Dict[str, Any] = {}
+    for k, v in (details or {}).items():
+        if k not in DETAIL_KEYS:
+            continue
+        if isinstance(v, bool) or (isinstance(v, (int, float)) and not isinstance(v, bool)):
+            out[k] = v
+        elif isinstance(v, (list, tuple)):
+            vals = [c for c in (_code(x) for x in list(v)[:20]) if c]
+            out[k] = vals
+        else:
+            c = _code(v)
+            if c:
+                out[k] = c
+    return out
+
+
+def build_audit_record(event: AuditEvent) -> Dict[str, Any]:
+    """The allow-listed, identifier-only audit record of an event (schema v1)."""
+    role = event.user_role.value if isinstance(event.user_role, Enum) else event.user_role
+    endpoint = event.endpoint if event.endpoint and _ENDPOINT.match(event.endpoint) else None
+    record = {
+        "schema_version": RECORD_SCHEMA_VERSION,
+        "event_id": event.event_id,
+        "event_type": event.event_type.value,
+        "severity": event.severity.value,
+        "outcome": event.outcome.value,
+        "action": _code(event.action),
+        "source": _code(event.source),
+        "client_timestamp": event.timestamp.isoformat(),
+        "actor_user_id": event.user_id if event.user_id and _IDENT.match(str(event.user_id)) else None,
+        "actor_username": event.username if event.username and _USERNAME.match(str(event.username)) else None,
+        "actor_role": _code(str(role).lower()) if role else None,
+        "attempted_identifier_hmac": _code(event.attempted_identifier_hmac),
+        "ip_address": _ip(event.ip_address),
+        "user_agent": classify_user_agent(event.user_agent),
+        "request_id": _code(event.request_id),
+        "trace_id": _code(event.trace_id),
+        "method": event.method if event.method in _METHODS else None,
+        "endpoint": endpoint,
+        "status_code": int(event.status_code) if isinstance(event.status_code, int) else None,
+        "resource_type": _code(event.resource_type),
+        "resource_ids": _safe_ids({**({"resource_id": event.resource_id} if event.resource_id else {}),
+                                   **(event.resource_ids or {})}),
+        "reason": _code(event.reason),
+        "details": _safe_details(event.details),
+        "service_revision": _code(os.environ.get("K_REVISION")),
+        "checksum": event.checksum,
+    }
+    return {k: v for k, v in record.items() if v not in (None, {}, [])}
+
+
+# Review m9 / re-review N4 — per-source budget for durable records that a stranger can cause at
+# will: records WITHOUT an authenticated actor (anonymous requests, forged or expired tokens, failed
+# sign-ins for unknown users). AUDIT_SOURCE_BUDGET records per AUDIT_SOURCE_WINDOW_S seconds per
+# source IP (defaults 30 per 60 s, per instance); beyond it the record goes to the server log only,
+# flagged durable_suppressed. Every record of an authenticated actor — success, failure or denial —
+# is always durable.
+_BUDGET_LOCK = threading.Lock()
+_BUDGET: Dict[str, tuple] = {}
+
+
+def _needs_budget(record: Dict[str, Any]) -> bool:
+    # re-review N4: ONLY anonymous records. An authenticated user's records (success, failure or
+    # denial) are always durable — per-user rate limits already bound them; budgeting them let 30
+    # anonymous junk requests push a radiologist's failed clinical action out of the trail.
+    return not record.get("actor_user_id")
+
+
+def _take_budget(source: str) -> bool:
+    import time as _time
+    limit = int(os.environ.get("AUDIT_SOURCE_BUDGET", "30"))
+    window = float(os.environ.get("AUDIT_SOURCE_WINDOW_S", "60"))
+    now = _time.monotonic()
+    with _BUDGET_LOCK:
+        start, count = _BUDGET.get(source, (now, 0))
+        if now - start >= window:
+            start, count = now, 0
+        if count >= limit:
+            _BUDGET[source] = (start, count)
+            return False
+        _BUDGET[source] = (start, count + 1)
+        if len(_BUDGET) > 50_000:
+            _BUDGET.clear()
+        return True
+
+
+def reset_audit_budget() -> None:
+    """Forget the per-source budgets (tests)."""
+    with _BUDGET_LOCK:
+        _BUDGET.clear()
+
+
+# Per-request audit context (set by AuditMiddleware): the durable writes a request produced
+# (so the middleware can wait for them) and whether the code emitted its own explicit event.
+class RequestAuditContext:
+    __slots__ = ("futures", "explicit")
+
+    def __init__(self):
+        self.futures: List[Any] = []
+        self.explicit = False
+
+
+_request_audit: ContextVar[Optional[RequestAuditContext]] = ContextVar("request_audit", default=None)
+
+
+def begin_request_audit():
+    """Start a request's audit context; returns (context, token for reset)."""
+    ctx = RequestAuditContext()
+    return ctx, _request_audit.set(ctx)
+
+
+def end_request_audit(token) -> None:
+    try:
+        _request_audit.reset(token)
+    except ValueError:  # reset from another context — harmless
+        pass
+
+
+def client_ip(request) -> Optional[str]:
+    """The right-most untrusted X-Forwarded-For hop (review m9) — see app/core/client_ip.py."""
+    from app.core.client_ip import client_ip as _client_ip
+    return _client_ip(request)
+
+
+def trace_id_of(request) -> Optional[str]:
+    header = request.headers.get("X-Cloud-Trace-Context") if request is not None else None
+    return header.split("/")[0] if header else None
+
+
+def emit_audit(
+    event_type: "AuditEventType",
+    outcome: "AuditOutcome",
+    *,
+    request=None,
+    user_id: Optional[str] = None,
+    username: Optional[str] = None,
+    role=None,
+    reason: Optional[str] = None,
+    resource_type: Optional[str] = None,
+    resource_ids: Optional[Dict[str, Any]] = None,
+    details: Optional[Dict[str, Any]] = None,
+    severity: Optional["AuditSeverity"] = None,
+    attempted_identifier: Optional[str] = None,
+    ip_address: Optional[str] = None,
+):
+    """Record an EXPLICIT audit event from the code that acted (authentication, admin changes).
+
+    Never raises. Within a request, the middleware then does not add a generic record for
+    the same authentication request."""
+    try:
+        if severity is None:
+            severity = {AuditOutcome.SUCCESS: AuditSeverity.LOW, AuditOutcome.DENIED: AuditSeverity.MEDIUM,
+                        AuditOutcome.FAILURE: AuditSeverity.MEDIUM}.get(outcome, AuditSeverity.MEDIUM)
+        route = request.scope.get("route") if request is not None else None
+        event = AuditEvent(
+            event_type=event_type,
+            severity=severity,
+            outcome=outcome,
+            user_id=user_id,
+            username=username,
+            user_role=role,
+            ip_address=ip_address or client_ip(request),
+            user_agent=request.headers.get("User-Agent") if request is not None else None,
+            method=request.method if request is not None else None,
+            endpoint=getattr(route, "path", None) or (request.url.path if request is not None else None),
+            action=event_type.value,
+            resource_type=resource_type,
+            resource_ids=dict(resource_ids or {}),
+            reason=reason,
+            details=dict(details or {}),
+            attempted_identifier_hmac=keyed_hash(attempted_identifier) if attempted_identifier else None,
+            trace_id=trace_id_of(request),
+            source="explicit",
+        )
+        return get_audit_logger().log_event(event)
+    except Exception as e:  # noqa: BLE001 — auditing must never break the request
+        logger.error(f"Failed to emit audit event: {e}", exc_info=True)
+        return None
+
+
 class AuditLogger:
     """
     Security audit logger with tamper-proof event recording.
@@ -228,15 +562,19 @@ class AuditLogger:
     ISO 27001 A.12.4.3 - Administrator and operator logs
     """
 
-    def __init__(self, audit_log_file: str = "logs/audit.log"):
+    def __init__(self, audit_log_file: Optional[str] = None, stdout: bool = True):
         """
         Initialize audit logger.
 
         Args:
-            audit_log_file: Path to audit log file
+            audit_log_file: Optional local file (developer convenience, never relied upon;
+                not used on Cloud Run, whose disk is per-instance memory).
+            stdout: Write each record as one structured JSON line on stdout (Cloud Logging).
         """
-        self.audit_log_file = Path(audit_log_file)
-        self.audit_log_file.parent.mkdir(parents=True, exist_ok=True)
+        self.audit_log_file = Path(audit_log_file) if audit_log_file else None
+        if self.audit_log_file is not None:
+            self.audit_log_file.parent.mkdir(parents=True, exist_ok=True)
+        self.stdout = stdout
 
         # Application logger for operational events
         self.logger = get_logger(__name__)
@@ -244,17 +582,25 @@ class AuditLogger:
         self.logger.info(
             "Audit logger initialized",
             extra={
-                "audit_log_file": str(self.audit_log_file),
+                "audit_log_file": str(self.audit_log_file) if self.audit_log_file else None,
+                "audit_durable_store": "firestore:audit_logs",
                 "iso27001_control": "A.12.4.1"
             }
         )
 
-    def log_event(self, event: AuditEvent) -> None:
+    def log_event(self, event: AuditEvent, durable: bool = True):
         """
-        Log audit event to file and application logger.
+        Record an audit event: one stdout JSON line at once, then the durable append-only store.
+
+        Never raises and never blocks the caller (CAPA-015, RC-067).
 
         Args:
             event: Audit event to log
+            durable: False only for records deliberately kept out of Firestore (a repeated read
+                within the deduplication window, a request that matched no route)
+
+        Returns:
+            The Future of the durable write, or None.
         """
         try:
             # Verify event integrity
@@ -266,34 +612,39 @@ class AuditLogger:
                         "event_type": event.event_type.value
                     }
                 )
-                return
+                return None
 
-            # Write to audit log file (append-only)
-            with open(self.audit_log_file, 'a', encoding='utf-8') as f:
-                f.write(event.to_json() + '\n')
+            if event.request_id is None:
+                event.request_id = get_request_id()
+            record = build_audit_record(event)
+            if durable and _needs_budget(record) and not _take_budget(record.get("ip_address") or "unknown"):
+                # Review m9: a flood of failed or anonymous requests from one source cannot fill the
+                # durable queue; every record still reaches the server log.
+                durable = False
+                record["details"] = {**record.get("details", {}), "durable_suppressed": True}
 
-            # Log to application logger based on severity
-            log_level = self._severity_to_log_level(event.severity)
-            self.logger.log(
-                log_level,
-                f"Audit Event: {event.event_type.value}",
-                extra={
-                    "event_id": event.event_id,
-                    "event_type": event.event_type.value,
-                    "severity": event.severity.value,
-                    "outcome": event.outcome.value,
-                    "user_id": event.user_id,
-                    "ip_address": event.ip_address,
-                    "resource_id": event.resource_id,
-                    "description": event.description,
-                    "iso27001_controls": event.iso27001_controls,
-                    "checksum": event.checksum,
-                }
-            )
+            if self.stdout:
+                self._write_stdout(record, event)
+
+            if self.audit_log_file is not None:
+                with open(self.audit_log_file, 'a', encoding='utf-8') as f:
+                    f.write(json.dumps(record, default=str) + '\n')
+
+            future = None
+            if durable:
+                from app.core.logging.audit_sink import get_durable_audit_sink
+                future = get_durable_audit_sink().submit(record)
+            ctx = _request_audit.get()
+            if ctx is not None:
+                if future is not None:
+                    ctx.futures.append(future)
+                if event.source == "explicit":
+                    ctx.explicit = True
 
             # Alert on critical security events
             if event.severity == AuditSeverity.CRITICAL:
                 self._send_security_alert(event)
+            return future
 
         except Exception as e:
             self.logger.error(
@@ -304,6 +655,22 @@ class AuditLogger:
                 },
                 exc_info=True
             )
+            return None
+
+    @staticmethod
+    def _write_stdout(record: Dict[str, Any], event: AuditEvent) -> None:
+        """One structured JSON line per record — Cloud Run forwards stdout to Cloud Logging."""
+        line = {
+            "severity": _CLOUD_SEVERITY.get(event.severity, "INFO"),
+            "message": f"AUDIT {record.get('event_type')} {record.get('outcome')}",
+            "audit": record,
+            "logging.googleapis.com/labels": {"audit": "true"},
+        }
+        project = os.environ.get("GOOGLE_CLOUD_PROJECT")
+        if record.get("trace_id") and project:
+            line["logging.googleapis.com/trace"] = f"projects/{project}/traces/{record['trace_id']}"
+        sys.stdout.write(json.dumps(line, default=str) + "\n")
+        sys.stdout.flush()
 
     def _severity_to_log_level(self, severity: AuditSeverity) -> int:
         """Map audit severity to logging level."""
@@ -528,6 +895,8 @@ def get_audit_logger() -> AuditLogger:
     if _audit_logger is None:
         from app.core.config import get_settings
         settings = get_settings()
-        audit_log_file = getattr(settings, 'AUDIT_LOG_FILE', 'logs/audit.log')
+        # CAPA-015: on Cloud Run (K_SERVICE set) the disk is per-instance memory that vanishes
+        # on restart and grows the instance's memory; the durable store is Firestore.
+        audit_log_file = None if os.environ.get("K_SERVICE") else getattr(settings, 'AUDIT_LOG_FILE', 'logs/audit.log')
         _audit_logger = AuditLogger(audit_log_file=audit_log_file)
     return _audit_logger

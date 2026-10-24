@@ -1,0 +1,270 @@
+{
+  "executed": "2026-10-24T13:53:41",
+  "base": "2c618ec (PR #65 head before the independent review fixes)",
+  "method": "source files that differ from the base commit restored to it, files it did not have removed; the CAPA-015 test files run unchanged, without cloud credentials; working tree restored byte for byte",
+  "swapped": {
+    "restored_to_base": [
+      "backend/.env.example",
+      "backend/app/api/routes/auth.py",
+      "backend/app/api/routes/authentication.py",
+      "backend/app/core/config.py",
+      "backend/app/core/logging/audit.py",
+      "backend/app/core/logging/audit_middleware.py",
+      "backend/app/core/logging/audit_sink.py",
+      "backend/app/core/security/rate_limit_middleware.py",
+      "backend/app/security/models.py",
+      "backend/app/security/refresh_tokens.py",
+      "backend/app/security/user_storage.py",
+      "backend/scripts/generate_secrets.py",
+      "frontend/src/components/SessionExpiredDialog.tsx",
+      "frontend/src/contexts/AuthContext.tsx",
+      "frontend/src/hooks/useSessionTimeout.ts",
+      "frontend/src/services/session.ts"
+    ],
+    "removed": [
+      "backend/app/core/client_ip.py"
+    ]
+  },
+  "test_sha256": {
+    "backend/tests/unit/test_capa015_review_fixes.py": "efc2194ca539b0d677ecd568e178b88fe30eda9356c632b36ffc6b8a2fec40ef",
+    "backend/tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
+    "frontend/src/services/session.capa015.review.test.tsx": "f57d8e4cb1b977d5321be83c5597d1535304519f1898f0f56b02f2b15ef4784f"
+  },
+  "backend": {
+    "passed": 29,
+    "failed": 18,
+    "errors": 0,
+    "results": {
+      "test_rc068_real_reuse_is_still_detected_after_the_window_or_after_the_successor_was_used": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc067_login_success_is_written_durably_with_actor_role_and_request_id": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.segmentation.save:POST]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.segmentation.save:PUT]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.segmentation.confirm:POST]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.segmentation.delete:DELETE]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.longitudinal.review:POST]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc067_ai_report_generation_is_recorded_with_template_and_outcome": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc067_data_reads_are_durable_once_per_window_and_always_on_stdout": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc067_records_hold_no_query_string_file_name_or_free_text": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc067_firestore_outage_never_breaks_the_request_is_logged_loudly_and_retried": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc067_admin_sees_when_audit_writing_is_failing": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc067_queue_overflow_keeps_the_record_in_the_server_log": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc067_records_are_append_only": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc067_audit_log_endpoint_reads_firestore_paginated_admin_only": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc067_auth_service_events_reach_the_durable_trail": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc068_login_sets_an_httponly_secure_samesite_strict_cookie_and_no_token_in_the_body": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc068_access_tokens_are_short_lived": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc068_refresh_rotates_and_the_old_token_is_refused": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc068_reuse_revokes_the_whole_family": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc068_refresh_tokens_are_stored_hashed": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc068_idle_and_absolute_expiry": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc068_logout_revokes_the_session_and_clears_the_cookie": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc068_password_change_takes_effect_and_revokes_every_session": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc068_inactive_or_locked_users_cannot_refresh": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc068_refreshed_access_token_carries_the_current_role": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc068_refresh_refuses_a_foreign_origin_and_a_missing_cookie": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc068_passkey_login_also_starts_a_rotating_session_and_keeps_lock_checks": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc068_firestore_repository_stores_hashes_and_rotates_in_one_transaction": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc068_startup_refuses_a_refresh_idle_limit_not_longer_than_the_access_token": {
+        "status": "failed",
+        "reason": "Failed: DID NOT RAISE <class 'pydantic_core._pydantic_core.ValidationError'>"
+      },
+      "test_rc068_login_and_refresh_tell_the_client_when_the_refresh_session_ends": {
+        "status": "failed",
+        "reason": "KeyError: 'refresh_expires_in'"
+      },
+      "test_rc068_secret_templates_no_longer_emit_a_60_minute_access_token": {
+        "status": "failed",
+        "reason": "AssertionError: backend/scripts/generate_secrets.py"
+      },
+      "test_rc067_auth_requests_without_their_own_event_are_still_recorded": {
+        "status": "failed",
+        "reason": "AssertionError: []"
+      },
+      "test_rc067_a_server_error_on_an_auth_route_is_recorded": {
+        "status": "failed",
+        "reason": "assert (0 == 1)"
+      },
+      "test_rc067_logout_with_an_unknown_cookie_and_no_bearer_is_recorded": {
+        "status": "failed",
+        "reason": "AssertionError: []"
+      },
+      "test_rc068_a_replay_within_the_grace_window_returns_the_same_successor": {
+        "status": "failed",
+        "reason": "AssertionError: {\"detail\":\"Session expired. Please sign in again.\"}"
+      },
+      "test_rc068_a_transient_user_store_error_does_not_end_the_session": {
+        "status": "failed",
+        "reason": "AssertionError: {\"user\":{\"id\":\"664a4da2-2e14-4bfa-bcbf-6c909a64e5d0\",\"username\":\"dr_rad\",\"email\":\"dr_rad@clinic.example\",\"full_name\":\"dr_rad\",\"role\":\"radiologist\",\"is_active\":true,\"is_locked\":false,\"email_verified\":true,\"created_at\":\"2026-1"
+      },
+      "test_rc068_secure_user_storage_distinguishes_not_found_from_an_error": {
+        "status": "failed",
+        "reason": "ImportError: cannot import name 'UserStoreUnavailable' from 'app.security.user_storage' (C:\\Users\\Nicolas\\medical-imaging-viewer\\.claude\\worktrees\\agent-a5e3a9f1585ba3491\\backend\\app\\security\\user_storage.py)"
+      },
+      "test_rc068_refresh_and_logout_store_calls_run_off_the_event_loop": {
+        "status": "failed",
+        "reason": "AssertionError: [('peek_owner', 'event-loop'), ('rotate', 'event-loop'), ('peek_owner', 'event-loop'), ('revoke_family', 'event-loop')]"
+      },
+      "test_rc068_revoking_every_session_touches_only_live_families": {
+        "status": "failed",
+        "reason": "AssertionError: MemoryRefreshRepo"
+      },
+      "test_rc067_the_recorded_ip_ignores_client_supplied_forwarded_hops": {
+        "status": "failed",
+        "reason": "AssertionError: 6.6.6.6"
+      },
+      "test_rc067_the_rate_limit_key_ignores_client_supplied_forwarded_hops": {
+        "status": "failed",
+        "reason": "AssertionError: assert '6.6.6.6' == '203.0.113.7'"
+      },
+      "test_rc067_a_flood_from_one_source_cannot_fill_the_durable_queue": {
+        "status": "failed",
+        "reason": "AssertionError: 60"
+      },
+      "test_rc067_the_banner_recovers_once_drops_are_no_longer_recent": {
+        "status": "failed",
+        "reason": "TypeError: DurableAuditSink.__init__() got an unexpected keyword argument 'clock'"
+      },
+      "test_rc067_identifiers_are_hashed_with_a_secret_key": {
+        "status": "failed",
+        "reason": "AssertionError: {'accession_sha256': '7103d3a3bff824e0'}"
+      },
+      "test_rc067_the_user_agent_is_reduced_to_a_coarse_class": {
+        "status": "failed",
+        "reason": "AssertionError: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Workstation-RAD-17"
+      },
+      "test_rc067_failed_logins_captcha_and_lockout_are_recorded_without_the_typed_identifier": {
+        "status": "failed",
+        "reason": "KeyError: 'attempted_identifier_hmac'"
+      }
+    }
+  },
+  "frontend": {
+    "passed": 0,
+    "failed": 9,
+    "not_passing": {
+      "rc069 renews before the refresh idle limit when it ends before the access token": {
+        "status": "failed",
+        "reason": "AssertionError: expected [] to have a length of 1 but got +0"
+      },
+      "rc069 a logout in another tab opens the dialog here and never navigates away (React Router)": {
+        "status": "failed",
+        "reason": "Error: Unable to find role=\"dialog\""
+      },
+      "rc069 another user's token written by another tab is never used here and opens the dialog": {
+        "status": "failed",
+        "reason": "Error: Unable to find role=\"dialog\""
+      },
+      "rc069 a re-login in another tab resumes this tab, closes its dialog and completes the waiting save": {
+        "status": "failed",
+        "reason": "Error: STACK_TRACE_ERROR"
+      },
+      "rc069 \"sign out\" in a dialog made stale by another tab's recovery does not log anybody out": {
+        "status": "failed",
+        "reason": "AssertionError: expected true to be false // Object.is equality"
+      },
+      "rc069 the inactivity log-off waits while the user is active in another tab": {
+        "status": "failed",
+        "reason": "AssertionError: expected +0 to be 1792828800000 // Object.is equality"
+      },
+      "rc069 a 404 from the refresh endpoint ends the session and keeps the waiting work": {
+        "status": "failed",
+        "reason": "AssertionError: expected 'active' to be 'expired' // Object.is equality"
+      },
+      "rc069 a 405 from the refresh endpoint ends the session and keeps the waiting work": {
+        "status": "failed",
+        "reason": "AssertionError: expected 'active' to be 'expired' // Object.is equality"
+      },
+      "rc069 a refresh that hangs gives up and frees the cross-tab lock": {
+        "status": "failed",
+        "reason": "AssertionError: expected false to be true // Object.is equality"
+      }
+    }
+  }
+}

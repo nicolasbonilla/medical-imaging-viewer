@@ -7,12 +7,9 @@ import {
   CheckCircle2, AlertCircle, KeyRound
 } from 'lucide-react';
 import { toast } from 'sonner';
-import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import LanguageSelector from '../components/LanguageSelector';
-
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-const API_URL = BASE_URL + '/api/v1';
+import { authClient, authUrl } from '../services/session';
 
 interface LoginForm {
   username: string;
@@ -77,7 +74,8 @@ export default function LoginPage() {
 
   const generateCaptcha = async () => {
     try {
-      const response = await axios.post(`${API_URL}/auth/captcha`, { difficulty: 'medium' });
+      // CAPA-015: same origin as the login it protects (hosting rewrite of /api/v1/auth/**)
+      const response = await authClient.post(authUrl('/captcha'), { difficulty: 'medium' });
       setCaptchaData(response.data);
       setRequiresCaptcha(true);
     } catch {
