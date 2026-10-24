@@ -1,0 +1,264 @@
+{
+  "executed": "2026-10-24T21:05:44",
+  "base": "29abe29 (PR #68 after the first review, before the second-review corrections)",
+  "method": "source files that differ from the base commit restored to it, files it did not have removed; the PRB-003 test files run unchanged; working tree restored byte for byte",
+  "swapped": {
+    "restored_to_base": [
+      "backend/app/api/routes/ai_report.py",
+      "backend/app/api/routes/segmentation.py",
+      "backend/app/api/routes/segmentation_analysis.py",
+      "backend/app/api/routes/segmentation_regions.py",
+      "backend/app/mcp/ms_clinical_server.py",
+      "backend/app/models/schemas.py",
+      "backend/app/services/brain_report_service.py",
+      "backend/app/services/dis_review_gate.py",
+      "backend/app/services/segmentation_service.py",
+      "frontend/src/api/segmentation.ts",
+      "frontend/src/components/LesionDashboard.tsx",
+      "frontend/src/i18n/locales/de.json",
+      "frontend/src/i18n/locales/en.json",
+      "frontend/src/i18n/locales/es.json",
+      "frontend/src/types/lesion.ts",
+      "frontend/src/types/segmentation.ts"
+    ],
+    "removed": []
+  },
+  "test_sha256": {
+    "backend/tests/unit/test_prb003_review2_findings.py": "0abedcd629b4be9b54a90657c4f67b79bd3e6a7c66c3a52ceb40081f64000e64",
+    "frontend/src/components/LesionDashboard.prb003.review2.test.tsx": "a8692baf202183c0882cbbc46563752130f6ac453e804c933998a9f6c32d325f"
+  },
+  "backend": {
+    "passed": 5,
+    "failed": 45,
+    "errors": 0,
+    "results": {
+      "test_rc070_n3_a_dis_statement_is_replaced[en-DIS: met (2/3 regions).]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc070_n3_a_dis_statement_is_replaced[es-Cumple diseminaci\\xf3n en espacio seg\\xfan McDonald.]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc070_n3_a_dis_statement_is_replaced[es-Lesiones en 2 de 4 localizaciones t\\xedpicas de EM, compatible con DIS.]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc070_n3_the_not_evaluated_sentence_itself_is_kept_unchanged": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc070_n4_no_template_asks_for_regions_without_an_evaluated_dis[ms_activity]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc070_n1_one_lesion_split_between_two_regions_is_never_evaluated": {
+        "status": "failed",
+        "reason": "AssertionError: {\"success\":true,\"already_confirmed\":false,\"clinician_review\":{\"reviewed_by\":\"dr_rev\",\"reviewed_by_id\":\"u-1\",\"reviewed_at\":\"2026-10-24T19:05:30.462078Z\",\"reviewed_mask_sha256\":\"8ecdbb7fefa7ae56eb8e08c2b04ad2c15c95f6ab029708a4"
+      },
+      "test_rc070_n1_a_lesion_relabelled_active_is_never_evaluated": {
+        "status": "failed",
+        "reason": "AssertionError: assert 200 == 409"
+      },
+      "test_rc070_n1_a_mask_flattened_to_one_label_needs_the_correction_acknowledged": {
+        "status": "failed",
+        "reason": "KeyError: 'correction_count'"
+      },
+      "test_rc070_n1_regions_relabelled_after_the_classification_need_an_acknowledgement": {
+        "status": "failed",
+        "reason": "AssertionError: assert 200 == 409"
+      },
+      "test_rc071_n1_an_acknowledgement_of_other_corrections_is_refused": {
+        "status": "failed",
+        "reason": "AssertionError: assert 200 == 409"
+      },
+      "test_rc070_n1_a_classification_record_without_lesion_regions_does_not_count": {
+        "status": "failed",
+        "reason": "AssertionError: {'active_voxels': 0, 'black_hole_voxels': 0, 'brain_regions_evaluated': 3, 'brain_regions_with_lesions': 2, ...}"
+      },
+      "test_rc070_n1_classify_regions_records_each_lesion_region": {
+        "status": "failed",
+        "reason": "KeyError: 'classified_lesion_regions'"
+      },
+      "test_rc070_n3_a_dis_statement_is_replaced[en-Lesions in periventricular, juxtacortical and infratentorial locations, fulfilling spatial dissemination.]": {
+        "status": "failed",
+        "reason": "AssertionError: ## FINDINGS"
+      },
+      "test_rc070_n3_a_dis_statement_is_replaced[en-The distribution is disseminated in space (3 of 4 characteristic locations).]": {
+        "status": "failed",
+        "reason": "AssertionError: ## FINDINGS"
+      },
+      "test_rc070_n3_a_dis_statement_is_replaced[en-Findings satisfy the MRI criteria for dissemination in **space**.]": {
+        "status": "failed",
+        "reason": "AssertionError: ## FINDINGS"
+      },
+      "test_rc070_n3_a_dis_statement_is_replaced[en-Dissemination-in-space criteria are fulfilled.]": {
+        "status": "failed",
+        "reason": "AssertionError: ## FINDINGS"
+      },
+      "test_rc070_n3_a_dis_statement_is_replaced[en-Lesions involve \\u22652 of the McDonald 2024 topographies (periventricular and juxtacortical).]": {
+        "status": "failed",
+        "reason": "AssertionError: ## FINDINGS"
+      },
+      "test_rc070_n3_a_dis_statement_is_replaced[en-Spatial distribution meets McDonald criteria.]": {
+        "status": "failed",
+        "reason": "AssertionError: ## FINDINGS"
+      },
+      "test_rc070_n3_a_dis_statement_is_replaced[en-MRI shows multifocal lesions typical of MS in periventricular and juxtacortical regions.]": {
+        "status": "failed",
+        "reason": "AssertionError: ## FINDINGS"
+      },
+      "test_rc070_n3_a_dis_statement_is_replaced[en-dis: met]": {
+        "status": "failed",
+        "reason": "AssertionError: ## FINDINGS"
+      },
+      "test_rc070_n3_a_dis_statement_is_replaced[en-D.I.S. criteria met.]": {
+        "status": "failed",
+        "reason": "AssertionError: ## FINDINGS"
+      },
+      "test_rc070_n3_a_dis_statement_is_replaced[es-Las lesiones cumplen criterios de diseminaci\\xf3n espacial (periventricular y yuxtacortical).]": {
+        "status": "failed",
+        "reason": "AssertionError: ## FINDINGS"
+      },
+      "test_rc070_n3_a_dis_statement_is_replaced[es-Afectaci\\xf3n de 3 de las 4 regiones caracter\\xedsticas.]": {
+        "status": "failed",
+        "reason": "AssertionError: ## FINDINGS"
+      },
+      "test_rc070_n3_a_dis_statement_is_replaced[es-Cumple criterios de diseminaci\\xf3n espacial.]": {
+        "status": "failed",
+        "reason": "AssertionError: ## FINDINGS"
+      },
+      "test_rc070_n3_a_dis_statement_is_replaced[de-R\\xe4umliche Streuung erf\\xfcllt (periventrikul\\xe4r und juxtakortikal).]": {
+        "status": "failed",
+        "reason": "AssertionError: ## FINDINGS"
+      },
+      "test_rc070_n3_a_dis_statement_is_replaced[de-Die Kriterien der \\xf6rtlichen Dissemination sind erf\\xfcllt.]": {
+        "status": "failed",
+        "reason": "AssertionError: ## FINDINGS"
+      },
+      "test_rc070_n3_a_dis_statement_is_replaced[de-L\\xe4sionen in 2 von 4 typischen Lokalisationen, vereinbar mit r\\xe4umlicher Ausbreitung.]": {
+        "status": "failed",
+        "reason": "AssertionError: ## FINDINGS"
+      },
+      "test_rc070_n3_a_region_table_is_removed": {
+        "status": "failed",
+        "reason": "AssertionError: assert ('Periventricular' not in '## FINDINGS...ount | 4 |\\n'"
+      },
+      "test_rc070_n3_not_evaluated_plus_a_claim_is_caught": {
+        "status": "failed",
+        "reason": "assert (0 == 1)"
+      },
+      "test_rc070_n3_a_region_heading_is_removed": {
+        "status": "failed",
+        "reason": "AssertionError: assert ('### Periventricular' not in '## FINDINGS... One lesion.'"
+      },
+      "test_rc070_n3_a_sentence_wrapped_over_two_lines_is_caught": {
+        "status": "failed",
+        "reason": "AssertionError: assert (1 == 1 and 'suggested b...hree regions' not in '## IMPRESSI...ree regions.'"
+      },
+      "test_rc070_n3_only_the_statement_is_replaced_not_the_paragraph": {
+        "status": "failed",
+        "reason": "AssertionError: Dissemination in space: not evaluated (requires clinician review of the segmentation)."
+      },
+      "test_rc070_n3_the_draft_states_how_many_statements_were_replaced": {
+        "status": "failed",
+        "reason": "AssertionError: assert ('**space**' not in '> **AI-Gene...pert review.'"
+      },
+      "test_rc070_n4_no_template_asks_for_regions_without_an_evaluated_dis[general]": {
+        "status": "failed",
+        "reason": "AssertionError: general still asks for regions: ['### Periventricular', '### Cortical / Juxtacortical', '### Infratentorial', '### Deep White Matter']"
+      },
+      "test_rc070_n4_no_template_asks_for_regions_without_an_evaluated_dis[ms_lesion_burden]": {
+        "status": "failed",
+        "reason": "AssertionError: ms_lesion_burden still asks for regions: ['### Periventricular', '### Cortical / Juxtacortical', '### Infratentorial', '### Deep White Matter', '| Region |', 'by anatomical region']"
+      },
+      "test_rc070_n4_no_template_asks_for_regions_without_an_evaluated_dis[ms_comprehensive]": {
+        "status": "failed",
+        "reason": "AssertionError: ms_comprehensive still asks for regions: ['### Regional Distribution', 'MAGNIMS Region', '| Region |', '| # | Region', '(region)', 'Distribution pattern']"
+      },
+      "test_rc070_n4_no_template_asks_for_regions_without_an_evaluated_dis[ms_longitudinal]": {
+        "status": "failed",
+        "reason": "AssertionError: ms_longitudinal: You are a fellowship-trained neuroradiologist with subspecialty expertise in longitudinal MS disease monitoring, writing a structured interval change report. Follow MAGNIMS-CMSC-NAIMS 2021 consensus, RSNA fo"
+      },
+      "test_rc071_n5_names_and_history_only_for_radiologist_and_admin[radiologist-True]": {
+        "status": "failed",
+        "reason": "KeyError: 'reviewed_by_role'"
+      },
+      "test_rc071_n5_names_and_history_only_for_radiologist_and_admin[admin-True]": {
+        "status": "failed",
+        "reason": "KeyError: 'reviewed_by_role'"
+      },
+      "test_rc071_n5_names_and_history_only_for_radiologist_and_admin[technician-False]": {
+        "status": "failed",
+        "reason": "AssertionError: assert ('dr_first' is None)"
+      },
+      "test_rc071_n5_names_and_history_only_for_radiologist_and_admin[viewer-False]": {
+        "status": "failed",
+        "reason": "AssertionError: assert ('dr_first' is None)"
+      },
+      "test_rc071_n5_the_list_route_hides_names_from_other_roles": {
+        "status": "failed",
+        "reason": "assert ('dr_first' not in '[{\"segmenta...asks\":null}]'"
+      },
+      "test_rc071_n5_the_history_is_capped": {
+        "status": "failed",
+        "reason": "AssertionError: assert 55 == 50"
+      },
+      "test_rc070_n5_the_assistant_never_receives_the_confirmer_name": {
+        "status": "failed",
+        "reason": "assert ('dr_rev' not in '{\"dis_asses...mentation.\"}'"
+      },
+      "test_rc070_n5_the_report_model_never_receives_the_confirmer_name": {
+        "status": "failed",
+        "reason": "assert ('evaluated' == 'evaluated'"
+      },
+      "test_rc071_n6_the_confirmation_writes_only_the_review_fields": {
+        "status": "failed",
+        "reason": "AssertionError: assert (None == 'renamed by another instance')"
+      },
+      "test_rc071_n6_a_document_changed_between_read_and_write_is_a_conflict": {
+        "status": "failed",
+        "reason": "AssertionError: {\"success\":true,\"already_confirmed\":false,\"clinician_review\":{\"reviewed_by\":\"dr_rev\",\"reviewed_by_id\":\"u-1\",\"reviewed_at\":\"2026-10-24T19:05:34.556796Z\",\"reviewed_mask_sha256\":\"7afa2b6aec6cbed8f9fb421786a4bb60895b9d08e88c64cb"
+      },
+      "test_rc071_n6_history_written_by_another_instance_is_kept": {
+        "status": "failed",
+        "reason": "AssertionError: assert [('confirmed', 'dr_rev')] == [('voided', '...d', 'dr_rev')]"
+      },
+      "test_rc070_n7_a_client_lesion_table_never_reaches_the_report": {
+        "status": "failed",
+        "reason": "KeyError: 'segmentation_id'"
+      },
+      "test_rc070_n7_a_lesion_table_that_cannot_be_computed_is_refused": {
+        "status": "failed",
+        "reason": "AssertionError: {\"report_id\":\"r\",\"content\":\"draft body\\n\\n---\\n\\n> **Dissemination in space: not evaluated.** No radiologist has confirmed the lesions and their MAGNIMS regions for the current version of the segmentation, so the software di"
+      }
+    }
+  },
+  "frontend": {
+    "passed": 0,
+    "failed": 5,
+    "not_passing": {
+      "rc070 review2 a lesion with no region or two regions is listed and no confirmation is offered": {
+        "status": "failed",
+        "reason": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"dis-lesion-labels-invalid\"]"
+      },
+      "rc071 review2 the corrections are listed and the confirmation waits for their acknowledgement": {
+        "status": "failed",
+        "reason": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"dis-edited-after-classification\"]"
+      },
+      "rc071 review2 acknowledged corrections are listed in the dialog and their digest is sent": {
+        "status": "failed",
+        "reason": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"dis-ack-corrections\"]"
+      },
+      "rc070 review2 an evaluated result says it includes acknowledged corrections": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirmed-corrections\"]"
+      },
+      "rc071 review2 without the confirmer name (other roles) the card says a radiologist confirmed": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirmed-by\"]"
+      }
+    }
+  },
+  "note": "Second independent review of PR #68 at 29abe29 (N1, N3-N7). Tests that pass on 29abe29 are positive controls or wordings the first output check already caught (stated in PRB-003 section 10); every other test fails on the base."
+}

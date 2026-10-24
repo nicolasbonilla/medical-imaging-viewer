@@ -35,8 +35,8 @@ from app.models.schemas import LabelInfo
 from app.security import get_current_active_user
 from app.security.models import UserRole
 from tests.unit.test_prb003_dis_requires_confirmed_segmentation import (  # noqa: F401  (fixtures)
-    D, H, W, MAGNIMS, CONCLUSION_KEYS, _Storage, _assert_not_evaluated, _confirm, _dis, _mask, _prov, _seed,
-    _service, _sha, _user, client_for, ms_server,
+    D, H, W, MAGNIMS, CONCLUSION_KEYS, _Storage, _assert_not_evaluated, _classification, _confirm, _dis, _mask,
+    _prov, _seed, _service, _sha, _user, client_for, ms_server,
 )
 
 BINARY = [LabelInfo(id=0, name="Background", color="#000000"), LabelInfo(id=1, name="Lesion", color="#FF0000")]
@@ -56,10 +56,7 @@ def _classify(entry, mask=None):
     """Record a region classification for the lesions of `mask` (default: the stored mask)."""
     m = entry["masks_3d"] if mask is None else mask
     meta = entry["metadata"]
-    meta.analysis_data = {**(meta.analysis_data or {}),
-                          "classification": {"method": "geometric",
-                                             "classified_lesion_footprint_sha256": _gate().footprint_sha256(m),
-                                             "classified_mask_sha256": _sha(m)}}
+    meta.analysis_data = {**(meta.analysis_data or {}), **_classification(m)}   # N1: with each lesion's region
 
 
 def _review(entry, by="dr_rev"):
@@ -168,7 +165,8 @@ def test_rc070_r1_classified_and_confirmed_is_evaluated(client_for):
 @pytest.mark.unit
 def test_rc070_r1_a_region_corrected_after_classification_keeps_the_classification(client_for):
     """The classification is bound to the classified LESIONS (footprint): a radiologist may correct a region
-    label; the correction is covered by the confirmation of mask + labels."""
+    label. Changed by the second review of PR #68 (N1): the correction is listed and must be acknowledged in the
+    confirmation — a confirmation of mask + labels alone no longer covers it."""
     svc = _service()
     entry = _seed(svc)
     _classify(entry)
@@ -177,8 +175,14 @@ def test_rc070_r1_a_region_corrected_after_classification_keeps_the_classificati
     entry["masks_3d"] = corrected
     _review(entry)
     body = _dis(client_for(svc))
+    _assert_not_evaluated(body)
+    assert body["regions"]["classified"] is True and body["regions"]["edited_after_classification"] is True
+    assert body["regions"]["correction_count"] == 1
+    r = client_for(svc).post("/api/v1/segmentation/seg-1/review/confirm", json={
+        "mask_sha256": _sha(corrected), "region_corrections_sha256": body["regions"]["corrections_sha256"]})
+    assert r.status_code == 200, r.text[:300]
+    body = _dis(client_for(svc))
     assert body["evaluation_status"] == "evaluated" and body["dis_met_brain"] is False
-    assert body["regions"]["edited_after_classification"] is True
 
 
 @pytest.mark.unit
@@ -508,6 +512,18 @@ def e2e(monkeypatch):
     monkeypatch.setattr(BrainReportService, "_get_client", lambda self: provider)
     monkeypatch.setattr(ai_report, "_dis_services", lambda: (svc, _Storage()), raising=False)
     monkeypatch.setattr(ai_report, "authorize_mask_specs", authorize, raising=False)
+    # Second review of PR #68 (N2): the same fixture must drive PR #67's route after the merge — it checks the
+    # report's segmentation and reads its patient (CAPA-014). Absent before the merge: nothing is replaced.
+
+    async def authorize_segmentation(segmentation_id, user):
+        return "11111111-1111-1111-1111-111111111111"
+
+    monkeypatch.setattr(ai_report, "authorize_segmentation_id", authorize_segmentation, raising=False)
+    try:
+        from tests.unit.test_capa014_report_provider_payload import _Patients, _record
+        monkeypatch.setattr(ai_report, "_patient_service", lambda: _Patients(_record()), raising=False)
+    except ImportError:                                   # PR #67 not merged yet
+        pass
     app.dependency_overrides[get_current_active_user] = lambda: _user()
     yield TestClient(app, raise_server_exceptions=False), svc, provider, authorized
     app.dependency_overrides.clear()

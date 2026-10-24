@@ -91,25 +91,69 @@ def _clinician_review(mask_sha, by="dr_rev", labels=None):
             "reviewed_mask_sha256": mask_sha, "reviewed_labels_sha256": gate.labels_sha256(labels or MAGNIMS)}
 
 
+def _lesion_regions(mask):
+    """Each 18-connected lesion of `mask` (first voxel in C order, voxel count, region; 0 = more than one label).
+    Computed here, independently of the code under test (second review of PR #68, N1)."""
+    from scipy import ndimage
+    components, n = ndimage.label(mask > 0, structure=ndimage.generate_binary_structure(3, 2))
+    out = []
+    for i in range(1, n + 1):
+        where = np.flatnonzero(components.ravel() == i)
+        values = np.unique(mask.ravel()[where])
+        out.append([int(where[0]), int(where.size), int(values[0]) if values.size == 1 else 0])
+    return sorted(out)
+
+
 def _classification(mask):
-    """The record classify-regions stores for the lesions of `mask` (review of PR #68, blocker 1)."""
+    """The record classify-regions stores for the lesions of `mask` (review of PR #68, blocker 1; second review,
+    N1: with each lesion's region)."""
     from app.services import dis_review_gate as gate
     return {"classification": {"method": "geometric", "classified_lesion_footprint_sha256": gate.footprint_sha256(mask),
-                               "classified_mask_sha256": _sha(mask)}}
+                               "classified_mask_sha256": _sha(mask),
+                               "classified_lesion_regions": _lesion_regions(mask), "lesion_connectivity": 18}}
 
 
 class _FakeDB:
+    """The metadata store: whole-document `set`, and field `update` with an optional update-time precondition
+    (second review of PR #68, N6). `writes` records every write as (kind, document id, data)."""
+
     def __init__(self):
-        self.docs = {}
+        self.docs, self.times, self.writes = {}, {}, []
+
+    def write_option(self, last_update_time=None):
+        return {"last_update_time": last_update_time}
 
     def collection(self, name):
         db = self
 
         class _C:
             def document(self, doc_id):
+                class _Snapshot:
+                    def __init__(self):
+                        self.exists = doc_id in db.docs
+                        self.update_time = db.times.get(doc_id)
+
+                    def to_dict(self):
+                        return dict(db.docs.get(doc_id) or {})
+
                 class _D:
                     def set(self, data):
+                        db.writes.append(("set", doc_id, data))
                         db.docs[doc_id] = data
+                        db.times[doc_id] = db.times.get(doc_id, 0) + 1
+
+                    def get(self):
+                        return _Snapshot()
+
+                    def update(self, data, option=None):
+                        from google.api_core.exceptions import FailedPrecondition, NotFound
+                        if doc_id not in db.docs:
+                            raise NotFound("no such document")
+                        if option is not None and option["last_update_time"] != db.times.get(doc_id):
+                            raise FailedPrecondition("the document changed since it was read")
+                        db.writes.append(("update", doc_id, data))
+                        db.docs[doc_id] = {**db.docs[doc_id], **data}
+                        db.times[doc_id] = db.times.get(doc_id, 0) + 1
                 return _D()
         return _C()
 
@@ -132,6 +176,9 @@ def _seed(svc, sid="seg-1", mask=None, classified=False, **meta):
     metadata = SegmentationMetadata(file_id=FILE, labels=MAGNIMS, **meta)
     svc.segmentations_cache[sid] = {"metadata": metadata, "masks_3d": mask, "image_shape": (H, W, D),
                                     "source_format": "nifti"}
+    if isinstance(getattr(svc, "_db", None), _FakeDB):     # the stored metadata document (it exists in production)
+        svc._db.docs[sid] = metadata.model_dump(mode="json")
+        svc._db.times[sid] = 1
     return svc.segmentations_cache[sid]
 
 
@@ -695,7 +742,9 @@ def test_rc070_assistant_receives_an_evaluated_assessment_unchanged(ms_server, m
         return {"metadata": {"analysis_data": {}}} if path == "/segmentation/seg-1" else {"total_count": 2}
 
     monkeypatch.setattr(ms_server, "api_get", api_get)
-    assert _run(ms_server.summarize_dis_items("seg-1"))["dis_assessment"] == evaluated
+    # Changed by the second review of PR #68 (N5): unchanged except the confirmer, given by role, never by name.
+    assert _run(ms_server.summarize_dis_items("seg-1"))["dis_assessment"] == {
+        **evaluated, "segmentation_review": {"status": "confirmed", "reviewed_by_role": "radiologist"}}
 
 
 @pytest.mark.unit
