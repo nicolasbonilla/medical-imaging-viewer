@@ -167,7 +167,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                              "'H C 7 7 8 8 1 2', 'MRN 2025 0042' not found"),
     "T8_birth_date_check_removed": ([(G, '    if any(p.search(norm) for p in _birth_patterns(ids.birth_date)):\n        found.append("birth_date")\n', "")],
                                     "'geb. 9.11.', \"born '75\" not found"),
-    "T9_record_phone_check_removed": ([(G, '    if ids.phones and any(p in digits for digits in runs for p in ids.phones):\n        found.append("phone")\n', "")],
+    "T9_record_phone_check_removed": ([(G, '        if any(p in blob for p in ids.phones):\n            found.append("phone")\n', "")],
                                       "the patient's short phone forms ('01 40400') not found"),
     "T10_email_checks_removed": ([(G, '    if any(e in norm for e in ids.emails):\n        found.append("email")\n', ""),
                                   skip_generic("email")], "e-mail addresses not found"),

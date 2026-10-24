@@ -534,6 +534,8 @@ _GENERIC = {
     "titled_name": re.compile(r"(?<![a-z])(?:dr|dra|prof|profa|herr|frau|mrs|mr|sra|sr)\.?\s{1,3}[a-z]{2,}"),
 }
 _DIGIT_RUN = re.compile(r"\d[\d\s().\-/]*")
+_DIGIT_GROUP = re.compile(r"\d+")
+_ASCII_DIGITS = re.compile(r"[0-9]+")
 _ALNUM = re.compile(r"[a-z0-9]+")
 _NUMBER_WITH_UNIT = re.compile(r"\d+(?:mm3|mm2|mm|cm3|cm2|cm|ml|ul|ms|mg|kg|g|t|th|st|nd|rd)")
 
@@ -611,17 +613,21 @@ def find_identifiers(text: str, ids: PatientIdentifiers, safe_words: FrozenSet[s
     if any(e in norm for e in ids.emails):
         found.append("email")
 
-    runs = [_digits(r.group(0)) for r in _DIGIT_RUN.finditer(norm)]
-    if ids.phones and any(p in digits for digits in runs for p in ids.phones):
-        found.append("phone")
+    # Digit runs are found once. Their ASCII digits, joined by "|" (a phone number cannot span two runs), are
+    # searched once per phone, so the time grows with the length of the text only.
+    run_texts = [r.group(0) for r in _DIGIT_RUN.finditer(norm)]
+    if ids.phones:
+        blob = "|".join("".join(_ASCII_DIGITS.findall(run)) for run in run_texts)
+        if any(p in blob for p in ids.phones):
+            found.append("phone")
 
     for category, pattern in _GENERIC.items():
         if pattern.search(norm):
             found.append(category)
-    for r in _DIGIT_RUN.finditer(norm):
-        run = r.group(0).strip()
-        groups = re.findall(r"\d+", run)
-        digits = sum(len(g) for g in groups)
+    for run in run_texts:
+        run = run.strip()
+        groups = _DIGIT_GROUP.findall(run)
+        digits = sum(map(len, groups))
         if digits >= 9 and (len(groups) == 1 or len(groups) >= 3 or run.startswith("0")):
             found.append("long_or_phone_like_number")
             break
