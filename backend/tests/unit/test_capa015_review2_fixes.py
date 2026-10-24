@@ -12,6 +12,8 @@ N4  the per-source budget pushed AUTHENTICATED failures and denials out of the d
 N2  a developer `.env` with `JWT_ACCESS_TOKEN_EXPIRE_MINUTES=60` stopped the app from importing (the
     start-up lifetime check): the suite sets the session lifetimes explicitly.
 nit `webauthn/register/begin` was recorded as a completed registration.
+N1b (coordinator check of the egress list, 2026-10-24) the embedded list lacked two IPv4 ranges and one
+    IPv6 range and had one IPv6 range too narrow — written before the list was replaced, fails on 9f4855e.
 
 Written before the fixes; they fail on 09e11e8 — record
 docs/iec62304/records/risk_verification/CAPA-015_review2_tests_on_pr65_2026-10-24.json.
@@ -66,6 +68,18 @@ def test_rc067_the_egress_list_is_sourced_dated_and_replaceable_without_a_rebuil
     monkeypatch.setenv("TRUSTED_PROXY_CIDRS", "192.0.2.0/24")       # a Cloud Run settings update
     assert mod.client_ip(_req("203.0.113.7, 192.0.2.5")) == "203.0.113.7"
     assert mod.client_ip(_req("203.0.113.7, 151.101.1.1")) == "151.101.1.1", "the override replaces the list"
+
+
+@pytest.mark.unit
+def test_rc067_the_egress_list_is_the_published_fastly_list(monkeypatch):
+    # Coordinator check 2026-10-24 against https://api.fastly.com/public-ip-list: the first transcription
+    # lacked 90.98.0.0/17, 90.98.128.0/18 and 2a04:4e44::/32 and had 2a04:4e42::/32 instead of /31.
+    monkeypatch.delenv("TRUSTED_PROXY_CIDRS", raising=False)
+    monkeypatch.delenv("TRUST_FORWARDED_FOR", raising=False)
+    mod = importlib.import_module("app.core.client_ip")
+    assert len(mod.EGRESS_CIDRS) == 24 and len(set(mod.EGRESS_CIDRS)) == 24, "21 IPv4 + 3 IPv6 ranges"
+    for egress in ("90.98.1.1", "90.98.200.1", "2a04:4e43::1", "2a04:4e44::1"):
+        assert mod.client_ip(_req(f"203.0.113.7, {egress}")) == "203.0.113.7", egress
 
 
 @pytest.mark.unit
