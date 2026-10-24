@@ -91,3 +91,6 @@ desktop.ini
 # ============================================================================
 # END OF GIT IGNORE RULES
 # ============================================================================
+
+# PRB-002: empty gcloud config dir the test suite points at (never holds credentials)
+tests/.no-cloud/

@@ -1,0 +1,99 @@
+{
+ "generated": "2026-10-24T12:34:15",
+ "tests": {
+  "tests/unit/test_prb002_no_cloud_in_tests.py": "7443f2c488a873ba86712f2d0a3e4fa35602f35fe5bf01990d68c2096d1a5add"
+ },
+ "conftest_sha256": "58776c0e4443527a810e05f4d759d55f67c04704bfdb1d464d1c03791546745b",
+ "baseline": {
+  "exit": 0,
+  "failed": []
+ },
+ "mutations": [
+  {
+   "name": "M1_credentials_path_not_forced",
+   "executed": "2026-10-24T12:34:28",
+   "exit": 1,
+   "failed_tests": [
+    "test_credentials_file_points_nowhere"
+   ],
+   "detected": true
+  },
+  {
+   "name": "M2_credentials_path_setdefault_only",
+   "executed": "2026-10-24T12:34:36",
+   "exit": 1,
+   "failed_tests": [
+    "test_credentials_file_points_nowhere"
+   ],
+   "detected": true
+  },
+  {
+   "name": "M3_storage_key_file_not_emptied",
+   "executed": "2026-10-24T12:34:43",
+   "exit": 1,
+   "failed_tests": [
+    "test_storage_service_cannot_reach_cloud"
+   ],
+   "detected": true
+  },
+  {
+   "name": "M4_gcloud_config_not_redirected",
+   "executed": "2026-10-24T12:34:51",
+   "exit": 1,
+   "failed_tests": [
+    "test_gcloud_config_dir_holds_no_credentials"
+   ],
+   "detected": true
+  },
+  {
+   "name": "M5_project_not_forced",
+   "executed": "2026-10-24T12:34:58",
+   "exit": 1,
+   "failed_tests": [
+    "test_project_is_not_a_real_project"
+   ],
+   "detected": true
+  },
+  {
+   "name": "M6_legacy_project_variable_kept",
+   "executed": "2026-10-24T12:35:06",
+   "exit": 1,
+   "failed_tests": [
+    "test_project_is_not_a_real_project"
+   ],
+   "detected": true
+  },
+  {
+   "name": "M7_credentials_guard_not_installed",
+   "executed": "2026-10-24T12:35:14",
+   "exit": 1,
+   "failed_tests": [
+    "test_google_auth_default_refuses"
+   ],
+   "detected": true
+  },
+  {
+   "name": "M8_only_public_default_patched",
+   "executed": "2026-10-24T12:35:23",
+   "exit": 1,
+   "failed_tests": [
+    "test_google_auth_default_refuses"
+   ],
+   "detected": true
+  },
+  {
+   "name": "M9_any_emulator_host_trusted",
+   "executed": "2026-10-24T12:35:31",
+   "exit": 1,
+   "failed_tests": [
+    "test_remote_emulator_host_is_not_trusted"
+   ],
+   "detected": true
+  }
+ ],
+ "summary": {
+  "mutations": 9,
+  "detected": 9,
+  "undetected": []
+ }
+}

@@ -36,6 +36,49 @@ os.environ['DEBUG'] = 'false'
 os.environ['JWT_SECRET_KEY'] = 'test-secret-key-minimum-32-characters-required-for-security'
 os.environ['ENCRYPTION_MASTER_KEY'] = 'dGVzdC1lbmNyeXB0aW9uLW1hc3Rlci1rZXktMzItYnl0ZXMtcmVxdWlyZWQ='
 
+# PRB-002: the test suite must never reach a real Google Cloud service. On a developer machine
+# with gcloud application-default credentials, SecureUserStorage built a real Firestore client
+# (project defaulting to brain-mri-476110) and every local run wrote test accounts into the
+# production auth_users collection. Four independent layers, all set BEFORE any app import:
+#   1. the credentials file points at a path that does not exist (forced, not setdefault, so a
+#      developer's own GOOGLE_APPLICATION_CREDENTIALS cannot leak in), and the storage service's
+#      own key-file setting is emptied;
+#   2. the gcloud config directory is an empty one, so the gcloud ADC file is never found;
+#   3. the project is a name that is not a real project, so nothing defaults to production;
+#   4. google.auth.default itself refuses (below), so any client that slips past 1-3 fails the
+#      same way as on a machine without credentials (CI), and the stores use their local backends.
+# Tests that need a store install an in-memory stand-in; the opt-in Firestore emulator tests
+# (requires_firestore) keep working against a LOCAL emulator only, with anonymous credentials.
+OFFLINE_PROJECT_ID = 'mstool-offline-tests'
+_NO_CLOUD_DIR = PROJECT_ROOT / 'tests' / '.no-cloud'
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(_NO_CLOUD_DIR / 'no-credentials.json')
+os.environ['GCS_CREDENTIALS_FILE'] = ''  # a .env cannot point the storage service at a key file
+os.environ['CLOUDSDK_CONFIG'] = str(_NO_CLOUD_DIR / 'gcloud')
+os.environ['GOOGLE_CLOUD_PROJECT'] = OFFLINE_PROJECT_ID
+os.environ.pop('GCLOUD_PROJECT', None)
+
+
+def _install_no_cloud_credentials_guard() -> None:
+    import google.auth
+    import google.auth._default
+    from google.auth.credentials import AnonymousCredentials
+    from google.auth.exceptions import DefaultCredentialsError
+
+    def _refuse_real_credentials(*_args, **_kwargs):
+        emulator = os.environ.get('FIRESTORE_EMULATOR_HOST', '')
+        if emulator.split(':')[0] in ('localhost', '127.0.0.1', '::1', '[::1]'):
+            return AnonymousCredentials(), OFFLINE_PROJECT_ID
+        raise DefaultCredentialsError(
+            'PRB-002: the test suite never uses real Google credentials '
+            '(backend/tests/conftest.py).')
+
+    _refuse_real_credentials.prb002_guard = True
+    google.auth.default = _refuse_real_credentials
+    google.auth._default.default = _refuse_real_credentials
+
+
+_install_no_cloud_credentials_guard()
+
 # Lazy imports — only load heavy app dependencies when integration/security tests need them.
 # Unit tests import services directly and don't need the full FastAPI app.
 try:
