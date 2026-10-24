@@ -1,58 +1,101 @@
 """
-Client IP address behind Google's front end — CAPA-015 review m9 (RC-067, RC-068; HAZ-010).
+Client IP address behind Google's front end — CAPA-015 review m9 / re-review N1 (RC-067, RC-068; HAZ-010).
 
-THE DEFECT
-----------
-Every caller (rate-limit key, IP block list, audit records, CAPTCHA binding, login logs) took the
-FIRST entry of `X-Forwarded-For`. That entry is whatever the client sent: anyone could pick the
-IP recorded in the audit trail and dodge the per-IP rate limit by changing it on every request.
+THE DEFECTS
+-----------
+1. (review m9) Every caller (rate-limit key, IP block list, audit records, CAPTCHA binding, login
+   logs) took the FIRST entry of `X-Forwarded-For` — whatever the client sent.
+2. (re-review N1) The first fix chose how many right-hand entries to trust from
+   `X-Forwarded-Host` — also a header the client sends: a direct call to run.app with
+   `X-Forwarded-For: 6.6.6.6` and `X-Forwarded-Host: app.mstool-ai.com` recorded 6.6.6.6. A wrong
+   hop count would also have put every user into one per-IP rate-limit bucket (429 at the morning
+   login wave).
 
 THE CONTROL
 -----------
-Proxies APPEND to `X-Forwarded-For`; only the entries appended by proxies we operate are
-trustworthy. Counting from the RIGHT:
-- direct to Cloud Run: Google's front end appends the address it saw, so the client is the
-  right-most entry (TRUSTED_PROXY_HOPS = 1, the default);
-- through the Firebase Hosting rewrite (requests carrying `X-Forwarded-Host` equal to one of the
-  app's hosting domains): Hosting appends the client, then Google's front end appends Hosting's
-  egress address, so the client is the second entry from the right
-  (FIREBASE_HOSTING_PROXY_HOPS = 2, the default).
-The Hosting hop count is an ASSUMPTION from the documented proxy behaviour; it has not been
-observed on the deployed service (no cloud access during the change). DEPLOYMENT_CHECKLIST.md
-asks to verify it after deployment (compare the recorded IP with your own, on both paths) and the
-counts are configurable. With fewer entries than expected hops the left-most entry is used.
-Local runs without a proxy: set TRUSTED_PROXY_HOPS=0 to ignore the header.
+No header the client can write decides anything. Proxies APPEND to `X-Forwarded-For`:
+- the RIGHT-MOST entry is appended by Google's front end in front of Cloud Run: the address that
+  actually connected — the client when the call is direct;
+- when that right-most address is a published Firebase Hosting (Fastly) EGRESS address, the request
+  came through the Hosting rewrite and Hosting appended the client one step to the left; step left,
+  and keep stepping only while the entry is such an egress address (a chain through two egress
+  hops never collapses to a proxy address).
+An egress-looking address written by the client further left is never reached: stepping stops at
+the first address that is not an egress address.
+
+THE LIST (EGRESS_CIDRS)
+-----------------------
+Source: Fastly's published public IP list, EGRESS_SOURCE_URL (JSON keys "addresses" and
+"ipv6_addresses"); Firebase Hosting has been served through Fastly. Transcribed on EGRESS_LIST_DATE
+from the list as known to the author — it could NOT be re-fetched during the change (no network
+access to cloud services was allowed), so it must be refreshed before go-live.
+Update procedure: (1) open EGRESS_SOURCE_URL; (2) replace EGRESS_CIDRS with "addresses" +
+"ipv6_addresses" and set EGRESS_LIST_DATE; (3) run tests/unit/test_capa015_review2_fixes.py;
+(4) at deployment, confirm the real `X-Forwarded-For` through a Firebase Hosting PREVIEW channel
+(DEPLOYMENT_CHECKLIST.md). Without a rebuild, the list can be replaced by the Cloud Run setting
+TRUSTED_PROXY_CIDRS (comma-separated CIDRs). Local runs without a proxy: TRUST_FORWARDED_FOR=0.
 
 @module core.client_ip (outside core.security: that package imports the audit logger, which imports this)
 """
 
+import ipaddress
 import os
-from typing import Optional
+from functools import lru_cache
+from typing import Optional, Tuple
+
+EGRESS_SOURCE_URL = "https://api.fastly.com/public-ip-list"
+EGRESS_LIST_DATE = "2026-10-24"
+EGRESS_CIDRS: Tuple[str, ...] = (
+    # "addresses"
+    "23.235.32.0/20", "43.249.72.0/22", "103.244.50.0/24", "103.245.222.0/23", "103.245.224.0/24",
+    "104.156.80.0/20", "140.248.64.0/18", "140.248.128.0/17", "146.75.0.0/17", "151.101.0.0/16",
+    "157.52.64.0/18", "167.82.0.0/17", "167.82.128.0/20", "167.82.160.0/20", "167.82.224.0/20",
+    "172.111.64.0/18", "185.31.16.0/22", "199.27.72.0/21", "199.232.0.0/16",
+    # "ipv6_addresses"
+    "2a04:4e40::/32", "2a04:4e42::/32",
+)
+_MAX_STEPS = 3
 
 
-def _hops(name: str, default: int) -> int:
+@lru_cache(maxsize=8)
+def _networks(spec: str):
+    nets = []
+    for part in spec.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        try:
+            nets.append(ipaddress.ip_network(part, strict=False))
+        except ValueError:
+            continue
+    return tuple(nets)
+
+
+def trusted_networks():
+    override = os.environ.get("TRUSTED_PROXY_CIDRS")
+    return _networks(override if override is not None else ",".join(EGRESS_CIDRS))
+
+
+def _is_egress(value: str, nets) -> bool:
     try:
-        return max(0, int(os.environ.get(name, str(default))))
+        addr = ipaddress.ip_address(value)
     except ValueError:
-        return default
-
-
-def _hosting_hosts() -> set:
-    raw = os.environ.get("FIREBASE_HOSTING_HOSTS",
-                         "app.mstool-ai.com,brain-mri-476110.web.app,brain-mri-476110.firebaseapp.com")
-    return {h.strip().lower() for h in raw.split(",") if h.strip()}
+        return False
+    return any(addr.version == n.version and addr in n for n in nets)
 
 
 def client_ip(request) -> Optional[str]:
-    """The client's address: the right-most untrusted hop of X-Forwarded-For (see module doc)."""
+    """The client's address (see module doc). Never decided by a header the client controls."""
     if request is None:
         return None
-    headers = request.headers
-    xff = [h.strip() for h in (headers.get("x-forwarded-for") or "").split(",") if h.strip()]
-    forwarded_host = (headers.get("x-forwarded-host") or "").split(",")[0].strip().lower()
-    hops = (_hops("FIREBASE_HOSTING_PROXY_HOPS", 2) if forwarded_host and forwarded_host in _hosting_hosts()
-            else _hops("TRUSTED_PROXY_HOPS", 1))
-    if xff and hops > 0:
-        return xff[max(len(xff) - hops, 0)]
+    xff = [h.strip() for h in (request.headers.get("x-forwarded-for") or "").split(",") if h.strip()]
+    if xff and os.environ.get("TRUST_FORWARDED_FOR", "1") != "0":
+        nets = trusted_networks()
+        i = len(xff) - 1                     # appended by Google's front end
+        steps = 0
+        while i > 0 and steps < _MAX_STEPS and _is_egress(xff[i], nets):
+            i -= 1                           # appended by Firebase Hosting: the client is to the left
+            steps += 1
+        return xff[i]
     client = getattr(request, "client", None)
     return client.host if client else None

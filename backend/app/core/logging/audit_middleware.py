@@ -88,7 +88,7 @@ ROUTE_ACTIONS: Dict[Tuple[str, str], Tuple[AuditEventType, str]] = {
     ("POST", "/api/v1/patients/{patient_id}/care-team"): (E.ADMIN_CARE_TEAM_CHANGED, "patient"),
     ("DELETE", "/api/v1/patients/{patient_id}/care-team/{assignment_id}"): (E.ADMIN_CARE_TEAM_CHANGED, "patient"),
     # review M3: passkey (WebAuthn) credentials are sign-in factors
-    ("POST", "/api/v1/auth/webauthn/register/begin"): (E.AUTH_CREDENTIAL_REGISTER, "credential"),
+    ("POST", "/api/v1/auth/webauthn/register/begin"): (E.AUTH_CREDENTIAL_REGISTER_BEGIN, "credential"),
     ("POST", "/api/v1/auth/webauthn/register/complete"): (E.AUTH_CREDENTIAL_REGISTER, "credential"),
     ("DELETE", "/api/v1/auth/webauthn/credentials/{credential_id}"): (E.AUTH_CREDENTIAL_DELETE, "credential"),
 }

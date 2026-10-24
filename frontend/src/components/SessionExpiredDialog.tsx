@@ -12,6 +12,7 @@
  * discards the unsaved changes.
  */
 import { FormEvent, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { LockKeyhole } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -49,6 +50,44 @@ export function SessionExpiredDialog() {
       setConfirmSignOut(false);
     }
   }, [sessionExpired]);
+
+  // CAPA-015 re-review N5: the dialog lives in its own node under <body>; while it is open every
+  // other top-level node (the app with its patient data) stays MOUNTED — unsaved work survives —
+  // but is hidden from assistive technology, inert (no focus, no clicks) and blurred, so nothing
+  // is readable behind the dialog. The owner may relax this (CAPA-015 decision D-5).
+  const [host] = useState(() => {
+    const el = document.createElement('div');
+    el.setAttribute('data-session-dialog', '');
+    return el;
+  });
+  useEffect(() => {
+    document.body.appendChild(host);
+    return () => { host.remove(); };
+  }, [host]);
+  useEffect(() => {
+    if (!sessionExpired || !user) return undefined;
+    const locked: Array<{ el: HTMLElement; ariaHidden: string | null; inert: boolean; filter: string;
+      pointerEvents: string; userSelect: string }> = [];
+    for (const node of Array.from(document.body.children)) {
+      if (node === host || !(node instanceof HTMLElement) || node.tagName === 'SCRIPT' || node.tagName === 'STYLE') continue;
+      locked.push({ el: node, ariaHidden: node.getAttribute('aria-hidden'), inert: node.hasAttribute('inert'),
+        filter: node.style.filter, pointerEvents: node.style.pointerEvents, userSelect: node.style.userSelect });
+      node.setAttribute('aria-hidden', 'true');
+      node.setAttribute('inert', '');
+      node.style.filter = 'blur(18px)';
+      node.style.pointerEvents = 'none';
+      node.style.userSelect = 'none';
+    }
+    return () => {
+      for (const l of locked) {
+        if (l.ariaHidden === null) l.el.removeAttribute('aria-hidden'); else l.el.setAttribute('aria-hidden', l.ariaHidden);
+        if (!l.inert) l.el.removeAttribute('inert');
+        l.el.style.filter = l.filter;
+        l.el.style.pointerEvents = l.pointerEvents;
+        l.el.style.userSelect = l.userSelect;
+      }
+    };
+  }, [sessionExpired, user, host]);
 
   if (!sessionExpired || !user) return null;
 
@@ -93,7 +132,7 @@ export function SessionExpiredDialog() {
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 p-4">
       <form
         role="dialog"
@@ -188,7 +227,8 @@ export function SessionExpiredDialog() {
           </div>
         )}
       </form>
-    </div>
+    </div>,
+    host,
   );
 }
 

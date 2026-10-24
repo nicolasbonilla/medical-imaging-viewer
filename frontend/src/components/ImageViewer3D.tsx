@@ -19,12 +19,12 @@ import { useViewerStore } from '@/store/useViewerStore';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import { createBoundingBoxMZ3, lesionVoxelToNifti } from '@/utils/boundingBoxMesh';
 import { ViewportSafetyOverlay } from './ViewportSafetyOverlay';
-import { fetchWithSession } from '@/services/session';
+import { fetchWithSession, getAccessToken } from '@/services/session';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 function getAuthHeaders(): Record<string, string> {
-  const token = localStorage.getItem('access_token');
+  const token = getAccessToken();   // CAPA-015 re-review N3: only this tab's own token
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 

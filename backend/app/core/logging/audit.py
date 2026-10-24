@@ -62,6 +62,7 @@ class AuditEventType(str, Enum):
     AUTH_TOKEN_INVALID = "auth.token.invalid"                # CAPA-015: refused for a missing/expired token
     AUTH_TOKEN_REUSE_DETECTED = "auth.token.reuse_detected"  # CAPA-015: a rotated refresh token was replayed
     AUTH_CREDENTIAL_REGISTER = "auth.credential.register"    # CAPA-015 review M3: passkey registration
+    AUTH_CREDENTIAL_REGISTER_BEGIN = "auth.credential.register_begin"  # re-review: a registration only started
     AUTH_CREDENTIAL_DELETE = "auth.credential.delete"        # CAPA-015 review M3: passkey deletion
 
     # Authorization Events (A.9.4.1)
@@ -423,17 +424,21 @@ def build_audit_record(event: AuditEvent) -> Dict[str, Any]:
     return {k: v for k, v in record.items() if v not in (None, {}, [])}
 
 
-# Review m9 — per-source budget for durable records that a stranger can cause at will: failed or
-# denied outcomes, and anything without an authenticated actor. AUDIT_SOURCE_BUDGET records per
-# AUDIT_SOURCE_WINDOW_S seconds per source IP (defaults 30 per 60 s, per instance); beyond it the
-# record goes to the server log only, flagged durable_suppressed. Successful actions of an
-# authenticated user (clinical actions, sign-ins) are never suppressed.
+# Review m9 / re-review N4 — per-source budget for durable records that a stranger can cause at
+# will: records WITHOUT an authenticated actor (anonymous requests, forged or expired tokens, failed
+# sign-ins for unknown users). AUDIT_SOURCE_BUDGET records per AUDIT_SOURCE_WINDOW_S seconds per
+# source IP (defaults 30 per 60 s, per instance); beyond it the record goes to the server log only,
+# flagged durable_suppressed. Every record of an authenticated actor — success, failure or denial —
+# is always durable.
 _BUDGET_LOCK = threading.Lock()
 _BUDGET: Dict[str, tuple] = {}
 
 
 def _needs_budget(record: Dict[str, Any]) -> bool:
-    return record.get("outcome") != "success" or not record.get("actor_user_id")
+    # re-review N4: ONLY anonymous records. An authenticated user's records (success, failure or
+    # denial) are always durable — per-user rate limits already bound them; budgeting them let 30
+    # anonymous junk requests push a radiologist's failed clinical action out of the trail.
+    return not record.get("actor_user_id")
 
 
 def _take_budget(source: str) -> bool:

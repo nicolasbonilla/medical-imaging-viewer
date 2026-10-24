@@ -411,11 +411,20 @@ export function installAuthInterceptors(instance: AxiosInstance): () => void {
   };
 }
 
-/** fetch() with the bearer token and the same 401 recovery (volumes, exports). */
+/** fetch() with the bearer token and the same 401 recovery (volumes, exports). Any Authorization
+ *  header the caller passed is dropped (re-review N3): only this tab's own token is ever sent. */
 export async function fetchWithSession(url: string, init: RequestInit = {}): Promise<Response> {
+  const raw = init.headers;
+  const entries: Array<[string, string]> = typeof Headers !== 'undefined' && raw instanceof Headers
+    ? Array.from(raw.entries())
+    : Array.isArray(raw) ? (raw as Array<[string, string]>) : Object.entries((raw as Record<string, string>) ?? {});
+  const callerHeaders: Record<string, string> = {};
+  for (const [k, v] of entries) {
+    if (k.toLowerCase() !== 'authorization') callerHeaders[k] = v;
+  }
   const send = (token: string | null) => fetch(url, {
     ...init,
-    headers: { ...(init.headers as Record<string, string> | undefined), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    headers: { ...callerHeaders, ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   });
   const first = await send(getAccessToken());
   if (first.status !== 401 || !tabHasSession()) return first;
