@@ -10,6 +10,7 @@ No cloud service is contacted (GOOGLE_APPLICATION_CREDENTIALS points at a file t
     python scripts/safety/capa015_tests_on_base.py
         -> docs/iec62304/records/risk_verification/CAPA-015_tests_on_base_2026-10-24.json
     python scripts/safety/capa015_tests_on_base.py --base 2c618ec         --label "2c618ec (PR #65 head before the independent review fixes)"         --backend-tests tests/unit/test_capa015_review_fixes.py,tests/unit/test_capa015_audit_and_session.py         --frontend-tests src/services/session.capa015.review.test.tsx         --out docs/iec62304/records/risk_verification/CAPA-015_review1_tests_on_pr65_2026-10-24.json
+    python scripts/safety/capa015_tests_on_base.py --base 09e11e8 --also-swap backend/tests/conftest.py ...  (re-review)
 NEVER run this while anything else edits the files it swaps (it restores a snapshot).
 """
 import datetime
@@ -47,6 +48,9 @@ NO_CLOUD = {"GOOGLE_APPLICATION_CREDENTIALS": os.path.join(tempfile.gettempdir()
 
 # Swapped back to the base: application code and the configuration templates the tests read.
 SOURCE_PATHS = ["backend/app", "frontend/src", "backend/scripts/generate_secrets.py", "backend/.env.example"]
+# Test-infrastructure files that hold a control themselves (re-review N2: backend/tests/conftest.py sets
+# the session lifetimes) — swapped too when named with --also-swap (comma-separated).
+ALSO_SWAP = [p for p in _arg("--also-swap", "").split(",") if p]
 
 
 def _is_test(path):
@@ -65,6 +69,10 @@ def source_files():
             continue
         in_base = subprocess.run(["git", "cat-file", "-e", f"{BASE}:{n}"], capture_output=True).returncode == 0
         (changed if in_base else added).append(n)
+    for n in ALSO_SWAP:
+        differs = subprocess.run(["git", "diff", "--quiet", BASE, "--", n]).returncode != 0
+        if differs and n not in changed:
+            changed.append(n)
     return changed, added
 
 
@@ -122,7 +130,7 @@ def main():
         "base": LABEL,
         "method": "source files that differ from the base commit restored to it, files it did not have removed; "
                   "the CAPA-015 test files run unchanged, without cloud credentials; working tree restored byte for byte",
-        "swapped": {"restored_to_base": CHANGED, "removed": ADDED},
+        "swapped": {"restored_to_base": CHANGED, "removed": ADDED, "test_infrastructure_also_swapped": ALSO_SWAP},
         "test_sha256": {t: hashlib.sha256(open(t, encoding="utf-8").read().replace("\r\n", "\n").encode("utf-8")).hexdigest()
                         for t in ["backend/" + b for b in BACKEND_TESTS] + ["frontend/" + f for f in FRONTEND_TESTS]},
         "backend": backend,

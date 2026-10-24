@@ -54,8 +54,18 @@ No new **required** variable. Optional variables (defaults shown):
 More optional variables (review of PR #65): `REFRESH_TOKEN_REUSE_GRACE_SECONDS` (`30`),
 `AUDIT_HASH_KEY` (secret for the keyed hashes in audit records; if unset it is derived from
 `JWT_SECRET_KEY` — rotating that secret then changes every hash), `AUDIT_SOURCE_BUDGET` /
-`AUDIT_SOURCE_WINDOW_S` (`30` / `60`: durable failed-or-anonymous records per source IP),
-`TRUSTED_PROXY_HOPS` (`1`), `FIREBASE_HOSTING_PROXY_HOPS` (`2`), `FIREBASE_HOSTING_HOSTS`.
+`AUDIT_SOURCE_WINDOW_S` (`30` / `60`: durable ANONYMOUS records per source IP per instance —
+an authenticated user's records are always durable), `TRUSTED_PROXY_CIDRS` (unset = the built-in
+Firebase Hosting / Fastly egress list in `backend/app/core/client_ip.py`; when set, comma-separated
+CIDRs that REPLACE it — a Cloud Run settings update, no rebuild), `TRUST_FORWARDED_FOR` (`1`; `0`
+only for local runs without any proxy). The former `TRUSTED_PROXY_HOPS`,
+`FIREBASE_HOSTING_PROXY_HOPS` and `FIREBASE_HOSTING_HOSTS` no longer exist (re-review N1: no header
+the client sends decides the client address).
+
+**Developers — update your local `backend/.env` (re-review N2).** An old
+`JWT_ACCESS_TOKEN_EXPIRE_MINUTES=60` (from earlier templates) now makes the backend refuse to start
+(check below): set it to `15` or delete the line, and add `REFRESH_TOKEN_IDLE_MINUTES=30`,
+`REFRESH_TOKEN_ABSOLUTE_HOURS=12`. The test suite sets these three values itself and is not affected.
 
 **Session lifetimes check (review M1).** The service refuses to start when
 `REFRESH_TOKEN_IDLE_MINUTES` ≤ `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` + 2 (Cloud Run then keeps the
@@ -73,6 +83,23 @@ Deployment window and order (the owner runs it; nothing was run by the change):
    SameSite=Strict) is first-party; Firebase Hosting forwards no other cookie name. Between the
    two steps the new page may meet the old backend: a 404/405 from `/refresh` opens the re-login
    dialog and keeps the work (review M4), it never discards it.
+   **1b. Client IP — verify BEFORE the live hosting deploy (re-review N1; owner action).** The
+   backend takes the right-most `X-Forwarded-For` entry and steps left only over published
+   Firebase Hosting (Fastly) egress addresses (list in `backend/app/core/client_ip.py`, source
+   and date in the file; transcribed from the author's knowledge, NOT re-fetched — refresh it
+   from https://api.fastly.com/public-ip-list first). Right after the backend deploy, deploy the
+   new hosting to a **preview channel** (`cd frontend && npx firebase hosting:channel:deploy
+   capa015-ip --expires 1d`), sign in once through the preview URL and once directly against the
+   Cloud Run URL, then as administrator read the two newest `auth.login.success` records
+   (`GET /api/v1/auth/audit-logs?event_type=auth.login.success&limit=2`): **both `ip_address`
+   values must be YOUR public address**. If the preview record shows a proxy address instead,
+   Hosting's egress is missing from the list — every user signing in through the app would then
+   share ONE login rate-limit bucket (429 at the morning sign-in wave). Fix it without a rebuild:
+   `gcloud run services update brain-mri --region=us-central1 --project=brain-mri-476110
+   --update-env-vars=^@^TRUSTED_PROXY_CIDRS=<published list + observed range, comma-separated>`,
+   then repeat the check. Never put in it a range from which clients reach Cloud Run directly:
+   if the proxy address seen is a shared Google Cloud address rather than a Fastly one, do NOT
+   trust it (anyone can call Cloud Run from Google Cloud) — stop and decide with the reviewer.
 2. Ask users to **reload** the app (a tab still running the old page gets 15-minute sessions and
    no silent renewal until it reloads).
 3. **Firestore indexes only**: `firebase deploy --only firestore:indexes` — the three composite
@@ -94,10 +121,7 @@ Deployment window and order (the owner runs it; nothing was run by the change):
      origin returns `Set-Cookie: __session=…; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth`;
    - as administrator, `GET /api/v1/auth/audit-status` answers `"state": "ok"` and
      `GET /api/v1/auth/audit-logs?limit=5` lists the sign-in;
-   - **client IP (review m9)**: sign in once through the app origin and once directly against
-     the Cloud Run URL, and check that the `ip_address` of both audit records is YOUR address. The
-     Firebase Hosting hop count (2) is an assumption not observed before deployment; adjust
-     `FIREBASE_HOSTING_PROXY_HOPS` / `TRUSTED_PROXY_HOPS` if not.
+   - the client IP again, on the live app (same check as step 1b, through `app.mstool-ai.com`).
    - if the app is also opened on `brain-mri-476110.firebaseapp.com`, add that origin to
      `CORS_ORIGINS` (refresh refuses origins outside it).
 
@@ -110,4 +134,6 @@ Deployment window and order (the owner runs it; nothing was run by the change):
 | Login works via curl but not browser | CORS + different URL aliases | Add ALL Cloud Run URLs to CORS_ORIGINS |
 | 500 on all endpoints | Missing required env var | Check the 9-var list above |
 | Users asked to sign in again every 15 min; no `__session` cookie | Hosting deployed without the `/api/v1/auth/**` rewrite, or backend older than the rewrite | Deploy backend, then hosting (CAPA-015) |
+| Many users refused at sign-in at once (429), or audit records through the app all show the same proxy address | Firebase Hosting's egress address is not in the trusted list (CAPA-015 re-review N1) | Set `TRUSTED_PROXY_CIDRS` (Cloud Run settings update, no rebuild) — step 1b |
+| Backend refuses to start locally: refresh idle limit vs access lifetime | Old `JWT_ACCESS_TOKEN_EXPIRE_MINUTES=60` in `backend/.env` | Set 15 / 30 / 12 (see "Developers" above) |
 | Red "Audit trail" banner for administrators | Firestore writes of `audit_logs` failing (records kept in the server log) | Check the service account's Firestore access and the logs for `AUDIT_SINK_WRITE_FAILED` |

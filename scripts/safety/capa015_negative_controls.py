@@ -36,8 +36,10 @@ PY = os.environ.get("BACKEND_PYTHON") or os.path.join(ROOT, "backend", "venv", "
 if not os.path.exists(PY):
     PY = sys.executable
 OUT = "docs/iec62304/records/risk_verification/CAPA-015_negative_controls_2026-10-24.json"
-BACKEND_TESTS = ["tests/unit/test_capa015_audit_and_session.py", "tests/unit/test_capa015_review_fixes.py"]
-FRONTEND_TESTS = ["src/services/session.capa015.test.tsx", "src/services/session.capa015.review.test.tsx"]
+BACKEND_TESTS = ["tests/unit/test_capa015_audit_and_session.py", "tests/unit/test_capa015_review_fixes.py",
+                 "tests/unit/test_capa015_review2_fixes.py"]
+FRONTEND_TESTS = ["src/services/session.capa015.test.tsx", "src/services/session.capa015.review.test.tsx",
+                  "src/services/session.capa015.review2.test.tsx"]
 # PRB-002: no cloud credentials, an empty gcloud configuration and a project that does not exist.
 _EMPTY_GCLOUD = os.path.join(tempfile.gettempdir(), "capa015-empty-gcloud-config")
 os.makedirs(_EMPTY_GCLOUD, exist_ok=True)
@@ -56,11 +58,14 @@ CFG = "backend/app/core/config.py"
 RULES = "firestore.rules"
 CIP = "backend/app/core/client_ip.py"
 USTORE = "backend/app/security/user_storage.py"
+CONFTEST = "backend/tests/conftest.py"
 GEN = "backend/scripts/generate_secrets.py"
 HOOK = "frontend/src/hooks/useSessionTimeout.ts"
 SESS = "frontend/src/services/session.ts"
 CTX = "frontend/src/contexts/AuthContext.tsx"
 DLG = "frontend/src/components/SessionExpiredDialog.tsx"
+V3D = "frontend/src/components/ImageViewer3D.tsx"
+PROFILE = "frontend/src/pages/ProfilePage.tsx"
 BAN = "frontend/src/components/AuditStatusBanner.tsx"
 EN = "frontend/src/i18n/locales/en.json"
 ES = "frontend/src/i18n/locales/es.json"
@@ -288,14 +293,14 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                             "'revoke every session' also rewrites expired families (memory repository) (m8)"),
     "R16_expired_families_revoked_firestore": ([(RT, '            if now is not None and _aware(f.get("absolute_expires_at")) <= now:\n                continue\n', "")],
                                                "'revoke every session' also rewrites expired families (Firestore repository) (m8)"),
-    "R17_leftmost_forwarded_hop": ([(CIP, "        return xff[max(len(xff) - hops, 0)]\n", "        return xff[0]\n")],
+    "R17_leftmost_forwarded_hop": ([(CIP, "        return xff[i]\n", "        return xff[0]\n")],
                                    "the client-supplied first X-Forwarded-For entry used as the client IP (m9, as found)"),
-    "R18_hosting_hop_ignored": ([(CIP, '    hops = (_hops("FIREBASE_HOSTING_PROXY_HOPS", 2) if forwarded_host and forwarded_host in _hosting_hosts()\n',
-                                  '    hops = (_hops("FIREBASE_HOSTING_PROXY_HOPS", 1) if forwarded_host and forwarded_host in _hosting_hosts()\n')],
-                                "Firebase Hosting's own hop taken for the client (m9)"),
+    "R18_hosting_egress_taken_for_client": ([(CIP, "        while i > 0 and steps < _MAX_STEPS and _is_egress(xff[i], nets):\n",
+                                              "        while False:\n")],
+                                            "Firebase Hosting's own egress address taken for the client (m9 / N1)"),
     "R19_no_source_budget": ([(AUD, '            if durable and _needs_budget(record) and not _take_budget(record.get("ip_address") or "unknown"):\n',
                                "            if False:\n")],
-                             "a flood of failed/anonymous requests from one source fills the durable queue (m9)"),
+                             "a flood of anonymous requests from one source fills the durable queue (m9)"),
     "R20_drops_red_forever": ([(SINK, "            elif recent > 0 or self.consecutive_failures >= self.failing_after:\n",
                                 "            elif self.dropped_total > 0 or self.consecutive_failures >= self.failing_after:\n")],
                               "one old dropped record keeps the banner red until a restart (m9, as found)"),
@@ -308,6 +313,26 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "R23_full_user_agent": ([(AUD, '        "user_agent": classify_user_agent(event.user_agent),\n',
                               '        "user_agent": str(event.user_agent)[:200] if event.user_agent else None,\n')],
                             "the full user-agent string stored (m10, as found)"),
+    "R24_forwarded_host_decides": ([(CIP, "        while i > 0 and steps < _MAX_STEPS and _is_egress(xff[i], nets):\n",
+                                     '        while i > 0 and steps < _MAX_STEPS and (_is_egress(xff[i], nets) or request.headers.get("x-forwarded-host")):\n')],
+                                   "a client-sent X-Forwarded-Host makes the server trust a client-sent hop (N1, as found)"),
+    "R25_any_entry_stepped_over": ([(CIP, "        while i > 0 and steps < _MAX_STEPS and _is_egress(xff[i], nets):\n",
+                                     "        while i > 0 and steps < _MAX_STEPS:\n")],
+                                   "entries that are not published egress addresses are stepped over: the client chooses its address (N1)"),
+    "R26_single_egress_step": ([(CIP, "        while i > 0 and steps < _MAX_STEPS and _is_egress(xff[i], nets):\n",
+                                 "        while i > 0 and steps < 1 and _is_egress(xff[i], nets):\n")],
+                               "a chain through two egress addresses collapses to a proxy address (N1)"),
+    "R27_egress_override_ignored": ([(CIP, '    return _networks(override if override is not None else ",".join(EGRESS_CIDRS))\n',
+                                      '    return _networks(",".join(EGRESS_CIDRS))\n')],
+                                    "the egress list cannot be replaced by a Cloud Run setting: a stale list needs a rebuild (N1)"),
+    "R28_authenticated_failures_budgeted": ([(AUD, '    return not record.get("actor_user_id")\n',
+                                              '    return record.get("outcome") != "success" or not record.get("actor_user_id")\n')],
+                                            "anonymous noise pushes an authenticated user's failed clinical action out of the durable trail (N4, as found)"),
+    "R29_register_begin_as_register": ([(MW, '(E.AUTH_CREDENTIAL_REGISTER_BEGIN, "credential")', '(E.AUTH_CREDENTIAL_REGISTER, "credential")')],
+                                       "starting a passkey registration is recorded as a completed registration (nit, as found)"),
+    "R30_developer_env_breaks_suite": ([(CONFTEST, "os.environ['JWT_ACCESS_TOKEN_EXPIRE_MINUTES'] = '15'\nos.environ['REFRESH_TOKEN_IDLE_MINUTES'] = '30'\n"
+                                                   "os.environ['REFRESH_TOKEN_ABSOLUTE_HOURS'] = '12'\n", "")],
+                                       "a developer backend/.env with old session lifetimes stops the test suite (N2, as found)"),
     "FR1_client_ignores_refresh_deadline": ([(SESS, "  const deadline = accessExp && sessionExp ? Math.min(accessExp, sessionExp) : accessExp;\n",
                                               "  const deadline = accessExp;\n")],
                                             "the renewal waits for the access token although the refresh session ends first (M1)"),
@@ -329,6 +354,21 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "FR9_refresh_can_hang": ([(SESS, "      const res = await withTimeout(authClient.post(authUrl('/refresh'), null), REFRESH_TIMEOUT_MS);\n",
                                "      const res = await authClient.post(authUrl('/refresh'), null);\n")],
                              "a hanging refresh holds the cross-tab lock forever (m13, as found)"),
+    "FR10_caller_token_kept": ([(SESS, "    if (k.toLowerCase() !== 'authorization') callerHeaders[k] = v;\n", "    callerHeaders[k] = v;\n")],
+                               "a caller-provided Authorization header (another user's token) is sent from this tab (N3, as found)"),
+    "FR11_viewer3d_reads_storage": ([(V3D, "  const token = getAccessToken();   // CAPA-015 re-review N3: only this tab's own token\n",
+                                      "  const token = localStorage.getItem('access_token');\n")],
+                                    "the 3D viewer reads the shared token from storage itself (N3, as found)"),
+    "FR12_profile_reads_storage": ([(PROFILE, "    setLoading(true);\n    try {\n      const token = getAccessToken();   // CAPA-015 re-review N3: only this tab's own token\n",
+                                     "    setLoading(true);\n    try {\n      const token = localStorage.getItem('access_token');\n")],
+                                   "the profile page reads the shared token from storage itself (N3, as found)"),
+    "FR13_page_readable_behind_dialog": ([(DLG, "    if (!sessionExpired || !user) return undefined;\n    const locked",
+                                           "    if (!sessionExpired || !user || host) return undefined;\n    const locked")],
+                                         "patient data stays readable and clickable behind the re-login dialog (N5, as found)"),
+    "FR14_page_not_blurred": ([(DLG, "      node.style.filter = 'blur(18px)';\n", "")],
+                              "the page behind the re-login dialog is not blurred (N5)"),
+    "FR15_page_not_inert": ([(DLG, "      node.setAttribute('inert', '');\n", "")],
+                            "the page behind the re-login dialog can still take focus and input (N5)"),
 }
 
 EXPECTED_UNDETECTED = {

@@ -22,7 +22,9 @@ get no second record — unless the response is a 5xx. Every other `/auth` reque
 registration and deletion, user list and detail reads, CAPTCHA) is recorded here (review M3).
 
 Durable (Firestore) policy: every record goes to stdout; Firestore receives every state-changing
-request, every clinical action, every 401/403, and reads of patient data once per actor, route
+request, every clinical action, every 401/403 (an ANONYMOUS one only within the per-source budget
+of audit.py — every record naming an authenticated user is durable; CAPA-015 re-review N4), and
+reads of patient data once per actor, route
 and resource per AUDIT_READ_DEDUP_SECONDS (default 300 s) on each instance — a viewer fetches
 hundreds of slices, and one record per slice would make the trail unreadable and costly.
 Requests that matched no route are kept on stdout only.
