@@ -333,4 +333,21 @@ describe('RC-067 / RC-069 — every new text exists in English, Spanish and Germ
       expect(get(de, k), `de ${k} is English`).not.toBe(get(en, k));
     }
   });
+
+  it('rc069 no English phrase is left inside the Spanish or German texts', () => {
+    // A whole-string comparison misses a text translated only in part (negative control F18).
+    const words = (s: string) => s.replace(/\{\{[^}]*\}\}/g, ' ').toLowerCase().match(/[a-zà-ÿß]+/g) ?? [];
+    const trigrams = (s: string) => {
+      const w = words(s);
+      return new Set(w.slice(0, -2).map((_, i) => `${w[i]} ${w[i + 1]} ${w[i + 2]}`));
+    };
+    const en = locale('en'); const es = locale('es'); const de = locale('de');
+    for (const k of KEYS) {
+      const english = trigrams(get(en, k));
+      for (const [lng, data] of [['es', es], ['de', de]] as const) {
+        const leaked = [...trigrams(get(data, k))].filter((t) => english.has(t));
+        expect(leaked, `${lng} ${k} contains English: ${leaked.join(' | ')}`).toEqual([]);
+      }
+    }
+  });
 });

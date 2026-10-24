@@ -239,9 +239,11 @@ def run_backend():
     env = dict(os.environ, **NO_CLOUD)
     r = subprocess.run([PY, "-m", "pytest", *BACKEND_TESTS, "-q", "-p", "no:cacheprovider", "-o", "log_cli=false"],
                        cwd="backend", capture_output=True, text=True, encoding="utf-8", errors="replace", env=env)
-    f = re.search(r"(\d+) failed", r.stdout)
-    p = re.search(r"(\d+) passed", r.stdout)
-    e = re.search(r"(\d+) error", r.stdout)
+    # Counts from pytest's final summary line only (captured log lines also contain "1 error").
+    summary = (re.findall(r"^=+ (.+) in [\d.]+s(?: \([^)]*\))? =+$", r.stdout, re.M) or [""])[-1]
+    f = re.search(r"(\d+) failed", summary)
+    p = re.search(r"(\d+) passed", summary)
+    e = re.search(r"(\d+) errors?\b", summary)
     return {"suite": "backend", "failed": int(f.group(1)) if f else 0, "passed": int(p.group(1)) if p else 0,
             "errors": int(e.group(1)) if e else 0, "skipped": 0,
             "failing_tests": sorted(set(re.findall(r"(?:FAILED|ERROR) \S+::(\S+)", r.stdout)))}
