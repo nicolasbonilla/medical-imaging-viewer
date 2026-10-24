@@ -37,6 +37,7 @@ from app.services.report_payload_guard import (
     PatientRecordUnavailable,
     assert_no_identifiers,
     label_vocabulary,
+    percent_text,
     provider_payload,
     words_of,
 )
@@ -650,7 +651,7 @@ class BrainReportService:
                 parts.append(f"  TP2 burden: {lng.get('burden_tp2_ml') or 0:.3f} mL "
                              f"({lng.get('total_lesions_tp2') or 0} lesions)")
                 if lng.get("burden_delta_percent") is not None:
-                    parts.append(f"  Burden delta: {lng.get('burden_delta_percent'):.1f}%")
+                    parts.append(f"  Burden delta: {percent_text(lng.get('burden_delta_percent'))}")
                 sc = lng.get("status_counts") or {}
                 parts.append(
                     "  NOTE: the following are UNCONFIRMED CHANGE CANDIDATES produced automatically, "
@@ -680,7 +681,7 @@ class BrainReportService:
             for zone_name, info in zs.get("zones", {}).items():
                 parts.append(
                     f"  - {zone_name}: {info.get('voxel_count', 0)} voxels "
-                    f"({info.get('percentage', 0):.1f}%)"
+                    f"({percent_text(info.get('percentage', 0))})"
                 )
 
         return "\n".join(parts)

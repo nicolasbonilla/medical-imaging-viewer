@@ -22,7 +22,9 @@ clinician's box or the app's note box or the app's headings; the entry or the no
 controls kept; a long text cut silently; the first line's indentation lost; an unbounded burden change, a voxel
 count of a fine image or a confidence in percent refusing the report; the patient's own numbers in number fields
 not checked; a rounding error at a range edge refusing; the made-up reports without an evaluated DIS or an
-absent region; the viewer's clinician box and the panel's limit missing. The script asserts every anchor occurs
+absent region; the viewer's clinician box and the panel's limit missing. Final check: the entry or the notes not
+returned as response fields, or rendered as Markdown; format characters kept in the model text; legitimate model
+sentences replaced; "not available%". The script asserts every anchor occurs
 exactly once, runs the bound tests of the mutated side (backend pytest; frontend vitest JSON reporter),
 records the failing test names and restores the exact original bytes.
 
@@ -32,9 +34,10 @@ CLOUDSDK_CONFIG to an empty folder, GOOGLE_CLOUD_PROJECT=mstool-offline-tests an
 the script also sets these for the test processes it starts.
     python scripts/safety/capa014_negative_controls.py            # every mutation
     python scripts/safety/capa014_negative_controls.py --only T   # re-run mutations starting with T
-Output: docs/iec62304/records/risk_verification/CAPA-014_review3_negative_controls_2026-10-24.json
-(kept: the redesign's run, 52 mutations, CAPA-014_negative_controls_2026-10-24.json; the second review's run,
-73 mutations, CAPA-014_review2_negative_controls_2026-10-24.json)
+Output: docs/iec62304/records/risk_verification/CAPA-014_review4_negative_controls_2026-10-24.json
+(kept: the redesign's run, 52 mutations, CAPA-014_negative_controls_2026-10-24.json; the second review's, 73,
+CAPA-014_review2_negative_controls_2026-10-24.json; the third review's, 89,
+CAPA-014_review3_negative_controls_2026-10-24.json)
 NEVER run this while anything else edits the files it mutates (it restores a snapshot).
 """
 import datetime
@@ -51,7 +54,7 @@ os.chdir(ROOT)
 PY = os.path.join(ROOT, "backend", "venv", "Scripts", "python.exe")
 if not os.path.exists(PY):
     PY = sys.executable
-OUT = "docs/iec62304/records/risk_verification/CAPA-014_review3_negative_controls_2026-10-24.json"
+OUT = "docs/iec62304/records/risk_verification/CAPA-014_review4_negative_controls_2026-10-24.json"
 BACKEND_TESTS = ["tests/unit/test_capa014_report_provider_payload.py",
                  "tests/unit/test_capa009_object_authorization_everywhere.py",
                  "tests/unit/test_capa008_assistant_read_only.py",
@@ -132,7 +135,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                                "        self.unlisted[f\"{written}#{len(self.unlisted)}\"] = f\"[unlisted label {len(self.unlisted) + 1}]\"\n"
                                                "        return f\"[unlisted label {len(self.unlisted)}]\"\n")],
                                              "groups and rows no longer match: one label gets several numbers"),
-    "P12_unlisted_names_not_shown": ([(AIR, "            unlisted_note(unlisted, request.language))}\n", "            None)}\n")],
+    "P12_unlisted_names_not_shown": ([(AIR, '            "app_notes": app_notes_of(unlisted, language),\n', '            "app_notes": [],\n')],
                                      "the draft does not say which label each placeholder stands for"),
     "P13_not_available_printed_as_zero": ([(G, "            return NOT_AVAILABLE if required else None\n        slack = ",
                                             "            return 0 if required else None\n        slack = ")],
@@ -167,6 +170,9 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                                 "'absent' not an exempt word"),
     "P24_no_rounding_slack": ([(G, "        slack = 1e-6 * max(1.0, abs(high))", "        slack = 0.0")],
                               "a percentile of 100.00000001 refuses the report"),
+    "P25_not_available_with_a_percent_sign": ([(G, '    return str(value) if isinstance(value, NotAvailable) else f"{value:.1f}%"\n',
+                                                '    return f"{value:.1f}%"\n')],
+                                              "'not available%' in the prompt"),
     # ── RC-065: detection-only tripwire and fail closed ──
     "T1_tripwire_removed": ([(BRS, "        assert_prompt_carries_no_identifier(user_prompt, identifiers)\n", "")],
                             "no check of the final prompt"),
@@ -248,44 +254,46 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "F6_assistant_omits_segmentation": ([(MCPS, '            "segmentation_id": segmentation_id,\n', "")],
                                         "the assistant's report tool sends no segmentation (every draft refused)"),
     # ── RC-066: typed text merged locally; records; claims; screen texts ──
-    "M1_typed_text_not_merged": ([(AIR, '            result["content"], request.language, clinician_entry(request.findings, request.language),\n',
-                                        '            result["content"], request.language, None,\n')],
+    "M1_typed_text_not_merged": ([(AIR, '            "clinician_entry": clinician_entry_of(findings, language),\n',
+                                        '            "clinician_entry": None,\n')],
                                  "the clinician's typed text missing from the draft"),
-    "M2_entry_before_disclaimer": ([(AIR, "(disclaimer if has_disclaimer else None, entry, heading, note, body)",
-                                     "(entry, disclaimer if has_disclaimer else None, heading, note, body)")],
-                                   "the typed text placed before the RC-006 disclaimer"),
+    "M2_entry_before_disclaimer": ([(AIR, '    out = [parts.get("disclaimer")]\n', "    out = []\n"),
+                                    (AIR, '    out.append(parts.get("ai_text"))\n',
+                                     '    out.append(parts.get("ai_text"))\n    out.insert(1, parts.get("disclaimer"))\n')],
+                                   "the typed text placed before the RC-006 disclaimer in the single text"),
     "M3_model_not_told": ([(BRS, "        if findings.get(\"clinician_entry\") is True:\n            parts.append(CLINICIAN_TEXT_INSTRUCTION)\n", "")],
                           "the model is not told that the clinician's text is added by the application"),
     # second independent review (N1, N6, N7): the draft's structure
-    "M4_typed_text_not_quoted": ([(AIR, "{quoted(text, ENTRY_BLOCK)}", "{text}")],
-                                 "typed Markdown rendered: a typed heading, image or link becomes report structure"),
+    "M4_typed_text_not_quoted": ([(AIR, "{quoted(f['text'])}", "{f['text']}")],
+                                 "typed Markdown rendered in the single text: a typed heading, image or link becomes structure"),
     "M5_fixed_short_fence": ([(AIR, '    fence = "`" * max(3, 1 + max((len(run) for run in re.findall(r"`+", text)), default=0))\n',
                                '    fence = "```"\n')],
                              "typed backticks close the quoted block and the rest is rendered"),
-    "M6_no_ai_heading": ([(AIR, "    heading = f\"### {AI_DRAFT_HEADING.get(language, AI_DRAFT_HEADING['en'])}\"\n", "    heading = None\n")],
-                         "the model text continues under the clinician's heading"),
-    "M7_entry_not_closed": ([(AIR, '"\\n\\n".join(blocks) + "\\n\\n---" if blocks else None', '"\\n\\n".join(blocks) if blocks else None')],
+    "M6_no_ai_heading": ([(AIR, "    out.append(f\"### {parts['ai_draft_heading']}\")\n", "")],
+                         "in the single text the model's text continues under the clinician's heading"),
+    "M7_entry_not_closed": ([(AIR, ' + "\\n\\n---")', ")")],
                             "the clinician's entry is not closed before the AI draft"),
     "M8_instruction_always_sent": ([(BRS, '        if findings.get("clinician_entry") is True:\n', "        if True:\n")],
                                    "the model is told about a clinician's entry that does not exist"),
-    # third review (R1, R4)
+    # third review (R1, R4) and its final check
     "M9_reserved_headings_kept": ([(AIR, "            lines[i] = removed\n", "            pass\n")],
-                                  "the model writes the clinician's heading or the AI heading itself"),
-    "M10_model_containers_kept": ([(AIR, '    body = _FENCE_INFO.sub(lambda m: m.group(1) + "text", without_bidi(body))\n',
-                                    "    body = without_bidi(body)\n")],
-                                  "the model's text opens a clinician box or an app-note box"),
-    "M11_entry_in_a_plain_block": ([(AIR, 'ENTRY_BLOCK, NOTE_BLOCK = "clinician-entry", "app-note"', 'ENTRY_BLOCK, NOTE_BLOCK = "text", "app-note"')],
-                                   "the clinician's entry looks like any block of the model"),
-    "M12_note_in_the_clinician_box": ([(AIR, 'ENTRY_BLOCK, NOTE_BLOCK = "clinician-entry", "app-note"',
-                                        'ENTRY_BLOCK, NOTE_BLOCK = "clinician-entry", "clinician-entry"')],
-                                      "the application's note shown as the clinician's entry"),
+                                  "the model writes the clinician's heading or the AI heading into the single text"),
+    "M10_format_characters_kept": ([(AIR, "    body = without_format_characters(body)\n", "    body = without_bidi(body)\n")],
+                                   "a zero-width space hides a reserved heading from the check"),
+    "M11_entry_field_missing": ([(AIR, "    clinician_entry: Optional[ClinicianEntry] = None\n", "")],
+                                "the response carries no clinician's entry for the viewer's box"),
+    "M12_app_notes_field_missing": ([(AIR, "    app_notes: List[AppNote] = []\n", "")],
+                                    "the response carries no application note for the viewer's box"),
     "M13_bidi_kept": ([(AIR, '    return _BIDI.sub("", text)\n', "    return text\n")],
-                      "right-to-left override characters reorder typed or model text"),
-    "M14_truncation_silent": ([(AIR, ' + (f"\\n\\n{cut_note}" if cut else "")', "")],
+                      "right-to-left override characters reorder the typed text"),
+    "M14_truncation_silent": ([(AIR, ' + (f"\\n\\n{entry[\'truncated_note\']}" if f["truncated"] else "")', "")],
                               "a long typed text cut without a mark"),
     "M15_first_line_indent_lost": ([(AIR, '    text = re.sub(r"\\A(?:[ \\t]*\\r?\\n)+", "", without_bidi(value)).rstrip()\n',
                                      "    text = without_bidi(value).strip()\n")],
                                    "the first typed line loses its indentation"),
+    "M16_legitimate_sentences_replaced": ([(AIR, "        if _heading_key(line) in reserved:\n",
+                                            '        if any(_heading_key(line).startswith(r.split(" (")[0]) for r in reserved):\n')],
+                                          "\"Clinician's entry (see the top of this draft).\" written by the model is replaced"),
     "L1_raw_findings_logged": ([(BRS, '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld},\n',
                                  '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld, "findings": findings},\n')],
                                "the request's findings written to the log"),
@@ -326,13 +334,16 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "U7_viewer_footer_claim_back": ([(VIEWER, "                    {t('reportViewer.aiDataNote')}\n",
                                       "                    {t('reportViewer.hipaaNote', 'HIPAA Compliant — Only de-identified clinical findings were used.')}\n")],
                                     "the report viewer footer claims HIPAA compliance again"),
-    "U8_viewer_loads_images": ([(VIEWER, "                      img: ({ alt }) => (\n"
-                                         "                        <span className=\"text-gray-500\">[image: {alt || '-'}]</span>\n"
-                                         "                      ),\n", "")],
+    "U8_viewer_loads_images": ([(VIEWER, "  img: ({ alt }) => (\n"
+                                         "    <span className=\"text-gray-500\">[image: {alt || '-'}]</span>\n"
+                                         "  ),\n", "")],
                                "an image named in the draft is loaded on screen and in print"),
-    "U9_viewer_clinician_box_plain": ([(VIEWER, "                        if (kind === 'clinician-entry') {\n",
-                                        "                        if (kind === 'never') {\n")],
-                                      "the clinician's entry not shown in its own box"),
+    "U9_viewer_ignores_the_parts": ([(VIEWER, "  const structured = typeof report.ai_text === 'string';\n",
+                                      "  const structured = false;\n")],
+                                    "the viewer shows the single text, not the clinician's box and the notes from their fields"),
+    "U11_entry_rendered_as_markdown": ([(VIEWER, '          <pre className="whitespace-pre-wrap break-words text-[13px] text-gray-800 font-mono">{field.text}</pre>\n',
+                                         "          <ReactMarkdown components={MARKDOWN_COMPONENTS}>{field.text}</ReactMarkdown>\n")],
+                                       "typed Markdown in the clinician's box is rendered (an image link, a heading)"),
     "U10_typed_fields_unlimited": ([(PANEL, "const MAX_TYPED_CHARS = 5000;\n", "const MAX_TYPED_CHARS = 524288;\n")],
                                    "the typed fields accept more than the draft shows, without a counter of the limit"),
 }

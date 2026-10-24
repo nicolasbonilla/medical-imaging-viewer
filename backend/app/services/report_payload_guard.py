@@ -81,6 +81,12 @@ class NotAvailable(str):
 
 
 NOT_AVAILABLE = NotAvailable("not available")
+
+
+def percent_text(value: Any) -> str:
+    """A percentage for the prompt: "12.3%" — or "not available", without a percent sign."""
+    return str(value) if isinstance(value, NotAvailable) else f"{value:.1f}%"
+
 # The DIS evaluation states of PR #68 (PRB-003, `dis_review_gate.EVALUATED` / `NOT_EVALUATED`).
 DIS_EVALUATED, DIS_NOT_EVALUATED = "evaluated", "not_evaluated"
 

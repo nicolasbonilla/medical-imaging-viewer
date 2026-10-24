@@ -18,18 +18,129 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Printer, Copy, Check, X } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { ReportResponse } from '@/types';
+import type { ReportAppNote, ReportClinicianEntry } from '@/types/ai';
 import { formatDate as formatLocalizedDate } from '@/utils/formatDate';
 
-/** The kind of a fenced block ("clinician-entry", "app-note", "text", …) from its `language-…` class. */
-function fencedKind(node: unknown): string | null {
-  const code = (node as { children?: Array<{ properties?: { className?: unknown } }> } | undefined)?.children?.[0];
-  const classes = code?.properties?.className;
-  const names = Array.isArray(classes) ? classes.map(String) : [];
-  const language = names.find((c) => c.startsWith('language-'));
-  return language ? language.slice('language-'.length) : null;
+/** How the Markdown of a draft is shown (the AI text, the fixed disclaimer, and drafts without parts). */
+const MARKDOWN_COMPONENTS: Components = {
+  h1: ({ children }) => (
+    <h1 className="text-base font-bold uppercase tracking-wider text-gray-900 text-center border-b-2 border-gray-400 pb-3 mb-6 mt-2 font-sans">
+      {children}
+    </h1>
+  ),
+  h2: ({ children }) => (
+    <h2 className="report-section-heading text-[13px] font-bold uppercase tracking-wider text-gray-800 pb-1.5 mb-3 mt-8 border-b border-gray-200 font-sans">
+      {children}
+    </h2>
+  ),
+  h3: ({ children }) => (
+    <h3 className="text-sm font-semibold text-gray-800 mb-2 mt-5 font-sans">
+      {children}
+    </h3>
+  ),
+  h4: ({ children }) => (
+    <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-700 mb-1.5 mt-4 font-sans">
+      {children}
+    </h4>
+  ),
+  p: ({ children }) => (
+    <p className="text-[13px] text-gray-700 leading-[1.85] mb-3 font-serif">
+      {children}
+    </p>
+  ),
+  ul: ({ children }) => (
+    <ul className="list-disc list-outside ml-5 mb-3 space-y-1">
+      {children}
+    </ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="list-decimal list-outside ml-5 mb-3 space-y-1">
+      {children}
+    </ol>
+  ),
+  li: ({ children }) => (
+    <li className="text-[13px] text-gray-700 leading-relaxed font-serif">
+      {children}
+    </li>
+  ),
+  strong: ({ children }) => (
+    <strong className="font-bold text-gray-900">{children}</strong>
+  ),
+  em: ({ children }) => (
+    <em className="italic text-gray-600">{children}</em>
+  ),
+  hr: () => (
+    <hr className="my-6 border-gray-200" />
+  ),
+  table: ({ children }) => (
+    <div className="overflow-x-auto mb-4 mt-2">
+      <table className="w-full text-sm border-collapse border border-gray-300">
+        {children}
+      </table>
+    </div>
+  ),
+  thead: ({ children }) => (
+    <thead className="bg-gray-100">{children}</thead>
+  ),
+  th: ({ children }) => (
+    <th className="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-gray-700 border border-gray-300 font-sans">
+      {children}
+    </th>
+  ),
+  td: ({ children }) => (
+    <td className="px-3 py-2 text-sm text-gray-700 border border-gray-300 font-serif">
+      {children}
+    </td>
+  ),
+  blockquote: ({ children }) => (
+    <blockquote className="border-l-4 border-amber-400 pl-4 py-1 my-3 bg-amber-50/50 rounded-r">
+      {children}
+    </blockquote>
+  ),
+  // CAPA-014: a fenced block of the AI text — whatever its kind ("clinician-entry", "app-note", …) — is an ordinary
+  // code block, shown exactly as written and wrapped so that it prints in full. The clinician's entry and the
+  // application's notes are not Markdown: they are response fields rendered by their own components below.
+  pre: ({ children }) => (
+    <pre className="whitespace-pre-wrap break-words text-[13px] text-gray-800 bg-gray-50 border border-gray-200 rounded px-3 py-2 mb-3 font-mono">
+      {children}
+    </pre>
+  ),
+  // CAPA-014: a draft never loads an image, on screen or in print — only its description.
+  img: ({ alt }) => (
+    <span className="text-gray-500">[image: {alt || '-'}]</span>
+  ),
+};
+
+/** CAPA-014: the clinician's entry — a response field, rendered here as text, never as Markdown, so neither typed
+ * Markdown nor anything the AI text holds can produce or alter this box. */
+function ClinicianEntryBox({ entry }: { entry: ReportClinicianEntry }) {
+  return (
+    <section data-testid="clinician-entry-box" className="border-l-4 border-sky-600 bg-sky-50 rounded-r px-4 py-3 mb-5">
+      <h3 className="text-sm font-semibold text-gray-800 mb-2 font-sans">{entry.heading}</h3>
+      {entry.fields.map((field) => (
+        <div key={field.key} className="mb-2">
+          <div className="text-xs font-semibold text-gray-700 font-sans">{field.label}:</div>
+          <pre className="whitespace-pre-wrap break-words text-[13px] text-gray-800 font-mono">{field.text}</pre>
+          {field.truncated && entry.truncated_note && (
+            <p className="text-xs italic text-gray-600">{entry.truncated_note}</p>
+          )}
+        </div>
+      ))}
+    </section>
+  );
+}
+
+/** CAPA-014: a note written by the application (e.g. which label a placeholder stands for) — a response field. */
+function AppNoteBox({ note }: { note: ReportAppNote }) {
+  return (
+    <aside data-testid="app-note-box" className="border border-dashed border-gray-400 rounded px-4 py-2 mb-4 text-gray-700">
+      <p className="text-[13px] mb-1 italic font-sans">{note.text}</p>
+      <pre className="whitespace-pre-wrap break-words text-[13px] font-mono">{note.lines.join('\n')}</pre>
+    </aside>
+  );
 }
 
 interface ReportViewerModalProps {
@@ -59,6 +170,8 @@ export function ReportViewerModal({
 }: ReportViewerModalProps) {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
+  // CAPA-014: a draft with parts — the entry and the notes come as fields, only the AI text is Markdown.
+  const structured = typeof report.ai_text === 'string';
 
   // Escape key handler
   useEffect(() => {
@@ -218,118 +331,29 @@ export function ReportViewerModal({
 
                 {/* Report Body — Rendered Markdown */}
                 <div className="report-body px-12 py-8">
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      h1: ({ children }) => (
-                        <h1 className="text-base font-bold uppercase tracking-wider text-gray-900 text-center border-b-2 border-gray-400 pb-3 mb-6 mt-2 font-sans">
-                          {children}
-                        </h1>
-                      ),
-                      h2: ({ children }) => (
-                        <h2 className="report-section-heading text-[13px] font-bold uppercase tracking-wider text-gray-800 pb-1.5 mb-3 mt-8 border-b border-gray-200 font-sans">
-                          {children}
-                        </h2>
-                      ),
-                      h3: ({ children }) => (
-                        <h3 className="text-sm font-semibold text-gray-800 mb-2 mt-5 font-sans">
-                          {children}
-                        </h3>
-                      ),
-                      h4: ({ children }) => (
-                        <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-700 mb-1.5 mt-4 font-sans">
-                          {children}
-                        </h4>
-                      ),
-                      p: ({ children }) => (
-                        <p className="text-[13px] text-gray-700 leading-[1.85] mb-3 font-serif">
-                          {children}
-                        </p>
-                      ),
-                      ul: ({ children }) => (
-                        <ul className="list-disc list-outside ml-5 mb-3 space-y-1">
-                          {children}
-                        </ul>
-                      ),
-                      ol: ({ children }) => (
-                        <ol className="list-decimal list-outside ml-5 mb-3 space-y-1">
-                          {children}
-                        </ol>
-                      ),
-                      li: ({ children }) => (
-                        <li className="text-[13px] text-gray-700 leading-relaxed font-serif">
-                          {children}
-                        </li>
-                      ),
-                      strong: ({ children }) => (
-                        <strong className="font-bold text-gray-900">{children}</strong>
-                      ),
-                      em: ({ children }) => (
-                        <em className="italic text-gray-600">{children}</em>
-                      ),
-                      hr: () => (
-                        <hr className="my-6 border-gray-200" />
-                      ),
-                      table: ({ children }) => (
-                        <div className="overflow-x-auto mb-4 mt-2">
-                          <table className="w-full text-sm border-collapse border border-gray-300">
-                            {children}
-                          </table>
-                        </div>
-                      ),
-                      thead: ({ children }) => (
-                        <thead className="bg-gray-100">{children}</thead>
-                      ),
-                      th: ({ children }) => (
-                        <th className="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-gray-700 border border-gray-300 font-sans">
-                          {children}
-                        </th>
-                      ),
-                      td: ({ children }) => (
-                        <td className="px-3 py-2 text-sm text-gray-700 border border-gray-300 font-serif">
-                          {children}
-                        </td>
-                      ),
-                      blockquote: ({ children }) => (
-                        <blockquote className="border-l-4 border-amber-400 pl-4 py-1 my-3 bg-amber-50/50 rounded-r">
-                          {children}
-                        </blockquote>
-                      ),
-                      // CAPA-014 (RC-066): the clinician's entry and the application's note arrive in their own
-                      // fenced blocks ("clinician-entry", "app-note") and get their own boxes; the server turns
-                      // any such block in the model's text into a plain one, so the model cannot produce these
-                      // boxes. Every block is shown exactly as written, wrapped so that it prints in full.
-                      pre: ({ node, children }) => {
-                        const kind = fencedKind(node);
-                        const block = (
-                          <pre className="whitespace-pre-wrap break-words text-[13px] text-gray-800 bg-gray-50 border border-gray-200 rounded px-3 py-2 mb-3 font-mono">
-                            {children}
-                          </pre>
-                        );
-                        if (kind === 'clinician-entry') {
-                          return (
-                            <div data-testid="clinician-entry-box" className="border-l-4 border-sky-600 bg-sky-50 rounded-r pl-3 pr-1 pt-1 mb-3">
-                              {block}
-                            </div>
-                          );
-                        }
-                        if (kind === 'app-note') {
-                          return (
-                            <div data-testid="app-note-box" className="border border-dashed border-gray-400 rounded px-1 pt-1 mb-3 italic">
-                              {block}
-                            </div>
-                          );
-                        }
-                        return block;
-                      },
-                      // CAPA-014: a draft never loads an image, on screen or in print — only its description.
-                      img: ({ alt }) => (
-                        <span className="text-gray-500">[image: {alt || '-'}]</span>
-                      ),
-                    }}
-                  >
-                    {report.content}
-                  </ReactMarkdown>
+                  {structured ? (
+                    <>
+                      {report.disclaimer && (
+                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>
+                          {report.disclaimer}
+                        </ReactMarkdown>
+                      )}
+                      {report.clinician_entry && <ClinicianEntryBox entry={report.clinician_entry} />}
+                      {report.ai_draft_heading && (
+                        <h3 className="text-sm font-semibold text-gray-800 mb-2 mt-5 font-sans">{report.ai_draft_heading}</h3>
+                      )}
+                      {(report.app_notes ?? []).map((note, i) => (
+                        <AppNoteBox key={`${note.kind}-${i}`} note={note} />
+                      ))}
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>
+                        {report.ai_text ?? ''}
+                      </ReactMarkdown>
+                    </>
+                  ) : (
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>
+                      {report.content}
+                    </ReactMarkdown>
+                  )}
                 </div>
 
                 {/* Footer */}

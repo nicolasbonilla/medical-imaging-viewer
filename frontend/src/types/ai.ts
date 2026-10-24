@@ -187,14 +187,42 @@ export interface ReportGenerateRequest {
   segmentation_id?: string;
 }
 
+/** A field the clinician typed (CAPA-014): shown as written, never sent to the AI service. */
+export interface ReportClinicianField {
+  key: string;
+  label: string;
+  text: string;
+  truncated: boolean;
+}
+
+export interface ReportClinicianEntry {
+  heading: string;
+  fields: ReportClinicianField[];
+  truncated_note?: string | null;
+}
+
+/** A note written by the application, not by the AI service (e.g. which label a placeholder stands for). */
+export interface ReportAppNote {
+  kind: string;
+  text: string;
+  lines: string[];
+}
+
 export interface ReportResponse {
   report_id: string;
+  /** The whole draft as one text, for copy and export (fixed headings; typed text and notes quoted). */
   content: string;
   template_type: ReportTemplateType;
   language: string;
   processing_time_ms: number;
   model?: string;
   tokens_used?: { input: number; output: number };
+  /** CAPA-014: the parts of the draft. The viewer renders all but `ai_text` outside the Markdown renderer. */
+  disclaimer?: string | null;
+  clinician_entry?: ReportClinicianEntry | null;
+  ai_draft_heading?: string | null;
+  app_notes?: ReportAppNote[];
+  ai_text?: string | null;
 }
 
 export interface ReportTemplateInfo {
