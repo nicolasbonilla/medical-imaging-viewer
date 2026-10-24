@@ -204,6 +204,7 @@ export interface ReportClinicianEntry {
 /** A note written by the application, not by the AI service (e.g. which label a placeholder stands for). */
 export interface ReportAppNote {
   kind: string;
+  heading?: string | null;
   text: string;
   lines: string[];
 }

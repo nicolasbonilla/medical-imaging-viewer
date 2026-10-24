@@ -70,6 +70,12 @@ UNLISTED_NOTE: Dict[str, str] = {
     "de": "Bezeichnungen außerhalb des Vokabulars des Geräts wurden als nummerierte Platzhalter an den "
           "KI-Dienst gesendet; ihre Namen wurden nicht gesendet:",
 }
+# The heading of the application's note in the single text (copy, export).
+APP_NOTE_HEADING: Dict[str, str] = {
+    "en": "Application note (written by the application, not by the AI service)",
+    "es": "Nota de la aplicación (escrita por la aplicación, no por el servicio de IA)",
+    "de": "Hinweis der Anwendung (von der Anwendung verfasst, nicht vom KI-Dienst)",
+}
 TRUNCATED_NOTE: Dict[str, str] = {
     "en": "[truncated: only the first {n} characters of this field are shown]",
     "es": "[truncado: solo se muestran los primeros {n} caracteres de este campo]",
@@ -87,6 +93,9 @@ MAX_LABEL_CHARS = 200
 # model's text loses every format character (Unicode category Cf), these included.
 _BIDI = re.compile("[\u202a-\u202e\u2066-\u2069]")
 _LINE_MARKS = re.compile(r"^(?:(?:>|[-*+]|\d{1,9}[.)]|#{1,6})\s*)*")
+_QUOTE_OR_LIST = re.compile(r"^(?:(?:>|[-*+]|\d{1,9}[.)])\s+)*")
+_SETEXT_LINE = re.compile(r"=+|-+")
+_BOLD_LINE = re.compile(r"(\*\*|__).+\1:?")
 
 
 def without_bidi(text: str) -> str:
@@ -94,7 +103,9 @@ def without_bidi(text: str) -> str:
 
 
 def without_format_characters(text: str) -> str:
-    """`text` without any Unicode format character (zero-width characters, soft hyphen, BOM, bidirectional controls)."""
+    """`text` without Unicode format characters (soft hyphen, zero-width joiners, BOM, bidirectional controls); a
+    zero-width space becomes a space, so that the words it separated stay apart."""
+    text = text.replace("\u200b", " ")
     return "".join(ch for ch in text if unicodedata.category(ch) != "Cf")
 
 
@@ -135,7 +146,8 @@ def app_notes_of(unlisted: Any, language: str) -> List[Dict[str, Any]]:
         return []
     lines = [f"{placeholder} = {' '.join(without_bidi(str(written)).split())[:MAX_LABEL_CHARS]}"
              for placeholder, written in unlisted.items()]
-    return [{"kind": "unlisted_labels", "text": UNLISTED_NOTE.get(language, UNLISTED_NOTE["en"]), "lines": lines}]
+    return [{"kind": "unlisted_labels", "heading": APP_NOTE_HEADING.get(language, APP_NOTE_HEADING["en"]),
+             "text": UNLISTED_NOTE.get(language, UNLISTED_NOTE["en"]), "lines": lines}]
 
 
 def _heading_key(line: str) -> str:
@@ -162,6 +174,29 @@ def neutralised_model_text(body: str, language: str) -> str:
     return "\n".join(lines)
 
 
+def _reserved_prefixes() -> Tuple[str, ...]:
+    headings = ([entry["heading"] for entry in CLINICIAN_ENTRY.values()] + list(AI_DRAFT_HEADING.values())
+                + list(APP_NOTE_HEADING.values()))
+    return tuple(_heading_key(h.split(" (")[0]) for h in headings)
+
+
+def without_reserved_heading_imitations(text: str, language: str) -> str:
+    """For the single text: a heading line of the AI text (marked with #, all bold, or underlined) whose words start
+    like one of the application's headings — "Clinician's entry", "Application note", "AI draft", es/de — is
+    replaced by a fixed line, so that the copied text cannot show a second entry or note. Other lines stay."""
+    prefixes, removed = _reserved_prefixes(), RESERVED_HEADING_REMOVED.get(language, RESERVED_HEADING_REMOVED["en"])
+    lines = text.split("\n")
+    for i, line in enumerate(lines):
+        bare = _QUOTE_OR_LIST.sub("", line.strip())
+        following = _QUOTE_OR_LIST.sub("", lines[i + 1].strip()) if i + 1 < len(lines) else ""
+        heading = bare.startswith("#") or _BOLD_LINE.fullmatch(bare) or (bare and _SETEXT_LINE.fullmatch(following))
+        key = _heading_key(line)
+        # starts like one: the line begins with a reserved heading's name, or is its first two words or more
+        if heading and any(key.startswith(p) or (len(key.split()) >= 2 and p.startswith(key)) for p in prefixes):
+            lines[i] = removed
+    return "\n".join(lines)
+
+
 def draft_parts(content: str, language: str, findings: Dict[str, Any], unlisted: Any) -> Dict[str, Any]:
     """The parts of the draft the response carries: the RC-006 disclaimer, the clinician's entry, the fixed heading
     of the AI text, the application's notes and the model's text (neutralised)."""
@@ -176,10 +211,10 @@ def draft_parts(content: str, language: str, findings: Dict[str, Any], unlisted:
             "ai_text": neutralised_model_text(body, language)}
 
 
-def draft_text(parts: Dict[str, Any]) -> str:
+def draft_text(parts: Dict[str, Any], language: str) -> str:
     """The whole draft as one text, for copy and export, assembled from the parts: the disclaimer first; the
     clinician's entry under its fixed heading, each field quoted, closed by a rule; the AI heading; the
-    application's notes quoted; the model's text."""
+    application's notes under their heading, quoted; the model's text without imitations of those headings."""
     out = [parts.get("disclaimer")]
     entry = parts.get("clinician_entry")
     if entry:
@@ -187,8 +222,9 @@ def draft_text(parts: Dict[str, Any]) -> str:
                   for f in entry["fields"]]
         out.append(f"### {entry['heading']}\n\n" + "\n\n".join(blocks) + "\n\n---")
     out.append(f"### {parts['ai_draft_heading']}")
-    out += [f"{note['text']}\n\n{quoted(chr(10).join(note['lines']))}" for note in parts.get("app_notes") or []]
-    out.append(parts.get("ai_text"))
+    out += [f"#### {note['heading']}\n\n{note['text']}\n\n{quoted(chr(10).join(note['lines']))}"
+            for note in parts.get("app_notes") or []]
+    out.append(without_reserved_heading_imitations(parts.get("ai_text") or "", language))
     return "\n\n".join(part for part in out if part)
 
 
@@ -375,6 +411,7 @@ class ClinicianEntry(BaseModel):
 class AppNote(BaseModel):
     """A note written by the application (not by the AI service), e.g. which label a placeholder stands for."""
     kind: str
+    heading: Optional[str] = None
     text: str
     lines: List[str] = []
 
@@ -487,7 +524,7 @@ async def generate_report(
         notice = longitudinal_notice(request.findings.get("longitudinal"), request.language)
         if notice:   # CAPA-013: appended in code, after the model, in the report language
             parts["ai_text"] = f"{parts['ai_text']}\n\n---\n\n> {notice}"
-        result = {**result, **parts, "content": draft_text(parts)}
+        result = {**result, **parts, "content": draft_text(parts, request.language)}
         return ReportResponse(**result)
 
     except ProviderGuardError as e:

@@ -137,6 +137,7 @@ function ClinicianEntryBox({ entry }: { entry: ReportClinicianEntry }) {
 function AppNoteBox({ note }: { note: ReportAppNote }) {
   return (
     <aside data-testid="app-note-box" className="border border-dashed border-gray-400 rounded px-4 py-2 mb-4 text-gray-700">
+      {note.heading && <h4 className="text-xs font-semibold uppercase tracking-wide mb-1 font-sans">{note.heading}</h4>}
       <p className="text-[13px] mb-1 italic font-sans">{note.text}</p>
       <pre className="whitespace-pre-wrap break-words text-[13px] font-mono">{note.lines.join('\n')}</pre>
     </aside>

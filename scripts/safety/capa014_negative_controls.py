@@ -24,7 +24,8 @@ count of a fine image or a confidence in percent refusing the report; the patien
 not checked; a rounding error at a range edge refusing; the made-up reports without an evaluated DIS or an
 absent region; the viewer's clinician box and the panel's limit missing. Final check: the entry or the notes not
 returned as response fields, or rendered as Markdown; format characters kept in the model text; legitimate model
-sentences replaced; "not available%". The script asserts every anchor occurs
+sentences replaced; "not available%". Last check: imitations of the app's headings kept in the copied text; a
+zero-width space joining words. The script asserts every anchor occurs
 exactly once, runs the bound tests of the mutated side (backend pytest; frontend vitest JSON reporter),
 records the failing test names and restores the exact original bytes.
 
@@ -34,7 +35,8 @@ CLOUDSDK_CONFIG to an empty folder, GOOGLE_CLOUD_PROJECT=mstool-offline-tests an
 the script also sets these for the test processes it starts.
     python scripts/safety/capa014_negative_controls.py            # every mutation
     python scripts/safety/capa014_negative_controls.py --only T   # re-run mutations starting with T
-Output: docs/iec62304/records/risk_verification/CAPA-014_review4_negative_controls_2026-10-24.json
+Output: docs/iec62304/records/risk_verification/CAPA-014_review5_negative_controls_2026-10-25.json
+(also kept: the final check's run, 92 mutations, CAPA-014_review4_negative_controls_2026-10-24.json)
 (kept: the redesign's run, 52 mutations, CAPA-014_negative_controls_2026-10-24.json; the second review's, 73,
 CAPA-014_review2_negative_controls_2026-10-24.json; the third review's, 89,
 CAPA-014_review3_negative_controls_2026-10-24.json)
@@ -54,7 +56,7 @@ os.chdir(ROOT)
 PY = os.path.join(ROOT, "backend", "venv", "Scripts", "python.exe")
 if not os.path.exists(PY):
     PY = sys.executable
-OUT = "docs/iec62304/records/risk_verification/CAPA-014_review4_negative_controls_2026-10-24.json"
+OUT = "docs/iec62304/records/risk_verification/CAPA-014_review5_negative_controls_2026-10-25.json"
 BACKEND_TESTS = ["tests/unit/test_capa014_report_provider_payload.py",
                  "tests/unit/test_capa009_object_authorization_everywhere.py",
                  "tests/unit/test_capa008_assistant_read_only.py",
@@ -258,8 +260,9 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                         '            "clinician_entry": None,\n')],
                                  "the clinician's typed text missing from the draft"),
     "M2_entry_before_disclaimer": ([(AIR, '    out = [parts.get("disclaimer")]\n', "    out = []\n"),
-                                    (AIR, '    out.append(parts.get("ai_text"))\n',
-                                     '    out.append(parts.get("ai_text"))\n    out.insert(1, parts.get("disclaimer"))\n')],
+                                    (AIR, '    out.append(without_reserved_heading_imitations(parts.get("ai_text") or "", language))\n',
+                                     '    out.append(without_reserved_heading_imitations(parts.get("ai_text") or "", language))\n'
+                                     '    out.insert(1, parts.get("disclaimer"))\n')],
                                    "the typed text placed before the RC-006 disclaimer in the single text"),
     "M3_model_not_told": ([(BRS, "        if findings.get(\"clinician_entry\") is True:\n            parts.append(CLINICIAN_TEXT_INSTRUCTION)\n", "")],
                           "the model is not told that the clinician's text is added by the application"),
@@ -276,7 +279,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "M8_instruction_always_sent": ([(BRS, '        if findings.get("clinician_entry") is True:\n', "        if True:\n")],
                                    "the model is told about a clinician's entry that does not exist"),
     # third review (R1, R4) and its final check
-    "M9_reserved_headings_kept": ([(AIR, "            lines[i] = removed\n", "            pass\n")],
+    "M9_reserved_headings_kept": ([(AIR, "        if _heading_key(line) in reserved:\n            lines[i] = removed\n",
+                                    "        if _heading_key(line) in reserved:\n            pass\n")],
                                   "the model writes the clinician's heading or the AI heading into the single text"),
     "M10_format_characters_kept": ([(AIR, "    body = without_format_characters(body)\n", "    body = without_bidi(body)\n")],
                                    "a zero-width space hides a reserved heading from the check"),
@@ -294,6 +298,12 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "M16_legitimate_sentences_replaced": ([(AIR, "        if _heading_key(line) in reserved:\n",
                                             '        if any(_heading_key(line).startswith(r.split(" (")[0]) for r in reserved):\n')],
                                           "\"Clinician's entry (see the top of this draft).\" written by the model is replaced"),
+    # last check of the third review
+    "M17_copied_text_keeps_heading_imitations": ([(AIR, '    out.append(without_reserved_heading_imitations(parts.get("ai_text") or "", language))\n',
+                                                   '    out.append(parts.get("ai_text"))\n')],
+                                                 "the copied text shows a second clinician's entry or application note"),
+    "M18_zero_width_space_joins_words": ([(AIR, '    text = text.replace("\\u200b", " ")\n', "")],
+                                         "'zero\u200bwidth' becomes 'zerowidth'"),
     "L1_raw_findings_logged": ([(BRS, '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld},\n',
                                  '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld, "findings": findings},\n')],
                                "the request's findings written to the log"),
