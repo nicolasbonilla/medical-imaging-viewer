@@ -32,6 +32,18 @@ interface AIReportPanelProps {
   onReportGenerated?: (report: ReportResponse) => void;
 }
 
+// CAPA-014 (third review, R4): the server adds at most this many characters of each typed field to the draft
+// (`MAX_TYPED_CHARS` in backend/app/api/routes/ai_report.py); the fields stop there and show the count.
+const MAX_TYPED_CHARS = 5000;
+
+function TypedCount({ testId, length }: { testId: string; length: number }) {
+  return (
+    <div data-testid={testId} className="text-[10px] text-right text-gray-400 dark:text-gray-500 mt-0.5">
+      {`${length} / ${MAX_TYPED_CHARS}`}
+    </div>
+  );
+}
+
 export const AIReportPanel: React.FC<AIReportPanelProps> = ({
   volumetry,
   patientAge,
@@ -200,11 +212,14 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
                 </label>
                 <input
                   type="text"
+                  data-testid="report-indication-input"
+                  maxLength={MAX_TYPED_CHARS}
                   value={indication}
                   onChange={(e) => setIndication(e.target.value)}
                   placeholder={t('report.indicationPlaceholder', 'e.g., Headache, rule out mass')}
                   className="w-full px-2 py-1.5 bg-white/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-amber-500"
                 />
+                <TypedCount testId="report-indication-count" length={indication.length} />
               </div>
 
               {/* Technique */}
@@ -214,11 +229,14 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
                 </label>
                 <input
                   type="text"
+                  data-testid="report-technique-input"
+                  maxLength={MAX_TYPED_CHARS}
                   value={technique}
                   onChange={(e) => setTechnique(e.target.value)}
                   placeholder={t('report.techniquePlaceholder', 'e.g., T1, T2, FLAIR, DWI, Gd+')}
                   className="w-full px-2 py-1.5 bg-white/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-amber-500"
                 />
+                <TypedCount testId="report-technique-count" length={technique.length} />
               </div>
 
               {/* Additional observations */}
@@ -227,12 +245,15 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
                   {t('report.observations', 'Additional Observations')}
                 </label>
                 <textarea
+                  data-testid="report-observations-input"
+                  maxLength={MAX_TYPED_CHARS}
                   value={observations}
                   onChange={(e) => setObservations(e.target.value)}
                   placeholder={t('report.observationsPlaceholder', 'Any additional findings or context...')}
                   rows={2}
                   className="w-full px-2 py-1.5 bg-white/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-amber-500 resize-none"
                 />
+                <TypedCount testId="report-observations-count" length={observations.length} />
               </div>
 
               {/* Active segmentation indicator — lesion data will be auto-collected */}

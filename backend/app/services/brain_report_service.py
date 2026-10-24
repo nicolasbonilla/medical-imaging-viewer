@@ -726,7 +726,7 @@ class BrainReportService:
 
         system_prompt = REPORT_TEMPLATES[template_type]      # fixed text: carries no patient data
         # RC-064: structured payload only — measurements, fixed labels, sex, age band; no free text.
-        payload = provider_payload(findings, volumetry)
+        payload = provider_payload(findings, volumetry, identifiers)   # the patient's own numbers refused (R2)
         user_prompt = self._build_findings_prompt(payload.findings, payload.volumetry, language)
         # RC-065: detection-only tripwire on the final prompt; refuses to send on any finding.
         assert_prompt_carries_no_identifier(user_prompt, identifiers)
@@ -856,8 +856,11 @@ def _synthetic_payloads():
         "anomalies": [{"type": n, "location": n, "confidence": 0.5, "volume_mm3": 1.0} for n in labels],
         "lesion_analysis": {"total_count": 1, "total_burden_mm3": 1.0, "total_burden_ml": 0.001, "regions": regions,
                             "size_distribution": {"small": 1, "medium": 1, "large": 1}, "lesions": lesions},
-        "dis_assessment": {"dis_met": True, "regions_with_lesions": 1, "total_dis_regions": 5,
-                           "region_details": {n: {"present": True} for n in labels}, "has_active_lesions": True,
+        # an evaluated DIS with present and absent regions (third review, M2: also printed once PR #68 is in)
+        "dis_assessment": {"evaluation_status": "evaluated", "dis_met": True, "regions_with_lesions": 1,
+                           "total_dis_regions": 5,
+                           "region_details": {n: {"present": i % 2 == 0} for i, n in enumerate(labels)},
+                           "has_active_lesions": True,
                            "active_voxels": 1, "has_black_holes": True, "black_hole_voxels": 1},
         "zone_stats": {"total_brain_voxels": 1, "zones": {n: {"voxel_count": 1, "percentage": 1.0} for n in labels}},
     }

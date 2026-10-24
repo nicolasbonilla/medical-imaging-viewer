@@ -17,7 +17,12 @@ range; the instruction sent although nothing was typed; the system templates' wo
 record number matched inside measurements; the digits of a prefixed record number not checked; pairs and
 joined words of the device's own text reported; the RC-007 claim back in the record generator; the stale
 model name back in the technical documentation; the DIS evaluation state dropped, or a DIS not evaluated
-sent as "NOT MET" (coordination with PR #68). The script asserts every anchor occurs
+sent as "NOT MET" (coordination with PR #68). Third review (R1-R4, M2): the model's text producing the
+clinician's box or the app's note box or the app's headings; the entry or the note in the wrong box; bidirectional
+controls kept; a long text cut silently; the first line's indentation lost; an unbounded burden change, a voxel
+count of a fine image or a confidence in percent refusing the report; the patient's own numbers in number fields
+not checked; a rounding error at a range edge refusing; the made-up reports without an evaluated DIS or an
+absent region; the viewer's clinician box and the panel's limit missing. The script asserts every anchor occurs
 exactly once, runs the bound tests of the mutated side (backend pytest; frontend vitest JSON reporter),
 records the failing test names and restores the exact original bytes.
 
@@ -27,8 +32,9 @@ CLOUDSDK_CONFIG to an empty folder, GOOGLE_CLOUD_PROJECT=mstool-offline-tests an
 the script also sets these for the test processes it starts.
     python scripts/safety/capa014_negative_controls.py            # every mutation
     python scripts/safety/capa014_negative_controls.py --only T   # re-run mutations starting with T
-Output: docs/iec62304/records/risk_verification/CAPA-014_review2_negative_controls_2026-10-24.json
-(the first redesign's run, 52 mutations, is kept as CAPA-014_negative_controls_2026-10-24.json)
+Output: docs/iec62304/records/risk_verification/CAPA-014_review3_negative_controls_2026-10-24.json
+(kept: the redesign's run, 52 mutations, CAPA-014_negative_controls_2026-10-24.json; the second review's run,
+73 mutations, CAPA-014_review2_negative_controls_2026-10-24.json)
 NEVER run this while anything else edits the files it mutates (it restores a snapshot).
 """
 import datetime
@@ -45,7 +51,7 @@ os.chdir(ROOT)
 PY = os.path.join(ROOT, "backend", "venv", "Scripts", "python.exe")
 if not os.path.exists(PY):
     PY = sys.executable
-OUT = "docs/iec62304/records/risk_verification/CAPA-014_review2_negative_controls_2026-10-24.json"
+OUT = "docs/iec62304/records/risk_verification/CAPA-014_review3_negative_controls_2026-10-24.json"
 BACKEND_TESTS = ["tests/unit/test_capa014_report_provider_payload.py",
                  "tests/unit/test_capa009_object_authorization_everywhere.py",
                  "tests/unit/test_capa008_assistant_read_only.py",
@@ -89,7 +95,7 @@ def skip_generic(*names):
 
 M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     # ── RC-064: structured payload only ──
-    "P1_payload_bypassed": ([(BRS, "        payload = provider_payload(findings, volumetry)\n",
+    "P1_payload_bypassed": ([(BRS, "        payload = provider_payload(findings, volumetry, identifiers)   # the patient's own numbers refused (R2)\n",
                               "        payload = type(\"P\", (), {\"findings\": findings, \"volumetry\": volumetry, \"withheld\": {}, "
                               "\"unlisted\": {}})()\n")],
                             "the request's findings go to the prompt builder as received"),
@@ -128,10 +134,10 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                              "groups and rows no longer match: one label gets several numbers"),
     "P12_unlisted_names_not_shown": ([(AIR, "            unlisted_note(unlisted, request.language))}\n", "            None)}\n")],
                                      "the draft does not say which label each placeholder stands for"),
-    "P13_not_available_printed_as_zero": ([(G, "            return NOT_AVAILABLE if required else None\n        if not low",
-                                            "            return 0 if required else None\n        if not low")],
+    "P13_not_available_printed_as_zero": ([(G, "            return NOT_AVAILABLE if required else None\n        slack = ",
+                                            "            return 0 if required else None\n        slack = ")],
                                           "a value that is not a number reported as 0"),
-    "P14_no_plausibility_range": ([(G, "        if not low <= n <= high:\n", "        if False:\n")],
+    "P14_no_plausibility_range": ([(G, "        if not low - slack <= n <= high + slack:\n", "        if False:\n")],
                                   "dates, record numbers and phone numbers in number fields sent"),
     # coordination with PR #68 (PRB-003): the DIS evaluation state
     "P15_dis_not_evaluated_as_not_met": ([(G, '        if state not in (None, DIS_EVALUATED) or not isinstance(dis.get("dis_met"), bool):\n',
@@ -143,6 +149,24 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "P17_builder_prints_not_evaluated_as_not_met": ([(BRS, '        if (findings.get("dis_assessment") or {}).get("evaluation_status") == "not_evaluated":\n',
                                                       '        if False:\n')],
                                                     "the prompt builder prints 'NOT MET' for a DIS not evaluated"),
+    # third review (R2, R3, M2)
+    "P18_unbounded_delta_refused": ([(G, "required=False,\n                             outside=NOT_AVAILABLE))\n", "required=False))\n")],
+                                    "a large but real burden change (1 mm³ to 12 mL) refuses the report"),
+    "P19_voxel_cap_16_million": ([(G, "_VOXELS_MAX = 2**31 - 1\n", "_VOXELS_MAX = 16_000_000\n")],
+                                 "a brain imaged at 0.4 mm isotropic refuses the report"),
+    "P20_confidence_in_percent_refused": ([(G, "required=False,\n                                                     outside=None))\n",
+                                            "required=False))\n")],
+                                          "a confidence given in percent refuses the report"),
+    "P21_patient_numbers_not_checked": ([(G, "        if n == int(n) and str(abs(int(n))) in self.patient_numbers:\n", "        if False:\n")],
+                                        "the patient's record number sent as '1234567 voxels'"),
+    "P22_synthetic_dis_without_state": ([(BRS, '        "dis_assessment": {"evaluation_status": "evaluated", "dis_met": True, "regions_with_lesions": 1,\n',
+                                          '        "dis_assessment": {"dis_met": True, "regions_with_lesions": 1,\n')],
+                                        "the exempt words lose the DIS words once only an evaluated DIS is printed"),
+    "P23_synthetic_dis_without_absent_region": ([(BRS, '{n: {"present": i % 2 == 0} for i, n in enumerate(labels)}',
+                                                  '{n: {"present": True} for i, n in enumerate(labels)}')],
+                                                "'absent' not an exempt word"),
+    "P24_no_rounding_slack": ([(G, "        slack = 1e-6 * max(1.0, abs(high))", "        slack = 0.0")],
+                              "a percentile of 100.00000001 refuses the report"),
     # ── RC-065: detection-only tripwire and fail closed ──
     "T1_tripwire_removed": ([(BRS, "        assert_prompt_carries_no_identifier(user_prompt, identifiers)\n", "")],
                             "no check of the final prompt"),
@@ -233,7 +257,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "M3_model_not_told": ([(BRS, "        if findings.get(\"clinician_entry\") is True:\n            parts.append(CLINICIAN_TEXT_INSTRUCTION)\n", "")],
                           "the model is not told that the clinician's text is added by the application"),
     # second independent review (N1, N6, N7): the draft's structure
-    "M4_typed_text_not_quoted": ([(AIR, "{quoted(findings[key].strip()[:MAX_TYPED_CHARS])}", "{findings[key].strip()[:MAX_TYPED_CHARS]}")],
+    "M4_typed_text_not_quoted": ([(AIR, "{quoted(text, ENTRY_BLOCK)}", "{text}")],
                                  "typed Markdown rendered: a typed heading, image or link becomes report structure"),
     "M5_fixed_short_fence": ([(AIR, '    fence = "`" * max(3, 1 + max((len(run) for run in re.findall(r"`+", text)), default=0))\n',
                                '    fence = "```"\n')],
@@ -244,6 +268,24 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                             "the clinician's entry is not closed before the AI draft"),
     "M8_instruction_always_sent": ([(BRS, '        if findings.get("clinician_entry") is True:\n', "        if True:\n")],
                                    "the model is told about a clinician's entry that does not exist"),
+    # third review (R1, R4)
+    "M9_reserved_headings_kept": ([(AIR, "            lines[i] = removed\n", "            pass\n")],
+                                  "the model writes the clinician's heading or the AI heading itself"),
+    "M10_model_containers_kept": ([(AIR, '    body = _FENCE_INFO.sub(lambda m: m.group(1) + "text", without_bidi(body))\n',
+                                    "    body = without_bidi(body)\n")],
+                                  "the model's text opens a clinician box or an app-note box"),
+    "M11_entry_in_a_plain_block": ([(AIR, 'ENTRY_BLOCK, NOTE_BLOCK = "clinician-entry", "app-note"', 'ENTRY_BLOCK, NOTE_BLOCK = "text", "app-note"')],
+                                   "the clinician's entry looks like any block of the model"),
+    "M12_note_in_the_clinician_box": ([(AIR, 'ENTRY_BLOCK, NOTE_BLOCK = "clinician-entry", "app-note"',
+                                        'ENTRY_BLOCK, NOTE_BLOCK = "clinician-entry", "clinician-entry"')],
+                                      "the application's note shown as the clinician's entry"),
+    "M13_bidi_kept": ([(AIR, '    return _BIDI.sub("", text)\n', "    return text\n")],
+                      "right-to-left override characters reorder typed or model text"),
+    "M14_truncation_silent": ([(AIR, ' + (f"\\n\\n{cut_note}" if cut else "")', "")],
+                              "a long typed text cut without a mark"),
+    "M15_first_line_indent_lost": ([(AIR, '    text = re.sub(r"\\A(?:[ \\t]*\\r?\\n)+", "", without_bidi(value)).rstrip()\n',
+                                     "    text = without_bidi(value).strip()\n")],
+                                   "the first typed line loses its indentation"),
     "L1_raw_findings_logged": ([(BRS, '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld},\n',
                                  '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld, "findings": findings},\n')],
                                "the request's findings written to the log"),
@@ -288,6 +330,11 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                          "                        <span className=\"text-gray-500\">[image: {alt || '-'}]</span>\n"
                                          "                      ),\n", "")],
                                "an image named in the draft is loaded on screen and in print"),
+    "U9_viewer_clinician_box_plain": ([(VIEWER, "                        if (kind === 'clinician-entry') {\n",
+                                        "                        if (kind === 'never') {\n")],
+                                      "the clinician's entry not shown in its own box"),
+    "U10_typed_fields_unlimited": ([(PANEL, "const MAX_TYPED_CHARS = 5000;\n", "const MAX_TYPED_CHARS = 524288;\n")],
+                                   "the typed fields accept more than the draft shows, without a counter of the limit"),
 }
 
 # Mutations that are NOT defects (equivalent code), stated rather than claimed as tested.

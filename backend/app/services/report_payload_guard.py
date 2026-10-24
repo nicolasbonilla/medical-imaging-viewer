@@ -11,7 +11,10 @@ RC-064 — structured payload only (inherent safety by design), ``provider_paylo
     outside the vocabulary becomes a numbered placeholder ("[unlisted label 2]", the same number for the
     same label in groups and rows; its name is shown to the clinician in the draft, never sent); a value
     where a number is expected and that is not one is printed "not available", never 0; a number outside
-    the physical range of its field (a date or a record number in a number field) refuses the request.
+    the physical range of its field (a date or a record number in a number field) refuses the request —
+    except a derived value without a physical bound (the burden change, "not available") and a value whose
+    unit is ambiguous (a confidence, left out); a whole number equal to the patient's own record number,
+    birth date or phone number, checked directly against the patient's record, refuses it in any field.
     Only a flag says that the clinician typed something; the typed text is merged into the draft by the
     route, after the model returns.
 
@@ -81,17 +84,20 @@ NOT_AVAILABLE = NotAvailable("not available")
 # The DIS evaluation states of PR #68 (PRB-003, `dis_review_gate.EVALUATED` / `NOT_EVALUATED`).
 DIS_EVALUATED, DIS_NOT_EVALUATED = "evaluated", "not_evaluated"
 
-# Physical range of each number that is printed. Counts stay below 7 digits; voxel counts below 16 million
-# (a brain imaged at 0.46 mm isotropic), which also excludes every date written YYYYMMDD from 1900 on;
-# volumes below the largest intracranial volume; centroids inside a 4096-voxel volume.
+# Physical range of each number that is printed. Counts stay below 7 digits; voxel counts below 2^31 (no
+# image the device loads has that many voxels; a brain at 0.4 mm isotropic has about 23 million); volumes
+# below the largest intracranial volume; centroids inside a 4096-voxel volume. A date or other number that
+# lies inside a range cannot be told from a measurement: the patient's own record number, birth date and
+# phone number are refused in every number field (`PatientIdentifiers.number_forms`).
 _COUNT_MAX = 100_000
-_VOXELS_MAX = 16_000_000
+_VOXELS_MAX = 2**31 - 1
 _LESION_MM3_MAX = 2_500_000
 _LESION_ML_MAX = 2_500
 _ANOMALY_MM3_MAX = 3_000_000
 _VOLUMETRY_ML_MAX = 3_000
 _CENTROID_MAX = 4_096
-_DELTA_PERCENT = (-100, 999_999)
+_DELTA_PERCENT = (-100, 999_999)     # derived, no physical upper bound: outside it, "not available"
+_REFUSE = object()
 
 _MEASUREMENT_BLOCKS = ("lesion_analysis", "dis_assessment", "longitudinal", "zone_stats",
                        "segmentation_labels", "anomalies")
@@ -169,9 +175,10 @@ class ProviderPayload:
 
 
 class _Projector:
-    def __init__(self):
+    def __init__(self, patient_numbers: FrozenSet[str] = frozenset()):
         self.counts: Counter = Counter()
         self.unlisted: Dict[str, str] = {}      # label as written -> its placeholder
+        self.patient_numbers = patient_numbers  # the patient's own numbers as whole numbers (never sent)
 
     def label(self, value: Any, allowed: Optional[Iterable[str]] = None) -> str:
         """The device's label, or a numbered placeholder: the same label always gets the same number, in
@@ -204,15 +211,24 @@ class _Projector:
         if value is not None:
             target[key] = value
 
-    def number(self, value: Any, name: str, low: float, high: float, required: bool = True) -> Any:
-        """The number; NOT_AVAILABLE (None when optional) when it is not a number; refuses outside [low, high]."""
+    def number(self, value: Any, name: str, low: float, high: float, required: bool = True,
+               outside: Any = _REFUSE) -> Any:
+        """The number; NOT_AVAILABLE (None when optional) when it is not a number. A whole number equal to one
+        of the patient's own numbers refuses the request. Outside [low, high] the request is refused too,
+        unless `outside` says what to use instead."""
         n = _number(value)
         if n is None:
             if value is not None:
                 self.counts["values_not_numbers"] += 1
             return NOT_AVAILABLE if required else None
-        if not low <= n <= high:
-            raise ImplausibleMeasurement(f"a measurement is outside its plausible range: {name}")
+        slack = 1e-6 * max(1.0, abs(high))       # a rounding error at an edge (100.00000001 %) is not a refusal
+        if not low - slack <= n <= high + slack:
+            if outside is _REFUSE:
+                raise ImplausibleMeasurement(f"a measurement is outside its plausible range: {name}")
+            self.counts["values_out_of_range"] += 1
+            return outside                        # not sent
+        if n == int(n) and str(abs(int(n))) in self.patient_numbers:
+            raise IdentifierInPrompt("identifier check failed (patient_number_in_a_number_field)")
         return n
 
     def count(self, value: Any, name: str, high: int = _COUNT_MAX, required: bool = True) -> Any:
@@ -283,7 +299,8 @@ class _Projector:
         for key in ("total_lesions_tp1", "total_lesions_tp2"):
             o[key] = self.count(lng.get(key), key)
         self.put(o, "burden_delta_percent",
-                 self.number(lng.get("burden_delta_percent"), "burden_delta_percent", *_DELTA_PERCENT, required=False))
+                 self.number(lng.get("burden_delta_percent"), "burden_delta_percent", *_DELTA_PERCENT, required=False,
+                             outside=NOT_AVAILABLE))
         sc = lng.get("status_counts") if isinstance(lng.get("status_counts"), dict) else {}
         o["status_counts"] = {k: self.count(sc.get(k), "status_counts")
                               for k in ("new", "enlarged", "resolved", "shrunk", "stable")}
@@ -306,7 +323,9 @@ class _Projector:
             item = {"type": self.label(a.get("type"))}
             if a.get("location") is not None:
                 item["location"] = self.label(a.get("location"))
-            self.put(item, "confidence", self.number(a.get("confidence"), "confidence", 0, 1, required=False))
+            # a confidence outside 0-1 (e.g. given in percent) is left out, as before: its unit is unknown
+            self.put(item, "confidence", self.number(a.get("confidence"), "confidence", 0, 1, required=False,
+                                                     outside=None))
             self.put(item, "volume_mm3", self.number(a.get("volume_mm3"), "volume_mm3", 0, _ANOMALY_MM3_MAX,
                                                      required=False))
             out.append(item)
@@ -334,13 +353,15 @@ class _Projector:
         return o
 
 
-def provider_payload(findings: Optional[Dict[str, Any]], volumetry: Optional[Dict[str, Any]]) -> ProviderPayload:
+def provider_payload(findings: Optional[Dict[str, Any]], volumetry: Optional[Dict[str, Any]],
+                     identifiers: Optional["PatientIdentifiers"] = None) -> ProviderPayload:
     """RC-064: the structured payload the provider may receive. The inputs are not modified.
 
-    Raises ImplausibleMeasurement when a number is outside the physical range of its field.
+    Raises ImplausibleMeasurement when a number is outside the physical range of its field, and
+    IdentifierInPrompt when a number field holds one of the patient's own numbers (`identifiers`).
     """
     f = findings if isinstance(findings, dict) else {}
-    p = _Projector()
+    p = _Projector(identifiers.number_forms() if identifiers is not None else frozenset())
     p.counts["free_text_fields"] = sum(1 for k in FREE_TEXT_FIELDS if f.get(k))
     p.counts["unknown_fields"] = sum(1 for k in f if k not in _KNOWN_FIELDS)
     out: Dict[str, Any] = {}
@@ -496,6 +517,18 @@ class PatientIdentifiers:
         emails = tuple(normalise(e) for e in (_text(_field(record, "email")),) if "@" in e)
         return cls(given=spell(given, middle), family=spell(family), other_names=others, record_numbers=tuple(numbers),
                    birth_date=birth, phones=frozenset(p for p in phones if len(p) >= 7), emails=emails)
+
+    def number_forms(self) -> FrozenSet[str]:
+        """The patient's own numbers as whole numbers, to be refused in any number field of the payload: record
+        numbers of digits only and the digits of a prefixed one (6 digits or more), phone numbers (7 or more)
+        and the birth date as day, month and year digits in each order, with and without leading zeros."""
+        b = self.birth_date
+        dates = set()
+        for d in (f"{b.day:02d}", str(b.day)):
+            for m in (f"{b.month:02d}", str(b.month)):
+                dates.update((f"{b.year}{m}{d}", f"{d}{m}{b.year}", f"{m}{d}{b.year}"))
+        forms = {n for n in self.record_numbers if n.isdigit() and len(n) >= 6} | set(self.phones) | dates
+        return frozenset(x.lstrip("0") for x in forms if x.strip("0"))
 
 
 # ─────────────────────────────────────────────────────────────────────────────

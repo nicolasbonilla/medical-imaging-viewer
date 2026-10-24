@@ -8,9 +8,10 @@ using Claude API, listing templates, and exporting reports.
 """
 
 import re
+import unicodedata
 
 from fastapi import APIRouter, HTTPException, status, Depends
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Tuple
 from pydantic import BaseModel, Field
 
 from app.security import get_current_active_user
@@ -68,42 +69,100 @@ UNLISTED_NOTE: Dict[str, str] = {
     "de": "Bezeichnungen außerhalb des Vokabulars des Geräts wurden als nummerierte Platzhalter an den "
           "KI-Dienst gesendet; ihre Namen wurden nicht gesendet:",
 }
+TRUNCATED_NOTE: Dict[str, str] = {
+    "en": "[truncated: only the first {n} characters of this field are shown]",
+    "es": "[truncado: solo se muestran los primeros {n} caracteres de este campo]",
+    "de": "[gekürzt: nur die ersten {n} Zeichen dieses Feldes werden angezeigt]",
+}
+# A heading of the application written by the model is replaced by this line (third review, R1).
+RESERVED_HEADING_REMOVED: Dict[str, str] = {
+    "en": "[a heading reserved for the application was removed from the AI text]",
+    "es": "[se quitó del texto de la IA un título reservado para la aplicación]",
+    "de": "[eine der Anwendung vorbehaltene Überschrift wurde aus dem KI-Text entfernt]",
+}
 MAX_TYPED_CHARS = 5000
 MAX_LABEL_CHARS = 200
+# Containers the viewer shows in their own style (third review, R1): the model's text can never open one.
+ENTRY_BLOCK, NOTE_BLOCK = "clinician-entry", "app-note"
+# Bidirectional control characters (LRE, RLE, PDF, LRO, RLO, LRI, RLI, FSI, PDI): removed from typed and model text.
+_BIDI = re.compile("[\u202a-\u202e\u2066-\u2069]")
+_FENCE_INFO = re.compile(r"(?mi)^([ \t>]*(?:`{3,}|~{3,})[ \t]*)(?:clinician-entry|app-note)\b")
+_HEADING_MARKUP = re.compile(r"^[\s>#*_]+|[\s#*_]+$")
 
 
-def quoted(text: str) -> str:
-    """`text` exactly as written, in a fenced block longer than any run of backticks inside it: nothing in
-    it is rendered as Markdown (heading, image, link, HTML) and nothing in it can close the block."""
+def without_bidi(text: str) -> str:
+    return _BIDI.sub("", text)
+
+
+def quoted(text: str, kind: str) -> str:
+    """`text` exactly as written, in a fenced block of `kind` longer than any run of backticks inside it:
+    nothing in it is rendered as Markdown (heading, image, link, HTML) and nothing in it can close the block."""
     text = text.replace("\r\n", "\n").replace("\r", "\n")
     fence = "`" * max(3, 1 + max((len(run) for run in re.findall(r"`+", text)), default=0))
-    return f"{fence}text\n{text}\n{fence}"
+    return f"{fence}{kind}\n{text}\n{fence}"
+
+
+def _typed(value: str) -> Tuple[str, bool]:
+    """The typed text without bidirectional controls, leading blank lines and trailing space — the first
+    line keeps its indentation — cut at MAX_TYPED_CHARS; and whether it was cut."""
+    text = re.sub(r"\A(?:[ \t]*\r?\n)+", "", without_bidi(value)).rstrip()
+    return text[:MAX_TYPED_CHARS], len(text) > MAX_TYPED_CHARS
 
 
 def clinician_entry(findings: Dict[str, Any], language: str) -> Optional[str]:
-    """The clinician's typed text as a closed block for the draft, or None when nothing was typed."""
+    """The clinician's typed text as a closed block for the draft, or None when nothing was typed. A text
+    longer than MAX_TYPED_CHARS is cut, and the draft says so."""
     texts = CLINICIAN_ENTRY.get(language, CLINICIAN_ENTRY["en"])
-    blocks = [f"**{texts[key]}:**\n\n{quoted(findings[key].strip()[:MAX_TYPED_CHARS])}"
-              for key in FREE_TEXT_FIELDS if isinstance(findings.get(key), str) and findings[key].strip()]
+    cut_note = TRUNCATED_NOTE.get(language, TRUNCATED_NOTE["en"]).format(n=MAX_TYPED_CHARS)
+    blocks = []
+    for key in FREE_TEXT_FIELDS:
+        if isinstance(findings.get(key), str) and without_bidi(findings[key]).strip():
+            text, cut = _typed(findings[key])
+            blocks.append(f"**{texts[key]}:**\n\n{quoted(text, ENTRY_BLOCK)}" + (f"\n\n{cut_note}" if cut else ""))
     return f"### {texts['heading']}\n\n" + "\n\n".join(blocks) + "\n\n---" if blocks else None
 
 
 def unlisted_note(unlisted: Any, language: str) -> Optional[str]:
-    """Which label each numbered placeholder stands for, quoted, or None when every label was listed."""
+    """Which label each numbered placeholder stands for, in the application's note box, or None when every
+    label was listed."""
     if not isinstance(unlisted, dict) or not unlisted:
         return None
-    lines = [f"{placeholder} = {' '.join(str(written).split())[:MAX_LABEL_CHARS]}"
+    lines = [f"{placeholder} = {' '.join(without_bidi(str(written)).split())[:MAX_LABEL_CHARS]}"
              for placeholder, written in unlisted.items()]
-    return UNLISTED_NOTE.get(language, UNLISTED_NOTE["en"]) + "\n\n" + quoted("\n".join(lines))
+    return UNLISTED_NOTE.get(language, UNLISTED_NOTE["en"]) + "\n\n" + quoted("\n".join(lines), NOTE_BLOCK)
+
+
+def _reserved_names() -> Tuple[str, ...]:
+    names = [h["heading"] for h in CLINICIAN_ENTRY.values()] + list(AI_DRAFT_HEADING.values())
+    return tuple(_plain(n.split(" (")[0]) for n in names)
+
+
+def _plain(line: str) -> str:
+    return _HEADING_MARKUP.sub("", unicodedata.normalize("NFKC", line)).replace("\u2019", "'").casefold()
+
+
+def neutralised_model_text(body: str, language: str) -> str:
+    """The model's text with nothing that could pass for the application's own parts (third review, R1):
+    bidirectional controls removed; a fence opening one of the application's containers turned into a plain
+    one; a line that is (or is marked up as) one of the application's headings replaced by a fixed line."""
+    body = _FENCE_INFO.sub(lambda m: m.group(1) + "text", without_bidi(body))
+    names, removed = _reserved_names(), RESERVED_HEADING_REMOVED.get(language, RESERVED_HEADING_REMOVED["en"])
+    lines = body.split("\n")
+    for i, line in enumerate(lines):
+        plain = _plain(line)
+        marked = line.lstrip(" >").startswith(("#", "*", "_"))
+        if any(plain.startswith(name + " (") or (marked and plain.startswith(name)) for name in names):
+            lines[i] = removed
+    return "\n".join(lines)
 
 
 def assemble_draft(content: str, language: str, entry: Optional[str], note: Optional[str]) -> str:
     """The RC-006 disclaimer first, then the clinician's entry (quoted, closed), then the model's text under
-    its own fixed heading, preceded by the note on unlisted labels."""
+    its own fixed heading, preceded by the note on unlisted labels. The model's text is neutralised first."""
     from app.services.brain_report_service import REPORT_DISCLAIMER_EN, REPORT_DISCLAIMERS
     disclaimer = REPORT_DISCLAIMERS.get(language, REPORT_DISCLAIMER_EN)
     has_disclaimer = content.startswith(disclaimer)
-    body = content[len(disclaimer):].lstrip() if has_disclaimer else content
+    body = neutralised_model_text(content[len(disclaimer):].lstrip() if has_disclaimer else content, language)
     heading = f"### {AI_DRAFT_HEADING.get(language, AI_DRAFT_HEADING['en'])}"
     return "\n\n".join(part for part in (disclaimer if has_disclaimer else None, entry, heading, note, body) if part)
 

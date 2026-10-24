@@ -768,8 +768,14 @@ available"; a dissemination-in-space result that is missing or not evaluated is 
 never "not met"; a number outside the physical range of its field stops the request (nothing is sent).
 
 **Draft layout:** the disclaimer, then the clinician's entry (quoted exactly as typed, not rendered as
-Markdown, and closed by a rule), then the model's text under the fixed heading "AI draft (from
-measurements only)".
+Markdown, shown in its own box and closed by a rule; at most 5000 characters per field, a longer text is
+marked "[truncated …]"), then the model's text under the fixed heading "AI draft (from measurements only)",
+preceded by the application's note on unlisted labels in its own box. The model's text cannot produce
+either box or the application's headings (they are neutralised in it), and bidirectional control characters
+are removed from the typed and the model's text. Exceptions to the physical ranges: a derived burden change
+without a physical bound is "not available", a confidence outside 0–1 is left out, a rounding error at an
+edge is accepted; the patient's own record number, birth date or phone number in any number field stops
+the request.
 
 **Never transmitted:**
 - Any free text: clinical indication, technique, observations (added to the draft in the application after the model returns)

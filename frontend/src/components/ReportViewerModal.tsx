@@ -23,6 +23,15 @@ import remarkGfm from 'remark-gfm';
 import type { ReportResponse } from '@/types';
 import { formatDate as formatLocalizedDate } from '@/utils/formatDate';
 
+/** The kind of a fenced block ("clinician-entry", "app-note", "text", …) from its `language-…` class. */
+function fencedKind(node: unknown): string | null {
+  const code = (node as { children?: Array<{ properties?: { className?: unknown } }> } | undefined)?.children?.[0];
+  const classes = code?.properties?.className;
+  const names = Array.isArray(classes) ? classes.map(String) : [];
+  const language = names.find((c) => c.startsWith('language-'));
+  return language ? language.slice('language-'.length) : null;
+}
+
 interface ReportViewerModalProps {
   report: ReportResponse;
   isOpen: boolean;
@@ -286,13 +295,33 @@ export function ReportViewerModal({
                           {children}
                         </blockquote>
                       ),
-                      // CAPA-014 (RC-066): the clinician's entry arrives quoted in a fenced block — shown
-                      // exactly as typed, wrapped so that it prints in full.
-                      pre: ({ children }) => (
-                        <pre className="whitespace-pre-wrap break-words text-[13px] text-gray-800 bg-gray-50 border border-gray-200 rounded px-3 py-2 mb-3 font-mono">
-                          {children}
-                        </pre>
-                      ),
+                      // CAPA-014 (RC-066): the clinician's entry and the application's note arrive in their own
+                      // fenced blocks ("clinician-entry", "app-note") and get their own boxes; the server turns
+                      // any such block in the model's text into a plain one, so the model cannot produce these
+                      // boxes. Every block is shown exactly as written, wrapped so that it prints in full.
+                      pre: ({ node, children }) => {
+                        const kind = fencedKind(node);
+                        const block = (
+                          <pre className="whitespace-pre-wrap break-words text-[13px] text-gray-800 bg-gray-50 border border-gray-200 rounded px-3 py-2 mb-3 font-mono">
+                            {children}
+                          </pre>
+                        );
+                        if (kind === 'clinician-entry') {
+                          return (
+                            <div data-testid="clinician-entry-box" className="border-l-4 border-sky-600 bg-sky-50 rounded-r pl-3 pr-1 pt-1 mb-3">
+                              {block}
+                            </div>
+                          );
+                        }
+                        if (kind === 'app-note') {
+                          return (
+                            <div data-testid="app-note-box" className="border border-dashed border-gray-400 rounded px-1 pt-1 mb-3 italic">
+                              {block}
+                            </div>
+                          );
+                        }
+                        return block;
+                      },
                       // CAPA-014: a draft never loads an image, on screen or in print — only its description.
                       img: ({ alt }) => (
                         <span className="text-gray-500">[image: {alt || '-'}]</span>
