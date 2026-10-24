@@ -107,8 +107,9 @@ own probe of a client pointed at `localhost:8081`, with no cloud contact; it is 
 ## 4. Corrective and preventive actions
 
 **Done on this branch (test configuration only):** `backend/tests/conftest.py` sets five
-independent layers before any application import (an app module imported earlier is caught by a
-test):
+independent layers before any application import (tests check that no app module was imported
+before the guard, before the environment layers took effect, or before the credential and socket
+guards were installed):
 1. `GOOGLE_APPLICATION_CREDENTIALS` is **forced** (not `setdefault`) to a file that does not exist,
    and `GCS_CREDENTIALS_FILE` is emptied (a `.env` cannot point the storage service at a key file);
    this also stops `google.oauth2.id_token.fetch_id_token`, which does not use `google.auth.default`;
@@ -123,17 +124,24 @@ test):
 4. `google.auth.default` (public and internal) **always** raises `DefaultCredentialsError`, also when
    `FIRESTORE_EMULATOR_HOST` is set (CI sets it without running an emulator), so every Google client
    fails exactly as on a computer without credentials;
-5. Python sockets may only connect to the loopback address (covers the HTTP clients: requests,
-   httpx, urllib3; gRPC does not use Python sockets and is covered by 1–4).
+5. Python sockets, and on Windows asyncio's default IOCP proactor, may only connect to the loopback
+   address, and HTTP proxies are switched off (`NO_PROXY=*`, proxy variables removed, which also
+   overrides a Windows system proxy), so a local proxy cannot relay requests out. Covers requests,
+   urllib3 and httpx (sync and async). **Limits:** gRPC does not use Python sockets (covered by 1–4);
+   UDP datagrams and DNS lookups are not blocked (they can leak a host name, no data); a service
+   listening on loopback is not necessarily local (a tunnel or port-forward, e.g. on the Redis port
+   the rate limiter pings at import; production runs no Redis today).
 
-**Verification:** `backend/tests/unit/test_prb002_no_cloud_in_tests.py` (15 tests: guard installed
-before any app import; each layer; credentials refused also with CI's emulator variable, and a GCS
-client failing at once under it; an outbound connection refused and a loopback connection allowed;
+**Verification:** `backend/tests/unit/test_prb002_no_cloud_in_tests.py` (19 tests: no app module
+imported before the guard, the environment layers or the credential guard; each layer; credentials
+refused also with CI's emulator variable, and a GCS client failing at once under it; HTTP proxies
+off; outbound `connect`, `connect_ex`, a host name and an asyncio connection refused, a loopback
+connection allowed;
 the end result for the **start-up user store singleton** and the `AuthService` that uses it (the
 object that wrote to production), a new user store, the Firestore client, the segmentation service
-and the storage service). Negative controls `scripts/safety/prb002_negative_controls.py`: 13
+and the storage service). Negative controls `scripts/safety/prb002_negative_controls.py`: 19
 mutations, each removing or weakening one layer or re-introducing a defect the independent review
-found (§7); result in `records/risk_verification/PRB-002_negative_controls_2026-10-24.json`. The
+found (§6); result in `records/risk_verification/PRB-002_negative_controls_2026-10-24.json`. The
 controls refuse to start if `conftest.py` has uncommitted changes, restore it on exit or signal, and
 run with an outer environment that already hides credentials and carries dummy service variables,
 so no control can reach the cloud. The base without the guard was deliberately **not** run "failing
@@ -150,7 +158,9 @@ guard, and the integration step run the way CI runs it: see the PR.
 - **(b) Preventive, application side (follow-up, not in this branch):** outside Cloud Run, the
   backend should not default to the production project (e.g. require an explicit
   `GOOGLE_CLOUD_PROJECT` when `K_SERVICE` is absent), so a locally started server cannot write to
-  production either. Checked 2026-10-24 (setting names only): the production Cloud Run service sets
+  production either. Checked 2026-10-24 by the coordinating agent with a read-only
+  `gcloud run services describe brain-mri --project=brain-mri-476110` (setting names and non-secret
+  values only; separate from the log-based scope above): the production Cloud Run service sets
   `GOOGLE_CLOUD_PROJECT` explicitly, so this would not change production behaviour. It changes
   start-up code, so it needs its own change record, tests and a careful deployment.
 - **(c)** Agents and developers keep running tests only through the suite's `conftest.py` (which now
@@ -196,6 +206,21 @@ branch (`1bd6d69`):
    signal.
 7. Record accuracy (emulator and CI claims, log rotation, severity mapping, marker docs).
    **Changed:** this record and the marker comments in `conftest.py`.
+
+**Re-review of `8bd7fe4`** (same reviewer): findings 1 to 8 closed or moot (CI simulation: the FHIR and
+DICOMweb requests that hung for 4 to 5 minutes now take 0.05 s; zero outbound attempts at the
+proxy). New findings, all addressed in the next commit:
+- N1: on Windows, asyncio's default proactor connected through IOCP `ConnectEx`, bypassing the
+  socket guard (`httpx.AsyncClient`, `redis.asyncio`, MCP client). **Changed:** the proactor's
+  `connect` is guarded; test with `asyncio.open_connection`; mutation M16.
+- N2: a proxy on loopback could relay requests out. **Changed:** proxies off (`NO_PROXY=*`); test;
+  mutation M17. The Redis-port ping at import is documented as a limit.
+- N3: `connect_ex` unpatched and host names treated as loopback went undetected; UDP and DNS not
+  guarded. **Changed:** tests and mutations M18, M19; UDP and DNS documented as limits.
+- N4: the opt-in Firestore emulator tests cannot run under the guard. **Changed:** marker text says
+  so (CI deselects them).
+- N5: record nits (section reference, layer-5 wording, ordering claim, how the Cloud Run setting was
+  checked). **Changed:** this record. Single-layer reordering is now tested (M14, M15).
 
 ## 7. Approval
 

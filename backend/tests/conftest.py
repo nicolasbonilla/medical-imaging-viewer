@@ -50,13 +50,22 @@ os.environ['ENCRYPTION_MASTER_KEY'] = 'dGVzdC1lbmNyeXB0aW9uLW1hc3Rlci1rZXktMzItY
 #   4. google.auth.default itself always refuses (below) -- also when FIRESTORE_EMULATOR_HOST is set,
 #      as CI sets it without running an emulator -- so any Google client fails exactly as on a
 #      machine without credentials and the stores use their local backends;
-#   5. Python sockets may only connect to the loopback address (HTTP clients: requests, httpx,
-#      urllib3). gRPC does not use Python sockets; layers 1-4 cover it.
+#   5. Python sockets (and, on Windows, asyncio's proactor) may only connect to the loopback
+#      address, and HTTP proxies are switched off (NO_PROXY=*), so a local proxy cannot relay out.
+#      Limits: gRPC does not use Python sockets (layers 1-4 cover it); UDP datagrams and DNS
+#      lookups are not blocked (they can leak a host name, no data); a service listening on
+#      loopback (e.g. a tunnel on the Redis port the rate limiter pings) is not local by nature.
 # Tests that need a store install an in-memory stand-in. A test that wants a LOCAL emulator must
 # give its client explicit anonymous credentials itself; nothing in the suite can reach a real one.
 OFFLINE_PROJECT_ID = 'mstool-offline-tests'
 _NO_CLOUD_DIR = PROJECT_ROOT / 'tests' / '.no-cloud'
-PRB002_APP_IMPORTED_BEFORE_GUARD = sorted(m for m in sys.modules if m == 'app' or m.startswith('app.'))
+
+
+def _app_modules():
+    return sorted(m for m in sys.modules if m == 'app' or m.startswith('app.'))
+
+
+PRB002_APP_IMPORTED_BEFORE_GUARD = _app_modules()
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(_NO_CLOUD_DIR / 'no-credentials.json')
 os.environ['GCS_CREDENTIALS_FILE'] = ''  # a .env cannot point the storage service at a key file
 os.environ['CLOUDSDK_CONFIG'] = str(_NO_CLOUD_DIR / 'gcloud')
@@ -70,9 +79,16 @@ PRB002_REMOVED_VARIABLES = (
 )
 for _name in PRB002_REMOVED_VARIABLES:
     os.environ.pop(_name, None)
+for _name in ('HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'GRPC_PROXY',
+              'http_proxy', 'https_proxy', 'all_proxy', 'grpc_proxy'):
+    os.environ.pop(_name, None)
+os.environ['NO_PROXY'] = os.environ['no_proxy'] = '*'   # also overrides a Windows system proxy
+PRB002_APP_IMPORTED_BEFORE_ENV_LAYERS = _app_modules()
 
 
 def _install_no_cloud_guard() -> None:
+    global PRB002_APP_IMPORTED_BEFORE_CREDENTIAL_GUARD
+    PRB002_APP_IMPORTED_BEFORE_CREDENTIAL_GUARD = _app_modules()
     import ipaddress
     import socket
     import google.auth
@@ -113,6 +129,18 @@ def _install_no_cloud_guard() -> None:
 
     _connect.prb002_guard = True
     socket.socket.connect, socket.socket.connect_ex = _connect, _connect_ex
+
+    if sys.platform == 'win32':          # the default proactor loop connects through IOCP ConnectEx
+        import asyncio.windows_events as windows_events
+        real_iocp_connect = windows_events.IocpProactor.connect
+
+        def _iocp_connect(proactor, conn, address):
+            if not _is_loopback(address):
+                raise OSError(f'PRB-002: the test suite never opens network connections ({address!r}).')
+            return real_iocp_connect(proactor, conn, address)
+
+        _iocp_connect.prb002_guard = True
+        windows_events.IocpProactor.connect = _iocp_connect
 
 
 _install_no_cloud_guard()
@@ -859,7 +887,8 @@ def pytest_configure(config):
         "markers", "slow: Tests that take significant time to run"
     )
     config.addinivalue_line(
-        "markers", "requires_firestore: Tests requiring a LOCAL Firestore emulator (never a real one, PRB-002)"
+        "markers", "requires_firestore: Firestore emulator tests; they cannot run in this suite, which "
+        "refuses all Google credentials (PRB-002); CI deselects them"
     )
     config.addinivalue_line(
         "markers", "requires_pacs: Tests requiring PACS connection"

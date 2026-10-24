@@ -80,6 +80,22 @@ MUTATIONS = [
     ("M13_socket_guard_allows_any_host",
      "        if host.lower() == 'localhost':\n            return True\n",
      "        return True\n"),
+    ("M14_app_imported_before_credential_guard",           # re-review X2 (only the guard call moved)
+     "\n_install_no_cloud_guard()\n",
+     "\nimport app.main  # noqa: F401\n_install_no_cloud_guard()\n"),
+    ("M15_app_imported_before_environment_layers",         # re-review X3
+     "PRB002_APP_IMPORTED_BEFORE_GUARD = _app_modules()\n",
+     "PRB002_APP_IMPORTED_BEFORE_GUARD = _app_modules()\nimport app.main  # noqa: F401\n"),
+    ("M16_windows_proactor_not_guarded",                   # re-review N1
+     "        windows_events.IocpProactor.connect = _iocp_connect\n", ""),
+    ("M17_proxies_left_on",                                # re-review N2
+     "os.environ['NO_PROXY'] = os.environ['no_proxy'] = '*'   # also overrides a Windows system proxy\n", ""),
+    ("M18_connect_ex_unpatched",                           # re-review X4
+     "    socket.socket.connect, socket.socket.connect_ex = _connect, _connect_ex\n",
+     "    socket.socket.connect = _connect\n"),
+    ("M19_host_names_treated_as_loopback",                 # re-review X5
+     "        except ValueError:\n            return False\n",
+     "        except ValueError:\n            return True\n"),
 ]
 
 
@@ -97,6 +113,7 @@ def outer_env(tmp):
         "GCS_CREDENTIALS_FILE": os.path.join(tmp, "outer-key.json"),
         "ANTHROPIC_API_KEY": "outer-dummy-not-a-key",
         "FLAMES_ENDPOINT": "http://outer.invalid",
+        "HTTPS_PROXY": "http://127.0.0.1:9",            # closed local port: a relay attempt fails fast
     })
     env.pop("FIRESTORE_EMULATOR_HOST", None)
     return env

@@ -8,6 +8,7 @@ imported, and the end result: the start-up user store, the Firestore client, the
 service and the storage service all fail to get a real client, also with the Firestore emulator
 variable that CI sets without running an emulator, and no Python socket leaves the loopback.
 """
+import asyncio
 import os
 import socket
 import sys
@@ -29,8 +30,23 @@ def _conftest():
 
 
 def test_guard_installed_before_any_app_import():
-    """The production writes came from the user store created while conftest imported app.main."""
-    assert _conftest().PRB002_APP_IMPORTED_BEFORE_GUARD == []
+    """The production writes came from the user store created while conftest imported app.main.
+    Checked at the top of the guard, after the environment layers and when the credential and
+    socket guards are installed."""
+    conftest = _conftest()
+    assert conftest.PRB002_APP_IMPORTED_BEFORE_GUARD == []
+    assert conftest.PRB002_APP_IMPORTED_BEFORE_ENV_LAYERS == []
+    assert conftest.PRB002_APP_IMPORTED_BEFORE_CREDENTIAL_GUARD == []
+
+
+def test_http_proxies_switched_off():
+    """A proxy listening on loopback could otherwise relay requests out past the socket guard."""
+    import requests
+
+    assert os.environ["NO_PROXY"] == "*" and os.environ["no_proxy"] == "*"
+    assert [n for n in ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy")
+            if n in os.environ] == []
+    assert requests.utils.get_environ_proxies("http://192.0.2.1/") == {}
 
 
 def test_credentials_file_points_nowhere():
@@ -93,6 +109,41 @@ def test_emulator_variable_does_not_unlock_storage(monkeypatch):
 def test_outbound_connections_refused():
     with pytest.raises(OSError, match="PRB-002"):
         socket.create_connection(("192.0.2.1", 443), timeout=2)  # TEST-NET-1, never routed
+
+
+def test_connect_ex_refused():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        with pytest.raises(OSError, match="PRB-002"):
+            sock.connect_ex(("192.0.2.1", 443))
+    finally:
+        sock.close()
+
+
+def test_host_name_is_not_treated_as_loopback():
+    """Refused before any DNS lookup or connection attempt."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        with pytest.raises(OSError, match="PRB-002"):
+            sock.connect(("mstool-offline-tests.invalid", 443))
+    finally:
+        sock.close()
+
+
+def test_async_outbound_connections_refused():
+    """asyncio's default loop (the IOCP proactor on Windows) must be guarded too: httpx.AsyncClient,
+    redis.asyncio and the MCP client connect through it."""
+    async def attempt():
+        await asyncio.wait_for(asyncio.open_connection("192.0.2.1", 443), timeout=3)
+
+    # A loop of the platform default type, without asyncio.run(): asyncio.run() clears the current
+    # event loop of the main thread and later tests that call get_event_loop() then fail.
+    loop = asyncio.new_event_loop()
+    try:
+        with pytest.raises(OSError, match="PRB-002"):
+            loop.run_until_complete(attempt())
+    finally:
+        loop.close()
 
 
 def test_loopback_connections_still_work():
