@@ -1,18 +1,27 @@
 {
-  "executed": "2026-10-24T22:25:35",
+  "executed": "2026-10-24T22:30:07",
   "base": "2e20b8a (PR #68 after the second review, before the third-review correction m-1)",
   "method": "source files that differ from the base commit restored to it, files it did not have removed; the PRB-003 test files run unchanged; working tree restored byte for byte",
   "swapped": {
-    "restored_to_base": [],
+    "restored_to_base": [
+      "backend/app/api/routes/segmentation.py",
+      "backend/app/api/routes/segmentation_regions.py",
+      "backend/app/services/dis_review_gate.py",
+      "frontend/src/components/LesionDashboard.tsx",
+      "frontend/src/i18n/locales/de.json",
+      "frontend/src/i18n/locales/en.json",
+      "frontend/src/i18n/locales/es.json",
+      "frontend/src/types/lesion.ts"
+    ],
     "removed": []
   },
   "test_sha256": {
-    "backend/tests/unit/test_prb003_review3_findings.py": "2c128457eaf88c4b469c47bb89afb8ccc6a1e8a653a302d65626669b411f12e6",
+    "backend/tests/unit/test_prb003_review3_findings.py": "88fc06a2dd880a0cf1699680095c2de7b2e42480fb44d1c431b8271afeaa91b3",
     "frontend/src/components/LesionDashboard.prb003.review3.test.tsx": "3738c4bc5cdc88fce4b28f36a374cc19eecaee26893bda10e7fdd1e8a9ee91ef"
   },
   "backend": {
     "passed": 0,
-    "failed": 3,
+    "failed": 4,
     "errors": 0,
     "results": {
       "test_rc070_m1_a_correction_names_the_lesion_as_the_lesion_table_does": {
@@ -26,6 +35,10 @@
       "test_rc071_m1_the_refused_confirmation_names_lesions_as_the_table_does": {
         "status": "failed",
         "reason": "AssertionError: assert 'lesion 1 (slice 6): Periventricular' in '1 lesion(s) carry no MAGNIMS region or more than one (lesion 2 (slice 6): Periventricular + Juxtacortical). Every con...iventricular, juxtacortical, infratentorial or deep whi"
+      },
+      "test_rc070_m1_classify_regions_records_the_voxel_volume": {
+        "status": "failed",
+        "reason": "KeyError: 'voxel_volume_mm3'"
       }
     }
   },
@@ -43,5 +56,5 @@
       }
     }
   },
-  "note": "Third independent review of PR #68 at 2e20b8a, finding m-1 (lesion numbering of the DIS card vs the lesion table). Every test fails on the base."
+  "note": "Third independent review of PR #68 at 2e20b8a, finding m-1 (lesion numbering of the DIS card vs the lesion table). Every test fails on the base. The test of the recorded voxel volume was added while writing the negative controls; this record was produced again with the final test files."
 }

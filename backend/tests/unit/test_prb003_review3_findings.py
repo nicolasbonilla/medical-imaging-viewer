@@ -108,3 +108,24 @@ def test_rc071_m1_the_refused_confirmation_names_lesions_as_the_table_does(clien
     message = r.json()["error"]["message"]
     assert f"lesion {main['id']} (slice {_slice_of(main) + 1}): Periventricular" in message
     assert "small component (2 voxels, slice 7): Juxtacortical" in message
+
+
+@pytest.mark.unit
+def test_rc070_m1_classify_regions_records_the_voxel_volume(client_for, monkeypatch):
+    """The lesion-size floor of the table needs the voxel volume: classify-regions records it with the lesions."""
+    import app.api.routes.segmentation_regions as regions_route
+
+    m = np.zeros((D, H, W), dtype=np.uint8)
+    m[1:3, 1:3, 1:3] = 1
+    m[5:7, 10:14, 10:14] = 2
+    svc = _service()
+    entry = _seed(svc, mask=(m > 0).astype(np.uint8))
+    monkeypatch.setattr(svc, "list_segmentations", lambda file_id=None, file_ids=None: [], raising=False)
+    monkeypatch.setattr(regions_route, "prepare_geometric_image", lambda affine, native, shape: np.ones(shape, np.uint8))
+    monkeypatch.setattr(regions_route, "classify_lesions_geometric", lambda mask, image, spacing: {
+        "classified_mask": m, "method": "geometric", "total_classified": 40, "processing_time_ms": 1,
+        "lesions": [], "classification_summary": {}})
+    client = client_for(svc)
+    assert client.post("/api/v1/segmentation/seg-1/classify-regions", json={"method": "geometric"}).status_code == 200
+    assert entry["metadata"].analysis_data["classification"]["voxel_volume_mm3"] == 3.0
+    assert _dis(client)["regions"]["classified"] is True
