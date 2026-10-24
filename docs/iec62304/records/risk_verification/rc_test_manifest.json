@@ -732,11 +732,12 @@
       "implementation": "backend/app/core/logging/audit_sink.py (DurableAuditSink, query_audit_records); backend/app/core/logging/audit.py (build_audit_record, emit_audit, AuditLogger.log_event); backend/app/core/logging/audit_middleware.py (ROUTE_ACTIONS, read deduplication, actor); backend/app/core/logging/middleware.py (unique request id); backend/app/security/auth.py (_log_audit_event); backend/app/api/routes/authentication.py; backend/app/api/routes/auth.py (/audit-logs, /audit-status); firestore.rules; firestore.indexes.json; frontend/src/components/AuditStatusBanner.tsx",
       "tests": [
         "tests/unit/test_capa015_audit_and_session.py",
-        "frontend/src/services/session.capa015.test.tsx"
+        "frontend/src/services/session.capa015.test.tsx",
+        "tests/unit/test_capa015_review_fixes.py"
       ],
       "requirement": "REQ-SEC-024 (REQ-SEC-009)",
       "change": "CAPA-015 (DRAFT, PENDING owner approval; branch fix/audit-trail-and-session-capa015; merge after CAPA-014)",
-      "negative_control": "Executed 2026-10-24 by scripts/safety/capa015_negative_controls.py (61 mutations, 61 detected in the second full run against the final tests; the first run had left F18 undetected (German text translated only in part), which led to the stronger language test; one mutation at a time, anchors asserted unique, files restored byte for byte, no cloud credentials); record docs/iec62304/records/risk_verification/CAPA-015_negative_controls_2026-10-24.json. Tests written before the fix (commit ecbcdad), re-run on main 70cc5c7 by scripts/safety/capa015_tests_on_base.py: backend 29 of 29 fail, frontend 12 of 12 fail; record docs/iec62304/records/risk_verification/CAPA-015_tests_on_base_2026-10-24.json. RC-067 mutations: B1-B25, F15-F16.",
+      "negative_control": "Executed 2026-10-24 by scripts/safety/capa015_negative_controls.py (94 mutations after the independent review of PR #65: 93 detected, 1 declared equivalent (R9 - redundant with the clearing of the sealed successor; R9b, removing both, is detected); the first full run (61 mutations) had left F18 undetected, which led to the stronger language test; one mutation at a time, anchors asserted unique, files restored byte for byte, PRB-002 isolation); record docs/iec62304/records/risk_verification/CAPA-015_negative_controls_2026-10-24.json. Tests written before the fix: on main 70cc5c7 backend 29 of 29 and frontend 12 of 12 fail (CAPA-015_tests_on_base_2026-10-24.json); the independent-review cases on the PR #65 head 2c618ec: backend 18 of 47, frontend 9 of 9 fail (CAPA-015_review1_tests_on_pr65_2026-10-24.json). RC-067 mutations: B1-B25, F15-F16, R4-R7, R17-R23.",
       "note": "Verified against an in-memory Firestore stand-in (create/get/where/order_by/start_after/transactions), not a real Firestore or the emulator. The status is per server instance. Retention is owner decision D-3 (proposal 6 years). AI report records carry no patient id because the request carries none (REQ-SEC-007). Owner approval PENDING."
     },
     "RC-068": {
@@ -745,11 +746,12 @@
       "status": "implemented",
       "implementation": "backend/app/security/refresh_tokens.py (RefreshTokenStore, MemoryRefreshRepo, FirestoreRefreshRepo, cookie helpers); backend/app/api/routes/authentication.py (/login, /refresh, start_session); backend/app/api/routes/auth.py (/logout, /change-password, /webauthn/login/complete, shared token manager); backend/app/security/auth.py (change_password); backend/app/core/config.py; firebase.json; firestore.rules",
       "tests": [
-        "tests/unit/test_capa015_audit_and_session.py"
+        "tests/unit/test_capa015_audit_and_session.py",
+        "tests/unit/test_capa015_review_fixes.py"
       ],
       "requirement": "REQ-SEC-025 (REQ-SEC-003)",
       "change": "CAPA-015 (DRAFT, PENDING owner approval; branch fix/audit-trail-and-session-capa015; merge after CAPA-014)",
-      "negative_control": "Executed 2026-10-24 by scripts/safety/capa015_negative_controls.py (61 mutations, 61 detected in the second full run against the final tests; the first run had left F18 undetected (German text translated only in part), which led to the stronger language test; one mutation at a time, anchors asserted unique, files restored byte for byte, no cloud credentials); record docs/iec62304/records/risk_verification/CAPA-015_negative_controls_2026-10-24.json. Tests written before the fix (commit ecbcdad), re-run on main 70cc5c7 by scripts/safety/capa015_tests_on_base.py: backend 29 of 29 fail, frontend 12 of 12 fail; record docs/iec62304/records/risk_verification/CAPA-015_tests_on_base_2026-10-24.json. RC-068 mutations: S1-S18.",
+      "negative_control": "Executed 2026-10-24 by scripts/safety/capa015_negative_controls.py (94 mutations after the independent review of PR #65: 93 detected, 1 declared equivalent (R9 - redundant with the clearing of the sealed successor; R9b, removing both, is detected); the first full run (61 mutations) had left F18 undetected, which led to the stronger language test; one mutation at a time, anchors asserted unique, files restored byte for byte, PRB-002 isolation); record docs/iec62304/records/risk_verification/CAPA-015_negative_controls_2026-10-24.json. Tests written before the fix: on main 70cc5c7 backend 29 of 29 and frontend 12 of 12 fail (CAPA-015_tests_on_base_2026-10-24.json); the independent-review cases on the PR #65 head 2c618ec: backend 18 of 47, frontend 9 of 9 fail (CAPA-015_review1_tests_on_pr65_2026-10-24.json). RC-068 mutations: S1-S18, R1-R3, R8-R16.",
       "note": "Session lifetimes are owner decision D-2 (15 min / 30 min idle / 12 h absolute instead of the suggested 12 h / 7 d, which would weaken the 15-minute automatic log-off on shared workstations). The Firebase Hosting rewrite and the cookie through it are not exercised in a deployed environment (decision D-4). Owner approval PENDING."
     },
     "RC-069": {
@@ -758,11 +760,12 @@
       "status": "implemented",
       "implementation": "frontend/src/services/session.ts; frontend/src/services/apiClient.ts; frontend/src/contexts/AuthContext.tsx; frontend/src/components/SessionExpiredDialog.tsx; frontend/src/components/NiivueViewer2D.tsx; frontend/src/components/ImageViewer3D.tsx; frontend/src/components/LesionDashboard.tsx; frontend/src/pages/LoginPage.tsx; frontend/src/i18n/locales/{en,es,de}.json",
       "tests": [
-        "frontend/src/services/session.capa015.test.tsx"
+        "frontend/src/services/session.capa015.test.tsx",
+        "frontend/src/services/session.capa015.review.test.tsx"
       ],
       "requirement": "REQ-SEC-026",
       "change": "CAPA-015 (DRAFT, PENDING owner approval; branch fix/audit-trail-and-session-capa015; merge after CAPA-014)",
-      "negative_control": "Executed 2026-10-24 by scripts/safety/capa015_negative_controls.py (61 mutations, 61 detected in the second full run against the final tests; the first run had left F18 undetected (German text translated only in part), which led to the stronger language test; one mutation at a time, anchors asserted unique, files restored byte for byte, no cloud credentials); record docs/iec62304/records/risk_verification/CAPA-015_negative_controls_2026-10-24.json. Tests written before the fix (commit ecbcdad), re-run on main 70cc5c7 by scripts/safety/capa015_tests_on_base.py: backend 29 of 29 fail, frontend 12 of 12 fail; record docs/iec62304/records/risk_verification/CAPA-015_tests_on_base_2026-10-24.json. RC-069 mutations: F1-F14, F17-F18.",
+      "negative_control": "Executed 2026-10-24 by scripts/safety/capa015_negative_controls.py (94 mutations after the independent review of PR #65: 93 detected, 1 declared equivalent (R9 - redundant with the clearing of the sealed successor; R9b, removing both, is detected); the first full run (61 mutations) had left F18 undetected, which led to the stronger language test; one mutation at a time, anchors asserted unique, files restored byte for byte, PRB-002 isolation); record docs/iec62304/records/risk_verification/CAPA-015_negative_controls_2026-10-24.json. Tests written before the fix: on main 70cc5c7 backend 29 of 29 and frontend 12 of 12 fail (CAPA-015_tests_on_base_2026-10-24.json); the independent-review cases on the PR #65 head 2c618ec: backend 18 of 47, frontend 9 of 9 fail (CAPA-015_review1_tests_on_pr65_2026-10-24.json). RC-069 mutations: F1-F14, F17-F18, FR1-FR9.",
       "note": "jsdom only, no real browser. The existing 15-minute inactivity log-off still discards unsaved work (unchanged; decision D-5). Wording in es/de awaits review. Owner approval PENDING."
     }
   },

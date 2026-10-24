@@ -264,6 +264,11 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "R9_grace_after_successor_used": ([(RT, '                        and not succ.get("used") and t.get("successor_sealed")\n',
                                         '                        and t.get("successor_sealed")\n')],
                                       "a replay accepted although the successor was already used (theft) (m5)"),
+    "R9b_both_successor_checks_removed": ([(RT, '                        and not succ.get("used") and t.get("successor_sealed")\n',
+                                            '                        and t.get("successor_sealed")\n'),
+                                           (RT, '            if pred is not None and pred.get("successor_sealed"):   # this token is used: drop the sealed copy\n'
+                                                '                tx.update_token(t["predecessor"], {"successor_sealed": None})\n', "")],
+                                          "a replay accepted after the successor was used: both protections removed (m5)"),
     "R10_grace_unbounded": ([(RT, "now - used_at <= self.grace and succ is not None", "now - used_at <= self.grace * 1000 and succ is not None")],
                             "a replay accepted long after the window (m5)"),
     "R11_successor_stored_raw": ([(RT, '"successor_sealed": self._seal(new_token, t["family_id"])})',
@@ -326,7 +331,12 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                              "a hanging refresh holds the cross-tab lock forever (m13, as found)"),
 }
 
-EXPECTED_UNDETECTED = {}
+EXPECTED_UNDETECTED = {
+    "R9_grace_after_successor_used": (
+        "equivalent: using the successor clears the predecessor's sealed copy in the same transaction, so the "
+        "grace branch cannot be taken once the successor was used even without this check (defence in depth); "
+        "R9b removes both protections and is detected"),
+}
 
 
 def run_backend():
