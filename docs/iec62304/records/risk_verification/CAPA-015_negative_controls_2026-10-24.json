@@ -1,0 +1,1114 @@
+{
+  "executed": "2026-10-24T12:02:40",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once; the bound tests of the mutated side are run (backend pytest without cloud credentials, frontend vitest JSON reporter)",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/api/routes/auth.py": "9a65961a24a27fb4565cd96fe8311cf8482e54ac3100dde50de0a3e29a307e76",
+    "backend/app/api/routes/authentication.py": "292e664b0ad241e75767076f333d732aed1b03cf18e27bd329d5675ed8a7e551",
+    "backend/app/core/config.py": "c831e2358926ff9d4c475a2f3a62d680f8cf29697e72888c359c969b0aa1d41b",
+    "backend/app/core/logging/audit.py": "313995a8e1e42464101858b670413fedcb944ff058247fc58472295e80626ff7",
+    "backend/app/core/logging/audit_middleware.py": "393fa67a406ef35f832a2be3bd024662f78882ad873af50069df44df8a3ec8a0",
+    "backend/app/core/logging/audit_sink.py": "eec98f729e5dae8dbd4375ec46008f079d54bb2cb2d1bd64e6ae08443dc27ec2",
+    "backend/app/security/auth.py": "68488e61ab16ff8a18bb829728879e94647f5b002f6fee18b3ac5fc94175792b",
+    "backend/app/security/refresh_tokens.py": "e3b7662b1018b36682a227140462ee4ea2b9d585de231cfe63608a8bd2fe5ac4",
+    "firestore.rules": "96b6719b0075a5c204027d8a4d87a5cd14a2361af518a76b0bc123917c0e674f",
+    "frontend/src/components/AuditStatusBanner.tsx": "41e5b250921ee076410183754e59a2dd2458d56af2aa6621b9dd9f2d37e0dc67",
+    "frontend/src/components/SessionExpiredDialog.tsx": "7c44d5b9b75803bcaea5ea0cb65997fbc9852d0911d2fb0a689559f9fc675000",
+    "frontend/src/contexts/AuthContext.tsx": "177d57f248631e00a3872ba7350654fcc1d1b21d7ba49976a6d75a8482432a59",
+    "frontend/src/i18n/locales/de.json": "aaf2bdc877ebd5f8dcf45d164e27ec96bf94ddb276b241800b56c096907b3c67",
+    "frontend/src/i18n/locales/es.json": "042ea438ed0a810dd2b45485649b92bf3e50cbd02055e517d305262ca7ef6549",
+    "frontend/src/services/session.ts": "71c87a817e5ef8c9a08640e1042c1e32d4a82596a35a15a4921c293ba0f299bc"
+  },
+  "test_sha256": {
+    "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0",
+    "frontend/src/services/session.capa015.test.tsx": "0f4eb947f6c861687d445f922da4054481b91a527f5a5b7e9cb2e998b1cb2cb3"
+  },
+  "tests": [
+    "tests/unit/test_capa015_audit_and_session.py",
+    "frontend/src/services/session.capa015.test.tsx"
+  ],
+  "mutations": {
+    "B1_not_written_durably": {
+      "suite": "backend",
+      "failed": 18,
+      "passed": 11,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc067_admin_sees_when_audit_writing_is_failing",
+        "test_rc067_ai_report_generation_is_recorded_with_template_and_outcome",
+        "test_rc067_audit_log_endpoint_reads_firestore_paginated_admin_only",
+        "test_rc067_auth_service_events_reach_the_durable_trail",
+        "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.longitudinal.review:POST]",
+        "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.segmentation.confirm:POST]",
+        "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.segmentation.delete:DELETE]",
+        "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.segmentation.save:POST]",
+        "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.segmentation.save:PUT]",
+        "test_rc067_data_reads_are_durable_once_per_window_and_always_on_stdout",
+        "test_rc067_failed_logins_captcha_and_lockout_are_recorded_without_the_typed_identifier",
+        "test_rc067_firestore_outage_never_breaks_the_request_is_logged_loudly_and_retried",
+        "test_rc067_login_success_is_written_durably_with_actor_role_and_request_id",
+        "test_rc067_records_hold_no_query_string_file_name_or_free_text",
+        "test_rc068_logout_revokes_the_session_and_clears_the_cookie",
+        "test_rc068_password_change_takes_effect_and_revokes_every_session",
+        "test_rc068_refresh_rotates_and_the_old_token_is_refused",
+        "test_rc068_reuse_revokes_the_whole_family"
+      ],
+      "reintroduces": "records only on stdout / the instance's disk — nothing in Firestore (the defect as found)",
+      "applied": true,
+      "executed": "2026-10-24T12:02:54",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "B2_overwrite_instead_of_append": {
+      "suite": "backend",
+      "failed": 4,
+      "passed": 25,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc067_admin_sees_when_audit_writing_is_failing",
+        "test_rc067_firestore_outage_never_breaks_the_request_is_logged_loudly_and_retried",
+        "test_rc067_queue_overflow_keeps_the_record_in_the_server_log",
+        "test_rc067_records_are_append_only"
+      ],
+      "reintroduces": "an existing audit record can be overwritten",
+      "applied": true,
+      "executed": "2026-10-24T12:03:09",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "B3_client_time_only": {
+      "suite": "backend",
+      "failed": 2,
+      "passed": 27,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc067_audit_log_endpoint_reads_firestore_paginated_admin_only",
+        "test_rc067_login_success_is_written_durably_with_actor_role_and_request_id"
+      ],
+      "reintroduces": "the record carries the instance's clock, not the server commit time",
+      "applied": true,
+      "executed": "2026-10-24T12:03:24",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "B4_failure_not_retried": {
+      "suite": "backend",
+      "failed": 3,
+      "passed": 26,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc067_admin_sees_when_audit_writing_is_failing",
+        "test_rc067_firestore_outage_never_breaks_the_request_is_logged_loudly_and_retried",
+        "test_rc067_queue_overflow_keeps_the_record_in_the_server_log"
+      ],
+      "reintroduces": "a failed write is given up at once (record lost from the trail)",
+      "applied": true,
+      "executed": "2026-10-24T12:03:38",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "B5_failure_silent": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc067_firestore_outage_never_breaks_the_request_is_logged_loudly_and_retried"
+      ],
+      "reintroduces": "a failed audit write is not logged loudly",
+      "applied": true,
+      "executed": "2026-10-24T12:03:53",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "B6_drop_silent": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc067_queue_overflow_keeps_the_record_in_the_server_log"
+      ],
+      "reintroduces": "a record dropped on queue overflow leaves no trace in the server log",
+      "applied": true,
+      "executed": "2026-10-24T12:04:07",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "B7_status_hides_failure": {
+      "suite": "backend",
+      "failed": 2,
+      "passed": 27,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc067_admin_sees_when_audit_writing_is_failing",
+        "test_rc067_queue_overflow_keeps_the_record_in_the_server_log"
+      ],
+      "reintroduces": "the administrator indicator says 'ok' while writes fail",
+      "applied": true,
+      "executed": "2026-10-24T12:04:22",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "B8_free_text_in_record": {
+      "suite": "backend",
+      "failed": 7,
+      "passed": 22,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.longitudinal.review:POST]",
+        "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.segmentation.confirm:POST]",
+        "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.segmentation.delete:DELETE]",
+        "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.segmentation.save:POST]",
+        "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.segmentation.save:PUT]",
+        "test_rc067_login_success_is_written_durably_with_actor_role_and_request_id",
+        "test_rc067_records_hold_no_query_string_file_name_or_free_text"
+      ],
+      "reintroduces": "description text (free text) reaches the durable record",
+      "applied": true,
+      "executed": "2026-10-24T12:04:37",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "B9_concrete_path_and_query": {
+      "suite": "backend",
+      "failed": 2,
+      "passed": 27,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc067_data_reads_are_durable_once_per_window_and_always_on_stdout",
+        "test_rc067_records_hold_no_query_string_file_name_or_free_text"
+      ],
+      "reintroduces": "the concrete URL with its query string instead of the route template",
+      "applied": true,
+      "executed": "2026-10-24T12:04:51",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "B10_file_reference_not_parsed": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc067_records_hold_no_query_string_file_name_or_free_text"
+      ],
+      "reintroduces": "an imaging file reference kept whole (file name) instead of its ids and hash",
+      "applied": true,
+      "executed": "2026-10-24T12:05:07",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "B11_typed_identifier_kept": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc067_failed_logins_captcha_and_lockout_are_recorded_without_the_typed_identifier"
+      ],
+      "reintroduces": "the identifier typed at a failed login is stored as typed",
+      "applied": true,
+      "executed": "2026-10-24T12:05:24",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "B12_login_not_audited": {
+      "suite": "backend",
+      "failed": 3,
+      "passed": 26,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc067_admin_sees_when_audit_writing_is_failing",
+        "test_rc067_firestore_outage_never_breaks_the_request_is_logged_loudly_and_retried",
+        "test_rc067_login_success_is_written_durably_with_actor_role_and_request_id"
+      ],
+      "reintroduces": "a successful password login leaves no audit record (the defect as found)",
+      "applied": true,
+      "executed": "2026-10-24T12:05:41",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "B13_lockout_not_audited": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc067_failed_logins_captcha_and_lockout_are_recorded_without_the_typed_identifier"
+      ],
+      "reintroduces": "an account lock-out leaves no audit record",
+      "applied": true,
+      "executed": "2026-10-24T12:06:00",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "B14_longitudinal_decision_unmapped": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.longitudinal.review:POST]"
+      ],
+      "reintroduces": "a radiologist's longitudinal decision recorded only as a generic modification",
+      "applied": true,
+      "executed": "2026-10-24T12:06:15",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "B15_ai_report_unmapped": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc067_ai_report_generation_is_recorded_with_template_and_outcome"
+      ],
+      "reintroduces": "AI report generation not recorded as such",
+      "applied": true,
+      "executed": "2026-10-24T12:06:30",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "B16_segmentation_save_unmapped": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.segmentation.save:POST]"
+      ],
+      "reintroduces": "a segmentation save not recorded as such",
+      "applied": true,
+      "executed": "2026-10-24T12:06:45",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "B17_body_ids_ignored": {
+      "suite": "backend",
+      "failed": 2,
+      "passed": 27,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc067_ai_report_generation_is_recorded_with_template_and_outcome",
+        "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.longitudinal.review:POST]"
+      ],
+      "reintroduces": "the segmentations a longitudinal decision was made on are not recorded",
+      "applied": true,
+      "executed": "2026-10-24T12:07:01",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "B18_reads_not_deduplicated": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc067_data_reads_are_durable_once_per_window_and_always_on_stdout"
+      ],
+      "reintroduces": "every slice read written to Firestore (unreadable, costly trail)",
+      "applied": true,
+      "executed": "2026-10-24T12:07:17",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "B19_actor_not_identified": {
+      "suite": "backend",
+      "failed": 7,
+      "passed": 22,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc067_ai_report_generation_is_recorded_with_template_and_outcome",
+        "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.longitudinal.review:POST]",
+        "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.segmentation.confirm:POST]",
+        "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.segmentation.delete:DELETE]",
+        "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.segmentation.save:POST]",
+        "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.segmentation.save:PUT]",
+        "test_rc067_data_reads_are_durable_once_per_window_and_always_on_stdout"
+      ],
+      "reintroduces": "request records without the acting user",
+      "applied": true,
+      "executed": "2026-10-24T12:07:33",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "B20_no_request_id": {
+      "suite": "backend",
+      "failed": 6,
+      "passed": 23,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.longitudinal.review:POST]",
+        "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.segmentation.confirm:POST]",
+        "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.segmentation.delete:DELETE]",
+        "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.segmentation.save:POST]",
+        "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.segmentation.save:PUT]",
+        "test_rc067_login_success_is_written_durably_with_actor_role_and_request_id"
+      ],
+      "reintroduces": "records not correlated with their request",
+      "applied": true,
+      "executed": "2026-10-24T12:07:49",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "B21_auth_service_events_lost": {
+      "suite": "backend",
+      "failed": 2,
+      "passed": 27,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc067_auth_service_events_reach_the_durable_trail",
+        "test_rc068_password_change_takes_effect_and_revokes_every_session"
+      ],
+      "reintroduces": "admin user changes and password changes not in the durable trail (the in-memory list, as found)",
+      "applied": true,
+      "executed": "2026-10-24T12:08:05",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "B22_trail_read_by_radiologists": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc067_audit_log_endpoint_reads_firestore_paginated_admin_only"
+      ],
+      "reintroduces": "radiologists can read the whole audit trail (as found)",
+      "applied": true,
+      "executed": "2026-10-24T12:08:21",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "B23_status_open_to_all": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc067_admin_sees_when_audit_writing_is_failing"
+      ],
+      "reintroduces": "any user sees the audit-store status",
+      "applied": true,
+      "executed": "2026-10-24T12:08:46",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "B24_trail_reading_not_audited": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc067_audit_log_endpoint_reads_firestore_paginated_admin_only"
+      ],
+      "reintroduces": "reading the audit trail is not itself recorded",
+      "applied": true,
+      "executed": "2026-10-24T12:09:09",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "B25_clients_may_write_trail": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc067_records_are_append_only"
+      ],
+      "reintroduces": "the security rules let a signed-in client write audit records",
+      "applied": true,
+      "executed": "2026-10-24T12:09:30",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "S1_no_refresh_cookie": {
+      "suite": "backend",
+      "failed": 7,
+      "passed": 22,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc068_idle_and_absolute_expiry",
+        "test_rc068_login_sets_an_httponly_secure_samesite_strict_cookie_and_no_token_in_the_body",
+        "test_rc068_refresh_refuses_a_foreign_origin_and_a_missing_cookie",
+        "test_rc068_refresh_rotates_and_the_old_token_is_refused",
+        "test_rc068_refresh_tokens_are_stored_hashed",
+        "test_rc068_refreshed_access_token_carries_the_current_role",
+        "test_rc068_reuse_revokes_the_whole_family"
+      ],
+      "reintroduces": "password login starts no refresh session (sign in again every hour, as found)",
+      "applied": true,
+      "executed": "2026-10-24T12:09:56",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "S2_cookie_readable_by_scripts": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc068_login_sets_an_httponly_secure_samesite_strict_cookie_and_no_token_in_the_body"
+      ],
+      "reintroduces": "the refresh cookie readable by page scripts",
+      "applied": true,
+      "executed": "2026-10-24T12:10:13",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "S3_cookie_sent_cross_site": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc068_login_sets_an_httponly_secure_samesite_strict_cookie_and_no_token_in_the_body"
+      ],
+      "reintroduces": "the refresh cookie sent on cross-site navigations",
+      "applied": true,
+      "executed": "2026-10-24T12:10:34",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "S4_raw_token_stored": {
+      "suite": "backend",
+      "failed": 8,
+      "passed": 21,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc068_firestore_repository_stores_hashes_and_rotates_in_one_transaction",
+        "test_rc068_idle_and_absolute_expiry",
+        "test_rc068_passkey_login_also_starts_a_rotating_session_and_keeps_lock_checks",
+        "test_rc068_refresh_refuses_a_foreign_origin_and_a_missing_cookie",
+        "test_rc068_refresh_rotates_and_the_old_token_is_refused",
+        "test_rc068_refresh_tokens_are_stored_hashed",
+        "test_rc068_refreshed_access_token_carries_the_current_role",
+        "test_rc068_reuse_revokes_the_whole_family"
+      ],
+      "reintroduces": "the raw refresh token stored server-side",
+      "applied": true,
+      "executed": "2026-10-24T12:10:50",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "S5_no_rotation": {
+      "suite": "backend",
+      "failed": 3,
+      "passed": 26,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc068_firestore_repository_stores_hashes_and_rotates_in_one_transaction",
+        "test_rc068_refresh_rotates_and_the_old_token_is_refused",
+        "test_rc068_reuse_revokes_the_whole_family"
+      ],
+      "reintroduces": "a refresh token stays usable after use",
+      "applied": true,
+      "executed": "2026-10-24T12:11:10",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "S6_reuse_not_revoking": {
+      "suite": "backend",
+      "failed": 2,
+      "passed": 27,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc068_firestore_repository_stores_hashes_and_rotates_in_one_transaction",
+        "test_rc068_reuse_revokes_the_whole_family"
+      ],
+      "reintroduces": "a replayed refresh token does not end the session family",
+      "applied": true,
+      "executed": "2026-10-24T12:11:28",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "S7_idle_not_enforced": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc068_idle_and_absolute_expiry"
+      ],
+      "reintroduces": "no idle expiry",
+      "applied": true,
+      "executed": "2026-10-24T12:11:44",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "S8_absolute_not_enforced": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc068_idle_and_absolute_expiry"
+      ],
+      "reintroduces": "no absolute expiry",
+      "applied": true,
+      "executed": "2026-10-24T12:12:01",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "S9_logout_not_revoking": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc068_logout_revokes_the_session_and_clears_the_cookie"
+      ],
+      "reintroduces": "logout leaves the refresh session usable",
+      "applied": true,
+      "executed": "2026-10-24T12:12:18",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "S10_password_change_not_revoking": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc068_password_change_takes_effect_and_revokes_every_session"
+      ],
+      "reintroduces": "a password change leaves every session usable",
+      "applied": true,
+      "executed": "2026-10-24T12:12:33",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "S11_password_not_persisted": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc068_password_change_takes_effect_and_revokes_every_session"
+      ],
+      "reintroduces": "the new password kept in one process only: the old one still works at login (as found)",
+      "applied": true,
+      "executed": "2026-10-24T12:12:49",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "S12_inactive_user_refreshes": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc068_inactive_or_locked_users_cannot_refresh"
+      ],
+      "reintroduces": "a deactivated user keeps refreshing",
+      "applied": true,
+      "executed": "2026-10-24T12:13:05",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "S13_locked_user_refreshes": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc068_inactive_or_locked_users_cannot_refresh"
+      ],
+      "reintroduces": "a locked user keeps refreshing",
+      "applied": true,
+      "executed": "2026-10-24T12:13:20",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "S14_role_not_reread": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc068_refreshed_access_token_carries_the_current_role"
+      ],
+      "reintroduces": "the refreshed token keeps a role the user no longer has",
+      "applied": true,
+      "executed": "2026-10-24T12:13:35",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "S15_foreign_origin_accepted": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc068_refresh_refuses_a_foreign_origin_and_a_missing_cookie"
+      ],
+      "reintroduces": "a refresh from a foreign origin accepted",
+      "applied": true,
+      "executed": "2026-10-24T12:13:50",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "S16_long_access_token": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc068_access_tokens_are_short_lived"
+      ],
+      "reintroduces": "a 60-minute access token (as found)",
+      "applied": true,
+      "executed": "2026-10-24T12:14:05",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "S17_passkey_no_session": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc068_passkey_login_also_starts_a_rotating_session_and_keeps_lock_checks"
+      ],
+      "reintroduces": "passkey login starts no refresh session",
+      "applied": true,
+      "executed": "2026-10-24T12:14:20",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "S18_rotation_outside_transaction": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc068_firestore_repository_stores_hashes_and_rotates_in_one_transaction"
+      ],
+      "reintroduces": "rotation writes outside the transaction (two instances could both rotate one token)",
+      "applied": true,
+      "executed": "2026-10-24T12:14:35",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0"
+      }
+    },
+    "F1_hard_redirect_restored": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 11,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc069 a 401 seen by the global axios instance no longer sends the browser to /login"
+      ],
+      "error_files": [],
+      "reintroduces": "a 401 on the global axios instance sends the browser to /login (as found)",
+      "applied": true,
+      "executed": "2026-10-24T12:14:43",
+      "test_sha256": {
+        "frontend/src/services/session.capa015.test.tsx": "0f4eb947f6c861687d445f922da4054481b91a527f5a5b7e9cb2e998b1cb2cb3"
+      }
+    },
+    "F2_refresh_to_api_host": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 10,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc069 refreshes once on 401 through the same-origin auth endpoint with the cookie, then retries",
+        "rc069 logout tells the server, so the refresh cookie is revoked"
+      ],
+      "error_files": [],
+      "reintroduces": "the refresh sent to the API host (another site: the SameSite cookie would never be sent)",
+      "applied": true,
+      "executed": "2026-10-24T12:14:49",
+      "test_sha256": {
+        "frontend/src/services/session.capa015.test.tsx": "0f4eb947f6c861687d445f922da4054481b91a527f5a5b7e9cb2e998b1cb2cb3"
+      }
+    },
+    "F3_no_credentials": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 10,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc069 refreshes once on 401 through the same-origin auth endpoint with the cookie, then retries",
+        "rc069 logout tells the server, so the refresh cookie is revoked"
+      ],
+      "error_files": [],
+      "reintroduces": "auth calls without the cookie",
+      "applied": true,
+      "executed": "2026-10-24T12:14:54",
+      "test_sha256": {
+        "frontend/src/services/session.capa015.test.tsx": "0f4eb947f6c861687d445f922da4054481b91a527f5a5b7e9cb2e998b1cb2cb3"
+      }
+    },
+    "F4_refresh_token_in_page_storage": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 11,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc069 refreshes once on 401 through the same-origin auth endpoint with the cookie, then retries"
+      ],
+      "error_files": [],
+      "reintroduces": "a refresh token read from page storage and sent in the body (as found)",
+      "applied": true,
+      "executed": "2026-10-24T12:15:00",
+      "test_sha256": {
+        "frontend/src/services/session.capa015.test.tsx": "0f4eb947f6c861687d445f922da4054481b91a527f5a5b7e9cb2e998b1cb2cb3"
+      }
+    },
+    "F5_no_single_flight": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 11,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc069 concurrent 401s trigger a single refresh"
+      ],
+      "error_files": [],
+      "reintroduces": "concurrent 401s each refresh (the second is a replay: the session would be revoked)",
+      "applied": true,
+      "executed": "2026-10-24T12:15:05",
+      "test_sha256": {
+        "frontend/src/services/session.capa015.test.tsx": "0f4eb947f6c861687d445f922da4054481b91a527f5a5b7e9cb2e998b1cb2cb3"
+      }
+    },
+    "F6_failure_redirects": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 10,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc069 refresh failure keeps the page and the unsaved work, asks to sign in, then retries the save",
+        "rc069 a 401 seen by the global axios instance no longer sends the browser to /login"
+      ],
+      "error_files": [],
+      "reintroduces": "a failed refresh leaves the page (unsaved work discarded)",
+      "applied": true,
+      "executed": "2026-10-24T12:15:12",
+      "test_sha256": {
+        "frontend/src/services/session.capa015.test.tsx": "0f4eb947f6c861687d445f922da4054481b91a527f5a5b7e9cb2e998b1cb2cb3"
+      }
+    },
+    "F7_waiting_requests_dropped": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 11,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc069 refresh failure keeps the page and the unsaved work, asks to sign in, then retries the save"
+      ],
+      "error_files": [],
+      "reintroduces": "the save that was waiting fails after the user signed in again",
+      "applied": true,
+      "executed": "2026-10-24T12:15:17",
+      "test_sha256": {
+        "frontend/src/services/session.capa015.test.tsx": "0f4eb947f6c861687d445f922da4054481b91a527f5a5b7e9cb2e998b1cb2cb3"
+      }
+    },
+    "F8_no_proactive_refresh": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 11,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc069 refreshes proactively before the access token expires"
+      ],
+      "error_files": [],
+      "reintroduces": "the token renewed only after it has expired",
+      "applied": true,
+      "executed": "2026-10-24T12:15:23",
+      "test_sha256": {
+        "frontend/src/services/session.capa015.test.tsx": "0f4eb947f6c861687d445f922da4054481b91a527f5a5b7e9cb2e998b1cb2cb3"
+      }
+    },
+    "F9_other_user_accepted": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 11,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc069 the re-login dialog keeps the work, accepts only the same user, then resumes"
+      ],
+      "error_files": [],
+      "reintroduces": "another person's sign-in accepted: the work would be saved under their name",
+      "applied": true,
+      "executed": "2026-10-24T12:15:29",
+      "test_sha256": {
+        "frontend/src/services/session.capa015.test.tsx": "0f4eb947f6c861687d445f922da4054481b91a527f5a5b7e9cb2e998b1cb2cb3"
+      }
+    },
+    "F10_other_session_left_open": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 11,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc069 the re-login dialog keeps the work, accepts only the same user, then resumes"
+      ],
+      "error_files": [],
+      "reintroduces": "the other person's new session left open at the workstation",
+      "applied": true,
+      "executed": "2026-10-24T12:15:35",
+      "test_sha256": {
+        "frontend/src/services/session.capa015.test.tsx": "0f4eb947f6c861687d445f922da4054481b91a527f5a5b7e9cb2e998b1cb2cb3"
+      }
+    },
+    "F11_logout_local_only": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 11,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc069 logout tells the server, so the refresh cookie is revoked"
+      ],
+      "error_files": [],
+      "reintroduces": "logout does not tell the server (refresh session stays valid, as found)",
+      "applied": true,
+      "executed": "2026-10-24T12:15:41",
+      "test_sha256": {
+        "frontend/src/services/session.capa015.test.tsx": "0f4eb947f6c861687d445f922da4054481b91a527f5a5b7e9cb2e998b1cb2cb3"
+      }
+    },
+    "F12_dialog_absent": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 11,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc069 the re-login dialog keeps the work, accepts only the same user, then resumes"
+      ],
+      "error_files": [],
+      "reintroduces": "no re-login dialog",
+      "applied": true,
+      "executed": "2026-10-24T12:15:47",
+      "test_sha256": {
+        "frontend/src/services/session.capa015.test.tsx": "0f4eb947f6c861687d445f922da4054481b91a527f5a5b7e9cb2e998b1cb2cb3"
+      }
+    },
+    "F13_unsaved_not_named": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 11,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc069 the re-login dialog keeps the work, accepts only the same user, then resumes"
+      ],
+      "error_files": [],
+      "reintroduces": "the dialog does not say the unsaved segmentation is kept",
+      "applied": true,
+      "executed": "2026-10-24T12:15:52",
+      "test_sha256": {
+        "frontend/src/services/session.capa015.test.tsx": "0f4eb947f6c861687d445f922da4054481b91a527f5a5b7e9cb2e998b1cb2cb3"
+      }
+    },
+    "F14_fetch_not_recovering": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 11,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc069 fetch-based downloads (volumes, DICOM-SEG export) recover from 401 the same way"
+      ],
+      "error_files": [],
+      "reintroduces": "volume / export downloads fail on an expired token",
+      "applied": true,
+      "executed": "2026-10-24T12:15:58",
+      "test_sha256": {
+        "frontend/src/services/session.capa015.test.tsx": "0f4eb947f6c861687d445f922da4054481b91a527f5a5b7e9cb2e998b1cb2cb3"
+      }
+    },
+    "F15_banner_hidden": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 11,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc067 shows a banner to an administrator when audit writing is failing"
+      ],
+      "error_files": [],
+      "reintroduces": "administrators are not told that audit writing fails",
+      "applied": true,
+      "executed": "2026-10-24T12:16:04",
+      "test_sha256": {
+        "frontend/src/services/session.capa015.test.tsx": "0f4eb947f6c861687d445f922da4054481b91a527f5a5b7e9cb2e998b1cb2cb3"
+      }
+    },
+    "F16_banner_for_everyone": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 11,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc067 shows nothing to a non-administrator and nothing when writing works"
+      ],
+      "error_files": [],
+      "reintroduces": "every user polls and sees the audit-store status",
+      "applied": true,
+      "executed": "2026-10-24T12:16:10",
+      "test_sha256": {
+        "frontend/src/services/session.capa015.test.tsx": "0f4eb947f6c861687d445f922da4054481b91a527f5a5b7e9cb2e998b1cb2cb3"
+      }
+    },
+    "F17_spanish_text_missing": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 10,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc069 the dialog and banner texts are translated",
+        "rc069 no English phrase is left inside the Spanish or German texts"
+      ],
+      "error_files": [],
+      "reintroduces": "a dialog text without its Spanish entry (English shown)",
+      "applied": true,
+      "executed": "2026-10-24T12:16:14",
+      "test_sha256": {
+        "frontend/src/services/session.capa015.test.tsx": "0f4eb947f6c861687d445f922da4054481b91a527f5a5b7e9cb2e998b1cb2cb3"
+      }
+    },
+    "F18_german_text_in_english": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 11,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc069 no English phrase is left inside the Spanish or German texts"
+      ],
+      "error_files": [],
+      "reintroduces": "the German dialog text left in English",
+      "applied": true,
+      "executed": "2026-10-24T12:16:20",
+      "test_sha256": {
+        "frontend/src/services/session.capa015.test.tsx": "0f4eb947f6c861687d445f922da4054481b91a527f5a5b7e9cb2e998b1cb2cb3"
+      }
+    }
+  },
+  "restored": {
+    "backend": {
+      "suite": "backend",
+      "failed": 0,
+      "passed": 29,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": []
+    },
+    "frontend": {
+      "suite": "frontend",
+      "failed": 0,
+      "passed": 12,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [],
+      "error_files": []
+    }
+  },
+  "expected_undetected": {},
+  "undetected": [],
+  "unexpected_undetected": []
+}

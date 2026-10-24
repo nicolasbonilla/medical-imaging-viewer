@@ -2,7 +2,7 @@
 
 ## IEC 62304 Clause 5.1.1(e) — Bidirectional Traceability
 
-**Document ID**: TM-001 | **Version**: 1.9 DRAFT (CAPA-013, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); merge after #52, #51, #53, #59, #49 and #62, which hold versions 1.4 to 1.8) — last approved: 1.3 | **Date**: October 17, 2026 (v1.2 to v1.5 same day; v1.1: September 28, 2026; v1.0: April 12, 2026)
+**Document ID**: TM-001 | **Version**: 1.11 DRAFT (CAPA-015, PENDING owner approval; merge after CAPA-014, which holds version 1.10) — previous: 1.9 DRAFT (CAPA-013, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); merge after #52, #51, #53, #59, #49 and #62, which hold versions 1.4 to 1.8) — last approved: 1.3 | **Date**: October 17, 2026 (v1.2 to v1.5 same day; v1.1: September 28, 2026; v1.0: April 12, 2026)
 
 | Version | Date | Author | Change | Approved By |
 |---------|------|--------|--------|-------------|
@@ -16,6 +16,7 @@
 | 1.7 (draft) | 2026-10-21 | Development Team | CP-SLICE-THICKNESS-001 (reliability by slice thickness, flag OFF): REQ-FUNC-098/099, REQ-SAFE-034/035/036 → RC-054..RC-058 → UT-RC054, UT-STC-LOGIC, UI-STC-CARD, UT-STC-FLAG (addendum below; test rows added). Versions 1.4, 1.5 and 1.6 are reserved by open PRs #52, #51 and #53. Amended 2026-10-23 after the independent review of PR #59: RC-054 row and UT-RC054 (spacing without thickness); RC-056/RC-057 rows, UT-STC-LOGIC and UI-STC-CARD (evidence asset v2, pre-registered bands only) | N. G. Bonilla Vargas — approved 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63) |
 | 1.8 (draft) | 2026-10-22 | Development Team | RMF-OBS-001 and PRB-001: REQ-FUNC-053 row annotated with the known nonconformity of the MSMask and LST-AI zones paths (PRB-001 → RC-059, proposed); REQ-FUNC-054 row annotated (RMF-OBS-001); REQ-SAFE-037 (proposed) → RC-060, RC-061, RC-062 (proposed); RC-059..RC-062 NOT IMPLEMENTED, no test (addendum below). Version 1.7 is reserved by open PR #59 | N. G. Bonilla Vargas — approved 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63) |
 | 1.9 (draft) | 2026-10-22 | Development Team | CAPA-013: REQ-SAFE-037 → RC-060/RC-061/RC-062 implemented on branch → UT-CAPA013, UI-CAPA013 (addendum below supersedes the three REQ-SAFE-037 rows of the 1.8 addendum; test rows added; REQ-FUNC-054 row annotated). Versions 1.4 to 1.8 are held by open PRs #52, #51, #53, #59 and #62 | N. G. Bonilla Vargas — approved 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63) |
+| 1.11 (draft) | 2026-10-24 | Development Team | CAPA-015: REQ-SEC-024/025/026 → RC-067/RC-068/RC-069 implemented on branch `fix/audit-trail-and-session-capa015` → UT-CAPA015, UI-CAPA015 (addendum to the security table and two rows in the backward table). Version 1.10 is held by the parallel CAPA-014 PR | PENDING owner approval |
 
 ---
 
@@ -220,6 +221,14 @@ The full binding is machine-checked in
 [`rc_test_manifest.json`](records/risk_verification/rc_test_manifest.json), enforced
 by `backend/tests/unit/test_risk_control_manifest.py`.
 
+> **Addendum 2026-10-24 (CAPA-015, DRAFT, PENDING owner approval): audit trail and session continuation.** Record: `records/capa/CAPA-015_Audit_Trail_And_Session_Continuation.md`. Tests written before the fix fail on `main` @ `70cc5c7` (`records/risk_verification/CAPA-015_tests_on_base_2026-10-24.json`); negative controls `records/risk_verification/CAPA-015_negative_controls_2026-10-24.json`.
+>
+> | Req ID | Requirement | Risk Control | HAZ ID | Implementation | Test | Verified? |
+> |--------|-------------|-------------|--------|----------------|------|-----------|
+> | REQ-SEC-024 | Durable, append-only audit trail of security and clinical events (server time, actor, role, action, resource ids, outcome, request id; no image data, body, query string or free text); never blocks the request; administrator-only paginated reading; failure indicator | RC-067 | HAZ-010 | `core/logging/audit_sink.py`, `audit.py`, `audit_middleware.py`, `api/routes/auth.py`, `authentication.py`, `security/auth.py`, `firestore.rules`, `AuditStatusBanner.tsx` | `test_capa015_audit_and_session.py` (`test_rc067_*`) — UT-CAPA015; `session.capa015.test.tsx` (`rc067 …`) — UI-CAPA015 | TEST-BOUND on branch (negative controls B1–B25, F15–F16) — PENDING owner approval |
+> | REQ-SEC-025 | Short-lived access token; rotating refresh token stored hashed, reuse revokes the family, idle/absolute expiry, revoked on logout, password change, inactive or locked account; HttpOnly Secure SameSite=Strict cookie on the app's origin; current role; password change effective at sign-in | RC-068 | HAZ-010 | `security/refresh_tokens.py`, `api/routes/authentication.py`, `api/routes/auth.py`, `security/auth.py`, `core/config.py`, `firebase.json` | `test_capa015_audit_and_session.py` (`test_rc068_*`) — UT-CAPA015 | TEST-BOUND on branch (negative controls S1–S18) — PENDING owner approval |
+> | REQ-SEC-026 | End of session never discards unsaved work: silent renewal, one refresh and retry on 401, same-user re-login dialog, waiting requests completed; logout ends the server session | RC-069 | HAZ-001, HAZ-010 | `frontend/src/services/session.ts`, `apiClient.ts`, `AuthContext.tsx`, `SessionExpiredDialog.tsx` | `session.capa015.test.tsx` (`rc069 …`) — UI-CAPA015 | TEST-BOUND on branch (negative controls F1–F14, F17–F18) — PENDING owner approval |
+
 ---
 
 ## Backward Traceability: Test → Requirement
@@ -228,6 +237,8 @@ by `backend/tests/unit/test_risk_control_manifest.py`.
 |---------|-----------------|---------------------|
 | IT-AUTH-001 | Login returns valid JWT | REQ-SEC-002, REQ-SEC-003 |
 | IT-AUTH-002 | Protected endpoint requires token | REQ-SEC-002 |
+| UT-CAPA015 | `backend/tests/unit/test_capa015_audit_and_session.py` — durable audit records (login, failures, lock-out, clinical actions, reads, no free text, outage retried, append-only, admin-only paginated reading); refresh cookie, rotation, reuse, hashing, expiry, revocation, password change, inactive/locked users, current role, origin, passkey (CAPA-015, draft) | REQ-SEC-024, REQ-SEC-025 |
+| UI-CAPA015 | `frontend/src/services/session.capa015.test.tsx` — silent refresh, single refresh, no redirect, work kept and waiting save completed, proactive renewal, same-user re-login dialog, logout revokes, downloads recover, administrator banner, en/es/de texts (CAPA-015, draft) | REQ-SEC-024, REQ-SEC-026 |
 | IT-AUTH-003 | WebAuthn register/begin returns challenge | REQ-SEC-004 |
 | IT-PACS-001 | DICOMweb connections CRUD | REQ-FUNC-070 |
 | IT-FHIR-001 | FHIR DiagnosticReport structure | REQ-FUNC-073 |

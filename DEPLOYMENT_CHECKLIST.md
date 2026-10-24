@@ -37,6 +37,37 @@ curl -s -D - -o /dev/null \
   "https://brain-mri-7bp6oqdu7a-uc.a.run.app/api/v1/auth/me" 2>&1 | grep "access-control-allow-origin"
 ```
 
+## Audit trail and session refresh (CAPA-015 — DRAFT, PENDING owner approval)
+
+No new **required** variable. Optional variables (defaults shown):
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | `15` | Access-token lifetime (was 60) |
+| `REFRESH_TOKEN_IDLE_MINUTES` | `30` | Refresh session dies after this long without a refresh (owner decision D-2) |
+| `REFRESH_TOKEN_ABSOLUTE_HOURS` | `12` | Fresh sign-in at least once per shift (owner decision D-2) |
+| `AUDIT_SINK_BACKEND` | `firestore` | `memory` / `off` only for tests and local runs — the admin banner then says "not durable" |
+| `AUDIT_FLUSH_WAIT_MS` | `500` | Longest wait for a request's own audit records (Cloud Run throttles CPU between requests) |
+| `AUDIT_READ_DEDUP_SECONDS` | `300` | One durable record per actor, route and resource for repeated reads |
+| `REFRESH_TOKEN_BACKEND` | `firestore` | `memory` only for tests |
+
+Order and one-off steps (the owner runs them; none was run by the change):
+
+1. **Deploy the backend first**, then hosting. `firebase.json` now rewrites `/api/v1/auth/**` on
+   the app's own origin to the Cloud Run service `brain-mri` (same project), so the
+   `__session` refresh cookie (HttpOnly, Secure, SameSite=Strict) is first-party. Firebase
+   Hosting forwards no other cookie name.
+2. Deploy the Firestore indexes and rules (`firebase deploy --only firestore:indexes,firestore:rules`):
+   three composite indexes for reading `audit_logs` by actor / event type / outcome; rules
+   that refuse client access to `refresh_tokens` and `refresh_token_families`.
+3. Optional, recommended: Firestore TTL policies on `refresh_tokens.expires_at` and
+   `refresh_token_families.absolute_expires_at`; a log-based alert on
+   `AUDIT_SINK_WRITE_FAILED`, `AUDIT_RECORD_DROPPED`, `REFRESH_STORE_UNAVAILABLE`.
+4. Verify: sign in on `https://app.mstool-ai.com` → the response of `POST /api/v1/auth/login`
+   carries `Set-Cookie: __session=…; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth`;
+   as administrator, `GET /api/v1/auth/audit-status` answers `"state": "ok"`;
+   `GET /api/v1/auth/audit-logs?limit=5` lists the sign-in.
+
 ## Common failures
 
 | Symptom | Cause | Fix |
@@ -45,3 +76,5 @@ curl -s -D - -o /dev/null \
 | CORS blocked in browser | `CORS_ORIGINS` uses `;` instead of `,` | Re-set with comma separator |
 | Login works via curl but not browser | CORS + different URL aliases | Add ALL Cloud Run URLs to CORS_ORIGINS |
 | 500 on all endpoints | Missing required env var | Check the 9-var list above |
+| Users asked to sign in again every 15 min; no `__session` cookie | Hosting deployed without the `/api/v1/auth/**` rewrite, or backend older than the rewrite | Deploy backend, then hosting (CAPA-015) |
+| Red "Audit trail" banner for administrators | Firestore writes of `audit_logs` failing (records kept in the server log) | Check the service account's Firestore access and the logs for `AUDIT_SINK_WRITE_FAILED` |
