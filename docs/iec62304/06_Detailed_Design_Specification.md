@@ -3,7 +3,7 @@
 ## IEC 62304 Clause 5.4 — Class C Software Unit Design
 
 **Document ID**: DD-001
-**Version**: 1.1
+**Version**: 1.3 DRAFT (2026-10-24 — DD-LES-003 added, DD-LES-002 and DD-RPT-001 annotated, PRB-003 / CAPA-016; PENDING owner approval; merge after #67, which holds 1.2) — last approved: 1.1
 **Effective Date**: September 28, 2026 (v1.0: April 12, 2026)
 **Software Safety Class**: IEC 62304 Class C
 
@@ -11,6 +11,7 @@
 |---------|------|--------|-------------|--------|
 | 1.0 | 2026-04-12 | Development Team | — | Initial release |
 | 1.1 | 2026-09-28 | Development Team | N. G. Bonilla Vargas — approved 2026-10-17 (PR #43) | DD-CLS-001 amended. (a) Audit #8 (HAZ-005, REQ-SAFE-010 amended, PR #42): per-lesion confidence removed. The amendment note in DD-CLS-001 was entered on 2026-09-28 under the v1.0 header; it is covered by this version. (b) CAPA-006 / RC-032 / REQ-SAFE-021: v1.0 described only the parcellation path. DD-CLS-001 now also specifies: the four-path order used by `method="auto"`; the LST-AI path as a voxel-wise copy with no contact rule and no priority; the MSMask atlas path; the MNI grid gate (`looks_mni`: isotropy, unpermuted axis alignment, per-axis field of view, grid centre, header transform; `NotMNISpaceError`) and its limits (SPM12 default bounding box refused; a well-behaved native 3D isotropic axial scan can pass); the zone-map reorientation and shape checks (`classify_lesions_with_atlas`, `classify_from_zone_mask`); that a persisted zone map is never reused for classification; parcellation identity (`looks_like_freesurfer_parcellation`: all of {2, 3, 4, 16, 41, 42, 43}, not a zone map, >= 500 mL; same image and grid); the geometric preconditions (`prepare_geometric_image`, `GeometricPreconditionError`, slice axis within 30° of inferior-superior); refusal (HTTP 422) versus fault (HTTP 500, `atlas_error`) handling; object-level authorization of both region routes (RC-029); the generate-zone-map order (authorize, validate, create and persist, then delete older zone maps); zone-map volumes from the image voxel volume; and the longitudinal compare route's use of the same gate. The 1.5 mm thresholds are unchanged; v1.0 already stated them. The 3 mm / 4 mm / 3 mm thresholds and two-tier cascade stated in IFU-001, AIA-001, CER-001 and GSPR-001 were wrong when those documents were issued on 2026-04-12 (the code had applied 1.5 mm since 2026-02-28, commit 67fa336, while DD-001 v1.0, issued the same day, stated 1.5 mm); they are withdrawn there. (c) Unit renamed from "MAGNIMS Region Classifier (EDT)": EDT is used by one of four paths only. (d) Withdrawn from the Safety paragraph (v1.0 text, quoted there): "EDT-based classification is more robust than pixel-adjacency methods" (no evidence) and "Distance thresholds (1.5mm) match LST-AI dilation criteria" (inexact; restated). (e) Implements / traceability now list REQ-SAFE-021, RC-032 and RC-029 |
+| 1.3 (draft) | 2026-10-24 | Development Team | PENDING owner approval | PRB-003 / CAPA-016. DD-LES-003 added (`dis_review_gate.py`, RC-070/RC-071: DIS only on a segmentation a radiologist confirmed for its current mask). DD-LES-002: called only after DD-LES-003 (unit unchanged). DD-RPT-001: the DIS block of the prompt passes a result only when it is marked evaluated, otherwise NOT EVALUATED and a rule against deriving DIS |
 
 ---
 
@@ -30,6 +31,7 @@ This document provides the detailed design for all Class C software units in MST
 | DD-RPT-001 | Report Generation | `brain_report_service.py` | C | HAZ-003 |
 | DD-LES-001 | Lesion Analysis — analyze_lesions | `lesion_analysis_service.py` | C | HAZ-005 |
 | DD-LES-002 | Lesion Analysis — compute_dis_criteria | `lesion_analysis_service.py` | C | HAZ-008 |
+| DD-LES-003 | DIS precondition — confirmed segmentation (draft 2026-10-24, PRB-003; Class C proposed, CAPA-016 PA-16.4) | `dis_review_gate.py` | C (proposed) | HAZ-008, HAZ-005, HAZ-003 |
 | DD-CLS-001 | MAGNIMS Region Classifier (four paths; renamed v1.1, was "(EDT)") | `ms_region_classifier.py` | C | HAZ-005 |
 | DD-NII-001 | NIfTI Loader | `nifti_utils.py` | C | HAZ-006 |
 | DD-NII-002 | NIfTI Transpose Utilities | `nifti_utils.py` | C | HAZ-006 |
@@ -251,6 +253,37 @@ RETURN { dis_met_brain, brain_regions_with_lesions, region_details, ... }
 **Safety**: McDonald 2024 requires >= 2 of 5 regions for DIS. Brain-only assessment evaluates 3 of 5 (PV, JC, IT). System explicitly documents that spinal cord and optic nerve are not assessed.
 
 **Implements**: REQ-FUNC-052, REQ-SAFE-015
+
+**Precondition (2026-10-24, PRB-003, DRAFT)**: called only after DD-LES-003 has found a radiologist's confirmation bound to the current mask (`segmentation_analysis.assess_dis`, `segmentation_regions.classify_regions`). The unit itself is unchanged.
+
+---
+
+### DD-LES-003: DIS precondition — confirmed segmentation (draft, PRB-003)
+
+**Purpose**: Decide whether dissemination in space may be evaluated for a stored segmentation (RC-070), and produce the explicit "not evaluated" state otherwise. Paper A: the DD-LES-002 rule applied to raw automatic FLAMeS segmentations was met in 19 of 100 healthy controls.
+
+**Interface** (`backend/app/services/dis_review_gate.py`):
+```
+review_state(metadata, masks_3d) -> {confirmed, status (confirmed|unconfirmed|outdated), source (ai_draft|automatic_tool|
+                                     origin_not_recorded), reviewed_by, reviewed_at, reviewed_mask_sha256, current_mask_sha256}
+not_evaluated(segmentation_id, state, reason=None) -> {evaluation_status: 'not_evaluated', not_evaluated_reason, message,
+                                     reason_detail, segmentation_review, dis_criteria_version[, information_for_safety]}
+evaluated(result, state) -> {**result, evaluation_status: 'evaluated', segmentation_review}
+is_evaluated(block) -> bool        without_stored_dis(metadata) -> metadata copy without analysis_data.dis_assessment
+```
+
+**Algorithm**:
+```
+current = SHA-256 of the stored (D,H,W) uint8 mask (same digest as RC-047)
+IF metadata.ai_provenance:      record = ai_provenance;    has_record = review_status == 'confirmed'   (RC-047 only)
+ELSE:                           record = clinician_review; has_record = record is not None             (RC-071)
+confirmed = has_record AND record.reviewed_mask_sha256 == current
+source = ai_draft | automatic_tool (segmentation_type 'automatic') | origin_not_recorded
+```
+
+**Safety**: the "not evaluated" state carries no `dis_met*`, `region_details`, `brain_regions_with_lesions`, `total_topographies_involved` or `dit_waiver_supported`. Region labels are part of the hashed mask, so a confirmation covers the region assignment, and a reclassification voids it. A stored block is never trusted without `is_evaluated`. The clinician confirmation is set only by `POST /segmentation/{id}/review/confirm` (radiologist, exact stored mask, authenticated user) and removed by `SegmentationService.enforce_review_binding` on any mask change.
+
+**Implements**: REQ-SAFE-038, REQ-SAFE-039 (RC-070, RC-071); tests UT-PRB003, UI-PRB003
 
 ---
 

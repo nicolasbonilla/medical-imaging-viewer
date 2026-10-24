@@ -26,7 +26,7 @@
   ],
   "manifest_version": 1,
   "capa_reference": "CAPA-001, CAPA-002, CAPA-004, CAPA-005, CAPA-006, CAPA-007, CAPA-010, CAPA-011, CAPA-013",
-  "last_updated": "2026-10-22",
+  "last_updated": "2026-10-24",
   "controls": {
     "RC-006": {
       "description": "AI-generated report carries a mandatory physician-review disclaimer",
@@ -724,6 +724,46 @@
       "change": "CAPA-013 (DRAFT, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); branch fix/longitudinal-activity-display-capa013; merge after #52, #51, #53, #59, #49, #62)",
       "negative_control": "Executed 2026-10-22 by scripts/safety/capa013_negative_controls.py (66 mutations, 66 detected, full run 2026-10-23 against the final tests, incl. B16-B20, E7-E9, A10-A16, F16-F22 for the independent review of PR #63; the first run (2026-10-22) had left F12 undetected, which led to the stronger language test; one mutation at a time, anchors asserted unique, files restored byte for byte); record docs/iec62304/records/risk_verification/CAPA-013_negative_controls_2026-10-22.json. Tests written before the fix, re-run on the PR #62 code by scripts/safety/capa013_tests_on_base.py (on PR #62: backend 50 of 52 fail, frontend 18 of 18; on ad144ba (PR #63 before the review fixes): backend 15 of 52, frontend 7 of 18 - records CAPA-013_tests_on_base_2026-10-22.json and CAPA-013_review1_tests_on_pr63_2026-10-23.json); record CAPA-013_tests_on_base_2026-10-22.json. RC-062 mutations: A1-A16, F13-F14, F16-F19, F22.",
       "note": "Proposed by RMF-OBS-001 as CAPA-008 CA-8.13; implemented by CAPA-013 (CA-13.6). Images uploaded as NIfTI carry no acquisition record, so their comparisons abstain (CAPA-013 D-3, PA-13.3). The Firestore lookup and the PACS import field are verified by unit and source tests only. Owner approval PENDING."
+    },
+    "RC-070": {
+      "description": "Dissemination in space evaluated and shown only on a segmentation a radiologist confirmed for its current stored mask (AI draft: RC-047 review; any other segmentation: RC-071), bound to the SHA-256 of that mask; otherwise the explicit 'not evaluated: requires clinician review of the segmentation' state with no met / not met, region presence or topography count - on every path: DIS route and cache, classify-regions, segmentation metadata responses, viewer, AI report (re-derived on the server, authorized, compute-only; NOT EVALUATED and a rule against deriving DIS in the prompt; fixed notice; unevaluated-only request refused), AI assistant (only evaluated blocks; instructions)",
+      "hazard": "HAZ-008, HAZ-005, HAZ-003",
+      "status": "implemented",
+      "implementation": "backend/app/services/dis_review_gate.py (review_state, not_evaluated, evaluated, is_evaluated, without_stored_dis); backend/app/api/routes/segmentation_analysis.py (assess_dis, get_dis_assessment); backend/app/api/routes/segmentation_regions.py (classify_regions); backend/app/api/routes/segmentation.py (get_segmentation, list_segmentations); backend/app/api/routes/ai_report.py (server_dis_assessment, dis_notice, generate_report); backend/app/services/brain_report_service.py (DIS block of _build_findings_prompt, DIS_NOT_EVALUATED_PROMPT - Class C, CAPA-016 s6); backend/app/mcp/ms_clinical_server.py (only_evaluated_dis, instructions); frontend/src/components/LesionDashboard.tsx; frontend/src/types/lesion.ts (isDisEvaluated)",
+      "tests": [
+        "tests/unit/test_prb003_dis_requires_confirmed_segmentation.py",
+        "frontend/src/components/LesionDashboard.prb003.test.tsx"
+      ],
+      "requirement": "REQ-SAFE-038",
+      "change": "PRB-003 / CAPA-016 (DRAFT, PENDING owner approval; branch fix/dis-requires-reviewed-segmentation-prb003; merge after #67 and #65)",
+      "negative_control": "Executed 2026-10-24 by scripts/safety/prb003_negative_controls.py (37 mutations, 37 detected; bound tests green after byte-exact restore) - docs/iec62304/records/risk_verification/PRB-003_negative_controls_2026-10-24.json. Tests written first fail on main @ 70cc5c7 (backend 39 of 41, frontend 12 of 12) - docs/iec62304/records/risk_verification/PRB-003_tests_on_base_2026-10-24.json - RC-070 mutations G1-G9, R1-R7, A1-A2, F1-F2, F12-F13.",
+      "note": "Evidence: paper A v0.3 healthy-control addendum (record docs/research/records/2026-10-24_paper_a_v03c_controls.json on research/paper-a-v0.3): brain-DIS met in 19 of 100 healthy controls on the raw automatic FLAMeS segmentation. LIMIT: the report model's own text is not checked; a confirmation records who confirmed, not how carefully."
+    },
+    "RC-071": {
+      "description": "A segmentation without AI provenance (drawn here, server tool, upload) is confirmed for DIS only by a radiologist, by an explicit action, only for the exact stored mask (SHA-256 of the mask on screen equal to the stored one; no confirm button with unsaved changes); authenticated user and time recorded, never a client value; AI drafts refused (own review, RC-047); any later change of the mask (save, upload, region classification) removes the confirmation at the single save point",
+      "hazard": "HAZ-008, HAZ-005",
+      "status": "implemented",
+      "implementation": "backend/app/models/schemas.py (ClinicianReview, SegmentationMetadata.clinician_review); backend/app/api/routes/segmentation.py (POST /segmentation/{id}/review/confirm); backend/app/services/segmentation_service.py (enforce_review_binding, _enforce_clinician_review_binding); frontend/src/components/LesionDashboard.tsx (confirmSegmentation); frontend/src/api/segmentation.ts (confirmSegmentationReview)",
+      "tests": [
+        "tests/unit/test_prb003_dis_requires_confirmed_segmentation.py",
+        "frontend/src/components/LesionDashboard.prb003.test.tsx"
+      ],
+      "requirement": "REQ-SAFE-039",
+      "change": "PRB-003 / CAPA-016 (DRAFT, PENDING owner approval; branch fix/dis-requires-reviewed-segmentation-prb003; merge after #67 and #65)",
+      "negative_control": "Executed 2026-10-24 by scripts/safety/prb003_negative_controls.py (37 mutations, 37 detected; bound tests green after byte-exact restore) - docs/iec62304/records/risk_verification/PRB-003_negative_controls_2026-10-24.json. Tests written first fail on main @ 70cc5c7 (backend 39 of 41, frontend 12 of 12) - docs/iec62304/records/risk_verification/PRB-003_tests_on_base_2026-10-24.json - RC-071 mutations C1-C5, F3-F5, F10-F11."
+    },
+    "RC-072": {
+      "description": "Information for safety wherever an automatic segmentation is shown (AI draft banner, segmentation panel for server-tool output, the 'not evaluated' DIS state of an automatic segmentation, report notice and prompt, assistant instructions): 'Automatic marking also marks spots in most healthy brains, mostly next to the ventricles. A marked spot is not evidence of multiple sclerosis; every spot needs expert review.' in en/es/de; no healthy-control figure until the dataset licence permits it",
+      "hazard": "HAZ-008, HAZ-003, HAZ-001",
+      "status": "implemented",
+      "implementation": "frontend/src/components/AutomaticMarkingNotice.tsx; frontend/src/components/AiDraftBanner.tsx; frontend/src/components/SegmentationPanel.tsx; frontend/src/i18n/locales/{en,es,de}.json (disReview); backend/app/services/dis_review_gate.py (AUTOMATIC_MARKING_NOTICE); backend/app/api/routes/ai_report.py (DIS_NOT_EVALUATED_NOTICE)",
+      "tests": [
+        "tests/unit/test_prb003_dis_requires_confirmed_segmentation.py",
+        "frontend/src/components/LesionDashboard.prb003.test.tsx"
+      ],
+      "requirement": "REQ-SAFE-040",
+      "change": "PRB-003 / CAPA-016 (DRAFT, PENDING owner approval; branch fix/dis-requires-reviewed-segmentation-prb003; merge after #67 and #65)",
+      "negative_control": "Executed 2026-10-24 by scripts/safety/prb003_negative_controls.py (37 mutations, 37 detected; bound tests green after byte-exact restore) - docs/iec62304/records/risk_verification/PRB-003_negative_controls_2026-10-24.json. Tests written first fail on main @ 70cc5c7 (backend 39 of 41, frontend 12 of 12) - docs/iec62304/records/risk_verification/PRB-003_tests_on_base_2026-10-24.json - RC-072 mutations N1, F6-F9."
     }
   },
   "unverified_controls_note": [
