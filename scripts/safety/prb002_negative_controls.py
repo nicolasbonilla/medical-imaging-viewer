@@ -1,7 +1,7 @@
-"""Negative controls for PRB-002 — the backend test suite must never reach a real Google Cloud service.
+"""Negative controls for PRB-002 — the backend test suite must never reach a real external service.
 
-Each mutation removes or weakens ONE layer of the guard in backend/tests/conftest.py, in the real
-source, one at a time. The script asserts every anchor occurs exactly once (the sabotage really was
+Each mutation removes or weakens ONE layer of the guard in backend/tests/conftest.py (or re-introduces
+a defect the independent review found), in the real source, one at a time. The script asserts every anchor occurs exactly once (the sabotage really was
 applied), runs tests/unit/test_prb002_no_cloud_in_tests.py, records the failing test names and
 restores the exact original bytes.
 
@@ -35,33 +35,79 @@ TESTS = ["tests/unit/test_prb002_no_cloud_in_tests.py"]
 CONF = "backend/tests/conftest.py"
 
 GUARD_FN = (
-    "    _refuse_real_credentials.prb002_guard = True\n"
-    "    google.auth.default = _refuse_real_credentials\n"
-    "    google.auth._default.default = _refuse_real_credentials\n"
+    "    _refuse_real_credentials.prb002_guard = True
+"
+    "    google.auth.default = _refuse_real_credentials
+"
+    "    google.auth._default.default = _refuse_real_credentials
+"
+)
+REFUSE_FN = (
+    "    def _refuse_real_credentials(*_args, **_kwargs):
+"
+    "        raise DefaultCredentialsError(
+"
 )
 MUTATIONS = [
     ("M1_credentials_path_not_forced",
-     "os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(_NO_CLOUD_DIR / 'no-credentials.json')\n", ""),
+     "os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(_NO_CLOUD_DIR / 'no-credentials.json')
+", ""),
     ("M2_credentials_path_setdefault_only",
-     "os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(_NO_CLOUD_DIR / 'no-credentials.json')\n",
-     "os.environ.setdefault('GOOGLE_APPLICATION_CREDENTIALS', str(_NO_CLOUD_DIR / 'no-credentials.json'))\n"),
+     "os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(_NO_CLOUD_DIR / 'no-credentials.json')
+",
+     "os.environ.setdefault('GOOGLE_APPLICATION_CREDENTIALS', str(_NO_CLOUD_DIR / 'no-credentials.json'))
+"),
     ("M3_storage_key_file_not_emptied",
-     "os.environ['GCS_CREDENTIALS_FILE'] = ''  # a .env cannot point the storage service at a key file\n", ""),
+     "os.environ['GCS_CREDENTIALS_FILE'] = ''  # a .env cannot point the storage service at a key file
+", ""),
     ("M4_gcloud_config_not_redirected",
-     "os.environ['CLOUDSDK_CONFIG'] = str(_NO_CLOUD_DIR / 'gcloud')\n", ""),
+     "os.environ['CLOUDSDK_CONFIG'] = str(_NO_CLOUD_DIR / 'gcloud')
+", ""),
     ("M5_project_not_forced",
-     "os.environ['GOOGLE_CLOUD_PROJECT'] = OFFLINE_PROJECT_ID\n", ""),
+     "os.environ['GOOGLE_CLOUD_PROJECT'] = OFFLINE_PROJECT_ID
+", ""),
     ("M6_legacy_project_variable_kept",
-     "os.environ.pop('GCLOUD_PROJECT', None)\n", ""),
+     "    'GCLOUD_PROJECT', 'ANTHROPIC_API_KEY',", "    'ANTHROPIC_API_KEY',"),
     ("M7_credentials_guard_not_installed",
-     "\n_install_no_cloud_credentials_guard()\n", "\n"),
+     "
+_install_no_cloud_guard()
+", "
+"),
     ("M8_only_public_default_patched",
      GUARD_FN,
-     "    _refuse_real_credentials.prb002_guard = True\n"
-     "    google.auth.default = _refuse_real_credentials\n"),
-    ("M9_any_emulator_host_trusted",
-     "        if emulator.split(':')[0] in ('localhost', '127.0.0.1', '::1', '[::1]'):\n",
-     "        if emulator:\n"),
+     "    _refuse_real_credentials.prb002_guard = True
+"
+     "    google.auth.default = _refuse_real_credentials
+"),
+    ("M9_emulator_variable_unlocks_anonymous_credentials",   # the first version of this PR (review finding 1)
+     REFUSE_FN,
+     "    def _refuse_real_credentials(*_args, **_kwargs):
+"
+     "        if os.environ.get('FIRESTORE_EMULATOR_HOST', '').split(':')[0] in ('localhost', '127.0.0.1'):
+"
+     "            from google.auth.credentials import AnonymousCredentials
+"
+     "            return AnonymousCredentials(), OFFLINE_PROJECT_ID
+"
+     "        raise DefaultCredentialsError(
+"),
+    ("M10_app_imported_before_guard",                       # review finding 2 (ordering)
+     "PRB002_APP_IMPORTED_BEFORE_GUARD = ",
+     "import app.main  # noqa: F401
+PRB002_APP_IMPORTED_BEFORE_GUARD = "),
+    ("M11_other_service_variables_kept",
+     "for _name in PRB002_REMOVED_VARIABLES:
+    os.environ.pop(_name, None)
+", ""),
+    ("M12_socket_guard_not_installed",
+     "    socket.socket.connect, socket.socket.connect_ex = _connect, _connect_ex
+", ""),
+    ("M13_socket_guard_allows_any_host",
+     "        if host.lower() == 'localhost':
+            return True
+",
+     "        return True
+"),
 ]
 
 
@@ -77,6 +123,8 @@ def outer_env(tmp):
         "GOOGLE_CLOUD_PROJECT": "outer-not-a-project",
         "GCLOUD_PROJECT": "outer-not-a-project",
         "GCS_CREDENTIALS_FILE": os.path.join(tmp, "outer-key.json"),
+        "ANTHROPIC_API_KEY": "outer-dummy-not-a-key",
+        "FLAMES_ENDPOINT": "http://outer.invalid",
     })
     env.pop("FIRESTORE_EMULATOR_HOST", None)
     return env
@@ -97,7 +145,18 @@ def run_tests(env, tmp):
 
 
 def main():
+    if subprocess.run(["git", "diff", "--quiet", "HEAD", "--", CONF]).returncode != 0:
+        raise SystemExit(f"{CONF} has uncommitted changes: commit them first (the script restores HEAD bytes)")
     original = open(CONF, "rb").read()
+
+    def _restore_and_exit(signum, _frame):
+        open(CONF, "wb").write(original)
+        raise SystemExit(f"interrupted by signal {signum}; {CONF} restored")
+
+    import signal
+    for sig in ("SIGTERM", "SIGBREAK", "SIGHUP"):
+        if hasattr(signal, sig):
+            signal.signal(getattr(signal, sig), _restore_and_exit)
     text = original.decode("utf-8")
     results = {"generated": datetime.datetime.now().isoformat(timespec="seconds"),
                "tests": {t: sha(os.path.join("backend", t)) for t in TESTS},

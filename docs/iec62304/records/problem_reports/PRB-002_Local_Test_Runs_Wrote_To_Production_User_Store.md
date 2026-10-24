@@ -11,9 +11,11 @@ machine (read-only; no cloud service was queried)
 **Date**: 2026-10-24
 **Version**: `main` @ `70cc5c7`. The behaviour exists since the user store moved to Firestore
 (`backend/app/security/user_storage.py`, "Prefer Firestore; fall back to disk when unavailable")
-**Severity**: **Major** (proposed): integrity of production data and separation of the test
-environment from production; no clinical data, no patient data and no clinical output involved
-(§5). **PENDING owner approval.**
+**Severity**: **Critical** (proposed, conservative mapping of SPR-001 §2 "data corruption": the
+production authentication collection was contaminated with test records by an uncontrolled process).
+Mitigating facts: no existing record was changed or deleted, no function was lost, no clinical or
+patient data was involved (§5). **PENDING owner approval** — the owner may classify it Major if he
+reads "data corruption" as alteration of existing data only.
 **Status**: OPEN — DRAFT. Corrective action implemented on branch `fix/test-cloud-isolation-prb002`
 (test configuration only, no application code changed); clean-up of production records pending an
 owner decision (§4).
@@ -48,8 +50,11 @@ in-memory backend (as in CI).
 
 ## 1. Evidence and scope (from local logs only)
 
-Local logs rotate (`app.log` + 2 backups of 10 MB each per working copy), so the surviving logs are a
-lower bound: runs before the oldest surviving entry cannot be counted or excluded.
+Local logs rotate at 10 MB (the main checkout keeps 6 backups, back to 2025-11-23; agent working
+copies keep 2), so the surviving logs are a lower bound: runs before the oldest surviving entry
+cannot be counted or excluded. No write was found before 2026-07-12. One later `"backend":
+"firestore"` line in the `prb002` working copy (2026-10-24 12:53:52) was the independent reviewer's
+own probe of a client pointed at `localhost:8081`, with no cloud contact; it is not part of the scope.
 
 | Working copy (`backend/logs/`) | Real-store initialisations | Writes to `auth_users` | Period in surviving logs |
 |---|---|---|---|
@@ -63,7 +68,9 @@ lower bound: runs before the oldest surviving entry cannot be counted or exclude
 | **Total** | | **112** | |
 
 - **Accounts written**: 62 distinct test accounts — 4 different `admin` records, 57 `lock_<hex>`
-  accounts, 1 `durable_user` — between 2026-07-12 (oldest surviving entry) and 2026-10-24.
+  accounts, 1 `durable_user` — between 2026-07-12 (oldest write found) and 2026-10-24.
+  Each record has a new random id (`backend/app/security/auth.py:190`), so no existing production
+  record was overwritten.
   "Real-store initialisations" is lower than the number of runs because the store is created once
   per test process and the oldest initialisation lines have rotated out. All are encrypted with the test key; the production service cannot
   decrypt them, so **they cannot be used to log in to production**.
@@ -82,7 +89,7 @@ lower bound: runs before the oldest surviving entry cannot be counted or exclude
 ## 2. Triage (SPR-001 §3.1)
 
 - **Reproducible**: yes (by construction; the logs show it on five working copies).
-- **Severity**: proposed Major (§5).
+- **Severity**: proposed Critical (§5).
 - **Assigned to**: corrective action by the AI coding agent (this branch); production clean-up:
   owner decision.
 
@@ -99,27 +106,39 @@ lower bound: runs before the oldest surviving entry cannot be counted or exclude
 
 ## 4. Corrective and preventive actions
 
-**Done on this branch (test configuration only):** `backend/tests/conftest.py` sets four
-independent layers before any application import:
+**Done on this branch (test configuration only):** `backend/tests/conftest.py` sets five
+independent layers before any application import (an app module imported earlier is caught by a
+test):
 1. `GOOGLE_APPLICATION_CREDENTIALS` is **forced** (not `setdefault`) to a file that does not exist,
    and `GCS_CREDENTIALS_FILE` is emptied (a `.env` cannot point the storage service at a key file);
+   this also stops `google.oauth2.id_token.fetch_id_token`, which does not use `google.auth.default`;
 2. `CLOUDSDK_CONFIG` points at an empty folder (`backend/tests/.no-cloud/gcloud`, git-ignored), so
    the gcloud ADC file is never found;
-3. `GOOGLE_CLOUD_PROJECT` is forced to `mstool-offline-tests` (not a real project) and
-   `GCLOUD_PROJECT` is removed;
-4. `google.auth.default` (public and internal) is replaced by a function that raises
-   `DefaultCredentialsError`, so any client that slips past 1–3 fails exactly as on a computer without
-   credentials; only a **local** Firestore emulator (opt-in `requires_firestore` tests) gets
-   anonymous credentials.
+3. `GOOGLE_CLOUD_PROJECT` is forced to `mstool-offline-tests` (not a real project), and keys and
+   endpoints of other external services inherited from the environment are removed
+   (`GCLOUD_PROJECT`, `ANTHROPIC_API_KEY`, `API_SERVICE_TOKEN`, `API_BASE_URL`, the FLAMeS / LST-AI /
+   SynthSeg / MindGlide / Vertex endpoints, Redis and PACS settings). On this computer
+   `ANTHROPIC_API_KEY` is set in the user environment; every test that touches the provider mocks its
+   client, so no evidence of real provider calls from tests was found;
+4. `google.auth.default` (public and internal) **always** raises `DefaultCredentialsError`, also when
+   `FIRESTORE_EMULATOR_HOST` is set (CI sets it without running an emulator), so every Google client
+   fails exactly as on a computer without credentials;
+5. Python sockets may only connect to the loopback address (covers the HTTP clients: requests,
+   httpx, urllib3; gRPC does not use Python sockets and is covered by 1–4).
 
-**Verification:** `backend/tests/unit/test_prb002_no_cloud_in_tests.py` (9 tests: each layer, a
-remote emulator host refused, and the end result for the user store, the Firestore client, the
-segmentation service and the storage service). Negative controls
-`scripts/safety/prb002_negative_controls.py`: 9 mutations, each removing or weakening one layer —
-**9/9 detected** (`records/risk_verification/PRB-002_negative_controls_2026-10-24.json`). The
-controls run with an outer environment that already hides credentials, so no control can reach the
-cloud. The base without the guard was deliberately **not** run "failing first": on this computer it
-writes to production, which is the defect. Full backend suite with the guard: see the PR.
+**Verification:** `backend/tests/unit/test_prb002_no_cloud_in_tests.py` (15 tests: guard installed
+before any app import; each layer; credentials refused also with CI's emulator variable, and a GCS
+client failing at once under it; an outbound connection refused and a loopback connection allowed;
+the end result for the **start-up user store singleton** and the `AuthService` that uses it (the
+object that wrote to production), a new user store, the Firestore client, the segmentation service
+and the storage service). Negative controls `scripts/safety/prb002_negative_controls.py`: 13
+mutations, each removing or weakening one layer or re-introducing a defect the independent review
+found (§7); result in `records/risk_verification/PRB-002_negative_controls_2026-10-24.json`. The
+controls refuse to start if `conftest.py` has uncommitted changes, restore it on exit or signal, and
+run with an outer environment that already hides credentials and carries dummy service variables,
+so no control can reach the cloud. The base without the guard was deliberately **not** run "failing
+first": on this computer it writes to production, which is the defect. Full backend suite with the
+guard, and the integration step run the way CI runs it: see the PR.
 
 **Pending — owner decisions:**
 - **(a) Remove the test records from production `auth_users`.** They are inert (not decryptable by
@@ -131,8 +150,9 @@ writes to production, which is the defect. Full backend suite with the guard: se
 - **(b) Preventive, application side (follow-up, not in this branch):** outside Cloud Run, the
   backend should not default to the production project (e.g. require an explicit
   `GOOGLE_CLOUD_PROJECT` when `K_SERVICE` is absent), so a locally started server cannot write to
-  production either. It changes start-up of the production service, so it needs its own change
-  record, tests and a careful deployment.
+  production either. Checked 2026-10-24 (setting names only): the production Cloud Run service sets
+  `GOOGLE_CLOUD_PROJECT` explicitly, so this would not change production behaviour. It changes
+  start-up code, so it needs its own change record, tests and a careful deployment.
 - **(c)** Agents and developers keep running tests only through the suite's `conftest.py` (which now
   guards every run); for open branches created before this fix, run tests with the same variables
   set outside (`GOOGLE_APPLICATION_CREDENTIALS` to a missing file, `CLOUDSDK_CONFIG` to an empty
@@ -145,12 +165,39 @@ writes to production, which is the defect. Full backend suite with the guard: se
 - [ ] Affects a Class C software item — no (test configuration only; no application module changed).
 - [ ] Requires regulatory notification (EU MDR Article 87) — no: the device is not CE-marked and not
   in clinical use, and no patient data was involved.
-- Proposed **Major** rather than Minor: a verification activity changed production data, for weeks,
-  without being detected by any control, and test runs read the production user collection (in
-  encrypted form). Under ISO 27001 A.8.31 / A.8.33 (separation of environments, test information)
-  this is a nonconformity of the development process.
+- Mapping to SPR-001 §2: **Critical** lists "safety impact, data corruption, complete system
+  failure"; **Major** "significant functional loss, no workaround". There was no safety impact and no
+  functional loss. Test records were added to a production collection by an uncontrolled process for
+  months without any control noticing; read conservatively, that is contamination ("data
+  corruption") of production data, so **Critical is proposed**. Read narrowly (no existing record
+  altered or lost), it is Major. The owner decides. Response: same day (this branch), as Critical
+  requires.
+- Under ISO 27001 A.8.31 / A.8.33 (separation of environments, test information) it is in any case a
+  nonconformity of the development process.
 
-## 6. Approval
+## 6. Independent review before merge (2026-10-24) and changes made
+
+An independent reviewer (AI agent, read-only, with a local proxy that logged and refused every
+outbound connection: zero attempts during the test runs) found, in the first version of this
+branch (`1bd6d69`):
+
+1. **CI regression.** CI sets `FIRESTORE_EMULATOR_HOST=localhost:8081` without an emulator; the first
+   version then gave *anonymous* credentials to every Google client, so routes that fell back via
+   try/except hung on gRPC (4 to 5 min per request in a local CI simulation) and an unmocked GCS call
+   retried towards storage.googleapis.com. **Changed:** layer 4 always refuses; mutation M9 re-creates
+   the old branch, and tests run with CI's variable.
+2. **The tests did not check the object that wrote to production** (the start-up singleton), and
+   moving the guard below the app import went undetected. **Changed:** tests on the singleton and on
+   `AuthService`, a test that no app module was imported before the guard, mutation M10.
+3. A cached Firestore client could keep a guard state: moot now that no client can be built.
+4. Other inherited secrets. **Changed:** layer 3 removes them; layer 5 added; mutations M11 to M13.
+5. Emulator host parsing: moot (branch removed).
+6. Negative-control script safety. **Changed:** refuses an uncommitted `conftest.py`, restores on
+   signal.
+7. Record accuracy (emulator and CI claims, log rotation, severity mapping, marker docs).
+   **Changed:** this record and the marker comments in `conftest.py`.
+
+## 7. Approval
 
 | Role | Name | Decision | Date |
 |---|---|---|---|
