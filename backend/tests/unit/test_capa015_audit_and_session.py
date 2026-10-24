@@ -54,7 +54,7 @@ SEG2 = "44444444-4444-4444-8444-444444444444"
 ALLOWED_RECORD_KEYS = {
     "schema_version", "event_id", "event_type", "severity", "outcome", "action", "source",
     "client_timestamp", "server_timestamp", "actor_user_id", "actor_username", "actor_role",
-    "attempted_identifier_sha256", "ip_address", "user_agent", "request_id", "trace_id",
+    "attempted_identifier_hmac", "ip_address", "user_agent", "request_id", "trace_id",
     "method", "endpoint", "status_code", "resource_type", "resource_ids", "reason", "details",
     "service_revision", "checksum",
 }
@@ -62,6 +62,17 @@ ALLOWED_RECORD_KEYS = {
 
 def _mod(name):
     return importlib.import_module(name)
+
+
+def keyed(value):
+    """The documented derivation (review m10): AUDIT_HASH_KEY if set, else
+    HMAC-SHA-256(JWT secret, "mstool-audit-identifier-hash-v1"); value = HMAC-SHA-256(key, identifier)[:16]."""
+    import hmac
+    import os
+    explicit = os.environ.get("AUDIT_HASH_KEY")
+    key = explicit.encode() if explicit else hmac.new(os.environ["JWT_SECRET_KEY"].encode(),
+                                                      b"mstool-audit-identifier-hash-v1", hashlib.sha256).digest()
+    return hmac.new(key, str(value).encode(), hashlib.sha256).hexdigest()[:16]
 
 
 def _user(username, role, **kw):
@@ -137,6 +148,9 @@ def env(monkeypatch):
     authn.attempt_tracker._attempts.clear()
     if hasattr(mw, "reset_read_dedup"):
         mw.reset_read_dedup()
+    aud = _mod("app.core.logging.audit")
+    if hasattr(aud, "reset_audit_budget"):
+        aud.reset_audit_budget()
     client = TestClient(app, base_url="https://testserver", raise_server_exceptions=False)
     tm = get_token_manager()
 
@@ -211,7 +225,9 @@ def test_rc067_failed_logins_captcha_and_lockout_are_recorded_without_the_typed_
     unknown = [r for r in env.records("auth.login.failed") if r.get("reason") == "user_not_found"]
     assert len(unknown) == 1
     assert typed not in json.dumps(unknown[0], default=str), "the typed identifier must not be stored"
-    assert unknown[0]["attempted_identifier_sha256"] == hashlib.sha256(typed.encode()).hexdigest()[:16]
+    # keyed hash (review m10): HMAC-SHA-256 with a key derived from the server secret, never a plain hash
+    assert unknown[0]["attempted_identifier_hmac"] == keyed(typed)
+    assert hashlib.sha256(typed.encode()).hexdigest()[:16] not in json.dumps(unknown[0], default=str)
 
     for _ in range(2):
         assert _login(env, password="wrong-password-123").status_code == 401
@@ -468,6 +484,7 @@ def test_rc068_refresh_rotates_and_the_old_token_is_refused(env):
     assert second and second != first
     payload = get_token_manager().decode_token(r.json()["token"]["access_token"])
     assert payload["user_id"] == env.rad.id and payload["type"] == "access"
+    env.clock.advance(seconds=31)                    # past the reuse grace window (review m5)
     assert _refresh(env, first).status_code == 401, "a used refresh token must not work twice"
     assert env.records("auth.token.refresh")
 
@@ -476,6 +493,7 @@ def test_rc068_refresh_rotates_and_the_old_token_is_refused(env):
 def test_rc068_reuse_revokes_the_whole_family(env):
     first = _cookie(_login(env))
     second = _cookie(_refresh(env, first))
+    env.clock.advance(seconds=31)                             # past the reuse grace window (review m5)
     assert _refresh(env, first).status_code == 401           # replay of a rotated token
     assert _refresh(env, second).status_code == 401, "reuse must revoke every token of the family"
     reuse = env.records("auth.token.reuse_detected")

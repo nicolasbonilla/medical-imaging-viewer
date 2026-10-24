@@ -233,6 +233,10 @@ class FakeUserStorage:
     def get_user_by_id(self, user_id):
         return self.users.get(user_id)
 
+    def lookup_user(self, user_id):
+        """Strict lookup (review m6): None only when the user does not exist; errors raise."""
+        return self.users.get(user_id)
+
     def get_user_by_username(self, username):
         return next((u for u in self.users.values() if u.username == username), None)
 
