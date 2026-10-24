@@ -50,9 +50,9 @@ MSTool-AI integrates four distinct AI/ML components:
 
 **Claude API Report Generation**
 - Model: Anthropic Claude (large language model)
-- Input: De-identified volumetry data, lesion analysis findings, clinical context (HIPAA-compliant)
+- Input: structured measurements only — volumetry and lesion-analysis figures, labels of the device's fixed vocabulary, sex and a 5-year age band; no free text (CAPA-014)
 - Output: Structured clinical report text (general, stroke, tumor, dementia, MS longitudinal templates)
-- Safety: No patient identifiers transmitted; de-identified findings only
+- Safety: no names, dates of birth, record numbers or free text are sent; an identifier check against the patient record refuses to send on any finding (CAPA-014, RC-064/RC-065)
 
 ~~**EDT-based MAGNIMS Classification**~~ **MAGNIMS region classification (four paths; EDT on the parcellation path only)** *(renamed v1.2, CAPA-006)*
 - ~~Method: Euclidean Distance Transform with rule-based thresholds~~ / ~~Tier 2: SynthSeg parcellation + EDT (PV<=3mm ventricle, JC<=4mm cortex, IT<=3mm infratentorial)~~ / ~~Tier 1 fallback: Geometric heuristics (z-coordinate, center distance, surface distance)~~ — *v1.1 text, replaced in v1.2 (CAPA-006): the 3/4/3 mm values and the two-level cascade did not describe the software at issue (see the version notes)*
@@ -116,7 +116,7 @@ None of the prohibited AI practices under Article 5 apply to MSTool-AI. The syst
 |-----------|------------------------|
 | SynthSeg | Trained on synthetic data (domain-randomized). Published methodology with known limitations. Validation on multi-site, multi-scanner datasets in peer-reviewed literature. |
 | ONNX Edge AI | Training dataset documentation maintained. Bias assessment for demographic representation (age, sex, scanner manufacturer). |
-| Claude API | Foundation model trained by Anthropic. MSTool-AI uses prompt engineering only (no fine-tuning). De-identified clinical data in prompts. |
+| Claude API | Foundation model trained by Anthropic. MSTool-AI uses prompt engineering only (no fine-tuning). Prompts carry structured measurements only (CAPA-014). |
 | MAGNIMS Classification | ~~Rule-based system using published distance thresholds from McDonald 2024 criteria.~~ *(v1.1 text, replaced in v1.2, CAPA-006: McDonald 2024 / MAGNIMS publish no distance thresholds.)* Rule-based system implementing the MAGNIMS / McDonald 2024 contact criterion (lesion abutting the lateral ventricles or cortex, or in or touching the brainstem/cerebellum). MAGNIMS defines contact, not distance thresholds; the parcellation path implements contact as a distance <= 1.5 mm, the MSMask path (adapted from LST-AI, not validated) as lesion voxels lying in an atlas zone (atlas white matter within the one-voxel dilation of the structure) (see Section 2.2). No training data required. Region-assignment accuracy has not been measured for any path. |
 
 **Data Quality Measures**:
@@ -217,7 +217,7 @@ None of the prohibited AI practices under Article 5 apply to MSTool-AI. The syst
 - Transport: HTTPS/TLS 1.2+ for all communications
 - API Security: CORS policies, rate limiting, input sanitization
 - SOUP Monitoring: Continuous vulnerability scanning (PMS-001 Section 3.4)
-- Data Protection: HIPAA-compliant de-identification for AI report generation
+- Data Protection: measurements only sent for AI report drafts; no free text; identifier check before sending (CAPA-014)
 - Access Control: Role-based access to patient data and AI features
 
 **Mapped Document**: VVP-001, CYB-001, RMF-001, PMS-001

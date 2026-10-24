@@ -48,7 +48,8 @@ RISK_CONTROLS = [
     ("RC-006", "HAZ-003", "Report includes structured disclaimers and limitations section",
      "brain_report_service.py FORMAT_INSTRUCTIONS mandate disclaimer in every report",
      "Code inspection + unit test: test_brain_report_service.py"),
-    ("RC-007", "HAZ-003", "De-identified data only sent to Claude API (HIPAA Safe Harbor)",
+    # Historical 2026-04-12 record text, withdrawn 2026-07-18 (RCV-SUMMARY, RC-007'); see CAPA-014.
+    ("RC-007", "HAZ-003", "De-identified data only sent to Claude API (HIPAA Safe Harbor)",  # withdrawn claim
      "brain_report_service.py _build_findings_prompt strips PHI; only age/sex/findings sent",
      "Code inspection: brain_report_service.py lines 400-430"),
     ("RC-008", "HAZ-004", "Confidence scores displayed for all AI predictions",

@@ -227,12 +227,15 @@ async def generate_ms_report(
 
     # Field names are those of the report route's request model (ReportGenerateRequest);
     # a test binds them, because unknown names are silently dropped by the backend.
+    # CAPA-014: segmentation_id lets the backend remove this patient's identifiers before the
+    # report service calls its model provider; without it the route sends nothing.
     report = await api_post_compute(
         "/ai/report/generate",
         {
             "template_type": "ms_longitudinal" if "longitudinal" in findings else "general",
             "language": language,
             "findings": findings,
+            "segmentation_id": segmentation_id,
         },
     )
     return {"report": report, "unavailable": unavailable}

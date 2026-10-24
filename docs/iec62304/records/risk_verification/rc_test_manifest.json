@@ -25,8 +25,8 @@
     "status here is 'implemented' or 'deliberately_absent'."
   ],
   "manifest_version": 1,
-  "capa_reference": "CAPA-001, CAPA-002, CAPA-004, CAPA-005, CAPA-006, CAPA-007, CAPA-010, CAPA-011, CAPA-013",
-  "last_updated": "2026-10-22",
+  "capa_reference": "CAPA-001, CAPA-002, CAPA-004, CAPA-005, CAPA-006, CAPA-007, CAPA-010, CAPA-011, CAPA-013, CAPA-014",
+  "last_updated": "2026-10-24",
   "controls": {
     "RC-006": {
       "description": "AI-generated report carries a mandatory physician-review disclaimer",
@@ -724,6 +724,47 @@
       "change": "CAPA-013 (DRAFT, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63); branch fix/longitudinal-activity-display-capa013; merge after #52, #51, #53, #59, #49, #62)",
       "negative_control": "Executed 2026-10-22 by scripts/safety/capa013_negative_controls.py (66 mutations, 66 detected, full run 2026-10-23 against the final tests, incl. B16-B20, E7-E9, A10-A16, F16-F22 for the independent review of PR #63; the first run (2026-10-22) had left F12 undetected, which led to the stronger language test; one mutation at a time, anchors asserted unique, files restored byte for byte); record docs/iec62304/records/risk_verification/CAPA-013_negative_controls_2026-10-22.json. Tests written before the fix, re-run on the PR #62 code by scripts/safety/capa013_tests_on_base.py (on PR #62: backend 50 of 52 fail, frontend 18 of 18; on ad144ba (PR #63 before the review fixes): backend 15 of 52, frontend 7 of 18 - records CAPA-013_tests_on_base_2026-10-22.json and CAPA-013_review1_tests_on_pr63_2026-10-23.json); record CAPA-013_tests_on_base_2026-10-22.json. RC-062 mutations: A1-A16, F13-F14, F16-F19, F22.",
       "note": "Proposed by RMF-OBS-001 as CAPA-008 CA-8.13; implemented by CAPA-013 (CA-13.6). Images uploaded as NIfTI carry no acquisition record, so their comparisons abstain (CAPA-013 D-3, PA-13.3). The Firestore lookup and the PACS import field are verified by unit and source tests only. Owner approval PENDING."
+    },
+    "RC-064": {
+      "description": "AI report draft, inherent safety by design: the request to the model provider is built only from a structured payload - measurements as numbers, labels of the device's fixed vocabulary (others -> '[unlisted label]'), sex M/F, a 5-year age band ('90 or older' from 90); no free-text or user-typed field and no unknown field; fixed system prompt; the clinician's typed text is added to the draft by the route after the model returns and is never sent",
+      "hazard": "HAZ-016",
+      "status": "implemented",
+      "implementation": "backend/app/services/report_payload_guard.py (provider_payload, label_vocabulary, age_band); backend/app/services/brain_report_service.py (prompt builder without free text, generate_report - Class C, CAPA-014 s7); backend/app/api/routes/ai_report.py (clinician_entry, with_clinician_entry)",
+      "tests": [
+        "tests/unit/test_capa014_report_provider_payload.py"
+      ],
+      "requirement": "REQ-SEC-021 (refines REQ-SEC-007 for the report path)",
+      "change": "CAPA-014 (DRAFT, PENDING owner approval; branch fix/ai-report-deidentification-capa014; redesign after the review of PR #67)",
+      "negative_control": "Executed 2026-10-24 by scripts/safety/capa014_negative_controls.py on the redesign (52 mutations, 52 detected; one mutation at a time, anchors asserted unique, files restored byte for byte, tests run offline per PRB-002); record docs/iec62304/records/risk_verification/CAPA-014_negative_controls_2026-10-24.json. Redesign tests written before the redesign (commit f975368), re-run by scripts/safety/capa014_tests_on_base.py: on the PR #67 head 4bfdd7e backend 129 of 176 fail, frontend 6 of 10 (record CAPA-014_review1_tests_on_pr67_2026-10-24.json); on main 70cc5c7 backend 129 of 176 fail, frontend 10 of 10 (record CAPA-014_tests_on_base_2026-10-24.json). RC-064 mutations: P1, P2, P3, P4, P5, P6, P7, P8, P9.",
+      "note": "Implements CAPA-001 CA-4 by design rather than by removal: no free text leaves the application. The first version (regex scrubbing of free text, PR #67 before the review) was removed. Owner approval PENDING."
+    },
+    "RC-065": {
+      "description": "AI report draft fails closed: segmentation required (400) and authorized (404, RC-036 rule), patient record readable and complete (503), service refuses without identifiers; a detection-only tripwire on the final prompt (NFKC, format characters removed, look-alikes and accents mapped) refuses to send (503) on the patient's own name (alone, written together, German spellings, pairs of the device's own words), record number (any separators), birth date (numeric, month-name, Roman; partial after a birth word), phone (with/without country code and trunk 0), e-mail, contact, city, street, and on generic e-mail, dated text, phone-like/long/ID-like numbers and titled names; never edits text; never fires on the device's own words alone; capped at 400000 characters; linear time; the panel and the assistant's report tool send the segmentation",
+      "hazard": "HAZ-016",
+      "status": "implemented",
+      "implementation": "backend/app/services/report_payload_guard.py (PatientIdentifiers, find_identifiers, assert_no_identifiers, normalise); backend/app/services/brain_report_service.py (assert_prompt_carries_no_identifier, fixed_prompt_words); backend/app/api/routes/ai_report.py (generate_report, read_patient_identifiers); backend/app/security/resource_access.py (authorize_segmentation_id); frontend/src/components/AIReportPanel.tsx; backend/app/mcp/ms_clinical_server.py (generate_ms_report)",
+      "tests": [
+        "tests/unit/test_capa014_report_provider_payload.py",
+        "frontend/src/components/AIReportPanel.capa014.test.tsx"
+      ],
+      "requirement": "REQ-SEC-022",
+      "change": "CAPA-014 (DRAFT, PENDING owner approval; branch fix/ai-report-deidentification-capa014; redesign after the review of PR #67)",
+      "negative_control": "Executed 2026-10-24 by scripts/safety/capa014_negative_controls.py on the redesign (52 mutations, 52 detected; one mutation at a time, anchors asserted unique, files restored byte for byte, tests run offline per PRB-002); record docs/iec62304/records/risk_verification/CAPA-014_negative_controls_2026-10-24.json. Redesign tests written before the redesign (commit f975368), re-run by scripts/safety/capa014_tests_on_base.py: on the PR #67 head 4bfdd7e backend 129 of 176 fail, frontend 6 of 10 (record CAPA-014_review1_tests_on_pr67_2026-10-24.json); on main 70cc5c7 backend 129 of 176 fail, frontend 10 of 10 (record CAPA-014_tests_on_base_2026-10-24.json). RC-065 mutations: T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, F1, F2, F3, F4, F5, F6, U5.",
+      "note": "Detection only, protective; the inherent control is RC-064. Limits: a name that is also one of the device's words is found only next to the other name; all-digit record numbers under 6 digits are not checked. The route is also classified in tests/unit/test_capa009_object_authorization_everywhere.py (call:authorize_segmentation_id, 404 probe; test_rc036_* names). Owner approval PENDING."
+    },
+    "RC-066": {
+      "description": "AI report draft records and disclosure: the typed text merged into the draft locally after the RC-006 disclaimer and the model told so; the log states that the check ran and counts what was withheld, never the payload; the panel note and the report viewer footer (en/es/de) state that only measurements, sex and a 5-year age range are sent; false HIPAA / de-identification claims corrected everywhere and a repository test fails on any new one (historical records excepted); data categories recorded for the data-processing agreement (CAPA-014 s6)",
+      "hazard": "HAZ-016",
+      "status": "implemented",
+      "implementation": "backend/app/api/routes/ai_report.py (with_clinician_entry); backend/app/services/brain_report_service.py (module header, generate_report log); frontend/src/components/AIReportPanel.tsx; frontend/src/components/ReportViewerModal.tsx; frontend/src/i18n/locales/{en,es,de}.json (report.deidentificationNote, reportViewer.aiDataNote); frontend/src/api/aiReport.ts; docs/iec62304/records/capa/CAPA-014_AI_Report_Deidentification.md s6",
+      "tests": [
+        "tests/unit/test_capa014_report_provider_payload.py",
+        "frontend/src/components/AIReportPanel.capa014.test.tsx"
+      ],
+      "requirement": "REQ-SEC-023",
+      "change": "CAPA-014 (DRAFT, PENDING owner approval; branch fix/ai-report-deidentification-capa014; redesign after the review of PR #67)",
+      "negative_control": "Executed 2026-10-24 by scripts/safety/capa014_negative_controls.py on the redesign (52 mutations, 52 detected; one mutation at a time, anchors asserted unique, files restored byte for byte, tests run offline per PRB-002); record docs/iec62304/records/risk_verification/CAPA-014_negative_controls_2026-10-24.json. Redesign tests written before the redesign (commit f975368), re-run by scripts/safety/capa014_tests_on_base.py: on the PR #67 head 4bfdd7e backend 129 of 176 fail, frontend 6 of 10 (record CAPA-014_review1_tests_on_pr67_2026-10-24.json); on main 70cc5c7 backend 129 of 176 fail, frontend 10 of 10 (record CAPA-014_tests_on_base_2026-10-24.json). RC-066 mutations: M1, M2, M3, L1, L2, L3, C1, C2, U1-U4, U6, U7.",
+      "note": "The data-processing agreement itself is an owner action (CAPA-014 D-3); wording of the es/de texts awaits review (D-9). Owner approval PENDING."
     }
   },
   "unverified_controls_note": [

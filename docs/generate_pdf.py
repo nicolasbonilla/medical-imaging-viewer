@@ -809,10 +809,10 @@ def build_pdf():
     story.append(PageBreak())
     section('12', 'AI-ASSISTED REPORT GENERATION')
 
-    subsection('12.1 HIPAA-Compliant Pipeline')
-    body('The report generation system integrates with the Claude API (Anthropic SDK v0.44.0) through a de-identification pipeline that strips all Protected Health Information (PHI) before transmission:')
+    subsection('12.1 Structured Payload (CAPA-014)')
+    body('The report generation system integrates with the Claude API (Anthropic SDK v0.44.0). Only a structured payload is sent: measurements, labels of the device vocabulary, sex and a 5-year age band; an identifier check runs before sending:')
 
-    code('Clinical Findings \u2192 De-identification \u2192 Prompt Assembly \u2192 Claude API \u2192 Report')
+    code('Measurements \u2192 Structured payload \u2192 Prompt Assembly \u2192 Identifier check \u2192 Claude API \u2192 Report + clinician entry')
 
     story.append(make_table(
         ['Template', 'Max Tokens', 'Clinical Focus'],
@@ -826,10 +826,10 @@ def build_pdf():
     ))
     caption('Table 13. Report generation templates and token budgets.')
 
-    subsection('12.2 De-Identification Protocol')
-    body('<b>Transmitted:</b> Patient age (integer), sex (M/F), clinical indication, technical parameters, numerical findings (lesion counts, volumes, regions), DIS assessment, longitudinal statistics.')
+    subsection('12.2 Data Sent to the AI Service')
+    body('<b>Transmitted:</b> 5-year age band, sex (M/F), numerical findings (lesion counts, volumes, regions), DIS assessment, longitudinal statistics, labels of the device vocabulary.')
     spacer(3)
-    body('<b>Never transmitted:</b> Patient name, date of birth, MRN, study date, institution name, referring/performing physician names.')
+    body('<b>Never transmitted:</b> any free text (clinical indication, technique, observations), patient name, date of birth, MRN, study date, institution name, physician names.')
 
     # ─── 13. EDGE AI ───
     section('13', 'EDGE AI INFERENCE')

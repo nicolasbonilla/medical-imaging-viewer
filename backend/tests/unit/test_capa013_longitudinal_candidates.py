@@ -292,6 +292,23 @@ FORGED = {
 }
 
 
+def _report_subject(monkeypatch):
+    """CAPA-014: the report route authorizes the segmentation and reads its patient record before
+    anything is sent to the provider; here an authorized segmentation with a readable record."""
+    import app.api.routes.ai_report as ai_report
+    from datetime import date
+
+    async def _authorize(segmentation_id, user):
+        return "44444444-4444-4444-4444-444444444444"
+
+    class _Patients:
+        async def get_patient(self, pid, **kw):
+            return {"mrn": "MRN-T-1", "given_name": "Ana", "family_name": "Test", "birth_date": date(1980, 1, 1)}
+
+    monkeypatch.setattr(ai_report, "authorize_segmentation_id", _authorize)
+    monkeypatch.setattr(ai_report, "_patient_service", lambda: _Patients())
+
+
 class _Captured:
     """Stands in for the model provider: records the prompt, returns a fixed body."""
     def __init__(self):
@@ -314,11 +331,12 @@ def test_rc060_forged_confirmation_never_reaches_the_report(monkeypatch):
     from app.services.brain_report_service import BrainReportService
     captured = _Captured()
     monkeypatch.setattr(BrainReportService, "_get_client", lambda self: captured)
+    _report_subject(monkeypatch)
     app.dependency_overrides[get_current_active_user] = lambda: TECHNICIAN
     try:
         r = TestClient(app).post("/api/v1/ai/report/generate",
                                  json={"template_type": "ms_longitudinal", "language": "en",
-                                       "findings": {"longitudinal": FORGED}})
+                                       "segmentation_id": "seg-2", "findings": {"longitudinal": FORGED}})
     finally:
         app.dependency_overrides.pop(get_current_active_user, None)
     assert r.status_code == 200, r.text
@@ -341,10 +359,12 @@ def test_rc060_report_route_drops_a_confirmation_sent_by_the_client(monkeypatch)
                     "language": kw["language"], "processing_time_ms": 1}
 
     monkeypatch.setattr(ai_report, "get_report_service", lambda: _Svc())
+    _report_subject(monkeypatch)
     app.dependency_overrides[get_current_active_user] = lambda: TECHNICIAN
     try:
         r = TestClient(app).post("/api/v1/ai/report/generate",
-                                 json={"template_type": "ms_longitudinal", "findings": {"longitudinal": FORGED}})
+                                 json={"template_type": "ms_longitudinal", "segmentation_id": "seg-2",
+                                       "findings": {"longitudinal": FORGED}})
     finally:
         app.dependency_overrides.pop(get_current_active_user, None)
     assert r.status_code == 200, r.text
@@ -408,6 +428,7 @@ def report_client(monkeypatch):
                     "language": kw["language"], "processing_time_ms": 1}
 
     monkeypatch.setattr(ai_report, "get_report_service", lambda: _Svc())
+    _report_subject(monkeypatch)
     app.dependency_overrides[get_current_active_user] = lambda: RADIOLOGIST
     yield TestClient(app)
     app.dependency_overrides.pop(get_current_active_user, None)
@@ -421,7 +442,7 @@ def test_rc060_report_draft_carries_the_unconfirmed_candidate_notice(env, report
     client, *_ = env
     longitudinal = _compare(client)
     r = report_client.post("/api/v1/ai/report/generate",
-                           json={"template_type": "ms_longitudinal", "language": lang,
+                           json={"template_type": "ms_longitudinal", "language": lang, "segmentation_id": "seg-2",
                                  "findings": {"longitudinal": longitudinal}})
     assert r.status_code == 200, r.text
     content = r.json()["content"]
@@ -577,7 +598,7 @@ def test_rc061_false_share_is_stated_precisely(env, report_client):
     for text in (res["caveat"], lcs.evidence_sentence(ev)):
         assert "46 %" in text and "most candidates may be false" not in text.lower()
     r = report_client.post("/api/v1/ai/report/generate",
-                           json={"template_type": "ms_longitudinal", "language": "en",
+                           json={"template_type": "ms_longitudinal", "language": "en", "segmentation_id": "seg-2",
                                  "findings": {"longitudinal": res}})
     notice = r.json()["content"][len("draft body"):]
     assert "46 %" in notice and "most candidates may be false" not in notice.lower()

@@ -117,7 +117,7 @@ This ISMS covers:
 | A.5.8 | Information security in project management | IEC 62304 lifecycle with security gates, CLAUDE.md rules for all contributors | 5.3.1 | IMPLEMENTED |
 | A.5.9 | Inventory of information | SOUP Bill of Materials (SOUP-001), CycloneDX SBOM, QMS dependency tracking | 5.3.11 | IMPLEMENTED |
 | A.5.10 | Acceptable use | RBAC enforces acceptable use, audit trail logs all actions | 5.3.7 | IMPLEMENTED |
-| A.5.14 | Information transfer | TLS 1.3 for all data in transit, HIPAA de-identification for AI API calls | 5.3.5 | IMPLEMENTED |
+| A.5.14 | Information transfer | TLS 1.3 for all data in transit; measurements only to the AI service, identifier check before sending (CAPA-014) | 5.3.5 | IMPLEMENTED |
 | A.5.23 | Information security for cloud services | Cloud Run (Google-managed TLS), Firebase (Google SOC 2/3), Firestore encryption | 5.3.5 | IMPLEMENTED |
 | A.5.24 | Incident management planning | TPL-08 Serious Incident Report, QP-007 Complaints Handling | 5.3.1 | IMPLEMENTED |
 | A.5.28 | Collection of evidence | Immutable audit trail in Firestore (QMS), structured JSON logs | 5.3.7 | IMPLEMENTED |
@@ -155,7 +155,7 @@ This ISMS covers:
 | A.8.8 | Management of technical vulnerabilities | npm audit + pip-audit in CI, QMS SOUP Monitor with NVD CVE scanning | 5.3.12 | IMPLEMENTED |
 | A.8.9 | Configuration management | IEC 62304 Configuration Management Plan (CMP-001), Git version control | 5.3.11 | IMPLEMENTED |
 | A.8.10 | Information deletion | Firestore document TTL, patient data deletion API, GDPR right to erasure | 5.3.5 | IMPLEMENTED |
-| A.8.12 | Data leakage prevention | PHI de-identification before AI API calls, no PHI in logs, CORS allowlist | 5.3.6 | IMPLEMENTED |
+| A.8.12 | Data leakage prevention | Measurements only to the AI service with an identifier check before sending (CAPA-014), no PHI in logs, CORS allowlist | 5.3.6 | IMPLEMENTED |
 | A.8.15 | Logging | Structured JSON audit logs, Cloud Run request logs, Firebase Auth logs | 5.3.7 | IMPLEMENTED |
 | A.8.16 | Monitoring activities | QMS Compliance Dashboard (real-time), GitHub Actions CI on every commit | 5.3.7 | IMPLEMENTED |
 | A.8.20 | Networks security | TLS 1.3 enforced, CORS configuration, API rate limiting (100/min) | 5.3.9 | IMPLEMENTED |
@@ -201,7 +201,7 @@ This table demonstrates how ISO 27001 controls provide evidence for IEC 81001-5-
 | 17.2(b) Protection against unauthorized access | 5.3.2 Authentication | A.8.5 | Firebase Auth + WebAuthn + JWT |
 | 17.2(b) Protection against unauthorized access | 5.3.3 Access control | A.5.2, A.8.2, A.8.3, A.8.4 | RBAC (4 roles, 15 permissions) |
 | 17.2(c) Data integrity | 5.3.5 Data protection | A.5.14, A.8.24 | TLS 1.3 + AES-256-GCM |
-| 17.2(d) Confidentiality | 5.3.6 De-identification | A.8.12, A.8.33 | PHI stripped before AI calls |
+| 17.2(d) Confidentiality | 5.3.6 De-identification | A.8.12, A.8.33 | Measurements only to the AI service; identifier check before sending (CAPA-014) |
 | 17.4 Audit trails | 5.3.7 Audit and accountability | A.5.28, A.8.15, A.8.16 | Firestore audit trail, QMS monitoring |
 | 17.2(e) Resilience | 5.3.8 Backup and recovery | A.5.29, A.5.30 | Cloud Run auto-scaling, GCS versioning |
 | 17.2(a) State of the art | 5.3.9 Network security | A.8.20, A.8.27, A.8.31 | TLS 1.3, CORS, container isolation |
