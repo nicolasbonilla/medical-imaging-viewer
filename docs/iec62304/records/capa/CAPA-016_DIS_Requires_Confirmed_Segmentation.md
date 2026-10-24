@@ -173,6 +173,9 @@ The template texts themselves are unchanged.
   Black Hole (T1) blocks DIS until corrected (PRB-003 §8.12).
 - Until PR #67 is merged, a report request without a segmentation uses the client's lesion counts (no regions, DIS not
   evaluated) (second review, N7).
+- A mask save (`_save_segmentation`) still rewrites the whole metadata document from the instance's cache, so it can erase
+  a confirmation written meanwhile by another instance; DIS then reads "not evaluated" (fail-safe) and must be confirmed
+  again (third review; pre-existing save path).
 - Regions of an unconfirmed segmentation stay visible to the radiologist (lesion table, region bars, lesion analysis,
   assistant region tools), caveated "not a DIS assessment"; the report model receives none (review of PR #68, finding 3).
 - Stored DIS blocks written before the fix stay in the records (no longer served). Read-only check of production data
@@ -198,6 +201,7 @@ The template texts themselves are unchanged.
 | D-10 | Region corrections by hand (revised after the second review, N1): one region per lesion; a correction is listed and must be acknowledged in the confirmation, which records it; labels 5 / 6 on a lesion block DIS until corrected (PRB-003 §8.12). |
 | D-11 | Label definitions changeable by radiologists and technicians only (403 for viewers and administrators). |
 | D-12 | Who confirmed (names, ids, history) shown to radiologists and administrators only; others: role and time; history capped at 50 events (second review, N5). |
+| D-13 | Merge with #67 (third review): amend RC-064 to "one of the fixed template variants" (owner approval) and adapt about six fixtures and two contract tests (CAPA-014 route fixture, CAPA-013 report fixture, capa008, brain_report, PRB-003 `report_env`, second-review report fixture); accept the N6 residual (a mask save on another instance can erase a confirmation; DIS fail-safe). |
 
 ## 10. Independent review of PR #68 (2026-10-24, at `4c601f2`) — findings and corrections (PENDING owner approval)
 
@@ -242,6 +246,31 @@ The second review closed M5 and m6-m11 and found B1, M3 and M4 only partly close
 | N7 | Removing `segmentation_id` from the client lesion block bypassed the 409 binding | With a report segmentation the lesion table is derived on the server for it (`segmentation_analysis.lesion_table`, compute-only, nothing stored); a client table — with, without or with another `segmentation_id` — never reaches the model; a table that cannot be computed gives 422. Without a report segmentation (possible only until #67, which makes it mandatory, is merged) the client's counts are used without regions and DIS is not evaluated | `test_rc070_n7_*`; mutations W34, W35 |
 
 Existing tests changed with the corrected contract (stated, not hidden): `test_rc070_r1_a_region_corrected_after_classification_keeps_the_classification` (a correction now needs the acknowledgement), `test_rc070_assistant_receives_an_evaluated_assessment_unchanged` (unchanged except the confirmer, given by role), the test helpers (`_classification` / `_classify` record each lesion's region, computed in the test with scipy, independently of the code under test; `_FakeDB` supports field updates with an update-time precondition; `_seed` stores the metadata document as production has it), `test_analysis_flow_ci_guard.py` (the classification record classify-regions writes) and the end-to-end fixture (N2).
+
+## 12. Third independent review of PR #68 (2026-10-24, at `2e20b8a`) — findings and corrections (PENDING owner approval)
+
+The third review found no blocker or major finding in #68 alone: N1-N7 closed, the N1 design cannot be gamed by
+splitting or merging lesions, and the evaluated state survives a merge with #67's pushed head `a3f3305`. Two minor
+findings were answered with the same process — tests written first (they fail on `2e20b8a`: backend 4 of 4, frontend 2 of 2;
+`records/risk_verification/PRB-003_review3_tests_on_2e20b8a_2026-10-24.json`), the correction, the negative controls
+re-run in full (119 mutations, 119 detected, bound tests green after byte-exact restore).
+
+| # | Finding (third review of PR #68 at `2e20b8a`) | Correction | Verified by |
+|---|---|---|---|
+| m-1 | Usability (IEC 62366): the gate numbered lesions in raster order and counted components below the lesion-size floor, while the lesion table numbers them by size and leaves those out — "Lesion 2 … Juxtacortical → Periventricular" in the correction list could be "Lesion 1" in the table | The gate builds the lesion table's entries as `analyze_lesions` does (Class C, not modified): per-label 18-connected components, the same centroid call, size order, the floor from the voxel volume that classify-regions now records (`voxel_volume_mm3`). Every list (corrections, lesions with more than one label, the refusal message, the confirm dialog) names a lesion by the table's number and by the slice its table row opens; a component below the floor is "Small component (N voxels, slice S)"; a lesion with two labels is listed part by part | `test_rc070_m1_*`, `test_rc071_m1_*` (the gate's lists compared with the real `/lesion-analysis` table of the same segmentation), `rc070/rc071 review3` (frontend); mutations W36-W40, WF9, WF10 |
+| m-3 | Mutation G14 only broke the import (removing the only statement of an `if` block gave an IndentationError) | G14 now replaces the statement with `pass` and is detected by the classify-regions tests | negative-control record |
+
+**Merge with PR #67 (noted by the third review; coordinated by the owner's agent after #67's final round):** besides the
+instructions in §8 item 8, the merge needs (a) RC-064 amended from "the system prompt is the fixed template" to "one of
+the fixed template variants" — **owner approval**; (b) about six test fixtures and two contract tests adapted: the
+CAPA-014 route fixture, the CAPA-013 report fixture, `test_capa008_*`, `test_brain_report_service.py`, the PRB-003
+`report_env` fixture and the second-review report fixture.
+
+**Residual risk noted by the third review (N6):** `SegmentationService._save_segmentation` (any mask save) still rewrites
+the whole metadata document from the instance's cached copy, so a save on one instance can erase a confirmation written
+meanwhile by `persist_metadata` on another. The failure is safe: without its confirmation the segmentation reads "not
+evaluated" and must be confirmed again; no DIS result is shown on a confirmation that is not stored. Not changed here
+(pre-existing save path, CAPA-006/A-2).
 
 ## 9. Approvals
 

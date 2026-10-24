@@ -33,10 +33,12 @@ if not os.path.exists(PY):
 OUT = "docs/iec62304/records/risk_verification/PRB-003_negative_controls_2026-10-24.json"
 BACKEND_TESTS = ["tests/unit/test_prb003_dis_requires_confirmed_segmentation.py",
                  "tests/unit/test_prb003_review1_findings.py",
-                 "tests/unit/test_prb003_review2_findings.py"]
+                 "tests/unit/test_prb003_review2_findings.py",
+                 "tests/unit/test_prb003_review3_findings.py"]
 FRONTEND_TESTS = ["src/components/LesionDashboard.prb003.test.tsx",
                   "src/components/LesionDashboard.prb003.review1.test.tsx",
                   "src/components/LesionDashboard.prb003.review2.test.tsx",
+                  "src/components/LesionDashboard.prb003.review3.test.tsx",
                   "src/components/SegmentationPanel.prb003.test.tsx"]
 
 GATE = "backend/app/services/dis_review_gate.py"
@@ -116,7 +118,10 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                         (GATE, '    return all(MAGNIMS_REGIONS.get(i) == name for i, name in pairs.items())\n',
                                          '    return True\n')],
                                        "the default preset (1 = MS Lesion Active) read as regions: a false MET (review blocker 1)"),
-    "G14_classification_does_not_record_the_lesions": ([(SR, '            response_data.update(dis_gate.classification_record(classified_mask))\n', '')],
+    # Third review of PR #68, m-3: the statement is replaced by `pass` (removing the only statement of the `if` block
+    # gave an IndentationError, so the mutation only broke the import).
+    "G14_classification_does_not_record_the_lesions": ([(SR, '            response_data.update(dis_gate.classification_record(classified_mask, voxel_spacing))\n',
+                                                         '            pass\n')],
                                                        "classify-regions records no classified lesions: DIS can never be traced to a classification"),
     # ── RC-071: the DIS confirmation ──
     "C1_any_role_may_confirm": ([(SEG, '    if not _radiologist(current_user):\n', '    if False:\n')],
@@ -376,6 +381,24 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "W35_failed_table_replaced_silently": ([(AIR, '        logger.error(f"[Report] Lesion measurements could not be computed for the report: {e}")\n',
                                              '        return {"total_count": 0}\n')],
                                            "a lesion table that could not be computed is replaced by an empty one (N7)"),
+    # ── third review of PR #68 (at 2e20b8a): m-1 lesions named as the lesion table names them ──
+    "W36_raster_numbering": ([(GATE, '        where = {"lesion": head["lesion"],', '        where = {"lesion": lesions.index(les) + 1,')],
+                             "the correction list numbers lesions in raster order, not as the lesion table (m-1, as found)"),
+    "W37_small_components_numbered": ([(GATE, '        e["small_component"] = not meets_min_volume(e["voxels"], voxel_volume_mm3)\n',
+                                        '        e["small_component"] = False\n')],
+                                      "a component below the lesion-size floor gets a lesion number the table does not have (m-1)"),
+    "W38_slice_of_the_first_voxel": ([(GATE, '"slice": int(math.floor(round(float(centroid[0]), 1) + 0.5))})',
+                                       '"slice": int(first_of[comp]) // (mask.shape[1] * mask.shape[2])})')],
+                                     "the list gives another slice than the one the table row opens (m-1)"),
+    "W39_raster_order_not_size_order": ([(GATE, '    entries.sort(key=lambda e: -e["voxels"])', '    entries.sort(key=lambda e: e["first"])')],
+                                        "lesions numbered in raster order instead of the table's size order (m-1)"),
+    "W40_voxel_volume_not_recorded": ([(GATE, '        "voxel_volume_mm3": float(np.prod(voxel_spacing)),\n', '')],
+                                      "classify-regions records no voxel volume: lesions cannot be named as the table (m-1)"),
+    "WF9_parts_not_listed": ([(DASH, "                          {les.parts?.length ? (", "                          {false ? (")],
+                             "a lesion with two labels is not listed part by part (m-1)"),
+    "WF10_small_component_not_named": ([(DASH, "    return c.small_component\n      ? fill(t('disReview.smallComponentCorrection'",
+                                         "    return false\n      ? fill(t('disReview.smallComponentCorrection'")],
+                                       "a correction of a small component is shown as a numbered lesion (m-1)"),
 }
 
 # Mutations that are NOT defects (equivalent code), stated rather than claimed as tested.

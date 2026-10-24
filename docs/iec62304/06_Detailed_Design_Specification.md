@@ -271,7 +271,10 @@ footprint_sha256(mask) -> SHA-256 of (mask > 0)        labels_sha256(labels) -> 
 labels_are_magnims(labels) -> ids 1-4 = PV, JC, IT, DWM names; every other id a MAGNIMS label
 regions_state(metadata, mask) -> {classified, label_scheme, edited_after_classification, method, lesion_count,
                                    lesions_valid, invalid_lesions, corrections, correction_count, corrections_sha256}
-classification_record(classified_mask) -> footprint + mask digests + classified_lesion_regions [[first voxel, voxels, region]]
+classification_record(classified_mask, voxel_spacing) -> footprint + mask digests + classified_lesion_regions
+                          [[first voxel, voxels, region]] + voxel_volume_mm3
+_table_entries(mask, voxel_volume) -> the lesion table's entries (as analyze_lesions: per-label components, size order,
+                          table number, slice of the row; below the floor: small component)   (third review, m-1)
 review_state(metadata, mask) -> {confirmed, status, reason, source, lesion_detection, regions, reviewed_by, reviewed_at,
                                  reviewed_mask_sha256, current_mask_sha256, current_labels_sha256}
 not_evaluated(segmentation_id, state, reason=None) / evaluated(result, state) / is_evaluated(block)
@@ -305,7 +308,9 @@ any later change voids it (with a history entry). The confirmation is set only b
 of the listed corrections, recorded in the confirmation); `persist_metadata` writes only `clinician_review` and
 `clinician_review_history` (field update, stored history merged, update-time precondition → 409); the confirmer's name,
 id and the history are returned to radiologists and administrators only; the report's lesion table is derived on the
-server (`segmentation_analysis.lesion_table`).
+server (`segmentation_analysis.lesion_table`). *Third review (m-1):* every list names a lesion by the lesion table's
+number and the slice its row opens; components below the lesion-size floor are "small components"; a lesion with two
+labels is listed part by part.
 
 **Implements**: REQ-SAFE-038, REQ-SAFE-039 (RC-070, RC-071); tests UT-PRB003, UT-PRB003-R1, UT-PRB003-R2, UI-PRB003,
 UI-PRB003-R1, UI-PRB003-R2
