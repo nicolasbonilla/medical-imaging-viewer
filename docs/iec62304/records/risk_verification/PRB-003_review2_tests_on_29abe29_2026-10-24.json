@@ -1,5 +1,5 @@
 {
-  "executed": "2026-10-24T21:05:44",
+  "executed": "2026-10-24T21:34:41",
   "base": "29abe29 (PR #68 after the first review, before the second-review corrections)",
   "method": "source files that differ from the base commit restored to it, files it did not have removed; the PRB-003 test files run unchanged; working tree restored byte for byte",
   "swapped": {
@@ -24,12 +24,12 @@
     "removed": []
   },
   "test_sha256": {
-    "backend/tests/unit/test_prb003_review2_findings.py": "0abedcd629b4be9b54a90657c4f67b79bd3e6a7c66c3a52ceb40081f64000e64",
-    "frontend/src/components/LesionDashboard.prb003.review2.test.tsx": "a8692baf202183c0882cbbc46563752130f6ac453e804c933998a9f6c32d325f"
+    "backend/tests/unit/test_prb003_review2_findings.py": "9a5108f8cd8d3c23a319e21625f2b0db9d8234e178db80ff3681756f3fc1f12e",
+    "frontend/src/components/LesionDashboard.prb003.review2.test.tsx": "b87f0ac3bca80d2b9132f8f5757baa1256c2a55b3aa1c6b539b6e3d0d7d5ebb6"
   },
   "backend": {
     "passed": 5,
-    "failed": 45,
+    "failed": 46,
     "errors": 0,
     "results": {
       "test_rc070_n3_a_dis_statement_is_replaced[en-DIS: met (2/3 regions).]": {
@@ -54,7 +54,7 @@
       },
       "test_rc070_n1_one_lesion_split_between_two_regions_is_never_evaluated": {
         "status": "failed",
-        "reason": "AssertionError: {\"success\":true,\"already_confirmed\":false,\"clinician_review\":{\"reviewed_by\":\"dr_rev\",\"reviewed_by_id\":\"u-1\",\"reviewed_at\":\"2026-10-24T19:05:30.462078Z\",\"reviewed_mask_sha256\":\"8ecdbb7fefa7ae56eb8e08c2b04ad2c15c95f6ab029708a4"
+        "reason": "AssertionError: {\"success\":true,\"already_confirmed\":false,\"clinician_review\":{\"reviewed_by\":\"dr_rev\",\"reviewed_by_id\":\"u-1\",\"reviewed_at\":\"2026-10-24T19:34:25.603887Z\",\"reviewed_mask_sha256\":\"8ecdbb7fefa7ae56eb8e08c2b04ad2c15c95f6ab029708a4"
       },
       "test_rc070_n1_a_lesion_relabelled_active_is_never_evaluated": {
         "status": "failed",
@@ -67,6 +67,10 @@
       "test_rc070_n1_regions_relabelled_after_the_classification_need_an_acknowledgement": {
         "status": "failed",
         "reason": "AssertionError: assert 200 == 409"
+      },
+      "test_rc071_n1_each_refusal_gives_its_own_reason": {
+        "status": "failed",
+        "reason": "AssertionError: {\"success\":true,\"already_confirmed\":false,\"clinician_review\":{\"reviewed_by\":\"dr_rev\",\"reviewed_by_id\":\"u-1\",\"reviewed_at\":\"2026-10-24T19:34:26.900561Z\",\"reviewed_mask_sha256\":\"d49bdc82bb92a70cd558e93bf8146f61089e5dafca7a2154"
       },
       "test_rc071_n1_an_acknowledgement_of_other_corrections_is_refused": {
         "status": "failed",
@@ -218,7 +222,7 @@
       },
       "test_rc071_n6_a_document_changed_between_read_and_write_is_a_conflict": {
         "status": "failed",
-        "reason": "AssertionError: {\"success\":true,\"already_confirmed\":false,\"clinician_review\":{\"reviewed_by\":\"dr_rev\",\"reviewed_by_id\":\"u-1\",\"reviewed_at\":\"2026-10-24T19:05:34.556796Z\",\"reviewed_mask_sha256\":\"7afa2b6aec6cbed8f9fb421786a4bb60895b9d08e88c64cb"
+        "reason": "AssertionError: {\"success\":true,\"already_confirmed\":false,\"clinician_review\":{\"reviewed_by\":\"dr_rev\",\"reviewed_by_id\":\"u-1\",\"reviewed_at\":\"2026-10-24T19:34:30.152713Z\",\"reviewed_mask_sha256\":\"7afa2b6aec6cbed8f9fb421786a4bb60895b9d08e88c64cb"
       },
       "test_rc071_n6_history_written_by_another_instance_is_kept": {
         "status": "failed",
@@ -236,7 +240,7 @@
   },
   "frontend": {
     "passed": 0,
-    "failed": 5,
+    "failed": 6,
     "not_passing": {
       "rc070 review2 a lesion with no region or two regions is listed and no confirmation is offered": {
         "status": "failed",
@@ -250,6 +254,10 @@
         "status": "failed",
         "reason": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"dis-ack-corrections\"]"
       },
+      "rc071 review2 a refused confirmation shows the server reason": {
+        "status": "failed",
+        "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31melement\u001b[39m\u001b[2m).toHaveTextContent()\u001b[22m"
+      },
       "rc070 review2 an evaluated result says it includes acknowledged corrections": {
         "status": "failed",
         "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirmed-corrections\"]"
@@ -260,5 +268,5 @@
       }
     }
   },
-  "note": "Second independent review of PR #68 at 29abe29 (N1, N3-N7). Tests that pass on 29abe29 are positive controls or wordings the first output check already caught (stated in PRB-003 section 10); every other test fails on the base."
+  "note": "Second independent review of PR #68 at 29abe29 (N1, N3-N7). Tests that pass on 29abe29 are positive controls (the not-evaluated sentence kept unchanged, the ms_activity template) or wordings the first output check already caught (stated in PRB-003 section 10); every other test fails on the base. Two tests (each refusal gives its own reason; the card shows the server's reason) were added while running the negative controls and this record was produced again with the final test files."
 }

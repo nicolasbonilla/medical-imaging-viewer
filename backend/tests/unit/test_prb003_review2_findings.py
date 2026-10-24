@@ -146,6 +146,23 @@ def test_rc070_n1_regions_relabelled_after_the_classification_need_an_acknowledg
 
 
 @pytest.mark.unit
+def test_rc071_n1_each_refusal_gives_its_own_reason(client_for):
+    """Before the classification the radiologist is asked to classify; after it, to fix the lesions listed."""
+    svc = _service()
+    entry = _seed(svc)                                    # MAGNIMS labels, never classified
+    r = _confirm(client_for(svc), _sha(entry["masks_3d"]))
+    assert r.status_code == 409 and "region classification first" in r.json()["error"]["message"], r.text[:300]
+    assert entry["metadata"].clinician_review is None
+    _classify(entry)
+    split = entry["masks_3d"].copy()
+    split[2, 2, 2] = 2                                    # one voxel of the PV lesion painted JC
+    entry["masks_3d"] = split
+    r = _confirm(client_for(svc), _sha(split))
+    assert r.status_code == 409, r.text[:300]
+    assert "lesion 1 (slice 3): Periventricular + Juxtacortical" in r.json()["error"]["message"]
+
+
+@pytest.mark.unit
 def test_rc071_n1_an_acknowledgement_of_other_corrections_is_refused(client_for):
     svc, entry = _classified(_two_lesions(4, 4))
     relabelled = _two_lesions(1, 2)

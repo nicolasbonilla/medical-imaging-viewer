@@ -145,6 +145,19 @@ describe('N1: one region per lesion; region corrections are listed and acknowled
       expect.stringMatching(/region correction\(s\)[\s\S]*Lesion 2 \(slice 7, 18 voxels\): Juxtacortical → Periventricular/));
   });
 
+  it('rc071 review2 a refused confirmation shows the server reason', async () => {
+    seed();
+    getDISAssessment.mockResolvedValue(notEvaluated('segmentation_not_confirmed', {}));
+    confirmSegmentationReview.mockRejectedValue({
+      message: 'Request failed with status code 409',
+      response: { status: 409, data: { error: { code: 'HTTP_409', message: '1 lesion region(s) differ from the region classification.' } } },
+    });
+    render(<LesionDashboard segmentationId="seg-1" />);
+    const card = await analyze();
+    fireEvent.click(screen.getByRole('button', { name: /confirm this segmentation/ }));
+    await waitFor(() => expect(card).toHaveTextContent('1 lesion region(s) differ from the region classification.'));
+  });
+
   it('rc070 review2 an evaluated result says it includes acknowledged corrections', async () => {
     seed();
     getDISAssessment.mockResolvedValue(evaluated('dr_rev', 1));
