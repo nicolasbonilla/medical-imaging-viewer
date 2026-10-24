@@ -1054,3 +1054,12 @@ def test_m2_exempt_words_keep_the_dis_words():
     assert any(d.get("evaluation_status") == "evaluated"
                and any(r.get("present") is False for r in d.get("region_details", {}).values()) for d in dis)
 
+
+@pytest.mark.unit
+def test_r3_a_rounding_error_at_a_range_edge_does_not_refuse_the_report(route):
+    # e3.py of the third review: a normative percentile of 100.00000001 (floating-point rounding) refused the report
+    volumetry = {"total_brain_volume_ml": 1100.0, "structures": [
+        {"structure_name": "Left Thalamus", "volume_ml": 7.1, "is_abnormal": True, "normative_percentile": 100.00000001}]}
+    r = _post(route, _measurements(), volumetry)
+    assert r.status_code == 200, r.text
+    assert "(100th percentile)" in route.provider.prompt()
