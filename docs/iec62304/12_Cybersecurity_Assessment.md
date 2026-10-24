@@ -69,7 +69,7 @@ Internet
 | Encryption in transit | TLS 1.3 (Cloud Run enforced) | 5.3.5 | A.8.24 | IMPLEMENTED |
 | Encryption at rest (user data) | AES-256-GCM | 5.3.5 | A.8.24 | IMPLEMENTED |
 | Encryption at rest (storage) | GCS server-side encryption | 5.3.5 | A.8.24 | IMPLEMENTED |
-| PHI de-identification | Stripped before AI API calls | 5.3.6 | A.8.12 | IMPLEMENTED |
+| PHI de-identification | Stripped before AI API calls | 5.3.6 | A.8.12 | ~~IMPLEMENTED~~ **NOT IMPLEMENTED before CAPA-014** *(annotated 2026-10-24, CAPA-014 — draft, PENDING owner approval: nothing de-identified the AI report request (CAPA-001 §2.3, CAPA-014 §1). Implemented on branch `fix/ai-report-deidentification-capa014` for the AI report path only (RC-064..RC-066, test-bound; removal not measured on real clinical texts); the Vertex AI path is unchecked (CAPA-014 PA-14.5))* |
 | Audit logging | Structured JSON per access event | 5.3.7 | A.8.15 | IMPLEMENTED |
 | Data backup | GCS versioning + Firestore export | 5.3.8 | A.5.29 | PARTIAL |
 
@@ -112,7 +112,7 @@ Internet
 | **Spoofing** | Attacker impersonates user | JWT auth + WebAuthn/Passkeys | Low |
 | **Tampering** | Modification of segmentation data in transit | TLS 1.3 encryption | Low |
 | **Repudiation** | User denies performing action | Audit logging with timestamps | Low |
-| **Information Disclosure** | PHI leaked to AI APIs | De-identification pipeline | Low |
+| **Information Disclosure** | PHI leaked to AI APIs | De-identification pipeline *(did not exist before CAPA-014; see HAZ-016, RMF-001 v1.13 draft)* | ~~Low~~ **Not established** *(2026-10-24, CAPA-014 — PENDING owner approval)* |
 | **Information Disclosure** | Patient data in error messages | Pydantic validation, no PHI in logs | Medium |
 | **Denial of Service** | API overwhelmed | Rate limiting (100/min), Cloud Run auto-scaling | Low |
 | **Elevation of Privilege** | User gains admin access | RBAC with 15 granular permissions | Low |
@@ -170,7 +170,7 @@ npm audit and pip-audit are already integrated in `.github/workflows/ci.yml` and
 | 5.3.3 | Access control | IMPLEMENTED |
 | 5.3.4 | Session management | IMPLEMENTED |
 | 5.3.5 | Data protection (confidentiality, integrity) | IMPLEMENTED |
-| 5.3.6 | Data de-identification | IMPLEMENTED |
+| 5.3.6 | Data de-identification | ~~IMPLEMENTED~~ **NOT IMPLEMENTED before CAPA-014** *(annotated 2026-10-24, CAPA-014 — draft, PENDING owner approval: nothing de-identified the AI report request (CAPA-001 §2.3, CAPA-014 §1). Implemented on branch `fix/ai-report-deidentification-capa014` for the AI report path only (RC-064..RC-066, test-bound; removal not measured on real clinical texts); the Vertex AI path is unchecked (CAPA-014 PA-14.5))* |
 | 5.3.7 | Audit and accountability | IMPLEMENTED |
 | 5.3.8 | Backup and recovery | PARTIAL |
 | 5.3.9 | Network security | PARTIAL (CSP missing) |

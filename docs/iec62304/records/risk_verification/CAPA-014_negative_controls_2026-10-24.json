@@ -1,0 +1,1173 @@
+{
+  "executed": "2026-10-24T12:11:31",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once; the bound tests of the mutated side are run (backend pytest, frontend vitest JSON reporter)",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/api/routes/ai_report.py": "459ec7910566b792a463c83dacc2e39fd63eed324e534b8b33b8c9833d61f431",
+    "backend/app/mcp/ms_clinical_server.py": "c32b354084bd46ecd8fc2a69d952454398735c8d2bf85e2d331d0fb44eef579a",
+    "backend/app/services/brain_report_service.py": "16dd8c16d3e2fbcfef4413e49dc09adcdfe201b67432684e3b85c890014d661d",
+    "backend/app/services/report_deidentification.py": "77379b2d24f2fb100930976a6c68a83cad887ab60f838a3dd25c07734cd83bdd",
+    "frontend/src/api/aiReport.ts": "3f9ee6d4a56127f199d7eb817dabf14c1c16876f5fc8de81534d335a6a47307b",
+    "frontend/src/components/AIReportPanel.tsx": "89f3655e18b64938dfb41590593570180dc2deb112efd2712a41ad3a93f51f96",
+    "frontend/src/i18n/locales/de.json": "b6162ca240aad92c584bd01fac0938644a9e718b43076a81cc3278851c2892ea",
+    "frontend/src/i18n/locales/es.json": "e0a004c00e4b3d48325f3bf86569bd1c805b13f157b3b7470f9f0649a0b5b81d"
+  },
+  "test_sha256": {
+    "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+    "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+    "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+    "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1",
+    "frontend/src/components/AIReportPanel.capa014.test.tsx": "90a9125a4ee213344cf9e51f35486652a54eec9d527d41df5220c998a82fb4a9"
+  },
+  "tests": [
+    "tests/unit/test_capa014_report_deidentification.py",
+    "tests/unit/test_capa009_object_authorization_everywhere.py",
+    "tests/unit/test_capa008_assistant_read_only.py",
+    "tests/unit/test_brain_report_service.py",
+    "frontend/src/components/AIReportPanel.capa014.test.tsx"
+  ],
+  "mutations": {
+    "D1_removal_step_and_residual_check_bypassed": {
+      "suite": "backend",
+      "failed": 14,
+      "passed": 166,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_age_is_sent_as_a_five_year_band[17-15-17]",
+        "test_rc064_age_is_sent_as_a_five_year_band[18-18-19]",
+        "test_rc064_age_is_sent_as_a_five_year_band[3-0-4]",
+        "test_rc064_age_is_sent_as_a_five_year_band[48-45-49]",
+        "test_rc064_age_is_sent_as_a_five_year_band[52-50-54]",
+        "test_rc064_age_is_sent_as_a_five_year_band[93-90",
+        "test_rc064_contact_details_ids_people_and_institutions_are_removed",
+        "test_rc064_exact_dates_become_intervals",
+        "test_rc064_fields_the_report_does_not_use_never_reach_the_provider",
+        "test_rc064_patient_identifiers_in_free_text_never_reach_the_provider",
+        "test_rc064_strings_inside_structured_findings_are_scrubbed",
+        "test_rc064_the_patients_own_age_in_the_text_is_banded",
+        "test_rc065_residual_identifier_stops_the_call",
+        "test_rc066_logs_say_that_deidentification_ran_with_counts_never_the_payload"
+      ],
+      "reintroduces": "the findings forwarded verbatim (the defect as found)",
+      "applied": true,
+      "executed": "2026-10-24T12:12:09",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D2_removal_step_bypassed": {
+      "suite": "backend",
+      "failed": 17,
+      "passed": 163,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_age_is_sent_as_a_five_year_band[17-15-17]",
+        "test_rc064_age_is_sent_as_a_five_year_band[18-18-19]",
+        "test_rc064_age_is_sent_as_a_five_year_band[3-0-4]",
+        "test_rc064_age_is_sent_as_a_five_year_band[48-45-49]",
+        "test_rc064_age_is_sent_as_a_five_year_band[52-50-54]",
+        "test_rc064_age_is_sent_as_a_five_year_band[93-90",
+        "test_rc064_clinical_content_and_measurements_are_kept",
+        "test_rc064_contact_details_ids_people_and_institutions_are_removed",
+        "test_rc064_exact_dates_become_intervals",
+        "test_rc064_fields_the_report_does_not_use_never_reach_the_provider",
+        "test_rc064_patient_identifiers_in_free_text_never_reach_the_provider",
+        "test_rc064_strings_inside_structured_findings_are_scrubbed",
+        "test_rc064_system_prompt_is_the_fixed_template",
+        "test_rc064_the_patients_own_age_in_the_text_is_banded",
+        "test_rc065_a_caller_without_access_gets_404_and_no_provider_call",
+        "test_rc065_the_segmentation_is_authorized_for_the_caller",
+        "test_rc066_logs_say_that_deidentification_ran_with_counts_never_the_payload"
+      ],
+      "reintroduces": "no removal step (only the residual check left)",
+      "applied": true,
+      "executed": "2026-10-24T12:12:42",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D3_names_rule_removed": {
+      "suite": "backend",
+      "failed": 24,
+      "passed": 156,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_age_is_sent_as_a_five_year_band[17-15-17]",
+        "test_rc064_age_is_sent_as_a_five_year_band[18-18-19]",
+        "test_rc064_age_is_sent_as_a_five_year_band[3-0-4]",
+        "test_rc064_age_is_sent_as_a_five_year_band[48-45-49]",
+        "test_rc064_age_is_sent_as_a_five_year_band[52-50-54]",
+        "test_rc064_age_is_sent_as_a_five_year_band[93-90",
+        "test_rc064_clinical_content_and_measurements_are_kept",
+        "test_rc064_contact_details_ids_people_and_institutions_are_removed",
+        "test_rc064_exact_dates_become_intervals",
+        "test_rc064_fields_the_report_does_not_use_never_reach_the_provider",
+        "test_rc064_german_record_and_spelling_variants",
+        "test_rc064_name_matching_ignores_case_and_accents[JUAN",
+        "test_rc064_name_matching_ignores_case_and_accents[P\\xc9REZ]",
+        "test_rc064_name_matching_ignores_case_and_accents[P\\xe9rez-G\\xf3mez,",
+        "test_rc064_name_matching_ignores_case_and_accents[ju\\xe1n",
+        "test_rc064_name_matching_ignores_case_and_accents[pErEz]",
+        "test_rc064_patient_identifiers_in_free_text_never_reach_the_provider",
+        "test_rc064_spanish_particles_and_clinical_words_survive_a_compound_surname",
+        "test_rc064_strings_inside_structured_findings_are_scrubbed",
+        "test_rc064_system_prompt_is_the_fixed_template",
+        "test_rc064_the_patients_own_age_in_the_text_is_banded",
+        "test_rc065_a_caller_without_access_gets_404_and_no_provider_call",
+        "test_rc065_the_segmentation_is_authorized_for_the_caller",
+        "test_rc066_logs_say_that_deidentification_ran_with_counts_never_the_payload"
+      ],
+      "reintroduces": "the patient's names from the record not removed",
+      "applied": true,
+      "executed": "2026-10-24T12:13:16",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D4_accents_and_case_not_folded": {
+      "suite": "backend",
+      "failed": 18,
+      "passed": 162,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_german_record_and_spelling_variants",
+        "test_rc064_name_matching_ignores_case_and_accents[JUAN",
+        "test_rc064_name_matching_ignores_case_and_accents[P\\xc9REZ]",
+        "test_rc064_name_matching_ignores_case_and_accents[ju\\xe1n",
+        "test_rc064_name_matching_ignores_case_and_accents[pErEz]",
+        "test_rc064_patient_identifiers_in_free_text_never_reach_the_provider",
+        "test_rc064_pattern_rules[Accession",
+        "test_rc064_pattern_rules[DOB:",
+        "test_rc064_pattern_rules[Fallnummer",
+        "test_rc064_pattern_rules[NHS",
+        "test_rc064_pattern_rules[Paciente",
+        "test_rc064_pattern_rules[Ref",
+        "test_rc064_pattern_rules[Seen",
+        "test_rc064_spanish_particles_and_clinical_words_survive_a_compound_surname",
+        "test_rc064_strings_inside_structured_findings_are_scrubbed",
+        "test_rc064_the_patients_own_age_in_the_text_is_banded",
+        "test_rc065_residual_identifier_stops_the_call",
+        "test_rc066_logs_say_that_deidentification_ran_with_counts_never_the_payload"
+      ],
+      "reintroduces": "matching sensitive to case and accents ('PÉREZ' != 'Perez')",
+      "applied": true,
+      "executed": "2026-10-24T12:13:50",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D5_no_german_spellings": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_german_record_and_spelling_variants"
+      ],
+      "reintroduces": "'Müller' not matched as 'Mueller'",
+      "applied": true,
+      "executed": "2026-10-24T12:14:22",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D6_particles_removed_alone": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_spanish_particles_and_clinical_words_survive_a_compound_surname"
+      ],
+      "reintroduces": "'de', 'la' removed everywhere for a compound surname (clinical text damaged)",
+      "applied": true,
+      "executed": "2026-10-24T12:14:54",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D7_record_numbers_rule_removed": {
+      "suite": "backend",
+      "failed": 3,
+      "passed": 177,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_german_record_and_spelling_variants",
+        "test_rc064_patient_identifiers_in_free_text_never_reach_the_provider",
+        "test_rc066_logs_say_that_deidentification_ran_with_counts_never_the_payload"
+      ],
+      "reintroduces": "the record number from the record not removed",
+      "applied": true,
+      "executed": "2026-10-24T12:15:27",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D8_record_number_separators_required": {
+      "suite": "backend",
+      "failed": 4,
+      "passed": 176,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_german_record_and_spelling_variants",
+        "test_rc064_patient_identifiers_in_free_text_never_reach_the_provider",
+        "test_rc065_residual_identifier_stops_the_call",
+        "test_rc066_logs_say_that_deidentification_ran_with_counts_never_the_payload"
+      ],
+      "reintroduces": "'mrn 2025 0042' / 'PAT 77123' not matched",
+      "applied": true,
+      "executed": "2026-10-24T12:16:00",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D9_record_phone_rule_removed": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_pattern_rules[Contacto:"
+      ],
+      "reintroduces": "the record's phone numbers not removed in formats the pattern misses",
+      "applied": true,
+      "executed": "2026-10-24T12:16:32",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D10_record_address_rule_removed": {
+      "suite": "backend",
+      "failed": 2,
+      "passed": 178,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_german_record_and_spelling_variants",
+        "test_rc064_patient_identifiers_in_free_text_never_reach_the_provider"
+      ],
+      "reintroduces": "address, city and postal code from the record not removed",
+      "applied": true,
+      "executed": "2026-10-24T12:17:04",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D11_birth_date_not_recognised": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_pattern_rules[Patient"
+      ],
+      "reintroduces": "the birth date treated as an ordinary date",
+      "applied": true,
+      "executed": "2026-10-24T12:17:34",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D12_birth_context_rule_removed": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_pattern_rules[DOB:"
+      ],
+      "reintroduces": "'DOB: 1978' kept",
+      "applied": true,
+      "executed": "2026-10-24T12:18:07",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D13_dates_kept": {
+      "suite": "backend",
+      "failed": 7,
+      "passed": 173,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_exact_dates_become_intervals",
+        "test_rc064_patient_identifiers_in_free_text_never_reach_the_provider",
+        "test_rc064_pattern_rules[Control",
+        "test_rc064_pattern_rules[Patient",
+        "test_rc064_pattern_rules[Seen",
+        "test_rc064_strings_inside_structured_findings_are_scrubbed",
+        "test_rc066_logs_say_that_deidentification_ran_with_counts_never_the_payload"
+      ],
+      "reintroduces": "exact dates sent",
+      "applied": true,
+      "executed": "2026-10-24T12:18:45",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D14_dates_not_intervals": {
+      "suite": "backend",
+      "failed": 2,
+      "passed": 178,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_exact_dates_become_intervals",
+        "test_rc064_pattern_rules[Seen"
+      ],
+      "reintroduces": "dates removed without the interval the report needs",
+      "applied": true,
+      "executed": "2026-10-24T12:19:22",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D15_email_rule_removed": {
+      "suite": "backend",
+      "failed": 2,
+      "passed": 178,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_contact_details_ids_people_and_institutions_are_removed",
+        "test_rc066_logs_say_that_deidentification_ran_with_counts_never_the_payload"
+      ],
+      "reintroduces": "e-mail addresses sent",
+      "applied": true,
+      "executed": "2026-10-24T12:19:54",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D16_phone_pattern_removed": {
+      "suite": "backend",
+      "failed": 2,
+      "passed": 178,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_pattern_rules[NHS",
+        "test_rc064_pattern_rules[Tel"
+      ],
+      "reintroduces": "phone numbers not in the record sent",
+      "applied": true,
+      "executed": "2026-10-24T12:20:25",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D17_id_word_rule_removed": {
+      "suite": "backend",
+      "failed": 2,
+      "passed": 178,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_pattern_rules[Fallnummer",
+        "test_rc064_the_patients_own_age_in_the_text_is_banded"
+      ],
+      "reintroduces": "short numbers after MRN / Fallnummer / NHC sent",
+      "applied": true,
+      "executed": "2026-10-24T12:20:57",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D18_id_number_rule_removed": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_pattern_rules[Ref"
+      ],
+      "reintroduces": "long ID-like numbers (accession, UID) sent",
+      "applied": true,
+      "executed": "2026-10-24T12:21:29",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D19_measurements_removed_as_ids": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_measurement_like_numbers_in_text_are_kept"
+      ],
+      "reintroduces": "a measurement with its unit removed as an ID number (clinical content lost)",
+      "applied": true,
+      "executed": "2026-10-24T12:22:02",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D20_exact_age_sent": {
+      "suite": "backend",
+      "failed": 6,
+      "passed": 174,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_age_is_sent_as_a_five_year_band[17-15-17]",
+        "test_rc064_age_is_sent_as_a_five_year_band[18-18-19]",
+        "test_rc064_age_is_sent_as_a_five_year_band[3-0-4]",
+        "test_rc064_age_is_sent_as_a_five_year_band[48-45-49]",
+        "test_rc064_age_is_sent_as_a_five_year_band[52-50-54]",
+        "test_rc064_age_is_sent_as_a_five_year_band[93-90"
+      ],
+      "reintroduces": "the exact age sent instead of the 5-year band",
+      "applied": true,
+      "executed": "2026-10-24T12:22:35",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D21_own_age_in_text_kept": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_pattern_rules[Patient,"
+      ],
+      "reintroduces": "'48 years' (the patient's own age) kept",
+      "applied": true,
+      "executed": "2026-10-24T12:23:09",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D22_age_phrases_kept": {
+      "suite": "backend",
+      "failed": 2,
+      "passed": 178,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_german_record_and_spelling_variants",
+        "test_rc064_pattern_rules[Paciente"
+      ],
+      "reintroduces": "'47 años de edad' kept",
+      "applied": true,
+      "executed": "2026-10-24T12:23:40",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D23_keys_not_scrubbed": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_strings_inside_structured_findings_are_scrubbed"
+      ],
+      "reintroduces": "identifiers in dictionary keys (region names) sent",
+      "applied": true,
+      "executed": "2026-10-24T12:24:12",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D24_titled_names_kept": {
+      "suite": "backend",
+      "failed": 4,
+      "passed": 176,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_contact_details_ids_people_and_institutions_are_removed",
+        "test_rc064_fields_the_report_does_not_use_never_reach_the_provider",
+        "test_rc064_patient_identifiers_in_free_text_never_reach_the_provider",
+        "test_rc064_pattern_rules[Prof."
+      ],
+      "reintroduces": "'Dr. Gregory House' sent",
+      "applied": true,
+      "executed": "2026-10-24T12:24:51",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D25_institutions_kept": {
+      "suite": "backend",
+      "failed": 3,
+      "passed": 177,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_contact_details_ids_people_and_institutions_are_removed",
+        "test_rc064_german_record_and_spelling_variants",
+        "test_rc064_patient_identifiers_in_free_text_never_reach_the_provider"
+      ],
+      "reintroduces": "'Hospital Universitario San Ignacio' sent",
+      "applied": true,
+      "executed": "2026-10-24T12:25:25",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D26_streets_kept": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_pattern_rules[Vive"
+      ],
+      "reintroduces": "street addresses not in the record sent",
+      "applied": true,
+      "executed": "2026-10-24T12:26:05",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D27_year_ranges_removed_as_ids": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_pattern_rules[Fingolimod"
+      ],
+      "reintroduces": "'2019-2021' (treatment period) removed as an ID number",
+      "applied": true,
+      "executed": "2026-10-24T12:26:41",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D28_year_lists_removed_as_phones": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_pattern_rules[Fingolimod"
+      ],
+      "reintroduces": "'MRI 2019 2020 2021' removed as a phone number",
+      "applied": true,
+      "executed": "2026-10-24T12:27:15",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D29_german_nie_as_id_word": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_pattern_rules[Kontrastmittelring"
+      ],
+      "reintroduces": "German 'nie' (never) read as an ID word, the following number removed",
+      "applied": true,
+      "executed": "2026-10-24T12:27:50",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D30_clinical_ring_as_street": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_pattern_rules[Kontrastmittelring"
+      ],
+      "reintroduces": "'Kontrastmittelring 5 mm' removed as a street address",
+      "applied": true,
+      "executed": "2026-10-24T12:28:35",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D31_institution_before_rule_removed": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_pattern_rules[Seen"
+      ],
+      "reintroduces": "'Mayo Clinic' sent",
+      "applied": true,
+      "executed": "2026-10-24T12:29:20",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "D32_phone_inside_a_token": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc064_pattern_rules[Ref"
+      ],
+      "reintroduces": "part of an ID ('A-20251012-0042') read as a phone, the rest sent",
+      "applied": true,
+      "executed": "2026-10-24T12:29:55",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "F1_route_needs_no_segmentation": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc065_no_segmentation_reference_no_provider_call"
+      ],
+      "reintroduces": "a request without patient reference reaches the provider",
+      "applied": true,
+      "executed": "2026-10-24T12:30:30",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "F2_route_does_not_authorize": {
+      "suite": "backend",
+      "failed": 4,
+      "passed": 176,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[post",
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc065_a_caller_without_access_gets_404_and_no_provider_call",
+        "test_rc065_the_segmentation_is_authorized_for_the_caller"
+      ],
+      "reintroduces": "any caller drafts a report on any patient's segmentation",
+      "applied": true,
+      "executed": "2026-10-24T12:31:14",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "F3_unreadable_record_ignored": {
+      "suite": "backend",
+      "failed": 2,
+      "passed": 178,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc065_patient_record_unavailable_no_provider_call[no-record]",
+        "test_rc065_patient_record_unavailable_no_provider_call[store-error]"
+      ],
+      "reintroduces": "the provider is called although the patient record could not be read",
+      "applied": true,
+      "executed": "2026-10-24T12:31:51",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "F4_incomplete_record_accepted": {
+      "suite": "backend",
+      "failed": 3,
+      "passed": 177,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc065_patient_record_unavailable_no_provider_call[no-birth-date]",
+        "test_rc065_patient_record_unavailable_no_provider_call[no-name]",
+        "test_rc065_patient_record_unavailable_no_provider_call[no-record-number]"
+      ],
+      "reintroduces": "a record without record number, name or birth date accepted",
+      "applied": true,
+      "executed": "2026-10-24T12:32:25",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "F5_service_sends_without_identifiers": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc065_service_refuses_to_send_without_identifiers"
+      ],
+      "reintroduces": "the service builds and sends a prompt without identifiers",
+      "applied": true,
+      "executed": "2026-10-24T12:32:59",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "F6_residual_check_removed": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc065_residual_identifier_stops_the_call"
+      ],
+      "reintroduces": "no check of the final prompt",
+      "applied": true,
+      "executed": "2026-10-24T12:33:34",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "F7_residual_name_check_removed": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc065_residual_identifier_stops_the_call"
+      ],
+      "reintroduces": "the residual check misses the patient's name",
+      "applied": true,
+      "executed": "2026-10-24T12:34:08",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "F8_residual_record_number_check_removed": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc065_residual_identifier_stops_the_call"
+      ],
+      "reintroduces": "the residual check misses the record number",
+      "applied": true,
+      "executed": "2026-10-24T12:34:40",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "F9_residual_birth_date_check_removed": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc065_residual_identifier_stops_the_call"
+      ],
+      "reintroduces": "the residual check misses the birth date",
+      "applied": true,
+      "executed": "2026-10-24T12:35:13",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "F10_residual_email_check_removed": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc065_residual_identifier_stops_the_call"
+      ],
+      "reintroduces": "the residual check misses the e-mail address",
+      "applied": true,
+      "executed": "2026-10-24T12:35:48",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "F11_residual_phone_check_removed": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc065_residual_identifier_stops_the_call"
+      ],
+      "reintroduces": "the residual check misses the phone number",
+      "applied": true,
+      "executed": "2026-10-24T12:36:26",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "F12_assistant_omits_segmentation": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc065_assistant_report_tool_names_the_segmentation"
+      ],
+      "reintroduces": "the assistant's report tool sends no segmentation (every draft refused)",
+      "applied": true,
+      "executed": "2026-10-24T12:37:04",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "L1_raw_findings_logged": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc066_logs_say_that_deidentification_ran_with_counts_never_the_payload"
+      ],
+      "reintroduces": "the raw findings written to the log",
+      "applied": true,
+      "executed": "2026-10-24T12:37:40",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "L2_prompt_logged": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc066_logs_say_that_deidentification_ran_with_counts_never_the_payload"
+      ],
+      "reintroduces": "the prompt (clinical free text) written to the log",
+      "applied": true,
+      "executed": "2026-10-24T12:38:15",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "L3_counts_not_logged": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc066_logs_say_that_deidentification_ran_with_counts_never_the_payload"
+      ],
+      "reintroduces": "no record of what was removed",
+      "applied": true,
+      "executed": "2026-10-24T12:38:50",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "L4_false_header_claim": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 179,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc066_no_false_de_identification_claim_remains"
+      ],
+      "reintroduces": "the service header claims again what it did not do",
+      "applied": true,
+      "executed": "2026-10-24T12:39:24",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "44dda2cf68b671e49d93ec632f6fea7e8372d63d321f16cd4be8f4e36aefedb0",
+        "tests/unit/test_capa008_assistant_read_only.py": "b59d3df6b3fb0f0c401de8f9de60c57b03af147613fe699629013c761328acaa",
+        "tests/unit/test_brain_report_service.py": "1882e39e5d94592f51316a2ae3ab620903947d69f4389333c4c848c2956c82d1"
+      }
+    },
+    "U1_note_not_shown": {
+      "suite": "frontend",
+      "failed": 3,
+      "passed": 3,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc066 the note next to the draft button says what is removed and what is sent (en)",
+        "rc066 the note next to the draft button says what is removed and what is sent (es)",
+        "rc066 the note next to the draft button says what is removed and what is sent (de)"
+      ],
+      "error_files": [],
+      "reintroduces": "no note next to the draft button",
+      "applied": true,
+      "executed": "2026-10-24T12:39:32",
+      "test_sha256": {
+        "frontend/src/components/AIReportPanel.capa014.test.tsx": "90a9125a4ee213344cf9e51f35486652a54eec9d527d41df5220c998a82fb4a9"
+      }
+    },
+    "U2_note_english_in_spanish": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 5,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc066 the note next to the draft button says what is removed and what is sent (es)"
+      ],
+      "error_files": [],
+      "reintroduces": "the Spanish note is the English text",
+      "applied": true,
+      "executed": "2026-10-24T12:39:39",
+      "test_sha256": {
+        "frontend/src/components/AIReportPanel.capa014.test.tsx": "90a9125a4ee213344cf9e51f35486652a54eec9d527d41df5220c998a82fb4a9"
+      }
+    },
+    "U3_note_missing_in_german": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 5,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc066 the note next to the draft button says what is removed and what is sent (de)"
+      ],
+      "error_files": [],
+      "reintroduces": "no German note (the key is shown)",
+      "applied": true,
+      "executed": "2026-10-24T12:39:45",
+      "test_sha256": {
+        "frontend/src/components/AIReportPanel.capa014.test.tsx": "90a9125a4ee213344cf9e51f35486652a54eec9d527d41df5220c998a82fb4a9"
+      }
+    },
+    "U4_note_away_from_button": {
+      "suite": "frontend",
+      "failed": 3,
+      "passed": 3,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc066 the note next to the draft button says what is removed and what is sent (en)",
+        "rc066 the note next to the draft button says what is removed and what is sent (es)",
+        "rc066 the note next to the draft button says what is removed and what is sent (de)"
+      ],
+      "error_files": [],
+      "reintroduces": "the note no longer directly above the draft button",
+      "applied": true,
+      "executed": "2026-10-24T12:39:51",
+      "test_sha256": {
+        "frontend/src/components/AIReportPanel.capa014.test.tsx": "90a9125a4ee213344cf9e51f35486652a54eec9d527d41df5220c998a82fb4a9"
+      }
+    },
+    "U5_panel_omits_segmentation": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 5,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc065 the request names the analysed segmentation, so the server can remove that patient's identifiers"
+      ],
+      "error_files": [],
+      "reintroduces": "the panel sends no segmentation (every draft refused)",
+      "applied": true,
+      "executed": "2026-10-24T12:39:57",
+      "test_sha256": {
+        "frontend/src/components/AIReportPanel.capa014.test.tsx": "90a9125a4ee213344cf9e51f35486652a54eec9d527d41df5220c998a82fb4a9"
+      }
+    },
+    "U6_client_claims_hipaa": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 5,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc066 the API client no longer claims HIPAA compliance"
+      ],
+      "error_files": [],
+      "reintroduces": "the API client claims HIPAA compliance again",
+      "applied": true,
+      "executed": "2026-10-24T12:40:03",
+      "test_sha256": {
+        "frontend/src/components/AIReportPanel.capa014.test.tsx": "90a9125a4ee213344cf9e51f35486652a54eec9d527d41df5220c998a82fb4a9"
+      }
+    }
+  },
+  "restored": {
+    "backend": {
+      "suite": "backend",
+      "failed": 0,
+      "passed": 180,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": []
+    },
+    "frontend": {
+      "suite": "frontend",
+      "failed": 0,
+      "passed": 6,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [],
+      "error_files": []
+    }
+  },
+  "expected_undetected": {},
+  "undetected": [],
+  "unexpected_undetected": []
+}

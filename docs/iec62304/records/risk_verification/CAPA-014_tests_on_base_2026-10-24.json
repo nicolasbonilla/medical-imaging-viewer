@@ -1,0 +1,285 @@
+{
+  "executed": "2026-10-24T12:41:20",
+  "base": "70cc5c7 (main, merge of PR #64)",
+  "method": "source files that differ from the base commit restored to it, files it did not have removed; the CAPA-014 test files run unchanged; working tree restored byte for byte",
+  "swapped": {
+    "restored_to_base": [
+      "backend/app/api/routes/ai_report.py",
+      "backend/app/mcp/_backend.py",
+      "backend/app/mcp/ms_clinical_server.py",
+      "backend/app/security/resource_access.py",
+      "backend/app/services/brain_report_service.py",
+      "frontend/src/api/aiReport.ts",
+      "frontend/src/components/AIReportPanel.tsx",
+      "frontend/src/i18n/locales/de.json",
+      "frontend/src/i18n/locales/en.json",
+      "frontend/src/i18n/locales/es.json",
+      "frontend/src/types/ai.ts"
+    ],
+    "removed": [
+      "backend/app/services/report_deidentification.py"
+    ]
+  },
+  "test_sha256": {
+    "backend/tests/unit/test_capa014_report_deidentification.py": "1f04a488f4c72ada24570dbe19b4c92414862c8822f76afffa19353bc1c065b4",
+    "frontend/src/components/AIReportPanel.capa014.test.tsx": "90a9125a4ee213344cf9e51f35486652a54eec9d527d41df5220c998a82fb4a9"
+  },
+  "backend": {
+    "passed": 2,
+    "failed": 53,
+    "errors": 0,
+    "results": {
+      "test_rc064_clinical_content_and_measurements_are_kept": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_system_prompt_is_the_fixed_template": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_patient_identifiers_in_free_text_never_reach_the_provider": {
+        "status": "failed",
+        "reason": "AssertionError: identifiers sent to the model provider: ['juan', 'carlos', 'perez', 'gomez', 'mrn-2025-0042', 'mrn 2025 0042', '15/03/1978', '300 123 4567', 'juan.perez@example.com', 'carrera 7', 'bogota', 'gregory house', 'san ignacio', 'a"
+      },
+      "test_rc064_exact_dates_become_intervals": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'seen on [date 1]' in 'Generate the report in English.\\nClinical indication: Juan Carlos P�rez G�mez (MRN-2025-0042), born 15/03/1978, known...or MRI 05/04/2024. mrn 2025 0042. CC 52.123.456. 48-year-old man, wife Luc"
+      },
+      "test_rc064_contact_details_ids_people_and_institutions_are_removed": {
+        "status": "failed",
+        "reason": "AssertionError: [phone removed]"
+      },
+      "test_rc064_age_is_sent_as_a_five_year_band[48-45-49]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Patient age band: 45-49' in 'Generate the report in English.\\nClinical indication: Juan Carlos P�rez G�mez (MRN-2025-0042), born 15/03/1978, known...or MRI 05/04/2024. mrn 2025 0042. CC 52.123.456. 48-year-old man, w"
+      },
+      "test_rc064_age_is_sent_as_a_five_year_band[17-15-17]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Patient age band: 15-17' in 'Generate the report in English.\\nClinical indication: Juan Carlos P�rez G�mez (MRN-2025-0042), born 15/03/1978, known...or MRI 05/04/2024. mrn 2025 0042. CC 52.123.456. 48-year-old man, w"
+      },
+      "test_rc064_age_is_sent_as_a_five_year_band[18-18-19]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Patient age band: 18-19' in 'Generate the report in English.\\nClinical indication: Juan Carlos P�rez G�mez (MRN-2025-0042), born 15/03/1978, known...or MRI 05/04/2024. mrn 2025 0042. CC 52.123.456. 48-year-old man, w"
+      },
+      "test_rc064_age_is_sent_as_a_five_year_band[3-0-4]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Patient age band: 0-4' in 'Generate the report in English.\\nClinical indication: Juan Carlos P�rez G�mez (MRN-2025-0042), born 15/03/1978, known...or MRI 05/04/2024. mrn 2025 0042. CC 52.123.456. 48-year-old man, wif"
+      },
+      "test_rc064_age_is_sent_as_a_five_year_band[93-90 or older]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Patient age band: 90 or older' in 'Generate the report in English.\\nClinical indication: Juan Carlos P�rez G�mez (MRN-2025-0042), born 15/03/1978, known...or MRI 05/04/2024. mrn 2025 0042. CC 52.123.456. 48-year-old "
+      },
+      "test_rc064_age_is_sent_as_a_five_year_band[52-50-54]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Patient age band: 50-54' in 'Generate the report in English.\\nClinical indication: Juan Carlos P�rez G�mez (MRN-2025-0042), born 15/03/1978, known...or MRI 05/04/2024. mrn 2025 0042. CC 52.123.456. 48-year-old man, w"
+      },
+      "test_rc064_the_patients_own_age_in_the_text_is_banded": {
+        "status": "failed",
+        "reason": "AssertionError: assert ('45-49-year-old man' in 'Generate the report in English.\\nClinical indication: Juan Carlos P�rez G�mez (MRN-2025-0042), born 15/03/1978, known...or MRI 05/04/2024. mrn 2025 0042. CC 52.123.456. 48-year-old man, wife "
+      },
+      "test_rc064_strings_inside_structured_findings_are_scrubbed": {
+        "status": "failed",
+        "reason": "AssertionError: assert not ['juan', 'perez', 'mrn-2025-0042', '2025-10-12']"
+      },
+      "test_rc064_fields_the_report_does_not_use_never_reach_the_provider": {
+        "status": "failed",
+        "reason": "assert ('juan' not in '{\"model\": \"...ce 2019.\"}]}'"
+      },
+      "test_rc064_name_matching_ignores_case_and_accents[JUAN PEREZ GOMEZ]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_name_matching_ignores_case_and_accents[ju\\xe1n p\\xe9rez g\\xf3mez]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_name_matching_ignores_case_and_accents[P\\xe9rez-G\\xf3mez, Juan]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_name_matching_ignores_case_and_accents[P\\xc9REZ]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_name_matching_ignores_case_and_accents[pErEz]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_german_record_and_spelling_variants": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_spanish_particles_and_clinical_words_survive_a_compound_surname": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_pattern_rules[Accession number: A1234567.]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_pattern_rules[NHS 943 476 5919, DNI 123456]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_pattern_rules[Prof. Dr. med. Hans Schmidt ]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_pattern_rules[Tel (604) 555-9876 or +49 89]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_pattern_rules[Seen in March 2024 and on 3 ]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_pattern_rules[Paciente de 47 a\\xf1os de edad,]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_pattern_rules[DICOM UID 1.2.840.113619.2.5]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_pattern_rules[Seen at Mayo Clinic last yea]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_pattern_rules[Control el 12 de mayo.]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_pattern_rules[Klinik: Sehst\\xf6rung rechts. R]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_pattern_rules[Patient 1978-03-15, seen 202]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_pattern_rules[DOB: 1978. Known MS since 20]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_pattern_rules[Fallnummer 4711, NHC 20931.]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_pattern_rules[Patient, 48 years, RRMS.]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_pattern_rules[Vive en Calle 80 # 15-20 y t]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_pattern_rules[Contacto: 31 07 65 43 21.]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_pattern_rules[Ref 2025031200123 and A-2025]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_pattern_rules[Fingolimod 2019-2021, ocreli]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_pattern_rules[Kontrastmittelring 5 mm, nie]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_measurement_like_numbers_in_text_are_kept": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc064_the_input_is_not_modified": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc065_no_segmentation_reference_no_provider_call": {
+        "status": "failed",
+        "reason": "AssertionError: {\"report_id\":\"9efe5f4e-fad7-4cfe-b818-5581b58920aa\",\"content\":\"> **AI-Generated � Requires Physician Review Before Clinical Action.** This draft was produced by an automated system from computed measurements. It is not a dia"
+      },
+      "test_rc065_the_segmentation_is_authorized_for_the_caller": {
+        "status": "failed",
+        "reason": "AssertionError: assert [] == [('seg-capa014', 'reader-14')]"
+      },
+      "test_rc065_patient_record_unavailable_no_provider_call[store-error]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"report_id\":\"f44f39c0-d417-4416-9a9e-ecd1dc08d78f\",\"content\":\"> **AI-Generated � Requires Physician Review Before Clinical Action.** This draft was produced by an automated system from computed measurements. It is not a dia"
+      },
+      "test_rc065_patient_record_unavailable_no_provider_call[no-record]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"report_id\":\"30a8e15b-bb75-4f0d-94fb-36efd911a290\",\"content\":\"> **AI-Generated � Requires Physician Review Before Clinical Action.** This draft was produced by an automated system from computed measurements. It is not a dia"
+      },
+      "test_rc065_patient_record_unavailable_no_provider_call[no-birth-date]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"report_id\":\"fa5186c4-ed36-4f2a-83ed-14f0e495a994\",\"content\":\"> **AI-Generated � Requires Physician Review Before Clinical Action.** This draft was produced by an automated system from computed measurements. It is not a dia"
+      },
+      "test_rc065_patient_record_unavailable_no_provider_call[no-record-number]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"report_id\":\"5681e68c-c786-4968-9a1c-cecf53d2dd79\",\"content\":\"> **AI-Generated � Requires Physician Review Before Clinical Action.** This draft was produced by an automated system from computed measurements. It is not a dia"
+      },
+      "test_rc065_patient_record_unavailable_no_provider_call[no-name]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"report_id\":\"64cc99bf-7742-4b85-8311-2f7cb2586006\",\"content\":\"> **AI-Generated � Requires Physician Review Before Clinical Action.** This draft was produced by an automated system from computed measurements. It is not a dia"
+      },
+      "test_rc065_a_caller_without_access_gets_404_and_no_provider_call": {
+        "status": "failed",
+        "reason": "AssertionError: {\"report_id\":\"f8d2505a-7bb4-489f-8453-88393c0b492a\",\"content\":\"> **AI-Generated � Requires Physician Review Before Clinical Action.** This draft was produced by an automated system from computed measurements. It is not a dia"
+      },
+      "test_rc065_service_refuses_to_send_without_identifiers": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc065_residual_identifier_stops_the_call": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_deidentification'"
+      },
+      "test_rc065_assistant_report_tool_names_the_segmentation": {
+        "status": "failed",
+        "reason": "AssertionError: assert (False)"
+      },
+      "test_rc066_logs_say_that_deidentification_ran_with_counts_never_the_payload": {
+        "status": "failed",
+        "reason": "AssertionError: ['Using proactor: IocpProactor', 'Request started: POST /api/v1/ai/report/generate', '[Report] Generate request: templ... general report in en', '[Report] Generated successfully in 0ms', 'Request completed: POST /api/v1/ai/r"
+      },
+      "test_rc066_no_false_de_identification_claim_remains": {
+        "status": "failed",
+        "reason": "assert 'No names, I...tes are sent' not in '\"\"\"\\nBrain ...ice\\n\"\"\"\\n\\n'"
+      }
+    }
+  },
+  "frontend": {
+    "passed": 0,
+    "failed": 6,
+    "not_passing": {
+      "rc065 the request names the analysed segmentation, so the server can remove that patient's identifiers": {
+        "status": "failed",
+        "reason": "AssertionError: expected undefined to be 'seg-7' // Object.is equality"
+      },
+      "rc066 the note next to the draft button says what is removed and what is sent (en)": {
+        "status": "failed",
+        "reason": "AssertionError: expected 0 to be greater than 80"
+      },
+      "rc066 the note next to the draft button says what is removed and what is sent (es)": {
+        "status": "failed",
+        "reason": "AssertionError: expected 0 to be greater than 80"
+      },
+      "rc066 the note next to the draft button says what is removed and what is sent (de)": {
+        "status": "failed",
+        "reason": "AssertionError: expected 0 to be greater than 80"
+      },
+      "rc066 the English note is precise about the removal and about what still goes to the provider": {
+        "status": "failed",
+        "reason": "AssertionError: expected '' to contain 'Anthropic'"
+      },
+      "rc066 the API client no longer claims HIPAA compliance": {
+        "status": "failed",
+        "reason": "AssertionError: expected '/**\\n * API client for AI report gene…' not to match /HIPAA/"
+      }
+    }
+  },
+  "note": "test_rc064_system_prompt_is_the_fixed_template and test_rc064_clinical_content_and_measurements_are_kept pass on the base too: they are regression guards (no patient data in the system prompt; measurement lines unchanged), not defect detectors."
+}
