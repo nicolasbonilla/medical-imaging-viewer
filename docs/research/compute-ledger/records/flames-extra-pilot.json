@@ -28,6 +28,7 @@
   "cost_usd_recorded": "0.0721",
   "price_basis": "Cloud Billing catalog list price 2026-10-17 (cores+RAM+boot disk)",
   "notes": "",
+  "_kind": "inference",
   "machines": 1,
   "purpose_es": "Piloto de colecciones nuevas: un caso de MS3SEG, Bagdad y PediMS; HD-BET + FLAMeS modelo 0",
   "notes_es": "Superado: 179 casos descargados una vez y guardados; HD-BET en 2 casos; FLAMeS 3/3 sin errores. Coincidencia con el experto (modelo 0): MS3SEG 0,59 \u00b7 Bagdad 0,40 \u00b7 PediMS 0,80."

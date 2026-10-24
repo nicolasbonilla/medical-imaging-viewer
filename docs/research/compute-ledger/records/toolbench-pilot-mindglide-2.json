@@ -28,6 +28,7 @@
   "cost_usd_recorded": "0.0263",
   "price_basis": "Cloud Billing catalog list price 2026-10-21 (cores+RAM+boot disk)",
   "notes": "",
+  "_kind": "inference",
   "machines": 1,
   "purpose_es": "Art\u00edculo F, piloto 2 de MindGlide (1 estudio, error completo)",
   "notes_es": "Causa encontrada: MindGlide funciona sin permisos de administrador y no pod\u00eda escribir en la carpeta de salida."

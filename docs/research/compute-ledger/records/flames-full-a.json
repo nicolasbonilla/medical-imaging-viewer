@@ -28,6 +28,7 @@
   "cost_usd_recorded": "0.8407",
   "price_basis": "Cloud Billing catalog list price 2026-10-17 (cores+RAM+boot disk)",
   "notes": "",
+  "_kind": "inference",
   "machines": 1,
   "purpose_es": "FLAMeS, 5 modelos por separado, bloque A (casos 1 a 49 de 145)",
   "notes_es": "Sin errores. Resultado conjunto (725 mapas, 145 por modelo): ver docs/research/records/2026-10-18_flames_5fold_ensemble_check.txt."

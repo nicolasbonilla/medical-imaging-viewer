@@ -1,0 +1,96 @@
+FLAMeS-thick - local end-to-end run of the KAGGLE code path (CPU, local folder as the kernel output)
+Command: FLAMES_THICK_E2E_KAGGLE_DATASETS=C:/tmp/flames-thick-kaggle/datasets python -m pytest -q -s research/flames_thick/tests/test_e2e_kaggle_local.py
+Machine: Windows 11 laptop, AMD Ryzen 7 5800H (16 threads), 15.4 GB RAM; torch 2.14.1+cpu, nnunetv2 2.8.1
+Inputs: the two folders uploaded as the private Kaggle datasets (prepare_datasets.py): FLAMeS fold-0 files
+(SHA-256 4fc7db24...) and mslesseg_train.zip.bin (186 members, each checked against PROVENANCE.json);
+2 scans (P1_T1 train, P2_T1 internal validation), 3 epochs x 2 iterations, 64^3 patch (local-only, refused on GPU).
+Session 1: SIGKILL after epoch 0 -> fresh worker resumed at epoch 1 -> forced pause after epoch 1 (status "paused").
+Session 2: work folder wiped (only the store kept, as on Kaggle) -> resumed at epoch 2 -> final validation -> export.
+Session 3: run already completed -> nothing to do.
+Result: 1 passed in 929.75 s (2026-10-21).
+--- test output ---
+ in 0s
+[worker] KILL TEST: SIGKILL after the epoch-0 checkpoint upload
+2026-10-21T15:38:59Z KILL TEST: worker died (15) after epoch 0; wiping local training state, a fresh worker must resume from the bucket
+2026-10-21T15:38:59Z starting worker #2
+Using device: cpu
+
+#######################################################################
+Please cite the following paper when using nnU-Net:
+Isensee, F., Jaeger, P. F., Kohl, S. A., Petersen, J., & Maier-Hein, K. H. (2021). nnU-Net: a self-configuring method for deep learning-based biomedical image segmentation. Nature methods, 18(2), 203-211.
+#######################################################################
+
+2026-10-21 17:39:27.927526: LOCAL TEST: patch size overridden to [64, 64, 64]
+2026-10-21 17:39:32.584585: resumed from checkpoint at epoch 1
+2026-10-21 17:39:32.676794: do_dummy_2d_data_aug: False
+2026-10-21 17:39:32.699148: thick-slice augmentation: {'n_cases_checked': 2, 'transpose_forward': [2, 0, 1], 'axis_map': {'axial': 1, 'coronal': 2, 'sagittal': 0}, 'spacing_by_patch_axis': [1.0, 0.9000000059604645, 0.9000000059604645], 'config': {'p_apply': 0.6666666666666666, 'axis_probs': {'axial': 0.8, 'coronal': 0.1, 'sagittal': 0.1}, 'thickness_mm': [3.0, 8.0], 'p_gap': 0.5, 'gap_fraction': [0.0, 0.5], 'max_spacing_mm': 10.0, 'profile_probs': {'box': 0.5, 'gaussian': 0.5}, 'resample_probs': {'nearest': 0.7, 'linear': 0.3}}}
+2026-10-21 17:39:33.007463: Using splits from existing split file: C:\Users\Nicolas\AppData\Local\Temp\pytest-of-Nicolas\pytest-148\test_kaggle_inputs_kill_pause_0\w_s1\nnunet_preprocessed\Dataset501_MSLesSegFT\splits_final.json
+2026-10-21 17:39:33.022517: The split file contains 2 splits.
+2026-10-21 17:39:33.040002: Desired fold for training: 0
+2026-10-21 17:39:33.058267: This split has 1 training and 1 validation cases.
+
+This is the configuration used by this training:
+Configuration name: 3d_fullres
+ {'data_identifier': 'nnUNetPlans_3d_fullres', 'preprocessor_name': 'DefaultPreprocessor', 'batch_size': 2, 'patch_size': [64, 64, 64], 'median_image_size_in_voxels': [133.0, 154.0, 185.0], 'spacing': [1.0, 0.9000000059604645, 0.9000000059604645], 'normalization_schemes': ['ZScoreNormalization'], 'use_mask_for_norm': [True], 'resampling_fn_data': 'resample_data_or_seg_to_shape', 'resampling_fn_seg': 'resample_data_or_seg_to_shape', 'resampling_fn_data_kwargs': {'is_seg': False, 'order': 3, 'order_z': 0, 'force_separate_z': None}, 'resampling_fn_seg_kwargs': {'is_seg': True, 'order': 1, 'order_z': 0, 'force_separate_z': None}, 'resampling_fn_probabilities': 'resample_data_or_seg_to_shape', 'resampling_fn_probabilities_kwargs': {'is_seg': False, 'order': 1, 'order_z': 0, 'force_separate_z': None}, 'architecture': {'network_class_name': 'dynamic_network_architectures.architectures.unet.PlainConvUNet', 'arch_kwargs': {'n_stages': 6, 'features_per_stage': [32, 64, 128, 256, 320, 320], 'conv_op': 'torch.nn.modules.conv.Conv3d', 'kernel_sizes': [[3, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3]], 'strides': [[1, 1, 1], [2, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2], [1, 2, 2]], 'n_conv_per_stage': [2, 2, 2, 2, 2, 2], 'n_conv_per_stage_decoder': [2, 2, 2, 2, 2], 'conv_bias': True, 'norm_op': 'torch.nn.modules.instancenorm.InstanceNorm3d', 'norm_op_kwargs': {'eps': 1e-05, 'affine': True}, 'dropout_op': None, 'dropout_op_kwargs': None, 'nonlin': 'torch.nn.LeakyReLU', 'nonlin_kwargs': {'inplace': True}}, '_kw_requires_import': ['conv_op', 'norm_op', 'dropout_op', 'nonlin']}, 'batch_dice': False} 
+
+These are the global plan.json settings:
+ {'dataset_name': 'Dataset501_MSLesSegFT', 'plans_name': 'nnUNetPlans', 'original_median_spacing_after_transp': [1.0, 0.9000000059604645, 0.9000000059604645], 'original_median_shape_after_transp': [144, 177, 190], 'image_reader_writer': 'SimpleITKIO', 'transpose_forward': [2, 0, 1], 'transpose_backward': [1, 2, 0], 'experiment_planner_used': 'ExperimentPlanner', 'label_manager': 'LabelManager', 'foreground_intensity_properties_per_channel': {'0': {'max': 3688541.5, 'mean': 63206.06989644738, 'median': 167.43850708007812, 'min': 0.0, 'percentile_00_5': 47.72833251953125, 'percentile_99_5': 2077017.5018749982, 'std': 327313.09328078595}}} 
+
+2026-10-21 17:39:34.953909: Unable to plot network architecture:
+2026-10-21 17:39:34.975146: No module named 'hiddenlayer'
+2026-10-21 17:39:35.093326: 
+2026-10-21 17:39:35.116416: Epoch 1
+2026-10-21 17:39:35.136933: Current learning rate: 0.001
+2026-10-21 17:40:09.681343: train_loss -0.7594
+2026-10-21 17:40:09.703048: val_loss -0.3438
+2026-10-21 17:40:09.723893: Pseudo dice [np.float32(0.7454)]
+2026-10-21 17:40:09.742846: Epoch time: 34.59 s
+[worker] uploaded checkpoint_latest.pth (epoch 1) in 36s
+2026-10-21 17:40:58.415673: Yayy! New best EMA pseudo Dice: 0.7024000287055969
+2026-10-21 17:41:14.726705: STOP after epoch 1: session_pause: forced pause after epoch 1 (pilot: session hand-over test)
+2026-10-21T15:41:15Z === stage train_end
+2026-10-21T15:41:15Z === stage end
+ 
+slice augmentation: {'n_cases_checked': 2, 'transpose_forward': [2, 0, 1], 'axis_map': {'axial': 1, 'coronal': 2, 'sagittal': 0}, 'spacing_by_patch_axis': [1.0, 0.9000000059604645, 0.9000000059604645], 'config': {'p_apply': 0.6666666666666666, 'axis_probs': {'axial': 0.8, 'coronal': 0.1, 'sagittal': 0.1}, 'thickness_mm': [3.0, 8.0], 'p_gap': 0.5, 'gap_fraction': [0.0, 0.5], 'max_spacing_mm': 10.0, 'profile_probs': {'box': 0.5, 'gaussian': 0.5}, 'resample_probs': {'nearest': 0.7, 'linear': 0.3}}}
+2026-10-21 17:44:26.369219: Using splits from existing split file: C:\Users\Nicolas\AppData\Local\Temp\pytest-of-Nicolas\pytest-148\test_kaggle_inputs_kill_pause_0\w_s2\nnunet_preprocessed\Dataset501_MSLesSegFT\splits_final.json
+2026-10-21 17:44:26.401669: The split file contains 2 splits.
+2026-10-21 17:44:26.419586: Desired fold for training: 0
+2026-10-21 17:44:26.441933: This split has 1 training and 1 validation cases.
+
+This is the configuration used by this training:
+Configuration name: 3d_fullres
+ {'data_identifier': 'nnUNetPlans_3d_fullres', 'preprocessor_name': 'DefaultPreprocessor', 'batch_size': 2, 'patch_size': [64, 64, 64], 'median_image_size_in_voxels': [133.0, 154.0, 185.0], 'spacing': [1.0, 0.9000000059604645, 0.9000000059604645], 'normalization_schemes': ['ZScoreNormalization'], 'use_mask_for_norm': [True], 'resampling_fn_data': 'resample_data_or_seg_to_shape', 'resampling_fn_seg': 'resample_data_or_seg_to_shape', 'resampling_fn_data_kwargs': {'is_seg': False, 'order': 3, 'order_z': 0, 'force_separate_z': None}, 'resampling_fn_seg_kwargs': {'is_seg': True, 'order': 1, 'order_z': 0, 'force_separate_z': None}, 'resampling_fn_probabilities': 'resample_data_or_seg_to_shape', 'resampling_fn_probabilities_kwargs': {'is_seg': False, 'order': 1, 'order_z': 0, 'force_separate_z': None}, 'architecture': {'network_class_name': 'dynamic_network_architectures.architectures.unet.PlainConvUNet', 'arch_kwargs': {'n_stages': 6, 'features_per_stage': [32, 64, 128, 256, 320, 320], 'conv_op': 'torch.nn.modules.conv.Conv3d', 'kernel_sizes': [[3, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3]], 'strides': [[1, 1, 1], [2, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2], [1, 2, 2]], 'n_conv_per_stage': [2, 2, 2, 2, 2, 2], 'n_conv_per_stage_decoder': [2, 2, 2, 2, 2], 'conv_bias': True, 'norm_op': 'torch.nn.modules.instancenorm.InstanceNorm3d', 'norm_op_kwargs': {'eps': 1e-05, 'affine': True}, 'dropout_op': None, 'dropout_op_kwargs': None, 'nonlin': 'torch.nn.LeakyReLU', 'nonlin_kwargs': {'inplace': True}}, '_kw_requires_import': ['conv_op', 'norm_op', 'dropout_op', 'nonlin']}, 'batch_dice': False} 
+
+These are the global plan.json settings:
+ {'dataset_name': 'Dataset501_MSLesSegFT', 'plans_name': 'nnUNetPlans', 'original_median_spacing_after_transp': [1.0, 0.9000000059604645, 0.9000000059604645], 'original_median_shape_after_transp': [144, 177, 190], 'image_reader_writer': 'SimpleITKIO', 'transpose_forward': [2, 0, 1], 'transpose_backward': [1, 2, 0], 'experiment_planner_used': 'ExperimentPlanner', 'label_manager': 'LabelManager', 'foreground_intensity_properties_per_channel': {'0': {'max': 3688541.5, 'mean': 63206.06989644738, 'median': 167.43850708007812, 'min': 0.0, 'percentile_00_5': 47.72833251953125, 'percentile_99_5': 2077017.5018749982, 'std': 327313.09328078595}}} 
+
+2026-10-21 17:44:27.159147: Unable to plot network architecture:
+2026-10-21 17:44:27.179384: No module named 'hiddenlayer'
+2026-10-21 17:44:27.325390: 
+2026-10-21 17:44:27.345877: Epoch 2
+2026-10-21 17:44:27.363616: Current learning rate: 0.00054
+2026-10-21 17:45:00.061687: train_loss -0.606
+2026-10-21 17:45:00.085773: val_loss -0.3876
+2026-10-21 17:45:00.109742: Pseudo dice [np.float32(0.4438)]
+2026-10-21 17:45:00.133544: Epoch time: 32.74 s
+2026-10-21 17:45:00.155193: Yayy! New best EMA pseudo Dice: 0.6765999794006348
+[worker] uploaded checkpoint_final.pth (epoch 2) in 26s
+2026-10-21 17:45:32.992041: Training done.
+perform_everything_on_device=True is only supported for cuda devices! Setting this to False
+2026-10-21 17:45:34.499100: Using splits from existing split file: C:\Users\Nicolas\AppData\Local\Temp\pytest-of-Nicolas\pytest-148\test_kaggle_inputs_kill_pause_0\w_s2\nnunet_preprocessed\Dataset501_MSLesSegFT\splits_final.json
+2026-10-21 17:45:34.517448: The split file contains 2 splits.
+2026-10-21 17:45:34.535513: Desired fold for training: 0
+2026-10-21 17:45:34.554353: This split has 1 training and 1 validation cases.
+2026-10-21 17:45:34.571846: predicting mslesseg_P2_T1
+2026-10-21 17:45:36.121804: mslesseg_P2_T1, shape torch.Size([1, 143, 162, 198]), rank 0
+2026-10-21 17:48:55.901087: Validation complete
+2026-10-21 17:48:55.921049: Mean Validation Dice:  0.6439299123904881
+[worker] training and internal validation done
+2026-10-21T15:48:59Z === stage train_end
+2026-10-21T15:49:25Z model exported: flames-thick/train/e2e-kaggle/model.tar.gz sha256 d30f09bfdcad3a29374587a58acfa16c48413b4b66fc8667df922e779a0dd5f2
+2026-10-21T15:49:25Z === stage end
+ 
+2026-10-21T15:49:45Z run e2e-kaggle already completed — nothing to do
+ 
+.
+1 passed in 929.75s (0:15:29)

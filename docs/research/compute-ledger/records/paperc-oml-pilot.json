@@ -28,6 +28,7 @@
   "cost_usd_recorded": "0.0179",
   "price_basis": "Cloud Billing catalog list price 2026-10-21 (cores+RAM+boot disk)",
   "notes": "",
+  "_kind": "inference",
   "machines": 1,
   "purpose_es": "Art\u00edculo C, piloto: FLAMeS modelo 0 en Ljubljana con dos visitas (paciente 16)",
   "notes_es": ""

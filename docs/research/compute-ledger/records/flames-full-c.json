@@ -28,6 +28,7 @@
   "cost_usd_recorded": "0.8945",
   "price_basis": "Cloud Billing catalog list price 2026-10-17 (cores+RAM+boot disk)",
   "notes": "Skipped 6 maps already in the bucket from the pilots: fold 0 of openms 01-04 and fold 1 of openms 01-02 (flames-pilot-1, same model and settings; its fold 0 matched Aug-2026).",
+  "_kind": "inference",
   "machines": 1,
   "purpose_es": "FLAMeS, 5 modelos por separado, bloque C (casos 98 a 145)",
   "notes_es": "No recalcul\u00f3 6 mapas que ya estaban en el cubo de los pilotos: modelo 0 de Ljubljana 01\u201304 y modelo 1 de Ljubljana 01\u201302 (piloto v1, mismo modelo y ajustes; su modelo 0 coincidi\u00f3 con agosto)."

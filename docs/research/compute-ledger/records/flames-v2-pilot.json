@@ -26,8 +26,9 @@
   "usd_per_hour_list": 0.20109,
   "cost_usd_list": 0.0616,
   "cost_usd_recorded": "0.0582",
-  "price_basis": "Cloud Billing catalog list price 2026-10-22 (cores+RAM+boot disk)",
+  "price_basis": "Cloud Billing catalog list price 2026-10-24 (cores+RAM+boot disk)",
   "notes": "Failed before the first case: PyPI torchvision built for another torch. Fix: torch + torchvision from the same CPU index and an environment self-test.",
+  "_kind": "inference",
   "machines": 1,
   "purpose_es": "Piloto v2 (m\u00e1quina est\u00e1ndar, datos guardados en el cubo): 2 casos de Ljubljana, modelo 0",
   "notes_es": "Fall\u00f3 antes del primer caso: torchvision de otra versi\u00f3n de torch. Corregido instalando ambos del mismo origen y con una autoprueba del entorno que para todo antes de gastar."
@@ -35,7 +36,7 @@
  "plan": {},
  "runinfo": {},
  "price": {
-  "date_utc": "2026-10-22T19:04:23Z",
+  "date_utc": "2026-10-24T11:02:21Z",
   "machine_type": "n2-standard-4",
   "region": "us-central1",
   "spot": false,

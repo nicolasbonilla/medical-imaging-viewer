@@ -28,6 +28,7 @@
   "cost_usd_recorded": "2.0714",
   "price_basis": "Cloud Billing catalog list price 2026-10-18 (cores+RAM+boot disk)",
   "notes": "",
+  "_kind": "inference",
   "machines": 1,
   "purpose_es": "Colecciones nuevas, bloque A (casos 1 a 90 de 179): HD-BET + FLAMeS 5 modelos",
   "notes_es": "449 mapas sin errores; HD-BET en los casos con cr\u00e1neo, cada cerebro guardado para reutilizarlo."

@@ -28,6 +28,7 @@
   "cost_usd_recorded": "1.4772",
   "price_basis": "Cloud Billing catalog list price 2026-10-22 (cores+RAM+boot disk)",
   "notes": "",
+  "_kind": "inference",
   "machines": 1,
   "purpose_es": "Art\u00edculo F: MindGlide con la imagen original (MS3SEG, Bagdad, PediMS)",
   "notes_es": "Lleg\u00f3 a su tope de 10 h en una m\u00e1quina E2 lenta (143 hechos, 3 cortados); el resto se termin\u00f3 en toolbench-mgraw-2."

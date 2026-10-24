@@ -28,6 +28,7 @@
   "cost_usd_recorded": "0.8803",
   "price_basis": "Cloud Billing catalog list price 2026-10-17 (cores+RAM+boot disk)",
   "notes": "",
+  "_kind": "inference",
   "machines": 1,
   "purpose_es": "FLAMeS, 5 modelos por separado, bloque B (casos 50 a 97 de 145)",
   "notes_es": "Sin errores. Un caso tard\u00f3 156 s (resto 68\u201372 s)."

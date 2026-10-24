@@ -28,6 +28,7 @@
   "cost_usd_recorded": "0.0373",
   "price_basis": "Cloud Billing catalog list price 2026-10-21 (cores+RAM+boot disk)",
   "notes": "",
+  "_kind": "inference",
   "machines": 1,
   "purpose_es": "Art\u00edculo F, piloto 3 de MindGlide con permisos corregidos (3 estudios)",
   "notes_es": "Superado: 3/3, unos 84 s por estudio y 5,5 GB de memoria; etiqueta 18 = lesi\u00f3n (documentaci\u00f3n oficial)."

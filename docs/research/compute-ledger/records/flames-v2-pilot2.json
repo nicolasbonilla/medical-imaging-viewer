@@ -28,6 +28,7 @@
   "cost_usd_recorded": "0.0165",
   "price_basis": "Cloud Billing catalog list price 2026-10-17 (cores+RAM+boot disk)",
   "notes": "",
+  "_kind": "inference",
   "machines": 1,
   "purpose_es": "Piloto v2 corregido: 2 casos de Ljubljana, modelo 0, comparado con agosto",
   "notes_es": "Comparaci\u00f3n SUPERADA: mapas id\u00e9nticos a los de agosto (Dice 1,0; diferencia m\u00e1xima 0,002 por redondeo). 66 s por caso y modelo con 4 procesadores."

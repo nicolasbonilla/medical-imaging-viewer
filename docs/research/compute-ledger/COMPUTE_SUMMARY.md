@@ -1,17 +1,18 @@
 # Registro de cómputo de la investigación MSTool-AI
 
-Generado el 2026-10-22 18:58 UTC con `research/cloud/build_ledger.py`. Precios: **precio oficial de lista de Google Cloud en USD** (Cloud Billing Catalog API, consultado el mismo día, con el código SKU de cada parte en `records/`). Cambio: 1 EUR = 1.1205 USD (tipo de referencia del BCE del 2026-10-22). Google factura en EUR con su propio cambio; la cifra exacta se cruza después con el informe de facturación.
+Generado el 2026-10-24 10:58 UTC con `research/cloud/build_ledger.py`. Precios: **precio oficial de lista de Google Cloud en USD** (Cloud Billing Catalog API, consultado el mismo día, con el código SKU de cada parte en `records/`). Cambio: 1 EUR = 1.1193 USD (tipo de referencia del BCE del 2026-10-23). Google factura en EUR con su propio cambio; la cifra exacta se cruza después con el informe de facturación.
 
 ## Resumen
 
 | Concepto | Valor |
 |---|---|
-| Corridas en la nube con tiempo medido | 20 en mstool-research · 9 en agosto (brain-mri-476110) |
-| Horas de máquina, proyecto de investigación | 65.84 h |
-| Coste a precio de lista, proyecto de investigación | 11.60 USD ≈ 10.35 EUR |
-| Almacenamiento en el cubo (hoy) | 5.37 GB ≈ 0.107 USD/mes |
-| Crédito gratuito usado (estimado) | 10.45 EUR de 264 EUR (tope propio 240 EUR; caduca 2027-01-15) — quedan ≈ 229.55 EUR |
+| Corridas en la nube con tiempo medido | 26 en mstool-research · 9 en agosto (brain-mri-476110) |
+| Horas de máquina, proyecto de investigación | 75.29 h |
+| Coste a precio de lista, proyecto de investigación | 13.31 USD ≈ 11.89 EUR |
+| Almacenamiento en el cubo (hoy) | 9.49 GB ≈ 0.190 USD/mes |
+| Crédito gratuito usado (estimado) | 12.06 EUR de 264 EUR (tope propio 240 EUR; caduca 2027-01-15) — quedan ≈ 227.94 EUR |
 | Horas de máquina, agosto (proyecto de la app) | 7.50 h · registrado 0.86 USD · a precio de lista de hoy 1.69 USD (pagado por la cuenta de la app, no por el crédito) |
+| Horas de tarjeta gráfica en Kaggle (cuota gratuita semanal) | 21.16 h de cuota en 7 sesiones · 0 USD |
 
 ## Máquinas usadas
 
@@ -23,6 +24,9 @@ Generado el 2026-10-22 18:58 UTC con `research/cloud/build_ledger.py`. Precios: 
 | n2d-standard-4 | AMD Milan — AMD EPYC 7B13 | 4 | 16.0 | — | estándar | 0.17583 |
 | n2-standard-4 | Intel Cascade Lake — Intel(R) Xeon(R) CPU @ 2.80GHz | 4 | 16.0 | — | estándar | 0.20109 |
 | e2-standard-4 | Intel Broadwell — Intel(R) Xeon(R) CPU @ 2.20GHz | 4 | 16.0 | — | estándar | 0.14772 |
+| Kaggle CPU |  — AMD EPYC 7B12 | 4 | 31 | none (CPU session) | cuota gratuita de Kaggle | 0 |
+| Kaggle NvidiaTeslaT4 |  — Intel(R) Xeon(R) CPU @ 2.00GHz | 4 | 31 | 2 × Tesla T4 (driver 580.178.04) | cuota gratuita de Kaggle | 0 |
+| n2d-highmem-4 | AMD Milan — AMD EPYC 7B13 | 4 | 32.0 | — | estándar | 0.24851 |
 
 ## Todas las corridas
 
@@ -59,8 +63,36 @@ Generado el 2026-10-22 18:58 UTC con `research/cloud/build_ledger.py`. Precios: 
 | 2026-10-21 | toolbench-pilot-mindglide | Artículo F, piloto 1 de MindGlide (3 estudios) | e2-standard-4 | Intel Broadwell | estándar | 0:13:27 | 0:07:27 / 0:05:58 | 0 / 3 | — | 0.0331 | 0.0331 | fallida (entorno de software) |
 | 2026-10-21 | toolbench-pilot-mindglide-2 | Artículo F, piloto 2 de MindGlide (1 estudio, error completo) | e2-standard-4 | Intel Broadwell | estándar | 0:10:41 | 0:08:25 / 0:02:13 | 0 / 1 | — | 0.0263 | 0.0263 | fallida (entorno de software) |
 | 2026-10-21 | toolbench-pilot-mindglide-3 | Artículo F, piloto 3 de MindGlide con permisos corregidos (3 estudios) | n2d-standard-4 | AMD Milan | estándar | 0:12:15 | 0:07:54 / 0:04:18 | 3 / 0 | 84.2 | 0.0373 | 0.0373 | correcta |
+| 2026-10-21 | kaggle-smoke-s1 | FLAMeS-thick Kaggle plumbing test on CPU (2 MSLesSeg-train scans, 64^3 patch) | Kaggle CPU |  | cuota gratuita de Kaggle | 0:03:19 | — / — | kaggle-smoke-thick: 2 (0→2) / — | kaggle-smoke-thick: 19.66 | 0.0000 | 0.0000 | correcta |
+| 2026-10-21 | kaggle-smoke-s2 | FLAMeS-thick Kaggle plumbing test on CPU (2 MSLesSeg-train scans, 64^3 patch) | Kaggle CPU |  | cuota gratuita de Kaggle | 0:06:43 | — / — | kaggle-smoke-thick: 1 (2→3) / — | kaggle-smoke-thick: 28.64 | 0.0000 | 0.0000 | correcta |
+| 2026-10-21 | kaggle-pilot-s1 | FLAMeS-thick Kaggle pilot: 2 MSLesSeg-train scans, short epochs, kill + session hand-over resume, timing of both arms side by side on the 2 T4 | Kaggle NvidiaTeslaT4 |  | cuota gratuita de Kaggle | 0:06:53 | — / — | kaggle-pilot-thick: 2 (0→2) / kaggle-pilot-ft: 2 (0→2) / — | kaggle-pilot-thick: 96.43 / kaggle-pilot-ft: 82.44 | 0.0000 | 0.0000 | correcta |
+| 2026-10-21 | kaggle-pilot-s2 | FLAMeS-thick Kaggle pilot: 2 MSLesSeg-train scans, short epochs, kill + session hand-over resume, timing of both arms side by side on the 2 T4 | Kaggle NvidiaTeslaT4 |  | cuota gratuita de Kaggle | 0:10:03 | — / — | kaggle-pilot-thick: 4 (2→6) / kaggle-pilot-ft: 4 (2→6) / — | kaggle-pilot-thick: 57.58 / kaggle-pilot-ft: 50.46 | 0.0000 | 0.0000 | correcta |
+| 2026-10-21 | kaggle-full-s1 | FLAMeS-thick full run, both arms side by side (300 epochs each, PROTOCOL §5) | Kaggle NvidiaTeslaT4 |  | cuota gratuita de Kaggle | 1:19:20 | — / — | flames-thick-a: 18 (0→18) / flames-thick-b: 16 (0→16) / — | flames-thick-a: 223.98 / flames-thick-b: 251.94 | 0.0000 | 0.0000 | correcta |
+| 2026-10-21 | kaggle-full-s2 | FLAMeS-thick full run, both arms side by side (300 epochs each, PROTOCOL §5) | Kaggle NvidiaTeslaT4 |  | cuota gratuita de Kaggle | 10:49:03 | — / — | flames-thick-a: 162 (18→180) / flames-thick-b: 175 (16→191) / — | flames-thick-a: 231.82 / flames-thick-b: 212.22 | 0.0000 | 0.0000 | correcta |
+| 2026-10-22 | flames-thick-eval-1 | FLAMeS-thick evaluation, chunk 1/2 of the 211 pre-registered scans, arms A and B (fold 0, no TTA) | n2d-standard-4 | AMD Milan | estándar | 4:02:55 | 0:05:30 / 3:57:24 | 212 / 0 | 68.2 | 0.7119 | 0.7119 | correcta |
+| 2026-10-22 | flames-thick-eval-2 | FLAMeS-thick evaluation, chunk 2/2 of the 211 pre-registered scans, arms A and B (fold 0, no TTA) | n2d-standard-4 | AMD Milan | estándar | 3:54:15 | 0:04:19 / 3:49:55 | 210 / 0 | 68.2 | 0.6865 | 0.6865 | correcta |
+| 2026-10-22 | flames-thick-eval-pilot | FLAMeS-thick evaluation pilot: 5 scans (one per site), arm A model trained on Kaggle | n2d-standard-4 | AMD Milan | estándar | 0:07:58 | 0:02:51 / 0:05:06 | 5 / 0 | 65.8 | 0.0233 | 0.0233 | correcta |
 | 2026-10-22 | toolbench-mgraw | Artículo F: MindGlide con la imagen original (MS3SEG, Bagdad, PediMS) | e2-standard-4 | Intel Broadwell | estándar | 10:00:01 | 0:08:57 / — | 143 / 3 | 252.8 | 1.4772 | 1.4772 | fallida |
 | 2026-10-22 | toolbench-mgraw-2 | Artículo F: MindGlide con la imagen original, casos restantes (36) | e2-standard-4 | Intel Broadwell | estándar | 3:04:22 | 0:08:16 / 2:56:04 | 36 / 0 | 286.1 | 0.4539 | 0.4539 | correcta |
+| 2026-10-22 | kaggle-full-s3 | FLAMeS-thick full run, both arms side by side (300 epochs each, PROTOCOL §5) | Kaggle NvidiaTeslaT4 |  | cuota gratuita de Kaggle | 8:34:06 | — / — | flames-thick-a: 120 (180→300) / flames-thick-b: 109 (191→300) / — | flames-thick-a: 246.81 / flames-thick-b: 244.79 | 0.0000 | 0.0000 | correcta |
+| 2026-10-23 | toolbench-pilot-fs | Paper F pilot: WMH-SynthSeg and SAMSEG (FreeSurfer 8.2.0) on ms3seg_001, pedims_P1_T1, mslesseg_P10_T1 | n2d-highmem-4 | AMD Milan | estándar | 0:29:32 | 0:06:46 / 0:22:45 | 3 / 0 | 243.1 | 0.1223 | 0.1223 | correcta |
+| 2026-10-23 | toolbench-pilot-fs-2 | Paper F pilot 2: SAMSEG remaining cases (ms3seg_001 already done) + manifest fix | n2d-standard-4 | AMD Milan | estándar | 0:26:14 | 0:08:33 / 0:17:40 | 2 / 0 | 524.1 | 0.0829 | 0.0829 | correcta |
+| 2026-10-24 | sibbms-ctl-a | Controles sanos SibBMS, bloque A (sub-001 a sub-034): imágenes sin cráneo + FLAMeS 5 modelos | n2d-standard-4 | AMD Milan | estándar | — | — / — | 40 / 0 | 69.8 | — | — | en curso |
+| 2026-10-24 | sibbms-ctl-b | Controles sanos SibBMS, bloque B (sub-035 a sub-067): imágenes sin cráneo + FLAMeS 5 modelos | n2d-standard-4 | AMD Milan | estándar | — | — / — | 40 / 0 | 70.7 | — | — | en curso |
+| 2026-10-24 | sibbms-ctl-c | Controles sanos SibBMS, bloque C (sub-068 a sub-100): imágenes sin cráneo + FLAMeS 5 modelos | n2-standard-4 | Intel Cascade Lake | estándar | — | — / — | 50 / 0 | 66.0 | — | — | en curso |
+| 2026-10-24 | sibbms-ctl-pilot | Piloto controles sanos SibBMS: 2 controles (sub-001 de agosto y sub-021 nuevo), HD-BET + FLAMeS 5 modelos | n2d-standard-4 | AMD Milan | estándar | 0:26:23 | 0:03:48 / 0:22:33 | 10 / 0 | 70.0 | 0.0773 | 0.0773 | correcta |
+
+## Entrenamiento en Kaggle (tarjetas gráficas gratuitas)
+
+| Fecha | Sesión | Para qué | Tarjeta | Horas de cuota | Épocas en la sesión (por brazo) | Mediana s por época | Coste USD | Estado |
+|---|---|---|---|---|---|---|---|---|
+| 2026-10-21 | kaggle-smoke-s1 | FLAMeS-thick Kaggle plumbing test on CPU (2 MSLesSeg-train scans, 64^3 patch) | none (CPU session) | 0.06 | kaggle-smoke-thick: 2 (0→2) | kaggle-smoke-thick: 19.66 | 0 | correcta |
+| 2026-10-21 | kaggle-smoke-s2 | FLAMeS-thick Kaggle plumbing test on CPU (2 MSLesSeg-train scans, 64^3 patch) | none (CPU session) | 0.11 | kaggle-smoke-thick: 1 (2→3) | kaggle-smoke-thick: 28.64 | 0 | correcta |
+| 2026-10-21 | kaggle-pilot-s1 | FLAMeS-thick Kaggle pilot: 2 MSLesSeg-train scans, short epochs, kill + session hand-over resume, timing of both arms side by side on the 2 T4 | 2 × Tesla T4 (driver 580.178.04) | 0.11 | kaggle-pilot-thick: 2 (0→2) / kaggle-pilot-ft: 2 (0→2) | kaggle-pilot-thick: 96.43 / kaggle-pilot-ft: 82.44 | 0 | correcta |
+| 2026-10-21 | kaggle-pilot-s2 | FLAMeS-thick Kaggle pilot: 2 MSLesSeg-train scans, short epochs, kill + session hand-over resume, timing of both arms side by side on the 2 T4 | 2 × Tesla T4 (driver 580.178.04) | 0.17 | kaggle-pilot-thick: 4 (2→6) / kaggle-pilot-ft: 4 (2→6) | kaggle-pilot-thick: 57.58 / kaggle-pilot-ft: 50.46 | 0 | correcta |
+| 2026-10-21 | kaggle-full-s1 | FLAMeS-thick full run, both arms side by side (300 epochs each, PROTOCOL §5) | 2 × Tesla T4 (driver 580.178.04) | 1.32 | flames-thick-a: 18 (0→18) / flames-thick-b: 16 (0→16) | flames-thick-a: 223.98 / flames-thick-b: 251.94 | 0 | correcta |
+| 2026-10-21 | kaggle-full-s2 | FLAMeS-thick full run, both arms side by side (300 epochs each, PROTOCOL §5) | 2 × Tesla T4 (driver 580.178.04) | 10.82 | flames-thick-a: 162 (18→180) / flames-thick-b: 175 (16→191) | flames-thick-a: 231.82 / flames-thick-b: 212.22 | 0 | correcta |
+| 2026-10-22 | kaggle-full-s3 | FLAMeS-thick full run, both arms side by side (300 epochs each, PROTOCOL §5) | 2 × Tesla T4 (driver 580.178.04) | 8.57 | flames-thick-a: 120 (180→300) / flames-thick-b: 109 (191→300) | flames-thick-a: 246.81 / flames-thick-b: 244.79 | 0 | correcta |
 
 ## Rendimiento medido (FLAMeS, un modelo, un caso, sin TTA)
 
@@ -80,8 +112,14 @@ Generado el 2026-10-22 18:58 UTC con `research/cloud/build_ledger.py`. Precios: 
 | toolbench-mindglide-a | n2d-standard-4 | AMD Milan | 84.3 | 0.00428 |
 | toolbench-mindglide-b | n2-standard-4 | Intel Cascade Lake | 77.2 | 0.00446 |
 | toolbench-pilot-mindglide-3 | n2d-standard-4 | AMD Milan | 84.2 | 0.00427 |
+| flames-thick-eval-1 | n2d-standard-4 | AMD Milan | 68.2 | 0.00333 |
+| flames-thick-eval-2 | n2d-standard-4 | AMD Milan | 68.2 | 0.00333 |
+| flames-thick-eval-pilot | n2d-standard-4 | AMD Milan | 65.8 | 0.00321 |
 | toolbench-mgraw | e2-standard-4 | Intel Broadwell | 252.8 | 0.01037 |
 | toolbench-mgraw-2 | e2-standard-4 | Intel Broadwell | 286.1 | 0.01174 |
+| toolbench-pilot-fs | n2d-highmem-4 | AMD Milan | 243.1 | 0.01678 |
+| toolbench-pilot-fs-2 | n2d-standard-4 | AMD Milan | 524.1 | 0.02759 |
+| sibbms-ctl-pilot | n2d-standard-4 | AMD Milan | 70.0 | 0.00342 |
 
 ## Computador local
 

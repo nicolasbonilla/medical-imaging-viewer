@@ -1,0 +1,130 @@
+{
+ "session": "pilot-s2",
+ "session_id": "pilot-s2-20261021T170048Z",
+ "kernel": "nicolasbonilna/mstool-research-flames-thick-pilot-s2",
+ "previous_kernel": "nicolasbonilna/mstool-research-flames-thick-pilot-s1",
+ "start_utc": "2026-10-21T17:00:48Z",
+ "git_commit": "e5d8ed70ce495c874269799552f7b3123b2f6ea9",
+ "code_sha256": "cfca8741c3993961968a537c24c7f7673c805d6ee09aca8aea801589bdacf0d6",
+ "purpose": "FLAMeS-thick Kaggle pilot: 2 MSLesSeg-train scans, short epochs, kill + session hand-over resume, timing of both arms side by side on the 2 T4",
+ "stages": {
+  "machine": "2026-10-21T17:00:48Z",
+  "code": "2026-10-21T17:00:49Z",
+  "env": "2026-10-21T17:00:49Z",
+  "inputs": "2026-10-21T17:01:57Z",
+  "restore": "2026-10-21T17:02:01Z",
+  "gpu_sanity": "2026-10-21T17:03:38Z",
+  "train": "2026-10-21T17:04:06Z",
+  "end_train": "2026-10-21T17:10:51Z"
+ },
+ "runs": {
+  "kaggle-pilot-thick": {
+   "arm": "thick",
+   "gpu_index": 0,
+   "state_at_start": "paused",
+   "epochs_done_at_start": 2,
+   "supervisor_returncode": 0,
+   "state_at_end": "completed",
+   "status": {
+    "state": "completed",
+    "utc": "2026-10-21T17:10:41Z",
+    "attempt": "20261021T170407Z-640c86ea0ad4"
+   },
+   "epochs_done_at_end": 6,
+   "epochs_this_session": 4,
+   "median_s_per_epoch": 57.58,
+   "iters": 60,
+   "model_tar_sha256": "2060682a42735f177c6173c908db8b693e427461297f2d3beaef8965cadbba27"
+  },
+  "kaggle-pilot-ft": {
+   "arm": "ft",
+   "gpu_index": 1,
+   "state_at_start": "paused",
+   "epochs_done_at_start": 2,
+   "supervisor_returncode": 0,
+   "state_at_end": "completed",
+   "status": {
+    "state": "completed",
+    "utc": "2026-10-21T17:10:34Z",
+    "attempt": "20261021T170407Z-640c86ea0ad4"
+   },
+   "epochs_done_at_end": 6,
+   "epochs_this_session": 4,
+   "median_s_per_epoch": 50.46,
+   "iters": 60,
+   "model_tar_sha256": "18a8211a9d1c11d713c5f6fd17619891304889fdd11ac9460252dff78f8e215e"
+  }
+ },
+ "errors": [],
+ "platform": "kaggle-kernel",
+ "cost_usd": 0.0,
+ "soft_deadline_utc": "2026-10-21T18:00:48Z",
+ "hard_deadline_utc": "2026-10-21T18:15:48Z",
+ "updated_utc": "2026-10-21T17:10:51Z",
+ "wall_seconds": 603.2,
+ "machine": {
+  "gpus": [
+   "0, Tesla T4, 15360 MiB, 580.178.04, 00000000:00:04.0",
+   "1, Tesla T4, 15360 MiB, 580.178.04, 00000000:00:05.0"
+  ],
+  "driver_cuda": "NVIDIA-SMI 580.178.04             Driver Version: 580.178.04     CUDA Version: 13.0",
+  "accelerator_requested": "NvidiaTeslaT4",
+  "cpu_model": "Intel(R) Xeon(R) CPU @ 2.00GHz",
+  "vcpus": 4,
+  "memory_gb": "31",
+  "kaggle_env": {
+   "KAGGLE_KERNEL_RUN_TYPE": "Batch",
+   "KAGGLE_DOCKER_IMAGE": "gcr.io/kaggle-gpu-images/python@sha256:2757e0c7d1e0a9cb43da657b97e223c321a98f5014bdf64f44f2f6b083ad2b2f",
+   "KAGGLE_CONTAINER_NAME": "kaggle_hJyLGp1NfViCfiH7Jv4CBgx9gdoGBGDBcULEBnMlb8-360858455-webtier"
+  },
+  "disk_free_gb": {
+   "/kaggle/working": 20.9,
+   "/tmp": 1146.0
+  },
+  "system_python": "3.13.15"
+ },
+ "uv_version": "uv 0.13.4 (x86_64-unknown-linux-gnu)",
+ "venv_python": "3.10.12",
+ "torch": "2.14.1+cu126 12.6 True 2 ['sm_50', 'sm_60', 'sm_70', 'sm_75', 'sm_80', 'sm_86', 'sm_90']",
+ "lock_sha256": "da51d5bed56d85fcc7f5915ae020889cda9f1ab1402a146a4cae5fddae1b3c48",
+ "lock_mismatches": {},
+ "inputs": {
+  "flames_dir": "/kaggle/input/datasets/nicolasbonilna/mstool-research-flames-fold0",
+  "flames_source": {
+   "doi": "10.5281/zenodo.17955359",
+   "url": "https://zenodo.org/api/records/17955359/files/Dataset004_WML.zip/content",
+   "file": "Dataset004_WML.zip",
+   "bytes": 2351319537,
+   "md5": "8b90b789d6ceca1886f42fa1724a08cc",
+   "md5_publisher": "8b90b789d6ceca1886f42fa1724a08cc",
+   "sha256": "943f49d4997fc752322f0892b4aa6dcfce64f99a8a8c445d38785f54af09c277",
+   "licence": "CC BY 4.0"
+  },
+  "mslesseg_zip": "/kaggle/input/datasets/nicolasbonilna/mstool-research-mslesseg-train/mslesseg_train.zip.bin",
+  "mslesseg_zip_sha256": "d1f1ab8d691f4efc01f9389b54468544b9461f5fa2dee4adc67294e0eb3808eb",
+  "mslesseg_source": {
+   "doi": "10.6084/m9.figshare.27919209.v1",
+   "url": "https://ndownloader.figshare.com/files/52771814",
+   "file": "MSLesSeg Dataset.zip",
+   "bytes": 1473284755,
+   "md5": "cb30cfb13b0981443c300a5e51dd91cd",
+   "md5_publisher": "cb30cfb13b0981443c300a5e51dd91cd",
+   "sha256": "7a32c86090c1663e11f8c65642de36c77653c3cfce6284162740bbe092fb4db5",
+   "licence": "CC BY 4.0"
+  }
+ },
+ "restored_from": "/kaggle/input/notebooks/nicolasbonilna/mstool-research-flames-thick-pilot-s1/store",
+ "gpu_sanity": {
+  "case": "mslesseg_P2_T1",
+  "device": "Tesla T4",
+  "seconds": 8.0,
+  "settings": "tile 0.5, gaussian, no mirroring, fold 0 checkpoint_final (unchanged FLAMeS)",
+  "dice": 0.5243,
+  "n_pred_voxels": 5571,
+  "n_ref_voxels": 2261,
+  "map": "mslesseg_P2_T1_gpu_f0_prob.nii.gz"
+ },
+ "end_utc": "2026-10-21T17:10:51Z",
+ "gpu_hours": 0.168,
+ "pip_freeze_lines": 112
+}

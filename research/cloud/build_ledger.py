@@ -6,6 +6,8 @@ Sources (nothing is estimated where a measurement exists):
     and {flames-ensemble,lstai}/manifests/<run>.json (per case timings, software versions, checksums).
   * August 2026 runs in brain-mri-476110 — docs/calm-ms/cost-ledger.csv (as recorded then).
   * Local computer runs — docs/research/compute-ledger/local_runs.csv (hand-kept, with timings).
+  * Kaggle sessions (free GPU quota, 0 USD) — docs/research/compute-ledger/kaggle_runs.csv, written from the
+    session records by research/flames_thick/kaggle_run/ledger_rows.py.
   * Human notes per run (parity checks, failure causes) — docs/research/compute-ledger/annotations.json.
 
 Prices: official LIST prices (USD) from the Cloud Billing catalog via pricing.py, looked up on the
@@ -93,11 +95,14 @@ def fetch_bucket(tmp):
     # here (run ids are unique). controls/manifests holds the HD-BET step of a controls run whose
     # per-item timings live in the FLAMeS manifest (flames-ensemble/manifests/<run>.json), so it is
     # not merged.
+    # flames-thick: Vertex AI training jobs (flames-thick/{cost,manifests}) and the CPU evaluation VMs
+    # (flames-thick/eval/{cost,manifests}); research/flames_thick/vertex_entry.py, vm_flames_thick_eval.sh.
     sources = {"runs": ["runs"],
                "flames-ensemble_cost": ["flames-ensemble/cost", "controls/cost", "lstai/cost", "toolbench/cost",
-                                        "flames-openms-long/cost"],
+                                        "flames-openms-long/cost", "flames-thick/cost", "flames-thick/eval/cost"],
                "flames-ensemble_manifests": ["flames-ensemble/manifests", "lstai/manifests", "toolbench/manifests",
-                                             "flames-openms-long/manifests"]}
+                                             "flames-openms-long/manifests", "flames-thick/manifests",
+                                             "flames-thick/eval/manifests"]}
     for local, subs in sources.items():
         dst = os.path.join(tmp, local)
         os.makedirs(dst, exist_ok=True)
@@ -123,6 +128,8 @@ def cloud_rows(tmp, notes, price_cache):
         info = load(os.path.join(runs_dir, rid, "runinfo.json"))
         man = load(os.path.join(man_dir, f"{rid}.json"))
         cost = kv_cost(os.path.join(cost_dir, f"{rid}.txt")) if os.path.exists(os.path.join(cost_dir, f"{rid}.txt")) else {}
+        if "kaggle-kernel" in (info.get("platform"), man.get("platform"), plan.get("platform")):
+            continue                 # Kaggle runs are counted per session from kaggle_runs.csv (0 USD), not here
         hw, st = info.get("hardware", {}), info.get("stages_utc", {})
         n = notes.get(rid, {})
         mt = (plan.get("machine_type") or hw.get("machine_type") or (vm.get("machineType", "").rsplit("/", 1)[-1])
@@ -132,17 +139,24 @@ def cloud_rows(tmp, notes, price_cache):
                 or ("SPOT" if spot else "STANDARD"))
         spot = prov == "SPOT"
         zone = plan.get("zone") or hw.get("zone") or vm.get("zone", "").rsplit("/", 1)[-1] or n.get("zone", "us-central1-a")
-        wall = int(info.get("wall_seconds") or cost.get("seconds") or 0) or ""
-        key = (mt, zone.rsplit("-", 1)[0], spot, plan.get("gpu"))
-        if key not in price_cache:
-            price_cache[key] = pricing.price(mt, key[1], spot=spot, gpu=key[3], disk_gb=50)
-        p = price_cache[key]
+        vertex = plan.get("platform") == "vertex-ai-customjob" or info.get("platform") == "vertex-ai-customjob"
+        # Vertex AI jobs: billed time = sum over Spot attempts + start-up allowance (vertex_entry.py / budget.py)
+        wall = int(float((info.get("billed_seconds_estimate") if vertex else None) or info.get("wall_seconds")
+                         or cost.get("seconds") or 0)) or ""
         if plan.get("list_price", {}).get("usd_per_hour"):     # exact price snapshot taken at launch (real disk size)
             p = plan["list_price"]
+        else:
+            region = plan.get("region") or zone.rsplit("-", 1)[0]
+            key = (mt, region, spot, plan.get("gpu"))
+            if key not in price_cache:
+                price_cache[key] = pricing.price(mt, key[1], spot=spot, gpu=key[3], disk_gb=50)
+            p = price_cache[key]
         cases = man.get("cases", [])
         per = [c["seconds"] for c in cases if c.get("ok")]
-        status = n.get("status") or ("running" if not wall else
-                                     ("failed" if man.get("errors") or (man and not per) else "ok"))
+        run_status = info.get("status") or man.get("status")
+        status = n.get("status") or ("running" if not wall or run_status == "running" else
+                                     ("failed" if run_status == "failed" or man.get("errors") or (man and not per)
+                                      else ("stopped by cost guard" if run_status == "budget_stop" else "ok")))
         rows.append({
             "run_id": rid, "date_utc": (plan.get("created_utc") or st.get("boot") or man.get("started_utc") or "")[:10],
             "project": "mstool-research", "purpose": plan.get("purpose") or n.get("purpose", ""),
@@ -153,15 +167,19 @@ def cloud_rows(tmp, notes, price_cache):
             "provisioning": prov, "zone": zone, "start_utc": st.get("boot", plan.get("created_utc", "")),
             "end_utc": st.get("end", ""), "wall_seconds": wall,
             "vm_hours": round(wall / 3600, 4) if wall else "",
-            "setup_seconds": secs(st.get("boot"), st.get("inference_start")),
-            "compute_seconds": secs(st.get("inference_start"), st.get("inference_end")),
+            "setup_seconds": secs(st.get("boot"), st.get("inference_start") or st.get("train_start")),
+            "compute_seconds": secs(st.get("inference_start") or st.get("train_start"),
+                                    st.get("inference_end") or st.get("train_end")),
             "items_ok": len(per) if man else "", "items_failed": len(man.get("errors", [])) if man else "",
             "median_seconds_per_item": round(statistics.median(per), 1) if per else "",
             "usd_per_hour_list": p["usd_per_hour"],
             "cost_usd_list": round(wall / 3600 * p["usd_per_hour"], 4) if wall else "",
             "cost_usd_recorded": cost.get("cost_usd_compute_estimate") or cost.get("cost_usd", ""),
-            "price_basis": f"Cloud Billing catalog list price {p['date_utc'][:10]} (cores+RAM+boot disk)",
+            "price_basis": (f"Cloud Billing catalog list price {p['date_utc'][:10]} (cores+RAM+boot disk)"
+                            + (" + GPU, Compute Engine Spot SKUs (Vertex AI Spot training); time = Spot attempts "
+                               "+ 5 min start-up each" if vertex else "")),
             "notes": n.get("notes", ""),
+            "_kind": man.get("kind", "inference") if man else ("training" if vertex else "inference"),
         })
         rows[-1]["_record"] = {"plan": plan, "runinfo": info, "price": p, "cost_record": cost,
                                "manifest_summary": {k: man.get(k) for k in ("versions", "threads", "tta", "folds",
@@ -219,6 +237,31 @@ def local_rows():
     return rows
 
 
+KAGGLE_PROJECT = "kaggle (free GPU quota)"
+
+
+def kaggle_rows():
+    """Kaggle sessions (one kernel each) from kaggle_runs.csv, written by kaggle_run/ledger_rows.py.
+
+    Kaggle is free: 0 USD. vm_hours = session hours = hours charged to the weekly GPU quota (a
+    "T4 x2" session holds both GPUs for the whole session; GPU-device hours are twice that).
+    """
+    path = os.path.join(OUT, "kaggle_runs.csv")
+    if not os.path.exists(path):
+        return []
+    rows = []
+    for r in csv.DictReader(open(path, encoding="utf-8")):
+        w = int(float(r["wall_seconds"])) if r["wall_seconds"].strip() else ""
+        rows.append({**{f: "" for f in FIELDS}, **{k: r[k] for k in r if k in FIELDS},
+                     "project": KAGGLE_PROJECT, "provisioning": "Kaggle free quota", "machines": 1, "zone": "",
+                     "wall_seconds": w, "vm_hours": round(w / 3600, 4) if w != "" else "",
+                     "items_ok": r.get("epochs", ""), "median_seconds_per_item": r.get("median_seconds_per_epoch", ""),
+                     "usd_per_hour_list": 0, "cost_usd_list": 0, "cost_usd_recorded": 0,
+                     "price_basis": "Kaggle free weekly GPU quota (account nicolasbonilna): 0 USD",
+                     "_kind": "training"})
+    return rows
+
+
 def bucket_storage():
     out = sh(f"gcloud storage du -s {BUCKET}").stdout.split()
     gb = int(out[0]) / 1e9 if out and out[0].isdigit() else None
@@ -227,8 +270,11 @@ def bucket_storage():
 
 ES = {"not recorded": "no registrado", "ok": "correcta", "running": "en curso", "SPOT": "Spot (interrumpible)",
       "STANDARD": "estándar", "own hardware": "equipo propio", "no run time recorded": "sin tiempo registrado",
+      "Kaggle free quota": "cuota gratuita de Kaggle", "paused": "en pausa (sigue en la próxima sesión)",
+      "completed": "terminada",
       "failed (pilot bugs fixed)": "fallida (errores del piloto corregidos)",
-      "failed (software environment)": "fallida (entorno de software)", "failed": "fallida"}
+      "failed (software environment)": "fallida (entorno de software)", "failed": "fallida",
+      "stopped by cost guard": "detenida por el tope de coste"}
 
 
 def es(v):
@@ -275,6 +321,10 @@ def summary(rows, usd_per_eur, ecb_day, storage_gb, built):
                  f"(tope propio {CREDIT_TARGET_EUR:.0f} EUR; caduca {CREDIT_EXPIRES}) — quedan ≈ {CREDIT_TARGET_EUR - used_eur:.2f} EUR |")
     L.append(f"| Horas de máquina, agosto (proyecto de la app) | {tot(aug, 'vm_hours'):.2f} h · registrado {tot(aug, 'cost_usd_recorded'):.2f} USD"
              f" · a precio de lista de hoy {tot(aug, 'cost_usd_list'):.2f} USD (pagado por la cuenta de la app, no por el crédito) |")
+    kag = [r for r in done if r["project"] == KAGGLE_PROJECT]
+    if kag:
+        L.append(f"| Horas de tarjeta gráfica en Kaggle (cuota gratuita semanal) | {tot(kag, 'vm_hours'):.2f} h de cuota en "
+                 f"{len(kag)} sesiones · 0 USD |")
     L.append("")
     L.append("## Máquinas usadas\n")
     L.append("| Máquina | Procesador | vCPU | Memoria (GB) | Tarjeta gráfica | Modalidad | USD/hora (lista) |\n|---|---|---|---|---|---|---|")
@@ -296,7 +346,24 @@ def summary(rows, usd_per_eur, ecb_day, storage_gb, built):
                  f"| {r['items_ok'] if r['items_ok'] != '' else '—'} / {r['items_failed'] if r['items_failed'] != '' else '—'} "
                  f"| {r['median_seconds_per_item'] or '—'} | {money(r['cost_usd_list'])} | {money(r['cost_usd_recorded'])} | {es(r['status'])} |")
     L.append("")
-    perf = [r for r in research if r["median_seconds_per_item"] not in ("", None)]
+    train = [r for r in research if r.get("_kind") == "training"]
+    if train:
+        L.append("## Entrenamiento en tarjeta gráfica (Vertex AI, Spot)\n")
+        L.append("| Corrida | Máquina | Tarjeta | Épocas | Mediana s por época | USD por época (lista) | Coste lista USD | Estado |\n|---|---|---|---|---|---|---|---|")
+        for r in train:
+            per = r["median_seconds_per_item"]
+            L.append(f"| {r['run_id']} | {r['machine_type']} | {r['gpu'] or '—'} | {r['items_ok'] or '—'} | {per or '—'} "
+                     f"| {(float(per) / 3600 * float(r['usd_per_hour_list'])) if per else 0:.4f} | {money(r['cost_usd_list'])} | {es(r['status'])} |")
+        L.append("")
+    if kag:
+        L.append("## Entrenamiento en Kaggle (tarjetas gráficas gratuitas)\n")
+        L.append("| Fecha | Sesión | Para qué | Tarjeta | Horas de cuota | Épocas en la sesión (por brazo) | Mediana s por época | Coste USD | Estado |\n"
+                 "|---|---|---|---|---|---|---|---|---|")
+        for r in kag:
+            L.append(f"| {r['date_utc']} | {r['run_id']} | {r['purpose_es']} | {r['gpu']} | {float(r['vm_hours']):.2f} "
+                     f"| {r['items_ok'] or '—'} | {r['median_seconds_per_item'] or '—'} | 0 | {es(r['status'])} |")
+        L.append("")
+    perf = [r for r in research if r["median_seconds_per_item"] not in ("", None) and r.get("_kind") != "training"]
     if perf:
         L.append("## Rendimiento medido (FLAMeS, un modelo, un caso, sin TTA)\n")
         L.append("| Corrida | Máquina | Procesador | Mediana s por caso-modelo | USD por caso-modelo (lista) |\n|---|---|---|---|---|")
@@ -338,7 +405,7 @@ def main():
         rows = cloud_rows(fetch_bucket(tmp), notes, price_cache)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
-    rows = august_rows(price_cache) + rows + local_rows()
+    rows = august_rows(price_cache) + rows + local_rows() + kaggle_rows()
     for r in rows:                                   # human annotations: Spanish text, dates, verified results
         a = notes.get(r["run_id"], {})
         r["machines"] = int(r.get("machines") or 1)

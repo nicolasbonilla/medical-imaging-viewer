@@ -28,6 +28,7 @@
   "cost_usd_recorded": "0.6504",
   "price_basis": "Cloud Billing catalog list price 2026-10-21 (cores+RAM+boot disk)",
   "notes": "",
+  "_kind": "inference",
   "machines": 1,
   "purpose_es": "Art\u00edculo F: MindGlide, brazo principal (misma imagen que FLAMeS), mitad A",
   "notes_es": ""

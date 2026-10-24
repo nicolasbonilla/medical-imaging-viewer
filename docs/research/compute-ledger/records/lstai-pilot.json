@@ -28,6 +28,7 @@
   "cost_usd_recorded": "0.0296",
   "price_basis": "Cloud Billing catalog list price 2026-10-17 (cores+RAM+boot disk)",
   "notes": "",
+  "_kind": "inference",
   "machines": 1,
   "purpose_es": "Piloto LST-AI v1.2.0: MSLesSeg P10_T1, P49_T2 (T1 vac\u00eda, debe saltarse) y Ljubljana 01",
   "notes_es": "Superado: 2 casos en 140 s cada uno, memoria m\u00e1xima 10,7 GB sin intercambio; P49_T2 saltado (T1 vac\u00eda). Mapas en la rejilla de FLAMeS (error de guardado 0,002). La versi\u00f3n de c\u00f3digo no se pudo leer en la imagen (sin python ni git); identidad comprobada por huella de la imagen y de los 3 modelos. Comprobaci\u00f3n corregida despu\u00e9s."

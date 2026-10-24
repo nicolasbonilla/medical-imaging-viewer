@@ -28,6 +28,7 @@
   "cost_usd_recorded": "0.0331",
   "price_basis": "Cloud Billing catalog list price 2026-10-21 (cores+RAM+boot disk)",
   "notes": "",
+  "_kind": "inference",
   "machines": 1,
   "purpose_es": "Art\u00edculo F, piloto 1 de MindGlide (3 estudios)",
   "notes_es": "Fallo en los 3 estudios tras segmentar: solo se guardaba la salida de errores, que escond\u00eda la causa real."

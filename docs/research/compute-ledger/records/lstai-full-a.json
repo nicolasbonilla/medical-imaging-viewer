@@ -28,6 +28,7 @@
   "cost_usd_recorded": "0.8415",
   "price_basis": "Cloud Billing catalog list price 2026-10-18 (cores+RAM+boot disk)",
   "notes": "",
+  "_kind": "inference",
   "machines": 1,
   "purpose_es": "LST-AI v1.2.0: todo MSLesSeg (P49_T2 saltado) + 30 Ljubljana; controles cuando llegue el permiso de SibBMS",
   "notes_es": ""

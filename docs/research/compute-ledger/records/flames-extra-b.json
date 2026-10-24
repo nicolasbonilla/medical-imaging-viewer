@@ -28,6 +28,7 @@
   "cost_usd_recorded": "1.7591",
   "price_basis": "Cloud Billing catalog list price 2026-10-18 (cores+RAM+boot disk)",
   "notes": "",
+  "_kind": "inference",
   "machines": 1,
   "purpose_es": "Colecciones nuevas, bloque B (casos 91 a 179): HD-BET + FLAMeS 5 modelos",
   "notes_es": ""

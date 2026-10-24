@@ -28,6 +28,7 @@
   "cost_usd_recorded": "0.6867",
   "price_basis": "Cloud Billing catalog list price 2026-10-21 (cores+RAM+boot disk)",
   "notes": "",
+  "_kind": "inference",
   "machines": 1,
   "purpose_es": "Art\u00edculo C: FLAMeS 5 modelos en las 40 im\u00e1genes de Ljubljana con dos visitas (cambios marcados por expertos)",
   "notes_es": ""
