@@ -1,0 +1,767 @@
+{
+  "executed": "2026-10-24T14:54:37",
+  "base": "4bfdd7e (PR #67 head before the review)",
+  "method": "source files that differ from the base commit restored to it, files it did not have removed; the CAPA-014 test files run unchanged; working tree restored byte for byte",
+  "swapped": {
+    "restored_to_base": [
+      "backend/app/api/routes/ai_report.py",
+      "backend/app/services/brain_report_service.py",
+      "frontend/src/components/ReportViewerModal.tsx",
+      "frontend/src/i18n/locales/de.json",
+      "frontend/src/i18n/locales/en.json",
+      "frontend/src/i18n/locales/es.json"
+    ],
+    "removed": [
+      "backend/app/services/report_payload_guard.py"
+    ],
+    "put_back_from_base": [
+      "backend/app/services/report_deidentification.py"
+    ]
+  },
+  "test_sha256": {
+    "backend/tests/unit/test_capa014_report_provider_payload.py": "a14a82a98bfdcb1cda8acf089736b154adac5fbb28fe8504701b64d7971047d4",
+    "frontend/src/components/AIReportPanel.capa014.test.tsx": "bb81a4c376991735d522764d7bcd62be404906ec284fe6fd15c614c2ba61980d"
+  },
+  "backend": {
+    "passed": 47,
+    "failed": 129,
+    "errors": 0,
+    "results": {
+      "test_rc064_measurements_and_device_labels_are_sent_unchanged": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_age_is_sent_as_a_five_year_band[48-45-49]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_age_is_sent_as_a_five_year_band[3-0-4]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_age_is_sent_as_a_five_year_band[89-85-89]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_age_is_sent_as_a_five_year_band[90-90 or older]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_age_is_sent_as_a_five_year_band[93-90 or older]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_age_is_sent_as_a_five_year_band[104.5-90 or older]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_age_is_sent_as_a_five_year_band[52-50-54]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_an_age_that_is_not_a_number_is_not_sent[93 years]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_an_age_that_is_not_a_number_is_not_sent[ninety]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_an_age_that_is_not_a_number_is_not_sent[True]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_an_age_that_is_not_a_number_is_not_sent[-1]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_an_age_that_is_not_a_number_is_not_sent[131]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_an_age_that_is_not_a_number_is_not_sent[None]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_sex_is_sent_only_as_m_or_f[M-Patient sex: Male]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_sex_is_sent_only_as_m_or_f[F-Patient sex: Female]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_system_prompt_is_the_fixed_template": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Jordi Pons]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Blanca Ruiz]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-May Ortiz]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Minh Do]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Anne Le]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Wei Du]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Blanca Pons]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Jordi Pons]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Blanca Ruiz]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-May Ortiz]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Minh Do]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Anne Le]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Wei Du]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Blanca Pons]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Jordi Pons]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Blanca Ruiz]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-May Ortiz]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Minh Do]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Anne Le]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Wei Du]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Blanca Pons]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_no_segmentation_reference_no_provider_call": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_the_segmentation_is_authorized_for_the_caller": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_patient_record_unavailable_no_provider_call[store-error]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_patient_record_unavailable_no_provider_call[no-record]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_patient_record_unavailable_no_provider_call[no-birth-date]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_patient_record_unavailable_no_provider_call[no-record-number]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_patient_record_unavailable_no_provider_call[no-name]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_a_caller_without_access_gets_404_and_no_provider_call": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_assistant_report_tool_names_the_segmentation": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_no_free_text_or_unlisted_label_reaches_the_provider": {
+        "status": "failed",
+        "reason": "AssertionError: ['zqx-indication', 'zqx-technique', 'zqx-label', 'zqx-type', 'zqx-location', 'zqx-structure', ...]"
+      },
+      "test_rc064_the_clinicians_typed_text_is_never_sent": {
+        "status": "failed",
+        "reason": "AssertionError: assert ('3T, 3D T2-F...San Ignacio.' not in 'Generate th...RI [date 1].'"
+      },
+      "test_rc064_age_is_sent_as_a_five_year_band[17-15-19]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Patient age band: 15-19 (years)' in 'Generate the report in English.\\nPatient age band: 15-17 (years)\\nPatient sex: Male\\nSegmented structures identified:...classified brain voxels: 1523456\\n  - Periventricular: 1200"
+      },
+      "test_rc064_age_is_sent_as_a_five_year_band[18-15-19]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Patient age band: 15-19 (years)' in 'Generate the report in English.\\nPatient age band: 18-19 (years)\\nPatient sex: Male\\nSegmented structures identified:...classified brain voxels: 1523456\\n  - Periventricular: 1200"
+      },
+      "test_rc064_sex_is_sent_only_as_m_or_f[other-None]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Patient sex' not in 'Generate th...oxels (5.9%)'"
+      },
+      "test_rc064_sex_is_sent_only_as_m_or_f[female-None]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Patient sex' not in 'Generate th...oxels (5.9%)'"
+      },
+      "test_rc064_sex_is_sent_only_as_m_or_f[X-None]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Patient sex' not in 'Generate th...oxels (5.9%)'"
+      },
+      "test_rc064_the_payload_itself_holds_only_known_fields_and_no_marker": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc064_the_prompt_builder_prints_no_free_text_even_when_called_directly": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'zqx' not in 'generate th...tions: zqx-3'"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Thomas White]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Generate the...voxels (5.9%)' == 'Generate the...voxels (5.9%)'"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Sarah Black]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Generate the...voxels (5.9%)' == 'Generate the...voxels (5.9%)'"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Ann Small]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Generate the...voxels (5.9%)' == 'Generate the...voxels (5.9%)'"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Rose Matter]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Generate the...voxels (5.9%)' == 'Generate the...voxels (5.9%)'"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Max Brain]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Generate the...voxels (5.9%)' == 'Generate the...voxels (5.9%)'"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Black White]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Generate the...voxels (5.9%)' == 'Generate the...voxels (5.9%)'"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Black Do]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Generate the...voxels (5.9%)' == 'Generate the...voxels (5.9%)'"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Thomas White]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Generate the...voxels (5.9%)' == 'Generate the...voxels (5.9%)'"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Sarah Black]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Generate the...voxels (5.9%)' == 'Generate the...voxels (5.9%)'"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Ann Small]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Generate the...voxels (5.9%)' == 'Generate the...voxels (5.9%)'"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Rose Matter]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Generate the...voxels (5.9%)' == 'Generate the...voxels (5.9%)'"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Max Brain]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Generate the...voxels (5.9%)' == 'Generate the...voxels (5.9%)'"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Black White]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Generate the...voxels (5.9%)' == 'Generate the...voxels (5.9%)'"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Black Do]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Generate the...voxels (5.9%)' == 'Generate the...voxels (5.9%)'"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Thomas White]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Generate the...voxels (5.9%)' == 'Generate the...voxels (5.9%)'"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Sarah Black]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Generate the...voxels (5.9%)' == 'Generate the...voxels (5.9%)'"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Ann Small]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Generate the...voxels (5.9%)' == 'Generate the...voxels (5.9%)'"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Rose Matter]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Generate the...voxels (5.9%)' == 'Generate the...voxels (5.9%)'"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Max Brain]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Generate the...voxels (5.9%)' == 'Generate the...voxels (5.9%)'"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Black White]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Generate the...voxels (5.9%)' == 'Generate the...voxels (5.9%)'"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Black Do]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Generate the...voxels (5.9%)' == 'Generate the...voxels (5.9%)'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[612 34 56 78]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[0034 612 345 678]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[+34 612 345 678]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[612345678]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[93 412 34 56]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[934 123 456]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[DOB: 9. 11. 1975]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[born 9-Nov-1975]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[born 9-November-1975]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[geb. 9.11.]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[nacido el 9/11]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[born 9.XI.1975]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[09 / 11 / 1975]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[1975-11-09]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[9 de noviembre de 1975]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[November 9, 1975]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[born '75]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[born in 1975]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Jor\\xaddi Pons]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Jor\\u200bdi]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Jordi\\xa0Pons]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[JordiPons]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[PonsPuig]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[\\uff2a\\uff4f\\uff52\\uff44\\uff49]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[J\\u043erdi]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Pu\\u200dig]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[\\ufeffPuig]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[HC-778812]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[H C 7 7 8 8 1 2]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[hc.778812]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[jpons@correo.es]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[JPONS@CORREO.ES]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Barcelona]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Mallorca 401]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Fuentem\\xfcller]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[delaFuente]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[FUENTE MUELLER]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Maria Jose]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Muenchen]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[MUELLER]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Juergen]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[030 12345678]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Ins. A 123 456 789]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Leopoldstrasse]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[06 12 34 56 78]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[06.12.34.56.78]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[0612345678]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[+33 6 12 34 56 78]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Minh Do]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Do Minh]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[DO, Minh]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Minh]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[MinhDo]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Juan P\\xe9rez]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[MRN 2025 0042]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[M R N": {
+        "status": "failed",
+        "reason": "2 0 2 5 - 0 0 4 2] - ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[MRN.2025.0042]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[15.03.1978]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[15 March 1978]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[300 123 4567]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[juan.perez@example.com]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Bogota]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Lucia]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[write to a.b@c.de]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[seen 12.03.2025]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[seen 2025-03-12]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[seen 12 March 2025]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[call +49 89 1234567]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[call 0170 1234567]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[ref 1234567890]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[id X1234567L]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[uid 1.2.840.113619.2.55]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[by Dr. Smith]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[by prof. huber]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[call +1 555 0100]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Black White]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[White, Black]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[BlackWhite]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Black Do]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[01 40400]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_never_edits_the_text": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_caps_the_text_it_scans": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_runs_in_linear_time[1-]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_runs_in_linear_time[1.]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_runs_in_linear_time[a.]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_runs_in_linear_time[a@]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_runs_in_linear_time[Dr. ]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_runs_in_linear_time[+1 ]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_runs_in_linear_time[9 11 ]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_runs_in_linear_time[Aa ]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_tripwire_runs_in_linear_time[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx@]": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_a_leak_through_a_label_is_stopped_before_the_provider": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc065_service_refuses_to_send_without_identifiers": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.services.report_payload_guard'"
+      },
+      "test_rc066_the_typed_text_is_added_to_the_draft_locally[en-Clinician's entry]": {
+        "status": "failed",
+        "reason": "assert \"Clinician's entry\" in '\\n\\n'"
+      },
+      "test_rc066_the_typed_text_is_added_to_the_draft_locally[es-Datos del m\\xe9dico]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Datos del m�dico' in '\\n\\n'"
+      },
+      "test_rc066_the_typed_text_is_added_to_the_draft_locally[de-Angaben der \\xc4rztin / des Arztes]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Angaben der �rztin / des Arztes' in '\\n\\n'"
+      },
+      "test_rc066_the_model_is_told_the_entry_is_added_by_the_application": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'added to the draft by the application' in 'Generate the report in English.\\nClinical indication: [name removed] ([record number removed]), born [birth date remo... Matter: 90000 voxels (5.9%)\\n\\nAdditional observatio"
+      },
+      "test_rc066_logs_say_the_check_ran_with_counts_never_the_payload": {
+        "status": "failed",
+        "reason": "AssertionError: ['Using proactor: IocpProactor', 'Request started: POST /api/v1/ai/report/generate', '[Report] Generate request: templ...e the model provider call', '[Report] Generating general report in en', '[Report] Generated successfull"
+      },
+      "test_rc066_no_false_ai_privacy_claim_anywhere_in_the_repository": {
+        "status": "failed",
+        "reason": "AssertionError: frontend/src/i18n/locales/de.json:983: \"hipaaNote\": \"HIPAA-konform � F�r die Berichterstellung wurden nur entidentifizierte klinische Befunde verwendet. Es wurden keine gesch�tzte"
+      }
+    }
+  },
+  "frontend": {
+    "passed": 4,
+    "failed": 6,
+    "not_passing": {
+      "rc066 the English note states measurements only and that the typed text stays here": {
+        "status": "failed",
+        "reason": "AssertionError: expected 'Sent to the AI provider (Anthropic): …' to contain 'only the measurements'"
+      },
+      "rc066 the report viewer footer is true, not a HIPAA claim (en)": {
+        "status": "failed",
+        "reason": "AssertionError: expected 0 to be greater than 60"
+      },
+      "rc066 the report viewer footer is true, not a HIPAA claim (es)": {
+        "status": "failed",
+        "reason": "AssertionError: expected 0 to be greater than 60"
+      },
+      "rc066 the report viewer footer is true, not a HIPAA claim (de)": {
+        "status": "failed",
+        "reason": "AssertionError: expected 0 to be greater than 60"
+      },
+      "rc066 the English footer states measurements only": {
+        "status": "failed",
+        "reason": "AssertionError: expected '' to contain 'measurements'"
+      },
+      "rc066 the API client and the viewer source make no HIPAA claim": {
+        "status": "failed",
+        "reason": "AssertionError: expected '/**\\n * ReportViewerModal - Professio…' not to match /HIPAA/"
+      }
+    }
+  },
+  "note": "Cases that pass on the base are regression guards (fixed system prompt, measurement lines, age bands the base already sent as bands, fail-closed controls already present, names that do not occur in the prompt), not defect detectors."
+}

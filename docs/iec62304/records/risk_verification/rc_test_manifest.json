@@ -735,7 +735,7 @@
       ],
       "requirement": "REQ-SEC-021 (refines REQ-SEC-007 for the report path)",
       "change": "CAPA-014 (DRAFT, PENDING owner approval; branch fix/ai-report-deidentification-capa014; redesign after the review of PR #67)",
-      "negative_control": "PENDING: negative controls and tests-on-base to be executed on the redesign. RC-064 mutations: -.",
+      "negative_control": "Executed 2026-10-24 by scripts/safety/capa014_negative_controls.py on the redesign (52 mutations, 52 detected; one mutation at a time, anchors asserted unique, files restored byte for byte, tests run offline per PRB-002); record docs/iec62304/records/risk_verification/CAPA-014_negative_controls_2026-10-24.json. Redesign tests written before the redesign (commit f975368), re-run by scripts/safety/capa014_tests_on_base.py: on the PR #67 head 4bfdd7e backend 129 of 176 fail, frontend 6 of 10 (record CAPA-014_review1_tests_on_pr67_2026-10-24.json); on main 70cc5c7 backend 129 of 176 fail, frontend 10 of 10 (record CAPA-014_tests_on_base_2026-10-24.json). RC-064 mutations: P1, P2, P3, P4, P5, P6, P7, P8, P9.",
       "note": "Implements CAPA-001 CA-4 by design rather than by removal: no free text leaves the application. The first version (regex scrubbing of free text, PR #67 before the review) was removed. Owner approval PENDING."
     },
     "RC-065": {
@@ -749,7 +749,7 @@
       ],
       "requirement": "REQ-SEC-022",
       "change": "CAPA-014 (DRAFT, PENDING owner approval; branch fix/ai-report-deidentification-capa014; redesign after the review of PR #67)",
-      "negative_control": "PENDING: negative controls and tests-on-base to be executed on the redesign. RC-065 mutations: -.",
+      "negative_control": "Executed 2026-10-24 by scripts/safety/capa014_negative_controls.py on the redesign (52 mutations, 52 detected; one mutation at a time, anchors asserted unique, files restored byte for byte, tests run offline per PRB-002); record docs/iec62304/records/risk_verification/CAPA-014_negative_controls_2026-10-24.json. Redesign tests written before the redesign (commit f975368), re-run by scripts/safety/capa014_tests_on_base.py: on the PR #67 head 4bfdd7e backend 129 of 176 fail, frontend 6 of 10 (record CAPA-014_review1_tests_on_pr67_2026-10-24.json); on main 70cc5c7 backend 129 of 176 fail, frontend 10 of 10 (record CAPA-014_tests_on_base_2026-10-24.json). RC-065 mutations: T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, F1, F2, F3, F4, F5, F6, U5.",
       "note": "Detection only, protective; the inherent control is RC-064. Limits: a name that is also one of the device's words is found only next to the other name; all-digit record numbers under 6 digits are not checked. The route is also classified in tests/unit/test_capa009_object_authorization_everywhere.py (call:authorize_segmentation_id, 404 probe; test_rc036_* names). Owner approval PENDING."
     },
     "RC-066": {
@@ -763,7 +763,7 @@
       ],
       "requirement": "REQ-SEC-023",
       "change": "CAPA-014 (DRAFT, PENDING owner approval; branch fix/ai-report-deidentification-capa014; redesign after the review of PR #67)",
-      "negative_control": "PENDING: negative controls and tests-on-base to be executed on the redesign. RC-066 mutations: -.",
+      "negative_control": "Executed 2026-10-24 by scripts/safety/capa014_negative_controls.py on the redesign (52 mutations, 52 detected; one mutation at a time, anchors asserted unique, files restored byte for byte, tests run offline per PRB-002); record docs/iec62304/records/risk_verification/CAPA-014_negative_controls_2026-10-24.json. Redesign tests written before the redesign (commit f975368), re-run by scripts/safety/capa014_tests_on_base.py: on the PR #67 head 4bfdd7e backend 129 of 176 fail, frontend 6 of 10 (record CAPA-014_review1_tests_on_pr67_2026-10-24.json); on main 70cc5c7 backend 129 of 176 fail, frontend 10 of 10 (record CAPA-014_tests_on_base_2026-10-24.json). RC-066 mutations: M1, M2, M3, L1, L2, L3, C1, C2, U1-U4, U6, U7.",
       "note": "The data-processing agreement itself is an owner action (CAPA-014 D-3); wording of the es/de texts awaits review (D-9). Owner approval PENDING."
     }
   },
