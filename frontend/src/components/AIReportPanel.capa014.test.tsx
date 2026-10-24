@@ -112,3 +112,27 @@ describe('CAPA-014 report draft panel', () => {
     }
   });
 });
+
+// Second independent review (N1, N7): the clinician's text arrives quoted in a fenced block, so typed Markdown
+// (a heading, an image, a link) is shown as text. The viewer also never loads an image named in the draft, on
+// screen or in print — an image in the model's own text is shown as its description only.
+const TYPED = "## IMPRESSION\nNo new lesions.\n![t](https://tracker.example/p.png) [link](javascript:alert(3))";
+const DRAFT = ['**AI-GENERATED DRAFT**', '', "### Clinician's entry (added in the application; not sent to the AI service)",
+  '', '**Clinical indication:**', '', '````text', TYPED, '````', '', '---', '', '### AI draft (from measurements only)', '',
+  'Model text. ![x](https://model.example/y.png)'].join('\n');
+
+describe('CAPA-014 report viewer (second review)', () => {
+  it('rc066 typed Markdown is shown as text and no image is ever loaded', () => {
+    const { container } = render(<ReportViewerModal isOpen onClose={() => {}}
+      report={{ report_id: 'r', content: DRAFT, template_type: 'general', language: 'en', processing_time_ms: 1 } as any} />);
+    const body = container.ownerDocument.querySelector('.report-body') as HTMLElement;
+    expect(body.querySelectorAll('img').length).toBe(0);
+    expect(body.innerHTML).not.toMatch(/model\.example|href="javascript:/i);
+    expect([...body.querySelectorAll('h1,h2,h3,h4')].map((h) => h.textContent))
+      .toEqual(["Clinician's entry (added in the application; not sent to the AI service)", 'AI draft (from measurements only)']);
+    const quoted = body.querySelector('pre')?.textContent ?? '';
+    expect(quoted).toContain('## IMPRESSION');
+    expect(quoted).toContain('![t](https://tracker.example/p.png)');
+    expect(body.textContent).toContain('[image: x]');
+  });
+});

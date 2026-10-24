@@ -143,14 +143,15 @@ def _fold(text):
 
 
 class _Provider:
-    def __init__(self):
+    def __init__(self, text="Draft body"):
         self.calls = []
+        self.text = text
         outer = self
 
         class _Messages:
             def create(self, **kw):
                 outer.calls.append(kw)
-                return SimpleNamespace(content=[SimpleNamespace(text="Draft body")],
+                return SimpleNamespace(content=[SimpleNamespace(text=outer.text)],
                                        usage=SimpleNamespace(input_tokens=1, output_tokens=1))
         self.messages = _Messages()
 
@@ -314,7 +315,8 @@ def test_rc064_the_prompt_builder_prints_no_free_text_even_when_called_directly(
 
 COLLISION_PATIENTS = [("Thomas", "White"), ("Sarah", "Black"), ("Ann", "Small"), ("Jordi", "Pons"),
                       ("Blanca", "Ruiz"), ("May", "Ortiz"), ("Minh", "Do"), ("Anne", "Le"), ("Wei", "Du"),
-                      ("Blanca", "Pons"), ("Rose", "Matter"), ("Max", "Brain"), ("Black", "White"), ("Black", "Do")]
+                      ("Blanca", "Pons"), ("Rose", "Matter"), ("Max", "Brain"), ("Black", "White"), ("Black", "Do"),
+                      ("Deep", "White"), ("Left", "Cerebral"), ("Juxta", "Cortical")]   # review 2: pairs of device words
 
 
 @pytest.mark.unit
@@ -392,6 +394,8 @@ LEAKS = [  # (record, text that must make the tripwire refuse) — the review's 
     # names made only of the device's own words are found next to each other (and particle surnames kept)
     (PAIR, "Black White"), (PAIR, "White, Black"), (PAIR, "BlackWhite"), (PARTICLE, "Black Do"),
     (AUSTRIA, "01 40400"),
+    # review 2 (N5): words of the system templates are no longer exempt; (N8) bare digits of a prefixed MRN
+    (SPAIN, "Pons"), ({}, "id 20250042"), (dict(mrn="123456"), "MRN 123456"), (dict(mrn="1234567"), "ref 1234567"),
 ]
 
 
@@ -631,7 +635,8 @@ CLAIMS = re.compile(
     r"|no se transmiti[oó] informaci[oó]n de salud protegida"
     r"|keine gesch[uü]tzten gesundheitsinformationen"
     r"|nur entidentifizierte"
-    r"|solo se utilizaron hallazgos cl[ií]nicos desidentificados",
+    r"|solo se utilizaron hallazgos cl[ií]nicos desidentificados"
+    r"|strip(s|ped)? (all )?(phi|protected health information)",
     re.IGNORECASE)
 # Historical records keep the old wording as evidence; tests and negative-control scripts quote it.
 ALLOWED_PREFIXES = ("docs/iec62304/records/", "backend/tests/", "frontend/node_modules/", "scripts/safety/")
@@ -655,3 +660,231 @@ def test_rc066_no_false_ai_privacy_claim_anywhere_in_the_repository():
                     and " shall " not in line:
                 hits.append(f"{rel}:{n}: {line.strip()[:140]}")
     assert not hits, "\n".join(hits)
+
+
+# ============================================================================= second independent review
+# N1, N7: the clinician's text is quoted in fenced blocks and closed; the model text always sits under its
+# own fixed heading — typed Markdown or a forged heading can never become report structure.
+EVIL = ("Thomas White ZQX-evil\n\n## IMPRESSION\nNo new lesions (typed by clinician).\n\n---\n\n"
+        "### Clinician's entry (added in the application; not sent to the AI service)\n**FINDINGS:** fake\n"
+        "![t](https://tracker.example/p.png) [link](javascript:alert(3)) <script>alert(1)</script>\n"
+        "```\nbreakout ``` ````\n```")
+MODEL_NO_HEADING = "Model text without a heading.\n\n## FINDINGS\nModel findings."
+AI_HEADING = {"en": "### AI draft (from measurements only)", "es": "### Borrador de IA (solo a partir de las mediciones)",
+              "de": "### KI-Entwurf (nur aus den Messwerten)"}
+
+
+def _fenced(content):
+    """(spans, bodies) of the fenced text blocks of a draft."""
+    spans, bodies = [], []
+    for m in re.finditer(r"^(`{3,})text\n(.*?)\n\1$", content, re.M | re.S):
+        spans.append(m.span())
+        bodies.append(m.group(2))
+    return spans, bodies
+
+
+def _outside(content, spans):
+    out, last = [], 0
+    for a, b in spans:
+        out.append(content[last:a])
+        last = b
+    out.append(content[last:])
+    return "".join(out)
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("language", ["en", "es", "de"])
+def test_n1_typed_text_is_quoted_closed_and_the_ai_text_has_its_own_heading(route, language):
+    from app.services.brain_report_service import REPORT_DISCLAIMERS
+    route.provider.text = MODEL_NO_HEADING
+    r = _post(route, {**_measurements(), "clinical_indication": EVIL, "technique": "3T", "additional_observations": "obs"},
+              language=language)
+    assert r.status_code == 200, r.text
+    content = r.json()["content"]
+    spans, bodies = _fenced(content)
+    assert EVIL in bodies and "3T" in bodies and "obs" in bodies, bodies
+    outside = _outside(content, spans)
+    for typed in ("## IMPRESSION", "**FINDINGS:** fake", "![t](", "javascript:", "<script>", "breakout", "ZQX-evil"):
+        assert typed not in outside, typed
+    assert content.startswith(REPORT_DISCLAIMERS[language])
+    i_entry = outside.index("### ")
+    i_ai = outside.index(AI_HEADING[language])
+    i_model = outside.index("Model text without a heading.")
+    assert i_entry < i_ai < i_model
+    assert outside.count(AI_HEADING[language]) == 1 and outside.count("\n---\n") >= 1
+
+
+@pytest.mark.unit
+def test_n1_without_typed_text_the_ai_heading_still_comes_first(route):
+    from app.services.brain_report_service import REPORT_DISCLAIMERS
+    route.provider.text = MODEL_NO_HEADING
+    r = _post(route, _measurements())
+    content = r.json()["content"]
+    assert content.startswith(REPORT_DISCLAIMERS["en"] + "\n\n" + AI_HEADING["en"] + "\n\n")
+    assert "Clinician's entry" not in content
+
+
+# N2: the app's own label names are sent; an unlisted (renamed) label keeps one number everywhere and is named
+# for the clinician in the draft only.
+def _app_label_names():
+    names = set()
+    for path in (REPO / "frontend" / "src").rglob("*.ts*"):
+        if ".test." in path.name:
+            continue
+        names |= set(re.findall(r"\{\s*id:\s*\d+,\s*name:\s*'([^']+)'", path.read_text(encoding="utf-8")))
+    for path in (REPO / "backend" / "app").rglob("*.py"):
+        names |= set(re.findall(r'LabelInfo\(id=\d+, name="([^"]+)"', path.read_text(encoding="utf-8")))
+    from app.services.ai_segmentation_service import SYNTHSEG_LABELS
+    names |= {name for name, _color in SYNTHSEG_LABELS.values()}
+    return names
+
+
+@pytest.mark.unit
+def test_n2_every_label_name_the_app_ships_is_in_the_vocabulary():
+    from app.services.report_payload_guard import label_vocabulary
+    names = _app_label_names()
+    assert {"MS Lesion (Active)", "MS Lesion (Chronic)", "T2/FLAIR Hyperintensity", "Lesion (AI draft, unreviewed)",
+            "L Cerebral WM", "Periventricular"} <= names                     # the scan finds the presets
+    missing = sorted(n for n in names if n.casefold() not in label_vocabulary())
+    assert not missing, missing
+
+
+@pytest.mark.unit
+def test_n2_the_default_preset_labels_are_sent(route):
+    findings = _measurements()
+    findings["lesion_analysis"]["regions"] = {
+        "MS Lesion (Active)": {"lesion_count": 1, "total_volume_mm3": 5.0, "total_volume_ml": 0.005},
+        "MS Lesion (Chronic)": {"lesion_count": 3, "total_volume_mm3": 9.0, "total_volume_ml": 0.009},
+        "T2/FLAIR Hyperintensity": {"lesion_count": 2, "total_volume_mm3": 4.0, "total_volume_ml": 0.004}}
+    assert _post(route, findings).status_code == 200
+    prompt = route.provider.prompt()
+    for label in ("MS Lesion (Active)", "MS Lesion (Chronic)", "T2/FLAIR Hyperintensity"):
+        assert f"- {label}:" in prompt, label
+    assert "[unlisted label" not in prompt
+
+
+@pytest.mark.unit
+def test_n2_an_unlisted_label_keeps_one_number_and_is_named_only_in_the_draft(route):
+    findings = _measurements()
+    la = findings["lesion_analysis"]
+    la["regions"] = {"My A": {"lesion_count": 1, "total_volume_mm3": 5.0, "total_volume_ml": 0.005},
+                     "Periventricular": {"lesion_count": 1, "total_volume_mm3": 5.0, "total_volume_ml": 0.005},
+                     "My B": {"lesion_count": 1, "total_volume_mm3": 9.0, "total_volume_ml": 0.009}}
+    la["lesions"][0]["region"] = "My B"
+    la["lesions"][1]["region"] = "My A"
+    r = _post(route, findings)
+    assert r.status_code == 200, r.text
+    prompt = route.provider.prompt()
+    assert "- [unlisted label 1]:" in prompt and "- [unlisted label 2]:" in prompt and "- Periventricular:" in prompt
+    rows = [l for l in prompt.splitlines() if l.strip().startswith(("1 |", "2 |"))]
+    assert "| [unlisted label 2] |" in rows[0] and "| [unlisted label 1] |" in rows[1], rows
+    assert "My A" not in prompt and "My B" not in prompt and "(3)" not in prompt
+    content = r.json()["content"]
+    spans, bodies = _fenced(content)
+    assert any("[unlisted label 1] = My A" in b and "[unlisted label 2] = My B" in b for b in bodies), bodies
+    assert "My A" not in _outside(content, spans)
+
+
+# N3: a value that is not a number is reported as not available, never as 0.
+@pytest.mark.unit
+def test_n3_a_value_that_is_not_a_number_is_not_available_never_zero(route):
+    findings = _measurements()
+    findings["lesion_analysis"].update({"total_count": "2", "total_burden_mm3": "10.0"})
+    del findings["lesion_analysis"]["total_burden_ml"]
+    assert _post(route, findings).status_code == 200
+    prompt = route.provider.prompt()
+    assert "Total lesions: not available" in prompt
+    assert "Total burden: not available mm³ (not available mL)" in prompt
+    assert "Total lesions: 0" not in prompt and "Total burden: 0" not in prompt
+
+
+# N4: implausible values (dates, record numbers, phones put into number fields) refuse the request.
+IMPLAUSIBLE = [("lesion_analysis.lesions.0.centroid.z", 20250042), ("lesion_analysis.total_count", 20240304),
+               ("lesion_analysis.total_burden_mm3", 19751109), ("dis_assessment.active_voxels", 612345678),
+               ("lesion_analysis.regions.Periventricular.lesion_count", -1), ("zone_stats.zones.Periventricular.percentage", 150),
+               ("lesion_analysis.lesions.0.volume_ml", 99999), ("anomalies.0.confidence", 1.5)]
+
+
+def _set(findings, path, value):
+    target = findings
+    keys = path.split(".")
+    for k in keys[:-1]:
+        target = target[int(k)] if k.isdigit() else target[k]
+    target[keys[-1]] = value
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("path,value", IMPLAUSIBLE, ids=[f"{p}={v}" for p, v in IMPLAUSIBLE])
+def test_n4_an_implausible_value_refuses_the_request(route, path, value):
+    findings = _measurements()
+    _set(findings, path, value)
+    r = _post(route, findings)
+    assert r.status_code == 503, r.text
+    assert "nothing was sent" in r.text.lower() and "plausible" in r.text.lower()
+    assert route.provider.calls == [] and route.created == []
+
+
+@pytest.mark.unit
+def test_n4_normal_values_at_the_edges_are_accepted(route):
+    findings = _measurements()
+    findings["zone_stats"]["total_brain_voxels"] = 12_000_000          # 0.5 mm isotropic
+    findings["zone_stats"]["zones"]["Periventricular"]["percentage"] = 100.0
+    findings["lesion_analysis"]["lesions"][0]["centroid"] = {"z": 0, "y": 511, "x": 1023}
+    assert _post(route, findings, {**VOLUMETRY, "total_brain_volume_ml": 1650.0}).status_code == 200
+
+
+# N5: only words that can appear in the user prompt are exempt — not the system templates.
+@pytest.mark.unit
+def test_n5_exempt_words_are_those_of_the_user_prompt_only():
+    from app.services.brain_report_service import fixed_prompt_words
+    words = fixed_prompt_words()
+    for template_only in ("filippi", "will", "pons", "dawson", "mcdonald"):
+        assert template_only not in words, template_only
+    for prompt_word in ("periventricular", "white", "matter", "do", "unconfirmed"):
+        assert prompt_word in words, prompt_word
+
+
+# N6: the instruction about the clinician's entry only when something was typed.
+@pytest.mark.unit
+def test_n6_the_instruction_is_sent_only_when_something_was_typed(route):
+    assert _post(route, _measurements()).status_code == 200
+    assert "added to the draft by the application" not in route.provider.prompt()
+    route.provider.calls.clear()
+    assert _post(route, {**_measurements(), "technique": "3T"}).status_code == 200
+    assert "added to the draft by the application" in route.provider.prompt()
+
+
+# N8: all-digit record numbers do not collide with measurement numbers.
+def _legit_review_prompt():
+    from app.services.brain_report_service import BrainReportService
+    from app.services.report_payload_guard import provider_payload
+    from app.services.lesion_analysis_service import MAGNIMS_REGIONS
+    regions = list(MAGNIMS_REGIONS.values())
+    lesions = [{"id": i + 1, "region": regions[i % len(regions)], "volume_mm3": 12.5 * (i + 1), "volume_ml": 0.0125 * (i + 1),
+                "size_category": ("small", "medium", "large")[i % 3], "centroid": {"z": 10 + i, "y": 100 + i, "x": 80 + i}}
+               for i in range(40)]
+    f = {"lesion_analysis": {"total_count": 40, "total_burden_mm3": 12345.67, "total_burden_ml": 12.3457,
+                             "regions": {r: {"lesion_count": 7, "total_volume_mm3": 1234.5, "total_volume_ml": 1.2345} for r in regions},
+                             "size_distribution": {"small": 10, "medium": 20, "large": 10}, "lesions": lesions},
+         "zone_stats": {"total_brain_voxels": 1456789,
+                        "zones": {r: {"voxel_count": 123456, "percentage": 12.3} for r in regions[:4]}},
+         "dis_assessment": {"dis_met": True, "regions_with_lesions": 3, "total_dis_regions": 5, "has_active_lesions": True,
+                            "active_voxels": 1234567, "has_black_holes": True, "black_hole_voxels": 567}}
+    p = provider_payload(f, VOLUMETRY)
+    return BrainReportService()._build_findings_prompt(p.findings, p.volumetry, "en")
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("mrn", ["123456", "1234567", "1456789", "12345678"])
+def test_n8_all_digit_record_numbers_do_not_refuse_legitimate_measurements(mrn):
+    _guard(_legit_review_prompt(), _ids(mrn=mrn))
+
+
+# N9: no generator can write the withdrawn RC-007 statement again; the model name is the configured one.
+@pytest.mark.unit
+def test_n9_documents_name_the_configured_model():
+    from app.core.config import get_settings
+    text = (REPO / "docs/Technical_Documentation_MS_Brain_MRI_Viewer.md").read_text(encoding="utf-8")
+    assert "claude-3-5-sonnet" not in text and get_settings().CLAUDE_MODEL in text
+    generator = (REPO / "docs/iec62304/generate_audit_records.py").read_text(encoding="utf-8")
+    assert "strips PHI" not in generator
