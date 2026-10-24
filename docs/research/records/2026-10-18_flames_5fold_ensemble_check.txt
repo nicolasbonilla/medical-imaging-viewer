@@ -1,0 +1,6 @@
+mslesseg               n=115  Dice fold0 0.715 | mean single fold 0.718 | 5-fold ensemble 0.727  (median)  ensemble better in 72% of cases
+                              lesion F1 fold0 0.732 -> ensemble 0.744; false-positive lesions per scan fold0 13.1 -> ensemble 12.0
+ljubljana_clean        n= 10  Dice fold0 0.667 | mean single fold 0.661 | 5-fold ensemble 0.673  (median)  ensemble better in 70% of cases
+                              lesion F1 fold0 0.754 -> ensemble 0.788; false-positive lesions per scan fold0 10.7 -> ensemble 7.8
+ljubljana_in_training  n= 20  Dice fold0 0.771 | mean single fold 0.783 | 5-fold ensemble 0.785  (median)  ensemble better in 85% of cases
+                              lesion F1 fold0 0.768 -> ensemble 0.782; false-positive lesions per scan fold0 11.2 -> ensemble 9.3

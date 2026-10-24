@@ -1,0 +1,12 @@
+{
+    "channel_names": {
+        "0": "FLAIR"
+    },
+    "labels": {
+        "background": 0,
+        "Lesion": 1
+    },
+    "numTraining": 668,
+    "file_ending": ".nii.gz",
+    "overwrite_image_reader_writer": "SimpleITKIO"
+}

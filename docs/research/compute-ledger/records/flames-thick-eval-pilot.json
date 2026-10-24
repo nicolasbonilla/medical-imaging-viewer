@@ -1,0 +1,266 @@
+{
+ "row": {
+  "run_id": "flames-thick-eval-pilot",
+  "date_utc": "2026-10-22",
+  "project": "mstool-research",
+  "purpose": "FLAMeS-thick evaluation pilot: 5 scans (one per site), arm A model trained on Kaggle",
+  "paper_or_feature": "flames-thick",
+  "status": "ok",
+  "machine_type": "n2d-standard-4",
+  "vcpus": 4,
+  "memory_gb": 16.0,
+  "cpu_platform": "AMD Milan",
+  "cpu_model": "AMD EPYC 7B13",
+  "gpu": "",
+  "provisioning": "STANDARD",
+  "zone": "us-central1-c",
+  "start_utc": "2026-10-22T23:41:04Z",
+  "end_utc": "2026-10-22T23:49:02Z",
+  "wall_seconds": 478,
+  "vm_hours": 0.1328,
+  "setup_seconds": 171,
+  "compute_seconds": 306,
+  "items_ok": 5,
+  "items_failed": 0,
+  "median_seconds_per_item": 65.8,
+  "usd_per_hour_list": 0.17583,
+  "cost_usd_list": 0.0233,
+  "cost_usd_recorded": "0.0233",
+  "price_basis": "Cloud Billing catalog list price 2026-10-22 (cores+RAM+boot disk)",
+  "notes": "",
+  "_kind": "inference",
+  "machines": 1,
+  "purpose_es": "FLAMeS-thick evaluation pilot: 5 scans (one per site), arm A model trained on Kaggle",
+  "notes_es": ""
+ },
+ "plan": {
+  "run_id": "flames-thick-eval-pilot",
+  "purpose": "FLAMeS-thick evaluation pilot: 5 scans (one per site), arm A model trained on Kaggle",
+  "paper_or_feature": "flames-thick",
+  "created_utc": "2026-10-22T23:40:26Z",
+  "project": "mstool-research",
+  "zone": "us-central1-c",
+  "machine_type": "n2d-standard-4",
+  "spot": false,
+  "gpu": null,
+  "cpu_platform": "AMD Milan",
+  "provisioning": "STANDARD",
+  "max_hours": 1,
+  "metadata": {
+   "models": "ftP=flames-thick/train/flames-thick-a/model.tar.gz",
+   "case-ids": "mslesseg_P54 openms_patient16 ms3seg_001 muslim_01 pedims_P1_T1",
+   "hourly-rate": "0.17583",
+   "machine-desc": "n2d-standard-4",
+   "max-hours": "1"
+  },
+  "list_price": {
+   "date_utc": "2026-10-22T23:40:25Z",
+   "machine_type": "n2d-standard-4",
+   "region": "us-central1",
+   "spot": false,
+   "gpu": null,
+   "vcpus": 4,
+   "memory_gb": 16.0,
+   "usd_per_hour": 0.17583,
+   "parts": {
+    "cores": {
+     "qty": 4,
+     "sku_id": "A03E-E620-7389",
+     "description": "N2D AMD Instance Core running in Americas",
+     "unit": "h",
+     "usd": 0.027502
+    },
+    "ram_gb": {
+     "qty": 16.0,
+     "sku_id": "5535-6D2D-4B50",
+     "description": "N2D AMD Instance Ram running in Americas",
+     "unit": "GiBy.h",
+     "usd": 0.003686
+    },
+    "boot_disk": {
+     "qty": 50,
+     "sku_id": "6AE1-525F-8B80",
+     "description": "Balanced PD Capacity",
+     "unit": "GiBy.mo",
+     "usd": 0.1,
+     "usd_per_gib_hour": 0.00013698630136986303
+    }
+   }
+  },
+  "startup_script": "vm_flames_thick_eval.sh",
+  "git_commit": "c4fd2e5"
+ },
+ "runinfo": {
+  "run_id": "flames-thick-eval-pilot",
+  "wall_seconds": 478,
+  "rate_usd_per_h_metadata": "0.17583",
+  "cost_usd_estimate_metadata": "0.0233",
+  "hardware": {
+   "cpu_platform": "AMD Milan",
+   "cpu_model": "AMD EPYC 7B13",
+   "vcpus": "4",
+   "memory_gb": "15",
+   "os": "Ubuntu 22.04.5 LTS",
+   "machine_type": "n2d-standard-4",
+   "zone": "us-central1-c",
+   "provisioning": ""
+  },
+  "stages_utc": {
+   "boot": "2026-10-22T23:41:04Z",
+   "env_start": "2026-10-22T23:41:25Z",
+   "weights_start": "2026-10-22T23:43:18Z",
+   "datasets_start": "2026-10-22T23:43:25Z",
+   "cases_start": "2026-10-22T23:43:50Z",
+   "inference_start": "2026-10-22T23:43:55Z",
+   "inference_end": "2026-10-22T23:49:01Z",
+   "end": "2026-10-22T23:49:02Z"
+  },
+  "code_sha256": {
+   "flames_ensemble_driver.py": "04110979548d931f225e2a8ce00509b1ec76c1cb9a9016478f2e2fe3b79b1dc1",
+   "cohorts_extra.py": "e59073a68b909a75ea3c816ff5564acd863afb3a99e019b11adf282eee19f90f",
+   "extra_cohorts_stage.py": "c9756630946234813210ebc3e3650318f49b7100336ba4d189652dddea0bbc60",
+   "flames_thick.tar.gz": "67ff2fb1fb87c2594e867b215682bb5f1712fd8ea2befadaeb509f42d289c65f"
+  },
+  "models_sha256": {
+   "ftP": "54448dd08e447acec55635655bc097a284cabaa87404bc1b25f13ec78b8ef8cc"
+  }
+ },
+ "price": {
+  "date_utc": "2026-10-22T23:40:25Z",
+  "machine_type": "n2d-standard-4",
+  "region": "us-central1",
+  "spot": false,
+  "gpu": null,
+  "vcpus": 4,
+  "memory_gb": 16.0,
+  "usd_per_hour": 0.17583,
+  "parts": {
+   "cores": {
+    "qty": 4,
+    "sku_id": "A03E-E620-7389",
+    "description": "N2D AMD Instance Core running in Americas",
+    "unit": "h",
+    "usd": 0.027502
+   },
+   "ram_gb": {
+    "qty": 16.0,
+    "sku_id": "5535-6D2D-4B50",
+    "description": "N2D AMD Instance Ram running in Americas",
+    "unit": "GiBy.h",
+    "usd": 0.003686
+   },
+   "boot_disk": {
+    "qty": 50,
+    "sku_id": "6AE1-525F-8B80",
+    "description": "Balanced PD Capacity",
+    "unit": "GiBy.mo",
+    "usd": 0.1,
+    "usd_per_gib_hour": 0.00013698630136986303
+   }
+  }
+ },
+ "cost_record": {
+  "run_id": "flames-thick-eval-pilot",
+  "machine": "n2d-standard-4",
+  "seconds": "478",
+  "rate_usd_per_h": "0.17583",
+  "cost_usd_compute_estimate": "0.0233"
+ },
+ "manifest_summary": {
+  "versions": {
+   "python": "3.10.12",
+   "torch": "2.14.1+cpu",
+   "nnunetv2": "unknown",
+   "nibabel": "5.4.2",
+   "numpy": "2.2.6"
+  },
+  "threads": 4,
+  "tta": false,
+  "folds": [
+   0
+  ],
+  "checkpoints_sha256": {
+   "fold_0/checkpoint_final.pth": "24da7ea88e5751810e92eb40bf20d3691d07a7800accbdc1149ae3d48f9a471c"
+  },
+  "errors": [],
+  "started_utc": "2026-10-22T23:43:58Z",
+  "finished_utc": "2026-10-22T23:49:00Z"
+ },
+ "vm": {
+  "cpuPlatform": "AMD Milan",
+  "machineType": "https://www.googleapis.com/compute/v1/projects/mstool-research/zones/us-central1-c/machineTypes/n2d-standard-4",
+  "zone": "https://www.googleapis.com/compute/v1/projects/mstool-research/zones/us-central1-c",
+  "scheduling": {
+   "automaticRestart": true,
+   "instanceTerminationAction": "DELETE",
+   "maxRunDuration": {
+    "nanos": 0,
+    "seconds": "7200"
+   },
+   "onHostMaintenance": "MIGRATE",
+   "preemptible": false,
+   "provisioningModel": "STANDARD"
+  },
+  "creationTimestamp": "2026-10-22T16:40:31.526-07:00",
+  "labels": {
+   "job": "flames",
+   "project": "mstool",
+   "run": "flames-thick-eval-pilot"
+  },
+  "disks": [
+   {
+    "architecture": "X86_64",
+    "autoDelete": true,
+    "boot": true,
+    "deviceName": "persistent-disk-0",
+    "diskSizeGb": "50",
+    "guestOsFeatures": [
+     {
+      "type": "VIRTIO_SCSI_MULTIQUEUE"
+     },
+     {
+      "type": "SEV_CAPABLE"
+     },
+     {
+      "type": "SEV_SNP_CAPABLE"
+     },
+     {
+      "type": "SEV_LIVE_MIGRATABLE"
+     },
+     {
+      "type": "SEV_LIVE_MIGRATABLE_V2"
+     },
+     {
+      "type": "IDPF"
+     },
+     {
+      "type": "TDX_CAPABLE"
+     },
+     {
+      "type": "UEFI_COMPATIBLE"
+     },
+     {
+      "type": "GVNIC"
+     }
+    ],
+    "index": 0,
+    "interface": "SCSI",
+    "kind": "compute#attachedDisk",
+    "licenses": [
+     "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/licenses/ubuntu-2204-lts"
+    ],
+    "mode": "READ_WRITE",
+    "shieldedInstanceInitialState": {
+     "dbxs": [
+      {
+       "content": "2gcDBhMRFQAAAAAAAAAAABENAAAAAvEOndKvSt9o7kmKqTR9N1ZlpzCCDPUCAQExDzANBglghkgBZQMEAgEFADALBgkqhkiG9w0BBwGgggsIMIIFGDCCBACgAwIBAgITMwAAABNryScg3e1ZiAAAAAAAEzANBgkqhkiG9w0BAQsFADCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMB4XDTE2MDEwNjE4MzQxNVoXDTE3MDQwNjE4MzQxNVowgZUxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xDTALBgNVBAsTBE1PUFIxMDAuBgNVBAMTJ01pY3Jvc29mdCBXaW5kb3dzIFVFRkkgS2V5IEV4Y2hhbmdlIEtleTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKXiCkZgbboTnVZnS1h_JbnlcVst9wtFK8NQjTpeB9wirml3h-fzi8vzki0hSNBD2Dg49lGEvs4egyowmTsLu1TnBUH1f_Hi8Noa7fKXV6F93qYrTPajx5v9L7NedplWnMEPsRvJrQdrysTZwtoXMLYDhc8bQHI5nlJDfgqrB8JiC4A3vL9i19lkQOTq4PZb5AcVcE0wlG7lR_btoQN0g5B4_7pI2S_9mU1PXr1NBSEl48Kl4cJwO2GyvOVvxQ6wUSFTExmCBKrT3LnPU5lZY68n3MpZ5VY4skhrEt2dyf5bZNzkYTTouxC0n37OrMbGGq3tpv7JDD6E_Rfqua3dXYECAwEAAaOCAXIwggFuMBQGA1UdJQQNMAsGCSsGAQQBgjdPATAdBgNVHQ4EFgQUVsJIppTfox2XYoAJRIlnxAUOy2owUQYDVR0RBEowSKRGMEQxDTALBgNVBAsTBE1PUFIxMzAxBgNVBAUTKjMxNjMxKzJjNDU2Y2JjLTA1NDItNDdkOS05OWU1LWQzOWI4MTVjNTczZTAfBgNVHSMEGDAWgBRi_EPNoD6ky2cS0lvZVax7zLaKXzBTBgNVHR8ETDBKMEigRqBEhkJodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NybC9NaWNDb3JLRUtDQTIwMTFfMjAxMS0wNi0yNC5jcmwwYAYIKwYBBQUHAQEEVDBSMFAGCCsGAQUFBzAChkRodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NlcnRzL01pY0NvcktFS0NBMjAxMV8yMDExLTA2LTI0LmNydDAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQCGjTFLjxsKmyLESJueg0S2Cp8N7MOq2IALsitZHwfYw2jMhY9b9kmKvIdSqVna1moZ6_zJSOS_JY6HkWZr6dDJe9Lj7xiW_e4qPP-KDrCVb02vBnK4EktVjTdJpyMhxBMdXUcq1eGl6518oCkQ27tu0-WZjaWEVsEY_gpQj0ye2UA4HYUYgJlpT24oJRi7TeQ03Nebb-ZrUkbf9uxl0OVV_mg2R5FDwOc3REoRAgv5jnw6X7ha5hlRCl2cLF27TFrFIRQQT4eSM33eDiitXXpYmD13jqKeHhLVXr07QSwqvKe1o1UYokJngP0pTwoDnt2qRuLnZ71jw732dSPN9B57MIIF6DCCA9CgAwIBAgIKYQrRiAAAAAAAAzANBgkqhkiG9w0BAQsFADCBkTELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjE7MDkGA1UEAxMyTWljcm9zb2Z0IENvcnBvcmF0aW9uIFRoaXJkIFBhcnR5IE1hcmtldHBsYWNlIFJvb3QwHhcNMTEwNjI0MjA0MTI5WhcNMjYwNjI0MjA1MTI5WjCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxOi1ir-tVyawJsPq5_tXekQCXQcN2krldCrmsA_sbevsf7njWmMyfBEXTw7jC6c4FZOOxvXghLGamyzn9beR1gnh4sAEqKwwHN9I8wZQmmSnUX_IhU-PIIbO_i_hn_-CwO3pzc70U2piOgtDueIl_f4F-dTEFKsR4iOJjXC3pB1N7K7lnPoWwtfBy9ToxC_lme4kiwPsjfKL6sNK-0MREgt-tUeSbNzmBInr9TME6xABKnHl-YMTPP8lCS9odkb_uk--3K1xKliq-w7SeT3km2U7zCkqn_xyWaLrrpLv9jUTgMYC7ORfzJ12ze9jksGveUCEeYd_41Ko6J17B2mPFQIDAQABo4IBTzCCAUswEAYJKwYBBAGCNxUBBAMCAQAwHQYDVR0OBBYEFGL8Q82gPqTLZxLSW9lVrHvMtopfMBkGCSsGAQQBgjcUAgQMHgoAUwB1AGIAQwBBMAsGA1UdDwQEAwIBhjAPBgNVHRMBAf8EBTADAQH_MB8GA1UdIwQYMBaAFEVmUkPhflgRv9ZOniNVCDs6ImqoMFwGA1UdHwRVMFMwUaBPoE2GS2h0dHA6Ly9jcmwubWljcm9zb2Z0LmNvbS9wa2kvY3JsL3Byb2R1Y3RzL01pY0NvclRoaVBhck1hclJvb18yMDEwLTEwLTA1LmNybDBgBggrBgEFBQcBAQRUMFIwUAYIKwYBBQUHMAKGRGh0dHA6Ly93d3cubWljcm9zb2Z0LmNvbS9wa2kvY2VydHMvTWljQ29yVGhpUGFyTWFyUm9vXzIwMTAtMTAtMDUuY3J0MA0GCSqGSIb3DQEBCwUAA4ICAQDUhIj1FJQYAsoqPPsqkhwM16DR8ehSZqjuorV1epAAqi2kdlrqebe5N2pRexBk9uFk8gJnvveoG3i9us6IWGQM1lfIGaNfBdbbxtBpzkhLMrfrXdIw9cD1uLp4B6Mr_pvbNFaE7ILKrkElcJxr6f6QD9eWH-XnlB-yKgyNS_8oKRB799d8pdF2uQXIee0PkJKcwv7fb35sD3vUwUXdNFGWOQ_lXlbYGAWW9AemQrOgd_0IGfJxVsyfhiOkh8um_Vh-1GlnFZF-gfJ_E-UNi4o8h4Tr4869Q-WtLYSTjmorWnxE-lKqgcgtHLvgUt8AEfiaPcFgsOEztaOI0WUZChrnrHykwYKHTjixLw3FFIdv_Y0uvDm25-bD4OTNJ4TvlELvKYuQRkE7gRtn2PlDWWXLDbz9AJJP9HU7p6kk_FBBQHngLU8Kaid2blLtlml7rw_3hwXQRcKtUxSBH_swBKo3NmHaSmkbNNho7dYCz2yUDNPPbCJ5rbHwvAOiRmCpxAfCIYLx_fLoeTJgv9ispSIUS8rB2EvrfT9XNbLmT3W0sGADIlOukXkd1ptBHxWGVHCy3g01D3ywNHK6l2A78HnrorIcXaIWuIfF6Rv2tZclbzif45H6inmYw2kOt6McIAWX-MoUrgDXxPPAFBB1azSgG7WZYPNcsMVXTjbSMoS_njGCAcQwggHAAgEBMIGYMIGAMQswCQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSowKAYDVQQDEyFNaWNyb3NvZnQgQ29ycG9yYXRpb24gS0VLIENBIDIwMTECEzMAAAATa8knIN3tWYgAAAAAABMwDQYJYIZIAWUDBAIBBQAwDQYJKoZIhvcNAQEBBQAEggEAhabaxRIJ7nUZ-m__mIG0lII6yD-lxoeI8S83ZKTP8Qx5h5asySWl7420eGhna7zyaVRvVVIhkjOMIfcKr29LgzQpYDqPUc8aYAdGCsZKZGmHCMjEulnq5TDK79GKinzZfb2sAWXEJ68N8oNnY7faBKjHjmmJbAEz8ufE4DijgJ_NBov2xmhTZyNHQ7pB1iCdrEUGObzdJc0Qtmh3CNOEcmH0ukd8sTHE9acBBTFHS8dvreR_sP7dXClZJbJiWAFKvQn3EjCTiYizkZ4I_5xiqjHELht_ORQKN-Hnoqnl4kcRINhZRV7JlgAQDlBJLv3OTjShRO_ZWCdcu7PtwhweiSYWxMFMUJJArKlB-TaTQyiMDgAAAAAAADAAAAC9mvp3WQMyTb1gKPTnj3hLgLTZaTG_DQL9kaYeGdFPHaRS5m2yQIyoYE1BH5Jlnwq9mvp3WQMyTb1gKPTnj3hL9S-Do_qc-9aSD3IoJNvkA0U00luFByRrO5V9rG4bznq9mvp3WQMyTb1gKPTnj3hLxdnYoYbiyC0Jr6oqb38uc4cNPmT3LE4I72d5aoQPD729mvp3WQMyTb1gKPTnj3hLNjOE0U0fLgt4FWJkhMRZrVejGO9DliZgSNBYxaGbv3a9mvp3WQMyTb1gKPTnj3hLGuyEuEtsZaUSIKm-cYGWUjAhDWLW0zxImZxrKVorCga9mvp3WQMyTb1gKPTnj3hL5spo6UFGYprwP2nC-G5r72L5MLN8b7zIeLeN-YwDNOW9mvp3WQMyTb1gKPTnj3hLw6maRg2kZKBXw1htg8719K4ItxA5ee2JMnQt8O1TDGa9mvp3WQMyTb1gKPTnj3hLWPuUGu-VollDs_tfJRCg3z_kTFjJXgq4BIcpdWirl3G9mvp3WQMyTb1gKPTnj3hLU5HDovsRIQKmqh7cJa534Z9dbwnNCe6yUJkiv81Zkuq9mvp3WQMyTb1gKPTnj3hL1iYVfh1qcYvBJKuNony7ZQcsoDp7ayV9vcu9YPZe89G9mvp3WQMyTb1gKPTnj3hL0GPsKPZ-ulPxZC2_ff8zxqMq3YafYBP-Fi4sMvHL5W29mvp3WQMyTb1gKPTnj3hLKcbrUrQ8OqGLLNjtbqhgfO88-uG6_hFldVzy5hSESkS9mvp3WQMyTb1gKPTnj3hLkPvnDmnWM0CNPhcMaDLbstIJ4CclJ9-2PUnSlXKm9Ey9mvp3WQMyTb1gKPTnj3hLB17qBgWJVIugYLL-7RDaPCDH_psXzQJrlOimg7gRUji9mvp3WQMyTb1gKPTnj3hLB-bGqFhkb7HvxnkD_iixFgEfI2f-kua-KzaZnv850J69mvp3WQMyTb1gKPTnj3hLCd9fTlESCOx4uW0S0IEl_bYDho3jn29yknhSWZtlnCa9mvp3WQMyTb1gKPTnj3hLC7tDktqseribMKSsZXUxuXv6qwT5Cw2v5fm265CgY3S9mvp3WQMyTb1gKPTnj3hLDBiTOXYt8zarPdAGpGPfcVo5z7D0kkZcYA5sa9e9iYy9mvp3WQMyTb1gKPTnj3hLDQ2-ym8p7KBvMxp9cuSISxIJf7NImDoqFKDXP08QFA-9mvp3WQMyTb1gKPTnj3hLDcnz-5mWIUjDyoM2MnWNPtT8jQsAB7lbMeZSjyrNW_y9mvp3WQMyTb1gKPTnj3hLEG-s6s_s_U4wO3T0gKCAmOLQgCuTb47HdM4h8xaGaJy9mvp3WQMyTb1gKPTnj3hLF046C1tDxqYHu9NATwU0Hj3POWJnzpT4tQ4uI6nakgy9mvp3WQMyTb1gKPTnj3hLGDM0Kf8FYu2flwM-EUjc7uUtvi5JbVQQtc_WyGTS0Q-9mvp3WQMyTb1gKPTnj3hLK5nPJkIukv42X79Lww0nCGye4Ut6b_9E-y9rkAFpmTm9mvp3WQMyTb1gKPTnj3hLK78sp7jx2R8n7lK2-ypd0Em4WiubUpxdZmIGgQSwVfi9mvp3WQMyTb1gKPTnj3hLLHPZMyW6bcvlidSkxjxbk1VZ75L78FDtUMTiCFIG8X29mvp3WQMyTb1gKPTnj3hLLnCRZ4am93NRH6cYH6sPHXC1V8YyLqkjsqjTuStRr329mvp3WQMyTb1gKPTnj3hLMGYo-lR3MFcoukpGfefQOHpU9WnTdp_OXnXsidKNFZO9mvp3WQMyTb1gKPTnj3hLNgjtuvWtD0GkFKF3er8vr15nAzRnXsOZXmk1gp4MqtK9mvp3WQMyTb1gKPTnj3hLOEHSITaNFYPXXAoC5iFgOU1sTgpnYLb2B7kDYryFWwK9mvp3WQMyTb1gKPTnj3hLP86bn98-8J1UUrD5XuSBwrfwbXQ6c3lxVY5wE2rOPnO9mvp3WQMyTb1gKPTnj3hLQ5fayoOef2MHfLUMkt9DvC0vsqj1nyb8eg5L1Nl1FpK9mvp3WQMyTb1gKPTnj3hLR8wIYSfiBpqG4Dpr7yzUEPjFWm1r2zYhaMMbLOMqWt-9mvp3WQMyTb1gKPTnj3hLUYgx_nOCtRTQPhXGISKLirZUeb0Mv6PFwdD0jZwwYTW9mvp3WQMyTb1gKPTnj3hLWulJ6ohV65PkOdvGW9ouQoUsL99nifoUZzbjw0EPK1y9mvp3WQMyTb1gKPTnj3hLax0TgHjkQYqmjet7s14GYJLPR57rjOTNEufQcsy0L2a9mvp3WQMyTb1gKPTnj3hLbIhUR43VWeKTUbgmwGy4v-8rlK01ODWHctGT-C7RyhG9mvp3WQMyTb1gKPTnj3hLbxQo_3HJ2w7Vrx8ue7_Lq2R8wmXd9bKTzbYm9Qo6eF69mvp3WQMyTb1gKPTnj3hLcfKQb9IiSX5Uo0ZiqySX_MgQIHcP9RNo6ePZv8v9Y3W9mvp3WQMyTb1gKPTnj3hLcms-tlQEajDz-D2bls4D9nDpqAbRcIoDceYtxJ0sI8G9mvp3WQMyTb1gKPTnj3hLcuC9GGfPXZ1WqxWK3zvdvIK_MqjYqh2MXi9t8pQo1ti9mvp3WQMyTb1gKPTnj3hLeCevmTYs-vBxfa3ksb_gQ4rRccFa3cJIt1v4yqRLssW9mvp3WQMyTb1gKPTnj3hLgai5ZbuE04drlCmpVIHMlVMYz6oUEtgIyKM7_TP_8OS9mvp3WQMyTb1gKPTnj3hLgts7zrT2CEPOnZfD0YfNm1lBzT3oEA5YbyvaVjdXX2e9mvp3WQMyTb1gKPTnj3hLiVqXhfYXyh1-1E_BoUcLcfPxIjhi2f-dzDri35IWPa-9mvp3WQMyTb1gKPTnj3hLitZIWfGVtfWNr6qUC2phZ6zWeohuj0aTZBdyIcVZRbm9mvp3WQMyTb1gKPTnj3hLi_Q0tJ4AzPcVAqLNkAhlywHsOz2gPDW-UF_fe9Vj9SG9mvp3WQMyTb1gKPTnj3hLjY6iic_nChwHq3NlyyjuUe3TPPJQbeiI-63WDr-ASBy9mvp3WQMyTb1gKPTnj3hLmZjTY8SRvha9dLoQuU2SkQAWEXNv3KZDo2ZkvA8xWkK9mvp3WQMyTb1gKPTnj3hLnkppFzFhaC5V_ej-9WDriOwf_tyvBAAfZsDK9weytzS9mvp3WQMyTb1gKPTnj3hLprUVHzZV06KvDUcnWXlr5KQgDlSVp9hpdUxISIV0CKe9mvp3WQMyTb1gKPTnj3hLp_MvUI1OsP6tmgh--U7RugrsXeb372_wpiuTvt9dRY29mvp3WQMyTb1gKPTnj3hLrWgm4ZRtJtPq82hciNl9hd47Tcs9DuKugccFYNE8VyC9mvp3WQMyTb1gKPTnj3hLruuuMVEnEnPtlaouZxE57TGphWcwOjMimPg3CanVWqG9mvp3WQMyTb1gKPTnj3hLr-IDCvt9LNoT-fozOgLjT2dRr-wRsBDbzUQf30xAArO9mvp3WQMyTb1gKPTnj3hLtU8e5jZjH61oBY07CTcDGsG5DMsXBio5HMpor9vkDVW9mvp3WQMyTb1gKPTnj3hLuPB42YOiSsQzIWOTiDUUzZMsM68Y591wiEyCNfQnVza9mvp3WQMyTb1gKPTnj3hLuXoIiQWcA1_x1UtttTsRuXZmaNn5VSR8AosoN9egTNm9mvp3WQMyTb1gKPTnj3hLvIemaOgZZkictQjugFGDwZ5qzSTPF3mcoGLS44TaDqe9mvp3WQMyTb1gKPTnj3hLxAm9rEd1rdjbkqoitbcY-4yUoUYsH-mkFrldijOIwvy9mvp3WQMyTb1gKPTnj3hLxhfBqLHuKoEcKLWoG0yD18mLWwwnKB1hAgfr5pLCln-9mvp3WQMyTb1gKPTnj3hLyQ8zZhe45_mDl1QTyZfxC3PrJn_YoQy5472_xmer24u9mvp3WQMyTb1gKPTnj3hLy2uFi0DToJh2WBW1ksFRSklgT6_WCBnaiNenbpd4_ve9mvp3WQMyTb1gKPTnj3hLzjv6vlnWfOisjf1KFvfEPvnCJFE_vGVZV9c1-in1QM69mvp3WQMyTb1gKPTnj3hL2MvrlzX1Zys2fk-WzcdJaWFdFwdK6WxyTULOAhb48_q9mvp3WQMyTb1gKPTnj3hL6Swi6ztWQtZcHsLK8kfSWUc47rt_s4QaRJVvWeKw0fq9mvp3WQMyTb1gKPTnj3hL_d1uPSnqhMd0Pa1KG9vHALX-wbOR-TJAkIasxx3W29i9mvp3WQMyTb1gKPTnj3hL_mOoT3gsydP88sz5_BH70Ddgh4dY0mKF7RJmm9xubQG9mvp3WQMyTb1gKPTnj3hL_s-yMtEumUttSF0scWdyiqVSWYStXKYedRYiHweaFDa9mvp3WQMyTb1gKPTnj3hLyhcdYUqNfhIck5SM0P5V05mB-dEaqW4DRQpBUifCxlu9mvp3WQMyTb1gKPTnj3hLVbmbDeU9vP5IWqnHN88_thbvPZH6tZmqfKsZ7adjtbq9mvp3WQMyTb1gKPTnj3hLd90ZD6MNiP9eOwEaCuYeYgl4DBMLU17Lh-bwiIoLay-9mvp3WQMyTb1gKPTnj3hLyDyxOSKtmfVgdEZ13TfMlNytWh_Lpkcv7jQRcdk56IS9mvp3WQMyTb1gKPTnj3hLOwKHUz4Mw9DsGqgjy_CpQarYchV50cSZgC3Rw6Y2uKm9mvp3WQMyTb1gKPTnj3hLk5ru9PX6UeIzQMPy5JBIzohyUmr991LDp_Oj8ryfYEm9mvp3WQMyTb1gKPTnj3hLZFdb2RJ4mi4UrVb2NB9Sr2v4DPlEAHhZdenwTi1k10W9mvp3WQMyTb1gKPTnj3hLRcfIrnUKz7tI_DdSfWQS3WRNrtiRPM2KJMlNhWln344=",
+       "fileType": "BIN"
+      }
+     ]
+    },
+    "source": "https://www.googleapis.com/compute/v1/projects/mstool-research/zones/us-central1-c/disks/flames-thick-eval-pilot",
+    "type": "PERSISTENT"
+   }
+  ]
+ }
+}

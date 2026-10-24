@@ -1,0 +1,129 @@
+{
+ "study": "FLAMeS-thick (docs/research/flames-thick/PROTOCOL.md)",
+ "platform": "Kaggle free GPU (2 x Tesla T4), account nicolasbonilna, private kernels",
+ "models": {
+  "flames-thick-a": {
+   "arm": "thick",
+   "trainer": "nnUNetTrainerFLAMeSThick",
+   "status": "completed",
+   "epochs": 300,
+   "model_tar_gz": {
+    "sha256": "54448dd08e447acec55635655bc097a284cabaa87404bc1b25f13ec78b8ef8cc",
+    "bytes": 233935096,
+    "top_folder": "Dataset501_MSLesSegFT/nnUNetTrainerFLAMeSThick__nnUNetPlans__3d_fullres",
+    "local_path": "data/models/flames-thick/flames-thick-a/model.tar.gz",
+    "kaggle_output": "nicolasbonilna/mstool-research-flames-thick-full-s3: store/flames-thick/train/flames-thick-a/model.tar.gz"
+   },
+   "internal_validation_final": {
+    "dice_mean_15_scans": 0.7366,
+    "note": "nnU-Net final validation (mirroring) on the 15 internal MSLesSeg-train validation scans (11 patients); unchanged FLAMeS fold 0 on the same scans without mirroring: mean Dice 0.689"
+   },
+   "pseudo_dice_first_last": [
+    0.819,
+    0.82
+   ],
+   "median_s_per_epoch": 232.41,
+   "sessions": {
+    "full-s1": {
+     "epochs": [
+      0,
+      18
+     ],
+     "quota_h": 1.322,
+     "git_commit": "73e9651466a85447c36f3c6d1bffb48f0eed7615",
+     "code_sha256": "8a269cc6572bec0347f0b0d3e7951f2eee68cd89388074f4ef02ec346c906622"
+    },
+    "full-s2": {
+     "epochs": [
+      18,
+      180
+     ],
+     "quota_h": 10.818,
+     "git_commit": "aba9a54e98ea90c85fe062c40b75640417053337",
+     "code_sha256": "8a269cc6572bec0347f0b0d3e7951f2eee68cd89388074f4ef02ec346c906622"
+    },
+    "full-s3": {
+     "epochs": [
+      180,
+      300
+     ],
+     "quota_h": 8.568,
+     "git_commit": "7a4c64a0e1c6aa57c087710a81a6846f96a63080",
+     "code_sha256": "da72174224c628f5fa18cae5d40e998a32a19085e5bf8e863d8516446f9ede94"
+    }
+   },
+   "flames_fold0_sha256": "4fc7db24e7c1541b59023df2a2f498a964eb629fe38f4eaec763297dd3fdf861",
+   "init": "strict FLAMeS fold-0 load (292 tensors), then resumes",
+   "gpu": "Tesla T4",
+   "torch": "2.14.1+cu126",
+   "nnunetv2": "2.8.1",
+   "python": "3.10.12"
+  },
+  "flames-thick-b": {
+   "arm": "ft",
+   "trainer": "nnUNetTrainerFLAMeSFT",
+   "status": "completed",
+   "epochs": 300,
+   "model_tar_gz": {
+    "sha256": "9b2aab1d7a5a05603042b4fdc87c86503637edaf9dc9f535d2de4e30ebe71c62",
+    "bytes": 233888774,
+    "top_folder": "Dataset501_MSLesSegFT/nnUNetTrainerFLAMeSFT__nnUNetPlans__3d_fullres",
+    "local_path": "data/models/flames-thick/flames-thick-b/model.tar.gz",
+    "kaggle_output": "nicolasbonilna/mstool-research-flames-thick-full-s3: store/flames-thick/train/flames-thick-b/model.tar.gz"
+   },
+   "internal_validation_final": {
+    "dice_mean_15_scans": 0.7567,
+    "note": "nnU-Net final validation (mirroring) on the 15 internal MSLesSeg-train validation scans (11 patients); unchanged FLAMeS fold 0 on the same scans without mirroring: mean Dice 0.689"
+   },
+   "pseudo_dice_first_last": [
+    0.839,
+    0.843
+   ],
+   "median_s_per_epoch": 218.58,
+   "sessions": {
+    "full-s1": {
+     "epochs": [
+      0,
+      16
+     ],
+     "quota_h": 1.322,
+     "git_commit": "73e9651466a85447c36f3c6d1bffb48f0eed7615",
+     "code_sha256": "8a269cc6572bec0347f0b0d3e7951f2eee68cd89388074f4ef02ec346c906622"
+    },
+    "full-s2": {
+     "epochs": [
+      16,
+      191
+     ],
+     "quota_h": 10.818,
+     "git_commit": "aba9a54e98ea90c85fe062c40b75640417053337",
+     "code_sha256": "8a269cc6572bec0347f0b0d3e7951f2eee68cd89388074f4ef02ec346c906622"
+    },
+    "full-s3": {
+     "epochs": [
+      191,
+      300
+     ],
+     "quota_h": 8.568,
+     "git_commit": "7a4c64a0e1c6aa57c087710a81a6846f96a63080",
+     "code_sha256": "da72174224c628f5fa18cae5d40e998a32a19085e5bf8e863d8516446f9ede94"
+    }
+   },
+   "flames_fold0_sha256": "4fc7db24e7c1541b59023df2a2f498a964eb629fe38f4eaec763297dd3fdf861",
+   "init": "strict FLAMeS fold-0 load (292 tensors), then resumes",
+   "gpu": "Tesla T4",
+   "torch": "2.14.1+cu126",
+   "nnunetv2": "2.8.1",
+   "python": "3.10.12"
+  }
+ },
+ "code_note": "full-s3 used a different code bundle SHA-256 only because research/flames_thick/tests/test_kaggle_run.py changed (git diff 73e9651..7a4c64a); the training code is identical in all sessions",
+ "quota_hours": {
+  "pilot": 0.283,
+  "full-s1": 1.322,
+  "full-s2": 10.818,
+  "full-s3": 8.568,
+  "kaggle_reported_total": 21.001,
+  "cost_usd": 0
+ }
+}

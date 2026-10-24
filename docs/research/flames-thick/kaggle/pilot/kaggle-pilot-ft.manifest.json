@@ -1,0 +1,424 @@
+{
+ "run_id": "kaggle-pilot-ft",
+ "kind": "training",
+ "arm": "ft",
+ "trainer": "nnUNetTrainerFLAMeSFT",
+ "purpose": "FLAMeS-thick Kaggle pilot: 2 MSLesSeg-train scans, short epochs, kill + session hand-over resume, timing of both arms side by side on the 2 T4",
+ "status": "completed",
+ "started_utc": "2026-10-21T17:04:07Z",
+ "updated_utc": "2026-10-21T17:10:34Z",
+ "image": "kaggle kernel nicolasbonilna/mstool-research-flames-thick-pilot-s2 (system image) + uv venv from requirements-gpu.lock",
+ "git_commit": "e5d8ed70ce495c874269799552f7b3123b2f6ea9",
+ "hardware": {
+  "host": "640c86ea0ad4",
+  "machine_type": "kaggle-NvidiaTeslaT4",
+  "gpu_requested": "NVIDIA Tesla T4 (GPU 1 of 2)",
+  "gpu": "Tesla T4, 15360 MiB, 580.178.04\nTesla T4, 15360 MiB, 580.178.04",
+  "cpu_model": "Intel(R) Xeon(R) CPU @ 2.00GHz",
+  "vcpus": 4,
+  "memory_gb": "31.3",
+  "zone": "",
+  "cpu_platform": "",
+  "provisioning": "Kaggle free GPU quota",
+  "os": "Linux-6.18.48+-x86_64-with-glibc2.39",
+  "cuda_visible_devices": "1",
+  "selftest": {
+   "torch": "2.14.1+cu126",
+   "cuda_build": "12.6",
+   "device_name": "Tesla T4",
+   "capability": [
+    7,
+    5
+   ],
+   "arch_list": [
+    "sm_50",
+    "sm_60",
+    "sm_70",
+    "sm_75",
+    "sm_80",
+    "sm_86",
+    "sm_90"
+   ],
+   "cudnn": 91002
+  }
+ },
+ "versions": {
+  "python": "3.10.12",
+  "torch": "2.14.1+cu126",
+  "nnunetv2": "2.8.1",
+  "batchgeneratorsv2": "0.3.6",
+  "numpy": "2.2.6",
+  "nibabel": "5.4.2",
+  "SimpleITK": "2.5.6",
+  "blosc2": "4.3.3",
+  "pip_freeze": [
+   "acvl_utils==0.2.6",
+   "annotated-types==0.8.0",
+   "anyio==4.15.1",
+   "batchgenerators==0.25.5",
+   "batchgeneratorsv2==0.3.6",
+   "blosc2==4.3.3",
+   "certifi==2026.7.22",
+   "cffi==2.1.1",
+   "charset-normalizer==3.5.2",
+   "click==8.5.0",
+   "cloudpickle==3.1.2",
+   "connected-components-3d==4.1.0",
+   "contourpy==1.3.2",
+   "cryptography==50.0.2",
+   "cuda-bindings==12.9.10",
+   "cuda-pathfinder==1.8.3",
+   "cuda-toolkit==12.6.3",
+   "cycler==0.12.1",
+   "dynamic_network_architectures==0.4.4",
+   "einops==0.8.2",
+   "exceptiongroup==1.3.1",
+   "filelock==3.32.3",
+   "fonttools==4.65.0",
+   "fsspec==2026.7.0",
+   "future==1.0.0",
+   "google-api-core==2.42.0",
+   "google-auth==2.62.0",
+   "google-cloud-core==2.8.0",
+   "google-cloud-storage==3.17.1",
+   "google-crc32c==1.9.0",
+   "google-resumable-media==2.11.0",
+   "googleapis-common-protos==1.75.5",
+   "graphviz==0.21",
+   "h11==0.16.0",
+   "hf-xet==1.7.0",
+   "httpcore2==2.13.1",
+   "httpx2==2.13.1",
+   "huggingface_hub==2.2.0",
+   "idna==3.20",
+   "imagecodecs==2025.3.30",
+   "ImageIO==2.38.0",
+   "importlib_resources==7.1.0",
+   "Jinja2==3.1.6",
+   "joblib==1.6.0",
+   "kiwisolver==1.5.1",
+   "lazy-loader==0.6",
+   "linecache2==1.0.0",
+   "MarkupSafe==3.0.3",
+   "matplotlib==3.10.9",
+   "mpmath==1.3.0",
+   "msgpack==1.2.3",
+   "ndindex==1.10.1",
+   "networkx==3.4.2",
+   "nibabel==5.4.2",
+   "nnunetv2==2.8.1",
+   "numexpr==2.14.1",
+   "numpy==2.2.6",
+   "nvidia-cublas-cu12==12.6.4.1",
+   "nvidia-cuda-cupti-cu12==12.6.80",
+   "nvidia-cuda-nvrtc-cu12==12.6.85",
+   "nvidia-cuda-runtime-cu12==12.6.77",
+   "nvidia-cudnn-cu12==9.10.2.21",
+   "nvidia-cufft-cu12==11.3.0.4",
+   "nvidia-cufile-cu12==1.11.1.6",
+   "nvidia-curand-cu12==10.3.7.77",
+   "nvidia-cusolver-cu12==11.7.1.2",
+   "nvidia-cusparse-cu12==12.5.4.2",
+   "nvidia-cusparselt-cu12==0.7.1",
+   "nvidia-nccl-cu12==2.29.3",
+   "nvidia-nvjitlink-cu12==12.9.86",
+   "nvidia-nvshmem-cu12==3.4.5",
+   "nvidia-nvtx-cu12==12.6.77",
+   "opentelemetry-api==1.45.1",
+   "packaging==26.3",
+   "pandas==2.3.3",
+   "pillow==12.3.0",
+   "proto-plus==1.29.0",
+   "protobuf==7.36.2",
+   "pyasn1==0.6.4",
+   "pyasn1_modules==0.4.2",
+   "pycparser==3.11",
+   "pydantic==2.14.1",
+   "pydantic_core==2.50.1",
+   "pyparsing==3.3.3",
+   "python-dateutil==2.9.0.post0",
+   "pytz==2026.5",
+   "PyYAML==6.0.3",
+   "requests==2.34.2",
+   "safetensors==0.8.0",
+   "scikit-image==0.25.2",
+   "scikit-learn==1.7.2",
+   "scipy==1.15.3",
+   "seaborn==0.13.2",
+   "simpleitk==2.5.6",
+   "six==1.17.0",
+   "sympy==1.14.0",
+   "threadpoolctl==3.7.0",
+   "tifffile==2025.5.10",
+   "timm==1.0.22",
+   "tomli==2.5.0",
+   "torch==2.14.1+cu126",
+   "torchvision==0.29.1+cu126",
+   "tqdm==4.70.1",
+   "traceback2==1.4.0",
+   "triton==3.8.0",
+   "truststore==0.10.5",
+   "typing-inspection==0.4.4",
+   "typing_extensions==4.16.0",
+   "tzdata==2026.5",
+   "unittest2==1.1.0",
+   "urllib3==2.8.0",
+   "yacs==0.1.8"
+  ]
+ },
+ "inputs": {
+  "flames_fold0_checkpoint_sha256": "4fc7db24e7c1541b59023df2a2f498a964eb629fe38f4eaec763297dd3fdf861",
+  "flames_weights_zip": {
+   "object": "kaggle dataset (fold-0 files of the Zenodo zip)",
+   "source": {
+    "doi": "10.5281/zenodo.17955359",
+    "url": "https://zenodo.org/api/records/17955359/files/Dataset004_WML.zip/content",
+    "file": "Dataset004_WML.zip",
+    "bytes": 2351319537,
+    "md5": "8b90b789d6ceca1886f42fa1724a08cc",
+    "md5_publisher": "8b90b789d6ceca1886f42fa1724a08cc",
+    "sha256": "943f49d4997fc752322f0892b4aa6dcfce64f99a8a8c445d38785f54af09c277",
+    "licence": "CC BY 4.0"
+   },
+   "files_sha256_checked": true
+  },
+  "mslesseg_zip": {
+   "object": "kaggle dataset (MSLesSeg train split of the Figshare zip)",
+   "sha256": "d1f1ab8d691f4efc01f9389b54468544b9461f5fa2dee4adc67294e0eb3808eb",
+   "bytes": 346297191,
+   "members_sha256_checked": 186,
+   "source": {
+    "doi": "10.6084/m9.figshare.27919209.v1",
+    "url": "https://ndownloader.figshare.com/files/52771814",
+    "file": "MSLesSeg Dataset.zip",
+    "bytes": 1473284755,
+    "md5": "cb30cfb13b0981443c300a5e51dd91cd",
+    "md5_publisher": "cb30cfb13b0981443c300a5e51dd91cd",
+    "sha256": "7a32c86090c1663e11f8c65642de36c77653c3cfce6284162740bbe092fb4db5",
+    "licence": "CC BY 4.0"
+   },
+   "matches_figshare_size": true
+  },
+  "model_export": {
+   "object": "flames-thick/train/kaggle-pilot-ft/model.tar.gz",
+   "sha256": "18a8211a9d1c11d713c5f6fd17619891304889fdd11ac9460252dff78f8e215e",
+   "bytes": 233391240,
+   "top_folder": "Dataset501_MSLesSegFT/nnUNetTrainerFLAMeSFT__nnUNetPlans__3d_fullres"
+  }
+ },
+ "training_cases": {
+  "mslesseg_P1_T1": {
+   "flair_member": "MSLesSeg Dataset/train/P1/T1/P1_T1_FLAIR.nii.gz",
+   "mask_member": "MSLesSeg Dataset/train/P1/T1/P1_T1_MASK.nii.gz",
+   "flair_sha256": "b228ba2c5ed0b77ecd7a9bff6a635568827d9686add4ae4b01f1aad4c199750a",
+   "mask_sha256": "74316374a03c34049eecc78b08abb9481837f6e285bcfe137ed89d041d6defb3",
+   "shape": [
+    182,
+    218,
+    182
+   ],
+   "zooms": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "lesion_voxels": 20674
+  },
+  "mslesseg_P2_T1": {
+   "flair_member": "MSLesSeg Dataset/train/P2/T1/P2_T1_FLAIR.nii.gz",
+   "mask_member": "MSLesSeg Dataset/train/P2/T1/P2_T1_MASK.nii.gz",
+   "flair_sha256": "d6ea962cd71d06aacdfc15053e72138a8b519e3e2167a96462d35aeeec04db28",
+   "mask_sha256": "40a55032f4f22ef6de91bf66a03b19293352711f6d2af0baa91fa45695031382",
+   "shape": [
+    182,
+    218,
+    182
+   ],
+   "zooms": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "lesion_voxels": 2261
+  }
+ },
+ "split": {
+  "fold": 0,
+  "train": [
+   "mslesseg_P1_T1"
+  ],
+  "val": [
+   "mslesseg_P2_T1"
+  ],
+  "seed": 12345,
+  "n_splits": 2
+ },
+ "schedule": {
+  "FT_EPOCHS": "6",
+  "FT_ITERS": "60",
+  "FT_VAL_ITERS": "10",
+  "FT_SAVE_EVERY": "1",
+  "FT_INITIAL_LR": 0.001,
+  "FT_WARMUP_EPOCHS": "1",
+  "nnUNet_n_proc_DA": null,
+  "nnUNet_compile": "f",
+  "FT_LOCAL_TEST_PATCH": null,
+  "FT_CASE_IDS": "mslesseg_P1_T1 mslesseg_P2_T1",
+  "FT_KILL_TEST_AFTER_EPOCH": null
+ },
+ "thick_augmentation": null,
+ "init_source": {
+  "kind": "checkpoint",
+  "resumed_at_epoch": 2
+ },
+ "stop": null,
+ "pause": null,
+ "platform": "kaggle-kernel",
+ "kill_test": null,
+ "budget": {
+  "attempts": 2,
+  "billed_seconds_estimate": 680.4,
+  "rate_usd_per_h_list": 0.0,
+  "safety_factor": 1.0,
+  "cost_usd_list_estimate": 0.0,
+  "cost_usd_guard_estimate": 0.0
+ },
+ "attempts": [
+  {
+   "attempt_id": "20261021T164113Z-b1880f19b299",
+   "start_utc": "2026-10-21T16:41:13Z",
+   "heartbeat_utc": "2026-10-21T16:46:06Z",
+   "end_utc": "2026-10-21T16:46:06Z",
+   "image": "kaggle kernel nicolasbonilna/mstool-research-flames-thick-pilot-s1 (system image) + uv venv from requirements-gpu.lock",
+   "git_commit": "22ecd8d9016832b1e7e0d637c012c42f7967d420"
+  },
+  {
+   "attempt_id": "20261021T170407Z-640c86ea0ad4",
+   "start_utc": "2026-10-21T17:04:07Z",
+   "heartbeat_utc": "2026-10-21T17:10:34Z",
+   "end_utc": "2026-10-21T17:10:34Z",
+   "image": "kaggle kernel nicolasbonilna/mstool-research-flames-thick-pilot-s2 (system image) + uv venv from requirements-gpu.lock",
+   "git_commit": "e5d8ed70ce495c874269799552f7b3123b2f6ea9",
+   "live": false
+  }
+ ],
+ "cases": [
+  {
+   "case": "epoch_0000",
+   "seconds": 82.44,
+   "ok": true
+  },
+  {
+   "case": "epoch_0001",
+   "seconds": 50.52,
+   "ok": true
+  },
+  {
+   "case": "epoch_0002",
+   "seconds": 102.2,
+   "ok": true
+  },
+  {
+   "case": "epoch_0003",
+   "seconds": 50.11,
+   "ok": true
+  },
+  {
+   "case": "epoch_0004",
+   "seconds": 50.46,
+   "ok": true
+  },
+  {
+   "case": "epoch_0005",
+   "seconds": 50.26,
+   "ok": true
+  }
+ ],
+ "epochs": [
+  {
+   "epoch": 0,
+   "seconds": 82.44,
+   "lr": 0.001,
+   "train_loss": -0.8436737656593323,
+   "val_loss": -0.2701461911201477,
+   "pseudo_dice": [
+    0.2700090706348419
+   ],
+   "train_seconds": 79.81,
+   "val_seconds": 2.63,
+   "iters": 60,
+   "val_iters": 10
+  },
+  {
+   "epoch": 1,
+   "seconds": 50.52,
+   "lr": 0.001,
+   "train_loss": -0.8807399272918701,
+   "val_loss": -0.2572926878929138,
+   "pseudo_dice": [
+    0.27880918979644775
+   ],
+   "train_seconds": 47.89,
+   "val_seconds": 2.63,
+   "iters": 60,
+   "val_iters": 10
+  },
+  {
+   "epoch": 2,
+   "seconds": 102.2,
+   "lr": 0.0008180521460508585,
+   "train_loss": -0.8964573740959167,
+   "val_loss": -0.2529091536998749,
+   "pseudo_dice": [
+    0.26600173115730286
+   ],
+   "train_seconds": 99.6,
+   "val_seconds": 2.6,
+   "iters": 60,
+   "val_iters": 10
+  },
+  {
+   "epoch": 3,
+   "seconds": 50.11,
+   "lr": 0.0006314458674893553,
+   "train_loss": -0.9047863483428955,
+   "val_loss": -0.2676139771938324,
+   "pseudo_dice": [
+    0.29580458998680115
+   ],
+   "train_seconds": 47.47,
+   "val_seconds": 2.64,
+   "iters": 60,
+   "val_iters": 10
+  },
+  {
+   "epoch": 4,
+   "seconds": 50.46,
+   "lr": 0.00043838329055408696,
+   "train_loss": -0.9057289361953735,
+   "val_loss": -0.22732634842395782,
+   "pseudo_dice": [
+    0.24585875868797302
+   ],
+   "train_seconds": 47.83,
+   "val_seconds": 2.63,
+   "iters": 60,
+   "val_iters": 10
+  },
+  {
+   "epoch": 5,
+   "seconds": 50.26,
+   "lr": 0.00023492378861760376,
+   "train_loss": -0.9094559550285339,
+   "val_loss": -0.20591814815998077,
+   "pseudo_dice": [
+    0.2386126071214676
+   ],
+   "train_seconds": 47.64,
+   "val_seconds": 2.62,
+   "iters": 60,
+   "val_iters": 10
+  }
+ ],
+ "errors": []
+}

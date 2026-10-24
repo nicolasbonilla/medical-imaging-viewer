@@ -1,0 +1,29 @@
+FLAMeS-thick — local end-to-end run of the training-job code path (CPU, local folder as the bucket)
+Command: python -m pytest research/flames_thick/tests/test_e2e_local.py -v  (env FLAMES_THICK_E2E_CKPT, FLAMES_THICK_E2E_MSLESSEG)
+Machine: Windows 11 laptop, AMD 16 vCPU, 15.4 GB RAM; torch 2.14.1+cpu, nnunetv2 2.8.1, batchgeneratorsv2 0.3.6
+Inputs: real FLAMeS fold-0 checkpoint (Zenodo 17955359, SHA-256 4fc7db24...), real MSLesSeg train P1_T1, P2_T1, P3_T1 + test P54 (must be ignored)
+Local-only deviation: patch 64x64x64 (FT_LOCAL_TEST_PATCH; refused on GPU) because CPU back-propagation of the 112x128x160 patch
+exhausts 15 GB RAM (access violation inside oneDNN, observed twice); validation without mirroring in this mode.
+
+================== 3 passed, 2 warnings in 598.90s (0:09:58) ==================
+
+== run e2e-thick: status completed
+  training cases: ['mslesseg_P1_T1', 'mslesseg_P2_T1', 'mslesseg_P3_T1']; split: train ['mslesseg_P2_T1', 'mslesseg_P3_T1'] / val ['mslesseg_P1_T1']
+  init: {'kind': 'checkpoint', 'resumed_at_epoch': 1}
+  kill test: {'killed_after_epoch': 0, 'utc': '2026-10-21T04:59:48Z', 'worker_returncode': 15, 'resumed_at_epoch': 1, 'ok': True}
+  thick augmentation: axis_map {'axial': 1, 'coronal': 2, 'sagittal': 0}, spacing [1.0, 0.9000000059604645, 0.9000000059604645], cases checked 3
+  epoch 0: 21.2 s (train 19.48 s / 2 it, val 1.72 s), lr 0.001000, train loss -0.4650, val loss -0.6690, pseudo-Dice [0.7585185170173645]
+  epoch 1: 20.35 s (train 18.59 s / 2 it, val 1.75 s), lr 0.001000, train loss -0.3638, val loss -0.7908, pseudo-Dice [0.8383769392967224]
+  epoch 2: 21.69 s (train 19.84 s / 2 it, val 1.83 s), lr 0.000536, train loss -0.5521, val loss -0.6585, pseudo-Dice [0.8109832406044006]
+  attempts: 1; budget: {'attempts': 1, 'billed_seconds_estimate': 676.7, 'rate_usd_per_h_list': 0.43, 'safety_factor': 1.15, 'cost_usd_list_estimate': 0.0808, 'cost_usd_guard_estimate': 0.093}
+  model export: flames-thick/train/e2e-thick/model.tar.gz sha256 f16df2db105bbba82296d536549e0fff3c1c63ad5f2ca0926525893bfa0a9b10 (233311668 bytes)
+  internal validation (1 scan, 64^3 patch, no mirroring): foreground Dice 0.7945
+  errors: []
+== run e2e-budget: status budget_stop ({'reason': 'max_cost: projected 0.14 USD > 0.13 USD (billed so far 0.11 h)', 'epoch': 1})
+  training cases: ['mslesseg_P1_T1', 'mslesseg_P2_T1', 'mslesseg_P3_T1']; split: train ['mslesseg_P2_T1', 'mslesseg_P3_T1'] / val ['mslesseg_P1_T1']
+  init: {'kind': 'flames', 'path': 'checkpoint_final.pth', 'trainer_name': 'nnUNetTrainer_8000epochs', 'n_tensors': 292, 'sha256': '4fc7db24e7c1541b59023df2a2f498a964eb629fe38f4eaec763297dd3fdf861'}
+  kill test: None
+  thick augmentation: axis_map {'axial': 1, 'coronal': 2, 'sagittal': 0}, spacing [1.0, 0.9000000059604645, 0.9000000059604645], cases checked 3
+  epoch 0: 21.78 s (train 20.05 s / 2 it, val 1.73 s), lr 0.001000, train loss -0.3966, val loss -0.5526, pseudo-Dice [0.8812891840934753]
+  attempts: 1; budget: {'attempts': 1, 'billed_seconds_estimate': 400.0, 'rate_usd_per_h_list': 0.43, 'safety_factor': 1.15, 'cost_usd_list_estimate': 0.0478, 'cost_usd_guard_estimate': 0.0549}
+  errors: []

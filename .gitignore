@@ -125,6 +125,8 @@ phase2.json
 /data/cohorts/*
 /data/experiments/*
 /data/cache/*
+# Research model weights (e.g. FLAMeS-thick fine-tunes); their SHA-256 are recorded in docs/research/
+/data/models/*
 !/data/external/.gitkeep
 !/data/cohorts/.gitkeep
 !/data/experiments/.gitkeep
@@ -140,3 +142,6 @@ scripts/calm-ms/.scorer_cache.npz
 scripts/calm-ms/.multisite_cache*.npz
 scripts/calm-ms/.multisite_adv_cache.npz
 scripts/calm-ms/.region_cache.npz
+
+# research/cloud price snapshots (re-fetchable)
+research/cloud/.price_cache/
