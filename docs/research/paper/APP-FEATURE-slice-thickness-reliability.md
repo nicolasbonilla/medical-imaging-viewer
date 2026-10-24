@@ -9,6 +9,10 @@
 > the deployed segmenter version before use. Values marked **[post hoc]** come from analyses
 > written after the results were seen.
 >
+> *Revised 2026-10-24 with the pre-registered healthy-control addendum (100 healthy controls, §5b,
+> rule 6): the false-lesion dial is not validated on healthy brains, and dissemination in space must
+> never be computed from an unreviewed automatic segmentation.*
+>
 > *Revised 2026-10-21 after an independent re-implementation of the analysis: the first version
 > of this spec presented thick-slice bands as "guarantee holds"; it now abstains on thick-slice
 > studies unless the site has its own calibration.*
@@ -90,18 +94,78 @@ lists about 1 in 5 of the lesions an expert would mark at the 20 % setting, and 
    lesions.
 5. Show the evidence size with every number (scans, patients, sites) and "research data, not
    validated for this site".
+6. **Never compute or display dissemination in space (DIS) from an automatic segmentation that a
+   clinician has not reviewed and confirmed.** On 100 healthy brains the app's own brain-DIS code
+   (MSMask zones → MAGNIMS contact rule → `compute_dis_criteria`), applied to the unselected FLAMeS
+   ensemble segmentation, returned "DIS met (brain)" in **19 (95 % CI 12–28 %)**; with a single fold
+   in 22. Proposed behaviour: the DIS card requires a "lesions confirmed by a clinician" state of the
+   segmentation; for an unconfirmed automatic segmentation it shows "Not assessable — automatic
+   lesions not reviewed" instead of met / not met. The high-confidence view lowers the rate (2–3 of
+   100) but is not a substitute for review. **This also concerns the existing DIS route, which
+   computes DIS on whatever segmentation is loaded, including AI-generated ones: it needs a problem
+   report and a risk review against HAZ-005 by the owner before any change; no app code is changed
+   here.**
+
+## 5b. Healthy brains — what the app may say (v0.3 healthy-control addendum, 2026-10-24)
+
+Evidence: 100 healthy adults of one public research dataset (SibBMS: one site, images registered to
+a 1-mm MNI-type template, licence CC BY-NC-SA 3.0, "lesion-free" assumed, not expert-read), FLAMeS
+5-fold ensemble, calibrations frozen from the patient cohorts before any control was analysed
+(`PROTOCOL-v0.3-addendum-controls.md`, `RESULTS-v0.3.md` §6). On a lesion-free scan the false-lesion
+setting "α" becomes a promise about healthy brains: at most α of them should get ≥ 1 marked lesion.
+
+| what the reader sees | healthy brains with ≥ 1 marked lesion (of 100) | pre-registered verdict | what the app may say |
+|---|---|---|---|
+| full automatic overlay (no selection) | **85** (2.6 marked spots per scan on average) | — (no promise) | see wording A — always |
+| high-confidence view, 10 % setting (1-mm-site calibration) | 14 [8–22 %] | **undecided**, above nominal | "Not validated on healthy brains." No number. |
+| high-confidence view, 20 % setting | 24 [16–34 %] | **undecided**, above nominal | "Not validated on healthy brains." No number. |
+| per-scan setting (P2) | 6 [2–13 %] | consistent with 10 % | not offered anyway (finds < 5 % of lesions in patients, §5 rule 4) |
+| any setting with a single fold (not the ensemble) | 59 at the 10 % setting | **failed** | never offer (already §5 rule 1) |
+| dissemination in space computed from the full automatic overlay | **19** [12–28 %] met the app's brain-DIS rule | — | **must not be computed or shown** (§5 rule 6) |
+| dissemination in space from the 10 % / 20 % high-confidence view | 2 / 3 | — | not a substitute for review; rule 6 applies |
+
+**Wording A (full overlay, always shown with it):** *"The automatic overlay also marks spots in most
+healthy brains, mostly next to the ventricles. A marked spot is not evidence of multiple sclerosis;
+every spot needs expert review."* With numbers — only after the SibBMS licence has been clarified for
+use in a commercial product (open item): *"… in a research set of 100 healthy adults from one site,
+at least one spot was marked in 85, on average 2–3 per scan."*
+
+**Scope of any healthy-brain statement.** Valid only for the configuration that was tested: FLAMeS
+5-fold ensemble of the same version, 1-mm-grid studies, calibration from 1-mm patient sites, adult
+brains (ages of the controls not verified). It does **not** extend to thick-slice studies, to other calibration pools (an all-site pool
+gave 5/100 at the 10 % setting, a single fold 59/100), to children, or to other segmenters. It rests
+on one site; whether template normalisation made these brains easier or harder than clinical scans
+is unknown.
+
+**Why the false-lesion dial cannot be shown for healthy brains.** With the calibration this spec
+would use, 14 % (10 % setting) and 24 % (20 % setting) of healthy brains got a marked lesion — both
+above the setting, statistically undecided; on the 70 controls never looked at before, the 10 %
+setting reached 18.6 % (lower bound 10.3 %). The patients' false lesions are not a good stand-in for
+a healthy brain's false lesions (healthy-brain false spots score higher **[post hoc]**), exactly the
+"exchangeability" assumption the dial needs.
 
 ## 6. What the feature must not claim
 
 - Not a diagnosis, not dissemination-in-space, not lesion counting for McDonald criteria.
-- No guarantee for healthy or screening populations: even pooled calibration flagged false lesions
-  in 10 of 30 healthy controls at the 10 % setting (fold-0 maps; ensemble not yet tested).
+- No guarantee for healthy or screening populations, and no "rule-out" use: with the 5-fold ensemble
+  and 1-mm-site calibration, 14 of 100 healthy controls got a marked lesion at the 10 % setting and
+  24 of 100 at the 20 % setting (both undecided, above the setting); the full overlay marked 85 of
+  100; a single fold, 59 of 100 at the 10 % setting (§5b).
+- No dissemination-in-space statement from unreviewed automatic lesions (rule 6).
 - No thickness-specific guarantee: the thickness bands are confounded with site, scanner,
   population and annotation protocol.
 
 ## 7. Open items before this could become a requirement
 
-- Ensemble maps for ≥ 100 healthy controls (pending data-access form).
+- ~~Ensemble maps for ≥ 100 healthy controls~~ — done (addendum, §5b). Still open: healthy controls
+  from a second site, natively acquired (not template-normalised) and expert-read; the LST-AI arm on
+  the controls (maps being computed); a calibration that is exchangeable with healthy brains (e.g.
+  patients' and controls' false candidates together, pre-registered) if a healthy-brain figure is
+  ever wanted.
+- **SibBMS licence** (CC BY 3.0 vs CC BY-NC-SA 3.0 in its own paper): clarify with the authors before
+  any number derived from the controls appears in a commercial product or its labelling.
+- **Problem report + risk review (owner):** DIS computed from unreviewed automatic segmentations
+  (rule 6), including the legacy AI path, whose precision is lower than FLAMeS's.
 - A second, independent site per thickness band, and a within-site thickness comparison.
 - Per-band (Mondrian) calibration tested as a pre-registered remedy.
 - Re-derivation of all tables for the exact deployed model version with the same code, and a
