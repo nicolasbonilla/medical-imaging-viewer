@@ -139,8 +139,10 @@ PASS only if all hold:
 5. WARN review (the only accuracy numbers looked at; PROTOCOL.md section 10): a Dice < 0.1 against the
    expert mask means a label, orientation or grid error → stop and fix before any full run (log the fix
    in PROTOCOL.md section 12).
-6. Memory: WMH-SynthSeg `peak_swap_used_gb` < 2 → keep; otherwise relaunch WMH-SynthSeg with
-   `wmh-crop=1` (pre-stated fallback). `plan_budget.py` picks standard or highmem machines for SAMSEG
+6. Memory: PROTOCOL.md section 4 governs: `wmh-crop=1` if the pilot peak is > 30 GB or an
+   out-of-memory stop occurs. *(This step used to say "keep if `peak_swap_used_gb` < 2", which
+   contradicted the protocol; the 2026-10-24 full run followed the old wording — see PROTOCOL.md
+   section 12, deviation of 2026-10-24.)* `plan_budget.py` picks standard or highmem machines for SAMSEG
    (peak ≥ 14 GB → highmem).
 7. Timing: `plan_budget.py` applies the CPU rule (> 15 min per scan → tool dropped) and prints the
    wave-1 projection and the SAMSEG tier.
