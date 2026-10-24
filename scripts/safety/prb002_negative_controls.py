@@ -35,79 +35,51 @@ TESTS = ["tests/unit/test_prb002_no_cloud_in_tests.py"]
 CONF = "backend/tests/conftest.py"
 
 GUARD_FN = (
-    "    _refuse_real_credentials.prb002_guard = True
-"
-    "    google.auth.default = _refuse_real_credentials
-"
-    "    google.auth._default.default = _refuse_real_credentials
-"
+    "    _refuse_real_credentials.prb002_guard = True\n"
+    "    google.auth.default = _refuse_real_credentials\n"
+    "    google.auth._default.default = _refuse_real_credentials\n"
 )
 REFUSE_FN = (
-    "    def _refuse_real_credentials(*_args, **_kwargs):
-"
-    "        raise DefaultCredentialsError(
-"
+    "    def _refuse_real_credentials(*_args, **_kwargs):\n"
+    "        raise DefaultCredentialsError(\n"
 )
 MUTATIONS = [
     ("M1_credentials_path_not_forced",
-     "os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(_NO_CLOUD_DIR / 'no-credentials.json')
-", ""),
+     "os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(_NO_CLOUD_DIR / 'no-credentials.json')\n", ""),
     ("M2_credentials_path_setdefault_only",
-     "os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(_NO_CLOUD_DIR / 'no-credentials.json')
-",
-     "os.environ.setdefault('GOOGLE_APPLICATION_CREDENTIALS', str(_NO_CLOUD_DIR / 'no-credentials.json'))
-"),
+     "os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(_NO_CLOUD_DIR / 'no-credentials.json')\n",
+     "os.environ.setdefault('GOOGLE_APPLICATION_CREDENTIALS', str(_NO_CLOUD_DIR / 'no-credentials.json'))\n"),
     ("M3_storage_key_file_not_emptied",
-     "os.environ['GCS_CREDENTIALS_FILE'] = ''  # a .env cannot point the storage service at a key file
-", ""),
+     "os.environ['GCS_CREDENTIALS_FILE'] = ''  # a .env cannot point the storage service at a key file\n", ""),
     ("M4_gcloud_config_not_redirected",
-     "os.environ['CLOUDSDK_CONFIG'] = str(_NO_CLOUD_DIR / 'gcloud')
-", ""),
+     "os.environ['CLOUDSDK_CONFIG'] = str(_NO_CLOUD_DIR / 'gcloud')\n", ""),
     ("M5_project_not_forced",
-     "os.environ['GOOGLE_CLOUD_PROJECT'] = OFFLINE_PROJECT_ID
-", ""),
+     "os.environ['GOOGLE_CLOUD_PROJECT'] = OFFLINE_PROJECT_ID\n", ""),
     ("M6_legacy_project_variable_kept",
      "    'GCLOUD_PROJECT', 'ANTHROPIC_API_KEY',", "    'ANTHROPIC_API_KEY',"),
     ("M7_credentials_guard_not_installed",
-     "
-_install_no_cloud_guard()
-", "
-"),
+     "\n_install_no_cloud_guard()\n", "\n"),
     ("M8_only_public_default_patched",
      GUARD_FN,
-     "    _refuse_real_credentials.prb002_guard = True
-"
-     "    google.auth.default = _refuse_real_credentials
-"),
+     "    _refuse_real_credentials.prb002_guard = True\n"
+     "    google.auth.default = _refuse_real_credentials\n"),
     ("M9_emulator_variable_unlocks_anonymous_credentials",   # the first version of this PR (review finding 1)
      REFUSE_FN,
-     "    def _refuse_real_credentials(*_args, **_kwargs):
-"
-     "        if os.environ.get('FIRESTORE_EMULATOR_HOST', '').split(':')[0] in ('localhost', '127.0.0.1'):
-"
-     "            from google.auth.credentials import AnonymousCredentials
-"
-     "            return AnonymousCredentials(), OFFLINE_PROJECT_ID
-"
-     "        raise DefaultCredentialsError(
-"),
+     "    def _refuse_real_credentials(*_args, **_kwargs):\n"
+     "        if os.environ.get('FIRESTORE_EMULATOR_HOST', '').split(':')[0] in ('localhost', '127.0.0.1'):\n"
+     "            from google.auth.credentials import AnonymousCredentials\n"
+     "            return AnonymousCredentials(), OFFLINE_PROJECT_ID\n"
+     "        raise DefaultCredentialsError(\n"),
     ("M10_app_imported_before_guard",                       # review finding 2 (ordering)
      "PRB002_APP_IMPORTED_BEFORE_GUARD = ",
-     "import app.main  # noqa: F401
-PRB002_APP_IMPORTED_BEFORE_GUARD = "),
+     "import app.main  # noqa: F401\nPRB002_APP_IMPORTED_BEFORE_GUARD = "),
     ("M11_other_service_variables_kept",
-     "for _name in PRB002_REMOVED_VARIABLES:
-    os.environ.pop(_name, None)
-", ""),
+     "for _name in PRB002_REMOVED_VARIABLES:\n    os.environ.pop(_name, None)\n", ""),
     ("M12_socket_guard_not_installed",
-     "    socket.socket.connect, socket.socket.connect_ex = _connect, _connect_ex
-", ""),
+     "    socket.socket.connect, socket.socket.connect_ex = _connect, _connect_ex\n", ""),
     ("M13_socket_guard_allows_any_host",
-     "        if host.lower() == 'localhost':
-            return True
-",
-     "        return True
-"),
+     "        if host.lower() == 'localhost':\n            return True\n",
+     "        return True\n"),
 ]
 
 
