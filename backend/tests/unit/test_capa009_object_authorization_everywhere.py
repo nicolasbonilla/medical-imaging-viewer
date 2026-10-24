@@ -67,7 +67,7 @@ ROUTE_AUTH = {
     ("GET", "/ai/segment/{task_id}/status"): "initiator",
     ("POST", "/ai/volumetry/compare"): "call:authorize_patient_id",
     ("POST", "/ai/volumetry/compute"): "call:authorize_mask_specs",
-    ("GET", "/auth/audit-logs"): "perm",
+    ("GET", "/auth/audit-logs"): "admin",   # CAPA-015 RC-067: administrators only (was AUDIT_VIEW, incl. radiologists)
     ("DELETE", "/auth/users/{user_id}"): "perm",
     ("GET", "/auth/users/{user_id}"): "perm",
     ("PATCH", "/auth/users/{user_id}"): "perm",

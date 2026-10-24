@@ -19,6 +19,7 @@ import { useViewerStore } from '@/store/useViewerStore';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import { createBoundingBoxMZ3, lesionVoxelToNifti } from '@/utils/boundingBoxMesh';
 import { ViewportSafetyOverlay } from './ViewportSafetyOverlay';
+import { fetchWithSession } from '@/services/session';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -32,7 +33,8 @@ async function fetchWithProgress(
   headers: Record<string, string>,
   onProgress: (percent: number, loadedMB: number, totalMB: number) => void,
 ): Promise<ArrayBuffer> {
-  const response = await fetch(url, { headers });
+  // CAPA-015 RC-069: current bearer token + silent refresh / re-login on 401.
+  const response = await fetchWithSession(url, { headers });
   if (!response.ok) {
     const text = await response.text().catch(() => '');
     throw new Error(`HTTP ${response.status}: ${text.slice(0, 200) || response.statusText}`);

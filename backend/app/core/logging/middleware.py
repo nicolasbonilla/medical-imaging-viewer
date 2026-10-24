@@ -6,6 +6,7 @@ request/response information.
 """
 
 import time
+import uuid
 from typing import Callable
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -55,7 +56,9 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         """
         # Generate or extract correlation ID
         correlation_id = request.headers.get('X-Correlation-ID') or generate_correlation_id()
-        request_id = f"req-{int(time.time() * 1000)}"
+        # CAPA-015 (RC-067): unique per request — it correlates audit records with the request.
+        # (Was the millisecond clock: two requests in the same millisecond shared an id.)
+        request_id = f"req-{uuid.uuid4().hex}"
 
         # Set context
         set_correlation_id(correlation_id)

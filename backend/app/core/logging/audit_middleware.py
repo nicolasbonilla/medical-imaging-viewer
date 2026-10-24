@@ -2,14 +2,41 @@
 Audit Middleware for FastAPI
 ISO 27001 A.12.4.1 - Event logging
 
-Automatically captures and logs security-relevant HTTP requests and responses
-including authentication, authorization, and data access events.
+CAPA-015 (RC-067, REQ-SEC-024; HAZ-010) — one audit record per API request:
+
+- WHO: the actor is read from the bearer token (signature verified; nothing is enforced here —
+  the routes still authenticate and authorize). Role included.
+- WHAT: the route TEMPLATE (`/api/v1/segmentation/{segmentation_id}/save`), never the concrete
+  path or the query string; the resource identifiers taken from the path parameters (and, for a
+  few small JSON routes, from the request body: `tp1`/`tp2`/`masks` ids, `file_id`, report
+  template and language); a semantic action for the clinically relevant routes
+  (`ROUTE_ACTIONS`: segmentation create/save/modify/delete/confirm, lesion readings,
+  longitudinal decisions, AI report generation, AI and clinical-tool runs, DICOM-SEG export,
+  care-team changes).
+- OUTCOME: from the HTTP status (success / failure / denied) and the status code.
+- CORRELATION: the request id (`X-Request-ID`) and the Cloud trace id.
+
+Authentication routes (`/api/v1/auth/*`) record their own, richer events (login success,
+failure with a reason code, lock-out, refresh, reuse, logout, password change, admin changes);
+for them this middleware adds a record only for a 401/403 nobody else recorded.
+
+Durable (Firestore) policy: every record goes to stdout; Firestore receives every state-changing
+request, every clinical action, every 401/403, and reads of patient data once per actor, route
+and resource per AUDIT_READ_DEDUP_SECONDS (default 300 s) on each instance — a viewer fetches
+hundreds of slices, and one record per slice would make the trail unreadable and costly.
+Requests that matched no route are kept on stdout only.
 
 @module core.logging.audit_middleware
 """
 
+import asyncio
+import json
+import os
+import threading
 import time
-from typing import Callable, Optional
+from collections import OrderedDict
+from typing import Any, Callable, Dict, Optional, Tuple
+
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
@@ -19,11 +46,181 @@ from app.core.logging.audit import (
     AuditEventType,
     AuditSeverity,
     AuditOutcome,
-    AuditEvent
+    AuditEvent,
+    begin_request_audit,
+    end_request_audit,
+    client_ip,
+    trace_id_of,
+    sha256_prefix,
 )
-from app.core.logging import get_logger
+from app.core.logging.config import get_logger
 
 logger = get_logger(__name__)
+
+API_PREFIX = "/api/v1"
+AUTH_PREFIX = "/api/v1/auth"
+EXCLUDED_PREFIXES = ("/api/health", "/api/docs", "/api/redoc", "/api/openapi.json")
+READ_METHODS = {"GET", "HEAD"}
+
+E = AuditEventType
+# (method, route template) -> (event type, resource type). A route listed here is a clinical
+# or administrative action: always durable, never deduplicated.
+ROUTE_ACTIONS: Dict[Tuple[str, str], Tuple[AuditEventType, str]] = {
+    ("POST", "/api/v1/segmentation/create"): (E.CLINICAL_SEGMENTATION_CREATE, "segmentation"),
+    ("POST", "/api/v1/segmentation/{segmentation_id}/save"): (E.CLINICAL_SEGMENTATION_SAVE, "segmentation"),
+    ("PUT", "/api/v1/segmentation/{segmentation_id}/mask/binary"): (E.CLINICAL_SEGMENTATION_SAVE, "segmentation"),
+    ("POST", "/api/v1/segmentation/{segmentation_id}/paint"): (E.CLINICAL_SEGMENTATION_MODIFY, "segmentation"),
+    ("PUT", "/api/v1/segmentation/{segmentation_id}/labels"): (E.CLINICAL_SEGMENTATION_MODIFY, "segmentation"),
+    ("POST", "/api/v1/segmentation/{segmentation_id}/classify-regions"): (E.CLINICAL_SEGMENTATION_MODIFY, "segmentation"),
+    ("DELETE", "/api/v1/segmentation/{segmentation_id}"): (E.CLINICAL_SEGMENTATION_DELETE, "segmentation"),
+    ("POST", "/api/v1/segmentation/{segmentation_id}/ai-review/confirm"): (E.CLINICAL_SEGMENTATION_CONFIRM, "segmentation"),
+    ("POST", "/api/v1/segmentation/{segmentation_id}/lesion-annotations"): (E.CLINICAL_LESION_ANNOTATION, "segmentation"),
+    ("POST", "/api/v1/segmentation/longitudinal/review"): (E.CLINICAL_LONGITUDINAL_REVIEW, "segmentation_pair"),
+    ("POST", "/api/v1/ai/report/generate"): (E.CLINICAL_AI_REPORT_GENERATE, "report"),
+    ("POST", "/api/v1/ai/segment/auto"): (E.CLINICAL_AI_RUN, "image"),
+    ("POST", "/api/v1/ai/segment/interactive"): (E.CLINICAL_AI_RUN, "image"),
+    ("POST", "/api/v1/ai/anomaly/detect"): (E.CLINICAL_AI_RUN, "image"),
+    ("POST", "/api/v1/clinical/flames/segment"): (E.CLINICAL_AI_RUN, "image"),
+    ("POST", "/api/v1/clinical/lst-ai/segment"): (E.CLINICAL_AI_RUN, "image"),
+    ("POST", "/api/v1/clinical/synthseg/parcellate"): (E.CLINICAL_AI_RUN, "image"),
+    ("GET", "/api/v1/segmentation/{segmentation_id}/export/dicom-seg"): (E.DATA_EXPORT, "segmentation"),
+    ("POST", "/api/v1/patients/{patient_id}/care-team"): (E.ADMIN_CARE_TEAM_CHANGED, "patient"),
+    ("DELETE", "/api/v1/patients/{patient_id}/care-team/{assignment_id}"): (E.ADMIN_CARE_TEAM_CHANGED, "patient"),
+}
+
+# Small JSON routes whose BODY names the objects acted on (read only up to 64 KiB, ids only).
+BODY_ID_ROUTES = frozenset({
+    "/api/v1/segmentation/longitudinal/review",
+    "/api/v1/segmentation/longitudinal/compare",
+    "/api/v1/segmentation/longitudinal/sel",
+    "/api/v1/segmentation/compare",
+    "/api/v1/segmentation/agreement-map",
+    "/api/v1/segmentation/create",
+    "/api/v1/ai/report/generate",
+})
+_BODY_LIMIT = 64 * 1024
+
+# Path parameters kept as resource identifiers (others — slice index, credential id — are not).
+_PATH_ID_KEYS = {
+    "patient_id": "patient_id", "study_id": "study_id", "series_id": "series_id",
+    "instance_id": "instance_id", "document_id": "document_id", "segmentation_id": "segmentation_id",
+    "version_id": "version_id", "task_id": "task_id", "job_id": "job_id",
+    "assignment_id": "assignment_id", "connection_id": "connection_id", "history_id": "history_id",
+    "user_id": "target_user_id",
+}
+_HASHED_PATH_KEYS = {"accession_number": "accession_sha256", "mrn": "mrn_sha256"}
+
+_READ_DEDUP_SECONDS = float(os.environ.get("AUDIT_READ_DEDUP_SECONDS", "300"))
+_FLUSH_WAIT_S = float(os.environ.get("AUDIT_FLUSH_WAIT_MS", "500")) / 1000.0
+_DEDUP_MAX = 20_000
+_dedup: "OrderedDict[Tuple, float]" = OrderedDict()
+_dedup_lock = threading.Lock()
+
+
+def reset_read_dedup() -> None:
+    """Forget the read-deduplication window (tests)."""
+    with _dedup_lock:
+        _dedup.clear()
+
+
+def _seen_recently(key: Tuple) -> bool:
+    now = time.monotonic()
+    with _dedup_lock:
+        t = _dedup.get(key)
+        if t is not None and now - t < _READ_DEDUP_SECONDS:
+            return True
+        _dedup[key] = now
+        _dedup.move_to_end(key)
+        while len(_dedup) > _DEDUP_MAX:
+            _dedup.popitem(last=False)
+        return False
+
+
+def file_ref_ids(file_id: str) -> Dict[str, str]:
+    """Identifiers of an imaging storage reference: patient/study/series ids from the RC-027
+    grammar, and a hash of the file name (file names are free text and may contain a name)."""
+    out: Dict[str, str] = {"file_sha256": sha256_prefix(file_id)}
+    try:
+        from app.security.storage_access import parse_patient_storage_ref
+        ref = parse_patient_storage_ref(file_id)
+        for attr in ("patient_id", "study_id", "series_id"):
+            v = getattr(ref, attr, None)
+            if v:
+                out[attr] = str(v)
+    except Exception:  # not a storage reference — the hash alone identifies it
+        pass
+    return out
+
+
+def _body_ids(body: Any) -> Tuple[Dict[str, str], Dict[str, Any]]:
+    ids: Dict[str, str] = {}
+    details: Dict[str, Any] = {}
+    if not isinstance(body, dict):
+        return ids, details
+    for key in ("tp1", "tp2"):
+        spec = body.get(key)
+        if isinstance(spec, dict) and spec.get("id"):
+            kind = spec.get("type")
+            ids[f"{key}_{kind}_id" if kind in ("segmentation", "instance") else f"{key}_id"] = str(spec["id"])
+    masks = body.get("masks")
+    if isinstance(masks, list):
+        for i, spec in enumerate(masks[:4]):
+            if isinstance(spec, dict) and spec.get("id"):
+                ids[f"mask{i + 1}_id"] = str(spec["id"])
+    if isinstance(body.get("file_id"), str):
+        ids.update(file_ref_ids(body["file_id"]))
+    for key in ("segmentation_id", "patient_id", "study_id"):
+        if isinstance(body.get(key), str):
+            ids[key] = body[key]
+    for key in ("template_type", "language"):
+        if isinstance(body.get(key), str):
+            details[key] = body[key]
+    if isinstance(body.get("decisions"), list):
+        details["decisions"] = len(body["decisions"])
+    return ids, details
+
+
+def _path_ids(path_params: Dict[str, Any]) -> Dict[str, str]:
+    ids: Dict[str, str] = {}
+    for name, value in (path_params or {}).items():
+        if value is None:
+            continue
+        if name == "file_id":
+            ids.update(file_ref_ids(str(value)))
+        elif name in _PATH_ID_KEYS:
+            ids[_PATH_ID_KEYS[name]] = str(value)
+        elif name in _HASHED_PATH_KEYS:
+            ids[_HASHED_PATH_KEYS[name]] = sha256_prefix(str(value))
+    return ids
+
+
+def _actor(request: Request) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+    """(user_id, username, role) from a valid bearer token, else (None, None, None)."""
+    auth = request.headers.get("authorization", "")
+    if not auth.lower().startswith("bearer "):
+        return None, None, None
+    try:
+        from app.security.jwt_manager import get_token_manager
+        data = get_token_manager().decode_token_data(auth[7:].strip())
+        return data.user_id, data.username, data.role.value
+    except Exception:
+        return None, None, None
+
+
+def _outcome(status: int) -> AuditOutcome:
+    if status < 400:
+        return AuditOutcome.SUCCESS
+    if status in (401, 403):
+        return AuditOutcome.DENIED
+    return AuditOutcome.FAILURE
+
+
+def _severity(status: int, clinical: bool) -> AuditSeverity:
+    if status >= 500:
+        return AuditSeverity.HIGH
+    if status >= 400:
+        return AuditSeverity.MEDIUM
+    return AuditSeverity.MEDIUM if clinical else AuditSeverity.LOW
 
 
 class AuditMiddleware(BaseHTTPMiddleware):
@@ -39,300 +236,118 @@ class AuditMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.audit_logger = get_audit_logger()
 
-        # Paths that should be audited
-        self.audit_paths = {
-            # Authentication endpoints
-            '/api/v1/auth/login': AuditEventType.AUTH_LOGIN_SUCCESS,
-            '/api/v1/auth/logout': AuditEventType.AUTH_LOGOUT,
-            '/api/v1/auth/refresh': AuditEventType.AUTH_TOKEN_REFRESH,
-            '/api/v1/auth/change-password': AuditEventType.AUTH_PASSWORD_CHANGE,
-            '/api/v1/auth/reset-password': AuditEventType.AUTH_PASSWORD_RESET,
-
-            # User management (admin)
-            '/api/v1/users': AuditEventType.ADMIN_USER_CREATED,
-
-            # Data access
-            '/api/v1/imaging': AuditEventType.DATA_ACCESS_FILE,
-            '/api/v1/storage': AuditEventType.DATA_ACCESS_FILE,
-        }
-
-        # Sensitive endpoints that require detailed logging
-        self.sensitive_paths = [
-            '/api/v1/auth',
-            '/api/v1/users',
-            '/api/v1/imaging',
-            '/api/v1/admin',
-        ]
-
-        # Paths to exclude from audit logging
-        self.exclude_paths = [
-            '/api/health',
-            '/api/docs',
-            '/api/redoc',
-            '/api/openapi.json',
-            '/',
-        ]
-
-    async def dispatch(
-        self, request: Request, call_next: Callable
-    ) -> Response:
-        """
-        Process request and log audit events.
-
-        Args:
-            request: Incoming HTTP request
-            call_next: Next middleware in chain
-
-        Returns:
-            HTTP response
-        """
-        # Check if path should be excluded
-        if self._should_exclude(request.url.path):
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        path = request.url.path
+        if not path.startswith(API_PREFIX) or path.startswith(EXCLUDED_PREFIXES):
             return await call_next(request)
 
-        # Record start time for performance tracking
+        ctx, token = begin_request_audit()
         start_time = time.time()
+        body_ids: Dict[str, str] = {}
+        body_details: Dict[str, Any] = {}
+        try:
+            if request.method == "POST" and path in BODY_ID_ROUTES:
+                body_ids, body_details = await self._peek_body(request)
+            actor = _actor(request)
+            try:
+                response = await call_next(request)
+                status = response.status_code
+            except Exception:
+                self._record(request, 500, actor, ctx, body_ids, body_details, start_time)
+                raise
+            self._record(request, status, actor, ctx, body_ids, body_details, start_time)
+            await self._wait_for_durable(ctx)
+            response.headers["X-Request-Duration-Ms"] = f"{(time.time() - start_time) * 1000:.2f}"
+            return response
+        finally:
+            end_request_audit(token)
 
-        # Extract request metadata
-        request_metadata = await self._extract_request_metadata(request)
+    @staticmethod
+    async def _peek_body(request: Request) -> Tuple[Dict[str, str], Dict[str, Any]]:
+        try:
+            length = int(request.headers.get("content-length") or 0)
+            if "json" not in (request.headers.get("content-type") or "") or not 0 < length <= _BODY_LIMIT:
+                return {}, {}
+            return _body_ids(json.loads(await request.body()))
+        except Exception:
+            return {}, {}
 
-        # Process request
-        response = await call_next(request)
+    @staticmethod
+    async def _wait_for_durable(ctx) -> None:
+        """Bounded wait for this request's durable writes while the sink is healthy (Cloud Run
+        throttles the CPU between requests). Never fails the request."""
+        if not ctx.futures or _FLUSH_WAIT_S <= 0:
+            return
+        try:
+            from app.core.logging.audit_sink import get_durable_audit_sink
+            if not get_durable_audit_sink().is_healthy():
+                return
+            waiters = [asyncio.wrap_future(f) for f in ctx.futures]
+            await asyncio.wait_for(asyncio.shield(asyncio.gather(*waiters, return_exceptions=True)), _FLUSH_WAIT_S)
+        except (asyncio.TimeoutError, Exception):
+            return
 
-        # Calculate request duration
-        duration_ms = (time.time() - start_time) * 1000
+    def _record(self, request, status, actor, ctx, body_ids, body_details, start_time) -> None:
+        try:
+            event, durable = self._build(request, status, actor, ctx, body_ids, body_details, start_time)
+            if event is not None:
+                self.audit_logger.log_event(event, durable=durable)
+        except Exception as e:  # noqa: BLE001 — auditing must never break the request
+            logger.error(f"Audit middleware failed to record a request: {e}", exc_info=True)
 
-        # Log audit event if path is sensitive
-        if self._is_sensitive(request.url.path):
-            await self._log_request_audit(
-                request=request,
-                response=response,
-                duration_ms=duration_ms,
-                metadata=request_metadata
-            )
+    def _build(self, request, status, actor, ctx, body_ids, body_details, start_time):
+        method = request.method
+        path = request.url.path
+        route = request.scope.get("route")
+        template = getattr(route, "path", None)
+        user_id, username, role = actor
 
-        # Log failed authentication attempts
-        if response.status_code == 401:
-            await self._log_auth_failure(request, request_metadata)
+        if path.startswith(AUTH_PREFIX):
+            # authentication routes record their own events; add one only for an unrecorded 401/403
+            if ctx.explicit or status not in (401, 403):
+                return None, False
 
-        # Log authorization failures
-        if response.status_code == 403:
-            await self._log_authz_failure(request, request_metadata)
+        mapped = ROUTE_ACTIONS.get((method, template)) if template else None
+        if mapped:
+            event_type, resource_type = mapped
+        elif status == 401:
+            event_type, resource_type = E.AUTH_TOKEN_INVALID, None
+        elif status == 403:
+            event_type, resource_type = E.AUTHZ_ACCESS_DENIED, None
+        elif method in READ_METHODS:
+            event_type, resource_type = E.DATA_ACCESS_READ, None
+        elif method == "DELETE":
+            event_type, resource_type = E.DATA_DELETE, None
+        else:
+            event_type, resource_type = E.DATA_MODIFY, None
 
-        # Add audit headers to response
-        response.headers["X-Audit-Logged"] = "true"
-        response.headers["X-Request-Duration-Ms"] = f"{duration_ms:.2f}"
+        ids = {**_path_ids(request.scope.get("path_params") or {}), **body_ids}
+        durable = True
+        if template is None and status not in (401, 403):
+            durable = False                     # matched no route: stdout only
+        elif event_type == E.DATA_ACCESS_READ:
+            key = (user_id or client_ip(request), template, tuple(sorted(ids.items())), status // 100)
+            durable = not _seen_recently(key)
 
-        return response
-
-    def _should_exclude(self, path: str) -> bool:
-        """Check if path should be excluded from auditing."""
-        return any(path.startswith(exclude) for exclude in self.exclude_paths)
-
-    def _is_sensitive(self, path: str) -> bool:
-        """Check if path is sensitive and requires detailed audit."""
-        return any(path.startswith(sensitive) for sensitive in self.sensitive_paths)
-
-    async def _extract_request_metadata(self, request: Request) -> dict:
-        """
-        Extract metadata from request for auditing.
-
-        Args:
-            request: HTTP request
-
-        Returns:
-            Dictionary with request metadata
-        """
-        # Extract client IP (handle proxy headers)
-        client_ip = request.client.host if request.client else None
-        forwarded_for = request.headers.get('X-Forwarded-For')
-        if forwarded_for:
-            client_ip = forwarded_for.split(',')[0].strip()
-
-        metadata = {
-            'method': request.method,
-            'path': request.url.path,
-            'query_params': dict(request.query_params),
-            'ip_address': client_ip,
-            'user_agent': request.headers.get('User-Agent'),
-            'referer': request.headers.get('Referer'),
-            'content_type': request.headers.get('Content-Type'),
-        }
-
-        # Extract user info from request state (set by auth middleware)
-        if hasattr(request.state, 'user'):
-            user = request.state.user
-            metadata['user_id'] = getattr(user, 'id', None)
-            metadata['username'] = getattr(user, 'username', None)
-            metadata['user_role'] = getattr(user, 'role', None)
-
-        return metadata
-
-    async def _log_request_audit(
-        self,
-        request: Request,
-        response: Response,
-        duration_ms: float,
-        metadata: dict
-    ) -> None:
-        """
-        Log audit event for request.
-
-        Args:
-            request: HTTP request
-            response: HTTP response
-            duration_ms: Request duration in milliseconds
-            metadata: Request metadata
-        """
-        # Determine event type based on path and method
-        event_type = self._determine_event_type(
-            path=metadata['path'],
-            method=metadata['method'],
-            status_code=response.status_code
-        )
-
-        # Determine severity based on status code
-        severity = self._determine_severity(response.status_code)
-
-        # Determine outcome
-        outcome = self._determine_outcome(response.status_code)
-
-        # Create audit event
         event = AuditEvent(
             event_type=event_type,
-            severity=severity,
-            outcome=outcome,
-            user_id=metadata.get('user_id'),
-            username=metadata.get('username'),
-            user_role=metadata.get('user_role'),
-            ip_address=metadata.get('ip_address'),
-            user_agent=metadata.get('user_agent'),
-            resource_type=self._extract_resource_type(metadata['path']),
-            action=metadata['method'],
-            method=metadata['method'],
-            endpoint=metadata['path'],
-            description=f"{metadata['method']} {metadata['path']} - {response.status_code}",
-            metadata={
-                'query_params': metadata.get('query_params'),
-                'referer': metadata.get('referer'),
-                'content_type': metadata.get('content_type'),
-                'status_code': response.status_code,
-                'duration_ms': duration_ms,
-            },
+            severity=_severity(status, bool(mapped)),
+            outcome=_outcome(status),
+            user_id=user_id,
+            username=username,
+            user_role=role,
+            ip_address=client_ip(request),
+            user_agent=request.headers.get("User-Agent"),
+            resource_type=resource_type,
+            resource_ids=ids,
+            action=event_type.value,
+            method=method,
+            endpoint=template,
+            status_code=status,
+            details={**body_details, **({} if durable or event_type != E.DATA_ACCESS_READ
+                                        else {"deduplicated_window_s": int(_READ_DEDUP_SECONDS)})},
+            trace_id=trace_id_of(request),
+            source="middleware",
             iso27001_controls=["A.12.4.1"],
         )
-
-        # Log the event
-        self.audit_logger.log_event(event)
-
-    async def _log_auth_failure(self, request: Request, metadata: dict) -> None:
-        """
-        Log authentication failure (401).
-
-        ISO 27001 A.9.4.2 - Secure log-on procedures
-        """
-        self.audit_logger.log_authentication(
-            event_type=AuditEventType.AUTH_LOGIN_FAILED,
-            username=metadata.get('username', 'unknown'),
-            ip_address=metadata.get('ip_address'),
-            success=False,
-            reason="Invalid credentials or token",
-            metadata={
-                'path': metadata['path'],
-                'user_agent': metadata.get('user_agent'),
-            }
-        )
-
-    async def _log_authz_failure(self, request: Request, metadata: dict) -> None:
-        """
-        Log authorization failure (403).
-
-        ISO 27001 A.9.4.1 - Information access restriction
-        """
-        self.audit_logger.log_authorization(
-            user_id=metadata.get('user_id', 'unknown'),
-            resource_type=self._extract_resource_type(metadata['path']),
-            resource_id=metadata.get('path'),
-            action=metadata['method'],
-            granted=False,
-            ip_address=metadata.get('ip_address'),
-            reason="Insufficient permissions"
-        )
-
-    def _determine_event_type(
-        self, path: str, method: str, status_code: int
-    ) -> AuditEventType:
-        """Determine audit event type based on request."""
-        # Check if specific path has defined event type
-        if path in self.audit_paths:
-            return self.audit_paths[path]
-
-        # Authentication endpoints
-        if '/auth/login' in path:
-            return AuditEventType.AUTH_LOGIN_SUCCESS if status_code == 200 else AuditEventType.AUTH_LOGIN_FAILED
-        elif '/auth/logout' in path:
-            return AuditEventType.AUTH_LOGOUT
-        elif '/auth/refresh' in path:
-            return AuditEventType.AUTH_TOKEN_REFRESH
-
-        # User management
-        elif '/users' in path:
-            if method == 'POST':
-                return AuditEventType.ADMIN_USER_CREATED
-            elif method == 'DELETE':
-                return AuditEventType.ADMIN_USER_DELETED
-            elif method in ['PUT', 'PATCH']:
-                return AuditEventType.ADMIN_USER_MODIFIED
-
-        # Data access
-        elif '/imaging' in path or '/storage' in path:
-            if method == 'GET':
-                return AuditEventType.DATA_ACCESS_FILE
-            elif method == 'DELETE':
-                return AuditEventType.DATA_DELETE
-            elif method in ['PUT', 'PATCH', 'POST']:
-                return AuditEventType.DATA_MODIFY
-
-        # Authorization
-        elif status_code == 403:
-            return AuditEventType.AUTHZ_ACCESS_DENIED
-
-        # Default
-        return AuditEventType.AUTHZ_ACCESS_GRANTED
-
-    def _determine_severity(self, status_code: int) -> AuditSeverity:
-        """Determine severity based on HTTP status code."""
-        if status_code >= 500:
-            return AuditSeverity.HIGH
-        elif status_code == 403:
-            return AuditSeverity.MEDIUM
-        elif status_code == 401:
-            return AuditSeverity.MEDIUM
-        elif status_code >= 400:
-            return AuditSeverity.LOW
-        else:
-            return AuditSeverity.LOW
-
-    def _determine_outcome(self, status_code: int) -> AuditOutcome:
-        """Determine outcome based on HTTP status code."""
-        if status_code < 300:
-            return AuditOutcome.SUCCESS
-        elif status_code == 403:
-            return AuditOutcome.DENIED
-        elif status_code >= 400:
-            return AuditOutcome.FAILURE
-        else:
-            return AuditOutcome.PARTIAL
-
-    def _extract_resource_type(self, path: str) -> str:
-        """Extract resource type from path."""
-        if '/imaging' in path:
-            return 'medical_image'
-        elif '/storage' in path:
-            return 'storage_file'
-        elif '/users' in path:
-            return 'user'
-        elif '/auth' in path:
-            return 'authentication'
-        else:
-            return 'unknown'
+        return event, durable

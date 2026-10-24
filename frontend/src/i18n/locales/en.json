@@ -442,7 +442,29 @@
     "hipaaNotice": "For security of patient health information (PHI), sessions automatically end after 15 minutes of inactivity.",
     "keyboardHint": "Press Enter to stay logged in, or Escape to log out",
     "expired": "Your session has expired. Please log in again.",
-    "extendedSuccess": "Session extended successfully"
+    "extendedSuccess": "Session extended successfully",
+    "reauthTitle": "Sign in again to continue",
+    "reauthMessage": "For your security your session has ended. Sign in again to continue: your unsaved work stays on this screen and is not lost.",
+    "reauthUnsaved": "You have unsaved segmentation changes. They are kept and you can save them after signing in.",
+    "reauthSignedInAs": "Signed in as {{username}}",
+    "reauthPassword": "Password",
+    "reauthSubmit": "Sign in",
+    "reauthPasskey": "Use a passkey",
+    "reauthSignOut": "Sign out",
+    "reauthSignOutWarning": "Signing out now discards the unsaved changes on this screen.",
+    "reauthSignOutConfirm": "Discard changes and sign out",
+    "reauthCancel": "Back",
+    "reauthWrongUser": "Only {{username}} can continue this work. Another person must first sign out and open their own session; signing out here discards the unsaved changes.",
+    "reauthFailed": "Sign-in failed. Check the password and try again.",
+    "reauthCaptcha": "Too many attempts: enter the numbers shown to continue.",
+    "reauthCaptchaLabel": "Security check"
+  },
+  "audit": {
+    "statusTitle": "Audit trail",
+    "statusFailing": "The server cannot write the audit trail to durable storage ({{count}} records waiting). Records are kept in the server log; contact the system administrator.",
+    "statusDegraded": "Writing the audit trail is being retried ({{count}} records waiting).",
+    "statusNotDurable": "The audit trail is not being stored durably on this server.",
+    "statusLastError": "Last error: {{error}}"
   },
   "patient": {
     "title": "Patients",

@@ -22,8 +22,14 @@ class SecuritySettings(BaseSettings):
     # JWT Configuration (ISO 27001 A.9.4.2)
     JWT_SECRET_KEY: str = Field(default="", description="JWT signing secret key")
     JWT_ALGORITHM: str = Field(default="HS256")
-    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=60, ge=5, le=1440)
-    JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = Field(default=7, ge=1, le=30)
+    # CAPA-015 (RC-068, REQ-SEC-025): short-lived access token; the session continues through a
+    # rotating refresh token (app/security/refresh_tokens.py). Was 60 min with no refresh at all.
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=15, ge=5, le=1440)
+    JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = Field(default=7, ge=1, le=30)   # legacy, unused
+    # Refresh session: dies after this long without a refresh (idle) and, whatever happens, this
+    # long after sign-in (absolute). Justification in refresh_tokens.py; owner decision D-2.
+    REFRESH_TOKEN_IDLE_MINUTES: int = Field(default=30, ge=16, le=720)
+    REFRESH_TOKEN_ABSOLUTE_HOURS: int = Field(default=12, ge=1, le=168)
 
     # Password Policy (ISO 27001 A.9.4.3)
     PASSWORD_MIN_LENGTH: int = Field(default=12, ge=8, le=128)
@@ -89,7 +95,7 @@ class Settings(BaseSettings):
     # Legacy properties for backward compatibility
     SECRET_KEY: str = ""
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
 
     # PostgreSQL Database Configuration
     DB_HOST: str = Field(default="localhost")

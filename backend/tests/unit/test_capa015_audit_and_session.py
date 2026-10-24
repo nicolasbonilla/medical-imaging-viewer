@@ -217,7 +217,7 @@ def test_rc067_failed_logins_captcha_and_lockout_are_recorded_without_the_typed_
         assert _login(env, password="wrong-password-123").status_code == 401
     # existing control kept: after 2 failures a CAPTCHA is required (and that refusal is audited)
     r = _login(env, password="wrong-password-123")
-    assert r.status_code == 400 and r.headers.get("x-captcha-required") == "true"
+    assert r.status_code == 400 and "captcha" in r.text.lower()
     assert [x for x in env.records("auth.login.failed") if x.get("reason") == "captcha_required"]
     for _ in range(3):
         _login(env, password="wrong-password-123", captcha_challenge_id="c", captcha_response="1")
@@ -394,8 +394,8 @@ def test_rc067_records_are_append_only(env):
     ops = {op for op, coll, _ in env.db.calls if coll == "audit_logs"}
     assert ops == {"create"}, f"audit_logs written with {ops}; only create is append-only"
     rules = (ROOT / "firestore.rules").read_text(encoding="utf-8")
-    block = rules[rules.index("match /audit_logs/"):]
-    assert "allow write: if false" in block[: block.index("}")]
+    block = re.search(r"match /audit_logs/\{\w+\}\s*\{([^}]*)\}", rules)
+    assert block and "allow write: if false" in block.group(1), "clients must never write the audit trail"
 
 
 @pytest.mark.unit

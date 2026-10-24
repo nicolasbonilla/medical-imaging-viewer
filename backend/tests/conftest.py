@@ -35,6 +35,14 @@ os.environ['ENVIRONMENT'] = 'testing'
 os.environ['DEBUG'] = 'false'
 os.environ['JWT_SECRET_KEY'] = 'test-secret-key-minimum-32-characters-required-for-security'
 os.environ['ENCRYPTION_MASTER_KEY'] = 'dGVzdC1lbmNyeXB0aW9uLW1hc3Rlci1rZXktMzItYnl0ZXMtcmVxdWlyZWQ='
+# CAPA-015: the test suite must never reach a cloud service. Without these, a developer machine
+# with gcloud application-default credentials made the suite read the real Firestore (and bill
+# the credentials' quota project). A missing credentials file makes every Google client fail at
+# once; the stores fall back to their local/in-memory backends. Tests that need a store install
+# an in-memory stand-in explicitly.
+os.environ.setdefault('GOOGLE_APPLICATION_CREDENTIALS', str(PROJECT_ROOT / 'tests' / 'no-cloud-credentials.json'))
+os.environ.setdefault('AUDIT_SINK_BACKEND', 'memory')
+os.environ.setdefault('REFRESH_TOKEN_BACKEND', 'memory')
 
 # Lazy imports — only load heavy app dependencies when integration/security tests need them.
 # Unit tests import services directly and don't need the full FastAPI app.

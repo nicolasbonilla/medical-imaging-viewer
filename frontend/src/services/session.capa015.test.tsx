@@ -13,7 +13,7 @@
  * network (axios adapters). They were written before the fix and fail on main @ 70cc5c7
  * (record: docs/iec62304/records/risk_verification/CAPA-015_tests_on_base_2026-10-24.json).
  */
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi, type Mock } from 'vitest';
 import { render, screen, fireEvent, waitFor, act, cleanup } from '@testing-library/react';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -79,14 +79,14 @@ async function network(routes: Route[]) {
 const ok = (data: unknown): Out => ({ status: 200, data });
 const tokenResponse = (access: string, user = USER) => ok({ token: { access_token: access, token_type: 'bearer', expires_in: 900 }, user });
 
-let hrefSet: ReturnType<typeof vi.fn>;
+let hrefSet: Mock<(v: string) => void>;
 const realLocation = window.location;
 
 beforeEach(async () => {
   vi.resetModules();
   calls = [];
   localStorage.clear();
-  hrefSet = vi.fn();
+  hrefSet = vi.fn<(v: string) => void>();
   const origin = realLocation.origin;
   Object.defineProperty(window, 'location', {
     configurable: true,
@@ -219,6 +219,7 @@ describe('RC-069 — the session continues silently; when it cannot, unsaved wor
     act(() => session.markSessionExpired());
     const dialog = await screen.findByRole('dialog');
     expect(dialog.textContent).toMatch(/unsaved/i);
+    expect(screen.getByTestId('reauth-unsaved')).toBeTruthy();   // the unsaved segmentation is named
     expect(dialog.textContent).toContain('dr_rad');
 
     fireEvent.change(screen.getByLabelText(/password/i), { target: { value: 'whatever-123' } });
@@ -235,6 +236,27 @@ describe('RC-069 — the session continues silently; when it cannot, unsaved wor
     expect(localStorage.getItem('access_token')).toBe('mine');
     expect(useSegmentationStore.getState().hasUnsavedMaskChanges).toBe(true);
     expect(hrefSet).not.toHaveBeenCalled();
+  });
+
+  it('rc069 fetch-based downloads (volumes, DICOM-SEG export) recover from 401 the same way', async () => {
+    signedIn();
+    await network([(c) => (c.url?.endsWith('/api/v1/auth/refresh') ? tokenResponse('new-token') : undefined)]);
+    const seen: string[] = [];
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = vi.fn(async (_url: any, init: any) => {
+      const auth = String(init?.headers?.Authorization ?? '');
+      seen.push(auth);
+      return new Response(auth === 'Bearer new-token' ? 'volume' : 'expired', { status: auth === 'Bearer new-token' ? 200 : 401 });
+    }) as any;
+    try {
+      const session: any = await load(SESSION);
+      const res = await session.fetchWithSession('http://localhost:8000/api/v1/imaging/nifti/x');
+      expect(res.status).toBe(200);
+      expect(await res.text()).toBe('volume');
+      expect(seen).toEqual(['Bearer old-token', 'Bearer new-token']);
+    } finally {
+      globalThis.fetch = realFetch;
+    }
   });
 
   it('rc069 logout tells the server, so the refresh cookie is revoked', async () => {

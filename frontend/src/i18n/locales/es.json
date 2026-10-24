@@ -448,7 +448,29 @@
     "hipaaNotice": "Para seguridad de la información de salud del paciente (PHI), las sesiones terminan automáticamente después de 15 minutos de inactividad.",
     "keyboardHint": "Presiona Enter para continuar, o Escape para cerrar sesión",
     "expired": "Tu sesión ha expirado. Por favor inicia sesión de nuevo.",
-    "extendedSuccess": "Sesión extendida exitosamente"
+    "extendedSuccess": "Sesión extendida exitosamente",
+    "reauthTitle": "Vuelva a iniciar sesión para continuar",
+    "reauthMessage": "Por su seguridad, la sesión ha terminado. Vuelva a iniciar sesión para continuar: el trabajo sin guardar sigue en esta pantalla y no se pierde.",
+    "reauthUnsaved": "Tiene cambios de segmentación sin guardar. Se conservan y podrá guardarlos después de iniciar sesión.",
+    "reauthSignedInAs": "Sesión de {{username}}",
+    "reauthPassword": "Contraseña",
+    "reauthSubmit": "Entrar",
+    "reauthPasskey": "Usar llave de acceso",
+    "reauthSignOut": "Cerrar sesión",
+    "reauthSignOutWarning": "Si cierra la sesión ahora, se descartan los cambios sin guardar de esta pantalla.",
+    "reauthSignOutConfirm": "Descartar cambios y cerrar sesión",
+    "reauthCancel": "Volver",
+    "reauthWrongUser": "Solo {{username}} puede continuar este trabajo. Otra persona debe cerrar antes esta sesión y abrir la suya; cerrar aquí descarta los cambios sin guardar.",
+    "reauthFailed": "No se pudo iniciar sesión. Revise la contraseña e inténtelo de nuevo.",
+    "reauthCaptcha": "Demasiados intentos: escriba los números que aparecen para continuar.",
+    "reauthCaptchaLabel": "Comprobación de seguridad"
+  },
+  "audit": {
+    "statusTitle": "Registro de auditoría",
+    "statusFailing": "El servidor no puede guardar el registro de auditoría en el almacén permanente ({{count}} registros en espera). Los registros se conservan en el registro del servidor; avise al administrador del sistema.",
+    "statusDegraded": "Se está reintentando guardar el registro de auditoría ({{count}} registros en espera).",
+    "statusNotDurable": "El registro de auditoría no se está guardando de forma permanente en este servidor.",
+    "statusLastError": "Último error: {{error}}"
   },
   "patient": {
     "title": "Pacientes",

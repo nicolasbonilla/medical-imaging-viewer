@@ -11,15 +11,27 @@ comprehensive security controls.
 """
 
 from typing import Optional
-from fastapi import APIRouter, HTTPException, status, Request, Depends
+from fastapi import APIRouter, HTTPException, status, Request, Depends, Response
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr, Field
 
+from app.core.config import get_settings
 from app.core.logging import get_logger
+from app.core.logging.audit import emit_audit, AuditEventType, AuditOutcome, AuditSeverity
 from app.security.auth import AuthService
 from app.security.password import PasswordManager
 from app.security.jwt_manager import get_token_manager, TokenManager
 from app.security.captcha import get_captcha_manager, CAPTCHAManager, CAPTCHADifficulty
 from app.security.user_storage import get_user_storage, SecureUserStorage
+from app.security.refresh_tokens import (
+    REFRESH_COOKIE_NAME,
+    RefreshError,
+    RefreshTokenStore,
+    clear_refresh_cookie,
+    get_refresh_token_store,
+    no_store,
+    set_refresh_cookie,
+)
 from app.security.models import (
     User,
     UserCreate,
@@ -140,6 +152,33 @@ def get_client_ip(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
+_F = AuditOutcome.FAILURE
+
+
+def _audit_login(http_request: Request, event_type: AuditEventType, outcome: AuditOutcome, *, user=None,
+                 reason: Optional[str] = None, attempted: Optional[str] = None, details=None, severity=None):
+    """CAPA-015 (RC-067): explicit, durable record of a sign-in step. A typed identifier that
+    matches no account is stored only as a SHA-256 prefix."""
+    emit_audit(event_type, outcome, request=http_request,
+               user_id=getattr(user, "id", None), username=getattr(user, "username", None),
+               role=getattr(user, "role", None), reason=reason,
+               attempted_identifier=attempted if user is None else None,
+               details=details, severity=severity)
+
+
+def start_session(response: Response, user, refresh_store: RefreshTokenStore) -> None:
+    """CAPA-015 (RC-068): a sign-in starts a refresh-token family; the token travels only in an
+    HttpOnly, Secure, SameSite=Strict cookie scoped to /api/v1/auth. Responses carrying tokens are
+    never cached. A failure of the store does not refuse the sign-in: the user simply gets no
+    silent continuation (and is asked to sign in again when the access token expires)."""
+    no_store(response)
+    try:
+        set_refresh_cookie(response, refresh_store.issue(user.id))
+    except Exception as e:  # noqa: BLE001
+        logger.error("REFRESH_STORE_UNAVAILABLE could not start a refresh session",
+                     extra={"error_type": type(e).__name__, "user_id": user.id})
+
+
 @router.post(
     "/register",
     response_model=RegisterResponse,
@@ -206,6 +245,8 @@ async def register_user(
             "Registration failed: username exists",
             extra={"username": request.username, "ip_address": ip_address}
         )
+        _audit_login(http_request, AuditEventType.ADMIN_USER_CREATED, _F, reason="username_exists",
+                     attempted=request.username)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Username already exists"
@@ -267,6 +308,8 @@ async def register_user(
 
     # Save user with encrypted storage
     user_storage.save_user(user, password_hash, password_history=[password_hash])
+    _audit_login(http_request, AuditEventType.ADMIN_USER_CREATED, AuditOutcome.SUCCESS, user=user,
+                 reason="self_registration", details={"role": user.role.value})
 
     logger.info(
         "User registered successfully",
@@ -294,9 +337,11 @@ async def register_user(
 async def login_user(
     request: LoginRequestWithCaptcha,
     http_request: Request,
+    response: Response,
     user_storage: SecureUserStorage = Depends(get_user_storage),
     token_manager: TokenManager = Depends(get_token_manager),
     captcha_manager: CAPTCHAManager = Depends(get_captcha_manager),
+    refresh_store: RefreshTokenStore = Depends(get_refresh_token_store),
 ) -> LoginResponse:
     """
     Authenticate user and issue JWT token.
@@ -346,6 +391,8 @@ async def login_user(
                 "Login failed: CAPTCHA required",
                 extra={"username": request.username, "ip_address": ip_address}
             )
+            _audit_login(http_request, AuditEventType.AUTH_LOGIN_FAILED, _F, reason="captcha_required",
+                         attempted=request.username)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="CAPTCHA verification required after multiple failed attempts",
@@ -364,6 +411,8 @@ async def login_user(
                 "Login failed: invalid CAPTCHA",
                 extra={"username": request.username, "ip_address": ip_address}
             )
+            _audit_login(http_request, AuditEventType.AUTH_LOGIN_FAILED, _F, reason="captcha_invalid",
+                         attempted=request.username)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid CAPTCHA. Please try again."
@@ -385,6 +434,8 @@ async def login_user(
                 "failed_attempts": attempts,
             }
         )
+        _audit_login(http_request, AuditEventType.AUTH_LOGIN_FAILED, _F, reason="user_not_found",
+                     attempted=request.username)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
@@ -404,6 +455,7 @@ async def login_user(
                     "ip_address": ip_address,
                 }
             )
+            _audit_login(http_request, AuditEventType.AUTH_LOGIN_FAILED, _F, user=user, reason="account_locked")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Account is locked until {user.locked_until.isoformat()}"
@@ -420,6 +472,7 @@ async def login_user(
             "Login failed: account inactive",
             extra={"user_id": user.id, "username": user.username, "ip_address": ip_address}
         )
+        _audit_login(http_request, AuditEventType.AUTH_LOGIN_FAILED, _F, user=user, reason="account_inactive")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account is inactive"
@@ -457,6 +510,13 @@ async def login_user(
         # Save updated user
         user_storage.save_user(user, password_data['password_hash'], password_data.get('password_history'))
 
+        _audit_login(http_request, AuditEventType.AUTH_LOGIN_FAILED, _F, user=user, reason="invalid_password",
+                     details={"failed_attempts": user.failed_login_attempts})
+        if user.is_locked:
+            _audit_login(http_request, AuditEventType.AUTH_ACCOUNT_LOCKED, AuditOutcome.SUCCESS, user=user,
+                         reason="excessive_failed_logins", severity=AuditSeverity.HIGH,
+                         details={"failed_attempts": user.failed_login_attempts})
+
         logger.warning(
             "Login failed: invalid password",
             extra={
@@ -488,6 +548,7 @@ async def login_user(
         username=user.username,
         role=user.role
     )
+    start_session(response, user, refresh_store)       # CAPA-015 RC-068
 
     logger.info(
         "Login successful",
@@ -499,8 +560,103 @@ async def login_user(
             "iso27001_control": "A.9.4.2",
         }
     )
+    _audit_login(http_request, AuditEventType.AUTH_LOGIN_SUCCESS, AuditOutcome.SUCCESS, user=user)
 
     return LoginResponse(user=user, token=token)
+
+
+def _allowed_origins() -> set:
+    origins = get_settings().CORS_ORIGINS
+    if isinstance(origins, str):
+        origins = [o.strip() for o in origins.split(",")]
+    return {o.rstrip("/") for o in origins if o}
+
+
+def _refused(status_code: int, detail: str) -> JSONResponse:
+    resp = JSONResponse(status_code=status_code, content={"detail": detail})
+    clear_refresh_cookie(resp)
+    no_store(resp)
+    return resp
+
+
+@router.post(
+    "/refresh",
+    response_model=LoginResponse,
+    summary="Continue the session",
+    description="Exchange the refresh cookie (HttpOnly, SameSite=Strict) for a new short-lived access "
+                "token and a rotated refresh cookie. A reused refresh token revokes its whole session "
+                "family. Served on the app's own origin through the hosting rewrite (CAPA-015, RC-068).",
+)
+async def refresh_session(
+    http_request: Request,
+    response: Response,
+    user_storage: SecureUserStorage = Depends(get_user_storage),
+    token_manager: TokenManager = Depends(get_token_manager),
+    refresh_store: RefreshTokenStore = Depends(get_refresh_token_store),
+):
+    """CAPA-015 (RC-068; REQ-SEC-025)."""
+    from datetime import datetime
+
+    def audit(outcome, *, user=None, user_id=None, reason=None, event=AuditEventType.AUTH_TOKEN_REFRESH,
+              severity=None, details=None):
+        emit_audit(event, outcome, request=http_request, user_id=getattr(user, "id", None) or user_id,
+                   username=getattr(user, "username", None), role=getattr(user, "role", None),
+                   reason=reason, severity=severity, details=details)
+
+    # Defence in depth against cross-site requests (the cookie is SameSite=Strict anyway).
+    origin = http_request.headers.get("origin")
+    if origin and origin.rstrip("/") not in _allowed_origins():
+        audit(AuditOutcome.DENIED, reason="foreign_origin")
+        return _refused(status.HTTP_403_FORBIDDEN, "Origin not allowed")
+
+    token = http_request.cookies.get(REFRESH_COOKIE_NAME)
+    if not token:
+        audit(AuditOutcome.DENIED, reason="no_session")
+        return _refused(status.HTTP_401_UNAUTHORIZED, "No session. Please sign in.")
+
+    # The account is checked BEFORE the token is consumed, so a transient error never burns it.
+    try:
+        owner_id, family_id = refresh_store.peek_owner(token)
+        user = user_storage.get_user_by_id(owner_id) if owner_id else None
+    except Exception as e:  # noqa: BLE001 — store unavailable: nothing consumed, try again later
+        logger.error("REFRESH_STORE_UNAVAILABLE refresh refused", extra={"error_type": type(e).__name__})
+        audit(AuditOutcome.FAILURE, reason="store_unavailable")
+        resp = JSONResponse(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                            content={"detail": "Session service temporarily unavailable."})
+        no_store(resp)
+        return resp
+    if owner_id:
+        reason = None
+        if user is None:
+            reason = "user_unknown"
+        elif not user.is_active:
+            reason = "user_inactive"
+        elif user.is_locked and (user.locked_until is None or datetime.utcnow() < user.locked_until):
+            reason = "user_locked"
+        if reason:
+            refresh_store.revoke_family(family_id, reason)
+            audit(AuditOutcome.DENIED, user=user, user_id=owner_id, reason=reason)
+            return _refused(status.HTTP_401_UNAUTHORIZED, "Session ended. Please sign in again.")
+
+    try:
+        issued = refresh_store.rotate(token)
+    except RefreshError as e:
+        if e.reuse:
+            audit(AuditOutcome.DENIED, user_id=e.user_id, reason="reuse_detected",
+                  event=AuditEventType.AUTH_TOKEN_REUSE_DETECTED, severity=AuditSeverity.HIGH)
+        else:
+            audit(AuditOutcome.DENIED, user_id=e.user_id, reason=e.reason)
+        return _refused(status.HTTP_401_UNAUTHORIZED, "Session expired. Please sign in again.")
+    except Exception as e:  # noqa: BLE001 — store unavailable: fail closed, the client asks to sign in
+        logger.error("REFRESH_STORE_UNAVAILABLE refresh refused", extra={"error_type": type(e).__name__})
+        audit(AuditOutcome.FAILURE, reason="store_unavailable")
+        return _refused(status.HTTP_401_UNAUTHORIZED, "Session could not be continued. Please sign in again.")
+
+    access = token_manager.create_access_token(user_id=user.id, username=user.username, role=user.role)
+    set_refresh_cookie(response, issued)
+    no_store(response)
+    audit(AuditOutcome.SUCCESS, user=user, details={"rotation_count": issued.rotation_count})
+    return LoginResponse(user=user, token=access)
 
 
 @router.post(

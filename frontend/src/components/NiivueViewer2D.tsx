@@ -28,16 +28,13 @@ import { Niivue, NVImage, SLICE_TYPE, SHOW_RENDER } from '@niivue/niivue';
 import { useViewerStore } from '@/store/useViewerStore';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import { windowLevelToCalRange, sliceIndexToFraction } from '@/utils/niivueWindowLevel';
+import { fetchWithSession } from '@/services/session';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
-function getAuthHeaders(): Record<string, string> {
-  const token = localStorage.getItem('access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 async function fetchBuffer(url: string): Promise<ArrayBuffer> {
-  const res = await fetch(url, { headers: getAuthHeaders() });
+  // CAPA-015 RC-069: bearer token + silent refresh / re-login on 401 (never a lost session).
+  const res = await fetchWithSession(url);
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`HTTP ${res.status}: ${text.slice(0, 160) || res.statusText}`);
