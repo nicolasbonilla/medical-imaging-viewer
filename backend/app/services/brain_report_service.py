@@ -10,10 +10,19 @@ focused on Multiple Sclerosis evaluation following international standards:
 
 Templates: general, ms_activity, ms_lesion_burden, ms_longitudinal.
 
-HIPAA Compliance:
-- Patient data is de-identified before sending to Claude API
-- Only clinical findings and measurements are transmitted
-- No names, IDs, or dates are sent to the external API
+Data sent to the model provider (CAPA-014; RC-064, RC-065, RC-066; HAZ-016):
+- Before anything is sent, one de-identification step (`report_deidentification`) removes the
+  patient's own name, record number, birth date, phone, e-mail and address (taken from the patient
+  record the server holds) and, by pattern, other dates (turned into intervals), phone numbers,
+  e-mail addresses, ID-like numbers, titled person names and institution names, from every string
+  of the findings; the age is sent as a 5-year band. The system prompt is a fixed template.
+- Without the patient's identifiers, or when one of them remains in the final prompt, the provider
+  is not called (fail closed).
+- What still reaches the provider: the measurements, sex, the age band and the clinician's text after
+  that removal — pseudonymised health data, not anonymous data (CAPA-014 §6).
+- An earlier version of this header stated that patient data was de-identified and that names, IDs
+  and dates were never sent; nothing de-identified then (CAPA-001 §2.3, CAPA-008 finding 4). That
+  statement is withdrawn.
 
 @module services.brain_report_service
 """
@@ -24,6 +33,12 @@ from typing import Optional, List, Dict, Any
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
+from app.services.report_deidentification import (
+    DeidentificationUnavailable,
+    PatientIdentifiers,
+    assert_no_residual_identifiers,
+    deidentify_report_input,
+)
 
 logger = get_logger(__name__)
 
@@ -440,9 +455,10 @@ class BrainReportService:
     - Integrates volumetry data when available
     - Multi-language support (en, es, de)
 
-    CAPA-008: this service does NOT de-identify. It forwards the supplied findings
-    (including age, sex and free text) to the model provider; callers must not send direct
-    identifiers. An earlier claim of HIPAA compliance here was unsubstantiated and is withdrawn.
+    CAPA-014: every report is generated for one patient, whose identifiers (read from the patient
+    record by the caller) are removed from the findings before the prompt is built; without them
+    no request is sent (see the module docstring). CAPA-008 had recorded that this service did not
+    de-identify; that was true until CAPA-014.
     """
 
     def __init__(self):
@@ -484,7 +500,8 @@ class BrainReportService:
             parts.append(f"Technique/Sequences: {findings['technique']}")
 
         if findings.get("patient_age"):
-            parts.append(f"Patient age: {findings['patient_age']} years")
+            # CAPA-014 (RC-064): a 5-year band set by the de-identification step, never the exact age
+            parts.append(f"Patient age band: {findings['patient_age']} (years)")
 
         if findings.get("patient_sex"):
             sex_label = "Male" if findings["patient_sex"] == "M" else "Female"
@@ -668,18 +685,23 @@ class BrainReportService:
         findings: Optional[Dict[str, Any]] = None,
         volumetry: Optional[Dict[str, Any]] = None,
         language: str = "en",
+        identifiers: Optional[PatientIdentifiers] = None,
     ) -> Dict[str, Any]:
         """
         Generate a structured brain MRI report.
 
         Args:
             template_type: Report template (general, ms_activity, ms_lesion_burden)
-            findings: Clinical findings dict (de-identified)
+            findings: Clinical findings dict (identifiers are removed here, CAPA-014)
             volumetry: Volumetry results dict (optional)
             language: Report language (en, es, de)
+            identifiers: The patient's own identifiers, from the patient record (required)
 
         Returns:
             Dict with report_id, content, template_type, language, processing_time_ms
+
+        Raises:
+            DeidentificationError: no identifiers, or one remained in the prompt — nothing was sent
         """
         start_time = time.time()
         report_id = str(uuid.uuid4())
@@ -691,8 +713,23 @@ class BrainReportService:
         if template_type not in REPORT_TEMPLATES:
             template_type = "general"
 
-        system_prompt = REPORT_TEMPLATES[template_type]
-        user_prompt = self._build_findings_prompt(findings, volumetry, language)
+        # CAPA-014 (RC-065, HAZ-016): no patient identifiers, no request to the provider.
+        if not isinstance(identifiers, PatientIdentifiers):
+            raise DeidentificationUnavailable(
+                "The patient's identifiers are needed to remove them before sending; nothing was sent")
+
+        system_prompt = REPORT_TEMPLATES[template_type]      # fixed text: carries no patient data
+        # RC-064: the single de-identification step — everything the prompt is built from passes it.
+        clean = deidentify_report_input(findings, volumetry, identifiers)
+        user_prompt = self._build_findings_prompt(clean.findings, clean.volumetry, language)
+        # RC-065: defence in depth — the patient's own identifiers must not remain in the final prompt.
+        assert_no_residual_identifiers(user_prompt, identifiers)
+        # RC-066: record that the removal ran and how many items of each kind — never the payload.
+        logger.info(
+            "[Report] De-identification applied before the model provider call",
+            extra={"report_id": report_id, "deidentification": "applied",
+                   "redactions": dict(clean.redactions)},
+        )
 
         logger.info(
             f"[Report] Generating {template_type} report in {language}",

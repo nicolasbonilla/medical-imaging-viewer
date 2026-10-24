@@ -950,6 +950,7 @@
     "generating": "Wird erstellt...",
     "generateError": "Berichterstellung fehlgeschlagen",
     "noMeasurements": "Für diese Untersuchung liegen keine Messwerte vor. Öffnen Sie zuerst eine Segmentierung und führen Sie deren Analyse aus: Ein Bericht ohne Messwerte wäre erfunden.",
+    "deidentificationNote": "An den KI-Anbieter (Anthropic) gesendet werden: die Messwerte, das Geschlecht, eine 5-Jahres-Altersspanne und Ihr Text. Vorher entfernt werden: Name, Patientennummer und Geburtsdatum des Patienten (aus der Patientenakte) sowie Daten (in Zeitabstände umgewandelt), Telefonnummern, E-Mail-Adressen und Ausweis- oder Kennnummern in Ihrem Text. Andere Namen werden möglicherweise nicht erkannt – bitte nicht eingeben.",
     "tokens": "Tokens",
     "copy": "Kopieren",
     "copied": "Kopiert!",

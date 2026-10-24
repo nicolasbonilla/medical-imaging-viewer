@@ -963,6 +963,7 @@
     "generating": "Generando...",
     "generateError": "Error al generar el informe",
     "noMeasurements": "No hay mediciones disponibles para este estudio. Abra una segmentación y ejecute su análisis primero: un informe sin mediciones sería inventado.",
+    "deidentificationNote": "Se envía al proveedor de IA (Anthropic): las mediciones, el sexo, un rango de edad de 5 años y su texto. Antes se eliminan: el nombre, el número de historia y la fecha de nacimiento del paciente (según su ficha), y las fechas (convertidas en intervalos), teléfonos, correos electrónicos y números de identificación de su texto. Otros nombres pueden no reconocerse: no los escriba.",
     "tokens": "Tokens",
     "copy": "Copiar",
     "copied": "Copiado!",

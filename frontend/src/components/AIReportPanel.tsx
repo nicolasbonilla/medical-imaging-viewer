@@ -95,6 +95,8 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
       language,
       findings,
       volumetry: volumetry || null,
+      // CAPA-014 (RC-065): the server removes this patient's identifiers before calling the provider
+      ...(activeSegId ? { segmentation_id: activeSegId } : {}),
     });
   };
 
@@ -267,8 +269,17 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
                 </div>
               )}
 
+              {/* CAPA-014 (RC-066): what is removed before sending, and what is still sent */}
+              <p
+                data-testid="report-deidentification-note"
+                className="text-[11px] leading-snug text-gray-500 dark:text-gray-400"
+              >
+                {t('report.deidentificationNote')}
+              </p>
+
               {/* Generate button */}
               <button
+                data-testid="report-generate-button"
                 onClick={handleGenerate}
                 disabled={generateMutation.isPending}
                 className="w-full px-3 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 shadow-sm"

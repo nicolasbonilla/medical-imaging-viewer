@@ -183,6 +183,8 @@ export interface ReportGenerateRequest {
   language: string;
   findings: Record<string, any>;
   volumetry?: Record<string, any> | null;
+  /** The analysed segmentation: required by the server to remove the patient's identifiers (CAPA-014). */
+  segmentation_id?: string;
 }
 
 export interface ReportResponse {

@@ -314,6 +314,45 @@ def test_rc064_spanish_particles_and_clinical_words_survive_a_compound_surname()
                    "[name removed] refiere fatiga.")
 
 
+PATTERN_CASES = [  # (text, must be gone (folded), must stay verbatim)
+    ("Accession number: A1234567.", ["a1234567"], ["Accession number: [ID number removed]."]),
+    ("NHS 943 476 5919, DNI 12345678Z, Patienten-ID 99887766.", ["943 476 5919", "12345678z", "99887766"],
+     ["NHS", "DNI", "Patienten-ID"]),
+    ("Prof. Dr. med. Hans Schmidt reviewed it.", ["hans", "schmidt"], ["[person name removed] reviewed it."]),
+    ("Tel (604) 555-9876 or +49 89 1234567.", ["555-9876", "604", "1234567", "+49"], ["Tel [phone removed] or"]),
+    ("Seen in March 2024 and on 3 April 2025.", ["march 2024", "april 2025"],
+     ["Seen in [date 1] and on [date 2 = date 1 + 13 months]."]),
+    ("Paciente de 47 años de edad, 2 años de evolución.", ["47 anos"], ["45-49 años de edad, 2 años de evolución."]),
+    ("DICOM UID 1.2.840.113619.2.55.3 attached.", ["113619"], ["attached."]),
+    ("Seen at Mayo Clinic last year.", ["mayo"], ["Seen at [institution removed] last year."]),
+    ("Control el 12 de mayo.", ["12 de mayo"], ["Control el [date removed]."]),
+    ("Klinik: Sehstörung rechts. Radiologie Befund unauffällig.", [],
+     ["Klinik: Sehstörung rechts. Radiologie Befund unauffällig."]),
+    ("Patient 1978-03-15, seen 2025-01-10.", ["1978-03-15"], ["Patient [birth date removed], seen [date 1]."]),
+    ("DOB: 1978. Known MS since 2019.", ["1978"], ["DOB: [birth date removed]. Known MS since 2019."]),
+    ("Fallnummer 4711, NHC 20931.", ["4711", "20931"], ["Fallnummer [ID number removed], NHC [ID number removed]."]),
+    ("Patient, 48 years, RRMS.", ["48 years"], ["Patient, 45-49 years, RRMS."]),
+    ("Vive en Calle 80 # 15-20 y trabaja en Av. 68 # 12-34.", ["calle 80", "15-20", "68 # 12"],
+     ["Vive en [address removed] y trabaja en [address removed]."]),
+    ("Contacto: 31 07 65 43 21.", ["31 07 65 43 21"], ["Contacto: [phone removed]."]),
+    ("Ref 2025031200123 and A-20251012-0042 attached.", ["2025031200123", "0042"],
+     ["Ref [ID number removed] and [ID number removed] attached."]),
+    ("Fingolimod 2019-2021, ocrelizumab since 2022; MRI 2019 2020 2021.", [],
+     ["Fingolimod 2019-2021, ocrelizumab since 2022; MRI 2019 2020 2021."]),
+    ("Kontrastmittelring 5 mm, nie 2019 Schübe gehabt.", [], ["Kontrastmittelring 5 mm, nie 2019 Schübe gehabt."]),
+]
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("text,gone,kept", PATTERN_CASES, ids=[c[0][:28] for c in PATTERN_CASES])
+def test_rc064_pattern_rules(text, gone, kept):
+    from app.services.report_deidentification import PatientIdentifiers, deidentify_report_input
+    ids = PatientIdentifiers.from_record(SimpleNamespace(**RECORD))
+    out = deidentify_report_input({"additional_observations": text}, None, ids).findings["additional_observations"]
+    assert not [g for g in gone if g in _fold(out)], out
+    assert all(k in out for k in kept), out
+
+
 @pytest.mark.unit
 def test_rc064_measurement_like_numbers_in_text_are_kept():
     from app.services.report_deidentification import PatientIdentifiers, deidentify_report_input
@@ -341,8 +380,9 @@ def test_rc065_no_segmentation_reference_no_provider_call(route):
     body = _body()
     del body["segmentation_id"]
     r = _post(route, body)
-    assert r.status_code == 422, r.text
-    assert "identifiers" in r.json()["detail"].lower() and "nothing was sent" in r.json()["detail"].lower()
+    assert r.status_code == 400, r.text      # not 422: the panel reads every 422 as "no measurements"
+    detail = r.text.lower()     # the app's error handler wraps the detail
+    assert "identifiers" in detail and "nothing was sent" in detail
     assert route.provider.calls == [] and route.created == []
 
 
@@ -364,7 +404,7 @@ def test_rc065_patient_record_unavailable_no_provider_call(route, patients):
     route.patients = patients
     r = _post(route, _body())
     assert r.status_code == 503, r.text
-    detail = r.json()["detail"].lower()
+    detail = r.text.lower()     # the app's error handler wraps the detail
     assert "nothing was sent" in detail
     assert route.provider.calls == [] and route.created == []
     assert "juan" not in detail and "mrn-2025" not in detail
@@ -435,8 +475,8 @@ async def test_rc065_residual_identifier_stops_the_call(monkeypatch):
     svc = brs.BrainReportService()
     provider = _Provider()
     svc._get_client = lambda: provider
-    ids = PatientIdentifiers.from_record(SimpleNamespace(**RECORD))
-    for leak in ("Juan Pérez Gómez", "MRN-2025-0042", "born 1978-03-15", "e-mail juan.perez@example.com",
+    ids = PatientIdentifiers.from_record(SimpleNamespace(**dict(RECORD, email="contacto.px7@example.org")))
+    for leak in ("Juan Pérez Gómez", "MRN-2025-0042", "born 1978-03-15", "e-mail contacto.px7@example.org",
                  "tel 300 123 4567"):
         with pytest.raises(DeidentificationFailed) as exc:
             await svc.generate_report(findings={"lesion_analysis": LESIONS, "additional_observations": leak},

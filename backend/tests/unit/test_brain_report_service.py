@@ -1,17 +1,27 @@
 """
 Unit tests for BrainReportService — IEC 62304 Class C.
 
-Tests verify report generation, template handling, HIPAA compliance,
-and prompt construction per DD-RPT-001.
+Tests verify report generation, template handling and prompt construction
+per DD-RPT-001. De-identification of what is sent to the provider (CAPA-014,
+REQ-SEC-021..023) is tested in test_capa014_report_deidentification.py.
 
 Requirement traceability:
   - REQ-FUNC-045: AI-assisted report generation
-  - REQ-SAFE-006: HIPAA-compliant de-identification before external API calls
+  - REQ-SAFE-006: AI disclaimer (RC-006)
   - DD-RPT-001: Report generation via Claude API
 """
 
 import pytest
+from datetime import date
 from unittest.mock import MagicMock, patch, AsyncMock
+
+# CAPA-014 (RC-065): the service sends nothing without the patient's identifiers.
+from app.services.report_deidentification import PatientIdentifiers
+
+TEST_IDENTIFIERS = PatientIdentifiers.from_record({
+    "mrn": "MRN-TEST-0001", "given_name": "Testgiven", "family_name": "Testfamily",
+    "birth_date": date(1980, 1, 1),
+})
 
 
 @pytest.mark.unit
@@ -116,7 +126,7 @@ class TestBrainReportService:
         mock_client.messages.create = MagicMock(return_value=mock_response)
 
         with patch.object(self.service, '_get_client', return_value=mock_client):
-            result = await self.service.generate_report(
+            result = await self.service.generate_report(identifiers=TEST_IDENTIFIERS, 
                 template_type="general",
                 findings={"clinical_indication": "MS follow-up"},
                 language="en",
@@ -148,7 +158,7 @@ class TestBrainReportService:
         mock_client.messages.create = MagicMock(return_value=mock_response)
 
         with patch.object(self.service, '_get_client', return_value=mock_client):
-            result = await self.service.generate_report(
+            result = await self.service.generate_report(identifiers=TEST_IDENTIFIERS, 
                 template_type="general", findings={}, language="en"
             )
 
@@ -167,7 +177,7 @@ class TestBrainReportService:
         mock_client.messages.create = MagicMock(return_value=mock_response)
 
         with patch.object(self.service, '_get_client', return_value=mock_client):
-            result = await self.service.generate_report(
+            result = await self.service.generate_report(identifiers=TEST_IDENTIFIERS, 
                 template_type="general", findings={}, language="en"
             )
 
@@ -184,8 +194,8 @@ class TestBrainReportService:
         mock_client.messages.create = MagicMock(return_value=mock_response)
 
         with patch.object(self.service, '_get_client', return_value=mock_client):
-            r1 = await self.service.generate_report(template_type="general", findings={})
-            r2 = await self.service.generate_report(template_type="general", findings={})
+            r1 = await self.service.generate_report(identifiers=TEST_IDENTIFIERS, template_type="general", findings={})
+            r2 = await self.service.generate_report(identifiers=TEST_IDENTIFIERS, template_type="general", findings={})
 
         assert r1["report_id"] != r2["report_id"]
 
@@ -204,7 +214,7 @@ class TestBrainReportService:
         mock_client.messages.create = MagicMock(return_value=mock_response)
 
         with patch.object(self.service, '_get_client', return_value=mock_client):
-            result = await self.service.generate_report(
+            result = await self.service.generate_report(identifiers=TEST_IDENTIFIERS, 
                 template_type="nonexistent_template", findings={}, language="en"
             )
 
@@ -224,7 +234,7 @@ class TestBrainReportService:
             mock_client.messages.create = MagicMock(return_value=mock_response)
 
             with patch.object(self.service, '_get_client', return_value=mock_client):
-                await self.service.generate_report(
+                await self.service.generate_report(identifiers=TEST_IDENTIFIERS, 
                     template_type=template_type, findings={}, language="en"
                 )
 
@@ -247,7 +257,7 @@ class TestBrainReportService:
         mock_client.messages.create = MagicMock(return_value=mock_response)
 
         with patch.object(self.service, '_get_client', return_value=mock_client):
-            await self.service.generate_report(
+            await self.service.generate_report(identifiers=TEST_IDENTIFIERS, 
                 template_type="ms_comprehensive", findings={}, language="en"
             )
 
@@ -266,7 +276,7 @@ class TestBrainReportService:
         mock_client.messages.create = MagicMock(return_value=mock_response)
 
         with patch.object(self.service, '_get_client', return_value=mock_client):
-            await self.service.generate_report(
+            await self.service.generate_report(identifiers=TEST_IDENTIFIERS, 
                 template_type="general", findings={}, language="en"
             )
 
@@ -288,7 +298,7 @@ class TestBrainReportService:
         mock_client.messages.create = MagicMock(return_value=mock_response)
 
         with patch.object(self.service, '_get_client', return_value=mock_client):
-            await self.service.generate_report(
+            await self.service.generate_report(identifiers=TEST_IDENTIFIERS, 
                 template_type="general", findings={}, language="en"
             )
 
@@ -306,7 +316,7 @@ class TestBrainReportService:
         mock_client.messages.create = MagicMock(return_value=mock_response)
 
         with patch.object(self.service, '_get_client', return_value=mock_client):
-            await self.service.generate_report(
+            await self.service.generate_report(identifiers=TEST_IDENTIFIERS, 
                 template_type="general", findings={}, language="es"
             )
 
@@ -324,7 +334,7 @@ class TestBrainReportService:
         mock_client.messages.create = MagicMock(return_value=mock_response)
 
         with patch.object(self.service, '_get_client', return_value=mock_client):
-            await self.service.generate_report(
+            await self.service.generate_report(identifiers=TEST_IDENTIFIERS, 
                 template_type="general", findings={}, language="de"
             )
 
@@ -342,7 +352,7 @@ class TestBrainReportService:
         mock_client.messages.create = MagicMock(return_value=mock_response)
 
         with patch.object(self.service, '_get_client', return_value=mock_client):
-            await self.service.generate_report(
+            await self.service.generate_report(identifiers=TEST_IDENTIFIERS, 
                 template_type="general", findings={}, language="xx"
             )
 
@@ -350,7 +360,7 @@ class TestBrainReportService:
         assert "English" in user_msg
 
     # =========================================================================
-    # Findings prompt construction — HIPAA compliance (REQ-SAFE-006)
+    # Findings prompt construction (what is removed before sending: test_capa014_report_deidentification.py)
     # =========================================================================
 
     def test_build_findings_prompt_clinical_indication(self):
@@ -361,11 +371,12 @@ class TestBrainReportService:
         assert "Known MS, annual follow-up" in prompt
 
     def test_build_findings_prompt_patient_age(self):
-        """Patient age is included (de-identified — age alone is not PHI)."""
+        """CAPA-014 (RC-064): the age reaches the prompt as the 5-year band set by the
+        de-identification step (was: the exact age)."""
         prompt = self.service._build_findings_prompt(
-            {"patient_age": 42}, language="en"
+            {"patient_age": "40-44"}, language="en"
         )
-        assert "42 years" in prompt
+        assert "Patient age band: 40-44 (years)" in prompt
 
     def test_build_findings_prompt_patient_sex(self):
         """Patient sex is included with readable label."""
@@ -506,7 +517,7 @@ class TestBrainReportService:
 
         with patch.object(self.service, '_get_client', return_value=mock_client):
             with pytest.raises(Exception, match="API rate limit exceeded"):
-                await self.service.generate_report(
+                await self.service.generate_report(identifiers=TEST_IDENTIFIERS, 
                     template_type="general", findings={}, language="en"
                 )
 
@@ -517,7 +528,7 @@ class TestBrainReportService:
         self.service._settings.ANTHROPIC_API_KEY = ""
 
         with pytest.raises(RuntimeError, match="ANTHROPIC_API_KEY"):
-            await self.service.generate_report(
+            await self.service.generate_report(identifiers=TEST_IDENTIFIERS, 
                 template_type="general", findings={}, language="en"
             )
 
@@ -532,7 +543,7 @@ class TestBrainReportService:
         mock_client.messages.create = MagicMock(return_value=mock_response)
 
         with patch.object(self.service, '_get_client', return_value=mock_client):
-            result = await self.service.generate_report(
+            result = await self.service.generate_report(identifiers=TEST_IDENTIFIERS, 
                 template_type="general", findings=None, language="en"
             )
 

@@ -957,6 +957,7 @@
     "generating": "Generating...",
     "generateError": "Report generation failed",
     "noMeasurements": "No measurements are available for this study. Open a segmentation and run its analysis first: a report without measurements would be invented.",
+    "deidentificationNote": "Sent to the AI provider (Anthropic): the measurements, sex, a 5-year age range and your text. Removed first: the patient's name, record number and birth date (from the patient record), and dates (turned into intervals), phone numbers, e-mail addresses and ID numbers in your text. Other names may not be recognised — do not type them.",
     "tokens": "Tokens",
     "copy": "Copy",
     "copied": "Copied!",
