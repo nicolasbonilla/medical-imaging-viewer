@@ -10,7 +10,7 @@ the code of `main` @ `70cc5c7` on 2026-10-24 and reproduced by tests written bef
 PRB-003). The device is not in clinical use and the AI tools are believed off in production: that lowers the
 probability of harm, not the class.
 **Owner**: *(to be assigned — a person; the AI coding agent cannot own a CAPA)*
-**Status**: DRAFT. Corrections implemented on branch `fix/dis-requires-reviewed-segmentation-prb003` (draft PR, from
+**Status**: DRAFT. Corrections implemented on branch `fix/dis-requires-reviewed-segmentation-prb003` (draft PR #68, from
 `main` @ `70cc5c7`). Nothing merged, nothing deployed. **PENDING owner approval.** Effectiveness is not verified.
 **Identifiers**: RC-070, RC-071, RC-072; REQ-SAFE-038, REQ-SAFE-039, REQ-SAFE-040; CAPA-016; no new hazard. Checked on
 every open branch on 2026-10-24: PR #67 (CAPA-014) holds RC-064..066, REQ-SEC-021..023, HAZ-016, SRS 1.11, RMF 1.13,

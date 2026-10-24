@@ -15,7 +15,7 @@ record drafted by the AI coding agent
 result for any mask, and the viewer has displayed it from the metadata, since `a637cdf` (2026-03-14)
 **Severity**: **Critical — safety-related** (proposed; SPR-001 §2 classes a problem with a safety impact as Critical;
 rationale in §5). **PENDING owner approval.**
-**Status**: OPEN — DRAFT. Fix implemented on branch `fix/dis-requires-reviewed-segmentation-prb003` (draft PR, not
+**Status**: OPEN — DRAFT. Fix implemented on branch `fix/dis-requires-reviewed-segmentation-prb003` (draft PR #68, not
 merged, not deployed); it changes one Class C module (`brain_report_service.py`, DIS block of the report prompt) and
 needs a code review before merge (CLAUDE.md). **PENDING owner approval.**
 
@@ -170,7 +170,7 @@ Record: `records/capa/CAPA-016_DIS_Requires_Confirmed_Segmentation.md`. **Owner 
 
 ## 6. Resolution (SPR-001 §4) — implemented on branch, NOT merged
 
-Branch `fix/dis-requires-reviewed-segmentation-prb003` (draft PR), from `main` @ `70cc5c7`:
+Branch `fix/dis-requires-reviewed-segmentation-prb003` (draft PR #68), from `main` @ `70cc5c7`:
 - **RC-070** — `backend/app/services/dis_review_gate.py` (new) decides; `segmentation_analysis.assess_dis` (DIS route and
   report route), `segmentation_regions.classify_regions`, `segmentation.get_segmentation` / `list_segmentations`,
   `ai_report.server_dis_assessment` / `dis_notice`, `brain_report_service._build_findings_prompt` (Class C, DIS block
