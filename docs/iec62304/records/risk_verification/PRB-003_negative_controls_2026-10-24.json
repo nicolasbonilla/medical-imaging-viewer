@@ -1,35 +1,45 @@
 {
-  "executed": "2026-10-24T18:00:51",
+  "executed": "2026-10-24T19:41:23",
   "method": "one mutation at a time; each anchor asserted to occur exactly once; the bound tests of the mutated side are run (backend pytest with no cloud credential per PRB-002, frontend vitest JSON reporter); original bytes restored after each mutation and checked at the end",
   "hash_basis": "sha256 of the UTF-8 text with LF line endings",
   "source_sha256": {
-    "backend/app/api/routes/ai_report.py": "3b60cc2d3b64620ed5ee9e60f96373381d886efeea14248c8811e88cdf007415",
-    "backend/app/api/routes/segmentation.py": "5d3306d37feab0409cead248f2242d9721053bb4968d581fa3a770fade276c01",
-    "backend/app/api/routes/segmentation_analysis.py": "94e1e9f21b6e3b0c0aebd73fbc126dee686ab421d50d01d9f4c0ce33d8720ed5",
-    "backend/app/api/routes/segmentation_regions.py": "364778f7b1ef922ff10eabba316561017caefe18d2569db9589683e75bf19421",
-    "backend/app/mcp/ms_clinical_server.py": "0cdfd6b2e8517849bb1eb9364b0276df40caae3b849d6a234ada7c2974b0de40",
-    "backend/app/services/brain_report_service.py": "53d1a09f87a8f1c091da45c8de8b7a6071bfbbd7e03deb8f875319187ea76aaf",
-    "backend/app/services/dis_review_gate.py": "ada355228a281e302f4b3f9ab697e96df802ebef2e10b5d4416c247ef0a5cc64",
-    "backend/app/services/segmentation_service.py": "a4959edae85a5ae4cd87599708cf7f17faeca93ae3a083bd1d237102734370a0",
+    "backend/app/api/routes/ai_report.py": "cc112e2d273f093cad14fb7062f6ec4c78c63375b6bc2c39f111eb552c9e8eb6",
+    "backend/app/api/routes/segmentation.py": "3f6b539a00490a93714528e1f0400cc94dc44271d267a7417b4d7bf05e5f2d05",
+    "backend/app/api/routes/segmentation_analysis.py": "69357a1d77cab6076fdcce9e655daba01c982b345f57693e4c53a4ba8ead84cb",
+    "backend/app/api/routes/segmentation_regions.py": "63627178b6c22a9e4b50541dac451015c38a8aab6b7acc2382dff554d542aa88",
+    "backend/app/mcp/ms_clinical_server.py": "5e7b80abeb6439ffd5f216097814ecae4d173d3c7e8b9d254ca2ec2a1c70b003",
+    "backend/app/services/brain_report_service.py": "8cc847ef186484b6efa7bfd3f6a0537b5b10c2c7a4da702494f87200eb315462",
+    "backend/app/services/dis_review_gate.py": "9ff887d9b550280666e31a6f060fed71f448c5f820cef383253b97c502544d22",
+    "backend/app/services/segmentation_service.py": "8cdf20f337b7e8976f037b9d67c01e80e58f3d230e096e24b3a9c67651b7c721",
+    "frontend/src/ViewerApp.tsx": "68895a743002bbd55758c2e31eca97c5cff806caa8ace98a8bc72d2a1d8ac5b3",
+    "frontend/src/components/AIReportPanel.tsx": "fdf231e94b8ccfada7a7aaf3bf35807cad2388ca0d9b6d64975b07562903a2a7",
     "frontend/src/components/AiDraftBanner.tsx": "adbca5070ccf94b6d9355a7ef870414f3bf8825068f9cdf203ac593d1f07b9d2",
-    "frontend/src/components/LesionDashboard.tsx": "e2f270378a99756fbaa861f9ef4eeccb2ef395292e46a6a670a28dd0d485aaa8",
-    "frontend/src/components/SegmentationPanel.tsx": "d6d2f8bc22520557d89471432da63881349291a3fb345610f78e7909b346172d",
-    "frontend/src/i18n/locales/es.json": "f2bfe34b11434713e49d549ad3a5c8fa5713b71a637666897ff6949b28d12aeb",
-    "frontend/src/types/lesion.ts": "9b62dbe3f1d0cb400e7f88b478422be8ae6f5ac82aea50732d2f724bf5482b54"
+    "frontend/src/components/BrowserFlamesCard.tsx": "5b061af0cc1c5bd7a4627957fd12c6c1fc49dd540187bbf2bc3eafca09c781bb",
+    "frontend/src/components/ClinicalToolsPanel.tsx": "0145cfd13e008da141a8f3652aaa74c322f547bc3a55b445c77e921945aacdd7",
+    "frontend/src/components/LesionDashboard.tsx": "2a3cc490cb136590ac0730b279e6fa593ddc2e0c3f15859ea78a0f85f73a45ab",
+    "frontend/src/components/SegmentationPanel.tsx": "55e363cbdc09d975dcef4db777c4aff1b3fe59b3b6f8f532ddc704785ba91d68",
+    "frontend/src/i18n/locales/es.json": "cd2d0fb9ddd017608636c4d05f6233994c105e07819a91fe530941fc52636abc",
+    "frontend/src/types/lesion.ts": "00bb90dd5c48b309a5e02952eb164eb1bf996d2ca295a4b275fdc387c584235a"
   },
   "test_sha256": {
-    "backend/tests/unit/test_prb003_dis_requires_confirmed_segmentation.py": "7105ab5c4de84e10b97375bf32b0e578556eaf26815ebd42c19e1cb1a78a6ef9",
-    "frontend/src/components/LesionDashboard.prb003.test.tsx": "ca0b34a5b5baafa1796467e403796e3de1f713c5155461a47cc6031b9a23a211"
+    "backend/tests/unit/test_prb003_dis_requires_confirmed_segmentation.py": "eb1a6048b094b159839279231e8977741f27b91dd63a9c26cd567fe90c451e0b",
+    "backend/tests/unit/test_prb003_review1_findings.py": "ed1545deddd35f21dc8675a7c35d5dff821b1534b370e32ea3fa4deebb2d3d23",
+    "frontend/src/components/LesionDashboard.prb003.test.tsx": "422f736d2c47895c42d8776e533945fee55750acd10bae776b4da9773b4c64b8",
+    "frontend/src/components/LesionDashboard.prb003.review1.test.tsx": "0faa08cf96b8eab015d60f9b85bf4bf699f9ea02d478c25fea0a6fcdac3d535c",
+    "frontend/src/components/SegmentationPanel.prb003.test.tsx": "ef21e5c3a3a4feace893a7e1ded9fcce95de751abf340bf677ff5be0dd14620f"
   },
   "tests": [
     "backend/tests/unit/test_prb003_dis_requires_confirmed_segmentation.py",
-    "frontend/src/components/LesionDashboard.prb003.test.tsx"
+    "backend/tests/unit/test_prb003_review1_findings.py",
+    "frontend/src/components/LesionDashboard.prb003.test.tsx",
+    "frontend/src/components/LesionDashboard.prb003.review1.test.tsx",
+    "frontend/src/components/SegmentationPanel.prb003.test.tsx"
   ],
   "mutations": {
     "G1_route_gate_bypassed": {
       "suite": "backend",
-      "failed": 19,
-      "passed": 22,
+      "failed": 41,
+      "passed": 47,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -38,69 +48,107 @@
         "test_rc070_a_confirmation_given_for_another_mask_does_not_count[clinician]",
         "test_rc070_a_stored_dis_conclusion_is_never_served_for_an_unconfirmed_segmentation",
         "test_rc070_external_evidence_does_not_bypass_the_gate",
+        "test_rc070_r1_a_classification_of_other_lesions_does_not_count",
+        "test_rc070_r1_a_confirmed_binary_lesion_mask_is_not_evaluated",
+        "test_rc070_r1_a_lesion_added_after_classification_needs_a_new_classification",
+        "test_rc070_r1_a_mask_value_outside_its_label_scheme_is_not_evaluated",
+        "test_rc070_r1_classified_lesions_relabelled_with_another_scheme_are_not_evaluated",
+        "test_rc070_r1_magnims_names_without_a_recorded_classification_are_not_evaluated",
+        "test_rc070_r1_the_default_label_preset_confirmed_is_not_evaluated",
+        "test_rc070_r3_without_an_evaluated_dis_the_report_receives_no_region_breakdown",
+        "test_rc070_r4_a_dis_statement_written_by_the_model_is_replaced[de-Die",
+        "test_rc070_r4_a_dis_statement_written_by_the_model_is_replaced[en-Lesions",
+        "test_rc070_r4_a_dis_statement_written_by_the_model_is_replaced[es-Las",
+        "test_rc070_r4_without_an_evaluated_dis_no_template_asks_for_dis[general]",
+        "test_rc070_r4_without_an_evaluated_dis_no_template_asks_for_dis[ms_activity]",
+        "test_rc070_r4_without_an_evaluated_dis_no_template_asks_for_dis[ms_comprehensive]",
+        "test_rc070_r4_without_an_evaluated_dis_no_template_asks_for_dis[ms_lesion_burden]",
+        "test_rc070_r4_without_an_evaluated_dis_no_template_asks_for_dis[ms_longitudinal]",
         "test_rc070_report_route_refuses_a_request_whose_only_measurement_is_an_unevaluated_dis",
         "test_rc070_report_route_replaces_a_client_dis_conclusion_with_the_server_state",
         "test_rc070_segmentation_of_unrecorded_origin_dis_is_not_evaluated",
         "test_rc070_server_tool_segmentation_dis_is_not_evaluated",
         "test_rc070_unreviewed_ai_draft_dis_is_not_evaluated",
         "test_rc071_a_radiologist_confirms_the_exact_stored_mask_and_dis_becomes_evaluable",
+        "test_rc071_r1_a_confirmation_given_for_another_label_scheme_does_not_count",
+        "test_rc071_r1_an_ai_draft_needs_its_own_review_and_the_dis_confirmation",
+        "test_rc071_r1_renaming_a_label_after_the_confirmation_voids_it",
         "test_rc071_saving_a_changed_mask_through_the_upload_route_voids_the_confirmation",
         "test_rc071_the_confirmation_cannot_be_sent_by_the_client_on_create",
         "test_rc072_not_evaluated_state_of_an_automatic_segmentation_carries_the_notice[ai-draft]",
         "test_rc072_not_evaluated_state_of_an_automatic_segmentation_carries_the_notice[origin-not-recorded]",
         "test_rc072_not_evaluated_state_of_an_automatic_segmentation_carries_the_notice[server-tool]",
+        "test_rc072_r4_the_notice_does_not_claim_the_draft_is_not_software_text",
+        "test_rc072_r9_the_healthy_brain_notice_only_for_lesion_detection_tools[flames-v1.0-True]",
+        "test_rc072_r9_the_healthy_brain_notice_only_for_lesion_detection_tools[lst-ai-v1.0.3-True]",
         "test_rc072_report_draft_ends_with_the_not_evaluated_notice_in_its_language[de-R\\xe4umliche",
         "test_rc072_report_draft_ends_with_the_not_evaluated_notice_in_its_language[en-Dissemination",
         "test_rc072_report_draft_ends_with_the_not_evaluated_notice_in_its_language[es-Diseminaci\\xf3n"
       ],
       "reintroduces": "DIS computed on any loaded segmentation (the defect as found: paper A, 19/100 healthy)",
       "applied": true,
-      "executed": "2026-10-24T18:01:04"
+      "executed": "2026-10-24T19:41:37"
     },
     "G2_confirmation_not_bound_to_the_mask": {
       "suite": "backend",
-      "failed": 2,
-      "passed": 39,
+      "failed": 1,
+      "passed": 87,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
-        "test_rc070_a_confirmation_given_for_another_mask_does_not_count[ai]",
         "test_rc070_a_confirmation_given_for_another_mask_does_not_count[clinician]"
       ],
       "reintroduces": "a confirmation given for another mask counts",
       "applied": true,
-      "executed": "2026-10-24T18:01:15"
+      "executed": "2026-10-24T19:41:49"
+    },
+    "G2b_confirmation_not_bound_to_the_labels": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 87,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc071_r1_a_confirmation_given_for_another_label_scheme_does_not_count"
+      ],
+      "reintroduces": "a confirmation survives a renaming of the labels (review finding 6)",
+      "applied": true,
+      "executed": "2026-10-24T19:42:01"
     },
     "G3_unreviewed_ai_draft_counts": {
       "suite": "backend",
-      "failed": 1,
-      "passed": 40,
+      "failed": 4,
+      "passed": 84,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
-        "test_rc070_unreviewed_ai_draft_dis_is_not_evaluated"
+        "test_rc070_a_clinician_record_never_replaces_the_review_of_an_ai_draft",
+        "test_rc070_a_confirmation_given_for_another_mask_does_not_count[ai]",
+        "test_rc071_an_ai_draft_is_confirmed_only_through_its_own_review",
+        "test_rc071_r1_an_ai_draft_needs_its_own_review_and_the_dis_confirmation"
       ],
-      "reintroduces": "an unreviewed AI draft counts as confirmed",
+      "reintroduces": "an unreviewed AI draft counts as reviewed",
       "applied": true,
-      "executed": "2026-10-24T18:01:27"
+      "executed": "2026-10-24T19:42:12"
     },
-    "G4_clinician_record_replaces_the_ai_review": {
+    "G4_ai_review_not_required": {
       "suite": "backend",
-      "failed": 1,
-      "passed": 40,
+      "failed": 2,
+      "passed": 86,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
-        "test_rc070_a_clinician_record_never_replaces_the_review_of_an_ai_draft"
+        "test_rc070_a_clinician_record_never_replaces_the_review_of_an_ai_draft",
+        "test_rc070_a_confirmation_given_for_another_mask_does_not_count[ai]"
       ],
-      "reintroduces": "an AI draft confirmed through the clinician record, bypassing RC-047",
+      "reintroduces": "an AI draft evaluated without its own review (RC-047)",
       "applied": true,
-      "executed": "2026-10-24T18:01:42"
+      "executed": "2026-10-24T19:42:24"
     },
     "G5_stored_state_served_as_a_result": {
       "suite": "backend",
       "failed": 1,
-      "passed": 40,
+      "passed": 87,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -108,12 +156,12 @@
       ],
       "reintroduces": "a stored DIS block (not evaluated, or from before the fix) served as a result",
       "applied": true,
-      "executed": "2026-10-24T18:01:57"
+      "executed": "2026-10-24T19:42:36"
     },
     "G6_metadata_route_serves_stored_dis": {
       "suite": "backend",
       "failed": 1,
-      "passed": 40,
+      "passed": 87,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -121,12 +169,12 @@
       ],
       "reintroduces": "the stored DIS block reaches the viewer with the segmentation metadata",
       "applied": true,
-      "executed": "2026-10-24T18:02:13"
+      "executed": "2026-10-24T19:42:48"
     },
     "G7_list_route_serves_stored_dis": {
       "suite": "backend",
       "failed": 1,
-      "passed": 40,
+      "passed": 87,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -134,12 +182,12 @@
       ],
       "reintroduces": "the stored DIS block reaches the viewer with the segmentation list",
       "applied": true,
-      "executed": "2026-10-24T18:02:37"
+      "executed": "2026-10-24T19:42:59"
     },
     "G8_classify_regions_stores_ungated_dis": {
       "suite": "backend",
       "failed": 1,
-      "passed": 40,
+      "passed": 87,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -147,12 +195,12 @@
       ],
       "reintroduces": "classify-regions stores a DIS conclusion for any mask (the defect as found)",
       "applied": true,
-      "executed": "2026-10-24T18:02:56"
+      "executed": "2026-10-24T19:43:11"
     },
     "G9_not_evaluated_state_carries_a_conclusion": {
       "suite": "backend",
-      "failed": 17,
-      "passed": 24,
+      "failed": 27,
+      "passed": 61,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -162,12 +210,22 @@
         "test_rc070_a_stored_dis_conclusion_is_never_served_for_an_unconfirmed_segmentation",
         "test_rc070_classify_regions_stores_no_dis_conclusion_for_an_unconfirmed_segmentation",
         "test_rc070_external_evidence_does_not_bypass_the_gate",
+        "test_rc070_r1_a_classification_of_other_lesions_does_not_count",
+        "test_rc070_r1_a_confirmed_binary_lesion_mask_is_not_evaluated",
+        "test_rc070_r1_a_lesion_added_after_classification_needs_a_new_classification",
+        "test_rc070_r1_a_mask_value_outside_its_label_scheme_is_not_evaluated",
+        "test_rc070_r1_classified_lesions_relabelled_with_another_scheme_are_not_evaluated",
+        "test_rc070_r1_magnims_names_without_a_recorded_classification_are_not_evaluated",
+        "test_rc070_r1_the_default_label_preset_confirmed_is_not_evaluated",
         "test_rc070_report_route_dis_block_naming_no_segmentation_is_not_evaluated",
         "test_rc070_report_route_replaces_a_client_dis_conclusion_with_the_server_state",
         "test_rc070_segmentation_of_unrecorded_origin_dis_is_not_evaluated",
         "test_rc070_server_tool_segmentation_dis_is_not_evaluated",
         "test_rc070_unreviewed_ai_draft_dis_is_not_evaluated",
         "test_rc071_a_radiologist_confirms_the_exact_stored_mask_and_dis_becomes_evaluable",
+        "test_rc071_r1_a_confirmation_given_for_another_label_scheme_does_not_count",
+        "test_rc071_r1_an_ai_draft_needs_its_own_review_and_the_dis_confirmation",
+        "test_rc071_r1_renaming_a_label_after_the_confirmation_voids_it",
         "test_rc071_saving_a_changed_mask_through_the_upload_route_voids_the_confirmation",
         "test_rc071_the_confirmation_cannot_be_sent_by_the_client_on_create",
         "test_rc072_not_evaluated_state_of_an_automatic_segmentation_carries_the_notice[ai-draft]",
@@ -176,12 +234,84 @@
       ],
       "reintroduces": "the 'not evaluated' state still says met / not met",
       "applied": true,
-      "executed": "2026-10-24T18:03:08"
+      "executed": "2026-10-24T19:43:24"
+    },
+    "G10_regions_not_required": {
+      "suite": "backend",
+      "failed": 5,
+      "passed": 83,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc070_r1_a_classification_of_other_lesions_does_not_count",
+        "test_rc070_r1_a_lesion_added_after_classification_needs_a_new_classification",
+        "test_rc070_r1_a_mask_value_outside_its_label_scheme_is_not_evaluated",
+        "test_rc070_r1_classified_lesions_relabelled_with_another_scheme_are_not_evaluated",
+        "test_rc070_r1_magnims_names_without_a_recorded_classification_are_not_evaluated"
+      ],
+      "reintroduces": "DIS evaluated on any confirmed mask, whatever its labels mean (review blocker 1, as found)",
+      "applied": true,
+      "executed": "2026-10-24T19:43:36"
+    },
+    "G11_mask_values_outside_the_scheme_accepted": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 87,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc070_r1_a_mask_value_outside_its_label_scheme_is_not_evaluated"
+      ],
+      "reintroduces": "a mask value no MAGNIMS label defines is read anyway",
+      "applied": true,
+      "executed": "2026-10-24T19:43:48"
+    },
+    "G12_classification_not_bound_to_the_lesions": {
+      "suite": "backend",
+      "failed": 4,
+      "passed": 84,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc070_r1_a_classification_of_other_lesions_does_not_count",
+        "test_rc070_r1_a_lesion_added_after_classification_needs_a_new_classification",
+        "test_rc070_r1_magnims_names_without_a_recorded_classification_are_not_evaluated",
+        "test_rc071_r1_the_confirmation_is_refused_before_the_regions_are_classified"
+      ],
+      "reintroduces": "MAGNIMS names on lesions that never went through the classification count as regions",
+      "applied": true,
+      "executed": "2026-10-24T19:44:00"
+    },
+    "G13_any_label_scheme_is_magnims": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 87,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc070_r1_classified_lesions_relabelled_with_another_scheme_are_not_evaluated"
+      ],
+      "reintroduces": "the default preset (1 = MS Lesion Active) read as regions: a false MET (review blocker 1)",
+      "applied": true,
+      "executed": "2026-10-24T19:44:12"
+    },
+    "G14_classification_does_not_record_the_lesions": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 87,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc070_r1_classify_regions_records_the_classified_lesions"
+      ],
+      "reintroduces": "classify-regions records no classified lesions: DIS can never be traced to a classification",
+      "applied": true,
+      "executed": "2026-10-24T19:44:24"
     },
     "C1_any_role_may_confirm": {
       "suite": "backend",
       "failed": 2,
-      "passed": 39,
+      "passed": 86,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -190,12 +320,12 @@
       ],
       "reintroduces": "any authenticated user confirms a segmentation",
       "applied": true,
-      "executed": "2026-10-24T18:03:21"
+      "executed": "2026-10-24T19:44:36"
     },
     "C2_confirmation_for_any_mask": {
       "suite": "backend",
       "failed": 1,
-      "passed": 40,
+      "passed": 87,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -203,68 +333,195 @@
       ],
       "reintroduces": "a confirmation recorded for a mask other than the stored one",
       "applied": true,
-      "executed": "2026-10-24T18:03:43"
+      "executed": "2026-10-24T19:44:47"
     },
-    "C3_ai_draft_confirmed_here": {
+    "C3_ai_draft_confirmed_without_its_review": {
       "suite": "backend",
-      "failed": 1,
-      "passed": 40,
+      "failed": 2,
+      "passed": 86,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
-        "test_rc071_an_ai_draft_is_confirmed_only_through_its_own_review"
+        "test_rc071_an_ai_draft_is_confirmed_only_through_its_own_review",
+        "test_rc071_r1_an_ai_draft_needs_its_own_review_and_the_dis_confirmation"
       ],
-      "reintroduces": "an AI draft confirmed outside its own review (RC-047)",
+      "reintroduces": "an AI draft DIS-confirmed before its own review (RC-047)",
       "applied": true,
-      "executed": "2026-10-24T18:03:56"
+      "executed": "2026-10-24T19:44:59"
     },
     "C4_mask_change_keeps_the_confirmation": {
       "suite": "backend",
-      "failed": 2,
-      "passed": 39,
+      "failed": 4,
+      "passed": 84,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
         "test_rc071_any_later_change_of_the_mask_voids_the_confirmation",
+        "test_rc071_r1_renaming_a_label_after_the_confirmation_voids_it",
+        "test_rc071_r5_a_voided_confirmation_is_kept_in_the_history",
         "test_rc071_saving_a_changed_mask_through_the_upload_route_voids_the_confirmation"
       ],
       "reintroduces": "a confirmation survives a change of the mask",
       "applied": true,
-      "executed": "2026-10-24T18:04:11"
+      "executed": "2026-10-24T19:45:11"
     },
     "C5_reviewer_not_the_authenticated_user": {
       "suite": "backend",
-      "failed": 1,
-      "passed": 40,
+      "failed": 4,
+      "passed": 84,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
-        "test_rc071_a_radiologist_confirms_the_exact_stored_mask_and_dis_becomes_evaluable"
+        "test_rc071_a_radiologist_confirms_the_exact_stored_mask_and_dis_becomes_evaluable",
+        "test_rc071_r5_a_second_confirmation_keeps_the_first_reviewer_and_is_recorded",
+        "test_rc071_r5_a_voided_confirmation_is_kept_in_the_history",
+        "test_rc071_r5_the_confirmation_does_not_rewrite_the_mask_object"
       ],
       "reintroduces": "the reviewer recorded from the request instead of the authenticated user",
       "applied": true,
-      "executed": "2026-10-24T18:04:24"
+      "executed": "2026-10-24T19:45:23"
+    },
+    "C6_confirmation_before_classification": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 87,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc071_r1_the_confirmation_is_refused_before_the_regions_are_classified"
+      ],
+      "reintroduces": "the confirmation accepted before the regions are classified (review blocker 1)",
+      "applied": true,
+      "executed": "2026-10-24T19:45:34"
+    },
+    "C7_second_confirmation_overwrites_the_first": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 87,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc071_r5_a_second_confirmation_keeps_the_first_reviewer_and_is_recorded"
+      ],
+      "reintroduces": "a repeat confirmation replaces the first confirmer (review finding 5)",
+      "applied": true,
+      "executed": "2026-10-24T19:45:46"
+    },
+    "C8_confirmation_not_in_the_history": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 87,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc071_r5_a_second_confirmation_keeps_the_first_reviewer_and_is_recorded"
+      ],
+      "reintroduces": "confirmations leave no history (review finding 5)",
+      "applied": true,
+      "executed": "2026-10-24T19:45:58"
+    },
+    "C9_voiding_not_in_the_history": {
+      "suite": "backend",
+      "failed": 2,
+      "passed": 86,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc071_r1_renaming_a_label_after_the_confirmation_voids_it",
+        "test_rc071_r5_a_voided_confirmation_is_kept_in_the_history"
+      ],
+      "reintroduces": "a voided confirmation disappears without trace (review finding 5)",
+      "applied": true,
+      "executed": "2026-10-24T19:46:10"
+    },
+    "C10_confirmation_rewrites_the_mask": {
+      "suite": "backend",
+      "failed": 3,
+      "passed": 85,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc071_r5_a_confirmation_that_was_not_stored_durably_is_refused_and_undone",
+        "test_rc071_r5_a_mask_changed_by_another_session_discards_the_cached_entry",
+        "test_rc071_r5_the_confirmation_does_not_rewrite_the_mask_object"
+      ],
+      "reintroduces": "the confirmation rewrites the mask object: the next save gets a 409 (review finding 5)",
+      "applied": true,
+      "executed": "2026-10-24T19:46:22"
+    },
+    "C11_non_durable_confirmation_accepted": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 87,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc071_r5_a_confirmation_that_was_not_stored_durably_is_refused_and_undone"
+      ],
+      "reintroduces": "a confirmation that was not stored durably is reported as recorded (review finding 5)",
+      "applied": true,
+      "executed": "2026-10-24T19:46:33"
+    },
+    "C12_stale_mask_keeps_the_cached_confirmation": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 87,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc071_r5_a_mask_changed_by_another_session_discards_the_cached_entry"
+      ],
+      "reintroduces": "after a stale-write conflict the confirmation stays in the instance cache (review finding 5)",
+      "applied": true,
+      "executed": "2026-10-24T19:46:45"
+    },
+    "C13_label_change_keeps_the_confirmation": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 87,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc071_r1_renaming_a_label_after_the_confirmation_voids_it"
+      ],
+      "reintroduces": "renaming a label keeps the stored confirmation (review finding 6)",
+      "applied": true,
+      "executed": "2026-10-24T19:46:57"
+    },
+    "C14_any_role_may_rename_labels": {
+      "suite": "backend",
+      "failed": 2,
+      "passed": 86,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc071_r1_only_clinical_roles_may_rename_labels[admin-False]",
+        "test_rc071_r1_only_clinical_roles_may_rename_labels[viewer-False]"
+      ],
+      "reintroduces": "a viewer or an administrator renames what the DIS rule reads as regions (review finding 6)",
+      "applied": true,
+      "executed": "2026-10-24T19:47:09"
     },
     "R1_report_trusts_the_client_block": {
       "suite": "backend",
       "failed": 4,
-      "passed": 37,
+      "passed": 84,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
+        "test_rc070_r2_e2e_a_confirmed_dis_reaches_the_model_through_the_real_report_service",
         "test_rc070_report_route_dis_block_naming_no_segmentation_is_not_evaluated",
-        "test_rc070_report_route_refuses_a_segmentation_the_caller_cannot_read",
         "test_rc070_report_route_replaces_a_client_dis_conclusion_with_the_server_state",
         "test_rc070_report_route_uses_the_server_assessment_of_a_confirmed_segmentation"
       ],
       "reintroduces": "a DIS conclusion sent by the client reaches the model (the defect as found)",
       "applied": true,
-      "executed": "2026-10-24T18:04:36"
+      "executed": "2026-10-24T19:47:21"
     },
     "R2_report_skips_authorization": {
       "suite": "backend",
       "failed": 2,
-      "passed": 39,
+      "passed": 86,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -273,12 +530,12 @@
       ],
       "reintroduces": "the report reads a segmentation the caller may not read (RC-029)",
       "applied": true,
-      "executed": "2026-10-24T18:04:47"
+      "executed": "2026-10-24T19:47:33"
     },
     "R3_report_route_stores_the_assessment": {
       "suite": "backend",
       "failed": 1,
-      "passed": 40,
+      "passed": 87,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -286,27 +543,33 @@
       ],
       "reintroduces": "the compute-only report route writes to the segmentation (RC-033)",
       "applied": true,
-      "executed": "2026-10-24T18:04:59"
+      "executed": "2026-10-24T19:47:44"
     },
     "R4_prompt_states_met_for_an_unevaluated_block": {
       "suite": "backend",
-      "failed": 3,
-      "passed": 38,
+      "failed": 9,
+      "passed": 79,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
+        "test_rc070_r2_a_dis_block_without_the_report_segmentation_is_not_evaluated",
+        "test_rc070_r4_without_an_evaluated_dis_no_template_asks_for_dis[general]",
+        "test_rc070_r4_without_an_evaluated_dis_no_template_asks_for_dis[ms_activity]",
+        "test_rc070_r4_without_an_evaluated_dis_no_template_asks_for_dis[ms_comprehensive]",
+        "test_rc070_r4_without_an_evaluated_dis_no_template_asks_for_dis[ms_lesion_burden]",
+        "test_rc070_r4_without_an_evaluated_dis_no_template_asks_for_dis[ms_longitudinal]",
         "test_rc070_report_prompt_never_states_met_or_not_met_unless_evaluated[legacy-met]",
         "test_rc070_report_prompt_never_states_met_or_not_met_unless_evaluated[no-flag]",
         "test_rc070_report_prompt_never_states_met_or_not_met_unless_evaluated[not-evaluated]"
       ],
       "reintroduces": "the prompt prints MET / NOT MET for a block that was not evaluated (the defect as found)",
       "applied": true,
-      "executed": "2026-10-24T18:05:10"
+      "executed": "2026-10-24T19:47:56"
     },
     "R5_prompt_lets_the_model_derive_dis": {
       "suite": "backend",
       "failed": 1,
-      "passed": 40,
+      "passed": 87,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -314,27 +577,28 @@
       ],
       "reintroduces": "lesion counts without an evaluated DIS reach the model with no rule against deriving DIS",
       "applied": true,
-      "executed": "2026-10-24T18:05:21"
+      "executed": "2026-10-24T19:48:08"
     },
     "R6_report_notice_removed": {
       "suite": "backend",
-      "failed": 3,
-      "passed": 38,
+      "failed": 4,
+      "passed": 84,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
+        "test_rc072_r4_the_notice_does_not_claim_the_draft_is_not_software_text",
         "test_rc072_report_draft_ends_with_the_not_evaluated_notice_in_its_language[de-R\\xe4umliche",
         "test_rc072_report_draft_ends_with_the_not_evaluated_notice_in_its_language[en-Dissemination",
         "test_rc072_report_draft_ends_with_the_not_evaluated_notice_in_its_language[es-Diseminaci\\xf3n"
       ],
       "reintroduces": "a draft without an evaluated DIS ends without the not-evaluated notice",
       "applied": true,
-      "executed": "2026-10-24T18:05:32"
+      "executed": "2026-10-24T19:48:20"
     },
     "R7_report_from_an_unevaluated_dis_only": {
       "suite": "backend",
       "failed": 1,
-      "passed": 40,
+      "passed": 87,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -342,12 +606,84 @@
       ],
       "reintroduces": "a draft requested with no measurement but a 'not evaluated' DIS state (RC-034)",
       "applied": true,
-      "executed": "2026-10-24T18:05:43"
+      "executed": "2026-10-24T19:48:32"
+    },
+    "R8_dis_of_another_segmentation_carried_in": {
+      "suite": "backend",
+      "failed": 2,
+      "passed": 86,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc070_r2_lesion_measurements_of_another_segmentation_are_refused",
+        "test_rc070_r2_the_dis_block_is_bound_to_the_report_segmentation"
+      ],
+      "reintroduces": "another segmentation's DIS or measurements carried into the report (review finding 2)",
+      "applied": true,
+      "executed": "2026-10-24T19:48:44"
+    },
+    "R9_regions_reach_the_model_unconfirmed": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 87,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc070_r3_without_an_evaluated_dis_the_report_receives_no_region_breakdown"
+      ],
+      "reintroduces": "regions of an unconfirmed segmentation reach the model (review finding 3)",
+      "applied": true,
+      "executed": "2026-10-24T19:48:56"
+    },
+    "R10_template_still_asks_for_dis": {
+      "suite": "backend",
+      "failed": 5,
+      "passed": 83,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc070_r4_without_an_evaluated_dis_no_template_asks_for_dis[general]",
+        "test_rc070_r4_without_an_evaluated_dis_no_template_asks_for_dis[ms_activity]",
+        "test_rc070_r4_without_an_evaluated_dis_no_template_asks_for_dis[ms_comprehensive]",
+        "test_rc070_r4_without_an_evaluated_dis_no_template_asks_for_dis[ms_lesion_burden]",
+        "test_rc070_r4_without_an_evaluated_dis_no_template_asks_for_dis[ms_longitudinal]"
+      ],
+      "reintroduces": "the templates ask the model for a DIS table although DIS was not evaluated (review finding 4)",
+      "applied": true,
+      "executed": "2026-10-24T19:49:08"
+    },
+    "R11_model_dis_statement_kept": {
+      "suite": "backend",
+      "failed": 3,
+      "passed": 85,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc070_r4_a_dis_statement_written_by_the_model_is_replaced[de-Die",
+        "test_rc070_r4_a_dis_statement_written_by_the_model_is_replaced[en-Lesions",
+        "test_rc070_r4_a_dis_statement_written_by_the_model_is_replaced[es-Las"
+      ],
+      "reintroduces": "a DIS statement written by the model stays in the draft (review finding 4)",
+      "applied": true,
+      "executed": "2026-10-24T19:49:20"
+    },
+    "R12_misleading_notice_wording": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 87,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc072_r4_the_notice_does_not_claim_the_draft_is_not_software_text"
+      ],
+      "reintroduces": "the notice claims no DIS statement comes from the software (review finding 4)",
+      "applied": true,
+      "executed": "2026-10-24T19:49:31"
     },
     "A1_assistant_receives_unevaluated_conclusion": {
       "suite": "backend",
       "failed": 1,
-      "passed": 40,
+      "passed": 87,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -355,12 +691,12 @@
       ],
       "reintroduces": "the assistant receives a DIS conclusion that was not evaluated (older backend)",
       "applied": true,
-      "executed": "2026-10-24T18:05:53"
+      "executed": "2026-10-24T19:49:43"
     },
     "A2_assistant_rule_removed": {
       "suite": "backend",
       "failed": 1,
-      "passed": 40,
+      "passed": 87,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -368,26 +704,94 @@
       ],
       "reintroduces": "the assistant is not told to report 'not evaluated' and never to derive DIS",
       "applied": true,
-      "executed": "2026-10-24T18:06:04"
+      "executed": "2026-10-24T19:49:55"
+    },
+    "A3_assistant_regions_without_caveat": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 87,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc070_r3_assistant_region_tools_carry_the_caveat"
+      ],
+      "reintroduces": "regions reach the assistant without 'not a DIS assessment' (review finding 3)",
+      "applied": true,
+      "executed": "2026-10-24T19:50:06"
+    },
+    "A4_assistant_report_without_its_segmentation": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 87,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc070_r2_the_assistant_report_names_its_segmentation"
+      ],
+      "reintroduces": "the assistant's report request names no segmentation: DIS never evaluated (review finding 2)",
+      "applied": true,
+      "executed": "2026-10-24T19:50:18"
+    },
+    "S1_result_cached_for_a_changed_mask": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 87,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc070_r8_a_mask_saved_during_the_assessment_is_never_cached_as_its_result"
+      ],
+      "reintroduces": "a result cached for a mask that changed during the assessment",
+      "applied": true,
+      "executed": "2026-10-24T19:50:29"
+    },
+    "S2_no_snapshot": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 87,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc070_r8_a_mask_saved_during_the_assessment_is_never_cached_as_its_result"
+      ],
+      "reintroduces": "the gate checks one mask and the rule reads another, edited during the spacing download",
+      "applied": true,
+      "executed": "2026-10-24T19:50:41"
     },
     "N1_not_evaluated_state_without_notice": {
       "suite": "backend",
-      "failed": 2,
-      "passed": 39,
+      "failed": 4,
+      "passed": 84,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
         "test_rc072_not_evaluated_state_of_an_automatic_segmentation_carries_the_notice[ai-draft]",
-        "test_rc072_not_evaluated_state_of_an_automatic_segmentation_carries_the_notice[server-tool]"
+        "test_rc072_not_evaluated_state_of_an_automatic_segmentation_carries_the_notice[server-tool]",
+        "test_rc072_r9_the_healthy_brain_notice_only_for_lesion_detection_tools[flames-v1.0-True]",
+        "test_rc072_r9_the_healthy_brain_notice_only_for_lesion_detection_tools[lst-ai-v1.0.3-True]"
       ],
-      "reintroduces": "the 'not evaluated' state of an automatic segmentation without the healthy-brain notice",
+      "reintroduces": "the 'not evaluated' state of an automatic lesion segmentation without the healthy-brain notice",
       "applied": true,
-      "executed": "2026-10-24T18:06:15"
+      "executed": "2026-10-24T19:50:53"
+    },
+    "N2_notice_for_structure_parcellations": {
+      "suite": "backend",
+      "failed": 2,
+      "passed": 86,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc072_r9_the_healthy_brain_notice_only_for_lesion_detection_tools[mindglide-v1.0-structures-False]",
+        "test_rc072_r9_the_healthy_brain_notice_only_for_lesion_detection_tools[synthseg-v2.0-False]"
+      ],
+      "reintroduces": "the healthy-brain notice on SynthSeg / mindGlide structures, where it is wrong (review finding 9)",
+      "applied": true,
+      "executed": "2026-10-24T19:51:05"
     },
     "F1_display_trusts_any_conclusion": {
       "suite": "frontend",
       "failed": 1,
-      "passed": 11,
+      "passed": 27,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -396,12 +800,12 @@
       "error_files": [],
       "reintroduces": "the dashboard shows met / not met for a block that was not evaluated",
       "applied": true,
-      "executed": "2026-10-24T18:06:23"
+      "executed": "2026-10-24T19:51:13"
     },
     "F2_topographies_panel_for_unevaluated": {
       "suite": "frontend",
       "failed": 2,
-      "passed": 10,
+      "passed": 26,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -409,14 +813,14 @@
         "rc070 an evaluated result is withheld while the mask on screen has unsaved changes, and re-read after saving"
       ],
       "error_files": [],
-      "reintroduces": "the five-topography panel (and its 'dissemination in time may be waived' line) shown for any block",
+      "reintroduces": "the five-topography panel shown for any block",
       "applied": true,
-      "executed": "2026-10-24T18:06:30"
+      "executed": "2026-10-24T19:51:21"
     },
     "F3_confirm_offered_with_unsaved_changes": {
       "suite": "frontend",
       "failed": 1,
-      "passed": 11,
+      "passed": 27,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -425,12 +829,12 @@
       "error_files": [],
       "reintroduces": "the confirm button offered while the mask on screen is not the saved one",
       "applied": true,
-      "executed": "2026-10-24T18:06:38"
+      "executed": "2026-10-24T19:51:30"
     },
     "F4_confirmation_not_bound_to_the_mask": {
       "suite": "frontend",
       "failed": 1,
-      "passed": 11,
+      "passed": 27,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -439,68 +843,72 @@
       "error_files": [],
       "reintroduces": "the confirmation does not send the SHA-256 of the mask on screen",
       "applied": true,
-      "executed": "2026-10-24T18:06:46"
+      "executed": "2026-10-24T19:51:38"
     },
-    "F5_confirm_offered_for_an_ai_draft": {
+    "F5_confirm_offered_before_classification": {
       "suite": "frontend",
-      "failed": 1,
-      "passed": 11,
+      "failed": 3,
+      "passed": 25,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
-        "rc071 an AI draft is not confirmed here: the card points to the AI draft review"
+        "rc071 review1 regions not classified: the card asks for the classification and offers no confirmation",
+        "rc071 review1 an AI draft without its own review: the card says so and offers no confirmation",
+        "rc071 an AI draft without its own review is not confirmed here: the card points to the AI draft review"
       ],
       "error_files": [],
-      "reintroduces": "an AI draft confirmed from the DIS card instead of its own review",
+      "reintroduces": "the confirm button offered before the regions are classified (review blocker 1)",
       "applied": true,
-      "executed": "2026-10-24T18:06:53"
+      "executed": "2026-10-24T19:51:47"
     },
     "F6_card_without_notice": {
       "suite": "frontend",
       "failed": 1,
-      "passed": 11,
+      "passed": 27,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
         "rc072 the \"not evaluated\" card of an automatic segmentation carries the notice"
       ],
       "error_files": [],
-      "reintroduces": "the 'not evaluated' card of an automatic segmentation without the healthy-brain notice",
+      "reintroduces": "the 'not evaluated' card of an automatic lesion segmentation without the notice",
       "applied": true,
-      "executed": "2026-10-24T18:07:00"
+      "executed": "2026-10-24T19:51:55"
     },
     "F7_banner_without_notice": {
       "suite": "frontend",
-      "failed": 1,
-      "passed": 11,
+      "failed": 2,
+      "passed": 26,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
+        "rc072 review1 the AI draft banner names automatic LESION marking",
         "rc072 the AI draft banner carries the notice"
       ],
       "error_files": [],
       "reintroduces": "the AI draft banner without the healthy-brain notice",
       "applied": true,
-      "executed": "2026-10-24T18:07:07"
+      "executed": "2026-10-24T19:52:02"
     },
-    "F8_panel_without_notice": {
+    "F8_panel_notice_for_any_tool": {
       "suite": "frontend",
-      "failed": 1,
-      "passed": 11,
+      "failed": 2,
+      "passed": 26,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
-        "rc072 the segmentation panel shows the notice for a server-tool segmentation (no AI provenance)"
+        "rc072 review1 automatic / synthseg-v2.0 -> notice false",
+        "rc072 review1 automatic / mindglide-v1.0-structures -> notice false"
       ],
       "error_files": [],
-      "reintroduces": "a server-tool segmentation shown without the healthy-brain notice",
+      "reintroduces": "the panel notice on structure parcellations (review finding 9)",
       "applied": true,
-      "executed": "2026-10-24T18:07:13"
+      "executed": "2026-10-24T19:52:10"
     },
     "F9_notice_english_in_spanish": {
       "suite": "frontend",
       "failed": 1,
-      "passed": 11,
+      "passed": 27,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -509,12 +917,12 @@
       "error_files": [],
       "reintroduces": "the healthy-brain notice shown in English to Spanish-language users",
       "applied": true,
-      "executed": "2026-10-24T18:07:20"
+      "executed": "2026-10-24T19:52:18"
     },
     "F10_confirmed_by_not_shown": {
       "suite": "frontend",
       "failed": 1,
-      "passed": 11,
+      "passed": 27,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -523,12 +931,12 @@
       "error_files": [],
       "reintroduces": "a DIS result shown without the radiologist whose confirmation it rests on",
       "applied": true,
-      "executed": "2026-10-24T18:07:27"
+      "executed": "2026-10-24T19:52:26"
     },
     "F11_no_refresh_after_confirmation": {
       "suite": "frontend",
       "failed": 1,
-      "passed": 11,
+      "passed": 27,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -537,12 +945,12 @@
       "error_files": [],
       "reintroduces": "after the confirmation the card keeps the old state",
       "applied": true,
-      "executed": "2026-10-24T18:07:35"
+      "executed": "2026-10-24T19:52:35"
     },
     "F12_result_shown_for_unsaved_changes": {
       "suite": "frontend",
       "failed": 1,
-      "passed": 11,
+      "passed": 27,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -551,12 +959,12 @@
       "error_files": [],
       "reintroduces": "a result shown for a mask on screen that is no longer the confirmed one",
       "applied": true,
-      "executed": "2026-10-24T18:07:42"
+      "executed": "2026-10-24T19:52:43"
     },
     "F13_no_refresh_after_saving": {
       "suite": "frontend",
       "failed": 1,
-      "passed": 11,
+      "passed": 27,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [
@@ -565,14 +973,112 @@
       "error_files": [],
       "reintroduces": "after saving a changed mask the panel keeps the result of the confirmed mask",
       "applied": true,
-      "executed": "2026-10-24T18:07:50"
+      "executed": "2026-10-24T19:52:51"
+    },
+    "F14_confirm_offered_on_another_segmentation": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 27,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc071 review1 the confirmation is offered only on the open segmentation (its mask is the one hashed)"
+      ],
+      "error_files": [],
+      "reintroduces": "the button confirms an expanded segmentation with the open mask's digest (review finding 7)",
+      "applied": true,
+      "executed": "2026-10-24T19:53:00"
+    },
+    "F15_late_reply_overwrites": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 27,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc070 review1 a late reply of an older request never overwrites a newer one"
+      ],
+      "error_files": [],
+      "reintroduces": "an older DIS reply overwrites a newer state (review finding 8)",
+      "applied": true,
+      "executed": "2026-10-24T19:53:07"
+    },
+    "F16_regions_without_caveat": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 27,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc070 review1 the lesion table and region bars say the regions are not confirmed and not a DIS assessment"
+      ],
+      "error_files": [],
+      "reintroduces": "regions of an unconfirmed segmentation shown without 'not a DIS assessment' (review finding 3)",
+      "applied": true,
+      "executed": "2026-10-24T19:53:15"
+    },
+    "F17_tool_card_notice_for_any_tool": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 27,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc072 review1 a completed lesion tool shows the notice; a structure parcellation does not"
+      ],
+      "error_files": [],
+      "reintroduces": "the healthy-brain notice on a SynthSeg result (review finding 9)",
+      "applied": true,
+      "executed": "2026-10-24T19:53:23"
+    },
+    "F18_flames_card_without_notice": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 27,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc072 review1 the in-browser FLAMeS result carries the notice"
+      ],
+      "error_files": [],
+      "reintroduces": "the in-browser FLAMeS result without the notice (review finding 9)",
+      "applied": true,
+      "executed": "2026-10-24T19:53:31"
+    },
+    "F19_report_without_its_segmentation": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 27,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc070 review1 the report request names the segmentation its measurements come from"
+      ],
+      "error_files": [],
+      "reintroduces": "the report request names no segmentation (review finding 2)",
+      "applied": true,
+      "executed": "2026-10-24T19:53:39"
+    },
+    "F20_dashboard_without_error_boundary": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 27,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc070 review1 the lesion panel is rendered inside an error boundary"
+      ],
+      "error_files": [],
+      "reintroduces": "a failure of the lesion panel takes the viewer down (review finding 10)",
+      "applied": true,
+      "executed": "2026-10-24T19:53:47"
     }
   },
   "restored": {
     "backend": {
       "suite": "backend",
       "failed": 0,
-      "passed": 41,
+      "passed": 88,
       "errors": 0,
       "skipped": 0,
       "failing_tests": []
@@ -580,7 +1086,7 @@
     "frontend": {
       "suite": "frontend",
       "failed": 0,
-      "passed": 12,
+      "passed": 28,
       "skipped": 0,
       "errors": 0,
       "failing_tests": [],
@@ -591,8 +1097,8 @@
   "undetected": [],
   "unexpected_undetected": [],
   "summary": {
-    "mutations": 37,
-    "detected": 37,
+    "mutations": 69,
+    "detected": 69,
     "undetected": 0
   }
 }

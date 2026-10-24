@@ -11,7 +11,7 @@
 |---------|------|--------|-------------|--------|
 | 1.0 | 2026-04-12 | Development Team | — | Initial release |
 | 1.1 | 2026-09-28 | Development Team | N. G. Bonilla Vargas — approved 2026-10-17 (PR #43) | DD-CLS-001 amended. (a) Audit #8 (HAZ-005, REQ-SAFE-010 amended, PR #42): per-lesion confidence removed. The amendment note in DD-CLS-001 was entered on 2026-09-28 under the v1.0 header; it is covered by this version. (b) CAPA-006 / RC-032 / REQ-SAFE-021: v1.0 described only the parcellation path. DD-CLS-001 now also specifies: the four-path order used by `method="auto"`; the LST-AI path as a voxel-wise copy with no contact rule and no priority; the MSMask atlas path; the MNI grid gate (`looks_mni`: isotropy, unpermuted axis alignment, per-axis field of view, grid centre, header transform; `NotMNISpaceError`) and its limits (SPM12 default bounding box refused; a well-behaved native 3D isotropic axial scan can pass); the zone-map reorientation and shape checks (`classify_lesions_with_atlas`, `classify_from_zone_mask`); that a persisted zone map is never reused for classification; parcellation identity (`looks_like_freesurfer_parcellation`: all of {2, 3, 4, 16, 41, 42, 43}, not a zone map, >= 500 mL; same image and grid); the geometric preconditions (`prepare_geometric_image`, `GeometricPreconditionError`, slice axis within 30° of inferior-superior); refusal (HTTP 422) versus fault (HTTP 500, `atlas_error`) handling; object-level authorization of both region routes (RC-029); the generate-zone-map order (authorize, validate, create and persist, then delete older zone maps); zone-map volumes from the image voxel volume; and the longitudinal compare route's use of the same gate. The 1.5 mm thresholds are unchanged; v1.0 already stated them. The 3 mm / 4 mm / 3 mm thresholds and two-tier cascade stated in IFU-001, AIA-001, CER-001 and GSPR-001 were wrong when those documents were issued on 2026-04-12 (the code had applied 1.5 mm since 2026-02-28, commit 67fa336, while DD-001 v1.0, issued the same day, stated 1.5 mm); they are withdrawn there. (c) Unit renamed from "MAGNIMS Region Classifier (EDT)": EDT is used by one of four paths only. (d) Withdrawn from the Safety paragraph (v1.0 text, quoted there): "EDT-based classification is more robust than pixel-adjacency methods" (no evidence) and "Distance thresholds (1.5mm) match LST-AI dilation criteria" (inexact; restated). (e) Implements / traceability now list REQ-SAFE-021, RC-032 and RC-029 |
-| 1.3 (draft) | 2026-10-24 | Development Team | PENDING owner approval | PRB-003 / CAPA-016. DD-LES-003 added (`dis_review_gate.py`, RC-070/RC-071: DIS only on a segmentation a radiologist confirmed for its current mask). DD-LES-002: called only after DD-LES-003 (unit unchanged). DD-RPT-001: the DIS block of the prompt passes a result only when it is marked evaluated, otherwise NOT EVALUATED and a rule against deriving DIS |
+| 1.3 (draft) | 2026-10-24 | Development Team | PENDING owner approval | PRB-003 / CAPA-016. DD-LES-003 added (`dis_review_gate.py`, RC-070/RC-071: DIS only on a segmentation a radiologist confirmed for its current mask). DD-LES-002: called only after DD-LES-003 (unit unchanged). DD-RPT-001: the DIS block of the prompt passes a result only when it is marked evaluated, otherwise NOT EVALUATED and a rule against deriving DIS; Amended 2026-10-24 after the independent review of PR #68 at 4c601f2: DIS only on MAGNIMS regions assigned by the classification to the current lesions; DIS confirmation for every segmentation (AI drafts after their own review), bound to mask and labels, idempotent, with history, metadata-only, durable; report bound to its own segmentation, no regions and no DIS instruction to the model without an evaluated DIS, model DIS lines replaced; region caveat; notice for lesion-detection tools only |
 
 ---
 
@@ -258,32 +258,42 @@ RETURN { dis_met_brain, brain_regions_with_lesions, region_details, ... }
 
 ---
 
-### DD-LES-003: DIS precondition — confirmed segmentation (draft, PRB-003)
+### DD-LES-003: DIS precondition — classified, confirmed segmentation (draft, PRB-003; corrected after the review of PR #68)
 
-**Purpose**: Decide whether dissemination in space may be evaluated for a stored segmentation (RC-070), and produce the explicit "not evaluated" state otherwise. Paper A: the DD-LES-002 rule applied to raw automatic FLAMeS segmentations was met in 19 of 100 healthy controls.
+**Purpose**: Decide whether dissemination in space may be evaluated for a stored segmentation (RC-070), and produce the
+explicit "not evaluated" state otherwise. Paper A: the DD-LES-002 rule applied to raw automatic FLAMeS segmentations was
+met in 19 of 100 healthy controls. Review of PR #68: DD-LES-002 reads label ids 1/2/3 as PV/JC/IT whatever they mean, so a
+confirmation of the mask alone was not enough.
 
 **Interface** (`backend/app/services/dis_review_gate.py`):
 ```
-review_state(metadata, masks_3d) -> {confirmed, status (confirmed|unconfirmed|outdated), source (ai_draft|automatic_tool|
-                                     origin_not_recorded), reviewed_by, reviewed_at, reviewed_mask_sha256, current_mask_sha256}
-not_evaluated(segmentation_id, state, reason=None) -> {evaluation_status: 'not_evaluated', not_evaluated_reason, message,
-                                     reason_detail, segmentation_review, dis_criteria_version[, information_for_safety]}
-evaluated(result, state) -> {**result, evaluation_status: 'evaluated', segmentation_review}
-is_evaluated(block) -> bool        without_stored_dis(metadata) -> metadata copy without analysis_data.dis_assessment
+footprint_sha256(mask) -> SHA-256 of (mask > 0)        labels_sha256(labels) -> SHA-256 of sorted (id, name), id > 0
+labels_are_magnims(labels) -> ids 1-4 = PV, JC, IT, DWM names; every other id a MAGNIMS label
+regions_state(metadata, mask) -> {classified, label_scheme, edited_after_classification, method}
+review_state(metadata, mask) -> {confirmed, status, reason, source, lesion_detection, regions, reviewed_by, reviewed_at,
+                                 reviewed_mask_sha256, current_mask_sha256, current_labels_sha256}
+not_evaluated(segmentation_id, state, reason=None) / evaluated(result, state) / is_evaluated(block)
+region_status(state) / without_stored_dis(metadata) / without_region_breakdown(lesion_analysis)
+scrub_unevaluated_dis(text, language) -> (text, lines replaced)
 ```
 
 **Algorithm**:
 ```
-current = SHA-256 of the stored (D,H,W) uint8 mask (same digest as RC-047)
-IF metadata.ai_provenance:      record = ai_provenance;    has_record = review_status == 'confirmed'   (RC-047 only)
-ELSE:                           record = clinician_review; has_record = record is not None             (RC-071)
-confirmed = has_record AND record.reviewed_mask_sha256 == current
-source = ai_draft | automatic_tool (segmentation_type 'automatic') | origin_not_recorded
+classified  = labels_are_magnims AND unique(mask) within the label ids AND
+              analysis_data.classification.classified_lesion_footprint_sha256 == footprint_sha256(mask)
+ai_ok       = no AI provenance OR (review_status == 'confirmed' AND reviewed_mask_sha256 == sha256(mask))
+bound       = clinician_review.reviewed_mask_sha256 == sha256(mask) AND .reviewed_labels_sha256 == labels_sha256(labels)
+confirmed   = classified AND ai_ok AND bound
+reason      = regions_not_classified | ai_review_missing | confirmation_outdated | segmentation_not_confirmed
 ```
 
-**Safety**: the "not evaluated" state carries no `dis_met*`, `region_details`, `brain_regions_with_lesions`, `total_topographies_involved` or `dit_waiver_supported`. Region labels are part of the hashed mask, so a confirmation covers the region assignment, and a reclassification voids it. A stored block is never trusted without `is_evaluated`. The clinician confirmation is set only by `POST /segmentation/{id}/review/confirm` (radiologist, exact stored mask, authenticated user) and removed by `SegmentationService.enforce_review_binding` on any mask change.
+**Safety**: the "not evaluated" state carries no `dis_met*`, `region_details`, `brain_regions_with_lesions`,
+`total_topographies_involved` or `dit_waiver_supported`. The classification is bound to the lesions (footprint), so a
+radiologist may correct a region label; the confirmation is bound to the mask and labels, so the correction is covered and
+any later change voids it (with a history entry). The confirmation is set only by `POST /segmentation/{id}/review/confirm`
+(radiologist; after the classification; idempotent; metadata-only write via `SegmentationService.persist_metadata`).
 
-**Implements**: REQ-SAFE-038, REQ-SAFE-039 (RC-070, RC-071); tests UT-PRB003, UI-PRB003
+**Implements**: REQ-SAFE-038, REQ-SAFE-039 (RC-070, RC-071); tests UT-PRB003, UT-PRB003-R1, UI-PRB003, UI-PRB003-R1
 
 ---
 

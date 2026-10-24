@@ -15,7 +15,7 @@ record drafted by the AI coding agent
 result for any mask, and the viewer has displayed it from the metadata, since `a637cdf` (2026-03-14)
 **Severity**: **Critical — safety-related** (proposed; SPR-001 §2 classes a problem with a safety impact as Critical;
 rationale in §5). **PENDING owner approval.**
-**Status**: OPEN — DRAFT. Fix implemented on branch `fix/dis-requires-reviewed-segmentation-prb003` (draft PR #68, not
+**Status**: OPEN — DRAFT. Corrected after the independent review of PR #68 (§9). Fix implemented on branch `fix/dis-requires-reviewed-segmentation-prb003` (draft PR #68, not
 merged, not deployed); it changes one Class C module (`brain_report_service.py`, DIS block of the report prompt) and
 needs a code review before merge (CLAUDE.md). **PENDING owner approval.**
 
@@ -177,10 +177,16 @@ Branch `fix/dis-requires-reviewed-segmentation-prb003` (draft PR #68), from `mai
   only), `mcp/ms_clinical_server.only_evaluated_dis` + instructions, `LesionDashboard.tsx`, `types/lesion.ts`.
   `lesion_analysis_service.compute_dis_criteria` (Class C) is **unchanged** and runs only after the gate.
 - **RC-071** — `ClinicianReview` (schemas), `POST /segmentation/{id}/review/confirm` (radiologist, exact stored mask,
-  authenticated user and time recorded, 409 for an AI draft), `enforce_review_binding` removes it on any mask change.
+  authenticated user and time recorded), `enforce_review_binding` removes it on any mask change.
 - **RC-072** — the healthy-brain notice (paper A wording A, no numbers) in en/es/de: AI draft banner, segmentation
   panel for server-tool output, the "not evaluated" card and API state of an automatic segmentation, report notice,
   report prompt and assistant instructions.
+- *Corrected after the independent review of PR #68 (§9):* DIS also requires MAGNIMS regions classified for the current
+  lesions; the confirmation is given for every segmentation (an AI draft after its own review), only after the
+  classification, bound to mask AND label scheme, idempotent, with an append-only history, written as metadata only and
+  refused when not durable; the report is bound to its own segmentation, gets no region and no DIS instruction without an
+  evaluated DIS, and any DIS line the model writes is replaced; regions of unconfirmed segmentations are caveated; the
+  notice is shown for lesion-detection tools only (also on the FLAMeS and tool result cards).
 
 **Verification**:
 
@@ -191,12 +197,34 @@ Branch `fix/dis-requires-reviewed-segmentation-prb003` (draft PR #68), from `mai
 | V3 | Negative controls `scripts/safety/prb003_negative_controls.py` (one mutation at a time, anchors asserted unique, bytes restored) | **37 mutations, 37 detected** (backend 24: gate, cache, metadata, classify-regions, confirmation, report, assistant, notice; frontend 13: display, confirmation, notices, unsaved changes); bound tests green after restore — `records/risk_verification/PRB-003_negative_controls_2026-10-24.json` |
 | V4 | Regression | Whole backend test tree, offline (PRB-002), Firestore/GCS/PACS tests deselected as in CI: 1759 passed, 5 xfailed, 1 failed — `test_webauthn_credentials_endpoint_exists` (`webauthn` not installed locally; known, unrelated); frontend suite 343 passed / 3 skipped; `tsc --noEmit` clean; production build passes; every anchor of the existing negative-control scripts still unique (236 checked) |
 | V5 | Existing tests changed to the new contract (stated, not hidden) | `test_analysis_flow_ci_guard.py::test_dis_assessment_returns_200` (confirmed segmentation evaluated, unconfirmed "not evaluated"); `test_brain_report_service.py::test_build_findings_prompt_dis_assessment` (block marked evaluated); `test_capa009_*` route registry (new route, object authorization); integration characterization `test_dis_assessment_contract` (requires Firestore, deselected in CI) |
-| V6 | Review and approval | Code review of the Class C change and owner approval — **PENDING** |
+| V6 | Independent review of PR #68 at `4c601f2` (2026-10-24) | Findings and corrections in §9; review-finding tests fail on `4c601f2` (backend 45 of 47, frontend 14 of 17: `records/risk_verification/PRB-003_review1_tests_on_4c601f2_2026-10-24.json`) and pass on the corrections; whole backend tree (offline, PRB-002; Firestore/GCS/PACS deselected as in CI) 1807 passed, 5 xfailed, 1 failed (webauthn not installed locally, known); frontend 359 passed, 3 skipped; tsc clean; production build passes |
+| V7 | Review and approval | Code review of the Class C change and owner approval — **PENDING** |
 
 ## 7. Closure (SPR-001 §4, step 6) — not applicable yet
 
 Resolution description, verification evidence, commit SHA of the merged fix, affected and fixed versions: *to be
 completed when the fix is reviewed, approved and merged.*
+
+## 9. Independent review of PR #68 (2026-10-24, at `4c601f2`) — findings and corrections
+
+The review said: do not merge as-is; the core idea is sound. Every finding was answered on the same branch with the same
+process — tests written before the corrections (they fail on `4c601f2`:
+`records/risk_verification/PRB-003_review1_tests_on_4c601f2_2026-10-24.json`), the corrections, negative controls re-run in
+full. Negative controls re-run in full after the corrections: 69 mutations, 69 detected (the 37 of the first version with anchors updated, and 32 for the review findings; bound tests green after byte-exact restore) — records/risk_verification/PRB-003_negative_controls_2026-10-24.json. A first full run left 2 undetected (gate's label binding, served cache of a not-evaluated state); one test was added and one made realistic, and the whole set was re-run.
+
+| # | Finding (review of PR #68 at `4c601f2`) | Correction on this branch | Verified by |
+|---|---|---|---|
+| B1 | **Blocker.** DIS was evaluated on any confirmed mask whatever its labels meant: `compute_dis_criteria` reads ids 1/2/3 as PV/JC/IT, so a confirmed binary "Lesion" mask gave a confirmed NOT MET (false negative) and the default preset (1 = MS Lesion Active, 2 = Chronic) a false MET | DIS only when the labels are the MAGNIMS scheme (ids 1-4 named PV/JC/IT/DWM; no other id or mask value) AND the region classification recorded these lesions (`classified_lesion_footprint_sha256` written by classify-regions equals the current `mask > 0`); reason `regions_not_classified` otherwise. The confirmation is offered only after the classification and binds the mask AND the label scheme. AI drafts: own review (RC-047) + the DIS confirmation. `test_analysis_flow_ci_guard` rewritten (it encoded the defect: DIS evaluated on a binary "MS Lesion" mask); gate docstring corrected. *Deliberate choice, for the reviewer:* the classification is bound to the lesion **footprint**, not to the exact mask hash, so that a radiologist can correct a region label without the correction being thrown away by a re-classification; the correction is covered by the confirmation (bound to the exact mask and labels) and is flagged (`edited_after_classification`) | `test_rc070_r1_*`, `test_rc071_r1_*`, `test_dis_assessment_returns_200`; mutations G10-G14, C6, F5 |
+| M2 | #67's payload guard drops `evaluation_status`, so after a merge a confirmed DIS prints NOT EVALUATED (PRB-003 §8.8 and CAPA D-7 described the opposite failure); the report re-derived DIS for whatever id the client put in the DIS block | §8.8 / D-7 corrected; end-to-end test through the real `generate_report` path with only the provider mocked (`test_rc070_r2_e2e_*`) fails if a merge drops the state. The request names its segmentation (`segmentation_id`, authorized in the route); a lesion-analysis or DIS block naming another segmentation is refused (409); without it DIS is not evaluated. Frontend and assistant send it | `test_rc070_r2_*`; mutations R2, R8, A4, F19 |
+| M3 | Per-region presence still shown and sent for unconfirmed segmentations | Caveat "Regions not confirmed by a radiologist; not a DIS assessment." on the lesion table and the region bars, in `/lesion-analysis` (`region_status`), in the assistant's region tools (`note`, `regions_note`); the report model receives no region at all without an evaluated DIS. RESIDUAL: the regions stay visible to the reviewer, who needs them to confirm | `test_rc070_r3_*`, `review1` caveat tests; mutations R9, A3, F16 |
+| M4 | Templates and format rule 4 still asked the model for DIS; the not-evaluated rule was only in the user message; misleading notice wording | Without an evaluated DIS the template's DIS sections are replaced and every other DIS instruction removed (`dis_not_evaluated_template`, Class C), a safety rule heads the system prompt; every line of the model's text stating DIS (en/es/de) is replaced and counted in the notice; notice reworded ("this draft must not be read as a statement on dissemination in space") | `test_rc070_r4_*`, `test_rc072_r4_*`; mutations R10-R12 |
+| M5 | Confirmation not idempotent, not auditable, rewrote the mask (next save 409), ignored durability | First confirmer kept (`already_confirmed`); append-only `clinician_review_history` (confirmed / confirmation_repeated / voided, with user, time, digests, reason); user logged; metadata-only write (`persist_metadata`); 503 and undone when not durable; 409 and cached entry discarded when another session saved a newer mask. PR #65 must map this route to `CLINICAL_SEGMENTATION_CONFIRM` in `ROUTE_ACTIONS` on merge | `test_rc071_r5_*`; mutations C7-C12 |
+| m6 | Renaming labels after a confirmation kept it | The confirmation is bound to the label scheme and removed (history: `labels_changed`) when a renamed scheme is saved; `PUT /labels` limited to radiologists and technicians (403 otherwise) | `test_rc071_r1_renaming_*`, `test_rc071_r1_only_clinical_roles_*`; mutations G2b, C13, C14 |
+| m7 | Confirm button offered on any expanded segmentation, though the digest is the open mask's | Offered only when the panel's segmentation is the open one ("Open this segmentation to confirm it" otherwise); checked again in the handler | `review1` open-segmentation tests; mutation F14 |
+| m8 | Race between the hash and the awaited spacing download; stale `refreshDis` replies | The gate and the rule run on one snapshot of mask and labels; a result is cached only if the stored mask is still the snapshot; every DIS request takes a ticket, older replies are dropped | `test_rc070_r8_*`, `review1` late-reply test; mutations S1, S2, F15 |
+| m9 | Information-for-safety text missing on the FLAMeS result and the tool "Segmentation ready" card, inaccurate on SynthSeg / mindGlide structures; "most" rests on CC BY-NC data | Added to both cards; shown for lesion-detection tools only (FLAMeS, LST-AI, mindGlide lesions) everywhere (panel, cards, API state); wording "Automatic **lesion** marking …"; "most" listed as an owner decision | `test_rc072_r9_*`, `review1` notice tests, `SegmentationPanel.prb003.test.tsx` (behavioural, replaces the regex check); mutations N2, F8, F17, F18 |
+| m10 | An old frontend crashes on a "not evaluated" block | Deploy the FRONTEND FIRST (DEPLOYMENT_CHECKLIST.md, PR); the lesion panel is wrapped in an error boundary; the new panel shows both answers | `review1` error-boundary check; mutation F20 |
+| m11 | `server_dis_assessment` docstring vs re-raised HTTP errors | Docstring states which errors are raised (404 of a missing segmentation; authorization now in the route) and that any other failure gives "not evaluated" | inspection |
 
 ## 8. Owner decisions pending
 
@@ -210,10 +238,19 @@ completed when the fix is reviewed, approved and merged.*
 5. Confirm the production values of `LSTAI/SYNTHSEG/MINDGLIDE/FLAMES_ENABLED` and `VITE_ENABLE_BROWSER_FLAMES`.
 6. SibBMS licence: may the healthy-control numbers be quoted in a product text (today: no number is shown)?
 7. IFU-001 / CER-001: state that DIS requires a confirmed segmentation.
-8. Merge order with PR #67 (CAPA-014): it rewrites the report payload (`report_payload_guard.dis_assessment` keeps only
-   `dis_met`, forced to a boolean). Whichever merges second must carry `evaluation_status` through that guard, or a
-   "not evaluated" state would print "NOT MET" — a test of this PR (`test_rc070_report_prompt_never_states_met_*`) will
-   fail if the merge drops it.
+8. Merge order with PR #67 (CAPA-014). *(Corrected 2026-10-24 after the review of PR #68: the first draft described the
+   opposite failure.)* #67's `report_payload_guard.dis_assessment()` keeps only `dis_met` and drops `evaluation_status`,
+   so after a merge a **confirmed** DIS would reach the prompt as NOT EVALUATED (checked on the merged tree by the
+   reviewer). The #67 agent has been asked to keep the evaluated / not-evaluated state and to print "not evaluated" when it
+   is missing. The end-to-end test `test_rc070_r2_e2e_a_confirmed_dis_reaches_the_model_through_the_real_report_service` (real
+   `generate_report`, only the model provider mocked) fails on a merge that drops it.
+9. PR #65 (CAPA-015): its `ROUTE_ACTIONS` must map `POST /segmentation/{id}/review/confirm` to
+   `CLINICAL_SEGMENTATION_CONFIRM` on merge.
+10. Deploy the frontend **before** the backend (DEPLOYMENT_CHECKLIST.md): a frontend older than PRB-003 cannot render the
+    "not evaluated" state.
+11. The word "most" in the information-for-safety text rests on the CC BY-NC-SA control data (as the numbers do).
+12. Accept the deliberate choice of review finding B1 (§9): the region classification is bound to the classified lesions
+    (footprint), so a radiologist can correct a region label before confirming.
 
 ---
 

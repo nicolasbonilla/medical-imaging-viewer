@@ -31,8 +31,11 @@ PY = os.path.join(ROOT, "backend", "venv", "Scripts", "python.exe")
 if not os.path.exists(PY):
     PY = sys.executable
 OUT = "docs/iec62304/records/risk_verification/PRB-003_negative_controls_2026-10-24.json"
-BACKEND_TESTS = ["tests/unit/test_prb003_dis_requires_confirmed_segmentation.py"]
-FRONTEND_TESTS = ["src/components/LesionDashboard.prb003.test.tsx"]
+BACKEND_TESTS = ["tests/unit/test_prb003_dis_requires_confirmed_segmentation.py",
+                 "tests/unit/test_prb003_review1_findings.py"]
+FRONTEND_TESTS = ["src/components/LesionDashboard.prb003.test.tsx",
+                  "src/components/LesionDashboard.prb003.review1.test.tsx",
+                  "src/components/SegmentationPanel.prb003.test.tsx"]
 
 GATE = "backend/app/services/dis_review_gate.py"
 SA = "backend/app/api/routes/segmentation_analysis.py"
@@ -45,6 +48,10 @@ MCPS = "backend/app/mcp/ms_clinical_server.py"
 DASH = "frontend/src/components/LesionDashboard.tsx"
 BANNER = "frontend/src/components/AiDraftBanner.tsx"
 PANEL = "frontend/src/components/SegmentationPanel.tsx"
+TOOLS = "frontend/src/components/ClinicalToolsPanel.tsx"
+FLAMES = "frontend/src/components/BrowserFlamesCard.tsx"
+REPORT = "frontend/src/components/AIReportPanel.tsx"
+VIEWER = "frontend/src/ViewerApp.tsx"
 TYPES = "frontend/src/types/lesion.ts"
 ES = "frontend/src/i18n/locales/es.json"
 
@@ -55,29 +62,31 @@ MCP_RULE = (
     '        "in space yourself from lesion counts, regions or the region classification. Automatic marking also "\n'
     '        "marks spots in most healthy brains; a marked spot is not evidence of multiple sclerosis.\\n"\n'
 )
-ES_NOTICE = ('    "automaticMarkingNotice": "La marcación automática también marca manchas en la mayoría de los cerebros '
-             'sanos, sobre todo junto a los ventrículos. Una mancha marcada no es prueba de esclerosis múltiple; cada '
-             'mancha requiere la revisión de un experto."')
-ES_NOTICE_EN = ('    "automaticMarkingNotice": "Automatic marking also marks spots in most healthy brains, mostly next to '
-                'the ventricles. A marked spot is not evidence of multiple sclerosis; every spot needs expert review."')
+ES_NOTICE = ('    "automaticMarkingNotice": "La marcación automática de lesiones también marca manchas en la mayoría de los '
+             'cerebros sanos, sobre todo junto a los ventrículos. Una mancha marcada no es prueba de esclerosis múltiple; '
+             'cada mancha requiere la revisión de un experto."')
+ES_NOTICE_EN = ('    "automaticMarkingNotice": "Automatic lesion marking also marks spots in most healthy brains, mostly next '
+                'to the ventricles. A marked spot is not evidence of multiple sclerosis; every spot needs expert review."')
+CONFIRMED_LINE = '    confirmed = bool(regions["classified"] and ai_review_ok and bound)\n'
 
 M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
-    # ── RC-070: the gate itself (backend) ──
+    # ── RC-070: the gate (backend) ──
     "G1_route_gate_bypassed": ([(SA, '    if not state["confirmed"]:\n        logger.info("DIS not evaluated',
                                  '    if False:\n        logger.info("DIS not evaluated')],
                                "DIS computed on any loaded segmentation (the defect as found: paper A, 19/100 healthy)"),
-    "G2_confirmation_not_bound_to_the_mask": ([(GATE, '    bound = has_record and getattr(record, "reviewed_mask_sha256", None) == current\n',
-                                                '    bound = has_record\n')],
+    "G2_confirmation_not_bound_to_the_mask": ([(GATE, '    bound = (has_record and getattr(record, "reviewed_mask_sha256", None) == current\n',
+                                                '    bound = (has_record\n')],
                                               "a confirmation given for another mask counts"),
-    "G3_unreviewed_ai_draft_counts": ([(GATE, '        has_record = provenance.review_status == "confirmed"\n',
-                                       '        has_record = True\n')],
-                                      "an unreviewed AI draft counts as confirmed"),
-    "G4_clinician_record_replaces_the_ai_review": ([(GATE, '    if provenance is not None:\n        source = SOURCE_AI_DRAFT\n',
-                                                    '    if provenance is not None and getattr(metadata, "clinician_review", None) is None:\n'
-                                                    '        source = SOURCE_AI_DRAFT\n')],
-                                                  "an AI draft confirmed through the clinician record, bypassing RC-047"),
-    "G5_stored_state_served_as_a_result": ([(SA, '            and dis_gate.is_evaluated(cached.get("dis_assessment"))):\n',
-                                             '            and "dis_assessment" in cached):\n')],
+    "G2b_confirmation_not_bound_to_the_labels": ([(GATE, '             and getattr(record, "reviewed_labels_sha256", None) == labels_digest)\n',
+                                                   '             and True)\n')],
+                                                 "a confirmation survives a renaming of the labels (review finding 6)"),
+    "G3_unreviewed_ai_draft_counts": ([(GATE, '        provenance.review_status == "confirmed" and provenance.reviewed_mask_sha256 == current)',
+                                       '        True)')],
+                                      "an unreviewed AI draft counts as reviewed"),
+    "G4_ai_review_not_required": ([(GATE, CONFIRMED_LINE, '    confirmed = bool(regions["classified"] and bound)\n')],
+                                  "an AI draft evaluated without its own review (RC-047)"),
+    "G5_stored_state_served_as_a_result": ([(SA, '            and dis_gate.is_evaluated(cached.get("dis_assessment"))\n',
+                                             '            and "dis_assessment" in cached\n')],
                                            "a stored DIS block (not evaluated, or from before the fix) served as a result"),
     "G6_metadata_route_serves_stored_dis": ([(SEG, '            metadata=dis_gate.without_stored_dis(metadata),\n',
                                               '            metadata=metadata,\n')],
@@ -90,29 +99,68 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "G9_not_evaluated_state_carries_a_conclusion": ([(GATE, '        "evaluation_status": NOT_EVALUATED,\n',
                                                       '        "evaluation_status": NOT_EVALUATED,\n        "dis_met": False,\n')],
                                                     "the 'not evaluated' state still says met / not met"),
-    # ── RC-071: confirming a segmentation without AI provenance ──
+    "G10_regions_not_required": ([(GATE, CONFIRMED_LINE, '    confirmed = bool(ai_review_ok and bound)\n')],
+                                 "DIS evaluated on any confirmed mask, whatever its labels mean (review blocker 1, as found)"),
+    "G11_mask_values_outside_the_scheme_accepted": ([(GATE, '    in_scheme = magnims and set(int(v) for v in np.unique(masks_3d)) <= allowed\n',
+                                                      '    in_scheme = magnims\n')],
+                                                    "a mask value no MAGNIMS label defines is read anyway"),
+    "G12_classification_not_bound_to_the_lesions": ([(GATE, '    classified = bool(in_scheme and record.get("classified_lesion_footprint_sha256") == footprint_sha256(masks_3d))\n',
+                                                      '    classified = bool(in_scheme)\n')],
+                                                    "MAGNIMS names on lesions that never went through the classification count as regions"),
+    "G13_any_label_scheme_is_magnims": ([(GATE, '    if any(pairs.get(i) != MAGNIMS_REGIONS[i] for i in MAGNIMS_REQUIRED_IDS):\n        return False\n',
+                                         '    if False:\n        return False\n'),
+                                        (GATE, '    return all(MAGNIMS_REGIONS.get(i) == name for i, name in pairs.items())\n',
+                                         '    return True\n')],
+                                       "the default preset (1 = MS Lesion Active) read as regions: a false MET (review blocker 1)"),
+    "G14_classification_does_not_record_the_lesions": ([(SR, '            response_data["classified_lesion_footprint_sha256"] = dis_gate.footprint_sha256(classified_mask)\n', '')],
+                                                       "classify-regions records no classified lesions: DIS can never be traced to a classification"),
+    # ── RC-071: the DIS confirmation ──
     "C1_any_role_may_confirm": ([(SEG, '    if not _radiologist(current_user):\n', '    if False:\n')],
                                 "any authenticated user confirms a segmentation"),
     "C2_confirmation_for_any_mask": ([(SEG, '    if stated != stored_digest:\n', '    if False:\n')],
                                      "a confirmation recorded for a mask other than the stored one"),
-    "C3_ai_draft_confirmed_here": ([(SEG, '    if metadata.ai_provenance is not None:\n        raise HTTPException(\n',
-                                     '    if False:\n        raise HTTPException(\n')],
-                                   "an AI draft confirmed outside its own review (RC-047)"),
+    "C3_ai_draft_confirmed_without_its_review": ([(SEG, '    if state["reason"] == dis_gate.REASON_AI_REVIEW:\n', '    if False:\n')],
+                                                 "an AI draft DIS-confirmed before its own review (RC-047)"),
     "C4_mask_change_keeps_the_confirmation": ([(SVC, '        clinician_reset = self._enforce_clinician_review_binding(seg_data)\n',
                                                 '        clinician_reset = False\n')],
                                               "a confirmation survives a change of the mask"),
-    "C5_reviewer_not_the_authenticated_user": ([(SEG, '        reviewed_by=current_user.username,\n',
-                                                 '        reviewed_by=str((body or {}).get("reviewed_by") or "client"),\n')],
+    "C5_reviewer_not_the_authenticated_user": ([(SEG, 'reviewed_by=current_user.username, reviewed_by_id=actor_id',
+                                                 'reviewed_by=str((body or {}).get("reviewed_by") or "client"), reviewed_by_id=actor_id')],
                                                "the reviewer recorded from the request instead of the authenticated user"),
+    "C6_confirmation_before_classification": ([(SEG, '    if not state["regions"]["classified"]:\n', '    if False:\n')],
+                                              "the confirmation accepted before the regions are classified (review blocker 1)"),
+    "C7_second_confirmation_overwrites_the_first": ([(SEG, '    already = bool(state["confirmed"])\n', '    already = False\n')],
+                                                    "a repeat confirmation replaces the first confirmer (review finding 5)"),
+    "C8_confirmation_not_in_the_history": ([(SEG, '    metadata.clinician_review_history = [*previous[1], event]\n',
+                                             '    metadata.clinician_review_history = previous[1]\n')],
+                                           "confirmations leave no history (review finding 5)"),
+    "C9_voiding_not_in_the_history": ([(SVC, '        metadata.clinician_review_history = [*(metadata.clinician_review_history or []), ClinicianReviewEvent(',
+                                        '        _unrecorded = [*(metadata.clinician_review_history or []), ClinicianReviewEvent(')],
+                                      "a voided confirmation disappears without trace (review finding 5)"),
+    "C10_confirmation_rewrites_the_mask": ([(SEG, '        tier = segmentation_service.persist_metadata(segmentation_id)\n',
+                                             '        tier = segmentation_service.persist(segmentation_id)\n')],
+                                           "the confirmation rewrites the mask object: the next save gets a 409 (review finding 5)"),
+    "C11_non_durable_confirmation_accepted": ([(SEG, '    if tier is None:\n        metadata.clinician_review, metadata.clinician_review_history = previous\n',
+                                                '    if False:\n        metadata.clinician_review, metadata.clinician_review_history = previous\n')],
+                                              "a confirmation that was not stored durably is reported as recorded (review finding 5)"),
+    "C12_stale_mask_keeps_the_cached_confirmation": ([(SEG, '        segmentation_service.discard_cached(segmentation_id)   # never keep',
+                                                       '        pass   # never keep')],
+                                                     "after a stale-write conflict the confirmation stays in the instance cache (review finding 5)"),
+    "C13_label_change_keeps_the_confirmation": ([(SVC, '        elif review.reviewed_labels_sha256 != labels_sha256(getattr(metadata, "labels", None) or []):\n',
+                                                  '        elif False:\n')],
+                                                "renaming a label keeps the stored confirmation (review finding 6)"),
+    "C14_any_role_may_rename_labels": ([(SEG, '    if getattr(current_user, "role", None) not in (UserRole.RADIOLOGIST, UserRole.TECHNICIAN):\n',
+                                         '    if False:\n')],
+                                       "a viewer or an administrator renames what the DIS rule reads as regions (review finding 6)"),
     # ── RC-070 on the report path (HAZ-003) ──
-    "R1_report_trusts_the_client_block": ([(AIR, '        findings["dis_assessment"] = await server_dis_assessment(findings["dis_assessment"], current_user)\n',
-                                            '        findings["dis_assessment"] = findings["dis_assessment"]\n')],
+    "R1_report_trusts_the_client_block": ([(AIR, '        findings["dis_assessment"] = await server_dis_assessment(report_sid, current_user)\n',
+                                            '        findings["dis_assessment"] = findings.get("dis_assessment") or {}\n')],
                                           "a DIS conclusion sent by the client reaches the model (the defect as found)"),
-    "R2_report_skips_authorization": ([(AIR, '    await authorize_mask_specs([{"type": "segmentation", "id": sid}], current_user)\n',
-                                        '    pass\n')],
+    "R2_report_skips_authorization": ([(AIR, '        await authorize_mask_specs([{"type": "segmentation", "id": report_sid}], current_user)\n',
+                                        '        pass\n')],
                                       "the report reads a segmentation the caller may not read (RC-029)"),
-    "R3_report_route_stores_the_assessment": ([(AIR, '        return await assess_dis(sid, segmentation_service, storage_service, store=False)\n',
-                                                '        return await assess_dis(sid, segmentation_service, storage_service, store=True)\n')],
+    "R3_report_route_stores_the_assessment": ([(AIR, '        return await assess_dis(segmentation_id, segmentation_service, storage_service, store=False)\n',
+                                                '        return await assess_dis(segmentation_id, segmentation_service, storage_service, store=True)\n')],
                                               "the compute-only report route writes to the segmentation (RC-033)"),
     "R4_prompt_states_met_for_an_unevaluated_block": ([(BRS, '        if not (isinstance(dis, dict) and dis.get("evaluation_status") == "evaluated"):\n',
                                                         '        if not isinstance(dis, dict):\n')],
@@ -124,39 +172,64 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "R7_report_from_an_unevaluated_dis_only": ([(AIR, '        if not (others or request.volumetry or gate.is_evaluated(findings["dis_assessment"])):\n',
                                                  '        if False:\n')],
                                                "a draft requested with no measurement but a 'not evaluated' DIS state (RC-034)"),
+    "R8_dis_of_another_segmentation_carried_in": ([(AIR, '        if named and report_sid and named != report_sid:\n', '        if False:\n')],
+                                                  "another segmentation's DIS or measurements carried into the report (review finding 2)"),
+    "R9_regions_reach_the_model_unconfirmed": ([(AIR, '        findings["lesion_analysis"] = gate.without_region_breakdown(findings["lesion_analysis"])\n',
+                                                 '        pass\n')],
+                                               "regions of an unconfirmed segmentation reach the model (review finding 3)"),
+    "R10_template_still_asks_for_dis": ([(BRS, '            system_prompt = dis_not_evaluated_template(system_prompt)\n', '            pass\n')],
+                                        "the templates ask the model for a DIS table although DIS was not evaluated (review finding 4)"),
+    "R11_model_dis_statement_kept": ([(AIR, '            content, replaced = gate.scrub_unevaluated_dis(result["content"], request.language)\n',
+                                       '            content, replaced = result["content"], 0\n')],
+                                     "a DIS statement written by the model stays in the draft (review finding 4)"),
+    "R12_misleading_notice_wording": ([(AIR, '"in space; this draft must not be read as a statement on dissemination in space.",',
+                                        '"in space; no statement on it in this draft comes from the software.",')],
+                                      "the notice claims no DIS statement comes from the software (review finding 4)"),
     # ── RC-070 on the assistant path (MCP) ──
     "A1_assistant_receives_unevaluated_conclusion": ([(MCPS, '    if isinstance(dis, dict) and dis.get("evaluation_status") == "evaluated":\n',
                                                        '    if isinstance(dis, dict):\n')],
                                                      "the assistant receives a DIS conclusion that was not evaluated (older backend)"),
     "A2_assistant_rule_removed": ([(MCPS, MCP_RULE, '')],
                                   "the assistant is not told to report 'not evaluated' and never to derive DIS"),
+    "A3_assistant_regions_without_caveat": ([(MCPS, '        "regions_note": REGIONS_ARE_NOT_DIS,\n', ''),
+                                             (MCPS, ', "note": REGIONS_ARE_NOT_DIS}', '}')],
+                                            "regions reach the assistant without 'not a DIS assessment' (review finding 3)"),
+    "A4_assistant_report_without_its_segmentation": ([(MCPS, '            "segmentation_id": segmentation_id,\n', '')],
+                                                     "the assistant's report request names no segmentation: DIS never evaluated (review finding 2)"),
+    # ── RC-070: hash / spacing race (review finding 8) ──
+    "S1_result_cached_for_a_changed_mask": ([(SA, '    if store and not any_external and still_stored:\n', '    if store and not any_external:\n')],
+                                            "a result cached for a mask that changed during the assessment"),
+    "S2_no_snapshot": ([(SA, '    masks_3d = np.array(seg_data["masks_3d"], dtype=np.uint8, copy=True)   # snapshot\n',
+                         '    masks_3d = seg_data["masks_3d"]\n')],
+                       "the gate checks one mask and the rule reads another, edited during the spacing download"),
     # ── RC-072: information for safety (backend) ──
-    "N1_not_evaluated_state_without_notice": ([(GATE, '    if state is not None and state["source"] in AUTOMATIC_SOURCES:\n',
-                                                '    if False:\n')],
-                                              "the 'not evaluated' state of an automatic segmentation without the healthy-brain notice"),
-    # ── frontend: the dashboard, the banner, the panel ──
+    "N1_not_evaluated_state_without_notice": ([(GATE, '    if state is not None and state.get("lesion_detection"):\n', '    if False:\n')],
+                                              "the 'not evaluated' state of an automatic lesion segmentation without the healthy-brain notice"),
+    "N2_notice_for_structure_parcellations": ([(GATE, '    lesion_detection = source == SOURCE_AI_DRAFT or (\n',
+                                                '    lesion_detection = source != SOURCE_ORIGIN_NOT_RECORDED or (\n')],
+                                              "the healthy-brain notice on SynthSeg / mindGlide structures, where it is wrong (review finding 9)"),
+    # ── frontend: the dashboard, the panels, the cards ──
     "F1_display_trusts_any_conclusion": ([(TYPES, "(d as { evaluation_status?: unknown }).evaluation_status === 'evaluated'",
                                            "'dis_met_brain' in (d as object)")],
                                          "the dashboard shows met / not met for a block that was not evaluated"),
     "F2_topographies_panel_for_unevaluated": ([(DASH, "      {disOk && (\n        <div className=\"p-2 rounded-lg bg-indigo-950/30",
                                                 "      {dis && (dis as any).total_topographies_involved !== undefined && (\n        <div className=\"p-2 rounded-lg bg-indigo-950/30")],
-                                              "the five-topography panel (and its 'dissemination in time may be waived' line) shown for any block"),
-    "F3_confirm_offered_with_unsaved_changes": ([(DASH, "                  hasUnsavedMaskChanges ? (\n", "                  false ? (\n")],
+                                              "the five-topography panel shown for any block"),
+    "F3_confirm_offered_with_unsaved_changes": ([(DASH, "                  ) : hasUnsavedMaskChanges ? (\n", "                  ) : false ? (\n")],
                                                 "the confirm button offered while the mask on screen is not the saved one"),
     "F4_confirmation_not_bound_to_the_mask": ([(DASH, "confirmSegmentationReview(segmentationId, digest)",
                                                 "confirmSegmentationReview(segmentationId, '0'.repeat(64))")],
                                               "the confirmation does not send the SHA-256 of the mask on screen"),
-    "F5_confirm_offered_for_an_ai_draft": ([(DASH, "{(source === 'automatic_tool' || source === 'origin_not_recorded') && (",
-                                             "{true && (")],
-                                           "an AI draft confirmed from the DIS card instead of its own review"),
-    "F6_card_without_notice": ([(DASH, "{(source === 'ai_draft' || source === 'automatic_tool') && <AutomaticMarkingNotice />}",
-                                 "{false && <AutomaticMarkingNotice />}")],
-                               "the 'not evaluated' card of an automatic segmentation without the healthy-brain notice"),
+    "F5_confirm_offered_before_classification": ([(DASH, "              && (reason === 'segmentation_not_confirmed' || reason === 'confirmation_outdated');",
+                                                   "              && true;")],
+                                                 "the confirm button offered before the regions are classified (review blocker 1)"),
+    "F6_card_without_notice": ([(DASH, "                {lesionTool && <AutomaticMarkingNotice />}", "                {false && <AutomaticMarkingNotice />}")],
+                               "the 'not evaluated' card of an automatic lesion segmentation without the notice"),
     "F7_banner_without_notice": ([(BANNER, '      <AutomaticMarkingNotice className="text-[10px] leading-snug" />\n', '')],
                                  "the AI draft banner without the healthy-brain notice"),
-    "F8_panel_without_notice": ([(PANEL, "{!activeSegmentation.ai_provenance && openSegmentationType === 'automatic' && (",
-                                  "{false && (")],
-                                "a server-tool segmentation shown without the healthy-brain notice"),
+    "F8_panel_notice_for_any_tool": ([(PANEL, "                      && isLesionDetectionSource(openValidationSource) && (",
+                                       "                      && true && (")],
+                                     "the panel notice on structure parcellations (review finding 9)"),
     "F9_notice_english_in_spanish": ([(ES, ES_NOTICE, ES_NOTICE_EN)],
                                      "the healthy-brain notice shown in English to Spanish-language users"),
     "F10_confirmed_by_not_shown": ([(DASH, "            {disOk.segmentation_review?.reviewed_by && (", "            {false && (")],
@@ -164,12 +237,31 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "F11_no_refresh_after_confirmation": ([(DASH, "      await refreshDis();\n    } catch (e: any) {\n",
                                             "      void 0;\n    } catch (e: any) {\n")],
                                           "after the confirmation the card keeps the old state"),
-    "F12_result_shown_for_unsaved_changes": ([(DASH, "  const disOk = isDisEvaluated(dis) && !hasUnsavedMaskChanges ? dis : null;\n",
+    "F12_result_shown_for_unsaved_changes": ([(DASH, "  const disOk = isDisEvaluated(dis) && !disHeldForUnsavedChanges ? dis : null;\n",
                                                "  const disOk = isDisEvaluated(dis) ? dis : null;\n")],
                                              "a result shown for a mask on screen that is no longer the confirmed one"),
-    "F13_no_refresh_after_saving": ([(DASH, "    if (hadUnsavedChanges.current && !hasUnsavedMaskChanges && dis) void refreshDis();\n",
+    "F13_no_refresh_after_saving": ([(DASH, "    if (isOpen && hadUnsavedChanges.current && !hasUnsavedMaskChanges && dis) void refreshDis();\n",
                                       "    if (false) void refreshDis();\n")],
                                     "after saving a changed mask the panel keeps the result of the confirmed mask"),
+    "F14_confirm_offered_on_another_segmentation": ([(DASH, "                  !isOpen ? (\n", "                  false ? (\n")],
+                                                    "the button confirms an expanded segmentation with the open mask's digest (review finding 7)"),
+    "F15_late_reply_overwrites": ([(DASH, "      if (ticket === disSeq.current) setDis(r);\n", "      setDis(r);\n")],
+                                  "an older DIS reply overwrites a newer state (review finding 8)"),
+    "F16_regions_without_caveat": ([(DASH, "      {analysis && analysis.lesions.length > 0 && !disOk && (\n", "      {false && (\n")],
+                                   "regions of an unconfirmed segmentation shown without 'not a DIS assessment' (review finding 3)"),
+    "F17_tool_card_notice_for_any_tool": ([(TOOLS, "          {isLesionDetectionSource(task.validation_source) && <AutomaticMarkingNotice />}",
+                                            "          {true && <AutomaticMarkingNotice />}")],
+                                          "the healthy-brain notice on a SynthSeg result (review finding 9)"),
+    "F18_flames_card_without_notice": ([(FLAMES, "          <AutomaticMarkingNotice />\n          {grid && !grid.ok",
+                                         "          {grid && !grid.ok")],
+                                       "the in-browser FLAMeS result without the notice (review finding 9)"),
+    "F19_report_without_its_segmentation": ([(REPORT, "      ...(activeSegId ? { segmentation_id: activeSegId } : {}),\n", "")],
+                                            "the report request names no segmentation (review finding 2)"),
+    "F20_dashboard_without_error_boundary": ([(VIEWER, '<ErrorBoundary name="LesionDashboard">\n                                <LesionDashboard',
+                                               '<>\n                                <LesionDashboard'),
+                                              (VIEWER, '                                />\n                                </ErrorBoundary>\n                              </div>',
+                                               '                                />\n                                </>\n                              </div>')],
+                                             "a failure of the lesion panel takes the viewer down (review finding 10)"),
 }
 
 # Mutations that are NOT defects (equivalent code), stated rather than claimed as tested.

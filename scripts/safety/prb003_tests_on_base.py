@@ -35,8 +35,11 @@ PY = os.path.join(ROOT, "backend", "venv", "Scripts", "python.exe")
 if not os.path.exists(PY):
     PY = sys.executable
 OUT = _arg("--out", "docs/iec62304/records/risk_verification/PRB-003_tests_on_base_2026-10-24.json")
-BACKEND_TEST = "tests/unit/test_prb003_dis_requires_confirmed_segmentation.py"
-FRONTEND_TEST = "src/components/LesionDashboard.prb003.test.tsx"
+# The test files run (comma-separated; defaults: the first PRB-003 run on main @ 70cc5c7). The review of PR #68
+# re-run uses: --base 4c601f2 --backend tests/unit/test_prb003_review1_findings.py
+#   --frontend src/components/LesionDashboard.prb003.review1.test.tsx,src/components/SegmentationPanel.prb003.test.tsx
+BACKEND_TESTS = _arg("--backend", "tests/unit/test_prb003_dis_requires_confirmed_segmentation.py").split(",")
+FRONTEND_TESTS = _arg("--frontend", "src/components/LesionDashboard.prb003.test.tsx").split(",")
 
 
 def offline_env():
@@ -73,7 +76,7 @@ def base_bytes(path):
 
 
 def run_backend():
-    r = subprocess.run([PY, "-m", "pytest", BACKEND_TEST, "-q", "-p", "no:cacheprovider", "-o", "log_cli=false",
+    r = subprocess.run([PY, "-m", "pytest", *BACKEND_TESTS, "-q", "-p", "no:cacheprovider", "-o", "log_cli=false",
                         "--tb=short", "-rA"], cwd="backend", capture_output=True, text=True, encoding="utf-8",
                        errors="replace", env={**offline_env(), "COLUMNS": "400"})
     tests = {}
@@ -90,7 +93,7 @@ def run_frontend():
     out = os.path.join(tempfile.gettempdir(), "prb003_base_vitest.json")
     if os.path.exists(out):
         os.remove(out)
-    subprocess.run(f"npx vitest run {FRONTEND_TEST} --pool=threads --reporter=json --outputFile={out}",
+    subprocess.run(f"npx vitest run {' '.join(FRONTEND_TESTS)} --pool=threads --reporter=json --outputFile={out}",
                    cwd="frontend", shell=True, capture_output=True, text=True, encoding="utf-8", errors="replace")
     d = json.load(open(out, encoding="utf-8"))
     res = [a for f in d["testResults"] for a in f["assertionResults"]]
@@ -122,7 +125,7 @@ def main():
                   "the PRB-003 test files run unchanged; working tree restored byte for byte",
         "swapped": {"restored_to_base": changed, "removed": added},
         "test_sha256": {t: hashlib.sha256(open(t, encoding="utf-8").read().replace("\r\n", "\n").encode("utf-8")).hexdigest()
-                        for t in ("backend/" + BACKEND_TEST, "frontend/" + FRONTEND_TEST)},
+                        for t in [*("backend/" + b for b in BACKEND_TESTS), *("frontend/" + f for f in FRONTEND_TESTS)]},
         "backend": backend,
         "frontend": frontend,
         "note": _arg("--note", "Tests that pass on the base are positive controls of behaviour that must not change "
