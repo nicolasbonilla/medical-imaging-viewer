@@ -273,9 +273,9 @@ def test_rc067_the_rate_limit_key_ignores_client_supplied_forwarded_hops():
 
     for cls in (RateLimitMiddleware, IPBlacklistMiddleware):
         assert cls._get_client_ip(object.__new__(cls), req("6.6.6.6, 203.0.113.7")) == "203.0.113.7"
-        # through Firebase Hosting (one more trusted hop, documented assumption)
-        assert cls._get_client_ip(object.__new__(cls), req("6.6.6.6, 203.0.113.7, 35.190.0.1",
-                                                           "app.mstool-ai.com")) == "203.0.113.7"
+        # through Firebase Hosting: the right-most entry is a published Hosting (Fastly) egress
+        # address, so the client is one step left (re-review N1: never chosen by X-Forwarded-Host)
+        assert cls._get_client_ip(object.__new__(cls), req("6.6.6.6, 203.0.113.7, 151.101.1.1")) == "203.0.113.7"
 
 
 @pytest.mark.unit
