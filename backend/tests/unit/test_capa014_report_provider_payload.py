@@ -900,3 +900,43 @@ def test_n9_documents_name_the_configured_model():
     assert "claude-3-5-sonnet" not in text and get_settings().CLAUDE_MODEL in text
     generator = (REPO / "docs/iec62304/generate_audit_records.py").read_text(encoding="utf-8")
     assert "strips PHI" not in generator
+
+
+# Coordination with PR #68 (PRB-003 / CAPA-016): the payload keeps the DIS "evaluated / not evaluated" state, and a
+# DIS that is missing or not evaluated reaches the model as "not evaluated" — never "NOT MET" (as N3: "not
+# available", never 0). No conclusion, region presence or topography count travels with a not-evaluated state.
+NOT_EVALUATED_DIS = [
+    {"evaluation_status": "not_evaluated", "dis_met": False, "regions_with_lesions": 2, "total_dis_regions": 5,
+     "region_details": {"Periventricular": {"present": True}}},
+    {"regions_with_lesions": 2, "total_dis_regions": 5},                       # the conclusion is missing
+    {"dis_met": "false", "regions_with_lesions": 2},                           # not a yes/no value
+    {"evaluation_status": "something else", "dis_met": True},                  # not a known state
+]
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("dis", NOT_EVALUATED_DIS, ids=["not_evaluated", "missing", "not_boolean", "unknown_state"])
+def test_rc064_dis_missing_or_not_evaluated_is_never_not_met(route, dis):
+    from app.services.report_payload_guard import provider_payload
+    assert provider_payload({"dis_assessment": dis}, None).findings["dis_assessment"] == {
+        "evaluation_status": "not_evaluated"}
+    assert _post(route, {**_measurements(), "dis_assessment": dis}).status_code == 200
+    prompt = route.provider.prompt()
+    assert "DIS Assessment: NOT EVALUATED" in prompt
+    assert "NOT MET" not in prompt and "DIS Assessment: MET" not in prompt
+    assert "PRESENT" not in prompt and "2/5 regions" not in prompt
+
+
+@pytest.mark.unit
+def test_rc064_dis_evaluated_state_is_kept_and_reported():
+    from app.services.brain_report_service import BrainReportService
+    from app.services.report_payload_guard import provider_payload
+    dis = {"evaluation_status": "evaluated", "dis_met": False, "regions_with_lesions": 1, "total_dis_regions": 5}
+    payload = provider_payload({"dis_assessment": dis}, None)
+    assert payload.findings["dis_assessment"]["evaluation_status"] == "evaluated"
+    prompt = BrainReportService()._build_findings_prompt(payload.findings, None, "en")
+    assert "DIS Assessment: NOT MET (1/5 regions)" in prompt and "NOT EVALUATED" not in prompt
+    legacy = provider_payload({"dis_assessment": {"dis_met": True, "regions_with_lesions": 3, "total_dis_regions": 5}},
+                              None)
+    assert "evaluation_status" not in legacy.findings["dis_assessment"]          # no state is invented
+    assert "DIS Assessment: MET (3/5 regions)" in BrainReportService()._build_findings_prompt(legacy.findings, None, "en")
