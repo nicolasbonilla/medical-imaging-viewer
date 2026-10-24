@@ -230,11 +230,11 @@ class TestAnalysisContract:
         r = await async_client.get(f"/api/v1/segmentation/{seg_id}/dis-assessment")
         assert r.status_code == 200, r.text[:300]
         body = r.json()
-        assert isinstance(body["dis_met_brain"], bool)
-        assert body["total_dis_regions"] == 5
-        assert body["brain_regions_evaluated"] == 3
+        # PRB-003 (RC-070): no radiologist confirmed this segmentation, so DIS is NOT evaluated —
+        # an explicit state with no met / not met and no region presence (contract changed 2026-10-24).
+        assert body["evaluation_status"] == "not_evaluated"
+        assert "dis_met_brain" not in body and "region_details" not in body
         assert "McDonald 2024" in body["dis_criteria_version"]
-        assert "region_details" in body
 
     @pytest.mark.asyncio
     async def test_compare_two_segmentations_contract(self, async_client: AsyncClient):

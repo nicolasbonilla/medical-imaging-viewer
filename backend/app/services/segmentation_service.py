@@ -276,6 +276,24 @@ class SegmentationService:
         return hashlib.sha256(np.ascontiguousarray(masks_3d, dtype=np.uint8).tobytes()).hexdigest()
 
     def enforce_review_binding(self, seg_data: dict) -> bool:
+        """RC-047 and RC-071: every clinician confirmation is bound to the exact mask that was reviewed.
+        If the mask now differs from the confirmed one, the AI review is reset to 'unreviewed' and the
+        clinician confirmation of a segmentation without AI provenance is removed (returns True if any)."""
+        clinician_reset = self._enforce_clinician_review_binding(seg_data)
+        return self._enforce_ai_review_binding(seg_data) or clinician_reset
+
+    def _enforce_clinician_review_binding(self, seg_data: dict) -> bool:
+        """RC-071 (PRB-003): remove a clinician confirmation that no longer matches the stored mask."""
+        metadata = seg_data.get("metadata")
+        review = getattr(metadata, "clinician_review", None)
+        if review is None or review.reviewed_mask_sha256 == self.mask_sha256(seg_data["masks_3d"]):
+            return False
+        metadata.clinician_review = None
+        logger.warning("Clinician confirmation removed: the mask changed after it was confirmed",
+                       extra={"previous_reviewer": review.reviewed_by})
+        return True
+
+    def _enforce_ai_review_binding(self, seg_data: dict) -> bool:
         """RC-047: a confirmed AI review is bound to the exact mask that was reviewed. If the mask now
         differs from the confirmed one, the review is reset to 'unreviewed' (returns True)."""
         metadata = seg_data.get("metadata")

@@ -45,6 +45,7 @@ from app.utils import load_nifti_from_bytes
 # never carries spacing, so resolve_voxel_spacing(seg_metadata) ALWAYS raised and these
 # region routes returned 500 for every call (found 2026-09-28).
 from app.api.routes.segmentation_analysis import _voxel_spacing_from_source_image
+from app.services import dis_review_gate as dis_gate   # PRB-003 (RC-070)
 
 settings = get_settings()
 
@@ -479,7 +480,15 @@ async def classify_regions(
 
                 analysis_result = analyze_lesions(classified_mask, voxel_spacing, label_map)
                 analysis_result["segmentation_id"] = segmentation_id
-                dis_result = compute_dis_criteria(classified_mask, label_map, voxel_spacing)
+                # PRB-003 (RC-070): DIS is stored only for a segmentation a clinician confirmed for
+                # THIS mask. Reclassifying changes the mask (region labels), which voids an earlier
+                # confirmation (RC-047 / RC-071): the regions must be checked and confirmed again.
+                review = dis_gate.review_state(metadata, classified_mask)
+                if review["confirmed"]:
+                    dis_result = dis_gate.evaluated(
+                        compute_dis_criteria(classified_mask, label_map, voxel_spacing), review)
+                else:
+                    dis_result = dis_gate.not_evaluated(segmentation_id, review)
                 dis_result["segmentation_id"] = segmentation_id
 
                 mask_mod = metadata.modified_at.isoformat()

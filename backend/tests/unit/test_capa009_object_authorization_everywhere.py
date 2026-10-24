@@ -129,6 +129,8 @@ ROUTE_AUTH = {
     ("GET", "/segmentation/{segmentation_id}"): "dep:require_segmentation_access",
     # CP-FLAMES-BROWSER-001 (RC-047): confirm the review of an AI draft
     ("POST", "/segmentation/{segmentation_id}/ai-review/confirm"): "dep:require_segmentation_access",
+    # PRB-003 (RC-071): a radiologist confirms a segmentation without AI provenance
+    ("POST", "/segmentation/{segmentation_id}/review/confirm"): "dep:require_segmentation_access",
     ("POST", "/segmentation/{segmentation_id}/classify-regions"): "dep:require_segmentation_access",
     ("GET", "/segmentation/{segmentation_id}/dis-assessment"): "dep:require_segmentation_access",
     ("GET", "/segmentation/{segmentation_id}/export/dicom-seg"): "dep:require_segmentation_access",
@@ -421,6 +423,7 @@ DENIED = [  # (method, path, json) -> 404 for a caller without access, before an
                                   "patient_id": PATIENT}),
     ("get", "/dicomweb/import/j-1", None),
     ("post", f"/segmentation/{OBJ}/ai-review/confirm", None),  # CP-FLAMES-BROWSER-001 (RC-047)
+    ("post", f"/segmentation/{OBJ}/review/confirm", {"mask_sha256": "0" * 64}),  # PRB-003 (RC-071)
 ]
 ADMIN_ONLY = [
     ("post", "/dicomweb/connections", {"name": "x", "url": "http://169.254.169.254/"}),

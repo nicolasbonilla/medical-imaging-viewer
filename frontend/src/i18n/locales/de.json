@@ -1038,6 +1038,22 @@
     "perSliceDice": "Dice pro Schnitt",
     "agreementMap": "Übereinstimmungskarte"
   },
+  "disReview": {
+    "title": "DIS (Gehirn-MRT): nicht beurteilt",
+    "body": "Die räumliche Dissemination erfordert die ärztliche Prüfung der Segmentierung: Sie wird nur für eine Segmentierung beurteilt, die ein Radiologe Läsion für Läsion und Region für Region für genau diese gespeicherte Maske bestätigt hat.",
+    "reasonNotConfirmed": "Kein Radiologe hat diese Segmentierung bestätigt.",
+    "reasonOutdated": "Die Segmentierung wurde nach der Bestätigung geändert; die Bestätigung gilt nicht mehr.",
+    "reasonUnsaved": "Die angezeigte Maske hat ungespeicherte Änderungen: Bestätigung und Ergebnis gelten nur für die gespeicherte Maske. Das Speichern einer geänderten Maske hebt die Bestätigung auf.",
+    "sourceAiDraft": "KI-Entwurf: Prüfen Sie jede Läsion und Region und bestätigen Sie die Prüfung im KI-Entwurfshinweis des Segmentierungsbereichs.",
+    "sourceAutomatic": "Automatische Segmentierung eines klinischen Werkzeugs: Ihre Herkunft ist erfasst, ihre Läsionen und Regionen sind nicht geprüft.",
+    "sourceUnrecorded": "Die Herkunft dieser Segmentierung ist nicht erfasst (hier gezeichnet oder aus einem anderen Programm hochgeladen).",
+    "confirm": "Ich habe jede Läsion und Region geprüft – diese Segmentierung bestätigen",
+    "confirmQuestion": "Bestätigen Sie, dass Sie jede Läsion und ihre Region in allen Schichten dieser gespeicherten Segmentierung geprüft haben? Ihr Name, die Uhrzeit und genau die gespeicherte Maske werden erfasst; jede spätere Änderung der Maske hebt diese Bestätigung auf.",
+    "saveFirst": "Ungespeicherte Änderungen: Speichern Sie sie zuerst. Nur die gespeicherte Maske kann bestätigt werden.",
+    "confirmedBy": "Segmentierung bestätigt von",
+    "maskUnreadable": "Die geöffnete Maske konnte nicht gelesen werden; laden Sie die Segmentierung neu und versuchen Sie es erneut.",
+    "automaticMarkingNotice": "Die automatische Markierung markiert auch in den meisten gesunden Gehirnen Stellen, vor allem neben den Ventrikeln. Eine markierte Stelle ist kein Nachweis einer Multiplen Sklerose; jede Stelle muss fachärztlich geprüft werden."
+  },
   "lesions": {
     "title": "Läsionsanalyse",
     "analyze": "Analysieren",

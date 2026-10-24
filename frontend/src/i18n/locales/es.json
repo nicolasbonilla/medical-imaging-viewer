@@ -1049,6 +1049,22 @@
     "perSliceDice": "Dice por Corte",
     "agreementMap": "Mapa de Acuerdo"
   },
+  "disReview": {
+    "title": "DIS (RM cerebral): no evaluada",
+    "body": "La diseminación en el espacio requiere la revisión clínica de la segmentación: solo se evalúa en una segmentación que un radiólogo ha confirmado, lesión por lesión y región por región, para esta máscara guardada exacta.",
+    "reasonNotConfirmed": "Ningún radiólogo ha confirmado esta segmentación.",
+    "reasonOutdated": "La segmentación cambió después de confirmarse; la confirmación ya no es válida.",
+    "reasonUnsaved": "La máscara en pantalla tiene cambios sin guardar: la confirmación y el resultado solo valen para la máscara guardada. Guardar una máscara modificada anula la confirmación.",
+    "sourceAiDraft": "Borrador de IA: revise cada lesión y región y confirme la revisión en el aviso del borrador de IA del panel de segmentación.",
+    "sourceAutomatic": "Segmentación automática de una herramienta clínica: su origen consta, pero sus lesiones y regiones no se han revisado.",
+    "sourceUnrecorded": "No consta el origen de esta segmentación (dibujada aquí o cargada desde otro programa).",
+    "confirm": "He revisado cada lesión y región: confirmar esta segmentación",
+    "confirmQuestion": "¿Confirma que ha revisado cada lesión y su región en todos los cortes de esta segmentación guardada? Se registrarán su nombre, la hora y la máscara guardada exacta; cualquier cambio posterior de la máscara anula esta confirmación.",
+    "saveFirst": "Cambios sin guardar: guárdelos primero. Solo se puede confirmar la máscara guardada.",
+    "confirmedBy": "Segmentación confirmada por",
+    "maskUnreadable": "No se pudo leer la máscara abierta; vuelva a cargar la segmentación e inténtelo de nuevo.",
+    "automaticMarkingNotice": "La marcación automática también marca manchas en la mayoría de los cerebros sanos, sobre todo junto a los ventrículos. Una mancha marcada no es prueba de esclerosis múltiple; cada mancha requiere la revisión de un experto."
+  },
   "lesions": {
     "title": "Analisis de Lesiones",
     "analyze": "Analizar",

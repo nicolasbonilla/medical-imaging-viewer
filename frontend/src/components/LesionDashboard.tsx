@@ -39,7 +39,9 @@ import {
   type LesionAnnotation,
   type CVSSummary,
   type PRLSummary,
+  isDisEvaluated,
 } from '@/types';
+import { AutomaticMarkingNotice } from './AutomaticMarkingNotice';
 import { regionEvidence, REGION_ABBREV } from '../utils/regionEvidence';
 import { FEATURES } from '../config/features';
 
@@ -93,8 +95,17 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
   const { t } = useTranslation();
   const reloadMaskCallback = useSegmentationStore((s) => s.reloadMaskCallback);
   const currentSegmentation = useSegmentationStore((s) => s.currentSegmentation);
+  const hasUnsavedMaskChanges = useSegmentationStore((s) => s.hasUnsavedMaskChanges);
   const [analysis, setAnalysis] = useState<LesionAnalysisResult | null>(null);
+  // PRB-003 (RC-070): the DIS state always comes from the gated route. `disOk` is a result the server
+  // evaluated on a segmentation a radiologist confirmed; anything else is shown as "not evaluated".
   const [dis, setDis] = useState<DISAssessment | null>(null);
+  // The result belongs to the SAVED mask: while the mask on screen has unsaved changes it is not shown.
+  const disOk = isDisEvaluated(dis) && !hasUnsavedMaskChanges ? dis : null;
+  const disPending = dis && !disOk ? dis : null;
+  const disHeldForUnsavedChanges = isDisEvaluated(dis) && hasUnsavedMaskChanges;
+  const [confirmBusy, setConfirmBusy] = useState(false);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
   const [classification, setClassification] = useState<RegionClassificationResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isClassifying, setIsClassifying] = useState(false);
@@ -148,7 +159,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       setAnalysis(cached.lesion_analysis);
       setExpanded(true);
     }
-    if (cached.dis_assessment) setDis(cached.dis_assessment);
+    // PRB-003 (RC-070): a DIS block stored in the metadata is never shown (see the effect below).
     if (cached.classification) setClassification(cached.classification);
     if (cached.lesion_annotations) {
       const map: Record<number, Partial<LesionAnnotation>> = {};
@@ -160,6 +171,87 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
     if (cached.cvs_summary) setCvsSummary(cached.cvs_summary);
     if (cached.prl_summary) setPrlSummary(cached.prl_summary);
   }, [segmentationId, currentSegmentation?.metadata?.analysis_data]);
+
+  // PRB-003 (RC-070): read the DIS state from the gated route whenever a segmentation with stored analysis is
+  // opened or its mask is saved again (modified_at) — never from the stored metadata.
+  const refreshDis = useCallback(async () => {
+    try {
+      setDis(await segmentationAPI.getDISAssessment(segmentationId));
+    } catch (e) {
+      console.error('[LesionDashboard] DIS state could not be read:', e);
+      setDis(null);
+    }
+  }, [segmentationId]);
+
+  const modifiedAt = currentSegmentation?.metadata?.modified_at;
+  useEffect(() => {
+    setDis(null);
+    const stored = useSegmentationStore.getState().currentSegmentation?.metadata?.analysis_data;
+    if (stored?.lesion_analysis || stored?.classification) void refreshDis();
+  }, [segmentationId, modifiedAt, refreshDis]);
+
+  // After a save (or a discard) the DIS state is read again: saving a changed mask voids a confirmation.
+  const hadUnsavedChanges = useRef(hasUnsavedMaskChanges);
+  useEffect(() => {
+    if (hadUnsavedChanges.current && !hasUnsavedMaskChanges && dis) void refreshDis();
+    hadUnsavedChanges.current = hasUnsavedMaskChanges;
+  }, [hasUnsavedMaskChanges, dis, refreshDis]);
+
+  // RC-047 / RC-071: after the mask changed on the server (region classification), re-read the review
+  // records so the AI draft banner and the store never show a confirmation the server has voided.
+  const refreshReviewRecords = useCallback(async () => {
+    try {
+      const fresh = await segmentationAPI.getSegmentation(segmentationId);
+      const store = useSegmentationStore.getState();
+      const cur = store.currentSegmentation;
+      if (cur && cur.segmentation_id === segmentationId) {
+        store.setCurrentSegmentation({
+          ...cur,
+          metadata: {
+            ...cur.metadata,
+            ai_provenance: fresh.metadata?.ai_provenance ?? null,
+            clinician_review: fresh.metadata?.clinician_review ?? null,
+          },
+        });
+      }
+      if (store.activeSegmentation && store.activeSegmentation.id === segmentationId) {
+        store.setActiveSegmentation({ ...store.activeSegmentation, ai_provenance: fresh.metadata?.ai_provenance ?? null });
+      }
+    } catch (e) {
+      console.error('[LesionDashboard] review records could not be re-read:', e);
+    }
+  }, [segmentationId]);
+
+  // RC-071: a radiologist confirms a segmentation without AI provenance, for the exact saved mask.
+  const confirmSegmentation = useCallback(async () => {
+    if (useSegmentationStore.getState().hasUnsavedMaskChanges) return;
+    const ok = window.confirm(
+      t(
+        'disReview.confirmQuestion',
+        'Confirm that you have checked every lesion and its region on every slice of this saved segmentation? Your name, the time and the exact saved mask will be recorded; any later change of the mask cancels this confirmation.',
+      ),
+    );
+    if (!ok) return;
+    setConfirmBusy(true);
+    setConfirmError(null);
+    try {
+      const digest = await useSegmentationStore.getState().maskDigestCallback?.();
+      if (!digest) {
+        throw new Error(t('disReview.maskUnreadable', 'The open mask could not be read; reload the segmentation and try again.'));
+      }
+      const review = await segmentationAPI.confirmSegmentationReview(segmentationId, digest);
+      const store = useSegmentationStore.getState();
+      const cur = store.currentSegmentation;
+      if (cur && cur.segmentation_id === segmentationId) {
+        store.setCurrentSegmentation({ ...cur, metadata: { ...cur.metadata, clinician_review: review } });
+      }
+      await refreshDis();
+    } catch (e: any) {
+      setConfirmError(e?.response?.data?.detail || e?.message || String(e));
+    } finally {
+      setConfirmBusy(false);
+    }
+  }, [segmentationId, refreshDis, t]);
 
   // Stale check: mask was edited after analysis was computed
   const isAnalysisStale = !!(
@@ -198,7 +290,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       setAnalysis(analysisResult);
       setDis(disResult);
       setExpanded(true);
-      patchAnalysisData({ lesion_analysis: analysisResult, dis_assessment: disResult });
+      patchAnalysisData({ lesion_analysis: analysisResult });
     } catch (err: any) {
       setError(err?.response?.data?.detail || err?.message || String(err));
     } finally {
@@ -218,6 +310,8 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       if (result.mask_updated) {
         await reloadMaskCallback?.();
         onMaskUpdated?.();
+        // The region labels changed the mask: any confirmation of the previous mask was voided (RC-047/RC-071).
+        await refreshReviewRecords();
       }
 
       if (result.labels_updated) {
@@ -242,14 +336,13 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       patchAnalysisData({
         classification: result,
         lesion_analysis: analysisResult,
-        dis_assessment: disResult,
       });
     } catch (err: any) {
       setError(err?.response?.data?.detail || err?.message || String(err));
     } finally {
       setIsClassifying(false);
     }
-  }, [segmentationId, classifyMethod, onMaskUpdated, reloadMaskCallback, patchAnalysisData]);
+  }, [segmentationId, classifyMethod, onMaskUpdated, reloadMaskCallback, patchAnalysisData, refreshReviewRecords]);
 
   const handleLesionClick = useCallback((lesion: LesionInfo) => {
     const current = useSegmentationStore.getState().selectedLesion;
@@ -550,23 +643,87 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
         )}
       </div>
 
-      {/* DIS Badge — McDonald 2024 */}
-      {dis ? (
+      {/* DIS — McDonald 2024. PRB-003 (RC-070): "not evaluated" unless a radiologist confirmed this segmentation
+          for its current mask; never met / not met, region presence or a topography count otherwise. */}
+      {disPending ? (
+        <div
+          className="p-2 rounded-lg bg-amber-950/30 border border-amber-700/50 flex flex-col gap-1"
+          role="status"
+          data-testid="dis-not-evaluated"
+        >
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" aria-hidden="true" />
+            <span className="text-xs font-bold text-amber-200">
+              {t('disReview.title', 'DIS (brain MRI): not evaluated')}
+            </span>
+          </div>
+          <p className="text-[10px] text-amber-100 leading-snug">
+            {t(
+              'disReview.body',
+              'Dissemination in space requires clinician review of the segmentation: it is evaluated only on a segmentation a radiologist has confirmed, lesion by lesion and region by region, for this exact saved mask.',
+            )}
+          </p>
+          {disHeldForUnsavedChanges ? (
+            <p className="text-[10px] text-amber-100/80" data-testid="dis-unsaved-changes">
+              {t('disReview.reasonUnsaved', 'The mask on screen has unsaved changes: the confirmation and the result apply to the saved mask only. Saving a changed mask cancels the confirmation.')}
+            </p>
+          ) : 'not_evaluated_reason' in disPending && disPending.not_evaluated_reason === 'confirmation_outdated' ? (
+            <p className="text-[10px] text-amber-100/80">
+              {t('disReview.reasonOutdated', 'The segmentation changed after it was confirmed; the confirmation no longer applies.')}
+            </p>
+          ) : (
+            <p className="text-[10px] text-amber-100/80">
+              {t('disReview.reasonNotConfirmed', 'No radiologist has confirmed this segmentation.')}
+            </p>
+          )}
+          {(() => {
+            const source = 'segmentation_review' in disPending ? disPending.segmentation_review?.source : undefined;
+            return (
+              <>
+                <p className="text-[10px] text-amber-100/80">
+                  {source === 'ai_draft'
+                    ? t('disReview.sourceAiDraft', 'AI draft: check every lesion and region, then confirm the review in the AI draft banner of the segmentation panel.')
+                    : source === 'automatic_tool'
+                    ? t('disReview.sourceAutomatic', 'Automatic segmentation from a clinical tool: its origin is recorded, its lesions and regions are not checked.')
+                    : t('disReview.sourceUnrecorded', 'The origin of this segmentation is not recorded (drawn here or uploaded from another program).')}
+                </p>
+                {(source === 'ai_draft' || source === 'automatic_tool') && <AutomaticMarkingNotice />}
+                {(source === 'automatic_tool' || source === 'origin_not_recorded') && (
+                  hasUnsavedMaskChanges ? (
+                    <p className="text-[10px] text-amber-300" data-testid="dis-save-first">
+                      {t('disReview.saveFirst', 'Unsaved changes: save them first. Only the saved mask can be confirmed.')}
+                    </p>
+                  ) : (
+                    <button
+                      onClick={confirmSegmentation}
+                      disabled={confirmBusy}
+                      className="self-start mt-0.5 px-2 py-0.5 rounded bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-[10px] text-white"
+                    >
+                      {t('disReview.confirm', 'I have checked every lesion and region — confirm this segmentation')}
+                    </button>
+                  )
+                )}
+              </>
+            );
+          })()}
+          {confirmError && <p className="text-[10px] text-red-300">{confirmError}</p>}
+        </div>
+      ) : disOk ? (
         <div className={`flex items-center gap-2 p-2 rounded-lg ${
-          (dis.dis_met_brain ?? dis.dis_met) ? 'bg-green-900/30 border border-green-700/50' : 'bg-red-900/30 border border-red-700/50'
+          (disOk.dis_met_brain ?? disOk.dis_met) ? 'bg-green-900/30 border border-green-700/50' : 'bg-red-900/30 border border-red-700/50'
         }`}>
-          {(dis.dis_met_brain ?? dis.dis_met) ? (
+          {(disOk.dis_met_brain ?? disOk.dis_met) ? (
             <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
           ) : (
             <XCircle className="w-4 h-4 text-red-400 shrink-0" />
           )}
           <div className="flex-1 min-w-0">
-            <div className={`text-xs font-bold ${(dis.dis_met_brain ?? dis.dis_met) ? 'text-green-300' : 'text-red-300'}`}>
-              DIS (Brain MRI): {dis.brain_regions_with_lesions ?? dis.regions_with_lesions}/{dis.brain_regions_evaluated ?? 3} {t('lesions.regions', 'regions')}
-              {(dis.dis_met_brain ?? dis.dis_met) ? ` \u2014 ${t('lesions.criterionMet', 'Criterion Met')}` : ` \u2014 ${t('lesions.criterionNotMet', 'Not Met')}`}
+            <div className={`text-xs font-bold ${(disOk.dis_met_brain ?? disOk.dis_met) ? 'text-green-300' : 'text-red-300'}`}>
+              DIS (Brain MRI): {disOk.brain_regions_with_lesions ?? disOk.regions_with_lesions}/{disOk.brain_regions_evaluated ?? 3} {t('lesions.regions', 'regions')}
+              {(disOk.dis_met_brain ?? disOk.dis_met) ? ` \u2014 ${t('lesions.criterionMet', 'Criterion Met')}` : ` \u2014 ${t('lesions.criterionNotMet', 'Not Met')}`}
             </div>
             <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-1">
-              {Object.entries(dis.region_details).map(([name, detail]) => (
+              {Object.entries(disOk.region_details ?? {}).map(([name, detail]) => (
                 <span key={name} className="flex items-center gap-0.5 text-[9px]">
                   {detail.present ? (
                     <CheckCircle2 className="w-2.5 h-2.5 text-green-400" />
@@ -588,11 +745,16 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                 </span>
               ))}
             </div>
-            {dis.note && (
-              <div className="text-[8px] text-gray-500 mt-1 italic">{dis.note}</div>
+            {disOk.note && (
+              <div className="text-[8px] text-gray-500 mt-1 italic">{disOk.note}</div>
             )}
-            {dis.dis_criteria_version && (
-              <div className="text-[7px] text-gray-600 mt-0.5">{dis.dis_criteria_version}</div>
+            {disOk.segmentation_review?.reviewed_by && (
+              <div className="text-[8px] text-green-200/80 mt-0.5" data-testid="dis-confirmed-by">
+                {t('disReview.confirmedBy', 'Segmentation confirmed by')} {disOk.segmentation_review.reviewed_by}
+              </div>
+            )}
+            {disOk.dis_criteria_version && (
+              <div className="text-[7px] text-gray-600 mt-0.5">{disOk.dis_criteria_version}</div>
             )}
           </div>
         </div>
@@ -607,19 +769,19 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
 
       {/* McDonald 2024: five-topography integration + external evidence.
           Decision support only — never a diagnosis (CMSC guidance). */}
-      {dis && (
+      {disOk && (
         <div className="p-2 rounded-lg bg-indigo-950/30 border border-indigo-800/40 flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-semibold text-indigo-200">
               {t('lesions.mcdonald2024', 'McDonald 2024 · 5 topographies')}
             </span>
             <span className="text-[10px] text-indigo-100 font-bold">
-              {dis.total_topographies_involved}/5
+              {disOk.total_topographies_involved}/5
               {disEvidenceLoading && <span className="ml-1 text-indigo-400 animate-pulse">…</span>}
             </span>
           </div>
 
-          {dis.dit_waiver_supported && (
+          {disOk.dit_waiver_supported && (
             <div className="text-[9px] text-emerald-300 bg-emerald-900/20 border border-emerald-800/40 rounded px-1.5 py-1">
               {t(
                 'lesions.ditWaiver',
@@ -650,7 +812,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
             ))}
           </div>
 
-          {dis.specificity_marker_present && (
+          {disOk.specificity_marker_present && (
             <div className="text-[9px] text-indigo-300">
               {t('lesions.specificityPresent', 'Supportive specificity marker present (adds diagnostic specificity).')}
             </div>
@@ -666,19 +828,19 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       )}
 
       {/* Additional badges (DWM, active, black holes) */}
-      {dis && (dis.dwm_lesion_count > 0 || dis.has_active_lesions || dis.has_black_holes) && (
+      {disOk && (disOk.dwm_lesion_count > 0 || disOk.has_active_lesions || disOk.has_black_holes) && (
         <div className="flex flex-wrap gap-2">
-          {dis.dwm_lesion_count > 0 && (
+          {disOk.dwm_lesion_count > 0 && (
             <span className="px-1.5 py-0.5 bg-yellow-900/40 border border-yellow-700/50 rounded text-[9px] text-yellow-300">
-              DWM: {dis.dwm_lesion_count} lesions (not a DIS region)
+              DWM: {disOk.dwm_lesion_count} lesions (not a DIS region)
             </span>
           )}
-          {dis.has_active_lesions && (
+          {disOk.has_active_lesions && (
             <span className="px-1.5 py-0.5 bg-fuchsia-900/40 border border-fuchsia-700/50 rounded text-[9px] text-fuchsia-300">
               Gd+ {t('lesions.active', 'Active')}
             </span>
           )}
-          {dis.has_black_holes && (
+          {disOk.has_black_holes && (
             <span className="px-1.5 py-0.5 bg-purple-900/40 border border-purple-700/50 rounded text-[9px] text-purple-300">
               T1 {t('lesions.blackHoles', 'Black Holes')}
             </span>

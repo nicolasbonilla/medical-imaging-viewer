@@ -450,9 +450,12 @@ class TestBrainReportService:
         assert "Periventricular" in prompt
 
     def test_build_findings_prompt_dis_assessment(self):
-        """DIS assessment data is included in the prompt."""
+        """DIS assessment data is included in the prompt — for a block the server EVALUATED on a confirmed
+        segmentation (PRB-003, RC-070: any other block is reported as NOT EVALUATED; see
+        test_prb003_dis_requires_confirmed_segmentation.py)."""
         findings = {
             "dis_assessment": {
+                "evaluation_status": "evaluated",
                 "dis_met": True,
                 "regions_with_lesions": 3,
                 "total_dis_regions": 4,

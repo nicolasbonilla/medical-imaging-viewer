@@ -13,6 +13,8 @@ from pydantic import BaseModel, Field
 
 from app.security import get_current_active_user
 from app.security.models import User
+# PRB-003 (RC-070): the segmentation named in a DIS block is authorized like any other mask reference.
+from app.security.resource_access import authorize_mask_specs
 
 from app.core.logging import get_logger
 
@@ -132,6 +134,67 @@ def longitudinal_notice(longitudinal: Any, language: str) -> Optional[str]:
     return " ".join(lines)
 
 
+# PRB-003 (RC-070, RC-072; HAZ-008, HAZ-003): a report request is client data, so a DIS conclusion in it
+# cannot be trusted (and before the fix every DIS block came from a route that evaluated any segmentation).
+# The route re-derives the DIS block on the server for the segmentation it names — evaluated only when a
+# radiologist confirmed that segmentation for its current mask — and a draft without an evaluated DIS ends
+# with this notice, written by code in the report language, whatever the model wrote.
+DIS_NOT_EVALUATED_NOTICE: Dict[str, str] = {
+    "en": "**Dissemination in space: not evaluated.** The segmentation has not been confirmed by a radiologist "
+          "for its current version (lesions and regions), so the software did not evaluate dissemination in "
+          "space; no statement on it in this draft comes from the software.",
+    "es": "**Diseminación en el espacio: no evaluada.** Ningún radiólogo ha confirmado la segmentación en su "
+          "versión actual (lesiones y regiones), por lo que el programa no evaluó la diseminación en el "
+          "espacio; ninguna afirmación sobre ella en este borrador procede del programa.",
+    "de": "**Räumliche Dissemination: nicht beurteilt.** Die Segmentierung wurde in ihrer aktuellen Fassung "
+          "(Läsionen und Regionen) von keinem Radiologen bestätigt; die Software hat die räumliche "
+          "Dissemination daher nicht beurteilt, und keine Aussage dazu in diesem Entwurf stammt von der Software.",
+}
+
+
+def _dis_services():
+    """The segmentation and storage services, resolved only when a DIS block must be re-derived."""
+    from app.core.container import get_segmentation_service, get_storage_service
+    return get_segmentation_service(), get_storage_service()
+
+
+async def server_dis_assessment(client_block: Any, current_user: User) -> Dict[str, Any]:
+    """The DIS block a report may use: re-derived on the server, never the client's own conclusion.
+
+    The block must name a stored segmentation (`segmentation_id`) the caller may read (RC-029, 404
+    otherwise); the DIS state is then computed by the same gated function as the DIS route, without
+    storing anything (compute-only, RC-033). No segmentation named, or the assessment failed: not
+    evaluated."""
+    from app.services import dis_review_gate as gate
+
+    sid = client_block.get("segmentation_id") if isinstance(client_block, dict) else None
+    if not isinstance(sid, str) or not sid.strip():
+        return gate.not_evaluated(None, None, reason=gate.REASON_NOT_IDENTIFIED)
+    await authorize_mask_specs([{"type": "segmentation", "id": sid}], current_user)
+    from app.api.routes.segmentation_analysis import assess_dis
+
+    segmentation_service, storage_service = _dis_services()
+    try:
+        return await assess_dis(sid, segmentation_service, storage_service, store=False)
+    except HTTPException:
+        raise
+    except Exception as e:  # noqa: BLE001 — a failed assessment is "not evaluated", never "not met"
+        logger.error(f"[Report] DIS assessment failed for the report: {e}")
+        return gate.not_evaluated(sid, None, reason=gate.REASON_FAILED)
+
+
+def dis_notice(findings: Dict[str, Any], language: str) -> Optional[str]:
+    """The fixed notice for a draft with lesion measurements or a DIS block but no evaluated DIS, or None."""
+    from app.services import dis_review_gate as gate
+
+    if not (findings.get("lesion_analysis") or "dis_assessment" in findings):
+        return None
+    if gate.is_evaluated(findings.get("dis_assessment")):
+        return None
+    lang = language if language in DIS_NOT_EVALUATED_NOTICE else "en"
+    return f"{DIS_NOT_EVALUATED_NOTICE[lang]} {gate.AUTOMATIC_MARKING_NOTICE[lang]}"
+
+
 # =============================================================================
 # Request/Response Models
 # =============================================================================
@@ -226,6 +289,18 @@ async def generate_report(
     findings = dict(request.findings)
     if "longitudinal" in findings:   # CAPA-013, review of PR #63 (blocker 1)
         findings["longitudinal"] = drop_unverifiable_decisions(findings["longitudinal"])
+    if "dis_assessment" in findings:   # PRB-003 (RC-070): the server's DIS state, never the client's
+        findings["dis_assessment"] = await server_dis_assessment(findings["dis_assessment"], current_user)
+        from app.services import dis_review_gate as gate
+        others = any(findings.get(k) for k in MEASUREMENT_FINDING_KEYS if k != "dis_assessment")
+        if not (others or request.volumetry or gate.is_evaluated(findings["dis_assessment"])):
+            # A "not evaluated" DIS state is not a measurement: the model would draft from nothing (RC-034).
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=("No measurement was supplied: dissemination in space was not evaluated (the segmentation "
+                        "has not been confirmed by a radiologist), and nothing else was measured. A report "
+                        "without measurements would be invented; run the lesion analysis first."),
+            )
 
     try:
         service = get_report_service()
@@ -238,6 +313,9 @@ async def generate_report(
         notice = longitudinal_notice(request.findings.get("longitudinal"), request.language)
         if notice:   # CAPA-013: appended in code, after the model, in the report language
             result = {**result, "content": f"{result['content']}\n\n---\n\n> {notice}"}
+        dis_text = dis_notice(findings, request.language)
+        if dis_text:   # PRB-003 (RC-070, RC-072): appended in code, after the model, in the report language
+            result = {**result, "content": f"{result['content']}\n\n---\n\n> {dis_text}"}
         return ReportResponse(**result)
 
     except RuntimeError as e:

@@ -86,6 +86,21 @@ def _apply_disclaimer(content: str, language: str) -> str:
     return f"{disclaimer}\n\n{body}"
 
 
+# PRB-003 (RC-070; HAZ-008, HAZ-003): passed instead of a DIS result whenever DIS was not evaluated on a
+# segmentation a radiologist confirmed (paper A: the device's brain-DIS rule on raw automatic segmentations
+# returned "DIS met" in 19 of 100 healthy controls). It overrides the templates, which ask for a DIS table.
+DIS_NOT_EVALUATED_PROMPT = (
+    "\nDIS Assessment: NOT EVALUATED — requires clinician review of the segmentation (no radiologist has "
+    "confirmed the lesions and regions of this segmentation in its current version).\n"
+    "  SAFETY RULE (overrides the template and rule 4): Do NOT state or imply dissemination in space — "
+    "neither met nor not met, supported nor not supported, nor how many typical MS regions are involved — "
+    "from the lesion counts, the regions or any other value. In the DIS section write only: "
+    "'Dissemination in space: not evaluated (requires clinician review of the segmentation).' "
+    "Automatic marking also marks spots in most healthy brains; a marked spot is not evidence of "
+    "multiple sclerosis."
+)
+
+
 # Shared formatting instructions for all templates
 _FORMAT_INSTRUCTIONS = (
     "\n\n## OUTPUT FORMAT RULES (MANDATORY):\n"
@@ -579,9 +594,16 @@ class BrainReportService:
                         f"z={ctr.get('z', 0):.0f}, y={ctr.get('y', 0):.0f}, x={ctr.get('x', 0):.0f}"
                     )
 
-        # DIS assessment data
-        if findings.get("dis_assessment"):
-            dis = findings["dis_assessment"]
+        # DIS assessment data. PRB-003 (RC-070; HAZ-008, HAZ-003): a DIS result is passed only when the
+        # server evaluated it on a segmentation a radiologist confirmed ("evaluation_status": "evaluated",
+        # set by the report route from the stored segmentation). Anything else — not evaluated, or a block
+        # without that state — is NOT EVALUATED, never "NOT MET" (a missing flag used to print NOT MET),
+        # and the model is told not to derive DIS from the lesion counts or regions.
+        dis = findings.get("dis_assessment")
+        if not (isinstance(dis, dict) and dis.get("evaluation_status") == "evaluated"):
+            if dis or findings.get("lesion_analysis"):
+                parts.append(DIS_NOT_EVALUATED_PROMPT)
+        else:
             met = "MET" if dis.get("dis_met") else "NOT MET"
             parts.append(f"\nDIS Assessment: {met} "
                          f"({dis.get('regions_with_lesions', 0)}/{dis.get('total_dis_regions', 4)} regions)")

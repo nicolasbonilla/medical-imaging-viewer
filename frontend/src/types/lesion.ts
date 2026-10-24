@@ -72,7 +72,48 @@ export interface DISSupportiveMarkers {
   csf_specific: boolean | null; // OCB or elevated kappa FLC
 }
 
-export interface DISAssessment {
+/**
+ * PRB-003 (RC-070): the confirmation a DIS state rests on. `source` says where the segmentation comes
+ * from: an AI draft (reviewed through its own banner, RC-047), a server tool, or an origin that is not
+ * recorded (drawn here or uploaded) — the last two are confirmed with `confirmSegmentationReview` (RC-071).
+ */
+export interface DISSegmentationReview {
+  status: 'confirmed' | 'unconfirmed' | 'outdated';
+  source: 'ai_draft' | 'automatic_tool' | 'origin_not_recorded';
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  reviewed_mask_sha256: string | null;
+  current_mask_sha256: string;
+}
+
+/**
+ * PRB-003 (RC-070): DIS is evaluated only on a segmentation a radiologist confirmed for its current mask.
+ * Otherwise the server returns this explicit state — no met / not met, no region presence.
+ */
+export interface DISNotEvaluated {
+  segmentation_id: string | null;
+  evaluation_status: 'not_evaluated';
+  not_evaluated_reason: 'segmentation_not_confirmed' | 'confirmation_outdated' | 'segmentation_not_identified'
+    | 'assessment_failed';
+  message: string;
+  reason_detail?: string;
+  segmentation_review: DISSegmentationReview | null;
+  dis_criteria_version: string;
+  /** Information for safety on automatic marking (RC-072), present for an automatic segmentation. */
+  information_for_safety?: string;
+}
+
+/** A DIS state from the server: evaluated (on a confirmed segmentation) or explicitly not evaluated. */
+export type DISAssessment = DISEvaluated | DISNotEvaluated;
+
+/** True only for a result the server evaluated on a confirmed segmentation; anything else is not shown as DIS. */
+export function isDisEvaluated(d: unknown): d is DISEvaluated {
+  return !!d && typeof d === 'object' && (d as { evaluation_status?: unknown }).evaluation_status === 'evaluated';
+}
+
+export interface DISEvaluated {
+  evaluation_status: 'evaluated';
+  segmentation_review: DISSegmentationReview;
   segmentation_id: string;
   dis_met_brain: boolean;
   dis_criteria_version: string;

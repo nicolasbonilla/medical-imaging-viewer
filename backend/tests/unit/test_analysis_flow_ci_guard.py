@@ -44,17 +44,23 @@ def _mask_with_lesion(shape=(10, 20, 20)):
 
 class _FakeSeg:
     """Minimal stand-in for SegmentationService: masks + real metadata, no I/O."""
-    def __init__(self, masks):
+    def __init__(self, masks, confirmed=()):
         self._masks = masks
+        self._confirmed = set(confirmed)   # PRB-003 (RC-071): segmentations a radiologist confirmed
 
     def get_loaded(self, sid):
         if sid not in self._masks:
             return None
+        from app.services.segmentation_service import SegmentationService
+        review = ({"reviewed_by": "dr_rev", "reviewed_at": "2026-10-24T10:00:00Z",
+                   "reviewed_mask_sha256": SegmentationService.mask_sha256(self._masks[sid])}
+                  if sid in self._confirmed else None)
         return {
             "masks_3d": self._masks[sid],
             "metadata": SegmentationMetadata(
                 file_id=f"img-{sid}",
                 labels=[LabelInfo(id=1, name="MS Lesion", color="#ff0000", opacity=0.5, visible=True)],
+                clinician_review=review,
             ),
         }
 
@@ -86,7 +92,8 @@ def client(monkeypatch):
         return None
 
     monkeypatch.setattr(analysis_routes, "authorize_mask_specs", _authorized)
-    seg = _FakeSeg({"seg-a": _mask_with_lesion(), "seg-b": _mask_with_lesion()})
+    seg = _FakeSeg({"seg-a": _mask_with_lesion(), "seg-b": _mask_with_lesion(), "seg-c": _mask_with_lesion()},
+                   confirmed={"seg-c"})
     app.dependency_overrides[get_current_active_user] = _admin
     app.dependency_overrides[get_segmentation_service] = lambda: seg
     app.dependency_overrides[get_storage_service] = lambda: _FakeStorage()
@@ -112,9 +119,14 @@ def test_lesion_analysis_returns_200_with_real_volumes(client):
 
 
 def test_dis_assessment_returns_200(client):
+    """The route is alive and computes DIS on a segmentation a radiologist confirmed (PRB-003, RC-070);
+    on an unconfirmed one it answers 200 with the explicit 'not evaluated' state."""
+    r = client.get("/api/v1/segmentation/seg-c/dis-assessment")
+    assert r.status_code == 200, f"{r.status_code}: {r.text[:200]}"
+    assert "dis_met_brain" in r.json() and r.json()["evaluation_status"] == "evaluated"
     r = client.get("/api/v1/segmentation/seg-a/dis-assessment")
     assert r.status_code == 200, f"{r.status_code}: {r.text[:200]}"
-    assert "dis_met_brain" in r.json()
+    assert r.json()["evaluation_status"] == "not_evaluated" and "dis_met_brain" not in r.json()
 
 
 def test_compare_two_segmentations_returns_200_with_metrics(client):

@@ -27,7 +27,8 @@ from typing import Optional
 # Routes that only compute and return, AND either authorize every object they reference
 # (RC-029) or reference none. Each was checked to store nothing (CAPA-008 §2):
 # - compare / longitudinal compare: authorize_mask_specs, return metrics, store nothing;
-# - /ai/report/generate: references no stored object, returns text, keeps no copy.
+# - /ai/report/generate: returns text, keeps no copy; it reads (never writes) the segmentation named in
+#   a DIS block, after authorizing it (RC-029), to re-derive the DIS state on the server (PRB-003, RC-070).
 # Deliberately NOT listed: /ai/segment/*, /ai/anomaly/detect and /ai/volumetry/* take a
 # file or segmentation id WITHOUT object-level authorization (CAPA-008 finding 8, CAPA-007
 # PA-7.2), and volumetry rests on unsourced normative data (CAPA-005).

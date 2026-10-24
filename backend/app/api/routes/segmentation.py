@@ -35,6 +35,7 @@ from app.core.interfaces.imaging_interface import IImagingService
 from app.core.interfaces.storage_interface import IStorageService
 from app.core.container import get_segmentation_service, get_imaging_service, get_storage_service
 from app.services.segmentation_service import SegmentationService
+from app.services import dis_review_gate as dis_gate   # PRB-003 (RC-070, RC-071)
 from app.core.config import get_settings
 from app.core.exceptions import ConflictException
 
@@ -148,8 +149,11 @@ async def list_segmentations(
             care_team_service=_seg_care_team_service(),
         )
         if ids_list:
-            return segmentation_service.list_segmentations(file_ids=ids_list)
-        return segmentation_service.list_segmentations(file_id=file_id)
+            listed = segmentation_service.list_segmentations(file_ids=ids_list)
+        else:
+            listed = segmentation_service.list_segmentations(file_id=file_id)
+        # PRB-003 (RC-070): a stored DIS block is never served with the metadata (gated DIS route only).
+        return [r.model_copy(update={"metadata": dis_gate.without_stored_dis(r.metadata)}) for r in listed]
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -186,7 +190,8 @@ async def get_segmentation(
         return SegmentationResponse(
             segmentation_id=segmentation_id,
             file_id=metadata.file_id,
-            metadata=metadata,
+            # PRB-003 (RC-070): no stored DIS conclusion in the metadata (gated DIS route only).
+            metadata=dis_gate.without_stored_dis(metadata),
             total_slices=total_slices,
             masks=None
         )
@@ -663,6 +668,67 @@ async def confirm_ai_review(
         if getattr(segmentation_service, "cache", None):
             await segmentation_service.cache.delete(f"seg:metadata:{segmentation_id}")
     return {"success": True, "ai_provenance": metadata.ai_provenance.model_dump()}
+
+
+def _radiologist(user) -> bool:
+    from app.security.models import UserRole
+    return getattr(user, "role", None) == UserRole.RADIOLOGIST
+
+
+@router.post("/{segmentation_id}/review/confirm")
+async def confirm_segmentation_review(
+    segmentation_id: str,
+    body: dict = Body(..., description='{"mask_sha256": "<SHA-256 of the saved mask the radiologist checked>"}'),
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-029 - object-level authorization.
+    _authorized=Depends(require_segmentation_access),
+):
+    """Record that a radiologist checked a segmentation WITHOUT AI provenance (PRB-003, RC-071, REQ-SAFE-039).
+
+    Such a segmentation may be drawn here, produced by a server tool or uploaded from another program;
+    dissemination in space is evaluated only after this confirmation (RC-070). Only a radiologist may
+    confirm (403). An AI draft is confirmed through its own review (RC-047, `ai-review/confirm`): 409 here.
+    The confirmation is bound to the exact stored mask: the client sends the SHA-256 of the mask it shows,
+    which must equal the stored mask (409 otherwise: unsaved changes, or the mask changed meanwhile); the
+    authenticated user and the time are recorded; any later change of the mask removes the confirmation.
+    Writes a record: deliberately NOT on the AI assistant's compute-only list (RC-033).
+    """
+    if not _radiologist(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only a radiologist can confirm a segmentation.",
+        )
+    entry = segmentation_service.get_loaded(segmentation_id)
+    if entry is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Segmentation not found")
+    metadata = entry["metadata"]
+    if metadata.ai_provenance is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This is an AI draft: confirm it with the AI draft review in the segmentation panel.",
+        )
+    stated = str((body or {}).get("mask_sha256", "")).strip().lower()
+    stored_digest = segmentation_service.mask_sha256(entry["masks_3d"])
+    if stated != stored_digest:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=("The stored mask is not the one you checked (unsaved changes, or the mask changed since you "
+                    "opened it). Save or reload, check it again, then confirm."),
+        )
+    from app.models.schemas import ClinicianReview
+    metadata.clinician_review = ClinicianReview(
+        reviewed_by=current_user.username,
+        reviewed_by_id=str(getattr(current_user, "id", "") or "") or None,
+        reviewed_at=datetime.utcnow().isoformat() + "Z",
+        reviewed_mask_sha256=stored_digest,
+    )
+    # modified_at is not changed: the mask did not change, so analyses computed on it stay valid.
+    segmentation_service.persist(segmentation_id)
+    if getattr(segmentation_service, "cache", None):
+        await segmentation_service.cache.delete(f"seg:metadata:{segmentation_id}")
+    logger.info("Segmentation confirmed by a radiologist", extra={"segmentation_id": segmentation_id})
+    return {"success": True, "clinician_review": metadata.clinician_review.model_dump()}
 
 
 @router.get("/{segmentation_id}/nifti")
