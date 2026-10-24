@@ -1063,7 +1063,11 @@
     "saveFirst": "Cambios sin guardar: guárdelos primero. Solo se puede confirmar la máscara guardada.",
     "confirmedBy": "Segmentación confirmada por",
     "maskUnreadable": "No se pudo leer la máscara abierta; vuelva a cargar la segmentación e inténtelo de nuevo.",
-    "automaticMarkingNotice": "La marcación automática también marca manchas en la mayoría de los cerebros sanos, sobre todo junto a los ventrículos. Una mancha marcada no es prueba de esclerosis múltiple; cada mancha requiere la revisión de un experto."
+    "regionsNotConfirmed": "Regiones no confirmadas por un radiólogo; no es una evaluación de la DIS.",
+    "openToConfirm": "Abra esta segmentación para confirmarla: la confirmación queda ligada a la máscara en pantalla.",
+    "reasonAiReviewMissing": "Este borrador de IA debe confirmar primero su propia revisión (aviso del borrador de IA en el panel de segmentación) para la máscara actual.",
+    "reasonRegionsNotClassified": "Las lesiones no tienen regiones MAGNIMS de la clasificación por regiones (o las lesiones cambiaron después). Ejecute la clasificación por regiones MAGNIMS, revise cada región y después confirme.",
+    "automaticMarkingNotice": "La marcación automática de lesiones también marca manchas en la mayoría de los cerebros sanos, sobre todo junto a los ventrículos. Una mancha marcada no es prueba de esclerosis múltiple; cada mancha requiere la revisión de un experto."
   },
   "lesions": {
     "title": "Analisis de Lesiones",

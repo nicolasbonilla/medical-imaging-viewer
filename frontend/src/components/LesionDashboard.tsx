@@ -100,10 +100,15 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
   // PRB-003 (RC-070): the DIS state always comes from the gated route. `disOk` is a result the server
   // evaluated on a segmentation a radiologist confirmed; anything else is shown as "not evaluated".
   const [dis, setDis] = useState<DISAssessment | null>(null);
-  // The result belongs to the SAVED mask: while the mask on screen has unsaved changes it is not shown.
-  const disOk = isDisEvaluated(dis) && !hasUnsavedMaskChanges ? dis : null;
+  // The confirmation is bound to the OPEN mask (its SHA-256 is sent): this panel may show another, expanded
+  // segmentation (review of PR #68, finding 7).
+  const isOpen = currentSegmentation?.segmentation_id === segmentationId;
+  // The result belongs to the SAVED mask: while the open mask has unsaved changes it is not shown.
+  const disHeldForUnsavedChanges = isDisEvaluated(dis) && isOpen && hasUnsavedMaskChanges;
+  const disOk = isDisEvaluated(dis) && !disHeldForUnsavedChanges ? dis : null;
   const disPending = dis && !disOk ? dis : null;
-  const disHeldForUnsavedChanges = isDisEvaluated(dis) && hasUnsavedMaskChanges;
+  // Finding 8: every DIS request takes a ticket; only the reply of the latest request is shown.
+  const disSeq = useRef(0);
   const [confirmBusy, setConfirmBusy] = useState(false);
   const [confirmError, setConfirmError] = useState<string | null>(null);
   const [classification, setClassification] = useState<RegionClassificationResult | null>(null);
@@ -123,20 +128,33 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
   const [disEvidence, setDisEvidence] = useState<DISExternalEvidence>({});
   const [disEvidenceLoading, setDisEvidenceLoading] = useState(false);
 
+  // PRB-003 (RC-070; review of PR #68, finding 8): the only way the panel reads the DIS state; a reply that
+  // arrives after a newer request was made is dropped, so an old "met" can never replace a newer state.
+  const fetchDis = useCallback(
+    async (evidence?: DISExternalEvidence) => {
+      const ticket = ++disSeq.current;
+      const r = evidence
+        ? await segmentationAPI.getDISAssessment(segmentationId, evidence)
+        : await segmentationAPI.getDISAssessment(segmentationId);
+      if (ticket === disSeq.current) setDis(r);
+      return r;
+    },
+    [segmentationId],
+  );
+
   const applyDisEvidence = useCallback(
     async (next: DISExternalEvidence) => {
       setDisEvidence(next);
       setDisEvidenceLoading(true);
       try {
-        const r = await segmentationAPI.getDISAssessment(segmentationId, next);
-        setDis(r);
+        await fetchDis(next);
       } catch (e) {
         console.error('[LesionDashboard] DIS re-eval failed:', e);
       } finally {
         setDisEvidenceLoading(false);
       }
     },
-    [segmentationId],
+    [segmentationId, fetchDis],
   );
 
   const toggleDisEvidence = useCallback(
@@ -176,15 +194,16 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
   // opened or its mask is saved again (modified_at) — never from the stored metadata.
   const refreshDis = useCallback(async () => {
     try {
-      setDis(await segmentationAPI.getDISAssessment(segmentationId));
+      await fetchDis();
     } catch (e) {
       console.error('[LesionDashboard] DIS state could not be read:', e);
       setDis(null);
     }
-  }, [segmentationId]);
+  }, [fetchDis]);
 
   const modifiedAt = currentSegmentation?.metadata?.modified_at;
   useEffect(() => {
+    disSeq.current += 1;   // a reply for the previous segmentation or mask is dropped
     setDis(null);
     const stored = useSegmentationStore.getState().currentSegmentation?.metadata?.analysis_data;
     if (stored?.lesion_analysis || stored?.classification) void refreshDis();
@@ -193,9 +212,9 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
   // After a save (or a discard) the DIS state is read again: saving a changed mask voids a confirmation.
   const hadUnsavedChanges = useRef(hasUnsavedMaskChanges);
   useEffect(() => {
-    if (hadUnsavedChanges.current && !hasUnsavedMaskChanges && dis) void refreshDis();
+    if (isOpen && hadUnsavedChanges.current && !hasUnsavedMaskChanges && dis) void refreshDis();
     hadUnsavedChanges.current = hasUnsavedMaskChanges;
-  }, [hasUnsavedMaskChanges, dis, refreshDis]);
+  }, [isOpen, hasUnsavedMaskChanges, dis, refreshDis]);
 
   // RC-047 / RC-071: after the mask changed on the server (region classification), re-read the review
   // records so the AI draft banner and the store never show a confirmation the server has voided.
@@ -224,7 +243,9 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
 
   // RC-071: a radiologist confirms a segmentation without AI provenance, for the exact saved mask.
   const confirmSegmentation = useCallback(async () => {
-    if (useSegmentationStore.getState().hasUnsavedMaskChanges) return;
+    const state = useSegmentationStore.getState();
+    // Finding 7: the digest is that of the OPEN mask — never confirm another segmentation with it.
+    if (state.hasUnsavedMaskChanges || state.currentSegmentation?.segmentation_id !== segmentationId) return;
     const ok = window.confirm(
       t(
         'disReview.confirmQuestion',
@@ -283,12 +304,11 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
     setIsLoading(true);
     setError(null);
     try {
-      const [analysisResult, disResult] = await Promise.all([
+      const [analysisResult] = await Promise.all([
         segmentationAPI.analyzeLesions(segmentationId),
-        segmentationAPI.getDISAssessment(segmentationId),
+        fetchDis(),
       ]);
       setAnalysis(analysisResult);
-      setDis(disResult);
       setExpanded(true);
       patchAnalysisData({ lesion_analysis: analysisResult });
     } catch (err: any) {
@@ -296,7 +316,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
     } finally {
       setIsLoading(false);
     }
-  }, [segmentationId, patchAnalysisData]);
+  }, [segmentationId, patchAnalysisData, fetchDis]);
 
   const handleClassifyRegions = useCallback(async () => {
     setIsClassifying(true);
@@ -325,12 +345,11 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
         }
       }
 
-      const [analysisResult, disResult] = await Promise.all([
+      const [analysisResult] = await Promise.all([
         segmentationAPI.analyzeLesions(segmentationId),
-        segmentationAPI.getDISAssessment(segmentationId),
+        fetchDis(),
       ]);
       setAnalysis(analysisResult);
-      setDis(disResult);
       setExpanded(true);
 
       patchAnalysisData({
@@ -342,7 +361,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
     } finally {
       setIsClassifying(false);
     }
-  }, [segmentationId, classifyMethod, onMaskUpdated, reloadMaskCallback, patchAnalysisData, refreshReviewRecords]);
+  }, [segmentationId, classifyMethod, onMaskUpdated, reloadMaskCallback, patchAnalysisData, refreshReviewRecords, fetchDis]);
 
   const handleLesionClick = useCallback((lesion: LesionInfo) => {
     const current = useSegmentationStore.getState().selectedLesion;
@@ -467,6 +486,16 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       {/* ================================================================ */}
       {/* LESION TABLE — Primary view, always visible when analysis exists */}
       {/* ================================================================ */}
+      {analysis && analysis.lesions.length > 0 && !disOk && (
+        <div
+          className="flex items-start gap-1 text-[9px] text-amber-300 bg-amber-900/20 border border-amber-700/40 rounded px-1.5 py-1"
+          role="note"
+          data-testid="regions-not-confirmed"
+        >
+          <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-px" aria-hidden="true" />
+          <span>{t('disReview.regionsNotConfirmed', 'Regions not confirmed by a radiologist; not a DIS assessment.')}</span>
+        </div>
+      )}
       {analysis && analysis.lesions.length > 0 && (
         <div className="bg-gray-900/60 rounded-lg p-2.5 border border-gray-700/50">
           <div className="flex items-center justify-between mb-2">
@@ -663,23 +692,37 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
               'Dissemination in space requires clinician review of the segmentation: it is evaluated only on a segmentation a radiologist has confirmed, lesion by lesion and region by region, for this exact saved mask.',
             )}
           </p>
-          {disHeldForUnsavedChanges ? (
-            <p className="text-[10px] text-amber-100/80" data-testid="dis-unsaved-changes">
-              {t('disReview.reasonUnsaved', 'The mask on screen has unsaved changes: the confirmation and the result apply to the saved mask only. Saving a changed mask cancels the confirmation.')}
-            </p>
-          ) : 'not_evaluated_reason' in disPending && disPending.not_evaluated_reason === 'confirmation_outdated' ? (
-            <p className="text-[10px] text-amber-100/80">
-              {t('disReview.reasonOutdated', 'The segmentation changed after it was confirmed; the confirmation no longer applies.')}
-            </p>
-          ) : (
-            <p className="text-[10px] text-amber-100/80">
-              {t('disReview.reasonNotConfirmed', 'No radiologist has confirmed this segmentation.')}
-            </p>
-          )}
           {(() => {
+            const reason = 'not_evaluated_reason' in disPending ? disPending.not_evaluated_reason : undefined;
             const source = 'segmentation_review' in disPending ? disPending.segmentation_review?.source : undefined;
+            const lesionTool = 'information_for_safety' in disPending && !!disPending.information_for_safety;
+            // Blocker 1: the confirmation is offered only once the regions are classified (and, for an AI draft,
+            // after its own review); finding 7: only on the open segmentation.
+            const confirmable = !disHeldForUnsavedChanges
+              && (reason === 'segmentation_not_confirmed' || reason === 'confirmation_outdated');
             return (
               <>
+                {disHeldForUnsavedChanges ? (
+                  <p className="text-[10px] text-amber-100/80" data-testid="dis-unsaved-changes">
+                    {t('disReview.reasonUnsaved', 'The mask on screen has unsaved changes: the confirmation and the result apply to the saved mask only. Saving a changed mask cancels the confirmation.')}
+                  </p>
+                ) : reason === 'regions_not_classified' ? (
+                  <p className="text-[10px] text-amber-100/80" data-testid="dis-regions-not-classified">
+                    {t('disReview.reasonRegionsNotClassified', 'The lesions have no MAGNIMS regions from the region classification (or lesions changed since). Run the MAGNIMS region classification, check every region, then confirm.')}
+                  </p>
+                ) : reason === 'ai_review_missing' ? (
+                  <p className="text-[10px] text-amber-100/80">
+                    {t('disReview.reasonAiReviewMissing', 'This AI draft must first confirm its own review (AI draft banner in the segmentation panel) for the current mask.')}
+                  </p>
+                ) : reason === 'confirmation_outdated' ? (
+                  <p className="text-[10px] text-amber-100/80">
+                    {t('disReview.reasonOutdated', 'The segmentation changed after it was confirmed; the confirmation no longer applies.')}
+                  </p>
+                ) : (
+                  <p className="text-[10px] text-amber-100/80">
+                    {t('disReview.reasonNotConfirmed', 'No radiologist has confirmed this segmentation.')}
+                  </p>
+                )}
                 <p className="text-[10px] text-amber-100/80">
                   {source === 'ai_draft'
                     ? t('disReview.sourceAiDraft', 'AI draft: check every lesion and region, then confirm the review in the AI draft banner of the segmentation panel.')
@@ -687,9 +730,13 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                     ? t('disReview.sourceAutomatic', 'Automatic segmentation from a clinical tool: its origin is recorded, its lesions and regions are not checked.')
                     : t('disReview.sourceUnrecorded', 'The origin of this segmentation is not recorded (drawn here or uploaded from another program).')}
                 </p>
-                {(source === 'ai_draft' || source === 'automatic_tool') && <AutomaticMarkingNotice />}
-                {(source === 'automatic_tool' || source === 'origin_not_recorded') && (
-                  hasUnsavedMaskChanges ? (
+                {lesionTool && <AutomaticMarkingNotice />}
+                {confirmable && (
+                  !isOpen ? (
+                    <p className="text-[10px] text-amber-300" data-testid="dis-open-to-confirm">
+                      {t('disReview.openToConfirm', 'Open this segmentation to confirm it: the confirmation is bound to the mask on screen.')}
+                    </p>
+                  ) : hasUnsavedMaskChanges ? (
                     <p className="text-[10px] text-amber-300" data-testid="dis-save-first">
                       {t('disReview.saveFirst', 'Unsaved changes: save them first. Only the saved mask can be confirmed.')}
                     </p>
@@ -940,6 +987,11 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
             <label className="text-[10px] text-gray-400 block">
               {t('lesions.byRegion', 'By Region')}
             </label>
+            {!disOk && (
+              <p className="text-[9px] text-amber-300" data-testid="regions-not-confirmed-bars">
+                {t('disReview.regionsNotConfirmed', 'Regions not confirmed by a radiologist; not a DIS assessment.')}
+              </p>
+            )}
             {Object.entries(analysis.regions).map(([name, region]) => (
               <div key={name} className="space-y-0.5">
                 <div className="flex items-center justify-between text-[9px]">

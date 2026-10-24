@@ -231,20 +231,36 @@ class AIProvenance(BaseModel):
 
 
 class ClinicianReview(BaseModel):
-    """A radiologist's confirmation of a segmentation WITHOUT AI provenance (PRB-003, RC-071, REQ-SAFE-039).
+    """A radiologist's confirmation that a segmentation's lesions AND their MAGNIMS regions were checked, for
+    dissemination in space (PRB-003, RC-071, REQ-SAFE-039).
 
-    Such a segmentation may have been drawn in the application, produced by a server tool (LST-AI, FLAMeS
-    worker, SynthSeg, mindGlide: `segmentation_type = automatic`, no AI provenance) or uploaded as a mask
-    from another program — its origin cannot be told apart. Dissemination in space is evaluated only on a
-    confirmed segmentation (RC-070). Set only by `POST /segmentation/{id}/review/confirm` (radiologists,
-    the authenticated user recorded), bound to the SHA-256 of the exact stored mask (same digest as RC-047);
-    any later change of the mask removes it (`SegmentationService.enforce_review_binding`). An AI draft is
-    confirmed through its own review (`AIProvenance`, RC-047), never through this record.
+    Any segmentation needs it before DIS is evaluated (RC-070): drawn in the application, produced by a server
+    tool, uploaded from another program, or an AI draft (which also needs its own review, RC-047). It is
+    offered only after the region classification, set only by `POST /segmentation/{id}/review/confirm`
+    (radiologists; the authenticated user recorded; the first confirmer is kept), and bound to the SHA-256 of
+    the exact stored mask (same digest as RC-047) AND of the label scheme (id -> name); a later change of either
+    removes it (`SegmentationService.enforce_review_binding`), with an entry in `clinician_review_history`.
     """
     reviewed_by: str = Field(..., min_length=1, max_length=200)
     reviewed_by_id: Optional[str] = Field(None, max_length=200)
     reviewed_at: str = Field(..., min_length=1, max_length=40)
     reviewed_mask_sha256: str = Field(..., pattern=r"^[0-9a-f]{64}$")
+    reviewed_labels_sha256: str = Field(..., pattern=r"^[0-9a-f]{64}$")
+
+
+class ClinicianReviewEvent(BaseModel):
+    """One entry of the append-only history of DIS confirmations (PRB-003, RC-071; review of PR #68, finding 5).
+
+    `confirmed` and `confirmation_repeated` carry the authenticated user; `voided` is written by the service's
+    single save point when the mask or the label scheme changed (the save itself is in the audit log)."""
+    event: Literal["confirmed", "confirmation_repeated", "voided"]
+    by: Optional[str] = Field(None, max_length=200)
+    by_id: Optional[str] = Field(None, max_length=200)
+    at: str = Field(..., min_length=1, max_length=40)
+    mask_sha256: Optional[str] = Field(None, pattern=r"^[0-9a-f]{64}$")
+    labels_sha256: Optional[str] = Field(None, pattern=r"^[0-9a-f]{64}$")
+    reason: Optional[Literal["mask_changed", "labels_changed"]] = None
+    previous_reviewer: Optional[str] = Field(None, max_length=200)
 
 
 class SegmentationMetadata(BaseModel):
@@ -277,8 +293,12 @@ class SegmentationMetadata(BaseModel):
     )
     clinician_review: Optional[ClinicianReview] = Field(
         None,
-        description=("Radiologist's confirmation of a segmentation without AI provenance, bound to the stored "
-                     "mask (REQ-SAFE-039, RC-071). Set only by the review/confirm route."),
+        description=("Radiologist's confirmation of the lesions and their MAGNIMS regions for DIS, bound to the "
+                     "stored mask and label scheme (REQ-SAFE-039, RC-071). Set only by the review/confirm route."),
+    )
+    clinician_review_history: List[ClinicianReviewEvent] = Field(
+        default_factory=list,
+        description="Append-only history of DIS confirmations and voidings (RC-071). Written by the server only.",
     )
 
 

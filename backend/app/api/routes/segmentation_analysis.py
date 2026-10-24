@@ -438,10 +438,14 @@ async def get_lesion_analysis(
         # Stale check — return cached result if mask hasn't changed
         cached = metadata.analysis_data or {}
         mask_mod = metadata.modified_at.isoformat()
+        # PRB-003 (review of PR #68, finding 3): the regions of the lesions are candidates until a radiologist
+        # confirmed the classified segmentation — every response says which.
+        region_status = dis_gate.region_status(dis_gate.review_state(metadata, masks_3d))
         if cached.get("analysis_mask_modified_at") == mask_mod and "lesion_analysis" in cached:
             logger.info("Returning cached lesion analysis for %s", segmentation_id)
             result = dict(cached["lesion_analysis"])
             result["segmentation_id"] = segmentation_id
+            result["region_status"] = region_status
             return result
 
         # Build label map from metadata
@@ -471,13 +475,14 @@ async def get_lesion_analysis(
         result = analyze_lesions(masks_3d, voxel_spacing, label_map)
         result["segmentation_id"] = segmentation_id
 
-        # Persist analysis result in metadata
+        # Persist analysis result in metadata (the region status is computed per response, never stored)
         metadata.analysis_data = {
             **cached,
             "lesion_analysis": result,
             "analysis_mask_modified_at": mask_mod,
         }
         segmentation_service.persist(segmentation_id)
+        result = {**result, "region_status": region_status}
 
         logger.info("Lesion analysis completed and cached", extra={
             "segmentation_id": segmentation_id,
@@ -499,24 +504,28 @@ async def get_lesion_analysis(
 
 async def assess_dis(segmentation_id, segmentation_service, storage_service,
                      external_evidence: Optional[dict] = None, *, store: bool = True) -> dict:
-    """The DIS assessment of a stored segmentation — evaluated only when a clinician confirmed it.
+    """The DIS assessment of a stored segmentation — evaluated only on classified, confirmed regions.
 
-    PRB-003 (RC-070, REQ-SAFE-038; HAZ-008): DIS is computed only when a radiologist's confirmation is
-    bound to the SHA-256 of the current stored mask (AI draft: RC-047 review; any other segmentation:
-    RC-071 clinician confirmation). Otherwise the explicit "not evaluated" state is returned: nothing is
-    computed, nothing is cached and no stored conclusion is served. Shared by the DIS route and the AI
-    report route; `store=False` keeps a caller compute-only (the report route stores nothing).
+    PRB-003 (RC-070, REQ-SAFE-038; HAZ-008): DIS is computed only when the mask's labels are MAGNIMS regions
+    assigned by the region classification to these lesions, an AI draft has its own review, and a
+    radiologist's DIS confirmation is bound to the SHA-256 of the current mask and label scheme (see
+    `dis_review_gate`). Otherwise the explicit "not evaluated" state is returned: nothing is computed,
+    nothing is cached and no stored conclusion is served. Shared by the DIS route and the AI report route;
+    `store=False` keeps a caller compute-only (the report route stores nothing). The gate and the computation
+    run on one snapshot of the mask and labels, so a save during the spacing download cannot mix two masks,
+    and a result is cached only if the stored mask is still the snapshot (review of PR #68, finding 8).
     """
     seg_data = segmentation_service.get_loaded(segmentation_id)
     if seg_data is None:
         raise HTTPException(status_code=404, detail=f"Segmentation {segmentation_id} not found")
-    masks_3d = seg_data["masks_3d"]
+    masks_3d = np.array(seg_data["masks_3d"], dtype=np.uint8, copy=True)   # snapshot
     metadata = seg_data["metadata"]
+    labels = list(metadata.labels or [])
 
     state = dis_gate.review_state(metadata, masks_3d)
     if not state["confirmed"]:
-        logger.info("DIS not evaluated: segmentation not confirmed by a clinician", extra={
-            "segmentation_id": segmentation_id, "review_status": state["status"], "source": state["source"],
+        logger.info("DIS not evaluated", extra={
+            "segmentation_id": segmentation_id, "reason": state["reason"], "source": state["source"],
         })
         return dis_gate.not_evaluated(segmentation_id, state)
 
@@ -531,15 +540,17 @@ async def assess_dis(segmentation_id, segmentation_service, storage_service,
     mask_mod = metadata.modified_at.isoformat()
     if (not any_external
             and cached.get("analysis_mask_modified_at") == mask_mod
-            and dis_gate.is_evaluated(cached.get("dis_assessment"))):
+            and dis_gate.is_evaluated(cached.get("dis_assessment"))
+            and (cached["dis_assessment"].get("segmentation_review") or {}).get("current_mask_sha256")
+            == state["current_mask_sha256"]):
         logger.info("Returning cached DIS assessment for %s", segmentation_id)
         result = dict(cached["dis_assessment"])
         result["segmentation_id"] = segmentation_id
         return dis_gate.evaluated(result, state)
 
-    # Build label map
+    # Build label map (from the snapshot of the labels the gate checked)
     label_map = {}
-    for lbl in metadata.labels:
+    for lbl in labels:
         if hasattr(lbl, 'id') and hasattr(lbl, 'name'):
             label_map[lbl.id] = lbl.name
         elif isinstance(lbl, dict):
@@ -562,7 +573,10 @@ async def assess_dis(segmentation_id, segmentation_service, storage_service,
 
     # Only persist the brain-only (unparameterized) assessment to the cache;
     # a result that folds in external evidence must not become the cached one.
-    if store and not any_external:
+    now_entry = segmentation_service.get_loaded(segmentation_id)
+    still_stored = now_entry is not None and dis_gate.SegmentationService.mask_sha256(
+        now_entry["masks_3d"]) == state["current_mask_sha256"]
+    if store and not any_external and still_stored:
         metadata.analysis_data = {
             **cached,
             "dis_assessment": result,

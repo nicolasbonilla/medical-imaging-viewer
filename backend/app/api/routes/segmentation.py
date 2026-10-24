@@ -587,6 +587,14 @@ async def update_labels(
     Uses dependency injection to get SegmentationService instance.
     Custom exceptions will be caught by global exception handler.
     """
+    # PRB-003 (review of PR #68, finding 6): a label name is what the DIS rule reads as a region — renaming
+    # is limited to clinical staff, and voids a DIS confirmation (bound to the label scheme) when saved.
+    from app.security.models import UserRole
+    if getattr(current_user, "role", None) not in (UserRole.RADIOLOGIST, UserRole.TECHNICIAN):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only clinical staff (radiologist, technician) can change label definitions.",
+        )
     try:
         metadata = await segmentation_service.get_metadata(segmentation_id)
         if metadata is None:
@@ -684,16 +692,23 @@ async def confirm_segmentation_review(
     # CAPA-002 CA-2.1 RC-029 - object-level authorization.
     _authorized=Depends(require_segmentation_access),
 ):
-    """Record that a radiologist checked a segmentation WITHOUT AI provenance (PRB-003, RC-071, REQ-SAFE-039).
+    """Record a radiologist's DIS confirmation: every lesion and its MAGNIMS region checked (PRB-003, RC-071).
 
-    Such a segmentation may be drawn here, produced by a server tool or uploaded from another program;
-    dissemination in space is evaluated only after this confirmation (RC-070). Only a radiologist may
-    confirm (403). An AI draft is confirmed through its own review (RC-047, `ai-review/confirm`): 409 here.
-    The confirmation is bound to the exact stored mask: the client sends the SHA-256 of the mask it shows,
-    which must equal the stored mask (409 otherwise: unsaved changes, or the mask changed meanwhile); the
-    authenticated user and the time are recorded; any later change of the mask removes the confirmation.
+    Dissemination in space is evaluated only after it (RC-070). Conditions (review of PR #68):
+    - radiologists only (403);
+    - the regions are classified (MAGNIMS label scheme, classification recorded for these lesions) — the
+      confirmation is offered only after the region classification (409 otherwise);
+    - an AI draft also has its own review (RC-047) for the current mask (409 otherwise);
+    - bound to the exact stored mask (the client sends the SHA-256 of the mask it shows; 409 if it differs)
+      AND to the label scheme; a later change of either removes it, with an entry in the history;
+    - idempotent: an existing confirmation of the same mask and labels keeps its first confirmer; the repeat
+      is recorded in the append-only history with the authenticated user and time;
+    - stored as metadata only (the mask object is not rewritten); refused (503, undone) when it could not be
+      stored durably; a mask saved meanwhile by another session gives 409 and the cached entry is discarded.
     Writes a record: deliberately NOT on the AI assistant's compute-only list (RC-033).
     """
+    from app.models.schemas import ClinicianReview, ClinicianReviewEvent
+
     if not _radiologist(current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -702,33 +717,62 @@ async def confirm_segmentation_review(
     entry = segmentation_service.get_loaded(segmentation_id)
     if entry is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Segmentation not found")
+    segmentation_service.enforce_review_binding(entry)          # an outdated confirmation is voided first
     metadata = entry["metadata"]
-    if metadata.ai_provenance is not None:
+    state = dis_gate.review_state(metadata, entry["masks_3d"])
+    if not state["regions"]["classified"]:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="This is an AI draft: confirm it with the AI draft review in the segmentation panel.",
+            detail=("Run the MAGNIMS region classification first and check every region: dissemination in "
+                    "space is evaluated only on lesions with classified regions."),
+        )
+    if state["reason"] == dis_gate.REASON_AI_REVIEW:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This is an AI draft: confirm its own review (AI draft banner) for the current mask first.",
         )
     stated = str((body or {}).get("mask_sha256", "")).strip().lower()
-    stored_digest = segmentation_service.mask_sha256(entry["masks_3d"])
+    stored_digest = state["current_mask_sha256"]
     if stated != stored_digest:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=("The stored mask is not the one you checked (unsaved changes, or the mask changed since you "
                     "opened it). Save or reload, check it again, then confirm."),
         )
-    from app.models.schemas import ClinicianReview
-    metadata.clinician_review = ClinicianReview(
-        reviewed_by=current_user.username,
-        reviewed_by_id=str(getattr(current_user, "id", "") or "") or None,
-        reviewed_at=datetime.utcnow().isoformat() + "Z",
-        reviewed_mask_sha256=stored_digest,
+    now = datetime.utcnow().isoformat() + "Z"
+    actor_id = str(getattr(current_user, "id", "") or "") or None
+    previous = (metadata.clinician_review, list(metadata.clinician_review_history or []))
+    already = bool(state["confirmed"])
+    review = metadata.clinician_review if already else ClinicianReview(
+        reviewed_by=current_user.username, reviewed_by_id=actor_id, reviewed_at=now,
+        reviewed_mask_sha256=stored_digest, reviewed_labels_sha256=state["current_labels_sha256"],
     )
-    # modified_at is not changed: the mask did not change, so analyses computed on it stay valid.
-    segmentation_service.persist(segmentation_id)
+    event = ClinicianReviewEvent(
+        event="confirmation_repeated" if already else "confirmed", by=current_user.username, by_id=actor_id,
+        at=now, mask_sha256=stored_digest, labels_sha256=state["current_labels_sha256"],
+    )
+    metadata.clinician_review = review
+    metadata.clinician_review_history = [*previous[1], event]
+    try:
+        tier = segmentation_service.persist_metadata(segmentation_id)
+    except ConflictException as ce:
+        segmentation_service.discard_cached(segmentation_id)   # never keep a confirmation of a stale mask
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=ce.message,
+                            headers={"X-Conflict": "segmentation-stale-write"})
+    if tier is None:
+        metadata.clinician_review, metadata.clinician_review_history = previous
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="The confirmation could not be stored durably; nothing was recorded. Try again.",
+        )
     if getattr(segmentation_service, "cache", None):
         await segmentation_service.cache.delete(f"seg:metadata:{segmentation_id}")
-    logger.info("Segmentation confirmed by a radiologist", extra={"segmentation_id": segmentation_id})
-    return {"success": True, "clinician_review": metadata.clinician_review.model_dump()}
+    logger.info("DIS confirmation recorded", extra={
+        "segmentation_id": segmentation_id, "reviewed_by": current_user.username, "event": event.event,
+        "mask_sha256": stored_digest,
+    })
+    return {"success": True, "already_confirmed": already, "clinician_review": review.model_dump(),
+            "history_length": len(metadata.clinician_review_history)}
 
 
 @router.get("/{segmentation_id}/nifti")

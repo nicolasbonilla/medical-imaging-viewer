@@ -51,16 +51,30 @@ class _FakeSeg:
     def get_loaded(self, sid):
         if sid not in self._masks:
             return None
+        if sid not in self._confirmed:
+            return {
+                "masks_3d": self._masks[sid],
+                "metadata": SegmentationMetadata(
+                    file_id=f"img-{sid}",
+                    labels=[LabelInfo(id=1, name="MS Lesion", color="#ff0000", opacity=0.5, visible=True)],
+                ),
+            }
+        # PRB-003 (RC-070/071): a MAGNIMS-classified segmentation (regions recorded for these lesions) that a
+        # radiologist confirmed for this mask and label scheme — the only case where DIS is evaluated.
+        from app.services import dis_review_gate as gate
         from app.services.segmentation_service import SegmentationService
-        review = ({"reviewed_by": "dr_rev", "reviewed_at": "2026-10-24T10:00:00Z",
-                   "reviewed_mask_sha256": SegmentationService.mask_sha256(self._masks[sid])}
-                  if sid in self._confirmed else None)
+        mask = self._masks[sid]
+        labels = [LabelInfo(id=0, name="Background", color="#000000")] + [
+            LabelInfo(id=i, name=name, color="#ff0000") for i, name in gate.MAGNIMS_REGIONS.items() if i <= 4]
         return {
-            "masks_3d": self._masks[sid],
+            "masks_3d": mask,
             "metadata": SegmentationMetadata(
-                file_id=f"img-{sid}",
-                labels=[LabelInfo(id=1, name="MS Lesion", color="#ff0000", opacity=0.5, visible=True)],
-                clinician_review=review,
+                file_id=f"img-{sid}", labels=labels,
+                analysis_data={"classification": {"classified_lesion_footprint_sha256": gate.footprint_sha256(mask),
+                                                  "classified_mask_sha256": SegmentationService.mask_sha256(mask)}},
+                clinician_review={"reviewed_by": "dr_rev", "reviewed_at": "2026-10-24T10:00:00Z",
+                                  "reviewed_mask_sha256": SegmentationService.mask_sha256(mask),
+                                  "reviewed_labels_sha256": gate.labels_sha256(labels)},
             ),
         }
 
@@ -92,7 +106,9 @@ def client(monkeypatch):
         return None
 
     monkeypatch.setattr(analysis_routes, "authorize_mask_specs", _authorized)
-    seg = _FakeSeg({"seg-a": _mask_with_lesion(), "seg-b": _mask_with_lesion(), "seg-c": _mask_with_lesion()},
+    two_regions = _mask_with_lesion()
+    two_regions[1:3, 14:18, 14:18] = 2          # a second lesion, juxtacortical (MAGNIMS label 2)
+    seg = _FakeSeg({"seg-a": _mask_with_lesion(), "seg-b": _mask_with_lesion(), "seg-c": two_regions},
                    confirmed={"seg-c"})
     app.dependency_overrides[get_current_active_user] = _admin
     app.dependency_overrides[get_segmentation_service] = lambda: seg
@@ -119,14 +135,23 @@ def test_lesion_analysis_returns_200_with_real_volumes(client):
 
 
 def test_dis_assessment_returns_200(client):
-    """The route is alive and computes DIS on a segmentation a radiologist confirmed (PRB-003, RC-070);
-    on an unconfirmed one it answers 200 with the explicit 'not evaluated' state."""
+    """The route is alive and computes DIS on a MAGNIMS-classified segmentation a radiologist confirmed
+    (PRB-003, RC-070 — the full evaluated contract); on a binary 'MS Lesion' mask, whose labels are not
+    regions, it answers 200 with the explicit 'not evaluated' state (review of PR #68, blocker 1)."""
     r = client.get("/api/v1/segmentation/seg-c/dis-assessment")
     assert r.status_code == 200, f"{r.status_code}: {r.text[:200]}"
-    assert "dis_met_brain" in r.json() and r.json()["evaluation_status"] == "evaluated"
+    body = r.json()
+    assert body["evaluation_status"] == "evaluated"
+    assert isinstance(body["dis_met_brain"], bool) and body["dis_met_brain"] is True   # PV + JC lesions
+    assert body["brain_regions_with_lesions"] == 2
+    assert body["total_dis_regions"] == 5
+    assert body["brain_regions_evaluated"] == 3
+    assert "McDonald 2024" in body["dis_criteria_version"]
+    assert set(body["region_details"]) == {"Periventricular", "Juxtacortical", "Infratentorial"}
     r = client.get("/api/v1/segmentation/seg-a/dis-assessment")
     assert r.status_code == 200, f"{r.status_code}: {r.text[:200]}"
     assert r.json()["evaluation_status"] == "not_evaluated" and "dis_met_brain" not in r.json()
+    assert r.json()["not_evaluated_reason"] == "regions_not_classified"
 
 
 def test_compare_two_segmentations_returns_200_with_metrics(client):

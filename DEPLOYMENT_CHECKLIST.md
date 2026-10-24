@@ -37,6 +37,15 @@ curl -s -D - -o /dev/null \
   "https://brain-mri-7bp6oqdu7a-uc.a.run.app/api/v1/auth/me" 2>&1 | grep "access-control-allow-origin"
 ```
 
+## Deployment order for PRB-003 (DIS only on a confirmed segmentation)
+
+**Deploy the FRONTEND FIRST, then the backend.** From PRB-003 the DIS route answers
+`{"evaluation_status": "not_evaluated", ...}` for every segmentation whose regions a radiologist has not
+confirmed. A frontend built before PRB-003 reads `region_details` from that answer and the lesion panel
+fails (blank panel). The new frontend shows both answers (old and new backend), and the panel now sits in
+an error boundary. After both are deployed: open a segmentation, press "Analyze" — the DIS card reads
+"DIS (brain MRI): not evaluated" until the regions are classified and a radiologist confirms them.
+
 ## Common failures
 
 | Symptom | Cause | Fix |

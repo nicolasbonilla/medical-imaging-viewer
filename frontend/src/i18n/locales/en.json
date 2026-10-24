@@ -1052,7 +1052,11 @@
     "saveFirst": "Unsaved changes: save them first. Only the saved mask can be confirmed.",
     "confirmedBy": "Segmentation confirmed by",
     "maskUnreadable": "The open mask could not be read; reload the segmentation and try again.",
-    "automaticMarkingNotice": "Automatic marking also marks spots in most healthy brains, mostly next to the ventricles. A marked spot is not evidence of multiple sclerosis; every spot needs expert review."
+    "regionsNotConfirmed": "Regions not confirmed by a radiologist; not a DIS assessment.",
+    "openToConfirm": "Open this segmentation to confirm it: the confirmation is bound to the mask on screen.",
+    "reasonAiReviewMissing": "This AI draft must first confirm its own review (AI draft banner in the segmentation panel) for the current mask.",
+    "reasonRegionsNotClassified": "The lesions have no MAGNIMS regions from the region classification (or lesions changed since). Run the MAGNIMS region classification, check every region, then confirm.",
+    "automaticMarkingNotice": "Automatic lesion marking also marks spots in most healthy brains, mostly next to the ventricles. A marked spot is not evidence of multiple sclerosis; every spot needs expert review."
   },
   "lesions": {
     "title": "Lesion Analysis",

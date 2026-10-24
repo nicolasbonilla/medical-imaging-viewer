@@ -95,6 +95,8 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
       language,
       findings,
       volumetry: volumetry || null,
+      // PRB-003 (review of PR #68, finding 2): the server derives the DIS state for this segmentation only.
+      ...(activeSegId ? { segmentation_id: activeSegId } : {}),
     });
   };
 

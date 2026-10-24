@@ -18,6 +18,7 @@ HIPAA Compliance:
 @module services.brain_report_service
 """
 
+import re
 import time
 import uuid
 from typing import Optional, List, Dict, Any
@@ -99,6 +100,38 @@ DIS_NOT_EVALUATED_PROMPT = (
     "Automatic marking also marks spots in most healthy brains; a marked spot is not evidence of "
     "multiple sclerosis."
 )
+
+
+# PRB-003 (review of PR #68, finding 4): when DIS was not evaluated, the template itself carries no DIS
+# instruction — its DIS sections are replaced, any other line asking for DIS is removed, and format rule 4 keeps
+# only its CMSC prohibition. The not-evaluated rule is no longer only in the user message.
+_DIS_SECTION = re.compile(r"^(#{2,3}) [^\n]*(?:Dissemination in Space|DIS ASSESSMENT)[^\n]*\n.*?(?=^#{2,3} |\Z)",
+                          re.MULTILINE | re.DOTALL)
+_DIS_INSTRUCTION = re.compile(r"\bDIS\b|dissemination in space|typical MS regions", re.IGNORECASE)
+DIS_NOT_EVALUATED_LINE = ("Write only: 'Dissemination in space: not evaluated (requires clinician review of the "
+                          "segmentation).'")
+DIS_NOT_EVALUATED_SYSTEM_RULE = (
+    "SAFETY RULE (overrides everything below): dissemination in space was NOT evaluated for this segmentation — "
+    "no radiologist has confirmed its lesions and their regions. Never state or imply dissemination in space, "
+    "a McDonald space item or a number of regions involved, in any section. " + DIS_NOT_EVALUATED_LINE + "\n\n"
+)
+_RULE4_NOT_EVALUATED = ("4. Per CMSC Task Force guidance, **never write** 'McDonald criteria are met' or 'McDonald "
+                        "criteria are not met' — this requires full clinical correlation. Dissemination in space "
+                        "was not evaluated: " + DIS_NOT_EVALUATED_LINE)
+
+
+def dis_not_evaluated_template(system_prompt: str) -> str:
+    """The template without any DIS instruction, for a draft whose DIS was not evaluated (RC-070)."""
+    text = _DIS_SECTION.sub(lambda m: f"{m.group(1)} Dissemination in Space (DIS) Assessment\n"
+                                      f"{DIS_NOT_EVALUATED_LINE}\n\n", system_prompt)
+    kept = []
+    for line in text.split("\n"):
+        if _DIS_INSTRUCTION.search(line) and "not evaluated" not in line and not line.startswith("#"):
+            if line.startswith("4. Per CMSC Task Force guidance"):
+                kept.append(_RULE4_NOT_EVALUATED)
+            continue
+        kept.append(line)
+    return DIS_NOT_EVALUATED_SYSTEM_RULE + "\n".join(kept)
 
 
 # Shared formatting instructions for all templates
@@ -714,6 +747,11 @@ class BrainReportService:
             template_type = "general"
 
         system_prompt = REPORT_TEMPLATES[template_type]
+        # PRB-003 (RC-070; review of PR #68, finding 4): no DIS instruction in the template unless DIS was
+        # evaluated on a classified, radiologist-confirmed segmentation (state set by the report route).
+        dis_block = findings.get("dis_assessment")
+        if not (isinstance(dis_block, dict) and dis_block.get("evaluation_status") == "evaluated"):
+            system_prompt = dis_not_evaluated_template(system_prompt)
         user_prompt = self._build_findings_prompt(findings, volumetry, language)
 
         logger.info(

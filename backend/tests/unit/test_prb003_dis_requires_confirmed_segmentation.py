@@ -83,10 +83,19 @@ def _prov(**over):
     return AIProvenance(**base)
 
 
-def _clinician_review(mask_sha, by="dr_rev"):
-    """A clinician confirmation record (RC-071). Built as a dict: on the base the field does not exist."""
+def _clinician_review(mask_sha, by="dr_rev", labels=None):
+    """A clinician confirmation record (RC-071), bound to the mask and the label scheme (review of PR #68).
+    Built as a dict: on the base the field does not exist."""
+    from app.services import dis_review_gate as gate
     return {"reviewed_by": by, "reviewed_by_id": "u-1", "reviewed_at": "2026-10-24T10:00:00Z",
-            "reviewed_mask_sha256": mask_sha}
+            "reviewed_mask_sha256": mask_sha, "reviewed_labels_sha256": gate.labels_sha256(labels or MAGNIMS)}
+
+
+def _classification(mask):
+    """The record classify-regions stores for the lesions of `mask` (review of PR #68, blocker 1)."""
+    from app.services import dis_review_gate as gate
+    return {"classification": {"method": "geometric", "classified_lesion_footprint_sha256": gate.footprint_sha256(mask),
+                               "classified_mask_sha256": _sha(mask)}}
 
 
 class _FakeDB:
@@ -116,8 +125,10 @@ def _service():
     return svc
 
 
-def _seed(svc, sid="seg-1", mask=None, **meta):
+def _seed(svc, sid="seg-1", mask=None, classified=False, **meta):
     mask = _mask() if mask is None else mask
+    if classified:
+        meta["analysis_data"] = {**(meta.get("analysis_data") or {}), **_classification(mask)}
     metadata = SegmentationMetadata(file_id=FILE, labels=MAGNIMS, **meta)
     svc.segmentations_cache[sid] = {"metadata": metadata, "masks_3d": mask, "image_shape": (H, W, D),
                                     "source_format": "nifti"}
@@ -208,11 +219,14 @@ def test_rc070_segmentation_of_unrecorded_origin_dis_is_not_evaluated(client_for
 
 @pytest.mark.unit
 def test_rc070_confirmed_ai_draft_bound_to_the_current_mask_is_evaluated(client_for):
+    """Changed after the review of PR #68: an AI draft needs its own review AND the DIS confirmation of its
+    classified regions (the AI review alone is tested in test_prb003_review1_findings.py)."""
     svc = _service()
     mask = _mask()
-    _seed(svc, mask=mask, segmentation_type="automatic",
+    _seed(svc, mask=mask, segmentation_type="automatic", classified=True,
           ai_provenance=_prov(review_status="confirmed", reviewed_by="dr_rev", reviewed_at="2026-10-24T09:00:00Z",
-                              reviewed_mask_sha256=_sha(mask)))
+                              reviewed_mask_sha256=_sha(mask)),
+          clinician_review=_clinician_review(_sha(mask)))
     body = _dis(client_for(svc))
     assert body.get("evaluation_status") == "evaluated", body
     assert body["dis_met_brain"] is True and body["brain_regions_with_lesions"] == 2
@@ -225,7 +239,7 @@ def test_rc070_confirmed_ai_draft_bound_to_the_current_mask_is_evaluated(client_
 def test_rc070_clinician_confirmed_segmentation_is_evaluated(client_for):
     svc = _service()
     mask = _mask()
-    _seed(svc, mask=mask, clinician_review=_clinician_review(_sha(mask)))
+    _seed(svc, mask=mask, classified=True, clinician_review=_clinician_review(_sha(mask)))
     body = _dis(client_for(svc))
     assert body.get("evaluation_status") == "evaluated", body
     assert body["dis_met_brain"] is True
@@ -240,14 +254,15 @@ def test_rc070_a_confirmation_given_for_another_mask_does_not_count(client_for, 
     svc = _service()
     other = "c" * 64
     if record == "ai":
-        _seed(svc, segmentation_type="automatic",
+        _seed(svc, segmentation_type="automatic", classified=True,
               ai_provenance=_prov(review_status="confirmed", reviewed_by="dr_rev", reviewed_at="x",
-                                  reviewed_mask_sha256=other))
+                                  reviewed_mask_sha256=other),
+              clinician_review=_clinician_review(_sha(_mask())))
     else:
-        _seed(svc, clinician_review=_clinician_review(other))
+        _seed(svc, classified=True, clinician_review=_clinician_review(other))
     body = _dis(client_for(svc))
     _assert_not_evaluated(body)
-    assert body["not_evaluated_reason"] == "confirmation_outdated"
+    assert body["not_evaluated_reason"] == ("ai_review_missing" if record == "ai" else "confirmation_outdated")
 
 
 @pytest.mark.unit
@@ -255,9 +270,11 @@ def test_rc070_a_clinician_record_never_replaces_the_review_of_an_ai_draft(clien
     """An AI draft is confirmed only through its own review (RC-047)."""
     svc = _service()
     mask = _mask()
-    _seed(svc, mask=mask, segmentation_type="automatic", ai_provenance=_prov(),
+    _seed(svc, mask=mask, segmentation_type="automatic", ai_provenance=_prov(), classified=True,
           clinician_review=_clinician_review(_sha(mask)))
-    _assert_not_evaluated(_dis(client_for(svc)))
+    body = _dis(client_for(svc))
+    _assert_not_evaluated(body)
+    assert body["not_evaluated_reason"] == "ai_review_missing"
 
 
 @pytest.mark.unit
@@ -280,8 +297,10 @@ def test_rc070_a_stored_not_evaluated_state_is_never_served_as_a_result_after_co
     mask = _mask()
     entry = _seed(svc, mask=mask)
     meta = entry["metadata"]
-    meta.analysis_data = {"dis_assessment": {"evaluation_status": "not_evaluated", "segmentation_id": "seg-1"},
-                          "analysis_mask_modified_at": meta.modified_at.isoformat()}
+    # as classify-regions stores it: the 'not evaluated' state of THIS mask (same digest)
+    meta.analysis_data = {"dis_assessment": {"evaluation_status": "not_evaluated", "segmentation_id": "seg-1",
+                                             "segmentation_review": {"current_mask_sha256": _sha(mask)}},
+                          "analysis_mask_modified_at": meta.modified_at.isoformat(), **_classification(mask)}
     client = client_for(svc)
     assert _confirm(client, _sha(mask)).status_code == 200
     body = _dis(client)
@@ -347,7 +366,7 @@ def _confirm(client, digest, sid="seg-1"):
 def test_rc071_a_radiologist_confirms_the_exact_stored_mask_and_dis_becomes_evaluable(client_for):
     svc = _service()
     mask = _mask()
-    entry = _seed(svc, mask=mask, segmentation_type="automatic", validation_source="lst-ai-v1.0.3")
+    entry = _seed(svc, mask=mask, segmentation_type="automatic", validation_source="lst-ai-v1.0.3", classified=True)
     client = client_for(svc, username="dr_rev")
     _assert_not_evaluated(_dis(client))
     r = _confirm(client, _sha(mask))
@@ -373,9 +392,10 @@ def test_rc071_only_a_radiologist_can_confirm(client_for, role):
 @pytest.mark.unit
 def test_rc071_a_confirmation_for_another_mask_is_refused(client_for):
     svc = _service()
-    entry = _seed(svc)
+    entry = _seed(svc, classified=True)
     r = _confirm(client_for(svc), "d" * 64)
     assert r.status_code == 409, r.text[:300]
+    assert "not the one you checked" in r.text
     assert getattr(entry["metadata"], "clinician_review", None) is None
 
 
@@ -383,9 +403,10 @@ def test_rc071_a_confirmation_for_another_mask_is_refused(client_for):
 def test_rc071_an_ai_draft_is_confirmed_only_through_its_own_review(client_for):
     svc = _service()
     mask = _mask()
-    entry = _seed(svc, mask=mask, ai_provenance=_prov(), segmentation_type="automatic")
+    entry = _seed(svc, mask=mask, ai_provenance=_prov(), segmentation_type="automatic", classified=True)
     r = _confirm(client_for(svc), _sha(mask))
     assert r.status_code == 409, r.text[:300]
+    assert "AI draft" in r.text
     assert getattr(entry["metadata"], "clinician_review", None) is None
     assert entry["metadata"].ai_provenance.review_status == "unreviewed"
 
@@ -394,7 +415,7 @@ def test_rc071_an_ai_draft_is_confirmed_only_through_its_own_review(client_for):
 def test_rc071_any_later_change_of_the_mask_voids_the_confirmation():
     svc = _service()
     mask = _mask()
-    entry = _seed(svc, mask=mask, clinician_review=_clinician_review(_sha(mask)))
+    entry = _seed(svc, mask=mask, classified=True, clinician_review=_clinician_review(_sha(mask)))
     assert svc.enforce_review_binding(entry) is False          # unchanged mask: kept
     assert entry["metadata"].clinician_review is not None
     changed = mask.copy()
@@ -497,9 +518,12 @@ def report_env(monkeypatch):
     app.dependency_overrides.clear()
 
 
-def _generate(client, findings, language="en"):
-    return client.post("/api/v1/ai/report/generate",
-                       json={"template_type": "ms_comprehensive", "language": language, "findings": findings})
+def _generate(client, findings, language="en", sid="seg-1"):
+    """Changed after the review of PR #68: the request names its segmentation; DIS is derived for it."""
+    body = {"template_type": "ms_comprehensive", "language": language, "findings": findings}
+    if sid is not None:
+        body["segmentation_id"] = sid
+    return client.post("/api/v1/ai/report/generate", json=body)
 
 
 @pytest.mark.unit
@@ -519,7 +543,7 @@ def test_rc070_report_route_replaces_a_client_dis_conclusion_with_the_server_sta
 def test_rc070_report_route_uses_the_server_assessment_of_a_confirmed_segmentation(report_env):
     client, svc, report, _ = report_env
     mask = _mask()
-    _seed(svc, mask=mask, clinician_review=_clinician_review(_sha(mask)))
+    _seed(svc, mask=mask, classified=True, clinician_review=_clinician_review(_sha(mask)))
     r = _generate(client, {"dis_assessment": {"segmentation_id": "seg-1", "evaluation_status": "evaluated",
                                               "dis_met": False, "regions_with_lesions": 0}})
     assert r.status_code == 200, r.text[:300]
@@ -533,7 +557,7 @@ def test_rc070_report_route_uses_the_server_assessment_of_a_confirmed_segmentati
 def test_rc070_report_route_dis_block_naming_no_segmentation_is_not_evaluated(report_env):
     client, _svc, report, authorized = report_env
     r = _generate(client, {"dis_assessment": {"dis_met": True, "evaluation_status": "evaluated"},
-                           "lesion_analysis": {"total_count": 1}})
+                           "lesion_analysis": {"total_count": 1}}, sid=None)
     assert r.status_code == 200, r.text[:300]
     _assert_not_evaluated(report.calls[0]["findings"]["dis_assessment"])
     assert authorized == []

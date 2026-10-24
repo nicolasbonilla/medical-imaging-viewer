@@ -183,6 +183,8 @@ export interface ReportGenerateRequest {
   language: string;
   findings: Record<string, any>;
   volumetry?: Record<string, any> | null;
+  /** PRB-003: the segmentation the findings were measured on (DIS is derived for it on the server). */
+  segmentation_id?: string;
 }
 
 export interface ReportResponse {

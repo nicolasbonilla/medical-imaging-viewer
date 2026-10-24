@@ -214,10 +214,12 @@ describe('RC-071 confirming a segmentation without AI provenance', () => {
     expect(screen.queryByRole('button', { name: /confirm this segmentation/ })).not.toBeInTheDocument();
   });
 
-  it('rc071 an AI draft is not confirmed here: the card points to the AI draft review', async () => {
+  it('rc071 an AI draft without its own review is not confirmed here: the card points to the AI draft review', async () => {
+    // Changed after the review of PR #68: an AI draft is DIS-confirmed here once its own review (RC-047) is
+    // confirmed; until then the server says `ai_review_missing` and no confirmation is offered.
     seedStore(null);
     analyzeLesions.mockResolvedValue(ANALYSIS);
-    getDISAssessment.mockResolvedValue(notEvaluated('ai_draft'));
+    getDISAssessment.mockResolvedValue({ ...notEvaluated('ai_draft'), not_evaluated_reason: 'ai_review_missing' });
     render(<LesionDashboard segmentationId="seg-1" />);
     fireEvent.click(screen.getByRole('button', { name: 'Analyze' }));
     const card = await screen.findByTestId('dis-not-evaluated');
@@ -268,11 +270,6 @@ describe('RC-072 information for safety on automatic marking', () => {
     expect(de.disReview.automaticMarkingNotice).toMatch(/gesunden Gehirnen/);
   });
 
-  it('rc072 the segmentation panel shows the notice for a server-tool segmentation (no AI provenance)', () => {
-    const src = fs.readFileSync(path.resolve(__dirname, 'SegmentationPanel.tsx'), 'utf-8');
-    expect(src).toMatch(/<AutomaticMarkingNotice/);
-    // the stored origin of the open segmentation ('automatic' for server-tool output), not only its AI provenance
-    expect(src).toMatch(/currentSegmentation\?\.metadata\?\.segmentation_type/);
-    expect(src).toMatch(/!activeSegmentation\.ai_provenance && openSegmentationType === 'automatic'/);
-  });
+  // The segmentation panel's notice (server-tool LESION output only) is tested through the real panel in
+  // SegmentationPanel.prb003.test.tsx — it replaces a source-text check (review of PR #68).
 });

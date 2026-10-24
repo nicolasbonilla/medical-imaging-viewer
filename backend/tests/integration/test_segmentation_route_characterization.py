@@ -235,6 +235,12 @@ class TestAnalysisContract:
         assert body["evaluation_status"] == "not_evaluated"
         assert "dis_met_brain" not in body and "region_details" not in body
         assert "McDonald 2024" in body["dis_criteria_version"]
+        # A painted binary lesion is not a MAGNIMS region (review of PR #68, blocker 1).
+        assert body["not_evaluated_reason"] == "regions_not_classified"
+        # The EVALUATED contract (dis_met_brain bool, total_dis_regions 5, brain_regions_evaluated 3, version,
+        # region_details) is pinned on a classified, confirmed segmentation by the CI-run
+        # tests/unit/test_analysis_flow_ci_guard.py::test_dis_assessment_returns_200 (classification needs the
+        # source image in storage, which this Firestore-only characterisation does not provide).
 
     @pytest.mark.asyncio
     async def test_compare_two_segmentations_contract(self, async_client: AsyncClient):

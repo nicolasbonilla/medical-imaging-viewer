@@ -887,12 +887,16 @@ function ViewerApp() {
                               <div className="ml-2 mt-1 mb-1 border-l-2 border-cyan-600/30 pl-2">
                                 {/* Overlay controls inline */}
                                 <OverlayControls />
+                                {/* PRB-003 (review of PR #68, finding 10): a failure of the lesion panel must not
+                                    take the viewer down. */}
+                                <ErrorBoundary name="LesionDashboard">
                                 <LesionDashboard
                                   segmentationId={seg.id}
                                   onNavigateToSlice={(idx) => activeSlice.setSliceIndex(idx)}
                                   sourceFileId={seg.fileId}
                                   studyInstances={studyInfo?.instances}
                                 />
+                                </ErrorBoundary>
                               </div>
                             )}
                           </div>

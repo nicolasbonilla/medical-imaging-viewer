@@ -93,14 +93,23 @@ export interface DISSegmentationReview {
 export interface DISNotEvaluated {
   segmentation_id: string | null;
   evaluation_status: 'not_evaluated';
-  not_evaluated_reason: 'segmentation_not_confirmed' | 'confirmation_outdated' | 'segmentation_not_identified'
-    | 'assessment_failed';
+  not_evaluated_reason: 'regions_not_classified' | 'ai_review_missing' | 'segmentation_not_confirmed'
+    | 'confirmation_outdated' | 'segmentation_not_identified' | 'assessment_failed';
   message: string;
   reason_detail?: string;
   segmentation_review: DISSegmentationReview | null;
   dis_criteria_version: string;
-  /** Information for safety on automatic marking (RC-072), present for an automatic segmentation. */
+  /** Information for safety on automatic lesion marking (RC-072), present for a lesion-detection tool's output. */
   information_for_safety?: string;
+  regions?: DISRegionsState | null;
+}
+
+/** Review of PR #68: whether the labels are MAGNIMS regions assigned by the classification to these lesions. */
+export interface DISRegionsState {
+  classified: boolean;
+  label_scheme: 'magnims' | 'other';
+  edited_after_classification?: boolean | null;
+  method?: string | null;
 }
 
 /** A DIS state from the server: evaluated (on a confirmed segmentation) or explicitly not evaluated. */
@@ -114,6 +123,7 @@ export function isDisEvaluated(d: unknown): d is DISEvaluated {
 export interface DISEvaluated {
   evaluation_status: 'evaluated';
   segmentation_review: DISSegmentationReview;
+  regions?: DISRegionsState;
   segmentation_id: string;
   dis_met_brain: boolean;
   dis_criteria_version: string;

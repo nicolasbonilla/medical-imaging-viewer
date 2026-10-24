@@ -1052,7 +1052,11 @@
     "saveFirst": "Ungespeicherte Änderungen: Speichern Sie sie zuerst. Nur die gespeicherte Maske kann bestätigt werden.",
     "confirmedBy": "Segmentierung bestätigt von",
     "maskUnreadable": "Die geöffnete Maske konnte nicht gelesen werden; laden Sie die Segmentierung neu und versuchen Sie es erneut.",
-    "automaticMarkingNotice": "Die automatische Markierung markiert auch in den meisten gesunden Gehirnen Stellen, vor allem neben den Ventrikeln. Eine markierte Stelle ist kein Nachweis einer Multiplen Sklerose; jede Stelle muss fachärztlich geprüft werden."
+    "regionsNotConfirmed": "Regionen nicht von einem Radiologen bestätigt; keine Beurteilung der DIS.",
+    "openToConfirm": "Öffnen Sie diese Segmentierung, um sie zu bestätigen: Die Bestätigung gilt für die angezeigte Maske.",
+    "reasonAiReviewMissing": "Für diesen KI-Entwurf muss zuerst seine eigene Prüfung (KI-Entwurfshinweis im Segmentierungsbereich) für die aktuelle Maske bestätigt werden.",
+    "reasonRegionsNotClassified": "Die Läsionen haben keine MAGNIMS-Regionen aus der Regionenklassifikation (oder die Läsionen haben sich seitdem geändert). Führen Sie die MAGNIMS-Regionenklassifikation aus, prüfen Sie jede Region und bestätigen Sie dann.",
+    "automaticMarkingNotice": "Die automatische Läsionsmarkierung markiert auch in den meisten gesunden Gehirnen Stellen, vor allem neben den Ventrikeln. Eine markierte Stelle ist kein Nachweis einer Multiplen Sklerose; jede Stelle muss fachärztlich geprüft werden."
   },
   "lesions": {
     "title": "Läsionsanalyse",

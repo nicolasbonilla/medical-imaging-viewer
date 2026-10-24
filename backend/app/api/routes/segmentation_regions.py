@@ -467,6 +467,11 @@ async def classify_regions(
             return obj
 
         response_data = _sanitize(response_data)
+        if classified_mask is not None:
+            # PRB-003 (review of PR #68, blocker 1): the lesions these regions were assigned to. DIS is evaluated
+            # only while the stored lesions (footprint) are these and the labels are the MAGNIMS scheme.
+            response_data["classified_lesion_footprint_sha256"] = dis_gate.footprint_sha256(classified_mask)
+            response_data["classified_mask_sha256"] = SegmentationService.mask_sha256(classified_mask)
 
         # --- Auto-compute and persist ALL analysis data ---
         if classified_mask is not None:
@@ -483,6 +488,7 @@ async def classify_regions(
                 # PRB-003 (RC-070): DIS is stored only for a segmentation a clinician confirmed for
                 # THIS mask. Reclassifying changes the mask (region labels), which voids an earlier
                 # confirmation (RC-047 / RC-071): the regions must be checked and confirmed again.
+                metadata.analysis_data = {**(metadata.analysis_data or {}), "classification": response_data}
                 review = dis_gate.review_state(metadata, classified_mask)
                 if review["confirmed"]:
                     dis_result = dis_gate.evaluated(

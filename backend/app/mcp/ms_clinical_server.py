@@ -81,8 +81,9 @@ DIS_CONCLUSION_KEYS = frozenset({
     "regions_with_lesions", "total_topographies_involved", "region_details",
 })
 REGIONS_ARE_NOT_DIS = (
-    "Regions of a segmentation are candidates to verify; never derive dissemination in space from them. "
-    "DIS is reported only by summarize_dis_items, when the segmentation was confirmed by a radiologist."
+    "Regions not confirmed by a radiologist are candidates to verify; not a DIS assessment. Never derive "
+    "dissemination in space from them: DIS is reported only by summarize_dis_items, when a radiologist "
+    "confirmed the classified segmentation."
 )
 
 
@@ -164,6 +165,8 @@ async def summarize_dis_items(segmentation_id: str) -> dict:
         "clinician_recorded_prl": analysis_data.get("prl_summary"),
         "criteria_version": "McDonald 2024 (Montalban et al., Lancet Neurology 2025)",
         "not_evaluable_from_brain_mri": ["spinal cord", "optic nerve"],
+        # Review of PR #68, finding 3: the lesion analysis carries regions; they are not a DIS assessment.
+        "regions_note": REGIONS_ARE_NOT_DIS,
     }
 
 
@@ -266,6 +269,8 @@ async def generate_ms_report(
             "template_type": "ms_longitudinal" if "longitudinal" in findings else "general",
             "language": language,
             "findings": findings,
+            # PRB-003: the report route derives the DIS state for this segmentation only.
+            "segmentation_id": segmentation_id,
         },
     )
     return {"report": report, "unavailable": unavailable}
