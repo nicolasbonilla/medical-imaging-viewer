@@ -1,5 +1,25 @@
 # Multi-site conformal lesion-FDR under real MS shift — honest characterization
 
+> **UPDATE 2026-10-21 (v0.3, read first).** A pre-registered five-cohort re-analysis with the
+> FLAMeS 5-fold ensemble and three thick-slice 2D-FLAIR cohorts supersedes the numbers below:
+> `docs/research/paper/RESULTS-v0.3.md` (protocol `PROTOCOL-v0.3.md`). In short: no violation of
+> conformal BH was detected on held-out sites, but it is undecided on one site at α = 0.1 and 1-mm
+> calibration gives 2.6–3.2× the within-site false-discovery rate on thick slices; a per-scan FDX
+> threshold did not transport from 1-mm to thick slices (local recalibration restores it only by
+> near-abstention); the single-fold (fold-0) pipeline used below violates the guarantee on one
+> thick-slice site, while the 5-fold ensemble doubles power but raises the false rate on another;
+> a same-image segmenter swap violates it (expected from the different score scales).
+>
+> **CORRECTION 2026-10-17.** The `openms` cohort is largely FLAMeS TRAINING data:
+> FLAMeS trained on Ljubljana patients 01–15 and 21–25 (identified exactly from the released
+> nnU-Net fingerprint; `docs/research/records/2026-10-17_flames_ljubljana_split.json`), and the
+> fold-0 weights that produced our maps trained on 18 of the 30. Every `openms` number below is
+> therefore **in-distribution (training-contaminated)**, not cross-site evidence, and every
+> "pooled" patient null below includes those in-sample scores. The "openms ↔ mslesseg transport"
+> of Finding 1 is withdrawn as external evidence; the clean re-analysis (10 never-trained openms
+> scans, MSLesSeg-only nulls, distinct-scan intervals) is in
+> `docs/research/paper/manuscript-draft.md` v0.2 and `research/paper_a/`.
+
 **Status:** research finding, reproducible on in-hand public data (CPU-only).
 **Script:** [`scripts/calm-ms/multisite_conformal_fdr.py`](../../scripts/calm-ms/multisite_conformal_fdr.py)
 **Record:** [`backend/app/services/assets/multisite_conformal_record.json`](../../backend/app/services/assets/multisite_conformal_record.json)

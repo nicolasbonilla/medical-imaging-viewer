@@ -26,6 +26,10 @@ datasets:
     space: MNI_1mm
     cohort: cohorts/isbi19-lstai
     base_model_overlap: {flames: true}       # CONFIRMED: FLAMeS ref 12 (Carass 2017) = ISBI-2015 -> IN-SAMPLE
+    # 2026-10-17: FLAMeS Table 1 "ISBI Challenge: 20 (5)" = the ISBI-2015 TRAINING scans. Our cohort
+    # is segmented by LST-AI, which trained only on 491 in-house TUM scans and used ISBI-2015
+    # training data (msisbi, n=21) as an external TEST set (Wiltgen et al. 2024, PMC11088188).
+    lstai_overlap: "test-only in the LST-AI paper (msisbi, 5 subjects / 21 scans); not LST-AI training data"
     appears_in: [shifts_ms]                   # ISBI = Shifts training split
     caveats: "CONTAMINATED for a FLAMeS base: ISBI-2015 is FLAMeS training data (paper ref 12) AND a Shifts-MS component. FORBIDDEN as a FLAMeS conformal null / held-out test. Single(-ish)-rater. Usable only with a base model provably not trained on it."
 
@@ -45,6 +49,15 @@ datasets:
     status: have
     fetch: manifests/fetch_open_ms_data.sh
     base_model_overlap: {flames: true}       # CONFIRMED: FLAMeS ref 13 (Lesjak 2018) = this dataset -> IN-SAMPLE
+    # 2026-10-17 (research/paper_a/ljubljana_flames_match.py + flames_fold_membership.py): FLAMeS
+    # Table 1 "PubMRI: 20" = patients 01-15 and 21-25 (exact match, all 3 axes, of the brain
+    # bounding box + voxel spacing in the released nnU-Net dataset_fingerprint.json; identifiers
+    # FLAIR_085..FLAIR_104, monotone). NEVER trained on by any FLAMeS fold: patients 16-20, 26-30.
+    # Our maps use fold 0 only, whose validation split also holds patients 04 and 07.
+    flames_trained_patients: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 21, 22, 23, 24, 25]
+    flames_heldout_patients: [16, 17, 18, 19, 20, 26, 27, 28, 29, 30]
+    flames_fold0_validation_patients: [4, 7]
+    lstai_overlap: "test-only in the LST-AI paper (msljub, n=30); LST-AI trained on 491 in-house TUM scans"
     appears_in: [shifts_ms]                   # = Shifts PubMRI / dev_out (do NOT double-count)
     caveats: "CONTAMINATED for a FLAMeS base: this IS FLAMeS ref-13 training data (in-sample probability maps -> non-exchangeable null; its 'clean' within-site ECE 0.02-0.03 is an in-sample artefact) AND = Shifts dev_out. FORBIDDEN as a FLAMeS conformal null / held-out test. Single site (3T Siemens Ljubljana), FUSED consensus mask only. Recoverable only with a leave-this-out base model."
 
@@ -64,6 +77,9 @@ datasets:
     status: have                              # downloaded to data/external/mslesseg
     fetch: manifests/fetch_mslesseg.sh
     base_model_overlap: {flames: false}      # CLEAN: FLAMeS external-test only, not training -> valid null
+    # 2026-10-17: FLAMeS used 51 of MSLesSeg's 53 training-split patients as an external TEST set;
+    # 0/115 of our MSLesSeg FLAIRs match any 1-mm FLAMeS training entry (research/paper_a/mslesseg_flames_overlap_check.py;
+    # weak corroboration only — a differently preprocessed copy would not match).
     per_scanner_labels: "UNVERIFIED — ~3 Catania 1.5T scanners but no per-scan scanner ID confirmed in the Figshare release; treat as ONE site until verified"
     caveats: "The valuable CLEAN (FLAMeS-independent) 3D-MNI volume. BUT: single-city Catania 1.5T; 3mm floor drops small lesions; GT single-rater-validated NOT consensus; per-scanner metadata likely absent -> only usable as ONE whole-dataset site (re-imports the annotation confound). SAME pool as MSValid -> dedupe."
 
@@ -80,6 +96,7 @@ datasets:
     geometry: mixed                           # 1.5T ~4mm thick + 3T ~0.6mm
     space: native
     status: available
+    base_model_overlap: {flames: false}      # 2026-10-17: not among the 11 training sources of FLAMeS Table 1 (PMC12426979)
     caveats: "HIGH VALUE = 100 healthy controls on same scanner/protocol = a genuine conformal FALSE-NULL. But only 10 masks public, native space, single-vendor Philips, license self-contradictory. Split use: take controls now, gate patient labels on author email."
 
   msseg2016:

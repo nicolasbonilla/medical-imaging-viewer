@@ -1,0 +1,3 @@
+fingerprint entries with 1 mm spacing: 319 (311 distinct boxes)
+MSLesSeg FLAIR scans checked: 115; exact box matches with a 1 mm training entry: 0
+wrote docs/research/records/2026-10-17_mslesseg_flames_overlap_check.json
