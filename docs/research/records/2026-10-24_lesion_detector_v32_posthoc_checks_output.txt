@@ -1,0 +1,13 @@
+Q1 prob 0.5-0.6: MS_true n=66 sd~0.4626, MS_false n=195 sd~0.4564, controls n=53 sd~0.4753 | DIS-RAW AUROC 0.7021
+Q1 prob 0.6-0.7: MS_true n=97 sd~0.3663, MS_false n=228 sd~0.369, controls n=52 sd~0.4017 | DIS-RAW AUROC 0.7234
+Q1 prob 0.7-0.8: MS_true n=196 sd~0.2578, MS_false n=309 sd~0.2704, controls n=68 sd~0.3705 | DIS-RAW AUROC 0.8007
+Q1 prob 0.8-0.9: MS_true n=797 sd~0.1011, MS_false n=421 sd~0.1144, controls n=37 sd~0.1538 | DIS-RAW AUROC 0.755
+Q1 prob 0.9-1.0: MS_true n=1810 sd~0.0349, MS_false n=186 sd~0.0427, controls n=53 sd~0.0574 | DIS-RAW AUROC 0.72
+Q1 vol 3-10 mm3: MS_true n=292 sd~0.149, MS_false n=514 sd~0.2867, controls n=64 sd~0.3847
+Q1 vol 10-30 mm3: MS_true n=668 sd~0.0753, MS_false n=383 sd~0.2026, controls n=75 sd~0.3667
+Q1 vol 30-100 mm3: MS_true n=935 sd~0.0571, MS_false n=252 sd~0.1739, controls n=58 sd~0.3718
+Q1 vol 100-1e+09 mm3: MS_true n=1071 sd~0.0321, MS_false n=190 sd~0.1314, controls n=66 sd~0.2613
+Q2 sens 0.80: ENS-RAW 0.73/0.39, DIS-RAW 0.61/0.34, GR-LR 0.74/0.41, GR+C-LR 0.69/0.37
+Q2 sens 0.90: ENS-RAW 1.02/0.49, DIS-RAW 0.93/0.48, GR-LR 1.31/0.63, GR+C-LR 0.97/0.49
+Q2 sens 0.95: ENS-RAW 1.62/0.7, DIS-RAW 1.26/0.61, GR-LR 1.97/0.81, GR+C-LR 1.61/0.73
+Q2 sens 1.00: ENS-RAW 2.63/0.85, DIS-RAW 2.63/0.85, GR-LR 2.63/0.85, GR+C-LR 2.63/0.85

@@ -237,3 +237,9 @@ Data stay outside the repository (scratch; deleted after the run).
   reported next to it. For H1 and K3 the same bias works *against* the learned models (conservative),
   so the pre-registered pooled endpoints are kept unchanged and the fold-wise versions are added as
   sensitivity analyses (K10 for H1; K3 fold-wise). No other change.
+* **Execution (2026-10-24, after the run):** the feature cache was built once and `evaluate_v32.py`
+  ran once, unchanged from commit 6606cc6; gate V1 passed; the K6 independent check matched exactly.
+  No deviation from the registered analyses beyond D1.
+* **Post-hoc additions, made AFTER the outcomes were seen, labelled as such:** `posthoc_checks_v32.py`
+  (fold disagreement of control vs MS candidates within probability and size bands; healthy false
+  candidates per scan at 80 / 95 / 100 % sensitivity). Descriptive only; no decision uses them.

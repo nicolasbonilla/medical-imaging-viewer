@@ -1,0 +1,5 @@
+(a) {"controls": 100, "candidates": 263, "scans_with_any": 85, "mismatches": [], "passed": true}
+(b) {"ENS-RAW": 0.8048, "GR+C-LR": 0.822, "delta": 0.0172, "record_ENS-RAW": 0.8048, "record_GR+C-LR": 0.822, "passed": true}
+(c) {"ENS-RAW": {"fps": 1.02, "share_any": 0.49, "record_fps": 1.02, "record_share": 0.49}, "GR+C-LR": {"fps": 0.97, "share_any": 0.49, "record_fps": 0.97, "record_share": 0.49}, "passed": true}
+K6 passed: True
+wrote docs/research/records/2026-10-24_lesion_detector_v32_independent_check.json
