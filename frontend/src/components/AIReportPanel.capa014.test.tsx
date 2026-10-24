@@ -136,3 +136,40 @@ describe('CAPA-014 report viewer (second review)', () => {
     expect(body.textContent).toContain('[image: x]');
   });
 });
+
+// Third independent review (R1, R4): the clinician's entry and the application's note are rendered in their own
+// boxes, which the model's text cannot produce (the server neutralises those containers in the model's text);
+// every typed field is limited to 5000 characters, with a visible counter.
+const BOXES = ["### Clinician's entry (added in the application; not sent to the AI service)", '', '**Technique:**', '',
+  '```clinician-entry', '3T', '```', '', '---', '', '### AI draft (from measurements only)', '',
+  "Labels outside the device's vocabulary were sent to the AI service as numbered placeholders; their names were not sent:",
+  '', '```app-note', '[unlisted label 1] = My A', '```', '', 'Model text.', '', '```text', 'model fence', '```'].join('\n');
+
+describe('CAPA-014 report draft (third review)', () => {
+  it('rc066 the clinician entry and the app note have their own boxes; a model fence does not', () => {
+    const { container } = render(<ReportViewerModal isOpen onClose={() => {}}
+      report={{ report_id: 'r', content: BOXES, template_type: 'general', language: 'en', processing_time_ms: 1 } as any} />);
+    const body = container.ownerDocument.querySelector('.report-body') as HTMLElement;
+    const entry = body.querySelectorAll('[data-testid="clinician-entry-box"]');
+    const note = body.querySelectorAll('[data-testid="app-note-box"]');
+    expect(entry.length).toBe(1);
+    expect(entry[0].textContent).toContain('3T');
+    expect(note.length).toBe(1);
+    expect(note[0].textContent).toContain('[unlisted label 1] = My A');
+    const modelPre = [...body.querySelectorAll('pre')].find((p) => p.textContent?.includes('model fence'));
+    expect(modelPre).toBeTruthy();
+    expect(modelPre!.closest('[data-testid="clinician-entry-box"], [data-testid="app-note-box"]')).toBeNull();
+  });
+
+  it('rc066 each typed field is limited to 5000 characters with a visible counter', () => {
+    renderPanel();
+    for (const id of ['report-indication-input', 'report-technique-input', 'report-observations-input']) {
+      expect((screen.getByTestId(id) as HTMLInputElement).maxLength).toBe(5000);
+    }
+    fireEvent.change(screen.getByTestId('report-indication-input'), { target: { value: 'abc' } });
+    expect(screen.getByTestId('report-indication-count').textContent).toBe('3 / 5000');
+    expect(screen.getByTestId('report-technique-count').textContent).toBe('0 / 5000');
+    expect(screen.getByTestId('report-observations-count').textContent).toBe('0 / 5000');
+  });
+});
+

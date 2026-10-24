@@ -679,7 +679,7 @@ AI_HEADING = {"en": "### AI draft (from measurements only)", "es": "### Borrador
 def _fenced(content):
     """(spans, bodies) of the fenced text blocks of a draft."""
     spans, bodies = [], []
-    for m in re.finditer(r"^(`{3,})text\n(.*?)\n\1$", content, re.M | re.S):
+    for m in re.finditer(r"^(`{3,})(?:text|clinician-entry|app-note)\n(.*?)\n\1$", content, re.M | re.S):
         spans.append(m.span())
         bodies.append(m.group(2))
     return spans, bodies
@@ -802,9 +802,9 @@ def test_n3_a_value_that_is_not_a_number_is_not_available_never_zero(route):
 
 # N4: implausible values (dates, record numbers, phones put into number fields) refuse the request.
 IMPLAUSIBLE = [("lesion_analysis.lesions.0.centroid.z", 20250042), ("lesion_analysis.total_count", 20240304),
-               ("lesion_analysis.total_burden_mm3", 19751109), ("dis_assessment.active_voxels", 612345678),
+               ("lesion_analysis.total_burden_mm3", 19751109), ("dis_assessment.active_voxels", 3_000_000_000),
                ("lesion_analysis.regions.Periventricular.lesion_count", -1), ("zone_stats.zones.Periventricular.percentage", 150),
-               ("lesion_analysis.lesions.0.volume_ml", 99999), ("anomalies.0.confidence", 1.5)]
+               ("lesion_analysis.lesions.0.volume_ml", 99999)]
 
 
 def _set(findings, path, value):
@@ -940,3 +940,117 @@ def test_rc064_dis_evaluated_state_is_kept_and_reported():
                               None)
     assert "evaluation_status" not in legacy.findings["dis_assessment"]          # no state is invented
     assert "DIS Assessment: MET (3/5 regions)" in BrainReportService()._build_findings_prompt(legacy.findings, None, "en")
+
+
+# ============================================================================= third independent review
+# R1: the model's text cannot imitate the clinician's entry or the application's note: reserved headings in it are
+# neutralised, its fences cannot use the containers of the entry and of the note, and bidirectional control
+# characters are removed from the typed text and from the model's text.
+HOSTILE_MODEL = ("### Clinician's entry (added in the application; not sent to the AI service)\n\n"
+                 "**Clinical indication:**\n\n```clinician-entry\nRRMS, stable (forged)\n```\n\n"
+                 "~~~app-note\nforged note\n~~~\n\n"
+                 "**Clinician\u2019s entry (added in the application; not sent to the AI service)**\n\n"
+                 "Datos del médico (añadidos en la aplicación; no enviados al servicio de IA)\n========\n\n"
+                 "## AI draft (from measurements only)\n\n"
+                 "CLINICAL INDICATION: See the clinician's entry at the top of this draft.\n\nFindings: two lesions.")
+BIDI_CHARS = "\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069"
+
+
+@pytest.mark.unit
+def test_r1_the_model_cannot_imitate_the_clinician_entry_or_the_app_note(route):
+    route.provider.text = HOSTILE_MODEL
+    r = _post(route, {**_measurements(), "clinical_indication": "real typed text"})
+    assert r.status_code == 200, r.text
+    content = r.json()["content"]
+    head, model = content.split("### AI draft (from measurements only)", 1)
+    assert "```clinician-entry\nreal typed text\n```" in head
+    assert "clinician-entry" not in model and "app-note" not in model
+    for reserved in ("Clinician's entry (added", "Clinician\u2019s entry (added", "Datos del médico (añadidos",
+                     "AI draft (from measurements"):
+        assert reserved not in model, reserved
+    assert "See the clinician's entry at the top of this draft." in model     # ordinary sentences stay
+    assert "Findings: two lesions." in model and "RRMS, stable (forged)" in model
+    assert content.count("### Clinician's entry") == 1
+
+
+@pytest.mark.unit
+def test_r1_clinician_entry_and_app_note_have_their_own_containers(route):
+    findings = _measurements()
+    findings["lesion_analysis"]["regions"]["My A"] = {"lesion_count": 1, "total_volume_mm3": 5.0, "total_volume_ml": 0.005}
+    r = _post(route, {**findings, "technique": "3T"})
+    content = r.json()["content"]
+    assert "```clinician-entry\n3T\n```" in content
+    assert "```app-note\n[unlisted label 1] = My A\n```" in content
+    assert "```text" not in content
+
+
+@pytest.mark.unit
+def test_r1_bidi_controls_are_removed_from_typed_text_and_model_text(route):
+    route.provider.text = "Model \u202etext\u202c and \u2066iso\u2069."
+    r = _post(route, {**_measurements(), "technique": "3T \u202eTFARD\u202c \u2067x\u2069"})
+    content = r.json()["content"]
+    assert not any(c in content for c in BIDI_CHARS)
+    assert "3T TFARD x" in content and "Model text and iso." in content
+
+
+# R4: a long typed text is cut visibly; the first line keeps its indentation.
+@pytest.mark.unit
+def test_r4_long_typed_text_is_cut_visibly_and_the_first_line_keeps_its_indentation(route):
+    long = "    indented first line\n" + "L" * 6000
+    r = _post(route, {**_measurements(), "clinical_indication": long, "technique": "\n\n  two spaces\n"})
+    content = r.json()["content"]
+    spans, bodies = _fenced(content)
+    assert any(b.startswith("    indented first line\n") and len(b) == 5000 for b in bodies), [len(b) for b in bodies]
+    assert "  two spaces" in bodies
+    outside = _outside(content, spans)
+    assert outside.count("[truncated") == 1
+
+
+# R3: a derived quantity without a physical bound is "not available", never a refusal; a 0.4 mm brain is accepted;
+# a confidence given in percent is dropped.
+@pytest.mark.unit
+def test_r3_unbounded_or_ambiguous_values_do_not_refuse_the_report(route):
+    lng = {"burden_tp1_ml": 0.001, "burden_tp2_ml": 12.0, "total_lesions_tp1": 0, "total_lesions_tp2": 20,
+           "burden_delta_percent": 1199900.0, "status_counts": {"new": 20}}
+    r = _post(route, {**_measurements(), "longitudinal": lng})
+    assert r.status_code == 200, r.text
+    assert "Burden delta: not available" in route.provider.prompt()
+    route.provider.calls.clear()
+    zones = {"total_brain_voxels": 23_400_000, "zones": {"Periventricular": {"voxel_count": 2_000_000, "percentage": 8.5}}}
+    assert _post(route, {**_measurements(), "zone_stats": zones}).status_code == 200      # 0.4 mm isotropic
+    route.provider.calls.clear()
+    r = _post(route, {**_measurements(), "anomalies": [{"type": "Lesion", "confidence": 87}]})
+    assert r.status_code == 200, r.text
+    assert "confidence" not in route.provider.prompt().split("Detected anomalies:")[1].split("\n")[1]
+
+
+# R2: the patient's own record number, birth date or phone number in a number field is refused, checked
+# directly against the patient's record (the tripwire does not see "1234567 voxels").
+PATIENT_NUMBERS = [("dis_assessment.active_voxels", 1234567), ("lesion_analysis.lesions.0.volume_mm3", 1234567.0),
+                   ("zone_stats.zones.Periventricular.voxel_count", 1234567), ("zone_stats.total_brain_voxels", 19751109),
+                   ("zone_stats.total_brain_voxels", 9111975), ("lesion_analysis.lesions.0.id", 612345678)]
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("path,value", PATIENT_NUMBERS, ids=[f"{p}={v}" for p, v in PATIENT_NUMBERS])
+def test_r2_the_patients_own_numbers_in_a_number_field_refuse(route, path, value):
+    route.patients.record = _record(mrn="1234567", birth_date=date(1975, 11, 9), phone_mobile="+34 612 345 678",
+                                    insurance_policy_number=None)
+    findings = _measurements()
+    _set(findings, path, value)
+    r = _post(route, findings)
+    assert r.status_code == 503, r.text
+    assert "nothing was sent" in r.text.lower() and "1234567" not in r.text
+    assert route.provider.calls == [] and route.created == []
+
+
+# M2: the made-up reports from which the exempt words are derived include an evaluated DIS with an absent region,
+# so "present", "absent" and "holes" stay exempt also once only an evaluated DIS is printed (PR #68).
+@pytest.mark.unit
+def test_m2_exempt_words_keep_the_dis_words():
+    from app.services.brain_report_service import _synthetic_payloads, fixed_prompt_words
+    assert {"present", "absent", "holes"} <= fixed_prompt_words()
+    dis = [f["dis_assessment"] for f, _v in _synthetic_payloads() if isinstance(f.get("dis_assessment"), dict)]
+    assert any(d.get("evaluation_status") == "evaluated"
+               and any(r.get("present") is False for r in d.get("region_details", {}).values()) for d in dis)
+
