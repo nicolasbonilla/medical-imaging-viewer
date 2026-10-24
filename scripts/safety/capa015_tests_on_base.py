@@ -45,15 +45,19 @@ NO_CLOUD = {"GOOGLE_APPLICATION_CREDENTIALS": os.path.join(tempfile.gettempdir()
             "AUDIT_SINK_BACKEND": "memory", "REFRESH_TOKEN_BACKEND": "memory", "COLUMNS": "400"}
 
 
+# Swapped back to the base: application code and the configuration templates the tests read.
+SOURCE_PATHS = ["backend/app", "frontend/src", "backend/scripts/generate_secrets.py", "backend/.env.example"]
+
+
 def _is_test(path):
     return "/tests/" in path or ".test." in path or "__tests__" in path
 
 
 def source_files():
     """(changed, added): source files that differ from BASE — at their BASE version, or new since."""
-    names = subprocess.run(["git", "diff", "--name-only", BASE, "--", "backend/app", "frontend/src"],
+    names = subprocess.run(["git", "diff", "--name-only", BASE, "--", *SOURCE_PATHS],
                            capture_output=True, text=True, check=True).stdout.split()
-    names += subprocess.run(["git", "ls-files", "--others", "--exclude-standard", "--", "backend/app", "frontend/src"],
+    names += subprocess.run(["git", "ls-files", "--others", "--exclude-standard", "--", *SOURCE_PATHS],
                             capture_output=True, text=True, check=True).stdout.split()
     changed, added = [], []
     for n in sorted(set(names)):
@@ -75,9 +79,11 @@ def run_backend():
     tests = {}
     for m in re.finditer(r"^(FAILED|ERROR|PASSED) [^:\s]+::(.+?)(?: - (.*))?$", r.stdout, re.M):
         tests[m.group(2)] = {"status": m.group(1).lower(), "reason": (m.group(3) or "")[:240]}
-    p = re.search(r"(\d+) passed", r.stdout)
-    f = re.search(r"(\d+) failed", r.stdout)
-    e = re.search(r"(\d+) error", r.stdout)
+    # counts from pytest's final summary line only (captured log lines also contain "1 error")
+    summary = (re.findall(r"^=+ (.+) in [\d.]+s(?: \([^)]*\))? =+$", r.stdout, re.M) or [""])[-1]
+    p = re.search(r"(\d+) passed", summary)
+    f = re.search(r"(\d+) failed", summary)
+    e = re.search(r"(\d+) errors?\b", summary)
     return {"passed": int(p.group(1)) if p else 0, "failed": int(f.group(1)) if f else 0,
             "errors": int(e.group(1)) if e else 0, "results": tests}
 
