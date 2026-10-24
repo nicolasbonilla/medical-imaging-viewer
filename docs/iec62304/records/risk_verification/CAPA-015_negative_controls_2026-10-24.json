@@ -1,14 +1,14 @@
 {
-  "executed": "2026-10-24T14:56:47",
+  "executed": "2026-10-24T16:36:47",
   "method": "one mutation at a time; each anchor asserted to occur exactly once; the bound tests of the mutated side are run (backend pytest without cloud credentials, frontend vitest JSON reporter)",
   "hash_basis": "sha256 of the UTF-8 text with LF line endings",
   "source_sha256": {
     "backend/app/api/routes/auth.py": "5ccd654e19a78f6391b697317197f4856653e2a3baa59b6332e7233ba02689a4",
     "backend/app/api/routes/authentication.py": "0decea955987724fa4fa5286306a4a9d57128b368602d63c32c29a246f7398bc",
-    "backend/app/core/client_ip.py": "56a9feb53d4d1d8683da138137ebf0aa67284a745b8b44a6b821513d71dd463a",
+    "backend/app/core/client_ip.py": "1b5aeac644c9016deffedd4108032517b61a6ddb22540e3d26a98b91823f5034",
     "backend/app/core/config.py": "c061d6b85f40dc613496b744cd83d073298385888db536d13a3c6540d03721da",
     "backend/app/core/logging/audit.py": "c625227d56f64bc11b40d748fe7818de75578e0ecaa769cffdb68fc2f3079b29",
-    "backend/app/core/logging/audit_middleware.py": "425cd6c4b0cf53ef09a985adcca51ae1d56aa075d1dcf33bfd1558b23bdbd21a",
+    "backend/app/core/logging/audit_middleware.py": "42edc748c4326e9fbc99b5674074788eff798492ad9f33de4da25b6f83a2f3df",
     "backend/app/core/logging/audit_sink.py": "d6c70f8f762a0bd72d263f19f5266414bdbe0cd6da6ec2a94f5593970b98a214",
     "backend/app/security/auth.py": "68488e61ab16ff8a18bb829728879e94647f5b002f6fee18b3ac5fc94175792b",
     "backend/app/security/refresh_tokens.py": "dc75c4facbf8e9ab83b4eea1cee989da2e122331087a54d1913a31b8c7efbf00",
@@ -29,7 +29,7 @@
   "test_sha256": {
     "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
     "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-    "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767",
+    "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a",
     "frontend/src/services/session.capa015.test.tsx": "0f4eb947f6c861687d445f922da4054481b91a527f5a5b7e9cb2e998b1cb2cb3",
     "frontend/src/services/session.capa015.review.test.tsx": "f57d8e4cb1b977d5321be83c5597d1535304519f1898f0f56b02f2b15ef4784f",
     "frontend/src/services/session.capa015.review2.test.tsx": "53083a7524147e9d65acb497e6756c3c18d3c31299ea516ceb01ebdeaecd71c8"
@@ -46,7 +46,7 @@
     "B1_not_written_durably": {
       "suite": "backend",
       "failed": 28,
-      "passed": 26,
+      "passed": 27,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -81,17 +81,17 @@
       ],
       "reintroduces": "records only on stdout / the instance's disk — nothing in Firestore (the defect as found)",
       "applied": true,
-      "executed": "2026-10-24T14:57:08",
+      "executed": "2026-10-24T16:37:15",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "B2_overwrite_instead_of_append": {
       "suite": "backend",
       "failed": 5,
-      "passed": 49,
+      "passed": 50,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -103,17 +103,17 @@
       ],
       "reintroduces": "an existing audit record can be overwritten",
       "applied": true,
-      "executed": "2026-10-24T14:57:29",
+      "executed": "2026-10-24T16:38:01",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "B3_client_time_only": {
       "suite": "backend",
       "failed": 2,
-      "passed": 52,
+      "passed": 53,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -122,17 +122,17 @@
       ],
       "reintroduces": "the record carries the instance's clock, not the server commit time",
       "applied": true,
-      "executed": "2026-10-24T14:57:49",
+      "executed": "2026-10-24T16:38:33",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "B4_failure_not_retried": {
       "suite": "backend",
       "failed": 3,
-      "passed": 51,
+      "passed": 52,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -142,17 +142,17 @@
       ],
       "reintroduces": "a failed write is given up at once (record lost from the trail)",
       "applied": true,
-      "executed": "2026-10-24T14:58:09",
+      "executed": "2026-10-24T16:39:14",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "B5_failure_silent": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -160,17 +160,17 @@
       ],
       "reintroduces": "a failed audit write is not logged loudly",
       "applied": true,
-      "executed": "2026-10-24T14:58:29",
+      "executed": "2026-10-24T16:39:48",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "B6_drop_silent": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -178,17 +178,17 @@
       ],
       "reintroduces": "a record dropped on queue overflow leaves no trace in the server log",
       "applied": true,
-      "executed": "2026-10-24T14:58:50",
+      "executed": "2026-10-24T16:40:23",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "B7_status_hides_failure": {
       "suite": "backend",
       "failed": 3,
-      "passed": 51,
+      "passed": 52,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -198,17 +198,17 @@
       ],
       "reintroduces": "the administrator indicator says 'ok' while writes fail",
       "applied": true,
-      "executed": "2026-10-24T14:59:11",
+      "executed": "2026-10-24T16:40:58",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "B8_free_text_in_record": {
       "suite": "backend",
       "failed": 7,
-      "passed": 47,
+      "passed": 48,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -222,17 +222,17 @@
       ],
       "reintroduces": "description text (free text) reaches the durable record",
       "applied": true,
-      "executed": "2026-10-24T14:59:32",
+      "executed": "2026-10-24T16:41:30",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "B9_concrete_path_and_query": {
       "suite": "backend",
       "failed": 6,
-      "passed": 48,
+      "passed": 49,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -245,17 +245,17 @@
       ],
       "reintroduces": "the concrete URL with its query string instead of the route template",
       "applied": true,
-      "executed": "2026-10-24T14:59:53",
+      "executed": "2026-10-24T16:42:01",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "B10_file_reference_not_parsed": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -263,17 +263,17 @@
       ],
       "reintroduces": "an imaging file reference kept whole (file name) instead of its ids and hash",
       "applied": true,
-      "executed": "2026-10-24T15:00:15",
+      "executed": "2026-10-24T16:42:32",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "B11_typed_identifier_kept": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -281,17 +281,17 @@
       ],
       "reintroduces": "the identifier typed at a failed login is stored as typed",
       "applied": true,
-      "executed": "2026-10-24T15:00:38",
+      "executed": "2026-10-24T16:43:02",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "B12_login_not_audited": {
       "suite": "backend",
       "failed": 4,
-      "passed": 50,
+      "passed": 51,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -302,17 +302,17 @@
       ],
       "reintroduces": "a successful password login leaves no audit record (the defect as found)",
       "applied": true,
-      "executed": "2026-10-24T15:01:00",
+      "executed": "2026-10-24T16:43:34",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "B13_lockout_not_audited": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -320,17 +320,17 @@
       ],
       "reintroduces": "an account lock-out leaves no audit record",
       "applied": true,
-      "executed": "2026-10-24T15:01:25",
+      "executed": "2026-10-24T16:44:07",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "B14_longitudinal_decision_unmapped": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -338,17 +338,17 @@
       ],
       "reintroduces": "a radiologist's longitudinal decision recorded only as a generic modification",
       "applied": true,
-      "executed": "2026-10-24T15:01:47",
+      "executed": "2026-10-24T16:44:40",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "B15_ai_report_unmapped": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -356,17 +356,17 @@
       ],
       "reintroduces": "AI report generation not recorded as such",
       "applied": true,
-      "executed": "2026-10-24T15:02:12",
+      "executed": "2026-10-24T16:45:11",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "B16_segmentation_save_unmapped": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -374,17 +374,17 @@
       ],
       "reintroduces": "a segmentation save not recorded as such",
       "applied": true,
-      "executed": "2026-10-24T15:02:42",
+      "executed": "2026-10-24T16:45:44",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "B17_body_ids_ignored": {
       "suite": "backend",
       "failed": 2,
-      "passed": 52,
+      "passed": 53,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -393,17 +393,17 @@
       ],
       "reintroduces": "the segmentations a longitudinal decision was made on are not recorded",
       "applied": true,
-      "executed": "2026-10-24T15:03:12",
+      "executed": "2026-10-24T16:46:19",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "B18_reads_not_deduplicated": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -411,17 +411,17 @@
       ],
       "reintroduces": "every slice read written to Firestore (unreadable, costly trail)",
       "applied": true,
-      "executed": "2026-10-24T15:03:37",
+      "executed": "2026-10-24T16:46:51",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "B19_actor_not_identified": {
       "suite": "backend",
       "failed": 10,
-      "passed": 44,
+      "passed": 45,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -438,17 +438,17 @@
       ],
       "reintroduces": "request records without the acting user",
       "applied": true,
-      "executed": "2026-10-24T15:04:08",
+      "executed": "2026-10-24T16:47:24",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "B20_no_request_id": {
       "suite": "backend",
       "failed": 6,
-      "passed": 48,
+      "passed": 49,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -461,17 +461,17 @@
       ],
       "reintroduces": "records not correlated with their request",
       "applied": true,
-      "executed": "2026-10-24T15:04:33",
+      "executed": "2026-10-24T16:47:55",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "B21_auth_service_events_lost": {
       "suite": "backend",
       "failed": 2,
-      "passed": 52,
+      "passed": 53,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -480,17 +480,17 @@
       ],
       "reintroduces": "admin user changes and password changes not in the durable trail (the in-memory list, as found)",
       "applied": true,
-      "executed": "2026-10-24T15:05:05",
+      "executed": "2026-10-24T16:48:26",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "B22_trail_read_by_radiologists": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -498,17 +498,17 @@
       ],
       "reintroduces": "radiologists can read the whole audit trail (as found)",
       "applied": true,
-      "executed": "2026-10-24T15:05:36",
+      "executed": "2026-10-24T16:48:57",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "B23_status_open_to_all": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -516,17 +516,17 @@
       ],
       "reintroduces": "any user sees the audit-store status",
       "applied": true,
-      "executed": "2026-10-24T15:05:59",
+      "executed": "2026-10-24T16:49:28",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "B24_trail_reading_not_audited": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -534,17 +534,17 @@
       ],
       "reintroduces": "reading the audit trail is not itself recorded",
       "applied": true,
-      "executed": "2026-10-24T15:06:23",
+      "executed": "2026-10-24T16:49:53",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "B25_clients_may_write_trail": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -552,17 +552,17 @@
       ],
       "reintroduces": "the security rules let a signed-in client write audit records",
       "applied": true,
-      "executed": "2026-10-24T15:06:47",
+      "executed": "2026-10-24T16:50:16",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "S1_no_refresh_cookie": {
       "suite": "backend",
       "failed": 12,
-      "passed": 42,
+      "passed": 43,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -581,17 +581,17 @@
       ],
       "reintroduces": "password login starts no refresh session (sign in again every hour, as found)",
       "applied": true,
-      "executed": "2026-10-24T15:07:09",
+      "executed": "2026-10-24T16:50:40",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "S2_cookie_readable_by_scripts": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -599,17 +599,17 @@
       ],
       "reintroduces": "the refresh cookie readable by page scripts",
       "applied": true,
-      "executed": "2026-10-24T15:07:31",
+      "executed": "2026-10-24T16:51:02",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "S3_cookie_sent_cross_site": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -617,17 +617,17 @@
       ],
       "reintroduces": "the refresh cookie sent on cross-site navigations",
       "applied": true,
-      "executed": "2026-10-24T15:07:54",
+      "executed": "2026-10-24T16:51:25",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "S4_raw_token_stored": {
       "suite": "backend",
       "failed": 12,
-      "passed": 42,
+      "passed": 43,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -646,17 +646,17 @@
       ],
       "reintroduces": "the raw refresh token stored server-side",
       "applied": true,
-      "executed": "2026-10-24T15:08:15",
+      "executed": "2026-10-24T16:51:45",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "S5_no_rotation": {
       "suite": "backend",
       "failed": 5,
-      "passed": 49,
+      "passed": 50,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -668,17 +668,17 @@
       ],
       "reintroduces": "a refresh token stays usable after use",
       "applied": true,
-      "executed": "2026-10-24T15:08:37",
+      "executed": "2026-10-24T16:52:08",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "S6_reuse_not_revoking": {
       "suite": "backend",
       "failed": 3,
-      "passed": 51,
+      "passed": 52,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -688,17 +688,17 @@
       ],
       "reintroduces": "a replayed refresh token does not end the session family",
       "applied": true,
-      "executed": "2026-10-24T15:08:58",
+      "executed": "2026-10-24T16:52:29",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "S7_idle_not_enforced": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -706,17 +706,17 @@
       ],
       "reintroduces": "no idle expiry",
       "applied": true,
-      "executed": "2026-10-24T15:09:19",
+      "executed": "2026-10-24T16:52:49",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "S8_absolute_not_enforced": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -724,17 +724,17 @@
       ],
       "reintroduces": "no absolute expiry",
       "applied": true,
-      "executed": "2026-10-24T15:09:40",
+      "executed": "2026-10-24T16:53:11",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "S9_logout_not_revoking": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -742,17 +742,17 @@
       ],
       "reintroduces": "logout leaves the refresh session usable",
       "applied": true,
-      "executed": "2026-10-24T15:10:03",
+      "executed": "2026-10-24T16:53:33",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "S10_password_change_not_revoking": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -760,17 +760,17 @@
       ],
       "reintroduces": "a password change leaves every session usable",
       "applied": true,
-      "executed": "2026-10-24T15:10:24",
+      "executed": "2026-10-24T16:53:53",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "S11_password_not_persisted": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -778,17 +778,17 @@
       ],
       "reintroduces": "the new password kept in one process only: the old one still works at login (as found)",
       "applied": true,
-      "executed": "2026-10-24T15:10:46",
+      "executed": "2026-10-24T16:54:14",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "S12_inactive_user_refreshes": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -796,17 +796,17 @@
       ],
       "reintroduces": "a deactivated user keeps refreshing",
       "applied": true,
-      "executed": "2026-10-24T15:11:08",
+      "executed": "2026-10-24T16:54:36",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "S13_locked_user_refreshes": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -814,17 +814,17 @@
       ],
       "reintroduces": "a locked user keeps refreshing",
       "applied": true,
-      "executed": "2026-10-24T15:11:30",
+      "executed": "2026-10-24T16:54:57",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "S14_role_not_reread": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -832,17 +832,17 @@
       ],
       "reintroduces": "the refreshed token keeps a role the user no longer has",
       "applied": true,
-      "executed": "2026-10-24T15:11:51",
+      "executed": "2026-10-24T16:55:19",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "S15_foreign_origin_accepted": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -850,17 +850,17 @@
       ],
       "reintroduces": "a refresh from a foreign origin accepted",
       "applied": true,
-      "executed": "2026-10-24T15:12:13",
+      "executed": "2026-10-24T16:55:40",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "S16_long_access_token": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -868,17 +868,17 @@
       ],
       "reintroduces": "a 60-minute access token (as found)",
       "applied": true,
-      "executed": "2026-10-24T15:12:35",
+      "executed": "2026-10-24T16:56:01",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "S17_passkey_no_session": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -886,17 +886,17 @@
       ],
       "reintroduces": "passkey login starts no refresh session",
       "applied": true,
-      "executed": "2026-10-24T15:12:57",
+      "executed": "2026-10-24T16:56:23",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "S18_rotation_outside_transaction": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -904,11 +904,11 @@
       ],
       "reintroduces": "rotation writes outside the transaction (two instances could both rotate one token)",
       "applied": true,
-      "executed": "2026-10-24T15:13:20",
+      "executed": "2026-10-24T16:56:47",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "F1_hard_redirect_restored": {
@@ -1272,7 +1272,7 @@
     "R1_startup_accepts_short_idle": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1280,17 +1280,17 @@
       ],
       "reintroduces": "a refresh idle limit shorter than the access token accepted at start-up (M1)",
       "applied": true,
-      "executed": "2026-10-24T15:16:02",
+      "executed": "2026-10-24T16:57:23",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R2_no_refresh_deadline_to_client": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1298,17 +1298,17 @@
       ],
       "reintroduces": "the client is not told when the refresh session ends (M1)",
       "applied": true,
-      "executed": "2026-10-24T15:16:22",
+      "executed": "2026-10-24T16:57:49",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R3_template_60": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1316,17 +1316,17 @@
       ],
       "reintroduces": "the secret generator emits a 60-minute access token again (M1)",
       "applied": true,
-      "executed": "2026-10-24T15:16:41",
+      "executed": "2026-10-24T16:58:23",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R4_auth_route_skipped_unless_401_403": {
       "suite": "backend",
       "failed": 2,
-      "passed": 52,
+      "passed": 53,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1335,17 +1335,17 @@
       ],
       "reintroduces": "/auth requests without their own event recorded only on 401/403 (M3, as found)",
       "applied": true,
-      "executed": "2026-10-24T15:17:00",
+      "executed": "2026-10-24T16:58:48",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R5_passkey_register_unmapped": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1353,17 +1353,17 @@
       ],
       "reintroduces": "a passkey registration recorded only as a generic modification (M3)",
       "applied": true,
-      "executed": "2026-10-24T15:17:20",
+      "executed": "2026-10-24T16:59:17",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R6_passkey_delete_unmapped": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1371,17 +1371,17 @@
       ],
       "reintroduces": "a passkey deletion recorded only as a generic deletion (M3)",
       "applied": true,
-      "executed": "2026-10-24T15:17:39",
+      "executed": "2026-10-24T16:59:42",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R7_logout_event_dropped": {
       "suite": "backend",
       "failed": 2,
-      "passed": 52,
+      "passed": 53,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1390,17 +1390,17 @@
       ],
       "reintroduces": "a logout (incl. one with an unknown cookie and no bearer) leaves no logout record (M3, as found)",
       "applied": true,
-      "executed": "2026-10-24T15:17:59",
+      "executed": "2026-10-24T17:00:11",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R8_no_grace": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1408,33 +1408,33 @@
       ],
       "reintroduces": "a lost refresh response or a two-tab race revokes the session (m5, as found)",
       "applied": true,
-      "executed": "2026-10-24T15:18:19",
+      "executed": "2026-10-24T17:00:34",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R9_grace_after_successor_used": {
       "suite": "backend",
       "failed": 0,
-      "passed": 54,
+      "passed": 55,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [],
       "reintroduces": "a replay accepted although the successor was already used (theft) (m5)",
       "applied": true,
-      "executed": "2026-10-24T15:18:38",
+      "executed": "2026-10-24T17:00:56",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R9b_both_successor_checks_removed": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1442,17 +1442,17 @@
       ],
       "reintroduces": "a replay accepted after the successor was used: both protections removed (m5)",
       "applied": true,
-      "executed": "2026-10-24T15:18:59",
+      "executed": "2026-10-24T17:01:19",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R10_grace_unbounded": {
       "suite": "backend",
       "failed": 4,
-      "passed": 50,
+      "passed": 51,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1463,17 +1463,17 @@
       ],
       "reintroduces": "a replay accepted long after the window (m5)",
       "applied": true,
-      "executed": "2026-10-24T15:19:20",
+      "executed": "2026-10-24T17:01:43",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R11_successor_stored_raw": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1481,17 +1481,17 @@
       ],
       "reintroduces": "the successor kept for the grace window stored readable (m5)",
       "applied": true,
-      "executed": "2026-10-24T15:19:39",
+      "executed": "2026-10-24T17:02:07",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R12_store_error_revokes": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1499,17 +1499,17 @@
       ],
       "reintroduces": "a transient user-store error treated as 'user gone': the family is revoked (m6, as found)",
       "applied": true,
-      "executed": "2026-10-24T15:19:58",
+      "executed": "2026-10-24T17:02:27",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R13_lookup_swallows_errors": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1517,17 +1517,17 @@
       ],
       "reintroduces": "the strict lookup returns None on a read error (m6)",
       "applied": true,
-      "executed": "2026-10-24T15:20:18",
+      "executed": "2026-10-24T17:02:48",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R14_refresh_on_event_loop": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1535,17 +1535,17 @@
       ],
       "reintroduces": "a Firestore call of /refresh runs on the event loop (m8)",
       "applied": true,
-      "executed": "2026-10-24T15:20:38",
+      "executed": "2026-10-24T17:03:08",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R15_expired_families_revoked_memory": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1553,17 +1553,17 @@
       ],
       "reintroduces": "'revoke every session' also rewrites expired families (memory repository) (m8)",
       "applied": true,
-      "executed": "2026-10-24T15:20:57",
+      "executed": "2026-10-24T17:03:28",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R16_expired_families_revoked_firestore": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1571,16 +1571,16 @@
       ],
       "reintroduces": "'revoke every session' also rewrites expired families (Firestore repository) (m8)",
       "applied": true,
-      "executed": "2026-10-24T15:21:17",
+      "executed": "2026-10-24T17:03:48",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R17_leftmost_forwarded_hop": {
       "suite": "backend",
-      "failed": 6,
+      "failed": 7,
       "passed": 48,
       "errors": 0,
       "skipped": 0,
@@ -1588,44 +1588,46 @@
         "test_rc067_no_client_header_chooses_the_hop_count",
         "test_rc067_steps_left_only_over_published_hosting_egress_addresses",
         "test_rc067_the_egress_list_is_sourced_dated_and_replaceable_without_a_rebuild",
+        "test_rc067_the_egress_list_is_the_published_fastly_list",
         "test_rc067_the_rate_limit_key_cannot_be_chosen_by_the_client",
         "test_rc067_the_rate_limit_key_ignores_client_supplied_forwarded_hops",
         "test_rc067_the_recorded_ip_ignores_client_supplied_forwarded_hops"
       ],
       "reintroduces": "the client-supplied first X-Forwarded-For entry used as the client IP (m9, as found)",
       "applied": true,
-      "executed": "2026-10-24T15:21:39",
+      "executed": "2026-10-24T17:04:09",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R18_hosting_egress_taken_for_client": {
       "suite": "backend",
-      "failed": 4,
+      "failed": 5,
       "passed": 50,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
         "test_rc067_steps_left_only_over_published_hosting_egress_addresses",
         "test_rc067_the_egress_list_is_sourced_dated_and_replaceable_without_a_rebuild",
+        "test_rc067_the_egress_list_is_the_published_fastly_list",
         "test_rc067_the_rate_limit_key_cannot_be_chosen_by_the_client",
         "test_rc067_the_rate_limit_key_ignores_client_supplied_forwarded_hops"
       ],
       "reintroduces": "Firebase Hosting's own egress address taken for the client (m9 / N1)",
       "applied": true,
-      "executed": "2026-10-24T15:22:00",
+      "executed": "2026-10-24T17:04:34",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R19_no_source_budget": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1633,17 +1635,17 @@
       ],
       "reintroduces": "a flood of anonymous requests from one source fills the durable queue (m9)",
       "applied": true,
-      "executed": "2026-10-24T15:22:23",
+      "executed": "2026-10-24T17:04:58",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R20_drops_red_forever": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1651,17 +1653,17 @@
       ],
       "reintroduces": "one old dropped record keeps the banner red until a restart (m9, as found)",
       "applied": true,
-      "executed": "2026-10-24T15:22:55",
+      "executed": "2026-10-24T17:05:21",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R21_plain_sha256": {
       "suite": "backend",
       "failed": 2,
-      "passed": 52,
+      "passed": 53,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1670,17 +1672,17 @@
       ],
       "reintroduces": "identifiers hashed with plain SHA-256 (reversible for MRNs, usernames) (m10, as found)",
       "applied": true,
-      "executed": "2026-10-24T15:23:21",
+      "executed": "2026-10-24T17:05:42",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R22_raw_jwt_key": {
       "suite": "backend",
       "failed": 2,
-      "passed": 52,
+      "passed": 53,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1689,17 +1691,17 @@
       ],
       "reintroduces": "the JWT secret used raw as the hash key (m10)",
       "applied": true,
-      "executed": "2026-10-24T15:24:36",
+      "executed": "2026-10-24T17:06:03",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R23_full_user_agent": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1707,17 +1709,17 @@
       ],
       "reintroduces": "the full user-agent string stored (m10, as found)",
       "applied": true,
-      "executed": "2026-10-24T15:25:09",
+      "executed": "2026-10-24T17:06:25",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R24_forwarded_host_decides": {
       "suite": "backend",
       "failed": 2,
-      "passed": 52,
+      "passed": 53,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1726,16 +1728,16 @@
       ],
       "reintroduces": "a client-sent X-Forwarded-Host makes the server trust a client-sent hop (N1, as found)",
       "applied": true,
-      "executed": "2026-10-24T15:25:37",
+      "executed": "2026-10-24T17:06:47",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R25_any_entry_stepped_over": {
       "suite": "backend",
-      "failed": 6,
+      "failed": 7,
       "passed": 48,
       "errors": 0,
       "skipped": 0,
@@ -1743,23 +1745,24 @@
         "test_rc067_no_client_header_chooses_the_hop_count",
         "test_rc067_steps_left_only_over_published_hosting_egress_addresses",
         "test_rc067_the_egress_list_is_sourced_dated_and_replaceable_without_a_rebuild",
+        "test_rc067_the_egress_list_is_the_published_fastly_list",
         "test_rc067_the_rate_limit_key_cannot_be_chosen_by_the_client",
         "test_rc067_the_rate_limit_key_ignores_client_supplied_forwarded_hops",
         "test_rc067_the_recorded_ip_ignores_client_supplied_forwarded_hops"
       ],
       "reintroduces": "entries that are not published egress addresses are stepped over: the client chooses its address (N1)",
       "applied": true,
-      "executed": "2026-10-24T15:26:08",
+      "executed": "2026-10-24T17:07:15",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R26_single_egress_step": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1767,17 +1770,17 @@
       ],
       "reintroduces": "a chain through two egress addresses collapses to a proxy address (N1)",
       "applied": true,
-      "executed": "2026-10-24T15:26:39",
+      "executed": "2026-10-24T17:07:38",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R27_egress_override_ignored": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1785,17 +1788,17 @@
       ],
       "reintroduces": "the egress list cannot be replaced by a Cloud Run setting: a stale list needs a rebuild (N1)",
       "applied": true,
-      "executed": "2026-10-24T15:27:02",
+      "executed": "2026-10-24T17:07:58",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R28_authenticated_failures_budgeted": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1803,17 +1806,17 @@
       ],
       "reintroduces": "anonymous noise pushes an authenticated user's failed clinical action out of the durable trail (N4, as found)",
       "applied": true,
-      "executed": "2026-10-24T15:27:26",
+      "executed": "2026-10-24T17:08:18",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R29_register_begin_as_register": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1821,17 +1824,17 @@
       ],
       "reintroduces": "starting a passkey registration is recorded as a completed registration (nit, as found)",
       "applied": true,
-      "executed": "2026-10-24T15:27:49",
+      "executed": "2026-10-24T17:08:38",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "R30_developer_env_breaks_suite": {
       "suite": "backend",
       "failed": 1,
-      "passed": 53,
+      "passed": 54,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1839,11 +1842,29 @@
       ],
       "reintroduces": "a developer backend/.env with old session lifetimes stops the test suite (N2, as found)",
       "applied": true,
-      "executed": "2026-10-24T15:28:10",
+      "executed": "2026-10-24T17:08:58",
       "test_sha256": {
         "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
         "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
-        "tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767"
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
+      }
+    },
+    "R31_egress_list_incomplete": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 54,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc067_the_egress_list_is_the_published_fastly_list"
+      ],
+      "reintroduces": "the egress list as first transcribed: two IPv4 ranges and one IPv6 range missing, one IPv6 range too narrow — users behind those Hosting addresses share one rate-limit key (N1b, as found)",
+      "applied": true,
+      "executed": "2026-10-24T17:09:19",
+      "test_sha256": {
+        "tests/unit/test_capa015_audit_and_session.py": "ae71244ee686903eb2cf168245baf644474828d91fcdb054e37cd75471a0fe3c",
+        "tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
+        "tests/unit/test_capa015_review2_fixes.py": "c8723ad1ceb456cca20347e4d2250973535c59942e25dd98595bd65854d6870a"
       }
     },
     "FR1_client_ignores_refresh_deadline": {
@@ -2135,11 +2156,12 @@
       }
     }
   },
+  "partial_rerun": "re-executed from 2026-10-24T16:36:47: mutations starting with 'R31' and every mutation whose bound tests changed since its previous execution; the others are kept from the previous run with the time and test hashes they were executed with",
   "restored": {
     "backend": {
       "suite": "backend",
       "failed": 0,
-      "passed": 54,
+      "passed": 55,
       "errors": 0,
       "skipped": 0,
       "failing_tests": []

@@ -86,8 +86,9 @@ Deployment window and order (the owner runs it; nothing was run by the change):
    **1b. Client IP — verify BEFORE the live hosting deploy (re-review N1; owner action).** The
    backend takes the right-most `X-Forwarded-For` entry and steps left only over published
    Firebase Hosting (Fastly) egress addresses (list in `backend/app/core/client_ip.py`, source
-   and date in the file; transcribed from the author's knowledge, NOT re-fetched — refresh it
-   from https://api.fastly.com/public-ip-list first). Right after the backend deploy, deploy the
+   and date in the file; fetched from https://api.fastly.com/public-ip-list on 2026-10-24 by the
+   coordinating agent and matching it exactly — the list changes from time to time, so fetch it
+   again first and, if it differs, update the file and its pinned test). Right after the backend deploy, deploy the
    new hosting to a **preview channel** (`cd frontend && npx firebase hosting:channel:deploy
    capa015-ip --expires 1d`), sign in once through the preview URL and once directly against the
    Cloud Run URL, then as administrator read the two newest `auth.login.success` records
