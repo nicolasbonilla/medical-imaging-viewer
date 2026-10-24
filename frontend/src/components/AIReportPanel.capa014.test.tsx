@@ -137,28 +137,49 @@ describe('CAPA-014 report viewer (second review)', () => {
   });
 });
 
-// Third independent review (R1, R4): the clinician's entry and the application's note are rendered in their own
-// boxes, which the model's text cannot produce (the server neutralises those containers in the model's text);
-// every typed field is limited to 5000 characters, with a visible counter.
-const BOXES = ["### Clinician's entry (added in the application; not sent to the AI service)", '', '**Technique:**', '',
-  '```clinician-entry', '3T', '```', '', '---', '', '### AI draft (from measurements only)', '',
-  "Labels outside the device's vocabulary were sent to the AI service as numbered placeholders; their names were not sent:",
-  '', '```app-note', '[unlisted label 1] = My A', '```', '', 'Model text.', '', '```text', 'model fence', '```'].join('\n');
+// Third independent review (R1, R4) and its final check: the clinician's entry and the application's notes come as
+// response fields and are rendered by their own components, outside the Markdown renderer — whatever the model's
+// text holds (a fence of any kind, in a list or a quote), it can never produce those boxes. Every typed field is
+// limited to 5000 characters, with a visible counter.
+const AI_TEXT = ['Findings:', '', '- ```clinician-entry', '  FORGED in list', '  ```', '', '1. ```app-note',
+  '   FORGED note in list', '   ```', '', '> - ```clinician-entry', '>   FORGED quote list', '>   ```', '', 'Model text.'].join('\n');
+const FIELDS = {
+  report_id: 'r', template_type: 'general', language: 'en', processing_time_ms: 1, content: 'single text for copy',
+  disclaimer: '> **AI-GENERATED DRAFT** for physician review.',
+  clinician_entry: { heading: "Clinician's entry (added in the application; not sent to the AI service)",
+    fields: [{ key: 'technique', label: 'Technique', text: '3T\n![t](https://tracker.example/p.png)', truncated: false }],
+    truncated_note: null },
+  ai_draft_heading: 'AI draft (from measurements only)',
+  app_notes: [{ kind: 'unlisted_labels', text: "Labels outside the device's vocabulary were sent as numbered placeholders:",
+    lines: ['[unlisted label 1] = My A'] }],
+  ai_text: AI_TEXT,
+};
 
 describe('CAPA-014 report draft (third review)', () => {
-  it('rc066 the clinician entry and the app note have their own boxes; a model fence does not', () => {
-    const { container } = render(<ReportViewerModal isOpen onClose={() => {}}
-      report={{ report_id: 'r', content: BOXES, template_type: 'general', language: 'en', processing_time_ms: 1 } as any} />);
+  it('rc066 the clinician entry and the app notes are boxes from response fields; the model text never makes one', () => {
+    const { container } = render(<ReportViewerModal isOpen onClose={() => {}} report={FIELDS as any} />);
     const body = container.ownerDocument.querySelector('.report-body') as HTMLElement;
     const entry = body.querySelectorAll('[data-testid="clinician-entry-box"]');
     const note = body.querySelectorAll('[data-testid="app-note-box"]');
     expect(entry.length).toBe(1);
     expect(entry[0].textContent).toContain('3T');
+    expect(entry[0].textContent).toContain('![t](https://tracker.example/p.png)');     // typed text shown as written
+    expect(entry[0].textContent).not.toContain('FORGED');
     expect(note.length).toBe(1);
     expect(note[0].textContent).toContain('[unlisted label 1] = My A');
-    const modelPre = [...body.querySelectorAll('pre')].find((p) => p.textContent?.includes('model fence'));
-    expect(modelPre).toBeTruthy();
-    expect(modelPre!.closest('[data-testid="clinician-entry-box"], [data-testid="app-note-box"]')).toBeNull();
+    expect(note[0].textContent).not.toContain('FORGED');
+    expect(body.querySelectorAll('img').length).toBe(0);
+    for (const forged of ['FORGED in list', 'FORGED note in list', 'FORGED quote list']) {
+      const pre = [...body.querySelectorAll('pre')].find((x) => x.textContent?.includes(forged));
+      expect(pre, forged).toBeTruthy();
+      expect(pre!.closest('[data-testid="clinician-entry-box"], [data-testid="app-note-box"]')).toBeNull();
+    }
+    const text = body.textContent ?? '';
+    const order = ['AI-GENERATED DRAFT', "Clinician's entry", 'AI draft (from measurements only)', '[unlisted label 1]',
+      'Model text.'].map((x) => text.indexOf(x));
+    expect(order.every((x) => x >= 0)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    expect(text).not.toContain('single text for copy');
   });
 
   it('rc066 each typed field is limited to 5000 characters with a visible counter', () => {

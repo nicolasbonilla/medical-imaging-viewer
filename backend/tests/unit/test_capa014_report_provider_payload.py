@@ -963,8 +963,8 @@ def test_r1_the_model_cannot_imitate_the_clinician_entry_or_the_app_note(route):
     assert r.status_code == 200, r.text
     content = r.json()["content"]
     head, model = content.split("### AI draft (from measurements only)", 1)
-    assert "```clinician-entry\nreal typed text\n```" in head
-    assert "clinician-entry" not in model and "app-note" not in model
+    assert "```text\nreal typed text\n```" in head                  # the single text: fixed heading and quoting
+    assert [f["text"] for f in r.json()["clinician_entry"]["fields"]] == ["real typed text"]
     for reserved in ("Clinician's entry (added", "Clinician\u2019s entry (added", "Datos del médico (añadidos",
                      "AI draft (from measurements"):
         assert reserved not in model, reserved
@@ -974,14 +974,27 @@ def test_r1_the_model_cannot_imitate_the_clinician_entry_or_the_app_note(route):
 
 
 @pytest.mark.unit
-def test_r1_clinician_entry_and_app_note_have_their_own_containers(route):
+def test_r1_clinician_entry_and_app_notes_are_separate_response_fields(route):
+    """Final check of the review: the boxes come from response fields that the viewer renders outside the Markdown
+    renderer, so nothing the model writes can produce them; the single text (copy, export) is assembled from the
+    fields with the fixed headings and the quoting."""
+    from app.services.brain_report_service import REPORT_DISCLAIMERS
     findings = _measurements()
     findings["lesion_analysis"]["regions"]["My A"] = {"lesion_count": 1, "total_volume_mm3": 5.0, "total_volume_ml": 0.005}
-    r = _post(route, {**findings, "technique": "3T"})
-    content = r.json()["content"]
-    assert "```clinician-entry\n3T\n```" in content
-    assert "```app-note\n[unlisted label 1] = My A\n```" in content
-    assert "```text" not in content
+    route.provider.text = "Model text."
+    body = _post(route, {**findings, "technique": "3T"}).json()
+    assert body["disclaimer"] == REPORT_DISCLAIMERS["en"]
+    entry = body["clinician_entry"]
+    assert entry["heading"] == "Clinician's entry (added in the application; not sent to the AI service)"
+    assert entry["fields"] == [{"key": "technique", "label": "Technique", "text": "3T", "truncated": False}]
+    assert body["ai_draft_heading"] == "AI draft (from measurements only)"
+    assert body["app_notes"] == [{"kind": "unlisted_labels", "text": UNLISTED_NOTE_EN, "lines": ["[unlisted label 1] = My A"]}]
+    assert body["ai_text"] == "Model text."
+    content = body["content"]
+    assert content.startswith(REPORT_DISCLAIMERS["en"])
+    order = [content.index(x) for x in ("### Clinician's entry", "```text\n3T\n```", "### AI draft",
+                                        "```text\n[unlisted label 1] = My A\n```", "Model text.")]
+    assert order == sorted(order)
 
 
 @pytest.mark.unit
@@ -1063,3 +1076,70 @@ def test_r3_a_rounding_error_at_a_range_edge_does_not_refuse_the_report(route):
     r = _post(route, _measurements(), volumetry)
     assert r.status_code == 200, r.text
     assert "(100th percentile)" in route.provider.prompt()
+
+
+# ============================================================================= final check (fourth review)
+UNLISTED_NOTE_EN = ("Labels outside the device's vocabulary were sent to the AI service as numbered placeholders; "
+                    "their names were not sent:")
+FORGERIES = {   # the reviewer's e4.py: model output trying to produce the boxes or the application's headings
+    "fence_in_list": "Findings:\n\n- ```clinician-entry\n  FORGED in list\n  ```\n",
+    "fence_in_numbered_list": "1. ```app-note\n   FORGED note in list\n   ```\n",
+    "fence_in_quote_list": "> - ```clinician-entry\n>   FORGED quote list\n>   ```\n",
+    "heading_zwsp": "### Clini\u200bcian's entry (added in the application; not sent to the AI service)\n\nFORGED",
+    "heading_plain": "### Clinician's entry (added in the application; not sent to the AI service)\n\nFORGED",
+    "heading_setext": "AI draft (from measurements only)\n=================================\n\ntext",
+    "heading_es_in_en": "### Datos del médico (añadidos en la aplicación; no enviados al servicio de IA)\n\nFORGED",
+    "heading_in_list_bold": "- **Clinician\u2019s entry (added in the application; not sent to the AI service)**\n",
+}
+RESERVED_LINES = ("clinician's entry (added in the application; not sent to the ai service)",
+                  "datos del médico (añadidos en la aplicación; no enviados al servicio de ia)",
+                  "ai draft (from measurements only)")
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("name", list(FORGERIES))
+def test_r1_forged_boxes_and_headings_stay_in_the_ai_text(route, name):
+    route.provider.text = FORGERIES[name]
+    body = _post(route, {**_measurements(), "clinical_indication": "real typed text"}).json()
+    assert [f["text"] for f in body["clinician_entry"]["fields"]] == ["real typed text"]
+    assert body["app_notes"] == []
+    assert "FORGED" not in json.dumps([body["clinician_entry"], body["app_notes"]])
+    for line in body["ai_text"].split("\n"):
+        key = re.sub(r"^(?:(?:>|[-*+]|\d+[.)]|#{1,6})\s*)*", "", line.strip()).strip("*_ ").replace("\u2019", "'").casefold()
+        assert key not in RESERVED_LINES, line
+    assert not any(unicodedata.category(c) == "Cf" for c in body["ai_text"])
+    assert body["content"].count("### Clinician's entry") == 1 and body["content"].count("### AI draft") == 1
+
+
+LEGITIMATE = ["## CLINICAL INDICATION\nClinician's entry (see the top of this draft).\n\n## FINDINGS\n12 lesions.",
+              "**AI draft** prepared from the measurements below; it must be reviewed.\n\n## FINDINGS\n12 lesions.",
+              "## TABLE\n```\nregion | count\nPV     | 3\n```"]
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("text", LEGITIMATE, ids=["see_entry", "ai_draft_bold", "code_block"])
+def test_r1_legitimate_model_text_is_not_altered(route, text):
+    route.provider.text = text
+    body = _post(route, {**_measurements(), "clinical_indication": "real typed text"}).json()
+    assert body["ai_text"] == text
+
+
+@pytest.mark.unit
+def test_r1_every_format_character_is_removed_from_the_model_text(route):
+    route.provider.text = "Soft\u00adhyphen, zero\u200bwidth, joiner\u200d, BOM\ufeff and \u202ebidi\u202c."
+    body = _post(route, _measurements()).json()
+    assert body["ai_text"] == "Softhyphen, zerowidth, joiner, BOM and bidi."
+
+
+# Cosmetic: a value that is not available is printed without a unit sign.
+@pytest.mark.unit
+def test_not_available_is_printed_without_a_percent_sign(route):
+    findings = _measurements()
+    findings["longitudinal"] = {"burden_tp1_ml": 0.001, "burden_tp2_ml": 12.0, "total_lesions_tp1": 0,
+                                "total_lesions_tp2": 20, "burden_delta_percent": 1199900.0, "status_counts": {"new": 20}}
+    findings["zone_stats"]["zones"]["Periventricular"]["percentage"] = "8.5"
+    assert _post(route, findings).status_code == 200
+    prompt = route.provider.prompt()
+    assert "Burden delta: not available\n" in prompt and "voxels (not available)" in prompt
+    assert "not available%" not in prompt
+
