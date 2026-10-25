@@ -7,18 +7,243 @@ using Claude API, listing templates, and exporting reports.
 @module api.routes.ai_report
 """
 
+import re
+import unicodedata
+
 from fastapi import APIRouter, HTTPException, status, Depends
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Tuple
 from pydantic import BaseModel, Field
 
 from app.security import get_current_active_user
 from app.security.models import User
+from app.security.resource_access import authorize_segmentation_id
+from app.services.report_payload_guard import (
+    FREE_TEXT_FIELDS,
+    PatientIdentifiers,
+    PatientRecordUnavailable,
+    ProviderGuardError,
+)
 
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
 router = APIRouter(prefix="/ai/report", tags=["AI Report"])
+
+# CAPA-014 (RC-065, HAZ-016): the draft is written by an external model provider from measurements only.
+# Before the call the final prompt is checked against the record of the patient the analysed
+# segmentation belongs to; without that record nothing is sent. Error texts name no identifier.
+SUBJECT_REQUIRED_DETAIL = (
+    "The analysed segmentation (segmentation_id) is required: the request to the AI service is checked "
+    "against that patient's record before it is sent. Nothing was sent."
+)
+NOT_SENT_DETAIL = "The request was not sent to the AI service ({reason}). Nothing was sent."
+
+# CAPA-014 (RC-066): the clinician's typed text is added to the draft here, after the model returns; it is never
+# sent. The response carries it — and the application's notes — as fields of their own, which the report viewer
+# renders outside the Markdown renderer, so nothing the model writes can look like them (final check of the third
+# review, R1). The single text for copy and export quotes them under fixed headings, and the model's text always
+# follows under its own fixed heading. Headings in the report language.
+CLINICIAN_ENTRY: Dict[str, Dict[str, str]] = {
+    "en": {"heading": "Clinician's entry (added in the application; not sent to the AI service)",
+           "clinical_indication": "Clinical indication", "technique": "Technique",
+           "additional_observations": "Additional observations"},
+    "es": {"heading": "Datos del médico (añadidos en la aplicación; no enviados al servicio de IA)",
+           "clinical_indication": "Indicación clínica", "technique": "Técnica",
+           "additional_observations": "Observaciones adicionales"},
+    "de": {"heading": "Angaben der Ärztin / des Arztes (in der Anwendung ergänzt; nicht an den KI-Dienst gesendet)",
+           "clinical_indication": "Klinische Fragestellung", "technique": "Technik",
+           "additional_observations": "Weitere Beobachtungen"},
+}
+AI_DRAFT_HEADING: Dict[str, str] = {
+    "en": "AI draft (from measurements only)",
+    "es": "Borrador de IA (solo a partir de las mediciones)",
+    "de": "KI-Entwurf (nur aus den Messwerten)",
+}
+# Labels outside the device's vocabulary (e.g. a label the clinician renamed) reach the model as numbered
+# placeholders; the draft names them for the clinician, here only.
+UNLISTED_NOTE: Dict[str, str] = {
+    "en": "Labels outside the device's vocabulary were sent to the AI service as numbered placeholders; "
+          "their names were not sent:",
+    "es": "Las etiquetas fuera del vocabulario del dispositivo se enviaron al servicio de IA como marcadores "
+          "numerados; sus nombres no se enviaron:",
+    "de": "Bezeichnungen außerhalb des Vokabulars des Geräts wurden als nummerierte Platzhalter an den "
+          "KI-Dienst gesendet; ihre Namen wurden nicht gesendet:",
+}
+# The heading of the application's note in the single text (copy, export).
+APP_NOTE_HEADING: Dict[str, str] = {
+    "en": "Application note (written by the application, not by the AI service)",
+    "es": "Nota de la aplicación (escrita por la aplicación, no por el servicio de IA)",
+    "de": "Hinweis der Anwendung (von der Anwendung verfasst, nicht vom KI-Dienst)",
+}
+TRUNCATED_NOTE: Dict[str, str] = {
+    "en": "[truncated: only the first {n} characters of this field are shown]",
+    "es": "[truncado: solo se muestran los primeros {n} caracteres de este campo]",
+    "de": "[gekürzt: nur die ersten {n} Zeichen dieses Feldes werden angezeigt]",
+}
+# A line of the model's text that is exactly one of the application's headings is replaced by this line.
+RESERVED_HEADING_REMOVED: Dict[str, str] = {
+    "en": "[a heading reserved for the application was removed from the AI text]",
+    "es": "[se quitó del texto de la IA un título reservado para la aplicación]",
+    "de": "[eine der Anwendung vorbehaltene Überschrift wurde aus dem KI-Text entfernt]",
+}
+MAX_TYPED_CHARS = 5000
+MAX_LABEL_CHARS = 200
+# Bidirectional control characters (LRE, RLE, PDF, LRO, RLO, LRI, RLI, FSI, PDI): removed from the typed text. The
+# model's text loses every format character (Unicode category Cf), these included.
+_BIDI = re.compile("[\u202a-\u202e\u2066-\u2069]")
+_LINE_MARKS = re.compile(r"^(?:(?:>|[-*+]|\d{1,9}[.)]|#{1,6})\s*)*")
+_QUOTE_OR_LIST = re.compile(r"^(?:(?:>|[-*+]|\d{1,9}[.)])\s+)*")
+_SETEXT_LINE = re.compile(r"=+|-+")
+_BOLD_LINE = re.compile(r"(\*\*|__).+\1:?")
+
+
+def without_bidi(text: str) -> str:
+    return _BIDI.sub("", text)
+
+
+def without_format_characters(text: str) -> str:
+    """`text` without Unicode format characters (soft hyphen, zero-width joiners, BOM, bidirectional controls); a
+    zero-width space becomes a space, so that the words it separated stay apart."""
+    text = text.replace("\u200b", " ")
+    return "".join(ch for ch in text if unicodedata.category(ch) != "Cf")
+
+
+def quoted(text: str) -> str:
+    """`text` exactly as written, in a fenced block longer than any run of backticks inside it: nothing in it
+    is rendered as Markdown (heading, image, link, HTML) and nothing in it can close the block."""
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    fence = "`" * max(3, 1 + max((len(run) for run in re.findall(r"`+", text)), default=0))
+    return f"{fence}text\n{text}\n{fence}"
+
+
+def _typed(value: str) -> Tuple[str, bool]:
+    """The typed text without bidirectional controls, leading blank lines and trailing space — the first
+    line keeps its indentation — cut at MAX_TYPED_CHARS; and whether it was cut."""
+    text = re.sub(r"\A(?:[ \t]*\r?\n)+", "", without_bidi(value)).rstrip()
+    return text[:MAX_TYPED_CHARS], len(text) > MAX_TYPED_CHARS
+
+
+def clinician_entry_of(findings: Dict[str, Any], language: str) -> Optional[Dict[str, Any]]:
+    """The clinician's typed text as a response field — heading, labelled fields, whether each was cut at
+    MAX_TYPED_CHARS and the note that says so — or None when nothing was typed."""
+    texts = CLINICIAN_ENTRY.get(language, CLINICIAN_ENTRY["en"])
+    fields = []
+    for key in FREE_TEXT_FIELDS:
+        if isinstance(findings.get(key), str) and without_bidi(findings[key]).strip():
+            text, cut = _typed(findings[key])
+            fields.append({"key": key, "label": texts[key], "text": text, "truncated": cut})
+    if not fields:
+        return None
+    cut_note = TRUNCATED_NOTE.get(language, TRUNCATED_NOTE["en"]).format(n=MAX_TYPED_CHARS)
+    return {"heading": texts["heading"], "fields": fields,
+            "truncated_note": cut_note if any(f["truncated"] for f in fields) else None}
+
+
+def app_notes_of(unlisted: Any, language: str) -> List[Dict[str, Any]]:
+    """The application's notes as a response field: which label each numbered placeholder stands for."""
+    if not isinstance(unlisted, dict) or not unlisted:
+        return []
+    lines = [f"{placeholder} = {' '.join(without_bidi(str(written)).split())[:MAX_LABEL_CHARS]}"
+             for placeholder, written in unlisted.items()]
+    return [{"kind": "unlisted_labels", "heading": APP_NOTE_HEADING.get(language, APP_NOTE_HEADING["en"]),
+             "text": UNLISTED_NOTE.get(language, UNLISTED_NOTE["en"]), "lines": lines}]
+
+
+def _heading_key(line: str) -> str:
+    """A line reduced to its words: quote, list and heading marks, surrounding emphasis, spacing and case removed."""
+    text = unicodedata.normalize("NFKC", line).replace("\u2019", "'").strip()
+    return " ".join(_LINE_MARKS.sub("", text).strip("*_# \t").split()).casefold()
+
+
+def _reserved_headings() -> frozenset:
+    headings = [entry["heading"] for entry in CLINICIAN_ENTRY.values()] + list(AI_DRAFT_HEADING.values())
+    return frozenset(_heading_key(h) for h in headings)
+
+
+def neutralised_model_text(body: str, language: str) -> str:
+    """The model's text without format characters, and with every line that is exactly one of the application's
+    headings (any language; with heading, list, quote or emphasis marks) replaced by a fixed line. Ordinary
+    sentences stay as written; the boxes of the entry and of the notes are response fields the model cannot write."""
+    body = without_format_characters(body)
+    reserved, removed = _reserved_headings(), RESERVED_HEADING_REMOVED.get(language, RESERVED_HEADING_REMOVED["en"])
+    lines = body.split("\n")
+    for i, line in enumerate(lines):
+        if _heading_key(line) in reserved:
+            lines[i] = removed
+    return "\n".join(lines)
+
+
+def _reserved_prefixes() -> Tuple[str, ...]:
+    headings = ([entry["heading"] for entry in CLINICIAN_ENTRY.values()] + list(AI_DRAFT_HEADING.values())
+                + list(APP_NOTE_HEADING.values()))
+    return tuple(_heading_key(h.split(" (")[0]) for h in headings)
+
+
+def without_reserved_heading_imitations(text: str, language: str) -> str:
+    """For the single text: a heading line of the AI text (marked with #, all bold, or underlined) whose words start
+    like one of the application's headings — "Clinician's entry", "Application note", "AI draft", es/de — is
+    replaced by a fixed line, so that the copied text cannot show a second entry or note. Other lines stay."""
+    prefixes, removed = _reserved_prefixes(), RESERVED_HEADING_REMOVED.get(language, RESERVED_HEADING_REMOVED["en"])
+    lines = text.split("\n")
+    for i, line in enumerate(lines):
+        bare = _QUOTE_OR_LIST.sub("", line.strip())
+        following = _QUOTE_OR_LIST.sub("", lines[i + 1].strip()) if i + 1 < len(lines) else ""
+        heading = bare.startswith("#") or _BOLD_LINE.fullmatch(bare) or (bare and _SETEXT_LINE.fullmatch(following))
+        key = _heading_key(line)
+        # starts like one: the line begins with a reserved heading's name, or is its first two words or more
+        if heading and any(key.startswith(p) or (len(key.split()) >= 2 and p.startswith(key)) for p in prefixes):
+            lines[i] = removed
+    return "\n".join(lines)
+
+
+def draft_parts(content: str, language: str, findings: Dict[str, Any], unlisted: Any) -> Dict[str, Any]:
+    """The parts of the draft the response carries: the RC-006 disclaimer, the clinician's entry, the fixed heading
+    of the AI text, the application's notes and the model's text (neutralised)."""
+    from app.services.brain_report_service import REPORT_DISCLAIMER_EN, REPORT_DISCLAIMERS
+    disclaimer = REPORT_DISCLAIMERS.get(language, REPORT_DISCLAIMER_EN)
+    has_disclaimer = content.startswith(disclaimer)
+    body = content[len(disclaimer):].lstrip() if has_disclaimer else content
+    return {"disclaimer": disclaimer if has_disclaimer else None,
+            "clinician_entry": clinician_entry_of(findings, language),
+            "ai_draft_heading": AI_DRAFT_HEADING.get(language, AI_DRAFT_HEADING["en"]),
+            "app_notes": app_notes_of(unlisted, language),
+            "ai_text": neutralised_model_text(body, language)}
+
+
+def draft_text(parts: Dict[str, Any], language: str) -> str:
+    """The whole draft as one text, for copy and export, assembled from the parts: the disclaimer first; the
+    clinician's entry under its fixed heading, each field quoted, closed by a rule; the AI heading; the
+    application's notes under their heading, quoted; the model's text without imitations of those headings."""
+    out = [parts.get("disclaimer")]
+    entry = parts.get("clinician_entry")
+    if entry:
+        blocks = [f"**{f['label']}:**\n\n{quoted(f['text'])}" + (f"\n\n{entry['truncated_note']}" if f["truncated"] else "")
+                  for f in entry["fields"]]
+        out.append(f"### {entry['heading']}\n\n" + "\n\n".join(blocks) + "\n\n---")
+    out.append(f"### {parts['ai_draft_heading']}")
+    out += [f"#### {note['heading']}\n\n{note['text']}\n\n{quoted(chr(10).join(note['lines']))}"
+            for note in parts.get("app_notes") or []]
+    out.append(without_reserved_heading_imitations(parts.get("ai_text") or "", language))
+    return "\n\n".join(part for part in out if part)
+
+
+def _patient_service():
+    from app.core.container import get_patient_service
+    return get_patient_service()
+
+
+async def read_patient_identifiers(patient_id: str) -> PatientIdentifiers:
+    """The authorized patient's own identifiers, read from the record the server holds (RC-065).
+
+    Raises PatientRecordUnavailable when the record cannot be read or lacks a field the check needs;
+    the caller must then send nothing.
+    """
+    try:
+        record = await _patient_service().get_patient(patient_id)
+    except Exception:          # noqa: BLE001 — any failure to read the record means: send nothing
+        record = None
+    return PatientIdentifiers.from_record(record)
 
 # CAPA-008 (HAZ-003): keys of `findings` that carry a MEASUREMENT computed by the device.
 # A request with none of them (and no volumetry) would make the language model write a
@@ -150,18 +375,53 @@ class ReportGenerateRequest(BaseModel):
     )
     findings: Dict[str, Any] = Field(
         default_factory=dict,
-        description="Clinical findings (de-identified). Keys: clinical_indication, "
-                    "technique, patient_age, patient_sex, segmentation_labels, "
-                    "anomalies, additional_observations",
+        description="Clinical findings. Keys: clinical_indication, technique, patient_age, "
+                    "patient_sex, segmentation_labels, anomalies, additional_observations, "
+                    "lesion_analysis, dis_assessment, longitudinal, zone_stats. Only measurements, "
+                    "labels of the device's vocabulary, sex and a 5-year age band are sent to the AI "
+                    "service; the typed text fields are added to the draft here, never sent (CAPA-014).",
     )
     volumetry: Optional[Dict[str, Any]] = Field(
         None,
         description="Volumetry results (from /ai/volumetry/compute)",
     )
+    segmentation_id: Optional[str] = Field(
+        None,
+        max_length=200,
+        description="The analysed segmentation the draft is for. Required (400 without it): the "
+                    "request to the AI service is checked against its patient's record before it "
+                    "is sent (CAPA-014).",
+    )
+
+
+class ClinicianField(BaseModel):
+    """One field the clinician typed (CAPA-014): shown as written, never sent to the AI service."""
+    key: str
+    label: str
+    text: str
+    truncated: bool = False
+
+
+class ClinicianEntry(BaseModel):
+    heading: str
+    fields: List[ClinicianField]
+    truncated_note: Optional[str] = None
+
+
+class AppNote(BaseModel):
+    """A note written by the application (not by the AI service), e.g. which label a placeholder stands for."""
+    kind: str
+    heading: Optional[str] = None
+    text: str
+    lines: List[str] = []
 
 
 class ReportResponse(BaseModel):
-    """Response with generated report."""
+    """Response with generated report.
+
+    CAPA-014: `content` is the whole draft as one text (copy, export): fixed headings, typed text and notes quoted.
+    The viewer renders the parts — `disclaimer`, `clinician_entry`, `ai_draft_heading`, `app_notes` in components of
+    their own, and only `ai_text` (the model's text and the application's notices after it) as Markdown."""
     report_id: str
     content: str
     template_type: str
@@ -169,6 +429,11 @@ class ReportResponse(BaseModel):
     processing_time_ms: int
     model: Optional[str] = None
     tokens_used: Optional[Dict[str, int]] = None
+    disclaimer: Optional[str] = None
+    clinician_entry: Optional[ClinicianEntry] = None
+    ai_draft_heading: Optional[str] = None
+    app_notes: List[AppNote] = []
+    ai_text: Optional[str] = None
 
 
 class ReportTemplateInfo(BaseModel):
@@ -199,8 +464,12 @@ def get_report_service():
     description="Generate a DRAFT structured brain MRI report from measurements computed by "
                 "the device, using the Claude API, for physician review. Templates: general, "
                 "ms_activity, ms_lesion_burden, ms_comprehensive, ms_longitudinal; languages "
-                "en, es, de. The findings are sent to the model provider: send no direct "
-                "patient identifiers. 422 when no measurement is supplied (CAPA-008).",
+                "en, es, de. Only the measurements, labels of the device's vocabulary, sex and a "
+                "5-year age band are sent to the model provider; the typed text is added to the "
+                "draft here. The request is checked against the record of the patient of "
+                "`segmentation_id` before it is sent (CAPA-014). 422 when no measurement is supplied "
+                "(CAPA-008); 400 when no segmentation is; 404 when the caller may not access the "
+                "segmentation; 503 when the check cannot run or finds an identifier (nothing is sent).",
 )
 async def generate_report(
     request: ReportGenerateRequest,
@@ -223,6 +492,18 @@ async def generate_report(
             ),
         )
 
+    # CAPA-014 (RC-065, HAZ-016): the patient the prompt is checked against — authorized for this
+    # caller (404 otherwise, as every object route) and read from the server's own record.
+    # 400, not 422: the report panel reads every 422 as "no measurements" (CAPA-008).
+    if not request.segmentation_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=SUBJECT_REQUIRED_DETAIL)
+    patient_id = await authorize_segmentation_id(request.segmentation_id, current_user)
+    try:
+        identifiers = await read_patient_identifiers(patient_id)
+    except PatientRecordUnavailable as e:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                            detail=NOT_SENT_DETAIL.format(reason=str(e)))
+
     findings = dict(request.findings)
     if "longitudinal" in findings:   # CAPA-013, review of PR #63 (blocker 1)
         findings["longitudinal"] = drop_unverifiable_decisions(findings["longitudinal"])
@@ -234,12 +515,24 @@ async def generate_report(
             findings=findings,
             volumetry=request.volumetry,
             language=request.language,
+            identifiers=identifiers,
         )
+        # CAPA-014 (RC-066): the typed text and the names of unlisted labels join the draft here, after the
+        # model, as fields of their own; they were never sent.
+        unlisted = result.pop("unlisted_labels", None)
+        parts = draft_parts(result["content"], request.language, request.findings, unlisted)
         notice = longitudinal_notice(request.findings.get("longitudinal"), request.language)
         if notice:   # CAPA-013: appended in code, after the model, in the report language
-            result = {**result, "content": f"{result['content']}\n\n---\n\n> {notice}"}
+            parts["ai_text"] = f"{parts['ai_text']}\n\n---\n\n> {notice}"
+        result = {**result, **parts, "content": draft_text(parts, request.language)}
         return ReportResponse(**result)
 
+    except ProviderGuardError as e:
+        # CAPA-014 (RC-065): the service refused to send; the message names categories, no identifier.
+        logger.warning("[Report] Not sent: the identifier check refused the request",
+                       extra={"privacy_check": "refused"})
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                            detail=NOT_SENT_DETAIL.format(reason=str(e)))
     except RuntimeError as e:
         # ANTHROPIC_API_KEY not configured
         raise HTTPException(

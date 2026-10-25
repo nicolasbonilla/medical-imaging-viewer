@@ -729,15 +729,16 @@ IF W_m != W_i AND H_m == W_i AND W_m == H_i:
 
 ### 12.1 Architecture
 
-The report generation system integrates with the Claude API (Anthropic SDK v0.44.0) through a HIPAA-compliant pipeline:
+The report generation system integrates with the Claude API (Anthropic SDK v0.44.0). Only a structured payload is sent (CAPA-014, RC-064/RC-065):
 
 ```
-Clinical Findings  -->  De-identification  -->  Prompt Assembly
+Measurements  -->  Structured payload  -->  Prompt Assembly  -->  Identifier check
                                                       |
 Report Template  ---------------------------------->  |
                                                       v
                                               Claude API Call
-                                              (claude-3-5-sonnet)
+                                              (claude-sonnet-4-5-20250929,
+                                               settings CLAUDE_MODEL)
                                                       |
                                                       v
                                               Structured Report
@@ -752,17 +753,37 @@ Report Template  ---------------------------------->  |
 | `ms_lesion_burden` | 6,144 | Quantitative lesion inventory |
 | `ms_comprehensive` | 8,192 | Publication-quality comprehensive report |
 
-### 12.3 De-Identification Protocol
+### 12.3 Data Sent to the AI Service (CAPA-014)
 
 **Transmitted to Claude:**
-- Patient age (integer), sex (M/F)
-- Clinical indication (free text)
-- Technical parameters (field strength, sequences)
+- 5-year age band, sex (M/F)
 - Numerical findings (lesion counts, volumes, regions)
 - DIS assessment results
 - Longitudinal change statistics
 
+Labels only from the device's fixed vocabulary (MAGNIMS regions, structures, size classes, the label
+names the application ships). Any other label is sent as a numbered placeholder ("[unlisted label 2]");
+its name is shown to the clinician in the draft only. A value that is not a number is sent as "not
+available"; a dissemination-in-space result that is missing or not evaluated is sent as "not evaluated",
+never "not met"; a number outside the physical range of its field stops the request (nothing is sent).
+
+**Draft layout:** the disclaimer, then the clinician's entry (shown exactly as typed; at most 5000
+characters per field, a longer text is marked "[truncated …]"), then the model's text under the fixed
+heading "AI draft (from measurements only)", preceded by the application's note on unlisted labels. The
+response carries these parts as separate fields (`disclaimer`, `clinician_entry`, `ai_draft_heading`,
+`app_notes`, `ai_text`); the viewer renders the entry and the notes in boxes of their own, outside the
+Markdown renderer, and only the model's text as Markdown, so nothing the model writes can produce those
+boxes. `content` is the whole draft as one text for copy and export, with fixed headings and the typed text
+and notes quoted under their headings; in it, a heading line of the AI text that starts like one of the
+application's headings is replaced. In the model's text every Unicode format character is removed (a
+zero-width space becomes a space) and a line that is exactly one of the application's headings is replaced;
+bidirectional control characters are removed from the typed text. Exceptions to the physical ranges: a derived burden change
+without a physical bound is "not available", a confidence outside 0–1 is left out, a rounding error at an
+edge is accepted; the patient's own record number, birth date or phone number in any number field stops
+the request.
+
 **Never transmitted:**
+- Any free text: clinical indication, technique, observations (added to the draft in the application after the model returns)
 - Patient name, date of birth, medical record number
 - Study date, institution name
 - Referring/performing physician names
@@ -999,7 +1020,7 @@ Launch:
 ### 16.3 HIPAA Compliance
 
 - **Audit logging:** All data access recorded with user, action, resource, timestamp
-- **De-identification:** PHI stripped before AI API calls
+- **AI report data:** measurements only are sent to the AI service — no names, dates of birth, record numbers or free text; identifier check before sending (CAPA-014)
 - **Access control:** Role-based with Firebase custom claims
 - **Transport:** TLS 1.3 enforced for all communications
 - **Data at rest:** GCS server-side encryption (AES-256)

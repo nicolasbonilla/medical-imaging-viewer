@@ -3,7 +3,7 @@
 ## IEC 62304 Clause 5.4 — Class C Software Unit Design
 
 **Document ID**: DD-001
-**Version**: 1.1
+**Version**: 1.2 DRAFT (2026-10-24 — DD-RPT-001 amended, DD-RPT-002 added, CAPA-014, updated after the second and third reviews and the final check; PENDING owner approval) — last approved: 1.1
 **Effective Date**: September 28, 2026 (v1.0: April 12, 2026)
 **Software Safety Class**: IEC 62304 Class C
 
@@ -11,6 +11,7 @@
 |---------|------|--------|-------------|--------|
 | 1.0 | 2026-04-12 | Development Team | — | Initial release |
 | 1.1 | 2026-09-28 | Development Team | N. G. Bonilla Vargas — approved 2026-10-17 (PR #43) | DD-CLS-001 amended. (a) Audit #8 (HAZ-005, REQ-SAFE-010 amended, PR #42): per-lesion confidence removed. The amendment note in DD-CLS-001 was entered on 2026-09-28 under the v1.0 header; it is covered by this version. (b) CAPA-006 / RC-032 / REQ-SAFE-021: v1.0 described only the parcellation path. DD-CLS-001 now also specifies: the four-path order used by `method="auto"`; the LST-AI path as a voxel-wise copy with no contact rule and no priority; the MSMask atlas path; the MNI grid gate (`looks_mni`: isotropy, unpermuted axis alignment, per-axis field of view, grid centre, header transform; `NotMNISpaceError`) and its limits (SPM12 default bounding box refused; a well-behaved native 3D isotropic axial scan can pass); the zone-map reorientation and shape checks (`classify_lesions_with_atlas`, `classify_from_zone_mask`); that a persisted zone map is never reused for classification; parcellation identity (`looks_like_freesurfer_parcellation`: all of {2, 3, 4, 16, 41, 42, 43}, not a zone map, >= 500 mL; same image and grid); the geometric preconditions (`prepare_geometric_image`, `GeometricPreconditionError`, slice axis within 30° of inferior-superior); refusal (HTTP 422) versus fault (HTTP 500, `atlas_error`) handling; object-level authorization of both region routes (RC-029); the generate-zone-map order (authorize, validate, create and persist, then delete older zone maps); zone-map volumes from the image voxel volume; and the longitudinal compare route's use of the same gate. The 1.5 mm thresholds are unchanged; v1.0 already stated them. The 3 mm / 4 mm / 3 mm thresholds and two-tier cascade stated in IFU-001, AIA-001, CER-001 and GSPR-001 were wrong when those documents were issued on 2026-04-12 (the code had applied 1.5 mm since 2026-02-28, commit 67fa336, while DD-001 v1.0, issued the same day, stated 1.5 mm); they are withdrawn there. (c) Unit renamed from "MAGNIMS Region Classifier (EDT)": EDT is used by one of four paths only. (d) Withdrawn from the Safety paragraph (v1.0 text, quoted there): "EDT-based classification is more robust than pixel-adjacency methods" (no evidence) and "Distance thresholds (1.5mm) match LST-AI dilation criteria" (inexact; restated). (e) Implements / traceability now list REQ-SAFE-021, RC-032 and RC-029 |
+| 1.2 (draft) | 2026-10-24 | Development Team | PENDING owner approval | CAPA-014. DD-RPT-001 amended: its statements that report generation was de-identified and that no name, date of birth or record number reached the provider were not true before CAPA-014 (the clinician's free text and the exact age were sent) — withdrawn. Now (redesign after the review of PR #67): structured payload only, the clinician's text merged by the route, a detection-only check before the call, counts logged. DD-RPT-002 added (`report_payload_guard.py`, RC-064/RC-065). Updated after the second independent review (N1–N10): numbered placeholders and the draft layout, "not available", physical ranges, record-number matching, the device's own words and pairs. Updated after the third review (R1–R4, M2): the patient's own numbers refused in number fields, range exceptions, boxes the model cannot produce, bidirectional controls, cut text marked. Updated after the final check: the entry and the notes as response fields rendered outside Markdown |
 
 ---
 
@@ -27,7 +28,8 @@ This document provides the detailed design for all Class C software units in MST
 | DD-AI-001 | AI Segmentation Service | `ai_segmentation_service.py` | C | HAZ-001 |
 | DD-VOL-001 | Brain Volumetry — compute_volumes | `brain_volumetry_service.py` | C | HAZ-002 |
 | DD-VOL-002 | Brain Volumetry — compare_timepoints | `brain_volumetry_service.py` | C | HAZ-002 |
-| DD-RPT-001 | Report Generation | `brain_report_service.py` | C | HAZ-003 |
+| DD-RPT-001 | Report Generation | `brain_report_service.py` | C | HAZ-003, HAZ-016 |
+| DD-RPT-002 | Report Provider Payload and Check (draft 2026-10-24, CAPA-014) | `report_payload_guard.py` | C (part of the report item) | HAZ-016 |
 | DD-LES-001 | Lesion Analysis — analyze_lesions | `lesion_analysis_service.py` | C | HAZ-005 |
 | DD-LES-002 | Lesion Analysis — compute_dis_criteria | `lesion_analysis_service.py` | C | HAZ-008 |
 | DD-CLS-001 | MAGNIMS Region Classifier (four paths; renamed v1.1, was "(EDT)") | `ms_region_classifier.py` | C | HAZ-005 |
@@ -127,40 +129,68 @@ RETURN VolumetryResult
 
 ### DD-RPT-001: Report Generation
 
-**Purpose**: Generates structured clinical reports via Claude API with HIPAA-compliant de-identification.
+**Purpose**: Generates structured clinical report drafts via Claude API from the device's measurements only. *(Amended 2026-10-24, CAPA-014 — draft, PENDING owner approval. The earlier purpose and safety lines, which said the generation was de-identified, are withdrawn: nothing de-identified then.)*
 
 **Interface**:
 ```
 Input:  template_type: str ("general"|"ms_activity"|"ms_lesion_burden"|"ms_comprehensive"|"ms_longitudinal")
-        findings: Dict (de-identified clinical data)
+        findings: Dict (only the structured payload of DD-RPT-002 reaches the prompt)
         volumetry: Optional[Dict]
         language: str ("en"|"es"|"de")
-Output: Dict { report_id: str, content: str, template_type: str, language: str, processing_time_ms: int, model: str, tokens_used: Dict }
+        identifiers: PatientIdentifiers (required; read by the route from the record of the patient of the
+                     analysed segmentation — DD-RPT-002)
+Output: Dict { report_id: str, content: str, template_type: str, language: str, processing_time_ms: int, model: str, tokens_used: Dict,
+                unlisted_labels: Dict[placeholder, label as written] (for the draft only; the route removes it) }
 ```
 
-**Pre-conditions**: ANTHROPIC_API_KEY configured. Findings dict contains ONLY de-identified data (no PHI).
-**Post-conditions**: Report content is MAGNIMS-formatted clinical text. No PHI in report.
+**Pre-conditions**: ANTHROPIC_API_KEY configured. `identifiers` supplied (otherwise `PatientRecordUnavailable`, nothing sent).
+**Post-conditions**: Report content is MAGNIMS-formatted clinical text with the RC-006 disclaimer. The provider received the fixed template and a prompt built from the structured payload only; the draft itself is model output and is not filtered. The route returns the parts of the draft as response fields (`draft_parts`): `disclaimer`; `clinician_entry` (heading, labelled fields exactly as typed, at most 5000 characters each, a cut flagged with its note); `ai_draft_heading`; `app_notes` (the names of unlisted labels); `ai_text` — the model's text without any Unicode format character, a line that is exactly one of the application's headings replaced by a fixed line, followed by the application's notices. `content` (`draft_text`) is the whole draft as one text for copy and export: fixed headings, the entry's fields and the notes quoted in plain fenced blocks. The report viewer renders the entry and the notes in components of their own, outside the Markdown renderer, and only `ai_text` as Markdown (CAPA-014 second and third reviews, final check).
 
 **Algorithm**:
 1. Validate template_type exists in REPORT_TEMPLATES; fallback to "general"
-2. Construct system_prompt from REPORT_TEMPLATES[template_type]
-3. Construct user_prompt via `_build_findings_prompt(findings, volumetry, language)`
-   - Formats clinical indication, technique, patient_age (int only), patient_sex (M/F only)
-   - Includes lesion counts, volumes, DIS assessment, longitudinal data
-   - Appends language instruction
-4. Initialize Anthropic client (lazy load)
-5. Call `client.messages.create(model, max_tokens, system, messages)`
-6. Extract content from response
-7. Return report with metadata and token usage
+2. Refuse (`PatientRecordUnavailable`) when `identifiers` is missing — before any client exists (RC-065)
+3. Construct system_prompt from REPORT_TEMPLATES[template_type] (fixed text, no patient data)
+4. `provider_payload(findings, volumetry)` (DD-RPT-002, RC-064) → `_build_findings_prompt(payload…)`: language, the instruction that the clinician's text is added by the application (only when something was typed), age band, sex (M/F), measurements and fixed labels — no free text; `ImplausibleMeasurement` (nothing sent) when a number is outside the physical range of its field
+5. `assert_prompt_carries_no_identifier(user_prompt, identifiers)` — detection only; `IdentifierInPrompt`, nothing sent (RC-065)
+6. Log `privacy_check="passed"` and the withheld counts — never the payload (RC-066)
+7. Initialize Anthropic client (lazy load); call `client.messages.create(model, max_tokens, system, messages)`; apply the RC-006 disclaimer; return report with metadata and token usage
 
-**Error Handling**: RuntimeError if API key missing. Generic Exception caught, logged, re-raised.
+**Error Handling**: RuntimeError if API key missing. `ProviderGuardError` raised before the client is created or called; the route maps it to 503 with a message naming no identifier. Generic Exception caught, logged, re-raised.
 
 **Safety**:
-- **HIPAA Compliance**: Only age (integer), sex (M/F), clinical findings, and measurements are transmitted. No patient name, DOB, MRN, study date, or institution name.
+- **Data sent to the provider** *(2026-10-24, CAPA-014 — draft)*: measurements, labels of the device's fixed vocabulary, sex and a 5-year age band — no free text, no names, dates of birth or record numbers (CAPA-014 §6).
 - **Report includes mandatory disclaimer**: "AI-Generated — Requires Physician Review"
 - Timeout: relies on httpx default timeout (configurable)
 
-**Implements**: REQ-FUNC-060, REQ-FUNC-061, REQ-FUNC-063, REQ-SAFE-006, REQ-SAFE-007, REQ-SEC-007
+**Implements**: REQ-FUNC-060, REQ-FUNC-061, REQ-FUNC-063, REQ-SAFE-006, REQ-SAFE-007, REQ-SEC-007, REQ-SEC-021, REQ-SEC-022, REQ-SEC-023
+
+---
+
+### DD-RPT-002: Report Provider Payload and Check *(added 2026-10-24, CAPA-014 — draft, PENDING owner approval)*
+
+**Purpose**: Builds the only payload the provider may receive (RC-064) and checks the final prompt before it leaves (RC-065, detection only). Called only by DD-RPT-001; part of the Class C report item.
+
+**Interface**:
+```
+provider_payload(findings, volumetry, identifiers=None) -> ProviderPayload(findings, volumetry, withheld, unlisted)
+    inputs not modified; withheld = {free_text_fields, unknown_fields, unlisted_labels, values_not_numbers: count};
+    unlisted = {"[unlisted label N]": label as written} (for the draft only, never sent);
+    raises ImplausibleMeasurement when a number is outside the physical range of its field, and IdentifierInPrompt
+    when a whole number equals one of identifiers.number_forms() (record number, phone, birth date as digits)
+PatientIdentifiers.from_record(record) -> PatientIdentifiers
+    raises PatientRecordUnavailable when None or without mrn, given_name, family_name or birth_date
+find_identifiers(text, identifiers, safe_words, safe_pairs) -> [category, ...]    # never edits the text
+assert_no_identifiers(text, identifiers, safe_words, safe_pairs) -> None           # raises IdentifierInPrompt
+age_band(value) -> "45-49" | "90 or older" | None
+```
+
+**Payload** (allow-list): lesion analysis, DIS assessment, longitudinal comparison, zone statistics, volumetry — numbers only where numbers are printed — a value that is not a number becomes `NOT_AVAILABLE` (prints "not available" whatever the format), a number outside its field's physical range raises `ImplausibleMeasurement` (counts < 100 000; voxel counts < 2^31; lesion volumes ≤ 2 500 000 mm³ / 2 500 mL; volumetry ≤ 3 000 mL; anomaly volume ≤ 3 000 000 mm³; centroid 0–4096; percentage and percentile 0–100; a slack of 10⁻⁶ of the bound for rounding) — except the burden change outside −100 % to 999 999 % (derived, no physical bound: `NOT_AVAILABLE`) and a confidence outside 0–1 (left out); a whole number equal to one of the patient's own numbers raises `IdentifierInPrompt`; labels only from `label_vocabulary()` (MAGNIMS_REGIONS, REGION_NAMES, STRUCTURE_NAMES, SYNTHSEG_LABELS, size classes, abnormality types, `APP_LABEL_NAMES` — the label names of the application's presets), other labels → "[unlisted label N]", one number per distinct label; sex M/F; 5-year age band ("90 or older" from 90); the flag `clinician_entry` when something was typed; the DIS block keeps an "evaluated" state as received (PR #68), and one not evaluated, in an unknown state or without a yes/no conclusion becomes `{"evaluation_status": "not_evaluated"}` only (printed "NOT EVALUATED", never "NOT MET"). Free-text fields and unknown fields are counted and left out.
+
+**Check** (on the final user prompt, after NFKC, removal of format characters, look-alike and accent mapping, casefold): text over 400 000 characters refused; the patient's names, contact, city and street words as whole words or inside a longer word (≥ 4 letters) unless the word is one of the device's own (`fixed_prompt_words()`: words of the builder's output on synthetic payloads — what the user prompt can contain, not the system templates); given + family name next to each other or joined, unless the two words stand in that order in the device's own text (`fixed_prompt_pairs()`) or the joined word is one of the device's words; letter-and-digit record numbers with up to 3 separator characters between characters; all-digit record numbers, and the digits of a prefixed one (≥ 6 digits), as a whole number not part of a decimal number nor followed by a unit (under 6 digits excepted); birth date patterns (D M Y, M D Y, Y M D with numeric, month-name en/es/de and Roman months; D M or year after a birth word); phone digit strings (with/without country code and trunk 0, ≥ 7 digits) inside any digit run; record e-mail; generic e-mail, dated text, "+" phone, ≥ 9-digit or grouped numbers, ID-like tokens (≥ 5 digits with letters, not a number with a unit), titled names. All patterns are bounded or anchored (linear time).
+
+**Safety**: never edits the text, so it cannot alter clinical wording; it can only refuse to send. Known limits (CAPA-014 §8): a name that is also one of the device's words is found only next to the other name; all-digit record numbers under 6 digits are not checked (they cannot be told from measurements); a name made of two device words in the device's order ("Deep White") is not found; a whole number equal to an all-digit record number refuses (it cannot be told from it); further forms are listed in CAPA-014 §8 item 2.
+
+**Implements**: REQ-SEC-021, REQ-SEC-022 (RC-064, RC-065)
 
 ---
 
@@ -561,7 +591,8 @@ Output: { normal: number [0,1], abnormal: number [0,1], inferenceTimeMs: number 
 | DD-AI-001 | REQ-FUNC-030 | RC-001, RC-002, RC-003 |
 | DD-VOL-001 | REQ-FUNC-040, 041, 042, REQ-SAFE-004, 005 | RC-004, RC-005 |
 | DD-VOL-002 | REQ-FUNC-040 | RC-004 |
-| DD-RPT-001 | REQ-FUNC-060, 061, 063, REQ-SAFE-006, 007, REQ-SEC-007 | RC-006, RC-007 |
+| DD-RPT-001 | REQ-FUNC-060, 061, 063, REQ-SAFE-006, 007, REQ-SEC-007, REQ-SEC-021..023 (draft) | RC-006, RC-007, RC-064..RC-066 (draft) |
+| DD-RPT-002 (draft) | REQ-SEC-021, REQ-SEC-022 | RC-064, RC-065 |
 | DD-LES-001 | REQ-FUNC-050, 051 | RC-010 |
 | DD-LES-002 | REQ-FUNC-052, REQ-SAFE-015 | RC-015 |
 | DD-CLS-001 | REQ-FUNC-053, REQ-SAFE-010 (amended 2026-09-28), 011, 021, REQ-SEC-014/015 (region routes) | RC-010 (amended), RC-011, RC-032 (path preconditions: MNI grid gate, also on the longitudinal compare route; parcellation identity; geometric preconditions; refusal vs fault; CAPA-006), RC-029 (object-level authorization of classify-regions and generate-zone-map; CAPA-006) |

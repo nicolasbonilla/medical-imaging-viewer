@@ -55,7 +55,7 @@ DEPS = ["require_segmentation_access", "require_study_access", "require_series_a
         "require_instance_access", "require_document_access", "require_patient_access",
         "require_version_access", "require_study_list_scope", "require_document_list_scope"]
 CALLS = ["require_imaging_access", "authorize_file_scope", "authorize_mask_specs",
-         "authorize_patient_id", "authorize_study_id", "authorize_document_id",
+         "authorize_patient_id", "authorize_study_id", "authorize_document_id", "authorize_segmentation_id",
          "_authorized_inputs", "_authorized_image_request"]
 
 # Every mounted route that references an object, with the mechanism that authorizes it.
@@ -66,6 +66,7 @@ ROUTE_AUTH = {
     ("POST", "/ai/segment/interactive"): "call:_authorized_image_request",
     ("GET", "/ai/segment/{task_id}/status"): "initiator",
     ("POST", "/ai/volumetry/compare"): "call:authorize_patient_id",
+    ("POST", "/ai/report/generate"): "call:authorize_segmentation_id",   # CAPA-014 (RC-065)
     ("POST", "/ai/volumetry/compute"): "call:authorize_mask_specs",
     ("GET", "/auth/audit-logs"): "admin",   # CAPA-015 RC-067: administrators only (was AUDIT_VIEW, incl. radiologists)
     ("DELETE", "/auth/users/{user_id}"): "perm",
@@ -412,6 +413,8 @@ DENIED = [  # (method, path, json) -> 404 for a caller without access, before an
     ("post", "/ai/anomaly/detect", {"file_id": FILE}),
     ("post", "/ai/volumetry/compute", {"segmentation_id": "s1"}),
     ("post", "/ai/volumetry/compare", {"patient_id": PATIENT, "timepoints": [{}, {}]}),
+    ("post", "/ai/report/generate", {"segmentation_id": "s1",                       # CAPA-014
+                                     "findings": {"lesion_analysis": {"total_count": 1}}}),
     ("get", "/ai/segment/t-1/status", None),
     ("post", "/clinical/flames/segment", {"flair_file_id": FILE}),
     ("post", "/clinical/synthseg/parcellate", {"file_id": FILE}),
