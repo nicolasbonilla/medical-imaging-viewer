@@ -5,7 +5,8 @@ Risk controls (HAZ-016; REQ-SEC-021, REQ-SEC-022, REQ-SEC-023):
   only from a structured payload — the device's measurements (numbers), labels from the device's
   fixed vocabulary, sex (M/F) and a 5-year age band ("90 or older" from 90). Every free-text or
   user-typed field is left out; any label outside the vocabulary becomes "[unlisted label]"; every
-  number is coerced to a number. The system prompt is the fixed template.
+  number is coerced to a number. The system prompt is one of the fixed template variants (amended 2026-10-25 at
+  the release integration with PR #68 — PENDING owner approval).
 - RC-065 (protective, detection only): fail closed — segmentation required and authorized, patient
   record readable; a tripwire on the final prompt refuses to send when one of the patient's own
   identifiers (name, record number, birth date, phone, e-mail, city) or a generic identifier pattern
@@ -325,12 +326,26 @@ def test_rc064_sex_is_sent_only_as_m_or_f(route, sex, line):
 
 @pytest.mark.unit
 def test_rc064_system_prompt_is_the_fixed_template(route):
-    from app.services.brain_report_service import REPORT_TEMPLATES
+    """RC-064 (f), amended 2026-10-25 at the release integration with PR #68 (PENDING owner approval): the system
+    prompt is ONE OF THE FIXED TEMPLATE VARIANTS — the template as written when the DIS block the model receives is
+    evaluated, otherwise the same template with its DIS and per-region instructions replaced (PRB-003, RC-070). Both
+    variants are fixed text: nothing of the request (typed text, measurements) is in the system prompt. (Name kept:
+    the CAPA-014 records cite it.)"""
+    from app.services.brain_report_service import REPORT_TEMPLATES, dis_not_evaluated_template
+    not_evaluated = {"evaluation_status": "not_evaluated"}
     for template in REPORT_TEMPLATES:
-        route.provider.calls.clear()
-        r = _post(route, {**_measurements(), **TYPED}, template=template)
-        assert r.status_code == 200, r.text
-        assert route.provider.sent()["system"] == REPORT_TEMPLATES[template]
+        for dis, expected in ((None, REPORT_TEMPLATES[template]),
+                              (not_evaluated, dis_not_evaluated_template(REPORT_TEMPLATES[template]))):
+            route.provider.calls.clear()
+            findings = {**_measurements(), **TYPED}
+            if dis is not None:
+                findings["dis_assessment"] = dis
+            r = _post(route, findings, template=template)
+            assert r.status_code == 200, r.text
+            system = route.provider.sent()["system"]
+            assert system == expected, f"{template}: not the fixed variant for this DIS state"
+            assert not any(text in system for text in TYPED.values())
+            assert "MRN-2025-0042" not in system and "1234.5" not in system
 
 
 @pytest.mark.unit
