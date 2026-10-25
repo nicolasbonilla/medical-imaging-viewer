@@ -1,0 +1,148 @@
+{
+  "executed": "2026-10-25T02:41:36",
+  "tree": "57933c326952aafad6bb17e0b10995ccd1e5010f",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once; only the bound backend tests run, offline per PRB-002, with an outer environment asking for the Firestore backends and a 60-minute access token (conftest must override it); bytes restored after each mutation",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/api/routes/ai_report.py": "17e0f82cd7d3684682cded6125bff697e8d0877837ad1ab3d4e5428c65fd49c5",
+    "backend/app/core/logging/audit_middleware.py": "908a769a69a38994cdae391dbc2efbd3689d085666fd7ce6222ff80245bc886b",
+    "backend/app/services/brain_report_service.py": "86f893f21328eaa74a9b514fcb0d5b8a4ee6b13a440ab348f985b18523dd9b02",
+    "backend/tests/conftest.py": "83b5b86cd72d4a131ad45f0b57ea0f9451a80c253be0232b9521af31e9fee3c7"
+  },
+  "test_sha256": {
+    "tests/unit/test_capa015_audit_and_session.py": "c2d117e9fddae634de5e46d9cc02f6572e783845a9488aae648d53e485e3479a",
+    "tests/unit/test_release_2026_10_25_integration.py": "886cf55f3cf3750c56b4f62195f861a158f25dabad455885ee69aa79f69c9e4e"
+  },
+  "baseline": {
+    "exit": 0,
+    "failed": 0,
+    "passed": 10,
+    "errors": 0,
+    "failing_tests": []
+  },
+  "mutations": {
+    "I1_check_also_runs_on_the_assembled_draft": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc070_release_i1_the_dis_check_changes_the_model_text_never_the_clinicians_entry[de]",
+        "test_rc070_release_i1_the_dis_check_changes_the_model_text_never_the_clinicians_entry[en]",
+        "test_rc070_release_i1_the_dis_check_changes_the_model_text_never_the_clinicians_entry[es]"
+      ],
+      "reintroduces": "PRB-003's output check also rewrites the assembled draft, including the clinician's typed entry",
+      "tests": [
+        "tests/unit/test_release_2026_10_25_integration.py::test_rc070_release_i1_the_dis_check_changes_the_model_text_never_the_clinicians_entry"
+      ],
+      "executed": "2026-10-25T02:41:54",
+      "detected": true
+    },
+    "I1b_check_moved_after_the_draft_assembly": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc070_release_i1_the_dis_check_changes_the_model_text_never_the_clinicians_entry[de]",
+        "test_rc070_release_i1_the_dis_check_changes_the_model_text_never_the_clinicians_entry[en]",
+        "test_rc070_release_i1_the_dis_check_changes_the_model_text_never_the_clinicians_entry[es]"
+      ],
+      "reintroduces": "the output check runs after the draft assembly instead of before it (merge notes of #67 and #68)",
+      "tests": [
+        "tests/unit/test_release_2026_10_25_integration.py::test_rc070_release_i1_the_dis_check_changes_the_model_text_never_the_clinicians_entry"
+      ],
+      "executed": "2026-10-25T02:42:04",
+      "detected": true
+    },
+    "I2_template_variant_chosen_on_the_raw_findings": {
+      "exit": 1,
+      "failed": 5,
+      "passed": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc064_release_i2_the_template_variant_follows_the_dis_block_the_model_receives[general]",
+        "test_rc064_release_i2_the_template_variant_follows_the_dis_block_the_model_receives[ms_activity]",
+        "test_rc064_release_i2_the_template_variant_follows_the_dis_block_the_model_receives[ms_comprehensive]",
+        "test_rc064_release_i2_the_template_variant_follows_the_dis_block_the_model_receives[ms_lesion_burden]",
+        "test_rc064_release_i2_the_template_variant_follows_the_dis_block_the_model_receives[ms_longitudinal]"
+      ],
+      "reintroduces": "the template asks for a DIS table while the payload sends the DIS as not evaluated",
+      "tests": [
+        "tests/unit/test_release_2026_10_25_integration.py::test_rc064_release_i2_the_template_variant_follows_the_dis_block_the_model_receives"
+      ],
+      "executed": "2026-10-25T02:42:14",
+      "detected": true
+    },
+    "I3_dis_confirmation_route_not_audited": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc067_prb003_dis_confirmation_is_a_recorded_clinical_action"
+      ],
+      "reintroduces": "#68's radiologist confirmation is not recorded as a clinical action (CAPA-015 + PRB-003)",
+      "tests": [
+        "tests/unit/test_capa015_audit_and_session.py::test_rc067_prb003_dis_confirmation_is_a_recorded_clinical_action"
+      ],
+      "executed": "2026-10-25T02:42:21",
+      "detected": true
+    },
+    "I4_audit_backend_not_forced": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_release_c1_conftest_forces_the_capa015_test_settings"
+      ],
+      "reintroduces": "a developer's environment selects the Firestore audit backend in the test suite (CAPA-015's setdefault)",
+      "tests": [
+        "tests/unit/test_release_2026_10_25_integration.py::test_release_c1_conftest_forces_the_capa015_test_settings"
+      ],
+      "executed": "2026-10-25T02:42:28",
+      "detected": true
+    },
+    "I5_refresh_backend_not_forced": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_release_c1_conftest_forces_the_capa015_test_settings"
+      ],
+      "reintroduces": "a developer's environment selects the Firestore refresh-token store in the test suite",
+      "tests": [
+        "tests/unit/test_release_2026_10_25_integration.py::test_release_c1_conftest_forces_the_capa015_test_settings"
+      ],
+      "executed": "2026-10-25T02:42:35",
+      "detected": true
+    },
+    "I6_access_lifetime_not_forced": {
+      "exit": 4,
+      "failed": 0,
+      "passed": 0,
+      "errors": 1,
+      "failing_tests": [],
+      "reintroduces": "an old 60-minute access-token setting reaches the test suite (the start-up check refuses it)",
+      "tests": [
+        "tests/unit/test_release_2026_10_25_integration.py::test_release_c1_conftest_forces_the_capa015_test_settings"
+      ],
+      "executed": "2026-10-25T02:42:38",
+      "detected": true
+    }
+  },
+  "restored": {
+    "exit": 0,
+    "failed": 0,
+    "passed": 10,
+    "errors": 0,
+    "failing_tests": []
+  },
+  "summary": {
+    "mutations": 7,
+    "detected": 7,
+    "undetected": []
+  }
+}
