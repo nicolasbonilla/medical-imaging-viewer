@@ -291,6 +291,30 @@ def test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome
 
 
 @pytest.mark.unit
+def test_rc067_prb003_dis_confirmation_is_a_recorded_clinical_action(env, monkeypatch):
+    """Release 2026-10-25 integration (#65 + #68): the radiologist's DIS confirmation of PR #68 (PRB-003, RC-071,
+    `POST /segmentation/{segmentation_id}/review/confirm`) is a clinical action — mapped to
+    clinical.segmentation.confirm, always durable, with actor, role, segmentation id and outcome."""
+    mw = _mod("app.core.logging.audit_middleware")
+    template = "/api/v1/segmentation/{segmentation_id}/review/confirm"
+    assert any(getattr(r, "path", None) == template and "POST" in getattr(r, "methods", set()) for r in app.routes), \
+        "the PRB-003 confirmation route is not mounted under the mapped template"
+    assert mw.ROUTE_ACTIONS[("POST", template)] == (mw.AuditEventType.CLINICAL_SEGMENTATION_CONFIRM, "segmentation")
+    _deny_objects(monkeypatch)
+    r = env.client.post(f"/api/v1/segmentation/{SEG}/review/confirm", json={"mask_sha256": "a" * 64},
+                        headers=env.bearer(env.rad))
+    assert r.status_code == 404
+    rows = env.records("clinical.segmentation.confirm")
+    assert len(rows) == 1, f"no durable 'clinical.segmentation.confirm' record: {env.records()}"
+    rec = rows[0]
+    assert rec["actor_user_id"] == env.rad.id and rec["actor_role"] == "radiologist"
+    assert rec["outcome"] == "failure" and rec["status_code"] == 404
+    assert rec["request_id"] == r.headers.get("x-request-id")
+    assert rec["resource_ids"].get("segmentation_id") == SEG
+    assert set(rec) <= ALLOWED_RECORD_KEYS
+
+
+@pytest.mark.unit
 def test_rc067_ai_report_generation_is_recorded_with_template_and_outcome(env, monkeypatch):
     ai_report = _mod("app.api.routes.ai_report")
 
