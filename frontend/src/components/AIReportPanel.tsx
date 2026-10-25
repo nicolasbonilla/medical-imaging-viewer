@@ -108,6 +108,7 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
       findings,
       volumetry: volumetry || null,
       // CAPA-014 (RC-065): the server removes this patient's identifiers before calling the provider
+      // PRB-003 (review of PR #68, finding 2): the server derives the DIS state for this segmentation only.
       ...(activeSegId ? { segmentation_id: activeSegId } : {}),
     });
   };

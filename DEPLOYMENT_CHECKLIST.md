@@ -76,14 +76,23 @@ raising the idle limit above 62.
 
 Deployment window and order (the owner runs it; nothing was run by the change):
 
-1. **Outside clinical hours, back to back**: deploy the backend (`bash scripts/deploy_backend.sh`),
-   then hosting at once (`cd frontend && npm run build && npx firebase deploy --only hosting`).
+0. *Release 2026-10-25 (PRs #66, #65, #67, #68 in one release): the order of step 1 below was changed
+   at integration because PRB-003 (#68) ships in the same release and needs the FRONTEND FIRST (see
+   "Deployment order for PRB-003" below). A new page against the old backend only opens the re-login
+   dialog and keeps the work (review M4) and reads both DIS answers; an old page against the new
+   backend breaks the lesion panel (PRB-003) and gets 15-minute sessions without silent renewal
+   (CAPA-015). The original CAPA-015 order was "backend, then hosting".*
+1. **Outside clinical hours, back to back**: deploy hosting first
+   (`cd frontend && npm run build && npx firebase deploy --only hosting`), then the backend at once
+   (`bash scripts/deploy_backend.sh`).
    `firebase.json` rewrites `/api/v1/auth/**` on the app's own origin to the Cloud Run service
    `brain-mri` (same project), so the `__session` refresh cookie (HttpOnly, Secure,
    SameSite=Strict) is first-party; Firebase Hosting forwards no other cookie name. Between the
    two steps the new page may meet the old backend: a 404/405 from `/refresh` opens the re-login
    dialog and keeps the work (review M4), it never discards it.
-   **1b. Client IP — verify BEFORE the live hosting deploy (re-review N1; owner action).** The
+   **1b. Client IP — verify BEFORE go-live, i.e. before clinical use resumes (re-review N1; owner
+   action; for the 2026-10-25 release this check runs right after the backend deploy, because the
+   hosting is deployed first).** The
    backend takes the right-most `X-Forwarded-For` entry and steps left only over published
    Firebase Hosting (Fastly) egress addresses (list in `backend/app/core/client_ip.py`, source
    and date in the file; fetched from https://api.fastly.com/public-ip-list on 2026-10-24 by the
@@ -125,6 +134,15 @@ Deployment window and order (the owner runs it; nothing was run by the change):
    - the client IP again, on the live app (same check as step 1b, through `app.mstool-ai.com`).
    - if the app is also opened on `brain-mri-476110.firebaseapp.com`, add that origin to
      `CORS_ORIGINS` (refresh refuses origins outside it).
+
+## Deployment order for PRB-003 (DIS only on a confirmed segmentation)
+
+**Deploy the FRONTEND FIRST, then the backend.** From PRB-003 the DIS route answers
+`{"evaluation_status": "not_evaluated", ...}` for every segmentation whose regions a radiologist has not
+confirmed. A frontend built before PRB-003 reads `region_details` from that answer and the lesion panel
+fails (blank panel). The new frontend shows both answers (old and new backend), and the panel now sits in
+an error boundary. After both are deployed: open a segmentation, press "Analyze" — the DIS card reads
+"DIS (brain MRI): not evaluated" until the regions are classified and a radiologist confirms them.
 
 ## Common failures
 

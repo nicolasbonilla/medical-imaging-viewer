@@ -382,6 +382,7 @@ export const DEFAULT_LABEL_PRESETS: Record<string, LabelInfo[]> = {
  */
 export interface SegmentationAnalysisData {
   lesion_analysis?: LesionAnalysisResult;
+  /** PRB-003 (RC-070): no longer sent with the metadata and never displayed from it — the gated DIS route only. */
   dis_assessment?: DISAssessment;
   classification?: RegionClassificationResult;
   zone_map_seg_id?: string;
@@ -407,6 +408,20 @@ export interface SegmentationMetadata {
   validation_source?: string | null;
   /** AI provenance (in-browser FLAMeS draft). Absent on manual segmentations. */
   ai_provenance?: AIProvenance | null;
+  /** PRB-003 (RC-071): a radiologist's confirmation of a segmentation without AI provenance, bound to the saved mask. */
+  clinician_review?: ClinicianReview | null;
+}
+
+/** PRB-003 (RC-071): set only by the server's review/confirm route; removed by any later change of the mask. */
+export interface ClinicianReview {
+  /** Radiologists and administrators only; null for other roles (second review of PR #68, N5). */
+  reviewed_by: string | null;
+  reviewed_by_id?: string | null;
+  reviewed_by_role?: string | null;
+  reviewed_at: string;
+  reviewed_mask_sha256: string;
+  /** Region corrections by hand the radiologist acknowledged (second review of PR #68, N1). */
+  region_correction_count?: number;
 }
 
 /**

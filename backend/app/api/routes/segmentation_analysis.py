@@ -37,6 +37,8 @@ from app.services.lesion_analysis_service import (
 )
 from app.services.longitudinal_tracking_service import compare_timepoints
 from app.services import longitudinal_candidate_safety as lcs
+# PRB-003 (RC-070): DIS only on a segmentation a clinician confirmed for its current mask.
+from app.services import dis_review_gate as dis_gate
 from app.core.config import get_settings
 from app.utils import load_nifti_from_bytes
 
@@ -436,10 +438,14 @@ async def get_lesion_analysis(
         # Stale check — return cached result if mask hasn't changed
         cached = metadata.analysis_data or {}
         mask_mod = metadata.modified_at.isoformat()
+        # PRB-003 (review of PR #68, finding 3): the regions of the lesions are candidates until a radiologist
+        # confirmed the classified segmentation — every response says which.
+        region_status = dis_gate.region_status(dis_gate.review_state(metadata, masks_3d))
         if cached.get("analysis_mask_modified_at") == mask_mod and "lesion_analysis" in cached:
             logger.info("Returning cached lesion analysis for %s", segmentation_id)
             result = dict(cached["lesion_analysis"])
             result["segmentation_id"] = segmentation_id
+            result["region_status"] = region_status
             return result
 
         # Build label map from metadata
@@ -469,13 +475,14 @@ async def get_lesion_analysis(
         result = analyze_lesions(masks_3d, voxel_spacing, label_map)
         result["segmentation_id"] = segmentation_id
 
-        # Persist analysis result in metadata
+        # Persist analysis result in metadata (the region status is computed per response, never stored)
         metadata.analysis_data = {
             **cached,
             "lesion_analysis": result,
             "analysis_mask_modified_at": mask_mod,
         }
         segmentation_service.persist(segmentation_id)
+        result = {**result, "region_status": region_status}
 
         logger.info("Lesion analysis completed and cached", extra={
             "segmentation_id": segmentation_id,
@@ -493,6 +500,133 @@ async def get_lesion_analysis(
             "error": str(e),
         })
         raise HTTPException(status_code=500, detail=f"Lesion analysis failed: {str(e)}")
+
+
+def _label_map(labels) -> dict:
+    """Label id -> name of a segmentation's label scheme (MAGNIMS names when none is defined)."""
+    label_map = {}
+    for lbl in labels or []:
+        if hasattr(lbl, 'id') and hasattr(lbl, 'name'):
+            label_map[lbl.id] = lbl.name
+        elif isinstance(lbl, dict):
+            label_map[lbl.get("id", 0)] = lbl.get("name", f"Label {lbl.get('id', 0)}")
+    if not label_map or all(lid == 0 for lid in label_map):
+        label_map = MAGNIMS_REGIONS
+    return label_map
+
+
+async def lesion_table(segmentation_id, segmentation_service, storage_service) -> dict:
+    """The lesion measurements of a STORED segmentation, computed on the server and storing nothing.
+
+    PRB-003 (second review of PR #68, N7): the AI report never takes a lesion table from the client — it is derived
+    here for the report's own segmentation, so a table of another segmentation (with or without its
+    `segmentation_id`) can never be put next to this segmentation's DIS state. Compute-only (RC-033)."""
+    seg_data = segmentation_service.get_loaded(segmentation_id)
+    if seg_data is None:
+        raise HTTPException(status_code=404, detail=f"Segmentation {segmentation_id} not found")
+    masks_3d = np.array(seg_data["masks_3d"], dtype=np.uint8, copy=True)   # a copy of the stored mask
+    metadata = seg_data["metadata"]
+    label_map = _label_map(list(metadata.labels or []))
+    voxel_spacing = await _voxel_spacing_from_source_image(
+        metadata.file_id, storage_service, context=f"segmentation {segmentation_id}"
+    )
+    result = analyze_lesions(masks_3d, voxel_spacing, label_map)
+    result["segmentation_id"] = segmentation_id
+    return result
+
+
+async def assess_dis(segmentation_id, segmentation_service, storage_service,
+                     external_evidence: Optional[dict] = None, *, store: bool = True) -> dict:
+    """The DIS assessment of a stored segmentation — evaluated only on classified, confirmed regions.
+
+    PRB-003 (RC-070, REQ-SAFE-038; HAZ-008): DIS is computed only when the mask's labels are MAGNIMS regions
+    assigned by the region classification to these lesions, an AI draft has its own review, and a
+    radiologist's DIS confirmation is bound to the SHA-256 of the current mask and label scheme (see
+    `dis_review_gate`). Otherwise the explicit "not evaluated" state is returned: nothing is computed,
+    nothing is cached and no stored conclusion is served. Shared by the DIS route and the AI report route;
+    `store=False` keeps a caller compute-only (the report route stores nothing). The gate and the computation
+    run on one snapshot of the mask and labels, so a save during the spacing download cannot mix two masks,
+    and a result is cached only if the stored mask is still the snapshot (review of PR #68, finding 8).
+    """
+    seg_data = segmentation_service.get_loaded(segmentation_id)
+    if seg_data is None:
+        raise HTTPException(status_code=404, detail=f"Segmentation {segmentation_id} not found")
+    masks_3d = np.array(seg_data["masks_3d"], dtype=np.uint8, copy=True)   # snapshot
+    metadata = seg_data["metadata"]
+    labels = list(metadata.labels or [])
+
+    state = dis_gate.review_state(metadata, masks_3d)
+    if not state["confirmed"]:
+        logger.info("DIS not evaluated", extra={
+            "segmentation_id": segmentation_id, "reason": state["reason"], "source": state["source"],
+        })
+        return dis_gate.not_evaluated(segmentation_id, state)
+
+    external_evidence = dict(external_evidence or {})
+    # Only the brain-only assessment (no external evidence) is cached — a
+    # parameterized result must not overwrite or be served from that cache.
+    any_external = any(v is not None for v in external_evidence.values())
+
+    # Stale check — return the cached result if the mask hasn't changed and it was evaluated (a block
+    # stored before PRB-003, or a "not evaluated" one, is never served as a result).
+    cached = metadata.analysis_data or {}
+    mask_mod = metadata.modified_at.isoformat()
+    if (not any_external
+            and cached.get("analysis_mask_modified_at") == mask_mod
+            and dis_gate.is_evaluated(cached.get("dis_assessment"))
+            and (cached["dis_assessment"].get("segmentation_review") or {}).get("current_mask_sha256")
+            == state["current_mask_sha256"]):
+        logger.info("Returning cached DIS assessment for %s", segmentation_id)
+        result = dict(cached["dis_assessment"])
+        result["segmentation_id"] = segmentation_id
+        return dis_gate.evaluated(result, state)
+
+    # Build label map (from the snapshot of the labels the gate checked)
+    label_map = {}
+    for lbl in labels:
+        if hasattr(lbl, 'id') and hasattr(lbl, 'name'):
+            label_map[lbl.id] = lbl.name
+        elif isinstance(lbl, dict):
+            label_map[lbl.get("id", 0)] = lbl.get("name", f"Label {lbl.get('id', 0)}")
+
+    if not label_map or all(lid == 0 for lid in label_map):
+        label_map = MAGNIMS_REGIONS
+
+    # RC-024 (CAPA-001 CA-5): voxel spacing is REQUIRED, from the SOURCE IMAGE, not the
+    # segmentation metadata (which never carries it — see _voxel_spacing_from_source_image).
+    voxel_spacing = await _voxel_spacing_from_source_image(
+        metadata.file_id, storage_service, context=f"segmentation {segmentation_id}"
+    )
+
+    result = compute_dis_criteria(
+        masks_3d, label_map, voxel_spacing, **external_evidence
+    )
+    result["segmentation_id"] = segmentation_id
+    result = dis_gate.evaluated(result, state)
+
+    # Only persist the brain-only (unparameterized) assessment to the cache;
+    # a result that folds in external evidence must not become the cached one.
+    now_entry = segmentation_service.get_loaded(segmentation_id)
+    still_stored = now_entry is not None and dis_gate.SegmentationService.mask_sha256(
+        now_entry["masks_3d"]) == state["current_mask_sha256"]
+    if store and not any_external and still_stored:
+        metadata.analysis_data = {
+            **cached,
+            "dis_assessment": result,
+            "analysis_mask_modified_at": mask_mod,
+        }
+        segmentation_service.persist(segmentation_id)
+
+    logger.info("DIS assessment completed", extra={
+        "segmentation_id": segmentation_id,
+        "dis_met_brain": result.get("dis_met_brain", False),
+        "brain_regions_with_lesions": result.get("brain_regions_with_lesions", 0),
+        "total_topographies_involved": result.get("total_topographies_involved", 0),
+        "dit_waiver_supported": result.get("dit_waiver_supported", False),
+        "external_evidence": any_external,
+        "confirmed_by": state["reviewed_by"],
+    })
+    return result
 
 
 @router.get("/{segmentation_id}/dis-assessment")
@@ -519,14 +653,11 @@ async def get_dis_assessment(
     cord / optic nerve and the supportive specificity markers (central vein sign,
     paramagnetic rim lesion, CSF-specific finding) are optional external evidence.
     Decision support only — never a diagnosis (CMSC guidance).
+
+    PRB-003 (RC-070): evaluated only on a segmentation a radiologist confirmed for its current mask;
+    otherwise 200 with `evaluation_status = "not_evaluated"` and no met / not met (see `assess_dis`).
     """
     try:
-        seg_data = segmentation_service.get_loaded(segmentation_id)
-        if seg_data is None:
-            raise HTTPException(status_code=404, detail=f"Segmentation {segmentation_id} not found")
-        masks_3d = seg_data["masks_3d"]
-        metadata = seg_data["metadata"]
-
         external_evidence = {
             "spinal_cord_involved": spinal_cord_involved,
             "optic_nerve_involved": optic_nerve_involved,
@@ -534,68 +665,10 @@ async def get_dis_assessment(
             "prl_present": prl_present,
             "csf_specific": csf_specific,
         }
-        # Only the brain-only assessment (no external evidence) is cached — a
-        # parameterized result must not overwrite or be served from that cache.
-        any_external = any(v is not None for v in external_evidence.values())
-
-        # Stale check — return cached result if mask hasn't changed
-        cached = metadata.analysis_data or {}
-        mask_mod = metadata.modified_at.isoformat()
-        if (not any_external
-                and cached.get("analysis_mask_modified_at") == mask_mod
-                and "dis_assessment" in cached):
-            logger.info("Returning cached DIS assessment for %s", segmentation_id)
-            result = dict(cached["dis_assessment"])
-            result["segmentation_id"] = segmentation_id
-            return result
-
-        # Build label map
-        label_map = {}
-        for lbl in metadata.labels:
-            if hasattr(lbl, 'id') and hasattr(lbl, 'name'):
-                label_map[lbl.id] = lbl.name
-            elif isinstance(lbl, dict):
-                label_map[lbl.get("id", 0)] = lbl.get("name", f"Label {lbl.get('id', 0)}")
-
-        if not label_map or all(lid == 0 for lid in label_map):
-            label_map = MAGNIMS_REGIONS
-
-        # RC-024 (CAPA-001 CA-5): voxel spacing is REQUIRED. This previously
-        # defaulted to (1.0, 1.0, 1.0) whenever metadata was absent — and to
-        # 1.0 slice thickness via `st or 1.0` even when pixel spacing WAS
-        # present. Lesion volumes are voxel_count x product(spacing), so a 3 mm
-        # study reported volumes understated 3x, with full apparent precision,
-        # feeding the MAGNIMS lesion-size thresholds that determine DIS.
-        # RC-024 fix: spacing from the SOURCE IMAGE, not the segmentation metadata.
-        voxel_spacing = await _voxel_spacing_from_source_image(
-            metadata.file_id, storage_service, context=f"segmentation {segmentation_id}"
-        )
-
-        result = compute_dis_criteria(
-            masks_3d, label_map, voxel_spacing, **external_evidence
-        )
-        result["segmentation_id"] = segmentation_id
-
-        # Only persist the brain-only (unparameterized) assessment to the cache;
-        # a result that folds in external evidence must not become the cached one.
-        if not any_external:
-            metadata.analysis_data = {
-                **cached,
-                "dis_assessment": result,
-                "analysis_mask_modified_at": mask_mod,
-            }
-            segmentation_service.persist(segmentation_id)
-
-        logger.info("DIS assessment completed", extra={
-            "segmentation_id": segmentation_id,
-            "dis_met_brain": result.get("dis_met_brain", False),
-            "brain_regions_with_lesions": result.get("brain_regions_with_lesions", 0),
-            "total_topographies_involved": result.get("total_topographies_involved", 0),
-            "dit_waiver_supported": result.get("dit_waiver_supported", False),
-            "external_evidence": any_external,
-        })
-
-        return result
+        # Second review of PR #68, N5: who confirmed is shown to radiologists and administrators only.
+        return dis_gate.dis_for_viewer(
+            await assess_dis(segmentation_id, segmentation_service, storage_service, external_evidence),
+            current_user)
 
     except HTTPException:
         raise

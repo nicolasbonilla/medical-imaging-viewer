@@ -24,6 +24,7 @@ Data sent to the model provider (CAPA-014; RC-064, RC-065, RC-066; HAZ-016):
 @module services.brain_report_service
 """
 
+import re
 import time
 import uuid
 from functools import lru_cache
@@ -109,6 +110,84 @@ CLINICIAN_TEXT_INSTRUCTION = (
     "added to the draft by the application. Under CLINICAL INDICATION and TECHNIQUE write only: "
     "\"See the clinician's entry at the top of this draft.\""
 )
+
+
+# PRB-003 (RC-070; HAZ-008, HAZ-003): passed instead of a DIS result whenever DIS was not evaluated on a
+# segmentation a radiologist confirmed (paper A: the device's brain-DIS rule on raw automatic segmentations
+# returned "DIS met" in 19 of 100 healthy controls). It overrides the templates, which ask for a DIS table.
+DIS_NOT_EVALUATED_PROMPT = (
+    "\nDIS Assessment: NOT EVALUATED — requires clinician review of the segmentation (no radiologist has "
+    "confirmed the lesions and regions of this segmentation in its current version).\n"
+    "  SAFETY RULE (overrides the template and rule 4): Do NOT state or imply dissemination in space — "
+    "neither met nor not met, supported nor not supported, nor how many typical MS regions are involved — "
+    "from the lesion counts, the regions or any other value. In the DIS section write only: "
+    "'Dissemination in space: not evaluated (requires clinician review of the segmentation).' "
+    "Automatic marking also marks spots in most healthy brains; a marked spot is not evidence of "
+    "multiple sclerosis."
+)
+
+
+# PRB-003 (review of PR #68, finding 4): when DIS was not evaluated, the template itself carries no DIS
+# instruction — its DIS sections are replaced, any other line asking for DIS is removed, and format rule 4 keeps
+# only its CMSC prohibition. The not-evaluated rule is no longer only in the user message.
+_DIS_SECTION = re.compile(r"^(#{2,3}) [^\n]*(?:Dissemination in Space|DIS ASSESSMENT)[^\n]*\n.*?(?=^#{2,3} |\Z)",
+                          re.MULTILINE | re.DOTALL)
+_DIS_INSTRUCTION = re.compile(r"\bDIS\b|dissemination in space|typical MS regions", re.IGNORECASE)
+DIS_NOT_EVALUATED_LINE = ("Write only: 'Dissemination in space: not evaluated (requires clinician review of the "
+                          "segmentation).'")
+DIS_NOT_EVALUATED_SYSTEM_RULE = (
+    "SAFETY RULE (overrides everything below): dissemination in space was NOT evaluated for this segmentation — "
+    "no radiologist has confirmed its lesions and their regions. Never state or imply dissemination in space, "
+    "a McDonald space item or a number of regions involved, in any section. " + DIS_NOT_EVALUATED_LINE + "\n\n"
+)
+_RULE4_NOT_EVALUATED = ("4. Per CMSC Task Force guidance, **never write** 'McDonald criteria are met' or 'McDonald "
+                        "criteria are not met' — this requires full clinical correlation. Dissemination in space "
+                        "was not evaluated: " + DIS_NOT_EVALUATED_LINE)
+
+
+# Second review of PR #68, N4: without an evaluated DIS the regions are not confirmed and are not sent to the
+# model, so no template may ask for a per-region section, a region column or a regional distribution either.
+_REGION_SECTION = re.compile(r"^### (?:Periventricular|Cortical / Juxtacortical|Infratentorial|Deep White Matter|"
+                             r"Regional Distribution)[^\n]*\n.*?(?=^#{2,3} |\Z)", re.MULTILINE | re.DOTALL)
+REGIONS_NOT_CONFIRMED_SECTION = (
+    "### White Matter Lesions\n"
+    "- Lesion count, total volume and size distribution as measured. The lesions' anatomical regions were not "
+    "confirmed by a radiologist and are not given: do not assign, count or tabulate lesions by region.\n\n")
+_REGION_LINE_EDITS = (
+    (re.compile(r"^Detailed lesion inventory by anatomical region:\n", re.MULTILINE), ""),
+    (re.compile(r"^\| # \| Region \| ", re.MULTILINE), "| # | "),
+    (re.compile(r"^\|---\|--------\|", re.MULTILINE), "|---|"),
+    (re.compile(r"^\| Region \| Count \| Change vs\. Prior \|$", re.MULTILINE),
+     "| Measure | Value | Change vs. Prior |"),
+    (re.compile(r" \(region\) \|"), " |"),
+    (re.compile(r"^\d+\. \*\*Distribution pattern\*\*:[^\n]*\n", re.MULTILINE), ""),
+    (re.compile(r"extensive periventricular confluency"), "extensive confluency"),
+    (re.compile(r",? and (?:reference )?(?:the )?2017 McDonald(?: diagnostic)? criteria"), ""),
+)
+
+
+def dis_not_evaluated_template(system_prompt: str) -> str:
+    """The template without any DIS instruction and without any per-region section, for a draft whose DIS was
+    not evaluated (RC-070; review of PR #68, finding 4; second review, N4)."""
+    text = _DIS_SECTION.sub(lambda m: f"{m.group(1)} Dissemination in Space (DIS) Assessment\n"
+                                      f"{DIS_NOT_EVALUATED_LINE}\n\n", system_prompt)
+    removed = []
+
+    def _one_section(_match):          # the per-region sections become ONE section without regions
+        removed.append(_match)
+        return REGIONS_NOT_CONFIRMED_SECTION if len(removed) == 1 else ""
+
+    text = _REGION_SECTION.sub(_one_section, text)
+    for pattern, replacement in _REGION_LINE_EDITS:
+        text = pattern.sub(replacement, text)
+    kept = []
+    for line in text.split("\n"):
+        if _DIS_INSTRUCTION.search(line) and "not evaluated" not in line and not line.startswith("#"):
+            if line.startswith("4. Per CMSC Task Force guidance"):
+                kept.append(_RULE4_NOT_EVALUATED)
+            continue
+        kept.append(line)
+    return DIS_NOT_EVALUATED_SYSTEM_RULE + "\n".join(kept)
 
 
 # Shared formatting instructions for all templates
@@ -602,14 +681,16 @@ class BrainReportService:
                         f"z={ctr.get('z', 0):.0f}, y={ctr.get('y', 0):.0f}, x={ctr.get('x', 0):.0f}"
                     )
 
-        # DIS assessment data. CAPA-014 (coordination with PR #68, PRB-003): a DIS that was not evaluated or
-        # has no yes/no conclusion arrives as {"evaluation_status": "not_evaluated"} and is never "NOT MET".
-        if (findings.get("dis_assessment") or {}).get("evaluation_status") == "not_evaluated":
-            parts.append("\nDIS Assessment: NOT EVALUATED — no dissemination-in-space result is available. "
-                         "Do not state or imply whether dissemination in space is met; write only that it was "
-                         "not evaluated.")
-        elif findings.get("dis_assessment"):
-            dis = findings["dis_assessment"]
+        # DIS assessment data. PRB-003 (RC-070; HAZ-008, HAZ-003): a DIS result is passed only when the
+        # server evaluated it on a segmentation a radiologist confirmed ("evaluation_status": "evaluated",
+        # set by the report route from the stored segmentation). Anything else — not evaluated, or a block
+        # without that state — is NOT EVALUATED, never "NOT MET" (a missing flag used to print NOT MET),
+        # and the model is told not to derive DIS from the lesion counts or regions.
+        dis = findings.get("dis_assessment")
+        if not (isinstance(dis, dict) and dis.get("evaluation_status") == "evaluated"):
+            if dis or findings.get("lesion_analysis"):
+                parts.append(DIS_NOT_EVALUATED_PROMPT)
+        else:
             met = "MET" if dis.get("dis_met") else "NOT MET"
             parts.append(f"\nDIS Assessment: {met} "
                          f"({dis.get('regions_with_lesions', 0)}/{dis.get('total_dis_regions', 4)} regions)")
@@ -728,6 +809,14 @@ class BrainReportService:
         system_prompt = REPORT_TEMPLATES[template_type]      # fixed text: carries no patient data
         # RC-064: structured payload only — measurements, fixed labels, sex, age band; no free text.
         payload = provider_payload(findings, volumetry, identifiers)   # the patient's own numbers refused (R2)
+        # PRB-003 (RC-070; review of PR #68, finding 4): no DIS instruction in the template unless DIS was
+        # evaluated on a classified, radiologist-confirmed segmentation (state set by the report route).
+        # Release 2026-10-25 integration (PR #67 + PR #68): the variant is chosen on the DIS block the model
+        # actually receives (the RC-064 payload), so the template and the findings prompt always agree; the
+        # system prompt is one of the fixed template variants (RC-064 amended, PENDING owner approval).
+        dis_block = payload.findings.get("dis_assessment")
+        if not (isinstance(dis_block, dict) and dis_block.get("evaluation_status") == "evaluated"):
+            system_prompt = dis_not_evaluated_template(system_prompt)
         user_prompt = self._build_findings_prompt(payload.findings, payload.volumetry, language)
         # RC-065: detection-only tripwire on the final prompt; refuses to send on any finding.
         assert_prompt_carries_no_identifier(user_prompt, identifiers)

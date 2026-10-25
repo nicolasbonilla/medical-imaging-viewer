@@ -230,6 +230,49 @@ class AIProvenance(BaseModel):
     sequence_confirmed_by: Optional[str] = None
 
 
+class ClinicianReview(BaseModel):
+    """A radiologist's confirmation that a segmentation's lesions AND their MAGNIMS regions were checked, for
+    dissemination in space (PRB-003, RC-071, REQ-SAFE-039).
+
+    Any segmentation needs it before DIS is evaluated (RC-070): drawn in the application, produced by a server
+    tool, uploaded from another program, or an AI draft (which also needs its own review, RC-047). It is
+    offered only after the region classification, set only by `POST /segmentation/{id}/review/confirm`
+    (radiologists; the authenticated user recorded; the first confirmer is kept), and bound to the SHA-256 of
+    the exact stored mask (same digest as RC-047) AND of the label scheme (id -> name); a later change of either
+    removes it (`SegmentationService.enforce_review_binding`), with an entry in `clinician_review_history`.
+
+    Second review of PR #68: a region a radiologist changed by hand after the classification is a correction he
+    acknowledges in the confirmation (`region_corrections`, bound by `reviewed_region_corrections_sha256`; N1).
+    `reviewed_by` / `reviewed_by_id` are returned only to radiologists and administrators; other roles and the
+    AI assistant see the role and the time (N5) — the route always records them.
+    """
+    reviewed_by: Optional[str] = Field(None, max_length=200)
+    reviewed_by_id: Optional[str] = Field(None, max_length=200)
+    reviewed_by_role: Optional[str] = Field(None, max_length=40)
+    reviewed_at: str = Field(..., min_length=1, max_length=40)
+    reviewed_mask_sha256: str = Field(..., pattern=r"^[0-9a-f]{64}$")
+    reviewed_labels_sha256: str = Field(..., pattern=r"^[0-9a-f]{64}$")
+    reviewed_region_corrections_sha256: Optional[str] = Field(None, pattern=r"^[0-9a-f]{64}$")
+    region_correction_count: int = Field(0, ge=0)
+    region_corrections: List[Dict[str, Any]] = Field(default_factory=list, max_length=100)
+
+
+class ClinicianReviewEvent(BaseModel):
+    """One entry of the append-only history of DIS confirmations (PRB-003, RC-071; review of PR #68, finding 5).
+
+    `confirmed` and `confirmation_repeated` carry the authenticated user; `voided` is written by the service's
+    single save point when the mask or the label scheme changed (the save itself is in the audit log)."""
+    event: Literal["confirmed", "confirmation_repeated", "voided"]
+    by: Optional[str] = Field(None, max_length=200)
+    by_id: Optional[str] = Field(None, max_length=200)
+    at: str = Field(..., min_length=1, max_length=40)
+    mask_sha256: Optional[str] = Field(None, pattern=r"^[0-9a-f]{64}$")
+    labels_sha256: Optional[str] = Field(None, pattern=r"^[0-9a-f]{64}$")
+    reason: Optional[Literal["mask_changed", "labels_changed"]] = None
+    previous_reviewer: Optional[str] = Field(None, max_length=200)
+    region_correction_count: Optional[int] = Field(None, ge=0)
+
+
 class SegmentationMetadata(BaseModel):
     """Metadata for a segmentation."""
     file_id: str = Field(..., description="Associated image file ID")
@@ -258,6 +301,17 @@ class SegmentationMetadata(BaseModel):
         None,
         description="AI draft provenance (REQ-SAFE-030). Absent on manual segmentations.",
     )
+    clinician_review: Optional[ClinicianReview] = Field(
+        None,
+        description=("Radiologist's confirmation of the lesions and their MAGNIMS regions for DIS, bound to the "
+                     "stored mask and label scheme (REQ-SAFE-039, RC-071). Set only by the review/confirm route."),
+    )
+    clinician_review_history: List[ClinicianReviewEvent] = Field(
+        default_factory=list,
+        description=("History of DIS confirmations and voidings (RC-071), the most recent 50 kept (every event is "
+                     "also in the server log). Written by the server only; returned to radiologists and "
+                     "administrators only (second review of PR #68, N5)."),
+    )
 
 
 class PaintStroke(BaseModel):
@@ -284,6 +338,8 @@ class SegmentationResponse(BaseModel):
     metadata: SegmentationMetadata
     total_slices: int
     masks: Optional[List[SegmentationMask]] = None
+    # PRB-003 (second review of PR #68, N5): for a role that does not see the DIS confirmation history, its length.
+    clinician_review_history_count: Optional[int] = None
 
 
 class OverlayImageRequest(BaseModel):

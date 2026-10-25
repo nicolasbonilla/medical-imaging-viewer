@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import type { AIProvenance } from '@/types';
 import { segmentationAPI } from '@/api/segmentation';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
+import { AutomaticMarkingNotice } from './AutomaticMarkingNotice';
 
 interface AiDraftBannerProps {
   provenance: AIProvenance;
@@ -68,6 +69,8 @@ export const AiDraftBanner: React.FC<AiDraftBannerProps> = ({ provenance, segmen
       data-testid="ai-draft-banner"
     >
       <p className="font-semibold">{aiStatusText(provenance)}</p>
+      {/* PRB-003 (RC-072): information for safety on automatic marking, whatever the review state. */}
+      <AutomaticMarkingNotice className="text-[10px] leading-snug" />
       <p>
         {provenance.model_name} {t('segmentation.aiDraft.fold', 'fold')} {provenance.fold} · sha256 {provenance.model_sha256.slice(0, 12)} ·{' '}
         {provenance.pipeline_version}

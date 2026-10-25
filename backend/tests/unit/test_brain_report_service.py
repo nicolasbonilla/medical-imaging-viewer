@@ -222,8 +222,10 @@ class TestBrainReportService:
 
     @pytest.mark.asyncio
     async def test_each_template_uses_correct_system_prompt(self):
-        """Each template type sends its corresponding system prompt to Claude."""
-        from app.services.brain_report_service import REPORT_TEMPLATES
+        """Each template type sends its corresponding system prompt to Claude — the template as written when
+        DIS was evaluated; without an evaluated DIS, the same template with its DIS instructions replaced
+        (PRB-003, review of PR #68 finding 4; see test_prb003_review1_findings.py)."""
+        from app.services.brain_report_service import REPORT_TEMPLATES, dis_not_evaluated_template
 
         for template_type in ["general", "ms_activity", "ms_lesion_burden", "ms_longitudinal"]:
             mock_response = MagicMock()
@@ -239,8 +241,17 @@ class TestBrainReportService:
                 )
 
             call_kwargs = mock_client.messages.create.call_args
-            assert call_kwargs.kwargs["system"] == REPORT_TEMPLATES[template_type], \
+            assert call_kwargs.kwargs["system"] == dis_not_evaluated_template(REPORT_TEMPLATES[template_type]), \
                 f"Wrong system prompt for template '{template_type}'"
+
+            with patch.object(self.service, '_get_client', return_value=mock_client):
+                await self.service.generate_report(
+                    template_type=template_type, language="en",
+                    findings={"dis_assessment": {"evaluation_status": "evaluated", "dis_met": True}},
+                )
+            call_kwargs = mock_client.messages.create.call_args
+            assert call_kwargs.kwargs["system"] == REPORT_TEMPLATES[template_type], \
+                f"Wrong system prompt for template '{template_type}' (evaluated DIS)"
 
     # =========================================================================
     # Comprehensive template max_tokens override
@@ -464,9 +475,12 @@ class TestBrainReportService:
         assert "Periventricular" in prompt
 
     def test_build_findings_prompt_dis_assessment(self):
-        """DIS assessment data is included in the prompt."""
+        """DIS assessment data is included in the prompt — for a block the server EVALUATED on a confirmed
+        segmentation (PRB-003, RC-070: any other block is reported as NOT EVALUATED; see
+        test_prb003_dis_requires_confirmed_segmentation.py)."""
         findings = {
             "dis_assessment": {
+                "evaluation_status": "evaluated",
                 "dis_met": True,
                 "regions_with_lesions": 3,
                 "total_dis_regions": 4,

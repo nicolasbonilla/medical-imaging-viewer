@@ -17,6 +17,8 @@ from pydantic import BaseModel, Field
 from app.security import get_current_active_user
 from app.security.models import User
 from app.security.resource_access import authorize_segmentation_id
+# PRB-003 (RC-070): the segmentation named in a DIS block is authorized like any other mask reference.
+from app.security.resource_access import authorize_mask_specs
 from app.services.report_payload_guard import (
     FREE_TEXT_FIELDS,
     PatientIdentifiers,
@@ -357,6 +359,100 @@ def longitudinal_notice(longitudinal: Any, language: str) -> Optional[str]:
     return " ".join(lines)
 
 
+# PRB-003 (RC-070, RC-072; HAZ-008, HAZ-003): a report request is client data, so a DIS conclusion in it
+# cannot be trusted. The route derives the DIS state on the server for the report's own segmentation
+# (`segmentation_id` of the request — never another one named inside a block), evaluated only on classified,
+# radiologist-confirmed regions; without it the lesion measurements reach the model without regions, the
+# template carries no DIS instruction, any DIS statement the model writes is replaced, and the draft ends with
+# this notice, written by code in the report language (review of PR #68, findings 2-4).
+DIS_NOT_EVALUATED_NOTICE: Dict[str, str] = {
+    "en": "**Dissemination in space: not evaluated.** No radiologist has confirmed the lesions and their MAGNIMS "
+          "regions for the current version of the segmentation, so the software did not assess dissemination "
+          "in space; this draft must not be read as a statement on dissemination in space.",
+    "es": "**Diseminación en el espacio: no evaluada.** Ningún radiólogo ha confirmado las lesiones y sus regiones "
+          "MAGNIMS en la versión actual de la segmentación, por lo que el programa no evaluó la diseminación en "
+          "el espacio; este borrador no debe leerse como una afirmación sobre la diseminación en el espacio.",
+    "de": "**Räumliche Dissemination: nicht beurteilt.** Kein Radiologe hat die Läsionen und ihre MAGNIMS-Regionen "
+          "in der aktuellen Fassung der Segmentierung bestätigt; die Software hat die räumliche Dissemination daher "
+          "nicht beurteilt, und dieser Entwurf darf nicht als Aussage zur räumlichen Dissemination gelesen werden.",
+}
+# Second review of PR #68, N3: counted per statement (sentence, clause, table row or region heading).
+DIS_LINES_REPLACED: Dict[str, str] = {
+    "en": "{n} statement(s) of the drafting model's text on dissemination in space or on lesion regions were "
+          "replaced or removed.",
+    "es": "Se sustituyeron o eliminaron {n} afirmación(es) del texto del modelo de redacción sobre la diseminación "
+          "en el espacio o sobre las regiones de las lesiones.",
+    "de": "{n} Aussage(n) des Modelltextes zur räumlichen Dissemination oder zu den Regionen der Läsionen wurden "
+          "ersetzt oder entfernt.",
+}
+
+
+def _dis_services():
+    """The segmentation and storage services, resolved only when a DIS block must be re-derived."""
+    from app.core.container import get_segmentation_service, get_storage_service
+    return get_segmentation_service(), get_storage_service()
+
+
+async def server_dis_assessment(segmentation_id: Optional[str], current_user: User) -> Dict[str, Any]:
+    """The DIS state a report may use, derived on the server for the report's own segmentation.
+
+    No segmentation named: not evaluated. The caller's right to read it was checked by the route (RC-029);
+    the 404 of a segmentation that does not exist is raised to the caller. The state is computed by the same
+    gated function as the DIS route, storing nothing (compute-only, RC-033). Any other failure of the
+    assessment gives "not evaluated", never "not met"."""
+    from app.services import dis_review_gate as gate
+
+    if not isinstance(segmentation_id, str) or not segmentation_id.strip():
+        return gate.not_evaluated(None, None, reason=gate.REASON_NOT_IDENTIFIED)
+    from app.api.routes.segmentation_analysis import assess_dis
+
+    segmentation_service, storage_service = _dis_services()
+    try:
+        return await assess_dis(segmentation_id, segmentation_service, storage_service, store=False)
+    except HTTPException:
+        raise
+    except Exception as e:  # noqa: BLE001 — a failed assessment is "not evaluated", never "not met"
+        logger.error(f"[Report] DIS assessment failed for the report: {e}")
+        return gate.not_evaluated(segmentation_id, None, reason=gate.REASON_FAILED)
+
+
+async def server_lesion_table(segmentation_id: str) -> Dict[str, Any]:
+    """The lesion measurements a report may use, derived on the server for the report's own segmentation (N7).
+
+    The caller's right to read it was checked by the route (RC-029). A table that cannot be computed is refused
+    (422) — the client's table is never used instead."""
+    from app.api.routes.segmentation_analysis import lesion_table
+
+    segmentation_service, storage_service = _dis_services()
+    try:
+        return await lesion_table(segmentation_id, segmentation_service, storage_service)
+    except HTTPException:
+        raise
+    except Exception as e:  # noqa: BLE001
+        logger.error(f"[Report] Lesion measurements could not be computed for the report: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(f"The lesion measurements of segmentation {segmentation_id} could not be computed on the server "
+                    "(the source image or its voxel geometry could not be read); nothing was sent."),
+        )
+
+
+def dis_notice(findings: Dict[str, Any], language: str, replaced: int = 0) -> Optional[str]:
+    """The fixed notice for a draft with lesion measurements or a DIS block but no evaluated DIS, or None."""
+    from app.services import dis_review_gate as gate
+
+    if not (findings.get("lesion_analysis") or "dis_assessment" in findings or replaced):
+        return None
+    if gate.is_evaluated(findings.get("dis_assessment")):
+        return None
+    lang = language if language in DIS_NOT_EVALUATED_NOTICE else "en"
+    parts = [DIS_NOT_EVALUATED_NOTICE[lang]]
+    if replaced:
+        parts.append(DIS_LINES_REPLACED[lang].format(n=replaced))
+    parts.append(gate.AUTOMATIC_MARKING_NOTICE[lang])
+    return " ".join(parts)
+
+
 # =============================================================================
 # Request/Response Models
 # =============================================================================
@@ -390,7 +486,9 @@ class ReportGenerateRequest(BaseModel):
         max_length=200,
         description="The analysed segmentation the draft is for. Required (400 without it): the "
                     "request to the AI service is checked against its patient's record before it "
-                    "is sent (CAPA-014).",
+                    "is sent (CAPA-014). The DIS state and the lesion table are derived for it on "
+                    "the server (the client's are not used); lesion measurements or a DIS block "
+                    "naming another segmentation are refused (409) (PRB-003).",
     )
 
 
@@ -507,6 +605,42 @@ async def generate_report(
     findings = dict(request.findings)
     if "longitudinal" in findings:   # CAPA-013, review of PR #63 (blocker 1)
         findings["longitudinal"] = drop_unverifiable_decisions(findings["longitudinal"])
+    # PRB-003 (RC-070; review of PR #68, finding 2): every segmentation-bound block belongs to the report's own
+    # segmentation; the DIS state is derived on the server for that one only.
+    from app.services import dis_review_gate as gate
+    report_sid = request.segmentation_id
+    if report_sid:   # RC-029: the report's segmentation must be one the caller may read (404 otherwise)
+        await authorize_mask_specs([{"type": "segmentation", "id": report_sid}], current_user)
+    for key in ("lesion_analysis", "dis_assessment"):
+        block = findings.get(key)
+        named = block.get("segmentation_id") if isinstance(block, dict) else None
+        if named and report_sid and named != report_sid:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=(f"The {key.replace('_', ' ')} belongs to another segmentation than this report "
+                        "(segmentation_id differs); nothing was sent."),
+            )
+    if report_sid and "lesion_analysis" in findings:
+        # Second review of PR #68, N7: the lesion table is derived on the server for the report's own segmentation
+        # — a client table (with, without or with another `segmentation_id`) never reaches the model.
+        findings["lesion_analysis"] = await server_lesion_table(report_sid)
+    if "dis_assessment" in findings or (report_sid and "lesion_analysis" in findings):
+        # N5: the model gets the confirmer's role and time, never the person.
+        findings["dis_assessment"] = gate.without_reviewer_identity(
+            await server_dis_assessment(report_sid, current_user))
+        others = any(findings.get(k) for k in MEASUREMENT_FINDING_KEYS if k != "dis_assessment")
+        if not (others or request.volumetry or gate.is_evaluated(findings["dis_assessment"])):
+            # A "not evaluated" DIS state is not a measurement: the model would draft from nothing (RC-034).
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=("No measurement was supplied: dissemination in space was not evaluated (the segmentation "
+                        "has not been confirmed by a radiologist), and nothing else was measured. A report "
+                        "without measurements would be invented; run the lesion analysis first."),
+            )
+    dis_evaluated = gate.is_evaluated(findings.get("dis_assessment"))
+    if not dis_evaluated and isinstance(findings.get("lesion_analysis"), dict):
+        # Finding 3: regions of a segmentation no radiologist confirmed are not passed to the model.
+        findings["lesion_analysis"] = gate.without_region_breakdown(findings["lesion_analysis"])
 
     try:
         service = get_report_service()
@@ -517,6 +651,18 @@ async def generate_report(
             language=request.language,
             identifiers=identifiers,
         )
+        replaced = 0
+        # Finding 4 / N3: a DIS statement written by the model is replaced, in code — a BACKSTOP; the main controls
+        # are the earlier layers (no regions sent, the system safety rule, no DIS or per-region template section).
+        # Merge note (PR #67 + PR #68, release 2026-10-25): this check runs on the model's text only (with the
+        # RC-006 disclaimer), BEFORE `draft_parts` / `draft_text` add the clinician's typed entry and the
+        # application's notes, which it must never touch.
+        if not dis_evaluated:
+            content, replaced = gate.scrub_unevaluated_dis(result["content"], request.language)
+            if replaced:
+                logger.warning("[Report] DIS statements written by the model were replaced",
+                               extra={"replaced_statements": replaced})
+            result = {**result, "content": content}
         # CAPA-014 (RC-066): the typed text and the names of unlisted labels join the draft here, after the
         # model, as fields of their own; they were never sent.
         unlisted = result.pop("unlisted_labels", None)
@@ -524,6 +670,9 @@ async def generate_report(
         notice = longitudinal_notice(request.findings.get("longitudinal"), request.language)
         if notice:   # CAPA-013: appended in code, after the model, in the report language
             parts["ai_text"] = f"{parts['ai_text']}\n\n---\n\n> {notice}"
+        dis_text = dis_notice(findings, request.language, replaced)
+        if dis_text:   # PRB-003 (RC-070, RC-072): appended in code, after the model, in the report language
+            parts["ai_text"] = f"{parts['ai_text']}\n\n---\n\n> {dis_text}"
         result = {**result, **parts, "content": draft_text(parts, request.language)}
         return ReportResponse(**result)
 

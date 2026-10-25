@@ -183,7 +183,8 @@ export interface ReportGenerateRequest {
   language: string;
   findings: Record<string, any>;
   volumetry?: Record<string, any> | null;
-  /** The analysed segmentation: required by the server to remove the patient's identifiers (CAPA-014). */
+  /** The analysed segmentation: required by the server to remove the patient's identifiers (CAPA-014); the DIS
+   *  state and the lesion table are derived for it on the server (PRB-003). One field, both uses. */
   segmentation_id?: string;
 }
 

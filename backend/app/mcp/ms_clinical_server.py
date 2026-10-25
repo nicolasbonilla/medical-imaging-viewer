@@ -47,6 +47,11 @@ mcp = FastMCP(
         "never 'absent'.\n"
         "- Deep white matter is not a DIS region. Periventricular = abutting the lateral "
         "ventricles.\n"
+        "- DIS is evaluated only on a segmentation a radiologist has confirmed for its current mask "
+        "(PRB-003). When `dis_assessment.evaluation_status` is not 'evaluated', say only 'dissemination in "
+        "space: not evaluated (requires clinician review of the segmentation)'. Never derive dissemination "
+        "in space yourself from lesion counts, regions or the region classification. Automatic marking also "
+        "marks spots in most healthy brains; a marked spot is not evidence of multiple sclerosis.\n"
         "- The central vein sign (CVS) and paramagnetic rim lesions (PRL) need "
         "susceptibility-sensitive MRI and a human reading. They give supportive evidence "
         "only in specific situations defined by the criteria; report the clinician-recorded "
@@ -63,6 +68,42 @@ mcp = FastMCP(
         "visually."
     ),
 )
+
+
+# PRB-003 (RC-070): the assistant never receives a DIS conclusion that was not evaluated on a confirmed
+# segmentation — also against an older backend that still returns a bare `dis_met` block.
+NOT_EVALUATED_DIS_MESSAGE = (
+    "Not evaluated: requires clinician review of the segmentation. Dissemination in space is evaluated "
+    "only on a segmentation that a radiologist has confirmed for its current mask."
+)
+DIS_CONCLUSION_KEYS = frozenset({
+    "dis_met", "dis_met_brain", "dis_met_full", "dit_waiver_supported", "brain_regions_with_lesions",
+    "regions_with_lesions", "total_topographies_involved", "region_details",
+})
+REGIONS_ARE_NOT_DIS = (
+    "Regions not confirmed by a radiologist are candidates to verify; not a DIS assessment. Never derive "
+    "dissemination in space from them: DIS is reported only by summarize_dis_items, when a radiologist "
+    "confirmed the classified segmentation."
+)
+
+
+def _without_reviewer_names(dis: dict) -> dict:
+    """Second review of PR #68, N5: the assistant gets the confirmer's role and time, never the person."""
+    review = dis.get("segmentation_review")
+    if not isinstance(review, dict):
+        return dis
+    kept = {k: v for k, v in review.items() if k not in ("reviewed_by", "reviewed_by_id")}
+    if review.get("reviewed_by") and not kept.get("reviewed_by_role"):
+        kept["reviewed_by_role"] = "radiologist"
+    return {**dis, "segmentation_review": kept}
+
+
+def only_evaluated_dis(dis):
+    """The DIS block (without reviewer names) when the backend evaluated it; otherwise the 'not evaluated' state."""
+    if isinstance(dis, dict) and dis.get("evaluation_status") == "evaluated":
+        return _without_reviewer_names(dis)
+    kept = {k: v for k, v in (dis or {}).items() if k not in DIS_CONCLUSION_KEYS} if isinstance(dis, dict) else {}
+    return _without_reviewer_names({**kept, "evaluation_status": "not_evaluated", "message": NOT_EVALUATED_DIS_MESSAGE})
 
 
 # =============================================================================
@@ -99,7 +140,7 @@ async def get_region_classification(segmentation_id: str) -> dict:
             "message": "No region classification is stored for this segmentation. Ask the "
                        "physician to run the region classification in the application.",
         }
-    return {"classification": _strip_region_confidence(classification)}
+    return {"classification": _strip_region_confidence(classification), "note": REGIONS_ARE_NOT_DIS}
 
 
 @mcp.tool()
@@ -108,7 +149,10 @@ async def summarize_dis_items(segmentation_id: str) -> dict:
     Brain-MRI dissemination-in-space (DIS) items of McDonald 2024, as measured by the device.
 
     Returns the device's DIS assessment and lesion analysis, plus the CVS and PRL counts
-    RECORDED BY A CLINICIAN in the application (if any). This is a summary of measurements
+    RECORDED BY A CLINICIAN in the application (if any). DIS is evaluated only on a segmentation a
+    radiologist confirmed for its current mask (PRB-003); otherwise `dis_assessment` is the state "not
+    evaluated: requires clinician review of the segmentation" — report exactly that, never met / not
+    met. This is a summary of measurements
     for physician review, not a diagnostic evaluation: spinal cord and optic nerve are not
     evaluable from brain MRI, and CVS/PRL count only in the situations the criteria define.
 
@@ -121,7 +165,7 @@ async def summarize_dis_items(segmentation_id: str) -> dict:
         {"dis_assessment", "lesion_analysis", "clinician_recorded_cvs", "clinician_recorded_prl",
          "criteria_version", "not_evaluable_from_brain_mri"}
     """
-    dis = await api_get(f"/segmentation/{segmentation_id}/dis-assessment")
+    dis = only_evaluated_dis(await api_get(f"/segmentation/{segmentation_id}/dis-assessment"))
     analysis = await api_get(f"/segmentation/{segmentation_id}/lesion-analysis")
     seg = await api_get(f"/segmentation/{segmentation_id}")
     analysis_data = (seg.get("metadata") or {}).get("analysis_data") or {}
@@ -132,6 +176,8 @@ async def summarize_dis_items(segmentation_id: str) -> dict:
         "clinician_recorded_prl": analysis_data.get("prl_summary"),
         "criteria_version": "McDonald 2024 (Montalban et al., Lancet Neurology 2025)",
         "not_evaluable_from_brain_mri": ["spinal cord", "optic nerve"],
+        # Review of PR #68, finding 3: the lesion analysis carries regions; they are not a DIS assessment.
+        "regions_note": REGIONS_ARE_NOT_DIS,
     }
 
 
@@ -203,7 +249,8 @@ async def generate_ms_report(
     except Exception as exc:  # report what could not be read instead of hiding it
         unavailable["lesion_analysis"] = str(exc)
     try:
-        findings["dis_assessment"] = await api_get(f"/segmentation/{segmentation_id}/dis-assessment")
+        findings["dis_assessment"] = only_evaluated_dis(
+            await api_get(f"/segmentation/{segmentation_id}/dis-assessment"))
     except Exception as exc:
         unavailable["dis_assessment"] = str(exc)
     if include_longitudinal and longitudinal_baseline_id:
@@ -235,6 +282,7 @@ async def generate_ms_report(
             "template_type": "ms_longitudinal" if "longitudinal" in findings else "general",
             "language": language,
             "findings": findings,
+            # PRB-003: the report route derives the DIS state for this segmentation only.
             "segmentation_id": segmentation_id,
         },
     )
@@ -262,7 +310,9 @@ diagnosis, never state that criteria are met, never recommend treatment.
    to run the classification in the application.
 
 2. **DIS items**: `summarize_dis_items(segmentation_id)` — brain-MRI DIS items of
-   McDonald 2024:
+   McDonald 2024, evaluated only on a segmentation a radiologist confirmed (PRB-003); if
+   `evaluation_status` is not "evaluated", write "not evaluated (requires clinician review of the
+   segmentation)" and never derive DIS from lesion counts or regions:
    - DIS needs typical lesions in >=2 of 5 regions (periventricular, cortical/juxtacortical,
      infratentorial, spinal cord, optic nerve)
    - Brain MRI covers 3 of 5; spinal cord and optic nerve are "not evaluable", never "absent"
