@@ -308,6 +308,19 @@ def _report_subject(monkeypatch):
     monkeypatch.setattr(ai_report, "authorize_segmentation_id", _authorize)
     monkeypatch.setattr(ai_report, "_patient_service", lambda: _Patients())
 
+    # Release 2026-10-25 integration with PR #68 (PRB-003): the merged route also authorizes the report's
+    # segmentation with `authorize_mask_specs` (RC-029) and derives segmentation-bound blocks on the server. These
+    # longitudinal requests carry no lesion or DIS block, so only the authorization is stubbed; `_dis_services`
+    # refuses, so no CAPA-013 report test can reach the segmentation store (PRB-002).
+    async def _allow(specs, user):
+        return None
+
+    def _no_segmentation_store():
+        raise AssertionError("CAPA-013 report tests never reach the segmentation store (PRB-002)")
+
+    monkeypatch.setattr(ai_report, "authorize_mask_specs", _allow, raising=False)
+    monkeypatch.setattr(ai_report, "_dis_services", _no_segmentation_store, raising=False)
+
 
 class _Captured:
     """Stands in for the model provider: records the prompt, returns a fixed body."""

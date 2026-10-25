@@ -306,6 +306,27 @@ def _subject(monkeypatch, ai_report):
     monkeypatch.setattr(ai_report, "authorize_segmentation_id", _authorize)
     monkeypatch.setattr(ai_report, "_patient_service", lambda: _Patients())
 
+    # Release 2026-10-25 integration with PR #68 (PRB-003): the merged route also authorizes the segmentation with
+    # `authorize_mask_specs` and derives the lesion table and the DIS state on the server. Stubbed as a server that
+    # measured 3 lesions on an unconfirmed segmentation; `_dis_services` refuses (no store is reached, PRB-002).
+    async def _allow(specs, user):
+        return None
+
+    async def _lesion_table(segmentation_id):
+        return {"segmentation_id": segmentation_id, "total_count": 3}
+
+    async def _dis(segmentation_id, user):
+        from app.services import dis_review_gate as gate
+        return gate.not_evaluated(segmentation_id, None, reason=gate.REASON_NOT_CONFIRMED)
+
+    def _no_segmentation_store():
+        raise AssertionError("CAPA-008 report tests never reach the segmentation store (PRB-002)")
+
+    monkeypatch.setattr(ai_report, "authorize_mask_specs", _allow, raising=False)
+    monkeypatch.setattr(ai_report, "server_lesion_table", _lesion_table, raising=False)
+    monkeypatch.setattr(ai_report, "server_dis_assessment", _dis, raising=False)
+    monkeypatch.setattr(ai_report, "_dis_services", _no_segmentation_store, raising=False)
+
 
 @pytest.fixture
 def report_client(monkeypatch):

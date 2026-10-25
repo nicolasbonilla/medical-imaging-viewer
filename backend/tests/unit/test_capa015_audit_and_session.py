@@ -300,8 +300,32 @@ def test_rc067_ai_report_generation_is_recorded_with_template_and_outcome(env, m
                     "language": kw["language"], "processing_time_ms": 1}
 
     monkeypatch.setattr(ai_report, "get_report_service", lambda: _Svc())
+    # Release 2026-10-25 integration: PR #67 (CAPA-014) requires the analysed segmentation (400 without it) and reads
+    # its patient's record; PR #68 (PRB-003) authorizes it again and derives the lesion table and DIS state on the
+    # server. Those hooks are stubbed (no store is reached, PRB-002); this test still checks the CAPA-015 record.
+    async def _patient_of(segmentation_id, user):
+        return "patient-capa015"
+
+    async def _identifiers(patient_id):
+        return object()                       # the stubbed report service above does not read them
+
+    async def _allow(specs, user):
+        return None
+
+    async def _lesion_table(segmentation_id):
+        return {"total_lesions": 3}
+
+    async def _dis(segmentation_id, user):
+        from app.services import dis_review_gate as gate
+        return gate.not_evaluated(segmentation_id, None, reason=gate.REASON_NOT_CONFIRMED)
+
+    monkeypatch.setattr(ai_report, "authorize_segmentation_id", _patient_of, raising=False)
+    monkeypatch.setattr(ai_report, "read_patient_identifiers", _identifiers, raising=False)
+    monkeypatch.setattr(ai_report, "authorize_mask_specs", _allow, raising=False)
+    monkeypatch.setattr(ai_report, "server_lesion_table", _lesion_table, raising=False)
+    monkeypatch.setattr(ai_report, "server_dis_assessment", _dis, raising=False)
     r = env.client.post("/api/v1/ai/report/generate", headers=env.bearer(env.rad), json={
-        "template_type": "ms_lesion_burden", "language": "es",
+        "template_type": "ms_lesion_burden", "language": "es", "segmentation_id": SEG,
         "findings": {"lesion_analysis": {"total_lesions": 3}, "patient_name": "Erika Mustermann"}})
     assert r.status_code == 200, r.text
     rows = env.records("clinical.ai_report.generate")

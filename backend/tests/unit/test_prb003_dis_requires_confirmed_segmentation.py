@@ -561,6 +561,20 @@ def report_env(monkeypatch):
     monkeypatch.setattr(ai_report, "get_report_service", lambda: report)
     monkeypatch.setattr(ai_report, "_dis_services", lambda: (svc, _Storage()), raising=False)
     monkeypatch.setattr(ai_report, "authorize_mask_specs", authorize, raising=False)
+    # Release 2026-10-25 integration with PR #67 (CAPA-014), as the e2e fixture of test_prb003_review1_findings.py:
+    # the merged route also checks the report's segmentation with `authorize_segmentation_id` and reads its patient's
+    # record before anything is sent. Stubbed here (no store is reached, PRB-002); RC-029 is still observed through
+    # `authorized` above. Absent before the merge: nothing is replaced.
+
+    async def authorize_segmentation(segmentation_id, user):
+        return "11111111-1111-1111-1111-111111111111"
+
+    monkeypatch.setattr(ai_report, "authorize_segmentation_id", authorize_segmentation, raising=False)
+    try:
+        from tests.unit.test_capa014_report_provider_payload import _Patients, _record
+        monkeypatch.setattr(ai_report, "_patient_service", lambda: _Patients(_record()), raising=False)
+    except ImportError:                                   # PR #67 not merged
+        pass
     app.dependency_overrides[get_current_active_user] = lambda: _user()
     yield TestClient(app, raise_server_exceptions=False), svc, report, authorized
     app.dependency_overrides.clear()
@@ -603,12 +617,19 @@ def test_rc070_report_route_uses_the_server_assessment_of_a_confirmed_segmentati
 
 @pytest.mark.unit
 def test_rc070_report_route_dis_block_naming_no_segmentation_is_not_evaluated(report_env):
+    """Contract changed at the release 2026-10-25 integration with PR #67 (CAPA-014, REQ-SEC-022 (a)): a report
+    request without `segmentation_id` is refused (400) before anything is derived or sent — so a client DIS block
+    can never reach the model, evaluated or not. The DIS state for no named segmentation stays "not evaluated"
+    (checked on the function the route uses). Was: 200 with the DIS sent as not evaluated."""
+    import app.api.routes.ai_report as ai_report
     client, _svc, report, authorized = report_env
     r = _generate(client, {"dis_assessment": {"dis_met": True, "evaluation_status": "evaluated"},
                            "lesion_analysis": {"total_count": 1}}, sid=None)
-    assert r.status_code == 200, r.text[:300]
-    _assert_not_evaluated(report.calls[0]["findings"]["dis_assessment"])
+    assert r.status_code == 400, r.text[:300]
+    assert "nothing was sent" in r.text.lower()
+    assert report.calls == []
     assert authorized == []
+    _assert_not_evaluated(_run(ai_report.server_dis_assessment(None, _user())))
 
 
 @pytest.mark.unit
@@ -648,12 +669,19 @@ def test_rc072_report_draft_ends_with_the_not_evaluated_notice_in_its_language(r
     r = _generate(client, {"dis_assessment": {"segmentation_id": "seg-1"}, "lesion_analysis": {"total_count": 2}},
                   language=lang)
     assert r.status_code == 200, r.text[:300]
-    content = r.json()["content"]
-    assert content.startswith("draft body")
-    notice = content[len("draft body"):]
+    # Contract changed at the release 2026-10-25 integration with PR #67 (CAPA-014, RC-066): the model's text and the
+    # notices after it are the response field `ai_text`; the single text `content` starts with the fixed AI heading
+    # (here no disclaimer — the report service is stubbed — and nothing typed) and ends with `ai_text`. The notice
+    # still follows the model's text, in the report language, in both. Was: `content.startswith("draft body")`.
+    from app.api.routes.ai_report import AI_DRAFT_HEADING
+    body = r.json()
+    ai_text, content = body["ai_text"], body["content"]
+    assert ai_text.startswith("draft body")
+    notice = ai_text[len("draft body"):]
     assert phrase in notice
     from app.services import dis_review_gate as gate
     assert gate.AUTOMATIC_MARKING_NOTICE[lang] in notice
+    assert content.startswith(f"### {AI_DRAFT_HEADING[lang]}") and content.endswith(ai_text)
 
 
 @pytest.mark.unit

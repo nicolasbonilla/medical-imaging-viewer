@@ -77,7 +77,11 @@ def _measurements():
                  "size_category": "medium", "centroid": {"z": 50, "y": 110, "x": 90}},
                 {"id": 3, "region": "Black Hole (T1)", "volume_mm3": 34.5, "volume_ml": 0.0345, "size_category": "small",
                  "centroid": {"z": 60, "y": 100, "x": 70}}]},
-        "dis_assessment": {"dis_met": True, "regions_with_lesions": 2, "total_dis_regions": 5,
+        # Release 2026-10-25 integration with PR #68 (PRB-003): a DIS result reaches the model, and the regions travel
+        # with the lesion table, only when the block is marked evaluated (what the server derives for a classified,
+        # radiologist-confirmed segmentation). A block without that state is "not evaluated" (merge note 1 of #67).
+        "dis_assessment": {"evaluation_status": "evaluated", "dis_met": True, "regions_with_lesions": 2,
+                           "total_dis_regions": 5,
                            "region_details": {"Periventricular": {"present": True}, "Juxtacortical": {"present": False},
                                               "Infratentorial": {"present": True}},
                            "has_active_lesions": True, "active_voxels": 12, "has_black_holes": True,
@@ -195,16 +199,51 @@ def route(monkeypatch):
 
     monkeypatch.setattr(ai_report, "authorize_segmentation_id", _authorize, raising=False)
     monkeypatch.setattr(ai_report, "_patient_service", lambda: state.patients, raising=False)
+    _stub_prb003_hooks(monkeypatch, state)
     app.dependency_overrides[get_current_active_user] = lambda: RADIOLOGIST
     state.client = TestClient(app, raise_server_exceptions=False)
     yield state
     app.dependency_overrides.pop(get_current_active_user, None)
 
 
+def _stub_prb003_hooks(monkeypatch, state):
+    """Release 2026-10-25 integration with PR #68 (PRB-003 / CAPA-016): the merged route also authorizes the report's
+    segmentation with `authorize_mask_specs` and derives the lesion table and the DIS state on the server
+    (`server_lesion_table`, `server_dis_assessment`, through `_dis_services`). These route tests test CAPA-014's
+    controls, so the server is stubbed to have derived exactly the measurements the test sends (the merged route
+    still replaces the client's blocks with these; #68's own tests check that it does). `_dis_services` refuses: no
+    CAPA-014 test may reach the segmentation store (PRB-002). `raising=False` keeps the stubs usable without #68."""
+    import app.api.routes.ai_report as ai_report
+    state.mask_specs_authorized = []
+    state.server_findings = {}
+
+    async def _authorize_mask_specs(specs, user):
+        state.mask_specs_authorized.extend(specs)
+
+    async def _server_lesion_table(segmentation_id):
+        return json.loads(json.dumps(state.server_findings.get("lesion_analysis")))
+
+    async def _server_dis_assessment(segmentation_id, user):
+        dis = state.server_findings.get("dis_assessment")
+        if isinstance(dis, dict):
+            return json.loads(json.dumps(dis))
+        from app.services import dis_review_gate as gate
+        return gate.not_evaluated(segmentation_id, None, reason=gate.REASON_NOT_CONFIRMED)
+
+    def _no_segmentation_store():
+        raise AssertionError("CAPA-014 route tests never reach the segmentation store (PRB-002)")
+
+    monkeypatch.setattr(ai_report, "authorize_mask_specs", _authorize_mask_specs, raising=False)
+    monkeypatch.setattr(ai_report, "server_lesion_table", _server_lesion_table, raising=False)
+    monkeypatch.setattr(ai_report, "server_dis_assessment", _server_dis_assessment, raising=False)
+    monkeypatch.setattr(ai_report, "_dis_services", _no_segmentation_store, raising=False)
+
+
 def _post(route, findings, volumetry=None, template="general", language="en", seg=SEG_ID):
     body = {"template_type": template, "language": language, "findings": findings, "volumetry": volumetry}
     if seg is not None:
         body["segmentation_id"] = seg
+    route.server_findings = findings   # PR #68 merge: what the stubbed server derives for this segmentation
     return route.client.post("/api/v1/ai/report/generate", json=body)
 
 
@@ -523,6 +562,9 @@ def test_rc065_a_caller_without_access_gets_404_and_no_provider_call(monkeypatch
     monkeypatch.setattr(ra, "_patient_service", lambda: patients)
     monkeypatch.setattr(ra, "_care_team_service", lambda: _Care([]))
     monkeypatch.setattr(ai_report, "_patient_service", lambda: patients, raising=False)
+    hooks = SimpleNamespace()
+    _stub_prb003_hooks(monkeypatch, hooks)            # PR #68 merge: only CAPA-014's authorization decides here
+    hooks.server_findings = _measurements()
     app.dependency_overrides[get_current_active_user] = lambda: RADIOLOGIST
     try:
         client = TestClient(app, raise_server_exceptions=False)
@@ -939,7 +981,12 @@ def test_rc064_dis_evaluated_state_is_kept_and_reported():
     legacy = provider_payload({"dis_assessment": {"dis_met": True, "regions_with_lesions": 3, "total_dis_regions": 5}},
                               None)
     assert "evaluation_status" not in legacy.findings["dis_assessment"]          # no state is invented
-    assert "DIS Assessment: MET (3/5 regions)" in BrainReportService()._build_findings_prompt(legacy.findings, None, "en")
+    # Release 2026-10-25 integration with PR #68 (merge note 1 of #67: #68's rule wins): a block WITHOUT the
+    # "evaluated" state is printed NOT EVALUATED — never MET / NOT MET (was "MET (3/5 regions)" on #67 alone).
+    legacy_prompt = BrainReportService()._build_findings_prompt(legacy.findings, None, "en")
+    assert "DIS Assessment: NOT EVALUATED" in legacy_prompt
+    assert "DIS Assessment: MET" not in legacy_prompt and "NOT MET" not in legacy_prompt
+    assert "3/5 regions" not in legacy_prompt
 
 
 # ============================================================================= third independent review

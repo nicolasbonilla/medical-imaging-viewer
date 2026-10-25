@@ -633,8 +633,12 @@ def test_rc070_r2_a_dis_block_without_the_report_segmentation_is_not_evaluated(e
     _classify(other)
     _review(other)
     r = _report(client, sid=None, dis_sid="seg-2", lesions=True)
-    assert r.status_code == 200, r.text[:300]
-    assert "NOT EVALUATED" in provider.calls[0]["messages"][0]["content"]
+    # Contract changed at the release 2026-10-25 integration with PR #67 (CAPA-014, REQ-SEC-022 (a)): without the
+    # report's segmentation the request is refused (400) and nothing reaches the model — the confirmed DIS of
+    # seg-2 named in the block can never be carried in. Was: 200 with the DIS sent as NOT EVALUATED.
+    assert r.status_code == 400, r.text[:300]
+    assert "nothing was sent" in r.text.lower()
+    assert provider.calls == []
     assert authorized == []
 
 

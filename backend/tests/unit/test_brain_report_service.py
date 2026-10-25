@@ -245,7 +245,9 @@ class TestBrainReportService:
                 f"Wrong system prompt for template '{template_type}'"
 
             with patch.object(self.service, '_get_client', return_value=mock_client):
-                await self.service.generate_report(
+                # Release 2026-10-25 integration with PR #67 (CAPA-014): the service sends nothing without the
+                # patient's identifiers, so this call passes them as the first one does.
+                await self.service.generate_report(identifiers=TEST_IDENTIFIERS,
                     template_type=template_type, language="en",
                     findings={"dis_assessment": {"evaluation_status": "evaluated", "dis_met": True}},
                 )
