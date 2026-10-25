@@ -1,0 +1,104 @@
+{
+  "executed": "2026-10-25T04:44:41",
+  "code_under_test": "6d1fde24f11111b5c78193c3246b23dcfc50946c (release/owner-signoff-2026-10-25 as reviewed: application code unchanged, only the new test files present)",
+  "purpose": "failing-first evidence for the corrections asked by the independent integration review of PR #69 (items 1-4 and 6); the passing cases are positive controls (confirmed regions still sent; an evaluated DIS with a conclusion; the fully real confirmed path, a test gap rather than a defect; a 422 without measurements)",
+  "environment": "offline per PRB-002 (missing credentials file, empty gcloud configuration, mstool-offline-tests, no model-provider key)",
+  "backend": {
+    "file": "backend/tests/unit/test_release_2026_10_25_review_fixes.py",
+    "failed": 13,
+    "total": 17,
+    "cases": {
+      "test_rc064_release_r1_unconfirmed_regions_give_no_placeholder_and_no_app_note[en]": {
+        "status": "failed",
+        "reason": "AssertionError: ['  1 | [unlisted label 1] | 1000.0 | 1.0000 | large | z=45, y=120, x=88', '  2 | [unlisted label 1] | 100.0 | 0.1000 | medium | z=50, y=110, x=90', '  3 | [unlisted label 1] | 34.5 | 0.0345 | small | z=60, y=100, x=70']\nassert '[unlisted label' not in 'Generate th...oxels (5.9%)'\n  "
+      },
+      "test_rc064_release_r1_unconfirmed_regions_give_no_placeholder_and_no_app_note[es]": {
+        "status": "failed",
+        "reason": "AssertionError: ['  1 | [unlisted label 1] | 1000.0 | 1.0000 | large | z=45, y=120, x=88', '  2 | [unlisted label 1] | 100.0 | 0.1000 | medium | z=50, y=110, x=90', '  3 | [unlisted label 1] | 34.5 | 0.0345 | small | z=60, y=100, x=70']\nassert '[unlisted label' not in 'Generate th...oxels (5.9%)'\n  "
+      },
+      "test_rc064_release_r1_unconfirmed_regions_give_no_placeholder_and_no_app_note[de]": {
+        "status": "failed",
+        "reason": "AssertionError: ['  1 | [unlisted label 1] | 1000.0 | 1.0000 | large | z=45, y=120, x=88', '  2 | [unlisted label 1] | 100.0 | 0.1000 | medium | z=50, y=110, x=90', '  3 | [unlisted label 1] | 34.5 | 0.0345 | small | z=60, y=100, x=70']\nassert '[unlisted label' not in 'Generate th...oxels (5.9%)'\n  "
+      },
+      "test_rc064_release_r1_confirmed_regions_are_still_sent": {
+        "status": "passed",
+        "reason": null
+      },
+      "test_rc070_release_r2_zero_width_characters_do_not_hide_a_dis_statement[en]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'consistent ...ion in space' not in '## FINDINGS...pert review.'\n  \n  'consistent with dissemination in space' is contained here:\n     regions, consistent with dissemination in space.\n    \n    \n    ---\n    \n    > **Dissemination in space: not evaluated.** No radiologist has co"
+      },
+      "test_rc070_release_r2_zero_width_characters_do_not_hide_a_dis_statement[es]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'consistent ...ion in space' not in '## FINDINGS... un experto.'\n  \n  'consistent with dissemination in space' is contained here:\n     regions, consistent with dissemination in space.\n    \n    \n    ---\n    ...\n  \n  ...Full output truncated (1 line hidden), use '-vv' to show"
+      },
+      "test_rc070_release_r2_zero_width_characters_do_not_hide_a_dis_statement[de]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'consistent ...ion in space' not in '## FINDINGS...rüft werden.'\n  \n  'consistent with dissemination in space' is contained here:\n     regions, consistent with dissemination in space.\n    \n    \n    ---\n    ...\n  \n  ...Full output truncated (1 line hidden), use '-vv' to show"
+      },
+      "test_rc070_release_r3_one_rule_decides_evaluated_for_route_prompt_and_template[evaluated_met]": {
+        "status": "passed",
+        "reason": null
+      },
+      "test_rc070_release_r3_one_rule_decides_evaluated_for_route_prompt_and_template[evaluated_not_met]": {
+        "status": "passed",
+        "reason": null
+      },
+      "test_rc070_release_r3_one_rule_decides_evaluated_for_route_prompt_and_template[evaluated_without_conclusion]": {
+        "status": "failed",
+        "reason": "AssertionError: assert True is False\n +  where True = <function is_evaluated at 0x000001B371743380>({'evaluation_status': 'evaluated', 'regions_with_lesions': 2, 'total_dis_regions': 4})\n +    where <function is_evaluated at 0x000001B371743380> = <module 'app.services.dis_review_gate' from 'C:\\\\User"
+      },
+      "test_rc070_release_r3_one_rule_decides_evaluated_for_route_prompt_and_template[evaluated_conclusion_not_boolean]": {
+        "status": "failed",
+        "reason": "AssertionError: assert True is False\n +  where True = <function is_evaluated at 0x000001B371743380>({'dis_met': 'true', 'evaluation_status': 'evaluated'})\n +    where <function is_evaluated at 0x000001B371743380> = <module 'app.services.dis_review_gate' from 'C:\\\\Users\\\\Nicolas\\\\medical-imaging-view"
+      },
+      "test_rc070_release_r3_one_rule_decides_evaluated_for_route_prompt_and_template[not_evaluated]": {
+        "status": "failed",
+        "reason": "AssertionError: {'findings prompt': False, 'route notice': False, 'route regions': True, 'template': False}\nassert {False, True} == {False}\n  \n  Extra items in the left set:\n  True\n  Use -v to get more diff"
+      },
+      "test_rc070_release_r3_one_rule_decides_evaluated_for_route_prompt_and_template[no_state]": {
+        "status": "failed",
+        "reason": "AssertionError: {'findings prompt': False, 'route notice': False, 'route regions': True, 'template': False}\nassert {False, True} == {False}\n  \n  Extra items in the left set:\n  True\n  Use -v to get more diff"
+      },
+      "test_rc070_release_r3_one_rule_decides_evaluated_for_route_prompt_and_template[unknown_state]": {
+        "status": "failed",
+        "reason": "AssertionError: {'findings prompt': False, 'route notice': False, 'route regions': True, 'template': False}\nassert {False, True} == {False}\n  \n  Extra items in the left set:\n  True\n  Use -v to get more diff"
+      },
+      "test_rc064_release_r4_markers_and_identifiers_never_reach_the_provider_on_the_real_path[unconfirmed]": {
+        "status": "failed",
+        "reason": "AssertionError: assert ('[unlisted label' not in '  # | Regio..., y=13, x=13'\n  \n  '[unlisted label' is contained here:\n    ,x)   1 | [unlisted label 1] | 54.0 | 0.0540 | small | z=2, y=3, x=3   2 | [unlisted label 1] | 54.0 | 0.0540 | small | z=6, y=13, x=13)"
+      },
+      "test_rc064_release_r4_markers_and_identifiers_never_reach_the_provider_on_the_real_path[confirmed]": {
+        "status": "passed",
+        "reason": null
+      },
+      "test_rc070_release_r6_unreadable_geometry_names_itself_and_the_panel_knows_the_phrase": {
+        "status": "failed",
+        "reason": "AttributeError: module 'app.api.routes.ai_report' has no attribute 'GEOMETRY_UNREADABLE_PHRASE'"
+      }
+    }
+  },
+  "frontend": {
+    "file": "frontend/src/components/AIReportPanel.release20261025.test.tsx",
+    "failed": 3,
+    "total": 4,
+    "cases": {
+      "rc070 release r6 a geometry 422 shows its own message, not \"no measurements\" (en)": {
+        "status": "failed",
+        "reason": "AssertionError: expected 0 to be greater than 40\n    at C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/release-2026-10-25/frontend/src/components/AIReportPanel.release20261025.test.tsx:78:26\n    at file:///C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/agent-a8847e46e97c8da95/f"
+      },
+      "rc070 release r6 a geometry 422 shows its own message, not \"no measurements\" (es)": {
+        "status": "failed",
+        "reason": "AssertionError: expected 0 to be greater than 40\n    at C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/release-2026-10-25/frontend/src/components/AIReportPanel.release20261025.test.tsx:78:26\n    at file:///C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/agent-a8847e46e97c8da95/f"
+      },
+      "rc070 release r6 a geometry 422 shows its own message, not \"no measurements\" (de)": {
+        "status": "failed",
+        "reason": "AssertionError: expected 0 to be greater than 40\n    at C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/release-2026-10-25/frontend/src/components/AIReportPanel.release20261025.test.tsx:78:26\n    at file:///C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/agent-a8847e46e97c8da95/f"
+      },
+      "rc070 release r6 a 422 without measurements still shows the CAPA-008 message": {
+        "status": "passed",
+        "reason": null
+      }
+    }
+  }
+}
