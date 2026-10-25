@@ -151,8 +151,10 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "P16_dis_evaluated_state_dropped": ([(G, "            o[\"evaluation_status\"] = DIS_EVALUATED     # kept as received; never invented for a block without it\n",
                                           "            pass\n")],
                                         "the 'evaluated' DIS state lost in the payload (every DIS not evaluated after PR #68)"),
-    "P17_builder_prints_not_evaluated_as_not_met": ([(BRS, '        if (findings.get("dis_assessment") or {}).get("evaluation_status") == "not_evaluated":\n',
-                                                      '        if False:\n')],
+    # Release 2026-10-25 integration with PR #68: CAPA-014's not-evaluated branch gave way to #68's rule (merge note 1),
+    # so the anchor is the merged builder's line; the mutation still sends a not-evaluated DIS to MET / NOT MET.
+    "P17_builder_prints_not_evaluated_as_not_met": ([(BRS, '        if not (isinstance(dis, dict) and dis.get("evaluation_status") == "evaluated"):\n',
+                                                      '        if not isinstance(dis, dict):\n')],
                                                     "the prompt builder prints 'NOT MET' for a DIS not evaluated"),
     # third review (R2, R3, M2)
     "P18_unbounded_delta_refused": ([(G, "required=False,\n                             outside=NOT_AVAILABLE))\n", "required=False))\n")],
