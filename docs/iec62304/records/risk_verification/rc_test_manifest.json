@@ -731,7 +731,8 @@
       "status": "implemented",
       "implementation": "backend/app/services/report_payload_guard.py (provider_payload, _Projector, label_vocabulary, APP_LABEL_NAMES, NOT_AVAILABLE, ImplausibleMeasurement, PatientIdentifiers.number_forms, age_band); backend/app/services/brain_report_service.py (prompt builder without free text, generate_report - Class C, CAPA-014 s7); backend/app/api/routes/ai_report.py (clinician_entry, unlisted_note, assemble_draft)",
       "tests": [
-        "tests/unit/test_capa014_report_provider_payload.py"
+        "tests/unit/test_capa014_report_provider_payload.py",
+        "tests/unit/test_release_2026_10_25_integration.py"
       ],
       "requirement": "REQ-SEC-021 (refines REQ-SEC-007 for the report path)",
       "change": "CAPA-014 (DRAFT, PENDING owner approval; branch fix/ai-report-deidentification-capa014; redesign after the review of PR #67; updated after the second review, N1-N10, the third, R1-R4, M2, its final check and a last check)",
@@ -825,7 +826,8 @@
         "tests/unit/test_prb003_review2_findings.py",
         "frontend/src/components/LesionDashboard.prb003.review2.test.tsx",
         "tests/unit/test_prb003_review3_findings.py",
-        "frontend/src/components/LesionDashboard.prb003.review3.test.tsx"
+        "frontend/src/components/LesionDashboard.prb003.review3.test.tsx",
+        "tests/unit/test_release_2026_10_25_integration.py"
       ],
       "requirement": "REQ-SAFE-038",
       "change": "PRB-003 / CAPA-016 (DRAFT, PENDING owner approval; branch fix/dis-requires-reviewed-segmentation-prb003; merge after #67 and #65; corrected after the independent review of PR #68 at 4c601f2); corrected again after the second independent review of PR #68 at 29abe29; m-1 and m-3 corrected after the third independent review of PR #68 at 2e20b8a",
