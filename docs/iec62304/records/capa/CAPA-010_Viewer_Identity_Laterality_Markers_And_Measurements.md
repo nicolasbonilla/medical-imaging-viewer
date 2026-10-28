@@ -153,3 +153,22 @@ Failing test names per mutation and the SHA-256 of every mutated source and test
 
 **Prepared by**: internal audit, 2026-10-17.
 **Requires**: human approval before merge and deployment. **Approved by N. G. Bonilla Vargas on 2026-10-23** (PR #52/#51/#53/#59/#49/#62/#63, written authorisation of the owner).
+
+---
+
+## Addendum 2026-10-28 — proposed CA-10.9 (PRB-004, PRB-006, PRB-010) — DRAFT, PENDING owner approval
+
+Three problems found around the browser capture session of the release candidate share this CAPA's root cause ("coordinate
+conventions and display settings re-implemented per view"), so they are proposed here as one more corrective action rather
+than a new CAPA (owner decision; a new CAPA is the alternative):
+
+| Action | Description | Status |
+|---|---|---|
+| **CA-10.9** | (a) PRB-004: the W/L GPU 2D view placed voxels by the scanner affine — rotated 90° (and possibly mirrored) against the Standard view where the mask is edited — and showed a position between two slices; a mask of another grid or voxel order was drawn by its own affine. Fixed: the GPU view lays the image and the mask out as the Standard view, voxel-centre slice, a mask drawn only on the image's own grid and voxel order, otherwise not drawn and stated (RC-073, REQ-SAFE-041). (b) PRB-006: every niivue mask overlay used the MRI display window copied into the mask file (red fog, lesions nearly invisible); fixed range for every overlay and a stored range of the mask's own (RC-074, REQ-SAFE-042). (c) PRB-010: the region colours on the image (2D, 3D, zone legends, stored labels) were red / green / blue / gold while the lesion legend is Okabe-Ito; one shared mapping (RC-076, REQ-SAFE-043) | **Implemented on branch `fix/viewer-display-orientation-prb004`** (draft PR) — PENDING owner approval and code review |
+
+Records: `records/problem_reports/PRB-004_GPU_View_Rotated_Against_Standard_View.md`,
+`records/problem_reports/PRB-006_Lesion_Mask_Coloured_With_MRI_Display_Window.md`; tests on `main`, negative controls and the
+real-browser probe in `records/risk_verification/PRB-004_*_2026-10-28.json`. The prevention side is the same as PA-10.1 (verify a
+presentation control where the failure can be seen): this time a real-browser probe with real WebGL
+(`scripts/safety/prb004_viewer_display_probe.mjs`) measures the rendered pixels. Still open: RC-013 — a canonical, verified 2D
+orientation for every view (PRB-004 D-1).

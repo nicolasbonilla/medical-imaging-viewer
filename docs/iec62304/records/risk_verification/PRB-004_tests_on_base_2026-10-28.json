@@ -1,0 +1,234 @@
+{
+  "executed": "2026-10-28T21:50:24",
+  "base": "70cc5c7 (main, merge of PR #64)",
+  "method": "source files that differ from the base commit restored to it, files it did not have removed (tests and frontend/src/test helpers kept); the PRB-004..009 test files run unchanged; working tree restored byte for byte",
+  "swapped": {
+    "restored_to_base": [
+      "backend/app/api/routes/segmentation_regions.py",
+      "backend/app/services/segmentation_service.py",
+      "frontend/src/ViewerApp.tsx",
+      "frontend/src/components/ImageViewer2D.tsx",
+      "frontend/src/components/ImageViewer3D.tsx",
+      "frontend/src/components/LesionDashboard.tsx",
+      "frontend/src/components/MAGNIMSZoneMapPanel.tsx",
+      "frontend/src/components/MultiPanelViewer.tsx",
+      "frontend/src/components/NiivueViewer2D.tsx",
+      "frontend/src/components/QuickScreenBadge.tsx",
+      "frontend/src/components/SegmentationCanvasLocal.tsx",
+      "frontend/src/config/features.ts",
+      "frontend/src/hooks/useEdgeAI.ts",
+      "frontend/src/i18n/locales/de.json",
+      "frontend/src/i18n/locales/en.json",
+      "frontend/src/i18n/locales/es.json",
+      "frontend/src/store/useMultiViewerStore.ts",
+      "frontend/src/store/useSegmentationStore.ts",
+      "frontend/src/store/useViewerStore.ts",
+      "frontend/src/types/segmentation.ts",
+      "frontend/src/utils/instanceClassification.ts",
+      "frontend/src/utils/niivueWindowLevel.ts",
+      "frontend/src/utils/sequenceDetection.ts"
+    ],
+    "removed": [
+      "frontend/src/utils/niivueVoxelGrid.ts",
+      "frontend/src/utils/regionColors.ts",
+      "frontend/src/utils/sliceOnOpen.ts"
+    ]
+  },
+  "test_sha256": {
+    "backend/tests/unit/test_prb006_mask_display_range.py": "5c966ecbd72f53e228f6a3d210e9aae77181d035bdb237ae6e0569562148afab",
+    "backend/tests/unit/test_prb010_region_label_colours.py": "e82d84907532cb88b8cb360ae3d421264ff989fa6736e2f9d238647e7c81c8e2",
+    "frontend/src/components/NiivueViewer2D.prb004.test.tsx": "385fca39c02f2422dc87cf6b5f7e8829ed203c8d067eaf5ae1c902e924db4ae2",
+    "frontend/src/components/ImageViewer3D.prb005.test.tsx": "8a89683e89f8e78d3288bb9011e12efeba90fbdc94c66b51e5a46b36fc9a6578",
+    "frontend/src/ViewerApp.prb007.test.tsx": "8a33203477f8890670af6fa21efa57591f9f056dd09219f7fca994ee838cccf1",
+    "frontend/src/utils/sequenceDetection.prb007.test.ts": "f1611e1cef8dc653cf2b3120a1a1a9c40c72ce0445dbe31d19b022889aa29a5d",
+    "frontend/src/utils/sliceOnOpen.test.ts": "ab1ade73984f6719b09aedef2d7f77cc224b141e71d76eafdb55dd6eaee9d4b0",
+    "frontend/src/utils/niivueWindowLevel.test.ts": "f5e47745aba5755a06a1f5b9c45a2661959f811462ef74f0cd40e22f18cfc01f",
+    "frontend/src/components/QuickScreenBadge.prb009.test.tsx": "7d5a94a0580632aebd19ccf9b7ba86f150fd2b1f25729fa32355fffdf44c39d9",
+    "frontend/src/config/features.quickScreen.test.ts": "a0bfa662e7dfc0145329af72a31192822052db70cfbba0bbc39b12651e0f6c57",
+    "frontend/src/components/SegmentationCanvasLocal.prb010.test.tsx": "054f86de320aaf65b13fbbe45d9cf32dcccc35b2a42bf717027147704a309d11",
+    "frontend/src/utils/regionColors.test.ts": "b1d6757d0107656ba78b443a787bbef7f0b3315cd34e2fe51a9171a507ed3d7d"
+  },
+  "backend": {
+    "passed": 1,
+    "failed": 8,
+    "errors": 0,
+    "results": {
+      "test_rc074_spatial_header_and_rc031_marker_are_still_the_mri_s": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc074_stored_binary_mask_display_range_is_zero_to_one[-15.5-189.2]": {
+        "status": "failed",
+        "reason": "assert -15.5 == 0.0"
+      },
+      "test_rc074_stored_binary_mask_display_range_is_zero_to_one[100.0-900.0]": {
+        "status": "failed",
+        "reason": "assert 100.0 == 0.0"
+      },
+      "test_rc074_stored_binary_mask_display_range_is_zero_to_one[0.0-255.0]": {
+        "status": "failed",
+        "reason": "assert 255.0 == 1.0"
+      },
+      "test_rc074_stored_label_mask_display_range_is_zero_to_its_highest_label": {
+        "status": "failed",
+        "reason": "assert -15.5 == 0.0"
+      },
+      "test_rc074_empty_mask_display_range_is_zero_to_one": {
+        "status": "failed",
+        "reason": "assert (-15.5, 189.1999969482422) == (0.0, 1.0)"
+      },
+      "test_rc074_mask_stored_without_the_mri_header_has_its_own_display_range": {
+        "status": "failed",
+        "reason": "assert (0.0, 0.0) == (0.0, 3.0)"
+      },
+      "test_rc076_backend_region_label_colours_are_the_frontend_mapping": {
+        "status": "failed",
+        "reason": "ImportError: cannot import name 'MAGNIMS_REGION_LABEL_COLORS' from 'app.api.routes.segmentation_regions' (C:\\Users\\Nicolas\\medical-imaging-viewer\\.claude\\worktrees\\viewer-display-prb004\\backend\\app\\api\\routes\\segmentation_regions.py)"
+      },
+      "test_rc076_routes_store_region_labels_with_the_mapping_only": {
+        "status": "failed",
+        "reason": "AssertionError: #FF0000 still stored for a region label"
+      }
+    }
+  },
+  "frontend": {
+    "frontend/src/ViewerApp.prb007.test.tsx": {
+      "passed": 0,
+      "failed": 7,
+      "file_error": "",
+      "not_passing": {
+        "prb007 a study of preprocessed images only: the 2x2 grid shows all four images, none empty": "AssertionError: expected [ null, null, null, null ] to deeply equal [ 'i-flair', 'i-t1', 'i-t2', 'i-t1ce' ]",
+        "prb007 a study of preprocessed images only: the 1x2 grid shows two images": "AssertionError: expected [ null, null ] to deeply equal [ 'i-flair', 'i-t1' ]",
+        "prb007 the image-source switch names the source actually shown (Preproc, not Original)": "AssertionError: expected null to be truthy",
+        "prb008 the first image opens on its middle slice (7 slices: slice 4 of 7)": "AssertionError: expected +0 to be 3 // Object.is equality",
+        "prb008 another image of the same size keeps the slice; an image of another size opens on its middle slice": "AssertionError: expected 5 to be 4 // Object.is equality",
+        "prb008 grid panels open on the middle slice of their image, not slice 1": "AssertionError: expected false to be true // Object.is equality",
+        "rc075 opening the viewer requests no screening model and shows no Quick Screen button": "AssertionError: expected [ '/models/brain_screening.onnx' ] to deeply equal []"
+      },
+      "passing": []
+    },
+    "frontend/src/config/features.quickScreen.test.ts": {
+      "passed": 1,
+      "failed": 4,
+      "file_error": "",
+      "not_passing": {
+        "rc075 is OFF when the variable is not set": "AssertionError: expected undefined to be false // Object.is equality",
+        "rc075 is OFF for any value other than true/1": "AssertionError: expected undefined to be false // Object.is equality",
+        "rc075 turns ON only with true or 1": "AssertionError: expected undefined to be true // Object.is equality",
+        "rc075 the viewer mounts the badge only behind the flag, in one place": "AssertionError: expected 'import { useEffect, useRef, useState,…' to match /\\{FEATURES\\.QUICK_SCREEN && currentSe…/"
+      },
+      "passing": [
+        "rc075 the production environment file does not switch it on"
+      ]
+    },
+    "frontend/src/components/ImageViewer3D.prb005.test.tsx": {
+      "passed": 0,
+      "failed": 6,
+      "file_error": "",
+      "not_passing": {
+        "prb005 3D volume: image and mask load on http://localhost:4173": "AssertionError: expected +0 to be 2 // Object.is equality",
+        "prb005 3D multiplanar: image and mask load on http://localhost:4173": "AssertionError: expected +0 to be 2 // Object.is equality",
+        "prb005 3D volume: image and mask load on http://mstool-viewer": "AssertionError: expected +0 to be 2 // Object.is equality",
+        "prb005 3D multiplanar: image and mask load on http://mstool-viewer": "AssertionError: expected +0 to be 2 // Object.is equality",
+        "rc074 3D volume: lesion mask and both visit masks — 0 transparent, labels >= 1 full colour": "AssertionError: expected 0 to be less than or equal to -15.5",
+        "rc074 3D multiplanar: lesion mask and both visit masks — 0 transparent, labels >= 1 full colour": "AssertionError: expected 0 to be less than or equal to -15.5"
+      },
+      "passing": []
+    },
+    "frontend/src/components/NiivueViewer2D.prb004.test.tsx": {
+      "passed": 2,
+      "failed": 10,
+      "file_error": "",
+      "not_passing": {
+        "rc073 every voxel of the slice is drawn at the standard view position: row i down, column j right": "AssertionError: expected 0.9375006407499313 to be close to 0.08333333333333333, received difference is 0.854167307416598, but expected 5e-7",
+        "rc073 the slice shown is the standard view slice index, at the centre of that voxel slice": "AssertionError: expected +0 to be close to 0.09999984502792358, received difference is 0.09999984502792358, but expected 5e-7",
+        "rc073 the mask is drawn on exactly the image voxels the standard view overlays it on": "AssertionError: expected 0.6875004768371582 to be close to 0.25, received difference is 0.4375004768371582, but expected 5e-7",
+        "rc073 a mask on another voxel grid is not drawn in this view, and the view says so": "AssertionError: expected 2 to be 1 // Object.is equality",
+        "rc073 a mask with the image shape but another position in the scanner is not drawn": "AssertionError: expected 2 to be 1 // Object.is equality",
+        "rc073 a mask stored without the RC-031 voxel-order marker (legacy in-plane transpose) is not drawn": "AssertionError: expected 2 to be 1 // Object.is equality",
+        "rc073 a mask that cannot be loaded is not silently missing: the view says it is not drawn": "Error: Unable to find an element by: [data-testid=\"niivue-mask-not-shown\"]",
+        "prb005 the W/L GPU view loads the image and the mask on http://localhost:4173": "AssertionError: expected +0 to be 2 // Object.is equality",
+        "prb005 the W/L GPU view loads the image and the mask on http://mstool-viewer": "AssertionError: expected +0 to be 2 // Object.is equality",
+        "rc074 mask background (0) is transparent and every lesion label (>= 1) full colour despite an MRI-copied range": "AssertionError: expected 0 to be less than or equal to -15.5"
+      },
+      "passing": [
+        "rc073 harness pin: niivue axial 2D puts patient left (−X) on the left and anterior (+Y) on top",
+        "rc073 a mask on the image grid is drawn and no \"not shown\" notice appears"
+      ]
+    },
+    "frontend/src/components/QuickScreenBadge.prb009.test.tsx": {
+      "passed": 2,
+      "failed": 2,
+      "file_error": "",
+      "not_passing": {
+        "rc075 no Quick Screen button is shown, not even while the model is being looked for": "Error: \u001b[2mexpect(\u001b[22m\u001b[31melement\u001b[39m\u001b[2m).not.toBeInTheDocument()\u001b[22m",
+        "rc075 the model is looked for once per page, not at every viewer opening": "AssertionError: expected [ …(3) ] to deeply equal [ 'HEAD /models/brain_screening.onnx' ]"
+      },
+      "passing": [
+        "rc075 an absent model writes nothing to the console",
+        "rc075 guard: with the model present the button is shown"
+      ]
+    },
+    "frontend/src/components/SegmentationCanvasLocal.prb010.test.tsx": {
+      "passed": 0,
+      "failed": 7,
+      "file_error": "",
+      "not_passing": {
+        "rc076 2D overlay of a classified segmentation: each region drawn in its legend colour (stored labels say red/green/blue/gold)": "AssertionError: expected [ '#FF0000', '#00CC00', …(2) ] to deeply equal [ '#E69F00', '#56B4E9', …(2) ]",
+        "rc076 2D zone-coloured lesions (MAGNIMS zone colouring on) use the legend colours": "AssertionError: expected [ '#FF0000', '#00CC00', …(2) ] to deeply equal [ '#E69F00', '#56B4E9', …(2) ]",
+        "rc076 2D zone-map background layer uses the legend colours": "AssertionError: expected [ '#FF0000', '#00CC00', …(2) ] to deeply equal [ '#E69F00', '#56B4E9', …(2) ]",
+        "rc076 no two regions drawn on the image are red against green, and every pair stays apart for deutan and protan readers": "AssertionError: expected true to be false // Object.is equality",
+        "rc076 3D zone map: niivue receives the legend colours for zones 1-4": "AssertionError: expected [ '#FF0000', '#00CC00', …(2) ] to deeply equal [ '#E69F00', '#56B4E9', …(2) ]",
+        "rc076 the zone-colouring legend (PV / JC / IT / DWM) shows the same colours as the lesion legend": "AssertionError: expected 'W-2 H-2 ROUNDED-FULL BG-RED-500 ' to contain '#E69F00'",
+        "rc076 the zone-map panel legend shows the same colours as the lesion legend": "AssertionError: expected 'W-2 H-2 ROUNDED-FULL BG-RED-500 ' to contain '#E69F00'"
+      },
+      "passing": []
+    },
+    "frontend/src/utils/niivueWindowLevel.test.ts": {
+      "passed": 5,
+      "failed": 5,
+      "file_error": "",
+      "not_passing": {
+        "rc073 addresses the centre of the voxel slice: (index + 0.5) / depth": "TypeError: (0 , __vite_ssr_import_1__.sliceIndexToVoxelCentreFraction) is not a function",
+        "rc073 niivue reads it back as exactly that voxel slice (f · depth − 0.5 = index)": "TypeError: (0 , __vite_ssr_import_1__.sliceIndexToVoxelCentreFraction) is not a function",
+        "clamps out-of-range indices to the first and last slice": "TypeError: (0 , __vite_ssr_import_1__.sliceIndexToVoxelCentreFraction) is not a function",
+        "a single slice is addressed at its centre": "TypeError: (0 , __vite_ssr_import_1__.sliceIndexToVoxelCentreFraction) is not a function",
+        "returns null when the volume has no slices or the depth is not a number": "TypeError: (0 , __vite_ssr_import_1__.sliceIndexToVoxelCentreFraction) is not a function"
+      },
+      "passing": [
+        "maps an active window to center ± width/2",
+        "handles negative centers (signed intensities)",
+        "never produces a degenerate range when a window is active (min < max)",
+        "falls back to the volume global range when no window is active (width <= 0)",
+        "falls back to the current cal range when global range is undefined"
+      ]
+    },
+    "frontend/src/utils/regionColors.test.ts": {
+      "passed": 0,
+      "failed": 0,
+      "file_error": "Cannot find module './regionColors' imported from 'C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/viewer-display-prb004/frontend/src/utils/regionColors.test.ts'",
+      "not_passing": {},
+      "passing": []
+    },
+    "frontend/src/utils/sequenceDetection.prb007.test.ts": {
+      "passed": 1,
+      "failed": 2,
+      "file_error": "",
+      "not_passing": {
+        "prb007 four images, two of them T1-weighted: four panels, sequences first": "AssertionError: expected [ 'flair', 't1ce', 't2' ] to deeply equal [ 'flair', 't1ce', 't2', 't1' ]",
+        "prb007 never more than four, never the same image twice": "AssertionError: expected [ 'a' ] to deeply equal [ 'a', 'b', 'c', 'd' ]"
+      },
+      "passing": [
+        "prb007 guard: one image per sequence keeps the canonical order, unknowns last"
+      ]
+    },
+    "frontend/src/utils/sliceOnOpen.test.ts": {
+      "passed": 0,
+      "failed": 0,
+      "file_error": "Failed to resolve import \"./sliceOnOpen\" from \"src/utils/sliceOnOpen.test.ts\". Does the file exist?",
+      "not_passing": {},
+      "passing": []
+    }
+  },
+  "note": "Tests that pass on the base are guards (stated in their names: 'guard', 'harness pin') or check behaviour the base already had; a file whose module did not exist on the base fails as a whole (file_error)."
+}

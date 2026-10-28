@@ -1,0 +1,517 @@
+{
+  "record": "PRB-004 .. PRB-009 — real-browser probe of the live viewer page (display and orientation)",
+  "script": "scripts/safety/prb004_viewer_display_probe.mjs",
+  "how": "real ViewerApp (Vite dev server) in headless Microsoft Edge with real WebGL (SwiftShader); every backend request answered by DevTools interception with a synthetic 40x48x36 LAS study (no patient data, no network): head 90-129, marker A (250, rows 14-18, columns 36-42, labelled by the lesion mask, whose header carries an MRI window -15.5/189.2) and marker B (180, rows 27-31, columns 8-12); slice index 17 set in every run; positions measured from the rendered pixels relative to the drawn head (u: 0 left .. 1 right, v: 0 top .. 1 bottom); page text and buttons hidden during each capture. Screenshots were produced next to each result (not committed).",
+  "runs": {
+    "fixed_branch_on_localhost": {
+      "executed": "2026-10-28T19:45:54.372Z",
+      "origin": "http://localhost:5193",
+      "method": "real ViewerApp in headless Edge (real WebGL), served from a host name without a dot; backend answered by CDP request interception with a synthetic 40x48x36 LAS study (markers A, B; lesion mask on A whose header carries an MRI window -15.5/189.2); positions measured from rendered pixels relative to the drawn head",
+      "checks": {
+        "sliceOnOpen": "18/36",
+        "quickScreenButton": false,
+        "maskOpened": true,
+        "sliceForComparison": "18/36",
+        "standard": {
+          "headBox": {
+            "x0": 49,
+            "y0": 49,
+            "x1": 764,
+            "y1": 628
+          },
+          "B": {
+            "u": 0.18,
+            "v": 0.769,
+            "px": 7535
+          },
+          "A": null,
+          "red": {
+            "u": 0.867,
+            "v": 0.397,
+            "px": 10115
+          },
+          "redTintedFraction": 0.0183
+        },
+        "gpuButton": true,
+        "optimalWindowButton": true,
+        "wlGpu": {
+          "headBox": {
+            "x0": 98,
+            "y0": 54,
+            "x1": 892,
+            "y1": 698
+          },
+          "B": {
+            "u": 0.179,
+            "v": 0.77,
+            "px": 9278
+          },
+          "A": null,
+          "red": {
+            "u": 0.867,
+            "v": 0.398,
+            "px": 11338
+          },
+          "redTintedFraction": 0.0195
+        },
+        "gpuNotice": null,
+        "gpuError": null,
+        "threeDButton": true,
+        "threeD": {
+          "headBox": {
+            "x0": 4,
+            "y0": 159,
+            "x1": 985,
+            "y1": 801
+          },
+          "B": {
+            "u": 0.406,
+            "v": 0.402,
+            "px": 23106
+          },
+          "A": null,
+          "red": {
+            "u": 0.545,
+            "v": 0.487,
+            "px": 19544
+          },
+          "redTintedFraction": 0.0521
+        },
+        "gridButton": true,
+        "grid": {
+          "panelsDrawn": 4,
+          "emptyPanels": 0
+        },
+        "screeningModelRequests": []
+      },
+      "ready": true,
+      "unknownRequests": [
+        "http://localhost:5193/api/v1/patients/11111111-1111-4111-8111-111111111111/history?active_only=false",
+        "http://localhost:5193/api/v1/studies/patient/11111111-1111-4111-8111-111111111111?page=1&page_size=20",
+        "http://localhost:5193/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?colormap=gray&minimal=true&overlay_opacity=0.6",
+        "http://localhost:5193/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?window_center=125&window_width=250&colormap=gray&minimal=true&overlay_opacity=0.6"
+      ],
+      "pageExceptions": [],
+      "consoleErrorsAndWarnings": [
+        "warning: ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.",
+        "warning: ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://localhost:5193/api/v1/patients/11111111-1111-4111-8111-111111111111/history?active_only=false",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://localhost:5193/api/v1/studies/patient/11111111-1111-4111-8111-111111111111?page=1&page_size=20",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://localhost:5193/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://localhost:5193/api/v1/patients/11111111-1111-4111-8111-111111111111/history?active_only=false",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://localhost:5193/api/v1/studies/patient/11111111-1111-4111-8111-111111111111?page=1&page_size=20",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://localhost:5193/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://localhost:5193/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://localhost:5193/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?window_center=125&window_width=250&colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://localhost:5193/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?window_center=125&window_width=250&colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "warning: niivue-warn textHeight is deprecated (use fontMinPx and fontSizeScaling)",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://localhost:5193/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?window_center=125&window_width=250&colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError"
+      ],
+      "verdict": {
+        "prb004_markerB_same_place_standard_vs_gpu": true,
+        "prb004_mask_drawn_on_marker_A_in_gpu_view": true,
+        "prb004_marker_A_same_place_standard_vs_gpu": true,
+        "prb005_no_toUpperCase_error": true,
+        "prb005_gpu_and_3d_drawn": true,
+        "prb006_3d_not_tinted_red": true,
+        "prb006_gpu_not_tinted_red": true,
+        "prb007_grid_four_images_none_empty": true,
+        "prb008_opens_on_middle_slice": true,
+        "prb009_no_model_request_no_button": true
+      },
+      "code": "fix/viewer-display-orientation-prb004 (source as committed in fcab367; probe 4473361)"
+    },
+    "main_on_localhost": {
+      "executed": "2026-10-28T19:47:47.362Z",
+      "origin": "http://localhost:5194",
+      "method": "real ViewerApp in headless Edge (real WebGL), served from a host name without a dot; backend answered by CDP request interception with a synthetic 40x48x36 LAS study (markers A, B; lesion mask on A whose header carries an MRI window -15.5/189.2); positions measured from rendered pixels relative to the drawn head",
+      "checks": {
+        "sliceOnOpen": "1/36",
+        "quickScreenButton": false,
+        "maskOpened": true,
+        "sliceForComparison": "18/36",
+        "standard": {
+          "headBox": {
+            "x0": 49,
+            "y0": 49,
+            "x1": 764,
+            "y1": 628
+          },
+          "B": {
+            "u": 0.18,
+            "v": 0.769,
+            "px": 7535
+          },
+          "A": null,
+          "red": {
+            "u": 0.867,
+            "v": 0.397,
+            "px": 10115
+          },
+          "redTintedFraction": 0.0183
+        },
+        "gpuButton": true,
+        "optimalWindowButton": true,
+        "wlGpu": {
+          "headBox": {
+            "x0": null,
+            "y0": null,
+            "x1": null,
+            "y1": null
+          },
+          "B": null,
+          "A": null,
+          "red": null,
+          "redTintedFraction": 0
+        },
+        "gpuNotice": null,
+        "gpuError": "Cannot read properties of undefined (reading 'toUpperCase')",
+        "threeDButton": true,
+        "threeD": {
+          "headBox": {
+            "x0": null,
+            "y0": null,
+            "x1": null,
+            "y1": null
+          },
+          "B": null,
+          "A": null,
+          "red": null,
+          "redTintedFraction": 0
+        },
+        "gridButton": true,
+        "grid": {
+          "panelsDrawn": 4,
+          "emptyPanels": 4
+        },
+        "screeningModelRequests": [
+          "http://localhost:5194/models/brain_screening.onnx",
+          "http://localhost:5194/models/brain_screening.onnx",
+          "http://localhost:5194/models/brain_screening.onnx",
+          "http://localhost:5194/models/brain_screening.onnx"
+        ]
+      },
+      "ready": true,
+      "unknownRequests": [
+        "http://localhost:5194/api/v1/patients/11111111-1111-4111-8111-111111111111/history?active_only=false",
+        "http://localhost:5194/api/v1/studies/patient/11111111-1111-4111-8111-111111111111?page=1&page_size=20",
+        "http://localhost:5194/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/0?colormap=gray&minimal=true&overlay_opacity=0.6",
+        "http://localhost:5194/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?colormap=gray&minimal=true&overlay_opacity=0.6",
+        "http://localhost:5194/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?window_center=125&window_width=250&colormap=gray&minimal=true&overlay_opacity=0.6"
+      ],
+      "pageExceptions": [],
+      "consoleErrorsAndWarnings": [
+        "warning: ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.",
+        "warning: ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://localhost:5194/api/v1/patients/11111111-1111-4111-8111-111111111111/history?active_only=false",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://localhost:5194/api/v1/studies/patient/11111111-1111-4111-8111-111111111111?page=1&page_size=20",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://localhost:5194/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/0?colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://localhost:5194/api/v1/patients/11111111-1111-4111-8111-111111111111/history?active_only=false",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://localhost:5194/api/v1/studies/patient/11111111-1111-4111-8111-111111111111?page=1&page_size=20",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://localhost:5194/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/0?colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://localhost:5194/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/0?colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://localhost:5194/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://localhost:5194/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://localhost:5194/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://localhost:5194/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?window_center=125&window_width=250&colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "warning: niivue-warn textHeight is deprecated (use fontMinPx and fontSizeScaling)",
+        "error: [3D] Volume init failed: TypeError: Cannot read properties of undefined (reading 'toUpperCase')\n    at getFileExt (http://localhost:5194/node_modules/.vite/deps/@niivue_niivue.js?v=8d7b2e6a:35733:13)\n    at Niivue.getFileExt (http://localhost:5194/node_modules/.vite/deps/@niivue_niivue.js?v=8d7b2e6a"
+      ],
+      "verdict": {
+        "prb004_markerB_same_place_standard_vs_gpu": false,
+        "prb004_mask_drawn_on_marker_A_in_gpu_view": false,
+        "prb004_marker_A_same_place_standard_vs_gpu": false,
+        "prb005_no_toUpperCase_error": false,
+        "prb005_gpu_and_3d_drawn": false,
+        "prb006_3d_not_tinted_red": true,
+        "prb006_gpu_not_tinted_red": true,
+        "prb007_grid_four_images_none_empty": false,
+        "prb008_opens_on_middle_slice": false,
+        "prb009_no_model_request_no_button": false
+      },
+      "code": "main @ 70cc5c7 (detached checkout)"
+    },
+    "main_on_127.0.0.1": {
+      "executed": "2026-10-28T19:50:09.297Z",
+      "origin": "http://127.0.0.1:5195",
+      "method": "real ViewerApp in headless Edge (real WebGL), served from a host name without a dot; backend answered by CDP request interception with a synthetic 40x48x36 LAS study (markers A, B; lesion mask on A whose header carries an MRI window -15.5/189.2); positions measured from rendered pixels relative to the drawn head",
+      "checks": {
+        "sliceOnOpen": "1/36",
+        "quickScreenButton": false,
+        "maskOpened": true,
+        "sliceForComparison": "18/36",
+        "standard": {
+          "headBox": {
+            "x0": 49,
+            "y0": 49,
+            "x1": 764,
+            "y1": 628
+          },
+          "B": {
+            "u": 0.18,
+            "v": 0.769,
+            "px": 7535
+          },
+          "A": null,
+          "red": {
+            "u": 0.867,
+            "v": 0.397,
+            "px": 10115
+          },
+          "redTintedFraction": 0.0183
+        },
+        "gpuButton": true,
+        "optimalWindowButton": true,
+        "wlGpu": {
+          "headBox": {
+            "x0": 228,
+            "y0": 47,
+            "x1": 762,
+            "y1": 706
+          },
+          "B": {
+            "u": 0.326,
+            "v": 0.635,
+            "px": 6638
+          },
+          "A": {
+            "u": 0.602,
+            "v": 0.13,
+            "px": 7478
+          },
+          "red": null,
+          "redTintedFraction": 0.6331
+        },
+        "gpuNotice": null,
+        "gpuError": null,
+        "threeDButton": true,
+        "threeD": {
+          "headBox": {
+            "x0": 4,
+            "y0": 159,
+            "x1": 984,
+            "y1": 801
+          },
+          "B": null,
+          "A": null,
+          "red": {
+            "u": 0.611,
+            "v": 0.743,
+            "px": 6699
+          },
+          "redTintedFraction": 0.4661
+        },
+        "gridButton": true,
+        "grid": {
+          "panelsDrawn": 4,
+          "emptyPanels": 4
+        },
+        "screeningModelRequests": [
+          "http://127.0.0.1:5195/models/brain_screening.onnx",
+          "http://127.0.0.1:5195/models/brain_screening.onnx",
+          "http://127.0.0.1:5195/models/brain_screening.onnx",
+          "http://127.0.0.1:5195/models/brain_screening.onnx"
+        ]
+      },
+      "ready": true,
+      "unknownRequests": [
+        "http://127.0.0.1:5195/api/v1/patients/11111111-1111-4111-8111-111111111111/history?active_only=false",
+        "http://127.0.0.1:5195/api/v1/studies/patient/11111111-1111-4111-8111-111111111111?page=1&page_size=20",
+        "http://127.0.0.1:5195/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/0?colormap=gray&minimal=true&overlay_opacity=0.6",
+        "http://127.0.0.1:5195/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?colormap=gray&minimal=true&overlay_opacity=0.6",
+        "http://127.0.0.1:5195/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?window_center=125&window_width=250&colormap=gray&minimal=true&overlay_opacity=0.6"
+      ],
+      "pageExceptions": [],
+      "consoleErrorsAndWarnings": [
+        "warning: ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.",
+        "warning: ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5195/api/v1/patients/11111111-1111-4111-8111-111111111111/history?active_only=false",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5195/api/v1/studies/patient/11111111-1111-4111-8111-111111111111?page=1&page_size=20",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5195/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/0?colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5195/api/v1/patients/11111111-1111-4111-8111-111111111111/history?active_only=false",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5195/api/v1/studies/patient/11111111-1111-4111-8111-111111111111?page=1&page_size=20",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5195/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/0?colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5195/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/0?colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5195/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5195/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5195/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5195/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?window_center=125&window_width=250&colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5195/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?window_center=125&window_width=250&colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "warning: niivue-warn textHeight is deprecated (use fontMinPx and fontSizeScaling)",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5195/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?window_center=125&window_width=250&colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5195/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?window_center=125&window_width=250&colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5195/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?window_center=125&window_width=250&colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError"
+      ],
+      "verdict": {
+        "prb004_markerB_same_place_standard_vs_gpu": false,
+        "prb004_mask_drawn_on_marker_A_in_gpu_view": false,
+        "prb004_marker_A_same_place_standard_vs_gpu": false,
+        "prb005_no_toUpperCase_error": true,
+        "prb005_gpu_and_3d_drawn": true,
+        "prb006_3d_not_tinted_red": false,
+        "prb006_gpu_not_tinted_red": false,
+        "prb007_grid_four_images_none_empty": false,
+        "prb008_opens_on_middle_slice": false,
+        "prb009_no_model_request_no_button": false
+      },
+      "code": "main @ 70cc5c7 (detached checkout)"
+    },
+    "fixed_branch_on_127.0.0.1": {
+      "executed": "2026-10-28T19:54:20.662Z",
+      "origin": "http://127.0.0.1:5197",
+      "method": "real ViewerApp in headless Edge (real WebGL), served from a host name without a dot; backend answered by CDP request interception with a synthetic 40x48x36 LAS study (markers A, B; lesion mask on A whose header carries an MRI window -15.5/189.2); positions measured from rendered pixels relative to the drawn head",
+      "checks": {
+        "sliceOnOpen": "18/36",
+        "quickScreenButton": false,
+        "maskOpened": true,
+        "sliceForComparison": "18/36",
+        "standard": {
+          "headBox": {
+            "x0": 49,
+            "y0": 49,
+            "x1": 764,
+            "y1": 628
+          },
+          "B": {
+            "u": 0.18,
+            "v": 0.769,
+            "px": 7535
+          },
+          "A": null,
+          "red": {
+            "u": 0.867,
+            "v": 0.397,
+            "px": 10115
+          },
+          "redTintedFraction": 0.0183
+        },
+        "gpuButton": true,
+        "optimalWindowButton": true,
+        "wlGpu": {
+          "headBox": {
+            "x0": 98,
+            "y0": 54,
+            "x1": 892,
+            "y1": 698
+          },
+          "B": {
+            "u": 0.179,
+            "v": 0.77,
+            "px": 9278
+          },
+          "A": null,
+          "red": {
+            "u": 0.867,
+            "v": 0.398,
+            "px": 11338
+          },
+          "redTintedFraction": 0.0195
+        },
+        "gpuNotice": null,
+        "gpuError": null,
+        "threeDButton": true,
+        "threeD": {
+          "headBox": {
+            "x0": 4,
+            "y0": 159,
+            "x1": 985,
+            "y1": 801
+          },
+          "B": {
+            "u": 0.406,
+            "v": 0.402,
+            "px": 23106
+          },
+          "A": null,
+          "red": {
+            "u": 0.545,
+            "v": 0.487,
+            "px": 19544
+          },
+          "redTintedFraction": 0.0521
+        },
+        "gridButton": true,
+        "grid": {
+          "panelsDrawn": 4,
+          "emptyPanels": 0
+        },
+        "screeningModelRequests": []
+      },
+      "ready": true,
+      "unknownRequests": [
+        "http://127.0.0.1:5197/api/v1/patients/11111111-1111-4111-8111-111111111111/history?active_only=false",
+        "http://127.0.0.1:5197/api/v1/studies/patient/11111111-1111-4111-8111-111111111111?page=1&page_size=20",
+        "http://127.0.0.1:5197/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?colormap=gray&minimal=true&overlay_opacity=0.6",
+        "http://127.0.0.1:5197/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?window_center=125&window_width=250&colormap=gray&minimal=true&overlay_opacity=0.6"
+      ],
+      "pageExceptions": [],
+      "consoleErrorsAndWarnings": [
+        "warning: ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.",
+        "warning: ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5197/api/v1/patients/11111111-1111-4111-8111-111111111111/history?active_only=false",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5197/api/v1/studies/patient/11111111-1111-4111-8111-111111111111?page=1&page_size=20",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5197/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5197/api/v1/patients/11111111-1111-4111-8111-111111111111/history?active_only=false",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5197/api/v1/studies/patient/11111111-1111-4111-8111-111111111111?page=1&page_size=20",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5197/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5197/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5197/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?window_center=125&window_width=250&colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5197/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?window_center=125&window_width=250&colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "warning: niivue-warn textHeight is deprecated (use fontMinPx and fontSizeScaling)",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5197/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?window_center=125&window_width=250&colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5197/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?window_center=125&window_width=250&colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError",
+        "log.error: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:5197/api/v1/imaging/matplotlib-2d/patients/11111111-1111-4111-8111-111111111111/studies/22222222-2222-4222-8222-222222222222/series/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444441/sub-01_desc-preproc_FLAIR.nii.gz/17?window_center=125&window_width=250&colormap=gray&minimal=true&overlay_opacity=0.6",
+        "error: [ImagingAPI] Matplotlib request failed: AxiosError"
+      ],
+      "verdict": {
+        "prb004_markerB_same_place_standard_vs_gpu": true,
+        "prb004_mask_drawn_on_marker_A_in_gpu_view": true,
+        "prb004_marker_A_same_place_standard_vs_gpu": true,
+        "prb005_no_toUpperCase_error": true,
+        "prb005_gpu_and_3d_drawn": true,
+        "prb006_3d_not_tinted_red": true,
+        "prb006_gpu_not_tinted_red": true,
+        "prb007_grid_four_images_none_empty": true,
+        "prb008_opens_on_middle_slice": true,
+        "prb009_no_model_request_no_button": true
+      },
+      "code": "fix/viewer-display-orientation-prb004 (probe 4473361)"
+    }
+  },
+  "notes": [
+    "main on localhost: the W/L GPU and 3D views do not load (\"Cannot read properties of undefined (reading 'toUpperCase')\", PRB-005), so its PRB-004/PRB-006 verdicts are not meaningful there (the two prb006 \"not tinted\" values are vacuous: nothing was drawn); main on 127.0.0.1 shows them: the GPU view places the markers elsewhere (rotated), draws no red lesion, and 63 % of the GPU viewport and 47 % of the 3D viewport are red-tinted (fixed: 2 % and 5 %, the lesion and niivue's crosshair).",
+    "Both runs on main open on slice 1/36 (PRB-008) and request /models/brain_screening.onnx 4 times (PRB-009); the 2x2 grid draws 4 panels all labelled \"No image assigned\" (PRB-007).",
+    "The four runs were made with the committed probe (final measurement code). One attempt of the fixed-branch run on 127.0.0.1 stopped on a 60 s DevTools timeout while capturing the 3D render (software WebGL, SwiftShader) and was re-run unchanged. Earlier runs made while the probe itself was being written (other measurement code, fixture or slice) are not part of this record (some of them misread a marker's anti-aliased rim or the window; the measurement was corrected before these four runs)."
+  ]
+}

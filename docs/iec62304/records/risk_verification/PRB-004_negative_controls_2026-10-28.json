@@ -1,0 +1,1150 @@
+{
+  "executed": "2026-10-28T21:50:25",
+  "tree": "a4443e3e65577a449dcd90e7a7c71777c597583d",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once (LF text, written back with the file's own line endings); only the bound tests of the mutated side run (backend pytest with no cloud credential per PRB-002; frontend vitest, JSON reporter, --pool=threads); original bytes restored after each mutation, at exit and on a signal, and checked at the end",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/api/routes/segmentation_regions.py": "152cc44c5c5d860fd7f526bc4000b3347bec35ab0a520ca11084a995dd2dd226",
+    "backend/app/services/segmentation_service.py": "7c3b5a518a7676d6d4b2277e7ddb6d00ce66d14ea0f0af5975c45a5a783dd4ee",
+    "frontend/src/ViewerApp.tsx": "4118e8056013b51b25608154f3715bd962e70ea779bad7cb724b093fa9ecd765",
+    "frontend/src/components/ImageViewer2D.tsx": "c3de329d6932dbe31d740e38f53cfa10f230e57c454aaca08ccc89c4a0322cc9",
+    "frontend/src/components/ImageViewer3D.tsx": "f88889f7e5b058c0101eb25d7bdad37eded07a4cc75856435dc2d9b32ddeea5c",
+    "frontend/src/components/LesionDashboard.tsx": "089712581e57473bda49b5bba5274f56015a4addbbce2846b7de9420849dbd6f",
+    "frontend/src/components/MAGNIMSZoneMapPanel.tsx": "2c23e461f61d591e90ca85619a5f28731c81c05442562510099268a91fb0f8dd",
+    "frontend/src/components/MultiPanelViewer.tsx": "3492d74875471959947daa7a72106e5c9febb2569370f5aa573965023b4aea6d",
+    "frontend/src/components/NiivueViewer2D.tsx": "af1bada83f4cee3e706642db3b14297c40b7533b65eec4e7ded4c5f2fcc44c94",
+    "frontend/src/components/QuickScreenBadge.tsx": "37b6f3a15ab3afca7b22242c32f059ac685a3fd61b1f865787189acc3c12acf4",
+    "frontend/src/components/SegmentationCanvasLocal.tsx": "2fab64d7f3b551eaf492880cb88790ba7f05f4c67a106d68453173ae7e29777b",
+    "frontend/src/config/features.ts": "011977508ca3e01dff592ecda1cec9bee63efb8b9102cdec3a25ffd4857938c0",
+    "frontend/src/hooks/useEdgeAI.ts": "94c56ddf65c7a87a80fdbf24633d31dd15188c1d6ffe63a1f790ac7f15b2713a",
+    "frontend/src/store/useSegmentationStore.ts": "c7dcc6036521f0d8484b5380315849f98caa42df7cf0a8e9cd541e2a02953eff",
+    "frontend/src/types/segmentation.ts": "c7bbc129d1c221bb26200847f111046e65760611a231927d3427cac3cd8104e1",
+    "frontend/src/utils/instanceClassification.ts": "e35bb3307426bff429138af77bc50b226b3d210713f2073f6ca189d35b304b9b",
+    "frontend/src/utils/niivueVoxelGrid.ts": "33d5d56b5ccc1a9909985fe7175c037bf91a9cfbc72012ad3ee34cf920624881",
+    "frontend/src/utils/niivueWindowLevel.ts": "f0aa53844238f33cd3ad24be6c6ecb131179360c72f65bba1bd5e8cd3e2ebe09",
+    "frontend/src/utils/regionColors.ts": "f28e0ce50dcbbed73adeec3d7affead236fc287162ee655ac6b187937992adfc",
+    "frontend/src/utils/sequenceDetection.ts": "425cca46ff16be0a6d54b03ebe485967eb0a39820f204d1cdb7e5570b813abd2",
+    "frontend/src/utils/sliceOnOpen.ts": "cb4e4235d01b71a4dae4a8fb6cccaee38b3776ec3dc8f726d4261424bf67814c"
+  },
+  "test_sha256": {
+    "backend/tests/unit/test_prb006_mask_display_range.py": "5c966ecbd72f53e228f6a3d210e9aae77181d035bdb237ae6e0569562148afab",
+    "backend/tests/unit/test_prb010_region_label_colours.py": "e82d84907532cb88b8cb360ae3d421264ff989fa6736e2f9d238647e7c81c8e2",
+    "frontend/src/ViewerApp.prb007.test.tsx": "8a33203477f8890670af6fa21efa57591f9f056dd09219f7fca994ee838cccf1",
+    "frontend/src/components/ImageViewer3D.prb005.test.tsx": "8a89683e89f8e78d3288bb9011e12efeba90fbdc94c66b51e5a46b36fc9a6578",
+    "frontend/src/components/NiivueViewer2D.prb004.test.tsx": "385fca39c02f2422dc87cf6b5f7e8829ed203c8d067eaf5ae1c902e924db4ae2",
+    "frontend/src/components/QuickScreenBadge.prb009.test.tsx": "7d5a94a0580632aebd19ccf9b7ba86f150fd2b1f25729fa32355fffdf44c39d9",
+    "frontend/src/components/SegmentationCanvasLocal.prb010.test.tsx": "054f86de320aaf65b13fbbe45d9cf32dcccc35b2a42bf717027147704a309d11",
+    "frontend/src/config/features.quickScreen.test.ts": "a0bfa662e7dfc0145329af72a31192822052db70cfbba0bbc39b12651e0f6c57",
+    "frontend/src/utils/niivueWindowLevel.test.ts": "f5e47745aba5755a06a1f5b9c45a2661959f811462ef74f0cd40e22f18cfc01f",
+    "frontend/src/utils/regionColors.test.ts": "b1d6757d0107656ba78b443a787bbef7f0b3315cd34e2fe51a9171a507ed3d7d",
+    "frontend/src/utils/sequenceDetection.prb007.test.ts": "f1611e1cef8dc653cf2b3120a1a1a9c40c72ce0445dbe31d19b022889aa29a5d",
+    "frontend/src/utils/sliceOnOpen.test.ts": "ab1ade73984f6719b09aedef2d7f77cc224b141e71d76eafdb55dd6eaee9d4b0"
+  },
+  "baseline": {
+    "backend": {
+      "suite": "backend",
+      "failed": 0,
+      "passed": 9,
+      "errors": 0,
+      "failing_tests": []
+    },
+    "frontend": {
+      "suite": "frontend",
+      "failed": 0,
+      "passed": 66,
+      "errors": 0,
+      "failing_tests": [],
+      "error_files": []
+    }
+  },
+  "mutations": {
+    "O1_image_keeps_scanner_layout": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 10,
+      "errors": 0,
+      "failing_tests": [
+        "rc073 every voxel of the slice is drawn at the standard view position: row i down, column j right",
+        "rc073 the mask is drawn on exactly the image voxels the standard view overlays it on"
+      ],
+      "error_files": [],
+      "reintroduces": "the GPU view draws the image by the scanner affine (the defect as found: rotated 90 degrees)",
+      "files": [
+        "frontend/src/components/NiivueViewer2D.tsx"
+      ],
+      "tests": [
+        "src/components/NiivueViewer2D.prb004.test.tsx"
+      ],
+      "executed": "2026-10-28T21:51:08",
+      "detected": true
+    },
+    "O2_mask_keeps_its_scanner_layout": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 11,
+      "errors": 0,
+      "failing_tests": [
+        "rc073 the mask is drawn on exactly the image voxels the standard view overlays it on"
+      ],
+      "error_files": [],
+      "reintroduces": "the mask drawn by its own affine on an image laid out as the standard view",
+      "files": [
+        "frontend/src/components/NiivueViewer2D.tsx"
+      ],
+      "tests": [
+        "src/components/NiivueViewer2D.prb004.test.tsx"
+      ],
+      "executed": "2026-10-28T21:51:15",
+      "detected": true
+    },
+    "O3_layout_transposed": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 10,
+      "errors": 0,
+      "failing_tests": [
+        "rc073 every voxel of the slice is drawn at the standard view position: row i down, column j right",
+        "rc073 the mask is drawn on exactly the image voxels the standard view overlays it on"
+      ],
+      "error_files": [],
+      "reintroduces": "rows and columns swapped in the GPU layout",
+      "files": [
+        "frontend/src/utils/niivueVoxelGrid.ts"
+      ],
+      "tests": [
+        "src/components/NiivueViewer2D.prb004.test.tsx"
+      ],
+      "executed": "2026-10-28T21:51:22",
+      "detected": true
+    },
+    "O4_rows_drawn_upwards": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 10,
+      "errors": 0,
+      "failing_tests": [
+        "rc073 every voxel of the slice is drawn at the standard view position: row i down, column j right",
+        "rc073 the mask is drawn on exactly the image voxels the standard view overlays it on"
+      ],
+      "error_files": [],
+      "reintroduces": "the GPU layout mirrored top to bottom",
+      "files": [
+        "frontend/src/utils/niivueVoxelGrid.ts"
+      ],
+      "tests": [
+        "src/components/NiivueViewer2D.prb004.test.tsx"
+      ],
+      "executed": "2026-10-28T21:51:33",
+      "detected": true
+    },
+    "O5_radiological_flip": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 11,
+      "errors": 0,
+      "failing_tests": [
+        "rc073 harness pin: niivue axial 2D puts patient left (−X) on the left and anterior (+Y) on top"
+      ],
+      "error_files": [],
+      "reintroduces": "niivue's radiological flip mirrors the layout left to right",
+      "files": [
+        "frontend/src/components/NiivueViewer2D.tsx"
+      ],
+      "tests": [
+        "src/components/NiivueViewer2D.prb004.test.tsx"
+      ],
+      "executed": "2026-10-28T21:51:40",
+      "detected": true
+    },
+    "O6_grid_dimensions_not_checked": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 11,
+      "errors": 0,
+      "failing_tests": [
+        "rc073 a mask on another voxel grid is not drawn in this view, and the view says so"
+      ],
+      "error_files": [],
+      "reintroduces": "a mask of other dimensions drawn on the image",
+      "files": [
+        "frontend/src/utils/niivueVoxelGrid.ts"
+      ],
+      "tests": [
+        "src/components/NiivueViewer2D.prb004.test.tsx"
+      ],
+      "executed": "2026-10-28T21:51:52",
+      "detected": true
+    },
+    "O7_position_not_checked": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 11,
+      "errors": 0,
+      "failing_tests": [
+        "rc073 a mask with the image shape but another position in the scanner is not drawn"
+      ],
+      "error_files": [],
+      "reintroduces": "a mask placed elsewhere in the scanner drawn on the image voxels",
+      "files": [
+        "frontend/src/utils/niivueVoxelGrid.ts"
+      ],
+      "tests": [
+        "src/components/NiivueViewer2D.prb004.test.tsx"
+      ],
+      "executed": "2026-10-28T21:52:05",
+      "detected": true
+    },
+    "O8_voxel_order_marker_not_checked": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 11,
+      "errors": 0,
+      "failing_tests": [
+        "rc073 a mask stored without the RC-031 voxel-order marker (legacy in-plane transpose) is not drawn"
+      ],
+      "error_files": [],
+      "reintroduces": "a legacy mask (in-plane transpose on disk) drawn transposed",
+      "files": [
+        "frontend/src/utils/niivueVoxelGrid.ts"
+      ],
+      "tests": [
+        "src/components/NiivueViewer2D.prb004.test.tsx"
+      ],
+      "executed": "2026-10-28T21:52:17",
+      "detected": true
+    },
+    "O9_position_tolerance_one_mm": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 11,
+      "errors": 0,
+      "failing_tests": [
+        "rc073 a mask with the image shape but another position in the scanner is not drawn"
+      ],
+      "error_files": [],
+      "reintroduces": "a mask half a voxel away accepted as on the image grid",
+      "files": [
+        "frontend/src/utils/niivueVoxelGrid.ts"
+      ],
+      "tests": [
+        "src/components/NiivueViewer2D.prb004.test.tsx"
+      ],
+      "executed": "2026-10-28T21:52:31",
+      "detected": true
+    },
+    "O10_refusal_not_stated": {
+      "suite": "frontend",
+      "failed": 3,
+      "passed": 9,
+      "errors": 0,
+      "failing_tests": [
+        "rc073 a mask on another voxel grid is not drawn in this view, and the view says so",
+        "rc073 a mask with the image shape but another position in the scanner is not drawn",
+        "rc073 a mask stored without the RC-031 voxel-order marker (legacy in-plane transpose) is not drawn"
+      ],
+      "error_files": [],
+      "reintroduces": "a refused mask silently missing from the view",
+      "files": [
+        "frontend/src/components/NiivueViewer2D.tsx"
+      ],
+      "tests": [
+        "src/components/NiivueViewer2D.prb004.test.tsx"
+      ],
+      "executed": "2026-10-28T21:52:42",
+      "detected": true
+    },
+    "O11_slice_between_two_voxel_slices": {
+      "suite": "frontend",
+      "failed": 4,
+      "passed": 18,
+      "errors": 0,
+      "failing_tests": [
+        "rc073 the slice shown is the standard view slice index, at the centre of that voxel slice",
+        "rc073 addresses the centre of the voxel slice: (index + 0.5) / depth",
+        "rc073 niivue reads it back as exactly that voxel slice (f · depth − 0.5 = index)",
+        "clamps out-of-range indices to the first and last slice"
+      ],
+      "error_files": [],
+      "reintroduces": "the GPU slider back to index / (depth - 1): a blend of two slices, slice 0 at the volume edge",
+      "files": [
+        "frontend/src/utils/niivueWindowLevel.ts"
+      ],
+      "tests": [
+        "src/components/NiivueViewer2D.prb004.test.tsx",
+        "src/utils/niivueWindowLevel.test.ts"
+      ],
+      "executed": "2026-10-28T21:52:51",
+      "detected": true
+    },
+    "O12_grid_read_after_the_display_transform": {
+      "suite": "frontend",
+      "failed": 5,
+      "passed": 7,
+      "errors": 0,
+      "failing_tests": [
+        "rc073 the mask is drawn on exactly the image voxels the standard view overlays it on",
+        "rc073 a mask on the image grid is drawn and no \"not shown\" notice appears",
+        "prb005 the W/L GPU view loads the image and the mask on http://localhost:4173",
+        "prb005 the W/L GPU view loads the image and the mask on http://mstool-viewer",
+        "rc074 mask background (0) is transparent and every lesion label (>= 1) full colour despite an MRI-copied range"
+      ],
+      "error_files": [],
+      "reintroduces": "the mask compared with the display transform instead of the image's scanner grid",
+      "files": [
+        "frontend/src/components/NiivueViewer2D.tsx"
+      ],
+      "tests": [
+        "src/components/NiivueViewer2D.prb004.test.tsx"
+      ],
+      "executed": "2026-10-28T21:53:24",
+      "detected": true
+    },
+    "O13_mask_load_failure_silent": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 11,
+      "errors": 0,
+      "failing_tests": [
+        "rc073 a mask that cannot be loaded is not silently missing: the view says it is not drawn"
+      ],
+      "error_files": [],
+      "reintroduces": "a mask that fails to load silently missing (the base behaviour)",
+      "files": [
+        "frontend/src/components/NiivueViewer2D.tsx"
+      ],
+      "tests": [
+        "src/components/NiivueViewer2D.prb004.test.tsx"
+      ],
+      "executed": "2026-10-28T21:53:34",
+      "detected": true
+    },
+    "N1_gpu_view_back_to_a_blob_url": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 10,
+      "errors": 0,
+      "failing_tests": [
+        "prb005 the W/L GPU view loads the image and the mask on http://localhost:4173",
+        "prb005 the W/L GPU view loads the image and the mask on http://mstool-viewer"
+      ],
+      "error_files": [],
+      "reintroduces": "the GPU view loads the image from a nameless blob URL (the defect as found)",
+      "files": [
+        "frontend/src/components/NiivueViewer2D.tsx"
+      ],
+      "tests": [
+        "src/components/NiivueViewer2D.prb004.test.tsx"
+      ],
+      "executed": "2026-10-28T21:53:53",
+      "detected": true
+    },
+    "N2_3d_volume_without_name": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 4,
+      "errors": 0,
+      "failing_tests": [
+        "prb005 3D volume: image and mask load on http://localhost:4173",
+        "prb005 3D volume: image and mask load on http://mstool-viewer"
+      ],
+      "error_files": [],
+      "reintroduces": "the 3D volume view loads a nameless blob URL",
+      "files": [
+        "frontend/src/components/ImageViewer3D.tsx"
+      ],
+      "tests": [
+        "src/components/ImageViewer3D.prb005.test.tsx"
+      ],
+      "executed": "2026-10-28T21:54:21",
+      "detected": true
+    },
+    "N3_3d_multiplanar_without_name": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 4,
+      "errors": 0,
+      "failing_tests": [
+        "prb005 3D multiplanar: image and mask load on http://localhost:4173",
+        "prb005 3D multiplanar: image and mask load on http://mstool-viewer"
+      ],
+      "error_files": [],
+      "reintroduces": "the 3D multiplanar view loads nameless blob URLs",
+      "files": [
+        "frontend/src/components/ImageViewer3D.tsx"
+      ],
+      "tests": [
+        "src/components/ImageViewer3D.prb005.test.tsx"
+      ],
+      "executed": "2026-10-28T21:54:51",
+      "detected": true
+    },
+    "N4_name_without_extension": {
+      "suite": "frontend",
+      "failed": 18,
+      "passed": 0,
+      "errors": 0,
+      "failing_tests": [
+        "prb005 3D volume: image and mask load on http://localhost:4173",
+        "prb005 3D multiplanar: image and mask load on http://localhost:4173",
+        "prb005 3D volume: image and mask load on http://mstool-viewer",
+        "prb005 3D multiplanar: image and mask load on http://mstool-viewer",
+        "rc074 3D volume: lesion mask and both visit masks — 0 transparent, labels >= 1 full colour",
+        "rc074 3D multiplanar: lesion mask and both visit masks — 0 transparent, labels >= 1 full colour",
+        "rc073 harness pin: niivue axial 2D puts patient left (−X) on the left and anterior (+Y) on top",
+        "rc073 every voxel of the slice is drawn at the standard view position: row i down, column j right",
+        "rc073 the slice shown is the standard view slice index, at the centre of that voxel slice",
+        "rc073 the mask is drawn on exactly the image voxels the standard view overlays it on",
+        "rc073 a mask on another voxel grid is not drawn in this view, and the view says so",
+        "rc073 a mask with the image shape but another position in the scanner is not drawn",
+        "rc073 a mask stored without the RC-031 voxel-order marker (legacy in-plane transpose) is not drawn",
+        "rc073 a mask that cannot be loaded is not silently missing: the view says it is not drawn",
+        "rc073 a mask on the image grid is drawn and no \"not shown\" notice appears",
+        "prb005 the W/L GPU view loads the image and the mask on http://localhost:4173",
+        "prb005 the W/L GPU view loads the image and the mask on http://mstool-viewer",
+        "rc074 mask background (0) is transparent and every lesion label (>= 1) full colour despite an MRI-copied range"
+      ],
+      "error_files": [],
+      "reintroduces": "a name that carries no NIfTI extension",
+      "files": [
+        "frontend/src/utils/niivueVoxelGrid.ts"
+      ],
+      "tests": [
+        "src/components/NiivueViewer2D.prb004.test.tsx",
+        "src/components/ImageViewer3D.prb005.test.tsx"
+      ],
+      "executed": "2026-10-28T21:55:59",
+      "detected": true
+    },
+    "R1_gpu_mask_header_range": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 11,
+      "errors": 0,
+      "failing_tests": [
+        "rc074 mask background (0) is transparent and every lesion label (>= 1) full colour despite an MRI-copied range"
+      ],
+      "error_files": [],
+      "reintroduces": "the GPU view colours the mask with the MRI window its header carries",
+      "files": [
+        "frontend/src/components/NiivueViewer2D.tsx"
+      ],
+      "tests": [
+        "src/components/NiivueViewer2D.prb004.test.tsx"
+      ],
+      "executed": "2026-10-28T21:56:09",
+      "detected": true
+    },
+    "R2_3d_volume_mask_header_range": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 5,
+      "errors": 0,
+      "failing_tests": [
+        "rc074 3D volume: lesion mask and both visit masks — 0 transparent, labels >= 1 full colour"
+      ],
+      "error_files": [],
+      "reintroduces": "the 3D volume render tints the whole volume red (the defect as found)",
+      "files": [
+        "frontend/src/components/ImageViewer3D.tsx"
+      ],
+      "tests": [
+        "src/components/ImageViewer3D.prb005.test.tsx"
+      ],
+      "executed": "2026-10-28T21:56:30",
+      "detected": true
+    },
+    "R3_3d_volume_visit1_header_range": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 5,
+      "errors": 0,
+      "failing_tests": [
+        "rc074 3D volume: lesion mask and both visit masks — 0 transparent, labels >= 1 full colour"
+      ],
+      "error_files": [],
+      "reintroduces": "the earlier-visit mask in 3D coloured with its header range",
+      "files": [
+        "frontend/src/components/ImageViewer3D.tsx"
+      ],
+      "tests": [
+        "src/components/ImageViewer3D.prb005.test.tsx"
+      ],
+      "executed": "2026-10-28T21:56:59",
+      "detected": true
+    },
+    "R4_3d_multiplanar_visit2_header_range": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 5,
+      "errors": 0,
+      "failing_tests": [
+        "rc074 3D multiplanar: lesion mask and both visit masks — 0 transparent, labels >= 1 full colour"
+      ],
+      "error_files": [],
+      "reintroduces": "the later-visit mask in the multiplanar view coloured with its header range",
+      "files": [
+        "frontend/src/components/ImageViewer3D.tsx"
+      ],
+      "tests": [
+        "src/components/ImageViewer3D.prb005.test.tsx"
+      ],
+      "executed": "2026-10-28T21:57:12",
+      "detected": true
+    },
+    "R5_3d_multiplanar_mask_header_range": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 5,
+      "errors": 0,
+      "failing_tests": [
+        "rc074 3D multiplanar: lesion mask and both visit masks — 0 transparent, labels >= 1 full colour"
+      ],
+      "error_files": [],
+      "reintroduces": "the lesion mask in the multiplanar view coloured with its header range",
+      "files": [
+        "frontend/src/components/ImageViewer3D.tsx"
+      ],
+      "tests": [
+        "src/components/ImageViewer3D.prb005.test.tsx"
+      ],
+      "executed": "2026-10-28T21:57:23",
+      "detected": true
+    },
+    "R6_fixed_range_hides_label_one": {
+      "suite": "frontend",
+      "failed": 3,
+      "passed": 15,
+      "errors": 0,
+      "failing_tests": [
+        "rc074 3D volume: lesion mask and both visit masks — 0 transparent, labels >= 1 full colour",
+        "rc074 3D multiplanar: lesion mask and both visit masks — 0 transparent, labels >= 1 full colour",
+        "rc074 mask background (0) is transparent and every lesion label (>= 1) full colour despite an MRI-copied range"
+      ],
+      "error_files": [],
+      "reintroduces": "label 1 drawn at half colour",
+      "files": [
+        "frontend/src/utils/niivueVoxelGrid.ts"
+      ],
+      "tests": [
+        "src/components/NiivueViewer2D.prb004.test.tsx",
+        "src/components/ImageViewer3D.prb005.test.tsx"
+      ],
+      "executed": "2026-10-28T21:57:34",
+      "detected": true
+    },
+    "R7_stored_header_keeps_the_mri_window": {
+      "suite": "backend",
+      "failed": 5,
+      "passed": 4,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc074_empty_mask_display_range_is_zero_to_one",
+        "test_rc074_stored_binary_mask_display_range_is_zero_to_one[-15.5-189.2]",
+        "test_rc074_stored_binary_mask_display_range_is_zero_to_one[0.0-255.0]",
+        "test_rc074_stored_binary_mask_display_range_is_zero_to_one[100.0-900.0]",
+        "test_rc074_stored_label_mask_display_range_is_zero_to_its_highest_label"
+      ],
+      "reintroduces": "a stored mask keeps the MRI's cal_min/cal_max (the defect as found)",
+      "files": [
+        "backend/app/services/segmentation_service.py"
+      ],
+      "tests": [
+        "tests/unit/test_prb006_mask_display_range.py",
+        "tests/unit/test_prb010_region_label_colours.py"
+      ],
+      "executed": "2026-10-28T21:57:45",
+      "detected": true
+    },
+    "R8_stored_range_always_zero_to_one": {
+      "suite": "backend",
+      "failed": 2,
+      "passed": 7,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc074_mask_stored_without_the_mri_header_has_its_own_display_range",
+        "test_rc074_stored_label_mask_display_range_is_zero_to_its_highest_label"
+      ],
+      "reintroduces": "a stored multi-label mask's range cut at 1",
+      "files": [
+        "backend/app/services/segmentation_service.py"
+      ],
+      "tests": [
+        "tests/unit/test_prb006_mask_display_range.py",
+        "tests/unit/test_prb010_region_label_colours.py"
+      ],
+      "executed": "2026-10-28T21:58:00",
+      "detected": true
+    },
+    "R9_fallback_header_without_range": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 8,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc074_mask_stored_without_the_mri_header_has_its_own_display_range"
+      ],
+      "reintroduces": "a mask stored without the MRI header carries no range of its own",
+      "files": [
+        "backend/app/services/segmentation_service.py"
+      ],
+      "tests": [
+        "tests/unit/test_prb006_mask_display_range.py",
+        "tests/unit/test_prb010_region_label_colours.py"
+      ],
+      "executed": "2026-10-28T21:58:14",
+      "detected": true
+    },
+    "G1_no_fallback_to_preprocessed": {
+      "suite": "frontend",
+      "failed": 4,
+      "passed": 3,
+      "errors": 0,
+      "failing_tests": [
+        "prb007 a study of preprocessed images only: the 2x2 grid shows all four images, none empty",
+        "prb007 a study of preprocessed images only: the 1x2 grid shows two images",
+        "prb007 the image-source switch names the source actually shown (Preproc, not Original)",
+        "prb008 grid panels open on the middle slice of their image, not slice 1"
+      ],
+      "error_files": [],
+      "reintroduces": "a study of preprocessed images only gives a grid of empty panels (the defect as found)",
+      "files": [
+        "frontend/src/utils/instanceClassification.ts"
+      ],
+      "tests": [
+        "src/ViewerApp.prb007.test.tsx"
+      ],
+      "executed": "2026-10-28T21:58:55",
+      "detected": true
+    },
+    "G2_spare_panels_not_filled": {
+      "suite": "frontend",
+      "failed": 3,
+      "passed": 7,
+      "errors": 0,
+      "failing_tests": [
+        "prb007 a study of preprocessed images only: the 2x2 grid shows all four images, none empty",
+        "prb007 four images, two of them T1-weighted: four panels, sequences first",
+        "prb007 never more than four, never the same image twice"
+      ],
+      "error_files": [],
+      "reintroduces": "a second image of one sequence (T1w after contrast) never shown",
+      "files": [
+        "frontend/src/utils/sequenceDetection.ts"
+      ],
+      "tests": [
+        "src/utils/sequenceDetection.prb007.test.ts",
+        "src/ViewerApp.prb007.test.tsx"
+      ],
+      "executed": "2026-10-28T21:59:23",
+      "detected": true
+    },
+    "G3_same_image_twice": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 1,
+      "errors": 0,
+      "failing_tests": [
+        "prb007 four images, two of them T1-weighted: four panels, sequences first",
+        "prb007 never more than four, never the same image twice"
+      ],
+      "error_files": [],
+      "reintroduces": "one image assigned to two panels",
+      "files": [
+        "frontend/src/utils/sequenceDetection.ts"
+      ],
+      "tests": [
+        "src/utils/sequenceDetection.prb007.test.ts"
+      ],
+      "executed": "2026-10-28T21:59:29",
+      "detected": true
+    },
+    "G4_switch_names_the_requested_source": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 6,
+      "errors": 0,
+      "failing_tests": [
+        "prb007 the image-source switch names the source actually shown (Preproc, not Original)"
+      ],
+      "error_files": [],
+      "reintroduces": "the switch says 'Original' while preprocessed images are shown",
+      "files": [
+        "frontend/src/ViewerApp.tsx"
+      ],
+      "tests": [
+        "src/ViewerApp.prb007.test.tsx"
+      ],
+      "executed": "2026-10-28T21:59:50",
+      "detected": true
+    },
+    "S1_opens_on_slice_zero": {
+      "suite": "frontend",
+      "failed": 5,
+      "passed": 8,
+      "errors": 0,
+      "failing_tests": [
+        "prb008 the first image opens on its middle slice (7 slices: slice 4 of 7)",
+        "prb008 another image of the same size keeps the slice; an image of another size opens on its middle slice",
+        "prb008 the first image opens on its middle slice, never slice 0 of a volume",
+        "prb008 another size, or another study: the middle slice",
+        "prb008 a kept index is never outside the new image"
+      ],
+      "error_files": [],
+      "reintroduces": "an image opens on slice 1 (the defect as found)",
+      "files": [
+        "frontend/src/utils/sliceOnOpen.ts"
+      ],
+      "tests": [
+        "src/utils/sliceOnOpen.test.ts",
+        "src/ViewerApp.prb007.test.tsx"
+      ],
+      "executed": "2026-10-28T22:00:20",
+      "detected": true
+    },
+    "S2_viewer_bypasses_the_rule": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 5,
+      "errors": 0,
+      "failing_tests": [
+        "prb008 the first image opens on its middle slice (7 slices: slice 4 of 7)",
+        "prb008 another image of the same size keeps the slice; an image of another size opens on its middle slice"
+      ],
+      "error_files": [],
+      "reintroduces": "the viewer page keeps whatever slice index was set before",
+      "files": [
+        "frontend/src/ViewerApp.tsx"
+      ],
+      "tests": [
+        "src/ViewerApp.prb007.test.tsx"
+      ],
+      "executed": "2026-10-28T22:00:50",
+      "detected": true
+    },
+    "S3_slice_kept_across_studies": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 5,
+      "errors": 0,
+      "failing_tests": [
+        "prb008 another size, or another study: the middle slice"
+      ],
+      "error_files": [],
+      "reintroduces": "another study opens on the previous study's slice",
+      "files": [
+        "frontend/src/utils/sliceOnOpen.ts"
+      ],
+      "tests": [
+        "src/utils/sliceOnOpen.test.ts"
+      ],
+      "executed": "2026-10-28T22:01:03",
+      "detected": true
+    },
+    "S4_slice_kept_for_another_size": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 11,
+      "errors": 0,
+      "failing_tests": [
+        "prb008 another image of the same size keeps the slice; an image of another size opens on its middle slice",
+        "prb008 another size, or another study: the middle slice"
+      ],
+      "error_files": [],
+      "reintroduces": "an image of another size opens on the previous image's slice",
+      "files": [
+        "frontend/src/utils/sliceOnOpen.ts"
+      ],
+      "tests": [
+        "src/utils/sliceOnOpen.test.ts",
+        "src/ViewerApp.prb007.test.tsx"
+      ],
+      "executed": "2026-10-28T22:01:29",
+      "detected": true
+    },
+    "S5_grid_panels_open_on_slice_zero": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 6,
+      "errors": 0,
+      "failing_tests": [
+        "prb008 grid panels open on the middle slice of their image, not slice 1"
+      ],
+      "error_files": [],
+      "reintroduces": "grid panels open on slice 1",
+      "files": [
+        "frontend/src/components/MultiPanelViewer.tsx"
+      ],
+      "tests": [
+        "src/ViewerApp.prb007.test.tsx"
+      ],
+      "executed": "2026-10-28T22:02:16",
+      "detected": true
+    },
+    "S6_middle_rounded_up": {
+      "suite": "frontend",
+      "failed": 3,
+      "passed": 3,
+      "errors": 0,
+      "failing_tests": [
+        "prb008 middle slice: floor((n - 1) / 2)",
+        "prb008 the first image opens on its middle slice, never slice 0 of a volume",
+        "prb008 another size, or another study: the middle slice"
+      ],
+      "error_files": [],
+      "reintroduces": "the middle of an even volume taken one slice too far",
+      "files": [
+        "frontend/src/utils/sliceOnOpen.ts"
+      ],
+      "tests": [
+        "src/utils/sliceOnOpen.test.ts"
+      ],
+      "executed": "2026-10-28T22:02:35",
+      "detected": true
+    },
+    "Q1_screening_on_by_default": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 11,
+      "errors": 0,
+      "failing_tests": [
+        "rc075 is OFF when the variable is not set"
+      ],
+      "error_files": [],
+      "reintroduces": "the unshipped screening model requested at every viewer opening (the defect as found)",
+      "files": [
+        "frontend/src/config/features.ts"
+      ],
+      "tests": [
+        "src/config/features.quickScreen.test.ts",
+        "src/ViewerApp.prb007.test.tsx"
+      ],
+      "executed": "2026-10-28T22:02:56",
+      "detected": true
+    },
+    "Q2_badge_not_behind_the_flag": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 11,
+      "errors": 0,
+      "failing_tests": [
+        "rc075 the viewer mounts the badge only behind the flag, in one place"
+      ],
+      "error_files": [],
+      "reintroduces": "the viewer mounts the screening whatever the flag",
+      "files": [
+        "frontend/src/components/ImageViewer2D.tsx"
+      ],
+      "tests": [
+        "src/config/features.quickScreen.test.ts",
+        "src/ViewerApp.prb007.test.tsx"
+      ],
+      "executed": "2026-10-28T22:03:20",
+      "detected": true
+    },
+    "Q3_model_looked_for_at_every_opening": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 3,
+      "errors": 0,
+      "failing_tests": [
+        "rc075 the model is looked for once per page, not at every viewer opening"
+      ],
+      "error_files": [],
+      "reintroduces": "one model request per viewer opening",
+      "files": [
+        "frontend/src/hooks/useEdgeAI.ts"
+      ],
+      "tests": [
+        "src/components/QuickScreenBadge.prb009.test.tsx"
+      ],
+      "executed": "2026-10-28T22:03:27",
+      "detected": true
+    },
+    "Q4_button_while_looking": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 3,
+      "errors": 0,
+      "failing_tests": [
+        "rc075 no Quick Screen button is shown, not even while the model is being looked for"
+      ],
+      "error_files": [],
+      "reintroduces": "the Quick Screen button shown before the model is known to exist",
+      "files": [
+        "frontend/src/components/QuickScreenBadge.tsx"
+      ],
+      "tests": [
+        "src/components/QuickScreenBadge.prb009.test.tsx"
+      ],
+      "executed": "2026-10-28T22:03:34",
+      "detected": true
+    },
+    "Q5_absent_model_logged_as_error": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 3,
+      "errors": 0,
+      "failing_tests": [
+        "rc075 an absent model writes nothing to the console"
+      ],
+      "error_files": [],
+      "reintroduces": "an absent model written to the console as an error",
+      "files": [
+        "frontend/src/hooks/useEdgeAI.ts"
+      ],
+      "tests": [
+        "src/components/QuickScreenBadge.prb009.test.tsx"
+      ],
+      "executed": "2026-10-28T22:03:43",
+      "detected": true
+    },
+    "P1_region_drawn_in_its_stored_colour": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 5,
+      "errors": 0,
+      "failing_tests": [
+        "rc076 2D overlay of a classified segmentation: each region drawn in its legend colour (stored labels say red/green/blue/gold)",
+        "rc076 no two regions drawn on the image are red against green, and every pair stays apart for deutan and protan readers"
+      ],
+      "error_files": [],
+      "reintroduces": "a classified segmentation drawn red / green / blue / gold as stored (the defect as found)",
+      "files": [
+        "frontend/src/store/useSegmentationStore.ts"
+      ],
+      "tests": [
+        "src/components/SegmentationCanvasLocal.prb010.test.tsx"
+      ],
+      "executed": "2026-10-28T22:03:51",
+      "detected": true
+    },
+    "P2_zone_coloured_lesions_red_green": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 11,
+      "errors": 0,
+      "failing_tests": [
+        "rc076 2D zone-coloured lesions (MAGNIMS zone colouring on) use the legend colours",
+        "rc076 the overlays and the 3D zone colormap carry no region colour of their own"
+      ],
+      "error_files": [],
+      "reintroduces": "zone-coloured lesions back to red / green / blue / yellow",
+      "files": [
+        "frontend/src/components/SegmentationCanvasLocal.tsx"
+      ],
+      "tests": [
+        "src/components/SegmentationCanvasLocal.prb010.test.tsx",
+        "src/utils/regionColors.test.ts"
+      ],
+      "executed": "2026-10-28T22:03:58",
+      "detected": true
+    },
+    "P3_zone_map_layer_red_green": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 11,
+      "errors": 0,
+      "failing_tests": [
+        "rc076 2D zone-map background layer uses the legend colours",
+        "rc076 the overlays and the 3D zone colormap carry no region colour of their own"
+      ],
+      "error_files": [],
+      "reintroduces": "the zone-map background layer back to red / green / blue / yellow",
+      "files": [
+        "frontend/src/components/SegmentationCanvasLocal.tsx"
+      ],
+      "tests": [
+        "src/components/SegmentationCanvasLocal.prb010.test.tsx",
+        "src/utils/regionColors.test.ts"
+      ],
+      "executed": "2026-10-28T22:04:07",
+      "detected": true
+    },
+    "P4_3d_zone_colormap_red_green": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 6,
+      "errors": 0,
+      "failing_tests": [
+        "rc076 3D zone map: niivue receives the legend colours for zones 1-4"
+      ],
+      "error_files": [],
+      "reintroduces": "the 3D zone colormap back to red / green / blue / yellow",
+      "files": [
+        "frontend/src/components/ImageViewer3D.tsx"
+      ],
+      "tests": [
+        "src/components/SegmentationCanvasLocal.prb010.test.tsx"
+      ],
+      "executed": "2026-10-28T22:04:14",
+      "detected": true
+    },
+    "P5_zone_legend_own_colours": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 11,
+      "errors": 0,
+      "failing_tests": [
+        "rc076 the zone-map panel legend shows the same colours as the lesion legend",
+        "rc076 the lesion legend and the zone-map legend take their colours from the mapping, not their own"
+      ],
+      "error_files": [],
+      "reintroduces": "the zone-map legend back to its own red / green / blue / yellow",
+      "files": [
+        "frontend/src/components/MAGNIMSZoneMapPanel.tsx"
+      ],
+      "tests": [
+        "src/components/SegmentationCanvasLocal.prb010.test.tsx",
+        "src/utils/regionColors.test.ts"
+      ],
+      "executed": "2026-10-28T22:04:21",
+      "detected": true
+    },
+    "P6_lesion_legend_own_copy": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 5,
+      "errors": 0,
+      "failing_tests": [
+        "rc076 the lesion legend and the zone-map legend take their colours from the mapping, not their own"
+      ],
+      "error_files": [],
+      "reintroduces": "the lesion legend keeps its own copy of the colours (two mappings that can drift apart again)",
+      "files": [
+        "frontend/src/components/LesionDashboard.tsx"
+      ],
+      "tests": [
+        "src/utils/regionColors.test.ts"
+      ],
+      "executed": "2026-10-28T22:04:25",
+      "detected": true
+    },
+    "P7_red_and_green_in_the_mapping": {
+      "suite": "frontend",
+      "failed": 9,
+      "passed": 4,
+      "errors": 0,
+      "failing_tests": [
+        "rc076 2D overlay of a classified segmentation: each region drawn in its legend colour (stored labels say red/green/blue/gold)",
+        "rc076 2D zone-coloured lesions (MAGNIMS zone colouring on) use the legend colours",
+        "rc076 2D zone-map background layer uses the legend colours",
+        "rc076 no two regions drawn on the image are red against green, and every pair stays apart for deutan and protan readers",
+        "rc076 3D zone map: niivue receives the legend colours for zones 1-4",
+        "rc076 the zone-colouring legend (PV / JC / IT / DWM) shows the same colours as the lesion legend",
+        "rc076 the zone-map panel legend shows the same colours as the lesion legend",
+        "rc076 the mapping is the Okabe-Ito legend mapping, by region and by label value",
+        "rc076 region labels stored with other colours are shown in the mapping; other labels untouched"
+      ],
+      "error_files": [],
+      "reintroduces": "the shared mapping itself puts periventricular red against juxtacortical green",
+      "files": [
+        "frontend/src/utils/regionColors.ts"
+      ],
+      "tests": [
+        "src/components/SegmentationCanvasLocal.prb010.test.tsx",
+        "src/utils/regionColors.test.ts"
+      ],
+      "executed": "2026-10-28T22:04:31",
+      "detected": true
+    },
+    "P8_label_preset_off_the_mapping": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 5,
+      "errors": 0,
+      "failing_tests": [
+        "rc076 the MAGNIMS label preset uses the mapping"
+      ],
+      "error_files": [],
+      "reintroduces": "the MAGNIMS label preset keeps its own (red) periventricular colour",
+      "files": [
+        "frontend/src/types/segmentation.ts"
+      ],
+      "tests": [
+        "src/utils/regionColors.test.ts"
+      ],
+      "executed": "2026-10-28T22:04:35",
+      "detected": true
+    },
+    "P9_backend_stores_red": {
+      "suite": "backend",
+      "failed": 2,
+      "passed": 7,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc076_backend_region_label_colours_are_the_frontend_mapping",
+        "test_rc076_routes_store_region_labels_with_the_mapping_only"
+      ],
+      "reintroduces": "classify-regions / generate-zone-map store periventricular red",
+      "files": [
+        "backend/app/api/routes/segmentation_regions.py"
+      ],
+      "tests": [
+        "tests/unit/test_prb006_mask_display_range.py",
+        "tests/unit/test_prb010_region_label_colours.py"
+      ],
+      "executed": "2026-10-28T22:04:44",
+      "detected": true
+    },
+    "P11_zone_colouring_legend_red_green": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 6,
+      "errors": 0,
+      "failing_tests": [
+        "rc076 the zone-colouring legend (PV / JC / IT / DWM) shows the same colours as the lesion legend"
+      ],
+      "error_files": [],
+      "reintroduces": "the zone-colouring legend back to red / green / blue / yellow (found during the PRB-010 work)",
+      "files": [
+        "frontend/src/components/MAGNIMSZoneMapPanel.tsx"
+      ],
+      "tests": [
+        "src/components/SegmentationCanvasLocal.prb010.test.tsx"
+      ],
+      "executed": "2026-10-28T22:04:51",
+      "detected": true
+    },
+    "P10_region_names_case_sensitive": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 5,
+      "errors": 0,
+      "failing_tests": [
+        "rc076 region labels stored with other colours are shown in the mapping; other labels untouched"
+      ],
+      "error_files": [],
+      "reintroduces": "a region label stored in another letter case keeps its stored colour",
+      "files": [
+        "frontend/src/utils/regionColors.ts"
+      ],
+      "tests": [
+        "src/utils/regionColors.test.ts"
+      ],
+      "executed": "2026-10-28T22:04:54",
+      "detected": true
+    }
+  },
+  "restored": {
+    "backend": {
+      "suite": "backend",
+      "failed": 0,
+      "passed": 9,
+      "errors": 0,
+      "failing_tests": []
+    },
+    "frontend": {
+      "suite": "frontend",
+      "failed": 0,
+      "passed": 66,
+      "errors": 0,
+      "failing_tests": [],
+      "error_files": []
+    }
+  },
+  "summary": {
+    "mutations": 52,
+    "detected": 52,
+    "undetected": []
+  }
+}
