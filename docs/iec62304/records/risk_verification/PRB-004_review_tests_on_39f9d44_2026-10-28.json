@@ -1,8 +1,8 @@
 {
-  "executed": "2026-10-28T23:30:03",
+  "executed": "2026-10-28T23:37:57",
   "base": "39f9d44 (PR #71 as independently reviewed)",
   "method": "in a throwaway detached worktree of the commit under test (review m8): source files that differ from the base commit restored to it, files it did not have removed (tests and frontend/src/test helpers kept); the PRB-004..010 test files (and the review tests) run unchanged; worktree removed",
-  "tests_from_commit": "27711ee5a51b3ab322952119b54cc3e8a9b173a1",
+  "tests_from_commit": "6060d2ecd032255c8590ae9cb49242d872079719",
   "swapped": {
     "restored_to_base": [
       "backend/app/api/routes/segmentation.py",
@@ -42,7 +42,8 @@
     "frontend/src/components/ImageViewer3D.prb004.review.test.tsx": "51afd450fe97b2c05ea05d1bdbeefdc89fded4c283bf98b52593013ac7ce925c",
     "frontend/src/utils/sliceOnOpen.review.test.ts": "f5d1d8e3f24c65daf84de736fd699ed1b007091ecceea2d04fa8fb63595b6cfc",
     "frontend/src/utils/instanceClassification.prb007.review.test.ts": "4fec246073ddbbc6e4953fe5569667a391142a8d9110cb1156c519466dedadb5",
-    "frontend/src/components/MultiPanelViewer.prb004.review.test.ts": "c9a47537945893fa6373dde55961441f98654ed0876e080b6e282a619ed0a690"
+    "frontend/src/components/MultiPanelViewer.prb004.review.test.ts": "c9a47537945893fa6373dde55961441f98654ed0876e080b6e282a619ed0a690",
+    "frontend/src/components/NiivueViewer2D.prb004.layout.test.tsx": "aec93bf6d380fd94945b19160e909e54c13338803aad241310153317dc7f1113"
   },
   "backend": {
     "passed": 9,
@@ -174,6 +175,15 @@
       "file_error": "",
       "not_passing": {
         "prb004 MultiPanelViewer has no mask overlay path": "AssertionError: expected '/**\\n * Multi-Panel Viewer for side-b…' not to match /segmentationMask/"
+      },
+      "passing": []
+    },
+    "frontend/src/components/NiivueViewer2D.prb004.layout.test.tsx": {
+      "passed": 0,
+      "failed": 1,
+      "file_error": "",
+      "not_passing": {
+        "rc073 m5: the notice is fully visible and covers no safety annotation, in a usual and a narrow viewport": "AssertionError: notice over the identity at 600x420: {\"notice\":{\"visibleFraction\":1,\"hiddenBelowPx\":0,\"top\":48,\"bottom\":91,\"left\":150,\"right\":450,\"clip\":{\"top\":0,\"left\":0,\"bottom\":420,\"right\":600}},\"b\":{\"visibleFraction\":1,\"hiddenBelowPx\":0"
       },
       "passing": []
     },
@@ -322,5 +332,5 @@
       ]
     }
   },
-  "note": "Review of PR #71: every review test (*.review.test.*, test_prb004_review_ref_alignment.py) except the guard 'same grid: the slice is kept' fails on 39f9d44. The earlier PRB-004..010 tests pass there except the PRB-010 colour tests, whose expected mapping the review changed (deep white matter vermillion; the colour-blind check made on the colours as drawn)."
+  "note": "Review of PR #71: every review test (*.review.test.*, NiivueViewer2D.prb004.layout.test.tsx, test_prb004_review_ref_alignment.py) except the guard 'same grid: the slice is kept' fails on 39f9d44. The earlier PRB-004..010 tests pass there except the PRB-010 colour tests, whose expected mapping the review changed (deep white matter vermillion; the colour-blind check made on the colours as drawn)."
 }
