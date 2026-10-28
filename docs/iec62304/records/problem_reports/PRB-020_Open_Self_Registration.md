@@ -100,7 +100,7 @@ product (no other account-creation path existed). **PENDING owner approval.**
   On the base: every RC-080/RC-081 test fails except two positive controls (registration works when explicitly enabled
   outside production; the Register tab shows when the server says it is on).
 - Negative controls: `scripts/safety/prb020_negative_controls.py`, mutations R1–R6 and F1–F3 (record
-  `records/risk_verification/PRB-020_negative_controls_2026-10-28.json`): whole run 56 mutations, 56 detected; for RC-080 7 of 7, RC-081 3 of 3.
+  `records/risk_verification/PRB-020_negative_controls_2026-10-28.json`): first run 56 of 56 detected; re-run after the independent review of PR #70 with 33 more mutations, 89 of 89 detected (the record now holds the re-run); RC-080 8 of 8, RC-081 8 of 8.
 - Whole suites after the fix: backend 1 failure (the local-only WebAuthn test, `webauthn` not installed — as on every
   earlier PR); frontend all pass; `tsc --noEmit` clean; `vite build` passes.
 
@@ -118,3 +118,31 @@ product (no other account-creation path existed). **PENDING owner approval.**
 4. Severity Critical (proposed); whether a CAPA is opened for the account-lifecycle controls (proposed: yes — no
    invitation flow, no e-mail verification, role changes take effect only at the next sign-in because the access token
    carries the role).
+
+## Review of PR #70 (2026-10-28) *(review of PR #70, 2026-10-28 — DRAFT, PENDING owner approval)*
+
+- **m4 — production detection fails closed**: self-registration was refused only when `ENVIRONMENT` was exactly
+  "production"; a production service configured as "prod", "staging", "live" or with an empty value would have opened it
+  when the setting was on. Now it can be on only when `ENVIRONMENT` is one of `development`, `local`, `test`, `testing`;
+  any other value counts as production (`registration_policy.NON_PRODUCTION_ENVIRONMENTS`). Tests
+  `test_rc080_prb020_r1_*` (10 cases; "prod", "staging", "", "live" fail at `7de9334`; "Production " and "PRODUCTION" were
+  already refused and are positive controls, as are the four named non-production values). Negative controls R2
+  (re-anchored), V20.
+- **m1 — audit of administrator-created accounts**: the security event of `POST /auth/users` named the new account as actor
+  and `/auth/register` as route. It now names the acting administrator and `/auth/users`, with the new account as target,
+  and creating an administrator account adds a second event `privileged_account_created`. Test
+  `test_rc081_prb020_r1_audit_of_an_admin_created_account_names_the_administrator` (fails at `7de9334`); negative controls
+  V12–V14. (Merge note: CAPA-015, PR #65, maps audit actions to event types; `privileged_account_created` needs an entry
+  there at integration.)
+- **Found while testing m8 — a refused password answered 500 and was logged as typed**: for a password refused by the
+  account model's validator (no capital, no digit, no special character), the validation-error handler failed (the error's
+  context holds the Python exception, which is not JSON) and the administrator got a 500 instead of the reason; and every
+  validation error, the typed password included, was written to the log with its `input`. Validation errors are now
+  reduced to location, message and type; context values become text; the submitted value is neither returned nor logged
+  (`core/exception_handlers.py`). Test `test_rc081_prb020_r1_administrator_route_applies_the_password_policy` (4 cases:
+  400 with the reason, the password in neither the response nor the log; 3 of 4 fail at `7de9334` with the 500, the fourth
+  — too short — returned the password in the response). Negative controls V21, V22. Earlier logs may contain passwords
+  typed into refused registrations or account creations (production logs were not read) — owner action in §7.
+- Additional owner action (§7, item 5): if production logs are kept, check whether "Request validation failed" entries
+  hold `input` values of password fields and restrict or delete them.
+Records: `records/risk_verification/PRB-020_review1_tests_on_7de9334_2026-10-28.json`, `records/risk_verification/PRB-020_negative_controls_2026-10-28.json`.

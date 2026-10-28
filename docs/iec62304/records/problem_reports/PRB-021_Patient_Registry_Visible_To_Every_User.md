@@ -57,3 +57,24 @@ administrator-only.
 review; whether the registry was read by self-registered accounts — production access logs, owner/DPO only;
 production was not contacted); whether CAPA-009's route enumeration is extended to list routes (proposed: yes —
 a test that sends every mounted GET without an id as an unentitled user and expects no record of another patient).
+
+## Deployment effect and review of PR #70 (2026-10-28) *(review of PR #70, 2026-10-28 — DRAFT, PENDING owner approval)*
+
+**Deployment effect**: after this change a clinician sees only the patients of their active care-team assignments; a
+clinician who created patients before PRB-023 (records with `created_by` but no assignment) or who treats patients created
+by someone else will see **no patients** until an administrator assigns them — run the owner backfill
+`scripts/owner/prb021_backfill_creator_care_team.py` (PRB-023) **before** deploying the backend, then assign the remaining
+treating clinicians (`POST /api/v1/patients/{id}/care-team`), as listed in `DEPLOYMENT_CHECKLIST.md`.
+
+**Empty state (review of PR #70, M3)**: a non-administrator with no listed patient read "No patients registered — Start by
+registering your first patient" and the tile "Patients 0 in registry" — false, and an invitation to register again a
+patient who already exists (same MRN → 409; a different spelling of the MRN → a **duplicate record** whose earlier scans are
+then missing from comparisons, HAZ-009). Now: "No patients are assigned to you yet. An administrator can add you to a
+patient's care team." — no create invitation in the empty state (the header's New Patient button stays) — and the tile
+says "assigned to you" (en/es/de; `PatientsPage.tsx`, `PatientsOverview.tsx`). An administrator keeps the registry wording.
+Tests: `frontend/src/pages/PatientsPage.prb021.test.tsx` — `rc082 prb021 *` (2); the clinician test fails at `7de9334`
+(`records/risk_verification/PRB-020_review1_tests_on_7de9334_2026-10-28.json`); the administrator test is the positive control. Negative controls VF1–VF4 (`records/risk_verification/PRB-020_negative_controls_2026-10-28.json`).
+
+**Limits added by the review (m9)**: `POST /patients` answers 409 "Patient with MRN '…' already exists" to any role that
+may create patients — an MRN-existence signal the scoped list no longer gives. Kept on purpose (it prevents duplicate
+records, HAZ-009) and recorded with a proposed mitigation in **PRB-027**, which also restricts the PACS patient search.

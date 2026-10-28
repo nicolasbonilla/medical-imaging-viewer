@@ -606,7 +606,7 @@ mstool-ai/
 
 ## 10. Security & Compliance
 
-The security architecture satisfies **IEC 81001-5-1:2021** (mandatory for CE Marking) using **ISO 27001:2022 Annex A** as the control framework, as recommended by **MDCG 2019-16 Rev.1**. See `docs/qms/ISMS-001_Information_Security_Management.md` for the complete ISO 27001 control mapping (42 controls assessed, **95% alignment**).
+The security architecture is designed against **IEC 81001-5-1:2021** (required for CE marking) using **ISO 27001:2022 Annex A** as the control framework, as recommended by **MDCG 2019-16 Rev.1**. No conformity assessment or certification has been performed: the mapping in `docs/qms/ISMS-001_Information_Security_Management.md` (42 controls) is a self-assessment, and several of its rows are under re-assessment (PRB-022).
 
 | Layer | Mechanism | IEC 81001-5-1 | ISO 27001 |
 |-------|-----------|:-------------:|:---------:|

@@ -55,3 +55,20 @@ backfilled (REQ-SEC-017: provenance is never inferred) — the owner may decide 
 **Owner decisions (PENDING)**: severity Major; the rule "the non-administrator creator is recorded on the care team at
 creation" (it changes the access model of CAPA-002 by adding an automatic, attributable assignment; proposed: accept);
 whether to assign the creators of existing records (a production action; production was not contacted).
+
+## Owner backfill of creator assignments — review of PR #70 (2026-10-28) *(review of PR #70, 2026-10-28 — DRAFT, PENDING owner approval)*
+
+The fix assigns creators from now on; records created by clinicians before it have `created_by` and no assignment, so
+their creators would see no patients after the deployment (PRB-021). `scripts/owner/prb021_backfill_creator_care_team.py`
+— **run by the owner only, before the backend deployment** — records for each such record the assignment the fix now
+records at creation (attending, granted by the administrator who runs it, basis `prb021_backfill_created_by`):
+- dry run by default (prints patient ids and creator usernames, no patient names; writes nothing);
+- `--apply` asks for the typed word `ASSIGN`, then writes a backup (every existing assignment row and the plan) and stops if
+  it cannot; each assignment is re-checked just before writing; the created ids are added to the backup (undo = revoke
+  exactly those ids);
+- idempotent; never re-grants an assignment that exists in any state (a revocation is a decision); skips records without
+  provenance (administrator triage), administrator creators, unknown and inactive accounts;
+- explicit `--project` (no default), refuses the Daita project; quota project forced to the named project.
+Tests (offline, in-memory stand-in only — the script was **not** run against anything):
+`backend/tests/unit/test_prb021_backfill_creator_care_team.py` — `test_rc083_prb023_backfill_*` (6); all fail at `7de9334`
+(the script did not exist). Negative controls V6–V11 (`records/risk_verification/PRB-020_negative_controls_2026-10-28.json`).

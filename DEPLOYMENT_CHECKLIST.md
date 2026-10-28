@@ -58,3 +58,18 @@ curl -s -D - -o /dev/null \
   (`username`, `email`, `full_name`, `password`, `role`). The first password is handed over through a separate channel.
 - Before the first deployment of this change: review every existing account (`GET /api/v1/auth/users`) and deactivate
   self-registered or unknown accounts (PRB-020 §7).
+
+## Care teams — run BEFORE deploying the backend of PR #70 (PRB-021, PRB-023 — DRAFT, PENDING owner approval)
+
+After this change a clinician sees only the patients of their care team. Records created by clinicians before it have no
+assignment, so their creators would see "No patients are assigned to you yet".
+1. Save the account list: `GET /api/v1/auth/users` with an administrator token → `users.json`.
+2. Dry run (writes nothing; prints patient ids and creator usernames):
+   `python scripts/owner/prb021_backfill_creator_care_team.py --project brain-mri-476110 --users-json users.json --granted-by <your admin user id>`
+3. Read the plan and the skipped groups (legacy records without provenance, administrator creators, unknown or inactive
+   accounts, existing or revoked rows). Then the same command with `--apply`, type `ASSIGN`; keep the backup file it writes
+   (it lists the created ids; to undo, revoke exactly those: `DELETE /api/v1/patients/{id}/care-team/{assignment_id}`).
+   Never with the Daita project (the script refuses it); never from an automated agent.
+4. Assign the remaining treating clinicians, and triage legacy records (`GET /api/v1/patients/quarantined`), before
+   telling users about the change.
+5. Only then deploy the backend; after deploy, sign in as a clinician and check that their patients are listed.

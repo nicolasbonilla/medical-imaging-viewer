@@ -42,3 +42,18 @@ the release branch read the store at renewal).
 
 **Owner decisions (PENDING)**: severity Major; the token gap above (proposed: a CAPA action — check the account in the
 store on each request, or a short token lifetime as CAPA-015 sets).
+
+## Review of PR #70 (2026-10-28) *(review of PR #70, 2026-10-28 — DRAFT, PENDING owner approval)*
+
+- **m2**: the administrator `PATCH /auth/users/{id}` (which this fix made work for accounts created after start-up) and
+  the passkey sign-in (`webauthn/login/complete`) saved the profile with `password_hash=''` when the password data could not
+  be read — the user could no longer sign in with a password — and always erased the password history (the 5-password
+  reuse rule restarted after any role change). Now every profile save goes through
+  `AuthService.save_profile_keeping_password`: the stored hash and history are written back unchanged (the store first —
+  another instance may have changed the password — this process's copy only when the store has none); with no known hash
+  nothing is written (PATCH → 503, nothing changed; passkey sign-in → a warning, sign-in still succeeds). The lockout path
+  (`_persist_login_state`) uses the same rule.
+- **m3**: deleting an account answered 204 when the store had not deleted it (the account could still sign in); now 503
+  and the account stays listed.
+Tests: `test_rc084_prb024_r1_*` (5 cases) in `backend/tests/unit/test_prb020_review1_findings.py`; all fail at `7de9334`
+(`records/risk_verification/PRB-020_review1_tests_on_7de9334_2026-10-28.json`). Negative controls S6 (re-anchored), V15–V19 (`records/risk_verification/PRB-020_negative_controls_2026-10-28.json`).

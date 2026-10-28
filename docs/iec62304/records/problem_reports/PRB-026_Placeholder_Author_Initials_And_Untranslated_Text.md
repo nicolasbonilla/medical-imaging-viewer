@@ -54,3 +54,11 @@ except the positive control. Negative controls A1–A2, F9–F21.
 Severity Major; the Spanish and German wording of the new keys awaits a native speaker's review (the German
 "Experte"/"KI" badges and the CALM-MS texts were translated by the agent); whether the 120 missing keys and the duplicate
 keys are fixed under a separate change (proposed).
+
+## Review of PR #70 (2026-10-28) *(review of PR #70, 2026-10-28 — DRAFT, PENDING owner approval)*
+
+Test gap m8: no test showed that the create **route** passes the authenticated user (only the service and the request
+schema were tested; removing `created_by=current_user.username` from the route passed every test). Added
+`test_rc088_prb026_r1_the_route_records_the_authenticated_user` (a request through the real route with a `created_by` in the
+body: the stored author is the signed-in user). It passes at `7de9334` (the behaviour was right); its value is shown by
+negative control V24 (the route passes no user → the test fails).

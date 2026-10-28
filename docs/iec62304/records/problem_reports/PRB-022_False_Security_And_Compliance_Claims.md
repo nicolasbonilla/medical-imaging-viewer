@@ -30,6 +30,8 @@ art. 7 prohibits misleading claims; no patient-harm path of its own). **PENDING 
 | 13 | `LoginPage.tsx:187` | "AI-Powered Brain MRI Analysis · IEC 62304 Class C Medical Device" | the device is not CE-marked; whether and how to state its regulatory status on the sign-in page is a regulatory decision | **OPEN** — owner decision (e.g. "Not CE-marked — not for clinical use" or the intended-use statement) |
 | 14 | `LoginPage.tsx:407-411` | links "Privacy Policy · Terms of Service · Cookie Policy" | all point to `#` (no document) | **OPEN** — owner decision (link the real documents or remove) |
 | 15 | `LoginPage.tsx:139-142`, `:270-281` | Google / Apple / GitHub sign-in buttons ("coming soon — contact admin for early access") | not implemented | **OPEN** — owner decision (they suggest a capability that does not exist) |
+| 16 | `LoginPage.tsx:394` (badge "IEC 62304 · Class C", kept by the first version of this fix) | looked like the removed certification badges | no conformity assessment exists; the software safety class is a development-process classification, not a certificate | **FIXED** (review of PR #70, m7: badge removed; the subtitle, row 13, stays an owner decision) |
+| 17 | `README.md:609` | "The security architecture **satisfies IEC 81001-5-1:2021** … **95% alignment**" | no conformity assessment; the ISMS-001 mapping is a self-assessment with rows under re-assessment | **FIXED** (review of PR #70, m7: reworded to "designed against …; no conformity assessment or certification has been performed") |
 
 **Root Cause**: marketing and "research-backed" badge text written into the interface and documents without a
 requirement or a verification step; nothing checks a claim against the code.
@@ -43,3 +45,8 @@ hold the badge claims). Both fail on `70cc5c7`. Negative controls F4, F5. Docume
 
 **Owner decisions (PENDING)**: severity Major; rows 11–15; whether a labelling review (all claims in the interface,
 README, web site and QMS documents) is added as a CAPA action (proposed).
+
+## Review of PR #70 (2026-10-28) *(review of PR #70, 2026-10-28 — DRAFT, PENDING owner approval)*
+
+Rows 16 and 17 added (m7). Test `frontend/src/pages/LoginPage.prb022.review1.test.tsx` — `rc086 prb022 no standard is shown
+as a badge` (fails at `7de9334`, `records/risk_verification/PRB-020_review1_tests_on_7de9334_2026-10-28.json`); negative control VF6 (`records/risk_verification/PRB-020_negative_controls_2026-10-28.json`). README by inspection.
