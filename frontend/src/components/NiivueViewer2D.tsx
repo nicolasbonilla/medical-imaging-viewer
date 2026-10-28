@@ -301,9 +301,10 @@ export function NiivueViewer2D({ hasUnsavedEdits = false }: NiivueViewer2DProps 
     nv.setOpacity(1, isOverlayVisible ? lesionOpacity : 0);
   }, [isOverlayVisible, lesionOpacity]);
 
-  // Review m5: bottom centre, above the standing laterality caveat (bottom-2) — clear of the patient
-  // identity block (top left) and the orientation banner (top right) of the safety overlay.
-  const noticeClass = 'pointer-events-none absolute bottom-10 left-1/2 z-10 max-w-md -translate-x-1/2 rounded border border-amber-600/60 bg-amber-950/85 px-2 py-1 text-[11px] text-amber-100';
+  // Review m5: bottom centre, above the standing laterality caveat (bottom-2; two lines in a narrow view) —
+  // clear of the patient identity block (top left) and the orientation banner (top right) of the safety
+  // overlay. Measured in a real browser (NiivueViewer2D.prb004.layout.test.tsx).
+  const noticeClass = 'pointer-events-none absolute bottom-14 left-1/2 z-10 max-w-md -translate-x-1/2 rounded border border-amber-600/60 bg-amber-950/85 px-2 py-1 text-[11px] text-amber-100';
 
   return (
     <div ref={rootRef} className="relative h-full w-full bg-black">

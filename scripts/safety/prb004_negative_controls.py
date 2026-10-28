@@ -100,6 +100,7 @@ T_3DR = "src/components/ImageViewer3D.prb004.review.test.tsx"
 T_SOR = "src/utils/sliceOnOpen.review.test.ts"
 T_ICR = "src/utils/instanceClassification.prb007.review.test.ts"
 T_MPR = "src/components/MultiPanelViewer.prb004.review.test.ts"
+T_NVL = "src/components/NiivueViewer2D.prb004.layout.test.tsx"
 BACKEND = ["tests/unit/test_prb006_mask_display_range.py", "tests/unit/test_prb010_region_label_colours.py",
            "tests/unit/test_prb004_review_ref_alignment.py"]
 HARNESS = ["frontend/src/test/niivueHarness.ts", "frontend/src/test/syntheticNifti.ts"]
@@ -432,9 +433,13 @@ M = {  # name: ([(file, anchor, replacement), ...], [bound frontend tests] or No
         [T_SOR], "the slice kept for an image stored in another orientation"),
     # m5 / m9 — the GPU notice
     "V35_gpu_notice_at_the_top": (
-        [(NV, "  const noticeClass = 'pointer-events-none absolute bottom-10 left-1/2",
-          "  const noticeClass = 'pointer-events-none absolute top-12 left-1/2")], [T_NVR],
+        [(NV, "  const noticeClass = 'pointer-events-none absolute bottom-14 left-1/2",
+          "  const noticeClass = 'pointer-events-none absolute top-12 left-1/2")], [T_NVR, T_NVL],
         "the GPU notice back at the top, where the identity block can cover it"),
+    "V39_gpu_notice_on_the_two_line_caveat": (
+        [(NV, "  const noticeClass = 'pointer-events-none absolute bottom-14 left-1/2",
+          "  const noticeClass = 'pointer-events-none absolute bottom-10 left-1/2")], [T_NVL],
+        "the GPU notice low enough to cover the laterality caveat when it wraps in a narrow view (the first review fix)"),
     "V36_gpu_grid_notice_sends_to_standard": (
         [(NV, "new Set<MaskNotShown>(['order', 'load', 'unsaved']);", "new Set<MaskNotShown>(['grid', 'position', 'order', 'load', 'unsaved']);")],
         [T_NVR], "the notice for a mask on another grid sends the reader to the Standard view"),
