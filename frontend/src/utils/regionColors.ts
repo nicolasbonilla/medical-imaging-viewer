@@ -5,7 +5,7 @@
  * The backend stores the same colours with the region labels (segmentation_regions.py,
  * MAGNIMS_REGION_LABEL_COLORS — a test checks the two agree).
  *
- * Okabe-Ito colour-blind-safe palette. Before PRB-010 the legend used it but the overlays drew the
+ * Okabe-Ito colour-blind-safe palette (orange, sky blue, bluish green, vermillion). Before PRB-010 the legend used it but the overlays drew the
  * regions red / green / blue / gold: the picture and the legend disagreed, and periventricular red against
  * juxtacortical green cannot be told apart with red-green colour blindness (about 8 % of men) — the two
  * most common lesion zones, side by side.
@@ -21,8 +21,12 @@ export const MAGNIMS_REGION_PALETTE: Readonly<Record<MagnimsRegion, { id: number
   Periventricular: { id: 1, hex: '#E69F00', dot: 'bg-[#E69F00]', text: 'text-[#F0A800]' },     // orange
   Juxtacortical: { id: 2, hex: '#56B4E9', dot: 'bg-[#56B4E9]', text: 'text-[#7FC7F0]' },       // sky blue
   Infratentorial: { id: 3, hex: '#009E73', dot: 'bg-[#009E73]', text: 'text-[#2DBF97]' },      // bluish green
-  'Deep White Matter': { id: 4, hex: '#CC79A7', dot: 'bg-[#CC79A7]', text: 'text-[#DB93BC]' }, // reddish purple
+  'Deep White Matter': { id: 4, hex: '#D55E00', dot: 'bg-[#D55E00]', text: 'text-[#F07A3A]' },     // vermillion
 });
+// Review of PR #71 (m1): deep white matter was reddish purple #CC79A7. As drawn (36 % over grey tissue) it
+// sat only dE76 5.3 from infratentorial bluish green for a deutan reader. With vermillion the worst pair as
+// drawn is 9.1 (tritan), 14.3 for normal vision; opaque, every pair stays above 15 for deutan, protan and
+// tritan (SegmentationCanvasLocal.prb010.test.tsx).
 
 /** Legend dot classes / text classes by region name (what the two legends render). */
 export const REGION_DOT_CLASSES: Readonly<Record<string, string>> = Object.freeze(

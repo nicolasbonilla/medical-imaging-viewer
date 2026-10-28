@@ -2,8 +2,12 @@
  * Multi-Panel Viewer for side-by-side MRI sequence comparison.
  *
  * Renders a CSS grid of 1-4 panels, each showing a different MRI sequence
- * of the same patient/timepoint. Supports synchronized slice navigation
- * and shared segmentation/expert mask overlays.
+ * of the same patient/timepoint. Supports synchronized slice navigation.
+ *
+ * No segmentation is drawn here (SRS REQ-SAFE-041, PRB-004 review of PR #71, m7): the panels show
+ * sequences that may lie on different voxel grids, and a mask can be placed voxel for voxel only on the
+ * image it was drawn on. A mask-overlay path that no caller used (no grid check, label colours of its own)
+ * was removed, so that wiring a mask in later cannot bring that hazard back unnoticed.
  *
  * @module components/MultiPanelViewer
  */
@@ -14,7 +18,6 @@ import { Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { imagingAPI } from '@/api/imaging';
 import { useMultiViewerStore, getPanelCount, type PanelState } from '@/store/useMultiViewerStore';
-import { useSegmentationStore } from '@/store/useSegmentationStore';
 import { SEQUENCE_INFO } from '@/utils/sequenceDetection';
 import { middleSliceIndex } from '@/utils/sliceOnOpen';
 import type { ImagingInstance } from '@/types';
@@ -29,13 +32,6 @@ interface PatientIdentity {
 
 interface MultiPanelViewerProps extends PatientIdentity {
   instances: ImagingInstance[];
-  /** Segmentation mask from useSegmentationMask (shared across panels) */
-  segmentationMask?: {
-    mask: Uint8Array | null;
-    depth: number;
-    height: number;
-    width: number;
-  };
 }
 
 /**
@@ -45,13 +41,11 @@ function ViewerPanel({
   panel,
   isActive,
   onActivate,
-  segmentationMask,
   identity,
 }: {
   panel: PanelState;
   isActive: boolean;
   onActivate: () => void;
-  segmentationMask?: { mask: Uint8Array | null; depth: number; height: number; width: number };
   identity: PatientIdentity;
 }) {
   const { t } = useTranslation();
@@ -59,7 +53,6 @@ function ViewerPanel({
   const containerRef = useRef<HTMLDivElement>(null);
   const setSliceIndex = useMultiViewerStore((s) => s.setSliceIndex);
   const syncSlice = useMultiViewerStore((s) => s.syncSlice);
-  const isOverlayVisible = useSegmentationStore((s) => s.isOverlayVisible);
 
   // Find instance data to get gcs_object_name
   const instanceGcsPath = panel.instanceId;
@@ -108,19 +101,9 @@ function ViewerPanel({
       canvas.height = renderHeight;
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(img, 0, 0, renderWidth, renderHeight);
-
-      // Render segmentation overlay
-      if (segmentationMask?.mask && isOverlayVisible) {
-        const sliceSize = segmentationMask.width * segmentationMask.height;
-        const sliceOffset = panel.sliceIndex * sliceSize;
-        if (sliceOffset + sliceSize <= segmentationMask.mask.length) {
-          const segSlice = segmentationMask.mask.subarray(sliceOffset, sliceOffset + sliceSize);
-          renderSegOverlayOnCtx(ctx, segSlice, segmentationMask.width, segmentationMask.height, renderWidth, renderHeight);
-        }
-      }
     };
     img.src = panel.imageData;
-  }, [panel.imageData, panel.sliceIndex, panel.metadata, segmentationMask, isOverlayVisible]);
+  }, [panel.imageData, panel.sliceIndex, panel.metadata]);
 
   // Mouse wheel for slice navigation
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -187,54 +170,10 @@ function ViewerPanel({
 }
 
 /**
- * Render contour overlay on a canvas context (simplified version for multi-panel).
- */
-/**
- * Render segmentation mask overlay on a canvas context (simplified for multi-panel).
- */
-function renderSegOverlayOnCtx(
-  ctx: CanvasRenderingContext2D,
-  maskSlice: Uint8Array,
-  maskW: number,
-  maskH: number,
-  canvasW: number,
-  canvasH: number,
-) {
-  const imageData = ctx.createImageData(maskW, maskH);
-  const data = imageData.data;
-
-  for (let y = 0; y < maskH; y++) {
-    for (let x = 0; x < maskW; x++) {
-      const idx = y * maskW + x;
-      const val = maskSlice[idx];
-      if (val === 0) continue;
-      // Simple color by label value
-      const pi = idx * 4;
-      data[pi] = (val * 67) % 256;
-      data[pi + 1] = (val * 137) % 256;
-      data[pi + 2] = (val * 211) % 256;
-      data[pi + 3] = 128;
-    }
-  }
-
-  const tmp = document.createElement('canvas');
-  tmp.width = maskW; tmp.height = maskH;
-  const tmpCtx = tmp.getContext('2d');
-  if (!tmpCtx) return;
-  tmpCtx.putImageData(imageData, 0, 0);
-
-  ctx.save();
-  ctx.globalAlpha = 0.5;
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(tmp, 0, 0, canvasW, canvasH);
-  ctx.restore();
-}
-
-/**
  * Main multi-panel viewer component.
  * Renders a CSS grid of ViewerPanel components.
  */
-export function MultiPanelViewer({ instances, segmentationMask, patientName, patientMRN, studyDescription }: MultiPanelViewerProps) {
+export function MultiPanelViewer({ instances, patientName, patientMRN, studyDescription }: MultiPanelViewerProps) {
   const { t } = useTranslation();
   const layout = useMultiViewerStore((s) => s.layout);
   const panels = useMultiViewerStore((s) => s.panels);
@@ -332,7 +271,6 @@ export function MultiPanelViewer({ instances, segmentationMask, patientName, pat
           panel={panel}
           isActive={panel.id === activePanelId}
           onActivate={() => setActivePanelId(panel.id)}
-          segmentationMask={segmentationMask}
           identity={{ patientName, patientMRN, studyDescription }}
         />
       ))}

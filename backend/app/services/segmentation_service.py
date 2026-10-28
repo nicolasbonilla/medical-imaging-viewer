@@ -947,6 +947,55 @@ class SegmentationService:
         except Exception:
             return False
 
+    @classmethod
+    def align_stored_mask_to_reference(cls, seg_bytes: bytes, ref_bytes: bytes, tolerance: float = 1e-3) -> Optional[bytes]:
+        """PRB-004 review (M1): the stored mask NIfTI realigned onto the reference image's voxel grid, or None.
+
+        Realigned only when the stored voxel-to-scanner transform IS the reference's (every element within
+        `tolerance`, the RC-039 tolerance) and, after the marker-driven reorder (RC-031: legacy masks are the
+        in-plane transpose), the shape is the reference's. Never stamps the reference affine onto a mask whose
+        position is not the reference's (identity fallback, another grid): that would be a fabricated alignment —
+        None, and the caller serves the stored file unchanged (the viewers then refuse it with a notice).
+        The output carries the reference affine and spatial header, the RC-031 v2 marker (its voxels ARE in the
+        image's order now) and the mask's own display range (PRB-006), never the MRI's window.
+        """
+        import tempfile
+        import os
+
+        def _load(raw: bytes):
+            suffix = '.nii.gz' if raw[:2] == b'\x1f\x8b' else '.nii'
+            with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as t:
+                t.write(raw)
+                path = t.name
+            img = nib.load(path)
+            out = (np.asarray(img.dataobj), img.affine.copy(), img.header.copy())
+            del img
+            os.unlink(path)
+            return out
+
+        seg_data, seg_affine, seg_header = _load(seg_bytes)
+        _ref_data, ref_affine, ref_header = _load(ref_bytes)
+        if seg_affine.shape != (4, 4) or not np.allclose(seg_affine, ref_affine, atol=tolerance, rtol=0):
+            return None
+        oriented = cls._seg_native_to_reference_order(seg_data, cls._header_has_v2_marker(seg_header))
+        if tuple(oriented.shape[:3]) != tuple(_ref_data.shape[:3]):
+            return None
+        labels = np.rint(oriented).astype(np.uint8)
+        header = ref_header.copy()
+        header.set_data_dtype(np.uint8)
+        header.set_data_shape(labels.shape)
+        header.set_slope_inter(1.0, 0.0)
+        header["cal_min"], header["cal_max"] = cls._label_display_range(labels)
+        header["descrip"] = cls._RC031_ORIENT_MARKER
+        img = nib.Nifti1Image(labels, ref_affine, header)
+        with tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False) as t:
+            path = t.name
+        nib.save(img, path)
+        with open(path, 'rb') as f:
+            data = f.read()
+        os.unlink(path)
+        return data
+
     @staticmethod
     def _label_display_range(labels: np.ndarray) -> tuple:
         """PRB-006: display range of a label mask — 0 (background) to its highest label, at least 1."""

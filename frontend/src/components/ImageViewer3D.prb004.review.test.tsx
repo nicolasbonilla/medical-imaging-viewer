@@ -77,8 +77,13 @@ async function loaded(mode: 'volume' | 'multiplanar', volumesEach: number) {
   }, { timeout: 8000 });
 }
 
-const lutHex = (cm: { lut: ArrayLike<number>; min: number }, v: number) =>
-  `#${[0, 1, 2].map((c) => cm.lut[(v - cm.min) * 4 + c].toString(16).padStart(2, '0')).join('').toUpperCase()}`;
+/** The colour niivue draws label value v of `vol` in: its colormap at v's place in its display range. */
+function drawnHex(vol: { colormap: string; cal_min: number; cal_max: number }, v: number) {
+  const cm = harness.colormaps[vol.colormap] as { R: number[]; G: number[]; B: number[] } | undefined;
+  if (!cm) return `unregistered colormap ${vol.colormap}`;
+  const t = Math.max(0, Math.min(255, Math.round(((v - vol.cal_min) / (vol.cal_max - vol.cal_min)) * 255)));
+  return `#${[cm.R[t], cm.G[t], cm.B[t]].map((c) => c.toString(16).padStart(2, '0')).join('').toUpperCase()}`;
+}
 
 describe('PRB-004 review — 3D view', () => {
   it('rc073 M1: the lesion mask and both visit masks are requested aligned to the image (ref_file_id)', async () => {
@@ -179,8 +184,7 @@ describe('PRB-004 review — 3D view', () => {
       [`/api/v1/imaging/nifti/${FILE}`]: img(), '/api/v1/segmentation/seg-1/nifti': msk({ labels: [1, 2, 3, 4] }) });
     render(<ImageViewer3D patientName="A" />);
     await loaded('volume', 2);
-    const cm = harness.instances[0].volumes[1].colormapLabel as { lut: Uint8ClampedArray; min: number } | undefined;
-    expect(cm).toBeDefined();
-    expect([1, 2, 3, 4].map((v) => lutHex(cm!, v))).toEqual(LEGEND);
+    const vol = harness.instances[0].volumes[1];
+    expect([1, 2, 3, 4].map((v) => drawnHex(vol, v))).toEqual(LEGEND);
   });
 });

@@ -108,6 +108,41 @@ export function maskMatchesImageGrid(mask: VoxelGrid, maskDescription: string | 
   return { ok: true };
 }
 
+export type Mask3DCheck =
+  | { ok: true }
+  | { ok: false; reason: 'position' | 'order' };
+
+function isIdentityAffine(affine: number[][]): boolean {
+  for (let r = 0; r < 3; r++) {
+    for (let c = 0; c < 4; c++) {
+      const a = affine[r]?.[c];
+      if (!Number.isFinite(a) || Math.abs(a - (r === c ? 1 : 0)) > SAME_GRID_TOLERANCE) return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * PRB-004 review (M1): the 3D view composites each mask by the mask's OWN voxel-to-scanner transform (a visit
+ * mask may lie on another grid), so it needs no common grid — but it needs a mask whose voxels are in its
+ * image's order (RC-031 marker; a legacy mask is the in-plane transpose and would be drawn mirrored about the
+ * diagonal) and whose scanner position is known (a mask saved without its image gets the identity transform:
+ * drawn by it, it lands at an arbitrary place). The masks are requested aligned to the image shown
+ * (`?ref_file_id=`), so a legacy mask on that image's grid arrives realigned, with the marker.
+ */
+export function maskPlaceableIn3D(mask: VoxelGrid, maskDescription: string | undefined): Mask3DCheck {
+  if (isIdentityAffine(mask.affine)) return { ok: false, reason: 'position' };
+  if (!(maskDescription ?? '').includes(RC031_V2_MARKER)) return { ok: false, reason: 'order' };
+  return { ok: true };
+}
+
+/** PRB-004 review (M1): the mask NIfTI of a segmentation, requested aligned to the image `fileId` (server-side
+ *  realignment of a mask on that image's grid; any other mask comes back as stored). */
+export function segmentationNiftiPath(segmentationId: string, fileId: string | null | undefined): string {
+  const base = `/api/v1/segmentation/${segmentationId}/nifti`;
+  return fileId ? `${base}?ref_file_id=${encodeURIComponent(fileId)}` : base;
+}
+
 /**
  * NIfTI file name for a downloaded buffer, by its content (gzip magic 1f 8b → .nii.gz).
  *

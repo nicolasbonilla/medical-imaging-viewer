@@ -169,7 +169,8 @@ describe('PRB-004 — the W/L GPU view draws each voxel where the standard view 
     });
     render(<NiivueViewer2D />);
     await mounted(1);
-    expect(await screen.findByTestId('niivue-mask-not-shown')).toHaveTextContent(/standard/i);
+    // Review m9: it names the cause; the Standard view is not offered for a mask on another grid.
+    expect(await screen.findByTestId('niivue-mask-not-shown')).toHaveTextContent(/voxel grid differs/i);
   });
 
   it('rc073 a mask with the image shape but another position in the scanner is not drawn', async () => {

@@ -70,6 +70,8 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
   const isPaintMode = useSegmentationStore((s) => s.isPaintMode);
   const setIsPaintMode = useSegmentationStore((s) => s.setIsPaintMode);
   const selectedLesion = useSegmentationStore((s) => s.selectedLesion);
+  // PRB-004 review M2: the W/L GPU view draws the SAVED mask only; it says so when there are unsaved edits.
+  const segmentationStoreDirty = useSegmentationStore((s) => s.isDirty);
   const zoneMapVisible = useSegmentationStore((s) => s.zoneMapVisible);
   const longitudinalVisible = useSegmentationStore((s) => s.longitudinalVisible);
   const conformalVisible = useSegmentationStore((s) => s.conformalVisible);
@@ -356,7 +358,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
       {renderMode === 'niivue' && (
         <div className="absolute inset-0 z-10">
           <Suspense fallback={<div className="flex h-full w-full items-center justify-center text-xs text-gray-400">Cargando visor GPU…</div>}>
-            <NiivueViewer2D />
+            <NiivueViewer2D hasUnsavedEdits={segmentationMask.state.isDirty || segmentationStoreDirty} />
           </Suspense>
         </div>
       )}

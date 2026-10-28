@@ -30,7 +30,7 @@ MAGNIMS_REGION_LABEL_COLORS = {
     "Periventricular": "#E69F00",
     "Juxtacortical": "#56B4E9",
     "Infratentorial": "#009E73",
-    "Deep White Matter": "#CC79A7",
+    "Deep White Matter": "#D55E00",   # vermillion (PR #71 review m1; was reddish purple #CC79A7)
 }
 from app.services.lesion_analysis_service import (
     analyze_lesions,

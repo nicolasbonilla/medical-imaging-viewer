@@ -35,7 +35,7 @@ export const harness = {
   loadFromUrlCalls: [] as Array<Record<string, unknown>>,
   /** Colormaps registered with Niivue.addColormap (name → definition), e.g. the MAGNIMS zone map's. */
   colormaps: {} as Record<string, unknown>,
-  /** Keys that reached niivue's own canvas key handlers (attached as niivue attaches them). */
+  /** Keys, wheel and double-click events that reached niivue's own canvas handlers (attached as niivue attaches them). */
   keysSeenByNiivue: [] as string[],
   reset() {
     harness.instances.length = 0;
@@ -75,10 +75,14 @@ export function harnessModule(actual: NiivueModule): NiivueModule {
       this.opts = { ...opts };
       harness.instances.push(this);
     }
-    /** As niivue 0.67 attachToCanvas: its keyboard handlers listen on the canvas itself. */
+    /** As niivue 0.67 attachToCanvas (registerInteractions): its keyboard, wheel and double-click handlers
+     *  listen on the canvas itself, and it makes the canvas focusable. */
     async attachToCanvas(canvas?: HTMLCanvasElement) {
       canvas?.addEventListener('keydown', (e) => { harness.keysSeenByNiivue.push(`down:${e.code}`); });
       canvas?.addEventListener('keyup', (e) => { harness.keysSeenByNiivue.push(`up:${e.code}`); });
+      canvas?.addEventListener('wheel', () => { harness.keysSeenByNiivue.push('wheel'); });
+      canvas?.addEventListener('dblclick', () => { harness.keysSeenByNiivue.push('dblclick'); });
+      canvas?.setAttribute('tabindex', '0');
       return this;
     }
     /** As niivue 0.67 Niivue.loadVolumes → addVolumesFromUrl → addVolumeFromUrl. */

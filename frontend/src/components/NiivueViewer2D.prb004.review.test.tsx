@@ -4,8 +4,8 @@
  *   M1  the view asks for the mask aligned to the image it shows (`?ref_file_id=`), so a mask saved before
  *       RC-031 that lies on the image's grid is realigned by the server and drawn (was: refused, D-3);
  *   M2  a segmentation not saved yet, or unsaved edits, were silently missing from the view;
- *   m3  niivue's own keys (V view type, C clip plane, Ctrl+U/D slice, M drag mode) acted on the view and
- *       bypassed the store;
+ *   m3  niivue's own keys (V view type, C clip plane, Ctrl+U/D slice, M drag mode), its wheel (slice) and
+ *       double-click (contrast reset) acted on the view and bypassed the store;
  *   m5  the "not drawn" notice sat at the top, where the identity block can cover it;
  *   m6  a region-classified mask was drawn all red; it is drawn in the label colours (regions: the shared
  *       mapping), and a label value missing from the table is still drawn;
@@ -68,8 +68,13 @@ async function mounted(wantVolumes: number) {
 beforeEach(() => harness.reset());
 afterEach(() => vi.unstubAllGlobals());
 
-const hex = (lut: ArrayLike<number>, min: number, v: number) =>
-  `#${[0, 1, 2].map((c) => lut[(v - min) * 4 + c].toString(16).padStart(2, '0')).join('').toUpperCase()}`;
+/** The colour (and alpha) niivue draws label value v of `vol` in: its colormap at v's place in its display range. */
+function drawnAt(vol: { colormap: string; cal_min: number; cal_max: number }, v: number) {
+  const cm = harness.colormaps[vol.colormap] as { R: number[]; G: number[]; B: number[]; A: number[] } | undefined;
+  if (!cm) return { hex: `unregistered colormap ${vol.colormap}`, alpha: 0 };
+  const t = Math.max(0, Math.min(255, Math.round(((v - vol.cal_min) / (vol.cal_max - vol.cal_min)) * 255)));
+  return { hex: `#${[cm.R[t], cm.G[t], cm.B[t]].map((c) => c.toString(16).padStart(2, '0')).join('').toUpperCase()}`, alpha: cm.A[t] };
+}
 
 describe('PRB-004 review — W/L GPU view', () => {
   it('rc073 M1: the mask is requested aligned to the image the view shows (ref_file_id)', async () => {
@@ -98,7 +103,7 @@ describe('PRB-004 review — W/L GPU view', () => {
     expect(await screen.findByTestId('niivue-mask-not-shown')).toHaveTextContent(/unsaved/i);
   });
 
-  it('rc073 m3: niivue keys never reach niivue, and its view-type / clip-plane hotkeys are off', async () => {
+  it('rc073 m3: niivue keys, wheel and double-click never reach niivue; the wheel steps the store slice', async () => {
     setStores(null);
     installBrowserNetwork('http://127.0.0.1:4173', { [`/api/v1/imaging/nifti/${FILE}`]: image() });
     const { container } = render(<NiivueViewer2D />);
@@ -106,11 +111,15 @@ describe('PRB-004 review — W/L GPU view', () => {
     expect(nv.opts.viewModeHotKey).toBe('');
     expect(nv.opts.clipPlaneHotKey).toBe('');
     const canvas = container.querySelector('canvas')!;
+    expect(canvas.hasAttribute('tabindex')).toBe(false);   // never takes keyboard focus
     for (const code of ['KeyV', 'KeyC', 'KeyM', 'KeyU', 'KeyD']) {
       fireEvent.keyDown(canvas, { code, ctrlKey: code === 'KeyU' || code === 'KeyD' });
       fireEvent.keyUp(canvas, { code });
     }
+    fireEvent.doubleClick(canvas);
+    fireEvent.wheel(canvas, { deltaY: 100 });
     expect(harness.keysSeenByNiivue).toEqual([]);
+    expect(useViewerStore.getState().currentSliceIndex).toBe(3);
   });
 
   it('rc073 m5: the notice is placed at the bottom of the view, clear of the identity block and orientation banner', async () => {
@@ -139,10 +148,10 @@ describe('PRB-004 review — W/L GPU view', () => {
       [`/api/v1/segmentation/${SEG}/nifti`]: mask({ labels: [1, 2, 3, 4, 9] }) });
     render(<NiivueViewer2D />);
     const nv = await mounted(2);
-    const cm = nv.volumes[1].colormapLabel as { lut: Uint8ClampedArray; min: number } | undefined;
-    expect(cm).toBeDefined();
-    expect([1, 2, 3, 4].map((v) => hex(cm!.lut, cm!.min, v))).toEqual(LEGEND);
-    expect(cm!.lut[(9 - cm!.min) * 4 + 3]).toBeGreaterThan(0);
-    expect(cm!.lut[(0 - cm!.min) * 4 + 3]).toBe(0);
+    const vol = nv.volumes[1];
+    expect([1, 2, 3, 4].map((v) => drawnAt(vol, v).hex)).toEqual(LEGEND);
+    expect([1, 2, 3, 4].every((v) => drawnAt(vol, v).alpha === 255)).toBe(true);
+    expect(drawnAt(vol, 9).alpha).toBeGreaterThan(0);   // a value missing from the table is still drawn
+    expect(drawnAt(vol, 0).alpha).toBe(0);              // background transparent
   });
 });

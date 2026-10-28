@@ -25,6 +25,16 @@
  *     cannot derive a file type from a blob URL on a host name without a dot.
  *   - PRB-006: the mask's display range is fixed (0 transparent, labels >= 1 full colour),
  *     never the MRI window its header may have copied.
+ *   - PRB-004 review of PR #71:
+ *       M1  the mask is requested aligned to the image shown (`?ref_file_id=`): a mask saved before RC-031
+ *           that lies on this image's grid comes back realigned, with the marker, and is drawn;
+ *       M2  this view draws the SAVED mask only: a segmentation not saved yet, or unsaved edits, are
+ *           announced on screen, never silently missing;
+ *       m3  niivue's own keyboard, wheel and double-click controls (view type, clip plane, slice, drag
+ *           mode, contrast reset) never act: they bypassed the store, so the view could show another slice
+ *           or window than the one the app reports. The wheel steps the store's slice instead;
+ *       m5  the notice sits at the bottom, clear of the identity block and the orientation banner;
+ *       m6  the mask is drawn in its label colours (MAGNIMS regions: the shared mapping), not all red.
  *   - Opt-in, never the default.
  *
  * A fresh canvas+instance is mounted per (study, segmentation) via the canvas `key`, so a GL
@@ -38,8 +48,9 @@ import { useSegmentationStore } from '@/store/useSegmentationStore';
 import { windowLevelToCalRange, sliceIndexToVoxelCentreFraction } from '@/utils/niivueWindowLevel';
 import {
   voxelGridOf, placeAsStandardView, maskMatchesImageGrid, niftiNameFor, LABEL_MASK_DISPLAY_RANGE,
-  type MaskGridCheck, type VolumeLike,
+  segmentationNiftiPath, type MaskGridCheck, type VolumeLike,
 } from '@/utils/niivueVoxelGrid';
+import { maskLabelColormap } from '@/utils/maskLabelColormap';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -85,14 +96,28 @@ function applySlice(nv: Niivue) {
 }
 
 /** Why a mask is not drawn in this view (PRB-004), for the on-screen notice. */
-const MASK_NOT_SHOWN_REASON: Record<Exclude<MaskGridCheck, { ok: true }>['reason'], [string, string]> = {
+const MASK_NOT_SHOWN_REASON: Record<Exclude<MaskGridCheck, { ok: true }>['reason'] | 'load' | 'unsaved', [string, string]> = {
   grid: ['viewer.gpuMaskNotShownGrid', 'its voxel grid differs from this image'],
   position: ['viewer.gpuMaskNotShownPosition', "it is not placed on this image's voxel grid"],
   order: ['viewer.gpuMaskNotShownOrder', 'it is stored in an older voxel order'],
+  load: ['viewer.gpuMaskNotShownLoad', 'it could not be loaded'],
+  unsaved: ['viewer.gpuMaskNotShownUnsaved', 'it is not saved yet'],
 };
+type MaskNotShown = keyof typeof MASK_NOT_SHOWN_REASON;
+/** Review m9: the Standard view is offered only where it shows the mask correctly (it draws a mask voxel for
+ *  voxel on the image it is shown with, so not for a mask on another grid or another position). */
+const STANDARD_VIEW_SHOWS_IT: ReadonlySet<MaskNotShown> = new Set<MaskNotShown>(['order', 'load', 'unsaved']);
 
-export function NiivueViewer2D() {
+const NIIVUE_HOTKEYS_OFF = { viewModeHotKey: '', clipPlaneHotKey: '', cycleClipPlaneHotKey: '' } as const;
+
+export interface NiivueViewer2DProps {
+  /** Review M2: the segmentation shown has edits not saved yet (this view draws the saved mask only). */
+  hasUnsavedEdits?: boolean;
+}
+
+export function NiivueViewer2D({ hasUnsavedEdits = false }: NiivueViewer2DProps = {}) {
   const { t } = useTranslation();
+  const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const nvRef = useRef<Niivue | null>(null);
   const readyRef = useRef(false);
@@ -109,11 +134,20 @@ export function NiivueViewer2D() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // PRB-004: a mask that cannot be drawn voxel for voxel on this image is not drawn — and said so.
-  const [maskNotShown, setMaskNotShown] = useState<keyof typeof MASK_NOT_SHOWN_REASON | 'load' | null>(null);
+  const [maskLoadProblem, setMaskLoadProblem] = useState<Exclude<MaskNotShown, 'unsaved'> | null>(null);
 
   const segId = currentSegmentation?.segmentation_id;
   const segIsLocal = !!segId && segId.startsWith('local-');
   const overlaySegId = segId && !segIsLocal ? segId : null;
+  // Review M2: a segmentation that exists only in this browser is never silently absent here.
+  const maskNotShown: MaskNotShown | null = segIsLocal ? 'unsaved' : maskLoadProblem;
+  const showEditsNotice = hasUnsavedEdits && !!overlaySegId && maskNotShown === null;
+  // Review m6: the label table the mask was saved with (colours by label value).
+  const savedLabels = currentSegmentation?.metadata?.labels;
+  const labelsRef = useRef(savedLabels);
+  labelsRef.current = savedLabels;
+  // A changed label table (e.g. after region classification) reloads the mask with its new colours.
+  const labelsKey = (savedLabels ?? []).map((l) => `${l.id}${l.color}`).join(',');
 
   // Load base volume (+ view-only mask overlay) whenever the study OR shown mask changes.
   // The canvas is keyed on the same pair, so each load gets a FRESH canvas+GL context.
@@ -125,7 +159,7 @@ export function NiivueViewer2D() {
     const init = async () => {
       setLoading(true);
       setError(null);
-      setMaskNotShown(null);
+      setMaskLoadProblem(null);
       try {
         const buffer = await fetchBuffer(`${API_BASE_URL}/api/v1/imaging/nifti/${fileId}`);
         if (cancelled) return;
@@ -147,8 +181,13 @@ export function NiivueViewer2D() {
           // PRB-004: the standard-view layout (utils/niivueVoxelGrid) assumes niivue's axial
           // screen is +x right, +y up; the radiological flip would mirror it. Stated, not defaulted.
           isRadiologicalConvention: false,
+          // Review m3: niivue's own view-type / clip-plane keys off (see also the guard below).
+          ...NIIVUE_HOTKEYS_OFF,
         });
         await nv.attachToCanvas(canvasRef.current!);
+        // Review m3: niivue makes its canvas focusable to take keys (slice Ctrl+U/D, drag mode M,
+        // view type V) that bypass the store. Not focusable: keys go to the app's own shortcuts.
+        canvasRef.current?.removeAttribute('tabindex');
         if (cancelled) { nv.cleanup?.(); return; }
         nvRef.current = nv;
 
@@ -164,12 +203,18 @@ export function NiivueViewer2D() {
 
         if (overlaySegId) {
           try {
-            const segBuf = await fetchBuffer(`${API_BASE_URL}/api/v1/segmentation/${overlaySegId}/nifti`);
+            // Review M1: aligned to this image by the server when it lies on this image's grid.
+            const segBuf = await fetchBuffer(`${API_BASE_URL}${segmentationNiftiPath(overlaySegId, fileId)}`);
             if (cancelled) return;
             const segName = niftiNameFor(segBuf, 'mask');
+            // Review m6: label colours (regions: the shared mapping); one colour when there is no table.
+            const labelCm = maskLabelColormap(labelsRef.current);
+            if (labelCm) nv.addColormap(labelCm.name, labelCm.colormap);
             const segVol = await NVImage.loadFromUrl({
-              url: segName, name: segName, buffer: segBuf, colormap: 'red',
-              ...LABEL_MASK_DISPLAY_RANGE, // PRB-006
+              url: segName, name: segName, buffer: segBuf,
+              ...(labelCm
+                ? { colormap: labelCm.name, cal_min: labelCm.cal_min, cal_max: labelCm.cal_max }
+                : { colormap: 'red', ...LABEL_MASK_DISPLAY_RANGE }), // PRB-006: never the MRI window
               opacity: useSegmentationStore.getState().isOverlayVisible
                 ? useSegmentationStore.getState().lesionOpacity : 0,
             });
@@ -180,11 +225,11 @@ export function NiivueViewer2D() {
               placeAsStandardView(seg, imageGrid); // the IMAGE's layout: voxel for voxel
               nv.addVolume(segVol);
             } else {
-              setMaskNotShown(check.reason);
+              setMaskLoadProblem(check.reason);
             }
           } catch {
             // The base image still shows; the clinician is told the mask is not drawn here.
-            if (!cancelled) setMaskNotShown('load');
+            if (!cancelled) setMaskLoadProblem('load');
           }
         }
 
@@ -208,7 +253,34 @@ export function NiivueViewer2D() {
       nvRef.current?.cleanup?.();
       nvRef.current = null;
     };
-  }, [fileId, overlaySegId]);
+  }, [fileId, overlaySegId, labelsKey]);
+
+  // Review m3: niivue's canvas listeners (keys, wheel, double-click) never run. They changed the slice,
+  // the view type, the clip plane, the drag mode or the contrast behind the store's back. Stopped in the
+  // capture phase on this wrapper, before they reach the canvas. The wheel steps the store's slice, as
+  // the standard view does (Ctrl/Cmd + wheel does nothing here: zoom is not part of this view).
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const onCanvas = (e: Event) => e.target instanceof HTMLCanvasElement;
+    const block = (e: Event) => { if (onCanvas(e)) e.stopPropagation(); };
+    const wheel = (e: WheelEvent) => {
+      if (!onCanvas(e)) return;
+      e.stopPropagation();
+      e.preventDefault();
+      if (e.ctrlKey || e.metaKey || e.deltaY === 0) return;
+      const { currentSliceIndex: k, currentSeries, setCurrentSliceIndex } = useViewerStore.getState();
+      const last = Math.max(0, (currentSeries?.total_slices ?? 1) - 1);
+      setCurrentSliceIndex(Math.max(0, Math.min(last, k + (e.deltaY > 0 ? 1 : -1))));
+    };
+    const types = ['keydown', 'keyup', 'keypress', 'dblclick'] as const;
+    types.forEach((type) => root.addEventListener(type, block, true));
+    root.addEventListener('wheel', wheel, { capture: true, passive: false });
+    return () => {
+      types.forEach((type) => root.removeEventListener(type, block, true));
+      root.removeEventListener('wheel', wheel, { capture: true });
+    };
+  }, []);
 
   // GPU window/level (the invariant): re-apply on any C/W change.
   useEffect(() => {
@@ -229,9 +301,13 @@ export function NiivueViewer2D() {
     nv.setOpacity(1, isOverlayVisible ? lesionOpacity : 0);
   }, [isOverlayVisible, lesionOpacity]);
 
+  // Review m5: bottom centre, above the standing laterality caveat (bottom-2) — clear of the patient
+  // identity block (top left) and the orientation banner (top right) of the safety overlay.
+  const noticeClass = 'pointer-events-none absolute bottom-10 left-1/2 z-10 max-w-md -translate-x-1/2 rounded border border-amber-600/60 bg-amber-950/85 px-2 py-1 text-[11px] text-amber-100';
+
   return (
-    <div className="relative h-full w-full bg-black">
-      <canvas key={`${fileId ?? 'x'}:${overlaySegId ?? 'x'}`} ref={canvasRef} className="h-full w-full" />
+    <div ref={rootRef} className="relative h-full w-full bg-black">
+      <canvas key={`${fileId ?? 'x'}:${overlaySegId ?? 'x'}:${labelsKey}`} ref={canvasRef} className="h-full w-full" />
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center text-xs text-gray-300">
           Cargando volumen…
@@ -243,18 +319,21 @@ export function NiivueViewer2D() {
         </div>
       )}
       {maskNotShown && (
-        <div
-          data-testid="niivue-mask-not-shown"
-          role="status"
-          className="pointer-events-none absolute left-1/2 top-12 z-10 max-w-md -translate-x-1/2 rounded border border-amber-600/60 bg-amber-950/85 px-2 py-1 text-[11px] text-amber-100"
-        >
+        <div data-testid="niivue-mask-not-shown" role="status" className={noticeClass}>
           {t('viewer.gpuMaskNotShown', 'The segmentation is not drawn in this view')}
           {': '}
-          {maskNotShown === 'load'
-            ? t('viewer.gpuMaskNotShownLoad', 'it could not be loaded')
-            : t(...MASK_NOT_SHOWN_REASON[maskNotShown])}
-          {'. '}
-          {t('viewer.gpuMaskNotShownUseStandard', 'Use the Standard view to see it.')}
+          {t(...MASK_NOT_SHOWN_REASON[maskNotShown])}
+          {'.'}
+          {STANDARD_VIEW_SHOWS_IT.has(maskNotShown) && (
+            <> {t('viewer.gpuMaskNotShownUseStandard', 'Use the Standard view to see it.')}</>
+          )}
+        </div>
+      )}
+      {showEditsNotice && (
+        <div data-testid="niivue-mask-not-shown" role="status" className={noticeClass}>
+          {t('viewer.gpuMaskUnsavedEdits', 'Unsaved edits are not shown in this view: it draws the last saved segmentation.')}
+          {' '}
+          {t('viewer.gpuMaskUnsavedEditsUseStandard', 'Use the Standard view to see them.')}
         </div>
       )}
       {/* Honest, non-dismissible mode note (bottom-left, clear of the z-20 patient-identity
