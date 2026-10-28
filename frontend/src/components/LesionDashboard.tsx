@@ -40,6 +40,7 @@ import {
   type DISRegionCorrection,
   type LesionInfo,
   type RegionClassificationResult,
+  type RemovedSmallComponents,
   type ClassificationMethod,
   type LesionAnnotation,
   type CVSSummary,
@@ -156,6 +157,10 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
   const [confirmPhase, setConfirmPhase] = useState<null | 'recording' | 'refreshing'>(null);
   // Review of PR #69, B1/M3: the reasons a confirmation was refused because lesions are not drawn.
   const [confirmRefusal, setConfirmRefusal] = useState<string[] | null>(null);
+  // Review of PR #69, m1: the classified mask could not be reloaded — the view may show the mask from before.
+  const [maskReloadFailed, setMaskReloadFailed] = useState(false);
+  // Review of PR #69, m5: the confirmation was recorded but the DIS result could not be read back yet.
+  const [confirmedUnread, setConfirmedUnread] = useState(false);
   // Review of PR #69, B1 (1): the sidebar list caches are refreshed after a classification (no provider in some tests).
   const queryClient = useContext(QueryClientContext);
   // Second review of PR #68 (N1): the radiologist acknowledges the region corrections listed (exactly these).
@@ -230,7 +235,10 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
 
   // Auto-populate from persisted analysis_data
   useEffect(() => {
-    const cached = currentSegmentation?.metadata?.analysis_data;
+    // Review of PR #69, M1: only the data of THIS dashboard's segmentation — never the open segmentation of another.
+    const cached = currentSegmentation?.segmentation_id === segmentationId
+      ? currentSegmentation?.metadata?.analysis_data
+      : null;
     if (!cached) {
       setAnalysis(null);
       setDis(null);
@@ -253,7 +261,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
     }
     if (cached.cvs_summary) setCvsSummary(cached.cvs_summary);
     if (cached.prl_summary) setPrlSummary(cached.prl_summary);
-  }, [segmentationId, currentSegmentation?.metadata?.analysis_data]);
+  }, [segmentationId, currentSegmentation?.segmentation_id, currentSegmentation?.metadata?.analysis_data]);
 
   // PRB-003 (RC-070): read the DIS state from the gated route whenever a segmentation with stored analysis is
   // opened or its mask is saved again (modified_at) — never from the stored metadata.
@@ -308,16 +316,19 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
 
   // Capture finding F09 (release 2026-10-25): the region classification removes lesion components below the minimum
   // lesion size from the mask; the classification card, the DIS card and the confirm dialog say how many and why.
-  const removedSmall = classification?.removed_small_components;
-  const removedVals = removedSmall && removedSmall.components > 0
-    ? { components: removedSmall.components, voxels: removedSmall.voxels,
-        volume: Number(removedSmall.volume_mm3.toFixed(1)), min: removedSmall.min_lesion_volume_mm3 }
-    : null;
+  // Review of PR #69, M1: the classification card shows this dashboard's own classification result; the DIS card and
+  // the confirm dialog take the removal from the server's DIS state of THIS segmentation, which carries it only while
+  // the classification record describes the current lesions.
+  const removedValsOf = (r: RemovedSmallComponents | null | undefined) => (r && r.components > 0
+    ? { components: r.components, voxels: r.voxels, volume: Number(r.volume_mm3.toFixed(1)), min: r.min_lesion_volume_mm3 }
+    : null);
+  const removedVals = removedValsOf(classification?.removed_small_components);
+  const confirmRemovedVals = removedValsOf(pendingRegions?.removed_small_components);
   const removedText = removedVals
     ? fill(t('classify.removedComponents', { defaultValue: 'The region classification removed {{components}} lesion component(s) smaller than {{min}} mm³ from the mask ({{voxels}} voxels, {{volume}} mm³): they are below the minimum lesion size and are not classified. Check that none was a lesion before confirming.', ...removedVals }), removedVals)
     : null;
-  const confirmRemovedText = removedVals
-    ? fill(t('disReview.removedComponents', { defaultValue: 'Before confirming: the region classification removed {{components}} lesion component(s) smaller than {{min}} mm³ ({{voxels}} voxels) from this mask; the confirmation applies to the mask without them.', ...removedVals }), removedVals)
+  const confirmRemovedText = confirmRemovedVals
+    ? fill(t('disReview.removedComponents', { defaultValue: 'Before confirming: the region classification removed {{components}} lesion component(s) smaller than {{min}} mm³ ({{voxels}} voxels) from this mask; the confirmation applies to the mask without them.', ...confirmRemovedVals }), confirmRemovedVals)
     : null;
 
   // RC-071: a radiologist confirms a segmentation without AI provenance, for the exact saved mask.
@@ -340,8 +351,11 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       isOverlayVisible: state.isOverlayVisible,
       lesionOpacity: state.lesionOpacity,
     });
-    if (undrawn === null || undrawn.length > 0) {
-      setConfirmRefusal(undrawnText(t, undrawn));
+    if (maskReloadFailed || undrawn === null || undrawn.length > 0) {
+      setConfirmRefusal([
+        ...(maskReloadFailed ? [t('disReview.reloadFailedRefusal', 'The classified mask could not be reloaded: the view may show the mask from before the classification. Reopen the segmentation.')] : []),
+        ...(undrawn === null || undrawn.length > 0 ? undrawnText(t, undrawn) : []),
+      ]);
       return;
     }
     const listed = (pendingRegions?.corrections ?? []).map(correctionText);
@@ -385,7 +399,9 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
         await fetchDis();
       } catch (refreshError) {
         console.error('[LesionDashboard] DIS state could not be read after the confirmation:', refreshError);
-        setConfirmError(t('disReview.refreshFailed', 'Your confirmation was recorded, but the DIS result could not be read; press Analyze to read it again.'));
+        // Review of PR #69, m5: the card says the confirmation was recorded (never "not confirmed") and offers no
+        // second confirmation until the next successful read.
+        setConfirmedUnread(true);
       }
     } catch (e: any) {
       // The server's reason (409: classification missing, lesions without one region, corrections not acknowledged).
@@ -394,7 +410,12 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       setConfirmBusy(false);
       setConfirmPhase(null);
     }
-  }, [segmentationId, fetchDis, t, correctionsDigest, ackedCorrections, pendingRegions, correctionText, confirmRemovedText]);
+  }, [segmentationId, fetchDis, t, correctionsDigest, ackedCorrections, pendingRegions, correctionText, confirmRemovedText,
+      maskReloadFailed]);
+
+  // m5: a new DIS state ends the "recorded, not read" state; m1: another opened segmentation ends the reload failure.
+  useEffect(() => { setConfirmedUnread(false); }, [dis]);
+  useEffect(() => { setMaskReloadFailed(false); }, [currentSegmentation?.segmentation_id]);
 
   // Stale check: mask was edited after analysis was computed
   const isAnalysisStale = !!(
@@ -408,7 +429,8 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
   const patchAnalysisData = useCallback((patch: Record<string, unknown>) => {
     const store = useSegmentationStore.getState();
     const cur = store.currentSegmentation;
-    if (!cur) return;
+    // Review of PR #69, M1: never write this dashboard's results into another (open) segmentation.
+    if (!cur || cur.segmentation_id !== segmentationId) return;
     store.setCurrentSegmentation({
       ...cur,
       metadata: {
@@ -441,6 +463,9 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
   }, [segmentationId, patchAnalysisData, fetchDis]);
 
   const handleClassifyRegions = useCallback(async () => {
+    // Review of PR #69, m2: only the open segmentation without unsaved changes (it reloads the open mask).
+    const st = useSegmentationStore.getState();
+    if (st.currentSegmentation?.segmentation_id !== segmentationId || st.hasUnsavedMaskChanges) return;
     setIsClassifying(true);
     setError(null);
     try {
@@ -452,16 +477,25 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       // they are refreshed so that no later open uses the labels from before it.
       void queryClient?.invalidateQueries({ queryKey: ['segmentations'] });
 
-      // Capture finding F08 (release 2026-10-25): the 2D canvas and NiiVue draw from activeSegmentation.labels. The
-      // labels the server stored with the classified mask reach it (and currentSegmentation), every region visible,
-      // BEFORE the mask is reloaded. Before, only currentSegmentation was updated, after the reload: lesions labelled
-      // 2-4 were not drawn until the study was reopened.
+      // Capture finding F08 (release 2026-10-25): the 2D canvas draws from activeSegmentation.labels. The labels the
+      // server stored with the classified mask reach it (and currentSegmentation), every region visible, BEFORE the
+      // mask is reloaded. Before, only currentSegmentation was updated, after the reload: lesions labelled 2-4 were not
+      // drawn until the study was reopened. (NiiVue's opt-in 2D view and the 3D view do not use the label table: they
+      // load the overlay once per segmentation with a fixed colormap and are not reloaded after a classification —
+      // review of PR #69, m3; left to PR #71, which rewrites them.)
       if (result.labels_updated) {
         useSegmentationStore.getState().applyServerLabels(segmentationId, result.labels ?? MAGNIMS_LESION_LABELS);
       }
 
       if (result.mask_updated) {
-        await reloadMaskCallback?.();
+        // Review of PR #69, m1: a failed reload is shown and blocks the confirmation until the segmentation is reopened.
+        const reloaded = await reloadMaskCallback?.();
+        if (reloaded === false) {
+          setMaskReloadFailed(true);
+          setError(t('classify.reloadFailed', 'The classified mask could not be reloaded: the view may show the mask from before the classification. Reopen the segmentation before checking or confirming it.'));
+        } else {
+          setMaskReloadFailed(false);
+        }
         onMaskUpdated?.();
         // The region labels changed the mask: any confirmation of the previous mask was voided (RC-047/RC-071).
         await refreshReviewRecords();
@@ -483,7 +517,8 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
     } finally {
       setIsClassifying(false);
     }
-  }, [segmentationId, classifyMethod, onMaskUpdated, reloadMaskCallback, patchAnalysisData, refreshReviewRecords, fetchDis]);
+  }, [segmentationId, classifyMethod, onMaskUpdated, reloadMaskCallback, patchAnalysisData, refreshReviewRecords, fetchDis,
+      queryClient, t]);
 
   const handleLesionClick = useCallback((lesion: LesionInfo) => {
     const current = useSegmentationStore.getState().selectedLesion;
@@ -711,9 +746,14 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
           ))}
         </div>
 
+        {!(isOpen && !hasUnsavedMaskChanges) && (
+          <p className="text-[9px] text-amber-300" data-testid="classify-needs-open-saved">
+            {t('classify.needsOpenSaved', 'Open this segmentation and save your changes to classify it: the classification works on the saved mask and reloads the open one.')}
+          </p>
+        )}
         <button
           onClick={handleClassifyRegions}
-          disabled={isClassifying}
+          disabled={isClassifying || !(isOpen && !hasUnsavedMaskChanges)}
           className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded text-xs text-white font-medium transition-colors"
         >
           {isClassifying ? (
@@ -832,6 +872,13 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
             // after its own review); finding 7: only on the open segmentation.
             const confirmable = !disHeldForUnsavedChanges
               && (reason === 'segmentation_not_confirmed' || reason === 'confirmation_outdated');
+            if (confirmedUnread) {
+              return (
+                <p className="text-[10px] text-amber-100" role="status" data-testid="dis-confirmed-unread">
+                  {t('disReview.refreshFailed', 'Your confirmation was recorded, but the DIS result could not be read; press Analyze to read it again.')}
+                </p>
+              );
+            }
             if (confirmPhase) {
               return (
                 <p className="flex items-center gap-1 text-[10px] text-amber-100" role="status" aria-live="polite"

@@ -762,7 +762,9 @@ def test_rc070_assistant_never_receives_a_dis_conclusion_that_was_not_evaluated(
 
 @pytest.mark.unit
 def test_rc070_assistant_receives_an_evaluated_assessment_unchanged(ms_server, monkeypatch):
-    evaluated = {"segmentation_id": "seg-1", "evaluation_status": "evaluated", "dis_met_brain": True,
+    # Release 2026-10-25 (review of PR #69, m4): an evaluated block carries its yes/no conclusion `dis_met`, as the
+    # server's DIS route always returns it; the one "evaluated" rule (also in the assistant) requires it.
+    evaluated = {"segmentation_id": "seg-1", "evaluation_status": "evaluated", "dis_met": True, "dis_met_brain": True,
                  "segmentation_review": {"status": "confirmed", "reviewed_by": "dr_rev"}}
 
     async def api_get(path, params=None):

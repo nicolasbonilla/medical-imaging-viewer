@@ -279,6 +279,7 @@ def regions_state(metadata: Any, masks_3d) -> Dict[str, Any]:
         "edited_after_classification": None, "lesion_count": None, "lesions_valid": None,
         "invalid_lesions": [], "invalid_lesion_count": 0,
         "corrections": [], "correction_count": 0, "corrections_sha256": None, "listed_limit": LESION_LIST_CAP,
+        "removed_small_components": None,
     }
     recorded = record.get("classified_lesion_regions")
     voxel_volume = record.get("voxel_volume_mm3")
@@ -330,6 +331,11 @@ def regions_state(metadata: Any, masks_3d) -> Dict[str, Any]:
         "invalid_lesions": invalid[:LESION_LIST_CAP], "invalid_lesion_count": len(invalid),
         "corrections": corrections[:LESION_LIST_CAP], "correction_count": len(corrections),
         "corrections_sha256": corrections_sha256(corrections),
+        # Release 2026-10-25 (review of PR #69, M1): what the classification removed from THIS mask (components below
+        # the minimum lesion size), served with the DIS state of this segmentation — only while the classification
+        # record describes the current lesions (checked above), so the viewer never shows another mask's figure.
+        "removed_small_components": (record.get("removed_small_components")
+                                     if isinstance(record.get("removed_small_components"), dict) else None),
     })
     return out
 

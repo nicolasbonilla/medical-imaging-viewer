@@ -100,7 +100,10 @@ def _without_reviewer_names(dis: dict) -> dict:
 
 def only_evaluated_dis(dis):
     """The DIS block (without reviewer names) when the backend evaluated it; otherwise the 'not evaluated' state."""
-    if isinstance(dis, dict) and dis.get("evaluation_status") == "evaluated":
+    # Review of PR #69, m4: the same rule as dis_review_gate.is_evaluated (status AND a yes/no conclusion). Mirrored
+    # here rather than imported: the assistant server reaches the backend over HTTP and stays independent of the
+    # gate's storage dependencies.
+    if isinstance(dis, dict) and dis.get("evaluation_status") == "evaluated" and isinstance(dis.get("dis_met"), bool):
         return _without_reviewer_names(dis)
     kept = {k: v for k, v in (dis or {}).items() if k not in DIS_CONCLUSION_KEYS} if isinstance(dis, dict) else {}
     return _without_reviewer_names({**kept, "evaluation_status": "not_evaluated", "message": NOT_EVALUATED_DIS_MESSAGE})

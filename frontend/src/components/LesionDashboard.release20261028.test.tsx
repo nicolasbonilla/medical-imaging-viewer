@@ -141,7 +141,7 @@ describe('F08: every region is drawn right after the classification', () => {
     fireEvent.click(screen.getByRole('button', { name: /Auto-Classify Regions/ }));
     await waitFor(() => expect(analyzeLesions).toHaveBeenCalled());
     const s = useSegmentationStore.getState();
-    expect(s.activeSegmentation?.labels).toEqual(SERVER_LABELS);           // what the 2D canvas and NiiVue draw from
+    expect(s.activeSegmentation?.labels).toEqual(SERVER_LABELS);           // what the 2D canvas draws from
     expect(s.currentSegmentation?.metadata?.labels).toEqual(SERVER_LABELS);
     for (const id of [1, 2, 3, 4]) expect(s.labelVisibility[id]).toBe(true);
     expect(labelsAtReload).toEqual(expect.arrayContaining([1, 2, 3, 4]));  // applied before the mask reload
@@ -152,6 +152,10 @@ describe('F08: every region is drawn right after the classification', () => {
 describe('F09: small components removed by the classification are stated before the confirmation', () => {
   it('rc070 release f09 the classification card and the confirmation state how many components and voxels were removed', async () => {
     seed({ lesion_analysis: ANALYSIS, classification: { ...CLASSIFICATION, removed_small_components: REMOVED } });
+    // Contract changed by the second review of PR #69 (M1): the DIS card and the confirm dialog take the removal from
+    // the server's DIS state of this segmentation (regions.removed_small_components), not from the open
+    // segmentation's stored classification; the server serves it here as it does for these lesions.
+    getDISAssessment.mockResolvedValue({ ...NOT_CONFIRMED, regions: { ...NOT_CONFIRMED.regions, removed_small_components: REMOVED } });
     render(<LesionDashboard segmentationId="seg-1" />);
     const removed = await screen.findByTestId('classification-removed-components');
     expect(removed).toHaveTextContent(/removed 8 lesion component\(s\) smaller than 3 mm³/);

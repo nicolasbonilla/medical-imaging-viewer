@@ -336,7 +336,7 @@ interface SegmentationState {
   removeLabel: (labelId: number) => void;
   setLabelPreset: (preset: LabelPreset) => void;
   /** Labels the SERVER stored with the mask (region classification): written to currentSegmentation AND
-   *  activeSegmentation (what the 2D canvas and NiiVue draw from), every label at its own visibility; not a
+   *  activeSegmentation (what the 2D canvas draws from; NiiVue's views use a fixed colormap), every label at its own visibility; not a
    *  local edit (isDirty unchanged). Release 2026-10-25, capture finding F08. */
   applyServerLabels: (segmentationId: string, labels: LabelInfo[]) => void;
 

@@ -391,6 +391,8 @@ DIS_LINES_REPLACED: Dict[str, str] = {
 # with this phrase; the report panel recognises it (AIReportPanel.tsx) and shows its own message instead of
 # CAPA-008's "no measurements".
 GEOMETRY_UNREADABLE_PHRASE = "The image geometry could not be read; report not generated"
+# Review of PR #69, n1: any other failure of the server-side lesion table says so (not "geometry").
+LESION_TABLE_FAILED_PHRASE = "The lesion measurements could not be computed on the server; report not generated"
 
 
 def _dis_services():
@@ -436,10 +438,17 @@ async def server_lesion_table(segmentation_id: str) -> Dict[str, Any]:
         raise
     except Exception as e:  # noqa: BLE001
         logger.error(f"[Report] Lesion measurements could not be computed for the report: {e}")
+        from app.utils import VoxelSpacingUnavailableError
+        if isinstance(e, VoxelSpacingUnavailableError):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=(f"{GEOMETRY_UNREADABLE_PHRASE}: the lesion measurements of segmentation {segmentation_id} "
+                        "could not be computed on the server (the source image or its voxel geometry could not be "
+                        "read). Nothing was sent."),
+            )
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=(f"{GEOMETRY_UNREADABLE_PHRASE}: the lesion measurements of segmentation {segmentation_id} could "
-                    "not be computed on the server (the source image or its voxel geometry could not be read). "
+            detail=(f"{LESION_TABLE_FAILED_PHRASE} ({type(e).__name__}) for segmentation {segmentation_id}. "
                     "Nothing was sent."),
         )
 

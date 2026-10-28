@@ -141,6 +141,10 @@ async def classify_regions(
             )
         lesion_mask = seg_data["masks_3d"]  # (D, H, W), uint8
         metadata = seg_data["metadata"]
+        # Review of PR #69, M2: the classification record before this run (its removal may be carried forward).
+        previous_classification = (metadata.analysis_data or {}).get("classification")
+        if not isinstance(previous_classification, dict):
+            previous_classification = None
 
         # RC-024 (CAPA-001 CA-5): voxel spacing is REQUIRED. This previously
         # defaulted to (1.0, 1.0, 1.0) whenever metadata was absent — and to
@@ -478,8 +482,21 @@ async def classify_regions(
         if classified_mask is not None:
             # Capture finding F09: what the classification removed from the mask, and why — shown before the
             # radiologist confirms (also kept with the stored classification record, for a later session).
-            response_data["removed_small_components"] = removed_small_components(
-                lesion_mask, classified_mask, voxel_spacing)
+            removed = removed_small_components(lesion_mask, classified_mask, voxel_spacing)
+            # Review of PR #69, M2: classifying the already classified lesions again (another method, a retry, the
+            # next session) finds nothing new to remove; the earlier removal from the same lesions is carried forward
+            # instead of being overwritten with 0. A saved mask with other lesions starts again.
+            previous = (previous_classification or {}).get("removed_small_components")
+            if (isinstance(previous, dict) and previous_classification.get("classified_lesion_footprint_sha256")
+                    == dis_gate.footprint_sha256(lesion_mask)):
+                removed = {
+                    **removed,
+                    "components": removed["components"] + int(previous.get("components") or 0),
+                    "voxels": removed["voxels"] + int(previous.get("voxels") or 0),
+                    "volume_mm3": round(removed["volume_mm3"] + float(previous.get("volume_mm3") or 0.0), 3),
+                    "includes_earlier_classifications": True,
+                }
+            response_data["removed_small_components"] = removed
             # Capture finding F08: the label scheme stored with the mask, so the viewer draws every region at once.
             response_data["labels"] = [
                 {"id": lbl.id, "name": lbl.name, "color": lbl.color, "opacity": lbl.opacity, "visible": lbl.visible}

@@ -38,6 +38,8 @@ const MAX_TYPED_CHARS = 5000;
 // Release 2026-10-25 (review of PR #69, item 6): the server's 422 for an unreadable image geometry starts with this
 // phrase (backend ai_report.GEOMETRY_UNREADABLE_PHRASE; a backend test checks that both say the same).
 const GEOMETRY_UNREADABLE_PHRASE = 'The image geometry could not be read; report not generated';
+// Review of PR #69, n1: any other failure of the server-side lesion table (backend ai_report.LESION_TABLE_FAILED_PHRASE).
+const LESION_TABLE_FAILED_PHRASE = 'The lesion measurements could not be computed on the server; report not generated';
 
 /** The server's error message ({"error": {"message"}} from the API, or FastAPI's {"detail"}), or ''. */
 function serverMessage(error: unknown): string {
@@ -300,6 +302,8 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
                   {(generateMutation.error as any)?.response?.status === 422
                     ? (serverMessage(generateMutation.error).startsWith(GEOMETRY_UNREADABLE_PHRASE)
                       ? t('report.geometryUnreadable', 'The image geometry could not be read, so the report was not generated. Nothing was sent to the AI service.')
+                      : serverMessage(generateMutation.error).startsWith(LESION_TABLE_FAILED_PHRASE)
+                      ? t('report.lesionTableFailed', 'The lesion measurements could not be computed on the server, so the report was not generated. Nothing was sent to the AI service.')
                       : t('report.noMeasurements', 'No measurements are available for this study. Open a segmentation and run its analysis first: a report without measurements would be invented.'))
                     : (generateMutation.error as Error)?.message || t('report.generateError', 'Report generation failed')}
                 </div>

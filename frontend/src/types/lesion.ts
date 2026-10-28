@@ -162,6 +162,9 @@ export interface DISRegionsState {
   correction_count?: number;
   /** Digest the radiologist sends to acknowledge exactly these corrections in the confirmation. */
   corrections_sha256?: string | null;
+  /** What the classification removed from this mask (review of PR #69, M1): served only while the classification
+   *  record describes the current lesions. */
+  removed_small_components?: RemovedSmallComponents | null;
   listed_limit?: number;
 }
 
@@ -170,7 +173,10 @@ export type DISAssessment = DISEvaluated | DISNotEvaluated;
 
 /** True only for a result the server evaluated on a confirmed segmentation; anything else is not shown as DIS. */
 export function isDisEvaluated(d: unknown): d is DISEvaluated {
-  return !!d && typeof d === 'object' && (d as { evaluation_status?: unknown }).evaluation_status === 'evaluated';
+  // Review of PR #69, m4: the same rule as the server's dis_review_gate.is_evaluated — the status "evaluated" AND a
+  // yes/no conclusion.
+  return !!d && typeof d === 'object' && (d as { evaluation_status?: unknown }).evaluation_status === 'evaluated'
+    && typeof (d as { dis_met?: unknown }).dis_met === 'boolean';
 }
 
 export interface DISEvaluated {
