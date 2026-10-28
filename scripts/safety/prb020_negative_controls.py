@@ -43,7 +43,9 @@ BACKEND_TESTS = ["tests/unit/test_prb020_self_registration_and_accounts.py",
                  "tests/security/test_authentication.py::TestAccountLockout",
                  # Review of PR #70 (2026-10-28):
                  "tests/unit/test_prb020_review1_findings.py",
-                 "tests/unit/test_prb021_backfill_creator_care_team.py"]
+                 "tests/unit/test_prb021_backfill_creator_care_team.py",
+                 # Re-review of PR #70 (2026-10-28):
+                 "tests/unit/test_prb020_review2_findings.py"]
 FRONTEND_TESTS = ["src/pages/LoginPage.prb020.test.tsx", "src/components/StudyCard.prb025.test.tsx",
                   "src/components/patientInitials.prb026.test.tsx", "src/hooks/useSegmentationData.prb026.test.tsx",
                   "src/components/i18nStrings.prb026.test.tsx",
@@ -265,8 +267,9 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                           "the backfill writes although the backup could not be taken"),
     "V9_backfill_assigns_administrators": ([(BACKFILL, '        elif str(account.get("role", "")).lower() == "admin":\n', "        elif False:\n")],
                                            "the backfill puts administrators on care teams"),
-    "V10_backfill_accepts_daita": ([(BACKFILL, "    if not project or project in FORBIDDEN_PROJECTS:\n", "    if not project:\n")],
-                                   "the backfill runs against the Daita project"),
+    # V10 re-anchored after the re-review (R1): the guard is now the allow-list; removing it lets the Daita project in.
+    "V10_backfill_accepts_daita": ([(BACKFILL, "    if project not in ALLOWED_PROJECTS or project in FORBIDDEN_PROJECTS:\n", "    if False:\n")],
+                                   "the backfill runs against the Daita project (no project guard at all)"),
     "V11_backfill_dry_run_writes": ([(BACKFILL, '    if not args.apply:\n        say("DRY RUN', '    if False:\n        say("DRY RUN')],
                                     "the backfill writes without --apply"),
     # ── m1: audit of administrator-created accounts (RC-081) ──
@@ -336,6 +339,35 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "VF6_iec_badge_back": ([(LOGIN, "              {[\n                { label: 'AES-256', sub: 'At rest' },\n",
                              "              {[\n                { label: 'IEC 62304', sub: 'Class C' },\n                { label: 'AES-256', sub: 'At rest' },\n")],
                            "the sign-in page shows an 'IEC 62304 · Class C' badge (m7, as found)"),
+    # ── Re-review of PR #70 (2026-10-28): R1-R3 (RC-083), R5 (RC-081), R6 (RC-084) ──
+    "W1_backfill_deny_list_only": ([(BACKFILL, "    if project not in ALLOWED_PROJECTS or project in FORBIDDEN_PROJECTS:\n",
+                                     "    if not project or project in FORBIDDEN_PROJECTS:\n")],
+                                   "the backfill accepts any project but Daita: another project or a typo (R1, as found)"),
+    "W2_backfill_reads_before_the_guard": ([(BACKFILL, "    project = args.project.strip()\n",
+                                             "    open(args.users_json, encoding=\"utf-8\").read()\n    project = args.project.strip()\n")],
+                                           "the account list is read before the project is checked"),
+    "W3_creator_active_by_default": ([(BACKFILL, "        elif account.get(\"is_active\") is not True:          # fail closed (re-review of PR #70, R2)\n",
+                                       "        elif not account.get(\"is_active\", True):\n")],
+                                     "a creator without is_active is treated as active (R2, as found)"),
+    "W4_granter_active_by_default": ([(BACKFILL, "or granter.get(\"is_active\") is not True:", "or not granter.get(\"is_active\", True):")],
+                                     "a granter without is_active is treated as active (R2, as found)"),
+    "W5_row_written_before_its_id_is_saved": ([(BACKFILL, "            record[\"attempted_assignment_ids\"].append(ref.id)\n            save_backup()             # the id is on disk before the row exists (re-review of PR #70, R3)\n", "")],
+                                              "a row is written before its id is in the backup (R3, as found)"),
+    "W6_backup_name_per_second": ([(BACKFILL, '%Y%m%dT%H%M%S%fZ")\n', '%Y%m%dT%H%M%SZ")\n'),
+                                   (BACKFILL, '_{stamp}_{uuid.uuid4().hex[:8]}.json")', '_{stamp}.json")'),
+                                   (BACKFILL, '        save_backup("x")          # exclusive: never overwrites another run\'s backup\n',
+                                    '        save_backup()\n')],
+                                  "a run in the same second overwrites the previous run's backup (R3, as found)"),
+    "W7_earlier_rows_not_counted": ([(BACKFILL, '    say(f"rows from earlier backfill runs (basis {BASIS}): {earlier}")\n', "")],
+                                    "a resumed run does not show the rows earlier runs left (R3)"),
+    "W8_500_returns_the_exception": ([(EXH, '        message="An unexpected error occurred",\n        details={}\n',
+                                       '        message="An unexpected error occurred",\n        details={"exception_type": type(exc).__name__, "exception_message": str(exc)}\n')],
+                                     "an unexpected error returns its type and message to the client (R5, as found)"),
+    "W9_profile_save_uses_the_remembered_hash": ([(SVC, '            return stored["password_hash"], list(stored.get("password_history") or [stored["password_hash"]])\n        return None, None\n',
+                                                   '            return stored["password_hash"], list(stored.get("password_history") or [stored["password_hash"]])\n'
+                                                   '        known = self._user_passwords.get(user_id)\n        if known:\n'
+                                                   '            return known, list(self._password_history.get(user_id) or [known])\n        return None, None\n')],
+                                                 "a profile save writes back this instance's possibly stale password (R6, as found)"),
 }
 
 
