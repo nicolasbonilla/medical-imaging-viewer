@@ -14,6 +14,13 @@
  */
 import type { LabelInfo } from '@/types/segmentation';
 
+/**
+ * Re-review of PR #71 (R5): the ONE colour of a mask value that its label table does not list — drawn, never
+ * left out, in every view that colours labels (W/L GPU and 3D here; the 2D overlay when it gains such a fallback).
+ * Cyan: no lesion label preset uses it (magenta is the MAGNIMS "Active (Gd+)" colour).
+ */
+export const UNLABELLED_FALLBACK_COLOR = '#00FFFF';
+
 export const MAGNIMS_REGIONS = ['Periventricular', 'Juxtacortical', 'Infratentorial', 'Deep White Matter'] as const;
 export type MagnimsRegion = (typeof MAGNIMS_REGIONS)[number];
 

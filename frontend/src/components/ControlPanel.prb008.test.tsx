@@ -65,7 +65,8 @@ describe('PRB-010 R6 — the cursor readout names the label under the cursor', (
     const { readFileSync } = await import('node:fs');
     const { join } = await import('node:path');
     const src = readFileSync(join(__dirname, 'ImageViewer2D.tsx'), 'utf-8');
-    expect(src).toMatch(/label: labelUnderCursor\(/);
+    expect(src).toMatch(/labelUnderCursor\(segmentationMask\.getSliceMask\(currentSliceIndex\)/);
+    expect(src).toMatch(/setCursorInfo\(\{[^}]*\blabel\b/);
   });
 });
 

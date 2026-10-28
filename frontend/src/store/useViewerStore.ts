@@ -7,6 +7,8 @@ export interface CursorInfo {
   y: number;
   z: number;
   intensity: number | null;
+  /** PRB-010 re-review R6: the segmentation label under the cursor, by name (null: background / no mask shown). */
+  label?: { value: number; name: string | null } | null;
 }
 
 interface ViewerState {

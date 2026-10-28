@@ -25,6 +25,7 @@ import MeasurementOverlay from './MeasurementOverlay';
 import { SegmentationConflictDialog } from './SegmentationConflictDialog';
 import { ViewportSafetyOverlay } from './ViewportSafetyOverlay';
 import { FEATURES } from '@/config/features';
+import { labelUnderCursor } from '@/utils/labelUnderCursor';
 
 interface ImageViewer2DProps {
   viewerControls: ReturnType<typeof import('../hooks/useViewerControls').useViewerControls>;
@@ -72,6 +73,8 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
   const selectedLesion = useSegmentationStore((s) => s.selectedLesion);
   // PRB-004 review M2: the W/L GPU view draws the SAVED mask only; it says so when there are unsaved edits.
   const segmentationStoreDirty = useSegmentationStore((s) => s.isDirty);
+  // PRB-010 re-review R6: the labels the overlay draws, to name the label under the cursor.
+  const overlayLabels = useSegmentationStore((s) => s.activeSegmentation?.labels);
   const zoneMapVisible = useSegmentationStore((s) => s.zoneMapVisible);
   const longitudinalVisible = useSegmentationStore((s) => s.longitudinalVisible);
   const conformalVisible = useSegmentationStore((s) => s.conformalVisible);
@@ -316,13 +319,20 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
       // Canvas may be tainted
     }
 
+    // PRB-010 re-review R6: the label under the cursor, by name (a non-colour cue for the region colours).
+    const dims = segmentationMask.state.dimensions;
+    const label = isOverlayVisible && dims
+      ? labelUnderCursor(segmentationMask.getSliceMask(currentSliceIndex), dims.width, dims.height, imgX, imgY, overlayLabels)
+      : null;
+
     setCursorInfo({
       x: imgX,
       y: imgY,
       z: currentSliceIndex,
       intensity,
+      label: label,
     });
-  }, [currentSeries, currentSliceIndex, setCursorInfo, zoomLevel, panOffset]);
+  }, [currentSeries, currentSliceIndex, setCursorInfo, zoomLevel, panOffset, segmentationMask, isOverlayVisible, overlayLabels]);
 
   const handleCursorLeave = useCallback(() => {
     setCursorInfo(null);

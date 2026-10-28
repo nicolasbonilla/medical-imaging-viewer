@@ -6,25 +6,23 @@
  * label's colour, a label named after a MAGNIMS region the region's colour from the one shared mapping
  * (utils/regionColors.ts), whatever colour was stored with it — as in the 2D overlay.
  *
- * A value present in the mask but missing from its label table is still drawn, in UNLISTED_LABEL_HEX: a voxel the
- * mask marks is never silently left out. Value 0 (background) is transparent.
+ * A value present in the mask but missing from its label table is still drawn, in UNLABELLED_FALLBACK_COLOR (cyan,
+ * the app's one colour for it, utils/regionColors.ts): a voxel the mask marks is never silently left out. Value 0
+ * (background) is transparent.
  *
  * Built as an ordinary niivue colormap (registered with `addColormap`) rather than a label colormap
  * (`colormapLabel`), which the 3D volume rendering does not colour (see registerZoneMapColormap in
  * ImageViewer3D). niivue samples a colormap texture with linear filtering, so each label value owns a wide
  * band of the 256 entries (as the zone-map colormap does) and the display range is 0 .. highest label + 1:
  * value v falls in the middle of its band, and every value above the highest listed label lands in the
- * top band, drawn in UNLISTED_LABEL_HEX.
+ * top band, drawn in UNLABELLED_FALLBACK_COLOR.
  */
 import type { LabelInfo } from '@/types/segmentation';
-import { withRegionColors } from './regionColors';
+import { withRegionColors, UNLABELLED_FALLBACK_COLOR } from './regionColors';
 
 /** Prefix of the names mask colormaps are registered under in niivue (one name per label table: niivue's
  *  colormap registry is shared by every viewer instance). */
 export const MASK_LABEL_COLORMAP = 'mstool_mask_labels';
-
-/** Colour of a label value the mask holds but its label table does not list (cyan: not a label colour in any preset). */
-export const UNLISTED_LABEL_HEX = '#00FFFF';
 
 export interface NiivueColormap { R: number[]; G: number[]; B: number[]; A: number[]; I: number[] }
 
@@ -51,7 +49,7 @@ export function maskLabelColormap(labels: ReadonlyArray<Pick<LabelInfo, 'id' | '
   const top = Math.max(...listed.map((l) => l.id));
   const lastBand = top + 1; // every value above the highest listed label
   const colourOf = (v: number): string | null =>
-    v === 0 ? null : (v <= top ? listed.find((l) => l.id === v)?.color : undefined) ?? UNLISTED_LABEL_HEX;
+    v === 0 ? null : (v <= top ? listed.find((l) => l.id === v)?.color : undefined) ?? UNLABELLED_FALLBACK_COLOR;
 
   const R = new Array<number>(256).fill(0);
   const G = new Array<number>(256).fill(0);

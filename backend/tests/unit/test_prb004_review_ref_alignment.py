@@ -173,7 +173,9 @@ def _uncompressed_header_only(shape):
     with open(p, "rb") as f:
         raw = f.read()
     os.unlink(p)
-    return raw[:int(img.header["vox_offset"]) + 16]
+    vox_offset = int(np.frombuffer(raw[108:112], "<f4")[0])   # as written in the file (352: header + extension flag)
+    assert len(raw) > vox_offset + 16
+    return raw[:vox_offset + 16]
 
 
 def test_rc073_reference_is_read_for_its_header_only(serve):

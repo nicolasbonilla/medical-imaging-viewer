@@ -61,6 +61,7 @@ FRONTEND_TESTS = [
     "src/components/MultiPanelViewer.prb004.review.test.ts",
     "src/components/NiivueViewer2D.prb004.layout.test.tsx",
     "src/components/ControlPanel.prb008.test.tsx",
+    "src/utils/labelUnderCursor.test.ts",
 ]
 
 

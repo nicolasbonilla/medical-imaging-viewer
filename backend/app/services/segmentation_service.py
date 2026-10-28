@@ -958,27 +958,42 @@ class SegmentationService:
         None, and the caller serves the stored file unchanged (the viewers then refuse it with a notice).
         The output carries the reference affine and spatial header, the RC-031 v2 marker (its voxels ARE in the
         image's order now) and the mask's own display range (PRB-006), never the MRI's window.
+        Re-review R2: the reference is read for its HEADER only (shape, affine): only the first bytes of the
+        file are decompressed, its voxels are never loaded. Raises on unreadable input; the route then serves
+        the stored file unchanged.
         """
+        import io
         import tempfile
         import os
+        import zlib
 
-        def _load(raw: bytes):
+        def _load_mask(raw: bytes):
             suffix = '.nii.gz' if raw[:2] == b'\x1f\x8b' else '.nii'
             with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as t:
                 t.write(raw)
                 path = t.name
-            img = nib.load(path)
-            out = (np.asarray(img.dataobj), img.affine.copy(), img.header.copy())
-            del img
-            os.unlink(path)
+            try:
+                img = nib.load(path)
+                out = (np.asarray(img.dataobj), img.affine.copy(), img.header.copy())
+                del img
+            finally:
+                os.unlink(path)
             return out
 
-        seg_data, seg_affine, seg_header = _load(seg_bytes)
-        _ref_data, ref_affine, ref_header = _load(ref_bytes)
+        def _reference_header(raw: bytes):
+            head = (zlib.decompressobj(16 + zlib.MAX_WBITS).decompress(raw, 1024)
+                    if raw[:2] == b'\x1f\x8b' else raw[:1024])
+            size = int.from_bytes(head[:4], 'little') if len(head) >= 4 else 0
+            header_class = nib.Nifti2Header if size == 540 or int.from_bytes(head[:4], 'big') == 540 else nib.Nifti1Header
+            hdr = header_class.from_fileobj(io.BytesIO(head))
+            return tuple(int(d) for d in hdr.get_data_shape()[:3]), hdr.get_best_affine(), hdr
+
+        seg_data, seg_affine, seg_header = _load_mask(seg_bytes)
+        ref_shape, ref_affine, ref_header = _reference_header(ref_bytes)
         if seg_affine.shape != (4, 4) or not np.allclose(seg_affine, ref_affine, atol=tolerance, rtol=0):
             return None
         oriented = cls._seg_native_to_reference_order(seg_data, cls._header_has_v2_marker(seg_header))
-        if tuple(oriented.shape[:3]) != tuple(_ref_data.shape[:3]):
+        if tuple(oriented.shape[:3]) != ref_shape:
             return None
         labels = np.rint(oriented).astype(np.uint8)
         header = ref_header.copy()

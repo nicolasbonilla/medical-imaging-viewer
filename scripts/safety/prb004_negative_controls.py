@@ -103,6 +103,8 @@ T_MPR = "src/components/MultiPanelViewer.prb004.review.test.ts"
 T_NVL = "src/components/NiivueViewer2D.prb004.layout.test.tsx"
 T_CP = "src/components/ControlPanel.prb008.test.tsx"
 CP = "frontend/src/components/ControlPanel.tsx"
+LUC = "frontend/src/utils/labelUnderCursor.ts"
+T_LUC = "src/utils/labelUnderCursor.test.ts"
 BACKEND = ["tests/unit/test_prb006_mask_display_range.py", "tests/unit/test_prb010_region_label_colours.py",
            "tests/unit/test_prb004_review_ref_alignment.py"]
 HARNESS = ["frontend/src/test/niivueHarness.ts", "frontend/src/test/syntheticNifti.ts"]
@@ -178,8 +180,8 @@ M = {  # name: ([(file, anchor, replacement), ...], [bound frontend tests] or No
           "  if (!labelCm) return { colormap: 'red' };\n")], [T_3D],
         "the 3D lesion mask (volume and multiplanar) tints the whole volume red (the defect as found)"),
     "R3_3d_volume_visit1_header_range": (
-        [(I3, "          const tp1 = await loadMask3D(longTp1Buffer, 'visit1', { colormap: 'blue', opacity: 0.5, ...LABEL_MASK_DISPLAY_RANGE });\n",
-          "          const tp1 = await loadMask3D(longTp1Buffer, 'visit1', { colormap: 'blue', opacity: 0.5 });\n")], [T_3D],
+        [(I3, "          const tp1 = await loadMask3D(longTp1Buffer, 'visit1', { colormap: 'blue', opacity: 0.5, ...LABEL_MASK_DISPLAY_RANGE }, nv);\n",
+          "          const tp1 = await loadMask3D(longTp1Buffer, 'visit1', { colormap: 'blue', opacity: 0.5 }, nv);\n")], [T_3D],
         "the earlier-visit mask in 3D coloured with its header range"),
     "R4_3d_multiplanar_visit2_header_range": (
         [(I3, "              colormap: 'red', opacity: i === 0 ? 0.5 : 0.3, ...LABEL_MASK_DISPLAY_RANGE,\n",
@@ -324,7 +326,8 @@ M = {  # name: ([(file, anchor, replacement), ...], [bound frontend tests] or No
           "        oriented = seg_data\n")], None,
         "a pre-RC-031 mask (in-plane transpose) not un-transposed by the aligned route"),
     "V6_aligned_mask_not_served": (
-        [(SEG, "                if aligned is not None:\n                    nifti_data = aligned\n", "")], None,
+        [(SEG, "                        nifti_data, alignment = aligned, \"aligned\"\n",
+          "                        alignment = \"aligned\"\n")], None,
         "the route computes the aligned mask and serves the stored one"),
     "V7_gpu_mask_not_requested_aligned": (
         [(NV, "            const segBuf = await fetchBuffer(`${API_BASE_URL}${segmentationNiftiPath(overlaySegId, fileId)}`);\n",
@@ -342,15 +345,15 @@ M = {  # name: ([(file, anchor, replacement), ...], [bound frontend tests] or No
         [(VG, "  if (!inImageOrder) return { ok: false, reason: 'order' };\n", "")], [T_3DR],
         "the 3D view draws a legacy mask (in-plane transpose) mirrored about the diagonal (the defect as found)"),
     "V11_3d_position_not_checked": (
-        [(VG, "  if (isIdentityAffine(mask.affine)) return { ok: false, reason: 'position' };\n", "")], [T_3DR],
+        [(VG, "  if (isIdentityAffine(mask.affine) && !identityLikeItsImage) return { ok: false, reason: 'position' };\n", "")], [T_3DR],
         "the 3D view draws an identity-fallback mask at an arbitrary place (the defect as found)"),
     "V12_3d_refused_mask_drawn_anyway": (
         [(I3, "  return check.ok ? { vol, problem: null } : { vol: null, problem: check.reason };\n",
           "  return { vol, problem: null };\n")], [T_3DR],
         "the 3D view checks a mask and draws it whatever the check says"),
     "V13_3d_refusal_not_stated": (
-        [(I3, "  const notDrawnList = (Object.entries({ ...masksNotDrawn, ...(lesionUnsaved ? { lesion: 'unsaved' } : {}) }) as Array<[Mask3D, Mask3DProblem]>)\n",
-          "  const notDrawnList = (Object.entries({ ...(lesionUnsaved ? { lesion: 'unsaved' } : {}) }) as Array<[Mask3D, Mask3DProblem]>)\n")],
+        [(I3, "  const notDrawnList = (Object.entries({ ...masksNotDrawn, ...loadFailures, ...(lesionUnsaved ? { lesion: 'unsaved' } : {}) }) as Array<[Mask3D, Mask3DProblem]>)\n",
+          "  const notDrawnList = (Object.entries({ ...loadFailures, ...(lesionUnsaved ? { lesion: 'unsaved' } : {}) }) as Array<[Mask3D, Mask3DProblem]>)\n")],
         [T_3DR], "a mask the 3D view refuses is silently missing"),
     # M2 — unsaved work announced
     "V14_gpu_unsaved_segmentation_silent": (
@@ -366,8 +369,8 @@ M = {  # name: ([(file, anchor, replacement), ...], [bound frontend tests] or No
           "            <NiivueViewer2D />")], [T_NVR],
         "the 2D viewer never tells the GPU view about unsaved edits"),
     "V17_3d_unsaved_segmentation_silent": (
-        [(I3, "  const notDrawnList = (Object.entries({ ...masksNotDrawn, ...(lesionUnsaved ? { lesion: 'unsaved' } : {}) }) as Array<[Mask3D, Mask3DProblem]>)\n",
-          "  const notDrawnList = (Object.entries({ ...masksNotDrawn }) as Array<[Mask3D, Mask3DProblem]>)\n")],
+        [(I3, "  const notDrawnList = (Object.entries({ ...masksNotDrawn, ...loadFailures, ...(lesionUnsaved ? { lesion: 'unsaved' } : {}) }) as Array<[Mask3D, Mask3DProblem]>)\n",
+          "  const notDrawnList = (Object.entries({ ...masksNotDrawn, ...loadFailures }) as Array<[Mask3D, Mask3DProblem]>)\n")],
         [T_3DR], "a segmentation not saved yet silently absent from the 3D view"),
     # M3 — 3D "go to slice"
     "V18_3d_slice_index_over_depth": (
@@ -394,8 +397,8 @@ M = {  # name: ([(file, anchor, replacement), ...], [bound frontend tests] or No
         [(MLC, "  const listed = withRegionColors(\n", "  const listed = (<T,>(x: T) => x)(\n")], [T_NVR, T_3DR],
         "GPU / 3D draw a region label in the colour stored with it (red / green / blue / gold)"),
     "V24_unlisted_label_value_not_drawn": (
-        [(MLC, "    v === 0 ? null : (v <= top ? listed.find((l) => l.id === v)?.color : undefined) ?? UNLISTED_LABEL_HEX;\n",
-          "    v === 0 ? null : (v <= top ? listed.find((l) => l.id === v)?.color ?? null : null);\n")], [T_NVR],
+        [(MLC, "    v === 0 ? null : (v <= top ? listed.find((l) => l.id === v)?.color : undefined) ?? UNLABELLED_FALLBACK_COLOR;\n",
+          "    v === 0 ? null : (v <= top ? listed.find((l) => l.id === v)?.color ?? null : null);\n")], [T_NVR, T_RC],
         "a label value missing from the table silently not drawn in GPU / 3D"),
     "V25_3d_label_colours_with_header_range": (
         [(I3, "  return { colormap: labelCm.name, cal_min: labelCm.cal_min, cal_max: labelCm.cal_max };\n",
@@ -403,8 +406,8 @@ M = {  # name: ([(file, anchor, replacement), ...], [bound frontend tests] or No
         "the 3D label colours read through the mask header's display range: each region in another region's colour"),
     # m2 — later visit
     "V26_3d_later_visit_white": (
-        [(I3, "          const tp2 = await loadMask3D(longTp2Buffer, 'visit2', { colormap: 'red', opacity: 0.5, ...LABEL_MASK_DISPLAY_RANGE });\n",
-          "          const tp2 = await loadMask3D(longTp2Buffer, 'visit2', { colormap: 'hot', opacity: 0.5, ...LABEL_MASK_DISPLAY_RANGE });\n")],
+        [(I3, "          const tp2 = await loadMask3D(longTp2Buffer, 'visit2', { colormap: 'red', opacity: 0.5, ...LABEL_MASK_DISPLAY_RANGE }, nv);\n",
+          "          const tp2 = await loadMask3D(longTp2Buffer, 'visit2', { colormap: 'hot', opacity: 0.5, ...LABEL_MASK_DISPLAY_RANGE }, nv);\n")],
         [T_3DR], "the later visit drawn white in 3D (the defect as found)"),
     # m3 — niivue's own controls
     "V27_gpu_niivue_hotkeys_on": (
@@ -458,6 +461,7 @@ M = {  # name: ([(file, anchor, replacement), ...], [bound frontend tests] or No
         [(CP, "  const navTotal = isMultiPanel ? activeSlice.totalSlices : totalSlices;\n",
           "  const navTotal = totalSlices;\n")], [T_CP],
         "the sidebar gives the single view's slice count for a panel of another size"),
+    # (end of the review set)
     "V36_gpu_grid_notice_sends_to_standard": (
         [(NV, "new Set<MaskNotShown>(['order', 'load', 'unsaved']);", "new Set<MaskNotShown>(['grid', 'position', 'order', 'load', 'unsaved']);")],
         [T_NVR], "the notice for a mask on another grid sends the reader to the Standard view"),
@@ -470,6 +474,64 @@ M = {  # name: ([(file, anchor, replacement), ...], [bound frontend tests] or No
         [(IC, "  const imagesOnly = (list: T[]) => list.filter((i) => !isSegmentationDerivative(i.original_filename ?? ''));\n",
           "  const imagesOnly = (list: T[]) => list;\n")], [T_ICR],
         "a segmentation file shown as a grey image in the grid"),
+    # ── Re-review of PR #71 @ 4626d17 (R1-R7) ──
+    "W1_3d_previous_mask_kept_on_a_new_request": (
+        [(I3, "    // Re-review R1: the previous mask goes as soon as the request changes — never drawn under the new name.\n    setSegBuffer(null);\n",
+          "    // Re-review R1: the previous mask goes as soon as the request changes — never drawn under the new name.\n")],
+        [T_3DR], "after a switch whose download fails, the previous segmentation still drawn in 3D (the defect as found)"),
+    "W2_3d_lesion_download_failure_silent": (
+        [(I3, "        if (!cancelled) markLoad('lesion', true);\n", "")], [T_3DR],
+        "a lesion mask that cannot be downloaded silently missing in 3D (the defect as found)"),
+    "W3_3d_visit_download_failure_silent": (
+        [(I3, "      .catch(err => { console.error('[3D] Long TP2 download failed:', err); if (!cancelled) markLoad('visit2', true); });",
+          "      .catch(err => console.error('[3D] Long TP2 download failed:', err));")], [T_3DR],
+        "a later-visit mask that cannot be downloaded silently missing in 3D"),
+    "W4_3d_load_failure_not_in_the_notice": (
+        [(I3, "  if (maskLoadFailed.lesion) loadFailures.lesion = 'load';\n", "")], [T_3DR],
+        "a recorded download failure left out of the 3D notice"),
+    "W5_3d_unsaved_edits_silent": (
+        [(I3, "  const showUnsavedEdits = unsavedEdits && !!segNiftiUrl && !notDrawnList.some(([mask]) => mask === 'lesion');\n",
+          "  const showUnsavedEdits = false;\n")], [T_3DR],
+        "unsaved edits on a saved segmentation not stated in 3D"),
+    "W6_identity_mask_refused_on_an_identity_image": (
+        [(VG, "  if (isIdentityAffine(mask.affine) && !identityLikeItsImage) return { ok: false, reason: 'position' };\n",
+          "  if (isIdentityAffine(mask.affine)) return { ok: false, reason: 'position' };\n")], [T_3DR],
+        "a mask of an identity-transform image refused in 3D although it aligns"),
+    "W7_identity_mask_accepted_on_any_image": (
+        [(VG, "  const identityLikeItsImage = !!image && isIdentityAffine(image.affine) && mask.dims.every((d, n) => d === image.dims[n]);\n",
+          "  const identityLikeItsImage = true;\n")], [T_3DR],
+        "an identity-fallback mask (no scanner position) drawn on a scanner-placed image"),
+    "W8_3d_niivue_view_and_clip_keys_on": (
+        [(I3, "    viewModeHotKey: '',\n    clipPlaneHotKey: '',\n    cycleClipPlaneHotKey: '',\n", "")], [T_3DR],
+        "niivue's view-type key turns a panel labelled Axial into another view; its clip keys act behind the app"),
+    "W9_3d_notice_on_the_two_line_caveat": (
+        [(I3, "        <div className=\"pointer-events-none absolute bottom-14 left-1/2 z-20 flex",
+          "        <div className=\"pointer-events-none absolute bottom-10 left-1/2 z-20 flex")], [T_NVL],
+        "the 3D notice low enough to cover the laterality caveat when it wraps in a narrow view (the defect as found)"),
+    "W10_alignment_error_becomes_a_500": (
+        [(SEG, "            except Exception as align_error:   # re-review R2: never a 500 for an alignment problem\n",
+          "            except ZeroDivisionError as align_error:   # re-review R2: never a 500 for an alignment problem\n")], None,
+        "an unreadable reference turns the mask request into HTTP 500 (the defect as found)"),
+    "W11_reference_voxels_loaded": (
+        [(SVC, "        ref_shape, ref_affine, ref_header = _reference_header(ref_bytes)\n",
+          "        _ref_voxels, ref_affine, ref_header = _load_mask(ref_bytes)\n        ref_shape = tuple(_ref_voxels.shape[:3])\n")], None,
+        "the whole reference MRI loaded to read its shape (the defect as found)"),
+    "W12_alignment_outcome_not_stated": (
+        [(SEG, "            headers[\"X-Mask-Alignment\"] = alignment\n", "")], None,
+        "the response does not say whether the mask was aligned, served as stored, or the alignment failed"),
+    "W13_unlabelled_colour_magenta": (
+        [(RC, "export const UNLABELLED_FALLBACK_COLOR = '#00FFFF';", "export const UNLABELLED_FALLBACK_COLOR = '#FF00FF';")],
+        [T_RC], "unlabelled values magenta: the MAGNIMS Active (Gd+) colour"),
+    "W14_cursor_label_not_shown": (
+        [(CP, "            {cursorInfo.label && (\n", "            {false && cursorInfo.label && (\n")], [T_CP],
+        "the sidebar does not name the label under the cursor"),
+    "W15_viewer_does_not_report_the_label_under_the_cursor": (
+        [(IV2, "      label: label,\n", "")], [T_CP],
+        "the 2D viewer leaves the label out of the cursor readout"),
+    "W16_label_under_cursor_transposed": (
+        [(LUC, "  const value = slice[y * width + x];\n", "  const value = slice[x * height + y];\n")], [T_LUC],
+        "the label read at the transposed voxel (row and column swapped)"),
+
 }
 
 

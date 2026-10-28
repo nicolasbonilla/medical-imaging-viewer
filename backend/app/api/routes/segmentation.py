@@ -685,6 +685,10 @@ async def get_segmentation_nifti(
     """
     try:
         nifti_data = None
+        # Re-review R2: with ref_file_id the response says what was served — "aligned" (realigned onto the
+        # reference grid), "as-stored" (not on that grid: served unchanged), "failed" (reference unavailable or
+        # alignment error: served unchanged, never a 500). The viewers apply their own grid checks either way.
+        alignment = None
 
         if ref_file_id:
             # Load the EXISTING segmentation NIfTI from GCS (not internal mask)
@@ -695,22 +699,32 @@ async def get_segmentation_nifti(
             # CAPA-009 (RC-036, RC-027): the reference image is a client-supplied storage path.
             # Parse and authorize it; never use the raw client string as a bucket key.
             _ref = await require_imaging_access(ref_file_id, current_user)
-            ref_blob = segmentation_service.gcs_bucket.blob(_ref.object_path)
             nifti_data = existing_bytes
-            if ref_blob.exists():
-                ref_buffer = io.BytesIO()   # PRB-004 review M1: `io` was not imported (NameError, CAPA-006 PA-6.4)
-                ref_blob.download_to_file(ref_buffer)
-                # PRB-004 review M1 (RC-073): realigned onto the reference grid only when the stored mask IS on
-                # that grid (legacy in-plane transpose undone by the RC-031 marker); then served with the RC-031
-                # marker and the mask's own display range. Otherwise served unchanged — never stamped with the
-                # reference affine (that fabricated an alignment for identity-fallback / other-grid masks).
-                aligned = segmentation_service.align_stored_mask_to_reference(existing_bytes, ref_buffer.getvalue())
-                logger.info("Segmentation NIfTI realignment", extra={
+            alignment = "failed"
+            try:
+                ref_blob = segmentation_service.gcs_bucket.blob(_ref.object_path)
+                if ref_blob.exists():
+                    ref_buffer = io.BytesIO()   # PRB-004 review M1: `io` was not imported (NameError, CAPA-006 PA-6.4)
+                    ref_blob.download_to_file(ref_buffer)
+                    # PRB-004 review M1 (RC-073): realigned onto the reference grid only when the stored mask IS on
+                    # that grid (legacy in-plane transpose undone by the RC-031 marker); then served with the RC-031
+                    # marker and the mask's own display range. Otherwise served unchanged — never stamped with the
+                    # reference affine (that fabricated an alignment for identity-fallback / other-grid masks).
+                    aligned = segmentation_service.align_stored_mask_to_reference(existing_bytes, ref_buffer.getvalue())
+                    if aligned is not None:
+                        nifti_data, alignment = aligned, "aligned"
+                    else:
+                        alignment = "as-stored"
+            except Exception as align_error:   # re-review R2: never a 500 for an alignment problem
+                nifti_data, alignment = existing_bytes, "failed"
+                logger.warning("Segmentation NIfTI alignment failed; stored file served unchanged", extra={
                     "segmentation_id": segmentation_id,
-                    "realigned": aligned is not None,
+                    "error": str(align_error),
                 })
-                if aligned is not None:
-                    nifti_data = aligned
+            logger.info("Segmentation NIfTI realignment", extra={
+                "segmentation_id": segmentation_id,
+                "alignment": alignment,
+            })
         else:
             # Get the segmentation NIfTI from GCS (original orientation)
             nifti_data = segmentation_service.get_segmentation_nifti(segmentation_id)
@@ -726,16 +740,15 @@ async def get_segmentation_nifti(
             "size_bytes": len(nifti_data)
         })
 
-        return Response(
-            content=nifti_data,
-            media_type="application/gzip",
-            headers={
-                "Content-Disposition": f'inline; filename="{segmentation_id}_segmentation.nii.gz"',
-                "Content-Length": str(len(nifti_data)),
-                "Cache-Control": "no-cache",  # Segmentation can change, don't cache
-                "Access-Control-Expose-Headers": "Content-Disposition, Content-Length"
-            }
-        )
+        headers = {
+            "Content-Disposition": f'inline; filename="{segmentation_id}_segmentation.nii.gz"',
+            "Content-Length": str(len(nifti_data)),
+            "Cache-Control": "no-cache",  # Segmentation can change, don't cache
+            "Access-Control-Expose-Headers": "Content-Disposition, Content-Length, X-Mask-Alignment"
+        }
+        if alignment is not None:
+            headers["X-Mask-Alignment"] = alignment
+        return Response(content=nifti_data, media_type="application/gzip", headers=headers)
 
     except HTTPException:
         raise

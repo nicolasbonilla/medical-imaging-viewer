@@ -367,6 +367,17 @@ export default function ControlPanel() {
                 </span>
               )}
             </div>
+            {/* PRB-010 re-review R6: the label under the cursor, by name — on the image the region colours are the
+                only other cue, and periventricular / deep white matter are the closest pair as drawn. */}
+            {cursorInfo.label && (
+              <div className="mt-1 text-xs text-gray-500" data-testid="cursor-label">
+                {t('viewer.cursorLabel', 'Label')}:{' '}
+                <span className="font-semibold text-gray-200">
+                  {cursorInfo.label.name
+                    ?? t('viewer.cursorLabelUnlisted', '{{value}} (not in the label table)', { value: cursorInfo.label.value })}
+                </span>
+              </div>
+            )}
             {sliceHistogram && (
               <div className="mt-2">
                 <SliceHistogram histogram={sliceHistogram} cursorIntensity={cursorInfo.intensity} />

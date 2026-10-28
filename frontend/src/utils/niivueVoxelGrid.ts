@@ -130,8 +130,11 @@ function isIdentityAffine(affine: number[][]): boolean {
  * drawn by it, it lands at an arbitrary place). The masks are requested aligned to the image shown
  * (`?ref_file_id=`), so a legacy mask on that image's grid arrives realigned, with the marker.
  */
-export function maskPlaceableIn3D(mask: VoxelGrid, maskDescription: string | undefined): Mask3DCheck {
-  if (isIdentityAffine(mask.affine)) return { ok: false, reason: 'position' };
+export function maskPlaceableIn3D(mask: VoxelGrid, maskDescription: string | undefined, image?: VoxelGrid): Mask3DCheck {
+  // Re-review R4: the identity transform is a real position when the image's own transform is the identity and the
+  // mask has the image's dimensions (both then lie on the same grid); otherwise it is the "no position" fallback.
+  const identityLikeItsImage = !!image && isIdentityAffine(image.affine) && mask.dims.every((d, n) => d === image.dims[n]);
+  if (isIdentityAffine(mask.affine) && !identityLikeItsImage) return { ok: false, reason: 'position' };
   const inImageOrder = (maskDescription ?? '').includes(RC031_V2_MARKER);
   if (!inImageOrder) return { ok: false, reason: 'order' };
   return { ok: true };
