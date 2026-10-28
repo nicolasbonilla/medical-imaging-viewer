@@ -388,8 +388,62 @@ async def change_password(
 
 
 # ============================================================================
+# Account creation policy (PRB-020, REQ-SEC-030/031)
+# ============================================================================
+from pydantic import BaseModel as _BaseModel  # noqa: E402
+from app.security.registration_policy import registration_status  # noqa: E402
+
+
+class RegistrationStatus(_BaseModel):
+    self_registration_enabled: bool
+    account_creation: str
+
+
+@router.get(
+    "/registration",
+    response_model=RegistrationStatus,
+    summary="How accounts are created (public)",
+    description="Public, no authentication: whether self-registration is on (never in production). The sign-in "
+                "page shows its Register tab only when this says true (PRB-020).",
+)
+async def get_registration_status() -> RegistrationStatus:
+    return RegistrationStatus(**registration_status())
+
+
+# ============================================================================
 # Admin Endpoints (Admin Role Required)
 # ============================================================================
+
+@router.post(
+    "/users",
+    response_model=User,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create an account (administrator only)",
+    description="""
+    Create a user account with its role (ISO 27001 A.9.2.1, A.9.2.2). Administrator only (USER_CREATE).
+
+    PRB-020: accounts are created by an administrator; self-registration is off by default and never on
+    in production. The password must meet the policy (REQ-SEC-011) and is stored only as an Argon2id hash.
+    Who created the account is recorded (`created_by`). Duplicates are checked against the persistent user
+    store, not this server's memory (PRB-024).
+    """,
+    responses={
+        201: {"description": "Account created"},
+        400: {"description": "Username or e-mail already exists, or password policy violation"},
+        403: {"description": "Not an administrator"},
+    },
+)
+async def create_user(
+    user_create: UserCreate,
+    current_user: User = Depends(require_permission(Permission.USER_CREATE)),
+) -> User:
+    created = auth_service.register_user(user_create, created_by=current_user.id)
+    logger.info(
+        "Account created by an administrator",
+        extra={"admin_user_id": current_user.id, "target_user_id": created.id, "role": created.role.value},
+    )
+    return created
+
 
 @router.get(
     "/users",
@@ -604,6 +658,8 @@ async def update_user(
 
     except HTTPException:
         raise
+    except ValueError:   # PRB-024: no such account in the store — a 404, not a server error
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User {user_id} not found")
     except Exception as e:
         logger.error(
             f"Update user failed: {str(e)}",
@@ -688,6 +744,8 @@ async def delete_user(
 
     except HTTPException:
         raise
+    except ValueError:   # PRB-024: no such account in the store — a 404, not a server error
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User {user_id} not found")
     except Exception as e:
         logger.error(
             f"Delete user failed: {str(e)}",

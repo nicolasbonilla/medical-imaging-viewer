@@ -144,8 +144,10 @@ class AuthService:
 
         ISO 27001: A.9.2.1 (User registration)
         """
-        # Check if username already exists
-        if any(u.username == user_create.username for u in self._users.values()):
+        # Check if username already exists — in the persistent store too (PRB-024): an account written by
+        # another server instance or by the register route after start-up is not in this process's memory.
+        if (any(u.username == user_create.username for u in self._users.values())
+                or self._storage.username_exists(user_create.username)):
             self._log_audit_event(
                 action="register_user_failed",
                 resource="/auth/register",
@@ -157,8 +159,9 @@ class AuthService:
                 detail="Username already exists"
             )
 
-        # Check if email already exists
-        if any(u.email == user_create.email for u in self._users.values()):
+        # Check if email already exists (memory and persistent store, PRB-024)
+        if (any(u.email == user_create.email for u in self._users.values())
+                or self._storage.email_exists(user_create.email)):
             self._log_audit_event(
                 action="register_user_failed",
                 resource="/auth/register",
@@ -215,17 +218,25 @@ class AuthService:
         self._user_passwords[user_id] = hashed_password
         self._password_history[user_id] = [hashed_password]
 
-        # Save to persistent storage for Cloud Run
+        # Save to persistent storage. PRB-024: the store is the source of truth (the login route and every
+        # other server instance read it); an account that could not be stored does not exist, so a failure
+        # here fails the creation instead of leaving an account only this process knows.
         try:
             self._storage.save_user(user, hashed_password, [hashed_password])
             logger.debug(f"User {user.username} saved to persistent storage")
         except Exception as e:
+            self._users.pop(user_id, None)
+            self._user_passwords.pop(user_id, None)
+            self._password_history.pop(user_id, None)
             logger.error(
                 "Failed to save user to persistent storage",
                 extra={"user_id": user_id, "error": str(e)},
                 exc_info=True
             )
-            # Continue - user is still in memory
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="The account could not be stored; it was not created. Try again later.",
+            )
 
         self._log_audit_event(
             user_id=user_id,
@@ -390,6 +401,7 @@ class AuthService:
                     "failed_attempts": user.failed_login_attempts
                 }
             )
+            self._persist_login_state(user)   # PRB-024: the store is the source of truth
 
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -417,6 +429,7 @@ class AuthService:
         # Successful login - reset failed attempts
         user.failed_login_attempts = 0
         user.last_login = datetime.utcnow()
+        self._persist_login_state(user)   # PRB-024: the store is the source of truth
 
         # Create access token
         token = self.token_manager.create_access_token(
@@ -588,20 +601,62 @@ class AuthService:
                 exc_info=True
             )
 
+    def _persist_login_state(self, user: User) -> None:
+        """Write lockout counters and last-login to the persistent store (PRB-024).
+
+        The administrator routes now read the store; a lockout kept only in this process's memory would be
+        invisible to them and lost on restart (the login ROUTE in authentication.py already persists it).
+        Never writes without the stored password hash: an empty hash would lock the user out."""
+        try:
+            password_hash = self._user_passwords.get(user.id)
+            if not password_hash:
+                password_hash = (self._storage.get_user_password_data(user.id) or {}).get("password_hash")
+            if not password_hash:
+                logger.error("Login state not persisted: no password hash known", extra={"user_id": user.id})
+                return
+            self._storage.save_user(user, password_hash, self._password_history.get(user.id))
+        except Exception as e:
+            logger.error("Failed to persist login state", extra={"user_id": user.id, "error_type": type(e).__name__})
+
+    def _refresh_cached_user(self, user: User) -> None:
+        """Bring this process's copy of one account up to date with the persistent store (PRB-024)."""
+        self._users[user.id] = user
+        pwd = self._storage.get_user_password_data(user.id)
+        if pwd and pwd.get("password_hash"):
+            self._user_passwords[user.id] = pwd["password_hash"]
+            self._password_history[user.id] = list(pwd.get("password_history") or [pwd["password_hash"]])
+
     def list_users(self) -> List[User]:
         """
-        List all registered users.
+        List all registered users — read from the persistent store, the source of truth.
+
+        PRB-024: this returned the in-memory copy loaded once at start-up, so an account created afterwards
+        (by the register route, an administrator on another instance, a restart elsewhere) was invisible to
+        the administrator, and an account deleted elsewhere was still listed. The caches follow the store.
 
         Returns:
             List of all users
 
         ISO 27001: A.9.2.5 (Review of user access rights)
         """
-        return list(self._users.values())
+        users = self._storage.list_all_users()
+        current = {u.id for u in users}
+        for stale in [uid for uid in self._users if uid not in current]:
+            self._users.pop(stale, None)
+            self._user_passwords.pop(stale, None)
+            self._password_history.pop(stale, None)
+        for user in users:
+            self._refresh_cached_user(user)
+        return users
 
     def get_user_by_id(self, user_id: str) -> Optional[User]:
-        """Get a user by ID."""
-        return self._users.get(user_id)
+        """Get a user by ID from the persistent store (PRB-024); None when the store has no such account."""
+        user = self._storage.get_user_by_id(user_id)
+        if user is None:
+            self._users.pop(user_id, None)
+            return None
+        self._refresh_cached_user(user)
+        return user
 
     def update_user(
         self,
@@ -609,8 +664,8 @@ class AuthService:
         user_update,
         updated_by: Optional[str] = None,
     ) -> User:
-        """Update a user's profile fields."""
-        user = self._users.get(user_id)
+        """Update a user's profile fields (the account is read from the persistent store, PRB-024)."""
+        user = self.get_user_by_id(user_id)
         if not user:
             raise ValueError(f"User {user_id} not found")
 
@@ -635,8 +690,8 @@ class AuthService:
         return user
 
     def delete_user(self, user_id: str, deleted_by: Optional[str] = None) -> None:
-        """Delete a user account."""
-        user = self._users.get(user_id)
+        """Delete a user account (the account is read from the persistent store, PRB-024)."""
+        user = self.get_user_by_id(user_id)
         if not user:
             raise ValueError(f"User {user_id} not found")
 

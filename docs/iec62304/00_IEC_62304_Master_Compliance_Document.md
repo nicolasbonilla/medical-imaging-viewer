@@ -1236,7 +1236,7 @@ MSTool-AI's AI components are classified as **high-risk AI** under EU AI Act 202
 |---------|---------------|--------|
 | TLS encryption (transit) | Cloud Run enforced HTTPS | COMPLIANT |
 | AES-256-GCM (at rest) | User data encryption service | COMPLIANT |
-| Authentication | Firebase Auth + JWT + WebAuthn | COMPLIANT |
+| Authentication | Password (Argon2id) + JWT; optional WebAuthn passkeys; no second factor enforced; accounts created by an administrator, self-registration off (PRB-020, PRB-022). *Corrected 2026-10-28 (PRB-022): the row said "Firebase Auth + JWT + WebAuthn" — Firebase Auth is not used for sign-in* | RE-ASSESSMENT PENDING (owner) |
 | Authorization (RBAC) | 4 roles, 15 permissions | COMPLIANT |
 | Input validation | Pydantic schemas on all endpoints | COMPLIANT |
 | Rate limiting | Token bucket algorithm | COMPLIANT |

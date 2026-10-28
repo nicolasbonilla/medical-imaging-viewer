@@ -179,12 +179,16 @@ async def delete_study(
     """
     Delete or cancel a study.
 
-    If hard_delete is False, the study is marked as cancelled.
-    If hard_delete is True, all files are deleted from storage.
+    If hard_delete is False, the study is marked as cancelled: it is kept as a record but no longer listed or
+    counted (PRB-025). If hard_delete is True, all files are deleted from storage.
 
-    Requires STUDY_DELETE permission (ADMIN only for hard_delete).
+    hard_delete is administrator-only (PRB-025): this docstring said so, but the route did not check it, so
+    any user with access to the patient could erase a study's images permanently.
     """
-    await study_service.delete_study(study_id, hard_delete=hard_delete)
+    from app.security.models import UserRole
+    if hard_delete and current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Permanent deletion of a study is restricted to administrators")
+    await study_service.delete_study(study_id, deleted_by=current_user.id, hard_delete=hard_delete)
     return {"message": "Study deleted successfully"}
 
 

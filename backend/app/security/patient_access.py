@@ -95,6 +95,7 @@ def decide_patient_access(
     patient_id: Optional[str],
     patient_created_by: Optional[str],
     assignments: Sequence[CareTeamAssignment],
+    patient_assignments: Optional[Sequence[CareTeamAssignment]] = None,
 ) -> AccessResult:
     """Decide whether a user may access a patient record.
 
@@ -135,8 +136,18 @@ def decide_patient_access(
     # Unattributed legacy record: no provenance AND no assignment. Reported
     # separately so an operator can tell "this predates provenance capture and
     # needs triage" from "you are simply not on this care team".
-    if patient_created_by is None and not assignments:
-        return AccessResult(AccessDecision.DENIED_QUARANTINED)
+    #
+    # PRB-023: "no assignment" is a fact about the RECORD (REQ-SEC-018), so it is
+    # decided on `patient_assignments` (every assignment row of this patient) when
+    # the caller supplies them. It was decided on the CALLER's assignments: a user
+    # with none was told "quarantined" for any patient — including a record with
+    # provenance whose created_by was simply not read — and a user with an
+    # assignment elsewhere was told "not assigned" for a true quarantined record.
+    # Only the recorded reason changes; every path here is a denial.
+    if patient_created_by is None:
+        record_unassigned = (not patient_assignments) if patient_assignments is not None else not assignments
+        if record_unassigned:
+            return AccessResult(AccessDecision.DENIED_QUARANTINED)
 
     return AccessResult(AccessDecision.DENIED_NOT_ASSIGNED)
 

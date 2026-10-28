@@ -25,7 +25,6 @@
   <img src="https://img.shields.io/badge/Python-3.11-3776AB?logo=python" alt="Python">
   <img src="https://img.shields.io/badge/NiiVue-0.67-blueviolet" alt="NiiVue">
   <img src="https://img.shields.io/badge/Cloud_Run-deployed-4285F4?logo=googlecloud" alt="Cloud Run">
-  <img src="https://img.shields.io/badge/HIPAA-compliant-green" alt="HIPAA">
   <img src="https://img.shields.io/badge/WebAuthn-passkeys-orange" alt="WebAuthn">
   <img src="https://img.shields.io/badge/DICOMweb-PACS-red" alt="DICOMweb">
   <img src="https://img.shields.io/badge/HL7_FHIR-R4-dc3545" alt="FHIR">
@@ -498,7 +497,7 @@ mstool-ai/
 │       ├── main.py                              # FastAPI app, lifespan, CORS
 │       ├── api/routes/
 │       │   ├── auth.py                          # Auth endpoints + WebAuthn (1200 lines)
-│       │   ├── authentication.py                # Login/register with CAPTCHA
+│       │   ├── authentication.py                # Login with CAPTCHA; register only if SELF_REGISTRATION_ENABLED (never in production)
 │       │   ├── segmentation.py                  # CRUD + analysis + comparison (2100 lines)
 │       │   ├── imaging.py                       # NIfTI serving, slice extraction
 │       │   ├── ai_segmentation.py               # Vertex AI + volumetry
@@ -611,7 +610,7 @@ The security architecture satisfies **IEC 81001-5-1:2021** (mandatory for CE Mar
 
 | Layer | Mechanism | IEC 81001-5-1 | ISO 27001 |
 |-------|-----------|:-------------:|:---------:|
-| Authentication | Firebase Auth + JWT + WebAuthn/Passkeys (FIDO2) | 5.3.2 | A.8.5 |
+| Authentication | Password (Argon2id) + JWT; optional WebAuthn passkeys; no second factor enforced; accounts created by an administrator, self-registration off (PRB-020, PRB-022) | 5.3.2 | A.8.5 |
 | Access Control | RBAC with 4 roles, 15 permissions | 5.3.3 | A.5.2, A.8.3 |
 | Encryption at Rest | AES-256-GCM (user data), GCS server-side encryption | 5.3.5 | A.8.24 |
 | Encryption in Transit | TLS 1.3 enforced (Cloud Run + Firebase) | 5.3.5 | A.8.24 |

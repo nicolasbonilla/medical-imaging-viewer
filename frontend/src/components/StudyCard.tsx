@@ -61,7 +61,11 @@ export const StudyCard: React.FC<StudyCardProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
 
-  const segmentationInfo = undefined as { count: number; has_approved: boolean; has_in_progress: boolean } | undefined;
+  // PRB-025: the number of saved segmentations the server counted for this study (zone maps excluded). It was
+  // a constant `undefined` rendered as 0 on every card. Not reported → a dash, never a 0 nobody counted.
+  const segmentationCount = (study as StudySummary).segmentation_count;
+  const segmentationCountText =
+    typeof segmentationCount === 'number' && Number.isFinite(segmentationCount) ? String(segmentationCount) : '—';
 
   const mod = modalityColors[study.modality] || modalityColors.OT;
   const stat = statusColors[study.status] || statusColors.registered;
@@ -230,7 +234,7 @@ export const StudyCard: React.FC<StudyCardProps> = ({
           <div style={{ fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
             Segm.
           </div>
-          <div style={{ fontSize: 17, fontWeight: 700, color: '#E7EBF2' }}>{segmentationInfo?.count ?? 0}</div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: '#E7EBF2' }}>{segmentationCountText}</div>
         </div>
       </div>
 
