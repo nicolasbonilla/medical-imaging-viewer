@@ -1,0 +1,79 @@
+{
+  "executed": "2026-10-28T23:46:27",
+  "code_under_test": "21b0df8933c31b34b1fa394670f365d62710ff08 (application code unchanged; only the new test files present)",
+  "purpose": "failing-first evidence for the film-capture finding 'DWM: 1 lesions' (plural with a count of one in the sidebar's region summary and, through the findings prompt, in the report text): a count of exactly one is singular in en/es/de, any other count plural, and the report tripwire keeps both forms among the device's own words",
+  "environment": "offline per PRB-002 (missing credentials file, empty gcloud configuration, mstool-offline-tests, no model-provider key)",
+  "backend": {
+    "files": [
+      "tests/unit/test_release_2026_10_25_plural_counts.py"
+    ],
+    "failed": 1,
+    "total": 6,
+    "cases": {
+      "test_release_plural_a_count_of_one_is_singular_in_the_findings_prompt": {
+        "status": "failed",
+        "reason": "AssertionError: assert '    - Deep White Matter: 1 lesion, ' in 'Generate the report in English.\\n\\nLesion analysis:\\n  Total lesions: 1\\n  Total burden: 36.00 mm³ (0.0360 mL)\\n  Reg... Radiologist decisions on these candidates are recorded in the application and are not part of this draft: state no"
+      },
+      "test_release_plural_any_other_count_is_plural_in_the_findings_prompt[0]": {
+        "status": "passed",
+        "reason": null
+      },
+      "test_release_plural_any_other_count_is_plural_in_the_findings_prompt[2]": {
+        "status": "passed",
+        "reason": null
+      },
+      "test_release_plural_any_other_count_is_plural_in_the_findings_prompt[17]": {
+        "status": "passed",
+        "reason": null
+      },
+      "test_release_plural_both_forms_stay_in_the_devices_own_words[1]": {
+        "status": "passed",
+        "reason": null
+      },
+      "test_release_plural_both_forms_stay_in_the_devices_own_words[2]": {
+        "status": "passed",
+        "reason": null
+      }
+    }
+  },
+  "frontend": {
+    "files": [
+      "src/components/LesionDashboard.release20261028d.test.tsx"
+    ],
+    "failed": 6,
+    "total": 6,
+    "files_failing_to_load": {},
+    "cases": {
+      "rc070 release plural en, count 1": {
+        "file": "src/components/LesionDashboard.release20261028d.test.tsx",
+        "status": "failed",
+        "reason": "Error: Unable to find an element with the text: DWM: 1 lesion (not a DIS region). This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b["
+      },
+      "rc070 release plural en, count 2": {
+        "file": "src/components/LesionDashboard.release20261028d.test.tsx",
+        "status": "failed",
+        "reason": "Error: Unable to find an element with the text: 2 lesions · 0.07 mL. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<d"
+      },
+      "rc070 release plural es, count 1": {
+        "file": "src/components/LesionDashboard.release20261028d.test.tsx",
+        "status": "failed",
+        "reason": "Error: Unable to find an element with the text: DWM: 1 lesión (no es una región de la DIS). This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.\n\nIgnored nodes: comments, script, style\n\u001b[3"
+      },
+      "rc070 release plural es, count 2": {
+        "file": "src/components/LesionDashboard.release20261028d.test.tsx",
+        "status": "failed",
+        "reason": "Error: Unable to find an element with the text: DWM: 2 lesiones (no es una región de la DIS). This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.\n\nIgnored nodes: comments, script, style\n\u001b"
+      },
+      "rc070 release plural de, count 1": {
+        "file": "src/components/LesionDashboard.release20261028d.test.tsx",
+        "status": "failed",
+        "reason": "Error: Unable to find an element with the text: DWM: 1 Läsion (keine DIS-Region). This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b["
+      },
+      "rc070 release plural de, count 2": {
+        "file": "src/components/LesionDashboard.release20261028d.test.tsx",
+        "status": "failed",
+        "reason": "Error: Unable to find an element with the text: DWM: 2 Läsionen (keine DIS-Region). This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>"
+      }
+    }
+  }
+}
