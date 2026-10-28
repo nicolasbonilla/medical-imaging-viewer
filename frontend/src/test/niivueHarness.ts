@@ -35,10 +35,13 @@ export const harness = {
   loadFromUrlCalls: [] as Array<Record<string, unknown>>,
   /** Colormaps registered with Niivue.addColormap (name → definition), e.g. the MAGNIMS zone map's. */
   colormaps: {} as Record<string, unknown>,
+  /** Keys that reached niivue's own canvas key handlers (attached as niivue attaches them). */
+  keysSeenByNiivue: [] as string[],
   reset() {
     harness.instances.length = 0;
     harness.loadFromUrlCalls.length = 0;
     for (const k of Object.keys(harness.colormaps)) delete harness.colormaps[k];
+    harness.keysSeenByNiivue.length = 0;
   },
 };
 
@@ -72,7 +75,12 @@ export function harnessModule(actual: NiivueModule): NiivueModule {
       this.opts = { ...opts };
       harness.instances.push(this);
     }
-    async attachToCanvas() { return this; }
+    /** As niivue 0.67 attachToCanvas: its keyboard handlers listen on the canvas itself. */
+    async attachToCanvas(canvas?: HTMLCanvasElement) {
+      canvas?.addEventListener('keydown', (e) => { harness.keysSeenByNiivue.push(`down:${e.code}`); });
+      canvas?.addEventListener('keyup', (e) => { harness.keysSeenByNiivue.push(`up:${e.code}`); });
+      return this;
+    }
     /** As niivue 0.67 Niivue.loadVolumes → addVolumesFromUrl → addVolumeFromUrl. */
     async loadVolumes(list: Array<Record<string, unknown>>) {
       this.loadVolumesCalls.push(list.map((x) => ({ ...x })));
@@ -91,7 +99,11 @@ export function harnessModule(actual: NiivueModule): NiivueModule {
     drawScene() {}
     cleanup() {}
     setRenderAzimuthElevation() {}
-    mm2frac(mm: number[]) { return [...mm]; }
+    /** niivue's own mm → texture fraction of the first volume (as Niivue.mm2frac). */
+    mm2frac(mm: number[]) {
+      const v = this.volumes[0];
+      return v?.convertMM2Frac ? Array.from(v.convertMM2Frac(mm) as number[]) : [...mm];
+    }
     setClipPlane() {}
     broadcastTo() {}
     async addMeshFromUrl(m: unknown) { this.meshes.push(m); }
@@ -131,7 +143,8 @@ export function installBrowserNetwork(origin: string, routes: Record<string, Arr
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     requests.push(url);
     if (blobs.has(url)) return new Response(await bytesOf(blobs.get(url)!));
-    const key = Object.keys(routes).find((k) => url.endsWith(k));
+    const path = url.split('?')[0];
+    const key = Object.keys(routes).find((k) => url.endsWith(k)) ?? Object.keys(routes).find((k) => path.endsWith(k));
     if (key === undefined) return new Response('not found', { status: 404 });
     const v = routes[key];
     if (typeof v === 'number') return new Response('x', { status: v });

@@ -12,6 +12,13 @@
  * What is checked is what reaches the canvas (the pixels the overlay writes, through a recording 2D
  * context — jsdom has none), the colormap handed to niivue for the 3D zone map, and the legend dots the
  * zone-map panel renders.
+ *
+ * Review of PR #71 (m1): the colour-blind check was made on the opaque colours, but the overlay draws a
+ * region at 36 % (label opacity 0.6 x the default lesion opacity 0.6) over grey tissue. Measured that way
+ * the first mapping (deep white matter reddish purple #CC79A7) kept infratentorial and deep white matter only
+ * dE76 5.3 apart for a deutan reader — less than the old red / green / blue / gold (7.9 worst, protan).
+ * Deep white matter is now vermillion #D55E00 (Okabe-Ito): worst pair 9.1 (tritan) as drawn, 14.3 for
+ * normal vision. The check is now made on the colours as they appear on mid and bright grey.
  */
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 import { render, waitFor, screen } from '@testing-library/react';
@@ -28,13 +35,16 @@ import { useViewerStore } from '@/store/useViewerStore';
 import { harness, installBrowserNetwork } from '@/test/niivueHarness';
 import { syntheticNifti, LAS_AFFINE } from '@/test/syntheticNifti';
 
-// The legend's mapping (LesionDashboard REGION_COLORS on main @ 70cc5c7).
+// The ONE mapping (utils/regionColors.ts): the legend's Okabe-Ito colours on main @ 70cc5c7, deep white
+// matter vermillion instead of reddish purple (review m1, see above).
 const LEGEND: Record<string, string> = {
   Periventricular: '#E69F00',
   Juxtacortical: '#56B4E9',
   Infratentorial: '#009E73',
-  'Deep White Matter': '#CC79A7',
+  'Deep White Matter': '#D55E00',
 };
+// useSegmentationStore's default lesion opacity (the slider's starting value).
+const DEFAULT_LESION_OPACITY = 0.6;
 const REGION_BY_LABEL = ['Periventricular', 'Juxtacortical', 'Infratentorial', 'Deep White Matter'];
 const rgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
 
@@ -105,13 +115,20 @@ function drawOverlay(showLabels: boolean) {
   );
 }
 
-/** The colour the overlay wrote for each of the four voxels (label / zone 1..4). */
-async function drawnColours(): Promise<string[]> {
+/** The RGBA the overlay wrote for each of the four voxels (label / zone 1..4). */
+async function drawnRgba(): Promise<number[][]> {
   await waitFor(() => expect(written.some((d) => d[3] > 0)).toBe(true));
   const drawnLayers = written.filter((x) => x[3] > 0);
   const d = drawnLayers[drawnLayers.length - 1];
-  return [0, 1, 2, 3].map((v) => `#${[d[v * 4], d[v * 4 + 1], d[v * 4 + 2]].map((c) => c.toString(16).padStart(2, '0')).join('').toUpperCase()}`);
+  return [0, 1, 2, 3].map((v) => [d[v * 4], d[v * 4 + 1], d[v * 4 + 2], d[v * 4 + 3]]);
 }
+const toHex = (c: number[]) => `#${c.slice(0, 3).map((x) => x.toString(16).padStart(2, '0')).join('').toUpperCase()}`;
+/** The colour the overlay wrote for each of the four voxels (label / zone 1..4). */
+async function drawnColours(): Promise<string[]> {
+  return (await drawnRgba()).map(toHex);
+}
+/** A drawn pixel as it appears over grey tissue of level `grey` (the browser's 8-bit source-over). */
+const over = (c: number[], grey: number) => c.slice(0, 3).map((v) => Math.round((v * c[3] + grey * (255 - c[3])) / 255));
 
 function setClassifiedSegmentation() {
   const s = useSegmentationStore.getState();
@@ -135,6 +152,8 @@ function lab(rgbLin: number[]) {
 // Machado, Oliveira & Fernandes 2009, severity 1.0 (on linear RGB)
 const DEUTAN = [[0.367322, 0.860646, -0.227968], [0.280085, 0.672501, 0.047413], [-0.011820, 0.042940, 0.968881]];
 const PROTAN = [[0.152286, 1.052583, -0.204868], [0.114503, 0.786281, 0.099216], [-0.003882, -0.048116, 1.051998]];
+const TRITAN = [[1.255528, -0.076749, -0.178779], [-0.078411, 0.930809, 0.147602], [0.004733, 0.691367, 0.303900]];
+const NORMAL = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
 function seenAs(hex: string, m: number[][]) { const l = rgb(hex).map(lin); return lab(m.map((row) => row[0] * l[0] + row[1] * l[1] + row[2] * l[2])); }
 const dE = (a: number[], b: number[]) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 function hue(hex: string) {
@@ -167,14 +186,24 @@ describe('PRB-010 — region colours on the image are the legend colours', () =>
     expect(await drawnColours()).toEqual(REGION_BY_LABEL.map((r) => LEGEND[r]));
   });
 
-  it('rc076 no two regions drawn on the image are red against green, and every pair stays apart for deutan and protan readers', async () => {
+  it('rc076 no two regions drawn on the image are red against green, and every pair stays apart for colour-blind readers, opaque and as drawn on grey tissue', async () => {
     setClassifiedSegmentation();
+    useSegmentationStore.setState({ lesionOpacity: DEFAULT_LESION_OPACITY });
     drawOverlay(true);
-    const drawn = await drawnColours();
+    const drawn = await drawnRgba();
+    const hexes = drawn.map(toHex);
+    expect(drawn.every((c) => c[3] > 0 && c[3] < 255)).toBe(true);   // translucent, as on screen
     for (let a = 0; a < 4; a++) {
       for (let b = a + 1; b < 4; b++) {
-        expect(isRed(drawn[a]) && isGreen(drawn[b]) || isGreen(drawn[a]) && isRed(drawn[b])).toBe(false);
-        for (const m of [DEUTAN, PROTAN]) expect(dE(seenAs(drawn[a], m), seenAs(drawn[b], m))).toBeGreaterThan(15);
+        const pair = `${hexes[a]} / ${hexes[b]}`;
+        expect(isRed(hexes[a]) && isGreen(hexes[b]) || isGreen(hexes[a]) && isRed(hexes[b]), pair).toBe(false);
+        // the colours themselves (legend dots, opaque)
+        for (const m of [DEUTAN, PROTAN, TRITAN]) expect(dE(seenAs(hexes[a], m), seenAs(hexes[b], m)), pair).toBeGreaterThan(15);
+        // as they appear on the image: the drawn alpha over mid and bright grey
+        for (const grey of [128, 220]) {
+          const ca = toHex(over(drawn[a], grey)), cb = toHex(over(drawn[b], grey));
+          for (const m of [NORMAL, DEUTAN, PROTAN, TRITAN]) expect(dE(seenAs(ca, m), seenAs(cb, m)), `${pair} on grey ${grey}`).toBeGreaterThan(9);
+        }
       }
     }
   });

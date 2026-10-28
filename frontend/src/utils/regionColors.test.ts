@@ -18,9 +18,9 @@ describe('PRB-010 — one MAGNIMS region colour mapping', () => {
       Periventricular: '#E69F00',
       Juxtacortical: '#56B4E9',
       Infratentorial: '#009E73',
-      'Deep White Matter': '#CC79A7',
+      'Deep White Matter': '#D55E00',   // vermillion (review m1: reddish purple sat 5.3 from bluish green, deutan, as drawn)
     });
-    expect([1, 2, 3, 4].map((v) => regionHex(v))).toEqual(['#E69F00', '#56B4E9', '#009E73', '#CC79A7']);
+    expect([1, 2, 3, 4].map((v) => regionHex(v))).toEqual(['#E69F00', '#56B4E9', '#009E73', '#D55E00']);
   });
 
   it('rc076 each legend dot class carries exactly the mapping colour', () => {
