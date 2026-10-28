@@ -542,6 +542,12 @@ REPORT_TEMPLATES: Dict[str, str] = {
 }
 
 
+def _lesions(count: Any) -> str:
+    """'1 lesion', '2 lesions' (release 2026-10-25, film capture: the prompt said "Deep White Matter: 1 lesions" and
+    the model copied it into the report). Text only; any value other than exactly one keeps the plural."""
+    return f"{count} lesion" if count == 1 and not isinstance(count, bool) else f"{count} lesions"
+
+
 class BrainReportService:
     """
     Generates structured brain MRI reports using Claude API.
@@ -665,7 +671,7 @@ class BrainReportService:
             if regions:
                 parts.append("  Regional summary:")
                 for name, info in regions.items():
-                    parts.append(f"    - {name}: {info.get('lesion_count', 0)} lesions, "
+                    parts.append(f"    - {name}: {_lesions(info.get('lesion_count', 0))}, "
                                  f"{info.get('total_volume_mm3', 0):.2f} mm³ "
                                  f"({info.get('total_volume_ml', 0):.4f} mL)")
             size_dist = la.get("size_distribution", {})
@@ -678,7 +684,7 @@ class BrainReportService:
             # Per-lesion detail table (critical for comprehensive reports)
             lesions = la.get("lesions", [])
             if lesions:
-                parts.append(f"\n  Individual lesion data ({len(lesions)} lesions):")
+                parts.append(f"\n  Individual lesion data ({_lesions(len(lesions))}):")
                 if regions_confirmed:
                     parts.append("  # | Region | Volume_mm3 | Volume_mL | Size | Centroid(z,y,x)")
                     parts.append("  --|--------|-----------|----------|------|----------------")
@@ -744,9 +750,9 @@ class BrainReportService:
                 )
             else:
                 parts.append(f"  TP1 burden: {lng.get('burden_tp1_ml') or 0:.3f} mL "
-                             f"({lng.get('total_lesions_tp1') or 0} lesions)")
+                             f"({_lesions(lng.get('total_lesions_tp1') or 0)})")
                 parts.append(f"  TP2 burden: {lng.get('burden_tp2_ml') or 0:.3f} mL "
-                             f"({lng.get('total_lesions_tp2') or 0} lesions)")
+                             f"({_lesions(lng.get('total_lesions_tp2') or 0)})")
                 if lng.get("burden_delta_percent") is not None:
                     parts.append(f"  Burden delta: {percent_text(lng.get('burden_delta_percent'))}")
                 sc = lng.get("status_counts") or {}
@@ -978,6 +984,16 @@ def _synthetic_payloads():
     for longitudinal in ({"burden_tp1_ml": 1.0, "burden_tp2_ml": 1.0, "total_lesions_tp1": 1, "total_lesions_tp2": 1,
                           "burden_delta_percent": 1.0, "status_counts": {"new": 1}}, {"abstained": True}):
         yield {**base, "longitudinal": longitudinal}, volumetry
+    # release 2026-10-25, film capture ("1 lesions"): a count of one is singular, any other plural - both forms of
+    # every counted noun, with and without the region column, are the device's own words and word pairs
+    for confirmed in (True, False):
+        for count in (1, 2):
+            yield {**base, "lesion_analysis": {**base["lesion_analysis"], "regions_confirmed": confirmed,
+                                               "regions": {n: {**r, "lesion_count": count} for n, r in regions.items()},
+                                               "lesions": lesions if count == 1 else lesions[:1]},
+                   "longitudinal": {"burden_tp1_ml": 1.0, "burden_tp2_ml": 1.0, "total_lesions_tp1": count,
+                                    "total_lesions_tp2": count},
+                   **({} if confirmed else {"dis_assessment": {"evaluation_status": "not_evaluated"}})}, volumetry
     yield {**base, "patient_sex": "F", "patient_age": "90 or older"}, volumetry
     # regions not confirmed (release 2026-10-25, item 1): the fixed line and the table without a region column
     yield {**base, "lesion_analysis": {**base["lesion_analysis"], "regions_confirmed": False},

@@ -103,6 +103,15 @@ function fill(text: string, values: Record<string, unknown>): string {
   return text.replace(/{{\s*(\w+)\s*}}/g, (m, k) => (k in values ? String(values[k]) : m));
 }
 
+/**
+ * Release 2026-10-25 (film capture, "DWM: 1 lesions"): a lesion count in the user's language — the `…One` text for
+ * exactly one (the CLDR "one" category of en, es and de), the `…Other` text for any other count.
+ */
+function countText(t: TFunction, key: string, n: number, one: string, other: string): string {
+  const [suffix, text] = n === 1 ? ['One', one] : ['Other', other];
+  return fill(t(`${key}${suffix}`, { defaultValue: text, n }), { n });
+}
+
 /** Release 2026-10-25 (review of PR #69, B1/M3): why a confirmation is refused while lesions are not drawn. */
 function undrawnText(t: TFunction, problems: UndrawnReason[] | null): string[] {
   if (problems === null) {
@@ -660,7 +669,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
               {t('lesions.lesionTable', 'Lesion Table')}
             </span>
             <span className="text-[10px] text-gray-400 font-mono">
-              {analysis.total_count} {t('lesions.totalCount', 'lesions')} &middot; {analysis.total_burden_ml.toFixed(2)} mL
+              {countText(t, 'lesions.count', analysis.total_count, '{{n}} lesion', '{{n}} lesions')} &middot; {analysis.total_burden_ml.toFixed(2)} mL
             </span>
           </div>
           <div className="max-h-72 overflow-y-auto">
@@ -1158,7 +1167,8 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
         <div className="flex flex-wrap gap-2">
           {disOk.dwm_lesion_count > 0 && (
             <span className="px-1.5 py-0.5 bg-yellow-900/40 border border-yellow-700/50 rounded text-[9px] text-yellow-300">
-              DWM: {disOk.dwm_lesion_count} lesions (not a DIS region)
+              {countText(t, 'lesions.dwmCount', disOk.dwm_lesion_count,
+                'DWM: {{n}} lesion (not a DIS region)', 'DWM: {{n}} lesions (not a DIS region)')}
             </span>
           )}
           {disOk.has_active_lesions && (
