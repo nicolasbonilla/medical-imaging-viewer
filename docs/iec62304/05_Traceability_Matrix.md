@@ -16,6 +16,7 @@
 | 1.7 (draft) | 2026-10-21 | Development Team | CP-SLICE-THICKNESS-001 (reliability by slice thickness, flag OFF): REQ-FUNC-098/099, REQ-SAFE-034/035/036 → RC-054..RC-058 → UT-RC054, UT-STC-LOGIC, UI-STC-CARD, UT-STC-FLAG (addendum below; test rows added). Versions 1.4, 1.5 and 1.6 are reserved by open PRs #52, #51 and #53. Amended 2026-10-23 after the independent review of PR #59: RC-054 row and UT-RC054 (spacing without thickness); RC-056/RC-057 rows, UT-STC-LOGIC and UI-STC-CARD (evidence asset v2, pre-registered bands only) | N. G. Bonilla Vargas — approved 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63) |
 | 1.8 (draft) | 2026-10-22 | Development Team | RMF-OBS-001 and PRB-001: REQ-FUNC-053 row annotated with the known nonconformity of the MSMask and LST-AI zones paths (PRB-001 → RC-059, proposed); REQ-FUNC-054 row annotated (RMF-OBS-001); REQ-SAFE-037 (proposed) → RC-060, RC-061, RC-062 (proposed); RC-059..RC-062 NOT IMPLEMENTED, no test (addendum below). Version 1.7 is reserved by open PR #59 | N. G. Bonilla Vargas — approved 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63) |
 | 1.9 (draft) | 2026-10-22 | Development Team | CAPA-013: REQ-SAFE-037 → RC-060/RC-061/RC-062 implemented on branch → UT-CAPA013, UI-CAPA013 (addendum below supersedes the three REQ-SAFE-037 rows of the 1.8 addendum; test rows added; REQ-FUNC-054 row annotated). Versions 1.4 to 1.8 are held by open PRs #52, #51, #53, #59 and #62 | N. G. Bonilla Vargas — approved 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63) |
+| 1.15 (draft) | 2026-10-28 | Development Team | PRB-020..PRB-026: REQ-SEC-030..034, REQ-FUNC-110/111, REQ-UI-010/011, REQ-REG-010/011 → RC-080..RC-088 → UT-PRB020, UT-PRB021, UI-PRB020, UI-PRB025, UI-PRB026 (section added below). Versions 1.10–1.13 are held by open PRs and release PR #69; 1.14 is left for the concurrent display-findings work | *PENDING owner approval* |
 
 ---
 
@@ -215,6 +216,20 @@ each carries a recorded negative-control result. "Verified?" here means
 | REQ-SEC-015 | Enumeration defence (404 not 403) | RC-026/027/028/029 | HAZ-010 | identical-404 in every guard | assertions in each test above | TEST-BOUND |
 | REQ-SEC-017 | Provenance capture (created_by) | RC-025 | HAZ-010 | `patients.py` create route | `test_rc025_patient_authorization.py` | TEST-BOUND (neg. control 1) |
 | REQ-SEC-018 | Quarantine of unattributable records | RC-026 | HAZ-010 | `patient_access.py` (DENIED_QUARANTINED) | `test_rc026_patient_access.py` | TEST-BOUND |
+
+**Added 2026-10-28 (PRB-020..PRB-026 — DRAFT, PENDING owner approval).** Tests written before the fix fail on `main` @ `70cc5c7` (`records/risk_verification/PRB-020_tests_on_base_2026-10-28.json`); negative controls `records/risk_verification/PRB-020_negative_controls_2026-10-28.json`.
+
+| Req ID | Requirement | Risk Control | HAZ ID | Implementation | Test | Verified? |
+|--------|-------------|-------------|--------|----------------|------|-----------|
+| REQ-SEC-030, REQ-REG-010 | Self-registration off by default, never in production; 404 while off | RC-080 | HAZ-010 | `registration_policy.py`, `authentication.py`, `config.py` | `test_prb020_self_registration_and_accounts.py` (`test_rc080_*`), `LoginPage.prb020.test.tsx` (`rc080`) | TEST-BOUND on branch |
+| REQ-SEC-031 | Administrator-created accounts; sign-in page offers registration only when the server says so | RC-080, RC-081 | HAZ-010 | `auth.py` (`/registration`, `POST /users`), `registrationPolicy.ts`, `LoginPage.tsx` | `test_rc081_*`, `rc080` | TEST-BOUND on branch |
+| REQ-SEC-032 | Patient list and search limited to the care team | RC-082 | HAZ-010 | `patients.py`, `patient_service_firestore.py` | `test_prb021_patient_scope_creator_counts.py` (`test_rc082_*`) | TEST-BOUND on branch |
+| REQ-SEC-033 | Creator on the care team at creation; true denial reason | RC-083 | HAZ-010 | `patients.py`, `patient_schemas.py`, `patient_access.py`, `patient_access_dependency.py` | `test_rc083_*` | TEST-BOUND on branch |
+| REQ-SEC-034 | Account management reads the persistent user store | RC-084 | HAZ-010 | `security/auth.py`, `routes/auth.py` | `test_rc084_*`, `TestAccountLockout` | TEST-BOUND on branch |
+| REQ-FUNC-110 | Deleted studies/documents not listed or counted; segmentation count; permanent deletion administrator-only | RC-085 | HAZ-009, HAZ-010 | `study_service_firestore.py`, `patient_service_firestore.py`, `studies.py`, `StudyCard.tsx`, `PatientCard.tsx` | `test_rc085_*`, `StudyCard.prb025.test.tsx` (`rc085`) | TEST-BOUND on branch |
+| REQ-REG-011 | No unverified security or compliance claim | RC-086 | — | `LoginPage.tsx`, locale files, documents | `LoginPage.prb020.test.tsx` (`rc086`); documents by inspection | TEST-BOUND on branch (page, translations) |
+| REQ-UI-010, REQ-UI-011 | Interface text from translation files; one initials rule | RC-087 | HAZ-009, HAZ-001 | `patientDisplay.ts`, `PatientCard.tsx`, `PatientBanner.tsx`, `SegmentationRow.tsx`, `NiivueViewer2D.tsx`, `ImageViewer2D.tsx`, `ViewerControls.tsx`, `ConformalPanel.tsx`, locale files | `patientInitials.prb026.test.tsx`, `i18nStrings.prb026.test.tsx` (`rc087`), `test_rc087_*` | TEST-BOUND on branch |
+| REQ-FUNC-111 | Segmentation creator recorded and shown | RC-088 | HAZ-010 | `segmentation_service.py`, `schemas.py`, `segmentationAuthor.ts`, `useSegmentationData.ts`, `SegmentationPanel.tsx`, `SegmentationList.tsx` | `test_rc088_*`, `useSegmentationData.prb026.test.tsx` (`rc088`) | TEST-BOUND on branch |
 
 The full binding is machine-checked in
 [`rc_test_manifest.json`](records/risk_verification/rc_test_manifest.json), enforced

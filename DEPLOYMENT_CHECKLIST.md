@@ -45,3 +45,16 @@ curl -s -D - -o /dev/null \
 | CORS blocked in browser | `CORS_ORIGINS` uses `;` instead of `,` | Re-set with comma separator |
 | Login works via curl but not browser | CORS + different URL aliases | Add ALL Cloud Run URLs to CORS_ORIGINS |
 | 500 on all endpoints | Missing required env var | Check the 9-var list above |
+
+## Accounts (PRB-020, PRB-024 — DRAFT, PENDING owner approval)
+
+- **Do not set `SELF_REGISTRATION_ENABLED`** on Cloud Run. Self-registration is off by default; with
+  `ENVIRONMENT=production` the setting is ignored anyway (a warning is logged). Turning it on for any production use
+  needs a code change, a code review and the owner's regulatory decision (EU MDR "making available").
+- Check after deploy: `curl -s https://<backend>/api/v1/auth/registration` must answer
+  `{"self_registration_enabled":false,"account_creation":"administrator"}`, and the sign-in page must show no
+  Register tab.
+- Accounts are created by an administrator: `POST /api/v1/auth/users` with an administrator token
+  (`username`, `email`, `full_name`, `password`, `role`). The first password is handed over through a separate channel.
+- Before the first deployment of this change: review every existing account (`GET /api/v1/auth/users`) and deactivate
+  self-registered or unknown accounts (PRB-020 §7).
