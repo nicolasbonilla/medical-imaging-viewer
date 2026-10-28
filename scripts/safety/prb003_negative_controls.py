@@ -197,7 +197,9 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                         '"in space; no statement on it in this draft comes from the software.",')],
                                       "the notice claims no DIS statement comes from the software (review finding 4)"),
     # ── RC-070 on the assistant path (MCP) ──
-    "A1_assistant_receives_unevaluated_conclusion": ([(MCPS, '    if isinstance(dis, dict) and dis.get("evaluation_status") == "evaluated":\n',
+    # Release 2026-10-25 (second review of PR #69, m4): the assistant's check also requires a yes/no conclusion; the
+    # anchor moved to that line, the mutation is unchanged.
+    "A1_assistant_receives_unevaluated_conclusion": ([(MCPS, '    if isinstance(dis, dict) and dis.get("evaluation_status") == "evaluated" and isinstance(dis.get("dis_met"), bool):\n',
                                                        '    if isinstance(dis, dict):\n')],
                                                      "the assistant receives a DIS conclusion that was not evaluated (older backend)"),
     "A2_assistant_rule_removed": ([(MCPS, MCP_RULE, '')],

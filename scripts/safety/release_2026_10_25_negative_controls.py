@@ -19,6 +19,13 @@ Added after the browser capture session of the release build (2026-10-28):
   I15/I17/I18 F09 — the components the classification removed are counted and named before the confirmation;
   I19/I20     F10 — the pending state after confirming;
   I21         F04 — a dash, not the escape text, in the per-region rows.
+Added after the second independent review of PR #69 (2026-10-28):
+  I22-I25 B1 — list caches refreshed, open from the server, fallback colour and warning for unlabelled values;
+  I26-I30 B1/M3 — the confirmation refuses undrawn lesions (guard, eye toggle, overlay, opacity, stored opacity);
+  I31-I35 M1/M2 — the removal belongs to the segmentation and survives a second classification;
+  I36-I41 m1, m2, m4 (viewer, assistant), m5, n1.
+  The canvas's own call of the fallback colours (SegmentationCanvasLocal) is not reachable from a jsdom test (no
+  2D canvas); its helper is (I24), and the capture session checks the drawing.
 
 Method (as the other scripts): one mutation at a time in the real source; every anchor asserted to occur exactly
 once (on the LF text, so a Windows CRLF checkout works); only the bound tests are run — backend offline (PRB-002: a
@@ -65,6 +72,17 @@ STORE = "frontend/src/store/useSegmentationStore.ts"
 REGIONS = "backend/app/api/routes/segmentation_regions.py"
 CAPTURE_UI = "frontend/src/components/LesionDashboard.release20261028.test.tsx"
 CAPTURE_API = "tests/unit/test_release_2026_10_25_capture_fixes.py"
+# second independent review of PR #69 (2026-10-28)
+VIEWER = "frontend/src/ViewerApp.tsx"
+DRAWN = "frontend/src/utils/drawnLabels.ts"
+TYPES = "frontend/src/types/lesion.ts"
+MCPS = "backend/app/mcp/ms_clinical_server.py"
+UI_B = "frontend/src/components/LesionDashboard.release20261028b.test.tsx"
+UI_C = "frontend/src/components/LesionDashboard.release20261028c.test.tsx"
+UI_VIEWER = "frontend/src/ViewerApp.release20261028.test.tsx"
+UI_STORE = "frontend/src/store/useSegmentationStore.release20261028.test.ts"
+UI_DRAWN = "frontend/src/utils/drawnLabels.test.ts"
+API_R2 = "tests/unit/test_release_2026_10_25_review2_fixes.py"
 
 ASSEMBLED = '        result = {**result, **parts, "content": draft_text(parts, request.language)}\n'
 SCRUB = '            content, replaced = gate.scrub_unevaluated_dis(result["content"], request.language)\n'
@@ -150,8 +168,8 @@ M = {
         [PANEL_TEST],
         "the report panel shows 'no measurements' for an unreadable image geometry (review item 6)"),
     "I12_geometry_422_without_its_phrase": (
-        [(AIR, '            detail=(f"{GEOMETRY_UNREADABLE_PHRASE}: the lesion measurements of segmentation {segmentation_id} could "\n',
-          '            detail=(f"The lesion measurements of segmentation {segmentation_id} could "\n')],
+        [(AIR, '                detail=(f"{GEOMETRY_UNREADABLE_PHRASE}: the lesion measurements of segmentation {segmentation_id} "\n',
+          '                detail=(f"The lesion measurements of segmentation {segmentation_id} "\n')],
         [R6_TEST],
         "the server's geometry 422 no longer starts with the phrase the panel recognises"),
     # ── browser capture session of the release build (2026-10-28): F08, F09, F10, F04 ──
@@ -195,6 +213,77 @@ M = {
           "                    {region.lesion_count} \\u2014 {region.total_volume_ml.toFixed(2)} mL\n")],
         [CAPTURE_UI],
         "F04: a literal escape text in the per-region rows"),
+    # ── second independent review of PR #69: B1, M3, M1, M2, m1, m2, m4, m5, n1 ──
+    "I22_list_caches_kept_after_classification": (
+        [(DASH, "      void queryClient?.invalidateQueries({ queryKey: ['segmentations'] });\n", "")],
+        [UI_B], "B1: the sidebar list fetched before the classification is used again on the next open"),
+    "I23_open_from_the_cached_list": (
+        [(VIEWER, "      fullSeg = await segmentationAPI.getSegmentation(segmentation.id);\n",
+          "      fullSeg = segmentationsData?.find((s) => s.segmentation_id === segmentation.id);\n")],
+        [UI_VIEWER], "B1: a segmentation is (re)opened with the labels of the stale sidebar list"),
+    "I24_no_fallback_colour_for_unlabelled_values": (
+        [(DRAWN, "  for (let id = 1; id <= 255; id++) if (!named.has(id)) out.push(id);\n", "")],
+        [UI_DRAWN], "B1: a mask value without a label is left transparent"),
+    "I25_no_warning_for_unlabelled_values": (
+        [(VIEWER, "          {unlabelled.length > 0 && (\n", "          {false && (\n")],
+        [UI_VIEWER], "B1: a mask value without a label is not announced"),
+    "I26_confirmation_without_the_drawn_check": (
+        [(DASH, "    if (maskReloadFailed || undrawn === null || undrawn.length > 0) {\n", "    if (false) {\n")],
+        [UI_B], "B1/M3: a mask with undrawn lesions is confirmed"),
+    "I27_hidden_label_not_checked": (
+        [(DRAWN, "    } else if (input.labelVisibility[value] === false) {\n", "    } else if (false) {\n")],
+        [UI_B], "M3: a label switched off with its eye toggle does not stop the confirmation"),
+    "I28_overlay_switch_not_checked": (
+        [(DRAWN, "  if (!input.isOverlayVisible) out.push({ kind: 'overlay_off' });\n", "")],
+        [UI_B], "M3: the overlay switched off does not stop the confirmation"),
+    "I29_low_opacity_not_checked": (
+        [(DRAWN, "  if (!(input.lesionOpacity >= MIN_VISIBLE_LESION_OPACITY)) out.push({ kind: 'opacity_low', opacity: input.lesionOpacity });\n", "")],
+        [UI_B], "M3: an invisible lesion opacity does not stop the confirmation"),
+    "I30_invisible_opacity_restored_next_session": (
+        [(STORE, "          return { ...current, ...stored, lesionOpacity: visible ? opacity : current.lesionOpacity };\n",
+          "          return { ...current, ...stored };\n")],
+        [UI_STORE], "M3: a stored opacity of 0 hides every lesion in the next session"),
+    "I31_dis_state_without_the_removal": (
+        [(GATE, '        "removed_small_components": (record.get("removed_small_components")\n',
+          '        "removed_small_components": (None\n')],
+        [API_R2 + "::test_rc070_release2_m1_the_dis_state_carries_the_removal_for_these_lesions_only"],
+        "M1: the server's DIS state does not carry the removal of this segmentation"),
+    "I32_dis_card_takes_the_open_segmentations_classification": (
+        [(DASH, "  const confirmRemovedVals = removedValsOf(pendingRegions?.removed_small_components);\n",
+          "  const confirmRemovedVals = removedValsOf(classification?.removed_small_components);\n")],
+        [UI_C], "M1: the DIS card and the dialog show the removal of whichever classification was read"),
+    "I33_reads_another_segmentations_analysis": (
+        [(DASH, "    const cached = currentSegmentation?.segmentation_id === segmentationId\n", "    const cached = true\n")],
+        [UI_C], "M1: a dashboard reads the open segmentation's analysis data, whichever it shows"),
+    "I34_writes_into_another_segmentation": (
+        [(DASH, "    if (!cur || cur.segmentation_id !== segmentationId) return;\n", "    if (!cur) return;\n")],
+        [UI_C], "M1: a dashboard writes its results into the open segmentation of another"),
+    "I35_second_classification_overwrites_the_removal": (
+        [(REGIONS, '            if (isinstance(previous, dict) and previous_classification.get("classified_lesion_footprint_sha256")\n',
+          '            if (False and previous_classification.get("classified_lesion_footprint_sha256")\n')],
+        [API_R2 + "::test_rc070_release2_m2_a_second_classification_carries_the_earlier_removal_forward"],
+        "M2: a second classification records 0 removed and erases the disclosure"),
+    "I36_reload_failure_silent": (
+        [(DASH, "        if (reloaded === false) {\n", "        if (false) {\n")],
+        [UI_C], "m1: a failed reload after the classification is silent and does not block the confirmation"),
+    "I37_classify_allowed_anywhere": (
+        [(DASH, "          disabled={isClassifying || !(isOpen && !hasUnsavedMaskChanges)}\n", "          disabled={isClassifying}\n")],
+        [UI_C], "m2: classifying a segmentation that is not open, or with unsaved changes, is offered"),
+    "I38_viewer_evaluated_without_conclusion": (
+        [(TYPES, "    && typeof (d as { dis_met?: unknown }).dis_met === 'boolean';\n", "    ;\n")],
+        [UI_C], "m4: the viewer shows an evaluated block without a yes/no conclusion as a result"),
+    "I39_assistant_evaluated_without_conclusion": (
+        [(MCPS, '    if isinstance(dis, dict) and dis.get("evaluation_status") == "evaluated" and isinstance(dis.get("dis_met"), bool):\n',
+          '    if isinstance(dis, dict) and dis.get("evaluation_status") == "evaluated":\n')],
+        [API_R2 + "::test_rc070_release2_m4_the_assistant_needs_a_yes_no_conclusion_too"],
+        "m4: the assistant passes an evaluated block without a yes/no conclusion"),
+    "I40_recorded_but_unread_shows_not_confirmed": (
+        [(DASH, "        setConfirmedUnread(true);\n", "")],
+        [UI_C], "m5: 'No radiologist has confirmed' and the confirm button next to a recorded confirmation"),
+    "I41_every_lesion_table_failure_called_geometry": (
+        [(AIR, "        if isinstance(e, VoxelSpacingUnavailableError):\n", "        if True:\n")],
+        [API_R2 + "::test_rc070_release2_n1_a_lesion_table_failure_names_its_real_reason"],
+        "n1: every lesion-table failure is reported as an unreadable image geometry"),
 }
 # Recorded with the result (integration review of PR #69, item 5: kept, and stated as by design).
 NOTES = {
