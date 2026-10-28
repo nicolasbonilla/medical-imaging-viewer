@@ -1,13 +1,14 @@
 {
-  "executed": "2026-10-28T23:37:57",
+  "executed": "2026-10-28T23:45:47",
   "base": "39f9d44 (PR #71 as independently reviewed)",
   "method": "in a throwaway detached worktree of the commit under test (review m8): source files that differ from the base commit restored to it, files it did not have removed (tests and frontend/src/test helpers kept); the PRB-004..010 test files (and the review tests) run unchanged; worktree removed",
-  "tests_from_commit": "6060d2ecd032255c8590ae9cb49242d872079719",
+  "tests_from_commit": "2d4fdeba60908b6d8bd74b3a7ee0041bd770f3a3",
   "swapped": {
     "restored_to_base": [
       "backend/app/api/routes/segmentation.py",
       "backend/app/api/routes/segmentation_regions.py",
       "backend/app/services/segmentation_service.py",
+      "frontend/src/components/ControlPanel.tsx",
       "frontend/src/components/ImageViewer2D.tsx",
       "frontend/src/components/ImageViewer3D.tsx",
       "frontend/src/components/MultiPanelViewer.tsx",
@@ -39,11 +40,12 @@
     "frontend/src/components/SegmentationCanvasLocal.prb010.test.tsx": "850f9cd7067a434fa07b036803f0e4403ad62ca4099f7a3e16a1e8f0f9fc358b",
     "frontend/src/utils/regionColors.test.ts": "622978845a9c09cfafd490ba9d1d19a9c98681612d9491dc1b017c75e5bdd152",
     "frontend/src/components/NiivueViewer2D.prb004.review.test.tsx": "ec20a7fa7b1f848afc22c625b9d8f345e11f6cfc50ea0773713a8056c1a47a95",
-    "frontend/src/components/ImageViewer3D.prb004.review.test.tsx": "51afd450fe97b2c05ea05d1bdbeefdc89fded4c283bf98b52593013ac7ce925c",
+    "frontend/src/components/ImageViewer3D.prb004.review.test.tsx": "f961b8c847f71796dce0b825f91b2f2bb10adde234bb050a6fcd431174d14f19",
     "frontend/src/utils/sliceOnOpen.review.test.ts": "f5d1d8e3f24c65daf84de736fd699ed1b007091ecceea2d04fa8fb63595b6cfc",
     "frontend/src/utils/instanceClassification.prb007.review.test.ts": "4fec246073ddbbc6e4953fe5569667a391142a8d9110cb1156c519466dedadb5",
     "frontend/src/components/MultiPanelViewer.prb004.review.test.ts": "c9a47537945893fa6373dde55961441f98654ed0876e080b6e282a619ed0a690",
-    "frontend/src/components/NiivueViewer2D.prb004.layout.test.tsx": "aec93bf6d380fd94945b19160e909e54c13338803aad241310153317dc7f1113"
+    "frontend/src/components/NiivueViewer2D.prb004.layout.test.tsx": "aec93bf6d380fd94945b19160e909e54c13338803aad241310153317dc7f1113",
+    "frontend/src/components/ControlPanel.prb008.test.tsx": "2b0995528253200a24b2d358edff56ef34eeb445b921e79e83f3fd9de1eb0f88"
   },
   "backend": {
     "passed": 9,
@@ -124,22 +126,21 @@
         "rc075 opening the viewer requests no screening model and shows no Quick Screen button"
       ]
     },
-    "frontend/src/config/features.quickScreen.test.ts": {
-      "passed": 5,
-      "failed": 0,
+    "frontend/src/components/ControlPanel.prb008.test.tsx": {
+      "passed": 1,
+      "failed": 2,
       "file_error": "",
-      "not_passing": {},
+      "not_passing": {
+        "prb008 2x2: the sidebar shows the active panel slice and its slice count": "AssertionError: expected '4 / 40' to be '12 / 24' // Object.is equality",
+        "prb008 2x2: moving the sidebar slider moves the panels, not a hidden single-view index": "AssertionError: expected 19 to be 25 // Object.is equality"
+      },
       "passing": [
-        "rc075 is OFF when the variable is not set",
-        "rc075 is OFF for any value other than true/1",
-        "rc075 turns ON only with true or 1",
-        "rc075 the viewer mounts the badge only behind the flag, in one place",
-        "rc075 the production environment file does not switch it on"
+        "prb008 single view: the sidebar shows the viewer slice (guard)"
       ]
     },
     "frontend/src/components/ImageViewer3D.prb004.review.test.tsx": {
       "passed": 0,
-      "failed": 10,
+      "failed": 12,
       "file_error": "",
       "not_passing": {
         "rc073 M1: the lesion mask and both visit masks are requested aligned to the image (ref_file_id)": "AssertionError: expected false to be true // Object.is equality",
@@ -150,6 +151,8 @@
         "rc073 M2: a segmentation not saved yet is not shown in 3D, and the view says so": "Error: Unable to find an element by: [data-testid=\"niivue-3d-mask-not-shown\"]",
         "rc073 M3: \"go to slice\" reaches storage slice k on its own axis (axial LAS)": "AssertionError: expected 0.5 to be close to 0.09999984502792358, received difference is 0.4000001549720764, but expected 5e-7",
         "rc073 M3: \"go to slice\" reaches storage slice k on its own axis (sagittally stored)": "AssertionError: expected 0.5 to be close to 0.09999999403953552, received difference is 0.4000000059604645, but expected 5e-7",
+        "rc023 3D volume: niivue draws no colour bar under the laterality caveat": "AssertionError: expected true to be false // Object.is equality",
+        "rc023 3D multiplanar: niivue draws no colour bar under the laterality caveat": "AssertionError: expected true to be false // Object.is equality",
         "rc074 m2: the later-visit mask is drawn in a saturated colour, not white": "AssertionError: expected [ 255, 255, 255 ] to not deeply equal [ 255, 255, 255 ]",
         "rc076 m6: 3D colours a region-classified mask with the shared region mapping": "AssertionError: expected [ 'unregistered colormap red', …(3) ] to deeply equal [ '#E69F00', '#56B4E9', …(2) ]"
       },
@@ -250,6 +253,19 @@
       },
       "passing": []
     },
+    "frontend/src/config/features.quickScreen.test.ts": {
+      "passed": 5,
+      "failed": 0,
+      "file_error": "",
+      "not_passing": {},
+      "passing": [
+        "rc075 is OFF when the variable is not set",
+        "rc075 is OFF for any value other than true/1",
+        "rc075 turns ON only with true or 1",
+        "rc075 the viewer mounts the badge only behind the flag, in one place",
+        "rc075 the production environment file does not switch it on"
+      ]
+    },
     "frontend/src/utils/instanceClassification.prb007.review.test.ts": {
       "passed": 0,
       "failed": 1,
@@ -332,5 +348,5 @@
       ]
     }
   },
-  "note": "Review of PR #71: every review test (*.review.test.*, NiivueViewer2D.prb004.layout.test.tsx, test_prb004_review_ref_alignment.py) except the guard 'same grid: the slice is kept' fails on 39f9d44. The earlier PRB-004..010 tests pass there except the PRB-010 colour tests, whose expected mapping the review changed (deep white matter vermillion; the colour-blind check made on the colours as drawn)."
+  "note": "Review of PR #71 and two film-capture findings: every new test (*.review.test.*, NiivueViewer2D.prb004.layout.test.tsx, ControlPanel.prb008.test.tsx, test_prb004_review_ref_alignment.py) fails on 39f9d44 except two guards ('same grid: the slice is kept', 'single view: the sidebar shows the viewer slice'). The earlier PRB-004..010 tests pass there except the PRB-010 colour tests, whose expected mapping the review changed (deep white matter vermillion; the colour-blind check made on the colours as drawn)."
 }
