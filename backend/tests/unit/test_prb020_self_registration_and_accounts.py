@@ -184,6 +184,21 @@ def test_rc084_prb024_account_the_store_did_not_take_is_not_created(store, monke
     assert "phantom" not in [u.username for u in auth_routes.auth_service._users.values()]
 
 
+def test_rc084_prb024_failed_sign_in_is_stored_and_the_password_kept(store):
+    from fastapi import HTTPException
+    from app.security.models import LoginRequest, UserCreate
+    svc = auth_routes.auth_service
+    user = svc.register_user(UserCreate(username="lock_me", email="lock.me@clinic.example.org", full_name="Lock Me",
+                                        password=PASSWORD, role=UserRole.VIEWER))
+    stored_hash = store.passwords[user.id]["password_hash"]
+    with pytest.raises(HTTPException):
+        svc.login(LoginRequest(username="lock_me", password="Wr0ng!Password789"))
+    assert store.get_user_by_id(user.id).failed_login_attempts == 1      # visible to every instance
+    assert store.passwords[user.id]["password_hash"] == stored_hash       # never overwritten
+    svc.login(LoginRequest(username="lock_me", password=PASSWORD))
+    assert store.get_user_by_id(user.id).failed_login_attempts == 0
+
+
 def test_rc084_prb024_account_deleted_elsewhere_is_no_longer_listed(store):
     gone = make_user("gone_user", UserRole.VIEWER)
     store.save_user(gone, "argon2-hash")
