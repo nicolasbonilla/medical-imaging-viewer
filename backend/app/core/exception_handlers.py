@@ -87,13 +87,17 @@ async def validation_exception_handler(
             }
         }
     """
-    # Log validation error
+    # Review of PR #70 (PRB-020): a password refused by a model validator (e.g. POST /auth/users with a weak
+    # password) made this handler fail — the error's `ctx` holds the ValueError object, which is not JSON — so the
+    # client got a 500 instead of the reason; and each error's `input` (the password as typed) was written to the
+    # log. Errors are now reduced to location, message and type; `ctx` values become text; `input` is never kept.
+    errors = _safe_validation_errors(exc.errors())
     logger.warning(
         "Request validation failed",
         extra={
             "path": request.url.path,
             "method": request.method,
-            "errors": exc.errors()
+            "errors": errors
         }
     )
 
@@ -104,11 +108,22 @@ async def validation_exception_handler(
                 "code": "VALIDATION_ERROR",
                 "message": "Invalid request parameters",
                 "details": {
-                    "errors": exc.errors()
+                    "errors": errors
                 }
             }
         }
     )
+
+
+def _safe_validation_errors(errors) -> list:
+    """Validation errors without the submitted values (`input`) and with `ctx` values as text."""
+    safe = []
+    for e in errors or []:
+        item = {"loc": list(e.get("loc", ())), "msg": str(e.get("msg", "")), "type": str(e.get("type", ""))}
+        if isinstance(e.get("ctx"), dict):
+            item["ctx"] = {str(k): str(v) for k, v in e["ctx"].items()}
+        safe.append(item)
+    return safe
 
 
 async def http_exception_handler(

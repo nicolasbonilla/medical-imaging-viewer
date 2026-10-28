@@ -48,6 +48,9 @@ export default function PatientsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  // PRB-021 (review of PR #70, M3): a non-administrator sees only the patients of their care team, so an empty list
+  // means "none assigned to you", not "no patients registered".
+  const isAdmin = String(user?.role ?? '').toLowerCase() === 'admin';
   const { theme } = useTheme();
 
   // UI State
@@ -200,7 +203,7 @@ export default function PatientsPage() {
       <main id="main-content" className="relative z-0 flex-1 overflow-auto" style={{ padding: '16px 24px' }} tabIndex={-1}>
         <div className="max-w-7xl mx-auto" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Cohort overview — clinical command-center KPIs (real aggregates) */}
-          <PatientsOverview patients={patients as never} total={total} />
+          <PatientsOverview patients={patients as never} total={total} scope={isAdmin ? 'registry' : 'assigned'} />
 
           {/* Toolbar — inline, same pattern as StudyList/DocumentList */}
           <motion.div
@@ -433,14 +436,20 @@ export default function PatientsPage() {
               <h3 style={{ fontSize: 14, fontWeight: 600, color: '#E7EBF2', margin: '0 0 4px 0' }}>
                 {filters.search
                   ? t('patients.noResults')
-                  : t('patients.noPatients')}
+                  : isAdmin
+                    ? t('patients.noPatients')
+                    : t('patients.noAssignedPatients', 'No patients are assigned to you yet')}
               </h3>
               <p style={{ fontSize: 12, color: '#96A0B0', margin: '0 0 16px 0' }}>
                 {filters.search
                   ? t('patients.tryDifferentSearch', 'Try a different search')
-                  : t('patients.createFirstDescription', 'Start by registering your first patient')}
+                  : isAdmin
+                    ? t('patients.createFirstDescription', 'Start by registering your first patient')
+                    : t('patients.noAssignedPatientsDescription', "An administrator can add you to a patient's care team.")}
               </p>
-              {!filters.search && (
+              {/* No "create first patient" invitation for a non-administrator: the patient probably exists already and
+                  a second record would split its scans (HAZ-009). The header's New Patient button stays. */}
+              {!filters.search && isAdmin && (
                 <button
                   onClick={handleCreatePatient}
                   className="inline-flex items-center bg-brand-950 border border-brand-500/30 text-white hover:bg-brand-500/10 transition-colors"

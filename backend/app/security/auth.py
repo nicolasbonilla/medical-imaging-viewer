@@ -238,14 +238,26 @@ class AuthService:
                 detail="The account could not be stored; it was not created. Try again later.",
             )
 
+        # Review of PR #70, m1: an account created by an administrator (POST /auth/users) is recorded with the
+        # administrator as actor and the real route; the new account is the target. Creating an administrator account
+        # is recorded a second time as a privileged event.
         self._log_audit_event(
-            user_id=user_id,
-            username=user.username,
+            user_id=created_by or user_id,
+            username=None if created_by else user.username,
             action="register_user",
-            resource="/auth/register",
+            resource="/auth/users" if created_by else "/auth/register",
             result="success",
-            details={"role": user.role.value}
+            details={"role": user.role.value, "target_user_id": user_id, "target_username": user.username,
+                     "created_by": created_by},
         )
+        if created_by and user.role == UserRole.ADMIN:
+            self._log_audit_event(
+                user_id=created_by,
+                action="privileged_account_created",
+                resource="/auth/users",
+                result="success",
+                details={"target_user_id": user_id, "role": user.role.value},
+            )
 
         logger.info(
             "User registered",
@@ -601,6 +613,32 @@ class AuthService:
                 exc_info=True
             )
 
+    def _stored_password(self, user_id: str):
+        """(hash, history) for a profile save — the persistent store first (another instance may have changed the
+        password), this process's copy only when the store has none; (None, None) when no hash is known."""
+        try:
+            stored = self._storage.get_user_password_data(user_id)
+        except Exception:
+            stored = None
+        if stored and stored.get("password_hash"):
+            return stored["password_hash"], list(stored.get("password_history") or [stored["password_hash"]])
+        known = self._user_passwords.get(user_id)
+        if known:
+            return known, list(self._password_history.get(user_id) or [known])
+        return None, None
+
+    def save_profile_keeping_password(self, user: User) -> bool:
+        """Write a profile change (role, flags, last login, lockout) to the persistent store without touching the
+        password: the stored hash and history are written back unchanged. Returns False — and writes nothing — when
+        no password hash is known, because an empty hash would lock the user out (review of PR #70, m2: the
+        administrator PATCH and the passkey sign-in wrote '' and always erased the history)."""
+        password_hash, history = self._stored_password(user.id)
+        if not password_hash:
+            logger.error("Profile not saved: the password hash could not be read", extra={"user_id": user.id})
+            return False
+        self._storage.save_user(user, password_hash, history)
+        return True
+
     def _persist_login_state(self, user: User) -> None:
         """Write lockout counters and last-login to the persistent store (PRB-024).
 
@@ -608,13 +646,7 @@ class AuthService:
         invisible to them and lost on restart (the login ROUTE in authentication.py already persists it).
         Never writes without the stored password hash: an empty hash would lock the user out."""
         try:
-            password_hash = self._user_passwords.get(user.id)
-            if not password_hash:
-                password_hash = (self._storage.get_user_password_data(user.id) or {}).get("password_hash")
-            if not password_hash:
-                logger.error("Login state not persisted: no password hash known", extra={"user_id": user.id})
-                return
-            self._storage.save_user(user, password_hash, self._password_history.get(user.id))
+            self.save_profile_keeping_password(user)
         except Exception as e:
             logger.error("Failed to persist login state", extra={"user_id": user.id, "error_type": type(e).__name__})
 
@@ -669,6 +701,7 @@ class AuthService:
         if not user:
             raise ValueError(f"User {user_id} not found")
 
+        user = user.model_copy(deep=True)   # change a copy; the cache follows only a successful save
         update_data = user_update.model_dump(exclude_unset=True) if hasattr(user_update, 'model_dump') else user_update
         for field, value in update_data.items():
             if field in ('role',) and updated_by != user_id:
@@ -678,12 +711,14 @@ class AuthService:
                 setattr(user, field, value)
 
         user.updated_at = datetime.utcnow()
-        self._users[user_id] = user
 
-        # Persist
-        pwd_data = self._storage.get_user_password_data(user_id)
-        pwd_hash = pwd_data.get('password_hash', '') if pwd_data else self._user_passwords.get(user_id, '')
-        self._storage.save_user(user, pwd_hash)
+        # Persist without touching the password (review of PR #70, m2): refuse rather than write an empty hash.
+        if not self.save_profile_keeping_password(user):
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="The account could not be updated: its stored password could not be read. Nothing was changed.",
+            )
+        self._users[user_id] = user
 
         self._log_audit_event("user_updated", f"user:{user_id}", "success",
                               user_id=updated_by or user_id, username=user.username)
@@ -695,13 +730,18 @@ class AuthService:
         if not user:
             raise ValueError(f"User {user_id} not found")
 
+        # Remove from persistent storage first (review of PR #70, m3): the store returns False when it did not delete
+        # (its errors are swallowed there); the account would still sign in, so that is reported, not a 204.
+        if not self._storage.delete_user(user_id):
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="The account could not be deleted from the user store; it still exists and can sign in.",
+            )
+
         # Remove from memory
         self._users.pop(user_id, None)
         self._user_passwords.pop(user_id, None)
         self._password_history.pop(user_id, None)
-
-        # Remove from persistent storage
-        self._storage.delete_user(user_id)
 
         self._log_audit_event("user_deleted", f"user:{user_id}", "success",
                               user_id=deleted_by, username=user.username)

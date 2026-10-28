@@ -10,7 +10,8 @@ who signs up — even free of charge — can count as "making available" under E
 THE RULE
 --------
 Accounts are created by an administrator (`POST /api/v1/auth/users`). Self-registration is OFF unless
-the setting SELF_REGISTRATION_ENABLED is true, and it is never on when ENVIRONMENT is "production",
+the setting SELF_REGISTRATION_ENABLED is true AND ENVIRONMENT is one of development, local, test, testing;
+any other ENVIRONMENT (production, prod, staging, empty...) counts as production, so it is never on there,
 whatever the setting says: that combination needs a code change, a code review and the owner's
 regulatory decision. When it is off the register route answers 404, as if it did not exist, before the
 request body is used; the sign-in page asks `GET /api/v1/auth/registration` and hides the tab.
@@ -23,10 +24,18 @@ from app.core.logging import get_logger
 logger = get_logger(__name__)
 
 PRODUCTION = "production"
+# Review of PR #70, m4 — fail closed: only these ENVIRONMENT values count as non-production. Any other value
+# ("prod", "staging", "live", empty, a typo) is treated as production, so a production service configured with a
+# different spelling can never open self-registration.
+NON_PRODUCTION_ENVIRONMENTS = frozenset({"development", "local", "test", "testing"})
+
+
+def is_non_production(environment) -> bool:
+    return str(environment if environment is not None else PRODUCTION).strip().lower() in NON_PRODUCTION_ENVIRONMENTS
 
 
 def self_registration_enabled() -> bool:
-    """True only when the setting is on AND the server is not a production server.
+    """True only when the setting is on AND the server is explicitly a non-production server.
 
     Read at call time (not at import), so a change of configuration takes effect without a code path
     that caches an old answer."""
@@ -34,7 +43,7 @@ def self_registration_enabled() -> bool:
     requested = bool(getattr(settings, "SELF_REGISTRATION_ENABLED", False))
     if not requested:
         return False
-    if str(getattr(settings, "ENVIRONMENT", PRODUCTION)).strip().lower() == PRODUCTION:
+    if not is_non_production(getattr(settings, "ENVIRONMENT", PRODUCTION)):
         logger.warning(
             "SELF_REGISTRATION_ENABLED is set on a production server and is ignored (PRB-020)",
             extra={"setting": "SELF_REGISTRATION_ENABLED"},

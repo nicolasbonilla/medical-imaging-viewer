@@ -16,14 +16,14 @@ from fastapi.responses import Response
 
 from app.core.logging import get_logger
 from app.core.config import get_settings
-from app.security import get_current_active_user
+from app.security import get_current_active_user, require_permission
 from app.security.resource_access import (
     require_study_access, require_series_access, require_instance_access,
     require_study_list_scope, authorize_patient_id, authorize_study_id,
 )
 from app.security.patient_access_dependency import require_patient_access
 from app.security.ownership import initiators
-from app.security.models import User
+from app.security.models import User, Permission, UserRole
 from app.core.container import get_study_service, get_storage_service
 from app.core.interfaces.study_interface import IStudyService
 from app.core.interfaces.storage_interface import IStorageService
@@ -49,6 +49,12 @@ from app.models.study_schemas import (
 )
 
 router = APIRouter(prefix="/studies", tags=["Imaging Studies"])
+
+
+def _may_change_study_status(user: User) -> bool:
+    """Review of PR #70, M2: cancelling or restoring a study needs PATIENT_UPDATE (radiologist, administrator)."""
+    from app.security.rbac import RBACManager
+    return RBACManager.has_permission(user.role, Permission.PATIENT_UPDATE)
 logger = get_logger(__name__)
 settings = get_settings()
 
@@ -162,8 +168,12 @@ async def update_study(
     """
     Update a study.
 
-    Requires STUDY_UPDATE permission.
+    A status change (cancel or restore) needs PATIENT_UPDATE (radiologist, administrator), like cancelling through
+    DELETE (review of PR #70, M2): otherwise a read-only user could hide a study from everyone with a PUT. Other
+    fields need object access only, as before. (The docstring named a STUDY_UPDATE permission that does not exist.)
     """
+    if data.status is not None and not _may_change_study_status(current_user):
+        raise HTTPException(status_code=403, detail="Changing a study's status requires the patient:update permission")
     return await study_service.update_study(study_id, data)
 
 
@@ -172,12 +182,17 @@ async def delete_study(
     study_id: UUID,
     hard_delete: bool = Query(False, description="Permanently delete files from storage"),
     study_service: IStudyService = Depends(get_study_service),
-    current_user: User = Depends(get_current_active_user),
+    # Review of PR #70, M2: cancelling hides the study from every user (PRB-025), so it needs a write permission.
+    current_user: User = Depends(require_permission(Permission.PATIENT_UPDATE)),
     # CAPA-002 CA-2.1 RC-028 - object-level authorization.
     _authorized=Depends(require_study_access),
 ):
     """
     Delete or cancel a study.
+
+    Requires PATIENT_UPDATE (radiologist, administrator) — review of PR #70, M2. The route had no role check and its
+    docstring named a STUDY_DELETE permission that does not exist; since PRB-025 a cancelled study is no longer listed
+    or counted for anyone, so a read-only user could hide a prior scan from a longitudinal comparison.
 
     If hard_delete is False, the study is marked as cancelled: it is kept as a record but no longer listed or
     counted (PRB-025). If hard_delete is True, all files are deleted from storage.
@@ -185,7 +200,6 @@ async def delete_study(
     hard_delete is administrator-only (PRB-025): this docstring said so, but the route did not check it, so
     any user with access to the patient could erase a study's images permanently.
     """
-    from app.security.models import UserRole
     if hard_delete and current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Permanent deletion of a study is restricted to administrators")
     await study_service.delete_study(study_id, deleted_by=current_user.id, hard_delete=hard_delete)
@@ -253,14 +267,17 @@ async def get_series(
 async def delete_series(
     series_id: UUID,
     study_service: IStudyService = Depends(get_study_service),
-    current_user: User = Depends(get_current_active_user),
+    # Review of PR #70, M1: erases the series' files from storage permanently → IMAGE_DELETE (administrator only).
+    current_user: User = Depends(require_permission(Permission.IMAGE_DELETE)),
     # CAPA-002 CA-2.1 RC-028 - object-level authorization.
     _authorized=Depends(require_series_access),
 ):
     """
-    Delete a series and all its instances.
+    Delete a series and all its instances, and their files in storage (permanent).
 
-    Requires STUDY_DELETE permission.
+    Requires IMAGE_DELETE (administrator only) — review of PR #70, M1. The route checked only object access and its
+    docstring named a STUDY_DELETE permission that does not exist: any care-team member, a viewer included, could
+    erase a series.
     """
     await study_service.delete_series(series_id)
     return {"message": "Series deleted successfully"}
@@ -323,14 +340,15 @@ async def update_instance(
 async def delete_instance(
     instance_id: UUID,
     study_service: IStudyService = Depends(get_study_service),
-    current_user: User = Depends(get_current_active_user),
+    # Review of PR #70, M1: erases the image file from storage permanently → IMAGE_DELETE (administrator only).
+    current_user: User = Depends(require_permission(Permission.IMAGE_DELETE)),
     # CAPA-002 CA-2.1 RC-028 - object-level authorization.
     _authorized=Depends(require_instance_access),
 ):
     """
-    Delete an instance.
+    Delete an instance and its file in storage (permanent).
 
-    Requires STUDY_DELETE permission.
+    Requires IMAGE_DELETE (administrator only) — review of PR #70, M1 (see delete_series).
     """
     await study_service.delete_instance(instance_id)
     return {"message": "Instance deleted successfully"}

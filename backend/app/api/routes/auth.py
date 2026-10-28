@@ -968,9 +968,11 @@ async def webauthn_login_complete(request: Request):
         user.last_login = dt.utcnow()
         user.failed_login_attempts = 0
         try:
-            pwd_data = auth_service._storage.get_user_password_data(user.id)
-            pwd_hash = pwd_data.get('password_hash', '') if pwd_data else ''
-            auth_service._storage.save_user(user, pwd_hash)
+            # Review of PR #70, m2: this wrote an empty password hash when the password data could not be read (the
+            # user could then no longer sign in with a password) and always erased the password history.
+            if not auth_service.save_profile_keeping_password(user):
+                logger.warning("Last login not stored after WebAuthn: password data unreadable",
+                               extra={"user_id": user.id})
         except Exception as e:
             logger.warning("Could not update last_login after WebAuthn", extra={"error": str(e)})
 

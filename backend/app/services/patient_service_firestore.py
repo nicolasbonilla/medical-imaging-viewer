@@ -178,20 +178,35 @@ class PatientServiceFirestore(IPatientService):
         return total - sum(self._count(Collections.DOCUMENTS, patient_id, s)
                            for s in self._REMOVED_DOCUMENT_STATUSES)
 
+    # Review of PR #70, m6: each patient needs 5 aggregation queries (studies: total, cancelled, entered-in-error;
+    # documents: total, entered-in-error). Run one after another they took ~5 round trips per patient — a page of 100
+    # patients (the search page) was 500 sequential queries. The patients of a page are now counted concurrently by a
+    # small, bounded pool (Firestore's client is thread-safe); results are identical and keep the page order.
+    COUNT_WORKERS = 8
+
+    def _counts_for(self, patient_id: str):
+        try:
+            study_count = self._active_study_count(patient_id)
+        except Exception:
+            study_count = None     # unknown, not 0 (PRB-025: a count is shown only when it was counted)
+        try:
+            document_count = self._active_document_count(patient_id)
+        except Exception:
+            document_count = None
+        return study_count, document_count
+
     def _summaries_with_counts(self, docs) -> List[PatientSummary]:
         """Summaries of one page of patient documents, with their (non-deleted) study and document counts."""
+        from concurrent.futures import ThreadPoolExecutor
+        docs = list(docs)
+        if not docs:
+            return []
+        with ThreadPoolExecutor(max_workers=min(self.COUNT_WORKERS, len(docs))) as pool:
+            counts = list(pool.map(lambda d: self._counts_for(d.id), docs))
         results = []
-        for doc in docs:
+        for doc, (study_count, document_count) in zip(docs, counts):
             doc_data = doc.to_dict()
             doc_data["id"] = doc.id
-            try:
-                study_count = self._active_study_count(doc.id)
-            except Exception:
-                study_count = None     # unknown, not 0 (PRB-025: a count is shown only when it was counted)
-            try:
-                document_count = self._active_document_count(doc.id)
-            except Exception:
-                document_count = None
             results.append(self._doc_to_summary(doc_data, study_count=study_count, document_count=document_count))
         return results
 

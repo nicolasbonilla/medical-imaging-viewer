@@ -837,6 +837,11 @@
     "subtitle": "Gestión de Documentos"
   },
   "patients": {
+    "noAssignedPatients": "Todavía no tiene pacientes asignados",
+    "noAssignedPatientsDescription": "Un administrador puede añadirle al equipo de atención de un paciente.",
+    "overview": {
+      "assignedToYou": "asignados a usted"
+    },
     "title": "Pacientes",
     "subtitle": "Gestión de pacientes del sistema EHR",
     "searchPlaceholder": "Buscar por nombre, HC o email...",

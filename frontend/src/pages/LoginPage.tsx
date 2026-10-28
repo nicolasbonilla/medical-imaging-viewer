@@ -406,8 +406,9 @@ export default function LoginPage() {
               is outside the user's jurisdiction). */}
           <div className="mt-6 pt-5 border-t border-white/[0.08]">
             <div className="flex items-center justify-center gap-1.5 flex-wrap">
+              {/* Review of PR #70, m7: the "IEC 62304 · Class C" badge looked like the removed certification badges;
+                  no conformity assessment exists (REQ-REG-011). The subtitle wording is an owner decision (PRB-022). */}
               {[
-                { label: 'IEC 62304', sub: 'Class C' },
                 { label: 'AES-256', sub: 'At rest' },
               ].map(b => (
                 <span key={b.label} className="inline-flex flex-col items-center px-2 py-1 rounded-lg bg-surface-base border border-surface-border">

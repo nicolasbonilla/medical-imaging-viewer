@@ -831,6 +831,11 @@
     "subtitle": "Document Management"
   },
   "patients": {
+    "noAssignedPatients": "No patients are assigned to you yet",
+    "noAssignedPatientsDescription": "An administrator can add you to a patient's care team.",
+    "overview": {
+      "assignedToYou": "assigned to you"
+    },
     "title": "Patients",
     "subtitle": "EHR Patient Management",
     "searchPlaceholder": "Search by name, MRN or email...",

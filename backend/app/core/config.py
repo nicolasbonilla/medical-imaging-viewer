@@ -206,7 +206,7 @@ class Settings(BaseSettings):
 
     # Self-registration (PRB-020, REQ-SEC-030/031) — default OFF. Accounts are created by an
     # administrator (POST /api/v1/auth/users). When true, POST /api/v1/auth/register creates a VIEWER
-    # account for anyone who can reach the server; it is IGNORED when ENVIRONMENT == "production"
+    # account for anyone who can reach the server; it is IGNORED unless ENVIRONMENT is development, local, test or testing
     # (app.security.registration_policy): offering a device that is not CE-marked to anyone who signs up
     # can count as "making available" under EU MDR arts. 2(27), 6. Turning it on in production needs a
     # code change, a code review and the owner's regulatory decision.

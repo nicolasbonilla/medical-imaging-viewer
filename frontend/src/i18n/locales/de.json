@@ -824,6 +824,11 @@
     "subtitle": "Dokumentenverwaltung"
   },
   "patients": {
+    "noAssignedPatients": "Ihnen sind noch keine Patienten zugewiesen",
+    "noAssignedPatientsDescription": "Eine Administratorin oder ein Administrator kann Sie dem Behandlungsteam eines Patienten hinzufügen.",
+    "overview": {
+      "assignedToYou": "Ihnen zugewiesen"
+    },
     "title": "Patienten",
     "subtitle": "EHR Patientenverwaltung",
     "searchPlaceholder": "Suchen nach Name, MRN oder E-Mail...",
