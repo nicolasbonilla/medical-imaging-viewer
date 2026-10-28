@@ -1,29 +1,34 @@
 {
-  "executed": "2026-10-28T18:05:43",
-  "tree": "9e8fa4886ba944c26eb8e98b9a14eaac4bd1a3ae",
+  "executed": "2026-10-28T20:10:08",
+  "tree": "09cd029bd2d8ab61f1ed74da5a2ae256de0ce2c5",
   "method": "one mutation at a time; each anchor asserted to occur exactly once (LF text); only the bound tests run (backend offline per PRB-002, with an outer environment asking for the Firestore backends and a 60-minute access token that conftest must override; frontend with vitest); bytes restored after each mutation and verified at the end",
   "hash_basis": "sha256 of the UTF-8 text with LF line endings",
   "source_sha256": {
     "backend/app/api/routes/ai_report.py": "89baddfcb46fa1bb4a4eaba6141bbb66155dd691fe481c1abd4c8111ffb865f6",
+    "backend/app/api/routes/segmentation_regions.py": "8f6ab504163efcff9653716b1f5b2f74a30a7383b4c28852ea828b6b9a4ee6db",
     "backend/app/core/logging/audit_middleware.py": "908a769a69a38994cdae391dbc2efbd3689d085666fd7ce6222ff80245bc886b",
     "backend/app/services/brain_report_service.py": "5f7f94895908d5b2755d68616d11033e2b3cc0d223b7d0ec974b00d2200aade4",
     "backend/app/services/dis_review_gate.py": "23eaa13c26523c151d1ebfdcc224ed19a8a0783839031c8fdb4f320fe044af95",
     "backend/app/services/report_payload_guard.py": "5a04fcfc7a333f030da9ec893b6c03e0c98157e866f5794c9e53b07515d3dc66",
     "backend/tests/conftest.py": "83b5b86cd72d4a131ad45f0b57ea0f9451a80c253be0232b9521af31e9fee3c7",
-    "frontend/src/components/AIReportPanel.tsx": "82a2a16d4204bc7e6302fe4dda45526607e05f6db4c8ab6230935c014c6344a8"
+    "frontend/src/components/AIReportPanel.tsx": "82a2a16d4204bc7e6302fe4dda45526607e05f6db4c8ab6230935c014c6344a8",
+    "frontend/src/components/LesionDashboard.tsx": "f04c396523388ad0e4742a67e80930c7c99c055a2d807e739844da78d8558bc2",
+    "frontend/src/store/useSegmentationStore.ts": "97748488fd1ea95c75bd27ed52fa6286de8402ba52b11bb2127e594a02e1b262"
   },
   "test_sha256": {
     "tests/unit/test_capa015_audit_and_session.py": "c2d117e9fddae634de5e46d9cc02f6572e783845a9488aae648d53e485e3479a",
+    "tests/unit/test_release_2026_10_25_capture_fixes.py": "a501509edf9048b0ae18917b810d578d88976f3bc1d7b8516da2db054e054a2f",
     "tests/unit/test_release_2026_10_25_integration.py": "886cf55f3cf3750c56b4f62195f861a158f25dabad455885ee69aa79f69c9e4e",
     "tests/unit/test_release_2026_10_25_review_fixes.py": "b33ecdf3ee502bf648c8d19868d931a47163a0895cf0870a23b95d00323ed262",
-    "frontend/src/components/AIReportPanel.release20261025.test.tsx": "f2c9328967132e8bb17761d3248da425a6e870779ee8c2fda65556c7d1ade2f3"
+    "frontend/src/components/AIReportPanel.release20261025.test.tsx": "f2c9328967132e8bb17761d3248da425a6e870779ee8c2fda65556c7d1ade2f3",
+    "frontend/src/components/LesionDashboard.release20261028.test.tsx": "c6a1e4be9a9f089f3a9d34b694c2a45071ccba2079c766e27705438640cc2790"
   },
   "baseline": {
     "backend": {
       "suite": "backend",
       "exit": 0,
       "failed": 0,
-      "passed": 56,
+      "passed": 59,
       "errors": 0,
       "failing_tests": []
     },
@@ -33,6 +38,14 @@
         "exit": 0,
         "failed": 0,
         "passed": 4,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 5,
         "errors": 0,
         "failing_tests": []
       }
@@ -54,7 +67,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_integration.py::test_rc070_release_i1_the_dis_check_changes_the_model_text_never_the_clinicians_entry"
       ],
-      "executed": "2026-10-28T18:06:44",
+      "executed": "2026-10-28T20:11:06",
       "detected": true
     },
     "I1b_check_moved_after_the_draft_assembly": {
@@ -72,7 +85,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_integration.py::test_rc070_release_i1_the_dis_check_changes_the_model_text_never_the_clinicians_entry"
       ],
-      "executed": "2026-10-28T18:07:08",
+      "executed": "2026-10-28T20:11:18",
       "detected": true
     },
     "I2_template_variant_on_the_raw_block_with_its_own_rule": {
@@ -92,7 +105,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_integration.py::test_rc064_release_i2_the_template_variant_follows_the_dis_block_the_model_receives"
       ],
-      "executed": "2026-10-28T18:07:20",
+      "executed": "2026-10-28T20:11:36",
       "detected": true
     },
     "I3_dis_confirmation_route_not_audited": {
@@ -108,7 +121,7 @@
       "tests": [
         "tests/unit/test_capa015_audit_and_session.py::test_rc067_prb003_dis_confirmation_is_a_recorded_clinical_action"
       ],
-      "executed": "2026-10-28T18:07:33",
+      "executed": "2026-10-28T20:11:47",
       "detected": true
     },
     "I4_audit_backend_not_forced": {
@@ -124,7 +137,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_integration.py::test_release_c1_conftest_forces_the_capa015_test_settings"
       ],
-      "executed": "2026-10-28T18:07:43",
+      "executed": "2026-10-28T20:12:00",
       "detected": true
     },
     "I5_refresh_backend_not_forced": {
@@ -140,7 +153,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_integration.py::test_release_c1_conftest_forces_the_capa015_test_settings"
       ],
-      "executed": "2026-10-28T18:08:02",
+      "executed": "2026-10-28T20:12:11",
       "detected": true
     },
     "I6_access_lifetime_not_forced": {
@@ -154,7 +167,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_integration.py::test_release_c1_conftest_forces_the_capa015_test_settings"
       ],
-      "executed": "2026-10-28T18:08:27",
+      "executed": "2026-10-28T20:12:16",
       "detected": true,
       "note": "Detected by design through a start-up failure, not an assertion: with a 60-minute access token and a 30-minute refresh idle limit the application's own start-up check (CAPA-015, RC-068) refuses to start, so the bound test module cannot even be collected and the suite goes red (pytest exit 4). That refusal is the protection the forced setting keeps out of the test suite."
     },
@@ -173,7 +186,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_review_fixes.py::test_rc064_release_r1_unconfirmed_regions_give_no_placeholder_and_no_app_note"
       ],
-      "executed": "2026-10-28T18:09:03",
+      "executed": "2026-10-28T20:12:27",
       "detected": true
     },
     "I7b_prompt_ignores_unconfirmed_regions": {
@@ -191,7 +204,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_review_fixes.py::test_rc064_release_r1_unconfirmed_regions_give_no_placeholder_and_no_app_note"
       ],
-      "executed": "2026-10-28T18:09:14",
+      "executed": "2026-10-28T20:12:39",
       "detected": true
     },
     "I8_format_characters_removed_only_after_the_check": {
@@ -209,7 +222,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_review_fixes.py::test_rc070_release_r2_zero_width_characters_do_not_hide_a_dis_statement"
       ],
-      "executed": "2026-10-28T18:09:29",
+      "executed": "2026-10-28T20:12:50",
       "detected": true
     },
     "I9_evaluated_without_a_conclusion": {
@@ -226,7 +239,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_review_fixes.py::test_rc070_release_r3_one_rule_decides_evaluated_for_route_prompt_and_template"
       ],
-      "executed": "2026-10-28T18:09:51",
+      "executed": "2026-10-28T20:13:00",
       "detected": true
     },
     "I10_route_uses_its_own_status_only_rule": {
@@ -243,7 +256,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_review_fixes.py::test_rc070_release_r3_one_rule_decides_evaluated_for_route_prompt_and_template"
       ],
-      "executed": "2026-10-28T18:10:07",
+      "executed": "2026-10-28T20:13:09",
       "detected": true
     },
     "I11_panel_shows_no_measurements_for_a_geometry_422": {
@@ -261,7 +274,7 @@
       "tests": [
         "frontend/src/components/AIReportPanel.release20261025.test.tsx"
       ],
-      "executed": "2026-10-28T18:10:19",
+      "executed": "2026-10-28T20:13:18",
       "detected": true
     },
     "I12_geometry_422_without_its_phrase": {
@@ -277,7 +290,151 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_review_fixes.py::test_rc070_release_r6_unreadable_geometry_names_itself_and_the_panel_knows_the_phrase"
       ],
-      "executed": "2026-10-28T18:10:32",
+      "executed": "2026-10-28T20:13:32",
+      "detected": true
+    },
+    "I13_classification_labels_not_applied_to_the_viewer": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 4,
+      "errors": 0,
+      "failing_tests": [
+        "rc070 release f08 the labels the server stored reach the viewer, every region visible, before the mask reload"
+      ],
+      "reintroduces": "F08: after the classification lesions labelled 2-4 are not drawn until the study is reopened",
+      "tests": [
+        "frontend/src/components/LesionDashboard.release20261028.test.tsx"
+      ],
+      "executed": "2026-10-28T20:13:42",
+      "detected": true
+    },
+    "I14_server_labels_skip_the_drawn_segmentation": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 4,
+      "errors": 0,
+      "failing_tests": [
+        "rc070 release f08 the labels the server stored reach the viewer, every region visible, before the mask reload"
+      ],
+      "reintroduces": "F08: the labels reach currentSegmentation only, not what the 2D canvas and NiiVue draw from",
+      "tests": [
+        "frontend/src/components/LesionDashboard.release20261028.test.tsx"
+      ],
+      "executed": "2026-10-28T20:13:50",
+      "detected": true
+    },
+    "I15_removed_components_not_counted": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 2,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc070_release_f09_classification_states_the_small_components_it_removed"
+      ],
+      "reintroduces": "F09: the classification removes small components from the mask without saying so",
+      "tests": [
+        "tests/unit/test_release_2026_10_25_capture_fixes.py"
+      ],
+      "executed": "2026-10-28T20:14:11",
+      "detected": true
+    },
+    "I16_labels_not_returned_by_the_classification": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 2,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc070_release_f09_the_route_returns_the_labels_it_stored"
+      ],
+      "reintroduces": "F08: the viewer cannot draw the server's label scheme (it is not returned)",
+      "tests": [
+        "tests/unit/test_release_2026_10_25_capture_fixes.py"
+      ],
+      "executed": "2026-10-28T20:14:24",
+      "detected": true
+    },
+    "I17_classification_card_silent_on_removed_components": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 4,
+      "errors": 0,
+      "failing_tests": [
+        "rc070 release f09 the classification card and the confirmation state how many components and voxels were removed"
+      ],
+      "reintroduces": "F09: the classification card does not say which components were removed",
+      "tests": [
+        "frontend/src/components/LesionDashboard.release20261028.test.tsx"
+      ],
+      "executed": "2026-10-28T20:14:31",
+      "detected": true
+    },
+    "I18_confirm_dialog_silent_on_removed_components": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 4,
+      "errors": 0,
+      "failing_tests": [
+        "rc070 release f09 the classification card and the confirmation state how many components and voxels were removed"
+      ],
+      "reintroduces": "F09: the radiologist confirms without being told that components were removed",
+      "tests": [
+        "frontend/src/components/LesionDashboard.release20261028.test.tsx"
+      ],
+      "executed": "2026-10-28T20:14:39",
+      "detected": true
+    },
+    "I19_no_pending_state_after_confirming": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 4,
+      "errors": 0,
+      "failing_tests": [
+        "rc071 release f10 the card shows the confirmation pending until the refreshed DIS state is read"
+      ],
+      "reintroduces": "F10: the card keeps saying 'No radiologist has confirmed' for seconds after the confirmation",
+      "tests": [
+        "frontend/src/components/LesionDashboard.release20261028.test.tsx"
+      ],
+      "executed": "2026-10-28T20:14:48",
+      "detected": true
+    },
+    "I20_confirmation_never_shown_as_recorded": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 4,
+      "errors": 0,
+      "failing_tests": [
+        "rc071 release f10 the card shows the confirmation pending until the refreshed DIS state is read"
+      ],
+      "reintroduces": "F10: the card does not say that the confirmation was recorded while the DIS state is read",
+      "tests": [
+        "frontend/src/components/LesionDashboard.release20261028.test.tsx"
+      ],
+      "executed": "2026-10-28T20:14:57",
+      "detected": true
+    },
+    "I21_escape_text_in_region_rows": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 4,
+      "errors": 0,
+      "failing_tests": [
+        "rc070 release f04 the by-region rows show a dash, never the escape text"
+      ],
+      "reintroduces": "F04: a literal escape text in the per-region rows",
+      "tests": [
+        "frontend/src/components/LesionDashboard.release20261028.test.tsx"
+      ],
+      "executed": "2026-10-28T20:15:04",
       "detected": true
     }
   },
@@ -286,7 +443,7 @@
       "suite": "backend",
       "exit": 0,
       "failed": 0,
-      "passed": 56,
+      "passed": 59,
       "errors": 0,
       "failing_tests": []
     },
@@ -298,12 +455,20 @@
         "passed": 4,
         "errors": 0,
         "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 5,
+        "errors": 0,
+        "failing_tests": []
       }
     ]
   },
   "summary": {
-    "mutations": 14,
-    "detected": 14,
+    "mutations": 23,
+    "detected": 23,
     "undetected": []
   }
 }

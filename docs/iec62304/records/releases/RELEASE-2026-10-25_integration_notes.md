@@ -35,7 +35,11 @@ Integration commits after the four merges (one concern each):
 | `269317d` | Integration review of #69: corrections of items 1, 2, 3 and 6 (§9) |
 | `9c78d2d` | Integration review of #69: CRLF-safe control scripts (item 5), R4 / P17 anchors, integration controls I7–I12 |
 | `9e8fa48` | CAPA-014 M10 kept detectable by a direct test; integration mutation I2 redefined (§6) |
-| (records commit) | §6 and §9 of these notes, re-run records, documents (SRS 1.14, RMF 1.16, TM 1.13, DD-001 1.4 rows; CAPA-014 §12; CAPA-016 §13), manifest |
+| `c7a06cf` | §6 and §9 of these notes, re-run records, documents (SRS 1.14, RMF 1.16, TM 1.13, DD-001 1.4 rows; CAPA-014 §12; CAPA-016 §13), manifest |
+| `7c7c70d` | Capture session: tests written first for F08, F09, F10, F04 (§10) |
+| `e9935eb` | Capture session: corrections of F08, F09, F10, F04 (§10) |
+| `09cd029` | PRB-003 F11 anchor after F10; integration controls I13–I21 |
+| (records commit) | §6 and §10 of these notes, capture-round control records, document rows, manifest |
 
 ## 2. Conflicts and how each was resolved
 
@@ -151,11 +155,11 @@ All backend runs offline: `GOOGLE_APPLICATION_CREDENTIALS` = a missing file, `CL
 
 | Check | Result |
 |---|---|
-| Backend unit (`tests/unit`, as CI) | **2066 passed, 0 failed** (2048 before the review of #69; +17 review tests, +1 draft-assembly test) |
+| Backend unit (`tests/unit`, as CI) | **2069 passed, 0 failed** (2048 before the review of #69; +17 review tests, +1 draft-assembly test, +3 capture tests) |
 | Backend integration (CI selection: not PACS / GCS / Firestore) | **25 passed, 1 failed, 20 deselected** — the failure is the known local one (`test_webauthn_credentials_endpoint_exists`: `webauthn` not installed in the local venv; CI installs it) |
 | Backend security (CI selection) | **112 passed, 5 xfailed** |
 | Manifest gate (`test_risk_control_manifest.py`) | passes (70 controls, every named test file exists and names its control) |
-| Frontend vitest (`--pool=threads`) | **408 passed, 3 skipped** (46 files passed, 3 skipped as on `main`; 404 before the review's panel test) |
+| Frontend vitest (`--pool=threads`) | **413 passed, 3 skipped** (47 files passed, 3 skipped as on `main`; 404 before the review's and the capture session's tests) |
 | Frontend `tsc --noEmit` | clean |
 | Frontend production build | passes |
 
@@ -166,10 +170,15 @@ All backend runs offline: `GOOGLE_APPLICATION_CREDENTIALS` = a missing file, `CL
 | `prb002_negative_controls.py` (#66) | 19 | **19 detected** — re-run 2026-10-28 on the Windows CRLF checkout | review of #69, item 5: anchors on the LF text, mutations with the file's own line endings, byte-exact restore, hash on the LF text | `RELEASE-2026-10-25_PRB-002_negative_controls.json` |
 | `capa015_negative_controls.py` (#65) | 108 | **107 detected, 1 declared equivalent** (R9 — the same mutation #65's record declares equivalent; R9b, which removes both protections, is detected) — run 2026-10-25; not repeated after the review: no CAPA-015 file and no bound test changed | none | `RELEASE-2026-10-25_CAPA-015_negative_controls.json` |
 | `capa014_negative_controls.py` (#67) | 94 | **94 detected** — re-run 2026-10-28 | P17 only: anchored on the merged builder line (#68's rule replaced #67's branch, merge note 1), and after review item 3 on the one-rule line `if not gate.is_evaluated(dis):`; the mutation still sends a not-evaluated DIS to MET / NOT MET. The first re-run after the review corrections left **M10** undetected (the route now removes format characters before the DIS check, so the draft assembly's own removal had become a second layer); a direct test of the assembly (`test_rc066_release_the_draft_assembly_removes_format_characters_itself`) now detects it | `RELEASE-2026-10-25_CAPA-014_negative_controls.json` |
-| `prb003_negative_controls.py` (#68) | 119 | **119 detected** — re-run 2026-10-28 (R2, removal of `authorize_mask_specs`, still detected through the spy in `report_env`) | R4 only: anchored on the one-rule line (review item 3), mutation unchanged | `RELEASE-2026-10-25_PRB-003_negative_controls.json` |
+| `prb003_negative_controls.py` (#68) | 119 | **119 detected** — re-run 2026-10-28 after the review and again after the capture corrections (R2, removal of `authorize_mask_specs`, still detected through the spy in `report_env`) | R4: anchored on the one-rule line (review item 3); F11: anchored on the one awaited DIS read after the confirmation (capture F10); mutations unchanged | `RELEASE-2026-10-25_PRB-003_negative_controls.json` |
 | `rc029_negative_controls.py` (CAPA-007, pre-existing) | 11 | **11 detected** — run 2026-10-28 | review of #69, item 5: byte-exact restore on a CRLF checkout (it wrote files back with the platform's line endings) | `RELEASE-2026-10-25_RC-029_negative_controls.json` |
-| `release_2026_10_25_negative_controls.py` (new) | 14 | **14 detected** — run 2026-10-28 (I6 by design through the start-up failure: the application refuses a 60-minute access token, the module cannot be collected, exit 4 — stated in the record). I2 was redefined after it went undetected once the one rule was in (choosing the raw block alone had become equivalent by construction); it now re-introduces the raw block with its own status-only rule | new | `RELEASE-2026-10-25_integration_negative_controls.json` |
-| **Total** | **365** | **364 detected, 1 declared equivalent** | | |
+| `release_2026_10_25_negative_controls.py` (new) | 23 | **23 detected** — run 2026-10-28 after the capture corrections (I6 by design through the start-up failure: the application refuses a 60-minute access token, the module cannot be collected, exit 4 — stated in the record). I2 was redefined after it went undetected once the one rule was in (choosing the raw block alone had become equivalent by construction); it now re-introduces the raw block with its own status-only rule. I13–I21 cover the capture findings | new | `RELEASE-2026-10-25_integration_negative_controls.json` |
+| `rc032_negative_controls.py` (CAPA-006, pre-existing; touches `segmentation_regions.py`, `LesionDashboard.tsx`) | 45 | **42 detected, 3 declared equivalent** (B, B2, L5 — the same three its own record declares) — run 2026-10-28 | none | `RELEASE-2026-10-25_RC-032_negative_controls.json` |
+| `slice_thickness_negative_controls.py` (CP-SLICE-THICKNESS-001, pre-existing; touches `LesionDashboard.tsx`) | 38 | **38 detected** — run 2026-10-28 | none | `RELEASE-2026-10-25_CP-SLICE-THICKNESS-001_negative_controls.json` |
+| `capa008_negative_controls.py` (CAPA-008, pre-existing; touches `LesionDashboard.tsx`) | 17 | **17 detected** — run 2026-10-28 | none | `RELEASE-2026-10-25_CAPA-008_negative_controls.json` |
+| **Total** | **474** | **470 detected, 4 declared equivalent** (R9 of CAPA-015; B, B2, L5 of RC-032 — each as its own record declares) | | |
+
+Not repeated after the capture corrections, with the reason: CAPA-015, CAPA-014 and CAPA-013 (`capa013_negative_controls.py`, 66 mutations) touch the changed locale files only, where new keys were added and no anchored text changed; their bound tests pass in the full suites. Every anchor of these scripts is still unique.
 
 Notes on the runs:
 - The scripts ran one after another (never two at once); after each one every source file was back byte for byte and
@@ -224,6 +233,26 @@ frontend 3 of 4 fail**, the passing cases are positive controls — record
 
 Script anchors moved by item 3 (mutation unchanged): PRB-003 **R4** and CAPA-014 **P17** now anchor on the builder's
 `if not gate.is_evaluated(dis):`.
+
+## 10. Browser capture session of the release build — findings F08, F09, F10, F04 (2026-10-28)
+
+A browser capture session of this release build (offline, local; `mstool-film/assets/app-captures/CAPTURES.md`,
+evidence in `findings/` and `logs/`) found defects in the confirmation flow that this release introduces or relies on.
+The radiologist must see exactly what they confirm, so they block the release. Same process: tests written first
+(`7c7c70d`: on `c7a06cf` **backend 3 of 3 and frontend 4 of 5 fail**, the passing case is a positive control — record
+`RELEASE-2026-10-25_capture_tests_on_c7a06cf.json`), corrections `e9935eb`, scripts `09cd029`. PENDING owner approval.
+
+| # | Finding | Cause | Correction | Tests / negative controls |
+|---|---|---|---|---|
+| F08 (clinical safety) | After "Auto-Classify Regions", lesions labelled 2–4 (juxtacortical, infratentorial, deep white matter) were not drawn on the 2D image until the study was reopened; a radiologist could confirm without seeing them | The 2D canvas and NiiVue draw from `activeSegmentation.labels`; the classification replaced only `currentSegmentation.metadata.labels`, and only after the mask reload — so only label 1 had a colour | `classify-regions` returns the label scheme it stored; new store action `applyServerLabels` writes it to `currentSegmentation` AND `activeSegmentation`, every region visible, without marking a local edit; `LesionDashboard` calls it BEFORE reloading the mask | vitest `rc070 release f08 …`; backend `test_rc070_release_f09_the_route_returns_the_labels_it_stored`; I13, I14, I16 |
+| F09 | The classification removed lesion components smaller than 3 mm³ from the stored mask without telling the user (capture: 29,903 → 29,886 voxels); the radiologist then confirmed a mask that had changed | Every classifier path in the Class C `ms_region_classifier.py` skips components below `MIN_LESION_VOLUME_MM3` and builds the classified mask from zeros | **The Class C module is unchanged.** The `classify-regions` route compares the mask before and after (18-connected components, as the classifier) and returns `removed_small_components` (components, voxels, volume, minimum, reason), also kept in the stored classification record so a later session shows it too. The classification card, the "not evaluated" DIS card and the confirm dialog state it before the radiologist confirms (en/es/de) | backend `test_rc070_release_f09_*` (the REAL geometric classifier drops two one-voxel specks of 1 mm³); vitest `rc070 release f09 …` (card, DIS card, dialog; nothing said when nothing was removed); I15, I17, I18 |
+| F10 | After "confirm", the DIS card kept saying "No radiologist has confirmed this segmentation" for 6–12 s with no progress | The card kept the old state while the DIS state of the confirmed mask was being read (the server reads the source image for its voxel geometry) | A pending state replaces the reason line and the button: "Recording your confirmation…" until the server answers, then "Confirmation recorded — reading the DIS result for the confirmed mask…" (role=status) until the one awaited read returns; a failed read says that the confirmation was recorded and to press Analyze | vitest `rc071 release f10 …`; I19, I20; PRB-003 F11 (anchor moved, still detected) |
+| F04 | A literal "—" in the per-region rows | Escape sequence in JSX text | `{'—'}` | vitest `rc070 release f04 …`; I21 |
+
+F12 of the capture session (an application note "[unlisted label 1] = not confirmed" in a plain draft) is item 1 of the
+integration review, corrected in §9. The other findings of the capture session (F01–F03, F05–F07, F11, F13–F21: e.g.
+the native confirm dialog, the login footer's MFA claim, open self-registration, the axial rotation between viewer
+modes) were not part of this request and are not addressed in this release; they are listed for the owner in the PR.
 
 *Drafted by the AI coding agent (development tool, SDP-001 §5.1.4). No approval is recorded in this document;
 approvals are to be recorded by the owner (CAPA-012).*
