@@ -158,6 +158,19 @@ describe('PRB-004 review — 3D view', () => {
     });
   }
 
+  for (const mode of ['volume', 'multiplanar'] as const) {
+    // Film capture (coordinator, 2026-10-28): niivue's colour bar, drawn along the bottom of the 3D render, lay under
+    // the standing "Laterality not labelled" caveat (RC-023) of the viewport's safety overlay — both unreadable.
+    it(`rc023 3D ${mode}: niivue draws no colour bar under the laterality caveat`, async () => {
+      scene(mode, null);
+      installBrowserNetwork('http://127.0.0.1:4173', { [`/api/v1/imaging/nifti/${FILE}`]: img() });
+      render(<ImageViewer3D patientName="A" />);
+      await loaded(mode, 1);
+      for (const nv of harness.instances) expect(nv.opts.isColorbar).toBe(false);
+      expect(screen.getByText(/Laterality not labelled/)).toBeInTheDocument();
+    });
+  }
+
   it('rc074 m2: the later-visit mask is drawn in a saturated colour, not white', async () => {
     scene('volume', null, true);
     installBrowserNetwork('http://127.0.0.1:4173', {
