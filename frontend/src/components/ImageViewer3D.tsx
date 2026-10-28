@@ -197,7 +197,10 @@ function createNvInstance(sliceType: number): Niivue {
     isRadiologicalConvention: false,
     sliceType,
     multiplanarShowRender: SHOW_RENDER.NEVER,
-    isColorbar: sliceType === SLICE_TYPE.RENDER,
+    // Film capture (2026-10-28, RC-023): niivue's colour bar runs along the bottom of the render, under the
+    // safety overlay's standing "Laterality not labelled" caveat — both unreadable. Off: the colour scale of an
+    // MRI in arbitrary units is not a measurement, and the colormap is named in the sidebar.
+    isColorbar: false,
     // RC-023 (HAZ-006, CAPA-010): no laterality glyph in 3D. The orientation cube carries
     // L/R/A/P/S/I letters and niivue draws L/R/A/P/S/I slice letters by DEFAULT
     // (isOrientationTextVisible defaults to true), while laterality labelling is not

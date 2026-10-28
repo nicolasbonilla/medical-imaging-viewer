@@ -6,6 +6,8 @@ import {
   Layers, ZoomIn, ZoomOut, RotateCcw, Box, Info, Scissors, Palette
 } from 'lucide-react';
 import { useViewerStore } from '@/store/useViewerStore';
+import { useMultiViewerStore } from '@/store/useMultiViewerStore';
+import { useActiveSliceInfo } from '@/hooks/useActiveSliceInfo';
 import { usePatient, useMedicalHistory } from '@/hooks/usePatients';
 import { studyAPI } from '@/api/study';
 import { COLORMAPS_3D } from '@/components/ImageViewer3D';
@@ -52,6 +54,14 @@ export default function ControlPanel() {
   const [historyOpen, setHistoryOpen] = useState(true);
   const [timelineOpen, setTimelineOpen] = useState(true);
   const totalSlices = currentSeries?.total_slices ?? currentSeries?.metadata?.slices ?? 1;
+  // PRB-008 (film capture): in the side-by-side panels the slice navigator follows the ACTIVE PANEL (as the
+  // toolbar does) — it read the single view's index, so it named a slice the panels did not show and its
+  // slider moved nothing on screen.
+  const isMultiPanel = useMultiViewerStore((s) => s.layout) !== 'single';
+  const activeSlice = useActiveSliceInfo();
+  const navIndex = isMultiPanel ? activeSlice.sliceIndex : currentSliceIndex;
+  const navTotal = isMultiPanel ? activeSlice.totalSlices : totalSlices;
+  const setNavIndex = isMultiPanel ? activeSlice.setSliceIndex : setCurrentSliceIndex;
 
   // Fetch patient data
   const { data: patient } = usePatient(currentPatientId ?? undefined);
@@ -267,7 +277,7 @@ export default function ControlPanel() {
           )}
 
           {/* Slice Navigator */}
-          {viewMode === '2d' && currentSeries && totalSlices > 1 && (
+          {viewMode === '2d' && currentSeries && navTotal > 1 && (
             <div>
               <div className="flex items-center justify-between text-xs mb-1">
                 <span className="font-semibold text-gray-400 flex items-center gap-1">
@@ -275,15 +285,15 @@ export default function ControlPanel() {
                   {t('viewer.slice', 'Slice')}
                 </span>
                 <span className="font-mono font-bold text-gray-300">
-                  {currentSliceIndex + 1} / {totalSlices}
+                  {navIndex + 1} / {navTotal}
                 </span>
               </div>
               <input
                 type="range"
                 min={0}
-                max={totalSlices - 1}
-                value={currentSliceIndex}
-                onChange={(e) => setCurrentSliceIndex(Number(e.target.value))}
+                max={navTotal - 1}
+                value={navIndex}
+                onChange={(e) => setNavIndex(Number(e.target.value))}
                 className="w-full h-1.5 bg-gray-700 rounded-full appearance-none cursor-pointer accent-blue-500"
               />
             </div>

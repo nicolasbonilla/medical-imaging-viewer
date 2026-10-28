@@ -60,6 +60,7 @@ FRONTEND_TESTS = [
     "src/utils/instanceClassification.prb007.review.test.ts",
     "src/components/MultiPanelViewer.prb004.review.test.ts",
     "src/components/NiivueViewer2D.prb004.layout.test.tsx",
+    "src/components/ControlPanel.prb008.test.tsx",
 ]
 
 

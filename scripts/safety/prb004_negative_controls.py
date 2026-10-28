@@ -101,6 +101,8 @@ T_SOR = "src/utils/sliceOnOpen.review.test.ts"
 T_ICR = "src/utils/instanceClassification.prb007.review.test.ts"
 T_MPR = "src/components/MultiPanelViewer.prb004.review.test.ts"
 T_NVL = "src/components/NiivueViewer2D.prb004.layout.test.tsx"
+T_CP = "src/components/ControlPanel.prb008.test.tsx"
+CP = "frontend/src/components/ControlPanel.tsx"
 BACKEND = ["tests/unit/test_prb006_mask_display_range.py", "tests/unit/test_prb010_region_label_colours.py",
            "tests/unit/test_prb004_review_ref_alignment.py"]
 HARNESS = ["frontend/src/test/niivueHarness.ts", "frontend/src/test/syntheticNifti.ts"]
@@ -440,6 +442,22 @@ M = {  # name: ([(file, anchor, replacement), ...], [bound frontend tests] or No
         [(NV, "  const noticeClass = 'pointer-events-none absolute bottom-14 left-1/2",
           "  const noticeClass = 'pointer-events-none absolute bottom-10 left-1/2")], [T_NVL],
         "the GPU notice low enough to cover the laterality caveat when it wraps in a narrow view (the first review fix)"),
+    # ── Film capture (coordinator, 2026-10-28): two display findings ──
+    "V40_3d_colour_bar_under_the_caveat": (
+        [(I3, "    isColorbar: false,\n", "    isColorbar: sliceType === SLICE_TYPE.RENDER,\n")], [T_3DR],
+        "niivue's colour bar back along the bottom of the 3D render, under the laterality caveat (the defect as found)"),
+    "V41_sidebar_slice_reads_the_single_view": (
+        [(CP, "  const navIndex = isMultiPanel ? activeSlice.sliceIndex : currentSliceIndex;\n",
+          "  const navIndex = currentSliceIndex;\n")], [T_CP],
+        "the sidebar names the single view's slice while the side-by-side panels show another (the defect as found)"),
+    "V42_sidebar_slider_moves_the_single_view": (
+        [(CP, "  const setNavIndex = isMultiPanel ? activeSlice.setSliceIndex : setCurrentSliceIndex;\n",
+          "  const setNavIndex = setCurrentSliceIndex;\n")], [T_CP],
+        "the sidebar slider moves a hidden single-view index, nothing on screen"),
+    "V43_sidebar_slice_count_of_the_single_view": (
+        [(CP, "  const navTotal = isMultiPanel ? activeSlice.totalSlices : totalSlices;\n",
+          "  const navTotal = totalSlices;\n")], [T_CP],
+        "the sidebar gives the single view's slice count for a panel of another size"),
     "V36_gpu_grid_notice_sends_to_standard": (
         [(NV, "new Set<MaskNotShown>(['order', 'load', 'unsaved']);", "new Set<MaskNotShown>(['grid', 'position', 'order', 'load', 'unsaved']);")],
         [T_NVR], "the notice for a mask on another grid sends the reader to the Standard view"),
