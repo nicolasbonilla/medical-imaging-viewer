@@ -187,8 +187,8 @@ m4 and the sidebar slice → PRB-008, m1 and m6 → PRB-010.
 
 ### 9.3 Negative controls
 
-`scripts/safety/prb004_negative_controls.py`, run in a throwaway worktree of `@@NEG_TREE@@`: review and film mutations
-V1–V43 — @@V_DET@@ of 43 detected; the whole set @@ALL_DET@@ of @@ALL_TOTAL@@ (`records/risk_verification/PRB-004_negative_controls_2026-10-28.json`). The real-browser probe of §6 was not
+`scripts/safety/prb004_negative_controls.py`, run in a throwaway worktree of `d28890b`: review and film mutations
+V1–V43 — 43 of 43 detected; the whole set 95 of 95 (`records/risk_verification/PRB-004_negative_controls_2026-10-28.json`). The real-browser probe of §6 was not
 re-run for the review changes: the GPU and 3D changes are covered by tests with niivue's own loaders and math, the notice
 placement by the real-browser layout test.
 
