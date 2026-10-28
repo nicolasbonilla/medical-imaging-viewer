@@ -1,0 +1,52 @@
+{
+  "executed": "2026-10-28T19:56:10",
+  "code_under_test": "c7a06cfad2d5a9392a940fadc8d09699b886c3a5 (release/owner-signoff-2026-10-25 as reviewed: application code unchanged, only the new test files present)",
+  "purpose": "failing-first evidence for the findings of the browser capture session of the release build (F08, F09, F10, F04) ; the passing case is a positive control (nothing removed, nothing said)",
+  "environment": "offline per PRB-002 (missing credentials file, empty gcloud configuration, mstool-offline-tests, no model-provider key)",
+  "backend": {
+    "file": "backend/tests/unit/test_release_2026_10_25_capture_fixes.py",
+    "failed": 3,
+    "total": 3,
+    "cases": {
+      "test_rc070_release_f09_classification_states_the_small_components_it_removed": {
+        "status": "failed",
+        "reason": "KeyError: 'removed_small_components'"
+      },
+      "test_rc070_release_f09_nothing_removed_is_stated_as_zero": {
+        "status": "failed",
+        "reason": "KeyError: 'removed_small_components'"
+      },
+      "test_rc070_release_f09_the_route_returns_the_labels_it_stored": {
+        "status": "failed",
+        "reason": "KeyError: 'labels'"
+      }
+    }
+  },
+  "frontend": {
+    "file": "frontend/src/components/LesionDashboard.release20261028.test.tsx",
+    "failed": 4,
+    "total": 5,
+    "cases": {
+      "rc070 release f08 the labels the server stored reach the viewer, every region visible, before the mask reload": {
+        "status": "failed",
+        "reason": "AssertionError: expected [ { id: +0, …(4) }, …(1) ] to deeply equal [ { id: +0, …(4) }, …(6) ]\n    at C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/release-2026-10-25/frontend/src/components/LesionDashboard.release20261028.test.tsx:133:42\n    at runNextTicks (node:internal/process/task_q"
+      },
+      "rc070 release f09 the classification card and the confirmation state how many components and voxels were removed": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"classification-removed-components\"]\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mstyle\u001b[39m=\u001b[32m\"background: rgb(22, 25, 34); border-radius: 8px; padding: 12px; display: flex; flex-directi"
+      },
+      "rc070 release f09 nothing is said when nothing was removed": {
+        "status": "passed",
+        "reason": null
+      },
+      "rc071 release f10 the card shows the confirmation pending until the refreshed DIS state is read": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirm-pending\"]\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mstyle\u001b[39m=\u001b[32m\"background: rgb(22, 25, 34); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; ga"
+      },
+      "rc070 release f04 the by-region rows show a dash, never the escape text": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element with the text: 1 — 0.04 mL. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m"
+      }
+    }
+  }
+}
