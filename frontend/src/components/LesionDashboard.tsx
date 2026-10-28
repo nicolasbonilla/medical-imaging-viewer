@@ -127,7 +127,7 @@ function undrawnText(t: TFunction, problems: UndrawnReason[] | null): string[] {
       }
       case 'no_label': {
         const vals = { value: p.value };
-        return fill(t('disReview.undrawnNoLabel', { defaultValue: 'Mask value {{value}} has no label in the label table (drawn in magenta, not as a region): reopen the segmentation.', ...vals }), vals);
+        return fill(t('disReview.undrawnNoLabel', { defaultValue: 'Mask value {{value}} has no label in the label table (drawn in cyan, not as a region): reopen the segmentation.', ...vals }), vals);
       }
       case 'hidden': {
         const vals = { name: p.name, value: p.value };

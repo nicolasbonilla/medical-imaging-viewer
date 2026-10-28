@@ -133,7 +133,7 @@ export function OverlayControls() {
             <p className="text-[10px] text-fuchsia-300 bg-fuchsia-950/40 border border-fuchsia-700/50 rounded px-1.5 py-1"
                role="alert" data-testid="unlabelled-mask-values">
               {t('segmentation.unlabelledValues', {
-                defaultValue: 'Mask value(s) {{values}} have no label in the label table: drawn in magenta. Reopen the segmentation to load its labels; it cannot be confirmed until every value has a label.',
+                defaultValue: 'Mask value(s) {{values}} have no label in the label table: drawn in cyan. Reopen the segmentation to load its labels; it cannot be confirmed until every value has a label.',
                 values: unlabelled.join(', '),
               }).replace('{{values}}', unlabelled.join(', '))}
             </p>
