@@ -508,6 +508,18 @@ export interface RegionClassificationResult {
   processing_time_ms: number;
   mask_updated: boolean;
   labels_updated: boolean;
+  /** The label scheme the server stored with the classified mask (release 2026-10-25, capture finding F08). */
+  labels?: Array<{ id: number; name: string; color: string; opacity: number; visible: boolean }>;
+  /** Lesion components the classification removed from the mask (below the minimum lesion size; finding F09). */
+  removed_small_components?: RemovedSmallComponents;
+}
+
+export interface RemovedSmallComponents {
+  components: number;
+  voxels: number;
+  volume_mm3: number;
+  min_lesion_volume_mm3: number;
+  reason: string;
 }
 
 export interface ZoneMapStat {

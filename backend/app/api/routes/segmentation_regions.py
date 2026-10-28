@@ -47,6 +47,33 @@ from app.utils import load_nifti_from_bytes
 from app.api.routes.segmentation_analysis import _voxel_spacing_from_source_image
 from app.services import dis_review_gate as dis_gate   # PRB-003 (RC-070)
 
+
+def removed_small_components(before, after, voxel_spacing) -> dict:
+    """The lesion components of `before` that the region classification left out of `after` (release 2026-10-25,
+    capture finding F09). Every classifier path in the Class C `ms_region_classifier.py` skips components smaller
+    than MIN_LESION_VOLUME_MM3 and builds the classified mask from zeros, so those components disappear from the
+    stored mask; this states how many, how large and why, without changing the Class C module. Components are
+    18-connected, as the classifier labels them (RC-030)."""
+    from app.services.lesion_metrics import MIN_LESION_VOLUME_MM3, label_lesions
+    labeled, n = label_lesions((np.asarray(before) > 0).astype(np.int32))
+    voxel_mm3 = float(np.prod(voxel_spacing))
+    components = voxels = 0
+    if n:
+        sizes = np.bincount(labeled.ravel(), minlength=n + 1)
+        kept = np.bincount(labeled[np.asarray(after) > 0], minlength=n + 1)
+        gone = (sizes > 0) & (kept == 0)
+        gone[0] = False
+        components, voxels = int(gone.sum()), int(sizes[gone].sum())
+    minimum = float(MIN_LESION_VOLUME_MM3)
+    return {
+        "components": components,
+        "voxels": voxels,
+        "volume_mm3": round(voxels * voxel_mm3, 3),
+        "min_lesion_volume_mm3": minimum,
+        "reason": (f"Lesion components smaller than {minimum:g} mm³ are below the minimum lesion size of the region "
+                   "classification; they are not classified and were removed from the mask."),
+    }
+
 settings = get_settings()
 
 
@@ -448,6 +475,15 @@ async def classify_regions(
         response_data["segmentation_id"] = segmentation_id
         response_data["mask_updated"] = classified_mask is not None
         response_data["labels_updated"] = classified_mask is not None
+        if classified_mask is not None:
+            # Capture finding F09: what the classification removed from the mask, and why — shown before the
+            # radiologist confirms (also kept with the stored classification record, for a later session).
+            response_data["removed_small_components"] = removed_small_components(
+                lesion_mask, classified_mask, voxel_spacing)
+            # Capture finding F08: the label scheme stored with the mask, so the viewer draws every region at once.
+            response_data["labels"] = [
+                {"id": lbl.id, "name": lbl.name, "color": lbl.color, "opacity": lbl.opacity, "visible": lbl.visible}
+                for lbl in metadata.labels]
 
         # Sanitize: replace inf/nan with finite values (EDT can produce inf)
         import math

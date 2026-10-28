@@ -324,6 +324,10 @@ interface SegmentationState {
   addLabel: (label: LabelInfo) => void;
   removeLabel: (labelId: number) => void;
   setLabelPreset: (preset: LabelPreset) => void;
+  /** Labels the SERVER stored with the mask (region classification): written to currentSegmentation AND
+   *  activeSegmentation (what the 2D canvas and NiiVue draw from), every label at its own visibility; not a
+   *  local edit (isDirty unchanged). Release 2026-10-25, capture finding F08. */
+  applyServerLabels: (segmentationId: string, labels: LabelInfo[]) => void;
 
   // =========================================================================
   // Actions - Paint Tool
@@ -629,6 +633,25 @@ export const useSegmentationStore = create<SegmentationState>()(
               labelVisibility: visibility,
               activeLabel: state.activeLabel === labelId ? 1 : state.activeLabel,
               isDirty: true,
+            };
+          }),
+
+        applyServerLabels: (segmentationId, labels) =>
+          set((state) => {
+            const cur = state.currentSegmentation;
+            const active = state.activeSegmentation;
+            const visibility: Record<number, boolean> = {};
+            labels.forEach((l) => { visibility[l.id] = l.visible; });
+            const activeMatches = !!active && active.id === segmentationId;
+            return {
+              currentSegmentation: cur && cur.segmentation_id === segmentationId
+                ? { ...cur, metadata: { ...cur.metadata, labels } }
+                : cur,
+              activeSegmentation: activeMatches ? { ...active!, labels } : active,
+              labelVisibility: activeMatches ? visibility : state.labelVisibility,
+              activeLabel: activeMatches && !labels.some((l) => l.id === state.activeLabel)
+                ? labels.find((l) => l.id !== 0)?.id ?? 1
+                : state.activeLabel,
             };
           }),
 
