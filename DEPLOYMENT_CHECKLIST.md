@@ -68,8 +68,10 @@ assignment, so their creators would see "No patients are assigned to you yet".
    `python scripts/owner/prb021_backfill_creator_care_team.py --project brain-mri-476110 --users-json users.json --granted-by <your admin user id>`
 3. Read the plan and the skipped groups (legacy records without provenance, administrator creators, unknown or inactive
    accounts, existing or revoked rows). Then the same command with `--apply`, type `ASSIGN`; keep the backup file it writes
-   (it lists the created ids; to undo, revoke exactly those: `DELETE /api/v1/patients/{id}/care-team/{assignment_id}`).
-   Never with the Daita project (the script refuses it); never from an automated agent.
+   (unique name; it lists the created ids before each row is written; to undo, revoke exactly those:
+   `DELETE /api/v1/patients/{id}/care-team/{assignment_id}` — or, if the backup is lost, every row whose `basis` is
+   `prb021_backfill_created_by` granted by you). The script acts only on `brain-mri-476110` and refuses any other project;
+   accounts without `"is_active": true` in `users.json` are treated as inactive. Never from an automated agent.
 4. Assign the remaining treating clinicians, and triage legacy records (`GET /api/v1/patients/quarantined`), before
    telling users about the change.
 5. Only then deploy the backend; after deploy, sign in as a clinician and check that their patients are listed.

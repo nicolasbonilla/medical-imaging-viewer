@@ -737,7 +737,7 @@
       ],
       "requirement": "REQ-SEC-030, REQ-SEC-031, REQ-REG-010",
       "change": "PRB-020..PRB-026 (DRAFT, PENDING owner approval; branch fix/platform-security-findings-prb020; not merged, not deployed)",
-      "negative_control": "Re-executed 2026-10-28 after the independent review of PR #70 by scripts/safety/prb020_negative_controls.py on 8b4853c (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 8 of 8 mutations for this control detected (F1, F2, F3, R1, R2, R3, R4, V20); whole run 89 of 89. Tests written before the fixes fail on main @ 70cc5c7 (docs/iec62304/records/risk_verification/PRB-020_tests_on_base_2026-10-28.json) and the review tests at the previous PR head 7de9334 (docs/iec62304/records/risk_verification/PRB-020_review1_tests_on_7de9334_2026-10-28.json).",
+      "negative_control": "Re-executed 2026-10-28 after the re-review of PR #70 by scripts/safety/prb020_negative_controls.py on 12241b3 (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 8 of 8 mutations for this control detected (F1, F2, F3, R1, R2, R3, R4, V20); whole run 98 of 98. Failing-first records: PRB-020_tests_on_base_2026-10-28.json (main @ 70cc5c7), PRB-020_review1_tests_on_7de9334_2026-10-28.json, PRB-020_review2_tests_on_570d78f_2026-10-28.json and PRB-020_review2_tests_on_7de9334_2026-10-28.json (all under docs/iec62304/records/risk_verification/).",
       "note": "PRB-020. Existing self-registered accounts in production are not touched (owner review, PRB-020 §7). Production not contacted. Review of PR #70 (m4): only ENVIRONMENT development/local/test/testing counts as non-production (fail closed)."
     },
     "RC-081": {
@@ -747,12 +747,13 @@
       "implementation": "backend/app/api/routes/auth.py (create_user); backend/app/security/auth.py (register_user)",
       "tests": [
         "tests/unit/test_prb020_self_registration_and_accounts.py",
-        "tests/unit/test_prb020_review1_findings.py"
+        "tests/unit/test_prb020_review1_findings.py",
+        "tests/unit/test_prb020_review2_findings.py"
       ],
       "requirement": "REQ-SEC-031",
       "change": "PRB-020..PRB-026 (DRAFT, PENDING owner approval; branch fix/platform-security-findings-prb020; not merged, not deployed)",
-      "negative_control": "Re-executed 2026-10-28 after the independent review of PR #70 by scripts/safety/prb020_negative_controls.py on 8b4853c (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 8 of 8 mutations for this control detected (R5, R6, S3, V12, V13, V14, V21, V22); whole run 89 of 89. Tests written before the fixes fail on main @ 70cc5c7 (docs/iec62304/records/risk_verification/PRB-020_tests_on_base_2026-10-28.json) and the review tests at the previous PR head 7de9334 (docs/iec62304/records/risk_verification/PRB-020_review1_tests_on_7de9334_2026-10-28.json).",
-      "note": "PRB-020. API only (no user-management page); no invitation or e-mail verification. Review of PR #70 (m1, m8): audit names the acting administrator and /auth/users, privileged event for an admin account; a refused password answers 400 and is neither returned nor logged."
+      "negative_control": "Re-executed 2026-10-28 after the re-review of PR #70 by scripts/safety/prb020_negative_controls.py on 12241b3 (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 9 of 9 mutations for this control detected (R5, R6, S3, V12, V13, V14, V21, V22, W8); whole run 98 of 98. Failing-first records: PRB-020_tests_on_base_2026-10-28.json (main @ 70cc5c7), PRB-020_review1_tests_on_7de9334_2026-10-28.json, PRB-020_review2_tests_on_570d78f_2026-10-28.json and PRB-020_review2_tests_on_7de9334_2026-10-28.json (all under docs/iec62304/records/risk_verification/).",
+      "note": "PRB-020. API only (no user-management page); no invitation or e-mail verification. Review of PR #70 (m1, m8): audit names the acting administrator and /auth/users, privileged event for an admin account; a refused password answers 400 and is neither returned nor logged. Re-review of PR #70 (R4, R5): sign-in and change-password leak regressions tested; an unexpected error returns the generic message only."
     },
     "RC-082": {
       "description": "Patient list and search return to a non-administrator only the patients of the caller's active care-team assignments; administrator: every record; unreadable assignments: 503",
@@ -765,7 +766,7 @@
       ],
       "requirement": "REQ-SEC-032 (REQ-SEC-014)",
       "change": "PRB-020..PRB-026 (DRAFT, PENDING owner approval; branch fix/platform-security-findings-prb020; not merged, not deployed)",
-      "negative_control": "Re-executed 2026-10-28 after the independent review of PR #70 by scripts/safety/prb020_negative_controls.py on 8b4853c (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 11 of 11 mutations for this control detected (P1, P2, P3, P4, P5, P6, P7, VF1, VF2, VF3, VF4); whole run 89 of 89. Tests written before the fixes fail on main @ 70cc5c7 (docs/iec62304/records/risk_verification/PRB-020_tests_on_base_2026-10-28.json) and the review tests at the previous PR head 7de9334 (docs/iec62304/records/risk_verification/PRB-020_review1_tests_on_7de9334_2026-10-28.json).",
+      "negative_control": "Re-executed 2026-10-28 after the re-review of PR #70 by scripts/safety/prb020_negative_controls.py on 12241b3 (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 11 of 11 mutations for this control detected (P1, P2, P3, P4, P5, P6, P7, VF1, VF2, VF3, VF4); whole run 98 of 98. Failing-first records: PRB-020_tests_on_base_2026-10-28.json (main @ 70cc5c7), PRB-020_review1_tests_on_7de9334_2026-10-28.json, PRB-020_review2_tests_on_570d78f_2026-10-28.json and PRB-020_review2_tests_on_7de9334_2026-10-28.json (all under docs/iec62304/records/risk_verification/).",
       "note": "PRB-021. Whether the registry was read in production by self-registered accounts is unknown (owner/DPO; production not contacted). Review of PR #70 (M3): a non-administrator's empty list says no patient is assigned, without a create invitation; tile 'assigned to you'."
     },
     "RC-083": {
@@ -775,12 +776,13 @@
       "implementation": "backend/app/api/routes/patients.py (create_patient); backend/app/models/patient_schemas.py (created_by, exclude=True); backend/app/services/patient_service_firestore.py; backend/app/security/patient_access.py (patient_assignments); backend/app/security/patient_access_dependency.py",
       "tests": [
         "tests/unit/test_prb021_patient_scope_creator_counts.py",
-        "tests/unit/test_prb021_backfill_creator_care_team.py"
+        "tests/unit/test_prb021_backfill_creator_care_team.py",
+        "tests/unit/test_prb020_review2_findings.py"
       ],
       "requirement": "REQ-SEC-033 (REQ-SEC-017, REQ-SEC-018)",
       "change": "PRB-020..PRB-026 (DRAFT, PENDING owner approval; branch fix/platform-security-findings-prb020; not merged, not deployed)",
-      "negative_control": "Re-executed 2026-10-28 after the independent review of PR #70 by scripts/safety/prb020_negative_controls.py on 8b4853c (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 13 of 13 mutations for this control detected (C1, C2, C3, C4, C5, C6, C7, V10, V11, V6, V7, V8, V9); whole run 89 of 89. Tests written before the fixes fail on main @ 70cc5c7 (docs/iec62304/records/risk_verification/PRB-020_tests_on_base_2026-10-28.json) and the review tests at the previous PR head 7de9334 (docs/iec62304/records/risk_verification/PRB-020_review1_tests_on_7de9334_2026-10-28.json).",
-      "note": "PRB-023. Creators of records created before the fix are not assigned (no backfill; owner decision). Review of PR #70 (M3): owner-run backfill scripts/owner/prb021_backfill_creator_care_team.py, tested offline only; never run by the agent."
+      "negative_control": "Re-executed 2026-10-28 after the re-review of PR #70 by scripts/safety/prb020_negative_controls.py on 12241b3 (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 20 of 20 mutations for this control detected (C1, C2, C3, C4, C5, C6, C7, V10, V11, V6, V7, V8, V9, W1, W2, W3, W4, W5, W6, W7); whole run 98 of 98. Failing-first records: PRB-020_tests_on_base_2026-10-28.json (main @ 70cc5c7), PRB-020_review1_tests_on_7de9334_2026-10-28.json, PRB-020_review2_tests_on_570d78f_2026-10-28.json and PRB-020_review2_tests_on_7de9334_2026-10-28.json (all under docs/iec62304/records/risk_verification/).",
+      "note": "PRB-023. Creators of records created before the fix are not assigned (no backfill; owner decision). Review of PR #70 (M3): owner-run backfill scripts/owner/prb021_backfill_creator_care_team.py, tested offline only; never run by the agent. Re-review of PR #70 (R1-R3): the backfill acts only on brain-mri-476110; accounts active only when marked so; each row id in the backup before the row; unique backup names; undo by basis documented."
     },
     "RC-084": {
       "description": "Administrator account management reads the persistent user store (list, read, change, delete); an account the store did not accept is not created; sign-in lockout stored without overwriting the password hash",
@@ -789,12 +791,13 @@
       "implementation": "backend/app/security/auth.py (list_users, get_user_by_id, update_user, delete_user, register_user, _persist_login_state); backend/app/api/routes/auth.py (404 for an unknown account)",
       "tests": [
         "tests/unit/test_prb020_self_registration_and_accounts.py",
-        "tests/unit/test_prb020_review1_findings.py"
+        "tests/unit/test_prb020_review1_findings.py",
+        "tests/unit/test_prb020_review2_findings.py"
       ],
       "requirement": "REQ-SEC-034",
       "change": "PRB-020..PRB-026 (DRAFT, PENDING owner approval; branch fix/platform-security-findings-prb020; not merged, not deployed)",
-      "negative_control": "Re-executed 2026-10-28 after the independent review of PR #70 by scripts/safety/prb020_negative_controls.py on 8b4853c (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 10 of 10 mutations for this control detected (S1, S2, S4, S5, S6, V15, V16, V17, V18, V19); whole run 89 of 89. Tests written before the fixes fail on main @ 70cc5c7 (docs/iec62304/records/risk_verification/PRB-020_tests_on_base_2026-10-28.json) and the review tests at the previous PR head 7de9334 (docs/iec62304/records/risk_verification/PRB-020_review1_tests_on_7de9334_2026-10-28.json).",
-      "note": "PRB-024. Also run by the controls: tests/security/test_authentication.py::TestAccountLockout (existing). The role and the active flag travel in the access token; a change takes effect at the next sign-in. Review of PR #70 (m2, m3): every profile save keeps the stored hash and history or writes nothing; a deletion the store refused answers 503."
+      "negative_control": "Re-executed 2026-10-28 after the re-review of PR #70 by scripts/safety/prb020_negative_controls.py on 12241b3 (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 11 of 11 mutations for this control detected (S1, S2, S4, S5, S6, V15, V16, V17, V18, V19, W9); whole run 98 of 98. Failing-first records: PRB-020_tests_on_base_2026-10-28.json (main @ 70cc5c7), PRB-020_review1_tests_on_7de9334_2026-10-28.json, PRB-020_review2_tests_on_570d78f_2026-10-28.json and PRB-020_review2_tests_on_7de9334_2026-10-28.json (all under docs/iec62304/records/risk_verification/).",
+      "note": "PRB-024. Also run by the controls: tests/security/test_authentication.py::TestAccountLockout (existing). The role and the active flag travel in the access token; a change takes effect at the next sign-in. Review of PR #70 (m2, m3): every profile save keeps the stored hash and history or writes nothing; a deletion the store refused answers 503. Re-review of PR #70 (R6): profile saves read the password from the store only and refuse otherwise."
     },
     "RC-085": {
       "description": "Deleted studies (cancelled, entered-in-error) and deleted documents are neither listed nor counted unless asked for by status; each study states its saved segmentations (zone maps excluded) or that the count is unknown; permanent study deletion is administrator-only",
@@ -809,7 +812,7 @@
       ],
       "requirement": "REQ-FUNC-110",
       "change": "PRB-020..PRB-026 (DRAFT, PENDING owner approval; branch fix/platform-security-findings-prb020; not merged, not deployed)",
-      "negative_control": "Re-executed 2026-10-28 after the independent review of PR #70 by scripts/safety/prb020_negative_controls.py on 8b4853c (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 17 of 17 mutations for this control detected (F6, F7, F8, K1, K2, K3, K4, K5, K6, K7, V1, V23, V2, V3, V4, V5, VF5); whole run 89 of 89. Tests written before the fixes fail on main @ 70cc5c7 (docs/iec62304/records/risk_verification/PRB-020_tests_on_base_2026-10-28.json) and the review tests at the previous PR head 7de9334 (docs/iec62304/records/risk_verification/PRB-020_review1_tests_on_7de9334_2026-10-28.json).",
+      "negative_control": "Re-executed 2026-10-28 after the re-review of PR #70 by scripts/safety/prb020_negative_controls.py on 12241b3 (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 17 of 17 mutations for this control detected (F6, F7, F8, K1, K2, K3, K4, K5, K6, K7, V1, V23, V2, V3, V4, V5, VF5); whole run 98 of 98. Failing-first records: PRB-020_tests_on_base_2026-10-28.json (main @ 70cc5c7), PRB-020_review1_tests_on_7de9334_2026-10-28.json, PRB-020_review2_tests_on_570d78f_2026-10-28.json and PRB-020_review2_tests_on_7de9334_2026-10-28.json (all under docs/iec62304/records/risk_verification/).",
       "note": "PRB-025. Also HAZ-010 (permanent deletion). Review of PR #70 (M1, M2, m5, m6): series and image deletion need IMAGE_DELETE; cancelling a study (DELETE or PUT status) needs PATIENT_UPDATE; tiles show a dash for unknown counts; page counts concurrent."
     },
     "RC-086": {
@@ -823,7 +826,7 @@
       ],
       "requirement": "REQ-REG-011",
       "change": "PRB-020..PRB-026 (DRAFT, PENDING owner approval; branch fix/platform-security-findings-prb020; not merged, not deployed)",
-      "negative_control": "Re-executed 2026-10-28 after the independent review of PR #70 by scripts/safety/prb020_negative_controls.py on 8b4853c (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 3 of 3 mutations for this control detected (F4, F5, VF6); whole run 89 of 89. Tests written before the fixes fail on main @ 70cc5c7 (docs/iec62304/records/risk_verification/PRB-020_tests_on_base_2026-10-28.json) and the review tests at the previous PR head 7de9334 (docs/iec62304/records/risk_verification/PRB-020_review1_tests_on_7de9334_2026-10-28.json).",
+      "negative_control": "Re-executed 2026-10-28 after the re-review of PR #70 by scripts/safety/prb020_negative_controls.py on 12241b3 (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 3 of 3 mutations for this control detected (F4, F5, VF6); whole run 98 of 98. Failing-first records: PRB-020_tests_on_base_2026-10-28.json (main @ 70cc5c7), PRB-020_review1_tests_on_7de9334_2026-10-28.json, PRB-020_review2_tests_on_570d78f_2026-10-28.json and PRB-020_review2_tests_on_7de9334_2026-10-28.json (all under docs/iec62304/records/risk_verification/).",
       "note": "PRB-022. Labelling control; documents by inspection; open claims listed in PRB-022 rows 10-15. HAZ-010 given as context (claims about access security). Review of PR #70 (m7): IEC 62304 badge removed; README IEC 81001-5-1 claim corrected (inspection)."
     },
     "RC-087": {
@@ -838,7 +841,7 @@
       ],
       "requirement": "REQ-UI-010, REQ-UI-011",
       "change": "PRB-020..PRB-026 (DRAFT, PENDING owner approval; branch fix/platform-security-findings-prb020; not merged, not deployed)",
-      "negative_control": "Re-executed 2026-10-28 after the independent review of PR #70 by scripts/safety/prb020_negative_controls.py on 8b4853c (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 11 of 11 mutations for this control detected (A2, F10, F11, F12, F16, F17, F18, F19, F20, F21, F9); whole run 89 of 89. Tests written before the fixes fail on main @ 70cc5c7 (docs/iec62304/records/risk_verification/PRB-020_tests_on_base_2026-10-28.json) and the review tests at the previous PR head 7de9334 (docs/iec62304/records/risk_verification/PRB-020_review1_tests_on_7de9334_2026-10-28.json).",
+      "negative_control": "Re-executed 2026-10-28 after the re-review of PR #70 by scripts/safety/prb020_negative_controls.py on 12241b3 (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 11 of 11 mutations for this control detected (A2, F10, F11, F12, F16, F17, F18, F19, F20, F21, F9); whole run 98 of 98. Failing-first records: PRB-020_tests_on_base_2026-10-28.json (main @ 70cc5c7), PRB-020_review1_tests_on_7de9334_2026-10-28.json, PRB-020_review2_tests_on_570d78f_2026-10-28.json and PRB-020_review2_tests_on_7de9334_2026-10-28.json (all under docs/iec62304/records/risk_verification/).",
       "note": "PRB-026 (B, C). Also HAZ-001 (provenance badge). es/de wording not reviewed by native speakers."
     },
     "RC-088": {
@@ -853,7 +856,7 @@
       ],
       "requirement": "REQ-FUNC-111",
       "change": "PRB-020..PRB-026 (DRAFT, PENDING owner approval; branch fix/platform-security-findings-prb020; not merged, not deployed)",
-      "negative_control": "Re-executed 2026-10-28 after the independent review of PR #70 by scripts/safety/prb020_negative_controls.py on 8b4853c (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 5 of 5 mutations for this control detected (A1, F13, F14, F15, V24); whole run 89 of 89. Tests written before the fixes fail on main @ 70cc5c7 (docs/iec62304/records/risk_verification/PRB-020_tests_on_base_2026-10-28.json) and the review tests at the previous PR head 7de9334 (docs/iec62304/records/risk_verification/PRB-020_review1_tests_on_7de9334_2026-10-28.json).",
+      "negative_control": "Re-executed 2026-10-28 after the re-review of PR #70 by scripts/safety/prb020_negative_controls.py on 12241b3 (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 5 of 5 mutations for this control detected (A1, F13, F14, F15, V24); whole run 98 of 98. Failing-first records: PRB-020_tests_on_base_2026-10-28.json (main @ 70cc5c7), PRB-020_review1_tests_on_7de9334_2026-10-28.json, PRB-020_review2_tests_on_570d78f_2026-10-28.json and PRB-020_review2_tests_on_7de9334_2026-10-28.json (all under docs/iec62304/records/risk_verification/).",
       "note": "PRB-026 (A)."
     },
     "RC-089": {
@@ -866,7 +869,7 @@
       ],
       "requirement": "REQ-SEC-035",
       "change": "PRB-027 (review of PR #70; DRAFT, PENDING owner approval; branch fix/platform-security-findings-prb020; not merged, not deployed)",
-      "negative_control": "Re-executed 2026-10-28 after the independent review of PR #70 by scripts/safety/prb020_negative_controls.py on 8b4853c (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 3 of 3 mutations for this control detected (V25, V26, V27); whole run 89 of 89. Tests written before the fixes fail on main @ 70cc5c7 (docs/iec62304/records/risk_verification/PRB-020_tests_on_base_2026-10-28.json) and the review tests at the previous PR head 7de9334 (docs/iec62304/records/risk_verification/PRB-020_review1_tests_on_7de9334_2026-10-28.json).",
+      "negative_control": "Re-executed 2026-10-28 after the re-review of PR #70 by scripts/safety/prb020_negative_controls.py on 12241b3 (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 3 of 3 mutations for this control detected (V25, V26, V27); whole run 98 of 98. Failing-first records: PRB-020_tests_on_base_2026-10-28.json (main @ 70cc5c7), PRB-020_review1_tests_on_7de9334_2026-10-28.json, PRB-020_review2_tests_on_570d78f_2026-10-28.json and PRB-020_review2_tests_on_7de9334_2026-10-28.json (all under docs/iec62304/records/risk_verification/).",
       "note": "PRB-027 part A. Technicians and radiologists still search the whole PACS (inherent to import); PACS searches are not audited (proposed). Part B (MRN conflict signal) recorded, not changed."
     }
   },

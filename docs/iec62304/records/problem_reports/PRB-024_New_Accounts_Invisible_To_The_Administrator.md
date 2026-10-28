@@ -57,3 +57,15 @@ store on each request, or a short token lifetime as CAPA-015 sets).
   and the account stays listed.
 Tests: `test_rc084_prb024_r1_*` (5 cases) in `backend/tests/unit/test_prb020_review1_findings.py`; all fail at `7de9334`
 (`records/risk_verification/PRB-020_review1_tests_on_7de9334_2026-10-28.json`). Negative controls S6 (re-anchored), V15–V19 (`records/risk_verification/PRB-020_negative_controls_2026-10-28.json`).
+
+## Re-review of PR #70 (2026-10-28) *(re-review of PR #70, 2026-10-28 — DRAFT, PENDING owner approval)*
+
+- **R6**: a profile save fell back to this process's password hash when the store gave none; that copy may be older than a
+  password changed on another instance, and writing it back would undo the change. The password is now read from the store
+  only; if the store gives none (its reader swallows errors, so "unreadable" and "no data" look the same) the save is
+  refused (PATCH → 503, nothing changed). A password-read error while refreshing the cache no longer turns the PATCH into
+  a 500. Tests `test_rc084_prb024_r2_profile_save_never_uses_the_remembered_hash[error|nothing]` (fail at `570d78f`,
+  `records/risk_verification/PRB-020_review2_tests_on_570d78f_2026-10-28.json`); control W9.
+- **R4**: a refused new password on `POST /auth/change-password` answered 500 and was logged as typed until the first
+  review's handler fix; regression test `test_rc084_prb024_r2_a_refused_new_password_leaks_nothing` (fails at `7de9334`,
+  `records/risk_verification/PRB-020_review2_tests_on_7de9334_2026-10-28.json`).

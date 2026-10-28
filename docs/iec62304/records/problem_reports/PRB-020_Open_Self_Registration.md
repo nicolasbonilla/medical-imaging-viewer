@@ -100,7 +100,7 @@ product (no other account-creation path existed). **PENDING owner approval.**
   On the base: every RC-080/RC-081 test fails except two positive controls (registration works when explicitly enabled
   outside production; the Register tab shows when the server says it is on).
 - Negative controls: `scripts/safety/prb020_negative_controls.py`, mutations R1–R6 and F1–F3 (record
-  `records/risk_verification/PRB-020_negative_controls_2026-10-28.json`): first run 56 of 56 detected; re-run after the independent review of PR #70 with 33 more mutations, 89 of 89 detected (the record now holds the re-run); RC-080 8 of 8, RC-081 8 of 8.
+  `records/risk_verification/PRB-020_negative_controls_2026-10-28.json`): first run 56 of 56 detected; re-run after the independent review of PR #70, 89 of 89; after the re-review, 98 of 98 detected (the record holds the latest run); RC-080 8 of 8, RC-081 9 of 9.
 - Whole suites after the fix: backend 1 failure (the local-only WebAuthn test, `webauthn` not installed — as on every
   earlier PR); frontend all pass; `tsc --noEmit` clean; `vite build` passes.
 
@@ -146,3 +146,25 @@ product (no other account-creation path existed). **PENDING owner approval.**
 - Additional owner action (§7, item 5): if production logs are kept, check whether "Request validation failed" entries
   hold `input` values of password fields and restrict or delete them.
 Records: `records/risk_verification/PRB-020_review1_tests_on_7de9334_2026-10-28.json`, `records/risk_verification/PRB-020_negative_controls_2026-10-28.json`.
+
+## Re-review of PR #70 (2026-10-28) *(re-review of PR #70, 2026-10-28 — DRAFT, PENDING owner approval)*
+
+- **R4 — two more password leaks were closed by the first review's handler fix**: signing in with a password longer than
+  128 characters returned that password in the error body and wrote it to the log; a refused new password on
+  `POST /auth/change-password` answered 500 and was logged as typed. Both go through the same validation handler; regression
+  tests `test_rc081_prb020_r2_sign_in_with_an_over_long_password_leaks_nothing` and
+  `test_rc084_prb024_r2_a_refused_new_password_leaks_nothing` pass at `570d78f` and fail at `7de9334` (`records/risk_verification/PRB-020_review2_tests_on_7de9334_2026-10-28.json`; body leak and
+  500). Controls V21/V22 now also break them.
+- **R5 — the catch-all 500 handler returned the exception's type and message to the client** (`exception_handlers.py`,
+  `unhandled_exception_handler`, `details.exception_message`), contrary to its own docstring; a message can carry internal
+  detail (a path, a query, a connection string). **Fixed**: the client gets the generic message only; the type and message
+  stay in the server log, which never contains the request body. Test
+  `test_rc081_prb020_r2_unexpected_errors_return_no_internal_detail` (fails at `570d78f`, `records/risk_verification/PRB-020_review2_tests_on_570d78f_2026-10-28.json`); control W8.
+
+### Known issue (not changed) — input validators would log password samples
+`backend/app/core/security/validators.py` (`SQLValidator` lines 143, 161; the XSS and command validators at 240, 260, 278,
+376, 394) write `value_sample: value[:100]` to the audit log when a field contains an SQL keyword or a pattern. The
+input-validation middleware that would apply them to request bodies is **inactive today**: `'/'` is in its `bypass_paths`
+(`validation_middleware.py:64`), so every path is bypassed. If that list is ever corrected, every password containing a
+listed keyword would be written to the audit log. Before the middleware is re-enabled: remove `value_sample`, or never
+validate fields whose name contains `password` (proposed; RMF §7.2 item). No password reaches these validators today.

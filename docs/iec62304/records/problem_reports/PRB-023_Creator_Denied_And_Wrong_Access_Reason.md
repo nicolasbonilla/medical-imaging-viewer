@@ -72,3 +72,21 @@ records at creation (attending, granted by the administrator who runs it, basis 
 Tests (offline, in-memory stand-in only — the script was **not** run against anything):
 `backend/tests/unit/test_prb021_backfill_creator_care_team.py` — `test_rc083_prb023_backfill_*` (6); all fail at `7de9334`
 (the script did not exist). Negative controls V6–V11 (`records/risk_verification/PRB-020_negative_controls_2026-10-28.json`).
+
+## Re-review of PR #70 (2026-10-28) *(re-review of PR #70, 2026-10-28 — DRAFT, PENDING owner approval)*
+
+- **R1 (major)**: the backfill refused only the Daita project and an empty value; any other project id (another project,
+  a typo such as `brain-mri-47611`) passed, and a real run would have read — and with `--apply` written to — that
+  project. It now acts **only on `brain-mri-476110`** (allow-list), checked before the account list is read or any client
+  is built; the Daita deny-list stays as a second check.
+- **R2**: an account without an `is_active` field counted as active (creator and granter). Now active only when the list
+  says `"is_active": true`.
+- **R3**: the backup was rewritten only at the end and named to the second (a run in the same second overwrote the previous
+  run's backup). Now the name carries microseconds and a random part and is created exclusively; each row's id is written
+  and flushed to the backup (`attempted_assignment_ids`) **before** the row is written, and `created_assignment_ids` after;
+  at start-up the script prints how many rows earlier runs left; the docstring states the fallback undo — revoke every row
+  whose `basis` is `prb021_backfill_created_by` and whose `granted_by` is the administrator who ran it.
+Tests `test_rc083_prb023_r2_*` in `backend/tests/unit/test_prb020_review2_findings.py` (12 cases: 7 project values refused
+with no read; the production project accepted — positive control; no-field accounts; id in the backup before each write;
+no overwrite; earlier rows counted and the undo documented); all but the positive control fail at `570d78f` (`records/risk_verification/PRB-020_review2_tests_on_570d78f_2026-10-28.json`).
+Negative controls V10 (re-anchored), W1–W7 (`records/risk_verification/PRB-020_negative_controls_2026-10-28.json`). The script was still never run against anything.
