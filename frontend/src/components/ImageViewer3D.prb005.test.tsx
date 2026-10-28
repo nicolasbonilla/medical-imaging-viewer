@@ -101,7 +101,7 @@ describe('PRB-005 — the 3D view on a host name without a dot', () => {
 
 describe('PRB-006 — 3D mask colours do not depend on the display range in the mask header', () => {
   for (const mode of ['volume', 'multiplanar'] as const) {
-    it(`rc074 3D ${mode}: lesion mask and both visit masks — 0 transparent, labels >= 1 full colour`, async () => {
+    it('rc074 3D ' + mode + ': lesion mask and both visit masks — 0 transparent, labels >= 1 full colour', async () => {
       setScene(mode, true);
       installBrowserNetwork('http://127.0.0.1:4173', ROUTES());
       render(<ImageViewer3D patientName="Ana Torres" />);
