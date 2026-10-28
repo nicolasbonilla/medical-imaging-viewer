@@ -271,6 +271,10 @@ M = {  # name: ([(file, anchor, replacement), ...], [bound frontend tests] or No
     "P9_backend_stores_red": (
         [(REG, '    "Periventricular": "#E69F00",\n', '    "Periventricular": "#FF0000",\n')], None,
         "classify-regions / generate-zone-map store periventricular red"),
+    "P11_zone_colouring_legend_red_green": (
+        [(ZP, "              <span className={`w-2 h-2 rounded-full ${REGION_DOT_CLASSES[region]}`} />{ZONE_ABBREV[region]}",
+          "              <span className={`w-2 h-2 rounded-full ${({ Periventricular: 'bg-red-500', Juxtacortical: 'bg-green-500', Infratentorial: 'bg-blue-500', 'Deep White Matter': 'bg-yellow-500' } as Record<string, string>)[region]}`} />{ZONE_ABBREV[region]}")],
+        [T_SCL], "the zone-colouring legend back to red / green / blue / yellow (found during the PRB-010 work)"),
     "P10_region_names_case_sensitive": (
         [(RC, "  return MAGNIMS_REGIONS.find((r) => r.toLowerCase() === n);\n",
           "  return MAGNIMS_REGIONS.find((r) => r === name);\n")], [T_RC],

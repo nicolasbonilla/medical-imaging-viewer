@@ -25,12 +25,16 @@ import {
 import { segmentationAPI } from '@/api/segmentation';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import type { ZoneMapResult } from '@/types';
-import { REGION_DOT_CLASSES, REGION_TEXT_CLASSES } from '@/utils/regionColors';
+import { REGION_DOT_CLASSES, REGION_TEXT_CLASSES, MAGNIMS_REGIONS } from '@/utils/regionColors';
 
 // PRB-010: the same mapping as the lesion legend and the overlays (was red / green / blue / yellow).
 const REGION_COLORS: Record<string, string> = REGION_DOT_CLASSES;
 
 const REGION_TEXT_COLORS: Record<string, string> = REGION_TEXT_CLASSES;
+
+const ZONE_ABBREV: Record<string, string> = {
+  Periventricular: 'PV', Juxtacortical: 'JC', Infratentorial: 'IT', 'Deep White Matter': 'DWM',
+};
 
 const ZONE_LABEL_NAMES: Record<number, string> = {
   1: 'Periventricular',
@@ -207,13 +211,14 @@ export function MAGNIMSZoneMapPanel({ fileId }: MAGNIMSZoneMapPanelProps) {
         )}
       </div>
 
-      {/* Zone colorization legend */}
+      {/* Zone colorization legend — PRB-010: the shared region mapping (was red / green / blue / yellow) */}
       {isGenerated && (
         <div className="flex items-center gap-2 text-[9px] text-gray-300">
-          <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-red-500" />PV</span>
-          <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-green-500" />JC</span>
-          <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-blue-500" />IT</span>
-          <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-yellow-500" />DWM</span>
+          {MAGNIMS_REGIONS.map((region) => (
+            <span key={region} className="flex items-center gap-0.5">
+              <span className={`w-2 h-2 rounded-full ${REGION_DOT_CLASSES[region]}`} />{ZONE_ABBREV[region]}
+            </span>
+          ))}
         </div>
       )}
 
