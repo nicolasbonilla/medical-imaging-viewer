@@ -23,6 +23,8 @@
  * Usage (from the repository root, frontend/node_modules installed):
  *   node scripts/safety/prb004_viewer_display_probe.mjs <out.json> [screenshotDir]
  * Env: FRONTEND (frontend dir to run, default ./frontend — e.g. a checkout of the base commit),
+ *      PROBE_HOST (default localhost — a host name without a dot; 127.0.0.1 to see the other
+ *      defects on a base where the dot-less host already breaks the GPU and 3D views),
  *      EDGE (msedge.exe), PORT (default 5191), CDP_PORT (default 9351).
  */
 import { spawn, execFileSync } from 'node:child_process';
@@ -37,7 +39,8 @@ const FRONTEND = resolve(process.env.FRONTEND ?? join(ROOT, 'frontend'));
 const EDGE = process.env.EDGE ?? 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 const PORT = Number(process.env.PORT ?? 5191);
 const CDP_PORT = Number(process.env.CDP_PORT ?? 9351);
-const ORIGIN = `http://localhost:${PORT}`; // PRB-005: a host name without a dot
+const HOST = process.env.PROBE_HOST ?? 'localhost'; // PRB-005: by default a host name without a dot
+const ORIGIN = `http://${HOST}:${PORT}`;
 const [W, H] = [1600, 900];
 
 const [outArg, shotDirArg] = process.argv.slice(2);
@@ -199,13 +202,18 @@ class Cdp {
       }
     };
   }
+  /** Every DevTools call times out (60 s) instead of hanging the probe. */
   send(method, params = {}, sessionId) {
     const id = ++this.id; const payload = { id, method, params };
     if (sessionId) payload.sessionId = sessionId;
     this.ws.send(JSON.stringify(payload));
-    return new Promise((res, rej) => this.pending.set(id, { res, rej }));
+    return new Promise((res, rej) => {
+      const timer = setTimeout(() => { this.pending.delete(id); rej(new Error(`CDP timeout: ${method}`)); }, 60000);
+      this.pending.set(id, { res: (v) => { clearTimeout(timer); res(v); }, rej: (e) => { clearTimeout(timer); rej(e); } });
+    });
   }
 }
+const step = (s) => process.stderr.write(`[probe] ${new Date().toISOString()} ${s}\n`);
 
 const evaluate = async (cdp, sid, expression) => (await cdp.send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true }, sid)).result?.value;
 async function until(cdp, sid, expression, ms = 30000) {
@@ -214,6 +222,8 @@ async function until(cdp, sid, expression, ms = 30000) {
   return false;
 }
 const clickButton = (cdp, sid, text) => evaluate(cdp, sid, `(() => { const b = [...document.querySelectorAll('button')].find(b => b.textContent.trim() === ${JSON.stringify(text)} || (b.getAttribute('aria-label') || '').startsWith(${JSON.stringify(text)})); if (b) b.click(); return !!b; })()`);
+/** Move the toolbar slider to `index` as a user would (React listens to the input event). */
+const setSlice = (cdp, sid, index) => evaluate(cdp, sid, `(() => { const r = document.querySelector('#main-content input[type="range"]'); if (!r) return false; Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(r, '${index}'); r.dispatchEvent(new Event('input', { bubbles: true })); r.dispatchEvent(new Event('change', { bubbles: true })); return r.previousElementSibling ? r.previousElementSibling.textContent.trim() : true; })()`);
 const clickText = (cdp, sid, text) => evaluate(cdp, sid, `(() => { const el = [...document.querySelectorAll('button, [role=button], div, span, p')].reverse().find(e => e.children.length === 0 && e.textContent.trim() === ${JSON.stringify(text)}); if (el) { el.click(); return true; } return false; })()`);
 
 /** Marker centroids in a captured region, relative to the drawn head's bounding box (0..1). */
@@ -296,7 +306,7 @@ async function openViewer(cdp) {
 }
 
 async function main() {
-  const vite = spawn(process.execPath, [join(FRONTEND, 'node_modules/vite/bin/vite.js'), '--port', String(PORT), '--strictPort', '--host', 'localhost'], {
+  const vite = spawn(process.execPath, [join(FRONTEND, 'node_modules/vite/bin/vite.js'), '--port', String(PORT), '--strictPort', '--host', HOST], {
     cwd: FRONTEND, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, VITE_API_BASE_URL: ORIGIN },
   });
   vite.stderr.on('data', (d) => process.stderr.write(`[vite] ${d}`));
@@ -325,24 +335,32 @@ async function main() {
     result.checks.quickScreenButton = await evaluate(cdp, sid, `[...document.querySelectorAll('button')].some(b => /Quick Screen/i.test(b.textContent))`);
 
     // Open the lesion mask from the sidebar (Standard view overlays it from the binary mask)
+    step('open mask');
     result.checks.maskOpened = await clickText(cdp, sid, 'Probe lesion mask');
     await sleep(2500);
+    // Same slice in every run (middle, index 17 = "18/36"), whatever the opening slice was.
+    result.checks.sliceForComparison = await setSlice(cdp, sid, Math.floor((NZ - 1) / 2));
+    await sleep(1500);
+    step('capture standard');
     const std = await captureCanvas(cdp, sid, '#main-content canvas', 'standard.png');
     result.checks.standard = std ? measure(std) : null;
 
     // PRB-004/005/006: the W/L GPU view (render mode button)
+    step('W/L GPU');
     result.checks.gpuButton = await clickButton(cdp, sid, 'W/L GPU');
     await until(cdp, sid, `[...document.querySelectorAll('#main-content canvas')].filter(c => c.width > 0).length > 0`, 20000);
     await sleep(4000);
     // The series' own window (125 / 250 in the fixture), so the whole head is drawn.
     result.checks.optimalWindowButton = await clickButton(cdp, sid, 'Optimal');
     await sleep(2000);
+    step('capture W/L GPU');
     const gpu = await captureCanvas(cdp, sid, '#main-content .z-10 canvas', 'wl_gpu.png');
     result.checks.wlGpu = gpu ? measure(gpu) : null;
     result.checks.gpuNotice = await evaluate(cdp, sid, `document.querySelector('[data-testid="niivue-mask-not-shown"]')?.textContent ?? null`);
     result.checks.gpuError = await evaluate(cdp, sid, `[...document.querySelectorAll('#main-content .bg-red-900\\\\/70')].map(e => e.textContent).join(' | ') || null`);
 
     // 3D volume with the mask (PRB-005 on a dot-less host; PRB-006 red fog)
+    step('3D');
     result.checks.threeDButton = await clickButton(cdp, sid, '3D');
     await sleep(9000);
     const vol = await captureCanvas(cdp, sid, '#main-content canvas', '3d_volume.png');
@@ -353,6 +371,7 @@ async function main() {
     await sleep(2500);
     await clickButton(cdp, sid, 'Standard');
     await sleep(1500);
+    step('2x2 grid');
     result.checks.gridButton = await clickButton(cdp, sid, '2x2');
     await sleep(5000);
     result.checks.grid = await evaluate(cdp, sid, `({ panelsDrawn: [...document.querySelectorAll('#main-content canvas')].filter(c => c.width > 0).length, emptyPanels: [...document.querySelectorAll('#main-content div')].filter(d => d.children.length === 0 && d.textContent.trim() === 'No image assigned').length })`);
