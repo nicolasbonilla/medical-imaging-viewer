@@ -89,6 +89,7 @@
     "invalidCredentials": "Falscher Benutzername oder Passwort",
     "accountLocked": "Konto ist gesperrt",
     "accountsByAdministrator": "Konten werden von einer Administratorin oder einem Administrator angelegt. Wenden Sie sich für einen Zugang an Ihre Administration.",
+    "productTagline": "Forschungsprototyp für Gehirn-MRT",
     "securityBadges": {
       "encrypted": "AES-256 Verschlüsselt"
     },

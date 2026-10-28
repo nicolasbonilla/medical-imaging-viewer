@@ -95,6 +95,7 @@
     "verifyingAuth": "Verifying authentication...",
     "yourRole": "Your role:",
     "accountsByAdministrator": "Accounts are created by an administrator. Contact your administrator for access.",
+    "productTagline": "Brain MRI research prototype",
     "securityBadges": {
       "encrypted": "AES-256 Encrypted"
     },

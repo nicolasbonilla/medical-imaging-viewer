@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/IEC_62304-Class_C-red?style=flat-square" alt="IEC 62304 Class C">
+  <img src="https://img.shields.io/badge/status-research_prototype,_not_CE--marked-orange?style=flat-square" alt="Research prototype, not CE-marked">
   <img src="https://img.shields.io/badge/QMS-AI_Powered-teal?style=flat-square" alt="QMS">
   <img src="https://img.shields.io/badge/React-18.3-61DAFB?logo=react" alt="React">
   <img src="https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi" alt="FastAPI">
@@ -77,7 +77,7 @@ MSTool-AI addresses the gap between research-grade neuroimaging tools (FSL, Free
 
 ## 2. Quality Management System (QMS)
 
-MSTool-AI is classified as **IEC 62304 Class C** (highest safety class) medical device software, meaning a software failure could result in death or serious injury. To meet the rigorous regulatory requirements for CE Marking under the EU Medical Devices Regulation (2017/745), this project is monitored by a dedicated **AI-powered Quality Management System**.
+MSTool-AI is a **research prototype**: it is not CE-marked and is not a medical device placed on the market. Its software is developed under the IEC 62304 lifecycle with the **software safety class C** (the highest *software* safety class: a software failure could contribute to death or serious injury) — a classification of the software process, not a device class or a certification. In preparation for a possible future CE marking under the EU Medical Devices Regulation (2017/745), this project is monitored by a dedicated **AI-powered Quality Management System**.
 
 ### MSTool-AI-QMS
 
@@ -113,14 +113,14 @@ Commercial QMS solutions (Ketryx ~$50K/yr, Greenlight Guru ~$30K/yr, MasterContr
 | **EU MDR 2017/745** | Medical device regulation | Compliance scoring, incident reporting (TPL-08) |
 | **EU AI Act 2024/1689** | AI governance | AI documentation, transparency tracking |
 
-#### Current Compliance Scores (Live)
+#### QMS self-assessment scores (not a conformity assessment; no CE marking exists)
 
 | Standard | Score | Status |
 |----------|-------|--------|
 | IEC 62304 | **97.1%** | PASS |
 | ISO 13485 | **96.3%** | PASS |
 | Cybersecurity | **93.9%** | PASS |
-| CE Mark Overall | **96.6%** | PASS |
+| CE readiness (self-assessed) | **96.6%** | PASS (internal check, not a certification) |
 
 #### QMS Architecture
 

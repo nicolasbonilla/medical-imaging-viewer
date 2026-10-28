@@ -95,6 +95,7 @@
     "verifyingAuth": "Verificando autenticación...",
     "yourRole": "Tu rol:",
     "accountsByAdministrator": "Las cuentas las crea un administrador. Pida acceso a su administrador.",
+    "productTagline": "Prototipo de investigación de RM cerebral",
     "securityBadges": {
       "encrypted": "Encriptado AES-256"
     },

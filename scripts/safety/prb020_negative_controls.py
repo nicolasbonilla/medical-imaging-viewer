@@ -339,6 +339,10 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "VF6_iec_badge_back": ([(LOGIN, "              {[\n                { label: 'AES-256', sub: 'At rest' },\n",
                              "              {[\n                { label: 'IEC 62304', sub: 'Class C' },\n                { label: 'AES-256', sub: 'At rest' },\n")],
                            "the sign-in page shows an 'IEC 62304 · Class C' badge (m7, as found)"),
+    # ── After the re-review (coordinator finding): the sign-in subtitle (RC-086) ──
+    "VF7_medical_device_subtitle_back": ([(LOGIN, "              {t('auth.productTagline', 'Brain MRI research prototype')}\n",
+                                           "              AI-Powered Brain MRI Analysis · IEC 62304 Class C Medical Device\n")],
+                                         "the sign-in page claims a 'Class C Medical Device' (as found)"),
     # ── Re-review of PR #70 (2026-10-28): R1-R3 (RC-083), R5 (RC-081), R6 (RC-084) ──
     "W1_backfill_deny_list_only": ([(BACKFILL, "    if project not in ALLOWED_PROJECTS or project in FORBIDDEN_PROJECTS:\n",
                                      "    if not project or project in FORBIDDEN_PROJECTS:\n")],

@@ -188,8 +188,11 @@ export default function LoginPage() {
               <Shield className="w-7 h-7 text-brand-400" />
             </div>
             <h1 className="text-2xl font-semibold text-ink-base mb-1 tracking-tight">MSTool-AI</h1>
+            {/* PRB-022 (coordinator finding after the re-review of PR #70): this read "AI-Powered Brain MRI Analysis ·
+                IEC 62304 Class C Medical Device" — a medical-device claim for a research prototype with no CE marking, and
+                a software safety class (IEC 62304) presented as a device class. */}
             <p className="text-ink-muted text-xs">
-              AI-Powered Brain MRI Analysis · IEC 62304 Class C Medical Device
+              {t('auth.productTagline', 'Brain MRI research prototype')}
             </p>
           </div>
 
