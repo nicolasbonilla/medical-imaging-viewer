@@ -13,6 +13,10 @@ Required:
 - a mask whose stored transform is not the reference's (identity fallback, another grid) is served unchanged
   (the viewers then refuse it with a notice) — never stamped with the reference affine.
 
+Re-review (R2): the reference MRI is read for its header only (shape, affine), never its voxels; any failure of the
+alignment serves the stored file unchanged, never an HTTP 500, and the response says which happened
+(`X-Mask-Alignment`: aligned / as-stored / failed) — the viewers then apply their own grid checks.
+
 Route driven through the real FastAPI app; storage and authorization replaced; no cloud access (PRB-002).
 """
 import gzip
@@ -158,6 +162,46 @@ def test_rc073_identity_fallback_mask_is_not_stamped_with_the_reference_affine(s
     assert r.status_code == 200, r.text
     _, affine, _ = _load(r.content)
     assert np.allclose(affine, np.eye(4)), "a mask of unknown position must not be presented as aligned"
+
+
+def _uncompressed_header_only(shape):
+    """An uncompressed reference NIfTI whose voxel data is cut off after the header: readable header, unreadable data."""
+    img = nib.Nifti1Image(np.zeros(shape, dtype=np.int16), AFFINE)
+    with tempfile.NamedTemporaryFile(suffix=".nii", delete=False) as t:
+        p = t.name
+    nib.save(img, p)
+    with open(p, "rb") as f:
+        raw = f.read()
+    os.unlink(p)
+    return raw[:int(img.header["vox_offset"]) + 16]
+
+
+def test_rc073_reference_is_read_for_its_header_only(serve):
+    native = np.zeros((A0, A1, K), dtype=np.uint8)
+    native[1, 5, 2] = 1
+    legacy = np.ascontiguousarray(np.transpose(native, (1, 0, 2)))
+    r = serve(_nifti_bytes(legacy, AFFINE, descrip=b""), _uncompressed_header_only((A0, A1, K)))
+    assert r.status_code == 200, r.text
+    assert r.headers.get("X-Mask-Alignment") == "aligned"
+    data, _, hdr = _load(r.content)
+    assert np.array_equal(data, native)
+    assert MARKER in bytes(np.asarray(hdr["descrip"]).tobytes())
+
+
+def test_rc073_alignment_failure_serves_the_stored_mask_marked_never_a_500(serve):
+    stored = _nifti_bytes(np.zeros((A0, A1, K), dtype=np.uint8), AFFINE, descrip=MARKER)
+    r = serve(stored, b"this is not a NIfTI file")
+    assert r.status_code == 200, r.text
+    assert r.content == stored
+    assert r.headers.get("X-Mask-Alignment") == "failed"
+
+
+def test_rc073_mask_not_on_the_reference_grid_is_marked_as_stored(serve):
+    stored = _nifti_bytes(np.zeros((A0, A1, K), dtype=np.uint8), np.eye(4), descrip=MARKER)
+    r = serve(stored, _reference((A0, A1, K)))
+    assert r.status_code == 200, r.text
+    assert r.content == stored
+    assert r.headers.get("X-Mask-Alignment") == "as-stored"
 
 
 def test_rc073_mask_on_another_scanner_grid_is_served_unchanged(serve):

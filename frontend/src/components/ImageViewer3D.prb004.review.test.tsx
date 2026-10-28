@@ -10,6 +10,12 @@
  *       a sagittally stored volume. Required: storage slice k reached through voxel → mm → niivue's mm2frac;
  *   m2  the later-visit mask was drawn white (top of niivue's "hot" at range 0..1);
  *   m6  a region-classified mask was drawn all red.
+ * Re-review (39f9d44..4626d17):
+ *   R1  a mask download that failed was only logged: the mask silently missing, or the PREVIOUS mask still drawn
+ *       after a switch while the app names the new one;
+ *   R3  unsaved edits on a saved segmentation were not stated (3D draws the last saved mask);
+ *   R4  an identity-transform mask was refused even when the image's own transform is the identity;
+ *   R7  niivue's view-type and clip-plane keys acted in 3D (a panel labelled "Axial" could show another view).
  *
  * niivue's renderer replaced, its loaders, mm2frac and colormaps real (src/test/niivueHarness.ts).
  */
@@ -168,6 +174,74 @@ describe('PRB-004 review — 3D view', () => {
       await loaded(mode, 1);
       for (const nv of harness.instances) expect(nv.opts.isColorbar).toBe(false);
       expect(screen.getByText(/Laterality not labelled/)).toBeInTheDocument();
+    });
+  }
+
+  it('rc073 R1: a lesion mask that cannot be downloaded is named in 3D: could not be loaded', async () => {
+    scene('volume', { segmentation_id: 'seg-1' });
+    installBrowserNetwork('http://127.0.0.1:4173', {
+      [`/api/v1/imaging/nifti/${FILE}`]: img(), '/api/v1/segmentation/seg-1/nifti': 500 });
+    render(<ImageViewer3D patientName="A" />);
+    await loaded('volume', 1);
+    expect(await screen.findByTestId('niivue-3d-mask-not-shown')).toHaveTextContent(/segmentation.*could not be loaded/i);
+  });
+
+  it('rc073 R1: after a switch, a failed download never leaves the previous mask drawn', async () => {
+    scene('volume', { segmentation_id: 'seg-1' });
+    installBrowserNetwork('http://127.0.0.1:4173', {
+      [`/api/v1/imaging/nifti/${FILE}`]: img(), '/api/v1/segmentation/seg-1/nifti': msk(),
+      '/api/v1/segmentation/seg-2/nifti': 500 });
+    render(<ImageViewer3D patientName="A" />);
+    await loaded('volume', 2);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    act(() => useSegmentationStore.setState({ currentSegmentation: { segmentation_id: 'seg-2' } as any }));
+    expect(await screen.findByTestId('niivue-3d-mask-not-shown')).toHaveTextContent(/could not be loaded/i);
+    await waitFor(() => {
+      const last = harness.instances[harness.instances.length - 1];
+      expect(last.volumes.length).toBe(1);
+    }, { timeout: 8000 });
+  });
+
+  it('rc073 R1: a later-visit mask that cannot be downloaded is named in 3D', async () => {
+    scene('volume', null, true);
+    installBrowserNetwork('http://127.0.0.1:4173', {
+      [`/api/v1/imaging/nifti/${FILE}`]: img(), '/api/v1/segmentation/tp1/nifti': msk(),
+      '/api/v1/segmentation/tp2/nifti': 503 });
+    render(<ImageViewer3D patientName="A" />);
+    expect(await screen.findByTestId('niivue-3d-mask-not-shown', undefined, { timeout: 8000 }))
+      .toHaveTextContent(/later visit.*could not be loaded/i);
+  });
+
+  it('rc073 R3: unsaved edits on a saved segmentation are stated in 3D', async () => {
+    scene('volume', { segmentation_id: 'seg-1' });
+    useSegmentationStore.setState({ hasUnsavedMaskChanges: true });
+    installBrowserNetwork('http://127.0.0.1:4173', {
+      [`/api/v1/imaging/nifti/${FILE}`]: img(), '/api/v1/segmentation/seg-1/nifti': msk() });
+    render(<ImageViewer3D patientName="A" />);
+    await loaded('volume', 2);
+    expect(await screen.findByTestId('niivue-3d-unsaved-edits')).toHaveTextContent(/unsaved edits/i);
+    useSegmentationStore.setState({ hasUnsavedMaskChanges: false });
+  });
+
+  it('rc073 R4: an identity-transform mask is drawn when the image\'s own transform is the identity too', async () => {
+    const ID = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
+    scene('volume', { segmentation_id: 'seg-1' });
+    installBrowserNetwork('http://127.0.0.1:4173', {
+      [`/api/v1/imaging/nifti/${FILE}`]: img(ID), '/api/v1/segmentation/seg-1/nifti': msk({ affine: ID }) });
+    render(<ImageViewer3D patientName="A" />);
+    await loaded('volume', 2);
+    expect(screen.queryByTestId('niivue-3d-mask-not-shown')).toBeNull();
+  });
+
+  for (const mode of ['volume', 'multiplanar'] as const) {
+    it(`rc073 R7: 3D ${mode}: niivue's view-type and clip-plane keys are off`, async () => {
+      scene(mode, null);
+      installBrowserNetwork('http://127.0.0.1:4173', { [`/api/v1/imaging/nifti/${FILE}`]: img() });
+      render(<ImageViewer3D patientName="A" />);
+      await loaded(mode, 1);
+      for (const nv of harness.instances) {
+        expect([nv.opts.viewModeHotKey, nv.opts.clipPlaneHotKey, nv.opts.cycleClipPlaneHotKey]).toEqual(['', '', '']);
+      }
     });
   }
 

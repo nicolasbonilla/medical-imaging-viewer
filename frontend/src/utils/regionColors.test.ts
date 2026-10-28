@@ -7,8 +7,10 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it, expect } from 'vitest';
+import * as regionColors from './regionColors';
 import { MAGNIMS_REGION_PALETTE, MAGNIMS_REGIONS, regionHex, withRegionColors } from './regionColors';
-import { MAGNIMS_LESION_LABELS } from '@/types';
+import { MAGNIMS_LESION_LABELS, DEFAULT_LABEL_PRESETS } from '@/types';
+import { maskLabelColormap } from './maskLabelColormap';
 
 const src = (p: string) => readFileSync(join(__dirname, '..', p), 'utf-8');
 
@@ -21,6 +23,22 @@ describe('PRB-010 — one MAGNIMS region colour mapping', () => {
       'Deep White Matter': '#D55E00',   // vermillion (review m1: reddish purple sat 5.3 from bluish green, deutan, as drawn)
     });
     expect([1, 2, 3, 4].map((v) => regionHex(v))).toEqual(['#E69F00', '#56B4E9', '#009E73', '#D55E00']);
+  });
+
+  it('rc076 R5: ONE colour for mask values missing from the label table: cyan, used by the GPU / 3D colormap, no label preset uses it', () => {
+    const fallback = (regionColors as Record<string, unknown>).UNLABELLED_FALLBACK_COLOR;
+    expect(fallback).toBe('#00FFFF');
+    const cm = maskLabelColormap([{ id: 1, name: 'Lesion', color: '#FF0000' }])!;
+    const at = (v: number) => {
+      const t = Math.max(0, Math.min(255, Math.round(((v - cm.cal_min) / (cm.cal_max - cm.cal_min)) * 255)));
+      return `#${[cm.colormap.R[t], cm.colormap.G[t], cm.colormap.B[t]].map((c) => c.toString(16).padStart(2, '0')).join('').toUpperCase()}`;
+    };
+    expect(at(2)).toBe(fallback);   // a value the table does not list
+    for (const labels of Object.values(DEFAULT_LABEL_PRESETS)) {
+      for (const l of labels) expect(l.color.toUpperCase(), `${l.name}`).not.toBe(fallback);
+    }
+    // one definition: the colormap module holds no colour literal of its own for it
+    expect(src('utils/maskLabelColormap.ts')).not.toMatch(/#00FFFF/i);
   });
 
   it('rc076 each legend dot class carries exactly the mapping colour', () => {

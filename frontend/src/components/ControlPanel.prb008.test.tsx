@@ -47,6 +47,28 @@ beforeEach(() => {
   useViewerStore.setState({ viewMode: '2d', currentSeries: SERIES as any, currentSliceIndex: 3 });
 });
 
+describe('PRB-010 R6 — the cursor readout names the label under the cursor', () => {
+  it('rc076 R6: the sidebar names the region under the cursor, and an unlisted value as such', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    useViewerStore.setState({ cursorInfo: { x: 3, y: 4, z: 3, intensity: 120, label: { value: 4, name: 'Deep White Matter' } } as any });
+    const { unmount } = render(
+      <QueryClientProvider client={new QueryClient()}><ControlPanel /></QueryClientProvider>);
+    expect(screen.getByTestId('cursor-label')).toHaveTextContent('Deep White Matter');
+    unmount();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    useViewerStore.setState({ cursorInfo: { x: 3, y: 4, z: 3, intensity: 120, label: { value: 9, name: null } } as any });
+    render(<QueryClientProvider client={new QueryClient()}><ControlPanel /></QueryClientProvider>);
+    expect(screen.getByTestId('cursor-label')).toHaveTextContent(/9.*not in the label table/i);
+  });
+
+  it('rc076 R6: the 2D viewer puts the label under the cursor into the readout (call site)', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const src = readFileSync(join(__dirname, 'ImageViewer2D.tsx'), 'utf-8');
+    expect(src).toMatch(/label: labelUnderCursor\(/);
+  });
+});
+
 describe('PRB-008 — the sidebar slice follows the side-by-side panels', () => {
   it('prb008 single view: the sidebar shows the viewer slice (guard)', () => {
     renderPanel();

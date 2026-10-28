@@ -18,6 +18,7 @@ vi.mock('@niivue/niivue', async (orig) =>
   (await import('@/test/niivueHarness')).harnessModule(await orig()));
 
 import { NiivueViewer2D } from './NiivueViewer2D';
+import ImageViewer3D from './ImageViewer3D';
 import { ViewportSafetyOverlay } from './ViewportSafetyOverlay';
 import { useViewerStore } from '@/store/useViewerStore';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
@@ -92,6 +93,51 @@ describe('PRB-004 review — the GPU notice in a real browser layout', () => {
       }
     }
     const results = measureInRealBrowser(browser!, cases);
+    assertClear(results, sizes);
+  }, 120000);
+
+  it('rc073 R1: the 3D notice is fully visible and covers no safety annotation, in a usual and a narrow viewport', async (ctx) => {
+    if (!browser && !process.env.CI) ctx.skip('no Chromium-family browser found (set CAPA010_BROWSER or CHROME_BIN)');
+    expect(browser, 'a Chromium-family browser is required in CI (set CAPA010_BROWSER or CHROME_BIN)').toBeTruthy();
+    for (const [key, value] of [['clientWidth', 800], ['clientHeight', 600]] as const) {
+      Object.defineProperty(HTMLElement.prototype, key, { configurable: true, get: () => value });
+    }
+    useViewerStore.setState({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      currentSeries: { id: 's', name: 'f', format: 'nifti', total_slices: DIMS[2], file_id: FILE,
+        metadata: { rows: DIMS[0], columns: DIMS[1], slices: DIMS[2], anatomical_orientation: 'LAS' } } as any,
+      render3DMode: 'volume', currentSliceIndex: 0,
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    useSegmentationStore.setState({ currentSegmentation: { segmentation_id: SEG } as any, longitudinalVisible: false,
+      zoneMapSegId: null, selectedLesion: null });
+    installBrowserNetwork('http://127.0.0.1:4173', {
+      [`/api/v1/imaging/nifti/${FILE}`]: syntheticNifti({ dims: DIMS, affine: LAS_AFFINE, gzip: true }),
+      [`/api/v1/segmentation/${SEG}/nifti`]: syntheticNifti({ dims: DIMS, affine: LAS_AFFINE, gzip: true,
+        data: new Uint8Array(DIMS[0] * DIMS[1] * DIMS[2]), descrip: '' }),   // older voxel order: refused, named
+    });
+    render(
+      <div style={{ position: 'fixed', inset: 0 }}>
+        <ImageViewer3D patientName="Ana María Torres-Villanueva de la Fuente" patientMRN="MRN-99120"
+          studyDescription="Brain MRI with and without contrast, follow-up" />
+      </div>,
+    );
+    await screen.findByTestId('niivue-3d-mask-not-shown', undefined, { timeout: 8000 });
+    const html = `<!doctype html>${document.documentElement.outerHTML}`;
+    const sizes: Array<[number, number]> = [[1100, 700], [600, 420], [480, 330]];
+    const cases: LayoutCase[] = [];
+    for (const [width, height] of sizes) {
+      for (const [what, selector] of Object.entries({ ...SELECTORS, notice: '[data-testid="niivue-3d-mask-not-shown"]' })) {
+        cases.push({ name: `${what} ${width}x${height}`, html, width, height, selector,
+          text: what === 'caveat' ? 'Laterality not labelled' : undefined });
+      }
+    }
+    assertClear(measureInRealBrowser(browser!, cases), sizes);
+  }, 120000);
+});
+
+function assertClear(results: ReturnType<typeof measureInRealBrowser>, sizes: Array<[number, number]>) {
+  {
     const at = (what: string, w: number, h: number) => results.find((r) => r.name === `${what} ${w}x${h}`)!.matches;
     for (const [w, h] of sizes) {
       const [notice] = at('notice', w, h);
@@ -105,5 +151,5 @@ describe('PRB-004 review — the GPU notice in a real browser layout', () => {
         }
       }
     }
-  }, 120000);
-});
+  }
+}
