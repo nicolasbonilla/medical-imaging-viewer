@@ -99,6 +99,13 @@ const EVALUATED = {
 
 const STORED_MET = { ...EVALUATED, evaluation_status: undefined, segmentation_review: undefined };
 
+// Release 2026-10-25 (review of PR #69, B1/M3): the label table of the open mask that the confirm tests confirm.
+const DRAWN_LABELS = [
+  { id: 0, name: 'Background', color: '#000000', opacity: 0, visible: false },
+  { id: 1, name: 'Periventricular', color: '#FF0000', opacity: 0.6, visible: true },
+  { id: 2, name: 'Juxtacortical', color: '#00CC00', opacity: 0.6, visible: true },
+];
+
 function seedStore(analysisData: Record<string, unknown> | null, extra: Record<string, unknown> = {}) {
   useSegmentationStore.setState({
     currentSegmentation: {
@@ -115,8 +122,15 @@ function seedStore(analysisData: Record<string, unknown> | null, extra: Record<s
       },
     } as any,
     maskDigestCallback: vi.fn().mockResolvedValue(DIGEST),
+    // Release 2026-10-25 (review of PR #69, B1/M3): the open mask that is confirmed is drawn — its values 1-2 have
+    // visible labels, the overlay is on and the opacity is visible (the confirmation checks this first).
+    activeSegmentation: { id: 'seg-1', labels: DRAWN_LABELS } as any,
+    labelVisibility: { 0: false, 1: true, 2: true },
+    isOverlayVisible: true,
+    lesionOpacity: 0.6,
+    maskValuesCallback: vi.fn(() => [1, 2]),
     hasUnsavedMaskChanges: false,
-  });
+  } as never);
 }
 
 beforeEach(() => {

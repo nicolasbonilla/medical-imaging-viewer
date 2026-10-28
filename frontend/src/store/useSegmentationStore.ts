@@ -26,6 +26,7 @@ import type {
   AIProvenance,
 } from '@/types';
 import { DEFAULT_LABEL_PRESETS } from '@/types';
+import { MIN_VISIBLE_LESION_OPACITY } from '@/utils/drawnLabels';
 
 // ============================================================================
 // Types
@@ -147,7 +148,7 @@ interface SegmentationState {
   createCallback: ((fileId: string, imageShape: { rows: number; columns: number; slices: number }) => void) | null;
 
   /** Reload mask callback — allows LesionDashboard to trigger mask reload after auto-classify */
-  reloadMaskCallback: (() => Promise<void>) | null;
+  reloadMaskCallback: (() => Promise<boolean | void>) | null;
 
   /**
    * Import-draft callback set by useSegmentationData — creates a LOCAL (unsaved) segmentation
@@ -158,6 +159,14 @@ interface SegmentationState {
 
   /** RC-047: SHA-256 (hex) of the mask currently open, as the server would hash it; null when none. */
   maskDigestCallback: (() => Promise<string | null>) | null;
+
+  /** Release 2026-10-25 (review of PR #69, B1/M3): the distinct non-zero values of the open mask, read now (null
+   *  when no mask is open). The confirmation checks that every one of them is drawn. */
+  maskValuesCallback: (() => number[] | null) | null;
+
+  /** The distinct non-zero values of the open mask as last loaded from the server (B1: the overlay controls warn
+   *  about values the label table does not name). */
+  maskLabelValues: number[] | null;
 
   /** RC-047: the open mask has unsaved changes (mirrors the local-first mask state). */
   hasUnsavedMaskChanges: boolean;
@@ -306,9 +315,11 @@ interface SegmentationState {
   setLastSavedAt: (timestamp: string | null) => void;
   setSaveCallback: (fn: (() => Promise<void>) | null) => void;
   setCreateCallback: (fn: ((fileId: string, imageShape: { rows: number; columns: number; slices: number }) => void) | null) => void;
-  setReloadMaskCallback: (fn: (() => Promise<void>) | null) => void;
+  setReloadMaskCallback: (fn: (() => Promise<boolean | void>) | null) => void;
   setImportDraftCallback: (fn: ImportDraftCallback | null) => void;
   setMaskDigestCallback: (fn: (() => Promise<string | null>) | null) => void;
+  setMaskValuesCallback: (fn: (() => number[] | null) | null) => void;
+  setMaskLabelValues: (values: number[] | null) => void;
   setHasUnsavedMaskChanges: (value: boolean) => void;
 
   // =========================================================================
@@ -428,9 +439,11 @@ const createInitialState = () => ({
   isSaving: false,
   saveCallback: null as (() => Promise<void>) | null,
   createCallback: null as ((fileId: string, imageShape: { rows: number; columns: number; slices: number }) => void) | null,
-  reloadMaskCallback: null as (() => Promise<void>) | null,
+  reloadMaskCallback: null as (() => Promise<boolean | void>) | null,
   importDraftCallback: null as ImportDraftCallback | null,
   maskDigestCallback: null as (() => Promise<string | null>) | null,
+  maskValuesCallback: null as (() => number[] | null) | null,
+  maskLabelValues: null as number[] | null,
   hasUnsavedMaskChanges: false,
   lastSavedAt: null as string | null,
 
@@ -549,6 +562,8 @@ export const useSegmentationStore = create<SegmentationState>()(
         setImportDraftCallback: (fn) => set({ importDraftCallback: fn }),
 
         setMaskDigestCallback: (fn) => set({ maskDigestCallback: fn }),
+        setMaskValuesCallback: (fn) => set({ maskValuesCallback: fn }),
+        setMaskLabelValues: (values) => set({ maskLabelValues: values }),
 
         setHasUnsavedMaskChanges: (value) => set({ hasUnsavedMaskChanges: value }),
 
@@ -841,6 +856,14 @@ export const useSegmentationStore = create<SegmentationState>()(
           zoneMapOpacity: state.zoneMapOpacity,
           conformalPreset: state.conformalPreset,
         }),
+        // Release 2026-10-25 (review of PR #69, M3): a stored lesion opacity below the visible minimum (e.g. 0) would
+        // hide every lesion in the next session without a word; it is not restored — the default is used instead.
+        merge: (persisted, current) => {
+          const stored = (persisted ?? {}) as Partial<SegmentationState>;
+          const opacity = stored.lesionOpacity;
+          const visible = typeof opacity === 'number' && opacity >= MIN_VISIBLE_LESION_OPACITY;
+          return { ...current, ...stored, lesionOpacity: visible ? opacity : current.lesionOpacity };
+        },
       }
     )
   )

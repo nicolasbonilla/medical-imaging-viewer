@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import type { UseSegmentationMaskReturn } from '@/hooks/useSegmentationMask';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import type { ClickPoint3D } from '@/types';
+import { UNLABELLED_FALLBACK_COLOR, idsWithoutLabel } from '@/utils/drawnLabels';
 
 /** Methods exposed via ref for external control */
 export interface SegmentationCanvasLocalRef {
@@ -711,6 +712,12 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
                 labelColors[label.id] = { ...c, a: Math.round(c.a * lesionOpacity) };
               }
             }
+          }
+          // Release 2026-10-25 (review of PR #69, B1): a mask value the label table does not name is drawn in the
+          // fallback colour — never left transparent (the overlay controls warn about it).
+          const fallback = parseColor(UNLABELLED_FALLBACK_COLOR, 0.8);
+          for (const id of idsWithoutLabel(storeLabels)) {
+            labelColors[id] = { ...fallback, a: Math.round(fallback.a * lesionOpacity) };
           }
 
           let sliceToRender = renderSlice;

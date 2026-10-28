@@ -83,6 +83,13 @@ const CLASSIFICATION = {
   thresholds_mm: {}, processing_time_ms: 5, mask_updated: true, labels_updated: true,
 };
 
+// Release 2026-10-25 (review of PR #69, B1/M3): the label table of the open mask that the confirm tests confirm.
+const DRAWN_LABELS = [
+  { id: 0, name: 'Background', color: '#000000', opacity: 0, visible: false },
+  { id: 1, name: 'Periventricular', color: '#FF0000', opacity: 0.6, visible: true },
+  { id: 2, name: 'Juxtacortical', color: '#00CC00', opacity: 0.6, visible: true },
+];
+
 function seed(analysisData: Record<string, unknown> | null = null) {
   useSegmentationStore.setState({
     currentSegmentation: {
@@ -103,8 +110,12 @@ function seed(analysisData: Record<string, unknown> | null = null) {
     activeLabel: 1,
     isDirty: false,
     maskDigestCallback: vi.fn().mockResolvedValue(DIGEST),
+    // Release 2026-10-25 (review of PR #69, B1/M3): the open mask that is confirmed is drawn (its value 1, Lesion, visible).
+    maskValuesCallback: vi.fn(() => [1]),
+    isOverlayVisible: true,
+    lesionOpacity: 0.6,
     hasUnsavedMaskChanges: false,
-  });
+  } as never);
 }
 
 beforeEach(() => {

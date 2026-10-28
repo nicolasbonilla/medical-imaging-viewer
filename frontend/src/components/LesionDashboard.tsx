@@ -9,7 +9,10 @@
  * @module components/LesionDashboard
  */
 
-import { useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
+import { useState, useCallback, useEffect, useRef, useContext, lazy, Suspense } from 'react';
+import { QueryClientContext } from '@tanstack/react-query';
+import type { TFunction } from 'i18next';
+import { MIN_VISIBLE_LESION_OPACITY, undrawnMaskValues, type UndrawnReason } from '../utils/drawnLabels';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
@@ -99,6 +102,35 @@ function fill(text: string, values: Record<string, unknown>): string {
   return text.replace(/{{\s*(\w+)\s*}}/g, (m, k) => (k in values ? String(values[k]) : m));
 }
 
+/** Release 2026-10-25 (review of PR #69, B1/M3): why a confirmation is refused while lesions are not drawn. */
+function undrawnText(t: TFunction, problems: UndrawnReason[] | null): string[] {
+  if (problems === null) {
+    return [t('disReview.undrawnMaskUnreadable', 'The open mask could not be read, so it cannot be checked that every lesion is drawn.')];
+  }
+  return problems.map((p) => {
+    switch (p.kind) {
+      case 'overlay_off':
+        return t('disReview.undrawnOverlayOff', 'The segmentation overlay is switched off.');
+      case 'opacity_low': {
+        const vals = { pct: Math.round(p.opacity * 100), min: Math.round(MIN_VISIBLE_LESION_OPACITY * 100) };
+        return fill(t('disReview.undrawnOpacityLow', { defaultValue: 'The lesion opacity ({{pct}} %) is below the visible minimum ({{min}} %).', ...vals }), vals);
+      }
+      case 'no_label': {
+        const vals = { value: p.value };
+        return fill(t('disReview.undrawnNoLabel', { defaultValue: 'Mask value {{value}} has no label in the label table (drawn in magenta, not as a region): reopen the segmentation.', ...vals }), vals);
+      }
+      case 'hidden': {
+        const vals = { name: p.name, value: p.value };
+        return fill(t('disReview.undrawnHidden', { defaultValue: '"{{name}}" (value {{value}}) is hidden with its eye toggle.', ...vals }), vals);
+      }
+      default: {
+        const vals = { name: p.name, value: p.value };
+        return fill(t('disReview.undrawnFaint', { defaultValue: '"{{name}}" (value {{value}}) is too faint to see.', ...vals }), vals);
+      }
+    }
+  });
+}
+
 export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdated, sourceFileId, studyInstances }: LesionDashboardProps) {
   const { t } = useTranslation();
   const reloadMaskCallback = useSegmentationStore((s) => s.reloadMaskCallback);
@@ -122,6 +154,10 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
   // Capture finding F10 (release 2026-10-25): from the click until the DIS state of the confirmed mask is read,
   // the card says what is happening instead of "No radiologist has confirmed this segmentation".
   const [confirmPhase, setConfirmPhase] = useState<null | 'recording' | 'refreshing'>(null);
+  // Review of PR #69, B1/M3: the reasons a confirmation was refused because lesions are not drawn.
+  const [confirmRefusal, setConfirmRefusal] = useState<string[] | null>(null);
+  // Review of PR #69, B1 (1): the sidebar list caches are refreshed after a classification (no provider in some tests).
+  const queryClient = useContext(QueryClientContext);
   // Second review of PR #68 (N1): the radiologist acknowledges the region corrections listed (exactly these).
   const [ackedCorrections, setAckedCorrections] = useState<string | null>(null);
   const pendingRegions = disPending && 'regions' in disPending ? disPending.regions ?? null : null;
@@ -291,6 +327,23 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
     if (state.hasUnsavedMaskChanges || state.currentSegmentation?.segmentation_id !== segmentationId) return;
     // N1: region corrections by hand are listed in the dialog and must have been acknowledged in the card.
     if (correctionsDigest && ackedCorrections !== correctionsDigest) return;
+    // Release 2026-10-25 (review of PR #69, B1/M3): a radiologist never confirms a mask with lesions that are not
+    // drawn — every value present in the open mask needs a label, visible, not too faint, with the overlay on and the
+    // lesion opacity above the visible minimum. Otherwise the confirmation is refused before any dialog or request.
+    setConfirmRefusal(null);
+    const maskValues = state.maskValuesCallback?.() ?? null;
+    const drawnSegmentation = state.activeSegmentation?.id === segmentationId;
+    const undrawn = maskValues === null || !drawnSegmentation ? null : undrawnMaskValues({
+      values: maskValues,
+      labels: state.activeSegmentation?.labels ?? [],
+      labelVisibility: state.labelVisibility,
+      isOverlayVisible: state.isOverlayVisible,
+      lesionOpacity: state.lesionOpacity,
+    });
+    if (undrawn === null || undrawn.length > 0) {
+      setConfirmRefusal(undrawnText(t, undrawn));
+      return;
+    }
     const listed = (pendingRegions?.corrections ?? []).map(correctionText);
     const question = t(
       'disReview.confirmQuestion',
@@ -395,6 +448,9 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
         method: classifyMethod,
       });
       setClassification(result);
+      // Review of PR #69, B1 (1): the sidebar list (and the per-file lists) were fetched before the classification;
+      // they are refreshed so that no later open uses the labels from before it.
+      void queryClient?.invalidateQueries({ queryKey: ['segmentations'] });
 
       // Capture finding F08 (release 2026-10-25): the 2D canvas and NiiVue draw from activeSegmentation.labels. The
       // labels the server stored with the classified mask reach it (and currentSegmentation), every region visible,
@@ -905,6 +961,17 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
               </>
             );
           })()}
+          {confirmRefusal && (
+            <div className="text-[10px] text-red-300 border border-red-700/50 rounded px-1.5 py-1" role="alert"
+                 data-testid="dis-confirm-refused">
+              <p className="font-semibold">
+                {t('disReview.notAllDrawn', 'Not confirmed: every lesion must be drawn on screen before you confirm.')}
+              </p>
+              <ul className="list-disc pl-4">
+                {confirmRefusal.map((line) => <li key={line}>{line}</li>)}
+              </ul>
+            </div>
+          )}
           {confirmError && <p className="text-[10px] text-red-300">{confirmError}</p>}
         </div>
       ) : disOk ? (

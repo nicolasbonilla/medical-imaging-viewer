@@ -47,7 +47,7 @@ interface StudyInfo {
 }
 
 /** Inline overlay toggle + opacity slider + label visibility for segmentation list items */
-function OverlayControls() {
+export function OverlayControls() {
   const { t } = useTranslation();
   const isOverlayVisible = useSegmentationStore((s) => s.isOverlayVisible);
   const setIsOverlayVisible = useSegmentationStore((s) => s.setIsOverlayVisible);
@@ -56,6 +56,10 @@ function OverlayControls() {
   const labels = useSegmentationStore((s) => s.activeSegmentation?.labels);
   const labelVisibility = useSegmentationStore((s) => s.labelVisibility);
   const toggleLabelVisibility = useSegmentationStore((s) => s.toggleLabelVisibility);
+  // Release 2026-10-25 (review of PR #69, B1): mask values the label table does not name are drawn in the fallback
+  // colour and announced here; the confirmation is refused while any exists.
+  const maskLabelValues = useSegmentationStore((s) => s.maskLabelValues);
+  const unlabelled = (maskLabelValues ?? []).filter((v) => v !== 0 && !(labels ?? []).some((l) => l.id === v));
 
   return (
     <div className="space-y-1.5 mb-2 p-1.5 rounded bg-gray-800/40">
@@ -124,6 +128,15 @@ function OverlayControls() {
                 );
               })}
             </div>
+          )}
+          {unlabelled.length > 0 && (
+            <p className="text-[10px] text-fuchsia-300 bg-fuchsia-950/40 border border-fuchsia-700/50 rounded px-1.5 py-1"
+               role="alert" data-testid="unlabelled-mask-values">
+              {t('segmentation.unlabelledValues', {
+                defaultValue: 'Mask value(s) {{values}} have no label in the label table: drawn in magenta. Reopen the segmentation to load its labels; it cannot be confirmed until every value has a label.',
+                values: unlabelled.join(', '),
+              }).replace('{{values}}', unlabelled.join(', '))}
+            </p>
           )}
         </>
       )}
@@ -416,7 +429,7 @@ function ViewerApp() {
   };
 
   // Handle opening/loading an existing segmentation (toggle: click again to deactivate)
-  const handleOpenSegmentation = useCallback((segmentation: { id: string; name: string; fileId?: string }) => {
+  const handleOpenSegmentation = useCallback(async (segmentation: { id: string; name: string; fileId?: string }) => {
     // Toggle off if clicking the already-active segmentation
     if (currentSegmentation?.segmentation_id === segmentation.id) {
       setCurrentSegmentation(null);
@@ -424,8 +437,17 @@ function ViewerApp() {
       return;
     }
 
-    // Find full segmentation data from the query results
-    const fullSeg = segmentationsData?.find((s) => s.segmentation_id === segmentation.id);
+    // Release 2026-10-25 (review of PR #69, B1): open from the SERVER, every time. The sidebar list is fetched once
+    // and is not refreshed by the region classification, so opening (or reopening) from it seeded the drawn labels
+    // with the labels from before the classification while the mask held regions 1-4 (lesions 2-4 not drawn).
+    let fullSeg;
+    try {
+      fullSeg = await segmentationAPI.getSegmentation(segmentation.id);
+    } catch (error) {
+      console.error('[ViewerApp] Segmentation could not be read from the server:', error);
+      toast.error(t('viewer.segmentationOpenFailed', 'The segmentation could not be read from the server; it was not opened.'));
+      return;
+    }
     if (!fullSeg) return;
 
     // Segmentations are in MNI space — need a preprocessed image to overlay on.
@@ -443,7 +465,7 @@ function ViewerApp() {
     // Activate segmentation mode
     viewerControls.setSegmentationMode(true);
     toast.success(t('viewer.segmentationLoaded', `Segmentation "${segmentation.name}" loaded`));
-  }, [viewerControls, t, segmentationsData, setCurrentSegmentation, currentSegmentation, currentSeries?.file_id, studyInfo, preprocessedInstances]);
+  }, [viewerControls, t, setCurrentSegmentation, currentSegmentation, currentSeries?.file_id, studyInfo, preprocessedInstances]);
 
   // Toggle expand/collapse for a segmentation item's info panel
   const toggleSegExpanded = useCallback((segId: string) => {
