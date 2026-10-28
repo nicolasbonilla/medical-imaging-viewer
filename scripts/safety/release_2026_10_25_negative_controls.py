@@ -14,6 +14,11 @@ Added after the independent integration review of PR #69 at 6d1fde2 (items 1-3 a
   I8      format characters (ZWJ, ZWSP) removed from the model's text BEFORE the DIS check;
   I9/I10  one "evaluated" rule (status AND a yes/no conclusion) for the route, the payload, the prompt and the template;
   I11/I12 the geometry 422 names itself and the report panel shows its own message.
+Added after the browser capture session of the release build (2026-10-28):
+  I13/I14/I16 F08 — the labels the server stored reach what the viewer draws, before the mask reload;
+  I15/I17/I18 F09 — the components the classification removed are counted and named before the confirmation;
+  I19/I20     F10 — the pending state after confirming;
+  I21         F04 — a dash, not the escape text, in the per-region rows.
 
 Method (as the other scripts): one mutation at a time in the real source; every anchor asserted to occur exactly
 once (on the LF text, so a Windows CRLF checkout works); only the bound tests are run — backend offline (PRB-002: a
@@ -54,6 +59,12 @@ REL = "tests/unit/test_release_2026_10_25_integration.py"
 REV = "tests/unit/test_release_2026_10_25_review_fixes.py"
 CAPA015 = "tests/unit/test_capa015_audit_and_session.py"
 PANEL_TEST = "frontend/src/components/AIReportPanel.release20261025.test.tsx"
+# browser capture session of the release build (2026-10-28)
+DASH = "frontend/src/components/LesionDashboard.tsx"
+STORE = "frontend/src/store/useSegmentationStore.ts"
+REGIONS = "backend/app/api/routes/segmentation_regions.py"
+CAPTURE_UI = "frontend/src/components/LesionDashboard.release20261028.test.tsx"
+CAPTURE_API = "tests/unit/test_release_2026_10_25_capture_fixes.py"
 
 ASSEMBLED = '        result = {**result, **parts, "content": draft_text(parts, request.language)}\n'
 SCRUB = '            content, replaced = gate.scrub_unevaluated_dis(result["content"], request.language)\n'
@@ -143,6 +154,47 @@ M = {
           '            detail=(f"The lesion measurements of segmentation {segmentation_id} could "\n')],
         [R6_TEST],
         "the server's geometry 422 no longer starts with the phrase the panel recognises"),
+    # ── browser capture session of the release build (2026-10-28): F08, F09, F10, F04 ──
+    "I13_classification_labels_not_applied_to_the_viewer": (
+        [(DASH, "        useSegmentationStore.getState().applyServerLabels(segmentationId, result.labels ?? MAGNIMS_LESION_LABELS);\n",
+          "")],
+        [CAPTURE_UI],
+        "F08: after the classification lesions labelled 2-4 are not drawn until the study is reopened"),
+    "I14_server_labels_skip_the_drawn_segmentation": (
+        [(STORE, "              activeSegmentation: activeMatches ? { ...active!, labels } : active,\n",
+          "              activeSegmentation: active,\n")],
+        [CAPTURE_UI],
+        "F08: the labels reach currentSegmentation only, not what the 2D canvas and NiiVue draw from"),
+    "I15_removed_components_not_counted": (
+        [(REGIONS, "        gone = (sizes > 0) & (kept == 0)\n", "        gone = (sizes > 0) & (kept < 0)\n")],
+        [CAPTURE_API],
+        "F09: the classification removes small components from the mask without saying so"),
+    "I16_labels_not_returned_by_the_classification": (
+        [(REGIONS, '            response_data["labels"] = [\n', '            response_data["labels_not_returned"] = [\n')],
+        [CAPTURE_API],
+        "F08: the viewer cannot draw the server's label scheme (it is not returned)"),
+    "I17_classification_card_silent_on_removed_components": (
+        [(DASH, "            {removedText && (\n", "            {false && (\n")],
+        [CAPTURE_UI],
+        "F09: the classification card does not say which components were removed"),
+    "I18_confirm_dialog_silent_on_removed_components": (
+        [(DASH, "    const ok = window.confirm(confirmRemovedText ? `${dialogText}\\n\\n${confirmRemovedText}` : dialogText);\n",
+          "    const ok = window.confirm(dialogText);\n")],
+        [CAPTURE_UI],
+        "F09: the radiologist confirms without being told that components were removed"),
+    "I19_no_pending_state_after_confirming": (
+        [(DASH, "            if (confirmPhase) {\n", "            if (false) {\n")],
+        [CAPTURE_UI],
+        "F10: the card keeps saying 'No radiologist has confirmed' for seconds after the confirmation"),
+    "I20_confirmation_never_shown_as_recorded": (
+        [(DASH, "      setConfirmPhase('refreshing');\n", "")],
+        [CAPTURE_UI],
+        "F10: the card does not say that the confirmation was recorded while the DIS state is read"),
+    "I21_escape_text_in_region_rows": (
+        [(DASH, "                    {region.lesion_count} {'\\u2014'} {region.total_volume_ml.toFixed(2)} mL\n",
+          "                    {region.lesion_count} \\u2014 {region.total_volume_ml.toFixed(2)} mL\n")],
+        [CAPTURE_UI],
+        "F04: a literal escape text in the per-region rows"),
 }
 # Recorded with the result (integration review of PR #69, item 5: kept, and stated as by design).
 NOTES = {

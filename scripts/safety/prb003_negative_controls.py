@@ -245,8 +245,10 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                      "the healthy-brain notice shown in English to Spanish-language users"),
     "F10_confirmed_by_not_shown": ([(DASH, "            {disOk.segmentation_review && (", "            {false && (")],
                                    "a DIS result shown without the radiologist whose confirmation it rests on"),
-    "F11_no_refresh_after_confirmation": ([(DASH, "      await refreshDis();\n    } catch (e: any) {\n",
-                                            "      void 0;\n    } catch (e: any) {\n")],
+    # Release 2026-10-25 (capture finding F10): the refresh after the confirmation is one awaited read of the DIS state
+    # (with a pending state); the anchor moved to it, the mutation is unchanged (no refresh).
+    "F11_no_refresh_after_confirmation": ([(DASH, "        await fetchDis();\n      } catch (refreshError) {\n",
+                                            "        void 0;\n      } catch (refreshError) {\n")],
                                           "after the confirmation the card keeps the old state"),
     "F12_result_shown_for_unsaved_changes": ([(DASH, "  const disOk = isDisEvaluated(dis) && !disHeldForUnsavedChanges ? dis : null;\n",
                                                "  const disOk = isDisEvaluated(dis) ? dis : null;\n")],
