@@ -198,15 +198,12 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
             }
         }
     """
-    # Wrap in InternalServerException for consistent logging
+    # Re-review of PR #70, R5: the response carried the exception type and message in `details`, contrary to this
+    # docstring — an exception message can hold internal detail (paths, query text, a connection string). The client
+    # now gets the generic message only; type and message stay in the server log below (never the request body).
     internal_error = InternalServerException(
         message="An unexpected error occurred",
-        details={
-            "path": request.url.path,
-            "method": request.method,
-            "exception_type": type(exc).__name__,
-            "exception_message": str(exc)
-        }
+        details={}
     )
 
     # Log with full stack trace

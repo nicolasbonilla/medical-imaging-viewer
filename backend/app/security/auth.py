@@ -614,17 +614,19 @@ class AuthService:
             )
 
     def _stored_password(self, user_id: str):
-        """(hash, history) for a profile save — the persistent store first (another instance may have changed the
-        password), this process's copy only when the store has none; (None, None) when no hash is known."""
+        """(hash, history) for a profile save, read from the persistent store only; (None, None) when the store gives
+        none or cannot be read.
+
+        Re-review of PR #70, R6: this fell back to this process's copy when the store gave nothing. That copy may be
+        older than a password changed on another instance, and writing it back would undo that change. The store's
+        reader swallows its own errors and answers None, so "unreadable" and "no data" cannot be told apart here —
+        both refuse."""
         try:
             stored = self._storage.get_user_password_data(user_id)
         except Exception:
             stored = None
         if stored and stored.get("password_hash"):
             return stored["password_hash"], list(stored.get("password_history") or [stored["password_hash"]])
-        known = self._user_passwords.get(user_id)
-        if known:
-            return known, list(self._password_history.get(user_id) or [known])
         return None, None
 
     def save_profile_keeping_password(self, user: User) -> bool:
@@ -653,7 +655,10 @@ class AuthService:
     def _refresh_cached_user(self, user: User) -> None:
         """Bring this process's copy of one account up to date with the persistent store (PRB-024)."""
         self._users[user.id] = user
-        pwd = self._storage.get_user_password_data(user.id)
+        try:
+            pwd = self._storage.get_user_password_data(user.id)
+        except Exception:          # the profile was read; a password-read error is handled where it matters (R6)
+            pwd = None
         if pwd and pwd.get("password_hash"):
             self._user_passwords[user.id] = pwd["password_hash"]
             self._password_history[user.id] = list(pwd.get("password_history") or [pwd["password_hash"]])
