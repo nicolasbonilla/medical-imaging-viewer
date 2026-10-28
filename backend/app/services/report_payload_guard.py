@@ -250,8 +250,15 @@ class _Projector:
         o: dict = {"total_count": self.count(la.get("total_count"), "total_count"),
                    "total_burden_mm3": self.number(la.get("total_burden_mm3"), "total_burden_mm3", 0, _LESION_MM3_MAX),
                    "total_burden_ml": self.number(la.get("total_burden_ml"), "total_burden_ml", 0, _LESION_ML_MAX)}
+        # Release 2026-10-25 (integration review of PR #69, item 1): regions no radiologist confirmed (PRB-003 marks
+        # them so in `region_status`) are not labels of any kind — no region summary, no region in the rows, and the
+        # prompt prints a fixed "regions not confirmed" line instead (never a numbered placeholder).
+        status = la.get("region_status")
+        confirmed = not (isinstance(status, dict) and status.get("confirmed") is False)
+        if not confirmed:
+            o["regions_confirmed"] = False
         regions = {}
-        for label, info in self.keyed(la.get("regions")):
+        for label, info in (self.keyed(la.get("regions")) if confirmed else ()):
             regions[label] = {
                 "lesion_count": self.count(info.get("lesion_count"), "lesion_count"),
                 "total_volume_mm3": self.number(info.get("total_volume_mm3"), "total_volume_mm3", 0, _LESION_MM3_MAX),
@@ -266,13 +273,16 @@ class _Projector:
             if not isinstance(les, dict):
                 continue
             ctr = les.get("centroid") if isinstance(les.get("centroid"), dict) else {}
-            lesions.append({
+            row = {
                 "id": self.count(les.get("id"), "lesion_id", required=False) or i + 1,
-                "region": self.label(les.get("region")),
+                "region": self.label(les.get("region")) if confirmed else None,
                 "volume_mm3": self.number(les.get("volume_mm3"), "volume_mm3", 0, _LESION_MM3_MAX),
                 "volume_ml": self.number(les.get("volume_ml"), "volume_ml", 0, _LESION_ML_MAX),
                 "size_category": self.label(les.get("size_category"), ("small", "medium", "large")),
-                "centroid": {k: self.number(ctr.get(k), "centroid", 0, _CENTROID_MAX) for k in ("z", "y", "x")}})
+                "centroid": {k: self.number(ctr.get(k), "centroid", 0, _CENTROID_MAX) for k in ("z", "y", "x")}}
+            if not confirmed:
+                del row["region"]
+            lesions.append(row)
         if lesions:
             o["lesions"] = lesions
         return o
@@ -294,7 +304,8 @@ class _Projector:
         o["active_voxels"] = self.count(dis.get("active_voxels"), "active_voxels", _VOXELS_MAX)
         o["has_black_holes"] = dis.get("has_black_holes") is True
         o["black_hole_voxels"] = self.count(dis.get("black_hole_voxels"), "black_hole_voxels", _VOXELS_MAX)
-        if state == DIS_EVALUATED:
+        from app.services import dis_review_gate as gate   # the one "evaluated" rule (release 2026-10-25, item 3)
+        if gate.is_evaluated(dis):
             o["evaluation_status"] = DIS_EVALUATED     # kept as received; never invented for a block without it
         return o
 

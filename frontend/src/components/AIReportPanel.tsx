@@ -35,6 +35,16 @@ interface AIReportPanelProps {
 // CAPA-014 (third review, R4): the server adds at most this many characters of each typed field to the draft
 // (`MAX_TYPED_CHARS` in backend/app/api/routes/ai_report.py); the fields stop there and show the count.
 const MAX_TYPED_CHARS = 5000;
+// Release 2026-10-25 (review of PR #69, item 6): the server's 422 for an unreadable image geometry starts with this
+// phrase (backend ai_report.GEOMETRY_UNREADABLE_PHRASE; a backend test checks that both say the same).
+const GEOMETRY_UNREADABLE_PHRASE = 'The image geometry could not be read; report not generated';
+
+/** The server's error message ({"error": {"message"}} from the API, or FastAPI's {"detail"}), or ''. */
+function serverMessage(error: unknown): string {
+  const data = (error as any)?.response?.data;
+  const message = data?.error?.message ?? data?.detail;
+  return typeof message === 'string' ? message : '';
+}
 
 function TypedCount({ testId, length }: { testId: string; length: number }) {
   return (
@@ -284,9 +294,13 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
               {/* Error */}
               {generateMutation.isError && (
                 <div className="p-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded text-xs text-red-700 dark:text-red-300">
-                  {/* CAPA-008: a 422 means no measurement was available — say so instead of a generic error. */}
+                  {/* CAPA-008: a 422 means no measurement was available — say so instead of a generic error.
+                      Release 2026-10-25 (review of PR #69, item 6): unless the server says the image geometry could
+                      not be read (PRB-003: the lesion table is derived on the server) — then that, in its own words. */}
                   {(generateMutation.error as any)?.response?.status === 422
-                    ? t('report.noMeasurements', 'No measurements are available for this study. Open a segmentation and run its analysis first: a report without measurements would be invented.')
+                    ? (serverMessage(generateMutation.error).startsWith(GEOMETRY_UNREADABLE_PHRASE)
+                      ? t('report.geometryUnreadable', 'The image geometry could not be read, so the report was not generated. Nothing was sent to the AI service.')
+                      : t('report.noMeasurements', 'No measurements are available for this study. Open a segmentation and run its analysis first: a report without measurements would be invented.'))
                     : (generateMutation.error as Error)?.message || t('report.generateError', 'Report generation failed')}
                 </div>
               )}

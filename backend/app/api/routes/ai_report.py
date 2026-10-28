@@ -387,6 +387,12 @@ DIS_LINES_REPLACED: Dict[str, str] = {
 }
 
 
+# Release 2026-10-25 (integration review of PR #69, item 6): the 422 of a lesion table that cannot be computed starts
+# with this phrase; the report panel recognises it (AIReportPanel.tsx) and shows its own message instead of
+# CAPA-008's "no measurements".
+GEOMETRY_UNREADABLE_PHRASE = "The image geometry could not be read; report not generated"
+
+
 def _dis_services():
     """The segmentation and storage services, resolved only when a DIS block must be re-derived."""
     from app.core.container import get_segmentation_service, get_storage_service
@@ -432,8 +438,9 @@ async def server_lesion_table(segmentation_id: str) -> Dict[str, Any]:
         logger.error(f"[Report] Lesion measurements could not be computed for the report: {e}")
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=(f"The lesion measurements of segmentation {segmentation_id} could not be computed on the server "
-                    "(the source image or its voxel geometry could not be read); nothing was sent."),
+            detail=(f"{GEOMETRY_UNREADABLE_PHRASE}: the lesion measurements of segmentation {segmentation_id} could "
+                    "not be computed on the server (the source image or its voxel geometry could not be read). "
+                    "Nothing was sent."),
         )
 
 
@@ -651,6 +658,11 @@ async def generate_report(
             language=request.language,
             identifiers=identifiers,
         )
+        # Release 2026-10-25 (integration review of PR #69, item 2): CAPA-014's format-character rule (zero-width
+        # space -> space, every other format character removed) is applied to the MODEL's text before the DIS check,
+        # so a zero-width joiner or space cannot hide a DIS statement from it. The clinician's typed text is not part
+        # of `result["content"]` and never passes through the check.
+        result = {**result, "content": without_format_characters(result["content"])}
         replaced = 0
         # Finding 4 / N3: a DIS statement written by the model is replaced, in code — a BACKSTOP; the main controls
         # are the earlier layers (no regions sent, the system safety rule, no DIS or per-region template section).

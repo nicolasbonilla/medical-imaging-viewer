@@ -425,8 +425,12 @@ def evaluated(result: Dict[str, Any], state: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def is_evaluated(block: Any) -> bool:
-    """True only for a block this gate marked as evaluated (anything else is treated as not evaluated)."""
-    return isinstance(block, dict) and block.get("evaluation_status") == EVALUATED
+    """True only for a block this gate marked as evaluated AND that carries a yes/no conclusion (anything else is
+    treated as not evaluated). Release 2026-10-25 (integration review of PR #69, item 3): this is the ONE rule —
+    the report route (notice, output check, regions withheld), the RC-064 payload, the findings prompt and the
+    template variant all call it, so they cannot disagree."""
+    return (isinstance(block, dict) and block.get("evaluation_status") == EVALUATED
+            and isinstance(block.get("dis_met"), bool))
 
 
 def region_status(state: Dict[str, Any]) -> Dict[str, Any]:

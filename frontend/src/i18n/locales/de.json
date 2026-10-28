@@ -972,6 +972,7 @@
     "generating": "Wird erstellt...",
     "generateError": "Berichterstellung fehlgeschlagen",
     "noMeasurements": "Für diese Untersuchung liegen keine Messwerte vor. Öffnen Sie zuerst eine Segmentierung und führen Sie deren Analyse aus: Ein Bericht ohne Messwerte wäre erfunden.",
+    "geometryUnreadable": "Die Bildgeometrie konnte nicht gelesen werden; der Bericht wurde daher nicht erstellt. Es wurde nichts an den KI-Dienst gesendet.",
     "deidentificationNote": "An den KI-Dienst (Anthropic) werden nur die Messwerte, das Geschlecht und eine 5-Jahres-Altersspanne gesendet – keine Namen, Geburtsdaten, Patientennummern oder Freitext. Ihr Text in den Feldern oben wird hier in der Anwendung in den Entwurf übernommen; er wird nicht an den KI-Dienst gesendet.",
     "tokens": "Tokens",
     "copy": "Kopieren",

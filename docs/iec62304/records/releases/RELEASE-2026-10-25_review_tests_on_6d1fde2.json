@@ -1,6 +1,6 @@
 {
-  "executed": "2026-10-25T04:44:41",
-  "code_under_test": "6d1fde24f11111b5c78193c3246b23dcfc50946c (release/owner-signoff-2026-10-25 as reviewed: application code unchanged, only the new test files present)",
+  "executed": "2026-10-25T04:49:02",
+  "code_under_test": "26ecb8247e44f01dfc129c369d42c33405870731 (release/owner-signoff-2026-10-25 as reviewed: application code unchanged, only the new test files present)",
   "purpose": "failing-first evidence for the corrections asked by the independent integration review of PR #69 (items 1-4 and 6); the passing cases are positive controls (confirmed regions still sent; an evaluated DIS with a conclusion; the fully real confirmed path, a test gap rather than a defect; a 422 without measurements)",
   "environment": "offline per PRB-002 (missing credentials file, empty gcloud configuration, mstool-offline-tests, no model-provider key)",
   "backend": {
@@ -46,11 +46,11 @@
       },
       "test_rc070_release_r3_one_rule_decides_evaluated_for_route_prompt_and_template[evaluated_without_conclusion]": {
         "status": "failed",
-        "reason": "AssertionError: assert True is False\n +  where True = <function is_evaluated at 0x000001B371743380>({'evaluation_status': 'evaluated', 'regions_with_lesions': 2, 'total_dis_regions': 4})\n +    where <function is_evaluated at 0x000001B371743380> = <module 'app.services.dis_review_gate' from 'C:\\\\User"
+        "reason": "AssertionError: assert True is False\n +  where True = <function is_evaluated at 0x000002417F8B3560>({'evaluation_status': 'evaluated', 'regions_with_lesions': 2, 'total_dis_regions': 4})\n +    where <function is_evaluated at 0x000002417F8B3560> = <module 'app.services.dis_review_gate' from 'C:\\\\User"
       },
       "test_rc070_release_r3_one_rule_decides_evaluated_for_route_prompt_and_template[evaluated_conclusion_not_boolean]": {
         "status": "failed",
-        "reason": "AssertionError: assert True is False\n +  where True = <function is_evaluated at 0x000001B371743380>({'dis_met': 'true', 'evaluation_status': 'evaluated'})\n +    where <function is_evaluated at 0x000001B371743380> = <module 'app.services.dis_review_gate' from 'C:\\\\Users\\\\Nicolas\\\\medical-imaging-view"
+        "reason": "AssertionError: assert True is False\n +  where True = <function is_evaluated at 0x000002417F8B3560>({'dis_met': 'true', 'evaluation_status': 'evaluated'})\n +    where <function is_evaluated at 0x000002417F8B3560> = <module 'app.services.dis_review_gate' from 'C:\\\\Users\\\\Nicolas\\\\medical-imaging-view"
       },
       "test_rc070_release_r3_one_rule_decides_evaluated_for_route_prompt_and_template[not_evaluated]": {
         "status": "failed",

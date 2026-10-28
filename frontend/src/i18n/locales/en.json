@@ -979,6 +979,7 @@
     "generating": "Generating...",
     "generateError": "Report generation failed",
     "noMeasurements": "No measurements are available for this study. Open a segmentation and run its analysis first: a report without measurements would be invented.",
+    "geometryUnreadable": "The image geometry could not be read, so the report was not generated. Nothing was sent to the AI service.",
     "deidentificationNote": "Sent to the AI service (Anthropic): only the measurements, sex and a 5-year age range — no names, dates of birth, record numbers or free text. Your text in the fields above is added to the draft here, in the application; it is not sent to the AI service.",
     "tokens": "Tokens",
     "copy": "Copy",

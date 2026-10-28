@@ -145,6 +145,13 @@ _RULE4_NOT_EVALUATED = ("4. Per CMSC Task Force guidance, **never write** 'McDon
                         "was not evaluated: " + DIS_NOT_EVALUATED_LINE)
 
 
+# Release 2026-10-25 (integration review of PR #69, item 1): without an evaluated DIS the route withholds the
+# regions (PRB-003) and the RC-064 payload drops the region of every lesion row; the prompt says so in this fixed
+# line instead of a numbered placeholder ("[unlisted label 1] = not confirmed").
+REGIONS_NOT_CONFIRMED_LINE = ("  Lesion regions: not confirmed by a radiologist; not given. Do not assign, count or "
+                              "tabulate the lesions by region.")
+
+
 # Second review of PR #68, N4: without an evaluated DIS the regions are not confirmed and are not sent to the
 # model, so no template may ask for a per-region section, a region column or a regional distribution either.
 _REGION_SECTION = re.compile(r"^### (?:Periventricular|Cortical / Juxtacortical|Infratentorial|Deep White Matter|"
@@ -651,7 +658,10 @@ class BrainReportService:
             parts.append(f"  Total lesions: {la.get('total_count', 0)}")
             parts.append(f"  Total burden: {la.get('total_burden_mm3', 0):.2f} mm³ "
                          f"({la.get('total_burden_ml', 0):.4f} mL)")
-            regions = la.get("regions", {})
+            regions_confirmed = la.get("regions_confirmed") is not False      # release 2026-10-25, item 1
+            if not regions_confirmed:
+                parts.append(REGIONS_NOT_CONFIRMED_LINE)
+            regions = la.get("regions", {}) if regions_confirmed else {}
             if regions:
                 parts.append("  Regional summary:")
                 for name, info in regions.items():
@@ -669,12 +679,17 @@ class BrainReportService:
             lesions = la.get("lesions", [])
             if lesions:
                 parts.append(f"\n  Individual lesion data ({len(lesions)} lesions):")
-                parts.append("  # | Region | Volume_mm3 | Volume_mL | Size | Centroid(z,y,x)")
-                parts.append("  --|--------|-----------|----------|------|----------------")
+                if regions_confirmed:
+                    parts.append("  # | Region | Volume_mm3 | Volume_mL | Size | Centroid(z,y,x)")
+                    parts.append("  --|--------|-----------|----------|------|----------------")
+                else:   # no region column: the regions were not confirmed (release 2026-10-25, item 1)
+                    parts.append("  # | Volume_mm3 | Volume_mL | Size | Centroid(z,y,x)")
+                    parts.append("  --|-----------|----------|------|----------------")
                 for les in lesions:
                     ctr = les.get("centroid", {})
+                    region = f"{les.get('region', 'Unknown')} | " if regions_confirmed else ""
                     parts.append(
-                        f"  {les.get('id', '?')} | {les.get('region', 'Unknown')} | "
+                        f"  {les.get('id', '?')} | {region}"
                         f"{les.get('volume_mm3', 0):.1f} | "
                         f"{les.get('volume_ml', 0):.4f} | "
                         f"{les.get('size_category', '?')} | "
@@ -686,8 +701,9 @@ class BrainReportService:
         # set by the report route from the stored segmentation). Anything else — not evaluated, or a block
         # without that state — is NOT EVALUATED, never "NOT MET" (a missing flag used to print NOT MET),
         # and the model is told not to derive DIS from the lesion counts or regions.
+        from app.services import dis_review_gate as gate   # the one "evaluated" rule (release 2026-10-25, item 3)
         dis = findings.get("dis_assessment")
-        if not (isinstance(dis, dict) and dis.get("evaluation_status") == "evaluated"):
+        if not gate.is_evaluated(dis):
             if dis or findings.get("lesion_analysis"):
                 parts.append(DIS_NOT_EVALUATED_PROMPT)
         else:
@@ -814,8 +830,9 @@ class BrainReportService:
         # Release 2026-10-25 integration (PR #67 + PR #68): the variant is chosen on the DIS block the model
         # actually receives (the RC-064 payload), so the template and the findings prompt always agree; the
         # system prompt is one of the fixed template variants (RC-064 amended, PENDING owner approval).
+        from app.services import dis_review_gate as gate   # the one "evaluated" rule (release 2026-10-25, item 3)
         dis_block = payload.findings.get("dis_assessment")
-        if not (isinstance(dis_block, dict) and dis_block.get("evaluation_status") == "evaluated"):
+        if not gate.is_evaluated(dis_block):
             system_prompt = dis_not_evaluated_template(system_prompt)
         user_prompt = self._build_findings_prompt(payload.findings, payload.volumetry, language)
         # RC-065: detection-only tripwire on the final prompt; refuses to send on any finding.
@@ -962,6 +979,9 @@ def _synthetic_payloads():
                           "burden_delta_percent": 1.0, "status_counts": {"new": 1}}, {"abstained": True}):
         yield {**base, "longitudinal": longitudinal}, volumetry
     yield {**base, "patient_sex": "F", "patient_age": "90 or older"}, volumetry
+    # regions not confirmed (release 2026-10-25, item 1): the fixed line and the table without a region column
+    yield {**base, "lesion_analysis": {**base["lesion_analysis"], "regions_confirmed": False},
+           "dis_assessment": {"evaluation_status": "not_evaluated"}}, volumetry
     # every value missing: what "not available" looks like in each block
     sparse = provider_payload({"lesion_analysis": {"regions": {"Lesion": {}}, "size_distribution": {"small": None},
                                                    "lesions": [{}]},

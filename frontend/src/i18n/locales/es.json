@@ -985,6 +985,7 @@
     "generating": "Generando...",
     "generateError": "Error al generar el informe",
     "noMeasurements": "No hay mediciones disponibles para este estudio. Abra una segmentación y ejecute su análisis primero: un informe sin mediciones sería inventado.",
+    "geometryUnreadable": "No se pudo leer la geometría de la imagen, por lo que no se generó el informe. No se envió nada al servicio de IA.",
     "deidentificationNote": "Al servicio de IA (Anthropic) solo se envían las mediciones, el sexo y un rango de edad de 5 años: ningún nombre, fecha de nacimiento, número de historia ni texto libre. Lo que escriba en los campos de arriba se añade al borrador aquí, en la aplicación; no se envía al servicio de IA.",
     "tokens": "Tokens",
     "copy": "Copiar",

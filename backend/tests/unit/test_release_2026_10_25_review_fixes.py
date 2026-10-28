@@ -78,7 +78,6 @@ PROBE = (f"Lesions in periventricular and juxta{ZWSP}cortical regions, consisten
 @pytest.mark.unit
 @pytest.mark.parametrize("language", ["en", "es", "de"])
 def test_rc070_release_r2_zero_width_characters_do_not_hide_a_dis_statement(route, language):
-    from app.services import dis_review_gate as gate
     typed = f"Outside report: dissem{ZWJ}ination in space met."
     route.provider.text = f"## FINDINGS\nTwo lesions.\n\n{PROBE}\n"
     r = _post(route, {**_measurements(), "dis_assessment": NOT_EVALUATED, "clinical_indication": typed},
@@ -88,7 +87,8 @@ def test_rc070_release_r2_zero_width_characters_do_not_hide_a_dis_statement(rout
     plain = body["ai_text"].replace(ZWJ, "").replace(ZWSP, " ")
     assert "consistent with dissemination in space" not in plain
     assert "juxta cortical" not in plain and "juxtacortical" not in plain
-    assert gate.DIS_LINES_REPLACED[language].split("{n}")[1][:20] in body["ai_text"]   # the notice counts it
+    from app.api.routes.ai_report import DIS_LINES_REPLACED
+    assert DIS_LINES_REPLACED[language].split("{n}")[1][:20] in body["ai_text"]   # the notice counts it
     # the clinician's typed text never passes through the check: exactly as typed
     assert body["clinician_entry"]["fields"][0]["text"] == typed
 
