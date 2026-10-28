@@ -1,6 +1,6 @@
 {
-  "executed": "2026-10-28T22:24:24",
-  "tree": "12241b3df49ccae5b6dd94f5c83a6be83688ffa5",
+  "executed": "2026-10-28T23:39:34",
+  "tree": "357698cddf27b3f3c5ab25d8b9d09a31b34ab2cc",
   "method": "one mutation at a time; each anchor asserted to occur exactly once (LF text); the bound tests of the mutated side run (backend pytest offline per PRB-002; frontend vitest --pool=threads, JSON reporter); original bytes restored after each mutation, on exit and on signals, and verified at the end; the baseline must pass first",
   "hash_basis": "sha256 of the UTF-8 text with LF line endings",
   "source_sha256": {
@@ -30,9 +30,9 @@
     "frontend/src/components/patients/PatientsOverview.tsx": "66c3b30bd1fdaa27ad2ee26b73c8d86fddbe1f2756463e89c1bd67c4bafe2e50",
     "frontend/src/components/viewer/SegmentationRow.tsx": "0b4e4224478bdbe1828d9bc5c04ea7a031ef88194442a142a284b0e75328131c",
     "frontend/src/hooks/useSegmentationData.ts": "84da2877af19ea9d83e9be7b746e4802cc60cd7357903505c0db9832977d39eb",
-    "frontend/src/i18n/locales/de.json": "4c2a8850f9d83545a48b6f08e2a956e53d19644a792c2156d22e75b2d3668a06",
-    "frontend/src/i18n/locales/en.json": "609adc79c79b7022e31efd22cb26d424b19bb3f552adefb8e4f36e981704502c",
-    "frontend/src/pages/LoginPage.tsx": "571ff0d116e070fba022bde94a69b361703e2420f9a4069e427f286aa9cefbd4",
+    "frontend/src/i18n/locales/de.json": "3f328477ff813763d39249d043a9e1ffc0fa721a5aeebbf7840073a01af11366",
+    "frontend/src/i18n/locales/en.json": "9752d518e2893a62c949faecd536d55e79c05466f7bd37deefd7df6531af8df7",
+    "frontend/src/pages/LoginPage.tsx": "6b1ed631481e2b2711b1b608e18268659bcb20108c57d6bd21cc0b75d5764dd8",
     "frontend/src/pages/PatientsPage.tsx": "b6b953ded00d4fb99516c20ffed9136762705204069e0724e573df6dc288c114",
     "frontend/src/services/registrationPolicy.ts": "78e134e64dd60e9ba93d97b62b48142a817a061bd8a0519385bf9c6b56ae4965",
     "frontend/src/utils/patientDisplay.ts": "94b8928f30ed05c06ae74e526080011fa3bd1cfb1b1878a77972a32d462a9411",
@@ -51,7 +51,7 @@
     "frontend/src/components/patientInitials.prb026.test.tsx": "426e41c03773588d74681bab5d7bab4665bb990b4c47e0b69d37a2670ff498df",
     "frontend/src/hooks/useSegmentationData.prb026.test.tsx": "b66df3034f6aacecac6073255f3c5cca007519354e5e7acde7ea581fe83bd3c8",
     "frontend/src/pages/LoginPage.prb020.test.tsx": "06164ed5b9e1b32911ac8211420cfc917c40cdc6202f04675d93a002a1dad36f",
-    "frontend/src/pages/LoginPage.prb022.review1.test.tsx": "a47d3165baae2dd09b4c38b607b59f81c38c7a1d1a1ae5f11d1d0c71a35e1a97",
+    "frontend/src/pages/LoginPage.prb022.review1.test.tsx": "da868e824c600af66409f32b10018ea1aa3ae704c08d009aeaeb495536fddd98",
     "frontend/src/pages/PatientsPage.prb021.test.tsx": "a9790102053bafdf827501c8c7a76c32d1bafd611e7e5e79c1481aaefb84ca98"
   },
   "backend_tests": [
@@ -84,7 +84,7 @@
       "suite": "frontend",
       "exit": 0,
       "failed": 0,
-      "passed": 29,
+      "passed": 30,
       "errors": 0,
       "failing_tests": []
     }
@@ -1440,6 +1440,20 @@
       "executed": "2026-10-28T22:55:18",
       "detected": true
     },
+    "VF7_medical_device_subtitle_back": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 29,
+      "errors": 0,
+      "failing_tests": [
+        "rc086 prb022 the subtitle says research prototype, not medical device or Class C (en, es, de)"
+      ],
+      "reintroduces": "the sign-in page claims a 'Class C Medical Device' (as found)",
+      "applied": true,
+      "executed": "2026-10-28T23:40:29",
+      "detected": true
+    },
     "W1_backfill_deny_list_only": {
       "suite": "backend",
       "exit": 1,
@@ -1592,14 +1606,14 @@
       "suite": "frontend",
       "exit": 0,
       "failed": 0,
-      "passed": 29,
+      "passed": 30,
       "errors": 0,
       "failing_tests": []
     }
   },
   "summary": {
-    "mutations": 98,
-    "detected": 98,
+    "mutations": 99,
+    "detected": 99,
     "undetected": []
   }
 }
