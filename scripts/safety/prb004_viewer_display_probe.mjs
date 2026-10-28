@@ -226,33 +226,59 @@ const clickButton = (cdp, sid, text) => evaluate(cdp, sid, `(() => { const b = [
 const setSlice = (cdp, sid, index) => evaluate(cdp, sid, `(() => { const r = document.querySelector('#main-content input[type="range"]'); if (!r) return false; Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(r, '${index}'); r.dispatchEvent(new Event('input', { bubbles: true })); r.dispatchEvent(new Event('change', { bubbles: true })); return r.previousElementSibling ? r.previousElementSibling.textContent.trim() : true; })()`);
 const clickText = (cdp, sid, text) => evaluate(cdp, sid, `(() => { const el = [...document.querySelectorAll('button, [role=button], div, span, p')].reverse().find(e => e.children.length === 0 && e.textContent.trim() === ${JSON.stringify(text)}); if (el) { el.click(); return true; } return false; })()`);
 
-/** Marker centroids in a captured region, relative to the drawn head's bounding box (0..1). */
+/**
+ * Marker positions in a captured region, relative to the drawn head's bounding box (u: 0 left .. 1 right,
+ * v: 0 top .. 1 bottom), whatever the window/level and whatever red tint the view adds:
+ *   head  pixels brighter than a quarter of the brightest grey pixel (a tinted background stays out);
+ *   red   the drawn lesion mask (clearly red);
+ *   B, A  the grey markers brighter than the head (pixels next to clearly red ones excluded — the mask's rim);
+ *         when two brightness groups lie apart (mask not drawn red), the brighter is A, the other B; two groups
+ *         at the same place are one marker (B) seen with an anti-aliased rim;
+ *   redTintedFraction  share of the viewport with any red tint (r and g/b differ by >= 8): the lesion and
+ *         niivue's 3D crosshair are red by design (a few per cent); the PRB-006 "fog" tints the whole volume.
+ */
 function measure(img) {
-  const acc = { head: [Infinity, Infinity, -Infinity, -Infinity], B: [0, 0, 0], A: [0, 0, 0], red: [0, 0, 0], tinted: 0 };
-  // Pixels near a reddish one are the blended rim of the drawn mask, not a grey marker.
-  const R = 6; const nearRed = new Uint8Array(img.w * img.h);
+  const N = img.w * img.h; const L = new Float32Array(N); const red = new Uint8Array(N); const greyPx = new Uint8Array(N);
+  let tinted = 0; let lmaxGrey = 0;
   for (let y = 0; y < img.h; y++) for (let x = 0; x < img.w; x++) {
-    const [r, g] = img.px(x, y);
-    if (r - g > 20) for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) {
+    const i = y * img.w + x; const [r, g, b] = img.px(x, y);
+    L[i] = (r + g + b) / 3;
+    if (r - g > 60 && r > 120) red[i] = 1;
+    if (r - g >= 8 && r - b >= 8) tinted++;
+    if (Math.abs(r - g) < 25 && Math.abs(g - b) < 25) { greyPx[i] = 1; if (L[i] > lmaxGrey) lmaxGrey = L[i]; }
+  }
+  const R = 6; const nearRed = new Uint8Array(N);
+  for (let y = 0; y < img.h; y++) for (let x = 0; x < img.w; x++) {
+    if (!red[y * img.w + x]) continue;
+    for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) {
       const yy = y + dy, xx = x + dx;
       if (yy >= 0 && yy < img.h && xx >= 0 && xx < img.w) nearRed[yy * img.w + xx] = 1;
     }
   }
-  for (let y = 0; y < img.h; y++) for (let x = 0; x < img.w; x++) {
-    const [r, g, b] = img.px(x, y);
-    const grey = Math.abs(r - g) < 25 && Math.abs(g - b) < 25 && !nearRed[y * img.w + x];
-    if (Math.max(r, g, b) > 40) { const hb = acc.head; hb[0] = Math.min(hb[0], x); hb[1] = Math.min(hb[1], y); hb[2] = Math.max(hb[2], x); hb[3] = Math.max(hb[3], y); }
-    if (grey && g >= 160 && g <= 215) { acc.B[0] += x; acc.B[1] += y; acc.B[2]++; }
-    if (grey && g > 235) { acc.A[0] += x; acc.A[1] += y; acc.A[2]++; }
-    if (r - g > 60 && r > 120) { acc.red[0] += x; acc.red[1] += y; acc.red[2]++; }
-    if (r - g > 30 && r > 30) acc.tinted++;
+  const headThr = 0.25 * lmaxGrey; const box = [Infinity, Infinity, -Infinity, -Infinity]; const headL = [];
+  for (let i = 0; i < N; i++) if (L[i] > headThr) {
+    const x = i % img.w, y = (i - x) / img.w;
+    box[0] = Math.min(box[0], x); box[1] = Math.min(box[1], y); box[2] = Math.max(box[2], x); box[3] = Math.max(box[3], y);
+    if (greyPx[i] && !nearRed[i]) headL.push(L[i]);
   }
-  const [x0, y0, x1, y1] = acc.head;
-  const rel = ([sx, sy, n]) => (n > 20 ? { u: +((sx / n - x0) / (x1 - x0)).toFixed(3), v: +((sy / n - y0) / (y1 - y0)).toFixed(3), px: n } : null);
-  // Red-tinted share of the whole captured viewport: the lesion and niivue's own crosshair lines are
-  // red by design (a few per cent); the PRB-006 "fog" tints the whole volume extent.
-  return { headBox: { x0, y0, x1, y1 }, B: rel(acc.B), A: rel(acc.A), red: rel(acc.red),
-    redTintedFraction: +(acc.tinted / (img.w * img.h)).toFixed(4) };
+  headL.sort((a, b) => a - b);
+  const median = headL.length ? headL[Math.floor(headL.length / 2)] : 0;
+  const brightThr = median + 0.35 * (lmaxGrey - median);
+  const bright = []; let bmin = Infinity, bmax = -Infinity;
+  for (let i = 0; i < N; i++) if (greyPx[i] && !nearRed[i] && L[i] > brightThr) { bright.push(i); bmin = Math.min(bmin, L[i]); bmax = Math.max(bmax, L[i]); }
+  const twoGroups = bmax - bmin > 15; const split = (bmin + bmax) / 2;
+  const accA = [0, 0, 0], accB = [0, 0, 0], accR = [0, 0, 0];
+  for (const i of bright) {
+    const x = i % img.w, y = (i - x) / img.w; const acc = twoGroups && L[i] >= split ? accA : accB;
+    acc[0] += x; acc[1] += y; acc[2]++;
+  }
+  for (let i = 0; i < N; i++) if (red[i]) { const x = i % img.w, y = (i - x) / img.w; accR[0] += x; accR[1] += y; accR[2]++; }
+  const [x0, y0, x1, y1] = box;
+  const rel = ([sx, sy, n]) => (n > 20 && x1 > x0 && y1 > y0 ? { u: +((sx / n - x0) / (x1 - x0)).toFixed(3), v: +((sy / n - y0) / (y1 - y0)).toFixed(3), px: n } : null);
+  let A = twoGroups ? rel(accA) : null; let B = rel(accB);
+  if (A && B && Math.hypot(A.u - B.u, A.v - B.v) < 0.1) { B = rel(accA.map((v, k) => v + accB[k])); A = null; }
+  if (A && !B) { B = A; A = null; }
+  return { headBox: { x0, y0, x1, y1 }, B, A, red: rel(accR), redTintedFraction: +(tinted / N).toFixed(4) };
 }
 const HIDE_DOM = `(() => { const s = document.createElement('style'); s.id = 'prb004-probe-hide';
   s.textContent = '#main-content * { visibility: hidden !important } #main-content canvas { visibility: visible !important }';
@@ -310,6 +336,7 @@ async function main() {
     cwd: FRONTEND, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, VITE_API_BASE_URL: ORIGIN },
   });
   vite.stderr.on('data', (d) => process.stderr.write(`[vite] ${d}`));
+  vite.stdout.on('data', (d) => process.stderr.write(`[vite] ${d}`));
   const profile = mkdtempSync(join(tmpdir(), 'prb004-edge-'));
   let edge;
   const result = { executed: new Date().toISOString(), frontend: FRONTEND, origin: ORIGIN,
@@ -396,6 +423,7 @@ async function main() {
   result.verdict = {
     prb004_markerB_same_place_standard_vs_gpu: close(c.standard?.B, c.wlGpu?.B),
     prb004_mask_drawn_on_marker_A_in_gpu_view: close(c.standard?.red, c.wlGpu?.red),
+    prb004_marker_A_same_place_standard_vs_gpu: close(c.standard?.red, c.wlGpu?.red ?? c.wlGpu?.A),
     prb005_no_toUpperCase_error: !result.pageExceptions.some((e) => /toUpperCase/.test(e ?? '')) && !/toUpperCase/.test(c.gpuError ?? ''),
     prb005_gpu_and_3d_drawn: !!c.wlGpu?.B && !!c.threeD && Number.isFinite(c.threeD.headBox.x0),
     prb006_3d_not_tinted_red: Number.isFinite(c.threeD?.redTintedFraction) && c.threeD.redTintedFraction < 0.15,
