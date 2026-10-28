@@ -30,7 +30,12 @@ Integration commits after the four merges (one concern each):
 | `929ce0c` | RC-064 amended — "one of the fixed template variants" (§3, S2) — PENDING owner approval |
 | `fe4487d` | Integration tests I-1, I-2, C-1 (§3, S3) |
 | `57933c3` | Negative-control scripts: P17 anchor, new integration script (§6) |
-| (records commit) | These notes, the integrated-tree negative-control records, the manifest's negative-control fields (RC-064..072), CAPA-015 D-4 note |
+| `6d1fde2` | These notes (first version), the integrated-tree negative-control records, the manifest's negative-control fields (RC-064..072), CAPA-015 D-4 note |
+| `26ecb82` | Integration review of #69: tests written first (§9) |
+| `269317d` | Integration review of #69: corrections of items 1, 2, 3 and 6 (§9) |
+| `9c78d2d` | Integration review of #69: CRLF-safe control scripts (item 5), R4 / P17 anchors, integration controls I7–I12 |
+| `9e8fa48` | CAPA-014 M10 kept detectable by a direct test; integration mutation I2 redefined (§6) |
+| (records commit) | §6 and §9 of these notes, re-run records, documents (SRS 1.14, RMF 1.16, TM 1.13, DD-001 1.4 rows; CAPA-014 §12; CAPA-016 §13), manifest |
 
 ## 2. Conflicts and how each was resolved
 
@@ -146,11 +151,11 @@ All backend runs offline: `GOOGLE_APPLICATION_CREDENTIALS` = a missing file, `CL
 
 | Check | Result |
 |---|---|
-| Backend unit (`tests/unit`, as CI) | **2048 passed, 0 failed** |
+| Backend unit (`tests/unit`, as CI) | **2066 passed, 0 failed** (2048 before the review of #69; +17 review tests, +1 draft-assembly test) |
 | Backend integration (CI selection: not PACS / GCS / Firestore) | **25 passed, 1 failed, 20 deselected** — the failure is the known local one (`test_webauthn_credentials_endpoint_exists`: `webauthn` not installed in the local venv; CI installs it) |
 | Backend security (CI selection) | **112 passed, 5 xfailed** |
 | Manifest gate (`test_risk_control_manifest.py`) | passes (70 controls, every named test file exists and names its control) |
-| Frontend vitest (`--pool=threads`) | **404 passed, 3 skipped** (45 files passed, 3 skipped — as on `main`) |
+| Frontend vitest (`--pool=threads`) | **408 passed, 3 skipped** (46 files passed, 3 skipped as on `main`; 404 before the review's panel test) |
 | Frontend `tsc --noEmit` | clean |
 | Frontend production build | passes |
 
@@ -158,12 +163,13 @@ All backend runs offline: `GOOGLE_APPLICATION_CREDENTIALS` = a missing file, `CL
 
 | Script (PR) | Mutations | Result on the integrated tree | Script change | Record (integrated tree) |
 |---|---|---|---|---|
-| `prb002_negative_controls.py` (#66) | 19 | **19 detected** | none | `RELEASE-2026-10-25_PRB-002_negative_controls.json` |
-| `capa015_negative_controls.py` (#65) | 108 | **107 detected, 1 declared equivalent** (R9 — the same mutation #65's record declares equivalent; R9b, which removes both protections, is detected) | none | `RELEASE-2026-10-25_CAPA-015_negative_controls.json` |
-| `capa014_negative_controls.py` (#67) | 94 | **94 detected** | P17 only: its anchor (#67's own not-evaluated branch of the prompt builder) no longer exists because #68's rule replaced it (merge note 1); the anchor is now the merged builder line, and the mutation still sends a not-evaluated DIS to MET / NOT MET (5 tests fail) | `RELEASE-2026-10-25_CAPA-014_negative_controls.json` |
-| `prb003_negative_controls.py` (#68) | 119 | **119 detected** (R2, removal of `authorize_mask_specs`, still detected through the spy in `report_env`) | none | `RELEASE-2026-10-25_PRB-003_negative_controls.json` |
-| `release_2026_10_25_negative_controls.py` (new) | 7 | **7 detected** (I1, I1b, I2, I3, I4, I5 by their tests; I6 by the suite failing to collect, because the application's start-up check refuses the 60-minute lifetime — exit 4) | new | `RELEASE-2026-10-25_integration_negative_controls.json` |
-| **Total** | **347** | **346 detected, 1 declared equivalent** | | |
+| `prb002_negative_controls.py` (#66) | 19 | **19 detected** — re-run 2026-10-28 on the Windows CRLF checkout | review of #69, item 5: anchors on the LF text, mutations with the file's own line endings, byte-exact restore, hash on the LF text | `RELEASE-2026-10-25_PRB-002_negative_controls.json` |
+| `capa015_negative_controls.py` (#65) | 108 | **107 detected, 1 declared equivalent** (R9 — the same mutation #65's record declares equivalent; R9b, which removes both protections, is detected) — run 2026-10-25; not repeated after the review: no CAPA-015 file and no bound test changed | none | `RELEASE-2026-10-25_CAPA-015_negative_controls.json` |
+| `capa014_negative_controls.py` (#67) | 94 | **94 detected** — re-run 2026-10-28 | P17 only: anchored on the merged builder line (#68's rule replaced #67's branch, merge note 1), and after review item 3 on the one-rule line `if not gate.is_evaluated(dis):`; the mutation still sends a not-evaluated DIS to MET / NOT MET. The first re-run after the review corrections left **M10** undetected (the route now removes format characters before the DIS check, so the draft assembly's own removal had become a second layer); a direct test of the assembly (`test_rc066_release_the_draft_assembly_removes_format_characters_itself`) now detects it | `RELEASE-2026-10-25_CAPA-014_negative_controls.json` |
+| `prb003_negative_controls.py` (#68) | 119 | **119 detected** — re-run 2026-10-28 (R2, removal of `authorize_mask_specs`, still detected through the spy in `report_env`) | R4 only: anchored on the one-rule line (review item 3), mutation unchanged | `RELEASE-2026-10-25_PRB-003_negative_controls.json` |
+| `rc029_negative_controls.py` (CAPA-007, pre-existing) | 11 | **11 detected** — run 2026-10-28 | review of #69, item 5: byte-exact restore on a CRLF checkout (it wrote files back with the platform's line endings) | `RELEASE-2026-10-25_RC-029_negative_controls.json` |
+| `release_2026_10_25_negative_controls.py` (new) | 14 | **14 detected** — run 2026-10-28 (I6 by design through the start-up failure: the application refuses a 60-minute access token, the module cannot be collected, exit 4 — stated in the record). I2 was redefined after it went undetected once the one rule was in (choosing the raw block alone had become equivalent by construction); it now re-introduces the raw block with its own status-only rule | new | `RELEASE-2026-10-25_integration_negative_controls.json` |
+| **Total** | **365** | **364 detected, 1 declared equivalent** | | |
 
 Notes on the runs:
 - The scripts ran one after another (never two at once); after each one every source file was back byte for byte and
@@ -171,10 +177,11 @@ Notes on the runs:
   frontend 24, CAPA-014 backend 374 / frontend 13, PRB-003 backend 143 / frontend 36, integration 10).
 - Each PR's own record in `records/risk_verification/` was left as the PR committed it: the scripts write there, so
   each output was copied to the release-named file above and the PR's record restored from git.
-- `prb002_negative_controls.py` compares its anchors without normalising line endings; this Windows working copy
-  (`core.autocrlf=true`) checks `conftest.py` out with CRLF, so its first run stopped at the anchor check before any
-  mutation. It was re-run on an LF working copy of the same committed content (`git diff HEAD` empty; the record's
-  `conftest_sha256` is that of the committed file). The script is unchanged.
+- `prb002_negative_controls.py` compared its anchors without normalising line endings; on this Windows working copy
+  (`core.autocrlf=true`, `conftest.py` with CRLF) its first run on 2026-10-25 stopped at the anchor check before any
+  mutation and was repeated on an LF working copy. After the review of #69 (item 5) the script matches anchors on the
+  LF text and restores the exact bytes; it was re-run on 2026-10-28 **on the CRLF checkout** (record field
+  `line_endings_of_checkout: CRLF`): 19/19.
 - T22 of CAPA-014 (a quadratic e-mail pattern, re-introduced on purpose) takes about 25 minutes because the runaway
   pattern keeps the processor busy after the 3-second test has failed — as in #67's own record.
 - Timestamps in the records are local time; the runs crossed the end of summer time (03:00 CEST → 02:00 CET), so
@@ -183,10 +190,8 @@ Notes on the runs:
 ## 7. Residuals and notes for the owner's review
 
 - Two authorizations of the same segmentation in the report route (C3 (c)) — deliberate, see above.
-- A server-derived DIS block marked "evaluated" but without a yes/no conclusion would reach the model as not
-  evaluated with the not-evaluated template (I-2), but the route's notice and output check (keyed on the route's own
-  "evaluated" test) would not run for it. It cannot arise from the server's DIS computation (`assess_dis` always
-  returns a boolean conclusion); recorded, not changed.
+- ~~A DIS block marked "evaluated" without a yes/no conclusion was judged differently by the route and by the
+  prompt / template.~~ Resolved by the review of #69 (item 3, §9): one rule, `dis_review_gate.is_evaluated`.
 - Deployment order changed for this release (C3, `DEPLOYMENT_CHECKLIST.md`); CAPA-015 D-4's "backend first" is
   superseded by this plan unless the owner decides otherwise.
 - #68's reviewer listed `_dis_services` among the hooks to stub in the CAPA-014 fixture; the fixture stubs the three
@@ -199,6 +204,26 @@ Notes on the runs:
 See the PR description "Owner decisions" and "Owner-only actions" (consolidated from PRB-002 §5/§7, CAPA-015 §9
 D-1..D-10, CAPA-014 §9 D-1..D-10, PRB-003 §8 items 1–15 incl. §8.12 and the history-visibility decision, CAPA-016 §8
 D-1..D-13).
+
+## 9. Independent integration review of PR #69 at `6d1fde2` — corrections (2026-10-28)
+
+The review found that nothing reviewed was lost in the integration and no blocker or major issue. Its six items were
+corrected with the same process: tests written first (`26ecb82`; on the uncorrected code **backend 13 of 17 and
+frontend 3 of 4 fail**, the passing cases are positive controls — record
+`RELEASE-2026-10-25_review_tests_on_6d1fde2.json`), then the corrections (`269317d`), then the control scripts
+(`9c78d2d`). Everything stays PENDING owner approval.
+
+| # | Finding | Correction | Tests / negative controls |
+|---|---|---|---|
+| 1 | On a segmentation whose regions no radiologist confirmed, #68's `without_region_breakdown` set every lesion's region to "not confirmed", which #67's label check treated as an unlisted label: `[unlisted label 1] = not confirmed` in the prompt and an application note in every unconfirmed draft | `report_payload_guard.py` (RC-064): when `region_status.confirmed` is False the payload carries no region summary and no region in the lesion rows (`regions_confirmed: False`); `brain_report_service.py` (Class C) prints the fixed line "Lesion regions: not confirmed by a radiologist; not given. Do not assign, count or tabulate the lesions by region." and a lesion table without a region column; the line joins the device's own words (new synthetic payload). No placeholder, no note | `test_rc064_release_r1_*` (en/es/de + confirmed positive control); I7, I7b |
+| 2 | Zero-width characters (ZWJ, ZWSP) hid a DIS statement from PRB-003's output check, which ran before CAPA-014 removed the format characters | `ai_report.py`: CAPA-014's rule (ZWSP → space, every other format character removed) is applied to the model's text **before** the check; the clinician's typed text is not part of that text and never passes through the check | `test_rc070_release_r2_*` with the reviewer's probe ("dissem‍ination in space … juxta​cortical"), en/es/de; I8 |
+| 3 | Two "evaluated" rules: the template and the findings prompt needed "evaluated + a yes/no conclusion", the route (notice, check, regions withheld) only the status | `dis_review_gate.is_evaluated` is **the one rule** (status "evaluated" AND a boolean conclusion); the route, the RC-064 payload's "evaluated" mark, the findings prompt and the template variant all call it, so they cannot disagree. (The assistant's MCP filter keeps its own status check against older backends; it decides nothing in the report.) | `test_rc070_release_r3_*` over seven DIS blocks: route notice, regions, prompt and template agree; I9, I10 |
+| 4 | Test gap: the fully real path | `test_rc064_release_r4_*`: CAPA-014's markers in every field and the patient's identifiers through the real route, the real report service and #68's real server-side lesion table and DIS state (in-memory segmentation store, real voxel geometry); only the provider, `authorize_segmentation_id`, `authorize_mask_specs` and the patient store stubbed — unconfirmed (a renamed label carrying a marker) and confirmed (MAGNIMS, classified, confirmed: "DIS Assessment: MET" reaches the model). **0 markers and 0 identifiers reach the provider** in both | — (a test; the confirmed case passed already on 6d1fde2, the unconfirmed case failed through item 1) |
+| 5 | `prb002_negative_controls.py` missed every anchor on a Windows CRLF checkout | Anchors matched on the LF text, mutations written with the file's own line endings, exact original bytes restored, conftest hash on the LF text; `rc029_negative_controls.py` wrote files back with the platform's line endings and is now byte-exact too (the other scripts already normalised). Integration mutation I6 is kept; its record states that it is detected **by design** through the start-up failure (the application's start-up check refuses a 60-minute access token, so the test module cannot be collected — exit 4) | PRB-002 re-run **on the CRLF checkout**: 19/19; RC-029 11/11 |
+| 6 | A 422 from the server-side lesion table (image geometry unreadable) showed "no measurements" in the report panel | `ai_report.py`: the 422 starts with `GEOMETRY_UNREADABLE_PHRASE` ("The image geometry could not be read; report not generated"); `AIReportPanel.tsx` recognises it and shows `report.geometryUnreadable` (en/es/de); CAPA-008's message is kept for a request without measurements. A backend test checks that server and panel use the same phrase | `test_rc070_release_r6_*`; vitest `AIReportPanel.release20261025.test.tsx` (4 cases); I11 (frontend), I12 |
+
+Script anchors moved by item 3 (mutation unchanged): PRB-003 **R4** and CAPA-014 **P17** now anchor on the builder's
+`if not gate.is_evaluated(dis):`.
 
 *Drafted by the AI coding agent (development tool, SDP-001 §5.1.4). No approval is recorded in this document;
 approvals are to be recorded by the owner (CAPA-012).*

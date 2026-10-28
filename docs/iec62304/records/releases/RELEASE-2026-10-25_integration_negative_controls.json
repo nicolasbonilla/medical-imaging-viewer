@@ -1,27 +1,46 @@
 {
-  "executed": "2026-10-25T02:41:36",
-  "tree": "57933c326952aafad6bb17e0b10995ccd1e5010f",
-  "method": "one mutation at a time; each anchor asserted to occur exactly once; only the bound backend tests run, offline per PRB-002, with an outer environment asking for the Firestore backends and a 60-minute access token (conftest must override it); bytes restored after each mutation",
+  "executed": "2026-10-28T18:05:43",
+  "tree": "9e8fa4886ba944c26eb8e98b9a14eaac4bd1a3ae",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once (LF text); only the bound tests run (backend offline per PRB-002, with an outer environment asking for the Firestore backends and a 60-minute access token that conftest must override; frontend with vitest); bytes restored after each mutation and verified at the end",
   "hash_basis": "sha256 of the UTF-8 text with LF line endings",
   "source_sha256": {
-    "backend/app/api/routes/ai_report.py": "17e0f82cd7d3684682cded6125bff697e8d0877837ad1ab3d4e5428c65fd49c5",
+    "backend/app/api/routes/ai_report.py": "89baddfcb46fa1bb4a4eaba6141bbb66155dd691fe481c1abd4c8111ffb865f6",
     "backend/app/core/logging/audit_middleware.py": "908a769a69a38994cdae391dbc2efbd3689d085666fd7ce6222ff80245bc886b",
-    "backend/app/services/brain_report_service.py": "86f893f21328eaa74a9b514fcb0d5b8a4ee6b13a440ab348f985b18523dd9b02",
-    "backend/tests/conftest.py": "83b5b86cd72d4a131ad45f0b57ea0f9451a80c253be0232b9521af31e9fee3c7"
+    "backend/app/services/brain_report_service.py": "5f7f94895908d5b2755d68616d11033e2b3cc0d223b7d0ec974b00d2200aade4",
+    "backend/app/services/dis_review_gate.py": "23eaa13c26523c151d1ebfdcc224ed19a8a0783839031c8fdb4f320fe044af95",
+    "backend/app/services/report_payload_guard.py": "5a04fcfc7a333f030da9ec893b6c03e0c98157e866f5794c9e53b07515d3dc66",
+    "backend/tests/conftest.py": "83b5b86cd72d4a131ad45f0b57ea0f9451a80c253be0232b9521af31e9fee3c7",
+    "frontend/src/components/AIReportPanel.tsx": "82a2a16d4204bc7e6302fe4dda45526607e05f6db4c8ab6230935c014c6344a8"
   },
   "test_sha256": {
     "tests/unit/test_capa015_audit_and_session.py": "c2d117e9fddae634de5e46d9cc02f6572e783845a9488aae648d53e485e3479a",
-    "tests/unit/test_release_2026_10_25_integration.py": "886cf55f3cf3750c56b4f62195f861a158f25dabad455885ee69aa79f69c9e4e"
+    "tests/unit/test_release_2026_10_25_integration.py": "886cf55f3cf3750c56b4f62195f861a158f25dabad455885ee69aa79f69c9e4e",
+    "tests/unit/test_release_2026_10_25_review_fixes.py": "b33ecdf3ee502bf648c8d19868d931a47163a0895cf0870a23b95d00323ed262",
+    "frontend/src/components/AIReportPanel.release20261025.test.tsx": "f2c9328967132e8bb17761d3248da425a6e870779ee8c2fda65556c7d1ade2f3"
   },
   "baseline": {
-    "exit": 0,
-    "failed": 0,
-    "passed": 10,
-    "errors": 0,
-    "failing_tests": []
+    "backend": {
+      "suite": "backend",
+      "exit": 0,
+      "failed": 0,
+      "passed": 56,
+      "errors": 0,
+      "failing_tests": []
+    },
+    "frontend": [
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 4,
+        "errors": 0,
+        "failing_tests": []
+      }
+    ]
   },
   "mutations": {
     "I1_check_also_runs_on_the_assembled_draft": {
+      "suite": "backend",
       "exit": 1,
       "failed": 3,
       "passed": 0,
@@ -35,10 +54,11 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_integration.py::test_rc070_release_i1_the_dis_check_changes_the_model_text_never_the_clinicians_entry"
       ],
-      "executed": "2026-10-25T02:41:54",
+      "executed": "2026-10-28T18:06:44",
       "detected": true
     },
     "I1b_check_moved_after_the_draft_assembly": {
+      "suite": "backend",
       "exit": 1,
       "failed": 3,
       "passed": 0,
@@ -52,10 +72,11 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_integration.py::test_rc070_release_i1_the_dis_check_changes_the_model_text_never_the_clinicians_entry"
       ],
-      "executed": "2026-10-25T02:42:04",
+      "executed": "2026-10-28T18:07:08",
       "detected": true
     },
-    "I2_template_variant_chosen_on_the_raw_findings": {
+    "I2_template_variant_on_the_raw_block_with_its_own_rule": {
+      "suite": "backend",
       "exit": 1,
       "failed": 5,
       "passed": 0,
@@ -71,10 +92,11 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_integration.py::test_rc064_release_i2_the_template_variant_follows_the_dis_block_the_model_receives"
       ],
-      "executed": "2026-10-25T02:42:14",
+      "executed": "2026-10-28T18:07:20",
       "detected": true
     },
     "I3_dis_confirmation_route_not_audited": {
+      "suite": "backend",
       "exit": 1,
       "failed": 1,
       "passed": 0,
@@ -86,10 +108,11 @@
       "tests": [
         "tests/unit/test_capa015_audit_and_session.py::test_rc067_prb003_dis_confirmation_is_a_recorded_clinical_action"
       ],
-      "executed": "2026-10-25T02:42:21",
+      "executed": "2026-10-28T18:07:33",
       "detected": true
     },
     "I4_audit_backend_not_forced": {
+      "suite": "backend",
       "exit": 1,
       "failed": 1,
       "passed": 0,
@@ -101,10 +124,11 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_integration.py::test_release_c1_conftest_forces_the_capa015_test_settings"
       ],
-      "executed": "2026-10-25T02:42:28",
+      "executed": "2026-10-28T18:07:43",
       "detected": true
     },
     "I5_refresh_backend_not_forced": {
+      "suite": "backend",
       "exit": 1,
       "failed": 1,
       "passed": 0,
@@ -116,10 +140,11 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_integration.py::test_release_c1_conftest_forces_the_capa015_test_settings"
       ],
-      "executed": "2026-10-25T02:42:35",
+      "executed": "2026-10-28T18:08:02",
       "detected": true
     },
     "I6_access_lifetime_not_forced": {
+      "suite": "backend",
       "exit": 4,
       "failed": 0,
       "passed": 0,
@@ -129,20 +154,156 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_integration.py::test_release_c1_conftest_forces_the_capa015_test_settings"
       ],
-      "executed": "2026-10-25T02:42:38",
+      "executed": "2026-10-28T18:08:27",
+      "detected": true,
+      "note": "Detected by design through a start-up failure, not an assertion: with a 60-minute access token and a 30-minute refresh idle limit the application's own start-up check (CAPA-015, RC-068) refuses to start, so the bound test module cannot even be collected and the suite goes red (pytest exit 4). That refusal is the protection the forced setting keeps out of the test suite."
+    },
+    "I7_unconfirmed_regions_sent_as_labels": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 3,
+      "passed": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc064_release_r1_unconfirmed_regions_give_no_placeholder_and_no_app_note[de]",
+        "test_rc064_release_r1_unconfirmed_regions_give_no_placeholder_and_no_app_note[en]",
+        "test_rc064_release_r1_unconfirmed_regions_give_no_placeholder_and_no_app_note[es]"
+      ],
+      "reintroduces": "unconfirmed regions reach the payload as labels: '[unlisted label 1] = not confirmed' and an app note",
+      "tests": [
+        "tests/unit/test_release_2026_10_25_review_fixes.py::test_rc064_release_r1_unconfirmed_regions_give_no_placeholder_and_no_app_note"
+      ],
+      "executed": "2026-10-28T18:09:03",
+      "detected": true
+    },
+    "I7b_prompt_ignores_unconfirmed_regions": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 3,
+      "passed": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc064_release_r1_unconfirmed_regions_give_no_placeholder_and_no_app_note[de]",
+        "test_rc064_release_r1_unconfirmed_regions_give_no_placeholder_and_no_app_note[en]",
+        "test_rc064_release_r1_unconfirmed_regions_give_no_placeholder_and_no_app_note[es]"
+      ],
+      "reintroduces": "the prompt has a region column of 'Unknown' and no 'regions not confirmed' line",
+      "tests": [
+        "tests/unit/test_release_2026_10_25_review_fixes.py::test_rc064_release_r1_unconfirmed_regions_give_no_placeholder_and_no_app_note"
+      ],
+      "executed": "2026-10-28T18:09:14",
+      "detected": true
+    },
+    "I8_format_characters_removed_only_after_the_check": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 3,
+      "passed": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc070_release_r2_zero_width_characters_do_not_hide_a_dis_statement[de]",
+        "test_rc070_release_r2_zero_width_characters_do_not_hide_a_dis_statement[en]",
+        "test_rc070_release_r2_zero_width_characters_do_not_hide_a_dis_statement[es]"
+      ],
+      "reintroduces": "a zero-width joiner or space hides a DIS statement from PRB-003's output check (review item 2)",
+      "tests": [
+        "tests/unit/test_release_2026_10_25_review_fixes.py::test_rc070_release_r2_zero_width_characters_do_not_hide_a_dis_statement"
+      ],
+      "executed": "2026-10-28T18:09:29",
+      "detected": true
+    },
+    "I9_evaluated_without_a_conclusion": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 2,
+      "passed": 5,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc070_release_r3_one_rule_decides_evaluated_for_route_prompt_and_template[evaluated_conclusion_not_boolean]",
+        "test_rc070_release_r3_one_rule_decides_evaluated_for_route_prompt_and_template[evaluated_without_conclusion]"
+      ],
+      "reintroduces": "the one rule accepts an 'evaluated' block without a yes/no conclusion (review item 3)",
+      "tests": [
+        "tests/unit/test_release_2026_10_25_review_fixes.py::test_rc070_release_r3_one_rule_decides_evaluated_for_route_prompt_and_template"
+      ],
+      "executed": "2026-10-28T18:09:51",
+      "detected": true
+    },
+    "I10_route_uses_its_own_status_only_rule": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 2,
+      "passed": 5,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc070_release_r3_one_rule_decides_evaluated_for_route_prompt_and_template[evaluated_conclusion_not_boolean]",
+        "test_rc070_release_r3_one_rule_decides_evaluated_for_route_prompt_and_template[evaluated_without_conclusion]"
+      ],
+      "reintroduces": "the route decides 'evaluated' by the status alone while the prompt and template need a conclusion (as on 6d1fde2)",
+      "tests": [
+        "tests/unit/test_release_2026_10_25_review_fixes.py::test_rc070_release_r3_one_rule_decides_evaluated_for_route_prompt_and_template"
+      ],
+      "executed": "2026-10-28T18:10:07",
+      "detected": true
+    },
+    "I11_panel_shows_no_measurements_for_a_geometry_422": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 3,
+      "passed": 1,
+      "errors": 0,
+      "failing_tests": [
+        "rc070 release r6 a geometry 422 shows its own message, not \"no measurements\" (en)",
+        "rc070 release r6 a geometry 422 shows its own message, not \"no measurements\" (es)",
+        "rc070 release r6 a geometry 422 shows its own message, not \"no measurements\" (de)"
+      ],
+      "reintroduces": "the report panel shows 'no measurements' for an unreadable image geometry (review item 6)",
+      "tests": [
+        "frontend/src/components/AIReportPanel.release20261025.test.tsx"
+      ],
+      "executed": "2026-10-28T18:10:19",
+      "detected": true
+    },
+    "I12_geometry_422_without_its_phrase": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc070_release_r6_unreadable_geometry_names_itself_and_the_panel_knows_the_phrase"
+      ],
+      "reintroduces": "the server's geometry 422 no longer starts with the phrase the panel recognises",
+      "tests": [
+        "tests/unit/test_release_2026_10_25_review_fixes.py::test_rc070_release_r6_unreadable_geometry_names_itself_and_the_panel_knows_the_phrase"
+      ],
+      "executed": "2026-10-28T18:10:32",
       "detected": true
     }
   },
   "restored": {
-    "exit": 0,
-    "failed": 0,
-    "passed": 10,
-    "errors": 0,
-    "failing_tests": []
+    "backend": {
+      "suite": "backend",
+      "exit": 0,
+      "failed": 0,
+      "passed": 56,
+      "errors": 0,
+      "failing_tests": []
+    },
+    "frontend": [
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 4,
+        "errors": 0,
+        "failing_tests": []
+      }
+    ]
   },
   "summary": {
-    "mutations": 7,
-    "detected": 7,
+    "mutations": 14,
+    "detected": 14,
     "undetected": []
   }
 }

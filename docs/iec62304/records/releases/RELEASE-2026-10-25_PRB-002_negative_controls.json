@@ -1,9 +1,11 @@
 {
- "generated": "2026-10-25T03:57:33",
+ "generated": "2026-10-28T16:03:07",
  "tests": {
-  "tests/unit/test_prb002_no_cloud_in_tests.py": "5e8626736c6fb2af9c64f3694f9c2ce0ff5325fa23004697b61cf29165ffb5e5"
+  "tests/unit/test_prb002_no_cloud_in_tests.py": "9758d49bb05f5102e802ee23380ca677afa203da86390fe109e4cb6f0259415f"
  },
  "conftest_sha256": "83b5b86cd72d4a131ad45f0b57ea0f9451a80c253be0232b9521af31e9fee3c7",
+ "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+ "line_endings_of_checkout": "CRLF",
  "baseline": {
   "exit": 0,
   "failed": []
@@ -11,7 +13,7 @@
  "mutations": [
   {
    "name": "M1_credentials_path_not_forced",
-   "executed": "2026-10-25T03:57:46",
+   "executed": "2026-10-28T16:03:21",
    "exit": 1,
    "failed_tests": [
     "test_credentials_file_points_nowhere"
@@ -20,7 +22,7 @@
   },
   {
    "name": "M2_credentials_path_setdefault_only",
-   "executed": "2026-10-25T03:57:54",
+   "executed": "2026-10-28T16:03:28",
    "exit": 1,
    "failed_tests": [
     "test_credentials_file_points_nowhere"
@@ -29,7 +31,7 @@
   },
   {
    "name": "M3_storage_key_file_not_emptied",
-   "executed": "2026-10-25T03:58:01",
+   "executed": "2026-10-28T16:03:37",
    "exit": 1,
    "failed_tests": [
     "test_storage_service_cannot_reach_cloud"
@@ -38,7 +40,7 @@
   },
   {
    "name": "M4_gcloud_config_not_redirected",
-   "executed": "2026-10-25T03:58:08",
+   "executed": "2026-10-28T16:03:46",
    "exit": 1,
    "failed_tests": [
     "test_gcloud_config_dir_holds_no_credentials"
@@ -47,7 +49,7 @@
   },
   {
    "name": "M5_project_not_forced",
-   "executed": "2026-10-25T03:58:16",
+   "executed": "2026-10-28T16:03:56",
    "exit": 1,
    "failed_tests": [
     "test_project_is_not_a_real_project"
@@ -56,7 +58,7 @@
   },
   {
    "name": "M6_legacy_project_variable_kept",
-   "executed": "2026-10-25T03:58:23",
+   "executed": "2026-10-28T16:04:04",
    "exit": 1,
    "failed_tests": [
     "test_project_is_not_a_real_project"
@@ -65,7 +67,7 @@
   },
   {
    "name": "M7_credentials_guard_not_installed",
-   "executed": "2026-10-25T03:58:57",
+   "executed": "2026-10-28T16:04:37",
    "exit": 1,
    "failed_tests": [
     "test_guard_installed_before_any_app_import",
@@ -80,7 +82,7 @@
   },
   {
    "name": "M8_only_public_default_patched",
-   "executed": "2026-10-25T03:59:04",
+   "executed": "2026-10-28T16:04:43",
    "exit": 1,
    "failed_tests": [
     "test_google_auth_default_refuses[None]",
@@ -90,7 +92,7 @@
   },
   {
    "name": "M9_emulator_variable_unlocks_anonymous_credentials",
-   "executed": "2026-10-25T03:59:11",
+   "executed": "2026-10-28T16:04:50",
    "exit": 1,
    "failed_tests": [
     "test_google_auth_default_refuses[localhost:8081]",
@@ -100,7 +102,7 @@
   },
   {
    "name": "M10_app_imported_before_guard",
-   "executed": "2026-10-25T03:59:19",
+   "executed": "2026-10-28T16:04:56",
    "exit": 1,
    "failed_tests": [
     "test_guard_installed_before_any_app_import"
@@ -109,7 +111,7 @@
   },
   {
    "name": "M11_other_service_variables_kept",
-   "executed": "2026-10-25T03:59:26",
+   "executed": "2026-10-28T16:05:03",
    "exit": 1,
    "failed_tests": [
     "test_project_is_not_a_real_project",
@@ -119,7 +121,7 @@
   },
   {
    "name": "M12_socket_guard_not_installed",
-   "executed": "2026-10-25T03:59:57",
+   "executed": "2026-10-28T16:05:33",
    "exit": 1,
    "failed_tests": [
     "test_outbound_connections_refused",
@@ -130,7 +132,7 @@
   },
   {
    "name": "M13_socket_guard_allows_any_host",
-   "executed": "2026-10-25T04:00:30",
+   "executed": "2026-10-28T16:06:06",
    "exit": 1,
    "failed_tests": [
     "test_outbound_connections_refused",
@@ -142,7 +144,7 @@
   },
   {
    "name": "M14_app_imported_before_credential_guard",
-   "executed": "2026-10-25T04:00:38",
+   "executed": "2026-10-28T16:06:13",
    "exit": 1,
    "failed_tests": [
     "test_guard_installed_before_any_app_import"
@@ -151,7 +153,7 @@
   },
   {
    "name": "M15_app_imported_before_environment_layers",
-   "executed": "2026-10-25T04:00:45",
+   "executed": "2026-10-28T16:06:20",
    "exit": 1,
    "failed_tests": [
     "test_guard_installed_before_any_app_import"
@@ -160,7 +162,7 @@
   },
   {
    "name": "M16_windows_proactor_not_guarded",
-   "executed": "2026-10-25T04:00:55",
+   "executed": "2026-10-28T16:06:29",
    "exit": 1,
    "failed_tests": [
     "test_async_outbound_connections_refused"
@@ -169,7 +171,7 @@
   },
   {
    "name": "M17_proxies_left_on",
-   "executed": "2026-10-25T04:01:03",
+   "executed": "2026-10-28T16:06:36",
    "exit": 1,
    "failed_tests": [
     "test_http_proxies_switched_off"
@@ -178,7 +180,7 @@
   },
   {
    "name": "M18_connect_ex_unpatched",
-   "executed": "2026-10-25T04:01:31",
+   "executed": "2026-10-28T16:07:04",
    "exit": 1,
    "failed_tests": [
     "test_connect_ex_refused"
@@ -187,7 +189,7 @@
   },
   {
    "name": "M19_host_names_treated_as_loopback",
-   "executed": "2026-10-25T04:01:38",
+   "executed": "2026-10-28T16:07:11",
    "exit": 1,
    "failed_tests": [
     "test_host_name_is_not_treated_as_loopback"

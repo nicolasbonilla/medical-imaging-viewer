@@ -272,6 +272,10 @@ meanwhile by `persist_metadata` on another. The failure is safe: without its con
 evaluated" and must be confirmed again; no DIS result is shown on a confirmation that is not stored. Not changed here
 (pre-existing save path, CAPA-006/A-2).
 
+## 13. Release integration (2026-10-25 / 2026-10-28) — PENDING owner approval
+
+PR #68 was integrated with #66, #65 and #67 on `release/owner-signoff-2026-10-25` (record `../releases/RELEASE-2026-10-25_integration_notes.md`). Merge notes applied (the DIS block of #68 wins; the output check runs on the model's text before CAPA-014's draft assembly; one `segmentation_id`; the confirmation route is recorded by CAPA-015's audit trail). The independent integration review of PR #69 (2026-10-28, notes §9) led to: `dis_review_gate.is_evaluated` is the one "evaluated" rule (status AND a yes/no conclusion) for the report route, the payload, the prompt and the template; format characters are removed from the model's text before `scrub_unevaluated_dis`; unconfirmed regions reach the model as a fixed "regions not confirmed" line, never as labels; the report panel names an unreadable image geometry. Negative controls re-run on the integrated tree on 2026-10-28: 119/119 (R4 anchored on the one-rule line).
+
 ## 9. Approvals
 
 | Role | Name | Decision | Date |

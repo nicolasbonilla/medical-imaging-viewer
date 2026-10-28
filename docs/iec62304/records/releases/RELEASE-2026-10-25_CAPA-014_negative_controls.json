@@ -1,24 +1,24 @@
 {
-  "executed": "2026-10-25T02:12:35",
+  "executed": "2026-10-28T18:11:04",
   "design": "redesign after the independent review of PR #67: structured payload only, typed text merged locally, detection-only tripwire (the scrubbing module of the first version was removed)",
   "method": "one mutation at a time; each anchor asserted to occur exactly once; the bound tests of the mutated side are run (backend pytest offline per PRB-002, frontend vitest JSON reporter)",
   "hash_basis": "sha256 of the UTF-8 text with LF line endings",
   "source_sha256": {
     "README.md": "f930a6f847971b837fe9eb6ee69d59645590b495fb506c089131bfa34a70e374",
-    "backend/app/api/routes/ai_report.py": "17e0f82cd7d3684682cded6125bff697e8d0877837ad1ab3d4e5428c65fd49c5",
+    "backend/app/api/routes/ai_report.py": "89baddfcb46fa1bb4a4eaba6141bbb66155dd691fe481c1abd4c8111ffb865f6",
     "backend/app/mcp/ms_clinical_server.py": "8cbff607887650e1967d35ee2f5530c03a61ff607a473f08512fa2c1764a9d40",
-    "backend/app/services/brain_report_service.py": "86f893f21328eaa74a9b514fcb0d5b8a4ee6b13a440ab348f985b18523dd9b02",
-    "backend/app/services/report_payload_guard.py": "2d5b0c6a1bf5098a67c221ade30c95b749f00d7892da5549327a0e4bcfedc5a3",
+    "backend/app/services/brain_report_service.py": "5f7f94895908d5b2755d68616d11033e2b3cc0d223b7d0ec974b00d2200aade4",
+    "backend/app/services/report_payload_guard.py": "5a04fcfc7a333f030da9ec893b6c03e0c98157e866f5794c9e53b07515d3dc66",
     "docs/Technical_Documentation_MS_Brain_MRI_Viewer.md": "e7ec163b0ad40f4488dedb5dfdb588c35b9bbf38af4bc5ec03c4df99281c9fcd",
     "docs/iec62304/generate_audit_records.py": "3a09d7ee43d668c4376563969784f663546444fca452fa5bdde3a14bc07f3f97",
     "frontend/src/api/aiReport.ts": "3f9ee6d4a56127f199d7eb817dabf14c1c16876f5fc8de81534d335a6a47307b",
-    "frontend/src/components/AIReportPanel.tsx": "8ad1c5114c8486c637d710d1f37cb0b0445806abeab40c734143792732da9a47",
+    "frontend/src/components/AIReportPanel.tsx": "82a2a16d4204bc7e6302fe4dda45526607e05f6db4c8ab6230935c014c6344a8",
     "frontend/src/components/ReportViewerModal.tsx": "41383fadeea313ac01a570a703d78b8055488e8488b9695530bd0b023629e876",
-    "frontend/src/i18n/locales/de.json": "7be25cf3e0e7d4e56e2df17a95e9ea119709b90c35fa543bcc7bc1cea9e93b54",
-    "frontend/src/i18n/locales/es.json": "76244b43c96f291b775c50dec04d5a35ea02cc29b23e58491e1b10e49af432fd"
+    "frontend/src/i18n/locales/de.json": "54d81dacae03c18458e7ce605b9b29bac12ea4d77340906d093f91940a5eda49",
+    "frontend/src/i18n/locales/es.json": "93ececc2da6769538c5b0ece89a8eaabbf9290b5292e04ddd6fa780a8bcfa988"
   },
   "test_sha256": {
-    "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+    "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
     "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
     "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
     "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b",
@@ -35,7 +35,7 @@
     "P1_payload_bypassed": {
       "suite": "backend",
       "failed": 33,
-      "passed": 341,
+      "passed": 342,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -75,9 +75,9 @@
       ],
       "reintroduces": "the request's findings go to the prompt builder as received",
       "applied": true,
-      "executed": "2026-10-25T02:13:12",
+      "executed": "2026-10-28T18:11:48",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -86,7 +86,7 @@
     "P2_builder_prints_free_text": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -94,9 +94,9 @@
       ],
       "reintroduces": "the prompt builder prints the clinical indication again",
       "applied": true,
-      "executed": "2026-10-25T02:13:46",
+      "executed": "2026-10-28T18:12:28",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -105,7 +105,7 @@
     "P3_payload_copies_free_text": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -113,9 +113,9 @@
       ],
       "reintroduces": "the free-text fields copied into the payload",
       "applied": true,
-      "executed": "2026-10-25T02:14:20",
+      "executed": "2026-10-28T18:13:07",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -124,7 +124,7 @@
     "P4_any_label_accepted": {
       "suite": "backend",
       "failed": 5,
-      "passed": 369,
+      "passed": 370,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -136,9 +136,9 @@
       ],
       "reintroduces": "labels outside the device's vocabulary sent",
       "applied": true,
-      "executed": "2026-10-25T02:14:55",
+      "executed": "2026-10-28T18:13:44",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -147,7 +147,7 @@
     "P5_counts_not_coerced": {
       "suite": "backend",
       "failed": 235,
-      "passed": 139,
+      "passed": 140,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -370,9 +370,9 @@
       ],
       "reintroduces": "any value printed where a number is expected (free text through number fields)",
       "applied": true,
-      "executed": "2026-10-25T02:15:43",
+      "executed": "2026-10-28T18:14:48",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -381,7 +381,7 @@
     "P6_any_sex_sent": {
       "suite": "backend",
       "failed": 4,
-      "passed": 370,
+      "passed": 371,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -392,9 +392,9 @@
       ],
       "reintroduces": "any sex value sent, shown as Female",
       "applied": true,
-      "executed": "2026-10-25T02:16:18",
+      "executed": "2026-10-28T18:15:35",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -403,7 +403,7 @@
     "P7_exact_age_sent": {
       "suite": "backend",
       "failed": 9,
-      "passed": 365,
+      "passed": 366,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -419,9 +419,9 @@
       ],
       "reintroduces": "the exact age sent instead of the 5-year band",
       "applied": true,
-      "executed": "2026-10-25T02:16:53",
+      "executed": "2026-10-28T18:16:18",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -430,7 +430,7 @@
     "P8_no_90_or_older": {
       "suite": "backend",
       "failed": 3,
-      "passed": 371,
+      "passed": 372,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -440,9 +440,9 @@
       ],
       "reintroduces": "ages of 90 and over sent in 5-year bands (93 -> 90-94)",
       "applied": true,
-      "executed": "2026-10-25T02:17:28",
+      "executed": "2026-10-28T18:17:06",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -451,7 +451,7 @@
     "P9_payload_in_system_prompt": {
       "suite": "backend",
       "failed": 2,
-      "passed": 372,
+      "passed": 373,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -460,9 +460,9 @@
       ],
       "reintroduces": "the system prompt no longer the fixed template",
       "applied": true,
-      "executed": "2026-10-25T02:18:02",
+      "executed": "2026-10-28T18:17:52",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -471,7 +471,7 @@
     "P10_app_label_names_missing": {
       "suite": "backend",
       "failed": 2,
-      "passed": 372,
+      "passed": 373,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -480,9 +480,9 @@
       ],
       "reintroduces": "the application's own labels ('MS Lesion (Active)') sent as unlisted",
       "applied": true,
-      "executed": "2026-10-25T02:18:37",
+      "executed": "2026-10-28T18:18:30",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -491,7 +491,7 @@
     "P11_unlisted_numbered_per_occurrence": {
       "suite": "backend",
       "failed": 2,
-      "passed": 372,
+      "passed": 373,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -500,9 +500,9 @@
       ],
       "reintroduces": "groups and rows no longer match: one label gets several numbers",
       "applied": true,
-      "executed": "2026-10-25T02:19:11",
+      "executed": "2026-10-28T18:19:09",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -511,7 +511,7 @@
     "P12_unlisted_names_not_shown": {
       "suite": "backend",
       "failed": 2,
-      "passed": 372,
+      "passed": 373,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -520,9 +520,9 @@
       ],
       "reintroduces": "the draft does not say which label each placeholder stands for",
       "applied": true,
-      "executed": "2026-10-25T02:19:46",
+      "executed": "2026-10-28T18:19:45",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -531,7 +531,7 @@
     "P13_not_available_printed_as_zero": {
       "suite": "backend",
       "failed": 2,
-      "passed": 372,
+      "passed": 373,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -540,9 +540,9 @@
       ],
       "reintroduces": "a value that is not a number reported as 0",
       "applied": true,
-      "executed": "2026-10-25T02:20:20",
+      "executed": "2026-10-28T18:20:25",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -551,7 +551,7 @@
     "P14_no_plausibility_range": {
       "suite": "backend",
       "failed": 9,
-      "passed": 365,
+      "passed": 366,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -567,9 +567,9 @@
       ],
       "reintroduces": "dates, record numbers and phone numbers in number fields sent",
       "applied": true,
-      "executed": "2026-10-25T02:20:55",
+      "executed": "2026-10-28T18:21:07",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -578,7 +578,7 @@
     "P15_dis_not_evaluated_as_not_met": {
       "suite": "backend",
       "failed": 4,
-      "passed": 370,
+      "passed": 371,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -589,9 +589,9 @@
       ],
       "reintroduces": "a DIS not evaluated or without a conclusion sent as 'NOT MET'",
       "applied": true,
-      "executed": "2026-10-25T02:21:30",
+      "executed": "2026-10-28T18:21:50",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -600,7 +600,7 @@
     "P16_dis_evaluated_state_dropped": {
       "suite": "backend",
       "failed": 4,
-      "passed": 370,
+      "passed": 371,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -611,9 +611,9 @@
       ],
       "reintroduces": "the 'evaluated' DIS state lost in the payload (every DIS not evaluated after PR #68)",
       "applied": true,
-      "executed": "2026-10-25T02:22:05",
+      "executed": "2026-10-28T18:22:36",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -622,7 +622,7 @@
     "P17_builder_prints_not_evaluated_as_not_met": {
       "suite": "backend",
       "failed": 5,
-      "passed": 369,
+      "passed": 370,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -634,9 +634,9 @@
       ],
       "reintroduces": "the prompt builder prints 'NOT MET' for a DIS not evaluated",
       "applied": true,
-      "executed": "2026-10-25T02:22:39",
+      "executed": "2026-10-28T18:23:19",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -645,7 +645,7 @@
     "P18_unbounded_delta_refused": {
       "suite": "backend",
       "failed": 2,
-      "passed": 372,
+      "passed": 373,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -654,9 +654,9 @@
       ],
       "reintroduces": "a large but real burden change (1 mm³ to 12 mL) refuses the report",
       "applied": true,
-      "executed": "2026-10-25T02:23:14",
+      "executed": "2026-10-28T18:24:11",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -665,7 +665,7 @@
     "P19_voxel_cap_16_million": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -673,9 +673,9 @@
       ],
       "reintroduces": "a brain imaged at 0.4 mm isotropic refuses the report",
       "applied": true,
-      "executed": "2026-10-25T02:23:48",
+      "executed": "2026-10-28T18:24:53",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -684,7 +684,7 @@
     "P20_confidence_in_percent_refused": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -692,9 +692,9 @@
       ],
       "reintroduces": "a confidence given in percent refuses the report",
       "applied": true,
-      "executed": "2026-10-25T02:24:23",
+      "executed": "2026-10-28T18:25:25",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -703,7 +703,7 @@
     "P21_patient_numbers_not_checked": {
       "suite": "backend",
       "failed": 3,
-      "passed": 371,
+      "passed": 372,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -713,9 +713,9 @@
       ],
       "reintroduces": "the patient's record number sent as '1234567 voxels'",
       "applied": true,
-      "executed": "2026-10-25T02:24:57",
+      "executed": "2026-10-28T18:26:06",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -724,7 +724,7 @@
     "P22_synthetic_dis_without_state": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -732,9 +732,9 @@
       ],
       "reintroduces": "the exempt words lose the DIS words once only an evaluated DIS is printed",
       "applied": true,
-      "executed": "2026-10-25T02:25:32",
+      "executed": "2026-10-28T18:26:49",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -743,7 +743,7 @@
     "P23_synthetic_dis_without_absent_region": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -751,9 +751,9 @@
       ],
       "reintroduces": "'absent' not an exempt word",
       "applied": true,
-      "executed": "2026-10-25T02:26:06",
+      "executed": "2026-10-28T18:27:29",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -762,7 +762,7 @@
     "P24_no_rounding_slack": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -770,9 +770,9 @@
       ],
       "reintroduces": "a percentile of 100.00000001 refuses the report",
       "applied": true,
-      "executed": "2026-10-25T02:26:40",
+      "executed": "2026-10-28T18:28:05",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -781,7 +781,7 @@
     "P25_not_available_with_a_percent_sign": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -789,9 +789,9 @@
       ],
       "reintroduces": "'not available%' in the prompt",
       "applied": true,
-      "executed": "2026-10-25T02:27:15",
+      "executed": "2026-10-28T18:28:43",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -800,7 +800,7 @@
     "T1_tripwire_removed": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -808,9 +808,9 @@
       ],
       "reintroduces": "no check of the final prompt",
       "applied": true,
-      "executed": "2026-10-25T02:27:49",
+      "executed": "2026-10-28T18:29:17",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -819,7 +819,7 @@
     "T2_name_check_removed": {
       "suite": "backend",
       "failed": 20,
-      "passed": 354,
+      "passed": 355,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -846,9 +846,9 @@
       ],
       "reintroduces": "the patient's names, contact, city and street not looked for",
       "applied": true,
-      "executed": "2026-10-25T02:28:25",
+      "executed": "2026-10-28T18:29:55",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -857,7 +857,7 @@
     "T3_names_written_together_missed": {
       "suite": "backend",
       "failed": 3,
-      "passed": 371,
+      "passed": 372,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -867,9 +867,9 @@
       ],
       "reintroduces": "'Fuentemüller', 'delaFuente' not found",
       "applied": true,
-      "executed": "2026-10-25T02:28:59",
+      "executed": "2026-10-28T18:30:34",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -878,7 +878,7 @@
     "T4_device_words_reported": {
       "suite": "backend",
       "failed": 34,
-      "passed": 340,
+      "passed": 341,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -915,9 +915,9 @@
       ],
       "reintroduces": "a patient named White blocks every draft ('Deep White Matter')",
       "applied": true,
-      "executed": "2026-10-25T02:29:35",
+      "executed": "2026-10-28T18:31:07",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -926,7 +926,7 @@
     "T5_pair_check_removed": {
       "suite": "backend",
       "failed": 4,
-      "passed": 370,
+      "passed": 371,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -936,9 +936,9 @@
       ],
       "reintroduces": "names made only of the device's words ('Black White') not found",
       "applied": true,
-      "executed": "2026-10-25T02:30:09",
+      "executed": "2026-10-28T18:31:42",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -947,7 +947,7 @@
     "T6_record_number_check_removed": {
       "suite": "backend",
       "failed": 10,
-      "passed": 364,
+      "passed": 365,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -963,9 +963,9 @@
       ],
       "reintroduces": "the record number not looked for",
       "applied": true,
-      "executed": "2026-10-25T02:30:44",
+      "executed": "2026-10-28T18:32:14",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -974,7 +974,7 @@
     "T7_record_number_separators_required": {
       "suite": "backend",
       "failed": 5,
-      "passed": 369,
+      "passed": 370,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -986,9 +986,9 @@
       ],
       "reintroduces": "'H C 7 7 8 8 1 2', 'MRN 2025 0042' not found",
       "applied": true,
-      "executed": "2026-10-25T02:31:19",
+      "executed": "2026-10-28T18:32:48",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -997,7 +997,7 @@
     "T8_birth_date_check_removed": {
       "suite": "backend",
       "failed": 4,
-      "passed": 370,
+      "passed": 371,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1007,9 +1007,9 @@
       ],
       "reintroduces": "'geb. 9.11.', \"born '75\" not found",
       "applied": true,
-      "executed": "2026-10-25T02:31:52",
+      "executed": "2026-10-28T18:33:21",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1018,7 +1018,7 @@
     "T9_record_phone_check_removed": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1026,9 +1026,9 @@
       ],
       "reintroduces": "the patient's short phone forms ('01 40400') not found",
       "applied": true,
-      "executed": "2026-10-25T02:32:27",
+      "executed": "2026-10-28T18:33:53",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1037,7 +1037,7 @@
     "T10_email_checks_removed": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1045,9 +1045,9 @@
       ],
       "reintroduces": "e-mail addresses not found",
       "applied": true,
-      "executed": "2026-10-25T02:33:01",
+      "executed": "2026-10-28T18:34:25",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1056,7 +1056,7 @@
     "T11_generic_email_removed": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1064,9 +1064,9 @@
       ],
       "reintroduces": "other people's e-mail addresses not found",
       "applied": true,
-      "executed": "2026-10-25T02:33:36",
+      "executed": "2026-10-28T18:35:00",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1075,7 +1075,7 @@
     "T12_generic_date_removed": {
       "suite": "backend",
       "failed": 3,
-      "passed": 371,
+      "passed": 372,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1083,9 +1083,9 @@
       ],
       "reintroduces": "dates with a year not found",
       "applied": true,
-      "executed": "2026-10-25T02:34:08",
+      "executed": "2026-10-28T18:35:36",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1094,7 +1094,7 @@
     "T13_generic_plus_phone_removed": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1102,9 +1102,9 @@
       ],
       "reintroduces": "'+1 555 0100' not found",
       "applied": true,
-      "executed": "2026-10-25T02:34:43",
+      "executed": "2026-10-28T18:36:09",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1113,7 +1113,7 @@
     "T14_long_number_removed": {
       "suite": "backend",
       "failed": 3,
-      "passed": 371,
+      "passed": 372,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1123,9 +1123,9 @@
       ],
       "reintroduces": "long and phone-like numbers not found",
       "applied": true,
-      "executed": "2026-10-25T02:35:17",
+      "executed": "2026-10-28T18:36:50",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1134,7 +1134,7 @@
     "T15_id_like_number_removed": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1142,9 +1142,9 @@
       ],
       "reintroduces": "'X1234567L' not found",
       "applied": true,
-      "executed": "2026-10-25T02:35:52",
+      "executed": "2026-10-28T18:37:29",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1153,7 +1153,7 @@
     "T16_titled_name_removed": {
       "suite": "backend",
       "failed": 2,
-      "passed": 372,
+      "passed": 373,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1161,9 +1161,9 @@
       ],
       "reintroduces": "'Dr. Smith' not found",
       "applied": true,
-      "executed": "2026-10-25T02:36:26",
+      "executed": "2026-10-28T18:38:13",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1172,7 +1172,7 @@
     "T17_format_characters_kept": {
       "suite": "backend",
       "failed": 2,
-      "passed": 372,
+      "passed": 373,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1181,9 +1181,9 @@
       ],
       "reintroduces": "a soft hyphen or zero-width character hides a name",
       "applied": true,
-      "executed": "2026-10-25T02:36:59",
+      "executed": "2026-10-28T18:38:56",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1192,7 +1192,7 @@
     "T18_look_alikes_kept": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1200,9 +1200,9 @@
       ],
       "reintroduces": "a Cyrillic 'о' hides a name",
       "applied": true,
-      "executed": "2026-10-25T02:37:33",
+      "executed": "2026-10-28T18:39:46",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1211,7 +1211,7 @@
     "T19_no_german_spellings": {
       "suite": "backend",
       "failed": 3,
-      "passed": 371,
+      "passed": 372,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1221,9 +1221,9 @@
       ],
       "reintroduces": "'Muenchen', 'MUELLER' not found",
       "applied": true,
-      "executed": "2026-10-25T02:38:08",
+      "executed": "2026-10-28T18:40:31",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1232,7 +1232,7 @@
     "T20_particle_surname_dropped": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1240,9 +1240,9 @@
       ],
       "reintroduces": "a surname such as Do or Le never looked for",
       "applied": true,
-      "executed": "2026-10-25T02:38:42",
+      "executed": "2026-10-28T18:41:11",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1251,7 +1251,7 @@
     "T21_length_cap_removed": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1259,9 +1259,9 @@
       ],
       "reintroduces": "no cap on the scanned text",
       "applied": true,
-      "executed": "2026-10-25T02:39:17",
+      "executed": "2026-10-28T18:42:14",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1270,7 +1270,7 @@
     "T22_quadratic_email_pattern": {
       "suite": "backend",
       "failed": 3,
-      "passed": 371,
+      "passed": 372,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1280,9 +1280,9 @@
       ],
       "reintroduces": "the e-mail pattern of the first version (quadratic time)",
       "applied": true,
-      "executed": "2026-10-25T03:05:39",
+      "executed": "2026-10-28T19:10:42",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1291,7 +1291,7 @@
     "T23_template_words_exempt": {
       "suite": "backend",
       "failed": 2,
-      "passed": 372,
+      "passed": 373,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1300,9 +1300,9 @@
       ],
       "reintroduces": "words of the system templates ('Pons', 'Filippi') never reported",
       "applied": true,
-      "executed": "2026-10-25T03:06:13",
+      "executed": "2026-10-28T19:11:22",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1311,7 +1311,7 @@
     "T24_numeric_record_number_in_measurements": {
       "suite": "backend",
       "failed": 3,
-      "passed": 371,
+      "passed": 372,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1321,9 +1321,9 @@
       ],
       "reintroduces": "an all-digit record number found inside '12345.67 mm³' (false refusal)",
       "applied": true,
-      "executed": "2026-10-25T03:06:48",
+      "executed": "2026-10-28T19:11:54",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1332,7 +1332,7 @@
     "T25_prefixed_digits_not_checked": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1340,9 +1340,9 @@
       ],
       "reintroduces": "'id 20250042' (the digits of MRN-2025-0042) not found",
       "applied": true,
-      "executed": "2026-10-25T03:07:22",
+      "executed": "2026-10-28T19:12:38",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1351,7 +1351,7 @@
     "T26_device_pairs_reported": {
       "suite": "backend",
       "failed": 6,
-      "passed": 368,
+      "passed": 369,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1364,9 +1364,9 @@
       ],
       "reintroduces": "a patient named Deep White blocks every draft ('Deep White Matter')",
       "applied": true,
-      "executed": "2026-10-25T03:07:57",
+      "executed": "2026-10-28T19:13:53",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1375,7 +1375,7 @@
     "T27_device_joined_words_reported": {
       "suite": "backend",
       "failed": 3,
-      "passed": 371,
+      "passed": 372,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1385,9 +1385,9 @@
       ],
       "reintroduces": "a patient named Juxta Cortical blocks every draft ('Juxtacortical')",
       "applied": true,
-      "executed": "2026-10-25T03:08:31",
+      "executed": "2026-10-28T19:15:00",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1396,7 +1396,7 @@
     "F1_route_needs_no_segmentation": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1404,9 +1404,9 @@
       ],
       "reintroduces": "a request without patient reference reaches the provider",
       "applied": true,
-      "executed": "2026-10-25T03:09:06",
+      "executed": "2026-10-28T19:16:09",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1415,7 +1415,7 @@
     "F2_route_does_not_authorize": {
       "suite": "backend",
       "failed": 4,
-      "passed": 370,
+      "passed": 371,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1425,9 +1425,9 @@
       ],
       "reintroduces": "any caller drafts a report on any patient's segmentation",
       "applied": true,
-      "executed": "2026-10-25T03:09:43",
+      "executed": "2026-10-28T19:17:14",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1436,7 +1436,7 @@
     "F3_unreadable_record_ignored": {
       "suite": "backend",
       "failed": 2,
-      "passed": 372,
+      "passed": 373,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1445,9 +1445,9 @@
       ],
       "reintroduces": "the provider is called although the patient record could not be read",
       "applied": true,
-      "executed": "2026-10-25T03:10:17",
+      "executed": "2026-10-28T19:18:14",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1456,7 +1456,7 @@
     "F4_incomplete_record_accepted": {
       "suite": "backend",
       "failed": 3,
-      "passed": 371,
+      "passed": 372,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1466,9 +1466,9 @@
       ],
       "reintroduces": "a record without record number, name or birth date accepted",
       "applied": true,
-      "executed": "2026-10-25T03:10:51",
+      "executed": "2026-10-28T19:19:00",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1477,7 +1477,7 @@
     "F5_service_sends_without_identifiers": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1485,9 +1485,9 @@
       ],
       "reintroduces": "the service builds and sends a prompt without the patient's identifiers",
       "applied": true,
-      "executed": "2026-10-25T03:11:26",
+      "executed": "2026-10-28T19:19:28",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1496,7 +1496,7 @@
     "F6_assistant_omits_segmentation": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1504,9 +1504,9 @@
       ],
       "reintroduces": "the assistant's report tool sends no segmentation (every draft refused)",
       "applied": true,
-      "executed": "2026-10-25T03:12:00",
+      "executed": "2026-10-28T19:19:56",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1515,7 +1515,7 @@
     "M1_typed_text_not_merged": {
       "suite": "backend",
       "failed": 19,
-      "passed": 355,
+      "passed": 356,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1541,9 +1541,9 @@
       ],
       "reintroduces": "the clinician's typed text missing from the draft",
       "applied": true,
-      "executed": "2026-10-25T03:12:36",
+      "executed": "2026-10-28T19:20:59",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1552,7 +1552,7 @@
     "M2_entry_before_disclaimer": {
       "suite": "backend",
       "failed": 8,
-      "passed": 366,
+      "passed": 367,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1567,9 +1567,9 @@
       ],
       "reintroduces": "the typed text placed before the RC-006 disclaimer in the single text",
       "applied": true,
-      "executed": "2026-10-25T03:13:11",
+      "executed": "2026-10-28T19:21:31",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1578,7 +1578,7 @@
     "M3_model_not_told": {
       "suite": "backend",
       "failed": 3,
-      "passed": 371,
+      "passed": 372,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1588,9 +1588,9 @@
       ],
       "reintroduces": "the model is not told that the clinician's text is added by the application",
       "applied": true,
-      "executed": "2026-10-25T03:13:45",
+      "executed": "2026-10-28T19:22:00",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1599,7 +1599,7 @@
     "M4_typed_text_not_quoted": {
       "suite": "backend",
       "failed": 6,
-      "passed": 368,
+      "passed": 369,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1612,9 +1612,9 @@
       ],
       "reintroduces": "typed Markdown rendered in the single text: a typed heading, image or link becomes structure",
       "applied": true,
-      "executed": "2026-10-25T03:14:20",
+      "executed": "2026-10-28T19:22:26",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1623,7 +1623,7 @@
     "M5_fixed_short_fence": {
       "suite": "backend",
       "failed": 3,
-      "passed": 371,
+      "passed": 372,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1633,9 +1633,9 @@
       ],
       "reintroduces": "typed backticks close the quoted block and the rest is rendered",
       "applied": true,
-      "executed": "2026-10-25T03:14:55",
+      "executed": "2026-10-28T19:22:52",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1644,7 +1644,7 @@
     "M6_no_ai_heading": {
       "suite": "backend",
       "failed": 15,
-      "passed": 359,
+      "passed": 360,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1666,9 +1666,9 @@
       ],
       "reintroduces": "in the single text the model's text continues under the clinician's heading",
       "applied": true,
-      "executed": "2026-10-25T03:15:30",
+      "executed": "2026-10-28T19:23:21",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1677,7 +1677,7 @@
     "M7_entry_not_closed": {
       "suite": "backend",
       "failed": 3,
-      "passed": 371,
+      "passed": 372,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1687,9 +1687,9 @@
       ],
       "reintroduces": "the clinician's entry is not closed before the AI draft",
       "applied": true,
-      "executed": "2026-10-25T03:16:05",
+      "executed": "2026-10-28T19:23:47",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1698,7 +1698,7 @@
     "M8_instruction_always_sent": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1706,9 +1706,9 @@
       ],
       "reintroduces": "the model is told about a clinician's entry that does not exist",
       "applied": true,
-      "executed": "2026-10-25T03:16:39",
+      "executed": "2026-10-28T19:24:14",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1716,7 +1716,7 @@
     },
     "M9_reserved_headings_kept": {
       "suite": "backend",
-      "failed": 4,
+      "failed": 5,
       "passed": 370,
       "errors": 0,
       "skipped": 0,
@@ -1724,13 +1724,14 @@
         "test_r1_forged_boxes_and_headings_stay_in_the_ai_text[heading_es_in_en]",
         "test_r1_forged_boxes_and_headings_stay_in_the_ai_text[heading_in_list_bold]",
         "test_r1_forged_boxes_and_headings_stay_in_the_ai_text[heading_plain]",
-        "test_r1_forged_boxes_and_headings_stay_in_the_ai_text[heading_setext]"
+        "test_r1_forged_boxes_and_headings_stay_in_the_ai_text[heading_setext]",
+        "test_rc066_release_the_draft_assembly_removes_format_characters_itself"
       ],
       "reintroduces": "the model writes the clinician's heading or the AI heading into the single text",
       "applied": true,
-      "executed": "2026-10-25T03:17:14",
+      "executed": "2026-10-28T19:24:42",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1738,20 +1739,18 @@
     },
     "M10_format_characters_kept": {
       "suite": "backend",
-      "failed": 3,
-      "passed": 371,
+      "failed": 1,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
-        "test_last_a_zero_width_space_keeps_words_apart",
-        "test_r1_every_format_character_is_removed_from_the_model_text",
-        "test_r1_forged_boxes_and_headings_stay_in_the_ai_text[heading_zwsp]"
+        "test_rc066_release_the_draft_assembly_removes_format_characters_itself"
       ],
       "reintroduces": "a zero-width space hides a reserved heading from the check",
       "applied": true,
-      "executed": "2026-10-25T03:17:48",
+      "executed": "2026-10-28T19:25:10",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1760,7 +1759,7 @@
     "M11_entry_field_missing": {
       "suite": "backend",
       "failed": 10,
-      "passed": 364,
+      "passed": 365,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1777,9 +1776,9 @@
       ],
       "reintroduces": "the response carries no clinician's entry for the viewer's box",
       "applied": true,
-      "executed": "2026-10-25T03:18:24",
+      "executed": "2026-10-28T19:25:47",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1788,7 +1787,7 @@
     "M12_app_notes_field_missing": {
       "suite": "backend",
       "failed": 9,
-      "passed": 365,
+      "passed": 366,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1804,9 +1803,9 @@
       ],
       "reintroduces": "the response carries no application note for the viewer's box",
       "applied": true,
-      "executed": "2026-10-25T03:18:59",
+      "executed": "2026-10-28T19:26:26",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1815,7 +1814,7 @@
     "M13_bidi_kept": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1823,9 +1822,9 @@
       ],
       "reintroduces": "right-to-left override characters reorder the typed text",
       "applied": true,
-      "executed": "2026-10-25T03:19:33",
+      "executed": "2026-10-28T19:27:03",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1834,7 +1833,7 @@
     "M14_truncation_silent": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1842,9 +1841,9 @@
       ],
       "reintroduces": "a long typed text cut without a mark",
       "applied": true,
-      "executed": "2026-10-25T03:20:08",
+      "executed": "2026-10-28T19:27:39",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1853,7 +1852,7 @@
     "M15_first_line_indent_lost": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1861,9 +1860,9 @@
       ],
       "reintroduces": "the first typed line loses its indentation",
       "applied": true,
-      "executed": "2026-10-25T03:20:42",
+      "executed": "2026-10-28T19:28:10",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1872,7 +1871,7 @@
     "M16_legitimate_sentences_replaced": {
       "suite": "backend",
       "failed": 3,
-      "passed": 371,
+      "passed": 372,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1882,9 +1881,9 @@
       ],
       "reintroduces": "\"Clinician's entry (see the top of this draft).\" written by the model is replaced",
       "applied": true,
-      "executed": "2026-10-25T03:21:16",
+      "executed": "2026-10-28T19:28:54",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1893,7 +1892,7 @@
     "M17_copied_text_keeps_heading_imitations": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1901,9 +1900,9 @@
       ],
       "reintroduces": "the copied text shows a second clinician's entry or application note",
       "applied": true,
-      "executed": "2026-10-25T03:21:51",
+      "executed": "2026-10-28T19:29:24",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1911,19 +1910,20 @@
     },
     "M18_zero_width_space_joins_words": {
       "suite": "backend",
-      "failed": 2,
+      "failed": 3,
       "passed": 372,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
         "test_last_a_zero_width_space_keeps_words_apart",
-        "test_r1_every_format_character_is_removed_from_the_model_text"
+        "test_r1_every_format_character_is_removed_from_the_model_text",
+        "test_rc066_release_the_draft_assembly_removes_format_characters_itself"
       ],
       "reintroduces": "'zero​width' becomes 'zerowidth'",
       "applied": true,
-      "executed": "2026-10-25T03:22:25",
+      "executed": "2026-10-28T19:29:58",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1932,7 +1932,7 @@
     "L1_raw_findings_logged": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1940,9 +1940,9 @@
       ],
       "reintroduces": "the request's findings written to the log",
       "applied": true,
-      "executed": "2026-10-25T03:22:59",
+      "executed": "2026-10-28T19:30:26",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1951,7 +1951,7 @@
     "L2_prompt_logged": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1959,9 +1959,9 @@
       ],
       "reintroduces": "the prompt written to the log",
       "applied": true,
-      "executed": "2026-10-25T03:23:34",
+      "executed": "2026-10-28T19:30:54",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1970,7 +1970,7 @@
     "L3_counts_not_logged": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1978,9 +1978,9 @@
       ],
       "reintroduces": "no record of what was withheld",
       "applied": true,
-      "executed": "2026-10-25T03:24:08",
+      "executed": "2026-10-28T19:31:22",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -1989,7 +1989,7 @@
     "C1_false_header_claim": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -1997,9 +1997,9 @@
       ],
       "reintroduces": "the service header claims de-identification again",
       "applied": true,
-      "executed": "2026-10-25T03:24:43",
+      "executed": "2026-10-28T19:31:50",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -2008,7 +2008,7 @@
     "C2_readme_badge_back": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -2016,9 +2016,9 @@
       ],
       "reintroduces": "the README's 'HIPAA compliant' badge back",
       "applied": true,
-      "executed": "2026-10-25T03:25:18",
+      "executed": "2026-10-28T19:32:23",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -2027,7 +2027,7 @@
     "C3_generator_claim_back": {
       "suite": "backend",
       "failed": 2,
-      "passed": 372,
+      "passed": 373,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -2036,9 +2036,9 @@
       ],
       "reintroduces": "the record generator writes the withdrawn RC-007 statement again",
       "applied": true,
-      "executed": "2026-10-25T03:25:52",
+      "executed": "2026-10-28T19:32:52",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -2047,7 +2047,7 @@
     "C4_stale_model_name": {
       "suite": "backend",
       "failed": 1,
-      "passed": 373,
+      "passed": 374,
       "errors": 0,
       "skipped": 0,
       "failing_tests": [
@@ -2055,9 +2055,9 @@
       ],
       "reintroduces": "the technical documentation names a model the device does not use",
       "applied": true,
-      "executed": "2026-10-25T03:26:26",
+      "executed": "2026-10-28T19:33:23",
       "test_sha256": {
-        "tests/unit/test_capa014_report_provider_payload.py": "8f9d18dcb3fd972e5c1f82277022c30a44713e4d3bf4b5de86079443255905cb",
+        "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
         "tests/unit/test_capa008_assistant_read_only.py": "9e1234e3759108bb7bab02c1d234b5afd7d424bdc7a7cd3ff00cd8ef0f2db340",
         "tests/unit/test_brain_report_service.py": "0e3ffdb4459c99607c345765b3c85b2f53c5c4d6ce8a0d288aef7f34c544e74b"
@@ -2077,7 +2077,7 @@
       "error_files": [],
       "reintroduces": "no note next to the draft button",
       "applied": true,
-      "executed": "2026-10-25T03:26:33",
+      "executed": "2026-10-28T19:34:12",
       "test_sha256": {
         "frontend/src/components/AIReportPanel.capa014.test.tsx": "e07d353fd2721fa2b94c02bbf621bc374e588cd39448eb9332fb09b1e5dd579f"
       }
@@ -2094,7 +2094,7 @@
       "error_files": [],
       "reintroduces": "the Spanish note is the English text",
       "applied": true,
-      "executed": "2026-10-25T03:26:40",
+      "executed": "2026-10-28T19:34:20",
       "test_sha256": {
         "frontend/src/components/AIReportPanel.capa014.test.tsx": "e07d353fd2721fa2b94c02bbf621bc374e588cd39448eb9332fb09b1e5dd579f"
       }
@@ -2111,7 +2111,7 @@
       "error_files": [],
       "reintroduces": "no German note (the key is shown)",
       "applied": true,
-      "executed": "2026-10-25T03:26:47",
+      "executed": "2026-10-28T19:34:28",
       "test_sha256": {
         "frontend/src/components/AIReportPanel.capa014.test.tsx": "e07d353fd2721fa2b94c02bbf621bc374e588cd39448eb9332fb09b1e5dd579f"
       }
@@ -2130,7 +2130,7 @@
       "error_files": [],
       "reintroduces": "the note no longer directly above the draft button",
       "applied": true,
-      "executed": "2026-10-25T03:26:54",
+      "executed": "2026-10-28T19:34:35",
       "test_sha256": {
         "frontend/src/components/AIReportPanel.capa014.test.tsx": "e07d353fd2721fa2b94c02bbf621bc374e588cd39448eb9332fb09b1e5dd579f"
       }
@@ -2147,7 +2147,7 @@
       "error_files": [],
       "reintroduces": "the panel sends no segmentation (every draft refused)",
       "applied": true,
-      "executed": "2026-10-25T03:27:00",
+      "executed": "2026-10-28T19:34:43",
       "test_sha256": {
         "frontend/src/components/AIReportPanel.capa014.test.tsx": "e07d353fd2721fa2b94c02bbf621bc374e588cd39448eb9332fb09b1e5dd579f"
       }
@@ -2164,7 +2164,7 @@
       "error_files": [],
       "reintroduces": "the API client claims HIPAA compliance again",
       "applied": true,
-      "executed": "2026-10-25T03:27:07",
+      "executed": "2026-10-28T19:34:52",
       "test_sha256": {
         "frontend/src/components/AIReportPanel.capa014.test.tsx": "e07d353fd2721fa2b94c02bbf621bc374e588cd39448eb9332fb09b1e5dd579f"
       }
@@ -2184,7 +2184,7 @@
       "error_files": [],
       "reintroduces": "the report viewer footer claims HIPAA compliance again",
       "applied": true,
-      "executed": "2026-10-25T03:27:16",
+      "executed": "2026-10-28T19:35:00",
       "test_sha256": {
         "frontend/src/components/AIReportPanel.capa014.test.tsx": "e07d353fd2721fa2b94c02bbf621bc374e588cd39448eb9332fb09b1e5dd579f"
       }
@@ -2201,7 +2201,7 @@
       "error_files": [],
       "reintroduces": "an image named in the draft is loaded on screen and in print",
       "applied": true,
-      "executed": "2026-10-25T03:27:24",
+      "executed": "2026-10-28T19:35:07",
       "test_sha256": {
         "frontend/src/components/AIReportPanel.capa014.test.tsx": "e07d353fd2721fa2b94c02bbf621bc374e588cd39448eb9332fb09b1e5dd579f"
       }
@@ -2218,7 +2218,7 @@
       "error_files": [],
       "reintroduces": "the viewer shows the single text, not the clinician's box and the notes from their fields",
       "applied": true,
-      "executed": "2026-10-25T03:27:31",
+      "executed": "2026-10-28T19:35:15",
       "test_sha256": {
         "frontend/src/components/AIReportPanel.capa014.test.tsx": "e07d353fd2721fa2b94c02bbf621bc374e588cd39448eb9332fb09b1e5dd579f"
       }
@@ -2235,7 +2235,7 @@
       "error_files": [],
       "reintroduces": "typed Markdown in the clinician's box is rendered (an image link, a heading)",
       "applied": true,
-      "executed": "2026-10-25T03:27:38",
+      "executed": "2026-10-28T19:35:24",
       "test_sha256": {
         "frontend/src/components/AIReportPanel.capa014.test.tsx": "e07d353fd2721fa2b94c02bbf621bc374e588cd39448eb9332fb09b1e5dd579f"
       }
@@ -2252,7 +2252,7 @@
       "error_files": [],
       "reintroduces": "the typed fields accept more than the draft shows, without a counter of the limit",
       "applied": true,
-      "executed": "2026-10-25T03:27:45",
+      "executed": "2026-10-28T19:35:32",
       "test_sha256": {
         "frontend/src/components/AIReportPanel.capa014.test.tsx": "e07d353fd2721fa2b94c02bbf621bc374e588cd39448eb9332fb09b1e5dd579f"
       }
@@ -2262,7 +2262,7 @@
     "backend": {
       "suite": "backend",
       "failed": 0,
-      "passed": 374,
+      "passed": 375,
       "errors": 0,
       "skipped": 0,
       "failing_tests": []
