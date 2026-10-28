@@ -26,6 +26,9 @@ Added after the second independent review of PR #69 (2026-10-28):
   I36-I41 m1, m2, m4 (viewer, assistant), m5, n1.
   The canvas's own call of the fallback colours (SegmentationCanvasLocal) is not reachable from a jsdom test (no
   2D canvas); its helper is (I24), and the capture session checks the drawing.
+Added after the film capture of the release build (2026-10-28, "DWM: 1 lesions"):
+  I42/I43 the lesion counts of the dashboard: singular for one, in the user's language;
+  I44/I45 the findings prompt says "1 lesion", and the RC-065 allow-list keeps both forms.
 
 Method (as the other scripts): one mutation at a time in the real source; every anchor asserted to occur exactly
 once (on the LF text, so a Windows CRLF checkout works); only the bound tests are run — backend offline (PRB-002: a
@@ -83,6 +86,9 @@ UI_VIEWER = "frontend/src/ViewerApp.release20261028.test.tsx"
 UI_STORE = "frontend/src/store/useSegmentationStore.release20261028.test.ts"
 UI_DRAWN = "frontend/src/utils/drawnLabels.test.ts"
 API_R2 = "tests/unit/test_release_2026_10_25_review2_fixes.py"
+# film capture of the release build (2026-10-28): "DWM: 1 lesions"
+UI_D = "frontend/src/components/LesionDashboard.release20261028d.test.tsx"
+API_P = "tests/unit/test_release_2026_10_25_plural_counts.py"
 
 ASSEMBLED = '        result = {**result, **parts, "content": draft_text(parts, request.language)}\n'
 SCRUB = '            content, replaced = gate.scrub_unevaluated_dis(result["content"], request.language)\n'
@@ -284,6 +290,22 @@ M = {
         [(AIR, "        if isinstance(e, VoxelSpacingUnavailableError):\n", "        if True:\n")],
         [API_R2 + "::test_rc070_release2_n1_a_lesion_table_failure_names_its_real_reason"],
         "n1: every lesion-table failure is reported as an unreadable image geometry"),
+    # ── film capture of the release build: "DWM: 1 lesions" ──
+    "I42_dashboard_count_plural_for_one": (
+        [(DASH, "  const [suffix, text] = n === 1 ? ['One', one] : ['Other', other];\n",
+          "  const [suffix, text] = ['Other', other];\n")],
+        [UI_D], "'DWM: 1 lesions' and '1 lesions' in the dashboard"),
+    "I43_dwm_count_english_only": (
+        [(DASH, "              {countText(t, 'lesions.dwmCount', disOk.dwm_lesion_count,\n",
+          "              {countText(t, 'lesions.dwmCountUntranslated', disOk.dwm_lesion_count,\n")],
+        [UI_D], "the deep-white-matter count of the DIS card in English whatever the user's language"),
+    "I44_prompt_plural_for_one": (
+        [(BRS, '    return f"{count} lesion" if count == 1 and not isinstance(count, bool) else f"{count} lesions"\n',
+          '    return f"{count} lesions"\n')],
+        [API_P], "the findings prompt says '1 lesions' and the model copies it into the report"),
+    "I45_allow_list_without_the_plural": (
+        [(BRS, "        for count in (1, 2):\n", "        for count in (1,):\n")],
+        [API_P], "the RC-065 allow-list loses the plural word pairs (a real prompt's pairs are not the device's)"),
 }
 # Recorded with the result (integration review of PR #69, item 5: kept, and stated as by design).
 NOTES = {
