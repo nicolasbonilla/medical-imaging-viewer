@@ -13,6 +13,8 @@
  *
  * niivue's renderer replaced (jsdom has no WebGL), its loaders and math real (src/test/niivueHarness.ts).
  */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 
@@ -101,6 +103,14 @@ describe('PRB-004 review — W/L GPU view', () => {
     render(<NiivueViewer2D hasUnsavedEdits />);
     await mounted(2);
     expect(await screen.findByTestId('niivue-mask-not-shown')).toHaveTextContent(/unsaved/i);
+  });
+
+  it('rc073 M2: the 2D viewer tells the GPU view about unsaved edits (in the mask hook or the store)', () => {
+    // Rendering ImageViewer2D needs canvas, both stores, React Query and the mask hook; as for its safety
+    // overlay (ViewportSafetyOverlay.test.tsx, rc016) the wiring is checked at the call site.
+    const src = readFileSync(join(__dirname, 'ImageViewer2D.tsx'), 'utf-8');
+    expect(src).toMatch(/<NiivueViewer2D hasUnsavedEdits=\{segmentationMask\.state\.isDirty \|\| segmentationStoreDirty\} \/>/);
+    expect(src).toMatch(/const segmentationStoreDirty = useSegmentationStore\(\(s\) => s\.isDirty\);/);
   });
 
   it('rc073 m3: niivue keys, wheel and double-click never reach niivue; the wheel steps the store slice', async () => {

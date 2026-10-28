@@ -132,7 +132,8 @@ function isIdentityAffine(affine: number[][]): boolean {
  */
 export function maskPlaceableIn3D(mask: VoxelGrid, maskDescription: string | undefined): Mask3DCheck {
   if (isIdentityAffine(mask.affine)) return { ok: false, reason: 'position' };
-  if (!(maskDescription ?? '').includes(RC031_V2_MARKER)) return { ok: false, reason: 'order' };
+  const inImageOrder = (maskDescription ?? '').includes(RC031_V2_MARKER);
+  if (!inImageOrder) return { ok: false, reason: 'order' };
   return { ok: true };
 }
 
