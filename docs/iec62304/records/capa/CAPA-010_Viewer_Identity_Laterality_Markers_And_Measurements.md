@@ -172,3 +172,11 @@ real-browser probe in `records/risk_verification/PRB-004_*_2026-10-28.json`. The
 presentation control where the failure can be seen): this time a real-browser probe with real WebGL
 (`scripts/safety/prb004_viewer_display_probe.mjs`) measures the rendered pixels. Still open: RC-013 — a canonical, verified 2D
 orientation for every view (PRB-004 D-1).
+
+**Addendum update 2026-10-28 (independent review of PR #71) — DRAFT, PENDING owner approval.** The review found the same root
+cause twice more inside the 3D view: masks composited by their own affine with no voxel-order or position check, and "go to
+slice" written as a proportion (index / (depth − 1)) on the axial axis while the selected-lesion path of the same component
+already went voxel → mm → niivue (RC-037) — a twin of PRB-004's slider defect. Both fixed under CA-10.9 (PRB-004 §9). The film
+capture added one more presentation conflict: niivue's 3D colour bar under the standing laterality caveat (RC-023); colour bar
+off. Prevention (PA-10.1) applied again: the GPU notice placement is measured in a real browser
+(`NiivueViewer2D.prb004.layout.test.tsx`), which caught a defect in the first review fix.

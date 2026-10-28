@@ -92,3 +92,28 @@ to it; no test looked at the colours drawn on the image.
   anyway. Re-save (or a migration) to change the stored colours — owner decision.
 
 ## 5. Closure — not applicable yet
+
+## R. Independent review of PR #71 (2026-10-28) — PENDING owner approval
+
+- **m1 — the colour-blind claim was measured on the opaque colours, the image shows them translucent.** A region is drawn at
+  label opacity 0.6 × lesion opacity 0.6 (the default) = 36 %, over grey tissue. Measured that way (Machado 2009 severity 1,
+  CIELAB ΔE76, 8-bit source-over on grey 128 and 220), the first mapping kept **infratentorial (#009E73) and deep white matter
+  (#CC79A7) only ΔE 5.3 apart for a deutan reader** — less than the old red / green / blue / gold (worst 7.9, protan); the
+  REQ-SAFE-043 / RC-076 claim (> 15) held only for the opaque legend dots.
+  Resolution: **deep white matter vermillion #D55E00** (Okabe-Ito). As drawn at the default opacity on grey 128 / 220 the worst
+  pair is now ΔE 9.8 deutan, 12.7 protan, 9.1 tritan, 14.3 normal vision; opaque, every pair above 15 for deutan, protan and
+  tritan. The legends follow (one mapping). Trade-off: for normal vision orange (PV) and vermillion (DWM) are closer than orange
+  and purple were (ΔE 14.3 as drawn instead of 21.8) — still clearly distinct; owner decision to confirm. The test now checks
+  the colours as written to the canvas at the default opacity, composited on grey 128 and 220 (> 9 for normal, deutan, protan
+  and tritan vision), plus the opaque colours (> 15); fails on `39f9d44` (`records/risk_verification/PRB-004_review_tests_on_39f9d44_2026-10-28.json`). Negative control V20.
+  Not done: a check with colour-blind readers.
+- **m6 — the GPU and 3D views drew a region-classified mask all red.** Both now draw every label value in its label's colour
+  (a label named after a region in the region's colour from the one mapping), a value missing from the label table in cyan,
+  background transparent (`utils/maskLabelColormap.ts`; an ordinary niivue colormap with one wide band per value, since niivue's
+  label colormap is not coloured in 3D volume rendering). Tests `NiivueViewer2D.prb004.review.test.tsx` and
+  `ImageViewer3D.prb004.review.test.tsx` (`rc076 m6`); fail on `39f9d44`. Negative controls V21–V25.
+- **Known issue, not fixed here: the longitudinal layer of the 2D view draws voxels present at both visits green and voxels
+  present only at the later visit (new) red** (visit-1-only blue; `SegmentationCanvasLocal.tsx`, longitudinal layer) — the same
+  red / green pair for a red-green colour-blind reader; and the result panel's status colours (`LongitudinalResultPanel.tsx`:
+  new blue, resolved green, enlarged red) use another code than the image. Left for the longitudinal work (CAPA-013 and PR #69
+  touch that view); proposed: one colour-blind-safe code for the layer and the panel, plus a non-colour cue.

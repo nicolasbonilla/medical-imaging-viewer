@@ -85,9 +85,9 @@ same voxels; a mask that cannot be drawn voxel for voxel on the image is not dra
 |---|---|---|
 | 2D Standard (editing) | stored voxel order (row i down, column j right) | unchanged |
 | 2D Matplotlib | stored voxel order (server, `imshow(origin='upper')`) | unchanged |
-| 2D multi-panel grid | stored voxel order (server slices) | unchanged |
+| 2D multi-panel grid | stored voxel order (server slices) | unchanged; draws no segmentation (§9, m7) |
 | 2D W/L GPU | scanner affine (anatomical axial), slice between voxels | **stored voxel order, voxel-centre slice** — the same as Standard |
-| 3D volume / multiplanar | scanner affine | unchanged (a 3D rendering must keep the anatomy's handedness; RC-023 letters stay off) |
+| 3D volume / multiplanar | scanner affine | unchanged (a 3D rendering must keep the anatomy's handedness; RC-023 letters stay off). Masks requested aligned to the image and drawn only with a known voxel order and scanner position; "go to slice" on the slice's own axis; no colour bar under the laterality caveat (§9) |
 
 - Mask in the GPU view: given the image's layout, so drawn voxel for voxel as in Standard. Drawn only when stored on the
   image's own grid (same dimensions, voxel-to-scanner transform within 0.001 per element — RC-039's tolerance) and in the
@@ -146,7 +146,57 @@ probability, not the severity. Proposed Critical.
   convention (anterior up); the 3D multiplanar slices are anatomical. RC-013 (canonical display with verified
   orientation) changes the painting coordinates and needs its own change with browser QA — proposed, not done here.
 - **D-2**: severity Critical and the CAPA linkage (proposed: CAPA-010 extended with CA-10.9, same root cause; or a new CAPA).
-- **D-3**: legacy masks (stored before RC-031) are no longer drawn in the GPU view (they are still drawn in Standard,
-  through the marker-aware loader). Accept, or migrate the stored masks.
+- **D-3 (resolved on the branch by the review fix, §9 M1)**: a legacy mask (stored before RC-031) that lies on the image's
+  grid is now realigned by the server and drawn in the GPU and 3D views; a legacy mask on another grid stays refused there,
+  with the reason (it is still drawn in Standard through the marker-aware loader). Migrating the stored masks remains an
+  owner option.
 
 ## 8. Closure (SPR-001 §4, step 6) — not applicable yet
+
+## 9. Independent review of the draft PR #71 (2026-10-28) — findings, resolution, verification — PENDING owner approval
+
+An independent review of the draft PR at `39f9d44` (report kept by the coordinator) found the items below; two more
+display findings came from the film capture the same day (§9.2). Every item was reproduced by a test written before
+its fix; the tests fail on `39f9d44` (`records/risk_verification/PRB-004_review_tests_on_39f9d44_2026-10-28.json`) and on `main` @ `70cc5c7`
+(`records/risk_verification/PRB-004_tests_on_base_2026-10-28.json`). Items of other reports: m2 → PRB-006, m10 → PRB-007,
+m4 and the sidebar slice → PRB-008, m1 and m6 → PRB-010.
+
+### 9.1 Review findings
+
+| Item | At `39f9d44` | Resolution on the branch | Tests (written first) |
+|---|---|---|---|
+| **M1** (HAZ-006) | The 3D view (volume and multiplanar) drew the lesion mask and both visit masks by their own affine with no check (`ImageViewer3D.tsx:208-212, :374-377, :473-480`): a mask saved before RC-031 (in-plane transpose, no marker) mirrored about the diagonal, a mask saved with the identity fallback (no scanner position) at an arbitrary place, silently. The aligned route `GET /segmentation/{id}/nifti?ref_file_id=` raised `NameError: io` (`io` imported only inside another function — CAPA-006 PA-6.4), and its code copied the MRI's header: RC-031 marker dropped, MRI display window copied (PRB-006), and the reference affine stamped onto ANY mask of the same shape — an identity-fallback or other-grid mask would have been presented as aligned. | Route: `io` imported; `SegmentationService.align_stored_mask_to_reference` realigns only a mask whose stored voxel-to-scanner transform IS the reference image's (0.001 per element, RC-039's tolerance), undoing the legacy transpose by the RC-031 marker, and serves it with the image's affine, the RC-031 marker and the mask's own display range; any other mask is served unchanged. The GPU and 3D views request every mask with `ref_file_id` (`segmentationNiftiPath`). The 3D view draws a mask only with the RC-031 marker and a scanner position (`maskPlaceableIn3D`); otherwise an amber notice names it (segmentation / earlier visit / later visit) and the reason. | `backend/tests/unit/test_prb004_review_ref_alignment.py` (5; the real FastAPI route, storage and authorization replaced, offline), `ImageViewer3D.prb004.review.test.tsx` (M1: 5), `NiivueViewer2D.prb004.review.test.tsx` (M1: 1) |
+| **M2** | A segmentation not saved yet (`local-…`) and unsaved edits were silently absent from the GPU view (`NiivueViewer2D.tsx:115-116`) and the 3D view. | GPU view: "not drawn: it is not saved yet" / "unsaved edits are not shown in this view: it draws the last saved segmentation"; `ImageViewer2D` passes `hasUnsavedEdits` (mask hook or store). 3D: the segmentation named, "not saved yet". | GPU 3 (one checks the `ImageViewer2D` call site, as rc016 does), 3D 1 |
+| **M3** (HAZ-006) | 3D "go to slice" (comparison and longitudinal panels) set niivue's axial fraction to index / (depth − 1) (`ImageViewer3D.tsx:690-716`): off by up to half a slice, and on the wrong axis for a sagittally or coronally stored volume. Twin of the selected-lesion path, which already went voxel → mm → niivue (RC-037). | Storage slice k: the centre voxel of slice k through the volume's affine to scanner mm, then niivue's own `mm2frac`, on the niivue axis along which k advances; the other two coordinates kept. | 3D 2 (axial LAS; sagittally stored) |
+| **m3** | niivue's own keys (V view type, C clip plane, Ctrl+U/D slice, M drag mode), its wheel (slice) and double-click (contrast reset) acted on the GPU view behind the store: the view could show another slice or window than the one the app reports. | Hotkeys off; the canvas is not focusable; keys, wheel and double-click stopped before niivue's canvas listeners; the wheel steps the store's slice. | GPU 1 |
+| **m5** | The GPU notice sat at the top (`top-12`), where the patient-identity block covers it in a narrow view. | Bottom centre, above the standing laterality caveat. Measured in a real browser (headless Edge, the app's Tailwind CSS, the overlay and the GPU view composed as in `ImageViewer2D`, 1100 × 700, 600 × 420, 480 × 330): fully visible, overlapping neither the identity block, the orientation banner nor the caveat. The measurement found that the first review fix (`bottom-10`) touched the caveat where it wraps to two lines; now `bottom-14`. At `39f9d44`: notice over the identity block at 600 × 420. | `NiivueViewer2D.prb004.layout.test.tsx` (real browser), GPU 1 (placement) |
+| **m7** | The multi-panel grid kept a mask-overlay path no caller wired (no grid check, colours of its own); REQ-SAFE-041 said every multi-panel cell draws the mask only on its grid. | Path removed; REQ-SAFE-041 now states that the grid draws no segmentation. | `MultiPanelViewer.prb004.review.test.ts` |
+| **m8** | Both safety scripts changed source files in the developer's checkout; an interrupted run could leave a mutation in real code. | Both run in a throwaway detached worktree of the commit (`scripts/safety/prb004_throwaway_worktree.py`; `node_modules` a junction removed with `os.rmdir`, never recursively; leftovers of interrupted runs removed first; one run at a time by a lock; `--only` refuses a record of another commit). An interrupted run during this work left the checkout untouched; the next run removed its worktree. | the runs below |
+| **m9** | The notice for a mask on another grid sent the reader to the Standard view, which draws a mask voxel for voxel on whatever image it is shown with. | The Standard view is offered only for an older voxel order, a load failure and unsaved work. | GPU 1 |
+| **D-3** | — | Resolved by M1 (§7). | as M1 |
+
+### 9.2 Film capture (coordinator, 2026-10-28)
+
+- **3D colour bar under the laterality caveat** (RC-023, HAZ-006 context; CAPA-010): niivue drew its colour bar along the
+  bottom of the 3D render (volume view and the 3D cell of multiplanar), under the safety overlay's standing "Laterality not
+  labelled — confirm side against the source study" — both unreadable. The colour bar is off in every 3D niivue instance (the
+  colour scale of an MRI in arbitrary units is not a measurement; the colormap is named in the sidebar). Test:
+  `ImageViewer3D.prb004.review.test.tsx` (`rc023 3D volume / multiplanar`, 2; fail on `39f9d44`). Owner option: bring a colour
+  bar back in a place that covers no safety annotation.
+- **Sidebar slice in the side-by-side panels**: recorded in PRB-008 §R.
+
+### 9.3 Negative controls
+
+`scripts/safety/prb004_negative_controls.py`, run in a throwaway worktree of `@@NEG_TREE@@`: review and film mutations
+V1–V43 — @@V_DET@@ of 43 detected; the whole set @@ALL_DET@@ of @@ALL_TOTAL@@ (`records/risk_verification/PRB-004_negative_controls_2026-10-28.json`). The real-browser probe of §6 was not
+re-run for the review changes: the GPU and 3D changes are covered by tests with niivue's own loaders and math, the notice
+placement by the real-browser layout test.
+
+### 9.4 Remaining limits
+
+- The 3D zone map (MAGNIMS zone overlay) is not yet requested aligned nor checked for voxel order and position (it is
+  generated by the server on the image's grid; not covered by the review).
+- A segmentation of another visit on another grid is composited by its own affine in 3D: no registration (the existing caveat
+  "NOT spatially registered" stays).
+- The label colour of a value missing from the label table is cyan in the GPU and 3D views (`UNLISTED_LABEL_HEX`); PR #69
+  adds a fallback colour for the 2D overlay — the two are to be made one constant when the branches meet.

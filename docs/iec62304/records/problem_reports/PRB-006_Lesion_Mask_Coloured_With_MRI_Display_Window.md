@@ -89,3 +89,12 @@ risk control: new **RC-074**.
 - **D-2**: severity Major, safety-related.
 
 ## 6. Closure — not applicable yet
+
+## R. Independent review of PR #71 (2026-10-28) — PENDING owner approval
+
+- **m2**: the later-visit mask of the 3D longitudinal overlay was loaded with niivue's "hot" colormap; with the fixed range
+  0 … 1 every label sits at the top of "hot", which is **white** — the comment said red, and white is the colour of a FLAIR
+  hyperintensity. Now "red" (both views). Test `ImageViewer3D.prb004.review.test.tsx` (`rc074 m2`: the top of the colormap the
+  later visit is drawn with is not white and is saturated); fails on `39f9d44` (`records/risk_verification/PRB-004_review_tests_on_39f9d44_2026-10-28.json`). Negative control V26.
+- The aligned route (`?ref_file_id=`, PRB-004 §9 M1) copied the MRI's header, display window included; the realigned mask now
+  carries its own display range (0 … highest label). Test `test_prb004_review_ref_alignment.py`; negative control V4.

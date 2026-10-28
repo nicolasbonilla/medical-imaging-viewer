@@ -62,3 +62,10 @@ the empty case was not considered. The panel filling rule assumed one image per 
 - Severity Minor.
 
 ## 5. Closure — not applicable yet
+
+## R. Independent review of PR #71 (2026-10-28) — PENDING owner approval
+
+- **m10**: a segmentation derivative (BIDS `desc-segfrompreproc`, `_dseg`, `_probseg`, `_seg`, `_mask`, `_label(s)`) is listed
+  with the preprocessed files, and the grid's fallback (§ resolution) could show it as a grey image in a panel. The grid now
+  takes images only (`isSegmentationDerivative` in `utils/instanceClassification.ts`, applied by `multiPanelImages`); the sidebar
+  list is unchanged. Test `utils/instanceClassification.prb007.review.test.ts`; fails on `39f9d44` (`records/risk_verification/PRB-004_review_tests_on_39f9d44_2026-10-28.json`). Negative control V38.

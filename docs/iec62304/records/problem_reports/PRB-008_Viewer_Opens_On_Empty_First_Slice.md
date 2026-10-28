@@ -58,3 +58,17 @@ No requirement said which slice an image opens on; the store's initial value 0 s
   in the IFU.
 
 ## 5. Closure — not applicable yet
+
+## R. Independent review of PR #71 and film capture (2026-10-28) — PENDING owner approval
+
+- **m4 (review)**: the slice was kept on an image switch within one study whenever the slice COUNT matched. Two sequences with the
+  same number of slices but another matrix, voxel size, slice thickness or stored orientation put the same index at another
+  anatomical level. The slice is now kept only when the two images report the same voxel grid (slice count, rows, columns,
+  slices, pixel spacing and slice thickness within 0.001 mm, stored orientation; a field neither reports cannot tell them apart)
+  — `sameReportedGrid` in `utils/sliceOnOpen.ts`. REQ-FUNC-103 reworded. Test `utils/sliceOnOpen.review.test.ts` (4 + a guard);
+  fails on `39f9d44`. Negative controls V31–V34.
+- **Sidebar slice in the side-by-side panels (film capture)**: the sidebar's slice navigator (`ControlPanel`) read the single
+  view's slice index while the 1x2 / 2x2 grid navigates its own per-panel index: it named a slice the panels did not show, gave
+  the single image's slice count, and its slider moved nothing on screen. It now follows the active panel, as the toolbar does
+  (`useActiveSliceInfo`). Test `components/ControlPanel.prb008.test.tsx` (2 + a guard); fails on `39f9d44` (`records/risk_verification/PRB-004_review_tests_on_39f9d44_2026-10-28.json`). Negative
+  controls V41–V43.
