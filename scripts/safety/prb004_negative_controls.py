@@ -1,6 +1,6 @@
-"""Negative controls for PRB-004 .. PRB-009 — viewer display and orientation
-(RC-073 / RC-074 / RC-075; REQ-SAFE-041 / REQ-SAFE-042; REQ-FUNC-101 .. REQ-FUNC-104; HAZ-006, HAZ-001, HAZ-007,
-HAZ-004).
+"""Negative controls for PRB-004 .. PRB-010 — viewer display, orientation and region colours
+(RC-073 / RC-074 / RC-075 / RC-076; REQ-SAFE-041 / 042 / 043; REQ-FUNC-101 .. REQ-FUNC-104; HAZ-006, HAZ-001,
+HAZ-007, HAZ-004, HAZ-005).
 
 Each mutation re-introduces ONE defect the fixes removed, or removes one sub-control they added, in the real source,
 one at a time:
@@ -15,7 +15,10 @@ one at a time:
   PRB-008  opening on slice 0, the viewer bypassing the rule, the slice kept across studies or sizes, grid panels on
            slice 0, a different middle;
   PRB-009  the screening on by default, mounted without the flag, the model looked for at every opening, the button
-           while looking, an absent model written to the console.
+           while looking, an absent model written to the console;
+  PRB-010  a region drawn in the colour stored with its label, the 2D zone layers / the 3D zone colormap / the zone
+           legend / the lesion legend with colours of their own, red and green back in the mapping, the label preset
+           or the backend's stored colours off the mapping, region names matched case-sensitively.
 The script refuses to start when a file it mutates has uncommitted changes, asserts that every anchor occurs exactly
 once (on the LF text — a Windows checkout has CRLF line endings; a mutation is written with the file's own line
 endings), runs the bound tests of the mutated side (backend: pytest offline per PRB-002; frontend: vitest JSON
@@ -61,6 +64,13 @@ FT = "frontend/src/config/features.ts"
 IV2 = "frontend/src/components/ImageViewer2D.tsx"
 EA = "frontend/src/hooks/useEdgeAI.ts"
 QS = "frontend/src/components/QuickScreenBadge.tsx"
+RC = "frontend/src/utils/regionColors.ts"
+SCL = "frontend/src/components/SegmentationCanvasLocal.tsx"
+ZP = "frontend/src/components/MAGNIMSZoneMapPanel.tsx"
+LD = "frontend/src/components/LesionDashboard.tsx"
+TY = "frontend/src/types/segmentation.ts"
+STORE = "frontend/src/store/useSegmentationStore.ts"
+REG = "backend/app/api/routes/segmentation_regions.py"
 
 T_NV = "src/components/NiivueViewer2D.prb004.test.tsx"
 T_WL = "src/utils/niivueWindowLevel.test.ts"
@@ -70,7 +80,9 @@ T_SD = "src/utils/sequenceDetection.prb007.test.ts"
 T_SO = "src/utils/sliceOnOpen.test.ts"
 T_QS = "src/components/QuickScreenBadge.prb009.test.tsx"
 T_FT = "src/config/features.quickScreen.test.ts"
-BACKEND = ["tests/unit/test_prb006_mask_display_range.py"]
+T_SCL = "src/components/SegmentationCanvasLocal.prb010.test.tsx"
+T_RC = "src/utils/regionColors.test.ts"
+BACKEND = ["tests/unit/test_prb006_mask_display_range.py", "tests/unit/test_prb010_region_label_colours.py"]
 
 M = {  # name: ([(file, anchor, replacement), ...], [bound frontend tests] or None for backend, what it re-introduces)
     # ── PRB-004 / RC-073: the GPU view lays voxels out as the standard view ──
@@ -221,6 +233,48 @@ M = {  # name: ([(file, anchor, replacement), ...], [bound frontend tests] or No
         [(EA, "      .catch(() => false);\n",
           "      .catch(() => false)\n      .then((ok) => { if (!ok) console.error('[EdgeAI] model not found'); return ok; });\n")],
         [T_QS], "an absent model written to the console as an error"),
+    # ── PRB-010 / RC-076: one MAGNIMS region colour mapping ──
+    "P1_region_drawn_in_its_stored_colour": (
+        [(STORE, "            ? { ...rawSegmentation, labels: withRegionColors(rawSegmentation.labels) }\n",
+          "            ? { ...rawSegmentation, labels: rawSegmentation.labels }\n")], [T_SCL],
+        "a classified segmentation drawn red / green / blue / gold as stored (the defect as found)"),
+    "P2_zone_coloured_lesions_red_green": (
+        [(SCL, "const MAGNIMS_ZONE_COLORS_LESION: Record<number, ParsedColor> = regionZoneRgba(153);",
+          "const MAGNIMS_ZONE_COLORS_LESION: Record<number, ParsedColor> = { 1: { r: 255, g: 0, b: 0, a: 153 }, 2: { r: 0, g: 204, b: 0, a: 153 }, 3: { r: 0, g: 102, b: 255, a: 153 }, 4: { r: 255, g: 215, b: 0, a: 153 } };")],
+        [T_SCL, T_RC], "zone-coloured lesions back to red / green / blue / yellow"),
+    "P3_zone_map_layer_red_green": (
+        [(SCL, "        const zoneColors: Record<number, ParsedColor> = regionZoneRgba(zmAlpha); // PRB-010",
+          "        const zoneColors: Record<number, ParsedColor> = { 1: { r: 255, g: 0, b: 0, a: zmAlpha }, 2: { r: 0, g: 204, b: 0, a: zmAlpha }, 3: { r: 0, g: 102, b: 255, a: zmAlpha }, 4: { r: 255, g: 215, b: 0, a: zmAlpha } };")],
+        [T_SCL, T_RC], "the zone-map background layer back to red / green / blue / yellow"),
+    "P4_3d_zone_colormap_red_green": (
+        [(I3, "    for (let i = from; i < to; i++) { R[i] = zone[id].r; G[i] = zone[id].g; B[i] = zone[id].b; A[i] = 255; }\n",
+          "    for (let i = from; i < to; i++) { R[i] = id === 1 || id === 4 ? 255 : 0; G[i] = [0, 0, 204, 102, 215][id]; B[i] = id === 3 ? 255 : 0; A[i] = 255; }\n")],
+        [T_SCL], "the 3D zone colormap back to red / green / blue / yellow"),
+    "P5_zone_legend_own_colours": (
+        [(ZP, "const REGION_COLORS: Record<string, string> = REGION_DOT_CLASSES;",
+          "const REGION_COLORS: Record<string, string> = { Periventricular: 'bg-red-500', Juxtacortical: 'bg-green-500', Infratentorial: 'bg-blue-500', 'Deep White Matter': 'bg-yellow-500' };")],
+        [T_SCL, T_RC], "the zone-map legend back to its own red / green / blue / yellow"),
+    "P6_lesion_legend_own_copy": (
+        [(LD, "const REGION_COLORS: Record<string, string> = REGION_DOT_CLASSES;",
+          "const REGION_COLORS: Record<string, string> = { Periventricular: 'bg-[#E69F00]', Juxtacortical: 'bg-[#56B4E9]', Infratentorial: 'bg-[#009E73]', 'Deep White Matter': 'bg-[#CC79A7]' };")],
+        [T_RC], "the lesion legend keeps its own copy of the colours (two mappings that can drift apart again)"),
+    "P7_red_and_green_in_the_mapping": (
+        [(RC, "  Periventricular: { id: 1, hex: '#E69F00', dot: 'bg-[#E69F00]', text: 'text-[#F0A800]' },     // orange\n"
+              "  Juxtacortical: { id: 2, hex: '#56B4E9', dot: 'bg-[#56B4E9]', text: 'text-[#7FC7F0]' },       // sky blue\n",
+          "  Periventricular: { id: 1, hex: '#FF0000', dot: 'bg-[#FF0000]', text: 'text-[#FF0000]' },     // orange\n"
+          "  Juxtacortical: { id: 2, hex: '#00CC00', dot: 'bg-[#00CC00]', text: 'text-[#00CC00]' },       // sky blue\n")],
+        [T_SCL, T_RC], "the shared mapping itself puts periventricular red against juxtacortical green"),
+    "P8_label_preset_off_the_mapping": (
+        [(TY, "  { id: 1, name: 'Periventricular', color: MAGNIMS_REGION_PALETTE.Periventricular.hex, opacity: 0.6, visible: true,",
+          "  { id: 1, name: 'Periventricular', color: '#FF0000', opacity: 0.6, visible: true,")],
+        [T_RC], "the MAGNIMS label preset keeps its own (red) periventricular colour"),
+    "P9_backend_stores_red": (
+        [(REG, '    "Periventricular": "#E69F00",\n', '    "Periventricular": "#FF0000",\n')], None,
+        "classify-regions / generate-zone-map store periventricular red"),
+    "P10_region_names_case_sensitive": (
+        [(RC, "  return MAGNIMS_REGIONS.find((r) => r.toLowerCase() === n);\n",
+          "  return MAGNIMS_REGIONS.find((r) => r === name);\n")], [T_RC],
+        "a region label stored in another letter case keeps its stored colour"),
 }
 
 

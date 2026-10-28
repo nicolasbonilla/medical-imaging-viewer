@@ -25,20 +25,12 @@ import {
 import { segmentationAPI } from '@/api/segmentation';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import type { ZoneMapResult } from '@/types';
+import { REGION_DOT_CLASSES, REGION_TEXT_CLASSES } from '@/utils/regionColors';
 
-const REGION_COLORS: Record<string, string> = {
-  Periventricular: 'bg-red-500',
-  Juxtacortical: 'bg-green-500',
-  Infratentorial: 'bg-blue-500',
-  'Deep White Matter': 'bg-yellow-500',
-};
+// PRB-010: the same mapping as the lesion legend and the overlays (was red / green / blue / yellow).
+const REGION_COLORS: Record<string, string> = REGION_DOT_CLASSES;
 
-const REGION_TEXT_COLORS: Record<string, string> = {
-  Periventricular: 'text-red-400',
-  Juxtacortical: 'text-green-400',
-  Infratentorial: 'text-blue-400',
-  'Deep White Matter': 'text-yellow-400',
-};
+const REGION_TEXT_COLORS: Record<string, string> = REGION_TEXT_CLASSES;
 
 const ZONE_LABEL_NAMES: Record<number, string> = {
   1: 'Periventricular',

@@ -13,6 +13,7 @@
  */
 
 import React, { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { regionZoneRgba } from '@/utils/regionColors';
 import { useTranslation } from 'react-i18next';
 import type { UseSegmentationMaskReturn } from '@/hooks/useSegmentationMask';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
@@ -95,13 +96,9 @@ function transposeSlice(src: Uint8Array, srcH: number, srcW: number): Uint8Array
   return dst;
 }
 
-/** MAGNIMS zone colors at lesion opacity (60%) for zone-colorized rendering */
-const MAGNIMS_ZONE_COLORS_LESION: Record<number, ParsedColor> = {
-  1: { r: 255, g: 0,   b: 0,   a: 153 },  // PV - red
-  2: { r: 0,   g: 204, b: 0,   a: 153 },  // JC - green
-  3: { r: 0,   g: 102, b: 255, a: 153 },  // IT - blue
-  4: { r: 255, g: 215, b: 0,   a: 153 },  // DWM - yellow
-};
+/** MAGNIMS zone colors at lesion opacity (60%) for zone-colorized rendering — PRB-010: the one
+ *  shared mapping (utils/regionColors.ts), the same as the legends (was red / green / blue / yellow). */
+const MAGNIMS_ZONE_COLORS_LESION: Record<number, ParsedColor> = regionZoneRgba(153);
 
 /**
  * Create a composite slice for MAGNIMS zone colorization.
@@ -505,12 +502,7 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
 
         // Use MAGNIMS colors with user-controlled opacity for background visualization
         const zmAlpha = Math.round(zoneMapOpacity * 255);
-        const zoneColors: Record<number, ParsedColor> = {
-          1: { r: 255, g: 0, b: 0, a: zmAlpha },      // PV - red
-          2: { r: 0, g: 204, b: 0, a: zmAlpha },       // JC - green
-          3: { r: 0, g: 102, b: 255, a: zmAlpha },     // IT - blue
-          4: { r: 255, g: 215, b: 0, a: zmAlpha },     // DWM - yellow
-        };
+        const zoneColors: Record<number, ParsedColor> = regionZoneRgba(zmAlpha); // PRB-010
         renderMaskToCanvas(
           ctx, zmSlice,
           zmRenderW, zmRenderH,

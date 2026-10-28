@@ -1,4 +1,4 @@
-"""PRB-004 .. PRB-009 (viewer display and orientation) — run the new tests against the code they were
+"""PRB-004 .. PRB-010 (viewer display, orientation and region colours) — run the new tests against the code they were
 written for (`main` @ 70cc5c7) — evidence that each test detects its defect.
 
 The tests were written before the fixes. This script puts back, temporarily, the base version of every
@@ -38,7 +38,7 @@ OUT = _arg("--out", "docs/iec62304/records/risk_verification/PRB-004_tests_on_ba
 PY = os.path.join(ROOT, "backend", "venv", "Scripts", "python.exe")
 if not os.path.exists(PY):
     PY = sys.executable
-BACKEND_TESTS = ["tests/unit/test_prb006_mask_display_range.py"]
+BACKEND_TESTS = ["tests/unit/test_prb006_mask_display_range.py", "tests/unit/test_prb010_region_label_colours.py"]
 FRONTEND_TESTS = [
     "src/components/NiivueViewer2D.prb004.test.tsx",
     "src/components/ImageViewer3D.prb005.test.tsx",
@@ -48,6 +48,8 @@ FRONTEND_TESTS = [
     "src/utils/niivueWindowLevel.test.ts",
     "src/components/QuickScreenBadge.prb009.test.tsx",
     "src/config/features.quickScreen.test.ts",
+    "src/components/SegmentationCanvasLocal.prb010.test.tsx",
+    "src/utils/regionColors.test.ts",
 ]
 
 

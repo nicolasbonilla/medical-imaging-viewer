@@ -20,6 +20,7 @@ import { useSegmentationStore } from '@/store/useSegmentationStore';
 import { createBoundingBoxMZ3, lesionVoxelToNifti } from '@/utils/boundingBoxMesh';
 import { ViewportSafetyOverlay } from './ViewportSafetyOverlay';
 import { niftiNameFor, LABEL_MASK_DISPLAY_RANGE } from '@/utils/niivueVoxelGrid';
+import { regionZoneRgba } from '@/utils/regionColors';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -101,14 +102,14 @@ function registerZoneMapColormap(nv: Niivue): void {
   const I = new Array(256).fill(0);
   for (let i = 0; i < 256; i++) I[i] = i;
 
-  // PV: Red [255, 0, 0] — indices 32-95
-  for (let i = 32; i < 96; i++) { R[i] = 255; A[i] = 255; }
-  // JC: Green [0, 204, 0] — indices 96-159
-  for (let i = 96; i < 160; i++) { G[i] = 204; A[i] = 255; }
-  // IT: Blue [0, 102, 255] — indices 160-223
-  for (let i = 160; i < 224; i++) { G[i] = 102; B[i] = 255; A[i] = 255; }
-  // DWM: Yellow [255, 215, 0] — indices 224-255
-  for (let i = 224; i < 256; i++) { R[i] = 255; G[i] = 215; A[i] = 255; }
+  // PRB-010: the one shared region mapping (utils/regionColors.ts, Okabe-Ito), the same as the
+  // legends and the 2D overlay (was red / green / blue / yellow).
+  // PV indices 32-95, JC 96-159, IT 160-223, DWM 224-255.
+  const zone = regionZoneRgba(255);
+  const ranges: Array<[number, number, number]> = [[1, 32, 96], [2, 96, 160], [3, 160, 224], [4, 224, 256]];
+  for (const [id, from, to] of ranges) {
+    for (let i = from; i < to; i++) { R[i] = zone[id].r; G[i] = zone[id].g; B[i] = zone[id].b; A[i] = 255; }
+  }
 
   nv.addColormap('magnims_zones', { R, G, B, A, I });
 }

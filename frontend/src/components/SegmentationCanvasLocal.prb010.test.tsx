@@ -108,7 +108,8 @@ function drawOverlay(showLabels: boolean) {
 /** The colour the overlay wrote for each of the four voxels (label / zone 1..4). */
 async function drawnColours(): Promise<string[]> {
   await waitFor(() => expect(written.some((d) => d[3] > 0)).toBe(true));
-  const d = written.filter((x) => x[3] > 0).at(-1)!;
+  const drawnLayers = written.filter((x) => x[3] > 0);
+  const d = drawnLayers[drawnLayers.length - 1];
   return [0, 1, 2, 3].map((v) => `#${[d[v * 4], d[v * 4 + 1], d[v * 4 + 2]].map((c) => c.toString(16).padStart(2, '0')).join('').toUpperCase()}`);
 }
 
