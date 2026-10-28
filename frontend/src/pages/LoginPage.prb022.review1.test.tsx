@@ -26,6 +26,20 @@ describe('PRB-022 sign-in page badges', () => {
     await i18n.changeLanguage('en');
   });
 
+  it('rc086 prb022 the subtitle says research prototype, not medical device or Class C (en, es, de)', async () => {
+    // Coordinator finding after the re-review: "AI-Powered Brain MRI Analysis · IEC 62304 Class C Medical Device" claimed
+    // a medical device (no CE marking) and called a software safety class a device class.
+    for (const [lang, text] of [['en', 'Brain MRI research prototype'], ['es', 'Prototipo de investigación de RM cerebral'],
+      ['de', 'Forschungsprototyp für Gehirn-MRT']] as const) {
+      await i18n.changeLanguage(lang);
+      const { container, unmount } = render(<MemoryRouter><LoginPage /></MemoryRouter>);
+      await new Promise((r) => setTimeout(r, 0));
+      expect(screen.getByText(text)).toBeInTheDocument();
+      expect(container.textContent || '').not.toMatch(/medical device|medizinprodukt|dispositivo m[eé]dico|class c|klasse c|clase c/i);
+      unmount();
+    }
+  });
+
   it('rc086 prb022 no standard is shown as a badge', async () => {
     render(<MemoryRouter><LoginPage /></MemoryRouter>);
     await new Promise((r) => setTimeout(r, 0));
