@@ -171,7 +171,9 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "R3_report_route_stores_the_assessment": ([(AIR, '        return await assess_dis(segmentation_id, segmentation_service, storage_service, store=False)\n',
                                                 '        return await assess_dis(segmentation_id, segmentation_service, storage_service, store=True)\n')],
                                               "the compute-only report route writes to the segmentation (RC-033)"),
-    "R4_prompt_states_met_for_an_unevaluated_block": ([(BRS, '        if not (isinstance(dis, dict) and dis.get("evaluation_status") == "evaluated"):\n',
+    # Release 2026-10-25 (integration review of PR #69, item 3): the builder calls the one rule, gate.is_evaluated;
+    # the anchor moved to that line, the mutation is unchanged.
+    "R4_prompt_states_met_for_an_unevaluated_block": ([(BRS, '        if not gate.is_evaluated(dis):\n',
                                                         '        if not isinstance(dis, dict):\n')],
                                                       "the prompt prints MET / NOT MET for a block that was not evaluated (the defect as found)"),
     "R5_prompt_lets_the_model_derive_dis": ([(BRS, '            if dis or findings.get("lesion_analysis"):\n', '            if dis:\n')],

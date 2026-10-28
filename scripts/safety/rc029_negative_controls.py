@@ -96,7 +96,12 @@ def run():
 
 
 def main():
-    orig = {p: open(p, encoding="utf-8").read() for p in FILES}
+    # Release 2026-10-25 (integration review of PR #69, item 5): on a Windows checkout (CRLF) the files were
+    # written back with the platform's line endings, not their own bytes. Anchors are matched on the LF text, a
+    # mutation is written with the file's own line endings, and the exact original bytes are restored.
+    raw = {p: open(p, "rb").read() for p in FILES}
+    eol = {p: "\r\n" if b"\r\n" in b else "\n" for p, b in raw.items()}
+    orig = {p: b.decode("utf-8").replace("\r\n", "\n") for p, b in raw.items()}
     for name, (path, anchor, n, _t, _w) in M.items():
         c = orig[path].count(anchor)
         assert c == n, f"{name}: anchor occurs {c}x in {path}, expected {n}"
@@ -110,15 +115,17 @@ def main():
         for name, (path, _a, _n, transform, what) in M.items():
             mutated = transform(orig[path])
             assert mutated != orig[path], name
-            open(path, "w", encoding="utf-8").write(mutated)
+            open(path, "w", encoding="utf-8", newline=eol[path]).write(mutated)
             out = run()
             out.update({"restores": what, "applied": True})
             res["mutations"][name] = out
-            open(path, "w", encoding="utf-8").write(orig[path])
+            open(path, "wb").write(raw[path])
             print(f"{name:40s} {out['failed']} failed / {out['passed']} passed", flush=True)
     finally:
-        for p, t in orig.items():
-            open(p, "w", encoding="utf-8").write(t)
+        for p, b in raw.items():
+            open(p, "wb").write(b)
+    for p in FILES:   # the restore is byte-exact
+        assert open(p, "rb").read() == raw[p], p
     res["restored"] = run()
     res["undetected"] = sorted(n for n, v in res["mutations"].items() if v["failed"] == 0)
     json.dump(res, open(OUT, "w", encoding="utf-8"), indent=2, ensure_ascii=False)

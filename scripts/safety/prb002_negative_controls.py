@@ -100,7 +100,8 @@ MUTATIONS = [
 
 
 def sha(path):
-    return hashlib.sha256(open(path, "rb").read()).hexdigest()
+    """sha256 of the UTF-8 text with LF line endings (the same on a CRLF and an LF checkout)."""
+    return hashlib.sha256(open(path, "rb").read().replace(b"\r\n", b"\n")).hexdigest()
 
 
 def outer_env(tmp):
@@ -146,10 +147,15 @@ def main():
     for sig in ("SIGTERM", "SIGBREAK", "SIGHUP"):
         if hasattr(signal, sig):
             signal.signal(getattr(signal, sig), _restore_and_exit)
-    text = original.decode("utf-8")
+    # Release 2026-10-25 (integration review of PR #69, item 5): a Windows checkout (core.autocrlf=true) has CRLF
+    # line endings; anchors are matched on the LF text, a mutation is written with the file's own line endings and
+    # the exact original bytes are restored (before, every anchor was missed on a CRLF checkout).
+    eol = "\r\n" if b"\r\n" in original else "\n"
+    text = original.decode("utf-8").replace("\r\n", "\n")
     results = {"generated": datetime.datetime.now().isoformat(timespec="seconds"),
                "tests": {t: sha(os.path.join("backend", t)) for t in TESTS},
-               "conftest_sha256": sha(CONF), "baseline": None, "mutations": []}
+               "conftest_sha256": sha(CONF), "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+               "line_endings_of_checkout": "CRLF" if eol == "\r\n" else "LF", "baseline": None, "mutations": []}
     with tempfile.TemporaryDirectory() as tmp:
         env = outer_env(tmp)
         code, failed, tail = run_tests(env, tmp)
@@ -162,7 +168,7 @@ def main():
             for name, anchor, replacement in MUTATIONS:
                 count = text.count(anchor)
                 assert count == 1, (name, count)
-                open(CONF, "wb").write(text.replace(anchor, replacement).encode("utf-8"))
+                open(CONF, "wb").write(text.replace(anchor, replacement).replace("\n", eol).encode("utf-8"))
                 code, failed, _ = run_tests(env, tmp)
                 detected = code != 0 and bool(failed)
                 results["mutations"].append({

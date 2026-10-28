@@ -153,7 +153,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                         "the 'evaluated' DIS state lost in the payload (every DIS not evaluated after PR #68)"),
     # Release 2026-10-25 integration with PR #68: CAPA-014's not-evaluated branch gave way to #68's rule (merge note 1),
     # so the anchor is the merged builder's line; the mutation still sends a not-evaluated DIS to MET / NOT MET.
-    "P17_builder_prints_not_evaluated_as_not_met": ([(BRS, '        if not (isinstance(dis, dict) and dis.get("evaluation_status") == "evaluated"):\n',
+    # (and again after the integration review of PR #69, item 3: the builder calls the one rule, gate.is_evaluated)
+    "P17_builder_prints_not_evaluated_as_not_met": ([(BRS, '        if not gate.is_evaluated(dis):\n',
                                                       '        if not isinstance(dis, dict):\n')],
                                                     "the prompt builder prints 'NOT MET' for a DIS not evaluated"),
     # third review (R2, R3, M2)
