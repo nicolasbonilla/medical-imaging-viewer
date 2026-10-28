@@ -40,12 +40,23 @@ OUT = "docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10
 
 BACKEND_TESTS = ["tests/unit/test_prb020_self_registration_and_accounts.py",
                  "tests/unit/test_prb021_patient_scope_creator_counts.py",
-                 "tests/security/test_authentication.py::TestAccountLockout"]
+                 "tests/security/test_authentication.py::TestAccountLockout",
+                 # Review of PR #70 (2026-10-28):
+                 "tests/unit/test_prb020_review1_findings.py",
+                 "tests/unit/test_prb021_backfill_creator_care_team.py"]
 FRONTEND_TESTS = ["src/pages/LoginPage.prb020.test.tsx", "src/components/StudyCard.prb025.test.tsx",
                   "src/components/patientInitials.prb026.test.tsx", "src/hooks/useSegmentationData.prb026.test.tsx",
-                  "src/components/i18nStrings.prb026.test.tsx"]
+                  "src/components/i18nStrings.prb026.test.tsx",
+                  # Review of PR #70 (2026-10-28):
+                  "src/pages/PatientsPage.prb021.test.tsx", "src/pages/LoginPage.prb022.review1.test.tsx"]
 
 CFG = "backend/app/core/config.py"
+DWEB = "backend/app/api/routes/dicomweb.py"
+EXH = "backend/app/core/exception_handlers.py"
+SEGR = "backend/app/api/routes/segmentation.py"
+BACKFILL = "scripts/owner/prb021_backfill_creator_care_team.py"
+PPAGE = "frontend/src/pages/PatientsPage.tsx"
+POVER = "frontend/src/components/patients/PatientsOverview.tsx"
 POL = "backend/app/security/registration_policy.py"
 AUTHN = "backend/app/api/routes/authentication.py"
 AUTHR = "backend/app/api/routes/auth.py"
@@ -78,8 +89,9 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     # ── PRB-020: self-registration (REQ-SEC-030/031) ──
     "R1_register_route_open": ([(AUTHN, "    dependencies=[Depends(require_self_registration_enabled)],\n", "")],
                                "POST /auth/register creates an account for anyone (the defect as found)"),
-    "R2_production_honours_the_setting": ([(POL, '    if str(getattr(settings, "ENVIRONMENT", PRODUCTION)).strip().lower() == PRODUCTION:\n',
-                                            "    if False:\n")],
+    # R2 re-anchored after the review of PR #70 (m4): production is now "anything not on the allow-list".
+    "R2_production_honours_the_setting": ([(POL, "    return str(environment if environment is not None else PRODUCTION).strip().lower() in NON_PRODUCTION_ENVIRONMENTS\n",
+                                            "    return True\n")],
                                           "a production server opens self-registration when the setting is on"),
     "R3_setting_on_by_default": ([(CFG, "    SELF_REGISTRATION_ENABLED: bool = Field(default=False)\n",
                                    "    SELF_REGISTRATION_ENABLED: bool = Field(default=True)\n")],
@@ -102,15 +114,16 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "S3_duplicates_checked_in_memory_only": ([(SVC, "                or self._storage.username_exists(user_create.username)):\n",
                                                "                or False):\n")],
                                              "a username another instance already stored is created twice"),
-    "S4_unstored_account_reported_as_created": ([(SVC, '            raise HTTPException(\n                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,\n',
-                                                  '            return user\n            raise HTTPException(\n                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,\n')],
+    "S4_unstored_account_reported_as_created": ([(SVC, '            raise HTTPException(\n                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,\n                detail="The account could not be stored;',
+                                                  '            return user\n            raise HTTPException(\n                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,\n                detail="The account could not be stored;')],
                                                 "an account the store did not take is reported as created"),
     "S5_lockout_kept_in_memory_only": ([(SVC, "            self._persist_login_state(user)   # PRB-024: the store is the source of truth\n\n            raise HTTPException(",
                                          "\n            raise HTTPException(")],
                                        "a lockout is invisible to the administrator routes and lost on restart"),
-    "S6_login_state_written_without_the_password": ([(SVC, "            self._storage.save_user(user, password_hash, self._password_history.get(user.id))\n",
-                                                      '            self._storage.save_user(user, "", self._password_history.get(user.id))\n')],
-                                                    "recording a failed sign-in overwrites the stored password hash (locks the user out)"),
+    # S6 redefined after the review of PR #70 (m2): the lockout now goes through save_profile_keeping_password.
+    "S6_login_state_written_without_the_password": ([(SVC, "        self._storage.save_user(user, password_hash, history)\n        return True\n",
+                                                      '        self._storage.save_user(user, "", history)\n        return True\n')],
+                                                    "a profile save (failed sign-in, role change) overwrites the stored password hash"),
     # ── PRB-021: patient registry scoped to the care team (REQ-SEC-014) ──
     "P1_patient_list_unscoped": ([(PAT, "        allowed_ids=_listing_scope(current_user, care_team),\n", "        allowed_ids=None,\n")],
                                  "every signed-in user lists every patient (the defect as found)"),
@@ -228,6 +241,101 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                        "the CALM-MS panel in Spanish in every interface language (as found)"),
     "F21_german_key_missing": ([(DE, '    "loadingVolume": "Volumen wird geladen…",\n', "")],
                                "a key missing in German: the German interface falls back to English"),
+    # ── Review of PR #70 (2026-10-28): M1, M2 (RC-085) ──
+    "V1_series_delete_open": ([(STR, "    current_user: User = Depends(require_permission(Permission.IMAGE_DELETE)),\n    # CAPA-002 CA-2.1 RC-028 - object-level authorization.\n    _authorized=Depends(require_series_access),\n",
+                                "    current_user: User = Depends(get_current_active_user),\n    # CAPA-002 CA-2.1 RC-028 - object-level authorization.\n    _authorized=Depends(require_series_access),\n")],
+                              "any care-team member erases a series from storage (M1, as found)"),
+    "V2_instance_delete_open": ([(STR, "    current_user: User = Depends(require_permission(Permission.IMAGE_DELETE)),\n    # CAPA-002 CA-2.1 RC-028 - object-level authorization.\n    _authorized=Depends(require_instance_access),\n",
+                                  "    current_user: User = Depends(get_current_active_user),\n    # CAPA-002 CA-2.1 RC-028 - object-level authorization.\n    _authorized=Depends(require_instance_access),\n")],
+                                "any care-team member erases an image file (M1, as found)"),
+    "V3_cancel_without_permission": ([(STR, "    current_user: User = Depends(require_permission(Permission.PATIENT_UPDATE)),\n",
+                                       "    current_user: User = Depends(get_current_active_user),\n")],
+                                     "a viewer or technician hides a study from everyone (M2, as found)"),
+    "V4_status_change_through_put_open": ([(STR, "    if data.status is not None and not _may_change_study_status(current_user):\n", "    if False:\n")],
+                                          "a read-only user cancels a study with PUT status=cancelled (M2)"),
+    "V5_status_rule_any_role": ([(STR, "    return RBACManager.has_permission(user.role, Permission.PATIENT_UPDATE)\n", "    return True\n")],
+                                "the status-change rule lets every role through (M2)"),
+    # ── M3: owner backfill (RC-083) ──
+    "V6_backfill_regrants_revoked": ([(BACKFILL, '    existing = {(r.get("patient_id"), r.get("user_id")) for r in assignments.values()}\n',
+                                       '    existing = {(r.get("patient_id"), r.get("user_id")) for r in assignments.values() if not r.get("revoked_at")}\n')],
+                                     "the backfill re-grants an assignment an administrator revoked"),
+    "V7_backfill_without_confirmation": ([(BACKFILL, '    if (answer or "").strip() != CONFIRMATION_WORD:\n', "    if False:\n")],
+                                         "the backfill writes without the typed confirmation word"),
+    "V8_backfill_writes_without_backup": ([(BACKFILL, "{project}.\")\n        return 3\n", "{project}.\")\n")],
+                                          "the backfill writes although the backup could not be taken"),
+    "V9_backfill_assigns_administrators": ([(BACKFILL, '        elif str(account.get("role", "")).lower() == "admin":\n', "        elif False:\n")],
+                                           "the backfill puts administrators on care teams"),
+    "V10_backfill_accepts_daita": ([(BACKFILL, "    if not project or project in FORBIDDEN_PROJECTS:\n", "    if not project:\n")],
+                                   "the backfill runs against the Daita project"),
+    "V11_backfill_dry_run_writes": ([(BACKFILL, '    if not args.apply:\n        say("DRY RUN', '    if False:\n        say("DRY RUN')],
+                                    "the backfill writes without --apply"),
+    # ── m1: audit of administrator-created accounts (RC-081) ──
+    "V12_audit_actor_is_the_new_account": ([(SVC, "            user_id=created_by or user_id,\n", "            user_id=user_id,\n")],
+                                           "the audit event names the new account, not the administrator (m1, as found)"),
+    "V13_audit_route_register": ([(SVC, '            resource="/auth/users" if created_by else "/auth/register",\n', '            resource="/auth/register",\n')],
+                                 "the audit event names /auth/register for an administrator-created account (m1, as found)"),
+    "V14_no_privileged_event": ([(SVC, "        if created_by and user.role == UserRole.ADMIN:\n", "        if False:\n")],
+                                "creating an administrator account leaves no privileged event (m1)"),
+    # ── m2, m3: profile saves and deletes (RC-084) ──
+    "V15_profile_saved_without_password": ([(SVC, '        if not password_hash:\n            logger.error("Profile not saved', '        if False:\n            logger.error("Profile not saved')],
+                                           "a profile is saved with no password hash (m2)"),
+    "V16_password_history_dropped": ([(SVC, "        self._storage.save_user(user, password_hash, history)\n        return True\n",
+                                       "        self._storage.save_user(user, password_hash)\n        return True\n")],
+                                     "a profile save erases the password history (m2, as found)"),
+    "V17_patch_old_save": ([(SVC, "        if not self.save_profile_keeping_password(user):\n            raise HTTPException(\n",
+                             "        self._storage.save_user(user, (self._storage.get_user_password_data(user_id) or {}).get('password_hash', ''))\n"
+                             "        if False:\n            raise HTTPException(\n")],
+                           "the administrator PATCH writes '' when the password cannot be read and drops the history (m2, as found)"),
+    "V18_passkey_old_save": ([(AUTHR, "            if not auth_service.save_profile_keeping_password(user):\n",
+                               "            pwd_data = auth_service._storage.get_user_password_data(user.id)\n"
+                               "            auth_service._storage.save_user(user, pwd_data.get('password_hash', '') if pwd_data else '')\n"
+                               "            if False:\n")],
+                             "the passkey sign-in writes '' when the password cannot be read and drops the history (m2, as found)"),
+    "V19_delete_ignores_the_store": ([(SVC, "        if not self._storage.delete_user(user_id):\n", "        if not (self._storage.delete_user(user_id) or True):\n")],
+                                     "a delete the store refused answers 204 (m3, as found)"),
+    # ── m4: production detection fails closed (RC-080) ──
+    "V20_exact_production_word": ([(POL, '    if not is_non_production(getattr(settings, "ENVIRONMENT", PRODUCTION)):\n',
+                                    '    if str(getattr(settings, "ENVIRONMENT", PRODUCTION)).strip().lower() == PRODUCTION:\n')],
+                                  "ENVIRONMENT=prod or staging opens self-registration when the setting is on (m4, as found)"),
+    # ── validation errors (RC-081) ──
+    "V21_validation_errors_raw": ([(EXH, "    errors = _safe_validation_errors(exc.errors())\n", "    errors = exc.errors()\n")],
+                                  "a refused password answers 500 and is logged as typed (as found)"),
+    "V22_validation_echoes_input": ([(EXH, '        item = {"loc": list(e.get("loc", ())), "msg": str(e.get("msg", "")), "type": str(e.get("type", ""))}\n',
+                                      '        item = {"loc": list(e.get("loc", ())), "msg": str(e.get("msg", "")), "type": str(e.get("type", "")), "input": str(e.get("input"))}\n')],
+                                    "the refused password is returned and logged"),
+    # ── m6: page counts (RC-085) ──
+    "V23_page_counts_sequential": ([(PSVC, "            counts = list(pool.map(lambda d: self._counts_for(d.id), docs))\n",
+                                     "            counts = [self._counts_for(d.id) for d in docs]\n")],
+                                   "the 5 count queries of every patient of a page run one after another (m6, as found)"),
+    # ── m8: the segmentation route records the authenticated user (RC-088) ──
+    "V24_route_drops_the_creator": ([(SEGR, "            created_by=current_user.username,\n", "            created_by=None,\n")],
+                                    "the create route no longer passes the authenticated user (m8 gap)"),
+    # ── m9 / PRB-027: PACS search and import (RC-089) ──
+    "V25_pacs_study_search_open": ([(DWEB, "async def search_studies(request: StudySearchRequest, current_user: User = _importer):",
+                                     "async def search_studies(request: StudySearchRequest, current_user: User = Depends(get_current_active_user)):")],
+                                   "every role, a viewer included, searches the PACS by patient name (as found)"),
+    "V26_pacs_series_search_open": ([(DWEB, "async def search_series(connection_id: str, study_instance_uid: str, current_user: User = _importer):",
+                                      "async def search_series(connection_id: str, study_instance_uid: str, current_user: User = Depends(get_current_active_user)):")],
+                                    "every role searches the PACS series (as found)"),
+    "V27_pacs_import_open": ([(DWEB, "async def start_import(request: ImportRequest, current_user: User = _importer):",
+                               "async def start_import(request: ImportRequest, current_user: User = Depends(get_current_active_user)):")],
+                             "every role on the care team imports from the PACS (as found)"),
+    # ── Frontend: M3 empty state and tiles (RC-082), m5 (RC-085), m7 (RC-086) ──
+    "VF1_empty_list_says_no_patients_registered": ([(PPAGE, "                  : isAdmin\n                    ? t('patients.noPatients')\n                    : t('patients.noAssignedPatients', 'No patients are assigned to you yet')}\n",
+                                                     "                  : t('patients.noPatients')}\n")],
+                                                   "a clinician with no assignment reads 'No patients registered' (M3, as found)"),
+    "VF2_create_invitation_for_everyone": ([(PPAGE, "              {!filters.search && isAdmin && (\n", "              {!filters.search && (\n")],
+                                           "a clinician with no assignment is invited to create the 'first' patient (M3, as found)"),
+    "VF3_tile_says_in_registry": ([(PPAGE, "scope={isAdmin ? 'registry' : 'assigned'}", "scope=\"registry\"")],
+                                  "the tile says 'in registry' to a clinician who sees only assigned patients (M3, as found)"),
+    "VF4_admin_role_case_sensitive": ([(PPAGE, "String(user?.role ?? '').toLowerCase() === 'admin'", "user?.role === 'ADMIN'")],
+                                      "the administrator (role 'admin' from the server) is treated as a clinician"),
+    "VF5_null_counted_as_zero": ([(POVER, "    if (typeof v !== 'number' || !Number.isFinite(v)) return null;\n",
+                                   "    if (typeof v !== 'number' || !Number.isFinite(v)) continue;\n")],
+                                 "the tiles add an uncounted value as 0 (m5, as found)"),
+    "VF6_iec_badge_back": ([(LOGIN, "              {[\n                { label: 'AES-256', sub: 'At rest' },\n",
+                             "              {[\n                { label: 'IEC 62304', sub: 'Class C' },\n                { label: 'AES-256', sub: 'At rest' },\n")],
+                           "the sign-in page shows an 'IEC 62304 · Class C' badge (m7, as found)"),
 }
 
 
