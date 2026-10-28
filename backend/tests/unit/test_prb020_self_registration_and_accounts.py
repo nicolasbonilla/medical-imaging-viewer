@@ -45,6 +45,15 @@ def _registration(username="new_clinician"):
             "password": PASSWORD, "confirm_password": PASSWORD}
 
 
+@pytest.fixture(autouse=True)
+def _restore_overrides():
+    """Review of PR #70 (m8): every test leaves the app's dependency overrides as it found them."""
+    saved = dict(app.dependency_overrides)
+    yield
+    app.dependency_overrides.clear()
+    app.dependency_overrides.update(saved)
+
+
 @pytest.fixture
 def store(monkeypatch):
     """One persistent user store, seen by the register route and by AuthService (as in production)."""
