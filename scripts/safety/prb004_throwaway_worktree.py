@@ -11,7 +11,8 @@ removed after it:
   delete through the junction would delete the shared node_modules;
 - leftovers of earlier interrupted runs (registered worktrees named with PREFIX) are cleaned the same way first.
 
-Only worktrees whose folder name starts with PREFIX are ever touched.
+Only worktrees whose folder name starts with PREFIX are ever touched. One run at a time (a lock file in the git
+folder), since a run removes the worktrees of earlier runs.
 """
 import contextlib
 import os
@@ -69,21 +70,42 @@ def clean_stale(root):
 
 
 @contextlib.contextmanager
+def _one_run_at_a_time(root):
+    """A run removes the worktrees of earlier runs, so two runs must never overlap: an exclusive lock file in the
+    repository's git folder. After a hard kill the lock stays; the message says how to clear it."""
+    common = _git(root, "rev-parse", "--git-common-dir").stdout.strip()
+    lock = os.path.join(root, common) if not os.path.isabs(common) else common
+    lock = os.path.join(lock, "prb004-safety-run.lock")
+    try:
+        fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+    except FileExistsError:
+        raise SystemExit(f"another PRB-004 safety run is in progress ({lock}). If none is (an interrupted run), "
+                         "delete that file and start again.")
+    try:
+        os.write(fd, f"pid {os.getpid()} since {time.strftime('%Y-%m-%d %H:%M:%S')}\n".encode())
+        os.close(fd)
+        yield
+    finally:
+        os.remove(lock)
+
+
+@contextlib.contextmanager
 def throwaway_worktree(root, rev="HEAD"):
     """Yield the path of a detached worktree of `rev` with node_modules linked; removed afterwards."""
-    stale = clean_stale(root)
-    sha = _git(root, "rev-parse", rev).stdout.strip()
-    path = os.path.join(tempfile.gettempdir(), f"{PREFIX}{os.getpid()}-{int(time.time())}")
-    _git(root, "worktree", "add", "--detach", path, sha)
-    try:
-        target = os.path.realpath(os.path.join(root, "frontend", "node_modules"))
-        if not os.path.isdir(target):
-            raise RuntimeError(f"no frontend/node_modules at {target}")
-        link = os.path.join(path, "frontend", "node_modules")
-        subprocess.run(["cmd", "/c", "mklink", "/J", link, target], capture_output=True, check=True)
-        yield {"path": path, "sha": sha, "stale_removed": stale}
-    finally:
-        _remove(root, path)
+    with _one_run_at_a_time(root):
+        stale = clean_stale(root)
+        sha = _git(root, "rev-parse", rev).stdout.strip()
+        path = os.path.join(tempfile.gettempdir(), f"{PREFIX}{os.getpid()}-{int(time.time())}")
+        _git(root, "worktree", "add", "--detach", path, sha)
+        try:
+            target = os.path.realpath(os.path.join(root, "frontend", "node_modules"))
+            if not os.path.isdir(target):
+                raise RuntimeError(f"no frontend/node_modules at {target}")
+            link = os.path.join(path, "frontend", "node_modules")
+            subprocess.run(["cmd", "/c", "mklink", "/J", link, target], capture_output=True, check=True)
+            yield {"path": path, "sha": sha, "stale_removed": stale}
+        finally:
+            _remove(root, path)
 
 
 def require_committed(root, paths):
