@@ -24,6 +24,7 @@ import { VoxelValueOverlay } from './VoxelValueOverlay';
 import MeasurementOverlay from './MeasurementOverlay';
 import { SegmentationConflictDialog } from './SegmentationConflictDialog';
 import { ViewportSafetyOverlay } from './ViewportSafetyOverlay';
+import { FEATURES } from '@/config/features';
 
 interface ImageViewer2DProps {
   viewerControls: ReturnType<typeof import('../hooks/useViewerControls').useViewerControls>;
@@ -624,8 +625,9 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
 
       {/* Zoom controls moved to ViewerApp toolbar bar above the image */}
 
-      {/* Edge AI Quick Screen — bottom right above slice slider */}
-      {currentSeries?.slices?.[currentSliceIndex]?.image_data && (
+      {/* Edge AI Quick Screen — bottom right above slice slider. PRB-009: only behind its build
+          flag (OFF by default — the model file is not shipped); off, nothing of it runs. */}
+      {FEATURES.QUICK_SCREEN && currentSeries?.slices?.[currentSliceIndex]?.image_data && (
         <div className="absolute bottom-20 right-4 z-20">
           <QuickScreenBadge
             currentSliceBase64={`data:image/png;base64,${currentSeries.slices[currentSliceIndex].image_data}`}

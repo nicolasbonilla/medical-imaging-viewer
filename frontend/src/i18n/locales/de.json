@@ -112,6 +112,12 @@
     "yourRole": "Ihre Rolle:"
   },
   "viewer": {
+    "gpuMaskNotShown": "Die Segmentierung wird in dieser Ansicht nicht gezeichnet",
+    "gpuMaskNotShownGrid": "ihr Voxelgitter unterscheidet sich von dem dieses Bildes",
+    "gpuMaskNotShownPosition": "sie liegt nicht auf dem Voxelgitter dieses Bildes",
+    "gpuMaskNotShownOrder": "sie ist in einer älteren Voxelreihenfolge gespeichert",
+    "gpuMaskNotShownLoad": "sie konnte nicht geladen werden",
+    "gpuMaskNotShownUseStandard": "Verwenden Sie die Standardansicht, um sie zu sehen.",
     "title": "MSTool-AI",
     "subtitle": "MS-Läsionsanalyse",
     "imageLoaded": "Bild Geladen",
@@ -1018,6 +1024,7 @@
     "thickness": "Konturstärke"
   },
   "layout": {
+    "onlyPreprocessed": "Diese Studie enthält nur vorverarbeitete Bilder",
     "single": "Einzelansicht",
     "sideBySide": "1x2 Nebeneinander",
     "grid": "2x2 Raster",

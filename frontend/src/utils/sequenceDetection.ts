@@ -70,7 +70,10 @@ export const SEQUENCE_ORDER: SequenceType[] = ['FLAIR', 'T1w', 'T2w', 'PDw'];
 
 /**
  * Auto-assign instances to panel slots based on sequence detection.
- * Returns up to 4 instances in canonical order (FLAIR, T1, T2, PD).
+ * Returns up to 4 instances: one per sequence in canonical order (FLAIR, T1, T2, PD), then
+ * images of unknown sequence, then (PRB-007) the remaining images in study order — e.g. a T1w
+ * after contrast next to the plain T1w — so no panel stays empty while the study has an image
+ * for it. An image is never assigned twice.
  */
 export function autoAssignPanels(
   instances: ImagingInstance[],
@@ -93,6 +96,15 @@ export function autoAssignPanels(
       if (assigned.length >= 4) break;
       assigned.push({ instance: inst, sequence: 'unknown' });
     }
+  }
+
+  // PRB-007: then any image not yet shown, in study order (a second image of a sequence).
+  const shown = new Set(assigned.map((a) => a.instance));
+  for (const inst of instances) {
+    if (assigned.length >= 4) break;
+    if (shown.has(inst)) continue;
+    assigned.push({ instance: inst, sequence: detectSequence(inst.original_filename || '') });
+    shown.add(inst);
   }
 
   return assigned;

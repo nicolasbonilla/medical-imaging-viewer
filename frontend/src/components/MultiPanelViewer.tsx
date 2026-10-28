@@ -16,6 +16,7 @@ import { imagingAPI } from '@/api/imaging';
 import { useMultiViewerStore, getPanelCount, type PanelState } from '@/store/useMultiViewerStore';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import { SEQUENCE_INFO } from '@/utils/sequenceDetection';
+import { middleSliceIndex } from '@/utils/sliceOnOpen';
 import type { ImagingInstance } from '@/types';
 import { ViewportSafetyOverlay } from './ViewportSafetyOverlay';
 
@@ -241,6 +242,7 @@ export function MultiPanelViewer({ instances, segmentationMask, patientName, pat
   const setActivePanelId = useMultiViewerStore((s) => s.setActivePanelId);
   const setPanelImageData = useMultiViewerStore((s) => s.setPanelImageData);
   const setPanelLoading = useMultiViewerStore((s) => s.setPanelLoading);
+  const setPanelSliceIndex = useMultiViewerStore((s) => s.setPanelSliceIndex);
 
   const panelCount = getPanelCount(layout);
   const activePanels = useMemo(() => panels.slice(0, panelCount), [panels, panelCount]);
@@ -274,22 +276,28 @@ export function MultiPanelViewer({ instances, segmentationMask, patientName, pat
       setPanelLoading(panel.id, true);
       imagingAPI.processImage(inst.gcs_object_name, 0, 500)
         .then((result) => {
-          const sliceData = result.slices?.[0]?.image_data;
+          const slices = result.slices || [];
+          panelSlicesRef.current.set(panel.id, slices);
+          // PRB-008: open on the middle slice of this panel's image (it opened on slice 1, a
+          // blank image); a position the panel already has (synchronised scrolling) is kept.
+          const current = useMultiViewerStore.getState().panels.find((p) => p.id === panel.id)?.sliceIndex ?? 0;
+          const start = current > 0 && current < slices.length ? current : middleSliceIndex(slices.length);
+          const sliceData = slices[start]?.image_data;
           if (sliceData) {
+            setPanelSliceIndex(panel.id, start);
             setPanelImageData(panel.id, `data:image/png;base64,${sliceData}`, {
               rows: result.metadata.rows ?? 0,
               columns: result.metadata.columns ?? 0,
               slices: result.metadata.slices ?? 0,
             }, result.metadata.anatomical_orientation); // RC-023: this panel's own image
           }
-          panelSlicesRef.current.set(panel.id, result.slices || []);
         })
         .catch((err) => {
           console.error(`[MultiPanel] Failed to load panel ${panel.id}:`, err);
           setPanelLoading(panel.id, false);
         });
     }
-  }, [activePanels, instances, setPanelImageData, setPanelLoading]);
+  }, [activePanels, instances, setPanelImageData, setPanelLoading, setPanelSliceIndex]);
 
   // Update panel image when slice changes
   useEffect(() => {

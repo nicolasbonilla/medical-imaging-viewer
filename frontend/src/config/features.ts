@@ -28,6 +28,12 @@ export interface FeatureFlags {
   // PROTOTYPE (IEC 62304 Class C change proposal, docs/research/flames-in-browser/):
   // FLAMeS MS-lesion segmentation running inside the browser. OFF unless VITE_ENABLE_BROWSER_FLAMES=true.
   BROWSER_FLAMES: boolean;
+
+  // PRB-009: in-browser "Quick Screen" (normal / abnormal of one slice). Its model file
+  // (/models/brain_screening.onnx) is NOT shipped with the app, so the feature is OFF unless
+  // VITE_ENABLE_QUICK_SCREEN is 'true' or '1'; with it off the viewer neither shows it nor
+  // requests the model.
+  QUICK_SCREEN: boolean;
 }
 
 /**
@@ -64,6 +70,9 @@ export const FEATURES: FeatureFlags = {
 
   // Prototype — must stay OFF in production until the Class C change is approved
   BROWSER_FLAMES: getFeatureFlag('ENABLE_BROWSER_FLAMES', false),
+
+  // PRB-009 — OFF: the screening model is not part of the app
+  QUICK_SCREEN: getFeatureFlag('ENABLE_QUICK_SCREEN', false),
 };
 
 /**

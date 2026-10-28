@@ -19,6 +19,7 @@ import { useViewerStore } from '@/store/useViewerStore';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import { createBoundingBoxMZ3, lesionVoxelToNifti } from '@/utils/boundingBoxMesh';
 import { ViewportSafetyOverlay } from './ViewportSafetyOverlay';
+import { niftiNameFor, LABEL_MASK_DISPLAY_RANGE } from '@/utils/niivueVoxelGrid';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -359,14 +360,19 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
 
         const mainUrl = URL.createObjectURL(new Blob([niftiBuffer]));
         blobUrls.push(mainUrl);
-        await nv.loadVolumes([{ url: mainUrl, colormap: colormap3D, opacity: 1 }]);
+        // PRB-005: explicit NIfTI name — niivue cannot read a file type from a blob URL on a
+        // host name without a dot (localhost, an intranet server name).
+        await nv.loadVolumes([{ url: mainUrl, name: niftiNameFor(niftiBuffer, 'image'), colormap: colormap3D, opacity: 1 }]);
         nv.setRenderAzimuthElevation(0, 15);
 
         // Load segmentation overlay if available
         if (segBuffer) {
           const segUrl = URL.createObjectURL(new Blob([segBuffer]));
           blobUrls.push(segUrl);
-          const segVol = await NVImage.loadFromUrl({ url: segUrl, colormap: 'red', opacity: 0.5 });
+          // PRB-006: the mask's own display range, never the MRI window its header may carry.
+          const segVol = await NVImage.loadFromUrl({
+            url: segUrl, name: niftiNameFor(segBuffer, 'mask'), colormap: 'red', opacity: 0.5, ...LABEL_MASK_DISPLAY_RANGE,
+          });
           nv.addVolume(segVol);
         }
 
@@ -377,6 +383,7 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
           blobUrls.push(zmUrl);
           const zmVol = await NVImage.loadFromUrl({
             url: zmUrl,
+            name: niftiNameFor(zoneMapBuffer, 'zones'),
             colormap: 'magnims_zones',
             cal_min: 0,
             cal_max: 4,
@@ -391,7 +398,9 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
         if (longTp1Buffer && longitudinalVisible) {
           const tp1Url = URL.createObjectURL(new Blob([longTp1Buffer]));
           blobUrls.push(tp1Url);
-          const tp1Vol = await NVImage.loadFromUrl({ url: tp1Url, colormap: 'blue', opacity: 0.5 });
+          const tp1Vol = await NVImage.loadFromUrl({
+            url: tp1Url, name: niftiNameFor(longTp1Buffer, 'visit1'), colormap: 'blue', opacity: 0.5, ...LABEL_MASK_DISPLAY_RANGE,
+          });
           nv.addVolume(tp1Vol);
         }
 
@@ -400,7 +409,9 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
         if (longTp2Buffer && longitudinalVisible) {
           const tp2Url = URL.createObjectURL(new Blob([longTp2Buffer]));
           blobUrls.push(tp2Url);
-          const tp2Vol = await NVImage.loadFromUrl({ url: tp2Url, colormap: 'hot', opacity: 0.5 });
+          const tp2Vol = await NVImage.loadFromUrl({
+            url: tp2Url, name: niftiNameFor(longTp2Buffer, 'visit2'), colormap: 'hot', opacity: 0.5, ...LABEL_MASK_DISPLAY_RANGE,
+          });
           nv.addVolume(tp2Vol);
         }
 
@@ -452,7 +463,7 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
         for (let i = 0; i < 4; i++) {
           const url = URL.createObjectURL(new Blob([niftiBuffer]));
           blobUrls.push(url);
-          await nvInstances[i].loadVolumes([{ url, colormap: colormap3D, opacity: 1 }]);
+          await nvInstances[i].loadVolumes([{ url, name: niftiNameFor(niftiBuffer, 'image'), colormap: colormap3D, opacity: 1 }]); // PRB-005
 
           // Load segmentation overlay
           if (segBuffer) {
@@ -460,6 +471,8 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
             blobUrls.push(segUrl);
             const segVol = await NVImage.loadFromUrl({
               url: segUrl,
+              name: niftiNameFor(segBuffer, 'mask'),
+              ...LABEL_MASK_DISPLAY_RANGE, // PRB-006
               colormap: 'red',
               opacity: i === 0 ? 0.5 : 0.3,
             });
@@ -474,6 +487,7 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
             const initOpacity = zoneMapVisible ? zoneMapOpacity : 0;
             const zmVol = await NVImage.loadFromUrl({
               url: zmUrl,
+              name: niftiNameFor(zoneMapBuffer, 'zones'),
               colormap: 'magnims_zones',
               cal_min: 0,
               cal_max: 4,
@@ -486,7 +500,9 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
           if (longTp1Buffer && longitudinalVisible) {
             const tp1Url = URL.createObjectURL(new Blob([longTp1Buffer]));
             blobUrls.push(tp1Url);
-            const tp1Vol = await NVImage.loadFromUrl({ url: tp1Url, colormap: 'blue', opacity: i === 0 ? 0.5 : 0.3 });
+            const tp1Vol = await NVImage.loadFromUrl({
+              url: tp1Url, name: niftiNameFor(longTp1Buffer, 'visit1'), colormap: 'blue', opacity: i === 0 ? 0.5 : 0.3, ...LABEL_MASK_DISPLAY_RANGE,
+            });
             nvInstances[i].addVolume(tp1Vol);
           }
 
@@ -494,7 +510,9 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
           if (longTp2Buffer && longitudinalVisible) {
             const tp2Url = URL.createObjectURL(new Blob([longTp2Buffer]));
             blobUrls.push(tp2Url);
-            const tp2Vol = await NVImage.loadFromUrl({ url: tp2Url, colormap: 'hot', opacity: i === 0 ? 0.5 : 0.3 });
+            const tp2Vol = await NVImage.loadFromUrl({
+              url: tp2Url, name: niftiNameFor(longTp2Buffer, 'visit2'), colormap: 'hot', opacity: i === 0 ? 0.5 : 0.3, ...LABEL_MASK_DISPLAY_RANGE,
+            });
             nvInstances[i].addVolume(tp2Vol);
           }
         }

@@ -947,6 +947,12 @@ class SegmentationService:
         except Exception:
             return False
 
+    @staticmethod
+    def _label_display_range(labels: np.ndarray) -> tuple:
+        """PRB-006: display range of a label mask — 0 (background) to its highest label, at least 1."""
+        top = int(labels.max()) if labels.size else 0
+        return 0.0, float(max(1, top))
+
     def _save_masks_to_gcs(
         self,
         segmentation_id: str,
@@ -1055,6 +1061,12 @@ class SegmentationService:
                 # "labels are verbatim" invariant does not depend on implicit
                 # library behavior. Audit P-4.1.
                 header.set_slope_inter(1.0, 0.0)
+                # PRB-006: the copied header also carries the MRI's DISPLAY window
+                # (cal_min/cal_max, e.g. -15.5/189.2). A viewer that honours it (niivue in
+                # this app's 3D and GPU views, MRIcroGL, FSLeyes) then tints every background
+                # voxel and shows the labels at the bottom of its colour scale. A label mask's
+                # display range is its own: 0 (background) to its highest label (at least 1).
+                header["cal_min"], header["cal_max"] = self._label_display_range(nifti_data)
                 header["descrip"] = self._RC031_ORIENT_MARKER  # RC-031 v2 tag
                 nifti_img = nib.Nifti1Image(nifti_data.astype(np.uint8), affine, header)
                 logger.info("Created segmentation NIfTI with original MRI affine/header", extra={
@@ -1064,6 +1076,7 @@ class SegmentationService:
             else:
                 # Fallback to generic NIfTI with identity affine
                 nifti_img = create_nifti_image(nifti_data)
+                nifti_img.header["cal_min"], nifti_img.header["cal_max"] = self._label_display_range(nifti_data)  # PRB-006
                 nifti_img.header["descrip"] = self._RC031_ORIENT_MARKER  # RC-031 v2 tag
                 logger.info("Created segmentation NIfTI with identity affine (original not available)")
 

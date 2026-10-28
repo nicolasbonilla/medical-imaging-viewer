@@ -14,20 +14,32 @@
  *     ("a rater paints what they see"); we eliminate it by not painting here. To edit a
  *     mask the user switches back to 'standard'/'matplotlib'. dragMode is pan, not a
  *     drawing/windowing mode — the store is the single source of truth for W/L.
- *   - The segmentation mask is shown only as a niivue overlay (affine-aligned by
- *     niivue), never edited.
- *   - Opt-in, never the default, until browser visual-QA confirms slice/orientation
- *     parity with the standard viewer.
+ *   - The segmentation mask is shown only as a niivue overlay, never edited.
+ *   - PRB-004 (HAZ-006): the image and the mask are laid out EXACTLY as the standard view
+ *     draws them — storage voxel (i, j) of slice k at row i, column j — not by the scanner
+ *     affine (which showed every slice rotated by 90 degrees against the standard view, and a
+ *     slider position between two slices). See utils/niivueVoxelGrid.ts. The mask gets the
+ *     image's layout, so it is drawn only when it is stored on the image's own voxel grid in
+ *     the image's voxel order (RC-031 marker); otherwise it is not drawn and the view says so.
+ *   - PRB-005: every volume is handed to niivue as a buffer with an explicit NIfTI name — niivue
+ *     cannot derive a file type from a blob URL on a host name without a dot.
+ *   - PRB-006: the mask's display range is fixed (0 transparent, labels >= 1 full colour),
+ *     never the MRI window its header may have copied.
+ *   - Opt-in, never the default.
  *
- * Reuses the exact niivue lifecycle proven in ImageViewer3D (attach → loadVolumes →
- * cal_min/max → cleanup + revoke blob URLs). A fresh canvas+instance is mounted per
- * (study, segmentation) via the canvas `key`, so a GL context is never reused/lost.
+ * A fresh canvas+instance is mounted per (study, segmentation) via the canvas `key`, so a GL
+ * context is never reused/lost.
  */
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Niivue, NVImage, SLICE_TYPE, SHOW_RENDER } from '@niivue/niivue';
 import { useViewerStore } from '@/store/useViewerStore';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
-import { windowLevelToCalRange, sliceIndexToFraction } from '@/utils/niivueWindowLevel';
+import { windowLevelToCalRange, sliceIndexToVoxelCentreFraction } from '@/utils/niivueWindowLevel';
+import {
+  voxelGridOf, placeAsStandardView, maskMatchesImageGrid, niftiNameFor, LABEL_MASK_DISPLAY_RANGE,
+  type MaskGridCheck, type VolumeLike,
+} from '@/utils/niivueVoxelGrid';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -58,24 +70,29 @@ function applyWindowLevel(nv: Niivue) {
   nv.updateGLVolume();
 }
 
-/** Store slice index → niivue axial depth fraction (best-effort; orientation/flip is a
- *  browser-QA item before this mode can become the default). */
+/** Store slice index → the same storage slice k the standard view shows (PRB-004). With the
+ *  standard-view layout, niivue's axial axis IS the storage k axis, increasing with k, so the
+ *  crosshair is set at the centre of voxel slice k: (k + 0.5) / depth. */
 function applySlice(nv: Niivue) {
   const vol = nv.volumes?.[0];
   if (!vol) return;
-  // crosshairPos[2] addresses niivue's RAS SUPERIOR (axial) axis, whose length is
-  // dimsRAS[3] — NOT the raw storage k-axis dims[3] (they coincide only for an axial-RAS
-  // volume). Use dimsRAS so a permuted affine still scans the right anatomical axis.
-  // (Flip direction — index 0 = inferior vs superior — remains a browser-QA item.)
   const depth = vol.dimsRAS?.[3] ?? vol.dims?.[3] ?? 0;
-  const frac = sliceIndexToFraction(useViewerStore.getState().currentSliceIndex, depth);
+  const frac = sliceIndexToVoxelCentreFraction(useViewerStore.getState().currentSliceIndex, depth);
   if (frac !== null && nv.scene?.crosshairPos) {
     nv.scene.crosshairPos = [0.5, 0.5, frac];
     nv.drawScene?.();
   }
 }
 
+/** Why a mask is not drawn in this view (PRB-004), for the on-screen notice. */
+const MASK_NOT_SHOWN_REASON: Record<Exclude<MaskGridCheck, { ok: true }>['reason'], [string, string]> = {
+  grid: ['viewer.gpuMaskNotShownGrid', 'its voxel grid differs from this image'],
+  position: ['viewer.gpuMaskNotShownPosition', "it is not placed on this image's voxel grid"],
+  order: ['viewer.gpuMaskNotShownOrder', 'it is stored in an older voxel order'],
+};
+
 export function NiivueViewer2D() {
+  const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const nvRef = useRef<Niivue | null>(null);
   const readyRef = useRef(false);
@@ -91,6 +108,8 @@ export function NiivueViewer2D() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // PRB-004: a mask that cannot be drawn voxel for voxel on this image is not drawn — and said so.
+  const [maskNotShown, setMaskNotShown] = useState<keyof typeof MASK_NOT_SHOWN_REASON | 'load' | null>(null);
 
   const segId = currentSegmentation?.segmentation_id;
   const segIsLocal = !!segId && segId.startsWith('local-');
@@ -102,11 +121,11 @@ export function NiivueViewer2D() {
     if (!fileId || !canvasRef.current) return;
     let cancelled = false;
     readyRef.current = false;
-    const blobUrls: string[] = [];
 
     const init = async () => {
       setLoading(true);
       setError(null);
+      setMaskNotShown(null);
       try {
         const buffer = await fetchBuffer(`${API_BASE_URL}/api/v1/imaging/nifti/${fileId}`);
         if (cancelled) return;
@@ -125,31 +144,47 @@ export function NiivueViewer2D() {
           crosshairWidth: 0,
           loadingText: '',
           dragMode: 3, // DRAG_MODE.pan (NOT 1=contrast) — the store drives W/L, no drag-windowing
+          // PRB-004: the standard-view layout (utils/niivueVoxelGrid) assumes niivue's axial
+          // screen is +x right, +y up; the radiological flip would mirror it. Stated, not defaulted.
+          isRadiologicalConvention: false,
         });
         await nv.attachToCanvas(canvasRef.current!);
         if (cancelled) { nv.cleanup?.(); return; }
         nvRef.current = nv;
 
-        const mainUrl = URL.createObjectURL(new Blob([buffer]));
-        blobUrls.push(mainUrl);
-        await nv.loadVolumes([{ url: mainUrl, colormap: 'gray', opacity: 1 }]);
+        // PRB-005: the buffer itself, with an explicit NIfTI name — no blob URL whose missing
+        // "extension" niivue would try to parse.
+        const baseName = niftiNameFor(buffer, 'image');
+        const base = await NVImage.loadFromUrl({ url: baseName, name: baseName, buffer, colormap: 'gray', opacity: 1 });
         if (cancelled) return;
+        // PRB-004: the image grid as stored, read BEFORE the display transform replaces the affine.
+        const imageGrid = voxelGridOf(base as unknown as VolumeLike);
+        placeAsStandardView(base as unknown as VolumeLike, imageGrid);
+        nv.addVolume(base);
 
         if (overlaySegId) {
           try {
             const segBuf = await fetchBuffer(`${API_BASE_URL}/api/v1/segmentation/${overlaySegId}/nifti`);
             if (cancelled) return;
-            const blob = URL.createObjectURL(new Blob([segBuf]));
-            blobUrls.push(blob);
+            const segName = niftiNameFor(segBuf, 'mask');
             const segVol = await NVImage.loadFromUrl({
-              url: blob, colormap: 'red',
+              url: segName, name: segName, buffer: segBuf, colormap: 'red',
+              ...LABEL_MASK_DISPLAY_RANGE, // PRB-006
               opacity: useSegmentationStore.getState().isOverlayVisible
                 ? useSegmentationStore.getState().lesionOpacity : 0,
             });
             if (cancelled) return;
-            nv.addVolume(segVol);
+            const seg = segVol as unknown as VolumeLike;
+            const check = maskMatchesImageGrid(voxelGridOf(seg), seg.hdr.description, imageGrid);
+            if (check.ok) {
+              placeAsStandardView(seg, imageGrid); // the IMAGE's layout: voxel for voxel
+              nv.addVolume(segVol);
+            } else {
+              setMaskNotShown(check.reason);
+            }
           } catch {
-            /* overlay is best-effort; the base image still shows */
+            // The base image still shows; the clinician is told the mask is not drawn here.
+            if (!cancelled) setMaskNotShown('load');
           }
         }
 
@@ -172,7 +207,6 @@ export function NiivueViewer2D() {
       // unmounted by React, so its context is released with the node.
       nvRef.current?.cleanup?.();
       nvRef.current = null;
-      blobUrls.forEach((u) => URL.revokeObjectURL(u));
     };
   }, [fileId, overlaySegId]);
 
@@ -206,6 +240,21 @@ export function NiivueViewer2D() {
       {error && (
         <div className="absolute inset-x-0 bottom-0 bg-red-900/70 px-2 py-1 text-[11px] text-red-100">
           {error}
+        </div>
+      )}
+      {maskNotShown && (
+        <div
+          data-testid="niivue-mask-not-shown"
+          role="status"
+          className="pointer-events-none absolute left-1/2 top-12 z-10 max-w-md -translate-x-1/2 rounded border border-amber-600/60 bg-amber-950/85 px-2 py-1 text-[11px] text-amber-100"
+        >
+          {t('viewer.gpuMaskNotShown', 'The segmentation is not drawn in this view')}
+          {': '}
+          {maskNotShown === 'load'
+            ? t('viewer.gpuMaskNotShownLoad', 'it could not be loaded')
+            : t(...MASK_NOT_SHOWN_REASON[maskNotShown])}
+          {'. '}
+          {t('viewer.gpuMaskNotShownUseStandard', 'Use the Standard view to see it.')}
         </div>
       )}
       {/* Honest, non-dismissible mode note (bottom-left, clear of the z-20 patient-identity

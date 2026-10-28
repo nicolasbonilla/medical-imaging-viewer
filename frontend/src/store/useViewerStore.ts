@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { ImageSeriesResponse, StorageFileInfo, ImageOrientation } from '@/types';
+import { sliceIndexOnOpen } from '@/utils/sliceOnOpen';
 
 export interface CursorInfo {
   x: number;
@@ -22,6 +23,11 @@ interface ViewerState {
   // Current image series
   currentSeries: ImageSeriesResponse | null;
   setCurrentSeries: (series: ImageSeriesResponse | null) => void;
+  /**
+   * PRB-008: show an image and choose its slice in one update - the middle slice, or the current
+   * slice when `sameStudy` and the image has the same number of slices (utils/sliceOnOpen.ts).
+   */
+  openSeries: (series: ImageSeriesResponse, opts?: { sameStudy?: boolean }) => void;
 
   // Current slice index
   currentSliceIndex: number;
@@ -131,6 +137,11 @@ export const useViewerStore = create<ViewerState>((set) => ({
   setAllFileIds: (fileIds) => set({ allFileIds: fileIds }),
 
   setCurrentSeries: (series) => set({ currentSeries: series }),
+
+  openSeries: (series, opts = {}) => set((state) => ({
+    currentSeries: series,
+    currentSliceIndex: sliceIndexOnOpen(series, state.currentSeries, state.currentSliceIndex, !!opts.sameStudy),
+  })),
 
   setCurrentSliceIndex: (index) => set({ currentSliceIndex: index }),
 

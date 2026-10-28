@@ -20,3 +20,21 @@ export function isPreprocessedInstance(filename: string): boolean {
     lower.includes('desc-segfrompreproc')
   );
 }
+
+export type MultiPanelImageSource = 'originals' | 'preprocessed';
+
+/**
+ * PRB-007: the images the multi-panel grid shows. The requested group when it has images,
+ * otherwise the other group — a study of preprocessed images only (the demo study, any study
+ * uploaded preprocessed) used to give a grid of "No image assigned" panels because the grid read
+ * the empty "originals" group. `source` is the group actually shown (for the switch's label).
+ */
+export function multiPanelImages<T>(
+  requested: MultiPanelImageSource,
+  originals: T[],
+  preprocessed: T[],
+): { source: MultiPanelImageSource; instances: T[] } {
+  if (requested === 'preprocessed' && preprocessed.length > 0) return { source: 'preprocessed', instances: preprocessed };
+  if (originals.length > 0) return { source: 'originals', instances: originals };
+  return { source: 'preprocessed', instances: preprocessed };
+}

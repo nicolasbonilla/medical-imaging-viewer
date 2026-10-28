@@ -112,6 +112,12 @@
     }
   },
   "viewer": {
+    "gpuMaskNotShown": "La segmentación no se dibuja en esta vista",
+    "gpuMaskNotShownGrid": "su rejilla de vóxeles es distinta de la de esta imagen",
+    "gpuMaskNotShownPosition": "no está colocada sobre la rejilla de vóxeles de esta imagen",
+    "gpuMaskNotShownOrder": "está guardada en un orden de vóxeles antiguo",
+    "gpuMaskNotShownLoad": "no se pudo cargar",
+    "gpuMaskNotShownUseStandard": "Use la vista Estándar para verla.",
     "title": "MSTool-AI",
     "subtitle": "Análisis de Lesiones de Esclerosis Múltiple",
     "imageLoaded": "Imagen Cargada",
@@ -1024,6 +1030,7 @@
     "blackHole": "Agujero Negro (T1)"
   },
   "layout": {
+    "onlyPreprocessed": "Este estudio solo tiene imágenes preprocesadas",
     "single": "Vista Unica",
     "sideBySide": "1x2 Lado a Lado",
     "grid": "2x2 Cuadricula",

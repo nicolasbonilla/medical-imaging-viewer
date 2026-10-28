@@ -112,6 +112,12 @@
     }
   },
   "viewer": {
+    "gpuMaskNotShown": "The segmentation is not drawn in this view",
+    "gpuMaskNotShownGrid": "its voxel grid differs from this image",
+    "gpuMaskNotShownPosition": "it is not placed on this image's voxel grid",
+    "gpuMaskNotShownOrder": "it is stored in an older voxel order",
+    "gpuMaskNotShownLoad": "it could not be loaded",
+    "gpuMaskNotShownUseStandard": "Use the Standard view to see it.",
     "title": "MSTool-AI",
     "subtitle": "MS Lesion Analysis",
     "imageLoaded": "Image Loaded",
@@ -1018,6 +1024,7 @@
     "blackHole": "Black Hole (T1)"
   },
   "layout": {
+    "onlyPreprocessed": "This study has preprocessed images only",
     "single": "Single View",
     "sideBySide": "1x2 Side by Side",
     "grid": "2x2 Grid",

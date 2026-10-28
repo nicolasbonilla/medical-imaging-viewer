@@ -42,13 +42,19 @@ export function windowLevelToCalRange(
 }
 
 /**
- * Store slice index → niivue axial depth fraction in [0, 0.999], or null when the volume
- * has no navigable depth (depth <= 1 or non-finite). The 0.999 clamp keeps the last slice
- * inside the volume (a bare 1.0 can round past the final voxel plane in niivue).
+ * Store slice index → niivue axial crosshair fraction at the CENTRE of that voxel slice:
+ * (index + 0.5) / depth, the index clamped to [0, depth − 1]. Null when the volume has no slices
+ * (depth < 1) or the depth is not a number.
+ *
+ * PRB-004: this was index / (depth − 1). niivue reads a fraction f as voxel f · depth − 0.5, so
+ * that put most slices between two voxel slices (slice 45 of 182 at 44.75: a blend of slices 44
+ * and 45), and slice 0 on the volume's outer edge — not the slice the standard view showed.
+ * The GPU view (NiivueViewer2D) lays the volume out as the standard view does (utils/niivueVoxelGrid),
+ * so this fraction addresses storage slice `index` itself.
  */
-export function sliceIndexToFraction(index: number, depth: number): number | null {
-  if (!Number.isFinite(depth) || depth <= 1) return null;
-  const frac = index / (depth - 1);
-  if (!Number.isFinite(frac)) return null;
-  return Math.min(0.999, Math.max(0, frac));
+export function sliceIndexToVoxelCentreFraction(index: number, depth: number): number | null {
+  if (!Number.isFinite(depth) || depth < 1) return null;
+  const n = Math.floor(depth);
+  const i = Number.isFinite(index) ? Math.min(n - 1, Math.max(0, Math.round(index))) : 0;
+  return (i + 0.5) / n;
 }
