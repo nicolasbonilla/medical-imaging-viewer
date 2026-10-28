@@ -33,9 +33,12 @@ export const harness = {
   instances: [] as HarnessNiivue[],
   /** Every item passed to NVImage.loadFromUrl (by the component or by loadVolumes). */
   loadFromUrlCalls: [] as Array<Record<string, unknown>>,
+  /** Colormaps registered with Niivue.addColormap (name → definition), e.g. the MAGNIMS zone map's. */
+  colormaps: {} as Record<string, unknown>,
   reset() {
     harness.instances.length = 0;
     harness.loadFromUrlCalls.length = 0;
+    for (const k of Object.keys(harness.colormaps)) delete harness.colormaps[k];
   },
 };
 
@@ -93,7 +96,7 @@ export function harnessModule(actual: NiivueModule): NiivueModule {
     broadcastTo() {}
     async addMeshFromUrl(m: unknown) { this.meshes.push(m); }
     removeMeshByUrl() {}
-    addColormap() {}
+    addColormap(name: string, cmap: unknown) { harness.colormaps[name] = cmap; }
     setScale() {}
     setPan2Dxyzmm() {}
     setColormap() {}
