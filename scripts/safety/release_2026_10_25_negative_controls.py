@@ -29,6 +29,9 @@ Added after the second independent review of PR #69 (2026-10-28):
 Added after the film capture of the release build (2026-10-28, "DWM: 1 lesions"):
   I42/I43 the lesion counts of the dashboard: singular for one, in the user's language;
   I44/I45 the findings prompt says "1 lesion", and the RC-065 allow-list keeps both forms.
+Added after the re-review of PR #71 (2026-10-29):
+  I46/I47 the B1 fallback colour is cyan, apart from every preset colour (magenta is Active (Gd+)), and the
+          warnings name it.
 
 Method (as the other scripts): one mutation at a time in the real source; every anchor asserted to occur exactly
 once (on the LF text, so a Windows CRLF checkout works); only the bound tests are run — backend offline (PRB-002: a
@@ -89,6 +92,9 @@ API_R2 = "tests/unit/test_release_2026_10_25_review2_fixes.py"
 # film capture of the release build (2026-10-28): "DWM: 1 lesions"
 UI_D = "frontend/src/components/LesionDashboard.release20261028d.test.tsx"
 API_P = "tests/unit/test_release_2026_10_25_plural_counts.py"
+# re-review of PR #71 (2026-10-29): the B1 fallback colour
+UI_FALLBACK = "frontend/src/utils/drawnLabels.fallback.test.ts"
+EN = "frontend/src/i18n/locales/en.json"
 
 ASSEMBLED = '        result = {**result, **parts, "content": draft_text(parts, request.language)}\n'
 SCRUB = '            content, replaced = gate.scrub_unevaluated_dis(result["content"], request.language)\n'
@@ -306,6 +312,14 @@ M = {
     "I45_allow_list_without_the_plural": (
         [(BRS, "        for count in (1, 2):\n", "        for count in (1,):\n")],
         [API_P], "the RC-065 allow-list loses the plural word pairs (a real prompt's pairs are not the device's)"),
+    # ── re-review of PR #71: the fallback colour of a value without a label ──
+    "I46_fallback_colour_is_the_active_gd_magenta": (
+        [(DRAWN, "export const UNLABELLED_FALLBACK_COLOR = '#00FFFF';\n",
+          "export const UNLABELLED_FALLBACK_COLOR = '#FF00FF';\n")],
+        [UI_FALLBACK], "a mask value without a label is drawn like an active (Gd+) lesion"),
+    "I47_warning_names_magenta": (
+        [(EN, "label table: drawn in cyan. Reopen the segmentation", "label table: drawn in magenta. Reopen the segmentation")],
+        [UI_FALLBACK], "the warning names a colour the canvas does not use"),
 }
 # Recorded with the result (integration review of PR #69, item 5: kept, and stated as by design).
 NOTES = {
