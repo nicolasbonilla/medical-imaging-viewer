@@ -1,28 +1,30 @@
 """PRB-004 .. PRB-010 (viewer display, orientation and region colours) — run the new tests against the code they were
 written for (`main` @ 70cc5c7) — evidence that each test detects its defect.
 
-The tests were written before the fixes. This script puts back, temporarily, the base version of every
-source file the fixes changed or added (tests and test helpers excepted), runs the PRB test files, records
-which tests fail and why (first line), and restores the exact bytes of the working tree (also on Ctrl-C /
-SIGTERM / SIGBREAK, and at exit).
+The tests were written before the fixes. This script puts back the base version of every source file the fixes
+changed or added (tests and test helpers excepted), runs the PRB test files, and records which tests fail and why
+(first line). Review of PR #71 (m8): it does so in a THROWAWAY WORKTREE of HEAD (prb004_throwaway_worktree.py),
+never in the developer's checkout — an interrupted run cannot leave base code behind in real files.
 
 Run from the repository root (needs backend/venv or the current Python with the backend requirements, and
 frontend/node_modules):
     python scripts/safety/prb004_tests_on_base.py
         -> docs/iec62304/records/risk_verification/PRB-004_tests_on_base_2026-10-28.json
-Refuses to start if a file it would swap has uncommitted changes (it restores what it read).
-NEVER run this while anything else edits the files it swaps.
+    python scripts/safety/prb004_tests_on_base.py --base 39f9d44 --label "39f9d44 (PR #71 as reviewed)" \
+        --out docs/iec62304/records/risk_verification/PRB-004_review_tests_on_39f9d44_2026-10-28.json
+Refuses to start if a file it covers has uncommitted changes (the run uses the commit).
 """
-import atexit
 import datetime
 import hashlib
 import json
 import os
 import re
-import signal
 import subprocess
 import sys
 import tempfile
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from prb004_throwaway_worktree import throwaway_worktree, require_committed  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 os.chdir(ROOT)
@@ -38,7 +40,8 @@ OUT = _arg("--out", "docs/iec62304/records/risk_verification/PRB-004_tests_on_ba
 PY = os.path.join(ROOT, "backend", "venv", "Scripts", "python.exe")
 if not os.path.exists(PY):
     PY = sys.executable
-BACKEND_TESTS = ["tests/unit/test_prb006_mask_display_range.py", "tests/unit/test_prb010_region_label_colours.py"]
+BACKEND_TESTS = ["tests/unit/test_prb006_mask_display_range.py", "tests/unit/test_prb010_region_label_colours.py",
+                 "tests/unit/test_prb004_review_ref_alignment.py"]
 FRONTEND_TESTS = [
     "src/components/NiivueViewer2D.prb004.test.tsx",
     "src/components/ImageViewer3D.prb005.test.tsx",
@@ -50,6 +53,12 @@ FRONTEND_TESTS = [
     "src/config/features.quickScreen.test.ts",
     "src/components/SegmentationCanvasLocal.prb010.test.tsx",
     "src/utils/regionColors.test.ts",
+    # review of PR #71 @ 39f9d44
+    "src/components/NiivueViewer2D.prb004.review.test.tsx",
+    "src/components/ImageViewer3D.prb004.review.test.tsx",
+    "src/utils/sliceOnOpen.review.test.ts",
+    "src/utils/instanceClassification.prb007.review.test.ts",
+    "src/components/MultiPanelViewer.prb004.review.test.ts",
 ]
 
 
@@ -125,46 +134,30 @@ def run_frontend():
 
 def main():
     changed, added = source_files()
-    dirty = subprocess.run(["git", "status", "--porcelain", "--", *changed, *added],
-                           capture_output=True, text=True).stdout
-    if dirty.strip():
-        raise SystemExit(f"uncommitted changes in {dirty.split()}: commit them first (the script restores the bytes)")
-    snapshot = {p: open(p, "rb").read() for p in changed + added}
-
-    def restore():
-        for p, b in snapshot.items():
-            with open(p, "wb") as fh:
-                fh.write(b)
-
-    def on_signal(signum, _frame):
-        restore()
-        raise SystemExit(f"interrupted by signal {signum}; working tree restored")
-
-    atexit.register(restore)
-    for sig in ("SIGINT", "SIGTERM", "SIGBREAK", "SIGHUP"):
-        if hasattr(signal, sig):
-            signal.signal(getattr(signal, sig), on_signal)
-    try:
-        for p in changed:
-            with open(p, "wb") as fh:
-                fh.write(base_bytes(p))
-        for p in added:
-            os.remove(p)
-        backend, frontend = run_backend(), run_frontend()
-    finally:
-        restore()
-    for p, b in snapshot.items():
-        assert open(p, "rb").read() == b, p
     tests = [f"backend/{t}" for t in BACKEND_TESTS] + [f"frontend/{t}" for t in FRONTEND_TESTS]
+    require_committed(ROOT, changed + added + tests + ["frontend/src/test", "backend/tests"])
+    with throwaway_worktree(ROOT) as wt:
+        os.chdir(wt["path"])
+        try:
+            for p in changed:   # in the throwaway worktree only
+                with open(p, "wb") as fh:
+                    fh.write(base_bytes(p))
+            for p in added:
+                os.remove(p)
+            test_sha = {t: hashlib.sha256(open(t, encoding="utf-8").read().replace("\r\n", "\n").encode("utf-8")).hexdigest()
+                        for t in tests}
+            backend, frontend = run_backend(), run_frontend()
+        finally:
+            os.chdir(ROOT)
     rec = {
         "executed": datetime.datetime.now().isoformat(timespec="seconds"),
         "base": LABEL,
-        "method": "source files that differ from the base commit restored to it, files it did not have removed "
-                  "(tests and frontend/src/test helpers kept); the PRB-004..009 test files run unchanged; working "
-                  "tree restored byte for byte",
+        "method": "in a throwaway detached worktree of the commit under test (review m8): source files that differ "
+                  "from the base commit restored to it, files it did not have removed (tests and frontend/src/test "
+                  "helpers kept); the PRB-004..010 test files (and the review tests) run unchanged; worktree removed",
+        "tests_from_commit": wt["sha"],
         "swapped": {"restored_to_base": changed, "removed": added},
-        "test_sha256": {t: hashlib.sha256(open(t, encoding="utf-8").read().replace("\r\n", "\n").encode("utf-8")).hexdigest()
-                        for t in tests},
+        "test_sha256": test_sha,
         "backend": backend,
         "frontend": frontend,
         "note": _arg("--note", "Tests that pass on the base are guards (stated in their names: 'guard', 'harness pin') "

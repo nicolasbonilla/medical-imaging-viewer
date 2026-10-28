@@ -19,7 +19,15 @@ one at a time:
   PRB-010  a region drawn in the colour stored with its label, the 2D zone layers / the 3D zone colormap / the zone
            legend / the lesion legend with colours of their own, red and green back in the mapping, the label preset
            or the backend's stored colours off the mapping, region names matched case-sensitively.
-The script refuses to start when a file it mutates has uncommitted changes, asserts that every anchor occurs exactly
+  Review of PR #71 (V1-V38): the aligned-mask route (realign only on the image's grid, marker and own range, never
+           the reference affine on another mask), GPU / 3D masks requested aligned, the 3D order / position checks
+           and notice, unsaved work announced, 3D "go to slice" on its own axis, deep white matter vermillion, label
+           colours in GPU / 3D, the later visit not white, niivue's own controls off, the slice kept only on the
+           same grid, the notice placement and wording, no mask input on the grid, no mask files as grid images.
+Review m8: the run happens in a THROWAWAY WORKTREE of HEAD (scripts/safety/prb004_throwaway_worktree.py), never in the
+developer's checkout, so an interrupted run cannot leave a mutation in real code. node_modules is a junction there.
+The script refuses to start when a file it mutates, or a test it runs, has uncommitted changes (the run uses the
+commit), asserts that every anchor occurs exactly
 once (on the LF text — a Windows checkout has CRLF line endings; a mutation is written with the file's own line
 endings), runs the bound tests of the mutated side (backend: pytest offline per PRB-002; frontend: vitest JSON
 reporter), records the failing tests and restores the exact original bytes — after each mutation, at exit, and on
@@ -29,8 +37,8 @@ Run from the repository root (needs backend/venv or the current Python with the 
 frontend/node_modules):
     python scripts/safety/prb004_negative_controls.py            # every mutation
     python scripts/safety/prb004_negative_controls.py --only O   # only the mutations starting with O
+          (--only merges with the previous record, and refuses unless that record is of the same commit)
 Output: docs/iec62304/records/risk_verification/PRB-004_negative_controls_2026-10-28.json
-NEVER run this while anything else edits the files it mutates (it restores a snapshot).
 """
 import atexit
 import datetime
@@ -43,9 +51,12 @@ import subprocess
 import sys
 import tempfile
 
-ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-os.chdir(ROOT)
-PY = os.path.join(ROOT, "backend", "venv", "Scripts", "python.exe")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from prb004_throwaway_worktree import throwaway_worktree, require_committed  # noqa: E402
+
+REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+os.chdir(REPO)
+PY = os.path.join(REPO, "backend", "venv", "Scripts", "python.exe")
 if not os.path.exists(PY):
     PY = sys.executable
 OUT = "docs/iec62304/records/risk_verification/PRB-004_negative_controls_2026-10-28.json"
@@ -71,6 +82,8 @@ LD = "frontend/src/components/LesionDashboard.tsx"
 TY = "frontend/src/types/segmentation.ts"
 STORE = "frontend/src/store/useSegmentationStore.ts"
 REG = "backend/app/api/routes/segmentation_regions.py"
+SEG = "backend/app/api/routes/segmentation.py"
+MLC = "frontend/src/utils/maskLabelColormap.ts"
 
 T_NV = "src/components/NiivueViewer2D.prb004.test.tsx"
 T_WL = "src/utils/niivueWindowLevel.test.ts"
@@ -82,7 +95,14 @@ T_QS = "src/components/QuickScreenBadge.prb009.test.tsx"
 T_FT = "src/config/features.quickScreen.test.ts"
 T_SCL = "src/components/SegmentationCanvasLocal.prb010.test.tsx"
 T_RC = "src/utils/regionColors.test.ts"
-BACKEND = ["tests/unit/test_prb006_mask_display_range.py", "tests/unit/test_prb010_region_label_colours.py"]
+T_NVR = "src/components/NiivueViewer2D.prb004.review.test.tsx"
+T_3DR = "src/components/ImageViewer3D.prb004.review.test.tsx"
+T_SOR = "src/utils/sliceOnOpen.review.test.ts"
+T_ICR = "src/utils/instanceClassification.prb007.review.test.ts"
+T_MPR = "src/components/MultiPanelViewer.prb004.review.test.ts"
+BACKEND = ["tests/unit/test_prb006_mask_display_range.py", "tests/unit/test_prb010_region_label_colours.py",
+           "tests/unit/test_prb004_review_ref_alignment.py"]
+HARNESS = ["frontend/src/test/niivueHarness.ts", "frontend/src/test/syntheticNifti.ts"]
 
 M = {  # name: ([(file, anchor, replacement), ...], [bound frontend tests] or None for backend, what it re-introduces)
     # ── PRB-004 / RC-073: the GPU view lays voxels out as the standard view ──
@@ -114,7 +134,7 @@ M = {  # name: ([(file, anchor, replacement), ...], [bound frontend tests] or No
         [(VG, "export const SAME_GRID_TOLERANCE = 1e-3;", "export const SAME_GRID_TOLERANCE = 1;")], [T_NV],
         "a mask half a voxel away accepted as on the image grid"),
     "O10_refusal_not_stated": (
-        [(NV, "              setMaskNotShown(check.reason);\n", "")], [T_NV],
+        [(NV, "              setMaskLoadProblem(check.reason);\n", "")], [T_NV],
         "a refused mask silently missing from the view"),
     "O11_slice_between_two_voxel_slices": (
         [(WL, "  return (i + 0.5) / n;\n", "  return n > 1 ? Math.min(0.999, i / (n - 1)) : 0.5;\n")], [T_NV, T_WL],
@@ -126,7 +146,7 @@ M = {  # name: ([(file, anchor, replacement), ...], [bound frontend tests] or No
           "        const imageGrid = voxelGridOf(base as unknown as VolumeLike);\n")], [T_NV],
         "the mask compared with the display transform instead of the image's scanner grid"),
     "O13_mask_load_failure_silent": (
-        [(NV, "            if (!cancelled) setMaskNotShown('load');\n", "")], [T_NV],
+        [(NV, "            if (!cancelled) setMaskLoadProblem('load');\n", "")], [T_NV],
         "a mask that fails to load silently missing (the base behaviour)"),
     # ── PRB-005: niivue file type from an explicit NIfTI name ──
     "N1_gpu_view_back_to_a_blob_url": (
@@ -147,23 +167,25 @@ M = {  # name: ([(file, anchor, replacement), ...], [bound frontend tests] or No
         [T_NV, T_3D], "a name that carries no NIfTI extension"),
     # ── PRB-006 / RC-074: mask display range ──
     "R1_gpu_mask_header_range": (
-        [(NV, "              ...LABEL_MASK_DISPLAY_RANGE, // PRB-006\n", "")], [T_NV],
+        [(NV, "                : { colormap: 'red', ...LABEL_MASK_DISPLAY_RANGE }), // PRB-006: never the MRI window\n",
+          "                : { colormap: 'red' }),\n")], [T_NV],
         "the GPU view colours the mask with the MRI window its header carries"),
-    "R2_3d_volume_mask_header_range": (
-        [(I3, "            url: segUrl, name: niftiNameFor(segBuffer, 'mask'), colormap: 'red', opacity: 0.5, ...LABEL_MASK_DISPLAY_RANGE,\n",
-          "            url: segUrl, name: niftiNameFor(segBuffer, 'mask'), colormap: 'red', opacity: 0.5,\n")], [T_3D],
-        "the 3D volume render tints the whole volume red (the defect as found)"),
+    "R2_3d_mask_header_range": (
+        [(I3, "  if (!labelCm) return { colormap: 'red', ...LABEL_MASK_DISPLAY_RANGE }; // PRB-006: never the MRI window\n",
+          "  if (!labelCm) return { colormap: 'red' };\n")], [T_3D],
+        "the 3D lesion mask (volume and multiplanar) tints the whole volume red (the defect as found)"),
     "R3_3d_volume_visit1_header_range": (
-        [(I3, "            url: tp1Url, name: niftiNameFor(longTp1Buffer, 'visit1'), colormap: 'blue', opacity: 0.5, ...LABEL_MASK_DISPLAY_RANGE,\n",
-          "            url: tp1Url, name: niftiNameFor(longTp1Buffer, 'visit1'), colormap: 'blue', opacity: 0.5,\n")], [T_3D],
+        [(I3, "          const tp1 = await loadMask3D(longTp1Buffer, 'visit1', { colormap: 'blue', opacity: 0.5, ...LABEL_MASK_DISPLAY_RANGE });\n",
+          "          const tp1 = await loadMask3D(longTp1Buffer, 'visit1', { colormap: 'blue', opacity: 0.5 });\n")], [T_3D],
         "the earlier-visit mask in 3D coloured with its header range"),
     "R4_3d_multiplanar_visit2_header_range": (
-        [(I3, "              url: tp2Url, name: niftiNameFor(longTp2Buffer, 'visit2'), colormap: 'hot', opacity: i === 0 ? 0.5 : 0.3, ...LABEL_MASK_DISPLAY_RANGE,\n",
-          "              url: tp2Url, name: niftiNameFor(longTp2Buffer, 'visit2'), colormap: 'hot', opacity: i === 0 ? 0.5 : 0.3,\n")], [T_3D],
+        [(I3, "              colormap: 'red', opacity: i === 0 ? 0.5 : 0.3, ...LABEL_MASK_DISPLAY_RANGE,\n",
+          "              colormap: 'red', opacity: i === 0 ? 0.5 : 0.3,\n")], [T_3D],
         "the later-visit mask in the multiplanar view coloured with its header range"),
-    "R5_3d_multiplanar_mask_header_range": (
-        [(I3, "              ...LABEL_MASK_DISPLAY_RANGE, // PRB-006\n", "")], [T_3D],
-        "the lesion mask in the multiplanar view coloured with its header range"),
+    "R5_3d_multiplanar_visit1_header_range": (
+        [(I3, "              colormap: 'blue', opacity: i === 0 ? 0.5 : 0.3, ...LABEL_MASK_DISPLAY_RANGE,\n",
+          "              colormap: 'blue', opacity: i === 0 ? 0.5 : 0.3,\n")], [T_3D],
+        "the earlier-visit mask in the multiplanar view coloured with its header range"),
     "R6_fixed_range_hides_label_one": (
         [(VG, "export const LABEL_MASK_DISPLAY_RANGE = Object.freeze({ cal_min: 0, cal_max: 1 });",
           "export const LABEL_MASK_DISPLAY_RANGE = Object.freeze({ cal_min: 0, cal_max: 2 });")], [T_NV, T_3D],
@@ -205,7 +227,7 @@ M = {  # name: ([(file, anchor, replacement), ...], [bound frontend tests] or No
         [(SO, "  const keep = sameStudy && previous !== null", "  const keep = previous !== null")], [T_SO],
         "another study opens on the previous study's slice"),
     "S4_slice_kept_for_another_size": (
-        [(SO, " && sliceCount(previous) === n\n", "\n")], [T_SO, T_PAGE],
+        [(SO, "  if (sliceCount(a) !== sliceCount(b)) return false;\n", "")], [T_SO, T_PAGE],
         "an image of another size opens on the previous image's slice"),
     "S5_grid_panels_open_on_slice_zero": (
         [(MP, "          const start = current > 0 && current < slices.length ? current : middleSliceIndex(slices.length);\n",
@@ -256,7 +278,7 @@ M = {  # name: ([(file, anchor, replacement), ...], [bound frontend tests] or No
         [T_SCL, T_RC], "the zone-map legend back to its own red / green / blue / yellow"),
     "P6_lesion_legend_own_copy": (
         [(LD, "const REGION_COLORS: Record<string, string> = REGION_DOT_CLASSES;",
-          "const REGION_COLORS: Record<string, string> = { Periventricular: 'bg-[#E69F00]', Juxtacortical: 'bg-[#56B4E9]', Infratentorial: 'bg-[#009E73]', 'Deep White Matter': 'bg-[#CC79A7]' };")],
+          "const REGION_COLORS: Record<string, string> = { Periventricular: 'bg-[#E69F00]', Juxtacortical: 'bg-[#56B4E9]', Infratentorial: 'bg-[#009E73]', 'Deep White Matter': 'bg-[#D55E00]' };")],
         [T_RC], "the lesion legend keeps its own copy of the colours (two mappings that can drift apart again)"),
     "P7_red_and_green_in_the_mapping": (
         [(RC, "  Periventricular: { id: 1, hex: '#E69F00', dot: 'bg-[#E69F00]', text: 'text-[#F0A800]' },     // orange\n"
@@ -279,6 +301,152 @@ M = {  # name: ([(file, anchor, replacement), ...], [bound frontend tests] or No
         [(RC, "  return MAGNIMS_REGIONS.find((r) => r.toLowerCase() === n);\n",
           "  return MAGNIMS_REGIONS.find((r) => r === name);\n")], [T_RC],
         "a region label stored in another letter case keeps its stored colour"),
+    # ── Review of PR #71 @ 39f9d44 (RC-073 / RC-074 / RC-076; REQ-SAFE-041 / 043; REQ-FUNC-103) ──
+    # M1 — masks requested aligned to the image; the route realigns only a mask on the image's grid
+    "V1_route_io_not_imported": (
+        [(SEG, "import io\nimport struct\n", "import struct\n")], None,
+        "GET /segmentation/{id}/nifti?ref_file_id= raises NameError again (the defect as found)"),
+    "V2_reference_affine_stamped_on_any_mask": (
+        [(SVC, "        if seg_affine.shape != (4, 4) or not np.allclose(seg_affine, ref_affine, atol=tolerance, rtol=0):\n"
+               "            return None\n", "")], None,
+        "an identity-fallback or other-grid mask served under the image's affine: a fabricated alignment"),
+    "V3_realigned_mask_without_marker": (
+        [(SVC, '        header["descrip"] = cls._RC031_ORIENT_MARKER\n', "")], None,
+        "a realigned mask served without the RC-031 marker (refused by the viewers: the 3D/GPU view loses it)"),
+    "V4_realigned_mask_with_the_mri_window": (
+        [(SVC, '        header["cal_min"], header["cal_max"] = cls._label_display_range(labels)\n', "")], None,
+        "a realigned mask served with the MRI's display window (PRB-006 again through the aligned route)"),
+    "V5_legacy_mask_not_reoriented": (
+        [(SVC, "        oriented = cls._seg_native_to_reference_order(seg_data, cls._header_has_v2_marker(seg_header))\n",
+          "        oriented = seg_data\n")], None,
+        "a pre-RC-031 mask (in-plane transpose) not un-transposed by the aligned route"),
+    "V6_aligned_mask_not_served": (
+        [(SEG, "                if aligned is not None:\n                    nifti_data = aligned\n", "")], None,
+        "the route computes the aligned mask and serves the stored one"),
+    "V7_gpu_mask_not_requested_aligned": (
+        [(NV, "            const segBuf = await fetchBuffer(`${API_BASE_URL}${segmentationNiftiPath(overlaySegId, fileId)}`);\n",
+          "            const segBuf = await fetchBuffer(`${API_BASE_URL}/api/v1/segmentation/${overlaySegId}/nifti`);\n")],
+        [T_NVR], "the W/L GPU view asks for the mask as stored (a legacy mask on the image's grid refused, D-3)"),
+    "V8_3d_mask_not_requested_aligned": (
+        [(I3, "    return `${API_BASE_URL}${segmentationNiftiPath(segId, fileId)}`;\n",
+          "    return `${API_BASE_URL}/api/v1/segmentation/${segId}/nifti`;\n")],
+        [T_3DR], "the 3D view asks for the lesion mask as stored"),
+    "V9_3d_later_visit_not_requested_aligned": (
+        [(I3, "    const url = `${API_BASE_URL}${segmentationNiftiPath(longTp2SegId, fileId)}`;\n",
+          "    const url = `${API_BASE_URL}/api/v1/segmentation/${longTp2SegId}/nifti`;\n")],
+        [T_3DR], "the 3D view asks for the later-visit mask as stored"),
+    "V10_3d_marker_not_checked": (
+        [(VG, "  if (!inImageOrder) return { ok: false, reason: 'order' };\n", "")], [T_3DR],
+        "the 3D view draws a legacy mask (in-plane transpose) mirrored about the diagonal (the defect as found)"),
+    "V11_3d_position_not_checked": (
+        [(VG, "  if (isIdentityAffine(mask.affine)) return { ok: false, reason: 'position' };\n", "")], [T_3DR],
+        "the 3D view draws an identity-fallback mask at an arbitrary place (the defect as found)"),
+    "V12_3d_refused_mask_drawn_anyway": (
+        [(I3, "  return check.ok ? { vol, problem: null } : { vol: null, problem: check.reason };\n",
+          "  return { vol, problem: null };\n")], [T_3DR],
+        "the 3D view checks a mask and draws it whatever the check says"),
+    "V13_3d_refusal_not_stated": (
+        [(I3, "  const notDrawnList = (Object.entries({ ...masksNotDrawn, ...(lesionUnsaved ? { lesion: 'unsaved' } : {}) }) as Array<[Mask3D, Mask3DProblem]>)\n",
+          "  const notDrawnList = (Object.entries({ ...(lesionUnsaved ? { lesion: 'unsaved' } : {}) }) as Array<[Mask3D, Mask3DProblem]>)\n")],
+        [T_3DR], "a mask the 3D view refuses is silently missing"),
+    # M2 — unsaved work announced
+    "V14_gpu_unsaved_segmentation_silent": (
+        [(NV, "  const maskNotShown: MaskNotShown | null = segIsLocal ? 'unsaved' : maskLoadProblem;\n",
+          "  const maskNotShown: MaskNotShown | null = maskLoadProblem;\n")], [T_NVR],
+        "a segmentation not saved yet silently absent from the GPU view (the defect as found)"),
+    "V15_gpu_unsaved_edits_silent": (
+        [(NV, "  const showEditsNotice = hasUnsavedEdits && !!overlaySegId && maskNotShown === null;\n",
+          "  const showEditsNotice = false;\n")], [T_NVR],
+        "the GPU view draws the saved mask without saying the unsaved edits are not shown"),
+    "V16_viewer_does_not_report_unsaved_edits": (
+        [(IV2, "            <NiivueViewer2D hasUnsavedEdits={segmentationMask.state.isDirty || segmentationStoreDirty} />",
+          "            <NiivueViewer2D />")], [T_NVR],
+        "the 2D viewer never tells the GPU view about unsaved edits"),
+    "V17_3d_unsaved_segmentation_silent": (
+        [(I3, "  const notDrawnList = (Object.entries({ ...masksNotDrawn, ...(lesionUnsaved ? { lesion: 'unsaved' } : {}) }) as Array<[Mask3D, Mask3DProblem]>)\n",
+          "  const notDrawnList = (Object.entries({ ...masksNotDrawn }) as Array<[Mask3D, Mask3DProblem]>)\n")],
+        [T_3DR], "a segmentation not saved yet silently absent from the 3D view"),
+    # M3 — 3D "go to slice"
+    "V18_3d_slice_index_over_depth": (
+        [(I3, "      nvInst.scene.crosshairPos[target.axis] = target.frac;\n",
+          "      nvInst.scene.crosshairPos[2] = currentSliceIndex / Math.max(1, (nvInst.volumes[0].dims?.[3] ?? 1) - 1);\n")],
+        [T_3DR], "3D 'go to slice' back to index / (depth - 1) on the axial axis (the defect as found)"),
+    "V19_3d_slice_always_on_the_axial_axis": (
+        [(I3, "  const axis = deltas.indexOf(Math.max(...deltas));\n", "  const axis = 2;\n")], [T_3DR],
+        "3D 'go to slice' on the axial axis for a sagittally stored volume"),
+    # m1 / m6 — colours
+    "V20_deep_white_matter_reddish_purple": (
+        [(RC, "  'Deep White Matter': { id: 4, hex: '#D55E00', dot: 'bg-[#D55E00]', text: 'text-[#F07A3A]' },     // vermillion\n",
+          "  'Deep White Matter': { id: 4, hex: '#CC79A7', dot: 'bg-[#CC79A7]', text: 'text-[#DB93BC]' },     // vermillion\n")],
+        [T_SCL], "deep white matter back to reddish purple: dE76 5.3 from infratentorial for a deutan reader, as drawn"),
+    "V21_gpu_mask_all_red": (
+        [(NV, "            const labelCm = maskLabelColormap(labelsRef.current);\n",
+          "            const labelCm = null as ReturnType<typeof maskLabelColormap>;\n")], [T_NVR],
+        "the GPU view draws a region-classified mask all red (the defect as found)"),
+    "V22_3d_lesion_mask_all_red": (
+        [(I3, "  const lesionLabelCm = useMemo(() => maskLabelColormap(savedLabels),\n",
+          "  const lesionLabelCm = useMemo(() => null as ReturnType<typeof maskLabelColormap>,\n")], [T_3DR],
+        "the 3D view draws a region-classified mask all red (the defect as found)"),
+    "V23_niivue_regions_in_stored_colours": (
+        [(MLC, "  const listed = withRegionColors(\n", "  const listed = (<T,>(x: T) => x)(\n")], [T_NVR, T_3DR],
+        "GPU / 3D draw a region label in the colour stored with it (red / green / blue / gold)"),
+    "V24_unlisted_label_value_not_drawn": (
+        [(MLC, "    v === 0 ? null : (v <= top ? listed.find((l) => l.id === v)?.color : undefined) ?? UNLISTED_LABEL_HEX;\n",
+          "    v === 0 ? null : (v <= top ? listed.find((l) => l.id === v)?.color ?? null : null);\n")], [T_NVR],
+        "a label value missing from the table silently not drawn in GPU / 3D"),
+    "V25_3d_label_colours_with_header_range": (
+        [(I3, "  return { colormap: labelCm.name, cal_min: labelCm.cal_min, cal_max: labelCm.cal_max };\n",
+          "  return { colormap: labelCm.name };\n")], [T_3DR],
+        "the 3D label colours read through the mask header's display range: each region in another region's colour"),
+    # m2 — later visit
+    "V26_3d_later_visit_white": (
+        [(I3, "          const tp2 = await loadMask3D(longTp2Buffer, 'visit2', { colormap: 'red', opacity: 0.5, ...LABEL_MASK_DISPLAY_RANGE });\n",
+          "          const tp2 = await loadMask3D(longTp2Buffer, 'visit2', { colormap: 'hot', opacity: 0.5, ...LABEL_MASK_DISPLAY_RANGE });\n")],
+        [T_3DR], "the later visit drawn white in 3D (the defect as found)"),
+    # m3 — niivue's own controls
+    "V27_gpu_niivue_hotkeys_on": (
+        [(NV, "          ...NIIVUE_HOTKEYS_OFF,\n", "")], [T_NVR],
+        "niivue's view-type and clip-plane hotkeys active in the GPU view"),
+    "V28_gpu_canvas_focusable": (
+        [(NV, "        canvasRef.current?.removeAttribute('tabindex');\n", "")], [T_NVR],
+        "the GPU canvas takes keyboard focus (niivue's keys act on it)"),
+    "V29_gpu_keys_reach_niivue": (
+        [(NV, "    const block = (e: Event) => { if (onCanvas(e)) e.stopPropagation(); };\n",
+          "    const block = (_e: Event) => {};\n")], [T_NVR],
+        "keys and double-click on the GPU canvas reach niivue (slice, drag mode, contrast reset behind the store)"),
+    "V30_gpu_wheel_reaches_niivue": (
+        [(NV, "      if (!onCanvas(e)) return;\n      e.stopPropagation();\n", "      if (!onCanvas(e)) return;\n")],
+        [T_NVR], "the wheel on the GPU canvas reaches niivue (it changes niivue's slice behind the store)"),
+    # m4 — slice kept only on the same grid
+    "V31_slice_kept_on_another_matrix": (
+        [(SO, "  if (!sameNumber(ma.rows, mb.rows) || !sameNumber(ma.columns, mb.columns) || !sameNumber(ma.slices, mb.slices)) return false;\n", "")],
+        [T_SOR], "the slice kept for an image with another matrix"),
+    "V32_slice_kept_on_another_spacing": (
+        [(SO, "  if (pa && pb && (pa.length !== pb.length || pa.some((v, n) => !sameNumber(v, pb[n], GRID_TOLERANCE_MM)))) return false;\n", "")],
+        [T_SOR], "the slice kept for an image with another pixel spacing"),
+    "V33_slice_kept_on_another_thickness": (
+        [(SO, "  if (!sameNumber(ma.slice_thickness, mb.slice_thickness, GRID_TOLERANCE_MM)) return false;\n", "")],
+        [T_SOR], "the slice kept for an image with another slice thickness"),
+    "V34_slice_kept_on_another_orientation": (
+        [(SO, "  return (ma.anatomical_orientation ?? null) === (mb.anatomical_orientation ?? null);\n", "  return true;\n")],
+        [T_SOR], "the slice kept for an image stored in another orientation"),
+    # m5 / m9 — the GPU notice
+    "V35_gpu_notice_at_the_top": (
+        [(NV, "  const noticeClass = 'pointer-events-none absolute bottom-10 left-1/2",
+          "  const noticeClass = 'pointer-events-none absolute top-12 left-1/2")], [T_NVR],
+        "the GPU notice back at the top, where the identity block can cover it"),
+    "V36_gpu_grid_notice_sends_to_standard": (
+        [(NV, "new Set<MaskNotShown>(['order', 'load', 'unsaved']);", "new Set<MaskNotShown>(['grid', 'position', 'order', 'load', 'unsaved']);")],
+        [T_NVR], "the notice for a mask on another grid sends the reader to the Standard view"),
+    # m7 / m10 — the grid
+    "V37_multi_panel_mask_prop_back": (
+        [(MP, "interface MultiPanelViewerProps extends PatientIdentity {\n  instances: ImagingInstance[];\n}",
+          "interface MultiPanelViewerProps extends PatientIdentity {\n  instances: ImagingInstance[];\n  segmentationMask?: unknown;\n}")],
+        [T_MPR], "a mask input on the multi-panel grid (the path without a grid check)"),
+    "V38_grid_shows_segmentation_files": (
+        [(IC, "  const imagesOnly = (list: T[]) => list.filter((i) => !isSegmentationDerivative(i.original_filename ?? ''));\n",
+          "  const imagesOnly = (list: T[]) => list;\n")], [T_ICR],
+        "a segmentation file shown as a grey image in the grid"),
 }
 
 
@@ -330,9 +498,33 @@ def sha(text):
 def main():
     only = sys.argv[sys.argv.index("--only") + 1] if "--only" in sys.argv else None
     files = sorted({e[0] for edits, _t, _w in M.values() for e in edits})
-    dirty = subprocess.run(["git", "status", "--porcelain", "--", *files], capture_output=True, text=True).stdout
-    if dirty.strip():
-        raise SystemExit(f"uncommitted changes in {dirty.split()}: commit them first (the script restores the bytes)")
+    frontend_tests = sorted({t for _e, tests, _w in M.values() if tests for t in tests})
+    test_paths = [f"backend/{t}" for t in BACKEND] + [f"frontend/{t}" for t in frontend_tests]
+    require_committed(REPO, files + test_paths + HARNESS + [os.path.relpath(__file__, REPO).replace(os.sep, "/")])
+    previous = json.load(open(OUT, encoding="utf-8")) if only and os.path.exists(OUT) else {"mutations": {}}
+    with throwaway_worktree(REPO) as wt:
+        if only and previous.get("tree") != wt["sha"]:
+            raise SystemExit(f"--only merges with {OUT}, which is of {previous.get('tree')}, not {wt['sha']}: run all")
+        os.chdir(wt["path"])
+        try:
+            res = run_in_worktree(only, files, frontend_tests, test_paths, previous)
+        finally:
+            os.chdir(REPO)
+    res["worktree"] = {"run_in": "throwaway detached worktree of the commit, removed after the run (review m8)",
+                       "commit": wt["sha"], "stale_worktrees_removed_first": wt["stale_removed"]}
+    os.makedirs(os.path.dirname(OUT), exist_ok=True)
+    json.dump(res, open(OUT, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
+    rb, rf = res["restored"]["backend"], res["restored"]["frontend"]
+    undetected = res["summary"]["undetected"]
+    print("restored backend", rb["passed"], "passed /", rb["failed"], "failed | frontend", rf["passed"], "passed /",
+          rf["failed"], "failed | detected", res["summary"]["detected"], "of", res["summary"]["mutations"],
+          "| undetected:", undetected)
+    bad = rb["failed"] or rb["errors"] or rf["failed"] or rf["errors"]
+    return 1 if undetected or bad else 0
+
+
+def run_in_worktree(only, files, frontend_tests, test_paths, previous):
+    here = os.getcwd()   # the throwaway worktree; restores always write THERE (absolute paths), never elsewhere
     raw = {p: open(p, "rb").read() for p in files}
     text = {p: b.decode("utf-8").replace("\r\n", "\n") for p, b in raw.items()}
     eol = {p: "\r\n" if b"\r\n" in b else "\n" for p, b in raw.items()}
@@ -343,24 +535,36 @@ def main():
 
     def restore():
         for p, b in raw.items():
-            with open(p, "wb") as fh:
-                fh.write(b)
+            target = os.path.join(here, p)
+            if os.path.isdir(os.path.dirname(target)):
+                with open(target, "wb") as fh:
+                    fh.write(b)
 
     def on_signal(signum, _frame):
         restore()
         raise SystemExit(f"interrupted by signal {signum}; sources restored")
 
     atexit.register(restore)
+    handlers = {}
     for sig in ("SIGINT", "SIGTERM", "SIGBREAK", "SIGHUP"):
         if hasattr(signal, sig):
-            signal.signal(getattr(signal, sig), on_signal)
+            handlers[sig] = signal.signal(getattr(signal, sig), on_signal)
+    try:
+        return _mutate_all(only, files, frontend_tests, test_paths, previous, raw, restore)
+    finally:
+        restore()
+        atexit.unregister(restore)
+        for sig, h in handlers.items():
+            signal.signal(getattr(signal, sig), h)
 
-    frontend_tests = sorted({t for _e, tests, _w in M.values() if tests for t in tests})
-    test_paths = [f"backend/{t}" for t in BACKEND] + [f"frontend/{t}" for t in frontend_tests]
-    previous = json.load(open(OUT, encoding="utf-8")) if only and os.path.exists(OUT) else {"mutations": {}}
+
+def _mutate_all(only, files, frontend_tests, test_paths, previous, raw, restore):
+    text = {p: b.decode("utf-8").replace("\r\n", "\n") for p, b in raw.items()}
+    eol = {p: "\r\n" if b"\r\n" in b else "\n" for p, b in raw.items()}
     res = {"executed": datetime.datetime.now().isoformat(timespec="seconds"),
            "tree": subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip(),
-           "method": "one mutation at a time; each anchor asserted to occur exactly once (LF text, written back with "
+           "method": "in a throwaway detached worktree of the commit (review m8); "
+                     "one mutation at a time; each anchor asserted to occur exactly once (LF text, written back with "
                      "the file's own line endings); only the bound tests of the mutated side run (backend pytest with "
                      "no cloud credential per PRB-002; frontend vitest, JSON reporter, --pool=threads); original bytes "
                      "restored after each mutation, at exit and on a signal, and checked at the end",
@@ -403,14 +607,7 @@ def main():
     undetected = sorted(n for n, v in res["mutations"].items() if not v["detected"])
     res["summary"] = {"mutations": len(res["mutations"]), "detected": len(res["mutations"]) - len(undetected),
                       "undetected": undetected}
-    os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    json.dump(res, open(OUT, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
-    rb, rf = res["restored"]["backend"], res["restored"]["frontend"]
-    print("restored backend", rb["passed"], "passed /", rb["failed"], "failed | frontend", rf["passed"], "passed /",
-          rf["failed"], "failed | detected", res["summary"]["detected"], "of", res["summary"]["mutations"],
-          "| undetected:", undetected)
-    bad = rb["failed"] or rb["errors"] or rf["failed"] or rf["errors"]
-    return 1 if undetected or bad else 0
+    return res
 
 
 if __name__ == "__main__":
