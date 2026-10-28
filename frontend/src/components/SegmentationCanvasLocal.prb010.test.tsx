@@ -203,6 +203,19 @@ describe('PRB-010 — region colours on the image are the legend colours', () =>
     expect([64, 128, 191, 255].map(at)).toEqual(REGION_BY_LABEL.map((r) => LEGEND[r]));
   });
 
+  it('rc076 the zone-colouring legend (PV / JC / IT / DWM) shows the same colours as the lesion legend', async () => {
+    useSegmentationStore.setState({ zoneMapMask: Uint8Array.from([1, 2, 3, 4]), zoneMapSegId: 'zm-1', zoneMapVisible: true });
+    render(<MAGNIMSZoneMapPanel fileId="f.nii.gz" />);
+    const abbrev: Record<string, string> = { PV: 'Periventricular', JC: 'Juxtacortical', IT: 'Infratentorial', DWM: 'Deep White Matter' };
+    for (const [short, region] of Object.entries(abbrev)) {
+      const item = (await screen.findAllByText(short)).find((el) => el.querySelector('span.rounded-full'));
+      expect(item).toBeDefined();
+      const dot = item!.querySelector('span.rounded-full') as HTMLElement;
+      const colour = (dot.getAttribute('class') ?? '') + ' ' + (dot.getAttribute('style') ?? '');
+      expect(colour.toUpperCase()).toContain(LEGEND[region]);
+    }
+  });
+
   it('rc076 the zone-map panel legend shows the same colours as the lesion legend', async () => {
     const zones = Uint8Array.from([1, 2, 3, 4, 1, 2, 3, 4]);
     useSegmentationStore.setState({ zoneMapMask: zones, zoneMapSegId: 'zm-1', zoneMapVisible: true });
