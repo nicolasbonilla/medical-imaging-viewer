@@ -1,0 +1,94 @@
+{
+  "executed": "2026-10-28T22:51:30",
+  "code_under_test": "ebf39c3edf1c01a71f9747136262acd0956355f4 (application code unchanged; only the new test files present)",
+  "purpose": "failing-first evidence for M1, M2 and the minor items m1, m2, m4, m5, m7, n1 of the second independent review of PR #69 (6d1fde2..dd22708), written after the B1/M3 correction (ebf39c3). Passing cases are positive controls or test gaps of code that was already right (a newly saved mask starts again; anisotropic voxel volume; a refused confirmation never says recorded)",
+  "environment": "offline per PRB-002 (missing credentials file, empty gcloud configuration, mstool-offline-tests, no model-provider key)",
+  "backend": {
+    "files": [
+      "tests/unit/test_release_2026_10_25_review2_fixes.py"
+    ],
+    "failed": 4,
+    "total": 6,
+    "cases": {
+      "test_rc070_release2_m1_the_dis_state_carries_the_removal_for_these_lesions_only": {
+        "status": "failed",
+        "reason": "KeyError: 'removed_small_components'"
+      },
+      "test_rc070_release2_m2_a_second_classification_carries_the_earlier_removal_forward": {
+        "status": "failed",
+        "reason": "assert (0, 0) == (2, 2)\n  \n  At index 0 diff: 0 != 2\n  Use -v to get more diff"
+      },
+      "test_rc070_release2_m2_a_newly_saved_mask_starts_again": {
+        "status": "passed",
+        "reason": null
+      },
+      "test_rc070_release2_m7_removed_volume_uses_the_anisotropic_voxel_volume": {
+        "status": "passed",
+        "reason": null
+      },
+      "test_rc070_release2_n1_a_lesion_table_failure_names_its_real_reason": {
+        "status": "failed",
+        "reason": "AssertionError: assert not True\n +  where True = <built-in method startswith of str object at 0x0000027E4F554030>('The image geometry could not be read; report not generated')\n +    where <built-in method startswith of str object at 0x0000027E4F554030> = 'The image geometry could not be read; report"
+      },
+      "test_rc070_release2_m4_the_assistant_needs_a_yes_no_conclusion_too": {
+        "status": "failed",
+        "reason": "AssertionError: assert ('evaluated' == 'not_evaluated'\n  \n  - not_evaluated\n  ? ----\n  + evaluated)"
+      }
+    }
+  },
+  "frontend": {
+    "files": [
+      "src/components/LesionDashboard.release20261028c.test.tsx"
+    ],
+    "failed": 8,
+    "total": 9,
+    "files_failing_to_load": {},
+    "cases": {
+      "rc070 release2 m1 another segmentation's removal is never shown in this dashboard": {
+        "file": "src/components/LesionDashboard.release20261028c.test.tsx",
+        "status": "failed",
+        "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31melement\u001b[39m\u001b[2m).not.toBeInTheDocument()\u001b[22m\n\n\u001b[31mexpected document not to contain element, found <p\n  class=\"text-[10px] text-amber-100\"\n  data-testid=\"dis-removed-components\"\n>\n  Before confirming: the region classification removed 5 lesion component(s) smaller than "
+      },
+      "rc070 release2 m1 the notice and the confirm dialog take the removal from the server state of this segmentation": {
+        "file": "src/components/LesionDashboard.release20261028c.test.tsx",
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-removed-components\"]\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mstyle\u001b[39m=\u001b[32m\"background: rgb(22, 25, 34); border-radius: 8px; padding: 12px; display: flex; flex-direction: column;"
+      },
+      "rc070 release2 m1 a dashboard never writes its results into the open segmentation of another": {
+        "file": "src/components/LesionDashboard.release20261028c.test.tsx",
+        "status": "failed",
+        "reason": "AssertionError: expected { lesion_analysis: { …(8) }, …(1) } to deeply equal { lesion_analysis: { …(8) } }\n    at C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/release-2026-10-25/frontend/src/components/LesionDashboard.release20261028c.test.tsx:125:90\n    at file:///C:/Users/Nicolas/medi"
+      },
+      "rc070 release2 m2 not offered on a segmentation that is not open": {
+        "file": "src/components/LesionDashboard.release20261028c.test.tsx",
+        "status": "failed",
+        "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31melement\u001b[39m\u001b[2m).toBeDisabled()\u001b[22m\n\nReceived element is not disabled:\n  \u001b[31m<button\n  class=\"w-full flex items-center justify-center gap-1.5 px-2 py-1.5 bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded text-xs text-white font-medi"
+      },
+      "rc070 release2 m2 not offered while the open mask has unsaved changes": {
+        "file": "src/components/LesionDashboard.release20261028c.test.tsx",
+        "status": "failed",
+        "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31melement\u001b[39m\u001b[2m).toBeDisabled()\u001b[22m\n\nReceived element is not disabled:\n  \u001b[31m<button\n  class=\"w-full flex items-center justify-center gap-1.5 px-2 py-1.5 bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded text-xs text-white font-medi"
+      },
+      "rc071 release2 m1 is shown, and the confirmation is refused until the mask is reloaded": {
+        "file": "src/components/LesionDashboard.release20261028c.test.tsx",
+        "status": "failed",
+        "reason": "Error: Unable to find an element with the text: /could not be reloaded/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[3"
+      },
+      "rc070 release2 m4 an evaluated block without a conclusion is shown as not evaluated": {
+        "file": "src/components/LesionDashboard.release20261028c.test.tsx",
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-not-evaluated\"]\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mstyle\u001b[39m=\u001b[32m\"background: rgb(22, 25, 34); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap:"
+      },
+      "rc071 release2 m5 recorded but not read back: no \"No radiologist has confirmed\", no second confirmation": {
+        "file": "src/components/LesionDashboard.release20261028c.test.tsx",
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirmed-unread\"]\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mstyle\u001b[39m=\u001b[32m\"background: rgb(22, 25, 34); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; g"
+      },
+      "rc071 release2 m7 a refused confirmation never says \"recorded\" (positive control of F10)": {
+        "file": "src/components/LesionDashboard.release20261028c.test.tsx",
+        "status": "passed",
+        "reason": null
+      }
+    }
+  }
+}
