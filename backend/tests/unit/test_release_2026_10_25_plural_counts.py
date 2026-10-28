@@ -22,9 +22,10 @@ def _lesion(i, region):
             "centroid": {"z": 3, "y": 3, "x": 3}}
 
 
-def _findings(dwm_count, pv_count, n_lesions, tp1, tp2):
+def _findings(dwm_count, pv_count, n_lesions, tp1, tp2, confirmed=True):
     return {
         "lesion_analysis": {
+            "regions_confirmed": confirmed,
             "total_count": n_lesions, "total_burden_mm3": 36.0 * n_lesions, "total_burden_ml": 0.036 * n_lesions,
             "regions": {_PV: {"lesion_count": pv_count, "total_volume_mm3": 36.0, "total_volume_ml": 0.036},
                         _DWM: {"lesion_count": dwm_count, "total_volume_mm3": 36.0, "total_volume_ml": 0.036}},
@@ -58,11 +59,13 @@ def test_release_plural_any_other_count_is_plural_in_the_findings_prompt(count):
     assert f"({count} lesions)" in prompt.split("TP1 burden:")[1].splitlines()[0]
 
 
-@pytest.mark.parametrize("count", [1, 2])
-def test_release_plural_both_forms_stay_in_the_devices_own_words(count):
+@pytest.mark.parametrize("confirmed", [True, False])
+@pytest.mark.parametrize("count,n_lesions", [(1, 1), (1, 3), (2, 1), (2, 3)])
+def test_release_plural_both_forms_stay_in_the_devices_own_words(count, n_lesions, confirmed):
     """RC-065 tripwire: the counted noun, singular or plural, is among the device's own words and word pairs (pairs
     across two optional blocks, e.g. ("ml", "individual") without a size distribution, are not the point here)."""
-    words = words_of(_prompt(_findings(dwm_count=count, pv_count=count, n_lesions=count + 1, tp1=count, tp2=count)))
+    words = words_of(_prompt(_findings(dwm_count=count, pv_count=count, n_lesions=n_lesions, tp1=count, tp2=count,
+                                       confirmed=confirmed)))
     assert set(words) <= brs.fixed_prompt_words()
     counted = {p for p in zip(words, words[1:]) if {"lesion", "lesions"} & set(p)}
     assert counted and counted <= brs.fixed_prompt_pairs()

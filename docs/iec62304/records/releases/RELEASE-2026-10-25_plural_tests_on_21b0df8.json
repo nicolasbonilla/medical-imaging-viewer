@@ -1,14 +1,14 @@
 {
-  "executed": "2026-10-28T23:46:27",
-  "code_under_test": "21b0df8933c31b34b1fa394670f365d62710ff08 (application code unchanged; only the new test files present)",
-  "purpose": "failing-first evidence for the film-capture finding 'DWM: 1 lesions' (plural with a count of one in the sidebar's region summary and, through the findings prompt, in the report text): a count of exactly one is singular in en/es/de, any other count plural, and the report tripwire keeps both forms among the device's own words",
+  "executed": "2026-10-28T23:50:40",
+  "code_under_test": "40f1d5c9eac3ed0c2b054ba01ff05cbb740e8f80 (application code unchanged; only the new test files present)",
+  "purpose": "failing-first evidence for the film-capture finding 'DWM: 1 lesions' (plural with a count of one in the sidebar's region summary and, through the findings prompt, in the report text): a count of exactly one is singular in en/es/de, any other count plural, and the report tripwire keeps both forms among the device's own words (re-recorded with the allow-list cases extended to one-lesion lists and unconfirmed regions; application code identical to 21b0df8)",
   "environment": "offline per PRB-002 (missing credentials file, empty gcloud configuration, mstool-offline-tests, no model-provider key)",
   "backend": {
     "files": [
       "tests/unit/test_release_2026_10_25_plural_counts.py"
     ],
     "failed": 1,
-    "total": 6,
+    "total": 12,
     "cases": {
       "test_release_plural_a_count_of_one_is_singular_in_the_findings_prompt": {
         "status": "failed",
@@ -26,11 +26,35 @@
         "status": "passed",
         "reason": null
       },
-      "test_release_plural_both_forms_stay_in_the_devices_own_words[1]": {
+      "test_release_plural_both_forms_stay_in_the_devices_own_words[1-1-True]": {
         "status": "passed",
         "reason": null
       },
-      "test_release_plural_both_forms_stay_in_the_devices_own_words[2]": {
+      "test_release_plural_both_forms_stay_in_the_devices_own_words[1-1-False]": {
+        "status": "passed",
+        "reason": null
+      },
+      "test_release_plural_both_forms_stay_in_the_devices_own_words[1-3-True]": {
+        "status": "passed",
+        "reason": null
+      },
+      "test_release_plural_both_forms_stay_in_the_devices_own_words[1-3-False]": {
+        "status": "passed",
+        "reason": null
+      },
+      "test_release_plural_both_forms_stay_in_the_devices_own_words[2-1-True]": {
+        "status": "passed",
+        "reason": null
+      },
+      "test_release_plural_both_forms_stay_in_the_devices_own_words[2-1-False]": {
+        "status": "passed",
+        "reason": null
+      },
+      "test_release_plural_both_forms_stay_in_the_devices_own_words[2-3-True]": {
+        "status": "passed",
+        "reason": null
+      },
+      "test_release_plural_both_forms_stay_in_the_devices_own_words[2-3-False]": {
         "status": "passed",
         "reason": null
       }
