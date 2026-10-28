@@ -25,17 +25,31 @@ import tempfile
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 os.chdir(ROOT)
-BASE = "70cc5c7"
-LABEL = "70cc5c7 (main, merge of PR #64)"
+
+
+def _arg(name, default):
+    return sys.argv[sys.argv.index(name) + 1] if name in sys.argv else default
+
+
+# Defaults: the first run on main @ 70cc5c7. The review of PR #70 re-run uses
+#   --base 7de9334 --label "7de9334 (PR #70 head before the review fixes)"
+#   --out docs/iec62304/records/risk_verification/PRB-020_review1_tests_on_7de9334_2026-10-28.json
+#   --backend tests/unit/test_prb020_review1_findings.py,tests/unit/test_prb021_backfill_creator_care_team.py
+#   --frontend src/pages/PatientsPage.prb021.test.tsx,src/pages/LoginPage.prb022.review1.test.tsx
+#   --paths backend/app,frontend/src,scripts/owner
+BASE = _arg("--base", "70cc5c7")
+LABEL = _arg("--label", "70cc5c7 (main, merge of PR #64)")
 PY = os.path.join(ROOT, "backend", "venv", "Scripts", "python.exe")
 if not os.path.exists(PY):
     PY = sys.executable
-OUT = "docs/iec62304/records/risk_verification/PRB-020_tests_on_base_2026-10-28.json"
-BACKEND_TESTS = ["tests/unit/test_prb020_self_registration_and_accounts.py",
-                 "tests/unit/test_prb021_patient_scope_creator_counts.py"]
-FRONTEND_TESTS = ["src/pages/LoginPage.prb020.test.tsx", "src/components/StudyCard.prb025.test.tsx",
-                  "src/components/patientInitials.prb026.test.tsx", "src/hooks/useSegmentationData.prb026.test.tsx",
-                  "src/components/i18nStrings.prb026.test.tsx"]
+OUT = _arg("--out", "docs/iec62304/records/risk_verification/PRB-020_tests_on_base_2026-10-28.json")
+BACKEND_TESTS = _arg("--backend", "tests/unit/test_prb020_self_registration_and_accounts.py,"
+                                  "tests/unit/test_prb021_patient_scope_creator_counts.py").split(",")
+FRONTEND_TESTS = _arg("--frontend", "src/pages/LoginPage.prb020.test.tsx,src/components/StudyCard.prb025.test.tsx,"
+                                    "src/components/patientInitials.prb026.test.tsx,"
+                                    "src/hooks/useSegmentationData.prb026.test.tsx,"
+                                    "src/components/i18nStrings.prb026.test.tsx").split(",")
+PATHS = _arg("--paths", "backend/app,frontend/src").split(",")
 
 
 def offline_env(tmp):
@@ -54,9 +68,9 @@ def _is_test(path):
 
 
 def source_files():
-    names = subprocess.run(["git", "diff", "--name-only", BASE, "--", "backend/app", "frontend/src"],
+    names = subprocess.run(["git", "diff", "--name-only", BASE, "--", *PATHS],
                            capture_output=True, text=True, check=True).stdout.split()
-    names += subprocess.run(["git", "ls-files", "--others", "--exclude-standard", "--", "backend/app", "frontend/src"],
+    names += subprocess.run(["git", "ls-files", "--others", "--exclude-standard", "--", *PATHS],
                             capture_output=True, text=True, check=True).stdout.split()
     changed, added = [], []
     for n in sorted(set(names)):
@@ -150,7 +164,7 @@ def main():
                         for t in [*("backend/" + b for b in BACKEND_TESTS), *("frontend/" + f for f in FRONTEND_TESTS)]},
         "backend": backend,
         "frontend": frontend,
-        "note": "Tests that pass on the base are positive controls of behaviour that must not change (an "
+        "note": _arg("--note", None) or "Tests that pass on the base are positive controls of behaviour that must not change (an "
                 "administrator lists every patient; an administrator who creates a patient is not put on a care team; "
                 "a client cannot set the segmentation creator; self-registration works when explicitly enabled outside "
                 "production; the Register tab appears when the server says it is on; SEGM. 0 shown when the server "
