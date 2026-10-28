@@ -78,9 +78,15 @@ M = {
                                       "result[\"content\"], request.language)\n")],
         [I1_TEST],
         "the output check runs after the draft assembly instead of before it (merge notes of #67 and #68)"),
-    "I2_template_variant_chosen_on_the_raw_findings": (
+    # Redefined after the integration review of PR #69 (item 3): with the one rule, the payload marks "evaluated"
+    # exactly when gate.is_evaluated holds for the request's block, so choosing the template on the raw block ALONE is
+    # now equivalent by construction (it went undetected on 2026-10-28, as expected). The mutation therefore
+    # re-introduces the whole defect: the template on the raw block with its own status-only rule.
+    "I2_template_variant_on_the_raw_block_with_its_own_rule": (
         [(BRS, '        dis_block = payload.findings.get("dis_assessment")\n',
-          '        dis_block = findings.get("dis_assessment")\n')],
+          '        dis_block = findings.get("dis_assessment")\n'),
+         (BRS, '        if not gate.is_evaluated(dis_block):\n',
+          '        if not (isinstance(dis_block, dict) and dis_block.get("evaluation_status") == "evaluated"):\n')],
         [REL + "::test_rc064_release_i2_the_template_variant_follows_the_dis_block_the_model_receives"],
         "the template asks for a DIS table while the payload sends the DIS as not evaluated"),
     "I3_dis_confirmation_route_not_audited": (

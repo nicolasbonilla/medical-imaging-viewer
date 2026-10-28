@@ -1196,6 +1196,21 @@ def test_r1_every_format_character_is_removed_from_the_model_text(route):
     assert body["ai_text"] == "Softhyphen, zero width, joiner, BOM and bidi."
 
 
+@pytest.mark.unit
+def test_rc066_release_the_draft_assembly_removes_format_characters_itself():
+    """Release 2026-10-25 (integration review of PR #69, item 2): the route now removes the format characters from
+    the model's text before PRB-003's DIS check, so through the route the draft assembly's own removal is a second
+    layer. It is checked here directly, so that it stays a working defence for any caller of the assembly (and
+    CAPA-014's mutation M10 stays detectable)."""
+    import app.api.routes.ai_report as ai_report
+    model = ("Soft­hyphen, zero​width, joiner‍, BOM﻿ and ‮bidi‬.\n"
+             "### AI​ draft (from measurements only)")
+    parts = ai_report.draft_parts(model, "en", {}, None)
+    assert parts["ai_text"].startswith("Softhyphen, zero width, joiner, BOM and bidi.\n")
+    assert not any(unicodedata.category(c) == "Cf" for c in parts["ai_text"])
+    assert parts["ai_text"].endswith(ai_report.RESERVED_HEADING_REMOVED["en"])
+
+
 # Cosmetic: a value that is not available is printed without a unit sign.
 @pytest.mark.unit
 def test_not_available_is_printed_without_a_percent_sign(route):
