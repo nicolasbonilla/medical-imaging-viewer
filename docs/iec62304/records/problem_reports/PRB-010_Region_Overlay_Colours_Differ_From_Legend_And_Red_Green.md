@@ -117,3 +117,24 @@ to it; no test looked at the colours drawn on the image.
   red / green pair for a red-green colour-blind reader; and the result panel's status colours (`LongitudinalResultPanel.tsx`:
   new blue, resolved green, enlarged red) use another code than the image. Left for the longitudinal work (CAPA-013 and PR #69
   touch that view); proposed: one colour-blind-safe code for the layer and the panel, plus a non-colour cue.
+
+### Re-review of PR #71 (2026-10-29)
+
+- **R6 — periventricular against deep white matter is now the closest pair as drawn** (ΔE2000 ≈ 11–12 for normal vision, ≈ 6
+  deutan, re-review's figures), and it is the pair that matters for DIS (periventricular counts, deep white matter does not).
+  The legends and the lesion rows already name the regions in text; on the image the colour was the only cue. **Non-colour
+  cue added:** the sidebar's cursor readout names the label of the voxel under the cursor ("Label: Periventricular"; a value
+  missing from the table as "9 (not in the label table)") — `utils/labelUnderCursor.ts`, `ImageViewer2D.tsx`,
+  `ControlPanel.tsx`. Tests: `utils/labelUnderCursor.test.ts`, `components/ControlPanel.prb008.test.tsx` (`rc076 R6`); fail on
+  `4626d17` (`records/risk_verification/PRB-004_rereview_tests_on_4626d17_2026-10-29.json`). Negative controls W14–W16.
+  The default region opacity was **not** raised: a stronger fill hides more of the FLAIR signal under the lesion, and the
+  reading effect has not been assessed — owner decision.
+- **Note — vermillion is close to plain red for a deutan reader** (ΔE76 2.3 opaque, re-review). Plain red is used by the GPU
+  and 3D views for a mask without a label table and by the later visit in 3D. A region-classified mask always has a label
+  table, so the two do not appear in the same lesion overlay; they can appear together in 3D (zone map with the later visit).
+  Recorded; no change.
+- **R5 — one colour for mask values missing from the label table:** `UNLABELLED_FALLBACK_COLOR = '#00FFFF'` (cyan) in
+  `utils/regionColors.ts`, used by the GPU / 3D colormap (`maskLabelColormap.ts` holds no colour literal of its own). No lesion
+  label preset uses cyan. PR #69 uses magenta (`#FF00FF`) in the 2D canvas, which is the MAGNIMS "Active (Gd+)" colour — an
+  unlabelled value would look like an active lesion; the coordinator asks #69 to import this constant. Test `regionColors.test.ts`
+  (`rc076 R5`); negative control W13.
