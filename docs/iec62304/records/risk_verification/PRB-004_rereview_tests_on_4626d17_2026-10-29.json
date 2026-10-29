@@ -1,0 +1,381 @@
+{
+  "executed": "2026-10-29T01:06:00",
+  "base": "4626d17 (PR #71 at the re-review)",
+  "method": "in a throwaway detached worktree of the commit under test (review m8): source files that differ from the base commit restored to it, files it did not have removed (tests and frontend/src/test helpers kept); the PRB-004..010 test files (and the review tests) run unchanged; worktree removed",
+  "tests_from_commit": "bd5b0320542f61430188af26270bc8ce2d1e8869",
+  "swapped": {
+    "restored_to_base": [
+      "backend/app/api/routes/segmentation.py",
+      "backend/app/services/segmentation_service.py",
+      "frontend/src/components/ControlPanel.tsx",
+      "frontend/src/components/ImageViewer2D.tsx",
+      "frontend/src/components/ImageViewer3D.tsx",
+      "frontend/src/i18n/locales/de.json",
+      "frontend/src/i18n/locales/en.json",
+      "frontend/src/i18n/locales/es.json",
+      "frontend/src/store/useViewerStore.ts",
+      "frontend/src/utils/maskLabelColormap.ts",
+      "frontend/src/utils/niivueVoxelGrid.ts",
+      "frontend/src/utils/regionColors.ts"
+    ],
+    "removed": [
+      "frontend/src/utils/labelUnderCursor.ts"
+    ]
+  },
+  "test_sha256": {
+    "backend/tests/unit/test_prb006_mask_display_range.py": "5c966ecbd72f53e228f6a3d210e9aae77181d035bdb237ae6e0569562148afab",
+    "backend/tests/unit/test_prb010_region_label_colours.py": "e82d84907532cb88b8cb360ae3d421264ff989fa6736e2f9d238647e7c81c8e2",
+    "backend/tests/unit/test_prb004_review_ref_alignment.py": "b28303d4ca858e71662cd7e387c5f6c93d57edddb84f40838098c1bbf529f473",
+    "frontend/src/components/NiivueViewer2D.prb004.test.tsx": "75b040bdaca11a192f10980bc00c9fd8524b54589de3d53636dd3532849ed5a9",
+    "frontend/src/components/ImageViewer3D.prb005.test.tsx": "8a89683e89f8e78d3288bb9011e12efeba90fbdc94c66b51e5a46b36fc9a6578",
+    "frontend/src/ViewerApp.prb007.test.tsx": "8a33203477f8890670af6fa21efa57591f9f056dd09219f7fca994ee838cccf1",
+    "frontend/src/utils/sequenceDetection.prb007.test.ts": "f1611e1cef8dc653cf2b3120a1a1a9c40c72ce0445dbe31d19b022889aa29a5d",
+    "frontend/src/utils/sliceOnOpen.test.ts": "ab1ade73984f6719b09aedef2d7f77cc224b141e71d76eafdb55dd6eaee9d4b0",
+    "frontend/src/utils/niivueWindowLevel.test.ts": "f5e47745aba5755a06a1f5b9c45a2661959f811462ef74f0cd40e22f18cfc01f",
+    "frontend/src/components/QuickScreenBadge.prb009.test.tsx": "7d5a94a0580632aebd19ccf9b7ba86f150fd2b1f25729fa32355fffdf44c39d9",
+    "frontend/src/config/features.quickScreen.test.ts": "a0bfa662e7dfc0145329af72a31192822052db70cfbba0bbc39b12651e0f6c57",
+    "frontend/src/components/SegmentationCanvasLocal.prb010.test.tsx": "850f9cd7067a434fa07b036803f0e4403ad62ca4099f7a3e16a1e8f0f9fc358b",
+    "frontend/src/utils/regionColors.test.ts": "17e79e4b1679b1144532d6ae55f0b2ab2d8ec434769a48ba47185289f1546178",
+    "frontend/src/components/NiivueViewer2D.prb004.review.test.tsx": "ec20a7fa7b1f848afc22c625b9d8f345e11f6cfc50ea0773713a8056c1a47a95",
+    "frontend/src/components/ImageViewer3D.prb004.review.test.tsx": "d146ec22ad62e27a2dcb3ae19abdd248dcfb3bc0195db7016937ba175cde116e",
+    "frontend/src/utils/sliceOnOpen.review.test.ts": "f5d1d8e3f24c65daf84de736fd699ed1b007091ecceea2d04fa8fb63595b6cfc",
+    "frontend/src/utils/instanceClassification.prb007.review.test.ts": "4fec246073ddbbc6e4953fe5569667a391142a8d9110cb1156c519466dedadb5",
+    "frontend/src/components/MultiPanelViewer.prb004.review.test.ts": "c9a47537945893fa6373dde55961441f98654ed0876e080b6e282a619ed0a690",
+    "frontend/src/components/NiivueViewer2D.prb004.layout.test.tsx": "9c766368736b190a674b998b76567134e44d1b13f54e89ce4f5abe8827b5bf3b",
+    "frontend/src/components/ControlPanel.prb008.test.tsx": "b4fedc36cc16c7cd60780a13d9f7ebd780ee616a2e0d24fc115b84dcd2dee779",
+    "frontend/src/utils/labelUnderCursor.test.ts": "595e6cc10876df1d87a946814ae4e4ae275e886c8d94eed70041d0f13653bab0"
+  },
+  "backend": {
+    "passed": 14,
+    "failed": 3,
+    "errors": 0,
+    "results": {
+      "test_rc074_stored_binary_mask_display_range_is_zero_to_one[-15.5-189.2]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc074_stored_binary_mask_display_range_is_zero_to_one[100.0-900.0]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc074_stored_binary_mask_display_range_is_zero_to_one[0.0-255.0]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc074_stored_label_mask_display_range_is_zero_to_its_highest_label": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc074_empty_mask_display_range_is_zero_to_one": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc074_mask_stored_without_the_mri_header_has_its_own_display_range": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc074_spatial_header_and_rc031_marker_are_still_the_mri_s": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc076_backend_region_label_colours_are_the_frontend_mapping": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc076_routes_store_region_labels_with_the_mapping_only": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc073_legacy_mask_on_the_reference_grid_is_served_in_image_order_with_marker_and_own_range": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc073_legacy_square_mask_is_un_transposed": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc073_v2_mask_on_the_reference_grid_keeps_its_order_and_gets_its_own_range": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc073_identity_fallback_mask_is_not_stamped_with_the_reference_affine": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc073_mask_on_another_scanner_grid_is_served_unchanged": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc073_reference_is_read_for_its_header_only": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_500\",\"message\":\"Failed to get segmentation NIfTI: [WinError 8] Not enough memory resources are available to process this command\",\"details\":{}}}"
+      },
+      "test_rc073_alignment_failure_serves_the_stored_mask_marked_never_a_500": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_500\",\"message\":\"Failed to get segmentation NIfTI: Cannot work out file type of \\\"C:/Users/Nicolas/AppData/Local/Temp/tmpqpe_vx56.nii\\\"\",\"details\":{}}}"
+      },
+      "test_rc073_mask_not_on_the_reference_grid_is_marked_as_stored": {
+        "status": "failed",
+        "reason": "assert None == 'as-stored'"
+      }
+    }
+  },
+  "frontend": {
+    "frontend/src/ViewerApp.prb007.test.tsx": {
+      "passed": 7,
+      "failed": 0,
+      "file_error": "",
+      "not_passing": {},
+      "passing": [
+        "prb007 a study of preprocessed images only: the 2x2 grid shows all four images, none empty",
+        "prb007 a study of preprocessed images only: the 1x2 grid shows two images",
+        "prb007 the image-source switch names the source actually shown (Preproc, not Original)",
+        "prb008 the first image opens on its middle slice (7 slices: slice 4 of 7)",
+        "prb008 another image of the same size keeps the slice; an image of another size opens on its middle slice",
+        "prb008 grid panels open on the middle slice of their image, not slice 1",
+        "rc075 opening the viewer requests no screening model and shows no Quick Screen button"
+      ]
+    },
+    "frontend/src/config/features.quickScreen.test.ts": {
+      "passed": 5,
+      "failed": 0,
+      "file_error": "",
+      "not_passing": {},
+      "passing": [
+        "rc075 is OFF when the variable is not set",
+        "rc075 is OFF for any value other than true/1",
+        "rc075 turns ON only with true or 1",
+        "rc075 the viewer mounts the badge only behind the flag, in one place",
+        "rc075 the production environment file does not switch it on"
+      ]
+    },
+    "frontend/src/components/ControlPanel.prb008.test.tsx": {
+      "passed": 3,
+      "failed": 2,
+      "file_error": "",
+      "not_passing": {
+        "rc076 R6: the sidebar names the region under the cursor, and an unlisted value as such": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"cursor-label\"]",
+        "rc076 R6: the 2D viewer puts the label under the cursor into the readout (call site)": "AssertionError: expected 'import { useEffect, useRef, useState,…' to match /labelUnderCursor\\(segmentationMask\\.g…/"
+      },
+      "passing": [
+        "prb008 single view: the sidebar shows the viewer slice (guard)",
+        "prb008 2x2: the sidebar shows the active panel slice and its slice count",
+        "prb008 2x2: moving the sidebar slider moves the panels, not a hidden single-view index"
+      ]
+    },
+    "frontend/src/components/ImageViewer3D.prb004.review.test.tsx": {
+      "passed": 12,
+      "failed": 7,
+      "file_error": "",
+      "not_passing": {
+        "rc073 R1: a lesion mask that cannot be downloaded is named in 3D: could not be loaded": "Error: Unable to find an element by: [data-testid=\"niivue-3d-mask-not-shown\"]",
+        "rc073 R1: after a switch, a failed download never leaves the previous mask drawn": "Error: Unable to find an element by: [data-testid=\"niivue-3d-mask-not-shown\"]",
+        "rc073 R1: a later-visit mask that cannot be downloaded is named in 3D": "Error: Unable to find an element by: [data-testid=\"niivue-3d-mask-not-shown\"]",
+        "rc073 R3: unsaved edits on a saved segmentation are stated in 3D": "Error: Unable to find an element by: [data-testid=\"niivue-3d-unsaved-edits\"]",
+        "rc073 R4: an identity-transform mask is drawn when the image's own transform is the identity too": "AssertionError: expected 1 to be 2 // Object.is equality",
+        "rc073 R7: 3D volume: niivue's view-type and clip-plane keys are off": "AssertionError: expected [ undefined, undefined, undefined ] to deeply equal [ '', '', '' ]",
+        "rc073 R7: 3D multiplanar: niivue's view-type and clip-plane keys are off": "AssertionError: expected [ undefined, undefined, undefined ] to deeply equal [ '', '', '' ]"
+      },
+      "passing": [
+        "rc073 M1: the lesion mask and both visit masks are requested aligned to the image (ref_file_id)",
+        "rc073 M1: 3D volume: a mask without the RC-031 voxel-order marker is not drawn, and the view says so",
+        "rc073 M1: 3D multiplanar: a mask without the RC-031 voxel-order marker is not drawn, and the view says so",
+        "rc073 M1: a mask with no scanner position (identity fallback) is not drawn, and the view says so",
+        "rc073 M1: a legacy later-visit mask is not drawn, the other masks are, and the view names it",
+        "rc073 M2: a segmentation not saved yet is not shown in 3D, and the view says so",
+        "rc073 M3: \"go to slice\" reaches storage slice k on its own axis (axial LAS)",
+        "rc073 M3: \"go to slice\" reaches storage slice k on its own axis (sagittally stored)",
+        "rc023 3D volume: niivue draws no colour bar under the laterality caveat",
+        "rc023 3D multiplanar: niivue draws no colour bar under the laterality caveat",
+        "rc074 m2: the later-visit mask is drawn in a saturated colour, not white",
+        "rc076 m6: 3D colours a region-classified mask with the shared region mapping"
+      ]
+    },
+    "frontend/src/components/ImageViewer3D.prb005.test.tsx": {
+      "passed": 6,
+      "failed": 0,
+      "file_error": "",
+      "not_passing": {},
+      "passing": [
+        "prb005 3D volume: image and mask load on http://localhost:4173",
+        "prb005 3D multiplanar: image and mask load on http://localhost:4173",
+        "prb005 3D volume: image and mask load on http://mstool-viewer",
+        "prb005 3D multiplanar: image and mask load on http://mstool-viewer",
+        "rc074 3D volume: lesion mask and both visit masks — 0 transparent, labels >= 1 full colour",
+        "rc074 3D multiplanar: lesion mask and both visit masks — 0 transparent, labels >= 1 full colour"
+      ]
+    },
+    "frontend/src/components/MultiPanelViewer.prb004.review.test.ts": {
+      "passed": 1,
+      "failed": 0,
+      "file_error": "",
+      "not_passing": {},
+      "passing": [
+        "prb004 MultiPanelViewer has no mask overlay path"
+      ]
+    },
+    "frontend/src/components/NiivueViewer2D.prb004.layout.test.tsx": {
+      "passed": 1,
+      "failed": 1,
+      "file_error": "",
+      "not_passing": {
+        "rc073 R1: the 3D notice is fully visible and covers no safety annotation, in a usual and a narrow viewport": "AssertionError: notice over the caveat at 480x330: {\"notice\":{\"visibleFraction\":1,\"hiddenBelowPx\":0,\"top\":247,\"bottom\":290,\"left\":120,\"right\":360,\"clip\":{\"top\":0,\"left\":0,\"bottom\":330,\"right\":480}},\"b\":{\"visibleFraction\":1,\"hiddenBelowPx\":0"
+      },
+      "passing": [
+        "rc073 m5: the notice is fully visible and covers no safety annotation, in a usual and a narrow viewport"
+      ]
+    },
+    "frontend/src/components/NiivueViewer2D.prb004.review.test.tsx": {
+      "passed": 8,
+      "failed": 0,
+      "file_error": "",
+      "not_passing": {},
+      "passing": [
+        "rc073 M1: the mask is requested aligned to the image the view shows (ref_file_id)",
+        "rc073 M2: a segmentation not saved yet is not drawn here, and the view says so",
+        "rc073 M2: with unsaved edits the saved mask is drawn and the view says the edits are not shown",
+        "rc073 M2: the 2D viewer tells the GPU view about unsaved edits (in the mask hook or the store)",
+        "rc073 m3: niivue keys, wheel and double-click never reach niivue; the wheel steps the store slice",
+        "rc073 m5: the notice is placed at the bottom of the view, clear of the identity block and orientation banner",
+        "rc073 m9: for a mask on another grid the notice does not send the reader to the Standard view",
+        "rc076 m6: a region-classified mask is coloured by region with the shared mapping; an unknown label value is still drawn"
+      ]
+    },
+    "frontend/src/components/NiivueViewer2D.prb004.test.tsx": {
+      "passed": 12,
+      "failed": 0,
+      "file_error": "",
+      "not_passing": {},
+      "passing": [
+        "rc073 harness pin: niivue axial 2D puts patient left (−X) on the left and anterior (+Y) on top",
+        "rc073 every voxel of the slice is drawn at the standard view position: row i down, column j right",
+        "rc073 the slice shown is the standard view slice index, at the centre of that voxel slice",
+        "rc073 the mask is drawn on exactly the image voxels the standard view overlays it on",
+        "rc073 a mask on another voxel grid is not drawn in this view, and the view says so",
+        "rc073 a mask with the image shape but another position in the scanner is not drawn",
+        "rc073 a mask stored without the RC-031 voxel-order marker (legacy in-plane transpose) is not drawn",
+        "rc073 a mask that cannot be loaded is not silently missing: the view says it is not drawn",
+        "rc073 a mask on the image grid is drawn and no \"not shown\" notice appears",
+        "prb005 the W/L GPU view loads the image and the mask on http://localhost:4173",
+        "prb005 the W/L GPU view loads the image and the mask on http://mstool-viewer",
+        "rc074 mask background (0) is transparent and every lesion label (>= 1) full colour despite an MRI-copied range"
+      ]
+    },
+    "frontend/src/components/QuickScreenBadge.prb009.test.tsx": {
+      "passed": 4,
+      "failed": 0,
+      "file_error": "",
+      "not_passing": {},
+      "passing": [
+        "rc075 no Quick Screen button is shown, not even while the model is being looked for",
+        "rc075 the model is looked for once per page, not at every viewer opening",
+        "rc075 an absent model writes nothing to the console",
+        "rc075 guard: with the model present the button is shown"
+      ]
+    },
+    "frontend/src/components/SegmentationCanvasLocal.prb010.test.tsx": {
+      "passed": 7,
+      "failed": 0,
+      "file_error": "",
+      "not_passing": {},
+      "passing": [
+        "rc076 2D overlay of a classified segmentation: each region drawn in its legend colour (stored labels say red/green/blue/gold)",
+        "rc076 2D zone-coloured lesions (MAGNIMS zone colouring on) use the legend colours",
+        "rc076 2D zone-map background layer uses the legend colours",
+        "rc076 no two regions drawn on the image are red against green, and every pair stays apart for colour-blind readers, opaque and as drawn on grey tissue",
+        "rc076 3D zone map: niivue receives the legend colours for zones 1-4",
+        "rc076 the zone-colouring legend (PV / JC / IT / DWM) shows the same colours as the lesion legend",
+        "rc076 the zone-map panel legend shows the same colours as the lesion legend"
+      ]
+    },
+    "frontend/src/utils/instanceClassification.prb007.review.test.ts": {
+      "passed": 1,
+      "failed": 0,
+      "file_error": "",
+      "not_passing": {},
+      "passing": [
+        "prb007 segmentation derivatives are left out of the grid images"
+      ]
+    },
+    "frontend/src/utils/labelUnderCursor.test.ts": {
+      "passed": 0,
+      "failed": 0,
+      "file_error": "Cannot find module './labelUnderCursor' imported from 'C:/Users/Nicolas/AppData/Local/Temp/prb004-safety-run-27724-1793232196/frontend/src/utils/labelUnderCursor.test.ts'",
+      "not_passing": {},
+      "passing": []
+    },
+    "frontend/src/utils/niivueWindowLevel.test.ts": {
+      "passed": 10,
+      "failed": 0,
+      "file_error": "",
+      "not_passing": {},
+      "passing": [
+        "maps an active window to center ± width/2",
+        "handles negative centers (signed intensities)",
+        "never produces a degenerate range when a window is active (min < max)",
+        "falls back to the volume global range when no window is active (width <= 0)",
+        "falls back to the current cal range when global range is undefined",
+        "rc073 addresses the centre of the voxel slice: (index + 0.5) / depth",
+        "rc073 niivue reads it back as exactly that voxel slice (f · depth − 0.5 = index)",
+        "clamps out-of-range indices to the first and last slice",
+        "a single slice is addressed at its centre",
+        "returns null when the volume has no slices or the depth is not a number"
+      ]
+    },
+    "frontend/src/utils/regionColors.test.ts": {
+      "passed": 6,
+      "failed": 1,
+      "file_error": "",
+      "not_passing": {
+        "rc076 R5: ONE colour for mask values missing from the label table: cyan, used by the GPU / 3D colormap, no label preset uses it": "AssertionError: expected undefined to be '#00FFFF' // Object.is equality"
+      },
+      "passing": [
+        "rc076 the mapping is the Okabe-Ito legend mapping, by region and by label value",
+        "rc076 each legend dot class carries exactly the mapping colour",
+        "rc076 the MAGNIMS label preset uses the mapping",
+        "rc076 region labels stored with other colours are shown in the mapping; other labels untouched",
+        "rc076 the lesion legend and the zone-map legend take their colours from the mapping, not their own",
+        "rc076 the overlays and the 3D zone colormap carry no region colour of their own"
+      ]
+    },
+    "frontend/src/utils/sequenceDetection.prb007.test.ts": {
+      "passed": 3,
+      "failed": 0,
+      "file_error": "",
+      "not_passing": {},
+      "passing": [
+        "prb007 four images, two of them T1-weighted: four panels, sequences first",
+        "prb007 never more than four, never the same image twice",
+        "prb007 guard: one image per sequence keeps the canonical order, unknowns last"
+      ]
+    },
+    "frontend/src/utils/sliceOnOpen.review.test.ts": {
+      "passed": 5,
+      "failed": 0,
+      "file_error": "",
+      "not_passing": {},
+      "passing": [
+        "prb008 same grid: the slice is kept",
+        "prb008 same slice count, other matrix: the middle slice",
+        "prb008 same slice count, other pixel spacing: the middle slice",
+        "prb008 same slice count, other slice thickness: the middle slice",
+        "prb008 same slice count, other stored orientation: the middle slice"
+      ]
+    },
+    "frontend/src/utils/sliceOnOpen.test.ts": {
+      "passed": 6,
+      "failed": 0,
+      "file_error": "",
+      "not_passing": {},
+      "passing": [
+        "prb008 middle slice: floor((n - 1) / 2)",
+        "prb008 the first image opens on its middle slice, never slice 0 of a volume",
+        "prb008 same study, same size: the slice is kept",
+        "prb008 another size, or another study: the middle slice",
+        "prb008 a kept index is never outside the new image",
+        "prb008 slice count from total_slices, else from the slices list; unknown is 0"
+      ]
+    }
+  },
+  "note": "Re-review of PR #71 (R1-R7): the re-review tests (named R1..R7, the header-only / never-500 / X-Mask-Alignment route tests, labelUnderCursor.test.ts, the 3D notice layout test) must fail on 4626d17; every earlier test passes there."
+}

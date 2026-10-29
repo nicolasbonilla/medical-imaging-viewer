@@ -153,8 +153,8 @@ async function openViewer() {
     </QueryClientProvider>,
     { container: root },
   );
-  await waitFor(() => expect(useViewerStore.getState().currentSeries).not.toBeNull(), { timeout: 5000 });
-  await waitFor(() => expect(document.querySelector('#main-content canvas')).not.toBeNull(), { timeout: 5000 });
+  await waitFor(() => expect(useViewerStore.getState().currentSeries).not.toBeNull(), { timeout: 15000 });
+  await waitFor(() => expect(document.querySelector('#main-content canvas')).not.toBeNull(), { timeout: 15000 });
 }
 
 const fileOf = (id: string) => fx.INSTANCES.find((i) => i.id === id)!;

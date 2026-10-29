@@ -1,8 +1,8 @@
 {
-  "executed": "2026-10-28T23:44:34",
+  "executed": "2026-10-29T00:59:29",
   "base": "70cc5c7 (main, merge of PR #64)",
   "method": "in a throwaway detached worktree of the commit under test (review m8): source files that differ from the base commit restored to it, files it did not have removed (tests and frontend/src/test helpers kept); the PRB-004..010 test files (and the review tests) run unchanged; worktree removed",
-  "tests_from_commit": "2d4fdeba60908b6d8bd74b3a7ee0041bd770f3a3",
+  "tests_from_commit": "bd5b0320542f61430188af26270bc8ce2d1e8869",
   "swapped": {
     "restored_to_base": [
       "backend/app/api/routes/segmentation.py",
@@ -32,6 +32,7 @@
       "frontend/src/utils/sequenceDetection.ts"
     ],
     "removed": [
+      "frontend/src/utils/labelUnderCursor.ts",
       "frontend/src/utils/maskLabelColormap.ts",
       "frontend/src/utils/niivueVoxelGrid.ts",
       "frontend/src/utils/regionColors.ts",
@@ -41,7 +42,7 @@
   "test_sha256": {
     "backend/tests/unit/test_prb006_mask_display_range.py": "5c966ecbd72f53e228f6a3d210e9aae77181d035bdb237ae6e0569562148afab",
     "backend/tests/unit/test_prb010_region_label_colours.py": "e82d84907532cb88b8cb360ae3d421264ff989fa6736e2f9d238647e7c81c8e2",
-    "backend/tests/unit/test_prb004_review_ref_alignment.py": "0eb55249a87b86849b76dd37f9203fdce07054285e9b666541f3e34b90bce0eb",
+    "backend/tests/unit/test_prb004_review_ref_alignment.py": "b28303d4ca858e71662cd7e387c5f6c93d57edddb84f40838098c1bbf529f473",
     "frontend/src/components/NiivueViewer2D.prb004.test.tsx": "75b040bdaca11a192f10980bc00c9fd8524b54589de3d53636dd3532849ed5a9",
     "frontend/src/components/ImageViewer3D.prb005.test.tsx": "8a89683e89f8e78d3288bb9011e12efeba90fbdc94c66b51e5a46b36fc9a6578",
     "frontend/src/ViewerApp.prb007.test.tsx": "8a33203477f8890670af6fa21efa57591f9f056dd09219f7fca994ee838cccf1",
@@ -51,18 +52,19 @@
     "frontend/src/components/QuickScreenBadge.prb009.test.tsx": "7d5a94a0580632aebd19ccf9b7ba86f150fd2b1f25729fa32355fffdf44c39d9",
     "frontend/src/config/features.quickScreen.test.ts": "a0bfa662e7dfc0145329af72a31192822052db70cfbba0bbc39b12651e0f6c57",
     "frontend/src/components/SegmentationCanvasLocal.prb010.test.tsx": "850f9cd7067a434fa07b036803f0e4403ad62ca4099f7a3e16a1e8f0f9fc358b",
-    "frontend/src/utils/regionColors.test.ts": "622978845a9c09cfafd490ba9d1d19a9c98681612d9491dc1b017c75e5bdd152",
+    "frontend/src/utils/regionColors.test.ts": "17e79e4b1679b1144532d6ae55f0b2ab2d8ec434769a48ba47185289f1546178",
     "frontend/src/components/NiivueViewer2D.prb004.review.test.tsx": "ec20a7fa7b1f848afc22c625b9d8f345e11f6cfc50ea0773713a8056c1a47a95",
-    "frontend/src/components/ImageViewer3D.prb004.review.test.tsx": "f961b8c847f71796dce0b825f91b2f2bb10adde234bb050a6fcd431174d14f19",
+    "frontend/src/components/ImageViewer3D.prb004.review.test.tsx": "d146ec22ad62e27a2dcb3ae19abdd248dcfb3bc0195db7016937ba175cde116e",
     "frontend/src/utils/sliceOnOpen.review.test.ts": "f5d1d8e3f24c65daf84de736fd699ed1b007091ecceea2d04fa8fb63595b6cfc",
     "frontend/src/utils/instanceClassification.prb007.review.test.ts": "4fec246073ddbbc6e4953fe5569667a391142a8d9110cb1156c519466dedadb5",
     "frontend/src/components/MultiPanelViewer.prb004.review.test.ts": "c9a47537945893fa6373dde55961441f98654ed0876e080b6e282a619ed0a690",
-    "frontend/src/components/NiivueViewer2D.prb004.layout.test.tsx": "aec93bf6d380fd94945b19160e909e54c13338803aad241310153317dc7f1113",
-    "frontend/src/components/ControlPanel.prb008.test.tsx": "2b0995528253200a24b2d358edff56ef34eeb445b921e79e83f3fd9de1eb0f88"
+    "frontend/src/components/NiivueViewer2D.prb004.layout.test.tsx": "9c766368736b190a674b998b76567134e44d1b13f54e89ce4f5abe8827b5bf3b",
+    "frontend/src/components/ControlPanel.prb008.test.tsx": "b4fedc36cc16c7cd60780a13d9f7ebd780ee616a2e0d24fc115b84dcd2dee779",
+    "frontend/src/utils/labelUnderCursor.test.ts": "595e6cc10876df1d87a946814ae4e4ae275e886c8d94eed70041d0f13653bab0"
   },
   "backend": {
     "passed": 1,
-    "failed": 13,
+    "failed": 16,
     "errors": 0,
     "results": {
       "test_rc074_spatial_header_and_rc031_marker_are_still_the_mri_s": {
@@ -95,7 +97,7 @@
       },
       "test_rc076_backend_region_label_colours_are_the_frontend_mapping": {
         "status": "failed",
-        "reason": "ImportError: cannot import name 'MAGNIMS_REGION_LABEL_COLORS' from 'app.api.routes.segmentation_regions' (C:\\Users\\Nicolas\\AppData\\Local\\Temp\\prb004-safety-run-27096-1793227408\\backend\\app\\api\\routes\\segmentation_regions.py)"
+        "reason": "ImportError: cannot import name 'MAGNIMS_REGION_LABEL_COLORS' from 'app.api.routes.segmentation_regions' (C:\\Users\\Nicolas\\AppData\\Local\\Temp\\prb004-safety-run-1436-1793231894\\backend\\app\\api\\routes\\segmentation_regions.py)"
       },
       "test_rc076_routes_store_region_labels_with_the_mapping_only": {
         "status": "failed",
@@ -114,6 +116,18 @@
         "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_500\",\"message\":\"Failed to get segmentation NIfTI: name 'io' is not defined\",\"details\":{}}}"
       },
       "test_rc073_identity_fallback_mask_is_not_stamped_with_the_reference_affine": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_500\",\"message\":\"Failed to get segmentation NIfTI: name 'io' is not defined\",\"details\":{}}}"
+      },
+      "test_rc073_reference_is_read_for_its_header_only": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_500\",\"message\":\"Failed to get segmentation NIfTI: name 'io' is not defined\",\"details\":{}}}"
+      },
+      "test_rc073_alignment_failure_serves_the_stored_mask_marked_never_a_500": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_500\",\"message\":\"Failed to get segmentation NIfTI: name 'io' is not defined\",\"details\":{}}}"
+      },
+      "test_rc073_mask_not_on_the_reference_grid_is_marked_as_stored": {
         "status": "failed",
         "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_500\",\"message\":\"Failed to get segmentation NIfTI: name 'io' is not defined\",\"details\":{}}}"
       },
@@ -155,9 +169,11 @@
     },
     "frontend/src/components/ControlPanel.prb008.test.tsx": {
       "passed": 1,
-      "failed": 2,
+      "failed": 4,
       "file_error": "",
       "not_passing": {
+        "rc076 R6: the sidebar names the region under the cursor, and an unlisted value as such": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"cursor-label\"]",
+        "rc076 R6: the 2D viewer puts the label under the cursor into the readout (call site)": "AssertionError: expected 'import { useEffect, useRef, useState,…' to match /labelUnderCursor\\(segmentationMask\\.g…/",
         "prb008 2x2: the sidebar shows the active panel slice and its slice count": "TypeError: multi.setPanelSliceIndex is not a function",
         "prb008 2x2: moving the sidebar slider moves the panels, not a hidden single-view index": "TypeError: multi.setPanelSliceIndex is not a function"
       },
@@ -166,8 +182,8 @@
       ]
     },
     "frontend/src/components/ImageViewer3D.prb004.review.test.tsx": {
-      "passed": 0,
-      "failed": 12,
+      "passed": 1,
+      "failed": 18,
       "file_error": "",
       "not_passing": {
         "rc073 M1: the lesion mask and both visit masks are requested aligned to the image (ref_file_id)": "AssertionError: expected false to be true // Object.is equality",
@@ -180,10 +196,18 @@
         "rc073 M3: \"go to slice\" reaches storage slice k on its own axis (sagittally stored)": "AssertionError: expected 0.5 to be close to 0.09999999403953552, received difference is 0.4000000059604645, but expected 5e-7",
         "rc023 3D volume: niivue draws no colour bar under the laterality caveat": "AssertionError: expected true to be false // Object.is equality",
         "rc023 3D multiplanar: niivue draws no colour bar under the laterality caveat": "AssertionError: expected true to be false // Object.is equality",
+        "rc073 R1: a lesion mask that cannot be downloaded is named in 3D: could not be loaded": "Error: Unable to find an element by: [data-testid=\"niivue-3d-mask-not-shown\"]",
+        "rc073 R1: after a switch, a failed download never leaves the previous mask drawn": "Error: Unable to find an element by: [data-testid=\"niivue-3d-mask-not-shown\"]",
+        "rc073 R1: a later-visit mask that cannot be downloaded is named in 3D": "Error: Unable to find an element by: [data-testid=\"niivue-3d-mask-not-shown\"]",
+        "rc073 R3: unsaved edits on a saved segmentation are stated in 3D": "Error: Unable to find an element by: [data-testid=\"niivue-3d-unsaved-edits\"]",
+        "rc073 R7: 3D volume: niivue's view-type and clip-plane keys are off": "AssertionError: expected [ undefined, undefined, undefined ] to deeply equal [ '', '', '' ]",
+        "rc073 R7: 3D multiplanar: niivue's view-type and clip-plane keys are off": "AssertionError: expected [ undefined, undefined, undefined ] to deeply equal [ '', '', '' ]",
         "rc074 m2: the later-visit mask is drawn in a saturated colour, not white": "AssertionError: expected [ 255, 255, 255 ] to not deeply equal [ 255, 255, 255 ]",
         "rc076 m6: 3D colours a region-classified mask with the shared region mapping": "AssertionError: expected [ 'unregistered colormap red', …(3) ] to deeply equal [ '#E69F00', '#56B4E9', …(2) ]"
       },
-      "passing": []
+      "passing": [
+        "rc073 R4: an identity-transform mask is drawn when the image's own transform is the identity too"
+      ]
     },
     "frontend/src/components/ImageViewer3D.prb005.test.tsx": {
       "passed": 0,
@@ -210,10 +234,11 @@
     },
     "frontend/src/components/NiivueViewer2D.prb004.layout.test.tsx": {
       "passed": 0,
-      "failed": 1,
+      "failed": 2,
       "file_error": "",
       "not_passing": {
-        "rc073 m5: the notice is fully visible and covers no safety annotation, in a usual and a narrow viewport": "Error: Unable to find an element by: [data-testid=\"niivue-mask-not-shown\"]"
+        "rc073 m5: the notice is fully visible and covers no safety annotation, in a usual and a narrow viewport": "Error: Unable to find an element by: [data-testid=\"niivue-mask-not-shown\"]",
+        "rc073 R1: the 3D notice is fully visible and covers no safety annotation, in a usual and a narrow viewport": "Error: Unable to find an element by: [data-testid=\"niivue-3d-mask-not-shown\"]"
       },
       "passing": []
     },
@@ -291,6 +316,13 @@
       },
       "passing": []
     },
+    "frontend/src/utils/labelUnderCursor.test.ts": {
+      "passed": 0,
+      "failed": 0,
+      "file_error": "Cannot find module './labelUnderCursor' imported from 'C:/Users/Nicolas/AppData/Local/Temp/prb004-safety-run-1436-1793231894/frontend/src/utils/labelUnderCursor.test.ts'",
+      "not_passing": {},
+      "passing": []
+    },
     "frontend/src/utils/niivueWindowLevel.test.ts": {
       "passed": 5,
       "failed": 5,
@@ -313,7 +345,7 @@
     "frontend/src/utils/regionColors.test.ts": {
       "passed": 0,
       "failed": 0,
-      "file_error": "Cannot find module './regionColors' imported from 'C:/Users/Nicolas/AppData/Local/Temp/prb004-safety-run-27096-1793227408/frontend/src/utils/regionColors.test.ts'",
+      "file_error": "Cannot find module './regionColors' imported from 'C:/Users/Nicolas/AppData/Local/Temp/prb004-safety-run-1436-1793231894/frontend/src/utils/regionColors.test.ts'",
       "not_passing": {},
       "passing": []
     },
