@@ -26,7 +26,7 @@
   "usd_per_hour_list": 0.20109,
   "cost_usd_list": 0.0616,
   "cost_usd_recorded": "0.0582",
-  "price_basis": "Cloud Billing catalog list price 2026-10-24 (cores+RAM+boot disk)",
+  "price_basis": "Cloud Billing catalog list price 2026-10-29 (cores+RAM+boot disk)",
   "notes": "Failed before the first case: PyPI torchvision built for another torch. Fix: torch + torchvision from the same CPU index and an environment self-test.",
   "_kind": "inference",
   "machines": 1,
@@ -36,7 +36,7 @@
  "plan": {},
  "runinfo": {},
  "price": {
-  "date_utc": "2026-10-24T11:02:21Z",
+  "date_utc": "2026-10-29T00:18:24Z",
   "machine_type": "n2-standard-4",
   "region": "us-central1",
   "spot": false,

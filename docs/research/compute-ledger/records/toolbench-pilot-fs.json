@@ -30,8 +30,8 @@
   "notes": "",
   "_kind": "inference",
   "machines": 1,
-  "purpose_es": "Paper F pilot: WMH-SynthSeg and SAMSEG (FreeSurfer 8.2.0) on ms3seg_001, pedims_P1_T1, mslesseg_P10_T1",
-  "notes_es": ""
+  "purpose_es": "Art\u00edculo F, piloto de FreeSurfer 8.2.0: WMH-SynthSeg y SAMSEG en 3 estudios (MS3SEG, PediMS, MSLesSeg)",
+  "notes_es": "WMH-SynthSeg 3/3 (unos 4 min por estudio, memoria m\u00e1xima 31,3 GB). SAMSEG termin\u00f3 ms3seg_001 (607 s) y el registro del piloto se cort\u00f3 al guardarlo (fallo de formato corregido en 96bd925); el resultado qued\u00f3 en el cubo y se comprob\u00f3 contra el registro de la m\u00e1quina (1129 v\u00f3xeles de lesi\u00f3n)."
  },
  "plan": {
   "run_id": "toolbench-pilot-fs",

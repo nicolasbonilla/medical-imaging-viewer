@@ -154,5 +154,36 @@
  },
  "toolbench-mgraw-2": {
   "purpose_es": "Artículo F: MindGlide con la imagen original, casos restantes (36)"
+ },
+ "lstai-ctl": {
+  "purpose_es": "LST-AI v1.2.0 en los 100 controles sanos SibBMS (sub-001 ya hecho en el piloto)"
+ },
+ "toolbench-pilot-fs": {
+  "purpose_es": "Artículo F, piloto de FreeSurfer 8.2.0: WMH-SynthSeg y SAMSEG en 3 estudios (MS3SEG, PediMS, MSLesSeg)",
+  "notes_es": "WMH-SynthSeg 3/3 (unos 4 min por estudio, memoria máxima 31,3 GB). SAMSEG terminó ms3seg_001 (607 s) y el registro del piloto se cortó al guardarlo (fallo de formato corregido en 96bd925); el resultado quedó en el cubo y se comprobó contra el registro de la máquina (1129 vóxeles de lesión)."
+ },
+ "toolbench-pilot-fs-2": {
+  "purpose_es": "Artículo F, piloto 2 de SAMSEG: los 2 estudios que faltaban, con el registro ya corregido",
+  "notes_es": "Superado: 2/2, unos 9 min por estudio, 7,1 GB de memoria; etiqueta 99 = lesión."
+ },
+ "toolbench-samseg-a": {
+  "purpose_es": "Artículo F: SAMSEG con lesiones (nivel C del presupuesto), bloque 1 de 3: MS3SEG impares",
+  "notes_es": "42/42 sin errores (ms3seg_001 ya venía del piloto); mediana 8,2 min por estudio, memoria máxima 4,7 GB."
+ },
+ "toolbench-samseg-b": {
+  "purpose_es": "Artículo F: SAMSEG con lesiones (nivel C del presupuesto), bloque 2 de 3: MS3SEG impares y Bagdad",
+  "notes_es": "43/43 sin errores; mediana 7,8 min por estudio, memoria máxima 6,0 GB."
+ },
+ "toolbench-samseg-c": {
+  "purpose_es": "Artículo F: SAMSEG con lesiones (nivel C del presupuesto), bloque 3 de 3: Bagdad y PediMS",
+  "notes_es": "42/42 sin errores (pedims_P1_T1 ya venía del piloto 2); mediana 8,7 min por estudio, memoria máxima 4,9 GB."
+ },
+ "toolbench-wmh": {
+  "purpose_es": "Artículo F: WMH-SynthSeg (FreeSurfer 8.2.0) en los 324 estudios",
+  "notes_es": "320 de 321 sin errores; muslim_16 se quedó sin memoria y se repitió con la opción de recorte (toolbench-wmh-crop), como fija el protocolo."
+ },
+ "toolbench-wmh-crop": {
+  "purpose_es": "Artículo F: WMH-SynthSeg con recorte, solo muslim_16 (se quedó sin memoria en la corrida principal)",
+  "notes_es": "Superado: 1/1 en 287 s, 25,3 GB de memoria."
  }
 }

@@ -5,27 +5,27 @@
   "project": "mstool-research",
   "purpose": "SibBMS controls sub-001..sub-034: HD-BET + FLAMeS folds 0-4",
   "paper_or_feature": "A,detector-v3",
-  "status": "running",
+  "status": "ok",
   "machine_type": "n2d-standard-4",
   "vcpus": 4,
   "memory_gb": 16.0,
   "cpu_platform": "AMD Milan",
-  "cpu_model": "not recorded",
+  "cpu_model": "AMD EPYC 7B13",
   "gpu": "",
   "provisioning": "STANDARD",
   "zone": "us-central1-c",
-  "start_utc": "2026-10-24T07:09:39Z",
-  "end_utc": "",
-  "wall_seconds": "",
-  "vm_hours": "",
-  "setup_seconds": "",
-  "compute_seconds": "",
-  "items_ok": 40,
+  "start_utc": "2026-10-24T07:10:16Z",
+  "end_utc": "2026-10-24T13:12:18Z",
+  "wall_seconds": 21722,
+  "vm_hours": 6.0339,
+  "setup_seconds": 285,
+  "compute_seconds": 21436,
+  "items_ok": 160,
   "items_failed": 0,
   "median_seconds_per_item": 69.8,
   "usd_per_hour_list": 0.17583,
-  "cost_usd_list": "",
-  "cost_usd_recorded": "",
+  "cost_usd_list": 1.0609,
+  "cost_usd_recorded": "1.0609",
   "price_basis": "Cloud Billing catalog list price 2026-10-24 (cores+RAM+boot disk)",
   "notes": "",
   "_kind": "inference",
@@ -90,7 +90,35 @@
   "startup_script": "vm_sibbms_controls_v2.sh",
   "git_commit": "dd5f281"
  },
- "runinfo": {},
+ "runinfo": {
+  "run_id": "sibbms-ctl-a",
+  "wall_seconds": 21722,
+  "rate_usd_per_h_metadata": "0.17583",
+  "cost_usd_estimate_metadata": "1.0609",
+  "hardware": {
+   "cpu_platform": "AMD Milan",
+   "cpu_model": "AMD EPYC 7B13",
+   "vcpus": "4",
+   "threads_per_core": "2",
+   "memory_gb": "15",
+   "gpu": "",
+   "os": "Ubuntu 22.04.5 LTS",
+   "kernel": "6.8.0-1070-gcp",
+   "machine_type": "n2d-standard-4",
+   "zone": "us-central1-c",
+   "provisioning": ""
+  },
+  "stages_utc": {
+   "boot": "2026-10-24T07:10:16Z",
+   "env_start": "2026-10-24T07:13:12Z",
+   "weights_start": "2026-10-24T07:14:28Z",
+   "code_start": "2026-10-24T07:14:58Z",
+   "inference_start": "2026-10-24T07:15:01Z",
+   "prep_end": "2026-10-24T10:05:16Z",
+   "inference_end": "2026-10-24T13:12:17Z",
+   "end": "2026-10-24T13:12:18Z"
+  }
+ },
  "price": {
   "date_utc": "2026-10-24T07:09:39Z",
   "machine_type": "n2d-standard-4",
@@ -125,7 +153,13 @@
    }
   }
  },
- "cost_record": {},
+ "cost_record": {
+  "run_id": "sibbms-ctl-a",
+  "machine": "n2d-standard-4",
+  "seconds": "21722",
+  "rate_usd_per_h": "0.17583",
+  "cost_usd_compute_estimate": "1.0609"
+ },
  "manifest_summary": {
   "versions": {
    "python": "3.10.12",
@@ -152,7 +186,7 @@
   },
   "errors": [],
   "started_utc": "2026-10-24T10:05:21Z",
-  "finished_utc": null
+  "finished_utc": "2026-10-24T13:12:16Z"
  },
  "vm": {
   "cpuPlatform": "AMD Milan",

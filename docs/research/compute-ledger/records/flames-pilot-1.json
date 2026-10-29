@@ -26,7 +26,7 @@
   "usd_per_hour_list": 0.23987,
   "cost_usd_list": 0.0838,
   "cost_usd_recorded": "0.028",
-  "price_basis": "Cloud Billing catalog list price 2026-10-24 (cores+RAM+boot disk)",
+  "price_basis": "Cloud Billing catalog list price 2026-10-29 (cores+RAM+boot disk)",
   "notes": "Reproduced the Aug-2026 maps (Dice 1.0; max difference 0.002 = storage rounding). Old script: CPU platform and stage times not recorded; its recorded rate 0.08 USD/h was an under-estimate.",
   "_kind": "inference",
   "machines": 1,
@@ -36,7 +36,7 @@
  "plan": {},
  "runinfo": {},
  "price": {
-  "date_utc": "2026-10-24T11:02:20Z",
+  "date_utc": "2026-10-29T00:18:22Z",
   "machine_type": "n2-standard-8",
   "region": "us-central1",
   "spot": true,

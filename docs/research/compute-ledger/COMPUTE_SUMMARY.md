@@ -1,16 +1,16 @@
 # Registro de cómputo de la investigación MSTool-AI
 
-Generado el 2026-10-24 10:58 UTC con `research/cloud/build_ledger.py`. Precios: **precio oficial de lista de Google Cloud en USD** (Cloud Billing Catalog API, consultado el mismo día, con el código SKU de cada parte en `records/`). Cambio: 1 EUR = 1.1193 USD (tipo de referencia del BCE del 2026-10-23). Google factura en EUR con su propio cambio; la cifra exacta se cruza después con el informe de facturación.
+Generado el 2026-10-29 00:14 UTC con `research/cloud/build_ledger.py`. Precios: **precio oficial de lista de Google Cloud en USD** (Cloud Billing Catalog API, consultado el mismo día, con el código SKU de cada parte en `records/`). Cambio: 1 EUR = 1.1133 USD (tipo de referencia del BCE del 2026-10-28). Google factura en EUR con su propio cambio; la cifra exacta se cruza después con el informe de facturación.
 
 ## Resumen
 
 | Concepto | Valor |
 |---|---|
-| Corridas en la nube con tiempo medido | 26 en mstool-research · 9 en agosto (brain-mri-476110) |
-| Horas de máquina, proyecto de investigación | 75.29 h |
-| Coste a precio de lista, proyecto de investigación | 13.31 USD ≈ 11.89 EUR |
-| Almacenamiento en el cubo (hoy) | 9.49 GB ≈ 0.190 USD/mes |
-| Crédito gratuito usado (estimado) | 12.06 EUR de 264 EUR (tope propio 240 EUR; caduca 2027-01-15) — quedan ≈ 227.94 EUR |
+| Corridas en la nube con tiempo medido | 35 en mstool-research · 9 en agosto (brain-mri-476110) |
+| Horas de máquina, proyecto de investigación | 136.72 h |
+| Coste a precio de lista, proyecto de investigación | 26.22 USD ≈ 23.55 EUR |
+| Almacenamiento en el cubo (hoy) | 9.55 GB ≈ 0.191 USD/mes |
+| Crédito gratuito usado (estimado) | 23.72 EUR de 264 EUR (tope propio 240 EUR; caduca 2027-01-15) — quedan ≈ 216.28 EUR |
 | Horas de máquina, agosto (proyecto de la app) | 7.50 h · registrado 0.86 USD · a precio de lista de hoy 1.69 USD (pagado por la cuenta de la app, no por el crédito) |
 | Horas de tarjeta gráfica en Kaggle (cuota gratuita semanal) | 21.16 h de cuota en 7 sesiones · 0 USD |
 
@@ -19,7 +19,7 @@ Generado el 2026-10-24 10:58 UTC con `research/cloud/build_ledger.py`. Precios: 
 | Máquina | Procesador | vCPU | Memoria (GB) | Tarjeta gráfica | Modalidad | USD/hora (lista) |
 |---|---|---|---|---|---|---|
 | e2-standard-8 | no registrado | 8 | 32.0 | — | Spot (interrumpible) | 0.1614 |
-| n1-standard-4 | no registrado | 4 | 15.0 | nvidia-tesla-p4:1 | Spot (interrumpible) | 0.34452 |
+| n1-standard-4 | no registrado | 4 | 15.0 | nvidia-tesla-p4:1 | Spot (interrumpible) | 0.32734 |
 | n2-standard-8 | no registrado | 8 | 32.0 | — | Spot (interrumpible) | 0.23987 |
 | n2d-standard-4 | AMD Milan — AMD EPYC 7B13 | 4 | 16.0 | — | estándar | 0.17583 |
 | n2-standard-4 | Intel Cascade Lake — Intel(R) Xeon(R) CPU @ 2.80GHz | 4 | 16.0 | — | estándar | 0.20109 |
@@ -36,7 +36,7 @@ Generado el 2026-10-24 10:58 UTC con `research/cloud/build_ledger.py`. Precios: 
 | 2026-08-17 | flames-pilot | FLAMeS, piloto 1 de agosto: 3 casos de principio a fin | e2-standard-8 | no registrado | Spot (interrumpible) | 0:17:33 | — / — | — / — | — | 0.0471 | 0.0292 | fallida (errores del piloto corregidos) |
 | 2026-08-17 | flames-pilot2 | FLAMeS, piloto 2 de agosto | e2-standard-8 | no registrado | Spot (interrumpible) | 0:12:42 | — / — | — / — | — | 0.0342 | 0.0212 | fallida (errores del piloto corregidos) |
 | 2026-08-17 | flames-pilot3 | FLAMeS, piloto 3 de agosto | e2-standard-8 | no registrado | Spot (interrumpible) | 0:22:19 | — / — | — / — | — | 0.0600 | 0.0372 | fallida (errores del piloto corregidos) |
-| 2026-08-17 | flames-pilot4-gpu | FLAMeS, piloto 4 de agosto con tarjeta gráfica NVIDIA P4 | n1-standard-4 | no registrado | Spot (interrumpible) | 0:25:49 | — / — | — / — | — | 0.1483 | 0.0947 | fallida (errores del piloto corregidos) |
+| 2026-08-17 | flames-pilot4-gpu | FLAMeS, piloto 4 de agosto con tarjeta gráfica NVIDIA P4 | n1-standard-4 | no registrado | Spot (interrumpible) | 0:25:49 | — / — | — / — | — | 0.1409 | 0.0947 | fallida (errores del piloto corregidos) |
 | 2026-08-17 | flames-pilot5-cpu | FLAMeS, piloto 5 de agosto solo con procesador (validado) | e2-standard-8 | no registrado | Spot (interrumpible) | 0:26:06 | — / — | — / — | — | 0.0702 | 0.0435 | correcta |
 | 2026-08-17 | flames-full | FLAMeS completo de agosto: mapas de 145 casos (30 Ljubljana + 115 MSLesSeg) | n1-standard-4 | no registrado | Spot (interrumpible) | — | — / — | — / — | — | — | — | sin tiempo registrado |
 | 2026-08-17 | flames-controls | FLAMeS en 100 controles sanos SibBMS (planificada en agosto) | n1-standard-8 | no registrado | Spot (interrumpible) | — | — / — | — / — | — | — | — | sin tiempo registrado |
@@ -75,12 +75,18 @@ Generado el 2026-10-24 10:58 UTC con `research/cloud/build_ledger.py`. Precios: 
 | 2026-10-22 | toolbench-mgraw | Artículo F: MindGlide con la imagen original (MS3SEG, Bagdad, PediMS) | e2-standard-4 | Intel Broadwell | estándar | 10:00:01 | 0:08:57 / — | 143 / 3 | 252.8 | 1.4772 | 1.4772 | fallida |
 | 2026-10-22 | toolbench-mgraw-2 | Artículo F: MindGlide con la imagen original, casos restantes (36) | e2-standard-4 | Intel Broadwell | estándar | 3:04:22 | 0:08:16 / 2:56:04 | 36 / 0 | 286.1 | 0.4539 | 0.4539 | correcta |
 | 2026-10-22 | kaggle-full-s3 | FLAMeS-thick full run, both arms side by side (300 epochs each, PROTOCOL §5) | Kaggle NvidiaTeslaT4 |  | cuota gratuita de Kaggle | 8:34:06 | — / — | flames-thick-a: 120 (180→300) / flames-thick-b: 109 (191→300) / — | flames-thick-a: 246.81 / flames-thick-b: 244.79 | 0.0000 | 0.0000 | correcta |
-| 2026-10-23 | toolbench-pilot-fs | Paper F pilot: WMH-SynthSeg and SAMSEG (FreeSurfer 8.2.0) on ms3seg_001, pedims_P1_T1, mslesseg_P10_T1 | n2d-highmem-4 | AMD Milan | estándar | 0:29:32 | 0:06:46 / 0:22:45 | 3 / 0 | 243.1 | 0.1223 | 0.1223 | correcta |
-| 2026-10-23 | toolbench-pilot-fs-2 | Paper F pilot 2: SAMSEG remaining cases (ms3seg_001 already done) + manifest fix | n2d-standard-4 | AMD Milan | estándar | 0:26:14 | 0:08:33 / 0:17:40 | 2 / 0 | 524.1 | 0.0829 | 0.0829 | correcta |
-| 2026-10-24 | sibbms-ctl-a | Controles sanos SibBMS, bloque A (sub-001 a sub-034): imágenes sin cráneo + FLAMeS 5 modelos | n2d-standard-4 | AMD Milan | estándar | — | — / — | 40 / 0 | 69.8 | — | — | en curso |
-| 2026-10-24 | sibbms-ctl-b | Controles sanos SibBMS, bloque B (sub-035 a sub-067): imágenes sin cráneo + FLAMeS 5 modelos | n2d-standard-4 | AMD Milan | estándar | — | — / — | 40 / 0 | 70.7 | — | — | en curso |
-| 2026-10-24 | sibbms-ctl-c | Controles sanos SibBMS, bloque C (sub-068 a sub-100): imágenes sin cráneo + FLAMeS 5 modelos | n2-standard-4 | Intel Cascade Lake | estándar | — | — / — | 50 / 0 | 66.0 | — | — | en curso |
+| 2026-10-23 | toolbench-pilot-fs | Artículo F, piloto de FreeSurfer 8.2.0: WMH-SynthSeg y SAMSEG en 3 estudios (MS3SEG, PediMS, MSLesSeg) | n2d-highmem-4 | AMD Milan | estándar | 0:29:32 | 0:06:46 / 0:22:45 | 3 / 0 | 243.1 | 0.1223 | 0.1223 | correcta |
+| 2026-10-23 | toolbench-pilot-fs-2 | Artículo F, piloto 2 de SAMSEG: los 2 estudios que faltaban, con el registro ya corregido | n2d-standard-4 | AMD Milan | estándar | 0:26:14 | 0:08:33 / 0:17:40 | 2 / 0 | 524.1 | 0.0829 | 0.0829 | correcta |
+| 2026-10-24 | lstai-ctl | LST-AI v1.2.0 en los 100 controles sanos SibBMS (sub-001 ya hecho en el piloto) | n2-standard-4 | Intel Cascade Lake | estándar | 2:53:14 | 0:05:00 / 2:48:13 | 100 / 0 | 100.5 | 0.6003 | 0.6003 | correcta |
+| 2026-10-24 | sibbms-ctl-a | Controles sanos SibBMS, bloque A (sub-001 a sub-034): imágenes sin cráneo + FLAMeS 5 modelos | n2d-standard-4 | AMD Milan | estándar | 6:02:02 | 0:04:45 / 5:57:16 | 160 / 0 | 69.8 | 1.0609 | 1.0609 | correcta |
+| 2026-10-24 | sibbms-ctl-b | Controles sanos SibBMS, bloque B (sub-035 a sub-067): imágenes sin cráneo + FLAMeS 5 modelos | n2d-standard-4 | AMD Milan | estándar | 6:12:45 | 0:02:18 / 6:10:25 | 165 / 0 | 70.4 | 1.0923 | 1.0923 | correcta |
+| 2026-10-24 | sibbms-ctl-c | Controles sanos SibBMS, bloque C (sub-068 a sub-100): imágenes sin cráneo + FLAMeS 5 modelos | n2-standard-4 | Intel Cascade Lake | estándar | 5:46:14 | 0:02:31 / 5:43:42 | 165 / 0 | 66.1 | 1.1604 | 1.1604 | correcta |
 | 2026-10-24 | sibbms-ctl-pilot | Piloto controles sanos SibBMS: 2 controles (sub-001 de agosto y sub-021 nuevo), HD-BET + FLAMeS 5 modelos | n2d-standard-4 | AMD Milan | estándar | 0:26:23 | 0:03:48 / 0:22:33 | 10 / 0 | 70.0 | 0.0773 | 0.0773 | correcta |
+| 2026-10-24 | toolbench-wmh | Artículo F: WMH-SynthSeg (FreeSurfer 8.2.0) en los 324 estudios | n2d-highmem-4 | AMD Milan | estándar | 22:28:04 | 0:05:46 / 22:22:17 | 320 / 1 | 216.0 | 5.5835 | 5.5835 | fallida |
+| 2026-10-28 | toolbench-samseg-a | Artículo F: SAMSEG con lesiones (nivel C del presupuesto), bloque 1 de 3: MS3SEG impares | n2d-standard-4 | AMD Milan | estándar | 5:49:52 | 0:06:06 / 5:43:45 | 42 / 0 | 489.1 | 1.0493 | 1.0493 | correcta |
+| 2026-10-28 | toolbench-samseg-b | Artículo F: SAMSEG con lesiones (nivel C del presupuesto), bloque 2 de 3: MS3SEG impares y Bagdad | n2d-standard-4 | AMD Milan | estándar | 5:48:12 | 0:06:02 / 5:42:09 | 43 / 0 | 469.6 | 1.0443 | 1.0443 | correcta |
+| 2026-10-28 | toolbench-samseg-c | Artículo F: SAMSEG con lesiones (nivel C del presupuesto), bloque 3 de 3: Bagdad y PediMS | n2-standard-4 | Intel Cascade Lake | estándar | 6:13:45 | 0:07:17 / 6:06:26 | 42 / 0 | 523.9 | 1.2782 | 1.2782 | correcta |
+| 2026-10-28 | toolbench-wmh-crop | Artículo F: WMH-SynthSeg con recorte, solo muslim_16 (se quedó sin memoria en la corrida principal) | n2d-highmem-4 | AMD Milan | estándar | 0:11:09 | 0:06:08 / 0:05:00 | 1 / 0 | 287.4 | 0.0444 | 0.0444 | correcta |
 
 ## Entrenamiento en Kaggle (tarjetas gráficas gratuitas)
 
@@ -119,7 +125,16 @@ Generado el 2026-10-24 10:58 UTC con `research/cloud/build_ledger.py`. Precios: 
 | toolbench-mgraw-2 | e2-standard-4 | Intel Broadwell | 286.1 | 0.01174 |
 | toolbench-pilot-fs | n2d-highmem-4 | AMD Milan | 243.1 | 0.01678 |
 | toolbench-pilot-fs-2 | n2d-standard-4 | AMD Milan | 524.1 | 0.02759 |
+| lstai-ctl | n2-standard-4 | Intel Cascade Lake | 100.5 | 0.00580 |
+| sibbms-ctl-a | n2d-standard-4 | AMD Milan | 69.8 | 0.00341 |
+| sibbms-ctl-b | n2d-standard-4 | AMD Milan | 70.4 | 0.00344 |
+| sibbms-ctl-c | n2-standard-4 | Intel Cascade Lake | 66.1 | 0.00369 |
 | sibbms-ctl-pilot | n2d-standard-4 | AMD Milan | 70.0 | 0.00342 |
+| toolbench-wmh | n2d-highmem-4 | AMD Milan | 216.0 | 0.01491 |
+| toolbench-samseg-a | n2d-standard-4 | AMD Milan | 489.1 | 0.02445 |
+| toolbench-samseg-b | n2d-standard-4 | AMD Milan | 469.6 | 0.02347 |
+| toolbench-samseg-c | n2-standard-4 | Intel Cascade Lake | 523.9 | 0.02986 |
+| toolbench-wmh-crop | n2d-highmem-4 | AMD Milan | 287.4 | 0.01907 |
 
 ## Computador local
 
@@ -149,6 +164,13 @@ Generado el 2026-10-24 10:58 UTC con `research/cloud/build_ledger.py`. Precios: 
 - **toolbench-pilot-mindglide-2**: Causa encontrada: MindGlide funciona sin permisos de administrador y no podía escribir en la carpeta de salida.
 - **toolbench-pilot-mindglide-3**: Superado: 3/3, unos 84 s por estudio y 5,5 GB de memoria; etiqueta 18 = lesión (documentación oficial).
 - **toolbench-mgraw**: Llegó a su tope de 10 h en una máquina E2 lenta (143 hechos, 3 cortados); el resto se terminó en toolbench-mgraw-2.
+- **toolbench-pilot-fs**: WMH-SynthSeg 3/3 (unos 4 min por estudio, memoria máxima 31,3 GB). SAMSEG terminó ms3seg_001 (607 s) y el registro del piloto se cortó al guardarlo (fallo de formato corregido en 96bd925); el resultado quedó en el cubo y se comprobó contra el registro de la máquina (1129 vóxeles de lesión).
+- **toolbench-pilot-fs-2**: Superado: 2/2, unos 9 min por estudio, 7,1 GB de memoria; etiqueta 99 = lesión.
+- **toolbench-wmh**: 320 de 321 sin errores; muslim_16 se quedó sin memoria y se repitió con la opción de recorte (toolbench-wmh-crop), como fija el protocolo.
+- **toolbench-samseg-a**: 42/42 sin errores (ms3seg_001 ya venía del piloto); mediana 8,2 min por estudio, memoria máxima 4,7 GB.
+- **toolbench-samseg-b**: 43/43 sin errores; mediana 7,8 min por estudio, memoria máxima 6,0 GB.
+- **toolbench-samseg-c**: 42/42 sin errores (pedims_P1_T1 ya venía del piloto 2); mediana 8,7 min por estudio, memoria máxima 4,9 GB.
+- **toolbench-wmh-crop**: Superado: 1/1 en 287 s, 25,3 GB de memoria.
 
 ## Cómo se mide
 

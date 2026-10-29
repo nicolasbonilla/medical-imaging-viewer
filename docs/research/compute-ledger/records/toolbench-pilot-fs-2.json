@@ -30,8 +30,8 @@
   "notes": "",
   "_kind": "inference",
   "machines": 1,
-  "purpose_es": "Paper F pilot 2: SAMSEG remaining cases (ms3seg_001 already done) + manifest fix",
-  "notes_es": ""
+  "purpose_es": "Art\u00edculo F, piloto 2 de SAMSEG: los 2 estudios que faltaban, con el registro ya corregido",
+  "notes_es": "Superado: 2/2, unos 9 min por estudio, 7,1 GB de memoria; etiqueta 99 = lesi\u00f3n."
  },
  "plan": {
   "run_id": "toolbench-pilot-fs-2",
