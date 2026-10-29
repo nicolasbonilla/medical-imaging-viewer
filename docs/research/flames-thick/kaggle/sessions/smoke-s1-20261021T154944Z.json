@@ -1,0 +1,102 @@
+{
+ "session": "smoke-s1",
+ "session_id": "smoke-s1-20261021T154944Z",
+ "kernel": "nicolasbonilna/mstool-research-flames-thick-smoke-s1",
+ "previous_kernel": null,
+ "start_utc": "2026-10-21T15:49:44Z",
+ "git_commit": "22ecd8d9016832b1e7e0d637c012c42f7967d420",
+ "code_sha256": "5be9d2528f9eb89f2c5c4133e90870652ef3fcdd4cfa5b1d11efa9c7d767c92f",
+ "purpose": "FLAMeS-thick Kaggle plumbing test on CPU (2 MSLesSeg-train scans, 64^3 patch)",
+ "stages": {
+  "machine": "2026-10-21T15:49:44Z",
+  "code": "2026-10-21T15:49:45Z",
+  "env": "2026-10-21T15:49:45Z",
+  "inputs": "2026-10-21T15:50:38Z",
+  "restore": "2026-10-21T15:51:03Z",
+  "train": "2026-10-21T15:51:04Z",
+  "end_train": "2026-10-21T15:53:04Z"
+ },
+ "runs": {
+  "kaggle-smoke-thick": {
+   "arm": "thick",
+   "gpu_index": "",
+   "state_at_start": null,
+   "epochs_done_at_start": 0,
+   "supervisor_returncode": 0,
+   "state_at_end": "paused",
+   "status": {
+    "state": "paused",
+    "utc": "2026-10-21T15:52:46Z",
+    "attempt": "20261021T155104Z-7f980219d681",
+    "pause": {
+     "reason": "session_pause: forced pause after epoch 1 (pilot: session hand-over test)",
+     "epoch": 2,
+     "utc": "2026-10-21T15:52:46Z"
+    }
+   },
+   "epochs_done_at_end": 2,
+   "epochs_this_session": 2,
+   "median_s_per_epoch": 19.66,
+   "iters": 2
+  }
+ },
+ "errors": [],
+ "platform": "kaggle-kernel",
+ "cost_usd": 0.0,
+ "soft_deadline_utc": "2026-10-21T17:49:44Z",
+ "hard_deadline_utc": "2026-10-21T18:19:44Z",
+ "updated_utc": "2026-10-21T15:53:04Z",
+ "wall_seconds": 199.2,
+ "machine": {
+  "gpus": [],
+  "driver_cuda": "",
+  "accelerator_requested": null,
+  "cpu_model": "AMD EPYC 7B12",
+  "vcpus": 4,
+  "memory_gb": "31",
+  "kaggle_env": {
+   "KAGGLE_KERNEL_RUN_TYPE": "Batch",
+   "KAGGLE_DOCKER_IMAGE": "gcr.io/kaggle-images/python@sha256:81b1e7c4b4f0f2a7e0a33943c95754b1b7af6b30d65221633a284b6b601cd84a",
+   "KAGGLE_CONTAINER_NAME": "kaggle_HS3lNMqIIH4iOA0Wuu0aa2wxnGu3PC3VVoR1yS0SgKc-360838248-webtier"
+  },
+  "disk_free_gb": {
+   "/kaggle/working": 20.9,
+   "/tmp": 1146.0
+  },
+  "system_python": "3.13.15"
+ },
+ "uv_version": "uv 0.13.4 (x86_64-unknown-linux-gnu)",
+ "venv_python": "3.10.12",
+ "torch": "2.14.1+cu126 12.6 False 0 ['sm_50', 'sm_60', 'sm_70', 'sm_75', 'sm_80', 'sm_86', 'sm_90']",
+ "lock_sha256": "da51d5bed56d85fcc7f5915ae020889cda9f1ab1402a146a4cae5fddae1b3c48",
+ "lock_mismatches": {},
+ "inputs": {
+  "flames_dir": "/kaggle/input/datasets/nicolasbonilna/mstool-research-flames-fold0",
+  "flames_source": {
+   "doi": "10.5281/zenodo.17955359",
+   "url": "https://zenodo.org/api/records/17955359/files/Dataset004_WML.zip/content",
+   "file": "Dataset004_WML.zip",
+   "bytes": 2351319537,
+   "md5": "8b90b789d6ceca1886f42fa1724a08cc",
+   "md5_publisher": "8b90b789d6ceca1886f42fa1724a08cc",
+   "sha256": "943f49d4997fc752322f0892b4aa6dcfce64f99a8a8c445d38785f54af09c277",
+   "licence": "CC BY 4.0"
+  },
+  "mslesseg_zip": "/kaggle/input/datasets/nicolasbonilna/mstool-research-mslesseg-train/mslesseg_train.zip.bin",
+  "mslesseg_zip_sha256": "d1f1ab8d691f4efc01f9389b54468544b9461f5fa2dee4adc67294e0eb3808eb",
+  "mslesseg_source": {
+   "doi": "10.6084/m9.figshare.27919209.v1",
+   "url": "https://ndownloader.figshare.com/files/52771814",
+   "file": "MSLesSeg Dataset.zip",
+   "bytes": 1473284755,
+   "md5": "cb30cfb13b0981443c300a5e51dd91cd",
+   "md5_publisher": "cb30cfb13b0981443c300a5e51dd91cd",
+   "sha256": "7a32c86090c1663e11f8c65642de36c77653c3cfce6284162740bbe092fb4db5",
+   "licence": "CC BY 4.0"
+  }
+ },
+ "restored_from": null,
+ "end_utc": "2026-10-21T15:53:04Z",
+ "gpu_hours": 0.055,
+ "pip_freeze_lines": 112
+}

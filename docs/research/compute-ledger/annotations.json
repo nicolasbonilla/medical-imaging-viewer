@@ -1,0 +1,189 @@
+{
+ "phase1-lstai": {
+  "purpose_es": "Fase 1: mapas de probabilidad de LST-AI en 19 casos ISBI"
+ },
+ "flames-pilot": {
+  "purpose_es": "FLAMeS, piloto 1 de agosto: 3 casos de principio a fin",
+  "notes_es": "Encontró 4 fallos de entorno (falta unzip, metadatos, ruta de conda, numpy); se validaron el registro de coste y el borrado automático."
+ },
+ "flames-pilot2": {
+  "purpose_es": "FLAMeS, piloto 2 de agosto",
+  "notes_es": "Faltaba pip en la imagen del sistema; corregido."
+ },
+ "flames-pilot3": {
+  "purpose_es": "FLAMeS, piloto 3 de agosto",
+  "notes_es": "Fallo torch/torchvision incompatibles (el mismo que reapareció el 17-10 en flames-v2-pilot)."
+ },
+ "flames-pilot4-gpu": {
+  "purpose_es": "FLAMeS, piloto 4 de agosto con tarjeta gráfica NVIDIA P4",
+  "notes_es": "La tarjeta P4 no fue visible para torch; se pasó a solo procesador."
+ },
+ "flames-pilot5-cpu": {
+  "purpose_es": "FLAMeS, piloto 5 de agosto solo con procesador (validado)",
+  "notes_es": "Cadena validada; se corrigió la orientación de los mapas (transposición 2,1,0)."
+ },
+ "flames-full": {
+  "purpose_es": "FLAMeS completo de agosto: mapas de 145 casos (30 Ljubljana + 115 MSLesSeg)",
+  "notes_es": "Los mapas de agosto existen, pero el registro de agosto no anotó el tiempo real de esta fila."
+ },
+ "flames-controls": {
+  "purpose_es": "FLAMeS en 100 controles sanos SibBMS (planificada en agosto)"
+ },
+ "sibbms-pilot": {
+  "purpose_es": "Piloto SibBMS: 3 controles sanos (sustituida por sibbms-pilots)"
+ },
+ "flames-backfill": {
+  "purpose_es": "MSLesSeg: los 22 casos de prueba que faltaban"
+ },
+ "sibbms-pilots": {
+  "purpose_es": "Validación de la cadena de controles sanos SibBMS (2 pilotos)"
+ },
+ "sibbms-full": {
+  "purpose_es": "Controles sanos SibBMS en 4 máquinas en paralelo",
+  "notes_es": "30 de 40 controles; una máquina Spot fue interrumpida por Google. Las horas de máquina son la suma de las 4."
+ },
+ "flames-pilot-1": {
+  "date_utc": "2026-10-17",
+  "purpose": "Pilot v1 (old script, Spot): FLAMeS fold 0 on Ljubljana cases, parity check against the Aug-2026 maps",
+  "purpose_es": "Piloto v1 en la nube de investigación (Spot): FLAMeS modelo 0 en casos de Ljubljana, comparado con agosto",
+  "paper_or_feature": "A",
+  "status": "ok",
+  "machine_type": "n2-standard-8",
+  "spot": true,
+  "zone": "us-central1-a",
+  "notes": "Reproduced the Aug-2026 maps (Dice 1.0; max difference 0.002 = storage rounding). Old script: CPU platform and stage times not recorded; its recorded rate 0.08 USD/h was an under-estimate.",
+  "notes_es": "Reprodujo los mapas de agosto (mismas lesiones; diferencia máxima 0,002 por redondeo). El guion antiguo no anotaba procesador ni etapas, y su tarifa de 0,08 USD/h era una estimación por debajo del precio real de lista."
+ },
+ "flames-v2-pilot": {
+  "purpose": "Pilot v2 (standard VM, cached inputs): 2 Ljubljana cases, fold 0",
+  "purpose_es": "Piloto v2 (máquina estándar, datos guardados en el cubo): 2 casos de Ljubljana, modelo 0",
+  "paper_or_feature": "A",
+  "status": "failed (software environment)",
+  "notes": "Failed before the first case: PyPI torchvision built for another torch. Fix: torch + torchvision from the same CPU index and an environment self-test.",
+  "notes_es": "Falló antes del primer caso: torchvision de otra versión de torch. Corregido instalando ambos del mismo origen y con una autoprueba del entorno que para todo antes de gastar."
+ },
+ "flames-v2-pilot2": {
+  "purpose_es": "Piloto v2 corregido: 2 casos de Ljubljana, modelo 0, comparado con agosto",
+  "notes_es": "Comparación SUPERADA: mapas idénticos a los de agosto (Dice 1,0; diferencia máxima 0,002 por redondeo). 66 s por caso y modelo con 4 procesadores."
+ },
+ "flames-full-a": {
+  "purpose_es": "FLAMeS, 5 modelos por separado, bloque A (casos 1 a 49 de 145)",
+  "notes_es": "Sin errores. Resultado conjunto (725 mapas, 145 por modelo): ver docs/research/records/2026-10-18_flames_5fold_ensemble_check.txt."
+ },
+ "flames-full-b": {
+  "purpose_es": "FLAMeS, 5 modelos por separado, bloque B (casos 50 a 97 de 145)",
+  "notes_es": "Sin errores. Un caso tardó 156 s (resto 68–72 s)."
+ },
+ "flames-full-c": {
+  "purpose_es": "FLAMeS, 5 modelos por separado, bloque C (casos 98 a 145)",
+  "notes_es": "No recalculó 6 mapas que ya estaban en el cubo de los pilotos: modelo 0 de Ljubljana 01–04 y modelo 1 de Ljubljana 01–02 (piloto v1, mismo modelo y ajustes; su modelo 0 coincidió con agosto).",
+  "notes": "Skipped 6 maps already in the bucket from the pilots: fold 0 of openms 01-04 and fold 1 of openms 01-02 (flames-pilot-1, same model and settings; its fold 0 matched Aug-2026)."
+ },
+ "local-rc032-negative-controls": {
+  "purpose_es": "Prueba de seguridad: batería de mutaciones RC-032",
+  "notes_es": "Aproximado (unos 50 min, no cronometrado). Mismo resultado: 3 mutaciones no detectadas por diseño."
+ },
+ "sibbms-ctl-pilot": {
+  "purpose_es": "Piloto controles sanos SibBMS: 2 controles (sub-001 de agosto y sub-021 nuevo), HD-BET + FLAMeS 5 modelos"
+ },
+ "sibbms-ctl-a": {
+  "purpose_es": "Controles sanos SibBMS, bloque A (sub-001 a sub-034): imágenes sin cráneo + FLAMeS 5 modelos"
+ },
+ "sibbms-ctl-b": {
+  "purpose_es": "Controles sanos SibBMS, bloque B (sub-035 a sub-067): imágenes sin cráneo + FLAMeS 5 modelos"
+ },
+ "sibbms-ctl-c": {
+  "purpose_es": "Controles sanos SibBMS, bloque C (sub-068 a sub-100): imágenes sin cráneo + FLAMeS 5 modelos"
+ },
+ "lstai-pilot": {
+  "purpose_es": "Piloto LST-AI v1.2.0: MSLesSeg P10_T1, P49_T2 (T1 vacía, debe saltarse) y Ljubljana 01",
+  "notes_es": "Superado: 2 casos en 140 s cada uno, memoria máxima 10,7 GB sin intercambio; P49_T2 saltado (T1 vacía). Mapas en la rejilla de FLAMeS (error de guardado 0,002). La versión de código no se pudo leer en la imagen (sin python ni git); identidad comprobada por huella de la imagen y de los 3 modelos. Comprobación corregida después."
+ },
+ "lstai-a": {
+  "purpose_es": "Mapas de probabilidad LST-AI, bloque A (MSLesSeg, 81 casos)"
+ },
+ "lstai-b": {
+  "purpose_es": "Mapas de probabilidad LST-AI, bloque B (33 MSLesSeg + 30 Ljubljana + 19 controles)"
+ },
+ "lstai-c": {
+  "purpose_es": "Mapas de probabilidad LST-AI, bloque C (81 controles sanos SibBMS)"
+ },
+ "flames-extra-pilot": {
+  "purpose_es": "Piloto de colecciones nuevas: un caso de MS3SEG, Bagdad y PediMS; HD-BET + FLAMeS modelo 0",
+  "notes_es": "Superado: 179 casos descargados una vez y guardados; HD-BET en 2 casos; FLAMeS 3/3 sin errores. Coincidencia con el experto (modelo 0): MS3SEG 0,59 · Bagdad 0,40 · PediMS 0,80."
+ },
+ "flames-extra-a": {
+  "purpose_es": "Colecciones nuevas, bloque A (casos 1 a 90 de 179): HD-BET + FLAMeS 5 modelos",
+  "notes_es": "449 mapas sin errores; HD-BET en los casos con cráneo, cada cerebro guardado para reutilizarlo."
+ },
+ "flames-extra-b": {
+  "purpose_es": "Colecciones nuevas, bloque B (casos 91 a 179): HD-BET + FLAMeS 5 modelos"
+ },
+ "lstai-full-a": {
+  "purpose_es": "LST-AI v1.2.0: todo MSLesSeg (P49_T2 saltado) + 30 Ljubljana; controles cuando llegue el permiso de SibBMS"
+ },
+ "paperc-oml-pilot": {
+  "purpose_es": "Artículo C, piloto: FLAMeS modelo 0 en Ljubljana con dos visitas (paciente 16)"
+ },
+ "paperc-oml-full": {
+  "purpose_es": "Artículo C: FLAMeS 5 modelos en las 40 imágenes de Ljubljana con dos visitas (cambios marcados por expertos)"
+ },
+ "toolbench-pilot-mindglide": {
+  "purpose_es": "Artículo F, piloto 1 de MindGlide (3 estudios)",
+  "status": "failed (software environment)",
+  "notes_es": "Fallo en los 3 estudios tras segmentar: solo se guardaba la salida de errores, que escondía la causa real."
+ },
+ "toolbench-pilot-mindglide-2": {
+  "purpose_es": "Artículo F, piloto 2 de MindGlide (1 estudio, error completo)",
+  "status": "failed (software environment)",
+  "notes_es": "Causa encontrada: MindGlide funciona sin permisos de administrador y no podía escribir en la carpeta de salida."
+ },
+ "toolbench-pilot-mindglide-3": {
+  "purpose_es": "Artículo F, piloto 3 de MindGlide con permisos corregidos (3 estudios)",
+  "notes_es": "Superado: 3/3, unos 84 s por estudio y 5,5 GB de memoria; etiqueta 18 = lesión (documentación oficial)."
+ },
+ "toolbench-mindglide-a": {
+  "purpose_es": "Artículo F: MindGlide, brazo principal (misma imagen que FLAMeS), mitad A"
+ },
+ "toolbench-mindglide-b": {
+  "purpose_es": "Artículo F: MindGlide, brazo principal (misma imagen que FLAMeS), mitad B"
+ },
+ "toolbench-mgraw": {
+  "purpose_es": "Artículo F: MindGlide con la imagen original (MS3SEG, Bagdad, PediMS)",
+  "notes_es": "Llegó a su tope de 10 h en una máquina E2 lenta (143 hechos, 3 cortados); el resto se terminó en toolbench-mgraw-2."
+ },
+ "toolbench-mgraw-2": {
+  "purpose_es": "Artículo F: MindGlide con la imagen original, casos restantes (36)"
+ },
+ "lstai-ctl": {
+  "purpose_es": "LST-AI v1.2.0 en los 100 controles sanos SibBMS (sub-001 ya hecho en el piloto)"
+ },
+ "toolbench-pilot-fs": {
+  "purpose_es": "Artículo F, piloto de FreeSurfer 8.2.0: WMH-SynthSeg y SAMSEG en 3 estudios (MS3SEG, PediMS, MSLesSeg)",
+  "notes_es": "WMH-SynthSeg 3/3 (unos 4 min por estudio, memoria máxima 31,3 GB). SAMSEG terminó ms3seg_001 (607 s) y el registro del piloto se cortó al guardarlo (fallo de formato corregido en 96bd925); el resultado quedó en el cubo y se comprobó contra el registro de la máquina (1129 vóxeles de lesión)."
+ },
+ "toolbench-pilot-fs-2": {
+  "purpose_es": "Artículo F, piloto 2 de SAMSEG: los 2 estudios que faltaban, con el registro ya corregido",
+  "notes_es": "Superado: 2/2, unos 9 min por estudio, 7,1 GB de memoria; etiqueta 99 = lesión."
+ },
+ "toolbench-samseg-a": {
+  "purpose_es": "Artículo F: SAMSEG con lesiones (nivel C del presupuesto), bloque 1 de 3: MS3SEG impares",
+  "notes_es": "42/42 sin errores (ms3seg_001 ya venía del piloto); mediana 8,2 min por estudio, memoria máxima 4,7 GB."
+ },
+ "toolbench-samseg-b": {
+  "purpose_es": "Artículo F: SAMSEG con lesiones (nivel C del presupuesto), bloque 2 de 3: MS3SEG impares y Bagdad",
+  "notes_es": "43/43 sin errores; mediana 7,8 min por estudio, memoria máxima 6,0 GB."
+ },
+ "toolbench-samseg-c": {
+  "purpose_es": "Artículo F: SAMSEG con lesiones (nivel C del presupuesto), bloque 3 de 3: Bagdad y PediMS",
+  "notes_es": "42/42 sin errores (pedims_P1_T1 ya venía del piloto 2); mediana 8,7 min por estudio, memoria máxima 4,9 GB."
+ },
+ "toolbench-wmh": {
+  "purpose_es": "Artículo F: WMH-SynthSeg (FreeSurfer 8.2.0) en los 324 estudios",
+  "notes_es": "320 de 321 sin errores; muslim_16 se quedó sin memoria y se repitió con la opción de recorte (toolbench-wmh-crop), como fija el protocolo."
+ },
+ "toolbench-wmh-crop": {
+  "purpose_es": "Artículo F: WMH-SynthSeg con recorte, solo muslim_16 (se quedó sin memoria en la corrida principal)",
+  "notes_es": "Superado: 1/1 en 287 s, 25,3 GB de memoria."
+ }
+}

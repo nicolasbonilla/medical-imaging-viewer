@@ -1,0 +1,127 @@
+{
+ "session": "pilot-s1",
+ "session_id": "pilot-s1-20261021T164004Z",
+ "kernel": "nicolasbonilna/mstool-research-flames-thick-pilot-s1",
+ "previous_kernel": null,
+ "start_utc": "2026-10-21T16:40:04Z",
+ "git_commit": "22ecd8d9016832b1e7e0d637c012c42f7967d420",
+ "code_sha256": "5be9d2528f9eb89f2c5c4133e90870652ef3fcdd4cfa5b1d11efa9c7d767c92f",
+ "purpose": "FLAMeS-thick Kaggle pilot: 2 MSLesSeg-train scans, short epochs, kill + session hand-over resume, timing of both arms side by side on the 2 T4",
+ "stages": {
+  "machine": "2026-10-21T16:40:04Z",
+  "code": "2026-10-21T16:40:05Z",
+  "env": "2026-10-21T16:40:05Z",
+  "inputs": "2026-10-21T16:41:04Z",
+  "restore": "2026-10-21T16:41:13Z",
+  "train": "2026-10-21T16:41:13Z",
+  "end_train": "2026-10-21T16:46:58Z"
+ },
+ "runs": {
+  "kaggle-pilot-thick": {
+   "arm": "thick",
+   "gpu_index": 0,
+   "state_at_start": null,
+   "epochs_done_at_start": 0,
+   "supervisor_returncode": 0,
+   "state_at_end": "paused",
+   "status": {
+    "state": "paused",
+    "utc": "2026-10-21T16:46:52Z",
+    "attempt": "20261021T164113Z-b1880f19b299",
+    "pause": {
+     "reason": "session_pause: forced pause after epoch 1 (pilot: session hand-over test)",
+     "epoch": 2,
+     "utc": "2026-10-21T16:46:51Z"
+    }
+   },
+   "epochs_done_at_end": 2,
+   "epochs_this_session": 2,
+   "median_s_per_epoch": 96.43,
+   "iters": 60
+  },
+  "kaggle-pilot-ft": {
+   "arm": "ft",
+   "gpu_index": 1,
+   "state_at_start": null,
+   "epochs_done_at_start": 0,
+   "supervisor_returncode": 0,
+   "state_at_end": "paused",
+   "status": {
+    "state": "paused",
+    "utc": "2026-10-21T16:46:06Z",
+    "attempt": "20261021T164113Z-b1880f19b299",
+    "pause": {
+     "reason": "session_pause: forced pause after epoch 1 (pilot: session hand-over test)",
+     "epoch": 2,
+     "utc": "2026-10-21T16:46:05Z"
+    }
+   },
+   "epochs_done_at_end": 2,
+   "epochs_this_session": 2,
+   "median_s_per_epoch": 82.44,
+   "iters": 60
+  }
+ },
+ "errors": [],
+ "platform": "kaggle-kernel",
+ "cost_usd": 0.0,
+ "soft_deadline_utc": "2026-10-21T17:40:04Z",
+ "hard_deadline_utc": "2026-10-21T17:55:04Z",
+ "updated_utc": "2026-10-21T16:46:58Z",
+ "wall_seconds": 413.4,
+ "machine": {
+  "gpus": [
+   "0, Tesla T4, 15360 MiB, 580.178.04, 00000000:00:04.0",
+   "1, Tesla T4, 15360 MiB, 580.178.04, 00000000:00:05.0"
+  ],
+  "driver_cuda": "NVIDIA-SMI 580.178.04             Driver Version: 580.178.04     CUDA Version: 13.0",
+  "accelerator_requested": "NvidiaTeslaT4",
+  "cpu_model": "Intel(R) Xeon(R) CPU @ 2.00GHz",
+  "vcpus": 4,
+  "memory_gb": "31",
+  "kaggle_env": {
+   "KAGGLE_KERNEL_RUN_TYPE": "Batch",
+   "KAGGLE_DOCKER_IMAGE": "gcr.io/kaggle-gpu-images/python@sha256:2757e0c7d1e0a9cb43da657b97e223c321a98f5014bdf64f44f2f6b083ad2b2f",
+   "KAGGLE_CONTAINER_NAME": "kaggle_crVl1zVM7Xpfsd4PjEfnvhtB6n9igcxIuJqucUyY-360839949-webtier"
+  },
+  "disk_free_gb": {
+   "/kaggle/working": 20.9,
+   "/tmp": 1146.0
+  },
+  "system_python": "3.13.15"
+ },
+ "uv_version": "uv 0.13.4 (x86_64-unknown-linux-gnu)",
+ "venv_python": "3.10.12",
+ "torch": "2.14.1+cu126 12.6 True 2 ['sm_50', 'sm_60', 'sm_70', 'sm_75', 'sm_80', 'sm_86', 'sm_90']",
+ "lock_sha256": "da51d5bed56d85fcc7f5915ae020889cda9f1ab1402a146a4cae5fddae1b3c48",
+ "lock_mismatches": {},
+ "inputs": {
+  "flames_dir": "/kaggle/input/datasets/nicolasbonilna/mstool-research-flames-fold0",
+  "flames_source": {
+   "doi": "10.5281/zenodo.17955359",
+   "url": "https://zenodo.org/api/records/17955359/files/Dataset004_WML.zip/content",
+   "file": "Dataset004_WML.zip",
+   "bytes": 2351319537,
+   "md5": "8b90b789d6ceca1886f42fa1724a08cc",
+   "md5_publisher": "8b90b789d6ceca1886f42fa1724a08cc",
+   "sha256": "943f49d4997fc752322f0892b4aa6dcfce64f99a8a8c445d38785f54af09c277",
+   "licence": "CC BY 4.0"
+  },
+  "mslesseg_zip": "/kaggle/input/datasets/nicolasbonilna/mstool-research-mslesseg-train/mslesseg_train.zip.bin",
+  "mslesseg_zip_sha256": "d1f1ab8d691f4efc01f9389b54468544b9461f5fa2dee4adc67294e0eb3808eb",
+  "mslesseg_source": {
+   "doi": "10.6084/m9.figshare.27919209.v1",
+   "url": "https://ndownloader.figshare.com/files/52771814",
+   "file": "MSLesSeg Dataset.zip",
+   "bytes": 1473284755,
+   "md5": "cb30cfb13b0981443c300a5e51dd91cd",
+   "md5_publisher": "cb30cfb13b0981443c300a5e51dd91cd",
+   "sha256": "7a32c86090c1663e11f8c65642de36c77653c3cfce6284162740bbe092fb4db5",
+   "licence": "CC BY 4.0"
+  }
+ },
+ "restored_from": null,
+ "end_utc": "2026-10-21T16:46:58Z",
+ "gpu_hours": 0.115,
+ "pip_freeze_lines": 112
+}

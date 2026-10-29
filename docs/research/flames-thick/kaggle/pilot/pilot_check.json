@@ -1,0 +1,173 @@
+{
+ "arms": {
+  "kaggle-pilot-ft": {
+   "arm": "ft",
+   "checks": {
+    "status_completed": true,
+    "no_errors": true,
+    "kill_test_ok": true,
+    "flames_checkpoint_sha_ok": true,
+    "mslesseg_zip_is_the_figshare_file": true,
+    "only_mslesseg_train": true,
+    "axial_axis_is_1": true,
+    "model_exported": true,
+    "gpu_selftest": true,
+    "resumed_kind": "checkpoint",
+    "s1_paused": true,
+    "s1_kill_test_ok": true,
+    "s2_resumed_after_pause": true,
+    "epochs_contiguous": true,
+    "two_attempts": true
+   },
+   "projection": {
+    "steady_epochs": [
+     1,
+     3,
+     4,
+     5
+    ],
+    "train_s_per_iter": 0.796,
+    "val_s_per_iter": 0.263,
+    "epoch_s_projected": 212.0,
+    "measured_epoch_seconds": [
+     82.44,
+     50.52,
+     102.2,
+     50.11,
+     50.46,
+     50.26
+    ]
+   },
+   "gpu": "Tesla T4",
+   "kill_test": null,
+   "pause_s1": {
+    "reason": "session_pause: forced pause after epoch 1 (pilot: session hand-over test)",
+    "epoch": 2,
+    "utc": "2026-10-21T16:46:05Z"
+   },
+   "init_s2": {
+    "kind": "checkpoint",
+    "resumed_at_epoch": 2
+   }
+  },
+  "kaggle-pilot-thick": {
+   "arm": "thick",
+   "checks": {
+    "status_completed": true,
+    "no_errors": true,
+    "kill_test_ok": true,
+    "flames_checkpoint_sha_ok": true,
+    "mslesseg_zip_is_the_figshare_file": true,
+    "only_mslesseg_train": true,
+    "axial_axis_is_1": true,
+    "model_exported": true,
+    "gpu_selftest": true,
+    "resumed_kind": "checkpoint",
+    "s1_paused": true,
+    "s1_kill_test_ok": true,
+    "s2_resumed_after_pause": true,
+    "epochs_contiguous": true,
+    "two_attempts": true
+   },
+   "projection": {
+    "steady_epochs": [
+     3,
+     4,
+     5
+    ],
+    "train_s_per_iter": 0.904,
+    "val_s_per_iter": 0.29,
+    "epoch_s_projected": 240.5,
+    "measured_epoch_seconds": [
+     96.43,
+     67.74,
+     77.71,
+     57.15,
+     57.58,
+     57.12
+    ]
+   },
+   "gpu": "Tesla T4",
+   "kill_test": {
+    "killed_after_epoch": 0,
+    "utc": "2026-10-21T16:45:19Z",
+    "worker_returncode": -9,
+    "resumed_at_epoch": 1,
+    "ok": true
+   },
+   "pause_s1": {
+    "reason": "session_pause: forced pause after epoch 1 (pilot: session hand-over test)",
+    "epoch": 2,
+    "utc": "2026-10-21T16:46:51Z"
+   },
+   "init_s2": {
+    "kind": "checkpoint",
+    "resumed_at_epoch": 2
+   }
+  }
+ },
+ "sessions": [
+  {
+   "session_id": "pilot-s1-20261021T164004Z",
+   "wall_s": 413.4,
+   "gpu_hours": 0.115,
+   "stages": {
+    "machine": "2026-10-21T16:40:04Z",
+    "code": "2026-10-21T16:40:05Z",
+    "env": "2026-10-21T16:40:05Z",
+    "inputs": "2026-10-21T16:41:04Z",
+    "restore": "2026-10-21T16:41:13Z",
+    "train": "2026-10-21T16:41:13Z",
+    "end_train": "2026-10-21T16:46:58Z"
+   },
+   "gpus": [
+    "0, Tesla T4, 15360 MiB, 580.178.04, 00000000:00:04.0",
+    "1, Tesla T4, 15360 MiB, 580.178.04, 00000000:00:05.0"
+   ],
+   "driver_cuda": "NVIDIA-SMI 580.178.04             Driver Version: 580.178.04     CUDA Version: 13.0",
+   "vcpus": 4,
+   "errors": [],
+   "torch": "2.14.1+cu126 12.6 True 2 ['sm_50', 'sm_60', 'sm_70', 'sm_75', 'sm_80', 'sm_86', 'sm_90']",
+   "venv_python": "3.10.12",
+   "lock_mismatches": {}
+  },
+  {
+   "session_id": "pilot-s2-20261021T170048Z",
+   "wall_s": 603.2,
+   "gpu_hours": 0.168,
+   "stages": {
+    "machine": "2026-10-21T17:00:48Z",
+    "code": "2026-10-21T17:00:49Z",
+    "env": "2026-10-21T17:00:49Z",
+    "inputs": "2026-10-21T17:01:57Z",
+    "restore": "2026-10-21T17:02:01Z",
+    "gpu_sanity": "2026-10-21T17:03:38Z",
+    "train": "2026-10-21T17:04:06Z",
+    "end_train": "2026-10-21T17:10:51Z"
+   },
+   "gpus": [
+    "0, Tesla T4, 15360 MiB, 580.178.04, 00000000:00:04.0",
+    "1, Tesla T4, 15360 MiB, 580.178.04, 00000000:00:05.0"
+   ],
+   "driver_cuda": "NVIDIA-SMI 580.178.04             Driver Version: 580.178.04     CUDA Version: 13.0",
+   "vcpus": 4,
+   "errors": [],
+   "torch": "2.14.1+cu126 12.6 True 2 ['sm_50', 'sm_60', 'sm_70', 'sm_75', 'sm_80', 'sm_86', 'sm_90']",
+   "venv_python": "3.10.12",
+   "lock_mismatches": {}
+  }
+ ],
+ "setup_s_assumed": 498.0,
+ "side_by_side_epoch_s": 240.5,
+ "plan": {
+  "epochs": 300,
+  "quota_hours_needed": 21.15,
+  "sessions": 2,
+  "epochs_per_session": 160,
+  "fits_this_week": true,
+  "quota_left_h": 29.71,
+  "margin_h": 1.0,
+  "quota_hours_for_300": 21.15
+ },
+ "pass": true
+}

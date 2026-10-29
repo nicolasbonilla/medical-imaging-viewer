@@ -1,0 +1,89 @@
+{
+ "row": {
+  "run_id": "flames-pilot-1",
+  "date_utc": "2026-10-17",
+  "project": "mstool-research",
+  "purpose": "Pilot v1 (old script, Spot): FLAMeS fold 0 on Ljubljana cases, parity check against the Aug-2026 maps",
+  "paper_or_feature": "A",
+  "status": "ok",
+  "machine_type": "n2-standard-8",
+  "vcpus": 8,
+  "memory_gb": 32.0,
+  "cpu_platform": "not recorded",
+  "cpu_model": "not recorded",
+  "gpu": "",
+  "provisioning": "SPOT",
+  "zone": "us-central1-a",
+  "start_utc": "",
+  "end_utc": "",
+  "wall_seconds": 1258,
+  "vm_hours": 0.3494,
+  "setup_seconds": "",
+  "compute_seconds": "",
+  "items_ok": "",
+  "items_failed": "",
+  "median_seconds_per_item": "",
+  "usd_per_hour_list": 0.23987,
+  "cost_usd_list": 0.0838,
+  "cost_usd_recorded": "0.028",
+  "price_basis": "Cloud Billing catalog list price 2026-10-29 (cores+RAM+boot disk)",
+  "notes": "Reproduced the Aug-2026 maps (Dice 1.0; max difference 0.002 = storage rounding). Old script: CPU platform and stage times not recorded; its recorded rate 0.08 USD/h was an under-estimate.",
+  "_kind": "inference",
+  "machines": 1,
+  "purpose_es": "Piloto v1 en la nube de investigaci\u00f3n (Spot): FLAMeS modelo 0 en casos de Ljubljana, comparado con agosto",
+  "notes_es": "Reprodujo los mapas de agosto (mismas lesiones; diferencia m\u00e1xima 0,002 por redondeo). El guion antiguo no anotaba procesador ni etapas, y su tarifa de 0,08 USD/h era una estimaci\u00f3n por debajo del precio real de lista."
+ },
+ "plan": {},
+ "runinfo": {},
+ "price": {
+  "date_utc": "2026-10-29T00:18:22Z",
+  "machine_type": "n2-standard-8",
+  "region": "us-central1",
+  "spot": true,
+  "gpu": null,
+  "vcpus": 8,
+  "memory_gb": 32.0,
+  "usd_per_hour": 0.23987,
+  "parts": {
+   "cores": {
+    "qty": 8,
+    "sku_id": "2856-91B1-406A",
+    "description": "Spot Preemptible N2 Instance Core running in Americas",
+    "unit": "h",
+    "usd": 0.01896
+   },
+   "ram_gb": {
+    "qty": 32.0,
+    "sku_id": "6276-ABCE-E764",
+    "description": "Spot Preemptible N2 Instance Ram running in Americas",
+    "unit": "GiBy.h",
+    "usd": 0.002542
+   },
+   "boot_disk": {
+    "qty": 50,
+    "sku_id": "6AE1-525F-8B80",
+    "description": "Balanced PD Capacity",
+    "unit": "GiBy.mo",
+    "usd": 0.1,
+    "usd_per_gib_hour": 0.00013698630136986303
+   }
+  }
+ },
+ "cost_record": {
+  "run_id": "flames-pilot-1",
+  "machine": "n2-standard-8-spot",
+  "seconds": "1258",
+  "rate_usd_per_h": "0.08",
+  "cost_usd": "0.028"
+ },
+ "manifest_summary": {},
+ "vm": {
+  "cpuPlatform": null,
+  "machineType": null,
+  "zone": null,
+  "scheduling": null,
+  "creationTimestamp": null,
+  "labels": null,
+  "disks": null
+ }
+}

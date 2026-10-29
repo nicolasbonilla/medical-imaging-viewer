@@ -1,0 +1,10 @@
+{
+ "case": "mslesseg_P2_T1",
+ "device": "Tesla T4",
+ "seconds": 8.0,
+ "settings": "tile 0.5, gaussian, no mirroring, fold 0 checkpoint_final (unchanged FLAMeS)",
+ "dice": 0.5243,
+ "n_pred_voxels": 5571,
+ "n_ref_voxels": 2261,
+ "map": "mslesseg_P2_T1_gpu_f0_prob.nii.gz"
+}
