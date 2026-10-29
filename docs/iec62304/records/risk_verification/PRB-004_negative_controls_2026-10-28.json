@@ -1,16 +1,16 @@
 {
-  "executed": "2026-10-28T23:46:06",
-  "tree": "d28890b0f1cfc4648e74c6640db2645a6f8fc156",
+  "executed": "2026-10-29T01:29:38",
+  "tree": "8fd9766c27a2ed540f99560a4919898a97e878f7",
   "method": "in a throwaway detached worktree of the commit (review m8); one mutation at a time; each anchor asserted to occur exactly once (LF text, written back with the file's own line endings); only the bound tests of the mutated side run (backend pytest with no cloud credential per PRB-002; frontend vitest, JSON reporter, --pool=threads); original bytes restored after each mutation, at exit and on a signal, and checked at the end",
   "hash_basis": "sha256 of the UTF-8 text with LF line endings",
   "source_sha256": {
-    "backend/app/api/routes/segmentation.py": "6f8eec2206d2f0b4a319585e6853851e9215a1b83f2c671a4b29f484100b06e4",
+    "backend/app/api/routes/segmentation.py": "71620f70582dc59c7241019d5328d2b87a17824bb12e17fc1c84e395512a5ae0",
     "backend/app/api/routes/segmentation_regions.py": "ebac9c406b9c7e3883653cce8533069e5c536f89a50531e1d88879727e0d9536",
-    "backend/app/services/segmentation_service.py": "66e5e70de2360d0ec31976e96190ad840afd0ddd6f50054ab6ebe81eba04a56e",
+    "backend/app/services/segmentation_service.py": "0c144e1a416f541af958b971927328ceb68b915375220fadb11d2521109f6ef8",
     "frontend/src/ViewerApp.tsx": "4118e8056013b51b25608154f3715bd962e70ea779bad7cb724b093fa9ecd765",
-    "frontend/src/components/ControlPanel.tsx": "0caab07fda7d79ff4b77fe2f38c0a76ea7c5f1788809ce02961e9091c85f809e",
-    "frontend/src/components/ImageViewer2D.tsx": "848c9b6659b1ae218c85edb57873ff6fd7c51a1bc694b1abb6483699e8e6158a",
-    "frontend/src/components/ImageViewer3D.tsx": "b67e6b78078410872bd8249b734df1fd6259cd95ad2fe77f49350cb01c6dd3e5",
+    "frontend/src/components/ControlPanel.tsx": "09ea2161fb7103aae227ad7a6dd5ca1f22d15cb509e39d7b9108c897b1c85b52",
+    "frontend/src/components/ImageViewer2D.tsx": "bf72f3389c4c3470aad50be8901e17af2a891f5e4de4b28bcd455ed21fb89ac0",
+    "frontend/src/components/ImageViewer3D.tsx": "c7ee494a265a29f86eacde99dd97b277ca868dd82355759e41fb480899d014c3",
     "frontend/src/components/LesionDashboard.tsx": "089712581e57473bda49b5bba5274f56015a4addbbce2846b7de9420849dbd6f",
     "frontend/src/components/MAGNIMSZoneMapPanel.tsx": "2c23e461f61d591e90ca85619a5f28731c81c05442562510099268a91fb0f8dd",
     "frontend/src/components/MultiPanelViewer.tsx": "519240fbbc08431dc63d10c7719d8fa1d9f458b40e9596ed0833a61a20e65266",
@@ -22,31 +22,33 @@
     "frontend/src/store/useSegmentationStore.ts": "c7dcc6036521f0d8484b5380315849f98caa42df7cf0a8e9cd541e2a02953eff",
     "frontend/src/types/segmentation.ts": "c7bbc129d1c221bb26200847f111046e65760611a231927d3427cac3cd8104e1",
     "frontend/src/utils/instanceClassification.ts": "c771a534d30cc9317137773e9952d47c25832652d9286beface56b73e7fc7b0d",
-    "frontend/src/utils/maskLabelColormap.ts": "3392af1a9dce0496fc439ba8c5218b2d60ea0c3b61ccde37f1e2e45e78721b45",
-    "frontend/src/utils/niivueVoxelGrid.ts": "135ec5157abd3ebd36ee325cd2476ae562e50ab0c1a054fd1b942c2a586b7835",
+    "frontend/src/utils/labelUnderCursor.ts": "dd2b3612b7b96a0cf4d9abea47ddadad44f015aa368bdb350822afb7b7b80f68",
+    "frontend/src/utils/maskLabelColormap.ts": "b847cd43873ce19f0021c7e29e81de016bbc767c8ae86cb63475098932ebb322",
+    "frontend/src/utils/niivueVoxelGrid.ts": "82b6be6c679dd9fbf93dd26b90ccc695bb6d4cd2c7c1c83de91eca05451af870",
     "frontend/src/utils/niivueWindowLevel.ts": "f0aa53844238f33cd3ad24be6c6ecb131179360c72f65bba1bd5e8cd3e2ebe09",
-    "frontend/src/utils/regionColors.ts": "f737a280f958cfd3a4c470ad5da84cc19f9f3f35bd0c0617a059bf8ff7429f4a",
+    "frontend/src/utils/regionColors.ts": "5e7c467ae2ee7902478e3ca98b577ff56a12a95df1db9af9bb78a61595c5ee1f",
     "frontend/src/utils/sequenceDetection.ts": "425cca46ff16be0a6d54b03ebe485967eb0a39820f204d1cdb7e5570b813abd2",
     "frontend/src/utils/sliceOnOpen.ts": "f3b1e8b503e3d03bb37b6f57868569a7a9c65ea825b4097536ecfd516a7223c9"
   },
   "test_sha256": {
     "backend/tests/unit/test_prb006_mask_display_range.py": "5c966ecbd72f53e228f6a3d210e9aae77181d035bdb237ae6e0569562148afab",
     "backend/tests/unit/test_prb010_region_label_colours.py": "e82d84907532cb88b8cb360ae3d421264ff989fa6736e2f9d238647e7c81c8e2",
-    "backend/tests/unit/test_prb004_review_ref_alignment.py": "0eb55249a87b86849b76dd37f9203fdce07054285e9b666541f3e34b90bce0eb",
-    "frontend/src/ViewerApp.prb007.test.tsx": "8a33203477f8890670af6fa21efa57591f9f056dd09219f7fca994ee838cccf1",
-    "frontend/src/components/ControlPanel.prb008.test.tsx": "2b0995528253200a24b2d358edff56ef34eeb445b921e79e83f3fd9de1eb0f88",
-    "frontend/src/components/ImageViewer3D.prb004.review.test.tsx": "f961b8c847f71796dce0b825f91b2f2bb10adde234bb050a6fcd431174d14f19",
+    "backend/tests/unit/test_prb004_review_ref_alignment.py": "b28303d4ca858e71662cd7e387c5f6c93d57edddb84f40838098c1bbf529f473",
+    "frontend/src/ViewerApp.prb007.test.tsx": "5d0df08ff9318c026f030d59454098d360f29c5c1d02d55f85af0b55eeb2e551",
+    "frontend/src/components/ControlPanel.prb008.test.tsx": "b4fedc36cc16c7cd60780a13d9f7ebd780ee616a2e0d24fc115b84dcd2dee779",
+    "frontend/src/components/ImageViewer3D.prb004.review.test.tsx": "d146ec22ad62e27a2dcb3ae19abdd248dcfb3bc0195db7016937ba175cde116e",
     "frontend/src/components/ImageViewer3D.prb005.test.tsx": "8a89683e89f8e78d3288bb9011e12efeba90fbdc94c66b51e5a46b36fc9a6578",
     "frontend/src/components/MultiPanelViewer.prb004.review.test.ts": "c9a47537945893fa6373dde55961441f98654ed0876e080b6e282a619ed0a690",
-    "frontend/src/components/NiivueViewer2D.prb004.layout.test.tsx": "aec93bf6d380fd94945b19160e909e54c13338803aad241310153317dc7f1113",
+    "frontend/src/components/NiivueViewer2D.prb004.layout.test.tsx": "9c766368736b190a674b998b76567134e44d1b13f54e89ce4f5abe8827b5bf3b",
     "frontend/src/components/NiivueViewer2D.prb004.review.test.tsx": "ec20a7fa7b1f848afc22c625b9d8f345e11f6cfc50ea0773713a8056c1a47a95",
     "frontend/src/components/NiivueViewer2D.prb004.test.tsx": "75b040bdaca11a192f10980bc00c9fd8524b54589de3d53636dd3532849ed5a9",
     "frontend/src/components/QuickScreenBadge.prb009.test.tsx": "7d5a94a0580632aebd19ccf9b7ba86f150fd2b1f25729fa32355fffdf44c39d9",
     "frontend/src/components/SegmentationCanvasLocal.prb010.test.tsx": "850f9cd7067a434fa07b036803f0e4403ad62ca4099f7a3e16a1e8f0f9fc358b",
     "frontend/src/config/features.quickScreen.test.ts": "a0bfa662e7dfc0145329af72a31192822052db70cfbba0bbc39b12651e0f6c57",
     "frontend/src/utils/instanceClassification.prb007.review.test.ts": "4fec246073ddbbc6e4953fe5569667a391142a8d9110cb1156c519466dedadb5",
+    "frontend/src/utils/labelUnderCursor.test.ts": "595e6cc10876df1d87a946814ae4e4ae275e886c8d94eed70041d0f13653bab0",
     "frontend/src/utils/niivueWindowLevel.test.ts": "f5e47745aba5755a06a1f5b9c45a2661959f811462ef74f0cd40e22f18cfc01f",
-    "frontend/src/utils/regionColors.test.ts": "622978845a9c09cfafd490ba9d1d19a9c98681612d9491dc1b017c75e5bdd152",
+    "frontend/src/utils/regionColors.test.ts": "17e79e4b1679b1144532d6ae55f0b2ab2d8ec434769a48ba47185289f1546178",
     "frontend/src/utils/sequenceDetection.prb007.test.ts": "f1611e1cef8dc653cf2b3120a1a1a9c40c72ce0445dbe31d19b022889aa29a5d",
     "frontend/src/utils/sliceOnOpen.review.test.ts": "f5d1d8e3f24c65daf84de736fd699ed1b007091ecceea2d04fa8fb63595b6cfc",
     "frontend/src/utils/sliceOnOpen.test.ts": "ab1ade73984f6719b09aedef2d7f77cc224b141e71d76eafdb55dd6eaee9d4b0"
@@ -55,14 +57,14 @@
     "backend": {
       "suite": "backend",
       "failed": 0,
-      "passed": 14,
+      "passed": 17,
       "errors": 0,
       "failing_tests": []
     },
     "frontend": {
       "suite": "frontend",
       "failed": 0,
-      "passed": 97,
+      "passed": 111,
       "errors": 0,
       "failing_tests": [],
       "error_files": []
@@ -86,7 +88,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-28T23:46:45",
+      "executed": "2026-10-29T01:30:20",
       "detected": true
     },
     "O2_mask_keeps_its_scanner_layout": {
@@ -105,7 +107,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-28T23:46:51",
+      "executed": "2026-10-29T01:30:26",
       "detected": true
     },
     "O3_layout_transposed": {
@@ -125,7 +127,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-28T23:46:57",
+      "executed": "2026-10-29T01:30:32",
       "detected": true
     },
     "O4_rows_drawn_upwards": {
@@ -145,7 +147,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-28T23:47:03",
+      "executed": "2026-10-29T01:30:38",
       "detected": true
     },
     "O5_radiological_flip": {
@@ -164,7 +166,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-28T23:47:09",
+      "executed": "2026-10-29T01:30:44",
       "detected": true
     },
     "O6_grid_dimensions_not_checked": {
@@ -183,7 +185,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-28T23:47:19",
+      "executed": "2026-10-29T01:30:56",
       "detected": true
     },
     "O7_position_not_checked": {
@@ -202,7 +204,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-28T23:47:31",
+      "executed": "2026-10-29T01:31:07",
       "detected": true
     },
     "O8_voxel_order_marker_not_checked": {
@@ -221,7 +223,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-28T23:47:42",
+      "executed": "2026-10-29T01:31:18",
       "detected": true
     },
     "O9_position_tolerance_one_mm": {
@@ -240,7 +242,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-28T23:47:53",
+      "executed": "2026-10-29T01:31:30",
       "detected": true
     },
     "O10_refusal_not_stated": {
@@ -261,7 +263,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-28T23:48:02",
+      "executed": "2026-10-29T01:31:39",
       "detected": true
     },
     "O11_slice_between_two_voxel_slices": {
@@ -284,7 +286,7 @@
         "src/components/NiivueViewer2D.prb004.test.tsx",
         "src/utils/niivueWindowLevel.test.ts"
       ],
-      "executed": "2026-10-28T23:48:08",
+      "executed": "2026-10-29T01:31:46",
       "detected": true
     },
     "O12_grid_read_after_the_display_transform": {
@@ -307,7 +309,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-28T23:48:39",
+      "executed": "2026-10-29T01:32:17",
       "detected": true
     },
     "O13_mask_load_failure_silent": {
@@ -326,7 +328,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-28T23:48:47",
+      "executed": "2026-10-29T01:32:24",
       "detected": true
     },
     "N1_gpu_view_back_to_a_blob_url": {
@@ -346,7 +348,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-28T23:49:04",
+      "executed": "2026-10-29T01:32:40",
       "detected": true
     },
     "N2_3d_volume_without_name": {
@@ -366,7 +368,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb005.test.tsx"
       ],
-      "executed": "2026-10-28T23:49:29",
+      "executed": "2026-10-29T01:33:03",
       "detected": true
     },
     "N3_3d_multiplanar_without_name": {
@@ -386,7 +388,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb005.test.tsx"
       ],
-      "executed": "2026-10-28T23:49:51",
+      "executed": "2026-10-29T01:33:25",
       "detected": true
     },
     "N4_name_without_extension": {
@@ -423,7 +425,7 @@
         "src/components/NiivueViewer2D.prb004.test.tsx",
         "src/components/ImageViewer3D.prb005.test.tsx"
       ],
-      "executed": "2026-10-28T23:50:57",
+      "executed": "2026-10-29T01:34:32",
       "detected": true
     },
     "R1_gpu_mask_header_range": {
@@ -442,7 +444,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-28T23:51:02",
+      "executed": "2026-10-29T01:34:38",
       "detected": true
     },
     "R2_3d_mask_header_range": {
@@ -462,7 +464,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb005.test.tsx"
       ],
-      "executed": "2026-10-28T23:51:08",
+      "executed": "2026-10-29T01:34:44",
       "detected": true
     },
     "R3_3d_volume_visit1_header_range": {
@@ -481,7 +483,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb005.test.tsx"
       ],
-      "executed": "2026-10-28T23:51:14",
+      "executed": "2026-10-29T01:34:51",
       "detected": true
     },
     "R4_3d_multiplanar_visit2_header_range": {
@@ -500,7 +502,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb005.test.tsx"
       ],
-      "executed": "2026-10-28T23:51:20",
+      "executed": "2026-10-29T01:34:57",
       "detected": true
     },
     "R5_3d_multiplanar_visit1_header_range": {
@@ -519,7 +521,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb005.test.tsx"
       ],
-      "executed": "2026-10-28T23:51:29",
+      "executed": "2026-10-29T01:35:04",
       "detected": true
     },
     "R6_fixed_range_hides_label_one": {
@@ -541,13 +543,13 @@
         "src/components/NiivueViewer2D.prb004.test.tsx",
         "src/components/ImageViewer3D.prb005.test.tsx"
       ],
-      "executed": "2026-10-28T23:51:35",
+      "executed": "2026-10-29T01:35:11",
       "detected": true
     },
     "R7_stored_header_keeps_the_mri_window": {
       "suite": "backend",
       "failed": 5,
-      "passed": 9,
+      "passed": 12,
       "errors": 0,
       "failing_tests": [
         "test_rc074_empty_mask_display_range_is_zero_to_one",
@@ -565,13 +567,13 @@
         "tests/unit/test_prb010_region_label_colours.py",
         "tests/unit/test_prb004_review_ref_alignment.py"
       ],
-      "executed": "2026-10-28T23:51:46",
+      "executed": "2026-10-29T01:35:22",
       "detected": true
     },
     "R8_stored_range_always_zero_to_one": {
       "suite": "backend",
       "failed": 3,
-      "passed": 11,
+      "passed": 14,
       "errors": 0,
       "failing_tests": [
         "test_rc073_legacy_mask_on_the_reference_grid_is_served_in_image_order_with_marker_and_own_range",
@@ -587,13 +589,13 @@
         "tests/unit/test_prb010_region_label_colours.py",
         "tests/unit/test_prb004_review_ref_alignment.py"
       ],
-      "executed": "2026-10-28T23:51:57",
+      "executed": "2026-10-29T01:35:34",
       "detected": true
     },
     "R9_fallback_header_without_range": {
       "suite": "backend",
       "failed": 1,
-      "passed": 13,
+      "passed": 16,
       "errors": 0,
       "failing_tests": [
         "test_rc074_mask_stored_without_the_mri_header_has_its_own_display_range"
@@ -607,7 +609,7 @@
         "tests/unit/test_prb010_region_label_colours.py",
         "tests/unit/test_prb004_review_ref_alignment.py"
       ],
-      "executed": "2026-10-28T23:52:09",
+      "executed": "2026-10-29T01:35:45",
       "detected": true
     },
     "G1_no_fallback_to_preprocessed": {
@@ -629,7 +631,7 @@
       "tests": [
         "src/ViewerApp.prb007.test.tsx"
       ],
-      "executed": "2026-10-28T23:52:45",
+      "executed": "2026-10-29T01:36:20",
       "detected": true
     },
     "G2_spare_panels_not_filled": {
@@ -651,7 +653,7 @@
         "src/utils/sequenceDetection.prb007.test.ts",
         "src/ViewerApp.prb007.test.tsx"
       ],
-      "executed": "2026-10-28T23:53:03",
+      "executed": "2026-10-29T01:36:40",
       "detected": true
     },
     "G3_same_image_twice": {
@@ -671,7 +673,7 @@
       "tests": [
         "src/utils/sequenceDetection.prb007.test.ts"
       ],
-      "executed": "2026-10-28T23:53:08",
+      "executed": "2026-10-29T01:36:45",
       "detected": true
     },
     "G4_switch_names_the_requested_source": {
@@ -690,7 +692,7 @@
       "tests": [
         "src/ViewerApp.prb007.test.tsx"
       ],
-      "executed": "2026-10-28T23:53:20",
+      "executed": "2026-10-29T01:37:00",
       "detected": true
     },
     "S1_opens_on_slice_zero": {
@@ -714,7 +716,7 @@
         "src/utils/sliceOnOpen.test.ts",
         "src/ViewerApp.prb007.test.tsx"
       ],
-      "executed": "2026-10-28T23:53:34",
+      "executed": "2026-10-29T01:37:20",
       "detected": true
     },
     "S2_viewer_bypasses_the_rule": {
@@ -734,7 +736,7 @@
       "tests": [
         "src/ViewerApp.prb007.test.tsx"
       ],
-      "executed": "2026-10-28T23:53:52",
+      "executed": "2026-10-29T01:37:36",
       "detected": true
     },
     "S3_slice_kept_across_studies": {
@@ -753,7 +755,7 @@
       "tests": [
         "src/utils/sliceOnOpen.test.ts"
       ],
-      "executed": "2026-10-28T23:53:59",
+      "executed": "2026-10-29T01:37:41",
       "detected": true
     },
     "S4_slice_kept_for_another_size": {
@@ -773,7 +775,7 @@
         "src/utils/sliceOnOpen.test.ts",
         "src/ViewerApp.prb007.test.tsx"
       ],
-      "executed": "2026-10-28T23:54:14",
+      "executed": "2026-10-29T01:37:59",
       "detected": true
     },
     "S5_grid_panels_open_on_slice_zero": {
@@ -792,7 +794,7 @@
       "tests": [
         "src/ViewerApp.prb007.test.tsx"
       ],
-      "executed": "2026-10-28T23:54:34",
+      "executed": "2026-10-29T01:38:19",
       "detected": true
     },
     "S6_middle_rounded_up": {
@@ -813,7 +815,7 @@
       "tests": [
         "src/utils/sliceOnOpen.test.ts"
       ],
-      "executed": "2026-10-28T23:54:40",
+      "executed": "2026-10-29T01:38:24",
       "detected": true
     },
     "Q1_screening_on_by_default": {
@@ -833,7 +835,7 @@
         "src/config/features.quickScreen.test.ts",
         "src/ViewerApp.prb007.test.tsx"
       ],
-      "executed": "2026-10-28T23:54:59",
+      "executed": "2026-10-29T01:38:39",
       "detected": true
     },
     "Q2_badge_not_behind_the_flag": {
@@ -853,7 +855,7 @@
         "src/config/features.quickScreen.test.ts",
         "src/ViewerApp.prb007.test.tsx"
       ],
-      "executed": "2026-10-28T23:55:16",
+      "executed": "2026-10-29T01:38:53",
       "detected": true
     },
     "Q3_model_looked_for_at_every_opening": {
@@ -872,7 +874,7 @@
       "tests": [
         "src/components/QuickScreenBadge.prb009.test.tsx"
       ],
-      "executed": "2026-10-28T23:55:23",
+      "executed": "2026-10-29T01:38:59",
       "detected": true
     },
     "Q4_button_while_looking": {
@@ -891,7 +893,7 @@
       "tests": [
         "src/components/QuickScreenBadge.prb009.test.tsx"
       ],
-      "executed": "2026-10-28T23:55:30",
+      "executed": "2026-10-29T01:39:05",
       "detected": true
     },
     "Q5_absent_model_logged_as_error": {
@@ -910,7 +912,7 @@
       "tests": [
         "src/components/QuickScreenBadge.prb009.test.tsx"
       ],
-      "executed": "2026-10-28T23:55:37",
+      "executed": "2026-10-29T01:39:10",
       "detected": true
     },
     "P1_region_drawn_in_its_stored_colour": {
@@ -930,13 +932,13 @@
       "tests": [
         "src/components/SegmentationCanvasLocal.prb010.test.tsx"
       ],
-      "executed": "2026-10-28T23:55:43",
+      "executed": "2026-10-29T01:39:17",
       "detected": true
     },
     "P2_zone_coloured_lesions_red_green": {
       "suite": "frontend",
       "failed": 2,
-      "passed": 11,
+      "passed": 12,
       "errors": 0,
       "failing_tests": [
         "rc076 2D zone-coloured lesions (MAGNIMS zone colouring on) use the legend colours",
@@ -951,13 +953,13 @@
         "src/components/SegmentationCanvasLocal.prb010.test.tsx",
         "src/utils/regionColors.test.ts"
       ],
-      "executed": "2026-10-28T23:55:50",
+      "executed": "2026-10-29T01:39:23",
       "detected": true
     },
     "P3_zone_map_layer_red_green": {
       "suite": "frontend",
       "failed": 2,
-      "passed": 11,
+      "passed": 12,
       "errors": 0,
       "failing_tests": [
         "rc076 2D zone-map background layer uses the legend colours",
@@ -972,7 +974,7 @@
         "src/components/SegmentationCanvasLocal.prb010.test.tsx",
         "src/utils/regionColors.test.ts"
       ],
-      "executed": "2026-10-28T23:55:56",
+      "executed": "2026-10-29T01:39:30",
       "detected": true
     },
     "P4_3d_zone_colormap_red_green": {
@@ -991,13 +993,13 @@
       "tests": [
         "src/components/SegmentationCanvasLocal.prb010.test.tsx"
       ],
-      "executed": "2026-10-28T23:56:03",
+      "executed": "2026-10-29T01:39:36",
       "detected": true
     },
     "P5_zone_legend_own_colours": {
       "suite": "frontend",
       "failed": 2,
-      "passed": 11,
+      "passed": 12,
       "errors": 0,
       "failing_tests": [
         "rc076 the zone-map panel legend shows the same colours as the lesion legend",
@@ -1012,13 +1014,13 @@
         "src/components/SegmentationCanvasLocal.prb010.test.tsx",
         "src/utils/regionColors.test.ts"
       ],
-      "executed": "2026-10-28T23:56:09",
+      "executed": "2026-10-29T01:39:43",
       "detected": true
     },
     "P6_lesion_legend_own_copy": {
       "suite": "frontend",
       "failed": 1,
-      "passed": 5,
+      "passed": 6,
       "errors": 0,
       "failing_tests": [
         "rc076 the lesion legend and the zone-map legend take their colours from the mapping, not their own"
@@ -1031,13 +1033,13 @@
       "tests": [
         "src/utils/regionColors.test.ts"
       ],
-      "executed": "2026-10-28T23:56:14",
+      "executed": "2026-10-29T01:39:47",
       "detected": true
     },
     "P7_red_and_green_in_the_mapping": {
       "suite": "frontend",
       "failed": 9,
-      "passed": 4,
+      "passed": 5,
       "errors": 0,
       "failing_tests": [
         "rc076 2D overlay of a classified segmentation: each region drawn in its legend colour (stored labels say red/green/blue/gold)",
@@ -1059,13 +1061,13 @@
         "src/components/SegmentationCanvasLocal.prb010.test.tsx",
         "src/utils/regionColors.test.ts"
       ],
-      "executed": "2026-10-28T23:56:21",
+      "executed": "2026-10-29T01:39:53",
       "detected": true
     },
     "P8_label_preset_off_the_mapping": {
       "suite": "frontend",
       "failed": 1,
-      "passed": 5,
+      "passed": 6,
       "errors": 0,
       "failing_tests": [
         "rc076 the MAGNIMS label preset uses the mapping"
@@ -1078,13 +1080,13 @@
       "tests": [
         "src/utils/regionColors.test.ts"
       ],
-      "executed": "2026-10-28T23:56:25",
+      "executed": "2026-10-29T01:39:57",
       "detected": true
     },
     "P9_backend_stores_red": {
       "suite": "backend",
       "failed": 2,
-      "passed": 12,
+      "passed": 15,
       "errors": 0,
       "failing_tests": [
         "test_rc076_backend_region_label_colours_are_the_frontend_mapping",
@@ -1099,7 +1101,7 @@
         "tests/unit/test_prb010_region_label_colours.py",
         "tests/unit/test_prb004_review_ref_alignment.py"
       ],
-      "executed": "2026-10-28T23:56:36",
+      "executed": "2026-10-29T01:40:08",
       "detected": true
     },
     "P11_zone_colouring_legend_red_green": {
@@ -1118,13 +1120,13 @@
       "tests": [
         "src/components/SegmentationCanvasLocal.prb010.test.tsx"
       ],
-      "executed": "2026-10-28T23:56:43",
+      "executed": "2026-10-29T01:40:15",
       "detected": true
     },
     "P10_region_names_case_sensitive": {
       "suite": "frontend",
       "failed": 1,
-      "passed": 5,
+      "passed": 6,
       "errors": 0,
       "failing_tests": [
         "rc076 region labels stored with other colours are shown in the mapping; other labels untouched"
@@ -1137,19 +1139,19 @@
       "tests": [
         "src/utils/regionColors.test.ts"
       ],
-      "executed": "2026-10-28T23:56:47",
+      "executed": "2026-10-29T01:40:19",
       "detected": true
     },
     "V1_route_io_not_imported": {
       "suite": "backend",
       "failed": 5,
-      "passed": 9,
+      "passed": 12,
       "errors": 0,
       "failing_tests": [
-        "test_rc073_identity_fallback_mask_is_not_stamped_with_the_reference_affine",
         "test_rc073_legacy_mask_on_the_reference_grid_is_served_in_image_order_with_marker_and_own_range",
         "test_rc073_legacy_square_mask_is_un_transposed",
-        "test_rc073_mask_on_another_scanner_grid_is_served_unchanged",
+        "test_rc073_mask_not_on_the_reference_grid_is_marked_as_stored",
+        "test_rc073_reference_is_read_for_its_header_only",
         "test_rc073_v2_mask_on_the_reference_grid_keeps_its_order_and_gets_its_own_range"
       ],
       "reintroduces": "GET /segmentation/{id}/nifti?ref_file_id= raises NameError again (the defect as found)",
@@ -1161,16 +1163,17 @@
         "tests/unit/test_prb010_region_label_colours.py",
         "tests/unit/test_prb004_review_ref_alignment.py"
       ],
-      "executed": "2026-10-28T23:56:58",
+      "executed": "2026-10-29T01:40:30",
       "detected": true
     },
     "V2_reference_affine_stamped_on_any_mask": {
       "suite": "backend",
-      "failed": 2,
-      "passed": 12,
+      "failed": 3,
+      "passed": 14,
       "errors": 0,
       "failing_tests": [
         "test_rc073_identity_fallback_mask_is_not_stamped_with_the_reference_affine",
+        "test_rc073_mask_not_on_the_reference_grid_is_marked_as_stored",
         "test_rc073_mask_on_another_scanner_grid_is_served_unchanged"
       ],
       "reintroduces": "an identity-fallback or other-grid mask served under the image's affine: a fabricated alignment",
@@ -1182,17 +1185,18 @@
         "tests/unit/test_prb010_region_label_colours.py",
         "tests/unit/test_prb004_review_ref_alignment.py"
       ],
-      "executed": "2026-10-28T23:57:09",
+      "executed": "2026-10-29T01:40:41",
       "detected": true
     },
     "V3_realigned_mask_without_marker": {
       "suite": "backend",
-      "failed": 3,
-      "passed": 11,
+      "failed": 4,
+      "passed": 13,
       "errors": 0,
       "failing_tests": [
         "test_rc073_legacy_mask_on_the_reference_grid_is_served_in_image_order_with_marker_and_own_range",
         "test_rc073_legacy_square_mask_is_un_transposed",
+        "test_rc073_reference_is_read_for_its_header_only",
         "test_rc073_v2_mask_on_the_reference_grid_keeps_its_order_and_gets_its_own_range"
       ],
       "reintroduces": "a realigned mask served without the RC-031 marker (refused by the viewers: the 3D/GPU view loses it)",
@@ -1204,13 +1208,13 @@
         "tests/unit/test_prb010_region_label_colours.py",
         "tests/unit/test_prb004_review_ref_alignment.py"
       ],
-      "executed": "2026-10-28T23:57:21",
+      "executed": "2026-10-29T01:40:52",
       "detected": true
     },
     "V4_realigned_mask_with_the_mri_window": {
       "suite": "backend",
       "failed": 2,
-      "passed": 12,
+      "passed": 15,
       "errors": 0,
       "failing_tests": [
         "test_rc073_legacy_mask_on_the_reference_grid_is_served_in_image_order_with_marker_and_own_range",
@@ -1225,17 +1229,18 @@
         "tests/unit/test_prb010_region_label_colours.py",
         "tests/unit/test_prb004_review_ref_alignment.py"
       ],
-      "executed": "2026-10-28T23:57:33",
+      "executed": "2026-10-29T01:41:02",
       "detected": true
     },
     "V5_legacy_mask_not_reoriented": {
       "suite": "backend",
-      "failed": 2,
-      "passed": 12,
+      "failed": 3,
+      "passed": 14,
       "errors": 0,
       "failing_tests": [
         "test_rc073_legacy_mask_on_the_reference_grid_is_served_in_image_order_with_marker_and_own_range",
-        "test_rc073_legacy_square_mask_is_un_transposed"
+        "test_rc073_legacy_square_mask_is_un_transposed",
+        "test_rc073_reference_is_read_for_its_header_only"
       ],
       "reintroduces": "a pre-RC-031 mask (in-plane transpose) not un-transposed by the aligned route",
       "files": [
@@ -1246,17 +1251,18 @@
         "tests/unit/test_prb010_region_label_colours.py",
         "tests/unit/test_prb004_review_ref_alignment.py"
       ],
-      "executed": "2026-10-28T23:57:45",
+      "executed": "2026-10-29T01:41:13",
       "detected": true
     },
     "V6_aligned_mask_not_served": {
       "suite": "backend",
-      "failed": 3,
-      "passed": 11,
+      "failed": 4,
+      "passed": 13,
       "errors": 0,
       "failing_tests": [
         "test_rc073_legacy_mask_on_the_reference_grid_is_served_in_image_order_with_marker_and_own_range",
         "test_rc073_legacy_square_mask_is_un_transposed",
+        "test_rc073_reference_is_read_for_its_header_only",
         "test_rc073_v2_mask_on_the_reference_grid_keeps_its_order_and_gets_its_own_range"
       ],
       "reintroduces": "the route computes the aligned mask and serves the stored one",
@@ -1268,7 +1274,7 @@
         "tests/unit/test_prb010_region_label_colours.py",
         "tests/unit/test_prb004_review_ref_alignment.py"
       ],
-      "executed": "2026-10-28T23:57:58",
+      "executed": "2026-10-29T01:41:24",
       "detected": true
     },
     "V7_gpu_mask_not_requested_aligned": {
@@ -1287,13 +1293,13 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-28T23:58:06",
+      "executed": "2026-10-29T01:41:31",
       "detected": true
     },
     "V8_3d_mask_not_requested_aligned": {
       "suite": "frontend",
       "failed": 1,
-      "passed": 11,
+      "passed": 18,
       "errors": 0,
       "failing_tests": [
         "rc073 M1: the lesion mask and both visit masks are requested aligned to the image (ref_file_id)"
@@ -1306,13 +1312,13 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-28T23:58:14",
+      "executed": "2026-10-29T01:41:38",
       "detected": true
     },
     "V9_3d_later_visit_not_requested_aligned": {
       "suite": "frontend",
       "failed": 1,
-      "passed": 11,
+      "passed": 18,
       "errors": 0,
       "failing_tests": [
         "rc073 M1: the lesion mask and both visit masks are requested aligned to the image (ref_file_id)"
@@ -1325,13 +1331,13 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-28T23:58:21",
+      "executed": "2026-10-29T01:41:45",
       "detected": true
     },
     "V10_3d_marker_not_checked": {
       "suite": "frontend",
       "failed": 3,
-      "passed": 9,
+      "passed": 16,
       "errors": 0,
       "failing_tests": [
         "rc073 M1: 3D volume: a mask without the RC-031 voxel-order marker is not drawn, and the view says so",
@@ -1346,13 +1352,13 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-28T23:58:52",
+      "executed": "2026-10-29T01:42:16",
       "detected": true
     },
     "V11_3d_position_not_checked": {
       "suite": "frontend",
       "failed": 1,
-      "passed": 11,
+      "passed": 18,
       "errors": 0,
       "failing_tests": [
         "rc073 M1: a mask with no scanner position (identity fallback) is not drawn, and the view says so"
@@ -1365,13 +1371,13 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-28T23:59:06",
+      "executed": "2026-10-29T01:42:31",
       "detected": true
     },
     "V12_3d_refused_mask_drawn_anyway": {
       "suite": "frontend",
       "failed": 4,
-      "passed": 8,
+      "passed": 15,
       "errors": 0,
       "failing_tests": [
         "rc073 M1: 3D volume: a mask without the RC-031 voxel-order marker is not drawn, and the view says so",
@@ -1387,13 +1393,13 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T00:00:02",
+      "executed": "2026-10-29T01:43:10",
       "detected": true
     },
     "V13_3d_refusal_not_stated": {
       "suite": "frontend",
       "failed": 4,
-      "passed": 8,
+      "passed": 15,
       "errors": 0,
       "failing_tests": [
         "rc073 M1: 3D volume: a mask without the RC-031 voxel-order marker is not drawn, and the view says so",
@@ -1409,7 +1415,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T00:00:13",
+      "executed": "2026-10-29T01:43:21",
       "detected": true
     },
     "V14_gpu_unsaved_segmentation_silent": {
@@ -1429,7 +1435,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T00:00:21",
+      "executed": "2026-10-29T01:43:29",
       "detected": true
     },
     "V15_gpu_unsaved_edits_silent": {
@@ -1448,7 +1454,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T00:00:28",
+      "executed": "2026-10-29T01:43:37",
       "detected": true
     },
     "V16_viewer_does_not_report_unsaved_edits": {
@@ -1467,13 +1473,13 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T00:00:36",
+      "executed": "2026-10-29T01:43:43",
       "detected": true
     },
     "V17_3d_unsaved_segmentation_silent": {
       "suite": "frontend",
       "failed": 1,
-      "passed": 11,
+      "passed": 18,
       "errors": 0,
       "failing_tests": [
         "rc073 M2: a segmentation not saved yet is not shown in 3D, and the view says so"
@@ -1486,13 +1492,13 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T00:00:43",
+      "executed": "2026-10-29T01:43:52",
       "detected": true
     },
     "V18_3d_slice_index_over_depth": {
       "suite": "frontend",
       "failed": 2,
-      "passed": 10,
+      "passed": 17,
       "errors": 0,
       "failing_tests": [
         "rc073 M3: \"go to slice\" reaches storage slice k on its own axis (axial LAS)",
@@ -1506,13 +1512,13 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T00:00:54",
+      "executed": "2026-10-29T01:44:02",
       "detected": true
     },
     "V19_3d_slice_always_on_the_axial_axis": {
       "suite": "frontend",
       "failed": 1,
-      "passed": 11,
+      "passed": 18,
       "errors": 0,
       "failing_tests": [
         "rc073 M3: \"go to slice\" reaches storage slice k on its own axis (sagittally stored)"
@@ -1525,7 +1531,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T00:01:03",
+      "executed": "2026-10-29T01:44:10",
       "detected": true
     },
     "V20_deep_white_matter_reddish_purple": {
@@ -1550,7 +1556,7 @@
       "tests": [
         "src/components/SegmentationCanvasLocal.prb010.test.tsx"
       ],
-      "executed": "2026-10-29T00:01:15",
+      "executed": "2026-10-29T01:44:18",
       "detected": true
     },
     "V21_gpu_mask_all_red": {
@@ -1569,13 +1575,13 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T00:01:24",
+      "executed": "2026-10-29T01:44:24",
       "detected": true
     },
     "V22_3d_lesion_mask_all_red": {
       "suite": "frontend",
       "failed": 1,
-      "passed": 11,
+      "passed": 18,
       "errors": 0,
       "failing_tests": [
         "rc076 m6: 3D colours a region-classified mask with the shared region mapping"
@@ -1588,13 +1594,13 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T00:01:34",
+      "executed": "2026-10-29T01:44:32",
       "detected": true
     },
     "V23_niivue_regions_in_stored_colours": {
       "suite": "frontend",
       "failed": 2,
-      "passed": 18,
+      "passed": 25,
       "errors": 0,
       "failing_tests": [
         "rc076 m6: 3D colours a region-classified mask with the shared region mapping",
@@ -1609,16 +1615,17 @@
         "src/components/NiivueViewer2D.prb004.review.test.tsx",
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T00:01:43",
+      "executed": "2026-10-29T01:44:40",
       "detected": true
     },
     "V24_unlisted_label_value_not_drawn": {
       "suite": "frontend",
-      "failed": 1,
-      "passed": 7,
+      "failed": 2,
+      "passed": 13,
       "errors": 0,
       "failing_tests": [
-        "rc076 m6: a region-classified mask is coloured by region with the shared mapping; an unknown label value is still drawn"
+        "rc076 m6: a region-classified mask is coloured by region with the shared mapping; an unknown label value is still drawn",
+        "rc076 R5: ONE colour for mask values missing from the label table: cyan, used by the GPU / 3D colormap, no label preset uses it"
       ],
       "error_files": [],
       "reintroduces": "a label value missing from the table silently not drawn in GPU / 3D",
@@ -1626,15 +1633,16 @@
         "frontend/src/utils/maskLabelColormap.ts"
       ],
       "tests": [
-        "src/components/NiivueViewer2D.prb004.review.test.tsx"
+        "src/components/NiivueViewer2D.prb004.review.test.tsx",
+        "src/utils/regionColors.test.ts"
       ],
-      "executed": "2026-10-29T00:01:53",
+      "executed": "2026-10-29T01:44:46",
       "detected": true
     },
     "V25_3d_label_colours_with_header_range": {
       "suite": "frontend",
       "failed": 1,
-      "passed": 11,
+      "passed": 18,
       "errors": 0,
       "failing_tests": [
         "rc076 m6: 3D colours a region-classified mask with the shared region mapping"
@@ -1647,13 +1655,13 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T00:02:00",
+      "executed": "2026-10-29T01:44:54",
       "detected": true
     },
     "V26_3d_later_visit_white": {
       "suite": "frontend",
       "failed": 1,
-      "passed": 11,
+      "passed": 18,
       "errors": 0,
       "failing_tests": [
         "rc074 m2: the later-visit mask is drawn in a saturated colour, not white"
@@ -1666,7 +1674,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T00:02:07",
+      "executed": "2026-10-29T01:45:01",
       "detected": true
     },
     "V27_gpu_niivue_hotkeys_on": {
@@ -1685,7 +1693,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T00:02:14",
+      "executed": "2026-10-29T01:45:08",
       "detected": true
     },
     "V28_gpu_canvas_focusable": {
@@ -1704,7 +1712,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T00:02:21",
+      "executed": "2026-10-29T01:45:15",
       "detected": true
     },
     "V29_gpu_keys_reach_niivue": {
@@ -1723,7 +1731,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T00:02:28",
+      "executed": "2026-10-29T01:45:22",
       "detected": true
     },
     "V30_gpu_wheel_reaches_niivue": {
@@ -1742,7 +1750,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T00:02:36",
+      "executed": "2026-10-29T01:45:29",
       "detected": true
     },
     "V31_slice_kept_on_another_matrix": {
@@ -1761,7 +1769,7 @@
       "tests": [
         "src/utils/sliceOnOpen.review.test.ts"
       ],
-      "executed": "2026-10-29T00:02:45",
+      "executed": "2026-10-29T01:45:34",
       "detected": true
     },
     "V32_slice_kept_on_another_spacing": {
@@ -1780,7 +1788,7 @@
       "tests": [
         "src/utils/sliceOnOpen.review.test.ts"
       ],
-      "executed": "2026-10-29T00:02:50",
+      "executed": "2026-10-29T01:45:41",
       "detected": true
     },
     "V33_slice_kept_on_another_thickness": {
@@ -1799,7 +1807,7 @@
       "tests": [
         "src/utils/sliceOnOpen.review.test.ts"
       ],
-      "executed": "2026-10-29T00:02:57",
+      "executed": "2026-10-29T01:45:46",
       "detected": true
     },
     "V34_slice_kept_on_another_orientation": {
@@ -1818,13 +1826,13 @@
       "tests": [
         "src/utils/sliceOnOpen.review.test.ts"
       ],
-      "executed": "2026-10-29T00:03:17",
+      "executed": "2026-10-29T01:45:52",
       "detected": true
     },
     "V35_gpu_notice_at_the_top": {
       "suite": "frontend",
       "failed": 2,
-      "passed": 7,
+      "passed": 8,
       "errors": 0,
       "failing_tests": [
         "rc073 m5: the notice is fully visible and covers no safety annotation, in a usual and a narrow viewport",
@@ -1839,13 +1847,13 @@
         "src/components/NiivueViewer2D.prb004.review.test.tsx",
         "src/components/NiivueViewer2D.prb004.layout.test.tsx"
       ],
-      "executed": "2026-10-29T00:05:35",
+      "executed": "2026-10-29T01:46:07",
       "detected": true
     },
     "V39_gpu_notice_on_the_two_line_caveat": {
       "suite": "frontend",
       "failed": 1,
-      "passed": 0,
+      "passed": 1,
       "errors": 0,
       "failing_tests": [
         "rc073 m5: the notice is fully visible and covers no safety annotation, in a usual and a narrow viewport"
@@ -1858,13 +1866,13 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.layout.test.tsx"
       ],
-      "executed": "2026-10-29T00:11:15",
+      "executed": "2026-10-29T01:46:22",
       "detected": true
     },
     "V40_3d_colour_bar_under_the_caveat": {
       "suite": "frontend",
       "failed": 2,
-      "passed": 10,
+      "passed": 17,
       "errors": 0,
       "failing_tests": [
         "rc023 3D volume: niivue draws no colour bar under the laterality caveat",
@@ -1878,13 +1886,13 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T00:11:27",
+      "executed": "2026-10-29T01:46:29",
       "detected": true
     },
     "V41_sidebar_slice_reads_the_single_view": {
       "suite": "frontend",
       "failed": 2,
-      "passed": 1,
+      "passed": 3,
       "errors": 0,
       "failing_tests": [
         "prb008 2x2: the sidebar shows the active panel slice and its slice count",
@@ -1898,13 +1906,13 @@
       "tests": [
         "src/components/ControlPanel.prb008.test.tsx"
       ],
-      "executed": "2026-10-29T00:11:35",
+      "executed": "2026-10-29T01:46:36",
       "detected": true
     },
     "V42_sidebar_slider_moves_the_single_view": {
       "suite": "frontend",
       "failed": 1,
-      "passed": 2,
+      "passed": 4,
       "errors": 0,
       "failing_tests": [
         "prb008 2x2: moving the sidebar slider moves the panels, not a hidden single-view index"
@@ -1917,13 +1925,13 @@
       "tests": [
         "src/components/ControlPanel.prb008.test.tsx"
       ],
-      "executed": "2026-10-29T00:11:44",
+      "executed": "2026-10-29T01:46:43",
       "detected": true
     },
     "V43_sidebar_slice_count_of_the_single_view": {
       "suite": "frontend",
       "failed": 1,
-      "passed": 2,
+      "passed": 4,
       "errors": 0,
       "failing_tests": [
         "prb008 2x2: the sidebar shows the active panel slice and its slice count"
@@ -1936,7 +1944,7 @@
       "tests": [
         "src/components/ControlPanel.prb008.test.tsx"
       ],
-      "executed": "2026-10-29T00:11:56",
+      "executed": "2026-10-29T01:46:49",
       "detected": true
     },
     "V36_gpu_grid_notice_sends_to_standard": {
@@ -1955,7 +1963,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T00:12:02",
+      "executed": "2026-10-29T01:46:55",
       "detected": true
     },
     "V37_multi_panel_mask_prop_back": {
@@ -1974,7 +1982,7 @@
       "tests": [
         "src/components/MultiPanelViewer.prb004.review.test.ts"
       ],
-      "executed": "2026-10-29T00:12:09",
+      "executed": "2026-10-29T01:46:59",
       "detected": true
     },
     "V38_grid_shows_segmentation_files": {
@@ -1993,7 +2001,321 @@
       "tests": [
         "src/utils/instanceClassification.prb007.review.test.ts"
       ],
-      "executed": "2026-10-29T00:12:15",
+      "executed": "2026-10-29T01:47:04",
+      "detected": true
+    },
+    "W1_3d_previous_mask_kept_on_a_new_request": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 18,
+      "errors": 0,
+      "failing_tests": [
+        "rc073 R1: after a switch, a failed download never leaves the previous mask drawn"
+      ],
+      "error_files": [],
+      "reintroduces": "after a switch whose download fails, the previous segmentation still drawn in 3D (the defect as found)",
+      "files": [
+        "frontend/src/components/ImageViewer3D.tsx"
+      ],
+      "tests": [
+        "src/components/ImageViewer3D.prb004.review.test.tsx"
+      ],
+      "executed": "2026-10-29T01:47:19",
+      "detected": true
+    },
+    "W2_3d_lesion_download_failure_silent": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 17,
+      "errors": 0,
+      "failing_tests": [
+        "rc073 R1: a lesion mask that cannot be downloaded is named in 3D: could not be loaded",
+        "rc073 R1: after a switch, a failed download never leaves the previous mask drawn"
+      ],
+      "error_files": [],
+      "reintroduces": "a lesion mask that cannot be downloaded silently missing in 3D (the defect as found)",
+      "files": [
+        "frontend/src/components/ImageViewer3D.tsx"
+      ],
+      "tests": [
+        "src/components/ImageViewer3D.prb004.review.test.tsx"
+      ],
+      "executed": "2026-10-29T01:47:28",
+      "detected": true
+    },
+    "W3_3d_visit_download_failure_silent": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 18,
+      "errors": 0,
+      "failing_tests": [
+        "rc073 R1: a later-visit mask that cannot be downloaded is named in 3D"
+      ],
+      "error_files": [],
+      "reintroduces": "a later-visit mask that cannot be downloaded silently missing in 3D",
+      "files": [
+        "frontend/src/components/ImageViewer3D.tsx"
+      ],
+      "tests": [
+        "src/components/ImageViewer3D.prb004.review.test.tsx"
+      ],
+      "executed": "2026-10-29T01:47:43",
+      "detected": true
+    },
+    "W4_3d_load_failure_not_in_the_notice": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 17,
+      "errors": 0,
+      "failing_tests": [
+        "rc073 R1: a lesion mask that cannot be downloaded is named in 3D: could not be loaded",
+        "rc073 R1: after a switch, a failed download never leaves the previous mask drawn"
+      ],
+      "error_files": [],
+      "reintroduces": "a recorded download failure left out of the 3D notice",
+      "files": [
+        "frontend/src/components/ImageViewer3D.tsx"
+      ],
+      "tests": [
+        "src/components/ImageViewer3D.prb004.review.test.tsx"
+      ],
+      "executed": "2026-10-29T01:47:52",
+      "detected": true
+    },
+    "W5_3d_unsaved_edits_silent": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 18,
+      "errors": 0,
+      "failing_tests": [
+        "rc073 R3: unsaved edits on a saved segmentation are stated in 3D"
+      ],
+      "error_files": [],
+      "reintroduces": "unsaved edits on a saved segmentation not stated in 3D",
+      "files": [
+        "frontend/src/components/ImageViewer3D.tsx"
+      ],
+      "tests": [
+        "src/components/ImageViewer3D.prb004.review.test.tsx"
+      ],
+      "executed": "2026-10-29T01:48:00",
+      "detected": true
+    },
+    "W6_identity_mask_refused_on_an_identity_image": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 18,
+      "errors": 0,
+      "failing_tests": [
+        "rc073 R4: an identity-transform mask is drawn when the image's own transform is the identity too"
+      ],
+      "error_files": [],
+      "reintroduces": "a mask of an identity-transform image refused in 3D although it aligns",
+      "files": [
+        "frontend/src/utils/niivueVoxelGrid.ts"
+      ],
+      "tests": [
+        "src/components/ImageViewer3D.prb004.review.test.tsx"
+      ],
+      "executed": "2026-10-29T01:48:15",
+      "detected": true
+    },
+    "W7_identity_mask_accepted_on_any_image": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 18,
+      "errors": 0,
+      "failing_tests": [
+        "rc073 M1: a mask with no scanner position (identity fallback) is not drawn, and the view says so"
+      ],
+      "error_files": [],
+      "reintroduces": "an identity-fallback mask (no scanner position) drawn on a scanner-placed image",
+      "files": [
+        "frontend/src/utils/niivueVoxelGrid.ts"
+      ],
+      "tests": [
+        "src/components/ImageViewer3D.prb004.review.test.tsx"
+      ],
+      "executed": "2026-10-29T01:48:30",
+      "detected": true
+    },
+    "W8_3d_niivue_view_and_clip_keys_on": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 17,
+      "errors": 0,
+      "failing_tests": [
+        "rc073 R7: 3D volume: niivue's view-type and clip-plane keys are off",
+        "rc073 R7: 3D multiplanar: niivue's view-type and clip-plane keys are off"
+      ],
+      "error_files": [],
+      "reintroduces": "niivue's view-type key turns a panel labelled Axial into another view; its clip keys act behind the app",
+      "files": [
+        "frontend/src/components/ImageViewer3D.tsx"
+      ],
+      "tests": [
+        "src/components/ImageViewer3D.prb004.review.test.tsx"
+      ],
+      "executed": "2026-10-29T01:48:37",
+      "detected": true
+    },
+    "W9_3d_notice_on_the_two_line_caveat": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 1,
+      "errors": 0,
+      "failing_tests": [
+        "rc073 R1: the 3D notice is fully visible and covers no safety annotation, in a usual and a narrow viewport"
+      ],
+      "error_files": [],
+      "reintroduces": "the 3D notice low enough to cover the laterality caveat when it wraps in a narrow view (the defect as found)",
+      "files": [
+        "frontend/src/components/ImageViewer3D.tsx"
+      ],
+      "tests": [
+        "src/components/NiivueViewer2D.prb004.layout.test.tsx"
+      ],
+      "executed": "2026-10-29T01:48:50",
+      "detected": true
+    },
+    "W10_alignment_error_becomes_a_500": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 16,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc073_alignment_failure_serves_the_stored_mask_marked_never_a_500"
+      ],
+      "reintroduces": "an unreadable reference turns the mask request into HTTP 500 (the defect as found)",
+      "files": [
+        "backend/app/api/routes/segmentation.py"
+      ],
+      "tests": [
+        "tests/unit/test_prb006_mask_display_range.py",
+        "tests/unit/test_prb010_region_label_colours.py",
+        "tests/unit/test_prb004_review_ref_alignment.py"
+      ],
+      "executed": "2026-10-29T01:49:02",
+      "detected": true
+    },
+    "W11_reference_voxels_loaded": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 16,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc073_reference_is_read_for_its_header_only"
+      ],
+      "reintroduces": "the whole reference MRI loaded to read its shape (the defect as found)",
+      "files": [
+        "backend/app/services/segmentation_service.py"
+      ],
+      "tests": [
+        "tests/unit/test_prb006_mask_display_range.py",
+        "tests/unit/test_prb010_region_label_colours.py",
+        "tests/unit/test_prb004_review_ref_alignment.py"
+      ],
+      "executed": "2026-10-29T01:49:13",
+      "detected": true
+    },
+    "W12_alignment_outcome_not_stated": {
+      "suite": "backend",
+      "failed": 3,
+      "passed": 14,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc073_alignment_failure_serves_the_stored_mask_marked_never_a_500",
+        "test_rc073_mask_not_on_the_reference_grid_is_marked_as_stored",
+        "test_rc073_reference_is_read_for_its_header_only"
+      ],
+      "reintroduces": "the response does not say whether the mask was aligned, served as stored, or the alignment failed",
+      "files": [
+        "backend/app/api/routes/segmentation.py"
+      ],
+      "tests": [
+        "tests/unit/test_prb006_mask_display_range.py",
+        "tests/unit/test_prb010_region_label_colours.py",
+        "tests/unit/test_prb004_review_ref_alignment.py"
+      ],
+      "executed": "2026-10-29T01:49:24",
+      "detected": true
+    },
+    "W13_unlabelled_colour_magenta": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 6,
+      "errors": 0,
+      "failing_tests": [
+        "rc076 R5: ONE colour for mask values missing from the label table: cyan, used by the GPU / 3D colormap, no label preset uses it"
+      ],
+      "error_files": [],
+      "reintroduces": "unlabelled values magenta: the MAGNIMS Active (Gd+) colour",
+      "files": [
+        "frontend/src/utils/regionColors.ts"
+      ],
+      "tests": [
+        "src/utils/regionColors.test.ts"
+      ],
+      "executed": "2026-10-29T01:49:28",
+      "detected": true
+    },
+    "W14_cursor_label_not_shown": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 4,
+      "errors": 0,
+      "failing_tests": [
+        "rc076 R6: the sidebar names the region under the cursor, and an unlisted value as such"
+      ],
+      "error_files": [],
+      "reintroduces": "the sidebar does not name the label under the cursor",
+      "files": [
+        "frontend/src/components/ControlPanel.tsx"
+      ],
+      "tests": [
+        "src/components/ControlPanel.prb008.test.tsx"
+      ],
+      "executed": "2026-10-29T01:49:34",
+      "detected": true
+    },
+    "W15_viewer_does_not_report_the_label_under_the_cursor": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 4,
+      "errors": 0,
+      "failing_tests": [
+        "rc076 R6: the 2D viewer puts the label under the cursor into the readout (call site)"
+      ],
+      "error_files": [],
+      "reintroduces": "the 2D viewer leaves the label out of the cursor readout",
+      "files": [
+        "frontend/src/components/ImageViewer2D.tsx"
+      ],
+      "tests": [
+        "src/components/ControlPanel.prb008.test.tsx"
+      ],
+      "executed": "2026-10-29T01:49:41",
+      "detected": true
+    },
+    "W16_label_under_cursor_transposed": {
+      "suite": "frontend",
+      "failed": 3,
+      "passed": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc076 R6 names the label at (column x, row y) of the slice",
+        "rc076 R6 background, outside the slice or no mask: nothing",
+        "rc076 R6 a value missing from the label table is reported with no name"
+      ],
+      "error_files": [],
+      "reintroduces": "the label read at the transposed voxel (row and column swapped)",
+      "files": [
+        "frontend/src/utils/labelUnderCursor.ts"
+      ],
+      "tests": [
+        "src/utils/labelUnderCursor.test.ts"
+      ],
+      "executed": "2026-10-29T01:49:45",
       "detected": true
     }
   },
@@ -2001,27 +2323,27 @@
     "backend": {
       "suite": "backend",
       "failed": 0,
-      "passed": 14,
+      "passed": 17,
       "errors": 0,
       "failing_tests": []
     },
     "frontend": {
       "suite": "frontend",
       "failed": 0,
-      "passed": 97,
+      "passed": 111,
       "errors": 0,
       "failing_tests": [],
       "error_files": []
     }
   },
   "summary": {
-    "mutations": 95,
-    "detected": 95,
+    "mutations": 111,
+    "detected": 111,
     "undetected": []
   },
   "worktree": {
     "run_in": "throwaway detached worktree of the commit, removed after the run (review m8)",
-    "commit": "d28890b0f1cfc4648e74c6640db2645a6f8fc156",
+    "commit": "8fd9766c27a2ed540f99560a4919898a97e878f7",
     "stale_worktrees_removed_first": []
   }
 }
