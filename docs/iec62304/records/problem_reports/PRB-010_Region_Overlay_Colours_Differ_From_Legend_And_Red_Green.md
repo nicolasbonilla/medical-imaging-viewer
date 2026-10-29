@@ -138,3 +138,14 @@ to it; no test looked at the colours drawn on the image.
   label preset uses cyan. PR #69 uses magenta (`#FF00FF`) in the 2D canvas, which is the MAGNIMS "Active (Gd+)" colour — an
   unlabelled value would look like an active lesion; the coordinator asks #69 to import this constant. Test `regionColors.test.ts`
   (`rc076 R5`); negative control W13.
+
+### Final check of PR #71 (2026-10-29) — F1
+
+- **The cursor label ignored the overlay's transpose rule.** The 2D overlay draws a mask whose rows and columns are swapped
+  against the image (older back-end masks; visible only on a non-square image) transposed; the readout read it as stored and
+  could name another voxel's label. The placement rule (`maskDisplayLayout`, `transposeSlice`) now lives in one module,
+  `frontend/src/utils/maskDisplayLayout.ts`, used by the overlay (mask, selected-lesion box and centroid) and by the readout;
+  a mask the overlay cannot place on the image gives no label. Test `utils/labelUnderCursor.test.ts` (`rc076 F1`, non-square
+  image, swapped mask: the readout equals what the overlay draws at every voxel); the file fails to load on `9d97ba2`
+  (`records/risk_verification/PRB-004_final_check_tests_on_9d97ba2_2026-10-29.json`) and negative control W17 restores the
+  defect as found (failing assertions). Negative controls W16–W19.
