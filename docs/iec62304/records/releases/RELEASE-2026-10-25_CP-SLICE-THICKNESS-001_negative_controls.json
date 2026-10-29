@@ -1,12 +1,12 @@
 {
-  "executed": "2026-10-28T21:47:44",
+  "executed": "2026-10-29T01:41:26",
   "change": "CP-SLICE-THICKNESS-001 (DRAFT, PENDING owner approval; feature flag OFF)",
   "method": "one mutation at a time; each anchor asserted to occur exactly once; backend pytest (JUnit XML) or frontend vitest (JSON reporter); original bytes restored and hash-checked after each mutation",
   "hash_basis": "sha256 of the UTF-8 text with LF line endings",
   "source_sha256": {
     "backend/app/services/acquisition_geometry.py": "0ea0b0b43f6cacf2fe8175b917ff75954c201f00430c6e3a93213622100d7209",
     "backend/app/services/imaging_service.py": "b90b2d00d1c88305f5a125629793d07521340724461f0ec24a089039f39b0242",
-    "frontend/src/components/LesionDashboard.tsx": "f04c396523388ad0e4742a67e80930c7c99c055a2d807e739844da78d8558bc2",
+    "frontend/src/components/LesionDashboard.tsx": "539e396c035288c3075d1fbef9639bd872c192a4ccc0c1110fad7def69dcd21a",
     "frontend/src/components/SliceThicknessReliabilityCard.tsx": "11bb15250816767c936083868d1ed1104a10fcf6b7ec79ad37158b0f9dca5c36",
     "frontend/src/config/features.ts": "d7ac18c0982d2203b157dd5dcc9d75f57c944313d65d61ce21df3022c82590df",
     "frontend/src/config/sliceThicknessReliability.v2.json": "1f3bee7f89a4c95fd3dc45784ad5a6e0b69188226aac56ecb9556796a93a44d8",

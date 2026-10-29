@@ -1,17 +1,17 @@
 {
-  "executed": "2026-10-28T21:54:10",
+  "executed": "2026-10-29T01:37:49",
   "method": "one mutation at a time; each anchor asserted to occur exactly once",
   "hash_basis": "sha256 of the UTF-8 text with LF line endings",
   "source_sha256": {
-    "backend/app/api/routes/ai_report.py": "89baddfcb46fa1bb4a4eaba6141bbb66155dd691fe481c1abd4c8111ffb865f6",
+    "backend/app/api/routes/ai_report.py": "18a9b4a95d61153f2ea1fda1dffefe958eef11ff7fc04ccc255e71bef37d66b5",
     "backend/app/api/routes/segmentation_analysis.py": "0362e078dd382dafe78b14fbf242f2747865911b3202835397c9d09206632bc6",
     "backend/app/mcp/_backend.py": "56439b06981052333ab56f19fa362ba9a978816795020c6df9aa33ddf64b27ea",
     "backend/app/mcp/imaging_server.py": "350a3b9580f27d5d07853a07da676f8ed2c3852b3aaaa3213e356b1f4050b992",
-    "backend/app/mcp/ms_clinical_server.py": "8cbff607887650e1967d35ee2f5530c03a61ff607a473f08512fa2c1764a9d40",
+    "backend/app/mcp/ms_clinical_server.py": "65d95f4cdd52af7ca0ea88630798cdbdf62a7491629e0ae91d6ce6c4efe880d4",
     "backend/app/mcp/run_all.py": "fe8f2196c422a3f6971171557754896df193973130c99a8f39dc797e6c20250f",
     "backend/app/services/longitudinal_tracking_service.py": "87a5908b6b49cc6e8bebcddf033af43dbc9cb920f2b18522b8f203b3243c62c2",
-    "frontend/src/components/AIReportPanel.tsx": "82a2a16d4204bc7e6302fe4dda45526607e05f6db4c8ab6230935c014c6344a8",
-    "frontend/src/components/LesionDashboard.tsx": "f04c396523388ad0e4742a67e80930c7c99c055a2d807e739844da78d8558bc2"
+    "frontend/src/components/AIReportPanel.tsx": "004bfadca79b2fdd395ba25aeead06c14f83c0f973929806dcd69f972c2b98b2",
+    "frontend/src/components/LesionDashboard.tsx": "539e396c035288c3075d1fbef9639bd872c192a4ccc0c1110fad7def69dcd21a"
   },
   "tests": [
     "tests/unit/test_capa008_assistant_read_only.py",

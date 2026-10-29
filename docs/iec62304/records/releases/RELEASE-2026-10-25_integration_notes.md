@@ -39,7 +39,19 @@ Integration commits after the four merges (one concern each):
 | `7c7c70d` | Capture session: tests written first for F08, F09, F10, F04 (§10) |
 | `e9935eb` | Capture session: corrections of F08, F09, F10, F04 (§10) |
 | `09cd029` | PRB-003 F11 anchor after F10; integration controls I13–I21 |
-| (records commit) | §6 and §10 of these notes, capture-round control records, document rows, manifest |
+| `dd22708` | §6 and §10 of these notes, capture-round control records, document rows, manifest |
+| `9d5a51f` | Second review of #69: tests written first for B1 and M3 (§11) |
+| `ebf39c3` | Second review of #69: corrections of B1 and M3 (§11) |
+| `30d9067` | Second review of #69: tests written first for M1, M2 and the minor items (§11) |
+| `38494ed` | Second review of #69: corrections of M1, M2, m1–m5 and n1 (§11) |
+| `21b0df8` | Integration controls I22–I41; PRB-003 A1 and integration I12 anchors moved (§11) |
+| `40f1d5c`, `197b918` | Film capture "DWM: 1 lesions": tests written first (§11) |
+| `a8ca653` | Film capture: a count of one is singular (dashboard en/es/de; findings prompt, Class C text) (§11) |
+| `d3104c3` | Integration controls I42–I45 (§11) |
+| `9c16548` | Re-review of PR #71: test written first for the fallback colour (§11) |
+| `1c66562` | Fallback colour cyan, not the Active (Gd+) magenta (§11) |
+| `b3a376e` | Integration controls I46, I47 (§11) |
+| (records commit) | §6, §7, §10 (F08 cause, m3) and §11 of these notes, second-review control records (also CAPA-010 and CAPA-013, now run on the integrated tree), document rows, manifest |
 
 ## 2. Conflicts and how each was resolved
 
@@ -155,11 +167,11 @@ All backend runs offline: `GOOGLE_APPLICATION_CREDENTIALS` = a missing file, `CL
 
 | Check | Result |
 |---|---|
-| Backend unit (`tests/unit`, as CI) | **2069 passed, 0 failed** (2048 before the review of #69; +17 review tests, +1 draft-assembly test, +3 capture tests) |
+| Backend unit (`tests/unit`, as CI) | **2087 passed, 0 failed** (2048 before the review of #69; +17 review tests, +1 draft-assembly test, +3 capture tests, +6 second-review tests, +12 plural tests) |
 | Backend integration (CI selection: not PACS / GCS / Firestore) | **25 passed, 1 failed, 20 deselected** — the failure is the known local one (`test_webauthn_credentials_endpoint_exists`: `webauthn` not installed in the local venv; CI installs it) |
 | Backend security (CI selection) | **112 passed, 5 xfailed** |
 | Manifest gate (`test_risk_control_manifest.py`) | passes (70 controls, every named test file exists and names its control) |
-| Frontend vitest (`--pool=threads`) | **413 passed, 3 skipped** (47 files passed, 3 skipped as on `main`; 404 before the review's and the capture session's tests) |
+| Frontend vitest (`--pool=threads`) | **464 passed, 3 skipped** (54 files passed, 3 skipped as on `main`; 404 before the review's and the capture session's tests, 413 before the second review's, 440 before the plural tests, 446 before the fallback-colour test) |
 | Frontend `tsc --noEmit` | clean |
 | Frontend production build | passes |
 
@@ -169,21 +181,26 @@ All backend runs offline: `GOOGLE_APPLICATION_CREDENTIALS` = a missing file, `CL
 |---|---|---|---|---|
 | `prb002_negative_controls.py` (#66) | 19 | **19 detected** — re-run 2026-10-28 on the Windows CRLF checkout | review of #69, item 5: anchors on the LF text, mutations with the file's own line endings, byte-exact restore, hash on the LF text | `RELEASE-2026-10-25_PRB-002_negative_controls.json` |
 | `capa015_negative_controls.py` (#65) | 108 | **107 detected, 1 declared equivalent** (R9 — the same mutation #65's record declares equivalent; R9b, which removes both protections, is detected) — run 2026-10-25; not repeated after the review: no CAPA-015 file and no bound test changed | none | `RELEASE-2026-10-25_CAPA-015_negative_controls.json` |
-| `capa014_negative_controls.py` (#67) | 94 | **94 detected** — re-run 2026-10-28 | P17 only: anchored on the merged builder line (#68's rule replaced #67's branch, merge note 1), and after review item 3 on the one-rule line `if not gate.is_evaluated(dis):`; the mutation still sends a not-evaluated DIS to MET / NOT MET. The first re-run after the review corrections left **M10** undetected (the route now removes format characters before the DIS check, so the draft assembly's own removal had become a second layer); a direct test of the assembly (`test_rc066_release_the_draft_assembly_removes_format_characters_itself`) now detects it | `RELEASE-2026-10-25_CAPA-014_negative_controls.json` |
-| `prb003_negative_controls.py` (#68) | 119 | **119 detected** — re-run 2026-10-28 after the review and again after the capture corrections (R2, removal of `authorize_mask_specs`, still detected through the spy in `report_env`) | R4: anchored on the one-rule line (review item 3); F11: anchored on the one awaited DIS read after the confirmation (capture F10); mutations unchanged | `RELEASE-2026-10-25_PRB-003_negative_controls.json` |
+| `capa014_negative_controls.py` (#67) | 94 | **94 detected** — re-run 2026-10-28, last on the final tree `b3a376e` (2026-10-29; m6: the record's source and locale hashes now include every release change) | P17 only: anchored on the merged builder line (#68's rule replaced #67's branch, merge note 1), and after review item 3 on the one-rule line `if not gate.is_evaluated(dis):`; the mutation still sends a not-evaluated DIS to MET / NOT MET. The first re-run after the review corrections left **M10** undetected (the route now removes format characters before the DIS check, so the draft assembly's own removal had become a second layer); a direct test of the assembly (`test_rc066_release_the_draft_assembly_removes_format_characters_itself`) now detects it | `RELEASE-2026-10-25_CAPA-014_negative_controls.json` |
+| `prb003_negative_controls.py` (#68) | 119 | **119 detected** — re-run 2026-10-28 after the review and after the capture corrections, and on the final tree `b3a376e` (2026-10-29) (R2, removal of `authorize_mask_specs`, still detected through the spy in `report_env`) | R4: anchored on the one-rule line (review item 3); F11: anchored on the one awaited DIS read after the confirmation (capture F10); A1: anchored on the assistant's one-rule line (second review, m4); mutations unchanged | `RELEASE-2026-10-25_PRB-003_negative_controls.json` |
 | `rc029_negative_controls.py` (CAPA-007, pre-existing) | 11 | **11 detected** — run 2026-10-28 | review of #69, item 5: byte-exact restore on a CRLF checkout (it wrote files back with the platform's line endings) | `RELEASE-2026-10-25_RC-029_negative_controls.json` |
-| `release_2026_10_25_negative_controls.py` (new) | 23 | **23 detected** — run 2026-10-28 after the capture corrections (I6 by design through the start-up failure: the application refuses a 60-minute access token, the module cannot be collected, exit 4 — stated in the record). I2 was redefined after it went undetected once the one rule was in (choosing the raw block alone had become equivalent by construction); it now re-introduces the raw block with its own status-only rule. I13–I21 cover the capture findings | new | `RELEASE-2026-10-25_integration_negative_controls.json` |
-| `rc032_negative_controls.py` (CAPA-006, pre-existing; touches `segmentation_regions.py`, `LesionDashboard.tsx`) | 45 | **42 detected, 3 declared equivalent** (B, B2, L5 — the same three its own record declares) — run 2026-10-28 | none | `RELEASE-2026-10-25_RC-032_negative_controls.json` |
-| `slice_thickness_negative_controls.py` (CP-SLICE-THICKNESS-001, pre-existing; touches `LesionDashboard.tsx`) | 38 | **38 detected** — run 2026-10-28 | none | `RELEASE-2026-10-25_CP-SLICE-THICKNESS-001_negative_controls.json` |
-| `capa008_negative_controls.py` (CAPA-008, pre-existing; touches `LesionDashboard.tsx`) | 17 | **17 detected** — run 2026-10-28 | none | `RELEASE-2026-10-25_CAPA-008_negative_controls.json` |
-| **Total** | **474** | **470 detected, 4 declared equivalent** (R9 of CAPA-015; B, B2, L5 of RC-032 — each as its own record declares) | | |
+| `release_2026_10_25_negative_controls.py` (new) | 49 | **49 detected** — run on the final tree `b3a376e` (2026-10-29) (I6 by design through the start-up failure: the application refuses a 60-minute access token, the module cannot be collected, exit 4 — stated in the record). I2 was redefined after it went undetected once the one rule was in (choosing the raw block alone had become equivalent by construction); it now re-introduces the raw block with its own status-only rule. I13–I21 cover the capture findings, I22–I41 the second review, I42–I45 the plural, I46–I47 the fallback colour (§11; I12 anchored inside the geometry branch, n1); a frontend mutation runs its own bound test file | new | `RELEASE-2026-10-25_integration_negative_controls.json` |
+| `rc032_negative_controls.py` (CAPA-006, pre-existing; touches `segmentation_regions.py`, `LesionDashboard.tsx`) | 45 | **42 detected, 3 declared equivalent** (B, B2, L5 — the same three its own record declares) — run 2026-10-28, again on the final tree (2026-10-29) | none | `RELEASE-2026-10-25_RC-032_negative_controls.json` |
+| `slice_thickness_negative_controls.py` (CP-SLICE-THICKNESS-001, pre-existing; touches `LesionDashboard.tsx`) | 38 | **38 detected** — run 2026-10-28, again on the final tree (2026-10-29) | none | `RELEASE-2026-10-25_CP-SLICE-THICKNESS-001_negative_controls.json` |
+| `capa008_negative_controls.py` (CAPA-008, pre-existing; touches `LesionDashboard.tsx`) | 17 | **17 detected** — run 2026-10-28, again on the final tree (2026-10-29) | none | `RELEASE-2026-10-25_CAPA-008_negative_controls.json` |
+| `capa010_negative_controls.py` (CAPA-010, pre-existing; touches `ViewerApp.tsx`) | 26 | **25 detected, 1 declared equivalent** (L2 — as its own record declares) — first run on the integrated tree: the final tree (2026-10-29) | none | `RELEASE-2026-10-25_CAPA-010_negative_controls.json` |
+| `capa013_negative_controls.py` (CAPA-013, pre-existing; touches `ai_report.py`, `ms_clinical_server.py`, the locale files) | 66 | **66 detected** — first run on the integrated tree: the final tree (2026-10-29) | none | `RELEASE-2026-10-25_CAPA-013_negative_controls.json` |
+| **Total** | **592** | **587 detected, 5 declared equivalent** (R9 of CAPA-015; B, B2, L5 of RC-032; L2 of CAPA-010 — each as its own record declares) | | |
 
-Not repeated after the capture corrections, with the reason: CAPA-015, CAPA-014 and CAPA-013 (`capa013_negative_controls.py`, 66 mutations) touch the changed locale files only, where new keys were added and no anchored text changed; their bound tests pass in the full suites. Every anchor of these scripts is still unique.
+Not repeated on the final tree, with the reason: CAPA-015 (`capa015_negative_controls.py`) touches the changed locale files only, where new keys were added and no anchored text changed (every anchor still unique; its bound tests pass in the full suites); PRB-002 and RC-029 touch no file the second review changed. CAPA-010 and CAPA-013 had not been run on the integrated tree before although the merges had changed `ViewerApp.tsx` and the report route; both were run on the final tree (rows above). Two first passes (on `21b0df8` and `d3104c3`) were stopped to include the plural and the fallback-colour corrections (§11).
 
 Notes on the runs:
 - The scripts ran one after another (never two at once); after each one every source file was back byte for byte and
   `git status` was clean. The bound tests of each script passed again after the restore (CAPA-015 backend 56 /
-  frontend 24, CAPA-014 backend 374 / frontend 13, PRB-003 backend 143 / frontend 36, integration 10).
+  frontend 24, CAPA-014 backend 374 / frontend 13, PRB-003 backend 143 / frontend 36, integration 10; after the
+  second review: integration backend 77 / frontend 60 in 9 files, PRB-003 backend 143 / frontend 36,
+  CAPA-008 46, slice thickness backend 39 / frontend 46, RC-032 36 / 60 / 6, CAPA-010 47, CAPA-013 backend 52 /
+  frontend 18, CAPA-014 backend 375 / frontend 13).
 - Each PR's own record in `records/risk_verification/` was left as the PR committed it: the scripts write there, so
   each output was copied to the release-named file above and the PR's record restored from git.
 - `prb002_negative_controls.py` compared its anchors without normalising line endings; on this Windows working copy
@@ -193,6 +210,9 @@ Notes on the runs:
   `line_endings_of_checkout: CRLF`): 19/19.
 - T22 of CAPA-014 (a quadratic e-mail pattern, re-introduced on purpose) takes about 25 minutes because the runaway
   pattern keeps the processor busy after the 3-second test has failed — as in #67's own record.
+- One full frontend run after the second review's corrections had a single failure in CAPA-013's longitudinal
+  comparison test under load; it passed alone and in the next full run, with no code changed (timing, not a
+  defect; noted for the owner).
 - Timestamps in the records are local time; the runs crossed the end of summer time (03:00 CEST → 02:00 CET), so
   later runs can carry earlier clock times.
 
@@ -205,6 +225,24 @@ Notes on the runs:
   superseded by this plan unless the owner decides otherwise.
 - #68's reviewer listed `_dis_services` among the hooks to stub in the CAPA-014 fixture; the fixture stubs the three
   functions that use it and makes `_dis_services` refuse, which is stricter (a test that reached it fails).
+- NiiVue's opt-in 2D view and the 3D view load the overlay once per segmentation with a fixed colormap (nothing is
+  hidden there) and are not reloaded after a classification (§11, m3). Not changed in this release because PR #71
+  (`fix/viewer-display-orientation-prb004`) rewrites NiivueViewer2D and the colour tables; to be handled there.
+- The confirmation is refused below a lesion opacity of 25 % and a per-label visibility of 0.1
+  (`frontend/src/utils/drawnLabels.ts`): values chosen by the agent so that a lesion is plainly visible; the owner
+  may set others (owner decision).
+- The plural correction (§11) changes the text of the Class C `brain_report_service.py` (findings prompt, synthetic
+  payloads of the RC-065 allow-list): it needs the independent review of a Class C change like every other one in
+  this release. Two counts outside the region counts still print the plural for one (the in-browser FLAMeS card,
+  the Spanish longitudinal reader-confirmation text); not changed here.
+- **Merging PR #71 after this release** (reported by the coordinator's trial merge of 2026-10-29; not resolved
+  here): text conflicts in SRS-001, RMF-001, TM-001, `rc_test_manifest.json` and four frontend imports; and this
+  branch still imports `sliceIndexToFraction` (`NiivueViewer2D.tsx`, `niivueWindowLevel.test.ts`), which #71
+  removed (its own slice mapping replaces it) — the merge must take #71's version and drop that import and its
+  test. This release's `UNLABELLED_FALLBACK_COLOR` and #71's `UNLISTED_LABEL_HEX` are the same cyan; one constant
+  can then serve both. To be done by the owner's merge of #71 (owner decision on the order).
+- DD-001 1.4: the capture-session sentence (§10) had been written into the approval column of the version row; it
+  was moved to the change column with its text unchanged.
 - `frontend/node_modules` was reused through a junction to #68's worktree (identical `package-lock.json`); nothing was
   installed.
 
@@ -244,7 +282,7 @@ The radiologist must see exactly what they confirm, so they block the release. S
 
 | # | Finding | Cause | Correction | Tests / negative controls |
 |---|---|---|---|---|
-| F08 (clinical safety) | After "Auto-Classify Regions", lesions labelled 2–4 (juxtacortical, infratentorial, deep white matter) were not drawn on the 2D image until the study was reopened; a radiologist could confirm without seeing them | The 2D canvas and NiiVue draw from `activeSegmentation.labels`; the classification replaced only `currentSegmentation.metadata.labels`, and only after the mask reload — so only label 1 had a colour | `classify-regions` returns the label scheme it stored; new store action `applyServerLabels` writes it to `currentSegmentation` AND `activeSegmentation`, every region visible, without marking a local edit; `LesionDashboard` calls it BEFORE reloading the mask | vitest `rc070 release f08 …`; backend `test_rc070_release_f09_the_route_returns_the_labels_it_stored`; I13, I14, I16 |
+| F08 (clinical safety) | After "Auto-Classify Regions", lesions labelled 2–4 (juxtacortical, infratentorial, deep white matter) were not drawn on the 2D image until the study was reopened; a radiologist could confirm without seeing them | The 2D canvas draws from `activeSegmentation.labels` (corrected in §11, m3: NiiVue's views do not use the label table); the classification replaced only `currentSegmentation.metadata.labels`, and only after the mask reload — so only label 1 had a colour | `classify-regions` returns the label scheme it stored; new store action `applyServerLabels` writes it to `currentSegmentation` AND `activeSegmentation`, every region visible, without marking a local edit; `LesionDashboard` calls it BEFORE reloading the mask | vitest `rc070 release f08 …`; backend `test_rc070_release_f09_the_route_returns_the_labels_it_stored`; I13, I14, I16 |
 | F09 | The classification removed lesion components smaller than 3 mm³ from the stored mask without telling the user (capture: 29,903 → 29,886 voxels); the radiologist then confirmed a mask that had changed | Every classifier path in the Class C `ms_region_classifier.py` skips components below `MIN_LESION_VOLUME_MM3` and builds the classified mask from zeros | **The Class C module is unchanged.** The `classify-regions` route compares the mask before and after (18-connected components, as the classifier) and returns `removed_small_components` (components, voxels, volume, minimum, reason), also kept in the stored classification record so a later session shows it too. The classification card, the "not evaluated" DIS card and the confirm dialog state it before the radiologist confirms (en/es/de) | backend `test_rc070_release_f09_*` (the REAL geometric classifier drops two one-voxel specks of 1 mm³); vitest `rc070 release f09 …` (card, DIS card, dialog; nothing said when nothing was removed); I15, I17, I18 |
 | F10 | After "confirm", the DIS card kept saying "No radiologist has confirmed this segmentation" for 6–12 s with no progress | The card kept the old state while the DIS state of the confirmed mask was being read (the server reads the source image for its voxel geometry) | A pending state replaces the reason line and the button: "Recording your confirmation…" until the server answers, then "Confirmation recorded — reading the DIS result for the confirmed mask…" (role=status) until the one awaited read returns; a failed read says that the confirmation was recorded and to press Analyze | vitest `rc071 release f10 …`; I19, I20; PRB-003 F11 (anchor moved, still detected) |
 | F04 | A literal "—" in the per-region rows | Escape sequence in JSX text | `{'—'}` | vitest `rc070 release f04 …`; I21 |
@@ -253,6 +291,69 @@ F12 of the capture session (an application note "[unlisted label 1] = not confir
 integration review, corrected in §9. The other findings of the capture session (F01–F03, F05–F07, F11, F13–F21: e.g.
 the native confirm dialog, the login footer's MFA claim, open self-registration, the axial rotation between viewer
 modes) were not part of this request and are not addressed in this release; they are listed for the owner in the PR.
+
+## 11. Second independent review of PR #69 (`6d1fde2..dd22708`) — corrections (2026-10-28)
+
+The review found round 1 (§9), F10 and F04 sound, and **1 blocker and 3 majors**. Each finding was reproduced by a test
+written before its correction. B1 and M3 were pushed first (`ebf39c3`) because the film's app re-capture runs on this
+branch. Everything stays PENDING owner approval.
+
+| Commit | Content |
+|---|---|
+| `9d5a51f` | Tests first for B1 and M3 (on `dd22708`: **frontend 12 of 14 fail**; `drawnLabels.test.ts` does not load — the module did not exist) — record `RELEASE-2026-10-25_review2_b1_m3_tests_on_dd22708.json` |
+| `ebf39c3` | Corrections of B1 and M3 (pushed and announced first) |
+| `30d9067` | Tests first for M1, M2, m1, m2, m4, m5, m7, n1 (on `ebf39c3`: **backend 4 of 6, frontend 8 of 9 fail**; the passing cases are positive controls or gaps of correct code) — record `RELEASE-2026-10-25_review2_rest_tests_on_ebf39c3.json` |
+| `38494ed` | Corrections of M1, M2, m1, m2, m3, m4, m5, n1 |
+| `21b0df8` | Negative controls I22–I41; PRB-003 A1 and integration I12 anchors moved |
+| `40f1d5c`, `197b918` | Film capture "DWM: 1 lesions": tests written first (on `21b0df8`: **frontend 6 of 6, backend 1 of 12 fail**; the other 11 are positive controls — the second commit only extends the allow-list cases before the correction) — record `RELEASE-2026-10-25_plural_tests_on_21b0df8.json` |
+| `a8ca653` | Correction of the plural (below) |
+| `d3104c3` | Negative controls I42–I45 |
+| `9c16548` | Re-review of PR #71: test written first for the fallback colour (on `d3104c3`: **frontend 5 of 18 fail**; the other 13 are positive controls) — record `RELEASE-2026-10-25_fallback_colour_tests_on_d3104c3.json` |
+| `1c66562` | Fallback colour cyan, not magenta (below) |
+| `b3a376e` | Negative controls I46, I47 |
+
+| # | Finding | Correction | Tests / negative controls |
+|---|---|---|---|
+| **B1** (blocker) | F08 still reachable: the sidebar list (`['segmentations','study',studyId]`) was never refreshed by the classification, and the viewer opened (and reopened) a segmentation from it — after close/reopen, or after classifying a segmentation that was not open, only label 1 was drawn while the mask held 1–4, and the confirmation was offered and accepted | (1) the classification invalidates every `['segmentations', …]` cache; (2) `ViewerApp` opens a segmentation from `getSegmentation()` (the server), every time — a segmentation the server cannot return is not opened; (3) the 2D canvas draws any mask value the label table does not name in a fallback colour (cyan, never transparent; first magenta, corrected below) and the overlay controls warn ("Mask value(s) … have no label"); (4) the confirmation is refused unless every value present in the open mask is drawn (below) | `ViewerApp.release20261028.test.tsx` (real viewer page: open, close/reopen, server failure, warning); `LesionDashboard.release20261028b.test.tsx` (cache invalidation); `drawnLabels.test.ts`; I22–I26 |
+| **M3** (pre-existing) | A label's eye toggle, the overlay switch or a lesion opacity of 0 (kept across sessions) let a radiologist confirm with lesions hidden | Confirm refuses, before any dialog or request, with a message per reason, while any value of the open mask has no label, is hidden, is too faint, the overlay is off, the lesion opacity is below 25 %, or the open mask cannot be read (`utils/drawnLabels.ts`, `maskValuesCallback`); a stored opacity below 25 % is not restored in a new session (persist `merge`) | `LesionDashboard.release20261028b.test.tsx` (5 refusals + positive control); `useSegmentationStore.release20261028.test.ts`; I26–I30 |
+| **M1** | The F09 notice was read from the OPEN segmentation's `analysis_data` in every dashboard, and `patchAnalysisData` wrote into it whatever the dashboard showed | `dis_review_gate.regions_state` serves `removed_small_components` only while the classification record describes the current lesions; the DIS card and the confirm dialog take it from the server's DIS state of the dashboard's own segmentation; the auto-populate effect and `patchAnalysisData` are guarded by `segmentation_id` | backend `test_rc070_release2_m1_*`; vitest `rc070 release2 m1 …` (3); I31–I34 |
+| **M2** | A second classification started from the cleaned mask, recorded 0 and overwrote the stored figure | `classify-regions` carries the earlier removal forward when the "before" mask has the previously classified footprint (`includes_earlier_classifications`); a saved mask with other lesions starts again | backend `test_rc070_release2_m2_*` (2); I35 |
+| m1 | A failed mask reload after classify was silent | The reload result is checked: an error is shown and the confirmation is refused until the segmentation is reopened | vitest `rc071 release2 m1 …`; I36 |
+| m2 | Classify reloaded the open mask and discarded its unsaved edits (also from another dashboard) | Auto-Classify only on the open segmentation without unsaved changes (button disabled with a message; the handler checks it too). This also removes the "classify while not open" path of B1 | vitest `rc070 release2 m2 …` (2); I37 |
+| m3 | The comment and §10 said NiiVue draws from the label table | Corrected: only the 2D canvas uses the label table. NiiVue's opt-in 2D view and the 3D view load the overlay once per segmentation with a fixed colormap (nothing hidden there) and are not reloaded after a classification; not changed here because PR #71 (`fix/viewer-display-orientation-prb004`) rewrites NiivueViewer2D and the colour tables — overlap noted | — |
+| m4 | "Evaluated" was still decided by the status alone in the viewer (`isDisEvaluated`) and the assistant | Both require a boolean `dis_met`, as `dis_review_gate.is_evaluated`; the assistant mirrors the rule instead of importing the gate (it reaches the backend over HTTP and stays free of the gate's storage dependencies) | vitest `rc070 release2 m4 …`; backend `test_rc070_release2_m4_*`; I38, I39; PRB-003 A1 (anchor moved) |
+| m5 | A failed read-back after a recorded confirmation left "No radiologist has confirmed" and the confirm button | "Your confirmation was recorded, but the DIS result could not be read; press Analyze …" replaces the reason line and the button until the next read | vitest `rc071 release2 m5 …`; I40 |
+| m6 | The CAPA-014 record's locale hashes predated `e9935eb` | CAPA-014 negative controls re-run on the final tree (§6) | record `RELEASE-2026-10-25_CAPA-014_negative_controls.json` |
+| m7 | Test gaps | Reopen and server failure (ViewerApp), classify-while-not-open (now refused, m2), reload failure (m1), anisotropic F09 (3 × 0.5 × 0.4 mm, `test_rc070_release2_m7_*`), F10 failure paths (refused POST never says "recorded"; m5) | as listed |
+| n1 | Every lesion-table failure was reported as "image geometry" | Only `VoxelSpacingUnavailableError` gives the geometry phrase; any other failure gives `LESION_TABLE_FAILED_PHRASE` with its error type; the report panel shows its own message for each | backend `test_rc070_release2_n1_*`; I41 |
+
+Fixture changes (no assertion changed): the confirm tests of #68 and of the capture round seed the open mask they
+confirm (its values drawn), as the guard requires; the capture F09 test serves the removal in the server's DIS state
+(M1 contract); the PRB-003 assistant test's evaluated block carries `dis_met`, as the server's does (m4).
+
+Not reachable from a test: the canvas's own call of the fallback colours (jsdom has no 2D canvas); its helper is
+tested (I24) and the film's capture checks the drawing.
+
+**Re-review of PR #71 (2026-10-29): the fallback colour.** B1's fallback colour was magenta (`#FF00FF`), and its comment said no preset used it — it is the MAGNIMS "Active (Gd+)" label colour, so a mask value without a label looked exactly like an active, gadolinium-enhancing lesion. Corrected (`1c66562`): `UNLABELLED_FALLBACK_COLOR` is cyan `#00FFFF`, the colour PR #71 uses for the same purpose in the GPU and 3D views (`UNLISTED_LABEL_HEX`); the warnings of the overlay controls and of the refused confirmation say cyan / cian / Cyan; comment corrected. Test `drawnLabels.fallback.test.ts` (18): cyan, more than 100 RGB units from every preset label colour (default and MAGNIMS) and every MAGNIMS zone colour of the canvas, warnings naming it in en/es/de; I46, I47.
+
+**Film capture of the release build (same day): "DWM: 1 lesions".** The region summary in the sidebar showed
+"DWM: 1 lesions" (plural with a count of one, and in English only), and the report text had the same pattern because
+the findings prompt gave the model "Deep White Matter: 1 lesions, …". Corrected (`a8ca653`):
+
+| Where | Correction | Tests / negative controls |
+|---|---|---|
+| `LesionDashboard.tsx` — deep-white-matter count of the evaluated DIS card; lesion count of the lesion table | `lesions.dwmCountOne/Other` and `lesions.countOne/Other` in en/es/de: the One text for exactly one (the CLDR "one" category of all three languages), the Other text for any other count | vitest `rc070 release plural …` (6: en/es/de × 1 and 2); I42, I43 |
+| `brain_report_service.py` (**Class C**, text only) — regional summary, individual lesion data, longitudinal counts of the findings prompt | "1 lesion" / "N lesions" (`_lesions`); the synthetic payloads of the RC-065 allow-list print both forms, with and without the region column, so the tripwire keeps every word and word pair the device can write | `test_release_2026_10_25_plural_counts.py` (12); I44, I45 |
+
+Other counts with a noun were checked: the remaining ones are written as fractions ("1/3 regions") or with "(s)"
+("lesion component(s)", "region correction(s)") and read correctly for one. Not changed (outside the region counts):
+the in-browser FLAMeS card's "N lesions" and the longitudinal reader-confirmation text ("{{n}} lesiones nuevas"),
+listed for the owner.
+
+The control chain that had started on `21b0df8` (integration 43/43; PRB-003 stopped after 67 of 119 mutations, all
+detected) was stopped to include this correction, so every script ran once on the final tree; the one source line
+the stopped run had left mutated (`AIReportPanel.tsx`) was restored from git before anything else, and `git status`
+was clean.
 
 *Drafted by the AI coding agent (development tool, SDP-001 §5.1.4). No approval is recorded in this document;
 approvals are to be recorded by the owner (CAPA-012).*
