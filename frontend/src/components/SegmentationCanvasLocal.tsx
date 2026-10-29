@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import type { UseSegmentationMaskReturn } from '@/hooks/useSegmentationMask';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import type { ClickPoint3D } from '@/types';
+import { maskDisplayLayout, transposeSlice } from '@/utils/maskDisplayLayout';
 
 /** Methods exposed via ref for external control */
 export interface SegmentationCanvasLocalRef {
@@ -82,19 +83,8 @@ function parseColor(hex: string, opacity: number): ParsedColor {
   };
 }
 
-/**
- * Transpose a 2D mask slice from (srcH × srcW) to (srcW × srcH) layout.
- * Used to fix axis ordering mismatch between backend mask format and MRI display.
- */
-function transposeSlice(src: Uint8Array, srcH: number, srcW: number): Uint8Array {
-  const dst = new Uint8Array(src.length);
-  for (let h = 0; h < srcH; h++) {
-    for (let w = 0; w < srcW; w++) {
-      dst[w * srcH + h] = src[h * srcW + w];
-    }
-  }
-  return dst;
-}
+// transposeSlice / maskDisplayLayout: utils/maskDisplayLayout.ts — the ONE placement rule, shared with the cursor
+// readout (PRB-010 final check F1), so the label it names is the label drawn here.
 
 /** MAGNIMS zone colors at lesion opacity (60%) for zone-colorized rendering — PRB-010: the one
  *  shared mapping (utils/regionColors.ts), the same as the legends (was red / green / blue / yellow). */
@@ -675,10 +665,7 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
         // (zone maps, AI results) that were stored with (k,j,i) instead of (k,i,j).
         let renderSlice = maskSlice;
         const maskDims = segmentationMask.state.dimensions;
-        const needsTranspose = maskDims
-          && maskDims.width !== imageWidth
-          && maskDims.height === imageWidth
-          && maskDims.width === imageHeight;
+        const needsTranspose = maskDisplayLayout(maskDims, imageWidth, imageHeight) === 'transposed';
         if (needsTranspose && maskDims) {
           renderSlice = transposeSlice(maskSlice, maskDims.height, maskDims.width);
         }
@@ -803,8 +790,7 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
         // The previous code swapped UNCONDITIONALLY (y→X, x→Y) — correct only for
         // the transposed case, wrong for every correctly-oriented mask (all
         // painted masks, square slices, and post-RC-031 tool masks).
-        const md = segmentationMask.state.dimensions;
-        const swap = !!(md && md.width !== imageWidth && md.height === imageWidth && md.width === imageHeight);
+        const swap = maskDisplayLayout(segmentationMask.state.dimensions, imageWidth, imageHeight) === 'transposed';
         const bxMin = swap ? bb.y_min : bb.x_min;
         const byMin = swap ? bb.x_min : bb.y_min;
         const bxMax = swap ? bb.y_max : bb.x_max;

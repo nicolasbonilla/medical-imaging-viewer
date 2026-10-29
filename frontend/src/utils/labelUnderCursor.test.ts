@@ -53,8 +53,10 @@ describe('PRB-010 R6 — the label under the cursor, by name', () => {
           .toEqual(v ? { value: v, name: LABELS.find((l) => l.id === v)?.name ?? null } : null);
       }
     }
-    // the voxel stored at row 0, column 1 is drawn at column 0, row 1 — not at column 1, row 0
-    expect(labelUnderCursor(stored, dims, 3, 2, 1, 0, LABELS)).toEqual({ value: 9, name: null });
+    // the voxel stored at row 2, column 0 (deep white matter) is drawn at column 2, row 0
+    expect(labelUnderCursor(stored, dims, 3, 2, 2, 0, LABELS)).toEqual({ value: 4, name: 'Deep White Matter' });
+    // the voxel stored at row 2, column 1 (periventricular) is drawn at column 2, row 1
+    expect(labelUnderCursor(stored, dims, 3, 2, 2, 1, LABELS)).toEqual({ value: 1, name: 'Periventricular' });
   });
 
   it('rc076 F1 a mask the overlay cannot place on the image (another grid): no label', () => {

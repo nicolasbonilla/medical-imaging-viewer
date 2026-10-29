@@ -104,6 +104,7 @@ T_NVL = "src/components/NiivueViewer2D.prb004.layout.test.tsx"
 T_CP = "src/components/ControlPanel.prb008.test.tsx"
 CP = "frontend/src/components/ControlPanel.tsx"
 LUC = "frontend/src/utils/labelUnderCursor.ts"
+MDL = "frontend/src/utils/maskDisplayLayout.ts"
 T_LUC = "src/utils/labelUnderCursor.test.ts"
 BACKEND = ["tests/unit/test_prb006_mask_display_range.py", "tests/unit/test_prb010_region_label_colours.py",
            "tests/unit/test_prb004_review_ref_alignment.py"]
@@ -529,8 +530,19 @@ M = {  # name: ([(file, anchor, replacement), ...], [bound frontend tests] or No
         [(IV2, "      label: label,\n", "")], [T_CP],
         "the 2D viewer leaves the label out of the cursor readout"),
     "W16_label_under_cursor_transposed": (
-        [(LUC, "  const value = slice[y * width + x];\n", "  const value = slice[x * height + y];\n")], [T_LUC],
-        "the label read at the transposed voxel (row and column swapped)"),
+        [(MDL, "  if (layout === 'as-stored') return y * mask.width + x;\n", "  if (layout === 'as-stored') return x * mask.width + y;\n")],
+        [T_LUC], "the label read at the transposed voxel (row and column swapped) of a mask stored as the image"),
+    # ── Final check of PR #71 (F1): the cursor label follows the overlay's own placement rule ──
+    "W17_cursor_label_ignores_the_overlay_transpose": (
+        [(LUC, "  const index = storedIndexOfDisplayedVoxel(mask, maskDisplayLayout(mask, imageWidth, imageHeight), x, y);\n",
+          "  const index = x < mask.width && y < mask.height ? y * mask.width + x : null;\n")], [T_LUC],
+        "a mask stored with rows and columns swapped: the readout names another voxel's label than the overlay draws (the defect as found)"),
+    "W18_transposed_mask_read_as_stored": (
+        [(MDL, "  if (layout === 'transposed') return x * mask.width + y;\n", "  if (layout === 'transposed') return y * mask.width + x;\n")],
+        [T_LUC], "the shared rule reads a transposed mask as stored"),
+    "W19_label_for_a_mask_the_overlay_cannot_place": (
+        [(MDL, "  if (layout === 'as-stored') return y * mask.width + x;\n", "  if (layout !== 'transposed') return y * mask.width + x;\n")],
+        [T_LUC], "a label named for a mask on another grid, which the overlay cannot place"),
 
 }
 

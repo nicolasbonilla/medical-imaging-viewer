@@ -322,7 +322,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
     // PRB-010 re-review R6: the label under the cursor, by name (a non-colour cue for the region colours).
     const dims = segmentationMask.state.dimensions;
     const label = isOverlayVisible && dims
-      ? labelUnderCursor(segmentationMask.getSliceMask(currentSliceIndex), dims.width, dims.height, imgX, imgY, overlayLabels)
+      ? labelUnderCursor(segmentationMask.getSliceMask(currentSliceIndex), dims, imgW, imgH, imgX, imgY, overlayLabels)
       : null;
 
     setCursorInfo({
