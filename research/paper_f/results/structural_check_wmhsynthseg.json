@@ -1,0 +1,3321 @@
+[
+ {
+  "case": "ms3seg_001",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8533077660594439,
+  "wmhsynthseg_dice": 0.312,
+  "wmhsynthseg_lesion_f1": 0.34,
+  "wmhsynthseg_lesion_ml": 3.17,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_002",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8826185101580135,
+  "wmhsynthseg_dice": 0.154,
+  "wmhsynthseg_lesion_f1": 0.233,
+  "wmhsynthseg_lesion_ml": 3.11,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_003",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8871252204585538,
+  "wmhsynthseg_dice": 0.229,
+  "wmhsynthseg_lesion_f1": 0.32,
+  "wmhsynthseg_lesion_ml": 3.53,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_004",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8357142857142857,
+  "wmhsynthseg_dice": 0.131,
+  "wmhsynthseg_lesion_f1": 0.298,
+  "wmhsynthseg_lesion_ml": 2.72,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_005",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8966588966588966,
+  "wmhsynthseg_dice": 0.316,
+  "wmhsynthseg_lesion_f1": 0.377,
+  "wmhsynthseg_lesion_ml": 3.55,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_006",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9163199260286639,
+  "wmhsynthseg_dice": 0.489,
+  "wmhsynthseg_lesion_f1": 0.32,
+  "wmhsynthseg_lesion_ml": 7.28,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_007",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9020771513353115,
+  "wmhsynthseg_dice": 0.261,
+  "wmhsynthseg_lesion_f1": 0.444,
+  "wmhsynthseg_lesion_ml": 2.81,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_008",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8663729809104258,
+  "wmhsynthseg_dice": 0.15,
+  "wmhsynthseg_lesion_f1": 0.191,
+  "wmhsynthseg_lesion_ml": 4.65,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_009",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8706199460916442,
+  "wmhsynthseg_dice": 0.125,
+  "wmhsynthseg_lesion_f1": 0.222,
+  "wmhsynthseg_lesion_ml": 2.31,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_010",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8577777777777778,
+  "wmhsynthseg_dice": 0.0,
+  "wmhsynthseg_lesion_f1": 0.0,
+  "wmhsynthseg_lesion_ml": 1.24,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.000 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_011",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9536423841059603,
+  "wmhsynthseg_dice": 0.279,
+  "wmhsynthseg_lesion_f1": 0.5,
+  "wmhsynthseg_lesion_ml": 0.93,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_012",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8546255506607929,
+  "wmhsynthseg_dice": 0.119,
+  "wmhsynthseg_lesion_f1": 0.242,
+  "wmhsynthseg_lesion_ml": 1.41,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_013",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8959341723136496,
+  "wmhsynthseg_dice": 0.412,
+  "wmhsynthseg_lesion_f1": 0.327,
+  "wmhsynthseg_lesion_ml": 11.95,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_014",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9189598586215603,
+  "wmhsynthseg_dice": 0.37,
+  "wmhsynthseg_lesion_f1": 0.317,
+  "wmhsynthseg_lesion_ml": 11.66,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_015",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8901408450704226,
+  "wmhsynthseg_dice": 0.264,
+  "wmhsynthseg_lesion_f1": 0.679,
+  "wmhsynthseg_lesion_ml": 3.32,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_016",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9116186693147964,
+  "wmhsynthseg_dice": 0.327,
+  "wmhsynthseg_lesion_f1": 0.364,
+  "wmhsynthseg_lesion_ml": 2.73,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_017",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8763213530655392,
+  "wmhsynthseg_dice": 0.262,
+  "wmhsynthseg_lesion_f1": 0.359,
+  "wmhsynthseg_lesion_ml": 5.99,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_018",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8780487804878049,
+  "wmhsynthseg_dice": 0.226,
+  "wmhsynthseg_lesion_f1": 0.292,
+  "wmhsynthseg_lesion_ml": 3.59,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_019",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9098805646036916,
+  "wmhsynthseg_dice": 0.254,
+  "wmhsynthseg_lesion_f1": 0.262,
+  "wmhsynthseg_lesion_ml": 3.17,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_020",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8590604026845637,
+  "wmhsynthseg_dice": 0.197,
+  "wmhsynthseg_lesion_f1": 0.321,
+  "wmhsynthseg_lesion_ml": 2.17,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_021",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8965779467680608,
+  "wmhsynthseg_dice": 0.356,
+  "wmhsynthseg_lesion_f1": 0.511,
+  "wmhsynthseg_lesion_ml": 8.86,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_022",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8979319546364243,
+  "wmhsynthseg_dice": 0.217,
+  "wmhsynthseg_lesion_f1": 0.479,
+  "wmhsynthseg_lesion_ml": 4.67,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_023",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9162605228178998,
+  "wmhsynthseg_dice": 0.306,
+  "wmhsynthseg_lesion_f1": 0.249,
+  "wmhsynthseg_lesion_ml": 6.09,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_024",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8990384615384616,
+  "wmhsynthseg_dice": 0.297,
+  "wmhsynthseg_lesion_f1": 0.292,
+  "wmhsynthseg_lesion_ml": 3.47,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_025",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8807339449541285,
+  "wmhsynthseg_dice": 0.334,
+  "wmhsynthseg_lesion_f1": 0.258,
+  "wmhsynthseg_lesion_ml": 2.03,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_026",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9240687679083095,
+  "wmhsynthseg_dice": 0.457,
+  "wmhsynthseg_lesion_f1": 0.457,
+  "wmhsynthseg_lesion_ml": 4.22,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_027",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9020556227327691,
+  "wmhsynthseg_dice": 0.379,
+  "wmhsynthseg_lesion_f1": 0.377,
+  "wmhsynthseg_lesion_ml": 2.23,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_028",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9282143571285743,
+  "wmhsynthseg_dice": 0.463,
+  "wmhsynthseg_lesion_f1": 0.282,
+  "wmhsynthseg_lesion_ml": 13.42,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_029",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9054388133498146,
+  "wmhsynthseg_dice": 0.277,
+  "wmhsynthseg_lesion_f1": 0.172,
+  "wmhsynthseg_lesion_ml": 9.39,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_030",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9306930693069307,
+  "wmhsynthseg_dice": 0.216,
+  "wmhsynthseg_lesion_f1": 0.267,
+  "wmhsynthseg_lesion_ml": 2.9,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_031",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8826945412311266,
+  "wmhsynthseg_dice": 0.207,
+  "wmhsynthseg_lesion_f1": 0.315,
+  "wmhsynthseg_lesion_ml": 2.67,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_032",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8275862068965517,
+  "wmhsynthseg_dice": 0.098,
+  "wmhsynthseg_lesion_f1": 0.129,
+  "wmhsynthseg_lesion_ml": 1.2,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.098 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_033",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9330754352030948,
+  "wmhsynthseg_dice": 0.447,
+  "wmhsynthseg_lesion_f1": 0.187,
+  "wmhsynthseg_lesion_ml": 7.73,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_034",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8944504896626768,
+  "wmhsynthseg_dice": 0.317,
+  "wmhsynthseg_lesion_f1": 0.431,
+  "wmhsynthseg_lesion_ml": 2.98,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_035",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8418230563002681,
+  "wmhsynthseg_dice": 0.226,
+  "wmhsynthseg_lesion_f1": 0.422,
+  "wmhsynthseg_lesion_ml": 1.23,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_036",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8462929475587704,
+  "wmhsynthseg_dice": 0.061,
+  "wmhsynthseg_lesion_f1": 0.189,
+  "wmhsynthseg_lesion_ml": 1.96,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.061 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_037",
+  "wmhsynthseg_prob_vs_seg_dice": 0.935064935064935,
+  "wmhsynthseg_dice": 0.488,
+  "wmhsynthseg_lesion_f1": 0.564,
+  "wmhsynthseg_lesion_ml": 8.78,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_038",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9007633587786259,
+  "wmhsynthseg_dice": 0.196,
+  "wmhsynthseg_lesion_f1": 0.368,
+  "wmhsynthseg_lesion_ml": 1.83,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_039",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8835820895522388,
+  "wmhsynthseg_dice": 0.258,
+  "wmhsynthseg_lesion_f1": 0.421,
+  "wmhsynthseg_lesion_ml": 1.99,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_040",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8071135430916553,
+  "wmhsynthseg_dice": 0.077,
+  "wmhsynthseg_lesion_f1": 0.124,
+  "wmhsynthseg_lesion_ml": 2.52,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.077 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_041",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9064039408866995,
+  "wmhsynthseg_dice": 0.073,
+  "wmhsynthseg_lesion_f1": 0.32,
+  "wmhsynthseg_lesion_ml": 3.31,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.073 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_042",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9264264264264265,
+  "wmhsynthseg_dice": 0.39,
+  "wmhsynthseg_lesion_f1": 0.533,
+  "wmhsynthseg_lesion_ml": 3.53,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_043",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8907014681892332,
+  "wmhsynthseg_dice": 0.151,
+  "wmhsynthseg_lesion_f1": 0.286,
+  "wmhsynthseg_lesion_ml": 1.66,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_044",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8645739910313901,
+  "wmhsynthseg_dice": 0.11,
+  "wmhsynthseg_lesion_f1": 0.208,
+  "wmhsynthseg_lesion_ml": 3.8,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_045",
+  "wmhsynthseg_prob_vs_seg_dice": 0.888095238095238,
+  "wmhsynthseg_dice": 0.38,
+  "wmhsynthseg_lesion_f1": 0.364,
+  "wmhsynthseg_lesion_ml": 2.52,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_046",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8758696448187477,
+  "wmhsynthseg_dice": 0.341,
+  "wmhsynthseg_lesion_f1": 0.487,
+  "wmhsynthseg_lesion_ml": 7.52,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_047",
+  "wmhsynthseg_prob_vs_seg_dice": 0.903010033444816,
+  "wmhsynthseg_dice": 0.438,
+  "wmhsynthseg_lesion_f1": 0.69,
+  "wmhsynthseg_lesion_ml": 6.49,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_048",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9023467070401211,
+  "wmhsynthseg_dice": 0.522,
+  "wmhsynthseg_lesion_f1": 0.429,
+  "wmhsynthseg_lesion_ml": 3.69,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_049",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8376470588235294,
+  "wmhsynthseg_dice": 0.149,
+  "wmhsynthseg_lesion_f1": 0.237,
+  "wmhsynthseg_lesion_ml": 2.76,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_050",
+  "wmhsynthseg_prob_vs_seg_dice": 0.7287234042553191,
+  "wmhsynthseg_dice": 0.138,
+  "wmhsynthseg_lesion_f1": 0.25,
+  "wmhsynthseg_lesion_ml": 1.24,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_051",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8513432835820895,
+  "wmhsynthseg_dice": 0.24,
+  "wmhsynthseg_lesion_f1": 0.269,
+  "wmhsynthseg_lesion_ml": 5.44,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_052",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8336079077429983,
+  "wmhsynthseg_dice": 0.117,
+  "wmhsynthseg_lesion_f1": 0.238,
+  "wmhsynthseg_lesion_ml": 1.87,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_053",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8681614349775785,
+  "wmhsynthseg_dice": 0.246,
+  "wmhsynthseg_lesion_f1": 0.432,
+  "wmhsynthseg_lesion_ml": 3.16,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_054",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9264544456641054,
+  "wmhsynthseg_dice": 0.193,
+  "wmhsynthseg_lesion_f1": 0.421,
+  "wmhsynthseg_lesion_ml": 2.74,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_055",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9188640973630832,
+  "wmhsynthseg_dice": 0.55,
+  "wmhsynthseg_lesion_f1": 0.839,
+  "wmhsynthseg_lesion_ml": 2.68,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_056",
+  "wmhsynthseg_prob_vs_seg_dice": 0.883352208380521,
+  "wmhsynthseg_dice": 0.018,
+  "wmhsynthseg_lesion_f1": 0.143,
+  "wmhsynthseg_lesion_ml": 2.49,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.018 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_057",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9129511677282378,
+  "wmhsynthseg_dice": 0.199,
+  "wmhsynthseg_lesion_f1": 0.122,
+  "wmhsynthseg_lesion_ml": 2.55,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_058",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8896551724137931,
+  "wmhsynthseg_dice": 0.204,
+  "wmhsynthseg_lesion_f1": 0.401,
+  "wmhsynthseg_lesion_ml": 1.58,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_059",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9213483146067416,
+  "wmhsynthseg_dice": 0.133,
+  "wmhsynthseg_lesion_f1": 0.439,
+  "wmhsynthseg_lesion_ml": 2.54,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_060",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9180790960451978,
+  "wmhsynthseg_dice": 0.34,
+  "wmhsynthseg_lesion_f1": 0.457,
+  "wmhsynthseg_lesion_ml": 2.14,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_061",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8640915593705293,
+  "wmhsynthseg_dice": 0.208,
+  "wmhsynthseg_lesion_f1": 0.45,
+  "wmhsynthseg_lesion_ml": 2.01,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_062",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8998923573735199,
+  "wmhsynthseg_dice": 0.342,
+  "wmhsynthseg_lesion_f1": 0.5,
+  "wmhsynthseg_lesion_ml": 5.3,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_063",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8830811554332875,
+  "wmhsynthseg_dice": 0.088,
+  "wmhsynthseg_lesion_f1": 0.158,
+  "wmhsynthseg_lesion_ml": 4.72,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.088 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_064",
+  "wmhsynthseg_prob_vs_seg_dice": 0.88671875,
+  "wmhsynthseg_dice": 0.134,
+  "wmhsynthseg_lesion_f1": 0.385,
+  "wmhsynthseg_lesion_ml": 1.58,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_065",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9159120310478654,
+  "wmhsynthseg_dice": 0.183,
+  "wmhsynthseg_lesion_f1": 0.324,
+  "wmhsynthseg_lesion_ml": 2.38,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_066",
+  "wmhsynthseg_prob_vs_seg_dice": 0.92079940784604,
+  "wmhsynthseg_dice": 0.182,
+  "wmhsynthseg_lesion_f1": 0.276,
+  "wmhsynthseg_lesion_ml": 4.14,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_067",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9443882709807887,
+  "wmhsynthseg_dice": 0.419,
+  "wmhsynthseg_lesion_f1": 0.483,
+  "wmhsynthseg_lesion_ml": 3.04,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_068",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9255596043727226,
+  "wmhsynthseg_dice": 0.365,
+  "wmhsynthseg_lesion_f1": 0.559,
+  "wmhsynthseg_lesion_ml": 5.15,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_069",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9401176877812392,
+  "wmhsynthseg_dice": 0.49,
+  "wmhsynthseg_lesion_f1": 0.29,
+  "wmhsynthseg_lesion_ml": 17.07,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_070",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8919491525423728,
+  "wmhsynthseg_dice": 0.164,
+  "wmhsynthseg_lesion_f1": 0.373,
+  "wmhsynthseg_lesion_ml": 5.74,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_071",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9097222222222222,
+  "wmhsynthseg_dice": 0.206,
+  "wmhsynthseg_lesion_f1": 0.258,
+  "wmhsynthseg_lesion_ml": 2.65,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_072",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9133425034387895,
+  "wmhsynthseg_dice": 0.192,
+  "wmhsynthseg_lesion_f1": 0.5,
+  "wmhsynthseg_lesion_ml": 2.29,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_073",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9230769230769231,
+  "wmhsynthseg_dice": 0.151,
+  "wmhsynthseg_lesion_f1": 0.387,
+  "wmhsynthseg_lesion_ml": 2.53,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_074",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8347386172006745,
+  "wmhsynthseg_dice": 0.202,
+  "wmhsynthseg_lesion_f1": 0.32,
+  "wmhsynthseg_lesion_ml": 4.05,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_075",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9244935543278084,
+  "wmhsynthseg_dice": 0.212,
+  "wmhsynthseg_lesion_f1": 0.407,
+  "wmhsynthseg_lesion_ml": 5.2,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_076",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9006993006993007,
+  "wmhsynthseg_dice": 0.162,
+  "wmhsynthseg_lesion_f1": 0.226,
+  "wmhsynthseg_lesion_ml": 2.23,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_077",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9157427937915743,
+  "wmhsynthseg_dice": 0.359,
+  "wmhsynthseg_lesion_f1": 0.44,
+  "wmhsynthseg_lesion_ml": 5.56,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_078",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8807339449541285,
+  "wmhsynthseg_dice": 0.212,
+  "wmhsynthseg_lesion_f1": 0.359,
+  "wmhsynthseg_lesion_ml": 3.21,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_079",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9250814332247557,
+  "wmhsynthseg_dice": 0.32,
+  "wmhsynthseg_lesion_f1": 0.286,
+  "wmhsynthseg_lesion_ml": 1.84,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_080",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9545787545787546,
+  "wmhsynthseg_dice": 0.41,
+  "wmhsynthseg_lesion_f1": 0.333,
+  "wmhsynthseg_lesion_ml": 8.11,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_081",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8901623686723973,
+  "wmhsynthseg_dice": 0.264,
+  "wmhsynthseg_lesion_f1": 0.355,
+  "wmhsynthseg_lesion_ml": 2.86,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_082",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9453357100415924,
+  "wmhsynthseg_dice": 0.476,
+  "wmhsynthseg_lesion_f1": 0.543,
+  "wmhsynthseg_lesion_ml": 8.94,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_083",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9323843416370107,
+  "wmhsynthseg_dice": 0.262,
+  "wmhsynthseg_lesion_f1": 0.294,
+  "wmhsynthseg_lesion_ml": 0.81,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_084",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8237082066869301,
+  "wmhsynthseg_dice": 0.189,
+  "wmhsynthseg_lesion_f1": 0.404,
+  "wmhsynthseg_lesion_ml": 1.88,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_085",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9112207151664612,
+  "wmhsynthseg_dice": 0.394,
+  "wmhsynthseg_lesion_f1": 0.486,
+  "wmhsynthseg_lesion_ml": 5.26,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_086",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9,
+  "wmhsynthseg_dice": 0.292,
+  "wmhsynthseg_lesion_f1": 0.333,
+  "wmhsynthseg_lesion_ml": 1.11,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_087",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9267120544653584,
+  "wmhsynthseg_dice": 0.3,
+  "wmhsynthseg_lesion_f1": 0.278,
+  "wmhsynthseg_lesion_ml": 7.53,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_088",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9170779861796644,
+  "wmhsynthseg_dice": 0.36,
+  "wmhsynthseg_lesion_f1": 0.485,
+  "wmhsynthseg_lesion_ml": 6.53,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_089",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8980205462290153,
+  "wmhsynthseg_dice": 0.354,
+  "wmhsynthseg_lesion_f1": 0.348,
+  "wmhsynthseg_lesion_ml": 12.37,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_090",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8992343032159265,
+  "wmhsynthseg_dice": 0.347,
+  "wmhsynthseg_lesion_f1": 0.329,
+  "wmhsynthseg_lesion_ml": 11.49,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_091",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9082483781278962,
+  "wmhsynthseg_dice": 0.132,
+  "wmhsynthseg_lesion_f1": 0.196,
+  "wmhsynthseg_lesion_ml": 3.33,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_092",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9332460732984293,
+  "wmhsynthseg_dice": 0.342,
+  "wmhsynthseg_lesion_f1": 0.375,
+  "wmhsynthseg_lesion_ml": 4.09,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_093",
+  "wmhsynthseg_prob_vs_seg_dice": 0.941696113074205,
+  "wmhsynthseg_dice": 0.378,
+  "wmhsynthseg_lesion_f1": 0.333,
+  "wmhsynthseg_lesion_ml": 12.03,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_094",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9134948096885813,
+  "wmhsynthseg_dice": 0.265,
+  "wmhsynthseg_lesion_f1": 0.296,
+  "wmhsynthseg_lesion_ml": 5.43,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_095",
+  "wmhsynthseg_prob_vs_seg_dice": 0.7876984126984127,
+  "wmhsynthseg_dice": 0.288,
+  "wmhsynthseg_lesion_f1": 0.27,
+  "wmhsynthseg_lesion_ml": 3.41,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_096",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9434447300771208,
+  "wmhsynthseg_dice": 0.337,
+  "wmhsynthseg_lesion_f1": 0.421,
+  "wmhsynthseg_lesion_ml": 2.5,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_097",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8946058091286307,
+  "wmhsynthseg_dice": 0.336,
+  "wmhsynthseg_lesion_f1": 0.457,
+  "wmhsynthseg_lesion_ml": 3.32,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_098",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8456189151599444,
+  "wmhsynthseg_dice": 0.117,
+  "wmhsynthseg_lesion_f1": 0.138,
+  "wmhsynthseg_lesion_ml": 1.92,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_099",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8944658944658944,
+  "wmhsynthseg_dice": 0.282,
+  "wmhsynthseg_lesion_f1": 0.262,
+  "wmhsynthseg_lesion_ml": 4.61,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_100",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9422222222222222,
+  "wmhsynthseg_dice": 0.189,
+  "wmhsynthseg_lesion_f1": 0.122,
+  "wmhsynthseg_lesion_ml": 2.71,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P10_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9722853248523399,
+  "wmhsynthseg_dice": 0.193,
+  "wmhsynthseg_lesion_f1": 0.569,
+  "wmhsynthseg_lesion_ml": 6.79,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P10_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9778752971292741,
+  "wmhsynthseg_dice": 0.268,
+  "wmhsynthseg_lesion_f1": 0.691,
+  "wmhsynthseg_lesion_ml": 5.59,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P11_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9726400414937759,
+  "wmhsynthseg_dice": 0.232,
+  "wmhsynthseg_lesion_f1": 0.353,
+  "wmhsynthseg_lesion_ml": 7.92,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P11_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9728932851436181,
+  "wmhsynthseg_dice": 0.275,
+  "wmhsynthseg_lesion_f1": 0.5,
+  "wmhsynthseg_lesion_ml": 10.8,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P12_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.980653960733642,
+  "wmhsynthseg_dice": 0.322,
+  "wmhsynthseg_lesion_f1": 0.714,
+  "wmhsynthseg_lesion_ml": 28.4,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P12_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9807300480022102,
+  "wmhsynthseg_dice": 0.34,
+  "wmhsynthseg_lesion_f1": 0.636,
+  "wmhsynthseg_lesion_ml": 29.52,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P12_T3",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9791087953450911,
+  "wmhsynthseg_dice": 0.342,
+  "wmhsynthseg_lesion_f1": 0.622,
+  "wmhsynthseg_lesion_ml": 31.05,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P12_T4",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9717090643759743,
+  "wmhsynthseg_dice": 0.339,
+  "wmhsynthseg_lesion_f1": 0.583,
+  "wmhsynthseg_lesion_ml": 31.0,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P13_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9836929987305927,
+  "wmhsynthseg_dice": 0.433,
+  "wmhsynthseg_lesion_f1": 0.682,
+  "wmhsynthseg_lesion_ml": 15.61,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P13_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9840202916930881,
+  "wmhsynthseg_dice": 0.399,
+  "wmhsynthseg_lesion_f1": 0.645,
+  "wmhsynthseg_lesion_ml": 16.02,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P14_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9761290453649717,
+  "wmhsynthseg_dice": 0.636,
+  "wmhsynthseg_lesion_f1": 0.685,
+  "wmhsynthseg_lesion_ml": 25.2,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P14_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9876665190283125,
+  "wmhsynthseg_dice": 0.721,
+  "wmhsynthseg_lesion_f1": 0.543,
+  "wmhsynthseg_lesion_ml": 29.71,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P14_T3",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9886432902377209,
+  "wmhsynthseg_dice": 0.687,
+  "wmhsynthseg_lesion_f1": 0.469,
+  "wmhsynthseg_lesion_ml": 31.52,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P14_T4",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9899022486047037,
+  "wmhsynthseg_dice": 0.691,
+  "wmhsynthseg_lesion_f1": 0.448,
+  "wmhsynthseg_lesion_ml": 31.31,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P15_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9530023447854011,
+  "wmhsynthseg_dice": 0.153,
+  "wmhsynthseg_lesion_f1": 0.545,
+  "wmhsynthseg_lesion_ml": 5.13,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P16_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9468732706142778,
+  "wmhsynthseg_dice": 0.069,
+  "wmhsynthseg_lesion_f1": 0.222,
+  "wmhsynthseg_lesion_ml": 3.81,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.069 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P17_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9601390368335483,
+  "wmhsynthseg_dice": 0.197,
+  "wmhsynthseg_lesion_f1": 0.613,
+  "wmhsynthseg_lesion_ml": 9.27,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P18_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9734169653524493,
+  "wmhsynthseg_dice": 0.017,
+  "wmhsynthseg_lesion_f1": 0.2,
+  "wmhsynthseg_lesion_ml": 10.31,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.017 < 0.1 (orientation, label or grid?)",
+   "wmhsynthseg: 10.3 mL predicted vs 0.8 mL expert (>10x)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P19_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.972077614765736,
+  "wmhsynthseg_dice": 0.554,
+  "wmhsynthseg_lesion_f1": 0.492,
+  "wmhsynthseg_lesion_ml": 17.38,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P19_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9700998658518408,
+  "wmhsynthseg_dice": 0.557,
+  "wmhsynthseg_lesion_f1": 0.537,
+  "wmhsynthseg_lesion_ml": 17.27,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P19_T3",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9726473069044463,
+  "wmhsynthseg_dice": 0.539,
+  "wmhsynthseg_lesion_f1": 0.529,
+  "wmhsynthseg_lesion_ml": 17.05,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P19_T4",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9744219744219744,
+  "wmhsynthseg_dice": 0.517,
+  "wmhsynthseg_lesion_f1": 0.71,
+  "wmhsynthseg_lesion_ml": 16.28,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P1_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9878382865681554,
+  "wmhsynthseg_dice": 0.54,
+  "wmhsynthseg_lesion_f1": 0.684,
+  "wmhsynthseg_lesion_ml": 24.39,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P1_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9809388142721476,
+  "wmhsynthseg_dice": 0.583,
+  "wmhsynthseg_lesion_f1": 0.651,
+  "wmhsynthseg_lesion_ml": 15.02,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P1_T3",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9843439034098448,
+  "wmhsynthseg_dice": 0.557,
+  "wmhsynthseg_lesion_f1": 0.545,
+  "wmhsynthseg_lesion_ml": 15.31,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P20_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.958692213042714,
+  "wmhsynthseg_dice": 0.02,
+  "wmhsynthseg_lesion_f1": 0.353,
+  "wmhsynthseg_lesion_ml": 5.92,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.020 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P20_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.972648501931308,
+  "wmhsynthseg_dice": 0.06,
+  "wmhsynthseg_lesion_f1": 0.432,
+  "wmhsynthseg_lesion_ml": 9.84,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.060 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P20_T3",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9757622391074349,
+  "wmhsynthseg_dice": 0.068,
+  "wmhsynthseg_lesion_f1": 0.455,
+  "wmhsynthseg_lesion_ml": 10.65,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.068 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P21_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9500505107194971,
+  "wmhsynthseg_dice": 0.245,
+  "wmhsynthseg_lesion_f1": 0.522,
+  "wmhsynthseg_lesion_ml": 4.68,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P22_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9811416063310322,
+  "wmhsynthseg_dice": 0.163,
+  "wmhsynthseg_lesion_f1": 0.628,
+  "wmhsynthseg_lesion_ml": 12.1,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P22_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9823421960625127,
+  "wmhsynthseg_dice": 0.129,
+  "wmhsynthseg_lesion_f1": 0.328,
+  "wmhsynthseg_lesion_ml": 12.54,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P23_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9855136204953407,
+  "wmhsynthseg_dice": 0.406,
+  "wmhsynthseg_lesion_f1": 0.412,
+  "wmhsynthseg_lesion_ml": 18.45,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P24_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9387512093473246,
+  "wmhsynthseg_dice": 0.341,
+  "wmhsynthseg_lesion_f1": 0.432,
+  "wmhsynthseg_lesion_ml": 7.13,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P25_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.969390471120575,
+  "wmhsynthseg_dice": 0.1,
+  "wmhsynthseg_lesion_f1": 0.421,
+  "wmhsynthseg_lesion_ml": 5.81,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P26_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9688473520249221,
+  "wmhsynthseg_dice": 0.256,
+  "wmhsynthseg_lesion_f1": 0.345,
+  "wmhsynthseg_lesion_ml": 7.61,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P27_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9540900254224615,
+  "wmhsynthseg_dice": 0.053,
+  "wmhsynthseg_lesion_f1": 0.207,
+  "wmhsynthseg_lesion_ml": 3.5,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.053 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P28_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9517561683599419,
+  "wmhsynthseg_dice": 0.039,
+  "wmhsynthseg_lesion_f1": 0.3,
+  "wmhsynthseg_lesion_ml": 9.03,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.039 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P28_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9548499131729099,
+  "wmhsynthseg_dice": 0.055,
+  "wmhsynthseg_lesion_f1": 0.288,
+  "wmhsynthseg_lesion_ml": 4.21,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.055 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P29_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9362361382909328,
+  "wmhsynthseg_dice": 0.1,
+  "wmhsynthseg_lesion_f1": 0.359,
+  "wmhsynthseg_lesion_ml": 6.52,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P2_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9662311216697776,
+  "wmhsynthseg_dice": 0.279,
+  "wmhsynthseg_lesion_f1": 0.549,
+  "wmhsynthseg_lesion_ml": 3.05,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P2_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.967705700645886,
+  "wmhsynthseg_dice": 0.208,
+  "wmhsynthseg_lesion_f1": 0.448,
+  "wmhsynthseg_lesion_ml": 3.68,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P2_T3",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9577464788732394,
+  "wmhsynthseg_dice": 0.248,
+  "wmhsynthseg_lesion_f1": 0.436,
+  "wmhsynthseg_lesion_ml": 3.29,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P2_T4",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9403242497412901,
+  "wmhsynthseg_dice": 0.218,
+  "wmhsynthseg_lesion_f1": 0.479,
+  "wmhsynthseg_lesion_ml": 3.07,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P30_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9790419161676647,
+  "wmhsynthseg_dice": 0.29,
+  "wmhsynthseg_lesion_f1": 0.4,
+  "wmhsynthseg_lesion_ml": 5.12,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P31_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9802595042156813,
+  "wmhsynthseg_dice": 0.294,
+  "wmhsynthseg_lesion_f1": 0.511,
+  "wmhsynthseg_lesion_ml": 10.1,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P31_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9797595363722862,
+  "wmhsynthseg_dice": 0.278,
+  "wmhsynthseg_lesion_f1": 0.481,
+  "wmhsynthseg_lesion_ml": 11.79,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P32_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.971080355298492,
+  "wmhsynthseg_dice": 0.027,
+  "wmhsynthseg_lesion_f1": 0.286,
+  "wmhsynthseg_lesion_ml": 4.98,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.027 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P33_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9857354184277262,
+  "wmhsynthseg_dice": 0.496,
+  "wmhsynthseg_lesion_f1": 0.613,
+  "wmhsynthseg_lesion_ml": 19.2,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P33_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9870714162114058,
+  "wmhsynthseg_dice": 0.341,
+  "wmhsynthseg_lesion_f1": 0.537,
+  "wmhsynthseg_lesion_ml": 20.49,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P34_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9705463605623776,
+  "wmhsynthseg_dice": 0.215,
+  "wmhsynthseg_lesion_f1": 0.583,
+  "wmhsynthseg_lesion_ml": 11.57,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P35_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9644904340058066,
+  "wmhsynthseg_dice": 0.355,
+  "wmhsynthseg_lesion_f1": 0.277,
+  "wmhsynthseg_lesion_ml": 6.96,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P36_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9595383664216528,
+  "wmhsynthseg_dice": 0.322,
+  "wmhsynthseg_lesion_f1": 0.522,
+  "wmhsynthseg_lesion_ml": 7.57,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P37_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9538101163897226,
+  "wmhsynthseg_dice": 0.041,
+  "wmhsynthseg_lesion_f1": 0.462,
+  "wmhsynthseg_lesion_ml": 7.15,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.041 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P38_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9794740982668606,
+  "wmhsynthseg_dice": 0.544,
+  "wmhsynthseg_lesion_f1": 0.329,
+  "wmhsynthseg_lesion_ml": 21.4,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P39_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9869181483074991,
+  "wmhsynthseg_dice": 0.597,
+  "wmhsynthseg_lesion_f1": 0.237,
+  "wmhsynthseg_lesion_ml": 43.56,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P3_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9830155599386369,
+  "wmhsynthseg_dice": 0.098,
+  "wmhsynthseg_lesion_f1": 0.414,
+  "wmhsynthseg_lesion_ml": 9.28,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.098 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P3_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9804893155775782,
+  "wmhsynthseg_dice": 0.059,
+  "wmhsynthseg_lesion_f1": 0.492,
+  "wmhsynthseg_lesion_ml": 6.58,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.059 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P3_T3",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9864482677350931,
+  "wmhsynthseg_dice": 0.126,
+  "wmhsynthseg_lesion_f1": 0.587,
+  "wmhsynthseg_lesion_ml": 8.6,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P3_T4",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9859154929577465,
+  "wmhsynthseg_dice": 0.115,
+  "wmhsynthseg_lesion_f1": 0.546,
+  "wmhsynthseg_lesion_ml": 8.35,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P40_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9780672206003443,
+  "wmhsynthseg_dice": 0.377,
+  "wmhsynthseg_lesion_f1": 0.713,
+  "wmhsynthseg_lesion_ml": 13.65,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P41_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9707748509901942,
+  "wmhsynthseg_dice": 0.034,
+  "wmhsynthseg_lesion_f1": 0.316,
+  "wmhsynthseg_lesion_ml": 5.35,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.034 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P42_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9840095424136083,
+  "wmhsynthseg_dice": 0.668,
+  "wmhsynthseg_lesion_f1": 0.316,
+  "wmhsynthseg_lesion_ml": 29.39,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P43_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.975,
+  "wmhsynthseg_dice": 0.384,
+  "wmhsynthseg_lesion_f1": 0.48,
+  "wmhsynthseg_lesion_ml": 10.74,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P44_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9733738094686348,
+  "wmhsynthseg_dice": 0.19,
+  "wmhsynthseg_lesion_f1": 0.316,
+  "wmhsynthseg_lesion_ml": 22.15,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P45_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9862009267274301,
+  "wmhsynthseg_dice": 0.259,
+  "wmhsynthseg_lesion_f1": 0.226,
+  "wmhsynthseg_lesion_ml": 39.82,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P46_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9815859074804132,
+  "wmhsynthseg_dice": 0.362,
+  "wmhsynthseg_lesion_f1": 0.716,
+  "wmhsynthseg_lesion_ml": 10.2,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P47_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9781640873436507,
+  "wmhsynthseg_dice": 0.414,
+  "wmhsynthseg_lesion_f1": 0.429,
+  "wmhsynthseg_lesion_ml": 21.69,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P48_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9480789200415368,
+  "wmhsynthseg_dice": 0.301,
+  "wmhsynthseg_lesion_f1": 0.532,
+  "wmhsynthseg_lesion_ml": 6.08,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P49_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9574682089230548,
+  "wmhsynthseg_dice": 0.397,
+  "wmhsynthseg_lesion_f1": 0.444,
+  "wmhsynthseg_lesion_ml": 14.51,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P49_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9701541489012792,
+  "wmhsynthseg_dice": 0.37,
+  "wmhsynthseg_lesion_f1": 0.683,
+  "wmhsynthseg_lesion_ml": 10.99,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P4_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.983677875706943,
+  "wmhsynthseg_dice": 0.711,
+  "wmhsynthseg_lesion_f1": 0.845,
+  "wmhsynthseg_lesion_ml": 31.54,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P4_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9814896043512589,
+  "wmhsynthseg_dice": 0.699,
+  "wmhsynthseg_lesion_f1": 0.746,
+  "wmhsynthseg_lesion_ml": 34.83,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P4_T3",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9814087998347449,
+  "wmhsynthseg_dice": 0.719,
+  "wmhsynthseg_lesion_f1": 0.77,
+  "wmhsynthseg_lesion_ml": 34.52,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P50_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9809969387165713,
+  "wmhsynthseg_dice": 0.332,
+  "wmhsynthseg_lesion_f1": 0.611,
+  "wmhsynthseg_lesion_ml": 17.64,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P50_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9719312076011867,
+  "wmhsynthseg_dice": 0.36,
+  "wmhsynthseg_lesion_f1": 0.518,
+  "wmhsynthseg_lesion_ml": 24.78,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P51_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9798428017112725,
+  "wmhsynthseg_dice": 0.292,
+  "wmhsynthseg_lesion_f1": 0.53,
+  "wmhsynthseg_lesion_ml": 25.63,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P51_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9767087359053106,
+  "wmhsynthseg_dice": 0.367,
+  "wmhsynthseg_lesion_f1": 0.511,
+  "wmhsynthseg_lesion_ml": 22.82,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P52_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9562155818362372,
+  "wmhsynthseg_dice": 0.214,
+  "wmhsynthseg_lesion_f1": 0.419,
+  "wmhsynthseg_lesion_ml": 5.78,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P52_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9841961087307719,
+  "wmhsynthseg_dice": 0.345,
+  "wmhsynthseg_lesion_f1": 0.414,
+  "wmhsynthseg_lesion_ml": 7.23,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P53_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9850083790026722,
+  "wmhsynthseg_dice": 0.041,
+  "wmhsynthseg_lesion_f1": 0.333,
+  "wmhsynthseg_lesion_ml": 33.62,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.041 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P53_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9852683269028412,
+  "wmhsynthseg_dice": 0.101,
+  "wmhsynthseg_lesion_f1": 0.435,
+  "wmhsynthseg_lesion_ml": 8.68,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P54",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9536950420954162,
+  "wmhsynthseg_dice": 0.044,
+  "wmhsynthseg_lesion_f1": 0.333,
+  "wmhsynthseg_lesion_ml": 4.47,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.044 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P55",
+  "wmhsynthseg_prob_vs_seg_dice": 0.975497592872027,
+  "wmhsynthseg_dice": 0.062,
+  "wmhsynthseg_lesion_f1": 0.336,
+  "wmhsynthseg_lesion_ml": 7.13,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.062 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P56",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9718509518023492,
+  "wmhsynthseg_dice": 0.312,
+  "wmhsynthseg_lesion_f1": 0.444,
+  "wmhsynthseg_lesion_ml": 5.08,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P57",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9885296401111974,
+  "wmhsynthseg_dice": 0.403,
+  "wmhsynthseg_lesion_f1": 0.201,
+  "wmhsynthseg_lesion_ml": 40.39,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P58",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9728082136841261,
+  "wmhsynthseg_dice": 0.243,
+  "wmhsynthseg_lesion_f1": 0.409,
+  "wmhsynthseg_lesion_ml": 6.4,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P59",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9533083343413572,
+  "wmhsynthseg_dice": 0.183,
+  "wmhsynthseg_lesion_f1": 0.448,
+  "wmhsynthseg_lesion_ml": 8.65,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P5_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9604728778800917,
+  "wmhsynthseg_dice": 0.175,
+  "wmhsynthseg_lesion_f1": 0.667,
+  "wmhsynthseg_lesion_ml": 12.93,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P5_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9707035366521941,
+  "wmhsynthseg_dice": 0.355,
+  "wmhsynthseg_lesion_f1": 0.643,
+  "wmhsynthseg_lesion_ml": 12.21,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P60",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9704483846598231,
+  "wmhsynthseg_dice": 0.144,
+  "wmhsynthseg_lesion_f1": 0.5,
+  "wmhsynthseg_lesion_ml": 11.58,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P61",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9620035889833815,
+  "wmhsynthseg_dice": 0.03,
+  "wmhsynthseg_lesion_f1": 0.333,
+  "wmhsynthseg_lesion_ml": 6.65,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.030 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P62",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9452290733723734,
+  "wmhsynthseg_dice": 0.262,
+  "wmhsynthseg_lesion_f1": 0.385,
+  "wmhsynthseg_lesion_ml": 4.59,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P63",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9558251672110748,
+  "wmhsynthseg_dice": 0.189,
+  "wmhsynthseg_lesion_f1": 0.476,
+  "wmhsynthseg_lesion_ml": 6.71,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P64",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9642560266001663,
+  "wmhsynthseg_dice": 0.217,
+  "wmhsynthseg_lesion_f1": 0.482,
+  "wmhsynthseg_lesion_ml": 11.21,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P65",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9696988826462976,
+  "wmhsynthseg_dice": 0.325,
+  "wmhsynthseg_lesion_f1": 0.348,
+  "wmhsynthseg_lesion_ml": 16.32,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P66",
+  "wmhsynthseg_prob_vs_seg_dice": 0.965353238431813,
+  "wmhsynthseg_dice": 0.218,
+  "wmhsynthseg_lesion_f1": 0.408,
+  "wmhsynthseg_lesion_ml": 15.66,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P67",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9534561460710792,
+  "wmhsynthseg_dice": 0.433,
+  "wmhsynthseg_lesion_f1": 0.477,
+  "wmhsynthseg_lesion_ml": 12.84,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P68",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9571670355422471,
+  "wmhsynthseg_dice": 0.0,
+  "wmhsynthseg_lesion_f1": 0.0,
+  "wmhsynthseg_lesion_ml": 4.0,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.000 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P69",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9411680606190578,
+  "wmhsynthseg_dice": 0.138,
+  "wmhsynthseg_lesion_f1": 0.474,
+  "wmhsynthseg_lesion_ml": 7.41,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P6_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9515122109008571,
+  "wmhsynthseg_dice": 0.424,
+  "wmhsynthseg_lesion_f1": 0.265,
+  "wmhsynthseg_lesion_ml": 16.21,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P6_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.962014166697251,
+  "wmhsynthseg_dice": 0.473,
+  "wmhsynthseg_lesion_f1": 0.242,
+  "wmhsynthseg_lesion_ml": 14.14,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P6_T3",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9558532323820618,
+  "wmhsynthseg_dice": 0.428,
+  "wmhsynthseg_lesion_f1": 0.376,
+  "wmhsynthseg_lesion_ml": 13.45,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P70",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9781694915254238,
+  "wmhsynthseg_dice": 0.46,
+  "wmhsynthseg_lesion_f1": 0.749,
+  "wmhsynthseg_lesion_ml": 11.3,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P71",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9621008854306413,
+  "wmhsynthseg_dice": 0.051,
+  "wmhsynthseg_lesion_f1": 0.566,
+  "wmhsynthseg_lesion_ml": 15.47,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.051 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P72",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9796745699674569,
+  "wmhsynthseg_dice": 0.656,
+  "wmhsynthseg_lesion_f1": 0.667,
+  "wmhsynthseg_lesion_ml": 27.43,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P73",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9850513297712673,
+  "wmhsynthseg_dice": 0.3,
+  "wmhsynthseg_lesion_f1": 0.513,
+  "wmhsynthseg_lesion_ml": 16.91,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P74",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9649376992176181,
+  "wmhsynthseg_dice": 0.137,
+  "wmhsynthseg_lesion_f1": 0.484,
+  "wmhsynthseg_lesion_ml": 8.93,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P75",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9839815631490597,
+  "wmhsynthseg_dice": 0.276,
+  "wmhsynthseg_lesion_f1": 0.583,
+  "wmhsynthseg_lesion_ml": 17.86,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P7_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9783745140967786,
+  "wmhsynthseg_dice": 0.633,
+  "wmhsynthseg_lesion_f1": 0.326,
+  "wmhsynthseg_lesion_ml": 22.86,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P7_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9872090662433785,
+  "wmhsynthseg_dice": 0.726,
+  "wmhsynthseg_lesion_f1": 0.483,
+  "wmhsynthseg_lesion_ml": 27.44,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P8_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9598130841121495,
+  "wmhsynthseg_dice": 0.325,
+  "wmhsynthseg_lesion_f1": 0.729,
+  "wmhsynthseg_lesion_ml": 5.57,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P8_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9539763113367175,
+  "wmhsynthseg_dice": 0.338,
+  "wmhsynthseg_lesion_f1": 0.638,
+  "wmhsynthseg_lesion_ml": 6.18,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P9_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9729028070744767,
+  "wmhsynthseg_dice": 0.14,
+  "wmhsynthseg_lesion_f1": 0.625,
+  "wmhsynthseg_lesion_ml": 6.33,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P9_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9755976916735367,
+  "wmhsynthseg_dice": 0.123,
+  "wmhsynthseg_lesion_f1": 0.541,
+  "wmhsynthseg_lesion_ml": 6.21,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P9_T3",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9727091993493584,
+  "wmhsynthseg_dice": 0.149,
+  "wmhsynthseg_lesion_f1": 0.548,
+  "wmhsynthseg_lesion_ml": 5.68,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_01",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8687050359712231,
+  "wmhsynthseg_dice": 0.181,
+  "wmhsynthseg_lesion_f1": 0.269,
+  "wmhsynthseg_lesion_ml": 2.46,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_02",
+  "wmhsynthseg_prob_vs_seg_dice": 0.855072463768116,
+  "wmhsynthseg_dice": 0.351,
+  "wmhsynthseg_lesion_f1": 0.477,
+  "wmhsynthseg_lesion_ml": 7.74,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_03",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9054945054945055,
+  "wmhsynthseg_dice": 0.134,
+  "wmhsynthseg_lesion_f1": 0.295,
+  "wmhsynthseg_lesion_ml": 2.95,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_04",
+  "wmhsynthseg_prob_vs_seg_dice": 0.7992087042532147,
+  "wmhsynthseg_dice": 0.146,
+  "wmhsynthseg_lesion_f1": 0.472,
+  "wmhsynthseg_lesion_ml": 2.88,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_05",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8817204301075269,
+  "wmhsynthseg_dice": 0.032,
+  "wmhsynthseg_lesion_f1": 0.092,
+  "wmhsynthseg_lesion_ml": 1.18,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.032 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "muslim_06",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8991964937910883,
+  "wmhsynthseg_dice": 0.341,
+  "wmhsynthseg_lesion_f1": 0.548,
+  "wmhsynthseg_lesion_ml": 6.69,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_07",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9700524853349799,
+  "wmhsynthseg_dice": 0.729,
+  "wmhsynthseg_lesion_f1": 0.447,
+  "wmhsynthseg_lesion_ml": 24.3,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_08",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9233942251031232,
+  "wmhsynthseg_dice": 0.462,
+  "wmhsynthseg_lesion_f1": 0.469,
+  "wmhsynthseg_lesion_ml": 8.77,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_09",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8862131246237207,
+  "wmhsynthseg_dice": 0.271,
+  "wmhsynthseg_lesion_f1": 0.326,
+  "wmhsynthseg_lesion_ml": 1.61,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_10",
+  "wmhsynthseg_prob_vs_seg_dice": 0.92734375,
+  "wmhsynthseg_dice": 0.386,
+  "wmhsynthseg_lesion_f1": 0.381,
+  "wmhsynthseg_lesion_ml": 12.77,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_11",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9480088495575221,
+  "wmhsynthseg_dice": 0.349,
+  "wmhsynthseg_lesion_f1": 0.444,
+  "wmhsynthseg_lesion_ml": 9.1,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_12",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9031518624641833,
+  "wmhsynthseg_dice": 0.48,
+  "wmhsynthseg_lesion_f1": 0.689,
+  "wmhsynthseg_lesion_ml": 6.97,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_13",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9278996865203761,
+  "wmhsynthseg_dice": 0.124,
+  "wmhsynthseg_lesion_f1": 0.345,
+  "wmhsynthseg_lesion_ml": 5.59,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_15",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9608669476219145,
+  "wmhsynthseg_dice": 0.332,
+  "wmhsynthseg_lesion_f1": 0.301,
+  "wmhsynthseg_lesion_ml": 3.27,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_16",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9279019466474405,
+  "wmhsynthseg_dice": 0.331,
+  "wmhsynthseg_lesion_f1": 0.329,
+  "wmhsynthseg_lesion_ml": 5.04,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_17",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9259990133201776,
+  "wmhsynthseg_dice": 0.302,
+  "wmhsynthseg_lesion_f1": 0.462,
+  "wmhsynthseg_lesion_ml": 9.17,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_18",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9241379310344827,
+  "wmhsynthseg_dice": 0.178,
+  "wmhsynthseg_lesion_f1": 0.455,
+  "wmhsynthseg_lesion_ml": 2.06,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_19",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9136981270657363,
+  "wmhsynthseg_dice": 0.454,
+  "wmhsynthseg_lesion_f1": 0.611,
+  "wmhsynthseg_lesion_ml": 7.57,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_20",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9304123711340206,
+  "wmhsynthseg_dice": 0.276,
+  "wmhsynthseg_lesion_f1": 0.281,
+  "wmhsynthseg_lesion_ml": 3.21,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_21",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8706624605678234,
+  "wmhsynthseg_dice": 0.0,
+  "wmhsynthseg_lesion_f1": 0.0,
+  "wmhsynthseg_lesion_ml": 0.57,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.000 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "muslim_22",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9115646258503401,
+  "wmhsynthseg_dice": 0.3,
+  "wmhsynthseg_lesion_f1": 0.207,
+  "wmhsynthseg_lesion_ml": 5.04,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_24",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8993576017130621,
+  "wmhsynthseg_dice": 0.132,
+  "wmhsynthseg_lesion_f1": 0.273,
+  "wmhsynthseg_lesion_ml": 2.17,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_25",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9397240377632534,
+  "wmhsynthseg_dice": 0.402,
+  "wmhsynthseg_lesion_f1": 0.605,
+  "wmhsynthseg_lesion_ml": 2.73,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_26",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9250435793143521,
+  "wmhsynthseg_dice": 0.139,
+  "wmhsynthseg_lesion_f1": 0.263,
+  "wmhsynthseg_lesion_ml": 4.25,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_27",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9010669253152279,
+  "wmhsynthseg_dice": 0.331,
+  "wmhsynthseg_lesion_f1": 0.562,
+  "wmhsynthseg_lesion_ml": 5.09,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_28",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9500752291068253,
+  "wmhsynthseg_dice": 0.554,
+  "wmhsynthseg_lesion_f1": 0.474,
+  "wmhsynthseg_lesion_ml": 11.03,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_29",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8532654792196777,
+  "wmhsynthseg_dice": 0.447,
+  "wmhsynthseg_lesion_f1": 0.359,
+  "wmhsynthseg_lesion_ml": 2.86,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_30",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8873279010958134,
+  "wmhsynthseg_dice": 0.196,
+  "wmhsynthseg_lesion_f1": 0.25,
+  "wmhsynthseg_lesion_ml": 8.92,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_31",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8990068360634593,
+  "wmhsynthseg_dice": 0.196,
+  "wmhsynthseg_lesion_f1": 0.2,
+  "wmhsynthseg_lesion_ml": 8.92,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_33",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8968858131487889,
+  "wmhsynthseg_dice": 0.308,
+  "wmhsynthseg_lesion_f1": 0.522,
+  "wmhsynthseg_lesion_ml": 2.27,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_34",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8686868686868687,
+  "wmhsynthseg_dice": 0.112,
+  "wmhsynthseg_lesion_f1": 0.263,
+  "wmhsynthseg_lesion_ml": 1.0,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_35",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8744101633393829,
+  "wmhsynthseg_dice": 0.171,
+  "wmhsynthseg_lesion_f1": 0.302,
+  "wmhsynthseg_lesion_ml": 3.9,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_36",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9460154241645244,
+  "wmhsynthseg_dice": 0.379,
+  "wmhsynthseg_lesion_f1": 0.4,
+  "wmhsynthseg_lesion_ml": 3.31,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_37",
+  "wmhsynthseg_prob_vs_seg_dice": 0.926984126984127,
+  "wmhsynthseg_dice": 0.151,
+  "wmhsynthseg_lesion_f1": 0.247,
+  "wmhsynthseg_lesion_ml": 2.56,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_38",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8927193208129663,
+  "wmhsynthseg_dice": 0.093,
+  "wmhsynthseg_lesion_f1": 0.086,
+  "wmhsynthseg_lesion_ml": 9.0,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.093 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "muslim_39",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8884150675195451,
+  "wmhsynthseg_dice": 0.215,
+  "wmhsynthseg_lesion_f1": 0.293,
+  "wmhsynthseg_lesion_ml": 2.54,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_40",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8847946482425838,
+  "wmhsynthseg_dice": 0.202,
+  "wmhsynthseg_lesion_f1": 0.13,
+  "wmhsynthseg_lesion_ml": 9.23,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_42",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9247787610619469,
+  "wmhsynthseg_dice": 0.303,
+  "wmhsynthseg_lesion_f1": 0.664,
+  "wmhsynthseg_lesion_ml": 4.06,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_43",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9352466367713005,
+  "wmhsynthseg_dice": 0.185,
+  "wmhsynthseg_lesion_f1": 0.287,
+  "wmhsynthseg_lesion_ml": 3.5,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_44",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9203961848862803,
+  "wmhsynthseg_dice": 0.362,
+  "wmhsynthseg_lesion_f1": 0.333,
+  "wmhsynthseg_lesion_ml": 11.15,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_45",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9136191677175284,
+  "wmhsynthseg_dice": 0.103,
+  "wmhsynthseg_lesion_f1": 0.28,
+  "wmhsynthseg_lesion_ml": 1.86,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_46",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9250554323725055,
+  "wmhsynthseg_dice": 0.27,
+  "wmhsynthseg_lesion_f1": 0.282,
+  "wmhsynthseg_lesion_ml": 5.08,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_47",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9176136363636364,
+  "wmhsynthseg_dice": 0.212,
+  "wmhsynthseg_lesion_f1": 0.7,
+  "wmhsynthseg_lesion_ml": 3.27,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_49",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9053708439897699,
+  "wmhsynthseg_dice": 0.274,
+  "wmhsynthseg_lesion_f1": 0.708,
+  "wmhsynthseg_lesion_ml": 2.78,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_50",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9302325581395349,
+  "wmhsynthseg_dice": 0.143,
+  "wmhsynthseg_lesion_f1": 0.246,
+  "wmhsynthseg_lesion_ml": 1.84,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_51",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9186923721709975,
+  "wmhsynthseg_dice": 0.228,
+  "wmhsynthseg_lesion_f1": 0.361,
+  "wmhsynthseg_lesion_ml": 3.36,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_52",
+  "wmhsynthseg_prob_vs_seg_dice": 0.902066834073788,
+  "wmhsynthseg_dice": 0.173,
+  "wmhsynthseg_lesion_f1": 0.25,
+  "wmhsynthseg_lesion_ml": 3.28,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_55",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9327208862469603,
+  "wmhsynthseg_dice": 0.3,
+  "wmhsynthseg_lesion_f1": 0.444,
+  "wmhsynthseg_lesion_ml": 7.24,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_58",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8753263707571801,
+  "wmhsynthseg_dice": 0.197,
+  "wmhsynthseg_lesion_f1": 0.378,
+  "wmhsynthseg_lesion_ml": 7.15,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_59",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9037037037037037,
+  "wmhsynthseg_dice": 0.136,
+  "wmhsynthseg_lesion_f1": 0.261,
+  "wmhsynthseg_lesion_ml": 2.17,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_60",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8936936936936937,
+  "wmhsynthseg_dice": 0.0,
+  "wmhsynthseg_lesion_f1": 0.0,
+  "wmhsynthseg_lesion_ml": 1.33,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.000 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "openms_patient01",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9816639477977162,
+  "wmhsynthseg_dice": 0.299,
+  "wmhsynthseg_lesion_f1": 0.103,
+  "wmhsynthseg_lesion_ml": 7.8,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "openms_patient02",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9728073535044044,
+  "wmhsynthseg_dice": 0.066,
+  "wmhsynthseg_lesion_f1": 0.471,
+  "wmhsynthseg_lesion_ml": 2.68,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.066 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "openms_patient03",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9682097044060234,
+  "wmhsynthseg_dice": 0.261,
+  "wmhsynthseg_lesion_f1": 0.545,
+  "wmhsynthseg_lesion_ml": 0.93,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "openms_patient04",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9846425419240953,
+  "wmhsynthseg_dice": 0.336,
+  "wmhsynthseg_lesion_f1": 0.247,
+  "wmhsynthseg_lesion_ml": 11.5,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "openms_patient05",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9176836032837807,
+  "wmhsynthseg_dice": 0.098,
+  "wmhsynthseg_lesion_f1": 0.229,
+  "wmhsynthseg_lesion_ml": 2.44,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.098 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "openms_patient06",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9694851855497588,
+  "wmhsynthseg_dice": 0.294,
+  "wmhsynthseg_lesion_f1": 0.037,
+  "wmhsynthseg_lesion_ml": 10.47,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "openms_patient07",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8988276161528441,
+  "wmhsynthseg_dice": 0.058,
+  "wmhsynthseg_lesion_f1": 0.231,
+  "wmhsynthseg_lesion_ml": 1.27,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.058 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "openms_patient08",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9765638462864036,
+  "wmhsynthseg_dice": 0.388,
+  "wmhsynthseg_lesion_f1": 0.488,
+  "wmhsynthseg_lesion_ml": 5.94,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "openms_patient09",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9670577318220985,
+  "wmhsynthseg_dice": 0.468,
+  "wmhsynthseg_lesion_f1": 0.355,
+  "wmhsynthseg_lesion_ml": 7.79,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "openms_patient10",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9792843691148776,
+  "wmhsynthseg_dice": 0.618,
+  "wmhsynthseg_lesion_f1": 0.468,
+  "wmhsynthseg_lesion_ml": 13.01,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "openms_patient11",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9771152085785275,
+  "wmhsynthseg_dice": 0.461,
+  "wmhsynthseg_lesion_f1": 0.342,
+  "wmhsynthseg_lesion_ml": 7.82,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "openms_patient12",
+  "wmhsynthseg_prob_vs_seg_dice": 0.968316506607568,
+  "wmhsynthseg_dice": 0.363,
+  "wmhsynthseg_lesion_f1": 0.081,
+  "wmhsynthseg_lesion_ml": 12.57,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "openms_patient13",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9870083110804404,
+  "wmhsynthseg_dice": 0.617,
+  "wmhsynthseg_lesion_f1": 0.286,
+  "wmhsynthseg_lesion_ml": 16.88,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "openms_patient14",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9779425867911259,
+  "wmhsynthseg_dice": 0.468,
+  "wmhsynthseg_lesion_f1": 0.375,
+  "wmhsynthseg_lesion_ml": 7.99,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "openms_patient15",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9714782608695652,
+  "wmhsynthseg_dice": 0.486,
+  "wmhsynthseg_lesion_f1": 0.3,
+  "wmhsynthseg_lesion_ml": 5.91,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "openms_patient16",
+  "wmhsynthseg_prob_vs_seg_dice": 0.974690909090909,
+  "wmhsynthseg_dice": 0.428,
+  "wmhsynthseg_lesion_f1": 0.141,
+  "wmhsynthseg_lesion_ml": 7.05,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "openms_patient17",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9507567682796845,
+  "wmhsynthseg_dice": 0.312,
+  "wmhsynthseg_lesion_f1": 0.444,
+  "wmhsynthseg_lesion_ml": 2.46,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "openms_patient18",
+  "wmhsynthseg_prob_vs_seg_dice": 0.948259030263586,
+  "wmhsynthseg_dice": 0.154,
+  "wmhsynthseg_lesion_f1": 0.375,
+  "wmhsynthseg_lesion_ml": 1.62,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "openms_patient19",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9740122914837577,
+  "wmhsynthseg_dice": 0.197,
+  "wmhsynthseg_lesion_f1": 0.089,
+  "wmhsynthseg_lesion_ml": 5.84,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "openms_patient20",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9547128927410617,
+  "wmhsynthseg_dice": 0.176,
+  "wmhsynthseg_lesion_f1": 0.21,
+  "wmhsynthseg_lesion_ml": 2.41,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "openms_patient21",
+  "wmhsynthseg_prob_vs_seg_dice": 0.979240931012791,
+  "wmhsynthseg_dice": 0.445,
+  "wmhsynthseg_lesion_f1": 0.093,
+  "wmhsynthseg_lesion_ml": 14.6,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "openms_patient22",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9631085774195662,
+  "wmhsynthseg_dice": 0.311,
+  "wmhsynthseg_lesion_f1": 0.224,
+  "wmhsynthseg_lesion_ml": 7.91,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "openms_patient23",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9794611896505735,
+  "wmhsynthseg_dice": 0.246,
+  "wmhsynthseg_lesion_f1": 0.115,
+  "wmhsynthseg_lesion_ml": 5.74,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "openms_patient24",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9643231899265478,
+  "wmhsynthseg_dice": 0.093,
+  "wmhsynthseg_lesion_f1": 0.27,
+  "wmhsynthseg_lesion_ml": 3.95,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.093 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "openms_patient25",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9858044164037855,
+  "wmhsynthseg_dice": 0.428,
+  "wmhsynthseg_lesion_f1": 0.255,
+  "wmhsynthseg_lesion_ml": 9.64,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "openms_patient26",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9751546695472847,
+  "wmhsynthseg_dice": 0.603,
+  "wmhsynthseg_lesion_f1": 0.7,
+  "wmhsynthseg_lesion_ml": 5.22,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "openms_patient27",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9252443933294997,
+  "wmhsynthseg_dice": 0.27,
+  "wmhsynthseg_lesion_f1": 0.3,
+  "wmhsynthseg_lesion_ml": 1.87,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "openms_patient28",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9538837422376056,
+  "wmhsynthseg_dice": 0.269,
+  "wmhsynthseg_lesion_f1": 0.204,
+  "wmhsynthseg_lesion_ml": 5.14,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "openms_patient29",
+  "wmhsynthseg_prob_vs_seg_dice": 0.948339483394834,
+  "wmhsynthseg_dice": 0.006,
+  "wmhsynthseg_lesion_f1": 0.222,
+  "wmhsynthseg_lesion_ml": 1.43,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.006 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "openms_patient30",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8974469926438771,
+  "wmhsynthseg_dice": 0.09,
+  "wmhsynthseg_lesion_f1": 0.522,
+  "wmhsynthseg_lesion_ml": 1.27,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.090 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "pedims_P1_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8293577981651377,
+  "wmhsynthseg_dice": 0.198,
+  "wmhsynthseg_lesion_f1": 0.364,
+  "wmhsynthseg_lesion_ml": 2.03,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P1_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8198019801980198,
+  "wmhsynthseg_dice": 0.188,
+  "wmhsynthseg_lesion_f1": 0.261,
+  "wmhsynthseg_lesion_ml": 1.92,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P1_T3",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8543046357615894,
+  "wmhsynthseg_dice": 0.155,
+  "wmhsynthseg_lesion_f1": 0.381,
+  "wmhsynthseg_lesion_ml": 1.84,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P2_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8703116253032283,
+  "wmhsynthseg_dice": 0.158,
+  "wmhsynthseg_lesion_f1": 0.263,
+  "wmhsynthseg_lesion_ml": 6.5,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P2_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8805646036916395,
+  "wmhsynthseg_dice": 0.111,
+  "wmhsynthseg_lesion_f1": 0.154,
+  "wmhsynthseg_lesion_ml": 4.35,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P2_T3",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8383333333333334,
+  "wmhsynthseg_dice": 0.154,
+  "wmhsynthseg_lesion_f1": 0.17,
+  "wmhsynthseg_lesion_ml": 4.4,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P2_T4",
+  "wmhsynthseg_prob_vs_seg_dice": 0.7933826117564238,
+  "wmhsynthseg_dice": 0.126,
+  "wmhsynthseg_lesion_f1": 0.162,
+  "wmhsynthseg_lesion_ml": 3.61,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P2_T5",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8681737363474727,
+  "wmhsynthseg_dice": 0.149,
+  "wmhsynthseg_lesion_f1": 0.227,
+  "wmhsynthseg_lesion_ml": 4.69,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P2_T6",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8556745182012848,
+  "wmhsynthseg_dice": 0.189,
+  "wmhsynthseg_lesion_f1": 0.175,
+  "wmhsynthseg_lesion_ml": 5.64,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P3_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.940327868852459,
+  "wmhsynthseg_dice": 0.401,
+  "wmhsynthseg_lesion_f1": 0.485,
+  "wmhsynthseg_lesion_ml": 5.13,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P3_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9096059747617822,
+  "wmhsynthseg_dice": 0.328,
+  "wmhsynthseg_lesion_f1": 0.405,
+  "wmhsynthseg_lesion_ml": 4.47,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P3_T3",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9256562982572248,
+  "wmhsynthseg_dice": 0.332,
+  "wmhsynthseg_lesion_f1": 0.387,
+  "wmhsynthseg_lesion_ml": 5.08,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P3_T4",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9243918474687706,
+  "wmhsynthseg_dice": 0.292,
+  "wmhsynthseg_lesion_f1": 0.37,
+  "wmhsynthseg_lesion_ml": 5.1,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P3_T5",
+  "wmhsynthseg_prob_vs_seg_dice": 0.906832298136646,
+  "wmhsynthseg_dice": 0.265,
+  "wmhsynthseg_lesion_f1": 0.422,
+  "wmhsynthseg_lesion_ml": 4.78,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P3_T6",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9177545691906005,
+  "wmhsynthseg_dice": 0.382,
+  "wmhsynthseg_lesion_f1": 0.545,
+  "wmhsynthseg_lesion_ml": 6.95,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P4_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9375118708452042,
+  "wmhsynthseg_dice": 0.424,
+  "wmhsynthseg_lesion_f1": 0.32,
+  "wmhsynthseg_lesion_ml": 5.94,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P4_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9341816586222027,
+  "wmhsynthseg_dice": 0.366,
+  "wmhsynthseg_lesion_f1": 0.32,
+  "wmhsynthseg_lesion_ml": 5.08,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P4_T3",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9206569511913023,
+  "wmhsynthseg_dice": 0.369,
+  "wmhsynthseg_lesion_f1": 0.438,
+  "wmhsynthseg_lesion_ml": 4.85,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P4_T4",
+  "wmhsynthseg_prob_vs_seg_dice": 0.926261319534282,
+  "wmhsynthseg_dice": 0.283,
+  "wmhsynthseg_lesion_f1": 0.308,
+  "wmhsynthseg_lesion_ml": 4.39,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P5_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8593508500772797,
+  "wmhsynthseg_dice": 0.232,
+  "wmhsynthseg_lesion_f1": 0.211,
+  "wmhsynthseg_lesion_ml": 2.3,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P6_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8682487725040916,
+  "wmhsynthseg_dice": 0.164,
+  "wmhsynthseg_lesion_f1": 0.367,
+  "wmhsynthseg_lesion_ml": 2.94,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P7_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.871611253196931,
+  "wmhsynthseg_dice": 0.062,
+  "wmhsynthseg_lesion_f1": 0.105,
+  "wmhsynthseg_lesion_ml": 2.31,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.062 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "pedims_P7_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8754491017964072,
+  "wmhsynthseg_dice": 0.054,
+  "wmhsynthseg_lesion_f1": 0.108,
+  "wmhsynthseg_lesion_ml": 1.99,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.054 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "pedims_P7_T3",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8458390177353342,
+  "wmhsynthseg_dice": 0.085,
+  "wmhsynthseg_lesion_f1": 0.27,
+  "wmhsynthseg_lesion_ml": 1.72,
+  "fails": [],
+  "warns": [
+   "wmhsynthseg: Dice vs expert 0.085 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "pedims_P8_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.87305430646835,
+  "wmhsynthseg_dice": 0.212,
+  "wmhsynthseg_lesion_f1": 0.413,
+  "wmhsynthseg_lesion_ml": 3.45,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P8_T2",
+  "wmhsynthseg_prob_vs_seg_dice": 0.8801020408163265,
+  "wmhsynthseg_dice": 0.174,
+  "wmhsynthseg_lesion_f1": 0.409,
+  "wmhsynthseg_lesion_ml": 3.71,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P8_T3",
+  "wmhsynthseg_prob_vs_seg_dice": 0.9030422411906325,
+  "wmhsynthseg_dice": 0.297,
+  "wmhsynthseg_lesion_f1": 0.513,
+  "wmhsynthseg_lesion_ml": 5.28,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P9_T1",
+  "wmhsynthseg_prob_vs_seg_dice": 0.929757343550447,
+  "wmhsynthseg_dice": 0.253,
+  "wmhsynthseg_lesion_f1": 0.353,
+  "wmhsynthseg_lesion_ml": 6.21,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ }
+]

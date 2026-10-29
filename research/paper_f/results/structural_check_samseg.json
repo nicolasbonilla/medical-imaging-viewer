@@ -1,0 +1,1318 @@
+[
+ {
+  "case": "ms3seg_001",
+  "samseg_prob_vs_seg_dice": 0.9232236528373867,
+  "samseg_dice": 0.615,
+  "samseg_lesion_f1": 0.492,
+  "samseg_lesion_ml": 6.2,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_003",
+  "samseg_prob_vs_seg_dice": 0.9211737629459148,
+  "samseg_dice": 0.623,
+  "samseg_lesion_f1": 0.581,
+  "samseg_lesion_ml": 11.05,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_005",
+  "samseg_prob_vs_seg_dice": 0.8731060606060606,
+  "samseg_dice": 0.515,
+  "samseg_lesion_f1": 0.643,
+  "samseg_lesion_ml": 6.24,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_007",
+  "samseg_prob_vs_seg_dice": 0.9053398058252428,
+  "samseg_dice": 0.569,
+  "samseg_lesion_f1": 0.632,
+  "samseg_lesion_ml": 2.37,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_009",
+  "samseg_prob_vs_seg_dice": 0.9246619446233098,
+  "samseg_dice": 0.437,
+  "samseg_lesion_f1": 0.64,
+  "samseg_lesion_ml": 4.85,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_011",
+  "samseg_prob_vs_seg_dice": 0.8934010152284264,
+  "samseg_dice": 0.39,
+  "samseg_lesion_f1": 0.333,
+  "samseg_lesion_ml": 0.65,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_013",
+  "samseg_prob_vs_seg_dice": 0.9387649864638391,
+  "samseg_dice": 0.631,
+  "samseg_lesion_f1": 0.318,
+  "samseg_lesion_ml": 22.26,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_015",
+  "samseg_prob_vs_seg_dice": 0.9515654268129515,
+  "samseg_dice": 0.736,
+  "samseg_lesion_f1": 0.619,
+  "samseg_lesion_ml": 11.38,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_017",
+  "samseg_prob_vs_seg_dice": 0.9387004495300367,
+  "samseg_dice": 0.62,
+  "samseg_lesion_f1": 0.568,
+  "samseg_lesion_ml": 15.09,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_019",
+  "samseg_prob_vs_seg_dice": 0.9237089201877934,
+  "samseg_dice": 0.657,
+  "samseg_lesion_f1": 0.665,
+  "samseg_lesion_ml": 11.84,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_021",
+  "samseg_prob_vs_seg_dice": 0.9482496194824962,
+  "samseg_dice": 0.685,
+  "samseg_lesion_f1": 0.628,
+  "samseg_lesion_ml": 17.18,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_023",
+  "samseg_prob_vs_seg_dice": 0.917832512315271,
+  "samseg_dice": 0.533,
+  "samseg_lesion_f1": 0.558,
+  "samseg_lesion_ml": 14.18,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_025",
+  "samseg_prob_vs_seg_dice": 0.891156462585034,
+  "samseg_dice": 0.506,
+  "samseg_lesion_f1": 0.706,
+  "samseg_lesion_ml": 7.58,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_027",
+  "samseg_prob_vs_seg_dice": 0.8947368421052632,
+  "samseg_dice": 0.072,
+  "samseg_lesion_f1": 0.125,
+  "samseg_lesion_ml": 0.11,
+  "fails": [],
+  "warns": [
+   "samseg: Dice vs expert 0.072 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_029",
+  "samseg_prob_vs_seg_dice": 0.9244159413650939,
+  "samseg_dice": 0.472,
+  "samseg_lesion_f1": 0.21,
+  "samseg_lesion_ml": 19.33,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_031",
+  "samseg_prob_vs_seg_dice": 0.8776978417266187,
+  "samseg_dice": 0.245,
+  "samseg_lesion_f1": 0.17,
+  "samseg_lesion_ml": 1.79,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_033",
+  "samseg_prob_vs_seg_dice": 0.9462211899231732,
+  "samseg_dice": 0.65,
+  "samseg_lesion_f1": 0.42,
+  "samseg_lesion_ml": 17.14,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_035",
+  "samseg_prob_vs_seg_dice": 0.9345172031076582,
+  "samseg_dice": 0.564,
+  "samseg_lesion_f1": 0.5,
+  "samseg_lesion_ml": 2.79,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_037",
+  "samseg_prob_vs_seg_dice": 0.947135955831608,
+  "samseg_dice": 0.771,
+  "samseg_lesion_f1": 0.792,
+  "samseg_lesion_ml": 19.7,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_039",
+  "samseg_prob_vs_seg_dice": 0.8858131487889274,
+  "samseg_dice": 0.408,
+  "samseg_lesion_f1": 0.7,
+  "samseg_lesion_ml": 0.94,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_041",
+  "samseg_prob_vs_seg_dice": 0.9368505195843325,
+  "samseg_dice": 0.527,
+  "samseg_lesion_f1": 0.66,
+  "samseg_lesion_ml": 8.27,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_043",
+  "samseg_prob_vs_seg_dice": 0.9289617486338798,
+  "samseg_dice": 0.321,
+  "samseg_lesion_f1": 0.3,
+  "samseg_lesion_ml": 0.5,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_045",
+  "samseg_prob_vs_seg_dice": 0.8763308763308764,
+  "samseg_dice": 0.43,
+  "samseg_lesion_f1": 0.5,
+  "samseg_lesion_ml": 3.93,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_047",
+  "samseg_prob_vs_seg_dice": 0.9428841905964026,
+  "samseg_dice": 0.694,
+  "samseg_lesion_f1": 0.706,
+  "samseg_lesion_ml": 8.65,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_049",
+  "samseg_prob_vs_seg_dice": 0.9110026286143448,
+  "samseg_dice": 0.478,
+  "samseg_lesion_f1": 0.555,
+  "samseg_lesion_ml": 8.43,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_051",
+  "samseg_prob_vs_seg_dice": 0.9347496206373292,
+  "samseg_dice": 0.602,
+  "samseg_lesion_f1": 0.515,
+  "samseg_lesion_ml": 12.24,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_053",
+  "samseg_prob_vs_seg_dice": 0.9404803341454925,
+  "samseg_dice": 0.732,
+  "samseg_lesion_f1": 0.95,
+  "samseg_lesion_ml": 7.86,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_055",
+  "samseg_prob_vs_seg_dice": 0.931740614334471,
+  "samseg_dice": 0.676,
+  "samseg_lesion_f1": 0.71,
+  "samseg_lesion_ml": 3.23,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_057",
+  "samseg_prob_vs_seg_dice": 0.9159663865546218,
+  "samseg_dice": 0.463,
+  "samseg_lesion_f1": 0.296,
+  "samseg_lesion_ml": 2.0,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_059",
+  "samseg_prob_vs_seg_dice": 0.9053030303030303,
+  "samseg_dice": 0.567,
+  "samseg_lesion_f1": 0.687,
+  "samseg_lesion_ml": 7.93,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_061",
+  "samseg_prob_vs_seg_dice": 0.9462647444298821,
+  "samseg_dice": 0.622,
+  "samseg_lesion_f1": 0.529,
+  "samseg_lesion_ml": 2.14,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_063",
+  "samseg_prob_vs_seg_dice": 0.9252644355817583,
+  "samseg_dice": 0.439,
+  "samseg_lesion_f1": 0.361,
+  "samseg_lesion_ml": 18.51,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_065",
+  "samseg_prob_vs_seg_dice": 0.9239543726235742,
+  "samseg_dice": 0.432,
+  "samseg_lesion_f1": 0.476,
+  "samseg_lesion_ml": 5.0,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_067",
+  "samseg_prob_vs_seg_dice": 0.9186496956281129,
+  "samseg_dice": 0.536,
+  "samseg_lesion_f1": 0.625,
+  "samseg_lesion_ml": 5.84,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_069",
+  "samseg_prob_vs_seg_dice": 0.8893115252947889,
+  "samseg_dice": 0.298,
+  "samseg_lesion_f1": 0.341,
+  "samseg_lesion_ml": 8.48,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_071",
+  "samseg_prob_vs_seg_dice": 0.9039881831610044,
+  "samseg_dice": 0.523,
+  "samseg_lesion_f1": 0.663,
+  "samseg_lesion_ml": 4.31,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_073",
+  "samseg_prob_vs_seg_dice": 0.9251396648044693,
+  "samseg_dice": 0.557,
+  "samseg_lesion_f1": 0.643,
+  "samseg_lesion_ml": 2.45,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_075",
+  "samseg_prob_vs_seg_dice": 0.9305657305657306,
+  "samseg_dice": 0.266,
+  "samseg_lesion_f1": 0.495,
+  "samseg_lesion_ml": 40.3,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_077",
+  "samseg_prob_vs_seg_dice": 0.9325014180374361,
+  "samseg_dice": 0.532,
+  "samseg_lesion_f1": 0.587,
+  "samseg_lesion_ml": 16.41,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_079",
+  "samseg_prob_vs_seg_dice": 0.8849665246500305,
+  "samseg_dice": 0.529,
+  "samseg_lesion_f1": 0.671,
+  "samseg_lesion_ml": 5.32,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_081",
+  "samseg_prob_vs_seg_dice": 0.9038701622971286,
+  "samseg_dice": 0.547,
+  "samseg_lesion_f1": 0.689,
+  "samseg_lesion_ml": 4.54,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_083",
+  "samseg_prob_vs_seg_dice": 0.8941605839416058,
+  "samseg_dice": 0.426,
+  "samseg_lesion_f1": 0.377,
+  "samseg_lesion_ml": 1.76,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_085",
+  "samseg_prob_vs_seg_dice": 0.9382716049382716,
+  "samseg_dice": 0.592,
+  "samseg_lesion_f1": 0.647,
+  "samseg_lesion_ml": 6.86,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_087",
+  "samseg_prob_vs_seg_dice": 0.9283717679944095,
+  "samseg_dice": 0.558,
+  "samseg_lesion_f1": 0.487,
+  "samseg_lesion_ml": 17.82,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_089",
+  "samseg_prob_vs_seg_dice": 0.9423245614035087,
+  "samseg_dice": 0.67,
+  "samseg_lesion_f1": 0.417,
+  "samseg_lesion_ml": 28.03,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_091",
+  "samseg_prob_vs_seg_dice": 0.9233278955954323,
+  "samseg_dice": 0.555,
+  "samseg_lesion_f1": 0.322,
+  "samseg_lesion_ml": 17.26,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_093",
+  "samseg_prob_vs_seg_dice": 0.9296740994854202,
+  "samseg_dice": 0.601,
+  "samseg_lesion_f1": 0.466,
+  "samseg_lesion_ml": 17.73,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_095",
+  "samseg_prob_vs_seg_dice": 0.965034965034965,
+  "samseg_dice": 0.809,
+  "samseg_lesion_f1": 0.747,
+  "samseg_lesion_ml": 9.46,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_097",
+  "samseg_prob_vs_seg_dice": 0.9333333333333333,
+  "samseg_dice": 0.522,
+  "samseg_lesion_f1": 0.398,
+  "samseg_lesion_ml": 3.06,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "ms3seg_099",
+  "samseg_prob_vs_seg_dice": 0.9235540959678891,
+  "samseg_dice": 0.582,
+  "samseg_lesion_f1": 0.592,
+  "samseg_lesion_ml": 16.43,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_01",
+  "samseg_prob_vs_seg_dice": 0.9274193548387096,
+  "samseg_dice": 0.172,
+  "samseg_lesion_f1": 0.151,
+  "samseg_lesion_ml": 0.54,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_02",
+  "samseg_prob_vs_seg_dice": 0.9501275806077476,
+  "samseg_dice": 0.618,
+  "samseg_lesion_f1": 0.643,
+  "samseg_lesion_ml": 14.16,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_03",
+  "samseg_prob_vs_seg_dice": 0.925476603119584,
+  "samseg_dice": 0.292,
+  "samseg_lesion_f1": 0.388,
+  "samseg_lesion_ml": 3.8,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_04",
+  "samseg_prob_vs_seg_dice": 0.9518864097363083,
+  "samseg_dice": 0.714,
+  "samseg_lesion_f1": 0.733,
+  "samseg_lesion_ml": 31.7,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_05",
+  "samseg_prob_vs_seg_dice": 0.8173913043478261,
+  "samseg_dice": 0.058,
+  "samseg_lesion_f1": 0.068,
+  "samseg_lesion_ml": 0.32,
+  "fails": [],
+  "warns": [
+   "samseg: Dice vs expert 0.058 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "muslim_06",
+  "samseg_prob_vs_seg_dice": 0.9487179487179487,
+  "samseg_dice": 0.604,
+  "samseg_lesion_f1": 0.6,
+  "samseg_lesion_ml": 8.76,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_07",
+  "samseg_prob_vs_seg_dice": 0.9696779458848641,
+  "samseg_dice": 0.742,
+  "samseg_lesion_f1": 0.504,
+  "samseg_lesion_ml": 30.42,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_08",
+  "samseg_prob_vs_seg_dice": 0.8900275916436736,
+  "samseg_dice": 0.505,
+  "samseg_lesion_f1": 0.502,
+  "samseg_lesion_ml": 6.96,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_09",
+  "samseg_prob_vs_seg_dice": 0.9545115585384042,
+  "samseg_dice": 0.366,
+  "samseg_lesion_f1": 0.278,
+  "samseg_lesion_ml": 0.63,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_10",
+  "samseg_prob_vs_seg_dice": null,
+  "samseg_dice": 0.0,
+  "samseg_lesion_f1": 0.0,
+  "samseg_lesion_ml": 0.0,
+  "fails": [],
+  "warns": [
+   "samseg: Dice vs expert 0.000 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "muslim_11",
+  "samseg_prob_vs_seg_dice": 0.9051568698160837,
+  "samseg_dice": 0.477,
+  "samseg_lesion_f1": 0.6,
+  "samseg_lesion_ml": 7.44,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_12",
+  "samseg_prob_vs_seg_dice": 0.7765293383270911,
+  "samseg_dice": 0.214,
+  "samseg_lesion_f1": 0.387,
+  "samseg_lesion_ml": 1.83,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_13",
+  "samseg_prob_vs_seg_dice": 0.9337066069428891,
+  "samseg_dice": 0.459,
+  "samseg_lesion_f1": 0.294,
+  "samseg_lesion_ml": 20.16,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_15",
+  "samseg_prob_vs_seg_dice": 0.9149090909090909,
+  "samseg_dice": 0.374,
+  "samseg_lesion_f1": 0.308,
+  "samseg_lesion_ml": 2.88,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_16",
+  "samseg_prob_vs_seg_dice": 0.936969696969697,
+  "samseg_dice": 0.446,
+  "samseg_lesion_f1": 0.242,
+  "samseg_lesion_ml": 6.08,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_17",
+  "samseg_prob_vs_seg_dice": 0.9331751680506128,
+  "samseg_dice": 0.528,
+  "samseg_lesion_f1": 0.378,
+  "samseg_lesion_ml": 17.9,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_18",
+  "samseg_prob_vs_seg_dice": 0.8982456140350877,
+  "samseg_dice": 0.359,
+  "samseg_lesion_f1": 0.697,
+  "samseg_lesion_ml": 3.59,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_19",
+  "samseg_prob_vs_seg_dice": 0.9083612040133779,
+  "samseg_dice": 0.555,
+  "samseg_lesion_f1": 0.613,
+  "samseg_lesion_ml": 4.33,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_20",
+  "samseg_prob_vs_seg_dice": 0.8867313915857605,
+  "samseg_dice": 0.299,
+  "samseg_lesion_f1": 0.354,
+  "samseg_lesion_ml": 2.73,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_21",
+  "samseg_prob_vs_seg_dice": 0.9,
+  "samseg_dice": 0.218,
+  "samseg_lesion_f1": 0.667,
+  "samseg_lesion_ml": 0.19,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_22",
+  "samseg_prob_vs_seg_dice": 0.9238598551575651,
+  "samseg_dice": 0.575,
+  "samseg_lesion_f1": 0.471,
+  "samseg_lesion_ml": 11.97,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_24",
+  "samseg_prob_vs_seg_dice": 0.9202453987730062,
+  "samseg_dice": 0.108,
+  "samseg_lesion_f1": 0.174,
+  "samseg_lesion_ml": 0.39,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_25",
+  "samseg_prob_vs_seg_dice": 0.8846960167714885,
+  "samseg_dice": 0.599,
+  "samseg_lesion_f1": 0.766,
+  "samseg_lesion_ml": 1.02,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_26",
+  "samseg_prob_vs_seg_dice": 0.9015691868758916,
+  "samseg_dice": 0.267,
+  "samseg_lesion_f1": 0.267,
+  "samseg_lesion_ml": 2.76,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_27",
+  "samseg_prob_vs_seg_dice": 0.8926291352292514,
+  "samseg_dice": 0.344,
+  "samseg_lesion_f1": 0.562,
+  "samseg_lesion_ml": 4.38,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_28",
+  "samseg_prob_vs_seg_dice": 0.9487947882736156,
+  "samseg_dice": 0.673,
+  "samseg_lesion_f1": 0.538,
+  "samseg_lesion_ml": 11.81,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_29",
+  "samseg_prob_vs_seg_dice": 0.9062253743104807,
+  "samseg_dice": 0.525,
+  "samseg_lesion_f1": 0.493,
+  "samseg_lesion_ml": 6.04,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_30",
+  "samseg_prob_vs_seg_dice": 0.925141471301536,
+  "samseg_dice": 0.547,
+  "samseg_lesion_f1": 0.205,
+  "samseg_lesion_ml": 30.57,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_31",
+  "samseg_prob_vs_seg_dice": null,
+  "samseg_dice": 0.0,
+  "samseg_lesion_f1": 0.0,
+  "samseg_lesion_ml": 0.0,
+  "fails": [],
+  "warns": [
+   "samseg: Dice vs expert 0.000 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "muslim_33",
+  "samseg_prob_vs_seg_dice": 0.8892261001517451,
+  "samseg_dice": 0.385,
+  "samseg_lesion_f1": 0.522,
+  "samseg_lesion_ml": 2.18,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_34",
+  "samseg_prob_vs_seg_dice": 0.934228187919463,
+  "samseg_dice": 0.089,
+  "samseg_lesion_f1": 0.216,
+  "samseg_lesion_ml": 0.49,
+  "fails": [],
+  "warns": [
+   "samseg: Dice vs expert 0.089 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "muslim_35",
+  "samseg_prob_vs_seg_dice": 0.9428186604628382,
+  "samseg_dice": 0.453,
+  "samseg_lesion_f1": 0.548,
+  "samseg_lesion_ml": 11.25,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_36",
+  "samseg_prob_vs_seg_dice": 0.911660777385159,
+  "samseg_dice": 0.624,
+  "samseg_lesion_f1": 0.643,
+  "samseg_lesion_ml": 1.93,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_37",
+  "samseg_prob_vs_seg_dice": 0.8865800865800866,
+  "samseg_dice": 0.199,
+  "samseg_lesion_f1": 0.247,
+  "samseg_lesion_ml": 1.67,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_38",
+  "samseg_prob_vs_seg_dice": null,
+  "samseg_dice": 0.0,
+  "samseg_lesion_f1": 0.0,
+  "samseg_lesion_ml": 0.0,
+  "fails": [],
+  "warns": [
+   "samseg: Dice vs expert 0.000 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "muslim_39",
+  "samseg_prob_vs_seg_dice": 0.9259962049335864,
+  "samseg_dice": 0.071,
+  "samseg_lesion_f1": 0.129,
+  "samseg_lesion_ml": 0.47,
+  "fails": [],
+  "warns": [
+   "samseg: Dice vs expert 0.071 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "muslim_40",
+  "samseg_prob_vs_seg_dice": 0.9195589821856169,
+  "samseg_dice": 0.408,
+  "samseg_lesion_f1": 0.258,
+  "samseg_lesion_ml": 19.29,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_42",
+  "samseg_prob_vs_seg_dice": 0.9063472308649658,
+  "samseg_dice": 0.492,
+  "samseg_lesion_f1": 0.613,
+  "samseg_lesion_ml": 5.49,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_43",
+  "samseg_prob_vs_seg_dice": 0.8987730061349694,
+  "samseg_dice": 0.414,
+  "samseg_lesion_f1": 0.426,
+  "samseg_lesion_ml": 1.74,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_44",
+  "samseg_prob_vs_seg_dice": 0.9419227824565242,
+  "samseg_dice": 0.544,
+  "samseg_lesion_f1": 0.421,
+  "samseg_lesion_ml": 18.93,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_45",
+  "samseg_prob_vs_seg_dice": 0.9186327388239965,
+  "samseg_dice": 0.583,
+  "samseg_lesion_f1": 0.605,
+  "samseg_lesion_ml": 18.3,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_46",
+  "samseg_prob_vs_seg_dice": 0.9442590120160214,
+  "samseg_dice": 0.579,
+  "samseg_lesion_f1": 0.429,
+  "samseg_lesion_ml": 13.8,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_47",
+  "samseg_prob_vs_seg_dice": 0.9437971213159698,
+  "samseg_dice": 0.448,
+  "samseg_lesion_f1": 0.731,
+  "samseg_lesion_ml": 6.74,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_49",
+  "samseg_prob_vs_seg_dice": 0.913151364764268,
+  "samseg_dice": 0.21,
+  "samseg_lesion_f1": 0.522,
+  "samseg_lesion_ml": 0.99,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_50",
+  "samseg_prob_vs_seg_dice": 0.782608695652174,
+  "samseg_dice": 0.023,
+  "samseg_lesion_f1": 0.042,
+  "samseg_lesion_ml": 0.14,
+  "fails": [],
+  "warns": [
+   "samseg: Dice vs expert 0.023 < 0.1 (orientation, label or grid?)"
+  ],
+  "pass": true
+ },
+ {
+  "case": "muslim_51",
+  "samseg_prob_vs_seg_dice": 0.890625,
+  "samseg_dice": 0.462,
+  "samseg_lesion_f1": 0.556,
+  "samseg_lesion_ml": 6.18,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_52",
+  "samseg_prob_vs_seg_dice": 0.905981155264236,
+  "samseg_dice": 0.347,
+  "samseg_lesion_f1": 0.515,
+  "samseg_lesion_ml": 6.36,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_55",
+  "samseg_prob_vs_seg_dice": 0.9098474341192788,
+  "samseg_dice": 0.381,
+  "samseg_lesion_f1": 0.552,
+  "samseg_lesion_ml": 8.91,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_58",
+  "samseg_prob_vs_seg_dice": 0.9134938929072941,
+  "samseg_dice": 0.516,
+  "samseg_lesion_f1": 0.294,
+  "samseg_lesion_ml": 22.87,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_59",
+  "samseg_prob_vs_seg_dice": 0.8725868725868726,
+  "samseg_dice": 0.156,
+  "samseg_lesion_f1": 0.3,
+  "samseg_lesion_ml": 0.75,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "muslim_60",
+  "samseg_prob_vs_seg_dice": 0.8987854251012146,
+  "samseg_dice": 0.182,
+  "samseg_lesion_f1": 0.571,
+  "samseg_lesion_ml": 0.6,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P1_T1",
+  "samseg_prob_vs_seg_dice": 0.9152542372881356,
+  "samseg_dice": 0.711,
+  "samseg_lesion_f1": 0.833,
+  "samseg_lesion_ml": 1.47,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P1_T2",
+  "samseg_prob_vs_seg_dice": 0.9117094552285535,
+  "samseg_dice": 0.677,
+  "samseg_lesion_f1": 0.759,
+  "samseg_lesion_ml": 1.91,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P1_T3",
+  "samseg_prob_vs_seg_dice": 0.8981077147016011,
+  "samseg_dice": 0.653,
+  "samseg_lesion_f1": 0.837,
+  "samseg_lesion_ml": 1.66,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P2_T1",
+  "samseg_prob_vs_seg_dice": 0.9214973262032086,
+  "samseg_dice": 0.369,
+  "samseg_lesion_f1": 0.25,
+  "samseg_lesion_ml": 11.06,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P2_T2",
+  "samseg_prob_vs_seg_dice": 0.9120977889627898,
+  "samseg_dice": 0.42,
+  "samseg_lesion_f1": 0.233,
+  "samseg_lesion_ml": 13.28,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P2_T3",
+  "samseg_prob_vs_seg_dice": 0.9212099894477664,
+  "samseg_dice": 0.434,
+  "samseg_lesion_f1": 0.148,
+  "samseg_lesion_ml": 13.46,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P2_T4",
+  "samseg_prob_vs_seg_dice": 0.9220134704005671,
+  "samseg_dice": 0.46,
+  "samseg_lesion_f1": 0.198,
+  "samseg_lesion_ml": 13.34,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P2_T5",
+  "samseg_prob_vs_seg_dice": 0.9246171967020024,
+  "samseg_dice": 0.481,
+  "samseg_lesion_f1": 0.337,
+  "samseg_lesion_ml": 14.02,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P2_T6",
+  "samseg_prob_vs_seg_dice": 0.9256885501472372,
+  "samseg_dice": 0.471,
+  "samseg_lesion_f1": 0.262,
+  "samseg_lesion_ml": 13.61,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P3_T1",
+  "samseg_prob_vs_seg_dice": 0.9060034305317324,
+  "samseg_dice": 0.608,
+  "samseg_lesion_f1": 0.85,
+  "samseg_lesion_ml": 7.0,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P3_T2",
+  "samseg_prob_vs_seg_dice": 0.9078303425774877,
+  "samseg_dice": 0.629,
+  "samseg_lesion_f1": 0.84,
+  "samseg_lesion_ml": 5.87,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P3_T3",
+  "samseg_prob_vs_seg_dice": 0.9102277802590442,
+  "samseg_dice": 0.593,
+  "samseg_lesion_f1": 0.743,
+  "samseg_lesion_ml": 10.71,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P3_T4",
+  "samseg_prob_vs_seg_dice": 0.919977103606182,
+  "samseg_dice": 0.59,
+  "samseg_lesion_f1": 0.743,
+  "samseg_lesion_ml": 10.35,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P3_T5",
+  "samseg_prob_vs_seg_dice": 0.9258817921830315,
+  "samseg_dice": 0.572,
+  "samseg_lesion_f1": 0.764,
+  "samseg_lesion_ml": 9.89,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P3_T6",
+  "samseg_prob_vs_seg_dice": 0.9374630396215258,
+  "samseg_dice": 0.641,
+  "samseg_lesion_f1": 0.682,
+  "samseg_lesion_ml": 15.77,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P4_T1",
+  "samseg_prob_vs_seg_dice": 0.9180035650623886,
+  "samseg_dice": 0.633,
+  "samseg_lesion_f1": 0.56,
+  "samseg_lesion_ml": 3.99,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P4_T2",
+  "samseg_prob_vs_seg_dice": 0.9110819097678493,
+  "samseg_dice": 0.612,
+  "samseg_lesion_f1": 0.488,
+  "samseg_lesion_ml": 2.73,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P4_T3",
+  "samseg_prob_vs_seg_dice": 0.9044642857142857,
+  "samseg_dice": 0.543,
+  "samseg_lesion_f1": 0.5,
+  "samseg_lesion_ml": 2.69,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P4_T4",
+  "samseg_prob_vs_seg_dice": 0.9090909090909091,
+  "samseg_dice": 0.551,
+  "samseg_lesion_f1": 0.68,
+  "samseg_lesion_ml": 3.28,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P5_T1",
+  "samseg_prob_vs_seg_dice": 0.9259259259259259,
+  "samseg_dice": 0.598,
+  "samseg_lesion_f1": 0.154,
+  "samseg_lesion_ml": 1.08,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P6_T1",
+  "samseg_prob_vs_seg_dice": 0.9345088161209067,
+  "samseg_dice": 0.525,
+  "samseg_lesion_f1": 0.56,
+  "samseg_lesion_ml": 0.93,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P7_T1",
+  "samseg_prob_vs_seg_dice": 0.9076305220883534,
+  "samseg_dice": 0.228,
+  "samseg_lesion_f1": 0.25,
+  "samseg_lesion_ml": 0.6,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P7_T2",
+  "samseg_prob_vs_seg_dice": 0.7813411078717201,
+  "samseg_dice": 0.138,
+  "samseg_lesion_f1": 0.125,
+  "samseg_lesion_ml": 0.46,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P7_T3",
+  "samseg_prob_vs_seg_dice": 0.8586525759577279,
+  "samseg_dice": 0.293,
+  "samseg_lesion_f1": 0.353,
+  "samseg_lesion_ml": 0.95,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P8_T1",
+  "samseg_prob_vs_seg_dice": 0.908851884312007,
+  "samseg_dice": 0.64,
+  "samseg_lesion_f1": 0.745,
+  "samseg_lesion_ml": 5.46,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P8_T2",
+  "samseg_prob_vs_seg_dice": 0.9034627492130115,
+  "samseg_dice": 0.58,
+  "samseg_lesion_f1": 0.6,
+  "samseg_lesion_ml": 4.58,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P8_T3",
+  "samseg_prob_vs_seg_dice": 0.9006685768863419,
+  "samseg_dice": 0.561,
+  "samseg_lesion_f1": 0.661,
+  "samseg_lesion_ml": 5.05,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "pedims_P9_T1",
+  "samseg_prob_vs_seg_dice": 0.9283402001177163,
+  "samseg_dice": 0.514,
+  "samseg_lesion_f1": 0.698,
+  "samseg_lesion_ml": 15.98,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ },
+ {
+  "case": "mslesseg_P10_T1",
+  "samseg_prob_vs_seg_dice": 0.8658536585365854,
+  "samseg_dice": 0.241,
+  "samseg_lesion_f1": 0.263,
+  "samseg_lesion_ml": 0.65,
+  "fails": [],
+  "warns": [],
+  "pass": true
+ }
+]
