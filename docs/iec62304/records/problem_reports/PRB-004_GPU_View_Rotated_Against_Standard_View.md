@@ -222,5 +222,5 @@ A first execution of the 4626d17 record failed the page test's first case once (
 cold start); the recorded re-run passed. The page test now waits up to 15 s for the first page load (per-test limit 30 s),
 so a slow start cannot pass for a detected defect in the negative-control run.
 
-**Negative controls** (throwaway worktree of `8fd9766`): re-review mutations W1–W16 — 16 of 16 detected; the whole
-set 111 of 111 (`records/risk_verification/PRB-004_negative_controls_2026-10-28.json`).
+**Negative controls** (throwaway worktree of `8fd9766`): re-review and final-check mutations W1–W19 — 19 of 19 detected (W1–W16 first on `8fd9766`, 111 of 111); the whole
+set 114 of 114, every one through failing tests, in a throwaway worktree of `249b642` (`records/risk_verification/PRB-004_negative_controls_2026-10-28.json`).

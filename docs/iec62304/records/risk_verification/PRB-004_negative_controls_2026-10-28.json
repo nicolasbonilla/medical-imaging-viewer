@@ -1,6 +1,6 @@
 {
-  "executed": "2026-10-29T01:29:38",
-  "tree": "8fd9766c27a2ed540f99560a4919898a97e878f7",
+  "executed": "2026-10-29T02:03:13",
+  "tree": "249b642fbc313856dc2aa33d5896c32e0b1f1819",
   "method": "in a throwaway detached worktree of the commit (review m8); one mutation at a time; each anchor asserted to occur exactly once (LF text, written back with the file's own line endings); only the bound tests of the mutated side run (backend pytest with no cloud credential per PRB-002; frontend vitest, JSON reporter, --pool=threads); original bytes restored after each mutation, at exit and on a signal, and checked at the end",
   "hash_basis": "sha256 of the UTF-8 text with LF line endings",
   "source_sha256": {
@@ -9,20 +9,21 @@
     "backend/app/services/segmentation_service.py": "0c144e1a416f541af958b971927328ceb68b915375220fadb11d2521109f6ef8",
     "frontend/src/ViewerApp.tsx": "4118e8056013b51b25608154f3715bd962e70ea779bad7cb724b093fa9ecd765",
     "frontend/src/components/ControlPanel.tsx": "09ea2161fb7103aae227ad7a6dd5ca1f22d15cb509e39d7b9108c897b1c85b52",
-    "frontend/src/components/ImageViewer2D.tsx": "bf72f3389c4c3470aad50be8901e17af2a891f5e4de4b28bcd455ed21fb89ac0",
+    "frontend/src/components/ImageViewer2D.tsx": "499ddac7141d61b02c6bab8aeaf5b3dc27847b2d772bd706df833448c5c047af",
     "frontend/src/components/ImageViewer3D.tsx": "c7ee494a265a29f86eacde99dd97b277ca868dd82355759e41fb480899d014c3",
     "frontend/src/components/LesionDashboard.tsx": "089712581e57473bda49b5bba5274f56015a4addbbce2846b7de9420849dbd6f",
     "frontend/src/components/MAGNIMSZoneMapPanel.tsx": "2c23e461f61d591e90ca85619a5f28731c81c05442562510099268a91fb0f8dd",
     "frontend/src/components/MultiPanelViewer.tsx": "519240fbbc08431dc63d10c7719d8fa1d9f458b40e9596ed0833a61a20e65266",
     "frontend/src/components/NiivueViewer2D.tsx": "addd7a23ca85643d995ac073982e4e5c38d898aba652e04fa065e82282a43486",
     "frontend/src/components/QuickScreenBadge.tsx": "37b6f3a15ab3afca7b22242c32f059ac685a3fd61b1f865787189acc3c12acf4",
-    "frontend/src/components/SegmentationCanvasLocal.tsx": "2fab64d7f3b551eaf492880cb88790ba7f05f4c67a106d68453173ae7e29777b",
+    "frontend/src/components/SegmentationCanvasLocal.tsx": "0eeada55b656c122ed32998dac3e03958c2879b292ad06c8d02e5b1ff21f5e8e",
     "frontend/src/config/features.ts": "011977508ca3e01dff592ecda1cec9bee63efb8b9102cdec3a25ffd4857938c0",
     "frontend/src/hooks/useEdgeAI.ts": "94c56ddf65c7a87a80fdbf24633d31dd15188c1d6ffe63a1f790ac7f15b2713a",
     "frontend/src/store/useSegmentationStore.ts": "c7dcc6036521f0d8484b5380315849f98caa42df7cf0a8e9cd541e2a02953eff",
     "frontend/src/types/segmentation.ts": "c7bbc129d1c221bb26200847f111046e65760611a231927d3427cac3cd8104e1",
     "frontend/src/utils/instanceClassification.ts": "c771a534d30cc9317137773e9952d47c25832652d9286beface56b73e7fc7b0d",
-    "frontend/src/utils/labelUnderCursor.ts": "dd2b3612b7b96a0cf4d9abea47ddadad44f015aa368bdb350822afb7b7b80f68",
+    "frontend/src/utils/labelUnderCursor.ts": "037ca36ca108d7336a3160adc1e3d7e9f3abd787f2cfb558a3f10bb09d43aa7a",
+    "frontend/src/utils/maskDisplayLayout.ts": "21d2b86934ba925b4f4e9ee8ccc98c49e0f0386105950822665c4b202642f6cc",
     "frontend/src/utils/maskLabelColormap.ts": "b847cd43873ce19f0021c7e29e81de016bbc767c8ae86cb63475098932ebb322",
     "frontend/src/utils/niivueVoxelGrid.ts": "82b6be6c679dd9fbf93dd26b90ccc695bb6d4cd2c7c1c83de91eca05451af870",
     "frontend/src/utils/niivueWindowLevel.ts": "f0aa53844238f33cd3ad24be6c6ecb131179360c72f65bba1bd5e8cd3e2ebe09",
@@ -46,7 +47,7 @@
     "frontend/src/components/SegmentationCanvasLocal.prb010.test.tsx": "850f9cd7067a434fa07b036803f0e4403ad62ca4099f7a3e16a1e8f0f9fc358b",
     "frontend/src/config/features.quickScreen.test.ts": "a0bfa662e7dfc0145329af72a31192822052db70cfbba0bbc39b12651e0f6c57",
     "frontend/src/utils/instanceClassification.prb007.review.test.ts": "4fec246073ddbbc6e4953fe5569667a391142a8d9110cb1156c519466dedadb5",
-    "frontend/src/utils/labelUnderCursor.test.ts": "595e6cc10876df1d87a946814ae4e4ae275e886c8d94eed70041d0f13653bab0",
+    "frontend/src/utils/labelUnderCursor.test.ts": "f6c9df4bca6d9a4c7ce82b096b3d80db868a999d0747c06d2899e412a67408d4",
     "frontend/src/utils/niivueWindowLevel.test.ts": "f5e47745aba5755a06a1f5b9c45a2661959f811462ef74f0cd40e22f18cfc01f",
     "frontend/src/utils/regionColors.test.ts": "17e79e4b1679b1144532d6ae55f0b2ab2d8ec434769a48ba47185289f1546178",
     "frontend/src/utils/sequenceDetection.prb007.test.ts": "f1611e1cef8dc653cf2b3120a1a1a9c40c72ce0445dbe31d19b022889aa29a5d",
@@ -64,7 +65,7 @@
     "frontend": {
       "suite": "frontend",
       "failed": 0,
-      "passed": 111,
+      "passed": 114,
       "errors": 0,
       "failing_tests": [],
       "error_files": []
@@ -88,7 +89,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-29T01:30:20",
+      "executed": "2026-10-29T02:03:55",
       "detected": true
     },
     "O2_mask_keeps_its_scanner_layout": {
@@ -107,7 +108,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-29T01:30:26",
+      "executed": "2026-10-29T02:04:01",
       "detected": true
     },
     "O3_layout_transposed": {
@@ -127,7 +128,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-29T01:30:32",
+      "executed": "2026-10-29T02:04:07",
       "detected": true
     },
     "O4_rows_drawn_upwards": {
@@ -147,7 +148,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-29T01:30:38",
+      "executed": "2026-10-29T02:04:13",
       "detected": true
     },
     "O5_radiological_flip": {
@@ -166,7 +167,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-29T01:30:44",
+      "executed": "2026-10-29T02:04:19",
       "detected": true
     },
     "O6_grid_dimensions_not_checked": {
@@ -185,7 +186,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-29T01:30:56",
+      "executed": "2026-10-29T02:04:30",
       "detected": true
     },
     "O7_position_not_checked": {
@@ -204,7 +205,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-29T01:31:07",
+      "executed": "2026-10-29T02:04:42",
       "detected": true
     },
     "O8_voxel_order_marker_not_checked": {
@@ -223,7 +224,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-29T01:31:18",
+      "executed": "2026-10-29T02:04:53",
       "detected": true
     },
     "O9_position_tolerance_one_mm": {
@@ -242,7 +243,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-29T01:31:30",
+      "executed": "2026-10-29T02:05:04",
       "detected": true
     },
     "O10_refusal_not_stated": {
@@ -263,7 +264,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-29T01:31:39",
+      "executed": "2026-10-29T02:05:13",
       "detected": true
     },
     "O11_slice_between_two_voxel_slices": {
@@ -286,7 +287,7 @@
         "src/components/NiivueViewer2D.prb004.test.tsx",
         "src/utils/niivueWindowLevel.test.ts"
       ],
-      "executed": "2026-10-29T01:31:46",
+      "executed": "2026-10-29T02:05:20",
       "detected": true
     },
     "O12_grid_read_after_the_display_transform": {
@@ -309,7 +310,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-29T01:32:17",
+      "executed": "2026-10-29T02:05:51",
       "detected": true
     },
     "O13_mask_load_failure_silent": {
@@ -328,7 +329,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-29T01:32:24",
+      "executed": "2026-10-29T02:05:58",
       "detected": true
     },
     "N1_gpu_view_back_to_a_blob_url": {
@@ -348,7 +349,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-29T01:32:40",
+      "executed": "2026-10-29T02:06:14",
       "detected": true
     },
     "N2_3d_volume_without_name": {
@@ -368,7 +369,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb005.test.tsx"
       ],
-      "executed": "2026-10-29T01:33:03",
+      "executed": "2026-10-29T02:06:37",
       "detected": true
     },
     "N3_3d_multiplanar_without_name": {
@@ -388,7 +389,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb005.test.tsx"
       ],
-      "executed": "2026-10-29T01:33:25",
+      "executed": "2026-10-29T02:06:59",
       "detected": true
     },
     "N4_name_without_extension": {
@@ -425,7 +426,7 @@
         "src/components/NiivueViewer2D.prb004.test.tsx",
         "src/components/ImageViewer3D.prb005.test.tsx"
       ],
-      "executed": "2026-10-29T01:34:32",
+      "executed": "2026-10-29T02:08:05",
       "detected": true
     },
     "R1_gpu_mask_header_range": {
@@ -444,7 +445,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.test.tsx"
       ],
-      "executed": "2026-10-29T01:34:38",
+      "executed": "2026-10-29T02:08:11",
       "detected": true
     },
     "R2_3d_mask_header_range": {
@@ -464,7 +465,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb005.test.tsx"
       ],
-      "executed": "2026-10-29T01:34:44",
+      "executed": "2026-10-29T02:08:18",
       "detected": true
     },
     "R3_3d_volume_visit1_header_range": {
@@ -483,7 +484,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb005.test.tsx"
       ],
-      "executed": "2026-10-29T01:34:51",
+      "executed": "2026-10-29T02:08:24",
       "detected": true
     },
     "R4_3d_multiplanar_visit2_header_range": {
@@ -502,7 +503,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb005.test.tsx"
       ],
-      "executed": "2026-10-29T01:34:57",
+      "executed": "2026-10-29T02:08:30",
       "detected": true
     },
     "R5_3d_multiplanar_visit1_header_range": {
@@ -521,7 +522,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb005.test.tsx"
       ],
-      "executed": "2026-10-29T01:35:04",
+      "executed": "2026-10-29T02:08:37",
       "detected": true
     },
     "R6_fixed_range_hides_label_one": {
@@ -543,7 +544,7 @@
         "src/components/NiivueViewer2D.prb004.test.tsx",
         "src/components/ImageViewer3D.prb005.test.tsx"
       ],
-      "executed": "2026-10-29T01:35:11",
+      "executed": "2026-10-29T02:08:44",
       "detected": true
     },
     "R7_stored_header_keeps_the_mri_window": {
@@ -567,7 +568,7 @@
         "tests/unit/test_prb010_region_label_colours.py",
         "tests/unit/test_prb004_review_ref_alignment.py"
       ],
-      "executed": "2026-10-29T01:35:22",
+      "executed": "2026-10-29T02:08:55",
       "detected": true
     },
     "R8_stored_range_always_zero_to_one": {
@@ -589,7 +590,7 @@
         "tests/unit/test_prb010_region_label_colours.py",
         "tests/unit/test_prb004_review_ref_alignment.py"
       ],
-      "executed": "2026-10-29T01:35:34",
+      "executed": "2026-10-29T02:09:06",
       "detected": true
     },
     "R9_fallback_header_without_range": {
@@ -609,7 +610,7 @@
         "tests/unit/test_prb010_region_label_colours.py",
         "tests/unit/test_prb004_review_ref_alignment.py"
       ],
-      "executed": "2026-10-29T01:35:45",
+      "executed": "2026-10-29T02:09:17",
       "detected": true
     },
     "G1_no_fallback_to_preprocessed": {
@@ -631,7 +632,7 @@
       "tests": [
         "src/ViewerApp.prb007.test.tsx"
       ],
-      "executed": "2026-10-29T01:36:20",
+      "executed": "2026-10-29T02:09:51",
       "detected": true
     },
     "G2_spare_panels_not_filled": {
@@ -653,7 +654,7 @@
         "src/utils/sequenceDetection.prb007.test.ts",
         "src/ViewerApp.prb007.test.tsx"
       ],
-      "executed": "2026-10-29T01:36:40",
+      "executed": "2026-10-29T02:10:11",
       "detected": true
     },
     "G3_same_image_twice": {
@@ -673,7 +674,7 @@
       "tests": [
         "src/utils/sequenceDetection.prb007.test.ts"
       ],
-      "executed": "2026-10-29T01:36:45",
+      "executed": "2026-10-29T02:10:16",
       "detected": true
     },
     "G4_switch_names_the_requested_source": {
@@ -692,7 +693,7 @@
       "tests": [
         "src/ViewerApp.prb007.test.tsx"
       ],
-      "executed": "2026-10-29T01:37:00",
+      "executed": "2026-10-29T02:10:30",
       "detected": true
     },
     "S1_opens_on_slice_zero": {
@@ -716,7 +717,7 @@
         "src/utils/sliceOnOpen.test.ts",
         "src/ViewerApp.prb007.test.tsx"
       ],
-      "executed": "2026-10-29T01:37:20",
+      "executed": "2026-10-29T02:10:46",
       "detected": true
     },
     "S2_viewer_bypasses_the_rule": {
@@ -736,7 +737,7 @@
       "tests": [
         "src/ViewerApp.prb007.test.tsx"
       ],
-      "executed": "2026-10-29T01:37:36",
+      "executed": "2026-10-29T02:11:02",
       "detected": true
     },
     "S3_slice_kept_across_studies": {
@@ -755,7 +756,7 @@
       "tests": [
         "src/utils/sliceOnOpen.test.ts"
       ],
-      "executed": "2026-10-29T01:37:41",
+      "executed": "2026-10-29T02:11:07",
       "detected": true
     },
     "S4_slice_kept_for_another_size": {
@@ -775,7 +776,7 @@
         "src/utils/sliceOnOpen.test.ts",
         "src/ViewerApp.prb007.test.tsx"
       ],
-      "executed": "2026-10-29T01:37:59",
+      "executed": "2026-10-29T02:11:22",
       "detected": true
     },
     "S5_grid_panels_open_on_slice_zero": {
@@ -794,7 +795,7 @@
       "tests": [
         "src/ViewerApp.prb007.test.tsx"
       ],
-      "executed": "2026-10-29T01:38:19",
+      "executed": "2026-10-29T02:11:42",
       "detected": true
     },
     "S6_middle_rounded_up": {
@@ -815,7 +816,7 @@
       "tests": [
         "src/utils/sliceOnOpen.test.ts"
       ],
-      "executed": "2026-10-29T01:38:24",
+      "executed": "2026-10-29T02:11:47",
       "detected": true
     },
     "Q1_screening_on_by_default": {
@@ -835,7 +836,7 @@
         "src/config/features.quickScreen.test.ts",
         "src/ViewerApp.prb007.test.tsx"
       ],
-      "executed": "2026-10-29T01:38:39",
+      "executed": "2026-10-29T02:12:02",
       "detected": true
     },
     "Q2_badge_not_behind_the_flag": {
@@ -855,7 +856,7 @@
         "src/config/features.quickScreen.test.ts",
         "src/ViewerApp.prb007.test.tsx"
       ],
-      "executed": "2026-10-29T01:38:53",
+      "executed": "2026-10-29T02:12:16",
       "detected": true
     },
     "Q3_model_looked_for_at_every_opening": {
@@ -874,7 +875,7 @@
       "tests": [
         "src/components/QuickScreenBadge.prb009.test.tsx"
       ],
-      "executed": "2026-10-29T01:38:59",
+      "executed": "2026-10-29T02:12:22",
       "detected": true
     },
     "Q4_button_while_looking": {
@@ -893,7 +894,7 @@
       "tests": [
         "src/components/QuickScreenBadge.prb009.test.tsx"
       ],
-      "executed": "2026-10-29T01:39:05",
+      "executed": "2026-10-29T02:12:27",
       "detected": true
     },
     "Q5_absent_model_logged_as_error": {
@@ -912,7 +913,7 @@
       "tests": [
         "src/components/QuickScreenBadge.prb009.test.tsx"
       ],
-      "executed": "2026-10-29T01:39:10",
+      "executed": "2026-10-29T02:12:33",
       "detected": true
     },
     "P1_region_drawn_in_its_stored_colour": {
@@ -932,7 +933,7 @@
       "tests": [
         "src/components/SegmentationCanvasLocal.prb010.test.tsx"
       ],
-      "executed": "2026-10-29T01:39:17",
+      "executed": "2026-10-29T02:12:39",
       "detected": true
     },
     "P2_zone_coloured_lesions_red_green": {
@@ -953,7 +954,7 @@
         "src/components/SegmentationCanvasLocal.prb010.test.tsx",
         "src/utils/regionColors.test.ts"
       ],
-      "executed": "2026-10-29T01:39:23",
+      "executed": "2026-10-29T02:12:46",
       "detected": true
     },
     "P3_zone_map_layer_red_green": {
@@ -974,7 +975,7 @@
         "src/components/SegmentationCanvasLocal.prb010.test.tsx",
         "src/utils/regionColors.test.ts"
       ],
-      "executed": "2026-10-29T01:39:30",
+      "executed": "2026-10-29T02:12:52",
       "detected": true
     },
     "P4_3d_zone_colormap_red_green": {
@@ -993,7 +994,7 @@
       "tests": [
         "src/components/SegmentationCanvasLocal.prb010.test.tsx"
       ],
-      "executed": "2026-10-29T01:39:36",
+      "executed": "2026-10-29T02:12:59",
       "detected": true
     },
     "P5_zone_legend_own_colours": {
@@ -1014,7 +1015,7 @@
         "src/components/SegmentationCanvasLocal.prb010.test.tsx",
         "src/utils/regionColors.test.ts"
       ],
-      "executed": "2026-10-29T01:39:43",
+      "executed": "2026-10-29T02:13:06",
       "detected": true
     },
     "P6_lesion_legend_own_copy": {
@@ -1033,7 +1034,7 @@
       "tests": [
         "src/utils/regionColors.test.ts"
       ],
-      "executed": "2026-10-29T01:39:47",
+      "executed": "2026-10-29T02:13:10",
       "detected": true
     },
     "P7_red_and_green_in_the_mapping": {
@@ -1061,7 +1062,7 @@
         "src/components/SegmentationCanvasLocal.prb010.test.tsx",
         "src/utils/regionColors.test.ts"
       ],
-      "executed": "2026-10-29T01:39:53",
+      "executed": "2026-10-29T02:13:16",
       "detected": true
     },
     "P8_label_preset_off_the_mapping": {
@@ -1080,7 +1081,7 @@
       "tests": [
         "src/utils/regionColors.test.ts"
       ],
-      "executed": "2026-10-29T01:39:57",
+      "executed": "2026-10-29T02:13:20",
       "detected": true
     },
     "P9_backend_stores_red": {
@@ -1101,7 +1102,7 @@
         "tests/unit/test_prb010_region_label_colours.py",
         "tests/unit/test_prb004_review_ref_alignment.py"
       ],
-      "executed": "2026-10-29T01:40:08",
+      "executed": "2026-10-29T02:13:31",
       "detected": true
     },
     "P11_zone_colouring_legend_red_green": {
@@ -1120,7 +1121,7 @@
       "tests": [
         "src/components/SegmentationCanvasLocal.prb010.test.tsx"
       ],
-      "executed": "2026-10-29T01:40:15",
+      "executed": "2026-10-29T02:13:38",
       "detected": true
     },
     "P10_region_names_case_sensitive": {
@@ -1139,7 +1140,7 @@
       "tests": [
         "src/utils/regionColors.test.ts"
       ],
-      "executed": "2026-10-29T01:40:19",
+      "executed": "2026-10-29T02:13:42",
       "detected": true
     },
     "V1_route_io_not_imported": {
@@ -1163,7 +1164,7 @@
         "tests/unit/test_prb010_region_label_colours.py",
         "tests/unit/test_prb004_review_ref_alignment.py"
       ],
-      "executed": "2026-10-29T01:40:30",
+      "executed": "2026-10-29T02:13:53",
       "detected": true
     },
     "V2_reference_affine_stamped_on_any_mask": {
@@ -1185,7 +1186,7 @@
         "tests/unit/test_prb010_region_label_colours.py",
         "tests/unit/test_prb004_review_ref_alignment.py"
       ],
-      "executed": "2026-10-29T01:40:41",
+      "executed": "2026-10-29T02:14:04",
       "detected": true
     },
     "V3_realigned_mask_without_marker": {
@@ -1208,7 +1209,7 @@
         "tests/unit/test_prb010_region_label_colours.py",
         "tests/unit/test_prb004_review_ref_alignment.py"
       ],
-      "executed": "2026-10-29T01:40:52",
+      "executed": "2026-10-29T02:14:15",
       "detected": true
     },
     "V4_realigned_mask_with_the_mri_window": {
@@ -1229,7 +1230,7 @@
         "tests/unit/test_prb010_region_label_colours.py",
         "tests/unit/test_prb004_review_ref_alignment.py"
       ],
-      "executed": "2026-10-29T01:41:02",
+      "executed": "2026-10-29T02:14:27",
       "detected": true
     },
     "V5_legacy_mask_not_reoriented": {
@@ -1251,7 +1252,7 @@
         "tests/unit/test_prb010_region_label_colours.py",
         "tests/unit/test_prb004_review_ref_alignment.py"
       ],
-      "executed": "2026-10-29T01:41:13",
+      "executed": "2026-10-29T02:14:39",
       "detected": true
     },
     "V6_aligned_mask_not_served": {
@@ -1274,7 +1275,7 @@
         "tests/unit/test_prb010_region_label_colours.py",
         "tests/unit/test_prb004_review_ref_alignment.py"
       ],
-      "executed": "2026-10-29T01:41:24",
+      "executed": "2026-10-29T02:14:50",
       "detected": true
     },
     "V7_gpu_mask_not_requested_aligned": {
@@ -1293,7 +1294,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:41:31",
+      "executed": "2026-10-29T02:14:56",
       "detected": true
     },
     "V8_3d_mask_not_requested_aligned": {
@@ -1312,7 +1313,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:41:38",
+      "executed": "2026-10-29T02:15:03",
       "detected": true
     },
     "V9_3d_later_visit_not_requested_aligned": {
@@ -1331,7 +1332,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:41:45",
+      "executed": "2026-10-29T02:15:10",
       "detected": true
     },
     "V10_3d_marker_not_checked": {
@@ -1352,7 +1353,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:42:16",
+      "executed": "2026-10-29T02:15:41",
       "detected": true
     },
     "V11_3d_position_not_checked": {
@@ -1371,7 +1372,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:42:31",
+      "executed": "2026-10-29T02:15:57",
       "detected": true
     },
     "V12_3d_refused_mask_drawn_anyway": {
@@ -1393,7 +1394,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:43:10",
+      "executed": "2026-10-29T02:16:38",
       "detected": true
     },
     "V13_3d_refusal_not_stated": {
@@ -1415,7 +1416,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:43:21",
+      "executed": "2026-10-29T02:16:49",
       "detected": true
     },
     "V14_gpu_unsaved_segmentation_silent": {
@@ -1435,7 +1436,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:43:29",
+      "executed": "2026-10-29T02:16:58",
       "detected": true
     },
     "V15_gpu_unsaved_edits_silent": {
@@ -1454,7 +1455,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:43:37",
+      "executed": "2026-10-29T02:17:05",
       "detected": true
     },
     "V16_viewer_does_not_report_unsaved_edits": {
@@ -1473,7 +1474,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:43:43",
+      "executed": "2026-10-29T02:17:13",
       "detected": true
     },
     "V17_3d_unsaved_segmentation_silent": {
@@ -1492,7 +1493,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:43:52",
+      "executed": "2026-10-29T02:17:22",
       "detected": true
     },
     "V18_3d_slice_index_over_depth": {
@@ -1512,7 +1513,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:44:02",
+      "executed": "2026-10-29T02:17:33",
       "detected": true
     },
     "V19_3d_slice_always_on_the_axial_axis": {
@@ -1531,7 +1532,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:44:10",
+      "executed": "2026-10-29T02:17:42",
       "detected": true
     },
     "V20_deep_white_matter_reddish_purple": {
@@ -1556,7 +1557,7 @@
       "tests": [
         "src/components/SegmentationCanvasLocal.prb010.test.tsx"
       ],
-      "executed": "2026-10-29T01:44:18",
+      "executed": "2026-10-29T02:17:50",
       "detected": true
     },
     "V21_gpu_mask_all_red": {
@@ -1575,7 +1576,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:44:24",
+      "executed": "2026-10-29T02:17:57",
       "detected": true
     },
     "V22_3d_lesion_mask_all_red": {
@@ -1594,7 +1595,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:44:32",
+      "executed": "2026-10-29T02:18:05",
       "detected": true
     },
     "V23_niivue_regions_in_stored_colours": {
@@ -1615,7 +1616,7 @@
         "src/components/NiivueViewer2D.prb004.review.test.tsx",
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:44:40",
+      "executed": "2026-10-29T02:18:14",
       "detected": true
     },
     "V24_unlisted_label_value_not_drawn": {
@@ -1636,7 +1637,7 @@
         "src/components/NiivueViewer2D.prb004.review.test.tsx",
         "src/utils/regionColors.test.ts"
       ],
-      "executed": "2026-10-29T01:44:46",
+      "executed": "2026-10-29T02:18:20",
       "detected": true
     },
     "V25_3d_label_colours_with_header_range": {
@@ -1655,7 +1656,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:44:54",
+      "executed": "2026-10-29T02:18:29",
       "detected": true
     },
     "V26_3d_later_visit_white": {
@@ -1674,7 +1675,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:45:01",
+      "executed": "2026-10-29T02:18:37",
       "detected": true
     },
     "V27_gpu_niivue_hotkeys_on": {
@@ -1693,7 +1694,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:45:08",
+      "executed": "2026-10-29T02:18:43",
       "detected": true
     },
     "V28_gpu_canvas_focusable": {
@@ -1712,7 +1713,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:45:15",
+      "executed": "2026-10-29T02:18:51",
       "detected": true
     },
     "V29_gpu_keys_reach_niivue": {
@@ -1731,7 +1732,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:45:22",
+      "executed": "2026-10-29T02:18:57",
       "detected": true
     },
     "V30_gpu_wheel_reaches_niivue": {
@@ -1750,7 +1751,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:45:29",
+      "executed": "2026-10-29T02:19:04",
       "detected": true
     },
     "V31_slice_kept_on_another_matrix": {
@@ -1769,7 +1770,7 @@
       "tests": [
         "src/utils/sliceOnOpen.review.test.ts"
       ],
-      "executed": "2026-10-29T01:45:34",
+      "executed": "2026-10-29T02:19:11",
       "detected": true
     },
     "V32_slice_kept_on_another_spacing": {
@@ -1788,7 +1789,7 @@
       "tests": [
         "src/utils/sliceOnOpen.review.test.ts"
       ],
-      "executed": "2026-10-29T01:45:41",
+      "executed": "2026-10-29T02:19:16",
       "detected": true
     },
     "V33_slice_kept_on_another_thickness": {
@@ -1807,7 +1808,7 @@
       "tests": [
         "src/utils/sliceOnOpen.review.test.ts"
       ],
-      "executed": "2026-10-29T01:45:46",
+      "executed": "2026-10-29T02:19:22",
       "detected": true
     },
     "V34_slice_kept_on_another_orientation": {
@@ -1826,7 +1827,7 @@
       "tests": [
         "src/utils/sliceOnOpen.review.test.ts"
       ],
-      "executed": "2026-10-29T01:45:52",
+      "executed": "2026-10-29T02:19:28",
       "detected": true
     },
     "V35_gpu_notice_at_the_top": {
@@ -1847,7 +1848,7 @@
         "src/components/NiivueViewer2D.prb004.review.test.tsx",
         "src/components/NiivueViewer2D.prb004.layout.test.tsx"
       ],
-      "executed": "2026-10-29T01:46:07",
+      "executed": "2026-10-29T02:19:44",
       "detected": true
     },
     "V39_gpu_notice_on_the_two_line_caveat": {
@@ -1866,7 +1867,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.layout.test.tsx"
       ],
-      "executed": "2026-10-29T01:46:22",
+      "executed": "2026-10-29T02:19:59",
       "detected": true
     },
     "V40_3d_colour_bar_under_the_caveat": {
@@ -1886,7 +1887,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:46:29",
+      "executed": "2026-10-29T02:20:08",
       "detected": true
     },
     "V41_sidebar_slice_reads_the_single_view": {
@@ -1906,7 +1907,7 @@
       "tests": [
         "src/components/ControlPanel.prb008.test.tsx"
       ],
-      "executed": "2026-10-29T01:46:36",
+      "executed": "2026-10-29T02:20:16",
       "detected": true
     },
     "V42_sidebar_slider_moves_the_single_view": {
@@ -1925,7 +1926,7 @@
       "tests": [
         "src/components/ControlPanel.prb008.test.tsx"
       ],
-      "executed": "2026-10-29T01:46:43",
+      "executed": "2026-10-29T02:20:23",
       "detected": true
     },
     "V43_sidebar_slice_count_of_the_single_view": {
@@ -1944,7 +1945,7 @@
       "tests": [
         "src/components/ControlPanel.prb008.test.tsx"
       ],
-      "executed": "2026-10-29T01:46:49",
+      "executed": "2026-10-29T02:20:31",
       "detected": true
     },
     "V36_gpu_grid_notice_sends_to_standard": {
@@ -1963,7 +1964,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:46:55",
+      "executed": "2026-10-29T02:20:37",
       "detected": true
     },
     "V37_multi_panel_mask_prop_back": {
@@ -1982,7 +1983,7 @@
       "tests": [
         "src/components/MultiPanelViewer.prb004.review.test.ts"
       ],
-      "executed": "2026-10-29T01:46:59",
+      "executed": "2026-10-29T02:20:42",
       "detected": true
     },
     "V38_grid_shows_segmentation_files": {
@@ -2001,7 +2002,7 @@
       "tests": [
         "src/utils/instanceClassification.prb007.review.test.ts"
       ],
-      "executed": "2026-10-29T01:47:04",
+      "executed": "2026-10-29T02:20:48",
       "detected": true
     },
     "W1_3d_previous_mask_kept_on_a_new_request": {
@@ -2020,7 +2021,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:47:19",
+      "executed": "2026-10-29T02:21:04",
       "detected": true
     },
     "W2_3d_lesion_download_failure_silent": {
@@ -2040,7 +2041,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:47:28",
+      "executed": "2026-10-29T02:21:15",
       "detected": true
     },
     "W3_3d_visit_download_failure_silent": {
@@ -2059,7 +2060,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:47:43",
+      "executed": "2026-10-29T02:21:31",
       "detected": true
     },
     "W4_3d_load_failure_not_in_the_notice": {
@@ -2079,7 +2080,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:47:52",
+      "executed": "2026-10-29T02:21:40",
       "detected": true
     },
     "W5_3d_unsaved_edits_silent": {
@@ -2098,7 +2099,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:48:00",
+      "executed": "2026-10-29T02:21:51",
       "detected": true
     },
     "W6_identity_mask_refused_on_an_identity_image": {
@@ -2117,7 +2118,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:48:15",
+      "executed": "2026-10-29T02:22:06",
       "detected": true
     },
     "W7_identity_mask_accepted_on_any_image": {
@@ -2136,7 +2137,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:48:30",
+      "executed": "2026-10-29T02:22:21",
       "detected": true
     },
     "W8_3d_niivue_view_and_clip_keys_on": {
@@ -2156,7 +2157,7 @@
       "tests": [
         "src/components/ImageViewer3D.prb004.review.test.tsx"
       ],
-      "executed": "2026-10-29T01:48:37",
+      "executed": "2026-10-29T02:22:29",
       "detected": true
     },
     "W9_3d_notice_on_the_two_line_caveat": {
@@ -2175,7 +2176,7 @@
       "tests": [
         "src/components/NiivueViewer2D.prb004.layout.test.tsx"
       ],
-      "executed": "2026-10-29T01:48:50",
+      "executed": "2026-10-29T02:22:45",
       "detected": true
     },
     "W10_alignment_error_becomes_a_500": {
@@ -2195,7 +2196,7 @@
         "tests/unit/test_prb010_region_label_colours.py",
         "tests/unit/test_prb004_review_ref_alignment.py"
       ],
-      "executed": "2026-10-29T01:49:02",
+      "executed": "2026-10-29T02:22:57",
       "detected": true
     },
     "W11_reference_voxels_loaded": {
@@ -2215,7 +2216,7 @@
         "tests/unit/test_prb010_region_label_colours.py",
         "tests/unit/test_prb004_review_ref_alignment.py"
       ],
-      "executed": "2026-10-29T01:49:13",
+      "executed": "2026-10-29T02:23:10",
       "detected": true
     },
     "W12_alignment_outcome_not_stated": {
@@ -2237,7 +2238,7 @@
         "tests/unit/test_prb010_region_label_colours.py",
         "tests/unit/test_prb004_review_ref_alignment.py"
       ],
-      "executed": "2026-10-29T01:49:24",
+      "executed": "2026-10-29T02:23:23",
       "detected": true
     },
     "W13_unlabelled_colour_magenta": {
@@ -2256,7 +2257,7 @@
       "tests": [
         "src/utils/regionColors.test.ts"
       ],
-      "executed": "2026-10-29T01:49:28",
+      "executed": "2026-10-29T02:23:28",
       "detected": true
     },
     "W14_cursor_label_not_shown": {
@@ -2275,7 +2276,7 @@
       "tests": [
         "src/components/ControlPanel.prb008.test.tsx"
       ],
-      "executed": "2026-10-29T01:49:34",
+      "executed": "2026-10-29T02:23:35",
       "detected": true
     },
     "W15_viewer_does_not_report_the_label_under_the_cursor": {
@@ -2294,28 +2295,84 @@
       "tests": [
         "src/components/ControlPanel.prb008.test.tsx"
       ],
-      "executed": "2026-10-29T01:49:41",
+      "executed": "2026-10-29T02:23:43",
       "detected": true
     },
     "W16_label_under_cursor_transposed": {
       "suite": "frontend",
-      "failed": 3,
-      "passed": 0,
+      "failed": 1,
+      "passed": 5,
       "errors": 0,
       "failing_tests": [
-        "rc076 R6 names the label at (column x, row y) of the slice",
-        "rc076 R6 background, outside the slice or no mask: nothing",
-        "rc076 R6 a value missing from the label table is reported with no name"
+        "rc076 R6 names the label at (column x, row y) of the slice"
       ],
       "error_files": [],
-      "reintroduces": "the label read at the transposed voxel (row and column swapped)",
+      "reintroduces": "the label read at the transposed voxel (row and column swapped) of a mask stored as the image",
+      "files": [
+        "frontend/src/utils/maskDisplayLayout.ts"
+      ],
+      "tests": [
+        "src/utils/labelUnderCursor.test.ts"
+      ],
+      "executed": "2026-10-29T02:23:47",
+      "detected": true
+    },
+    "W17_cursor_label_ignores_the_overlay_transpose": {
+      "suite": "frontend",
+      "failed": 2,
+      "passed": 4,
+      "errors": 0,
+      "failing_tests": [
+        "rc076 F1 a mask stored with rows and columns swapped (non-square image): the label the overlay draws there",
+        "rc076 F1 a mask the overlay cannot place on the image (another grid): no label"
+      ],
+      "error_files": [],
+      "reintroduces": "a mask stored with rows and columns swapped: the readout names another voxel's label than the overlay draws (the defect as found)",
       "files": [
         "frontend/src/utils/labelUnderCursor.ts"
       ],
       "tests": [
         "src/utils/labelUnderCursor.test.ts"
       ],
-      "executed": "2026-10-29T01:49:45",
+      "executed": "2026-10-29T02:23:52",
+      "detected": true
+    },
+    "W18_transposed_mask_read_as_stored": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 5,
+      "errors": 0,
+      "failing_tests": [
+        "rc076 F1 a mask stored with rows and columns swapped (non-square image): the label the overlay draws there"
+      ],
+      "error_files": [],
+      "reintroduces": "the shared rule reads a transposed mask as stored",
+      "files": [
+        "frontend/src/utils/maskDisplayLayout.ts"
+      ],
+      "tests": [
+        "src/utils/labelUnderCursor.test.ts"
+      ],
+      "executed": "2026-10-29T02:23:57",
+      "detected": true
+    },
+    "W19_label_for_a_mask_the_overlay_cannot_place": {
+      "suite": "frontend",
+      "failed": 1,
+      "passed": 5,
+      "errors": 0,
+      "failing_tests": [
+        "rc076 F1 a mask the overlay cannot place on the image (another grid): no label"
+      ],
+      "error_files": [],
+      "reintroduces": "a label named for a mask on another grid, which the overlay cannot place",
+      "files": [
+        "frontend/src/utils/maskDisplayLayout.ts"
+      ],
+      "tests": [
+        "src/utils/labelUnderCursor.test.ts"
+      ],
+      "executed": "2026-10-29T02:24:02",
       "detected": true
     }
   },
@@ -2330,20 +2387,20 @@
     "frontend": {
       "suite": "frontend",
       "failed": 0,
-      "passed": 111,
+      "passed": 114,
       "errors": 0,
       "failing_tests": [],
       "error_files": []
     }
   },
   "summary": {
-    "mutations": 111,
-    "detected": 111,
+    "mutations": 114,
+    "detected": 114,
     "undetected": []
   },
   "worktree": {
     "run_in": "throwaway detached worktree of the commit, removed after the run (review m8)",
-    "commit": "8fd9766c27a2ed540f99560a4919898a97e878f7",
+    "commit": "249b642fbc313856dc2aa33d5896c32e0b1f1819",
     "stale_worktrees_removed_first": []
   }
 }
