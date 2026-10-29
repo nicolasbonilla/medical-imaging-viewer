@@ -695,7 +695,8 @@ def _radiologist(user) -> bool:
 async def confirm_segmentation_review(
     segmentation_id: str,
     body: dict = Body(..., description=('{"mask_sha256": "<SHA-256 of the saved mask the radiologist checked>", '
-                                        '"region_corrections_sha256": "<digest of the region corrections he '
+                                        '"drawn_labels_sha256": "<SHA-256 of the label table the mask was drawn '
+                                        'with>", "region_corrections_sha256": "<digest of the region corrections he '
                                         'acknowledges, when the DIS state lists any>"}')),
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
     current_user: User = Depends(get_current_active_user),
@@ -711,6 +712,8 @@ async def confirm_segmentation_review(
     - an AI draft also has its own review (RC-047) for the current mask (409 otherwise);
     - bound to the exact stored mask (the client sends the SHA-256 of the mask it shows; 409 if it differs)
       AND to the label scheme; a later change of either removes it, with an entry in the history;
+    - the label table the client drew the mask with (`drawn_labels_sha256`) is the stored one (409 otherwise;
+      final check of PR #69, R2);
     - every connected lesion carries exactly one region 1-4 (409 otherwise); a region that differs from the
       classifier's is a correction the radiologist acknowledges by sending `region_corrections_sha256` (the
       digest of the corrections listed in the DIS state); it is recorded in the confirmation (second review, N1);
@@ -764,6 +767,18 @@ async def confirm_segmentation_review(
             status_code=status.HTTP_409_CONFLICT,
             detail=("The stored mask is not the one you checked (unsaved changes, or the mask changed since you "
                     "opened it). Save or reload, check it again, then confirm."),
+        )
+    # Release 2026-10-25 (final check of PR #69, R2): the client states the label table it DREW the mask with; a table
+    # other than the stored one (e.g. the "Default" preset selected, which redraws the regions with other names and
+    # colours) is refused. A partial, server-side safeguard: whether every lesion was drawn is checked in the browser
+    # (RMF-001, RC-071 residual risk).
+    drawn_labels = str((body or {}).get("drawn_labels_sha256", "")).strip().lower()
+    if drawn_labels != dis_gate.drawn_labels_sha256(getattr(metadata, "labels", None) or []):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=("The labels the mask was drawn with on your screen are not the labels stored for this "
+                    "segmentation (another label preset, or labels changed since it was opened). Reopen the "
+                    "segmentation, check every lesion with its stored region labels, then confirm."),
         )
     # Second review of PR #68, N1: a region changed by hand after the classification is the radiologist's
     # correction — listed to him, acknowledged explicitly (the digest of the listed corrections) and recorded.

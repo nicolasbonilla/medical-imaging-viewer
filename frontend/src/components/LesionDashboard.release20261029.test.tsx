@@ -52,7 +52,7 @@ const notConfirmed = (storedLabels: unknown = STORED) => ({
   segmentation_review: { status: 'unconfirmed', source: 'origin_not_recorded', reviewed_by: null, reviewed_at: null,
     reviewed_mask_sha256: null, current_mask_sha256: DIGEST },
   regions: { classified: true, label_scheme: 'magnims', removed_small_components: null,
-    ...(storedLabels === undefined ? {} : { stored_labels: storedLabels }) },
+    ...(storedLabels === null ? {} : { stored_labels: storedLabels }) },          // null: an answer without it
 });
 
 /** Segmentation "seg-1" is open, drawn with its MAGNIMS labels in the standard 2D view (unless overridden). */
@@ -124,7 +124,7 @@ describe('R2: each value present is drawn with the label the server stored for i
   });
 
   it('rc071 release final r2 refused when the stored labels could not be read', async () => {
-    getDISAssessment.mockResolvedValue(notConfirmed(undefined));
+    getDISAssessment.mockResolvedValue(notConfirmed(null));
     seedOpen();
     await pressConfirm();
     expect(await screen.findByTestId('dis-confirm-refused')).toHaveTextContent(/stored for this segmentation could not be read/);

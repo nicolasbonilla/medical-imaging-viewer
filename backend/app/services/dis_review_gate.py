@@ -149,6 +149,30 @@ def labels_sha256(labels: Iterable[Any]) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
+def stored_labels(labels: Iterable[Any]) -> List[Dict[str, Any]]:
+    """The label table as it is drawn — id, name and colour of every label but the background, by id (release
+    2026-10-25, final check of PR #69, R2): served with the DIS state so the viewer can check that each value of the
+    mask is drawn with the label stored for it."""
+    rows: List[Dict[str, Any]] = []
+    for lbl in labels or []:
+        get = (lambda k: lbl.get(k)) if isinstance(lbl, dict) else (lambda k: getattr(lbl, k, None))
+        lid = get("id")
+        if isinstance(lid, int) and not isinstance(lid, bool) and lid > 0:
+            rows.append({"id": lid, "name": str(get("name")), "color": str(get("color")).upper()})
+    rows.sort(key=lambda r: r["id"])
+    return rows
+
+
+def drawn_labels_sha256(labels: Iterable[Any]) -> str:
+    """SHA-256 of the label table as drawn: [[id, name, colour], …] by id, colours upper case, background excluded —
+    the canonical text the viewer digests too (frontend/src/utils/drawnLabels.ts, `drawnLabelsSha256`). The DIS
+    confirmation states the table it was drawn with; another table than the stored one is refused (final check of
+    PR #69, R2: a partial, server-side safeguard — the drawn-lesion check itself runs in the browser)."""
+    canonical = json.dumps([[r["id"], r["name"], r["color"]] for r in stored_labels(labels)],
+                           separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
 def labels_are_magnims(labels: Iterable[Any]) -> bool:
     """Ids 1-4 named exactly as the MAGNIMS regions the DIS rule reads; every other id a MAGNIMS label too."""
     pairs = _label_pairs(labels)
@@ -280,6 +304,9 @@ def regions_state(metadata: Any, masks_3d) -> Dict[str, Any]:
         "invalid_lesions": [], "invalid_lesion_count": 0,
         "corrections": [], "correction_count": 0, "corrections_sha256": None, "listed_limit": LESION_LIST_CAP,
         "removed_small_components": None,
+        # Release 2026-10-25 (final check of PR #69, R2): the stored label table, for the viewer's check that every
+        # value of the mask is drawn with the label stored for it.
+        "stored_labels": stored_labels(labels),
     }
     recorded = record.get("classified_lesion_regions")
     voxel_volume = record.get("voxel_volume_mm3")

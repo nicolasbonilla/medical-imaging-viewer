@@ -48,7 +48,8 @@ const ANALYSIS = {
 
 const REGIONS_BASE = { classified: true, label_scheme: 'magnims', method: 'geometric', lesion_count: 2,
   lesions_valid: true, invalid_lesions: [], invalid_lesion_count: 0, corrections: [], correction_count: 0,
-  corrections_sha256: 'ee'.repeat(32), listed_limit: 100, edited_after_classification: false };
+  corrections_sha256: 'ee'.repeat(32), listed_limit: 100, edited_after_classification: false,
+  stored_labels: [{ id: 1, name: 'Periventricular', color: '#FF0000' }, { id: 2, name: 'Juxtacortical', color: '#00CC00' }] };   // final check of #69 (R2): the stored label table
 
 const CORRECTION = { lesion: 2, slice: 6, first_voxel: [6, 12, 12], voxels: 18, classified_region: 2,
   classified_region_name: 'Juxtacortical', current_region: 1, current_region_name: 'Periventricular' };
@@ -99,6 +100,8 @@ function seed() {
     labelVisibility: { 0: false, 1: true, 2: true },
     isOverlayVisible: true,
     lesionOpacity: 0.6,
+    // Release 2026-10-25 (final check of #69, R1): the standard 2D view on screen draws the open segmentation.
+    overlayOnScreen: 'seg-1',
     maskValuesCallback: vi.fn(() => [1, 2]),
     hasUnsavedMaskChanges: false,
   } as never);
@@ -154,7 +157,8 @@ describe('N1: one region per lesion; region corrections are listed and acknowled
     const button = screen.getByRole('button', { name: /confirm this segmentation/ });
     expect(button).not.toBeDisabled();
     fireEvent.click(button);
-    await waitFor(() => expect(confirmSegmentationReview).toHaveBeenCalledWith('seg-1', DIGEST, CORRECTIONS));
+    // final check of #69 (R2): the call also carries the label table the mask was drawn with
+    await waitFor(() => expect(confirmSegmentationReview).toHaveBeenCalledWith('seg-1', DIGEST, CORRECTIONS, DRAWN_LABELS));
     expect(window.confirm).toHaveBeenCalledWith(
       expect.stringMatching(/region correction\(s\)[\s\S]*Lesion 2 \(slice 7, 18 voxels\): Juxtacortical → Periventricular/));
   });

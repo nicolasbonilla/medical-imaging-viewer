@@ -51,7 +51,10 @@ const NOT_CONFIRMED = {
   message: 'Not evaluated: requires clinician review of the segmentation.', dis_criteria_version: 'McDonald 2024',
   segmentation_review: { status: 'unconfirmed', source: 'origin_not_recorded', reviewed_by: null, reviewed_at: null,
     reviewed_mask_sha256: null, current_mask_sha256: DIGEST },
-  regions: { classified: true, label_scheme: 'magnims' },
+  // final check of #69 (R2): the stored label table (segmentation_regions.py)
+  regions: { classified: true, label_scheme: 'magnims', stored_labels: [{ id: 1, name: 'Periventricular', color: '#FF0000' }, { id: 2, name: 'Juxtacortical', color: '#00CC00' },
+    { id: 3, name: 'Infratentorial', color: '#0066FF' }, { id: 4, name: 'Deep White Matter', color: '#FFD700' },
+    { id: 5, name: 'Active (Gd+)', color: '#FF00FF' }, { id: 6, name: 'Black Hole (T1)', color: '#9932CC' }] },
 };
 const EVALUATED = {
   segmentation_id: 'seg-1', evaluation_status: 'evaluated', dis_met_brain: true, dis_met: true,
@@ -64,7 +67,10 @@ const EVALUATED = {
   black_hole_voxels: 0,
   segmentation_review: { status: 'confirmed', source: 'origin_not_recorded', reviewed_by: 'dr_rev', reviewed_at: 'x',
     reviewed_mask_sha256: DIGEST, current_mask_sha256: DIGEST },
-  regions: { classified: true, label_scheme: 'magnims' },
+  // final check of #69 (R2): the stored label table (segmentation_regions.py)
+  regions: { classified: true, label_scheme: 'magnims', stored_labels: [{ id: 1, name: 'Periventricular', color: '#FF0000' }, { id: 2, name: 'Juxtacortical', color: '#00CC00' },
+    { id: 3, name: 'Infratentorial', color: '#0066FF' }, { id: 4, name: 'Deep White Matter', color: '#FFD700' },
+    { id: 5, name: 'Active (Gd+)', color: '#FF00FF' }, { id: 6, name: 'Black Hole (T1)', color: '#9932CC' }] },
 };
 // The labels the server stores with a classified mask (segmentation_regions.py).
 const SERVER_LABELS = [
@@ -90,27 +96,31 @@ const DRAWN_LABELS = [
   { id: 2, name: 'Juxtacortical', color: '#00CC00', opacity: 0.6, visible: true },
 ];
 
-function seed(analysisData: Record<string, unknown> | null = null) {
+const BINARY = [{ id: 0, name: 'Background', color: '#000000', opacity: 0, visible: false },
+                { id: 1, name: 'Lesion', color: '#FF0000', opacity: 0.5, visible: true }];
+
+// Final check of #69 (R2): a classified segmentation is drawn with the labels the server stored (SERVER_LABELS).
+function seed(analysisData: Record<string, unknown> | null = null, drawnLabels: unknown[] = BINARY) {
   useSegmentationStore.setState({
     currentSegmentation: {
       segmentation_id: 'seg-1', file_id: 'f.nii.gz', total_slices: 10,
       metadata: { file_id: 'f.nii.gz', created_at: 'T0', modified_at: 'T1',
-        labels: [{ id: 0, name: 'Background', color: '#000000', opacity: 0, visible: false },
-                 { id: 1, name: 'Lesion', color: '#FF0000', opacity: 0.5, visible: true }],
+        labels: drawnLabels,
         analysis_data: analysisData },
     } as any,
     activeSegmentation: {
       id: 'seg-1', patient_id: '', study_id: '', series_id: '', file_id: 'f.nii.gz', name: 'S',
       segmentation_type: 'manual', status: 'in_progress', progress_percentage: 0, slices_annotated: 0,
       total_slices: 10, created_by: 'u', created_at: 'T0', modified_at: 'T1',
-      labels: [{ id: 0, name: 'Background', color: '#000000', opacity: 0, visible: false },
-               { id: 1, name: 'Lesion', color: '#FF0000', opacity: 0.5, visible: true }],
+      labels: drawnLabels,
     } as any,
     labelVisibility: { 0: false, 1: true },
     activeLabel: 1,
     isDirty: false,
     maskDigestCallback: vi.fn().mockResolvedValue(DIGEST),
     // Release 2026-10-25 (review of PR #69, B1/M3): the open mask that is confirmed is drawn (its value 1, Lesion, visible).
+    // Release 2026-10-25 (final check of #69, R1): the standard 2D view on screen draws the open segmentation.
+    overlayOnScreen: 'seg-1',
     maskValuesCallback: vi.fn(() => [1]),
     isOverlayVisible: true,
     lesionOpacity: 0.6,
@@ -151,7 +161,8 @@ describe('F08: every region is drawn right after the classification', () => {
 
 describe('F09: small components removed by the classification are stated before the confirmation', () => {
   it('rc070 release f09 the classification card and the confirmation state how many components and voxels were removed', async () => {
-    seed({ lesion_analysis: ANALYSIS, classification: { ...CLASSIFICATION, removed_small_components: REMOVED } });
+    seed({ lesion_analysis: ANALYSIS, classification: { ...CLASSIFICATION, removed_small_components: REMOVED } },
+      SERVER_LABELS);
     // Contract changed by the second review of PR #69 (M1): the DIS card and the confirm dialog take the removal from
     // the server's DIS state of this segmentation (regions.removed_small_components), not from the open
     // segmentation's stored classification; the server serves it here as it does for these lesions.
@@ -181,7 +192,7 @@ describe('F09: small components removed by the classification are stated before 
 
 describe('F10: the pending state after confirming', () => {
   it('rc071 release f10 the card shows the confirmation pending until the refreshed DIS state is read', async () => {
-    seed({ lesion_analysis: ANALYSIS, classification: CLASSIFICATION });
+    seed({ lesion_analysis: ANALYSIS, classification: CLASSIFICATION }, SERVER_LABELS);
     let releaseDis: (v: unknown) => void = () => undefined;
     let releasePost: (v: unknown) => void = () => undefined;
     confirmSegmentationReview.mockImplementation(() => new Promise((resolve) => { releasePost = resolve; }));

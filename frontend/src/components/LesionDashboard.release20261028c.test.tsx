@@ -52,7 +52,9 @@ const notConfirmed = (sid: string, removed: unknown = null) => ({
   message: 'Not evaluated: requires clinician review of the segmentation.', dis_criteria_version: 'McDonald 2024',
   segmentation_review: { status: 'unconfirmed', source: 'origin_not_recorded', reviewed_by: null, reviewed_at: null,
     reviewed_mask_sha256: null, current_mask_sha256: DIGEST },
-  regions: { classified: true, label_scheme: 'magnims', removed_small_components: removed },
+  regions: { classified: true, label_scheme: 'magnims', removed_small_components: removed,
+    stored_labels: [{ id: 1, name: 'Periventricular', color: '#FF0000' }, { id: 2, name: 'Juxtacortical', color: '#00CC00' },
+    { id: 3, name: 'Infratentorial', color: '#0066FF' }, { id: 4, name: 'Deep White Matter', color: '#FFD700' }] },   // final check of #69 (R2): the stored label table
 });
 const MAGNIMS = [
   { id: 0, name: 'Background', color: '#000000', opacity: 0, visible: false },
@@ -77,6 +79,8 @@ function seedOpen(analysis: Record<string, unknown> | null, over: Record<string,
     isOverlayVisible: true,
     lesionOpacity: 0.6,
     maskDigestCallback: vi.fn().mockResolvedValue(DIGEST),
+    // Release 2026-10-25 (final check of #69, R1): the standard 2D view on screen draws the open segmentation.
+    overlayOnScreen: 'seg-1',
     maskValuesCallback: vi.fn(() => [1, 2]),
     hasUnsavedMaskChanges: false,
     reloadMaskCallback: vi.fn(async () => true),

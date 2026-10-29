@@ -119,6 +119,14 @@ function undrawnText(t: TFunction, problems: UndrawnReason[] | null): string[] {
   }
   return problems.map((p) => {
     switch (p.kind) {
+      case 'not_on_screen':
+        return t('disReview.undrawnNotOnScreen', 'The view on screen does not draw this segmentation with its region labels. Switch to the Standard view (2D, one panel) with Segmentation mode on to confirm.');
+      case 'stored_labels_unknown':
+        return t('disReview.undrawnStoredLabelsUnknown', 'The region labels stored for this segmentation could not be read, so it cannot be checked that the lesions are drawn with them: press Analyze.');
+      case 'not_stored_label': {
+        const vals = { value: p.value, drawn: p.drawn, drawnColor: p.drawnColor, stored: p.stored, storedColor: p.storedColor };
+        return fill(t('disReview.undrawnNotStoredLabel', { defaultValue: 'Mask value {{value}} is drawn as "{{drawn}}" ({{drawnColor}}), not with the label stored for this segmentation, "{{stored}}" ({{storedColor}}): select the MAGNIMS Regional labels or reopen the segmentation.', ...vals }), vals);
+      }
       case 'overlay_off':
         return t('disReview.undrawnOverlayOff', 'The segmentation overlay is switched off.');
       case 'opacity_low': {
@@ -347,9 +355,11 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
     if (state.hasUnsavedMaskChanges || state.currentSegmentation?.segmentation_id !== segmentationId) return;
     // N1: region corrections by hand are listed in the dialog and must have been acknowledged in the card.
     if (correctionsDigest && ackedCorrections !== correctionsDigest) return;
-    // Release 2026-10-25 (review of PR #69, B1/M3): a radiologist never confirms a mask with lesions that are not
-    // drawn — every value present in the open mask needs a label, visible, not too faint, with the overlay on and the
-    // lesion opacity above the visible minimum. Otherwise the confirmation is refused before any dialog or request.
+    // Release 2026-10-25 (review of PR #69, B1/M3; final check, R1/R2): the browser refuses the confirmation, before
+    // any dialog or request, unless the standard 2D view on screen draws this segmentation (segmentation mode on),
+    // and every value present in the open mask has a label there, visible and not too faint — on a classified
+    // segmentation the label stored on the server for it, same name and colour — with the overlay on and the lesion
+    // opacity above the visible minimum. The server checks only the drawn label table (`drawn_labels_sha256`).
     setConfirmRefusal(null);
     const maskValues = state.maskValuesCallback?.() ?? null;
     const drawnSegmentation = state.activeSegmentation?.id === segmentationId;
@@ -359,7 +369,10 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       labelVisibility: state.labelVisibility,
       isOverlayVisible: state.isOverlayVisible,
       lesionOpacity: state.lesionOpacity,
+      onScreen: state.overlayOnScreen === segmentationId,
+      storedLabels: pendingRegions?.classified ? (pendingRegions.stored_labels ?? null) : undefined,
     });
+    const drawnLabels = state.activeSegmentation?.labels ?? [];
     if (maskReloadFailed || undrawn === null || undrawn.length > 0) {
       setConfirmRefusal([
         ...(maskReloadFailed ? [t('disReview.reloadFailedRefusal', 'The classified mask could not be reloaded: the view may show the mask from before the classification. Reopen the segmentation.')] : []),
@@ -394,9 +407,8 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       if (!digest) {
         throw new Error(t('disReview.maskUnreadable', 'The open mask could not be read; reload the segmentation and try again.'));
       }
-      const review = correctionsDigest
-        ? await segmentationAPI.confirmSegmentationReview(segmentationId, digest, correctionsDigest)
-        : await segmentationAPI.confirmSegmentationReview(segmentationId, digest);
+      const review = await segmentationAPI.confirmSegmentationReview(segmentationId, digest, correctionsDigest ?? null,
+        drawnLabels);
       const store = useSegmentationStore.getState();
       const cur = store.currentSegmentation;
       if (cur && cur.segmentation_id === segmentationId) {

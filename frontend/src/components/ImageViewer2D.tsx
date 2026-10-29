@@ -67,6 +67,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
   const isOverlayVisible = useSegmentationStore((s) => s.isOverlayVisible);
   const lesionOpacity = useSegmentationStore((s) => s.lesionOpacity);
   const isPaintMode = useSegmentationStore((s) => s.isPaintMode);
+  const setOverlayOnScreen = useSegmentationStore((s) => s.setOverlayOnScreen);
   const setIsPaintMode = useSegmentationStore((s) => s.setIsPaintMode);
   const selectedLesion = useSegmentationStore((s) => s.selectedLesion);
   const zoneMapVisible = useSegmentationStore((s) => s.zoneMapVisible);
@@ -125,6 +126,17 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
   useSliceNavigation({ scrollableRef });
 
   useCanvasRendering({ canvasRef, containerRef, renderMode });
+
+  // Release 2026-10-25 (final check of PR #69, R1): the DIS confirmation is accepted only while the view on screen
+  // draws the segmentation with its label table — this view, in the standard render mode, in segmentation mode,
+  // with an image. Every other state (and every other view: this one is then not mounted) publishes nothing.
+  const drawnHere = renderMode === 'standard' && segmentationMode && currentSeries
+    ? currentSegmentation?.segmentation_id ?? null
+    : null;
+  useEffect(() => {
+    setOverlayOnScreen(drawnHere);
+    return () => setOverlayOnScreen(null);
+  }, [drawnHere, setOverlayOnScreen]);
 
   // Reset paint mode when segmentation mode is turned off
   useEffect(() => {

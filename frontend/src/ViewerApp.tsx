@@ -46,6 +46,9 @@ interface StudyInfo {
   instances: ImagingInstance[];
 }
 
+/** Label ids 1-4 of a region-classified segmentation (the MAGNIMS regions the DIS rule reads). */
+const MAGNIMS_REGION_NAMES = ['Periventricular', 'Juxtacortical', 'Infratentorial', 'Deep White Matter'];
+
 /** Inline overlay toggle + opacity slider + label visibility for segmentation list items */
 export function OverlayControls() {
   const { t } = useTranslation();
@@ -60,6 +63,12 @@ export function OverlayControls() {
   // colour and announced here; the confirmation is refused while any exists.
   const maskLabelValues = useSegmentationStore((s) => s.maskLabelValues);
   const unlabelled = (maskLabelValues ?? []).filter((v) => v !== 0 && !(labels ?? []).some((l) => l.id === v));
+  // Release 2026-10-25 (final check of PR #69, R2): on a classified segmentation (a classification record, and ids
+  // 1-4 named as the MAGNIMS regions) the preset cannot be switched — "Default" redrew the regions with other names
+  // and colours.
+  const classificationRecord = useSegmentationStore((s) => s.currentSegmentation?.metadata?.analysis_data?.classification);
+  const presetLocked = !!classificationRecord && MAGNIMS_REGION_NAMES.every(
+    (name, i) => (labels ?? []).find((l) => l.id === i + 1)?.name === name);
 
   return (
     <div className="space-y-1.5 mb-2 p-1.5 rounded bg-gray-800/40">
@@ -92,8 +101,10 @@ export function OverlayControls() {
             <div className="space-y-1">
               <select
                 value={detectLabelPreset(labels)}
+                disabled={presetLocked}
                 onChange={(e) => {
                   const preset = e.target.value;
+                  if (presetLocked) return;
                   if (preset === 'default' || preset === 'magnims') {
                     useSegmentationStore.getState().setLabelPreset(preset as 'default' | 'magnims');
                   }
@@ -104,6 +115,11 @@ export function OverlayControls() {
                 <option value="magnims">MAGNIMS Regional</option>
                 <option value="custom" disabled>Custom</option>
               </select>
+              {presetLocked && (
+                <p className="text-[9px] text-gray-400" data-testid="label-preset-locked">
+                  {t('segmentation.presetLocked', 'Locked: a classified segmentation is drawn with its MAGNIMS region labels.')}
+                </p>
+              )}
             </div>
           )}
           {labels && labels.filter((l) => l.id !== 0).length > 0 && (

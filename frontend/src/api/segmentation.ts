@@ -3,6 +3,7 @@
  */
 
 import { apiClient } from '@/services/apiClient';
+import { drawnLabelsSha256 } from '@/utils/drawnLabels';
 import type {
   AIProvenance,
   ClinicianReview,
@@ -60,13 +61,17 @@ export const segmentationAPI = {
   async confirmSegmentationReview(
     segmentationId: string,
     maskSha256: string,
-    regionCorrectionsSha256?: string | null,
+    regionCorrectionsSha256: string | null | undefined,
+    drawnLabels: ReadonlyArray<Pick<LabelInfo, 'id' | 'name' | 'color'>>,
   ): Promise<ClinicianReview> {
+    // Release 2026-10-25 (final check of PR #69, R2): the label table the mask was drawn with; the server refuses
+    // a confirmation drawn with another table than the stored one.
+    const drawnLabelsSha256Hex = await drawnLabelsSha256(drawnLabels);
     const response = await apiClient.post<{ success: boolean; clinician_review: ClinicianReview }>(
       `${API_PREFIX}/segmentation/${segmentationId}/review/confirm`,
       regionCorrectionsSha256
-        ? { mask_sha256: maskSha256, region_corrections_sha256: regionCorrectionsSha256 }
-        : { mask_sha256: maskSha256 },
+        ? { mask_sha256: maskSha256, region_corrections_sha256: regionCorrectionsSha256, drawn_labels_sha256: drawnLabelsSha256Hex }
+        : { mask_sha256: maskSha256, drawn_labels_sha256: drawnLabelsSha256Hex },
     );
     return response.data.clinician_review;
   },

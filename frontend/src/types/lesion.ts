@@ -166,6 +166,9 @@ export interface DISRegionsState {
    *  record describes the current lesions. */
   removed_small_components?: RemovedSmallComponents | null;
   listed_limit?: number;
+  /** Release 2026-10-25 (final check of PR #69, R2): the label table stored for this segmentation (id, name,
+   *  colour upper case, background left out) — each value of the mask must be drawn with its stored label. */
+  stored_labels?: Array<{ id: number; name: string; color: string }>;
 }
 
 /** A DIS state from the server: evaluated (on a confirmed segmentation) or explicitly not evaluated. */

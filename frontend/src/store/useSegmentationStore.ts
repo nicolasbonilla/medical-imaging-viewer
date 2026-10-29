@@ -168,6 +168,11 @@ interface SegmentationState {
    *  about values the label table does not name). */
   maskLabelValues: number[] | null;
 
+  /** Release 2026-10-25 (final check of PR #69, R1): the segmentation the view on screen draws with its label
+   *  table — published by the standard 2D view (one panel, segmentation mode on); null in every other view
+   *  (segmentation mode off, NiiVue, matplotlib, multi-panel, 3D). The DIS confirmation needs it. */
+  overlayOnScreen: string | null;
+
   /** RC-047: the open mask has unsaved changes (mirrors the local-first mask state). */
   hasUnsavedMaskChanges: boolean;
 
@@ -320,6 +325,7 @@ interface SegmentationState {
   setMaskDigestCallback: (fn: (() => Promise<string | null>) | null) => void;
   setMaskValuesCallback: (fn: (() => number[] | null) | null) => void;
   setMaskLabelValues: (values: number[] | null) => void;
+  setOverlayOnScreen: (segmentationId: string | null) => void;
   setHasUnsavedMaskChanges: (value: boolean) => void;
 
   // =========================================================================
@@ -444,6 +450,7 @@ const createInitialState = () => ({
   maskDigestCallback: null as (() => Promise<string | null>) | null,
   maskValuesCallback: null as (() => number[] | null) | null,
   maskLabelValues: null as number[] | null,
+  overlayOnScreen: null as string | null,
   hasUnsavedMaskChanges: false,
   lastSavedAt: null as string | null,
 
@@ -564,6 +571,7 @@ export const useSegmentationStore = create<SegmentationState>()(
         setMaskDigestCallback: (fn) => set({ maskDigestCallback: fn }),
         setMaskValuesCallback: (fn) => set({ maskValuesCallback: fn }),
         setMaskLabelValues: (values) => set({ maskLabelValues: values }),
+        setOverlayOnScreen: (segmentationId) => set({ overlayOnScreen: segmentationId }),
 
         setHasUnsavedMaskChanges: (value) => set({ hasUnsavedMaskChanges: value }),
 

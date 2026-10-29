@@ -35,7 +35,7 @@ from app.models.schemas import LabelInfo
 from app.security import get_current_active_user
 from app.security.models import UserRole
 from tests.unit.test_prb003_dis_requires_confirmed_segmentation import (  # noqa: F401  (fixtures)
-    D, H, W, MAGNIMS, CONCLUSION_KEYS, _Storage, _assert_not_evaluated, _classification, _confirm, _dis, _mask,
+    D, H, W, MAGNIMS, CONCLUSION_KEYS, _Storage, _assert_not_evaluated, _classification, _confirm, _dis, _drawn, _mask,
     _prov, _seed, _service, _sha, _user, client_for, ms_server,
 )
 
@@ -179,7 +179,8 @@ def test_rc070_r1_a_region_corrected_after_classification_keeps_the_classificati
     assert body["regions"]["classified"] is True and body["regions"]["edited_after_classification"] is True
     assert body["regions"]["correction_count"] == 1
     r = client_for(svc).post("/api/v1/segmentation/seg-1/review/confirm", json={
-        "mask_sha256": _sha(corrected), "region_corrections_sha256": body["regions"]["corrections_sha256"]})
+        "mask_sha256": _sha(corrected), "region_corrections_sha256": body["regions"]["corrections_sha256"],
+        "drawn_labels_sha256": _drawn(client_for(svc))})
     assert r.status_code == 200, r.text[:300]
     body = _dis(client_for(svc))
     assert body["evaluation_status"] == "evaluated" and body["dis_met_brain"] is False

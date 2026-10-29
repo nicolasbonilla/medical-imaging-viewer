@@ -31,7 +31,7 @@ from app.models.schemas import LabelInfo, SegmentationResponse
 from app.security import get_current_active_user
 from app.security.models import UserRole
 from tests.unit.test_prb003_dis_requires_confirmed_segmentation import (  # noqa: F401  (fixtures)
-    D, H, W, FILE, MAGNIMS, _Storage, _assert_not_evaluated, _confirm, _dis, _lesion_regions, _mask, _seed,
+    D, H, W, FILE, MAGNIMS, _Storage, _assert_not_evaluated, _confirm, _dis, _drawn, _lesion_regions, _mask, _seed,
     _service, _sha, _user, client_for, ms_server, report_env, _run,
 )
 from tests.unit.test_prb003_review1_findings import (  # noqa: F401  (fixtures)
@@ -50,7 +50,8 @@ def _two_lesions(a=1, b=2):
 
 def _confirm_ack(client, mask, corrections_sha256, sid="seg-1"):
     return client.post(f"/api/v1/segmentation/{sid}/review/confirm",
-                       json={"mask_sha256": _sha(mask), "region_corrections_sha256": corrections_sha256})
+                       json={"mask_sha256": _sha(mask), "region_corrections_sha256": corrections_sha256,
+                             "drawn_labels_sha256": _drawn(client, sid)})
 
 
 def _classified(mask, labels=None):

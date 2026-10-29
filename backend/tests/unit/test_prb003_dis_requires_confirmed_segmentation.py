@@ -406,8 +406,18 @@ def test_rc070_classify_regions_stores_no_dis_conclusion_for_an_unconfirmed_segm
 
 
 # ------------------------------------------- RC-071: confirming a segmentation without AI provenance
+def _drawn(client, sid="seg-1"):
+    """The label table the viewer drew the mask with: the one it read from the server (release 2026-10-25, final
+    check of PR #69, R2 — the confirmation states it as `drawn_labels_sha256`)."""
+    from app.services.dis_review_gate import drawn_labels_sha256
+    r = client.get(f"/api/v1/segmentation/{sid}")
+    labels = (r.json().get("metadata") or {}).get("labels") if r.status_code == 200 else None
+    return drawn_labels_sha256(labels or [])
+
+
 def _confirm(client, digest, sid="seg-1"):
-    return client.post(f"/api/v1/segmentation/{sid}/review/confirm", json={"mask_sha256": digest})
+    return client.post(f"/api/v1/segmentation/{sid}/review/confirm",
+                       json={"mask_sha256": digest, "drawn_labels_sha256": _drawn(client, sid)})
 
 
 @pytest.mark.unit
