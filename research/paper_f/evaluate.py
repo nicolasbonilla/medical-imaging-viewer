@@ -24,6 +24,7 @@ Ground truth: {case}_gt.nii.gz (binarised expert mask, same grid).
 import argparse
 import csv
 import glob
+import hashlib
 import json
 import os
 import sys
@@ -151,7 +152,14 @@ ROW_KEYS = ("n_ref", "n_pred", "tp_ref", "tp_pred", "false_lesions", "missed_les
             "precision", "recall", "f1", "dice", "vol_pred_ml", "vol_ref_ml")
 
 
-def per_scan_rows(cases, dirs, outcomes, tools=TOOLS, variants=VARIANTS):
+NOT_RUN_TIER = "not-run-outside-tier"          # the tool was not run on this scan by its budget tier (4.4)
+OUTSIDE_TIER = "outside-tier-not-analysed"     # an output exists (pilot) but the scan is outside the tier
+
+
+def per_scan_rows(cases, dirs, outcomes, tools=TOOLS, variants=VARIANTS, tool_cases=None):
+    """tool_cases: {tool: set of case ids} — the analysis set of a tool run on a budget tier (PROTOCOL.md
+    4.4 and section 12, 2026-10-29). Scans outside it get a status that no comparison uses."""
+    tool_cases = tool_cases or {}
     rows = []
     for case in cases:
         gimg, gt = _load(os.path.join(dirs["flames"], f"{case}_gt.nii.gz"))
@@ -164,6 +172,8 @@ def per_scan_rows(cases, dirs, outcomes, tools=TOOLS, variants=VARIANTS):
             pred, status = load_prediction(tool, case, dirs, gimg)
             if status == "missing" and outcomes.get((case, tool)) == "failed":
                 pred, status = np.zeros(gt.shape, bool), "failed-as-empty"        # intention to segment
+            if tool in tool_cases and case not in tool_cases[tool]:
+                status = NOT_RUN_TIER if status == "missing" else OUTSIDE_TIER
             preds[tool] = (pred, status)
         for vname, (min_mm3, conn) in variants.items():
             if vname == "S3_inplane_8conn" and base["band"] != "thick":
@@ -260,6 +270,17 @@ def degradation(rows, tool, ref_tool, outcome, n_boot=M.BOOT_N):
             **M.summarize(pt - pi, bt - bi, nt + ni, kt + ki)}
 
 
+REGISTERED_FAMILY = {"primary": 6, "secondary": 11, "secondary_raw_arm": 4}
+
+
+def holm_registered(pvalues, m):
+    """Holm over the registered family of m tests; a test not run (p None, or absent) counts as p = 1,
+    i.e. it is never rejected (PROTOCOL.md section 12, 2026-10-29). None stays None."""
+    padded = [1.0 if p is None else p for p in pvalues] + [1.0] * max(0, m - len(pvalues))
+    adj = M.holm(padded)[:len(pvalues)]
+    return [None if p is None else a for p, a in zip(pvalues, adj)]
+
+
 def prestated(rows, n_boot=M.BOOT_N):
     """All comparisons fixed in PROTOCOL.md section 7, in protocol order."""
     out = {"primary": [], "secondary": [], "secondary_raw_arm": [], "sensitivity": [], "descriptive": [],
@@ -285,6 +306,10 @@ def prestated(rows, n_boot=M.BOOT_N):
     for r, p in zip(raw, M.holm([r["p_two_sided"] for r in raw])):
         r["p_holm"] = p
     out["secondary_raw_arm"] = raw
+    for fam, size in REGISTERED_FAMILY.items():
+        for r, p in zip(out[fam], holm_registered([r.get("p_two_sided") for r in out[fam]], size)):
+            r["p_holm_registered_family"] = p
+            r["registered_family_size"] = size
     out["sensitivity"] = sensitivity(rows, n_boot)
     for tool in TOOLS:                                           # D: per cohort / band, every outcome
         for cohort in ("mslesseg", "openms", "ms3seg", "muslim", "pedims"):
@@ -328,6 +353,47 @@ def compare_confirmed(rows, tool, outcome, band, n_boot):
     return M.stratified_cluster_bootstrap(d, s, c, n_boot=n_boot)
 
 
+def _sha256(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def provenance(a, cases, dirs, tool_cases):
+    """Code commit + SHA-256 of every input file the run reads (written next to the results)."""
+    import datetime
+    import subprocess
+
+    def git(*args):
+        try:
+            return subprocess.run(["git", "-C", HERE, *args], capture_output=True, text=True, timeout=60).stdout.strip()
+        except Exception as exc:                                     # recorded, never silent
+            return f"unavailable: {exc!r}"
+    files = []
+    for case in cases:
+        files.append(("flames", os.path.join(dirs["flames"], f"{case}_gt.nii.gz")))
+        for tool in TOOLS:
+            for p in tool_paths(tool, case, dirs):
+                if os.path.exists(p):
+                    files.append((tool, p))
+    for p in sorted(glob.glob(os.path.join(a.manifests or "", "*.json"))):
+        files.append(("manifest", p))
+    hashes = [{"role": role, "file": os.path.basename(p), "sha256": _sha256(p)} for role, p in files]
+    digest = hashlib.sha256("\n".join(f"{h['file']} {h['sha256']}" for h in hashes).encode()).hexdigest()
+    return {"created_utc": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "code_commit": git("rev-parse", "HEAD"),
+            "code_uncommitted_changes_in_research_paper_f": git("status", "--porcelain", "--", HERE),
+            "code_sha256": {f: _sha256(os.path.join(HERE, f)) for f in ("evaluate.py", "metrics.py", "flames_inputs.json")},
+            "python": sys.version.split()[0], "numpy": np.__version__,
+            "args": {k: v for k, v in vars(a).items()},
+            "n_cases": len(cases),
+            "tool_cases": {t: {"n": len(v), "sha256_of_sorted_ids": hashlib.sha256(
+                " ".join(sorted(v)).encode()).hexdigest()} for t, v in tool_cases.items()},
+            "n_input_files": len(hashes), "inputs_digest_sha256": digest, "inputs": hashes}
+
+
 def write_csv(rows, path):
     keys = []
     for r in rows:
@@ -354,6 +420,8 @@ def main():
     r.add_argument("--manifests")
     r.add_argument("--cases", nargs="*")
     r.add_argument("--n-boot", type=int, default=M.BOOT_N)
+    r.add_argument("--tool-cases", nargs="*", default=[], metavar="TOOL=IDS_FILE",
+                   help="analysis set of a tool run on a budget tier (ids separated by spaces or new lines)")
     r.add_argument("--out", required=True)
     a = ap.parse_args()
     if a.cmd == "check":
@@ -370,8 +438,14 @@ def main():
         sys.exit(0 if all(x["pass"] for x in res) else 1)
     dirs = {"flames": a.flames_dir, "lstai": a.lstai_dir, "tool": a.tool_dir}
     cases = a.cases or list_cases(a.flames_dir)
-    rows = per_scan_rows(cases, dirs, manifest_outcomes(a.manifests))
+    tool_cases = {}
+    for spec in a.tool_cases:
+        tool, path = spec.split("=", 1)
+        tool_cases[tool] = set(open(path).read().split())
     os.makedirs(a.out, exist_ok=True)
+    # Provenance first (RUNBOOK.md section 4: the code commit is written before comparisons exist).
+    json.dump(provenance(a, cases, dirs, tool_cases), open(os.path.join(a.out, "run_info.json"), "w"), indent=1)
+    rows = per_scan_rows(cases, dirs, manifest_outcomes(a.manifests), tool_cases=tool_cases)
     write_csv(rows, os.path.join(a.out, "per_scan.csv"))
     res = prestated(rows, n_boot=a.n_boot)
     json.dump(res, open(os.path.join(a.out, "comparisons.json"), "w"), indent=1)

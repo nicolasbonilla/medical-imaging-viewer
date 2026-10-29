@@ -1,0 +1,822 @@
+{
+ "planned_counts": {
+  "wmhsynthseg": 324,
+  "mindglide": 324,
+  "mindglide-raw": 179,
+  "samseg": 129
+ },
+ "tools": {
+  "wmhsynthseg": {
+   "planned": 324,
+   "ok": 324,
+   "missing_output": [],
+   "failed_never_recovered": [],
+   "failed_then_recovered": [
+    {
+     "case": "muslim_16",
+     "errors": [
+      {
+       "run": "toolbench-wmh",
+       "error": "RuntimeError(\"wmhsynthseg exit 137: STDOUT[-1500:]='' STDERR[-1500:]=''\")",
+       "seconds": 1018.2
+      }
+     ],
+     "ok_runs": [
+      "toolbench-wmh-crop"
+     ]
+    }
+   ],
+   "sha256_seg_mismatch": [],
+   "sha256_prob_mismatch": [],
+   "outputs_outside_plan": [],
+   "ok_in_runs": {
+    "toolbench-pilot-fs": 3,
+    "toolbench-wmh": 320,
+    "toolbench-wmh-crop": 1
+   },
+   "transform_kinds": {
+    "footprint-mean": 179,
+    "trilinear": 145
+   },
+   "complete": true
+  },
+  "mindglide": {
+   "planned": 324,
+   "ok": 324,
+   "missing_output": [],
+   "failed_never_recovered": [],
+   "failed_then_recovered": [
+    {
+     "case": "ms3seg_001",
+     "errors": [
+      {
+       "run": "toolbench-pilot-mindglide",
+       "error": "RuntimeError('mindglide exit 1: \\nSegmenting Images:   0%|          | 0/1 [00:00<?, ?it/s]\\nSegmenting Images: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [01:45<00:00, 105.56s/it]\\nSegmenting Images: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [01:45<00:00, 105.56s/it]\\n')",
+       "seconds": 117.0
+      },
+      {
+       "run": "toolbench-pilot-mindglide-2",
+       "error": "RuntimeError('mindglide exit 1: STDOUT[-1500:]=\"\\\\nIf you use this tool, please cite the original MindGlide paper:\\\\n------\\\\nGoebl, P., Wingrove, J., Abdelmannan, O., Brito Vega, B., Stutters,\\\\nJ., Ramos, S. D. G., ... & Eshaghi, A. (2025).\\\\nEnabling new insights from old scans by repurposing cli",
+       "seconds": 126.3
+      }
+     ],
+     "ok_runs": [
+      "toolbench-pilot-mindglide-3"
+     ]
+    },
+    {
+     "case": "mslesseg_P10_T1",
+     "errors": [
+      {
+       "run": "toolbench-pilot-mindglide",
+       "error": "RuntimeError('mindglide exit 1: \\nSegmenting Images:   0%|          | 0/1 [00:00<?, ?it/s]\\nSegmenting Images: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [01:41<00:00, 101.56s/it]\\nSegmenting Images: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [01:41<00:00, 101.56s/it]\\n')",
+       "seconds": 110.3
+      }
+     ],
+     "ok_runs": [
+      "toolbench-pilot-mindglide-3"
+     ]
+    },
+    {
+     "case": "pedims_P1_T1",
+     "errors": [
+      {
+       "run": "toolbench-pilot-mindglide",
+       "error": "RuntimeError('mindglide exit 1: \\nSegmenting Images:   0%|          | 0/1 [00:00<?, ?it/s]\\nSegmenting Images: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [01:48<00:00, 108.13s/it]\\nSegmenting Images: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [01:48<00:00, 108.13s/it]\\n')",
+       "seconds": 119.3
+      }
+     ],
+     "ok_runs": [
+      "toolbench-pilot-mindglide-3"
+     ]
+    }
+   ],
+   "sha256_seg_mismatch": [],
+   "sha256_prob_mismatch": [],
+   "outputs_outside_plan": [],
+   "ok_in_runs": {
+    "toolbench-pilot-mindglide-3": 3,
+    "toolbench-mindglide-a": 160,
+    "toolbench-mindglide-b": 161
+   },
+   "transform_kinds": {
+    "identity": 324
+   },
+   "complete": true
+  },
+  "mindglide-raw": {
+   "planned": 179,
+   "ok": 179,
+   "missing_output": [],
+   "failed_never_recovered": [],
+   "failed_then_recovered": [
+    {
+     "case": "muslim_49",
+     "errors": [
+      {
+       "run": "toolbench-mgraw",
+       "error": "RuntimeError(\"mindglide exit 137: STDOUT[-1500:]='\\\\nIf you use this tool, please cite the original MindGlide paper:\\\\n------\\\\nGoebl, P., Wingrove, J., Abdelmannan, O., Brito Vega, B., Stutters,\\\\nJ., Ramos, S. D. G., ... & Eshaghi, A. (2025).\\\\nEnabling new insights from old scans by repurposing c",
+       "seconds": 93.9
+      }
+     ],
+     "ok_runs": [
+      "toolbench-mgraw-2"
+     ]
+    },
+    {
+     "case": "muslim_50",
+     "errors": [
+      {
+       "run": "toolbench-mgraw",
+       "error": "RuntimeError('mindglide exit 125: STDOUT[-1500:]=\\'\\\\nIf you use this tool, please cite the original MindGlide paper:\\\\n------\\\\nGoebl, P., Wingrove, J., Abdelmannan, O., Brito Vega, B., Stutters,\\\\nJ., Ramos, S. D. G., ... & Eshaghi, A. (2025).\\\\nEnabling new insights from old scans by repurposing ",
+       "seconds": 50.3
+      }
+     ],
+     "ok_runs": [
+      "toolbench-mgraw-2"
+     ]
+    },
+    {
+     "case": "muslim_51",
+     "errors": [
+      {
+       "run": "toolbench-mgraw",
+       "error": "RuntimeError(\"mindglide exit 1: STDOUT[-1500:]='' STDERR[-1500:]='Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?\\\\n'\")",
+       "seconds": 0.0
+      }
+     ],
+     "ok_runs": [
+      "toolbench-mgraw-2"
+     ]
+    }
+   ],
+   "sha256_seg_mismatch": [],
+   "sha256_prob_mismatch": [],
+   "outputs_outside_plan": [],
+   "ok_in_runs": {
+    "toolbench-mgraw": 143,
+    "toolbench-mgraw-2": 36
+   },
+   "transform_kinds": {
+    "identity": 179
+   },
+   "complete": true
+  },
+  "samseg": {
+   "planned": 129,
+   "ok": 128,
+   "missing_output": [
+    {
+     "case": "ms3seg_001",
+     "errors": []
+    }
+   ],
+   "failed_never_recovered": [],
+   "failed_then_recovered": [],
+   "sha256_seg_mismatch": [],
+   "sha256_prob_mismatch": [],
+   "outputs_outside_plan": [
+    "mslesseg_P10_T1"
+   ],
+   "ok_in_runs": {
+    "toolbench-samseg-a": 42,
+    "toolbench-samseg-b": 43,
+    "toolbench-samseg-c": 42,
+    "toolbench-pilot-fs-2": 1
+   },
+   "transform_kinds": {
+    "identity": 128
+   },
+   "complete": false
+  }
+ },
+ "runs": [
+  {
+   "run_id": "toolbench-pilot-mindglide",
+   "tools": [
+    "mindglide"
+   ],
+   "output_tags": null,
+   "input_variant": null,
+   "started_utc": "2026-10-21T21:39:06Z",
+   "finished_utc": "2026-10-21T21:44:53Z",
+   "n_ok": 0,
+   "n_errors": 3,
+   "input_problems": [],
+   "fs_license_present": false,
+   "code_sha256": {
+    "toolbench_driver.py": "6bba5923db6002890dbe09c8c23a9fdf106e660c7431cb39c44b14b990b550d7",
+    "job_common.py": "9a731c470f6bfad61a289b0210ff15bb279310b827a54b7dacfd0aa65dd1a8d5",
+    "flames_inputs.json": "4847df6d0edcdd4c4920c782b72706b544dfe41bf1cf2863e79deb82fc9e398d"
+   },
+   "samseg_seed": 12345,
+   "timeout_min": 45.0,
+   "selection_explicit": 3,
+   "commands": {
+    "mindglide": "docker run --rm --network=none --shm-size=4g -v <case_dir>:/work -e OMP_NUM_THREADS=4 -e MKL_NUM_THREADS=4 -e ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=4 mindglide:bench -i /work/in/flair.nii.gz -o /work/out/mindglide_seg.nii.gz --device cpu"
+   },
+   "mindglide_digest_ok": true,
+   "mindglide_weights_ok": true,
+   "log": {
+    "present": true,
+    "toolbench_done": "TOOLBENCH DONE 0 ok, 3 errors, 0 input problems",
+    "tool_dropped_lines": [],
+    "tools_after_checks": "mindglide",
+    "wall_clock_guard_hit": false,
+    "oom_or_killed_lines": []
+   },
+   "cost_record": "COST_RECORD,run_id=toolbench-pilot-mindglide,machine=e2-standard-4,seconds=807,rate_usd_per_h=0.14772,cost_usd_compute_estimate=0.0331"
+  },
+  {
+   "run_id": "toolbench-pilot-mindglide-2",
+   "tools": [
+    "mindglide"
+   ],
+   "output_tags": null,
+   "input_variant": null,
+   "started_utc": "2026-10-21T22:01:02Z",
+   "finished_utc": "2026-10-21T22:03:08Z",
+   "n_ok": 0,
+   "n_errors": 1,
+   "input_problems": [],
+   "fs_license_present": false,
+   "code_sha256": {
+    "toolbench_driver.py": "42bc1a4f614bffd816c82a23f76b9396b0eb4a44b0981f45cf9bad65ce076c00",
+    "job_common.py": "9a731c470f6bfad61a289b0210ff15bb279310b827a54b7dacfd0aa65dd1a8d5",
+    "flames_inputs.json": "4847df6d0edcdd4c4920c782b72706b544dfe41bf1cf2863e79deb82fc9e398d"
+   },
+   "samseg_seed": 12345,
+   "timeout_min": 45.0,
+   "selection_explicit": 1,
+   "commands": {
+    "mindglide": "docker run --rm --network=none --shm-size=4g -v <case_dir>:/work -e OMP_NUM_THREADS=4 -e MKL_NUM_THREADS=4 -e ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=4 mindglide:bench -i /work/in/flair.nii.gz -o /work/out/mindglide_seg.nii.gz --device cpu"
+   },
+   "mindglide_digest_ok": true,
+   "mindglide_weights_ok": true,
+   "log": {
+    "present": true,
+    "toolbench_done": "TOOLBENCH DONE 0 ok, 1 errors, 0 input problems",
+    "tool_dropped_lines": [],
+    "tools_after_checks": "mindglide",
+    "wall_clock_guard_hit": false,
+    "oom_or_killed_lines": []
+   },
+   "cost_record": "COST_RECORD,run_id=toolbench-pilot-mindglide-2,machine=e2-standard-4,seconds=641,rate_usd_per_h=0.14772,cost_usd_compute_estimate=0.0263"
+  },
+  {
+   "run_id": "toolbench-pilot-mindglide-3",
+   "tools": [
+    "mindglide"
+   ],
+   "output_tags": null,
+   "input_variant": null,
+   "started_utc": "2026-10-21T22:19:18Z",
+   "finished_utc": "2026-10-21T22:23:30Z",
+   "n_ok": 3,
+   "n_errors": 0,
+   "input_problems": [],
+   "fs_license_present": false,
+   "code_sha256": {
+    "toolbench_driver.py": "790bbebb540de4337c223dcf2410a9026b1410a3d65fc17346c3b2d79b750feb",
+    "job_common.py": "9a731c470f6bfad61a289b0210ff15bb279310b827a54b7dacfd0aa65dd1a8d5",
+    "flames_inputs.json": "4847df6d0edcdd4c4920c782b72706b544dfe41bf1cf2863e79deb82fc9e398d"
+   },
+   "samseg_seed": 12345,
+   "timeout_min": 45.0,
+   "selection_explicit": 3,
+   "commands": {
+    "mindglide": "docker run --rm --network=none --shm-size=4g -v <case_dir>:/work -e OMP_NUM_THREADS=4 -e MKL_NUM_THREADS=4 -e ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=4 mindglide:bench -i /work/in/flair.nii.gz -o /work/out/mindglide_seg.nii.gz --device cpu"
+   },
+   "mindglide_digest_ok": true,
+   "mindglide_weights_ok": true,
+   "seconds_per_case": {
+    "median": 84.2,
+    "min": 82.4,
+    "max": 85.0
+   },
+   "peak_mem_gb_max": 5.61,
+   "peak_swap_gb_max": 0,
+   "log": {
+    "present": true,
+    "toolbench_done": "TOOLBENCH DONE 3 ok, 0 errors, 0 input problems",
+    "tool_dropped_lines": [],
+    "tools_after_checks": "mindglide",
+    "wall_clock_guard_hit": false,
+    "oom_or_killed_lines": []
+   },
+   "cost_record": "COST_RECORD,run_id=toolbench-pilot-mindglide-3,machine=n2d-standard-4,seconds=735,rate_usd_per_h=0.18268,cost_usd_compute_estimate=0.0373"
+  },
+  {
+   "run_id": "toolbench-mindglide-a",
+   "tools": [
+    "mindglide"
+   ],
+   "output_tags": null,
+   "input_variant": null,
+   "started_utc": "2026-10-21T22:39:36Z",
+   "finished_utc": "2026-10-22T02:06:16Z",
+   "n_ok": 160,
+   "n_errors": 0,
+   "input_problems": [],
+   "fs_license_present": false,
+   "code_sha256": {
+    "toolbench_driver.py": "790bbebb540de4337c223dcf2410a9026b1410a3d65fc17346c3b2d79b750feb",
+    "job_common.py": "9a731c470f6bfad61a289b0210ff15bb279310b827a54b7dacfd0aa65dd1a8d5",
+    "flames_inputs.json": "4847df6d0edcdd4c4920c782b72706b544dfe41bf1cf2863e79deb82fc9e398d"
+   },
+   "samseg_seed": 12345,
+   "timeout_min": 45.0,
+   "selection_explicit": 0,
+   "commands": {
+    "mindglide": "docker run --rm --network=none --shm-size=4g -v <case_dir>:/work -e OMP_NUM_THREADS=4 -e MKL_NUM_THREADS=4 -e ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=4 mindglide:bench -i /work/in/flair.nii.gz -o /work/out/mindglide_seg.nii.gz --device cpu"
+   },
+   "mindglide_digest_ok": true,
+   "mindglide_weights_ok": true,
+   "seconds_per_case": {
+    "median": 84.3,
+    "min": 36.1,
+    "max": 105.4
+   },
+   "peak_mem_gb_max": 5.76,
+   "peak_swap_gb_max": 0,
+   "log": {
+    "present": true,
+    "toolbench_done": "TOOLBENCH DONE 160 ok, 0 errors, 0 input problems",
+    "tool_dropped_lines": [],
+    "tools_after_checks": "mindglide",
+    "wall_clock_guard_hit": false,
+    "oom_or_killed_lines": []
+   },
+   "cost_record": "COST_RECORD,run_id=toolbench-mindglide-a,machine=n2d-standard-4,seconds=12817,rate_usd_per_h=0.18268,cost_usd_compute_estimate=0.6504"
+  },
+  {
+   "run_id": "toolbench-mindglide-b",
+   "tools": [
+    "mindglide"
+   ],
+   "output_tags": null,
+   "input_variant": null,
+   "started_utc": "2026-10-21T22:42:10Z",
+   "finished_utc": "2026-10-22T01:47:10Z",
+   "n_ok": 161,
+   "n_errors": 0,
+   "input_problems": [],
+   "fs_license_present": false,
+   "code_sha256": {
+    "toolbench_driver.py": "790bbebb540de4337c223dcf2410a9026b1410a3d65fc17346c3b2d79b750feb",
+    "job_common.py": "9a731c470f6bfad61a289b0210ff15bb279310b827a54b7dacfd0aa65dd1a8d5",
+    "flames_inputs.json": "4847df6d0edcdd4c4920c782b72706b544dfe41bf1cf2863e79deb82fc9e398d"
+   },
+   "samseg_seed": 12345,
+   "timeout_min": 45.0,
+   "selection_explicit": 0,
+   "commands": {
+    "mindglide": "docker run --rm --network=none --shm-size=4g -v <case_dir>:/work -e OMP_NUM_THREADS=4 -e MKL_NUM_THREADS=4 -e ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=4 mindglide:bench -i /work/in/flair.nii.gz -o /work/out/mindglide_seg.nii.gz --device cpu"
+   },
+   "mindglide_digest_ok": true,
+   "mindglide_weights_ok": true,
+   "seconds_per_case": {
+    "median": 77.2,
+    "min": 33.6,
+    "max": 138.9
+   },
+   "peak_mem_gb_max": 5.91,
+   "peak_swap_gb_max": 0,
+   "log": {
+    "present": true,
+    "toolbench_done": "TOOLBENCH DONE 161 ok, 0 errors, 0 input problems",
+    "tool_dropped_lines": [],
+    "tools_after_checks": "mindglide",
+    "wall_clock_guard_hit": false,
+    "oom_or_killed_lines": []
+   },
+   "cost_record": "COST_RECORD,run_id=toolbench-mindglide-b,machine=n2-standard-4,seconds=11576,rate_usd_per_h=0.20793,cost_usd_compute_estimate=0.6686"
+  },
+  {
+   "run_id": "toolbench-mgraw",
+   "tools": [
+    "mindglide"
+   ],
+   "output_tags": {
+    "mindglide": "mindglide-raw"
+   },
+   "input_variant": "raw",
+   "started_utc": "2026-10-22T02:05:24Z",
+   "finished_utc": null,
+   "n_ok": 143,
+   "n_errors": 3,
+   "input_problems": [],
+   "fs_license_present": false,
+   "code_sha256": {
+    "toolbench_driver.py": "cc3120b826b9932a2d4e0f23b54f663d01333a2663d840b1a8e186f295a9042f",
+    "job_common.py": "9a731c470f6bfad61a289b0210ff15bb279310b827a54b7dacfd0aa65dd1a8d5",
+    "flames_inputs.json": "4847df6d0edcdd4c4920c782b72706b544dfe41bf1cf2863e79deb82fc9e398d"
+   },
+   "samseg_seed": 12345,
+   "timeout_min": 45.0,
+   "selection_explicit": 0,
+   "commands": {
+    "mindglide": "docker run --rm --network=none --shm-size=4g -v <case_dir>:/work -e OMP_NUM_THREADS=4 -e MKL_NUM_THREADS=4 -e ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=4 mindglide:bench -i /work/in/flair.nii.gz -o /work/out/mindglide_seg.nii.gz --device cpu"
+   },
+   "mindglide_digest_ok": true,
+   "mindglide_weights_ok": true,
+   "seconds_per_case": {
+    "median": 252.8,
+    "min": 172.1,
+    "max": 488.6
+   },
+   "peak_mem_gb_max": 13.31,
+   "peak_swap_gb_max": 0,
+   "log": {
+    "present": true,
+    "toolbench_done": null,
+    "tool_dropped_lines": [],
+    "tools_after_checks": "mindglide",
+    "wall_clock_guard_hit": true,
+    "oom_or_killed_lines": [
+     "[mindglide-raw] muslim_49 FAILED: RuntimeError(\"mindglide exit 137: STDOUT[-1500:]='\\\\nIf you use this tool, please cite the original MindGlide paper:\\\\n------\\\\nGoebl, P., Wingrove, J., Abdelmannan, "
+    ]
+   },
+   "cost_record": "COST_RECORD,run_id=toolbench-mgraw,machine=e2-standard-4,seconds=36001,rate_usd_per_h=0.14772,cost_usd_compute_estimate=1.4772"
+  },
+  {
+   "run_id": "toolbench-mgraw-2",
+   "tools": [
+    "mindglide"
+   ],
+   "output_tags": {
+    "mindglide": "mindglide-raw"
+   },
+   "input_variant": "raw",
+   "started_utc": "2026-10-22T14:29:00Z",
+   "finished_utc": "2026-10-22T17:24:55Z",
+   "n_ok": 36,
+   "n_errors": 0,
+   "input_problems": [],
+   "fs_license_present": false,
+   "code_sha256": {
+    "toolbench_driver.py": "cc3120b826b9932a2d4e0f23b54f663d01333a2663d840b1a8e186f295a9042f",
+    "job_common.py": "9a731c470f6bfad61a289b0210ff15bb279310b827a54b7dacfd0aa65dd1a8d5",
+    "flames_inputs.json": "4847df6d0edcdd4c4920c782b72706b544dfe41bf1cf2863e79deb82fc9e398d"
+   },
+   "samseg_seed": 12345,
+   "timeout_min": 45.0,
+   "selection_explicit": 0,
+   "commands": {
+    "mindglide": "docker run --rm --network=none --shm-size=4g -v <case_dir>:/work -e OMP_NUM_THREADS=4 -e MKL_NUM_THREADS=4 -e ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=4 mindglide:bench -i /work/in/flair.nii.gz -o /work/out/mindglide_seg.nii.gz --device cpu"
+   },
+   "mindglide_digest_ok": true,
+   "mindglide_weights_ok": true,
+   "seconds_per_case": {
+    "median": 286.15,
+    "min": 156.2,
+    "max": 425.8
+   },
+   "peak_mem_gb_max": 13.11,
+   "peak_swap_gb_max": 0,
+   "log": {
+    "present": true,
+    "toolbench_done": "TOOLBENCH DONE 36 ok, 0 errors, 0 input problems",
+    "tool_dropped_lines": [],
+    "tools_after_checks": "mindglide",
+    "wall_clock_guard_hit": false,
+    "oom_or_killed_lines": []
+   },
+   "cost_record": "COST_RECORD,run_id=toolbench-mgraw-2,machine=e2-standard-4,seconds=11062,rate_usd_per_h=0.14772,cost_usd_compute_estimate=0.4539"
+  },
+  {
+   "run_id": "toolbench-pilot-fs",
+   "tools": [
+    "wmhsynthseg",
+    "samseg"
+   ],
+   "output_tags": {
+    "wmhsynthseg": "wmhsynthseg",
+    "samseg": "samseg"
+   },
+   "input_variant": "flames",
+   "started_utc": "2026-10-23T15:25:06Z",
+   "finished_utc": null,
+   "n_ok": 3,
+   "n_errors": 0,
+   "input_problems": [],
+   "fs_license_present": true,
+   "code_sha256": {
+    "toolbench_driver.py": "cc3120b826b9932a2d4e0f23b54f663d01333a2663d840b1a8e186f295a9042f",
+    "job_common.py": "9a731c470f6bfad61a289b0210ff15bb279310b827a54b7dacfd0aa65dd1a8d5",
+    "flames_inputs.json": "4847df6d0edcdd4c4920c782b72706b544dfe41bf1cf2863e79deb82fc9e398d"
+   },
+   "samseg_seed": 12345,
+   "timeout_min": 45.0,
+   "selection_explicit": 3,
+   "commands": {
+    "wmhsynthseg": "docker run --rm --network=none --shm-size=4g -v <case_dir>:/work -e OMP_NUM_THREADS=4 -e MKL_NUM_THREADS=4 -e ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=4 -v /w/fs_license/license.txt:/fs_license/license.txt:ro -e FS_LICENSE=/fs_license/license.txt -v /w/models/WMH-SynthSeg_v10_231110.pth:/usr/local/freesurfer/8.2.0-1/models/WMH-SynthSeg_v10_231110.pth:ro --entrypoint /bin/bash freesurfer:bench -c source \"$FREESURFER_HOME/SetUpFreeSurfer.sh\" >/dev/null 2>&1 || true; exec \"$0\" \"$@\" mri_WMHsynthseg --i /work/in/flair.nii.gz --o /work/out/wmh_seg.nii.gz --csv_vols /work/out/wmh_vols.csv --device cpu --threads 4 --save_lesion_probabilities",
+    "samseg": "docker run --rm --network=none --shm-size=4g -v <case_dir>:/work -e OMP_NUM_THREADS=4 -e MKL_NUM_THREADS=4 -e ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=4 -v /w/fs_license/license.txt:/fs_license/license.txt:ro -e FS_LICENSE=/fs_license/license.txt --entrypoint /bin/bash freesurfer:bench -c source \"$FREESURFER_HOME/SetUpFreeSurfer.sh\" >/dev/null 2>&1 || true; exec \"$0\" \"$@\" run_samseg --input /work/in/flair.nii.gz --output /work/out/samseg --lesion --lesion-mask-pattern 1 --pallidum-separate --threads 4 --random-seed 12345 --save-posteriors Lesions"
+   },
+   "fs_digest_ok": true,
+   "fs_build": "freesurfer-linux-rocky8_x86_64-8.2.0-20260314-d932c45",
+   "wmh_model": {
+    "bytes": 790531383,
+    "sha256": "0ece39dd651357aa95222fc4d45fa32d00f11e763d2583cae3f869989ce35988"
+   },
+   "seconds_per_case": {
+    "median": 243.1,
+    "min": 215.6,
+    "max": 286.4
+   },
+   "peak_mem_gb_max": 31.32,
+   "peak_swap_gb_max": 1.41,
+   "log": {
+    "present": true,
+    "toolbench_done": null,
+    "tool_dropped_lines": [],
+    "tools_after_checks": "wmhsynthseg samseg",
+    "wall_clock_guard_hit": false,
+    "oom_or_killed_lines": []
+   },
+   "cost_record": "COST_RECORD,run_id=toolbench-pilot-fs,machine=n2d-highmem-4,seconds=1772,rate_usd_per_h=0.24851,cost_usd_compute_estimate=0.1223"
+  },
+  {
+   "run_id": "toolbench-pilot-fs-2",
+   "tools": [
+    "samseg"
+   ],
+   "output_tags": {
+    "samseg": "samseg"
+   },
+   "input_variant": "flames",
+   "started_utc": "2026-10-23T16:01:59Z",
+   "finished_utc": "2026-10-23T16:19:28Z",
+   "n_ok": 2,
+   "n_errors": 0,
+   "input_problems": [],
+   "fs_license_present": true,
+   "code_sha256": {
+    "toolbench_driver.py": "94e44a04c3cace09562c752dbcadf2aef4891597580bfc7fa7d60ea68fe79f1a",
+    "job_common.py": "9a731c470f6bfad61a289b0210ff15bb279310b827a54b7dacfd0aa65dd1a8d5",
+    "flames_inputs.json": "4847df6d0edcdd4c4920c782b72706b544dfe41bf1cf2863e79deb82fc9e398d"
+   },
+   "samseg_seed": 12345,
+   "timeout_min": 45.0,
+   "selection_explicit": 3,
+   "commands": {
+    "samseg": "docker run --rm --network=none --shm-size=4g -v <case_dir>:/work -e OMP_NUM_THREADS=4 -e MKL_NUM_THREADS=4 -e ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=4 -v /w/fs_license/license.txt:/fs_license/license.txt:ro -e FS_LICENSE=/fs_license/license.txt --entrypoint /bin/bash freesurfer:bench -c source \"$FREESURFER_HOME/SetUpFreeSurfer.sh\" >/dev/null 2>&1 || true; exec \"$0\" \"$@\" run_samseg --input /work/in/flair.nii.gz --output /work/out/samseg --lesion --lesion-mask-pattern 1 --pallidum-separate --threads 4 --random-seed 12345 --save-posteriors Lesions"
+   },
+   "fs_digest_ok": true,
+   "fs_build": "freesurfer-linux-rocky8_x86_64-8.2.0-20260314-d932c45",
+   "seconds_per_case": {
+    "median": 524.1,
+    "min": 492.3,
+    "max": 555.9
+   },
+   "peak_mem_gb_max": 7.1,
+   "peak_swap_gb_max": 0,
+   "log": {
+    "present": true,
+    "toolbench_done": "TOOLBENCH DONE 2 ok, 0 errors, 0 input problems",
+    "tool_dropped_lines": [],
+    "tools_after_checks": "samseg",
+    "wall_clock_guard_hit": false,
+    "oom_or_killed_lines": []
+   },
+   "cost_record": "COST_RECORD,run_id=toolbench-pilot-fs-2,machine=n2d-standard-4,seconds=1574,rate_usd_per_h=0.18953,cost_usd_compute_estimate=0.0829"
+  },
+  {
+   "run_id": "toolbench-wmh",
+   "tools": [
+    "wmhsynthseg"
+   ],
+   "output_tags": {
+    "wmhsynthseg": "wmhsynthseg"
+   },
+   "input_variant": "flames",
+   "started_utc": "2026-10-24T13:31:41Z",
+   "finished_utc": "2026-10-25T11:53:42Z",
+   "n_ok": 320,
+   "n_errors": 1,
+   "input_problems": [],
+   "fs_license_present": true,
+   "code_sha256": {
+    "toolbench_driver.py": "94e44a04c3cace09562c752dbcadf2aef4891597580bfc7fa7d60ea68fe79f1a",
+    "job_common.py": "9a731c470f6bfad61a289b0210ff15bb279310b827a54b7dacfd0aa65dd1a8d5",
+    "flames_inputs.json": "4847df6d0edcdd4c4920c782b72706b544dfe41bf1cf2863e79deb82fc9e398d"
+   },
+   "samseg_seed": 12345,
+   "timeout_min": 45.0,
+   "selection_explicit": 0,
+   "commands": {
+    "wmhsynthseg": "docker run --rm --network=none --shm-size=4g -v <case_dir>:/work -e OMP_NUM_THREADS=4 -e MKL_NUM_THREADS=4 -e ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=4 -v /w/fs_license/license.txt:/fs_license/license.txt:ro -e FS_LICENSE=/fs_license/license.txt -v /w/models/WMH-SynthSeg_v10_231110.pth:/usr/local/freesurfer/8.2.0-1/models/WMH-SynthSeg_v10_231110.pth:ro --entrypoint /bin/bash freesurfer:bench -c source \"$FREESURFER_HOME/SetUpFreeSurfer.sh\" >/dev/null 2>&1 || true; exec \"$0\" \"$@\" mri_WMHsynthseg --i /work/in/flair.nii.gz --o /work/out/wmh_seg.nii.gz --csv_vols /work/out/wmh_vols.csv --device cpu --threads 4 --save_lesion_probabilities"
+   },
+   "fs_digest_ok": true,
+   "fs_build": "freesurfer-linux-rocky8_x86_64-8.2.0-20260314-d932c45",
+   "wmh_model": {
+    "bytes": 790531383,
+    "sha256": "0ece39dd651357aa95222fc4d45fa32d00f11e763d2583cae3f869989ce35988"
+   },
+   "seconds_per_case": {
+    "median": 216.0,
+    "min": 172.2,
+    "max": 615.8
+   },
+   "peak_mem_gb_max": 31.34,
+   "peak_swap_gb_max": 14.38,
+   "log": {
+    "present": true,
+    "toolbench_done": "TOOLBENCH DONE 320 ok, 1 errors, 0 input problems",
+    "tool_dropped_lines": [],
+    "tools_after_checks": "wmhsynthseg",
+    "wall_clock_guard_hit": false,
+    "oom_or_killed_lines": [
+     "[wmhsynthseg] muslim_16 FAILED: RuntimeError(\"wmhsynthseg exit 137: STDOUT[-1500:]='' STDERR[-1500:]=''\")"
+    ]
+   },
+   "cost_record": "COST_RECORD,run_id=toolbench-wmh,machine=n2d-highmem-4,seconds=80884,rate_usd_per_h=0.24851,cost_usd_compute_estimate=5.5835"
+  },
+  {
+   "run_id": "toolbench-wmh-crop",
+   "tools": [
+    "wmhsynthseg"
+   ],
+   "output_tags": {
+    "wmhsynthseg": "wmhsynthseg"
+   },
+   "input_variant": "flames",
+   "started_utc": "2026-10-28T15:02:47Z",
+   "finished_utc": "2026-10-28T15:07:35Z",
+   "n_ok": 1,
+   "n_errors": 0,
+   "input_problems": [],
+   "fs_license_present": true,
+   "code_sha256": {
+    "toolbench_driver.py": "94e44a04c3cace09562c752dbcadf2aef4891597580bfc7fa7d60ea68fe79f1a",
+    "job_common.py": "9a731c470f6bfad61a289b0210ff15bb279310b827a54b7dacfd0aa65dd1a8d5",
+    "flames_inputs.json": "4847df6d0edcdd4c4920c782b72706b544dfe41bf1cf2863e79deb82fc9e398d"
+   },
+   "samseg_seed": 12345,
+   "timeout_min": 45.0,
+   "selection_explicit": 1,
+   "commands": {
+    "wmhsynthseg": "docker run --rm --network=none --shm-size=4g -v <case_dir>:/work -e OMP_NUM_THREADS=4 -e MKL_NUM_THREADS=4 -e ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=4 -v /w/fs_license/license.txt:/fs_license/license.txt:ro -e FS_LICENSE=/fs_license/license.txt -v /w/models/WMH-SynthSeg_v10_231110.pth:/usr/local/freesurfer/8.2.0-1/models/WMH-SynthSeg_v10_231110.pth:ro --entrypoint /bin/bash freesurfer:bench -c source \"$FREESURFER_HOME/SetUpFreeSurfer.sh\" >/dev/null 2>&1 || true; exec \"$0\" \"$@\" mri_WMHsynthseg --i /work/in/flair.nii.gz --o /work/out/wmh_seg.nii.gz --csv_vols /work/out/wmh_vols.csv --device cpu --threads 4 --save_lesion_probabilities --crop"
+   },
+   "fs_digest_ok": true,
+   "fs_build": "freesurfer-linux-rocky8_x86_64-8.2.0-20260314-d932c45",
+   "wmh_model": {
+    "bytes": 790531383,
+    "sha256": "0ece39dd651357aa95222fc4d45fa32d00f11e763d2583cae3f869989ce35988"
+   },
+   "seconds_per_case": {
+    "median": 287.4,
+    "min": 287.4,
+    "max": 287.4
+   },
+   "peak_mem_gb_max": 25.32,
+   "peak_swap_gb_max": 0,
+   "log": {
+    "present": true,
+    "toolbench_done": "TOOLBENCH DONE 1 ok, 0 errors, 0 input problems",
+    "tool_dropped_lines": [],
+    "tools_after_checks": "wmhsynthseg",
+    "wall_clock_guard_hit": false,
+    "oom_or_killed_lines": []
+   },
+   "cost_record": "COST_RECORD,run_id=toolbench-wmh-crop,machine=n2d-highmem-4,seconds=669,rate_usd_per_h=0.23892,cost_usd_compute_estimate=0.0444"
+  },
+  {
+   "run_id": "toolbench-samseg-a",
+   "tools": [
+    "samseg"
+   ],
+   "output_tags": {
+    "samseg": "samseg"
+   },
+   "input_variant": "flames",
+   "started_utc": "2026-10-28T15:06:27Z",
+   "finished_utc": "2026-10-28T20:49:59Z",
+   "n_ok": 42,
+   "n_errors": 0,
+   "input_problems": [],
+   "fs_license_present": true,
+   "code_sha256": {
+    "toolbench_driver.py": "94e44a04c3cace09562c752dbcadf2aef4891597580bfc7fa7d60ea68fe79f1a",
+    "job_common.py": "9a731c470f6bfad61a289b0210ff15bb279310b827a54b7dacfd0aa65dd1a8d5",
+    "flames_inputs.json": "4847df6d0edcdd4c4920c782b72706b544dfe41bf1cf2863e79deb82fc9e398d"
+   },
+   "samseg_seed": 12345,
+   "timeout_min": 45.0,
+   "selection_explicit": 43,
+   "commands": {
+    "samseg": "docker run --rm --network=none --shm-size=4g -v <case_dir>:/work -e OMP_NUM_THREADS=4 -e MKL_NUM_THREADS=4 -e ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=4 -v /w/fs_license/license.txt:/fs_license/license.txt:ro -e FS_LICENSE=/fs_license/license.txt --entrypoint /bin/bash freesurfer:bench -c source \"$FREESURFER_HOME/SetUpFreeSurfer.sh\" >/dev/null 2>&1 || true; exec \"$0\" \"$@\" run_samseg --input /work/in/flair.nii.gz --output /work/out/samseg --lesion --lesion-mask-pattern 1 --pallidum-separate --threads 4 --random-seed 12345 --save-posteriors Lesions"
+   },
+   "fs_digest_ok": true,
+   "fs_build": "freesurfer-linux-rocky8_x86_64-8.2.0-20260314-d932c45",
+   "seconds_per_case": {
+    "median": 489.1,
+    "min": 438.5,
+    "max": 570.6
+   },
+   "peak_mem_gb_max": 4.68,
+   "peak_swap_gb_max": 0,
+   "log": {
+    "present": true,
+    "toolbench_done": "TOOLBENCH DONE 42 ok, 0 errors, 0 input problems",
+    "tool_dropped_lines": [],
+    "tools_after_checks": "samseg",
+    "wall_clock_guard_hit": false,
+    "oom_or_killed_lines": []
+   },
+   "cost_record": "COST_RECORD,run_id=toolbench-samseg-a,machine=n2d-standard-4,seconds=20992,rate_usd_per_h=0.17994,cost_usd_compute_estimate=1.0493"
+  },
+  {
+   "run_id": "toolbench-samseg-c",
+   "tools": [
+    "samseg"
+   ],
+   "output_tags": {
+    "samseg": "samseg"
+   },
+   "input_variant": "flames",
+   "started_utc": "2026-10-28T15:08:51Z",
+   "finished_utc": "2026-10-28T21:15:01Z",
+   "n_ok": 42,
+   "n_errors": 0,
+   "input_problems": [],
+   "fs_license_present": true,
+   "code_sha256": {
+    "toolbench_driver.py": "94e44a04c3cace09562c752dbcadf2aef4891597580bfc7fa7d60ea68fe79f1a",
+    "job_common.py": "9a731c470f6bfad61a289b0210ff15bb279310b827a54b7dacfd0aa65dd1a8d5",
+    "flames_inputs.json": "4847df6d0edcdd4c4920c782b72706b544dfe41bf1cf2863e79deb82fc9e398d"
+   },
+   "samseg_seed": 12345,
+   "timeout_min": 45.0,
+   "selection_explicit": 43,
+   "commands": {
+    "samseg": "docker run --rm --network=none --shm-size=4g -v <case_dir>:/work -e OMP_NUM_THREADS=4 -e MKL_NUM_THREADS=4 -e ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=4 -v /w/fs_license/license.txt:/fs_license/license.txt:ro -e FS_LICENSE=/fs_license/license.txt --entrypoint /bin/bash freesurfer:bench -c source \"$FREESURFER_HOME/SetUpFreeSurfer.sh\" >/dev/null 2>&1 || true; exec \"$0\" \"$@\" run_samseg --input /work/in/flair.nii.gz --output /work/out/samseg --lesion --lesion-mask-pattern 1 --pallidum-separate --threads 4 --random-seed 12345 --save-posteriors Lesions"
+   },
+   "fs_digest_ok": true,
+   "fs_build": "freesurfer-linux-rocky8_x86_64-8.2.0-20260314-d932c45",
+   "seconds_per_case": {
+    "median": 523.9,
+    "min": 413.6,
+    "max": 627.4
+   },
+   "peak_mem_gb_max": 4.91,
+   "peak_swap_gb_max": 0,
+   "log": {
+    "present": true,
+    "toolbench_done": "TOOLBENCH DONE 42 ok, 0 errors, 0 input problems",
+    "tool_dropped_lines": [],
+    "tools_after_checks": "samseg",
+    "wall_clock_guard_hit": false,
+    "oom_or_killed_lines": []
+   },
+   "cost_record": "COST_RECORD,run_id=toolbench-samseg-c,machine=n2-standard-4,seconds=22425,rate_usd_per_h=0.20519,cost_usd_compute_estimate=1.2782"
+  },
+  {
+   "run_id": "toolbench-samseg-b",
+   "tools": [
+    "samseg"
+   ],
+   "output_tags": {
+    "samseg": "samseg"
+   },
+   "input_variant": "flames",
+   "started_utc": "2026-10-28T15:18:55Z",
+   "finished_utc": "2026-10-28T21:00:51Z",
+   "n_ok": 43,
+   "n_errors": 0,
+   "input_problems": [],
+   "fs_license_present": true,
+   "code_sha256": {
+    "toolbench_driver.py": "94e44a04c3cace09562c752dbcadf2aef4891597580bfc7fa7d60ea68fe79f1a",
+    "job_common.py": "9a731c470f6bfad61a289b0210ff15bb279310b827a54b7dacfd0aa65dd1a8d5",
+    "flames_inputs.json": "4847df6d0edcdd4c4920c782b72706b544dfe41bf1cf2863e79deb82fc9e398d"
+   },
+   "samseg_seed": 12345,
+   "timeout_min": 45.0,
+   "selection_explicit": 43,
+   "commands": {
+    "samseg": "docker run --rm --network=none --shm-size=4g -v <case_dir>:/work -e OMP_NUM_THREADS=4 -e MKL_NUM_THREADS=4 -e ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=4 -v /w/fs_license/license.txt:/fs_license/license.txt:ro -e FS_LICENSE=/fs_license/license.txt --entrypoint /bin/bash freesurfer:bench -c source \"$FREESURFER_HOME/SetUpFreeSurfer.sh\" >/dev/null 2>&1 || true; exec \"$0\" \"$@\" run_samseg --input /work/in/flair.nii.gz --output /work/out/samseg --lesion --lesion-mask-pattern 1 --pallidum-separate --threads 4 --random-seed 12345 --save-posteriors Lesions"
+   },
+   "fs_digest_ok": true,
+   "fs_build": "freesurfer-linux-rocky8_x86_64-8.2.0-20260314-d932c45",
+   "seconds_per_case": {
+    "median": 469.6,
+    "min": 424.6,
+    "max": 602.4
+   },
+   "peak_mem_gb_max": 5.97,
+   "peak_swap_gb_max": 0,
+   "log": {
+    "present": true,
+    "toolbench_done": "TOOLBENCH DONE 43 ok, 0 errors, 0 input problems",
+    "tool_dropped_lines": [],
+    "tools_after_checks": "samseg",
+    "wall_clock_guard_hit": false,
+    "oom_or_killed_lines": []
+   },
+   "cost_record": "COST_RECORD,run_id=toolbench-samseg-b,machine=n2d-standard-4,seconds=20892,rate_usd_per_h=0.17994,cost_usd_compute_estimate=1.0443"
+  }
+ ],
+ "input_sha256_mismatches": [],
+ "lesion_label_missing": []
+}

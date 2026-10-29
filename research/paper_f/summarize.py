@@ -2,7 +2,9 @@
 
 Adds nothing to the protocol: it only formats the pre-registered outputs and, for an INTERIM report
 (some tools not run yet), replaces Holm in an incomplete family by its conservative Bonferroni bound
-(p x family size, capped at 1), which Holm can never exceed once the family is complete.
+(p x family size, capped at 1), which Holm can never exceed once the family is complete. For the final
+report (comparisons carry `p_holm_registered_family`) it shows Holm over the registered family size, a
+test that could not run counting as p = 1, and lists the tests not run (PROTOCOL.md section 12, 2026-10-29).
 
     python research/paper_f/summarize.py --results <dir with per_scan.csv, comparisons.json> --out <tables.md>
 """
@@ -116,17 +118,23 @@ def tables(rows, comp, n_boot=M.BOOT_N):
             label = sub or band
             out["per_band"].append({"band": label, "tool": t, "n": len(rs), **res})
             L.append(f"| {label} | {NAMES[t]} | {len(rs)} | {ci(res['f1'])} | {ci(res['false_lesions'], 1)} | {ci(res['dice'])} |")
-    L.append("\n### Table 3 — pre-stated comparisons available now (difference = tool minus reference)\n")
+    L.append("\n### Table 3 — pre-stated comparisons (difference = tool minus reference)\n")
     L.append("| Family | Tool vs | Band | Outcome | Scans / patients | Difference (95% CI) | 90% CI | p | Multiplicity-adjusted p | Equivalent? |")
     L.append("|---|---|---|---|---|---|---|---|---|---|")
     out["comparisons"] = []
     for fam in ("primary", "secondary", "secondary_raw_arm"):
         avail = [r for r in comp.get(fam, []) if r.get("estimate") is not None]
         complete = len(avail) == FAMILY_SIZE[fam]
+        n_not_run = FAMILY_SIZE[fam] - len(avail)
         for r in avail:
-            adj = r.get("p_holm") if complete else (None if r.get("p_two_sided") is None
-                                                    else min(1.0, FAMILY_SIZE[fam] * r["p_two_sided"]))
-            how = "Holm" if complete else f"Bonferroni bound x{FAMILY_SIZE[fam]} (family incomplete)"
+            if "p_holm_registered_family" in r:          # final report (PROTOCOL.md section 12, 2026-10-29)
+                adj = r["p_holm_registered_family"]
+                how = "Holm" if complete else (f"Holm over the registered {FAMILY_SIZE[fam]} "
+                                               f"({n_not_run} not run, counted as p = 1)")
+            else:                                         # interim report: conservative Bonferroni bound
+                adj = r.get("p_holm") if complete else (None if r.get("p_two_sided") is None
+                                                        else min(1.0, FAMILY_SIZE[fam] * r["p_two_sided"]))
+                how = "Holm" if complete else f"Bonferroni bound x{FAMILY_SIZE[fam]} (family incomplete)"
             band = r.get("band") or r.get("contrast", "")
             eq = r.get("equivalent_within_margin")
             out["comparisons"].append({**r, "family": fam, "p_adjusted": adj, "adjustment": how})
@@ -134,6 +142,12 @@ def tables(rows, comp, n_boot=M.BOOT_N):
                      f"| {r.get('n_scans')} / {r.get('n_clusters')} | {ci(r, 3)} | {fmt(r.get('ci90', [None])[0])} to "
                      f"{fmt(r.get('ci90', [None, None])[1])} | {pfmt(r.get('p_two_sided'))} | {pfmt(adj)} ({how}) "
                      f"| {'—' if eq is None else ('yes' if eq else 'no')} |")
+        for r in comp.get(fam, []):
+            if r.get("estimate") is None:
+                out["comparisons"].append({**r, "family": fam, "p_adjusted": None, "adjustment": "not run"})
+                L.append(f"| {fam} | {NAMES.get(r['tool'], r['tool'])} vs {NAMES.get(r['vs'], r['vs'])} "
+                         f"| {r.get('band') or r.get('contrast', '')} | {r['outcome']} | 0 | **not run** (no usable pair) "
+                         f"| — | — | — | — |")
     L.append("\n### Table 4 — expert lesions detected, by lesion size (pooled over scans; 95% CI)\n")
     bins = M.SIZE_BIN_LABELS
     L.append("| Band | Tool | " + " | ".join(f"{b} mm³" for b in bins) + " |")

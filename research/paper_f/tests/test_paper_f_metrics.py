@@ -182,8 +182,11 @@ def test_interim_tables_bound_incomplete_families(tmp_path):
     rows = ev.per_scan_rows(cases, dirs, {})                        # SAMSEG never ran -> family incomplete
     ev.write_csv(rows, str(tmp_path / "per_scan.csv"))
     comp = ev.prestated(rows, n_boot=100)
+    for fam in ("primary", "secondary", "secondary_raw_arm"):          # an interim comparisons.json (2026-10-22)
+        for r in comp[fam]:                                            # predates the registered-family field
+            r.pop("p_holm_registered_family", None)
     md, data = sm.tables(sm.load_rows(str(tmp_path / "per_scan.csv")), comp, n_boot=100)
-    prim = [c for c in data["comparisons"] if c["family"] == "primary"]
+    prim = [c for c in data["comparisons"] if c["family"] == "primary" and c["adjustment"] != "not run"]
     assert prim and all(c["adjustment"].startswith("Bonferroni bound x6") for c in prim)
     mg = [c for c in prim if c["tool"] == "mindglide" and c["outcome"] == "f1"][0]
     assert mg["p_adjusted"] == min(1.0, 6 * mg["p_two_sided"])
@@ -192,6 +195,38 @@ def test_interim_tables_bound_incomplete_families(tmp_path):
     assert "samseg" not in data["tools_with_outputs"] and "Table 4" in md
     b = [x for x in data["size_bins"] if x["tool"] == "mindglide" and x["band"] == "thick" and x["n_ref"]]
     assert b and all(x["estimate"] == 1.0 for x in b)                  # the perfect tool detects every lesion
+
+
+def test_tier_restriction_and_registered_family_holm(tmp_path):
+    """PROTOCOL.md section 12, 2026-10-29: a tier-run tool is analysed only on its tier; a lone pilot output
+    outside it enters no comparison; Holm keeps the registered family size (tests not run count as p = 1)."""
+    import summarize as sm
+    dirs, cases = make_cohort(tmp_path)
+    shape = (40, 40, 12)
+    gt = blob(shape, (10, 10, 5), 4) | blob(shape, (30, 30, 6), 4)
+    for case, z in (("ms3seg_001", (0.9, 0.9, 6.8)), ("mslesseg_P1_T1", ISO)):      # tier scan + iso pilot
+        nii(os.path.join(dirs["tool"], f"{case}_samseg_seg.nii.gz"), gt, zooms=z, dtype=np.uint8)
+    rows = ev.per_scan_rows(cases, dirs, {}, tool_cases={"samseg": {"ms3seg_001", "muslim_02"}})
+    prim = {(r["case"], r["tool"]): r for r in rows if r["variant"] == "primary"}
+    assert prim[("ms3seg_001", "samseg")]["status"] == "ok"
+    assert prim[("muslim_02", "samseg")]["status"] == "missing"                      # in tier, no output
+    assert prim[("mslesseg_P1_T1", "samseg")]["status"] == ev.OUTSIDE_TIER
+    assert prim[("openms_patient01", "samseg")]["status"] == ev.NOT_RUN_TIER
+    res = ev.prestated(rows, n_boot=200)
+    sec = {(r["tool"], r.get("band", "contrast"), r["outcome"]): r for r in res["secondary"]}
+    assert sec[("samseg", "iso", "f1")]["estimate"] is None                           # pilot scan not used
+    assert sec[("samseg", "contrast", "f1")]["estimate"] is None
+    assert all(r["registered_family_size"] == 11 for r in res["secondary"])
+    done = [r for r in res["secondary"] if r.get("p_two_sided") is not None]
+    assert done and all(r["p_holm_registered_family"] >= r["p_holm"] - 1e-12 for r in done)
+    assert ev.holm_registered([0.01, None], 3) == [0.03, None]
+    assert ev.holm_registered([0.01, 0.02, 0.03], 3) == M.holm([0.01, 0.02, 0.03])
+    ev.write_csv(rows, str(tmp_path / "per_scan.csv"))
+    md, data = sm.tables(sm.load_rows(str(tmp_path / "per_scan.csv")), res, n_boot=100)
+    s = [c for c in data["comparisons"] if c["family"] == "secondary"]
+    assert len(s) == 11 and sum(c["adjustment"] == "not run" for c in s) == 3
+    assert all(c["adjustment"].startswith("Holm over the registered 11") for c in s if c["adjustment"] != "not run")
+    assert "**not run**" in md
 
 
 def test_check_flags_wrong_grid_and_non_binary(tmp_path):
