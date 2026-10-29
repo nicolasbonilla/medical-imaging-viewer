@@ -230,8 +230,10 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                               "the five-topography panel shown for any block"),
     "F3_confirm_offered_with_unsaved_changes": ([(DASH, "                  ) : hasUnsavedMaskChanges ? (\n", "                  ) : false ? (\n")],
                                                 "the confirm button offered while the mask on screen is not the saved one"),
-    "F4_confirmation_not_bound_to_the_mask": ([(DASH, "confirmSegmentationReview(segmentationId, digest)",
-                                                "confirmSegmentationReview(segmentationId, '0'.repeat(64))")],
+    # Release 2026-10-25 (final check of PR #69): the call also carries the drawn label table; F4 and WF3 anchor on
+    # the one call line, the mutations are unchanged.
+    "F4_confirmation_not_bound_to_the_mask": ([(DASH, "confirmSegmentationReview(segmentationId, digest, correctionsDigest ?? null,",
+                                                "confirmSegmentationReview(segmentationId, '0'.repeat(64), correctionsDigest ?? null,")],
                                               "the confirmation does not send the SHA-256 of the mask on screen"),
     "F5_confirm_offered_before_classification": ([(DASH, "              && (reason === 'segmentation_not_confirmed' || reason === 'confirmation_outdated');",
                                                    "              && true;")],
@@ -308,8 +310,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                              (DASH, "disabled={confirmBusy || (!!correctionsDigest && ackedCorrections !== correctionsDigest)}",
                                               "disabled={confirmBusy}")],
                                             "the confirmation is sent without the explicit acknowledgement (N1)"),
-    "WF3_acknowledgement_not_sent": ([(DASH, "confirmSegmentationReview(segmentationId, digest, correctionsDigest)",
-                                       "confirmSegmentationReview(segmentationId, digest)")],
+    "WF3_acknowledgement_not_sent": ([(DASH, "confirmSegmentationReview(segmentationId, digest, correctionsDigest ?? null,",
+                                       "confirmSegmentationReview(segmentationId, digest, null,")],
                                      "the acknowledged corrections are not sent with the confirmation (N1)"),
     "WF4_dialog_without_the_corrections": ([(DASH, "      correctionsDigest\n        ? `${question}", "      false\n        ? `${question}")],
                                            "the confirm dialog does not list the corrections (N1)"),

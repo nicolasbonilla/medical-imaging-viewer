@@ -32,6 +32,12 @@ Added after the film capture of the release build (2026-10-28, "DWM: 1 lesions")
 Added after the re-review of PR #71 (2026-10-29):
   I46/I47 the B1 fallback colour is cyan, apart from every preset colour (magenta is Active (Gd+)), and the
           warnings name it.
+Added after the final check of PR #69 (2026-10-29):
+  I48-I50 R1 — only the standard 2D view in segmentation mode publishes the segmentation it draws, and the
+          confirmation needs it;
+  I51-I53 R2 — the label preset is locked on a classified segmentation, and each value is drawn with its stored
+          label;
+  I54-I57 R2, server side — the drawn label table is sent, digested alike, served and checked.
 
 Method (as the other scripts): one mutation at a time in the real source; every anchor asserted to occur exactly
 once (on the LF text, so a Windows CRLF checkout works); only the bound tests are run — backend offline (PRB-002: a
@@ -94,6 +100,14 @@ UI_D = "frontend/src/components/LesionDashboard.release20261028d.test.tsx"
 API_P = "tests/unit/test_release_2026_10_25_plural_counts.py"
 # re-review of PR #71 (2026-10-29): the B1 fallback colour
 UI_FALLBACK = "frontend/src/utils/drawnLabels.fallback.test.ts"
+# final check of PR #69 (2026-10-29): R1, R2
+VIEW2D = "frontend/src/components/ImageViewer2D.tsx"
+APISEG = "frontend/src/api/segmentation.ts"
+SEGROUTE = "backend/app/api/routes/segmentation.py"
+UI_VIEWER29 = "frontend/src/ViewerApp.release20261029.test.tsx"
+UI_DASH29 = "frontend/src/components/LesionDashboard.release20261029.test.tsx"
+UI_DIGEST = "frontend/src/utils/drawnLabels.digest.test.ts"
+API_FINAL = "tests/unit/test_release_2026_10_25_final_check.py"
 EN = "frontend/src/i18n/locales/en.json"
 
 ASSEMBLED = '        result = {**result, **parts, "content": draft_text(parts, request.language)}\n'
@@ -320,6 +334,44 @@ M = {
     "I47_warning_names_magenta": (
         [(EN, "label table: drawn in cyan. Reopen the segmentation", "label table: drawn in magenta. Reopen the segmentation")],
         [UI_FALLBACK], "the warning names a colour the canvas does not use"),
+    # ── final check of PR #69: R1 (the view on screen), R2 (the labels drawn are the labels stored) ──
+    "I48_every_view_publishes_the_overlay": (
+        [(VIEW2D, "  const drawnHere = renderMode === 'standard' && segmentationMode && currentSeries\n",
+          "  const drawnHere = currentSeries\n")],
+        [UI_VIEWER29], "R1: segmentation mode off, NiiVue or matplotlib still count as drawing the segmentation"),
+    "I49_view_not_checked": (
+        [(DRAWN, "  if (input.onScreen === false) out.push({ kind: 'not_on_screen' });\n", "")],
+        [UI_DASH29], "R1: a confirmation from a view that does not draw the segmentation is accepted"),
+    "I50_dashboard_ignores_the_view": (
+        [(DASH, "      onScreen: state.overlayOnScreen === segmentationId,\n", "")],
+        [UI_DASH29], "R1: the confirmation does not ask which segmentation the view on screen draws"),
+    "I51_preset_not_locked": (
+        [(VIEWER, "                disabled={presetLocked}\n", "")],
+        [UI_VIEWER29], "R2: the label preset can be switched on a classified segmentation"),
+    "I52_stored_labels_not_compared": (
+        [(DRAWN, "    if (label && input.storedLabels) {\n", "    if (false) {\n")],
+        [UI_DASH29], "R2: values drawn with other names or colours than the stored labels are confirmed"),
+    "I53_dashboard_without_stored_labels": (
+        [(DASH, "      storedLabels: pendingRegions?.classified ? (pendingRegions.stored_labels ?? null) : undefined,\n", "")],
+        [UI_DASH29], "R2: the confirmation does not compare the drawn labels with the stored ones"),
+    "I54_server_ignores_the_drawn_table": (
+        [(SEGROUTE, '    if drawn_labels != dis_gate.drawn_labels_sha256(getattr(metadata, "labels", None) or []):\n',
+          '    if False:\n')],
+        [API_FINAL + "::test_rc071_release_final_a_confirmation_drawn_with_other_labels_is_refused"],
+        "R2: the server records a confirmation drawn with another label table"),
+    "I55_drawn_table_not_sent": (
+        [(APISEG, "        : { mask_sha256: maskSha256, drawn_labels_sha256: drawnLabelsSha256Hex },\n",
+          "        : { mask_sha256: maskSha256 },\n")],
+        [UI_DIGEST], "R2: the confirmation does not state the label table it was drawn with"),
+    "I56_server_digest_case_sensitive": (
+        [(GATE, '            rows.append({"id": lid, "name": str(get("name")), "color": str(get("color")).upper()})\n',
+          '            rows.append({"id": lid, "name": str(get("name")), "color": str(get("color"))})\n')],
+        [API_FINAL + "::test_rc071_release_final_drawn_labels_digest_is_the_shared_canonical_text"],
+        "R2: the server digests the table differently from the browser (a correct client is refused)"),
+    "I57_dis_state_without_stored_labels": (
+        [(GATE, '        "stored_labels": stored_labels(labels),\n', "")],
+        [API_FINAL + "::test_rc071_release_final_the_dis_state_serves_the_stored_label_table"],
+        "R2: the DIS state does not serve the stored label table"),
 }
 # Recorded with the result (integration review of PR #69, item 5: kept, and stated as by design).
 NOTES = {
