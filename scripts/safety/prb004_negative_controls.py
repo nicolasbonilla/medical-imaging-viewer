@@ -517,7 +517,7 @@ M = {  # name: ([(file, anchor, replacement), ...], [bound frontend tests] or No
           "        _ref_voxels, ref_affine, ref_header = _load_mask(ref_bytes)\n        ref_shape = tuple(_ref_voxels.shape[:3])\n")], None,
         "the whole reference MRI loaded to read its shape (the defect as found)"),
     "W12_alignment_outcome_not_stated": (
-        [(SEG, "            headers[\"X-Mask-Alignment\"] = alignment\n", "")], None,
+        [(SEG, "            headers[\"X-Mask-Alignment\"] = alignment\n", "            pass   # mutated: the outcome left out\n")], None,
         "the response does not say whether the mask was aligned, served as stored, or the alignment failed"),
     "W13_unlabelled_colour_magenta": (
         [(RC, "export const UNLABELLED_FALLBACK_COLOR = '#00FFFF';", "export const UNLABELLED_FALLBACK_COLOR = '#FF00FF';")],
