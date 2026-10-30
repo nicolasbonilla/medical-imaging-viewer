@@ -1,20 +1,20 @@
 {
-  "executed": "2026-10-30T06:52:27",
+  "executed": "2026-10-30T12:16:28",
   "method": "one mutation at a time; each anchor asserted to occur exactly once",
   "hash_basis": "sha256 of the UTF-8 text with LF line endings",
   "source_sha256": {
     "backend/app/api/routes/ai_segmentation.py": "611e97a9d48f6f7b984aaac9d010d4ffce27852200d34360164ee5e4ab54d4d8",
     "backend/app/api/routes/clinical_tools.py": "613693844484311a3c78d79c4a1d98c8fe72e8d6ec366c860ca415adf1199ed4",
-    "backend/app/api/routes/dicomweb.py": "d111ee27916a2400c7b797c9ba117746b2b77bfa326b9c0e0bc78b63c1c8619a",
+    "backend/app/api/routes/dicomweb.py": "93a6867eada0647cbe95d741851a1f1e6f4461110a72cdefc6092ef0cec7a8a9",
     "backend/app/api/routes/documents.py": "b345e85eddf9ed27462c093a35d127a4b87d5780a3797cfe9e5e7e75ac311325",
     "backend/app/api/routes/fhir.py": "832ec964c3142a12b1d1967698c639d604176f54b1135c022e5a208fa692543b",
     "backend/app/api/routes/imaging.py": "87a37a9f6ce703f5bedd28803ee39abe30b454df298f5be91913e9efd9a0ac4d",
-    "backend/app/api/routes/patients.py": "83cad2dcd21605c28c91aff3f766d6fe98e8e4dbc24677a66916915714aaf8b8",
+    "backend/app/api/routes/patients.py": "0033f5232ff94f93341047ef9dea81ab7fec492bde760ccc6d1625a168b1c99b",
     "backend/app/api/routes/segmentation.py": "511d34d674cd3fdd77d883395d70bd683f369513e4e262b53e6c363b5034102a",
-    "backend/app/api/routes/studies.py": "2bc5227fa0873fa43ba4114b343cfc991ea21f680f645b8d3efbe6631dc22ab3",
+    "backend/app/api/routes/studies.py": "da3af611f26d444776a16cb3e14510371a77c7a43cf9310212ce8897beab928c",
     "backend/app/api/routes/websocket.py": "4b5242793faeea168b5c49cefd25f3ff12a1855b670969b1fd02cdc536229695",
     "backend/app/security/ownership.py": "7e1e15766388c6247ad7713cd2005a3fd317846987763f12e9d77b2e7da53652",
-    "backend/app/security/patient_access_dependency.py": "4c0ad4c60d9f5cbc232566a4609f1d280ca866c437a8d0c6d9741cba7b040adb"
+    "backend/app/security/patient_access_dependency.py": "09b2717789009ff6e67506d378e23b4f3b02fb578fe9d27ab42eb29b72c29435"
   },
   "tests": [
     "tests/unit/test_capa009_object_authorization_everywhere.py"

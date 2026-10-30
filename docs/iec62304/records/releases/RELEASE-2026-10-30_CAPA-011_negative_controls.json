@@ -1,9 +1,9 @@
 {
-  "executed": "2026-10-30T05:01:23",
+  "executed": "2026-10-30T12:23:45",
   "method": "one mutation at a time; each anchor asserted to occur exactly once",
   "hash_basis": "sha256 of the UTF-8 text with LF line endings",
   "source_sha256": {
-    "backend/app/services/segmentation_service.py": "b789036f00469398ddf26c60eaff3bac618f4010b77964bf6bbcc0defa8a54ae",
+    "backend/app/services/segmentation_service.py": "d6ccc6e91b247a8f6641b9d76f0261cd78b9dce4231a2d9b35e3685d9ec09e64",
     "backend/app/services/tool_runner_service.py": "9c87e3b887ff41f190cba87c1ccfd5389e162f9c25a4eacbe81ee46d447301c0"
   },
   "tests": [

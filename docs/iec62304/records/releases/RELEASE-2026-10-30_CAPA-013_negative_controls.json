@@ -1,5 +1,5 @@
 {
-  "executed": "2026-10-30T04:28:26",
+  "executed": "2026-10-30T12:00:11",
   "method": "one mutation at a time; each anchor asserted to occur exactly once; the bound tests of the mutated side are run (backend pytest, frontend vitest JSON reporter)",
   "hash_basis": "sha256 of the UTF-8 text with LF line endings",
   "source_sha256": {
@@ -13,9 +13,9 @@
     "backend/app/services/longitudinal_candidate_safety.py": "7521e7a228de555986f5a9f5ac1a8afe9cef9b35aa41f3aed4cbe23976f17442",
     "frontend/src/components/LongitudinalCompare.tsx": "27dc294708b56b10ef90d1f1886a7628f16d5fc126dc162d88647426d85a12ea",
     "frontend/src/components/LongitudinalResultPanel.tsx": "f82d9abdd1449771814abec7daba0a8e32f484c631ac7cb27ced1b2f324fbcf1",
-    "frontend/src/i18n/locales/de.json": "da6cc2e32cac4f42f7e1077b08e47b297ba050f7ecb527c8c253194ee04f4f59",
-    "frontend/src/i18n/locales/en.json": "f6d5ebac973dae103e5a35fb9df365b0e1fef07f7f48e1ec9515868d2cf64367",
-    "frontend/src/i18n/locales/es.json": "493434378e48358d00bb3f79fd5524d391b2a865359fc01725b6eaa91912f0af"
+    "frontend/src/i18n/locales/de.json": "d21c05bb8d0b826916127123b96eea0b5bfde46440434a0428be232e0c88f3de",
+    "frontend/src/i18n/locales/en.json": "457fd2964481e2e2b617b7d3fd130be7b2e4868b9a27c7b26955f0c4a1fd4c9c",
+    "frontend/src/i18n/locales/es.json": "26e87993abff41c36c3eedbc18dc80d0124dc6adf7213f142b56795a1a8e1d48"
   },
   "test_sha256": {
     "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d",
@@ -40,7 +40,7 @@
       ],
       "reintroduces": "activity_candidate / dit_candidate reach the view, the report and the assistant (the defect as found)",
       "applied": true,
-      "executed": "2026-10-30T04:28:41",
+      "executed": "2026-10-30T12:00:25",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -70,7 +70,7 @@
       ],
       "reintroduces": "the route returns the raw comparison (as on PR #62)",
       "applied": true,
-      "executed": "2026-10-30T04:28:53",
+      "executed": "2026-10-30T12:00:37",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -105,7 +105,7 @@
       ],
       "reintroduces": "the activity statement computed from unconfirmed candidates",
       "applied": true,
-      "executed": "2026-10-30T04:29:04",
+      "executed": "2026-10-30T12:00:52",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -122,7 +122,7 @@
       ],
       "reintroduces": "a rejected candidate counted as confirmed",
       "applied": true,
-      "executed": "2026-10-30T04:29:16",
+      "executed": "2026-10-30T12:01:06",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -138,7 +138,7 @@
       ],
       "reintroduces": "any authenticated user records a confirmation",
       "applied": true,
-      "executed": "2026-10-30T04:29:27",
+      "executed": "2026-10-30T12:01:18",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -156,7 +156,7 @@
       ],
       "reintroduces": "a decision recorded for masks other than those compared",
       "applied": true,
-      "executed": "2026-10-30T04:29:39",
+      "executed": "2026-10-30T12:01:31",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -172,7 +172,7 @@
       ],
       "reintroduces": "decisions kept after either segmentation changed",
       "applied": true,
-      "executed": "2026-10-30T04:29:51",
+      "executed": "2026-10-30T12:01:43",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -189,7 +189,7 @@
       ],
       "reintroduces": "a decision stored without the authenticated reader",
       "applied": true,
-      "executed": "2026-10-30T04:30:04",
+      "executed": "2026-10-30T12:01:56",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -208,7 +208,7 @@
       ],
       "reintroduces": "any decision value accepted",
       "applied": true,
-      "executed": "2026-10-30T04:30:17",
+      "executed": "2026-10-30T12:02:10",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -224,7 +224,7 @@
       ],
       "reintroduces": "the report template asks for an Active/Not active classification (the defect as found)",
       "applied": true,
-      "executed": "2026-10-30T04:30:30",
+      "executed": "2026-10-30T12:02:23",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -242,7 +242,7 @@
       ],
       "reintroduces": "the report prompt labels candidates as active disease",
       "applied": true,
-      "executed": "2026-10-30T04:30:44",
+      "executed": "2026-10-30T12:02:36",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -261,7 +261,7 @@
       ],
       "reintroduces": "a report draft with longitudinal data ends without the unconfirmed-candidate notice",
       "applied": true,
-      "executed": "2026-10-30T04:30:55",
+      "executed": "2026-10-30T12:02:49",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -277,7 +277,7 @@
       ],
       "reintroduces": "the assistant receives activity / DIT flags",
       "applied": true,
-      "executed": "2026-10-30T04:31:06",
+      "executed": "2026-10-30T12:03:01",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -293,7 +293,7 @@
       ],
       "reintroduces": "the read-only assistant can record a radiologist decision",
       "applied": true,
-      "executed": "2026-10-30T04:31:18",
+      "executed": "2026-10-30T12:03:14",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -310,7 +310,7 @@
       ],
       "reintroduces": "the rate written in code instead of read from the asset",
       "applied": true,
-      "executed": "2026-10-30T04:31:29",
+      "executed": "2026-10-30T12:03:26",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -326,7 +326,7 @@
       ],
       "reintroduces": "the rate served for a rule it was not measured on",
       "applied": true,
-      "executed": "2026-10-30T04:31:40",
+      "executed": "2026-10-30T12:03:38",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -342,7 +342,7 @@
       ],
       "reintroduces": "an asset without the figure served as a rate of 0",
       "applied": true,
-      "executed": "2026-10-30T04:31:51",
+      "executed": "2026-10-30T12:03:50",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -359,7 +359,7 @@
       ],
       "reintroduces": "the API caveat (assistant, other consumers) omits the measured rate",
       "applied": true,
-      "executed": "2026-10-30T04:32:02",
+      "executed": "2026-10-30T12:04:03",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -380,7 +380,7 @@
       ],
       "reintroduces": "the asset states a figure that is not the one in its source record",
       "applied": true,
-      "executed": "2026-10-30T04:32:14",
+      "executed": "2026-10-30T12:04:15",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -396,7 +396,7 @@
       ],
       "reintroduces": "the assistant is told the subtraction confirms a lesion",
       "applied": true,
-      "executed": "2026-10-30T04:32:25",
+      "executed": "2026-10-30T12:04:27",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -415,7 +415,7 @@
       ],
       "reintroduces": "candidates shown whatever the acquisition (the defect as found)",
       "applied": true,
-      "executed": "2026-10-30T04:32:37",
+      "executed": "2026-10-30T12:04:40",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -436,7 +436,7 @@
       ],
       "reintroduces": "missing metadata treated as the same acquisition",
       "applied": true,
-      "executed": "2026-10-30T04:32:48",
+      "executed": "2026-10-30T12:04:52",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -454,7 +454,7 @@
       ],
       "reintroduces": "repetition / echo / inversion time and slice spacing not compared",
       "applied": true,
-      "executed": "2026-10-30T04:33:00",
+      "executed": "2026-10-30T12:05:05",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -470,7 +470,7 @@
       ],
       "reintroduces": "a change of voxel size between the visits not detected",
       "applied": true,
-      "executed": "2026-10-30T04:33:12",
+      "executed": "2026-10-30T12:05:17",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -486,7 +486,7 @@
       ],
       "reintroduces": "1.5 T and 3 T treated as the same field strength",
       "applied": true,
-      "executed": "2026-10-30T04:33:23",
+      "executed": "2026-10-30T12:05:29",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -504,7 +504,7 @@
       ],
       "reintroduces": "an abstained comparison still carries candidates and counts",
       "applied": true,
-      "executed": "2026-10-30T04:33:35",
+      "executed": "2026-10-30T12:05:42",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -522,7 +522,7 @@
       ],
       "reintroduces": "the acquisition of visit 1 compared with itself",
       "applied": true,
-      "executed": "2026-10-30T04:33:46",
+      "executed": "2026-10-30T12:05:54",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -538,7 +538,7 @@
       ],
       "reintroduces": "PACS import stores no acquisition record (every comparison would abstain)",
       "applied": true,
-      "executed": "2026-10-30T04:33:57",
+      "executed": "2026-10-30T12:06:07",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -554,7 +554,7 @@
       ],
       "reintroduces": "acquisition numbers stored as text (field strength '3' never equals 3.0)",
       "applied": true,
-      "executed": "2026-10-30T04:34:08",
+      "executed": "2026-10-30T12:06:21",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -575,7 +575,7 @@
       "error_files": [],
       "reintroduces": "the 'Active-disease CANDIDATE' / NEDA banner from the legacy flag (the defect as found)",
       "applied": true,
-      "executed": "2026-10-30T04:34:24",
+      "executed": "2026-10-30T12:06:42",
       "test_sha256": {
         "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "1a82b537670dd8f742b3008f59e24b60fcf932e624ba6999f4e359f0947f9b11"
       }
@@ -595,7 +595,7 @@
       "error_files": [],
       "reintroduces": "the activity box shown from unconfirmed candidates",
       "applied": true,
-      "executed": "2026-10-30T04:34:39",
+      "executed": "2026-10-30T12:06:59",
       "test_sha256": {
         "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "1a82b537670dd8f742b3008f59e24b60fcf932e624ba6999f4e359f0947f9b11"
       }
@@ -613,7 +613,7 @@
       "error_files": [],
       "reintroduces": "no way for the radiologist to record a decision (review stated, not recorded)",
       "applied": true,
-      "executed": "2026-10-30T04:35:02",
+      "executed": "2026-10-30T12:07:20",
       "test_sha256": {
         "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "1a82b537670dd8f742b3008f59e24b60fcf932e624ba6999f4e359f0947f9b11"
       }
@@ -630,7 +630,7 @@
       "error_files": [],
       "reintroduces": "the decision sent without the masks it was given for",
       "applied": true,
-      "executed": "2026-10-30T04:35:20",
+      "executed": "2026-10-30T12:07:36",
       "test_sha256": {
         "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "1a82b537670dd8f742b3008f59e24b60fcf932e624ba6999f4e359f0947f9b11"
       }
@@ -647,7 +647,7 @@
       "error_files": [],
       "reintroduces": "the panel keeps showing the state before the decision",
       "applied": true,
-      "executed": "2026-10-30T04:35:38",
+      "executed": "2026-10-30T12:07:54",
       "test_sha256": {
         "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "1a82b537670dd8f742b3008f59e24b60fcf932e624ba6999f4e359f0947f9b11"
       }
@@ -664,7 +664,7 @@
       "error_files": [],
       "reintroduces": "the rate written in the component instead of the asset",
       "applied": true,
-      "executed": "2026-10-30T04:35:54",
+      "executed": "2026-10-30T12:08:12",
       "test_sha256": {
         "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "1a82b537670dd8f742b3008f59e24b60fcf932e624ba6999f4e359f0947f9b11"
       }
@@ -685,7 +685,7 @@
       "error_files": [],
       "reintroduces": "the measured rate not shown",
       "applied": true,
-      "executed": "2026-10-30T04:36:10",
+      "executed": "2026-10-30T12:08:29",
       "test_sha256": {
         "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "1a82b537670dd8f742b3008f59e24b60fcf932e624ba6999f4e359f0947f9b11"
       }
@@ -703,7 +703,7 @@
       "error_files": [],
       "reintroduces": "the English backend caveat shown in every language (the defect as found)",
       "applied": true,
-      "executed": "2026-10-30T04:36:25",
+      "executed": "2026-10-30T12:08:45",
       "test_sha256": {
         "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "1a82b537670dd8f742b3008f59e24b60fcf932e624ba6999f4e359f0947f9b11"
       }
@@ -720,7 +720,7 @@
       "error_files": [],
       "reintroduces": "'confirmed brighter at follow-up' (the defect as found)",
       "applied": true,
-      "executed": "2026-10-30T04:36:40",
+      "executed": "2026-10-30T12:09:01",
       "test_sha256": {
         "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "1a82b537670dd8f742b3008f59e24b60fcf932e624ba6999f4e359f0947f9b11"
       }
@@ -737,7 +737,7 @@
       "error_files": [],
       "reintroduces": "'supports a genuine new lesion' (the defect as found)",
       "applied": true,
-      "executed": "2026-10-30T04:36:55",
+      "executed": "2026-10-30T12:09:18",
       "test_sha256": {
         "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "1a82b537670dd8f742b3008f59e24b60fcf932e624ba6999f4e359f0947f9b11"
       }
@@ -755,7 +755,7 @@
       "error_files": [],
       "reintroduces": "a safety text without a Spanish entry (English shown, the defect as found)",
       "applied": true,
-      "executed": "2026-10-30T04:37:10",
+      "executed": "2026-10-30T12:09:34",
       "test_sha256": {
         "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "1a82b537670dd8f742b3008f59e24b60fcf932e624ba6999f4e359f0947f9b11"
       }
@@ -773,7 +773,7 @@
       "error_files": [],
       "reintroduces": "the measured rate shown in English to German readers",
       "applied": true,
-      "executed": "2026-10-30T04:37:26",
+      "executed": "2026-10-30T12:09:50",
       "test_sha256": {
         "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "1a82b537670dd8f742b3008f59e24b60fcf932e624ba6999f4e359f0947f9b11"
       }
@@ -791,7 +791,7 @@
       "error_files": [],
       "reintroduces": "the standing caveat left partly in English for Spanish readers",
       "applied": true,
-      "executed": "2026-10-30T04:37:41",
+      "executed": "2026-10-30T12:10:06",
       "test_sha256": {
         "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "1a82b537670dd8f742b3008f59e24b60fcf932e624ba6999f4e359f0947f9b11"
       }
@@ -812,7 +812,7 @@
       "error_files": [],
       "reintroduces": "an abstained comparison shown as if candidates existed, with no reason",
       "applied": true,
-      "executed": "2026-10-30T04:38:01",
+      "executed": "2026-10-30T12:10:27",
       "test_sha256": {
         "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "1a82b537670dd8f742b3008f59e24b60fcf932e624ba6999f4e359f0947f9b11"
       }
@@ -829,7 +829,7 @@
       "error_files": [],
       "reintroduces": "the reader is not told which metadata are missing",
       "applied": true,
-      "executed": "2026-10-30T04:38:16",
+      "executed": "2026-10-30T12:10:43",
       "test_sha256": {
         "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "1a82b537670dd8f742b3008f59e24b60fcf932e624ba6999f4e359f0947f9b11"
       }
@@ -847,7 +847,7 @@
       ],
       "reintroduces": "the report prompt states a reader confirmation taken from its input (review blocker 1: 'confirmed by radiologist dr.house')",
       "applied": true,
-      "executed": "2026-10-30T04:38:27",
+      "executed": "2026-10-30T12:10:56",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -863,7 +863,7 @@
       ],
       "reintroduces": "the report route passes a client-sent reader confirmation to the report service",
       "applied": true,
-      "executed": "2026-10-30T04:38:38",
+      "executed": "2026-10-30T12:11:10",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -879,7 +879,7 @@
       ],
       "reintroduces": "earlier decisions overwritten instead of kept",
       "applied": true,
-      "executed": "2026-10-30T04:38:49",
+      "executed": "2026-10-30T12:11:22",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -895,7 +895,7 @@
       ],
       "reintroduces": "decisions that could not be read shown as 'awaiting review'",
       "applied": true,
-      "executed": "2026-10-30T04:39:01",
+      "executed": "2026-10-30T12:11:35",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -911,7 +911,7 @@
       ],
       "reintroduces": "a decision can be recorded while the stored decisions could not be read",
       "applied": true,
-      "executed": "2026-10-30T04:39:13",
+      "executed": "2026-10-30T12:11:49",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -927,7 +927,7 @@
       ],
       "reintroduces": "the assistant's rate written in code (review finding)",
       "applied": true,
-      "executed": "2026-10-30T04:39:26",
+      "executed": "2026-10-30T12:12:01",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -943,7 +943,7 @@
       ],
       "reintroduces": "'most candidates may be false' instead of the measured 46 % (review finding)",
       "applied": true,
-      "executed": "2026-10-30T04:39:37",
+      "executed": "2026-10-30T12:12:14",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -959,7 +959,7 @@
       ],
       "reintroduces": "the template list still advertises a NEDA-3 evaluation (review finding)",
       "applied": true,
-      "executed": "2026-10-30T04:39:48",
+      "executed": "2026-10-30T12:12:27",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -977,7 +977,7 @@
       ],
       "reintroduces": "lesion load and count of each visit still returned when counts are withheld (review blocker 2)",
       "applied": true,
-      "executed": "2026-10-30T04:40:00",
+      "executed": "2026-10-30T12:12:40",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -993,7 +993,7 @@
       ],
       "reintroduces": "the report prompt carries the lesion load when counts are withheld (review blocker 2)",
       "applied": true,
-      "executed": "2026-10-30T04:40:11",
+      "executed": "2026-10-30T12:12:53",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -1009,7 +1009,7 @@
       ],
       "reintroduces": "visit 2 earlier than visit 1 accepted (review finding)",
       "applied": true,
-      "executed": "2026-10-30T04:40:23",
+      "executed": "2026-10-30T12:13:05",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -1025,7 +1025,7 @@
       ],
       "reintroduces": "two segmentations of the same visit compared (review finding)",
       "applied": true,
-      "executed": "2026-10-30T04:40:35",
+      "executed": "2026-10-30T12:13:19",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -1041,7 +1041,7 @@
       ],
       "reintroduces": "candidates shown when the visit dates are unknown",
       "applied": true,
-      "executed": "2026-10-30T04:40:47",
+      "executed": "2026-10-30T12:13:31",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -1057,7 +1057,7 @@
       ],
       "reintroduces": "slowly-expanding lesions searched when the change candidates are withheld (review finding)",
       "applied": true,
-      "executed": "2026-10-30T04:41:00",
+      "executed": "2026-10-30T12:13:43",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -1075,7 +1075,7 @@
       ],
       "reintroduces": "the comparison route does not check the visits",
       "applied": true,
-      "executed": "2026-10-30T04:41:12",
+      "executed": "2026-10-30T12:13:56",
       "test_sha256": {
         "tests/unit/test_capa013_longitudinal_candidates.py": "fc462964c82d992cc9e16101cb6b4e3d59fb362552c9a211d06575fea38e800d"
       }
@@ -1092,7 +1092,7 @@
       "error_files": [],
       "reintroduces": "lesion load 'x → y mL' and counts shown when counts are withheld (review blocker 2)",
       "applied": true,
-      "executed": "2026-10-30T04:41:28",
+      "executed": "2026-10-30T12:14:14",
       "test_sha256": {
         "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "1a82b537670dd8f742b3008f59e24b60fcf932e624ba6999f4e359f0947f9b11"
       }
@@ -1109,7 +1109,7 @@
       "error_files": [],
       "reintroduces": "the SEL search offered when counts are withheld (review finding)",
       "applied": true,
-      "executed": "2026-10-30T04:41:43",
+      "executed": "2026-10-30T12:14:30",
       "test_sha256": {
         "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "1a82b537670dd8f742b3008f59e24b60fcf932e624ba6999f4e359f0947f9b11"
       }
@@ -1126,7 +1126,7 @@
       "error_files": [],
       "reintroduces": "visit 2 earlier than visit 1 can be compared from the view",
       "applied": true,
-      "executed": "2026-10-30T04:41:58",
+      "executed": "2026-10-30T12:14:46",
       "test_sha256": {
         "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "1a82b537670dd8f742b3008f59e24b60fcf932e624ba6999f4e359f0947f9b11"
       }
@@ -1143,7 +1143,7 @@
       "error_files": [],
       "reintroduces": "the same visit picked twice is not named as such",
       "applied": true,
-      "executed": "2026-10-30T04:42:13",
+      "executed": "2026-10-30T12:15:02",
       "test_sha256": {
         "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "1a82b537670dd8f742b3008f59e24b60fcf932e624ba6999f4e359f0947f9b11"
       }
@@ -1160,7 +1160,7 @@
       "error_files": [],
       "reintroduces": "decisions that could not be read shown as 'awaiting review'",
       "applied": true,
-      "executed": "2026-10-30T04:42:28",
+      "executed": "2026-10-30T12:15:20",
       "test_sha256": {
         "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "1a82b537670dd8f742b3008f59e24b60fcf932e624ba6999f4e359f0947f9b11"
       }
@@ -1177,7 +1177,7 @@
       "error_files": [],
       "reintroduces": "'most candidates may be false' instead of the measured share (review finding)",
       "applied": true,
-      "executed": "2026-10-30T04:42:43",
+      "executed": "2026-10-30T12:15:41",
       "test_sha256": {
         "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "1a82b537670dd8f742b3008f59e24b60fcf932e624ba6999f4e359f0947f9b11"
       }
@@ -1194,7 +1194,7 @@
       "error_files": [],
       "reintroduces": "abstention for unknown visit dates without saying why",
       "applied": true,
-      "executed": "2026-10-30T04:42:58",
+      "executed": "2026-10-30T12:15:59",
       "test_sha256": {
         "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "1a82b537670dd8f742b3008f59e24b60fcf932e624ba6999f4e359f0947f9b11"
       }

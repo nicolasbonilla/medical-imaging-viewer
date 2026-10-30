@@ -1,6 +1,6 @@
 {
-  "executed": "2026-10-30T02:25:17",
-  "tree": "04fd105ef2e3b2b134742919d83dae3bcc540e10",
+  "executed": "2026-10-30T09:52:51",
+  "tree": "c3f3e8e8051f2123f5caa03a425853ec22c45807",
   "method": "one mutation at a time; each anchor asserted to occur exactly once (LF text); only the bound tests run (backend offline per PRB-002, with an outer environment asking for the Firestore backends and a 60-minute access token that conftest must override; frontend with vitest); bytes restored after each mutation and verified at the end",
   "hash_basis": "sha256 of the UTF-8 text with LF line endings",
   "source_sha256": {
@@ -9,6 +9,7 @@
     "backend/app/api/routes/segmentation_regions.py": "c7266b6410f4486db19a95fb3123b9c9a602d9ce1a842d96488d446fd82318e5",
     "backend/app/core/logging/audit_middleware.py": "908a769a69a38994cdae391dbc2efbd3689d085666fd7ce6222ff80245bc886b",
     "backend/app/mcp/ms_clinical_server.py": "65d95f4cdd52af7ca0ea88630798cdbdf62a7491629e0ae91d6ce6c4efe880d4",
+    "backend/app/security/auth.py": "10795eb25a9b2bdd2fde444330029f88eb866b15ffccf97bc0716420becf7271",
     "backend/app/services/brain_report_service.py": "18dd4f0f1a77541fe49612377a7a432694282b448ead10f59e9b2ac351915cba",
     "backend/app/services/dis_review_gate.py": "eb313ff3659fdb133bd834cac96a78370dda2cfdb3a452221226ec27890a01ab",
     "backend/app/services/report_payload_guard.py": "5a04fcfc7a333f030da9ec893b6c03e0c98157e866f5794c9e53b07515d3dc66",
@@ -16,9 +17,9 @@
     "frontend/src/ViewerApp.tsx": "a20df8fe8f76ba71c6fa3f20700743fe2efd09f2ada7211aa8fcfcd52f3e7c07",
     "frontend/src/api/segmentation.ts": "44eda2d5436e67c2bae84ee782f2c7de510df2e3011873c604bac4860c2cc972",
     "frontend/src/components/AIReportPanel.tsx": "004bfadca79b2fdd395ba25aeead06c14f83c0f973929806dcd69f972c2b98b2",
-    "frontend/src/components/ImageViewer2D.tsx": "d17dbc3250ca19b52381535f71b5f02d0f994c702643563d1a214099113f24dd",
+    "frontend/src/components/ImageViewer2D.tsx": "5c317de36b06e9d25d3477319dbac481d85c2f203e2f4d8d1aa78f6c23fed0f5",
     "frontend/src/components/LesionDashboard.tsx": "9f410e534450b30c8471ceeed60aba8c0311a015dbf0e4ca31778f2a884ef9b7",
-    "frontend/src/i18n/locales/en.json": "f6d5ebac973dae103e5a35fb9df365b0e1fef07f7f48e1ec9515868d2cf64367",
+    "frontend/src/i18n/locales/en.json": "457fd2964481e2e2b617b7d3fd130be7b2e4868b9a27c7b26955f0c4a1fd4c9c",
     "frontend/src/store/useSegmentationStore.ts": "2423b997fc01973ea19b23bbf46892d8f027b1365ada72970b4ab1b02f4c226e",
     "frontend/src/types/lesion.ts": "e3c3ca8420bafd8e3cd34decd7cea5bb4e2cb1ade4a8e62ae7335fbf4cd27328",
     "frontend/src/utils/drawnLabels.ts": "c71f0024c0b6ebd788f4229bbb1688b05d3b73497a8dd033973f12c14ee801cd",
@@ -32,6 +33,7 @@
     "tests/unit/test_release_2026_10_25_plural_counts.py": "410864467fe5e0dced7437a3159f537e6cc188c81dc230c54d9051649cf1834d",
     "tests/unit/test_release_2026_10_25_review2_fixes.py": "43d72c4f11f0dd4c6cd12f907a8c7f1a4c43efd8ff9a7ad52e129f1e95c6191d",
     "tests/unit/test_release_2026_10_25_review_fixes.py": "b33ecdf3ee502bf648c8d19868d931a47163a0895cf0870a23b95d00323ed262",
+    "tests/unit/test_release_2026_10_30_main_merge.py": "3d2ee53402efbd598ca7a3e405108c65de5d873bf39d16b7e52e01c695ed9645",
     "tests/unit/test_release_2026_10_30_merge.py": "c255e996f12cb49f2c554776f83d12dd562638691c5c8a0fd7883cc26b47f52b",
     "frontend/src/ViewerApp.release20261028.test.tsx": "cedadf165f84b603236344050aa81cb66f03febca8f3dd0a95812b09b502456f",
     "frontend/src/ViewerApp.release20261029.test.tsx": "b68656add9b17c5288f995a8b21fcceaac2c0af3b0c894ad4859a3ebceaae3a8",
@@ -52,7 +54,7 @@
       "suite": "backend",
       "exit": 0,
       "failed": 0,
-      "passed": 84,
+      "passed": 86,
       "errors": 0,
       "failing_tests": []
     },
@@ -179,7 +181,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_integration.py::test_rc070_release_i1_the_dis_check_changes_the_model_text_never_the_clinicians_entry"
       ],
-      "executed": "2026-10-30T02:29:22",
+      "executed": "2026-10-30T09:55:12",
       "detected": true
     },
     "I1b_check_moved_after_the_draft_assembly": {
@@ -197,7 +199,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_integration.py::test_rc070_release_i1_the_dis_check_changes_the_model_text_never_the_clinicians_entry"
       ],
-      "executed": "2026-10-30T02:29:39",
+      "executed": "2026-10-30T09:55:23",
       "detected": true
     },
     "I2_template_variant_on_the_raw_block_with_its_own_rule": {
@@ -217,7 +219,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_integration.py::test_rc064_release_i2_the_template_variant_follows_the_dis_block_the_model_receives"
       ],
-      "executed": "2026-10-30T02:29:56",
+      "executed": "2026-10-30T09:55:36",
       "detected": true
     },
     "I3_dis_confirmation_route_not_audited": {
@@ -233,7 +235,7 @@
       "tests": [
         "tests/unit/test_capa015_audit_and_session.py::test_rc067_prb003_dis_confirmation_is_a_recorded_clinical_action"
       ],
-      "executed": "2026-10-30T02:30:11",
+      "executed": "2026-10-30T09:55:47",
       "detected": true
     },
     "I4_audit_backend_not_forced": {
@@ -249,7 +251,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_integration.py::test_release_c1_conftest_forces_the_capa015_test_settings"
       ],
-      "executed": "2026-10-30T02:30:27",
+      "executed": "2026-10-30T09:55:58",
       "detected": true
     },
     "I5_refresh_backend_not_forced": {
@@ -265,7 +267,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_integration.py::test_release_c1_conftest_forces_the_capa015_test_settings"
       ],
-      "executed": "2026-10-30T02:30:42",
+      "executed": "2026-10-30T09:56:08",
       "detected": true
     },
     "I6_access_lifetime_not_forced": {
@@ -279,7 +281,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_integration.py::test_release_c1_conftest_forces_the_capa015_test_settings"
       ],
-      "executed": "2026-10-30T02:30:50",
+      "executed": "2026-10-30T09:56:12",
       "detected": true,
       "note": "Detected by design through a start-up failure, not an assertion: with a 60-minute access token and a 30-minute refresh idle limit the application's own start-up check (CAPA-015, RC-068) refuses to start, so the bound test module cannot even be collected and the suite goes red (pytest exit 4). That refusal is the protection the forced setting keeps out of the test suite."
     },
@@ -298,7 +300,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_review_fixes.py::test_rc064_release_r1_unconfirmed_regions_give_no_placeholder_and_no_app_note"
       ],
-      "executed": "2026-10-30T02:31:09",
+      "executed": "2026-10-30T09:56:24",
       "detected": true
     },
     "I7b_prompt_ignores_unconfirmed_regions": {
@@ -316,7 +318,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_review_fixes.py::test_rc064_release_r1_unconfirmed_regions_give_no_placeholder_and_no_app_note"
       ],
-      "executed": "2026-10-30T02:31:27",
+      "executed": "2026-10-30T09:56:35",
       "detected": true
     },
     "I8_format_characters_removed_only_after_the_check": {
@@ -334,7 +336,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_review_fixes.py::test_rc070_release_r2_zero_width_characters_do_not_hide_a_dis_statement"
       ],
-      "executed": "2026-10-30T02:31:43",
+      "executed": "2026-10-30T09:56:45",
       "detected": true
     },
     "I9_evaluated_without_a_conclusion": {
@@ -351,7 +353,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_review_fixes.py::test_rc070_release_r3_one_rule_decides_evaluated_for_route_prompt_and_template"
       ],
-      "executed": "2026-10-30T02:31:59",
+      "executed": "2026-10-30T09:56:58",
       "detected": true
     },
     "I10_route_uses_its_own_status_only_rule": {
@@ -368,7 +370,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_review_fixes.py::test_rc070_release_r3_one_rule_decides_evaluated_for_route_prompt_and_template"
       ],
-      "executed": "2026-10-30T02:32:13",
+      "executed": "2026-10-30T09:57:09",
       "detected": true
     },
     "I11_panel_shows_no_measurements_for_a_geometry_422": {
@@ -386,7 +388,7 @@
       "tests": [
         "frontend/src/components/AIReportPanel.release20261025.test.tsx"
       ],
-      "executed": "2026-10-30T02:32:25",
+      "executed": "2026-10-30T09:57:20",
       "detected": true
     },
     "I12_geometry_422_without_its_phrase": {
@@ -402,7 +404,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_review_fixes.py::test_rc070_release_r6_unreadable_geometry_names_itself_and_the_panel_knows_the_phrase"
       ],
-      "executed": "2026-10-30T02:32:40",
+      "executed": "2026-10-30T09:57:32",
       "detected": true
     },
     "I13_classification_labels_not_applied_to_the_viewer": {
@@ -418,7 +420,7 @@
       "tests": [
         "frontend/src/components/LesionDashboard.release20261028.test.tsx"
       ],
-      "executed": "2026-10-30T02:32:51",
+      "executed": "2026-10-30T09:57:41",
       "detected": true
     },
     "I14_server_labels_skip_the_drawn_segmentation": {
@@ -434,7 +436,7 @@
       "tests": [
         "frontend/src/components/LesionDashboard.release20261028.test.tsx"
       ],
-      "executed": "2026-10-30T02:33:02",
+      "executed": "2026-10-30T09:57:50",
       "detected": true
     },
     "I15_removed_components_not_counted": {
@@ -450,7 +452,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_capture_fixes.py"
       ],
-      "executed": "2026-10-30T02:33:17",
+      "executed": "2026-10-30T09:58:01",
       "detected": true
     },
     "I16_labels_not_returned_by_the_classification": {
@@ -466,7 +468,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_capture_fixes.py"
       ],
-      "executed": "2026-10-30T02:33:31",
+      "executed": "2026-10-30T09:58:13",
       "detected": true
     },
     "I17_classification_card_silent_on_removed_components": {
@@ -482,7 +484,7 @@
       "tests": [
         "frontend/src/components/LesionDashboard.release20261028.test.tsx"
       ],
-      "executed": "2026-10-30T02:33:43",
+      "executed": "2026-10-30T09:58:21",
       "detected": true
     },
     "I18_confirm_dialog_silent_on_removed_components": {
@@ -498,7 +500,7 @@
       "tests": [
         "frontend/src/components/LesionDashboard.release20261028.test.tsx"
       ],
-      "executed": "2026-10-30T02:33:54",
+      "executed": "2026-10-30T09:58:29",
       "detected": true
     },
     "I19_no_pending_state_after_confirming": {
@@ -514,7 +516,7 @@
       "tests": [
         "frontend/src/components/LesionDashboard.release20261028.test.tsx"
       ],
-      "executed": "2026-10-30T02:34:06",
+      "executed": "2026-10-30T09:58:37",
       "detected": true
     },
     "I20_confirmation_never_shown_as_recorded": {
@@ -530,7 +532,7 @@
       "tests": [
         "frontend/src/components/LesionDashboard.release20261028.test.tsx"
       ],
-      "executed": "2026-10-30T02:34:17",
+      "executed": "2026-10-30T09:58:45",
       "detected": true
     },
     "I21_escape_text_in_region_rows": {
@@ -546,7 +548,7 @@
       "tests": [
         "frontend/src/components/LesionDashboard.release20261028.test.tsx"
       ],
-      "executed": "2026-10-30T02:34:29",
+      "executed": "2026-10-30T09:58:53",
       "detected": true
     },
     "I22_list_caches_kept_after_classification": {
@@ -562,7 +564,7 @@
       "tests": [
         "frontend/src/components/LesionDashboard.release20261028b.test.tsx"
       ],
-      "executed": "2026-10-30T02:34:42",
+      "executed": "2026-10-30T09:59:01",
       "detected": true
     },
     "I23_open_from_the_cached_list": {
@@ -580,7 +582,7 @@
       "tests": [
         "frontend/src/ViewerApp.release20261028.test.tsx"
       ],
-      "executed": "2026-10-30T02:34:57",
+      "executed": "2026-10-30T09:59:15",
       "detected": true
     },
     "I24_no_fallback_colour_for_unlabelled_values": {
@@ -596,7 +598,7 @@
       "tests": [
         "frontend/src/utils/drawnLabels.test.ts"
       ],
-      "executed": "2026-10-30T02:35:04",
+      "executed": "2026-10-30T09:59:22",
       "detected": true
     },
     "I25_no_warning_for_unlabelled_values": {
@@ -612,7 +614,7 @@
       "tests": [
         "frontend/src/ViewerApp.release20261028.test.tsx"
       ],
-      "executed": "2026-10-30T02:35:19",
+      "executed": "2026-10-30T09:59:34",
       "detected": true
     },
     "I26_confirmation_without_the_drawn_check": {
@@ -632,7 +634,7 @@
       "tests": [
         "frontend/src/components/LesionDashboard.release20261028b.test.tsx"
       ],
-      "executed": "2026-10-30T02:35:38",
+      "executed": "2026-10-30T09:59:48",
       "detected": true
     },
     "I27_hidden_label_not_checked": {
@@ -648,7 +650,7 @@
       "tests": [
         "frontend/src/components/LesionDashboard.release20261028b.test.tsx"
       ],
-      "executed": "2026-10-30T02:35:52",
+      "executed": "2026-10-30T09:59:58",
       "detected": true
     },
     "I28_overlay_switch_not_checked": {
@@ -664,7 +666,7 @@
       "tests": [
         "frontend/src/components/LesionDashboard.release20261028b.test.tsx"
       ],
-      "executed": "2026-10-30T02:36:07",
+      "executed": "2026-10-30T10:00:08",
       "detected": true
     },
     "I29_low_opacity_not_checked": {
@@ -680,7 +682,7 @@
       "tests": [
         "frontend/src/components/LesionDashboard.release20261028b.test.tsx"
       ],
-      "executed": "2026-10-30T02:36:22",
+      "executed": "2026-10-30T10:00:18",
       "detected": true
     },
     "I30_invisible_opacity_restored_next_session": {
@@ -697,7 +699,7 @@
       "tests": [
         "frontend/src/store/useSegmentationStore.release20261028.test.ts"
       ],
-      "executed": "2026-10-30T02:36:30",
+      "executed": "2026-10-30T10:00:23",
       "detected": true
     },
     "I31_dis_state_without_the_removal": {
@@ -713,7 +715,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_review2_fixes.py::test_rc070_release2_m1_the_dis_state_carries_the_removal_for_these_lesions_only"
       ],
-      "executed": "2026-10-30T02:36:46",
+      "executed": "2026-10-30T10:00:33",
       "detected": true
     },
     "I32_dis_card_takes_the_open_segmentations_classification": {
@@ -729,7 +731,7 @@
       "tests": [
         "frontend/src/components/LesionDashboard.release20261028c.test.tsx"
       ],
-      "executed": "2026-10-30T02:37:01",
+      "executed": "2026-10-30T10:00:43",
       "detected": true
     },
     "I33_reads_another_segmentations_analysis": {
@@ -745,7 +747,7 @@
       "tests": [
         "frontend/src/components/LesionDashboard.release20261028c.test.tsx"
       ],
-      "executed": "2026-10-30T02:37:14",
+      "executed": "2026-10-30T10:00:51",
       "detected": true
     },
     "I34_writes_into_another_segmentation": {
@@ -761,7 +763,7 @@
       "tests": [
         "frontend/src/components/LesionDashboard.release20261028c.test.tsx"
       ],
-      "executed": "2026-10-30T02:37:27",
+      "executed": "2026-10-30T10:01:02",
       "detected": true
     },
     "I35_second_classification_overwrites_the_removal": {
@@ -777,7 +779,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_review2_fixes.py::test_rc070_release2_m2_a_second_classification_carries_the_earlier_removal_forward"
       ],
-      "executed": "2026-10-30T02:37:44",
+      "executed": "2026-10-30T10:01:12",
       "detected": true
     },
     "I36_reload_failure_silent": {
@@ -793,7 +795,7 @@
       "tests": [
         "frontend/src/components/LesionDashboard.release20261028c.test.tsx"
       ],
-      "executed": "2026-10-30T02:37:58",
+      "executed": "2026-10-30T10:01:21",
       "detected": true
     },
     "I37_classify_allowed_anywhere": {
@@ -810,7 +812,7 @@
       "tests": [
         "frontend/src/components/LesionDashboard.release20261028c.test.tsx"
       ],
-      "executed": "2026-10-30T02:38:13",
+      "executed": "2026-10-30T10:01:29",
       "detected": true
     },
     "I38_viewer_evaluated_without_conclusion": {
@@ -826,7 +828,7 @@
       "tests": [
         "frontend/src/components/LesionDashboard.release20261028c.test.tsx"
       ],
-      "executed": "2026-10-30T02:38:27",
+      "executed": "2026-10-30T10:01:39",
       "detected": true
     },
     "I39_assistant_evaluated_without_conclusion": {
@@ -842,7 +844,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_review2_fixes.py::test_rc070_release2_m4_the_assistant_needs_a_yes_no_conclusion_too"
       ],
-      "executed": "2026-10-30T02:38:40",
+      "executed": "2026-10-30T10:01:48",
       "detected": true
     },
     "I40_recorded_but_unread_shows_not_confirmed": {
@@ -858,7 +860,7 @@
       "tests": [
         "frontend/src/components/LesionDashboard.release20261028c.test.tsx"
       ],
-      "executed": "2026-10-30T02:38:54",
+      "executed": "2026-10-30T10:01:59",
       "detected": true
     },
     "I41_every_lesion_table_failure_called_geometry": {
@@ -874,7 +876,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_review2_fixes.py::test_rc070_release2_n1_a_lesion_table_failure_names_its_real_reason"
       ],
-      "executed": "2026-10-30T02:39:08",
+      "executed": "2026-10-30T10:02:08",
       "detected": true
     },
     "I42_dashboard_count_plural_for_one": {
@@ -892,7 +894,7 @@
       "tests": [
         "frontend/src/components/LesionDashboard.release20261028d.test.tsx"
       ],
-      "executed": "2026-10-30T02:39:23",
+      "executed": "2026-10-30T10:02:18",
       "detected": true
     },
     "I43_dwm_count_english_only": {
@@ -911,7 +913,7 @@
       "tests": [
         "frontend/src/components/LesionDashboard.release20261028d.test.tsx"
       ],
-      "executed": "2026-10-30T02:39:37",
+      "executed": "2026-10-30T10:02:28",
       "detected": true
     },
     "I44_prompt_plural_for_one": {
@@ -927,7 +929,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_plural_counts.py"
       ],
-      "executed": "2026-10-30T02:39:50",
+      "executed": "2026-10-30T10:02:38",
       "detected": true
     },
     "I45_allow_list_without_the_plural": {
@@ -947,7 +949,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_plural_counts.py"
       ],
-      "executed": "2026-10-30T02:40:02",
+      "executed": "2026-10-30T10:02:47",
       "detected": true
     },
     "I46_fallback_colour_is_the_active_gd_magenta": {
@@ -964,7 +966,7 @@
       "tests": [
         "frontend/src/utils/drawnLabels.fallback.test.ts"
       ],
-      "executed": "2026-10-30T02:40:11",
+      "executed": "2026-10-30T10:02:52",
       "detected": true
     },
     "I47_warning_names_magenta": {
@@ -980,7 +982,7 @@
       "tests": [
         "frontend/src/utils/drawnLabels.fallback.test.ts"
       ],
-      "executed": "2026-10-30T02:40:19",
+      "executed": "2026-10-30T10:02:57",
       "detected": true
     },
     "I48_every_view_publishes_the_overlay": {
@@ -998,7 +1000,7 @@
       "tests": [
         "frontend/src/ViewerApp.release20261029.test.tsx"
       ],
-      "executed": "2026-10-30T02:40:39",
+      "executed": "2026-10-30T10:03:11",
       "detected": true
     },
     "I49_view_not_checked": {
@@ -1015,7 +1017,7 @@
       "tests": [
         "frontend/src/components/LesionDashboard.release20261029.test.tsx"
       ],
-      "executed": "2026-10-30T02:40:52",
+      "executed": "2026-10-30T10:03:22",
       "detected": true
     },
     "I50_dashboard_ignores_the_view": {
@@ -1032,7 +1034,7 @@
       "tests": [
         "frontend/src/components/LesionDashboard.release20261029.test.tsx"
       ],
-      "executed": "2026-10-30T02:41:07",
+      "executed": "2026-10-30T10:03:32",
       "detected": true
     },
     "I51_preset_not_locked": {
@@ -1048,7 +1050,7 @@
       "tests": [
         "frontend/src/ViewerApp.release20261029.test.tsx"
       ],
-      "executed": "2026-10-30T02:41:21",
+      "executed": "2026-10-30T10:03:42",
       "detected": true
     },
     "I52_stored_labels_not_compared": {
@@ -1065,7 +1067,7 @@
       "tests": [
         "frontend/src/components/LesionDashboard.release20261029.test.tsx"
       ],
-      "executed": "2026-10-30T02:41:33",
+      "executed": "2026-10-30T10:03:53",
       "detected": true
     },
     "I53_dashboard_without_stored_labels": {
@@ -1083,7 +1085,7 @@
       "tests": [
         "frontend/src/components/LesionDashboard.release20261029.test.tsx"
       ],
-      "executed": "2026-10-30T02:41:46",
+      "executed": "2026-10-30T10:04:03",
       "detected": true
     },
     "I54_server_ignores_the_drawn_table": {
@@ -1099,7 +1101,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_final_check.py::test_rc071_release_final_a_confirmation_drawn_with_other_labels_is_refused"
       ],
-      "executed": "2026-10-30T02:41:58",
+      "executed": "2026-10-30T10:04:14",
       "detected": true
     },
     "I55_drawn_table_not_sent": {
@@ -1115,7 +1117,7 @@
       "tests": [
         "frontend/src/utils/drawnLabels.digest.test.ts"
       ],
-      "executed": "2026-10-30T02:42:02",
+      "executed": "2026-10-30T10:04:17",
       "detected": true
     },
     "I56_server_digest_case_sensitive": {
@@ -1131,7 +1133,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_final_check.py::test_rc071_release_final_drawn_labels_digest_is_the_shared_canonical_text"
       ],
-      "executed": "2026-10-30T02:42:15",
+      "executed": "2026-10-30T10:04:25",
       "detected": true
     },
     "I57_dis_state_without_stored_labels": {
@@ -1147,7 +1149,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_25_final_check.py::test_rc071_release_final_the_dis_state_serves_the_stored_label_table"
       ],
-      "executed": "2026-10-30T02:42:33",
+      "executed": "2026-10-30T10:04:35",
       "detected": true
     },
     "I58_stored_table_not_as_drawn": {
@@ -1165,7 +1167,7 @@
       "tests": [
         "tests/unit/test_release_2026_10_30_merge.py"
       ],
-      "executed": "2026-10-30T02:42:52",
+      "executed": "2026-10-30T10:04:45",
       "detected": true
     },
     "I59_two_fallback_colours": {
@@ -1181,7 +1183,39 @@
       "tests": [
         "frontend/src/utils/fallbackColour.release20261030.test.ts"
       ],
-      "executed": "2026-10-30T02:43:02",
+      "executed": "2026-10-30T10:04:50",
+      "detected": true
+    },
+    "I60_privileged_creation_recorded_as_access_grant": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 1,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc067_release_1030_main_a_privileged_account_creation_is_recorded_as_a_role_assignment"
+      ],
+      "reintroduces": "an administrator account created by an administrator is recorded as an access grant",
+      "tests": [
+        "tests/unit/test_release_2026_10_30_main_merge.py"
+      ],
+      "executed": "2026-10-30T10:05:00",
+      "detected": true
+    },
+    "I61_created_account_not_recorded_as_target": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 1,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc067_release_1030_main_a_privileged_account_creation_is_recorded_as_a_role_assignment"
+      ],
+      "reintroduces": "the durable record of an account creation does not name the account created",
+      "tests": [
+        "tests/unit/test_release_2026_10_30_main_merge.py"
+      ],
+      "executed": "2026-10-30T10:05:09",
       "detected": true
     }
   },
@@ -1190,7 +1224,7 @@
       "suite": "backend",
       "exit": 0,
       "failed": 0,
-      "passed": 84,
+      "passed": 86,
       "errors": 0,
       "failing_tests": []
     },
@@ -1302,8 +1336,8 @@
     ]
   },
   "summary": {
-    "mutations": 61,
-    "detected": 61,
+    "mutations": 63,
+    "detected": 63,
     "undetected": []
   }
 }
