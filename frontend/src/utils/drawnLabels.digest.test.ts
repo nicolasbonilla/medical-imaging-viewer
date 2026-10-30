@@ -16,7 +16,20 @@ vi.mock('@/services/apiClient', () => ({ apiClient: { post: (...a: unknown[]) =>
 
 import * as drawn from './drawnLabels';
 import { segmentationAPI } from '@/api/segmentation';
-import { DEFAULT_LABEL_PRESETS } from '@/types/segmentation';
+// Release 2026-10-30 (merge with #71): the MAGNIMS preset now carries #71's shared region colours, so the shared
+// vector is computed on this fixed table (the colours of the vector), not on the preset.
+const MAGNIMS_TABLE = [
+  { id: 0, name: 'Background', color: '#000000' }, { id: 1, name: 'Periventricular', color: '#FF0000' },
+  { id: 2, name: 'Juxtacortical', color: '#00CC00' }, { id: 3, name: 'Infratentorial', color: '#0066FF' },
+  { id: 4, name: 'Deep White Matter', color: '#FFD700' }, { id: 5, name: 'Active (Gd+)', color: '#FF00FF' },
+  { id: 6, name: 'Black Hole (T1)', color: '#9932CC' },
+];
+const DEFAULT_TABLE = [
+  { id: 0, name: 'Background', color: '#000000' }, { id: 1, name: 'MS Lesion (Active)', color: '#FF0000' },
+  { id: 2, name: 'MS Lesion (Chronic)', color: '#FFD700' }, { id: 3, name: 'T2/FLAIR Hyperintensity', color: '#4169E1' },
+  { id: 4, name: 'Black Hole (T1)', color: '#9932CC' },
+];
+const DEFAULT_LABEL_PRESETS = { magnims: MAGNIMS_TABLE, default: DEFAULT_TABLE };
 
 const MAGNIMS_TEXT = '[[1,"Periventricular","#FF0000"],[2,"Juxtacortical","#00CC00"],[3,"Infratentorial","#0066FF"],'
   + '[4,"Deep White Matter","#FFD700"],[5,"Active (Gd+)","#FF00FF"],[6,"Black Hole (T1)","#9932CC"]]';

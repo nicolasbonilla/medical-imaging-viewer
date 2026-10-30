@@ -772,9 +772,11 @@ async def confirm_segmentation_review(
     # Release 2026-10-25 (final check of PR #69, R2): the client states the label table it DREW the mask with; a table
     # other than the stored one (e.g. the "Default" preset selected, which redraws the regions with other names and
     # colours) is refused. A partial, server-side safeguard: whether every lesion was drawn is checked in the browser
-    # (RMF-001, RC-071 residual risk).
+    # (RMF-001, RC-071 residual risk). Release 2026-10-30 (merge with PR #71): compared with the stored table AS THE
+    # VIEWER DRAWS IT (region names in the shared region colours), the table the client can have drawn.
     drawn_labels = str((body or {}).get("drawn_labels_sha256", "")).strip().lower()
-    if drawn_labels != dis_gate.drawn_labels_sha256(getattr(metadata, "labels", None) or []):
+    as_drawn = dis_gate.stored_labels(getattr(metadata, "labels", None) or [])
+    if drawn_labels != dis_gate.drawn_labels_sha256(as_drawn):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=("The labels the mask was drawn with on your screen are not the labels stored for this "

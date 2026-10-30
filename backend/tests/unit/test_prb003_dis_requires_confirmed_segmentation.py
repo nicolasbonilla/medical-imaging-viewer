@@ -409,10 +409,11 @@ def test_rc070_classify_regions_stores_no_dis_conclusion_for_an_unconfirmed_segm
 def _drawn(client, sid="seg-1"):
     """The label table the viewer drew the mask with: the one it read from the server (release 2026-10-25, final
     check of PR #69, R2 — the confirmation states it as `drawn_labels_sha256`)."""
-    from app.services.dis_review_gate import drawn_labels_sha256
+    # Release 2026-10-30 (merge with #71): the viewer draws region names in the shared region colours.
+    from app.services.dis_review_gate import drawn_labels_sha256, stored_labels
     r = client.get(f"/api/v1/segmentation/{sid}")
     labels = (r.json().get("metadata") or {}).get("labels") if r.status_code == 200 else None
-    return drawn_labels_sha256(labels or [])
+    return drawn_labels_sha256(stored_labels(labels or []))
 
 
 def _confirm(client, digest, sid="seg-1"):

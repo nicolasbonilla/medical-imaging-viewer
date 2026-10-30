@@ -17,12 +17,11 @@ export const MIN_VISIBLE_LESION_OPACITY = 0.25;
 /** A label's own opacity times the slider below which that label counts as not drawn. */
 export const MIN_VISIBLE_LABEL_ALPHA = 0.1;
 /**
- * Colour of a mask value the label table does not name: drawn, never transparent. Cyan, the colour PR #71 uses for the
- * same purpose in the GPU and 3D views (`UNLISTED_LABEL_HEX`): no preset label and no MAGNIMS zone uses it. (Not
- * magenta: that is the MAGNIMS "Active (Gd+)" colour, so an unlabelled value looked like an active lesion — re-review
- * of PR #71; drawnLabels.fallback.test.ts keeps it apart from every preset colour.)
+ * Colour of a mask value the label table does not name: drawn, never transparent — cyan, which no preset label and no
+ * MAGNIMS zone uses (not magenta, the "Active (Gd+)" colour). Release 2026-10-30 (merge of #69 and #71): ONE
+ * definition, in regionColors.ts, shared with the GPU and 3D views; re-exported here for the 2D canvas.
  */
-export const UNLABELLED_FALLBACK_COLOR = '#00FFFF';
+export { UNLABELLED_FALLBACK_COLOR } from './regionColors';
 
 /** Ids 1-255 that the label table does not name: the canvas draws them with the fallback colour. */
 export function idsWithoutLabel(labels: ReadonlyArray<Pick<LabelInfo, 'id'>> | null | undefined): number[] {

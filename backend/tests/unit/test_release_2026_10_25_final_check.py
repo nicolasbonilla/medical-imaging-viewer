@@ -61,8 +61,10 @@ def test_rc071_release_final_the_dis_state_serves_the_stored_label_table(client_
     _seed(svc, classified=True)
     regions = _dis(client_for(svc))["regions"]
     stored = {e["id"]: (e["name"], e["color"]) for e in regions["stored_labels"]}
+    # Release 2026-10-30 (merge with #71): served as drawn — deep white matter in the shared region colour (the
+    # fixture stores #CC79A7).
     assert stored == {1: ("Periventricular", "#E69F00"), 2: ("Juxtacortical", "#56B4E9"),
-                      3: ("Infratentorial", "#009E73"), 4: ("Deep White Matter", "#CC79A7")}
+                      3: ("Infratentorial", "#009E73"), 4: ("Deep White Matter", "#D55E00")}
 
 
 @pytest.mark.unit
@@ -94,11 +96,14 @@ def test_rc071_release_final_a_confirmation_drawn_with_the_stored_labels_is_reco
 
 
 def gate_digest_of(labels):
-    """The digest computed the way the browser does (frontend/src/utils/drawnLabels.ts), independent of the gate."""
+    """The digest computed the way the browser does (frontend/src/utils/drawnLabels.ts), independent of the gate —
+    of the table AS THE VIEWER DRAWS IT (release 2026-10-30, merge with #71: region names in the shared colours)."""
+    from app.api.routes.segmentation_regions import MAGNIMS_REGION_LABEL_COLORS
+    shared = {k.lower(): v.upper() for k, v in MAGNIMS_REGION_LABEL_COLORS.items()}
     rows = []
     for lbl in labels:
         d = lbl if isinstance(lbl, dict) else lbl.model_dump()
         if isinstance(d.get("id"), int) and d["id"] > 0:
-            rows.append([d["id"], str(d["name"]), str(d["color"]).upper()])
+            rows.append([d["id"], str(d["name"]), shared.get(str(d["name"]).lower(), str(d["color"]).upper())])
     rows.sort(key=lambda r: r[0])
     return hashlib.sha256(json.dumps(rows, separators=(",", ":"), ensure_ascii=False).encode("utf-8")).hexdigest()

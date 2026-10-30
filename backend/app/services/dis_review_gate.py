@@ -149,10 +149,8 @@ def labels_sha256(labels: Iterable[Any]) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
-def stored_labels(labels: Iterable[Any]) -> List[Dict[str, Any]]:
-    """The label table as it is drawn — id, name and colour of every label but the background, by id (release
-    2026-10-25, final check of PR #69, R2): served with the DIS state so the viewer can check that each value of the
-    mask is drawn with the label stored for it."""
+def _label_rows(labels: Iterable[Any]) -> List[Dict[str, Any]]:
+    """Id, name and colour (upper case) of every label but the background, by id — the table as given."""
     rows: List[Dict[str, Any]] = []
     for lbl in labels or []:
         get = (lambda k: lbl.get(k)) if isinstance(lbl, dict) else (lambda k: getattr(lbl, k, None))
@@ -163,12 +161,23 @@ def stored_labels(labels: Iterable[Any]) -> List[Dict[str, Any]]:
     return rows
 
 
+def stored_labels(labels: Iterable[Any]) -> List[Dict[str, Any]]:
+    """The stored label table AS THE VIEWER DRAWS IT (release 2026-10-25, final check of PR #69, R2; release
+    2026-10-30, merge with PR #71): a label named after a MAGNIMS region in the shared region colour (PRB-010,
+    `MAGNIMS_REGION_LABEL_COLORS` = frontend `withRegionColors`), whatever colour was stored with it — segmentations
+    classified before PRB-010 store red / green / blue / gold; every other label as stored. Served with the DIS state
+    so the viewer can check that each value of the mask is drawn with it, and digested to check the confirmation."""
+    from app.api.routes.segmentation_regions import MAGNIMS_REGION_LABEL_COLORS   # lazy: the route imports this module
+    shared = {name.lower(): colour.upper() for name, colour in MAGNIMS_REGION_LABEL_COLORS.items()}
+    return [{**r, "color": shared.get(r["name"].strip().lower(), r["color"])} for r in _label_rows(labels)]
+
+
 def drawn_labels_sha256(labels: Iterable[Any]) -> str:
     """SHA-256 of the label table as drawn: [[id, name, colour], …] by id, colours upper case, background excluded —
     the canonical text the viewer digests too (frontend/src/utils/drawnLabels.ts, `drawnLabelsSha256`). The DIS
     confirmation states the table it was drawn with; another table than the stored one is refused (final check of
     PR #69, R2: a partial, server-side safeguard — the drawn-lesion check itself runs in the browser)."""
-    canonical = json.dumps([[r["id"], r["name"], r["color"]] for r in stored_labels(labels)],
+    canonical = json.dumps([[r["id"], r["name"], r["color"]] for r in _label_rows(labels)],
                            separators=(",", ":"), ensure_ascii=False)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 

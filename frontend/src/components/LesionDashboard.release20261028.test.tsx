@@ -36,6 +36,7 @@ vi.mock('sonner', () => ({ toast: { loading: vi.fn(), success: vi.fn(), error: v
 
 import { LesionDashboard } from './LesionDashboard';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
+import { withRegionColors } from '@/utils/regionColors';
 
 const DIGEST = 'ab'.repeat(32);
 const ANALYSIS = {
@@ -151,7 +152,9 @@ describe('F08: every region is drawn right after the classification', () => {
     fireEvent.click(screen.getByRole('button', { name: /Auto-Classify Regions/ }));
     await waitFor(() => expect(analyzeLesions).toHaveBeenCalled());
     const s = useSegmentationStore.getState();
-    expect(s.activeSegmentation?.labels).toEqual(SERVER_LABELS);           // what the 2D canvas draws from
+    // Release 2026-10-30 (merge with #71): what the 2D canvas draws from is the server's labels in #71's shared region
+    // colours (withRegionColors; this fixture stores the colours from before PRB-010).
+    expect(s.activeSegmentation?.labels).toEqual(withRegionColors(SERVER_LABELS));
     expect(s.currentSegmentation?.metadata?.labels).toEqual(SERVER_LABELS);
     for (const id of [1, 2, 3, 4]) expect(s.labelVisibility[id]).toBe(true);
     expect(labelsAtReload).toEqual(expect.arrayContaining([1, 2, 3, 4]));  // applied before the mask reload
