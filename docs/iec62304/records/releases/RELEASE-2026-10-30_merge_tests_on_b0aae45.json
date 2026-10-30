@@ -1,0 +1,58 @@
+{
+  "executed": "2026-10-30T02:11:19",
+  "code_under_test": "b0aae45a79b2d9a4e8ae14333238343cf34acf3c (application code unchanged; only the new test files present)",
+  "purpose": "failing-first evidence for the merge of #69 and #71: the stored label table must be served, and the drawn-table digest checked, AS THE VIEWER DRAWS IT (#71's shared region colours), so a segmentation classified before #71 can be confirmed and colours the viewer never draws are refused; one fallback colour definition; the viewer-side contract test of the merged dashboard",
+  "environment": "offline per PRB-002 (missing credentials file, empty gcloud configuration, mstool-offline-tests, no model-provider key)",
+  "backend": {
+    "files": [
+      "tests/unit/test_release_2026_10_30_merge.py"
+    ],
+    "failed": 3,
+    "total": 3,
+    "cases": {
+      "test_rc071_release_1030_the_dis_state_serves_the_labels_as_drawn": {
+        "status": "failed",
+        "reason": "AssertionError: assert [(1, 'Periven...', '#FFD700')] == [(1, 'Periven...', '#D55E00')]\n  \n  At index 0 diff: (1, 'Periventricular', '#FF0000') != (1, 'Periventricular', '#E69F00')\n  Use -v to get more diff"
+      },
+      "test_rc071_release_1030_a_segmentation_classified_before_71_drawn_in_the_region_colours_is_confirmed": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_409\",\"message\":\"The labels the mask was drawn with on your screen are not the labels stored for this segmentation (another label preset, or labels changed since it was opened). Reopen the segmentation, check every lesion with its stored region labels, then conf"
+      },
+      "test_rc071_release_1030_a_confirmation_stating_colours_the_viewer_never_draws_is_refused": {
+        "status": "failed",
+        "reason": "AssertionError: {\"success\":true,\"already_confirmed\":false,\"clinician_review\":{\"reviewed_by\":\"dr_rev\",\"reviewed_by_id\":\"u-1\",\"reviewed_by_role\":\"radiologist\",\"reviewed_at\":\"2026-10-30T01:11:39.389779Z\",\"reviewed_mask_sha256\":\"7afa2b6aec6cbed8f9fb421786a4bb60895b9d08e88c64cbb2aad9dbc135d43b\",\"reviewed"
+      }
+    }
+  },
+  "frontend": {
+    "files": [
+      "src/utils/fallbackColour.release20261030.test.ts",
+      "src/components/LesionDashboard.release20261030.test.tsx"
+    ],
+    "failed": 1,
+    "total": 4,
+    "files_failing_to_load": {},
+    "cases": {
+      "rc071 release 1030 is drawn in the region colours and confirmed against the table as drawn": {
+        "file": "src/components/LesionDashboard.release20261030.test.tsx",
+        "status": "passed",
+        "reason": null
+      },
+      "rc071 release 1030 a table in colours the viewer does not draw is refused": {
+        "file": "src/components/LesionDashboard.release20261030.test.tsx",
+        "status": "passed",
+        "reason": null
+      },
+      "rc070 release 1030 the 2D canvas and the GPU / 3D views use the same constant": {
+        "file": "src/utils/fallbackColour.release20261030.test.ts",
+        "status": "passed",
+        "reason": null
+      },
+      "rc070 release 1030 it is defined once, in regionColors.ts": {
+        "file": "src/utils/fallbackColour.release20261030.test.ts",
+        "status": "failed",
+        "reason": "AssertionError: expected 1 to be +0 // Object.is equality\n    at C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/release-2026-10-30/frontend/src/utils/fallbackColour.release20261030.test.ts:28:43\n    at file:///C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/agent-a8847e46e97c8da"
+      }
+    }
+  }
+}

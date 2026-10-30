@@ -48,9 +48,12 @@ RISK_CONTROLS = [
     ("RC-006", "HAZ-003", "Report includes structured disclaimers and limitations section",
      "brain_report_service.py FORMAT_INSTRUCTIONS mandate disclaimer in every report",
      "Code inspection + unit test: test_brain_report_service.py"),
-    ("RC-007", "HAZ-003", "De-identified data only sent to Claude API (HIPAA Safe Harbor)",
-     "brain_report_service.py _build_findings_prompt strips PHI; only age/sex/findings sent",
-     "Code inspection: brain_report_service.py lines 400-430"),
+    # RC-007 was withdrawn on 2026-07-18 (RCV-SUMMARY, RC-007'). Its 2026-04-12 wording is kept only in the
+    # historical records under docs/iec62304/records/ and is not generated again (CAPA-014, second review N9).
+    ("RC-007", "HAZ-003", "Withdrawn 2026-07-18; replaced by RC-064, RC-065 and RC-066 (CAPA-014)",
+     "Not a control. The AI report draft sends measurements only (RC-064), checks the request against the "
+     "patient's record before sending (RC-065) and adds the typed text in the application (RC-066)",
+     "See CAPA-014 and docs/iec62304/records/risk_verification/rc_test_manifest.json"),
     ("RC-008", "HAZ-004", "Confidence scores displayed for all AI predictions",
      "QuickScreenBadge.tsx shows confidence %",  # ms_region_classifier emits no confidence since RC-010 (amended), 2026-09-28
      "Code inspection: QuickScreenBadge.tsx"),

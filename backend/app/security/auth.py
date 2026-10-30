@@ -97,11 +97,12 @@ class AuthService:
         self.token_manager = token_manager or get_token_manager()
         self.password_policy = password_policy or PasswordPolicy()
 
-        # In-memory storage (replace with database in production)
+        # In-memory caches of the persistent user store (the store is the source of truth).
+        # CAPA-015 (RC-067): audit events are no longer kept in a per-process list — they go to
+        # the durable audit trail (stdout + Firestore `audit_logs`) through _log_audit_event.
         self._users: Dict[str, User] = {}
         self._user_passwords: Dict[str, str] = {}  # user_id -> hashed_password
         self._password_history: Dict[str, List[str]] = {}  # user_id -> [hashes]
-        self._audit_logs: List[AuditLog] = []
 
         # Persistent storage for Cloud Run
         from app.security.user_storage import get_user_storage
@@ -494,13 +495,22 @@ class AuthService:
             HTTPException: If validation fails
 
         ISO 27001: A.9.4.3 (Password management)
+
+        CAPA-015 (found 2026-10-24): the change was kept in this process's memory only, while
+        the login route reads the persistent user store — the OLD password kept working and the
+        new one did not (and a user created after start-up got 404). The persistent store is now
+        read and written; the in-memory caches follow it.
         """
-        user = self._users.get(user_id)
+        user = self._storage.get_user_by_id(user_id) or self._users.get(user_id)
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
             )
+        stored = self._storage.get_user_password_data(user_id) or {}
+        if stored.get("password_hash"):
+            self._user_passwords[user_id] = stored["password_hash"]
+            self._password_history[user_id] = list(stored.get("password_history") or [stored["password_hash"]])
 
         # Verify current password
         current_hash = self._user_passwords.get(user_id)
@@ -560,6 +570,12 @@ class AuthService:
         # Update password history
         password_history.insert(0, new_hash)
         self._password_history[user_id] = password_history[:self.password_policy.password_history_count]
+
+        # Persist (CAPA-015): the login route reads the persistent store. A failure here must
+        # fail the change — never report success for a password that does not work.
+        user.last_password_change = datetime.utcnow()
+        self._storage.save_user(user, new_hash, self._password_history[user_id])
+        self._users[user_id] = user
 
         self._log_audit_event(
             user_id=user_id,
@@ -725,8 +741,11 @@ class AuthService:
             )
         self._users[user_id] = user
 
+        changed = {"fields_changed": sorted(update_data.keys())}
+        if "role" in update_data and update_data["role"] is not None:
+            changed["new_role"] = getattr(update_data["role"], "value", update_data["role"])
         self._log_audit_event("user_updated", f"user:{user_id}", "success",
-                              user_id=updated_by or user_id, username=user.username)
+                              user_id=updated_by or user_id, username=user.username, details=changed)
         return user
 
     def delete_user(self, user_id: str, deleted_by: Optional[str] = None) -> None:
@@ -752,29 +771,28 @@ class AuthService:
                               user_id=deleted_by, username=user.username)
 
     def logout(self, token: str) -> None:
-        """Revoke a token (logout)."""
+        """Revoke an access token (logout). The route records the audit event with its actor."""
         try:
             self.token_manager.revoke_token(token)
         except Exception as e:
             logger.warning(f"Token revocation failed: {e}")
-        self._log_audit_event("logout", "session", "success")
 
-    def get_audit_logs(
-        self,
-        limit: int = 100,
-        offset: int = 0,
-        user_id: Optional[str] = None,
-        action: Optional[str] = None,
-    ) -> List[AuditLog]:
-        """Get filtered audit logs."""
-        logs = self._audit_logs
-        if user_id:
-            logs = [l for l in logs if l.user_id == user_id]
-        if action:
-            logs = [l for l in logs if l.action == action]
-        # Sort newest first
-        logs = sorted(logs, key=lambda l: l.timestamp, reverse=True)
-        return logs[offset:offset + limit]
+    # CAPA-015 (RC-067): this service's action names -> audit event types.
+    _AUDIT_EVENT_TYPES = {
+        "register_user": "admin.user.created",
+        "register_user_failed": "admin.user.created",
+        # Release 2026-10-30 (merge of PR #70 under CAPA-015): an administrator account created by an administrator
+        # is recorded a second time as a privileged event (#70, review m1) - a role assignment, not an access grant.
+        "privileged_account_created": "authz.role.assigned",
+        "login_success": "auth.login.success",
+        "login_failed": "auth.login.failed",
+        "account_locked": "auth.account.locked",
+        "password_changed": "auth.password.change",
+        "password_change_failed": "auth.password.change",
+        "user_updated": "admin.user.modified",
+        "user_deleted": "admin.user.deleted",
+        "logout": "auth.logout",
+    }
 
     def _log_audit_event(
         self,
@@ -787,25 +805,35 @@ class AuthService:
         user_agent: Optional[str] = None,
         details: Optional[dict] = None
     ) -> None:
-        """Log security audit event (ISO 27001 A.12.4.1)."""
-        audit_log = AuditLog(
-            id=str(uuid.uuid4()),
-            timestamp=datetime.utcnow(),
+        """Log security audit event (ISO 27001 A.12.4.1) to the durable audit trail.
+
+        CAPA-015 (RC-067): was appended to a per-process list that vanished on every Cloud Run
+        restart. Only identifiers, reason codes and allow-listed details are recorded (the
+        record builder drops e-mail addresses and typed names)."""
+        from app.core.logging.audit import emit_audit, AuditEventType, AuditOutcome, AuditSeverity
+
+        event_type = AuditEventType(self._AUDIT_EVENT_TYPES.get(action, "authz.access.granted"))
+        outcome = AuditOutcome.SUCCESS if result == "success" else AuditOutcome.FAILURE
+        details = dict(details or {})
+        target = resource.split(":", 1)[1] if resource.startswith("user:") else None
+        # Release 2026-10-30 (merge of PR #70): #70 names the account an administrator created in
+        # details["target_user_id"] (its resource is the route); recorded as the target, an identifier.
+        target = target or (str(details.pop("target_user_id")) if details.get("target_user_id") else None)
+        actor = self._users.get(user_id) if user_id else None
+        # The username passed by update/delete is the TARGET's; never record it as the actor's.
+        actor_username = actor.username if actor else (username if user_id and target in (None, user_id) else None)
+        emit_audit(
+            event_type,
+            outcome,
             user_id=user_id,
-            username=username,
-            action=action,
-            resource=resource,
-            result=result,
+            username=actor_username,
+            role=getattr(actor, "role", None),
+            reason=details.pop("reason", None) or (None if outcome == AuditOutcome.SUCCESS else action),
+            resource_type="user" if target else None,
+            resource_ids={"target_user_id": target} if target else None,
+            details=details,
             ip_address=ip_address,
-            user_agent=user_agent,
-            details=details
-        )
-
-        self._audit_logs.append(audit_log)
-
-        logger.info(
-            f"Security event: {action}",
-            extra=audit_log.model_dump()
+            severity=AuditSeverity.HIGH if event_type.value.startswith("admin.") else None,
         )
 
 

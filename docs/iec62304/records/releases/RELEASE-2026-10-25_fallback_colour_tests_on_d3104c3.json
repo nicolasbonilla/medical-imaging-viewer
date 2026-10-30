@@ -1,0 +1,107 @@
+{
+  "executed": "2026-10-29T00:45:12",
+  "code_under_test": "d3104c39e3d3f22a35a0a5a656dd010a998e6e1f (application code unchanged; only the new test files present)",
+  "purpose": "failing-first evidence for the re-review of PR #71: the B1 fallback colour of the 2D canvas (#FF00FF, magenta) is the MAGNIMS Active (Gd+) label colour, so a mask value without a label looked like an active lesion; it must be the cyan of PR #71 (#00FFFF), clearly apart from every preset label and zone colour, and the en/es/de warnings must name it",
+  "environment": "offline per PRB-002 (missing credentials file, empty gcloud configuration, mstool-offline-tests, no model-provider key)",
+  "backend": {},
+  "frontend": {
+    "files": [
+      "src/utils/drawnLabels.fallback.test.ts"
+    ],
+    "failed": 5,
+    "total": 18,
+    "files_failing_to_load": {},
+    "cases": {
+      "rc070 release b1 fallback is the cyan of PR #71": {
+        "file": "src/utils/drawnLabels.fallback.test.ts",
+        "status": "failed",
+        "reason": "AssertionError: expected '#FF00FF' to be '#00FFFF' // Object.is equality\n    at C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/release-2026-10-25/frontend/src/utils/drawnLabels.fallback.test.ts:35:53\n    at file:///C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/agent-a8847e46e9"
+      },
+      "rc070 release b1 fallback is clearly apart from default 1 MS Lesion (Active) (#FF0000)": {
+        "file": "src/utils/drawnLabels.fallback.test.ts",
+        "status": "passed",
+        "reason": null
+      },
+      "rc070 release b1 fallback is clearly apart from default 2 MS Lesion (Chronic) (#FFD700)": {
+        "file": "src/utils/drawnLabels.fallback.test.ts",
+        "status": "passed",
+        "reason": null
+      },
+      "rc070 release b1 fallback is clearly apart from default 3 T2/FLAIR Hyperintensity (#4169E1)": {
+        "file": "src/utils/drawnLabels.fallback.test.ts",
+        "status": "passed",
+        "reason": null
+      },
+      "rc070 release b1 fallback is clearly apart from default 4 Black Hole (T1) (#9932CC)": {
+        "file": "src/utils/drawnLabels.fallback.test.ts",
+        "status": "passed",
+        "reason": null
+      },
+      "rc070 release b1 fallback is clearly apart from magnims 1 Periventricular (#FF0000)": {
+        "file": "src/utils/drawnLabels.fallback.test.ts",
+        "status": "passed",
+        "reason": null
+      },
+      "rc070 release b1 fallback is clearly apart from magnims 2 Juxtacortical (#00CC00)": {
+        "file": "src/utils/drawnLabels.fallback.test.ts",
+        "status": "passed",
+        "reason": null
+      },
+      "rc070 release b1 fallback is clearly apart from magnims 3 Infratentorial (#0066FF)": {
+        "file": "src/utils/drawnLabels.fallback.test.ts",
+        "status": "passed",
+        "reason": null
+      },
+      "rc070 release b1 fallback is clearly apart from magnims 4 Deep White Matter (#FFD700)": {
+        "file": "src/utils/drawnLabels.fallback.test.ts",
+        "status": "passed",
+        "reason": null
+      },
+      "rc070 release b1 fallback is clearly apart from magnims 5 Active (Gd+) (#FF00FF)": {
+        "file": "src/utils/drawnLabels.fallback.test.ts",
+        "status": "failed",
+        "reason": "AssertionError: expected 0 to be greater than 100\n    at C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/release-2026-10-25/frontend/src/utils/drawnLabels.fallback.test.ts:39:57\n    at file:///C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/agent-a8847e46e97c8da95/frontend/node_m"
+      },
+      "rc070 release b1 fallback is clearly apart from magnims 6 Black Hole (T1) (#9932CC)": {
+        "file": "src/utils/drawnLabels.fallback.test.ts",
+        "status": "passed",
+        "reason": null
+      },
+      "rc070 release b1 fallback is clearly apart from zone PV (#FF0000)": {
+        "file": "src/utils/drawnLabels.fallback.test.ts",
+        "status": "passed",
+        "reason": null
+      },
+      "rc070 release b1 fallback is clearly apart from zone JC (#00CC00)": {
+        "file": "src/utils/drawnLabels.fallback.test.ts",
+        "status": "passed",
+        "reason": null
+      },
+      "rc070 release b1 fallback is clearly apart from zone IT (#0066FF)": {
+        "file": "src/utils/drawnLabels.fallback.test.ts",
+        "status": "passed",
+        "reason": null
+      },
+      "rc070 release b1 fallback is clearly apart from zone DWM (#FFD700)": {
+        "file": "src/utils/drawnLabels.fallback.test.ts",
+        "status": "passed",
+        "reason": null
+      },
+      "rc070 release b1 the en warnings name the fallback colour, never magenta": {
+        "file": "src/utils/drawnLabels.fallback.test.ts",
+        "status": "failed",
+        "reason": "AssertionError: expected 'Mask value(s) {{values}} have no labe…' to match /\\bcyan\\b/\n    at C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/release-2026-10-25/frontend/src/utils/drawnLabels.fallback.test.ts:45:20\n    at file:///C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/age"
+      },
+      "rc070 release b1 the es warnings name the fallback colour, never magenta": {
+        "file": "src/utils/drawnLabels.fallback.test.ts",
+        "status": "failed",
+        "reason": "AssertionError: expected 'Los valores de máscara {{values}} no …' to match /\\bcian\\b/\n    at C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/release-2026-10-25/frontend/src/utils/drawnLabels.fallback.test.ts:45:20\n    at file:///C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/age"
+      },
+      "rc070 release b1 the de warnings name the fallback colour, never magenta": {
+        "file": "src/utils/drawnLabels.fallback.test.ts",
+        "status": "failed",
+        "reason": "AssertionError: expected 'Maskenwert(e) {{values}} haben keine …' to match /\\bCyan\\b/\n    at C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/release-2026-10-25/frontend/src/utils/drawnLabels.fallback.test.ts:45:20\n    at file:///C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/age"
+      }
+    }
+  }
+}

@@ -1,0 +1,215 @@
+{
+  "executed": "2026-10-24T12:02:14",
+  "base": "70cc5c7 (main, Merge PR #64)",
+  "method": "source files that differ from the base commit restored to it, files it did not have removed; the CAPA-015 test files run unchanged, without cloud credentials; working tree restored byte for byte",
+  "swapped": {
+    "restored_to_base": [
+      "backend/app/api/routes/auth.py",
+      "backend/app/api/routes/authentication.py",
+      "backend/app/core/config.py",
+      "backend/app/core/logging/audit.py",
+      "backend/app/core/logging/audit_middleware.py",
+      "backend/app/core/logging/middleware.py",
+      "backend/app/main.py",
+      "backend/app/security/auth.py",
+      "frontend/src/App.tsx",
+      "frontend/src/components/ImageViewer3D.tsx",
+      "frontend/src/components/LesionDashboard.tsx",
+      "frontend/src/components/NiivueViewer2D.tsx",
+      "frontend/src/contexts/AuthContext.tsx",
+      "frontend/src/i18n/locales/de.json",
+      "frontend/src/i18n/locales/en.json",
+      "frontend/src/i18n/locales/es.json",
+      "frontend/src/pages/LoginPage.tsx",
+      "frontend/src/services/apiClient.ts"
+    ],
+    "removed": [
+      "backend/app/core/logging/audit_sink.py",
+      "backend/app/security/refresh_tokens.py",
+      "frontend/src/components/AuditStatusBanner.tsx",
+      "frontend/src/components/SessionExpiredDialog.tsx",
+      "frontend/src/services/session.ts"
+    ]
+  },
+  "test_sha256": {
+    "backend/tests/unit/test_capa015_audit_and_session.py": "58d878d01a7becd12ce1d5a9373b22afe5a76901e9eeefc2cf1b8c92fbee72b0",
+    "frontend/src/services/session.capa015.test.tsx": "0f4eb947f6c861687d445f922da4054481b91a527f5a5b7e9cb2e998b1cb2cb3"
+  },
+  "backend": {
+    "passed": 0,
+    "failed": 29,
+    "errors": 0,
+    "results": {
+      "test_rc067_login_success_is_written_durably_with_actor_role_and_request_id": {
+        "status": "failed",
+        "reason": "AssertionError: no durable login record in Firestore audit_logs: []"
+      },
+      "test_rc067_failed_logins_captcha_and_lockout_are_recorded_without_the_typed_identifier": {
+        "status": "failed",
+        "reason": "assert 0 == 1"
+      },
+      "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.segmentation.save:POST]": {
+        "status": "failed",
+        "reason": "AssertionError: POST /api/v1/segmentation/33333333-3333-4333-8333-333333333333/save: no durable 'clinical.segmentation.save' record: []"
+      },
+      "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.segmentation.save:PUT]": {
+        "status": "failed",
+        "reason": "AssertionError: PUT /api/v1/segmentation/33333333-3333-4333-8333-333333333333/mask/binary: no durable 'clinical.segmentation.save' record: []"
+      },
+      "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.segmentation.confirm:POST]": {
+        "status": "failed",
+        "reason": "AssertionError: POST /api/v1/segmentation/33333333-3333-4333-8333-333333333333/ai-review/confirm: no durable 'clinical.segmentation.confirm' record: []"
+      },
+      "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.segmentation.delete:DELETE]": {
+        "status": "failed",
+        "reason": "AssertionError: DELETE /api/v1/segmentation/33333333-3333-4333-8333-333333333333: no durable 'clinical.segmentation.delete' record: []"
+      },
+      "test_rc067_clinical_actions_are_recorded_with_actor_resource_ids_and_outcome[clinical.longitudinal.review:POST]": {
+        "status": "failed",
+        "reason": "AssertionError: POST /api/v1/segmentation/longitudinal/review: no durable 'clinical.longitudinal.review' record: []"
+      },
+      "test_rc067_ai_report_generation_is_recorded_with_template_and_outcome": {
+        "status": "failed",
+        "reason": "assert 0 == 1"
+      },
+      "test_rc067_data_reads_are_durable_once_per_window_and_always_on_stdout": {
+        "status": "failed",
+        "reason": "AssertionError: a repeated read within the window is one durable record: []"
+      },
+      "test_rc067_records_hold_no_query_string_file_name_or_free_text": {
+        "status": "failed",
+        "reason": "assert ([])"
+      },
+      "test_rc067_firestore_outage_never_breaks_the_request_is_logged_loudly_and_retried": {
+        "status": "failed",
+        "reason": "AttributeError: 'NoneType' object has no attribute 'status'"
+      },
+      "test_rc067_admin_sees_when_audit_writing_is_failing": {
+        "status": "failed",
+        "reason": "assert 404 == 200"
+      },
+      "test_rc067_queue_overflow_keeps_the_record_in_the_server_log": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.core.logging.audit_sink'"
+      },
+      "test_rc067_records_are_append_only": {
+        "status": "failed",
+        "reason": "AttributeError: 'NoneType' object has no attribute 'submit'"
+      },
+      "test_rc067_audit_log_endpoint_reads_firestore_paginated_admin_only": {
+        "status": "failed",
+        "reason": "AttributeError: 'NoneType' object has no attribute 'submit'"
+      },
+      "test_rc067_auth_service_events_reach_the_durable_trail": {
+        "status": "failed",
+        "reason": "assert (0 == 1)"
+      },
+      "test_rc068_login_sets_an_httponly_secure_samesite_strict_cookie_and_no_token_in_the_body": {
+        "status": "failed",
+        "reason": "AssertionError: no refresh cookie: ''"
+      },
+      "test_rc068_access_tokens_are_short_lived": {
+        "status": "failed",
+        "reason": "assert 60 <= 15"
+      },
+      "test_rc068_refresh_rotates_and_the_old_token_is_refused": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_404\",\"message\":\"Not Found\",\"details\":{}}}"
+      },
+      "test_rc068_reuse_revokes_the_whole_family": {
+        "status": "failed",
+        "reason": "AssertionError: assert 404 == 401"
+      },
+      "test_rc068_refresh_tokens_are_stored_hashed": {
+        "status": "failed",
+        "reason": "AttributeError: 'NoneType' object has no attribute 'repo'"
+      },
+      "test_rc068_idle_and_absolute_expiry": {
+        "status": "failed",
+        "reason": "AssertionError: idle expiry (30 min) not enforced"
+      },
+      "test_rc068_logout_revokes_the_session_and_clears_the_cookie": {
+        "status": "failed",
+        "reason": "AssertionError: assert ('__session=' in '')"
+      },
+      "test_rc068_password_change_takes_effect_and_revokes_every_session": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_404\",\"message\":\"User not found\",\"details\":{}}}"
+      },
+      "test_rc068_inactive_or_locked_users_cannot_refresh": {
+        "status": "failed",
+        "reason": "AssertionError: assert 404 == 401"
+      },
+      "test_rc068_refreshed_access_token_carries_the_current_role": {
+        "status": "failed",
+        "reason": "assert 404 == 200"
+      },
+      "test_rc068_refresh_refuses_a_foreign_origin_and_a_missing_cookie": {
+        "status": "failed",
+        "reason": "AssertionError: assert 404 == 403"
+      },
+      "test_rc068_passkey_login_also_starts_a_rotating_session_and_keeps_lock_checks": {
+        "status": "failed",
+        "reason": "assert (None)"
+      },
+      "test_rc068_firestore_repository_stores_hashes_and_rotates_in_one_transaction": {
+        "status": "failed",
+        "reason": "ModuleNotFoundError: No module named 'app.security.refresh_tokens'"
+      }
+    }
+  },
+  "frontend": {
+    "passed": 0,
+    "failed": 12,
+    "not_passing": {
+      "rc069 refreshes once on 401 through the same-origin auth endpoint with the cookie, then retries": {
+        "status": "failed",
+        "reason": "AxiosError: Request failed with status code 401"
+      },
+      "rc069 concurrent 401s trigger a single refresh": {
+        "status": "failed",
+        "reason": "AxiosError: Request failed with status code 401"
+      },
+      "rc069 refresh failure keeps the page and the unsaved work, asks to sign in, then retries the save": {
+        "status": "failed",
+        "reason": "Error: Cannot find module '/src/services/session' imported from 'C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/agent-a5e3a9f1585ba3491/frontend/src/services/session.capa015.test.tsx'"
+      },
+      "rc069 refreshes proactively before the access token expires": {
+        "status": "failed",
+        "reason": "Error: Cannot find module '/src/services/session' imported from 'C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/agent-a5e3a9f1585ba3491/frontend/src/services/session.capa015.test.tsx'"
+      },
+      "rc069 a 401 seen by the global axios instance no longer sends the browser to /login": {
+        "status": "failed",
+        "reason": "Error: Cannot find module '/src/services/session' imported from 'C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/agent-a5e3a9f1585ba3491/frontend/src/services/session.capa015.test.tsx'"
+      },
+      "rc069 the re-login dialog keeps the work, accepts only the same user, then resumes": {
+        "status": "failed",
+        "reason": "Error: Cannot find module '/src/components/SessionExpiredDialog' imported from 'C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/agent-a5e3a9f1585ba3491/frontend/src/services/session.capa015.test.tsx'"
+      },
+      "rc069 fetch-based downloads (volumes, DICOM-SEG export) recover from 401 the same way": {
+        "status": "failed",
+        "reason": "Error: Cannot find module '/src/services/session' imported from 'C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/agent-a5e3a9f1585ba3491/frontend/src/services/session.capa015.test.tsx'"
+      },
+      "rc069 logout tells the server, so the refresh cookie is revoked": {
+        "status": "failed",
+        "reason": "AssertionError: expected false to be true // Object.is equality"
+      },
+      "rc067 shows a banner to an administrator when audit writing is failing": {
+        "status": "failed",
+        "reason": "Error: Cannot find module '/src/components/AuditStatusBanner' imported from 'C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/agent-a5e3a9f1585ba3491/frontend/src/services/session.capa015.test.tsx'"
+      },
+      "rc067 shows nothing to a non-administrator and nothing when writing works": {
+        "status": "failed",
+        "reason": "Error: Cannot find module '/src/components/AuditStatusBanner' imported from 'C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/agent-a5e3a9f1585ba3491/frontend/src/services/session.capa015.test.tsx'"
+      },
+      "rc069 the dialog and banner texts are translated": {
+        "status": "failed",
+        "reason": "AssertionError: en session.reauthTitle: expected 'undefined' to be 'string' // Object.is equality"
+      },
+      "rc069 no English phrase is left inside the Spanish or German texts": {
+        "status": "failed",
+        "reason": "TypeError: Cannot read properties of undefined (reading 'replace')"
+      }
+    }
+  }
+}

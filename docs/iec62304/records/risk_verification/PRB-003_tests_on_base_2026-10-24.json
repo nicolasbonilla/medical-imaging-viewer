@@ -1,0 +1,261 @@
+{
+  "executed": "2026-10-24T18:00:51",
+  "base": "70cc5c7 (main, merge of PR #64)",
+  "method": "source files that differ from the base commit restored to it, files it did not have removed; the PRB-003 test files run unchanged; working tree restored byte for byte",
+  "swapped": {
+    "restored_to_base": [
+      "backend/app/api/routes/ai_report.py",
+      "backend/app/api/routes/segmentation.py",
+      "backend/app/api/routes/segmentation_analysis.py",
+      "backend/app/api/routes/segmentation_regions.py",
+      "backend/app/mcp/_backend.py",
+      "backend/app/mcp/ms_clinical_server.py",
+      "backend/app/models/schemas.py",
+      "backend/app/services/brain_report_service.py",
+      "backend/app/services/segmentation_service.py",
+      "frontend/src/api/segmentation.ts",
+      "frontend/src/components/AiDraftBanner.tsx",
+      "frontend/src/components/LesionDashboard.tsx",
+      "frontend/src/components/SegmentationPanel.tsx",
+      "frontend/src/i18n/locales/de.json",
+      "frontend/src/i18n/locales/en.json",
+      "frontend/src/i18n/locales/es.json",
+      "frontend/src/types/lesion.ts",
+      "frontend/src/types/segmentation.ts"
+    ],
+    "removed": [
+      "backend/app/services/dis_review_gate.py",
+      "frontend/src/components/AutomaticMarkingNotice.tsx"
+    ]
+  },
+  "test_sha256": {
+    "backend/tests/unit/test_prb003_dis_requires_confirmed_segmentation.py": "7105ab5c4de84e10b97375bf32b0e578556eaf26815ebd42c19e1cb1a78a6ef9",
+    "frontend/src/components/LesionDashboard.prb003.test.tsx": "ca0b34a5b5baafa1796467e403796e3de1f713c5155461a47cc6031b9a23a211"
+  },
+  "backend": {
+    "passed": 2,
+    "failed": 39,
+    "errors": 0,
+    "results": {
+      "test_rc070_report_prompt_states_the_result_of_an_evaluated_assessment": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc070_assistant_receives_an_evaluated_assessment_unchanged": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc070_unreviewed_ai_draft_dis_is_not_evaluated": {
+        "status": "failed",
+        "reason": "AssertionError: {'active_voxels': 0, 'black_hole_voxels': 0, 'brain_regions_evaluated': 3, 'brain_regions_with_lesions': 2, ...}"
+      },
+      "test_rc070_server_tool_segmentation_dis_is_not_evaluated": {
+        "status": "failed",
+        "reason": "AssertionError: {'active_voxels': 0, 'black_hole_voxels': 0, 'brain_regions_evaluated': 3, 'brain_regions_with_lesions': 2, ...}"
+      },
+      "test_rc070_segmentation_of_unrecorded_origin_dis_is_not_evaluated": {
+        "status": "failed",
+        "reason": "AssertionError: {'active_voxels': 0, 'black_hole_voxels': 0, 'brain_regions_evaluated': 3, 'brain_regions_with_lesions': 2, ...}"
+      },
+      "test_rc070_confirmed_ai_draft_bound_to_the_current_mask_is_evaluated": {
+        "status": "failed",
+        "reason": "AssertionError: {'active_voxels': 0, 'black_hole_voxels': 0, 'brain_regions_evaluated': 3, 'brain_regions_with_lesions': 2, ...}"
+      },
+      "test_rc070_clinician_confirmed_segmentation_is_evaluated": {
+        "status": "failed",
+        "reason": "AssertionError: {'active_voxels': 0, 'black_hole_voxels': 0, 'brain_regions_evaluated': 3, 'brain_regions_with_lesions': 2, ...}"
+      },
+      "test_rc070_a_confirmation_given_for_another_mask_does_not_count[ai]": {
+        "status": "failed",
+        "reason": "AssertionError: {'active_voxels': 0, 'black_hole_voxels': 0, 'brain_regions_evaluated': 3, 'brain_regions_with_lesions': 2, ...}"
+      },
+      "test_rc070_a_confirmation_given_for_another_mask_does_not_count[clinician]": {
+        "status": "failed",
+        "reason": "AssertionError: {'active_voxels': 0, 'black_hole_voxels': 0, 'brain_regions_evaluated': 3, 'brain_regions_with_lesions': 2, ...}"
+      },
+      "test_rc070_a_clinician_record_never_replaces_the_review_of_an_ai_draft": {
+        "status": "failed",
+        "reason": "AssertionError: {'active_voxels': 0, 'black_hole_voxels': 0, 'brain_regions_evaluated': 3, 'brain_regions_with_lesions': 2, ...}"
+      },
+      "test_rc070_a_stored_dis_conclusion_is_never_served_for_an_unconfirmed_segmentation": {
+        "status": "failed",
+        "reason": "AssertionError: {'brain_regions_with_lesions': 2, 'dis_met': True, 'dis_met_brain': True, 'region_details': {}, ...}"
+      },
+      "test_rc070_a_stored_not_evaluated_state_is_never_served_as_a_result_after_confirmation": {
+        "status": "failed",
+        "reason": "AssertionError: assert 404 == 200"
+      },
+      "test_rc070_external_evidence_does_not_bypass_the_gate": {
+        "status": "failed",
+        "reason": "AssertionError: {'active_voxels': 0, 'black_hole_voxels': 0, 'brain_regions_evaluated': 3, 'brain_regions_with_lesions': 2, ...}"
+      },
+      "test_rc070_segmentation_metadata_responses_carry_no_stored_dis_conclusion": {
+        "status": "failed",
+        "reason": "AssertionError: assert ('dis_assessment' not in {'dis_assessment': {'dis_met': True, 'dis_met_brain': True}, 'lesion_analysis': {'total_count': 2}})"
+      },
+      "test_rc070_classify_regions_stores_no_dis_conclusion_for_an_unconfirmed_segmentation": {
+        "status": "failed",
+        "reason": "AssertionError: {'active_voxels': 0, 'black_hole_voxels': 0, 'brain_regions_evaluated': 3, 'brain_regions_with_lesions': 2, ...}"
+      },
+      "test_rc071_a_radiologist_confirms_the_exact_stored_mask_and_dis_becomes_evaluable": {
+        "status": "failed",
+        "reason": "AssertionError: {'active_voxels': 0, 'black_hole_voxels': 0, 'brain_regions_evaluated': 3, 'brain_regions_with_lesions': 2, ...}"
+      },
+      "test_rc071_only_a_radiologist_can_confirm[admin]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_404\",\"message\":\"Not Found\",\"details\":{}}}"
+      },
+      "test_rc071_only_a_radiologist_can_confirm[technician]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_404\",\"message\":\"Not Found\",\"details\":{}}}"
+      },
+      "test_rc071_a_confirmation_for_another_mask_is_refused": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_404\",\"message\":\"Not Found\",\"details\":{}}}"
+      },
+      "test_rc071_an_ai_draft_is_confirmed_only_through_its_own_review": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_404\",\"message\":\"Not Found\",\"details\":{}}}"
+      },
+      "test_rc071_any_later_change_of_the_mask_voids_the_confirmation": {
+        "status": "failed",
+        "reason": "AttributeError: 'SegmentationMetadata' object has no attribute 'clinician_review'"
+      },
+      "test_rc071_saving_a_changed_mask_through_the_upload_route_voids_the_confirmation": {
+        "status": "failed",
+        "reason": "AttributeError: 'SegmentationMetadata' object has no attribute 'clinician_review'"
+      },
+      "test_rc071_the_confirmation_cannot_be_sent_by_the_client_on_create": {
+        "status": "failed",
+        "reason": "AssertionError: {'active_voxels': 0, 'black_hole_voxels': 0, 'brain_regions_evaluated': 3, 'brain_regions_with_lesions': 0, ...}"
+      },
+      "test_rc070_report_prompt_never_states_met_or_not_met_unless_evaluated[legacy-met]": {
+        "status": "failed",
+        "reason": "AssertionError: assert ('DIS Assessment: MET' not in 'Generate th...lar: PRESENT'"
+      },
+      "test_rc070_report_prompt_never_states_met_or_not_met_unless_evaluated[not-evaluated]": {
+        "status": "failed",
+        "reason": "AssertionError: assert ('DIS Assessment: MET' not in 'Generate th...0/4 regions)'"
+      },
+      "test_rc070_report_prompt_never_states_met_or_not_met_unless_evaluated[no-flag]": {
+        "status": "failed",
+        "reason": "AssertionError: assert ('DIS Assessment: MET' not in 'Generate th...0/4 regions)'"
+      },
+      "test_rc070_report_prompt_with_lesions_and_no_evaluated_dis_forbids_deriving_dis": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'NOT EVALUATED' in 'Generate the report in English.\\n\\nLesion analysis:\\n  Total lesions: 3\\n  Total burden: 0.00 mm� (0.0000 mL)\\n  Regional summary:\\n    - Periventricular: 2 lesions, 30.00 mm� (0.0300 mL)'"
+      },
+      "test_rc070_report_route_replaces_a_client_dis_conclusion_with_the_server_state": {
+        "status": "failed",
+        "reason": "AssertionError: {'dis_met': True, 'dis_met_brain': True, 'evaluation_status': 'evaluated', 'region_details': {'Periventricular': {'present': True}}, ...}"
+      },
+      "test_rc070_report_route_uses_the_server_assessment_of_a_confirmed_segmentation": {
+        "status": "failed",
+        "reason": "AssertionError: assert ('evaluated' == 'evaluated'"
+      },
+      "test_rc070_report_route_dis_block_naming_no_segmentation_is_not_evaluated": {
+        "status": "failed",
+        "reason": "AssertionError: {'dis_met': True, 'evaluation_status': 'evaluated'}"
+      },
+      "test_rc070_report_route_refuses_a_request_whose_only_measurement_is_an_unevaluated_dis": {
+        "status": "failed",
+        "reason": "AssertionError: {\"report_id\":\"r\",\"content\":\"draft body\",\"template_type\":\"ms_comprehensive\",\"language\":\"en\",\"processing_time_ms\":1,\"model\":null,\"tokens_used\":null}"
+      },
+      "test_rc070_report_route_refuses_a_segmentation_the_caller_cannot_read": {
+        "status": "failed",
+        "reason": "AssertionError: {\"report_id\":\"r\",\"content\":\"draft body\",\"template_type\":\"ms_comprehensive\",\"language\":\"en\",\"processing_time_ms\":1,\"model\":null,\"tokens_used\":null}"
+      },
+      "test_rc072_report_draft_ends_with_the_not_evaluated_notice_in_its_language[en-Dissemination in space: not evaluated]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Dissemination in space: not evaluated' in ''"
+      },
+      "test_rc072_report_draft_ends_with_the_not_evaluated_notice_in_its_language[es-Diseminaci\\xf3n en el espacio: no evaluada]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Diseminaci�n en el espacio: no evaluada' in ''"
+      },
+      "test_rc072_report_draft_ends_with_the_not_evaluated_notice_in_its_language[de-R\\xe4umliche Dissemination: nicht beurteilt]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'R�umliche Dissemination: nicht beurteilt' in ''"
+      },
+      "test_rc072_automatic_marking_notice_exists_in_every_language": {
+        "status": "failed",
+        "reason": "ImportError: cannot import name 'dis_review_gate' from 'app.services' (C:\\Users\\Nicolas\\medical-imaging-viewer\\.claude\\worktrees\\prb003-dis-review\\backend\\app\\services\\__init__.py)"
+      },
+      "test_rc072_not_evaluated_state_of_an_automatic_segmentation_carries_the_notice[ai-draft]": {
+        "status": "failed",
+        "reason": "ImportError: cannot import name 'dis_review_gate' from 'app.services' (C:\\Users\\Nicolas\\medical-imaging-viewer\\.claude\\worktrees\\prb003-dis-review\\backend\\app\\services\\__init__.py)"
+      },
+      "test_rc072_not_evaluated_state_of_an_automatic_segmentation_carries_the_notice[server-tool]": {
+        "status": "failed",
+        "reason": "ImportError: cannot import name 'dis_review_gate' from 'app.services' (C:\\Users\\Nicolas\\medical-imaging-viewer\\.claude\\worktrees\\prb003-dis-review\\backend\\app\\services\\__init__.py)"
+      },
+      "test_rc072_not_evaluated_state_of_an_automatic_segmentation_carries_the_notice[origin-not-recorded]": {
+        "status": "failed",
+        "reason": "ImportError: cannot import name 'dis_review_gate' from 'app.services' (C:\\Users\\Nicolas\\medical-imaging-viewer\\.claude\\worktrees\\prb003-dis-review\\backend\\app\\services\\__init__.py)"
+      },
+      "test_rc070_assistant_never_receives_a_dis_conclusion_that_was_not_evaluated": {
+        "status": "failed",
+        "reason": "AssertionError: {'dis_met': True, 'dis_met_brain': True, 'region_details': {}, 'segmentation_id': 'seg-1'}"
+      },
+      "test_rc070_assistant_instructions_forbid_deriving_dis_from_an_unconfirmed_segmentation": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'requires clinician review of the segmentation' in 'You assist a physician who reviews brain MRI measurements computed by an investigational device. The device is NOT in... the two visits differs or could not be est.."
+      }
+    }
+  },
+  "frontend": {
+    "passed": 0,
+    "failed": 12,
+    "not_passing": {
+      "rc070 a DIS conclusion stored in the metadata is never shown; the gated route decides": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-not-evaluated\"]"
+      },
+      "rc070 after Analyze an unconfirmed segmentation reads \"not evaluated\", never met / not met": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-not-evaluated\"]"
+      },
+      "rc070 a block without the \"evaluated\" state (an older backend) is never shown as met / not met": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-not-evaluated\"]"
+      },
+      "rc070 an evaluated result is withheld while the mask on screen has unsaved changes, and re-read after saving": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-unsaved-changes\"]"
+      },
+      "rc070 a confirmed segmentation shows the result and who confirmed it": {
+        "status": "failed",
+        "reason": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"dis-confirmed-by\"]"
+      },
+      "rc071 the radiologist confirms the saved mask (its SHA-256 is sent) and DIS is evaluated": {
+        "status": "failed",
+        "reason": "Error: Unable to find role=\"button\" and name `/confirm this segmentation/`"
+      },
+      "rc071 with unsaved changes there is no confirm button, only \"save first\"": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-save-first\"]"
+      },
+      "rc071 an AI draft is not confirmed here: the card points to the AI draft review": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-not-evaluated\"]"
+      },
+      "rc072 the AI draft banner carries the notice": {
+        "status": "failed",
+        "reason": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"automatic-marking-notice\"]"
+      },
+      "rc072 the \"not evaluated\" card of an automatic segmentation carries the notice": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-not-evaluated\"]"
+      },
+      "rc072 every new text exists in en, es and de, translated": {
+        "status": "failed",
+        "reason": "AssertionError: expected 0 to be greater than or equal to 8"
+      },
+      "rc072 the segmentation panel shows the notice for a server-tool segmentation (no AI provenance)": {
+        "status": "failed",
+        "reason": "AssertionError: expected '/**\\n * SegmentationPanel - ITK-SNAP …' to match /<AutomaticMarkingNotice/"
+      }
+    }
+  },
+  "note": "Tests that pass on the base are positive controls of behaviour that must not change (an evaluated DIS block still reaches the report prompt and the assistant unchanged); every other test fails on the base."
+}

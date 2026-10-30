@@ -69,7 +69,7 @@ Internet
 | Encryption in transit | TLS 1.3 (Cloud Run enforced) | 5.3.5 | A.8.24 | IMPLEMENTED |
 | Encryption at rest (user data) | AES-256-GCM | 5.3.5 | A.8.24 | IMPLEMENTED |
 | Encryption at rest (storage) | GCS server-side encryption | 5.3.5 | A.8.24 | IMPLEMENTED |
-| PHI de-identification | Stripped before AI API calls | 5.3.6 | A.8.12 | IMPLEMENTED |
+| AI report data | Measurements only to the AI service; identifier check before sending | 5.3.6 | A.8.12 | measurements only to the AI service, identifier check before sending — IMPLEMENTED on branch (CAPA-014, draft, N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)); the earlier row "PHI de-identification — Stripped before AI API calls — IMPLEMENTED" was not true (withdrawn) |
 | Audit logging | Structured JSON per access event | 5.3.7 | A.8.15 | IMPLEMENTED |
 | Data backup | GCS versioning + Firestore export | 5.3.8 | A.5.29 | PARTIAL |
 
@@ -112,7 +112,7 @@ Internet
 | **Spoofing** | Attacker impersonates user | JWT auth + WebAuthn/Passkeys | Low |
 | **Tampering** | Modification of segmentation data in transit | TLS 1.3 encryption | Low |
 | **Repudiation** | User denies performing action | Audit logging with timestamps | Low |
-| **Information Disclosure** | PHI leaked to AI APIs | De-identification pipeline | Low |
+| **Information Disclosure** | PHI leaked to AI APIs | Measurements only sent; identifier check before sending (CAPA-014, RC-064/RC-065; HAZ-016) — the earlier "de-identification pipeline" did not exist (withdrawn) | Not established *(2026-10-24, CAPA-014 — N. G. Bonilla Vargas — approved 2026-10-30 (PR #72))* |
 | **Information Disclosure** | Patient data in error messages | Pydantic validation, no PHI in logs | Medium |
 | **Denial of Service** | API overwhelmed | Rate limiting (100/min), Cloud Run auto-scaling | Low |
 | **Elevation of Privilege** | User gains admin access | RBAC with 15 granular permissions | Low |
@@ -170,7 +170,7 @@ npm audit and pip-audit are already integrated in `.github/workflows/ci.yml` and
 | 5.3.3 | Access control | IMPLEMENTED |
 | 5.3.4 | Session management | IMPLEMENTED |
 | 5.3.5 | Data protection (confidentiality, integrity) | IMPLEMENTED |
-| 5.3.6 | Data de-identification | IMPLEMENTED |
+| 5.3.6 | AI report data | measurements only to the AI service, identifier check before sending — IMPLEMENTED on branch (CAPA-014, draft, N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)); the earlier row "PHI de-identification — Stripped before AI API calls — IMPLEMENTED" was not true (withdrawn) |
 | 5.3.7 | Audit and accountability | IMPLEMENTED |
 | 5.3.8 | Backup and recovery | PARTIAL |
 | 5.3.9 | Network security | PARTIAL (CSP missing) |

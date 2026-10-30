@@ -36,7 +36,7 @@
 
 ## Abstract
 
-**MSTool-AI** is a full-stack cloud-native web application engineered for the visualization, interactive segmentation, quantitative analysis, and longitudinal tracking of brain magnetic resonance imaging (MRI) data in the clinical context of **Multiple Sclerosis (MS)**. The platform integrates real-time 2D and 3D neuroimaging visualization with automated lesion detection, region-specific classification conforming to the **MAGNIMS 2024 consensus guidelines** (Barkhof et al., 2025), IoU-based longitudinal disease progression tracking, normative brain volumetry with z-score percentile computation, and AI-powered clinical report generation via the **Claude API** with HIPAA-compliant de-identification.
+**MSTool-AI** is a full-stack cloud-native web application engineered for the visualization, interactive segmentation, quantitative analysis, and longitudinal tracking of brain magnetic resonance imaging (MRI) data in the clinical context of **Multiple Sclerosis (MS)**. The platform integrates real-time 2D and 3D neuroimaging visualization with automated lesion detection, region-specific classification conforming to the **MAGNIMS 2024 consensus guidelines** (Barkhof et al., 2025), IoU-based longitudinal disease progression tracking, normative brain volumetry with z-score percentile computation, and AI-assisted report drafts via the **Claude API** — measurements only are sent to the AI service, no names, dates of birth, record numbers or free text (CAPA-014).
 
 The system implements a decoupled client-server architecture with a **React/TypeScript** single-page application deployed on Firebase Hosting and a **FastAPI/Python** backend deployed on Google Cloud Run with auto-scaling. State management employs the Zustand library following a single-source-of-truth pattern. Hospital integration is achieved through **DICOMweb** (QIDO-RS/WADO-RS) for PACS connectivity, **DICOM-SEG** for standardized segmentation export, and **HL7 FHIR R4** for EHR interoperability. The codebase comprises approximately **84,000 lines** of production code across **224+ files**, with CI/CD automation (GitHub Actions), 35+ automated tests, clinical measurement tools (ruler, angle, ROI), WebAuthn/Passkeys biometric authentication, edge-based neural network inference via ONNX Runtime Web, and Model Context Protocol (MCP) server integration for Claude-native tool use.
 
@@ -287,7 +287,7 @@ Cross-study comparison of lesion masks between serial MRI examinations:
 Integration with the **Claude API** (Anthropic) for structured clinical report generation:
 
 - **Templates**: General MS, disease activity, lesion burden, comprehensive publication-quality, MS longitudinal
-- **HIPAA Compliance**: De-identified findings only — no PHI (name, DOB, MRN) transmitted
+- **Data sent to the AI service**: measurements, labels of the device's fixed vocabulary, sex and a 5-year age band only — no names, dates of birth, record numbers or free text; the clinician's typed text is added to the draft in the application, and a check against the patient record refuses to send on any identifier (CAPA-014)
 - **Clinical Data Integration**: Lesion counts, volumes, DIS assessment, longitudinal changes, volumetry data
 - **Multi-Language**: English, Spanish, German output
 - **MAGNIMS Formatting**: Lesion count ranges, morphology descriptors, enhancement patterns, burden grading
@@ -467,7 +467,7 @@ VITE_API_BASE_URL=http://localhost:8000
 
 ### Edge AI Model (Optional)
 
-Place an ONNX model at `frontend/public/models/brain_screening.onnx` for in-browser screening. The feature degrades gracefully if the model is absent.
+The in-browser screening ("Quick Screen") is OFF unless the frontend is built with `VITE_ENABLE_QUICK_SCREEN=true` (PRB-009): its model is not part of the application. When enabled, place an ONNX model at `frontend/public/models/brain_screening.onnx`; the model is looked for once per page and the button appears only when it is served. With the flag off nothing is requested and nothing is shown.
 
 ---
 
@@ -614,7 +614,7 @@ The security architecture is designed against **IEC 81001-5-1:2021** (required f
 | Access Control | RBAC with 4 roles, 15 permissions | 5.3.3 | A.5.2, A.8.3 |
 | Encryption at Rest | AES-256-GCM (user data), GCS server-side encryption | 5.3.5 | A.8.24 |
 | Encryption in Transit | TLS 1.3 enforced (Cloud Run + Firebase) | 5.3.5 | A.8.24 |
-| De-Identification | PHI stripped before AI API calls | 5.3.6 | A.8.12 |
+| AI report data | Measurements only to the AI service (no names, dates of birth, record numbers or free text); identifier check before sending (CAPA-014) | 5.3.6 | A.8.12 |
 | Audit Logging | Structured JSON logs + QMS immutable audit trail | 5.3.7 | A.8.15, A.5.28 |
 | Input Validation | Pydantic schemas + sanitization on all endpoints | 5.3.10 | A.8.7, A.8.28 |
 | SOUP Management | SBOM (CycloneDX) + npm/pip audit in CI + QMS CVE scan | 5.3.11, 5.3.12 | A.5.9, A.8.8 |

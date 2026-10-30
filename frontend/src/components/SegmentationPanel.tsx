@@ -21,6 +21,7 @@ import { segmentationAPI } from '@/api/segmentation';
 import { ClinicalToolsPanel } from './ClinicalToolsPanel';
 import { ConformalPanel } from './ConformalPanel';
 import { AiDraftBanner, aiStatusText } from './AiDraftBanner';
+import { AutomaticMarkingNotice, isLesionDetectionSource } from './AutomaticMarkingNotice';
 import { recordedAuthor, authorLabel } from '@/utils/segmentationAuthor';
 import type { AIProvenance, LabelInfo, Segmentation, SegmentationResponse } from '@/types';
 
@@ -299,6 +300,10 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
 
   // RC-047: the review can only be confirmed on the saved mask (no unsaved corrections).
   const hasUnsavedMaskChanges = useSegmentationStore((s) => s.hasUnsavedMaskChanges);
+  // PRB-003 (RC-072): the stored origin of the open segmentation ('automatic' for server-tool output too) and the
+  // tool that produced it — the notice is for lesion-detection tools, not structure parcellations.
+  const openSegmentationType = useSegmentationStore((s) => s.currentSegmentation?.metadata?.segmentation_type);
+  const openValidationSource = useSegmentationStore((s) => s.currentSegmentation?.metadata?.validation_source);
 
   // Fetch segmentations list for ALL images in the study (same cache key as ViewerApp)
   const { data: segmentationsList, isLoading: isLoadingList } = useQuery({
@@ -613,6 +618,12 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                       </svg>
                       {authorLabel(activeSegmentation, t)}
                     </p>
+                    {/* PRB-003 (RC-072): a server-tool segmentation (automatic, no AI provenance) carries the
+                        same information for safety as an AI draft (whose banner shows it). */}
+                    {!activeSegmentation.ai_provenance && openSegmentationType === 'automatic'
+                      && isLesionDetectionSource(openValidationSource) && (
+                      <AutomaticMarkingNotice />
+                    )}
                     {/* REQ-SAFE-030: an AI segmentation is always labelled as such, saved or not. */}
                     {activeSegmentation.ai_provenance && (
                       <AiDraftBanner

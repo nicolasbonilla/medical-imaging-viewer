@@ -116,6 +116,15 @@ async def lifespan(app: FastAPI):
 
     # Shutdown: gracefully handle shutdown
     logger.info("Application shutdown initiated - waiting for pending tasks")
+    # CAPA-015 (RC-067): write queued audit records before the instance goes away (Cloud Run
+    # allows ~10 s after SIGTERM; every record is already on stdout regardless).
+    try:
+        from app.core.logging.audit_sink import get_durable_audit_sink
+        drained = await asyncio.to_thread(get_durable_audit_sink().flush, 5.0, True)
+        if not drained:
+            logger.error("AUDIT_SINK_SHUTDOWN_NOT_DRAINED", extra=get_durable_audit_sink().status())
+    except Exception as e:  # noqa: BLE001
+        logger.error(f"Audit sink flush at shutdown failed: {e}")
     await asyncio.sleep(0.1)
     logger.info("Application shutdown complete")
 

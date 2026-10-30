@@ -6,6 +6,7 @@
  */
 
 import type { CVSSummary, DISAssessment, LesionAnalysisResult, LesionAnnotation, PRLSummary, RegionClassificationResult } from './lesion';
+import { MAGNIMS_REGION_PALETTE } from '@/utils/regionColors';
 
 // ============================================================================
 // Segmentation Types - ITK-SNAP Style Multi-Expert Segmentation
@@ -339,19 +340,20 @@ export const DEFAULT_SEGMENTATION_LABELS: LabelInfo[] = [
 /**
  * MAGNIMS regional labels for MS lesion classification.
  * Based on McDonald 2024 / MAGNIMS criteria for Dissemination in Space (DIS).
+ * PRB-010: region colours from the one shared mapping (utils/regionColors.ts, Okabe-Ito).
  */
 export const MAGNIMS_LESION_LABELS: LabelInfo[] = [
   { id: 0, name: 'Background', color: '#000000', opacity: 0.0, visible: false },
-  { id: 1, name: 'Periventricular', color: '#FF0000', opacity: 0.6, visible: true,
+  { id: 1, name: 'Periventricular', color: MAGNIMS_REGION_PALETTE.Periventricular.hex, opacity: 0.6, visible: true,
     snomed_code: '12738006', finding_site: 'Periventricular white matter',
     description: 'Dawson fingers — perpendicular to lateral ventricles' },
-  { id: 2, name: 'Juxtacortical', color: '#00CC00', opacity: 0.6, visible: true,
+  { id: 2, name: 'Juxtacortical', color: MAGNIMS_REGION_PALETTE.Juxtacortical.hex, opacity: 0.6, visible: true,
     snomed_code: '4479006', finding_site: 'Juxtacortical/cortical',
     description: 'Touching cortex, involving U-fibers' },
-  { id: 3, name: 'Infratentorial', color: '#0066FF', opacity: 0.6, visible: true,
+  { id: 3, name: 'Infratentorial', color: MAGNIMS_REGION_PALETTE.Infratentorial.hex, opacity: 0.6, visible: true,
     snomed_code: '31065004', finding_site: 'Brainstem/cerebellum',
     description: 'Brainstem, cerebellum, cerebellar peduncles' },
-  { id: 4, name: 'Deep White Matter', color: '#FFD700', opacity: 0.6, visible: true,
+  { id: 4, name: 'Deep White Matter', color: MAGNIMS_REGION_PALETTE['Deep White Matter'].hex, opacity: 0.6, visible: true,
     snomed_code: '69536005', finding_site: 'Deep white matter',
     description: 'Atypical for MS — common in vascular processes' },
   { id: 5, name: 'Active (Gd+)', color: '#FF00FF', opacity: 0.6, visible: true,
@@ -382,6 +384,7 @@ export const DEFAULT_LABEL_PRESETS: Record<string, LabelInfo[]> = {
  */
 export interface SegmentationAnalysisData {
   lesion_analysis?: LesionAnalysisResult;
+  /** PRB-003 (RC-070): no longer sent with the metadata and never displayed from it — the gated DIS route only. */
   dis_assessment?: DISAssessment;
   classification?: RegionClassificationResult;
   zone_map_seg_id?: string;
@@ -407,8 +410,22 @@ export interface SegmentationMetadata {
   validation_source?: string | null;
   /** AI provenance (in-browser FLAMeS draft). Absent on manual segmentations. */
   ai_provenance?: AIProvenance | null;
+  /** PRB-003 (RC-071): a radiologist's confirmation of a segmentation without AI provenance, bound to the saved mask. */
+  clinician_review?: ClinicianReview | null;
   /** PRB-026: username of the authenticated user who created it, recorded by the server; absent = not recorded. */
   created_by?: string | null;
+}
+
+/** PRB-003 (RC-071): set only by the server's review/confirm route; removed by any later change of the mask. */
+export interface ClinicianReview {
+  /** Radiologists and administrators only; null for other roles (second review of PR #68, N5). */
+  reviewed_by: string | null;
+  reviewed_by_id?: string | null;
+  reviewed_by_role?: string | null;
+  reviewed_at: string;
+  reviewed_mask_sha256: string;
+  /** Region corrections by hand the radiologist acknowledged (second review of PR #68, N1). */
+  region_correction_count?: number;
 }
 
 /**

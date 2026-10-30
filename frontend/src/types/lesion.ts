@@ -72,7 +72,120 @@ export interface DISSupportiveMarkers {
   csf_specific: boolean | null; // OCB or elevated kappa FLC
 }
 
-export interface DISAssessment {
+/**
+ * PRB-003 (RC-070): the confirmation a DIS state rests on. `source` says where the segmentation comes
+ * from: an AI draft (reviewed through its own banner, RC-047), a server tool, or an origin that is not
+ * recorded (drawn here or uploaded) — the last two are confirmed with `confirmSegmentationReview` (RC-071).
+ */
+export interface DISSegmentationReview {
+  status: 'confirmed' | 'unconfirmed' | 'outdated';
+  source: 'ai_draft' | 'automatic_tool' | 'origin_not_recorded';
+  /** Shown to radiologists and administrators only; null for other roles (second review of PR #68, N5). */
+  reviewed_by: string | null;
+  reviewed_by_role?: string | null;
+  reviewed_at: string | null;
+  reviewed_mask_sha256: string | null;
+  current_mask_sha256: string;
+}
+
+/**
+ * PRB-003 (RC-070): DIS is evaluated only on a segmentation a radiologist confirmed for its current mask.
+ * Otherwise the server returns this explicit state — no met / not met, no region presence.
+ */
+export interface DISNotEvaluated {
+  segmentation_id: string | null;
+  evaluation_status: 'not_evaluated';
+  not_evaluated_reason: 'regions_not_classified' | 'lesion_labels_invalid' | 'ai_review_missing'
+    | 'segmentation_not_confirmed' | 'confirmation_outdated' | 'segmentation_not_identified' | 'assessment_failed';
+  message: string;
+  reason_detail?: string;
+  segmentation_review: DISSegmentationReview | null;
+  dis_criteria_version: string;
+  /** Information for safety on automatic lesion marking (RC-072), present for a lesion-detection tool's output. */
+  information_for_safety?: string;
+  regions?: DISRegionsState | null;
+}
+
+/** One label of a lesion, named as the lesion table names it (third review of PR #68, m-1): its table number, or a
+ *  "small component" below the lesion-size floor, which the table leaves out. */
+export interface DISLesionPart {
+  lesion: number | null;
+  small_component: boolean;
+  label: number;
+  label_name: string;
+  voxels: number;
+  /** 0-based slice the viewer opens for the table row (rounded centroid); the viewer shows slice + 1. */
+  slice: number;
+}
+
+/** A lesion that carries no MAGNIMS region or more than one (second review of PR #68, N1). */
+export interface DISInvalidLesion {
+  /** The table number of its largest part (third review, m-1); null for a small component. */
+  lesion: number | null;
+  small_component?: boolean;
+  /** 0-based slice of its largest part, as the lesion table (the viewer shows slice + 1). */
+  slice: number;
+  first_voxel: [number, number, number];
+  voxels: number;
+  labels: number[];
+  label_names: string[];
+  /** Its labels part by part, in table order (third review, m-1). */
+  parts?: DISLesionPart[];
+}
+
+/** A lesion whose region differs from the classifier's: a correction by hand (second review of PR #68, N1). */
+export interface DISRegionCorrection {
+  /** The lesion table's number (third review of PR #68, m-1); null for a small component. */
+  lesion: number | null;
+  small_component?: boolean;
+  slice: number;
+  first_voxel: [number, number, number];
+  voxels: number;
+  classified_region: number;
+  classified_region_name: string;
+  current_region: number;
+  current_region_name: string;
+}
+
+/** Review of PR #68: whether the labels are MAGNIMS regions assigned by the classification to these lesions —
+ *  one region per lesion — and which regions were changed by hand since (second review, N1). */
+export interface DISRegionsState {
+  classified: boolean;
+  label_scheme: 'magnims' | 'other';
+  edited_after_classification?: boolean | null;
+  method?: string | null;
+  lesion_count?: number | null;
+  lesions_valid?: boolean | null;
+  invalid_lesions?: DISInvalidLesion[];
+  invalid_lesion_count?: number;
+  corrections?: DISRegionCorrection[];
+  correction_count?: number;
+  /** Digest the radiologist sends to acknowledge exactly these corrections in the confirmation. */
+  corrections_sha256?: string | null;
+  /** What the classification removed from this mask (review of PR #69, M1): served only while the classification
+   *  record describes the current lesions. */
+  removed_small_components?: RemovedSmallComponents | null;
+  listed_limit?: number;
+  /** Release 2026-10-25 (final check of PR #69, R2): the label table stored for this segmentation (id, name,
+   *  colour upper case, background left out) — each value of the mask must be drawn with its stored label. */
+  stored_labels?: Array<{ id: number; name: string; color: string }>;
+}
+
+/** A DIS state from the server: evaluated (on a confirmed segmentation) or explicitly not evaluated. */
+export type DISAssessment = DISEvaluated | DISNotEvaluated;
+
+/** True only for a result the server evaluated on a confirmed segmentation; anything else is not shown as DIS. */
+export function isDisEvaluated(d: unknown): d is DISEvaluated {
+  // Review of PR #69, m4: the same rule as the server's dis_review_gate.is_evaluated — the status "evaluated" AND a
+  // yes/no conclusion.
+  return !!d && typeof d === 'object' && (d as { evaluation_status?: unknown }).evaluation_status === 'evaluated'
+    && typeof (d as { dis_met?: unknown }).dis_met === 'boolean';
+}
+
+export interface DISEvaluated {
+  evaluation_status: 'evaluated';
+  segmentation_review: DISSegmentationReview;
+  regions?: DISRegionsState;
   segmentation_id: string;
   dis_met_brain: boolean;
   dis_criteria_version: string;
@@ -404,6 +517,18 @@ export interface RegionClassificationResult {
   processing_time_ms: number;
   mask_updated: boolean;
   labels_updated: boolean;
+  /** The label scheme the server stored with the classified mask (release 2026-10-25, capture finding F08). */
+  labels?: Array<{ id: number; name: string; color: string; opacity: number; visible: boolean }>;
+  /** Lesion components the classification removed from the mask (below the minimum lesion size; finding F09). */
+  removed_small_components?: RemovedSmallComponents;
+}
+
+export interface RemovedSmallComponents {
+  components: number;
+  voxels: number;
+  volume_mm3: number;
+  min_lesion_volume_mm3: number;
+  reason: string;
 }
 
 export interface ZoneMapStat {

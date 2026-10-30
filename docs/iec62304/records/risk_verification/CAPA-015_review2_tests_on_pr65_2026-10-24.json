@@ -1,0 +1,151 @@
+{
+  "executed": "2026-10-24T14:56:30",
+  "base": "09e11e8 (PR #65 head before the re-review fixes)",
+  "method": "source files that differ from the base commit restored to it, files it did not have removed; the CAPA-015 test files run unchanged, without cloud credentials; working tree restored byte for byte",
+  "swapped": {
+    "restored_to_base": [
+      "backend/app/core/client_ip.py",
+      "backend/app/core/logging/audit.py",
+      "backend/app/core/logging/audit_middleware.py",
+      "frontend/src/components/ImageViewer3D.tsx",
+      "frontend/src/components/SessionExpiredDialog.tsx",
+      "frontend/src/pages/ProfilePage.tsx",
+      "frontend/src/services/session.ts",
+      "backend/tests/conftest.py"
+    ],
+    "removed": [],
+    "test_infrastructure_also_swapped": [
+      "backend/tests/conftest.py"
+    ]
+  },
+  "test_sha256": {
+    "backend/tests/unit/test_capa015_review2_fixes.py": "ef2632daad4df06c2d6344a396f8ffcab5fe4256206a12693c2a15678488e767",
+    "backend/tests/unit/test_capa015_review_fixes.py": "f8bc2e8d62a794ad987dba96683fa704c006c35b6de5ed8a1a05f42d98fbfb41",
+    "frontend/src/services/session.capa015.review2.test.tsx": "53083a7524147e9d65acb497e6756c3c18d3c31299ea516ceb01ebdeaecd71c8"
+  },
+  "backend": {
+    "passed": 17,
+    "failed": 8,
+    "errors": 0,
+    "results": {
+      "test_rc068_startup_refuses_a_refresh_idle_limit_not_longer_than_the_access_token": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc068_login_and_refresh_tell_the_client_when_the_refresh_session_ends": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc068_secret_templates_no_longer_emit_a_60_minute_access_token": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc067_auth_requests_without_their_own_event_are_still_recorded": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc067_a_server_error_on_an_auth_route_is_recorded": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc067_logout_with_an_unknown_cookie_and_no_bearer_is_recorded": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc068_a_replay_within_the_grace_window_returns_the_same_successor": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc068_real_reuse_is_still_detected_after_the_window_or_after_the_successor_was_used": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc068_a_transient_user_store_error_does_not_end_the_session": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc068_secure_user_storage_distinguishes_not_found_from_an_error": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc068_refresh_and_logout_store_calls_run_off_the_event_loop": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc068_revoking_every_session_touches_only_live_families": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc067_the_recorded_ip_ignores_client_supplied_forwarded_hops": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc067_a_flood_from_one_source_cannot_fill_the_durable_queue": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc067_the_banner_recovers_once_drops_are_no_longer_recent": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc067_identifiers_are_hashed_with_a_secret_key": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc067_the_user_agent_is_reduced_to_a_coarse_class": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc067_no_client_header_chooses_the_hop_count": {
+        "status": "failed",
+        "reason": "AssertionError: a client-sent X-Forwarded-Host must not make the server trust a client-sent hop"
+      },
+      "test_rc067_steps_left_only_over_published_hosting_egress_addresses": {
+        "status": "failed",
+        "reason": "AssertionError: assert '151.101.1.1' == '203.0.113.7'"
+      },
+      "test_rc067_the_egress_list_is_sourced_dated_and_replaceable_without_a_rebuild": {
+        "status": "failed",
+        "reason": "AttributeError: module 'app.core.client_ip' has no attribute 'EGRESS_SOURCE_URL'"
+      },
+      "test_rc067_the_rate_limit_key_cannot_be_chosen_by_the_client": {
+        "status": "failed",
+        "reason": "AssertionError: assert '6.6.6.6' == '198.51.100.200'"
+      },
+      "test_rc067_anonymous_noise_never_pushes_an_authenticated_failure_out_of_the_trail": {
+        "status": "failed",
+        "reason": "AssertionError: an authenticated user's failed clinical action must always be durable"
+      },
+      "test_rc068_a_developer_env_file_cannot_break_the_test_suite": {
+        "status": "failed",
+        "reason": "pydantic_core._pydantic_core.ValidationError: 1 validation error for SecuritySettings"
+      },
+      "test_rc067_starting_a_passkey_registration_is_not_recorded_as_a_registration": {
+        "status": "failed",
+        "reason": "AssertionError: [{'action': 'auth.credential.register', 'actor_role': 'radiologist', 'actor_user_id': 'f677d546-eb03-4819-bf8f-2260c224202b', 'actor_username': 'dr_rad', ...}]"
+      },
+      "test_rc067_the_rate_limit_key_ignores_client_supplied_forwarded_hops": {
+        "status": "failed",
+        "reason": "AssertionError: assert '151.101.1.1' == '203.0.113.7'"
+      }
+    }
+  },
+  "frontend": {
+    "passed": 0,
+    "failed": 3,
+    "not_passing": {
+      "rc069 fetchWithSession drops a caller-provided token that is not this tab's own": {
+        "status": "failed",
+        "reason": "AssertionError: expected 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX…' to be undefined"
+      },
+      "rc069 no component reads the shared token from storage itself": {
+        "status": "failed",
+        "reason": "AssertionError: expected [ Array(2) ] to deeply equal []"
+      },
+      "rc069 the page stays mounted but is hidden and inert while the dialog is open": {
+        "status": "failed",
+        "reason": "AssertionError: expected null to be 'true' // Object.is equality"
+      }
+    }
+  }
+}

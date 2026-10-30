@@ -1,0 +1,133 @@
+{
+  "executed": "2026-10-29T20:30:07",
+  "code_under_test": "39d9730eee04f2eec0f65bc210f61991a37c6919 (application code unchanged; only the new test files present)",
+  "purpose": "failing-first evidence for majors R1 and R2 of the final check of PR #69 (dd22708..39d9730): the confirmation guard must require the standard 2D view in segmentation mode drawing this segmentation (R1) and, on a classified segmentation, every value present drawn with the label the server stored for it (R2: the label-preset switch is locked; the confirmation sends the drawn label table and the server refuses another)",
+  "environment": "offline per PRB-002 (missing credentials file, empty gcloud configuration, mstool-offline-tests, no model-provider key)",
+  "backend": {
+    "files": [
+      "tests/unit/test_release_2026_10_25_final_check.py"
+    ],
+    "failed": 3,
+    "total": 4,
+    "cases": {
+      "test_rc071_release_final_drawn_labels_digest_is_the_shared_canonical_text": {
+        "status": "failed",
+        "reason": "AttributeError: module 'app.services.dis_review_gate' has no attribute 'drawn_labels_sha256'"
+      },
+      "test_rc071_release_final_the_dis_state_serves_the_stored_label_table": {
+        "status": "failed",
+        "reason": "KeyError: 'stored_labels'"
+      },
+      "test_rc071_release_final_a_confirmation_drawn_with_other_labels_is_refused": {
+        "status": "failed",
+        "reason": "AssertionError: (None, '{\"success\":true,\"already_confirmed\":false,\"clinician_review\":{\"reviewed_by\":\"dr_rev\",\"reviewed_by_id\":\"u-1\",\"r...\",\"reviewed_mask_sha256\":\"7afa2b6aec6cbed8f9fb421786a4bb60895b9d08e88c64cbb2aad9dbc135d43b\",\"reviewed_labels_sha256\":')\nassert 200 == 409\n +  where 200 = <Response"
+      },
+      "test_rc071_release_final_a_confirmation_drawn_with_the_stored_labels_is_recorded": {
+        "status": "passed",
+        "reason": null
+      }
+    }
+  },
+  "frontend": {
+    "files": [
+      "src/ViewerApp.release20261029.test.tsx",
+      "src/components/LesionDashboard.release20261029.test.tsx",
+      "src/utils/drawnLabels.digest.test.ts"
+    ],
+    "failed": 17,
+    "total": 18,
+    "files_failing_to_load": {},
+    "cases": {
+      "rc071 release final r1 the standard 2D view in segmentation mode publishes the open segmentation": {
+        "file": "src/ViewerApp.release20261029.test.tsx",
+        "status": "failed",
+        "reason": "AssertionError: expected undefined to be 'seg-1' // Object.is equality\n\nIgnored nodes: comments, script, style\n\u001b[36m<html>\u001b[39m\n  \u001b[36m<head />\u001b[39m\n  \u001b[36m<body>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mid\u001b[39m=\u001b[32m\"root\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"h-screen f"
+      },
+      "rc071 release final r1 segmentation mode off: nothing is published": {
+        "file": "src/ViewerApp.release20261029.test.tsx",
+        "status": "failed",
+        "reason": "AssertionError: expected undefined to be 'seg-1' // Object.is equality\n\nIgnored nodes: comments, script, style\n\u001b[36m<html>\u001b[39m\n  \u001b[36m<head />\u001b[39m\n  \u001b[36m<body>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mid\u001b[39m=\u001b[32m\"root\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"h-screen f"
+      },
+      "rc071 release final r1 render niivue: nothing is published": {
+        "file": "src/ViewerApp.release20261029.test.tsx",
+        "status": "failed",
+        "reason": "AssertionError: expected undefined to be 'seg-1' // Object.is equality\n\nIgnored nodes: comments, script, style\n\u001b[36m<html>\u001b[39m\n  \u001b[36m<head />\u001b[39m\n  \u001b[36m<body>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mid\u001b[39m=\u001b[32m\"root\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"h-screen f"
+      },
+      "rc071 release final r1 render matplotlib: nothing is published": {
+        "file": "src/ViewerApp.release20261029.test.tsx",
+        "status": "failed",
+        "reason": "AssertionError: expected undefined to be 'seg-1' // Object.is equality\n\nIgnored nodes: comments, script, style\n\u001b[36m<html>\u001b[39m\n  \u001b[36m<head />\u001b[39m\n  \u001b[36m<body>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mid\u001b[39m=\u001b[32m\"root\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"h-screen f"
+      },
+      "rc071 release final r1 the 3D view: nothing is published": {
+        "file": "src/ViewerApp.release20261029.test.tsx",
+        "status": "failed",
+        "reason": "AssertionError: expected undefined to be 'seg-1' // Object.is equality\n\nIgnored nodes: comments, script, style\n\u001b[36m<html>\u001b[39m\n  \u001b[36m<head />\u001b[39m\n  \u001b[36m<body>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mid\u001b[39m=\u001b[32m\"root\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"h-screen f"
+      },
+      "rc071 release final r1 the multi-panel layout: nothing is published": {
+        "file": "src/ViewerApp.release20261029.test.tsx",
+        "status": "failed",
+        "reason": "AssertionError: expected undefined to be 'seg-1' // Object.is equality\n\nIgnored nodes: comments, script, style\n\u001b[36m<html>\u001b[39m\n  \u001b[36m<head />\u001b[39m\n  \u001b[36m<body>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mid\u001b[39m=\u001b[32m\"root\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"h-screen f"
+      },
+      "rc071 release final r1 closing the segmentation: nothing is published": {
+        "file": "src/ViewerApp.release20261029.test.tsx",
+        "status": "failed",
+        "reason": "AssertionError: expected undefined to be 'seg-1' // Object.is equality\n\nIgnored nodes: comments, script, style\n\u001b[36m<html>\u001b[39m\n  \u001b[36m<head />\u001b[39m\n  \u001b[36m<body>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mid\u001b[39m=\u001b[32m\"root\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"h-screen f"
+      },
+      "rc071 release final r2 the preset switch is locked on a classified segmentation": {
+        "file": "src/ViewerApp.release20261029.test.tsx",
+        "status": "failed",
+        "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31melement\u001b[39m\u001b[2m).toBeDisabled()\u001b[22m\n\nReceived element is not disabled:\n  \u001b[31m<select\n  class=\"w-full px-1.5 py-1 bg-gray-700 border border-gray-600 rounded text-[10px] text-white\"\n/>\u001b[39m\n    at Proxy.expectWrapper (file:///C:/Users/Nicolas/medical-imaging-viewer/.clau"
+      },
+      "rc071 release final r2 an unclassified segmentation keeps the preset switch (positive control)": {
+        "file": "src/ViewerApp.release20261029.test.tsx",
+        "status": "passed",
+        "reason": null
+      },
+      "rc071 release final r1 refused: segmentation mode off, multi-panel, 3D, NiiVue or matplotlib view (nothing published)": {
+        "file": "src/components/LesionDashboard.release20261029.test.tsx",
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirm-refused\"]\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mstyle\u001b[39m=\u001b[32m\"background: rgb(22, 25, 34); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; ga"
+      },
+      "rc071 release final r1 refused: the standard view draws another segmentation": {
+        "file": "src/components/LesionDashboard.release20261029.test.tsx",
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirm-refused\"]\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mstyle\u001b[39m=\u001b[32m\"background: rgb(22, 25, 34); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; ga"
+      },
+      "rc071 release final r2 refused after switching the label preset to Default": {
+        "file": "src/components/LesionDashboard.release20261029.test.tsx",
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirm-refused\"]\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mstyle\u001b[39m=\u001b[32m\"background: rgb(22, 25, 34); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; ga"
+      },
+      "rc071 release final r2 refused when one colour differs from the stored label": {
+        "file": "src/components/LesionDashboard.release20261029.test.tsx",
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirm-refused\"]\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mstyle\u001b[39m=\u001b[32m\"background: rgb(22, 25, 34); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; ga"
+      },
+      "rc071 release final r2 refused when the stored labels could not be read": {
+        "file": "src/components/LesionDashboard.release20261029.test.tsx",
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirm-refused\"]\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mstyle\u001b[39m=\u001b[32m\"background: rgb(22, 25, 34); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; ga"
+      },
+      "rc071 release final drawn with the stored labels in the standard view: confirmed, with the drawn table (positive control)": {
+        "file": "src/components/LesionDashboard.release20261029.test.tsx",
+        "status": "failed",
+        "reason": "AssertionError: expected \"vi.fn()\" to be called with arguments: [ 'seg-1', …(3) ]\u001b[90m\n\nReceived: \n\n\u001b[1m  1st vi.fn() call:\n\n\u001b[22m\u001b[2m  [\u001b[22m\n\u001b[2m    \"seg-1\",\u001b[22m\n\u001b[2m    \"abababababababababababababababababababababababababababababababab\",\u001b[22m\n\u001b[32m-   null,\u001b[90m\n\u001b[32m-   [\u001b[90m\n\u001b[32m-     {\u001b[90m\n"
+      },
+      "rc071 release final the canonical text and its digest match the server": {
+        "file": "src/utils/drawnLabels.digest.test.ts",
+        "status": "failed",
+        "reason": "TypeError: api.drawnLabelsCanonical is not a function\n    at C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/release-2026-10-25/frontend/src/utils/drawnLabels.digest.test.ts:38:16\n    at file:///C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/agent-a8847e46e97c8da95/frontend/node"
+      },
+      "rc071 release final the digest ignores order and colour case, not names or colours": {
+        "file": "src/utils/drawnLabels.digest.test.ts",
+        "status": "failed",
+        "reason": "TypeError: api.drawnLabelsSha256 is not a function\n    at C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/release-2026-10-25/frontend/src/utils/drawnLabels.digest.test.ts:45:22\n    at file:///C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/agent-a8847e46e97c8da95/frontend/node_mo"
+      },
+      "rc071 release final the confirmation sends the digest of the drawn table": {
+        "file": "src/utils/drawnLabels.digest.test.ts",
+        "status": "failed",
+        "reason": "AssertionError: expected { Object (mask_sha256) } to deeply equal { …(2) }\n    at C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/release-2026-10-25/frontend/src/utils/drawnLabels.digest.test.ts:53:35\n    at file:///C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/agent-a8847e46e9"
+      }
+    }
+  }
+}

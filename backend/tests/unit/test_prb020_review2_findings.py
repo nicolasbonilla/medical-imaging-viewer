@@ -188,13 +188,33 @@ def test_rc083_prb023_r2_earlier_runs_are_counted_and_the_undo_by_basis_document
 # ============================================================================================
 # R4 — the other password paths through the validation handler
 # ============================================================================================
+def _capture_audit_calls(monkeypatch, svc):
+    """Release 2026-10-30 (merge with the release of #65 CAPA-015): the per-process list `_audit_logs` no longer exists
+    (RC-067: audit events go to the durable audit trail). The audit calls are captured here, for this test only, into
+    `_audit_logs` with the fields these tests read (action, resource, result, user_id, username, details); every call
+    still goes to the durable trail."""
+    import inspect
+    from types import SimpleNamespace
+    original = svc._log_audit_event
+    captured = []
+
+    def capture(*args, **kwargs):
+        a = inspect.signature(original).bind(*args, **kwargs).arguments
+        captured.append(SimpleNamespace(action=a["action"], resource=a["resource"], result=a["result"],
+                                        user_id=a.get("user_id"), username=a.get("username"),
+                                        details=dict(a.get("details") or {})))
+        return original(*args, **kwargs)
+    monkeypatch.setattr(svc, "_log_audit_event", capture)
+    monkeypatch.setattr(svc, "_audit_logs", captured, raising=False)
+
+
 @pytest.fixture
 def store(monkeypatch):
     s = FakeUserStorage()
     svc = auth_routes.auth_service
-    for name, value in (("_storage", s), ("_users", {}), ("_user_passwords", {}), ("_password_history", {}),
-                        ("_audit_logs", [])):
+    for name, value in (("_storage", s), ("_users", {}), ("_user_passwords", {}), ("_password_history", {})):
         monkeypatch.setattr(svc, name, value)
+    _capture_audit_calls(monkeypatch, svc)
     app.dependency_overrides[get_user_storage] = lambda: s
     return s
 

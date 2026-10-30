@@ -16,6 +16,26 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 const MODEL_URL = '/models/brain_screening.onnx';
 
+/**
+ * PRB-009: whether the model file is served, looked up ONCE per page and shared by every
+ * viewer opening (it was requested at each opening). Resolves false — silently — when the
+ * request fails or returns no model; an absent model is a switched-off feature, not an error.
+ * Firebase Hosting's SPA rewrite answers 200 + index.html for ANY path, so a text/html answer
+ * also means "absent" (ONNX must never parse HTML).
+ */
+let modelAvailability: Promise<boolean> | null = null;
+function modelIsServed(): Promise<boolean> {
+  if (!modelAvailability) {
+    modelAvailability = fetch(MODEL_URL, { method: 'HEAD' })
+      .then((res) => {
+        const ct = res.headers.get('content-type') || '';
+        return res.ok && !ct.includes('text/html');
+      })
+      .catch(() => false);
+  }
+  return modelAvailability;
+}
+
 export interface ScreeningResult {
   normal: number;
   abnormal: number;
@@ -57,17 +77,11 @@ export function useEdgeAI(): UseEdgeAIReturn {
   // Track pending classify request while model loads
   const pendingClassifyRef = useRef<{ pixelData: Float32Array; width: number; height: number } | null>(null);
 
-  // Check model availability on mount.
-  // Firebase Hosting SPA rewrite returns 200 + index.html for ANY path
-  // (including /models/brain_screening.onnx when file doesn't exist).
-  // Must verify content-type is NOT text/html to avoid ONNX parsing HTML.
+  // Model availability: one shared lookup per page (PRB-009).
   useEffect(() => {
-    fetch(MODEL_URL, { method: 'HEAD' })
-      .then((res) => {
-        const ct = res.headers.get('content-type') || '';
-        setIsModelAvailable(res.ok && !ct.includes('text/html'));
-      })
-      .catch(() => setIsModelAvailable(false));
+    let live = true;
+    modelIsServed().then((served) => { if (live) setIsModelAvailable(served); });
+    return () => { live = false; };
   }, []);
 
   // Create worker

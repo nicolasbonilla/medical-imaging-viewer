@@ -211,27 +211,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return f"ip:{client_ip}:{path}"
 
     def _get_client_ip(self, request: Request) -> str:
-        """
-        Get client IP address from request.
-
-        Handles X-Forwarded-For header for proxied requests.
-        """
-        # Check X-Forwarded-For header (for reverse proxy)
-        forwarded_for = request.headers.get('X-Forwarded-For')
-        if forwarded_for:
-            # Get first IP (original client)
-            return forwarded_for.split(',')[0].strip()
-
-        # Check X-Real-IP header
-        real_ip = request.headers.get('X-Real-IP')
-        if real_ip:
-            return real_ip
-
-        # Fall back to direct connection
-        if request.client:
-            return request.client.host
-
-        return 'unknown'
+        """Client IP: the right-most untrusted X-Forwarded-For hop (CAPA-015 review m9; the first
+        entry, used before, is whatever the client sends)."""
+        from app.core.client_ip import client_ip
+        return client_ip(request) or 'unknown'
 
     def _get_user_id(self, request: Request) -> Optional[str]:
         """
@@ -379,19 +362,9 @@ class IPBlacklistMiddleware(BaseHTTPMiddleware):
             return ip in self.memory_blacklist
 
     def _get_client_ip(self, request: Request) -> str:
-        """Get client IP from request."""
-        forwarded_for = request.headers.get('X-Forwarded-For')
-        if forwarded_for:
-            return forwarded_for.split(',')[0].strip()
-
-        real_ip = request.headers.get('X-Real-IP')
-        if real_ip:
-            return real_ip
-
-        if request.client:
-            return request.client.host
-
-        return 'unknown'
+        """Client IP: the right-most untrusted X-Forwarded-For hop (CAPA-015 review m9)."""
+        from app.core.client_ip import client_ip
+        return client_ip(request) or 'unknown'
 
     async def add_to_blacklist(
         self, ip: str, duration: int = 3600, reason: str = "Security policy violation"

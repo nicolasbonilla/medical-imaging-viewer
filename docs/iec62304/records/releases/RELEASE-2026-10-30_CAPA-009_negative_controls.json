@@ -1,0 +1,390 @@
+{
+  "executed": "2026-10-30T12:16:28",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/api/routes/ai_segmentation.py": "611e97a9d48f6f7b984aaac9d010d4ffce27852200d34360164ee5e4ab54d4d8",
+    "backend/app/api/routes/clinical_tools.py": "613693844484311a3c78d79c4a1d98c8fe72e8d6ec366c860ca415adf1199ed4",
+    "backend/app/api/routes/dicomweb.py": "93a6867eada0647cbe95d741851a1f1e6f4461110a72cdefc6092ef0cec7a8a9",
+    "backend/app/api/routes/documents.py": "b345e85eddf9ed27462c093a35d127a4b87d5780a3797cfe9e5e7e75ac311325",
+    "backend/app/api/routes/fhir.py": "832ec964c3142a12b1d1967698c639d604176f54b1135c022e5a208fa692543b",
+    "backend/app/api/routes/imaging.py": "87a37a9f6ce703f5bedd28803ee39abe30b454df298f5be91913e9efd9a0ac4d",
+    "backend/app/api/routes/patients.py": "0033f5232ff94f93341047ef9dea81ab7fec492bde760ccc6d1625a168b1c99b",
+    "backend/app/api/routes/segmentation.py": "511d34d674cd3fdd77d883395d70bd683f369513e4e262b53e6c363b5034102a",
+    "backend/app/api/routes/studies.py": "da3af611f26d444776a16cb3e14510371a77c7a43cf9310212ce8897beab928c",
+    "backend/app/api/routes/websocket.py": "4b5242793faeea168b5c49cefd25f3ff12a1855b670969b1fd02cdc536229695",
+    "backend/app/security/ownership.py": "7e1e15766388c6247ad7713cd2005a3fd317846987763f12e9d77b2e7da53652",
+    "backend/app/security/patient_access_dependency.py": "09b2717789009ff6e67506d378e23b4f3b02fb578fe9d27ab42eb29b72c29435"
+  },
+  "tests": [
+    "tests/unit/test_capa009_object_authorization_everywhere.py"
+  ],
+  "mutations": {
+    "P1_patient_check_never_awaited": {
+      "failed": 7,
+      "passed": 44,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_no_dependency_can_silently_skip_itself",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[get",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[get",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[get",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[get",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[get",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[get"
+      ],
+      "reintroduces": "the RC-026 defect: the patient dependency returns a coroutine that is never awaited",
+      "applied": true
+    },
+    "S1_instance_download_url_open": {
+      "failed": 2,
+      "passed": 49,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[get"
+      ],
+      "reintroduces": "signed download link for any instance",
+      "applied": true
+    },
+    "S2_study_download_urls_open": {
+      "failed": 2,
+      "passed": 49,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[get"
+      ],
+      "reintroduces": "signed download links for any study",
+      "applied": true
+    },
+    "S3_patient_study_list_open": {
+      "failed": 2,
+      "passed": 49,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[get"
+      ],
+      "reintroduces": "any patient's study list",
+      "applied": true
+    },
+    "S4_expert_mask_open": {
+      "failed": 2,
+      "passed": 49,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[get"
+      ],
+      "reintroduces": "any expert mask",
+      "applied": true
+    },
+    "S5_create_study_any_patient": {
+      "failed": 2,
+      "passed": 49,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[post"
+      ],
+      "reintroduces": "a study created for any patient",
+      "applied": true
+    },
+    "S6_accession_lookup_open": {
+      "failed": 2,
+      "passed": 49,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc036_a_lookup_by_accession_number_does_not_bypass_the_patient_check"
+      ],
+      "reintroduces": "lookup of any study by accession number",
+      "applied": true
+    },
+    "S7_upload_into_any_study": {
+      "failed": 2,
+      "passed": 49,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[post"
+      ],
+      "reintroduces": "an upload into any study",
+      "applied": true
+    },
+    "S8_complete_anyones_upload": {
+      "failed": 2,
+      "passed": 49,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[post"
+      ],
+      "reintroduces": "completion of someone else's upload",
+      "applied": true
+    },
+    "D1_study_documents_open": {
+      "failed": 2,
+      "passed": 49,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[get"
+      ],
+      "reintroduces": "documents of any study",
+      "applied": true
+    },
+    "D2_version_open": {
+      "failed": 2,
+      "passed": 49,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[get"
+      ],
+      "reintroduces": "any document version",
+      "applied": true
+    },
+    "D3_document_download_open": {
+      "failed": 2,
+      "passed": 49,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[get"
+      ],
+      "reintroduces": "signed download link for any document",
+      "applied": true
+    },
+    "D4_patient_document_links_open": {
+      "failed": 2,
+      "passed": 49,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[get"
+      ],
+      "reintroduces": "signed download links for any patient's documents",
+      "applied": true
+    },
+    "D5_document_upload_any_patient": {
+      "failed": 2,
+      "passed": 49,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[post"
+      ],
+      "reintroduces": "a document uploaded into any patient",
+      "applied": true
+    },
+    "D6_version_upload_any_document": {
+      "failed": 2,
+      "passed": 49,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[post"
+      ],
+      "reintroduces": "a new version of any document",
+      "applied": true
+    },
+    "D7_complete_anyones_document_upload": {
+      "failed": 2,
+      "passed": 49,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[post"
+      ],
+      "reintroduces": "completion of someone else's document upload",
+      "applied": true
+    },
+    "F1_fhir_patient_open": {
+      "failed": 2,
+      "passed": 49,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[get"
+      ],
+      "reintroduces": "any patient as a FHIR resource",
+      "applied": true
+    },
+    "F2_fhir_study_open": {
+      "failed": 2,
+      "passed": 49,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[get"
+      ],
+      "reintroduces": "any study as a FHIR resource",
+      "applied": true
+    },
+    "M1_mrn_enumeration": {
+      "failed": 2,
+      "passed": 49,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[get"
+      ],
+      "reintroduces": "enumeration of patients by MRN",
+      "applied": true
+    },
+    "A1_ai_on_any_image": {
+      "failed": 2,
+      "passed": 49,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[post"
+      ],
+      "reintroduces": "AI segmentation of any image",
+      "applied": true
+    },
+    "A2_volumetry_any_segmentation": {
+      "failed": 1,
+      "passed": 50,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism"
+      ],
+      "reintroduces": "volumetry of any segmentation",
+      "applied": true
+    },
+    "A3_volumetry_compare_any_patient": {
+      "failed": 2,
+      "passed": 49,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[post"
+      ],
+      "reintroduces": "volumetry comparison for any patient",
+      "applied": true
+    },
+    "A4_anyones_ai_task": {
+      "failed": 2,
+      "passed": 49,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[get"
+      ],
+      "reintroduces": "polling of someone else's AI task",
+      "applied": true
+    },
+    "T1_tool_on_any_image": {
+      "failed": 3,
+      "passed": 48,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[post",
+        "test_rc036_tool_inputs_must_belong_to_one_patient_and_match_the_ids"
+      ],
+      "reintroduces": "a clinical tool run on any image",
+      "applied": true
+    },
+    "T2_anyones_tool_task": {
+      "failed": 2,
+      "passed": 49,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[get"
+      ],
+      "reintroduces": "polling of someone else's clinical-tool task",
+      "applied": true
+    },
+    "W1_pacs_import_any_patient": {
+      "failed": 2,
+      "passed": 49,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[post"
+      ],
+      "reintroduces": "a PACS import into any patient",
+      "applied": true
+    },
+    "W2_anyones_import_job": {
+      "failed": 1,
+      "passed": 50,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism"
+      ],
+      "reintroduces": "status of someone else's import job",
+      "applied": true
+    },
+    "W3_any_user_tests_any_url": {
+      "failed": 2,
+      "passed": 49,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc036_administrator_only_routes_refuse_other_roles[post"
+      ],
+      "reintroduces": "any user makes the server call a URL",
+      "applied": true
+    },
+    "W4_websocket_stats_open": {
+      "failed": 2,
+      "passed": 49,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_every_object_route_is_classified_and_keeps_its_mechanism",
+        "test_rc036_administrator_only_routes_refuse_other_roles[get"
+      ],
+      "reintroduces": "another user's connection statistics",
+      "applied": true
+    },
+    "O1_overlay_any_segmentation": {
+      "failed": 1,
+      "passed": 50,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_an_overlay_or_reference_from_another_patient_is_refused"
+      ],
+      "reintroduces": "another patient's mask drawn onto an authorized image",
+      "applied": true
+    },
+    "O2_raw_reference_path": {
+      "failed": 1,
+      "passed": 50,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_an_overlay_or_reference_from_another_patient_is_refused"
+      ],
+      "reintroduces": "a raw client storage path used as a bucket key",
+      "applied": true
+    },
+    "R1_registry_allows_everyone": {
+      "failed": 7,
+      "passed": 44,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[post",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[post",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[post",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[get",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[get",
+        "test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched[get",
+        "test_rc036_initiator_registry_allows_the_initiator_and_admins_only"
+      ],
+      "reintroduces": "the initiator registry authorizes everyone",
+      "applied": true
+    }
+  },
+  "restored": {
+    "failed": 0,
+    "passed": 51,
+    "errors": 0,
+    "failing_tests": []
+  },
+  "undetected": []
+}

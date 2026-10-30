@@ -1,0 +1,92 @@
+{
+  "executed": "2026-10-28T22:38:21",
+  "code_under_test": "dd22708e4b2846baf85a2dda144fc193d8b51f95 (application code unchanged; only the new test files present)",
+  "purpose": "failing-first evidence for blocker B1 and major M3 of the second independent review of PR #69 (6d1fde2..dd22708): a segmentation opened from the server, the list caches refreshed after the classification, every mask value drawn (fallback colour and warning), the confirmation refused while any lesion is not drawn, an invisible opacity not restored in a new session. Passing cases are positive controls; drawnLabels.test.ts fails to load because the module does not exist yet",
+  "environment": "offline per PRB-002 (missing credentials file, empty gcloud configuration, mstool-offline-tests, no model-provider key)",
+  "backend": {},
+  "frontend": {
+    "files": [
+      "src/ViewerApp.release20261028.test.tsx",
+      "src/components/LesionDashboard.release20261028b.test.tsx",
+      "src/store/useSegmentationStore.release20261028.test.ts",
+      "src/utils/drawnLabels.test.ts"
+    ],
+    "failed": 12,
+    "total": 14,
+    "files_failing_to_load": {
+      "src/utils/drawnLabels.test.ts": "Failed to resolve import \"./drawnLabels\" from \"src/utils/drawnLabels.test.ts\". Does the file exist?"
+    },
+    "cases": {
+      "rc070 release b1 opening takes the labels the server stored, not the list fetched before the classification": {
+        "file": "src/ViewerApp.release20261028.test.tsx",
+        "status": "failed",
+        "reason": "AssertionError: expected \"vi.fn()\" to be called with arguments: [ 'seg-1' ]\u001b[90m\n\nNumber of calls: \u001b[1m0\u001b[22m\n\u001b[39m\n    at Proxy.<anonymous> (file:///C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/agent-a8847e46e97c8da95/frontend/node_modules/@vitest/expect/dist/index.js:1420:10)\n    at P"
+      },
+      "rc070 release b1 closing and reopening reads the server again (the reopen path of the review)": {
+        "file": "src/ViewerApp.release20261028.test.tsx",
+        "status": "failed",
+        "reason": "AssertionError: expected \"vi.fn()\" to be called 2 times, but got 0 times\n    at C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/release-2026-10-25/frontend/src/ViewerApp.release20261028.test.tsx:177:35\n    at file:///C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/agent-a8847e46e"
+      },
+      "rc070 release b1 a segmentation the server cannot return is not opened from the stale list": {
+        "file": "src/ViewerApp.release20261028.test.tsx",
+        "status": "failed",
+        "reason": "AssertionError: expected \"vi.fn()\" to be called at least once\n\nIgnored nodes: comments, script, style\n\u001b[36m<html>\u001b[39m\n  \u001b[36m<head />\u001b[39m\n  \u001b[36m<body>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mid\u001b[39m=\u001b[32m\"root\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"h-screen flex flex-"
+      },
+      "rc070 release b1 the overlay controls warn about mask values without a label": {
+        "file": "src/ViewerApp.release20261028.test.tsx",
+        "status": "failed",
+        "reason": "Error: Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.\n    at createFiberFromTypeAnd"
+      },
+      "rc070 release b1 the classification invalidates every segmentation list cache": {
+        "file": "src/components/LesionDashboard.release20261028b.test.tsx",
+        "status": "failed",
+        "reason": "AssertionError: expected [] to deep equally contain [ 'segmentations' ]\n    at C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/release-2026-10-25/frontend/src/components/LesionDashboard.release20261028b.test.tsx:116:18\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at pro"
+      },
+      "rc071 release m3 everything drawn: the confirmation goes ahead (positive control)": {
+        "file": "src/components/LesionDashboard.release20261028b.test.tsx",
+        "status": "passed",
+        "reason": null
+      },
+      "rc071 release m3 refused: a label switched off with its eye toggle": {
+        "file": "src/components/LesionDashboard.release20261028b.test.tsx",
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirm-refused\"]\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mstyle\u001b[39m=\u001b[32m\"background: rgb(22, 25, 34); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; ga"
+      },
+      "rc071 release m3 refused: the overlay switched off": {
+        "file": "src/components/LesionDashboard.release20261028b.test.tsx",
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirm-refused\"]\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mstyle\u001b[39m=\u001b[32m\"background: rgb(22, 25, 34); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; ga"
+      },
+      "rc071 release m3 refused: the lesion opacity below the visible minimum": {
+        "file": "src/components/LesionDashboard.release20261028b.test.tsx",
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirm-refused\"]\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mstyle\u001b[39m=\u001b[32m\"background: rgb(22, 25, 34); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; ga"
+      },
+      "rc071 release m3 refused: a mask value with no entry in the label table": {
+        "file": "src/components/LesionDashboard.release20261028b.test.tsx",
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirm-refused\"]\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mstyle\u001b[39m=\u001b[32m\"background: rgb(22, 25, 34); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; ga"
+      },
+      "rc071 release m3 refused: a mask that cannot be read": {
+        "file": "src/components/LesionDashboard.release20261028b.test.tsx",
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirm-refused\"]\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mstyle\u001b[39m=\u001b[32m\"background: rgb(22, 25, 34); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; ga"
+      },
+      "rc071 release m3 a stored opacity of 0 is replaced by the default when the session starts": {
+        "file": "src/store/useSegmentationStore.release20261028.test.ts",
+        "status": "failed",
+        "reason": "AssertionError: expected +0 to be 0.6 // Object.is equality\n    at C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/release-2026-10-25/frontend/src/store/useSegmentationStore.release20261028.test.ts:22:59\n    at file:///C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/agent-a8847e4"
+      },
+      "rc071 release m3 a stored opacity below the visible minimum is replaced too": {
+        "file": "src/store/useSegmentationStore.release20261028.test.ts",
+        "status": "failed",
+        "reason": "AssertionError: expected 0.1 to be 0.6 // Object.is equality\n    at C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/release-2026-10-25/frontend/src/store/useSegmentationStore.release20261028.test.ts:28:59\n    at file:///C:/Users/Nicolas/medical-imaging-viewer/.claude/worktrees/agent-a8847e"
+      },
+      "rc071 release m3 a visible stored opacity is kept (positive control)": {
+        "file": "src/store/useSegmentationStore.release20261028.test.ts",
+        "status": "passed",
+        "reason": null
+      }
+    }
+  }
+}

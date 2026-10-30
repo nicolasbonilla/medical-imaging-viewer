@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { isWebAuthnSupported, prepareRegistrationOptions, serializeRegistrationCredential } from '@/utils/webauthn';
 import AppHeader from '@/components/AppHeader';
 import { formatDate } from '@/utils/formatDate';
+import { getAccessToken } from '@/services/session';
 
 export default function ProfilePage() {
   const { t } = useTranslation();
@@ -175,7 +176,7 @@ function PasskeySection({ userId }: { userId: string }) {
   const fetchCredentials = useCallback(async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('access_token');
+      const token = getAccessToken();   // CAPA-015 re-review N3: only this tab's own token
       if (!token) return;
       const res = await webauthnClient.get(`/api/v1/auth/webauthn/credentials`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -194,7 +195,7 @@ function PasskeySection({ userId }: { userId: string }) {
   const handleRegister = async () => {
     setRegistering(true);
     try {
-      const token = localStorage.getItem('access_token');
+      const token = getAccessToken();   // CAPA-015 re-review N3: only this tab's own token
       if (!token) { toast.error('Not authenticated'); setRegistering(false); return; }
       const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
 
@@ -232,7 +233,7 @@ function PasskeySection({ userId }: { userId: string }) {
 
   const handleDelete = async (credentialId: string) => {
     try {
-      const token = localStorage.getItem('access_token');
+      const token = getAccessToken();   // CAPA-015 re-review N3: only this tab's own token
       await webauthnClient.delete(`/api/v1/auth/webauthn/credentials/${credentialId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });

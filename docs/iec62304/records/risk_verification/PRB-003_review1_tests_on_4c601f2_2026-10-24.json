@@ -1,0 +1,294 @@
+{
+  "executed": "2026-10-24T19:41:22",
+  "base": "4c601f2 (PR #68 head reviewed on 2026-10-24)",
+  "method": "source files that differ from the base commit restored to it, files it did not have removed; the PRB-003 test files run unchanged; working tree restored byte for byte",
+  "swapped": {
+    "restored_to_base": [
+      "backend/app/api/routes/ai_report.py",
+      "backend/app/api/routes/segmentation.py",
+      "backend/app/api/routes/segmentation_analysis.py",
+      "backend/app/api/routes/segmentation_regions.py",
+      "backend/app/mcp/ms_clinical_server.py",
+      "backend/app/models/schemas.py",
+      "backend/app/services/brain_report_service.py",
+      "backend/app/services/dis_review_gate.py",
+      "backend/app/services/segmentation_service.py",
+      "frontend/src/ViewerApp.tsx",
+      "frontend/src/components/AIReportPanel.tsx",
+      "frontend/src/components/AutomaticMarkingNotice.tsx",
+      "frontend/src/components/BrowserFlamesCard.tsx",
+      "frontend/src/components/ClinicalToolsPanel.tsx",
+      "frontend/src/components/LesionDashboard.tsx",
+      "frontend/src/components/SegmentationPanel.tsx",
+      "frontend/src/i18n/locales/de.json",
+      "frontend/src/i18n/locales/en.json",
+      "frontend/src/i18n/locales/es.json",
+      "frontend/src/types/ai.ts",
+      "frontend/src/types/lesion.ts"
+    ],
+    "removed": []
+  },
+  "test_sha256": {
+    "backend/tests/unit/test_prb003_review1_findings.py": "ed1545deddd35f21dc8675a7c35d5dff821b1534b370e32ea3fa4deebb2d3d23",
+    "frontend/src/components/LesionDashboard.prb003.review1.test.tsx": "0faa08cf96b8eab015d60f9b85bf4bf699f9ea02d478c25fea0a6fcdac3d535c",
+    "frontend/src/components/SegmentationPanel.prb003.test.tsx": "ef21e5c3a3a4feace893a7e1ded9fcce95de751abf340bf677ff5be0dd14620f"
+  },
+  "backend": {
+    "passed": 2,
+    "failed": 45,
+    "errors": 0,
+    "results": {
+      "test_rc071_r1_only_clinical_roles_may_rename_labels[technician-True]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc071_r1_only_clinical_roles_may_rename_labels[radiologist-True]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc070_r1_a_confirmed_binary_lesion_mask_is_not_evaluated": {
+        "status": "failed",
+        "reason": "AssertionError: {'active_voxels': 0, 'black_hole_voxels': 0, 'brain_regions_evaluated': 3, 'brain_regions_with_lesions': 1, ...}"
+      },
+      "test_rc070_r1_the_default_label_preset_confirmed_is_not_evaluated": {
+        "status": "failed",
+        "reason": "AssertionError: {'active_voxels': 0, 'black_hole_voxels': 0, 'brain_regions_evaluated': 3, 'brain_regions_with_lesions': 2, ...}"
+      },
+      "test_rc070_r1_classified_lesions_relabelled_with_another_scheme_are_not_evaluated": {
+        "status": "failed",
+        "reason": "AttributeError: module 'app.services.dis_review_gate' has no attribute 'footprint_sha256'"
+      },
+      "test_rc070_r1_magnims_names_without_a_recorded_classification_are_not_evaluated": {
+        "status": "failed",
+        "reason": "AttributeError: module 'app.services.dis_review_gate' has no attribute 'labels_sha256'"
+      },
+      "test_rc070_r1_a_classification_of_other_lesions_does_not_count": {
+        "status": "failed",
+        "reason": "AttributeError: module 'app.services.dis_review_gate' has no attribute 'footprint_sha256'"
+      },
+      "test_rc070_r1_a_mask_value_outside_its_label_scheme_is_not_evaluated": {
+        "status": "failed",
+        "reason": "AttributeError: module 'app.services.dis_review_gate' has no attribute 'footprint_sha256'"
+      },
+      "test_rc070_r1_classified_and_confirmed_is_evaluated": {
+        "status": "failed",
+        "reason": "AttributeError: module 'app.services.dis_review_gate' has no attribute 'footprint_sha256'"
+      },
+      "test_rc070_r1_a_region_corrected_after_classification_keeps_the_classification": {
+        "status": "failed",
+        "reason": "AttributeError: module 'app.services.dis_review_gate' has no attribute 'footprint_sha256'"
+      },
+      "test_rc070_r1_a_lesion_added_after_classification_needs_a_new_classification": {
+        "status": "failed",
+        "reason": "AttributeError: module 'app.services.dis_review_gate' has no attribute 'footprint_sha256'"
+      },
+      "test_rc071_r1_the_confirmation_is_refused_before_the_regions_are_classified": {
+        "status": "failed",
+        "reason": "AssertionError: {\"success\":true,\"clinician_review\":{\"reviewed_by\":\"dr_rev\",\"reviewed_by_id\":\"u-1\",\"reviewed_at\":\"2026-10-24T17:41:12.003799Z\",\"reviewed_mask_sha256\":\"7afa2b6aec6cbed8f9fb421786a4bb60895b9d08e88c64cbb2aad9dbc135d43b\"}}"
+      },
+      "test_rc071_r1_the_confirmation_binds_the_mask_and_the_label_scheme": {
+        "status": "failed",
+        "reason": "AttributeError: module 'app.services.dis_review_gate' has no attribute 'footprint_sha256'"
+      },
+      "test_rc071_r1_a_confirmation_given_for_another_label_scheme_does_not_count": {
+        "status": "failed",
+        "reason": "AttributeError: module 'app.services.dis_review_gate' has no attribute 'footprint_sha256'"
+      },
+      "test_rc071_r1_renaming_a_label_after_the_confirmation_voids_it": {
+        "status": "failed",
+        "reason": "AttributeError: module 'app.services.dis_review_gate' has no attribute 'footprint_sha256'"
+      },
+      "test_rc071_r1_only_clinical_roles_may_rename_labels[viewer-False]": {
+        "status": "failed",
+        "reason": "AssertionError: (<UserRole.VIEWER: 'viewer'>, 200, '{\"success\":true,\"message\":\"Labels updated successfully\"}')"
+      },
+      "test_rc071_r1_only_clinical_roles_may_rename_labels[admin-False]": {
+        "status": "failed",
+        "reason": "AssertionError: (<UserRole.ADMIN: 'admin'>, 200, '{\"success\":true,\"message\":\"Labels updated successfully\"}')"
+      },
+      "test_rc070_r1_classify_regions_records_the_classified_lesions": {
+        "status": "failed",
+        "reason": "KeyError: 'classified_lesion_footprint_sha256'"
+      },
+      "test_rc071_r1_an_ai_draft_needs_its_own_review_and_the_dis_confirmation": {
+        "status": "failed",
+        "reason": "AttributeError: module 'app.services.dis_review_gate' has no attribute 'footprint_sha256'"
+      },
+      "test_rc071_r5_a_second_confirmation_keeps_the_first_reviewer_and_is_recorded": {
+        "status": "failed",
+        "reason": "AttributeError: module 'app.services.dis_review_gate' has no attribute 'footprint_sha256'"
+      },
+      "test_rc071_r5_a_voided_confirmation_is_kept_in_the_history": {
+        "status": "failed",
+        "reason": "AttributeError: module 'app.services.dis_review_gate' has no attribute 'footprint_sha256'"
+      },
+      "test_rc071_r5_the_confirmation_does_not_rewrite_the_mask_object": {
+        "status": "failed",
+        "reason": "AttributeError: module 'app.services.dis_review_gate' has no attribute 'footprint_sha256'"
+      },
+      "test_rc071_r5_a_confirmation_that_was_not_stored_durably_is_refused_and_undone": {
+        "status": "failed",
+        "reason": "AttributeError: module 'app.services.dis_review_gate' has no attribute 'footprint_sha256'"
+      },
+      "test_rc071_r5_a_mask_changed_by_another_session_discards_the_cached_entry": {
+        "status": "failed",
+        "reason": "AttributeError: module 'app.services.dis_review_gate' has no attribute 'footprint_sha256'"
+      },
+      "test_rc071_r5_the_confirming_user_is_logged": {
+        "status": "failed",
+        "reason": "AttributeError: module 'app.services.dis_review_gate' has no attribute 'footprint_sha256'"
+      },
+      "test_rc070_r8_a_mask_saved_during_the_assessment_is_never_cached_as_its_result": {
+        "status": "failed",
+        "reason": "AttributeError: module 'app.services.dis_review_gate' has no attribute 'footprint_sha256'"
+      },
+      "test_rc072_r9_the_healthy_brain_notice_only_for_lesion_detection_tools[lst-ai-v1.0.3-True]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'lesion marking' in 'Automatic marking also marks spots in most healthy brains, mostly next to the ventricles. A marked spot is not evidence of multiple sclerosis; every spot needs expert review.'"
+      },
+      "test_rc072_r9_the_healthy_brain_notice_only_for_lesion_detection_tools[flames-v1.0-True]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'lesion marking' in 'Automatic marking also marks spots in most healthy brains, mostly next to the ventricles. A marked spot is not evidence of multiple sclerosis; every spot needs expert review.'"
+      },
+      "test_rc072_r9_the_healthy_brain_notice_only_for_lesion_detection_tools[synthseg-v2.0-False]": {
+        "status": "failed",
+        "reason": "AssertionError: assert ('information_for_safety' in {'dis_criteria_version': 'McDonald 2024 (Montalban et al., Lancet Neurology 2025)', 'evaluation_status': 'not_evaluate...segmentation that a radiologist has confirmed, lesion by lesion and"
+      },
+      "test_rc072_r9_the_healthy_brain_notice_only_for_lesion_detection_tools[mindglide-v1.0-structures-False]": {
+        "status": "failed",
+        "reason": "AssertionError: assert ('information_for_safety' in {'dis_criteria_version': 'McDonald 2024 (Montalban et al., Lancet Neurology 2025)', 'evaluation_status': 'not_evaluate...segmentation that a radiologist has confirmed, lesion by lesion and"
+      },
+      "test_rc070_r3_lesion_analysis_states_whether_its_regions_are_confirmed": {
+        "status": "failed",
+        "reason": "KeyError: 'region_status'"
+      },
+      "test_rc070_r3_assistant_region_tools_carry_the_caveat": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'not a DIS assessment' in 'Regions of a segmentation are candidates to verify; never derive dissemination in space from them. DIS is reported only by summarize_dis_items, when the segmentation was confirmed by a radio"
+      },
+      "test_rc070_r2_the_assistant_report_names_its_segmentation": {
+        "status": "failed",
+        "reason": "KeyError: 'segmentation_id'"
+      },
+      "test_rc070_r2_e2e_a_confirmed_dis_reaches_the_model_through_the_real_report_service": {
+        "status": "failed",
+        "reason": "AttributeError: module 'app.services.dis_review_gate' has no attribute 'footprint_sha256'"
+      },
+      "test_rc070_r4_without_an_evaluated_dis_no_template_asks_for_dis[general]": {
+        "status": "failed",
+        "reason": "AssertionError: general: the system prompt still asks for DIS: ['typical MS regions', 'consistent with dissemination in space', '4 DIS anatomical regions']"
+      },
+      "test_rc070_r4_without_an_evaluated_dis_no_template_asks_for_dis[ms_activity]": {
+        "status": "failed",
+        "reason": "AssertionError: ms_activity: the system prompt still asks for DIS: ['typical MS regions', 'Organize by DIS regions', 'Tabulate lesion presence', 'consistent with dissemination in space']"
+      },
+      "test_rc070_r4_without_an_evaluated_dis_no_template_asks_for_dis[ms_lesion_burden]": {
+        "status": "failed",
+        "reason": "AssertionError: ms_lesion_burden: the system prompt still asks for DIS: ['typical MS regions', 'consistent with dissemination in space']"
+      },
+      "test_rc070_r4_without_an_evaluated_dis_no_template_asks_for_dis[ms_comprehensive]": {
+        "status": "failed",
+        "reason": "AssertionError: ms_comprehensive: the system prompt still asks for DIS: ['DIS checklist table', 'typical MS regions', 'DIS regions involved', 'consistent with dissemination in space', 'MAGNIMS DIS regions']"
+      },
+      "test_rc070_r4_without_an_evaluated_dis_no_template_asks_for_dis[ms_longitudinal]": {
+        "status": "failed",
+        "reason": "AssertionError: ms_longitudinal: the system prompt still asks for DIS: ['typical MS regions', 'consistent with dissemination in space', 'Present DIS data']"
+      },
+      "test_rc070_r4_a_dis_statement_written_by_the_model_is_replaced[en-Lesions involve 2 of 4 typical MS regions, consistent with dissemination in space.-Dissemination in space: not evaluated]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Lesions inv...on in space.' not in '> **AI-Gene...pert review.'"
+      },
+      "test_rc070_r4_a_dis_statement_written_by_the_model_is_replaced[es-Las lesiones afectan 2 de 4 regiones t\\xedpicas, compatible con diseminaci\\xf3n en el espacio.-Diseminaci\\xf3n en el espacio: no evaluada]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Las lesione... el espacio.' not in '> **Generad... un experto.'"
+      },
+      "test_rc070_r4_a_dis_statement_written_by_the_model_is_replaced[de-Die L\\xe4sionen betreffen 2 von 4 typischen MS-Regionen, vereinbar mit r\\xe4umlicher Dissemination.-R\\xe4umliche Dissemination: nicht beurteilt]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'Die L�sione...ssemination.' not in '> **KI-gene...r�ft werden.'"
+      },
+      "test_rc072_r4_the_notice_does_not_claim_the_draft_is_not_software_text": {
+        "status": "failed",
+        "reason": "AssertionError: assert 'comes from the software' not in '> **AI-Gene...pert review.'"
+      },
+      "test_rc070_r2_the_dis_block_is_bound_to_the_report_segmentation": {
+        "status": "failed",
+        "reason": "AttributeError: module 'app.services.dis_review_gate' has no attribute 'footprint_sha256'"
+      },
+      "test_rc070_r2_a_dis_block_without_the_report_segmentation_is_not_evaluated": {
+        "status": "failed",
+        "reason": "AttributeError: module 'app.services.dis_review_gate' has no attribute 'footprint_sha256'"
+      },
+      "test_rc070_r2_lesion_measurements_of_another_segmentation_are_refused": {
+        "status": "failed",
+        "reason": "AssertionError: {\"report_id\":\"31b02f37-aa89-4835-84e4-cdd520302b49\",\"content\":\"> **AI-Generated � Requires Physician Review Before Clinical Action.** This draft was produced by an automated system from computed measurements. It is not a dia"
+      },
+      "test_rc070_r3_without_an_evaluated_dis_the_report_receives_no_region_breakdown": {
+        "status": "failed",
+        "reason": "AssertionError: Periventricular reached the model for an unconfirmed segmentation"
+      }
+    }
+  },
+  "frontend": {
+    "passed": 3,
+    "failed": 14,
+    "not_passing": {
+      "rc071 review1 regions not classified: the card asks for the classification and offers no confirmation": {
+        "status": "failed",
+        "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31melement\u001b[39m\u001b[2m).toHaveTextContent()\u001b[22m"
+      },
+      "rc071 review1 an AI draft without its own review: the card says so and offers no confirmation": {
+        "status": "failed",
+        "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31melement\u001b[39m\u001b[2m).toHaveTextContent()\u001b[22m"
+      },
+      "rc071 review1 the confirmation is offered only on the open segmentation (its mask is the one hashed)": {
+        "status": "failed",
+        "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31melement\u001b[39m\u001b[2m).not.toBeInTheDocument()\u001b[22m"
+      },
+      "rc070 review1 a late reply of an older request never overwrites a newer one": {
+        "status": "failed",
+        "reason": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"dis-not-evaluated\"]"
+      },
+      "rc070 review1 the lesion table and region bars say the regions are not confirmed and not a DIS assessment": {
+        "status": "failed",
+        "reason": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"regions-not-confirmed\"]"
+      },
+      "rc072 review1 the AI draft banner names automatic LESION marking": {
+        "status": "failed",
+        "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31melement\u001b[39m\u001b[2m).toHaveTextContent()\u001b[22m"
+      },
+      "rc072 review1 a completed lesion tool shows the notice; a structure parcellation does not": {
+        "status": "failed",
+        "reason": "Error: Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed"
+      },
+      "rc072 review1 the in-browser FLAMeS result carries the notice": {
+        "status": "failed",
+        "reason": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"automatic-marking-notice\"]"
+      },
+      "rc070 review1 the report request names the segmentation its measurements come from": {
+        "status": "failed",
+        "reason": "AssertionError: expected undefined to be 'seg-1' // Object.is equality"
+      },
+      "rc070 review1 the lesion panel is rendered inside an error boundary": {
+        "status": "failed",
+        "reason": "AssertionError: expected 'import { useState, useRef, useEffect,…' to match /<ErrorBoundary name=\"LesionDashboard\"…/"
+      },
+      "rc072 review1 automatic / lst-ai-v1.0.3 -> notice true": {
+        "status": "failed",
+        "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31melement\u001b[39m\u001b[2m).toHaveTextContent()\u001b[22m"
+      },
+      "rc072 review1 automatic / flames-v1.0 -> notice true": {
+        "status": "failed",
+        "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31melement\u001b[39m\u001b[2m).toHaveTextContent()\u001b[22m"
+      },
+      "rc072 review1 automatic / synthseg-v2.0 -> notice false": {
+        "status": "failed",
+        "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31melement\u001b[39m\u001b[2m).not.toBeInTheDocument()\u001b[22m"
+      },
+      "rc072 review1 automatic / mindglide-v1.0-structures -> notice false": {
+        "status": "failed",
+        "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31melement\u001b[39m\u001b[2m).not.toBeInTheDocument()\u001b[22m"
+      }
+    }
+  },
+  "note": "Written before the corrections of the review of PR #68 (three backend cases added while designing the negative controls: relabelled classified lesions, another label scheme, the assistant's report request; the race case made to edit the mask in place; test names prefixed with the control they demonstrate for the manifest gate). Tests passing on 4c601f2 are positive controls (label renaming by a technician or radiologist allowed; the confirmation still offered on the open, classified segmentation; an evaluated result shows no caveat; a segmentation of unrecorded origin shows no notice)."
+}

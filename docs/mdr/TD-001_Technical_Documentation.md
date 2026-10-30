@@ -30,7 +30,7 @@ MSTool-AI is a cloud-native Software as a Medical Device (SaMD) intended to assi
 2. **Brain volumetry** — Quantitative measurement of brain structure volumes with normative comparison (age/sex-adjusted percentiles)
 3. **MS lesion analysis** — Connected-component lesion detection, MAGNIMS region classification (periventricular, juxtacortical, infratentorial, deep white matter), and DIS (Dissemination in Space) assessment per McDonald 2024 criteria
 4. **Longitudinal tracking** — Comparison of lesion burden across timepoints (NEW, RESOLVED, ENLARGED, SHRUNK, STABLE)
-5. **AI-generated clinical reports** — Structured radiology reports using Claude API with HIPAA-compliant de-identified findings
+5. **AI-generated clinical reports** — Structured radiology report drafts using Claude API from measurements only (no names, dates of birth, record numbers or free text are sent; CAPA-014)
 6. **Edge AI screening** — Browser-based ONNX Runtime Web classification for rapid normal/abnormal triage
 
 The software is an assistive tool only. It does not provide standalone diagnoses and all results require verification by a qualified clinician.

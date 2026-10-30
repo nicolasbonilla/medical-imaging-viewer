@@ -26,6 +26,8 @@ import type {
   AIProvenance,
 } from '@/types';
 import { DEFAULT_LABEL_PRESETS } from '@/types';
+import { MIN_VISIBLE_LESION_OPACITY } from '@/utils/drawnLabels';
+import { withRegionColors } from '@/utils/regionColors';
 
 // ============================================================================
 // Types
@@ -147,7 +149,7 @@ interface SegmentationState {
   createCallback: ((fileId: string, imageShape: { rows: number; columns: number; slices: number }) => void) | null;
 
   /** Reload mask callback — allows LesionDashboard to trigger mask reload after auto-classify */
-  reloadMaskCallback: (() => Promise<void>) | null;
+  reloadMaskCallback: (() => Promise<boolean | void>) | null;
 
   /**
    * Import-draft callback set by useSegmentationData — creates a LOCAL (unsaved) segmentation
@@ -158,6 +160,19 @@ interface SegmentationState {
 
   /** RC-047: SHA-256 (hex) of the mask currently open, as the server would hash it; null when none. */
   maskDigestCallback: (() => Promise<string | null>) | null;
+
+  /** Release 2026-10-25 (review of PR #69, B1/M3): the distinct non-zero values of the open mask, read now (null
+   *  when no mask is open). The confirmation checks that every one of them is drawn. */
+  maskValuesCallback: (() => number[] | null) | null;
+
+  /** The distinct non-zero values of the open mask as last loaded from the server (B1: the overlay controls warn
+   *  about values the label table does not name). */
+  maskLabelValues: number[] | null;
+
+  /** Release 2026-10-25 (final check of PR #69, R1): the segmentation the view on screen draws with its label
+   *  table — published by the standard 2D view (one panel, segmentation mode on); null in every other view
+   *  (segmentation mode off, NiiVue, matplotlib, multi-panel, 3D). The DIS confirmation needs it. */
+  overlayOnScreen: string | null;
 
   /** RC-047: the open mask has unsaved changes (mirrors the local-first mask state). */
   hasUnsavedMaskChanges: boolean;
@@ -306,9 +321,12 @@ interface SegmentationState {
   setLastSavedAt: (timestamp: string | null) => void;
   setSaveCallback: (fn: (() => Promise<void>) | null) => void;
   setCreateCallback: (fn: ((fileId: string, imageShape: { rows: number; columns: number; slices: number }) => void) | null) => void;
-  setReloadMaskCallback: (fn: (() => Promise<void>) | null) => void;
+  setReloadMaskCallback: (fn: (() => Promise<boolean | void>) | null) => void;
   setImportDraftCallback: (fn: ImportDraftCallback | null) => void;
   setMaskDigestCallback: (fn: (() => Promise<string | null>) | null) => void;
+  setMaskValuesCallback: (fn: (() => number[] | null) | null) => void;
+  setMaskLabelValues: (values: number[] | null) => void;
+  setOverlayOnScreen: (segmentationId: string | null) => void;
   setHasUnsavedMaskChanges: (value: boolean) => void;
 
   // =========================================================================
@@ -324,6 +342,10 @@ interface SegmentationState {
   addLabel: (label: LabelInfo) => void;
   removeLabel: (labelId: number) => void;
   setLabelPreset: (preset: LabelPreset) => void;
+  /** Labels the SERVER stored with the mask (region classification): written to currentSegmentation AND
+   *  activeSegmentation (what the 2D canvas draws from; NiiVue's views use a fixed colormap), every label at its own visibility; not a
+   *  local edit (isDirty unchanged). Release 2026-10-25, capture finding F08. */
+  applyServerLabels: (segmentationId: string, labels: LabelInfo[]) => void;
 
   // =========================================================================
   // Actions - Paint Tool
@@ -424,9 +446,12 @@ const createInitialState = () => ({
   isSaving: false,
   saveCallback: null as (() => Promise<void>) | null,
   createCallback: null as ((fileId: string, imageShape: { rows: number; columns: number; slices: number }) => void) | null,
-  reloadMaskCallback: null as (() => Promise<void>) | null,
+  reloadMaskCallback: null as (() => Promise<boolean | void>) | null,
   importDraftCallback: null as ImportDraftCallback | null,
   maskDigestCallback: null as (() => Promise<string | null>) | null,
+  maskValuesCallback: null as (() => number[] | null) | null,
+  maskLabelValues: null as number[] | null,
+  overlayOnScreen: null as string | null,
   hasUnsavedMaskChanges: false,
   lastSavedAt: null as string | null,
 
@@ -498,7 +523,12 @@ export const useSegmentationStore = create<SegmentationState>()(
         setCurrentSegmentation: (segmentation) =>
           set({ currentSegmentation: segmentation }),
 
-        setActiveSegmentation: (segmentation) =>
+        setActiveSegmentation: (rawSegmentation) => {
+          // PRB-010: a label named after a MAGNIMS region is shown in the shared region colour,
+          // whatever colour was stored with it (classified masks carried red / green / blue / gold).
+          const segmentation = rawSegmentation
+            ? { ...rawSegmentation, labels: withRegionColors(rawSegmentation.labels) }
+            : rawSegmentation;
           set({
             activeSegmentation: segmentation,
             isDirty: false,
@@ -507,7 +537,8 @@ export const useSegmentationStore = create<SegmentationState>()(
               (acc, label) => ({ ...acc, [label.id]: label.visible }),
               {}
             ) ?? {},
-          }),
+          });
+        },
 
         updateActiveSegmentationProgress: (progress) =>
           set((state) => {
@@ -545,6 +576,9 @@ export const useSegmentationStore = create<SegmentationState>()(
         setImportDraftCallback: (fn) => set({ importDraftCallback: fn }),
 
         setMaskDigestCallback: (fn) => set({ maskDigestCallback: fn }),
+        setMaskValuesCallback: (fn) => set({ maskValuesCallback: fn }),
+        setMaskLabelValues: (values) => set({ maskLabelValues: values }),
+        setOverlayOnScreen: (segmentationId) => set({ overlayOnScreen: segmentationId }),
 
         setHasUnsavedMaskChanges: (value) => set({ hasUnsavedMaskChanges: value }),
 
@@ -629,6 +663,25 @@ export const useSegmentationStore = create<SegmentationState>()(
               labelVisibility: visibility,
               activeLabel: state.activeLabel === labelId ? 1 : state.activeLabel,
               isDirty: true,
+            };
+          }),
+
+        applyServerLabels: (segmentationId, labels) =>
+          set((state) => {
+            const cur = state.currentSegmentation;
+            const active = state.activeSegmentation;
+            const visibility: Record<number, boolean> = {};
+            labels.forEach((l) => { visibility[l.id] = l.visible; });
+            const activeMatches = !!active && active.id === segmentationId;
+            return {
+              currentSegmentation: cur && cur.segmentation_id === segmentationId
+                ? { ...cur, metadata: { ...cur.metadata, labels } }
+                : cur,
+              activeSegmentation: activeMatches ? { ...active!, labels } : active,
+              labelVisibility: activeMatches ? visibility : state.labelVisibility,
+              activeLabel: activeMatches && !labels.some((l) => l.id === state.activeLabel)
+                ? labels.find((l) => l.id !== 0)?.id ?? 1
+                : state.activeLabel,
             };
           }),
 
@@ -818,6 +871,14 @@ export const useSegmentationStore = create<SegmentationState>()(
           zoneMapOpacity: state.zoneMapOpacity,
           conformalPreset: state.conformalPreset,
         }),
+        // Release 2026-10-25 (review of PR #69, M3): a stored lesion opacity below the visible minimum (e.g. 0) would
+        // hide every lesion in the next session without a word; it is not restored — the default is used instead.
+        merge: (persisted, current) => {
+          const stored = (persisted ?? {}) as Partial<SegmentationState>;
+          const opacity = stored.lesionOpacity;
+          const visible = typeof opacity === 'number' && opacity >= MIN_VISIBLE_LESION_OPACITY;
+          return { ...current, ...stored, lesionOpacity: visible ? opacity : current.lesionOpacity };
+        },
       }
     )
   )

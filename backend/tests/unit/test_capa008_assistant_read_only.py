@@ -292,6 +292,42 @@ def _user(uid="reader-7", role=UserRole.RADIOLOGIST):
                 created_at=now, updated_at=now)
 
 
+def _subject(monkeypatch, ai_report):
+    """CAPA-014: an authorized segmentation whose patient record can be read."""
+    from datetime import date
+
+    async def _authorize(segmentation_id, user):
+        return "44444444-4444-4444-4444-444444444444"
+
+    class _Patients:
+        async def get_patient(self, pid, **kw):
+            return {"mrn": "MRN-T-1", "given_name": "Ana", "family_name": "Test", "birth_date": date(1980, 1, 1)}
+
+    monkeypatch.setattr(ai_report, "authorize_segmentation_id", _authorize)
+    monkeypatch.setattr(ai_report, "_patient_service", lambda: _Patients())
+
+    # Release 2026-10-25 integration with PR #68 (PRB-003): the merged route also authorizes the segmentation with
+    # `authorize_mask_specs` and derives the lesion table and the DIS state on the server. Stubbed as a server that
+    # measured 3 lesions on an unconfirmed segmentation; `_dis_services` refuses (no store is reached, PRB-002).
+    async def _allow(specs, user):
+        return None
+
+    async def _lesion_table(segmentation_id):
+        return {"segmentation_id": segmentation_id, "total_count": 3}
+
+    async def _dis(segmentation_id, user):
+        from app.services import dis_review_gate as gate
+        return gate.not_evaluated(segmentation_id, None, reason=gate.REASON_NOT_CONFIRMED)
+
+    def _no_segmentation_store():
+        raise AssertionError("CAPA-008 report tests never reach the segmentation store (PRB-002)")
+
+    monkeypatch.setattr(ai_report, "authorize_mask_specs", _allow, raising=False)
+    monkeypatch.setattr(ai_report, "server_lesion_table", _lesion_table, raising=False)
+    monkeypatch.setattr(ai_report, "server_dis_assessment", _dis, raising=False)
+    monkeypatch.setattr(ai_report, "_dis_services", _no_segmentation_store, raising=False)
+
+
 @pytest.fixture
 def report_client(monkeypatch):
     import app.api.routes.ai_report as ai_report
@@ -302,6 +338,7 @@ def report_client(monkeypatch):
                     "language": kw["language"], "processing_time_ms": 1}
 
     monkeypatch.setattr(ai_report, "get_report_service", lambda: _Svc())
+    _subject(monkeypatch, ai_report)        # CAPA-014: the route reads the patient record first
     app.dependency_overrides[get_current_active_user] = lambda: _user()
     yield TestClient(app)
     app.dependency_overrides.pop(get_current_active_user, None)
@@ -321,7 +358,8 @@ def test_rc034_report_route_refuses_a_report_without_measurements(report_client,
 @pytest.mark.unit
 def test_rc034_report_route_accepts_measurements(report_client):
     r = report_client.post("/api/v1/ai/report/generate",
-                           json={"template_type": "general", "findings": {"lesion_analysis": {"total_count": 3}}})
+                           json={"template_type": "general", "segmentation_id": "seg-1",
+                                 "findings": {"lesion_analysis": {"total_count": 3}}})
     assert r.status_code == 200, r.text
 
 

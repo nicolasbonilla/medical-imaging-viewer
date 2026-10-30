@@ -278,6 +278,120 @@ class SegmentationService:
         return hashlib.sha256(np.ascontiguousarray(masks_3d, dtype=np.uint8).tobytes()).hexdigest()
 
     def enforce_review_binding(self, seg_data: dict) -> bool:
+        """RC-047 and RC-071: every clinician confirmation is bound to the exact mask that was reviewed.
+        If the mask now differs from the confirmed one, the AI review is reset to 'unreviewed' and the
+        clinician confirmation of a segmentation without AI provenance is removed (returns True if any)."""
+        clinician_reset = self._enforce_clinician_review_binding(seg_data)
+        return self._enforce_ai_review_binding(seg_data) or clinician_reset
+
+    def _enforce_clinician_review_binding(self, seg_data: dict) -> bool:
+        """RC-071 (PRB-003): remove a DIS confirmation that no longer matches the stored mask or label scheme,
+        and record the voiding in the append-only history (review of PR #68, findings 5 and 6)."""
+        from app.services.dis_review_gate import capped_history, labels_sha256   # lazy: the gate imports this module
+        from app.models.schemas import ClinicianReviewEvent
+
+        metadata = seg_data.get("metadata")
+        review = getattr(metadata, "clinician_review", None)
+        if review is None:
+            return False
+        if review.reviewed_mask_sha256 != self.mask_sha256(seg_data["masks_3d"]):
+            reason = "mask_changed"
+        elif review.reviewed_labels_sha256 != labels_sha256(getattr(metadata, "labels", None) or []):
+            reason = "labels_changed"
+        else:
+            return False
+        metadata.clinician_review = None
+        metadata.clinician_review_history = capped_history([*(metadata.clinician_review_history or []), ClinicianReviewEvent(
+            event="voided", at=datetime.utcnow().isoformat() + "Z", reason=reason,
+            mask_sha256=review.reviewed_mask_sha256, labels_sha256=review.reviewed_labels_sha256,
+            previous_reviewer=review.reviewed_by)])
+        logger.warning("DIS confirmation removed: the mask or its labels changed after it was confirmed",
+                       extra={"previous_reviewer": review.reviewed_by, "reason": reason})
+        return True
+
+    REVIEW_FIELDS = ("clinician_review", "clinician_review_history")
+
+    def persist_metadata(self, segmentation_id: str) -> Optional[str]:
+        """Write ONLY the DIS review fields of the metadata document (PRB-003, RC-071; review of PR #68, finding 5
+        and second review, N6).
+
+        A review record must not rewrite the unchanged mask object: that advanced its storage generation
+        and made the clinician's next save a 409. Nor may it rewrite the rest of the metadata document from this
+        instance's cached copy (labels, analysis, names saved meanwhile by another instance would be lost): it is
+        a field update of `clinician_review` and `clinician_review_history` only. The stored history is read
+        first and merged (events written meanwhile by another instance are kept; the most recent 50), and the
+        update carries the read document's update time as precondition: a change in between gives a conflict.
+        The review binding is enforced first (single choke point, as in `_save_segmentation`). Raises
+        ConflictException when the stored mask is no longer the one this instance holds (another session saved a
+        newer mask) or the document changed between the read and the update. Returns "firestore" when the fields
+        were stored durably, None otherwise — there is no local fallback for a review record."""
+        seg_data = self.segmentations_cache.get(segmentation_id)
+        if seg_data is None:
+            return None
+        self.enforce_review_binding(seg_data)   # the same single choke point as _save_segmentation
+        metadata = seg_data["metadata"]
+        known = self._gcs_generations.get(segmentation_id)
+        if known is not None:
+            try:
+                blob = self.gcs_bucket.blob(f"segmentations/{segmentation_id}/masks.nii.gz")
+                blob.reload()
+                stored_generation = blob.generation
+            except Exception as e:  # noqa: BLE001 — cannot establish the stored mask: not durable
+                logger.error("Review record not stored: the stored mask could not be checked",
+                             extra={"segmentation_id": segmentation_id, "error": str(e)})
+                return None
+            if stored_generation != known:
+                raise ConflictException(
+                    message=("This segmentation was modified by another session since you loaded it. "
+                             "Reload it, check it again, then confirm."),
+                    error_code="SEGMENTATION_STALE_WRITE",
+                    details={"segmentation_id": segmentation_id, "expected_generation": known},
+                )
+        from app.services.dis_review_gate import capped_history   # lazy: the gate imports this module
+        from app.models.schemas import ClinicianReviewEvent
+        try:
+            doc_ref = self.db.collection(SEGMENTATIONS_COLLECTION).document(segmentation_id)
+            snapshot = doc_ref.get()
+            if not getattr(snapshot, "exists", False):
+                logger.error("Review record not stored: the metadata document does not exist",
+                             extra={"segmentation_id": segmentation_id})
+                return None
+            stored = snapshot.to_dict() or {}
+            ours = [e.model_dump(mode="json") for e in (metadata.clinician_review_history or [])]
+            merged, seen = [], set()
+            for event in [*(stored.get("clinician_review_history") or []), *ours]:
+                key = json.dumps(event, sort_keys=True, default=str)
+                if isinstance(event, dict) and key not in seen:
+                    seen.add(key)
+                    merged.append(event)
+            merged.sort(key=lambda e: str(e.get("at") or ""))
+            history = [ClinicianReviewEvent(**e) for e in capped_history(merged)]
+            fields = {
+                "clinician_review": (metadata.clinician_review.model_dump(mode="json")
+                                     if metadata.clinician_review is not None else None),
+                "clinician_review_history": [e.model_dump(mode="json") for e in history],
+            }
+            update_time = getattr(snapshot, "update_time", None)
+            if update_time is not None:
+                doc_ref.update(fields, option=self.db.write_option(last_update_time=update_time))
+            else:
+                doc_ref.update(fields)
+        except Exception as e:  # noqa: BLE001
+            from google.api_core.exceptions import FailedPrecondition   # the update-time precondition failed
+            if isinstance(e, FailedPrecondition):
+                raise ConflictException(
+                    message=("This segmentation was changed by another session while the confirmation was being "
+                             "recorded. Reload it, check it again, then confirm."),
+                    error_code="SEGMENTATION_STALE_WRITE",
+                    details={"segmentation_id": segmentation_id},
+                )
+            logger.error("Review record not stored durably", extra={"segmentation_id": segmentation_id,
+                                                                   "error": str(e)})
+            return None
+        metadata.clinician_review_history = history
+        return "firestore"
+
+    def _enforce_ai_review_binding(self, seg_data: dict) -> bool:
         """RC-047: a confirmed AI review is bound to the exact mask that was reviewed. If the mask now
         differs from the confirmed one, the review is reset to 'unreviewed' (returns True)."""
         metadata = seg_data.get("metadata")
@@ -949,6 +1063,76 @@ class SegmentationService:
         except Exception:
             return False
 
+    @classmethod
+    def align_stored_mask_to_reference(cls, seg_bytes: bytes, ref_bytes: bytes, tolerance: float = 1e-3) -> Optional[bytes]:
+        """PRB-004 review (M1): the stored mask NIfTI realigned onto the reference image's voxel grid, or None.
+
+        Realigned only when the stored voxel-to-scanner transform IS the reference's (every element within
+        `tolerance`, the RC-039 tolerance) and, after the marker-driven reorder (RC-031: legacy masks are the
+        in-plane transpose), the shape is the reference's. Never stamps the reference affine onto a mask whose
+        position is not the reference's (identity fallback, another grid): that would be a fabricated alignment —
+        None, and the caller serves the stored file unchanged (the viewers then refuse it with a notice).
+        The output carries the reference affine and spatial header, the RC-031 v2 marker (its voxels ARE in the
+        image's order now) and the mask's own display range (PRB-006), never the MRI's window.
+        Re-review R2: the reference is read for its HEADER only (shape, affine): only the first bytes of the
+        file are decompressed, its voxels are never loaded. Raises on unreadable input; the route then serves
+        the stored file unchanged.
+        """
+        import io
+        import tempfile
+        import os
+        import zlib
+
+        def _load_mask(raw: bytes):
+            suffix = '.nii.gz' if raw[:2] == b'\x1f\x8b' else '.nii'
+            with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as t:
+                t.write(raw)
+                path = t.name
+            try:
+                img = nib.load(path)
+                out = (np.asarray(img.dataobj), img.affine.copy(), img.header.copy())
+                del img
+            finally:
+                os.unlink(path)
+            return out
+
+        def _reference_header(raw: bytes):
+            head = (zlib.decompressobj(16 + zlib.MAX_WBITS).decompress(raw, 1024)
+                    if raw[:2] == b'\x1f\x8b' else raw[:1024])
+            size = int.from_bytes(head[:4], 'little') if len(head) >= 4 else 0
+            header_class = nib.Nifti2Header if size == 540 or int.from_bytes(head[:4], 'big') == 540 else nib.Nifti1Header
+            hdr = header_class.from_fileobj(io.BytesIO(head))
+            return tuple(int(d) for d in hdr.get_data_shape()[:3]), hdr.get_best_affine(), hdr
+
+        seg_data, seg_affine, seg_header = _load_mask(seg_bytes)
+        ref_shape, ref_affine, ref_header = _reference_header(ref_bytes)
+        if seg_affine.shape != (4, 4) or not np.allclose(seg_affine, ref_affine, atol=tolerance, rtol=0):
+            return None
+        oriented = cls._seg_native_to_reference_order(seg_data, cls._header_has_v2_marker(seg_header))
+        if tuple(oriented.shape[:3]) != ref_shape:
+            return None
+        labels = np.rint(oriented).astype(np.uint8)
+        header = ref_header.copy()
+        header.set_data_dtype(np.uint8)
+        header.set_data_shape(labels.shape)
+        header.set_slope_inter(1.0, 0.0)
+        header["cal_min"], header["cal_max"] = cls._label_display_range(labels)
+        header["descrip"] = cls._RC031_ORIENT_MARKER
+        img = nib.Nifti1Image(labels, ref_affine, header)
+        with tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False) as t:
+            path = t.name
+        nib.save(img, path)
+        with open(path, 'rb') as f:
+            data = f.read()
+        os.unlink(path)
+        return data
+
+    @staticmethod
+    def _label_display_range(labels: np.ndarray) -> tuple:
+        """PRB-006: display range of a label mask — 0 (background) to its highest label, at least 1."""
+        top = int(labels.max()) if labels.size else 0
+        return 0.0, float(max(1, top))
+
     def _save_masks_to_gcs(
         self,
         segmentation_id: str,
@@ -1057,6 +1241,12 @@ class SegmentationService:
                 # "labels are verbatim" invariant does not depend on implicit
                 # library behavior. Audit P-4.1.
                 header.set_slope_inter(1.0, 0.0)
+                # PRB-006: the copied header also carries the MRI's DISPLAY window
+                # (cal_min/cal_max, e.g. -15.5/189.2). A viewer that honours it (niivue in
+                # this app's 3D and GPU views, MRIcroGL, FSLeyes) then tints every background
+                # voxel and shows the labels at the bottom of its colour scale. A label mask's
+                # display range is its own: 0 (background) to its highest label (at least 1).
+                header["cal_min"], header["cal_max"] = self._label_display_range(nifti_data)
                 header["descrip"] = self._RC031_ORIENT_MARKER  # RC-031 v2 tag
                 nifti_img = nib.Nifti1Image(nifti_data.astype(np.uint8), affine, header)
                 logger.info("Created segmentation NIfTI with original MRI affine/header", extra={
@@ -1066,6 +1256,7 @@ class SegmentationService:
             else:
                 # Fallback to generic NIfTI with identity affine
                 nifti_img = create_nifti_image(nifti_data)
+                nifti_img.header["cal_min"], nifti_img.header["cal_max"] = self._label_display_range(nifti_data)  # PRB-006
                 nifti_img.header["descrip"] = self._RC031_ORIENT_MARKER  # RC-031 v2 tag
                 logger.info("Created segmentation NIfTI with identity affine (original not available)")
 

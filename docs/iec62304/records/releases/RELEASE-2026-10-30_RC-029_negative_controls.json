@@ -1,0 +1,129 @@
+{
+  "executed": "2026-10-30T05:34:57",
+  "method": "one mutation at a time; each anchor asserted to occur the expected number of times",
+  "hash_basis": "sha256 of the UTF-8 text as read by Python (universal newlines, LF)",
+  "source_sha256": {
+    "backend/app/api/routes/segmentation_analysis.py": "0362e078dd382dafe78b14fbf242f2747865911b3202835397c9d09206632bc6",
+    "backend/app/security/resource_access.py": "a94f8195fba42cf8c2cc3ad479af647cc8ed004c2bfc5019cc9fc473998ae555"
+  },
+  "test_sha256": "2c4ca28e357b6c9d3ed3c69738b9c4cb2a054092d67a5aa4d95c9c8fa6b51996",
+  "mutations": {
+    "P1_lesion_analysis_unprotected": {
+      "failed": 2,
+      "passed": 10,
+      "failing_tests": [
+        "test_rc029_every_segmentation_object_route_requires_object_access",
+        "test_rc029_analysis_route_refuses_a_caller_without_access[lesion-analysis]"
+      ],
+      "restores": "lesion-analysis without object-level authorization",
+      "applied": true
+    },
+    "P2_dis_assessment_unprotected": {
+      "failed": 2,
+      "passed": 10,
+      "failing_tests": [
+        "test_rc029_every_segmentation_object_route_requires_object_access",
+        "test_rc029_analysis_route_refuses_a_caller_without_access[dis-assessment]"
+      ],
+      "restores": "dis-assessment without object-level authorization",
+      "applied": true
+    },
+    "P3_lesion_annotations_unprotected": {
+      "failed": 2,
+      "passed": 10,
+      "failing_tests": [
+        "test_rc029_every_segmentation_object_route_requires_object_access",
+        "test_rc029_analysis_route_refuses_a_caller_without_access[lesion-annotations]"
+      ],
+      "restores": "lesion-annotations (a write) without object-level authorization",
+      "applied": true
+    },
+    "P4_export_dicom_seg_unprotected": {
+      "failed": 2,
+      "passed": 10,
+      "failing_tests": [
+        "test_rc029_every_segmentation_object_route_requires_object_access",
+        "test_rc029_analysis_route_refuses_a_caller_without_access[dicom-seg]"
+      ],
+      "restores": "export/dicom-seg without object-level authorization",
+      "applied": true
+    },
+    "B1_compare_unprotected": {
+      "failed": 2,
+      "passed": 10,
+      "failing_tests": [
+        "test_rc029_every_other_segmentation_route_is_classified_and_authorizes_its_scope",
+        "test_rc029_analysis_route_refuses_a_caller_without_access[compare0]"
+      ],
+      "restores": "compare without authorization of its masks",
+      "applied": true
+    },
+    "B2_agreement_map_unprotected": {
+      "failed": 2,
+      "passed": 10,
+      "failing_tests": [
+        "test_rc029_every_other_segmentation_route_is_classified_and_authorizes_its_scope",
+        "test_rc029_analysis_route_refuses_a_caller_without_access[agreement-map]"
+      ],
+      "restores": "agreement-map without authorization of its masks",
+      "applied": true
+    },
+    "B3_longitudinal_compare_unprotected": {
+      "failed": 2,
+      "passed": 10,
+      "failing_tests": [
+        "test_rc029_every_other_segmentation_route_is_classified_and_authorizes_its_scope",
+        "test_rc029_analysis_route_refuses_a_caller_without_access[compare1]"
+      ],
+      "restores": "longitudinal/compare without authorization",
+      "applied": true
+    },
+    "B4_longitudinal_sel_unprotected": {
+      "failed": 2,
+      "passed": 10,
+      "failing_tests": [
+        "test_rc029_every_other_segmentation_route_is_classified_and_authorizes_its_scope",
+        "test_rc029_analysis_route_refuses_a_caller_without_access[sel]"
+      ],
+      "restores": "longitudinal/sel without authorization",
+      "applied": true
+    },
+    "G1_client_gcs_path_trusted": {
+      "failed": 1,
+      "passed": 11,
+      "failing_tests": [
+        "test_rc029_compare_ignores_a_client_storage_path"
+      ],
+      "restores": "compare trusts a client gcs_path again",
+      "applied": true
+    },
+    "H1_helper_allows_everything": {
+      "failed": 5,
+      "passed": 7,
+      "failing_tests": [
+        "test_rc029_analysis_route_refuses_a_caller_without_access[compare0]",
+        "test_rc029_analysis_route_refuses_a_caller_without_access[agreement-map]",
+        "test_rc029_analysis_route_refuses_a_caller_without_access[compare1]",
+        "test_rc029_analysis_route_refuses_a_caller_without_access[sel]",
+        "test_rc029_mask_specs_helper_allows_entitled_and_refuses_the_rest"
+      ],
+      "restores": "authorize_mask_specs authorizes nothing",
+      "applied": true
+    },
+    "H2_unknown_type_accepted": {
+      "failed": 1,
+      "passed": 11,
+      "failing_tests": [
+        "test_rc029_mask_specs_helper_allows_entitled_and_refuses_the_rest"
+      ],
+      "restores": "authorize_mask_specs skips an unknown mask type",
+      "applied": true
+    }
+  },
+  "restored": {
+    "failed": 0,
+    "passed": 12,
+    "failing_tests": []
+  },
+  "undetected": []
+}

@@ -1,0 +1,917 @@
+{
+  "executed": "2026-10-24T20:32:08",
+  "base": "5314af7 (PR #67 head before the second review)",
+  "method": "source files that differ from the base commit restored to it, files it did not have removed; the CAPA-014 test files run unchanged; working tree restored byte for byte",
+  "swapped": {
+    "restored_to_base": [
+      "backend/app/api/routes/ai_report.py",
+      "backend/app/services/brain_report_service.py",
+      "backend/app/services/report_payload_guard.py",
+      "frontend/src/components/ReportViewerModal.tsx"
+    ],
+    "removed": [],
+    "put_back_from_base": []
+  },
+  "test_sha256": {
+    "backend/tests/unit/test_capa014_report_provider_payload.py": "daf0e8774aeec74456c2426013bf3d7b91523d0fda5bdb5d30b03823507de5dc",
+    "frontend/src/components/AIReportPanel.capa014.test.tsx": "8ab94fad862ed85f06347dc620cebffe7b820f5d9254d27d5d690b3a028380f1"
+  },
+  "backend": {
+    "passed": 184,
+    "failed": 36,
+    "errors": 0,
+    "results": {
+      "test_rc064_no_free_text_or_unlisted_label_reaches_the_provider": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_the_clinicians_typed_text_is_never_sent": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_measurements_and_device_labels_are_sent_unchanged": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_age_is_sent_as_a_five_year_band[48-45-49]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_age_is_sent_as_a_five_year_band[17-15-19]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_age_is_sent_as_a_five_year_band[18-15-19]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_age_is_sent_as_a_five_year_band[3-0-4]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_age_is_sent_as_a_five_year_band[89-85-89]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_age_is_sent_as_a_five_year_band[90-90 or older]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_age_is_sent_as_a_five_year_band[93-90 or older]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_age_is_sent_as_a_five_year_band[104.5-90 or older]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_age_is_sent_as_a_five_year_band[52-50-54]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_an_age_that_is_not_a_number_is_not_sent[93 years]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_an_age_that_is_not_a_number_is_not_sent[ninety]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_an_age_that_is_not_a_number_is_not_sent[True]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_an_age_that_is_not_a_number_is_not_sent[-1]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_an_age_that_is_not_a_number_is_not_sent[131]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_an_age_that_is_not_a_number_is_not_sent[None]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_sex_is_sent_only_as_m_or_f[M-Patient sex: Male]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_sex_is_sent_only_as_m_or_f[F-Patient sex: Female]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_sex_is_sent_only_as_m_or_f[other-None]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_sex_is_sent_only_as_m_or_f[female-None]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_sex_is_sent_only_as_m_or_f[X-None]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_system_prompt_is_the_fixed_template": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_the_payload_itself_holds_only_known_fields_and_no_marker": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_the_prompt_builder_prints_no_free_text_even_when_called_directly": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Thomas White]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Sarah Black]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Ann Small]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Jordi Pons]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Blanca Ruiz]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-May Ortiz]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Minh Do]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Anne Le]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Wei Du]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Blanca Pons]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Rose Matter]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Max Brain]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Black White]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Black Do]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Thomas White]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Sarah Black]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Ann Small]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Jordi Pons]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Blanca Ruiz]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-May Ortiz]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Minh Do]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Anne Le]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Wei Du]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Blanca Pons]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Rose Matter]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Max Brain]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Black White]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Black Do]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Thomas White]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Sarah Black]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Ann Small]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Jordi Pons]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Blanca Ruiz]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-May Ortiz]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Minh Do]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Anne Le]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Wei Du]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Blanca Pons]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Rose Matter]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Max Brain]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Black White]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Black Do]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[612 34 56 78]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[0034 612 345 678]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[+34 612 345 678]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[612345678]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[93 412 34 56]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[934 123 456]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[DOB: 9. 11. 1975]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[born 9-Nov-1975]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[born 9-November-1975]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[geb. 9.11.]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[nacido el 9/11]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[born 9.XI.1975]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[09 / 11 / 1975]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[1975-11-09]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[9 de noviembre de 1975]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[November 9, 1975]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[born '75]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[born in 1975]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Jor\\xaddi Pons]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Jor\\u200bdi]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Jordi\\xa0Pons]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[JordiPons]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[PonsPuig]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[\\uff2a\\uff4f\\uff52\\uff44\\uff49]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[J\\u043erdi]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Pu\\u200dig]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[\\ufeffPuig]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[HC-778812]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[H C 7 7 8 8 1 2]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[hc.778812]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[jpons@correo.es]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[JPONS@CORREO.ES]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Barcelona]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Mallorca 401]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Fuentem\\xfcller]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[delaFuente]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[FUENTE MUELLER]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Maria Jose]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Muenchen]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[MUELLER]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Juergen]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[030 12345678]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Ins. A 123 456 789]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Leopoldstrasse]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[06 12 34 56 78]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[06.12.34.56.78]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[0612345678]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[+33 6 12 34 56 78]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Minh Do]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Do Minh]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[DO, Minh]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Minh]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[MinhDo]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Juan P\\xe9rez]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[MRN 2025 0042]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[M R N": {
+        "status": "passed",
+        "reason": "2 0 2 5 - 0 0 4 2]"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[MRN.2025.0042]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[15.03.1978]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[15 March 1978]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[300 123 4567]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[juan.perez@example.com]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Bogota]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Lucia]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[write to a.b@c.de]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[seen 12.03.2025]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[seen 2025-03-12]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[seen 12 March 2025]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[call +49 89 1234567]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[call 0170 1234567]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[ref 1234567890]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[id X1234567L]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[uid 1.2.840.113619.2.55]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[by Dr. Smith]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[by prof. huber]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[call +1 555 0100]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Black White]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[White, Black]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[BlackWhite]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Black Do]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[01 40400]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[MRN 123456]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[ref 1234567]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_never_edits_the_text": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_caps_the_text_it_scans": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_runs_in_linear_time[1-]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_runs_in_linear_time[1.]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_runs_in_linear_time[a.]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_runs_in_linear_time[a@]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_runs_in_linear_time[Dr. ]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_runs_in_linear_time[+1 ]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_runs_in_linear_time[9 11 ]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_runs_in_linear_time[Aa ]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_tripwire_runs_in_linear_time[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx@]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_a_leak_through_a_label_is_stopped_before_the_provider": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_no_segmentation_reference_no_provider_call": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_the_segmentation_is_authorized_for_the_caller": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_patient_record_unavailable_no_provider_call[store-error]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_patient_record_unavailable_no_provider_call[no-record]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_patient_record_unavailable_no_provider_call[no-birth-date]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_patient_record_unavailable_no_provider_call[no-record-number]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_patient_record_unavailable_no_provider_call[no-name]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_a_caller_without_access_gets_404_and_no_provider_call": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_service_refuses_to_send_without_identifiers": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc065_assistant_report_tool_names_the_segmentation": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc066_the_typed_text_is_added_to_the_draft_locally[en-Clinician's entry]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc066_the_typed_text_is_added_to_the_draft_locally[es-Datos del m\\xe9dico]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc066_the_typed_text_is_added_to_the_draft_locally[de-Angaben der \\xc4rztin / des Arztes]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc066_the_model_is_told_the_entry_is_added_by_the_application": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc066_logs_say_the_check_ran_with_counts_never_the_payload": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc066_no_false_ai_privacy_claim_anywhere_in_the_repository": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_n4_normal_values_at_the_edges_are_accepted": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_n8_all_digit_record_numbers_do_not_refuse_legitimate_measurements[104523]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_n8_all_digit_record_numbers_do_not_refuse_legitimate_measurements[12345678]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_n8_all_digit_record_numbers_do_not_refuse_legitimate_measurements[MRN-1234567]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_n8_what_remains_a_whole_number_equal_to_the_record_number_still_refuses": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_n9_documents_name_the_configured_model": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Deep White]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_503\",\"message\":\"The request was not sent to the AI service (identifier check failed (name)). Nothing was sent.\",\"details\":{}}}"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Left Cerebral]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_503\",\"message\":\"The request was not sent to the AI service (identifier check failed (name)). Nothing was sent.\",\"details\":{}}}"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[en-Juxta Cortical]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_503\",\"message\":\"The request was not sent to the AI service (identifier check failed (name)). Nothing was sent.\",\"details\":{}}}"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Deep White]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_503\",\"message\":\"The request was not sent to the AI service (identifier check failed (name)). Nothing was sent.\",\"details\":{}}}"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Left Cerebral]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_503\",\"message\":\"The request was not sent to the AI service (identifier check failed (name)). Nothing was sent.\",\"details\":{}}}"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[es-Juxta Cortical]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_503\",\"message\":\"The request was not sent to the AI service (identifier check failed (name)). Nothing was sent.\",\"details\":{}}}"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Deep White]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_503\",\"message\":\"The request was not sent to the AI service (identifier check failed (name)). Nothing was sent.\",\"details\":{}}}"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Left Cerebral]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_503\",\"message\":\"The request was not sent to the AI service (identifier check failed (name)). Nothing was sent.\",\"details\":{}}}"
+      },
+      "test_rc064_rc065_names_equal_to_device_labels_change_nothing_and_never_block[de-Juxta Cortical]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_503\",\"message\":\"The request was not sent to the AI service (identifier check failed (name)). Nothing was sent.\",\"details\":{}}}"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[Pons]": {
+        "status": "failed",
+        "reason": "Failed: DID NOT RAISE <class 'app.services.report_payload_guard.IdentifierInPrompt'>"
+      },
+      "test_rc065_tripwire_refuses_each_leak_form[id 20250042]": {
+        "status": "failed",
+        "reason": "Failed: DID NOT RAISE <class 'app.services.report_payload_guard.IdentifierInPrompt'>"
+      },
+      "test_n1_typed_text_is_quoted_closed_and_the_ai_text_has_its_own_heading[en]": {
+        "status": "failed",
+        "reason": "AssertionError: []"
+      },
+      "test_n1_typed_text_is_quoted_closed_and_the_ai_text_has_its_own_heading[es]": {
+        "status": "failed",
+        "reason": "AssertionError: []"
+      },
+      "test_n1_typed_text_is_quoted_closed_and_the_ai_text_has_its_own_heading[de]": {
+        "status": "failed",
+        "reason": "AssertionError: []"
+      },
+      "test_n1_without_typed_text_the_ai_heading_still_comes_first": {
+        "status": "failed",
+        "reason": "AssertionError: assert False"
+      },
+      "test_n2_every_label_name_the_app_ships_is_in_the_vocabulary": {
+        "status": "failed",
+        "reason": "AssertionError: ['L Accumbens', 'L Amygdala', 'L Caudate', 'L Cerebellum Cortex', 'L Cerebellum WM', 'L Cerebral Cortex', ...]"
+      },
+      "test_n2_the_default_preset_labels_are_sent": {
+        "status": "failed",
+        "reason": "AssertionError: MS Lesion (Active)"
+      },
+      "test_n2_an_unlisted_label_keeps_one_number_and_is_named_only_in_the_draft": {
+        "status": "failed",
+        "reason": "assert ('- [unlisted label 1]:' in \"Generate the report in English.\\nThe clinical indication, the technique and the clinician's notes are not provided to...classified brain voxels: 1523456\\n  - Periventricular: 12000 voxels (0.8%)\\n  - Deep"
+      },
+      "test_n3_a_value_that_is_not_a_number_is_not_available_never_zero": {
+        "status": "failed",
+        "reason": "assert 'Total lesions: not available' in \"Generate the report in English.\\nThe clinical indication, the technique and the clinician's notes are not provided to...classified brain voxels: 1523456\\n  - Periventricular: 12000 voxels (0.8%)\\n  "
+      },
+      "test_n4_an_implausible_value_refuses_the_request[lesion_analysis.lesions.0.centroid.z=20250042]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"report_id\":\"d1e4841d-3051-489c-af4d-47f4b7af1899\",\"content\":\"> **AI-Generated — Requires Physician Review Before Clinical Action.** This draft was produced by an automated system from computed measurements. It is not a dia"
+      },
+      "test_n4_an_implausible_value_refuses_the_request[lesion_analysis.total_count=20240304]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"report_id\":\"bb2c5e56-bec6-4fe9-83b9-0715dffd3924\",\"content\":\"> **AI-Generated — Requires Physician Review Before Clinical Action.** This draft was produced by an automated system from computed measurements. It is not a dia"
+      },
+      "test_n4_an_implausible_value_refuses_the_request[lesion_analysis.total_burden_mm3=19751109]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"report_id\":\"680b1dc0-d3db-491e-9cd7-35da4a3c8357\",\"content\":\"> **AI-Generated — Requires Physician Review Before Clinical Action.** This draft was produced by an automated system from computed measurements. It is not a dia"
+      },
+      "test_n4_an_implausible_value_refuses_the_request[dis_assessment.active_voxels=612345678]": {
+        "status": "failed",
+        "reason": "assert ('nothing was sent' in '{\"error\":{\"code\":\"http_503\",\"message\":\"the request was not sent to the ai service (identifier check failed (long_or_phone_like_number)). nothing was sent.\",\"details\":{}}}' and 'plausible' in '{\"error\":{\"code\":"
+      },
+      "test_n4_an_implausible_value_refuses_the_request[lesion_analysis.regions.Periventricular.lesion_count=-1]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"report_id\":\"aded7c3f-7fd0-4a1d-9dbe-4b381fcd76c9\",\"content\":\"> **AI-Generated — Requires Physician Review Before Clinical Action.** This draft was produced by an automated system from computed measurements. It is..."
+      },
+      "test_n4_an_implausible_value_refuses_the_request[zone_stats.zones.Periventricular.percentage=150]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"report_id\":\"673daaf6-45e9-43bf-aa5d-8b4e7ed8277b\",\"content\":\"> **AI-Generated — Requires Physician Review Before Clinical Action.** This draft was produced by an automated system from computed measurements. It is not a d.."
+      },
+      "test_n4_an_implausible_value_refuses_the_request[lesion_analysis.lesions.0.volume_ml=99999]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"report_id\":\"cae0c391-09c6-4782-8586-24b2b25088ce\",\"content\":\"> **AI-Generated — Requires Physician Review Before Clinical Action.** This draft was produced by an automated system from computed measurements. It is not a dia"
+      },
+      "test_n4_an_implausible_value_refuses_the_request[anomalies.0.confidence=1.5]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"report_id\":\"15d45d8a-b09a-4d9e-90cf-637cce81b868\",\"content\":\"> **AI-Generated — Requires Physician Review Before Clinical Action.** This draft was produced by an automated system from computed measurements. It is not a dia"
+      },
+      "test_n5_exempt_words_are_those_of_the_user_prompt_only": {
+        "status": "failed",
+        "reason": "AssertionError: filippi"
+      },
+      "test_n6_the_instruction_is_sent_only_when_something_was_typed": {
+        "status": "failed",
+        "reason": "assert 'added to th... application' not in 'Generate th...oxels (5.9%)'"
+      },
+      "test_n8_all_digit_record_numbers_do_not_refuse_legitimate_measurements[123456]": {
+        "status": "failed",
+        "reason": "app.services.report_payload_guard.IdentifierInPrompt: identifier check failed (record_number)"
+      },
+      "test_n8_all_digit_record_numbers_do_not_refuse_legitimate_measurements[1234567]": {
+        "status": "failed",
+        "reason": "app.services.report_payload_guard.IdentifierInPrompt: identifier check failed (record_number)"
+      },
+      "test_rc064_dis_missing_or_not_evaluated_is_never_not_met[not_evaluated]": {
+        "status": "failed",
+        "reason": "AssertionError: assert {'dis_met': F...: True}}, ...} == {'evaluation_...ot_evaluated'}"
+      },
+      "test_rc064_dis_missing_or_not_evaluated_is_never_not_met[missing]": {
+        "status": "failed",
+        "reason": "AssertionError: assert {'dis_met': F...ions': 2, ...} == {'evaluation_...ot_evaluated'}"
+      },
+      "test_rc064_dis_missing_or_not_evaluated_is_never_not_met[not_boolean]": {
+        "status": "failed",
+        "reason": "AssertionError: assert {'dis_met': F...h_lesions': 2} == {'evaluation_...ot_evaluated'}"
+      },
+      "test_rc064_dis_missing_or_not_evaluated_is_never_not_met[unknown_state]": {
+        "status": "failed",
+        "reason": "AssertionError: assert {'dis_met': T...holes': False} == {'evaluation_...ot_evaluated'}"
+      },
+      "test_rc064_dis_evaluated_state_is_kept_and_reported": {
+        "status": "failed",
+        "reason": "KeyError: 'evaluation_status'"
+      }
+    }
+  },
+  "frontend": {
+    "passed": 10,
+    "failed": 1,
+    "not_passing": {
+      "rc066 typed Markdown is shown as text and no image is ever loaded": {
+        "status": "failed",
+        "reason": "AssertionError: expected 1 to be +0 // Object.is equality"
+      }
+    }
+  },
+  "note": "Second review (N1-N10) and the DIS state of PR #68. Only backend/app and frontend/src are put back to the base; documents are not, so the document checks (repository claims scan, N9) pass here. Cases that pass on the base are regression guards (fixed system prompt, measurement lines, fail-closed controls, collision names, leak forms the base already found)."
+}

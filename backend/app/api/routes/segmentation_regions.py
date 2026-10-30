@@ -21,6 +21,17 @@ from app.core.container import get_patient_service as _patient_service
 # (C3) after RC-029 was wired there, and never received object-level authorization.
 from app.security.resource_access import require_segmentation_access, authorize_file_scope
 from app.services.segmentation_service import SegmentationService
+
+# PRB-010: colours stored with the MAGNIMS region labels — the app's ONE region mapping
+# (frontend/src/utils/regionColors.ts, Okabe-Ito colour-blind-safe; a test checks they agree).
+# Was red / green / blue / gold: the overlay disagreed with the legend, and periventricular red
+# against juxtacortical green cannot be told apart with red-green colour blindness.
+MAGNIMS_REGION_LABEL_COLORS = {
+    "Periventricular": "#E69F00",
+    "Juxtacortical": "#56B4E9",
+    "Infratentorial": "#009E73",
+    "Deep White Matter": "#D55E00",   # vermillion (PR #71 review m1; was reddish purple #CC79A7)
+}
 from app.services.lesion_analysis_service import (
     analyze_lesions,
     compute_dis_criteria,
@@ -45,6 +56,34 @@ from app.utils import load_nifti_from_bytes
 # never carries spacing, so resolve_voxel_spacing(seg_metadata) ALWAYS raised and these
 # region routes returned 500 for every call (found 2026-09-28).
 from app.api.routes.segmentation_analysis import _voxel_spacing_from_source_image
+from app.services import dis_review_gate as dis_gate   # PRB-003 (RC-070)
+
+
+def removed_small_components(before, after, voxel_spacing) -> dict:
+    """The lesion components of `before` that the region classification left out of `after` (release 2026-10-25,
+    capture finding F09). Every classifier path in the Class C `ms_region_classifier.py` skips components smaller
+    than MIN_LESION_VOLUME_MM3 and builds the classified mask from zeros, so those components disappear from the
+    stored mask; this states how many, how large and why, without changing the Class C module. Components are
+    18-connected, as the classifier labels them (RC-030)."""
+    from app.services.lesion_metrics import MIN_LESION_VOLUME_MM3, label_lesions
+    labeled, n = label_lesions((np.asarray(before) > 0).astype(np.int32))
+    voxel_mm3 = float(np.prod(voxel_spacing))
+    components = voxels = 0
+    if n:
+        sizes = np.bincount(labeled.ravel(), minlength=n + 1)
+        kept = np.bincount(labeled[np.asarray(after) > 0], minlength=n + 1)
+        gone = (sizes > 0) & (kept == 0)
+        gone[0] = False
+        components, voxels = int(gone.sum()), int(sizes[gone].sum())
+    minimum = float(MIN_LESION_VOLUME_MM3)
+    return {
+        "components": components,
+        "voxels": voxels,
+        "volume_mm3": round(voxels * voxel_mm3, 3),
+        "min_lesion_volume_mm3": minimum,
+        "reason": (f"Lesion components smaller than {minimum:g} mm³ are below the minimum lesion size of the region "
+                   "classification; they are not classified and were removed from the mask."),
+    }
 
 settings = get_settings()
 
@@ -113,6 +152,10 @@ async def classify_regions(
             )
         lesion_mask = seg_data["masks_3d"]  # (D, H, W), uint8
         metadata = seg_data["metadata"]
+        # Review of PR #69, M2: the classification record before this run (its removal may be carried forward).
+        previous_classification = (metadata.analysis_data or {}).get("classification")
+        if not isinstance(previous_classification, dict):
+            previous_classification = None
 
         # RC-024 (CAPA-001 CA-5): voxel spacing is REQUIRED. This previously
         # defaulted to (1.0, 1.0, 1.0) whenever metadata was absent — and to
@@ -429,10 +472,10 @@ async def classify_regions(
             from app.models.schemas import LabelInfo as SchemaLabelInfo
             magnims_labels = [
                 SchemaLabelInfo(id=0, name="Background", color="#000000", opacity=0.0, visible=False),
-                SchemaLabelInfo(id=1, name="Periventricular", color="#FF0000", opacity=0.6, visible=True),
-                SchemaLabelInfo(id=2, name="Juxtacortical", color="#00CC00", opacity=0.6, visible=True),
-                SchemaLabelInfo(id=3, name="Infratentorial", color="#0066FF", opacity=0.6, visible=True),
-                SchemaLabelInfo(id=4, name="Deep White Matter", color="#FFD700", opacity=0.6, visible=True),
+                SchemaLabelInfo(id=1, name="Periventricular", color=MAGNIMS_REGION_LABEL_COLORS["Periventricular"], opacity=0.6, visible=True),
+                SchemaLabelInfo(id=2, name="Juxtacortical", color=MAGNIMS_REGION_LABEL_COLORS["Juxtacortical"], opacity=0.6, visible=True),
+                SchemaLabelInfo(id=3, name="Infratentorial", color=MAGNIMS_REGION_LABEL_COLORS["Infratentorial"], opacity=0.6, visible=True),
+                SchemaLabelInfo(id=4, name="Deep White Matter", color=MAGNIMS_REGION_LABEL_COLORS["Deep White Matter"], opacity=0.6, visible=True),
                 SchemaLabelInfo(id=5, name="Active (Gd+)", color="#FF00FF", opacity=0.6, visible=True),
                 SchemaLabelInfo(id=6, name="Black Hole (T1)", color="#9932CC", opacity=0.5, visible=True),
             ]
@@ -447,6 +490,28 @@ async def classify_regions(
         response_data["segmentation_id"] = segmentation_id
         response_data["mask_updated"] = classified_mask is not None
         response_data["labels_updated"] = classified_mask is not None
+        if classified_mask is not None:
+            # Capture finding F09: what the classification removed from the mask, and why — shown before the
+            # radiologist confirms (also kept with the stored classification record, for a later session).
+            removed = removed_small_components(lesion_mask, classified_mask, voxel_spacing)
+            # Review of PR #69, M2: classifying the already classified lesions again (another method, a retry, the
+            # next session) finds nothing new to remove; the earlier removal from the same lesions is carried forward
+            # instead of being overwritten with 0. A saved mask with other lesions starts again.
+            previous = (previous_classification or {}).get("removed_small_components")
+            if (isinstance(previous, dict) and previous_classification.get("classified_lesion_footprint_sha256")
+                    == dis_gate.footprint_sha256(lesion_mask)):
+                removed = {
+                    **removed,
+                    "components": removed["components"] + int(previous.get("components") or 0),
+                    "voxels": removed["voxels"] + int(previous.get("voxels") or 0),
+                    "volume_mm3": round(removed["volume_mm3"] + float(previous.get("volume_mm3") or 0.0), 3),
+                    "includes_earlier_classifications": True,
+                }
+            response_data["removed_small_components"] = removed
+            # Capture finding F08: the label scheme stored with the mask, so the viewer draws every region at once.
+            response_data["labels"] = [
+                {"id": lbl.id, "name": lbl.name, "color": lbl.color, "opacity": lbl.opacity, "visible": lbl.visible}
+                for lbl in metadata.labels]
 
         # Sanitize: replace inf/nan with finite values (EDT can produce inf)
         import math
@@ -466,6 +531,11 @@ async def classify_regions(
             return obj
 
         response_data = _sanitize(response_data)
+        if classified_mask is not None:
+            # PRB-003 (review of PR #68, blocker 1; second review, N1): the lesions these regions were assigned to,
+            # and each lesion's region. DIS is evaluated only while the stored lesions are these, each carries one
+            # region, and a region changed by hand since is acknowledged in the radiologist's confirmation.
+            response_data.update(dis_gate.classification_record(classified_mask, voxel_spacing))
 
         # --- Auto-compute and persist ALL analysis data ---
         if classified_mask is not None:
@@ -479,7 +549,16 @@ async def classify_regions(
 
                 analysis_result = analyze_lesions(classified_mask, voxel_spacing, label_map)
                 analysis_result["segmentation_id"] = segmentation_id
-                dis_result = compute_dis_criteria(classified_mask, label_map, voxel_spacing)
+                # PRB-003 (RC-070): DIS is stored only for a segmentation a clinician confirmed for
+                # THIS mask. Reclassifying changes the mask (region labels), which voids an earlier
+                # confirmation (RC-047 / RC-071): the regions must be checked and confirmed again.
+                metadata.analysis_data = {**(metadata.analysis_data or {}), "classification": response_data}
+                review = dis_gate.review_state(metadata, classified_mask)
+                if review["confirmed"]:
+                    dis_result = dis_gate.evaluated(
+                        compute_dis_criteria(classified_mask, label_map, voxel_spacing), review)
+                else:
+                    dis_result = dis_gate.not_evaluated(segmentation_id, review)
                 dis_result["segmentation_id"] = segmentation_id
 
                 mask_mod = metadata.modified_at.isoformat()
@@ -692,10 +771,10 @@ async def generate_zone_map_endpoint(
         depth, height, width = zone_mask.shape
         magnims_labels = [
             SchemaLabelInfo(id=0, name="Background", color="#000000", opacity=0.0, visible=False),
-            SchemaLabelInfo(id=1, name="Periventricular", color="#FF0000", opacity=0.6, visible=True),
-            SchemaLabelInfo(id=2, name="Juxtacortical", color="#00CC00", opacity=0.6, visible=True),
-            SchemaLabelInfo(id=3, name="Infratentorial", color="#0066FF", opacity=0.6, visible=True),
-            SchemaLabelInfo(id=4, name="Deep White Matter", color="#FFD700", opacity=0.6, visible=True),
+            SchemaLabelInfo(id=1, name="Periventricular", color=MAGNIMS_REGION_LABEL_COLORS["Periventricular"], opacity=0.6, visible=True),
+            SchemaLabelInfo(id=2, name="Juxtacortical", color=MAGNIMS_REGION_LABEL_COLORS["Juxtacortical"], opacity=0.6, visible=True),
+            SchemaLabelInfo(id=3, name="Infratentorial", color=MAGNIMS_REGION_LABEL_COLORS["Infratentorial"], opacity=0.6, visible=True),
+            SchemaLabelInfo(id=4, name="Deep White Matter", color=MAGNIMS_REGION_LABEL_COLORS["Deep White Matter"], opacity=0.6, visible=True),
         ]
 
         # create_segmentation expects: file_id: str, image_shape: (H, W, D) tuple

@@ -17,6 +17,7 @@ import { useSegmentationMask, type LocalPaintStroke } from './useSegmentationMas
 import type { AIProvenance, PaintStroke, ImageShape, Segmentation, SegmentationResponse } from '@/types';
 import type { ImportDraftResult } from '@/store/useSegmentationStore';
 import { isAiSegmentation, provenanceRecorded } from '@/services/flames/draft';
+import { distinctMaskValues } from '@/utils/drawnLabels';
 import { recordedAuthor } from '@/utils/segmentationAuthor';
 
 interface UseSegmentationDataProps {
@@ -48,17 +49,25 @@ export function useSegmentationData({
   // Flag to skip loadMask when transitioning from local-ID to server-ID after save
   const skipNextLoadRef = useRef(false);
 
+  // Release 2026-10-25 (review of PR #69, B1): the distinct values of the mask as loaded from the server, so the
+  // overlay controls can warn about a value the label table does not name (drawn in the fallback colour).
+  const publishMaskValues = useCallback((loaded: boolean) => {
+    const bytes = loaded ? segmentationMask.getMaskSnapshot() : null;
+    useSegmentationStore.getState().setMaskLabelValues(bytes ? distinctMaskValues(bytes) : null);
+  }, [segmentationMask]);
+
   // Load mask when segmentation changes (skip local-only — mask is already initialized)
   useEffect(() => {
     if (!currentSegmentation?.segmentation_id) {
       segmentationMask.clearMask();
+      useSegmentationStore.getState().setMaskLabelValues(null);
     } else if (!currentSegmentation.segmentation_id.startsWith('local-')) {
       if (skipNextLoadRef.current) {
         // After save: mask is already in memory, skip redundant server fetch
         skipNextLoadRef.current = false;
         return;
       }
-      segmentationMask.loadMask(currentSegmentation.segmentation_id);
+      void segmentationMask.loadMask(currentSegmentation.segmentation_id).then(publishMaskValues);
     }
     // local- IDs already have an empty mask initialized by createSegmentation
   }, [currentSegmentation?.segmentation_id]);
@@ -445,6 +454,16 @@ export function useSegmentationData({
     return () => useSegmentationStore.getState().setMaskDigestCallback(null);
   }, [getMaskSnapshot]);
 
+  // Release 2026-10-25 (review of PR #69, B1/M3): the values of the open mask, read at the moment of a confirmation.
+  useEffect(() => {
+    const values = (): number[] | null => {
+      const bytes = getMaskSnapshot();
+      return bytes ? distinctMaskValues(bytes) : null;
+    };
+    useSegmentationStore.getState().setMaskValuesCallback(values);
+    return () => useSegmentationStore.getState().setMaskValuesCallback(null);
+  }, [getMaskSnapshot]);
+
   const unsavedMask = Boolean(segmentationMask.state.isDirty || segmentationMask.state.conflict != null);
   useEffect(() => {
     useSegmentationStore.getState().setHasUnsavedMaskChanges(unsavedMask);
@@ -454,9 +473,12 @@ export function useSegmentationData({
   const reloadCurrentMask = useCallback(async () => {
     const seg = useSegmentationStore.getState().currentSegmentation;
     if (seg) {
-      await segmentationMask.loadMask(seg.segmentation_id);
+      const loaded = await segmentationMask.loadMask(seg.segmentation_id);
+      publishMaskValues(loaded);
+      return loaded;
     }
-  }, [segmentationMask]);
+    return false;
+  }, [segmentationMask, publishMaskValues]);
 
   useEffect(() => {
     useSegmentationStore.getState().setReloadMaskCallback(reloadCurrentMask);

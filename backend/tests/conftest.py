@@ -36,6 +36,129 @@ os.environ['DEBUG'] = 'false'
 os.environ['JWT_SECRET_KEY'] = 'test-secret-key-minimum-32-characters-required-for-security'
 os.environ['ENCRYPTION_MASTER_KEY'] = 'dGVzdC1lbmNyeXB0aW9uLW1hc3Rlci1rZXktMzItYnl0ZXMtcmVxdWlyZWQ='
 
+# PRB-002: the test suite must never reach a real external service. On a developer machine with
+# gcloud application-default credentials, SecureUserStorage built a real Firestore client (project
+# defaulting to brain-mri-476110) and every local run wrote test accounts into the production
+# auth_users collection. Five independent layers, all set BEFORE any app import (an app module
+# imported earlier is caught by test_prb002_no_cloud_in_tests.py):
+#   1. the credentials file points at a path that does not exist (forced, not setdefault, so a
+#      developer's own GOOGLE_APPLICATION_CREDENTIALS cannot leak in), and the storage service's
+#      own key-file setting is emptied;
+#   2. the gcloud config directory is an empty one, so the gcloud ADC file is never found;
+#   3. the project is a name that is not a real project, so nothing defaults to production, and
+#      keys / endpoints of other external services inherited from the environment are removed;
+#   4. google.auth.default itself always refuses (below) -- also when FIRESTORE_EMULATOR_HOST is set,
+#      as CI sets it without running an emulator -- so any Google client fails exactly as on a
+#      machine without credentials and the stores use their local backends;
+#   5. Python sockets (and, on Windows, asyncio's proactor) may only connect to the loopback
+#      address, and HTTP proxies are switched off (NO_PROXY=*), so a local proxy cannot relay out.
+#      Limits: gRPC does not use Python sockets (layers 1-4 cover it); UDP datagrams and DNS
+#      lookups are not blocked (they can leak a host name, no data); a service listening on
+#      loopback (e.g. a tunnel on the Redis port the rate limiter pings) is not local by nature.
+# Tests that need a store install an in-memory stand-in. A test that wants a LOCAL emulator must
+# give its client explicit anonymous credentials itself; nothing in the suite can reach a real one.
+OFFLINE_PROJECT_ID = 'mstool-offline-tests'
+_NO_CLOUD_DIR = PROJECT_ROOT / 'tests' / '.no-cloud'
+
+
+def _app_modules():
+    return sorted(m for m in sys.modules if m == 'app' or m.startswith('app.'))
+
+
+PRB002_APP_IMPORTED_BEFORE_GUARD = _app_modules()
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(_NO_CLOUD_DIR / 'no-credentials.json')
+os.environ['GCS_CREDENTIALS_FILE'] = ''  # a .env cannot point the storage service at a key file
+os.environ['CLOUDSDK_CONFIG'] = str(_NO_CLOUD_DIR / 'gcloud')
+os.environ['GOOGLE_CLOUD_PROJECT'] = OFFLINE_PROJECT_ID
+PRB002_REMOVED_VARIABLES = (
+    'GCLOUD_PROJECT', 'ANTHROPIC_API_KEY', 'API_SERVICE_TOKEN', 'API_BASE_URL', 'STORAGE_EMULATOR_HOST',
+    'FLAMES_ENDPOINT', 'LSTAI_ENDPOINT', 'SYNTHSEG_ENDPOINT', 'MINDGLIDE_ENDPOINT',
+    'VERTEX_AI_ENDPOINT_INTERACTIVE', 'VERTEX_AI_ENDPOINT_AUTO', 'VERTEX_AI_ENDPOINT_ANOMALY',
+    'VERTEX_AI_PROJECT_ID', 'GCS_PROJECT_ID',
+    'REDIS_HOST', 'REDIS_PASSWORD', 'REDIS_URL', 'PACS_HOST', 'PACS_PORT', 'PACS_AE_TITLE',
+)
+for _name in PRB002_REMOVED_VARIABLES:
+    os.environ.pop(_name, None)
+for _name in ('HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'GRPC_PROXY',
+              'http_proxy', 'https_proxy', 'all_proxy', 'grpc_proxy'):
+    os.environ.pop(_name, None)
+os.environ['NO_PROXY'] = os.environ['no_proxy'] = '*'   # also overrides a Windows system proxy
+PRB002_APP_IMPORTED_BEFORE_ENV_LAYERS = _app_modules()
+
+
+def _install_no_cloud_guard() -> None:
+    global PRB002_APP_IMPORTED_BEFORE_CREDENTIAL_GUARD
+    PRB002_APP_IMPORTED_BEFORE_CREDENTIAL_GUARD = _app_modules()
+    import ipaddress
+    import socket
+    import google.auth
+    import google.auth._default
+    from google.auth.exceptions import DefaultCredentialsError
+
+    def _refuse_real_credentials(*_args, **_kwargs):
+        raise DefaultCredentialsError(
+            'PRB-002: the test suite never uses real Google credentials '
+            '(backend/tests/conftest.py).')
+
+    _refuse_real_credentials.prb002_guard = True
+    google.auth.default = _refuse_real_credentials
+    google.auth._default.default = _refuse_real_credentials
+
+    def _is_loopback(address) -> bool:
+        if not isinstance(address, tuple):          # AF_UNIX path
+            return True
+        host = str(address[0]).strip('[]')
+        if host.lower() == 'localhost':
+            return True
+        try:
+            return ipaddress.ip_address(host.split('%')[0]).is_loopback
+        except ValueError:
+            return False
+
+    real_connect, real_connect_ex = socket.socket.connect, socket.socket.connect_ex
+
+    def _connect(sock, address):
+        if not _is_loopback(address):
+            raise OSError(f'PRB-002: the test suite never opens network connections ({address!r}).')
+        return real_connect(sock, address)
+
+    def _connect_ex(sock, address):
+        if not _is_loopback(address):
+            raise OSError(f'PRB-002: the test suite never opens network connections ({address!r}).')
+        return real_connect_ex(sock, address)
+
+    _connect.prb002_guard = True
+    socket.socket.connect, socket.socket.connect_ex = _connect, _connect_ex
+
+    if sys.platform == 'win32':          # the default proactor loop connects through IOCP ConnectEx
+        import asyncio.windows_events as windows_events
+        real_iocp_connect = windows_events.IocpProactor.connect
+
+        def _iocp_connect(proactor, conn, address):
+            if not _is_loopback(address):
+                raise OSError(f'PRB-002: the test suite never opens network connections ({address!r}).')
+            return real_iocp_connect(proactor, conn, address)
+
+        _iocp_connect.prb002_guard = True
+        windows_events.IocpProactor.connect = _iocp_connect
+
+
+_install_no_cloud_guard()
+
+# CAPA-015: the audit trail and the refresh-token store use their in-memory backends in the test
+# suite. Forced (not setdefault), like the PRB-002 layers above, so a developer's environment or
+# backend/.env cannot select the Firestore backends. Tests that need a store install an in-memory
+# stand-in explicitly. (Release 2026-10-25 integration: CAPA-015's own setdefault credentials line
+# is dropped; PRB-002 layer 1 above forces the credentials file.)
+os.environ['AUDIT_SINK_BACKEND'] = 'memory'
+os.environ['REFRESH_TOKEN_BACKEND'] = 'memory'
+# CAPA-015 re-review N2: the session lifetimes are set explicitly, so a developer's backend/.env
+# (e.g. an old JWT_ACCESS_TOKEN_EXPIRE_MINUTES=60, which the start-up check refuses) cannot stop the
+# app from importing in the test suite. Environment variables take precedence over .env.
+os.environ['JWT_ACCESS_TOKEN_EXPIRE_MINUTES'] = '15'
+os.environ['REFRESH_TOKEN_IDLE_MINUTES'] = '30'
+os.environ['REFRESH_TOKEN_ABSOLUTE_HOURS'] = '12'
+
 # Lazy imports — only load heavy app dependencies when integration/security tests need them.
 # Unit tests import services directly and don't need the full FastAPI app.
 try:
@@ -778,7 +901,8 @@ def pytest_configure(config):
         "markers", "slow: Tests that take significant time to run"
     )
     config.addinivalue_line(
-        "markers", "requires_firestore: Tests requiring Firestore (emulator or real)"
+        "markers", "requires_firestore: Firestore emulator tests; they cannot run in this suite, which "
+        "refuses all Google credentials (PRB-002); CI deselects them"
     )
     config.addinivalue_line(
         "markers", "requires_pacs: Tests requiring PACS connection"
@@ -791,8 +915,10 @@ def pytest_configure(config):
 # External-service markers: tests carrying these need a backing service (Firestore
 # emulator, GCS, PACS) that a plain local/CI run does not provide. They are SKIPPED
 # (not failed) unless the service is opted in via env var — an honest "dependency
-# absent -> skip", never a fake pass. Set the env var to run them against a real/emulated
-# service. (These tests' behavior is otherwise covered by unit tests; see each file.)
+# absent -> skip", never a fake pass. Set the env var to run them against a LOCAL emulator
+# or test server that the test configures with explicit credentials: the PRB-002 guard above
+# refuses Google credentials and non-loopback connections, so no test can reach a real service.
+# (These tests' behavior is otherwise covered by unit tests; see each file.)
 _SERVICE_MARKERS = {
     "requires_firestore": ("FIRESTORE_EMULATOR_HOST", "RUN_FIRESTORE_TESTS"),
     "requires_gcs": ("GCS_TEST_BUCKET", "RUN_GCS_TESTS"),

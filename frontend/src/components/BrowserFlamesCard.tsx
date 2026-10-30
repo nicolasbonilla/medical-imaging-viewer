@@ -26,6 +26,7 @@ import {
 } from '@/services/flames/draft';
 import { FLAMES_FOLD0_MODEL } from '@/services/flames/plan';
 import { FLAMES_NOTICES } from '@/services/flames/notices';
+import { AutomaticMarkingNotice } from './AutomaticMarkingNotice';
 import { currentEnvironment, estimateDuration, formatElapsed } from '@/services/flames/runtimeEstimate';
 
 interface BrowserFlamesCardProps {
@@ -189,6 +190,8 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
               {flames.result.provenance.backend === 'webgpu' ? 'WebGPU' : `WebAssembly ×${flames.result.provenance.threads}`}
             </p>
           )}
+          {/* PRB-003 (RC-072; review of PR #68, finding 9): with every in-browser lesion result. */}
+          <AutomaticMarkingNotice />
           {grid && !grid.ok && <p className="text-[9px] text-amber-300">{grid.reason}</p>}
           {pendingDiscard !== null && (
             <div className="text-[10px] text-amber-100 bg-amber-900/40 border border-amber-500/50 rounded p-1.5 space-y-1" role="alertdialog" data-testid="browser-flames-unsaved">

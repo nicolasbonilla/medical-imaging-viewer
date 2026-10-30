@@ -86,8 +86,9 @@ export const QuickScreenBadge: React.FC<QuickScreenBadgeProps> = ({
     }
   }, [extractPixelData, classify, imageWidth, imageHeight]);
 
-  // Model not available — don't show anything
-  if (isModelAvailable === false) {
+  // PRB-009: nothing until the model is known to be served — not while it is being looked
+  // for (the button used to appear and then vanish), and never when it is absent.
+  if (isModelAvailable !== true) {
     return null;
   }
 
