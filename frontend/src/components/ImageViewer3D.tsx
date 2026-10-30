@@ -8,6 +8,22 @@
  * Downloads NIfTI once with progress tracking, then loads into NiiVue
  * from a blob URL (no repeated network calls on mode switch).
  *
+ * PRB-004 review of PR #71 (Class C, HAZ-006):
+ *   M1  the lesion mask and both visit masks are requested aligned to the image shown (`?ref_file_id=`) and
+ *       drawn only when their voxel order is known (RC-031 marker) and they carry a scanner position (not the
+ *       identity fallback); otherwise they are not drawn and the view says which and why;
+ *   M2  a segmentation not saved yet is announced, not silently absent;
+ *   M3  "go to slice" reaches storage slice k on its own axis (voxel → scanner mm → niivue), as the
+ *       selected-lesion path does — not index / (depth − 1) on the axial axis;
+ *   m2  the later visit is drawn red (it was the top of "hot": white);
+ *   m6  the lesion mask is drawn in its label colours (MAGNIMS regions: the shared mapping).
+ * Re-review (39f9d44..4626d17):
+ *   R1  a mask download that fails is named ("could not be loaded"), and a mask buffer is cleared as soon as its
+ *       request changes — the previous segmentation is never drawn under the new one's name;
+ *   R3  unsaved edits on a saved segmentation are stated (3D draws the last saved mask);
+ *   R4  an identity-transform mask is drawn when the image's own transform is the identity too;
+ *   R7  niivue's view-type and clip-plane keys are off (panel labels and the app's clip-plane controls stay true).
+ *
  * @module components/ImageViewer3D
  */
 
@@ -20,6 +36,12 @@ import { useSegmentationStore } from '@/store/useSegmentationStore';
 import { createBoundingBoxMZ3, lesionVoxelToNifti } from '@/utils/boundingBoxMesh';
 import { ViewportSafetyOverlay } from './ViewportSafetyOverlay';
 import { fetchWithSession, getAccessToken } from '@/services/session';
+import {
+  niftiNameFor, LABEL_MASK_DISPLAY_RANGE, voxelGridOf, maskPlaceableIn3D, segmentationNiftiPath,
+  type Mask3DCheck, type VolumeLike,
+} from '@/utils/niivueVoxelGrid';
+import { regionZoneRgba } from '@/utils/regionColors';
+import { maskLabelColormap, type MaskLabelColormap } from '@/utils/maskLabelColormap';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -102,16 +124,80 @@ function registerZoneMapColormap(nv: Niivue): void {
   const I = new Array(256).fill(0);
   for (let i = 0; i < 256; i++) I[i] = i;
 
-  // PV: Red [255, 0, 0] — indices 32-95
-  for (let i = 32; i < 96; i++) { R[i] = 255; A[i] = 255; }
-  // JC: Green [0, 204, 0] — indices 96-159
-  for (let i = 96; i < 160; i++) { G[i] = 204; A[i] = 255; }
-  // IT: Blue [0, 102, 255] — indices 160-223
-  for (let i = 160; i < 224; i++) { G[i] = 102; B[i] = 255; A[i] = 255; }
-  // DWM: Yellow [255, 215, 0] — indices 224-255
-  for (let i = 224; i < 256; i++) { R[i] = 255; G[i] = 215; A[i] = 255; }
+  // PRB-010: the one shared region mapping (utils/regionColors.ts, Okabe-Ito), the same as the
+  // legends and the 2D overlay (was red / green / blue / yellow).
+  // PV indices 32-95, JC 96-159, IT 160-223, DWM 224-255.
+  const zone = regionZoneRgba(255);
+  const ranges: Array<[number, number, number]> = [[1, 32, 96], [2, 96, 160], [3, 160, 224], [4, 224, 256]];
+  for (const [id, from, to] of ranges) {
+    for (let i = from; i < to; i++) { R[i] = zone[id].r; G[i] = zone[id].g; B[i] = zone[id].b; A[i] = 255; }
+  }
 
   nv.addColormap('magnims_zones', { R, G, B, A, I });
+}
+
+/** The masks the 3D view composites, for the "not drawn" notice. */
+type Mask3D = 'lesion' | 'visit1' | 'visit2';
+type Mask3DProblem = Exclude<Mask3DCheck, { ok: true }>['reason'] | 'unsaved' | 'load';
+const MASK_3D_NAME: Record<Mask3D, [string, string]> = {
+  lesion: ['viewer.mask3dLesion', 'the segmentation'],
+  visit1: ['viewer.mask3dVisit1', 'the earlier visit'],
+  visit2: ['viewer.mask3dVisit2', 'the later visit'],
+};
+const MASK_3D_REASON: Record<Mask3DProblem, [string, string]> = {
+  order: ['viewer.mask3dReasonOrder', 'stored in an older voxel order'],
+  position: ['viewer.mask3dReasonPosition', 'no scanner position stored with it'],
+  unsaved: ['viewer.mask3dReasonUnsaved', 'not saved yet'],
+  load: ['viewer.mask3dReasonLoad', 'could not be loaded'],
+};
+
+/**
+ * Review M1: load a mask volume and decide whether the 3D view may draw it (composited by its own affine).
+ * Returns the volume, or the reason it is not drawn.
+ */
+async function loadMask3D(
+  buffer: ArrayBuffer, stem: string, opts: Record<string, unknown>, image?: Niivue,
+): Promise<{ vol: NVImage; problem: null } | { vol: null; problem: Exclude<Mask3DProblem, 'unsaved' | 'load'> }> {
+  // PRB-005: the bytes themselves (a copy per instance), with an explicit NIfTI name — no blob URL.
+  const name = niftiNameFor(buffer, stem);
+  const vol = await NVImage.loadFromUrl({ url: name, name, buffer: buffer.slice(0), ...opts });
+  const imageVol = image?.volumes?.[0] as unknown as VolumeLike | undefined;
+  const check = maskPlaceableIn3D(voxelGridOf(vol as unknown as VolumeLike), (vol as unknown as VolumeLike).hdr.description,
+    imageVol ? voxelGridOf(imageVol) : undefined);
+  return check.ok ? { vol, problem: null } : { vol: null, problem: check.reason };
+}
+
+/** Review m6: the lesion mask's colours — its label table (regions: the shared mapping), else one red. */
+function lesionMaskDisplay(nv: Niivue, labelCm: MaskLabelColormap | null): Record<string, unknown> {
+  if (!labelCm) return { colormap: 'red', ...LABEL_MASK_DISPLAY_RANGE }; // PRB-006: never the MRI window
+  nv.addColormap(labelCm.name, labelCm.colormap);
+  return { colormap: labelCm.name, cal_min: labelCm.cal_min, cal_max: labelCm.cal_max };
+}
+
+/**
+ * Review M3: niivue's crosshair position for storage slice k of the first volume — the centre voxel of that
+ * slice taken through the volume's own voxel-to-scanner transform and niivue's mm → fraction, on the one
+ * niivue axis along which storage k advances (a sagittally stored volume advances along left-right). The
+ * other two coordinates are left where they are.
+ */
+function crosshairForStorageSlice(nv: Niivue, k: number): { axis: number; frac: number } | null {
+  const vol = nv.volumes?.[0] as unknown as VolumeLike | undefined;
+  const a = vol?.hdr?.affine;
+  const d = vol?.hdr?.dims;
+  if (!a || !d || (d[3] | 0) < 1) return null;
+  const depth = d[3] | 0;
+  const kk = Math.max(0, Math.min(depth - 1, k));
+  const ci = ((d[1] | 0) - 1) / 2;
+  const cj = ((d[2] | 0) - 1) / 2;
+  const fracOf = (kz: number) => {
+    const mm = [0, 1, 2].map((r) => a[r][0] * ci + a[r][1] * cj + a[r][2] * kz + a[r][3]);
+    return Array.from(nv.mm2frac(mm as [number, number, number], 0) as ArrayLike<number>);
+  };
+  const here = fracOf(kk);
+  const step = fracOf(kk + (kk + 1 < depth ? 1 : -1));
+  const deltas = [0, 1, 2].map((n) => Math.abs(step[n] - here[n]));
+  const axis = deltas.indexOf(Math.max(...deltas));
+  return Number.isFinite(here[axis]) ? { axis, frac: here[axis] } : null;
 }
 
 /** Create a NiiVue instance for a specific slice type */
@@ -122,13 +208,21 @@ function createNvInstance(sliceType: number): Niivue {
     isRadiologicalConvention: false,
     sliceType,
     multiplanarShowRender: SHOW_RENDER.NEVER,
-    isColorbar: sliceType === SLICE_TYPE.RENDER,
+    // Film capture (2026-10-28, RC-023): niivue's colour bar runs along the bottom of the render, under the
+    // safety overlay's standing "Laterality not labelled" caveat — both unreadable. Off: the colour scale of an
+    // MRI in arbitrary units is not a measurement, and the colormap is named in the sidebar.
+    isColorbar: false,
     // RC-023 (HAZ-006, CAPA-010): no laterality glyph in 3D. The orientation cube carries
     // L/R/A/P/S/I letters and niivue draws L/R/A/P/S/I slice letters by DEFAULT
     // (isOrientationTextVisible defaults to true), while laterality labelling is not
     // verified (CAPA-004 CA-4.3). The orientation is reported as text by the safety overlay.
     isOrientCube: false,
     isOrientationTextVisible: false,
+    // Re-review R7: niivue's view-type key (V) would turn a panel labelled "Axial" into another view, and its
+    // clip-plane keys would move the clip plane behind the app's own clip-plane controls. Off.
+    viewModeHotKey: '',
+    clipPlaneHotKey: '',
+    cycleClipPlaneHotKey: '',
     crosshairWidth: 1,
     crosshairColor: [1, 0, 0, 1],
     textHeight: 0.03,
@@ -161,6 +255,21 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
   const zoneMapVisible = useSegmentationStore((s) => s.zoneMapVisible);
   const zoneMapOpacity = useSegmentationStore((s) => s.zoneMapOpacity);
   const currentSliceIndex = useViewerStore((s) => s.currentSliceIndex);
+
+  // Review m6: the label table the lesion mask was saved with.
+  const savedLabels = currentSegmentation?.metadata?.labels;
+  const labelsKey = (savedLabels ?? []).map((l) => `${l.id}${l.color}`).join(',');
+  const lesionLabelCm = useMemo(() => maskLabelColormap(savedLabels),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [labelsKey]);
+  // Review M1: masks loaded but not drawn (unknown voxel order / no scanner position), per mask.
+  const [masksNotDrawn, setMasksNotDrawn] = useState<Partial<Record<Mask3D, Mask3DProblem>>>({});
+  // Re-review R1: masks whose download failed (named "could not be loaded").
+  const [maskLoadFailed, setMaskLoadFailed] = useState<Partial<Record<Mask3D, boolean>>>({});
+  const markLoad = useCallback((mask: Mask3D, failed: boolean) =>
+    setMaskLoadFailed((prev) => (!!prev[mask] === failed ? prev : { ...prev, [mask]: failed })), []);
+  // Re-review R3: edits not saved yet on the shown segmentation (3D draws the last saved mask).
+  const unsavedEdits = useSegmentationStore((s) => s.hasUnsavedMaskChanges || s.isDirty);
 
   // Longitudinal overlay state
   const longTp1SegId = useSegmentationStore((s) => s.longitudinalTp1SegId);
@@ -205,11 +314,14 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
     return `${API_BASE_URL}/api/v1/imaging/nifti/${fileId}`;
   }, [fileId]);
 
+  // Review M1: requested aligned to the image shown (server-side realignment of a mask on its grid).
   const segNiftiUrl = useMemo(() => {
     const segId = currentSegmentation?.segmentation_id;
     if (!segId || segId.startsWith('local-')) return null;
-    return `${API_BASE_URL}/api/v1/segmentation/${segId}/nifti`;
-  }, [currentSegmentation?.segmentation_id]);
+    return `${API_BASE_URL}${segmentationNiftiPath(segId, fileId)}`;
+  }, [currentSegmentation?.segmentation_id, fileId]);
+  // Review M2: a segmentation that exists only in this browser is not in the 3D view — said so.
+  const lesionUnsaved = !!currentSegmentation?.segmentation_id?.startsWith('local-');
 
   const zoneMapNiftiUrl = useMemo(() => {
     if (!zoneMapSegId || zoneMapSegId.startsWith('local-')) return null;
@@ -299,7 +411,10 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
 
   // ─── EFFECT 1b: Download segmentation NIfTI ───
   useEffect(() => {
-    if (!segNiftiUrl) { setSegBuffer(null); return; }
+    // Re-review R1: the previous mask goes as soon as the request changes — never drawn under the new name.
+    setSegBuffer(null);
+    markLoad('lesion', false);
+    if (!segNiftiUrl) return;
     let cancelled = false;
     const download = async () => {
       try {
@@ -308,6 +423,7 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
         if (!cancelled) setSegBuffer(buffer);
       } catch (err) {
         console.error('[3D] Seg download failed:', err);
+        if (!cancelled) markLoad('lesion', true);
       }
     };
     download();
@@ -326,24 +442,28 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
 
   // ─── EFFECT 1d: Download longitudinal TP1 NIfTI (normalized orientation) ───
   useEffect(() => {
-    if (!longTp1SegId || longTp1SegId.startsWith('local-')) { setLongTp1Buffer(null); return; }
+    setLongTp1Buffer(null);   // re-review R1
+    markLoad('visit1', false);
+    if (!longTp1SegId || longTp1SegId.startsWith('local-')) return;
     let cancelled = false;
-    const url = `${API_BASE_URL}/api/v1/segmentation/${longTp1SegId}/nifti`;
+    const url = `${API_BASE_URL}${segmentationNiftiPath(longTp1SegId, fileId)}`; // review M1
     fetchWithProgress(url, getAuthHeaders(), () => {})
       .then(buffer => { if (!cancelled) setLongTp1Buffer(buffer); })
-      .catch(err => console.error('[3D] Long TP1 download failed:', err));
+      .catch(err => { console.error('[3D] Long TP1 download failed:', err); if (!cancelled) markLoad('visit1', true); });
     return () => { cancelled = true; };
   }, [longTp1SegId, fileId]);
 
   // ─── EFFECT 1e: Download longitudinal TP2 NIfTI (aligned to current MRI) ───
   useEffect(() => {
-    if (!longTp2SegId || longTp2SegId.startsWith('local-')) { setLongTp2Buffer(null); return; }
+    setLongTp2Buffer(null);   // re-review R1
+    markLoad('visit2', false);
+    if (!longTp2SegId || longTp2SegId.startsWith('local-')) return;
     let cancelled = false;
-    // Use ref_file_id to align TP2's axes and affine to the current MRI
-    const url = `${API_BASE_URL}/api/v1/segmentation/${longTp2SegId}/nifti`;
+    // Review M1: ref_file_id realigns TP2 only when it lies on the current MRI's grid (no registration).
+    const url = `${API_BASE_URL}${segmentationNiftiPath(longTp2SegId, fileId)}`;
     fetchWithProgress(url, getAuthHeaders(), () => {})
       .then(buffer => { if (!cancelled) setLongTp2Buffer(buffer); })
-      .catch(err => console.error('[3D] Long TP2 download failed:', err));
+      .catch(err => { console.error('[3D] Long TP2 download failed:', err); if (!cancelled) markLoad('visit2', true); });
     return () => { cancelled = true; };
   }, [longTp2SegId, fileId]);
 
@@ -352,6 +472,7 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
     if (render3DMode !== 'volume' || !niftiBuffer || !volumeCanvasRef.current || containerSize.width === 0) return;
 
     const blobUrls: string[] = [];
+    const notDrawn: Partial<Record<Mask3D, Mask3DProblem>> = {};
 
     const init = async () => {
       try {
@@ -361,15 +482,16 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
 
         const mainUrl = URL.createObjectURL(new Blob([niftiBuffer]));
         blobUrls.push(mainUrl);
-        await nv.loadVolumes([{ url: mainUrl, colormap: colormap3D, opacity: 1 }]);
+        // PRB-005: explicit NIfTI name — niivue cannot read a file type from a blob URL on a
+        // host name without a dot (localhost, an intranet server name).
+        await nv.loadVolumes([{ url: mainUrl, name: niftiNameFor(niftiBuffer, 'image'), colormap: colormap3D, opacity: 1 }]);
         nv.setRenderAzimuthElevation(0, 15);
 
-        // Load segmentation overlay if available
+        // Load segmentation overlay if available (review M1: only with known voxel order and position;
+        // m6: in its label colours; PRB-006: never the MRI window its header may carry).
         if (segBuffer) {
-          const segUrl = URL.createObjectURL(new Blob([segBuffer]));
-          blobUrls.push(segUrl);
-          const segVol = await NVImage.loadFromUrl({ url: segUrl, colormap: 'red', opacity: 0.5 });
-          nv.addVolume(segVol);
+          const seg = await loadMask3D(segBuffer, 'mask', { opacity: 0.5, ...lesionMaskDisplay(nv, lesionLabelCm) }, nv);
+          if (seg.vol) nv.addVolume(seg.vol); else notDrawn.lesion = seg.problem;
         }
 
         // Load zone map overlay if buffer available
@@ -379,6 +501,7 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
           blobUrls.push(zmUrl);
           const zmVol = await NVImage.loadFromUrl({
             url: zmUrl,
+            name: niftiNameFor(zoneMapBuffer, 'zones'),
             colormap: 'magnims_zones',
             cal_min: 0,
             cal_max: 4,
@@ -391,20 +514,18 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
         // own affine — there is NO spatial registration between TP1 and TP2, so overlap is
         // NOT verified alignment (Class C: treat any apparent change as a candidate).
         if (longTp1Buffer && longitudinalVisible) {
-          const tp1Url = URL.createObjectURL(new Blob([longTp1Buffer]));
-          blobUrls.push(tp1Url);
-          const tp1Vol = await NVImage.loadFromUrl({ url: tp1Url, colormap: 'blue', opacity: 0.5 });
-          nv.addVolume(tp1Vol);
+          const tp1 = await loadMask3D(longTp1Buffer, 'visit1', { colormap: 'blue', opacity: 0.5, ...LABEL_MASK_DISPLAY_RANGE }, nv);
+          if (tp1.vol) nv.addVolume(tp1.vol); else notDrawn.visit1 = tp1.problem;
         }
 
-        // Load longitudinal TP2 overlay (hot). NO TP2->TP1 registration is performed (the
-        // load URL passes no ref_file_id); niivue only affine-composites. Change is a candidate.
+        // Load longitudinal TP2 overlay (red; review m2: was "hot", whose top at range 0..1 is white).
+        // NO TP2->TP1 registration is performed: ref_file_id realigns TP2 only when it already lies on
+        // the current MRI's grid; niivue only affine-composites. Change is a candidate.
         if (longTp2Buffer && longitudinalVisible) {
-          const tp2Url = URL.createObjectURL(new Blob([longTp2Buffer]));
-          blobUrls.push(tp2Url);
-          const tp2Vol = await NVImage.loadFromUrl({ url: tp2Url, colormap: 'hot', opacity: 0.5 });
-          nv.addVolume(tp2Vol);
+          const tp2 = await loadMask3D(longTp2Buffer, 'visit2', { colormap: 'red', opacity: 0.5, ...LABEL_MASK_DISPLAY_RANGE }, nv);
+          if (tp2.vol) nv.addVolume(tp2.vol); else notDrawn.visit2 = tp2.problem;
         }
+        setMasksNotDrawn(notDrawn);
 
         // Clip overlays along with MRI only when zone map is loaded
         // Only clip zone map with brain; longitudinal overlays stay visible through clip plane
@@ -423,9 +544,10 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
       bboxMeshUrlRef.current = null;
       volumeNvRef.current = null;
       setVolumeReady(false);
+      setMasksNotDrawn({});
       blobUrls.forEach(url => URL.revokeObjectURL(url));
     };
-  }, [render3DMode, niftiBuffer, segBuffer, zoneMapBuffer, longTp1Buffer, longTp2Buffer, longitudinalVisible, containerSize.width]);
+  }, [render3DMode, niftiBuffer, segBuffer, zoneMapBuffer, longTp1Buffer, longTp2Buffer, longitudinalVisible, containerSize.width, lesionLabelCm]);
 
   // ─── EFFECT 3: Multiplanar mode — 4 NiiVue instances with sync ───
   useEffect(() => {
@@ -436,6 +558,7 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
     if (!canvases[0] || !canvases[1] || !canvases[2] || !canvases[3]) return;
 
     const blobUrls: string[] = [];
+    const notDrawn: Partial<Record<Mask3D, Mask3DProblem>> = {};
     let cancelled = false;
 
     const init = async () => {
@@ -454,18 +577,14 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
         for (let i = 0; i < 4; i++) {
           const url = URL.createObjectURL(new Blob([niftiBuffer]));
           blobUrls.push(url);
-          await nvInstances[i].loadVolumes([{ url, colormap: colormap3D, opacity: 1 }]);
+          await nvInstances[i].loadVolumes([{ url, name: niftiNameFor(niftiBuffer, 'image'), colormap: colormap3D, opacity: 1 }]); // PRB-005
 
-          // Load segmentation overlay
+          // Load segmentation overlay (review M1 / m6, PRB-006 — as in volume mode)
           if (segBuffer) {
-            const segUrl = URL.createObjectURL(new Blob([segBuffer]));
-            blobUrls.push(segUrl);
-            const segVol = await NVImage.loadFromUrl({
-              url: segUrl,
-              colormap: 'red',
-              opacity: i === 0 ? 0.5 : 0.3,
-            });
-            nvInstances[i].addVolume(segVol);
+            const seg = await loadMask3D(segBuffer, 'mask', {
+              opacity: i === 0 ? 0.5 : 0.3, ...lesionMaskDisplay(nvInstances[i], lesionLabelCm),
+            }, nvInstances[i]);
+            if (seg.vol) nvInstances[i].addVolume(seg.vol); else notDrawn.lesion = seg.problem;
           }
 
           // Load zone map overlay (opacity 0 if hidden; Effect 10 handles reactively)
@@ -476,6 +595,7 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
             const initOpacity = zoneMapVisible ? zoneMapOpacity : 0;
             const zmVol = await NVImage.loadFromUrl({
               url: zmUrl,
+              name: niftiNameFor(zoneMapBuffer, 'zones'),
               colormap: 'magnims_zones',
               cal_min: 0,
               cal_max: 4,
@@ -486,22 +606,24 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
 
           // Load longitudinal TP1 overlay (blue)
           if (longTp1Buffer && longitudinalVisible) {
-            const tp1Url = URL.createObjectURL(new Blob([longTp1Buffer]));
-            blobUrls.push(tp1Url);
-            const tp1Vol = await NVImage.loadFromUrl({ url: tp1Url, colormap: 'blue', opacity: i === 0 ? 0.5 : 0.3 });
-            nvInstances[i].addVolume(tp1Vol);
+            const tp1 = await loadMask3D(longTp1Buffer, 'visit1', {
+              colormap: 'blue', opacity: i === 0 ? 0.5 : 0.3, ...LABEL_MASK_DISPLAY_RANGE,
+            }, nvInstances[i]);
+            if (tp1.vol) nvInstances[i].addVolume(tp1.vol); else notDrawn.visit1 = tp1.problem;
           }
 
-          // Load longitudinal TP2 overlay (red) — backend aligns via ref_file_id
+          // Load longitudinal TP2 overlay (red; review m2: was "hot", white at range 0..1). The backend
+          // realigns it via ref_file_id only when it lies on the current MRI's grid (no registration).
           if (longTp2Buffer && longitudinalVisible) {
-            const tp2Url = URL.createObjectURL(new Blob([longTp2Buffer]));
-            blobUrls.push(tp2Url);
-            const tp2Vol = await NVImage.loadFromUrl({ url: tp2Url, colormap: 'hot', opacity: i === 0 ? 0.5 : 0.3 });
-            nvInstances[i].addVolume(tp2Vol);
+            const tp2 = await loadMask3D(longTp2Buffer, 'visit2', {
+              colormap: 'red', opacity: i === 0 ? 0.5 : 0.3, ...LABEL_MASK_DISPLAY_RANGE,
+            }, nvInstances[i]);
+            if (tp2.vol) nvInstances[i].addVolume(tp2.vol); else notDrawn.visit2 = tp2.problem;
           }
         }
 
         if (cancelled) return;
+        setMasksNotDrawn(notDrawn);
 
         // Clip overlays along with MRI when clip plane is active
         for (const nvInst of nvInstances) {
@@ -533,9 +655,10 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
       bboxMeshUrlRef.current = null;
       mpNvRefs.current = [null, null, null, null];
       setMpReady(false);
+      setMasksNotDrawn({});
       blobUrls.forEach((url) => URL.revokeObjectURL(url));
     };
-  }, [render3DMode, niftiBuffer, segBuffer, zoneMapBuffer, longTp1Buffer, longTp2Buffer, longitudinalVisible, containerSize.width]);
+  }, [render3DMode, niftiBuffer, segBuffer, zoneMapBuffer, longTp1Buffer, longTp2Buffer, longitudinalVisible, containerSize.width, lesionLabelCm]);
 
   // ─── EFFECT 4: Update colormap ───
   useEffect(() => {
@@ -678,15 +801,14 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
     const ready = render3DMode === 'volume' ? volumeReady : mpReady;
     if (!nv || !ready || nv.volumes.length === 0) return;
 
-    const dims = nv.volumes[0].dims;
-    const totalSlices = dims ? dims[3] : 0;
-    if (totalSlices <= 1) return;
-
-    const zFrac = currentSliceIndex / Math.max(1, totalSlices - 1);
+    // Review M3: storage slice k through voxel → scanner mm → niivue (was index / (depth − 1) on the
+    // axial axis: off by up to half a slice, and the wrong axis for a sagittally or coronally stored volume).
+    const target = crosshairForStorageSlice(nv, currentSliceIndex);
+    if (!target) return;
 
     const updateCrosshair = (nvInst: Niivue | null) => {
       if (!nvInst || nvInst.volumes.length === 0) return;
-      nvInst.scene.crosshairPos[2] = zFrac;
+      nvInst.scene.crosshairPos[target.axis] = target.frac;
       nvInst.drawScene();
     };
 
@@ -811,6 +933,14 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
   }
 
   const isReady = render3DMode === 'volume' ? volumeReady : mpReady;
+  // Review M1/M2, re-review R1: every mask the 3D view does not draw is named, with the reason.
+  const loadFailures: Partial<Record<Mask3D, Mask3DProblem>> = {};
+  if (maskLoadFailed.lesion) loadFailures.lesion = 'load';
+  if (longitudinalVisible && maskLoadFailed.visit1) loadFailures.visit1 = 'load';
+  if (longitudinalVisible && maskLoadFailed.visit2) loadFailures.visit2 = 'load';
+  const notDrawnList = (Object.entries({ ...masksNotDrawn, ...loadFailures, ...(lesionUnsaved ? { lesion: 'unsaved' } : {}) }) as Array<[Mask3D, Mask3DProblem]>)
+    .filter(([, why]) => !!why);
+  const showUnsavedEdits = unsavedEdits && !!segNiftiUrl && !notDrawnList.some(([mask]) => mask === 'lesion');
 
   return (
     <div className="relative h-full bg-black">
@@ -827,6 +957,38 @@ export default function ImageViewer3D({ patientName, patientMRN, studyDescriptio
       {longitudinalVisible && (longTp1Buffer || longTp2Buffer) && (
         <div className="pointer-events-none absolute left-1/2 top-2 z-20 -translate-x-1/2 rounded border border-amber-500/50 bg-amber-900/80 px-2 py-0.5 text-[10px] text-amber-100">
           {t('longitudinal.overlayCaveat', 'TP1/TP2 overlay — NOT spatially registered; apparent change is a candidate.')}
+        </div>
+      )}
+      {(notDrawnList.length > 0 || showUnsavedEdits) && (
+        // Bottom centre, above the standing laterality caveat (two lines in a narrow view) — clear of the identity
+        // block and the orientation banner; measured in a real browser (NiivueViewer2D.prb004.layout.test.tsx).
+        <div className="pointer-events-none absolute bottom-14 left-1/2 z-20 flex max-w-md -translate-x-1/2 flex-col gap-1">
+          {notDrawnList.length > 0 && (
+            <div
+              data-testid="niivue-3d-mask-not-shown"
+              role="status"
+              className="rounded border border-amber-600/60 bg-amber-950/85 px-2 py-1 text-[11px] text-amber-100"
+            >
+              {t('viewer.mask3dNotShown', 'Not drawn in 3D')}
+              {': '}
+              {notDrawnList.map(([mask, why], n) => (
+                <span key={mask}>
+                  {n > 0 && '; '}
+                  {t(...MASK_3D_NAME[mask])} — {t(...MASK_3D_REASON[why])}
+                </span>
+              ))}
+              {'.'}
+            </div>
+          )}
+          {showUnsavedEdits && (
+            <div
+              data-testid="niivue-3d-unsaved-edits"
+              role="status"
+              className="rounded border border-amber-600/60 bg-amber-950/85 px-2 py-1 text-[11px] text-amber-100"
+            >
+              {t('viewer.mask3dUnsavedEdits', 'Unsaved edits are not shown in 3D: it draws the last saved segmentation.')}
+            </div>
+          )}
         </div>
       )}
       <div ref={containerRef} className="absolute inset-0">

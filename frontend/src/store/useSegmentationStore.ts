@@ -27,6 +27,7 @@ import type {
 } from '@/types';
 import { DEFAULT_LABEL_PRESETS } from '@/types';
 import { MIN_VISIBLE_LESION_OPACITY } from '@/utils/drawnLabels';
+import { withRegionColors } from '@/utils/regionColors';
 
 // ============================================================================
 // Types
@@ -522,7 +523,12 @@ export const useSegmentationStore = create<SegmentationState>()(
         setCurrentSegmentation: (segmentation) =>
           set({ currentSegmentation: segmentation }),
 
-        setActiveSegmentation: (segmentation) =>
+        setActiveSegmentation: (rawSegmentation) => {
+          // PRB-010: a label named after a MAGNIMS region is shown in the shared region colour,
+          // whatever colour was stored with it (classified masks carried red / green / blue / gold).
+          const segmentation = rawSegmentation
+            ? { ...rawSegmentation, labels: withRegionColors(rawSegmentation.labels) }
+            : rawSegmentation;
           set({
             activeSegmentation: segmentation,
             isDirty: false,
@@ -531,7 +537,8 @@ export const useSegmentationStore = create<SegmentationState>()(
               (acc, label) => ({ ...acc, [label.id]: label.visible }),
               {}
             ) ?? {},
-          }),
+          });
+        },
 
         updateActiveSegmentationProgress: (progress) =>
           set((state) => {

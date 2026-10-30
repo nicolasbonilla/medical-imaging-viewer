@@ -847,7 +847,8 @@ Classification: Normal (p < 0.5) | Abnormal (p >= 0.5)
 - **Input:** [1, 1, 224, 224] float32 tensor
 - **Output:** Binary classification (normal/abnormal)
 - **Location:** `frontend/public/models/brain_screening.onnx` (user-supplied)
-- **Graceful degradation:** Hidden when model file unavailable (HEAD request check)
+- **Feature flag:** OFF unless built with `VITE_ENABLE_QUICK_SCREEN=true` (PRB-009, RC-075); off, the viewer neither shows it nor requests the model
+- **Graceful degradation (flag on):** one HEAD request per page; nothing shown until the model is known to be served; an absent model is silent
 
 ---
 

@@ -51,6 +51,7 @@ import { AutomaticMarkingNotice } from './AutomaticMarkingNotice';
 import { regionEvidence, REGION_ABBREV } from '../utils/regionEvidence';
 import { FEATURES } from '../config/features';
 import { fetchWithSession } from '../services/session';
+import { REGION_DOT_CLASSES, REGION_TEXT_CLASSES } from '@/utils/regionColors';
 
 // CP-SLICE-THICKNESS-001 (DRAFT, RC-058): only reachable through the flag, loaded lazily so that
 // nothing of it (component, logic, evidence asset) is fetched while the flag is OFF.
@@ -72,19 +73,10 @@ interface LesionDashboardProps {
 // The previous red(Periventricular)/green(Juxtacortical) pairing was indistinguishable
 // for the ~8% of males with red-green deficiency — a clinical-safety defect, since these
 // are the two most common lesion zones and sit adjacent in the legend and table.
-const REGION_COLORS: Record<string, string> = {
-  Periventricular: 'bg-[#E69F00]',       // orange
-  Juxtacortical: 'bg-[#56B4E9]',         // sky blue
-  Infratentorial: 'bg-[#009E73]',        // bluish green
-  'Deep White Matter': 'bg-[#CC79A7]',   // reddish purple
-};
+// PRB-010: from the ONE shared mapping, so the overlays on the image use the same colours.
+const REGION_COLORS: Record<string, string> = REGION_DOT_CLASSES;
 
-const REGION_TEXT_COLORS: Record<string, string> = {
-  Periventricular: 'text-[#F0A800]',
-  Juxtacortical: 'text-[#7FC7F0]',
-  Infratentorial: 'text-[#2DBF97]',
-  'Deep White Matter': 'text-[#DB93BC]',
-};
+const REGION_TEXT_COLORS: Record<string, string> = REGION_TEXT_CLASSES;
 
 function sizeColor(cat: string): string {
   if (cat === 'large') return 'text-red-400';

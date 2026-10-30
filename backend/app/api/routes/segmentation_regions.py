@@ -21,6 +21,17 @@ from app.core.container import get_patient_service as _patient_service
 # (C3) after RC-029 was wired there, and never received object-level authorization.
 from app.security.resource_access import require_segmentation_access, authorize_file_scope
 from app.services.segmentation_service import SegmentationService
+
+# PRB-010: colours stored with the MAGNIMS region labels — the app's ONE region mapping
+# (frontend/src/utils/regionColors.ts, Okabe-Ito colour-blind-safe; a test checks they agree).
+# Was red / green / blue / gold: the overlay disagreed with the legend, and periventricular red
+# against juxtacortical green cannot be told apart with red-green colour blindness.
+MAGNIMS_REGION_LABEL_COLORS = {
+    "Periventricular": "#E69F00",
+    "Juxtacortical": "#56B4E9",
+    "Infratentorial": "#009E73",
+    "Deep White Matter": "#D55E00",   # vermillion (PR #71 review m1; was reddish purple #CC79A7)
+}
 from app.services.lesion_analysis_service import (
     analyze_lesions,
     compute_dis_criteria,
@@ -461,10 +472,10 @@ async def classify_regions(
             from app.models.schemas import LabelInfo as SchemaLabelInfo
             magnims_labels = [
                 SchemaLabelInfo(id=0, name="Background", color="#000000", opacity=0.0, visible=False),
-                SchemaLabelInfo(id=1, name="Periventricular", color="#FF0000", opacity=0.6, visible=True),
-                SchemaLabelInfo(id=2, name="Juxtacortical", color="#00CC00", opacity=0.6, visible=True),
-                SchemaLabelInfo(id=3, name="Infratentorial", color="#0066FF", opacity=0.6, visible=True),
-                SchemaLabelInfo(id=4, name="Deep White Matter", color="#FFD700", opacity=0.6, visible=True),
+                SchemaLabelInfo(id=1, name="Periventricular", color=MAGNIMS_REGION_LABEL_COLORS["Periventricular"], opacity=0.6, visible=True),
+                SchemaLabelInfo(id=2, name="Juxtacortical", color=MAGNIMS_REGION_LABEL_COLORS["Juxtacortical"], opacity=0.6, visible=True),
+                SchemaLabelInfo(id=3, name="Infratentorial", color=MAGNIMS_REGION_LABEL_COLORS["Infratentorial"], opacity=0.6, visible=True),
+                SchemaLabelInfo(id=4, name="Deep White Matter", color=MAGNIMS_REGION_LABEL_COLORS["Deep White Matter"], opacity=0.6, visible=True),
                 SchemaLabelInfo(id=5, name="Active (Gd+)", color="#FF00FF", opacity=0.6, visible=True),
                 SchemaLabelInfo(id=6, name="Black Hole (T1)", color="#9932CC", opacity=0.5, visible=True),
             ]
@@ -760,10 +771,10 @@ async def generate_zone_map_endpoint(
         depth, height, width = zone_mask.shape
         magnims_labels = [
             SchemaLabelInfo(id=0, name="Background", color="#000000", opacity=0.0, visible=False),
-            SchemaLabelInfo(id=1, name="Periventricular", color="#FF0000", opacity=0.6, visible=True),
-            SchemaLabelInfo(id=2, name="Juxtacortical", color="#00CC00", opacity=0.6, visible=True),
-            SchemaLabelInfo(id=3, name="Infratentorial", color="#0066FF", opacity=0.6, visible=True),
-            SchemaLabelInfo(id=4, name="Deep White Matter", color="#FFD700", opacity=0.6, visible=True),
+            SchemaLabelInfo(id=1, name="Periventricular", color=MAGNIMS_REGION_LABEL_COLORS["Periventricular"], opacity=0.6, visible=True),
+            SchemaLabelInfo(id=2, name="Juxtacortical", color=MAGNIMS_REGION_LABEL_COLORS["Juxtacortical"], opacity=0.6, visible=True),
+            SchemaLabelInfo(id=3, name="Infratentorial", color=MAGNIMS_REGION_LABEL_COLORS["Infratentorial"], opacity=0.6, visible=True),
+            SchemaLabelInfo(id=4, name="Deep White Matter", color=MAGNIMS_REGION_LABEL_COLORS["Deep White Matter"], opacity=0.6, visible=True),
         ]
 
         # create_segmentation expects: file_id: str, image_shape: (H, W, D) tuple

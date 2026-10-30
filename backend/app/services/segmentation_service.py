@@ -1061,6 +1061,76 @@ class SegmentationService:
         except Exception:
             return False
 
+    @classmethod
+    def align_stored_mask_to_reference(cls, seg_bytes: bytes, ref_bytes: bytes, tolerance: float = 1e-3) -> Optional[bytes]:
+        """PRB-004 review (M1): the stored mask NIfTI realigned onto the reference image's voxel grid, or None.
+
+        Realigned only when the stored voxel-to-scanner transform IS the reference's (every element within
+        `tolerance`, the RC-039 tolerance) and, after the marker-driven reorder (RC-031: legacy masks are the
+        in-plane transpose), the shape is the reference's. Never stamps the reference affine onto a mask whose
+        position is not the reference's (identity fallback, another grid): that would be a fabricated alignment —
+        None, and the caller serves the stored file unchanged (the viewers then refuse it with a notice).
+        The output carries the reference affine and spatial header, the RC-031 v2 marker (its voxels ARE in the
+        image's order now) and the mask's own display range (PRB-006), never the MRI's window.
+        Re-review R2: the reference is read for its HEADER only (shape, affine): only the first bytes of the
+        file are decompressed, its voxels are never loaded. Raises on unreadable input; the route then serves
+        the stored file unchanged.
+        """
+        import io
+        import tempfile
+        import os
+        import zlib
+
+        def _load_mask(raw: bytes):
+            suffix = '.nii.gz' if raw[:2] == b'\x1f\x8b' else '.nii'
+            with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as t:
+                t.write(raw)
+                path = t.name
+            try:
+                img = nib.load(path)
+                out = (np.asarray(img.dataobj), img.affine.copy(), img.header.copy())
+                del img
+            finally:
+                os.unlink(path)
+            return out
+
+        def _reference_header(raw: bytes):
+            head = (zlib.decompressobj(16 + zlib.MAX_WBITS).decompress(raw, 1024)
+                    if raw[:2] == b'\x1f\x8b' else raw[:1024])
+            size = int.from_bytes(head[:4], 'little') if len(head) >= 4 else 0
+            header_class = nib.Nifti2Header if size == 540 or int.from_bytes(head[:4], 'big') == 540 else nib.Nifti1Header
+            hdr = header_class.from_fileobj(io.BytesIO(head))
+            return tuple(int(d) for d in hdr.get_data_shape()[:3]), hdr.get_best_affine(), hdr
+
+        seg_data, seg_affine, seg_header = _load_mask(seg_bytes)
+        ref_shape, ref_affine, ref_header = _reference_header(ref_bytes)
+        if seg_affine.shape != (4, 4) or not np.allclose(seg_affine, ref_affine, atol=tolerance, rtol=0):
+            return None
+        oriented = cls._seg_native_to_reference_order(seg_data, cls._header_has_v2_marker(seg_header))
+        if tuple(oriented.shape[:3]) != ref_shape:
+            return None
+        labels = np.rint(oriented).astype(np.uint8)
+        header = ref_header.copy()
+        header.set_data_dtype(np.uint8)
+        header.set_data_shape(labels.shape)
+        header.set_slope_inter(1.0, 0.0)
+        header["cal_min"], header["cal_max"] = cls._label_display_range(labels)
+        header["descrip"] = cls._RC031_ORIENT_MARKER
+        img = nib.Nifti1Image(labels, ref_affine, header)
+        with tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False) as t:
+            path = t.name
+        nib.save(img, path)
+        with open(path, 'rb') as f:
+            data = f.read()
+        os.unlink(path)
+        return data
+
+    @staticmethod
+    def _label_display_range(labels: np.ndarray) -> tuple:
+        """PRB-006: display range of a label mask — 0 (background) to its highest label, at least 1."""
+        top = int(labels.max()) if labels.size else 0
+        return 0.0, float(max(1, top))
+
     def _save_masks_to_gcs(
         self,
         segmentation_id: str,
@@ -1169,6 +1239,12 @@ class SegmentationService:
                 # "labels are verbatim" invariant does not depend on implicit
                 # library behavior. Audit P-4.1.
                 header.set_slope_inter(1.0, 0.0)
+                # PRB-006: the copied header also carries the MRI's DISPLAY window
+                # (cal_min/cal_max, e.g. -15.5/189.2). A viewer that honours it (niivue in
+                # this app's 3D and GPU views, MRIcroGL, FSLeyes) then tints every background
+                # voxel and shows the labels at the bottom of its colour scale. A label mask's
+                # display range is its own: 0 (background) to its highest label (at least 1).
+                header["cal_min"], header["cal_max"] = self._label_display_range(nifti_data)
                 header["descrip"] = self._RC031_ORIENT_MARKER  # RC-031 v2 tag
                 nifti_img = nib.Nifti1Image(nifti_data.astype(np.uint8), affine, header)
                 logger.info("Created segmentation NIfTI with original MRI affine/header", extra={
@@ -1178,6 +1254,7 @@ class SegmentationService:
             else:
                 # Fallback to generic NIfTI with identity affine
                 nifti_img = create_nifti_image(nifti_data)
+                nifti_img.header["cal_min"], nifti_img.header["cal_max"] = self._label_display_range(nifti_data)  # PRB-006
                 nifti_img.header["descrip"] = self._RC031_ORIENT_MARKER  # RC-031 v2 tag
                 logger.info("Created segmentation NIfTI with identity affine (original not available)")
 

@@ -24,6 +24,8 @@ import { VoxelValueOverlay } from './VoxelValueOverlay';
 import MeasurementOverlay from './MeasurementOverlay';
 import { SegmentationConflictDialog } from './SegmentationConflictDialog';
 import { ViewportSafetyOverlay } from './ViewportSafetyOverlay';
+import { FEATURES } from '@/config/features';
+import { labelUnderCursor } from '@/utils/labelUnderCursor';
 
 interface ImageViewer2DProps {
   viewerControls: ReturnType<typeof import('../hooks/useViewerControls').useViewerControls>;
@@ -70,6 +72,10 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
   const setOverlayOnScreen = useSegmentationStore((s) => s.setOverlayOnScreen);
   const setIsPaintMode = useSegmentationStore((s) => s.setIsPaintMode);
   const selectedLesion = useSegmentationStore((s) => s.selectedLesion);
+  // PRB-004 review M2: the W/L GPU view draws the SAVED mask only; it says so when there are unsaved edits.
+  const segmentationStoreDirty = useSegmentationStore((s) => s.isDirty);
+  // PRB-010 re-review R6: the labels the overlay draws, to name the label under the cursor.
+  const overlayLabels = useSegmentationStore((s) => s.activeSegmentation?.labels);
   const zoneMapVisible = useSegmentationStore((s) => s.zoneMapVisible);
   const longitudinalVisible = useSegmentationStore((s) => s.longitudinalVisible);
   const conformalVisible = useSegmentationStore((s) => s.conformalVisible);
@@ -325,13 +331,20 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
       // Canvas may be tainted
     }
 
+    // PRB-010 re-review R6: the label under the cursor, by name (a non-colour cue for the region colours).
+    const dims = segmentationMask.state.dimensions;
+    const label = isOverlayVisible && dims
+      ? labelUnderCursor(segmentationMask.getSliceMask(currentSliceIndex), dims, imgW, imgH, imgX, imgY, overlayLabels)
+      : null;
+
     setCursorInfo({
       x: imgX,
       y: imgY,
       z: currentSliceIndex,
       intensity,
+      label: label,
     });
-  }, [currentSeries, currentSliceIndex, setCursorInfo, zoomLevel, panOffset]);
+  }, [currentSeries, currentSliceIndex, setCursorInfo, zoomLevel, panOffset, segmentationMask, isOverlayVisible, overlayLabels]);
 
   const handleCursorLeave = useCallback(() => {
     setCursorInfo(null);
@@ -367,7 +380,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
       {renderMode === 'niivue' && (
         <div className="absolute inset-0 z-10">
           <Suspense fallback={<div className="flex h-full w-full items-center justify-center text-xs text-gray-400">Cargando visor GPU…</div>}>
-            <NiivueViewer2D />
+            <NiivueViewer2D hasUnsavedEdits={segmentationMask.state.isDirty || segmentationStoreDirty} />
           </Suspense>
         </div>
       )}
@@ -636,8 +649,9 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
 
       {/* Zoom controls moved to ViewerApp toolbar bar above the image */}
 
-      {/* Edge AI Quick Screen — bottom right above slice slider */}
-      {currentSeries?.slices?.[currentSliceIndex]?.image_data && (
+      {/* Edge AI Quick Screen — bottom right above slice slider. PRB-009: only behind its build
+          flag (OFF by default — the model file is not shipped); off, nothing of it runs. */}
+      {FEATURES.QUICK_SCREEN && currentSeries?.slices?.[currentSliceIndex]?.image_data && (
         <div className="absolute bottom-20 right-4 z-20">
           <QuickScreenBadge
             currentSliceBase64={`data:image/png;base64,${currentSeries.slices[currentSliceIndex].image_data}`}

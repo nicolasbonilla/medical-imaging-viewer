@@ -47,6 +47,8 @@ interface MultiViewerState {
   // Actions
   setLayout: (layout: ViewerLayout) => void;
   setSliceIndex: (panelId: string, index: number) => void;
+  /** PRB-008: position ONE panel (its image just loaded), whatever the sync setting. */
+  setPanelSliceIndex: (panelId: string, index: number) => void;
   assignInstance: (panelId: string, instanceId: string, sequence: SequenceType) => void;
   /** `orientation` replaces the panel's orientation (pass the panel's own value to keep it). */
   setPanelImageData: (panelId: string, imageData: string, metadata: { rows: number; columns: number; slices: number }, orientation?: string) => void;
@@ -94,6 +96,11 @@ export const useMultiViewerStore = create<MultiViewerState>()((set, get) => ({
       });
     }
   },
+
+  setPanelSliceIndex: (panelId, index) =>
+    set((state) => ({
+      panels: state.panels.map((p) => (p.id === panelId ? { ...p, sliceIndex: index } : p)),
+    })),
 
   assignInstance: (panelId, instanceId, sequence) =>
     set((state) => ({

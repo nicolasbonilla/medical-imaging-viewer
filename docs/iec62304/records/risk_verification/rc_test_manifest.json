@@ -888,6 +888,70 @@
       "change": "PRB-003 / CAPA-016 (DRAFT, PENDING owner approval; branch fix/dis-requires-reviewed-segmentation-prb003; merge after #67 and #65; corrected after the independent review of PR #68 at 4c601f2)",
       "negative_control": "Executed 2026-10-24 by scripts/safety/prb003_negative_controls.py after the independent review of PR #68 (69 mutations, 69 detected; bound tests green after byte-exact restore) - docs/iec62304/records/risk_verification/PRB-003_negative_controls_2026-10-24.json. Tests written first fail on main @ 70cc5c7 (backend 39 of 41, frontend 12 of 12 - PRB-003_tests_on_base_2026-10-24.json) and the review-finding tests fail on 4c601f2 (backend 45 of 47, frontend 14 of 17 - PRB-003_review1_tests_on_4c601f2_2026-10-24.json) - RC-072 mutations N1-N2, F6-F9, F17-F18. Re-run on the integrated tree of release/owner-signoff-2026-10-25 (2026-10-25): 119 mutations, 119 detected - docs/iec62304/records/releases/RELEASE-2026-10-25_PRB-003_negative_controls.json. Re-run again on 2026-10-28 after the integration review of PR #69: PRB-003 119/119 (R4 on the one-rule line); integration controls 14/14 - docs/iec62304/records/releases/. Re-run after the browser capture session corrections (2026-10-28): PRB-003 119/119 (F11 anchored on the one awaited DIS read after the confirmation); integration controls 23/23 (I13-I21 for F08, F09, F10, F04) - docs/iec62304/records/releases/. Re-run on the final tree after the second independent review of PR #69 and the film-capture plural fix (b3a376e, 2026-10-29): PRB-003 119/119 (A1 anchored on the assistant's one-rule line, m4); integration controls 49/49 (I22-I41 for B1, M3, M1, M2, m1, m2, m4, m5, n1; I42-I45 for the plural of the film capture; I46-I47 for the cyan fallback colour) - docs/iec62304/records/releases/. Re-run on the final tree after the final check of PR #69 (0ca1967, 2026-10-29, in a throwaway worktree): PRB-003 119/119 (F4 and WF3 anchored on the one confirm call); integration controls 59/59 (I48-I57 for R1 and R2 of the final check) - docs/iec62304/records/releases/.",
       "note": "Also bound by frontend/src/components/SegmentationPanel.prb003.test.tsx (it.each 'rc072 review1 ...': the notice for lesion-detection tools only, through the real panel), run by the negative-control script."
+    },
+    "RC-073": {
+      "description": "Every 2D render mode shows the Standard view's layout (storage voxel (i, j) of slice k at row i, column j) and the voxel slice of the slider index; the W/L GPU view gives niivue a display transform built from the image's grid for the image AND the mask (non-radiological axial screen stated) and the slice at (k + 0.5) / depth; masks are requested aligned to the image (?ref_file_id=: the server realigns only a mask whose stored transform IS the image's, with the RC-031 marker and its own range, and never presents another mask as aligned); a mask is drawn only on the image's own grid in the image's voxel order, otherwise, on a load failure or when not saved yet, not drawn and the reason stated (notice clear of the safety annotations, measured in a real browser); unsaved edits stated; niivue's own keys, wheel and double-click never act; the multi-panel grid draws no segmentation; the 3D view composites masks only with the RC-031 marker and a scanner position (else names them), reaches storage slice k on its own axis through voxel -> mm -> niivue, and draws no colour bar under the laterality caveat. Re-review: 3D mask buffers cleared when the request changes and failed downloads named (never the previous mask under the new name); the aligned route reads the reference header only, never answers an alignment problem with an error (serves the stored file, X-Mask-Alignment); 3D states unsaved edits, accepts an identity-transform mask on an identity-transform image of the same dimensions, and has niivue's view-type and clip-plane keys off. Display only",
+      "hazard": "HAZ-006",
+      "status": "implemented",
+      "implementation": "frontend/src/utils/niivueVoxelGrid.ts (standardViewAffine, placeAsStandardView, maskMatchesImageGrid, maskPlaceableIn3D, segmentationNiftiPath); frontend/src/components/NiivueViewer2D.tsx; ImageViewer2D.tsx (hasUnsavedEdits); ImageViewer3D.tsx; MultiPanelViewer.tsx; frontend/src/utils/niivueWindowLevel.ts (sliceIndexToVoxelCentreFraction); backend/app/api/routes/segmentation.py (get_segmentation_nifti); backend/app/services/segmentation_service.py (align_stored_mask_to_reference)",
+      "tests": [
+        "frontend/src/components/NiivueViewer2D.prb004.test.tsx",
+        "frontend/src/utils/niivueWindowLevel.test.ts",
+        "frontend/src/components/NiivueViewer2D.prb004.review.test.tsx",
+        "frontend/src/components/NiivueViewer2D.prb004.layout.test.tsx",
+        "frontend/src/components/ImageViewer3D.prb004.review.test.tsx",
+        "tests/unit/test_prb004_review_ref_alignment.py"
+      ],
+      "requirement": "REQ-SAFE-041",
+      "change": "PRB-004 .. PRB-010 and the independent review of PR #71 (DRAFT, PENDING owner approval; branch fix/viewer-display-orientation-prb004)",
+      "negative_control": "Executed 2026-10-28 by scripts/safety/prb004_negative_controls.py in a throwaway detached worktree of 249b642 (review of PR #71, m8: never in the developer's checkout; refuses to start on uncommitted changes in the files and tests it covers; one mutation at a time, every anchor asserted unique on the LF text, original bytes restored after each mutation and checked at the end; only the bound tests run, backend offline per PRB-002); failing test names per mutation in docs/iec62304/records/risk_verification/PRB-004_negative_controls_2026-10-28.json (114 mutations for PRB-004..010 and the review, 114 detected). RC-073: O1-O13 (13 of 13 detected) and the review / film-capture mutations V1, V2, V3, V5, V6, V7, V8, V9, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V27, V28, V29, V30, V35, V36, V37, V39, V40, W1, W2, W3, W4, W5, W6, W7, W8, W9, W10, W11, W12 (39 of 39 detected)."
+    },
+    "RC-074": {
+      "description": "A segmentation's colours never depend on the image's window or on the display range its file carries: every niivue mask overlay (3D volume and multiplanar: lesion mask, earlier visit blue, later visit red - never the white top of 'hot'; W/L GPU 2D) loads with a fixed range (0..1 for one colour, 0..highest label + 1 for label colours), 0 transparent; a stored segmentation NIfTI carries its own range (0 to its highest label, at least 1), never the MRI's, also when served aligned to an image",
+      "hazard": "HAZ-001, HAZ-007",
+      "status": "implemented",
+      "implementation": "frontend/src/utils/niivueVoxelGrid.ts (LABEL_MASK_DISPLAY_RANGE); frontend/src/components/ImageViewer3D.tsx; frontend/src/components/NiivueViewer2D.tsx; backend/app/services/segmentation_service.py (_label_display_range, _save_masks_to_gcs)",
+      "tests": [
+        "tests/unit/test_prb006_mask_display_range.py",
+        "frontend/src/components/ImageViewer3D.prb005.test.tsx",
+        "frontend/src/components/NiivueViewer2D.prb004.test.tsx",
+        "frontend/src/components/ImageViewer3D.prb004.review.test.tsx"
+      ],
+      "requirement": "REQ-SAFE-042",
+      "change": "PRB-004 .. PRB-010 and the independent review of PR #71 (DRAFT, PENDING owner approval; branch fix/viewer-display-orientation-prb004)",
+      "negative_control": "Executed 2026-10-28 by scripts/safety/prb004_negative_controls.py in a throwaway detached worktree of 249b642 (review of PR #71, m8: never in the developer's checkout; refuses to start on uncommitted changes in the files and tests it covers; one mutation at a time, every anchor asserted unique on the LF text, original bytes restored after each mutation and checked at the end; only the bound tests run, backend offline per PRB-002); failing test names per mutation in docs/iec62304/records/risk_verification/PRB-004_negative_controls_2026-10-28.json (114 mutations for PRB-004..010 and the review, 114 detected). RC-074: R1-R9 (9 of 9 detected), V4 and V26 (2 of 2 detected)."
+    },
+    "RC-075": {
+      "description": "The in-browser normal/abnormal screening (Quick Screen) is reachable only in a build with VITE_ENABLE_QUICK_SCREEN true or 1 (off by default, not set in .env.production); off, the viewer mounts nothing of it and requests no model; on, the model is looked for once per page and the button appears only when it is served",
+      "hazard": "HAZ-004",
+      "status": "implemented",
+      "implementation": "frontend/src/config/features.ts (QUICK_SCREEN); frontend/src/components/ImageViewer2D.tsx; frontend/src/hooks/useEdgeAI.ts; frontend/src/components/QuickScreenBadge.tsx",
+      "tests": [
+        "frontend/src/ViewerApp.prb007.test.tsx",
+        "frontend/src/components/QuickScreenBadge.prb009.test.tsx",
+        "frontend/src/config/features.quickScreen.test.ts"
+      ],
+      "requirement": "REQ-FUNC-104",
+      "change": "PRB-004 .. PRB-009 (DRAFT, PENDING owner approval; branch fix/viewer-display-orientation-prb004)",
+      "negative_control": "Executed 2026-10-28 by scripts/safety/prb004_negative_controls.py in a throwaway detached worktree of 249b642 (review of PR #71, m8: never in the developer's checkout; refuses to start on uncommitted changes in the files and tests it covers; one mutation at a time, every anchor asserted unique on the LF text, original bytes restored after each mutation and checked at the end; only the bound tests run, backend offline per PRB-002); failing test names per mutation in docs/iec62304/records/risk_verification/PRB-004_negative_controls_2026-10-28.json (114 mutations for PRB-004..010 and the review, 114 detected). RC-075: Q1-Q5 (5 of 5 detected)."
+    },
+    "RC-076": {
+      "description": "ONE MAGNIMS region colour mapping (Okabe-Ito: periventricular #E69F00, juxtacortical #56B4E9, infratentorial #009E73, deep white matter #D55E00 - was #CC79A7) read by every legend and overlay (lesion legend, both zone-map legends, 2D overlay of a classified segmentation via the store, 2D zone layers, 3D zone colormap, W/L GPU and 3D label colours) and stored by the backend with the region labels; no region pair red against green; every pair more than dE76 15 apart opaque for deutan, protan and tritan vision and more than 9 as drawn (default opacity, grey 128 and 220) for normal, deutan, protan and tritan vision; one colour for mask values missing from the label table (UNLABELLED_FALLBACK_COLOR, cyan); the label under the cursor named in the readout",
+      "hazard": "HAZ-005",
+      "status": "implemented",
+      "implementation": "frontend/src/utils/regionColors.ts; frontend/src/components/LesionDashboard.tsx; frontend/src/components/MAGNIMSZoneMapPanel.tsx; frontend/src/components/SegmentationCanvasLocal.tsx; frontend/src/components/ImageViewer3D.tsx; frontend/src/store/useSegmentationStore.ts; frontend/src/types/segmentation.ts; backend/app/api/routes/segmentation_regions.py (MAGNIMS_REGION_LABEL_COLORS); frontend/src/utils/maskLabelColormap.ts; frontend/src/components/NiivueViewer2D.tsx; frontend/src/utils/labelUnderCursor.ts; frontend/src/components/ImageViewer2D.tsx; frontend/src/components/ControlPanel.tsx; frontend/src/utils/maskDisplayLayout.ts (the overlay's placement rule, shared with the readout)",
+      "tests": [
+        "frontend/src/components/SegmentationCanvasLocal.prb010.test.tsx",
+        "frontend/src/utils/regionColors.test.ts",
+        "tests/unit/test_prb010_region_label_colours.py",
+        "frontend/src/components/NiivueViewer2D.prb004.review.test.tsx",
+        "frontend/src/components/ImageViewer3D.prb004.review.test.tsx",
+        "frontend/src/utils/labelUnderCursor.test.ts",
+        "frontend/src/components/ControlPanel.prb008.test.tsx"
+      ],
+      "requirement": "REQ-SAFE-043",
+      "change": "PRB-010 and the independent review of PR #71 (DRAFT, PENDING owner approval; branch fix/viewer-display-orientation-prb004)",
+      "negative_control": "Executed 2026-10-28 by scripts/safety/prb004_negative_controls.py in a throwaway detached worktree of 249b642 (review of PR #71, m8: never in the developer's checkout; refuses to start on uncommitted changes in the files and tests it covers; one mutation at a time, every anchor asserted unique on the LF text, original bytes restored after each mutation and checked at the end; only the bound tests run, backend offline per PRB-002); failing test names per mutation in docs/iec62304/records/risk_verification/PRB-004_negative_controls_2026-10-28.json (114 mutations for PRB-004..010 and the review, 114 detected). RC-076: P1-P11 (11 of 11 detected), V20-V25 and W13-W19 (13 of 13 detected)."
     }
   },
   "unverified_controls_note": [

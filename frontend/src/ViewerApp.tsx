@@ -31,7 +31,7 @@ import { MAGNIMSZoneMapPanel } from './components/MAGNIMSZoneMapPanel';
 import { useSegmentationStore } from './store/useSegmentationStore';
 import { useMultiViewerStore, type ViewerLayout } from './store/useMultiViewerStore';
 import { autoAssignPanels, detectSequence } from './utils/sequenceDetection';
-import { isPreprocessedInstance } from './utils/instanceClassification';
+import { isPreprocessedInstance, multiPanelImages } from './utils/instanceClassification';
 import { detectLabelPreset } from './utils/labelPresets';
 import { buildSegmentationList } from './utils/segmentationList';
 import { formatDate } from './utils/formatDate';
@@ -169,7 +169,9 @@ function ViewerApp() {
   const studyId = searchParams.get('studyId');
 
   const viewMode = useViewerStore((state) => state.viewMode);
-  const setCurrentSeries = useViewerStore((state) => state.setCurrentSeries);
+  const openSeries = useViewerStore((state) => state.openSeries);
+  // PRB-008: the study whose image was opened last (keep the slice only within one study).
+  const openedStudyRef = useRef<string | null>(null);
   const setIsLoading = useViewerStore((state) => state.setIsLoading);
   const currentSeries = useViewerStore((state) => state.currentSeries);
   const setHierarchicalContext = useViewerStore((state) => state.setHierarchicalContext);
@@ -258,11 +260,10 @@ function ViewerApp() {
     [studyInfo?.instances]
   );
 
-  // Instances to use for multi-panel viewer (based on source toggle)
-  const multiPanelInstances = useMemo(() =>
-    multiPanelSource === 'preprocessed' && preprocessedInstances.length > 0
-      ? preprocessedInstances
-      : originalInstances,
+  // Instances to use for multi-panel viewer (based on source toggle). PRB-007: falls back to the
+  // other group when the chosen one is empty; shownMultiPanelSource is the group actually shown.
+  const { source: shownMultiPanelSource, instances: multiPanelInstances } = useMemo(
+    () => multiPanelImages(multiPanelSource, originalInstances, preprocessedInstances),
     [multiPanelSource, originalInstances, preprocessedInstances]
   );
 
@@ -278,9 +279,7 @@ function ViewerApp() {
   // Re-assign panels when source toggle changes
   const handleMultiPanelSourceChange = useCallback((source: 'originals' | 'preprocessed') => {
     setMultiPanelSource(source);
-    const instances = source === 'preprocessed' && preprocessedInstances.length > 0
-      ? preprocessedInstances
-      : originalInstances;
+    const { instances } = multiPanelImages(source, originalInstances, preprocessedInstances); // PRB-007
     if (isMultiPanel && instances.length > 0) {
       const assignments = autoAssignPanels(instances);
       autoAssign(assignments.map((a) => ({ instanceId: a.instance.id, sequence: a.sequence })));
@@ -381,7 +380,10 @@ function ViewerApp() {
         const result = await imagingAPI.processImage(selectedInstance.gcs_object_name, 0, 500);
         // Add the file_id to the result so 3D viewer can use it
         const resultWithFileId = { ...result, file_id: selectedInstance.gcs_object_name };
-        setCurrentSeries(resultWithFileId);
+        // PRB-008: opens on the middle slice, or keeps the slice for an image of the same size
+        // in the same study (utils/sliceOnOpen.ts) - never on the blank slice 1 by default.
+        openSeries(resultWithFileId, { sameStudy: openedStudyRef.current === studyId });
+        openedStudyRef.current = studyId;
         toast.success(t('viewer.imageLoadSuccess'), { id: 'loading-image' });
         return resultWithFileId;
       } catch (error) {
@@ -1013,11 +1015,14 @@ function ViewerApp() {
                           {syncSlice ? <Link2 style={{ width: 14, height: 14 }} /> : <Unlink2 style={{ width: 14, height: 14 }} />}
                         </button>
                         {preprocessedInstances.length > 0 && (
-                          <button onClick={() => handleMultiPanelSourceChange(multiPanelSource === 'originals' ? 'preprocessed' : 'originals')}
-                            className={`flex items-center transition-colors ${multiPanelSource === 'preprocessed' ? 'bg-teal-600 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
+                          <button onClick={() => handleMultiPanelSourceChange(shownMultiPanelSource === 'originals' ? 'preprocessed' : 'originals')}
+                            // PRB-007: names the group actually shown; nothing to switch to without originals.
+                            disabled={originalInstances.length === 0}
+                            title={originalInstances.length === 0 ? t('layout.onlyPreprocessed', 'This study has preprocessed images only') : undefined}
+                            className={`flex items-center transition-colors disabled:cursor-default ${shownMultiPanelSource === 'preprocessed' ? 'bg-teal-600 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
                             style={{ height: 28, gap: 4, padding: '0 8px', borderRadius: 6, fontSize: 12, fontWeight: 500 }}>
-                            {multiPanelSource === 'preprocessed' ? <FlaskConical style={{ width: 14, height: 14 }} /> : <FileImage style={{ width: 14, height: 14 }} />}
-                            {multiPanelSource === 'preprocessed' ? 'Preproc' : 'Original'}
+                            {shownMultiPanelSource === 'preprocessed' ? <FlaskConical style={{ width: 14, height: 14 }} /> : <FileImage style={{ width: 14, height: 14 }} />}
+                            {shownMultiPanelSource === 'preprocessed' ? 'Preproc' : 'Original'}
                           </button>
                         )}
                       </>

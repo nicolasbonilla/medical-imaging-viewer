@@ -467,7 +467,7 @@ VITE_API_BASE_URL=http://localhost:8000
 
 ### Edge AI Model (Optional)
 
-Place an ONNX model at `frontend/public/models/brain_screening.onnx` for in-browser screening. The feature degrades gracefully if the model is absent.
+The in-browser screening ("Quick Screen") is OFF unless the frontend is built with `VITE_ENABLE_QUICK_SCREEN=true` (PRB-009): its model is not part of the application. When enabled, place an ONNX model at `frontend/public/models/brain_screening.onnx`; the model is looked for once per page and the button appears only when it is served. With the flag off nothing is requested and nothing is shown.
 
 ---
 
