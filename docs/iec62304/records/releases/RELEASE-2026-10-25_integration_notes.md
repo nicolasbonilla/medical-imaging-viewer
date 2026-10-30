@@ -171,7 +171,7 @@ All backend runs offline: `GOOGLE_APPLICATION_CREDENTIALS` = a missing file, `CL
 
 | Check | Result |
 |---|---|
-| Backend unit (`tests/unit`, as CI) | **2087 passed, 0 failed** (2048 before the review of #69; +17 review tests, +1 draft-assembly test, +3 capture tests, +6 second-review tests, +12 plural tests, +4 final-check tests) |
+| Backend unit (`tests/unit`, as CI) | **2091 passed, 0 failed** (2048 before the review of #69; +17 review tests, +1 draft-assembly test, +3 capture tests, +6 second-review tests, +12 plural tests, +4 final-check tests) |
 | Backend integration (CI selection: not PACS / GCS / Firestore) | **25 passed, 1 failed, 20 deselected** — the failure is the known local one (`test_webauthn_credentials_endpoint_exists`: `webauthn` not installed in the local venv; CI installs it) |
 | Backend security (CI selection) | **112 passed, 5 xfailed** |
 | Manifest gate (`test_risk_control_manifest.py`) | passes (70 controls, every named test file exists and names its control) |
@@ -235,14 +235,30 @@ Notes on the runs:
 - The confirmation is refused below a lesion opacity of 25 % and a per-label visibility of 0.1
   (`frontend/src/utils/drawnLabels.ts`): values chosen by the agent so that a lesion is plainly visible; the owner
   may set others (owner decision).
-- **The drawn-lesion check runs in the browser** (§12): a direct API call, an old cached client or a modified client
-  can record a DIS confirmation without it. The server checks only that the label table the client says it drew
+- **The drawn-lesion check runs in the browser** (§12): a direct API call or a modified client can record a DIS
+  confirmation without it (a client from before `a11b648` sends no drawn-table digest and is refused). A replayed request is a form of direct API call: the digests are deterministic and there is no nonce, so an identical repeat sent with the radiologist's valid token passes while the stored mask and label table are byte-identical (a repeat is logged in the history; a confirmation voided by a change and later matching the same bytes again would be re-recorded without anyone looking). The server checks only that the label table the client says it drew
   is the stored one (`drawn_labels_sha256`); that closes R2 and stale-label defects for this client, not a client
   that states the stored table without drawing it. Stated as the RC-071 residual risk in RMF-001 1.16.
 - Known pre-existing issue, not changed here: the AI-draft review confirmation (`AiDraftBanner`, RC-047) has no
   drawn-lesion check; the DIS confirmation that must follow it has one.
 - R1 refuses the confirmation in the NiiVue and matplotlib render modes, the multi-panel layout and the 3D view;
   making those views draw region colours is left to PR #71.
+- **Known minor items for the owner** (last check of #69, `39d9730..0e1ee22`; none hides a lesion silently; accept or
+  have them fixed):
+  - **L1 — another image under the segmentation.** The R1 check requires an image in the standard view, not the
+    segmentation's own image or grid. A radiologist can select another image (e.g. the original instead of the
+    MNI-preprocessed one) while the segmentation stays open; the mask is then drawn sheared or truncated on the
+    other grid, and Confirm is accepted. Pre-existing and visibly wrong in most cases. Fix: also require the open
+    mask's dimensions to match the image grid, or the image to be the segmentation's.
+  - **L2 — the zone map and the longitudinal overlay can camouflage lesions.** The zone map is drawn under the
+    lesions in the same MAGNIMS colours at a user opacity up to 100 % (kept across sessions, not filtered like the
+    lesion opacity); a periventricular lesion inside the red periventricular zone cannot be seen. The longitudinal
+    overlay (red / green) has the same effect. Visually obvious (the whole brain is painted). Fix: refuse while the
+    zone map is visible above a low opacity (or draw lesion outlines) and do not restore a high zone opacity.
+  - **L3 — lesion-table chips against image colours** (pre-existing). The region chips use the Okabe-Ito palette
+    (2026-08, for red-green colour blindness); the 2D canvas still draws MAGNIMS red, green, blue and gold, so a
+    region's chip colour differs from its colour on the image. Nothing is hidden. Resolved when PR #71 merges
+    (its shared region colours are used by the image too).
 - The plural correction (§11) changes the text of the Class C `brain_report_service.py` (findings prompt, synthetic
   payloads of the RC-065 allow-list): it needs the independent review of a Class C change like every other one in
   this release. Two counts outside the region counts still print the plural for one (the in-browser FLAMeS card,
@@ -384,8 +400,8 @@ request, the browser refuses the DIS confirmation unless:
 - on a classified segmentation, each of those values is drawn with the label the server stored for it — same name and
   colour (R2).
 
-It does not record what the radiologist looked at. It runs in the browser, so a direct API call, an old cached
-client or a modified client skips it. The server checks only one part: the label table the client says it drew must
+It does not record what the radiologist looked at. It runs in the browser, so a direct API call or a modified
+client skips it (a client from before `a11b648` sends no drawn-table digest and the server refuses it). A replayed request is a form of direct API call: the digests are deterministic and there is no nonce, so an identical repeat sent with the radiologist's valid token passes while the stored mask and label table are byte-identical (a repeat is logged in the history; a confirmation voided by a change and later matching the same bytes again would be re-recorded without anyone looking). The server checks only one part: the label table the client says it drew must
 be the stored one (below).
 
 | # | Finding | Correction | Tests / negative controls |
