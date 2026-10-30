@@ -38,6 +38,9 @@ Added after the final check of PR #69 (2026-10-29):
   I51-I53 R2 — the label preset is locked on a classified segmentation, and each value is drawn with its stored
           label;
   I54-I57 R2, server side — the drawn label table is sent, digested alike, served and checked.
+Added at the merge with PR #71 (release 2026-10-30): I58 the stored table served and checked as drawn (#71's region
+  colours); I59 one fallback colour definition. I46 and I54 re-anchored (the constant now lives in regionColors.ts;
+  the route compares the table as drawn).
 
 Method (as the other scripts): one mutation at a time in the real source; every anchor asserted to occur exactly
 once (on the LF text, so a Windows CRLF checkout works); only the bound tests are run — backend offline (PRB-002: a
@@ -108,6 +111,10 @@ UI_VIEWER29 = "frontend/src/ViewerApp.release20261029.test.tsx"
 UI_DASH29 = "frontend/src/components/LesionDashboard.release20261029.test.tsx"
 UI_DIGEST = "frontend/src/utils/drawnLabels.digest.test.ts"
 API_FINAL = "tests/unit/test_release_2026_10_25_final_check.py"
+# release 2026-10-30: merge with PR #71
+REGCOL = "frontend/src/utils/regionColors.ts"
+API_MERGE = "tests/unit/test_release_2026_10_30_merge.py"
+UI_ONE_FALLBACK = "frontend/src/utils/fallbackColour.release20261030.test.ts"
 EN = "frontend/src/i18n/locales/en.json"
 
 ASSEMBLED = '        result = {**result, **parts, "content": draft_text(parts, request.language)}\n'
@@ -328,7 +335,7 @@ M = {
         [API_P], "the RC-065 allow-list loses the plural word pairs (a real prompt's pairs are not the device's)"),
     # ── re-review of PR #71: the fallback colour of a value without a label ──
     "I46_fallback_colour_is_the_active_gd_magenta": (
-        [(DRAWN, "export const UNLABELLED_FALLBACK_COLOR = '#00FFFF';\n",
+        [(REGCOL, "export const UNLABELLED_FALLBACK_COLOR = '#00FFFF';\n",
           "export const UNLABELLED_FALLBACK_COLOR = '#FF00FF';\n")],
         [UI_FALLBACK], "a mask value without a label is drawn like an active (Gd+) lesion"),
     "I47_warning_names_magenta": (
@@ -355,7 +362,7 @@ M = {
         [(DASH, "      storedLabels: pendingRegions?.classified ? (pendingRegions.stored_labels ?? null) : undefined,\n", "")],
         [UI_DASH29], "R2: the confirmation does not compare the drawn labels with the stored ones"),
     "I54_server_ignores_the_drawn_table": (
-        [(SEGROUTE, '    if drawn_labels != dis_gate.drawn_labels_sha256(getattr(metadata, "labels", None) or []):\n',
+        [(SEGROUTE, '    if drawn_labels != dis_gate.drawn_labels_sha256(as_drawn):\n',
           '    if False:\n')],
         [API_FINAL + "::test_rc071_release_final_a_confirmation_drawn_with_other_labels_is_refused"],
         "R2: the server records a confirmation drawn with another label table"),
@@ -372,6 +379,15 @@ M = {
         [(GATE, '        "stored_labels": stored_labels(labels),\n', "")],
         [API_FINAL + "::test_rc071_release_final_the_dis_state_serves_the_stored_label_table"],
         "R2: the DIS state does not serve the stored label table"),
+    # ── release 2026-10-30, merge with PR #71 ──
+    "I58_stored_table_not_as_drawn": (
+        [(GATE, '    return [{**r, "color": shared.get(r["name"].strip().lower(), r["color"])} for r in _label_rows(labels)]\n',
+          '    return _label_rows(labels)\n')],
+        [API_MERGE], "a segmentation classified before #71, drawn in the shared region colours, cannot be confirmed"),
+    "I59_two_fallback_colours": (
+        [(DRAWN, "export { UNLABELLED_FALLBACK_COLOR } from './regionColors';\n",
+          "export const UNLABELLED_FALLBACK_COLOR = '#00FFFF';\n")],
+        [UI_ONE_FALLBACK], "the 2D canvas and the GPU / 3D views define their fallback colour separately (they can drift)"),
 }
 # Recorded with the result (integration review of PR #69, item 5: kept, and stated as by design).
 NOTES = {
