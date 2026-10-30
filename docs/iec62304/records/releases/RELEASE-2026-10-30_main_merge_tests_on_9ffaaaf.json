@@ -1,0 +1,24 @@
+{
+  "executed": "2026-10-30T09:42:45",
+  "code_under_test": "9ffaaafaa54f3573edb902f33fb534312bcff417 (application code unchanged; only the new test files present)",
+  "purpose": "failing-first evidence for the merge of main (PR #70) into the release 2026-10-30 branch: #70 records an administrator account created by an administrator as a privileged event, which this branch's durable audit trail (CAPA-015, RC-067) did not map and would record as an access grant; it must be recorded as a role assignment by the administrator, with the new account as target (#70's account-test fixtures adapted to the durable trail in the same commit; their assertions unchanged)",
+  "environment": "offline per PRB-002 (missing credentials file, empty gcloud configuration, mstool-offline-tests, no model-provider key)",
+  "backend": {
+    "files": [
+      "tests/unit/test_release_2026_10_30_main_merge.py"
+    ],
+    "failed": 1,
+    "total": 2,
+    "cases": {
+      "test_rc067_release_1030_main_a_privileged_account_creation_is_recorded_as_a_role_assignment": {
+        "status": "failed",
+        "reason": "assert (0 == 1)\n +  where 0 = len([])"
+      },
+      "test_rc067_release_1030_main_a_non_privileged_account_creation_is_one_record": {
+        "status": "passed",
+        "reason": null
+      }
+    }
+  },
+  "frontend": {}
+}
