@@ -7,7 +7,7 @@
 **Date**: 2026-10-28
 **Version**: `main` @ `70cc5c7`
 **Severity**: **Major** (proposed; attribution of clinical work shown falsely; an inconsistent patient-identification cue,
-HAZ-009; a Class C provenance badge not in the user's language). **PENDING owner approval.**
+HAZ-009; a Class C provenance badge not in the user's language). **N. G. Bonilla Vargas — approved 2026-10-30 (PR #70).**
 **Status**: OPEN — DRAFT. Fix on branch `fix/platform-security-findings-prb020`.
 
 ## A. Segmentation author "current_user" (F06)
@@ -55,7 +55,7 @@ Severity Major; the Spanish and German wording of the new keys awaits a native s
 "Experte"/"KI" badges and the CALM-MS texts were translated by the agent); whether the 120 missing keys and the duplicate
 keys are fixed under a separate change (proposed).
 
-## Review of PR #70 (2026-10-28) *(review of PR #70, 2026-10-28 — DRAFT, PENDING owner approval)*
+## Review of PR #70 (2026-10-28) *(review of PR #70, 2026-10-28 — DRAFT, N. G. Bonilla Vargas — approved 2026-10-30 (PR #70))*
 
 Test gap m8: no test showed that the create **route** passes the authenticated user (only the service and the request
 schema were tested; removing `created_by=current_user.username` from the route passed every test). Added

@@ -8,7 +8,7 @@ the concurrent display work). GitHub Issue: not raised — owner action.*
 **Date**: 2026-10-28
 **Version**: `main` @ `70cc5c7` (present before PR #70)
 **Severity**: **Major** (proposed; disclosure of patient identities from the connected hospital PACS to any account, a viewer
-included — HAZ-010; only when a PACS connection is configured). **PENDING owner approval.**
+included — HAZ-010; only when a PACS connection is configured). **N. G. Bonilla Vargas — approved 2026-10-30 (PR #70).**
 **Status**: OPEN — DRAFT. Part A fixed on branch `fix/platform-security-findings-prb020` (PR #70); part B recorded with a
 proposed fix, not implemented.
 

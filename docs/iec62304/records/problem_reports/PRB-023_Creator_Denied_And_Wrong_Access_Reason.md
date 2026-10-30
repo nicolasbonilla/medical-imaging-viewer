@@ -8,7 +8,7 @@ reproduced on `main` by the AI coding agent
 **Date**: 2026-10-28
 **Version**: `main` @ `70cc5c7`
 **Severity**: **Major** (proposed; loss of function with no workaround but an administrator, and an audit record that
-states a false reason — HAZ-010 accountability). **PENDING owner approval.**
+states a false reason — HAZ-010 accountability). **N. G. Bonilla Vargas — approved 2026-10-30 (PR #70).**
 **Status**: OPEN — DRAFT. Fix on branch `fix/platform-security-findings-prb020`.
 
 **Description**: A radiologist or technician creates a patient (`POST /api/v1/patients`, `patients.py:50-74`); the record
@@ -56,7 +56,7 @@ backfilled (REQ-SEC-017: provenance is never inferred) — the owner may decide 
 creation" (it changes the access model of CAPA-002 by adding an automatic, attributable assignment; proposed: accept);
 whether to assign the creators of existing records (a production action; production was not contacted).
 
-## Owner backfill of creator assignments — review of PR #70 (2026-10-28) *(review of PR #70, 2026-10-28 — DRAFT, PENDING owner approval)*
+## Owner backfill of creator assignments — review of PR #70 (2026-10-28) *(review of PR #70, 2026-10-28 — DRAFT, N. G. Bonilla Vargas — approved 2026-10-30 (PR #70))*
 
 The fix assigns creators from now on; records created by clinicians before it have `created_by` and no assignment, so
 their creators would see no patients after the deployment (PRB-021). `scripts/owner/prb021_backfill_creator_care_team.py`
@@ -73,7 +73,7 @@ Tests (offline, in-memory stand-in only — the script was **not** run against a
 `backend/tests/unit/test_prb021_backfill_creator_care_team.py` — `test_rc083_prb023_backfill_*` (6); all fail at `7de9334`
 (the script did not exist). Negative controls V6–V11 (`records/risk_verification/PRB-020_negative_controls_2026-10-28.json`).
 
-## Re-review of PR #70 (2026-10-28) *(re-review of PR #70, 2026-10-28 — DRAFT, PENDING owner approval)*
+## Re-review of PR #70 (2026-10-28) *(re-review of PR #70, 2026-10-28 — DRAFT, N. G. Bonilla Vargas — approved 2026-10-30 (PR #70))*
 
 - **R1 (major)**: the backfill refused only the Daita project and an empty value; any other project id (another project,
   a typo such as `brain-mri-47611`) passed, and a real run would have read — and with `--apply` written to — that

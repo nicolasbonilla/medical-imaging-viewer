@@ -10,7 +10,7 @@ display work, PRB-010..019 left free for it). GitHub Issue: not raised — owner
 **Version**: `main` @ `70cc5c7` (also on the release branch). The list and search routes have been unscoped since they
 were written; CAPA-002/CAPA-009 scoped every route that names an object, and these two name none
 **Severity**: **Critical** (proposed; disclosure of patient identifiers to any account — HAZ-010, REQ-SEC-014 not met).
-**PENDING owner approval.**
+**N. G. Bonilla Vargas — approved 2026-10-30 (PR #70).**
 **Status**: OPEN — DRAFT. Fix on branch `fix/platform-security-findings-prb020`; not merged, not deployed.
 
 **Description**: `GET /api/v1/patients` (`patients.py:77-108`) and `GET /api/v1/patients/search` (`:112-163`) need only
@@ -58,7 +58,7 @@ review; whether the registry was read by self-registered accounts — production
 production was not contacted); whether CAPA-009's route enumeration is extended to list routes (proposed: yes —
 a test that sends every mounted GET without an id as an unentitled user and expects no record of another patient).
 
-## Deployment effect and review of PR #70 (2026-10-28) *(review of PR #70, 2026-10-28 — DRAFT, PENDING owner approval)*
+## Deployment effect and review of PR #70 (2026-10-28) *(review of PR #70, 2026-10-28 — DRAFT, N. G. Bonilla Vargas — approved 2026-10-30 (PR #70))*
 
 **Deployment effect**: after this change a clinician sees only the patients of their active care-team assignments; a
 clinician who created patients before PRB-023 (records with `created_by` but no assignment) or who treats patients created

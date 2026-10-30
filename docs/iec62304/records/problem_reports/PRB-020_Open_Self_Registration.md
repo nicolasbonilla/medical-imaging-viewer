@@ -14,9 +14,9 @@ risk; reproduced on `main` and record drafted by the AI coding agent
 **Date**: 2026-10-28
 **Version**: `main` @ `70cc5c7` (also present on the release branch)
 **Severity**: **Critical** (proposed; security and regulatory — together with PRB-021 it gives anyone on the internet the
-patient registry). **PENDING owner approval.**
+patient registry). **N. G. Bonilla Vargas — approved 2026-10-30 (PR #70).**
 **Status**: OPEN — DRAFT. Fix implemented on branch `fix/platform-security-findings-prb020` (draft PR, not merged,
-not deployed). No Class C module changed. **PENDING owner approval and code review.**
+not deployed). No Class C module changed. **N. G. Bonilla Vargas — approved 2026-10-30 (PR #70) and code review.**
 
 **Description**: The sign-in page offers a "Register" tab to anyone; `POST /api/v1/auth/register` is public and creates
 a VIEWER account for anyone who can reach the server. There is no e-mail verification (the field `email_verified` is
@@ -59,7 +59,7 @@ down. No requirement said who may create an account; REQ-SEC-002 ("authenticatio
 treated registration as a legitimate public endpoint. No administrator path to create accounts existed, so disabling
 registration was never possible without breaking access.
 
-## 3. Fix (on branch; PENDING owner approval)
+## 3. Fix (on branch; N. G. Bonilla Vargas — approved 2026-10-30 (PR #70))
 - `backend/app/core/config.py`: `SELF_REGISTRATION_ENABLED` (default **False**).
 - `backend/app/security/registration_policy.py` (new): self-registration is on only when the setting is true **and**
   `ENVIRONMENT` is not `production` (a production server ignores the setting and logs a warning); `async` dependency
@@ -90,7 +90,7 @@ registration was never possible without breaking access.
 ## 5. Severity Rationale (SPR-001 §2)
 Proposed **Critical**: the problem opens the device to unidentified users (HAZ-010) and, with PRB-021, to the patient
 registry; it is also the main regulatory risk named for a device without CE marking. It has no workaround in the
-product (no other account-creation path existed). **PENDING owner approval.**
+product (no other account-creation path existed). **N. G. Bonilla Vargas — approved 2026-10-30 (PR #70).**
 
 ## 6. Verification
 - Failing-first tests (written before the fix, run on `main` @ `70cc5c7` by `scripts/safety/prb020_tests_on_base.py`,
@@ -119,7 +119,7 @@ product (no other account-creation path existed). **PENDING owner approval.**
    invitation flow, no e-mail verification, role changes take effect only at the next sign-in because the access token
    carries the role).
 
-## Review of PR #70 (2026-10-28) *(review of PR #70, 2026-10-28 — DRAFT, PENDING owner approval)*
+## Review of PR #70 (2026-10-28) *(review of PR #70, 2026-10-28 — DRAFT, N. G. Bonilla Vargas — approved 2026-10-30 (PR #70))*
 
 - **m4 — production detection fails closed**: self-registration was refused only when `ENVIRONMENT` was exactly
   "production"; a production service configured as "prod", "staging", "live" or with an empty value would have opened it
@@ -147,7 +147,7 @@ product (no other account-creation path existed). **PENDING owner approval.**
   hold `input` values of password fields and restrict or delete them.
 Records: `records/risk_verification/PRB-020_review1_tests_on_7de9334_2026-10-28.json`, `records/risk_verification/PRB-020_negative_controls_2026-10-28.json`.
 
-## Re-review of PR #70 (2026-10-28) *(re-review of PR #70, 2026-10-28 — DRAFT, PENDING owner approval)*
+## Re-review of PR #70 (2026-10-28) *(re-review of PR #70, 2026-10-28 — DRAFT, N. G. Bonilla Vargas — approved 2026-10-30 (PR #70))*
 
 - **R4 — two more password leaks were closed by the first review's handler fix**: signing in with a password longer than
   128 characters returned that password in the error body and wrote it to the log; a refused new password on

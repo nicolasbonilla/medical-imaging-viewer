@@ -10,7 +10,7 @@ coding agent while reproducing it
 **Version**: `main` @ `70cc5c7`
 **Severity**: **Major** (proposed; wrong counts on the patient record and dashboard, a monitoring view built on deleted
 studies). The permanent-deletion part could be **Critical** (irreversible loss of images by any user with access) —
-owner decision. **PENDING owner approval.**
+owner decision. **N. G. Bonilla Vargas — approved 2026-10-30 (PR #70).**
 **Status**: OPEN — DRAFT. Fix on branch `fix/platform-security-findings-prb020`.
 
 **Description**:
@@ -91,7 +91,7 @@ not measured (production was not contacted):
 documents is also restricted to administrators; whether a view of deleted studies is wanted; the choice of PATIENT_UPDATE
 for cancelling a study (technicians lose it; proposed: accept, or a new `study:cancel` permission later).
 
-## Review of PR #70 (2026-10-28) *(review of PR #70, 2026-10-28 — DRAFT, PENDING owner approval)*
+## Review of PR #70 (2026-10-28) *(review of PR #70, 2026-10-28 — DRAFT, N. G. Bonilla Vargas — approved 2026-10-30 (PR #70))*
 
 Verification of M1, M2, m5, m6: `backend/tests/unit/test_prb020_review1_findings.py` — `test_rc085_prb025_r1_*` (8 cases:
 viewer, technician and radiologist get 403 on the series and instance deletes and nothing is erased; an administrator still

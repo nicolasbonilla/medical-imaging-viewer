@@ -8,7 +8,7 @@ documents by the AI coding agent
 **Date**: 2026-10-28
 **Version**: `main` @ `70cc5c7`
 **Severity**: **Major** (proposed; labelling / information supplied by the manufacturer that is not true — EU MDR
-art. 7 prohibits misleading claims; no patient-harm path of its own). **PENDING owner approval.**
+art. 7 prohibits misleading claims; no patient-harm path of its own). **N. G. Bonilla Vargas — approved 2026-10-30 (PR #70).**
 **Status**: OPEN — DRAFT. Fix on branch `fix/platform-security-findings-prb020` for the items marked FIXED.
 
 **Description and findings** (each verified against the code; production configuration was not read):
@@ -50,12 +50,12 @@ hold the badge claims). Both fail on `70cc5c7`. Negative controls F4, F5. Docume
 **Owner decisions (PENDING)**: severity Major; rows 11–15; whether a labelling review (all claims in the interface,
 README, web site and QMS documents) is added as a CAPA action (proposed).
 
-## Review of PR #70 (2026-10-28) *(review of PR #70, 2026-10-28 — DRAFT, PENDING owner approval)*
+## Review of PR #70 (2026-10-28) *(review of PR #70, 2026-10-28 — DRAFT, N. G. Bonilla Vargas — approved 2026-10-30 (PR #70))*
 
 Rows 16 and 17 added (m7). Test `frontend/src/pages/LoginPage.prb022.review1.test.tsx` — `rc086 prb022 no standard is shown
 as a badge` (fails at `7de9334`, `records/risk_verification/PRB-020_review1_tests_on_7de9334_2026-10-28.json`); negative control VF6 (`records/risk_verification/PRB-020_negative_controls_2026-10-28.json`). README by inspection.
 
-## Coordinator finding after the re-review of PR #70 (2026-10-28) *(DRAFT, PENDING owner approval)*
+## Coordinator finding after the re-review of PR #70 (2026-10-28) *(DRAFT, N. G. Bonilla Vargas — approved 2026-10-30 (PR #70))*
 
 Row 13 fixed and rows 18–21 added after a search of the whole frontend (`frontend/src`, `index.html`, `public/`) and the
 README for "medical device", "Class C", "certified", "CE mark", "FDA", "clinical-grade": no other claim is shown to users

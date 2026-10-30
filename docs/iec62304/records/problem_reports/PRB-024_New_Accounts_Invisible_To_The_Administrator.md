@@ -8,7 +8,7 @@
 **Version**: `main` @ `70cc5c7`. Also on the release branch: CAPA-015 (PR #65) made the password change read the store
 but left the administrator routes on the memory copy
 **Severity**: **Major** (proposed; the administrator cannot see, change, deactivate or delete an account until a
-restart — a self-registered account cannot be disabled; HAZ-010). **PENDING owner approval.**
+restart — a self-registered account cannot be disabled; HAZ-010). **N. G. Bonilla Vargas — approved 2026-10-30 (PR #70).**
 **Status**: OPEN — DRAFT. Fix on branch `fix/platform-security-findings-prb020`.
 
 **Description**: `AuthService` (`security/auth.py`) copies every account from the persistent user store into memory once,
@@ -43,7 +43,7 @@ the release branch read the store at renewal).
 **Owner decisions (PENDING)**: severity Major; the token gap above (proposed: a CAPA action — check the account in the
 store on each request, or a short token lifetime as CAPA-015 sets).
 
-## Review of PR #70 (2026-10-28) *(review of PR #70, 2026-10-28 — DRAFT, PENDING owner approval)*
+## Review of PR #70 (2026-10-28) *(review of PR #70, 2026-10-28 — DRAFT, N. G. Bonilla Vargas — approved 2026-10-30 (PR #70))*
 
 - **m2**: the administrator `PATCH /auth/users/{id}` (which this fix made work for accounts created after start-up) and
   the passkey sign-in (`webauthn/login/complete`) saved the profile with `password_hash=''` when the password data could not
@@ -58,7 +58,7 @@ store on each request, or a short token lifetime as CAPA-015 sets).
 Tests: `test_rc084_prb024_r1_*` (5 cases) in `backend/tests/unit/test_prb020_review1_findings.py`; all fail at `7de9334`
 (`records/risk_verification/PRB-020_review1_tests_on_7de9334_2026-10-28.json`). Negative controls S6 (re-anchored), V15–V19 (`records/risk_verification/PRB-020_negative_controls_2026-10-28.json`).
 
-## Re-review of PR #70 (2026-10-28) *(re-review of PR #70, 2026-10-28 — DRAFT, PENDING owner approval)*
+## Re-review of PR #70 (2026-10-28) *(re-review of PR #70, 2026-10-28 — DRAFT, N. G. Bonilla Vargas — approved 2026-10-30 (PR #70))*
 
 - **R6**: a profile save fell back to this process's password hash when the store gave none; that copy may be older than a
   password changed on another instance, and writing it back would undo the change. The password is now read from the store

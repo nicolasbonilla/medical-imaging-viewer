@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-17/18 |
 | Branch | `feat/flames-in-browser` (flag `VITE_ENABLE_BROWSER_FLAMES` still **OFF** by default; nothing deployed) |
-| Records | SRS 1.7, RMF 1.9, TM 1.6, SOUP 1.2, CMP 1.1 — all **DRAFT, PENDING owner approval** (versions 1.5/1.6, 1.7/1.8, 1.4/1.5 are reserved by open PRs #52 and #51: merge this after them) |
+| Records | SRS 1.7, RMF 1.9, TM 1.6, SOUP 1.2, CMP 1.1 — all **DRAFT, N. G. Bonilla Vargas — approved 2026-10-30 (PR #70)** (versions 1.5/1.6, 1.7/1.8, 1.4/1.5 are reserved by open PRs #52 and #51: merge this after them) |
 | Negative controls | `docs/iec62304/records/risk_verification/CP-FLAMES-BROWSER-001_negative_controls_2026-10-17.json` (script `research/flames_in_browser/negative_controls_v2.py`) |
 | Re-review 2 | 2026-10-18, made on commit `c838bb1` ("do not merge yet"): see **§8** — FLAIR gate redesigned (positive evidence, fail closed), review confirmation bound to the exact mask, stricter provenance echo |
 

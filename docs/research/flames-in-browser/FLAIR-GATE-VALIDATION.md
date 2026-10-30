@@ -5,7 +5,7 @@
 | Date | 2026-10-18 (re-review 2 of PR #53) |
 | Gate validated | `flair-gate/2` — the shipped TypeScript (`frontend/src/services/flames/pipeline.ts` `checkInputGates`, `contrastGate.ts`, `headerEvidence.ts`, `nifti.ts`). Features recorded by the opt-in harness `src/services/flames/__tests__/gateValidation.flames.test.ts`; decisions re-applied by the shipped decision code in `gateReplay.flames.test.ts`. No Python re-implementation of the decision. |
 | Raw results | `evidence/gate-validation-2026-10-18.json` (495 volumes, MSLesSeg + open_ms_data, features + the `flair-gate/1` decisions at recording time) · `evidence/gate-validation-isbi2015-2026-10-18.json` (38 volumes, ISBI-2015) · `evidence/gate-flair-gate-2-2026-10-18.json` (`flair-gate/2` replay of all 533 volumes, with and without positive evidence, and the leave-one-dataset-out results) |
-| Status | Evidence for REQ-SAFE-033 / RC-043 / RC-049 — DRAFT, PENDING owner approval |
+| Status | Evidence for REQ-SAFE-033 / RC-043 / RC-049 — DRAFT, N. G. Bonilla Vargas — approved 2026-10-30 (PR #70) |
 
 ## 0. What the re-review found, and the corrections
 
