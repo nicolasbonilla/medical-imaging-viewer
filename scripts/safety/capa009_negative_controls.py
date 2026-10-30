@@ -105,9 +105,12 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                 "another user's connection statistics"),
     "O1_overlay_any_segmentation": ([drop(IMG, "            await authorize_mask_specs([{\"type\": \"segmentation\", \"id\": segmentation_id}], current_user)\n")],
                                     "another patient's mask drawn onto an authorized image"),
-    # Release 2026-10-30 (merge of #69 and #71): PRB-004 (#71) moved the bucket read into a try block below the
-    # authorization; O2 anchors on that read alone - the mutation (the raw client path as the bucket key) is unchanged.
-    "O2_raw_reference_path": ([(SEG, "                ref_blob = segmentation_service.gcs_bucket.blob(_ref.object_path)",
+    # Release 2026-10-30 (merge of #69 and #71): PRB-004 (#71) moved the bucket read into a try block a few lines below
+    # the authorization, so the original two-line anchor no longer matches. O2 is the same mutation as before, as two
+    # edits: the reference image is not authorized AND its raw client path is the bucket key. (A first re-anchor on
+    # the bucket read alone kept the authorization and went undetected - recorded in the release notes.)
+    "O2_raw_reference_path": ([(SEG, "            _ref = await require_imaging_access(ref_file_id, current_user)\n", ""),
+                               (SEG, "                ref_blob = segmentation_service.gcs_bucket.blob(_ref.object_path)",
                                 "                ref_blob = segmentation_service.gcs_bucket.blob(ref_file_id)")],
                               "a raw client storage path used as a bucket key"),
     "R1_registry_allows_everyone": ([(OWN, "        if user.role == UserRole.ADMIN:\n            return\n        if handle and",
