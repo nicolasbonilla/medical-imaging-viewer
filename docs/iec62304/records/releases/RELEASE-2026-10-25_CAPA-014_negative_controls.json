@@ -1,5 +1,5 @@
 {
-  "executed": "2026-10-29T02:39:43",
+  "executed": "2026-10-30T00:05:27",
   "design": "redesign after the independent review of PR #67: structured payload only, typed text merged locally, detection-only tripwire (the scrubbing module of the first version was removed)",
   "method": "one mutation at a time; each anchor asserted to occur exactly once; the bound tests of the mutated side are run (backend pytest offline per PRB-002, frontend vitest JSON reporter)",
   "hash_basis": "sha256 of the UTF-8 text with LF line endings",
@@ -14,8 +14,8 @@
     "frontend/src/api/aiReport.ts": "3f9ee6d4a56127f199d7eb817dabf14c1c16876f5fc8de81534d335a6a47307b",
     "frontend/src/components/AIReportPanel.tsx": "004bfadca79b2fdd395ba25aeead06c14f83c0f973929806dcd69f972c2b98b2",
     "frontend/src/components/ReportViewerModal.tsx": "41383fadeea313ac01a570a703d78b8055488e8488b9695530bd0b023629e876",
-    "frontend/src/i18n/locales/de.json": "39c5f2a106149376e9b143323f8b04f546a222ecd22a88d0cad5be1cb538a4f7",
-    "frontend/src/i18n/locales/es.json": "c4f2d9f63641e90c2ecc5dc369a4c7b400a43ef094f43acd89c9f802a76679c6"
+    "frontend/src/i18n/locales/de.json": "bb2a59ec5bd07a66370b160ff80b9350f703bdeb245b57fa365b71bea75149ed",
+    "frontend/src/i18n/locales/es.json": "8ac936e1c2692071a853eb08a6024854c09e193f89ffcdff247feccc1c730b2b"
   },
   "test_sha256": {
     "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
@@ -75,7 +75,7 @@
       ],
       "reintroduces": "the request's findings go to the prompt builder as received",
       "applied": true,
-      "executed": "2026-10-29T02:40:30",
+      "executed": "2026-10-30T00:06:15",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -94,7 +94,7 @@
       ],
       "reintroduces": "the prompt builder prints the clinical indication again",
       "applied": true,
-      "executed": "2026-10-29T02:41:06",
+      "executed": "2026-10-30T00:06:55",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -113,7 +113,7 @@
       ],
       "reintroduces": "the free-text fields copied into the payload",
       "applied": true,
-      "executed": "2026-10-29T02:41:42",
+      "executed": "2026-10-30T00:07:45",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -136,7 +136,7 @@
       ],
       "reintroduces": "labels outside the device's vocabulary sent",
       "applied": true,
-      "executed": "2026-10-29T02:42:18",
+      "executed": "2026-10-30T00:08:27",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -370,7 +370,7 @@
       ],
       "reintroduces": "any value printed where a number is expected (free text through number fields)",
       "applied": true,
-      "executed": "2026-10-29T02:43:11",
+      "executed": "2026-10-30T00:09:26",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -392,7 +392,7 @@
       ],
       "reintroduces": "any sex value sent, shown as Female",
       "applied": true,
-      "executed": "2026-10-29T02:43:44",
+      "executed": "2026-10-30T00:10:08",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -419,7 +419,7 @@
       ],
       "reintroduces": "the exact age sent instead of the 5-year band",
       "applied": true,
-      "executed": "2026-10-29T02:44:20",
+      "executed": "2026-10-30T00:10:48",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -440,7 +440,7 @@
       ],
       "reintroduces": "ages of 90 and over sent in 5-year bands (93 -> 90-94)",
       "applied": true,
-      "executed": "2026-10-29T02:44:53",
+      "executed": "2026-10-30T00:11:26",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -460,7 +460,7 @@
       ],
       "reintroduces": "the system prompt no longer the fixed template",
       "applied": true,
-      "executed": "2026-10-29T02:45:26",
+      "executed": "2026-10-30T00:12:04",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -480,7 +480,7 @@
       ],
       "reintroduces": "the application's own labels ('MS Lesion (Active)') sent as unlisted",
       "applied": true,
-      "executed": "2026-10-29T02:45:59",
+      "executed": "2026-10-30T00:12:45",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -500,7 +500,7 @@
       ],
       "reintroduces": "groups and rows no longer match: one label gets several numbers",
       "applied": true,
-      "executed": "2026-10-29T02:46:33",
+      "executed": "2026-10-30T00:13:30",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -520,7 +520,7 @@
       ],
       "reintroduces": "the draft does not say which label each placeholder stands for",
       "applied": true,
-      "executed": "2026-10-29T02:47:08",
+      "executed": "2026-10-30T00:14:04",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -540,7 +540,7 @@
       ],
       "reintroduces": "a value that is not a number reported as 0",
       "applied": true,
-      "executed": "2026-10-29T02:47:41",
+      "executed": "2026-10-30T00:14:41",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -567,7 +567,7 @@
       ],
       "reintroduces": "dates, record numbers and phone numbers in number fields sent",
       "applied": true,
-      "executed": "2026-10-29T02:48:14",
+      "executed": "2026-10-30T00:15:17",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -589,7 +589,7 @@
       ],
       "reintroduces": "a DIS not evaluated or without a conclusion sent as 'NOT MET'",
       "applied": true,
-      "executed": "2026-10-29T02:48:48",
+      "executed": "2026-10-30T00:15:52",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -611,7 +611,7 @@
       ],
       "reintroduces": "the 'evaluated' DIS state lost in the payload (every DIS not evaluated after PR #68)",
       "applied": true,
-      "executed": "2026-10-29T02:49:21",
+      "executed": "2026-10-30T00:16:27",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -634,7 +634,7 @@
       ],
       "reintroduces": "the prompt builder prints 'NOT MET' for a DIS not evaluated",
       "applied": true,
-      "executed": "2026-10-29T02:49:54",
+      "executed": "2026-10-30T00:17:03",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -654,7 +654,7 @@
       ],
       "reintroduces": "a large but real burden change (1 mm³ to 12 mL) refuses the report",
       "applied": true,
-      "executed": "2026-10-29T02:50:28",
+      "executed": "2026-10-30T00:17:38",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -673,7 +673,7 @@
       ],
       "reintroduces": "a brain imaged at 0.4 mm isotropic refuses the report",
       "applied": true,
-      "executed": "2026-10-29T02:51:01",
+      "executed": "2026-10-30T00:18:13",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -692,7 +692,7 @@
       ],
       "reintroduces": "a confidence given in percent refuses the report",
       "applied": true,
-      "executed": "2026-10-29T02:51:33",
+      "executed": "2026-10-30T00:18:47",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -713,7 +713,7 @@
       ],
       "reintroduces": "the patient's record number sent as '1234567 voxels'",
       "applied": true,
-      "executed": "2026-10-29T02:52:08",
+      "executed": "2026-10-30T00:19:23",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -732,7 +732,7 @@
       ],
       "reintroduces": "the exempt words lose the DIS words once only an evaluated DIS is printed",
       "applied": true,
-      "executed": "2026-10-29T02:52:42",
+      "executed": "2026-10-30T00:19:57",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -751,7 +751,7 @@
       ],
       "reintroduces": "'absent' not an exempt word",
       "applied": true,
-      "executed": "2026-10-29T02:53:15",
+      "executed": "2026-10-30T00:20:33",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -770,7 +770,7 @@
       ],
       "reintroduces": "a percentile of 100.00000001 refuses the report",
       "applied": true,
-      "executed": "2026-10-29T02:53:48",
+      "executed": "2026-10-30T00:21:08",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -789,7 +789,7 @@
       ],
       "reintroduces": "'not available%' in the prompt",
       "applied": true,
-      "executed": "2026-10-29T02:54:21",
+      "executed": "2026-10-30T00:21:44",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -808,7 +808,7 @@
       ],
       "reintroduces": "no check of the final prompt",
       "applied": true,
-      "executed": "2026-10-29T02:54:52",
+      "executed": "2026-10-30T00:22:17",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -846,7 +846,7 @@
       ],
       "reintroduces": "the patient's names, contact, city and street not looked for",
       "applied": true,
-      "executed": "2026-10-29T02:55:26",
+      "executed": "2026-10-30T00:22:53",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -867,7 +867,7 @@
       ],
       "reintroduces": "'Fuentemüller', 'delaFuente' not found",
       "applied": true,
-      "executed": "2026-10-29T02:55:59",
+      "executed": "2026-10-30T00:23:28",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -915,7 +915,7 @@
       ],
       "reintroduces": "a patient named White blocks every draft ('Deep White Matter')",
       "applied": true,
-      "executed": "2026-10-29T02:56:34",
+      "executed": "2026-10-30T00:24:06",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -936,7 +936,7 @@
       ],
       "reintroduces": "names made only of the device's words ('Black White') not found",
       "applied": true,
-      "executed": "2026-10-29T02:57:07",
+      "executed": "2026-10-30T00:24:41",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -963,7 +963,7 @@
       ],
       "reintroduces": "the record number not looked for",
       "applied": true,
-      "executed": "2026-10-29T02:57:39",
+      "executed": "2026-10-30T00:25:16",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -986,7 +986,7 @@
       ],
       "reintroduces": "'H C 7 7 8 8 1 2', 'MRN 2025 0042' not found",
       "applied": true,
-      "executed": "2026-10-29T02:58:12",
+      "executed": "2026-10-30T00:25:50",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1007,7 +1007,7 @@
       ],
       "reintroduces": "'geb. 9.11.', \"born '75\" not found",
       "applied": true,
-      "executed": "2026-10-29T02:58:44",
+      "executed": "2026-10-30T00:26:23",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1026,7 +1026,7 @@
       ],
       "reintroduces": "the patient's short phone forms ('01 40400') not found",
       "applied": true,
-      "executed": "2026-10-29T02:59:17",
+      "executed": "2026-10-30T00:26:58",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1045,7 +1045,7 @@
       ],
       "reintroduces": "e-mail addresses not found",
       "applied": true,
-      "executed": "2026-10-29T02:59:49",
+      "executed": "2026-10-30T00:27:31",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1064,7 +1064,7 @@
       ],
       "reintroduces": "other people's e-mail addresses not found",
       "applied": true,
-      "executed": "2026-10-29T03:00:22",
+      "executed": "2026-10-30T00:28:07",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1083,7 +1083,7 @@
       ],
       "reintroduces": "dates with a year not found",
       "applied": true,
-      "executed": "2026-10-29T03:00:55",
+      "executed": "2026-10-30T00:28:39",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1102,7 +1102,7 @@
       ],
       "reintroduces": "'+1 555 0100' not found",
       "applied": true,
-      "executed": "2026-10-29T03:01:28",
+      "executed": "2026-10-30T00:29:16",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1123,7 +1123,7 @@
       ],
       "reintroduces": "long and phone-like numbers not found",
       "applied": true,
-      "executed": "2026-10-29T03:02:01",
+      "executed": "2026-10-30T00:29:52",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1142,7 +1142,7 @@
       ],
       "reintroduces": "'X1234567L' not found",
       "applied": true,
-      "executed": "2026-10-29T03:02:33",
+      "executed": "2026-10-30T00:30:31",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1161,7 +1161,7 @@
       ],
       "reintroduces": "'Dr. Smith' not found",
       "applied": true,
-      "executed": "2026-10-29T03:03:06",
+      "executed": "2026-10-30T00:31:14",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1181,7 +1181,7 @@
       ],
       "reintroduces": "a soft hyphen or zero-width character hides a name",
       "applied": true,
-      "executed": "2026-10-29T03:03:38",
+      "executed": "2026-10-30T00:31:48",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1200,7 +1200,7 @@
       ],
       "reintroduces": "a Cyrillic 'о' hides a name",
       "applied": true,
-      "executed": "2026-10-29T03:04:11",
+      "executed": "2026-10-30T00:32:21",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1221,7 +1221,7 @@
       ],
       "reintroduces": "'Muenchen', 'MUELLER' not found",
       "applied": true,
-      "executed": "2026-10-29T03:04:44",
+      "executed": "2026-10-30T00:32:59",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1240,7 +1240,7 @@
       ],
       "reintroduces": "a surname such as Do or Le never looked for",
       "applied": true,
-      "executed": "2026-10-29T03:05:17",
+      "executed": "2026-10-30T00:33:34",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1259,7 +1259,7 @@
       ],
       "reintroduces": "no cap on the scanned text",
       "applied": true,
-      "executed": "2026-10-29T03:05:50",
+      "executed": "2026-10-30T00:34:12",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1280,7 +1280,7 @@
       ],
       "reintroduces": "the e-mail pattern of the first version (quadratic time)",
       "applied": true,
-      "executed": "2026-10-29T03:28:11",
+      "executed": "2026-10-30T00:59:16",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1300,7 +1300,7 @@
       ],
       "reintroduces": "words of the system templates ('Pons', 'Filippi') never reported",
       "applied": true,
-      "executed": "2026-10-29T03:28:44",
+      "executed": "2026-10-30T00:59:53",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1321,7 +1321,7 @@
       ],
       "reintroduces": "an all-digit record number found inside '12345.67 mm³' (false refusal)",
       "applied": true,
-      "executed": "2026-10-29T03:29:17",
+      "executed": "2026-10-30T01:00:29",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1340,7 +1340,7 @@
       ],
       "reintroduces": "'id 20250042' (the digits of MRN-2025-0042) not found",
       "applied": true,
-      "executed": "2026-10-29T03:29:50",
+      "executed": "2026-10-30T01:01:03",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1364,7 +1364,7 @@
       ],
       "reintroduces": "a patient named Deep White blocks every draft ('Deep White Matter')",
       "applied": true,
-      "executed": "2026-10-29T03:30:23",
+      "executed": "2026-10-30T01:01:37",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1385,7 +1385,7 @@
       ],
       "reintroduces": "a patient named Juxta Cortical blocks every draft ('Juxtacortical')",
       "applied": true,
-      "executed": "2026-10-29T03:30:56",
+      "executed": "2026-10-30T01:02:11",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1404,7 +1404,7 @@
       ],
       "reintroduces": "a request without patient reference reaches the provider",
       "applied": true,
-      "executed": "2026-10-29T03:31:29",
+      "executed": "2026-10-30T01:02:45",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1425,7 +1425,7 @@
       ],
       "reintroduces": "any caller drafts a report on any patient's segmentation",
       "applied": true,
-      "executed": "2026-10-29T03:32:04",
+      "executed": "2026-10-30T01:03:26",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1445,7 +1445,7 @@
       ],
       "reintroduces": "the provider is called although the patient record could not be read",
       "applied": true,
-      "executed": "2026-10-29T03:32:37",
+      "executed": "2026-10-30T01:04:02",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1466,7 +1466,7 @@
       ],
       "reintroduces": "a record without record number, name or birth date accepted",
       "applied": true,
-      "executed": "2026-10-29T03:33:10",
+      "executed": "2026-10-30T01:04:37",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1485,7 +1485,7 @@
       ],
       "reintroduces": "the service builds and sends a prompt without the patient's identifiers",
       "applied": true,
-      "executed": "2026-10-29T03:33:43",
+      "executed": "2026-10-30T01:05:12",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1504,7 +1504,7 @@
       ],
       "reintroduces": "the assistant's report tool sends no segmentation (every draft refused)",
       "applied": true,
-      "executed": "2026-10-29T03:34:16",
+      "executed": "2026-10-30T01:05:47",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1541,7 +1541,7 @@
       ],
       "reintroduces": "the clinician's typed text missing from the draft",
       "applied": true,
-      "executed": "2026-10-29T03:34:51",
+      "executed": "2026-10-30T01:06:22",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1567,7 +1567,7 @@
       ],
       "reintroduces": "the typed text placed before the RC-006 disclaimer in the single text",
       "applied": true,
-      "executed": "2026-10-29T03:35:24",
+      "executed": "2026-10-30T01:06:56",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1588,7 +1588,7 @@
       ],
       "reintroduces": "the model is not told that the clinician's text is added by the application",
       "applied": true,
-      "executed": "2026-10-29T03:35:57",
+      "executed": "2026-10-30T01:07:30",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1612,7 +1612,7 @@
       ],
       "reintroduces": "typed Markdown rendered in the single text: a typed heading, image or link becomes structure",
       "applied": true,
-      "executed": "2026-10-29T03:36:30",
+      "executed": "2026-10-30T01:08:05",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1633,7 +1633,7 @@
       ],
       "reintroduces": "typed backticks close the quoted block and the rest is rendered",
       "applied": true,
-      "executed": "2026-10-29T03:37:03",
+      "executed": "2026-10-30T01:08:40",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1666,7 +1666,7 @@
       ],
       "reintroduces": "in the single text the model's text continues under the clinician's heading",
       "applied": true,
-      "executed": "2026-10-29T03:37:38",
+      "executed": "2026-10-30T01:09:17",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1687,7 +1687,7 @@
       ],
       "reintroduces": "the clinician's entry is not closed before the AI draft",
       "applied": true,
-      "executed": "2026-10-29T03:38:10",
+      "executed": "2026-10-30T01:09:52",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1706,7 +1706,7 @@
       ],
       "reintroduces": "the model is told about a clinician's entry that does not exist",
       "applied": true,
-      "executed": "2026-10-29T03:38:44",
+      "executed": "2026-10-30T01:10:32",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1729,7 +1729,7 @@
       ],
       "reintroduces": "the model writes the clinician's heading or the AI heading into the single text",
       "applied": true,
-      "executed": "2026-10-29T03:39:17",
+      "executed": "2026-10-30T01:11:11",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1748,7 +1748,7 @@
       ],
       "reintroduces": "a zero-width space hides a reserved heading from the check",
       "applied": true,
-      "executed": "2026-10-29T03:39:50",
+      "executed": "2026-10-30T01:11:50",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1776,7 +1776,7 @@
       ],
       "reintroduces": "the response carries no clinician's entry for the viewer's box",
       "applied": true,
-      "executed": "2026-10-29T03:40:24",
+      "executed": "2026-10-30T01:12:26",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1803,7 +1803,7 @@
       ],
       "reintroduces": "the response carries no application note for the viewer's box",
       "applied": true,
-      "executed": "2026-10-29T03:40:57",
+      "executed": "2026-10-30T01:13:04",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1822,7 +1822,7 @@
       ],
       "reintroduces": "right-to-left override characters reorder the typed text",
       "applied": true,
-      "executed": "2026-10-29T03:41:30",
+      "executed": "2026-10-30T01:13:46",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1841,7 +1841,7 @@
       ],
       "reintroduces": "a long typed text cut without a mark",
       "applied": true,
-      "executed": "2026-10-29T03:42:03",
+      "executed": "2026-10-30T01:14:28",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1860,7 +1860,7 @@
       ],
       "reintroduces": "the first typed line loses its indentation",
       "applied": true,
-      "executed": "2026-10-29T03:42:36",
+      "executed": "2026-10-30T01:15:09",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1881,7 +1881,7 @@
       ],
       "reintroduces": "\"Clinician's entry (see the top of this draft).\" written by the model is replaced",
       "applied": true,
-      "executed": "2026-10-29T03:43:09",
+      "executed": "2026-10-30T01:15:52",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1900,7 +1900,7 @@
       ],
       "reintroduces": "the copied text shows a second clinician's entry or application note",
       "applied": true,
-      "executed": "2026-10-29T03:43:41",
+      "executed": "2026-10-30T01:16:34",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1921,7 +1921,7 @@
       ],
       "reintroduces": "'zero​width' becomes 'zerowidth'",
       "applied": true,
-      "executed": "2026-10-29T03:44:14",
+      "executed": "2026-10-30T01:17:16",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1940,7 +1940,7 @@
       ],
       "reintroduces": "the request's findings written to the log",
       "applied": true,
-      "executed": "2026-10-29T03:44:47",
+      "executed": "2026-10-30T01:17:58",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1959,7 +1959,7 @@
       ],
       "reintroduces": "the prompt written to the log",
       "applied": true,
-      "executed": "2026-10-29T03:45:20",
+      "executed": "2026-10-30T01:18:35",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1978,7 +1978,7 @@
       ],
       "reintroduces": "no record of what was withheld",
       "applied": true,
-      "executed": "2026-10-29T03:45:53",
+      "executed": "2026-10-30T01:19:12",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -1997,7 +1997,7 @@
       ],
       "reintroduces": "the service header claims de-identification again",
       "applied": true,
-      "executed": "2026-10-29T03:46:27",
+      "executed": "2026-10-30T01:19:50",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -2016,7 +2016,7 @@
       ],
       "reintroduces": "the README's 'HIPAA compliant' badge back",
       "applied": true,
-      "executed": "2026-10-29T03:46:59",
+      "executed": "2026-10-30T01:20:30",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -2036,7 +2036,7 @@
       ],
       "reintroduces": "the record generator writes the withdrawn RC-007 statement again",
       "applied": true,
-      "executed": "2026-10-29T03:47:32",
+      "executed": "2026-10-30T01:21:16",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -2055,7 +2055,7 @@
       ],
       "reintroduces": "the technical documentation names a model the device does not use",
       "applied": true,
-      "executed": "2026-10-29T03:48:05",
+      "executed": "2026-10-30T01:22:03",
       "test_sha256": {
         "tests/unit/test_capa014_report_provider_payload.py": "3557841f0dd32802dfc84d04ef125c2ec2aac659364c21b52f59c31c9a8d8a95",
         "tests/unit/test_capa009_object_authorization_everywhere.py": "a2eaf56df633c88ca4660b3af4e3d64e868805e732540e99d0abe179091927b5",
@@ -2077,7 +2077,7 @@
       "error_files": [],
       "reintroduces": "no note next to the draft button",
       "applied": true,
-      "executed": "2026-10-29T03:48:14",
+      "executed": "2026-10-30T01:24:05",
       "test_sha256": {
         "frontend/src/components/AIReportPanel.capa014.test.tsx": "e07d353fd2721fa2b94c02bbf621bc374e588cd39448eb9332fb09b1e5dd579f"
       }
@@ -2094,7 +2094,7 @@
       "error_files": [],
       "reintroduces": "the Spanish note is the English text",
       "applied": true,
-      "executed": "2026-10-29T03:48:21",
+      "executed": "2026-10-30T01:24:53",
       "test_sha256": {
         "frontend/src/components/AIReportPanel.capa014.test.tsx": "e07d353fd2721fa2b94c02bbf621bc374e588cd39448eb9332fb09b1e5dd579f"
       }
@@ -2111,7 +2111,7 @@
       "error_files": [],
       "reintroduces": "no German note (the key is shown)",
       "applied": true,
-      "executed": "2026-10-29T03:48:27",
+      "executed": "2026-10-30T01:26:28",
       "test_sha256": {
         "frontend/src/components/AIReportPanel.capa014.test.tsx": "e07d353fd2721fa2b94c02bbf621bc374e588cd39448eb9332fb09b1e5dd579f"
       }
@@ -2130,7 +2130,7 @@
       "error_files": [],
       "reintroduces": "the note no longer directly above the draft button",
       "applied": true,
-      "executed": "2026-10-29T03:48:34",
+      "executed": "2026-10-30T01:27:05",
       "test_sha256": {
         "frontend/src/components/AIReportPanel.capa014.test.tsx": "e07d353fd2721fa2b94c02bbf621bc374e588cd39448eb9332fb09b1e5dd579f"
       }
@@ -2147,7 +2147,7 @@
       "error_files": [],
       "reintroduces": "the panel sends no segmentation (every draft refused)",
       "applied": true,
-      "executed": "2026-10-29T03:48:40",
+      "executed": "2026-10-30T01:27:41",
       "test_sha256": {
         "frontend/src/components/AIReportPanel.capa014.test.tsx": "e07d353fd2721fa2b94c02bbf621bc374e588cd39448eb9332fb09b1e5dd579f"
       }
@@ -2164,7 +2164,7 @@
       "error_files": [],
       "reintroduces": "the API client claims HIPAA compliance again",
       "applied": true,
-      "executed": "2026-10-29T03:48:47",
+      "executed": "2026-10-30T01:28:15",
       "test_sha256": {
         "frontend/src/components/AIReportPanel.capa014.test.tsx": "e07d353fd2721fa2b94c02bbf621bc374e588cd39448eb9332fb09b1e5dd579f"
       }
@@ -2184,7 +2184,7 @@
       "error_files": [],
       "reintroduces": "the report viewer footer claims HIPAA compliance again",
       "applied": true,
-      "executed": "2026-10-29T03:48:53",
+      "executed": "2026-10-30T01:29:02",
       "test_sha256": {
         "frontend/src/components/AIReportPanel.capa014.test.tsx": "e07d353fd2721fa2b94c02bbf621bc374e588cd39448eb9332fb09b1e5dd579f"
       }
@@ -2201,7 +2201,7 @@
       "error_files": [],
       "reintroduces": "an image named in the draft is loaded on screen and in print",
       "applied": true,
-      "executed": "2026-10-29T03:49:00",
+      "executed": "2026-10-30T01:29:28",
       "test_sha256": {
         "frontend/src/components/AIReportPanel.capa014.test.tsx": "e07d353fd2721fa2b94c02bbf621bc374e588cd39448eb9332fb09b1e5dd579f"
       }
@@ -2218,7 +2218,7 @@
       "error_files": [],
       "reintroduces": "the viewer shows the single text, not the clinician's box and the notes from their fields",
       "applied": true,
-      "executed": "2026-10-29T03:49:06",
+      "executed": "2026-10-30T01:29:56",
       "test_sha256": {
         "frontend/src/components/AIReportPanel.capa014.test.tsx": "e07d353fd2721fa2b94c02bbf621bc374e588cd39448eb9332fb09b1e5dd579f"
       }
@@ -2235,7 +2235,7 @@
       "error_files": [],
       "reintroduces": "typed Markdown in the clinician's box is rendered (an image link, a heading)",
       "applied": true,
-      "executed": "2026-10-29T03:49:13",
+      "executed": "2026-10-30T01:30:33",
       "test_sha256": {
         "frontend/src/components/AIReportPanel.capa014.test.tsx": "e07d353fd2721fa2b94c02bbf621bc374e588cd39448eb9332fb09b1e5dd579f"
       }
@@ -2252,7 +2252,7 @@
       "error_files": [],
       "reintroduces": "the typed fields accept more than the draft shows, without a counter of the limit",
       "applied": true,
-      "executed": "2026-10-29T03:49:20",
+      "executed": "2026-10-30T01:31:17",
       "test_sha256": {
         "frontend/src/components/AIReportPanel.capa014.test.tsx": "e07d353fd2721fa2b94c02bbf621bc374e588cd39448eb9332fb09b1e5dd579f"
       }

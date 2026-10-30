@@ -1,9 +1,9 @@
 {
-  "executed": "2026-10-29T02:15:34",
+  "executed": "2026-10-29T23:40:49",
   "method": "one mutation at a time; each anchor asserted to occur exactly once; vitest JSON reporter",
   "hash_basis": "sha256 of the UTF-8 text with LF line endings",
   "source_sha256": {
-    "frontend/src/ViewerApp.tsx": "3611a2264bc81fce90421f6212e38ed9b2dcbe3983a2a13d41202031beadab51",
+    "frontend/src/ViewerApp.tsx": "ac2c33f68ae16fd204c6bbe05f7f944879695629682f06628db2a489dae7263f",
     "frontend/src/components/ImageViewer3D.tsx": "00ab19821e1b65ca8ea7a0aa87f19230ffa40c6c5949c8a82f64a99a59e51ecb",
     "frontend/src/components/MeasurementOverlay.tsx": "0740e1055690d0dd713bedf8132489072ee2cb0155a81116e74f3093169d41d4",
     "frontend/src/components/MultiPanelViewer.tsx": "2cf7788856199459360fe10269321f00603e9edf0771ad81ae08245678810679",

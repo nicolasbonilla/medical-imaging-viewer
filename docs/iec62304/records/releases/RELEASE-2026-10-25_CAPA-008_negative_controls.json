@@ -1,5 +1,5 @@
 {
-  "executed": "2026-10-29T01:37:49",
+  "executed": "2026-10-29T22:30:44",
   "method": "one mutation at a time; each anchor asserted to occur exactly once",
   "hash_basis": "sha256 of the UTF-8 text with LF line endings",
   "source_sha256": {
@@ -11,7 +11,7 @@
     "backend/app/mcp/run_all.py": "fe8f2196c422a3f6971171557754896df193973130c99a8f39dc797e6c20250f",
     "backend/app/services/longitudinal_tracking_service.py": "87a5908b6b49cc6e8bebcddf033af43dbc9cb920f2b18522b8f203b3243c62c2",
     "frontend/src/components/AIReportPanel.tsx": "004bfadca79b2fdd395ba25aeead06c14f83c0f973929806dcd69f972c2b98b2",
-    "frontend/src/components/LesionDashboard.tsx": "539e396c035288c3075d1fbef9639bd872c192a4ccc0c1110fad7def69dcd21a"
+    "frontend/src/components/LesionDashboard.tsx": "b5ad0acb7c530431afb635bce9b5d88c9c3c3d3e2f933da4c6b5196868d93088"
   },
   "tests": [
     "tests/unit/test_capa008_assistant_read_only.py",
