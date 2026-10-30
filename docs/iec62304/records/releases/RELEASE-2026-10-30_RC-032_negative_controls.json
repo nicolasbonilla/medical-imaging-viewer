@@ -1,0 +1,538 @@
+{
+  "executed": "2026-10-30T05:08:59",
+  "method": "one mutation at a time; each target string asserted to occur exactly once before replacement",
+  "hash_basis": "sha256 of the UTF-8 text as read by Python (universal newlines, LF); a raw CRLF working-tree hash differs",
+  "source_sha256": {
+    "backend/app/services/ms_region_classifier.py": "fa5a5cecdcfb67a5e00b1e0ffaa5bdee5695a3daa2a01b784977460a3cb07289",
+    "backend/app/api/routes/segmentation_regions.py": "c7266b6410f4486db19a95fb3123b9c9a602d9ce1a842d96488d446fd82318e5",
+    "backend/app/api/routes/segmentation_analysis.py": "0362e078dd382dafe78b14fbf242f2747865911b3202835397c9d09206632bc6",
+    "backend/app/mcp/ms_clinical_server.py": "65d95f4cdd52af7ca0ea88630798cdbdf62a7491629e0ae91d6ce6c4efe880d4",
+    "docs/mdr/IFU-001_Instructions_For_Use.md": "9aeb21746eb4514f6b3847d5e5c722deb037516e97bad2b81e295b67bc4fdf76",
+    "README.md": "5fb629b65e7e7e0f476cf30652573cc8a981c04eed649d3df7fc9965597936ad",
+    "frontend/src/components/LesionDashboard.tsx": "9f410e534450b30c8471ceeed60aba8c0311a015dbf0e4ca31778f2a884ef9b7",
+    "frontend/src/i18n/locales/en.json": "f6d5ebac973dae103e5a35fb9df365b0e1fef07f7f48e1ec9515868d2cf64367"
+  },
+  "test_sha256": {
+    "tests/unit/test_rc032_region_atlas_guard.py": "6e88f63f47a88bd95f49826b2d152ac2fea9c94c83afbf95d8c9f6ab92b0b8e7",
+    "tests/unit/test_capa006_labelling_bound_to_code.py": "f924ec065ddc802e19782a4d380f3943e22a82f1f9a04b14a4bfa6fde9b0758d",
+    "src/components/LesionDashboard.rc032.test.ts": "ceea6c081f622fc8573391f023eeb506f34be538c0173f99a1a4250c9df107d8"
+  },
+  "expected_undetected": {
+    "B_classify_source_gate_off": "covered by the service gate (generate_zone_map_atlas); detected together in AB",
+    "B2_zonemap_route_gate_off": "covered by the service gate; detected together with the 422 mapping in F",
+    "L5_gate_column_max_instead_of_diagonal": "a permuted affine has a zero diagonal, so the per-axis FOV condition already rejects it"
+  },
+  "mutations": {
+    "A_service_gate_off": {
+      "failed": 1,
+      "passed": 35,
+      "failing_tests": [
+        "test_rc032_zone_map_refuses_non_mni_image"
+      ],
+      "restores": "generate_zone_map_atlas no longer refuses non-MNI grids",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "B_classify_source_gate_off": {
+      "failed": 0,
+      "passed": 36,
+      "failing_tests": [],
+      "restores": "classify-regions no longer checks the source image (covered by the service gate)",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "AB_service_and_classify_gates_off": {
+      "failed": 8,
+      "passed": 28,
+      "failing_tests": [
+        "test_rc032_zone_map_refuses_non_mni_image",
+        "test_rc032_msmask_on_non_mni_image_is_refused",
+        "test_rc032_auto_on_non_mni_falls_back_and_says_why",
+        "test_rc032_persisted_zone_map_not_reused_for_non_mni_image",
+        "test_rc032_zone_map_is_not_read_as_a_parcellation",
+        "test_rc032_geometric_refused_on_sagittal_and_reversed_slices",
+        "test_rc032_instance_labelled_mask_is_not_read_as_a_parcellation",
+        "test_rc032_geometric_fault_is_a_500_not_a_refusal"
+      ],
+      "restores": "both MNI gates on the classify path removed",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "B2_zonemap_route_gate_off": {
+      "failed": 0,
+      "passed": 36,
+      "failing_tests": [],
+      "restores": "generate-zone-map route pre-check removed (covered by the service gate)",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "F_zonemap_route_gate_and_mapping_off": {
+      "failed": 1,
+      "passed": 35,
+      "failing_tests": [
+        "test_rc032_generate_zone_map_refuses_non_mni_and_keeps_existing_zone_maps"
+      ],
+      "restores": "generate-zone-map: route pre-check AND NotMNISpaceError->422 mapping removed",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "L1_gate_no_isotropy": {
+      "failed": 2,
+      "passed": 34,
+      "failing_tests": [
+        "test_rc032_rejects_what_the_first_gate_accepted",
+        "test_rc032_longitudinal_route_uses_the_same_gate"
+      ],
+      "restores": "gate without the isotropy condition",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "L2_gate_no_fov": {
+      "failed": 1,
+      "passed": 35,
+      "failing_tests": [
+        "test_rc032_rejects_a_centred_isotropic_native_scan_by_field_of_view"
+      ],
+      "restores": "gate without the per-axis field-of-view condition",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "L3_gate_no_centre": {
+      "failed": 2,
+      "passed": 34,
+      "failing_tests": [
+        "test_rc032_rejects_oblique_and_clinical_grids",
+        "test_rc032_rejects_what_the_first_gate_accepted"
+      ],
+      "restores": "gate without the grid-centre condition",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "L4_gate_no_header": {
+      "failed": 1,
+      "passed": 35,
+      "failing_tests": [
+        "test_rc032_rejects_what_the_first_gate_accepted"
+      ],
+      "restores": "gate without the spatial-transform (xform code) condition",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "L5_gate_column_max_instead_of_diagonal": {
+      "failed": 0,
+      "passed": 36,
+      "failing_tests": [],
+      "restores": "gate accepts permuted axes (redundant with the per-axis FOV condition)",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "Z_longitudinal_own_gate": {
+      "failed": 1,
+      "passed": 35,
+      "failing_tests": [
+        "test_rc032_longitudinal_route_uses_the_same_gate"
+      ],
+      "restores": "the longitudinal compare route uses its own (accept-all) gate",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "C_spacing_from_seg_metadata": {
+      "failed": 15,
+      "passed": 21,
+      "failing_tests": [
+        "test_rc032_classify_route_is_alive",
+        "test_rc032_msmask_on_non_mni_image_is_refused",
+        "test_rc032_auto_on_non_mni_falls_back_and_says_why",
+        "test_rc032_persisted_zone_map_not_reused_for_non_mni_image",
+        "test_rc032_persisted_zone_map_never_reused_even_on_mni",
+        "test_rc032_msmask_on_mni_image_classifies",
+        "test_rc032_geometric_uses_the_brain_outline",
+        "test_rc032_zone_map_is_not_read_as_a_parcellation",
+        "test_rc032_zone_map_refused_as_explicit_parcellation",
+        "test_rc032_geometric_refused_on_sagittal_and_reversed_slices",
+        "test_rc032_foreign_image_parcellation_is_refused",
+        "test_rc032_same_image_parcellation_is_used",
+        "test_rc032_instance_labelled_mask_is_not_read_as_a_parcellation",
+        "test_rc032_atlas_fault_is_reported_not_silent",
+        "test_rc032_geometric_fault_is_a_500_not_a_refusal"
+      ],
+      "restores": "classify-regions reads spacing from SegmentationMetadata (the outage)",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "E_zonemap_undefined_names": {
+      "failed": 4,
+      "passed": 32,
+      "failing_tests": [
+        "test_rc032_generate_zone_map_refuses_non_mni_and_keeps_existing_zone_maps",
+        "test_rc032_generate_zone_map_is_alive_on_mni_image",
+        "test_rc032_generate_zone_map_refuses_a_zone_map_as_parcellation",
+        "test_rc032_generate_zone_map_refuses_another_images_parcellation"
+      ],
+      "restores": "generate-zone-map spacing reads undefined metadata/segmentation_id",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "D_atlas_transpose_off": {
+      "failed": 4,
+      "passed": 32,
+      "failing_tests": [
+        "test_rc032_atlas_classification_matches_orientation_consistent_reference",
+        "test_rc032_cubic_grid_is_not_silently_rotated",
+        "test_rc032_persisted_zone_map_never_reused_even_on_mni",
+        "test_rc032_msmask_on_mni_image_classifies"
+      ],
+      "restores": "classify_lesions_with_atlas: no transpose, no shape check",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "P_zone_mask_shape_check_off": {
+      "failed": 1,
+      "passed": 35,
+      "failing_tests": [
+        "test_rc032_zone_map_of_another_grid_is_refused"
+      ],
+      "restores": "classify_from_zone_mask shape check removed",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "M_persisted_zone_map_reused": {
+      "failed": 1,
+      "passed": 35,
+      "failing_tests": [
+        "test_rc032_persisted_zone_map_never_reused_even_on_mni"
+      ],
+      "restores": "classify-regions reuses a persisted zone map again",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "N_raw_gcs_overwrite": {
+      "failed": 1,
+      "passed": 35,
+      "failing_tests": [
+        "test_rc032_generate_zone_map_is_alive_on_mni_image"
+      ],
+      "restores": "generate-zone-map overwrites the blob directly again",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "O_delete_before_validation": {
+      "failed": 3,
+      "passed": 33,
+      "failing_tests": [
+        "test_rc032_generate_zone_map_refuses_non_mni_and_keeps_existing_zone_maps",
+        "test_rc032_generate_zone_map_is_alive_on_mni_image",
+        "test_rc032_zone_map_replacement_is_atomic"
+      ],
+      "restores": "generate-zone-map deletes existing zone maps before validating",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "W_delete_before_persist": {
+      "failed": 2,
+      "passed": 34,
+      "failing_tests": [
+        "test_rc032_generate_zone_map_is_alive_on_mni_image",
+        "test_rc032_zone_map_replacement_is_atomic"
+      ],
+      "restores": "generate-zone-map deletes old zone maps before the new one is persisted",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "G_old_parcellation_autodetect": {
+      "failed": 2,
+      "passed": 34,
+      "failing_tests": [
+        "test_rc032_zone_map_is_not_read_as_a_parcellation",
+        "test_rc032_instance_labelled_mask_is_not_read_as_a_parcellation"
+      ],
+      "restores": "classify-regions auto-detects a parcellation with the old label test",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "H_classify_explicit_parcellation_unchecked": {
+      "failed": 1,
+      "passed": 35,
+      "failing_tests": [
+        "test_rc032_zone_map_refused_as_explicit_parcellation"
+      ],
+      "restores": "classify-regions accepts any explicit parcellation_id (identity)",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "H2_zonemap_explicit_parcellation_unchecked": {
+      "failed": 1,
+      "passed": 35,
+      "failing_tests": [
+        "test_rc032_generate_zone_map_refuses_a_zone_map_as_parcellation"
+      ],
+      "restores": "generate-zone-map accepts any explicit parcellation_id (identity)",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "Q_same_image_check_off": {
+      "failed": 1,
+      "passed": 35,
+      "failing_tests": [
+        "test_rc032_foreign_image_parcellation_is_refused"
+      ],
+      "restores": "classify-regions accepts a parcellation of another image",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "Q2_zonemap_same_image_check_off": {
+      "failed": 1,
+      "passed": 35,
+      "failing_tests": [
+        "test_rc032_generate_zone_map_refuses_another_images_parcellation"
+      ],
+      "restores": "generate-zone-map accepts a parcellation of another image",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "R_required_labels_weakened": {
+      "failed": 4,
+      "passed": 32,
+      "failing_tests": [
+        "test_rc032_generate_zone_map_refuses_a_zone_map_as_parcellation",
+        "test_rc032_zone_map_is_not_read_as_a_parcellation",
+        "test_rc032_zone_map_refused_as_explicit_parcellation",
+        "test_rc032_parcellation_test_rejects_zone_maps_and_lesion_masks"
+      ],
+      "restores": "parcellation identity needs only one landmark label",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "S_foreground_size_off": {
+      "failed": 1,
+      "passed": 35,
+      "failing_tests": [
+        "test_rc032_parcellation_test_rejects_zone_maps_and_lesion_masks"
+      ],
+      "restores": "parcellation identity without the brain-sized volume condition",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "I_native_order_image": {
+      "failed": 8,
+      "passed": 28,
+      "failing_tests": [
+        "test_rc032_classify_route_is_alive",
+        "test_rc032_auto_on_non_mni_falls_back_and_says_why",
+        "test_rc032_persisted_zone_map_not_reused_for_non_mni_image",
+        "test_rc032_geometric_uses_the_brain_outline",
+        "test_rc032_zone_map_is_not_read_as_a_parcellation",
+        "test_rc032_geometric_refused_on_sagittal_and_reversed_slices",
+        "test_rc032_instance_labelled_mask_is_not_read_as_a_parcellation",
+        "test_rc032_atlas_fault_is_reported_not_silent"
+      ],
+      "restores": "geometric path receives the native-order image again",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "J_no_orientation_check": {
+      "failed": 2,
+      "passed": 34,
+      "failing_tests": [
+        "test_rc032_geometric_refused_on_sagittal_and_reversed_slices",
+        "test_rc032_geometric_image_is_reordered_and_checked"
+      ],
+      "restores": "geometric slice-axis orientation not checked",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "T_tilt_cap_off": {
+      "failed": 1,
+      "passed": 35,
+      "failing_tests": [
+        "test_rc032_geometric_tilt_cap_and_singleton_4d"
+      ],
+      "restores": "geometric path accepts a strongly tilted slice axis",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "K_silent_whole_volume_fallback": {
+      "failed": 1,
+      "passed": 35,
+      "failing_tests": [
+        "test_rc032_geometric_refuses_a_mismatched_image_instead_of_dropping_it"
+      ],
+      "restores": "geometric classifier silently drops a mismatched image",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "U_atlas_fault_silent": {
+      "failed": 1,
+      "passed": 35,
+      "failing_tests": [
+        "test_rc032_atlas_fault_is_reported_not_silent"
+      ],
+      "restores": "an atlas fault degrades silently to geometric again",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "V_geometric_fault_swallowed": {
+      "failed": 1,
+      "passed": 35,
+      "failing_tests": [
+        "test_rc032_geometric_fault_is_a_500_not_a_refusal"
+      ],
+      "restores": "a geometric fault is swallowed (400/422 instead of 500)",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "X_classify_authz_off": {
+      "failed": 1,
+      "passed": 35,
+      "failing_tests": [
+        "test_rc032_classify_route_enforces_object_level_access"
+      ],
+      "restores": "classify-regions without object-level authorization",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "Y_zonemap_authz_off": {
+      "failed": 1,
+      "passed": 35,
+      "failing_tests": [
+        "test_rc032_zone_map_route_enforces_image_access"
+      ],
+      "restores": "generate-zone-map without image authorization",
+      "test_file": "tests/unit/test_rc032_region_atlas_guard.py",
+      "applied": true
+    },
+    "LAB1_ifu_restates_3_4_3mm": {
+      "failed": 1,
+      "passed": 59,
+      "failing_tests": [
+        "test_capa006_withdrawn_thresholds_appear_only_as_withdrawn[docs/mdr/IFU-001_Instructions_For_Use.md]"
+      ],
+      "restores": "IFU restates the withdrawn thresholds",
+      "test_file": "tests/unit/test_capa006_labelling_bound_to_code.py",
+      "applied": true
+    },
+    "LAB2_readme_two_tier": {
+      "failed": 1,
+      "passed": 59,
+      "failing_tests": [
+        "test_capa006_no_two_tier_cascade_is_described[README.md]"
+      ],
+      "restores": "README describes a two-tier cascade",
+      "test_file": "tests/unit/test_capa006_labelling_bound_to_code.py",
+      "applied": true
+    },
+    "LAB3_constant_changes": {
+      "failed": 1,
+      "passed": 59,
+      "failing_tests": [
+        "test_capa006_ifu_states_the_distance_the_code_applies"
+      ],
+      "restores": "code constant changes without the IFU",
+      "test_file": "tests/unit/test_capa006_labelling_bound_to_code.py",
+      "applied": true
+    },
+    "LAB4_accuracy_claim_in_code": {
+      "failed": 1,
+      "passed": 59,
+      "failing_tests": [
+        "test_capa006_no_unsupported_accuracy_or_validation_claim[backend/app/api/routes/segmentation_regions.py]"
+      ],
+      "restores": "an unmeasured accuracy figure reappears in a Class C docstring",
+      "test_file": "tests/unit/test_capa006_labelling_bound_to_code.py",
+      "applied": true
+    },
+    "LAB5_validation_claim_in_ifu": {
+      "failed": 1,
+      "passed": 59,
+      "failing_tests": [
+        "test_capa006_no_unsupported_accuracy_or_validation_claim[docs/mdr/IFU-001_Instructions_For_Use.md]"
+      ],
+      "restores": "an unevidenced validation claim reappears in the IFU",
+      "test_file": "tests/unit/test_capa006_labelling_bound_to_code.py",
+      "applied": true
+    },
+    "LAB6_accuracy_claim_for_assistant": {
+      "failed": 1,
+      "passed": 59,
+      "failing_tests": [
+        "test_capa006_no_unsupported_accuracy_or_validation_claim[backend/app/mcp/ms_clinical_server.py]"
+      ],
+      "restores": "an unmeasured accuracy figure reappears in the text the clinical assistant reads",
+      "test_file": "tests/unit/test_capa006_labelling_bound_to_code.py",
+      "applied": true
+    },
+    "FE1_atlas_alert_removed": {
+      "failed": 1,
+      "passed": 5,
+      "failing_tests": [
+        "rc032 renders an alert whenever the response carries atlas_unavailable_reason"
+      ],
+      "restores": "UI no longer shows why the atlas was not used",
+      "test_file": "src/components/LesionDashboard.rc032.test.ts",
+      "applied": true
+    },
+    "FE2_geometric_warning_removed": {
+      "failed": 1,
+      "passed": 5,
+      "failing_tests": [
+        "rc032 geometric regions always carry a least-accurate warning"
+      ],
+      "restores": "UI no longer warns on geometric regions",
+      "test_file": "src/components/LesionDashboard.rc032.test.ts",
+      "applied": true
+    },
+    "FE3_best_restored": {
+      "failed": 1,
+      "passed": 5,
+      "failing_tests": [
+        "rc032 the panel no longer promises SynthSeg or a \"best\" automatic method"
+      ],
+      "restores": "UI calls the automatic method 'best' again",
+      "test_file": "src/components/LesionDashboard.rc032.test.ts",
+      "applied": true
+    },
+    "FE4_atlas_fault_alert_removed": {
+      "failed": 1,
+      "passed": 5,
+      "failing_tests": [
+        "rc032 an atlas FAULT is shown separately from a refusal"
+      ],
+      "restores": "UI no longer shows an atlas fault",
+      "test_file": "src/components/LesionDashboard.rc032.test.ts",
+      "applied": true
+    },
+    "FE5_least_accurate_restored": {
+      "failed": 1,
+      "passed": 5,
+      "failing_tests": [
+        "rc032 no warning claims an unmeasured comparative accuracy"
+      ],
+      "restores": "UI claims an unmeasured comparative accuracy again",
+      "test_file": "src/components/LesionDashboard.rc032.test.ts",
+      "applied": true
+    }
+  },
+  "restored": {
+    "tests/unit/test_rc032_region_atlas_guard.py": {
+      "failed": 0,
+      "passed": 36,
+      "failing_tests": []
+    },
+    "tests/unit/test_capa006_labelling_bound_to_code.py": {
+      "failed": 0,
+      "passed": 60,
+      "failing_tests": []
+    },
+    "src/components/LesionDashboard.rc032.test.ts": {
+      "failed": 0,
+      "passed": 6,
+      "failing_tests": []
+    }
+  },
+  "undetected": [
+    "B2_zonemap_route_gate_off",
+    "B_classify_source_gate_off",
+    "L5_gate_column_max_instead_of_diagonal"
+  ],
+  "unexpected_undetected": []
+}

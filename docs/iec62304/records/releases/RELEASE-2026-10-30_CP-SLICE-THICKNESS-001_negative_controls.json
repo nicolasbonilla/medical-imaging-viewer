@@ -1,0 +1,633 @@
+{
+  "executed": "2026-10-30T05:04:41",
+  "change": "CP-SLICE-THICKNESS-001 (DRAFT, PENDING owner approval; feature flag OFF)",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once; backend pytest (JUnit XML) or frontend vitest (JSON reporter); original bytes restored and hash-checked after each mutation",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/services/acquisition_geometry.py": "0ea0b0b43f6cacf2fe8175b917ff75954c201f00430c6e3a93213622100d7209",
+    "backend/app/services/imaging_service.py": "b90b2d00d1c88305f5a125629793d07521340724461f0ec24a089039f39b0242",
+    "frontend/src/components/LesionDashboard.tsx": "9f410e534450b30c8471ceeed60aba8c0311a015dbf0e4ca31778f2a884ef9b7",
+    "frontend/src/components/SliceThicknessReliabilityCard.tsx": "11bb15250816767c936083868d1ed1104a10fcf6b7ec79ad37158b0f9dca5c36",
+    "frontend/src/config/features.ts": "011977508ca3e01dff592ecda1cec9bee63efb8b9102cdec3a25ffd4857938c0",
+    "frontend/src/config/sliceThicknessReliability.v2.json": "1f3bee7f89a4c95fd3dc45784ad5a6e0b69188226aac56ecb9556796a93a44d8",
+    "frontend/src/utils/sliceThicknessReliability.ts": "59c4ec371d02a02abe6bccaaf06cda7e3420d99d97153aa218d4a7105c630d51"
+  },
+  "tests": {
+    "backend": [
+      "tests/unit/test_rc054_acquisition_geometry.py"
+    ],
+    "frontend": [
+      "src/utils/sliceThicknessReliability.test.ts",
+      "src/components/SliceThicknessReliabilityCard.test.tsx",
+      "src/config/features.sliceThickness.test.ts"
+    ]
+  },
+  "test_sha256": {
+    "tests/unit/test_rc054_acquisition_geometry.py": "6eb7ecd843512e8c5e68054b28304c9b9a9fa11df46f7fbd329c9cb4d971c634",
+    "src/utils/sliceThicknessReliability.test.ts": "eac0df3f1a3cef3770c20c7493f5fbdff63e70f90f6f23e22225eb27172468b2",
+    "src/components/SliceThicknessReliabilityCard.test.tsx": "d78abbf2db57045f09b906dfc0969847799d4ed106b92e1232b13cc7ad0297de",
+    "src/config/features.sliceThickness.test.ts": "7d580df5606dc23951f7e139fa93b83538fc2469790ef5f7b72a273c014afe87"
+  },
+  "provenance": {
+    "commit": "cabb99d2e17dd595bd9e189dad6b28e6246a5b04",
+    "records": {
+      "docs/research/records/2026-10-21_paper_a_v03_results.json": {
+        "available": true,
+        "sha256": "972bb3ef62d8b497809863a777aa65769f9bf83f9b483ba6619fafbdefcbdc43",
+        "matches_asset": true
+      }
+    },
+    "rows": {
+      "B1_grid": {
+        "checked": true,
+        "matches_record": true
+      },
+      "B2": {
+        "checked": true,
+        "matches_record": true
+      },
+      "B3": {
+        "checked": true,
+        "matches_record": true
+      },
+      "B4": {
+        "checked": true,
+        "matches_record": true
+      }
+    },
+    "ok": true
+  },
+  "mutations": {
+    "B1_nifti_grid_called_native": {
+      "failed": 6,
+      "passed": 33,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc054_nifti_is_never_native[zooms0]",
+        "test_rc054_nifti_is_never_native[zooms3]",
+        "test_rc054_nifti_is_never_native[zooms4]",
+        "test_rc054_nifti_thick_grid_is_a_lower_bound_on_any_axis",
+        "test_rc054_nifti_units_are_honoured",
+        "test_rc054_image_loaders_expose_the_geometry"
+      ],
+      "error_files": [],
+      "reintroduces": "a NIfTI grid reported as the native acquisition thickness",
+      "runner": "backend",
+      "applied": true
+    },
+    "B2_fine_grid_accepted": {
+      "failed": 2,
+      "passed": 37,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc054_nifti_fine_grid_is_not_determinable_mslesseg_case",
+        "test_rc054_process_image_response_carries_the_geometry"
+      ],
+      "error_files": [],
+      "reintroduces": "a 1-mm grid (e.g. MSLesSeg, acquired at 2-5 mm) taken as a thickness",
+      "runner": "backend",
+      "applied": true
+    },
+    "B3_default_thickness": {
+      "failed": 6,
+      "passed": 33,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc054_missing_thickness_is_not_determinable_never_a_default",
+        "test_rc054_spacing_without_thickness_is_not_determinable[image_type0-2D]",
+        "test_rc054_spacing_without_thickness_is_not_determinable[image_type1-3D]",
+        "test_rc054_spacing_without_thickness_is_not_determinable[image_type2-None]",
+        "test_rc054_spacing_without_thickness_is_not_determinable[image_type3-2D]",
+        "test_rc054_loader_never_reports_the_spacing_as_the_thickness"
+      ],
+      "error_files": [],
+      "reintroduces": "a missing SliceThickness defaulted to 1.0 mm (the legacy behaviour)",
+      "runner": "backend",
+      "applied": true
+    },
+    "B4_derived_called_original": {
+      "failed": 1,
+      "passed": 38,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc054_derived_or_untyped_dicom_is_never_native"
+      ],
+      "error_files": [],
+      "reintroduces": "a derived/reformatted or untyped DICOM reported as native",
+      "runner": "backend",
+      "applied": true
+    },
+    "B5_gap_ignored": {
+      "failed": 3,
+      "passed": 36,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc054_original_2d_dicom_with_spacing_is_native_and_counts_the_gap",
+        "test_rc054_enhanced_multiframe_reads_the_shared_functional_group",
+        "test_rc054_image_loaders_expose_the_geometry"
+      ],
+      "error_files": [],
+      "reintroduces": "the gap between slices ignored (thickness used instead of spacing)",
+      "runner": "backend",
+      "applied": true
+    },
+    "B6_2d_without_spacing_native": {
+      "failed": 3,
+      "passed": 36,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc054_2d_dicom_without_spacing_is_only_a_lower_bound",
+        "test_rc054_thin_dicom_without_3d_or_spacing_is_not_determinable",
+        "test_rc054_an_invalid_spacing_does_not_make_a_value_native"
+      ],
+      "error_files": [],
+      "reintroduces": "a 2D image without the spacing between slices reported as native",
+      "runner": "backend",
+      "applied": true
+    },
+    "B7_implausible_kept": {
+      "failed": 1,
+      "passed": 38,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc054_invalid_values_are_rejected_not_clipped[25]"
+      ],
+      "error_files": [],
+      "reintroduces": "implausible header values (e.g. 25 mm) kept instead of rejected",
+      "runner": "backend",
+      "applied": true
+    },
+    "B8_contradiction_ignored": {
+      "failed": 1,
+      "passed": 38,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc054_nifti_header_contradicting_itself_is_not_determinable"
+      ],
+      "error_files": [],
+      "reintroduces": "a NIfTI whose pixdim contradicts its affine used anyway",
+      "runner": "backend",
+      "applied": true
+    },
+    "B9_units_ignored": {
+      "failed": 1,
+      "passed": 38,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc054_nifti_units_are_honoured"
+      ],
+      "error_files": [],
+      "reintroduces": "NIfTI spatial units ignored (metres read as millimetres)",
+      "runner": "backend",
+      "applied": true
+    },
+    "B10_not_total": {
+      "failed": 6,
+      "passed": 33,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc054_never_raises_on_garbage[None]",
+        "test_rc054_never_raises_on_garbage[0]",
+        "test_rc054_never_raises_on_garbage[x]",
+        "test_rc054_never_raises_on_garbage[garbage3]",
+        "test_rc054_never_raises_on_garbage[garbage4]",
+        "test_rc054_never_raises_on_garbage[garbage5]"
+      ],
+      "error_files": [],
+      "reintroduces": "an unreadable header raises instead of 'not determinable' (could break image loading)",
+      "runner": "backend",
+      "applied": true
+    },
+    "B11_loader_not_wired": {
+      "failed": 2,
+      "passed": 37,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc054_image_loaders_expose_the_geometry",
+        "test_rc054_process_image_response_carries_the_geometry"
+      ],
+      "error_files": [],
+      "reintroduces": "the NIfTI loader does not expose the geometry",
+      "runner": "backend",
+      "applied": true
+    },
+    "B12_legacy_value_exposed": {
+      "failed": 3,
+      "passed": 36,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc054_loader_never_reports_the_spacing_as_the_thickness",
+        "test_rc054_image_loaders_expose_the_geometry",
+        "test_rc054_the_legacy_default_never_leaks_into_the_geometry"
+      ],
+      "error_files": [],
+      "reintroduces": "the legacy slice_thickness (1.0 mm default) exposed as the native thickness",
+      "runner": "backend",
+      "applied": true
+    },
+    "B13_spacing_taken_as_thickness": {
+      "failed": 5,
+      "passed": 34,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc054_spacing_without_thickness_is_not_determinable[image_type0-2D]",
+        "test_rc054_spacing_without_thickness_is_not_determinable[image_type1-3D]",
+        "test_rc054_spacing_without_thickness_is_not_determinable[image_type2-None]",
+        "test_rc054_spacing_without_thickness_is_not_determinable[image_type3-2D]",
+        "test_rc054_loader_never_reports_the_spacing_as_the_thickness"
+      ],
+      "error_files": [],
+      "reintroduces": "a SpacingBetweenSlices without SliceThickness reported as the thickness ('2.5 mm, from the header')",
+      "runner": "backend",
+      "applied": true
+    },
+    "P1_native_from_any_source": {
+      "failed": 1,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc055 a native value is accepted only from a DICOM header"
+      ],
+      "error_files": [],
+      "reintroduces": "a 'native' value accepted from a NIfTI grid",
+      "runner": "frontend",
+      "applied": true
+    },
+    "P2_legacy_fallback": {
+      "failed": 1,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc055 the legacy slice_thickness (1.0 mm default) is never shown as the thickness"
+      ],
+      "error_files": [],
+      "reintroduces": "the legacy slice_thickness (1.0 mm default) used when the geometry is absent",
+      "runner": "frontend",
+      "applied": true
+    },
+    "P3_viewer_image_for_any_segmentation": {
+      "failed": 1,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc055 the loaded image is used only when it is the segmentation's image"
+      ],
+      "error_files": [],
+      "reintroduces": "the thickness of whatever image is on screen shown for another image's segmentation",
+      "runner": "frontend",
+      "applied": true
+    },
+    "P4_thin_lower_bound_accepted": {
+      "failed": 1,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc055 a lower bound at or below 1.5 mm says nothing and is rejected"
+      ],
+      "error_files": [],
+      "reintroduces": "a lower bound at or below 1.5 mm accepted",
+      "runner": "frontend",
+      "applied": true
+    },
+    "P5_first_original_guessed": {
+      "failed": 1,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc055 a processed image with no original FLAIR, or with several, is not determinable"
+      ],
+      "error_files": [],
+      "reintroduces": "with several original FLAIRs, the first one taken as the source",
+      "runner": "frontend",
+      "applied": true
+    },
+    "P6_thinner_source_wins": {
+      "failed": 1,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc055 the thicker source wins; a thin value never hides a thicker one"
+      ],
+      "error_files": [],
+      "reintroduces": "the thinner of two sources shown (a thin value hides a thicker one)",
+      "runner": "frontend",
+      "applied": true
+    },
+    "P7_masks_taken_for_images": {
+      "failed": 1,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc055 a mask whose name contains FLAIR is not taken for the original image"
+      ],
+      "error_files": [],
+      "reintroduces": "a mask file named *FLAIR* taken for the original FLAIR",
+      "runner": "frontend",
+      "applied": true
+    },
+    "P8_original_never_consulted": {
+      "failed": 5,
+      "passed": 41,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc055 a processed 1-mm image reads the original FLAIR of the study and names it",
+        "rc055 a processed image without a single original FLAIR is not determinable, with the reason",
+        "rc055 a processed image reads the single original FLAIR of the study, named",
+        "rc055 a processed image with no original FLAIR, or with several, is not determinable",
+        "rc055 the thicker source wins; a thin value never hides a thicker one"
+      ],
+      "error_files": [],
+      "reintroduces": "a processed (resampled) image never traced to its original FLAIR",
+      "runner": "frontend",
+      "applied": true
+    },
+    "R1_false_lesion_percentage": {
+      "failed": 3,
+      "passed": 43,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc056 thick slices: false-lesion rate not shown, with the >= 10 site-patient condition",
+        "rc056 thin slices and unknown thickness: still no false-lesion rate",
+        "rc056 the shipped asset has no calibration, a >= 10-patient rule and no false-lesion numbers"
+      ],
+      "error_files": [],
+      "reintroduces": "a false-lesion percentage shown on thick slices",
+      "runner": "frontend",
+      "applied": true
+    },
+    "R2_calibrated_asset_accepted": {
+      "failed": 1,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc056 an asset carrying a site calibration is refused (no figures at all)"
+      ],
+      "error_files": [],
+      "reintroduces": "an asset carrying a site calibration accepted",
+      "runner": "frontend",
+      "applied": true
+    },
+    "R3_thick_reason_lost": {
+      "failed": 2,
+      "passed": 44,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc056 thick slices: false-lesion rate not shown, with the >= 10 site-patient condition",
+        "rc056 thick or unknown thickness gives the \"not reliable at this thickness\" reason"
+      ],
+      "error_files": [],
+      "reintroduces": "thick slices not told that the figure is unreliable at this thickness",
+      "runner": "frontend",
+      "applied": true
+    },
+    "D1_best_case": {
+      "failed": 1,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc057 a lower bound uses its band and every thicker band"
+      ],
+      "error_files": [],
+      "reintroduces": "the best evidence row of the band used instead of the worst",
+      "runner": "frontend",
+      "applied": true
+    },
+    "D2_any_bin_enough": {
+      "failed": 1,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc057 \"from this size\" requires the bin and every larger bin"
+      ],
+      "error_files": [],
+      "reintroduces": "'from this size' without requiring every larger size",
+      "runner": "frontend",
+      "applied": true
+    },
+    "D3_lower_bound_own_band_only": {
+      "failed": 2,
+      "passed": 44,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc057 a lower bound reads \"at least\" and uses every thicker band",
+        "rc057 a lower bound uses its band and every thicker band"
+      ],
+      "error_files": [],
+      "reintroduces": "an 'at least' thickness read as exactly that thickness",
+      "runner": "frontend",
+      "applied": true
+    },
+    "D4_asset_figure_changed": {
+      "failed": 3,
+      "passed": 43,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc057 thick native slices: no size found 8 in 10, half from 50 mm³, evidence and guidance",
+        "rc057 the asset reproduces the paper (spec section 3, rounded %)",
+        "rc057 smallest sizes per band equal the paper and are the worst case over the band"
+      ],
+      "error_files": [],
+      "reintroduces": "an evidence figure no longer equal to the paper",
+      "runner": "frontend",
+      "applied": true
+    },
+    "D5_post_hoc_row_accepted": {
+      "failed": 1,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc057 an asset carrying a post-hoc evidence row or record is refused (no figures at all)"
+      ],
+      "error_files": [],
+      "reintroduces": "an evidence row added after the results were seen accepted in the clinical asset",
+      "runner": "frontend",
+      "applied": true
+    },
+    "D6_evidence_size_dropped": {
+      "failed": 1,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc057 thick native slices: no size found 8 in 10, half from 50 mm³, evidence and guidance"
+      ],
+      "error_files": [],
+      "reintroduces": "figures shown without their evidence size",
+      "runner": "frontend",
+      "applied": true
+    },
+    "D7_empty_list_warning_dropped": {
+      "failed": 3,
+      "passed": 43,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc057 thick native slices: no size found 8 in 10, half from 50 mm³, evidence and guidance",
+        "rc057 natively thin: from 50 mm³ (about 4.6 mm), no 3D recommendation, empty-list warning kept",
+        "rc057 Spanish wording when the interface is in Spanish"
+      ],
+      "error_files": [],
+      "reintroduces": "no 'an empty or short list does not mean no lesions' warning",
+      "runner": "frontend",
+      "applied": true
+    },
+    "D8_no_3d_recommendation": {
+      "failed": 7,
+      "passed": 39,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc056 thick slices: false-lesion rate not shown, with the >= 10 site-patient condition",
+        "rc057 thick native slices: no size found 8 in 10, half from 50 mm³, evidence and guidance",
+        "rc057 a lower bound reads \"at least\" and uses every thicker band",
+        "rc057 natively 2 mm: the pre-registered 1.5-4.5 mm band says no size 8 in 10 (no post-hoc \"from 50 mm³\")",
+        "rc056 thick or unknown thickness gives the \"not reliable at this thickness\" reason",
+        "rc057 band edges: 1.5 is thin, anything above is thick",
+        "rc057 a lower bound uses its band and every thicker band"
+      ],
+      "error_files": [],
+      "reintroduces": "thick-slice studies without the 3D FLAIR recommendation",
+      "runner": "frontend",
+      "applied": true
+    },
+    "D9_unknown_guessed_thin": {
+      "failed": 8,
+      "passed": 38,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc055 the loaded image is used only when it is the segmentation's image",
+        "rc055 the legacy slice_thickness (1.0 mm default) is never shown as the thickness",
+        "rc055 a processed image without a single original FLAIR is not determinable, with the reason",
+        "rc055 a request failure is not determinable, never a guess",
+        "rc057 not determinable: the reason, the conservative guidance, and no figures",
+        "rc055 an MSLesSeg-like 1-mm image is never reported as thin",
+        "rc056 thick or unknown thickness gives the \"not reliable at this thickness\" reason",
+        "rc057 not determinable shows no band and no figure"
+      ],
+      "error_files": [],
+      "reintroduces": "an unknown thickness shown as a thin-slice band (a guess)",
+      "runner": "frontend",
+      "applied": true
+    },
+    "D10_post_hoc_record_accepted": {
+      "failed": 1,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc057 an asset carrying a post-hoc evidence row or record is refused (no figures at all)"
+      ],
+      "error_files": [],
+      "reintroduces": "a post-hoc research record accepted as a source of the clinical asset",
+      "runner": "frontend",
+      "applied": true
+    },
+    "D11_band_not_preregistered": {
+      "failed": 4,
+      "passed": 42,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc057 natively 2 mm: the pre-registered 1.5-4.5 mm band says no size 8 in 10 (no post-hoc \"from 50 mm³\")",
+        "rc057 only the pre-registered bands of the protocol (B1 <= 1.5, B2 (1.5, 4.5], B3 (4.5, 6.5], B4 > 6.5 mm)",
+        "rc057 a natively 2 mm study is not told \"8 in 10 from 50 mm3\" (post-hoc row): no size, as pre-registered",
+        "rc057 smallest sizes per band equal the paper and are the worst case over the band"
+      ],
+      "error_files": [],
+      "reintroduces": "a thickness band fed by evidence that is not its pre-registered band (v1 used post-hoc rows at 1.5-3.5 mm)",
+      "runner": "frontend",
+      "applied": true
+    },
+    "F1_flag_default_on": {
+      "failed": 1,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc058 is OFF when the variable is not set"
+      ],
+      "error_files": [],
+      "reintroduces": "the card ON by default",
+      "runner": "frontend",
+      "applied": true
+    },
+    "F2_card_outside_flag": {
+      "failed": 1,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc058 the card is rendered only behind the flag and loaded lazily"
+      ],
+      "error_files": [],
+      "reintroduces": "the card rendered whatever the flag",
+      "runner": "frontend",
+      "applied": true
+    },
+    "F3_card_not_lazy": {
+      "failed": 2,
+      "passed": 44,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc058 the card is rendered only behind the flag and loaded lazily",
+        "rc058 nothing else imports the card, its logic or its evidence asset (stays in the lazy chunk)"
+      ],
+      "error_files": [],
+      "reintroduces": "the card (and its evidence asset) bundled into the main chunk",
+      "runner": "frontend",
+      "applied": true
+    }
+  },
+  "restored": {
+    "backend": {
+      "failed": 0,
+      "passed": 39,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [],
+      "error_files": []
+    },
+    "frontend": {
+      "failed": 0,
+      "passed": 46,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [],
+      "error_files": []
+    }
+  },
+  "expected_undetected": {},
+  "undetected": [],
+  "unexpected_undetected": []
+}
