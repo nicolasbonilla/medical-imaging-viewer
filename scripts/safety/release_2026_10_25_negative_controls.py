@@ -41,6 +41,8 @@ Added after the final check of PR #69 (2026-10-29):
 Added at the merge with PR #71 (release 2026-10-30): I58 the stored table served and checked as drawn (#71's region
   colours); I59 one fallback colour definition. I46 and I54 re-anchored (the constant now lives in regionColors.ts;
   the route compares the table as drawn).
+Added at the merge of main (PR #70, owner-signed): I60 #70's privileged account creation recorded as a role
+  assignment in the durable audit trail (not an access grant); I61 the created account recorded as the target.
 
 Method (as the other scripts): one mutation at a time in the real source; every anchor asserted to occur exactly
 once (on the LF text, so a Windows CRLF checkout works); only the bound tests are run — backend offline (PRB-002: a
@@ -115,6 +117,9 @@ API_FINAL = "tests/unit/test_release_2026_10_25_final_check.py"
 REGCOL = "frontend/src/utils/regionColors.ts"
 API_MERGE = "tests/unit/test_release_2026_10_30_merge.py"
 UI_ONE_FALLBACK = "frontend/src/utils/fallbackColour.release20261030.test.ts"
+# release 2026-10-30: merge of main (PR #70)
+AUTHSVC = "backend/app/security/auth.py"
+API_MAIN = "tests/unit/test_release_2026_10_30_main_merge.py"
 EN = "frontend/src/i18n/locales/en.json"
 
 ASSEMBLED = '        result = {**result, **parts, "content": draft_text(parts, request.language)}\n'
@@ -388,6 +393,13 @@ M = {
         [(DRAWN, "export { UNLABELLED_FALLBACK_COLOR } from './regionColors';\n",
           "export const UNLABELLED_FALLBACK_COLOR = '#00FFFF';\n")],
         [UI_ONE_FALLBACK], "the 2D canvas and the GPU / 3D views define their fallback colour separately (they can drift)"),
+    # ── release 2026-10-30, merge of main (PR #70) ──
+    "I60_privileged_creation_recorded_as_access_grant": (
+        [(AUTHSVC, '        "privileged_account_created": "authz.role.assigned",\n', "")],
+        [API_MAIN], "an administrator account created by an administrator is recorded as an access grant"),
+    "I61_created_account_not_recorded_as_target": (
+        [(AUTHSVC, '        target = target or (str(details.pop("target_user_id")) if details.get("target_user_id") else None)\n', "")],
+        [API_MAIN], "the durable record of an account creation does not name the account created"),
 }
 # Recorded with the result (integration review of PR #69, item 5: kept, and stated as by design).
 NOTES = {
