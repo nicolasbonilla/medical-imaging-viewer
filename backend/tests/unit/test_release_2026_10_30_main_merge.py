@@ -13,8 +13,8 @@ import pytest
 
 from app.core.logging.audit_sink import get_durable_audit_sink
 from app.security.models import UserRole
-from tests.unit.test_prb020_review1_findings import (  # noqa: F401  (fixture)
-    _act_as, _new_account, client, store,
+from tests.unit.test_prb020_review1_findings import (  # noqa: F401  (fixtures, the autouse one restores overrides)
+    _act_as, _new_account, _restore_overrides, client, store,
 )
 
 

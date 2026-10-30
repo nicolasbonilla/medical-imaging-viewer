@@ -781,6 +781,9 @@ class AuthService:
     _AUDIT_EVENT_TYPES = {
         "register_user": "admin.user.created",
         "register_user_failed": "admin.user.created",
+        # Release 2026-10-30 (merge of PR #70 under CAPA-015): an administrator account created by an administrator
+        # is recorded a second time as a privileged event (#70, review m1) - a role assignment, not an access grant.
+        "privileged_account_created": "authz.role.assigned",
         "login_success": "auth.login.success",
         "login_failed": "auth.login.failed",
         "account_locked": "auth.account.locked",
@@ -813,6 +816,9 @@ class AuthService:
         outcome = AuditOutcome.SUCCESS if result == "success" else AuditOutcome.FAILURE
         details = dict(details or {})
         target = resource.split(":", 1)[1] if resource.startswith("user:") else None
+        # Release 2026-10-30 (merge of PR #70): #70 names the account an administrator created in
+        # details["target_user_id"] (its resource is the route); recorded as the target, an identifier.
+        target = target or (str(details.pop("target_user_id")) if details.get("target_user_id") else None)
         actor = self._users.get(user_id) if user_id else None
         # The username passed by update/delete is the TARGET's; never record it as the actor's.
         actor_username = actor.username if actor else (username if user_id and target in (None, user_id) else None)
