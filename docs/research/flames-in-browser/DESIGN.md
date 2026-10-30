@@ -4,7 +4,7 @@
 |---|---|
 | Status | **PROTOTYPE — research only, not for clinical use.** Behind `VITE_ENABLE_BROWSER_FLAMES` (default **OFF**). Not deployed. |
 | Branch | `feat/flames-in-browser` |
-| Safety class | Touches IEC 62304 **Class C** behaviour (lesion segmentation, HAZ-001; orientation, HAZ-006). Change proposal: [CHANGE-PROPOSAL.md](CHANGE-PROPOSAL.md). Since the 2026-10-17 review fixes ([REVIEW-RESPONSE.md](REVIEW-RESPONSE.md)) the controlled documents carry DRAFT entries (SRS 1.7, RMF 1.9, TM 1.6, SOUP 1.2, CMP 1.1), every approval field PENDING owner approval. |
+| Safety class | Touches IEC 62304 **Class C** behaviour (lesion segmentation, HAZ-001; orientation, HAZ-006). Change proposal: [CHANGE-PROPOSAL.md](CHANGE-PROPOSAL.md). Since the 2026-10-17 review fixes ([REVIEW-RESPONSE.md](REVIEW-RESPONSE.md)) the controlled documents carry DRAFT entries (SRS 1.7, RMF 1.9, TM 1.6, SOUP 1.2, CMP 1.1), every approval field N. G. Bonilla Vargas — approved 2026-10-30 (PR #70). |
 | Date | 2026-10-17 |
 
 ## 0. Summary

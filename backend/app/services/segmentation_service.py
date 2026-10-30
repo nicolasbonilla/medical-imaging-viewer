@@ -185,6 +185,8 @@ class SegmentationService:
                 if provenance else None
             ),
             ai_provenance=provenance,
+            # PRB-026: who created it — the authenticated user passed by the route, never a client field.
+            created_by=created_by,
         )
 
         # Initialize empty 3D mask using medical imaging convention (depth, height, width)

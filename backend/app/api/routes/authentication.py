@@ -44,6 +44,9 @@ from app.security.models import (
 
 logger = get_logger(__name__)
 
+# PRB-020: self-registration is off unless explicitly enabled outside production.
+from app.security.registration_policy import require_self_registration_enabled  # noqa: E402
+
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
@@ -179,7 +182,10 @@ def start_session(response: Response, user, refresh_store: RefreshTokenStore) ->
     response_model=RegisterResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Register new user",
-    description="Register a new user account with password policy validation (ISO 27001 A.9.2.1)"
+    description="Self-registration of a VIEWER account (ISO 27001 A.9.2.1). OFF by default and never on in "
+                "production (PRB-020): answers 404 unless SELF_REGISTRATION_ENABLED is set on a non-production "
+                "server. Accounts are created by an administrator: POST /api/v1/auth/users.",
+    dependencies=[Depends(require_self_registration_enabled)],
 )
 async def register_user(
     request: RegisterRequest,
@@ -291,7 +297,7 @@ async def register_user(
         role=UserRole.VIEWER,  # Default role (least privilege)
         is_active=True,
         is_locked=False,
-        email_verified=False,  # Requires email verification
+        email_verified=False,  # never verified: no e-mail verification exists (PRB-020)
         created_at=now,
         updated_at=now,
         last_password_change=now,
@@ -319,7 +325,9 @@ async def register_user(
 
     return RegisterResponse(
         user=user,
-        message="User registered successfully. Please verify your email to activate your account."
+        # PRB-022: the message promised an e-mail verification that does not exist.
+        message="Account created with the Viewer role. The e-mail address is not verified; an administrator "
+                "decides which patients the account may see."
     )
 
 

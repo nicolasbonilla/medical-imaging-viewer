@@ -262,6 +262,11 @@ class PatientResponse(BaseModel):
     study_count: Optional[int] = None
     document_count: Optional[int] = None
 
+    # Provenance (REQ-SEC-017) for the server's own access decision (PRB-023): the object-level check reads
+    # it to tell "not on the care team" from "quarantined legacy record". exclude=True: never serialised,
+    # so no response carries the creator's user id.
+    created_by: Optional[str] = Field(default=None, exclude=True)
+
     model_config = {
         "from_attributes": True
     }
@@ -274,6 +279,10 @@ class PatientSummary(BaseModel):
     id: uuid.UUID
     mrn: str
     full_name: str
+    # PRB-026: the list item carries the name parts, so the list card and the record page derive the same
+    # initials (first letter of the given name and of the family name). Both are already part of full_name.
+    given_name: Optional[str] = None
+    family_name: Optional[str] = None
     birth_date: date
     gender: Gender
     status: PatientStatus

@@ -12,12 +12,15 @@ interface PatientLike {
 interface PatientsOverviewProps {
   patients: PatientLike[];
   total: number;
+  /** PRB-021: an administrator sees the whole registry; any other user only the patients assigned to them. */
+  scope?: 'registry' | 'assigned';
 }
 
 interface Tile {
   key: string;
   label: string;
-  value: number;
+  /** null = not counted (PRB-025: shown as a dash, never as 0). */
+  value: number | null;
   context: string;
   icon: LucideIcon;
   accent: string;     // icon + number accent
@@ -31,17 +34,30 @@ interface Tile {
  * design direction: confident stat numbers, generous cards — while staying
  * within the dark clinical palette of DESIGN_SYSTEM.md.
  */
-export function PatientsOverview({ patients, total }: PatientsOverviewProps) {
+/** Sum of counts the server reported; null when any of them was not counted (review of PR #70, m5). */
+function sumCounted(values: Array<number | null | undefined>): number | null {
+  let sum = 0;
+  for (const v of values) {
+    if (typeof v !== 'number' || !Number.isFinite(v)) return null;
+    sum += v;
+  }
+  return sum;
+}
+
+export function PatientsOverview({ patients, total, scope = 'registry' }: PatientsOverviewProps) {
   const { t } = useTranslation();
 
   const tiles = useMemo<Tile[]>(() => {
     const active = patients.filter((p) => (p.status || '').toLowerCase() === 'active').length;
-    const studies = patients.reduce((s, p) => s + (p.study_count || 0), 0);
-    const documents = patients.reduce((s, p) => s + (p.document_count || 0), 0);
+    const studies = sumCounted(patients.map((p) => p.study_count));
+    const documents = sumCounted(patients.map((p) => p.document_count));
     return [
       {
         key: 'patients', label: t('patients.overview.total', 'Patients'),
-        value: total, context: t('patients.overview.inRegistry', 'in registry'),
+        value: total,
+        context: scope === 'assigned'
+          ? t('patients.overview.assignedToYou', 'assigned to you')
+          : t('patients.overview.inRegistry', 'in registry'),
         icon: Users, accent: '#60A5FA', chipBg: 'rgba(59,130,246,0.12)',
       },
       {
@@ -60,7 +76,7 @@ export function PatientsOverview({ patients, total }: PatientsOverviewProps) {
         icon: FileText, accent: '#38BDF8', chipBg: 'rgba(14,165,233,0.12)',
       },
     ];
-  }, [patients, total, t]);
+  }, [patients, total, scope, t]);
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4" style={{ gap: 12 }}>
@@ -90,7 +106,7 @@ export function PatientsOverview({ patients, total }: PatientsOverviewProps) {
               </span>
             </div>
             <div style={{ fontSize: 26, fontWeight: 700, lineHeight: 1, color: '#F9FAFB', letterSpacing: '-0.01em' }}>
-              {tile.value.toLocaleString()}
+              {tile.value === null ? '—' : tile.value.toLocaleString()}
             </div>
             <div
               style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', color: '#96A0B0', textTransform: 'uppercase', marginTop: 8 }}

@@ -379,7 +379,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
           it stays in the standard/matplotlib modes (no wrong-location hazard). */}
       {renderMode === 'niivue' && (
         <div className="absolute inset-0 z-10">
-          <Suspense fallback={<div className="flex h-full w-full items-center justify-center text-xs text-gray-400">Cargando visor GPU…</div>}>
+          <Suspense fallback={<div className="flex h-full w-full items-center justify-center text-xs text-gray-400">{t('viewer.loadingGpuViewer', 'Loading GPU viewer…')}</div>}>
             <NiivueViewer2D hasUnsavedEdits={segmentationMask.state.isDirty || segmentationStoreDirty} />
           </Suspense>
         </div>

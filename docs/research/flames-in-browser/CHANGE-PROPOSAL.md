@@ -7,7 +7,7 @@
 | Branch | `feat/flames-in-browser` (prototype behind `VITE_ENABLE_BROWSER_FLAMES`, default OFF; not deployed) |
 | Safety class | **C** (IEC 62304:2006+A1:2015) |
 | Design | [DESIGN.md](DESIGN.md) · review response [REVIEW-RESPONSE.md](REVIEW-RESPONSE.md) · gate validation [FLAIR-GATE-VALIDATION.md](FLAIR-GATE-VALIDATION.md) · [COOP-COEP-IMPACT.md](COOP-COEP-IMPACT.md) |
-| Status | **Draft records written, NOT approved.** SRS 1.7, RMF 1.9, TM 1.6, SOUP 1.2, CMP 1.1 carry the entries below with every approval field "PENDING owner approval". IDs coordinated with open PRs #52 (CAPA-010: RC-037/038, REQ-SAFE-025..027) and #51 (CAPA-011: RC-039, REQ-SAFE-028): **merge after #52 and #51**. Requires a code review and the owner's approval before any merge; the flag stays OFF. |
+| Status | **Draft records written, NOT approved.** SRS 1.7, RMF 1.9, TM 1.6, SOUP 1.2, CMP 1.1 carry the entries below with every approval field "N. G. Bonilla Vargas — approved 2026-10-30 (PR #70)". IDs coordinated with open PRs #52 (CAPA-010: RC-037/038, REQ-SAFE-025..027) and #51 (CAPA-011: RC-039, REQ-SAFE-028): **merge after #52 and #51**. Requires a code review and the owner's approval before any merge; the flag stays OFF. |
 
 ## 1. What changes and why
 

@@ -955,6 +955,153 @@
       "requirement": "REQ-SAFE-043",
       "change": "PRB-010 and the independent review of PR #71 (DRAFT, PENDING owner approval; branch fix/viewer-display-orientation-prb004)",
       "negative_control": "Executed 2026-10-28 by scripts/safety/prb004_negative_controls.py in a throwaway detached worktree of 249b642 (review of PR #71, m8: never in the developer's checkout; refuses to start on uncommitted changes in the files and tests it covers; one mutation at a time, every anchor asserted unique on the LF text, original bytes restored after each mutation and checked at the end; only the bound tests run, backend offline per PRB-002); failing test names per mutation in docs/iec62304/records/risk_verification/PRB-004_negative_controls_2026-10-28.json (114 mutations for PRB-004..010 and the review, 114 detected). RC-076: P1-P11 (11 of 11 detected), V20-V25 and W13-W19 (13 of 13 detected). Re-run on the merged tree of release 2026-10-30 (#69 + #71; release/owner-signoff-2026-10-30 @ 04fd105, CAPA-009 @ 530b953; throwaway worktree): PRB-004 114/114 - docs/iec62304/records/releases/RELEASE-2026-10-30_*."
+    },
+    "RC-080": {
+      "description": "Self-registration off by default; enabled only by SELF_REGISTRATION_ENABLED and never on a production server; while off POST /auth/register answers 404 and creates nothing; GET /auth/registration states the policy; the sign-in page shows the Register tab only when the server says it is on (fail closed) and otherwise says an administrator creates accounts",
+      "hazard": "HAZ-010",
+      "status": "implemented",
+      "implementation": "backend/app/security/registration_policy.py; backend/app/api/routes/authentication.py (register dependency); backend/app/api/routes/auth.py (/registration); backend/app/core/config.py (SELF_REGISTRATION_ENABLED); frontend/src/services/registrationPolicy.ts; frontend/src/pages/LoginPage.tsx",
+      "tests": [
+        "tests/unit/test_prb020_self_registration_and_accounts.py",
+        "frontend/src/pages/LoginPage.prb020.test.tsx",
+        "tests/unit/test_prb020_review1_findings.py"
+      ],
+      "requirement": "REQ-SEC-030, REQ-SEC-031, REQ-REG-010",
+      "change": "PRB-020..PRB-026 (DRAFT, N. G. Bonilla Vargas — approved 2026-10-30 (PR #70); branch fix/platform-security-findings-prb020; not merged, not deployed)",
+      "negative_control": "Re-executed 2026-10-28 after the re-review of PR #70 (VF7, the sign-in subtitle, executed alone with --only; the other 98 from the full run of the same day) by scripts/safety/prb020_negative_controls.py on 357698c (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 8 of 8 mutations for this control detected (F1, F2, F3, R1, R2, R3, R4, V20); whole run 99 of 99. Failing-first records: PRB-020_tests_on_base_2026-10-28.json (main @ 70cc5c7), PRB-020_review1_tests_on_7de9334_2026-10-28.json, PRB-020_review2_tests_on_570d78f_2026-10-28.json and PRB-020_review2_tests_on_7de9334_2026-10-28.json (all under docs/iec62304/records/risk_verification/).",
+      "note": "PRB-020. Existing self-registered accounts in production are not touched (owner review, PRB-020 §7). Production not contacted. Review of PR #70 (m4): only ENVIRONMENT development/local/test/testing counts as non-production (fail closed)."
+    },
+    "RC-081": {
+      "description": "Accounts created by an administrator (POST /auth/users, USER_CREATE) with an explicit role; the creator recorded; duplicates checked against the persistent user store",
+      "hazard": "HAZ-010",
+      "status": "implemented",
+      "implementation": "backend/app/api/routes/auth.py (create_user); backend/app/security/auth.py (register_user)",
+      "tests": [
+        "tests/unit/test_prb020_self_registration_and_accounts.py",
+        "tests/unit/test_prb020_review1_findings.py",
+        "tests/unit/test_prb020_review2_findings.py"
+      ],
+      "requirement": "REQ-SEC-031",
+      "change": "PRB-020..PRB-026 (DRAFT, N. G. Bonilla Vargas — approved 2026-10-30 (PR #70); branch fix/platform-security-findings-prb020; not merged, not deployed)",
+      "negative_control": "Re-executed 2026-10-28 after the re-review of PR #70 (VF7, the sign-in subtitle, executed alone with --only; the other 98 from the full run of the same day) by scripts/safety/prb020_negative_controls.py on 357698c (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 9 of 9 mutations for this control detected (R5, R6, S3, V12, V13, V14, V21, V22, W8); whole run 99 of 99. Failing-first records: PRB-020_tests_on_base_2026-10-28.json (main @ 70cc5c7), PRB-020_review1_tests_on_7de9334_2026-10-28.json, PRB-020_review2_tests_on_570d78f_2026-10-28.json and PRB-020_review2_tests_on_7de9334_2026-10-28.json (all under docs/iec62304/records/risk_verification/).",
+      "note": "PRB-020. API only (no user-management page); no invitation or e-mail verification. Review of PR #70 (m1, m8): audit names the acting administrator and /auth/users, privileged event for an admin account; a refused password answers 400 and is neither returned nor logged. Re-review of PR #70 (R4, R5): sign-in and change-password leak regressions tested; an unexpected error returns the generic message only."
+    },
+    "RC-082": {
+      "description": "Patient list and search return to a non-administrator only the patients of the caller's active care-team assignments; administrator: every record; unreadable assignments: 503",
+      "hazard": "HAZ-010",
+      "status": "implemented",
+      "implementation": "backend/app/api/routes/patients.py (_listing_scope, list_patients, search_patients); backend/app/services/patient_service_firestore.py (allowed_ids, _scoped_docs)",
+      "tests": [
+        "tests/unit/test_prb021_patient_scope_creator_counts.py",
+        "frontend/src/pages/PatientsPage.prb021.test.tsx"
+      ],
+      "requirement": "REQ-SEC-032 (REQ-SEC-014)",
+      "change": "PRB-020..PRB-026 (DRAFT, N. G. Bonilla Vargas — approved 2026-10-30 (PR #70); branch fix/platform-security-findings-prb020; not merged, not deployed)",
+      "negative_control": "Re-executed 2026-10-28 after the re-review of PR #70 (VF7, the sign-in subtitle, executed alone with --only; the other 98 from the full run of the same day) by scripts/safety/prb020_negative_controls.py on 357698c (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 11 of 11 mutations for this control detected (P1, P2, P3, P4, P5, P6, P7, VF1, VF2, VF3, VF4); whole run 99 of 99. Failing-first records: PRB-020_tests_on_base_2026-10-28.json (main @ 70cc5c7), PRB-020_review1_tests_on_7de9334_2026-10-28.json, PRB-020_review2_tests_on_570d78f_2026-10-28.json and PRB-020_review2_tests_on_7de9334_2026-10-28.json (all under docs/iec62304/records/risk_verification/).",
+      "note": "PRB-021. Whether the registry was read in production by self-registered accounts is unknown (owner/DPO; production not contacted). Review of PR #70 (M3): a non-administrator's empty list says no patient is assigned, without a create invitation; tile 'assigned to you'."
+    },
+    "RC-083": {
+      "description": "The non-administrator creator of a patient is recorded on its care team at creation (attending, granted by the creator; a failure is reported); the access check reads the record's provenance and the record's assignments so the denial reason is the true one",
+      "hazard": "HAZ-010",
+      "status": "implemented",
+      "implementation": "backend/app/api/routes/patients.py (create_patient); backend/app/models/patient_schemas.py (created_by, exclude=True); backend/app/services/patient_service_firestore.py; backend/app/security/patient_access.py (patient_assignments); backend/app/security/patient_access_dependency.py",
+      "tests": [
+        "tests/unit/test_prb021_patient_scope_creator_counts.py",
+        "tests/unit/test_prb021_backfill_creator_care_team.py",
+        "tests/unit/test_prb020_review2_findings.py"
+      ],
+      "requirement": "REQ-SEC-033 (REQ-SEC-017, REQ-SEC-018)",
+      "change": "PRB-020..PRB-026 (DRAFT, N. G. Bonilla Vargas — approved 2026-10-30 (PR #70); branch fix/platform-security-findings-prb020; not merged, not deployed)",
+      "negative_control": "Re-executed 2026-10-28 after the re-review of PR #70 (VF7, the sign-in subtitle, executed alone with --only; the other 98 from the full run of the same day) by scripts/safety/prb020_negative_controls.py on 357698c (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 20 of 20 mutations for this control detected (C1, C2, C3, C4, C5, C6, C7, V10, V11, V6, V7, V8, V9, W1, W2, W3, W4, W5, W6, W7); whole run 99 of 99. Failing-first records: PRB-020_tests_on_base_2026-10-28.json (main @ 70cc5c7), PRB-020_review1_tests_on_7de9334_2026-10-28.json, PRB-020_review2_tests_on_570d78f_2026-10-28.json and PRB-020_review2_tests_on_7de9334_2026-10-28.json (all under docs/iec62304/records/risk_verification/).",
+      "note": "PRB-023. Creators of records created before the fix are not assigned (no backfill; owner decision). Review of PR #70 (M3): owner-run backfill scripts/owner/prb021_backfill_creator_care_team.py, tested offline only; never run by the agent. Re-review of PR #70 (R1-R3): the backfill acts only on brain-mri-476110; accounts active only when marked so; each row id in the backup before the row; unique backup names; undo by basis documented."
+    },
+    "RC-084": {
+      "description": "Administrator account management reads the persistent user store (list, read, change, delete); an account the store did not accept is not created; sign-in lockout stored without overwriting the password hash",
+      "hazard": "HAZ-010",
+      "status": "implemented",
+      "implementation": "backend/app/security/auth.py (list_users, get_user_by_id, update_user, delete_user, register_user, _persist_login_state); backend/app/api/routes/auth.py (404 for an unknown account)",
+      "tests": [
+        "tests/unit/test_prb020_self_registration_and_accounts.py",
+        "tests/unit/test_prb020_review1_findings.py",
+        "tests/unit/test_prb020_review2_findings.py"
+      ],
+      "requirement": "REQ-SEC-034",
+      "change": "PRB-020..PRB-026 (DRAFT, N. G. Bonilla Vargas — approved 2026-10-30 (PR #70); branch fix/platform-security-findings-prb020; not merged, not deployed)",
+      "negative_control": "Re-executed 2026-10-28 after the re-review of PR #70 (VF7, the sign-in subtitle, executed alone with --only; the other 98 from the full run of the same day) by scripts/safety/prb020_negative_controls.py on 357698c (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 11 of 11 mutations for this control detected (S1, S2, S4, S5, S6, V15, V16, V17, V18, V19, W9); whole run 99 of 99. Failing-first records: PRB-020_tests_on_base_2026-10-28.json (main @ 70cc5c7), PRB-020_review1_tests_on_7de9334_2026-10-28.json, PRB-020_review2_tests_on_570d78f_2026-10-28.json and PRB-020_review2_tests_on_7de9334_2026-10-28.json (all under docs/iec62304/records/risk_verification/).",
+      "note": "PRB-024. Also run by the controls: tests/security/test_authentication.py::TestAccountLockout (existing). The role and the active flag travel in the access token; a change takes effect at the next sign-in. Review of PR #70 (m2, m3): every profile save keeps the stored hash and history or writes nothing; a deletion the store refused answers 503. Re-review of PR #70 (R6): profile saves read the password from the store only and refuse otherwise."
+    },
+    "RC-085": {
+      "description": "Deleted studies (cancelled, entered-in-error) and deleted documents are neither listed nor counted unless asked for by status; each study states its saved segmentations (zone maps excluded) or that the count is unknown; permanent study deletion is administrator-only",
+      "hazard": "HAZ-009",
+      "status": "implemented",
+      "implementation": "backend/app/services/study_service_firestore.py (search_studies, list_patient_studies, _segmentation_count); backend/app/services/patient_service_firestore.py (_active_study_count, _active_document_count); backend/app/api/routes/studies.py (hard_delete); frontend/src/components/StudyCard.tsx; frontend/src/components/PatientCard.tsx",
+      "tests": [
+        "tests/unit/test_prb021_patient_scope_creator_counts.py",
+        "frontend/src/components/StudyCard.prb025.test.tsx",
+        "tests/unit/test_prb020_review1_findings.py",
+        "frontend/src/pages/PatientsPage.prb021.test.tsx"
+      ],
+      "requirement": "REQ-FUNC-110",
+      "change": "PRB-020..PRB-026 (DRAFT, N. G. Bonilla Vargas — approved 2026-10-30 (PR #70); branch fix/platform-security-findings-prb020; not merged, not deployed)",
+      "negative_control": "Re-executed 2026-10-28 after the re-review of PR #70 (VF7, the sign-in subtitle, executed alone with --only; the other 98 from the full run of the same day) by scripts/safety/prb020_negative_controls.py on 357698c (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 17 of 17 mutations for this control detected (F6, F7, F8, K1, K2, K3, K4, K5, K6, K7, V1, V23, V2, V3, V4, V5, VF5); whole run 99 of 99. Failing-first records: PRB-020_tests_on_base_2026-10-28.json (main @ 70cc5c7), PRB-020_review1_tests_on_7de9334_2026-10-28.json, PRB-020_review2_tests_on_570d78f_2026-10-28.json and PRB-020_review2_tests_on_7de9334_2026-10-28.json (all under docs/iec62304/records/risk_verification/).",
+      "note": "PRB-025. Also HAZ-010 (permanent deletion). Review of PR #70 (M1, M2, m5, m6): series and image deletion need IMAGE_DELETE; cancelling a study (DELETE or PUT status) needs PATIENT_UPDATE; tiles show a dash for unknown counts; page counts concurrent."
+    },
+    "RC-086": {
+      "description": "The sign-in page and the translation files make no MFA, NIST AAL, data-residency, HIPAA, ISO 27001 or TLS-version claim",
+      "hazard": "HAZ-010",
+      "status": "implemented",
+      "implementation": "frontend/src/pages/LoginPage.tsx; frontend/src/i18n/locales/{en,es,de}.json; documents corrected per PRB-022",
+      "tests": [
+        "frontend/src/pages/LoginPage.prb020.test.tsx",
+        "frontend/src/pages/LoginPage.prb022.review1.test.tsx"
+      ],
+      "requirement": "REQ-REG-011",
+      "change": "PRB-020..PRB-026 (DRAFT, N. G. Bonilla Vargas — approved 2026-10-30 (PR #70); branch fix/platform-security-findings-prb020; not merged, not deployed)",
+      "negative_control": "Re-executed 2026-10-28 after the re-review of PR #70 (VF7, the sign-in subtitle, executed alone with --only; the other 98 from the full run of the same day) by scripts/safety/prb020_negative_controls.py on 357698c (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 4 of 4 mutations for this control detected (F4, F5, VF6, VF7); whole run 99 of 99. Failing-first records: PRB-020_tests_on_base_2026-10-28.json (main @ 70cc5c7), PRB-020_review1_tests_on_7de9334_2026-10-28.json, PRB-020_review2_tests_on_570d78f_2026-10-28.json and PRB-020_review2_tests_on_7de9334_2026-10-28.json (all under docs/iec62304/records/risk_verification/).",
+      "note": "PRB-022. Labelling control; documents by inspection; open claims listed in PRB-022 rows 10-15. HAZ-010 given as context (claims about access security). Review of PR #70 (m7): IEC 62304 badge removed; README IEC 81001-5-1 claim corrected (inspection)."
+    },
+    "RC-087": {
+      "description": "One patient-initials rule (given + family name) in every view, the list item carrying the name parts; every text of the 2D viewer, the provenance badges and the CALM-MS panel from the translation files (en/es/de)",
+      "hazard": "HAZ-009",
+      "status": "implemented",
+      "implementation": "frontend/src/utils/patientDisplay.ts; frontend/src/components/PatientCard.tsx, PatientBanner.tsx, viewer/SegmentationRow.tsx, NiivueViewer2D.tsx, ImageViewer2D.tsx, ViewerControls.tsx, ConformalPanel.tsx; locale files; backend/app/models/patient_schemas.py (PatientSummary name parts)",
+      "tests": [
+        "tests/unit/test_prb021_patient_scope_creator_counts.py",
+        "frontend/src/components/patientInitials.prb026.test.tsx",
+        "frontend/src/components/i18nStrings.prb026.test.tsx"
+      ],
+      "requirement": "REQ-UI-010, REQ-UI-011",
+      "change": "PRB-020..PRB-026 (DRAFT, N. G. Bonilla Vargas — approved 2026-10-30 (PR #70); branch fix/platform-security-findings-prb020; not merged, not deployed)",
+      "negative_control": "Re-executed 2026-10-28 after the re-review of PR #70 (VF7, the sign-in subtitle, executed alone with --only; the other 98 from the full run of the same day) by scripts/safety/prb020_negative_controls.py on 357698c (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 11 of 11 mutations for this control detected (A2, F10, F11, F12, F16, F17, F18, F19, F20, F21, F9); whole run 99 of 99. Failing-first records: PRB-020_tests_on_base_2026-10-28.json (main @ 70cc5c7), PRB-020_review1_tests_on_7de9334_2026-10-28.json, PRB-020_review2_tests_on_570d78f_2026-10-28.json and PRB-020_review2_tests_on_7de9334_2026-10-28.json (all under docs/iec62304/records/risk_verification/).",
+      "note": "PRB-026 (B, C). Also HAZ-001 (provenance badge). es/de wording not reviewed by native speakers."
+    },
+    "RC-088": {
+      "description": "The server records the authenticated creator of a segmentation (the request cannot set it); the viewer shows that author or 'Author not recorded', never a placeholder",
+      "hazard": "HAZ-010",
+      "status": "implemented",
+      "implementation": "backend/app/services/segmentation_service.py; backend/app/models/schemas.py (SegmentationMetadata.created_by); frontend/src/utils/segmentationAuthor.ts; frontend/src/hooks/useSegmentationData.ts; frontend/src/components/SegmentationPanel.tsx, SegmentationList.tsx",
+      "tests": [
+        "tests/unit/test_prb021_patient_scope_creator_counts.py",
+        "frontend/src/hooks/useSegmentationData.prb026.test.tsx",
+        "tests/unit/test_prb020_review1_findings.py"
+      ],
+      "requirement": "REQ-FUNC-111",
+      "change": "PRB-020..PRB-026 (DRAFT, N. G. Bonilla Vargas — approved 2026-10-30 (PR #70); branch fix/platform-security-findings-prb020; not merged, not deployed)",
+      "negative_control": "Re-executed 2026-10-28 after the re-review of PR #70 (VF7, the sign-in subtitle, executed alone with --only; the other 98 from the full run of the same day) by scripts/safety/prb020_negative_controls.py on 357698c (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 5 of 5 mutations for this control detected (A1, F13, F14, F15, V24); whole run 99 of 99. Failing-first records: PRB-020_tests_on_base_2026-10-28.json (main @ 70cc5c7), PRB-020_review1_tests_on_7de9334_2026-10-28.json, PRB-020_review2_tests_on_570d78f_2026-10-28.json and PRB-020_review2_tests_on_7de9334_2026-10-28.json (all under docs/iec62304/records/risk_verification/).",
+      "note": "PRB-026 (A)."
+    },
+    "RC-089": {
+      "description": "Searching the connected PACS by patient name, id or birth date and importing from it need IMAGE_UPLOAD (technician, radiologist, administrator); a viewer is refused before the PACS is contacted",
+      "hazard": "HAZ-010",
+      "status": "implemented",
+      "implementation": "backend/app/api/routes/dicomweb.py (_importer on search/studies, search/series, import)",
+      "tests": [
+        "tests/unit/test_prb020_review1_findings.py"
+      ],
+      "requirement": "REQ-SEC-035",
+      "change": "PRB-027 (review of PR #70; DRAFT, N. G. Bonilla Vargas — approved 2026-10-30 (PR #70); branch fix/platform-security-findings-prb020; not merged, not deployed)",
+      "negative_control": "Re-executed 2026-10-28 after the re-review of PR #70 (VF7, the sign-in subtitle, executed alone with --only; the other 98 from the full run of the same day) by scripts/safety/prb020_negative_controls.py on 357698c (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 3 of 3 mutations for this control detected (V25, V26, V27); whole run 99 of 99. Failing-first records: PRB-020_tests_on_base_2026-10-28.json (main @ 70cc5c7), PRB-020_review1_tests_on_7de9334_2026-10-28.json, PRB-020_review2_tests_on_570d78f_2026-10-28.json and PRB-020_review2_tests_on_7de9334_2026-10-28.json (all under docs/iec62304/records/risk_verification/).",
+      "note": "PRB-027 part A. Technicians and radiologists still search the whole PACS (inherent to import); PACS searches are not audited (proposed). Part B (MRN conflict signal) recorded, not changed."
     }
   },
   "unverified_controls_note": [

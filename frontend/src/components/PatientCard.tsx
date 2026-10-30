@@ -13,6 +13,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import type { Patient, MedicalHistory } from '@/types';
+import { patientInitials } from '@/utils/patientDisplay';
 
 interface PatientCardProps {
   patient: Patient;
@@ -40,20 +41,12 @@ const calculateAge = (birthDate: string): number => {
   return age;
 };
 
-// Get initials from full_name or given_name/family_name
-const getInitials = (patient: Patient): string => {
-  if (patient.given_name && patient.family_name) {
-    return `${patient.given_name[0]}${patient.family_name[0]}`.toUpperCase();
-  }
-  if (patient.full_name) {
-    const parts = patient.full_name.trim().split(/\s+/);
-    if (parts.length >= 2) {
-      return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-    }
-    return patient.full_name.substring(0, 2).toUpperCase();
-  }
-  return '??';
-};
+// PRB-026: one initials rule for every view (utils/patientDisplay). This card used the first and LAST word of
+// the full name ("Demo Patient (public data)" -> "DD") while the record page showed "DP".
+const getInitials = (patient: Patient): string => patientInitials(patient);
+
+// PRB-025: a count the server could not compute is shown as a dash, never as a 0 nobody counted.
+const countText = (n?: number | null): string => (typeof n === 'number' && Number.isFinite(n) ? String(n) : '—');
 
 // Get display name
 const getDisplayName = (patient: Patient): string => {
@@ -247,11 +240,11 @@ export default function PatientCard({
         </div>
         <div>
           <div style={{ fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>{t('patient.studies')}</div>
-          <div style={{ fontSize: 17, fontWeight: 700, color: '#E7EBF2' }}>{patient.study_count ?? 0}</div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: '#E7EBF2' }}>{countText(patient.study_count)}</div>
         </div>
         <div>
           <div style={{ fontSize: 11, color: '#767E8E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>{t('patient.documents')}</div>
-          <div style={{ fontSize: 17, fontWeight: 700, color: '#E7EBF2' }}>{patient.document_count ?? 0}</div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: '#E7EBF2' }}>{countText(patient.document_count)}</div>
         </div>
       </div>
 

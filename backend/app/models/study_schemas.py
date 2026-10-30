@@ -134,6 +134,8 @@ class StudySummary(BaseModel):
     series_count: Optional[int] = None
     instance_count: Optional[int] = None
     total_size_bytes: Optional[int] = None
+    # PRB-025: saved segmentations of the study's images (MAGNIMS zone maps excluded); None = not counted.
+    segmentation_count: Optional[int] = None
 
     model_config = {"from_attributes": True}
 

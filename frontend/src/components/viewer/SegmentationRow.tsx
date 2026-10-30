@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, Eye, EyeOff, Loader2, Trash2 } from 'lucide-react';
 import type { SegOrigin } from '../../utils/segmentationList';
 
@@ -11,21 +12,23 @@ type Accent = 'emerald' | 'purple';
  * warning and labelled research-only; `zonemap`/`manual` render no badge (the zone
  * map has its own emerald identity; manual is the unremarkable default).
  */
-const PROVENANCE: Partial<Record<SegOrigin, { label: string; title: string; cls: string }>> = {
+// PRB-026: the badge text was written in Spanish into the code and shown in every interface language. It is
+// translated now (provenance.* in en/es/de); the English text here is only the fallback.
+const PROVENANCE: Partial<Record<SegOrigin, { key: string; label: string; title: string; cls: string }>> = {
   expert: {
-    label: 'Experto', title: 'Human expert ground truth',
+    key: 'expert', label: 'Expert', title: 'Human expert ground truth',
     cls: 'text-emerald-300 bg-emerald-900/50 border border-emerald-700/50',
   },
   ai: {
-    label: 'IA', title: 'Automatic segmentation (validated tool)',
+    key: 'ai', label: 'AI', title: 'Automatic segmentation (validated tool)',
     cls: 'text-cyan-300 bg-cyan-900/40 border border-cyan-700/50',
   },
   'ai-legacy': {
-    label: 'IA · investigación', title: 'Legacy AI segmenter — research only (over-segments; precision 0.22)',
+    key: 'aiLegacy', label: 'AI · research', title: 'Legacy AI segmenter — research only (over-segments; precision 0.22)',
     cls: 'text-amber-300 bg-amber-900/40 border border-amber-700/60',
   },
   unknown: {
-    label: 'Sin verificar', title: 'Unverified provenance — origin recorded but not a recognised validated tool',
+    key: 'unknown', label: 'Unverified', title: 'Unverified provenance — origin recorded but not a recognised validated tool',
     cls: 'text-gray-300 bg-gray-700/50 border border-gray-600',
   },
 };
@@ -78,6 +81,7 @@ export function SegmentationRow({
   name, icon: Icon, accent, highlighted, expanded, overlayOn, isDeleting, origin,
   onRowClick, onToggleOverlay, onDelete,
 }: SegmentationRowProps) {
+  const { t } = useTranslation();
   const a = ACCENTS[accent];
   const prov = origin ? PROVENANCE[origin] : undefined;
   return (
@@ -97,9 +101,9 @@ export function SegmentationRow({
         {prov && (
           <span
             className={`flex-shrink-0 text-[9px] leading-none font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded ${prov.cls}`}
-            title={prov.title}
+            title={t(`provenance.${prov.key}Title`, prov.title)}
           >
-            {prov.label}
+            {t(`provenance.${prov.key}`, prov.label)}
           </span>
         )}
         <button
@@ -107,7 +111,7 @@ export function SegmentationRow({
           className={`p-1 rounded transition-colors flex-shrink-0 ${
             overlayOn ? a.overlayOn : 'text-gray-500 hover:text-gray-300'
           }`}
-          title={overlayOn ? 'Hide overlay' : 'Show overlay'}
+          title={overlayOn ? t('viewer.hideOverlay', 'Hide overlay') : t('viewer.showOverlay', 'Show overlay')}
         >
           {overlayOn ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
         </button>

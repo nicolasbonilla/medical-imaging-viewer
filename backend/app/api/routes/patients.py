@@ -36,6 +36,31 @@ router = APIRouter(prefix="/patients", tags=["Patients"])
 logger = get_logger(__name__)
 
 
+def get_care_team_service():
+    """The care-team store (RC-026). Defined before the routes that depend on it (PRB-021, PRB-023)."""
+    from app.services.care_team_service import CareTeamService
+    return CareTeamService()
+
+
+def _listing_scope(current_user: User, care_team) -> Optional[set]:
+    """PRB-021 (REQ-SEC-014, REQ-SEC-032): which patients a list or search may return to this caller.
+
+    None for an administrator (every record, as for every object route: GRANTED_ADMIN); otherwise the ids of
+    the patients the caller holds an ACTIVE care-team assignment for — possibly none. A store that cannot be
+    read refuses the listing (503) rather than returning an empty or an unfiltered registry.
+    """
+    if current_user.role == UserRole.ADMIN:
+        return None
+    try:
+        entitlements = care_team.list_entitlements_for_user(str(current_user.id))
+    except Exception:
+        logger.error("Care-team store unavailable: patient listing refused",
+                     extra={"user_id": str(current_user.id)})
+        from fastapi import HTTPException
+        raise HTTPException(status_code=503, detail="Patient list temporarily unavailable")
+    return {e.patient_id for e in entitlements if e.user_id == str(current_user.id) and e.is_active}
+
+
 # ============================================================================
 # PATIENT CRUD ENDPOINTS
 # ============================================================================
@@ -50,7 +75,8 @@ logger = get_logger(__name__)
 async def create_patient(
     data: PatientCreate,
     service: PatientServiceFirestore = Depends(get_patient_service),
-    current_user: User = Depends(require_permission(Permission.PATIENT_CREATE))
+    current_user: User = Depends(require_permission(Permission.PATIENT_CREATE)),
+    care_team=Depends(get_care_team_service),
 ):
     """
     Create a new patient record.
@@ -71,6 +97,29 @@ async def create_patient(
     # reason this is landing now rather than waiting for the entitlement model
     # to be decided: every day without it enlarges the un-attributable set.
     patient = await service.create_patient(data, created_by=current_user.id)
+
+    # PRB-023 (REQ-SEC-033): the clinician who creates a patient record is RECORDED on its care team at
+    # creation — an explicit, attributable assignment (granted_by = the creator), not an inference from
+    # created_by at access time (REQ-SEC-014/018 stay as they are). Without it the creator's next request
+    # answered "Patient not found". An administrator is not put on a care team: administrator access is
+    # its own audited grant (GRANTED_ADMIN), and an IT administrator does not treat the patient.
+    if current_user.role != UserRole.ADMIN:
+        try:
+            care_team.assign(patient_id=str(patient.id), user_id=str(current_user.id),
+                             role_in_care="attending", granted_by=str(current_user.id))
+        except Exception as e:
+            logger.error(
+                "Patient created but the creator's care-team assignment was not recorded",
+                extra={"patient_id": str(patient.id), "user_id": str(current_user.id),
+                       "error_type": type(e).__name__},
+            )
+            from fastapi import HTTPException
+            raise HTTPException(
+                status_code=500,
+                detail=(f"The patient record was created (id {patient.id}), but your access to it could not "
+                        "be recorded on its care team. Ask an administrator to add you to the care team; do "
+                        "not create the patient again."),
+            )
     return patient
 
 
@@ -85,17 +134,21 @@ async def list_patients(
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     status: Optional[PatientStatus] = Query(None, description="Filter by status"),
     service: PatientServiceFirestore = Depends(get_patient_service),
-    current_user: User = Depends(require_permission(Permission.PATIENT_VIEW))
+    current_user: User = Depends(require_permission(Permission.PATIENT_VIEW)),
+    care_team=Depends(get_care_team_service),
 ):
     """
-    List all patients with pagination.
+    List the patients the caller may access, with pagination.
 
-    Required permissions: PATIENT_VIEW
+    Required permissions: PATIENT_VIEW. PRB-021 (REQ-SEC-014, REQ-SEC-032): an administrator sees every record; any
+    other user only the patients of their active care-team assignments. This route returned EVERY patient
+    (name, record number, birth date, sex) to every signed-in user.
     """
     patients, total = await service.list_patients(
         page=page,
         page_size=page_size,
-        status=status.value if status else None
+        status=status.value if status else None,
+        allowed_ids=_listing_scope(current_user, care_team),
     )
 
     total_pages = (total + page_size - 1) // page_size
@@ -128,14 +181,17 @@ async def search_patients(
     sort_by: str = Query("family_name", description="Sort field"),
     sort_order: str = Query("asc", pattern="^(asc|desc)$", description="Sort order"),
     service: PatientServiceFirestore = Depends(get_patient_service),
-    current_user: User = Depends(require_permission(Permission.PATIENT_VIEW))
+    current_user: User = Depends(require_permission(Permission.PATIENT_VIEW)),
+    care_team=Depends(get_care_team_service),
 ):
     """
-    Search patients with filters and pagination.
+    Search the patients the caller may access, with filters and pagination.
 
-    Required permissions: PATIENT_VIEW
+    Required permissions: PATIENT_VIEW. PRB-021 (REQ-SEC-014, REQ-SEC-032): scoped like the list — an administrator
+    searches every record, any other user only the patients of their active care-team assignments.
 
-    Supports full-text search on name, MRN, and email.
+    Filters applied: exact MRN, family-name prefix, gender, status. `query`, `given_name` and `city` are
+    accepted but not applied (no full-text search exists; this docstring claimed one).
     """
     search = PatientSearch(
         query=query,
@@ -151,7 +207,7 @@ async def search_patients(
         sort_order=sort_order
     )
 
-    patients, total = await service.search_patients(search)
+    patients, total = await service.search_patients(search, allowed_ids=_listing_scope(current_user, care_team))
     total_pages = (total + page_size - 1) // page_size
 
     return PatientListResponse(
@@ -405,10 +461,8 @@ async def update_medical_history(
 # =============================================================================
 from pydantic import BaseModel, Field as PydField  # noqa: E402
 from app.services.care_team_service import CareTeamService, VALID_CARE_ROLES  # noqa: E402
-
-
-def get_care_team_service() -> CareTeamService:
-    return CareTeamService()
+# get_care_team_service is defined at the top of this module (PRB-021/PRB-023 use it in the list,
+# search and create routes, which are declared before this section).
 
 
 class CareTeamAssignRequest(BaseModel):

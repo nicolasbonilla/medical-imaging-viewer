@@ -312,6 +312,14 @@ class SegmentationMetadata(BaseModel):
                      "also in the server log). Written by the server only; returned to radiologists and "
                      "administrators only (second review of PR #68, N5)."),
     )
+    created_by: Optional[str] = Field(
+        None,
+        description=(
+            "Username of the authenticated user who created the segmentation, set by the server at creation "
+            "(PRB-026); never taken from the request. Absent on segmentations created before it was recorded "
+            "and on ones written by tools or scripts — the viewer then says 'Author not recorded'."
+        ),
+    )
 
 
 class PaintStroke(BaseModel):

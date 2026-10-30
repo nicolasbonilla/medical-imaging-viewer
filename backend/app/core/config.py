@@ -225,6 +225,14 @@ class Settings(BaseSettings):
     # reader study, PCCP) is NOT yet complete, so the endpoint stays dark until enabled.
     CALM_MS_RESEARCH_ENABLED: bool = Field(default=False)
 
+    # Self-registration (PRB-020, REQ-SEC-030/031) — default OFF. Accounts are created by an
+    # administrator (POST /api/v1/auth/users). When true, POST /api/v1/auth/register creates a VIEWER
+    # account for anyone who can reach the server; it is IGNORED unless ENVIRONMENT is development, local, test or testing
+    # (app.security.registration_policy): offering a device that is not CE-marked to anyone who signs up
+    # can count as "making available" under EU MDR arts. 2(27), 6. Turning it on in production needs a
+    # code change, a code review and the owner's regulatory decision.
+    SELF_REGISTRATION_ENABLED: bool = Field(default=False)
+
     # Longitudinal TP2->TP1 registration "verified change" flip (REQ-FUNC-LONG-010) —
     # INVESTIGATIONAL. Default OFF and PERMANENTLY blocked on in-hand data: the registration
     # service runs in SHADOW (truthfully co-registered overlay; registration_verified stays

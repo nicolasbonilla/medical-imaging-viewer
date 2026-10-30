@@ -18,6 +18,7 @@ import type { AIProvenance, PaintStroke, ImageShape, Segmentation, SegmentationR
 import type { ImportDraftResult } from '@/store/useSegmentationStore';
 import { isAiSegmentation, provenanceRecorded } from '@/services/flames/draft';
 import { distinctMaskValues } from '@/utils/drawnLabels';
+import { recordedAuthor } from '@/utils/segmentationAuthor';
 
 interface UseSegmentationDataProps {
   /** Called when a paint stroke completes - receives the slice index for cache management */
@@ -134,7 +135,8 @@ export function useSegmentationData({
           progress_percentage: progressPct,
           slices_annotated: slicesAnnotated,
           total_slices: totalSlices,
-          created_by: 'current_user',
+          // PRB-026: the author the server recorded (never a placeholder); '' = not recorded.
+          created_by: recordedAuthor(currentSegmentation.metadata),
           labels,
           created_at: currentSegmentation.metadata?.created_at || new Date().toISOString(),
           modified_at: currentSegmentation.metadata?.modified_at || new Date().toISOString(),

@@ -54,6 +54,8 @@ import {
 import { maskLabelColormap } from '@/utils/maskLabelColormap';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+// PRB-026: marker for 'the volume could not be loaded' without a message; shown in the interface language.
+const LOAD_FAILED = '__volume_load_failed__';
 
 async function fetchBuffer(url: string): Promise<ArrayBuffer> {
   // CAPA-015 RC-069: bearer token + silent refresh / re-login on 401 (never a lost session).
@@ -234,7 +236,7 @@ export function NiivueViewer2D({ hasUnsavedEdits = false }: NiivueViewer2DProps 
         applyWindowLevel(nv);
         applySlice(nv);
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : 'No se pudo cargar el volumen');
+        if (!cancelled) setError(e instanceof Error && e.message ? e.message : LOAD_FAILED);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -308,12 +310,12 @@ export function NiivueViewer2D({ hasUnsavedEdits = false }: NiivueViewer2DProps 
       <canvas key={`${fileId ?? 'x'}:${overlaySegId ?? 'x'}:${labelsKey}`} ref={canvasRef} className="h-full w-full" />
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center text-xs text-gray-300">
-          Cargando volumen…
+          {t('viewer.loadingVolume', 'Loading volume…')}
         </div>
       )}
       {error && (
         <div className="absolute inset-x-0 bottom-0 bg-red-900/70 px-2 py-1 text-[11px] text-red-100">
-          {error}
+          {error === LOAD_FAILED ? t('viewer.volumeLoadFailed', 'The volume could not be loaded') : error}
         </div>
       )}
       {maskNotShown && (
@@ -337,7 +339,7 @@ export function NiivueViewer2D({ hasUnsavedEdits = false }: NiivueViewer2DProps 
       {/* Honest, non-dismissible mode note (bottom-left, clear of the z-20 patient-identity
           safety overlay): this is a fast-W/L viewing mode, not an editor. */}
       <div className="pointer-events-none absolute bottom-2 left-2 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-gray-300">
-        W/L GPU · solo visualización (para pintar, usa el modo estándar)
+        {t('viewer.niivueViewOnly', 'W/L GPU · view only (to paint, use the standard mode)')}
       </div>
     </div>
   );

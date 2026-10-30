@@ -412,6 +412,8 @@ export interface SegmentationMetadata {
   ai_provenance?: AIProvenance | null;
   /** PRB-003 (RC-071): a radiologist's confirmation of a segmentation without AI provenance, bound to the saved mask. */
   clinician_review?: ClinicianReview | null;
+  /** PRB-026: username of the authenticated user who created it, recorded by the server; absent = not recorded. */
+  created_by?: string | null;
 }
 
 /** PRB-003 (RC-071): set only by the server's review/confirm route; removed by any later change of the mask. */

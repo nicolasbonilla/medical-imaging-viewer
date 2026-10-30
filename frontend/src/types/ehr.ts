@@ -59,6 +59,9 @@ export interface PatientSummary {
   id: string;
   mrn: string;
   full_name: string;
+  /** PRB-026: the list item carries the name parts so every view derives the same initials. */
+  given_name?: string;
+  family_name?: string;
   birth_date: string;
   gender: Gender;
   status: PatientStatus;
@@ -161,6 +164,8 @@ export interface StudySummary {
   series_count?: number;
   instance_count?: number;
   total_size_bytes?: number;
+  /** PRB-025: saved segmentations of the study's images (zone maps excluded); absent/null = not counted. */
+  segmentation_count?: number | null;
 }
 
 export interface StudyCreate {

@@ -150,7 +150,7 @@ This ISMS covers:
 | A.8.2 | Privileged access rights | Admin role requires explicit assignment, CODEOWNERS for Class C modules | 5.3.3 | IMPLEMENTED |
 | A.8.3 | Information access restriction | RBAC with 15 permissions, API endpoint auth on 100% of mutating endpoints | 5.3.3 | IMPLEMENTED |
 | A.8.4 | Access to source code | Private GitHub repository, CODEOWNERS for Class C, branch protection | 5.3.3 | IMPLEMENTED |
-| A.8.5 | Secure authentication | Firebase Auth + JWT + WebAuthn/Passkeys (FIDO2), Argon2id password hashing | 5.3.2 | IMPLEMENTED |
+| A.8.5 | Secure authentication | Password (Argon2id) + JWT; optional WebAuthn passkeys; no second factor enforced; accounts created by an administrator, self-registration off (PRB-020, PRB-022). *Corrected 2026-10-28 (PRB-022): "Firebase Auth" is not used for sign-in* | 5.3.2 | IMPLEMENTED (single factor) — RE-ASSESSMENT PENDING (owner) |
 | A.8.7 | Protection against malware | Pydantic input validation, file type verification (NIfTI/DICOM only) | 5.3.10 | IMPLEMENTED |
 | A.8.8 | Management of technical vulnerabilities | npm audit + pip-audit in CI, QMS SOUP Monitor with NVD CVE scanning | 5.3.12 | IMPLEMENTED |
 | A.8.9 | Configuration management | IEC 62304 Configuration Management Plan (CMP-001), Git version control | 5.3.11 | IMPLEMENTED |
@@ -198,7 +198,7 @@ This table demonstrates how ISO 27001 controls provide evidence for IEC 81001-5-
 | EU MDR Annex I | IEC 81001-5-1 Clause | ISO 27001 Controls | MSTool-AI Evidence |
 |----------------|---------------------|--------------------|--------------------|
 | 17.2(a) Cybersecurity measures | 5.3.1 Security risk management | A.5.1, A.5.8, A.8.25, A.8.26 | RMF-001, CSA-001, this document |
-| 17.2(b) Protection against unauthorized access | 5.3.2 Authentication | A.8.5 | Firebase Auth + WebAuthn + JWT |
+| 17.2(b) Protection against unauthorized access | 5.3.2 Authentication | A.8.5 | Password + JWT, optional WebAuthn passkeys; no second factor; administrator-created accounts (PRB-020, PRB-022) |
 | 17.2(b) Protection against unauthorized access | 5.3.3 Access control | A.5.2, A.8.2, A.8.3, A.8.4 | RBAC (4 roles, 15 permissions) |
 | 17.2(c) Data integrity | 5.3.5 Data protection | A.5.14, A.8.24 | TLS 1.3 + AES-256-GCM |
 | 17.2(d) Confidentiality | 5.3.6 De-identification | A.8.12, A.8.33 | Measurements only to the AI service; identifier check before sending (CAPA-014) |
