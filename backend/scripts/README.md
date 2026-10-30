@@ -517,4 +517,4 @@ pip install -r requirements.txt
 ---
 
 **Última actualización**: 2025-01-22
-**ISO 27001:2022 Compliant**
+**Controles orientados a ISO 27001:2022 — sin certificación ni auditoría externa (PRB-022, 2026-10-28)**

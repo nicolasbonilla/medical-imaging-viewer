@@ -26,6 +26,7 @@ import {
 import type { Patient } from '@/types';
 import { getStatusColor, getGenderColor, STATUS_COLORS, GENDER_COLORS } from '@/utils/medicalColors';
 import { formatDate } from '@/utils/formatDate';
+import { patientInitials } from '@/utils/patientDisplay';
 
 interface PatientBannerProps {
   patient: Patient;
@@ -182,7 +183,8 @@ function PatientBannerComponent({
           className="flex-shrink-0 bg-brand-950 border border-brand-500/30 flex items-center justify-center text-white"
           style={{ width: 36, height: 36, borderRadius: 6, fontSize: 14, fontWeight: 700 }}
         >
-          {patient.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+          {/* PRB-026: the same initials rule as the patient list (utils/patientDisplay) */}
+          {patientInitials(patient)}
         </div>
 
         {/* Name only — same weight as app name, this is a page title */}

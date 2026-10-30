@@ -21,6 +21,7 @@ import { segmentationAPI } from '@/api/segmentation';
 import { ClinicalToolsPanel } from './ClinicalToolsPanel';
 import { ConformalPanel } from './ConformalPanel';
 import { AiDraftBanner, aiStatusText } from './AiDraftBanner';
+import { recordedAuthor, authorLabel } from '@/utils/segmentationAuthor';
 import type { AIProvenance, LabelInfo, Segmentation, SegmentationResponse } from '@/types';
 
 // ============================================================================
@@ -330,7 +331,7 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
     progress_percentage: 0,
     slices_annotated: 0,
     total_slices: seg.total_slices,
-    created_by: 'current_user',
+    created_by: recordedAuthor(seg.metadata),   // PRB-026: recorded by the server; '' = not recorded
     created_at: seg.metadata?.created_at || new Date().toISOString(),
     modified_at: seg.metadata?.modified_at || new Date().toISOString(),
     label_count: seg.metadata?.labels?.filter(l => l.id !== 0).length ?? 1,
@@ -610,7 +611,7 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
-                      {activeSegmentation.created_by_name || activeSegmentation.created_by}
+                      {authorLabel(activeSegmentation, t)}
                     </p>
                     {/* REQ-SAFE-030: an AI segmentation is always labelled as such, saved or not. */}
                     {activeSegmentation.ai_provenance && (

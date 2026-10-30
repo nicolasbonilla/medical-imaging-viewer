@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/IEC_62304-Class_C-red?style=flat-square" alt="IEC 62304 Class C">
+  <img src="https://img.shields.io/badge/status-research_prototype,_not_CE--marked-orange?style=flat-square" alt="Research prototype, not CE-marked">
   <img src="https://img.shields.io/badge/QMS-AI_Powered-teal?style=flat-square" alt="QMS">
   <img src="https://img.shields.io/badge/React-18.3-61DAFB?logo=react" alt="React">
   <img src="https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi" alt="FastAPI">
@@ -25,7 +25,6 @@
   <img src="https://img.shields.io/badge/Python-3.11-3776AB?logo=python" alt="Python">
   <img src="https://img.shields.io/badge/NiiVue-0.67-blueviolet" alt="NiiVue">
   <img src="https://img.shields.io/badge/Cloud_Run-deployed-4285F4?logo=googlecloud" alt="Cloud Run">
-  <img src="https://img.shields.io/badge/HIPAA-compliant-green" alt="HIPAA">
   <img src="https://img.shields.io/badge/WebAuthn-passkeys-orange" alt="WebAuthn">
   <img src="https://img.shields.io/badge/DICOMweb-PACS-red" alt="DICOMweb">
   <img src="https://img.shields.io/badge/HL7_FHIR-R4-dc3545" alt="FHIR">
@@ -78,7 +77,7 @@ MSTool-AI addresses the gap between research-grade neuroimaging tools (FSL, Free
 
 ## 2. Quality Management System (QMS)
 
-MSTool-AI is classified as **IEC 62304 Class C** (highest safety class) medical device software, meaning a software failure could result in death or serious injury. To meet the rigorous regulatory requirements for CE Marking under the EU Medical Devices Regulation (2017/745), this project is monitored by a dedicated **AI-powered Quality Management System**.
+MSTool-AI is a **research prototype**: it is not CE-marked and is not a medical device placed on the market. Its software is developed under the IEC 62304 lifecycle with the **software safety class C** (the highest *software* safety class: a software failure could contribute to death or serious injury) — a classification of the software process, not a device class or a certification. In preparation for a possible future CE marking under the EU Medical Devices Regulation (2017/745), this project is monitored by a dedicated **AI-powered Quality Management System**.
 
 ### MSTool-AI-QMS
 
@@ -114,14 +113,14 @@ Commercial QMS solutions (Ketryx ~$50K/yr, Greenlight Guru ~$30K/yr, MasterContr
 | **EU MDR 2017/745** | Medical device regulation | Compliance scoring, incident reporting (TPL-08) |
 | **EU AI Act 2024/1689** | AI governance | AI documentation, transparency tracking |
 
-#### Current Compliance Scores (Live)
+#### QMS self-assessment scores (not a conformity assessment; no CE marking exists)
 
 | Standard | Score | Status |
 |----------|-------|--------|
 | IEC 62304 | **97.1%** | PASS |
 | ISO 13485 | **96.3%** | PASS |
 | Cybersecurity | **93.9%** | PASS |
-| CE Mark Overall | **96.6%** | PASS |
+| CE readiness (self-assessed) | **96.6%** | PASS (internal check, not a certification) |
 
 #### QMS Architecture
 
@@ -498,7 +497,7 @@ mstool-ai/
 │       ├── main.py                              # FastAPI app, lifespan, CORS
 │       ├── api/routes/
 │       │   ├── auth.py                          # Auth endpoints + WebAuthn (1200 lines)
-│       │   ├── authentication.py                # Login/register with CAPTCHA
+│       │   ├── authentication.py                # Login with CAPTCHA; register only if SELF_REGISTRATION_ENABLED (never in production)
 │       │   ├── segmentation.py                  # CRUD + analysis + comparison (2100 lines)
 │       │   ├── imaging.py                       # NIfTI serving, slice extraction
 │       │   ├── ai_segmentation.py               # Vertex AI + volumetry
@@ -607,11 +606,11 @@ mstool-ai/
 
 ## 10. Security & Compliance
 
-The security architecture satisfies **IEC 81001-5-1:2021** (mandatory for CE Marking) using **ISO 27001:2022 Annex A** as the control framework, as recommended by **MDCG 2019-16 Rev.1**. See `docs/qms/ISMS-001_Information_Security_Management.md` for the complete ISO 27001 control mapping (42 controls assessed, **95% alignment**).
+The security architecture is designed against **IEC 81001-5-1:2021** (required for CE marking) using **ISO 27001:2022 Annex A** as the control framework, as recommended by **MDCG 2019-16 Rev.1**. No conformity assessment or certification has been performed: the mapping in `docs/qms/ISMS-001_Information_Security_Management.md` (42 controls) is a self-assessment, and several of its rows are under re-assessment (PRB-022).
 
 | Layer | Mechanism | IEC 81001-5-1 | ISO 27001 |
 |-------|-----------|:-------------:|:---------:|
-| Authentication | Firebase Auth + JWT + WebAuthn/Passkeys (FIDO2) | 5.3.2 | A.8.5 |
+| Authentication | Password (Argon2id) + JWT; optional WebAuthn passkeys; no second factor enforced; accounts created by an administrator, self-registration off (PRB-020, PRB-022) | 5.3.2 | A.8.5 |
 | Access Control | RBAC with 4 roles, 15 permissions | 5.3.3 | A.5.2, A.8.3 |
 | Encryption at Rest | AES-256-GCM (user data), GCS server-side encryption | 5.3.5 | A.8.24 |
 | Encryption in Transit | TLS 1.3 enforced (Cloud Run + Firebase) | 5.3.5 | A.8.24 |

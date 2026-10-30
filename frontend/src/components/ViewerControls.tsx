@@ -119,7 +119,7 @@ export default function ViewerControls({
           </button>
           <button
             onClick={() => setRenderMode('niivue')}
-            title={t('viewer.niivueHint', 'Ventana/nivel instantáneo por GPU (solo visualización)')}
+            title={t('viewer.niivueHint', 'Instant GPU window/level (view only)')}
             className={`flex items-center justify-center transition-colors ${
               renderMode === 'niivue' ? 'bg-gray-700 text-white border border-gray-600' : 'bg-gray-800 text-gray-400 hover:bg-gray-700 border border-transparent'
             }`}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useSelfRegistrationEnabled } from '../services/registrationPolicy';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Lock, Mail, User, Eye, EyeOff, Shield, RefreshCw,
@@ -61,6 +62,9 @@ export default function LoginPage() {
   const { login, loginWithPasskey, register, isAuthenticated } = useAuth();
   const { t } = useTranslation();
   const [mode, setMode] = useState<'login' | 'register'>('login');
+  // PRB-020: the Register tab and form exist only when the server says self-registration is on.
+  const selfRegistration = useSelfRegistrationEnabled();
+  const activeMode: 'login' | 'register' = selfRegistration ? mode : 'login';
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -124,6 +128,7 @@ export default function LoginPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selfRegistration) return;   // PRB-020: never sent while the server says self-registration is off
     if (registerForm.password !== registerForm.confirm_password) { toast.error(t('auth.passwordsDoNotMatch')); return; }
     if (passwordStrength.score < 4) { toast.error(t('auth.passwordTooWeak')); return; }
     setLoading(true);
@@ -183,25 +188,35 @@ export default function LoginPage() {
               <Shield className="w-7 h-7 text-brand-400" />
             </div>
             <h1 className="text-2xl font-semibold text-ink-base mb-1 tracking-tight">MSTool-AI</h1>
+            {/* PRB-022 (coordinator finding after the re-review of PR #70): this read "AI-Powered Brain MRI Analysis ·
+                IEC 62304 Class C Medical Device" — a medical-device claim for a research prototype with no CE marking, and
+                a software safety class (IEC 62304) presented as a device class. */}
             <p className="text-ink-muted text-xs">
-              AI-Powered Brain MRI Analysis · IEC 62304 Class C Medical Device
+              {t('auth.productTagline', 'Brain MRI research prototype')}
             </p>
           </div>
 
-          {/* Mode toggle */}
-          <div className="flex gap-1 mb-5 p-1 bg-surface-base border border-surface-border rounded-lg">
-            <button onClick={() => setMode('login')}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60 ${mode === 'login' ? 'bg-brand-500 text-surface-void' : 'text-ink-muted hover:text-ink-base'}`}>
-              {t('auth.login')}
-            </button>
-            <button onClick={() => setMode('register')}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60 ${mode === 'register' ? 'bg-brand-500 text-surface-void' : 'text-ink-muted hover:text-ink-base'}`}>
-              {t('auth.register')}
-            </button>
-          </div>
+          {/* Mode toggle — only when the server allows self-registration (PRB-020). Otherwise accounts are
+              created by an administrator, and the page says so. */}
+          {selfRegistration ? (
+            <div className="flex gap-1 mb-5 p-1 bg-surface-base border border-surface-border rounded-lg">
+              <button onClick={() => setMode('login')}
+                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60 ${activeMode === 'login' ? 'bg-brand-500 text-surface-void' : 'text-ink-muted hover:text-ink-base'}`}>
+                {t('auth.login')}
+              </button>
+              <button onClick={() => setMode('register')}
+                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60 ${activeMode === 'register' ? 'bg-brand-500 text-surface-void' : 'text-ink-muted hover:text-ink-base'}`}>
+                {t('auth.register')}
+              </button>
+            </div>
+          ) : (
+            <p className="mb-5 text-center text-xs text-ink-muted">
+              {t('auth.accountsByAdministrator', 'Accounts are created by an administrator. Contact your administrator for access.')}
+            </p>
+          )}
 
           <AnimatePresence mode="wait">
-            {mode === 'login' ? (
+            {activeMode === 'login' ? (
               <motion.form key="login" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.3 }} onSubmit={handleLogin} className="space-y-4">
 
@@ -387,15 +402,17 @@ export default function LoginPage() {
             )}
           </AnimatePresence>
 
-          {/* Security badges — research-backed per HIPAA 2026 + IEC 62304 + ISO 27001 */}
+          {/* PRB-022: only facts the device can back. Removed: "HIPAA 2026", "ISO 27001 2022" (no assessment or
+              certification exists), "TLS 1.3" (the minimum version is not enforced: REQ-SEC-001 says TLS 1.2 or
+              higher) and the footer "MFA enforced · NIST SP 800-63B AAL2 · Data never leaves your jurisdiction"
+              (sign-in is password-only, passkeys optional; nothing enforces a second factor; the AI report service
+              is outside the user's jurisdiction). */}
           <div className="mt-6 pt-5 border-t border-white/[0.08]">
             <div className="flex items-center justify-center gap-1.5 flex-wrap">
+              {/* Review of PR #70, m7: the "IEC 62304 · Class C" badge looked like the removed certification badges;
+                  no conformity assessment exists (REQ-REG-011). The subtitle wording is an owner decision (PRB-022). */}
               {[
-                { label: 'IEC 62304', sub: 'Class C' },
-                { label: 'HIPAA', sub: '2026' },
-                { label: 'ISO 27001', sub: '2022' },
-                { label: 'AES-256', sub: 'Encrypted' },
-                { label: 'TLS 1.3', sub: 'Transport' },
+                { label: 'AES-256', sub: 'At rest' },
               ].map(b => (
                 <span key={b.label} className="inline-flex flex-col items-center px-2 py-1 rounded-lg bg-surface-base border border-surface-border">
                   <span className="text-[9px] font-bold text-gray-300 leading-none">{b.label}</span>
@@ -410,9 +427,6 @@ export default function LoginPage() {
               <span>·</span>
               <a href="#" className="hover:text-gray-300 transition-colors">Cookie Policy</a>
             </div>
-            <p className="text-center text-[8px] text-gray-600 mt-2">
-              MFA enforced · NIST SP 800-63B AAL2 · Data never leaves your jurisdiction
-            </p>
           </div>
         </div>
       </motion.div>

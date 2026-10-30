@@ -150,8 +150,84 @@ class PatientServiceFirestore(IPatientService):
             created_at=created_at,
             updated_at=updated_at,
             study_count=study_count,
-            document_count=document_count
+            document_count=document_count,
+            # PRB-023: provenance for the access decision (excluded from every response).
+            created_by=(str(doc_data["created_by"]) if doc_data.get("created_by") is not None else None),
         )
+
+    # PRB-025: a deleted study is kept as a record with status "cancelled" (soft delete), a deleted document
+    # with "entered-in-error"; neither is a study or document of the patient any more, so neither is counted.
+    _REMOVED_STUDY_STATUSES = ("cancelled", "entered-in-error")
+    _REMOVED_DOCUMENT_STATUSES = ("entered-in-error",)
+
+    def _count(self, collection: str, patient_id: str, status: Optional[str] = None) -> int:
+        query = self.db.collection(collection).where(filter=FieldFilter("patient_id", "==", patient_id))
+        if status is not None:
+            query = query.where(filter=FieldFilter("status", "==", status))
+        result = query.count().get()
+        return result[0][0].value if result else 0
+
+    def _active_study_count(self, patient_id: str) -> int:
+        """Studies of the patient that are not deleted (PRB-025). Equality filters only: no composite index."""
+        total = self._count(Collections.STUDIES, patient_id)
+        return total - sum(self._count(Collections.STUDIES, patient_id, s) for s in self._REMOVED_STUDY_STATUSES)
+
+    def _active_document_count(self, patient_id: str) -> int:
+        """Documents of the patient that are not deleted (PRB-025)."""
+        total = self._count(Collections.DOCUMENTS, patient_id)
+        return total - sum(self._count(Collections.DOCUMENTS, patient_id, s)
+                           for s in self._REMOVED_DOCUMENT_STATUSES)
+
+    # Review of PR #70, m6: each patient needs 5 aggregation queries (studies: total, cancelled, entered-in-error;
+    # documents: total, entered-in-error). Run one after another they took ~5 round trips per patient — a page of 100
+    # patients (the search page) was 500 sequential queries. The patients of a page are now counted concurrently by a
+    # small, bounded pool (Firestore's client is thread-safe); results are identical and keep the page order.
+    COUNT_WORKERS = 8
+
+    def _counts_for(self, patient_id: str):
+        try:
+            study_count = self._active_study_count(patient_id)
+        except Exception:
+            study_count = None     # unknown, not 0 (PRB-025: a count is shown only when it was counted)
+        try:
+            document_count = self._active_document_count(patient_id)
+        except Exception:
+            document_count = None
+        return study_count, document_count
+
+    def _summaries_with_counts(self, docs) -> List[PatientSummary]:
+        """Summaries of one page of patient documents, with their (non-deleted) study and document counts."""
+        from concurrent.futures import ThreadPoolExecutor
+        docs = list(docs)
+        if not docs:
+            return []
+        with ThreadPoolExecutor(max_workers=min(self.COUNT_WORKERS, len(docs))) as pool:
+            counts = list(pool.map(lambda d: self._counts_for(d.id), docs))
+        results = []
+        for doc, (study_count, document_count) in zip(docs, counts):
+            doc_data = doc.to_dict()
+            doc_data["id"] = doc.id
+            results.append(self._doc_to_summary(doc_data, study_count=study_count, document_count=document_count))
+        return results
+
+    def _scoped_docs(self, allowed_ids, status: Optional[str] = None) -> list:
+        """PRB-021: the patient documents of an explicit id set (a non-administrator's care-team patients),
+        read one by one — never a query over the whole registry."""
+        docs = []
+        for pid in sorted(set(allowed_ids)):
+            snap = self.db.collection(self.collection).document(str(pid)).get()
+            if not snap.exists:
+                continue
+            data = snap.to_dict() or {}
+            if status and data.get("status") != status:
+                continue
+            docs.append(snap)
+        return docs
+
+    @staticmethod
+    def _page(docs: list, page: int, page_size: int) -> list:
+        offset = (page - 1) * page_size
+        return docs[offset:offset + page_size]
 
     def _doc_to_summary(
         self,
@@ -178,6 +254,8 @@ class PatientServiceFirestore(IPatientService):
             id=UUID(doc_data["id"]),
             mrn=doc_data["mrn"],
             full_name=full_name,
+            given_name=doc_data.get("given_name"),
+            family_name=doc_data.get("family_name"),
             birth_date=birth_date,
             gender=Gender(doc_data["gender"]),
             status=PatientStatus(doc_data.get("status", "active")),
@@ -279,17 +357,9 @@ class PatientServiceFirestore(IPatientService):
         document_count = None
 
         if include_stats:
-            # Count studies for this patient
-            studies = self.db.collection(Collections.STUDIES).where(
-                filter=FieldFilter("patient_id", "==", str(patient_id))
-            ).count().get()
-            study_count = studies[0][0].value if studies else 0
-
-            # Count documents for this patient
-            docs = self.db.collection(Collections.DOCUMENTS).where(
-                filter=FieldFilter("patient_id", "==", str(patient_id))
-            ).count().get()
-            document_count = docs[0][0].value if docs else 0
+            # PRB-025: deleted (cancelled / entered-in-error) studies and documents are not counted.
+            study_count = self._active_study_count(str(patient_id))
+            document_count = self._active_document_count(str(patient_id))
 
         return self._doc_to_response(doc_data, study_count, document_count)
 
@@ -397,9 +467,34 @@ class PatientServiceFirestore(IPatientService):
 
     async def search_patients(
         self,
-        search: PatientSearch
+        search: PatientSearch,
+        allowed_ids=None,
     ) -> Tuple[List[PatientSummary], int]:
-        """Search patients with filters and pagination."""
+        """Search patients with filters and pagination.
+
+        allowed_ids (PRB-021): None = every record (administrator); otherwise only these patient ids (the
+        caller's active care-team patients), read one by one and filtered with the same rules in memory.
+        """
+        gender_value = (search.gender.value if hasattr(search.gender, 'value') else search.gender) \
+            if search.gender else None
+        status_value = (search.status.value if hasattr(search.status, 'value') else search.status) \
+            if search.status else None
+
+        if allowed_ids is not None:
+            def keep(d: dict) -> bool:
+                if search.mrn and d.get("mrn") != search.mrn.upper():
+                    return False
+                if search.family_name and not str(d.get("family_name") or "").startswith(search.family_name):
+                    return False
+                if gender_value and d.get("gender") != gender_value:
+                    return False
+                return True
+
+            docs = [s for s in self._scoped_docs(allowed_ids, status_value) if keep(s.to_dict() or {})]
+            field = "created_at" if search.sort_by == "created_at" else "family_name"
+            docs.sort(key=lambda s: str((s.to_dict() or {}).get(field) or ""), reverse=search.sort_order == "desc")
+            return self._summaries_with_counts(self._page(docs, search.page, search.page_size)), len(docs)
+
         query = self.db.collection(self.collection)
 
         # Build filters
@@ -411,12 +506,10 @@ class PatientServiceFirestore(IPatientService):
             query = query.where(filter=FieldFilter("family_name", ">=", search.family_name))
             query = query.where(filter=FieldFilter("family_name", "<=", search.family_name + "\uf8ff"))
 
-        if search.gender:
-            gender_value = search.gender.value if hasattr(search.gender, 'value') else search.gender
+        if gender_value:
             query = query.where(filter=FieldFilter("gender", "==", gender_value))
 
-        if search.status:
-            status_value = search.status.value if hasattr(search.status, 'value') else search.status
+        if status_value:
             query = query.where(filter=FieldFilter("status", "==", status_value))
 
         # Get total count first
@@ -442,42 +535,8 @@ class PatientServiceFirestore(IPatientService):
             query = query.limit(search.page_size)
             docs = list(query.stream())
 
-        # Collect patient IDs for batch count queries
-        patient_ids = [doc.id for doc in docs]
-
-        # Get study counts for all patients in this page
-        study_counts = {}
-        for patient_id in patient_ids:
-            try:
-                studies = self.db.collection(Collections.STUDIES).where(
-                    filter=FieldFilter("patient_id", "==", patient_id)
-                ).count().get()
-                study_counts[patient_id] = studies[0][0].value if studies else 0
-            except Exception:
-                study_counts[patient_id] = 0
-
-        # Get document counts for all patients in this page
-        document_counts = {}
-        for patient_id in patient_ids:
-            try:
-                documents = self.db.collection(Collections.DOCUMENTS).where(
-                    filter=FieldFilter("patient_id", "==", patient_id)
-                ).count().get()
-                document_counts[patient_id] = documents[0][0].value if documents else 0
-            except Exception:
-                document_counts[patient_id] = 0
-
-        results = []
-        for doc in docs:
-            doc_data = doc.to_dict()
-            doc_data["id"] = doc.id
-            results.append(self._doc_to_summary(
-                doc_data,
-                study_count=study_counts.get(doc.id, 0),
-                document_count=document_counts.get(doc.id, 0)
-            ))
-
-        return results, total
+        # PRB-025: counts exclude deleted studies and documents.
+        return self._summaries_with_counts(docs), total
 
     async def list_unattributed_patients(
         self,
@@ -511,9 +570,20 @@ class PatientServiceFirestore(IPatientService):
         self,
         page: int = 1,
         page_size: int = 20,
-        status: Optional[str] = None
+        status: Optional[str] = None,
+        allowed_ids=None,
     ) -> Tuple[List[PatientSummary], int]:
-        """List all patients with pagination and study/document counts."""
+        """List patients with pagination and study/document counts.
+
+        allowed_ids (PRB-021): None = every record (administrator); otherwise only these patient ids (the
+        caller's active care-team patients), ordered like the full list (family name, given name).
+        """
+        if allowed_ids is not None:
+            docs = self._scoped_docs(allowed_ids, status)
+            docs.sort(key=lambda s: (str((s.to_dict() or {}).get("family_name") or ""),
+                                     str((s.to_dict() or {}).get("given_name") or "")))
+            return self._summaries_with_counts(self._page(docs, page, page_size)), len(docs)
+
         query = self.db.collection(self.collection)
 
         if status:
@@ -536,42 +606,8 @@ class PatientServiceFirestore(IPatientService):
             query = query.limit(page_size)
             docs = list(query.stream())
 
-        # Collect patient IDs for batch count queries
-        patient_ids = [doc.id for doc in docs]
-
-        # Get study counts for all patients in this page
-        study_counts = {}
-        for patient_id in patient_ids:
-            try:
-                studies = self.db.collection(Collections.STUDIES).where(
-                    filter=FieldFilter("patient_id", "==", patient_id)
-                ).count().get()
-                study_counts[patient_id] = studies[0][0].value if studies else 0
-            except Exception:
-                study_counts[patient_id] = 0
-
-        # Get document counts for all patients in this page
-        document_counts = {}
-        for patient_id in patient_ids:
-            try:
-                documents = self.db.collection(Collections.DOCUMENTS).where(
-                    filter=FieldFilter("patient_id", "==", patient_id)
-                ).count().get()
-                document_counts[patient_id] = documents[0][0].value if documents else 0
-            except Exception:
-                document_counts[patient_id] = 0
-
-        results = []
-        for doc in docs:
-            doc_data = doc.to_dict()
-            doc_data["id"] = doc.id
-            results.append(self._doc_to_summary(
-                doc_data,
-                study_count=study_counts.get(doc.id, 0),
-                document_count=document_counts.get(doc.id, 0)
-            ))
-
-        return results, total
+        # PRB-025: counts exclude deleted studies and documents.
+        return self._summaries_with_counts(docs), total
 
     # Medical History methods would go here (simplified for now)
 

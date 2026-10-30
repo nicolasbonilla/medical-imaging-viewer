@@ -1,0 +1,118 @@
+{
+  "executed": "2026-10-28T22:23:23",
+  "base": "7de9334 (PR #70 head before the first review fixes)",
+  "tree": "113b8b5d942052fcd2c57cfe679ad9a3535de04a",
+  "method": "source files that differ from the base commit restored to it, files it did not have removed; the PRB test files run unchanged; working tree restored byte for byte",
+  "swapped": {
+    "restored_to_base": [
+      "backend/app/api/routes/auth.py",
+      "backend/app/api/routes/dicomweb.py",
+      "backend/app/api/routes/studies.py",
+      "backend/app/core/config.py",
+      "backend/app/core/exception_handlers.py",
+      "backend/app/security/auth.py",
+      "backend/app/security/registration_policy.py",
+      "backend/app/services/patient_service_firestore.py",
+      "frontend/src/components/patients/PatientsOverview.tsx",
+      "frontend/src/i18n/locales/de.json",
+      "frontend/src/i18n/locales/en.json",
+      "frontend/src/i18n/locales/es.json",
+      "frontend/src/pages/LoginPage.tsx",
+      "frontend/src/pages/PatientsPage.tsx"
+    ],
+    "removed": [
+      "scripts/owner/prb021_backfill_creator_care_team.py"
+    ]
+  },
+  "test_sha256": {
+    "backend/tests/unit/test_prb020_review2_findings.py": "fecc5249f6760bb01fd5bcf6c6e44f11045139940b8bfe18b37d3b50a8b64869",
+    "frontend/src/pages/LoginPage.prb022.review1.test.tsx": "a47d3165baae2dd09b4c38b607b59f81c38c7a1d1a1ae5f11d1d0c71a35e1a97"
+  },
+  "backend": {
+    "passed": 0,
+    "failed": 17,
+    "errors": 0,
+    "results": {
+      "test_rc083_prb023_r2_backfill_acts_only_on_the_production_project[mstool-research]": {
+        "status": "failed",
+        "reason": "FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\Nicolas\\\\medical-imaging-viewer\\\\.claude\\\\worktrees\\\\platform-security-prb005\\\\scripts\\\\owner\\\\prb021_backfill_creator_care_team.py'"
+      },
+      "test_rc083_prb023_r2_backfill_acts_only_on_the_production_project[brain-mri-47611]": {
+        "status": "failed",
+        "reason": "FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\Nicolas\\\\medical-imaging-viewer\\\\.claude\\\\worktrees\\\\platform-security-prb005\\\\scripts\\\\owner\\\\prb021_backfill_creator_care_team.py'"
+      },
+      "test_rc083_prb023_r2_backfill_acts_only_on_the_production_project[]": {
+        "status": "failed",
+        "reason": "FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\Nicolas\\\\medical-imaging-viewer\\\\.claude\\\\worktrees\\\\platform-security-prb005\\\\scripts\\\\owner\\\\prb021_backfill_creator_care_team.py'"
+      },
+      "test_rc083_prb023_r2_backfill_acts_only_on_the_production_project[daita-9f4f6]": {
+        "status": "failed",
+        "reason": "FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\Nicolas\\\\medical-imaging-viewer\\\\.claude\\\\worktrees\\\\platform-security-prb005\\\\scripts\\\\owner\\\\prb021_backfill_creator_care_team.py'"
+      },
+      "test_rc083_prb023_r2_backfill_acts_only_on_the_production_project[some-other-project]": {
+        "status": "failed",
+        "reason": "FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\Nicolas\\\\medical-imaging-viewer\\\\.claude\\\\worktrees\\\\platform-security-prb005\\\\scripts\\\\owner\\\\prb021_backfill_creator_care_team.py'"
+      },
+      "test_rc083_prb023_r2_backfill_acts_only_on_the_production_project[BRAIN-MRI-476110]": {
+        "status": "failed",
+        "reason": "FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\Nicolas\\\\medical-imaging-viewer\\\\.claude\\\\worktrees\\\\platform-security-prb005\\\\scripts\\\\owner\\\\prb021_backfill_creator_care_team.py'"
+      },
+      "test_rc083_prb023_r2_backfill_acts_only_on_the_production_project[brain-mri-476110-copy]": {
+        "status": "failed",
+        "reason": "FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\Nicolas\\\\medical-imaging-viewer\\\\.claude\\\\worktrees\\\\platform-security-prb005\\\\scripts\\\\owner\\\\prb021_backfill_creator_care_team.py'"
+      },
+      "test_rc083_prb023_r2_backfill_accepts_the_production_project": {
+        "status": "failed",
+        "reason": "FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\Nicolas\\\\medical-imaging-viewer\\\\.claude\\\\worktrees\\\\platform-security-prb005\\\\scripts\\\\owner\\\\prb021_backfill_creator_care_team.py'"
+      },
+      "test_rc083_prb023_r2_account_without_is_active_is_not_active": {
+        "status": "failed",
+        "reason": "FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\Nicolas\\\\medical-imaging-viewer\\\\.claude\\\\worktrees\\\\platform-security-prb005\\\\scripts\\\\owner\\\\prb021_backfill_creator_care_team.py'"
+      },
+      "test_rc083_prb023_r2_each_row_id_is_in_the_backup_before_it_is_written": {
+        "status": "failed",
+        "reason": "FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\Nicolas\\\\medical-imaging-viewer\\\\.claude\\\\worktrees\\\\platform-security-prb005\\\\scripts\\\\owner\\\\prb021_backfill_creator_care_team.py'"
+      },
+      "test_rc083_prb023_r2_a_run_never_overwrites_another_runs_backup": {
+        "status": "failed",
+        "reason": "FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\Nicolas\\\\medical-imaging-viewer\\\\.claude\\\\worktrees\\\\platform-security-prb005\\\\scripts\\\\owner\\\\prb021_backfill_creator_care_team.py'"
+      },
+      "test_rc083_prb023_r2_earlier_runs_are_counted_and_the_undo_by_basis_documented": {
+        "status": "failed",
+        "reason": "FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\Nicolas\\\\medical-imaging-viewer\\\\.claude\\\\worktrees\\\\platform-security-prb005\\\\scripts\\\\owner\\\\prb021_backfill_creator_care_team.py'"
+      },
+      "test_rc081_prb020_r2_sign_in_with_an_over_long_password_leaks_nothing": {
+        "status": "failed",
+        "reason": "assert ('zqxSECRETpw' not in '{\"error\":{\"...h\":128}}]}}}'"
+      },
+      "test_rc084_prb024_r2_a_refused_new_password_leaks_nothing": {
+        "status": "failed",
+        "reason": "TypeError: Object of type ValueError is not JSON serializable"
+      },
+      "test_rc081_prb020_r2_unexpected_errors_return_no_internal_detail": {
+        "status": "failed",
+        "reason": "assert ('internal-detail-zqx' not in '{\"error\":{\"...=hunter2\"}}}'"
+      },
+      "test_rc084_prb024_r2_profile_save_never_uses_the_remembered_hash[error]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_500\",\"message\":\"Failed to update user\",\"details\":{}}}"
+      },
+      "test_rc084_prb024_r2_profile_save_never_uses_the_remembered_hash[nothing]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"id\":\"9fb565c7-cbe1-4dd7-b2ba-70ed7a733dcb\",\"username\":\"stale_memory\",\"email\":\"stale_memory@example.org\",\"full_name\":\"Stale Memory\",\"role\":\"radiologist\",\"is_active\":true,\"is_locked\":false,\"email_verified\":false,\"created_at\""
+      }
+    }
+  },
+  "frontend": {
+    "passed": 0,
+    "failed": 1,
+    "file_errors": [],
+    "not_passing": {
+      "rc086 prb022 no standard is shown as a badge": {
+        "status": "failed",
+        "reason": "AssertionError: expected <span …(1)></span> to be null"
+      }
+    }
+  },
+  "note": "Re-review of PR #70, R4: the record is kept for the two password-leak regression tests (test_rc081_prb020_r2_sign_in_with_an_over_long_password_leaks_nothing, test_rc084_prb024_r2_a_refused_new_password_leaks_nothing), which fail on the code before the first review's handler fix. The other tests of the file fail here for the reasons already recorded at 570d78f (or because the owner script did not exist yet)."
+}

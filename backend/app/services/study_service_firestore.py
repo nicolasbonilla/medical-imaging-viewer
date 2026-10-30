@@ -435,11 +435,77 @@ class StudyServiceFirestore(IStudyService):
 
         return True
 
+    # PRB-025: a deleted study is kept as a record (soft delete: status "cancelled"; or "entered-in-error"),
+    # but it is no longer a study of the patient: it is neither listed nor counted unless asked for by status.
+    REMOVED_STUDY_STATUSES = frozenset({StudyStatus.CANCELLED.value, StudyStatus.ENTERED_IN_ERROR.value})
+    # The MAGNIMS zone map is stored as a segmentation document but is an anatomical overlay, not a lesion
+    # segmentation (the viewer lists it apart, utils/segmentationList.ts); it is not counted in "SEGM.".
+    ZONE_MAP_DESCRIPTION = "MAGNIMS Zone Map"
+    SEGMENTATIONS_COLLECTION = "segmentations"
+
+    def _segmentation_count(self, doc_data: dict) -> Optional[int]:
+        """Saved segmentations of the study's images (PRB-025): documents of the segmentations collection
+        whose file_id lies under the study's storage prefix. None when they could not be counted (the card
+        then shows a dash, never a 0 that was not counted)."""
+        prefix = doc_data.get("gcs_prefix") or self._build_gcs_prefix(doc_data["patient_id"], doc_data["id"])
+        prefix = str(prefix).rstrip("/") + "/"
+        try:
+            docs = (self.db.collection(self.SEGMENTATIONS_COLLECTION)
+                    .where(filter=FieldFilter("file_id", ">=", prefix))
+                    .where(filter=FieldFilter("file_id", "<", prefix + ""))
+                    .stream())
+            count = 0
+            for d in docs:
+                data = d.to_dict() or {}
+                if str(data.get("file_id", "")).startswith(prefix) and data.get("description") != self.ZONE_MAP_DESCRIPTION:
+                    count += 1
+            return count
+        except Exception as e:
+            logger.warning("Segmentation count unavailable", extra={"study_id": doc_data.get("id"),
+                                                                     "error_type": type(e).__name__})
+            return None
+
+    def _summaries(self, docs) -> List[StudySummary]:
+        results = []
+        for doc in docs:
+            doc_data = doc.to_dict()
+            doc_data["id"] = doc.id
+
+            # Calculate stats for this study
+            series_count = 0
+            instance_count = 0
+            total_size = 0
+
+            series_stream = doc.reference.collection("series").stream()
+            for series_doc in series_stream:
+                series_count += 1
+                instances = series_doc.reference.collection("instances").stream()
+                for inst in instances:
+                    instance_count += 1
+                    inst_data = inst.to_dict()
+                    total_size += inst_data.get("file_size_bytes", 0)
+
+            summary = self._doc_to_summary(
+                doc_data,
+                series_count=series_count,
+                instance_count=instance_count,
+                total_size_bytes=total_size
+            )
+            summary.segmentation_count = self._segmentation_count(doc_data)
+            results.append(summary)
+        return results
+
     async def search_studies(
         self,
         search: StudySearch
     ) -> Tuple[List[StudySummary], int]:
-        """Search studies with filters and pagination."""
+        """Search studies with filters and pagination.
+
+        PRB-025: without an explicit status filter, deleted studies (cancelled / entered-in-error) are
+        excluded from the page AND the total, in memory (as documents are: no inequality filter, so no
+        composite index and no loss of records that carry no status field). With a status filter, exactly
+        that status is returned (so a deleted study can still be found on purpose).
+        """
         query = self.db.collection(Collections.STUDIES)
 
         # Build filters
@@ -455,10 +521,6 @@ class StudyServiceFirestore(IStudyService):
         if search.accession_number:
             query = query.where(filter=FieldFilter("accession_number", "==", search.accession_number))
 
-        # Get total count
-        count_result = query.count().get()
-        total = count_result[0][0].value if count_result else 0
-
         # Apply ordering
         if search.sort_by == "study_date":
             direction = "DESCENDING" if search.sort_order == "desc" else "ASCENDING"
@@ -466,43 +528,22 @@ class StudyServiceFirestore(IStudyService):
         else:
             query = query.order_by("created_at", direction="DESCENDING")
 
-        # Apply pagination
         offset = (search.page - 1) * search.page_size
-        if offset > 0:
-            query = query.limit(search.page_size + offset)
-            docs = list(query.stream())
-            docs = docs[offset:offset + search.page_size]
+        if search.status:
+            # Get total count
+            count_result = query.count().get()
+            total = count_result[0][0].value if count_result else 0
+            if offset > 0:
+                docs = list(query.limit(search.page_size + offset).stream())[offset:offset + search.page_size]
+            else:
+                docs = list(query.limit(search.page_size).stream())
         else:
-            query = query.limit(search.page_size)
-            docs = list(query.stream())
+            kept = [d for d in query.stream()
+                    if (d.to_dict() or {}).get("status") not in self.REMOVED_STUDY_STATUSES]
+            total = len(kept)
+            docs = kept[offset:offset + search.page_size]
 
-        results = []
-        for doc in docs:
-            doc_data = doc.to_dict()
-            doc_data["id"] = doc.id
-
-            # Calculate stats for this study
-            series_count = 0
-            instance_count = 0
-            total_size = 0
-
-            series_stream = doc.reference.collection("series").stream()
-            for series_doc in series_stream:
-                series_count += 1
-                instances = series_doc.reference.collection("instances").stream()
-                for inst in instances:
-                    instance_count += 1
-                    inst_data = inst.to_dict()
-                    total_size += inst_data.get("file_size_bytes", 0)
-
-            results.append(self._doc_to_summary(
-                doc_data,
-                series_count=series_count,
-                instance_count=instance_count,
-                total_size_bytes=total_size
-            ))
-
-        return results, total
+        return self._summaries(docs), total
 
     async def list_patient_studies(
         self,
@@ -510,54 +551,9 @@ class StudyServiceFirestore(IStudyService):
         page: int = 1,
         page_size: int = 20
     ) -> Tuple[List[StudySummary], int]:
-        """List all studies for a patient."""
-        query = self.db.collection(Collections.STUDIES).where(
-            filter=FieldFilter("patient_id", "==", str(patient_id))
-        )
-
-        # Get total count
-        count_result = query.count().get()
-        total = count_result[0][0].value if count_result else 0
-
-        # Apply ordering and pagination
-        query = query.order_by("study_date", direction="DESCENDING")
-
-        offset = (page - 1) * page_size
-        if offset > 0:
-            query = query.limit(page_size + offset)
-            docs = list(query.stream())
-            docs = docs[offset:offset + page_size]
-        else:
-            query = query.limit(page_size)
-            docs = list(query.stream())
-
-        results = []
-        for doc in docs:
-            doc_data = doc.to_dict()
-            doc_data["id"] = doc.id
-
-            # Calculate stats for this study
-            series_count = 0
-            instance_count = 0
-            total_size = 0
-
-            series_stream = doc.reference.collection("series").stream()
-            for series_doc in series_stream:
-                series_count += 1
-                instances = series_doc.reference.collection("instances").stream()
-                for inst in instances:
-                    instance_count += 1
-                    inst_data = inst.to_dict()
-                    total_size += inst_data.get("file_size_bytes", 0)
-
-            results.append(self._doc_to_summary(
-                doc_data,
-                series_count=series_count,
-                instance_count=instance_count,
-                total_size_bytes=total_size
-            ))
-
-        return results, total
+        """List the studies of a patient, newest first — deleted studies excluded (PRB-025)."""
+        return await self.search_studies(StudySearch(patient_id=patient_id, page=page, page_size=page_size,
+                                                     sort_by="study_date", sort_order="desc"))
 
     # =========================================================================
     # Series Operations

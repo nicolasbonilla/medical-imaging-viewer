@@ -407,6 +407,8 @@ export interface SegmentationMetadata {
   validation_source?: string | null;
   /** AI provenance (in-browser FLAMeS draft). Absent on manual segmentations. */
   ai_provenance?: AIProvenance | null;
+  /** PRB-026: username of the authenticated user who created it, recorded by the server; absent = not recorded. */
+  created_by?: string | null;
 }
 
 /**

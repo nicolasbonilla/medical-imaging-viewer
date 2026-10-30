@@ -1,0 +1,228 @@
+{
+  "executed": "2026-10-28T21:28:25",
+  "base": "7de9334 (PR #70 head before the review fixes)",
+  "tree": "d600adb098f3545f84efecf8d1efcaf0ebafdb85",
+  "method": "source files that differ from the base commit restored to it, files it did not have removed; the PRB test files run unchanged; working tree restored byte for byte",
+  "swapped": {
+    "restored_to_base": [
+      "backend/app/api/routes/auth.py",
+      "backend/app/api/routes/dicomweb.py",
+      "backend/app/api/routes/studies.py",
+      "backend/app/core/config.py",
+      "backend/app/core/exception_handlers.py",
+      "backend/app/security/auth.py",
+      "backend/app/security/registration_policy.py",
+      "backend/app/services/patient_service_firestore.py",
+      "frontend/src/components/patients/PatientsOverview.tsx",
+      "frontend/src/i18n/locales/de.json",
+      "frontend/src/i18n/locales/en.json",
+      "frontend/src/i18n/locales/es.json",
+      "frontend/src/pages/LoginPage.tsx",
+      "frontend/src/pages/PatientsPage.tsx"
+    ],
+    "removed": [
+      "scripts/owner/prb021_backfill_creator_care_team.py"
+    ]
+  },
+  "test_sha256": {
+    "backend/tests/unit/test_prb020_review1_findings.py": "710810c59b0459e7b8f1aa640f0966b03f813d9a9c8ab75179d8af67081e16ab",
+    "backend/tests/unit/test_prb021_backfill_creator_care_team.py": "f5b2b6f82872902806f53ccc1fa9a65f263aadb27e7a207ff871e3003403cc82",
+    "frontend/src/pages/PatientsPage.prb021.test.tsx": "a9790102053bafdf827501c8c7a76c32d1bafd611e7e5e79c1481aaefb84ca98",
+    "frontend/src/pages/LoginPage.prb022.review1.test.tsx": "a47d3165baae2dd09b4c38b607b59f81c38c7a1d1a1ae5f11d1d0c71a35e1a97"
+  },
+  "backend": {
+    "passed": 12,
+    "failed": 30,
+    "errors": 0,
+    "results": {
+      "test_rc085_prb025_r1_an_administrator_still_erases_a_series_and_an_image": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc085_prb025_r1_a_radiologist_cancels_and_restores_a_study": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[Production ]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[PRODUCTION]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc080_prb020_r1_named_non_production_environments_allow_it_when_set[development]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc080_prb020_r1_named_non_production_environments_allow_it_when_set[local]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc080_prb020_r1_named_non_production_environments_allow_it_when_set[test]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc080_prb020_r1_named_non_production_environments_allow_it_when_set[testing]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc088_prb026_r1_the_route_records_the_authenticated_user": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc089_prb027_a_technician_still_searches_and_imports[/api/v1/dicomweb/search/studies-body0]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc089_prb027_a_technician_still_searches_and_imports[/api/v1/dicomweb/search/series?connection_id=c1&study_instance_uid=1.2.3-None]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc089_prb027_a_technician_still_searches_and_imports[/api/v1/dicomweb/import-body2]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc085_prb025_r1_only_an_administrator_erases_a_series_or_an_image[viewer-u-viewer]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 200 == 403"
+      },
+      "test_rc085_prb025_r1_only_an_administrator_erases_a_series_or_an_image[technician-u-tech]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 200 == 403"
+      },
+      "test_rc085_prb025_r1_only_an_administrator_erases_a_series_or_an_image[radiologist-u-rad]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 200 == 403"
+      },
+      "test_rc085_prb025_r1_cancelling_a_study_needs_a_write_permission[viewer-u-viewer]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 200 == 403"
+      },
+      "test_rc085_prb025_r1_cancelling_a_study_needs_a_write_permission[technician-u-tech]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 200 == 403"
+      },
+      "test_rc085_prb025_r1_a_status_change_through_update_needs_the_same_permission": {
+        "status": "failed",
+        "reason": "AssertionError: assert 200 == 403"
+      },
+      "test_rc081_prb020_r1_audit_of_an_admin_created_account_names_the_administrator": {
+        "status": "failed",
+        "reason": "AssertionError: assert '6dea3c42-d2e...-ec6a73d8d5be' == 'u-admin'"
+      },
+      "test_rc081_prb020_r1_administrator_route_applies_the_password_policy[short1!A]": {
+        "status": "failed",
+        "reason": "assert ('password' in '{\"error\":{\"code\":\"VALIDATION_ERROR\",\"message\":\"Invalid request parameters\",\"details\":{\"errors\":[{\"type\":\"string_too_s...:[\"body\",\"password\"],\"msg\":\"String should have at least 12 characters\",\"input\":\"short1!A\",\"ctx\":{"
+      },
+      "test_rc081_prb020_r1_administrator_route_applies_the_password_policy[alllowercase-2026!]": {
+        "status": "failed",
+        "reason": "TypeError: Object of type ValueError is not JSON serializable"
+      },
+      "test_rc081_prb020_r1_administrator_route_applies_the_password_policy[NoDigitsHere!!!x]": {
+        "status": "failed",
+        "reason": "TypeError: Object of type ValueError is not JSON serializable"
+      },
+      "test_rc081_prb020_r1_administrator_route_applies_the_password_policy[NoSpecial2026abc]": {
+        "status": "failed",
+        "reason": "TypeError: Object of type ValueError is not JSON serializable"
+      },
+      "test_rc084_prb024_r1_role_change_keeps_the_password_and_its_history": {
+        "status": "failed",
+        "reason": "AssertionError: assert {'password_ha...': ['hash-3']} == {'password_ha...2', 'hash-1']}"
+      },
+      "test_rc084_prb024_r1_profile_is_not_saved_without_the_password": {
+        "status": "failed",
+        "reason": "AssertionError: {\"id\":\"70a4c384-2033-4405-8a91-55f1676764bb\",\"username\":\"unreadable_pw\",\"email\":\"unreadable_pw@example.org\",\"full_name\":\"Unreadable Pw\",\"role\":\"radiologist\",\"is_active\":true,\"is_locked\":false,\"email_verified\":false,\"created_"
+      },
+      "test_rc084_prb024_r1_passkey_sign_in_never_writes_an_empty_password[True]": {
+        "status": "failed",
+        "reason": "AssertionError: assert {'password_ha...: ['hash-pk']} == {'password_ha..., 'hash-old']}"
+      },
+      "test_rc084_prb024_r1_passkey_sign_in_never_writes_an_empty_password[False]": {
+        "status": "failed",
+        "reason": "AssertionError: assert {'password_ha...istory': ['']} == {'password_ha..., 'hash-old']}"
+      },
+      "test_rc084_prb024_r1_delete_the_store_refused_is_reported": {
+        "status": "failed",
+        "reason": "AssertionError: "
+      },
+      "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[prod]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 201 == 404"
+      },
+      "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[staging]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 201 == 404"
+      },
+      "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 201 == 404"
+      },
+      "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[live]": {
+        "status": "failed",
+        "reason": "AssertionError: assert 201 == 404"
+      },
+      "test_rc085_prb025_r1_page_counts_run_concurrently_with_the_same_results": {
+        "status": "failed",
+        "reason": "AssertionError: page counts took 5.11 s"
+      },
+      "test_rc089_prb027_a_viewer_cannot_search_or_import_from_the_pacs[/api/v1/dicomweb/search/studies-body0]": {
+        "status": "failed",
+        "reason": "AssertionError: []"
+      },
+      "test_rc089_prb027_a_viewer_cannot_search_or_import_from_the_pacs[/api/v1/dicomweb/search/series?connection_id=c1&study_instance_uid=1.2.3-None]": {
+        "status": "failed",
+        "reason": "AssertionError: []"
+      },
+      "test_rc089_prb027_a_viewer_cannot_search_or_import_from_the_pacs[/api/v1/dicomweb/import-body2]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"job_id\":\"job-1\"}"
+      },
+      "test_rc083_prb023_backfill_dry_run_writes_nothing_and_lists_the_plan": {
+        "status": "failed",
+        "reason": "Failed: owner backfill script missing: C:\\Users\\Nicolas\\medical-imaging-viewer\\.claude\\worktrees\\platform-security-prb005\\scripts\\owner\\prb021_backfill_creator_care_team.py"
+      },
+      "test_rc083_prb023_backfill_needs_the_typed_confirmation_word": {
+        "status": "failed",
+        "reason": "Failed: owner backfill script missing: C:\\Users\\Nicolas\\medical-imaging-viewer\\.claude\\worktrees\\platform-security-prb005\\scripts\\owner\\prb021_backfill_creator_care_team.py"
+      },
+      "test_rc083_prb023_backfill_takes_a_backup_assigns_once_and_is_idempotent": {
+        "status": "failed",
+        "reason": "Failed: owner backfill script missing: C:\\Users\\Nicolas\\medical-imaging-viewer\\.claude\\worktrees\\platform-security-prb005\\scripts\\owner\\prb021_backfill_creator_care_team.py"
+      },
+      "test_rc083_prb023_backfill_refuses_the_daita_project": {
+        "status": "failed",
+        "reason": "Failed: owner backfill script missing: C:\\Users\\Nicolas\\medical-imaging-viewer\\.claude\\worktrees\\platform-security-prb005\\scripts\\owner\\prb021_backfill_creator_care_team.py"
+      },
+      "test_rc083_prb023_backfill_refuses_a_granter_who_is_not_an_active_administrator": {
+        "status": "failed",
+        "reason": "Failed: owner backfill script missing: C:\\Users\\Nicolas\\medical-imaging-viewer\\.claude\\worktrees\\platform-security-prb005\\scripts\\owner\\prb021_backfill_creator_care_team.py"
+      },
+      "test_rc083_prb023_backfill_stops_before_writing_when_the_backup_fails": {
+        "status": "failed",
+        "reason": "Failed: owner backfill script missing: C:\\Users\\Nicolas\\medical-imaging-viewer\\.claude\\worktrees\\platform-security-prb005\\scripts\\owner\\prb021_backfill_creator_care_team.py"
+      }
+    }
+  },
+  "frontend": {
+    "passed": 2,
+    "failed": 3,
+    "file_errors": [],
+    "not_passing": {
+      "rc086 prb022 no standard is shown as a badge": {
+        "status": "failed",
+        "reason": "AssertionError: expected <span …(1)></span> to be null"
+      },
+      "rc082 prb021 a clinician with no patient is told none are assigned, with no create invitation": {
+        "status": "failed",
+        "reason": "TestingLibraryElementError: Unable to find an element with the text: No patients are assigned to you yet. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to ma"
+      },
+      "rc085 prb025 a null study or document count shows a dash": {
+        "status": "failed",
+        "reason": "AssertionError: expected '2' to be '—' // Object.is equality"
+      }
+    }
+  },
+  "note": "Review of PR #70: the tests that pass at 7de9334 are positive controls (an administrator still erases a series and an image; a radiologist cancels and restores a study; named non-production environments; a technician searches and imports from the PACS; counted values summed; the administrator keeps the registry wording) or test-gap tests whose behaviour was already right (m8: the segmentation route records the authenticated user)."
+}

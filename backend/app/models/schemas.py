@@ -258,6 +258,14 @@ class SegmentationMetadata(BaseModel):
         None,
         description="AI draft provenance (REQ-SAFE-030). Absent on manual segmentations.",
     )
+    created_by: Optional[str] = Field(
+        None,
+        description=(
+            "Username of the authenticated user who created the segmentation, set by the server at creation "
+            "(PRB-026); never taken from the request. Absent on segmentations created before it was recorded "
+            "and on ones written by tools or scripts — the viewer then says 'Author not recorded'."
+        ),
+    )
 
 
 class PaintStroke(BaseModel):
