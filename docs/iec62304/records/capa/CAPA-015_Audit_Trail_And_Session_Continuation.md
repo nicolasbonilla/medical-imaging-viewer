@@ -1,11 +1,11 @@
 # CAPA-015 — Audit Trail Not Durable; Session Not Continued (Hourly Forced Sign-In, Unsaved Work at Risk)
 
 **CAPA ID**: CAPA-015
-**Date Opened**: 2026-10-24 (DRAFT — opening, severity and actions **PENDING owner approval**)
+**Date Opened**: 2026-10-24 (DRAFT — opening, severity and actions **N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)**)
 **Source**: Code reading of 2026-10-24 (two defects reported to the AI coding agent), re-checked in the code of `main` @ `70cc5c7` on 2026-10-24 and reproduced by tests written before the fix (§5). Three further defects were found while verifying (§1, F6–F7).
-**Severity**: **Critical** (proposed — QP-002 §5: regulatory non-compliance; SPR-001 §2: security impact). The audit trail required for medical-device traceability (IEC 81001-5-1 logging, ISO 27001 A.12.4, EU MDR Annex I §17.2/§17.4) and for GDPR accountability (Art. 5(2), Art. 30, Art. 32) was lost on every server restart. The device is not in clinical use, which lowers the probability of harm, not the class. **PENDING owner approval.**
+**Severity**: **Critical** (proposed — QP-002 §5: regulatory non-compliance; SPR-001 §2: security impact). The audit trail required for medical-device traceability (IEC 81001-5-1 logging, ISO 27001 A.12.4, EU MDR Annex I §17.2/§17.4) and for GDPR accountability (Art. 5(2), Art. 30, Art. 32) was lost on every server restart. The device is not in clinical use, which lowers the probability of harm, not the class. **N. G. Bonilla Vargas — approved 2026-10-30 (PR #72).**
 **Owner**: *(to be assigned — a person; the AI coding agent cannot own a CAPA)*
-**Status**: DRAFT. Corrections implemented on branch `fix/audit-trail-and-session-capa015` (draft PR #65; amended after the independent review, §10, and the re-review, §11). **Merge after CAPA-014** (parallel PR; it holds RC-064..066, REQ-SEC-021..023, SRS 1.11, RMF 1.13, TM 1.10). Nothing merged, nothing deployed. **Owner approval: PENDING owner approval.** Effectiveness is not verified.
+**Status**: DRAFT. Corrections implemented on branch `fix/audit-trail-and-session-capa015` (draft PR #65; amended after the independent review, §10, and the re-review, §11). **Merge after CAPA-014** (parallel PR; it holds RC-064..066, REQ-SEC-021..023, SRS 1.11, RMF 1.13, TM 1.10). Nothing merged, nothing deployed. **Owner approval: N. G. Bonilla Vargas — approved 2026-10-30 (PR #72).** Effectiveness is not verified.
 **Identifiers**: RC-067, RC-068, RC-069; REQ-SEC-024, REQ-SEC-025, REQ-SEC-026; document versions **SRS 1.12, RMF 1.14, TM 1.11** (drafts).
 **Procedure**: QP-002 (`docs/qms/QP-002_CAPA_Procedure.md`) · SPR-001
 **Related**: HAZ-010 (HAZ-001 for unsaved segmentation work) · REQ-SEC-003 · REQ-SEC-009 · REQ-SEC-012 · RC-017 · RC-036 · CAPA-009 · CAPA-014
@@ -51,7 +51,7 @@ On a developer machine with gcloud application-default credentials, importing th
 2. **Coverage assumed, not verified.** "All endpoints include audit logging" (module docstrings) was taken as true; handlers wrote to the operational logger, which is not the audit trail. No test asked "after this action, is there a record?".
 3. **A contract with one side only.** The refresh flow existed in the frontend but not in the backend; no end-to-end test expired a session. Error handling chose the simplest reaction (redirect to login) without considering clinical work held in memory.
 
-## 3. Corrections and corrective actions (implemented on the branch — PENDING owner approval)
+## 3. Corrections and corrective actions (implemented on the branch — N. G. Bonilla Vargas — approved 2026-10-30 (PR #72))
 
 | ID | Action | Control |
 |----|--------|---------|
@@ -74,7 +74,7 @@ The API answers at `brain-mri-…-uc.a.run.app`; the app at `app.mstool-ai.com` 
 - Administrators can read the audit trail (paginated) and see a red banner when audit writing fails. Radiologists can no longer read it.
 - A password change ends every refresh session of the user and the new password works at once. **Access tokens already issued stay valid until they expire (at most 15 minutes)**: the access-token revocation list is kept in each server instance's memory, so another instance does not know about it (§10, m7).
 
-## 4. Preventive actions (proposed — PENDING owner approval)
+## 4. Preventive actions (proposed — N. G. Bonilla Vargas — approved 2026-10-30 (PR #72))
 
 | ID | Action |
 |----|--------|
@@ -90,7 +90,7 @@ The API answers at `brain-mri-…-uc.a.run.app`; the app at `app.mstool-ai.com` 
 | Cloud Logging (stdout copy) | the same records | **7 days** — the `_Default` bucket of `brain-mri-476110` is set to 7 days (`COSTS.md`; corrected in the re-review, the earlier text said 30); optionally a dedicated bucket for `labels.audit="true"` with 400 days | short backup copy while Firestore is unavailable — a Firestore outage longer than 7 days loses records unless the dedicated bucket is created |
 | `refresh_tokens` / families | token hashes, user id, times | until expiry + 1 day / + 30 days | needed only to detect reuse |
 
-## 5. Verification (by the author — not independent; **PENDING owner approval**)
+## 5. Verification (by the author — not independent; **N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)**)
 
 **Tests written before the fix, failing on `main`.** Commit `ecbcdad` (tests only, on top of `70cc5c7`): `backend/tests/unit/test_capa015_audit_and_session.py` (29 cases, `test_rc067_*`, `test_rc068_*`) and `frontend/src/services/session.capa015.test.tsx` (`rc069 …`, `rc067 …`). On `70cc5c7` **backend 29 of 29 fail** for the behaviour they check (no record in `audit_logs`, no refresh cookie, `/auth/refresh` 404, `expires_in` 3600, password change 404 "User not found", radiologist reads the trail) and **frontend 10 of 10 fail**. Two frontend cases were added later and also fail on the base: `fetch`-based downloads (added during implementation, with one assertion that the dialog names the unsaved segmentation) and "no English phrase left in the Spanish or German texts" (added after the first negative-control run, below). Re-run of the final test files against the base by `scripts/safety/capa015_tests_on_base.py` → `docs/iec62304/records/risk_verification/CAPA-015_tests_on_base_2026-10-24.json`: **backend 29 of 29 fail, frontend 12 of 12 fail**.
 
@@ -122,14 +122,14 @@ None of the Class C modules listed in `CLAUDE.md` is modified. Security-relevant
 - Pre-existing, not changed: the exception handler drops `HTTPException` headers (`X-CAPTCHA-Required`; the frontend relies on the message). The assistant's `API_SERVICE_TOKEN` (a clinician's access token) now lasts 15 minutes instead of 60.
 - The role map still lists `AUDIT_VIEW` for radiologists (now unused by the audit endpoints) — decision D-6.
 
-## 8. Owner decisions (all **PENDING owner approval**)
+## 8. Owner decisions (all **N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)**)
 
 | ID | Decision | Proposal |
 |----|----------|----------|
 | D-1 | Severity | Critical (regulatory non-compliance) |
 | D-2 | Session lifetimes | Access 15 min; refresh idle **30 min**, absolute **12 h** — instead of the suggested 12 h idle / 7 d absolute, which would let anyone opening a shared clinical workstation hours later continue the previous user's session and so weaken the existing 15-minute automatic log-off. Configurable: `JWT_ACCESS_TOKEN_EXPIRE_MINUTES`, `REFRESH_TOKEN_IDLE_MINUTES`, `REFRESH_TOKEN_ABSOLUTE_HOURS`. |
 | D-3 | Audit retention | §4 table (6 years Firestore; Cloud Logging copy **7 days** in the project's `_Default` bucket, or a dedicated 400-day bucket for audit records) |
-| D-4 | Firebase Hosting rewrite of `/api/v1/auth/**` to Cloud Run | Accept; deploy backend first, then hosting. Without it the refresh cookie cannot work and users are asked to sign in again when the access token expires (no work lost). *(Release 2026-10-25 integration: for the release that also ships PRB-003 the order is hosting first, then the backend at once — PRB-003 needs the frontend first and a new page meeting the old backend only opens the re-login dialog; `DEPLOYMENT_CHECKLIST.md` step 0/1; owner to confirm — PENDING owner approval.)* |
+| D-4 | Firebase Hosting rewrite of `/api/v1/auth/**` to Cloud Run | Accept; deploy backend first, then hosting. Without it the refresh cookie cannot work and users are asked to sign in again when the access token expires (no work lost). *(Release 2026-10-25 integration: for the release that also ships PRB-003 the order is hosting first, then the backend at once — PRB-003 needs the frontend first and a new page meeting the old backend only opens the re-login dialog; `DEPLOYMENT_CHECKLIST.md` step 0/1; owner to confirm — N. G. Bonilla Vargas — approved 2026-10-30 (PR #72).)* |
 | D-5 | Inactivity log-off discards unsaved work; what the re-login dialog hides | Consider a lock screen that hides patient data but keeps the work (separate change). Re-review N5: while the re-login dialog is open the page behind it stays mounted (work kept) but is hidden from assistive technology, inert and blurred — **the owner may relax this** (e.g. a lighter blur), it does not change the inactivity log-off |
 | D-6 | Radiologists' `AUDIT_VIEW` | Remove from the role map or define a restricted view |
 | D-7 | Alerting | PA-15.2 |
@@ -141,17 +141,17 @@ None of the Class C modules listed in `CLAUDE.md` is modified. Security-relevant
 
 | Role | Name | Decision | Date |
 |------|------|----------|------|
-| CAPA owner | PENDING owner approval | PENDING owner approval | PENDING owner approval |
-| Severity (D-1) | PENDING owner approval | PENDING owner approval | PENDING owner approval |
-| Corrective actions CA-15.1–15.9 | PENDING owner approval | PENDING owner approval | PENDING owner approval |
-| Preventive actions PA-15.1–15.4 | PENDING owner approval | PENDING owner approval | PENDING owner approval |
-| Decisions D-2–D-10 | PENDING owner approval | PENDING owner approval | PENDING owner approval |
-| Review corrections (§10) | PENDING owner approval | PENDING owner approval | PENDING owner approval |
-| Re-review corrections (§11) | PENDING owner approval | PENDING owner approval | PENDING owner approval |
-| Code review (security modules, CLAUDE.md) | PENDING owner approval | PENDING owner approval | PENDING owner approval |
-| Effectiveness verification | PENDING owner approval | PENDING owner approval | PENDING owner approval |
+| CAPA owner | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) |
+| Severity (D-1) | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) |
+| Corrective actions CA-15.1–15.9 | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) |
+| Preventive actions PA-15.1–15.4 | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) |
+| Decisions D-2–D-10 | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) |
+| Review corrections (§10) | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) |
+| Re-review corrections (§11) | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) |
+| Code review (security modules, CLAUDE.md) | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) |
+| Effectiveness verification | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) |
 
-## 10. Independent adversarial review of PR #65 (2026-10-24) — findings and corrections (PENDING owner approval)
+## 10. Independent adversarial review of PR #65 (2026-10-24) — findings and corrections (N. G. Bonilla Vargas — approved 2026-10-30 (PR #72))
 
 The review concluded "do not deploy as is". Every finding below was reproduced by a test written before its fix: on the PR head before the fixes (`2c618ec`) **backend 18 of 47 cases fail and frontend 9 of 9 fail** (`scripts/safety/capa015_tests_on_base.py --base 2c618ec` → `docs/iec62304/records/risk_verification/CAPA-015_review1_tests_on_pr65_2026-10-24.json`). New tests: `backend/tests/unit/test_capa015_review_fixes.py` (18 cases), `frontend/src/services/session.capa015.review.test.tsx` (9 cases); existing cases adjusted where the control changed (grace window, keyed hashes, the exact outage assertion).
 
@@ -172,7 +172,7 @@ The review concluded "do not deploy as is". Every finding below was reproduced b
 
 **After the fixes.** All CAPA-015 tests pass (backend 47/47, frontend 21/21). Whole backend tree under PRB-002 isolation (no cloud credentials, empty gcloud configuration, project `mstool-offline-tests`): **1764 passed, 20 skipped, 5 xfailed, 1 failed** (`test_webauthn_credentials_endpoint_exists`, `webauthn` not installed locally — unchanged). Frontend: 41 files, 355 tests — **352 passed, 3 skipped, 0 failed**; type check clean; production build passes. Negative controls: 94 mutations, 93 detected, 1 declared equivalent (§5; review mutations R1–R23 incl. R9b, FR1–FR9).
 
-## 11. Re-review of PR #65 at `09e11e8` (2026-10-24) — findings and corrections (PENDING owner approval)
+## 11. Re-review of PR #65 at `09e11e8` (2026-10-24) — findings and corrections (N. G. Bonilla Vargas — approved 2026-10-30 (PR #72))
 
 The re-review found that two §10 corrections were incomplete (N1, N4) and three further defects (N2, N3, N5). Every finding was reproduced by a test written before its fix (commit `6b3d0f0`): on `09e11e8` **backend 8 of 25 cases fail and frontend 3 of 3 fail** (`scripts/safety/capa015_tests_on_base.py --base 09e11e8 --also-swap backend/tests/conftest.py` → `docs/iec62304/records/risk_verification/CAPA-015_review2_tests_on_pr65_2026-10-24.json`; the test-suite configuration file is swapped too because it holds the N2 control). New tests: `backend/tests/unit/test_capa015_review2_fixes.py` (8 cases: 7 for the re-review findings, 1 for the egress list — N1b), `frontend/src/services/session.capa015.review2.test.tsx` (3 cases); one §10 case adjusted (the rate-limit key now uses a Hosting chain instead of `X-Forwarded-Host`).
 

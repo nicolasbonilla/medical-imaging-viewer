@@ -12,7 +12,7 @@
 `4584b81` (2026-08-21). The release branch does not change this.
 **Severity**: **Major** (proposed; SPR-001 §2: significant functional loss — the 3D view and the GPU view are unusable
 on such a host; the standard 2D view, where review and editing happen, works). Not safety-related: nothing wrong is
-displayed, the view shows an error. **PENDING owner approval.**
+displayed, the view shows an error. **N. G. Bonilla Vargas — approved 2026-10-30 (PR #72).**
 **Status**: OPEN — DRAFT. Fix implemented on branch `fix/viewer-display-orientation-prb004` (draft PR).
 
 **Description**: Hospitals run applications on internal host names without a dot (`http://localhost`,
@@ -51,7 +51,7 @@ All `loadVolumes` / `NVImage.loadFromUrl` calls of the app (two components; `gre
 volume now carries an explicit NIfTI name chosen by its bytes (`.nii.gz` when gzip, else `.nii`), and the GPU view hands
 niivue the downloaded buffer itself (no blob URL). Requirement: new **REQ-FUNC-101**. No risk control affected.
 
-## 3. Resolution — implemented on branch, PENDING owner approval
+## 3. Resolution — implemented on branch, N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)
 
 - `frontend/src/utils/niivueVoxelGrid.ts`: `niftiNameFor(buffer, stem)`.
 - `frontend/src/components/ImageViewer3D.tsx`: `name` on the image volume (volume and multiplanar) and on every overlay.

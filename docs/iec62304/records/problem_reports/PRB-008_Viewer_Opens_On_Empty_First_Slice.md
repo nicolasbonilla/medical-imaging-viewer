@@ -33,7 +33,7 @@ image of a panel = slice 0); `frontend/src/store/useMultiViewerStore.ts` (panels
 
 No requirement said which slice an image opens on; the store's initial value 0 served as the answer.
 
-## 2. Resolution — implemented on branch, PENDING owner approval
+## 2. Resolution — implemented on branch, N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)
 
 - `frontend/src/utils/sliceOnOpen.ts` (new): `middleSliceIndex`, `sliceIndexOnOpen` (the rule above).
 - `frontend/src/store/useViewerStore.ts`: `openSeries(series, { sameStudy })` sets the image and its slice in one update.
@@ -59,7 +59,7 @@ No requirement said which slice an image opens on; the store's initial value 0 s
 
 ## 5. Closure — not applicable yet
 
-## R. Independent review of PR #71 and film capture (2026-10-28) — PENDING owner approval
+## R. Independent review of PR #71 and film capture (2026-10-28) — N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)
 
 - **m4 (review)**: the slice was kept on an image switch within one study whenever the slice COUNT matched. Two sequences with the
   same number of slices but another matrix, voxel size, slice thickness or stored orientation put the same index at another

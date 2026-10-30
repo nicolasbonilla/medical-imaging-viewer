@@ -14,7 +14,7 @@ machine (read-only; no cloud service was queried)
 **Severity**: **Critical** (proposed, conservative mapping of SPR-001 §2 "data corruption": the
 production authentication collection was contaminated with test records by an uncontrolled process).
 Mitigating facts: no existing record was changed or deleted, no function was lost, no clinical or
-patient data was involved (§5). **PENDING owner approval** — the owner may classify it Major if he
+patient data was involved (§5). **N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)** — the owner may classify it Major if he
 reads "data corruption" as alteration of existing data only.
 **Status**: OPEN — DRAFT. Corrective action implemented on branch `fix/test-cloud-isolation-prb002`
 (test configuration only, no application code changed); clean-up of production records pending an
@@ -226,4 +226,4 @@ proxy). New findings, all addressed in the next commit:
 
 | Role | Name | Decision | Date |
 |---|---|---|---|
-| Owner / management representative | N. G. Bonilla Vargas | PENDING owner approval | |
+| Owner / management representative | N. G. Bonilla Vargas | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) | |

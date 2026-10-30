@@ -37,7 +37,7 @@ hidden only once the model is known to be absent).
 An optional feature whose artefact is not shipped was mounted unconditionally and discovered its own absence at run time, once
 per mount, showing its button while it looked.
 
-## 2. Resolution — implemented on branch, PENDING owner approval
+## 2. Resolution — implemented on branch, N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)
 
 - `frontend/src/config/features.ts`: `QUICK_SCREEN`, OFF unless `VITE_ENABLE_QUICK_SCREEN` is `true` or `1` (not set in
   `.env.production`).

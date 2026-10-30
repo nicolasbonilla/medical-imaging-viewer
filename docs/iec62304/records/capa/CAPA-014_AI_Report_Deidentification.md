@@ -1,7 +1,7 @@
 # CAPA-014 — AI Report Draft: Patient Data Sent to the Model Provider Without De-identification
 
 **CAPA ID**: CAPA-014
-**Date Opened**: 2026-10-24 (DRAFT — opening, severity and actions PENDING owner approval)
+**Date Opened**: 2026-10-24 (DRAFT — opening, severity and actions N. G. Bonilla Vargas — approved 2026-10-30 (PR #72))
 **Source**: code reading of `main` @ `70cc5c7` on 2026-10-24 (orchestrating session), verified the same day by behavioural tests written before the fix (§5). Earlier records of the same gap: RCV-SUMMARY 2026-07-18 (RC-007′ "No de-identification routine exists"), CAPA-001 §2.3 and action CA-4 (still PENDING), CAPA-008 finding 4 and CA-8.5. **Redesigned the same day** after an independent adversarial review of the first version (draft PR #67 @ `4bfdd7e`, §11). **Re-reviewed the same day:** the second independent review closed the 8 findings and raised 10 more (N1–N10), fixed on the branch (§8.1). A **third** independent review found the branch ready for the owner's Class C review and raised minor items R1–R4, M1, M2, fixed on the branch (§8.2); its **final check** found the branch mergeable on the provider path and one item still open (R1), fixed structurally (§8.3); a **last check** found it mergeable on its own, with two small items fixed (§8.4).
 **Severity**: **CRITICAL** (proposed; QP-002 §5: regulatory non-compliance — special-category health data sent to a third-party processor without de-identification and without a recorded data-processing agreement; REQ-SEC-007 not met). Not a direct patient-injury defect.
 **Owner**: *(to be assigned — a person; the AI coding agent cannot own a CAPA)*
@@ -41,11 +41,11 @@ The route logged template and language only (no payload — correct), but nothin
 3. CAPA-008 corrected the wording in two places and moved the burden to the caller instead of implementing CAPA-001 CA-4.
 4. *(Added after the review, §11.)* The first correction treated the problem as text cleaning: a protective measure on free text, which cannot be complete (ISO 14971 §7.1 requires inherent safety by design first).
 
-## 3. Corrections and corrective actions (implemented on the branch — PENDING owner approval)
+## 3. Corrections and corrective actions (implemented on the branch — N. G. Bonilla Vargas — approved 2026-10-30 (PR #72))
 
 | ID | Action | Control | Where |
 |---|---|---|---|
-| CA-14.1 | **Structured payload only (inherent safety by design).** `provider_payload` builds the only payload the provider receives: measurements as numbers (any other value dropped — also in the fields printed without a number format), labels only from the device's fixed vocabulary (`MAGNIMS_REGIONS`, `REGION_NAMES`, `STRUCTURE_NAMES`, size classes, abnormality types — single source of truth, imported from the producing services) with any other label replaced by "[unlisted label]", sex only M or F, age only as a 5-year band ("90 or older" from 90). Free-text fields (clinical indication, technique, observations) and unknown fields are counted and left out. The prompt builder prints no free text even if called directly. The system prompt is one of the fixed template variants *(amended 2026-10-25 at the release integration with PR #68, §12 — PENDING owner approval; was "the fixed template")* | RC-064 | `services/report_payload_guard.py` (new, part of the Class C report item), `brain_report_service.py` |
+| CA-14.1 | **Structured payload only (inherent safety by design).** `provider_payload` builds the only payload the provider receives: measurements as numbers (any other value dropped — also in the fields printed without a number format), labels only from the device's fixed vocabulary (`MAGNIMS_REGIONS`, `REGION_NAMES`, `STRUCTURE_NAMES`, size classes, abnormality types — single source of truth, imported from the producing services) with any other label replaced by "[unlisted label]", sex only M or F, age only as a 5-year band ("90 or older" from 90). Free-text fields (clinical indication, technique, observations) and unknown fields are counted and left out. The prompt builder prints no free text even if called directly. The system prompt is one of the fixed template variants *(amended 2026-10-25 at the release integration with PR #68, §12 — N. G. Bonilla Vargas — approved 2026-10-30 (PR #72); was "the fixed template")* | RC-064 | `services/report_payload_guard.py` (new, part of the Class C report item), `brain_report_service.py` |
 | CA-14.2 | **The clinician's text stays in the application.** The route adds the typed indication, technique and observations to the draft after the model returns, right after the RC-006 disclaimer, under a heading in the report language ("Clinician's entry (added in the application; not sent to the AI service)"); the model is told that this text is added by the application | RC-064, RC-066 | `ai_report.py` (`clinician_entry`, `with_clinician_entry`), `brain_report_service.py` (`CLINICIAN_TEXT_INSTRUCTION`) |
 | CA-14.3 | **Fail closed and a detection-only tripwire.** Segmentation required (400 — not 422, which the panel reads as "no measurements"), authorized for the caller (`authorize_segmentation_id`, 404 as RC-036), patient record readable and complete (503). Before the call, `find_identifiers` checks the final prompt — after NFKC, removal of format characters (soft hyphen, zero-width characters, BOM), look-alike and accent mapping — for the patient's own name (alone, inside a longer word, German ae/oe/ue spellings, and for names that are also words of the device's fixed text, next to the other name), record number (up to 3 separator characters between characters), birth date (numeric, month-name en/es/de, Roman; day and month or year after a birth word), phone (with and without country code and trunk 0), e-mail, contact name, city and street, and for generic e-mail, dated text, "+" phones, long or grouped numbers, ID-like tokens and titled names. Any finding: 503, nothing sent. It never edits text, never reports the device's own words alone (derived from the templates and from the builder's output on synthetic payloads), refuses texts over 400 000 characters and uses only bounded or anchored patterns | RC-065 | `report_payload_guard.py`, `brain_report_service.py` (`assert_prompt_carries_no_identifier`, `fixed_prompt_words`), `ai_report.py`, `security/resource_access.py`, `AIReportPanel.tsx`, `mcp/ms_clinical_server.py` |
 | CA-14.4 | **Records and true statements.** The log records `privacy_check="passed"` and the withheld counts (free-text fields, unlisted labels, unknown fields), never the payload, prompt or typed text. Panel note directly above the draft button and report viewer footer, en/es/de: only the measurements, sex and a 5-year age range are sent — no names, dates of birth, record numbers or free text; the typed text is added in the application. False claims corrected in the service header, API client, viewer footer (old `hipaaNote` key removed), README (badge removed), TD-001, AIA-001, ISMS-001, CSA-001, DD-001, master compliance document, technical documentation and its PDF generator; a repository test fails on any new claim (historical records, tests and negative-control scripts excepted). Data categories recorded (§6) | RC-066 | `brain_report_service.py`, `AIReportPanel.tsx`, `ReportViewerModal.tsx`, `i18n/locales/{en,es,de}.json`, `aiReport.ts`, documents listed, §6 |
@@ -70,7 +70,7 @@ The route logged template and language only (no payload — correct), but nothin
 | No open segmentation | "No measurements are available…" (422) | Unchanged |
 | Record unreadable, or the check finds something | Draft generated | Refused; the panel shows its generic error, the API says "The request was not sent to the AI service (…). Nothing was sent." (PA-14.4) |
 
-## 4. Preventive actions (proposed — PENDING owner approval)
+## 4. Preventive actions (proposed — N. G. Bonilla Vargas — approved 2026-10-30 (PR #72))
 
 | ID | Action |
 |---|---|
@@ -212,17 +212,17 @@ The last check found the branch mergeable on its own: forging in the viewer and 
 | D-7 | Code review of the Class C change (§7) by a person other than the author |
 | D-8 | Merge order with the parallel CAPA-015 PR (document versions and a possible second HAZ-016) and with PR #68 (PRB-003 / CAPA-016): #68's DIS rule wins in the prompt builder (a block without the "evaluated" state is not evaluated); #68's check of the model's DIS statements runs before the draft is assembled, so it never touches the clinician's typed text; one `segmentation_id` field in the report request; merge #66 (PRB-002 guard) first, and the second of #67 / #68 to merge updates the route tests' fixtures — each PR stubs only its own hooks, so the other's `authorize_mask_specs` / `server_dis_assessment` would reach the real datastore client, and #68's tests must send `segmentation_id` and drop their `startswith("draft body")` assertions (merge notes in the description of PR #67) |
 | D-9 | Wording of the panel note, the "Clinician's entry" and "AI draft (from measurements only)" headings, the note on unlisted labels and the report viewer footer in en/es/de (radiologist review of the translations) |
-| D-10 | *(Added 2026-10-25 at the release integration, §12.)* RC-064 / REQ-SEC-021 (f) amended: the system prompt is one of the fixed template variants (as written, or with its DIS and per-region instructions replaced when DIS was not evaluated — PRB-003) — PENDING owner approval |
+| D-10 | *(Added 2026-10-25 at the release integration, §12.)* RC-064 / REQ-SEC-021 (f) amended: the system prompt is one of the fixed template variants (as written, or with its DIS and per-region instructions replaced when DIS was not evaluated — PRB-003) — N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) |
 
 ## 10. Approvals
 
 | Role | Name | Decision | Date |
 |---|---|---|---|
-| CAPA owner | *(to be assigned)* | PENDING owner approval | — |
-| Owner / Project Lead | — | PENDING owner approval | — |
-| Code review (Class C, D-7) | — | PENDING owner approval | — |
-| Data protection (D-3, D-4) | — | PENDING owner approval | — |
-| Effectiveness check | — | PENDING owner approval | — |
+| CAPA owner | *(to be assigned)* | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) | — |
+| Owner / Project Lead | — | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) | — |
+| Code review (Class C, D-7) | — | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) | — |
+| Data protection (D-3, D-4) | — | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) | — |
+| Effectiveness check | — | N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) | — |
 
 ## 11. Independent review of PR #67 (2026-10-24) — findings and how the redesign removes them
 
@@ -239,12 +239,12 @@ The first version (PR #67 @ `4bfdd7e`) removed identifiers from the free text wi
 | 7 | Wrong labels (redaction categories that did not match what was removed) | No redaction labels exist any more; the log counts what was withheld from the payload | `test_rc066_logs_say_the_check_ran_with_counts_never_the_payload`; L1–L3 |
 | 8 | The tests missed all of the above | Tests now plant markers in every field and inspect the exact call; leak forms of the review, collision names and timing are tested; negative controls cover every sub-control | §5 |
 
-## 12. Release integration (2026-10-25) — RC-064 amended (PENDING owner approval)
+## 12. Release integration (2026-10-25) — RC-064 amended (N. G. Bonilla Vargas — approved 2026-10-30 (PR #72))
 
 PR #67 was integrated with PRs #66 (PRB-002), #65 (CAPA-015) and #68 (PRB-003 / CAPA-016) on
 `release/owner-signoff-2026-10-25`. Record: `../releases/RELEASE-2026-10-25_integration_notes.md`.
 
-- **RC-064 / REQ-SEC-021 (f) amended — PENDING owner approval.** PR #68 replaces the DIS and per-region instructions
+- **RC-064 / REQ-SEC-021 (f) amended — N. G. Bonilla Vargas — approved 2026-10-30 (PR #72).** PR #68 replaces the DIS and per-region instructions
   of the template when dissemination in space was not evaluated (`dis_not_evaluated_template`, Class C). "The system
   prompt is the fixed template" therefore becomes "the system prompt is one of the fixed template variants": the
   template as written, or the same template with those instructions replaced. The variant is chosen on the DIS block
@@ -260,7 +260,7 @@ PR #67 was integrated with PRs #66 (PRB-002), #65 (CAPA-015) and #68 (PRB-003 / 
   fixture of `test_capa014_report_provider_payload.py` stubs #68's hooks, so no test reaches a store (PRB-002).
 - **Negative controls** of this PR re-run on the integrated tree; results, and the one anchor that moved, in the
   integration notes.
-- **Owner decision D-10 (new, PENDING owner approval):** approve the RC-064 amendment.
+- **Owner decision D-10 (new, N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)):** approve the RC-064 amendment.
 - **Independent integration review of PR #69 (2026-10-28; integration notes §9).** (1) Unconfirmed regions are no longer turned into `[unlisted label N] = not confirmed`: `provider_payload` drops the region of every lesion row when PRB-003 marks the regions unconfirmed, and the prompt prints a fixed "regions not confirmed" line (its words join the device's own words). (2) The route removes the format characters from the model's text before PRB-003's check; the draft assembly keeps its own removal, now tested directly (`test_rc066_release_the_draft_assembly_removes_format_characters_itself`, so mutation M10 stays detected). (3) The payload's "evaluated" mark uses the one rule `dis_review_gate.is_evaluated`. (4) The fully real path is tested: 0 markers and 0 identifiers reach the provider, unconfirmed and confirmed. Negative controls re-run on the integrated tree on 2026-10-28: 94/94 (P17 anchored on the one-rule line).
 - **Second independent review of PR #69 (2026-10-28; integration notes §11).** No CAPA-014 control changed. The report route names the real reason of a lesion-table failure (only an unreadable voxel geometry gives `GEOMETRY_UNREADABLE_PHRASE`; any other failure `LESION_TABLE_FAILED_PHRASE`). This PR's negative controls were re-run on the final tree (94/94), so the record's source and locale hashes include every release change (m6). Film capture "DWM: 1 lesions" (same day): the findings prompt writes "1 lesion" for a count of one, and the synthetic payloads behind `fixed_prompt_words()` / `fixed_prompt_pairs()` print both forms, with and without the region column, so the RC-065 tripwire keeps every word and word pair the device can write (`test_release_2026_10_25_plural_counts.py`; integration controls I44, I45).
 

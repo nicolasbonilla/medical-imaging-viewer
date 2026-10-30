@@ -11,7 +11,7 @@ switched to Okabe-Ito on 2026-08-18 (`79bcfee`, "red/green indistinguishable …
 overlays. The release branch does not change these colours.
 **Severity**: **Major — safety-related** (proposed; HAZ-005: the region a reader sees on the image is the region the device
 counts for DIS — a reader who cannot tell periventricular from juxtacortical on the image, or who reads the image with the
-legend's colours, can misjudge the regions). **PENDING owner approval.**
+legend's colours, can misjudge the regions). **N. G. Bonilla Vargas — approved 2026-10-30 (PR #72).**
 **Status**: OPEN — DRAFT. Fix implemented on branch `fix/viewer-display-orientation-prb004` (draft PR, with PRB-004..009).
 
 **Description**: After region classification, the lesions are coloured by MAGNIMS region. The lesion panel's legend
@@ -55,7 +55,7 @@ The region → colour mapping was written in seven places (two backend label lis
 3D colormap, three legends). The 2026-08-18 colour-blind fix changed one of them (the lesion legend) and nothing tied the others
 to it; no test looked at the colours drawn on the image.
 
-## 2. Resolution — implemented on branch, PENDING owner approval
+## 2. Resolution — implemented on branch, N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)
 
 - `frontend/src/utils/regionColors.ts` (new): the ONE mapping (`MAGNIMS_REGION_PALETTE`, by region name and label value),
   legend classes, canvas RGBA (`regionZoneRgba`) and `withRegionColors` (a label named after a region shows the region's colour,
@@ -93,7 +93,7 @@ to it; no test looked at the colours drawn on the image.
 
 ## 5. Closure — not applicable yet
 
-## R. Independent review of PR #71 (2026-10-28) — PENDING owner approval
+## R. Independent review of PR #71 (2026-10-28) — N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)
 
 - **m1 — the colour-blind claim was measured on the opaque colours, the image shows them translucent.** A region is drawn at
   label opacity 0.6 × lesion opacity 0.6 (the default) = 36 %, over grey tissue. Measured that way (Machado 2009 severity 1,

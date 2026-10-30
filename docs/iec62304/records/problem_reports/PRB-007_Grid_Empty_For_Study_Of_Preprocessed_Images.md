@@ -10,7 +10,7 @@ still `stills/06_multipanel_2x2.png`); reproduced on `main` and record drafted b
 **Version**: `main` @ `70cc5c7`. The grid's image source exists since `67fa336` (2026-02-28); the toolbar since `e0bdb7e`
 (2026-04-21). The release branch does not change this.
 **Severity**: **Minor** (proposed; SPR-001 §2: a workaround exists — the hidden "Original/Preproc" switch). Not
-safety-related. **PENDING owner approval.**
+safety-related. **N. G. Bonilla Vargas — approved 2026-10-30 (PR #72).**
 **Status**: OPEN — DRAFT. Fix implemented on branch `fix/viewer-display-orientation-prb004` (draft PR).
 
 **Description**: In a study whose images are all preprocessed (the demo study; any study uploaded already registered), the
@@ -35,7 +35,7 @@ layout button.
 The grid's image group was chosen by a UI state with a default ("originals") that does not depend on what the study holds;
 the empty case was not considered. The panel filling rule assumed one image per sequence.
 
-## 2. Resolution — implemented on branch, PENDING owner approval
+## 2. Resolution — implemented on branch, N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)
 
 - `frontend/src/utils/instanceClassification.ts`: `multiPanelImages(requested, originals, preprocessed)` — the requested
   group when it has images, otherwise the other; returns the group actually shown.
@@ -63,7 +63,7 @@ the empty case was not considered. The panel filling rule assumed one image per 
 
 ## 5. Closure — not applicable yet
 
-## R. Independent review of PR #71 (2026-10-28) — PENDING owner approval
+## R. Independent review of PR #71 (2026-10-28) — N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)
 
 - **m10**: a segmentation derivative (BIDS `desc-segfrompreproc`, `_dseg`, `_probseg`, `_seg`, `_mask`, `_label(s)`) is listed
   with the preprocessed files, and the grid's fallback (§ resolution) could show it as a grey image in a panel. The grid now

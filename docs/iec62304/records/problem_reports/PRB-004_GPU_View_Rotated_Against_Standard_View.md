@@ -13,7 +13,7 @@ finding F16 / F14 in `mstool-film/assets/app-captures/CAPTURES.md` §5, screensh
 **Version**: `main` @ `70cc5c7`. The GPU view exists since `4584b81` (2026-08-21); the standard view has drawn the stored
 voxel order since the first commit. The release branch does not change either file's display logic.
 **Severity**: **Critical — safety-related** (proposed; SPR-001 §2 classes a problem with a safety impact as Critical;
-HAZ-006). **PENDING owner approval.**
+HAZ-006). **N. G. Bonilla Vargas — approved 2026-10-30 (PR #72).**
 **Status**: OPEN — DRAFT. Fix implemented on branch `fix/viewer-display-orientation-prb004` (draft PR, not merged, not
 deployed). No Class C module of the CLAUDE.md list is changed by this fix; it changes how a Class C image is presented,
 so a code review is required before merge.
@@ -99,7 +99,7 @@ same voxels; a mask that cannot be drawn voxel for voxel on the image is not dra
 - Released versions: the GPU view is opt-in and has been in production since 2026-08-21 (deploys after `4584b81`);
   how often it was used is unknown (no usage record exists).
 
-## 4. Resolution (SPR-001 §4) — implemented on branch, PENDING owner approval
+## 4. Resolution (SPR-001 §4) — implemented on branch, N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)
 
 - `frontend/src/utils/niivueVoxelGrid.ts` (new): `standardViewAffine` — voxel (i, j, k) → display (x = j·s1, y = −i·s0,
   z = k·s2) for niivue's axial screen (+x right, +y up); `placeAsStandardView` applies it before a volume is added;
@@ -153,7 +153,7 @@ probability, not the severity. Proposed Critical.
 
 ## 8. Closure (SPR-001 §4, step 6) — not applicable yet
 
-## 9. Independent review of the draft PR #71 (2026-10-28) — findings, resolution, verification — PENDING owner approval
+## 9. Independent review of the draft PR #71 (2026-10-28) — findings, resolution, verification — N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)
 
 An independent review of the draft PR at `39f9d44` (report kept by the coordinator) found the items below; two more
 display findings came from the film capture the same day (§9.2). Every item was reproduced by a test written before
@@ -200,7 +200,7 @@ placement by the real-browser layout test.
   "NOT spatially registered" stays).
 - The label colour of a value missing from the label table: see §10 (R5) — now one named constant.
 
-## 10. Re-review of PR #71 (`39f9d44..4626d17`, 2026-10-29) — PENDING owner approval
+## 10. Re-review of PR #71 (`39f9d44..4626d17`, 2026-10-29) — N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)
 
 The re-review verified every item of §9 as fixed and found one major and six minor items. Each was reproduced first by a
 test that fails on `4626d17` (`records/risk_verification/PRB-004_rereview_tests_on_4626d17_2026-10-29.json`); every earlier test passes there. R6 → PRB-010 §R; R5 → PRB-010 §R and below.

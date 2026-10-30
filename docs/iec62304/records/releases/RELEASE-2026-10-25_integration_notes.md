@@ -1,9 +1,9 @@
 # RELEASE-2026-10-25 — integration notes (`release/owner-signoff-2026-10-25`)
 
-**Status: DRAFT for the owner's single sign-off. PENDING owner approval.** Nothing was merged to `main`, nothing was
+**Status: DRAFT for the owner's single sign-off. N. G. Bonilla Vargas — approved 2026-10-30 (PR #72).** Nothing was merged to `main`, nothing was
 deployed, nothing was signed. No cloud service, no Firestore, no model provider and no GCP project was contacted;
 every backend run was offline per PRB-002. Every approval field in every document still reads
-"PENDING owner approval".
+"N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)".
 
 Prepared by the AI coding agent (release integrator) on 2026-10-25. Like the previous release (PR #64), this is one
 integration branch that the owner signs and merges once; the four draft PRs can then be closed as merged here.
@@ -27,7 +27,7 @@ Integration commits after the four merges (one concern each):
 |---|---|
 | `4320744` | Test-fixture reconciliation (§4) |
 | `f93eafd` | #68's confirmation route recorded by CAPA-015's audit trail (§3, S1) |
-| `929ce0c` | RC-064 amended — "one of the fixed template variants" (§3, S2) — PENDING owner approval |
+| `929ce0c` | RC-064 amended — "one of the fixed template variants" (§3, S2) — N. G. Bonilla Vargas — approved 2026-10-30 (PR #72) |
 | `fe4487d` | Integration tests I-1, I-2, C-1 (§3, S3) |
 | `57933c3` | Negative-control scripts: P17 anchor, new integration script (§6) |
 | `6d1fde2` | These notes (first version), the integrated-tree negative-control records, the manifest's negative-control fields (RC-064..072), CAPA-015 D-4 note |
@@ -114,13 +114,13 @@ No identifier is duplicated: REQ-SEC-021..026, REQ-SAFE-038..040, RC-064..072 an
 mapping holds, a refused confirmation leaves one durable record (actor, role, segmentation id, outcome, request id).
 It fails without the mapping (KeyError) and passes with it; negative control I3.
 
-**S2 — RC-064 amended — PENDING owner approval** (`929ce0c`). Asked by the third independent review of #68: #68
+**S2 — RC-064 amended — N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)** (`929ce0c`). Asked by the third independent review of #68: #68
 replaces the DIS and per-region instructions of the template when DIS was not evaluated, so CAPA-014's
 "(f) the system prompt is the fixed template" becomes "**one of the fixed template variants**" (as written, or with
 those instructions replaced), chosen on the DIS block of the payload. Both variants are fixed text; no request data is
 in the system prompt. Recorded in SRS-001 1.14 (REQ-SEC-021 (f)), RMF-001 1.16 (RC-064 row and §7 open item D-10),
 DD-001 1.4 (DD-RPT-001), CAPA-014 §12 and new decision D-10, the manifest's RC-064 description; every one reads
-"PENDING owner approval". The test `test_rc064_system_prompt_is_the_fixed_template` now checks **both** variants
+"N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)". The test `test_rc064_system_prompt_is_the_fixed_template` now checks **both** variants
 exactly and that no request data is in the system prompt (its name is kept because the CAPA-014 records cite it).
 
 **S3 — integration tests** (`fe4487d`, `backend/tests/unit/test_release_2026_10_25_integration.py`, 9 cases; real
@@ -155,7 +155,7 @@ CAPA-015 1, CAPA-008 1, report service 1).
 
 ## 5. Documents — version sequence on the integrated tree
 
-| Document | Versions (all DRAFT, PENDING owner approval) | Last approved |
+| Document | Versions (all DRAFT, N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)) | Last approved |
 |---|---|---|
 | SRS-001 | 1.11 #67 · 1.12 #65 · 1.13 #68 · **1.14 integration** (REQ-SEC-021 (f)) | 1.10 |
 | RMF-001 | 1.13 #67 · 1.14 #65 · 1.15 #68 · **1.16 integration** (RC-064) | 1.12 |
@@ -286,7 +286,7 @@ The review found that nothing reviewed was lost in the integration and no blocke
 corrected with the same process: tests written first (`26ecb82`; on the uncorrected code **backend 13 of 17 and
 frontend 3 of 4 fail**, the passing cases are positive controls — record
 `RELEASE-2026-10-25_review_tests_on_6d1fde2.json`), then the corrections (`269317d`), then the control scripts
-(`9c78d2d`). Everything stays PENDING owner approval.
+(`9c78d2d`). Everything stays N. G. Bonilla Vargas — approved 2026-10-30 (PR #72).
 
 | # | Finding | Correction | Tests / negative controls |
 |---|---|---|---|
@@ -306,7 +306,7 @@ A browser capture session of this release build (offline, local; `mstool-film/as
 evidence in `findings/` and `logs/`) found defects in the confirmation flow that this release introduces or relies on.
 What a radiologist confirms must be drawn on screen, so they block the release (§11 and §12 say exactly what the browser now checks, and what it cannot). Same process: tests written first
 (`7c7c70d`: on `c7a06cf` **backend 3 of 3 and frontend 4 of 5 fail**, the passing case is a positive control — record
-`RELEASE-2026-10-25_capture_tests_on_c7a06cf.json`), corrections `e9935eb`, scripts `09cd029`. PENDING owner approval.
+`RELEASE-2026-10-25_capture_tests_on_c7a06cf.json`), corrections `e9935eb`, scripts `09cd029`. N. G. Bonilla Vargas — approved 2026-10-30 (PR #72).
 
 | # | Finding | Cause | Correction | Tests / negative controls |
 |---|---|---|---|---|
@@ -324,7 +324,7 @@ modes) were not part of this request and are not addressed in this release; they
 
 The review found round 1 (§9), F10 and F04 sound, and **1 blocker and 3 majors**. Each finding was reproduced by a test
 written before its correction. B1 and M3 were pushed first (`ebf39c3`) because the film's app re-capture runs on this
-branch. Everything stays PENDING owner approval.
+branch. Everything stays N. G. Bonilla Vargas — approved 2026-10-30 (PR #72).
 
 | Commit | Content |
 |---|---|
@@ -389,7 +389,7 @@ The final check found B1, M1, M2, M3 and the minor items fixed, the `brain_repor
 blocker. It found **two major gaps in the confirmation guard** of §11. Both were reproduced by tests written before the
 correction (`1d3c495`: on `39d9730` **backend 3 of 4 and frontend 17 of 18 fail**; the passing cases are positive
 controls — record `RELEASE-2026-10-25_final_check_tests_on_39d9730.json`); correction `a11b648`; controls and anchors
-`0ca1967`. PENDING owner approval.
+`0ca1967`. N. G. Bonilla Vargas — approved 2026-10-30 (PR #72).
 
 **What the guard checks now** (it replaces the wording of §11, which said more than the code did). Before any dialog or
 request, the browser refuses the DIS confirmation unless:

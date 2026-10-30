@@ -1,7 +1,7 @@
 # CAPA-016 — Dissemination in Space Evaluated on a Segmentation No Clinician Has Confirmed
 
 **CAPA ID**: CAPA-016
-**Date Opened**: 2026-10-24 (DRAFT — opening, severity and actions **PENDING owner approval**)
+**Date Opened**: 2026-10-24 (DRAFT — opening, severity and actions **N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)**)
 **Source**: PRB-003 (`records/problem_reports/PRB-003_DIS_Evaluated_On_Unreviewed_Segmentation.md`), from the paper A
 v0.3 healthy-control addendum (branch `research/paper-a-v0.3`, PR #54, `f3b22cd`; record
 `docs/research/records/2026-10-24_paper_a_v03c_controls.json`, key `app_dis`). Every finding below was re-checked in
@@ -11,7 +11,7 @@ PRB-003). The device is not in clinical use and the AI tools are believed off in
 probability of harm, not the class.
 **Owner**: *(to be assigned — a person; the AI coding agent cannot own a CAPA)*
 **Status**: DRAFT. Corrections implemented on branch `fix/dis-requires-reviewed-segmentation-prb003` (draft PR #68, from
-`main` @ `70cc5c7`). Nothing merged, nothing deployed. **PENDING owner approval.** Effectiveness is not verified.
+`main` @ `70cc5c7`). Nothing merged, nothing deployed. **N. G. Bonilla Vargas — approved 2026-10-30 (PR #72).** Effectiveness is not verified.
 **Identifiers**: RC-070, RC-071, RC-072; REQ-SAFE-038, REQ-SAFE-039, REQ-SAFE-040; CAPA-016; no new hazard. Checked on
 every open branch on 2026-10-24: PR #67 (CAPA-014) holds RC-064..066, REQ-SEC-021..023, HAZ-016, SRS 1.11, RMF 1.13,
 TM 1.10; PR #65 (CAPA-015) holds RC-067..069, REQ-SEC-024..026, SRS 1.12, RMF 1.14, TM 1.11 (RC-063 is unused but was
@@ -62,7 +62,7 @@ exports (no DIS), the longitudinal comparison (no DIS; DIT handled by CAPA-013).
 3. A derived clinical conclusion was persisted and displayed outside the route that computes it.
 4. Client data (report findings) were trusted for a clinical conclusion.
 
-## 3. Corrections and corrective actions (implemented on the branch — PENDING owner approval)
+## 3. Corrections and corrective actions (implemented on the branch — N. G. Bonilla Vargas — approved 2026-10-30 (PR #72))
 
 *The rows below are the first version (`4c601f2`); they were corrected after the independent review of PR #68 — see §10,
 which supersedes CA-16.1, CA-16.3, CA-16.5, CA-16.6 and CA-16.7 where they differ (e.g. an AI draft is no longer refused by
@@ -87,7 +87,7 @@ the confirmation route: it needs its own review AND the DIS confirmation).*
   changed mask, or a new region classification, returns the card to "not evaluated".
 - AI report: a draft without an evaluated DIS ends with "Dissemination in space: not evaluated …" and the notice.
 
-## 4. Preventive actions (proposed — PENDING owner approval)
+## 4. Preventive actions (proposed — N. G. Bonilla Vargas — approved 2026-10-30 (PR #72))
 
 | ID | Action |
 |---|---|
@@ -185,7 +185,7 @@ The template texts themselves are unchanged.
   generation may then get the existing stale-write conflict (A-2) on its next save. Pre-existing, not changed here.
 - HAZ-008 residual risk to be re-estimated by the owner with RC-070..072 (RMF-001 §5.2).
 
-## 8. Owner decisions (PENDING owner approval)
+## 8. Owner decisions (N. G. Bonilla Vargas — approved 2026-10-30 (PR #72))
 
 | ID | Decision |
 |---|---|
@@ -203,7 +203,7 @@ The template texts themselves are unchanged.
 | D-12 | Who confirmed (names, ids, history) shown to radiologists and administrators only; others: role and time; history capped at 50 events (second review, N5). |
 | D-13 | Merge with #67 (third review): amend RC-064 to "one of the fixed template variants" (owner approval) and adapt about six fixtures and two contract tests (CAPA-014 route fixture, CAPA-013 report fixture, capa008, brain_report, PRB-003 `report_env`, second-review report fixture); accept the N6 residual (a mask save on another instance can erase a confirmation; DIS fail-safe). |
 
-## 10. Independent review of PR #68 (2026-10-24, at `4c601f2`) — findings and corrections (PENDING owner approval)
+## 10. Independent review of PR #68 (2026-10-24, at `4c601f2`) — findings and corrections (N. G. Bonilla Vargas — approved 2026-10-30 (PR #72))
 
 Tests written before the corrections fail on `4c601f2`: backend 45 of 47 (`test_prb003_review1_findings.py`), frontend 14 of
 17 (`LesionDashboard.prb003.review1.test.tsx`, `SegmentationPanel.prb003.test.tsx`); the passing ones are positive controls —
@@ -231,7 +231,7 @@ segmentation, authorized with `authorize_mask_specs`, 404 for a stranger); the i
 `regions_not_classified`; the evaluated contract is pinned by the CI-run `test_analysis_flow_ci_guard`); the source-text
 panel check replaced by a behavioural test.
 
-## 11. Second independent review of PR #68 (2026-10-24, at `29abe29`) — findings and corrections (PENDING owner approval)
+## 11. Second independent review of PR #68 (2026-10-24, at `29abe29`) — findings and corrections (N. G. Bonilla Vargas — approved 2026-10-30 (PR #72))
 
 The second review closed M5 and m6-m11 and found B1, M3 and M4 only partly closed. Every finding was answered on the same branch with the same process: tests written before the corrections — they fail on `29abe29` (backend 46 of 51, frontend 6 of 6; `records/risk_verification/PRB-003_review2_tests_on_29abe29_2026-10-24.json`) — then the corrections, then the negative controls re-run in full: 112 mutations, 112 detected (the 69 of the previous run with anchors updated and 43 for the second review; bound tests green after byte-exact restore) — `records/risk_verification/PRB-003_negative_controls_2026-10-24.json`. A first full run left one mutation undetected (C6: the new per-lesion check also refused lesions that were never classified, so removing the classification check changed nothing visible); the per-lesion check now reads classified lesions only, a test asserts the reason of each refusal (and the card shows the server's reason), the record of the tests on `29abe29` was produced again with the final test files, and the whole set was re-run.
 
@@ -247,7 +247,7 @@ The second review closed M5 and m6-m11 and found B1, M3 and M4 only partly close
 
 Existing tests changed with the corrected contract (stated, not hidden): `test_rc070_r1_a_region_corrected_after_classification_keeps_the_classification` (a correction now needs the acknowledgement), `test_rc070_assistant_receives_an_evaluated_assessment_unchanged` (unchanged except the confirmer, given by role), the test helpers (`_classification` / `_classify` record each lesion's region, computed in the test with scipy, independently of the code under test; `_FakeDB` supports field updates with an update-time precondition; `_seed` stores the metadata document as production has it), `test_analysis_flow_ci_guard.py` (the classification record classify-regions writes) and the end-to-end fixture (N2).
 
-## 12. Third independent review of PR #68 (2026-10-24, at `2e20b8a`) — findings and corrections (PENDING owner approval)
+## 12. Third independent review of PR #68 (2026-10-24, at `2e20b8a`) — findings and corrections (N. G. Bonilla Vargas — approved 2026-10-30 (PR #72))
 
 The third review found no blocker or major finding in #68 alone: N1-N7 closed, the N1 design cannot be gamed by
 splitting or merging lesions, and the evaluated state survives a merge with #67's pushed head `a3f3305`. Two minor
@@ -272,7 +272,7 @@ meanwhile by `persist_metadata` on another. The failure is safe: without its con
 evaluated" and must be confirmed again; no DIS result is shown on a confirmation that is not stored. Not changed here
 (pre-existing save path, CAPA-006/A-2).
 
-## 13. Release integration (2026-10-25 / 2026-10-28) — PENDING owner approval
+## 13. Release integration (2026-10-25 / 2026-10-28) — N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)
 
 PR #68 was integrated with #66, #65 and #67 on `release/owner-signoff-2026-10-25` (record `../releases/RELEASE-2026-10-25_integration_notes.md`). Merge notes applied (the DIS block of #68 wins; the output check runs on the model's text before CAPA-014's draft assembly; one `segmentation_id`; the confirmation route is recorded by CAPA-015's audit trail). The independent integration review of PR #69 (2026-10-28, notes §9) led to: `dis_review_gate.is_evaluated` is the one "evaluated" rule (status AND a yes/no conclusion) for the report route, the payload, the prompt and the template; format characters are removed from the model's text before `scrub_unevaluated_dis`; unconfirmed regions reach the model as a fixed "regions not confirmed" line, never as labels; the report panel names an unreadable image geometry. Negative controls re-run on the integrated tree on 2026-10-28: 119/119 (R4 anchored on the one-rule line).
 
@@ -286,5 +286,5 @@ The final check of PR #69 (2026-10-29, integration notes §12) found two major g
 
 | Role | Name | Decision | Date |
 |---|---|---|---|
-| Owner / management representative | *(owner)* | **PENDING owner approval** | — |
+| Owner / management representative | *(owner)* | **N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)** | — |
 | Code review of the Class C change | *(reviewer)* | **PENDING** | — |

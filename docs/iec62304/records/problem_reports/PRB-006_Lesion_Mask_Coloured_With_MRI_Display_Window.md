@@ -11,7 +11,7 @@
 display range of their own since `67fa336` (2026-02-28), the GPU view's since `4584b81` (2026-08-21).
 **Severity**: **Major — safety-related** (proposed; the lesions can be missed in the 3D and GPU views — HAZ-001 and, for the
 two visit masks of the longitudinal overlay, HAZ-007; the standard 2D view, where the mask is reviewed, was not affected).
-**PENDING owner approval.**
+**N. G. Bonilla Vargas — approved 2026-10-30 (PR #72).**
 **Status**: OPEN — DRAFT. Fix implemented on branch `fix/viewer-display-orientation-prb004` (draft PR).
 
 **Description**: A segmentation is stored as a NIfTI written with a copy of the source MRI's header, so that it lines
@@ -63,7 +63,7 @@ Masks stored before the fix keep the MRI window in their file until they are sav
 viewers (ITK-SNAP, FSLeyes) see the stored window of old files — owner decision D-1. Requirement: new **REQ-SAFE-042**;
 risk control: new **RC-074**.
 
-## 3. Resolution — implemented on branch, PENDING owner approval
+## 3. Resolution — implemented on branch, N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)
 
 - `backend/app/services/segmentation_service.py`: `_label_display_range()`; both header paths of `_save_masks_to_gcs` set it.
 - `frontend/src/utils/niivueVoxelGrid.ts`: `LABEL_MASK_DISPLAY_RANGE` = { cal_min 0, cal_max 1 } — passed to every mask
@@ -90,7 +90,7 @@ risk control: new **RC-074**.
 
 ## 6. Closure — not applicable yet
 
-## R. Independent review of PR #71 (2026-10-28) — PENDING owner approval
+## R. Independent review of PR #71 (2026-10-28) — N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)
 
 - **m2**: the later-visit mask of the 3D longitudinal overlay was loaded with niivue's "hot" colormap; with the fixed range
   0 … 1 every label sits at the top of "hot", which is **white** — the comment said red, and white is the colour of a FLAIR

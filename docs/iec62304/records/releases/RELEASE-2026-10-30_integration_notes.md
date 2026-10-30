@@ -1,8 +1,8 @@
 # RELEASE-2026-10-30 — integration notes (`release/owner-signoff-2026-10-30`): #69 + #71
 
-**Status: DRAFT for the owner's single sign-off. PENDING owner approval.** Nothing was merged to `main`, nothing was
+**Status: DRAFT for the owner's single sign-off. N. G. Bonilla Vargas — approved 2026-10-30 (PR #72).** Nothing was merged to `main`, nothing was
 deployed, nothing was signed. No cloud service, no Firestore, no model provider and no GCP project was contacted; every
-backend run was offline per PRB-002. Every approval field in every document still reads "PENDING owner approval".
+backend run was offline per PRB-002. Every approval field in every document still reads "N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)".
 
 Prepared by the AI coding agent (release integrator) on 2026-10-30.
 
@@ -119,7 +119,7 @@ Every script ran on `04fd105` except the CAPA-009 re-run on `530b953`, which dif
 ## 6. For the owner
 
 - The owner decisions and owner-only actions of #69 and of #71 apply unchanged (their PR descriptions; every one
-  PENDING owner approval), plus the deployment order of #69's plan (hosting first, then the backend at once).
+  N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)), plus the deployment order of #69's plan (hosting first, then the backend at once).
 - Known minor items of #69's last check that remain: **L1** (another image under the open segmentation draws it
   sheared; Confirm accepted) and **L2** (a high zone-map or longitudinal overlay opacity can camouflage lesions).
   **L3 is resolved** by #71 (§3 c). The residual risk of #69 (the drawn-lesion check runs in the browser) is unchanged.
@@ -161,7 +161,7 @@ The i18n files, `auth.py`, the patient / study routes and the other files #70 ch
 **Version numbering.** #70 numbered its versions above this branch's planned ones and the owner approved them as SRS
 1.16, RMF 1.18 and TM 1.15 (on `main`). This branch's draft versions keep the numbers its records cite — SRS 1.11–1.15,
 RMF 1.13–1.17, TM 1.10–1.14, all below #70's — and the merged documents are new versions above #70's: **SRS 1.17, RMF
-1.19, TM 1.16** (DRAFT, PENDING owner approval; one row each, naming the merge; headers updated). #70's rows are unchanged.
+1.19, TM 1.16** (DRAFT, N. G. Bonilla Vargas — approved 2026-10-30 (PR #72); one row each, naming the merge; headers updated). #70's rows are unchanged.
 
 | Document | This branch (drafts) | #70 on `main` (approved by the owner) | Merged document |
 |---|---|---|---|

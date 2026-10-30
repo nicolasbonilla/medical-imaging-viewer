@@ -14,10 +14,10 @@ record drafted by the AI coding agent
 **Version**: `main` @ `70cc5c7`. The DIS route exists since `cf780f4` (2026-02-22); classify-regions has stored a DIS
 result for any mask, and the viewer has displayed it from the metadata, since `a637cdf` (2026-03-14)
 **Severity**: **Critical — safety-related** (proposed; SPR-001 §2 classes a problem with a safety impact as Critical;
-rationale in §5). **PENDING owner approval.**
+rationale in §5). **N. G. Bonilla Vargas — approved 2026-10-30 (PR #72).**
 **Status**: OPEN — DRAFT. Corrected after the independent review of PR #68 (§9), its second review (§10) and its third review (§11). Fix implemented on branch `fix/dis-requires-reviewed-segmentation-prb003` (draft PR #68, not
 merged, not deployed); it changes one Class C module (`brain_report_service.py`, DIS block of the report prompt) and
-needs a code review before merge (CLAUDE.md). **PENDING owner approval.**
+needs a code review before merge (CLAUDE.md). **N. G. Bonilla Vargas — approved 2026-10-30 (PR #72).**
 
 **Description**: The device evaluates the brain-MRI dissemination-in-space (DIS) items of McDonald 2024 and shows
 "DIS (Brain MRI): … Criterion Met / Not Met" on **any** loaded segmentation. Nothing checks where the segmentation
@@ -329,5 +329,5 @@ evaluated" and must be confirmed again; no DIS result is shown on a confirmation
 ---
 
 **Prepared by**: AI coding agent (Claude Code) from paper A, 2026-10-24.
-**Approval**: **PENDING owner approval** — severity, CAPA linkage, the fix and the decisions in §8. No approval is
+**Approval**: **N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)** — severity, CAPA linkage, the fix and the decisions in §8. No approval is
 recorded here.
