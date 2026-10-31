@@ -41,10 +41,11 @@ Requirement **REQ-SAFE-047**; risk control **RC-093** (HAZ-005, HAZ-008, HAZ-007
 
 ## 3. Verification
 - Failing first: `frontend/src/components/LesionDashboard.prb031.test.tsx` (9),
-  `frontend/src/store/useSegmentationStore.prb031.test.ts` (9), `frontend/src/components/SegmentationCanvasLocal.prb031.test.tsx`
+  `frontend/src/store/useSegmentationStore.prb031.test.ts` (3), `frontend/src/components/SegmentationCanvasLocal.prb031.test.tsx`
   (2), and the PRB-031 case of `AiDraftBanner.prb029.test.tsx`; on `ca600c2` every refusal fails; the zone map at 30 % or
   hidden and a stored opacity at or below 30 % are positive controls (record `PRB-028-031_tests_on_base_2026-10-31.json`).
-- Negative controls O1–O8, L1, L2: record `PRB-028-031_negative_controls_2026-10-31.json`.
+- Negative controls O1–O8, L1, L2 and D1: **11 of 11 detected** (whole run 49 of 49, throwaway worktree of `05cdf37`)
+  — record `PRB-028-031_negative_controls_2026-10-31.json`.
 
 ## 4. Limits
 - Vermillion is also the deep-white-matter region colour; the longitudinal overlay is drawn under the lesions and is

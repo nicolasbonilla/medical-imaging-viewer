@@ -44,7 +44,8 @@ Requirement **REQ-SAFE-044**; risk control **RC-090** (HAZ-005, HAZ-008).
 - Failing first: `backend/tests/unit/test_prb028_geometric_fallback_review.py` (10) and
   `frontend/src/components/LesionDashboard.prb028.test.tsx` (7) — on `ca600c2` all fail except the atlas positive
   control (record `records/risk_verification/PRB-028-031_tests_on_base_2026-10-31.json`).
-- Negative controls G1–G8 (server) and U1–U5 (viewer): `scripts/safety/prb028_031_negative_controls.py`, record
+- Negative controls G1–G8 (server), U1–U5 and P2 (viewer): **14 of 14 detected** (whole run 49 of 49, throwaway
+  worktree of `05cdf37`, 2026-10-31) — `scripts/safety/prb028_031_negative_controls.py`, record
   `records/risk_verification/PRB-028-031_negative_controls_2026-10-31.json`.
 - Fixture change, no assertion removed: the PRB-003 test classification record states the atlas method ("msmask")
   instead of "geometric", so those tests keep testing their own rule.

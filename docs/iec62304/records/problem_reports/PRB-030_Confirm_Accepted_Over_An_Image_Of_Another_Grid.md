@@ -38,7 +38,8 @@ Requirement **REQ-SAFE-046**; risk control **RC-092** (HAZ-006, HAZ-008).
   (4) and the PRB-030 cases of `backend/tests/unit/test_prb029_prb030_confirm_view_checks.py` (both routes); on
   `ca600c2` every refusal fails; the segmentation's own image and another series of the study on the same grid are
   positive controls (record `PRB-028-031_tests_on_base_2026-10-31.json`).
-- Negative controls R1–R9 (server), C1–C8, D2, P1 (viewer): record `PRB-028-031_negative_controls_2026-10-31.json`.
+- Negative controls R1–R9 (server), C1–C8, D2, P1 (viewer): **19 of 19 detected** (whole run 49 of 49, throwaway
+  worktree of `05cdf37`) — record `PRB-028-031_negative_controls_2026-10-31.json`.
 - Fixture changes, no assertion removed: the confirmation tests state the image under the mask (the segmentation's own).
 
 ## 4. Limits and residual risk
