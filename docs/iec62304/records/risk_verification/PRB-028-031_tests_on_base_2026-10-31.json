@@ -1,0 +1,352 @@
+{
+  "executed": "2026-10-31T08:08:55",
+  "base": "ca600c2 (main, merge of PR #72)",
+  "tree": "5f4d9ccbbd097a10c2cc24e6db8da44a8ad9bb58",
+  "method": "source files that differ from the base commit restored to it, files it did not have removed; the PRB test files run unchanged; working tree restored byte for byte",
+  "swapped": {
+    "restored_to_base": [],
+    "removed": []
+  },
+  "test_sha256": {
+    "backend/tests/unit/test_prb028_geometric_fallback_review.py": "9a9a0d46ea0c0235aa1b0b3b0490530db86c9401aeffdfa24b913a90f6330695",
+    "backend/tests/unit/test_prb029_prb030_confirm_view_checks.py": "4a6bbfb040652fb2c3f2f1489ee78c49b5784c5140888618daa48e7a95810716",
+    "frontend/src/components/LesionDashboard.prb028.test.tsx": "69a8a3acbeca7512283155dd0c1573896da9a02543e75c9d72e70ea4b5313934",
+    "frontend/src/components/LesionDashboard.prb030.test.tsx": "ddd1234029ffce4f13868c0ec87c0f56a480adb17cd68a641abcf0bebce5d4d0",
+    "frontend/src/components/LesionDashboard.prb031.test.tsx": "1c34a0b915a0de68fde36aa534453eeacd9f50c860fe7a61337124d6e59befe0",
+    "frontend/src/components/AiDraftBanner.prb029.test.tsx": "b84d7a7bc04815bbc96b01743877e6d0268d689a136be1765431023248f71432",
+    "frontend/src/store/useSegmentationStore.prb031.test.ts": "0e6f4001ecff6e62a0236014f816b9a2614c07cb7d91b41ea078fdab528bc3b7",
+    "frontend/src/components/SegmentationCanvasLocal.prb031.test.tsx": "b64984dbd4bd511c64a6bf488e2fe30f702d6e2bf90ca6c364069328bb98486c",
+    "frontend/src/ViewerApp.prb030.test.tsx": "e09ef8452f29b24acfc47108bf6c4e975fecf24e5c9106e2107a4af0141d133f"
+  },
+  "backend": {
+    "passed": 5,
+    "failed": 32,
+    "errors": 0,
+    "results": {
+      "test_prb029_ai_review_drawn_with_the_stored_labels_over_its_own_image_is_confirmed": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_prb030_the_own_image_or_another_series_of_the_study_on_the_same_grid_is_accepted[patients/11111111-1111-1111-1111-111111111111/studies/44444444-4444-4444-4444-444444444444/series/55555555-5555-5555-5555-555555555555/flair.nii.gz-dis]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_prb030_the_own_image_or_another_series_of_the_study_on_the_same_grid_is_accepted[patients/11111111-1111-1111-1111-111111111111/studies/44444444-4444-4444-4444-444444444444/series/55555555-5555-5555-5555-555555555555/flair.nii.gz-ai]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_prb030_the_own_image_or_another_series_of_the_study_on_the_same_grid_is_accepted[patients/11111111-1111-1111-1111-111111111111/studies/44444444-4444-4444-4444-444444444444/series/66666666-6666-6666-6666-666666666666/t1.nii.gz-dis]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_prb030_the_own_image_or_another_series_of_the_study_on_the_same_grid_is_accepted[patients/11111111-1111-1111-1111-111111111111/studies/44444444-4444-4444-4444-444444444444/series/66666666-6666-6666-6666-666666666666/t1.nii.gz-ai]": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_prb028_dis_state_lists_every_geometric_region_to_check_lesion_by_lesion": {
+        "status": "failed",
+        "reason": "KeyError: 'geometric_fallback'"
+      },
+      "test_prb028_confirm_refused_while_geometric_regions_were_not_checked_one_by_one": {
+        "status": "failed",
+        "reason": "AssertionError: {\"success\":true,\"already_confirmed\":false,\"clinician_review\":{\"reviewed_by\":\"dr_rev\",\"reviewed_by_id\":\"u-1\",\"reviewed_by_role\":\"radiologist\",\"reviewed_at\":\"2026-10-31T07:08:34.215102Z\",\"reviewed_mask_sha256\":\"7afa2b6aec6cbed"
+      },
+      "test_prb028_a_partial_or_foreign_review_is_refused": {
+        "status": "failed",
+        "reason": "AssertionError: ('1de9d7727d6bd8ce8f9fb014334b82b3b6e3a531ac6b075e5c6db05f45664600', '{\"success\":true,\"already_confirmed\":false,\"clini...\",\"reviewed_mask_sha256\":\"7afa2b6aec6cbed8f9fb421786a4bb60895b9d08e88c64cbb2aad9dbc135d43b\",\"reviewed_l"
+      },
+      "test_prb028_every_region_checked_one_by_one_is_accepted_recorded_and_dis_evaluated": {
+        "status": "failed",
+        "reason": "KeyError: 'geometric_regions_sha256'"
+      },
+      "test_prb028_a_corrected_lesion_is_a_correction_the_rest_still_checked_one_by_one": {
+        "status": "failed",
+        "reason": "KeyError: 'geometric_region_count'"
+      },
+      "test_prb028_a_confirmation_recorded_without_the_review_does_not_make_dis_evaluable": {
+        "status": "failed",
+        "reason": "AssertionError: {'active_voxels': 0, 'black_hole_voxels': 0, 'brain_regions_evaluated': 3, 'brain_regions_with_lesions': 2, ...}"
+      },
+      "test_prb028_more_lesions_than_the_list_can_hold_cannot_be_checked_here": {
+        "status": "failed",
+        "reason": "KeyError: 'geometric_region_count'"
+      },
+      "test_prb028_an_atlas_or_parcellation_classification_needs_no_per_lesion_tick[msmask]": {
+        "status": "failed",
+        "reason": "KeyError: 'geometric_region_count'"
+      },
+      "test_prb028_an_atlas_or_parcellation_classification_needs_no_per_lesion_tick[parcellation]": {
+        "status": "failed",
+        "reason": "KeyError: 'geometric_region_count'"
+      },
+      "test_prb028_an_atlas_or_parcellation_classification_needs_no_per_lesion_tick[lst-ai]": {
+        "status": "failed",
+        "reason": "KeyError: 'geometric_region_count'"
+      },
+      "test_prb029_ai_review_refused_unless_drawn_with_the_stored_labels[None]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"success\":true,\"ai_provenance\":{\"kind\":\"ai_draft\",\"model_name\":\"FLAMeS\",\"model_version\":\"Zenodo 10.5281/zenodo.17955359 v2.0 (Dataset004_WML)\",\"model_sha256\":\"2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae"
+      },
+      "test_prb029_ai_review_refused_unless_drawn_with_the_stored_labels[]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"success\":true,\"ai_provenance\":{\"kind\":\"ai_draft\",\"model_name\":\"FLAMeS\",\"model_version\":\"Zenodo 10.5281/zenodo.17955359 v2.0 (Dataset004_WML)\",\"model_sha256\":\"2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae"
+      },
+      "test_prb029_ai_review_refused_unless_drawn_with_the_stored_labels[eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"success\":true,\"ai_provenance\":{\"kind\":\"ai_draft\",\"model_name\":\"FLAMeS\",\"model_version\":\"Zenodo 10.5281/zenodo.17955359 v2.0 (Dataset004_WML)\",\"model_sha256\":\"2a10bb9d72dc33381a3f44dd6a..."
+      },
+      "test_prb029_ai_review_refused_unless_drawn_with_the_stored_labels[default-preset]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"success\":true,\"ai_provenance\":{\"kind\":\"ai_draft\",\"model_name\":\"FLAMeS\",\"model_version\":\"Zenodo 10.5281/zenodo.17955359 v2.0 (Dataset004_WML)\",\"model_sha256\":\"2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae"
+      },
+      "test_prb030_the_image_under_the_mask_must_be_stated[dis]": {
+        "status": "failed",
+        "reason": "AssertionError: (None, '{\"success\":true,\"already_confirmed\":false,\"clinician_review\":{\"reviewed_by\":\"dr_rev\",\"reviewed_by_id\":\"u-1\",\"r...\",\"reviewed_mask_sha256\":\"7afa2b6aec6cbed8f9fb421786a4bb60895b9d08e88c64cbb2aad9dbc135d43b\",\"reviewed_l"
+      },
+      "test_prb030_the_image_under_the_mask_must_be_stated[ai]": {
+        "status": "failed",
+        "reason": "AssertionError: (None, '{\"success\":true,\"ai_provenance\":{\"kind\":\"ai_draft\",\"model_name\":\"FLAMeS\",\"model_version\":\"Zenodo 10.5281/zenod...d6a59ec612dfd87534e02f15488b426ae127176ae\",\"fold\":0,\"source_checkpoint_sha256\":\"4fc7db24e7c1541b59023df"
+      },
+      "test_prb030_an_image_on_another_grid_is_refused[patients/11111111-1111-1111-1111-111111111111/studies/44444444-4444-4444-4444-444444444444/series/66666666-6666-6666-6666-666666666666/sheared.nii.gz-dis]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"success\":true,\"already_confirmed\":false,\"clinician_review\":{\"reviewed_by\":\"dr_rev\",\"reviewed_by_id\":\"u-1\",\"review..."
+      },
+      "test_prb030_an_image_on_another_grid_is_refused[patients/11111111-1111-1111-1111-111111111111/studies/44444444-4444-4444-4444-444444444444/series/66666666-6666-6666-6666-666666666666/sheared.nii.gz-ai]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"success\":true,\"ai_provenance\":{\"kind\":\"ai_draft\",\"model_name\":\"FLAMeS\",\"model_version\":\"Zenodo 10.5281/zenodo.1795..."
+      },
+      "test_prb030_an_image_on_another_grid_is_refused[patients/11111111-1111-1111-1111-111111111111/studies/44444444-4444-4444-4444-444444444444/series/66666666-6666-6666-6666-666666666666/shifted.nii.gz-dis]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"success\":true,\"already_confirmed\":false,\"clinician_review\":{\"reviewed_by\":\"dr_rev\",\"reviewed_by_id\":\"u-1\",\"review..."
+      },
+      "test_prb030_an_image_on_another_grid_is_refused[patients/11111111-1111-1111-1111-111111111111/studies/44444444-4444-4444-4444-444444444444/series/66666666-6666-6666-6666-666666666666/shifted.nii.gz-ai]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"success\":true,\"ai_provenance\":{\"kind\":\"ai_draft\",\"model_name\":\"FLAMeS\",\"model_version\":\"Zenodo 10.5281/zenodo.1795..."
+      },
+      "test_prb030_an_image_on_another_grid_is_refused[patients/11111111-1111-1111-1111-111111111111/studies/44444444-4444-4444-4444-444444444444/series/66666666-6666-6666-6666-666666666666/resampled.nii.gz-dis]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"success\":true,\"already_confirmed\":false,\"clinician_review\":{\"reviewed_by\":\"dr_rev\",\"reviewed_by_id\":\"u-1\",\"revi..."
+      },
+      "test_prb030_an_image_on_another_grid_is_refused[patients/11111111-1111-1111-1111-111111111111/studies/44444444-4444-4444-4444-444444444444/series/66666666-6666-6666-6666-666666666666/resampled.nii.gz-ai]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"success\":true,\"ai_provenance\":{\"kind\":\"ai_draft\",\"model_name\":\"FLAMeS\",\"model_version\":\"Zenodo 10.5281/zenodo.17..."
+      },
+      "test_prb030_an_image_on_another_grid_is_refused[patients/11111111-1111-1111-1111-111111111111/studies/44444444-4444-4444-4444-444444444444/series/66666666-6666-6666-6666-666666666666/cut.nii.gz-dis]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"success\":true,\"already_confirmed\":false,\"clinician_review\":{\"reviewed_by\":\"dr_rev\",\"reviewed_by_id\":\"u-1\",\"reviewed_b..."
+      },
+      "test_prb030_an_image_on_another_grid_is_refused[patients/11111111-1111-1111-1111-111111111111/studies/44444444-4444-4444-4444-444444444444/series/66666666-6666-6666-6666-666666666666/cut.nii.gz-ai]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"success\":true,\"ai_provenance\":{\"kind\":\"ai_draft\",\"model_name\":\"FLAMeS\",\"model_version\":\"Zenodo 10.5281/zenodo.17955359..."
+      },
+      "test_prb030_an_image_of_another_visit_is_refused_even_on_the_same_grid[dis]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"success\":true,\"already_confirmed\":false,\"clinician_review\":{\"reviewed_by\":\"dr_rev\",\"reviewed_by_id\":\"u-1\",\"reviewed_by_role\":\"radiologist\",\"reviewed_at\":\"2026-10-31T07:08:35.253047Z\",\"reviewed_mask_sha256\":\"7afa2b6aec6cbed"
+      },
+      "test_prb030_an_image_of_another_visit_is_refused_even_on_the_same_grid[ai]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"success\":true,\"ai_provenance\":{\"kind\":\"ai_draft\",\"model_name\":\"FLAMeS\",\"model_version\":\"Zenodo 10.5281/zenodo.17955359 v2.0 (Dataset004_WML)\",\"model_sha256\":\"2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae"
+      },
+      "test_prb030_an_image_that_cannot_be_read_is_refused[dis]": {
+        "status": "failed",
+        "reason": "AssertionError: ('patients/11111111-1111-1111-1111-111111111111/studies/44444444-4444-4444-4444-444444444444/series/66666666-6666-6666...\",\"reviewed_mask_sha256\":\"7afa2b6aec6cbed8f9fb421786a4bb60895b9d08e88c64cbb2aad9dbc135d43b\",\"reviewed_l"
+      },
+      "test_prb030_an_image_that_cannot_be_read_is_refused[ai]": {
+        "status": "failed",
+        "reason": "AssertionError: ('patients/11111111-1111-1111-1111-111111111111/studies/44444444-4444-4444-4444-444444444444/series/66666666-6666-6666...d6a59ec612dfd87534e02f15488b426ae127176ae\",\"fold\":0,\"source_checkpoint_sha256\":\"4fc7db24e7c1541b59023df"
+      },
+      "test_prb030_a_mask_whose_shape_is_not_the_image_grid_is_refused[dis]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"success\":true,\"already_confirmed\":false,\"clinician_review\":{\"reviewed_by\":\"dr_rev\",\"reviewed_by_id\":\"u-1\",\"reviewed_by_role\":\"radiologist\",\"reviewed_at\":\"2026-10-31T07:08:35.427717Z\",\"reviewed_mask_sha256\":\"16cc2102ad75580"
+      },
+      "test_prb030_a_mask_whose_shape_is_not_the_image_grid_is_refused[ai]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"success\":true,\"ai_provenance\":{\"kind\":\"ai_draft\",\"model_name\":\"FLAMeS\",\"model_version\":\"Zenodo 10.5281/zenodo.17955359 v2.0 (Dataset004_WML)\",\"model_sha256\":\"2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae"
+      },
+      "test_prb030_an_image_the_user_may_not_open_is_not_read[dis]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"success\":true,\"already_confirmed\":false,\"clinician_review\":{\"reviewed_by\":\"dr_rev\",\"reviewed_by_id\":\"u-1\",\"reviewed_by_role\":\"radiologist\",\"reviewed_at\":\"2026-10-31T07:08:35.516850Z\",\"reviewed_mask_sha256\":\"7afa2b6aec6cbed"
+      },
+      "test_prb030_an_image_the_user_may_not_open_is_not_read[ai]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"success\":true,\"ai_provenance\":{\"kind\":\"ai_draft\",\"model_name\":\"FLAMeS\",\"model_version\":\"Zenodo 10.5281/zenodo.17955359 v2.0 (Dataset004_WML)\",\"model_sha256\":\"2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae"
+      }
+    }
+  },
+  "frontend": {
+    "passed": 7,
+    "failed": 42,
+    "file_errors": [],
+    "not_passing": {
+      "rc092 prb030 the image file and its grid (columns x rows x slices) are published with the open segmentation": {
+        "status": "failed",
+        "reason": "AssertionError: expected undefined to deeply equal ObjectContaining{…}"
+      },
+      "rc092 prb030 render niivue: nothing is published": {
+        "status": "failed",
+        "reason": "AssertionError: expected undefined to be 'seg-1' // Object.is equality"
+      },
+      "rc092 prb030 render matplotlib: nothing is published": {
+        "status": "failed",
+        "reason": "AssertionError: expected undefined to be 'seg-1' // Object.is equality"
+      },
+      "rc092 prb030 segmentation mode off, the 3D view or the multi-panel layout: nothing is published": {
+        "status": "failed",
+        "reason": "AssertionError: expected undefined to be 'seg-1' // Object.is equality"
+      },
+      "rc091 prb029 refused: segmentation mode off, NiiVue, matplotlib, multi-panel or 3D (nothing published)": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"ai-draft-confirm-refused\"]"
+      },
+      "rc091 prb029 refused: the overlay is switched off": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"ai-draft-confirm-refused\"]"
+      },
+      "rc091 prb029 refused: the lesion label is hidden with its eye toggle": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"ai-draft-confirm-refused\"]"
+      },
+      "rc091 prb029 refused: the lesion opacity is below the visible minimum": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"ai-draft-confirm-refused\"]"
+      },
+      "rc091 prb029 refused: a mask value has no label": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"ai-draft-confirm-refused\"]"
+      },
+      "rc091 prb029 refused: the label is drawn in another colour than the stored one": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"ai-draft-confirm-refused\"]"
+      },
+      "rc091 prb029 refused when the labels stored on the server cannot be read": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"ai-draft-confirm-refused\"]"
+      },
+      "rc091 prb029 refused while the mask is drawn over an image of another grid (PRB-030)": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"ai-draft-confirm-refused\"]"
+      },
+      "rc091 prb029 refused while the zone map is drawn above 30 % (PRB-031)": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"ai-draft-confirm-refused\"]"
+      },
+      "rc091 prb029 drawn on screen with the stored labels: confirmed with the drawn table and the image under the mask": {
+        "status": "failed",
+        "reason": "AssertionError: expected \"vi.fn()\" to be called with arguments: [ 'seg-1', …(2) ]\u001b[90m"
+      },
+      "rc090 prb028 every geometric-fallback lesion is listed with its region, a tick and its slice": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-geometric-region\"]"
+      },
+      "rc090 prb028 Confirm stays off until every listed lesion is ticked": {
+        "status": "failed",
+        "reason": "Error: Unable to find role=\"checkbox\" and name `/checked the region of lesion/i`"
+      },
+      "rc090 prb028 with every lesion ticked the confirmation sends the digest of the checked list": {
+        "status": "failed",
+        "reason": "Error: Unable to find role=\"checkbox\" and name `/checked the region of lesion/i`"
+      },
+      "rc090 prb028 more geometric-fallback lesions than the list holds: no Confirm here": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-geometric-too-many\"]"
+      },
+      "rc090 prb028 a confirmation recorded without the per-lesion check is explained and can be redone": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-reason-geometric\"]"
+      },
+      "rc090 prb028 the classification card says each geometric region must be checked one by one": {
+        "status": "failed",
+        "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31melement\u001b[39m\u001b[2m).toHaveTextContent()\u001b[22m"
+      },
+      "rc092 prb030 refused: the original image (another in-plane size) under the MNI mask": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirm-refused\"]"
+      },
+      "rc092 prb030 refused: an image with fewer slices (the mask would be cut off)": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirm-refused\"]"
+      },
+      "rc092 prb030 refused: rows and columns swapped": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirm-refused\"]"
+      },
+      "rc092 prb030 refused when it cannot be checked: nothing published about the image under the mask": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirm-refused\"]"
+      },
+      "rc092 prb030 refused when it cannot be checked: the image published is under another segmentation": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirm-refused\"]"
+      },
+      "rc092 prb030 refused when it cannot be checked: the mask grid is not known": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirm-refused\"]"
+      },
+      "rc092 prb030 refused when it cannot be checked: the image has no id the server can check": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirm-refused\"]"
+      },
+      "rc092 prb030 the image on the mask grid: confirmed, and the server is told which image it was": {
+        "status": "failed",
+        "reason": "AssertionError: expected undefined to deeply equal ObjectContaining{…}"
+      },
+      "rc093 prb031 refused while the zone map at 100 % is drawn under the lesions": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirm-refused\"]"
+      },
+      "rc093 prb031 refused while the zone map at 31 % is drawn under the lesions": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirm-refused\"]"
+      },
+      "rc093 prb031 refused while the longitudinal overlay is drawn under the lesions": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirm-refused\"]"
+      },
+      "rc093 prb031 refused while the FLAIR subtraction heat map is drawn under the lesions": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirm-refused\"]"
+      },
+      "rc093 prb031 refused while the conformal tiers is drawn under the lesions": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"dis-confirm-refused\"]"
+      },
+      "rc093 prb031 the refusal texts of PRB-028..031 exist in English, Spanish and German": {
+        "status": "failed",
+        "reason": "AssertionError: en disReview.undrawnUnderlayOpaque: expected 'undefined' to be 'string' // Object.is equality"
+      },
+      "rc093 prb031 persistent, resolved and new are drawn in the shared colour-blind-safe palette at the fixed 55 %": {
+        "status": "failed",
+        "reason": "AssertionError: expected [ '#E69F00', '#56B4E9', …(5) ] to include '#32CD32'"
+      },
+      "rc093 prb031 no two of them are red against green, and every pair stays apart for colour-blind readers": {
+        "status": "failed",
+        "reason": "AssertionError: #32CD32 / #F54646: expected true to be false // Object.is equality"
+      },
+      "rc093 prb031 a stored zone-map opacity of 1 is replaced by the default": {
+        "status": "failed",
+        "reason": "AssertionError: expected 1 to be 0.3 // Object.is equality"
+      },
+      "rc093 prb031 a stored zone-map opacity of 0.8 is replaced by the default": {
+        "status": "failed",
+        "reason": "AssertionError: expected 0.8 to be 0.3 // Object.is equality"
+      },
+      "rc093 prb031 a stored zone-map opacity of 0.31 is replaced by the default": {
+        "status": "failed",
+        "reason": "AssertionError: expected 0.31 to be 0.3 // Object.is equality"
+      },
+      "rc093 prb031 a stored zone-map opacity that is not a number (high) is replaced": {
+        "status": "failed",
+        "reason": "AssertionError: expected 'high' to be 0.3 // Object.is equality"
+      },
+      "rc093 prb031 a stored zone-map opacity that is not a number (null) is replaced": {
+        "status": "failed",
+        "reason": "AssertionError: expected null to be 0.3 // Object.is equality"
+      },
+      "rc093 prb031 a stored zone-map opacity that is not a number (NaN) is replaced": {
+        "status": "failed",
+        "reason": "AssertionError: expected null to be 0.3 // Object.is equality"
+      }
+    }
+  },
+  "note": "Run on 5f4d9cc = ca600c2 plus the test files only (no source file differs from ca600c2, so nothing was swapped). Tests that pass are positive controls of behaviour that must not change: a confirmation over the segmentation's own image or another series of the same study on the same grid, an AI-draft review drawn with the stored labels, an atlas classification confirmed without per-lesion ticks, the zone map at 30 % or hidden, a stored zone-map opacity at or below 30 % restored. Every other test fails on the base."
+}
