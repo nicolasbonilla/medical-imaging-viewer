@@ -1,0 +1,206 @@
+{
+  "executed": "2026-10-29T22:30:44",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/api/routes/ai_report.py": "18a9b4a95d61153f2ea1fda1dffefe958eef11ff7fc04ccc255e71bef37d66b5",
+    "backend/app/api/routes/segmentation_analysis.py": "0362e078dd382dafe78b14fbf242f2747865911b3202835397c9d09206632bc6",
+    "backend/app/mcp/_backend.py": "56439b06981052333ab56f19fa362ba9a978816795020c6df9aa33ddf64b27ea",
+    "backend/app/mcp/imaging_server.py": "350a3b9580f27d5d07853a07da676f8ed2c3852b3aaaa3213e356b1f4050b992",
+    "backend/app/mcp/ms_clinical_server.py": "65d95f4cdd52af7ca0ea88630798cdbdf62a7491629e0ae91d6ce6c4efe880d4",
+    "backend/app/mcp/run_all.py": "fe8f2196c422a3f6971171557754896df193973130c99a8f39dc797e6c20250f",
+    "backend/app/services/longitudinal_tracking_service.py": "87a5908b6b49cc6e8bebcddf033af43dbc9cb920f2b18522b8f203b3243c62c2",
+    "frontend/src/components/AIReportPanel.tsx": "004bfadca79b2fdd395ba25aeead06c14f83c0f973929806dcd69f972c2b98b2",
+    "frontend/src/components/LesionDashboard.tsx": "b5ad0acb7c530431afb635bce9b5d88c9c3c3d3e2f933da4c6b5196868d93088"
+  },
+  "tests": [
+    "tests/unit/test_capa008_assistant_read_only.py",
+    "tests/unit/test_longitudinal_clinical_rules.py"
+  ],
+  "mutations": {
+    "A1_allow_list_opens_an_unauthorized_route": {
+      "failed": 1,
+      "passed": 45,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc033_client_refuses_any_other_post_before_sending[/ai/segment/auto]"
+      ],
+      "reintroduces": "the assistant may POST to an AI route without object-level authorization",
+      "applied": true
+    },
+    "A2_identifiers_reach_the_assistant": {
+      "failed": 1,
+      "passed": 45,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc033_client_removes_direct_identifiers_at_any_depth"
+      ],
+      "reintroduces": "patient identifiers are passed to the assistant's model provider",
+      "applied": true
+    },
+    "A3_write_tool_restored": {
+      "failed": 2,
+      "passed": 44,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc033_exact_tool_set_and_no_write_tool",
+        "test_rc033_every_post_is_a_compute_only_route"
+      ],
+      "reintroduces": "the assistant can write CVS/PRL readings again",
+      "applied": true
+    },
+    "A4_report_fields_silently_dropped": {
+      "failed": 1,
+      "passed": 45,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc034_request_fields_sent_by_the_assistant_are_accepted_by_the_route"
+      ],
+      "reintroduces": "the MS report tool sends its data under a field name the route drops",
+      "applied": true
+    },
+    "A5_diagnosis_framing": {
+      "failed": 1,
+      "passed": 45,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc033_no_intended_use_contradiction_or_unverified_claim[ms_clinical_server.py]"
+      ],
+      "reintroduces": "the assistant is told it diagnoses MS",
+      "applied": true
+    },
+    "A6_unauthorized_get": {
+      "failed": 1,
+      "passed": 45,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc033_every_get_hits_a_mounted_route_that_authorizes_its_object"
+      ],
+      "reintroduces": "a tool reads a route without object-level authorization",
+      "applied": true
+    },
+    "A7_post_outside_allow_list": {
+      "failed": 1,
+      "passed": 45,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc033_every_post_is_a_compute_only_route"
+      ],
+      "reintroduces": "a tool posts to a route that is not on the compute-only list",
+      "applied": true
+    },
+    "A8_direct_http_client": {
+      "failed": 1,
+      "passed": 45,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc033_no_server_reaches_the_backend_except_through_the_read_only_client"
+      ],
+      "reintroduces": "a server imports its own HTTP client",
+      "applied": true
+    },
+    "A9_unauthenticated_http_transport": {
+      "failed": 1,
+      "passed": 45,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc033_stdio_only_no_unauthenticated_http_transport"
+      ],
+      "reintroduces": "the SSE (HTTP) transport without authentication",
+      "applied": true
+    },
+    "R1_report_without_measurements": {
+      "failed": 5,
+      "passed": 41,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc034_report_route_refuses_a_report_without_measurements[empty]",
+        "test_rc034_report_route_refuses_a_report_without_measurements[empty-findings]",
+        "test_rc034_report_route_refuses_a_report_without_measurements[indication-only]",
+        "test_rc034_report_route_refuses_a_report_without_measurements[free-text-only]",
+        "test_rc034_report_route_refuses_a_report_without_measurements[old-assistant-payload]"
+      ],
+      "reintroduces": "a report is drafted with no measurement",
+      "applied": true
+    },
+    "R2_ui_hides_the_reason": {
+      "failed": 1,
+      "passed": 45,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc034_report_panel_states_why_a_report_was_refused"
+      ],
+      "reintroduces": "the report panel no longer explains the refusal",
+      "applied": true
+    },
+    "C1_client_chosen_reader": {
+      "failed": 1,
+      "passed": 45,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc035_reader_is_the_authenticated_user_and_no_40_percent_rule"
+      ],
+      "reintroduces": "the stored reader is whatever the client claims",
+      "applied": true
+    },
+    "C2_any_status_accepted": {
+      "failed": 2,
+      "passed": 44,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc035_invalid_readings_are_refused_and_nothing_is_stored[ann0]",
+        "test_rc035_invalid_readings_are_refused_and_nothing_is_stored[ann1]"
+      ],
+      "reintroduces": "any CVS/PRL status string is stored",
+      "applied": true
+    },
+    "C3_forty_percent_rule_in_api": {
+      "failed": 1,
+      "passed": 45,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc035_reader_is_the_authenticated_user_and_no_40_percent_rule"
+      ],
+      "reintroduces": "the withdrawn 40% rule is computed again",
+      "applied": true
+    },
+    "C4_forty_percent_rule_in_ui": {
+      "failed": 1,
+      "passed": 45,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc035_ui_shows_counts_not_a_withdrawn_rule"
+      ],
+      "reintroduces": "the UI shows the withdrawn 40% rule",
+      "applied": true
+    },
+    "C5_prl_shown_as_criterion_met": {
+      "failed": 1,
+      "passed": 45,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc035_ui_shows_counts_not_a_withdrawn_rule"
+      ],
+      "reintroduces": "the UI shows >=1 PRL as a criterion met",
+      "applied": true
+    },
+    "C6_activity_needs_two": {
+      "failed": 2,
+      "passed": 44,
+      "errors": 0,
+      "failing_tests": [
+        "test_new_lesion_size_gate_and_dit_candidate",
+        "test_rc035_a_single_enlarging_lesion_is_an_activity_candidate"
+      ],
+      "reintroduces": "a single new or enlarging candidate raises no activity signal",
+      "applied": true
+    }
+  },
+  "restored": {
+    "failed": 0,
+    "passed": 46,
+    "errors": 0,
+    "failing_tests": []
+  },
+  "undetected": []
+}

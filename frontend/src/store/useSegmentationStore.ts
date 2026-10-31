@@ -23,12 +23,40 @@ import type {
   OverlaySettings,
   OverlayMode,
   LesionInfo,
+  AIProvenance,
 } from '@/types';
 import { DEFAULT_LABEL_PRESETS } from '@/types';
+import { MIN_VISIBLE_LESION_OPACITY, MAX_UNDERLAY_OPACITY, type GridDims } from '@/utils/drawnLabels';
+import { withRegionColors } from '@/utils/regionColors';
 
 // ============================================================================
 // Types
 // ============================================================================
+
+/**
+ * Result of handing an AI draft to the segmentation flow (in-browser FLAMeS prototype).
+ * 'unsaved-work': the open segmentation has unsaved changes; NOTHING was touched and the caller
+ * must ask the clinician (REQ-SAFE-032). 'grid-mismatch': the mask does not fit the image grid.
+ */
+export type ImportDraftResult =
+  | { ok: true }
+  | { ok: false; reason: 'unsaved-work'; openSegmentationName: string }
+  | { ok: false; reason: 'grid-mismatch' };
+
+/**
+ * Creates a LOCAL (unsaved, `local-*`) segmentation for `fileId` pre-filled with `mask`
+ * (app order: depth=slices, height=rows, width=columns; RC-031). Used by the in-browser
+ * FLAMeS prototype. The clinician must review and explicitly Save; nothing is persisted here,
+ * and unsaved work in the open segmentation is never discarded unless `discardUnsavedWork`
+ * is passed after the clinician explicitly chose to discard it.
+ */
+export type ImportDraftCallback = (
+  fileId: string,
+  imageShape: { rows: number; columns: number; slices: number },
+  mask: Uint8Array,
+  meta: { description: string; labels?: LabelInfo[]; aiProvenance: AIProvenance },
+  options?: { discardUnsavedWork?: boolean },
+) => ImportDraftResult;
 
 /**
  * Paint tool types available for segmentation.
@@ -121,7 +149,38 @@ interface SegmentationState {
   createCallback: ((fileId: string, imageShape: { rows: number; columns: number; slices: number }) => void) | null;
 
   /** Reload mask callback — allows LesionDashboard to trigger mask reload after auto-classify */
-  reloadMaskCallback: (() => Promise<void>) | null;
+  reloadMaskCallback: (() => Promise<boolean | void>) | null;
+
+  /**
+   * Import-draft callback set by useSegmentationData — creates a LOCAL (unsaved) segmentation
+   * pre-filled with an externally computed mask (in-browser FLAMeS prototype). Returns false
+   * (and imports nothing) if the mask does not match the image grid.
+   */
+  importDraftCallback: ImportDraftCallback | null;
+
+  /** RC-047: SHA-256 (hex) of the mask currently open, as the server would hash it; null when none. */
+  maskDigestCallback: (() => Promise<string | null>) | null;
+
+  /** Release 2026-10-25 (review of PR #69, B1/M3): the distinct non-zero values of the open mask, read now (null
+   *  when no mask is open). The confirmation checks that every one of them is drawn. */
+  maskValuesCallback: (() => number[] | null) | null;
+
+  /** The distinct non-zero values of the open mask as last loaded from the server (B1: the overlay controls warn
+   *  about values the label table does not name). */
+  maskLabelValues: number[] | null;
+
+  /** Release 2026-10-25 (final check of PR #69, R1): the segmentation the view on screen draws with its label
+   *  table — published by the standard 2D view (one panel, segmentation mode on); null in every other view
+   *  (segmentation mode off, NiiVue, matplotlib, multi-panel, 3D). The DIS confirmation needs it. */
+  overlayOnScreen: string | null;
+
+  /** PRB-030 (RC-092, L1): the image the same standard 2D view draws under that segmentation — its storage id and grid
+   *  (columns, rows, slices) — and the grid of the mask drawn over it (null while the mask is not loaded). Published and
+   *  withdrawn together with `overlayOnScreen`. Both confirmations are refused unless the two grids are the same. */
+  overlayImageOnScreen: OverlayImageOnScreen | null;
+
+  /** RC-047: the open mask has unsaved changes (mirrors the local-first mask state). */
+  hasUnsavedMaskChanges: boolean;
 
   /** Last save timestamp */
   lastSavedAt: string | null;
@@ -267,7 +326,14 @@ interface SegmentationState {
   setLastSavedAt: (timestamp: string | null) => void;
   setSaveCallback: (fn: (() => Promise<void>) | null) => void;
   setCreateCallback: (fn: ((fileId: string, imageShape: { rows: number; columns: number; slices: number }) => void) | null) => void;
-  setReloadMaskCallback: (fn: (() => Promise<void>) | null) => void;
+  setReloadMaskCallback: (fn: (() => Promise<boolean | void>) | null) => void;
+  setImportDraftCallback: (fn: ImportDraftCallback | null) => void;
+  setMaskDigestCallback: (fn: (() => Promise<string | null>) | null) => void;
+  setMaskValuesCallback: (fn: (() => number[] | null) | null) => void;
+  setMaskLabelValues: (values: number[] | null) => void;
+  setOverlayOnScreen: (segmentationId: string | null) => void;
+  setOverlayImageOnScreen: (image: OverlayImageOnScreen | null) => void;
+  setHasUnsavedMaskChanges: (value: boolean) => void;
 
   // =========================================================================
   // Actions - Labels
@@ -282,6 +348,10 @@ interface SegmentationState {
   addLabel: (label: LabelInfo) => void;
   removeLabel: (labelId: number) => void;
   setLabelPreset: (preset: LabelPreset) => void;
+  /** Labels the SERVER stored with the mask (region classification): written to currentSegmentation AND
+   *  activeSegmentation (what the 2D canvas draws from; NiiVue's views use a fixed colormap), every label at its own visibility; not a
+   *  local edit (isDirty unchanged). Release 2026-10-25, capture finding F08. */
+  applyServerLabels: (segmentationId: string, labels: LabelInfo[]) => void;
 
   // =========================================================================
   // Actions - Paint Tool
@@ -348,6 +418,17 @@ interface SegmentationState {
   resetPaintTool: () => void;
 }
 
+/** PRB-030 (RC-092): what the standard 2D view draws under the open segmentation (see `overlayImageOnScreen`). */
+export interface OverlayImageOnScreen {
+  segmentationId: string;
+  /** storage id of the image (the server reads its header to check shape, affine and study); null when unknown */
+  imageFileId: string | null;
+  /** columns (width), rows (height) and slices (depth) of the image as drawn */
+  image: GridDims;
+  /** width, height and depth of the mask drawn over it; null while it is not loaded */
+  mask: GridDims | null;
+}
+
 // ============================================================================
 // Initial State
 // ============================================================================
@@ -382,7 +463,14 @@ const createInitialState = () => ({
   isSaving: false,
   saveCallback: null as (() => Promise<void>) | null,
   createCallback: null as ((fileId: string, imageShape: { rows: number; columns: number; slices: number }) => void) | null,
-  reloadMaskCallback: null as (() => Promise<void>) | null,
+  reloadMaskCallback: null as (() => Promise<boolean | void>) | null,
+  importDraftCallback: null as ImportDraftCallback | null,
+  maskDigestCallback: null as (() => Promise<string | null>) | null,
+  maskValuesCallback: null as (() => number[] | null) | null,
+  maskLabelValues: null as number[] | null,
+  overlayOnScreen: null as string | null,
+  overlayImageOnScreen: null as OverlayImageOnScreen | null,
+  hasUnsavedMaskChanges: false,
   lastSavedAt: null as string | null,
 
   // List
@@ -453,7 +541,12 @@ export const useSegmentationStore = create<SegmentationState>()(
         setCurrentSegmentation: (segmentation) =>
           set({ currentSegmentation: segmentation }),
 
-        setActiveSegmentation: (segmentation) =>
+        setActiveSegmentation: (rawSegmentation) => {
+          // PRB-010: a label named after a MAGNIMS region is shown in the shared region colour,
+          // whatever colour was stored with it (classified masks carried red / green / blue / gold).
+          const segmentation = rawSegmentation
+            ? { ...rawSegmentation, labels: withRegionColors(rawSegmentation.labels) }
+            : rawSegmentation;
           set({
             activeSegmentation: segmentation,
             isDirty: false,
@@ -462,7 +555,8 @@ export const useSegmentationStore = create<SegmentationState>()(
               (acc, label) => ({ ...acc, [label.id]: label.visible }),
               {}
             ) ?? {},
-          }),
+          });
+        },
 
         updateActiveSegmentationProgress: (progress) =>
           set((state) => {
@@ -496,6 +590,16 @@ export const useSegmentationStore = create<SegmentationState>()(
         setCreateCallback: (fn) => set({ createCallback: fn }),
 
         setReloadMaskCallback: (fn) => set({ reloadMaskCallback: fn }),
+
+        setImportDraftCallback: (fn) => set({ importDraftCallback: fn }),
+
+        setMaskDigestCallback: (fn) => set({ maskDigestCallback: fn }),
+        setMaskValuesCallback: (fn) => set({ maskValuesCallback: fn }),
+        setMaskLabelValues: (values) => set({ maskLabelValues: values }),
+        setOverlayOnScreen: (segmentationId) => set({ overlayOnScreen: segmentationId }),
+        setOverlayImageOnScreen: (image) => set({ overlayImageOnScreen: image }),
+
+        setHasUnsavedMaskChanges: (value) => set({ hasUnsavedMaskChanges: value }),
 
         // =====================================================================
         // Label Actions
@@ -578,6 +682,25 @@ export const useSegmentationStore = create<SegmentationState>()(
               labelVisibility: visibility,
               activeLabel: state.activeLabel === labelId ? 1 : state.activeLabel,
               isDirty: true,
+            };
+          }),
+
+        applyServerLabels: (segmentationId, labels) =>
+          set((state) => {
+            const cur = state.currentSegmentation;
+            const active = state.activeSegmentation;
+            const visibility: Record<number, boolean> = {};
+            labels.forEach((l) => { visibility[l.id] = l.visible; });
+            const activeMatches = !!active && active.id === segmentationId;
+            return {
+              currentSegmentation: cur && cur.segmentation_id === segmentationId
+                ? { ...cur, metadata: { ...cur.metadata, labels } }
+                : cur,
+              activeSegmentation: activeMatches ? { ...active!, labels } : active,
+              labelVisibility: activeMatches ? visibility : state.labelVisibility,
+              activeLabel: activeMatches && !labels.some((l) => l.id === state.activeLabel)
+                ? labels.find((l) => l.id !== 0)?.id ?? 1
+                : state.activeLabel,
             };
           }),
 
@@ -767,6 +890,22 @@ export const useSegmentationStore = create<SegmentationState>()(
           zoneMapOpacity: state.zoneMapOpacity,
           conformalPreset: state.conformalPreset,
         }),
+        // Release 2026-10-25 (review of PR #69, M3): a stored lesion opacity below the visible minimum (e.g. 0) would
+        // hide every lesion in the next session without a word; it is not restored — the default is used instead.
+        // PRB-031 (RC-093, L2): likewise a stored zone-map opacity above the safe limit (30 %), which would paint the
+        // MAGNIMS zones over lesions of the same colour in the next session; the default (30 %) is used instead.
+        merge: (persisted, current) => {
+          const stored = (persisted ?? {}) as Partial<SegmentationState>;
+          const opacity = stored.lesionOpacity;
+          const visible = typeof opacity === 'number' && opacity >= MIN_VISIBLE_LESION_OPACITY;
+          const zone = stored.zoneMapOpacity;
+          const safeZone = typeof zone === 'number' && zone >= 0 && Math.round(zone * 100) <= Math.round(MAX_UNDERLAY_OPACITY * 100);
+          return {
+            ...current, ...stored,
+            lesionOpacity: visible ? opacity : current.lesionOpacity,
+            zoneMapOpacity: safeZone ? zone : current.zoneMapOpacity,
+          };
+        },
       }
     )
   )

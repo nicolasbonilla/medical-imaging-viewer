@@ -1,0 +1,30 @@
+{
+ "filename": "flames-fold0.onnx",
+ "fold": 0,
+ "bytes": 61642305,
+ "sha256": "2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae",
+ "source_checkpoint_sha256": "4fc7db24e7c1541b59023df2a2f498a964eb629fe38f4eaec763297dd3fdf861",
+ "source": "Zenodo 10.5281/zenodo.17955359 v2.0 Dataset004_WML.zip (md5 8b90b789d6ceca1886f42fa1724a08cc), nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_0/checkpoint_final.pth",
+ "license": "CC-BY-4.0 (FLAMeS weights, Dereskewicz/La Rosa et al.); converted to ONNX (format change, float16 storage)",
+ "patch_size": [
+  112,
+  128,
+  160
+ ],
+ "input": "input [1,1,112,128,160] float32",
+ "output": "logits [1,2,112,128,160] float32 (0=background, 1=lesion)",
+ "opset": 17,
+ "checks": {
+  "torch_vs_onnx_max_abs": 0.0028786659240722656,
+  "convtranspose_replaced": 5,
+  "torch_vs_rewritten_max_abs": 0.0028786659240722656,
+  "torch_vs_final_max_abs": 0.02845144271850586,
+  "class_agreement_random_patch": 0.9999965122767858
+ },
+ "versions": {
+  "torch": "2.14.1+cpu",
+  "onnx": "1.23.2",
+  "onnxruntime": "1.31.0",
+  "python": "3.11.4"
+ }
+}

@@ -1,0 +1,192 @@
+{
+  "executed": "2026-10-17T23:05:55",
+  "what": "CAPA-010 tests run against the MAIN sources: the six fixed files restored from main with `git checkout main -- <files>`, the tests kept",
+  "main_commit": "6209131",
+  "sources_restored_from_main": [
+    "frontend/src/ViewerApp.tsx",
+    "frontend/src/components/ImageViewer3D.tsx",
+    "frontend/src/components/MeasurementOverlay.tsx",
+    "frontend/src/components/MultiPanelViewer.tsx",
+    "frontend/src/store/useMultiViewerStore.ts",
+    "frontend/src/utils/boundingBoxMesh.ts"
+  ],
+  "command": "npx vitest run <tests> --pool=threads --reporter=json",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "test_sha256": {
+    "src/components/ImageViewer3D.capa010.test.tsx": "9abc97964d71320ca5293e0978ab3e6288f5dbcb576ae9b503f56151a2cbda1f",
+    "src/components/MultiPanelViewer.capa010.test.tsx": "72eaa55d12c16b9536f5710fb6c908dfff67220dad19224ae4879739e758ad89",
+    "src/components/MeasurementOverlay.rc038.test.tsx": "1aa9959724e4d2f635e17fad1850d7cbb74eaa40f5a97951775ac828050c9e73",
+    "src/ViewerApp.capa010.test.tsx": "f6765559fa49df218056450f57fbfd3c21649d5ef71283612a9f727d46ba6fe5"
+  },
+  "total": 27,
+  "failed": 25,
+  "passed": 2,
+  "expected_to_pass_on_main": [
+    "rc016 ViewerApp 2d (2D identity already worked, CAPA-004)",
+    "rc023 the niivue default would draw slice letters (pins a third-party default)"
+  ],
+  "results": [
+    {
+      "file": "src/ViewerApp.capa010.test.tsx",
+      "test": "rc016 ViewerApp 2d: the loaded patient name and MRN are on the viewport",
+      "status": "passed",
+      "failure": null
+    },
+    {
+      "file": "src/ViewerApp.capa010.test.tsx",
+      "test": "rc016 ViewerApp multi-panel: the loaded patient name and MRN are on every panel",
+      "status": "failed",
+      "failure": "Error: Unable to find an element by: [data-testid=\"viewport-safety-overlay\"]"
+    },
+    {
+      "file": "src/ViewerApp.capa010.test.tsx",
+      "test": "rc016 ViewerApp 3D volume: the loaded patient name and MRN are on the viewport",
+      "status": "failed",
+      "failure": "Error: Unable to find an element by: [data-testid=\"viewport-safety-overlay\"]"
+    },
+    {
+      "file": "src/ViewerApp.capa010.test.tsx",
+      "test": "rc016 ViewerApp 3D multiplanar: the loaded patient name and MRN are on the viewport",
+      "status": "failed",
+      "failure": "Error: Unable to find an element by: [data-testid=\"viewport-safety-overlay\"]"
+    },
+    {
+      "file": "src/ViewerApp.capa010.test.tsx",
+      "test": "rc023 ViewerApp: every view shows its laterality caveat in full at 1366x768, 1600x900 and 1920x1080",
+      "status": "failed",
+      "failure": "AssertionError: 2d 1366x768: 0.00 | 2d 1600x900: 0.00 | 2d 1920x1080: 0.00 | multi 1366x768: none | multi 1600x900: none | multi 1920x1080: none | 3d-volume 1366x768: none | 3d-volume 1600x900: none | 3d-volume 1920x1080: none | 3d-mpr 1366x768: none | 3d-mpr 1600x900: none | 3d-mpr 1920x1080: none: expected 0 to be greater than 0.999"
+    },
+    {
+      "file": "src/components/ImageViewer3D.capa010.test.tsx",
+      "test": "rc016 3D volume mode renders the patient name and MRN on the viewport",
+      "status": "failed",
+      "failure": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"viewport-patient-identity\"]"
+    },
+    {
+      "file": "src/components/ImageViewer3D.capa010.test.tsx",
+      "test": "rc016 3D multiplanar mode renders the patient name and MRN on the viewport",
+      "status": "failed",
+      "failure": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"viewport-patient-identity\"]"
+    },
+    {
+      "file": "src/components/ImageViewer3D.capa010.test.tsx",
+      "test": "rc016 3D view warns that the patient is not identified when identity is absent",
+      "status": "failed",
+      "failure": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"viewport-identity-missing\"]"
+    },
+    {
+      "file": "src/components/ImageViewer3D.capa010.test.tsx",
+      "test": "rc023 the niivue default would draw slice letters, so the viewer must switch them off explicitly",
+      "status": "passed",
+      "failure": null
+    },
+    {
+      "file": "src/components/ImageViewer3D.capa010.test.tsx",
+      "test": "rc023 3D volume mode draws no orientation cube and no slice letters",
+      "status": "failed",
+      "failure": "AssertionError: expected true to be false // Object.is equality"
+    },
+    {
+      "file": "src/components/ImageViewer3D.capa010.test.tsx",
+      "test": "rc023 3D multiplanar mode draws no orientation cube and no slice letters in any of its 4 panels",
+      "status": "failed",
+      "failure": "AssertionError: expected true to be false // Object.is equality"
+    },
+    {
+      "file": "src/components/ImageViewer3D.capa010.test.tsx",
+      "test": "rc023 3D view reports the orientation read from the affine and the standing laterality caveat",
+      "status": "failed",
+      "failure": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"viewport-safety-overlay\"]"
+    },
+    {
+      "file": "src/components/ImageViewer3D.capa010.test.tsx",
+      "test": "rc037 the volume-mode crosshair is placed at affine * (y, x, z) of the lesion centroid",
+      "status": "failed",
+      "failure": "AssertionError: expected 50 to be close to 80, received difference is 30, but expected 5e-7"
+    },
+    {
+      "file": "src/components/ImageViewer3D.capa010.test.tsx",
+      "test": "rc037 every multiplanar panel puts its crosshair on the same, correct lesion point",
+      "status": "failed",
+      "failure": "AssertionError: expected 50 to be close to 80, received difference is 30, but expected 5e-7"
+    },
+    {
+      "file": "src/components/ImageViewer3D.capa010.test.tsx",
+      "test": "rc037 the bounding box mesh spans exactly the lesion box in scanner space",
+      "status": "failed",
+      "failure": "AssertionError: expected 45.74019241333008 to be greater than or equal to 77.6999"
+    },
+    {
+      "file": "src/components/MeasurementOverlay.rc038.test.tsx",
+      "test": "rc038 a ruler at zoom 2 reports the true length, not twice it",
+      "status": "failed",
+      "failure": "AssertionError: expected '20.0 mm' to be '10.0 mm' // Object.is equality"
+    },
+    {
+      "file": "src/components/MeasurementOverlay.rc038.test.tsx",
+      "test": "rc038 a ruler measures the same length at zoom 1, zoom 2 and zoom 4 with pan",
+      "status": "failed",
+      "failure": "AssertionError: expected [ '5.0 mm', '10.0 mm', '20.0 mm' ] to deeply equal [ '5.0 mm', '5.0 mm', '5.0 mm' ]"
+    },
+    {
+      "file": "src/components/MeasurementOverlay.rc038.test.tsx",
+      "test": "rc038 an elliptical ROI at zoom 2 reports the true area, not four times it",
+      "status": "failed",
+      "failure": "AssertionError: expected '628.3 mm²' to be '157.1 mm²' // Object.is equality"
+    },
+    {
+      "file": "src/components/MeasurementOverlay.rc038.test.tsx",
+      "test": "rc038 a ruler stays on the anatomy it measured when the zoom changes",
+      "status": "failed",
+      "failure": "AssertionError: expected 140 to be close to 120, received difference is 20, but expected 5e-7"
+    },
+    {
+      "file": "src/components/MeasurementOverlay.rc038.test.tsx",
+      "test": "rc038 a ruler stays on the anatomy it measured when the image is panned",
+      "status": "failed",
+      "failure": "AssertionError: expected 130 to be close to 100, received difference is 30, but expected 5e-7"
+    },
+    {
+      "file": "src/components/MeasurementOverlay.rc038.test.tsx",
+      "test": "rc038 the angle is computed in millimetres on anisotropic pixels (2 mm rows, 1 mm columns)",
+      "status": "failed",
+      "failure": "AssertionError: expected '45.0°' to be '63.4°' // Object.is equality"
+    },
+    {
+      "file": "src/components/MultiPanelViewer.capa010.test.tsx",
+      "test": "rc016 every panel renders the patient name and MRN",
+      "status": "failed",
+      "failure": "Error: Unable to find an element by: [data-testid=\"viewport-safety-overlay\"]"
+    },
+    {
+      "file": "src/components/MultiPanelViewer.capa010.test.tsx",
+      "test": "rc016 every panel warns when the patient identity is absent",
+      "status": "failed",
+      "failure": "Error: Unable to find an element by: [data-testid=\"viewport-identity-missing\"]"
+    },
+    {
+      "file": "src/components/MultiPanelViewer.capa010.test.tsx",
+      "test": "rc023 each panel shows the orientation of its own image, read from the server metadata",
+      "status": "failed",
+      "failure": "Error: Unable to find an element by: [data-testid=\"viewport-orientation\"]"
+    },
+    {
+      "file": "src/components/MultiPanelViewer.capa010.test.tsx",
+      "test": "rc023 every panel carries the standing laterality caveat",
+      "status": "failed",
+      "failure": "Error: Unable to find an element by: [data-testid=\"viewport-safety-overlay\"]"
+    },
+    {
+      "file": "src/components/MultiPanelViewer.capa010.test.tsx",
+      "test": "rc023 a panel keeps its orientation when the slice changes",
+      "status": "failed",
+      "failure": "Error: Unable to find an element by: [data-testid=\"viewport-orientation\"]"
+    },
+    {
+      "file": "src/components/MultiPanelViewer.capa010.test.tsx",
+      "test": "rc023 reassigning a panel clears the previous image orientation until the new image reports its own",
+      "status": "failed",
+      "failure": "AssertionError: expected undefined to be 'LAS' // Object.is equality"
+    }
+  ]
+}

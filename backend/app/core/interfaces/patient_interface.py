@@ -135,7 +135,8 @@ class IPatientService(ABC):
     @abstractmethod
     async def search_patients(
         self,
-        search: PatientSearch
+        search: PatientSearch,
+        allowed_ids=None,   # PRB-021: None = every record (administrator); else only these patient ids
     ) -> Tuple[List[PatientSummary], int]:
         """
         Search patients with filters and pagination.
@@ -153,7 +154,8 @@ class IPatientService(ABC):
         self,
         page: int = 1,
         page_size: int = 20,
-        status: Optional[str] = None
+        status: Optional[str] = None,
+        allowed_ids=None,   # PRB-021: None = every record (administrator); else only these patient ids
     ) -> Tuple[List[PatientSummary], int]:
         """
         List all patients with pagination.

@@ -3,7 +3,10 @@
  */
 
 import { apiClient } from '@/services/apiClient';
+import { drawnLabelsSha256 } from '@/utils/drawnLabels';
 import type {
+  AIProvenance,
+  ClinicianReview,
   CreateSegmentationRequest,
   SegmentationResponse,
   PaintStroke,
@@ -34,6 +37,59 @@ export const segmentationAPI = {
       request
     );
     return response.data;
+  },
+
+  /**
+   * Record the clinician's explicit review of a saved AI draft (REQ-SAFE-030). Radiologists only. Bound to the
+   * exact stored mask: `maskSha256` is the SHA-256 of the mask the clinician reviewed (409 if it differs).
+   * PRB-029 (RC-091): with the label table the mask was drawn with (409 unless the stored one) and, PRB-030
+   * (RC-092), the image under the mask on screen (409 unless on the mask's grid, in the same study) — the result of
+   * the shared check of the view on screen (utils/confirmDrawCheck.ts).
+   */
+  async confirmAiReview(
+    segmentationId: string,
+    maskSha256: string,
+    onScreen: { drawnLabels: ReadonlyArray<Pick<LabelInfo, 'id' | 'name' | 'color'>>; displayedImageFileId: string | null },
+  ): Promise<AIProvenance> {
+    const response = await apiClient.post<{ success: boolean; ai_provenance: AIProvenance }>(
+      `${API_PREFIX}/segmentation/${segmentationId}/ai-review/confirm`,
+      { mask_sha256: maskSha256, drawn_labels_sha256: await drawnLabelsSha256(onScreen.drawnLabels),
+        displayed_image_file_id: onScreen.displayedImageFileId },
+    );
+    return response.data.ai_provenance;
+  },
+
+  /**
+   * PRB-003 (RC-071): record a radiologist's confirmation of a saved segmentation WITHOUT AI provenance (drawn here,
+   * from a server tool, or uploaded). Bound to the exact stored mask: `maskSha256` is the SHA-256 of the mask the
+   * radiologist checked (409 if it differs; 403 for other roles; 409 for an AI draft, which has its own review).
+   * `regionCorrectionsSha256` acknowledges the region corrections by hand listed in the DIS state (409 without it
+   * when there are any; second review of PR #68, N1). `onScreen` (next safety round): the digest of the
+   * geometric-fallback regions checked one by one (PRB-028, RC-090; 409 without it when the DIS state lists any) and
+   * the image under the mask on screen (PRB-030, RC-092; 409 unless on the mask's grid, in the same study).
+   */
+  async confirmSegmentationReview(
+    segmentationId: string,
+    maskSha256: string,
+    regionCorrectionsSha256: string | null | undefined,
+    drawnLabels: ReadonlyArray<Pick<LabelInfo, 'id' | 'name' | 'color'>>,
+    onScreen: { geometricRegionsReviewedSha256?: string | null; displayedImageFileId: string | null },
+  ): Promise<ClinicianReview> {
+    // Release 2026-10-25 (final check of PR #69, R2): the label table the mask was drawn with; the server refuses
+    // a confirmation drawn with another table than the stored one.
+    const drawnLabelsSha256Hex = await drawnLabelsSha256(drawnLabels);
+    const response = await apiClient.post<{ success: boolean; clinician_review: ClinicianReview }>(
+      `${API_PREFIX}/segmentation/${segmentationId}/review/confirm`,
+      {
+        mask_sha256: maskSha256,
+        drawn_labels_sha256: drawnLabelsSha256Hex,
+        displayed_image_file_id: onScreen.displayedImageFileId,
+        ...(regionCorrectionsSha256 ? { region_corrections_sha256: regionCorrectionsSha256 } : {}),
+        ...(onScreen.geometricRegionsReviewedSha256
+          ? { geometric_regions_reviewed_sha256: onScreen.geometricRegionsReviewedSha256 } : {}),
+      },
+    );
+    return response.data.clinician_review;
   },
 
   /**
@@ -187,6 +243,24 @@ export const segmentationAPI = {
     const response = await apiClient.post<LongitudinalResult>(
       `${API_PREFIX}/segmentation/longitudinal/compare`,
       { tp1, tp2 }
+    );
+    return response.data;
+  },
+
+  /**
+   * Record a radiologist's decision on longitudinal change candidates (CAPA-013, RC-060).
+   * Radiologists only (403 otherwise). Bound to the masks compared: `review_binding` is the one the
+   * comparison returned; 409 if either segmentation changed since.
+   */
+  async reviewLongitudinalCandidates(body: {
+    tp1: { type: 'segmentation'; id: string };
+    tp2: { type: 'segmentation'; id: string };
+    review_binding: { tp1_mask_sha256: string; tp2_mask_sha256: string };
+    decisions: { candidate_key: string; decision: 'confirmed' | 'rejected' }[];
+  }): Promise<{ success: boolean; recorded: number }> {
+    const response = await apiClient.post<{ success: boolean; recorded: number }>(
+      `${API_PREFIX}/segmentation/longitudinal/review`,
+      body,
     );
     return response.data;
   },

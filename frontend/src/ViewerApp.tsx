@@ -31,7 +31,7 @@ import { MAGNIMSZoneMapPanel } from './components/MAGNIMSZoneMapPanel';
 import { useSegmentationStore } from './store/useSegmentationStore';
 import { useMultiViewerStore, type ViewerLayout } from './store/useMultiViewerStore';
 import { autoAssignPanels, detectSequence } from './utils/sequenceDetection';
-import { isPreprocessedInstance } from './utils/instanceClassification';
+import { isPreprocessedInstance, multiPanelImages } from './utils/instanceClassification';
 import { detectLabelPreset } from './utils/labelPresets';
 import { buildSegmentationList } from './utils/segmentationList';
 import { formatDate } from './utils/formatDate';
@@ -46,8 +46,11 @@ interface StudyInfo {
   instances: ImagingInstance[];
 }
 
+/** Label ids 1-4 of a region-classified segmentation (the MAGNIMS regions the DIS rule reads). */
+const MAGNIMS_REGION_NAMES = ['Periventricular', 'Juxtacortical', 'Infratentorial', 'Deep White Matter'];
+
 /** Inline overlay toggle + opacity slider + label visibility for segmentation list items */
-function OverlayControls() {
+export function OverlayControls() {
   const { t } = useTranslation();
   const isOverlayVisible = useSegmentationStore((s) => s.isOverlayVisible);
   const setIsOverlayVisible = useSegmentationStore((s) => s.setIsOverlayVisible);
@@ -56,6 +59,16 @@ function OverlayControls() {
   const labels = useSegmentationStore((s) => s.activeSegmentation?.labels);
   const labelVisibility = useSegmentationStore((s) => s.labelVisibility);
   const toggleLabelVisibility = useSegmentationStore((s) => s.toggleLabelVisibility);
+  // Release 2026-10-25 (review of PR #69, B1): mask values the label table does not name are drawn in the fallback
+  // colour and announced here; the confirmation is refused while any exists.
+  const maskLabelValues = useSegmentationStore((s) => s.maskLabelValues);
+  const unlabelled = (maskLabelValues ?? []).filter((v) => v !== 0 && !(labels ?? []).some((l) => l.id === v));
+  // Release 2026-10-25 (final check of PR #69, R2): on a classified segmentation (a classification record, and ids
+  // 1-4 named as the MAGNIMS regions) the preset cannot be switched — "Default" redrew the regions with other names
+  // and colours.
+  const classificationRecord = useSegmentationStore((s) => s.currentSegmentation?.metadata?.analysis_data?.classification);
+  const presetLocked = !!classificationRecord && MAGNIMS_REGION_NAMES.every(
+    (name, i) => (labels ?? []).find((l) => l.id === i + 1)?.name === name);
 
   return (
     <div className="space-y-1.5 mb-2 p-1.5 rounded bg-gray-800/40">
@@ -88,8 +101,10 @@ function OverlayControls() {
             <div className="space-y-1">
               <select
                 value={detectLabelPreset(labels)}
+                disabled={presetLocked}
                 onChange={(e) => {
                   const preset = e.target.value;
+                  if (presetLocked) return;
                   if (preset === 'default' || preset === 'magnims') {
                     useSegmentationStore.getState().setLabelPreset(preset as 'default' | 'magnims');
                   }
@@ -100,6 +115,11 @@ function OverlayControls() {
                 <option value="magnims">MAGNIMS Regional</option>
                 <option value="custom" disabled>Custom</option>
               </select>
+              {presetLocked && (
+                <p className="text-[9px] text-gray-400" data-testid="label-preset-locked">
+                  {t('segmentation.presetLocked', 'Locked: a classified segmentation is drawn with its MAGNIMS region labels.')}
+                </p>
+              )}
             </div>
           )}
           {labels && labels.filter((l) => l.id !== 0).length > 0 && (
@@ -125,6 +145,15 @@ function OverlayControls() {
               })}
             </div>
           )}
+          {unlabelled.length > 0 && (
+            <p className="text-[10px] text-fuchsia-300 bg-fuchsia-950/40 border border-fuchsia-700/50 rounded px-1.5 py-1"
+               role="alert" data-testid="unlabelled-mask-values">
+              {t('segmentation.unlabelledValues', {
+                defaultValue: 'Mask value(s) {{values}} have no label in the label table: drawn in cyan. Reopen the segmentation to load its labels; it cannot be confirmed until every value has a label.',
+                values: unlabelled.join(', '),
+              }).replace('{{values}}', unlabelled.join(', '))}
+            </p>
+          )}
         </>
       )}
     </div>
@@ -140,7 +169,9 @@ function ViewerApp() {
   const studyId = searchParams.get('studyId');
 
   const viewMode = useViewerStore((state) => state.viewMode);
-  const setCurrentSeries = useViewerStore((state) => state.setCurrentSeries);
+  const openSeries = useViewerStore((state) => state.openSeries);
+  // PRB-008: the study whose image was opened last (keep the slice only within one study).
+  const openedStudyRef = useRef<string | null>(null);
   const setIsLoading = useViewerStore((state) => state.setIsLoading);
   const currentSeries = useViewerStore((state) => state.currentSeries);
   const setHierarchicalContext = useViewerStore((state) => state.setHierarchicalContext);
@@ -229,11 +260,10 @@ function ViewerApp() {
     [studyInfo?.instances]
   );
 
-  // Instances to use for multi-panel viewer (based on source toggle)
-  const multiPanelInstances = useMemo(() =>
-    multiPanelSource === 'preprocessed' && preprocessedInstances.length > 0
-      ? preprocessedInstances
-      : originalInstances,
+  // Instances to use for multi-panel viewer (based on source toggle). PRB-007: falls back to the
+  // other group when the chosen one is empty; shownMultiPanelSource is the group actually shown.
+  const { source: shownMultiPanelSource, instances: multiPanelInstances } = useMemo(
+    () => multiPanelImages(multiPanelSource, originalInstances, preprocessedInstances),
     [multiPanelSource, originalInstances, preprocessedInstances]
   );
 
@@ -249,9 +279,7 @@ function ViewerApp() {
   // Re-assign panels when source toggle changes
   const handleMultiPanelSourceChange = useCallback((source: 'originals' | 'preprocessed') => {
     setMultiPanelSource(source);
-    const instances = source === 'preprocessed' && preprocessedInstances.length > 0
-      ? preprocessedInstances
-      : originalInstances;
+    const { instances } = multiPanelImages(source, originalInstances, preprocessedInstances); // PRB-007
     if (isMultiPanel && instances.length > 0) {
       const assignments = autoAssignPanels(instances);
       autoAssign(assignments.map((a) => ({ instanceId: a.instance.id, sequence: a.sequence })));
@@ -352,7 +380,10 @@ function ViewerApp() {
         const result = await imagingAPI.processImage(selectedInstance.gcs_object_name, 0, 500);
         // Add the file_id to the result so 3D viewer can use it
         const resultWithFileId = { ...result, file_id: selectedInstance.gcs_object_name };
-        setCurrentSeries(resultWithFileId);
+        // PRB-008: opens on the middle slice, or keeps the slice for an image of the same size
+        // in the same study (utils/sliceOnOpen.ts) - never on the blank slice 1 by default.
+        openSeries(resultWithFileId, { sameStudy: openedStudyRef.current === studyId });
+        openedStudyRef.current = studyId;
         toast.success(t('viewer.imageLoadSuccess'), { id: 'loading-image' });
         return resultWithFileId;
       } catch (error) {
@@ -416,7 +447,7 @@ function ViewerApp() {
   };
 
   // Handle opening/loading an existing segmentation (toggle: click again to deactivate)
-  const handleOpenSegmentation = useCallback((segmentation: { id: string; name: string; fileId?: string }) => {
+  const handleOpenSegmentation = useCallback(async (segmentation: { id: string; name: string; fileId?: string }) => {
     // Toggle off if clicking the already-active segmentation
     if (currentSegmentation?.segmentation_id === segmentation.id) {
       setCurrentSegmentation(null);
@@ -424,8 +455,17 @@ function ViewerApp() {
       return;
     }
 
-    // Find full segmentation data from the query results
-    const fullSeg = segmentationsData?.find((s) => s.segmentation_id === segmentation.id);
+    // Release 2026-10-25 (review of PR #69, B1): open from the SERVER, every time. The sidebar list is fetched once
+    // and is not refreshed by the region classification, so opening (or reopening) from it seeded the drawn labels
+    // with the labels from before the classification while the mask held regions 1-4 (lesions 2-4 not drawn).
+    let fullSeg;
+    try {
+      fullSeg = await segmentationAPI.getSegmentation(segmentation.id);
+    } catch (error) {
+      console.error('[ViewerApp] Segmentation could not be read from the server:', error);
+      toast.error(t('viewer.segmentationOpenFailed', 'The segmentation could not be read from the server; it was not opened.'));
+      return;
+    }
     if (!fullSeg) return;
 
     // Segmentations are in MNI space — need a preprocessed image to overlay on.
@@ -443,7 +483,7 @@ function ViewerApp() {
     // Activate segmentation mode
     viewerControls.setSegmentationMode(true);
     toast.success(t('viewer.segmentationLoaded', `Segmentation "${segmentation.name}" loaded`));
-  }, [viewerControls, t, segmentationsData, setCurrentSegmentation, currentSegmentation, currentSeries?.file_id, studyInfo, preprocessedInstances]);
+  }, [viewerControls, t, setCurrentSegmentation, currentSegmentation, currentSeries?.file_id, studyInfo, preprocessedInstances]);
 
   // Toggle expand/collapse for a segmentation item's info panel
   const toggleSegExpanded = useCallback((segId: string) => {
@@ -887,10 +927,16 @@ function ViewerApp() {
                               <div className="ml-2 mt-1 mb-1 border-l-2 border-cyan-600/30 pl-2">
                                 {/* Overlay controls inline */}
                                 <OverlayControls />
+                                {/* PRB-003 (review of PR #68, finding 10): a failure of the lesion panel must not
+                                    take the viewer down. */}
+                                <ErrorBoundary name="LesionDashboard">
                                 <LesionDashboard
                                   segmentationId={seg.id}
                                   onNavigateToSlice={(idx) => activeSlice.setSliceIndex(idx)}
+                                  sourceFileId={seg.fileId}
+                                  studyInstances={studyInfo?.instances}
                                 />
+                                </ErrorBoundary>
                               </div>
                             )}
                           </div>
@@ -931,7 +977,11 @@ function ViewerApp() {
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="flex-1"
+          // RC-023 (CAPA-010): a flex column, so the viewport below takes the height LEFT by
+          // the toolbar. It was a block with the toolbar on top of an `h-full` viewport, which
+          // pushed the bottom of the viewport (the laterality caveat and the bottom of the
+          // image) under the overflow-hidden frame.
+          className="flex flex-1 flex-col"
         >
           {/* Viewer Toolbar — centered bar with all controls */}
           {viewMode === '2d' && currentSeries && (
@@ -965,11 +1015,14 @@ function ViewerApp() {
                           {syncSlice ? <Link2 style={{ width: 14, height: 14 }} /> : <Unlink2 style={{ width: 14, height: 14 }} />}
                         </button>
                         {preprocessedInstances.length > 0 && (
-                          <button onClick={() => handleMultiPanelSourceChange(multiPanelSource === 'originals' ? 'preprocessed' : 'originals')}
-                            className={`flex items-center transition-colors ${multiPanelSource === 'preprocessed' ? 'bg-teal-600 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
+                          <button onClick={() => handleMultiPanelSourceChange(shownMultiPanelSource === 'originals' ? 'preprocessed' : 'originals')}
+                            // PRB-007: names the group actually shown; nothing to switch to without originals.
+                            disabled={originalInstances.length === 0}
+                            title={originalInstances.length === 0 ? t('layout.onlyPreprocessed', 'This study has preprocessed images only') : undefined}
+                            className={`flex items-center transition-colors disabled:cursor-default ${shownMultiPanelSource === 'preprocessed' ? 'bg-teal-600 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
                             style={{ height: 28, gap: 4, padding: '0 8px', borderRadius: 6, fontSize: 12, fontWeight: 500 }}>
-                            {multiPanelSource === 'preprocessed' ? <FlaskConical style={{ width: 14, height: 14 }} /> : <FileImage style={{ width: 14, height: 14 }} />}
-                            {multiPanelSource === 'preprocessed' ? 'Preproc' : 'Original'}
+                            {shownMultiPanelSource === 'preprocessed' ? <FlaskConical style={{ width: 14, height: 14 }} /> : <FileImage style={{ width: 14, height: 14 }} />}
+                            {shownMultiPanelSource === 'preprocessed' ? 'Preproc' : 'Original'}
                           </button>
                         )}
                       </>
@@ -1041,7 +1094,7 @@ function ViewerApp() {
             </div>
           )}
 
-          <div className="h-full overflow-hidden" style={{ background: '#000' }}>
+          <div className="min-h-0 flex-1 overflow-hidden" style={{ background: '#000' }}>
             {isLoadingImage && !isMultiPanel ? (
               <div className="h-full flex flex-col items-center justify-center">
                 <Loader2 className="animate-spin" style={{ width: 36, height: 36, color: '#60A5FA', marginBottom: 8 }} />
@@ -1051,6 +1104,9 @@ function ViewerApp() {
               <ErrorBoundary name="MultiPanelViewer">
                 <MultiPanelViewer
                   instances={[...originalInstances, ...preprocessedInstances]}
+                  patientName={patientData?.full_name}
+                  patientMRN={patientData?.mrn}
+                  studyDescription={studyInfo?.study.study_description}
                 />
               </ErrorBoundary>
             ) : viewMode === '2d' ? (
@@ -1066,7 +1122,11 @@ function ViewerApp() {
               </ErrorBoundary>
             ) : (
               <ErrorBoundary name="ImageViewer3D">
-                <ImageViewer3D />
+                <ImageViewer3D
+                  patientName={patientData?.full_name}
+                  patientMRN={patientData?.mrn}
+                  studyDescription={studyInfo?.study.study_description}
+                />
               </ErrorBoundary>
             )}
           </div>

@@ -20,7 +20,10 @@ import { useViewerStore } from '@/store/useViewerStore';
 import { segmentationAPI } from '@/api/segmentation';
 import { ClinicalToolsPanel } from './ClinicalToolsPanel';
 import { ConformalPanel } from './ConformalPanel';
-import type { LabelInfo, Segmentation, SegmentationResponse } from '@/types';
+import { AiDraftBanner, aiStatusText } from './AiDraftBanner';
+import { AutomaticMarkingNotice, isLesionDetectionSource } from './AutomaticMarkingNotice';
+import { recordedAuthor, authorLabel } from '@/utils/segmentationAuthor';
+import type { AIProvenance, LabelInfo, Segmentation, SegmentationResponse } from '@/types';
 
 // ============================================================================
 // Types
@@ -295,6 +298,13 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
     reset,
   } = useSegmentationStore();
 
+  // RC-047: the review can only be confirmed on the saved mask (no unsaved corrections).
+  const hasUnsavedMaskChanges = useSegmentationStore((s) => s.hasUnsavedMaskChanges);
+  // PRB-003 (RC-072): the stored origin of the open segmentation ('automatic' for server-tool output too) and the
+  // tool that produced it — the notice is for lesion-detection tools, not structure parcellations.
+  const openSegmentationType = useSegmentationStore((s) => s.currentSegmentation?.metadata?.segmentation_type);
+  const openValidationSource = useSegmentationStore((s) => s.currentSegmentation?.metadata?.validation_source);
+
   // Fetch segmentations list for ALL images in the study (same cache key as ViewerApp)
   const { data: segmentationsList, isLoading: isLoadingList } = useQuery({
     queryKey: ['segmentations', 'study', currentStudyId],
@@ -318,12 +328,15 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
   // Map SegmentationResponse[] to minimal SegmentationSummary-like objects for the list
   const segmentations = (segmentationsList ?? []).map((seg: SegmentationResponse) => ({
     id: seg.segmentation_id,
-    name: seg.metadata?.description || t('segmentation.defaultName', 'Segmentation'),
+    // REQ-SAFE-030: a saved AI draft is named by its review status first, never like manual work.
+    name: seg.metadata?.ai_provenance
+      ? `[${aiStatusText(seg.metadata.ai_provenance)}] ${seg.metadata.ai_provenance.model_name} fold ${seg.metadata.ai_provenance.fold}`
+      : seg.metadata?.description || t('segmentation.defaultName', 'Segmentation'),
     status: 'saved' as const,
     progress_percentage: 0,
     slices_annotated: 0,
     total_slices: seg.total_slices,
-    created_by: 'current_user',
+    created_by: recordedAuthor(seg.metadata),   // PRB-026: recorded by the server; '' = not recorded
     created_at: seg.metadata?.created_at || new Date().toISOString(),
     modified_at: seg.metadata?.modified_at || new Date().toISOString(),
     label_count: seg.metadata?.labels?.filter(l => l.id !== 0).length ?? 1,
@@ -379,6 +392,14 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
       console.error('Failed to delete segmentation:', error);
     }
   }, [deleteSegmentationMutation]);
+
+  const handleAiReviewConfirmed = useCallback((provenance: AIProvenance) => {
+    const store = useSegmentationStore.getState();
+    if (store.activeSegmentation) store.setActiveSegmentation({ ...store.activeSegmentation, ai_provenance: provenance });
+    const cur = store.currentSegmentation;
+    if (cur) setCurrentSegmentation({ ...cur, metadata: { ...cur.metadata, ai_provenance: provenance } });
+    queryClient.invalidateQueries({ queryKey: ['segmentations', 'study', currentStudyId] });
+  }, [setCurrentSegmentation, queryClient, currentStudyId]);
 
   const handleSaveSegmentation = useCallback(async () => {
     if (!saveCallback) return;
@@ -595,8 +616,23 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
-                      {activeSegmentation.created_by_name || activeSegmentation.created_by}
+                      {authorLabel(activeSegmentation, t)}
                     </p>
+                    {/* PRB-003 (RC-072): a server-tool segmentation (automatic, no AI provenance) carries the
+                        same information for safety as an AI draft (whose banner shows it). */}
+                    {!activeSegmentation.ai_provenance && openSegmentationType === 'automatic'
+                      && isLesionDetectionSource(openValidationSource) && (
+                      <AutomaticMarkingNotice />
+                    )}
+                    {/* REQ-SAFE-030: an AI segmentation is always labelled as such, saved or not. */}
+                    {activeSegmentation.ai_provenance && (
+                      <AiDraftBanner
+                        provenance={activeSegmentation.ai_provenance}
+                        segmentationId={activeSegmentation.id}
+                        hasUnsavedChanges={hasUnsavedMaskChanges}
+                        onConfirmed={handleAiReviewConfirmed}
+                      />
+                    )}
                   </div>
                   <button
                     onClick={handleCloseSegmentation}

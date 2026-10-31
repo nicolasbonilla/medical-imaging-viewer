@@ -62,19 +62,25 @@ export default function MeasurementOverlay({
     }
   }, [clearSignal]);
 
-  // Scale factors: image coords → canvas coords
-  const scaleX = canvasWidth / imageWidth;
-  const scaleY = canvasHeight / imageHeight;
+  // RC-038 (CAPA-010, HAZ-014): image coords <-> overlay coords through the SAME transform
+  // the standard canvas draws the slice with (useCanvasRendering):
+  //   overlay = (image * s0 - centre) * zoom + centre + pan,   s0 = canvas px per image px.
+  // The overlay used s0 only, so at zoom 2 a ruler reported twice the true length (an ROI
+  // four times the area) and drawn measurements did not follow the image when zooming.
+  const scaleX = (canvasWidth / imageWidth) * zoomLevel;
+  const scaleY = (canvasHeight / imageHeight) * zoomLevel;
+  const originX = (canvasWidth / 2) * (1 - zoomLevel) + panOffset.x;
+  const originY = (canvasHeight / 2) * (1 - zoomLevel) + panOffset.y;
 
   const toCanvas = useCallback((p: Point): Point => ({
-    x: p.x * scaleX,
-    y: p.y * scaleY,
-  }), [scaleX, scaleY]);
+    x: originX + p.x * scaleX,
+    y: originY + p.y * scaleY,
+  }), [originX, originY, scaleX, scaleY]);
 
   const toImage = useCallback((canvasX: number, canvasY: number): Point => ({
-    x: canvasX / scaleX,
-    y: canvasY / scaleY,
-  }), [scaleX, scaleY]);
+    x: (canvasX - originX) / scaleX,
+    y: (canvasY - originY) / scaleY,
+  }), [originX, originY, scaleX, scaleY]);
 
   const getMousePos = useCallback((e: React.MouseEvent): Point => {
     const svg = svgRef.current;
@@ -90,17 +96,18 @@ export default function MeasurementOverlay({
     return Math.sqrt(dx * dx + dy * dy);
   }, [pixelSpacing]);
 
-  // Angle in degrees
+  // Angle in degrees, between the arms in MILLIMETRES (RC-038): on anisotropic pixels an
+  // angle measured in pixel units is wrong.
   const calcAngle = useCallback((p1: Point, p2: Point, p3: Point): number => {
-    const v1 = { x: p1.x - p2.x, y: p1.y - p2.y };
-    const v2 = { x: p3.x - p2.x, y: p3.y - p2.y };
+    const v1 = { x: (p1.x - p2.x) * pixelSpacing[1], y: (p1.y - p2.y) * pixelSpacing[0] };
+    const v2 = { x: (p3.x - p2.x) * pixelSpacing[1], y: (p3.y - p2.y) * pixelSpacing[0] };
     const dot = v1.x * v2.x + v1.y * v2.y;
     const mag1 = Math.sqrt(v1.x * v1.x + v1.y * v1.y);
     const mag2 = Math.sqrt(v2.x * v2.x + v2.y * v2.y);
     if (mag1 === 0 || mag2 === 0) return 0;
     const cos = Math.max(-1, Math.min(1, dot / (mag1 * mag2)));
     return Math.acos(cos) * (180 / Math.PI);
-  }, []);
+  }, [pixelSpacing]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (!activeTool) return;

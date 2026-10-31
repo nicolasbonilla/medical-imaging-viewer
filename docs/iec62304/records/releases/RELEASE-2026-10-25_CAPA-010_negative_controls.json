@@ -1,0 +1,395 @@
+{
+  "executed": "2026-10-29T23:40:49",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once; vitest JSON reporter",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "frontend/src/ViewerApp.tsx": "ac2c33f68ae16fd204c6bbe05f7f944879695629682f06628db2a489dae7263f",
+    "frontend/src/components/ImageViewer3D.tsx": "00ab19821e1b65ca8ea7a0aa87f19230ffa40c6c5949c8a82f64a99a59e51ecb",
+    "frontend/src/components/MeasurementOverlay.tsx": "0740e1055690d0dd713bedf8132489072ee2cb0155a81116e74f3093169d41d4",
+    "frontend/src/components/MultiPanelViewer.tsx": "2cf7788856199459360fe10269321f00603e9edf0771ad81ae08245678810679",
+    "frontend/src/store/useMultiViewerStore.ts": "ea91ba24581b4a4b119a88078907b979ca2844293051080834ea7195ac3c5e6d",
+    "frontend/src/utils/boundingBoxMesh.ts": "7825ea0ade415f6bf34ffa5f1baa3d8d45487ad07b0873b8c007918a01bab408"
+  },
+  "test_sha256": {
+    "src/components/ImageViewer3D.capa010.test.tsx": "9abc97964d71320ca5293e0978ab3e6288f5dbcb576ae9b503f56151a2cbda1f",
+    "src/components/MultiPanelViewer.capa010.test.tsx": "72eaa55d12c16b9536f5710fb6c908dfff67220dad19224ae4879739e758ad89",
+    "src/components/MeasurementOverlay.rc038.test.tsx": "6de558f71539cb19078bc6b02137020c5cad362067bc07e42a029859303f89ae",
+    "src/ViewerApp.capa010.test.tsx": "f6765559fa49df218056450f57fbfd3c21649d5ef71283612a9f727d46ba6fe5",
+    "src/components/ViewportSafetyOverlay.test.tsx": "599678382b2c019763fdeecd14b1e32fc864ab65f2e01bf536a059dc6bdf9bf0"
+  },
+  "tests": [
+    "src/components/ImageViewer3D.capa010.test.tsx",
+    "src/components/MultiPanelViewer.capa010.test.tsx",
+    "src/components/MeasurementOverlay.rc038.test.tsx",
+    "src/ViewerApp.capa010.test.tsx",
+    "src/components/ViewportSafetyOverlay.test.tsx"
+  ],
+  "mutations": {
+    "I1_3d_overlay_removed": {
+      "failed": 7,
+      "passed": 40,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc016 ViewerApp 3D volume: the loaded patient name and MRN are on the viewport",
+        "rc016 ViewerApp 3D multiplanar: the loaded patient name and MRN are on the viewport",
+        "rc023 ViewerApp: every view shows its laterality caveat in full at 1366x768, 1600x900 and 1920x1080",
+        "rc016 3D volume mode renders the patient name and MRN on the viewport",
+        "rc016 3D multiplanar mode renders the patient name and MRN on the viewport",
+        "rc016 3D view warns that the patient is not identified when identity is absent",
+        "rc023 3D view reports the orientation read from the affine and the standing laterality caveat"
+      ],
+      "error_files": [],
+      "reintroduces": "no identity / orientation / caveat on the 3D viewport (the defect as found)",
+      "applied": true
+    },
+    "I2_3d_identity_not_passed": {
+      "failed": 2,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc016 ViewerApp 3D volume: the loaded patient name and MRN are on the viewport",
+        "rc016 ViewerApp 3D multiplanar: the loaded patient name and MRN are on the viewport"
+      ],
+      "error_files": [],
+      "reintroduces": "the page loads the patient but does not hand it to the 3D viewer",
+      "applied": true
+    },
+    "I3_panel_overlay_removed": {
+      "failed": 7,
+      "passed": 40,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc016 ViewerApp multi-panel: the loaded patient name and MRN are on every panel",
+        "rc023 ViewerApp: every view shows its laterality caveat in full at 1366x768, 1600x900 and 1920x1080",
+        "rc016 every panel renders the patient name and MRN",
+        "rc016 every panel warns when the patient identity is absent",
+        "rc023 each panel shows the orientation of its own image, read from the server metadata",
+        "rc023 every panel carries the standing laterality caveat",
+        "rc023 a panel keeps its orientation when the slice changes"
+      ],
+      "error_files": [],
+      "reintroduces": "no identity / orientation / caveat on multi-panel cells (the defect as found)",
+      "applied": true
+    },
+    "I4_multipanel_identity_not_passed": {
+      "failed": 1,
+      "passed": 46,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc016 ViewerApp multi-panel: the loaded patient name and MRN are on every panel"
+      ],
+      "error_files": [],
+      "reintroduces": "the page does not hand the patient to the multi-panel viewer",
+      "applied": true
+    },
+    "I5_panel_identity_dropped": {
+      "failed": 2,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc016 ViewerApp multi-panel: the loaded patient name and MRN are on every panel",
+        "rc016 every panel renders the patient name and MRN"
+      ],
+      "error_files": [],
+      "reintroduces": "a dead prop: the multi-panel viewer receives the identity but its panels do not",
+      "applied": true
+    },
+    "O1_panel_orientation_not_stored": {
+      "failed": 2,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc023 each panel shows the orientation of its own image, read from the server metadata",
+        "rc023 a panel keeps its orientation when the slice changes"
+      ],
+      "error_files": [],
+      "reintroduces": "panels never learn the orientation of their own image",
+      "applied": true
+    },
+    "O2_orientation_lost_on_slice_change": {
+      "failed": 1,
+      "passed": 46,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc023 a panel keeps its orientation when the slice changes"
+      ],
+      "error_files": [],
+      "reintroduces": "a panel loses its orientation when the slice changes",
+      "applied": true
+    },
+    "O3_stale_orientation_on_assign": {
+      "failed": 1,
+      "passed": 46,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc023 reassigning a panel clears the previous image orientation until the new image reports its own"
+      ],
+      "error_files": [],
+      "reintroduces": "a reassigned panel keeps showing the previous image's orientation",
+      "applied": true
+    },
+    "O4_stale_orientation_on_autoassign": {
+      "failed": 1,
+      "passed": 46,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc023 reassigning a panel clears the previous image orientation until the new image reports its own"
+      ],
+      "error_files": [],
+      "reintroduces": "auto-assignment keeps the previous image's orientation",
+      "applied": true
+    },
+    "G1_orientation_cube_restored": {
+      "failed": 2,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc023 3D volume mode draws no orientation cube and no slice letters",
+        "rc023 3D multiplanar mode draws no orientation cube and no slice letters in any of its 4 panels"
+      ],
+      "error_files": [],
+      "reintroduces": "the 3D orientation cube with L/R/A/P/S/I letters (the defect as found)",
+      "applied": true
+    },
+    "G2_slice_letters_by_default": {
+      "failed": 2,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc023 3D volume mode draws no orientation cube and no slice letters",
+        "rc023 3D multiplanar mode draws no orientation cube and no slice letters in any of its 4 panels"
+      ],
+      "error_files": [],
+      "reintroduces": "niivue's default L/A slice letters in the 3D multiplanar panels",
+      "applied": true
+    },
+    "L1_layout_as_main": {
+      "failed": 1,
+      "passed": 46,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc023 ViewerApp: every view shows its laterality caveat in full at 1366x768, 1600x900 and 1920x1080"
+      ],
+      "error_files": [],
+      "reintroduces": "the 2D viewport pushed under the frame: caveat off-screen (the defect as found)",
+      "applied": true
+    },
+    "L2_viewport_full_height_only": {
+      "failed": 0,
+      "passed": 47,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [],
+      "error_files": [],
+      "reintroduces": "flex column kept, viewport back to h-full",
+      "applied": true
+    },
+    "L3_column_block_only": {
+      "failed": 1,
+      "passed": 46,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc023 ViewerApp: every view shows its laterality caveat in full at 1366x768, 1600x900 and 1920x1080"
+      ],
+      "error_files": [],
+      "reintroduces": "viewport kept flex-1, column back to a block",
+      "applied": true
+    },
+    "M1_crosshair_xyz": {
+      "failed": 2,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc037 the volume-mode crosshair is placed at affine * (y, x, z) of the lesion centroid",
+        "rc037 every multiplanar panel puts its crosshair on the same, correct lesion point"
+      ],
+      "error_files": [],
+      "reintroduces": "the 3D crosshair transposed in-plane (the defect as found)",
+      "applied": true
+    },
+    "M2_bbox_xyz": {
+      "failed": 1,
+      "passed": 46,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc037 the bounding box mesh spans exactly the lesion box in scanner space"
+      ],
+      "error_files": [],
+      "reintroduces": "the 3D bounding box transposed in-plane (the defect as found)",
+      "applied": true
+    },
+    "M3_mapping_xyz": {
+      "failed": 3,
+      "passed": 44,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc037 the volume-mode crosshair is placed at affine * (y, x, z) of the lesion centroid",
+        "rc037 every multiplanar panel puts its crosshair on the same, correct lesion point",
+        "rc037 the bounding box mesh spans exactly the lesion box in scanner space"
+      ],
+      "error_files": [],
+      "reintroduces": "the shared (z, y, x) -> (i, j, k) mapping wrong for both markers",
+      "applied": true
+    },
+    "R1_zoom_and_pan_ignored": {
+      "failed": 8,
+      "passed": 39,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc038 a ruler at zoom 2 reports the true length, not twice it",
+        "rc038 a ruler measures the same length at zoom 1, zoom 2 and zoom 4 with pan",
+        "rc038 an elliptical ROI at zoom 2 reports the true area, not four times it",
+        "rc038 a ruler stays on the anatomy it measured when the zoom changes",
+        "rc038 a ruler stays on the anatomy it measured when the image is panned",
+        "rc038 non-square: a diagonal ruler reads the same millimetres at zoom 1, 2 and 4",
+        "rc038 non-square: an elliptical ROI reads the same area at zoom 1, 2 and 4",
+        "rc038 non-square: a ruler drawn at zoom 2 is redrawn exactly where the canvas draws its end points at zoom 1 and 4"
+      ],
+      "error_files": [],
+      "reintroduces": "the ruler ignores zoom and pan: x2 length at zoom 2 (the defect as found)",
+      "applied": true
+    },
+    "R2_zoom_ignored_in_scale": {
+      "failed": 8,
+      "passed": 39,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc038 a ruler at zoom 2 reports the true length, not twice it",
+        "rc038 a ruler measures the same length at zoom 1, zoom 2 and zoom 4 with pan",
+        "rc038 an elliptical ROI at zoom 2 reports the true area, not four times it",
+        "rc038 a ruler stays on the anatomy it measured when the zoom changes",
+        "rc038 a ruler stays on the anatomy it measured when the image is panned",
+        "rc038 non-square: a diagonal ruler reads the same millimetres at zoom 1, 2 and 4",
+        "rc038 non-square: an elliptical ROI reads the same area at zoom 1, 2 and 4",
+        "rc038 non-square: a ruler drawn at zoom 2 is redrawn exactly where the canvas draws its end points at zoom 1 and 4"
+      ],
+      "error_files": [],
+      "reintroduces": "lengths scaled by the zoom factor",
+      "applied": true
+    },
+    "R3_pan_ignored": {
+      "failed": 2,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc038 a ruler stays on the anatomy it measured when the image is panned",
+        "rc038 non-square: a ruler drawn at zoom 2 is redrawn exactly where the canvas draws its end points at zoom 1 and 4"
+      ],
+      "error_files": [],
+      "reintroduces": "measurements detached from the anatomy when the image is panned",
+      "applied": true
+    },
+    "R4_angle_in_pixels": {
+      "failed": 2,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc038 the angle is computed in millimetres on anisotropic pixels (2 mm rows, 1 mm columns)",
+        "rc038 non-square: an angle is computed in millimetres at zoom 1, 2 and 4"
+      ],
+      "error_files": [],
+      "reintroduces": "the angle computed in pixel units on anisotropic pixels (the defect as found)",
+      "applied": true
+    },
+    "R5_vertical_centre_from_width": {
+      "failed": 1,
+      "passed": 46,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc038 non-square: a ruler drawn at zoom 2 is redrawn exactly where the canvas draws its end points at zoom 1 and 4"
+      ],
+      "error_files": [],
+      "reintroduces": "the vertical zoom centre taken from the canvas WIDTH (found by the PR #52 review)",
+      "applied": true
+    },
+    "R6_horizontal_centre_from_height": {
+      "failed": 1,
+      "passed": 46,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc038 non-square: a ruler drawn at zoom 2 is redrawn exactly where the canvas draws its end points at zoom 1 and 4"
+      ],
+      "error_files": [],
+      "reintroduces": "the horizontal zoom centre taken from the canvas HEIGHT",
+      "applied": true
+    },
+    "R7_vertical_scale_from_width": {
+      "failed": 4,
+      "passed": 43,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc038 non-square: a diagonal ruler reads the same millimetres at zoom 1, 2 and 4",
+        "rc038 non-square: an elliptical ROI reads the same area at zoom 1, 2 and 4",
+        "rc038 non-square: an angle is computed in millimetres at zoom 1, 2 and 4",
+        "rc038 non-square: a ruler drawn at zoom 2 is redrawn exactly where the canvas draws its end points at zoom 1 and 4"
+      ],
+      "error_files": [],
+      "reintroduces": "the vertical scale taken from the horizontal axis",
+      "applied": true
+    },
+    "R8_angle_spacing_swapped": {
+      "failed": 2,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc038 the angle is computed in millimetres on anisotropic pixels (2 mm rows, 1 mm columns)",
+        "rc038 non-square: an angle is computed in millimetres at zoom 1, 2 and 4"
+      ],
+      "error_files": [],
+      "reintroduces": "row and column spacing swapped in the angle",
+      "applied": true
+    },
+    "R9_distance_spacing_swapped": {
+      "failed": 2,
+      "passed": 45,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [
+        "rc038 non-square: a diagonal ruler reads the same millimetres at zoom 1, 2 and 4",
+        "rc038 non-square: a ruler drawn at zoom 2 is redrawn exactly where the canvas draws its end points at zoom 1 and 4"
+      ],
+      "error_files": [],
+      "reintroduces": "row and column spacing swapped in lengths",
+      "applied": true
+    }
+  },
+  "restored": {
+    "failed": 0,
+    "passed": 47,
+    "skipped": 0,
+    "errors": 0,
+    "failing_tests": [],
+    "error_files": []
+  },
+  "expected_undetected": {
+    "L2_viewport_full_height_only": "equivalent: once the centre column is a flex column, an overflow-hidden child with height 100% shrinks to the space left by the toolbar (flex-shrink 1; a scroll container's automatic minimum height is 0), so the page lays out the same. The defect needs the column to be a block again (L1, L3: detected). `min-h-0 flex-1` on the viewport is kept as the explicit form; confirmed in the real browser by this run"
+  },
+  "undetected": [
+    "L2_viewport_full_height_only"
+  ],
+  "unexpected_undetected": []
+}

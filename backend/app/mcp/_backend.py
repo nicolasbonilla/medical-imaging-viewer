@@ -27,7 +27,9 @@ from typing import Optional
 # Routes that only compute and return, AND either authorize every object they reference
 # (RC-029) or reference none. Each was checked to store nothing (CAPA-008 §2):
 # - compare / longitudinal compare: authorize_mask_specs, return metrics, store nothing;
-# - /ai/report/generate: references no stored object, returns text, keeps no copy.
+# - /ai/report/generate: authorizes the segmentation it drafts for (CAPA-014, RC-065; RC-029), returns
+#   text, keeps no copy; it reads (never writes) that segmentation to re-derive the DIS state and the
+#   lesion table on the server (PRB-003, RC-070).
 # Deliberately NOT listed: /ai/segment/*, /ai/anomaly/detect and /ai/volumetry/* take a
 # file or segmentation id WITHOUT object-level authorization (CAPA-008 finding 8, CAPA-007
 # PA-7.2), and volumetry rests on unsourced normative data (CAPA-005).
@@ -63,6 +65,25 @@ def drop_direct_identifiers(value):
     return value
 
 
+# CAPA-013 (RC-060, HAZ-007): the assistant never receives an activity or dissemination-in-time
+# flag computed from unconfirmed longitudinal candidates (the backend no longer sends them; this
+# also covers an older backend). A radiologist's confirmation travels as
+# `reader_confirmed_activity`, which is kept.
+UNCONFIRMED_ACTIVITY_KEYS = frozenset({
+    "activity_candidate", "dit_candidate", "new_clinically_significant_count", "enlarging_count",
+})
+
+
+def drop_unconfirmed_activity_flags(value):
+    """Return a copy of a JSON-like value without the UNCONFIRMED_ACTIVITY_KEYS fields, at any depth."""
+    if isinstance(value, dict):
+        return {k: drop_unconfirmed_activity_flags(v) for k, v in value.items()
+                if k not in UNCONFIRMED_ACTIVITY_KEYS}
+    if isinstance(value, list):
+        return [drop_unconfirmed_activity_flags(v) for v in value]
+    return value
+
+
 def _api_base() -> str:
     return os.environ.get("API_BASE_URL", "http://localhost:8000")
 
@@ -86,7 +107,7 @@ async def api_get(path: str, params: Optional[dict] = None, timeout: float = 60.
     async with httpx.AsyncClient(timeout=timeout) as client:
         response = await client.get(f"{_api_base()}/api/v1{path}", params=params, headers=_headers())
         response.raise_for_status()
-        return drop_direct_identifiers(response.json())
+        return drop_unconfirmed_activity_flags(drop_direct_identifiers(response.json()))
 
 
 async def api_post_compute(path: str, json_data: Optional[dict] = None, timeout: float = 120.0) -> dict:
@@ -96,4 +117,4 @@ async def api_post_compute(path: str, json_data: Optional[dict] = None, timeout:
     async with httpx.AsyncClient(timeout=timeout) as client:
         response = await client.post(f"{_api_base()}/api/v1{path}", json=json_data, headers=_headers())
         response.raise_for_status()
-        return drop_direct_identifiers(response.json())
+        return drop_unconfirmed_activity_flags(drop_direct_identifiers(response.json()))

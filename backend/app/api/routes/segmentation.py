@@ -8,6 +8,7 @@ from typing import List, Optional
 from datetime import datetime
 import numpy as np
 
+import io
 import struct
 
 from app.security import get_current_active_user
@@ -35,6 +36,7 @@ from app.core.interfaces.imaging_interface import IImagingService
 from app.core.interfaces.storage_interface import IStorageService
 from app.core.container import get_segmentation_service, get_imaging_service, get_storage_service
 from app.services.segmentation_service import SegmentationService
+from app.services import dis_review_gate as dis_gate   # PRB-003 (RC-070, RC-071)
 from app.core.config import get_settings
 from app.core.exceptions import ConflictException
 
@@ -97,7 +99,10 @@ async def create_segmentation(
             image_shape=image_shape,
             labels=request.labels,
             description=request.description,
-            source_format=source_format
+            source_format=source_format,
+            # REQ-SAFE-030: an AI draft keeps its provenance and is stored as 'unreviewed'.
+            ai_provenance=request.ai_provenance,
+            created_by=current_user.username,
         )
 
         return segmentation
@@ -145,8 +150,16 @@ async def list_segmentations(
             care_team_service=_seg_care_team_service(),
         )
         if ids_list:
-            return segmentation_service.list_segmentations(file_ids=ids_list)
-        return segmentation_service.list_segmentations(file_id=file_id)
+            listed = segmentation_service.list_segmentations(file_ids=ids_list)
+        else:
+            listed = segmentation_service.list_segmentations(file_id=file_id)
+        # PRB-003 (RC-070): a stored DIS block is never served with the metadata (gated DIS route only); who
+        # confirmed and the confirmation history only to radiologists and administrators (second review, N5).
+        out = []
+        for r in listed:
+            shown, count = dis_gate.metadata_for_viewer(dis_gate.without_stored_dis(r.metadata), current_user)
+            out.append(r.model_copy(update={"metadata": shown, "clinician_review_history_count": count}))
+        return out
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -180,12 +193,16 @@ async def get_segmentation(
         seg_data = segmentation_service.get_cached(segmentation_id)
         total_slices = seg_data["masks_3d"].shape[0] if seg_data else 0  # D,H,W convention
 
+        # PRB-003 (RC-070): no stored DIS conclusion in the metadata (gated DIS route only); who confirmed and the
+        # confirmation history only to radiologists and administrators (second review of PR #68, N5).
+        shown, history_count = dis_gate.metadata_for_viewer(dis_gate.without_stored_dis(metadata), current_user)
         return SegmentationResponse(
             segmentation_id=segmentation_id,
             file_id=metadata.file_id,
-            metadata=metadata,
+            metadata=shown,
             total_slices=total_slices,
-            masks=None
+            masks=None,
+            clinician_review_history_count=history_count,
         )
 
     except HTTPException:
@@ -579,6 +596,14 @@ async def update_labels(
     Uses dependency injection to get SegmentationService instance.
     Custom exceptions will be caught by global exception handler.
     """
+    # PRB-003 (review of PR #68, finding 6): a label name is what the DIS rule reads as a region — renaming
+    # is limited to clinical staff, and voids a DIS confirmation (bound to the label scheme) when saved.
+    from app.security.models import UserRole
+    if getattr(current_user, "role", None) not in (UserRole.RADIOLOGIST, UserRole.TECHNICIAN):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only clinical staff (radiologist, technician) can change label definitions.",
+        )
     try:
         metadata = await segmentation_service.get_metadata(segmentation_id)
         if metadata is None:
@@ -605,6 +630,296 @@ async def update_labels(
         )
 
 
+@router.post("/{segmentation_id}/ai-review/confirm")
+async def confirm_ai_review(
+    segmentation_id: str,
+    body: dict = Body(..., description=('{"mask_sha256": "<SHA-256 of the mask the clinician reviewed>", '
+                                        '"drawn_labels_sha256": "<SHA-256 of the label table the mask was drawn '
+                                        'with>", "displayed_image_file_id": "<the image under the mask on screen>"}')),
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    storage_service: IStorageService = Depends(get_storage_service),
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-029 - object-level authorization.
+    _authorized=Depends(require_segmentation_access),
+):
+    """Record that a clinician reviewed an AI-draft segmentation (REQ-SAFE-030, RC-047).
+
+    Only segmentations stored with AI provenance can be confirmed; manual work has nothing to
+    confirm (409). Only a radiologist may confirm (403). The reviewer and time are recorded; the
+    model identity is never changed. The confirmation is bound to the exact stored mask: the client
+    sends the SHA-256 of the mask it reviewed and it must equal the stored mask (409 otherwise —
+    unsaved corrections, or another session changed the mask); any later mask change resets it.
+    PRB-029 (RC-091): the client also states the label table it drew the mask with (`drawn_labels_sha256`; 409 unless
+    the stored one as the viewer draws it) — the same server-side safeguard as the DIS confirmation; the drawn-lesion
+    check itself runs in the browser (shared with the DIS confirmation).
+    PRB-030 (RC-092): and the image under the mask on screen (`displayed_image_file_id`; 409 unless on the mask's grid,
+    in the same study).
+    """
+    from app.security.models import UserRole
+
+    if getattr(current_user, "role", None) != UserRole.RADIOLOGIST:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only a radiologist can confirm the review of an AI draft.",
+        )
+    # Mutate the authoritative in-memory entry (get_metadata may return a cached copy).
+    entry = segmentation_service.get_loaded(segmentation_id)
+    if entry is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Segmentation not found")
+    metadata = entry["metadata"]
+    provenance = metadata.ai_provenance
+    if provenance is None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This segmentation has no AI provenance; there is no AI draft to confirm.",
+        )
+    reviewed = str((body or {}).get("mask_sha256", "")).strip().lower()
+    current = segmentation_service.mask_sha256(entry["masks_3d"])
+    if reviewed != current:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=("The stored mask is not the one you reviewed (unsaved corrections, or the mask changed "
+                    "since you opened it). Save or reload, check it again, then confirm."),
+        )
+    problem = _outdated_viewer_problem(body)                                     # review of PR #74, m7
+    if problem is None:
+        problem = _drawn_labels_problem(body, metadata)                          # PRB-029 (RC-091)
+    if problem is None:
+        problem = await _displayed_image_problem(body, metadata, entry["masks_3d"], storage_service,
+                                                 current_user)                   # PRB-030 (RC-092)
+    if problem:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=problem)
+    if provenance.review_status != "confirmed" or provenance.reviewed_mask_sha256 != current:
+        metadata.ai_provenance = provenance.model_copy(update={
+            "review_status": "confirmed",
+            "reviewed_by": current_user.username,
+            "reviewed_at": datetime.utcnow().isoformat() + "Z",
+            "reviewed_mask_sha256": current,
+        })
+        metadata.modified_at = datetime.utcnow()
+        segmentation_service.persist(segmentation_id)
+        if getattr(segmentation_service, "cache", None):
+            await segmentation_service.cache.delete(f"seg:metadata:{segmentation_id}")
+    return {"success": True, "ai_provenance": metadata.ai_provenance.model_dump()}
+
+
+def _radiologist(user) -> bool:
+    from app.security.models import UserRole
+    return getattr(user, "role", None) == UserRole.RADIOLOGIST
+
+
+OUTDATED_VIEWER = ("This viewer is out of date: the confirmation does not state the labels the mask was drawn with or "
+                   "the image under it. Reload the page in the browser, check the segmentation again, then confirm.")
+
+
+def _outdated_viewer_problem(body) -> Optional[str]:
+    """Review of PR #74 (m7): a viewer opened before this version sends neither the drawn label table nor the image
+    under the mask; it gets one clear answer (reload) instead of the label-table or grid message."""
+    b = body or {}
+    if not str(b.get("drawn_labels_sha256") or "").strip() or not str(b.get("displayed_image_file_id") or "").strip():
+        return OUTDATED_VIEWER
+    return None
+
+
+def _drawn_labels_problem(body, metadata) -> Optional[str]:
+    """Release 2026-10-25 (final check of PR #69, R2), shared since PRB-029 by both confirmations: the client states the
+    label table it DREW the mask with (`drawn_labels_sha256`); a table other than the stored one AS THE VIEWER DRAWS IT
+    (region names in the shared region colours) is refused. A partial, server-side safeguard: whether every lesion was
+    drawn is checked in the browser (RMF-001, RC-071 residual risk)."""
+    drawn_labels = str((body or {}).get("drawn_labels_sha256", "")).strip().lower()
+    as_drawn = dis_gate.stored_labels(getattr(metadata, "labels", None) or [])
+    if drawn_labels != dis_gate.drawn_labels_sha256(as_drawn):
+        return ("The labels the mask was drawn with on your screen are not the labels stored for this "
+                "segmentation (another label preset, or labels changed since it was opened). Reopen the "
+                "segmentation, check every lesion with its stored labels, then confirm.")
+    return None
+
+
+async def _displayed_image_problem(body, metadata, masks_3d, storage_service, current_user) -> Optional[str]:
+    """PRB-030 (RC-092), both confirmations: the image the standard 2D view drew under the mask lies on the mask's
+    grid (services/displayed_image_check.py). Another image than the segmentation's own is authorized for the user
+    first (404 otherwise, never read)."""
+    from app.services.displayed_image_check import displayed_image_problem
+
+    displayed = str((body or {}).get("displayed_image_file_id") or "").strip()
+    own = getattr(metadata, "file_id", None)
+    if displayed and displayed != own:
+        await authorize_file_scope(
+            file_ids=[displayed], user=current_user,
+            patient_service=_seg_patient_service(), care_team_service=_seg_care_team_service(),
+        )
+    return await displayed_image_problem(displayed, own, np.shape(masks_3d), storage_service,
+                                         settings.GCS_BUCKET_NAME)
+
+
+@router.post("/{segmentation_id}/review/confirm")
+async def confirm_segmentation_review(
+    segmentation_id: str,
+    body: dict = Body(..., description=('{"mask_sha256": "<SHA-256 of the saved mask the radiologist checked>", '
+                                        '"drawn_labels_sha256": "<SHA-256 of the label table the mask was drawn '
+                                        'with>", "region_corrections_sha256": "<digest of the region corrections he '
+                                        'acknowledges, when the DIS state lists any>", '
+                                        '"geometric_regions_reviewed_sha256": "<digest of the geometric-fallback '
+                                        'regions he checked one by one, when the DIS state lists any>", '
+                                        '"displayed_image_file_id": "<the image under the mask on screen>"}')),
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    storage_service: IStorageService = Depends(get_storage_service),
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-029 - object-level authorization.
+    _authorized=Depends(require_segmentation_access),
+):
+    """Record a radiologist's DIS confirmation: every lesion and its MAGNIMS region checked (PRB-003, RC-071).
+
+    Dissemination in space is evaluated only after it (RC-070). Conditions (review of PR #68):
+    - radiologists only (403);
+    - the regions are classified (MAGNIMS label scheme, classification recorded for these lesions) — the
+      confirmation is offered only after the region classification (409 otherwise);
+    - an AI draft also has its own review (RC-047) for the current mask (409 otherwise);
+    - bound to the exact stored mask (the client sends the SHA-256 of the mask it shows; 409 if it differs)
+      AND to the label scheme; a later change of either removes it, with an entry in the history;
+    - the label table the client drew the mask with (`drawn_labels_sha256`) is the stored one (409 otherwise;
+      final check of PR #69, R2);
+    - every connected lesion carries exactly one region 1-4 (409 otherwise); a region that differs from the
+      classifier's is a correction the radiologist acknowledges by sending `region_corrections_sha256` (the
+      digest of the corrections listed in the DIS state); it is recorded in the confirmation (second review, N1);
+    - PRB-028 (RC-090): on a classification by the geometric fallback, every lesion left at its geometric region is
+      checked one by one: the client sends `geometric_regions_reviewed_sha256`, the digest of the list the DIS state
+      serves (409 otherwise, and always when there are more such lesions than the list can hold); recorded;
+    - PRB-030 (RC-092): the image under the mask on screen (`displayed_image_file_id`) lies on the mask's grid, in
+      the same study (409 otherwise; 404 for an image the user may not open);
+    - idempotent: an existing confirmation of the same mask and labels keeps its first confirmer; the repeat
+      is recorded in the history (the most recent 50 events) with the authenticated user and time;
+    - stored as metadata only (the mask object is not rewritten); refused (503, undone) when it could not be
+      stored durably; a mask saved meanwhile by another session gives 409 and the cached entry is discarded.
+    Writes a record: deliberately NOT on the AI assistant's compute-only list (RC-033).
+    """
+    from app.models.schemas import ClinicianReview, ClinicianReviewEvent
+
+    if not _radiologist(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only a radiologist can confirm a segmentation.",
+        )
+    entry = segmentation_service.get_loaded(segmentation_id)
+    if entry is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Segmentation not found")
+    segmentation_service.enforce_review_binding(entry)          # an outdated confirmation is voided first
+    metadata = entry["metadata"]
+    state = dis_gate.review_state(metadata, entry["masks_3d"])
+    regions = state["regions"]
+    if not regions["classified"]:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=("Run the MAGNIMS region classification first and check every region: dissemination in "
+                    "space is evaluated only on lesions with classified regions."),
+        )
+    if regions["lesions_valid"] is False:   # second review of PR #68, N1: one region (1-4) per classified lesion
+        # Third review of PR #68, m-1: each part named as the lesion table names it.
+        listed = "; ".join(" + ".join(
+            (f"small component ({p['voxels']} voxels, slice {p['slice'] + 1}): {p['label_name']}" if p['small_component']
+             else f"lesion {p['lesion']} (slice {p['slice'] + 1}): {p['label_name']}") for p in les["parts"])
+            for les in regions["invalid_lesions"][:5])
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(f"{regions['invalid_lesion_count']} lesion(s) carry no MAGNIMS region or more than one ({listed}). "
+                    "Every connected lesion must carry exactly one of periventricular, juxtacortical, "
+                    "infratentorial or deep white matter: correct them or run the region classification again."),
+        )
+    if state["reason"] == dis_gate.REASON_AI_REVIEW:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This is an AI draft: confirm its own review (AI draft banner) for the current mask first.",
+        )
+    stated = str((body or {}).get("mask_sha256", "")).strip().lower()
+    stored_digest = state["current_mask_sha256"]
+    if stated != stored_digest:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=("The stored mask is not the one you checked (unsaved changes, or the mask changed since you "
+                    "opened it). Save or reload, check it again, then confirm."),
+        )
+    # Release 2026-10-25 (final check of PR #69, R2): the client states the label table it DREW the mask with; a table
+    # other than the stored one (e.g. the "Default" preset selected, which redraws the regions with other names and
+    # colours) is refused. A partial, server-side safeguard: whether every lesion was drawn is checked in the browser
+    # (RMF-001, RC-071 residual risk). Release 2026-10-30 (merge with PR #71): compared with the stored table AS THE
+    # VIEWER DRAWS IT (region names in the shared region colours), the table the client can have drawn. PRB-029: the
+    # same check serves the AI-draft review (`_drawn_labels_problem`).
+    problem = _outdated_viewer_problem(body) or _drawn_labels_problem(body, metadata)   # review of PR #74, m7
+    if problem is None:   # PRB-030 (RC-092): the image under the mask on screen lies on the mask's grid
+        problem = await _displayed_image_problem(body, metadata, entry["masks_3d"], storage_service, current_user)
+    if problem:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=problem)
+    # Second review of PR #68, N1: a region changed by hand after the classification is the radiologist's
+    # correction — listed to him, acknowledged explicitly (the digest of the listed corrections) and recorded.
+    acknowledged = (body or {}).get("region_corrections_sha256")
+    acknowledged = str(acknowledged).strip().lower() if acknowledged else None
+    if (regions["correction_count"] or acknowledged) and acknowledged != regions["corrections_sha256"]:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(f"{regions['correction_count']} lesion region(s) differ from the region classification. Check "
+                    "the corrections listed and acknowledge them in the confirmation (or run the region "
+                    "classification again)."),
+        )
+    # PRB-028 (RC-090): regions from the geometric fallback are checked lesion by lesion — the client states the digest
+    # of the list it was shown and ticked; more lesions than the list holds cannot be checked here.
+    geometric_count = regions["geometric_region_count"]
+    checked = (body or {}).get("geometric_regions_reviewed_sha256")
+    checked = str(checked).strip().lower() if checked else None
+    if geometric_count > dis_gate.LESION_LIST_CAP:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(f"{geometric_count} lesion regions come from the geometric fallback, more than the "
+                    f"{dis_gate.LESION_LIST_CAP} that can be checked one by one here. Classify the regions with the "
+                    "atlas (an image registered to MNI space) or a parcellation of this image instead."),
+        )
+    if (geometric_count or checked) and checked != regions["geometric_regions_sha256"]:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(f"{geometric_count} lesion region(s) come from the geometric fallback (coordinate rules, not "
+                    "anatomy). Check the region of every lesion listed one by one and tick it (correct it with the "
+                    "brush and save if it is wrong), then confirm."),
+        )
+    now = datetime.utcnow().isoformat() + "Z"
+    actor_id = str(getattr(current_user, "id", "") or "") or None
+    previous = (metadata.clinician_review, list(metadata.clinician_review_history or []))
+    already = bool(state["confirmed"])
+    review = metadata.clinician_review if already else ClinicianReview(
+        reviewed_by=current_user.username, reviewed_by_id=actor_id, reviewed_by_role="radiologist",
+        reviewed_at=now, reviewed_mask_sha256=stored_digest, reviewed_labels_sha256=state["current_labels_sha256"],
+        reviewed_region_corrections_sha256=regions["corrections_sha256"],
+        region_correction_count=regions["correction_count"], region_corrections=regions["corrections"],
+        reviewed_geometric_regions_sha256=regions["geometric_regions_sha256"],
+        geometric_region_count=geometric_count, geometric_regions=regions["geometric_regions"],
+    )
+    event = ClinicianReviewEvent(
+        event="confirmation_repeated" if already else "confirmed", by=current_user.username, by_id=actor_id,
+        at=now, mask_sha256=stored_digest, labels_sha256=state["current_labels_sha256"],
+        region_correction_count=regions["correction_count"],
+    )
+    metadata.clinician_review = review
+    metadata.clinician_review_history = dis_gate.capped_history([*previous[1], event])   # N5: bounded
+    try:
+        tier = segmentation_service.persist_metadata(segmentation_id)
+    except ConflictException as ce:
+        segmentation_service.discard_cached(segmentation_id)   # never keep a confirmation of a stale mask
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=ce.message,
+                            headers={"X-Conflict": "segmentation-stale-write"})
+    if tier is None:
+        metadata.clinician_review, metadata.clinician_review_history = previous
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="The confirmation could not be stored durably; nothing was recorded. Try again.",
+        )
+    if getattr(segmentation_service, "cache", None):
+        await segmentation_service.cache.delete(f"seg:metadata:{segmentation_id}")
+    logger.info("DIS confirmation recorded", extra={
+        "segmentation_id": segmentation_id, "reviewed_by": current_user.username, "event": event.event,
+        "mask_sha256": stored_digest,
+    })
+    return {"success": True, "already_confirmed": already, "clinician_review": review.model_dump(),
+            "history_length": len(metadata.clinician_review_history)}
+
+
 @router.get("/{segmentation_id}/nifti")
 async def get_segmentation_nifti(
     segmentation_id: str,
@@ -624,11 +939,12 @@ async def get_segmentation_nifti(
     """
     try:
         nifti_data = None
+        # Re-review R2: with ref_file_id the response says what was served — "aligned" (realigned onto the
+        # reference grid), "as-stored" (not on that grid: served unchanged), "failed" (reference unavailable or
+        # alignment error: served unchanged, never a 500). The viewers apply their own grid checks either way.
+        alignment = None
 
         if ref_file_id:
-            import nibabel as nib
-            import tempfile, os
-
             # Load the EXISTING segmentation NIfTI from GCS (not internal mask)
             existing_bytes = segmentation_service.get_segmentation_nifti(segmentation_id)
             if not existing_bytes:
@@ -637,79 +953,32 @@ async def get_segmentation_nifti(
             # CAPA-009 (RC-036, RC-027): the reference image is a client-supplied storage path.
             # Parse and authorize it; never use the raw client string as a bucket key.
             _ref = await require_imaging_access(ref_file_id, current_user)
-            ref_blob = segmentation_service.gcs_bucket.blob(_ref.object_path)
-            if not ref_blob.exists():
-                # Fallback: serve original NIfTI as-is
-                nifti_data = existing_bytes
-            else:
-                # Load reference MRI
-                ref_buffer = io.BytesIO()
-                ref_blob.download_to_file(ref_buffer)
-                ref_buffer.seek(0)
-                with tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False) as rtmp:
-                    rtmp.write(ref_buffer.read())
-                    ref_tmp_path = rtmp.name
-                ref_img = nib.load(ref_tmp_path)
-
-                # Load existing segmentation NIfTI
-                with tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False) as stmp:
-                    stmp.write(existing_bytes)
-                    seg_tmp_path = stmp.name
-                seg_img = nib.load(seg_tmp_path)
-                seg_data = seg_img.get_fdata()
-
-                ref_shape = ref_img.shape[:3]
-                seg_shape = seg_data.shape[:3]
-
-                logger.info("Aligning segmentation to reference", extra={
-                    "seg_shape": str(seg_shape),
-                    "ref_shape": str(ref_shape),
-                    "seg_affine_diag": str(np.diag(seg_img.affine)[:3].tolist()),
-                    "ref_affine_diag": str(np.diag(ref_img.affine)[:3].tolist()),
+            nifti_data = existing_bytes
+            alignment = "failed"
+            try:
+                ref_blob = segmentation_service.gcs_bucket.blob(_ref.object_path)
+                if ref_blob.exists():
+                    ref_buffer = io.BytesIO()   # PRB-004 review M1: `io` was not imported (NameError, CAPA-006 PA-6.4)
+                    ref_blob.download_to_file(ref_buffer)
+                    # PRB-004 review M1 (RC-073): realigned onto the reference grid only when the stored mask IS on
+                    # that grid (legacy in-plane transpose undone by the RC-031 marker); then served with the RC-031
+                    # marker and the mask's own display range. Otherwise served unchanged — never stamped with the
+                    # reference affine (that fabricated an alignment for identity-fallback / other-grid masks).
+                    aligned = segmentation_service.align_stored_mask_to_reference(existing_bytes, ref_buffer.getvalue())
+                    if aligned is not None:
+                        nifti_data, alignment = aligned, "aligned"
+                    else:
+                        alignment = "as-stored"
+            except Exception as align_error:   # re-review R2: never a 500 for an alignment problem
+                nifti_data, alignment = existing_bytes, "failed"
+                logger.warning("Segmentation NIfTI alignment failed; stored file served unchanged", extra={
+                    "segmentation_id": segmentation_id,
+                    "error": str(align_error),
                 })
-
-                # RC-031: reorient by the header marker, not a shape-permutation
-                # guess. v2 masks are MRI-native; legacy masks are the in-plane
-                # transpose. This is deterministic even on square (a0==a1) data,
-                # where the greedy permutation could not detect the swap and left
-                # legacy overlays mirrored.
-                seg_v2 = segmentation_service._header_has_v2_marker(seg_img.header)
-                oriented = segmentation_service._seg_native_to_reference_order(seg_data, seg_v2)
-
-                if tuple(oriented.shape[:3]) == tuple(ref_shape):
-                    result_data = oriented.astype(np.uint8)
-                    logger.info("Aligned segmentation to reference", extra={
-                        "rc031_v2": seg_v2,
-                        "result_shape": str(result_data.shape),
-                    })
-                else:
-                    # Dimensional mismatch (e.g. different resolution) — serve original
-                    logger.warning("Cannot align: incompatible shapes", extra={
-                        "seg_shape": str(seg_shape),
-                        "ref_shape": str(ref_shape),
-                        "rc031_v2": seg_v2,
-                    })
-                    os.unlink(ref_tmp_path)
-                    os.unlink(seg_tmp_path)
-                    nifti_data = existing_bytes
-                    result_data = None
-
-                if result_data is not None:
-                    # Save with reference affine AND full header
-                    aligned_img = nib.Nifti1Image(result_data, ref_img.affine, ref_img.header)
-                    with tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False) as otmp:
-                        out_path = otmp.name
-                    nib.save(aligned_img, out_path)
-                    with open(out_path, 'rb') as f:
-                        nifti_data = f.read()
-                    os.unlink(out_path)
-                    logger.info("Generated aligned NIfTI", extra={
-                        "size_bytes": len(nifti_data),
-                        "shape": str(result_data.shape),
-                    })
-
-                os.unlink(ref_tmp_path)
-                os.unlink(seg_tmp_path)
+            logger.info("Segmentation NIfTI realignment", extra={
+                "segmentation_id": segmentation_id,
+                "alignment": alignment,
+            })
         else:
             # Get the segmentation NIfTI from GCS (original orientation)
             nifti_data = segmentation_service.get_segmentation_nifti(segmentation_id)
@@ -725,16 +994,15 @@ async def get_segmentation_nifti(
             "size_bytes": len(nifti_data)
         })
 
-        return Response(
-            content=nifti_data,
-            media_type="application/gzip",
-            headers={
-                "Content-Disposition": f'inline; filename="{segmentation_id}_segmentation.nii.gz"',
-                "Content-Length": str(len(nifti_data)),
-                "Cache-Control": "no-cache",  # Segmentation can change, don't cache
-                "Access-Control-Expose-Headers": "Content-Disposition, Content-Length"
-            }
-        )
+        headers = {
+            "Content-Disposition": f'inline; filename="{segmentation_id}_segmentation.nii.gz"',
+            "Content-Length": str(len(nifti_data)),
+            "Cache-Control": "no-cache",  # Segmentation can change, don't cache
+            "Access-Control-Expose-Headers": "Content-Disposition, Content-Length, X-Mask-Alignment"
+        }
+        if alignment is not None:
+            headers["X-Mask-Alignment"] = alignment
+        return Response(content=nifti_data, media_type="application/gzip", headers=headers)
 
     except HTTPException:
         raise
@@ -943,6 +1211,8 @@ async def upload_binary_mask(
         # Update the mask in cache
         seg_data["masks_3d"] = masks_3d
         seg_data["metadata"].modified_at = datetime.utcnow()
+        # RC-047: a changed mask voids a confirmed AI review (also enforced again in persist()).
+        review_reset = segmentation_service.enforce_review_binding(seg_data)
 
         # Save to GCS (this is the ONLY time we save during editing). persist()
         # returns the durability tier so we don't claim an unqualified success when
@@ -972,6 +1242,9 @@ async def upload_binary_mask(
 
         # Count annotated voxels
         annotated_voxels = int(np.sum(masks_3d > 0))
+        provenance = getattr(seg_data["metadata"], "ai_provenance", None)
+        if provenance is not None and getattr(segmentation_service, "cache", None):
+            await segmentation_service.cache.delete(f"seg:metadata:{segmentation_id}")
 
         logger.info("Binary mask uploaded and saved", extra={
             "segmentation_id": segmentation_id,
@@ -1008,6 +1281,9 @@ async def upload_binary_mask(
             # false-conflicting against the generation it just advanced. None on the
             # local tier (no durable GCS generation).
             "generation": segmentation_service.get_generation(segmentation_id),
+            # RC-047: current AI provenance (a confirmed review is reset when the mask changed).
+            "ai_provenance": provenance.model_dump() if provenance is not None else None,
+            "ai_review_reset": bool(review_reset),
         }
 
     except HTTPException:

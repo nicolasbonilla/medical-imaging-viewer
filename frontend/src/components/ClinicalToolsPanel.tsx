@@ -17,6 +17,11 @@ import { clinicalToolsAPI } from '@/api/clinicalTools';
 import { useViewerStore } from '@/store/useViewerStore';
 import { detectSequence, type SequenceType, SEQUENCE_INFO } from '@/utils/sequenceDetection';
 import type { ClinicalToolInfo, ToolTaskResult, ToolTaskStatus } from '@/types';
+import { FEATURES } from '@/config/features';
+import { AutomaticMarkingNotice, isLesionDetectionSource } from './AutomaticMarkingNotice';
+
+// Prototype, code-split: with the flag OFF this chunk (and ONNX Runtime WebGPU) is never downloaded.
+const BrowserFlamesCard = React.lazy(() => import('./BrowserFlamesCard'));
 
 interface ClinicalToolsPanelProps {
   fileId?: string;
@@ -278,6 +283,13 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
         {flamesTask && (
           <TaskProgress task={flamesTask} getStatusColor={getStatusColor} getStatusLabel={getStatusLabel} />
         )}
+
+        {/* PROTOTYPE: in-browser FLAMeS (no GPU server). Hidden unless VITE_ENABLE_BROWSER_FLAMES=true. */}
+        {FEATURES.BROWSER_FLAMES && (
+          <React.Suspense fallback={null}>
+            <BrowserFlamesCard flairFileId={flairFileId} />
+          </React.Suspense>
+        )}
       </div>
 
       {/* LST-AI Card */}
@@ -417,7 +429,7 @@ interface TaskProgressProps {
   getStatusLabel: (status: ToolTaskStatus) => string;
 }
 
-const TaskProgress: React.FC<TaskProgressProps> = ({ task, getStatusColor, getStatusLabel }) => {
+export const TaskProgress: React.FC<TaskProgressProps> = ({ task, getStatusColor, getStatusLabel }) => {
   return (
     <div className="space-y-1">
       {/* Progress bar */}
@@ -463,6 +475,8 @@ const TaskProgress: React.FC<TaskProgressProps> = ({ task, getStatusColor, getSt
           <p className="text-[9px] text-gray-500 mt-0.5">
             Source: {task.validation_source}
           </p>
+          {/* PRB-003 (RC-072; review of PR #68, finding 9): lesion-detection tools only. */}
+          {isLesionDetectionSource(task.validation_source) && <AutomaticMarkingNotice />}
         </div>
       )}
     </div>

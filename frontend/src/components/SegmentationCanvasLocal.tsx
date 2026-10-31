@@ -13,10 +13,18 @@
  */
 
 import React, { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { regionZoneRgba, LONGITUDINAL_OVERLAY_COLORS } from '@/utils/regionColors';
 import { useTranslation } from 'react-i18next';
 import type { UseSegmentationMaskReturn } from '@/hooks/useSegmentationMask';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import type { ClickPoint3D } from '@/types';
+import {
+  UNLABELLED_FALLBACK_COLOR, idsWithoutLabel, LONGITUDINAL_OVERLAY_OPACITY, SUBTRACTION_MAX_OPACITY, CONFORMAL_TIER_OPACITY,
+} from '@/utils/drawnLabels';
+
+/** PRB-031: a #RRGGBB colour of the shared palette as r, g, b. */
+const hexRgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)) as [number, number, number];
+import { maskDisplayLayout, transposeSlice } from '@/utils/maskDisplayLayout';
 
 /** Methods exposed via ref for external control */
 export interface SegmentationCanvasLocalRef {
@@ -81,27 +89,12 @@ function parseColor(hex: string, opacity: number): ParsedColor {
   };
 }
 
-/**
- * Transpose a 2D mask slice from (srcH × srcW) to (srcW × srcH) layout.
- * Used to fix axis ordering mismatch between backend mask format and MRI display.
- */
-function transposeSlice(src: Uint8Array, srcH: number, srcW: number): Uint8Array {
-  const dst = new Uint8Array(src.length);
-  for (let h = 0; h < srcH; h++) {
-    for (let w = 0; w < srcW; w++) {
-      dst[w * srcH + h] = src[h * srcW + w];
-    }
-  }
-  return dst;
-}
+// transposeSlice / maskDisplayLayout: utils/maskDisplayLayout.ts — the ONE placement rule, shared with the cursor
+// readout (PRB-010 final check F1), so the label it names is the label drawn here.
 
-/** MAGNIMS zone colors at lesion opacity (60%) for zone-colorized rendering */
-const MAGNIMS_ZONE_COLORS_LESION: Record<number, ParsedColor> = {
-  1: { r: 255, g: 0,   b: 0,   a: 153 },  // PV - red
-  2: { r: 0,   g: 204, b: 0,   a: 153 },  // JC - green
-  3: { r: 0,   g: 102, b: 255, a: 153 },  // IT - blue
-  4: { r: 255, g: 215, b: 0,   a: 153 },  // DWM - yellow
-};
+/** MAGNIMS zone colors at lesion opacity (60%) for zone-colorized rendering — PRB-010: the one
+ *  shared mapping (utils/regionColors.ts), the same as the legends (was red / green / blue / yellow). */
+const MAGNIMS_ZONE_COLORS_LESION: Record<number, ParsedColor> = regionZoneRgba(153);
 
 /**
  * Create a composite slice for MAGNIMS zone colorization.
@@ -505,12 +498,7 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
 
         // Use MAGNIMS colors with user-controlled opacity for background visualization
         const zmAlpha = Math.round(zoneMapOpacity * 255);
-        const zoneColors: Record<number, ParsedColor> = {
-          1: { r: 255, g: 0, b: 0, a: zmAlpha },      // PV - red
-          2: { r: 0, g: 204, b: 0, a: zmAlpha },       // JC - green
-          3: { r: 0, g: 102, b: 255, a: zmAlpha },     // IT - blue
-          4: { r: 255, g: 215, b: 0, a: zmAlpha },     // DWM - yellow
-        };
+        const zoneColors: Record<number, ParsedColor> = regionZoneRgba(zmAlpha); // PRB-010
         renderMaskToCanvas(
           ctx, zmSlice,
           zmRenderW, zmRenderH,
@@ -538,7 +526,8 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
         // displayed image grid (after the transpose attempt). A stale/off-grid mask
         // must NOT be stretched onto the wrong anatomy (adversarial finding).
         if (cRenderW === imageWidth && cRenderH === imageHeight) {
-          const a = 200;
+          // PRB-031: the drawn opacity is the one the confirmation check reads (utils/drawnLabels.ts)
+          const a = Math.round(CONFORMAL_TIER_OPACITY * 255);
           const tierColors: Record<number, ParsedColor> = {
             1: { r: 52, g: 211, b: 153, a },   // high  - emerald
             2: { r: 251, g: 191, b: 36, a },   // medium - amber
@@ -549,7 +538,8 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
       }
     }
 
-    // Draw longitudinal overlay (TP1=blue, TP2=red, overlap=green)
+    // Draw longitudinal overlay — PRB-031: overlap (persistent) yellow, first visit only (resolved) blue, second visit
+    // only (new) vermillion: the shared colour-blind-safe palette (was green / blue / red).
     if (longVisible && longTp1Mask && longTp1Dims && longTp2Mask && longTp2Dims) {
       const tp1SliceSize = longTp1Dims.width * longTp1Dims.height;
       const tp1Offset = sliceIndex * tp1SliceSize;
@@ -586,20 +576,16 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
         if (longGridOk) {
         const longImgData = ctx.createImageData(imageWidth, imageHeight);
         const ld = longImgData.data;
-        const opacity = Math.round(0.55 * 255);
+        const opacity = Math.round(LONGITUDINAL_OVERLAY_OPACITY * 255);   // PRB-031: the opacity the Confirm check reads
+        const [persistent, resolved, added] = [LONGITUDINAL_OVERLAY_COLORS.persistent, LONGITUDINAL_OVERLAY_COLORS.resolved,
+          LONGITUDINAL_OVERLAY_COLORS.new].map(hexRgb);
         for (let i = 0; i < imageWidth * imageHeight; i++) {
           const inTp1 = tp1Slice[i] > 0;
           const inTp2 = tp2Slice[i] > 0;
           const pi = i * 4;
-          if (inTp1 && inTp2) {
-            // Overlap (persistent) = green
-            ld[pi] = 50; ld[pi+1] = 205; ld[pi+2] = 50; ld[pi+3] = opacity;
-          } else if (inTp1) {
-            // TP1 only (resolved) = blue
-            ld[pi] = 65; ld[pi+1] = 135; ld[pi+2] = 245; ld[pi+3] = opacity;
-          } else if (inTp2) {
-            // TP2 only (new) = red
-            ld[pi] = 245; ld[pi+1] = 70; ld[pi+2] = 70; ld[pi+3] = opacity;
+          const rgbHere = inTp1 && inTp2 ? persistent : inTp1 ? resolved : inTp2 ? added : null;
+          if (rgbHere) {
+            ld[pi] = rgbHere[0]; ld[pi + 1] = rgbHere[1]; ld[pi + 2] = rgbHere[2]; ld[pi + 3] = opacity;
           }
         }
         const tmpC = document.createElement('canvas');
@@ -633,7 +619,7 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
           const subImg = ctx.createImageData(imageWidth, imageHeight);
           const sd = subImg.data;
           // Ignore |Δ| below ~0.4 SD (uint8 128±17) as noise; ramp alpha above it.
-          const NEUTRAL = 128, DEAD = 17, MAXA = 0.6 * 255;
+          const NEUTRAL = 128, DEAD = 17, MAXA = SUBTRACTION_MAX_OPACITY * 255;   // PRB-031: read by the Confirm check
           for (let i = 0; i < imageWidth * imageHeight; i++) {
             const v = subSlice[i] - NEUTRAL;
             const pi = i * 4;
@@ -683,10 +669,7 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
         // (zone maps, AI results) that were stored with (k,j,i) instead of (k,i,j).
         let renderSlice = maskSlice;
         const maskDims = segmentationMask.state.dimensions;
-        const needsTranspose = maskDims
-          && maskDims.width !== imageWidth
-          && maskDims.height === imageWidth
-          && maskDims.width === imageHeight;
+        const needsTranspose = maskDisplayLayout(maskDims, imageWidth, imageHeight) === 'transposed';
         if (needsTranspose && maskDims) {
           renderSlice = transposeSlice(maskSlice, maskDims.height, maskDims.width);
         }
@@ -711,6 +694,12 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
                 labelColors[label.id] = { ...c, a: Math.round(c.a * lesionOpacity) };
               }
             }
+          }
+          // Release 2026-10-25 (review of PR #69, B1): a mask value the label table does not name is drawn in the
+          // fallback colour — never left transparent (the overlay controls warn about it).
+          const fallback = parseColor(UNLABELLED_FALLBACK_COLOR, 0.8);
+          for (const id of idsWithoutLabel(storeLabels)) {
+            labelColors[id] = { ...fallback, a: Math.round(fallback.a * lesionOpacity) };
           }
 
           let sliceToRender = renderSlice;
@@ -811,8 +800,7 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
         // The previous code swapped UNCONDITIONALLY (y→X, x→Y) — correct only for
         // the transposed case, wrong for every correctly-oriented mask (all
         // painted masks, square slices, and post-RC-031 tool masks).
-        const md = segmentationMask.state.dimensions;
-        const swap = !!(md && md.width !== imageWidth && md.height === imageWidth && md.width === imageHeight);
+        const swap = maskDisplayLayout(segmentationMask.state.dimensions, imageWidth, imageHeight) === 'transposed';
         const bxMin = swap ? bb.y_min : bb.x_min;
         const byMin = swap ? bb.x_min : bb.y_min;
         const bxMax = swap ? bb.y_max : bb.x_max;

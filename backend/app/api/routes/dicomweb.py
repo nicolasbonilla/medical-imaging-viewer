@@ -11,8 +11,8 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
 
 from app.security import get_current_active_user
-from app.security.auth import require_role
-from app.security.models import User, UserRole
+from app.security.auth import require_role, require_permission
+from app.security.models import User, UserRole, Permission
 from app.security.resource_access import authorize_patient_id
 from app.security.ownership import initiators
 
@@ -21,6 +21,10 @@ from app.security.ownership import initiators
 # to that URL (server-side request forgery). Creating, deleting and testing are now for
 # administrators; listing and reading stay open (credentials masked) so users can pick one.
 _admin = Depends(require_role(UserRole.ADMIN))
+# PRB-027: searching the remote PACS by patient name, id or birth date, and importing from it, is part of bringing
+# images in: IMAGE_UPLOAD (technician, radiologist, administrator). It was open to every role, a viewer included.
+# The care-team rule (REQ-SEC-032) cannot apply to the external PACS, which has no assignments.
+_importer = Depends(require_permission(Permission.IMAGE_UPLOAD))
 from app.core.logging import get_logger
 from app.models.dicomweb_schemas import (
     PACSConnectionCreate, PACSConnectionResponse,
@@ -111,7 +115,7 @@ async def test_connection(connection_id: str, current_user: User = _admin):
 # ============================================================================
 
 @router.post("/search/studies")
-async def search_studies(request: StudySearchRequest, current_user: User = Depends(get_current_active_user)):
+async def search_studies(request: StudySearchRequest, current_user: User = _importer):
     """Search studies on a remote PACS via QIDO-RS."""
     svc = _get_dicomweb_service()
     try:
@@ -128,7 +132,7 @@ async def search_studies(request: StudySearchRequest, current_user: User = Depen
 
 
 @router.post("/search/series")
-async def search_series(connection_id: str, study_instance_uid: str, current_user: User = Depends(get_current_active_user)):
+async def search_series(connection_id: str, study_instance_uid: str, current_user: User = _importer):
     """Search series within a study on a remote PACS via QIDO-RS."""
     svc = _get_dicomweb_service()
     try:
@@ -146,7 +150,7 @@ async def search_series(connection_id: str, study_instance_uid: str, current_use
 # ============================================================================
 
 @router.post("/import")
-async def start_import(request: ImportRequest, current_user: User = Depends(get_current_active_user)):
+async def start_import(request: ImportRequest, current_user: User = _importer):
     # CAPA-009 (RC-036): import only into a patient the caller may access (HAZ-012, HAZ-010).
     await authorize_patient_id(request.patient_id, current_user)
     """Start importing a DICOM series from PACS (async with job tracking)."""

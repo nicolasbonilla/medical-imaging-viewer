@@ -97,11 +97,12 @@ class AuthService:
         self.token_manager = token_manager or get_token_manager()
         self.password_policy = password_policy or PasswordPolicy()
 
-        # In-memory storage (replace with database in production)
+        # In-memory caches of the persistent user store (the store is the source of truth).
+        # CAPA-015 (RC-067): audit events are no longer kept in a per-process list — they go to
+        # the durable audit trail (stdout + Firestore `audit_logs`) through _log_audit_event.
         self._users: Dict[str, User] = {}
         self._user_passwords: Dict[str, str] = {}  # user_id -> hashed_password
         self._password_history: Dict[str, List[str]] = {}  # user_id -> [hashes]
-        self._audit_logs: List[AuditLog] = []
 
         # Persistent storage for Cloud Run
         from app.security.user_storage import get_user_storage
@@ -144,8 +145,10 @@ class AuthService:
 
         ISO 27001: A.9.2.1 (User registration)
         """
-        # Check if username already exists
-        if any(u.username == user_create.username for u in self._users.values()):
+        # Check if username already exists — in the persistent store too (PRB-024): an account written by
+        # another server instance or by the register route after start-up is not in this process's memory.
+        if (any(u.username == user_create.username for u in self._users.values())
+                or self._storage.username_exists(user_create.username)):
             self._log_audit_event(
                 action="register_user_failed",
                 resource="/auth/register",
@@ -157,8 +160,9 @@ class AuthService:
                 detail="Username already exists"
             )
 
-        # Check if email already exists
-        if any(u.email == user_create.email for u in self._users.values()):
+        # Check if email already exists (memory and persistent store, PRB-024)
+        if (any(u.email == user_create.email for u in self._users.values())
+                or self._storage.email_exists(user_create.email)):
             self._log_audit_event(
                 action="register_user_failed",
                 resource="/auth/register",
@@ -215,26 +219,46 @@ class AuthService:
         self._user_passwords[user_id] = hashed_password
         self._password_history[user_id] = [hashed_password]
 
-        # Save to persistent storage for Cloud Run
+        # Save to persistent storage. PRB-024: the store is the source of truth (the login route and every
+        # other server instance read it); an account that could not be stored does not exist, so a failure
+        # here fails the creation instead of leaving an account only this process knows.
         try:
             self._storage.save_user(user, hashed_password, [hashed_password])
             logger.debug(f"User {user.username} saved to persistent storage")
         except Exception as e:
+            self._users.pop(user_id, None)
+            self._user_passwords.pop(user_id, None)
+            self._password_history.pop(user_id, None)
             logger.error(
                 "Failed to save user to persistent storage",
                 extra={"user_id": user_id, "error": str(e)},
                 exc_info=True
             )
-            # Continue - user is still in memory
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="The account could not be stored; it was not created. Try again later.",
+            )
 
+        # Review of PR #70, m1: an account created by an administrator (POST /auth/users) is recorded with the
+        # administrator as actor and the real route; the new account is the target. Creating an administrator account
+        # is recorded a second time as a privileged event.
         self._log_audit_event(
-            user_id=user_id,
-            username=user.username,
+            user_id=created_by or user_id,
+            username=None if created_by else user.username,
             action="register_user",
-            resource="/auth/register",
+            resource="/auth/users" if created_by else "/auth/register",
             result="success",
-            details={"role": user.role.value}
+            details={"role": user.role.value, "target_user_id": user_id, "target_username": user.username,
+                     "created_by": created_by},
         )
+        if created_by and user.role == UserRole.ADMIN:
+            self._log_audit_event(
+                user_id=created_by,
+                action="privileged_account_created",
+                resource="/auth/users",
+                result="success",
+                details={"target_user_id": user_id, "role": user.role.value},
+            )
 
         logger.info(
             "User registered",
@@ -390,6 +414,7 @@ class AuthService:
                     "failed_attempts": user.failed_login_attempts
                 }
             )
+            self._persist_login_state(user)   # PRB-024: the store is the source of truth
 
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -417,6 +442,7 @@ class AuthService:
         # Successful login - reset failed attempts
         user.failed_login_attempts = 0
         user.last_login = datetime.utcnow()
+        self._persist_login_state(user)   # PRB-024: the store is the source of truth
 
         # Create access token
         token = self.token_manager.create_access_token(
@@ -469,13 +495,22 @@ class AuthService:
             HTTPException: If validation fails
 
         ISO 27001: A.9.4.3 (Password management)
+
+        CAPA-015 (found 2026-10-24): the change was kept in this process's memory only, while
+        the login route reads the persistent user store — the OLD password kept working and the
+        new one did not (and a user created after start-up got 404). The persistent store is now
+        read and written; the in-memory caches follow it.
         """
-        user = self._users.get(user_id)
+        user = self._storage.get_user_by_id(user_id) or self._users.get(user_id)
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
             )
+        stored = self._storage.get_user_password_data(user_id) or {}
+        if stored.get("password_hash"):
+            self._user_passwords[user_id] = stored["password_hash"]
+            self._password_history[user_id] = list(stored.get("password_history") or [stored["password_hash"]])
 
         # Verify current password
         current_hash = self._user_passwords.get(user_id)
@@ -536,6 +571,12 @@ class AuthService:
         password_history.insert(0, new_hash)
         self._password_history[user_id] = password_history[:self.password_policy.password_history_count]
 
+        # Persist (CAPA-015): the login route reads the persistent store. A failure here must
+        # fail the change — never report success for a password that does not work.
+        user.last_password_change = datetime.utcnow()
+        self._storage.save_user(user, new_hash, self._password_history[user_id])
+        self._users[user_id] = user
+
         self._log_audit_event(
             user_id=user_id,
             username=user.username,
@@ -588,20 +629,87 @@ class AuthService:
                 exc_info=True
             )
 
+    def _stored_password(self, user_id: str):
+        """(hash, history) for a profile save, read from the persistent store only; (None, None) when the store gives
+        none or cannot be read.
+
+        Re-review of PR #70, R6: this fell back to this process's copy when the store gave nothing. That copy may be
+        older than a password changed on another instance, and writing it back would undo that change. The store's
+        reader swallows its own errors and answers None, so "unreadable" and "no data" cannot be told apart here —
+        both refuse."""
+        try:
+            stored = self._storage.get_user_password_data(user_id)
+        except Exception:
+            stored = None
+        if stored and stored.get("password_hash"):
+            return stored["password_hash"], list(stored.get("password_history") or [stored["password_hash"]])
+        return None, None
+
+    def save_profile_keeping_password(self, user: User) -> bool:
+        """Write a profile change (role, flags, last login, lockout) to the persistent store without touching the
+        password: the stored hash and history are written back unchanged. Returns False — and writes nothing — when
+        no password hash is known, because an empty hash would lock the user out (review of PR #70, m2: the
+        administrator PATCH and the passkey sign-in wrote '' and always erased the history)."""
+        password_hash, history = self._stored_password(user.id)
+        if not password_hash:
+            logger.error("Profile not saved: the password hash could not be read", extra={"user_id": user.id})
+            return False
+        self._storage.save_user(user, password_hash, history)
+        return True
+
+    def _persist_login_state(self, user: User) -> None:
+        """Write lockout counters and last-login to the persistent store (PRB-024).
+
+        The administrator routes now read the store; a lockout kept only in this process's memory would be
+        invisible to them and lost on restart (the login ROUTE in authentication.py already persists it).
+        Never writes without the stored password hash: an empty hash would lock the user out."""
+        try:
+            self.save_profile_keeping_password(user)
+        except Exception as e:
+            logger.error("Failed to persist login state", extra={"user_id": user.id, "error_type": type(e).__name__})
+
+    def _refresh_cached_user(self, user: User) -> None:
+        """Bring this process's copy of one account up to date with the persistent store (PRB-024)."""
+        self._users[user.id] = user
+        try:
+            pwd = self._storage.get_user_password_data(user.id)
+        except Exception:          # the profile was read; a password-read error is handled where it matters (R6)
+            pwd = None
+        if pwd and pwd.get("password_hash"):
+            self._user_passwords[user.id] = pwd["password_hash"]
+            self._password_history[user.id] = list(pwd.get("password_history") or [pwd["password_hash"]])
+
     def list_users(self) -> List[User]:
         """
-        List all registered users.
+        List all registered users — read from the persistent store, the source of truth.
+
+        PRB-024: this returned the in-memory copy loaded once at start-up, so an account created afterwards
+        (by the register route, an administrator on another instance, a restart elsewhere) was invisible to
+        the administrator, and an account deleted elsewhere was still listed. The caches follow the store.
 
         Returns:
             List of all users
 
         ISO 27001: A.9.2.5 (Review of user access rights)
         """
-        return list(self._users.values())
+        users = self._storage.list_all_users()
+        current = {u.id for u in users}
+        for stale in [uid for uid in self._users if uid not in current]:
+            self._users.pop(stale, None)
+            self._user_passwords.pop(stale, None)
+            self._password_history.pop(stale, None)
+        for user in users:
+            self._refresh_cached_user(user)
+        return users
 
     def get_user_by_id(self, user_id: str) -> Optional[User]:
-        """Get a user by ID."""
-        return self._users.get(user_id)
+        """Get a user by ID from the persistent store (PRB-024); None when the store has no such account."""
+        user = self._storage.get_user_by_id(user_id)
+        if user is None:
+            self._users.pop(user_id, None)
+            return None
+        self._refresh_cached_user(user)
+        return user
 
     def update_user(
         self,
@@ -609,11 +717,12 @@ class AuthService:
         user_update,
         updated_by: Optional[str] = None,
     ) -> User:
-        """Update a user's profile fields."""
-        user = self._users.get(user_id)
+        """Update a user's profile fields (the account is read from the persistent store, PRB-024)."""
+        user = self.get_user_by_id(user_id)
         if not user:
             raise ValueError(f"User {user_id} not found")
 
+        user = user.model_copy(deep=True)   # change a copy; the cache follows only a successful save
         update_data = user_update.model_dump(exclude_unset=True) if hasattr(user_update, 'model_dump') else user_update
         for field, value in update_data.items():
             if field in ('role',) and updated_by != user_id:
@@ -623,58 +732,67 @@ class AuthService:
                 setattr(user, field, value)
 
         user.updated_at = datetime.utcnow()
+
+        # Persist without touching the password (review of PR #70, m2): refuse rather than write an empty hash.
+        if not self.save_profile_keeping_password(user):
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="The account could not be updated: its stored password could not be read. Nothing was changed.",
+            )
         self._users[user_id] = user
 
-        # Persist
-        pwd_data = self._storage.get_user_password_data(user_id)
-        pwd_hash = pwd_data.get('password_hash', '') if pwd_data else self._user_passwords.get(user_id, '')
-        self._storage.save_user(user, pwd_hash)
-
+        changed = {"fields_changed": sorted(update_data.keys())}
+        if "role" in update_data and update_data["role"] is not None:
+            changed["new_role"] = getattr(update_data["role"], "value", update_data["role"])
         self._log_audit_event("user_updated", f"user:{user_id}", "success",
-                              user_id=updated_by or user_id, username=user.username)
+                              user_id=updated_by or user_id, username=user.username, details=changed)
         return user
 
     def delete_user(self, user_id: str, deleted_by: Optional[str] = None) -> None:
-        """Delete a user account."""
-        user = self._users.get(user_id)
+        """Delete a user account (the account is read from the persistent store, PRB-024)."""
+        user = self.get_user_by_id(user_id)
         if not user:
             raise ValueError(f"User {user_id} not found")
+
+        # Remove from persistent storage first (review of PR #70, m3): the store returns False when it did not delete
+        # (its errors are swallowed there); the account would still sign in, so that is reported, not a 204.
+        if not self._storage.delete_user(user_id):
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="The account could not be deleted from the user store; it still exists and can sign in.",
+            )
 
         # Remove from memory
         self._users.pop(user_id, None)
         self._user_passwords.pop(user_id, None)
         self._password_history.pop(user_id, None)
 
-        # Remove from persistent storage
-        self._storage.delete_user(user_id)
-
         self._log_audit_event("user_deleted", f"user:{user_id}", "success",
                               user_id=deleted_by, username=user.username)
 
     def logout(self, token: str) -> None:
-        """Revoke a token (logout)."""
+        """Revoke an access token (logout). The route records the audit event with its actor."""
         try:
             self.token_manager.revoke_token(token)
         except Exception as e:
             logger.warning(f"Token revocation failed: {e}")
-        self._log_audit_event("logout", "session", "success")
 
-    def get_audit_logs(
-        self,
-        limit: int = 100,
-        offset: int = 0,
-        user_id: Optional[str] = None,
-        action: Optional[str] = None,
-    ) -> List[AuditLog]:
-        """Get filtered audit logs."""
-        logs = self._audit_logs
-        if user_id:
-            logs = [l for l in logs if l.user_id == user_id]
-        if action:
-            logs = [l for l in logs if l.action == action]
-        # Sort newest first
-        logs = sorted(logs, key=lambda l: l.timestamp, reverse=True)
-        return logs[offset:offset + limit]
+    # CAPA-015 (RC-067): this service's action names -> audit event types.
+    _AUDIT_EVENT_TYPES = {
+        "register_user": "admin.user.created",
+        "register_user_failed": "admin.user.created",
+        # Release 2026-10-30 (merge of PR #70 under CAPA-015): an administrator account created by an administrator
+        # is recorded a second time as a privileged event (#70, review m1) - a role assignment, not an access grant.
+        "privileged_account_created": "authz.role.assigned",
+        "login_success": "auth.login.success",
+        "login_failed": "auth.login.failed",
+        "account_locked": "auth.account.locked",
+        "password_changed": "auth.password.change",
+        "password_change_failed": "auth.password.change",
+        "user_updated": "admin.user.modified",
+        "user_deleted": "admin.user.deleted",
+        "logout": "auth.logout",
+    }
 
     def _log_audit_event(
         self,
@@ -687,25 +805,35 @@ class AuthService:
         user_agent: Optional[str] = None,
         details: Optional[dict] = None
     ) -> None:
-        """Log security audit event (ISO 27001 A.12.4.1)."""
-        audit_log = AuditLog(
-            id=str(uuid.uuid4()),
-            timestamp=datetime.utcnow(),
+        """Log security audit event (ISO 27001 A.12.4.1) to the durable audit trail.
+
+        CAPA-015 (RC-067): was appended to a per-process list that vanished on every Cloud Run
+        restart. Only identifiers, reason codes and allow-listed details are recorded (the
+        record builder drops e-mail addresses and typed names)."""
+        from app.core.logging.audit import emit_audit, AuditEventType, AuditOutcome, AuditSeverity
+
+        event_type = AuditEventType(self._AUDIT_EVENT_TYPES.get(action, "authz.access.granted"))
+        outcome = AuditOutcome.SUCCESS if result == "success" else AuditOutcome.FAILURE
+        details = dict(details or {})
+        target = resource.split(":", 1)[1] if resource.startswith("user:") else None
+        # Release 2026-10-30 (merge of PR #70): #70 names the account an administrator created in
+        # details["target_user_id"] (its resource is the route); recorded as the target, an identifier.
+        target = target or (str(details.pop("target_user_id")) if details.get("target_user_id") else None)
+        actor = self._users.get(user_id) if user_id else None
+        # The username passed by update/delete is the TARGET's; never record it as the actor's.
+        actor_username = actor.username if actor else (username if user_id and target in (None, user_id) else None)
+        emit_audit(
+            event_type,
+            outcome,
             user_id=user_id,
-            username=username,
-            action=action,
-            resource=resource,
-            result=result,
+            username=actor_username,
+            role=getattr(actor, "role", None),
+            reason=details.pop("reason", None) or (None if outcome == AuditOutcome.SUCCESS else action),
+            resource_type="user" if target else None,
+            resource_ids={"target_user_id": target} if target else None,
+            details=details,
             ip_address=ip_address,
-            user_agent=user_agent,
-            details=details
-        )
-
-        self._audit_logs.append(audit_log)
-
-        logger.info(
-            f"Security event: {action}",
-            extra=audit_log.model_dump()
+            severity=AuditSeverity.HIGH if event_type.value.startswith("admin.") else None,
         )
 
 

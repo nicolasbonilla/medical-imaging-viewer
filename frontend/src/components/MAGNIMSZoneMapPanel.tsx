@@ -25,19 +25,15 @@ import {
 import { segmentationAPI } from '@/api/segmentation';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import type { ZoneMapResult } from '@/types';
+import { REGION_DOT_CLASSES, REGION_TEXT_CLASSES, MAGNIMS_REGIONS } from '@/utils/regionColors';
 
-const REGION_COLORS: Record<string, string> = {
-  Periventricular: 'bg-red-500',
-  Juxtacortical: 'bg-green-500',
-  Infratentorial: 'bg-blue-500',
-  'Deep White Matter': 'bg-yellow-500',
-};
+// PRB-010: the same mapping as the lesion legend and the overlays (was red / green / blue / yellow).
+const REGION_COLORS: Record<string, string> = REGION_DOT_CLASSES;
 
-const REGION_TEXT_COLORS: Record<string, string> = {
-  Periventricular: 'text-red-400',
-  Juxtacortical: 'text-green-400',
-  Infratentorial: 'text-blue-400',
-  'Deep White Matter': 'text-yellow-400',
+const REGION_TEXT_COLORS: Record<string, string> = REGION_TEXT_CLASSES;
+
+const ZONE_ABBREV: Record<string, string> = {
+  Periventricular: 'PV', Juxtacortical: 'JC', Infratentorial: 'IT', 'Deep White Matter': 'DWM',
 };
 
 const ZONE_LABEL_NAMES: Record<number, string> = {
@@ -215,13 +211,14 @@ export function MAGNIMSZoneMapPanel({ fileId }: MAGNIMSZoneMapPanelProps) {
         )}
       </div>
 
-      {/* Zone colorization legend */}
+      {/* Zone colorization legend — PRB-010: the shared region mapping (was red / green / blue / yellow) */}
       {isGenerated && (
         <div className="flex items-center gap-2 text-[9px] text-gray-300">
-          <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-red-500" />PV</span>
-          <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-green-500" />JC</span>
-          <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-blue-500" />IT</span>
-          <span className="flex items-center gap-0.5"><span className="w-2 h-2 rounded-full bg-yellow-500" />DWM</span>
+          {MAGNIMS_REGIONS.map((region) => (
+            <span key={region} className="flex items-center gap-0.5">
+              <span className={`w-2 h-2 rounded-full ${REGION_DOT_CLASSES[region]}`} />{ZONE_ABBREV[region]}
+            </span>
+          ))}
         </div>
       )}
 

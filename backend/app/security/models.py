@@ -297,6 +297,9 @@ class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_in: int = Field(..., description="Token expiration time in seconds")
+    # CAPA-015 review M1: seconds until the refresh session (cookie) ends — the client renews
+    # before the earlier of the two deadlines.
+    refresh_expires_in: Optional[int] = Field(None, description="Seconds until the refresh session ends")
 
     class Config:
         json_schema_extra = {

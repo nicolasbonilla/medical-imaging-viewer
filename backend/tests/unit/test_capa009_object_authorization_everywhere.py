@@ -55,7 +55,7 @@ DEPS = ["require_segmentation_access", "require_study_access", "require_series_a
         "require_instance_access", "require_document_access", "require_patient_access",
         "require_version_access", "require_study_list_scope", "require_document_list_scope"]
 CALLS = ["require_imaging_access", "authorize_file_scope", "authorize_mask_specs",
-         "authorize_patient_id", "authorize_study_id", "authorize_document_id",
+         "authorize_patient_id", "authorize_study_id", "authorize_document_id", "authorize_segmentation_id",
          "_authorized_inputs", "_authorized_image_request"]
 
 # Every mounted route that references an object, with the mechanism that authorizes it.
@@ -66,8 +66,9 @@ ROUTE_AUTH = {
     ("POST", "/ai/segment/interactive"): "call:_authorized_image_request",
     ("GET", "/ai/segment/{task_id}/status"): "initiator",
     ("POST", "/ai/volumetry/compare"): "call:authorize_patient_id",
+    ("POST", "/ai/report/generate"): "call:authorize_segmentation_id",   # CAPA-014 (RC-065)
     ("POST", "/ai/volumetry/compute"): "call:authorize_mask_specs",
-    ("GET", "/auth/audit-logs"): "perm",
+    ("GET", "/auth/audit-logs"): "admin",   # CAPA-015 RC-067: administrators only (was AUDIT_VIEW, incl. radiologists)
     ("DELETE", "/auth/users/{user_id}"): "perm",
     ("GET", "/auth/users/{user_id}"): "perm",
     ("PATCH", "/auth/users/{user_id}"): "perm",
@@ -124,8 +125,14 @@ ROUTE_AUTH = {
     ("GET", "/segmentation/list"): "call:authorize_file_scope",
     ("POST", "/segmentation/longitudinal/compare"): "call:authorize_mask_specs",
     ("POST", "/segmentation/longitudinal/sel"): "call:authorize_mask_specs",
+    ("POST", "/segmentation/longitudinal/review"): "call:authorize_mask_specs",   # CAPA-013 RC-060
     ("DELETE", "/segmentation/{segmentation_id}"): "dep:require_segmentation_access",
     ("GET", "/segmentation/{segmentation_id}"): "dep:require_segmentation_access",
+    # CP-FLAMES-BROWSER-001 (RC-047): confirm the review of an AI draft
+    ("POST", "/segmentation/{segmentation_id}/ai-review/confirm"): "dep:require_segmentation_access",
+    # PRB-003 (RC-071): a radiologist confirms a segmentation without AI provenance
+    ("POST", "/ai/report/generate"): "call:authorize_mask_specs",   # PRB-003: the report's own segmentation
+    ("POST", "/segmentation/{segmentation_id}/review/confirm"): "dep:require_segmentation_access",
     ("POST", "/segmentation/{segmentation_id}/classify-regions"): "dep:require_segmentation_access",
     ("GET", "/segmentation/{segmentation_id}/dis-assessment"): "dep:require_segmentation_access",
     ("GET", "/segmentation/{segmentation_id}/export/dicom-seg"): "dep:require_segmentation_access",
@@ -409,6 +416,8 @@ DENIED = [  # (method, path, json) -> 404 for a caller without access, before an
     ("post", "/ai/anomaly/detect", {"file_id": FILE}),
     ("post", "/ai/volumetry/compute", {"segmentation_id": "s1"}),
     ("post", "/ai/volumetry/compare", {"patient_id": PATIENT, "timepoints": [{}, {}]}),
+    ("post", "/ai/report/generate", {"segmentation_id": "s1",                       # CAPA-014
+                                     "findings": {"lesion_analysis": {"total_count": 1}}}),
     ("get", "/ai/segment/t-1/status", None),
     ("post", "/clinical/flames/segment", {"flair_file_id": FILE}),
     ("post", "/clinical/synthseg/parcellate", {"file_id": FILE}),
@@ -417,6 +426,10 @@ DENIED = [  # (method, path, json) -> 404 for a caller without access, before an
     ("post", "/dicomweb/import", {"connection_id": "c", "study_instance_uid": "1", "series_instance_uid": "2",
                                   "patient_id": PATIENT}),
     ("get", "/dicomweb/import/j-1", None),
+    ("post", f"/segmentation/{OBJ}/ai-review/confirm", None),  # CP-FLAMES-BROWSER-001 (RC-047)
+    ("post", f"/segmentation/{OBJ}/review/confirm", {"mask_sha256": "0" * 64}),  # PRB-003 (RC-071)
+    ("post", "/ai/report/generate", {"segmentation_id": OBJ,                     # PRB-003 (review of PR #68)
+                                     "findings": {"lesion_analysis": {"total_count": 1}}}),
 ]
 ADMIN_ONLY = [
     ("post", "/dicomweb/connections", {"name": "x", "url": "http://169.254.169.254/"}),

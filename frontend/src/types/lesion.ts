@@ -72,7 +72,139 @@ export interface DISSupportiveMarkers {
   csf_specific: boolean | null; // OCB or elevated kappa FLC
 }
 
-export interface DISAssessment {
+/**
+ * PRB-003 (RC-070): the confirmation a DIS state rests on. `source` says where the segmentation comes
+ * from: an AI draft (reviewed through its own banner, RC-047), a server tool, or an origin that is not
+ * recorded (drawn here or uploaded) — the last two are confirmed with `confirmSegmentationReview` (RC-071).
+ */
+export interface DISSegmentationReview {
+  status: 'confirmed' | 'unconfirmed' | 'outdated';
+  source: 'ai_draft' | 'automatic_tool' | 'origin_not_recorded';
+  /** Shown to radiologists and administrators only; null for other roles (second review of PR #68, N5). */
+  reviewed_by: string | null;
+  reviewed_by_role?: string | null;
+  reviewed_at: string | null;
+  reviewed_mask_sha256: string | null;
+  current_mask_sha256: string;
+}
+
+/**
+ * PRB-003 (RC-070): DIS is evaluated only on a segmentation a radiologist confirmed for its current mask.
+ * Otherwise the server returns this explicit state — no met / not met, no region presence.
+ */
+export interface DISNotEvaluated {
+  segmentation_id: string | null;
+  evaluation_status: 'not_evaluated';
+  not_evaluated_reason: 'regions_not_classified' | 'lesion_labels_invalid' | 'ai_review_missing'
+    | 'segmentation_not_confirmed' | 'confirmation_outdated' | 'segmentation_not_identified' | 'assessment_failed'
+    | 'geometric_regions_not_reviewed';
+  message: string;
+  reason_detail?: string;
+  segmentation_review: DISSegmentationReview | null;
+  dis_criteria_version: string;
+  /** Information for safety on automatic lesion marking (RC-072), present for a lesion-detection tool's output. */
+  information_for_safety?: string;
+  regions?: DISRegionsState | null;
+}
+
+/** One label of a lesion, named as the lesion table names it (third review of PR #68, m-1): its table number, or a
+ *  "small component" below the lesion-size floor, which the table leaves out. */
+export interface DISLesionPart {
+  lesion: number | null;
+  small_component: boolean;
+  label: number;
+  label_name: string;
+  voxels: number;
+  /** 0-based slice the viewer opens for the table row (rounded centroid); the viewer shows slice + 1. */
+  slice: number;
+}
+
+/** A lesion that carries no MAGNIMS region or more than one (second review of PR #68, N1). */
+export interface DISInvalidLesion {
+  /** The table number of its largest part (third review, m-1); null for a small component. */
+  lesion: number | null;
+  small_component?: boolean;
+  /** 0-based slice of its largest part, as the lesion table (the viewer shows slice + 1). */
+  slice: number;
+  first_voxel: [number, number, number];
+  voxels: number;
+  labels: number[];
+  label_names: string[];
+  /** Its labels part by part, in table order (third review, m-1). */
+  parts?: DISLesionPart[];
+}
+
+/** A lesion whose region differs from the classifier's: a correction by hand (second review of PR #68, N1). */
+export interface DISRegionCorrection {
+  /** The lesion table's number (third review of PR #68, m-1); null for a small component. */
+  lesion: number | null;
+  small_component?: boolean;
+  slice: number;
+  first_voxel: [number, number, number];
+  voxels: number;
+  classified_region: number;
+  classified_region_name: string;
+  current_region: number;
+  current_region_name: string;
+}
+
+/** PRB-028 (RC-090): a lesion whose region comes from the geometric fallback, checked one by one before the
+ *  DIS confirmation (named as the lesion table names it). */
+export interface DISGeometricRegion {
+  lesion: number | null;
+  small_component?: boolean;
+  slice: number;
+  first_voxel: [number, number, number];
+  voxels: number;
+  region: number;
+  region_name: string;
+}
+
+/** Review of PR #68: whether the labels are MAGNIMS regions assigned by the classification to these lesions —
+ *  one region per lesion — and which regions were changed by hand since (second review, N1). */
+export interface DISRegionsState {
+  classified: boolean;
+  label_scheme: 'magnims' | 'other';
+  edited_after_classification?: boolean | null;
+  method?: string | null;
+  lesion_count?: number | null;
+  lesions_valid?: boolean | null;
+  invalid_lesions?: DISInvalidLesion[];
+  invalid_lesion_count?: number;
+  corrections?: DISRegionCorrection[];
+  correction_count?: number;
+  /** Digest the radiologist sends to acknowledge exactly these corrections in the confirmation. */
+  corrections_sha256?: string | null;
+  /** PRB-028 (RC-090): the classification used the geometric fallback; its regions are checked lesion by lesion. */
+  geometric_fallback?: boolean;
+  geometric_regions?: DISGeometricRegion[];
+  geometric_region_count?: number;
+  /** Digest the radiologist sends once every listed lesion was ticked. */
+  geometric_regions_sha256?: string | null;
+  /** What the classification removed from this mask (review of PR #69, M1): served only while the classification
+   *  record describes the current lesions. */
+  removed_small_components?: RemovedSmallComponents | null;
+  listed_limit?: number;
+  /** Release 2026-10-25 (final check of PR #69, R2): the label table stored for this segmentation (id, name,
+   *  colour upper case, background left out) — each value of the mask must be drawn with its stored label. */
+  stored_labels?: Array<{ id: number; name: string; color: string }>;
+}
+
+/** A DIS state from the server: evaluated (on a confirmed segmentation) or explicitly not evaluated. */
+export type DISAssessment = DISEvaluated | DISNotEvaluated;
+
+/** True only for a result the server evaluated on a confirmed segmentation; anything else is not shown as DIS. */
+export function isDisEvaluated(d: unknown): d is DISEvaluated {
+  // Review of PR #69, m4: the same rule as the server's dis_review_gate.is_evaluated — the status "evaluated" AND a
+  // yes/no conclusion.
+  return !!d && typeof d === 'object' && (d as { evaluation_status?: unknown }).evaluation_status === 'evaluated'
+    && typeof (d as { dis_met?: unknown }).dis_met === 'boolean';
+}
+
+export interface DISEvaluated {
+  evaluation_status: 'evaluated';
+  segmentation_review: DISSegmentationReview;
+  regions?: DISRegionsState;
   segmentation_id: string;
   dis_met_brain: boolean;
   dis_criteria_version: string;
@@ -133,8 +265,13 @@ export interface LesionChange {
   status: LesionChangeStatus;
   iou: number;
   /** For status==='new': false when the lesion is below the MAGNIMS ~3 mm-diameter
-   *  clinical size gate (reported but excluded from activity/DIT candidate counts). */
+   *  size gate (reported but not counted as a change candidate). */
   clinically_significant?: boolean;
+  /** CAPA-013 (RC-060): key of a reviewable candidate (new >= 3 mm or enlarged) for the masks
+   *  compared — what a radiologist's decision is recorded against. */
+  candidate_key?: string;
+  /** CAPA-013 (RC-060): the radiologist's decision on this candidate, if any, for these masks. */
+  reader_review?: LongitudinalReaderReview;
   /** MAGNIMS region id (1=PV, 2=JC, 3=IT, 4=DWM) from the MSMask atlas, or null when
    *  no zone map was available (off-MNI input / atlas failure). Candidate-quality. */
   region_id?: number | null;
@@ -145,8 +282,9 @@ export interface LesionChange {
    *  normalized subtraction signal (SD units) within the lesion. Positive = brighter
    *  at follow-up (supports a true new lesion). null when unavailable. */
   subtraction_signal?: number | null;
-  /** True when the new candidate's subtraction signal clears the advisory bar (likely
-   *  a genuine new lesion, not a segmentation/registration artifact). null/absent for
+  /** True when the new candidate is brighter at follow-up on the FLAIR subtraction (signal at or
+   *  above the advisory bar). A SIGNAL, never a confirmation: in paper C (PR #60) candidates
+   *  passing this check were still false in 19 of 20 patients (CAPA-013, RC-061). null/absent for
    *  non-new changes or when subtraction was unavailable/withheld. NEVER a diagnostic verdict. */
   subtraction_confirmed?: boolean | null;
   /** Why the subtraction verdict is what it is: 'assessed' | 'border' | 'unmatched' |
@@ -185,29 +323,112 @@ export interface SELResult {
   caveat?: string;
 }
 
+export interface LongitudinalReaderReview {
+  decision: 'confirmed' | 'rejected';
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+}
+
+export interface LongitudinalCandidateSummary {
+  new: number;
+  enlarging: number;
+  total: number;
+  confirmed: number;
+  rejected: number;
+  awaiting_review: number;
+  /** True when decisions existed for other (since changed) masks and were not applied. */
+  earlier_decisions_voided?: boolean;
+  /** True when the stored decisions could not be read: the counts above are null, nothing may be
+   *  shown as "awaiting review" and no decision may be recorded (review of PR #63). */
+  decisions_unavailable?: boolean;
+}
+
+export interface LongitudinalVisitCheck {
+  status: 'ok' | 'same_visit' | 'wrong_order' | 'unknown';
+  tp1_study_date?: string | null;
+  tp2_study_date?: string | null;
+}
+
+export interface LongitudinalReaderConfirmed {
+  rule: string;
+  confirmed_new: number;
+  confirmed_enlarging: number;
+  confirmed_by: string[];
+  first_confirmed_at: string;
+  last_confirmed_at: string;
+}
+
+export type LongitudinalAcquisitionField =
+  | 'manufacturer' | 'manufacturer_model_name' | 'magnetic_field_strength_t' | 'mr_acquisition_type'
+  | 'slice_thickness_mm' | 'voxel_spacing_mm' | 'repetition_time_ms' | 'echo_time_ms'
+  | 'inversion_time_ms' | 'spacing_between_slices_mm';
+
+export interface LongitudinalAcquisitionCheck {
+  status: 'same' | 'differs' | 'not_established';
+  comparable?: boolean;
+  required_fields: LongitudinalAcquisitionField[];
+  fields_compared: LongitudinalAcquisitionField[];
+  differing: { field: LongitudinalAcquisitionField; tp1: unknown; tp2: unknown }[];
+  missing: { field: LongitudinalAcquisitionField; timepoints: ('tp1' | 'tp2')[] }[];
+  source?: string;
+}
+
+export interface LongitudinalFalseCandidateEvidence {
+  asset: string;
+  version: string;
+  measured_on: string;
+  dataset: string;
+  segmenter: string;
+  patients: number;
+  stable_patients: number;
+  patients_with_false_candidate: number;
+  false_candidates_per_patient: number;
+  false_candidates_per_patient_ci95: [number, number] | number[];
+  after_subtraction_per_patient: number;
+  after_subtraction_per_patient_ci95?: [number, number] | number[];
+  /** False candidates and all candidates in the source record, and their ratio (review of PR #63). */
+  false_candidates?: number;
+  all_candidates?: number;
+  false_share_of_candidates?: number;
+  source: string;
+  source_record?: string;
+  source_commit?: string;
+}
+
 export interface LongitudinalResult {
   changes: LesionChange[];
-  total_lesions_tp1: number;
-  total_lesions_tp2: number;
-  burden_tp1_mm3: number;
-  burden_tp2_mm3: number;
-  burden_tp1_ml: number;
-  burden_tp2_ml: number;
-  burden_delta_mm3: number;
-  burden_delta_percent: number;
-  status_counts: Record<LesionChangeStatus, number>;
-  // ── MAGNIMS clinical CANDIDATE signals (advisory — never a diagnosis) ──
-  /** The ~3 mm-diameter minimum used to count a "clinically significant" new lesion. */
+  /** null when the comparison abstained (RC-062): no quantity of either visit is compared. */
+  total_lesions_tp1: number | null;
+  total_lesions_tp2: number | null;
+  burden_tp1_mm3: number | null;
+  burden_tp2_mm3: number | null;
+  burden_tp1_ml: number | null;
+  burden_tp2_ml: number | null;
+  /** null when the comparison abstained (RC-062). */
+  burden_delta_mm3: number | null;
+  burden_delta_percent: number | null;
+  /** null when the comparison abstained (RC-062). */
+  status_counts: Record<LesionChangeStatus, number> | null;
+  /** The ~3 mm-diameter minimum for a new candidate to be counted. */
   new_lesion_min_diameter_mm?: number;
-  /** Count of new lesions clearing the ≥3 mm size gate. */
-  new_clinically_significant_count?: number;
-  /** Count of enlarging lesions. */
-  enlarging_count?: number;
-  /** ≥1 significant new lesion → supports dissemination-in-time (CANDIDATE — a reader
-   *  must confirm; the report builder is barred from asserting DIT). */
-  dit_candidate?: boolean;
-  /** ≥1 new/enlarging lesion → MAGNIMS 2021 active-disease signal (CANDIDATE only; CAPA-008). */
-  activity_candidate?: boolean;
+  // ── CAPA-013 (RC-060/061/062, HAZ-007). The former activity_candidate / dit_candidate flags
+  //    and the "clinically significant" count names are no longer sent: unconfirmed candidates
+  //    are never an activity or dissemination-in-time statement. ──
+  /** Unconfirmed change candidates (new >= 3 mm, enlarged) and the reader decisions on them.
+   *  null when the comparison abstained. */
+  change_candidates?: LongitudinalCandidateSummary | null;
+  /** Present ONLY when a radiologist confirmed at least one candidate for the masks compared:
+   *  MAGNIMS 2021 (>= 1 new or enlarging T2 lesion) applied to the confirmed candidates. */
+  reader_confirmed_activity?: LongitudinalReaderConfirmed;
+  /** SHA-256 of both stored masks; a decision is recorded against it. null = no decision possible. */
+  review_binding?: { tp1_mask_sha256: string; tp2_mask_sha256: string } | null;
+  /** RC-062: true when the acquisition of the two visits differs or could not be established. */
+  abstained?: boolean;
+  acquisition_check?: LongitudinalAcquisitionCheck;
+  /** Visit 2 later than visit 1 and a different visit; "unknown" makes the comparison abstain. */
+  visit_check?: LongitudinalVisitCheck;
+  /** RC-061: the measured false-candidate rate (versioned asset), or null when not available. */
+  false_candidate_evidence?: LongitudinalFalseCandidateEvidence | null;
   /** MAGNIMS region stratification (MSMask atlas) of new + enlarging candidates by
    *  McDonald region. null when no zone map was available (off-MNI / atlas failure). */
   region_stratification?: Record<string, { new: number; enlarging: number }> | null;
@@ -315,6 +536,18 @@ export interface RegionClassificationResult {
   processing_time_ms: number;
   mask_updated: boolean;
   labels_updated: boolean;
+  /** The label scheme the server stored with the classified mask (release 2026-10-25, capture finding F08). */
+  labels?: Array<{ id: number; name: string; color: string; opacity: number; visible: boolean }>;
+  /** Lesion components the classification removed from the mask (below the minimum lesion size; finding F09). */
+  removed_small_components?: RemovedSmallComponents;
+}
+
+export interface RemovedSmallComponents {
+  components: number;
+  voxels: number;
+  volume_mm3: number;
+  min_lesion_volume_mm3: number;
+  reason: string;
 }
 
 export interface ZoneMapStat {

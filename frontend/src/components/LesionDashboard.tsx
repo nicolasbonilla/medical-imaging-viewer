@@ -9,7 +9,10 @@
  * @module components/LesionDashboard
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useContext, lazy, Suspense } from 'react';
+import { QueryClientContext } from '@tanstack/react-query';
+import type { TFunction } from 'i18next';
+import { confirmDrawCheck, undrawnText } from '../utils/confirmDrawCheck';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
@@ -33,14 +36,27 @@ import {
   type LesionAnalysisResult,
   type DISAssessment,
   type DISExternalEvidence,
+  type DISLesionPart,
+  type DISRegionCorrection,
+  type DISGeometricRegion,
   type LesionInfo,
   type RegionClassificationResult,
+  type RemovedSmallComponents,
   type ClassificationMethod,
   type LesionAnnotation,
   type CVSSummary,
   type PRLSummary,
+  isDisEvaluated,
 } from '@/types';
+import { AutomaticMarkingNotice } from './AutomaticMarkingNotice';
 import { regionEvidence, REGION_ABBREV } from '../utils/regionEvidence';
+import { FEATURES } from '../config/features';
+import { fetchWithSession } from '../services/session';
+import { REGION_DOT_CLASSES, REGION_TEXT_CLASSES } from '@/utils/regionColors';
+
+// CP-SLICE-THICKNESS-001 (DRAFT, RC-058): only reachable through the flag, loaded lazily so that
+// nothing of it (component, logic, evidence asset) is fetched while the flag is OFF.
+const SliceThicknessReliabilityCard = lazy(() => import('./SliceThicknessReliabilityCard'));
 
 
 interface LesionDashboardProps {
@@ -48,25 +64,20 @@ interface LesionDashboardProps {
   onNavigateToSlice?: (sliceIndex: number) => void;
   /** Called after auto-classify updates the mask on the server — parent should reload mask */
   onMaskUpdated?: () => void;
+  /** Storage key of the image this segmentation was drawn on (slice-thickness card, RC-055). */
+  sourceFileId?: string;
+  /** Instances of the current study (slice-thickness card: original FLAIR of a processed image). */
+  studyInstances?: ReadonlyArray<{ gcs_object_name: string; original_filename?: string }>;
 }
 
 // MAGNIMS region legend uses the Okabe-Ito colour-blind-safe categorical palette.
 // The previous red(Periventricular)/green(Juxtacortical) pairing was indistinguishable
 // for the ~8% of males with red-green deficiency — a clinical-safety defect, since these
 // are the two most common lesion zones and sit adjacent in the legend and table.
-const REGION_COLORS: Record<string, string> = {
-  Periventricular: 'bg-[#E69F00]',       // orange
-  Juxtacortical: 'bg-[#56B4E9]',         // sky blue
-  Infratentorial: 'bg-[#009E73]',        // bluish green
-  'Deep White Matter': 'bg-[#CC79A7]',   // reddish purple
-};
+// PRB-010: from the ONE shared mapping, so the overlays on the image use the same colours.
+const REGION_COLORS: Record<string, string> = REGION_DOT_CLASSES;
 
-const REGION_TEXT_COLORS: Record<string, string> = {
-  Periventricular: 'text-[#F0A800]',
-  Juxtacortical: 'text-[#7FC7F0]',
-  Infratentorial: 'text-[#2DBF97]',
-  'Deep White Matter': 'text-[#DB93BC]',
-};
+const REGION_TEXT_COLORS: Record<string, string> = REGION_TEXT_CLASSES;
 
 function sizeColor(cat: string): string {
   if (cat === 'large') return 'text-red-400';
@@ -80,12 +91,96 @@ function regionBarWidth(vol: number, maxVol: number): string {
 }
 
 
-export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdated }: LesionDashboardProps) {
+/** Interpolates {{name}} placeholders left by `t` (also when no i18n instance is initialised, e.g. in tests). */
+function fill(text: string, values: Record<string, unknown>): string {
+  return text.replace(/{{\s*(\w+)\s*}}/g, (m, k) => (k in values ? String(values[k]) : m));
+}
+
+/**
+ * Release 2026-10-25 (film capture, "DWM: 1 lesions"): a lesion count in the user's language — the `…One` text for
+ * exactly one (the CLDR "one" category of en, es and de), the `…Other` text for any other count.
+ */
+function countText(t: TFunction, key: string, n: number, one: string, other: string): string {
+  const [suffix, text] = n === 1 ? ['One', one] : ['Other', other];
+  return fill(t(`${key}${suffix}`, { defaultValue: text, n }), { n });
+}
+
+export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdated, sourceFileId, studyInstances }: LesionDashboardProps) {
   const { t } = useTranslation();
   const reloadMaskCallback = useSegmentationStore((s) => s.reloadMaskCallback);
   const currentSegmentation = useSegmentationStore((s) => s.currentSegmentation);
+  const hasUnsavedMaskChanges = useSegmentationStore((s) => s.hasUnsavedMaskChanges);
   const [analysis, setAnalysis] = useState<LesionAnalysisResult | null>(null);
+  // PRB-003 (RC-070): the DIS state always comes from the gated route. `disOk` is a result the server
+  // evaluated on a segmentation a radiologist confirmed; anything else is shown as "not evaluated".
   const [dis, setDis] = useState<DISAssessment | null>(null);
+  // The confirmation is bound to the OPEN mask (its SHA-256 is sent): this panel may show another, expanded
+  // segmentation (review of PR #68, finding 7).
+  const isOpen = currentSegmentation?.segmentation_id === segmentationId;
+  // The result belongs to the SAVED mask: while the open mask has unsaved changes it is not shown.
+  const disHeldForUnsavedChanges = isDisEvaluated(dis) && isOpen && hasUnsavedMaskChanges;
+  const disOk = isDisEvaluated(dis) && !disHeldForUnsavedChanges ? dis : null;
+  const disPending = dis && !disOk ? dis : null;
+  // Finding 8: every DIS request takes a ticket; only the reply of the latest request is shown.
+  const disSeq = useRef(0);
+  const [confirmBusy, setConfirmBusy] = useState(false);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
+  // Capture finding F10 (release 2026-10-25): from the click until the DIS state of the confirmed mask is read,
+  // the card says what is happening instead of "No radiologist has confirmed this segmentation".
+  const [confirmPhase, setConfirmPhase] = useState<null | 'recording' | 'refreshing'>(null);
+  // Review of PR #69, B1/M3: the reasons a confirmation was refused because lesions are not drawn.
+  const [confirmRefusal, setConfirmRefusal] = useState<string[] | null>(null);
+  // Review of PR #69, m1: the classified mask could not be reloaded — the view may show the mask from before.
+  const [maskReloadFailed, setMaskReloadFailed] = useState(false);
+  // Review of PR #69, m5: the confirmation was recorded but the DIS result could not be read back yet.
+  const [confirmedUnread, setConfirmedUnread] = useState(false);
+  // Review of PR #69, B1 (1): the sidebar list caches are refreshed after a classification (no provider in some tests).
+  const queryClient = useContext(QueryClientContext);
+  // Second review of PR #68 (N1): the radiologist acknowledges the region corrections listed (exactly these).
+  const [ackedCorrections, setAckedCorrections] = useState<string | null>(null);
+  const pendingRegions = disPending && 'regions' in disPending ? disPending.regions ?? null : null;
+  const correctionsDigest = pendingRegions?.correction_count ? pendingRegions.corrections_sha256 ?? null : null;
+  // PRB-028 (RC-090): the lesions whose region comes from the geometric fallback, checked one by one (a tick each);
+  // the confirmation sends the digest of the list only when every listed lesion is ticked. More lesions than the
+  // list holds cannot be checked here (no Confirm).
+  const geometricDigest = pendingRegions?.geometric_region_count ? pendingRegions.geometric_regions_sha256 ?? null : null;
+  const geometricListed = pendingRegions?.geometric_regions ?? [];
+  const geometricTooMany = (pendingRegions?.geometric_region_count ?? 0) > geometricListed.length;
+  // Review of PR #74: a tick is keyed by the lesion's first voxel AND its region (m5) — and the ticks are cleared when
+  // the served list changes; a tick can be given only while THIS segmentation is open and drawn in the standard view,
+  // after its "open slice" was pressed (m2); ticks and opened slices are cleared when the segmentation is closed or
+  // another one is opened. A tick is the radiologist's statement; it cannot prove the slice was read (RMF-001, RC-090).
+  const geometricKey = (g: DISGeometricRegion) => `${g.first_voxel.join(',')}:${g.region}`;
+  const [checkedGeometric, setCheckedGeometric] = useState<ReadonlySet<string>>(new Set());
+  const [openedGeometric, setOpenedGeometric] = useState<ReadonlySet<string>>(new Set());
+  const drawnOnScreen = useSegmentationStore((s) => s.overlayOnScreen) === segmentationId;
+  const ticksAllowed = isOpen && drawnOnScreen;
+  useEffect(() => { setCheckedGeometric(new Set()); setOpenedGeometric(new Set()); }, [geometricDigest]);
+  useEffect(() => {
+    if (!isOpen) { setCheckedGeometric(new Set()); setOpenedGeometric(new Set()); }
+  }, [isOpen]);
+  const allGeometricChecked = !geometricDigest
+    || (!geometricTooMany && geometricListed.every((g) => checkedGeometric.has(geometricKey(g))));
+  // Third review of PR #68 (m-1): every list names a lesion as the lesion table does (its number and the slice its row
+  // opens); a component below the lesion-size floor, which the table leaves out, is a "small component".
+  const geometricText = useCallback((g: DISGeometricRegion) => {
+    const v = { n: g.lesion, slice: g.slice + 1, voxels: g.voxels, region: g.region_name };
+    return g.small_component
+      ? fill(t('disReview.geometricSmallComponentItem', { defaultValue: 'Small component ({{voxels}} voxels, slice {{slice}}): {{region}}', ...v }), v)
+      : fill(t('disReview.geometricRegionItem', { defaultValue: 'Lesion {{n}} (slice {{slice}}, {{voxels}} voxels): {{region}}', ...v }), v);
+  }, [t]);
+  const correctionText = useCallback((c: DISRegionCorrection) => {
+    const v = { n: c.lesion, slice: c.slice + 1, voxels: c.voxels, from: c.classified_region_name, to: c.current_region_name };
+    return c.small_component
+      ? fill(t('disReview.smallComponentCorrection', { defaultValue: 'Small component ({{voxels}} voxels, slice {{slice}}): {{from}} → {{to}}', ...v }), v)
+      : fill(t('disReview.correctionItem', { defaultValue: 'Lesion {{n}} (slice {{slice}}, {{voxels}} voxels): {{from}} → {{to}}', ...v }), v);
+  }, [t]);
+  const partText = useCallback((p: DISLesionPart) => {
+    const v = { n: p.lesion, slice: p.slice + 1, voxels: p.voxels, label: p.label_name };
+    return p.small_component
+      ? fill(t('disReview.smallComponentPart', { defaultValue: 'Small component ({{voxels}} voxels, slice {{slice}}): {{label}}', ...v }), v)
+      : fill(t('disReview.lesionPart', { defaultValue: 'Lesion {{n}} (slice {{slice}}, {{voxels}} voxels): {{label}}', ...v }), v);
+  }, [t]);
   const [classification, setClassification] = useState<RegionClassificationResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isClassifying, setIsClassifying] = useState(false);
@@ -103,20 +198,33 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
   const [disEvidence, setDisEvidence] = useState<DISExternalEvidence>({});
   const [disEvidenceLoading, setDisEvidenceLoading] = useState(false);
 
+  // PRB-003 (RC-070; review of PR #68, finding 8): the only way the panel reads the DIS state; a reply that
+  // arrives after a newer request was made is dropped, so an old "met" can never replace a newer state.
+  const fetchDis = useCallback(
+    async (evidence?: DISExternalEvidence) => {
+      const ticket = ++disSeq.current;
+      const r = evidence
+        ? await segmentationAPI.getDISAssessment(segmentationId, evidence)
+        : await segmentationAPI.getDISAssessment(segmentationId);
+      if (ticket === disSeq.current) setDis(r);
+      return r;
+    },
+    [segmentationId],
+  );
+
   const applyDisEvidence = useCallback(
     async (next: DISExternalEvidence) => {
       setDisEvidence(next);
       setDisEvidenceLoading(true);
       try {
-        const r = await segmentationAPI.getDISAssessment(segmentationId, next);
-        setDis(r);
+        await fetchDis(next);
       } catch (e) {
         console.error('[LesionDashboard] DIS re-eval failed:', e);
       } finally {
         setDisEvidenceLoading(false);
       }
     },
-    [segmentationId],
+    [segmentationId, fetchDis],
   );
 
   const toggleDisEvidence = useCallback(
@@ -127,7 +235,10 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
 
   // Auto-populate from persisted analysis_data
   useEffect(() => {
-    const cached = currentSegmentation?.metadata?.analysis_data;
+    // Review of PR #69, M1: only the data of THIS dashboard's segmentation — never the open segmentation of another.
+    const cached = currentSegmentation?.segmentation_id === segmentationId
+      ? currentSegmentation?.metadata?.analysis_data
+      : null;
     if (!cached) {
       setAnalysis(null);
       setDis(null);
@@ -139,7 +250,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       setAnalysis(cached.lesion_analysis);
       setExpanded(true);
     }
-    if (cached.dis_assessment) setDis(cached.dis_assessment);
+    // PRB-003 (RC-070): a DIS block stored in the metadata is never shown (see the effect below).
     if (cached.classification) setClassification(cached.classification);
     if (cached.lesion_annotations) {
       const map: Record<number, Partial<LesionAnnotation>> = {};
@@ -150,7 +261,164 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
     }
     if (cached.cvs_summary) setCvsSummary(cached.cvs_summary);
     if (cached.prl_summary) setPrlSummary(cached.prl_summary);
-  }, [segmentationId, currentSegmentation?.metadata?.analysis_data]);
+  }, [segmentationId, currentSegmentation?.segmentation_id, currentSegmentation?.metadata?.analysis_data]);
+
+  // PRB-003 (RC-070): read the DIS state from the gated route whenever a segmentation with stored analysis is
+  // opened or its mask is saved again (modified_at) — never from the stored metadata.
+  const refreshDis = useCallback(async () => {
+    try {
+      await fetchDis();
+    } catch (e) {
+      console.error('[LesionDashboard] DIS state could not be read:', e);
+      setDis(null);
+    }
+  }, [fetchDis]);
+
+  const modifiedAt = currentSegmentation?.metadata?.modified_at;
+  useEffect(() => {
+    disSeq.current += 1;   // a reply for the previous segmentation or mask is dropped
+    setDis(null);
+    const stored = useSegmentationStore.getState().currentSegmentation?.metadata?.analysis_data;
+    if (stored?.lesion_analysis || stored?.classification) void refreshDis();
+  }, [segmentationId, modifiedAt, refreshDis]);
+
+  // After a save (or a discard) the DIS state is read again: saving a changed mask voids a confirmation.
+  const hadUnsavedChanges = useRef(hasUnsavedMaskChanges);
+  useEffect(() => {
+    if (isOpen && hadUnsavedChanges.current && !hasUnsavedMaskChanges && dis) void refreshDis();
+    hadUnsavedChanges.current = hasUnsavedMaskChanges;
+  }, [isOpen, hasUnsavedMaskChanges, dis, refreshDis]);
+
+  // RC-047 / RC-071: after the mask changed on the server (region classification), re-read the review
+  // records so the AI draft banner and the store never show a confirmation the server has voided.
+  const refreshReviewRecords = useCallback(async () => {
+    try {
+      const fresh = await segmentationAPI.getSegmentation(segmentationId);
+      const store = useSegmentationStore.getState();
+      const cur = store.currentSegmentation;
+      if (cur && cur.segmentation_id === segmentationId) {
+        store.setCurrentSegmentation({
+          ...cur,
+          metadata: {
+            ...cur.metadata,
+            ai_provenance: fresh.metadata?.ai_provenance ?? null,
+            clinician_review: fresh.metadata?.clinician_review ?? null,
+          },
+        });
+      }
+      if (store.activeSegmentation && store.activeSegmentation.id === segmentationId) {
+        store.setActiveSegmentation({ ...store.activeSegmentation, ai_provenance: fresh.metadata?.ai_provenance ?? null });
+      }
+    } catch (e) {
+      console.error('[LesionDashboard] review records could not be re-read:', e);
+    }
+  }, [segmentationId]);
+
+  // Capture finding F09 (release 2026-10-25): the region classification removes lesion components below the minimum
+  // lesion size from the mask; the classification card, the DIS card and the confirm dialog say how many and why.
+  // Review of PR #69, M1: the classification card shows this dashboard's own classification result; the DIS card and
+  // the confirm dialog take the removal from the server's DIS state of THIS segmentation, which carries it only while
+  // the classification record describes the current lesions.
+  const removedValsOf = (r: RemovedSmallComponents | null | undefined) => (r && r.components > 0
+    ? { components: r.components, voxels: r.voxels, volume: Number(r.volume_mm3.toFixed(1)), min: r.min_lesion_volume_mm3 }
+    : null);
+  const removedVals = removedValsOf(classification?.removed_small_components);
+  const confirmRemovedVals = removedValsOf(pendingRegions?.removed_small_components);
+  const removedText = removedVals
+    ? fill(t('classify.removedComponents', { defaultValue: 'The region classification removed {{components}} lesion component(s) smaller than {{min}} mm³ from the mask ({{voxels}} voxels, {{volume}} mm³): they are below the minimum lesion size and are not classified. Check that none was a lesion before confirming.', ...removedVals }), removedVals)
+    : null;
+  const confirmRemovedText = confirmRemovedVals
+    ? fill(t('disReview.removedComponents', { defaultValue: 'Before confirming: the region classification removed {{components}} lesion component(s) smaller than {{min}} mm³ ({{voxels}} voxels) from this mask; the confirmation applies to the mask without them.', ...confirmRemovedVals }), confirmRemovedVals)
+    : null;
+
+  // RC-071: a radiologist confirms a segmentation without AI provenance, for the exact saved mask.
+  const confirmSegmentation = useCallback(async () => {
+    const state = useSegmentationStore.getState();
+    // Finding 7: the digest is that of the OPEN mask — never confirm another segmentation with it.
+    if (state.hasUnsavedMaskChanges || state.currentSegmentation?.segmentation_id !== segmentationId) return;
+    // N1: region corrections by hand are listed in the dialog and must have been acknowledged in the card.
+    if (correctionsDigest && ackedCorrections !== correctionsDigest) return;
+    // PRB-028: every geometric-fallback region listed must have been ticked (and all of them listed).
+    if (geometricDigest && !allGeometricChecked) return;
+    // Release 2026-10-25 (review of PR #69, B1/M3; final check, R1/R2): the browser refuses the confirmation, before
+    // any dialog or request, unless the standard 2D view on screen draws this segmentation (segmentation mode on),
+    // and every value present in the open mask has a label there, visible and not too faint — on a classified
+    // segmentation the label stored on the server for it, same name and colour — with the overlay on and the lesion
+    // opacity above the visible minimum; PRB-030: over an image on the mask's grid; PRB-031: with no layer drawn under
+    // the lesions above 30 %. The shared check (utils/confirmDrawCheck.ts, also the AI-draft review's). The server
+    // checks the drawn label table (`drawn_labels_sha256`) and the image under the mask (`displayed_image_file_id`).
+    setConfirmRefusal(null);
+    const { problems: undrawn, drawnLabels, displayedImageFileId } = confirmDrawCheck(
+      segmentationId, pendingRegions?.classified ? (pendingRegions.stored_labels ?? null) : undefined);
+    if (maskReloadFailed || undrawn === null || undrawn.length > 0) {
+      setConfirmRefusal([
+        ...(maskReloadFailed ? [t('disReview.reloadFailedRefusal', 'The classified mask could not be reloaded: the view may show the mask from before the classification. Reopen the segmentation.')] : []),
+        ...(undrawn === null || undrawn.length > 0 ? undrawnText(t, undrawn) : []),
+      ]);
+      return;
+    }
+    const listed = (pendingRegions?.corrections ?? []).map(correctionText);
+    const question = t(
+      'disReview.confirmQuestion',
+      'Confirm that you have checked every lesion and its region on every slice of this saved segmentation? Your name, the time and the exact saved mask will be recorded; any later change of the mask cancels this confirmation.',
+    );
+    const correctionsText = (
+      correctionsDigest
+        ? `${question}\n\n${fill(t('disReview.confirmCorrections', {
+          defaultValue: 'You also confirm these {{count}} region correction(s) made by hand after the region classification:',
+          count: pendingRegions?.correction_count ?? listed.length,
+        }), {
+          defaultValue: 'You also confirm these {{count}} region correction(s) made by hand after the region classification:',
+          count: pendingRegions?.correction_count ?? listed.length,
+        })}\n${listed.join('\n')}`
+        : question
+    );
+    // PRB-028: the per-lesion check of the geometric-fallback regions is named in the dialog too.
+    const geometricVals = { count: pendingRegions?.geometric_region_count ?? geometricListed.length };
+    const dialogText = geometricDigest
+      ? `${correctionsText}\n\n${fill(t('disReview.confirmGeometric', { defaultValue: 'You also confirm that you checked the region of each of these {{count}} lesions one by one (geometric fallback: coordinate rules, not anatomy).', ...geometricVals }), geometricVals)}`
+      : correctionsText;
+    // F09: the components the classification removed are named in the dialog too.
+    const ok = window.confirm(confirmRemovedText ? `${dialogText}\n\n${confirmRemovedText}` : dialogText);
+    if (!ok) return;
+    setConfirmBusy(true);
+    setConfirmError(null);
+    setConfirmPhase('recording');
+    try {
+      const digest = await useSegmentationStore.getState().maskDigestCallback?.();
+      if (!digest) {
+        throw new Error(t('disReview.maskUnreadable', 'The open mask could not be read; reload the segmentation and try again.'));
+      }
+      const review = await segmentationAPI.confirmSegmentationReview(segmentationId, digest, correctionsDigest ?? null,
+        drawnLabels, { geometricRegionsReviewedSha256: geometricDigest, displayedImageFileId });
+      const store = useSegmentationStore.getState();
+      const cur = store.currentSegmentation;
+      if (cur && cur.segmentation_id === segmentationId) {
+        store.setCurrentSegmentation({ ...cur, metadata: { ...cur.metadata, clinician_review: review } });
+      }
+      // F10: recorded — the card says so until the DIS state of the confirmed mask is read (one request, awaited).
+      setConfirmPhase('refreshing');
+      try {
+        await fetchDis();
+      } catch (refreshError) {
+        console.error('[LesionDashboard] DIS state could not be read after the confirmation:', refreshError);
+        // Review of PR #69, m5: the card says the confirmation was recorded (never "not confirmed") and offers no
+        // second confirmation until the next successful read.
+        setConfirmedUnread(true);
+      }
+    } catch (e: any) {
+      // The server's reason (409: classification missing, lesions without one region, corrections not acknowledged).
+      setConfirmError(e?.response?.data?.error?.message || e?.response?.data?.detail || e?.message || String(e));
+    } finally {
+      setConfirmBusy(false);
+      setConfirmPhase(null);
+    }
+  }, [segmentationId, fetchDis, t, correctionsDigest, ackedCorrections, pendingRegions, correctionText, confirmRemovedText,
+      maskReloadFailed, geometricDigest, allGeometricChecked, geometricListed.length]);
+
+  // m5: a new DIS state ends the "recorded, not read" state; m1: another opened segmentation ends the reload failure.
+  useEffect(() => { setConfirmedUnread(false); }, [dis]);
+  useEffect(() => { setMaskReloadFailed(false); }, [currentSegmentation?.segmentation_id]);
 
   // Stale check: mask was edited after analysis was computed
   const isAnalysisStale = !!(
@@ -164,7 +432,8 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
   const patchAnalysisData = useCallback((patch: Record<string, unknown>) => {
     const store = useSegmentationStore.getState();
     const cur = store.currentSegmentation;
-    if (!cur) return;
+    // Review of PR #69, M1: never write this dashboard's results into another (open) segmentation.
+    if (!cur || cur.segmentation_id !== segmentationId) return;
     store.setCurrentSegmentation({
       ...cur,
       metadata: {
@@ -182,22 +451,24 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
     setIsLoading(true);
     setError(null);
     try {
-      const [analysisResult, disResult] = await Promise.all([
+      const [analysisResult] = await Promise.all([
         segmentationAPI.analyzeLesions(segmentationId),
-        segmentationAPI.getDISAssessment(segmentationId),
+        fetchDis(),
       ]);
       setAnalysis(analysisResult);
-      setDis(disResult);
       setExpanded(true);
-      patchAnalysisData({ lesion_analysis: analysisResult, dis_assessment: disResult });
+      patchAnalysisData({ lesion_analysis: analysisResult });
     } catch (err: any) {
       setError(err?.response?.data?.detail || err?.message || String(err));
     } finally {
       setIsLoading(false);
     }
-  }, [segmentationId, patchAnalysisData]);
+  }, [segmentationId, patchAnalysisData, fetchDis]);
 
   const handleClassifyRegions = useCallback(async () => {
+    // Review of PR #69, m2: only the open segmentation without unsaved changes (it reloads the open mask).
+    const st = useSegmentationStore.getState();
+    if (st.currentSegmentation?.segmentation_id !== segmentationId || st.hasUnsavedMaskChanges) return;
     setIsClassifying(true);
     setError(null);
     try {
@@ -205,42 +476,52 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
         method: classifyMethod,
       });
       setClassification(result);
+      // Review of PR #69, B1 (1): the sidebar list (and the per-file lists) were fetched before the classification;
+      // they are refreshed so that no later open uses the labels from before it.
+      void queryClient?.invalidateQueries({ queryKey: ['segmentations'] });
+
+      // Capture finding F08 (release 2026-10-25): the 2D canvas draws from activeSegmentation.labels. The labels the
+      // server stored with the classified mask reach it (and currentSegmentation), every region visible, BEFORE the
+      // mask is reloaded. Before, only currentSegmentation was updated, after the reload: lesions labelled 2-4 were not
+      // drawn until the study was reopened. (NiiVue's opt-in 2D view and the 3D view do not use the label table: they
+      // load the overlay once per segmentation with a fixed colormap and are not reloaded after a classification —
+      // review of PR #69, m3; left to PR #71, which rewrites them.)
+      if (result.labels_updated) {
+        useSegmentationStore.getState().applyServerLabels(segmentationId, result.labels ?? MAGNIMS_LESION_LABELS);
+      }
 
       if (result.mask_updated) {
-        await reloadMaskCallback?.();
-        onMaskUpdated?.();
-      }
-
-      if (result.labels_updated) {
-        const store = useSegmentationStore.getState();
-        const curSeg = store.currentSegmentation;
-        if (curSeg) {
-          store.setCurrentSegmentation({
-            ...curSeg,
-            metadata: { ...curSeg.metadata, labels: MAGNIMS_LESION_LABELS },
-          });
+        // Review of PR #69, m1: a failed reload is shown and blocks the confirmation until the segmentation is reopened.
+        const reloaded = await reloadMaskCallback?.();
+        if (reloaded === false) {
+          setMaskReloadFailed(true);
+          setError(t('classify.reloadFailed', 'The classified mask could not be reloaded: the view may show the mask from before the classification. Reopen the segmentation before checking or confirming it.'));
+        } else {
+          setMaskReloadFailed(false);
         }
+        onMaskUpdated?.();
+        // The region labels changed the mask: any confirmation of the previous mask was voided (RC-047/RC-071).
+        await refreshReviewRecords();
       }
 
-      const [analysisResult, disResult] = await Promise.all([
+      const [analysisResult] = await Promise.all([
         segmentationAPI.analyzeLesions(segmentationId),
-        segmentationAPI.getDISAssessment(segmentationId),
+        fetchDis(),
       ]);
       setAnalysis(analysisResult);
-      setDis(disResult);
       setExpanded(true);
 
       patchAnalysisData({
         classification: result,
         lesion_analysis: analysisResult,
-        dis_assessment: disResult,
       });
     } catch (err: any) {
       setError(err?.response?.data?.detail || err?.message || String(err));
     } finally {
       setIsClassifying(false);
     }
-  }, [segmentationId, classifyMethod, onMaskUpdated, reloadMaskCallback, patchAnalysisData]);
+  }, [segmentationId, classifyMethod, onMaskUpdated, reloadMaskCallback, patchAnalysisData, refreshReviewRecords, fetchDis,
+      queryClient, t]);
 
   const handleLesionClick = useCallback((lesion: LesionInfo) => {
     const current = useSegmentationStore.getState().selectedLesion;
@@ -354,9 +635,27 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
         </div>
       )}
 
+      {/* Reliability by slice thickness (CP-SLICE-THICKNESS-001, DRAFT, flag OFF) — placed
+          before the lesion table so it is read with the list, not after it. */}
+      {FEATURES.SLICE_THICKNESS_RELIABILITY && (
+        <Suspense fallback={null}>
+          <SliceThicknessReliabilityCard sourceFileId={sourceFileId} studyInstances={studyInstances} />
+        </Suspense>
+      )}
+
       {/* ================================================================ */}
       {/* LESION TABLE — Primary view, always visible when analysis exists */}
       {/* ================================================================ */}
+      {analysis && analysis.lesions.length > 0 && !disOk && (
+        <div
+          className="flex items-start gap-1 text-[9px] text-amber-300 bg-amber-900/20 border border-amber-700/40 rounded px-1.5 py-1"
+          role="note"
+          data-testid="regions-not-confirmed"
+        >
+          <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-px" aria-hidden="true" />
+          <span>{t('disReview.regionsNotConfirmed', 'Regions not confirmed by a radiologist; not a DIS assessment.')}</span>
+        </div>
+      )}
       {analysis && analysis.lesions.length > 0 && (
         <div className="bg-gray-900/60 rounded-lg p-2.5 border border-gray-700/50">
           <div className="flex items-center justify-between mb-2">
@@ -364,7 +663,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
               {t('lesions.lesionTable', 'Lesion Table')}
             </span>
             <span className="text-[10px] text-gray-400 font-mono">
-              {analysis.total_count} {t('lesions.totalCount', 'lesions')} &middot; {analysis.total_burden_ml.toFixed(2)} mL
+              {countText(t, 'lesions.count', analysis.total_count, '{{n}} lesion', '{{n}} lesions')} &middot; {analysis.total_burden_ml.toFixed(2)} mL
             </span>
           </div>
           <div className="max-h-72 overflow-y-auto">
@@ -450,9 +749,14 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
           ))}
         </div>
 
+        {!(isOpen && !hasUnsavedMaskChanges) && (
+          <p className="text-[9px] text-amber-300" data-testid="classify-needs-open-saved">
+            {t('classify.needsOpenSaved', 'Open this segmentation and save your changes to classify it: the classification works on the saved mask and reloads the open one.')}
+          </p>
+        )}
         <button
           onClick={handleClassifyRegions}
-          disabled={isClassifying}
+          disabled={isClassifying || !(isOpen && !hasUnsavedMaskChanges)}
           className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded text-xs text-white font-medium transition-colors"
         >
           {isClassifying ? (
@@ -486,7 +790,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
               >
                 <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-px" aria-hidden="true" />
                 <span>
-                  {t('classify.atlasUnavailable', 'Atlas regions not used: this image is not in MNI space, so the geometric fallback (coordinate rules, not anatomical landmarks) was applied. Verify every region before using it for DIS.')}
+                  {t('classify.atlasUnavailable', 'Atlas regions not used: this image is not in MNI space, so the geometric fallback (coordinate rules, not anatomical landmarks) was applied. Its regions often differ from the atlas: before the DIS confirmation each lesion\'s region must be checked (or corrected) one by one.')}
                 </span>
               </div>
             )}
@@ -498,7 +802,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
               >
                 <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-px" aria-hidden="true" />
                 <span>
-                  {t('classify.atlasError', 'Atlas regions could not be computed (internal error), so the geometric fallback was applied. Verify every region before using it for DIS.')}
+                  {t('classify.atlasError', 'Atlas regions could not be computed (internal error), so the geometric fallback was applied. Before the DIS confirmation each lesion\'s region must be checked (or corrected) one by one.')}
                 </span>
               </div>
             )}
@@ -510,8 +814,18 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
               >
                 <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-px" aria-hidden="true" />
                 <span>
-                  {t('classify.geometricWarning', 'Geometric heuristics: coordinate rules, not anatomical landmarks; their accuracy has not been measured. Verify every region before using it for DIS.')}
+                  {t('classify.geometricWarning', 'Geometric heuristics: coordinate rules, not anatomical landmarks; their accuracy has not been measured and their regions often differ from the atlas. Before the DIS confirmation each lesion\'s region must be checked (or corrected) one by one.')}
                 </span>
+              </div>
+            )}
+            {removedText && (
+              <div
+                className="flex items-start gap-1 text-[9px] text-amber-300 bg-amber-900/20 border border-amber-700/40 rounded px-1.5 py-1"
+                role="alert"
+                data-testid="classification-removed-components"
+              >
+                <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-px" aria-hidden="true" />
+                <span>{removedText}</span>
               </div>
             )}
             <div className="flex flex-wrap gap-x-2 gap-y-1">
@@ -533,23 +847,261 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
         )}
       </div>
 
-      {/* DIS Badge — McDonald 2024 */}
-      {dis ? (
+      {/* DIS — McDonald 2024. PRB-003 (RC-070): "not evaluated" unless a radiologist confirmed this segmentation
+          for its current mask; never met / not met, region presence or a topography count otherwise. */}
+      {disPending ? (
+        <div
+          className="p-2 rounded-lg bg-amber-950/30 border border-amber-700/50 flex flex-col gap-1"
+          role="status"
+          data-testid="dis-not-evaluated"
+        >
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" aria-hidden="true" />
+            <span className="text-xs font-bold text-amber-200">
+              {t('disReview.title', 'DIS (brain MRI): not evaluated')}
+            </span>
+          </div>
+          <p className="text-[10px] text-amber-100 leading-snug">
+            {t(
+              'disReview.body',
+              'Dissemination in space requires clinician review of the segmentation: it is evaluated only on a segmentation a radiologist has confirmed, lesion by lesion and region by region, for this exact saved mask.',
+            )}
+          </p>
+          {(() => {
+            const reason = 'not_evaluated_reason' in disPending ? disPending.not_evaluated_reason : undefined;
+            const source = 'segmentation_review' in disPending ? disPending.segmentation_review?.source : undefined;
+            const lesionTool = 'information_for_safety' in disPending && !!disPending.information_for_safety;
+            // Blocker 1: the confirmation is offered only once the regions are classified (and, for an AI draft,
+            // after its own review); finding 7: only on the open segmentation.
+            const confirmable = !disHeldForUnsavedChanges
+              && (reason === 'segmentation_not_confirmed' || reason === 'confirmation_outdated'
+                || reason === 'geometric_regions_not_reviewed');
+            if (confirmedUnread) {
+              return (
+                <p className="text-[10px] text-amber-100" role="status" data-testid="dis-confirmed-unread">
+                  {t('disReview.refreshFailed', 'Your confirmation was recorded, but the DIS result could not be read; press Analyze to read it again.')}
+                </p>
+              );
+            }
+            if (confirmPhase) {
+              return (
+                <p className="flex items-center gap-1 text-[10px] text-amber-100" role="status" aria-live="polite"
+                   data-testid="dis-confirm-pending">
+                  <Loader2 className="w-3 h-3 animate-spin shrink-0" aria-hidden="true" />
+                  {confirmPhase === 'recording'
+                    ? t('disReview.confirmRecording', 'Recording your confirmation…')
+                    : t('disReview.confirmRefreshing', 'Confirmation recorded — reading the DIS result for the confirmed mask…')}
+                </p>
+              );
+            }
+            return (
+              <>
+                {disHeldForUnsavedChanges ? (
+                  <p className="text-[10px] text-amber-100/80" data-testid="dis-unsaved-changes">
+                    {t('disReview.reasonUnsaved', 'The mask on screen has unsaved changes: the confirmation and the result apply to the saved mask only. Saving a changed mask cancels the confirmation.')}
+                  </p>
+                ) : reason === 'regions_not_classified' ? (
+                  <p className="text-[10px] text-amber-100/80" data-testid="dis-regions-not-classified">
+                    {t('disReview.reasonRegionsNotClassified', 'The lesions have no MAGNIMS regions from the region classification (or lesions changed since). Run the MAGNIMS region classification, check every region, then confirm.')}
+                  </p>
+                ) : reason === 'lesion_labels_invalid' ? (
+                  <div className="text-[10px] text-amber-100/80" data-testid="dis-lesion-labels-invalid">
+                    <p>{t('disReview.reasonLesionLabelsInvalid', 'Every connected lesion must carry exactly one region (periventricular, juxtacortical, infratentorial or deep white matter); Active (Gd+) and Black Hole (T1) are not regions. Correct these lesions, or run the region classification again:')}</p>
+                    <ul className="list-disc pl-4">
+                      {(pendingRegions?.invalid_lesions ?? []).map((les) => (
+                        <li key={les.first_voxel.join('-')} data-testid="dis-invalid-lesion">
+                          {les.parts?.length ? (
+                            les.parts.map((p, i) => (
+                              <div key={i} data-testid="dis-invalid-lesion-part">{partText(p)}</div>
+                            ))
+                          ) : fill(t('disReview.invalidLesionItem', {
+                            defaultValue: 'Lesion {{n}} (slice {{slice}}, {{voxels}} voxels): {{labels}}',
+                            n: les.lesion, slice: les.slice + 1, voxels: les.voxels, labels: les.label_names.join(' + '),
+                          }), { n: les.lesion, slice: les.slice + 1, voxels: les.voxels, labels: les.label_names.join(' + ') })}
+                        </li>
+                      ))}
+                    </ul>
+                    {(pendingRegions?.invalid_lesion_count ?? 0) > (pendingRegions?.invalid_lesions?.length ?? 0) && (
+                      <p>{fill(t('disReview.moreLesions', { defaultValue: '… and {{count}} more', count: (pendingRegions?.invalid_lesion_count ?? 0) - (pendingRegions?.invalid_lesions?.length ?? 0) }), { defaultValue: '… and {{count}} more', count: (pendingRegions?.invalid_lesion_count ?? 0) - (pendingRegions?.invalid_lesions?.length ?? 0) })}</p>
+                    )}
+                  </div>
+                ) : reason === 'ai_review_missing' ? (
+                  <p className="text-[10px] text-amber-100/80">
+                    {t('disReview.reasonAiReviewMissing', 'This AI draft must first confirm its own review (AI draft banner in the segmentation panel) for the current mask.')}
+                  </p>
+                ) : reason === 'geometric_regions_not_reviewed' ? (
+                  <p className="text-[10px] text-amber-100/80" data-testid="dis-reason-geometric">
+                    {t('disReview.reasonGeometricNotReviewed', 'The regions come from the geometric fallback, and the confirmation did not cover a check of each lesion\'s region one by one. Check (or correct) every region listed, then confirm again.')}
+                  </p>
+                ) : reason === 'confirmation_outdated' ? (
+                  <p className="text-[10px] text-amber-100/80">
+                    {t('disReview.reasonOutdated', 'The segmentation changed after it was confirmed; the confirmation no longer applies.')}
+                  </p>
+                ) : (
+                  <p className="text-[10px] text-amber-100/80">
+                    {t('disReview.reasonNotConfirmed', 'No radiologist has confirmed this segmentation.')}
+                  </p>
+                )}
+                <p className="text-[10px] text-amber-100/80">
+                  {source === 'ai_draft'
+                    ? t('disReview.sourceAiDraft', 'AI draft: check every lesion and region, then confirm the review in the AI draft banner of the segmentation panel.')
+                    : source === 'automatic_tool'
+                    ? t('disReview.sourceAutomatic', 'Automatic segmentation from a clinical tool: its origin is recorded, its lesions and regions are not checked.')
+                    : t('disReview.sourceUnrecorded', 'The origin of this segmentation is not recorded (drawn here or uploaded from another program).')}
+                </p>
+                {lesionTool && <AutomaticMarkingNotice />}
+                {confirmRemovedText && (
+                  <p className="text-[10px] text-amber-100" data-testid="dis-removed-components">{confirmRemovedText}</p>
+                )}
+                {pendingRegions?.edited_after_classification && (
+                  <p className="text-[10px] text-amber-100/80" data-testid="dis-edited-after-classification">
+                    {t('disReview.editedAfterClassification', 'Region labels were changed by hand after the region classification.')}
+                  </p>
+                )}
+                {!!pendingRegions?.correction_count && (
+                  <div className="text-[10px] text-amber-100" data-testid="dis-region-corrections">
+                    <p className="font-semibold">
+                      {fill(t('disReview.correctionsTitle', {
+                        defaultValue: '{{count}} lesion region(s) differ from the region classification (corrected by hand):',
+                        count: pendingRegions.correction_count,
+                      }), {
+                        defaultValue: '{{count}} lesion region(s) differ from the region classification (corrected by hand):',
+                        count: pendingRegions.correction_count,
+                      })}
+                    </p>
+                    <ul className="list-disc pl-4">
+                      {(pendingRegions.corrections ?? []).map((c) => (
+                        <li key={c.first_voxel.join('-')} data-testid="dis-region-correction">
+                          {correctionText(c)}
+                        </li>
+                      ))}
+                    </ul>
+                    {pendingRegions.correction_count > (pendingRegions.corrections?.length ?? 0) && (
+                      <p>{fill(t('disReview.moreLesions', { defaultValue: '… and {{count}} more', count: pendingRegions.correction_count - (pendingRegions.corrections?.length ?? 0) }), { defaultValue: '… and {{count}} more', count: pendingRegions.correction_count - (pendingRegions.corrections?.length ?? 0) })}</p>
+                    )}
+                  </div>
+                )}
+                {!!pendingRegions?.geometric_region_count && (
+                  <div className="text-[10px] text-amber-100" data-testid="dis-geometric-regions">
+                    <p className="font-semibold">
+                      {fill(t('disReview.geometricRegionsTitle', {
+                        defaultValue: 'The regions of these {{count}} lesion(s) come from the geometric fallback (coordinate rules, not anatomy): open each lesion, check its region (correct it with the brush and save if it is wrong) and tick it.',
+                        count: pendingRegions.geometric_region_count,
+                      }), {
+                        defaultValue: 'The regions of these {{count}} lesion(s) come from the geometric fallback (coordinate rules, not anatomy): open each lesion, check its region (correct it with the brush and save if it is wrong) and tick it.',
+                        count: pendingRegions.geometric_region_count,
+                      })}
+                    </p>
+                    {geometricTooMany ? (
+                      <p className="text-amber-300" data-testid="dis-geometric-too-many">
+                        {fill(t('disReview.geometricTooMany', {
+                          defaultValue: '{{count}} lesions: more than the {{max}} that can be checked one by one here. Classify the regions with the atlas (an image registered to MNI space) or a parcellation of this image instead.',
+                          count: pendingRegions.geometric_region_count, max: geometricListed.length,
+                        }), { count: pendingRegions.geometric_region_count, max: geometricListed.length })}
+                      </p>
+                    ) : (
+                      <ul className="pl-1">
+                        {geometricListed.map((g) => {
+                          const name = geometricText(g);
+                          const vals = { n: g.lesion ?? '-', slice: g.slice + 1 };
+                          return (
+                            <li key={geometricKey(g)} className="flex items-center gap-1" data-testid="dis-geometric-region">
+                              <input
+                                type="checkbox"
+                                aria-label={fill(t('disReview.acknowledgeGeometricRegion', { defaultValue: 'I have checked the region of lesion {{n}} (slice {{slice}})', ...vals }), vals)}
+                                checked={checkedGeometric.has(geometricKey(g))}
+                                disabled={!ticksAllowed || !openedGeometric.has(geometricKey(g))}
+                                onChange={(e) => {
+                                  const next = new Set(checkedGeometric);
+                                  if (e.target.checked) next.add(geometricKey(g)); else next.delete(geometricKey(g));
+                                  setCheckedGeometric(next);
+                                }}
+                              />
+                              <span>{name}</span>
+                              {onNavigateToSlice && (
+                                <button
+                                  type="button"
+                                  className="underline text-amber-300 hover:text-amber-200"
+                                  onClick={() => {
+                                    setOpenedGeometric((prev) => new Set(prev).add(geometricKey(g)));
+                                    onNavigateToSlice(g.slice);
+                                  }}
+                                >
+                                  {fill(t('disReview.openSlice', { defaultValue: 'open slice {{slice}}', slice: g.slice + 1 }), { slice: g.slice + 1 })}
+                                </button>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                )}
+                {confirmable && !(geometricDigest && geometricTooMany) && (
+                  !isOpen ? (
+                    <p className="text-[10px] text-amber-300" data-testid="dis-open-to-confirm">
+                      {t('disReview.openToConfirm', 'Open this segmentation to confirm it: the confirmation is bound to the mask on screen.')}
+                    </p>
+                  ) : hasUnsavedMaskChanges ? (
+                    <p className="text-[10px] text-amber-300" data-testid="dis-save-first">
+                      {t('disReview.saveFirst', 'Unsaved changes: save them first. Only the saved mask can be confirmed.')}
+                    </p>
+                  ) : (
+                    <>
+                      {correctionsDigest && (
+                        <label className="flex items-start gap-1 text-[10px] text-amber-100">
+                          <input
+                            type="checkbox"
+                            data-testid="dis-ack-corrections"
+                            checked={ackedCorrections === correctionsDigest}
+                            onChange={(e) => setAckedCorrections(e.target.checked ? correctionsDigest : null)}
+                          />
+                          <span>{t('disReview.acknowledgeCorrections', 'I have checked these region corrections and confirm them as mine.')}</span>
+                        </label>
+                      )}
+                      <button
+                        onClick={confirmSegmentation}
+                        disabled={confirmBusy || (!!correctionsDigest && ackedCorrections !== correctionsDigest)
+                          || !allGeometricChecked}
+                        className="self-start mt-0.5 px-2 py-0.5 rounded bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-[10px] text-white"
+                      >
+                        {t('disReview.confirm', 'I have checked every lesion and region — confirm this segmentation')}
+                      </button>
+                    </>
+                  )
+                )}
+              </>
+            );
+          })()}
+          {confirmRefusal && (
+            <div className="text-[10px] text-red-300 border border-red-700/50 rounded px-1.5 py-1" role="alert"
+                 data-testid="dis-confirm-refused">
+              <p className="font-semibold">
+                {t('disReview.notAllDrawn', 'Not confirmed: every lesion must be drawn on screen before you confirm.')}
+              </p>
+              <ul className="list-disc pl-4">
+                {confirmRefusal.map((line) => <li key={line}>{line}</li>)}
+              </ul>
+            </div>
+          )}
+          {confirmError && <p className="text-[10px] text-red-300">{confirmError}</p>}
+        </div>
+      ) : disOk ? (
         <div className={`flex items-center gap-2 p-2 rounded-lg ${
-          (dis.dis_met_brain ?? dis.dis_met) ? 'bg-green-900/30 border border-green-700/50' : 'bg-red-900/30 border border-red-700/50'
+          (disOk.dis_met_brain ?? disOk.dis_met) ? 'bg-green-900/30 border border-green-700/50' : 'bg-red-900/30 border border-red-700/50'
         }`}>
-          {(dis.dis_met_brain ?? dis.dis_met) ? (
+          {(disOk.dis_met_brain ?? disOk.dis_met) ? (
             <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
           ) : (
             <XCircle className="w-4 h-4 text-red-400 shrink-0" />
           )}
           <div className="flex-1 min-w-0">
-            <div className={`text-xs font-bold ${(dis.dis_met_brain ?? dis.dis_met) ? 'text-green-300' : 'text-red-300'}`}>
-              DIS (Brain MRI): {dis.brain_regions_with_lesions ?? dis.regions_with_lesions}/{dis.brain_regions_evaluated ?? 3} {t('lesions.regions', 'regions')}
-              {(dis.dis_met_brain ?? dis.dis_met) ? ` \u2014 ${t('lesions.criterionMet', 'Criterion Met')}` : ` \u2014 ${t('lesions.criterionNotMet', 'Not Met')}`}
+            <div className={`text-xs font-bold ${(disOk.dis_met_brain ?? disOk.dis_met) ? 'text-green-300' : 'text-red-300'}`}>
+              DIS (Brain MRI): {disOk.brain_regions_with_lesions ?? disOk.regions_with_lesions}/{disOk.brain_regions_evaluated ?? 3} {t('lesions.regions', 'regions')}
+              {(disOk.dis_met_brain ?? disOk.dis_met) ? ` \u2014 ${t('lesions.criterionMet', 'Criterion Met')}` : ` \u2014 ${t('lesions.criterionNotMet', 'Not Met')}`}
             </div>
             <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-1">
-              {Object.entries(dis.region_details).map(([name, detail]) => (
+              {Object.entries(disOk.region_details ?? {}).map(([name, detail]) => (
                 <span key={name} className="flex items-center gap-0.5 text-[9px]">
                   {detail.present ? (
                     <CheckCircle2 className="w-2.5 h-2.5 text-green-400" />
@@ -571,11 +1123,29 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                 </span>
               ))}
             </div>
-            {dis.note && (
-              <div className="text-[8px] text-gray-500 mt-1 italic">{dis.note}</div>
+            {disOk.note && (
+              <div className="text-[8px] text-gray-500 mt-1 italic">{disOk.note}</div>
             )}
-            {dis.dis_criteria_version && (
-              <div className="text-[7px] text-gray-600 mt-0.5">{dis.dis_criteria_version}</div>
+            {disOk.segmentation_review && (
+              <div className="text-[8px] text-green-200/80 mt-0.5" data-testid="dis-confirmed-by">
+                {disOk.segmentation_review.reviewed_by
+                  ? `${t('disReview.confirmedBy', 'Segmentation confirmed by')} ${disOk.segmentation_review.reviewed_by}`
+                  : t('disReview.confirmedByRadiologist', 'Segmentation confirmed by a radiologist')}
+              </div>
+            )}
+            {!!disOk.regions?.correction_count && (
+              <div className="text-[8px] text-green-200/80" data-testid="dis-confirmed-corrections">
+                {fill(t('disReview.confirmedCorrections', {
+                  defaultValue: 'Including {{count}} region correction(s) made by hand and acknowledged in the confirmation.',
+                  count: disOk.regions.correction_count,
+                }), {
+                  defaultValue: 'Including {{count}} region correction(s) made by hand and acknowledged in the confirmation.',
+                  count: disOk.regions.correction_count,
+                })}
+              </div>
+            )}
+            {disOk.dis_criteria_version && (
+              <div className="text-[7px] text-gray-600 mt-0.5">{disOk.dis_criteria_version}</div>
             )}
           </div>
         </div>
@@ -590,19 +1160,19 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
 
       {/* McDonald 2024: five-topography integration + external evidence.
           Decision support only — never a diagnosis (CMSC guidance). */}
-      {dis && (
+      {disOk && (
         <div className="p-2 rounded-lg bg-indigo-950/30 border border-indigo-800/40 flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-semibold text-indigo-200">
               {t('lesions.mcdonald2024', 'McDonald 2024 · 5 topographies')}
             </span>
             <span className="text-[10px] text-indigo-100 font-bold">
-              {dis.total_topographies_involved}/5
+              {disOk.total_topographies_involved}/5
               {disEvidenceLoading && <span className="ml-1 text-indigo-400 animate-pulse">…</span>}
             </span>
           </div>
 
-          {dis.dit_waiver_supported && (
+          {disOk.dit_waiver_supported && (
             <div className="text-[9px] text-emerald-300 bg-emerald-900/20 border border-emerald-800/40 rounded px-1.5 py-1">
               {t(
                 'lesions.ditWaiver',
@@ -633,7 +1203,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
             ))}
           </div>
 
-          {dis.specificity_marker_present && (
+          {disOk.specificity_marker_present && (
             <div className="text-[9px] text-indigo-300">
               {t('lesions.specificityPresent', 'Supportive specificity marker present (adds diagnostic specificity).')}
             </div>
@@ -649,19 +1219,20 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       )}
 
       {/* Additional badges (DWM, active, black holes) */}
-      {dis && (dis.dwm_lesion_count > 0 || dis.has_active_lesions || dis.has_black_holes) && (
+      {disOk && (disOk.dwm_lesion_count > 0 || disOk.has_active_lesions || disOk.has_black_holes) && (
         <div className="flex flex-wrap gap-2">
-          {dis.dwm_lesion_count > 0 && (
+          {disOk.dwm_lesion_count > 0 && (
             <span className="px-1.5 py-0.5 bg-yellow-900/40 border border-yellow-700/50 rounded text-[9px] text-yellow-300">
-              DWM: {dis.dwm_lesion_count} lesions (not a DIS region)
+              {countText(t, 'lesions.dwmCount', disOk.dwm_lesion_count,
+                'DWM: {{n}} lesion (not a DIS region)', 'DWM: {{n}} lesions (not a DIS region)')}
             </span>
           )}
-          {dis.has_active_lesions && (
+          {disOk.has_active_lesions && (
             <span className="px-1.5 py-0.5 bg-fuchsia-900/40 border border-fuchsia-700/50 rounded text-[9px] text-fuchsia-300">
               Gd+ {t('lesions.active', 'Active')}
             </span>
           )}
-          {dis.has_black_holes && (
+          {disOk.has_black_holes && (
             <span className="px-1.5 py-0.5 bg-purple-900/40 border border-purple-700/50 rounded text-[9px] text-purple-300">
               T1 {t('lesions.blackHoles', 'Black Holes')}
             </span>
@@ -761,6 +1332,11 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
             <label className="text-[10px] text-gray-400 block">
               {t('lesions.byRegion', 'By Region')}
             </label>
+            {!disOk && (
+              <p className="text-[9px] text-amber-300" data-testid="regions-not-confirmed-bars">
+                {t('disReview.regionsNotConfirmed', 'Regions not confirmed by a radiologist; not a DIS assessment.')}
+              </p>
+            )}
             {Object.entries(analysis.regions).map(([name, region]) => (
               <div key={name} className="space-y-0.5">
                 <div className="flex items-center justify-between text-[9px]">
@@ -769,7 +1345,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                     <span className="text-gray-300">{name}</span>
                   </span>
                   <span className="text-gray-400">
-                    {region.lesion_count} \u2014 {region.total_volume_ml.toFixed(2)} mL
+                    {region.lesion_count} {'\u2014'} {region.total_volume_ml.toFixed(2)} mL
                   </span>
                 </div>
                 <div className="w-full h-1.5 bg-gray-700 rounded-full overflow-hidden">
@@ -914,9 +1490,8 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
           <button
             onClick={() => {
               const url = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/v1/segmentation/${segmentationId}/export/dicom-seg`;
-              const token = localStorage.getItem('access_token');
               const toastId = toast.loading(t('lesions.exportingSeg', 'Exporting DICOM-SEG…'));
-              fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+              fetchWithSession(url)   // CAPA-015 RC-069: silent refresh / re-login on 401
                 .then(res => {
                   if (!res.ok) throw new Error(`Export failed (${res.status})`);
                   return res.blob();

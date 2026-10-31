@@ -6,6 +6,7 @@
  */
 
 import type { CVSSummary, DISAssessment, LesionAnalysisResult, LesionAnnotation, PRLSummary, RegionClassificationResult } from './lesion';
+import { MAGNIMS_REGION_PALETTE } from '@/utils/regionColors';
 
 // ============================================================================
 // Segmentation Types - ITK-SNAP Style Multi-Expert Segmentation
@@ -29,7 +30,37 @@ export type SegmentationStatus =
 export type SegmentationType =
   | 'binary'      // One label per segment (0 or 1)
   | 'labelmap'    // Multiple labels (ITK-SNAP style, 0-255)
-  | 'fractional'; // Probability values (AI predictions)
+  | 'fractional'  // Probability values (AI predictions)
+  | 'manual'      // Origin: drawn by a clinician (local-first flow)
+  | 'automatic';  // Origin: produced by an algorithm (server tools, in-browser FLAMeS draft)
+
+/**
+ * Provenance of an AI-produced segmentation (in-browser FLAMeS draft, CP-FLAMES-BROWSER-001,
+ * REQ-SAFE-030). Persisted with the segmentation so an AI draft can never be mistaken for manual
+ * work. `review_status` is 'unreviewed' when stored; the server forces it, whatever the client sends.
+ */
+export interface AIProvenance {
+  kind: 'ai_draft';
+  model_name: string;
+  model_version: string;
+  model_sha256: string;
+  fold: number;
+  source_checkpoint_sha256: string;
+  pipeline_version: string;
+  runtime: string;
+  generated_at: string;
+  lesion_count: number;
+  annotated_voxels: number;
+  review_status: 'unreviewed' | 'confirmed';
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
+  /** SHA-256 of the exact stored mask the review was confirmed for (server-set; reset on any mask change) */
+  reviewed_mask_sha256?: string | null;
+  /** RC-049: positive evidence that the input was a FLAIR */
+  sequence_evidence: 'header' | 'clinician';
+  /** server-set: the authenticated user who confirmed the sequence */
+  sequence_confirmed_by?: string | null;
+}
 
 /**
  * Overlay rendering mode.
@@ -88,6 +119,8 @@ export interface Segmentation {
   name: string;
   description?: string;
   segmentation_type: SegmentationType;
+  /** Present only for AI-produced segmentations (never on manual work). */
+  ai_provenance?: AIProvenance | null;
 
   // Status and progress
   status: SegmentationStatus;
@@ -307,19 +340,20 @@ export const DEFAULT_SEGMENTATION_LABELS: LabelInfo[] = [
 /**
  * MAGNIMS regional labels for MS lesion classification.
  * Based on McDonald 2024 / MAGNIMS criteria for Dissemination in Space (DIS).
+ * PRB-010: region colours from the one shared mapping (utils/regionColors.ts, Okabe-Ito).
  */
 export const MAGNIMS_LESION_LABELS: LabelInfo[] = [
   { id: 0, name: 'Background', color: '#000000', opacity: 0.0, visible: false },
-  { id: 1, name: 'Periventricular', color: '#FF0000', opacity: 0.6, visible: true,
+  { id: 1, name: 'Periventricular', color: MAGNIMS_REGION_PALETTE.Periventricular.hex, opacity: 0.6, visible: true,
     snomed_code: '12738006', finding_site: 'Periventricular white matter',
     description: 'Dawson fingers — perpendicular to lateral ventricles' },
-  { id: 2, name: 'Juxtacortical', color: '#00CC00', opacity: 0.6, visible: true,
+  { id: 2, name: 'Juxtacortical', color: MAGNIMS_REGION_PALETTE.Juxtacortical.hex, opacity: 0.6, visible: true,
     snomed_code: '4479006', finding_site: 'Juxtacortical/cortical',
     description: 'Touching cortex, involving U-fibers' },
-  { id: 3, name: 'Infratentorial', color: '#0066FF', opacity: 0.6, visible: true,
+  { id: 3, name: 'Infratentorial', color: MAGNIMS_REGION_PALETTE.Infratentorial.hex, opacity: 0.6, visible: true,
     snomed_code: '31065004', finding_site: 'Brainstem/cerebellum',
     description: 'Brainstem, cerebellum, cerebellar peduncles' },
-  { id: 4, name: 'Deep White Matter', color: '#FFD700', opacity: 0.6, visible: true,
+  { id: 4, name: 'Deep White Matter', color: MAGNIMS_REGION_PALETTE['Deep White Matter'].hex, opacity: 0.6, visible: true,
     snomed_code: '69536005', finding_site: 'Deep white matter',
     description: 'Atypical for MS — common in vascular processes' },
   { id: 5, name: 'Active (Gd+)', color: '#FF00FF', opacity: 0.6, visible: true,
@@ -350,6 +384,7 @@ export const DEFAULT_LABEL_PRESETS: Record<string, LabelInfo[]> = {
  */
 export interface SegmentationAnalysisData {
   lesion_analysis?: LesionAnalysisResult;
+  /** PRB-003 (RC-070): no longer sent with the metadata and never displayed from it — the gated DIS route only. */
   dis_assessment?: DISAssessment;
   classification?: RegionClassificationResult;
   zone_map_seg_id?: string;
@@ -370,6 +405,29 @@ export interface SegmentationMetadata {
   labels: LabelInfo[];
   description?: string;
   analysis_data?: SegmentationAnalysisData | null;
+  /** 'automatic' for algorithm output (server tools, in-browser AI draft); absent/'manual' otherwise. */
+  segmentation_type?: string | null;
+  validation_source?: string | null;
+  /** AI provenance (in-browser FLAMeS draft). Absent on manual segmentations. */
+  ai_provenance?: AIProvenance | null;
+  /** PRB-003 (RC-071): a radiologist's confirmation of a segmentation without AI provenance, bound to the saved mask. */
+  clinician_review?: ClinicianReview | null;
+  /** PRB-026: username of the authenticated user who created it, recorded by the server; absent = not recorded. */
+  created_by?: string | null;
+}
+
+/** PRB-003 (RC-071): set only by the server's review/confirm route; removed by any later change of the mask. */
+export interface ClinicianReview {
+  /** Radiologists and administrators only; null for other roles (second review of PR #68, N5). */
+  reviewed_by: string | null;
+  reviewed_by_id?: string | null;
+  reviewed_by_role?: string | null;
+  reviewed_at: string;
+  reviewed_mask_sha256: string;
+  /** Region corrections by hand the radiologist acknowledged (second review of PR #68, N1). */
+  region_correction_count?: number;
+  /** PRB-028 (RC-090): geometric-fallback regions the radiologist checked one by one. */
+  geometric_region_count?: number;
 }
 
 /**
@@ -398,6 +456,8 @@ export interface CreateSegmentationRequest {
   file_id: string;
   image_shape: ImageShape;
   description?: string;
+  /** Only for an AI draft explicitly saved by the clinician (REQ-SAFE-030). */
+  ai_provenance?: AIProvenance;
   labels?: LabelInfo[];
 }
 

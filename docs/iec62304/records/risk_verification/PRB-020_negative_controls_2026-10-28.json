@@ -1,0 +1,1619 @@
+{
+  "executed": "2026-10-28T23:39:34",
+  "tree": "357698cddf27b3f3c5ab25d8b9d09a31b34ab2cc",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once (LF text); the bound tests of the mutated side run (backend pytest offline per PRB-002; frontend vitest --pool=threads, JSON reporter); original bytes restored after each mutation, on exit and on signals, and verified at the end; the baseline must pass first",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/api/routes/auth.py": "2c0647ff7da7939172223b5821a2ec74c8b708a8336d5c854079c9e8837a8d3b",
+    "backend/app/api/routes/authentication.py": "a0c3b7fdc27c93448bb9f0e8014020b9d0c2a6bc7fd8a71233f9d1fc93adf49a",
+    "backend/app/api/routes/dicomweb.py": "93a6867eada0647cbe95d741851a1f1e6f4461110a72cdefc6092ef0cec7a8a9",
+    "backend/app/api/routes/patients.py": "0033f5232ff94f93341047ef9dea81ab7fec492bde760ccc6d1625a168b1c99b",
+    "backend/app/api/routes/segmentation.py": "b537600925a1af4b3baab28192f02335f757124ba2fddca6ac14efff41781c05",
+    "backend/app/api/routes/studies.py": "da3af611f26d444776a16cb3e14510371a77c7a43cf9310212ce8897beab928c",
+    "backend/app/core/config.py": "5e7395c50ad8debe955bb50e10272593bb31d4f0dd63234b3243a925243520eb",
+    "backend/app/core/exception_handlers.py": "f8f4525c3c2b98ba9b3cbf6f85298396260c33a746084eb15d9ed8e1a7e69c3d",
+    "backend/app/models/patient_schemas.py": "3d2dcdf6df870bc7a3f69e0980c7d8ad6da8e5af7e66065a65da7aca0f84d7c2",
+    "backend/app/security/auth.py": "d015256a3611301ef06c69d6bc809b2c01674a15e75fb878557eae8e23cd151a",
+    "backend/app/security/patient_access.py": "50a95eb357c27e62cd1e29722ff3038390ff9417b757270b8b5c0caf098a13ee",
+    "backend/app/security/patient_access_dependency.py": "09b2717789009ff6e67506d378e23b4f3b02fb578fe9d27ab42eb29b72c29435",
+    "backend/app/security/registration_policy.py": "e7704fb5a19e3637eeb26d73748f5280556fe053bc1d9e47b613e88bdd163b43",
+    "backend/app/services/patient_service_firestore.py": "18610afd34cfa2a9d9c29faf951bf5e02bd89170c370f93b803a1c2403658d8d",
+    "backend/app/services/segmentation_service.py": "b6398077f4067ba1deeede4f5335942411eacdc74010b465745fa5a4a1c5ed30",
+    "backend/app/services/study_service_firestore.py": "6810f76198a5f729bd4ebc677a541ad02022c0fa52b4be8600134da34da06a2c",
+    "frontend/src/components/ConformalPanel.tsx": "acf902401e68461c09bc8280931ecba9c68ecd25f404868180b40e5be92480e7",
+    "frontend/src/components/ImageViewer2D.tsx": "f29e12b3d6cf4143855fc40f6dd436eeb57dca87dd2d42787e62be3b544dc70a",
+    "frontend/src/components/NiivueViewer2D.tsx": "dd991598af199b333488cdec5ffd79b242b15f647c89e51da3595e953dd3674d",
+    "frontend/src/components/PatientBanner.tsx": "70cbb9ced7ea5b18bc071adb91a8f91753e4a46bf1269cc45685645aae605c0f",
+    "frontend/src/components/PatientCard.tsx": "1dbe831178a98ec6b8ade47663328b7e1c9f6221bacca013cb65a94c8c4f2d65",
+    "frontend/src/components/SegmentationPanel.tsx": "2666fbb8396afc08d07074c8769e66e34f0d0fc5b140f819057fe6ba5e3292ec",
+    "frontend/src/components/StudyCard.tsx": "a069d84c5f5463efca5c55cb6b68437096970038bbb2d79d3eca37315ae3c825",
+    "frontend/src/components/patients/PatientsOverview.tsx": "66c3b30bd1fdaa27ad2ee26b73c8d86fddbe1f2756463e89c1bd67c4bafe2e50",
+    "frontend/src/components/viewer/SegmentationRow.tsx": "0b4e4224478bdbe1828d9bc5c04ea7a031ef88194442a142a284b0e75328131c",
+    "frontend/src/hooks/useSegmentationData.ts": "84da2877af19ea9d83e9be7b746e4802cc60cd7357903505c0db9832977d39eb",
+    "frontend/src/i18n/locales/de.json": "3f328477ff813763d39249d043a9e1ffc0fa721a5aeebbf7840073a01af11366",
+    "frontend/src/i18n/locales/en.json": "9752d518e2893a62c949faecd536d55e79c05466f7bd37deefd7df6531af8df7",
+    "frontend/src/pages/LoginPage.tsx": "6b1ed631481e2b2711b1b608e18268659bcb20108c57d6bd21cc0b75d5764dd8",
+    "frontend/src/pages/PatientsPage.tsx": "b6b953ded00d4fb99516c20ffed9136762705204069e0724e573df6dc288c114",
+    "frontend/src/services/registrationPolicy.ts": "78e134e64dd60e9ba93d97b62b48142a817a061bd8a0519385bf9c6b56ae4965",
+    "frontend/src/utils/patientDisplay.ts": "94b8928f30ed05c06ae74e526080011fa3bd1cfb1b1878a77972a32d462a9411",
+    "frontend/src/utils/segmentationAuthor.ts": "67cd2bb03186d181b408c4aec9f889bdf10fdf617aef525253761221cdf8411e",
+    "scripts/owner/prb021_backfill_creator_care_team.py": "f6b60ed4b4ba1be4faa8030c44d15c77d814642732828a6eaf5ca2e70baca145"
+  },
+  "test_sha256": {
+    "backend/tests/security/test_authentication.py": "ec66ed4b0bda198a80a88537ce51548e99de7f0d4e95a3277864480c062418b3",
+    "backend/tests/unit/test_prb020_review1_findings.py": "710810c59b0459e7b8f1aa640f0966b03f813d9a9c8ab75179d8af67081e16ab",
+    "backend/tests/unit/test_prb020_review2_findings.py": "fecc5249f6760bb01fd5bcf6c6e44f11045139940b8bfe18b37d3b50a8b64869",
+    "backend/tests/unit/test_prb020_self_registration_and_accounts.py": "d6e3090a58642f20427d266ea808dfcdfd78e220deda9b4a00c8984918a28076",
+    "backend/tests/unit/test_prb021_backfill_creator_care_team.py": "f5b2b6f82872902806f53ccc1fa9a65f263aadb27e7a207ff871e3003403cc82",
+    "backend/tests/unit/test_prb021_patient_scope_creator_counts.py": "b297bccf2add0327a525f09d847486097618f0c7ee6b18fc70cc3d3c0bbc3288",
+    "frontend/src/components/StudyCard.prb025.test.tsx": "ca0bf5fa1656192ba362fedf568f62a3e85c213b64a9450ed97460dbc9452312",
+    "frontend/src/components/i18nStrings.prb026.test.tsx": "d9e832f4c1fcfc911b485e6c84b12607d172af537beee16485609668fe9174f8",
+    "frontend/src/components/patientInitials.prb026.test.tsx": "426e41c03773588d74681bab5d7bab4665bb990b4c47e0b69d37a2670ff498df",
+    "frontend/src/hooks/useSegmentationData.prb026.test.tsx": "b66df3034f6aacecac6073255f3c5cca007519354e5e7acde7ea581fe83bd3c8",
+    "frontend/src/pages/LoginPage.prb020.test.tsx": "06164ed5b9e1b32911ac8211420cfc917c40cdc6202f04675d93a002a1dad36f",
+    "frontend/src/pages/LoginPage.prb022.review1.test.tsx": "da868e824c600af66409f32b10018ea1aa3ae704c08d009aeaeb495536fddd98",
+    "frontend/src/pages/PatientsPage.prb021.test.tsx": "a9790102053bafdf827501c8c7a76c32d1bafd611e7e5e79c1481aaefb84ca98"
+  },
+  "backend_tests": [
+    "tests/unit/test_prb020_self_registration_and_accounts.py",
+    "tests/unit/test_prb021_patient_scope_creator_counts.py",
+    "tests/security/test_authentication.py::TestAccountLockout",
+    "tests/unit/test_prb020_review1_findings.py",
+    "tests/unit/test_prb021_backfill_creator_care_team.py",
+    "tests/unit/test_prb020_review2_findings.py"
+  ],
+  "frontend_tests": [
+    "src/pages/LoginPage.prb020.test.tsx",
+    "src/components/StudyCard.prb025.test.tsx",
+    "src/components/patientInitials.prb026.test.tsx",
+    "src/hooks/useSegmentationData.prb026.test.tsx",
+    "src/components/i18nStrings.prb026.test.tsx",
+    "src/pages/PatientsPage.prb021.test.tsx",
+    "src/pages/LoginPage.prb022.review1.test.tsx"
+  ],
+  "baseline": {
+    "backend": {
+      "suite": "backend",
+      "exit": 0,
+      "failed": 0,
+      "passed": 101,
+      "errors": 0,
+      "failing_tests": []
+    },
+    "frontend": {
+      "suite": "frontend",
+      "exit": 0,
+      "failed": 0,
+      "passed": 30,
+      "errors": 0,
+      "failing_tests": []
+    }
+  },
+  "mutations": {
+    "R1_register_route_open": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 8,
+      "passed": 93,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc080_prb020_production_never_allows_self_registration",
+        "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[PRODUCTION]",
+        "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[Production",
+        "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[]",
+        "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[live]",
+        "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[prod]",
+        "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[staging]",
+        "test_rc080_prb020_register_is_refused_when_self_registration_is_off"
+      ],
+      "reintroduces": "POST /auth/register creates an account for anyone (the defect as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:25:07",
+      "detected": true
+    },
+    "R2_production_honours_the_setting": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 8,
+      "passed": 93,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc080_prb020_production_never_allows_self_registration",
+        "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[PRODUCTION]",
+        "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[Production",
+        "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[]",
+        "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[live]",
+        "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[prod]",
+        "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[staging]",
+        "test_rc080_prb020_registration_status_is_public_and_states_the_policy"
+      ],
+      "reintroduces": "a production server opens self-registration when the setting is on",
+      "applied": true,
+      "executed": "2026-10-28T22:25:22",
+      "detected": true
+    },
+    "R3_setting_on_by_default": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 3,
+      "passed": 98,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc080_prb020_register_is_refused_when_self_registration_is_off",
+        "test_rc080_prb020_registration_status_is_public_and_states_the_policy",
+        "test_rc080_prb020_self_registration_setting_is_off_by_default"
+      ],
+      "reintroduces": "self-registration on unless someone turns it off",
+      "applied": true,
+      "executed": "2026-10-28T22:25:38",
+      "detected": true
+    },
+    "R4_status_endpoint_says_open": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 7,
+      "passed": 94,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[PRODUCTION]",
+        "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[Production",
+        "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[]",
+        "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[live]",
+        "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[prod]",
+        "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[staging]",
+        "test_rc080_prb020_registration_status_is_public_and_states_the_policy"
+      ],
+      "reintroduces": "the sign-in page is told self-registration is on when it is not",
+      "applied": true,
+      "executed": "2026-10-28T22:25:58",
+      "detected": true
+    },
+    "R5_any_role_creates_accounts": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 3,
+      "passed": 98,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc081_prb020_only_an_administrator_creates_accounts[radiologist]",
+        "test_rc081_prb020_only_an_administrator_creates_accounts[technician]",
+        "test_rc081_prb020_only_an_administrator_creates_accounts[viewer]"
+      ],
+      "reintroduces": "a viewer, technician or radiologist creates accounts, an administrator among them",
+      "applied": true,
+      "executed": "2026-10-28T22:26:16",
+      "detected": true
+    },
+    "R6_creator_of_the_account_not_recorded": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 2,
+      "passed": 99,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc081_prb020_administrator_creates_an_account_with_its_role",
+        "test_rc081_prb020_r1_audit_of_an_admin_created_account_names_the_administrator"
+      ],
+      "reintroduces": "who created an account is not recorded",
+      "applied": true,
+      "executed": "2026-10-28T22:26:36",
+      "detected": true
+    },
+    "S1_list_users_from_memory": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 2,
+      "passed": 99,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc084_prb024_account_deleted_elsewhere_is_no_longer_listed",
+        "test_rc084_prb024_account_registered_after_start_is_listed_for_the_administrator"
+      ],
+      "reintroduces": "accounts created after start-up are invisible to the administrator (the defect as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:27:05",
+      "detected": true
+    },
+    "S2_get_user_from_memory": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 6,
+      "passed": 95,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc084_prb024_administrator_changes_the_role_of_an_account_created_after_start",
+        "test_rc084_prb024_r1_delete_the_store_refused_is_reported",
+        "test_rc084_prb024_r1_profile_is_not_saved_without_the_password",
+        "test_rc084_prb024_r1_role_change_keeps_the_password_and_its_history",
+        "test_rc084_prb024_r2_profile_save_never_uses_the_remembered_hash[error]",
+        "test_rc084_prb024_r2_profile_save_never_uses_the_remembered_hash[nothing]"
+      ],
+      "reintroduces": "an account created after start-up cannot be opened or changed (PATCH answered 500)",
+      "applied": true,
+      "executed": "2026-10-28T22:27:23",
+      "detected": true
+    },
+    "S3_duplicates_checked_in_memory_only": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc081_prb020_account_creation_refuses_a_name_already_in_the_store"
+      ],
+      "reintroduces": "a username another instance already stored is created twice",
+      "applied": true,
+      "executed": "2026-10-28T22:27:37",
+      "detected": true
+    },
+    "S4_unstored_account_reported_as_created": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc084_prb024_account_the_store_did_not_take_is_not_created"
+      ],
+      "reintroduces": "an account the store did not take is reported as created",
+      "applied": true,
+      "executed": "2026-10-28T22:27:52",
+      "detected": true
+    },
+    "S5_lockout_kept_in_memory_only": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 4,
+      "passed": 97,
+      "errors": 0,
+      "failing_tests": [
+        "test_account_lockout_after_failed_attempts",
+        "test_failed_attempts_reset_on_success",
+        "test_locked_account_rejects_correct_password",
+        "test_rc084_prb024_failed_sign_in_is_stored_and_the_password_kept"
+      ],
+      "reintroduces": "a lockout is invisible to the administrator routes and lost on restart",
+      "applied": true,
+      "executed": "2026-10-28T22:28:07",
+      "detected": true
+    },
+    "S6_login_state_written_without_the_password": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 7,
+      "passed": 94,
+      "errors": 0,
+      "failing_tests": [
+        "test_account_lockout_after_failed_attempts",
+        "test_failed_attempts_reset_on_success",
+        "test_locked_account_rejects_correct_password",
+        "test_rc084_prb024_administrator_changes_the_role_of_an_account_created_after_start",
+        "test_rc084_prb024_failed_sign_in_is_stored_and_the_password_kept",
+        "test_rc084_prb024_r1_passkey_sign_in_never_writes_an_empty_password[True]",
+        "test_rc084_prb024_r1_role_change_keeps_the_password_and_its_history"
+      ],
+      "reintroduces": "a profile save (failed sign-in, role change) overwrites the stored password hash",
+      "applied": true,
+      "executed": "2026-10-28T22:28:23",
+      "detected": true
+    },
+    "P1_patient_list_unscoped": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 6,
+      "passed": 95,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc082_prb021_patient_list_shows_only_the_assigned_patients",
+        "test_rc082_prb021_revoked_assignment_no_longer_lists_the_patient",
+        "test_rc082_prb021_scoped_list_pages_and_filters_by_status",
+        "test_rc082_prb021_user_without_assignment_lists_no_patient[radiologist]",
+        "test_rc082_prb021_user_without_assignment_lists_no_patient[technician]",
+        "test_rc082_prb021_user_without_assignment_lists_no_patient[viewer]"
+      ],
+      "reintroduces": "every signed-in user lists every patient (the defect as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:28:39",
+      "detected": true
+    },
+    "P2_patient_search_unscoped": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc082_prb021_patient_search_is_scoped_too"
+      ],
+      "reintroduces": "every signed-in user searches every patient",
+      "applied": true,
+      "executed": "2026-10-28T22:28:53",
+      "detected": true
+    },
+    "P3_revoked_assignment_lists": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc082_prb021_revoked_assignment_no_longer_lists_the_patient"
+      ],
+      "reintroduces": "a revoked care-team assignment still lists the patient",
+      "applied": true,
+      "executed": "2026-10-28T22:29:08",
+      "detected": true
+    },
+    "P4_everyone_scoped_like_an_administrator": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 7,
+      "passed": 94,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc082_prb021_patient_list_shows_only_the_assigned_patients",
+        "test_rc082_prb021_patient_search_is_scoped_too",
+        "test_rc082_prb021_revoked_assignment_no_longer_lists_the_patient",
+        "test_rc082_prb021_scoped_list_pages_and_filters_by_status",
+        "test_rc082_prb021_user_without_assignment_lists_no_patient[radiologist]",
+        "test_rc082_prb021_user_without_assignment_lists_no_patient[technician]",
+        "test_rc082_prb021_user_without_assignment_lists_no_patient[viewer]"
+      ],
+      "reintroduces": "the listing scope returns the whole registry for every role",
+      "applied": true,
+      "executed": "2026-10-28T22:29:27",
+      "detected": true
+    },
+    "P5_scoped_search_ignores_the_mrn": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc082_prb021_patient_search_is_scoped_too"
+      ],
+      "reintroduces": "a scoped search returns patients that do not match the record number",
+      "applied": true,
+      "executed": "2026-10-28T22:29:45",
+      "detected": true
+    },
+    "P6_scoped_list_ignores_the_status": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc082_prb021_scoped_list_pages_and_filters_by_status"
+      ],
+      "reintroduces": "a scoped list ignores the status filter",
+      "applied": true,
+      "executed": "2026-10-28T22:30:08",
+      "detected": true
+    },
+    "P7_scoped_list_not_paged": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc082_prb021_scoped_list_pages_and_filters_by_status"
+      ],
+      "reintroduces": "a scoped list ignores the page size",
+      "applied": true,
+      "executed": "2026-10-28T22:30:32",
+      "detected": true
+    },
+    "C1_creator_not_on_the_care_team": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 2,
+      "passed": 99,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc083_prb023_creator_is_put_on_the_care_team_and_can_open_the_patient",
+        "test_rc083_prb023_failed_assignment_is_reported_not_hidden"
+      ],
+      "reintroduces": "the clinician who creates a patient gets 'Patient not found' (the defect as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:30:55",
+      "detected": true
+    },
+    "C2_administrator_put_on_care_teams": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc083_prb023_administrator_creator_is_not_put_on_a_care_team"
+      ],
+      "reintroduces": "an administrator who creates a patient is put on its care team",
+      "applied": true,
+      "executed": "2026-10-28T22:31:12",
+      "detected": true
+    },
+    "C3_failed_assignment_hidden": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc083_prb023_failed_assignment_is_reported_not_hidden"
+      ],
+      "reintroduces": "a creator whose assignment was not recorded is told the creation succeeded",
+      "applied": true,
+      "executed": "2026-10-28T22:31:30",
+      "detected": true
+    },
+    "C4_provenance_not_read": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 2,
+      "passed": 99,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc083_prb023_provenance_is_read_for_the_decision_but_never_returned",
+        "test_rc083_prb023_unassigned_user_on_an_attributed_patient_is_denied_as_not_assigned"
+      ],
+      "reintroduces": "the access check cannot see created_by: 'quarantined' for an attributed patient (as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:31:51",
+      "detected": true
+    },
+    "C5_provenance_returned_to_clients": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc083_prb023_provenance_is_read_for_the_decision_but_never_returned"
+      ],
+      "reintroduces": "every patient response carries the creator's user id",
+      "applied": true,
+      "executed": "2026-10-28T22:32:16",
+      "detected": true
+    },
+    "C6_quarantine_on_the_callers_assignments": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 2,
+      "passed": 99,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc083_prb023_legacy_patient_on_someone_elses_care_team_is_not_called_quarantined",
+        "test_rc083_prb023_legacy_patient_without_any_assignment_is_quarantined"
+      ],
+      "reintroduces": "'quarantined' decided on the caller's assignments, not the record's (as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:32:41",
+      "detected": true
+    },
+    "C7_record_assignments_not_read": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 2,
+      "passed": 99,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc083_prb023_legacy_patient_on_someone_elses_care_team_is_not_called_quarantined",
+        "test_rc083_prb023_legacy_patient_without_any_assignment_is_quarantined"
+      ],
+      "reintroduces": "the access check never reads the record's assignments",
+      "applied": true,
+      "executed": "2026-10-28T22:33:02",
+      "detected": true
+    },
+    "K1_deleted_studies_listed": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 3,
+      "passed": 98,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc085_prb025_deleted_studies_are_not_listed_for_the_patient",
+        "test_rc085_prb025_deleting_a_study_removes_it_from_the_list_and_the_counts",
+        "test_rc085_prb025_explicit_status_filter_still_finds_a_cancelled_study"
+      ],
+      "reintroduces": "a deleted (cancelled) study stays in the patient's list (the defect as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:33:26",
+      "detected": true
+    },
+    "K2_deleted_studies_counted": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 3,
+      "passed": 98,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc085_prb025_deleted_studies_and_documents_are_not_counted",
+        "test_rc085_prb025_deleting_a_study_removes_it_from_the_list_and_the_counts",
+        "test_rc085_prb025_r1_page_counts_run_concurrently_with_the_same_results"
+      ],
+      "reintroduces": "a deleted study is counted in the patient's study count (as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:33:52",
+      "detected": true
+    },
+    "K3_deleted_documents_counted": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc085_prb025_deleted_studies_and_documents_are_not_counted"
+      ],
+      "reintroduces": "a deleted (entered-in-error) document is counted",
+      "applied": true,
+      "executed": "2026-10-28T22:34:07",
+      "detected": true
+    },
+    "K4_zone_map_counted_as_segmentation": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc085_prb025_study_summary_counts_its_segmentations"
+      ],
+      "reintroduces": "the MAGNIMS zone map is counted as a segmentation",
+      "applied": true,
+      "executed": "2026-10-28T22:34:22",
+      "detected": true
+    },
+    "K5_segmentation_count_not_computed": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc085_prb025_study_summary_counts_its_segmentations"
+      ],
+      "reintroduces": "no segmentation count reaches the study card (as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:34:37",
+      "detected": true
+    },
+    "K6_explicit_status_filter_drops_deleted": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc085_prb025_explicit_status_filter_still_finds_a_cancelled_study"
+      ],
+      "reintroduces": "a deleted study cannot be found even when asked for by status",
+      "applied": true,
+      "executed": "2026-10-28T22:34:53",
+      "detected": true
+    },
+    "K7_permanent_deletion_open": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc085_prb025_permanent_deletion_needs_an_administrator"
+      ],
+      "reintroduces": "any user with access erases a study's images permanently (as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:35:08",
+      "detected": true
+    },
+    "A1_segmentation_creator_not_stored": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 2,
+      "passed": 99,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc088_prb026_r1_the_route_records_the_authenticated_user",
+        "test_rc088_prb026_segmentation_records_its_creator"
+      ],
+      "reintroduces": "the creator of a segmentation is not stored (as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:35:26",
+      "detected": true
+    },
+    "A2_list_item_without_name_parts": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc087_prb026_patient_list_item_carries_given_and_family_name"
+      ],
+      "reintroduces": "the patient list item carries no given name (the card falls back to the full name)",
+      "applied": true,
+      "executed": "2026-10-28T22:35:42",
+      "detected": true
+    },
+    "F1_register_tab_always_shown": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 2,
+      "passed": 27,
+      "errors": 0,
+      "failing_tests": [
+        "rc080 prb020 hides the Register tab and says an administrator creates accounts when it is off",
+        "rc080 prb020 hides the Register tab when the server cannot be asked (fail closed)"
+      ],
+      "reintroduces": "the Register tab is offered whatever the server says (as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:37:05",
+      "detected": true
+    },
+    "F2_status_read_as_open": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "failing_tests": [
+        "rc080 prb020 hides the Register tab and says an administrator creates accounts when it is off"
+      ],
+      "reintroduces": "any answer of the server shows the Register tab",
+      "applied": true,
+      "executed": "2026-10-28T22:37:19",
+      "detected": true
+    },
+    "F3_fail_open": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "failing_tests": [
+        "rc080 prb020 hides the Register tab when the server cannot be asked (fail closed)"
+      ],
+      "reintroduces": "the Register tab is shown when the server cannot be asked",
+      "applied": true,
+      "executed": "2026-10-28T22:37:40",
+      "detected": true
+    },
+    "F4_mfa_claim_back": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "failing_tests": [
+        "rc086 prb022 makes no MFA, AAL2, data-residency, HIPAA, ISO 27001 or TLS 1.3 claim"
+      ],
+      "reintroduces": "the footer claims MFA, AAL2 and data residency again (as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:38:27",
+      "detected": true
+    },
+    "F5_hipaa_badge_back": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "failing_tests": [
+        "rc086 prb022 makes no MFA, AAL2, data-residency, HIPAA, ISO 27001 or TLS 1.3 claim"
+      ],
+      "reintroduces": "a HIPAA badge without any assessment (as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:38:41",
+      "detected": true
+    },
+    "F6_segm_hard_coded": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 2,
+      "passed": 27,
+      "errors": 0,
+      "failing_tests": [
+        "rc085 prb025 shows the number of segmentations the server reports",
+        "rc085 prb025 shows a dash, not 0, when the count is unknown"
+      ],
+      "reintroduces": "the study card shows SEGM. 0 always (as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:38:56",
+      "detected": true
+    },
+    "F7_unknown_count_shown_as_zero": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "failing_tests": [
+        "rc085 prb025 shows a dash, not 0, when the count is unknown"
+      ],
+      "reintroduces": "a count nobody computed is shown as 0",
+      "applied": true,
+      "executed": "2026-10-28T22:39:12",
+      "detected": true
+    },
+    "F8_patient_card_unknown_count_as_zero": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "failing_tests": [
+        "rc085 prb025 the patient card shows a dash for a count the server could not compute"
+      ],
+      "reintroduces": "the patient card shows 0 for a count the server could not compute",
+      "applied": true,
+      "executed": "2026-10-28T22:39:30",
+      "detected": true
+    },
+    "F9_card_first_and_last_word": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 2,
+      "passed": 27,
+      "errors": 0,
+      "failing_tests": [
+        "rc087 prb026 a title in the full name does not change the initials",
+        "rc087 prb026 the list card of the capture shows the same initials as the record page"
+      ],
+      "reintroduces": "the list card uses the first and last word of the full name: 'DD' (as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:39:49",
+      "detected": true
+    },
+    "F10_banner_first_two_words": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "failing_tests": [
+        "rc087 prb026 a title in the full name does not change the initials"
+      ],
+      "reintroduces": "the record page uses the first two words: a title becomes an initial (as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:40:07",
+      "detected": true
+    },
+    "F11_rule_ignores_name_parts": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "failing_tests": [
+        "rc087 prb026 a title in the full name does not change the initials"
+      ],
+      "reintroduces": "the shared rule reads the full name instead of the given and family name",
+      "applied": true,
+      "executed": "2026-10-28T22:40:23",
+      "detected": true
+    },
+    "F12_punctuation_as_initial": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "failing_tests": [
+        "rc087 prb026 punctuation is never an initial"
+      ],
+      "reintroduces": "a bracket or quote becomes an initial",
+      "applied": true,
+      "executed": "2026-10-28T22:40:38",
+      "detected": true
+    },
+    "F13_hook_placeholder_author": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 3,
+      "passed": 26,
+      "errors": 0,
+      "failing_tests": [
+        "rc088 prb026 the open segmentation carries the author the server recorded",
+        "rc088 prb026 a segmentation without a recorded author is never given the placeholder",
+        "rc088 prb026 no source file fills an author with a placeholder"
+      ],
+      "reintroduces": "the open segmentation shows 'current_user' as its author (as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:40:51",
+      "detected": true
+    },
+    "F14_panel_placeholder_author": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "failing_tests": [
+        "rc088 prb026 no source file fills an author with a placeholder"
+      ],
+      "reintroduces": "the saved-segmentation list shows 'current_user' as the author (as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:41:06",
+      "detected": true
+    },
+    "F15_no_author_not_recorded_text": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "failing_tests": [
+        "rc088 prb026 the list says \"Author not recorded\" when no author was stored"
+      ],
+      "reintroduces": "a segmentation without a recorded author shows an empty author",
+      "applied": true,
+      "executed": "2026-10-28T22:41:22",
+      "detected": true
+    },
+    "F16_badge_not_translated": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "failing_tests": [
+        "rc087 prb026 provenance badges in German and Spanish"
+      ],
+      "reintroduces": "the provenance badge ignores the interface language",
+      "applied": true,
+      "executed": "2026-10-28T22:41:43",
+      "detected": true
+    },
+    "F17_english_locale_in_spanish": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 2,
+      "passed": 27,
+      "errors": 0,
+      "failing_tests": [
+        "rc087 prb026 provenance badges in English",
+        "rc087 prb026 every new key exists in English, Spanish and German"
+      ],
+      "reintroduces": "the English interface shows the Spanish badge 'Experto' (as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:42:03",
+      "detected": true
+    },
+    "F18_niivue_loading_in_spanish": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "failing_tests": [
+        "rc087 prb026 no Spanish text is written into these components"
+      ],
+      "reintroduces": "'Cargando volumen…' in every interface language (as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:42:17",
+      "detected": true
+    },
+    "F19_gpu_viewer_loading_in_spanish": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "failing_tests": [
+        "rc087 prb026 no Spanish text is written into these components"
+      ],
+      "reintroduces": "'Cargando visor GPU…' in every interface language (as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:42:32",
+      "detected": true
+    },
+    "F20_conformal_title_in_spanish": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 2,
+      "passed": 27,
+      "errors": 0,
+      "failing_tests": [
+        "rc087 prb026 the CALM-MS panel is in English in the English interface",
+        "rc087 prb026 no Spanish text is written into these components"
+      ],
+      "reintroduces": "the CALM-MS panel in Spanish in every interface language (as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:42:45",
+      "detected": true
+    },
+    "F21_german_key_missing": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "failing_tests": [
+        "rc087 prb026 every new key exists in English, Spanish and German"
+      ],
+      "reintroduces": "a key missing in German: the German interface falls back to English",
+      "applied": true,
+      "executed": "2026-10-28T22:43:02",
+      "detected": true
+    },
+    "V1_series_delete_open": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 3,
+      "passed": 98,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc085_prb025_r1_only_an_administrator_erases_a_series_or_an_image[radiologist-u-rad]",
+        "test_rc085_prb025_r1_only_an_administrator_erases_a_series_or_an_image[technician-u-tech]",
+        "test_rc085_prb025_r1_only_an_administrator_erases_a_series_or_an_image[viewer-u-viewer]"
+      ],
+      "reintroduces": "any care-team member erases a series from storage (M1, as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:43:25",
+      "detected": true
+    },
+    "V2_instance_delete_open": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 3,
+      "passed": 98,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc085_prb025_r1_only_an_administrator_erases_a_series_or_an_image[radiologist-u-rad]",
+        "test_rc085_prb025_r1_only_an_administrator_erases_a_series_or_an_image[technician-u-tech]",
+        "test_rc085_prb025_r1_only_an_administrator_erases_a_series_or_an_image[viewer-u-viewer]"
+      ],
+      "reintroduces": "any care-team member erases an image file (M1, as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:44:13",
+      "detected": true
+    },
+    "V3_cancel_without_permission": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 2,
+      "passed": 99,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc085_prb025_r1_cancelling_a_study_needs_a_write_permission[technician-u-tech]",
+        "test_rc085_prb025_r1_cancelling_a_study_needs_a_write_permission[viewer-u-viewer]"
+      ],
+      "reintroduces": "a viewer or technician hides a study from everyone (M2, as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:44:40",
+      "detected": true
+    },
+    "V4_status_change_through_put_open": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc085_prb025_r1_a_status_change_through_update_needs_the_same_permission"
+      ],
+      "reintroduces": "a read-only user cancels a study with PUT status=cancelled (M2)",
+      "applied": true,
+      "executed": "2026-10-28T22:45:03",
+      "detected": true
+    },
+    "V5_status_rule_any_role": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc085_prb025_r1_a_status_change_through_update_needs_the_same_permission"
+      ],
+      "reintroduces": "the status-change rule lets every role through (M2)",
+      "applied": true,
+      "executed": "2026-10-28T22:45:23",
+      "detected": true
+    },
+    "V6_backfill_regrants_revoked": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 2,
+      "passed": 99,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc083_prb023_backfill_dry_run_writes_nothing_and_lists_the_plan",
+        "test_rc083_prb023_backfill_takes_a_backup_assigns_once_and_is_idempotent"
+      ],
+      "reintroduces": "the backfill re-grants an assignment an administrator revoked",
+      "applied": true,
+      "executed": "2026-10-28T22:45:47",
+      "detected": true
+    },
+    "V7_backfill_without_confirmation": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc083_prb023_backfill_needs_the_typed_confirmation_word"
+      ],
+      "reintroduces": "the backfill writes without the typed confirmation word",
+      "applied": true,
+      "executed": "2026-10-28T22:46:16",
+      "detected": true
+    },
+    "V8_backfill_writes_without_backup": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc083_prb023_backfill_stops_before_writing_when_the_backup_fails"
+      ],
+      "reintroduces": "the backfill writes although the backup could not be taken",
+      "applied": true,
+      "executed": "2026-10-28T22:46:34",
+      "detected": true
+    },
+    "V9_backfill_assigns_administrators": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 3,
+      "passed": 98,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc083_prb023_backfill_dry_run_writes_nothing_and_lists_the_plan",
+        "test_rc083_prb023_backfill_takes_a_backup_assigns_once_and_is_idempotent",
+        "test_rc083_prb023_r2_each_row_id_is_in_the_backup_before_it_is_written"
+      ],
+      "reintroduces": "the backfill puts administrators on care teams",
+      "applied": true,
+      "executed": "2026-10-28T22:46:53",
+      "detected": true
+    },
+    "V10_backfill_accepts_daita": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 8,
+      "passed": 93,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc083_prb023_backfill_refuses_the_daita_project",
+        "test_rc083_prb023_r2_backfill_acts_only_on_the_production_project[BRAIN-MRI-476110]",
+        "test_rc083_prb023_r2_backfill_acts_only_on_the_production_project[]",
+        "test_rc083_prb023_r2_backfill_acts_only_on_the_production_project[brain-mri-476110-copy]",
+        "test_rc083_prb023_r2_backfill_acts_only_on_the_production_project[brain-mri-47611]",
+        "test_rc083_prb023_r2_backfill_acts_only_on_the_production_project[daita-9f4f6]",
+        "test_rc083_prb023_r2_backfill_acts_only_on_the_production_project[mstool-research]",
+        "test_rc083_prb023_r2_backfill_acts_only_on_the_production_project[some-other-project]"
+      ],
+      "reintroduces": "the backfill runs against the Daita project (no project guard at all)",
+      "applied": true,
+      "executed": "2026-10-28T22:47:30",
+      "detected": true
+    },
+    "V11_backfill_dry_run_writes": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 2,
+      "passed": 99,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc083_prb023_backfill_dry_run_writes_nothing_and_lists_the_plan",
+        "test_rc083_prb023_r2_account_without_is_active_is_not_active"
+      ],
+      "reintroduces": "the backfill writes without --apply",
+      "applied": true,
+      "executed": "2026-10-28T22:47:46",
+      "detected": true
+    },
+    "V12_audit_actor_is_the_new_account": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc081_prb020_r1_audit_of_an_admin_created_account_names_the_administrator"
+      ],
+      "reintroduces": "the audit event names the new account, not the administrator (m1, as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:48:03",
+      "detected": true
+    },
+    "V13_audit_route_register": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc081_prb020_r1_audit_of_an_admin_created_account_names_the_administrator"
+      ],
+      "reintroduces": "the audit event names /auth/register for an administrator-created account (m1, as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:48:19",
+      "detected": true
+    },
+    "V14_no_privileged_event": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc081_prb020_r1_audit_of_an_admin_created_account_names_the_administrator"
+      ],
+      "reintroduces": "creating an administrator account leaves no privileged event (m1)",
+      "applied": true,
+      "executed": "2026-10-28T22:48:37",
+      "detected": true
+    },
+    "V15_profile_saved_without_password": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 4,
+      "passed": 97,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc084_prb024_r1_passkey_sign_in_never_writes_an_empty_password[False]",
+        "test_rc084_prb024_r1_profile_is_not_saved_without_the_password",
+        "test_rc084_prb024_r2_profile_save_never_uses_the_remembered_hash[error]",
+        "test_rc084_prb024_r2_profile_save_never_uses_the_remembered_hash[nothing]"
+      ],
+      "reintroduces": "a profile is saved with no password hash (m2)",
+      "applied": true,
+      "executed": "2026-10-28T22:48:56",
+      "detected": true
+    },
+    "V16_password_history_dropped": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 2,
+      "passed": 99,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc084_prb024_r1_passkey_sign_in_never_writes_an_empty_password[True]",
+        "test_rc084_prb024_r1_role_change_keeps_the_password_and_its_history"
+      ],
+      "reintroduces": "a profile save erases the password history (m2, as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:49:15",
+      "detected": true
+    },
+    "V17_patch_old_save": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 4,
+      "passed": 97,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc084_prb024_r1_profile_is_not_saved_without_the_password",
+        "test_rc084_prb024_r1_role_change_keeps_the_password_and_its_history",
+        "test_rc084_prb024_r2_profile_save_never_uses_the_remembered_hash[error]",
+        "test_rc084_prb024_r2_profile_save_never_uses_the_remembered_hash[nothing]"
+      ],
+      "reintroduces": "the administrator PATCH writes '' when the password cannot be read and drops the history (m2, as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:49:33",
+      "detected": true
+    },
+    "V18_passkey_old_save": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 2,
+      "passed": 99,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc084_prb024_r1_passkey_sign_in_never_writes_an_empty_password[False]",
+        "test_rc084_prb024_r1_passkey_sign_in_never_writes_an_empty_password[True]"
+      ],
+      "reintroduces": "the passkey sign-in writes '' when the password cannot be read and drops the history (m2, as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:49:51",
+      "detected": true
+    },
+    "V19_delete_ignores_the_store": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc084_prb024_r1_delete_the_store_refused_is_reported"
+      ],
+      "reintroduces": "a delete the store refused answers 204 (m3, as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:50:09",
+      "detected": true
+    },
+    "V20_exact_production_word": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 4,
+      "passed": 97,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[]",
+        "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[live]",
+        "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[prod]",
+        "test_rc080_prb020_r1_an_unknown_environment_counts_as_production[staging]"
+      ],
+      "reintroduces": "ENVIRONMENT=prod or staging opens self-registration when the setting is on (m4, as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:50:27",
+      "detected": true
+    },
+    "V21_validation_errors_raw": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 6,
+      "passed": 95,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc081_prb020_r1_administrator_route_applies_the_password_policy[NoDigitsHere!!!x]",
+        "test_rc081_prb020_r1_administrator_route_applies_the_password_policy[NoSpecial2026abc]",
+        "test_rc081_prb020_r1_administrator_route_applies_the_password_policy[alllowercase-2026!]",
+        "test_rc081_prb020_r1_administrator_route_applies_the_password_policy[short1!A]",
+        "test_rc081_prb020_r2_sign_in_with_an_over_long_password_leaks_nothing",
+        "test_rc084_prb024_r2_a_refused_new_password_leaks_nothing"
+      ],
+      "reintroduces": "a refused password answers 500 and is logged as typed (as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:50:51",
+      "detected": true
+    },
+    "V22_validation_echoes_input": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 6,
+      "passed": 95,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc081_prb020_r1_administrator_route_applies_the_password_policy[NoDigitsHere!!!x]",
+        "test_rc081_prb020_r1_administrator_route_applies_the_password_policy[NoSpecial2026abc]",
+        "test_rc081_prb020_r1_administrator_route_applies_the_password_policy[alllowercase-2026!]",
+        "test_rc081_prb020_r1_administrator_route_applies_the_password_policy[short1!A]",
+        "test_rc081_prb020_r2_sign_in_with_an_over_long_password_leaks_nothing",
+        "test_rc084_prb024_r2_a_refused_new_password_leaks_nothing"
+      ],
+      "reintroduces": "the refused password is returned and logged",
+      "applied": true,
+      "executed": "2026-10-28T22:51:08",
+      "detected": true
+    },
+    "V23_page_counts_sequential": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc085_prb025_r1_page_counts_run_concurrently_with_the_same_results"
+      ],
+      "reintroduces": "the 5 count queries of every patient of a page run one after another (m6, as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:51:29",
+      "detected": true
+    },
+    "V24_route_drops_the_creator": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc088_prb026_r1_the_route_records_the_authenticated_user"
+      ],
+      "reintroduces": "the create route no longer passes the authenticated user (m8 gap)",
+      "applied": true,
+      "executed": "2026-10-28T22:51:47",
+      "detected": true
+    },
+    "V25_pacs_study_search_open": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc089_prb027_a_viewer_cannot_search_or_import_from_the_pacs[/api/v1/dicomweb/search/studies-body0]"
+      ],
+      "reintroduces": "every role, a viewer included, searches the PACS by patient name (as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:52:05",
+      "detected": true
+    },
+    "V26_pacs_series_search_open": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc089_prb027_a_viewer_cannot_search_or_import_from_the_pacs[/api/v1/dicomweb/search/series?connection_id=c1&study_instance_uid=1.2.3-None]"
+      ],
+      "reintroduces": "every role searches the PACS series (as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:52:21",
+      "detected": true
+    },
+    "V27_pacs_import_open": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc089_prb027_a_viewer_cannot_search_or_import_from_the_pacs[/api/v1/dicomweb/import-body2]"
+      ],
+      "reintroduces": "every role on the care team imports from the PACS (as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:52:39",
+      "detected": true
+    },
+    "VF1_empty_list_says_no_patients_registered": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "failing_tests": [
+        "rc082 prb021 a clinician with no patient is told none are assigned, with no create invitation"
+      ],
+      "reintroduces": "a clinician with no assignment reads 'No patients registered' (M3, as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:54:22",
+      "detected": true
+    },
+    "VF2_create_invitation_for_everyone": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "failing_tests": [
+        "rc082 prb021 a clinician with no patient is told none are assigned, with no create invitation"
+      ],
+      "reintroduces": "a clinician with no assignment is invited to create the 'first' patient (M3, as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:54:33",
+      "detected": true
+    },
+    "VF3_tile_says_in_registry": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "failing_tests": [
+        "rc082 prb021 a clinician with no patient is told none are assigned, with no create invitation"
+      ],
+      "reintroduces": "the tile says 'in registry' to a clinician who sees only assigned patients (M3, as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:54:44",
+      "detected": true
+    },
+    "VF4_admin_role_case_sensitive": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "failing_tests": [
+        "rc082 prb021 an administrator keeps the registry wording and the create invitation"
+      ],
+      "reintroduces": "the administrator (role 'admin' from the server) is treated as a clinician",
+      "applied": true,
+      "executed": "2026-10-28T22:54:54",
+      "detected": true
+    },
+    "VF5_null_counted_as_zero": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "failing_tests": [
+        "rc085 prb025 a null study or document count shows a dash"
+      ],
+      "reintroduces": "the tiles add an uncounted value as 0 (m5, as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:55:05",
+      "detected": true
+    },
+    "VF6_iec_badge_back": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 28,
+      "errors": 0,
+      "failing_tests": [
+        "rc086 prb022 no standard is shown as a badge"
+      ],
+      "reintroduces": "the sign-in page shows an 'IEC 62304 · Class C' badge (m7, as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:55:18",
+      "detected": true
+    },
+    "VF7_medical_device_subtitle_back": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 29,
+      "errors": 0,
+      "failing_tests": [
+        "rc086 prb022 the subtitle says research prototype, not medical device or Class C (en, es, de)"
+      ],
+      "reintroduces": "the sign-in page claims a 'Class C Medical Device' (as found)",
+      "applied": true,
+      "executed": "2026-10-28T23:40:29",
+      "detected": true
+    },
+    "W1_backfill_deny_list_only": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 5,
+      "passed": 96,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc083_prb023_r2_backfill_acts_only_on_the_production_project[BRAIN-MRI-476110]",
+        "test_rc083_prb023_r2_backfill_acts_only_on_the_production_project[brain-mri-476110-copy]",
+        "test_rc083_prb023_r2_backfill_acts_only_on_the_production_project[brain-mri-47611]",
+        "test_rc083_prb023_r2_backfill_acts_only_on_the_production_project[mstool-research]",
+        "test_rc083_prb023_r2_backfill_acts_only_on_the_production_project[some-other-project]"
+      ],
+      "reintroduces": "the backfill accepts any project but Daita: another project or a typo (R1, as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:55:35",
+      "detected": true
+    },
+    "W2_backfill_reads_before_the_guard": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 7,
+      "passed": 94,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc083_prb023_r2_backfill_acts_only_on_the_production_project[BRAIN-MRI-476110]",
+        "test_rc083_prb023_r2_backfill_acts_only_on_the_production_project[]",
+        "test_rc083_prb023_r2_backfill_acts_only_on_the_production_project[brain-mri-476110-copy]",
+        "test_rc083_prb023_r2_backfill_acts_only_on_the_production_project[brain-mri-47611]",
+        "test_rc083_prb023_r2_backfill_acts_only_on_the_production_project[daita-9f4f6]",
+        "test_rc083_prb023_r2_backfill_acts_only_on_the_production_project[mstool-research]",
+        "test_rc083_prb023_r2_backfill_acts_only_on_the_production_project[some-other-project]"
+      ],
+      "reintroduces": "the account list is read before the project is checked",
+      "applied": true,
+      "executed": "2026-10-28T22:55:49",
+      "detected": true
+    },
+    "W3_creator_active_by_default": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 2,
+      "passed": 99,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc083_prb023_r2_account_without_is_active_is_not_active",
+        "test_rc083_prb023_r2_earlier_runs_are_counted_and_the_undo_by_basis_documented"
+      ],
+      "reintroduces": "a creator without is_active is treated as active (R2, as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:56:05",
+      "detected": true
+    },
+    "W4_granter_active_by_default": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc083_prb023_r2_account_without_is_active_is_not_active"
+      ],
+      "reintroduces": "a granter without is_active is treated as active (R2, as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:56:24",
+      "detected": true
+    },
+    "W5_row_written_before_its_id_is_saved": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc083_prb023_r2_each_row_id_is_in_the_backup_before_it_is_written"
+      ],
+      "reintroduces": "a row is written before its id is in the backup (R3, as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:56:43",
+      "detected": true
+    },
+    "W6_backup_name_per_second": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc083_prb023_r2_a_run_never_overwrites_another_runs_backup"
+      ],
+      "reintroduces": "a run in the same second overwrites the previous run's backup (R3, as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:57:09",
+      "detected": true
+    },
+    "W7_earlier_rows_not_counted": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc083_prb023_r2_earlier_runs_are_counted_and_the_undo_by_basis_documented"
+      ],
+      "reintroduces": "a resumed run does not show the rows earlier runs left (R3)",
+      "applied": true,
+      "executed": "2026-10-28T22:57:37",
+      "detected": true
+    },
+    "W8_500_returns_the_exception": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 100,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc081_prb020_r2_unexpected_errors_return_no_internal_detail"
+      ],
+      "reintroduces": "an unexpected error returns its type and message to the client (R5, as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:57:54",
+      "detected": true
+    },
+    "W9_profile_save_uses_the_remembered_hash": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 2,
+      "passed": 99,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc084_prb024_r2_profile_save_never_uses_the_remembered_hash[error]",
+        "test_rc084_prb024_r2_profile_save_never_uses_the_remembered_hash[nothing]"
+      ],
+      "reintroduces": "a profile save writes back this instance's possibly stale password (R6, as found)",
+      "applied": true,
+      "executed": "2026-10-28T22:58:10",
+      "detected": true
+    }
+  },
+  "restored": {
+    "backend": {
+      "suite": "backend",
+      "exit": 0,
+      "failed": 0,
+      "passed": 101,
+      "errors": 0,
+      "failing_tests": []
+    },
+    "frontend": {
+      "suite": "frontend",
+      "exit": 0,
+      "failed": 0,
+      "passed": 30,
+      "errors": 0,
+      "failing_tests": []
+    }
+  },
+  "summary": {
+    "mutations": 99,
+    "detected": 99,
+    "undetected": []
+  }
+}

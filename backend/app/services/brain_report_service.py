@@ -10,20 +10,38 @@ focused on Multiple Sclerosis evaluation following international standards:
 
 Templates: general, ms_activity, ms_lesion_burden, ms_longitudinal.
 
-HIPAA Compliance:
-- Patient data is de-identified before sending to Claude API
-- Only clinical findings and measurements are transmitted
-- No names, IDs, or dates are sent to the external API
+Data sent to the model provider (CAPA-014; RC-064, RC-065, RC-066; HAZ-016):
+- Measurements only. The prompt is built from a structured payload (`report_payload_guard`): the
+  device's measurements, labels from the device's fixed vocabulary (any other label as a numbered
+  placeholder), sex (M/F) and a 5-year age band. No free-text or user-typed field is sent; the
+  clinician's text is added to the draft by the route after the model returns. The system prompt is a
+  fixed template.
+- Before the call, a detection-only check of the final prompt (the patient's own identifiers from
+  the patient record, and generic identifier patterns) refuses to send on any finding; without the
+  patient's record nothing is sent (fail closed).
+- An earlier header stated that patient data was de-identified and that names, IDs and dates were never sent; nothing did that then (CAPA-001 §2.3, CAPA-008 finding 4) — statement withdrawn.
 
 @module services.brain_report_service
 """
 
+import re
 import time
 import uuid
+from functools import lru_cache
 from typing import Optional, List, Dict, Any
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
+from app.services.report_payload_guard import (
+    UNLISTED,
+    PatientIdentifiers,
+    PatientRecordUnavailable,
+    assert_no_identifiers,
+    label_vocabulary,
+    percent_text,
+    provider_payload,
+    words_of,
+)
 
 logger = get_logger(__name__)
 
@@ -84,6 +102,99 @@ def _apply_disclaimer(content: str, language: str) -> str:
     if body.startswith(disclaimer):
         return body
     return f"{disclaimer}\n\n{body}"
+
+
+# CAPA-014 (RC-064): the model never receives the clinician's text; the route adds it to the draft.
+CLINICIAN_TEXT_INSTRUCTION = (
+    "The clinical indication, the technique and the clinician's notes are not provided to you: they are "
+    "added to the draft by the application. Under CLINICAL INDICATION and TECHNIQUE write only: "
+    "\"See the clinician's entry at the top of this draft.\""
+)
+
+
+# PRB-003 (RC-070; HAZ-008, HAZ-003): passed instead of a DIS result whenever DIS was not evaluated on a
+# segmentation a radiologist confirmed (paper A: the device's brain-DIS rule on raw automatic segmentations
+# returned "DIS met" in 19 of 100 healthy controls). It overrides the templates, which ask for a DIS table.
+DIS_NOT_EVALUATED_PROMPT = (
+    "\nDIS Assessment: NOT EVALUATED — requires clinician review of the segmentation (no radiologist has "
+    "confirmed the lesions and regions of this segmentation in its current version).\n"
+    "  SAFETY RULE (overrides the template and rule 4): Do NOT state or imply dissemination in space — "
+    "neither met nor not met, supported nor not supported, nor how many typical MS regions are involved — "
+    "from the lesion counts, the regions or any other value. In the DIS section write only: "
+    "'Dissemination in space: not evaluated (requires clinician review of the segmentation).' "
+    "Automatic marking also marks spots in most healthy brains; a marked spot is not evidence of "
+    "multiple sclerosis."
+)
+
+
+# PRB-003 (review of PR #68, finding 4): when DIS was not evaluated, the template itself carries no DIS
+# instruction — its DIS sections are replaced, any other line asking for DIS is removed, and format rule 4 keeps
+# only its CMSC prohibition. The not-evaluated rule is no longer only in the user message.
+_DIS_SECTION = re.compile(r"^(#{2,3}) [^\n]*(?:Dissemination in Space|DIS ASSESSMENT)[^\n]*\n.*?(?=^#{2,3} |\Z)",
+                          re.MULTILINE | re.DOTALL)
+_DIS_INSTRUCTION = re.compile(r"\bDIS\b|dissemination in space|typical MS regions", re.IGNORECASE)
+DIS_NOT_EVALUATED_LINE = ("Write only: 'Dissemination in space: not evaluated (requires clinician review of the "
+                          "segmentation).'")
+DIS_NOT_EVALUATED_SYSTEM_RULE = (
+    "SAFETY RULE (overrides everything below): dissemination in space was NOT evaluated for this segmentation — "
+    "no radiologist has confirmed its lesions and their regions. Never state or imply dissemination in space, "
+    "a McDonald space item or a number of regions involved, in any section. " + DIS_NOT_EVALUATED_LINE + "\n\n"
+)
+_RULE4_NOT_EVALUATED = ("4. Per CMSC Task Force guidance, **never write** 'McDonald criteria are met' or 'McDonald "
+                        "criteria are not met' — this requires full clinical correlation. Dissemination in space "
+                        "was not evaluated: " + DIS_NOT_EVALUATED_LINE)
+
+
+# Release 2026-10-25 (integration review of PR #69, item 1): without an evaluated DIS the route withholds the
+# regions (PRB-003) and the RC-064 payload drops the region of every lesion row; the prompt says so in this fixed
+# line instead of a numbered placeholder ("[unlisted label 1] = not confirmed").
+REGIONS_NOT_CONFIRMED_LINE = ("  Lesion regions: not confirmed by a radiologist; not given. Do not assign, count or "
+                              "tabulate the lesions by region.")
+
+
+# Second review of PR #68, N4: without an evaluated DIS the regions are not confirmed and are not sent to the
+# model, so no template may ask for a per-region section, a region column or a regional distribution either.
+_REGION_SECTION = re.compile(r"^### (?:Periventricular|Cortical / Juxtacortical|Infratentorial|Deep White Matter|"
+                             r"Regional Distribution)[^\n]*\n.*?(?=^#{2,3} |\Z)", re.MULTILINE | re.DOTALL)
+REGIONS_NOT_CONFIRMED_SECTION = (
+    "### White Matter Lesions\n"
+    "- Lesion count, total volume and size distribution as measured. The lesions' anatomical regions were not "
+    "confirmed by a radiologist and are not given: do not assign, count or tabulate lesions by region.\n\n")
+_REGION_LINE_EDITS = (
+    (re.compile(r"^Detailed lesion inventory by anatomical region:\n", re.MULTILINE), ""),
+    (re.compile(r"^\| # \| Region \| ", re.MULTILINE), "| # | "),
+    (re.compile(r"^\|---\|--------\|", re.MULTILINE), "|---|"),
+    (re.compile(r"^\| Region \| Count \| Change vs\. Prior \|$", re.MULTILINE),
+     "| Measure | Value | Change vs. Prior |"),
+    (re.compile(r" \(region\) \|"), " |"),
+    (re.compile(r"^\d+\. \*\*Distribution pattern\*\*:[^\n]*\n", re.MULTILINE), ""),
+    (re.compile(r"extensive periventricular confluency"), "extensive confluency"),
+    (re.compile(r",? and (?:reference )?(?:the )?2017 McDonald(?: diagnostic)? criteria"), ""),
+)
+
+
+def dis_not_evaluated_template(system_prompt: str) -> str:
+    """The template without any DIS instruction and without any per-region section, for a draft whose DIS was
+    not evaluated (RC-070; review of PR #68, finding 4; second review, N4)."""
+    text = _DIS_SECTION.sub(lambda m: f"{m.group(1)} Dissemination in Space (DIS) Assessment\n"
+                                      f"{DIS_NOT_EVALUATED_LINE}\n\n", system_prompt)
+    removed = []
+
+    def _one_section(_match):          # the per-region sections become ONE section without regions
+        removed.append(_match)
+        return REGIONS_NOT_CONFIRMED_SECTION if len(removed) == 1 else ""
+
+    text = _REGION_SECTION.sub(_one_section, text)
+    for pattern, replacement in _REGION_LINE_EDITS:
+        text = pattern.sub(replacement, text)
+    kept = []
+    for line in text.split("\n"):
+        if _DIS_INSTRUCTION.search(line) and "not evaluated" not in line and not line.startswith("#"):
+            if line.startswith("4. Per CMSC Task Force guidance"):
+                kept.append(_RULE4_NOT_EVALUATED)
+            continue
+        kept.append(line)
+    return DIS_NOT_EVALUATED_SYSTEM_RULE + "\n".join(kept)
 
 
 # Shared formatting instructions for all templates
@@ -379,62 +490,62 @@ REPORT_TEMPLATES: Dict[str, str] = {
         "Follow MAGNIMS-CMSC-NAIMS 2021 consensus, RSNA format, and 2017 McDonald criteria.\n\n"
         "The user will provide quantitative data from automated lesion comparison between "
         "two timepoints including: per-lesion volume changes, new/resolved/enlarged/stable "
-        "counts, total burden delta, and DIS assessment.\n\n"
-        "CRITICAL SAFETY CONSTRAINT (overrides any directness instruction): these automated "
-        "interval-change counts are produced WITHOUT verified spatial co-registration of the "
-        "two timepoints and are UNADJUDICATED CANDIDATES that may include misregistration "
-        "artefacts. You MUST (a) label new/enlarging counts as 'candidate (registration "
-        "unverified)'; (b) NOT assert dissemination in time from them; (c) in DISEASE ACTIVITY "
-        "CLASSIFICATION, state that activity status CANNOT be confirmed from unregistered "
-        "candidates and requires radiologist review of co-registered images — never output a "
-        "bare 'Active' conclusion based on these counts; (d) present the numbers as candidates "
-        "for review, not confirmed findings.\n\n"
+        "change candidates, total burden delta, and DIS assessment.\n\n"
+        "CRITICAL SAFETY CONSTRAINT (overrides any directness instruction; CAPA-013, HAZ-007): "
+        "the automated new/enlarging results are UNCONFIRMED CHANGE CANDIDATES. In a public test "
+        "with expert-marked change this rule proposed several false candidates per patient, and "
+        "the two timepoints are not verified as co-registered at lesion scale. You MUST (a) "
+        "list them only as 'unconfirmed change candidates awaiting radiologist review', never "
+        "as new or enlarging lesions; (b) NOT assert dissemination in time from them; (c) NOT "
+        "classify the disease course from them; (d) state no reader decision: the radiologist's "
+        "decisions on the candidates are recorded in the application, not in this draft; (e) when "
+        "the data say the change candidates were NOT computed (acquisition or visit order not "
+        "established as comparable), report no count and no lesion load and state that the "
+        "change must be assessed visually by the radiologist. The FLAIR subtraction is a "
+        "signal, never a confirmation.\n\n"
         "Generate the report with these exact sections:\n\n"
         "## CLINICAL INDICATION\n"
         "Restate indication, noting longitudinal comparison purpose.\n\n"
         "## TECHNIQUE\n"
-        "MRI technique per MAGNIMS MS protocol. Note standardized acquisition for comparison.\n\n"
+        "MRI technique per MAGNIMS MS protocol; note whether the acquisition of the two visits "
+        "was established as the same (as supplied in the data).\n\n"
         "## COMPARISON\n"
         "Reference the prior timepoint study with specific comparison data provided.\n\n"
         "## INTERVAL CHANGES\n"
-        "### New Lesions\n"
-        "- Exact count of new T2/FLAIR lesions, approximate locations if centroid data provided\n"
-        "- Clinical significance: evidence of ongoing inflammatory activity\n\n"
-        "### Enlarging Lesions\n"
-        "- Count and percentage volume increase for each\n"
-        "- Distinguish between definite enlargement (>20%) and borderline change\n\n"
-        "### Resolved/Shrunk Lesions\n"
-        "- Count and interpretation (treatment response, natural resolution)\n\n"
-        "### Stable Lesions\n"
-        "- Count of unchanged lesions\n\n"
+        "### Change Candidates (unconfirmed)\n"
+        "- Number of unconfirmed new and enlarging change candidates awaiting radiologist review; "
+        "approximate locations if centroid data provided\n\n"
+        "### Radiologist Decisions\n"
+        "- Write: 'The radiologist's decisions on these candidates are recorded in the "
+        "application and are not part of this draft.'\n\n"
+        "### Resolved/Shrunk and Stable Candidates\n"
+        "- Counts, labelled as unconfirmed candidates\n\n"
         "## LESION BURDEN TRAJECTORY\n"
-        "- Total T2 lesion load: prior vs. current (mL or mm³)\n"
-        "- Percentage change in total burden\n"
-        "- Trajectory classification: **improving**, **stable**, or **worsening**\n"
-        "- Annualized new lesion rate if calculable\n\n"
+        "- Total T2 lesion load: prior vs. current (mL or mm³), only if supplied\n"
+        "- Percentage change in total burden (only if supplied)\n\n"
         "## DIS ASSESSMENT\n"
         "- Present DIS data from provided analysis\n"
         "- Lesion presence across 4 MAGNIMS regions with checkmarks\n\n"
-        "## DISEASE ACTIVITY CLASSIFICATION\n"
-        "Per MAGNIMS 2021 framework:\n"
-        "- **Active**: new enhancing or new/enlarging T2 lesions since prior\n"
-        "- **Not Active**: no new or enlarging lesions\n"
-        "- **Progression**: worsening disability independent of relapses (PIRA)\n"
-        "- Assessment of treatment efficacy: expected response vs. breakthrough activity\n"
-        "- Consider NEDA-3 criteria if data supports (no relapses, no disability worsening, "
-        "no MRI activity)\n\n"
+        "## INTERVAL CHANGE STATUS\n"
+        "- Write: 'Not determined by the software — N unconfirmed change candidates for "
+        "radiologist review; the radiologist's decisions are recorded in the application.' Never "
+        "infer a conclusion from the candidates.\n\n"
         "## IMPRESSION\n"
         "Numbered summary:\n"
-        "1. Interval change summary: N new, N enlarged, N resolved lesions\n"
-        "2. Burden trajectory with quantitative delta\n"
+        "1. Unconfirmed change candidates for radiologist review\n"
+        "2. Burden trajectory with quantitative delta (if supplied)\n"
         "3. DIS status (X/4 regions)\n"
-        "4. Activity classification (active/not active)\n"
-        "5. Treatment efficacy assessment\n"
-        "6. Evidence of PIRA if applicable\n"
-        "7. Recommended follow-up interval per MAGNIMS guidelines\n"
+        "4. Interval change status as above\n"
+        "5. Recommended follow-up interval per MAGNIMS guidelines\n"
         + _FORMAT_INSTRUCTIONS
     ),
 }
+
+
+def _lesions(count: Any) -> str:
+    """'1 lesion', '2 lesions' (release 2026-10-25, film capture: the prompt said "Deep White Matter: 1 lesions" and
+    the model copied it into the report). Text only; any value other than exactly one keeps the plural."""
+    return f"{count} lesion" if count == 1 and not isinstance(count, bool) else f"{count} lesions"
 
 
 class BrainReportService:
@@ -446,9 +557,9 @@ class BrainReportService:
     - Integrates volumetry data when available
     - Multi-language support (en, es, de)
 
-    CAPA-008: this service does NOT de-identify. It forwards the supplied findings
-    (including age, sex and free text) to the model provider; callers must not send direct
-    identifiers. An earlier claim of HIPAA compliance here was unsubstantiated and is withdrawn.
+    CAPA-014: the prompt is built from a structured payload only (measurements, fixed labels, sex,
+    age band) and checked against the patient's own identifiers before any call; without the
+    patient's record no request is sent (see the module docstring).
     """
 
     def __init__(self):
@@ -481,18 +592,16 @@ class BrainReportService:
         lang_map = {"en": "English", "es": "Spanish", "de": "German"}
         lang_name = lang_map.get(language, "English")
         parts.append(f"Generate the report in {lang_name}.")
-
-        # Clinical context (de-identified)
-        if findings.get("clinical_indication"):
-            parts.append(f"Clinical indication: {findings['clinical_indication']}")
-
-        if findings.get("technique"):
-            parts.append(f"Technique/Sequences: {findings['technique']}")
+        # CAPA-014 (RC-064): no free text is sent; when the clinician typed some, the route adds it to the
+        # draft and the model is told so (only then).
+        if findings.get("clinician_entry") is True:
+            parts.append(CLINICIAN_TEXT_INSTRUCTION)
 
         if findings.get("patient_age"):
-            parts.append(f"Patient age: {findings['patient_age']} years")
+            # CAPA-014 (RC-064): the 5-year band of the structured payload, never the exact age
+            parts.append(f"Patient age band: {findings['patient_age']} (years)")
 
-        if findings.get("patient_sex"):
+        if findings.get("patient_sex") in ("M", "F"):
             sex_label = "Male" if findings["patient_sex"] == "M" else "Female"
             parts.append(f"Patient sex: {sex_label}")
 
@@ -555,11 +664,14 @@ class BrainReportService:
             parts.append(f"  Total lesions: {la.get('total_count', 0)}")
             parts.append(f"  Total burden: {la.get('total_burden_mm3', 0):.2f} mm³ "
                          f"({la.get('total_burden_ml', 0):.4f} mL)")
-            regions = la.get("regions", {})
+            regions_confirmed = la.get("regions_confirmed") is not False      # release 2026-10-25, item 1
+            if not regions_confirmed:
+                parts.append(REGIONS_NOT_CONFIRMED_LINE)
+            regions = la.get("regions", {}) if regions_confirmed else {}
             if regions:
                 parts.append("  Regional summary:")
                 for name, info in regions.items():
-                    parts.append(f"    - {name}: {info.get('lesion_count', 0)} lesions, "
+                    parts.append(f"    - {name}: {_lesions(info.get('lesion_count', 0))}, "
                                  f"{info.get('total_volume_mm3', 0):.2f} mm³ "
                                  f"({info.get('total_volume_ml', 0):.4f} mL)")
             size_dist = la.get("size_distribution", {})
@@ -572,22 +684,35 @@ class BrainReportService:
             # Per-lesion detail table (critical for comprehensive reports)
             lesions = la.get("lesions", [])
             if lesions:
-                parts.append(f"\n  Individual lesion data ({len(lesions)} lesions):")
-                parts.append("  # | Region | Volume_mm3 | Volume_mL | Size | Centroid(z,y,x)")
-                parts.append("  --|--------|-----------|----------|------|----------------")
+                parts.append(f"\n  Individual lesion data ({_lesions(len(lesions))}):")
+                if regions_confirmed:
+                    parts.append("  # | Region | Volume_mm3 | Volume_mL | Size | Centroid(z,y,x)")
+                    parts.append("  --|--------|-----------|----------|------|----------------")
+                else:   # no region column: the regions were not confirmed (release 2026-10-25, item 1)
+                    parts.append("  # | Volume_mm3 | Volume_mL | Size | Centroid(z,y,x)")
+                    parts.append("  --|-----------|----------|------|----------------")
                 for les in lesions:
                     ctr = les.get("centroid", {})
+                    region = f"{les.get('region', 'Unknown')} | " if regions_confirmed else ""
                     parts.append(
-                        f"  {les.get('id', '?')} | {les.get('region', 'Unknown')} | "
+                        f"  {les.get('id', '?')} | {region}"
                         f"{les.get('volume_mm3', 0):.1f} | "
                         f"{les.get('volume_ml', 0):.4f} | "
                         f"{les.get('size_category', '?')} | "
                         f"z={ctr.get('z', 0):.0f}, y={ctr.get('y', 0):.0f}, x={ctr.get('x', 0):.0f}"
                     )
 
-        # DIS assessment data
-        if findings.get("dis_assessment"):
-            dis = findings["dis_assessment"]
+        # DIS assessment data. PRB-003 (RC-070; HAZ-008, HAZ-003): a DIS result is passed only when the
+        # server evaluated it on a segmentation a radiologist confirmed ("evaluation_status": "evaluated",
+        # set by the report route from the stored segmentation). Anything else — not evaluated, or a block
+        # without that state — is NOT EVALUATED, never "NOT MET" (a missing flag used to print NOT MET),
+        # and the model is told not to derive DIS from the lesion counts or regions.
+        from app.services import dis_review_gate as gate   # the one "evaluated" rule (release 2026-10-25, item 3)
+        dis = findings.get("dis_assessment")
+        if not gate.is_evaluated(dis):
+            if dis or findings.get("lesion_analysis"):
+                parts.append(DIS_NOT_EVALUATED_PROMPT)
+        else:
             met = "MET" if dis.get("dis_met") else "NOT MET"
             parts.append(f"\nDIS Assessment: {met} "
                          f"({dis.get('regions_with_lesions', 0)}/{dis.get('total_dis_regions', 4)} regions)")
@@ -609,31 +734,47 @@ class BrainReportService:
         # instruct the report generator not to assert them as findings.
         if findings.get("longitudinal"):
             lng = findings["longitudinal"]
-            # No spatial registration exists anywhere in the system, and `findings` can be
+            # No spatial registration is verified anywhere in the system, and `findings` can be
             # supplied straight from the client (/ai/report/generate). So NEVER trust a
-            # caller-provided registration_verified=true — always candidate-frame until a
-            # validated registration service ships. (Adversarial finding D4.)
-            verified = False
+            # caller-provided registration_verified=true (adversarial finding D4), and never
+            # pass an activity or DIT flag: the candidates are unconfirmed (CAPA-013, RC-060).
             parts.append(f"\nLongitudinal comparison data:")
-            parts.append(f"  TP1 burden: {lng.get('burden_tp1_ml', 0):.3f} mL "
-                         f"({lng.get('total_lesions_tp1', 0)} lesions)")
-            parts.append(f"  TP2 burden: {lng.get('burden_tp2_ml', 0):.3f} mL "
-                         f"({lng.get('total_lesions_tp2', 0)} lesions)")
-            parts.append(f"  Burden delta: {lng.get('burden_delta_percent', 0):.1f}%")
-            sc = lng.get("status_counts", {})
-            if not verified:
+            if lng.get("abstained"):
+                # RC-062: acquisition or visit order not established as comparable — no change
+                # result and no lesion load or count of either visit (review of PR #63, blocker 2).
                 parts.append(
-                    "  NOTE: the following are UNADJUDICATED CHANGE CANDIDATES from a "
-                    "comparison that did NOT verify spatial registration. Do NOT report them "
-                    "as confirmed new/enlarging lesions or use them to assert dissemination "
-                    "in time; present them only as candidates requiring radiologist review."
+                    "  Automatic change candidates were NOT computed: the acquisition of the two "
+                    "visits, or their order, could not be established as comparable. Report no new, "
+                    "enlarging or resolved figure and no lesion load of either visit; state that the "
+                    "change between the visits must be assessed visually by the radiologist."
                 )
-            label = (lambda k: k) if verified else (lambda k: f"{k} (candidate, registration unverified)")
-            parts.append(f"  New-lesion {label('count')}: {sc.get('new', 0)}")
-            parts.append(f"  Enlarging {label('count')}: {sc.get('enlarged', 0)}")
-            parts.append(f"  Resolved {label('count')}: {sc.get('resolved', 0)}")
-            parts.append(f"  Shrunk {label('count')}: {sc.get('shrunk', 0)}")
-            parts.append(f"  Stable {label('count')}: {sc.get('stable', 0)}")
+            else:
+                parts.append(f"  TP1 burden: {lng.get('burden_tp1_ml') or 0:.3f} mL "
+                             f"({_lesions(lng.get('total_lesions_tp1') or 0)})")
+                parts.append(f"  TP2 burden: {lng.get('burden_tp2_ml') or 0:.3f} mL "
+                             f"({_lesions(lng.get('total_lesions_tp2') or 0)})")
+                if lng.get("burden_delta_percent") is not None:
+                    parts.append(f"  Burden delta: {percent_text(lng.get('burden_delta_percent'))}")
+                sc = lng.get("status_counts") or {}
+                parts.append(
+                    "  NOTE: the following are UNCONFIRMED CHANGE CANDIDATES produced automatically, "
+                    "without spatial registration verified at lesion scale. In a public test with "
+                    "expert-marked change this rule proposed several false candidates per patient. "
+                    "Do NOT report them as new or enlarging lesions, do NOT classify the disease "
+                    "course from them, do NOT use them for dissemination in time; list them only as "
+                    "unconfirmed candidates awaiting radiologist review."
+                )
+                parts.append(f"  New-lesion candidates (unconfirmed): {sc.get('new', 0)}")
+                parts.append(f"  Enlarging candidates (unconfirmed): {sc.get('enlarged', 0)}")
+                parts.append(f"  Resolved candidates (unconfirmed): {sc.get('resolved', 0)}")
+                parts.append(f"  Shrunk candidates (unconfirmed): {sc.get('shrunk', 0)}")
+                parts.append(f"  Stable candidates (unconfirmed): {sc.get('stable', 0)}")
+                # Review of PR #63, blocker 1: findings come from the request and a reader decision
+                # in them cannot be verified here, so none is ever passed to the model.
+                parts.append(
+                    "  Radiologist decisions on these candidates are recorded in the application and "
+                    "are not part of this draft: state none."
+                )
 
         # Zone map statistics (from MSMask atlas)
         if findings.get("zone_stats"):
@@ -643,12 +784,8 @@ class BrainReportService:
             for zone_name, info in zs.get("zones", {}).items():
                 parts.append(
                     f"  - {zone_name}: {info.get('voxel_count', 0)} voxels "
-                    f"({info.get('percentage', 0):.1f}%)"
+                    f"({percent_text(info.get('percentage', 0))})"
                 )
-
-        # Additional observations
-        if findings.get("additional_observations"):
-            parts.append(f"\nAdditional observations: {findings['additional_observations']}")
 
         return "\n".join(parts)
 
@@ -658,18 +795,23 @@ class BrainReportService:
         findings: Optional[Dict[str, Any]] = None,
         volumetry: Optional[Dict[str, Any]] = None,
         language: str = "en",
+        identifiers: Optional[PatientIdentifiers] = None,
     ) -> Dict[str, Any]:
         """
         Generate a structured brain MRI report.
 
         Args:
             template_type: Report template (general, ms_activity, ms_lesion_burden)
-            findings: Clinical findings dict (de-identified)
+            findings: Clinical findings dict (only the structured payload is sent, CAPA-014)
             volumetry: Volumetry results dict (optional)
             language: Report language (en, es, de)
+            identifiers: The patient's own identifiers, from the patient record (required, for the check)
 
         Returns:
             Dict with report_id, content, template_type, language, processing_time_ms
+
+        Raises:
+            ProviderGuardError: no identifiers, or the check found one in the prompt — nothing was sent
         """
         start_time = time.time()
         report_id = str(uuid.uuid4())
@@ -681,8 +823,31 @@ class BrainReportService:
         if template_type not in REPORT_TEMPLATES:
             template_type = "general"
 
-        system_prompt = REPORT_TEMPLATES[template_type]
-        user_prompt = self._build_findings_prompt(findings, volumetry, language)
+        # CAPA-014 (RC-065, HAZ-016): without the patient's identifiers there is nothing to check
+        # against, so no request is sent.
+        if not isinstance(identifiers, PatientIdentifiers):
+            raise PatientRecordUnavailable("the patient's identifiers were not supplied")
+
+        system_prompt = REPORT_TEMPLATES[template_type]      # fixed text: carries no patient data
+        # RC-064: structured payload only — measurements, fixed labels, sex, age band; no free text.
+        payload = provider_payload(findings, volumetry, identifiers)   # the patient's own numbers refused (R2)
+        # PRB-003 (RC-070; review of PR #68, finding 4): no DIS instruction in the template unless DIS was
+        # evaluated on a classified, radiologist-confirmed segmentation (state set by the report route).
+        # Release 2026-10-25 integration (PR #67 + PR #68): the variant is chosen on the DIS block the model
+        # actually receives (the RC-064 payload), so the template and the findings prompt always agree; the
+        # system prompt is one of the fixed template variants (RC-064 amended, PENDING owner approval).
+        from app.services import dis_review_gate as gate   # the one "evaluated" rule (release 2026-10-25, item 3)
+        dis_block = payload.findings.get("dis_assessment")
+        if not gate.is_evaluated(dis_block):
+            system_prompt = dis_not_evaluated_template(system_prompt)
+        user_prompt = self._build_findings_prompt(payload.findings, payload.volumetry, language)
+        # RC-065: detection-only tripwire on the final prompt; refuses to send on any finding.
+        assert_prompt_carries_no_identifier(user_prompt, identifiers)
+        # RC-066: record that the check ran and what was withheld (counts) — never the payload.
+        logger.info(
+            "[Report] Structured payload checked before the model provider call",
+            extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld},
+        )
 
         logger.info(
             f"[Report] Generating {template_type} report in {language}",
@@ -730,6 +895,8 @@ class BrainReportService:
                     "input": message.usage.input_tokens,
                     "output": message.usage.output_tokens,
                 },
+                # CAPA-014: placeholder -> label as written, for the clinician's draft only (never sent)
+                "unlisted_labels": payload.unlisted,
             }
 
         except Exception as e:
@@ -776,9 +943,91 @@ class BrainReportService:
                 "id": "ms_longitudinal",
                 "name": "MS Longitudinal Comparison",
                 "description": (
-                    "Interval change report with per-lesion tracking (new/enlarged/resolved), "
-                    "burden trajectory, DIS assessment, and NEDA-3 evaluation."
+                    "Interval change report: unconfirmed change candidates (new/enlarged/resolved) "
+                    "for radiologist review, burden trajectory and DIS assessment."
                 ),
             },
         ]
         return templates
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CAPA-014 (RC-065): the device's own words — the tripwire never reports one of them on its own, so a
+# patient named White does not stop "Deep White Matter", nor two of them in the order the device's text has
+# them ("Deep White"). Derived only from what can appear in the user prompt — the prompt builder itself on
+# synthetic payloads covering every label and branch — not from the system templates, which are never
+# checked (second review, N5).
+# ─────────────────────────────────────────────────────────────────────────────
+def _synthetic_payloads():
+    labels = sorted(set(label_vocabulary().values()))
+    regions = {n: {"lesion_count": 1, "total_volume_mm3": 1.0, "total_volume_ml": 0.001} for n in labels}
+    lesions = [{"id": i + 1, "region": n, "volume_mm3": 1.0, "volume_ml": 0.001, "size_category": "small",
+                "centroid": {"z": 1, "y": 1, "x": 1}} for i, n in enumerate(labels)]
+    base = {
+        "clinician_entry": True,
+        "patient_age": "45-49", "patient_sex": "M", "segmentation_labels": labels + [UNLISTED],
+        "anomalies": [{"type": n, "location": n, "confidence": 0.5, "volume_mm3": 1.0} for n in labels],
+        "lesion_analysis": {"total_count": 1, "total_burden_mm3": 1.0, "total_burden_ml": 0.001, "regions": regions,
+                            "size_distribution": {"small": 1, "medium": 1, "large": 1}, "lesions": lesions},
+        # an evaluated DIS with present and absent regions (third review, M2: also printed once PR #68 is in)
+        "dis_assessment": {"evaluation_status": "evaluated", "dis_met": True, "regions_with_lesions": 1,
+                           "total_dis_regions": 5,
+                           "region_details": {n: {"present": i % 2 == 0} for i, n in enumerate(labels)},
+                           "has_active_lesions": True,
+                           "active_voxels": 1, "has_black_holes": True, "black_hole_voxels": 1},
+        "zone_stats": {"total_brain_voxels": 1, "zones": {n: {"voxel_count": 1, "percentage": 1.0} for n in labels}},
+    }
+    volumetry = {"total_brain_volume_ml": 1.0, "intracranial_volume_ml": 1.0, "structures":
+                 [{"structure_name": n, "volume_ml": 1.0, "is_abnormal": True, "normative_percentile": 1,
+                   "abnormality_type": "atrophy"} for n in labels]
+                 + [{"structure_name": n, "volume_ml": 1.0, "is_abnormal": False} for n in labels]}
+    for longitudinal in ({"burden_tp1_ml": 1.0, "burden_tp2_ml": 1.0, "total_lesions_tp1": 1, "total_lesions_tp2": 1,
+                          "burden_delta_percent": 1.0, "status_counts": {"new": 1}}, {"abstained": True}):
+        yield {**base, "longitudinal": longitudinal}, volumetry
+    # release 2026-10-25, film capture ("1 lesions"): a count of one is singular, any other plural - both forms of
+    # every counted noun, with and without the region column, are the device's own words and word pairs
+    for confirmed in (True, False):
+        for count in (1, 2):
+            yield {**base, "lesion_analysis": {**base["lesion_analysis"], "regions_confirmed": confirmed,
+                                               "regions": {n: {**r, "lesion_count": count} for n, r in regions.items()},
+                                               "lesions": lesions if count == 1 else lesions[:1]},
+                   "longitudinal": {"burden_tp1_ml": 1.0, "burden_tp2_ml": 1.0, "total_lesions_tp1": count,
+                                    "total_lesions_tp2": count},
+                   **({} if confirmed else {"dis_assessment": {"evaluation_status": "not_evaluated"}})}, volumetry
+    yield {**base, "patient_sex": "F", "patient_age": "90 or older"}, volumetry
+    # regions not confirmed (release 2026-10-25, item 1): the fixed line and the table without a region column
+    yield {**base, "lesion_analysis": {**base["lesion_analysis"], "regions_confirmed": False},
+           "dis_assessment": {"evaluation_status": "not_evaluated"}}, volumetry
+    # every value missing: what "not available" looks like in each block
+    sparse = provider_payload({"lesion_analysis": {"regions": {"Lesion": {}}, "size_distribution": {"small": None},
+                                                   "lesions": [{}]},
+                               "dis_assessment": {"has_active_lesions": True, "has_black_holes": True},
+                               "zone_stats": {"zones": {"Lesion": {}}}, "longitudinal": {"status_counts": {}}}, None)
+    yield sparse.findings, None
+
+
+@lru_cache(maxsize=1)
+def _fixed_prompt_word_lists() -> tuple:
+    builder = BrainReportService.__new__(BrainReportService)
+    texts = [UNLISTED, "Structure Label"]
+    for findings, volumetry in _synthetic_payloads():
+        for language in ("en", "es", "de"):
+            texts.append(builder._build_findings_prompt(findings, volumetry, language))
+    return tuple(tuple(words_of(text)) for text in texts)
+
+
+@lru_cache(maxsize=1)
+def fixed_prompt_words() -> frozenset:
+    """Words the device's own text can put in the user prompt."""
+    return frozenset(w for words in _fixed_prompt_word_lists() for w in words)
+
+
+@lru_cache(maxsize=1)
+def fixed_prompt_pairs() -> frozenset:
+    """Two such words in the order the device's own text has them, e.g. ("deep", "white")."""
+    return frozenset(pair for words in _fixed_prompt_word_lists() for pair in zip(words, words[1:]))
+
+
+def assert_prompt_carries_no_identifier(user_prompt: str, identifiers: PatientIdentifiers) -> None:
+    """RC-065: the tripwire on the final prompt (raises IdentifierInPrompt; never edits the text)."""
+    assert_no_identifiers(user_prompt, identifiers, fixed_prompt_words(), fixed_prompt_pairs())

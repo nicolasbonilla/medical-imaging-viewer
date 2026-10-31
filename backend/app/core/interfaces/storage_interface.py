@@ -108,6 +108,21 @@ class IStorageService(ABC):
         """
         pass
 
+    async def download_file_range(
+        self,
+        bucket_name: str,
+        object_name: str,
+        start: int,
+        end: int,
+    ) -> bytes:
+        """
+        Bytes start..end (inclusive) of a file — fewer when the file is shorter (review of PR #74, m9: the image-grid
+        check reads a NIfTI header without downloading the image). This default downloads the whole file and slices
+        it; storage services that can read a range override it.
+        """
+        data = await self.download_file(bucket_name, object_name)
+        return data[start:end + 1]
+
     @abstractmethod
     async def delete_file(
         self,

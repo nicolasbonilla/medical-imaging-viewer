@@ -27,6 +27,11 @@ export interface PanelState {
   } | null;
   /** Whether this panel is currently loading */
   isLoading: boolean;
+  /**
+   * RC-023 (CAPA-010): anatomical axis codes of THIS panel's image, from the server
+   * metadata. Undefined until the image is loaded (the panel then reports UNKNOWN).
+   */
+  orientation?: string;
 }
 
 interface MultiViewerState {
@@ -42,8 +47,11 @@ interface MultiViewerState {
   // Actions
   setLayout: (layout: ViewerLayout) => void;
   setSliceIndex: (panelId: string, index: number) => void;
+  /** PRB-008: position ONE panel (its image just loaded), whatever the sync setting. */
+  setPanelSliceIndex: (panelId: string, index: number) => void;
   assignInstance: (panelId: string, instanceId: string, sequence: SequenceType) => void;
-  setPanelImageData: (panelId: string, imageData: string, metadata: { rows: number; columns: number; slices: number }) => void;
+  /** `orientation` replaces the panel's orientation (pass the panel's own value to keep it). */
+  setPanelImageData: (panelId: string, imageData: string, metadata: { rows: number; columns: number; slices: number }, orientation?: string) => void;
   setPanelLoading: (panelId: string, loading: boolean) => void;
   setActivePanelId: (panelId: string) => void;
   setSyncSlice: (sync: boolean) => void;
@@ -89,19 +97,24 @@ export const useMultiViewerStore = create<MultiViewerState>()((set, get) => ({
     }
   },
 
+  setPanelSliceIndex: (panelId, index) =>
+    set((state) => ({
+      panels: state.panels.map((p) => (p.id === panelId ? { ...p, sliceIndex: index } : p)),
+    })),
+
   assignInstance: (panelId, instanceId, sequence) =>
     set((state) => ({
       panels: state.panels.map((p) =>
         p.id === panelId
-          ? { ...p, instanceId, sequence, sliceIndex: 0, imageData: null, metadata: null, isLoading: false }
+          ? { ...p, instanceId, sequence, sliceIndex: 0, imageData: null, metadata: null, isLoading: false, orientation: undefined }
           : p
       ),
     })),
 
-  setPanelImageData: (panelId, imageData, metadata) =>
+  setPanelImageData: (panelId, imageData, metadata, orientation) =>
     set((state) => ({
       panels: state.panels.map((p) =>
-        p.id === panelId ? { ...p, imageData, metadata, isLoading: false } : p
+        p.id === panelId ? { ...p, imageData, metadata, orientation, isLoading: false } : p
       ),
     })),
 
@@ -128,6 +141,7 @@ export const useMultiViewerStore = create<MultiViewerState>()((set, get) => ({
           imageData: null,
           metadata: null,
           isLoading: false,
+          orientation: undefined, // never show the previous image's orientation
         };
       }
       // Clear unused panels
@@ -140,6 +154,7 @@ export const useMultiViewerStore = create<MultiViewerState>()((set, get) => ({
           imageData: null,
           metadata: null,
           isLoading: false,
+          orientation: undefined,
         };
       }
       return { panels };

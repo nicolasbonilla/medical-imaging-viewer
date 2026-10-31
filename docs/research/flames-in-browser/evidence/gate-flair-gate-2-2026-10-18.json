@@ -1,0 +1,4969 @@
+{
+ "date": "2026-10-18",
+ "gate": {
+  "version": "flair-gate/2",
+  "maxDeepOverCortex": 0.915,
+  "maxGreyClassFraction": 0.27,
+  "maxBrightFraction": 0.025,
+  "minBandVoxels": 500,
+  "maxHeadDarkFraction": 0.2,
+  "maxRimBrightFraction": 0.01,
+  "maxBorderNonzeroFraction": 0.02
+ },
+ "inputs": [
+  "docs/research/flames-in-browser/evidence/gate-validation-2026-10-18.json",
+  "docs/research/flames-in-browser/evidence/gate-validation-isbi2015-2026-10-18.json"
+ ],
+ "replay_code": "frontend/src/services/flames/__tests__/gateReplay.flames.test.ts (shipped decideFlairContrast + GATES)",
+ "lodo_code": "research/flames_in_browser/gate_lodo.py",
+ "shipped_counts": {
+  "note": "flair: [FLAIR accepted, n]; other: [T1/T1-post/T2 refused, n]; skull: [FLAIR with skull refused, n]. clinician_confirmed = every case replayed as if the clinician confirmed it is a FLAIR (most permissive legal input); no_positive_evidence = no confirmation, no proving header.",
+  "clinician_confirmed": {
+   "mslesseg": {
+    "flair": [
+     40,
+     115
+    ],
+    "other": [
+     230,
+     230
+    ],
+    "skull": [
+     0,
+     0
+    ]
+   },
+   "openms": {
+    "flair": [
+     35,
+     36
+    ],
+    "other": [
+     102,
+     102
+    ],
+    "skull": [
+     12,
+     12
+    ]
+   },
+   "isbi2015": {
+    "flair": [
+     12,
+     19
+    ],
+    "other": [
+     19,
+     19
+    ],
+    "skull": [
+     0,
+     0
+    ]
+   },
+   "all": {
+    "flair": [
+     87,
+     170
+    ],
+    "other": [
+     351,
+     351
+    ],
+    "skull": [
+     12,
+     12
+    ]
+   }
+  },
+  "no_positive_evidence": {
+   "mslesseg": {
+    "flair": [
+     0,
+     115
+    ],
+    "other": [
+     230,
+     230
+    ],
+    "skull": [
+     0,
+     0
+    ]
+   },
+   "openms": {
+    "flair": [
+     0,
+     36
+    ],
+    "other": [
+     102,
+     102
+    ],
+    "skull": [
+     12,
+     12
+    ]
+   },
+   "isbi2015": {
+    "flair": [
+     0,
+     19
+    ],
+    "other": [
+     19,
+     19
+    ],
+    "skull": [
+     0,
+     0
+    ]
+   },
+   "all": {
+    "flair": [
+     0,
+     170
+    ],
+    "other": [
+     351,
+     351
+    ],
+    "skull": [
+     12,
+     12
+    ]
+   }
+  }
+ },
+ "replay_summary": {
+  "clinician_confirmed": {
+   "mslesseg-test | FLAIR | stripped": {
+    "n": 22,
+    "accepted": 9,
+    "byDecision": {
+     "refused-contrast": 8,
+     "refused-skull": 4,
+     "accepted": 9,
+     "refused-border-volume": 1
+    }
+   },
+   "mslesseg-test | T1 | stripped": {
+    "n": 22,
+    "accepted": 0,
+    "byDecision": {
+     "refused-skull": 9,
+     "refused-border-volume": 11,
+     "refused-contrast": 2
+    }
+   },
+   "mslesseg-test | T2 | stripped": {
+    "n": 22,
+    "accepted": 0,
+    "byDecision": {
+     "refused-skull": 19,
+     "refused-border-volume": 1,
+     "refused-contrast": 2
+    }
+   },
+   "mslesseg-train | FLAIR | stripped": {
+    "n": 93,
+    "accepted": 31,
+    "byDecision": {
+     "refused-contrast": 37,
+     "accepted": 31,
+     "refused-border-volume": 5,
+     "refused-skull": 20
+    }
+   },
+   "mslesseg-train | T1 | stripped": {
+    "n": 93,
+    "accepted": 0,
+    "byDecision": {
+     "refused-border-volume": 47,
+     "refused-skull": 44,
+     "refused-contrast": 2
+    }
+   },
+   "mslesseg-train | T2 | stripped": {
+    "n": 93,
+    "accepted": 0,
+    "byDecision": {
+     "refused-skull": 86,
+     "refused-border-volume": 6,
+     "refused-contrast": 1
+    }
+   },
+   "openms-mni | FLAIR | stripped": {
+    "n": 30,
+    "accepted": 30,
+    "byDecision": {
+     "accepted": 30
+    }
+   },
+   "openms-mni | T1 | stripped": {
+    "n": 30,
+    "accepted": 0,
+    "byDecision": {
+     "refused-contrast": 30
+    }
+   },
+   "openms-mni | T1POST | stripped": {
+    "n": 30,
+    "accepted": 0,
+    "byDecision": {
+     "refused-skull": 28,
+     "refused-contrast": 2
+    }
+   },
+   "openms-mni | T2 | stripped": {
+    "n": 30,
+    "accepted": 0,
+    "byDecision": {
+     "refused-skull": 30
+    }
+   },
+   "openms-native | FLAIR | stripped": {
+    "n": 6,
+    "accepted": 5,
+    "byDecision": {
+     "accepted": 5,
+     "refused-skull": 1
+    }
+   },
+   "openms-native | FLAIR | skull-raw": {
+    "n": 6,
+    "accepted": 0,
+    "byDecision": {
+     "refused-skull": 3,
+     "refused-border-volume": 3
+    }
+   },
+   "openms-native | FLAIR | skull-zero-background": {
+    "n": 6,
+    "accepted": 0,
+    "byDecision": {
+     "refused-skull": 4,
+     "refused-border-volume": 2
+    }
+   },
+   "openms-native | T1 | stripped": {
+    "n": 6,
+    "accepted": 0,
+    "byDecision": {
+     "refused-contrast": 6
+    }
+   },
+   "openms-native | T2 | stripped": {
+    "n": 6,
+    "accepted": 0,
+    "byDecision": {
+     "refused-skull": 6
+    }
+   },
+   "isbi2015 | FLAIR | stripped": {
+    "n": 19,
+    "accepted": 12,
+    "byDecision": {
+     "accepted": 12,
+     "refused-contrast": 6,
+     "refused-skull": 1
+    }
+   },
+   "isbi2015 | T1 | stripped": {
+    "n": 19,
+    "accepted": 0,
+    "byDecision": {
+     "refused-skull": 9,
+     "refused-contrast": 10
+    }
+   }
+  },
+  "no_positive_evidence": {
+   "mslesseg-test | FLAIR | stripped": {
+    "n": 22,
+    "accepted": 0,
+    "byDecision": {
+     "refused-contrast": 17,
+     "refused-skull": 4,
+     "refused-border-volume": 1
+    }
+   },
+   "mslesseg-test | T1 | stripped": {
+    "n": 22,
+    "accepted": 0,
+    "byDecision": {
+     "refused-skull": 9,
+     "refused-border-volume": 11,
+     "refused-contrast": 2
+    }
+   },
+   "mslesseg-test | T2 | stripped": {
+    "n": 22,
+    "accepted": 0,
+    "byDecision": {
+     "refused-skull": 19,
+     "refused-border-volume": 1,
+     "refused-contrast": 2
+    }
+   },
+   "mslesseg-train | FLAIR | stripped": {
+    "n": 93,
+    "accepted": 0,
+    "byDecision": {
+     "refused-contrast": 68,
+     "refused-border-volume": 5,
+     "refused-skull": 20
+    }
+   },
+   "mslesseg-train | T1 | stripped": {
+    "n": 93,
+    "accepted": 0,
+    "byDecision": {
+     "refused-border-volume": 47,
+     "refused-skull": 44,
+     "refused-contrast": 2
+    }
+   },
+   "mslesseg-train | T2 | stripped": {
+    "n": 93,
+    "accepted": 0,
+    "byDecision": {
+     "refused-skull": 86,
+     "refused-border-volume": 6,
+     "refused-contrast": 1
+    }
+   },
+   "openms-mni | FLAIR | stripped": {
+    "n": 30,
+    "accepted": 0,
+    "byDecision": {
+     "refused-contrast": 30
+    }
+   },
+   "openms-mni | T1 | stripped": {
+    "n": 30,
+    "accepted": 0,
+    "byDecision": {
+     "refused-contrast": 30
+    }
+   },
+   "openms-mni | T1POST | stripped": {
+    "n": 30,
+    "accepted": 0,
+    "byDecision": {
+     "refused-skull": 28,
+     "refused-contrast": 2
+    }
+   },
+   "openms-mni | T2 | stripped": {
+    "n": 30,
+    "accepted": 0,
+    "byDecision": {
+     "refused-skull": 30
+    }
+   },
+   "openms-native | FLAIR | stripped": {
+    "n": 6,
+    "accepted": 0,
+    "byDecision": {
+     "refused-contrast": 5,
+     "refused-skull": 1
+    }
+   },
+   "openms-native | FLAIR | skull-raw": {
+    "n": 6,
+    "accepted": 0,
+    "byDecision": {
+     "refused-skull": 3,
+     "refused-border-volume": 3
+    }
+   },
+   "openms-native | FLAIR | skull-zero-background": {
+    "n": 6,
+    "accepted": 0,
+    "byDecision": {
+     "refused-skull": 4,
+     "refused-border-volume": 2
+    }
+   },
+   "openms-native | T1 | stripped": {
+    "n": 6,
+    "accepted": 0,
+    "byDecision": {
+     "refused-contrast": 6
+    }
+   },
+   "openms-native | T2 | stripped": {
+    "n": 6,
+    "accepted": 0,
+    "byDecision": {
+     "refused-skull": 6
+    }
+   },
+   "isbi2015 | FLAIR | stripped": {
+    "n": 19,
+    "accepted": 0,
+    "byDecision": {
+     "refused-contrast": 18,
+     "refused-skull": 1
+    }
+   },
+   "isbi2015 | T1 | stripped": {
+    "n": 19,
+    "accepted": 0,
+    "byDecision": {
+     "refused-skull": 9,
+     "refused-contrast": 10
+    }
+   }
+  }
+ },
+ "replay_decisions_clinician_confirmed": [
+  [
+   "P54_FLAIR",
+   "mslesseg-test",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P54_T1",
+   "mslesseg-test",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P54_T2",
+   "mslesseg-test",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P55_FLAIR",
+   "mslesseg-test",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P55_T1",
+   "mslesseg-test",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P55_T2",
+   "mslesseg-test",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P56_FLAIR",
+   "mslesseg-test",
+   "FLAIR",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P56_T1",
+   "mslesseg-test",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P56_T2",
+   "mslesseg-test",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P57_FLAIR",
+   "mslesseg-test",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P57_T1",
+   "mslesseg-test",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P57_T2",
+   "mslesseg-test",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P58_FLAIR",
+   "mslesseg-test",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P58_T1",
+   "mslesseg-test",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P58_T2",
+   "mslesseg-test",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P59_FLAIR",
+   "mslesseg-test",
+   "FLAIR",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P59_T1",
+   "mslesseg-test",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P59_T2",
+   "mslesseg-test",
+   "T2",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P60_FLAIR",
+   "mslesseg-test",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P60_T1",
+   "mslesseg-test",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P60_T2",
+   "mslesseg-test",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P61_FLAIR",
+   "mslesseg-test",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P61_T1",
+   "mslesseg-test",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P61_T2",
+   "mslesseg-test",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P62_FLAIR",
+   "mslesseg-test",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P62_T1",
+   "mslesseg-test",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P62_T2",
+   "mslesseg-test",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P63_FLAIR",
+   "mslesseg-test",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P63_T1",
+   "mslesseg-test",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P63_T2",
+   "mslesseg-test",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P64_FLAIR",
+   "mslesseg-test",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P64_T1",
+   "mslesseg-test",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P64_T2",
+   "mslesseg-test",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P65_FLAIR",
+   "mslesseg-test",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P65_T1",
+   "mslesseg-test",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P65_T2",
+   "mslesseg-test",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P66_FLAIR",
+   "mslesseg-test",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P66_T1",
+   "mslesseg-test",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P66_T2",
+   "mslesseg-test",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P67_FLAIR",
+   "mslesseg-test",
+   "FLAIR",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P67_T1",
+   "mslesseg-test",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P67_T2",
+   "mslesseg-test",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P68_FLAIR",
+   "mslesseg-test",
+   "FLAIR",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P68_T1",
+   "mslesseg-test",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P68_T2",
+   "mslesseg-test",
+   "T2",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P69_FLAIR",
+   "mslesseg-test",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P69_T1",
+   "mslesseg-test",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P69_T2",
+   "mslesseg-test",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P70_FLAIR",
+   "mslesseg-test",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P70_T1",
+   "mslesseg-test",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P70_T2",
+   "mslesseg-test",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P71_FLAIR",
+   "mslesseg-test",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P71_T1",
+   "mslesseg-test",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P71_T2",
+   "mslesseg-test",
+   "T2",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P72_FLAIR",
+   "mslesseg-test",
+   "FLAIR",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P72_T1",
+   "mslesseg-test",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P72_T2",
+   "mslesseg-test",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P73_FLAIR",
+   "mslesseg-test",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P73_T1",
+   "mslesseg-test",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P73_T2",
+   "mslesseg-test",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P74_FLAIR",
+   "mslesseg-test",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P74_T1",
+   "mslesseg-test",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P74_T2",
+   "mslesseg-test",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P75_FLAIR",
+   "mslesseg-test",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P75_T1",
+   "mslesseg-test",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P75_T2",
+   "mslesseg-test",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P10_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P10_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P10_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P10_T2_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P10_T2_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P10_T2_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P11_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P11_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P11_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P11_T2_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P11_T2_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P11_T2_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P12_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P12_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P12_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P12_T2_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P12_T2_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P12_T2_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P12_T3_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P12_T3_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P12_T3_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P12_T4_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P12_T4_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P12_T4_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P13_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P13_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P13_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P13_T2_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P13_T2_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P13_T2_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P14_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P14_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P14_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P14_T2_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P14_T2_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P14_T2_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P14_T3_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P14_T3_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P14_T3_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P14_T4_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P14_T4_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P14_T4_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P15_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P15_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P15_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P16_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P16_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P16_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P17_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P17_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P17_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P18_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P18_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P18_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P19_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P19_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P19_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P19_T2_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P19_T2_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P19_T2_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P19_T3_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P19_T3_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P19_T3_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P19_T4_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P19_T4_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P19_T4_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P1_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P1_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P1_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P1_T2_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P1_T2_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P1_T2_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P1_T3_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P1_T3_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P1_T3_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P20_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P20_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P20_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P20_T2_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P20_T2_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P20_T2_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P20_T3_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P20_T3_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P20_T3_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P21_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P21_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P21_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P22_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P22_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P22_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P22_T2_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P22_T2_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P22_T2_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P23_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P23_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P23_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P24_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P24_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P24_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P25_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P25_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P25_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P26_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P26_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P26_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P27_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P27_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P27_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P28_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P28_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P28_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P28_T2_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P28_T2_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P28_T2_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P29_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P29_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P29_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P2_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P2_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P2_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P2_T2_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P2_T2_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P2_T2_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P2_T3_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P2_T3_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P2_T3_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P2_T4_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P2_T4_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P2_T4_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P30_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P30_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P30_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P31_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P31_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P31_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P31_T2_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P31_T2_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P31_T2_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P32_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P32_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P32_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P33_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P33_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P33_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P33_T2_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P33_T2_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P33_T2_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P34_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P34_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P34_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P35_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P35_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P35_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P36_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P36_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P36_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P37_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P37_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P37_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P38_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P38_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P38_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P39_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P39_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P39_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P3_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P3_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P3_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P3_T2_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P3_T2_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P3_T2_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P3_T3_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P3_T3_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P3_T3_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P3_T4_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P3_T4_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P3_T4_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P40_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P40_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P40_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P41_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P41_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P41_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P42_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P42_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P42_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P43_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P43_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P43_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P44_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P44_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P44_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P45_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P45_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P45_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P46_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P46_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P46_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P47_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P47_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P47_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P48_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P48_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P48_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P49_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P49_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P49_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P49_T2_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P49_T2_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P49_T2_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P4_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P4_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P4_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P4_T2_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P4_T2_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P4_T2_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P4_T3_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P4_T3_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P4_T3_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P50_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P50_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P50_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P50_T2_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P50_T2_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P50_T2_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P51_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P51_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P51_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P51_T2_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P51_T2_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P51_T2_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P52_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P52_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P52_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P52_T2_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P52_T2_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P52_T2_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P53_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P53_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P53_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P53_T2_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "P53_T2_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P53_T2_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P5_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P5_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P5_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P5_T2_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P5_T2_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P5_T2_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P6_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P6_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P6_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P6_T2_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P6_T2_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P6_T2_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P6_T3_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P6_T3_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P6_T3_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P7_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P7_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P7_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P7_T2_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P7_T2_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P7_T2_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P8_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P8_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P8_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P8_T2_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P8_T2_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P8_T2_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P9_T1_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P9_T1_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P9_T1_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P9_T2_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "P9_T2_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P9_T2_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P9_T3_FLAIR",
+   "mslesseg-train",
+   "FLAIR",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "P9_T3_T1",
+   "mslesseg-train",
+   "T1",
+   "stripped",
+   "refused-border-volume"
+  ],
+  [
+   "P9_T3_T2",
+   "mslesseg-train",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient01-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient01-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient01-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient01-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient02-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient02-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient02-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient02-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient03-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient03-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient03-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient03-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient04-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient04-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient04-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient04-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient05-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient05-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient05-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient05-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient06-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient06-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient06-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient06-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient07-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient07-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient07-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient07-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient08-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient08-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient08-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient08-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient09-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient09-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient09-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient09-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient10-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient10-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient10-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient10-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient11-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient11-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient11-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient11-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient12-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient12-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient12-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient12-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient13-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient13-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient13-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient13-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient14-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient14-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient14-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient14-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient15-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient15-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient15-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient15-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient16-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient16-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient16-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient16-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient17-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient17-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient17-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient17-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient18-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient18-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient18-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient18-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient19-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient19-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient19-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient19-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient20-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient20-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient20-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient20-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient21-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient21-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient21-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient21-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient22-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient22-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient22-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient22-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient23-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient23-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient23-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient23-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient24-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient24-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient24-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient24-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient25-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient25-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient25-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient25-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient26-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient26-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient26-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient26-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient27-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient27-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient27-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient27-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient28-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient28-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient28-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient28-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient29-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient29-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient29-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient29-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient30-FLAIR",
+   "openms-mni",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-mni-patient30-T1",
+   "openms-mni",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-mni-patient30-T1POST",
+   "openms-mni",
+   "T1POST",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-mni-patient30-T2",
+   "openms-mni",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-native-patient01-FLAIR",
+   "openms-native",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-native-patient01-FLAIR-skull",
+   "openms-native",
+   "FLAIR",
+   "skull-raw",
+   "refused-skull"
+  ],
+  [
+   "openms-native-patient01-FLAIR-skull-zerobg",
+   "openms-native",
+   "FLAIR",
+   "skull-zero-background",
+   "refused-skull"
+  ],
+  [
+   "openms-native-patient01-T1",
+   "openms-native",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-native-patient01-T2",
+   "openms-native",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-native-patient05-FLAIR",
+   "openms-native",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-native-patient05-FLAIR-skull",
+   "openms-native",
+   "FLAIR",
+   "skull-raw",
+   "refused-skull"
+  ],
+  [
+   "openms-native-patient05-FLAIR-skull-zerobg",
+   "openms-native",
+   "FLAIR",
+   "skull-zero-background",
+   "refused-skull"
+  ],
+  [
+   "openms-native-patient05-T1",
+   "openms-native",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-native-patient05-T2",
+   "openms-native",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-native-patient10-FLAIR",
+   "openms-native",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-native-patient10-FLAIR-skull",
+   "openms-native",
+   "FLAIR",
+   "skull-raw",
+   "refused-border-volume"
+  ],
+  [
+   "openms-native-patient10-FLAIR-skull-zerobg",
+   "openms-native",
+   "FLAIR",
+   "skull-zero-background",
+   "refused-border-volume"
+  ],
+  [
+   "openms-native-patient10-T1",
+   "openms-native",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-native-patient10-T2",
+   "openms-native",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-native-patient15-FLAIR",
+   "openms-native",
+   "FLAIR",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-native-patient15-FLAIR-skull",
+   "openms-native",
+   "FLAIR",
+   "skull-raw",
+   "refused-border-volume"
+  ],
+  [
+   "openms-native-patient15-FLAIR-skull-zerobg",
+   "openms-native",
+   "FLAIR",
+   "skull-zero-background",
+   "refused-border-volume"
+  ],
+  [
+   "openms-native-patient15-T1",
+   "openms-native",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-native-patient15-T2",
+   "openms-native",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-native-patient20-FLAIR",
+   "openms-native",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-native-patient20-FLAIR-skull",
+   "openms-native",
+   "FLAIR",
+   "skull-raw",
+   "refused-border-volume"
+  ],
+  [
+   "openms-native-patient20-FLAIR-skull-zerobg",
+   "openms-native",
+   "FLAIR",
+   "skull-zero-background",
+   "refused-skull"
+  ],
+  [
+   "openms-native-patient20-T1",
+   "openms-native",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-native-patient20-T2",
+   "openms-native",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "openms-native-patient25-FLAIR",
+   "openms-native",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "openms-native-patient25-FLAIR-skull",
+   "openms-native",
+   "FLAIR",
+   "skull-raw",
+   "refused-skull"
+  ],
+  [
+   "openms-native-patient25-FLAIR-skull-zerobg",
+   "openms-native",
+   "FLAIR",
+   "skull-zero-background",
+   "refused-skull"
+  ],
+  [
+   "openms-native-patient25-T1",
+   "openms-native",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "openms-native-patient25-T2",
+   "openms-native",
+   "T2",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "isbi2015-case001-FLAIR",
+   "isbi2015",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "isbi2015-case001-T1",
+   "isbi2015",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "isbi2015-case002-FLAIR",
+   "isbi2015",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "isbi2015-case002-T1",
+   "isbi2015",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "isbi2015-case003-FLAIR",
+   "isbi2015",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "isbi2015-case003-T1",
+   "isbi2015",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "isbi2015-case004-FLAIR",
+   "isbi2015",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "isbi2015-case004-T1",
+   "isbi2015",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "isbi2015-case005-FLAIR",
+   "isbi2015",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "isbi2015-case005-T1",
+   "isbi2015",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "isbi2015-case006-FLAIR",
+   "isbi2015",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "isbi2015-case006-T1",
+   "isbi2015",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "isbi2015-case007-FLAIR",
+   "isbi2015",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "isbi2015-case007-T1",
+   "isbi2015",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "isbi2015-case008-FLAIR",
+   "isbi2015",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "isbi2015-case008-T1",
+   "isbi2015",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "isbi2015-case009-FLAIR",
+   "isbi2015",
+   "FLAIR",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "isbi2015-case009-T1",
+   "isbi2015",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "isbi2015-case010-FLAIR",
+   "isbi2015",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "isbi2015-case010-T1",
+   "isbi2015",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "isbi2015-case011-FLAIR",
+   "isbi2015",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "isbi2015-case011-T1",
+   "isbi2015",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "isbi2015-case012-FLAIR",
+   "isbi2015",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "isbi2015-case012-T1",
+   "isbi2015",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "isbi2015-case013-FLAIR",
+   "isbi2015",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "isbi2015-case013-T1",
+   "isbi2015",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "isbi2015-case014-FLAIR",
+   "isbi2015",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "isbi2015-case014-T1",
+   "isbi2015",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "isbi2015-case015-FLAIR",
+   "isbi2015",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "isbi2015-case015-T1",
+   "isbi2015",
+   "T1",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "isbi2015-case016-FLAIR",
+   "isbi2015",
+   "FLAIR",
+   "stripped",
+   "accepted"
+  ],
+  [
+   "isbi2015-case016-T1",
+   "isbi2015",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "isbi2015-case017-FLAIR",
+   "isbi2015",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "isbi2015-case017-T1",
+   "isbi2015",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "isbi2015-case018-FLAIR",
+   "isbi2015",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "isbi2015-case018-T1",
+   "isbi2015",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ],
+  [
+   "isbi2015-case019-FLAIR",
+   "isbi2015",
+   "FLAIR",
+   "stripped",
+   "refused-contrast"
+  ],
+  [
+   "isbi2015-case019-T1",
+   "isbi2015",
+   "T1",
+   "stripped",
+   "refused-skull"
+  ]
+ ],
+ "lodo": {
+  "objective_content": {
+   "groups": [
+    "isbi2015",
+    "mslesseg",
+    "openms"
+   ],
+   "objective": "content",
+   "lodo": {
+    "isbi2015": {
+     "thresholds": {
+      "deepOverCortex_max": 0.915,
+      "frac45to80_max": 0.59,
+      "fracAbove1p6_max": 0.025
+     },
+     "content_only": {
+      "flair_accepted": "13/19",
+      "sensitivity": 0.684,
+      "sensitivity_ci95": [
+       0.46,
+       0.846
+      ],
+      "non_flair_refused": "18/19",
+      "specificity": 0.947,
+      "specificity_ci95": [
+       0.754,
+       0.991
+      ],
+      "false_accepts": [
+       "isbi2015-case007-T1"
+      ]
+     },
+     "full_gate": {
+      "flair_accepted": "12/19",
+      "sensitivity": 0.632,
+      "sensitivity_ci95": [
+       0.41,
+       0.809
+      ],
+      "non_flair_refused": "18/19",
+      "specificity": 0.947,
+      "specificity_ci95": [
+       0.754,
+       0.991
+      ],
+      "false_accepts": [
+       "isbi2015-case007-T1"
+      ]
+     }
+    },
+    "mslesseg": {
+     "thresholds": {
+      "deepOverCortex_max": 0.96,
+      "frac45to80_max": 0.27,
+      "fracAbove1p6_max": 0.085
+     },
+     "content_only": {
+      "flair_accepted": "93/115",
+      "sensitivity": 0.809,
+      "sensitivity_ci95": [
+       0.727,
+       0.87
+      ],
+      "non_flair_refused": "197/230",
+      "specificity": 0.857,
+      "specificity_ci95": [
+       0.805,
+       0.896
+      ],
+      "false_accepts": [
+       "P54_T2",
+       "P58_T2",
+       "P61_T2",
+       "P71_T2",
+       "P10_T1_T2",
+       "P13_T1_T2",
+       "P13_T2_T2",
+       "P14_T1_T2",
+       "P15_T1_T2",
+       "P16_T1_T2",
+       "P17_T1_T2",
+       "P18_T1_T2",
+       "P19_T1_T2",
+       "P19_T2_T2",
+       "P19_T3_T2",
+       "P19_T4_T2",
+       "P20_T1_T2",
+       "P20_T2_T2",
+       "P20_T3_T2",
+       "P22_T1_T2",
+       "P26_T1_T2",
+       "P28_T1_T2",
+       "P28_T2_T2",
+       "P29_T1_T2",
+       "P2_T2_T2",
+       "P38_T1_T2",
+       "P49_T1_T2",
+       "P49_T2_T2",
+       "P6_T2_T2",
+       "P6_T3_T2",
+       "P9_T1_T2",
+       "P9_T2_T2",
+       "P9_T3_T2"
+      ]
+     },
+     "full_gate": {
+      "flair_accepted": "70/115",
+      "sensitivity": 0.609,
+      "sensitivity_ci95": [
+       0.517,
+       0.693
+      ],
+      "non_flair_refused": "229/230",
+      "specificity": 0.996,
+      "specificity_ci95": [
+       0.976,
+       0.999
+      ],
+      "false_accepts": [
+       "P71_T2"
+      ]
+     }
+    },
+    "openms": {
+     "thresholds": {
+      "deepOverCortex_max": 0.915,
+      "frac45to80_max": 0.27,
+      "fracAbove1p6_max": 0.025
+     },
+     "content_only": {
+      "flair_accepted": "36/36",
+      "sensitivity": 1.0,
+      "sensitivity_ci95": [
+       0.904,
+       1.0
+      ],
+      "non_flair_refused": "102/102",
+      "specificity": 1.0,
+      "specificity_ci95": [
+       0.964,
+       1.0
+      ],
+      "false_accepts": [],
+      "with_skull_refused": "2/12"
+     },
+     "full_gate": {
+      "flair_accepted": "35/36",
+      "sensitivity": 0.972,
+      "sensitivity_ci95": [
+       0.858,
+       0.995
+      ],
+      "non_flair_refused": "102/102",
+      "specificity": 1.0,
+      "specificity_ci95": [
+       0.964,
+       1.0
+      ],
+      "false_accepts": [],
+      "with_skull_refused": "12/12"
+     }
+    }
+   },
+   "all": {
+    "fit_on_all": {
+     "thresholds": {
+      "deepOverCortex_max": 0.915,
+      "frac45to80_max": 0.27,
+      "fracAbove1p6_max": 0.025
+     },
+     "content_only": {
+      "flair_accepted": "103/170",
+      "sensitivity": 0.606,
+      "sensitivity_ci95": [
+       0.531,
+       0.676
+      ],
+      "non_flair_refused": "351/351",
+      "specificity": 1.0,
+      "specificity_ci95": [
+       0.989,
+       1.0
+      ],
+      "false_accepts": [],
+      "with_skull_refused": "2/12"
+     },
+     "full_gate": {
+      "flair_accepted": "87/170",
+      "sensitivity": 0.512,
+      "sensitivity_ci95": [
+       0.437,
+       0.586
+      ],
+      "non_flair_refused": "351/351",
+      "specificity": 1.0,
+      "specificity_ci95": [
+       0.989,
+       1.0
+      ],
+      "false_accepts": [],
+      "with_skull_refused": "12/12"
+     }
+    },
+    "isbi2015": {
+     "thresholds": {
+      "deepOverCortex_max": 0.915,
+      "frac45to80_max": 0.27,
+      "fracAbove1p6_max": 0.025
+     },
+     "content_only": {
+      "flair_accepted": "13/19",
+      "sensitivity": 0.684,
+      "sensitivity_ci95": [
+       0.46,
+       0.846
+      ],
+      "non_flair_refused": "19/19",
+      "specificity": 1.0,
+      "specificity_ci95": [
+       0.832,
+       1.0
+      ],
+      "false_accepts": []
+     },
+     "full_gate": {
+      "flair_accepted": "12/19",
+      "sensitivity": 0.632,
+      "sensitivity_ci95": [
+       0.41,
+       0.809
+      ],
+      "non_flair_refused": "19/19",
+      "specificity": 1.0,
+      "specificity_ci95": [
+       0.832,
+       1.0
+      ],
+      "false_accepts": []
+     }
+    },
+    "mslesseg": {
+     "thresholds": {
+      "deepOverCortex_max": 0.915,
+      "frac45to80_max": 0.27,
+      "fracAbove1p6_max": 0.025
+     },
+     "content_only": {
+      "flair_accepted": "54/115",
+      "sensitivity": 0.47,
+      "sensitivity_ci95": [
+       0.381,
+       0.56
+      ],
+      "non_flair_refused": "230/230",
+      "specificity": 1.0,
+      "specificity_ci95": [
+       0.984,
+       1.0
+      ],
+      "false_accepts": []
+     },
+     "full_gate": {
+      "flair_accepted": "40/115",
+      "sensitivity": 0.348,
+      "sensitivity_ci95": [
+       0.267,
+       0.439
+      ],
+      "non_flair_refused": "230/230",
+      "specificity": 1.0,
+      "specificity_ci95": [
+       0.984,
+       1.0
+      ],
+      "false_accepts": []
+     }
+    },
+    "openms": {
+     "thresholds": {
+      "deepOverCortex_max": 0.915,
+      "frac45to80_max": 0.27,
+      "fracAbove1p6_max": 0.025
+     },
+     "content_only": {
+      "flair_accepted": "36/36",
+      "sensitivity": 1.0,
+      "sensitivity_ci95": [
+       0.904,
+       1.0
+      ],
+      "non_flair_refused": "102/102",
+      "specificity": 1.0,
+      "specificity_ci95": [
+       0.964,
+       1.0
+      ],
+      "false_accepts": [],
+      "with_skull_refused": "2/12"
+     },
+     "full_gate": {
+      "flair_accepted": "35/36",
+      "sensitivity": 0.972,
+      "sensitivity_ci95": [
+       0.858,
+       0.995
+      ],
+      "non_flair_refused": "102/102",
+      "specificity": 1.0,
+      "specificity_ci95": [
+       0.964,
+       1.0
+      ],
+      "false_accepts": [],
+      "with_skull_refused": "12/12"
+     }
+    }
+   }
+  },
+  "objective_full": {
+   "groups": [
+    "isbi2015",
+    "mslesseg",
+    "openms"
+   ],
+   "objective": "full",
+   "lodo": {
+    "isbi2015": {
+     "thresholds": {
+      "deepOverCortex_max": 0.915,
+      "frac45to80_max": 0.59,
+      "fracAbove1p6_max": 0.115
+     },
+     "content_only": {
+      "flair_accepted": "13/19",
+      "sensitivity": 0.684,
+      "sensitivity_ci95": [
+       0.46,
+       0.846
+      ],
+      "non_flair_refused": "18/19",
+      "specificity": 0.947,
+      "specificity_ci95": [
+       0.754,
+       0.991
+      ],
+      "false_accepts": [
+       "isbi2015-case007-T1"
+      ]
+     },
+     "full_gate": {
+      "flair_accepted": "12/19",
+      "sensitivity": 0.632,
+      "sensitivity_ci95": [
+       0.41,
+       0.809
+      ],
+      "non_flair_refused": "18/19",
+      "specificity": 0.947,
+      "specificity_ci95": [
+       0.754,
+       0.991
+      ],
+      "false_accepts": [
+       "isbi2015-case007-T1"
+      ]
+     }
+    },
+    "mslesseg": {
+     "thresholds": {
+      "deepOverCortex_max": 0.975,
+      "frac45to80_max": 0.27,
+      "fracAbove1p6_max": 0.115
+     },
+     "content_only": {
+      "flair_accepted": "100/115",
+      "sensitivity": 0.87,
+      "sensitivity_ci95": [
+       0.796,
+       0.919
+      ],
+      "non_flair_refused": "163/230",
+      "specificity": 0.709,
+      "specificity_ci95": [
+       0.647,
+       0.764
+      ],
+      "false_accepts": [
+       "P54_T2",
+       "P55_T2",
+       "P56_T2",
+       "P58_T2",
+       "P61_T2",
+       "P64_T2",
+       "P67_T2",
+       "P68_T2",
+       "P69_T2",
+       "P71_T2",
+       "P72_T2",
+       "P74_T2",
+       "P10_T1_T2",
+       "P10_T2_T1",
+       "P10_T2_T2",
+       "P11_T2_T2",
+       "P12_T3_T1",
+       "P12_T4_T1",
+       "P13_T1_T2",
+       "P13_T2_T2",
+       "P14_T1_T2",
+       "P14_T2_T2",
+       "P15_T1_T2",
+       "P16_T1_T2",
+       "P17_T1_T2",
+       "P18_T1_T2",
+       "P19_T1_T2",
+       "P19_T2_T2",
+       "P19_T3_T2",
+       "P19_T4_T2",
+       "P1_T1_T2",
+       "P1_T2_T2",
+       "P1_T3_T2",
+       "P20_T1_T2",
+       "P20_T2_T2",
+       "P20_T3_T2",
+       "P21_T1_T2",
+       "P22_T1_T2",
+       "P22_T2_T2",
+       "P26_T1_T2",
+       "P28_T1_T2",
+       "P28_T2_T2",
+       "P29_T1_T2",
+       "P2_T1_T2",
+       "P2_T2_T2",
+       "P2_T3_T2",
+       "P31_T1_T2",
+       "P31_T2_T2",
+       "P32_T1_T2",
+       "P35_T1_T2",
+       "P37_T1_T2",
+       "P38_T1_T2",
+       "P3_T3_T2",
+       "P43_T1_T2",
+       "P45_T1_T2",
+       "P49_T1_T2",
+       "P49_T2_T2",
+       "P5_T1_T2",
+       "P5_T2_T2",
+       "P6_T2_T2",
+       "P6_T3_T2",
+       "P7_T1_T2",
+       "P7_T2_T2",
+       "P8_T1_T2",
+       "P9_T1_T2",
+       "P9_T2_T2",
+       "P9_T3_T2"
+      ]
+     },
+     "full_gate": {
+      "flair_accepted": "77/115",
+      "sensitivity": 0.67,
+      "sensitivity_ci95": [
+       0.579,
+       0.749
+      ],
+      "non_flair_refused": "228/230",
+      "specificity": 0.991,
+      "specificity_ci95": [
+       0.969,
+       0.998
+      ],
+      "false_accepts": [
+       "P68_T2",
+       "P71_T2"
+      ]
+     }
+    },
+    "openms": {
+     "thresholds": {
+      "deepOverCortex_max": 0.91,
+      "frac45to80_max": 0.59,
+      "fracAbove1p6_max": 0.115
+     },
+     "content_only": {
+      "flair_accepted": "36/36",
+      "sensitivity": 1.0,
+      "sensitivity_ci95": [
+       0.904,
+       1.0
+      ],
+      "non_flair_refused": "98/102",
+      "specificity": 0.961,
+      "specificity_ci95": [
+       0.903,
+       0.985
+      ],
+      "false_accepts": [
+       "openms-mni-patient07-T2",
+       "openms-mni-patient17-T2",
+       "openms-mni-patient18-T2",
+       "openms-mni-patient29-T2"
+      ],
+      "with_skull_refused": "0/12"
+     },
+     "full_gate": {
+      "flair_accepted": "35/36",
+      "sensitivity": 0.972,
+      "sensitivity_ci95": [
+       0.858,
+       0.995
+      ],
+      "non_flair_refused": "102/102",
+      "specificity": 1.0,
+      "specificity_ci95": [
+       0.964,
+       1.0
+      ],
+      "false_accepts": [],
+      "with_skull_refused": "12/12"
+     }
+    }
+   },
+   "all": {
+    "fit_on_all": {
+     "thresholds": {
+      "deepOverCortex_max": 0.91,
+      "frac45to80_max": 0.59,
+      "fracAbove1p6_max": 0.115
+     },
+     "content_only": {
+      "flair_accepted": "104/170",
+      "sensitivity": 0.612,
+      "sensitivity_ci95": [
+       0.537,
+       0.682
+      ],
+      "non_flair_refused": "283/351",
+      "specificity": 0.806,
+      "specificity_ci95": [
+       0.762,
+       0.844
+      ],
+      "false_accepts": [
+       "P54_T2",
+       "P55_T2",
+       "P56_T2",
+       "P58_T2",
+       "P61_T2",
+       "P64_T2",
+       "P67_T2",
+       "P69_T2",
+       "P72_T2",
+       "P74_T2",
+       "P10_T1_T2",
+       "P10_T2_T2",
+       "P11_T1_T2",
+       "P11_T2_T2",
+       "P13_T1_T2",
+       "P13_T2_T2",
+       "P14_T1_T2",
+       "P14_T2_T2",
+       "P15_T1_T2",
+       "P16_T1_T2",
+       "P17_T1_T2",
+       "P18_T1_T2",
+       "P19_T1_T2",
+       "P19_T2_T2",
+       "P19_T3_T2",
+       "P19_T4_T2",
+       "P1_T1_T2",
+       "P1_T2_T2",
+       "P1_T3_T2",
+       "P20_T1_T2",
+       "P20_T2_T2",
+       "P20_T3_T2",
+       "P21_T1_T2",
+       "P22_T1_T2",
+       "P22_T2_T2",
+       "P26_T1_T2",
+       "P28_T1_T2",
+       "P28_T2_T2",
+       "P29_T1_T2",
+       "P2_T1_T2",
+       "P2_T2_T2",
+       "P2_T3_T2",
+       "P31_T1_T2",
+       "P31_T2_T2",
+       "P32_T1_T2",
+       "P35_T1_T2",
+       "P37_T1_T2",
+       "P38_T1_T2",
+       "P3_T3_T2",
+       "P43_T1_T2",
+       "P45_T1_T2",
+       "P49_T1_T2",
+       "P49_T2_T2",
+       "P5_T1_T2",
+       "P5_T2_T2",
+       "P6_T1_T2",
+       "P6_T2_T2",
+       "P6_T3_T2",
+       "P7_T1_T2",
+       "P7_T2_T2",
+       "P8_T1_T2",
+       "P9_T1_T2",
+       "P9_T2_T2",
+       "P9_T3_T2",
+       "openms-mni-patient07-T2",
+       "openms-mni-patient17-T2",
+       "openms-mni-patient18-T2",
+       "openms-mni-patient29-T2"
+      ],
+      "with_skull_refused": "0/12"
+     },
+     "full_gate": {
+      "flair_accepted": "88/170",
+      "sensitivity": 0.518,
+      "sensitivity_ci95": [
+       0.443,
+       0.592
+      ],
+      "non_flair_refused": "351/351",
+      "specificity": 1.0,
+      "specificity_ci95": [
+       0.989,
+       1.0
+      ],
+      "false_accepts": [],
+      "with_skull_refused": "12/12"
+     }
+    },
+    "isbi2015": {
+     "thresholds": {
+      "deepOverCortex_max": 0.91,
+      "frac45to80_max": 0.59,
+      "fracAbove1p6_max": 0.115
+     },
+     "content_only": {
+      "flair_accepted": "9/19",
+      "sensitivity": 0.474,
+      "sensitivity_ci95": [
+       0.273,
+       0.683
+      ],
+      "non_flair_refused": "19/19",
+      "specificity": 1.0,
+      "specificity_ci95": [
+       0.832,
+       1.0
+      ],
+      "false_accepts": []
+     },
+     "full_gate": {
+      "flair_accepted": "8/19",
+      "sensitivity": 0.421,
+      "sensitivity_ci95": [
+       0.231,
+       0.637
+      ],
+      "non_flair_refused": "19/19",
+      "specificity": 1.0,
+      "specificity_ci95": [
+       0.832,
+       1.0
+      ],
+      "false_accepts": []
+     }
+    },
+    "mslesseg": {
+     "thresholds": {
+      "deepOverCortex_max": 0.91,
+      "frac45to80_max": 0.59,
+      "fracAbove1p6_max": 0.115
+     },
+     "content_only": {
+      "flair_accepted": "59/115",
+      "sensitivity": 0.513,
+      "sensitivity_ci95": [
+       0.423,
+       0.602
+      ],
+      "non_flair_refused": "166/230",
+      "specificity": 0.722,
+      "specificity_ci95": [
+       0.661,
+       0.776
+      ],
+      "false_accepts": [
+       "P54_T2",
+       "P55_T2",
+       "P56_T2",
+       "P58_T2",
+       "P61_T2",
+       "P64_T2",
+       "P67_T2",
+       "P69_T2",
+       "P72_T2",
+       "P74_T2",
+       "P10_T1_T2",
+       "P10_T2_T2",
+       "P11_T1_T2",
+       "P11_T2_T2",
+       "P13_T1_T2",
+       "P13_T2_T2",
+       "P14_T1_T2",
+       "P14_T2_T2",
+       "P15_T1_T2",
+       "P16_T1_T2",
+       "P17_T1_T2",
+       "P18_T1_T2",
+       "P19_T1_T2",
+       "P19_T2_T2",
+       "P19_T3_T2",
+       "P19_T4_T2",
+       "P1_T1_T2",
+       "P1_T2_T2",
+       "P1_T3_T2",
+       "P20_T1_T2",
+       "P20_T2_T2",
+       "P20_T3_T2",
+       "P21_T1_T2",
+       "P22_T1_T2",
+       "P22_T2_T2",
+       "P26_T1_T2",
+       "P28_T1_T2",
+       "P28_T2_T2",
+       "P29_T1_T2",
+       "P2_T1_T2",
+       "P2_T2_T2",
+       "P2_T3_T2",
+       "P31_T1_T2",
+       "P31_T2_T2",
+       "P32_T1_T2",
+       "P35_T1_T2",
+       "P37_T1_T2",
+       "P38_T1_T2",
+       "P3_T3_T2",
+       "P43_T1_T2",
+       "P45_T1_T2",
+       "P49_T1_T2",
+       "P49_T2_T2",
+       "P5_T1_T2",
+       "P5_T2_T2",
+       "P6_T1_T2",
+       "P6_T2_T2",
+       "P6_T3_T2",
+       "P7_T1_T2",
+       "P7_T2_T2",
+       "P8_T1_T2",
+       "P9_T1_T2",
+       "P9_T2_T2",
+       "P9_T3_T2"
+      ]
+     },
+     "full_gate": {
+      "flair_accepted": "45/115",
+      "sensitivity": 0.391,
+      "sensitivity_ci95": [
+       0.307,
+       0.483
+      ],
+      "non_flair_refused": "230/230",
+      "specificity": 1.0,
+      "specificity_ci95": [
+       0.984,
+       1.0
+      ],
+      "false_accepts": []
+     }
+    },
+    "openms": {
+     "thresholds": {
+      "deepOverCortex_max": 0.91,
+      "frac45to80_max": 0.59,
+      "fracAbove1p6_max": 0.115
+     },
+     "content_only": {
+      "flair_accepted": "36/36",
+      "sensitivity": 1.0,
+      "sensitivity_ci95": [
+       0.904,
+       1.0
+      ],
+      "non_flair_refused": "98/102",
+      "specificity": 0.961,
+      "specificity_ci95": [
+       0.903,
+       0.985
+      ],
+      "false_accepts": [
+       "openms-mni-patient07-T2",
+       "openms-mni-patient17-T2",
+       "openms-mni-patient18-T2",
+       "openms-mni-patient29-T2"
+      ],
+      "with_skull_refused": "0/12"
+     },
+     "full_gate": {
+      "flair_accepted": "35/36",
+      "sensitivity": 0.972,
+      "sensitivity_ci95": [
+       0.858,
+       0.995
+      ],
+      "non_flair_refused": "102/102",
+      "specificity": 1.0,
+      "specificity_ci95": [
+       0.964,
+       1.0
+      ],
+      "false_accepts": [],
+      "with_skull_refused": "12/12"
+     }
+    }
+   }
+  }
+ }
+}

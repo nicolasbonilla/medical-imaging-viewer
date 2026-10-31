@@ -32,6 +32,30 @@ interface AIReportPanelProps {
   onReportGenerated?: (report: ReportResponse) => void;
 }
 
+// CAPA-014 (third review, R4): the server adds at most this many characters of each typed field to the draft
+// (`MAX_TYPED_CHARS` in backend/app/api/routes/ai_report.py); the fields stop there and show the count.
+const MAX_TYPED_CHARS = 5000;
+// Release 2026-10-25 (review of PR #69, item 6): the server's 422 for an unreadable image geometry starts with this
+// phrase (backend ai_report.GEOMETRY_UNREADABLE_PHRASE; a backend test checks that both say the same).
+const GEOMETRY_UNREADABLE_PHRASE = 'The image geometry could not be read; report not generated';
+// Review of PR #69, n1: any other failure of the server-side lesion table (backend ai_report.LESION_TABLE_FAILED_PHRASE).
+const LESION_TABLE_FAILED_PHRASE = 'The lesion measurements could not be computed on the server; report not generated';
+
+/** The server's error message ({"error": {"message"}} from the API, or FastAPI's {"detail"}), or ''. */
+function serverMessage(error: unknown): string {
+  const data = (error as any)?.response?.data;
+  const message = data?.error?.message ?? data?.detail;
+  return typeof message === 'string' ? message : '';
+}
+
+function TypedCount({ testId, length }: { testId: string; length: number }) {
+  return (
+    <div data-testid={testId} className="text-[10px] text-right text-gray-400 dark:text-gray-500 mt-0.5">
+      {`${length} / ${MAX_TYPED_CHARS}`}
+    </div>
+  );
+}
+
 export const AIReportPanel: React.FC<AIReportPanelProps> = ({
   volumetry,
   patientAge,
@@ -95,6 +119,9 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
       language,
       findings,
       volumetry: volumetry || null,
+      // CAPA-014 (RC-065): the server removes this patient's identifiers before calling the provider
+      // PRB-003 (review of PR #68, finding 2): the server derives the DIS state for this segmentation only.
+      ...(activeSegId ? { segmentation_id: activeSegId } : {}),
     });
   };
 
@@ -198,11 +225,14 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
                 </label>
                 <input
                   type="text"
+                  data-testid="report-indication-input"
+                  maxLength={MAX_TYPED_CHARS}
                   value={indication}
                   onChange={(e) => setIndication(e.target.value)}
                   placeholder={t('report.indicationPlaceholder', 'e.g., Headache, rule out mass')}
                   className="w-full px-2 py-1.5 bg-white/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-amber-500"
                 />
+                <TypedCount testId="report-indication-count" length={indication.length} />
               </div>
 
               {/* Technique */}
@@ -212,11 +242,14 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
                 </label>
                 <input
                   type="text"
+                  data-testid="report-technique-input"
+                  maxLength={MAX_TYPED_CHARS}
                   value={technique}
                   onChange={(e) => setTechnique(e.target.value)}
                   placeholder={t('report.techniquePlaceholder', 'e.g., T1, T2, FLAIR, DWI, Gd+')}
                   className="w-full px-2 py-1.5 bg-white/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-amber-500"
                 />
+                <TypedCount testId="report-technique-count" length={technique.length} />
               </div>
 
               {/* Additional observations */}
@@ -225,12 +258,15 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
                   {t('report.observations', 'Additional Observations')}
                 </label>
                 <textarea
+                  data-testid="report-observations-input"
+                  maxLength={MAX_TYPED_CHARS}
                   value={observations}
                   onChange={(e) => setObservations(e.target.value)}
                   placeholder={t('report.observationsPlaceholder', 'Any additional findings or context...')}
                   rows={2}
                   className="w-full px-2 py-1.5 bg-white/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-amber-500 resize-none"
                 />
+                <TypedCount testId="report-observations-count" length={observations.length} />
               </div>
 
               {/* Active segmentation indicator — lesion data will be auto-collected */}
@@ -260,15 +296,30 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
               {/* Error */}
               {generateMutation.isError && (
                 <div className="p-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded text-xs text-red-700 dark:text-red-300">
-                  {/* CAPA-008: a 422 means no measurement was available — say so instead of a generic error. */}
+                  {/* CAPA-008: a 422 means no measurement was available — say so instead of a generic error.
+                      Release 2026-10-25 (review of PR #69, item 6): unless the server says the image geometry could
+                      not be read (PRB-003: the lesion table is derived on the server) — then that, in its own words. */}
                   {(generateMutation.error as any)?.response?.status === 422
-                    ? t('report.noMeasurements', 'No measurements are available for this study. Open a segmentation and run its analysis first: a report without measurements would be invented.')
+                    ? (serverMessage(generateMutation.error).startsWith(GEOMETRY_UNREADABLE_PHRASE)
+                      ? t('report.geometryUnreadable', 'The image geometry could not be read, so the report was not generated. Nothing was sent to the AI service.')
+                      : serverMessage(generateMutation.error).startsWith(LESION_TABLE_FAILED_PHRASE)
+                      ? t('report.lesionTableFailed', 'The lesion measurements could not be computed on the server, so the report was not generated. Nothing was sent to the AI service.')
+                      : t('report.noMeasurements', 'No measurements are available for this study. Open a segmentation and run its analysis first: a report without measurements would be invented.'))
                     : (generateMutation.error as Error)?.message || t('report.generateError', 'Report generation failed')}
                 </div>
               )}
 
+              {/* CAPA-014 (RC-066): what is removed before sending, and what is still sent */}
+              <p
+                data-testid="report-deidentification-note"
+                className="text-[11px] leading-snug text-gray-500 dark:text-gray-400"
+              >
+                {t('report.deidentificationNote')}
+              </p>
+
               {/* Generate button */}
               <button
+                data-testid="report-generate-button"
                 onClick={handleGenerate}
                 disabled={generateMutation.isPending}
                 className="w-full px-3 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 shadow-sm"

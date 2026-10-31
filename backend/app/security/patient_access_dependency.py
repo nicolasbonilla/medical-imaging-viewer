@@ -35,7 +35,7 @@ from fastapi import Depends, HTTPException, Path, status
 
 from app.core.logging import get_logger
 from app.security.auth import get_current_active_user
-from app.security.models import User
+from app.security.models import User, UserRole
 from app.security.patient_access import (
     AccessResult,
     audit_access_decision,
@@ -94,12 +94,24 @@ async def authorize_patient_access(
 
     entitlements = care_team_service.list_entitlements_for_user(str(user.id))
 
+    # PRB-023: whether the RECORD has any care-team assignment decides "quarantined" vs "not assigned" for a
+    # record without provenance. Read only on that path (one extra query); a store without the method or a
+    # read error leaves the old basis in place — the outcome is a denial either way, only the reason differs.
+    patient_assignments = None
+    if patient is not None and created_by is None and user.role != UserRole.ADMIN:
+        try:
+            patient_assignments = [r.to_entitlement() if hasattr(r, "to_entitlement") else r
+                                   for r in care_team_service.list_for_patient(str(patient_id))]
+        except Exception:
+            patient_assignments = None
+
     result: AccessResult = decide_patient_access(
         user_id=str(user.id),
         user_role=user.role,
         patient_id=str(patient_id) if patient is not None else None,
         patient_created_by=created_by,
         assignments=entitlements,
+        patient_assignments=patient_assignments,
     )
 
     audit_access_decision(user_id=str(user.id), patient_id=str(patient_id), result=result)

@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/IEC_62304-Class_C-red?style=flat-square" alt="IEC 62304 Class C">
+  <img src="https://img.shields.io/badge/status-research_prototype,_not_CE--marked-orange?style=flat-square" alt="Research prototype, not CE-marked">
   <img src="https://img.shields.io/badge/QMS-AI_Powered-teal?style=flat-square" alt="QMS">
   <img src="https://img.shields.io/badge/React-18.3-61DAFB?logo=react" alt="React">
   <img src="https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi" alt="FastAPI">
@@ -25,7 +25,6 @@
   <img src="https://img.shields.io/badge/Python-3.11-3776AB?logo=python" alt="Python">
   <img src="https://img.shields.io/badge/NiiVue-0.67-blueviolet" alt="NiiVue">
   <img src="https://img.shields.io/badge/Cloud_Run-deployed-4285F4?logo=googlecloud" alt="Cloud Run">
-  <img src="https://img.shields.io/badge/HIPAA-compliant-green" alt="HIPAA">
   <img src="https://img.shields.io/badge/WebAuthn-passkeys-orange" alt="WebAuthn">
   <img src="https://img.shields.io/badge/DICOMweb-PACS-red" alt="DICOMweb">
   <img src="https://img.shields.io/badge/HL7_FHIR-R4-dc3545" alt="FHIR">
@@ -37,7 +36,7 @@
 
 ## Abstract
 
-**MSTool-AI** is a full-stack cloud-native web application engineered for the visualization, interactive segmentation, quantitative analysis, and longitudinal tracking of brain magnetic resonance imaging (MRI) data in the clinical context of **Multiple Sclerosis (MS)**. The platform integrates real-time 2D and 3D neuroimaging visualization with automated lesion detection, region-specific classification conforming to the **MAGNIMS 2024 consensus guidelines** (Barkhof et al., 2025), IoU-based longitudinal disease progression tracking, normative brain volumetry with z-score percentile computation, and AI-powered clinical report generation via the **Claude API** with HIPAA-compliant de-identification.
+**MSTool-AI** is a full-stack cloud-native web application engineered for the visualization, interactive segmentation, quantitative analysis, and longitudinal tracking of brain magnetic resonance imaging (MRI) data in the clinical context of **Multiple Sclerosis (MS)**. The platform integrates real-time 2D and 3D neuroimaging visualization with automated lesion detection, region-specific classification conforming to the **MAGNIMS 2024 consensus guidelines** (Barkhof et al., 2025), IoU-based longitudinal disease progression tracking, normative brain volumetry with z-score percentile computation, and AI-assisted report drafts via the **Claude API** — measurements only are sent to the AI service, no names, dates of birth, record numbers or free text (CAPA-014).
 
 The system implements a decoupled client-server architecture with a **React/TypeScript** single-page application deployed on Firebase Hosting and a **FastAPI/Python** backend deployed on Google Cloud Run with auto-scaling. State management employs the Zustand library following a single-source-of-truth pattern. Hospital integration is achieved through **DICOMweb** (QIDO-RS/WADO-RS) for PACS connectivity, **DICOM-SEG** for standardized segmentation export, and **HL7 FHIR R4** for EHR interoperability. The codebase comprises approximately **84,000 lines** of production code across **224+ files**, with CI/CD automation (GitHub Actions), 35+ automated tests, clinical measurement tools (ruler, angle, ROI), WebAuthn/Passkeys biometric authentication, edge-based neural network inference via ONNX Runtime Web, and Model Context Protocol (MCP) server integration for Claude-native tool use.
 
@@ -78,7 +77,7 @@ MSTool-AI addresses the gap between research-grade neuroimaging tools (FSL, Free
 
 ## 2. Quality Management System (QMS)
 
-MSTool-AI is classified as **IEC 62304 Class C** (highest safety class) medical device software, meaning a software failure could result in death or serious injury. To meet the rigorous regulatory requirements for CE Marking under the EU Medical Devices Regulation (2017/745), this project is monitored by a dedicated **AI-powered Quality Management System**.
+MSTool-AI is a **research prototype**: it is not CE-marked and is not a medical device placed on the market. Its software is developed under the IEC 62304 lifecycle with the **software safety class C** (the highest *software* safety class: a software failure could contribute to death or serious injury) — a classification of the software process, not a device class or a certification. In preparation for a possible future CE marking under the EU Medical Devices Regulation (2017/745), this project is monitored by a dedicated **AI-powered Quality Management System**.
 
 ### MSTool-AI-QMS
 
@@ -114,14 +113,14 @@ Commercial QMS solutions (Ketryx ~$50K/yr, Greenlight Guru ~$30K/yr, MasterContr
 | **EU MDR 2017/745** | Medical device regulation | Compliance scoring, incident reporting (TPL-08) |
 | **EU AI Act 2024/1689** | AI governance | AI documentation, transparency tracking |
 
-#### Current Compliance Scores (Live)
+#### QMS self-assessment scores (not a conformity assessment; no CE marking exists)
 
 | Standard | Score | Status |
 |----------|-------|--------|
 | IEC 62304 | **97.1%** | PASS |
 | ISO 13485 | **96.3%** | PASS |
 | Cybersecurity | **93.9%** | PASS |
-| CE Mark Overall | **96.6%** | PASS |
+| CE readiness (self-assessed) | **96.6%** | PASS (internal check, not a certification) |
 
 #### QMS Architecture
 
@@ -288,7 +287,7 @@ Cross-study comparison of lesion masks between serial MRI examinations:
 Integration with the **Claude API** (Anthropic) for structured clinical report generation:
 
 - **Templates**: General MS, disease activity, lesion burden, comprehensive publication-quality, MS longitudinal
-- **HIPAA Compliance**: De-identified findings only — no PHI (name, DOB, MRN) transmitted
+- **Data sent to the AI service**: measurements, labels of the device's fixed vocabulary, sex and a 5-year age band only — no names, dates of birth, record numbers or free text; the clinician's typed text is added to the draft in the application, and a check against the patient record refuses to send on any identifier (CAPA-014)
 - **Clinical Data Integration**: Lesion counts, volumes, DIS assessment, longitudinal changes, volumetry data
 - **Multi-Language**: English, Spanish, German output
 - **MAGNIMS Formatting**: Lesion count ranges, morphology descriptors, enhancement patterns, burden grading
@@ -468,7 +467,7 @@ VITE_API_BASE_URL=http://localhost:8000
 
 ### Edge AI Model (Optional)
 
-Place an ONNX model at `frontend/public/models/brain_screening.onnx` for in-browser screening. The feature degrades gracefully if the model is absent.
+The in-browser screening ("Quick Screen") is OFF unless the frontend is built with `VITE_ENABLE_QUICK_SCREEN=true` (PRB-009): its model is not part of the application. When enabled, place an ONNX model at `frontend/public/models/brain_screening.onnx`; the model is looked for once per page and the button appears only when it is served. With the flag off nothing is requested and nothing is shown.
 
 ---
 
@@ -498,7 +497,7 @@ mstool-ai/
 │       ├── main.py                              # FastAPI app, lifespan, CORS
 │       ├── api/routes/
 │       │   ├── auth.py                          # Auth endpoints + WebAuthn (1200 lines)
-│       │   ├── authentication.py                # Login/register with CAPTCHA
+│       │   ├── authentication.py                # Login with CAPTCHA; register only if SELF_REGISTRATION_ENABLED (never in production)
 │       │   ├── segmentation.py                  # CRUD + analysis + comparison (2100 lines)
 │       │   ├── imaging.py                       # NIfTI serving, slice extraction
 │       │   ├── ai_segmentation.py               # Vertex AI + volumetry
@@ -607,15 +606,15 @@ mstool-ai/
 
 ## 10. Security & Compliance
 
-The security architecture satisfies **IEC 81001-5-1:2021** (mandatory for CE Marking) using **ISO 27001:2022 Annex A** as the control framework, as recommended by **MDCG 2019-16 Rev.1**. See `docs/qms/ISMS-001_Information_Security_Management.md` for the complete ISO 27001 control mapping (42 controls assessed, **95% alignment**).
+The security architecture is designed against **IEC 81001-5-1:2021** (required for CE marking) using **ISO 27001:2022 Annex A** as the control framework, as recommended by **MDCG 2019-16 Rev.1**. No conformity assessment or certification has been performed: the mapping in `docs/qms/ISMS-001_Information_Security_Management.md` (42 controls) is a self-assessment, and several of its rows are under re-assessment (PRB-022).
 
 | Layer | Mechanism | IEC 81001-5-1 | ISO 27001 |
 |-------|-----------|:-------------:|:---------:|
-| Authentication | Firebase Auth + JWT + WebAuthn/Passkeys (FIDO2) | 5.3.2 | A.8.5 |
+| Authentication | Password (Argon2id) + JWT; optional WebAuthn passkeys; no second factor enforced; accounts created by an administrator, self-registration off (PRB-020, PRB-022) | 5.3.2 | A.8.5 |
 | Access Control | RBAC with 4 roles, 15 permissions | 5.3.3 | A.5.2, A.8.3 |
 | Encryption at Rest | AES-256-GCM (user data), GCS server-side encryption | 5.3.5 | A.8.24 |
 | Encryption in Transit | TLS 1.3 enforced (Cloud Run + Firebase) | 5.3.5 | A.8.24 |
-| De-Identification | PHI stripped before AI API calls | 5.3.6 | A.8.12 |
+| AI report data | Measurements only to the AI service (no names, dates of birth, record numbers or free text); identifier check before sending (CAPA-014) | 5.3.6 | A.8.12 |
 | Audit Logging | Structured JSON logs + QMS immutable audit trail | 5.3.7 | A.8.15, A.5.28 |
 | Input Validation | Pydantic schemas + sanitization on all endpoints | 5.3.10 | A.8.7, A.8.28 |
 | SOUP Management | SBOM (CycloneDX) + npm/pip audit in CI + QMS CVE scan | 5.3.11, 5.3.12 | A.5.9, A.8.8 |

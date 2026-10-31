@@ -92,12 +92,15 @@ async def test_store_back_uploads_with_real_signature_to_canonical_path(tmp_path
     arr = np.zeros((4, 5, 3), dtype=np.uint8)
     arr[1, 2, 0] = 1
     mask_path = _write_nifti(tmp_path / "m.nii.gz", arr)
+    # RC-039 (CAPA-011): the image the tool ran on is required (fail closed).
+    flair_path = _write_nifti(tmp_path / "flair.nii.gz", np.zeros_like(arr))
 
     seg_id = await svc._store_nifti_as_segmentation(
         mask_path=mask_path,
         file_id="flair-1",
         description="FLAMeS automated MS lesion segmentation",
         validation_source="flames-v1.0",
+        reference_mri_path=flair_path,
     )
 
     assert seg_id

@@ -1,0 +1,9 @@
+{
+ "backend": "onnx",
+ "fold": 0,
+ "mirror": false,
+ "seconds": 126.5,
+ "threads": 8,
+ "flair": "P57_FLAIR_thick4mm.nii.gz",
+ "onnx": "flames-fold0.onnx"
+}

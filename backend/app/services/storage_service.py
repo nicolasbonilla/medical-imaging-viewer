@@ -215,6 +215,26 @@ class GCSStorageService(IStorageService):
                 details={"file_path": file_path}
             )
 
+    async def download_file_range(
+        self,
+        bucket_name: str,
+        object_name: str,
+        start: int,
+        end: int,
+    ) -> bytes:
+        """Bytes start..end (inclusive) of a GCS object, read as a range (review of PR #74, m9: a NIfTI header without
+        the image). Errors as `download_file`."""
+        try:
+            client = self._get_client()
+            blob = client.bucket(bucket_name).blob(object_name)
+            return await self._run_sync(blob.download_as_bytes, start=start, end=end)
+        except NotFound:
+            raise NotFoundException(
+                message="File not found in GCS",
+                error_code="STORAGE_FILE_NOT_FOUND",
+                details={"bucket": bucket_name, "object": object_name},
+            )
+
     async def download_file(
         self,
         bucket_name: str,

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { windowLevelToCalRange, sliceIndexToFraction } from './niivueWindowLevel';
+import { windowLevelToCalRange, sliceIndexToVoxelCentreFraction } from './niivueWindowLevel';
 
 describe('windowLevelToCalRange (DICOM VOI-LUT → niivue cal range)', () => {
   it('maps an active window to center ± width/2', () => {
@@ -31,25 +31,36 @@ describe('windowLevelToCalRange (DICOM VOI-LUT → niivue cal range)', () => {
   });
 });
 
-describe('sliceIndexToFraction (store index → niivue axial depth fraction)', () => {
-  it('maps first/last slice to the [0, 0.999] extent', () => {
-    expect(sliceIndexToFraction(0, 182)).toBe(0);
-    expect(sliceIndexToFraction(181, 182)).toBe(0.999); // last slice clamped inside the volume
+describe('sliceIndexToVoxelCentreFraction (store index → niivue axial crosshair fraction)', () => {
+  // PRB-004: replaces sliceIndexToFraction (index / (depth − 1)), which addressed a position
+  // between two voxel slices for most indices and the volume's outer edge for slice 0.
+  it('rc073 addresses the centre of the voxel slice: (index + 0.5) / depth', () => {
+    expect(sliceIndexToVoxelCentreFraction(0, 182)).toBeCloseTo(0.5 / 182, 12);
+    expect(sliceIndexToVoxelCentreFraction(45, 182)).toBeCloseTo(45.5 / 182, 12);
+    expect(sliceIndexToVoxelCentreFraction(181, 182)).toBeCloseTo(181.5 / 182, 12);
   });
 
-  it('maps a mid slice proportionally', () => {
-    expect(sliceIndexToFraction(90, 181)).toBeCloseTo(0.5, 5);
+  it('rc073 niivue reads it back as exactly that voxel slice (f · depth − 0.5 = index)', () => {
+    for (const depth of [1, 2, 5, 60, 181, 182]) {
+      for (let i = 0; i < depth; i++) {
+        const f = sliceIndexToVoxelCentreFraction(i, depth)!;
+        expect(f * depth - 0.5).toBeCloseTo(i, 9);
+      }
+    }
   });
 
-  it('clamps out-of-range indices into [0, 0.999]', () => {
-    expect(sliceIndexToFraction(-5, 100)).toBe(0);
-    expect(sliceIndexToFraction(999, 100)).toBe(0.999);
+  it('clamps out-of-range indices to the first and last slice', () => {
+    expect(sliceIndexToVoxelCentreFraction(-5, 100)).toBeCloseTo(0.5 / 100, 12);
+    expect(sliceIndexToVoxelCentreFraction(999, 100)).toBeCloseTo(99.5 / 100, 12);
   });
 
-  it('returns null for a non-navigable volume (depth <= 1 or non-finite)', () => {
-    expect(sliceIndexToFraction(0, 1)).toBeNull();
-    expect(sliceIndexToFraction(0, 0)).toBeNull();
-    expect(sliceIndexToFraction(0, NaN)).toBeNull();
-    expect(sliceIndexToFraction(0, undefined as unknown as number)).toBeNull();
+  it('a single slice is addressed at its centre', () => {
+    expect(sliceIndexToVoxelCentreFraction(0, 1)).toBe(0.5);
+  });
+
+  it('returns null when the volume has no slices or the depth is not a number', () => {
+    expect(sliceIndexToVoxelCentreFraction(0, 0)).toBeNull();
+    expect(sliceIndexToVoxelCentreFraction(0, NaN)).toBeNull();
+    expect(sliceIndexToVoxelCentreFraction(0, undefined as unknown as number)).toBeNull();
   });
 });

@@ -456,6 +456,22 @@ async def authorize_study_id(study_id, user) -> Optional[str]:
     return pid
 
 
+async def authorize_segmentation_id(segmentation_id, user) -> Optional[str]:
+    """Authorize a segmentation referenced in a request body; return its owning patient_id.
+
+    CAPA-014 (RC-065): the AI report route names the analysed segmentation so that the server can
+    read that patient's record and remove the patient's identifiers before calling the provider.
+    """
+    segmentations, patients, care_team = _services_or_deny(
+        "Segmentation", _segmentation_service, _patient_service, _care_team_service)
+    pid = await resolve_segmentation_patient_id(segmentation_id, segmentations) if segmentation_id else None
+    await authorize_resolved_patient(
+        patient_id=pid, resource_label="Segmentation", user=user,
+        patient_service=patients, care_team_service=care_team,
+    )
+    return pid
+
+
 async def authorize_document_id(document_id, user) -> Optional[str]:
     """Authorize a document referenced outside the path; return its owning patient_id."""
     documents, patients, care_team = _services_or_deny(
