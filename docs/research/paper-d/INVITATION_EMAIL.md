@@ -58,7 +58,7 @@ send the protocol, the consent form and the software. I am glad to answer any qu
 phone.
 
 With kind regards,
-Nicolás G. Bonilla Vargas
+Nicolas G. Bonilla Vargas
 MSTool-AI · [professional e-mail] · [phone]
 
 ---
@@ -114,5 +114,5 @@ Ihnen dann Protokoll, Einwilligungserklärung und Software. Für Fragen oder ein
 ich gern zur Verfügung.
 
 Mit freundlichen Grüßen
-Nicolás G. Bonilla Vargas
+Nicolas G. Bonilla Vargas
 MSTool-AI · [berufliche E-Mail] · [Telefon]

@@ -6,7 +6,7 @@ protocol was committed before any result (`../PROTOCOL.md`, commit `980cb56`). T
 specified in `../READER_STUDY_PROTOCOL.md`; every result that needs the three neuroradiologists is
 marked **TODO**. Supersedes `../MANUSCRIPT.md` (v0.1).*
 
-**Authors.** Nicolás G. Bonilla Vargas¹; [Reader A]², [Reader B]³, [Reader C]⁴ (neuroradiologists;
+**Authors.** Nicolas G. Bonilla Vargas¹; [Reader A]², [Reader B]³, [Reader C]⁴ (neuroradiologists;
 authorship per ICMJE, `../READER_STUDY_PROTOCOL.md` §11) [+ others TBD].
 ¹ MSTool-AI. ²–⁴ TBD.
 **Target.** NeuroImage: Clinical or AJNR (full paper); short version for a MICCAI workshop.
