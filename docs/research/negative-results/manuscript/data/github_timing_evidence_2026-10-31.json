@@ -1,0 +1,151 @@
+{
+ "queried_utc": "2026-10-31T15:03:49Z",
+ "note": "Raw GitHub REST API responses kept as evidence. The repository events endpoint only returns recent events (about 90 days), so these PushEvent records cannot be re-queried later; pull-request metadata remains queryable.",
+ "repo_visibility_at_query": "public",
+ "pull_55": {
+  "created_at": "2026-10-21T03:14:13Z",
+  "head_ref": "research/lesion-detector-v3",
+  "base_ref": "main",
+  "merged_at": null,
+  "commits": [
+   "59cc7969cac57d44342bad96cd0e16425d2e3c9e",
+   "6840ef390c08082e4ed6ab714f37bbb06a89b71e",
+   "ed3c858cb6f27645d993b39aaf408cab2b0c50bc",
+   "b87f2672bd44ab230f639fdfe1c32873043b2f7d",
+   "e5415e5b2a9d1e82c1f26fb4509c5844ce9aaa11",
+   "a5b63081d86c3ba637b3728b0e4660ef9c570e6c",
+   "129d2ff6efb70d606b3bc899e5d19a9ac41ade0f",
+   "0d339b1ea4c4a5747658a2546199661dd82236e2",
+   "d451fbb00cf88a89197790846bb967bea2d09e6c",
+   "3c2497747f722d64838484c51c92082a2a3a11bc",
+   "6606cc6ef44bfbe7adc68b68645c7ab3ca7695a3",
+   "90797a93611fcc8e2c8275b738bbf5f1b44921bc"
+  ]
+ },
+ "pull_56": {
+  "created_at": "2026-10-21T05:08:35Z",
+  "head_ref": "research/flames-thick",
+  "base_ref": "research/cloud-compute-ledger",
+  "merged_at": "2026-10-24T11:06:27Z",
+  "commits": [
+   "5b286f2a105e5f548b80a6ac7766cb47dcc05a13",
+   "e5b8f61142cd22115fb768ceeec0d6076203fce7",
+   "76adbccf7891ee80f16adfa3cffa10b37500c996",
+   "b6342ecbf83510cde701bacb2219f3b943f93a6b",
+   "1539e16198a239c6c36c644db76e5abf194d024c",
+   "22ecd8d9016832b1e7e0d637c012c42f7967d420",
+   "a2836a18fd74f9bf71f735532385e88b1b431658",
+   "e5d8ed70ce495c874269799552f7b3123b2f6ea9",
+   "73e9651466a85447c36f3c6d1bffb48f0eed7615",
+   "aba9a54e98ea90c85fe062c40b75640417053337",
+   "7a4c64a0e1c6aa57c087710a81a6846f96a63080",
+   "b89ee98d36eeae092f4ce5ae93d16c4ccb4bced3",
+   "c4fd2e588db88efede0b353cd3af73265901fcf2",
+   "b19293c48302b93bc6934230ad5ab97627df5362"
+  ]
+ },
+ "events_total_returned": 161,
+ "events_earliest_returned": "2026-10-17T10:16:10Z",
+ "events_for_study_branches": [
+  {
+   "action": "opened",
+   "before": null,
+   "created_at": "2026-10-21T03:14:13Z",
+   "head": null,
+   "id": "17773079387",
+   "number": 55,
+   "ref": null,
+   "type": "PullRequestEvent"
+  },
+  {
+   "action": "opened",
+   "before": null,
+   "created_at": "2026-10-21T05:08:35Z",
+   "head": null,
+   "id": "17778947354",
+   "number": 56,
+   "ref": null,
+   "type": "PullRequestEvent"
+  },
+  {
+   "action": null,
+   "before": "76adbccf7891ee80f16adfa3cffa10b37500c996",
+   "created_at": "2026-10-21T05:21:37Z",
+   "head": "b6342ecbf83510cde701bacb2219f3b943f93a6b",
+   "id": "24685289595",
+   "number": null,
+   "ref": "refs/heads/research/flames-thick",
+   "type": "PushEvent"
+  },
+  {
+   "action": null,
+   "before": "b6342ecbf83510cde701bacb2219f3b943f93a6b",
+   "created_at": "2026-10-21T17:19:42Z",
+   "head": "73e9651466a85447c36f3c6d1bffb48f0eed7615",
+   "id": "24732585384",
+   "number": null,
+   "ref": "refs/heads/research/flames-thick",
+   "type": "PushEvent"
+  },
+  {
+   "action": null,
+   "before": "73e9651466a85447c36f3c6d1bffb48f0eed7615",
+   "created_at": "2026-10-21T18:40:54Z",
+   "head": "aba9a54e98ea90c85fe062c40b75640417053337",
+   "id": "24737997266",
+   "number": null,
+   "ref": "refs/heads/research/flames-thick",
+   "type": "PushEvent"
+  },
+  {
+   "action": null,
+   "before": "aba9a54e98ea90c85fe062c40b75640417053337",
+   "created_at": "2026-10-21T18:42:09Z",
+   "head": "7a4c64a0e1c6aa57c087710a81a6846f96a63080",
+   "id": "24837599268",
+   "number": null,
+   "ref": "refs/heads/research/flames-thick",
+   "type": "PushEvent"
+  },
+  {
+   "action": "merged",
+   "before": null,
+   "created_at": "2026-10-24T11:06:27Z",
+   "head": null,
+   "id": "18099748410",
+   "number": 56,
+   "ref": null,
+   "type": "PullRequestEvent"
+  },
+  {
+   "action": null,
+   "before": "d451fbb00cf88a89197790846bb967bea2d09e6c",
+   "created_at": "2026-10-24T16:26:06Z",
+   "head": "3c2497747f722d64838484c51c92082a2a3a11bc",
+   "id": "25144696320",
+   "number": null,
+   "ref": "refs/heads/research/lesion-detector-v3",
+   "type": "PushEvent"
+  },
+  {
+   "action": null,
+   "before": "3c2497747f722d64838484c51c92082a2a3a11bc",
+   "created_at": "2026-10-24T16:38:27Z",
+   "head": "6606cc6ef44bfbe7adc68b68645c7ab3ca7695a3",
+   "id": "25053606142",
+   "number": null,
+   "ref": "refs/heads/research/lesion-detector-v3",
+   "type": "PushEvent"
+  },
+  {
+   "action": null,
+   "before": "6606cc6ef44bfbe7adc68b68645c7ab3ca7695a3",
+   "created_at": "2026-10-24T17:03:01Z",
+   "head": "90797a93611fcc8e2c8275b738bbf5f1b44921bc",
+   "id": "25079580004",
+   "number": null,
+   "ref": "refs/heads/research/lesion-detector-v3",
+   "type": "PushEvent"
+  }
+ ]
+}
