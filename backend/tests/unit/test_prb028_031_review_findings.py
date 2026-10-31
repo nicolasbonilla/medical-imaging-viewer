@@ -144,6 +144,10 @@ def test_rc092_review_m9_the_gcs_storage_reads_a_byte_range():
 
     svc = object.__new__(GCSStorageService)
     svc._get_client = lambda: _Client()
-    data = asyncio.run(svc.download_file_range("bucket", "patients/x.nii.gz", 0, 1023))
+    loop = asyncio.new_event_loop()        # never asyncio.run: it would leave no current loop for later tests
+    try:
+        data = loop.run_until_complete(svc.download_file_range("bucket", "patients/x.nii.gz", 0, 1023))
+    finally:
+        loop.close()
     assert len(data) == 1024
     assert calls == ["patients/x.nii.gz", (0, 1023)]

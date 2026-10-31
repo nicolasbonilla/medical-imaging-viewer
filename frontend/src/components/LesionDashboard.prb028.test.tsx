@@ -92,6 +92,10 @@ function seedOpen() {
 }
 
 const confirmButton = () => screen.findByRole('button', { name: /confirm this segmentation/ });
+// Review of PR #74 (m2): a tick can be given only after its "open slice" was pressed.
+async function openEverySlice() {
+  for (const button of await screen.findAllByRole('button', { name: /open slice/i })) fireEvent.click(button);
+}
 
 beforeEach(() => {
   for (const f of [getDISAssessment, analyzeLesions, confirmSegmentationReview]) f.mockReset();
@@ -118,7 +122,8 @@ describe('PRB-028: geometric-fallback regions are checked lesion by lesion befor
 
   it('rc090 prb028 Confirm stays off until every listed lesion is ticked', async () => {
     getDISAssessment.mockResolvedValue(dis(GEOMETRIC));
-    render(<LesionDashboard segmentationId="seg-1" />);
+    render(<LesionDashboard segmentationId="seg-1" onNavigateToSlice={vi.fn()} />);
+    await openEverySlice();
     const ticks = await screen.findAllByRole('checkbox', { name: /checked the region of lesion/i });
     expect(ticks).toHaveLength(2);
     expect(await confirmButton()).toBeDisabled();
@@ -130,7 +135,8 @@ describe('PRB-028: geometric-fallback regions are checked lesion by lesion befor
 
   it('rc090 prb028 with every lesion ticked the confirmation sends the digest of the checked list', async () => {
     getDISAssessment.mockResolvedValue(dis(GEOMETRIC));
-    render(<LesionDashboard segmentationId="seg-1" />);
+    render(<LesionDashboard segmentationId="seg-1" onNavigateToSlice={vi.fn()} />);
+    await openEverySlice();
     for (const tick of await screen.findAllByRole('checkbox', { name: /checked the region of lesion/i })) {
       fireEvent.click(tick);
     }
