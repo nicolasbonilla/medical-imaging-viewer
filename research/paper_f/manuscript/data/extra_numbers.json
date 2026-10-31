@@ -1,0 +1,568 @@
+{
+ "_provenance": {
+  "per_scan_rows": 6906,
+  "inputs": [
+   "results/per_scan.csv.gz",
+   "results/comparisons.json",
+   "manuscript/data/compute_ledger_c8b4239.csv"
+  ],
+  "bootstrap": "10000 replicates, seed 20261021, patient clusters within cohort"
+ },
+ "cohorts": {
+  "mslesseg": {
+   "scans": 115,
+   "patients": 75,
+   "slice_mm_min": 1.0,
+   "slice_mm_max": 1.0,
+   "slice_mm_median": 1.0,
+   "bands": [
+    "iso"
+   ],
+   "flames_contaminated_scans": 0
+  },
+  "openms": {
+   "scans": 30,
+   "patients": 30,
+   "slice_mm_min": 1.0,
+   "slice_mm_max": 1.0,
+   "slice_mm_median": 1.0,
+   "bands": [
+    "iso"
+   ],
+   "flames_contaminated_scans": 20
+  },
+  "ms3seg": {
+   "scans": 100,
+   "patients": 100,
+   "slice_mm_min": 6.0,
+   "slice_mm_max": 8.1,
+   "slice_mm_median": 7.2,
+   "bands": [
+    "thick"
+   ],
+   "flames_contaminated_scans": 0
+  },
+  "muslim": {
+   "scans": 51,
+   "patients": 51,
+   "slice_mm_min": 4.86,
+   "slice_mm_max": 8.3,
+   "slice_mm_median": 6.0,
+   "bands": [
+    "thick"
+   ],
+   "flames_contaminated_scans": 0
+  },
+  "pedims": {
+   "scans": 28,
+   "patients": 9,
+   "slice_mm_min": 3.9,
+   "slice_mm_max": 3.9,
+   "slice_mm_median": 3.9,
+   "bands": [
+    "thick"
+   ],
+   "flames_contaminated_scans": 0
+  }
+ },
+ "bands": {
+  "iso": {
+   "scans": 145,
+   "patients": 105,
+   "expert_lesions_flames_set": 3463,
+   "expert_lesions_14_50": 1209,
+   "share_14_50": 0.34911926075656946,
+   "scans_flames_set": 125,
+   "scans_with_empty_reference": 0
+  },
+  "thick": {
+   "scans": 179,
+   "patients": 160,
+   "expert_lesions_flames_set": 5993,
+   "expert_lesions_14_50": 1248,
+   "share_14_50": 0.20824295010845986,
+   "scans_flames_set": 179,
+   "scans_with_empty_reference": 0
+  }
+ },
+ "n_scans_total": 324,
+ "n_patients_total": 265,
+ "zero_prediction_scans_posthoc": {
+  "flames|iso": {
+   "scans": 125,
+   "no_predicted_lesion": 0
+  },
+  "flames|thick": {
+   "scans": 179,
+   "no_predicted_lesion": 0
+  },
+  "lstai|iso": {
+   "scans": 144,
+   "no_predicted_lesion": 0
+  },
+  "mindglide|iso": {
+   "scans": 145,
+   "no_predicted_lesion": 0
+  },
+  "mindglide|thick": {
+   "scans": 179,
+   "no_predicted_lesion": 0
+  },
+  "mindglide-raw|thick": {
+   "scans": 179,
+   "no_predicted_lesion": 0
+  },
+  "wmhsynthseg|iso": {
+   "scans": 145,
+   "no_predicted_lesion": 0
+  },
+  "wmhsynthseg|thick": {
+   "scans": 179,
+   "no_predicted_lesion": 0
+  },
+  "samseg|thick": {
+   "scans": 129,
+   "no_predicted_lesion": 3
+  }
+ },
+ "tier_c": {
+  "n_ids": 129,
+  "flames_scans": 129,
+  "samseg_scans": 129,
+  "flames_f1": {
+   "n_scans": 129,
+   "n_clusters": 110,
+   "estimate": 0.7289850727936417,
+   "ci95": [
+    0.7071713695143133,
+    0.749823322658466
+   ],
+   "ci90": [
+    0.7107816047933934,
+    0.7468386546117755
+   ],
+   "p_two_sided": 0.0
+  },
+  "flames_false_lesions": {
+   "n_scans": 129,
+   "n_clusters": 110,
+   "estimate": 6.973053221288516,
+   "ci95": [
+    5.951354129530599,
+    7.922638574970218
+   ],
+   "ci90": [
+    6.10352184382525,
+    7.766182948179273
+   ],
+   "p_two_sided": 0.0
+  },
+  "samseg_f1": {
+   "n_scans": 129,
+   "n_clusters": 110,
+   "estimate": 0.49228402572334823,
+   "ci95": [
+    0.42718911797411535,
+    0.5534827003492293
+   ],
+   "ci90": [
+    0.436218687197679,
+    0.5454670678843949
+   ],
+   "p_two_sided": 0.0
+  },
+  "samseg_false_lesions": {
+   "n_scans": 129,
+   "n_clusters": 110,
+   "estimate": 1.8217740429505136,
+   "ci95": [
+    1.4067545480557813,
+    2.2812430374448627
+   ],
+   "ci90": [
+    1.47761505814447,
+    2.2168335146152414
+   ],
+   "p_two_sided": 0.0
+  }
+ },
+ "precision_by_band_descriptive": {
+  "flames|iso": {
+   "n_scans": 125,
+   "n_clusters": 85,
+   "estimate": 0.8186495114127602,
+   "ci95": [
+    0.7638660515788924,
+    0.8656654671015593
+   ],
+   "ci90": [
+    0.7737608291512786,
+    0.859344917141663
+   ],
+   "p_two_sided": 0.0
+  },
+  "flames|thick": {
+   "n_scans": 179,
+   "n_clusters": 160,
+   "estimate": 0.7383609069286251,
+   "ci95": [
+    0.7077804678095564,
+    0.768676140584626
+   ],
+   "ci90": [
+    0.7125358052843813,
+    0.7641488831536272
+   ],
+   "p_two_sided": 0.0
+  },
+  "lstai|iso": {
+   "n_scans": 144,
+   "n_clusters": 105,
+   "estimate": 0.6895794455265757,
+   "ci95": [
+    0.6471960551523692,
+    0.729843465495024
+   ],
+   "ci90": [
+    0.6546811955415364,
+    0.7235892188382799
+   ],
+   "p_two_sided": 0.0
+  },
+  "mindglide|iso": {
+   "n_scans": 145,
+   "n_clusters": 105,
+   "estimate": 0.569472496716626,
+   "ci95": [
+    0.524999779044595,
+    0.6129453454762662
+   ],
+   "ci90": [
+    0.5321023893077654,
+    0.6061017794961582
+   ],
+   "p_two_sided": 0.0
+  },
+  "mindglide|thick": {
+   "n_scans": 179,
+   "n_clusters": 160,
+   "estimate": 0.600098335507434,
+   "ci95": [
+    0.5453568185488868,
+    0.6509338815408054
+   ],
+   "ci90": [
+    0.5534807695624495,
+    0.6426910938186162
+   ],
+   "p_two_sided": 0.0
+  },
+  "mindglide-raw|thick": {
+   "n_scans": 179,
+   "n_clusters": 160,
+   "estimate": 0.6058641908280711,
+   "ci95": [
+    0.5582898895989389,
+    0.650113116130757
+   ],
+   "ci90": [
+    0.564941297503961,
+    0.6432427345076537
+   ],
+   "p_two_sided": 0.0
+  },
+  "wmhsynthseg|iso": {
+   "n_scans": 145,
+   "n_clusters": 105,
+   "estimate": 0.7522404934637359,
+   "ci95": [
+    0.7080295813290555,
+    0.7939382493648811
+   ],
+   "ci90": [
+    0.7149956958423346,
+    0.7874659901566297
+   ],
+   "p_two_sided": 0.0
+  },
+  "wmhsynthseg|thick": {
+   "n_scans": 179,
+   "n_clusters": 160,
+   "estimate": 0.7074851471716429,
+   "ci95": [
+    0.6277175084925632,
+    0.7681829432518474
+   ],
+   "ci90": [
+    0.639045173121935,
+    0.7596676887313903
+   ],
+   "p_two_sided": 0.0
+  },
+  "samseg|thick": {
+   "n_scans": 126,
+   "n_clusters": 107,
+   "estimate": 0.8367390189107192,
+   "ci95": [
+    0.7938206632072158,
+    0.872948711368245
+   ],
+   "ci90": [
+    0.8011331359754986,
+    0.8677035150772617
+   ],
+   "p_two_sided": 0.0
+  }
+ },
+ "recall_by_band_descriptive": {
+  "flames|iso": {
+   "n_scans": 125,
+   "n_clusters": 85,
+   "estimate": 0.7402172517505914,
+   "ci95": [
+    0.708091485362397,
+    0.7712214958034365
+   ],
+   "ci90": [
+    0.7135970283361083,
+    0.7663955038930302
+   ],
+   "p_two_sided": 0.0
+  },
+  "flames|thick": {
+   "n_scans": 179,
+   "n_clusters": 160,
+   "estimate": 0.7578607955534923,
+   "ci95": [
+    0.7324127794528182,
+    0.7818986203962007
+   ],
+   "ci90": [
+    0.7367306648156714,
+    0.7780756469511569
+   ],
+   "p_two_sided": 0.0
+  },
+  "lstai|iso": {
+   "n_scans": 144,
+   "n_clusters": 105,
+   "estimate": 0.5889488799598153,
+   "ci95": [
+    0.5587616521870878,
+    0.617591669366327
+   ],
+   "ci90": [
+    0.5632674117358694,
+    0.613347019366049
+   ],
+   "p_two_sided": 0.0
+  },
+  "mindglide|iso": {
+   "n_scans": 145,
+   "n_clusters": 105,
+   "estimate": 0.5990312727406714,
+   "ci95": [
+    0.5597748772293356,
+    0.6380748956348498
+   ],
+   "ci90": [
+    0.5659429065619667,
+    0.6319016482092812
+   ],
+   "p_two_sided": 0.0
+  },
+  "mindglide|thick": {
+   "n_scans": 179,
+   "n_clusters": 160,
+   "estimate": 0.5932001643852886,
+   "ci95": [
+    0.5343731515154748,
+    0.6470146855273512
+   ],
+   "ci90": [
+    0.5427867794782095,
+    0.6403501488688812
+   ],
+   "p_two_sided": 0.0
+  },
+  "mindglide-raw|thick": {
+   "n_scans": 179,
+   "n_clusters": 160,
+   "estimate": 0.5487581579199358,
+   "ci95": [
+    0.4942142897941576,
+    0.5991578959522196
+   ],
+   "ci90": [
+    0.5029434927296966,
+    0.5928552138950669
+   ],
+   "p_two_sided": 0.0
+  },
+  "wmhsynthseg|iso": {
+   "n_scans": 145,
+   "n_clusters": 105,
+   "estimate": 0.31215768450880205,
+   "ci95": [
+    0.2843919718148074,
+    0.3397405974497612
+   ],
+   "ci90": [
+    0.28879190315564224,
+    0.3355909936724326
+   ],
+   "p_two_sided": 0.0
+  },
+  "wmhsynthseg|thick": {
+   "n_scans": 179,
+   "n_clusters": 160,
+   "estimate": 0.24751263067997406,
+   "ci95": [
+    0.21899728565845777,
+    0.2767389830510901
+   ],
+   "ci90": [
+    0.22330884963349323,
+    0.2724678137837759
+   ],
+   "p_two_sided": 0.0
+  },
+  "samseg|thick": {
+   "n_scans": 129,
+   "n_clusters": 110,
+   "estimate": 0.39747719058571657,
+   "ci95": [
+    0.32857111915493614,
+    0.4618020575175335
+   ],
+   "ci90": [
+    0.33873960231520434,
+    0.45325010662946125
+   ],
+   "p_two_sided": 0.0
+  }
+ },
+ "e1_posthoc": [
+  {
+   "tool": "mindglide",
+   "band": "thick",
+   "n_scans": 179,
+   "n_poor": 14,
+   "auroc_reproduced": 0.7785714285714286,
+   "auroc_ci95_posthoc": [
+    0.5967827341740385,
+    0.9251093180805618
+   ],
+   "n_boot_valid": 10000,
+   "auroc_cohort_stratified_posthoc": 0.8192695214105793,
+   "poor_by_cohort": {
+    "ms3seg": 4,
+    "muslim": 10,
+    "pedims": 0
+   },
+   "scans_by_cohort": {
+    "ms3seg": 100,
+    "muslim": 51,
+    "pedims": 28
+   },
+   "auroc_registered": 0.7785714285714286
+  },
+  {
+   "tool": "wmhsynthseg",
+   "band": "thick",
+   "n_scans": 179,
+   "n_poor": 14,
+   "auroc_reproduced": 0.5926406926406926,
+   "auroc_ci95_posthoc": [
+    0.38481810587894344,
+    0.7868307255229072
+   ],
+   "n_boot_valid": 10000,
+   "auroc_cohort_stratified_posthoc": 0.6492443324937027,
+   "poor_by_cohort": {
+    "ms3seg": 4,
+    "muslim": 10,
+    "pedims": 0
+   },
+   "scans_by_cohort": {
+    "ms3seg": 100,
+    "muslim": 51,
+    "pedims": 28
+   },
+   "auroc_registered": 0.5926406926406926
+  },
+  {
+   "tool": "samseg",
+   "band": "thick",
+   "n_scans": 129,
+   "n_poor": 11,
+   "auroc_reproduced": 0.48805855161787365,
+   "auroc_ci95_posthoc": [
+    0.2847796642312453,
+    0.6974931305391076
+   ],
+   "n_boot_valid": 10000,
+   "auroc_cohort_stratified_posthoc": 0.4084967320261438,
+   "poor_by_cohort": {
+    "ms3seg": 1,
+    "muslim": 10,
+    "pedims": 0
+   },
+   "scans_by_cohort": {
+    "ms3seg": 50,
+    "muslim": 51,
+    "pedims": 28
+   },
+   "auroc_registered": 0.48805855161787365
+  }
+ ],
+ "compute": {
+  "runs": 14,
+  "vm_hours": 61.9021,
+  "usd_list": 12.5517,
+  "by_group": {
+   "pilots": {
+    "runs": 5,
+    "vm_hours": 1.5359,
+    "usd_list": 0.3019
+   },
+   "mindglide_primary": {
+    "runs": 2,
+    "vm_hours": 6.7759,
+    "usd_list": 1.319
+   },
+   "mindglide_raw_arm": {
+    "runs": 2,
+    "vm_hours": 13.0731,
+    "usd_list": 1.9311
+   },
+   "wmhsynthseg": {
+    "runs": 2,
+    "vm_hours": 22.6536,
+    "usd_list": 5.6279
+   },
+   "samseg_tier_c": {
+    "runs": 3,
+    "vm_hours": 17.863599999999998,
+    "usd_list": 3.3718
+   }
+  },
+  "upstream_not_paper_f": {
+   "flames_iso_maps": {
+    "runs": 3,
+    "vm_hours": 14.235600000000002,
+    "usd_list": 2.6155
+   },
+   "flames_thick_maps_incl_hdbet": {
+    "runs": 2,
+    "vm_hours": 21.7853,
+    "usd_list": 3.8305000000000002
+   },
+   "lstai_maps": {
+    "runs": 1,
+    "vm_hours": 4.0469,
+    "usd_list": 0.8415
+   }
+  }
+ }
+}
