@@ -15,7 +15,7 @@ and are reported in the paper.*
 **1.1 Title.** A per-patient, distribution-free bound on false new-lesion activity calls in
 longitudinal multiple sclerosis MRI: a pre-registered evaluation on MSSEG-2.
 
-**1.2 Authors.** Nicolás G. Bonilla Vargas (MSTool-AI). Contributor statement and any further
+**1.2 Authors.** Nicolas G. Bonilla Vargas (MSTool-AI). Contributor statement and any further
 authors are added before submission; a change of authors is not a deviation.
 
 **1.3 Description.** The 2021 MAGNIMS–CMSC–NAIMS recommendations treat one new or enlarging T2

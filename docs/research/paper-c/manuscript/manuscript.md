@@ -7,7 +7,7 @@ device. Pilot numbers are copied from `../RESULTS.md` and the records in `docs/r
 will be filled only by the analysis pre-registered in `../PREREGISTRATION_C.md`. Supersedes
 `../manuscript-skeleton.md` (v0.1).*
 
-**Authors.** Nicolás G. Bonilla Vargas¹ [+ co-authors TBD]
+**Authors.** Nicolas G. Bonilla Vargas¹ [+ co-authors TBD]
 ¹ MSTool-AI.
 **Target.** Medical Image Analysis / MELBA (full paper; pre-registered confirmatory study); short
 version for a MICCAI 2027 workshop (UNSURE). Reporting follows TRIPOD+AI where applicable (Collins et

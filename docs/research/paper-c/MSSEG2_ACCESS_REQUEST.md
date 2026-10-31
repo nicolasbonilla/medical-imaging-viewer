@@ -127,7 +127,7 @@ the data accessed. The clauses:
 
 | Field | Value |
 |---|---|
-| First name | Nicolás *(as in your identity documents)* |
+| First name | Nicolas *(exactly as in your identity documents, with accent if it has one)* |
 | Last name | Bonilla Vargas |
 | E-mail | **your professional address in your own name** (e.g. `nombre@mstool-ai.com`) — not Gmail and not the shared `contact@mstool-ai.com` (clause 6 asks for *your* professional address) |
 | Institution / Employer | `MSTool-AI (independent research and software development)` — if MSTool-AI is a registered company, write its exact legal name instead |
@@ -144,7 +144,7 @@ the data accessed. The clauses:
 > usage agreement I would like to be fully transparent about who I am and what I intend to do, and
 > to ask two questions.
 >
-> **Who I am.** I am Nicolás G. Bonilla Vargas. I develop MSTool-AI, a software tool for MS MRI
+> **Who I am.** I am Nicolas G. Bonilla Vargas. I develop MSTool-AI, a software tool for MS MRI
 > analysis that is intended to become a commercial medical device; it is not in clinical use. I also
 > carry out methodological research that I publish openly. I am not affiliated with a university.
 >
@@ -175,7 +175,7 @@ the data accessed. The clauses:
 > Thank you for building and sharing this dataset.
 >
 > Kind regards,
-> Nicolás G. Bonilla Vargas
+> Nicolas G. Bonilla Vargas
 > MSTool-AI — [professional e-mail] — [city, country]
 
 **Version française (même contenu)**
@@ -189,7 +189,7 @@ the data accessed. The clauses:
 > l'accord d'utilisation des données, je souhaite être entièrement transparent sur ma situation et
 > sur mon projet, et vous poser deux questions.
 >
-> **Qui je suis.** Je m'appelle Nicolás G. Bonilla Vargas. Je développe MSTool-AI, un logiciel
+> **Qui je suis.** Je m'appelle Nicolas G. Bonilla Vargas. Je développe MSTool-AI, un logiciel
 > d'analyse d'IRM dans la sclérose en plaques destiné à devenir un dispositif médical commercial ; il
 > n'est pas utilisé en clinique. Je mène aussi des travaux de recherche méthodologique publiés
 > ouvertement. Je ne suis pas rattaché à une université.
@@ -226,7 +226,7 @@ the data accessed. The clauses:
 > Merci d'avoir constitué et partagé ce jeu de données.
 >
 > Bien cordialement,
-> Nicolás G. Bonilla Vargas
+> Nicolas G. Bonilla Vargas
 > MSTool-AI — [adresse e-mail professionnelle] — [ville, pays]
 
 *Why both languages:* OFSEP and Inria are French institutions; the English text is the reference,
