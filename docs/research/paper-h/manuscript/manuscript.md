@@ -36,7 +36,7 @@ Höst, of MSTool-AI: investigational brain-MRI software for multiple sclerosis, 
 62304 Class C lifecycle by one human owner (the author), who holds every approval, with Claude Code
 as the agent. Data: the git history of `main` (595 commits, December 2025 to 31 October 2026),
 75 pull requests and their descriptions, 16 CAPA records, 22 problem reports, a risk-control-to-test
-manifest, 47 negative-control (mutation) record files and the 16 scripts that produce them, the CI
+manifest, 47 negative-control (mutation) record files and the 16 scripts that produce most of them, the CI
 history and the GitHub commit-verification status of the sign-off commits. Every number is
 re-derived by published scripts from pinned commits; every coded quotation is checked verbatim.
 
