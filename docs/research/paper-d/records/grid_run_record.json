@@ -1,0 +1,6123 @@
+{
+ "thresholds": [
+  0.3,
+  0.4,
+  0.5,
+  0.6,
+  0.7
+ ],
+ "sources_primary": [
+  "F0",
+  "F1",
+  "F2",
+  "F3",
+  "F4",
+  "FENS",
+  "LENS"
+ ],
+ "sources_secondary": [
+  "L1",
+  "L2",
+  "L3"
+ ],
+ "rules": [
+  "APP",
+  "APP-LV",
+  "APP-3MM",
+  "APP-MAJ",
+  "LSTAI",
+  "LSTAI-LV",
+  "LSTAI-ORD2"
+ ],
+ "min_size": [
+  "none",
+  "v3",
+  "v14",
+  "la3"
+ ],
+ "registration": [
+  "G0",
+  "G1",
+  "G2"
+ ],
+ "default": {
+  "source": "F0",
+  "t": 0.5,
+  "M": "v3",
+  "R": "APP",
+  "G": "G0"
+ },
+ "reference": {
+  "source": "E",
+  "t": null,
+  "M": "v3",
+  "R": "APP",
+  "G": "G0"
+ },
+ "columns": [
+  "case",
+  "source",
+  "t",
+  "G",
+  "R",
+  "M",
+  "n_pv",
+  "n_jc",
+  "n_it",
+  "n_dwm",
+  "n_total",
+  "vol_total_mm3",
+  "dis",
+  "dis_pv3"
+ ],
+ "scans": {
+  "mslesseg_P10_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P10",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      12,
+      7,
+      0,
+      15
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      12,
+      7,
+      0,
+      15
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      12,
+      7,
+      0,
+      21
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      12,
+      7,
+      0,
+      21
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P10_T2": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P10",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      12,
+      6,
+      0,
+      11
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      12,
+      6,
+      0,
+      11
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      14,
+      7,
+      1,
+      12
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      14,
+      7,
+      1,
+      12
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P11_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P11",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      4,
+      5,
+      1,
+      3
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      4,
+      5,
+      1,
+      3
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      4,
+      7,
+      1,
+      5
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      4,
+      7,
+      1,
+      5
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P11_T2": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P11",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      3,
+      5,
+      0,
+      2
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      3,
+      5,
+      0,
+      2
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      4,
+      5,
+      0,
+      2
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      4,
+      5,
+      0,
+      2
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P12_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P12",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      1,
+      16,
+      2,
+      11
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      1,
+      16,
+      2,
+      11
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      2,
+      16,
+      1,
+      8
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      2,
+      16,
+      1,
+      8
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P12_T2": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P12",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      1,
+      22,
+      2,
+      11
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      1,
+      22,
+      2,
+      11
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      2,
+      17,
+      0,
+      5
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      2,
+      17,
+      0,
+      5
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P12_T3": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P12",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      3,
+      18,
+      2,
+      9
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      3,
+      18,
+      2,
+      9
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      4,
+      12,
+      0,
+      19
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      4,
+      12,
+      0,
+      19
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P12_T4": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P12",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      2,
+      17,
+      2,
+      13
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      2,
+      17,
+      2,
+      13
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      2,
+      16,
+      1,
+      7
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      2,
+      16,
+      1,
+      7
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P13_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P13",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      4,
+      16,
+      1,
+      17
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      4,
+      16,
+      1,
+      17
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      7,
+      22,
+      1,
+      25
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      22,
+      1,
+      25
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P13_T2": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P13",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      7,
+      21,
+      2,
+      23
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      21,
+      2,
+      23
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      5,
+      28,
+      1,
+      31
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      5,
+      28,
+      1,
+      31
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P14_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P14",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      6,
+      3,
+      2,
+      5
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      3,
+      2,
+      5
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      12,
+      7,
+      4,
+      8
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      12,
+      7,
+      4,
+      8
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P14_T2": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P14",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      3,
+      8,
+      1,
+      4
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      3,
+      8,
+      1,
+      4
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      5,
+      9,
+      0,
+      12
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      5,
+      9,
+      0,
+      12
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P14_T3": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P14",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      4,
+      14,
+      0,
+      8
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      4,
+      14,
+      0,
+      8
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      6,
+      10,
+      1,
+      16
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      10,
+      1,
+      16
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P14_T4": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P14",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      4,
+      14,
+      0,
+      8
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      4,
+      14,
+      0,
+      8
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      7,
+      13,
+      0,
+      8
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      13,
+      0,
+      8
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P15_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P15",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      4,
+      0,
+      0,
+      1
+     ],
+     "device_dis": 0,
+     "grid_counts": [
+      4,
+      0,
+      0,
+      1
+     ],
+     "grid_dis": 0,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      5,
+      1,
+      1,
+      2
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      5,
+      1,
+      1,
+      2
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P16_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P16",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      1,
+      4,
+      1,
+      1
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      1,
+      4,
+      1,
+      1
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P17_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P17",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      2,
+      6,
+      0,
+      3
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      2,
+      6,
+      0,
+      3
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      4,
+      4,
+      0,
+      14
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      4,
+      4,
+      0,
+      14
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P18_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P18",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      0,
+      0,
+      1,
+      2
+     ],
+     "device_dis": 0,
+     "grid_counts": [
+      0,
+      0,
+      1,
+      2
+     ],
+     "grid_dis": 0,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      0,
+      0,
+      0,
+      4
+     ],
+     "device_dis": 0,
+     "grid_counts": [
+      0,
+      0,
+      0,
+      4
+     ],
+     "grid_dis": 0,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P19_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P19",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      12,
+      13,
+      6,
+      27
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      12,
+      13,
+      6,
+      27
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      13,
+      23,
+      7,
+      24
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      13,
+      23,
+      7,
+      24
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P19_T2": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P19",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      10,
+      19,
+      7,
+      17
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      10,
+      19,
+      7,
+      17
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      10,
+      27,
+      7,
+      31
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      10,
+      27,
+      7,
+      31
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P19_T3": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P19",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      12,
+      21,
+      7,
+      22
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      12,
+      21,
+      7,
+      22
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      10,
+      20,
+      5,
+      28
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      10,
+      20,
+      5,
+      28
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P19_T4": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P19",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      6,
+      7,
+      4,
+      8
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      7,
+      4,
+      8
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      9,
+      14,
+      8,
+      12
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      9,
+      14,
+      8,
+      12
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P1_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P1",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      9,
+      4,
+      1,
+      4
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      9,
+      4,
+      1,
+      4
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      9,
+      6,
+      0,
+      5
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      9,
+      6,
+      0,
+      5
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P1_T2": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P1",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      6,
+      3,
+      0,
+      3
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      3,
+      0,
+      3
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      8,
+      6,
+      0,
+      6
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      8,
+      6,
+      0,
+      6
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P1_T3": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P1",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      5,
+      2,
+      0,
+      4
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      5,
+      2,
+      0,
+      4
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      9,
+      2,
+      0,
+      8
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      9,
+      2,
+      0,
+      8
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P20_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P20",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      3,
+      3,
+      0,
+      2
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      3,
+      3,
+      0,
+      2
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      6,
+      5,
+      0,
+      3
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      5,
+      0,
+      3
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P20_T2": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P20",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      8,
+      7,
+      7,
+      3
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      8,
+      7,
+      7,
+      3
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      7,
+      5,
+      1,
+      6
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      5,
+      1,
+      6
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P20_T3": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P20",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      4,
+      3,
+      1,
+      5
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      4,
+      3,
+      1,
+      5
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      9,
+      4,
+      0,
+      12
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      9,
+      4,
+      0,
+      12
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P21_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P21",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      7,
+      3,
+      1,
+      2
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      3,
+      1,
+      2
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      12,
+      3,
+      3,
+      2
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      12,
+      3,
+      3,
+      2
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P22_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P22",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      8,
+      2,
+      1,
+      10
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      8,
+      2,
+      1,
+      10
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      12,
+      4,
+      1,
+      5
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      12,
+      4,
+      1,
+      5
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P22_T2": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P22",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      10,
+      3,
+      2,
+      6
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      10,
+      3,
+      2,
+      6
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      11,
+      3,
+      3,
+      5
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      11,
+      3,
+      3,
+      5
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P23_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P23",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      6,
+      4,
+      4,
+      6
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      4,
+      4,
+      6
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      9,
+      4,
+      2,
+      7
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      9,
+      4,
+      2,
+      7
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P24_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P24",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      13,
+      34,
+      0,
+      10
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      13,
+      34,
+      0,
+      10
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      9,
+      22,
+      1,
+      14
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      9,
+      22,
+      1,
+      14
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P25_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P25",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      2,
+      3,
+      0,
+      1
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      2,
+      3,
+      0,
+      1
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      2,
+      3,
+      0,
+      8
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      2,
+      3,
+      0,
+      8
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P26_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P26",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      6,
+      23,
+      5,
+      9
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      23,
+      5,
+      9
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      8,
+      22,
+      1,
+      19
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      8,
+      22,
+      1,
+      19
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P27_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P27",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      4,
+      5,
+      8,
+      8
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      4,
+      5,
+      8,
+      8
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      7,
+      5,
+      5,
+      11
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      5,
+      5,
+      11
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P28_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P28",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      2,
+      3,
+      1,
+      2
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      2,
+      3,
+      1,
+      2
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      0,
+      3,
+      0,
+      9
+     ],
+     "device_dis": 0,
+     "grid_counts": [
+      0,
+      3,
+      0,
+      9
+     ],
+     "grid_dis": 0,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P28_T2": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P28",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      4,
+      7,
+      1,
+      8
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      4,
+      7,
+      1,
+      8
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      1,
+      4,
+      1,
+      7
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      1,
+      4,
+      1,
+      7
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P29_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P29",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      1,
+      17,
+      1,
+      7
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      1,
+      17,
+      1,
+      7
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      1,
+      8,
+      1,
+      11
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      1,
+      8,
+      1,
+      11
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P2_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P2",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      7,
+      3,
+      0,
+      5
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      3,
+      0,
+      5
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      6,
+      4,
+      0,
+      6
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      4,
+      0,
+      6
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P2_T2": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P2",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      8,
+      7,
+      1,
+      4
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      8,
+      7,
+      1,
+      4
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      8,
+      4,
+      0,
+      5
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      8,
+      4,
+      0,
+      5
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P2_T3": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P2",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      7,
+      4,
+      0,
+      3
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      4,
+      0,
+      3
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      8,
+      4,
+      0,
+      5
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      8,
+      4,
+      0,
+      5
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P2_T4": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P2",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      8,
+      5,
+      0,
+      4
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      8,
+      5,
+      0,
+      4
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      8,
+      6,
+      0,
+      6
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      8,
+      6,
+      0,
+      6
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P30_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P30",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      4,
+      0,
+      0,
+      2
+     ],
+     "device_dis": 0,
+     "grid_counts": [
+      4,
+      0,
+      0,
+      2
+     ],
+     "grid_dis": 0,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      5,
+      1,
+      1,
+      2
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      5,
+      1,
+      1,
+      2
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P31_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P31",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      14,
+      8,
+      0,
+      6
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      14,
+      8,
+      0,
+      6
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      14,
+      4,
+      0,
+      6
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      14,
+      4,
+      0,
+      6
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P31_T2": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P31",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      14,
+      8,
+      0,
+      6
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      14,
+      8,
+      0,
+      6
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      14,
+      8,
+      1,
+      6
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      14,
+      8,
+      1,
+      6
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P32_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P32",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      8,
+      2,
+      0,
+      1
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      8,
+      2,
+      0,
+      1
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      6,
+      2,
+      0,
+      3
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      2,
+      0,
+      3
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P33_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P33",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      13,
+      11,
+      1,
+      16
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      13,
+      11,
+      1,
+      16
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      13,
+      6,
+      2,
+      20
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      13,
+      6,
+      2,
+      20
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P33_T2": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P33",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      6,
+      10,
+      0,
+      15
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      10,
+      0,
+      15
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      16,
+      13,
+      1,
+      25
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      16,
+      13,
+      1,
+      25
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P34_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P34",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      9,
+      7,
+      3,
+      11
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      9,
+      7,
+      3,
+      11
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      14,
+      6,
+      1,
+      14
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      14,
+      6,
+      1,
+      14
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P35_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P35",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      14,
+      57,
+      2,
+      32
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      14,
+      57,
+      2,
+      32
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      23,
+      52,
+      6,
+      47
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      23,
+      52,
+      6,
+      47
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P36_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P36",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      18,
+      19,
+      12,
+      28
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      18,
+      19,
+      12,
+      28
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      24,
+      25,
+      7,
+      31
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      24,
+      25,
+      7,
+      31
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P37_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P37",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      3,
+      5,
+      3,
+      5
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      3,
+      5,
+      3,
+      5
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      4,
+      5,
+      3,
+      6
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      4,
+      5,
+      3,
+      6
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P38_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P38",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      5,
+      50,
+      11,
+      32
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      5,
+      50,
+      11,
+      32
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      4,
+      57,
+      12,
+      39
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      4,
+      57,
+      12,
+      39
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P39_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P39",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      1,
+      16,
+      7,
+      6
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      1,
+      16,
+      7,
+      6
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      1,
+      20,
+      9,
+      16
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      1,
+      20,
+      9,
+      16
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P3_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P3",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      9,
+      16,
+      1,
+      13
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      9,
+      16,
+      1,
+      13
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      15,
+      18,
+      0,
+      28
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      15,
+      18,
+      0,
+      28
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P3_T2": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P3",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      2,
+      6,
+      0,
+      8
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      2,
+      6,
+      0,
+      8
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      8,
+      14,
+      0,
+      13
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      8,
+      14,
+      0,
+      13
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P3_T3": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P3",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      6,
+      8,
+      1,
+      8
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      8,
+      1,
+      8
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      7,
+      11,
+      0,
+      14
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      11,
+      0,
+      14
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P3_T4": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P3",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      5,
+      10,
+      2,
+      6
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      5,
+      10,
+      2,
+      6
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      5,
+      10,
+      0,
+      11
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      5,
+      10,
+      0,
+      11
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P40_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P40",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      4,
+      13,
+      1,
+      5
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      4,
+      13,
+      1,
+      5
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      2,
+      16,
+      1,
+      8
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      2,
+      16,
+      1,
+      8
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P41_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P41",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      6,
+      1,
+      1,
+      2
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      1,
+      1,
+      2
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      5,
+      1,
+      0,
+      5
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      5,
+      1,
+      0,
+      5
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P42_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P42",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      5,
+      13,
+      1,
+      20
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      5,
+      13,
+      1,
+      20
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      8,
+      14,
+      0,
+      24
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      8,
+      14,
+      0,
+      24
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P43_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P43",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      7,
+      11,
+      0,
+      14
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      11,
+      0,
+      14
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      12,
+      12,
+      2,
+      18
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      12,
+      12,
+      2,
+      18
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P44_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P44",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      0,
+      8,
+      0,
+      2
+     ],
+     "device_dis": 0,
+     "grid_counts": [
+      0,
+      8,
+      0,
+      2
+     ],
+     "grid_dis": 0,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      2,
+      12,
+      2,
+      6
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      2,
+      12,
+      2,
+      6
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P45_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P45",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      0,
+      7,
+      0,
+      7
+     ],
+     "device_dis": 0,
+     "grid_counts": [
+      0,
+      7,
+      0,
+      7
+     ],
+     "grid_dis": 0,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      0,
+      9,
+      0,
+      5
+     ],
+     "device_dis": 0,
+     "grid_counts": [
+      0,
+      9,
+      0,
+      5
+     ],
+     "grid_dis": 0,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P46_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P46",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      9,
+      8,
+      0,
+      10
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      9,
+      8,
+      0,
+      10
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      9,
+      5,
+      0,
+      10
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      9,
+      5,
+      0,
+      10
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P47_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P47",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      8,
+      27,
+      2,
+      16
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      8,
+      27,
+      2,
+      16
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      10,
+      27,
+      2,
+      20
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      10,
+      27,
+      2,
+      20
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P48_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P48",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      12,
+      10,
+      5,
+      15
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      12,
+      10,
+      5,
+      15
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      11,
+      11,
+      1,
+      20
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      11,
+      11,
+      1,
+      20
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P49_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P49",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      10,
+      6,
+      3,
+      11
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      10,
+      6,
+      3,
+      11
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      11,
+      7,
+      3,
+      9
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      11,
+      7,
+      3,
+      9
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P4_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P4",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      4,
+      6,
+      0,
+      9
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      4,
+      6,
+      0,
+      9
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      6,
+      12,
+      1,
+      20
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      12,
+      1,
+      20
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P4_T2": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P4",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      6,
+      8,
+      0,
+      8
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      8,
+      0,
+      8
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      6,
+      11,
+      2,
+      20
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      11,
+      2,
+      20
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P4_T3": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P4",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      6,
+      3,
+      0,
+      8
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      3,
+      0,
+      8
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      4,
+      10,
+      0,
+      24
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      4,
+      10,
+      0,
+      24
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P50_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P50",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      13,
+      13,
+      0,
+      20
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      13,
+      13,
+      0,
+      20
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      11,
+      9,
+      0,
+      18
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      11,
+      9,
+      0,
+      18
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P50_T2": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P50",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      15,
+      13,
+      1,
+      11
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      15,
+      13,
+      1,
+      11
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      12,
+      10,
+      3,
+      15
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      12,
+      10,
+      3,
+      15
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P51_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P51",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      9,
+      12,
+      4,
+      17
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      9,
+      12,
+      4,
+      17
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      8,
+      13,
+      2,
+      25
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      8,
+      13,
+      2,
+      25
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P51_T2": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P51",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      8,
+      9,
+      5,
+      12
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      8,
+      9,
+      5,
+      12
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      11,
+      7,
+      2,
+      13
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      11,
+      7,
+      2,
+      13
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P52_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P52",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      10,
+      5,
+      3,
+      7
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      10,
+      5,
+      3,
+      7
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      10,
+      5,
+      2,
+      8
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      10,
+      5,
+      2,
+      8
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P52_T2": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P52",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      6,
+      2,
+      2,
+      4
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      2,
+      2,
+      4
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      8,
+      3,
+      1,
+      13
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      8,
+      3,
+      1,
+      13
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P53_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P53",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      2,
+      8,
+      4,
+      8
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      2,
+      8,
+      4,
+      8
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      1,
+      10,
+      1,
+      8
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      1,
+      10,
+      1,
+      8
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P53_T2": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P53",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      7,
+      8,
+      5,
+      3
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      8,
+      5,
+      3
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      7,
+      5,
+      2,
+      5
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      5,
+      2,
+      5
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P54": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P54",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      4,
+      0,
+      0,
+      1
+     ],
+     "device_dis": 0,
+     "grid_counts": [
+      4,
+      0,
+      0,
+      1
+     ],
+     "grid_dis": 0,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      5,
+      0,
+      0,
+      1
+     ],
+     "device_dis": 0,
+     "grid_counts": [
+      5,
+      0,
+      0,
+      1
+     ],
+     "grid_dis": 0,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P55": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P55",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      11,
+      11,
+      6,
+      9
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      11,
+      11,
+      6,
+      9
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      8,
+      9,
+      5,
+      4
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      8,
+      9,
+      5,
+      4
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P56": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P56",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      1,
+      2,
+      0,
+      0
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      1,
+      2,
+      0,
+      0
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      7,
+      1,
+      0,
+      2
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      1,
+      0,
+      2
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P57": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P57",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      10,
+      48,
+      17,
+      26
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      10,
+      48,
+      17,
+      26
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      4,
+      37,
+      10,
+      24
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      4,
+      37,
+      10,
+      24
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P58": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P58",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      8,
+      15,
+      8,
+      12
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      8,
+      15,
+      8,
+      12
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      10,
+      11,
+      5,
+      12
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      10,
+      11,
+      5,
+      12
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P59": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P59",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      3,
+      6,
+      2,
+      4
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      3,
+      6,
+      2,
+      4
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      2,
+      5,
+      1,
+      11
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      2,
+      5,
+      1,
+      11
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P5_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P5",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      5,
+      2,
+      5,
+      7
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      5,
+      2,
+      5,
+      7
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      6,
+      3,
+      1,
+      8
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      3,
+      1,
+      8
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P5_T2": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P5",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      5,
+      3,
+      2,
+      3
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      5,
+      3,
+      2,
+      3
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      7,
+      3,
+      1,
+      8
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      3,
+      1,
+      8
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P60": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P60",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      7,
+      8,
+      1,
+      9
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      8,
+      1,
+      9
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      13,
+      10,
+      2,
+      9
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      13,
+      10,
+      2,
+      9
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P61": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P61",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      8,
+      2,
+      1,
+      1
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      8,
+      2,
+      1,
+      1
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      14,
+      3,
+      0,
+      1
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      14,
+      3,
+      0,
+      1
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P62": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P62",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      18,
+      10,
+      2,
+      19
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      18,
+      10,
+      2,
+      19
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      16,
+      9,
+      0,
+      19
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      16,
+      9,
+      0,
+      19
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P63": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P63",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      5,
+      5,
+      0,
+      2
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      5,
+      5,
+      0,
+      2
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      9,
+      4,
+      1,
+      3
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      9,
+      4,
+      1,
+      3
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P64": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P64",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      12,
+      3,
+      8,
+      7
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      12,
+      3,
+      8,
+      7
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      12,
+      4,
+      3,
+      8
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      12,
+      4,
+      3,
+      8
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P65": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P65",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      17,
+      107,
+      10,
+      58
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      17,
+      107,
+      10,
+      58
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      13,
+      96,
+      4,
+      67
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      13,
+      96,
+      4,
+      67
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P66": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P66",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      14,
+      20,
+      11,
+      12
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      14,
+      20,
+      11,
+      12
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      12,
+      17,
+      8,
+      12
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      12,
+      17,
+      8,
+      12
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P67": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P67",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      13,
+      39,
+      4,
+      16
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      13,
+      39,
+      4,
+      16
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      7,
+      26,
+      1,
+      14
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      26,
+      1,
+      14
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P68": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P68",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      2,
+      2,
+      2,
+      0
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      2,
+      2,
+      2,
+      0
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      3,
+      2,
+      0,
+      3
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      3,
+      2,
+      0,
+      3
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P69": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P69",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      4,
+      14,
+      0,
+      7
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      4,
+      14,
+      0,
+      7
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      5,
+      9,
+      0,
+      5
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      5,
+      9,
+      0,
+      5
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P6_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P6",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      7,
+      10,
+      2,
+      13
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      10,
+      2,
+      13
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      7,
+      10,
+      1,
+      26
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      10,
+      1,
+      26
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P6_T2": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P6",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      10,
+      8,
+      8,
+      4
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      10,
+      8,
+      8,
+      4
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      7,
+      7,
+      2,
+      18
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      7,
+      2,
+      18
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P6_T3": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P6",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      9,
+      5,
+      7,
+      13
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      9,
+      5,
+      7,
+      13
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      8,
+      9,
+      5,
+      24
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      8,
+      9,
+      5,
+      24
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P70": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P70",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      7,
+      7,
+      0,
+      7
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      7,
+      0,
+      7
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      7,
+      9,
+      1,
+      9
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      9,
+      1,
+      9
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P71": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P71",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      10,
+      2,
+      2,
+      4
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      10,
+      2,
+      2,
+      4
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      12,
+      3,
+      1,
+      8
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      12,
+      3,
+      1,
+      8
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P72": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P72",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      5,
+      3,
+      1,
+      4
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      5,
+      3,
+      1,
+      4
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      7,
+      4,
+      6,
+      18
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      4,
+      6,
+      18
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P73": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P73",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      16,
+      7,
+      5,
+      3
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      16,
+      7,
+      5,
+      3
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      14,
+      3,
+      9,
+      15
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      14,
+      3,
+      9,
+      15
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P74": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P74",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      7,
+      7,
+      1,
+      14
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      7,
+      1,
+      14
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      7,
+      6,
+      2,
+      10
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      6,
+      2,
+      10
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P75": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P75",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      14,
+      28,
+      2,
+      23
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      14,
+      28,
+      2,
+      23
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      16,
+      23,
+      2,
+      29
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      16,
+      23,
+      2,
+      29
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P7_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P7",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      4,
+      8,
+      2,
+      6
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      4,
+      8,
+      2,
+      6
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      2,
+      18,
+      4,
+      17
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      2,
+      18,
+      4,
+      17
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P7_T2": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P7",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      2,
+      12,
+      0,
+      5
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      2,
+      12,
+      0,
+      5
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      2,
+      17,
+      4,
+      13
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      2,
+      17,
+      4,
+      13
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P8_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P8",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      6,
+      5,
+      0,
+      6
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      5,
+      0,
+      6
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      8,
+      6,
+      0,
+      16
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      8,
+      6,
+      0,
+      16
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P8_T2": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P8",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      7,
+      6,
+      0,
+      6
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      6,
+      0,
+      6
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      8,
+      6,
+      0,
+      16
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      8,
+      6,
+      0,
+      16
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P9_T1": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P9",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      6,
+      3,
+      0,
+      4
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      3,
+      0,
+      4
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      12,
+      4,
+      0,
+      10
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      12,
+      4,
+      0,
+      10
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P9_T2": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P9",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      12,
+      4,
+      0,
+      4
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      12,
+      4,
+      0,
+      4
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      12,
+      3,
+      2,
+      5
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      12,
+      3,
+      2,
+      5
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "mslesseg_P9_T3": {
+   "dataset": "mslesseg",
+   "patient": "mslesseg_P9",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      5,
+      5,
+      0,
+      3
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      5,
+      5,
+      0,
+      3
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      9,
+      3,
+      0,
+      8
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      9,
+      3,
+      0,
+      8
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient01": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient01",
+   "flames_in_sample": true,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      7,
+      126,
+      17,
+      100
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      126,
+      17,
+      100
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      13,
+      90,
+      9,
+      90
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      13,
+      90,
+      9,
+      90
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient02": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient02",
+   "flames_in_sample": true,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      8,
+      3,
+      0,
+      11
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      8,
+      3,
+      0,
+      11
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      9,
+      3,
+      0,
+      13
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      9,
+      3,
+      0,
+      13
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient03": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient03",
+   "flames_in_sample": true,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      6,
+      3,
+      0,
+      9
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      3,
+      0,
+      9
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      4,
+      2,
+      1,
+      5
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      4,
+      2,
+      1,
+      5
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient04": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient04",
+   "flames_in_sample": true,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      8,
+      63,
+      6,
+      27
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      8,
+      63,
+      6,
+      27
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      9,
+      59,
+      4,
+      36
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      9,
+      59,
+      4,
+      36
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient05": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient05",
+   "flames_in_sample": true,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      18,
+      24,
+      6,
+      28
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      18,
+      24,
+      6,
+      28
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      16,
+      17,
+      5,
+      22
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      16,
+      17,
+      5,
+      22
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient06": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient06",
+   "flames_in_sample": true,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      11,
+      142,
+      29,
+      159
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      11,
+      142,
+      29,
+      159
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      7,
+      95,
+      26,
+      108
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      95,
+      26,
+      108
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient07": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient07",
+   "flames_in_sample": true,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      6,
+      8,
+      5,
+      12
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      8,
+      5,
+      12
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      6,
+      8,
+      2,
+      14
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      8,
+      2,
+      14
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient08": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient08",
+   "flames_in_sample": true,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      14,
+      11,
+      2,
+      17
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      14,
+      11,
+      2,
+      17
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      16,
+      9,
+      0,
+      14
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      16,
+      9,
+      0,
+      14
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient09": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient09",
+   "flames_in_sample": true,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      16,
+      13,
+      16,
+      39
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      16,
+      13,
+      16,
+      39
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      17,
+      12,
+      8,
+      23
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      17,
+      12,
+      8,
+      23
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient10": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient10",
+   "flames_in_sample": true,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      7,
+      21,
+      5,
+      42
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      21,
+      5,
+      42
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      13,
+      12,
+      2,
+      29
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      13,
+      12,
+      2,
+      29
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient11": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient11",
+   "flames_in_sample": true,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      19,
+      36,
+      7,
+      37
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      19,
+      36,
+      7,
+      37
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      18,
+      16,
+      6,
+      40
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      18,
+      16,
+      6,
+      40
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient12": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient12",
+   "flames_in_sample": true,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      2,
+      56,
+      11,
+      28
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      2,
+      56,
+      11,
+      28
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      4,
+      56,
+      8,
+      29
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      4,
+      56,
+      8,
+      29
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient13": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient13",
+   "flames_in_sample": true,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      6,
+      9,
+      6,
+      10
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      9,
+      6,
+      10
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      5,
+      12,
+      5,
+      11
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      5,
+      12,
+      5,
+      11
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient14": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient14",
+   "flames_in_sample": true,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      12,
+      11,
+      11,
+      21
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      12,
+      11,
+      11,
+      21
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      12,
+      7,
+      7,
+      16
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      12,
+      7,
+      7,
+      16
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient15": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient15",
+   "flames_in_sample": true,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      5,
+      11,
+      4,
+      7
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      5,
+      11,
+      4,
+      7
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      10,
+      8,
+      2,
+      8
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      10,
+      8,
+      2,
+      8
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient16": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient16",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      10,
+      33,
+      7,
+      40
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      10,
+      33,
+      7,
+      40
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      6,
+      34,
+      7,
+      40
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      34,
+      7,
+      40
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient17": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient17",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      9,
+      4,
+      3,
+      8
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      9,
+      4,
+      3,
+      8
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      5,
+      3,
+      2,
+      9
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      5,
+      3,
+      2,
+      9
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient18": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient18",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      5,
+      8,
+      0,
+      5
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      5,
+      8,
+      0,
+      5
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      3,
+      6,
+      0,
+      3
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      3,
+      6,
+      0,
+      3
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient19": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient19",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      4,
+      36,
+      4,
+      47
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      4,
+      36,
+      4,
+      47
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      3,
+      33,
+      2,
+      36
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      3,
+      33,
+      2,
+      36
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient20": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient20",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      38,
+      66,
+      17,
+      93
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      38,
+      66,
+      17,
+      93
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      25,
+      43,
+      10,
+      82
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      25,
+      43,
+      10,
+      82
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient21": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient21",
+   "flames_in_sample": true,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      5,
+      59,
+      28,
+      84
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      5,
+      59,
+      28,
+      84
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      3,
+      48,
+      19,
+      75
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      3,
+      48,
+      19,
+      75
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient22": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient22",
+   "flames_in_sample": true,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      23,
+      76,
+      10,
+      74
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      23,
+      76,
+      10,
+      74
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      19,
+      58,
+      6,
+      66
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      19,
+      58,
+      6,
+      66
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient23": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient23",
+   "flames_in_sample": true,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      24,
+      162,
+      12,
+      169
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      24,
+      162,
+      12,
+      169
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      24,
+      118,
+      3,
+      142
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      24,
+      118,
+      3,
+      142
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient24": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient24",
+   "flames_in_sample": true,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      6,
+      9,
+      4,
+      19
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      9,
+      4,
+      19
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      9,
+      7,
+      2,
+      22
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      9,
+      7,
+      2,
+      22
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient25": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient25",
+   "flames_in_sample": true,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      23,
+      23,
+      12,
+      49
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      23,
+      23,
+      12,
+      49
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      25,
+      20,
+      8,
+      42
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      25,
+      20,
+      8,
+      42
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient26": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient26",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      11,
+      0,
+      2,
+      6
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      11,
+      0,
+      2,
+      6
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      8,
+      1,
+      0,
+      4
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      8,
+      1,
+      0,
+      4
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient27": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient27",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      7,
+      28,
+      2,
+      19
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      7,
+      28,
+      2,
+      19
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      10,
+      13,
+      0,
+      15
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      10,
+      13,
+      0,
+      15
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient28": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient28",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      19,
+      52,
+      4,
+      47
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      19,
+      52,
+      4,
+      47
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      12,
+      47,
+      1,
+      49
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      12,
+      47,
+      1,
+      49
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient29": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient29",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      3,
+      5,
+      1,
+      7
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      3,
+      5,
+      1,
+      7
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      4,
+      3,
+      0,
+      5
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      4,
+      3,
+      0,
+      5
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  },
+  "openms_patient30": {
+   "dataset": "ljubljana",
+   "patient": "openms_patient30",
+   "flames_in_sample": false,
+   "zone_map_equals_device": true,
+   "device_checks": {
+    "E": {
+     "device_counts": [
+      6,
+      4,
+      1,
+      6
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      6,
+      4,
+      1,
+      6
+     ],
+     "grid_dis": 1,
+     "equal": true
+    },
+    "F0": {
+     "device_counts": [
+      5,
+      1,
+      1,
+      3
+     ],
+     "device_dis": 1,
+     "grid_counts": [
+      5,
+      1,
+      1,
+      3
+     ],
+     "grid_dis": 1,
+     "equal": true
+    }
+   }
+  }
+ }
+}
