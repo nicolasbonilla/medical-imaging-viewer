@@ -9,7 +9,7 @@ the owner as "fix in the next version"; fixed by the AI coding agent on branch `
 **Date**: 2026-10-31
 **Version**: `main` @ `ca600c2` (pre-existing)
 **Severity**: **Minor** (proposed; visibly wrong in most cases, but a confirmed region check can rest on a mask drawn in
-the wrong place — HAZ-006, HAZ-008). **PENDING owner approval.**
+the wrong place — HAZ-006, HAZ-008). **N. G. Bonilla Vargas — approved 2026-10-31 (PR #74).**
 **Status**: OPEN — DRAFT. Fixed on branch `fix/next-safety-round` (draft PR), not merged, not deployed.
 
 ## 1. What happened
@@ -53,7 +53,7 @@ Requirement **REQ-SAFE-046**; risk control **RC-092** (HAZ-006, HAZ-008).
   told apart on an MNI grid, and a segmentation whose own file id does not follow the convention accepts only its own
   image (fail closed).
 
-## 6. Independent review of PR #74 (`290e407`) — corrections (2026-10-31, DRAFT, PENDING owner approval)
+## 6. Independent review of PR #74 (`290e407`) — corrections (2026-10-31, DRAFT, N. G. Bonilla Vargas — approved 2026-10-31 (PR #74))
 No blocker and no major issue; the claims hold. Tests written first (on `290e407` they fail except their positive controls: `records/risk_verification/PRB-028-031_review1_tests_on_290e407_2026-10-31.json`), then the corrections, then the negative controls (`PRB-028-031_negative_controls_2026-10-31.json`, re-run).
 | # | Finding | Correction | Tests / controls |
 |---|---|---|---|

@@ -1116,7 +1116,7 @@
         "frontend/src/components/LesionDashboard.prb028.review.test.tsx"
       ],
       "requirement": "REQ-SAFE-044",
-      "change": "PRB-028 (next safety round; DRAFT, PENDING owner approval; branch fix/next-safety-round; not merged, not deployed)",
+      "change": "PRB-028 (next safety round; DRAFT, N. G. Bonilla Vargas — approved 2026-10-31 (PR #74); branch fix/next-safety-round; not merged, not deployed)",
       "negative_control": "Executed 2026-10-31 by scripts/safety/prb028_031_negative_controls.py in a throwaway worktree of 5cc88b9 (record docs/iec62304/records/risk_verification/PRB-028-031_negative_controls_2026-10-31.json): 18 of 18 mutations for this control detected (G1, G2, G3, G4, G5, G6, G7, G8, U1, U2, U3, U4, U5, P2, G9, U6, U7, U8); whole run 62 of 62. Failing-first record: docs/iec62304/records/risk_verification/PRB-028-031_tests_on_base_2026-10-31.json (sources of main @ ca600c2)."
     },
     "RC-091": {
@@ -1131,7 +1131,7 @@
         "frontend/src/components/AiDraftBanner.prb029.review.test.tsx"
       ],
       "requirement": "REQ-SAFE-045",
-      "change": "PRB-029 (next safety round; DRAFT, PENDING owner approval; branch fix/next-safety-round; not merged, not deployed)",
+      "change": "PRB-029 (next safety round; DRAFT, N. G. Bonilla Vargas — approved 2026-10-31 (PR #74); branch fix/next-safety-round; not merged, not deployed)",
       "negative_control": "Executed 2026-10-31 by scripts/safety/prb028_031_negative_controls.py in a throwaway worktree of 5cc88b9 (record docs/iec62304/records/risk_verification/PRB-028-031_negative_controls_2026-10-31.json): 9 of 9 mutations for this control detected (A1, A2, B1, B2, B3, A3, Z1, Z2, Z3); whole run 62 of 62. Failing-first record: docs/iec62304/records/risk_verification/PRB-028-031_tests_on_base_2026-10-31.json (sources of main @ ca600c2)."
     },
     "RC-092": {
@@ -1145,7 +1145,7 @@
         "frontend/src/ViewerApp.prb030.test.tsx"
       ],
       "requirement": "REQ-SAFE-046",
-      "change": "PRB-030 (L1) (next safety round; DRAFT, PENDING owner approval; branch fix/next-safety-round; not merged, not deployed)",
+      "change": "PRB-030 (L1) (next safety round; DRAFT, N. G. Bonilla Vargas — approved 2026-10-31 (PR #74); branch fix/next-safety-round; not merged, not deployed)",
       "negative_control": "Executed 2026-10-31 by scripts/safety/prb028_031_negative_controls.py in a throwaway worktree of 5cc88b9 (record docs/iec62304/records/risk_verification/PRB-028-031_negative_controls_2026-10-31.json): 21 of 21 mutations for this control detected (R1, R2, R3, R4, R5, R6, R7, R8, R9, C1, C2, C3, C4, C5, C6, C7, C8, D2, P1, R10, R11); whole run 62 of 62. Failing-first record: docs/iec62304/records/risk_verification/PRB-028-031_tests_on_base_2026-10-31.json (sources of main @ ca600c2)."
     },
     "RC-093": {
@@ -1160,7 +1160,7 @@
         "frontend/src/components/LongitudinalOverlayLegend.prb031.test.tsx"
       ],
       "requirement": "REQ-SAFE-047",
-      "change": "PRB-031 (L2) (next safety round; DRAFT, PENDING owner approval; branch fix/next-safety-round; not merged, not deployed)",
+      "change": "PRB-031 (L2) (next safety round; DRAFT, N. G. Bonilla Vargas — approved 2026-10-31 (PR #74); branch fix/next-safety-round; not merged, not deployed)",
       "negative_control": "Executed 2026-10-31 by scripts/safety/prb028_031_negative_controls.py in a throwaway worktree of 5cc88b9 (record docs/iec62304/records/risk_verification/PRB-028-031_negative_controls_2026-10-31.json): 14 of 14 mutations for this control detected (O1, O2, O3, O4, O5, O6, O7, O8, L1, L2, D1, L3, L5, L4); whole run 62 of 62. Failing-first record: docs/iec62304/records/risk_verification/PRB-028-031_tests_on_base_2026-10-31.json (sources of main @ ca600c2)."
     }
   },

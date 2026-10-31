@@ -10,7 +10,7 @@ the owner as "fix in the next version"; fixed by the AI coding agent on branch `
 **Version**: `main` @ `ca600c2` (pre-existing)
 **Severity**: **Minor** (proposed; visually obvious — the whole brain is painted — but a lesion inside its own zone can
 be invisible when the radiologist confirms — HAZ-005, HAZ-008; the red / green longitudinal colours, HAZ-007).
-**PENDING owner approval.**
+**N. G. Bonilla Vargas — approved 2026-10-31 (PR #74).**
 **Status**: OPEN — DRAFT. Fixed on branch `fix/next-safety-round` (draft PR), not merged, not deployed.
 
 ## 1. What happened
@@ -66,7 +66,7 @@ Requirement **REQ-SAFE-047**; risk control **RC-093** (HAZ-005, HAZ-008, HAZ-007
    Confirm whenever shown (rather than being drawn lighter).
 3. The longitudinal colours (yellow / blue / reddish purple).
 
-## 6. Independent review of PR #74 (`290e407`) — corrections (2026-10-31, DRAFT, PENDING owner approval)
+## 6. Independent review of PR #74 (`290e407`) — corrections (2026-10-31, DRAFT, N. G. Bonilla Vargas — approved 2026-10-31 (PR #74))
 No blocker and no major issue; the claims hold. Tests written first (on `290e407` they fail except their positive controls: `records/risk_verification/PRB-028-031_review1_tests_on_290e407_2026-10-31.json`), then the corrections, then the negative controls (`PRB-028-031_negative_controls_2026-10-31.json`, re-run).
 | # | Finding | Correction | Tests / controls |
 |---|---|---|---|
