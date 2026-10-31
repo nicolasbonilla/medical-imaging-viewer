@@ -1,0 +1,856 @@
+% references.bib -- Paper H: "An AI coding agent as primary developer of
+% IEC 62304 Class C medical-imaging software: a single-case study"
+%
+% Every entry below was checked on 2026-10-31 against an authoritative source
+% (Crossref DOI metadata, arXiv abstract page / arXiv API, publisher or
+% proceedings page, or the official standards / regulator page). The
+% non-printing field `verified` records date and method. Entries that could
+% not be verified were left out on purpose.
+%
+% Sections: A standards and regulation; B empirical SE method;
+% C mutation testing and test adequacy; D LLM coding assistants and agents;
+% E medical-device software engineering and failures.
+
+% =====================================================================
+% A. Standards and regulatory documents
+% =====================================================================
+
+@misc{iec62304,
+  author       = {{International Electrotechnical Commission}},
+  title        = {{IEC} 62304:2006+{AMD1}:2015 {CSV}: Medical device software -- Software life cycle processes},
+  organization = {IEC},
+  address      = {Geneva, Switzerland},
+  howpublished = {International standard, consolidated version (edition 1.1)},
+  year         = {2015},
+  month        = jun,
+  note         = {First edition (2006) consolidated with Amendment 1 (2015); publication date 2015-06-26},
+  url          = {https://webstore.iec.ch/en/publication/22794},
+  verified     = {2026-10-31; IEC webstore page}
+}
+
+@misc{iso14971,
+  author       = {{International Organization for Standardization}},
+  title        = {{ISO} 14971:2019: Medical devices -- Application of risk management to medical devices},
+  organization = {ISO},
+  address      = {Geneva, Switzerland},
+  howpublished = {International standard, 3rd edition},
+  year         = {2019},
+  month        = dec,
+  url          = {https://www.iso.org/standard/72704.html},
+  verified     = {2026-10-31; iso.org catalogue page (via search listing)}
+}
+
+@misc{iso13485,
+  author       = {{International Organization for Standardization}},
+  title        = {{ISO} 13485:2016: Medical devices -- Quality management systems -- Requirements for regulatory purposes},
+  organization = {ISO},
+  address      = {Geneva, Switzerland},
+  howpublished = {International standard, 3rd edition},
+  year         = {2016},
+  url          = {https://www.iso.org/standard/59752.html},
+  verified     = {2026-10-31; iso.org catalogue page (via search listing)}
+}
+
+@misc{iec82304,
+  author       = {{International Electrotechnical Commission}},
+  title        = {{IEC} 82304-1:2016: Health software -- Part 1: General requirements for product safety},
+  organization = {IEC},
+  address      = {Geneva, Switzerland},
+  howpublished = {International standard, edition 1.0},
+  year         = {2016},
+  month        = oct,
+  note         = {Publication date 2016-10-27},
+  url          = {https://webstore.iec.ch/en/publication/26120},
+  verified     = {2026-10-31; IEC webstore page}
+}
+
+@misc{eu2017mdr,
+  author       = {{European Parliament and Council of the European Union}},
+  title        = {Regulation ({EU}) 2017/745 of the {European} {Parliament} and of the {Council} of 5 {April} 2017 on medical devices, amending {Directive} 2001/83/{EC}, {Regulation} ({EC}) {No} 178/2002 and {Regulation} ({EC}) {No} 1223/2009 and repealing {Council} {Directives} 90/385/{EEC} and 93/42/{EEC}},
+  howpublished = {Official Journal of the European Union, L 117, 5 May 2017},
+  year         = {2017},
+  note         = {Medical Device Regulation (MDR); CELEX 32017R0745. Consolidated versions exist up to 2026; state which one is cited},
+  url          = {https://eur-lex.europa.eu/eli/reg/2017/745/oj/eng},
+  verified     = {2026-10-31; EUR-Lex listing (ELI page, OJ L 117 table of contents)}
+}
+
+@misc{mdcg2019_11,
+  author       = {{Medical Device Coordination Group}},
+  title        = {{MDCG} 2019-11 rev.1: Guidance on Qualification and Classification of Software in {Regulation} ({EU}) 2017/745 -- {MDR} and {Regulation} ({EU}) 2017/746 -- {IVDR}},
+  howpublished = {MDCG endorsed guidance document, European Commission},
+  year         = {2025},
+  month        = jun,
+  note         = {Original version October 2019; revision 1 June 2025},
+  url          = {https://health.ec.europa.eu/document/download/b45335c5-1679-4c71-a91c-fc7a4d37f12b_en?filename=mdcg_2019_11_en.pdf},
+  verified     = {2026-10-31; official PDF on health.ec.europa.eu (cover page read)}
+}
+
+@misc{eu2024aiact,
+  author       = {{European Parliament and Council of the European Union}},
+  title        = {Regulation ({EU}) 2024/1689 of the {European} {Parliament} and of the {Council} of 13 {June} 2024 laying down harmonised rules on artificial intelligence ({Artificial} {Intelligence} {Act})},
+  howpublished = {Official Journal of the European Union, OJ L, 2024/1689, 12 July 2024},
+  year         = {2024},
+  note         = {CELEX 32024R1689; a consolidated version dated 2026-07-27 exists on EUR-Lex},
+  url          = {https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng},
+  verified     = {2026-10-31; EUR-Lex listing (ELI page)}
+}
+
+@misc{fda2002gpsv,
+  author       = {{U.S. Food and Drug Administration}},
+  title        = {General Principles of Software Validation; Final Guidance for Industry and {FDA} Staff},
+  howpublished = {Final guidance, CDRH and CBER, docket FDA-1997-D-0029},
+  year         = {2002},
+  month        = jan,
+  url          = {https://www.fda.gov/regulatory-information/search-fda-guidance-documents/general-principles-software-validation},
+  verified     = {2026-10-31; fda.gov guidance page}
+}
+
+@misc{fda2023premarket,
+  author       = {{U.S. Food and Drug Administration}},
+  title        = {Content of Premarket Submissions for Device Software Functions: Guidance for Industry and {Food} and {Drug} {Administration} Staff},
+  howpublished = {Final guidance, docket FDA-2021-D-0775},
+  year         = {2023},
+  month        = jun,
+  note         = {Issued June 2023 (page current as of 2023-06-14)},
+  url          = {https://www.fda.gov/regulatory-information/search-fda-guidance-documents/content-premarket-submissions-device-software-functions},
+  verified     = {2026-10-31; fda.gov guidance page}
+}
+
+@misc{fda2026csa,
+  author       = {{U.S. Food and Drug Administration}},
+  title        = {Computer Software Assurance for Production and Quality Management System Software: Guidance for Industry and {Food} and {Drug} {Administration} Staff},
+  howpublished = {Final guidance, CDRH and CBER, docket FDA-2022-D-0795},
+  year         = {2026},
+  month        = feb,
+  note         = {Supersedes the final guidance ``Computer Software Assurance for Production and Quality System Software'' issued 24 September 2025 (draft September 2022)},
+  url          = {https://www.fda.gov/regulatory-information/search-fda-guidance-documents/computer-software-assurance-production-and-quality-management-system-software},
+  verified     = {2026-10-31; fda.gov guidance page}
+}
+
+@misc{fda2025aidsf,
+  author       = {{U.S. Food and Drug Administration}},
+  title        = {Artificial Intelligence-Enabled Device Software Functions: Lifecycle Management and Marketing Submission Recommendations},
+  howpublished = {Draft guidance, docket FDA-2024-D-4488},
+  year         = {2025},
+  month        = jan,
+  note         = {Draft (not for implementation); issued January 2025 (page current as of 2025-01-07); still draft on 2026-10-31},
+  url          = {https://www.fda.gov/regulatory-information/search-fda-guidance-documents/artificial-intelligence-enabled-device-software-functions-lifecycle-management-and-marketing},
+  verified     = {2026-10-31; fda.gov guidance page}
+}
+
+@misc{fda2024pccp,
+  author       = {{U.S. Food and Drug Administration}},
+  title        = {Marketing Submission Recommendations for a Predetermined Change Control Plan for Artificial Intelligence-Enabled Device Software Functions},
+  howpublished = {Final guidance, docket FDA-2022-D-2628},
+  year         = {2024},
+  month        = dec,
+  note         = {Final guidance issued 4 December 2024; the version now posted is dated August 2025 (page current as of 2025-08-18)},
+  url          = {https://www.fda.gov/regulatory-information/search-fda-guidance-documents/marketing-submission-recommendations-predetermined-change-control-plan-artificial-intelligence},
+  verified     = {2026-10-31; fda.gov guidance page + FDA webinar transcript of 2025-01-14 (issue date)}
+}
+
+@misc{imdrf2014samd,
+  author       = {{IMDRF Software as a Medical Device Working Group}},
+  title        = {``{Software} as a {Medical} {Device}'': Possible Framework for Risk Categorization and Corresponding Considerations},
+  howpublished = {IMDRF/SaMD WG/N12FINAL:2014, International Medical Device Regulators Forum},
+  year         = {2014},
+  month        = sep,
+  note         = {Final document, 18 September 2014},
+  url          = {https://www.imdrf.org/documents/software-medical-device-possible-framework-risk-categorization-and-corresponding-considerations},
+  verified     = {2026-10-31; imdrf.org listing}
+}
+
+% =====================================================================
+% B. Empirical software-engineering method
+% =====================================================================
+
+@article{runeson2009guidelines,
+  author   = {Runeson, Per and H{\"o}st, Martin},
+  title    = {Guidelines for conducting and reporting case study research in software engineering},
+  journal  = {Empirical Software Engineering},
+  volume   = {14},
+  number   = {2},
+  pages    = {131--164},
+  year     = {2009},
+  doi      = {10.1007/s10664-008-9102-8},
+  verified = {2026-10-31; Crossref DOI metadata}
+}
+
+@book{runeson2012case,
+  author    = {Runeson, Per and H{\"o}st, Martin and Rainer, Austen and Regnell, Bj{\"o}rn},
+  title     = {Case Study Research in Software Engineering: Guidelines and Examples},
+  publisher = {Wiley},
+  address   = {Hoboken, NJ},
+  year      = {2012},
+  doi       = {10.1002/9781118181034},
+  verified  = {2026-10-31; Crossref DOI metadata}
+}
+
+@book{yin2018case,
+  author    = {Yin, Robert K.},
+  title     = {Case Study Research and Applications: Design and Methods},
+  edition   = {6th},
+  publisher = {SAGE},
+  address   = {Los Angeles, CA},
+  year      = {2018},
+  isbn      = {978-1-5063-3616-9},
+  verified  = {2026-10-31; SAGE publisher page + library catalogue records}
+}
+
+@misc{ralph2021empirical,
+  author        = {Ralph, Paul and {bin Ali}, Nauman and Baltes, Sebastian and Bianculli, Domenico and Diaz, Jessica and Dittrich, Yvonne and Ernst, Neil and Felderer, Michael and Feldt, Robert and Filieri, Antonio and {de Fran{\c{c}}a}, Breno Bernard Nicolau and Furia, Carlo Alberto and Gay, Greg and Gold, Nicolas and Graziotin, Daniel and He, Pinjia and Hoda, Rashina and Juristo, Natalia and Kitchenham, Barbara and Lenarduzzi, Valentina and Mart{\'\i}nez, Jorge and Melegati, Jorge and Mendez, Daniel and Menzies, Tim and Molleri, Jefferson and Pfahl, Dietmar and Robbes, Romain and Russo, Daniel and Saarim{\"a}ki, Nyyti and Sarro, Federica and Taibi, Davide and Siegmund, Janet and Spinellis, Diomidis and Staron, Miroslaw and Stol, Klaas and Storey, Margaret-Anne and Tamburri, Damian and Torchiano, Marco and Treude, Christoph and Turhan, Burak and Wang, Xiaofeng and Vegas, Sira},
+  title         = {Empirical Standards for Software Engineering Research},
+  howpublished  = {arXiv preprint arXiv:2010.03525 (v2)},
+  year          = {2021},
+  eprint        = {2010.03525},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.SE},
+  note          = {ACM SIGSOFT Empirical Standards; v1 7 Oct 2020, v2 4 Mar 2021; living version at https://github.com/acmsigsoft/EmpiricalStandards},
+  url           = {https://arxiv.org/abs/2010.03525},
+  verified      = {2026-10-31; arXiv abs page}
+}
+
+@article{flyvbjerg2006five,
+  author   = {Flyvbjerg, Bent},
+  title    = {Five Misunderstandings About Case-Study Research},
+  journal  = {Qualitative Inquiry},
+  volume   = {12},
+  number   = {2},
+  pages    = {219--245},
+  year     = {2006},
+  doi      = {10.1177/1077800405284363},
+  verified = {2026-10-31; Crossref DOI metadata}
+}
+
+@incollection{easterbrook2008selecting,
+  author    = {Easterbrook, Steve and Singer, Janice and Storey, Margaret-Anne and Damian, Daniela},
+  title     = {Selecting Empirical Methods for Software Engineering Research},
+  booktitle = {Guide to Advanced Empirical Software Engineering},
+  publisher = {Springer},
+  address   = {London},
+  pages     = {285--311},
+  year      = {2008},
+  doi       = {10.1007/978-1-84800-044-5_11},
+  verified  = {2026-10-31; Crossref DOI metadata}
+}
+
+@book{wohlin2012experimentation,
+  author    = {Wohlin, Claes and Runeson, Per and H{\"o}st, Martin and Ohlsson, Magnus C. and Regnell, Bj{\"o}rn and Wessl{\'e}n, Anders},
+  title     = {Experimentation in Software Engineering},
+  publisher = {Springer},
+  address   = {Berlin, Heidelberg},
+  year      = {2012},
+  doi       = {10.1007/978-3-642-29044-2},
+  verified  = {2026-10-31; Crossref DOI metadata}
+}
+
+@article{cohen1960coefficient,
+  author   = {Cohen, Jacob},
+  title    = {A Coefficient of Agreement for Nominal Scales},
+  journal  = {Educational and Psychological Measurement},
+  volume   = {20},
+  number   = {1},
+  pages    = {37--46},
+  year     = {1960},
+  doi      = {10.1177/001316446002000104},
+  verified = {2026-10-31; Crossref DOI metadata}
+}
+
+@inproceedings{badampudi2019contextualizing,
+  author    = {Badampudi, Deepika and Wohlin, Claes and Gorschek, Tony},
+  title     = {Contextualizing Research Evidence through Knowledge Translation in Software Engineering},
+  booktitle = {Proceedings of the Evaluation and Assessment on Software Engineering (EASE '19)},
+  publisher = {ACM},
+  pages     = {306--311},
+  year      = {2019},
+  doi       = {10.1145/3319008.3319358},
+  verified  = {2026-10-31; Crossref DOI metadata}
+}
+
+% =====================================================================
+% C. Mutation testing and test adequacy
+% =====================================================================
+
+@article{demillo1978hints,
+  author   = {DeMillo, Richard A. and Lipton, Richard J. and Sayward, Frederick G.},
+  title    = {Hints on Test Data Selection: Help for the Practicing Programmer},
+  journal  = {Computer},
+  volume   = {11},
+  number   = {4},
+  pages    = {34--41},
+  year     = {1978},
+  doi      = {10.1109/C-M.1978.218136},
+  verified = {2026-10-31; Crossref DOI metadata}
+}
+
+@article{jia2011analysis,
+  author   = {Jia, Yue and Harman, Mark},
+  title    = {An Analysis and Survey of the Development of Mutation Testing},
+  journal  = {IEEE Transactions on Software Engineering},
+  volume   = {37},
+  number   = {5},
+  pages    = {649--678},
+  year     = {2011},
+  doi      = {10.1109/TSE.2010.62},
+  verified = {2026-10-31; Crossref DOI metadata}
+}
+
+@incollection{papadakis2019mutation,
+  author    = {Papadakis, Mike and Kintis, Marinos and Zhang, Jie M. and Jia, Yue and {Le Traon}, Yves and Harman, Mark},
+  title     = {Mutation Testing Advances: An Analysis and Survey},
+  booktitle = {Advances in Computers},
+  volume    = {112},
+  publisher = {Elsevier},
+  pages     = {275--378},
+  year      = {2019},
+  doi       = {10.1016/bs.adcom.2018.03.015},
+  verified  = {2026-10-31; Crossref DOI metadata (title, pages, year) + OpenAlex record (authors)}
+}
+
+@inproceedings{just2014mutants,
+  author    = {Just, Ren{\'e} and Jalali, Darioush and Inozemtseva, Laura and Ernst, Michael D. and Holmes, Reid and Fraser, Gordon},
+  title     = {Are Mutants a Valid Substitute for Real Faults in Software Testing?},
+  booktitle = {Proceedings of the 22nd ACM SIGSOFT International Symposium on Foundations of Software Engineering (FSE 2014)},
+  publisher = {ACM},
+  pages     = {654--665},
+  year      = {2014},
+  doi       = {10.1145/2635868.2635929},
+  verified  = {2026-10-31; Crossref DOI metadata}
+}
+
+@inproceedings{petrovic2018state,
+  author    = {Petrovi{\'c}, Goran and Ivankovi{\'c}, Marko},
+  title     = {State of Mutation Testing at {Google}},
+  booktitle = {Proceedings of the 40th International Conference on Software Engineering: Software Engineering in Practice (ICSE-SEIP 2018)},
+  publisher = {ACM},
+  pages     = {163--171},
+  year      = {2018},
+  doi       = {10.1145/3183519.3183521},
+  verified  = {2026-10-31; Crossref DOI metadata}
+}
+
+@article{petrovic2022practical,
+  author   = {Petrovi{\'c}, Goran and Ivankovi{\'c}, Marko and Fraser, Gordon and Just, Ren{\'e}},
+  title    = {Practical Mutation Testing at Scale: A View from {Google}},
+  journal  = {IEEE Transactions on Software Engineering},
+  volume   = {48},
+  number   = {10},
+  pages    = {3900--3912},
+  year     = {2022},
+  doi      = {10.1109/TSE.2021.3107634},
+  verified = {2026-10-31; Crossref DOI metadata}
+}
+
+@article{madeyski2014overcoming,
+  author   = {Madeyski, Lech and Orzeszyna, Wojciech and Torkar, Richard and Jozala, Mariusz},
+  title    = {Overcoming the Equivalent Mutant Problem: A Systematic Literature Review and a Comparative Experiment of Second Order Mutation},
+  journal  = {IEEE Transactions on Software Engineering},
+  volume   = {40},
+  number   = {1},
+  pages    = {23--42},
+  year     = {2014},
+  doi      = {10.1109/TSE.2013.44},
+  verified = {2026-10-31; Crossref DOI metadata}
+}
+
+@article{barr2015oracle,
+  author   = {Barr, Earl T. and Harman, Mark and McMinn, Phil and Shahbaz, Muzammil and Yoo, Shin},
+  title    = {The Oracle Problem in Software Testing: A Survey},
+  journal  = {IEEE Transactions on Software Engineering},
+  volume   = {41},
+  number   = {5},
+  pages    = {507--525},
+  year     = {2015},
+  doi      = {10.1109/TSE.2014.2372785},
+  verified = {2026-10-31; Crossref DOI metadata}
+}
+
+@inproceedings{papadakis2018mutation,
+  author    = {Papadakis, Mike and Shin, Donghwan and Yoo, Shin and Bae, Doo-Hwan},
+  title     = {Are Mutation Scores Correlated with Real Fault Detection?},
+  booktitle = {Proceedings of the 40th International Conference on Software Engineering (ICSE 2018)},
+  publisher = {ACM},
+  pages     = {537--548},
+  year      = {2018},
+  doi       = {10.1145/3180155.3180183},
+  verified  = {2026-10-31; Crossref DOI metadata}
+}
+
+% =====================================================================
+% D. LLM coding assistants and agents
+% =====================================================================
+
+@misc{chen2021codex,
+  author        = {Chen, Mark and Tworek, Jerry and Jun, Heewoo and Yuan, Qiming and {Ponde de Oliveira Pinto}, Henrique and Kaplan, Jared and Edwards, Harri and Burda, Yuri and Joseph, Nicholas and Brockman, Greg and others},
+  title         = {Evaluating Large Language Models Trained on Code},
+  howpublished  = {arXiv preprint arXiv:2107.03374},
+  year          = {2021},
+  eprint        = {2107.03374},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2107.03374},
+  verified      = {2026-10-31; arXiv API metadata}
+}
+
+@inproceedings{jimenez2024swebench,
+  author    = {Jimenez, Carlos E. and Yang, John and Wettig, Alexander and Yao, Shunyu and Pei, Kexin and Press, Ofir and Narasimhan, Karthik},
+  title     = {{SWE-bench}: Can Language Models Resolve Real-World {GitHub} Issues?},
+  booktitle = {The Twelfth International Conference on Learning Representations (ICLR 2024)},
+  year      = {2024},
+  eprint    = {2310.06770},
+  archivePrefix = {arXiv},
+  url       = {https://openreview.net/forum?id=VTF8yNQM66},
+  verified  = {2026-10-31; arXiv API metadata (comment names ICLR 2024 + OpenReview id) + ICLR proceedings listing}
+}
+
+@inproceedings{yang2024sweagent,
+  author    = {Yang, John and Jimenez, Carlos E. and Wettig, Alexander and Lieret, Kilian and Yao, Shunyu and Narasimhan, Karthik and Press, Ofir},
+  title     = {{SWE-agent}: Agent-Computer Interfaces Enable Automated Software Engineering},
+  booktitle = {Advances in Neural Information Processing Systems 37 (NeurIPS 2024)},
+  pages     = {50528--50652},
+  year      = {2024},
+  doi       = {10.52202/079017-1601},
+  eprint    = {2405.15793},
+  archivePrefix = {arXiv},
+  verified  = {2026-10-31; NeurIPS proceedings page + Crossref DOI metadata}
+}
+
+@inproceedings{wang2025openhands,
+  author    = {Wang, Xingyao and Li, Boxuan and Song, Yufan and Xu, Frank F. and Tang, Xiangru and Zhuge, Mingchen and Pan, Jiayi and Song, Yueqi and Li, Bowen and Singh, Jaskirat and Tran, Hoang H. and Li, Fuqiang and Ma, Ren and Zheng, Mingzhang and Qian, Bill and Shao, Yanjun and Muennighoff, Niklas and Zhang, Yizhe and Hui, Binyuan and Lin, Junyang and Brennan, Robert and Peng, Hao and Ji, Heng and Neubig, Graham},
+  title     = {{OpenHands}: An Open Platform for {AI} Software Developers as Generalist Agents},
+  booktitle = {The Thirteenth International Conference on Learning Representations (ICLR 2025)},
+  year      = {2025},
+  eprint    = {2407.16741},
+  archivePrefix = {arXiv},
+  url       = {https://proceedings.iclr.cc/paper_files/paper/2025/hash/a4b6ad6b48850c0c331d1259fc66a69c-Abstract-Conference.html},
+  verified  = {2026-10-31; ICLR 2025 proceedings page + arXiv API metadata}
+}
+
+@article{hou2024llm4se,
+  author   = {Hou, Xinyi and Zhao, Yanjie and Liu, Yue and Yang, Zhou and Wang, Kailong and Li, Li and Luo, Xiapu and Lo, David and Grundy, John and Wang, Haoyu},
+  title    = {Large Language Models for Software Engineering: A Systematic Literature Review},
+  journal  = {ACM Transactions on Software Engineering and Methodology},
+  volume   = {33},
+  number   = {8},
+  pages    = {1--79},
+  year     = {2024},
+  doi      = {10.1145/3695988},
+  verified = {2026-10-31; Crossref DOI metadata}
+}
+
+@inproceedings{fan2023llm4se,
+  author    = {Fan, Angela and Gokkaya, Beliz and Harman, Mark and Lyubarskiy, Mitya and Sengupta, Shubho and Yoo, Shin and Zhang, Jie M.},
+  title     = {Large Language Models for Software Engineering: Survey and Open Problems},
+  booktitle = {2023 IEEE/ACM International Conference on Software Engineering: Future of Software Engineering (ICSE-FoSE)},
+  publisher = {IEEE},
+  pages     = {31--53},
+  year      = {2023},
+  doi       = {10.1109/ICSE-FoSE59343.2023.00008},
+  verified  = {2026-10-31; Crossref DOI metadata}
+}
+
+@article{liu2026agentsurvey,
+  author   = {Liu, Junwei and Wang, Kaixin and Chen, Yixuan and Peng, Xin and Chen, Zhenpeng and Zhang, Lingming and Lou, Yiling},
+  title    = {Large Language Model-Based Agents for Software Engineering: A Survey},
+  journal  = {ACM Transactions on Software Engineering and Methodology},
+  year     = {2026},
+  doi      = {10.1145/3796507},
+  eprint   = {2409.02977},
+  archivePrefix = {arXiv},
+  note     = {Published online 5 March 2026; volume/issue not yet assigned in Crossref on 2026-10-31},
+  verified = {2026-10-31; Crossref DOI metadata + arXiv API metadata}
+}
+
+@inproceedings{pearce2022asleep,
+  author    = {Pearce, Hammond and Ahmad, Baleegh and Tan, Benjamin and Dolan-Gavitt, Brendan and Karri, Ramesh},
+  title     = {Asleep at the Keyboard? Assessing the Security of {GitHub} {Copilot}'s Code Contributions},
+  booktitle = {2022 IEEE Symposium on Security and Privacy (SP)},
+  publisher = {IEEE},
+  pages     = {754--768},
+  year      = {2022},
+  doi       = {10.1109/SP46214.2022.9833571},
+  verified  = {2026-10-31; Crossref DOI metadata}
+}
+
+@inproceedings{perry2023insecure,
+  author    = {Perry, Neil and Srivastava, Megha and Kumar, Deepak and Boneh, Dan},
+  title     = {Do Users Write More Insecure Code with {AI} Assistants?},
+  booktitle = {Proceedings of the 2023 ACM SIGSAC Conference on Computer and Communications Security (CCS '23)},
+  publisher = {ACM},
+  pages     = {2785--2799},
+  year      = {2023},
+  doi       = {10.1145/3576915.3623157},
+  verified  = {2026-10-31; Crossref DOI metadata}
+}
+
+@misc{becker2025metr,
+  author        = {Becker, Joel and Rush, Nate and Barnes, Elizabeth and Rein, David},
+  title         = {Measuring the Impact of Early-2025 {AI} on Experienced Open-Source Developer Productivity},
+  howpublished  = {arXiv preprint arXiv:2507.09089},
+  year          = {2025},
+  eprint        = {2507.09089},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2507.09089},
+  verified      = {2026-10-31; arXiv API metadata}
+}
+
+@misc{li2025aidev,
+  author        = {Li, Hao and Zhang, Haoxiang and Hassan, Ahmed E.},
+  title         = {The Rise of {AI} Teammates in Software Engineering ({SE}) 3.0: How Autonomous Coding Agents Are Reshaping Software Engineering},
+  howpublished  = {arXiv preprint arXiv:2507.15003},
+  year          = {2025},
+  eprint        = {2507.15003},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.SE},
+  note          = {Introduces the AIDev dataset},
+  url           = {https://arxiv.org/abs/2507.15003},
+  verified      = {2026-10-31; arXiv abs page}
+}
+
+@article{watanabe2026agentic,
+  author   = {Watanabe, Miku and Li, Hao and Kashiwa, Yutaro and Reid, Brittany and Iida, Hajimu and Hassan, Ahmed E.},
+  title    = {On the Use of Agentic Coding: An Empirical Study of Pull Requests on {GitHub}},
+  journal  = {ACM Transactions on Software Engineering and Methodology},
+  volume   = {35},
+  number   = {10},
+  pages    = {1--24},
+  year     = {2026},
+  doi      = {10.1145/3798166},
+  eprint   = {2509.14745},
+  archivePrefix = {arXiv},
+  verified = {2026-10-31; Crossref DOI metadata + arXiv abs page}
+}
+
+@inproceedings{ehsani2026agentsfail,
+  author    = {Ehsani, Ramtin and Pathak, Sakshi and Rawal, Shriya and Mujahid, Abdullah Al and Imran, Mia Mohammad and Chatterjee, Preetha},
+  title     = {Where Do {AI} Coding Agents Fail? An Empirical Study of Failed Agentic Pull Requests in {GitHub}},
+  booktitle = {Proceedings of the 23rd International Conference on Mining Software Repositories (MSR 2026)},
+  publisher = {ACM},
+  pages     = {807--811},
+  year      = {2026},
+  doi       = {10.1145/3793302.3793579},
+  eprint    = {2601.15195},
+  archivePrefix = {arXiv},
+  verified  = {2026-10-31; Crossref DOI metadata + arXiv abs page}
+}
+
+@inproceedings{tang2026misalignment,
+  author    = {Tang, Ningzhi and Chen, Chaoran and Xu, Gelei and Shi, Yiyu and Huang, Yu and McMillan, Collin and Dong, Tao and Li, Toby Jia-Jun},
+  title     = {How Coding Agents Fail Their Users: A Large-Scale Analysis of Developer-Agent Misalignment in 20,574 Real-World Sessions},
+  booktitle = {Proceedings of the 2026 Conference on Empirical Methods in Natural Language Processing (EMNLP 2026)},
+  publisher = {Association for Computational Linguistics},
+  pages     = {23264--23282},
+  year      = {2026},
+  doi       = {10.18653/2026.emnlp-main.1011},
+  eprint    = {2605.29442},
+  archivePrefix = {arXiv},
+  verified  = {2026-10-31; Crossref DOI metadata + arXiv abs page}
+}
+
+@misc{ferris2026assuring,
+  author        = {Ferris, Lindsey and Bonilla, Sierra},
+  title         = {A Case Study in Assuring {AI}-Written Software},
+  howpublished  = {arXiv preprint arXiv:2610.08651},
+  year          = {2026},
+  eprint        = {2610.08651},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.SE},
+  note          = {Accepted to the NeurIPS 2026 Meta-Agents Workshop (arXiv comment)},
+  url           = {https://arxiv.org/abs/2610.08651},
+  verified      = {2026-10-31; arXiv abs page}
+}
+
+@misc{davis2026cheap,
+  author        = {Davis, James C. and Amusuo, Paschal C. and Singla, Tanmay and {\c{C}}akar, Berk and Davis, Kirsten A.},
+  title         = {Cheap Code, Costly Judgment: A Case Study on Governable Agentic Software Engineering},
+  howpublished  = {arXiv preprint arXiv:2607.01087},
+  year          = {2026},
+  eprint        = {2607.01087},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.SE},
+  url           = {https://arxiv.org/abs/2607.01087},
+  verified      = {2026-10-31; arXiv abs page}
+}
+
+@article{wang2026brachy,
+  author   = {Wang, Tonghe and Beaudry, Joel and Damato, Antonio L. and Kollmeier, Marisa and {Aramburu N{\'u}{\~n}ez}, David},
+  title    = {{AI}-assisted software development for brachytherapy seed inventory management},
+  journal  = {Journal of Applied Clinical Medical Physics},
+  volume   = {27},
+  number   = {9},
+  pages    = {e70795},
+  year     = {2026},
+  doi      = {10.1002/acm2.70795},
+  verified = {2026-10-31; Crossref DOI metadata (incl. abstract)}
+}
+
+@article{witztum2026aicoded,
+  author   = {Witztum, Alon and Wang, Yi and Wang, Dongxu},
+  title    = {{AI}-coded radiation therapy software requires unique quality assurance},
+  journal  = {Journal of Applied Clinical Medical Physics},
+  volume   = {27},
+  number   = {10},
+  pages    = {e70848},
+  year     = {2026},
+  doi      = {10.1002/acm2.70848},
+  verified = {2026-10-31; Crossref DOI metadata (article type/section not stated in metadata)}
+}
+
+@inproceedings{sun2026agentic,
+  author    = {Sun, Simin and Staron, Miroslaw},
+  title     = {Agentic Pipelines in Embedded Software Engineering: Emerging Practices and Challenges},
+  booktitle = {2026 IEEE International Conference on Software Analysis, Evolution and Reengineering (SANER)},
+  publisher = {IEEE},
+  pages     = {136--146},
+  year      = {2026},
+  doi       = {10.1109/SANER67736.2026.00024},
+  eprint    = {2601.10220},
+  archivePrefix = {arXiv},
+  verified  = {2026-10-31; Crossref DOI metadata + arXiv API metadata}
+}
+
+@misc{gangopadhyay2026safety,
+  author        = {Gangopadhyay, Tuhinangshu and Adler, Rasmus and Liggesmeyer, Peter and Reich, Jan},
+  title         = {From Safety Documentation to Safety Knowledge Support: An Evidence-Grounded {LLM} Framework for Medical Devices},
+  howpublished  = {arXiv preprint arXiv:2608.12025},
+  year          = {2026},
+  eprint        = {2608.12025},
+  archivePrefix = {arXiv},
+  note          = {ISSRE 2026 workshop AISQ (arXiv comment); no proceedings DOI found on 2026-10-31},
+  url           = {https://arxiv.org/abs/2608.12025},
+  verified      = {2026-10-31; arXiv abs page}
+}
+
+@misc{maharjan2026trust,
+  author       = {Maharjan, Suraj},
+  title        = {Trust but Trace: {AI} Coding Assistants in Software Developed under Regulatory Design Controls},
+  howpublished = {SSRN preprint},
+  year         = {2026},
+  doi          = {10.2139/ssrn.7349799},
+  verified     = {2026-10-31; Crossref DOI metadata (posted content, incl. abstract); SSRN page itself returned HTTP 403}
+}
+
+@inproceedings{kirchner2025automotive,
+  author    = {Kirchner, Sven and Knoll, Alois C.},
+  title     = {Generating Automotive Code: Large Language Models for Software Development and Verification in Safety-Critical Systems},
+  booktitle = {2025 IEEE Intelligent Vehicles Symposium (IV)},
+  publisher = {IEEE},
+  pages     = {813--820},
+  year      = {2025},
+  doi       = {10.1109/IV64158.2025.11097503},
+  eprint    = {2506.04038},
+  archivePrefix = {arXiv},
+  verified  = {2026-10-31; Crossref DOI metadata + arXiv API metadata}
+}
+
+@article{liu2024safetycritical,
+  author   = {Liu, Mingxing and Wang, Junfeng and Lin, Tao and Ma, Quan and Fang, Zhiyang and Wu, Yanqun},
+  title    = {An Empirical Study of the Code Generation of Safety-Critical Software Using {LLMs}},
+  journal  = {Applied Sciences},
+  volume   = {14},
+  number   = {3},
+  pages    = {1046},
+  year     = {2024},
+  doi      = {10.3390/app14031046},
+  verified = {2026-10-31; Crossref DOI metadata}
+}
+
+@inproceedings{nouri2025simulation,
+  author    = {Nouri, Ali and Andersson, Johan and {De Jesus Hornig}, Kailash and Fei, Zhennan and Knabe, Emil and Sivencrona, Hakan and Cabrero-Daniel, Beatriz and Berger, Christian},
+  title     = {On Simulation-Guided {LLM}-based Code Generation for Safe Autonomous Driving Software},
+  booktitle = {Proceedings of the 29th International Conference on Evaluation and Assessment in Software Engineering (EASE 2025)},
+  publisher = {ACM},
+  pages     = {1097--1106},
+  year      = {2025},
+  doi       = {10.1145/3756681.3756987},
+  eprint    = {2504.02141},
+  archivePrefix = {arXiv},
+  verified  = {2026-10-31; Crossref DOI metadata + arXiv API metadata}
+}
+
+@article{liu2026hallucinations,
+  author   = {Liu, Fang and Liu, Yang and Shi, Lin and Yang, Zhen and Zhang, Li and Lian, Xiaoli and Li, Zhongqi and Ma, Yuchi},
+  title    = {Beyond Functional Correctness: Exploring Hallucinations in {LLM}-Generated Code},
+  journal  = {IEEE Transactions on Software Engineering},
+  volume   = {52},
+  number   = {3},
+  pages    = {1037--1055},
+  year     = {2026},
+  doi      = {10.1109/TSE.2026.3657432},
+  eprint   = {2404.00971},
+  archivePrefix = {arXiv},
+  note     = {Earlier arXiv versions titled ``Exploring and Evaluating Hallucinations in LLM-Powered Code Generation''},
+  verified = {2026-10-31; Crossref DOI metadata + arXiv API metadata}
+}
+
+@inproceedings{spracklen2025package,
+  author    = {Spracklen, Joseph and Wijewickrama, Raveen and Sakib, A H M Nazmus and Maiti, Anindya and Viswanath, Bimal and Jadliwala, Murtuza},
+  title     = {We Have a Package for You! {A} Comprehensive Analysis of Package Hallucinations by Code Generating {LLMs}},
+  booktitle = {34th USENIX Security Symposium (USENIX Security 25)},
+  publisher = {USENIX Association},
+  address   = {Seattle, WA},
+  pages     = {3687--3706},
+  year      = {2025},
+  isbn      = {978-1-939133-52-6},
+  eprint    = {2406.10279},
+  archivePrefix = {arXiv},
+  url       = {https://www.usenix.org/conference/usenixsecurity25/presentation/spracklen},
+  verified  = {2026-10-31; USENIX proceedings page (official BibTeX) + arXiv API metadata}
+}
+
+@misc{anthropic2026permissions,
+  author       = {{Anthropic}},
+  title        = {Configure permissions -- {Claude} {Code} Docs},
+  howpublished = {Official product documentation},
+  year         = {2026},
+  url          = {https://code.claude.com/docs/en/permissions},
+  urldate      = {2026-10-31},
+  note         = {Accessed 31 October 2026},
+  verified     = {2026-10-31; official docs page fetched}
+}
+
+@misc{anthropic2026permissionmodes,
+  author       = {{Anthropic}},
+  title        = {Choose a permission mode -- {Claude} {Code} Docs},
+  howpublished = {Official product documentation},
+  year         = {2026},
+  url          = {https://code.claude.com/docs/en/permission-modes},
+  urldate      = {2026-10-31},
+  note         = {Accessed 31 October 2026; documents modes default (Manual), acceptEdits, plan, auto, dontAsk, bypassPermissions},
+  verified     = {2026-10-31; official docs page fetched}
+}
+
+@misc{github2026signature,
+  author       = {{GitHub}},
+  title        = {About commit signature verification -- {GitHub} Docs},
+  howpublished = {Official product documentation},
+  year         = {2026},
+  url          = {https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification},
+  urldate      = {2026-10-31},
+  note         = {Accessed 31 October 2026; describes automatic GPG signing of web-interface commits with GitHub's web-flow key and the Verified status},
+  verified     = {2026-10-31; official docs page fetched}
+}
+
+% =====================================================================
+% E. Medical-device software engineering and failures
+% =====================================================================
+
+@article{leveson1993therac,
+  author   = {Leveson, Nancy G. and Turner, Clark S.},
+  title    = {An Investigation of the {Therac-25} Accidents},
+  journal  = {Computer},
+  volume   = {26},
+  number   = {7},
+  pages    = {18--41},
+  year     = {1993},
+  doi      = {10.1109/MC.1993.274940},
+  verified = {2026-10-31; Crossref DOI metadata}
+}
+
+@article{wallace2001failure,
+  author   = {Wallace, Dolores R. and Kuhn, D. Richard},
+  title    = {Failure Modes in Medical Device Software: An Analysis of 15 Years of Recall Data},
+  journal  = {International Journal of Reliability, Quality and Safety Engineering},
+  volume   = {8},
+  number   = {4},
+  pages    = {351--371},
+  year     = {2001},
+  doi      = {10.1142/S021853930100058X},
+  verified = {2026-10-31; Crossref DOI metadata}
+}
+
+@article{alemzadeh2013analysis,
+  author   = {Alemzadeh, Homa and Iyer, Ravishankar K. and Kalbarczyk, Zbigniew and Raman, Jai},
+  title    = {Analysis of Safety-Critical Computer Failures in Medical Devices},
+  journal  = {IEEE Security \& Privacy},
+  volume   = {11},
+  number   = {4},
+  pages    = {14--26},
+  year     = {2013},
+  doi      = {10.1109/MSP.2013.49},
+  verified = {2026-10-31; Crossref DOI metadata}
+}
+
+@inproceedings{mchugh2012barriers,
+  author    = {McHugh, Martin and McCaffery, Fergal and Casey, Valentine},
+  title     = {Barriers to Adopting Agile Practices When Developing Medical Device Software},
+  booktitle = {Software Process Improvement and Capability Determination (SPICE 2012)},
+  series    = {Communications in Computer and Information Science},
+  publisher = {Springer},
+  address   = {Berlin, Heidelberg},
+  pages     = {141--147},
+  year      = {2012},
+  doi       = {10.1007/978-3-642-30439-2_13},
+  verified  = {2026-10-31; Crossref DOI metadata}
+}
+
+@article{heeager2018conceptual,
+  author   = {Heeager, Lise Tordrup and Nielsen, Peter Axel},
+  title    = {A conceptual model of agile software development in a safety-critical context: A systematic literature review},
+  journal  = {Information and Software Technology},
+  volume   = {103},
+  pages    = {22--39},
+  year     = {2018},
+  doi      = {10.1016/j.infsof.2018.06.004},
+  verified = {2026-10-31; Crossref DOI metadata}
+}
+
+@incollection{fu2011trustworthy,
+  author    = {Fu, Kevin},
+  title     = {Trustworthy Medical Device Software},
+  booktitle = {Public Health Effectiveness of the {FDA} 510(k) Clearance Process: Measuring Postmarket Performance and Other Select Topics: Workshop Report},
+  publisher = {The National Academies Press},
+  address   = {Washington, DC},
+  organization = {Institute of Medicine},
+  pages     = {97--118},
+  note      = {Appendix D},
+  year      = {2011},
+  doi       = {10.17226/13020},
+  verified  = {2026-10-31; Crossref DOI metadata (report) + nationalacademies.org chapter page (appendix, pages)}
+}
+
+@inproceedings{laukkarinen2017devops,
+  author    = {Laukkarinen, Teemu and Kuusinen, Kati and Mikkonen, Tommi},
+  title     = {{DevOps} in Regulated Software Development: Case Medical Devices},
+  booktitle = {2017 IEEE/ACM 39th International Conference on Software Engineering: New Ideas and Emerging Technologies Results Track (ICSE-NIER)},
+  publisher = {IEEE},
+  pages     = {15--18},
+  year      = {2017},
+  doi       = {10.1109/ICSE-NIER.2017.20},
+  verified  = {2026-10-31; Crossref DOI metadata}
+}
+
+@article{laukkarinen2018regulated,
+  author   = {Laukkarinen, Teemu and Kuusinen, Kati and Mikkonen, Tommi},
+  title    = {Regulated software meets {DevOps}},
+  journal  = {Information and Software Technology},
+  volume   = {97},
+  pages    = {176--178},
+  year     = {2018},
+  doi      = {10.1016/j.infsof.2018.01.011},
+  verified = {2026-10-31; Crossref DOI metadata}
+}
+
+@article{granlund2021mlops,
+  author   = {Granlund, Tuomas and Stirbu, Vlad and Mikkonen, Tommi},
+  title    = {Towards Regulatory-Compliant {MLOps}: {Oravizio}'s Journey from a Machine Learning Experiment to a Deployed Certified Medical Product},
+  journal  = {SN Computer Science},
+  volume   = {2},
+  number   = {5},
+  pages    = {342},
+  year     = {2021},
+  doi      = {10.1007/s42979-021-00726-1},
+  verified = {2026-10-31; Crossref DOI metadata}
+}
+
+@article{stirbu2023continuous,
+  author   = {Stirbu, Vlad and Granlund, Tuomas and Mikkonen, Tommi},
+  title    = {Continuous design control for machine learning in certified medical systems},
+  journal  = {Software Quality Journal},
+  volume   = {31},
+  number   = {2},
+  pages    = {307--333},
+  year     = {2023},
+  doi      = {10.1007/s11219-022-09601-5},
+  note     = {Published online 17 October 2022},
+  verified = {2026-10-31; Crossref DOI metadata}
+}

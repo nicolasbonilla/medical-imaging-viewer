@@ -2,6 +2,9 @@
 
 *Draft v0.1, 2026-10-21 — for Empirical Software Engineering (primary) or Journal of Systems and Software (alternative)*
 
+> **Superseded (2026-10-31)** by [`manuscript/manuscript.md`](manuscript/manuscript.md) (v1.0, data to
+> `main` @ `8805882`). Kept unchanged below as the October draft that CAPA-012 cites.
+
 *Author: N. G. Bonilla Vargas [+ an independent software-engineering co-author and second coder — required, see §7]*
 
 > **Status of this draft.** Written by the AI coding agent under study (Claude Opus 5.5, via Claude

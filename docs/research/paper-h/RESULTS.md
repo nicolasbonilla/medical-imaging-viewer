@@ -4,6 +4,10 @@ Every number below is produced by the scripts in `research/paper_h/` from pinned
 (`research/paper_h/config.py`) and the committed GitHub snapshot. Protocol: `PROTOCOL.md`
 (committed first, `08e952e`). Results computed 2026-10-21.
 
+> **Update 2026-10-31.** The manuscript (`manuscript/manuscript.md`) extends this analysis to `main` @
+> `8805882` with `research/paper_h/manuscript_data.py` (post hoc; see manuscript §4.7). The numbers below
+> remain those of `main` @ `6209131` and are still reproduced by `run_all.py`.
+
 ## How to reproduce
 
 ```bash
