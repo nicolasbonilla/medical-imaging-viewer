@@ -1,0 +1,161 @@
+﻿
+=== A1: 20 units, 476 candidates (185 true), median 23/unit, units with >=1 false cand 19, stable units 0
+   AUROC 0.403 [0.338,0.460] | Q4 rho(maxfalse, burden) 0.04 p=0.869
+   B_all          FWER 0.95 (19/20) CP[0.75,1.00] | true-flag 0.95 (19/20) | lesion sens 0.377 [0.285,0.466] | false/unit 14.55 | abstain 0
+   marginal_a0.1  FWER 0.10 (2/20) CP[0.01,0.32] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.20 | abstain 0 | no violation detected, bought by abstention | thr~4.055302619934082
+   pac_a0.1       FWER 0.00 (0/20) CP[0.00,0.17] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.00 | abstain 20 | no violation detected, bought by abstention | thr~None
+   plugin_a0.1    FWER 0.10 (2/20) CP[0.01,0.32] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.20 | abstain 0 | no violation detected, bought by abstention | thr~4.055302619934082
+   marginal_a0.2  FWER 0.20 (4/20) CP[0.06,0.44] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.30 | abstain 0 | no violation detected, bought by abstention | thr~3.89174485206604
+   pac_a0.2       FWER 0.10 (2/20) CP[0.01,0.32] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.20 | abstain 0 | no violation detected, bought by abstention | thr~4.055302619934082
+   plugin_a0.2    FWER 0.20 (4/20) CP[0.06,0.44] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.30 | abstain 0 | no violation detected, bought by abstention | thr~3.89174485206604
+
+=== A2: 25 units, 327 candidates (119 true), median 11/unit, units with >=1 false cand 25, stable units 0
+   AUROC 0.702 [0.627,0.775] | Q4 rho(maxfalse, burden) -0.03 p=0.882
+   B_all          FWER 1.00 (25/25) CP[0.86,1.00] | true-flag 0.96 (24/25) | lesion sens 0.473 [0.389,0.554] | false/unit 8.24 | abstain 0
+   B_app_sub      FWER 1.00 (25/25) CP[0.86,1.00] | true-flag 0.84 (21/25) | lesion sens 0.357 [0.272,0.441] | false/unit 3.68 | abstain 0
+   B_fixed_0.5SD  FWER 0.76 (19/25) CP[0.55,0.91] | true-flag 0.80 (20/25) | lesion sens 0.291 [0.202,0.388] | false/unit 2.52 | abstain 0
+   app activity_candidate rate 1.00; subtraction-confirmed 1.00
+   marginal_a0.1  FWER 0.08 (2/25) CP[0.01,0.26] | true-flag 0.04 (1/25) | lesion sens 0.004 [0.000,0.012] | false/unit 0.16 | abstain 0 | no violation detected, bought by abstention | thr~4.896335601806641
+   pac_a0.1       FWER 0.04 (1/25) CP[0.00,0.20] | true-flag 0.04 (1/25) | lesion sens 0.004 [0.000,0.012] | false/unit 0.08 | abstain 0 | no violation detected, bought by abstention | thr~5.3418121337890625
+   plugin_a0.1    FWER 0.12 (3/25) CP[0.03,0.31] | true-flag 0.12 (3/25) | lesion sens 0.039 [0.000,0.090] | false/unit 0.28 | abstain 0 | no violation detected, bought by abstention | thr~2.5304622650146484
+   marginal_a0.2  FWER 0.20 (5/25) CP[0.07,0.41] | true-flag 0.20 (5/25) | lesion sens 0.070 [0.012,0.136] | false/unit 0.36 | abstain 0 | no violation detected, intermediate | thr~1.4845387935638428
+   pac_a0.2       FWER 0.08 (2/25) CP[0.01,0.26] | true-flag 0.04 (1/25) | lesion sens 0.004 [0.000,0.012] | false/unit 0.16 | abstain 0 | no violation detected, bought by abstention | thr~4.896335601806641
+   plugin_a0.2    FWER 0.20 (5/25) CP[0.07,0.41] | true-flag 0.20 (5/25) | lesion sens 0.070 [0.012,0.136] | false/unit 0.36 | abstain 0 | no violation detected, intermediate | thr~1.4845387935638428
+
+=== A2b: 25 units, 327 candidates (119 true), median 11/unit, units with >=1 false cand 25, stable units 0
+   AUROC 0.721 [0.633,0.795] | Q4 rho(maxfalse, burden) 0.12 p=0.552
+   B_all          FWER 1.00 (25/25) CP[0.86,1.00] | true-flag 0.96 (24/25) | lesion sens 0.473 [0.389,0.554] | false/unit 8.32 | abstain 0
+   B_app_sub      FWER 1.00 (25/25) CP[0.86,1.00] | true-flag 0.84 (21/25) | lesion sens 0.357 [0.272,0.441] | false/unit 3.68 | abstain 0
+   app activity_candidate rate 1.00; subtraction-confirmed 1.00
+   marginal_a0.1  FWER 0.08 (2/25) CP[0.01,0.26] | true-flag 0.28 (7/25) | lesion sens 0.031 [0.013,0.051] | false/unit 0.08 | abstain 0 | no violation detected, intermediate | thr~0.9465377926826477
+   pac_a0.1       FWER 0.04 (1/25) CP[0.00,0.20] | true-flag 0.20 (5/25) | lesion sens 0.019 [0.005,0.034] | false/unit 0.04 | abstain 0 | no violation detected, intermediate | thr~0.9564438462257385
+   plugin_a0.1    FWER 0.12 (3/25) CP[0.03,0.31] | true-flag 0.28 (7/25) | lesion sens 0.050 [0.020,0.086] | false/unit 0.12 | abstain 0 | no violation detected, intermediate | thr~0.9419608116149902
+   marginal_a0.2  FWER 0.20 (5/25) CP[0.07,0.41] | true-flag 0.40 (10/25) | lesion sens 0.105 [0.048,0.167] | false/unit 0.20 | abstain 0 | no violation detected, intermediate | thr~0.90352863073349
+   pac_a0.2       FWER 0.08 (2/25) CP[0.01,0.26] | true-flag 0.28 (7/25) | lesion sens 0.031 [0.013,0.051] | false/unit 0.08 | abstain 0 | no violation detected, intermediate | thr~0.9465377926826477
+   plugin_a0.2    FWER 0.20 (5/25) CP[0.07,0.41] | true-flag 0.40 (10/25) | lesion sens 0.105 [0.048,0.167] | false/unit 0.20 | abstain 0 | no violation detected, intermediate | thr~0.90352863073349
+
+=== A3: 25 units, 1264 candidates (56 true), median 31/unit, units with >=1 false cand 24, stable units 0
+   AUROC 0.554 [0.395,0.689] | Q4 rho(maxfalse, burden) -0.11 p=0.589
+   B_all          FWER 0.96 (24/25) CP[0.80,1.00] | true-flag 0.52 (13/25) | lesion sens 0.182 [0.088,0.287] | false/unit 48.32 | abstain 0
+   marginal_a0.1  FWER 0.08 (2/25) CP[0.01,0.26] | true-flag 0.04 (1/25) | lesion sens 0.004 [0.000,0.012] | false/unit 0.32 | abstain 0 | no violation detected, bought by abstention | thr~4.629858493804932
+   pac_a0.1       FWER 0.04 (1/25) CP[0.00,0.20] | true-flag 0.00 (0/25) | lesion sens 0.000 [0.000,0.000] | false/unit 0.16 | abstain 0 | no violation detected, bought by abstention | thr~4.870644569396973
+   plugin_a0.1    FWER 0.12 (3/25) CP[0.03,0.31] | true-flag 0.04 (1/25) | lesion sens 0.004 [0.000,0.012] | false/unit 0.48 | abstain 0 | no violation detected, bought by abstention | thr~4.310183525085449
+   marginal_a0.2  FWER 0.20 (5/25) CP[0.07,0.41] | true-flag 0.04 (1/25) | lesion sens 0.008 [0.000,0.024] | false/unit 0.76 | abstain 0 | no violation detected, bought by abstention | thr~4.069809436798096
+   pac_a0.2       FWER 0.08 (2/25) CP[0.01,0.26] | true-flag 0.04 (1/25) | lesion sens 0.004 [0.000,0.012] | false/unit 0.32 | abstain 0 | no violation detected, bought by abstention | thr~4.629858493804932
+   plugin_a0.2    FWER 0.20 (5/25) CP[0.07,0.41] | true-flag 0.04 (1/25) | lesion sens 0.008 [0.000,0.024] | false/unit 0.76 | abstain 0 | no violation detected, bought by abstention | thr~4.069809436798096
+
+=== A1_truthpos: 20 units, 476 candidates (180 true), median 23/unit, units with >=1 false cand 19, stable units 0
+   AUROC 0.407 [0.343,0.462] | Q4 rho(maxfalse, burden) 0.04 p=0.869
+   B_all          FWER 0.95 (19/20) CP[0.75,1.00] | true-flag 0.95 (19/20) | lesion sens 0.377 [0.285,0.466] | false/unit 14.80 | abstain 0
+   marginal_a0.1  FWER 0.10 (2/20) CP[0.01,0.32] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.20 | abstain 0 | no violation detected, bought by abstention | thr~4.055302619934082
+   pac_a0.1       FWER 0.00 (0/20) CP[0.00,0.17] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.00 | abstain 20 | no violation detected, bought by abstention | thr~None
+   plugin_a0.1    FWER 0.10 (2/20) CP[0.01,0.32] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.20 | abstain 0 | no violation detected, bought by abstention | thr~4.055302619934082
+   marginal_a0.2  FWER 0.20 (4/20) CP[0.06,0.44] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.30 | abstain 0 | no violation detected, bought by abstention | thr~3.89174485206604
+   pac_a0.2       FWER 0.10 (2/20) CP[0.01,0.32] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.20 | abstain 0 | no violation detected, bought by abstention | thr~4.055302619934082
+   plugin_a0.2    FWER 0.20 (4/20) CP[0.06,0.44] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.30 | abstain 0 | no violation detected, bought by abstention | thr~3.89174485206604
+
+=== A1_t1.0: 20 units, 1172 candidates (297 true), median 57/unit, units with >=1 false cand 20, stable units 0
+   AUROC 0.600 [0.516,0.666] | Q4 rho(maxfalse, burden) -0.07 p=0.772
+   B_all          FWER 1.00 (20/20) CP[0.83,1.00] | true-flag 1.00 (20/20) | lesion sens 0.612 [0.520,0.686] | false/unit 43.75 | abstain 0
+   marginal_a0.1  FWER 0.10 (2/20) CP[0.01,0.32] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.15 | abstain 0 | no violation detected, bought by abstention | thr~4.055302619934082
+   pac_a0.1       FWER 0.00 (0/20) CP[0.00,0.17] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.00 | abstain 20 | no violation detected, bought by abstention | thr~None
+   plugin_a0.1    FWER 0.10 (2/20) CP[0.01,0.32] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.15 | abstain 0 | no violation detected, bought by abstention | thr~4.055302619934082
+   marginal_a0.2  FWER 0.20 (4/20) CP[0.06,0.44] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.45 | abstain 0 | no violation detected, bought by abstention | thr~3.7845091819763184
+   pac_a0.2       FWER 0.10 (2/20) CP[0.01,0.32] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.15 | abstain 0 | no violation detected, bought by abstention | thr~4.055302619934082
+   plugin_a0.2    FWER 0.20 (4/20) CP[0.06,0.44] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.45 | abstain 0 | no violation detected, bought by abstention | thr~3.7845091819763184
+
+=== A1_t2.0: 20 units, 263 candidates (107 true), median 10/unit, units with >=1 false cand 18, stable units 0
+   AUROC 0.272 [0.200,0.332] | Q4 rho(maxfalse, burden) 0.05 p=0.821
+   B_all          FWER 0.90 (18/20) CP[0.68,0.99] | true-flag 0.85 (17/20) | lesion sens 0.220 [0.152,0.299] | false/unit 7.80 | abstain 0
+   marginal_a0.1  FWER 0.10 (2/20) CP[0.01,0.32] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.30 | abstain 0 | no violation detected, bought by abstention | thr~5.057592391967773
+   pac_a0.1       FWER 0.00 (0/20) CP[0.00,0.17] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.00 | abstain 20 | no violation detected, bought by abstention | thr~None
+   plugin_a0.1    FWER 0.10 (2/20) CP[0.01,0.32] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.30 | abstain 0 | no violation detected, bought by abstention | thr~5.057592391967773
+   marginal_a0.2  FWER 0.20 (4/20) CP[0.06,0.44] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.50 | abstain 0 | no violation detected, bought by abstention | thr~4.233665466308594
+   pac_a0.2       FWER 0.10 (2/20) CP[0.01,0.32] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.30 | abstain 0 | no violation detected, bought by abstention | thr~5.057592391967773
+   plugin_a0.2    FWER 0.20 (4/20) CP[0.06,0.44] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.50 | abstain 0 | no violation detected, bought by abstention | thr~4.233665466308594
+
+=== A3_t1.0: 25 units, 2726 candidates (87 true), median 60/unit, units with >=1 false cand 25, stable units 0
+   AUROC 0.544 [0.455,0.643] | Q4 rho(maxfalse, burden) -0.15 p=0.470
+   B_all          FWER 1.00 (25/25) CP[0.86,1.00] | true-flag 0.72 (18/25) | lesion sens 0.333 [0.210,0.458] | false/unit 105.56 | abstain 0
+   marginal_a0.1  FWER 0.08 (2/25) CP[0.01,0.26] | true-flag 0.00 (0/25) | lesion sens 0.000 [0.000,0.000] | false/unit 0.24 | abstain 0 | no violation detected, bought by abstention | thr~4.629858493804932
+   pac_a0.1       FWER 0.04 (1/25) CP[0.00,0.20] | true-flag 0.00 (0/25) | lesion sens 0.000 [0.000,0.000] | false/unit 0.08 | abstain 0 | no violation detected, bought by abstention | thr~4.870644569396973
+   plugin_a0.1    FWER 0.12 (3/25) CP[0.03,0.31] | true-flag 0.00 (0/25) | lesion sens 0.000 [0.000,0.000] | false/unit 0.44 | abstain 0 | no violation detected, bought by abstention | thr~4.309035301208496
+   marginal_a0.2  FWER 0.20 (5/25) CP[0.07,0.41] | true-flag 0.04 (1/25) | lesion sens 0.008 [0.000,0.024] | false/unit 0.80 | abstain 0 | no violation detected, bought by abstention | thr~3.9484894275665283
+   pac_a0.2       FWER 0.08 (2/25) CP[0.01,0.26] | true-flag 0.00 (0/25) | lesion sens 0.000 [0.000,0.000] | false/unit 0.24 | abstain 0 | no violation detected, bought by abstention | thr~4.629858493804932
+   plugin_a0.2    FWER 0.20 (5/25) CP[0.07,0.41] | true-flag 0.04 (1/25) | lesion sens 0.008 [0.000,0.024] | false/unit 0.80 | abstain 0 | no violation detected, bought by abstention | thr~3.9484894275665283
+
+=== A3_t2.0: 25 units, 592 candidates (41 true), median 15/unit, units with >=1 false cand 21, stable units 0
+   AUROC 0.470 [0.351,0.586] | Q4 rho(maxfalse, burden) -0.15 p=0.456
+   B_all          FWER 0.84 (21/25) CP[0.64,0.95] | true-flag 0.40 (10/25) | lesion sens 0.128 [0.055,0.215] | false/unit 22.04 | abstain 0
+   marginal_a0.1  FWER 0.08 (2/25) CP[0.01,0.26] | true-flag 0.04 (1/25) | lesion sens 0.004 [0.000,0.012] | false/unit 0.28 | abstain 0 | no violation detected, bought by abstention | thr~4.629858493804932
+   pac_a0.1       FWER 0.04 (1/25) CP[0.00,0.20] | true-flag 0.04 (1/25) | lesion sens 0.004 [0.000,0.012] | false/unit 0.16 | abstain 0 | no violation detected, bought by abstention | thr~4.908083915710449
+   plugin_a0.1    FWER 0.12 (3/25) CP[0.03,0.31] | true-flag 0.04 (1/25) | lesion sens 0.008 [0.000,0.024] | false/unit 0.48 | abstain 0 | no violation detected, bought by abstention | thr~4.366549491882324
+   marginal_a0.2  FWER 0.20 (5/25) CP[0.07,0.41] | true-flag 0.04 (1/25) | lesion sens 0.012 [0.000,0.036] | false/unit 0.72 | abstain 0 | no violation detected, bought by abstention | thr~4.134343147277832
+   pac_a0.2       FWER 0.08 (2/25) CP[0.01,0.26] | true-flag 0.04 (1/25) | lesion sens 0.004 [0.000,0.012] | false/unit 0.28 | abstain 0 | no violation detected, bought by abstention | thr~4.629858493804932
+   plugin_a0.2    FWER 0.20 (5/25) CP[0.07,0.41] | true-flag 0.04 (1/25) | lesion sens 0.012 [0.000,0.036] | false/unit 0.72 | abstain 0 | no violation detected, bought by abstention | thr~4.134343147277832
+
+=== A2_allpairs: 40 units, 499 candidates (171 true), median 11/unit, units with >=1 false cand 39, stable units 1
+   AUROC 0.642 [0.563,0.725] | Q4 rho(maxfalse, burden) 0.12 p=0.472
+   B_all          FWER 0.97 (39/40) CP[0.87,1.00] | true-flag 0.95 (37/39) | lesion sens 0.449 [0.386,0.514] | false/unit 8.05 | abstain 0
+   B_app_sub      FWER 0.95 (38/40) CP[0.83,0.99] | true-flag 0.82 (32/39) | lesion sens 0.318 [0.258,0.392] | false/unit 3.67 | abstain 0
+   B_fixed_0.5SD  FWER 0.78 (31/40) CP[0.62,0.89] | true-flag 0.72 (28/39) | lesion sens 0.243 [0.176,0.332] | false/unit 2.48 | abstain 0
+   app activity_candidate rate 0.97; subtraction-confirmed 0.95
+   marginal_a0.1  FWER 0.07 (3/40) CP[0.02,0.20] | true-flag 0.03 (1/39) | lesion sens 0.003 [0.000,0.009] | false/unit 0.15 | abstain 0 | no violation detected, bought by abstention | thr~4.896335601806641
+   pac_a0.1       FWER 0.05 (2/40) CP[0.01,0.17] | true-flag 0.03 (1/39) | lesion sens 0.003 [0.000,0.009] | false/unit 0.10 | abstain 0 | no violation detected, bought by abstention | thr~5.3418121337890625
+   plugin_a0.1    FWER 0.10 (4/40) CP[0.03,0.24] | true-flag 0.03 (1/39) | lesion sens 0.003 [0.000,0.009] | false/unit 0.20 | abstain 0 | no violation detected, bought by abstention | thr~4.284067630767822
+   marginal_a0.2  FWER 0.17 (7/40) CP[0.07,0.33] | true-flag 0.18 (7/39) | lesion sens 0.053 [0.015,0.103] | false/unit 0.33 | abstain 0 | no violation detected, bought by abstention | thr~1.4845387935638428
+   pac_a0.2       FWER 0.12 (5/40) CP[0.04,0.27] | true-flag 0.05 (2/39) | lesion sens 0.013 [0.000,0.035] | false/unit 0.23 | abstain 0 | no violation detected, bought by abstention | thr~2.5304622650146484
+   plugin_a0.2    FWER 0.20 (8/40) CP[0.09,0.36] | true-flag 0.18 (7/39) | lesion sens 0.053 [0.015,0.103] | false/unit 0.35 | abstain 0 | no violation detected, bought by abstention | thr~1.4845387935638428
+
+=== A2b_allpairs: 40 units, 499 candidates (171 true), median 11/unit, units with >=1 false cand 39, stable units 1
+   AUROC 0.706 [0.639,0.765] | Q4 rho(maxfalse, burden) 0.24 p=0.127
+   B_all          FWER 0.97 (39/40) CP[0.87,1.00] | true-flag 0.95 (37/39) | lesion sens 0.449 [0.386,0.514] | false/unit 8.20 | abstain 0
+   B_app_sub      FWER 0.95 (38/40) CP[0.83,0.99] | true-flag 0.82 (32/39) | lesion sens 0.318 [0.258,0.392] | false/unit 3.67 | abstain 0
+   app activity_candidate rate 0.97; subtraction-confirmed 0.95
+   marginal_a0.1  FWER 0.10 (4/40) CP[0.03,0.24] | true-flag 0.26 (10/39) | lesion sens 0.061 [0.024,0.110] | false/unit 0.10 | abstain 0 | no violation detected, intermediate | thr~0.9419608116149902
+   pac_a0.1       FWER 0.03 (1/40) CP[0.00,0.13] | true-flag 0.18 (7/39) | lesion sens 0.019 [0.008,0.033] | false/unit 0.03 | abstain 0 | no violation detected, bought by abstention | thr~0.9465377926826477
+   plugin_a0.1    FWER 0.10 (4/40) CP[0.03,0.24] | true-flag 0.28 (11/39) | lesion sens 0.070 [0.030,0.118] | false/unit 0.10 | abstain 0 | no violation detected, intermediate | thr~0.9152858853340149
+   marginal_a0.2  FWER 0.20 (8/40) CP[0.09,0.36] | true-flag 0.33 (13/39) | lesion sens 0.088 [0.042,0.147] | false/unit 0.23 | abstain 0 | no violation detected, intermediate | thr~0.8941276669502258
+   pac_a0.2       FWER 0.12 (5/40) CP[0.04,0.27] | true-flag 0.31 (12/39) | lesion sens 0.080 [0.037,0.135] | false/unit 0.12 | abstain 0 | no violation detected, intermediate | thr~0.90352863073349
+   plugin_a0.2    FWER 0.20 (8/40) CP[0.09,0.36] | true-flag 0.33 (13/39) | lesion sens 0.088 [0.042,0.147] | false/unit 0.23 | abstain 0 | no violation detected, intermediate | thr~0.8941276669502258
+
+=== A3_allpairs: 40 units, 1579 candidates (61 true), median 20/unit, units with >=1 false cand 38, stable units 1
+   AUROC 0.537 [0.388,0.664] | Q4 rho(maxfalse, burden) 0.03 p=0.873
+   B_all          FWER 0.95 (38/40) CP[0.83,0.99] | true-flag 0.44 (17/39) | lesion sens 0.139 [0.072,0.226] | false/unit 37.95 | abstain 0
+   marginal_a0.1  FWER 0.10 (4/40) CP[0.03,0.24] | true-flag 0.03 (1/39) | lesion sens 0.003 [0.000,0.009] | false/unit 0.35 | abstain 0 | no violation detected, bought by abstention | thr~4.47002100944519
+   pac_a0.1       FWER 0.05 (2/40) CP[0.01,0.17] | true-flag 0.00 (0/39) | lesion sens 0.000 [0.000,0.000] | false/unit 0.15 | abstain 0 | no violation detected, bought by abstention | thr~4.801893711090088
+   plugin_a0.1    FWER 0.10 (4/40) CP[0.03,0.24] | true-flag 0.03 (1/39) | lesion sens 0.003 [0.000,0.009] | false/unit 0.42 | abstain 0 | no violation detected, bought by abstention | thr~4.310183525085449
+   marginal_a0.2  FWER 0.17 (7/40) CP[0.07,0.33] | true-flag 0.03 (1/39) | lesion sens 0.005 [0.000,0.018] | false/unit 0.75 | abstain 0 | no violation detected, bought by abstention | thr~3.554474115371704
+   pac_a0.2       FWER 0.12 (5/40) CP[0.04,0.27] | true-flag 0.03 (1/39) | lesion sens 0.003 [0.000,0.009] | false/unit 0.45 | abstain 0 | no violation detected, bought by abstention | thr~4.134343147277832
+   plugin_a0.2    FWER 0.20 (8/40) CP[0.09,0.36] | true-flag 0.03 (1/39) | lesion sens 0.005 [0.000,0.018] | false/unit 0.78 | abstain 0 | no violation detected, bought by abstention | thr~3.554474115371704
+
+=== A4: 20 units, 390 candidates (212 true), median 14/unit, units with >=1 false cand 20, stable units 0
+   AUROC 0.841 [0.752,0.903] | Q4 rho(maxfalse, burden) 0.15 p=0.531
+   B_all          FWER 1.00 (20/20) CP[0.83,1.00] | true-flag 1.00 (20/20) | lesion sens 0.516 [0.399,0.612] | false/unit 8.90 | abstain 0
+   B_app_sub      FWER 0.95 (19/20) CP[0.75,1.00] | true-flag 1.00 (20/20) | lesion sens 0.493 [0.379,0.587] | false/unit 5.40 | abstain 0
+   B_fixed_0.5SD  FWER 0.85 (17/20) CP[0.62,0.97] | true-flag 1.00 (20/20) | lesion sens 0.457 [0.344,0.557] | false/unit 3.15 | abstain 0
+   app activity_candidate rate 1.00; subtraction-confirmed 1.00
+   marginal_a0.1  FWER 0.10 (2/20) CP[0.01,0.32] | true-flag 1.00 (20/20) | lesion sens 0.278 [0.176,0.375] | false/unit 0.15 | abstain 0 | no violation detected, informative | thr~1.136121153831482
+   pac_a0.1       FWER 0.00 (0/20) CP[0.00,0.17] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.00 | abstain 20 | no violation detected, bought by abstention | thr~None
+   plugin_a0.1    FWER 0.10 (2/20) CP[0.01,0.32] | true-flag 1.00 (20/20) | lesion sens 0.278 [0.176,0.375] | false/unit 0.15 | abstain 0 | no violation detected, informative | thr~1.136121153831482
+   marginal_a0.2  FWER 0.20 (4/20) CP[0.06,0.44] | true-flag 1.00 (20/20) | lesion sens 0.305 [0.192,0.411] | false/unit 0.25 | abstain 0 | no violation detected, informative | thr~1.0538311004638672
+   pac_a0.2       FWER 0.10 (2/20) CP[0.01,0.32] | true-flag 1.00 (20/20) | lesion sens 0.278 [0.176,0.375] | false/unit 0.15 | abstain 0 | no violation detected, informative | thr~1.136121153831482
+   plugin_a0.2    FWER 0.20 (4/20) CP[0.06,0.44] | true-flag 1.00 (20/20) | lesion sens 0.305 [0.192,0.411] | false/unit 0.25 | abstain 0 | no violation detected, informative | thr~1.0538311004638672
+
+=== A4b: 20 units, 390 candidates (212 true), median 14/unit, units with >=1 false cand 20, stable units 0
+   AUROC 0.764 [0.671,0.821] | Q4 rho(maxfalse, burden) -0.09 p=0.711
+   B_all          FWER 1.00 (20/20) CP[0.83,1.00] | true-flag 1.00 (20/20) | lesion sens 0.516 [0.399,0.612] | false/unit 8.90 | abstain 0
+   B_app_sub      FWER 0.95 (19/20) CP[0.75,1.00] | true-flag 1.00 (20/20) | lesion sens 0.493 [0.379,0.587] | false/unit 5.40 | abstain 0
+   app activity_candidate rate 1.00; subtraction-confirmed 1.00
+   marginal_a0.1  FWER 0.10 (2/20) CP[0.01,0.32] | true-flag 0.70 (14/20) | lesion sens 0.132 [0.069,0.184] | false/unit 0.10 | abstain 0 | no violation detected, informative | thr~0.9283169507980347
+   pac_a0.1       FWER 0.00 (0/20) CP[0.00,0.17] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.00 | abstain 20 | no violation detected, bought by abstention | thr~None
+   plugin_a0.1    FWER 0.10 (2/20) CP[0.01,0.32] | true-flag 0.70 (14/20) | lesion sens 0.132 [0.069,0.184] | false/unit 0.10 | abstain 0 | no violation detected, informative | thr~0.9283169507980347
+   marginal_a0.2  FWER 0.20 (4/20) CP[0.06,0.44] | true-flag 0.75 (15/20) | lesion sens 0.155 [0.084,0.212] | false/unit 0.20 | abstain 0 | no violation detected, informative | thr~0.9188233017921448
+   pac_a0.2       FWER 0.10 (2/20) CP[0.01,0.32] | true-flag 0.70 (14/20) | lesion sens 0.132 [0.069,0.184] | false/unit 0.10 | abstain 0 | no violation detected, informative | thr~0.9283169507980347
+   plugin_a0.2    FWER 0.20 (4/20) CP[0.06,0.44] | true-flag 0.75 (15/20) | lesion sens 0.155 [0.084,0.212] | false/unit 0.20 | abstain 0 | no violation detected, informative | thr~0.9188233017921448
+   transport open_ms->MSLesSeg a=0.1: thr 4.055 FWER 0.20 (5/25) CP[0.07,0.41] | true-flag 0.04 (1/25) | lesion sens 0.004 [0.000,0.012] | false/unit 0.56 | abstain 0 | no violation detected
+   transport open_ms->MSLesSeg a=0.2: thr 3.892 FWER 0.20 (5/25) CP[0.07,0.41] | true-flag 0.04 (1/25) | lesion sens 0.004 [0.000,0.012] | false/unit 0.60 | abstain 0 | no violation detected
+   transport MSLesSeg->open_ms a=0.1: thr 4.630 FWER 0.00 (0/20) CP[0.00,0.17] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.00 | abstain 0 | no violation detected
+   transport MSLesSeg->open_ms a=0.2: thr 4.070 FWER 0.05 (1/20) CP[0.00,0.25] | true-flag 0.00 (0/20) | lesion sens 0.000 [0.000,0.000] | false/unit 0.15 | abstain 0 | no violation detected
+
+wrote docs\research\records\2026-10-21_paper_c_pilot.json

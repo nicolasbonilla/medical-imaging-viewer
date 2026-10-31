@@ -1,0 +1,66 @@
+﻿=== open_ms_data longitudinal (Lesjak 2016), expert change truth
+patient01: [325, 334, 53] [0.719, 0.719, 3.0] 203 d | change comps 13 positive 8 (clinical 6) active True
+patient02: [262, 274, 53] [0.898, 0.898, 2.999] 283 d | change comps 11 positive 8 (clinical 7) active True
+patient03: [333, 361, 66] [0.719, 0.719, 3.0] 671 d | change comps 47 positive 32 (clinical 28) active True
+patient04: [272, 268, 50] [0.898, 0.898, 2.999] 155 d | change comps 25 positive 23 (clinical 22) active True
+patient05: [265, 267, 47] [0.898, 0.898, 2.999] 380 d | change comps 8 positive 3 (clinical 3) active True
+patient06: [267, 312, 81] [0.898, 0.898, 2.999] 473 d | change comps 30 positive 10 (clinical 10) active True
+patient07: [269, 296, 64] [0.898, 0.898, 2.999] 317 d | change comps 70 positive 43 (clinical 42) active True
+patient08: [282, 292, 67] [0.898, 0.898, 2.999] 305 d | change comps 75 positive 31 (clinical 25) active True
+patient09: [314, 429, 55] [0.573, 0.573, 3.3] 116 d | change comps 47 positive 23 (clinical 18) active True
+patient10: [287, 296, 56] [0.898, 0.898, 2.999] 236 d | change comps 19 positive 14 (clinical 11) active True
+patient11: [261, 260, 48] [0.898, 0.898, 2.999] 405 d | change comps 53 positive 13 (clinical 11) active True
+patient12: [334, 352, 60] [0.719, 0.719, 3.0] 81 d | change comps 46 positive 28 (clinical 21) active True
+patient13: [260, 274, 55] [0.898, 0.898, 2.999] 329 d | change comps 13 positive 13 (clinical 8) active True
+patient14: [284, 278, 48] [0.898, 0.898, 2.999] 723 d | change comps 37 positive 29 (clinical 29) active True
+patient15: [283, 285, 58] [0.898, 0.898, 2.999] 168 d | change comps 42 positive 27 (clinical 23) active True
+patient16: [275, 293, 60] [0.898, 0.898, 2.999] 164 d | change comps 53 positive 24 (clinical 23) active True
+patient17: [260, 264, 51] [0.898, 0.898, 2.999] 321 d | change comps 133 positive 107 (clinical 96) active True
+patient18: [268, 260, 50] [0.898, 0.898, 2.999] 524 d | change comps 51 positive 22 (clinical 22) active True
+patient19: [328, 336, 53] [0.719, 0.719, 3.0] 228 d | change comps 51 positive 34 (clinical 33) active True
+patient20: [280, 304, 65] [0.898, 0.898, 2.999] 454 d | change comps 11 positive 8 (clinical 8) active True
+open_ms: 20 patients, active 20, stable 0; change components 835, positive 500
+
+=== MSLesSeg, patients with >= 2 timepoints, approximate truth from per-timepoint masks
+P1 T1->T2: new(clin) 2 new(>=3mm3) 3 enl 1 active True | Philips Medical Systems Achieva dStream 2.3mm -> Philips Healthcare Ingenia 3mm same False | 0.42 y
+P1 T2->T3: new(clin) 1 new(>=3mm3) 2 enl 3 active True | Philips Healthcare Ingenia 3mm -> Philips Healthcare Ingenia 3mm same True | 0.98 y
+P2 T1->T2: new(clin) 5 new(>=3mm3) 5 enl 5 active True | Philips Healthcare Ingenia 3mm -> Philips Medical Systems Ingenia 3mm same False | 0.94 y
+P2 T2->T3: new(clin) 0 new(>=3mm3) 0 enl 5 active True | Philips Medical Systems Ingenia 3mm -> Philips Medical Systems Ingenia 3mm same True | 1.06 y
+P2 T3->T4: new(clin) 3 new(>=3mm3) 3 enl 2 active True | Philips Medical Systems Ingenia 3mm -> NONE NONE NONEmm same False | 2.59 y
+P3 T1->T2: new(clin) 0 new(>=3mm3) 0 enl 2 active True | Philips Medical Systems Achieva dStream 2.3mm -> Philips Healthcare Ingenia 3mm same False | 0.09 y
+P3 T2->T3: new(clin) 7 new(>=3mm3) 9 enl 5 active True | Philips Healthcare Ingenia 3mm -> Philips Medical Systems Ingenia 3mm same False | 0.99 y
+P3 T3->T4: new(clin) 5 new(>=3mm3) 5 enl 2 active True | Philips Medical Systems Ingenia 3mm -> Philips Medical Systems Ingenia 3mm same True | 3.33 y
+P4 T1->T2: new(clin) 3 new(>=3mm3) 3 enl 1 active True | Philips Healthcare Ingenia 3mm -> Philips Healthcare Ingenia 3mm same True | 1.09 y
+P4 T2->T3: new(clin) 3 new(>=3mm3) 4 enl 1 active True | Philips Healthcare Ingenia 3mm -> Philips Healthcare Ingenia 3mm same True | 1.1 y
+P5 T1->T2: new(clin) 4 new(>=3mm3) 4 enl 4 active True | Philips Healthcare Ingenia 3mm -> Philips Healthcare Ingenia 3mm same True | 1.59 y
+P6 T1->T2: new(clin) 9 new(>=3mm3) 13 enl 6 active True | Philips Healthcare Ingenia 3mm -> Philips Healthcare Ingenia 3mm same True | 1.19 y
+P6 T2->T3: new(clin) 4 new(>=3mm3) 6 enl 5 active True | Philips Healthcare Ingenia 3mm -> Philips Medical Systems Ingenia 3mm same False | 0.82 y
+P7 T1->T2: new(clin) 7 new(>=3mm3) 10 enl 2 active True | Philips Medical Systems Achieva dStream 2.3mm -> Philips Healthcare Ingenia 3mm same False | 0.97 y
+P8 T1->T2: new(clin) 5 new(>=3mm3) 5 enl 3 active True | Philips Healthcare Ingenia 3mm -> Philips Healthcare Ingenia 3mm same True | 1.02 y
+P9 T1->T2: new(clin) 9 new(>=3mm3) 9 enl 1 active True | Philips Healthcare Ingenia 3mm -> Philips Medical Systems Ingenia 3mm same False | 0.98 y
+P9 T2->T3: new(clin) 1 new(>=3mm3) 2 enl 4 active True | Philips Medical Systems Ingenia 3mm -> Philips Healthcare Ingenia 3mm same False | 1.17 y
+P10 T1->T2: new(clin) 9 new(>=3mm3) 10 enl 4 active True | Philips Medical Systems Ingenia 3mm -> Philips Medical Systems Ingenia 3mm same True | 1.0 y
+P11 T1->T2: new(clin) 1 new(>=3mm3) 1 enl 0 active True | Philips Healthcare Ingenia 3mm -> NONE NONE NONEmm same False | 0.58 y
+P12 T1->T2: new(clin) 5 new(>=3mm3) 10 enl 5 active True | Philips Medical Systems Ingenia 3mm -> Philips Medical Systems Ingenia 3mm same True | 2.17 y
+P12 T2->T3: new(clin) 4 new(>=3mm3) 7 enl 4 active True | Philips Medical Systems Ingenia 3mm -> Philips Medical Systems Ingenia 3mm same True | 0.74 y
+P12 T3->T4: new(clin) 3 new(>=3mm3) 9 enl 5 active True | Philips Medical Systems Ingenia 3mm -> Philips Medical Systems Ingenia 3mm same True | 0.25 y
+P13 T1->T2: new(clin) 17 new(>=3mm3) 19 enl 8 active True | Philips Medical Systems Ingenia 3mm -> Philips Medical Systems Ingenia 3mm same True | 1.39 y
+P14 T1->T2: new(clin) 6 new(>=3mm3) 6 enl 2 active True | Philips Medical Systems Ingenia 3mm -> Philips Healthcare Ingenia 3mm same False | 3.11 y
+P14 T2->T3: new(clin) 11 new(>=3mm3) 11 enl 0 active True | Philips Healthcare Ingenia 3mm -> NONE NONE NONEmm same False | 0.23 y
+P14 T3->T4: new(clin) 0 new(>=3mm3) 0 enl 0 active False | NONE NONE NONEmm -> NONE NONE NONEmm same True | 0.41 y
+P19 T1->T2: new(clin) 9 new(>=3mm3) 10 enl 7 active True | Philips Medical Systems Ingenia 3mm -> Philips Medical Systems Ingenia 3mm same True | 0.47 y
+P19 T2->T3: new(clin) 20 new(>=3mm3) 23 enl 11 active True | Philips Medical Systems Ingenia 3mm -> Philips Medical Systems Ingenia 3mm same True | 3.89 y
+P19 T3->T4: new(clin) 1 new(>=3mm3) 2 enl 4 active True | Philips Medical Systems Ingenia 3mm -> Philips Medical Systems Ingenia 3mm same True | 1.67 y
+P20 T1->T2: new(clin) 19 new(>=3mm3) 19 enl 4 active True | Philips Medical Systems Ingenia 3mm -> Philips Medical Systems Ingenia 3mm same True | 3.17 y
+P20 T2->T3: new(clin) 1 new(>=3mm3) 1 enl 1 active True | Philips Medical Systems Ingenia 3mm -> Philips Medical Systems Ingenia 3mm same True | 1.2 y
+P22 T1->T2: new(clin) 3 new(>=3mm3) 3 enl 4 active True | Philips Medical Systems Ingenia 3mm -> Philips Healthcare Ingenia 5mm same False | 0.59 y
+P28 T1->T2: new(clin) 12 new(>=3mm3) 14 enl 0 active True | Philips Medical Systems Ingenia 3mm -> Philips Healthcare Ingenia 5mm same False | 0.97 y
+P31 T1->T2: new(clin) 6 new(>=3mm3) 6 enl 8 active True | Philips Medical Systems Achieva dStream 2.3mm -> Philips Medical Systems Achieva dStream 2.3mm same True | 1.48 y
+P33 T1->T2: new(clin) 1 new(>=3mm3) 2 enl 3 active True | Philips Ingenia 2.3mm -> Philips Medical Systems Achieva dStream 2.3mm same False | 2.42 y
+P49 T1->T2: new(clin) 2 new(>=3mm3) 2 enl 2 active True | Philips Healthcare Ingenia 5mm -> Philips Medical Systems Ingenia 3mm same False | 1.05 y
+P50 T1->T2: new(clin) 6 new(>=3mm3) 8 enl 11 active True | Philips Ingenia 2mm -> Philips Ingenia 2mm same True | 1.0 y
+P51 T1->T2: new(clin) 5 new(>=3mm3) 5 enl 4 active True | Philips Medical Systems Achieva dStream 2.3mm -> Philips Medical Systems Ingenia 3mm same False | 3.01 y
+P52 T1->T2: new(clin) 3 new(>=3mm3) 3 enl 4 active True | Philips Ingenia 2mm -> GE MEDICAL SYSTEMS Signa HDxt 4mm same False | 0.16 y
+P53 T1->T2: new(clin) 19 new(>=3mm3) 21 enl 0 active True | Philips Ingenia 2mm -> Philips Ingenia 2mm same True | 1.17 y
+MSLesSeg summary: {'patients_multi': 25, 'pairs_all': 40, 'pairs_first': 25, 'first_active': 25, 'first_stable': 0, 'first_stable_lenient': 0, 'all_active': 39, 'all_stable': 1, 'first_same_scanner': 12, 'first_stable_same_scanner': 0}
+wrote docs\research\records\2026-10-21_paper_c_inventory.json
