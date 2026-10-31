@@ -23,6 +23,9 @@ an interrupted run can never leave a mutation in the developer's checkout. The s
     (--pool=threads, JSON reporter) on the test files bound to that mutation;
   - checks the baseline passes first, and records the failing test names per mutation.
 
+Independent review of PR #74 (290e407), corrections m1, m2, m4, m5, m6, m7, m9: mutations G9, A3, R10, R11, U6-U8, Z1-Z3,
+L3-L5 added; G4, A1 and L2 re-anchored on the corrected code (same defect re-introduced).
+
 Run from the repository root, with the backend's Python (it needs the backend requirements) and frontend/node_modules:
     python scripts/safety/prb028_031_negative_controls.py              # every mutation
     python scripts/safety/prb028_031_negative_controls.py --only G     # only the mutations whose name starts with G
@@ -60,6 +63,8 @@ BACKEND = [
     "tests/unit/test_rc047_ai_draft_provenance.py",
     "tests/unit/test_release_2026_10_25_final_check.py",
     "tests/unit/test_release_2026_10_30_merge.py",
+    # Independent review of PR #74 (m4, m7, m9):
+    "tests/unit/test_prb028_031_review_findings.py",
 ]
 
 # sources
@@ -74,15 +79,23 @@ API = "frontend/src/api/segmentation.ts"
 IV2 = "frontend/src/components/ImageViewer2D.tsx"
 STORE = "frontend/src/store/useSegmentationStore.ts"
 COLORS = "frontend/src/utils/regionColors.ts"
+IFACE = "backend/app/core/interfaces/storage_interface.py"
+GCS = "backend/app/services/storage_service.py"
+LEGEND = "frontend/src/components/LongitudinalOverlayLegend.tsx"
+PANEL_L = "frontend/src/components/LongitudinalResultPanel.tsx"
 
 # frontend tests bound to each mutation
-T28 = ["src/components/LesionDashboard.prb028.test.tsx"]
-T29 = ["src/components/AiDraftBanner.prb029.test.tsx", "src/components/AiDraftBanner.test.tsx"]
+T28 = ["src/components/LesionDashboard.prb028.test.tsx", "src/components/LesionDashboard.prb028.review.test.tsx"]
+T29 = ["src/components/AiDraftBanner.prb029.test.tsx", "src/components/AiDraftBanner.test.tsx",
+       "src/components/AiDraftBanner.prb029.review.test.tsx"]
 T30 = ["src/components/LesionDashboard.prb030.test.tsx"]
 T30V = ["src/ViewerApp.prb030.test.tsx"]
 T31 = ["src/components/LesionDashboard.prb031.test.tsx"]
 T31S = ["src/store/useSegmentationStore.prb031.test.ts"]
 T31C = ["src/components/SegmentationCanvasLocal.prb031.test.tsx"]
+T31L = ["src/components/LongitudinalOverlayLegend.prb031.test.tsx"]
+T31P = ["src/components/LongitudinalCompare.capa013.test.tsx"]
+TZ = ["src/components/AiDraftBanner.prb029.review.test.tsx"]
 TDIG = ["src/utils/drawnLabels.digest.test.ts"]
 TDRAWN = ["src/components/LesionDashboard.release20261029.test.tsx", "src/components/LesionDashboard.release20261028b.test.tsx"]
 
@@ -99,7 +112,8 @@ M = {  # name: ([(file, anchor, replacement), ...], frontend tests (None: the ba
           '    canonical = json.dumps([[g["first_voxel"]] for g in lesions], separators=(",", ":"))\n')], None,
         "the digest of the checked list does not bind the region each lesion was checked with"),
     "G4_record_does_not_bind_the_review": (
-        [(GATE, "    geometric_ok = checked == regions[\"geometric_regions_sha256\"]\n", "    geometric_ok = True\n")], None,
+        [(GATE, "    geometric_ok = regions[\"geometric_region_count\"] == 0 or checked == regions[\"geometric_regions_sha256\"]\n",
+          "    geometric_ok = True\n")], None,
         "a confirmation recorded without the per-lesion review makes DIS evaluable on a geometric classification"),
     "G5_reason_not_named": (
         [(GATE, "    elif has_record and not geometric_ok:\n        reason = REASON_GEOMETRIC_REVIEW\n", "")], None,
@@ -117,8 +131,8 @@ M = {  # name: ([(file, anchor, replacement), ...], frontend tests (None: the ba
         "the confirmation does not record which geometric regions were checked (DIS stays unevaluable)"),
     # ── PRB-029 (RC-091): the AI-draft review states the drawn label table — server ──
     "A1_ai_review_without_the_drawn_labels": (
-        [(ROUTE, "    problem = _drawn_labels_problem(body, metadata)                              # PRB-029 (RC-091)\n",
-          "    problem = None\n")], None,
+        [(ROUTE, "        problem = _drawn_labels_problem(body, metadata)                          # PRB-029 (RC-091)\n",
+          "        problem = None\n")], None,
         "the AI-draft review accepted whatever labels the mask was drawn with (the defect as found)"),
     "A2_drawn_label_table_not_compared": (
         [(ROUTE, "    if drawn_labels != dis_gate.drawn_labels_sha256(as_drawn):\n        return (", "    if False:\n        return (")],
@@ -251,7 +265,7 @@ M = {  # name: ([(file, anchor, replacement), ...], frontend tests (None: the ba
         [(COLORS, "  persistent: '#F0E442',", "  persistent: '#32CD32',")], T31C,
         "persistent lesions green against new red-ish lesions (red-green colour blindness, the defect as found)"),
     "L2_new_red_again": (
-        [(COLORS, "  new: '#D55E00',", "  new: '#F54646',")], T31C,
+        [(COLORS, "  new: '#CC79A7',", "  new: '#F54646',")], T31C,
         "new lesions in the former red, outside the shared colour-blind-safe palette"),
     # ── the DIS confirmation uses the shared check and sends what it found ──
     "D1_dashboard_ignores_the_check": (
@@ -268,6 +282,52 @@ M = {  # name: ([(file, anchor, replacement), ...], frontend tests (None: the ba
         [(API, "          ? { geometric_regions_reviewed_sha256: onScreen.geometricRegionsReviewedSha256 } : {}),",
           "          ? {} : {}),")], TDIG,
         "the DIS confirmation request leaves the per-lesion review out"),
+    # ── independent review of PR #74 (290e407) ──
+    "G9_binding_compared_without_geometric_lesions": (
+        [(GATE, "    geometric_ok = regions[\"geometric_region_count\"] == 0 or checked == regions[\"geometric_regions_sha256\"]\n",
+          "    geometric_ok = checked == regions[\"geometric_regions_sha256\"]\n")], None,
+        "m4: the same mask classified again with the atlas loses a confirmation given with ticks (false reason, as found)"),
+    "A3_out_of_date_viewer_not_named": (
+        [(ROUTE, "        return OUTDATED_VIEWER\n", "        return None\n")], None,
+        "m7: a viewer from before the update gets the label-table message instead of 'reload' (as found)"),
+    "R10_whole_image_downloaded": (
+        [(GRID, '    ranged = getattr(storage_service, "download_file_range", None)\n', "    ranged = None\n")], None,
+        "m9: two whole images downloaded on every confirmation to read their headers (as found)"),
+    "R11_gcs_range_not_requested": (
+        [(GCS, "            return await self._run_sync(blob.download_as_bytes, start=start, end=end)\n",
+          "            return await self._run_sync(blob.download_as_bytes)\n")], None,
+        "m9: the GCS storage reads the whole object although a range was asked"),
+    "U6_ticks_kept_on_a_changed_list": (
+        [(DASH, "  useEffect(() => { setCheckedGeometric(new Set()); setOpenedGeometric(new Set()); }, [geometricDigest]);\n", "")],
+        T28, "m5: ticks given on the earlier list survive a re-served list (a corrected region, a new classification)"),
+    "U7_ticks_on_a_segmentation_not_open_or_drawn": (
+        [(DASH, "                                disabled={!ticksAllowed || !openedGeometric.has(geometricKey(g))}\n",
+          "                                disabled={!openedGeometric.has(geometricKey(g))}\n")], T28,
+        "m2: ticks given on the card of a segmentation that is not open or not drawn (as found)"),
+    "U8_tick_without_opening_the_slice": (
+        [(DASH, "                                disabled={!ticksAllowed || !openedGeometric.has(geometricKey(g))}\n",
+          "                                disabled={!ticksAllowed}\n")], T28,
+        "m2: a tick without its 'open slice' pressed"),
+    "Z1_zone_colouring_not_checked": (
+        [(DRAWN, "  if (input.zoneColorized && input.values.some((v) => v !== 0\n", "  if (false && input.values.some((v) => v !== 0\n")],
+        TZ, "m1: Confirm accepted while lesions are coloured by zone (values 5/6 not drawn, labels not as stored; as found)"),
+    "Z2_zone_colouring_not_passed": (
+        [(CHECK, "    zoneColorized: !!(state.zoneColorizeEnabled && state.zoneMapMask && state.zoneMapDims),\n",
+          "    zoneColorized: false,\n")], TZ, "m1: the shared check is not told that lesions are coloured by zone"),
+    "Z3_any_value_1_4_accepted": (
+        [(DRAWN, "      && !(v >= 1 && v <= 4 && input.labels.find((l) => l.id === v)?.name === MAGNIMS_REGIONS[v - 1]))) {\n",
+          "      && !(v >= 1 && v <= 4))) {\n")], TZ,
+        "m1: a value 1-4 that is not a region label (an AI draft 'Lesion') accepted in zone colours"),
+    "L3_legend_in_the_former_colours": (
+        [(LEGEND, "                style={{ backgroundColor: LONGITUDINAL_OVERLAY_COLORS[key] }} />\n",
+          "                style={{ backgroundColor: ({ resolved: '#4187F5', persistent: '#32CD32', new: '#F54646' })[key] }} />\n")],
+        T31L, "m6: the legend shows the former blue / green / red while the overlay draws the new colours (as found)"),
+    "L5_result_panel_without_the_shared_legend": (
+        [(PANEL_L, "      <LongitudinalOverlayLegend />\n", "")], T31P,
+        "m6: the comparison result shows no legend of the overlay"),
+    "L4_new_is_the_white_matter_colour": (
+        [(COLORS, "  new: '#CC79A7',", "  new: '#D55E00',")], T31C,
+        "m6: new candidates drawn in the deep-white-matter vermillion (as found)"),
 }
 
 
