@@ -14,6 +14,8 @@ import { createRef } from 'react';
 
 import { SegmentationCanvasLocal } from './SegmentationCanvasLocal';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
+import { MAGNIMS_REGION_PALETTE } from '@/utils/regionColors';
+import { MAGNIMS_LESION_LABELS } from '@/types/segmentation';
 
 const OKABE_ITO = ['#E69F00', '#56B4E9', '#009E73', '#F0E442', '#0072B2', '#D55E00', '#CC79A7'];
 
@@ -104,6 +106,19 @@ describe('PRB-031: the longitudinal overlay is readable for colour-blind readers
       expect(c[3]).toBe(Math.round(0.55 * 255));
     }
     expect(new Set(drawn.slice(0, 3).map(toHex)).size).toBe(3);
+  });
+
+  it('rc093 review m6 "new" is drawn in a colour no region and no lesion label uses (it was the deep-white-matter vermillion)', async () => {
+    // Independent review of PR #74, m6: during the longitudinal review the open segmentation's region labels lie over
+    // this layer; a new candidate and a deep-white-matter lesion were both #D55E00. Written before the correction.
+    const drawn = await drawLongitudinal();
+    const added = toHex(drawn[2]);
+    const used = [...Object.values(MAGNIMS_REGION_PALETTE).map((r) => r.hex),
+      ...MAGNIMS_LESION_LABELS.filter((l) => l.id !== 0).map((l) => l.color.toUpperCase())];
+    expect(used).not.toContain(added);
+    for (const other of used) {
+      for (const m of [NORMAL, DEUTAN, PROTAN, TRITAN]) expect(dE(seenAs(added, m), seenAs(other, m)), `${added} / ${other}`).toBeGreaterThan(15);
+    }
   });
 
   it('rc093 prb031 no two of them are red against green, and every pair stays apart for colour-blind readers', async () => {
