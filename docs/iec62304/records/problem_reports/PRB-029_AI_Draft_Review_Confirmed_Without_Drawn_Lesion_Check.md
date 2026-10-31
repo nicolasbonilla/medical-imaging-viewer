@@ -9,7 +9,7 @@ the next version"; fixed by the AI coding agent on branch `fix/next-safety-round
 **Date**: 2026-10-31
 **Version**: `main` @ `ca600c2`
 **Severity**: **Major** (proposed; the AI report stays ON in production by owner decision, and the AI draft's review is
-the first confirmation a radiologist gives on an AI segmentation — HAZ-001, HAZ-003). **PENDING owner approval.**
+the first confirmation a radiologist gives on an AI segmentation — HAZ-001, HAZ-003). **N. G. Bonilla Vargas — approved 2026-10-31 (PR #74).**
 **Status**: OPEN — DRAFT. Fixed on branch `fix/next-safety-round` (draft PR), not merged, not deployed.
 
 ## 1. What happened
@@ -46,7 +46,7 @@ Requirement **REQ-SAFE-045**; risk control **RC-091** (HAZ-001, HAZ-003).
 As for the DIS confirmation: the drawn-lesion check runs in the browser; a direct API call or another client can state
 the stored table without drawing it (RMF-001, residual risk of RC-071).
 
-## 6. Independent review of PR #74 (`290e407`) — corrections (2026-10-31, DRAFT, PENDING owner approval)
+## 6. Independent review of PR #74 (`290e407`) — corrections (2026-10-31, DRAFT, N. G. Bonilla Vargas — approved 2026-10-31 (PR #74))
 No blocker and no major issue; the claims hold. Tests written first (on `290e407` they fail except their positive controls: `records/risk_verification/PRB-028-031_review1_tests_on_290e407_2026-10-31.json`), then the corrections, then the negative controls (`PRB-028-031_negative_controls_2026-10-31.json`, re-run).
 | # | Finding | Correction | Tests / controls |
 |---|---|---|---|

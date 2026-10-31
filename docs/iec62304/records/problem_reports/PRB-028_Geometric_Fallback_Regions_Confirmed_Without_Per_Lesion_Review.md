@@ -9,7 +9,7 @@ fixed by the AI coding agent on branch `fix/next-safety-round`
 **Date**: 2026-10-31
 **Version**: `main` @ `ca600c2` (present since the region classification has a geometric fallback)
 **Severity**: **Major** (proposed; a DIS result can rest on region labels that are wrong for most lesions — HAZ-005,
-HAZ-008). **PENDING owner approval.**
+HAZ-008). **N. G. Bonilla Vargas — approved 2026-10-31 (PR #74).**
 **Status**: OPEN — DRAFT. Fixed on branch `fix/next-safety-round` (draft PR), not merged, not deployed.
 
 ## 1. What happened
@@ -61,7 +61,7 @@ Requirement **REQ-SAFE-044**; risk control **RC-090** (HAZ-005, HAZ-008).
   (about one click and one slice per lesion; 45 for P51), and more than 100 lesions cannot be confirmed on a geometric
   classification at all. A parcellation of the image (FreeSurfer labels) or MNI registration avoids it.
 
-## 6. Independent review of PR #74 (`290e407`) — corrections (2026-10-31, DRAFT, PENDING owner approval)
+## 6. Independent review of PR #74 (`290e407`) — corrections (2026-10-31, DRAFT, N. G. Bonilla Vargas — approved 2026-10-31 (PR #74))
 No blocker and no major issue; the claims hold. Tests written first (on `290e407` they fail except their positive controls: `records/risk_verification/PRB-028-031_review1_tests_on_290e407_2026-10-31.json`), then the corrections, then the negative controls (`PRB-028-031_negative_controls_2026-10-31.json`, re-run).
 | # | Finding | Correction | Tests / controls |
 |---|---|---|---|
