@@ -32,8 +32,8 @@ datasets:
   open_ms_data:
     title: "Ljubljana 3D-MS-DB (Lesjak et al., Neuroinformatics 2018)"
     source: "https://github.com/muschellij2/open_ms_data"
-    license: "CC-BY"
-    verdict: include                         # TIER 1 — best quality/effort
+    license: "CC BY-NC-ND (official lab page, checked 2026-10-28); the GitHub mirror says CC-BY. Treat as NON-COMMERCIAL: academic papers only, never product calibration, thresholds or marketing"
+    verdict: include                         # TIER 1 — best quality/effort  # licence: NON-COMMERCIAL, see license
     patients: 30                             # + 20 longitudinal (lesion-change masks)
     usable_labeled: 30
     longitudinal: 20
