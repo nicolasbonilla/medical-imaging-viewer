@@ -18,7 +18,7 @@ import pytest
 from app.api.routes.segmentation_regions import MAGNIMS_REGION_LABEL_COLORS
 from app.models.schemas import LabelInfo
 from tests.unit.test_prb003_dis_requires_confirmed_segmentation import (  # noqa: F401  (fixture)
-    _FakeDB, _dis, _mask, _seed, _service, _sha, client_for,
+    FILE, _FakeDB, _dis, _mask, _seed, _service, _sha, client_for,
 )
 
 STORED_BEFORE_71 = [(1, "Periventricular", "#FF0000"), (2, "Juxtacortical", "#00CC00"),
@@ -65,7 +65,8 @@ def test_rc071_release_1030_a_segmentation_classified_before_71_drawn_in_the_reg
     svc = _service()
     entry = _classified_before_71(svc)
     r = client_for(svc).post("/api/v1/segmentation/seg-1/review/confirm", json={
-        "mask_sha256": _sha(_mask()), "drawn_labels_sha256": _digest(_as_drawn(STORED_BEFORE_71))})
+        "mask_sha256": _sha(_mask()), "drawn_labels_sha256": _digest(_as_drawn(STORED_BEFORE_71)),
+        "displayed_image_file_id": FILE})   # next safety round, PRB-030: the segmentation's own image
     assert r.status_code == 200, r.text[:300]
     assert entry["metadata"].clinician_review.reviewed_by == "dr_rev"
 

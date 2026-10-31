@@ -13,12 +13,17 @@
  */
 
 import React, { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
-import { regionZoneRgba } from '@/utils/regionColors';
+import { regionZoneRgba, LONGITUDINAL_OVERLAY_COLORS } from '@/utils/regionColors';
 import { useTranslation } from 'react-i18next';
 import type { UseSegmentationMaskReturn } from '@/hooks/useSegmentationMask';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import type { ClickPoint3D } from '@/types';
-import { UNLABELLED_FALLBACK_COLOR, idsWithoutLabel } from '@/utils/drawnLabels';
+import {
+  UNLABELLED_FALLBACK_COLOR, idsWithoutLabel, LONGITUDINAL_OVERLAY_OPACITY, SUBTRACTION_MAX_OPACITY, CONFORMAL_TIER_OPACITY,
+} from '@/utils/drawnLabels';
+
+/** PRB-031: a #RRGGBB colour of the shared palette as r, g, b. */
+const hexRgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)) as [number, number, number];
 import { maskDisplayLayout, transposeSlice } from '@/utils/maskDisplayLayout';
 
 /** Methods exposed via ref for external control */
@@ -521,7 +526,8 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
         // displayed image grid (after the transpose attempt). A stale/off-grid mask
         // must NOT be stretched onto the wrong anatomy (adversarial finding).
         if (cRenderW === imageWidth && cRenderH === imageHeight) {
-          const a = 200;
+          // PRB-031: the drawn opacity is the one the confirmation check reads (utils/drawnLabels.ts)
+          const a = Math.round(CONFORMAL_TIER_OPACITY * 255);
           const tierColors: Record<number, ParsedColor> = {
             1: { r: 52, g: 211, b: 153, a },   // high  - emerald
             2: { r: 251, g: 191, b: 36, a },   // medium - amber
@@ -532,7 +538,8 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
       }
     }
 
-    // Draw longitudinal overlay (TP1=blue, TP2=red, overlap=green)
+    // Draw longitudinal overlay — PRB-031: overlap (persistent) yellow, first visit only (resolved) blue, second visit
+    // only (new) vermillion: the shared colour-blind-safe palette (was green / blue / red).
     if (longVisible && longTp1Mask && longTp1Dims && longTp2Mask && longTp2Dims) {
       const tp1SliceSize = longTp1Dims.width * longTp1Dims.height;
       const tp1Offset = sliceIndex * tp1SliceSize;
@@ -569,20 +576,16 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
         if (longGridOk) {
         const longImgData = ctx.createImageData(imageWidth, imageHeight);
         const ld = longImgData.data;
-        const opacity = Math.round(0.55 * 255);
+        const opacity = Math.round(LONGITUDINAL_OVERLAY_OPACITY * 255);   // PRB-031: the opacity the Confirm check reads
+        const [persistent, resolved, added] = [LONGITUDINAL_OVERLAY_COLORS.persistent, LONGITUDINAL_OVERLAY_COLORS.resolved,
+          LONGITUDINAL_OVERLAY_COLORS.new].map(hexRgb);
         for (let i = 0; i < imageWidth * imageHeight; i++) {
           const inTp1 = tp1Slice[i] > 0;
           const inTp2 = tp2Slice[i] > 0;
           const pi = i * 4;
-          if (inTp1 && inTp2) {
-            // Overlap (persistent) = green
-            ld[pi] = 50; ld[pi+1] = 205; ld[pi+2] = 50; ld[pi+3] = opacity;
-          } else if (inTp1) {
-            // TP1 only (resolved) = blue
-            ld[pi] = 65; ld[pi+1] = 135; ld[pi+2] = 245; ld[pi+3] = opacity;
-          } else if (inTp2) {
-            // TP2 only (new) = red
-            ld[pi] = 245; ld[pi+1] = 70; ld[pi+2] = 70; ld[pi+3] = opacity;
+          const rgbHere = inTp1 && inTp2 ? persistent : inTp1 ? resolved : inTp2 ? added : null;
+          if (rgbHere) {
+            ld[pi] = rgbHere[0]; ld[pi + 1] = rgbHere[1]; ld[pi + 2] = rgbHere[2]; ld[pi + 3] = opacity;
           }
         }
         const tmpC = document.createElement('canvas');
@@ -616,7 +619,7 @@ export const SegmentationCanvasLocal = forwardRef<SegmentationCanvasLocalRef, Se
           const subImg = ctx.createImageData(imageWidth, imageHeight);
           const sd = subImg.data;
           // Ignore |Δ| below ~0.4 SD (uint8 128±17) as noise; ramp alpha above it.
-          const NEUTRAL = 128, DEAD = 17, MAXA = 0.6 * 255;
+          const NEUTRAL = 128, DEAD = 17, MAXA = SUBTRACTION_MAX_OPACITY * 255;   // PRB-031: read by the Confirm check
           for (let i = 0; i < imageWidth * imageHeight; i++) {
             const v = subSlice[i] - NEUTRAL;
             const pi = i * 4;

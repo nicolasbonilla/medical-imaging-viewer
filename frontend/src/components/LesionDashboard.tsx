@@ -12,7 +12,7 @@
 import { useState, useCallback, useEffect, useRef, useContext, lazy, Suspense } from 'react';
 import { QueryClientContext } from '@tanstack/react-query';
 import type { TFunction } from 'i18next';
-import { MIN_VISIBLE_LESION_OPACITY, undrawnMaskValues, type UndrawnReason } from '../utils/drawnLabels';
+import { confirmDrawCheck, undrawnText } from '../utils/confirmDrawCheck';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
@@ -38,6 +38,7 @@ import {
   type DISExternalEvidence,
   type DISLesionPart,
   type DISRegionCorrection,
+  type DISGeometricRegion,
   type LesionInfo,
   type RegionClassificationResult,
   type RemovedSmallComponents,
@@ -104,43 +105,6 @@ function countText(t: TFunction, key: string, n: number, one: string, other: str
   return fill(t(`${key}${suffix}`, { defaultValue: text, n }), { n });
 }
 
-/** Release 2026-10-25 (review of PR #69, B1/M3): why a confirmation is refused while lesions are not drawn. */
-function undrawnText(t: TFunction, problems: UndrawnReason[] | null): string[] {
-  if (problems === null) {
-    return [t('disReview.undrawnMaskUnreadable', 'The open mask could not be read, so it cannot be checked that every lesion is drawn.')];
-  }
-  return problems.map((p) => {
-    switch (p.kind) {
-      case 'not_on_screen':
-        return t('disReview.undrawnNotOnScreen', 'The view on screen does not draw this segmentation with its region labels. Switch to the Standard view (2D, one panel) with Segmentation mode on to confirm.');
-      case 'stored_labels_unknown':
-        return t('disReview.undrawnStoredLabelsUnknown', 'The region labels stored for this segmentation could not be read, so it cannot be checked that the lesions are drawn with them: press Analyze.');
-      case 'not_stored_label': {
-        const vals = { value: p.value, drawn: p.drawn, drawnColor: p.drawnColor, stored: p.stored, storedColor: p.storedColor };
-        return fill(t('disReview.undrawnNotStoredLabel', { defaultValue: 'Mask value {{value}} is drawn as "{{drawn}}" ({{drawnColor}}), not with the label stored for this segmentation, "{{stored}}" ({{storedColor}}): select the MAGNIMS Regional labels or reopen the segmentation.', ...vals }), vals);
-      }
-      case 'overlay_off':
-        return t('disReview.undrawnOverlayOff', 'The segmentation overlay is switched off.');
-      case 'opacity_low': {
-        const vals = { pct: Math.round(p.opacity * 100), min: Math.round(MIN_VISIBLE_LESION_OPACITY * 100) };
-        return fill(t('disReview.undrawnOpacityLow', { defaultValue: 'The lesion opacity ({{pct}} %) is below the visible minimum ({{min}} %).', ...vals }), vals);
-      }
-      case 'no_label': {
-        const vals = { value: p.value };
-        return fill(t('disReview.undrawnNoLabel', { defaultValue: 'Mask value {{value}} has no label in the label table (drawn in cyan, not as a region): reopen the segmentation.', ...vals }), vals);
-      }
-      case 'hidden': {
-        const vals = { name: p.name, value: p.value };
-        return fill(t('disReview.undrawnHidden', { defaultValue: '"{{name}}" (value {{value}}) is hidden with its eye toggle.', ...vals }), vals);
-      }
-      default: {
-        const vals = { name: p.name, value: p.value };
-        return fill(t('disReview.undrawnFaint', { defaultValue: '"{{name}}" (value {{value}}) is too faint to see.', ...vals }), vals);
-      }
-    }
-  });
-}
-
 export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdated, sourceFileId, studyInstances }: LesionDashboardProps) {
   const { t } = useTranslation();
   const reloadMaskCallback = useSegmentationStore((s) => s.reloadMaskCallback);
@@ -176,8 +140,35 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
   const [ackedCorrections, setAckedCorrections] = useState<string | null>(null);
   const pendingRegions = disPending && 'regions' in disPending ? disPending.regions ?? null : null;
   const correctionsDigest = pendingRegions?.correction_count ? pendingRegions.corrections_sha256 ?? null : null;
+  // PRB-028 (RC-090): the lesions whose region comes from the geometric fallback, checked one by one (a tick each);
+  // the confirmation sends the digest of the list only when every listed lesion is ticked. More lesions than the
+  // list holds cannot be checked here (no Confirm).
+  const geometricDigest = pendingRegions?.geometric_region_count ? pendingRegions.geometric_regions_sha256 ?? null : null;
+  const geometricListed = pendingRegions?.geometric_regions ?? [];
+  const geometricTooMany = (pendingRegions?.geometric_region_count ?? 0) > geometricListed.length;
+  // Review of PR #74: a tick is keyed by the lesion's first voxel AND its region (m5) — and the ticks are cleared when
+  // the served list changes; a tick can be given only while THIS segmentation is open and drawn in the standard view,
+  // after its "open slice" was pressed (m2); ticks and opened slices are cleared when the segmentation is closed or
+  // another one is opened. A tick is the radiologist's statement; it cannot prove the slice was read (RMF-001, RC-090).
+  const geometricKey = (g: DISGeometricRegion) => `${g.first_voxel.join(',')}:${g.region}`;
+  const [checkedGeometric, setCheckedGeometric] = useState<ReadonlySet<string>>(new Set());
+  const [openedGeometric, setOpenedGeometric] = useState<ReadonlySet<string>>(new Set());
+  const drawnOnScreen = useSegmentationStore((s) => s.overlayOnScreen) === segmentationId;
+  const ticksAllowed = isOpen && drawnOnScreen;
+  useEffect(() => { setCheckedGeometric(new Set()); setOpenedGeometric(new Set()); }, [geometricDigest]);
+  useEffect(() => {
+    if (!isOpen) { setCheckedGeometric(new Set()); setOpenedGeometric(new Set()); }
+  }, [isOpen]);
+  const allGeometricChecked = !geometricDigest
+    || (!geometricTooMany && geometricListed.every((g) => checkedGeometric.has(geometricKey(g))));
   // Third review of PR #68 (m-1): every list names a lesion as the lesion table does (its number and the slice its row
   // opens); a component below the lesion-size floor, which the table leaves out, is a "small component".
+  const geometricText = useCallback((g: DISGeometricRegion) => {
+    const v = { n: g.lesion, slice: g.slice + 1, voxels: g.voxels, region: g.region_name };
+    return g.small_component
+      ? fill(t('disReview.geometricSmallComponentItem', { defaultValue: 'Small component ({{voxels}} voxels, slice {{slice}}): {{region}}', ...v }), v)
+      : fill(t('disReview.geometricRegionItem', { defaultValue: 'Lesion {{n}} (slice {{slice}}, {{voxels}} voxels): {{region}}', ...v }), v);
+  }, [t]);
   const correctionText = useCallback((c: DISRegionCorrection) => {
     const v = { n: c.lesion, slice: c.slice + 1, voxels: c.voxels, from: c.classified_region_name, to: c.current_region_name };
     return c.small_component
@@ -347,24 +338,18 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
     if (state.hasUnsavedMaskChanges || state.currentSegmentation?.segmentation_id !== segmentationId) return;
     // N1: region corrections by hand are listed in the dialog and must have been acknowledged in the card.
     if (correctionsDigest && ackedCorrections !== correctionsDigest) return;
+    // PRB-028: every geometric-fallback region listed must have been ticked (and all of them listed).
+    if (geometricDigest && !allGeometricChecked) return;
     // Release 2026-10-25 (review of PR #69, B1/M3; final check, R1/R2): the browser refuses the confirmation, before
     // any dialog or request, unless the standard 2D view on screen draws this segmentation (segmentation mode on),
     // and every value present in the open mask has a label there, visible and not too faint — on a classified
     // segmentation the label stored on the server for it, same name and colour — with the overlay on and the lesion
-    // opacity above the visible minimum. The server checks only the drawn label table (`drawn_labels_sha256`).
+    // opacity above the visible minimum; PRB-030: over an image on the mask's grid; PRB-031: with no layer drawn under
+    // the lesions above 30 %. The shared check (utils/confirmDrawCheck.ts, also the AI-draft review's). The server
+    // checks the drawn label table (`drawn_labels_sha256`) and the image under the mask (`displayed_image_file_id`).
     setConfirmRefusal(null);
-    const maskValues = state.maskValuesCallback?.() ?? null;
-    const drawnSegmentation = state.activeSegmentation?.id === segmentationId;
-    const undrawn = maskValues === null || !drawnSegmentation ? null : undrawnMaskValues({
-      values: maskValues,
-      labels: state.activeSegmentation?.labels ?? [],
-      labelVisibility: state.labelVisibility,
-      isOverlayVisible: state.isOverlayVisible,
-      lesionOpacity: state.lesionOpacity,
-      onScreen: state.overlayOnScreen === segmentationId,
-      storedLabels: pendingRegions?.classified ? (pendingRegions.stored_labels ?? null) : undefined,
-    });
-    const drawnLabels = state.activeSegmentation?.labels ?? [];
+    const { problems: undrawn, drawnLabels, displayedImageFileId } = confirmDrawCheck(
+      segmentationId, pendingRegions?.classified ? (pendingRegions.stored_labels ?? null) : undefined);
     if (maskReloadFailed || undrawn === null || undrawn.length > 0) {
       setConfirmRefusal([
         ...(maskReloadFailed ? [t('disReview.reloadFailedRefusal', 'The classified mask could not be reloaded: the view may show the mask from before the classification. Reopen the segmentation.')] : []),
@@ -377,7 +362,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       'disReview.confirmQuestion',
       'Confirm that you have checked every lesion and its region on every slice of this saved segmentation? Your name, the time and the exact saved mask will be recorded; any later change of the mask cancels this confirmation.',
     );
-    const dialogText = (
+    const correctionsText = (
       correctionsDigest
         ? `${question}\n\n${fill(t('disReview.confirmCorrections', {
           defaultValue: 'You also confirm these {{count}} region correction(s) made by hand after the region classification:',
@@ -388,6 +373,11 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
         })}\n${listed.join('\n')}`
         : question
     );
+    // PRB-028: the per-lesion check of the geometric-fallback regions is named in the dialog too.
+    const geometricVals = { count: pendingRegions?.geometric_region_count ?? geometricListed.length };
+    const dialogText = geometricDigest
+      ? `${correctionsText}\n\n${fill(t('disReview.confirmGeometric', { defaultValue: 'You also confirm that you checked the region of each of these {{count}} lesions one by one (geometric fallback: coordinate rules, not anatomy).', ...geometricVals }), geometricVals)}`
+      : correctionsText;
     // F09: the components the classification removed are named in the dialog too.
     const ok = window.confirm(confirmRemovedText ? `${dialogText}\n\n${confirmRemovedText}` : dialogText);
     if (!ok) return;
@@ -400,7 +390,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
         throw new Error(t('disReview.maskUnreadable', 'The open mask could not be read; reload the segmentation and try again.'));
       }
       const review = await segmentationAPI.confirmSegmentationReview(segmentationId, digest, correctionsDigest ?? null,
-        drawnLabels);
+        drawnLabels, { geometricRegionsReviewedSha256: geometricDigest, displayedImageFileId });
       const store = useSegmentationStore.getState();
       const cur = store.currentSegmentation;
       if (cur && cur.segmentation_id === segmentationId) {
@@ -424,7 +414,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
       setConfirmPhase(null);
     }
   }, [segmentationId, fetchDis, t, correctionsDigest, ackedCorrections, pendingRegions, correctionText, confirmRemovedText,
-      maskReloadFailed]);
+      maskReloadFailed, geometricDigest, allGeometricChecked, geometricListed.length]);
 
   // m5: a new DIS state ends the "recorded, not read" state; m1: another opened segmentation ends the reload failure.
   useEffect(() => { setConfirmedUnread(false); }, [dis]);
@@ -800,7 +790,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
               >
                 <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-px" aria-hidden="true" />
                 <span>
-                  {t('classify.atlasUnavailable', 'Atlas regions not used: this image is not in MNI space, so the geometric fallback (coordinate rules, not anatomical landmarks) was applied. Verify every region before using it for DIS.')}
+                  {t('classify.atlasUnavailable', 'Atlas regions not used: this image is not in MNI space, so the geometric fallback (coordinate rules, not anatomical landmarks) was applied. Its regions often differ from the atlas: before the DIS confirmation each lesion\'s region must be checked (or corrected) one by one.')}
                 </span>
               </div>
             )}
@@ -812,7 +802,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
               >
                 <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-px" aria-hidden="true" />
                 <span>
-                  {t('classify.atlasError', 'Atlas regions could not be computed (internal error), so the geometric fallback was applied. Verify every region before using it for DIS.')}
+                  {t('classify.atlasError', 'Atlas regions could not be computed (internal error), so the geometric fallback was applied. Before the DIS confirmation each lesion\'s region must be checked (or corrected) one by one.')}
                 </span>
               </div>
             )}
@@ -824,7 +814,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
               >
                 <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-px" aria-hidden="true" />
                 <span>
-                  {t('classify.geometricWarning', 'Geometric heuristics: coordinate rules, not anatomical landmarks; their accuracy has not been measured. Verify every region before using it for DIS.')}
+                  {t('classify.geometricWarning', 'Geometric heuristics: coordinate rules, not anatomical landmarks; their accuracy has not been measured and their regions often differ from the atlas. Before the DIS confirmation each lesion\'s region must be checked (or corrected) one by one.')}
                 </span>
               </div>
             )}
@@ -884,7 +874,8 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
             // Blocker 1: the confirmation is offered only once the regions are classified (and, for an AI draft,
             // after its own review); finding 7: only on the open segmentation.
             const confirmable = !disHeldForUnsavedChanges
-              && (reason === 'segmentation_not_confirmed' || reason === 'confirmation_outdated');
+              && (reason === 'segmentation_not_confirmed' || reason === 'confirmation_outdated'
+                || reason === 'geometric_regions_not_reviewed');
             if (confirmedUnread) {
               return (
                 <p className="text-[10px] text-amber-100" role="status" data-testid="dis-confirmed-unread">
@@ -938,6 +929,10 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                   <p className="text-[10px] text-amber-100/80">
                     {t('disReview.reasonAiReviewMissing', 'This AI draft must first confirm its own review (AI draft banner in the segmentation panel) for the current mask.')}
                   </p>
+                ) : reason === 'geometric_regions_not_reviewed' ? (
+                  <p className="text-[10px] text-amber-100/80" data-testid="dis-reason-geometric">
+                    {t('disReview.reasonGeometricNotReviewed', 'The regions come from the geometric fallback, and the confirmation did not cover a check of each lesion\'s region one by one. Check (or correct) every region listed, then confirm again.')}
+                  </p>
                 ) : reason === 'confirmation_outdated' ? (
                   <p className="text-[10px] text-amber-100/80">
                     {t('disReview.reasonOutdated', 'The segmentation changed after it was confirmed; the confirmation no longer applies.')}
@@ -986,7 +981,63 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                     )}
                   </div>
                 )}
-                {confirmable && (
+                {!!pendingRegions?.geometric_region_count && (
+                  <div className="text-[10px] text-amber-100" data-testid="dis-geometric-regions">
+                    <p className="font-semibold">
+                      {fill(t('disReview.geometricRegionsTitle', {
+                        defaultValue: 'The regions of these {{count}} lesion(s) come from the geometric fallback (coordinate rules, not anatomy): open each lesion, check its region (correct it with the brush and save if it is wrong) and tick it.',
+                        count: pendingRegions.geometric_region_count,
+                      }), {
+                        defaultValue: 'The regions of these {{count}} lesion(s) come from the geometric fallback (coordinate rules, not anatomy): open each lesion, check its region (correct it with the brush and save if it is wrong) and tick it.',
+                        count: pendingRegions.geometric_region_count,
+                      })}
+                    </p>
+                    {geometricTooMany ? (
+                      <p className="text-amber-300" data-testid="dis-geometric-too-many">
+                        {fill(t('disReview.geometricTooMany', {
+                          defaultValue: '{{count}} lesions: more than the {{max}} that can be checked one by one here. Classify the regions with the atlas (an image registered to MNI space) or a parcellation of this image instead.',
+                          count: pendingRegions.geometric_region_count, max: geometricListed.length,
+                        }), { count: pendingRegions.geometric_region_count, max: geometricListed.length })}
+                      </p>
+                    ) : (
+                      <ul className="pl-1">
+                        {geometricListed.map((g) => {
+                          const name = geometricText(g);
+                          const vals = { n: g.lesion ?? '-', slice: g.slice + 1 };
+                          return (
+                            <li key={geometricKey(g)} className="flex items-center gap-1" data-testid="dis-geometric-region">
+                              <input
+                                type="checkbox"
+                                aria-label={fill(t('disReview.acknowledgeGeometricRegion', { defaultValue: 'I have checked the region of lesion {{n}} (slice {{slice}})', ...vals }), vals)}
+                                checked={checkedGeometric.has(geometricKey(g))}
+                                disabled={!ticksAllowed || !openedGeometric.has(geometricKey(g))}
+                                onChange={(e) => {
+                                  const next = new Set(checkedGeometric);
+                                  if (e.target.checked) next.add(geometricKey(g)); else next.delete(geometricKey(g));
+                                  setCheckedGeometric(next);
+                                }}
+                              />
+                              <span>{name}</span>
+                              {onNavigateToSlice && (
+                                <button
+                                  type="button"
+                                  className="underline text-amber-300 hover:text-amber-200"
+                                  onClick={() => {
+                                    setOpenedGeometric((prev) => new Set(prev).add(geometricKey(g)));
+                                    onNavigateToSlice(g.slice);
+                                  }}
+                                >
+                                  {fill(t('disReview.openSlice', { defaultValue: 'open slice {{slice}}', slice: g.slice + 1 }), { slice: g.slice + 1 })}
+                                </button>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                )}
+                {confirmable && !(geometricDigest && geometricTooMany) && (
                   !isOpen ? (
                     <p className="text-[10px] text-amber-300" data-testid="dis-open-to-confirm">
                       {t('disReview.openToConfirm', 'Open this segmentation to confirm it: the confirmation is bound to the mask on screen.')}
@@ -1010,7 +1061,8 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                       )}
                       <button
                         onClick={confirmSegmentation}
-                        disabled={confirmBusy || (!!correctionsDigest && ackedCorrections !== correctionsDigest)}
+                        disabled={confirmBusy || (!!correctionsDigest && ackedCorrections !== correctionsDigest)
+                          || !allGeometricChecked}
                         className="self-start mt-0.5 px-2 py-0.5 rounded bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-[10px] text-white"
                       >
                         {t('disReview.confirm', 'I have checked every lesion and region — confirm this segmentation')}

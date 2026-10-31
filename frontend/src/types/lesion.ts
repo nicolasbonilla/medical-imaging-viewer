@@ -96,7 +96,8 @@ export interface DISNotEvaluated {
   segmentation_id: string | null;
   evaluation_status: 'not_evaluated';
   not_evaluated_reason: 'regions_not_classified' | 'lesion_labels_invalid' | 'ai_review_missing'
-    | 'segmentation_not_confirmed' | 'confirmation_outdated' | 'segmentation_not_identified' | 'assessment_failed';
+    | 'segmentation_not_confirmed' | 'confirmation_outdated' | 'segmentation_not_identified' | 'assessment_failed'
+    | 'geometric_regions_not_reviewed';
   message: string;
   reason_detail?: string;
   segmentation_review: DISSegmentationReview | null;
@@ -147,6 +148,18 @@ export interface DISRegionCorrection {
   current_region_name: string;
 }
 
+/** PRB-028 (RC-090): a lesion whose region comes from the geometric fallback, checked one by one before the
+ *  DIS confirmation (named as the lesion table names it). */
+export interface DISGeometricRegion {
+  lesion: number | null;
+  small_component?: boolean;
+  slice: number;
+  first_voxel: [number, number, number];
+  voxels: number;
+  region: number;
+  region_name: string;
+}
+
 /** Review of PR #68: whether the labels are MAGNIMS regions assigned by the classification to these lesions —
  *  one region per lesion — and which regions were changed by hand since (second review, N1). */
 export interface DISRegionsState {
@@ -162,6 +175,12 @@ export interface DISRegionsState {
   correction_count?: number;
   /** Digest the radiologist sends to acknowledge exactly these corrections in the confirmation. */
   corrections_sha256?: string | null;
+  /** PRB-028 (RC-090): the classification used the geometric fallback; its regions are checked lesion by lesion. */
+  geometric_fallback?: boolean;
+  geometric_regions?: DISGeometricRegion[];
+  geometric_region_count?: number;
+  /** Digest the radiologist sends once every listed lesion was ticked. */
+  geometric_regions_sha256?: string | null;
   /** What the classification removed from this mask (review of PR #69, M1): served only while the classification
    *  record describes the current lesions. */
   removed_small_components?: RemovedSmallComponents | null;

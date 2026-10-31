@@ -102,6 +102,7 @@ function seed() {
     lesionOpacity: 0.6,
     // Release 2026-10-25 (final check of #69, R1): the standard 2D view on screen draws the open segmentation.
     overlayOnScreen: 'seg-1',
+    overlayImageOnScreen: { segmentationId: 'seg-1', imageFileId: 'f.nii.gz', image: { width: 20, height: 20, depth: 10 }, mask: { width: 20, height: 20, depth: 10 } },   // next safety round, PRB-030: over an image on the mask grid
     maskValuesCallback: vi.fn(() => [1, 2]),
     hasUnsavedMaskChanges: false,
   } as never);
@@ -158,7 +159,8 @@ describe('N1: one region per lesion; region corrections are listed and acknowled
     expect(button).not.toBeDisabled();
     fireEvent.click(button);
     // final check of #69 (R2): the call also carries the label table the mask was drawn with
-    await waitFor(() => expect(confirmSegmentationReview).toHaveBeenCalledWith('seg-1', DIGEST, CORRECTIONS, DRAWN_LABELS));
+    await waitFor(() => expect(confirmSegmentationReview).toHaveBeenCalledWith('seg-1', DIGEST, CORRECTIONS, DRAWN_LABELS,
+      { geometricRegionsReviewedSha256: null, displayedImageFileId: 'f.nii.gz' }));
     expect(window.confirm).toHaveBeenCalledWith(
       expect.stringMatching(/region correction\(s\)[\s\S]*Lesion 2 \(slice 7, 18 voxels\): Juxtacortical → Periventricular/));
   });

@@ -24,8 +24,13 @@ metadata, the AI report, the AI assistant):
 1c. a lesion whose region differs from the classifier's is a correction by hand: it is listed, and the
    radiologist acknowledges the corrections in the confirmation (bound to their digest) (N1);
 2. an AI draft also has its own review (RC-047) for the current mask;
+1d. PRB-028 (RC-090): a region assigned by the GEOMETRIC fallback of the classifier (coordinate rules, used when the
+   MNI atlas cannot be; on MSLesSeg P51 it agreed with the atlas on 11 of 45 lesions and called 42 periventricular) is
+   listed lesion by lesion, and the radiologist states in the confirmation that he checked each one (bound to the
+   digest of the list); a lesion he relabelled is a correction (1c) instead;
 3. a radiologist's DIS confirmation (`clinician_review`, RC-071) is bound to the SHA-256 of the current
-   mask, of the label scheme and of the region corrections (review of PR #68, blocker 1, finding 6, N1).
+   mask, of the label scheme, of the region corrections (review of PR #68, blocker 1, finding 6, N1) and of the
+   geometric-fallback regions he checked one by one (PRB-028).
 Otherwise the result is the explicit state "not evaluated: requires clinician review of the segmentation",
 with its reason: no met / not met, no region presence, no topography count.
 
@@ -61,6 +66,10 @@ REASON_NOT_CONFIRMED = "segmentation_not_confirmed"
 REASON_OUTDATED = "confirmation_outdated"
 REASON_NOT_IDENTIFIED = "segmentation_not_identified"
 REASON_FAILED = "assessment_failed"
+REASON_GEOMETRIC_REVIEW = "geometric_regions_not_reviewed"   # PRB-028 (RC-090)
+
+# PRB-028 (RC-090): the classification method whose regions the radiologist checks lesion by lesion before DIS.
+GEOMETRIC_METHOD = "geometric"
 
 CRITERIA_VERSION = "McDonald 2024 (Montalban et al., Lancet Neurology 2025)"
 
@@ -94,6 +103,9 @@ REASON_DETAIL = {
                       "applies."),
     REASON_NOT_IDENTIFIED: "The request did not name its stored segmentation, so DIS could not be checked.",
     REASON_FAILED: "The assessment could not be computed for the confirmed segmentation.",
+    REASON_GEOMETRIC_REVIEW: ("The regions come from the geometric fallback (coordinate rules, not anatomy) and the "
+                              "confirmation does not state that each lesion's region was checked one by one. Check "
+                              "(or correct) the region of every lesion listed, then confirm again."),
 }
 
 REGIONS_NOT_CONFIRMED_NOTE = "Regions not confirmed by a radiologist; not a DIS assessment."
@@ -296,6 +308,16 @@ def corrections_sha256(corrections: List[Dict[str, Any]]) -> str:
 NO_CORRECTIONS_SHA256 = corrections_sha256([])
 
 
+def geometric_regions_sha256(lesions: List[Dict[str, Any]]) -> str:
+    """PRB-028: digest of the lesions whose geometric-fallback region the radiologist checks one by one (first voxel,
+    region), in raster order of the first voxel."""
+    canonical = json.dumps([[g["first_voxel"], g["region"]] for g in lesions], separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+NO_GEOMETRIC_REGIONS_SHA256 = geometric_regions_sha256([])
+
+
 # ─────────────────────────────────────────────────────────────────────────────────────────── the gate
 def regions_state(metadata: Any, masks_3d) -> Dict[str, Any]:
     """Are the mask's labels MAGNIMS regions assigned by the region classification to exactly these lesions, one
@@ -312,6 +334,9 @@ def regions_state(metadata: Any, masks_3d) -> Dict[str, Any]:
         "edited_after_classification": None, "lesion_count": None, "lesions_valid": None,
         "invalid_lesions": [], "invalid_lesion_count": 0,
         "corrections": [], "correction_count": 0, "corrections_sha256": None, "listed_limit": LESION_LIST_CAP,
+        # PRB-028 (RC-090): the lesions whose region comes from the geometric fallback, checked one by one.
+        "geometric_fallback": False, "geometric_regions": [], "geometric_region_count": 0,
+        "geometric_regions_sha256": None,
         "removed_small_components": None,
         # Release 2026-10-25 (final check of PR #69, R2): the stored label table, for the viewer's check that every
         # value of the mask is drawn with the label stored for it.
@@ -342,7 +367,8 @@ def regions_state(metadata: Any, masks_3d) -> Dict[str, Any]:
         footprint = np.asarray(label_lesions(np.asarray(masks_3d) > 0)[0]).ravel()
         for entry in _table_entries(masks_3d, float(voxel_volume)):
             parts_of.setdefault(int(footprint[entry["first"]]), []).append(entry)
-    invalid, corrections = [], []
+    invalid, corrections, geometric = [], [], []
+    from_geometric = record.get("method") == GEOMETRIC_METHOD
     for les in lesions:
         classified_region = by_first[les["first"]][1]
         parts = parts_of[les["component"]]
@@ -358,6 +384,10 @@ def regions_state(metadata: Any, masks_3d) -> Dict[str, Any]:
                                 "classified_region_name": MAGNIMS_REGIONS.get(classified_region, "none"),
                                 "current_region": les["labels"][0],
                                 "current_region_name": MAGNIMS_REGIONS[les["labels"][0]]})
+        elif from_geometric:
+            # PRB-028: a region the geometric fallback assigned and nobody changed: checked one by one.
+            geometric.append({**where, "region": classified_region,
+                              "region_name": MAGNIMS_REGIONS.get(classified_region, "none")})
     edited = None
     if record.get("classified_mask_sha256"):
         edited = record["classified_mask_sha256"] != SegmentationService.mask_sha256(masks_3d)
@@ -367,6 +397,8 @@ def regions_state(metadata: Any, masks_3d) -> Dict[str, Any]:
         "invalid_lesions": invalid[:LESION_LIST_CAP], "invalid_lesion_count": len(invalid),
         "corrections": corrections[:LESION_LIST_CAP], "correction_count": len(corrections),
         "corrections_sha256": corrections_sha256(corrections),
+        "geometric_fallback": from_geometric, "geometric_regions": geometric[:LESION_LIST_CAP],
+        "geometric_region_count": len(geometric), "geometric_regions_sha256": geometric_regions_sha256(geometric),
         # Release 2026-10-25 (review of PR #69, M1): what the classification removed from THIS mask (components below
         # the minimum lesion size), served with the DIS state of this segmentation — only while the classification
         # record describes the current lesions (checked above), so the viewer never shows another mask's figure.
@@ -381,7 +413,7 @@ def review_state(metadata: Any, masks_3d) -> Dict[str, Any]:
 
     Order of the reasons: regions not classified → a lesion without exactly one region → an AI draft's own
     review missing → no confirmation → a confirmation given for another mask, label scheme or set of region
-    corrections."""
+    corrections → (PRB-028) a confirmation that does not cover the geometric-fallback regions checked one by one."""
     current = SegmentationService.mask_sha256(masks_3d)
     labels_digest = labels_sha256(getattr(metadata, "labels", None) or [])
     regions = regions_state(metadata, masks_3d)
@@ -398,9 +430,15 @@ def review_state(metadata: Any, masks_3d) -> Dict[str, Any]:
     record = getattr(metadata, "clinician_review", None)
     has_record = record is not None
     acknowledged = getattr(record, "reviewed_region_corrections_sha256", None) or NO_CORRECTIONS_SHA256
-    bound = (has_record and getattr(record, "reviewed_mask_sha256", None) == current
-             and getattr(record, "reviewed_labels_sha256", None) == labels_digest
-             and acknowledged == regions["corrections_sha256"])
+    bound_to_mask = (has_record and getattr(record, "reviewed_mask_sha256", None) == current
+                     and getattr(record, "reviewed_labels_sha256", None) == labels_digest
+                     and acknowledged == regions["corrections_sha256"])
+    # PRB-028 (RC-090): on a geometric classification the record must also cover each region checked one by one.
+    # Review of PR #74 (m4): compared only while there ARE geometric-fallback lesions — the same mask classified again
+    # with the atlas keeps a confirmation given with ticks (with the same mask, labels and method the list is the same).
+    checked = getattr(record, "reviewed_geometric_regions_sha256", None) or NO_GEOMETRIC_REGIONS_SHA256
+    geometric_ok = regions["geometric_region_count"] == 0 or checked == regions["geometric_regions_sha256"]
+    bound = bound_to_mask and geometric_ok
     regions_ok = bool(regions["classified"] and regions["lesions_valid"])
     confirmed = bool(regions_ok and ai_review_ok and bound)
     if confirmed:
@@ -411,8 +449,10 @@ def review_state(metadata: Any, masks_3d) -> Dict[str, Any]:
         reason = REASON_LESION_LABELS
     elif not ai_review_ok:
         reason = REASON_AI_REVIEW
-    elif has_record and not bound:
+    elif has_record and not bound_to_mask:
         reason = REASON_OUTDATED
+    elif has_record and not geometric_ok:
+        reason = REASON_GEOMETRIC_REVIEW
     else:
         reason = REASON_NOT_CONFIRMED
     return {

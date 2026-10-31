@@ -70,6 +70,7 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
   const lesionOpacity = useSegmentationStore((s) => s.lesionOpacity);
   const isPaintMode = useSegmentationStore((s) => s.isPaintMode);
   const setOverlayOnScreen = useSegmentationStore((s) => s.setOverlayOnScreen);
+  const setOverlayImageOnScreen = useSegmentationStore((s) => s.setOverlayImageOnScreen);
   const setIsPaintMode = useSegmentationStore((s) => s.setIsPaintMode);
   const selectedLesion = useSegmentationStore((s) => s.selectedLesion);
   // PRB-004 review M2: the W/L GPU view draws the SAVED mask only; it says so when there are unsaved edits.
@@ -143,6 +144,29 @@ function ImageViewer2D({ viewerControls, createSegmentationRef, patientName, pat
     setOverlayOnScreen(drawnHere);
     return () => setOverlayOnScreen(null);
   }, [drawnHere, setOverlayOnScreen]);
+
+  // PRB-030 (RC-092, L1): with it, the image this view draws under the segmentation and both grids — image columns,
+  // rows and slices from its metadata, mask width, height and depth as loaded — so a confirmation is refused while
+  // the mask is drawn over an image of another grid (sheared or cut off). Unknown image dimensions publish nothing
+  // (refused). The server reads the image's header too (shape, affine, same study).
+  const imageFileId = currentSeries?.file_id ?? null;
+  const imageCols = currentSeries?.metadata?.columns;
+  const imageRows = currentSeries?.metadata?.rows;
+  const imageSlices = currentSeries?.metadata?.slices ?? currentSeries?.total_slices;
+  const maskDims = segmentationMask.state.dimensions;
+  const maskW = maskDims?.width;
+  const maskH = maskDims?.height;
+  const maskD = maskDims?.depth;
+  useEffect(() => {
+    const known = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n) && n > 0;
+    setOverlayImageOnScreen(drawnHere && known(imageCols) && known(imageRows) && known(imageSlices) ? {
+      segmentationId: drawnHere,
+      imageFileId,
+      image: { width: imageCols, height: imageRows, depth: imageSlices },
+      mask: known(maskW) && known(maskH) && known(maskD) ? { width: maskW, height: maskH, depth: maskD } : null,
+    } : null);
+    return () => setOverlayImageOnScreen(null);
+  }, [drawnHere, imageFileId, imageCols, imageRows, imageSlices, maskW, maskH, maskD, setOverlayImageOnScreen]);
 
   // Reset paint mode when segmentation mode is turned off
   useEffect(() => {

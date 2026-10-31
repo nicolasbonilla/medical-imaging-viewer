@@ -633,8 +633,11 @@ async def update_labels(
 @router.post("/{segmentation_id}/ai-review/confirm")
 async def confirm_ai_review(
     segmentation_id: str,
-    body: dict = Body(..., description='{"mask_sha256": "<SHA-256 of the mask the clinician reviewed>"}'),
+    body: dict = Body(..., description=('{"mask_sha256": "<SHA-256 of the mask the clinician reviewed>", '
+                                        '"drawn_labels_sha256": "<SHA-256 of the label table the mask was drawn '
+                                        'with>", "displayed_image_file_id": "<the image under the mask on screen>"}')),
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    storage_service: IStorageService = Depends(get_storage_service),
     current_user: User = Depends(get_current_active_user),
     # CAPA-002 CA-2.1 RC-029 - object-level authorization.
     _authorized=Depends(require_segmentation_access),
@@ -646,6 +649,11 @@ async def confirm_ai_review(
     model identity is never changed. The confirmation is bound to the exact stored mask: the client
     sends the SHA-256 of the mask it reviewed and it must equal the stored mask (409 otherwise —
     unsaved corrections, or another session changed the mask); any later mask change resets it.
+    PRB-029 (RC-091): the client also states the label table it drew the mask with (`drawn_labels_sha256`; 409 unless
+    the stored one as the viewer draws it) — the same server-side safeguard as the DIS confirmation; the drawn-lesion
+    check itself runs in the browser (shared with the DIS confirmation).
+    PRB-030 (RC-092): and the image under the mask on screen (`displayed_image_file_id`; 409 unless on the mask's grid,
+    in the same study).
     """
     from app.security.models import UserRole
 
@@ -673,6 +681,14 @@ async def confirm_ai_review(
             detail=("The stored mask is not the one you reviewed (unsaved corrections, or the mask changed "
                     "since you opened it). Save or reload, check it again, then confirm."),
         )
+    problem = _outdated_viewer_problem(body)                                     # review of PR #74, m7
+    if problem is None:
+        problem = _drawn_labels_problem(body, metadata)                          # PRB-029 (RC-091)
+    if problem is None:
+        problem = await _displayed_image_problem(body, metadata, entry["masks_3d"], storage_service,
+                                                 current_user)                   # PRB-030 (RC-092)
+    if problem:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=problem)
     if provenance.review_status != "confirmed" or provenance.reviewed_mask_sha256 != current:
         metadata.ai_provenance = provenance.model_copy(update={
             "review_status": "confirmed",
@@ -692,14 +708,62 @@ def _radiologist(user) -> bool:
     return getattr(user, "role", None) == UserRole.RADIOLOGIST
 
 
+OUTDATED_VIEWER = ("This viewer is out of date: the confirmation does not state the labels the mask was drawn with or "
+                   "the image under it. Reload the page in the browser, check the segmentation again, then confirm.")
+
+
+def _outdated_viewer_problem(body) -> Optional[str]:
+    """Review of PR #74 (m7): a viewer opened before this version sends neither the drawn label table nor the image
+    under the mask; it gets one clear answer (reload) instead of the label-table or grid message."""
+    b = body or {}
+    if not str(b.get("drawn_labels_sha256") or "").strip() or not str(b.get("displayed_image_file_id") or "").strip():
+        return OUTDATED_VIEWER
+    return None
+
+
+def _drawn_labels_problem(body, metadata) -> Optional[str]:
+    """Release 2026-10-25 (final check of PR #69, R2), shared since PRB-029 by both confirmations: the client states the
+    label table it DREW the mask with (`drawn_labels_sha256`); a table other than the stored one AS THE VIEWER DRAWS IT
+    (region names in the shared region colours) is refused. A partial, server-side safeguard: whether every lesion was
+    drawn is checked in the browser (RMF-001, RC-071 residual risk)."""
+    drawn_labels = str((body or {}).get("drawn_labels_sha256", "")).strip().lower()
+    as_drawn = dis_gate.stored_labels(getattr(metadata, "labels", None) or [])
+    if drawn_labels != dis_gate.drawn_labels_sha256(as_drawn):
+        return ("The labels the mask was drawn with on your screen are not the labels stored for this "
+                "segmentation (another label preset, or labels changed since it was opened). Reopen the "
+                "segmentation, check every lesion with its stored labels, then confirm.")
+    return None
+
+
+async def _displayed_image_problem(body, metadata, masks_3d, storage_service, current_user) -> Optional[str]:
+    """PRB-030 (RC-092), both confirmations: the image the standard 2D view drew under the mask lies on the mask's
+    grid (services/displayed_image_check.py). Another image than the segmentation's own is authorized for the user
+    first (404 otherwise, never read)."""
+    from app.services.displayed_image_check import displayed_image_problem
+
+    displayed = str((body or {}).get("displayed_image_file_id") or "").strip()
+    own = getattr(metadata, "file_id", None)
+    if displayed and displayed != own:
+        await authorize_file_scope(
+            file_ids=[displayed], user=current_user,
+            patient_service=_seg_patient_service(), care_team_service=_seg_care_team_service(),
+        )
+    return await displayed_image_problem(displayed, own, np.shape(masks_3d), storage_service,
+                                         settings.GCS_BUCKET_NAME)
+
+
 @router.post("/{segmentation_id}/review/confirm")
 async def confirm_segmentation_review(
     segmentation_id: str,
     body: dict = Body(..., description=('{"mask_sha256": "<SHA-256 of the saved mask the radiologist checked>", '
                                         '"drawn_labels_sha256": "<SHA-256 of the label table the mask was drawn '
                                         'with>", "region_corrections_sha256": "<digest of the region corrections he '
-                                        'acknowledges, when the DIS state lists any>"}')),
+                                        'acknowledges, when the DIS state lists any>", '
+                                        '"geometric_regions_reviewed_sha256": "<digest of the geometric-fallback '
+                                        'regions he checked one by one, when the DIS state lists any>", '
+                                        '"displayed_image_file_id": "<the image under the mask on screen>"}')),
     segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    storage_service: IStorageService = Depends(get_storage_service),
     current_user: User = Depends(get_current_active_user),
     # CAPA-002 CA-2.1 RC-029 - object-level authorization.
     _authorized=Depends(require_segmentation_access),
@@ -718,6 +782,11 @@ async def confirm_segmentation_review(
     - every connected lesion carries exactly one region 1-4 (409 otherwise); a region that differs from the
       classifier's is a correction the radiologist acknowledges by sending `region_corrections_sha256` (the
       digest of the corrections listed in the DIS state); it is recorded in the confirmation (second review, N1);
+    - PRB-028 (RC-090): on a classification by the geometric fallback, every lesion left at its geometric region is
+      checked one by one: the client sends `geometric_regions_reviewed_sha256`, the digest of the list the DIS state
+      serves (409 otherwise, and always when there are more such lesions than the list can hold); recorded;
+    - PRB-030 (RC-092): the image under the mask on screen (`displayed_image_file_id`) lies on the mask's grid, in
+      the same study (409 otherwise; 404 for an image the user may not open);
     - idempotent: an existing confirmation of the same mask and labels keeps its first confirmer; the repeat
       is recorded in the history (the most recent 50 events) with the authenticated user and time;
     - stored as metadata only (the mask object is not rewritten); refused (503, undone) when it could not be
@@ -773,16 +842,13 @@ async def confirm_segmentation_review(
     # other than the stored one (e.g. the "Default" preset selected, which redraws the regions with other names and
     # colours) is refused. A partial, server-side safeguard: whether every lesion was drawn is checked in the browser
     # (RMF-001, RC-071 residual risk). Release 2026-10-30 (merge with PR #71): compared with the stored table AS THE
-    # VIEWER DRAWS IT (region names in the shared region colours), the table the client can have drawn.
-    drawn_labels = str((body or {}).get("drawn_labels_sha256", "")).strip().lower()
-    as_drawn = dis_gate.stored_labels(getattr(metadata, "labels", None) or [])
-    if drawn_labels != dis_gate.drawn_labels_sha256(as_drawn):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=("The labels the mask was drawn with on your screen are not the labels stored for this "
-                    "segmentation (another label preset, or labels changed since it was opened). Reopen the "
-                    "segmentation, check every lesion with its stored region labels, then confirm."),
-        )
+    # VIEWER DRAWS IT (region names in the shared region colours), the table the client can have drawn. PRB-029: the
+    # same check serves the AI-draft review (`_drawn_labels_problem`).
+    problem = _outdated_viewer_problem(body) or _drawn_labels_problem(body, metadata)   # review of PR #74, m7
+    if problem is None:   # PRB-030 (RC-092): the image under the mask on screen lies on the mask's grid
+        problem = await _displayed_image_problem(body, metadata, entry["masks_3d"], storage_service, current_user)
+    if problem:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=problem)
     # Second review of PR #68, N1: a region changed by hand after the classification is the radiologist's
     # correction — listed to him, acknowledged explicitly (the digest of the listed corrections) and recorded.
     acknowledged = (body or {}).get("region_corrections_sha256")
@@ -794,6 +860,25 @@ async def confirm_segmentation_review(
                     "the corrections listed and acknowledge them in the confirmation (or run the region "
                     "classification again)."),
         )
+    # PRB-028 (RC-090): regions from the geometric fallback are checked lesion by lesion — the client states the digest
+    # of the list it was shown and ticked; more lesions than the list holds cannot be checked here.
+    geometric_count = regions["geometric_region_count"]
+    checked = (body or {}).get("geometric_regions_reviewed_sha256")
+    checked = str(checked).strip().lower() if checked else None
+    if geometric_count > dis_gate.LESION_LIST_CAP:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(f"{geometric_count} lesion regions come from the geometric fallback, more than the "
+                    f"{dis_gate.LESION_LIST_CAP} that can be checked one by one here. Classify the regions with the "
+                    "atlas (an image registered to MNI space) or a parcellation of this image instead."),
+        )
+    if (geometric_count or checked) and checked != regions["geometric_regions_sha256"]:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(f"{geometric_count} lesion region(s) come from the geometric fallback (coordinate rules, not "
+                    "anatomy). Check the region of every lesion listed one by one and tick it (correct it with the "
+                    "brush and save if it is wrong), then confirm."),
+        )
     now = datetime.utcnow().isoformat() + "Z"
     actor_id = str(getattr(current_user, "id", "") or "") or None
     previous = (metadata.clinician_review, list(metadata.clinician_review_history or []))
@@ -803,6 +888,8 @@ async def confirm_segmentation_review(
         reviewed_at=now, reviewed_mask_sha256=stored_digest, reviewed_labels_sha256=state["current_labels_sha256"],
         reviewed_region_corrections_sha256=regions["corrections_sha256"],
         region_correction_count=regions["correction_count"], region_corrections=regions["corrections"],
+        reviewed_geometric_regions_sha256=regions["geometric_regions_sha256"],
+        geometric_region_count=geometric_count, geometric_regions=regions["geometric_regions"],
     )
     event = ClinicianReviewEvent(
         event="confirmation_repeated" if already else "confirmed", by=current_user.username, by_id=actor_id,

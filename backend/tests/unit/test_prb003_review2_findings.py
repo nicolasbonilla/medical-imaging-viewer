@@ -51,7 +51,8 @@ def _two_lesions(a=1, b=2):
 def _confirm_ack(client, mask, corrections_sha256, sid="seg-1"):
     return client.post(f"/api/v1/segmentation/{sid}/review/confirm",
                        json={"mask_sha256": _sha(mask), "region_corrections_sha256": corrections_sha256,
-                             "drawn_labels_sha256": _drawn(client, sid)})
+                             "drawn_labels_sha256": _drawn(client, sid),
+                             "displayed_image_file_id": FILE})   # PRB-030: the segmentation's own image
 
 
 def _classified(mask, labels=None):

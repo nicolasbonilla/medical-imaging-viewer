@@ -61,12 +61,26 @@ describe('R2: the label table the mask was drawn with, as the server digests it'
   });
 
   it('rc071 release final the confirmation sends the digest of the drawn table', async () => {
-    await segmentationAPI.confirmSegmentationReview('seg-1', 'a'.repeat(64), null, DEFAULT_LABEL_PRESETS.magnims as never);
+    // Next safety round: the call also states the image under the mask (PRB-030) and, when the DIS state lists any,
+    // the geometric-fallback regions checked one by one (PRB-028); the drawn-table digest is unchanged.
+    const onScreen = { displayedImageFileId: 'f.nii.gz' };
+    await segmentationAPI.confirmSegmentationReview('seg-1', 'a'.repeat(64), null, DEFAULT_LABEL_PRESETS.magnims as never, onScreen);
     expect(post).toHaveBeenCalledTimes(1);
-    expect(post.mock.calls[0][1]).toEqual({ mask_sha256: 'a'.repeat(64), drawn_labels_sha256: MAGNIMS_SHA });
-    await segmentationAPI.confirmSegmentationReview('seg-1', 'a'.repeat(64), 'c'.repeat(64), DEFAULT_LABEL_PRESETS.default as never);
+    expect(post.mock.calls[0][1]).toEqual({ mask_sha256: 'a'.repeat(64), drawn_labels_sha256: MAGNIMS_SHA,
+      displayed_image_file_id: 'f.nii.gz' });
+    await segmentationAPI.confirmSegmentationReview('seg-1', 'a'.repeat(64), 'c'.repeat(64), DEFAULT_LABEL_PRESETS.default as never,
+      { ...onScreen, geometricRegionsReviewedSha256: 'd'.repeat(64) });
     expect(post.mock.calls[1][1]).toEqual({
       mask_sha256: 'a'.repeat(64), region_corrections_sha256: 'c'.repeat(64), drawn_labels_sha256: DEFAULT_SHA,
+      displayed_image_file_id: 'f.nii.gz', geometric_regions_reviewed_sha256: 'd'.repeat(64),
     });
+  });
+
+  it('rc091 prb029 the AI-draft review sends the digest of the drawn table and the image under the mask', async () => {
+    post.mockResolvedValue({ data: { success: true, ai_provenance: { review_status: 'confirmed' } } });
+    await segmentationAPI.confirmAiReview('seg-1', 'a'.repeat(64),
+      { drawnLabels: DEFAULT_LABEL_PRESETS.magnims as never, displayedImageFileId: 'f.nii.gz' });
+    expect(post.mock.calls[0][1]).toEqual({ mask_sha256: 'a'.repeat(64), drawn_labels_sha256: MAGNIMS_SHA,
+      displayed_image_file_id: 'f.nii.gz' });
   });
 });

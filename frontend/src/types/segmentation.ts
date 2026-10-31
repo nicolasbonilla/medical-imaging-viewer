@@ -426,6 +426,8 @@ export interface ClinicianReview {
   reviewed_mask_sha256: string;
   /** Region corrections by hand the radiologist acknowledged (second review of PR #68, N1). */
   region_correction_count?: number;
+  /** PRB-028 (RC-090): geometric-fallback regions the radiologist checked one by one. */
+  geometric_region_count?: number;
 }
 
 /**

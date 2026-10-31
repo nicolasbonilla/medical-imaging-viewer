@@ -130,6 +130,7 @@ function seedStore(analysisData: Record<string, unknown> | null, extra: Record<s
     lesionOpacity: 0.6,
     // Release 2026-10-25 (final check of #69, R1): the standard 2D view on screen draws the open segmentation.
     overlayOnScreen: 'seg-1',
+    overlayImageOnScreen: { segmentationId: 'seg-1', imageFileId: 'f.nii.gz', image: { width: 20, height: 20, depth: 10 }, mask: { width: 20, height: 20, depth: 10 } },   // next safety round, PRB-030: over an image on the mask grid
     maskValuesCallback: vi.fn(() => [1, 2]),
     hasUnsavedMaskChanges: false,
   } as never);
@@ -215,7 +216,8 @@ describe('RC-071 confirming a segmentation without AI provenance', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Analyze' }));
     fireEvent.click(await screen.findByRole('button', { name: /confirm this segmentation/ }));
     // final check of #69 (R2): the call also carries the label table the mask was drawn with
-    await waitFor(() => expect(confirmSegmentationReview).toHaveBeenCalledWith('seg-1', DIGEST, null, DRAWN_LABELS));
+    await waitFor(() => expect(confirmSegmentationReview).toHaveBeenCalledWith('seg-1', DIGEST, null, DRAWN_LABELS,
+      { geometricRegionsReviewedSha256: null, displayedImageFileId: 'f.nii.gz' }));
     expect(window.confirm).toHaveBeenCalledWith(expect.stringMatching(/any later change of the mask cancels/));
     expect(await screen.findByText(/Criterion Met/)).toBeInTheDocument();
   });

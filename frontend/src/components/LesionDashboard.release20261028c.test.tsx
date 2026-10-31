@@ -81,6 +81,7 @@ function seedOpen(analysis: Record<string, unknown> | null, over: Record<string,
     maskDigestCallback: vi.fn().mockResolvedValue(DIGEST),
     // Release 2026-10-25 (final check of #69, R1): the standard 2D view on screen draws the open segmentation.
     overlayOnScreen: 'seg-1',
+    overlayImageOnScreen: { segmentationId: 'seg-1', imageFileId: 'f.nii.gz', image: { width: 20, height: 20, depth: 10 }, mask: { width: 20, height: 20, depth: 10 } },   // next safety round, PRB-030: over an image on the mask grid
     maskValuesCallback: vi.fn(() => [1, 2]),
     hasUnsavedMaskChanges: false,
     reloadMaskCallback: vi.fn(async () => true),

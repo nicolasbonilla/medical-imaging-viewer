@@ -69,6 +69,7 @@ function openClassifiedBefore71() {
   store.setActiveSegmentation({ id: 'seg-1', labels: STORED_BEFORE_71 } as never);   // #71: drawn in region colours
   useSegmentationStore.setState({
     isOverlayVisible: true, lesionOpacity: 0.6, hasUnsavedMaskChanges: false, overlayOnScreen: 'seg-1',
+    overlayImageOnScreen: { segmentationId: 'seg-1', imageFileId: 'f.nii.gz', image: { width: 20, height: 20, depth: 10 }, mask: { width: 20, height: 20, depth: 10 } },   // next safety round, PRB-030: over an image on the mask grid
     maskDigestCallback: vi.fn().mockResolvedValue(DIGEST), maskValuesCallback: vi.fn(() => [1, 2, 3, 4]),
     reloadMaskCallback: vi.fn(async () => true),
   } as never);
@@ -91,7 +92,8 @@ describe('merge of #69 and #71: a segmentation classified before #71', () => {
     getDISAssessment.mockResolvedValue(notConfirmed(AS_DRAWN));
     render(<LesionDashboard segmentationId="seg-1" />);
     fireEvent.click(await screen.findByRole('button', { name: /confirm this segmentation/ }));
-    await waitFor(() => expect(confirmSegmentationReview).toHaveBeenCalledWith('seg-1', DIGEST, null, drawn));
+    await waitFor(() => expect(confirmSegmentationReview).toHaveBeenCalledWith('seg-1', DIGEST, null, drawn,
+      { geometricRegionsReviewedSha256: null, displayedImageFileId: 'f.nii.gz' }));
     expect(screen.queryByTestId('dis-confirm-refused')).not.toBeInTheDocument();
   });
 

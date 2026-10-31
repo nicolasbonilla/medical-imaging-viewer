@@ -10,8 +10,14 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 const confirmAiReview = vi.fn();
+// Next safety round (PRB-029): the banner reads the stored label table before it confirms.
+const LABELS = [{ id: 0, name: 'Background', color: '#000000', opacity: 0, visible: false },
+                { id: 1, name: 'Lesion', color: '#FF8C00', opacity: 0.6, visible: true }];
 vi.mock('@/api/segmentation', () => ({
-  segmentationAPI: { confirmAiReview: (...a: unknown[]) => confirmAiReview(...a) },
+  segmentationAPI: {
+    confirmAiReview: (...a: unknown[]) => confirmAiReview(...a),
+    getSegmentation: async () => ({ segmentation_id: 'seg-1', metadata: { labels: LABELS } }),
+  },
 }));
 
 import { AiDraftBanner } from './AiDraftBanner';
@@ -49,6 +55,15 @@ beforeEach(() => {
   confirmAiReview.mockReset();
   vi.spyOn(window, 'confirm').mockReturnValue(true);
   useSegmentationStore.setState({ maskDigestCallback: vi.fn().mockResolvedValue(DIGEST) });
+  // Next safety round (PRB-029..031): the draft is drawn with its stored labels in the standard 2D view, over its own
+  // image, with no layer under the lesions — the shared check of the view on screen passes.
+  const grid = { width: 5, height: 4, depth: 3 };
+  useSegmentationStore.setState({
+    activeSegmentation: { id: 'seg-1', labels: LABELS } as never, labelVisibility: { 0: false, 1: true },
+    isOverlayVisible: true, lesionOpacity: 0.6, maskValuesCallback: vi.fn(() => [1]), overlayOnScreen: 'seg-1',
+    overlayImageOnScreen: { segmentationId: 'seg-1', imageFileId: 'f.nii.gz', image: grid, mask: grid },
+    zoneMapVisible: false, longitudinalVisible: false, longitudinalSubtractionVisible: false, conformalVisible: false,
+  } as never);
 });
 
 describe('AI review confirmation bound to the saved mask (RC-047)', () => {
@@ -65,7 +80,8 @@ describe('AI review confirmation bound to the saved mask (RC-047)', () => {
     render(<AiDraftBanner provenance={UNREVIEWED} segmentationId="seg-1" hasUnsavedChanges={false} onConfirmed={onConfirmed} />);
     fireEvent.click(screen.getByRole('button', { name: /I have reviewed this AI draft/ }));
     await waitFor(() => expect(onConfirmed).toHaveBeenCalledWith(CONFIRMED));
-    expect(confirmAiReview).toHaveBeenCalledWith('seg-1', DIGEST);
+    expect(confirmAiReview).toHaveBeenCalledWith('seg-1', DIGEST,
+      { drawnLabels: LABELS, displayedImageFileId: 'f.nii.gz' });   // PRB-029 / PRB-030: what was drawn, over which image
     expect(window.confirm).toHaveBeenCalledWith(expect.stringMatching(/any later change of the mask cancels/));
   });
 
