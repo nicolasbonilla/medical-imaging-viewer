@@ -1,5 +1,7 @@
 # How fragile is an automated dissemination-in-space decision? A multiverse analysis of brain-MRI DIS in multiple sclerosis
 
+> **Superseded 2026-10-31 by `manuscript/manuscript.md` (v0.2).** Kept for the record.
+
 *Manuscript skeleton v0.1 (2026-10-22). Numbers are frozen from `records/results_v1.json` and
 `RESULTS.md`; the protocol was committed before any result (`PROTOCOL.md`). **This version has no
 radiologist reads; the final version requires three neuroradiologists (§2.7, §5).***

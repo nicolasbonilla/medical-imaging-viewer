@@ -278,3 +278,4 @@ Code: `research/paper_d/` (`common.py`, `atlas.py`, `rules.py`, `register_atlas_
 |---|---|---|---|
 | 2026-10-21 | v1.0 | first issue | — |
 | 2026-10-22 | none to the protocol; implementation deviations and post hoc analyses are listed in RESULTS.md §12 (APP-3MM built at G0 only; fewer parallel workers; 21 scans recomputed, identical; post hoc stability signals labelled as such) | after the run | secondary rule APP-3MM only |
+| 2026-10-31 | none to the automated analysis. §10's planned reader study is specified in `READER_STUDY_PROTOCOL.md` v1.0 (84 scans: all 48 non-unanimous + 36 unanimous controls; two tasks; washout ≥ 4 weeks), written before any reader was invited; case selection `select_reader_cases.py`, power `reader_power.py`. Citation correction: the MSLesSeg paper's first author is Guarnera (Sci Data 2025;12:920), not Rondinella | preparation of the reader study | none |
