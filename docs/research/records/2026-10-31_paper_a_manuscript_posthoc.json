@@ -1,0 +1,2100 @@
+{
+ "status": "POST-HOC (manuscript stage, 2026-10-31), not pre-registered; PROTOCOL-v0.3 \u00a713 entry 10",
+ "cache_sha256": "2096109e4da247aeaf03db43f4f5be02a14f95a450f711bb349e4942b9a6f4ec",
+ "seed": 20261031,
+ "draws_subsampled": 200,
+ "arm": "ens (5-fold mean), primary score",
+ "A_site_seen_sensitivity": {
+  "D3-noLj|ms3seg|P1|0.1": {
+   "cell": "D3-noLj|ms3seg",
+   "procedure": "P1",
+   "target": 0.1,
+   "nominal": 0.1,
+   "estimate": 0.0984,
+   "ci95": [
+    0.0706,
+    0.1314
+   ],
+   "class": "holds",
+   "ci_bonferroni": [
+    0.0555,
+    0.1554
+   ],
+   "class_bonferroni": "inconclusive",
+   "uninformative_abstention": false,
+   "n_sel": 986,
+   "sens_e2e": 0.2665,
+   "sens_e2e_ci": [
+    0.2253,
+    0.3076
+   ],
+   "micro_fdr": 0.0933,
+   "scans": 100,
+   "patients": 100,
+   "scans_selecting": 93,
+   "false_per_scan": 0.92,
+   "threshold": null,
+   "calibration_patients": 75,
+   "null_size": 1257,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.1067,
+    "ci95": [
+     0.0745,
+     0.1448
+    ],
+    "class": "holds",
+    "sens_e2e": 0.2582
+   }
+  },
+  "D3-noLj|ms3seg|P1|0.2": {
+   "cell": "D3-noLj|ms3seg",
+   "procedure": "P1",
+   "target": 0.2,
+   "nominal": 0.2,
+   "estimate": 0.1242,
+   "ci95": [
+    0.0999,
+    0.1511
+   ],
+   "class": "holds",
+   "ci_bonferroni": [
+    0.0878,
+    0.1681
+   ],
+   "class_bonferroni": "holds",
+   "uninformative_abstention": false,
+   "n_sel": 1554,
+   "sens_e2e": 0.4055,
+   "sens_e2e_ci": [
+    0.3666,
+    0.4466
+   ],
+   "micro_fdr": 0.1248,
+   "scans": 100,
+   "patients": 100,
+   "scans_selecting": 97,
+   "false_per_scan": 1.94,
+   "threshold": null,
+   "calibration_patients": 75,
+   "null_size": 1257,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.1234,
+    "ci95": [
+     0.0991,
+     0.1506
+    ],
+    "class": "holds",
+    "sens_e2e": 0.4037
+   }
+  },
+  "D3-noLj|ms3seg|P2|0.1": {
+   "cell": "D3-noLj|ms3seg",
+   "procedure": "P2",
+   "target": 0.1,
+   "nominal": 0.1,
+   "estimate": 0.21,
+   "ci95": [
+    0.13,
+    0.3029
+   ],
+   "class": "violated",
+   "ci_bonferroni": [
+    0.09,
+    0.3615
+   ],
+   "class_bonferroni": "inconclusive",
+   "uninformative_abstention": false,
+   "n_sel": 436,
+   "sens_e2e": 0.1208,
+   "sens_e2e_ci": [
+    0.1029,
+    0.1405
+   ],
+   "micro_fdr": 0.0711,
+   "scans": 100,
+   "patients": 100,
+   "scans_selecting": 96,
+   "false_per_scan": 0.31,
+   "threshold": 0.965,
+   "calibration_patients": 75,
+   "null_size": null,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.21,
+    "ci95": [
+     0.13,
+     0.3029
+    ],
+    "class": "violated",
+    "sens_e2e": 0.1208
+   }
+  },
+  "D3-noLj|ms3seg|P2|0.2": {
+   "cell": "D3-noLj|ms3seg",
+   "procedure": "P2",
+   "target": 0.2,
+   "nominal": 0.1,
+   "estimate": 0.12,
+   "ci95": [
+    0.06,
+    0.2002
+   ],
+   "class": "inconclusive",
+   "ci_bonferroni": [
+    0.03,
+    0.2538
+   ],
+   "class_bonferroni": "inconclusive",
+   "uninformative_abstention": false,
+   "n_sel": 436,
+   "sens_e2e": 0.1208,
+   "sens_e2e_ci": [
+    0.1029,
+    0.1405
+   ],
+   "micro_fdr": 0.0711,
+   "scans": 100,
+   "patients": 100,
+   "scans_selecting": 96,
+   "false_per_scan": 0.31,
+   "threshold": 0.965,
+   "calibration_patients": 75,
+   "null_size": null,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.12,
+    "ci95": [
+     0.06,
+     0.2002
+    ],
+    "class": "inconclusive",
+    "sens_e2e": 0.1208
+   }
+  },
+  "D3-noLj|muslim|P1|0.1": {
+   "cell": "D3-noLj|muslim",
+   "procedure": "P1",
+   "target": 0.1,
+   "nominal": 0.1,
+   "estimate": 0.1218,
+   "ci95": [
+    0.0616,
+    0.1974
+   ],
+   "class": "inconclusive",
+   "ci_bonferroni": [
+    0.0317,
+    0.2444
+   ],
+   "class_bonferroni": "inconclusive",
+   "uninformative_abstention": false,
+   "n_sel": 193,
+   "sens_e2e": 0.094,
+   "sens_e2e_ci": [
+    0.0584,
+    0.1321
+   ],
+   "micro_fdr": 0.114,
+   "scans": 51,
+   "patients": 51,
+   "scans_selecting": 31,
+   "false_per_scan": 0.431,
+   "threshold": null,
+   "calibration_patients": 75,
+   "null_size": 1257,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.1218,
+    "ci95": [
+     0.0616,
+     0.1974
+    ],
+    "class": "inconclusive",
+    "sens_e2e": 0.0951
+   }
+  },
+  "D3-noLj|muslim|P1|0.2": {
+   "cell": "D3-noLj|muslim",
+   "procedure": "P1",
+   "target": 0.2,
+   "nominal": 0.2,
+   "estimate": 0.0973,
+   "ci95": [
+    0.0594,
+    0.147
+   ],
+   "class": "holds",
+   "ci_bonferroni": [
+    0.043,
+    0.1869
+   ],
+   "class_bonferroni": "holds",
+   "uninformative_abstention": false,
+   "n_sel": 483,
+   "sens_e2e": 0.2402,
+   "sens_e2e_ci": [
+    0.1721,
+    0.3056
+   ],
+   "micro_fdr": 0.0952,
+   "scans": 51,
+   "patients": 51,
+   "scans_selecting": 43,
+   "false_per_scan": 0.902,
+   "threshold": null,
+   "calibration_patients": 75,
+   "null_size": 1257,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.0965,
+    "ci95": [
+     0.0582,
+     0.1457
+    ],
+    "class": "holds",
+    "sens_e2e": 0.2347
+   }
+  },
+  "D3-noLj|muslim|P2|0.1": {
+   "cell": "D3-noLj|muslim",
+   "procedure": "P2",
+   "target": 0.1,
+   "nominal": 0.1,
+   "estimate": 0.2941,
+   "ci95": [
+    0.1749,
+    0.4383
+   ],
+   "class": "violated",
+   "ci_bonferroni": [
+    0.1176,
+    0.5232
+   ],
+   "class_bonferroni": "violated",
+   "uninformative_abstention": false,
+   "n_sel": 81,
+   "sens_e2e": 0.0363,
+   "sens_e2e_ci": [
+    0.0247,
+    0.0484
+   ],
+   "micro_fdr": 0.1852,
+   "scans": 51,
+   "patients": 51,
+   "scans_selecting": 37,
+   "false_per_scan": 0.294,
+   "threshold": 0.965,
+   "calibration_patients": 75,
+   "null_size": null,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.2941,
+    "ci95": [
+     0.1749,
+     0.4383
+    ],
+    "class": "violated",
+    "sens_e2e": 0.0363
+   }
+  },
+  "D3-noLj|muslim|P2|0.2": {
+   "cell": "D3-noLj|muslim",
+   "procedure": "P2",
+   "target": 0.2,
+   "nominal": 0.1,
+   "estimate": 0.2745,
+   "ci95": [
+    0.1569,
+    0.4174
+   ],
+   "class": "violated",
+   "ci_bonferroni": [
+    0.098,
+    0.5026
+   ],
+   "class_bonferroni": "inconclusive",
+   "uninformative_abstention": false,
+   "n_sel": 81,
+   "sens_e2e": 0.0363,
+   "sens_e2e_ci": [
+    0.0247,
+    0.0484
+   ],
+   "micro_fdr": 0.1852,
+   "scans": 51,
+   "patients": 51,
+   "scans_selecting": 37,
+   "false_per_scan": 0.294,
+   "threshold": 0.965,
+   "calibration_patients": 75,
+   "null_size": null,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.2745,
+    "ci95": [
+     0.1569,
+     0.4174
+    ],
+    "class": "violated",
+    "sens_e2e": 0.0363
+   }
+  },
+  "D3-noLj|pedims|P1|0.1": {
+   "cell": "D3-noLj|pedims",
+   "procedure": "P1",
+   "target": 0.1,
+   "nominal": 0.1,
+   "estimate": 0.0437,
+   "ci95": [
+    0.0153,
+    0.0894
+   ],
+   "class": "holds",
+   "ci_bonferroni": [
+    0.0,
+    0.1367
+   ],
+   "class_bonferroni": "holds",
+   "uninformative_abstention": false,
+   "n_sel": 152,
+   "sens_e2e": 0.1295,
+   "sens_e2e_ci": [
+    0.0372,
+    0.3669
+   ],
+   "micro_fdr": 0.0592,
+   "scans": 28,
+   "patients": 9,
+   "scans_selecting": 20,
+   "false_per_scan": 0.321,
+   "threshold": null,
+   "calibration_patients": 75,
+   "null_size": 1257,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.0406,
+    "ci95": [
+     0.0086,
+     0.1019
+    ],
+    "class": "holds",
+    "sens_e2e": 0.1196
+   }
+  },
+  "D3-noLj|pedims|P1|0.2": {
+   "cell": "D3-noLj|pedims",
+   "procedure": "P1",
+   "target": 0.2,
+   "nominal": 0.2,
+   "estimate": 0.088,
+   "ci95": [
+    0.0597,
+    0.1224
+   ],
+   "class": "holds",
+   "ci_bonferroni": [
+    0.043,
+    0.1438
+   ],
+   "class_bonferroni": "holds",
+   "uninformative_abstention": false,
+   "n_sel": 425,
+   "sens_e2e": 0.3478,
+   "sens_e2e_ci": [
+    0.2881,
+    0.5111
+   ],
+   "micro_fdr": 0.0965,
+   "scans": 28,
+   "patients": 9,
+   "scans_selecting": 28,
+   "false_per_scan": 1.464,
+   "threshold": null,
+   "calibration_patients": 75,
+   "null_size": 1257,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.0858,
+    "ci95": [
+     0.0555,
+     0.1223
+    ],
+    "class": "holds",
+    "sens_e2e": 0.3261
+   }
+  },
+  "D3-noLj|pedims|P2|0.1": {
+   "cell": "D3-noLj|pedims",
+   "procedure": "P2",
+   "target": 0.1,
+   "nominal": 0.1,
+   "estimate": 0.0714,
+   "ci95": [
+    0.0,
+    0.235
+   ],
+   "class": "inconclusive",
+   "ci_bonferroni": [
+    0.0,
+    0.3479
+   ],
+   "class_bonferroni": "inconclusive",
+   "uninformative_abstention": false,
+   "n_sel": 60,
+   "sens_e2e": 0.0525,
+   "sens_e2e_ci": [
+    0.027,
+    0.1166
+   ],
+   "micro_fdr": 0.0333,
+   "scans": 28,
+   "patients": 9,
+   "scans_selecting": 21,
+   "false_per_scan": 0.071,
+   "threshold": 0.965,
+   "calibration_patients": 75,
+   "null_size": null,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.0714,
+    "ci95": [
+     0.0,
+     0.235
+    ],
+    "class": "inconclusive",
+    "sens_e2e": 0.0525
+   }
+  },
+  "D3-noLj|pedims|P2|0.2": {
+   "cell": "D3-noLj|pedims",
+   "procedure": "P2",
+   "target": 0.2,
+   "nominal": 0.1,
+   "estimate": 0.0714,
+   "ci95": [
+    0.0,
+    0.235
+   ],
+   "class": "inconclusive",
+   "ci_bonferroni": [
+    0.0,
+    0.3479
+   ],
+   "class_bonferroni": "inconclusive",
+   "uninformative_abstention": false,
+   "n_sel": 60,
+   "sens_e2e": 0.0525,
+   "sens_e2e_ci": [
+    0.027,
+    0.1166
+   ],
+   "micro_fdr": 0.0333,
+   "scans": 28,
+   "patients": 9,
+   "scans_selecting": 21,
+   "false_per_scan": 0.071,
+   "threshold": 0.965,
+   "calibration_patients": 75,
+   "null_size": null,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.0714,
+    "ci95": [
+     0.0,
+     0.235
+    ],
+    "class": "inconclusive",
+    "sens_e2e": 0.0525
+   }
+  },
+  "D2-noLj|mslesseg|P1|0.1": {
+   "cell": "D2-noLj|mslesseg",
+   "procedure": "P1",
+   "target": 0.1,
+   "nominal": 0.1,
+   "estimate": 0.0087,
+   "ci95": [
+    0.0,
+    0.0294
+   ],
+   "class": "holds",
+   "ci_bonferroni": [
+    0.0,
+    0.0485
+   ],
+   "class_bonferroni": "holds",
+   "uninformative_abstention": true,
+   "n_sel": 34,
+   "sens_e2e": 0.0099,
+   "sens_e2e_ci": [
+    0.0029,
+    0.0192
+   ],
+   "micro_fdr": 0.0294,
+   "scans": 115,
+   "patients": 75,
+   "scans_selecting": 10,
+   "false_per_scan": 0.009,
+   "threshold": null,
+   "calibration_patients": 160,
+   "null_size": 2051,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.0087,
+    "ci95": [
+     0.0,
+     0.0294
+    ],
+    "class": "holds",
+    "sens_e2e": 0.0099
+   }
+  },
+  "D2-noLj|mslesseg|P1|0.2": {
+   "cell": "D2-noLj|mslesseg",
+   "procedure": "P1",
+   "target": 0.2,
+   "nominal": 0.2,
+   "estimate": 0.0183,
+   "ci95": [
+    0.0038,
+    0.0421
+   ],
+   "class": "holds",
+   "ci_bonferroni": [
+    0.0007,
+    0.0591
+   ],
+   "class_bonferroni": "holds",
+   "uninformative_abstention": false,
+   "n_sel": 299,
+   "sens_e2e": 0.0849,
+   "sens_e2e_ci": [
+    0.0469,
+    0.1318
+   ],
+   "micro_fdr": 0.0502,
+   "scans": 115,
+   "patients": 75,
+   "scans_selecting": 32,
+   "false_per_scan": 0.13,
+   "threshold": null,
+   "calibration_patients": 160,
+   "null_size": 2051,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.0183,
+    "ci95": [
+     0.0038,
+     0.0421
+    ],
+    "class": "holds",
+    "sens_e2e": 0.0888
+   }
+  },
+  "D2-noLj|mslesseg|P2|0.1": {
+   "cell": "D2-noLj|mslesseg",
+   "procedure": "P2",
+   "target": 0.1,
+   "nominal": 0.1,
+   "estimate": 0.0174,
+   "ci95": [
+    0.0,
+    0.0614
+   ],
+   "class": "holds",
+   "ci_bonferroni": [
+    0.0,
+    0.0961
+   ],
+   "class_bonferroni": "holds",
+   "uninformative_abstention": true,
+   "n_sel": 3,
+   "sens_e2e": 0.0003,
+   "sens_e2e_ci": [
+    0.0,
+    0.0011
+   ],
+   "micro_fdr": 0.6667,
+   "scans": 115,
+   "patients": 75,
+   "scans_selecting": 3,
+   "false_per_scan": 0.017,
+   "threshold": 0.981,
+   "calibration_patients": 160,
+   "null_size": null,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.0174,
+    "ci95": [
+     0.0,
+     0.0614
+    ],
+    "class": "holds",
+    "sens_e2e": 0.0006
+   }
+  },
+  "D2-noLj|mslesseg|P2|0.2": {
+   "cell": "D2-noLj|mslesseg",
+   "procedure": "P2",
+   "target": 0.2,
+   "nominal": 0.1,
+   "estimate": 0.0174,
+   "ci95": [
+    0.0,
+    0.0614
+   ],
+   "class": "holds",
+   "ci_bonferroni": [
+    0.0,
+    0.0961
+   ],
+   "class_bonferroni": "holds",
+   "uninformative_abstention": true,
+   "n_sel": 4,
+   "sens_e2e": 0.0006,
+   "sens_e2e_ci": [
+    0.0,
+    0.0016
+   ],
+   "micro_fdr": 0.5,
+   "scans": 115,
+   "patients": 75,
+   "scans_selecting": 4,
+   "false_per_scan": 0.017,
+   "threshold": 0.98,
+   "calibration_patients": 160,
+   "null_size": null,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.0261,
+    "ci95": [
+     0.0,
+     0.0743
+    ],
+    "class": "holds",
+    "sens_e2e": 0.0039
+   }
+  },
+  "D2-noLj|ms3seg|P1|0.1": {
+   "cell": "D2-noLj|ms3seg",
+   "procedure": "P1",
+   "target": 0.1,
+   "nominal": 0.1,
+   "estimate": 0.0871,
+   "ci95": [
+    0.0592,
+    0.1207
+   ],
+   "class": "holds",
+   "ci_bonferroni": [
+    0.046,
+    0.1421
+   ],
+   "class_bonferroni": "holds",
+   "uninformative_abstention": false,
+   "n_sel": 745,
+   "sens_e2e": 0.2016,
+   "sens_e2e_ci": [
+    0.1659,
+    0.239
+   ],
+   "micro_fdr": 0.0926,
+   "scans": 100,
+   "patients": 100,
+   "scans_selecting": 81,
+   "false_per_scan": 0.69,
+   "threshold": null,
+   "calibration_patients": 135,
+   "null_size": 2146,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.0872,
+    "ci95": [
+     0.0594,
+     0.1208
+    ],
+    "class": "holds",
+    "sens_e2e": 0.2013
+   }
+  },
+  "D2-noLj|ms3seg|P1|0.2": {
+   "cell": "D2-noLj|ms3seg",
+   "procedure": "P1",
+   "target": 0.2,
+   "nominal": 0.2,
+   "estimate": 0.1154,
+   "ci95": [
+    0.0931,
+    0.1415
+   ],
+   "class": "holds",
+   "ci_bonferroni": [
+    0.081,
+    0.1573
+   ],
+   "class_bonferroni": "holds",
+   "uninformative_abstention": false,
+   "n_sel": 1454,
+   "sens_e2e": 0.3816,
+   "sens_e2e_ci": [
+    0.3424,
+    0.4221
+   ],
+   "micro_fdr": 0.1197,
+   "scans": 100,
+   "patients": 100,
+   "scans_selecting": 96,
+   "false_per_scan": 1.74,
+   "threshold": null,
+   "calibration_patients": 135,
+   "null_size": 2146,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.1155,
+    "ci95": [
+     0.0931,
+     0.1415
+    ],
+    "class": "holds",
+    "sens_e2e": 0.3813
+   }
+  },
+  "D2-noLj|ms3seg|P2|0.1": {
+   "cell": "D2-noLj|ms3seg",
+   "procedure": "P2",
+   "target": 0.1,
+   "nominal": 0.1,
+   "estimate": 0.14,
+   "ci95": [
+    0.0787,
+    0.2237
+   ],
+   "class": "inconclusive",
+   "ci_bonferroni": [
+    0.04,
+    0.2787
+   ],
+   "class_bonferroni": "inconclusive",
+   "uninformative_abstention": false,
+   "n_sel": 294,
+   "sens_e2e": 0.0817,
+   "sens_e2e_ci": [
+    0.069,
+    0.0953
+   ],
+   "micro_fdr": 0.068,
+   "scans": 100,
+   "patients": 100,
+   "scans_selecting": 90,
+   "false_per_scan": 0.2,
+   "threshold": 0.972,
+   "calibration_patients": 135,
+   "null_size": null,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.16,
+    "ci95": [
+     0.09,
+     0.2468
+    ],
+    "class": "inconclusive",
+    "sens_e2e": 0.0871
+   }
+  },
+  "D2-noLj|ms3seg|P2|0.2": {
+   "cell": "D2-noLj|ms3seg",
+   "procedure": "P2",
+   "target": 0.2,
+   "nominal": 0.1,
+   "estimate": 0.1,
+   "ci95": [
+    0.049,
+    0.1762
+   ],
+   "class": "inconclusive",
+   "ci_bonferroni": [
+    0.02,
+    0.228
+   ],
+   "class_bonferroni": "inconclusive",
+   "uninformative_abstention": false,
+   "n_sel": 294,
+   "sens_e2e": 0.0817,
+   "sens_e2e_ci": [
+    0.069,
+    0.0953
+   ],
+   "micro_fdr": 0.068,
+   "scans": 100,
+   "patients": 100,
+   "scans_selecting": 90,
+   "false_per_scan": 0.2,
+   "threshold": 0.972,
+   "calibration_patients": 135,
+   "null_size": null,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.12,
+    "ci95": [
+     0.06,
+     0.2002
+    ],
+    "class": "inconclusive",
+    "sens_e2e": 0.0871
+   }
+  },
+  "D2-noLj|muslim|P1|0.1": {
+   "cell": "D2-noLj|muslim",
+   "procedure": "P1",
+   "target": 0.1,
+   "nominal": 0.1,
+   "estimate": 0.0824,
+   "ci95": [
+    0.0328,
+    0.1373
+   ],
+   "class": "holds",
+   "ci_bonferroni": [
+    0.0139,
+    0.1856
+   ],
+   "class_bonferroni": "inconclusive",
+   "uninformative_abstention": true,
+   "n_sel": 66,
+   "sens_e2e": 0.0297,
+   "sens_e2e_ci": [
+    0.0132,
+    0.0523
+   ],
+   "micro_fdr": 0.1818,
+   "scans": 51,
+   "patients": 51,
+   "scans_selecting": 18,
+   "false_per_scan": 0.235,
+   "threshold": null,
+   "calibration_patients": 184,
+   "null_size": 2740,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.0824,
+    "ci95": [
+     0.0328,
+     0.1373
+    ],
+    "class": "holds",
+    "sens_e2e": 0.0297
+   }
+  },
+  "D2-noLj|muslim|P1|0.2": {
+   "cell": "D2-noLj|muslim",
+   "procedure": "P1",
+   "target": 0.2,
+   "nominal": 0.2,
+   "estimate": 0.1015,
+   "ci95": [
+    0.0492,
+    0.1645
+   ],
+   "class": "holds",
+   "ci_bonferroni": [
+    0.0253,
+    0.2146
+   ],
+   "class_bonferroni": "holds",
+   "uninformative_abstention": false,
+   "n_sel": 272,
+   "sens_e2e": 0.1369,
+   "sens_e2e_ci": [
+    0.0881,
+    0.19
+   ],
+   "micro_fdr": 0.0846,
+   "scans": 51,
+   "patients": 51,
+   "scans_selecting": 34,
+   "false_per_scan": 0.451,
+   "threshold": null,
+   "calibration_patients": 184,
+   "null_size": 2740,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.0997,
+    "ci95": [
+     0.0475,
+     0.1627
+    ],
+    "class": "holds",
+    "sens_e2e": 0.1391
+   }
+  },
+  "D2-noLj|muslim|P2|0.1": {
+   "cell": "D2-noLj|muslim",
+   "procedure": "P2",
+   "target": 0.1,
+   "nominal": 0.1,
+   "estimate": 0.1569,
+   "ci95": [
+    0.0588,
+    0.2859
+   ],
+   "class": "inconclusive",
+   "ci_bonferroni": [
+    0.0196,
+    0.369
+   ],
+   "class_bonferroni": "inconclusive",
+   "uninformative_abstention": true,
+   "n_sel": 30,
+   "sens_e2e": 0.0121,
+   "sens_e2e_ci": [
+    0.0071,
+    0.0186
+   ],
+   "micro_fdr": 0.2667,
+   "scans": 51,
+   "patients": 51,
+   "scans_selecting": 20,
+   "false_per_scan": 0.157,
+   "threshold": 0.974,
+   "calibration_patients": 184,
+   "null_size": null,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.1765,
+    "ci95": [
+     0.0784,
+     0.3087
+    ],
+    "class": "inconclusive",
+    "sens_e2e": 0.0154
+   }
+  },
+  "D2-noLj|muslim|P2|0.2": {
+   "cell": "D2-noLj|muslim",
+   "procedure": "P2",
+   "target": 0.2,
+   "nominal": 0.1,
+   "estimate": 0.1765,
+   "ci95": [
+    0.0784,
+    0.3087
+   ],
+   "class": "inconclusive",
+   "ci_bonferroni": [
+    0.0392,
+    0.3926
+   ],
+   "class_bonferroni": "inconclusive",
+   "uninformative_abstention": true,
+   "n_sel": 37,
+   "sens_e2e": 0.0154,
+   "sens_e2e_ci": [
+    0.0098,
+    0.0227
+   ],
+   "micro_fdr": 0.2432,
+   "scans": 51,
+   "patients": 51,
+   "scans_selecting": 25,
+   "false_per_scan": 0.176,
+   "threshold": 0.972,
+   "calibration_patients": 184,
+   "null_size": null,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.1765,
+    "ci95": [
+     0.0784,
+     0.3087
+    ],
+    "class": "inconclusive",
+    "sens_e2e": 0.0154
+   }
+  },
+  "D2-noLj|pedims|P1|0.1": {
+   "cell": "D2-noLj|pedims",
+   "procedure": "P1",
+   "target": 0.1,
+   "nominal": 0.1,
+   "estimate": 0.0065,
+   "ci95": [
+    0.0,
+    0.0218
+   ],
+   "class": "holds",
+   "ci_bonferroni": [
+    0.0,
+    0.0379
+   ],
+   "class_bonferroni": "holds",
+   "uninformative_abstention": false,
+   "n_sel": 72,
+   "sens_e2e": 0.0634,
+   "sens_e2e_ci": [
+    0.0146,
+    0.2124
+   ],
+   "micro_fdr": 0.0278,
+   "scans": 28,
+   "patients": 9,
+   "scans_selecting": 12,
+   "false_per_scan": 0.071,
+   "threshold": null,
+   "calibration_patients": 226,
+   "null_size": 2987,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.0065,
+    "ci95": [
+     0.0,
+     0.0218
+    ],
+    "class": "holds",
+    "sens_e2e": 0.0643
+   }
+  },
+  "D2-noLj|pedims|P1|0.2": {
+   "cell": "D2-noLj|pedims",
+   "procedure": "P1",
+   "target": 0.2,
+   "nominal": 0.2,
+   "estimate": 0.0499,
+   "ci95": [
+    0.0156,
+    0.0933
+   ],
+   "class": "holds",
+   "ci_bonferroni": [
+    0.0,
+    0.1356
+   ],
+   "class_bonferroni": "holds",
+   "uninformative_abstention": false,
+   "n_sel": 194,
+   "sens_e2e": 0.163,
+   "sens_e2e_ci": [
+    0.042,
+    0.4383
+   ],
+   "micro_fdr": 0.0722,
+   "scans": 28,
+   "patients": 9,
+   "scans_selecting": 18,
+   "false_per_scan": 0.5,
+   "threshold": null,
+   "calibration_patients": 226,
+   "null_size": 2987,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.0496,
+    "ci95": [
+     0.0155,
+     0.093
+    ],
+    "class": "holds",
+    "sens_e2e": 0.1639
+   }
+  },
+  "D2-noLj|pedims|P2|0.1": {
+   "cell": "D2-noLj|pedims",
+   "procedure": "P2",
+   "target": 0.1,
+   "nominal": 0.1,
+   "estimate": 0.0,
+   "ci95": [
+    0.0,
+    0.1234
+   ],
+   "class": "holds",
+   "ci_bonferroni": [
+    0.0,
+    0.2255
+   ],
+   "class_bonferroni": "inconclusive",
+   "uninformative_abstention": true,
+   "n_sel": 28,
+   "sens_e2e": 0.0254,
+   "sens_e2e_ci": [
+    0.0089,
+    0.0702
+   ],
+   "micro_fdr": 0.0,
+   "scans": 28,
+   "patients": 9,
+   "scans_selecting": 16,
+   "false_per_scan": 0.0,
+   "threshold": 0.975,
+   "calibration_patients": 226,
+   "null_size": null,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.0,
+    "ci95": [
+     0.0,
+     0.1234
+    ],
+    "class": "holds",
+    "sens_e2e": 0.0254
+   }
+  },
+  "D2-noLj|pedims|P2|0.2": {
+   "cell": "D2-noLj|pedims",
+   "procedure": "P2",
+   "target": 0.2,
+   "nominal": 0.1,
+   "estimate": 0.0,
+   "ci95": [
+    0.0,
+    0.1234
+   ],
+   "class": "holds",
+   "ci_bonferroni": [
+    0.0,
+    0.2255
+   ],
+   "class_bonferroni": "inconclusive",
+   "uninformative_abstention": true,
+   "n_sel": 28,
+   "sens_e2e": 0.0254,
+   "sens_e2e_ci": [
+    0.0089,
+    0.0702
+   ],
+   "micro_fdr": 0.0,
+   "scans": 28,
+   "patients": 9,
+   "scans_selecting": 16,
+   "false_per_scan": 0.0,
+   "threshold": 0.975,
+   "calibration_patients": 226,
+   "null_size": null,
+   "preregistered_with_Ljubljana": {
+    "estimate": 0.0,
+    "ci95": [
+     0.0,
+     0.1234
+    ],
+    "class": "holds",
+    "sens_e2e": 0.0254
+   }
+  }
+ },
+ "B_baselines": {
+  "SUB|D3|ms3seg|0.1": {
+   "cell": "D3|ms3seg",
+   "target": 0.1,
+   "estimate": 0.0649,
+   "ci95": [
+    0.0475,
+    0.0862
+   ],
+   "class": "holds",
+   "uninformative_abstention": false,
+   "sens_e2e": 0.1931,
+   "n_sel_mean": 723.1,
+   "scans": 100,
+   "patients": 100,
+   "draws": 200,
+   "null_size": 82,
+   "realised_fdr_draws_q025_q975": [
+    0.0036,
+    0.1154
+   ],
+   "share_draws_above_alpha": 0.145,
+   "sens_draws_q025_q975": [
+    0.008,
+    0.3796
+   ]
+  },
+  "LRhier|D3|ms3seg|0.1": {
+   "cell": "D3|ms3seg",
+   "target": 0.1,
+   "estimate": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "class": "holds",
+   "uninformative_abstention": true,
+   "batch_fdp": null,
+   "batch_fdp_ci95": null,
+   "n_sel": 0,
+   "sens_e2e": 0.0,
+   "scans_selecting": 0,
+   "calibration_groups": 85
+  },
+  "B3_LTT_from_v03|D3|ms3seg|0.1": {
+   "estimate": 0.0826,
+   "ci95": [
+    0.0399,
+    0.1275
+   ],
+   "sens_e2e": 0.0924,
+   "n_sel": 336,
+   "class": "holds"
+  },
+  "SUB|D3|ms3seg|0.2": {
+   "cell": "D3|ms3seg",
+   "target": 0.2,
+   "estimate": 0.1165,
+   "ci95": [
+    0.094,
+    0.1425
+   ],
+   "class": "holds",
+   "uninformative_abstention": false,
+   "sens_e2e": 0.3761,
+   "n_sel_mean": 1443.8,
+   "scans": 100,
+   "patients": 100,
+   "draws": 200,
+   "null_size": 82,
+   "realised_fdr_draws_q025_q975": [
+    0.0678,
+    0.153
+   ],
+   "share_draws_above_alpha": 0.0,
+   "sens_draws_q025_q975": [
+    0.2029,
+    0.4693
+   ]
+  },
+  "LRhier|D3|ms3seg|0.2": {
+   "cell": "D3|ms3seg",
+   "target": 0.2,
+   "estimate": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "class": "holds",
+   "uninformative_abstention": true,
+   "batch_fdp": null,
+   "batch_fdp_ci95": null,
+   "n_sel": 0,
+   "sens_e2e": 0.0,
+   "scans_selecting": 0,
+   "calibration_groups": 85
+  },
+  "B3_LTT_from_v03|D3|ms3seg|0.2": {
+   "estimate": 0.181,
+   "ci95": [
+    0.1525,
+    0.2131
+   ],
+   "sens_e2e": 0.4896,
+   "n_sel": 1961,
+   "class": "holds"
+  },
+  "SUB|D3|muslim|0.1": {
+   "cell": "D3|muslim",
+   "target": 0.1,
+   "estimate": 0.0278,
+   "ci95": [
+    0.0141,
+    0.0447
+   ],
+   "class": "holds",
+   "uninformative_abstention": false,
+   "sens_e2e": 0.0706,
+   "n_sel_mean": 140.5,
+   "scans": 51,
+   "patients": 51,
+   "draws": 200,
+   "null_size": 82,
+   "realised_fdr_draws_q025_q975": [
+    0.0,
+    0.0788
+   ],
+   "share_draws_above_alpha": 0.01,
+   "sens_draws_q025_q975": [
+    0.0,
+    0.2464
+   ]
+  },
+  "LRhier|D3|muslim|0.1": {
+   "cell": "D3|muslim",
+   "target": 0.1,
+   "estimate": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "class": "holds",
+   "uninformative_abstention": true,
+   "batch_fdp": null,
+   "batch_fdp_ci95": null,
+   "n_sel": 0,
+   "sens_e2e": 0.0,
+   "scans_selecting": 0,
+   "calibration_groups": 85
+  },
+  "B3_LTT_from_v03|D3|muslim|0.1": {
+   "estimate": 0.134,
+   "ci95": [
+    0.0621,
+    0.2256
+   ],
+   "sens_e2e": 0.0187,
+   "n_sel": 44,
+   "class": "inconclusive"
+  },
+  "SUB|D3|muslim|0.2": {
+   "cell": "D3|muslim",
+   "target": 0.2,
+   "estimate": 0.0741,
+   "ci95": [
+    0.0517,
+    0.0981
+   ],
+   "class": "holds",
+   "uninformative_abstention": false,
+   "sens_e2e": 0.2097,
+   "n_sel_mean": 423.1,
+   "scans": 51,
+   "patients": 51,
+   "draws": 200,
+   "null_size": 82,
+   "realised_fdr_draws_q025_q975": [
+    0.0255,
+    0.1298
+   ],
+   "share_draws_above_alpha": 0.0,
+   "sens_draws_q025_q975": [
+    0.0544,
+    0.3158
+   ]
+  },
+  "LRhier|D3|muslim|0.2": {
+   "cell": "D3|muslim",
+   "target": 0.2,
+   "estimate": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "class": "holds",
+   "uninformative_abstention": true,
+   "batch_fdp": null,
+   "batch_fdp_ci95": null,
+   "n_sel": 0,
+   "sens_e2e": 0.0,
+   "scans_selecting": 0,
+   "calibration_groups": 85
+  },
+  "B3_LTT_from_v03|D3|muslim|0.2": {
+   "estimate": 0.1588,
+   "ci95": [
+    0.1188,
+    0.1967
+   ],
+   "sens_e2e": 0.3606,
+   "n_sel": 781,
+   "class": "holds"
+  },
+  "SUB|D3|pedims|0.1": {
+   "cell": "D3|pedims",
+   "target": 0.1,
+   "estimate": 0.0289,
+   "ci95": [
+    0.0144,
+    0.0467
+   ],
+   "class": "holds",
+   "uninformative_abstention": false,
+   "sens_e2e": 0.1161,
+   "n_sel_mean": 138.0,
+   "scans": 28,
+   "patients": 9,
+   "draws": 200,
+   "null_size": 82,
+   "realised_fdr_draws_q025_q975": [
+    0.0063,
+    0.0811
+   ],
+   "share_draws_above_alpha": 0.005,
+   "sens_draws_q025_q975": [
+    0.0063,
+    0.3499
+   ]
+  },
+  "LRhier|D3|pedims|0.1": {
+   "cell": "D3|pedims",
+   "target": 0.1,
+   "estimate": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "class": "holds",
+   "uninformative_abstention": true,
+   "batch_fdp": null,
+   "batch_fdp_ci95": null,
+   "n_sel": 0,
+   "sens_e2e": 0.0,
+   "scans_selecting": 0,
+   "calibration_groups": 85
+  },
+  "B3_LTT_from_v03|D3|pedims|0.1": {
+   "estimate": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "sens_e2e": 0.0389,
+   "n_sel": 43,
+   "class": "holds"
+  },
+  "SUB|D3|pedims|0.2": {
+   "cell": "D3|pedims",
+   "target": 0.2,
+   "estimate": 0.0746,
+   "ci95": [
+    0.0481,
+    0.1071
+   ],
+   "class": "holds",
+   "uninformative_abstention": false,
+   "sens_e2e": 0.292,
+   "n_sel_mean": 356.7,
+   "scans": 28,
+   "patients": 9,
+   "draws": 200,
+   "null_size": 82,
+   "realised_fdr_draws_q025_q975": [
+    0.0224,
+    0.1128
+   ],
+   "share_draws_above_alpha": 0.0,
+   "sens_draws_q025_q975": [
+    0.0978,
+    0.4576
+   ]
+  },
+  "LRhier|D3|pedims|0.2": {
+   "cell": "D3|pedims",
+   "target": 0.2,
+   "estimate": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "class": "holds",
+   "uninformative_abstention": true,
+   "batch_fdp": null,
+   "batch_fdp_ci95": null,
+   "n_sel": 0,
+   "sens_e2e": 0.0,
+   "scans_selecting": 0,
+   "calibration_groups": 85
+  },
+  "B3_LTT_from_v03|D3|pedims|0.2": {
+   "estimate": 0.1137,
+   "ci95": [
+    0.0756,
+    0.1524
+   ],
+   "sens_e2e": 0.4991,
+   "n_sel": 623,
+   "class": "holds"
+  },
+  "SUB|D2|mslesseg|0.1": {
+   "cell": "D2|mslesseg",
+   "target": 0.1,
+   "estimate": 0.0011,
+   "ci95": [
+    0.0003,
+    0.0021
+   ],
+   "class": "holds",
+   "uninformative_abstention": true,
+   "sens_e2e": 0.0072,
+   "n_sel_mean": 24.8,
+   "scans": 115,
+   "patients": 75,
+   "draws": 200,
+   "null_size": 168,
+   "realised_fdr_draws_q025_q975": [
+    0.0,
+    0.0109
+   ],
+   "share_draws_above_alpha": 0.0,
+   "sens_draws_q025_q975": [
+    0.0,
+    0.0458
+   ]
+  },
+  "LRhier|D2|mslesseg|0.1": {
+   "cell": "D2|mslesseg",
+   "target": 0.1,
+   "estimate": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "class": "holds",
+   "uninformative_abstention": true,
+   "batch_fdp": null,
+   "batch_fdp_ci95": null,
+   "n_sel": 0,
+   "sens_e2e": 0.0,
+   "scans_selecting": 0,
+   "calibration_groups": 170
+  },
+  "B3_LTT_from_v03|D2|mslesseg|0.1": {
+   "estimate": 0.0087,
+   "ci95": [
+    0.0,
+    0.0294
+   ],
+   "sens_e2e": 0.0,
+   "n_sel": 1,
+   "class": "holds"
+  },
+  "SUB|D2|mslesseg|0.2": {
+   "cell": "D2|mslesseg",
+   "target": 0.2,
+   "estimate": 0.0101,
+   "ci95": [
+    0.0044,
+    0.0176
+   ],
+   "class": "holds",
+   "uninformative_abstention": false,
+   "sens_e2e": 0.0724,
+   "n_sel_mean": 254.9,
+   "scans": 115,
+   "patients": 75,
+   "draws": 200,
+   "null_size": 168,
+   "realised_fdr_draws_q025_q975": [
+    0.0,
+    0.0275
+   ],
+   "share_draws_above_alpha": 0.0,
+   "sens_draws_q025_q975": [
+    0.0135,
+    0.2022
+   ]
+  },
+  "LRhier|D2|mslesseg|0.2": {
+   "cell": "D2|mslesseg",
+   "target": 0.2,
+   "estimate": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "class": "holds",
+   "uninformative_abstention": true,
+   "batch_fdp": null,
+   "batch_fdp_ci95": null,
+   "n_sel": 0,
+   "sens_e2e": 0.0,
+   "scans_selecting": 0,
+   "calibration_groups": 170
+  },
+  "B3_LTT_from_v03|D2|mslesseg|0.2": {
+   "estimate": 0.094,
+   "ci95": [
+    0.0734,
+    0.115
+   ],
+   "sens_e2e": 0.4596,
+   "n_sel": 1706,
+   "class": "holds"
+  },
+  "SUB|D2|openms|0.1": {
+   "cell": "D2|openms",
+   "target": 0.1,
+   "estimate": 0.0001,
+   "ci95": [
+    0.0,
+    0.0002
+   ],
+   "class": "holds",
+   "uninformative_abstention": true,
+   "sens_e2e": 0.0055,
+   "n_sel_mean": 3.7,
+   "scans": 10,
+   "patients": 10,
+   "draws": 200,
+   "null_size": 232,
+   "realised_fdr_draws_q025_q975": [
+    0.0,
+    0.0
+   ],
+   "share_draws_above_alpha": 0.0,
+   "sens_draws_q025_q975": [
+    0.0,
+    0.018
+   ]
+  },
+  "LRhier|D2|openms|0.1": {
+   "cell": "D2|openms",
+   "target": 0.1,
+   "estimate": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "class": "holds",
+   "uninformative_abstention": true,
+   "batch_fdp": null,
+   "batch_fdp_ci95": null,
+   "n_sel": 0,
+   "sens_e2e": 0.0,
+   "scans_selecting": 0,
+   "calibration_groups": 235
+  },
+  "B3_LTT_from_v03|D2|openms|0.1": {
+   "estimate": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "sens_e2e": 0.0165,
+   "n_sel": 11,
+   "class": "holds"
+  },
+  "SUB|D2|openms|0.2": {
+   "cell": "D2|openms",
+   "target": 0.2,
+   "estimate": 0.0114,
+   "ci95": [
+    0.0001,
+    0.0332
+   ],
+   "class": "holds",
+   "uninformative_abstention": false,
+   "sens_e2e": 0.0656,
+   "n_sel_mean": 44.9,
+   "scans": 10,
+   "patients": 10,
+   "draws": 200,
+   "null_size": 232,
+   "realised_fdr_draws_q025_q975": [
+    0.0,
+    0.0325
+   ],
+   "share_draws_above_alpha": 0.0,
+   "sens_draws_q025_q975": [
+    0.012,
+    0.174
+   ]
+  },
+  "LRhier|D2|openms|0.2": {
+   "cell": "D2|openms",
+   "target": 0.2,
+   "estimate": 0.1194,
+   "ci95": [
+    0.0736,
+    0.1693
+   ],
+   "class": "holds",
+   "uninformative_abstention": false,
+   "batch_fdp": 0.0897,
+   "batch_fdp_ci95": [
+    0.0556,
+    0.1429
+   ],
+   "n_sel": 435,
+   "sens_e2e": 0.5937,
+   "scans_selecting": 10,
+   "calibration_groups": 235
+  },
+  "B3_LTT_from_v03|D2|openms|0.2": {
+   "estimate": 0.0723,
+   "ci95": [
+    0.0311,
+    0.1159
+   ],
+   "sens_e2e": 0.4168,
+   "n_sel": 294,
+   "class": "holds"
+  },
+  "SUB|D2|ms3seg|0.1": {
+   "cell": "D2|ms3seg",
+   "target": 0.1,
+   "estimate": 0.0499,
+   "ci95": [
+    0.0326,
+    0.071
+   ],
+   "class": "holds",
+   "uninformative_abstention": false,
+   "sens_e2e": 0.1173,
+   "n_sel_mean": 432.8,
+   "scans": 100,
+   "patients": 100,
+   "draws": 200,
+   "null_size": 141,
+   "realised_fdr_draws_q025_q975": [
+    0.0025,
+    0.0928
+   ],
+   "share_draws_above_alpha": 0.015,
+   "sens_draws_q025_q975": [
+    0.0051,
+    0.2926
+   ]
+  },
+  "LRhier|D2|ms3seg|0.1": {
+   "cell": "D2|ms3seg",
+   "target": 0.1,
+   "estimate": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "class": "holds",
+   "uninformative_abstention": true,
+   "batch_fdp": null,
+   "batch_fdp_ci95": null,
+   "n_sel": 0,
+   "sens_e2e": 0.0,
+   "scans_selecting": 0,
+   "calibration_groups": 145
+  },
+  "B3_LTT_from_v03|D2|ms3seg|0.1": {
+   "estimate": 0.0462,
+   "ci95": [
+    0.0176,
+    0.0805
+   ],
+   "sens_e2e": 0.0659,
+   "n_sel": 235,
+   "class": "holds"
+  },
+  "SUB|D2|ms3seg|0.2": {
+   "cell": "D2|ms3seg",
+   "target": 0.2,
+   "estimate": 0.1065,
+   "ci95": [
+    0.0841,
+    0.133
+   ],
+   "class": "holds",
+   "uninformative_abstention": false,
+   "sens_e2e": 0.3355,
+   "n_sel_mean": 1280.3,
+   "scans": 100,
+   "patients": 100,
+   "draws": 200,
+   "null_size": 141,
+   "realised_fdr_draws_q025_q975": [
+    0.0591,
+    0.1426
+   ],
+   "share_draws_above_alpha": 0.0,
+   "sens_draws_q025_q975": [
+    0.1523,
+    0.4493
+   ]
+  },
+  "LRhier|D2|ms3seg|0.2": {
+   "cell": "D2|ms3seg",
+   "target": 0.2,
+   "estimate": 0.2122,
+   "ci95": [
+    0.1875,
+    0.2387
+   ],
+   "class": "holds",
+   "uninformative_abstention": false,
+   "batch_fdp": 0.2017,
+   "batch_fdp_ci95": [
+    0.184,
+    0.2211
+   ],
+   "n_sel": 2350,
+   "sens_e2e": 0.5593,
+   "scans_selecting": 100,
+   "calibration_groups": 145
+  },
+  "B3_LTT_from_v03|D2|ms3seg|0.2": {
+   "estimate": 0.1901,
+   "ci95": [
+    0.1612,
+    0.2222
+   ],
+   "sens_e2e": 0.5072,
+   "n_sel": 2053,
+   "class": "holds"
+  },
+  "SUB|D2|muslim|0.1": {
+   "cell": "D2|muslim",
+   "target": 0.1,
+   "estimate": 0.0251,
+   "ci95": [
+    0.0077,
+    0.0464
+   ],
+   "class": "holds",
+   "uninformative_abstention": true,
+   "sens_e2e": 0.0137,
+   "n_sel_mean": 29.2,
+   "scans": 51,
+   "patients": 51,
+   "draws": 200,
+   "null_size": 191,
+   "realised_fdr_draws_q025_q975": [
+    0.0,
+    0.074
+   ],
+   "share_draws_above_alpha": 0.0,
+   "sens_draws_q025_q975": [
+    0.0,
+    0.0574
+   ]
+  },
+  "LRhier|D2|muslim|0.1": {
+   "cell": "D2|muslim",
+   "target": 0.1,
+   "estimate": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "class": "holds",
+   "uninformative_abstention": true,
+   "batch_fdp": null,
+   "batch_fdp_ci95": null,
+   "n_sel": 0,
+   "sens_e2e": 0.0,
+   "scans_selecting": 0,
+   "calibration_groups": 194
+  },
+  "B3_LTT_from_v03|D2|muslim|0.1": {
+   "estimate": 0.134,
+   "ci95": [
+    0.0621,
+    0.2256
+   ],
+   "sens_e2e": 0.0181,
+   "n_sel": 43,
+   "class": "inconclusive"
+  },
+  "SUB|D2|muslim|0.2": {
+   "cell": "D2|muslim",
+   "target": 0.2,
+   "estimate": 0.0709,
+   "ci95": [
+    0.0357,
+    0.1134
+   ],
+   "class": "holds",
+   "uninformative_abstention": false,
+   "sens_e2e": 0.0947,
+   "n_sel_mean": 189.7,
+   "scans": 51,
+   "patients": 51,
+   "draws": 200,
+   "null_size": 191,
+   "realised_fdr_draws_q025_q975": [
+    0.0279,
+    0.1278
+   ],
+   "share_draws_above_alpha": 0.0,
+   "sens_draws_q025_q975": [
+    0.0225,
+    0.193
+   ]
+  },
+  "LRhier|D2|muslim|0.2": {
+   "cell": "D2|muslim",
+   "target": 0.2,
+   "estimate": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "class": "holds",
+   "uninformative_abstention": true,
+   "batch_fdp": null,
+   "batch_fdp_ci95": null,
+   "n_sel": 0,
+   "sens_e2e": 0.0,
+   "scans_selecting": 0,
+   "calibration_groups": 194
+  },
+  "B3_LTT_from_v03|D2|muslim|0.2": {
+   "estimate": 0.151,
+   "ci95": [
+    0.1114,
+    0.1876
+   ],
+   "sens_e2e": 0.3524,
+   "n_sel": 756,
+   "class": "holds"
+  },
+  "SUB|D2|pedims|0.1": {
+   "cell": "D2|pedims",
+   "target": 0.1,
+   "estimate": 0.0072,
+   "ci95": [
+    0.0008,
+    0.0195
+   ],
+   "class": "holds",
+   "uninformative_abstention": true,
+   "sens_e2e": 0.036,
+   "n_sel_mean": 41.5,
+   "scans": 28,
+   "patients": 9,
+   "draws": 200,
+   "null_size": 232,
+   "realised_fdr_draws_q025_q975": [
+    0.0,
+    0.0227
+   ],
+   "share_draws_above_alpha": 0.0,
+   "sens_draws_q025_q975": [
+    0.0,
+    0.0861
+   ]
+  },
+  "LRhier|D2|pedims|0.1": {
+   "cell": "D2|pedims",
+   "target": 0.1,
+   "estimate": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "class": "holds",
+   "uninformative_abstention": true,
+   "batch_fdp": null,
+   "batch_fdp_ci95": null,
+   "n_sel": 0,
+   "sens_e2e": 0.0,
+   "scans_selecting": 0,
+   "calibration_groups": 236
+  },
+  "B3_LTT_from_v03|D2|pedims|0.1": {
+   "estimate": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "sens_e2e": 0.0317,
+   "n_sel": 35,
+   "class": "holds"
+  },
+  "SUB|D2|pedims|0.2": {
+   "cell": "D2|pedims",
+   "target": 0.2,
+   "estimate": 0.0359,
+   "ci95": [
+    0.0168,
+    0.0601
+   ],
+   "class": "holds",
+   "uninformative_abstention": false,
+   "sens_e2e": 0.1305,
+   "n_sel_mean": 154.6,
+   "scans": 28,
+   "patients": 9,
+   "draws": 200,
+   "null_size": 232,
+   "realised_fdr_draws_q025_q975": [
+    0.0065,
+    0.0856
+   ],
+   "share_draws_above_alpha": 0.0,
+   "sens_draws_q025_q975": [
+    0.0743,
+    0.28
+   ]
+  },
+  "LRhier|D2|pedims|0.2": {
+   "cell": "D2|pedims",
+   "target": 0.2,
+   "estimate": 0.1565,
+   "ci95": [
+    0.1149,
+    0.1982
+   ],
+   "class": "holds",
+   "uninformative_abstention": false,
+   "batch_fdp": 0.1525,
+   "batch_fdp_ci95": [
+    0.1246,
+    0.1982
+   ],
+   "n_sel": 767,
+   "sens_e2e": 0.5888,
+   "scans_selecting": 28,
+   "calibration_groups": 236
+  },
+  "B3_LTT_from_v03|D2|pedims|0.2": {
+   "estimate": 0.1087,
+   "ci95": [
+    0.0651,
+    0.1481
+   ],
+   "sens_e2e": 0.4873,
+   "n_sel": 608,
+   "class": "holds"
+  }
+ },
+ "reproduction_check": {
+  "D3|ms3seg|P1|0.1": {
+   "recomputed": 0.1067,
+   "v03_record": 0.1067,
+   "equal": true
+  },
+  "D3|ms3seg|P1|0.2": {
+   "recomputed": 0.1234,
+   "v03_record": 0.1234,
+   "equal": true
+  },
+  "D3|muslim|P1|0.1": {
+   "recomputed": 0.1218,
+   "v03_record": 0.1218,
+   "equal": true
+  },
+  "D3|muslim|P1|0.2": {
+   "recomputed": 0.0965,
+   "v03_record": 0.0965,
+   "equal": true
+  },
+  "D3|pedims|P1|0.1": {
+   "recomputed": 0.0406,
+   "v03_record": 0.0406,
+   "equal": true
+  },
+  "D3|pedims|P1|0.2": {
+   "recomputed": 0.0858,
+   "v03_record": 0.0858,
+   "equal": true
+  },
+  "D2|mslesseg|P1|0.1": {
+   "recomputed": 0.0087,
+   "v03_record": 0.0087,
+   "equal": true
+  },
+  "D2|mslesseg|P1|0.2": {
+   "recomputed": 0.0183,
+   "v03_record": 0.0183,
+   "equal": true
+  },
+  "D2|openms|P1|0.1": {
+   "recomputed": 0.0,
+   "v03_record": 0.0,
+   "equal": true
+  },
+  "D2|openms|P1|0.2": {
+   "recomputed": 0.0111,
+   "v03_record": 0.0111,
+   "equal": true
+  },
+  "D2|ms3seg|P1|0.1": {
+   "recomputed": 0.0872,
+   "v03_record": 0.0872,
+   "equal": true
+  },
+  "D2|ms3seg|P1|0.2": {
+   "recomputed": 0.1155,
+   "v03_record": 0.1155,
+   "equal": true
+  },
+  "D2|muslim|P1|0.1": {
+   "recomputed": 0.0824,
+   "v03_record": 0.0824,
+   "equal": true
+  },
+  "D2|muslim|P1|0.2": {
+   "recomputed": 0.0997,
+   "v03_record": 0.0997,
+   "equal": true
+  },
+  "D2|pedims|P1|0.1": {
+   "recomputed": 0.0065,
+   "v03_record": 0.0065,
+   "equal": true
+  },
+  "D2|pedims|P1|0.2": {
+   "recomputed": 0.0496,
+   "v03_record": 0.0496,
+   "equal": true
+  }
+ },
+ "reproduction_all_equal": true,
+ "runtime_s": 42.2
+}

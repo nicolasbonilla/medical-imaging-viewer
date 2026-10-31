@@ -187,8 +187,9 @@ sensitivity; selections.
 0.164 [0.136, 0.196] / 0.230 [0.206, 0.255] — **violated at both**; Muslim 0.144 [0.107, 0.180]
 — **violated** / 0.235; PediMS 0.106 / 0.197. Conformal risk control (B2): MS3SEG 0.072 / 0.129;
 **Muslim 0.180 [0.103, 0.265] at α = 0.1 — violated**; PediMS 0.069 / 0.098. Learn-then-Test (B3):
-MS3SEG 0.083 / 0.181; Muslim 0.134 [0.062, 0.226] / 0.159; PediMS 0.000 / 0.114. Conformal BH (P1)
-is the only procedure with no violated D3 cell.
+MS3SEG 0.083 / 0.181; Muslim 0.134 [0.062, 0.226] / 0.159; PediMS 0.000 / 0.114. ~~Conformal BH (P1)
+is the only procedure with no violated D3 cell.~~ **Corrected 2026-10-31:** Learn-then-Test (B3) had no
+violated D3 (or D2) cell either; conformal BH and B3 are the two procedures without one (journal manuscript §6.4).
 
 **1-mm sites under foreign calibration are over-conservative.** Leave-one-site-out and thick →
 1-mm calibration made MSLesSeg nearly silent (P1 α = 0.1: 34 selections, sensitivity 0.010;

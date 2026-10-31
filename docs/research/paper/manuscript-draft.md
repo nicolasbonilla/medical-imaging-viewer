@@ -1,3 +1,6 @@
+> **Superseded 2026-10-31** by the journal manuscript `docs/research/paper/manuscript/manuscript.md` (with
+> `NUMBERS_CHECK.md`). This draft is kept as the working record of v0.3.
+
 # Does conformal lesion-level false-discovery control survive site, slice-thickness and segmenter shift in MS MRI? A pre-registered five-cohort audit with training-overlap control
 
 *Draft v0.3 (2026-10-21; healthy-control addendum 2026-10-24) — target venue: MELBA (full) / MICCAI UNSURE workshop (short). Every
@@ -308,7 +311,7 @@ fold-consensus score S_cons every 1-mm → thick P1 cell holds (Muslim α = 0.1:
 and no P2 cell is violated, at a modest power cost (sensitivity 0.30 vs 0.34 at α = 0.2) — a
 pre-specified sensitivity analysis, not the primary result.
 
-Among all procedures, only conformal BH had no violated 1-mm → thick cell: the precision-matched
+~~Among all procedures, only conformal BH had no violated 1-mm → thick cell:~~ *(Corrected 2026-10-31: Learn-then-Test (B3) had none either; see `manuscript/manuscript.md` §6.4.)* Violated 1-mm → thick cells: the precision-matched
 threshold B1 was violated on MS3SEG at α = 0.1 and 0.2 (0.164 [0.136, 0.196]; 0.230 [0.206, 0.255])
 and on Muslim at α = 0.1 (0.144 [0.107, 0.180]); conformal risk control B2 on Muslim at α = 0.1
 (0.180 [0.103, 0.265]).

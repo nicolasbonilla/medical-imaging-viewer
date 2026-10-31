@@ -1,0 +1,55 @@
+{
+ "description": "GitHub events for the Paper A branches (public remote timestamps), retrieved 2026-10-31 with `gh api repos/nicolasbonilla/medical-imaging-viewer/events --paginate` (read-only). Used by the manuscript (section 5.1) as the external timestamp of the pre-registration.",
+ "retrieved": "2026-10-31",
+ "events": [
+  {
+   "before": null,
+   "created_at": "2026-10-21T03:09:07Z",
+   "head": null,
+   "ref": "research/paper-a-v0.3",
+   "type": "CreateEvent"
+  },
+  {
+   "before": "2fa812dcc6274befa301fba0cc0330b7cfc0cfc9",
+   "created_at": "2026-10-21T03:30:32Z",
+   "head": "073114591e5b514dc79ad48172b56dc0010f445c",
+   "ref": "refs/heads/research/paper-a-v0.3",
+   "type": "PushEvent"
+  },
+  {
+   "before": "073114591e5b514dc79ad48172b56dc0010f445c",
+   "created_at": "2026-10-21T05:14:27Z",
+   "head": "a3e5f9d8c62ea9d9bfd51bf8d291656b7fdee4f5",
+   "ref": "refs/heads/research/paper-a-v0.3",
+   "type": "PushEvent"
+  },
+  {
+   "before": "a3e5f9d8c62ea9d9bfd51bf8d291656b7fdee4f5",
+   "created_at": "2026-10-21T05:14:37Z",
+   "head": "cabb99d2e17dd595bd9e189dad6b28e6246a5b04",
+   "ref": "refs/heads/research/paper-a-v0.3",
+   "type": "PushEvent"
+  },
+  {
+   "before": "cabb99d2e17dd595bd9e189dad6b28e6246a5b04",
+   "created_at": "2026-10-24T13:52:31Z",
+   "head": "caa47e7ab7c60fa792f5a7402d11f8c95a6318a4",
+   "ref": "refs/heads/research/paper-a-v0.3",
+   "type": "PushEvent"
+  },
+  {
+   "before": "caa47e7ab7c60fa792f5a7402d11f8c95a6318a4",
+   "created_at": "2026-10-24T15:03:30Z",
+   "head": "413f5b573b9d4b455f367e7399afcab78180cfd4",
+   "ref": "refs/heads/research/paper-a-v0.3",
+   "type": "PushEvent"
+  },
+  {
+   "before": "413f5b573b9d4b455f367e7399afcab78180cfd4",
+   "created_at": "2026-10-24T15:09:48Z",
+   "head": "f3b22cdc93ac692380dda9bf9af96d5ce00f2275",
+   "ref": "refs/heads/research/paper-a-v0.3",
+   "type": "PushEvent"
+  }
+ ]
+}

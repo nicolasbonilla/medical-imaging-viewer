@@ -1,0 +1,610 @@
+% Paper A manuscript — bibliography.
+% Policy: only entries whose existence and bibliographic details were checked against a primary
+% source are included. The provenance of each check is given in a comment above the entry:
+%   [V-notes]  checked during the 2026-10-17/-28 literature verification (Crossref / arXiv / PMC /
+%              publisher page), recorded in research_notes/ (untracked folder of the main checkout):
+%              "Plan de publicaciones de MSTool AI/conformal_theory_frontier.md",
+%              ".../conformal_medical_imaging.md", ".../ms_segmentation_sota_datasets.md",
+%              ".../clinical_mcdonald_dis.md", "Comprobaciones de novedad/verificaciones_2026-10-17.md"
+%   [V-data]   dataset papers/records checked when the data were downloaded (docs/research/
+%              cohorts-extra.md on branch research/cohorts-extra; data/registry.yaml; protocol addendum)
+%   [V-classic] standard reference whose details are unambiguous (textbook / landmark paper)
+%   [OWNER-CHECK] real work, but one field (marked) could not be re-checked offline on 2026-10-31;
+%              listed in RESUMEN_PARA_EL_DUEÑO.md as a pre-submission check.
+% No entry was generated from memory alone without one of these tags.
+
+% ---------------------------------------------------------------- multiple testing, conformal
+% [V-classic]
+@article{benjamini1995controlling,
+  author  = {Benjamini, Yoav and Hochberg, Yosef},
+  title   = {Controlling the False Discovery Rate: A Practical and Powerful Approach to Multiple Testing},
+  journal = {Journal of the Royal Statistical Society: Series B (Methodological)},
+  volume  = {57},
+  number  = {1},
+  pages   = {289--300},
+  year    = {1995},
+  doi     = {10.1111/j.2517-6161.1995.tb02031.x}
+}
+
+% [V-notes] listed in Song et al. (2026) bibliography; volume/pages [V-classic]
+@article{genovese2006exceedance,
+  author  = {Genovese, Christopher R. and Wasserman, Larry},
+  title   = {Exceedance Control of the False Discovery Proportion},
+  journal = {Journal of the American Statistical Association},
+  volume  = {101},
+  number  = {476},
+  pages   = {1408--1417},
+  year    = {2006}
+}
+
+% [V-notes] Crossref
+@article{bates2023testing,
+  author  = {Bates, Stephen and Cand{\`e}s, Emmanuel and Lei, Lihua and Romano, Yaniv and Sesia, Matteo},
+  title   = {Testing for Outliers with Conformal p-Values},
+  journal = {The Annals of Statistics},
+  volume  = {51},
+  number  = {1},
+  pages   = {149--178},
+  year    = {2023},
+  doi     = {10.1214/22-AOS2244}
+}
+
+% [V-notes] arXiv 2210.01408, journal comment "Journal of Machine Learning Research";
+% [OWNER-CHECK] volume/number 24(244) not re-checked
+@article{jin2023selection,
+  author  = {Jin, Ying and Cand{\`e}s, Emmanuel J.},
+  title   = {Selection by Prediction with Conformal p-Values},
+  journal = {Journal of Machine Learning Research},
+  volume  = {24},
+  number  = {244},
+  pages   = {1--41},
+  year    = {2023},
+  eprint  = {2210.01408},
+  archivePrefix = {arXiv}
+}
+
+% [V-notes] Crossref
+@article{jin2026weighted,
+  author  = {Jin, Ying and Cand{\`e}s, Emmanuel J.},
+  title   = {Model-Free Selective Inference under Covariate Shift via Weighted Conformal p-Values},
+  journal = {Biometrika},
+  volume  = {113},
+  number  = {1},
+  pages   = {asaf066},
+  year    = {2026},
+  doi     = {10.1093/biomet/asaf066}
+}
+
+% [V-classic]
+@inproceedings{tibshirani2019conformal,
+  author    = {Tibshirani, Ryan J. and Barber, Rina Foygel and Cand{\`e}s, Emmanuel J. and Ramdas, Aaditya},
+  title     = {Conformal Prediction Under Covariate Shift},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {32},
+  year      = {2019}
+}
+
+% [V-notes] arXiv 2202.13415; journal AoS 51(2) 2023 [OWNER-CHECK pages]
+@article{barber2023beyond,
+  author  = {Barber, Rina Foygel and Cand{\`e}s, Emmanuel J. and Ramdas, Aaditya and Tibshirani, Ryan J.},
+  title   = {Conformal Prediction beyond Exchangeability},
+  journal = {The Annals of Statistics},
+  volume  = {51},
+  number  = {2},
+  year    = {2023},
+  eprint  = {2202.13415},
+  archivePrefix = {arXiv}
+}
+
+% [V-classic]
+@book{vovk2005algorithmic,
+  author    = {Vovk, Vladimir and Gammerman, Alex and Shafer, Glenn},
+  title     = {Algorithmic Learning in a Random World},
+  publisher = {Springer},
+  address   = {New York},
+  year      = {2005}
+}
+
+% [V-notes] Crossref
+@article{vovk2013conditional,
+  author  = {Vovk, Vladimir},
+  title   = {Conditional Validity of Inductive Conformal Predictors},
+  journal = {Machine Learning},
+  volume  = {92},
+  number  = {2--3},
+  pages   = {349--376},
+  year    = {2013},
+  doi     = {10.1007/s10994-013-5355-6}
+}
+
+% [V-notes] Crossref
+@article{angelopoulos2025ltt,
+  author  = {Angelopoulos, Anastasios N. and Bates, Stephen and Cand{\`e}s, Emmanuel J. and Jordan, Michael I. and Lei, Lihua},
+  title   = {Learn Then Test: Calibrating Predictive Algorithms to Achieve Risk Control},
+  journal = {The Annals of Applied Statistics},
+  volume  = {19},
+  number  = {2},
+  pages   = {1641--1662},
+  year    = {2025},
+  doi     = {10.1214/24-AOAS1998}
+}
+
+% [V-notes] ICLR 2024 proceedings page; arXiv 2208.02814
+@inproceedings{angelopoulos2024crc,
+  author    = {Angelopoulos, Anastasios N. and Bates, Stephen and Fisch, Adam and Lei, Lihua and Schuster, Tal},
+  title     = {Conformal Risk Control},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2024},
+  eprint    = {2208.02814},
+  archivePrefix = {arXiv}
+}
+
+% [V-classic] (J. ACM 68(6), article 43)
+@article{bates2021rcps,
+  author  = {Bates, Stephen and Angelopoulos, Anastasios and Lei, Lihua and Malik, Jitendra and Jordan, Michael},
+  title   = {Distribution-Free, Risk-Controlling Prediction Sets},
+  journal = {Journal of the ACM},
+  volume  = {68},
+  number  = {6},
+  pages   = {43:1--43:34},
+  year    = {2021}
+}
+
+% [V-notes] ICLR 2024 (cited by Tan et al. 2025 related work)
+@inproceedings{farinhas2024nonexchangeable,
+  author    = {Farinhas and Zerva and Ulmer and Martins},
+  title     = {Non-Exchangeable Conformal Risk Control},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2024}
+}
+
+% [V-notes] IDEAS/RePEc + arXiv 1809.07441
+@article{dunn2023distribution,
+  author  = {Dunn, Robin and Wasserman, Larry and Ramdas, Aaditya},
+  title   = {Distribution-Free Prediction Sets for Two-Layer Hierarchical Models},
+  journal = {Journal of the American Statistical Association},
+  volume  = {118},
+  number  = {544},
+  pages   = {2491--2502},
+  year    = {2023},
+  doi     = {10.1080/01621459.2022.2060112}
+}
+
+% [V-notes] arXiv HTML read
+@misc{lee2025selection,
+  author        = {Lee, Y. and Ren, Z.},
+  title         = {Selection from Hierarchical Data with Conformal e-Values},
+  year          = {2025},
+  eprint        = {2501.02514},
+  archivePrefix = {arXiv},
+  primaryClass  = {stat.ME}
+}
+
+% [V-notes] Crossref query link recorded; volume/pages [V-classic]
+@article{wang2022false,
+  author  = {Wang, Ruodu and Ramdas, Aaditya},
+  title   = {False Discovery Rate Control with e-Values},
+  journal = {Journal of the Royal Statistical Society Series B: Statistical Methodology},
+  volume  = {84},
+  number  = {3},
+  pages   = {822--852},
+  year    = {2022}
+}
+
+% [V-notes] arXiv + PMLR
+@inproceedings{gazin2024transductive,
+  author    = {Gazin, Ulysse and Blanchard, Gilles and Roquain, Etienne},
+  title     = {Transductive Conformal Inference with Adaptive Scores},
+  booktitle = {Proceedings of the 27th International Conference on Artificial Intelligence and Statistics (AISTATS)},
+  series    = {Proceedings of Machine Learning Research},
+  volume    = {238},
+  year      = {2024},
+  eprint    = {2310.18108},
+  archivePrefix = {arXiv}
+}
+
+% [V-notes] arXiv abs + v2 HTML read
+@misc{song2026everywhere,
+  author        = {Song, Ziang and Jin, Ying and Cand{\`e}s, Emmanuel J.},
+  title         = {Everywhere Valid Bounds on False Discovery Proportions in Conformal Inference},
+  year          = {2026},
+  eprint        = {2605.20726},
+  archivePrefix = {arXiv},
+  primaryClass  = {stat.ME}
+}
+
+% [V-notes] Crossref
+@article{blanchard2020posthoc,
+  author  = {Blanchard, Gilles and Neuvial, Pierre and Roquain, Etienne},
+  title   = {Post Hoc Confidence Bounds on False Positives Using Reference Families},
+  journal = {The Annals of Statistics},
+  volume  = {48},
+  number  = {3},
+  pages   = {1281--1303},
+  year    = {2020},
+  doi     = {10.1214/19-AOS1847}
+}
+
+% [V-notes] Crossref
+@article{marandon2024adaptive,
+  author  = {Marandon, A. and Lei, L. and Mary, D. and Roquain, E.},
+  title   = {Adaptive Novelty Detection with False Discovery Rate Guarantee},
+  journal = {The Annals of Statistics},
+  volume  = {52},
+  number  = {1},
+  pages   = {157--183},
+  year    = {2024},
+  doi     = {10.1214/23-AOS2338}
+}
+
+% ---------------------------------------------------------------- conformal methods in medical imaging
+% [V-notes] arXiv abs
+@misc{mossina2025controlling,
+  author        = {Mossina and Friedrich},
+  title         = {Controlling False Positives in Image Segmentation via Conformal Prediction},
+  year          = {2025},
+  eprint        = {2511.15406},
+  archivePrefix = {arXiv}
+}
+
+% [V-notes] arXiv abs
+@misc{tan2025conformal,
+  author        = {Tan, Binyu and Wang, Zhiyuan and Duan, Jinhao and Xu, Kaidi and Shen, Heng Tao and Shi, Xiaoshuang and Shen, Fumin},
+  title         = {Conformal Lesion Segmentation for {3D} Medical Images},
+  year          = {2025},
+  eprint        = {2510.17897},
+  archivePrefix = {arXiv}
+}
+
+% [V-notes] PMLR 266 (COPA 2025); arXiv 2412.20167
+@inproceedings{hulsman2025conformal,
+  author    = {Hulsman and Comte and Bertolini and Wiesenthal and {Puertas Gallardo} and Ceresa},
+  title     = {Conformal Risk Control for Pulmonary Nodule Detection},
+  booktitle = {Proceedings of the Fourteenth Symposium on Conformal and Probabilistic Prediction with Applications (COPA)},
+  series    = {Proceedings of Machine Learning Research},
+  volume    = {266},
+  pages     = {445--463},
+  year      = {2025}
+}
+
+% [V-notes] arXiv abs (MICCAI UNSURE 2026)
+@misc{adhikary2026bound,
+  author        = {Adhikary and Chabi and Mastmeyer},
+  title         = {Bound-Aware Per-Organ Recall Risk Control for Multi-Organ {CT} Segmentation under Clinical Domain Shift},
+  howpublished  = {MICCAI UNSURE workshop 2026},
+  year          = {2026},
+  eprint        = {2608.18193},
+  archivePrefix = {arXiv},
+  note          = {Given names not recorded in our verification notes}
+}
+
+% [V-notes] PMC12022056
+@article{sreenivasan2025conformal,
+  author  = {Sreenivasan, A. P. and Vaivade, A. and Noui, Y. and {Emami Khoonsari}, P. and Burman, J. and Spjuth, O. and Kultima, K.},
+  title   = {Conformal Prediction Enables Disease Course Prediction and Allows Individualized Diagnostic Uncertainty in Multiple Sclerosis},
+  journal = {npj Digital Medicine},
+  volume  = {8},
+  pages   = {224},
+  year    = {2025},
+  doi     = {10.1038/s41746-025-01616-z}
+}
+
+% [V-notes] arXiv API (MICCAI 2024)
+@inproceedings{lambert2024robust,
+  author    = {Lambert and Forbes and Doyle and Dojat},
+  title     = {Robust Conformal Volume Estimation in {3D} Medical Images},
+  booktitle = {Medical Image Computing and Computer Assisted Intervention (MICCAI)},
+  year      = {2024},
+  eprint    = {2407.19938},
+  archivePrefix = {arXiv}
+}
+
+% [V-notes] arXiv 2311.08931v3; DOI from notes
+@article{molchanova2025structural,
+  author  = {Molchanova, N. and others},
+  title   = {Structural-Based Uncertainty in Deep Learning across Anatomical Scales: Analysis in White Matter Lesion Segmentation},
+  journal = {Computers in Biology and Medicine},
+  volume  = {184},
+  pages   = {109336},
+  year    = {2025},
+  doi     = {10.1016/j.compbiomed.2024.109336}
+}
+
+% [V-notes] arXiv 2206.15407
+@misc{malinin2022shifts,
+  author        = {Malinin, A. and others},
+  title         = {Shifts 2.0: Extending the Dataset of Real Distributional Shifts},
+  year          = {2022},
+  eprint        = {2206.15407},
+  archivePrefix = {arXiv}
+}
+
+% [V-classic]
+@inproceedings{lakshminarayanan2017simple,
+  author    = {Lakshminarayanan, Balaji and Pritzel, Alexander and Blundell, Charles},
+  title     = {Simple and Scalable Predictive Uncertainty Estimation Using Deep Ensembles},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {30},
+  year      = {2017}
+}
+
+% ---------------------------------------------------------------- segmenters and tools
+% [V-classic]
+@article{isensee2021nnunet,
+  author  = {Isensee, Fabian and Jaeger, Paul F. and Kohl, Simon A. A. and Petersen, Jens and Maier-Hein, Klaus H.},
+  title   = {{nnU-Net}: A Self-Configuring Method for Deep Learning-Based Biomedical Image Segmentation},
+  journal = {Nature Methods},
+  volume  = {18},
+  number  = {2},
+  pages   = {203--211},
+  year    = {2021},
+  doi     = {10.1038/s41592-020-01008-z}
+}
+
+% [V-notes] PMC12426979 (peer-reviewed version of the FLAMeS preprint, PMC12140514)
+@article{dereskewicz2025flames,
+  author  = {Dereskewicz, E. and La Rosa, F. and others},
+  title   = {A Novel Convolutional Neural Network for Automated Multiple Sclerosis Brain Lesion Segmentation},
+  journal = {Journal of Neuroimaging},
+  volume  = {35},
+  number  = {5},
+  pages   = {e70085},
+  year    = {2025},
+  doi     = {10.1111/jon.70085}
+}
+
+% [V-data] Zenodo record (weights v2.0, CC BY 4.0), pinned in the software's SOUP list
+@misc{flames2025weights,
+  author       = {Dereskewicz, E. and La Rosa, F. and others},
+  title        = {{FLAMeS} model weights, version 2.0 (nnU-Net Dataset004\_WML)},
+  howpublished = {Zenodo},
+  year         = {2025},
+  doi          = {10.5281/zenodo.17955359}
+}
+
+% [V-notes] publisher PDF read (NeuroImage: Clinical 42, 103611)
+@article{wiltgen2024lstai,
+  author  = {Wiltgen, T. and McGinnis, J. and others},
+  title   = {{LST-AI}: A Deep Learning Ensemble for Accurate {MS} Lesion Segmentation},
+  journal = {NeuroImage: Clinical},
+  volume  = {42},
+  pages   = {103611},
+  year    = {2024}
+}
+
+% [OWNER-CHECK] HD-BET journal details not re-checked offline (tool and version are pinned in the manifests)
+@article{isensee2019hdbet,
+  author  = {Isensee, F. and others},
+  title   = {Automated Brain Extraction of Multisequence {MRI} Using Artificial Neural Networks},
+  journal = {Human Brain Mapping},
+  volume  = {40},
+  number  = {17},
+  pages   = {4952--4964},
+  year    = {2019}
+}
+
+% ---------------------------------------------------------------- datasets
+% [V-notes] Neuroinformatics 16:51-63
+@article{lesjak2018novel,
+  author  = {Lesjak, {\v{Z}}. and others},
+  title   = {A Novel Public {MR} Image Dataset of Multiple Sclerosis Patients with Lesion Segmentations Based on Multi-Rater Consensus},
+  journal = {Neuroinformatics},
+  volume  = {16},
+  pages   = {51--63},
+  year    = {2018}
+}
+
+% [V-notes] "MSLesSeg (ICPR 2024; Sci Data 12:920, 2025)"; data Figshare 10.6084/m9.figshare.27919209 [V-data]
+% [OWNER-CHECK] exact article title and author list
+@article{rondinella2025mslesseg,
+  author  = {Rondinella, A. and Guarnera, F. and others},
+  title   = {{MSLesSeg}: Baseline and Benchmarking of a New Multiple Sclerosis Lesion Segmentation Dataset},
+  journal = {Scientific Data},
+  volume  = {12},
+  pages   = {920},
+  year    = {2025}
+}
+
+% [V-data]
+@misc{mslesseg2025data,
+  title        = {{MSLesSeg} dataset},
+  howpublished = {Figshare},
+  year         = {2025},
+  doi          = {10.6084/m9.figshare.27919209},
+  note         = {CC BY 4.0 (data)}
+}
+
+% [V-data]
+@article{bawil2026ms3seg,
+  author  = {Bawil, M. B. and Shamsi, M. and Ghalehasadi, A. and Jafargholkhanloo, A. F. and Bavil, A. S.},
+  title   = {A Multiple Sclerosis {MRI} Dataset with Tri-Mask Annotations for Lesion Segmentation},
+  journal = {Scientific Data},
+  volume  = {13},
+  pages   = {867},
+  year    = {2026},
+  doi     = {10.1038/s41597-026-07184-5}
+}
+
+% [V-data]
+@misc{ms3seg2026data,
+  title        = {{MS3SEG} dataset},
+  howpublished = {Figshare},
+  year         = {2026},
+  doi          = {10.6084/m9.figshare.30393475},
+  note         = {CC BY 4.0 (data); code MIT}
+}
+
+% [V-data]
+@article{muslim2022brain,
+  author  = {Muslim, A. M. and Mashohor, S. and Gawwam, G. A. and Mahmud, R. and Hanafi, M. B. and Alnuaimi, O. and Josephine, R. and Almutairi, A. D.},
+  title   = {Brain {MRI} Dataset of Multiple Sclerosis with Consensus Manual Lesion Segmentation and Patient Meta Information},
+  journal = {Data in Brief},
+  volume  = {42},
+  pages   = {108139},
+  year    = {2022},
+  doi     = {10.1016/j.dib.2022.108139}
+}
+
+% [V-data]
+@misc{muslim2022data,
+  title        = {Brain {MRI} dataset of multiple sclerosis with consensus manual lesion segmentation and patient meta information (data)},
+  howpublished = {Mendeley Data, V1},
+  year         = {2022},
+  doi          = {10.17632/8bctsm8jz7.1},
+  note         = {CC BY 4.0}
+}
+
+% [V-data]
+@article{popa2025pedims,
+  author  = {Popa, M. and Vi{\c{s}}a, G. A. and {\c{S}}ofariu, C. R.},
+  title   = {{PediMS}: A Pediatric Multiple Sclerosis Lesion Segmentation Dataset},
+  journal = {Scientific Data},
+  volume  = {12},
+  pages   = {1184},
+  year    = {2025},
+  doi     = {10.1038/s41597-025-05346-5}
+}
+
+% [V-data]
+@misc{pedims2025data,
+  title        = {{PediMS} dataset},
+  howpublished = {Figshare},
+  year         = {2025},
+  doi          = {10.6084/m9.figshare.28701065},
+  note         = {CC BY 4.0}
+}
+
+% [V-data] protocol addendum §1; medRxiv preprint (licence stated twice: CC BY 3.0 and CC BY-NC-SA 3.0)
+@misc{tuchinov2025sibbms,
+  author       = {Tuchinov, B. N. and others},
+  title        = {{SibBMS}: Siberian Brain Multiple Sclerosis Dataset with Lesion Segmentation and Patient Meta Information},
+  howpublished = {medRxiv},
+  year         = {2025},
+  doi          = {10.1101/2025.08.14.25333741}
+}
+
+% [V-notes] NeuroImage 148:77-102
+@article{carass2017longitudinal,
+  author  = {Carass, A. and others},
+  title   = {Longitudinal Multiple Sclerosis Lesion Segmentation: Resource and Challenge},
+  journal = {NeuroImage},
+  volume  = {148},
+  pages   = {77--102},
+  year    = {2017}
+}
+
+% [V-notes] PMC6135867
+@article{commowick2018objective,
+  author  = {Commowick, O. and others},
+  title   = {Objective Evaluation of Multiple Sclerosis Lesion Segmentation Using a Data Management and Processing Infrastructure},
+  journal = {Scientific Reports},
+  volume  = {8},
+  year    = {2018},
+  note    = {PMCID: PMC6135867}
+}
+
+% ---------------------------------------------------------------- clinical context
+% [V-classic]
+@article{thompson2018diagnosis,
+  author  = {Thompson, A. J. and others},
+  title   = {Diagnosis of Multiple Sclerosis: 2017 Revisions of the {McDonald} Criteria},
+  journal = {The Lancet Neurology},
+  volume  = {17},
+  number  = {2},
+  pages   = {162--173},
+  year    = {2018}
+}
+
+% [V-notes] Lancet Neurol 2025;24(10):850-865 (PubMed 40975101)
+@article{montalban2025diagnosis,
+  author  = {Montalban, X. and Lebrun-Fr{\'e}nay, C. and Oh, J. and others},
+  title   = {Diagnosis of Multiple Sclerosis: 2024 Revisions of the {McDonald} Criteria},
+  journal = {The Lancet Neurology},
+  volume  = {24},
+  number  = {10},
+  pages   = {850--865},
+  year    = {2025}
+}
+
+% [V-notes] Lancet Neurol 2021;20(8):653-670
+@article{wattjes2021magnims,
+  author  = {Wattjes, M. P. and Ciccarelli, O. and Reich, D. S. and others},
+  title   = {2021 {MAGNIMS--CMSC--NAIMS} Consensus Recommendations on the Use of {MRI} in Patients with Multiple Sclerosis},
+  journal = {The Lancet Neurology},
+  volume  = {20},
+  number  = {8},
+  pages   = {653--670},
+  year    = {2021}
+}
+
+% ---------------------------------------------------------------- research practice and statistics
+% [V-classic]
+@article{nosek2018preregistration,
+  author  = {Nosek, Brian A. and Ebersole, Charles R. and DeHaven, Alexander C. and Mellor, David T.},
+  title   = {The Preregistration Revolution},
+  journal = {Proceedings of the National Academy of Sciences},
+  volume  = {115},
+  number  = {11},
+  pages   = {2600--2606},
+  year    = {2018}
+}
+
+% [V-classic]
+@article{kapoor2023leakage,
+  author  = {Kapoor, Sayash and Narayanan, Arvind},
+  title   = {Leakage and the Reproducibility Crisis in Machine-Learning-Based Science},
+  journal = {Patterns},
+  volume  = {4},
+  number  = {9},
+  pages   = {100804},
+  year    = {2023}
+}
+
+% [V-classic]
+@article{varoquaux2022machine,
+  author  = {Varoquaux, Ga{\"e}l and Cheplygina, Veronika},
+  title   = {Machine Learning for Medical Imaging: Methodological Failures and Recommendations for the Future},
+  journal = {npj Digital Medicine},
+  volume  = {5},
+  pages   = {48},
+  year    = {2022}
+}
+
+% [V-classic]
+@article{clopper1934use,
+  author  = {Clopper, C. J. and Pearson, E. S.},
+  title   = {The Use of Confidence or Fiducial Limits Illustrated in the Case of the Binomial},
+  journal = {Biometrika},
+  volume  = {26},
+  number  = {4},
+  pages   = {404--413},
+  year    = {1934}
+}
+
+% [V-classic]
+@book{davison1997bootstrap,
+  author    = {Davison, A. C. and Hinkley, D. V.},
+  title     = {Bootstrap Methods and Their Application},
+  publisher = {Cambridge University Press},
+  address   = {Cambridge},
+  year      = {1997}
+}
+
+% [V-classic]
+@article{kuhn1955hungarian,
+  author  = {Kuhn, Harold W.},
+  title   = {The {Hungarian} Method for the Assignment Problem},
+  journal = {Naval Research Logistics Quarterly},
+  volume  = {2},
+  number  = {1--2},
+  pages   = {83--97},
+  year    = {1955}
+}
+
+% [V-classic]
+@misc{iec62304,
+  author       = {{International Electrotechnical Commission}},
+  title        = {{IEC} 62304:2006+{A1}:2015 Medical Device Software -- Software Life Cycle Processes},
+  howpublished = {International standard},
+  year         = {2015}
+}

@@ -1,0 +1,30 @@
+{
+ "inputs": {
+  "docs/research/records/2026-10-21_paper_a_v03_results.json": "972bb3ef62d8b497809863a777aa65769f9bf83f9b483ba6619fafbdefcbdc43",
+  "docs/research/records/2026-10-21_paper_a_v03_posthoc.json": "9209ffd3b26471ec6194f57129a434a6d708574f7b61f872f587ae2b5aed4ee8",
+  "docs/research/records/2026-10-24_paper_a_v03c_controls.json": "1200fea597384ad2204af1f683f9062a93bb76d2b2023d62ba4dee693826f09e",
+  "docs/research/records/2026-10-31_paper_a_manuscript_posthoc.json": "21a7540a3af770e8f08a13303d74879ac2a81c545d0f5315da05aa2c01a6b417"
+ },
+ "outputs": {
+  "fig1_primary_cells.png": "342b509d0014657ad92c73d27b6224a3c055b4eafda7ab26ef3bb563fa94046d",
+  "fig2_threshold_mechanism.png": "92d377ec56ff75602133f87a9594da64475878acef458d25f60bf5c8f53ea08b",
+  "fig3_detection_by_size_and_band.png": "809817aec9ba326e84adae9e170d36593eb29465bb86f783e10ac94c44dd3f28",
+  "fig4_ensemble_vs_fold0.png": "340ad5f2dd50486a450b50894ca2e5b88ee8faff28d85f9545fc323a9fb1e962",
+  "fig5_recalibration_curve.png": "7aeab9c26d7a35903d425a7d341042ab7cbd4da0250356c2dba2583d67aec80c",
+  "fig6_healthy_controls.png": "88d09ccb769fd97d7c8950b0b1c509831e1991bceee6209e7844db5ba3402961",
+  "fig7_baselines_validity_power.png": "3533a8141245a29d46f4ac9e56c12b6f652fba8d46f6ab679063a0b5837328e2"
+ },
+ "palette": {
+  "categorical": [
+   "#2a78d6",
+   "#eb6834",
+   "#1baf7a"
+  ],
+  "status": [
+   "#0ca30c",
+   "#fab219",
+   "#d03b3b"
+  ],
+  "validator": "dataviz validate_palette.js --pairs all --mode light: ALL CHECKS PASS (aqua contrast WARN -> legends + markers)"
+ }
+}
