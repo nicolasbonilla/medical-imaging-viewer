@@ -325,3 +325,7 @@ on the same candidates. (g) A validity–power frontier under D3 (α 0.05–0.3)
 volumes. Script `research/paper_a/v03r_revision.py`, record
 `docs/research/records/2026-10-31_paper_a_revision.json`. The pre-registered classification rule and
 verdicts are unchanged and are reported as such; every new quantity is labelled post hoc.
+(i) *Added to entry 11 before running:* the share of calibration first scans whose safe threshold
+lies above the scan's highest-scoring false candidate, at γ = 0.1 and γ = 0.2, per site (the earlier
+text gave only γ = 0.2 without saying so). Script `research/paper_a/v03r_revision_extra.py`, record
+`docs/research/records/2026-10-31_paper_a_revision_extra.json`.
