@@ -26,7 +26,7 @@
   ],
   "manifest_version": 1,
   "capa_reference": "CAPA-001, CAPA-002, CAPA-004, CAPA-005, CAPA-006, CAPA-007, CAPA-010, CAPA-011, CAPA-013, CAPA-014, CAPA-015, CAPA-016",
-  "last_updated": "2026-10-28",
+  "last_updated": "2026-10-31",
   "controls": {
     "RC-006": {
       "description": "AI-generated report carries a mandatory physician-review disclaimer",
@@ -1103,6 +1103,61 @@
       "change": "PRB-027 (review of PR #70; DRAFT, N. G. Bonilla Vargas — approved 2026-10-30 (PR #70); branch fix/platform-security-findings-prb020; not merged, not deployed)",
       "negative_control": "Re-executed 2026-10-28 after the re-review of PR #70 (VF7, the sign-in subtitle, executed alone with --only; the other 98 from the full run of the same day) by scripts/safety/prb020_negative_controls.py on 357698c (record docs/iec62304/records/risk_verification/PRB-020_negative_controls_2026-10-28.json): 3 of 3 mutations for this control detected (V25, V26, V27); whole run 99 of 99. Failing-first records: PRB-020_tests_on_base_2026-10-28.json (main @ 70cc5c7), PRB-020_review1_tests_on_7de9334_2026-10-28.json, PRB-020_review2_tests_on_570d78f_2026-10-28.json and PRB-020_review2_tests_on_7de9334_2026-10-28.json (all under docs/iec62304/records/risk_verification/). Re-run after the merge of main (PR #70) into release/owner-signoff-2026-10-30 (c3f3e8e, 2026-10-30, throwaway worktree): PRB-020 99/99 - docs/iec62304/records/releases/RELEASE-2026-10-30_*.",
       "note": "PRB-027 part A. Technicians and radiologists still search the whole PACS (inherent to import); PACS searches are not audited (proposed). Part B (MRN conflict signal) recorded, not changed."
+    },
+    "RC-090": {
+      "description": "On a region classification by the geometric fallback, DIS is evaluated only after the radiologist checked every lesion's region one by one: the DIS state lists the lesions left at their geometric region (count, digest); Confirm only with every listed lesion ticked; the route refuses without the digest of the list and above 100 such lesions; the record binds the digest; a confirmation without it does not make DIS evaluable",
+      "hazard": "HAZ-005, HAZ-008",
+      "status": "implemented",
+      "implementation": "backend/app/services/dis_review_gate.py (regions_state, review_state, geometric_regions_sha256); backend/app/api/routes/segmentation.py (confirm_segmentation_review); backend/app/models/schemas.py (ClinicianReview); frontend/src/components/LesionDashboard.tsx",
+      "tests": [
+        "tests/unit/test_prb028_geometric_fallback_review.py",
+        "frontend/src/components/LesionDashboard.prb028.test.tsx"
+      ],
+      "requirement": "REQ-SAFE-044",
+      "change": "PRB-028 (next safety round; DRAFT, PENDING owner approval; branch fix/next-safety-round; not merged, not deployed)",
+      "negative_control": "Negative controls by scripts/safety/prb028_031_negative_controls.py in a throwaway worktree (record docs/iec62304/records/risk_verification/PRB-028-031_negative_controls_2026-10-31.json): mutations G1-G8, U1-U5. Failing-first record: docs/iec62304/records/risk_verification/PRB-028-031_tests_on_base_2026-10-31.json (main @ ca600c2)."
+    },
+    "RC-091": {
+      "description": "The AI-draft review runs the check of the view on screen shared with the DIS confirmation (standard 2D view drawing this segmentation, every value drawn with the label stored on the server, visible, overlay on, lesion opacity at least the minimum, plus RC-092 and RC-093) and states the drawn label table, which the route compares with the stored one as drawn",
+      "hazard": "HAZ-001, HAZ-003",
+      "status": "implemented",
+      "implementation": "frontend/src/components/AiDraftBanner.tsx; frontend/src/utils/confirmDrawCheck.ts; frontend/src/api/segmentation.ts (confirmAiReview); backend/app/api/routes/segmentation.py (confirm_ai_review, _drawn_labels_problem)",
+      "tests": [
+        "tests/unit/test_prb029_prb030_confirm_view_checks.py",
+        "frontend/src/components/AiDraftBanner.prb029.test.tsx",
+        "frontend/src/utils/drawnLabels.digest.test.ts"
+      ],
+      "requirement": "REQ-SAFE-045",
+      "change": "PRB-029 (next safety round; DRAFT, PENDING owner approval; branch fix/next-safety-round; not merged, not deployed)",
+      "negative_control": "Negative controls by scripts/safety/prb028_031_negative_controls.py in a throwaway worktree (record docs/iec62304/records/risk_verification/PRB-028-031_negative_controls_2026-10-31.json): mutations A1, A2, B1-B3. Failing-first record: docs/iec62304/records/risk_verification/PRB-028-031_tests_on_base_2026-10-31.json (main @ ca600c2)."
+    },
+    "RC-092": {
+      "description": "Neither confirmation is accepted while the image the standard 2D view draws under the mask is on another grid: the view publishes the image and both grids; the shared check refuses a difference or an unknown; the request names the image and the server compares its header (shape; affine within the RC-039 tolerance; same study; unreadable refused; an image the user may not open is not read)",
+      "hazard": "HAZ-006, HAZ-008",
+      "status": "implemented",
+      "implementation": "frontend/src/components/ImageViewer2D.tsx; frontend/src/store/useSegmentationStore.ts (overlayImageOnScreen); frontend/src/utils/drawnLabels.ts; frontend/src/utils/confirmDrawCheck.ts; backend/app/services/displayed_image_check.py; backend/app/services/segmentation_service.py (nifti_header_grid); backend/app/api/routes/segmentation.py (_displayed_image_problem)",
+      "tests": [
+        "tests/unit/test_prb029_prb030_confirm_view_checks.py",
+        "frontend/src/components/LesionDashboard.prb030.test.tsx",
+        "frontend/src/ViewerApp.prb030.test.tsx"
+      ],
+      "requirement": "REQ-SAFE-046",
+      "change": "PRB-030 (L1) (next safety round; DRAFT, PENDING owner approval; branch fix/next-safety-round; not merged, not deployed)",
+      "negative_control": "Negative controls by scripts/safety/prb028_031_negative_controls.py in a throwaway worktree (record docs/iec62304/records/risk_verification/PRB-028-031_negative_controls_2026-10-31.json): mutations R1-R9, C1-C8, D2, P1. Failing-first record: docs/iec62304/records/risk_verification/PRB-028-031_tests_on_base_2026-10-31.json (main @ ca600c2)."
+    },
+    "RC-093": {
+      "description": "Neither confirmation is accepted while a layer under the lesions is drawn above 30 % (zone map above it; longitudinal overlay, subtraction heat map and conformal tiers whenever shown); a stored zone-map opacity above 30 % is not restored; the 2D longitudinal overlay uses the shared colour-blind-safe palette",
+      "hazard": "HAZ-005, HAZ-008, HAZ-007",
+      "status": "implemented",
+      "implementation": "frontend/src/utils/drawnLabels.ts (MAX_UNDERLAY_OPACITY, layer opacities); frontend/src/utils/confirmDrawCheck.ts (underlaysOnScreen); frontend/src/store/useSegmentationStore.ts (merge); frontend/src/utils/regionColors.ts (LONGITUDINAL_OVERLAY_COLORS); frontend/src/components/SegmentationCanvasLocal.tsx",
+      "tests": [
+        "frontend/src/components/LesionDashboard.prb031.test.tsx",
+        "frontend/src/store/useSegmentationStore.prb031.test.ts",
+        "frontend/src/components/SegmentationCanvasLocal.prb031.test.tsx"
+      ],
+      "requirement": "REQ-SAFE-047",
+      "change": "PRB-031 (L2) (next safety round; DRAFT, PENDING owner approval; branch fix/next-safety-round; not merged, not deployed)",
+      "negative_control": "Negative controls by scripts/safety/prb028_031_negative_controls.py in a throwaway worktree (record docs/iec62304/records/risk_verification/PRB-028-031_negative_controls_2026-10-31.json): mutations O1-O8, L1, L2, D1. Failing-first record: docs/iec62304/records/risk_verification/PRB-028-031_tests_on_base_2026-10-31.json (main @ ca600c2)."
     }
   },
   "unverified_controls_note": [
