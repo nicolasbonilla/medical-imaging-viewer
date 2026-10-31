@@ -35,7 +35,7 @@ Requirement **REQ-SAFE-045**; risk control **RC-091** (HAZ-001, HAZ-003).
 - Failing first: `frontend/src/components/AiDraftBanner.prb029.test.tsx` (10) and the PRB-029 cases of
   `backend/tests/unit/test_prb029_prb030_confirm_view_checks.py` (5); on `ca600c2` every refusal fails, the case drawn
   with the stored labels is a positive control (record `PRB-028-031_tests_on_base_2026-10-31.json`).
-- Negative controls A1, A2 (server), B1–B3 (viewer): **5 of 5 detected**; the shared-check mutations C4, C6, O1, O3, O7
+- Negative controls A1–A3 (server), B1–B3 and Z1–Z3 (viewer): **9 of 9 detected** (whole run 62 of 62, throwaway worktree of `5cc88b9`, 2026-10-31, after the review of PR #74; first run 5 of 5 of the first round's set, `05cdf37`); the shared-check mutations C4, C6, O1, O3, O7
   also run the AI-draft tests (all detected; whole run 49 of 49, throwaway worktree of `05cdf37`) — record
   `PRB-028-031_negative_controls_2026-10-31.json`.
 - Fixture changes, no assertion removed: `AiDraftBanner.test.tsx` seeds the draft drawn on screen and the stored labels;

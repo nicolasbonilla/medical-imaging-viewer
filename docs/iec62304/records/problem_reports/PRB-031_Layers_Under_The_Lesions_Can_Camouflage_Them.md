@@ -47,7 +47,7 @@ Requirement **REQ-SAFE-047**; risk control **RC-093** (HAZ-005, HAZ-008, HAZ-007
   `frontend/src/store/useSegmentationStore.prb031.test.ts` (3), `frontend/src/components/SegmentationCanvasLocal.prb031.test.tsx`
   (2), and the PRB-031 case of `AiDraftBanner.prb029.test.tsx`; on `ca600c2` every refusal fails; the zone map at 30 % or
   hidden and a stored opacity at or below 30 % are positive controls (record `PRB-028-031_tests_on_base_2026-10-31.json`).
-- Negative controls O1–O8, L1, L2 and D1: **11 of 11 detected** (whole run 49 of 49, throwaway worktree of `05cdf37`)
+- Negative controls O1–O8, L1–L5 and D1: **14 of 14 detected** (whole run 62 of 62, throwaway worktree of `5cc88b9`, 2026-10-31, after the review of PR #74; first run 11 of 11 of the first round's set, `05cdf37`)
   — record `PRB-028-031_negative_controls_2026-10-31.json`.
 
 ## 4. Limits

@@ -1,20 +1,23 @@
 {
-  "executed": "2026-10-31T08:48:18",
-  "tree": "05cdf37eb7e3cfe5fd6b893e23cf554ec8c4412a",
+  "executed": "2026-10-31T10:26:09",
+  "tree": "5cc88b9e62b4175f1361a86fbaae8c8db1928bc5",
   "method": "in a throwaway detached worktree of the commit; one mutation at a time; each anchor asserted to occur exactly once (LF text, written back with the file's own line endings); only the bound tests of the mutated side run (backend pytest with no cloud credential per PRB-002; frontend vitest, JSON reporter, --pool=threads, the files bound to the mutation); original bytes restored after each mutation, at exit and on a signal, and checked at the end; the baseline must pass first",
   "hash_basis": "sha256 of the UTF-8 text with LF line endings",
   "source_sha256": {
-    "backend/app/api/routes/segmentation.py": "38886eafd97e7f8c88ef5ff30c9054142006a043dc1de443d332d5cba21931fd",
-    "backend/app/services/dis_review_gate.py": "813cc9d65e6213d5b7e4238df6ffccb9a5d39ff7466625efb1f20c481d4f735d",
-    "backend/app/services/displayed_image_check.py": "a6509be3a487ced9f6d0619535b42485dc625be5bbddf4490ce4991e5dc4ed54",
+    "backend/app/api/routes/segmentation.py": "ab4a9d0e99cb38d468233e78900f994c16c4e7ead353be2da97b2dbdfa1511a3",
+    "backend/app/services/dis_review_gate.py": "00303be0689289ecdcd229b2c883a7c8b35ff08dac60c6685c8811673664a03d",
+    "backend/app/services/displayed_image_check.py": "7aa23d9d9c65905e053352300f921cee85e3d57771ced4b02d679b1891122205",
+    "backend/app/services/storage_service.py": "6a197f55c005db9b11977ae71a835daaa3acf05b2a789cb8029497b9bc913e53",
     "frontend/src/api/segmentation.ts": "97dfb9568f6117a95c351b0225712c1f50dee555eacd61c9bfc2b529fb4d0542",
     "frontend/src/components/AiDraftBanner.tsx": "8c8c8698d993a639bbc7857f0c704711e1edc25ee9fa2247f3ab05197dd6232b",
     "frontend/src/components/ImageViewer2D.tsx": "829540b5fa1b48d56682382d39a9c5b202ee1f7c69d32d3822105b77a579e660",
-    "frontend/src/components/LesionDashboard.tsx": "29d8e73f8d15d8aad063962b7bcfb4efbba2d62cc2fe22ad0164e21f86de6e51",
+    "frontend/src/components/LesionDashboard.tsx": "c60b2e4aaee071dce5c3dff07f07dfe7b6459a1f0989c2e9677390a8960a99c6",
+    "frontend/src/components/LongitudinalOverlayLegend.tsx": "eb9caf7328675c29d175da14603059cea10055031e5adadcac40f5d798c00b18",
+    "frontend/src/components/LongitudinalResultPanel.tsx": "7af8db2b4540ba259ec0d942358e29fb8cc71531e8ed088175e78e08f00c664d",
     "frontend/src/store/useSegmentationStore.ts": "1bc6d7815bb0468d5067fdd7607655ee3105969c214c78a50eed9e9e0819f9b0",
-    "frontend/src/utils/confirmDrawCheck.ts": "0c594de820a73c57a3a1fa97a33fead149ba3266fd83e8d6c0a247ead600e484",
-    "frontend/src/utils/drawnLabels.ts": "d3d8034f4f90b8f714f2aac044b7ba8c05151a6dbcebd353f8c207c840959a7e",
-    "frontend/src/utils/regionColors.ts": "f3c444fb0d12ad70ed416b1a3dc4ae21c052703853d67ea66ac27abae2f4cc29"
+    "frontend/src/utils/confirmDrawCheck.ts": "bae6a7ea5be503c230583406b4948819b5d874f93d2f57a73d79f34001f815ac",
+    "frontend/src/utils/drawnLabels.ts": "409dec84122f9ac856f755ed8300bd100d99d92c78030680790c1227da0f3df9",
+    "frontend/src/utils/regionColors.ts": "b99f72a07cfd9d942540fe5707019a00730dcbb73272b22559088c4764866380"
   },
   "test_sha256": {
     "backend/tests/unit/test_prb028_geometric_fallback_review.py": "08b716cafd4c02fd44d9520ce66a7fbcf5b8867dbc848fbd37362ef74ae2406c",
@@ -25,15 +28,20 @@
     "backend/tests/unit/test_rc047_ai_draft_provenance.py": "29d715110a4df19f634bfae7392f19efb45ef28481d392e6759c9293222ac9d4",
     "backend/tests/unit/test_release_2026_10_25_final_check.py": "4cedd9e4f096e030574367bf3f561dfb99d13847f7c4c9aec5ca658b21d6d0b8",
     "backend/tests/unit/test_release_2026_10_30_merge.py": "c14c5f9509674b31c376592500cc696bc4efe687e09a4c5b1544029839020756",
+    "backend/tests/unit/test_prb028_031_review_findings.py": "95d62cbb9f5d92af19138260874ef7b269a4a530559a70daa3217818125d9717",
     "frontend/src/ViewerApp.prb030.test.tsx": "e09ef8452f29b24acfc47108bf6c4e975fecf24e5c9106e2107a4af0141d133f",
+    "frontend/src/components/AiDraftBanner.prb029.review.test.tsx": "545fd81c0d4f19957a53d41376a5c5046d5e82090204f5c6b9b6bbc4936db449",
     "frontend/src/components/AiDraftBanner.prb029.test.tsx": "b84d7a7bc04815bbc96b01743877e6d0268d689a136be1765431023248f71432",
     "frontend/src/components/AiDraftBanner.test.tsx": "e9859b64e32789944dad379b86866fff43111ffe236e20e164a8c791834204b5",
-    "frontend/src/components/LesionDashboard.prb028.test.tsx": "69a8a3acbeca7512283155dd0c1573896da9a02543e75c9d72e70ea4b5313934",
+    "frontend/src/components/LesionDashboard.prb028.review.test.tsx": "a742b8d602c5f047aadb8c6c4b42b75e86542a324d0728b17a0fff203973eb63",
+    "frontend/src/components/LesionDashboard.prb028.test.tsx": "188ecb62f2c0599fcefb21792937785e22e197f0bfcb9257d738a4b8ab6fbf24",
     "frontend/src/components/LesionDashboard.prb030.test.tsx": "ddd1234029ffce4f13868c0ec87c0f56a480adb17cd68a641abcf0bebce5d4d0",
     "frontend/src/components/LesionDashboard.prb031.test.tsx": "624aa264e26e43120d10fd68611f22981d9f6ec70e333671232ae1341ca096b3",
     "frontend/src/components/LesionDashboard.release20261028b.test.tsx": "ba3ae5457add30c827f976ae9399e7522afc0d6257b0cc8f9029f914ba6a8552",
     "frontend/src/components/LesionDashboard.release20261029.test.tsx": "5e4d729ca7356bd85952683552e04dac7b03ce2ec8ae1e33053d6ba49cf139f2",
-    "frontend/src/components/SegmentationCanvasLocal.prb031.test.tsx": "b64984dbd4bd511c64a6bf488e2fe30f702d6e2bf90ca6c364069328bb98486c",
+    "frontend/src/components/LongitudinalCompare.capa013.test.tsx": "1a82b537670dd8f742b3008f59e24b60fcf932e624ba6999f4e359f0947f9b11",
+    "frontend/src/components/LongitudinalOverlayLegend.prb031.test.tsx": "7e07d722c872c666e7eecb86a5e55102063d5bdf5b05260cc283a3b3300c9913",
+    "frontend/src/components/SegmentationCanvasLocal.prb031.test.tsx": "48b2f5513695e6a7d7c9044466c2be45b93e49b5091bd82789d03169b6e438db",
     "frontend/src/store/useSegmentationStore.prb031.test.ts": "ce0f5ba5789c1a18610bc004f43ab5526adc51628fc80083dd7ac790169ca3ab",
     "frontend/src/utils/drawnLabels.digest.test.ts": "92c961b6caf5665090cbe515ec5e6e65a072a7bc789b4663c84bb44b5ed2c327"
   },
@@ -45,14 +53,15 @@
     "tests/unit/test_prb003_review2_findings.py",
     "tests/unit/test_rc047_ai_draft_provenance.py",
     "tests/unit/test_release_2026_10_25_final_check.py",
-    "tests/unit/test_release_2026_10_30_merge.py"
+    "tests/unit/test_release_2026_10_30_merge.py",
+    "tests/unit/test_prb028_031_review_findings.py"
   ],
   "baseline": {
     "backend": {
       "suite": "backend",
       "exit": 0,
       "failed": 0,
-      "passed": 195,
+      "passed": 205,
       "errors": 0,
       "failing_tests": []
     },
@@ -60,7 +69,7 @@
       "suite": "frontend",
       "exit": 0,
       "failed": 0,
-      "passed": 65,
+      "passed": 95,
       "errors": 0,
       "failing_tests": [],
       "error_files": []
@@ -70,8 +79,8 @@
     "G1_geometric_regions_not_listed": {
       "suite": "backend",
       "exit": 1,
-      "failed": 7,
-      "passed": 188,
+      "failed": 8,
+      "passed": 197,
       "errors": 0,
       "failing_tests": [
         "test_rc090_prb028_a_confirmation_recorded_without_the_review_does_not_make_dis_evaluable",
@@ -80,7 +89,8 @@
         "test_rc090_prb028_confirm_refused_while_geometric_regions_were_not_checked_one_by_one",
         "test_rc090_prb028_dis_state_lists_every_geometric_region_to_check_lesion_by_lesion",
         "test_rc090_prb028_every_region_checked_one_by_one_is_accepted_recorded_and_dis_evaluated",
-        "test_rc090_prb028_more_lesions_than_the_list_can_hold_cannot_be_checked_here"
+        "test_rc090_prb028_more_lesions_than_the_list_can_hold_cannot_be_checked_here",
+        "test_rc090_review_m4_the_geometric_binding_still_holds_while_geometric_lesions_exist"
       ],
       "reintroduces": "a geometric-fallback classification is treated like the atlas: nothing to check lesion by lesion (the defect as found)",
       "files": [
@@ -94,16 +104,17 @@
         "tests/unit/test_prb003_review2_findings.py",
         "tests/unit/test_rc047_ai_draft_provenance.py",
         "tests/unit/test_release_2026_10_25_final_check.py",
-        "tests/unit/test_release_2026_10_30_merge.py"
+        "tests/unit/test_release_2026_10_30_merge.py",
+        "tests/unit/test_prb028_031_review_findings.py"
       ],
-      "executed": "2026-10-31T08:50:26",
+      "executed": "2026-10-31T10:27:34",
       "detected": true
     },
     "G2_corrected_lesions_listed_too": {
       "suite": "backend",
       "exit": 1,
       "failed": 1,
-      "passed": 194,
+      "passed": 204,
       "errors": 0,
       "failing_tests": [
         "test_rc090_prb028_a_corrected_lesion_is_a_correction_the_rest_still_checked_one_by_one"
@@ -120,16 +131,17 @@
         "tests/unit/test_prb003_review2_findings.py",
         "tests/unit/test_rc047_ai_draft_provenance.py",
         "tests/unit/test_release_2026_10_25_final_check.py",
-        "tests/unit/test_release_2026_10_30_merge.py"
+        "tests/unit/test_release_2026_10_30_merge.py",
+        "tests/unit/test_prb028_031_review_findings.py"
       ],
-      "executed": "2026-10-31T08:50:57",
+      "executed": "2026-10-31T10:27:58",
       "detected": true
     },
     "G3_digest_without_the_region": {
       "suite": "backend",
       "exit": 1,
       "failed": 1,
-      "passed": 194,
+      "passed": 204,
       "errors": 0,
       "failing_tests": [
         "test_rc090_prb028_dis_state_lists_every_geometric_region_to_check_lesion_by_lesion"
@@ -146,19 +158,21 @@
         "tests/unit/test_prb003_review2_findings.py",
         "tests/unit/test_rc047_ai_draft_provenance.py",
         "tests/unit/test_release_2026_10_25_final_check.py",
-        "tests/unit/test_release_2026_10_30_merge.py"
+        "tests/unit/test_release_2026_10_30_merge.py",
+        "tests/unit/test_prb028_031_review_findings.py"
       ],
-      "executed": "2026-10-31T08:51:28",
+      "executed": "2026-10-31T10:28:22",
       "detected": true
     },
     "G4_record_does_not_bind_the_review": {
       "suite": "backend",
       "exit": 1,
-      "failed": 1,
-      "passed": 194,
+      "failed": 2,
+      "passed": 203,
       "errors": 0,
       "failing_tests": [
-        "test_rc090_prb028_a_confirmation_recorded_without_the_review_does_not_make_dis_evaluable"
+        "test_rc090_prb028_a_confirmation_recorded_without_the_review_does_not_make_dis_evaluable",
+        "test_rc090_review_m4_the_geometric_binding_still_holds_while_geometric_lesions_exist"
       ],
       "reintroduces": "a confirmation recorded without the per-lesion review makes DIS evaluable on a geometric classification",
       "files": [
@@ -172,19 +186,21 @@
         "tests/unit/test_prb003_review2_findings.py",
         "tests/unit/test_rc047_ai_draft_provenance.py",
         "tests/unit/test_release_2026_10_25_final_check.py",
-        "tests/unit/test_release_2026_10_30_merge.py"
+        "tests/unit/test_release_2026_10_30_merge.py",
+        "tests/unit/test_prb028_031_review_findings.py"
       ],
-      "executed": "2026-10-31T08:51:57",
+      "executed": "2026-10-31T10:28:48",
       "detected": true
     },
     "G5_reason_not_named": {
       "suite": "backend",
       "exit": 1,
-      "failed": 1,
-      "passed": 194,
+      "failed": 2,
+      "passed": 203,
       "errors": 0,
       "failing_tests": [
-        "test_rc090_prb028_a_confirmation_recorded_without_the_review_does_not_make_dis_evaluable"
+        "test_rc090_prb028_a_confirmation_recorded_without_the_review_does_not_make_dis_evaluable",
+        "test_rc090_review_m4_the_geometric_binding_still_holds_while_geometric_lesions_exist"
       ],
       "reintroduces": "a confirmation without the per-lesion review is reported as 'not confirmed', not why",
       "files": [
@@ -198,16 +214,17 @@
         "tests/unit/test_prb003_review2_findings.py",
         "tests/unit/test_rc047_ai_draft_provenance.py",
         "tests/unit/test_release_2026_10_25_final_check.py",
-        "tests/unit/test_release_2026_10_30_merge.py"
+        "tests/unit/test_release_2026_10_30_merge.py",
+        "tests/unit/test_prb028_031_review_findings.py"
       ],
-      "executed": "2026-10-31T08:53:01",
+      "executed": "2026-10-31T10:29:15",
       "detected": true
     },
     "G6_confirm_without_the_review": {
       "suite": "backend",
       "exit": 1,
       "failed": 3,
-      "passed": 192,
+      "passed": 202,
       "errors": 0,
       "failing_tests": [
         "test_rc090_prb028_a_corrected_lesion_is_a_correction_the_rest_still_checked_one_by_one",
@@ -226,16 +243,17 @@
         "tests/unit/test_prb003_review2_findings.py",
         "tests/unit/test_rc047_ai_draft_provenance.py",
         "tests/unit/test_release_2026_10_25_final_check.py",
-        "tests/unit/test_release_2026_10_30_merge.py"
+        "tests/unit/test_release_2026_10_30_merge.py",
+        "tests/unit/test_prb028_031_review_findings.py"
       ],
-      "executed": "2026-10-31T08:53:58",
+      "executed": "2026-10-31T10:29:41",
       "detected": true
     },
     "G7_more_than_the_list_accepted": {
       "suite": "backend",
       "exit": 1,
       "failed": 1,
-      "passed": 194,
+      "passed": 204,
       "errors": 0,
       "failing_tests": [
         "test_rc090_prb028_more_lesions_than_the_list_can_hold_cannot_be_checked_here"
@@ -252,16 +270,17 @@
         "tests/unit/test_prb003_review2_findings.py",
         "tests/unit/test_rc047_ai_draft_provenance.py",
         "tests/unit/test_release_2026_10_25_final_check.py",
-        "tests/unit/test_release_2026_10_30_merge.py"
+        "tests/unit/test_release_2026_10_30_merge.py",
+        "tests/unit/test_prb028_031_review_findings.py"
       ],
-      "executed": "2026-10-31T08:54:25",
+      "executed": "2026-10-31T10:30:07",
       "detected": true
     },
     "G8_review_not_recorded": {
       "suite": "backend",
       "exit": 1,
       "failed": 2,
-      "passed": 193,
+      "passed": 203,
       "errors": 0,
       "failing_tests": [
         "test_rc090_prb028_a_corrected_lesion_is_a_correction_the_rest_still_checked_one_by_one",
@@ -279,20 +298,19 @@
         "tests/unit/test_prb003_review2_findings.py",
         "tests/unit/test_rc047_ai_draft_provenance.py",
         "tests/unit/test_release_2026_10_25_final_check.py",
-        "tests/unit/test_release_2026_10_30_merge.py"
+        "tests/unit/test_release_2026_10_30_merge.py",
+        "tests/unit/test_prb028_031_review_findings.py"
       ],
-      "executed": "2026-10-31T08:54:51",
+      "executed": "2026-10-31T10:30:38",
       "detected": true
     },
     "A1_ai_review_without_the_drawn_labels": {
       "suite": "backend",
       "exit": 1,
-      "failed": 4,
-      "passed": 191,
+      "failed": 2,
+      "passed": 203,
       "errors": 0,
       "failing_tests": [
-        "test_rc091_prb029_ai_review_refused_unless_drawn_with_the_stored_labels[None]",
-        "test_rc091_prb029_ai_review_refused_unless_drawn_with_the_stored_labels[]",
         "test_rc091_prb029_ai_review_refused_unless_drawn_with_the_stored_labels[default-preset]",
         "test_rc091_prb029_ai_review_refused_unless_drawn_with_the_stored_labels[eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee]"
       ],
@@ -308,21 +326,20 @@
         "tests/unit/test_prb003_review2_findings.py",
         "tests/unit/test_rc047_ai_draft_provenance.py",
         "tests/unit/test_release_2026_10_25_final_check.py",
-        "tests/unit/test_release_2026_10_30_merge.py"
+        "tests/unit/test_release_2026_10_30_merge.py",
+        "tests/unit/test_prb028_031_review_findings.py"
       ],
-      "executed": "2026-10-31T08:55:40",
+      "executed": "2026-10-31T10:31:04",
       "detected": true
     },
     "A2_drawn_label_table_not_compared": {
       "suite": "backend",
       "exit": 1,
-      "failed": 5,
-      "passed": 190,
+      "failed": 3,
+      "passed": 202,
       "errors": 0,
       "failing_tests": [
         "test_rc071_release_final_a_confirmation_drawn_with_other_labels_is_refused",
-        "test_rc091_prb029_ai_review_refused_unless_drawn_with_the_stored_labels[None]",
-        "test_rc091_prb029_ai_review_refused_unless_drawn_with_the_stored_labels[]",
         "test_rc091_prb029_ai_review_refused_unless_drawn_with_the_stored_labels[default-preset]",
         "test_rc091_prb029_ai_review_refused_unless_drawn_with_the_stored_labels[eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee]"
       ],
@@ -338,16 +355,17 @@
         "tests/unit/test_prb003_review2_findings.py",
         "tests/unit/test_rc047_ai_draft_provenance.py",
         "tests/unit/test_release_2026_10_25_final_check.py",
-        "tests/unit/test_release_2026_10_30_merge.py"
+        "tests/unit/test_release_2026_10_30_merge.py",
+        "tests/unit/test_prb028_031_review_findings.py"
       ],
-      "executed": "2026-10-31T08:56:06",
+      "executed": "2026-10-31T10:31:33",
       "detected": true
     },
     "R1_ai_review_image_not_checked": {
       "suite": "backend",
       "exit": 1,
-      "failed": 9,
-      "passed": 186,
+      "failed": 10,
+      "passed": 195,
       "errors": 0,
       "failing_tests": [
         "test_rc092_prb030_a_mask_whose_shape_is_not_the_image_grid_is_refused[ai]",
@@ -358,7 +376,8 @@
         "test_rc092_prb030_an_image_on_another_grid_is_refused[patients/11111111-1111-1111-1111-111111111111/studies/44444444-4444-4444-4444-444444444444/series/66666666-6666-6666-6666-666666666666/shifted.nii.gz-ai]",
         "test_rc092_prb030_an_image_that_cannot_be_read_is_refused[ai]",
         "test_rc092_prb030_an_image_the_user_may_not_open_is_not_read[ai]",
-        "test_rc092_prb030_the_image_under_the_mask_must_be_stated[ai]"
+        "test_rc092_review_m9_only_the_header_of_the_image_under_the_mask_is_read[False]",
+        "test_rc092_review_m9_only_the_header_of_the_image_under_the_mask_is_read[True]"
       ],
       "reintroduces": "the AI-draft review accepted over an image of another grid (the defect as found)",
       "files": [
@@ -372,16 +391,17 @@
         "tests/unit/test_prb003_review2_findings.py",
         "tests/unit/test_rc047_ai_draft_provenance.py",
         "tests/unit/test_release_2026_10_25_final_check.py",
-        "tests/unit/test_release_2026_10_30_merge.py"
+        "tests/unit/test_release_2026_10_30_merge.py",
+        "tests/unit/test_prb028_031_review_findings.py"
       ],
-      "executed": "2026-10-31T08:56:32",
+      "executed": "2026-10-31T10:32:03",
       "detected": true
     },
     "R2_dis_confirmation_image_not_checked": {
       "suite": "backend",
       "exit": 1,
-      "failed": 9,
-      "passed": 186,
+      "failed": 8,
+      "passed": 197,
       "errors": 0,
       "failing_tests": [
         "test_rc092_prb030_a_mask_whose_shape_is_not_the_image_grid_is_refused[dis]",
@@ -391,8 +411,7 @@
         "test_rc092_prb030_an_image_on_another_grid_is_refused[patients/11111111-1111-1111-1111-111111111111/studies/44444444-4444-4444-4444-444444444444/series/66666666-6666-6666-6666-666666666666/sheared.nii.gz-dis]",
         "test_rc092_prb030_an_image_on_another_grid_is_refused[patients/11111111-1111-1111-1111-111111111111/studies/44444444-4444-4444-4444-444444444444/series/66666666-6666-6666-6666-666666666666/shifted.nii.gz-dis]",
         "test_rc092_prb030_an_image_that_cannot_be_read_is_refused[dis]",
-        "test_rc092_prb030_an_image_the_user_may_not_open_is_not_read[dis]",
-        "test_rc092_prb030_the_image_under_the_mask_must_be_stated[dis]"
+        "test_rc092_prb030_an_image_the_user_may_not_open_is_not_read[dis]"
       ],
       "reintroduces": "the DIS confirmation accepted over an image of another grid (the defect as found)",
       "files": [
@@ -406,20 +425,22 @@
         "tests/unit/test_prb003_review2_findings.py",
         "tests/unit/test_rc047_ai_draft_provenance.py",
         "tests/unit/test_release_2026_10_25_final_check.py",
-        "tests/unit/test_release_2026_10_30_merge.py"
+        "tests/unit/test_release_2026_10_30_merge.py",
+        "tests/unit/test_prb028_031_review_findings.py"
       ],
-      "executed": "2026-10-31T08:56:58",
+      "executed": "2026-10-31T10:32:32",
       "detected": true
     },
     "R3_image_not_stated_accepted": {
       "suite": "backend",
       "exit": 1,
-      "failed": 2,
-      "passed": 193,
+      "failed": 3,
+      "passed": 202,
       "errors": 0,
       "failing_tests": [
-        "test_rc092_prb030_the_image_under_the_mask_must_be_stated[ai]",
-        "test_rc092_prb030_the_image_under_the_mask_must_be_stated[dis]"
+        "test_rc092_review_the_grid_check_itself_refuses_an_unstated_image[",
+        "test_rc092_review_the_grid_check_itself_refuses_an_unstated_image[None]",
+        "test_rc092_review_the_grid_check_itself_refuses_an_unstated_image[]"
       ],
       "reintroduces": "a confirmation that does not say which image was under the mask is accepted (an old or another client)",
       "files": [
@@ -433,16 +454,17 @@
         "tests/unit/test_prb003_review2_findings.py",
         "tests/unit/test_rc047_ai_draft_provenance.py",
         "tests/unit/test_release_2026_10_25_final_check.py",
-        "tests/unit/test_release_2026_10_30_merge.py"
+        "tests/unit/test_release_2026_10_30_merge.py",
+        "tests/unit/test_prb028_031_review_findings.py"
       ],
-      "executed": "2026-10-31T08:57:28",
+      "executed": "2026-10-31T10:33:08",
       "detected": true
     },
     "R4_other_visit_accepted": {
       "suite": "backend",
       "exit": 1,
       "failed": 2,
-      "passed": 193,
+      "passed": 203,
       "errors": 0,
       "failing_tests": [
         "test_rc092_prb030_an_image_of_another_visit_is_refused_even_on_the_same_grid[ai]",
@@ -460,16 +482,17 @@
         "tests/unit/test_prb003_review2_findings.py",
         "tests/unit/test_rc047_ai_draft_provenance.py",
         "tests/unit/test_release_2026_10_25_final_check.py",
-        "tests/unit/test_release_2026_10_30_merge.py"
+        "tests/unit/test_release_2026_10_30_merge.py",
+        "tests/unit/test_prb028_031_review_findings.py"
       ],
-      "executed": "2026-10-31T08:57:56",
+      "executed": "2026-10-31T10:33:46",
       "detected": true
     },
     "R5_unreadable_image_accepted": {
       "suite": "backend",
       "exit": 1,
       "failed": 2,
-      "passed": 193,
+      "passed": 203,
       "errors": 0,
       "failing_tests": [
         "test_rc092_prb030_an_image_that_cannot_be_read_is_refused[ai]",
@@ -487,16 +510,17 @@
         "tests/unit/test_prb003_review2_findings.py",
         "tests/unit/test_rc047_ai_draft_provenance.py",
         "tests/unit/test_release_2026_10_25_final_check.py",
-        "tests/unit/test_release_2026_10_30_merge.py"
+        "tests/unit/test_release_2026_10_30_merge.py",
+        "tests/unit/test_prb028_031_review_findings.py"
       ],
-      "executed": "2026-10-31T08:58:27",
+      "executed": "2026-10-31T10:34:24",
       "detected": true
     },
     "R6_mask_shape_not_checked": {
       "suite": "backend",
       "exit": 1,
       "failed": 2,
-      "passed": 193,
+      "passed": 203,
       "errors": 0,
       "failing_tests": [
         "test_rc092_prb030_a_mask_whose_shape_is_not_the_image_grid_is_refused[ai]",
@@ -514,16 +538,17 @@
         "tests/unit/test_prb003_review2_findings.py",
         "tests/unit/test_rc047_ai_draft_provenance.py",
         "tests/unit/test_release_2026_10_25_final_check.py",
-        "tests/unit/test_release_2026_10_30_merge.py"
+        "tests/unit/test_release_2026_10_30_merge.py",
+        "tests/unit/test_prb028_031_review_findings.py"
       ],
-      "executed": "2026-10-31T08:58:55",
+      "executed": "2026-10-31T10:36:00",
       "detected": true
     },
     "R7_affine_not_compared": {
       "suite": "backend",
       "exit": 1,
       "failed": 6,
-      "passed": 189,
+      "passed": 199,
       "errors": 0,
       "failing_tests": [
         "test_rc092_prb030_an_image_on_another_grid_is_refused[patients/11111111-1111-1111-1111-111111111111/studies/44444444-4444-4444-4444-444444444444/series/66666666-6666-6666-6666-666666666666/resampled.nii.gz-ai]",
@@ -545,16 +570,17 @@
         "tests/unit/test_prb003_review2_findings.py",
         "tests/unit/test_rc047_ai_draft_provenance.py",
         "tests/unit/test_release_2026_10_25_final_check.py",
-        "tests/unit/test_release_2026_10_30_merge.py"
+        "tests/unit/test_release_2026_10_30_merge.py",
+        "tests/unit/test_prb028_031_review_findings.py"
       ],
-      "executed": "2026-10-31T08:59:27",
+      "executed": "2026-10-31T10:36:24",
       "detected": true
     },
     "R8_tolerance_one_millimetre": {
       "suite": "backend",
       "exit": 1,
       "failed": 6,
-      "passed": 189,
+      "passed": 199,
       "errors": 0,
       "failing_tests": [
         "test_rc092_prb030_an_image_on_another_grid_is_refused[patients/11111111-1111-1111-1111-111111111111/studies/44444444-4444-4444-4444-444444444444/series/66666666-6666-6666-6666-666666666666/resampled.nii.gz-ai]",
@@ -576,16 +602,17 @@
         "tests/unit/test_prb003_review2_findings.py",
         "tests/unit/test_rc047_ai_draft_provenance.py",
         "tests/unit/test_release_2026_10_25_final_check.py",
-        "tests/unit/test_release_2026_10_30_merge.py"
+        "tests/unit/test_release_2026_10_30_merge.py",
+        "tests/unit/test_prb028_031_review_findings.py"
       ],
-      "executed": "2026-10-31T09:00:00",
+      "executed": "2026-10-31T10:36:44",
       "detected": true
     },
     "R9_displayed_image_not_authorized": {
       "suite": "backend",
       "exit": 1,
       "failed": 2,
-      "passed": 193,
+      "passed": 203,
       "errors": 0,
       "failing_tests": [
         "test_rc092_prb030_an_image_the_user_may_not_open_is_not_read[ai]",
@@ -603,18 +630,21 @@
         "tests/unit/test_prb003_review2_findings.py",
         "tests/unit/test_rc047_ai_draft_provenance.py",
         "tests/unit/test_release_2026_10_25_final_check.py",
-        "tests/unit/test_release_2026_10_30_merge.py"
+        "tests/unit/test_release_2026_10_30_merge.py",
+        "tests/unit/test_prb028_031_review_findings.py"
       ],
-      "executed": "2026-10-31T09:00:27",
+      "executed": "2026-10-31T10:37:03",
       "detected": true
     },
     "U1_confirm_with_unticked_regions": {
       "suite": "frontend",
       "exit": 1,
-      "failed": 2,
-      "passed": 5,
+      "failed": 4,
+      "passed": 8,
       "errors": 0,
       "failing_tests": [
+        "rc090 review m2 another segmentation opened: no tick on this card, and the ticks are gone when it is opened again",
+        "rc090 review m5 a re-served list (lesion 1 corrected to another region) clears the ticks of every lesion",
         "rc090 prb028 Confirm stays off until every listed lesion is ticked",
         "rc090 prb028 a confirmation recorded without the per-lesion check is explained and can be redone"
       ],
@@ -624,16 +654,17 @@
         "frontend/src/components/LesionDashboard.tsx"
       ],
       "tests": [
-        "src/components/LesionDashboard.prb028.test.tsx"
+        "src/components/LesionDashboard.prb028.test.tsx",
+        "src/components/LesionDashboard.prb028.review.test.tsx"
       ],
-      "executed": "2026-10-31T09:00:55",
+      "executed": "2026-10-31T10:37:19",
       "detected": true
     },
     "U2_digest_not_sent": {
       "suite": "frontend",
       "exit": 1,
       "failed": 1,
-      "passed": 6,
+      "passed": 11,
       "errors": 0,
       "failing_tests": [
         "rc090 prb028 with every lesion ticked the confirmation sends the digest of the checked list"
@@ -644,16 +675,17 @@
         "frontend/src/components/LesionDashboard.tsx"
       ],
       "tests": [
-        "src/components/LesionDashboard.prb028.test.tsx"
+        "src/components/LesionDashboard.prb028.test.tsx",
+        "src/components/LesionDashboard.prb028.review.test.tsx"
       ],
-      "executed": "2026-10-31T09:01:11",
+      "executed": "2026-10-31T10:37:30",
       "detected": true
     },
     "U3_too_many_still_offered": {
       "suite": "frontend",
       "exit": 1,
       "failed": 1,
-      "passed": 6,
+      "passed": 11,
       "errors": 0,
       "failing_tests": [
         "rc090 prb028 more geometric-fallback lesions than the list holds: no Confirm here"
@@ -664,18 +696,24 @@
         "frontend/src/components/LesionDashboard.tsx"
       ],
       "tests": [
-        "src/components/LesionDashboard.prb028.test.tsx"
+        "src/components/LesionDashboard.prb028.test.tsx",
+        "src/components/LesionDashboard.prb028.review.test.tsx"
       ],
-      "executed": "2026-10-31T09:01:29",
+      "executed": "2026-10-31T10:37:41",
       "detected": true
     },
     "U4_list_not_shown": {
       "suite": "frontend",
       "exit": 1,
-      "failed": 5,
+      "failed": 10,
       "passed": 2,
       "errors": 0,
       "failing_tests": [
+        "rc090 review m2 the card of a segmentation that is not open offers no tick",
+        "rc090 review m2 no tick while the open segmentation is not drawn in the standard view",
+        "rc090 review m2 a tick is given only after its \"open slice\" was pressed",
+        "rc090 review m2 another segmentation opened: no tick on this card, and the ticks are gone when it is opened again",
+        "rc090 review m5 a re-served list (lesion 1 corrected to another region) clears the ticks of every lesion",
         "rc090 prb028 every geometric-fallback lesion is listed with its region, a tick and its slice",
         "rc090 prb028 Confirm stays off until every listed lesion is ticked",
         "rc090 prb028 with every lesion ticked the confirmation sends the digest of the checked list",
@@ -688,16 +726,17 @@
         "frontend/src/components/LesionDashboard.tsx"
       ],
       "tests": [
-        "src/components/LesionDashboard.prb028.test.tsx"
+        "src/components/LesionDashboard.prb028.test.tsx",
+        "src/components/LesionDashboard.prb028.review.test.tsx"
       ],
-      "executed": "2026-10-31T09:01:46",
+      "executed": "2026-10-31T10:37:55",
       "detected": true
     },
     "U5_reason_not_confirmable": {
       "suite": "frontend",
       "exit": 1,
       "failed": 1,
-      "passed": 6,
+      "passed": 11,
       "errors": 0,
       "failing_tests": [
         "rc090 prb028 a confirmation recorded without the per-lesion check is explained and can be redone"
@@ -708,18 +747,21 @@
         "frontend/src/components/LesionDashboard.tsx"
       ],
       "tests": [
-        "src/components/LesionDashboard.prb028.test.tsx"
+        "src/components/LesionDashboard.prb028.test.tsx",
+        "src/components/LesionDashboard.prb028.review.test.tsx"
       ],
-      "executed": "2026-10-31T09:01:58",
+      "executed": "2026-10-31T10:38:10",
       "detected": true
     },
     "B1_ai_review_not_checked_on_screen": {
       "suite": "frontend",
       "exit": 1,
-      "failed": 9,
-      "passed": 6,
+      "failed": 11,
+      "passed": 8,
       "errors": 0,
       "failing_tests": [
+        "rc091 review m1 an AI draft (\"Lesion\", value 1) drawn in zone colours is refused",
+        "rc091 review m1 a value-5 (Active Gd+) lesion, which zone colouring does not draw, is refused",
         "rc091 prb029 refused: segmentation mode off, NiiVue, matplotlib, multi-panel or 3D (nothing published)",
         "rc091 prb029 refused: the overlay is switched off",
         "rc091 prb029 refused: the lesion label is hidden with its eye toggle",
@@ -737,16 +779,17 @@
       ],
       "tests": [
         "src/components/AiDraftBanner.prb029.test.tsx",
-        "src/components/AiDraftBanner.test.tsx"
+        "src/components/AiDraftBanner.test.tsx",
+        "src/components/AiDraftBanner.prb029.review.test.tsx"
       ],
-      "executed": "2026-10-31T09:02:18",
+      "executed": "2026-10-31T10:38:29",
       "detected": true
     },
     "B2_stored_labels_not_compared": {
       "suite": "frontend",
       "exit": 1,
       "failed": 2,
-      "passed": 13,
+      "passed": 17,
       "errors": 0,
       "failing_tests": [
         "rc091 prb029 refused: the label is drawn in another colour than the stored one",
@@ -759,9 +802,10 @@
       ],
       "tests": [
         "src/components/AiDraftBanner.prb029.test.tsx",
-        "src/components/AiDraftBanner.test.tsx"
+        "src/components/AiDraftBanner.test.tsx",
+        "src/components/AiDraftBanner.prb029.review.test.tsx"
       ],
-      "executed": "2026-10-31T09:02:36",
+      "executed": "2026-10-31T10:38:42",
       "detected": true
     },
     "B3_request_without_the_drawn_table": {
@@ -781,7 +825,7 @@
       "tests": [
         "src/utils/drawnLabels.digest.test.ts"
       ],
-      "executed": "2026-10-31T09:02:47",
+      "executed": "2026-10-31T10:38:49",
       "detected": true
     },
     "C1_unknown_grid_accepted": {
@@ -804,7 +848,7 @@
       "tests": [
         "src/components/LesionDashboard.prb030.test.tsx"
       ],
-      "executed": "2026-10-31T09:03:07",
+      "executed": "2026-10-31T10:39:06",
       "detected": true
     },
     "C2_grid_mismatch_accepted": {
@@ -826,7 +870,7 @@
       "tests": [
         "src/components/LesionDashboard.prb030.test.tsx"
       ],
-      "executed": "2026-10-31T09:03:26",
+      "executed": "2026-10-31T10:39:22",
       "detected": true
     },
     "C3_slices_not_compared": {
@@ -846,14 +890,14 @@
       "tests": [
         "src/components/LesionDashboard.prb030.test.tsx"
       ],
-      "executed": "2026-10-31T09:03:39",
+      "executed": "2026-10-31T10:39:36",
       "detected": true
     },
     "C4_check_without_the_grid": {
       "suite": "frontend",
       "exit": 1,
       "failed": 8,
-      "passed": 15,
+      "passed": 19,
       "errors": 0,
       "failing_tests": [
         "rc091 prb029 refused while the mask is drawn over an image of another grid (PRB-030)",
@@ -873,9 +917,10 @@
       "tests": [
         "src/components/LesionDashboard.prb030.test.tsx",
         "src/components/AiDraftBanner.prb029.test.tsx",
-        "src/components/AiDraftBanner.test.tsx"
+        "src/components/AiDraftBanner.test.tsx",
+        "src/components/AiDraftBanner.prb029.review.test.tsx"
       ],
-      "executed": "2026-10-31T09:03:59",
+      "executed": "2026-10-31T10:39:57",
       "detected": true
     },
     "C5_image_of_another_segmentation_used": {
@@ -895,14 +940,14 @@
       "tests": [
         "src/components/LesionDashboard.prb030.test.tsx"
       ],
-      "executed": "2026-10-31T09:04:14",
+      "executed": "2026-10-31T10:40:09",
       "detected": true
     },
     "C6_image_not_sent": {
       "suite": "frontend",
       "exit": 1,
       "failed": 3,
-      "passed": 20,
+      "passed": 24,
       "errors": 0,
       "failing_tests": [
         "rc091 prb029 drawn on screen with the stored labels: confirmed with the drawn table and the image under the mask",
@@ -917,9 +962,10 @@
       "tests": [
         "src/components/LesionDashboard.prb030.test.tsx",
         "src/components/AiDraftBanner.prb029.test.tsx",
-        "src/components/AiDraftBanner.test.tsx"
+        "src/components/AiDraftBanner.test.tsx",
+        "src/components/AiDraftBanner.prb029.review.test.tsx"
       ],
-      "executed": "2026-10-31T09:04:26",
+      "executed": "2026-10-31T10:40:23",
       "detected": true
     },
     "C7_view_does_not_publish_the_image": {
@@ -942,7 +988,7 @@
       "tests": [
         "src/ViewerApp.prb030.test.tsx"
       ],
-      "executed": "2026-10-31T09:04:42",
+      "executed": "2026-10-31T10:41:08",
       "detected": true
     },
     "C8_published_in_every_view": {
@@ -964,14 +1010,14 @@
       "tests": [
         "src/ViewerApp.prb030.test.tsx"
       ],
-      "executed": "2026-10-31T09:05:00",
+      "executed": "2026-10-31T10:41:53",
       "detected": true
     },
     "O1_underlays_not_checked": {
       "suite": "frontend",
       "exit": 1,
       "failed": 6,
-      "passed": 18,
+      "passed": 22,
       "errors": 0,
       "failing_tests": [
         "rc091 prb029 refused while the zone map is drawn above 30 % (PRB-031)",
@@ -989,9 +1035,10 @@
       "tests": [
         "src/components/LesionDashboard.prb031.test.tsx",
         "src/components/AiDraftBanner.prb029.test.tsx",
-        "src/components/AiDraftBanner.test.tsx"
+        "src/components/AiDraftBanner.test.tsx",
+        "src/components/AiDraftBanner.prb029.review.test.tsx"
       ],
-      "executed": "2026-10-31T09:05:20",
+      "executed": "2026-10-31T10:42:15",
       "detected": true
     },
     "O2_limit_raised_to_100": {
@@ -1017,14 +1064,14 @@
         "src/components/LesionDashboard.prb031.test.tsx",
         "src/store/useSegmentationStore.prb031.test.ts"
       ],
-      "executed": "2026-10-31T09:05:41",
+      "executed": "2026-10-31T10:42:36",
       "detected": true
     },
     "O3_zone_map_not_counted": {
       "suite": "frontend",
       "exit": 1,
       "failed": 3,
-      "passed": 21,
+      "passed": 25,
       "errors": 0,
       "failing_tests": [
         "rc091 prb029 refused while the zone map is drawn above 30 % (PRB-031)",
@@ -1039,9 +1086,10 @@
       "tests": [
         "src/components/LesionDashboard.prb031.test.tsx",
         "src/components/AiDraftBanner.prb029.test.tsx",
-        "src/components/AiDraftBanner.test.tsx"
+        "src/components/AiDraftBanner.test.tsx",
+        "src/components/AiDraftBanner.prb029.review.test.tsx"
       ],
-      "executed": "2026-10-31T09:05:59",
+      "executed": "2026-10-31T10:42:55",
       "detected": true
     },
     "O4_longitudinal_not_counted": {
@@ -1061,7 +1109,7 @@
       "tests": [
         "src/components/LesionDashboard.prb031.test.tsx"
       ],
-      "executed": "2026-10-31T09:06:24",
+      "executed": "2026-10-31T10:43:09",
       "detected": true
     },
     "O5_subtraction_not_counted": {
@@ -1081,7 +1129,7 @@
       "tests": [
         "src/components/LesionDashboard.prb031.test.tsx"
       ],
-      "executed": "2026-10-31T09:06:41",
+      "executed": "2026-10-31T10:43:30",
       "detected": true
     },
     "O6_conformal_not_counted": {
@@ -1101,14 +1149,14 @@
       "tests": [
         "src/components/LesionDashboard.prb031.test.tsx"
       ],
-      "executed": "2026-10-31T09:06:57",
+      "executed": "2026-10-31T10:43:51",
       "detected": true
     },
     "O7_check_without_underlays": {
       "suite": "frontend",
       "exit": 1,
       "failed": 6,
-      "passed": 18,
+      "passed": 22,
       "errors": 0,
       "failing_tests": [
         "rc091 prb029 refused while the zone map is drawn above 30 % (PRB-031)",
@@ -1126,9 +1174,10 @@
       "tests": [
         "src/components/LesionDashboard.prb031.test.tsx",
         "src/components/AiDraftBanner.prb029.test.tsx",
-        "src/components/AiDraftBanner.test.tsx"
+        "src/components/AiDraftBanner.test.tsx",
+        "src/components/AiDraftBanner.prb029.review.test.tsx"
       ],
-      "executed": "2026-10-31T09:07:20",
+      "executed": "2026-10-31T10:44:11",
       "detected": true
     },
     "O8_high_zone_opacity_restored": {
@@ -1149,18 +1198,17 @@
       "tests": [
         "src/store/useSegmentationStore.prb031.test.ts"
       ],
-      "executed": "2026-10-31T09:07:33",
+      "executed": "2026-10-31T10:44:28",
       "detected": true
     },
     "L1_persistent_green_again": {
       "suite": "frontend",
       "exit": 1,
-      "failed": 2,
-      "passed": 0,
+      "failed": 1,
+      "passed": 2,
       "errors": 0,
       "failing_tests": [
-        "rc093 prb031 persistent, resolved and new are drawn in the shared colour-blind-safe palette at the fixed 55 %",
-        "rc093 prb031 no two of them are red against green, and every pair stays apart for colour-blind readers"
+        "rc093 prb031 persistent, resolved and new are drawn in the shared colour-blind-safe palette at the fixed 55 %"
       ],
       "error_files": [],
       "reintroduces": "persistent lesions green against new red-ish lesions (red-green colour blindness, the defect as found)",
@@ -1170,14 +1218,14 @@
       "tests": [
         "src/components/SegmentationCanvasLocal.prb031.test.tsx"
       ],
-      "executed": "2026-10-31T09:07:47",
+      "executed": "2026-10-31T10:45:00",
       "detected": true
     },
     "L2_new_red_again": {
       "suite": "frontend",
       "exit": 1,
       "failed": 1,
-      "passed": 1,
+      "passed": 2,
       "errors": 0,
       "failing_tests": [
         "rc093 prb031 persistent, resolved and new are drawn in the shared colour-blind-safe palette at the fixed 55 %"
@@ -1190,7 +1238,7 @@
       "tests": [
         "src/components/SegmentationCanvasLocal.prb031.test.tsx"
       ],
-      "executed": "2026-10-31T09:07:57",
+      "executed": "2026-10-31T10:45:28",
       "detected": true
     },
     "D1_dashboard_ignores_the_check": {
@@ -1234,7 +1282,7 @@
         "src/components/LesionDashboard.release20261029.test.tsx",
         "src/components/LesionDashboard.release20261028b.test.tsx"
       ],
-      "executed": "2026-10-31T09:08:20",
+      "executed": "2026-10-31T10:46:06",
       "detected": true
     },
     "D2_dashboard_does_not_send_the_image": {
@@ -1254,7 +1302,7 @@
       "tests": [
         "src/components/LesionDashboard.prb030.test.tsx"
       ],
-      "executed": "2026-10-31T09:08:42",
+      "executed": "2026-10-31T10:46:21",
       "detected": true
     },
     "P1_request_without_the_image": {
@@ -1274,7 +1322,7 @@
       "tests": [
         "src/utils/drawnLabels.digest.test.ts"
       ],
-      "executed": "2026-10-31T09:08:54",
+      "executed": "2026-10-31T10:46:29",
       "detected": true
     },
     "P2_request_without_the_geometric_review": {
@@ -1294,7 +1342,302 @@
       "tests": [
         "src/utils/drawnLabels.digest.test.ts"
       ],
-      "executed": "2026-10-31T09:09:02",
+      "executed": "2026-10-31T10:46:38",
+      "detected": true
+    },
+    "G9_binding_compared_without_geometric_lesions": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 204,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc090_review_m4_an_atlas_rerun_on_the_same_mask_keeps_the_confirmation"
+      ],
+      "reintroduces": "m4: the same mask classified again with the atlas loses a confirmation given with ticks (false reason, as found)",
+      "files": [
+        "backend/app/services/dis_review_gate.py"
+      ],
+      "tests": [
+        "tests/unit/test_prb028_geometric_fallback_review.py",
+        "tests/unit/test_prb029_prb030_confirm_view_checks.py",
+        "tests/unit/test_prb003_dis_requires_confirmed_segmentation.py",
+        "tests/unit/test_prb003_review1_findings.py",
+        "tests/unit/test_prb003_review2_findings.py",
+        "tests/unit/test_rc047_ai_draft_provenance.py",
+        "tests/unit/test_release_2026_10_25_final_check.py",
+        "tests/unit/test_release_2026_10_30_merge.py",
+        "tests/unit/test_prb028_031_review_findings.py"
+      ],
+      "executed": "2026-10-31T10:47:10",
+      "detected": true
+    },
+    "A3_out_of_date_viewer_not_named": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 2,
+      "passed": 203,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc091_review_m7_a_viewer_from_before_the_update_is_told_to_reload[ai]",
+        "test_rc091_review_m7_a_viewer_from_before_the_update_is_told_to_reload[dis]"
+      ],
+      "reintroduces": "m7: a viewer from before the update gets the label-table message instead of 'reload' (as found)",
+      "files": [
+        "backend/app/api/routes/segmentation.py"
+      ],
+      "tests": [
+        "tests/unit/test_prb028_geometric_fallback_review.py",
+        "tests/unit/test_prb029_prb030_confirm_view_checks.py",
+        "tests/unit/test_prb003_dis_requires_confirmed_segmentation.py",
+        "tests/unit/test_prb003_review1_findings.py",
+        "tests/unit/test_prb003_review2_findings.py",
+        "tests/unit/test_rc047_ai_draft_provenance.py",
+        "tests/unit/test_release_2026_10_25_final_check.py",
+        "tests/unit/test_release_2026_10_30_merge.py",
+        "tests/unit/test_prb028_031_review_findings.py"
+      ],
+      "executed": "2026-10-31T10:47:43",
+      "detected": true
+    },
+    "R10_whole_image_downloaded": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 2,
+      "passed": 203,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc092_review_m9_only_the_header_of_the_image_under_the_mask_is_read[False]",
+        "test_rc092_review_m9_only_the_header_of_the_image_under_the_mask_is_read[True]"
+      ],
+      "reintroduces": "m9: two whole images downloaded on every confirmation to read their headers (as found)",
+      "files": [
+        "backend/app/services/displayed_image_check.py"
+      ],
+      "tests": [
+        "tests/unit/test_prb028_geometric_fallback_review.py",
+        "tests/unit/test_prb029_prb030_confirm_view_checks.py",
+        "tests/unit/test_prb003_dis_requires_confirmed_segmentation.py",
+        "tests/unit/test_prb003_review1_findings.py",
+        "tests/unit/test_prb003_review2_findings.py",
+        "tests/unit/test_rc047_ai_draft_provenance.py",
+        "tests/unit/test_release_2026_10_25_final_check.py",
+        "tests/unit/test_release_2026_10_30_merge.py",
+        "tests/unit/test_prb028_031_review_findings.py"
+      ],
+      "executed": "2026-10-31T10:48:16",
+      "detected": true
+    },
+    "R11_gcs_range_not_requested": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 204,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc092_review_m9_the_gcs_storage_reads_a_byte_range"
+      ],
+      "reintroduces": "m9: the GCS storage reads the whole object although a range was asked",
+      "files": [
+        "backend/app/services/storage_service.py"
+      ],
+      "tests": [
+        "tests/unit/test_prb028_geometric_fallback_review.py",
+        "tests/unit/test_prb029_prb030_confirm_view_checks.py",
+        "tests/unit/test_prb003_dis_requires_confirmed_segmentation.py",
+        "tests/unit/test_prb003_review1_findings.py",
+        "tests/unit/test_prb003_review2_findings.py",
+        "tests/unit/test_rc047_ai_draft_provenance.py",
+        "tests/unit/test_release_2026_10_25_final_check.py",
+        "tests/unit/test_release_2026_10_30_merge.py",
+        "tests/unit/test_prb028_031_review_findings.py"
+      ],
+      "executed": "2026-10-31T10:48:59",
+      "detected": true
+    },
+    "U6_ticks_kept_on_a_changed_list": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 11,
+      "errors": 0,
+      "failing_tests": [
+        "rc090 review m5 a re-served list (lesion 1 corrected to another region) clears the ticks of every lesion"
+      ],
+      "error_files": [],
+      "reintroduces": "m5: ticks given on the earlier list survive a re-served list (a corrected region, a new classification)",
+      "files": [
+        "frontend/src/components/LesionDashboard.tsx"
+      ],
+      "tests": [
+        "src/components/LesionDashboard.prb028.test.tsx",
+        "src/components/LesionDashboard.prb028.review.test.tsx"
+      ],
+      "executed": "2026-10-31T10:50:56",
+      "detected": true
+    },
+    "U7_ticks_on_a_segmentation_not_open_or_drawn": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 11,
+      "errors": 0,
+      "failing_tests": [
+        "rc090 review m2 no tick while the open segmentation is not drawn in the standard view"
+      ],
+      "error_files": [],
+      "reintroduces": "m2: ticks given on the card of a segmentation that is not open or not drawn (as found)",
+      "files": [
+        "frontend/src/components/LesionDashboard.tsx"
+      ],
+      "tests": [
+        "src/components/LesionDashboard.prb028.test.tsx",
+        "src/components/LesionDashboard.prb028.review.test.tsx"
+      ],
+      "executed": "2026-10-31T10:51:23",
+      "detected": true
+    },
+    "U8_tick_without_opening_the_slice": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 11,
+      "errors": 0,
+      "failing_tests": [
+        "rc090 review m2 a tick is given only after its \"open slice\" was pressed"
+      ],
+      "error_files": [],
+      "reintroduces": "m2: a tick without its 'open slice' pressed",
+      "files": [
+        "frontend/src/components/LesionDashboard.tsx"
+      ],
+      "tests": [
+        "src/components/LesionDashboard.prb028.test.tsx",
+        "src/components/LesionDashboard.prb028.review.test.tsx"
+      ],
+      "executed": "2026-10-31T10:51:41",
+      "detected": true
+    },
+    "Z1_zone_colouring_not_checked": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 2,
+      "passed": 2,
+      "errors": 0,
+      "failing_tests": [
+        "rc091 review m1 an AI draft (\"Lesion\", value 1) drawn in zone colours is refused",
+        "rc091 review m1 a value-5 (Active Gd+) lesion, which zone colouring does not draw, is refused"
+      ],
+      "error_files": [],
+      "reintroduces": "m1: Confirm accepted while lesions are coloured by zone (values 5/6 not drawn, labels not as stored; as found)",
+      "files": [
+        "frontend/src/utils/drawnLabels.ts"
+      ],
+      "tests": [
+        "src/components/AiDraftBanner.prb029.review.test.tsx"
+      ],
+      "executed": "2026-10-31T10:51:58",
+      "detected": true
+    },
+    "Z2_zone_colouring_not_passed": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 2,
+      "passed": 2,
+      "errors": 0,
+      "failing_tests": [
+        "rc091 review m1 an AI draft (\"Lesion\", value 1) drawn in zone colours is refused",
+        "rc091 review m1 a value-5 (Active Gd+) lesion, which zone colouring does not draw, is refused"
+      ],
+      "error_files": [],
+      "reintroduces": "m1: the shared check is not told that lesions are coloured by zone",
+      "files": [
+        "frontend/src/utils/confirmDrawCheck.ts"
+      ],
+      "tests": [
+        "src/components/AiDraftBanner.prb029.review.test.tsx"
+      ],
+      "executed": "2026-10-31T10:53:04",
+      "detected": true
+    },
+    "Z3_any_value_1_4_accepted": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 3,
+      "errors": 0,
+      "failing_tests": [
+        "rc091 review m1 an AI draft (\"Lesion\", value 1) drawn in zone colours is refused"
+      ],
+      "error_files": [],
+      "reintroduces": "m1: a value 1-4 that is not a region label (an AI draft 'Lesion') accepted in zone colours",
+      "files": [
+        "frontend/src/utils/drawnLabels.ts"
+      ],
+      "tests": [
+        "src/components/AiDraftBanner.prb029.review.test.tsx"
+      ],
+      "executed": "2026-10-31T10:53:23",
+      "detected": true
+    },
+    "L3_legend_in_the_former_colours": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 1,
+      "errors": 0,
+      "failing_tests": [
+        "rc093 review m6 each class is named with the colour the canvas draws for it"
+      ],
+      "error_files": [],
+      "reintroduces": "m6: the legend shows the former blue / green / red while the overlay draws the new colours (as found)",
+      "files": [
+        "frontend/src/components/LongitudinalOverlayLegend.tsx"
+      ],
+      "tests": [
+        "src/components/LongitudinalOverlayLegend.prb031.test.tsx"
+      ],
+      "executed": "2026-10-31T10:53:31",
+      "detected": true
+    },
+    "L5_result_panel_without_the_shared_legend": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 17,
+      "errors": 0,
+      "failing_tests": [
+        "rc062 a scanner or protocol change shows no counts, the reason and the metadata compared"
+      ],
+      "error_files": [],
+      "reintroduces": "m6: the comparison result shows no legend of the overlay",
+      "files": [
+        "frontend/src/components/LongitudinalResultPanel.tsx"
+      ],
+      "tests": [
+        "src/components/LongitudinalCompare.capa013.test.tsx"
+      ],
+      "executed": "2026-10-31T10:53:50",
+      "detected": true
+    },
+    "L4_new_is_the_white_matter_colour": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 2,
+      "errors": 0,
+      "failing_tests": [
+        "rc093 review m6 \"new\" is drawn in a colour no region and no lesion label uses (it was the deep-white-matter vermillion)"
+      ],
+      "error_files": [],
+      "reintroduces": "m6: new candidates drawn in the deep-white-matter vermillion (as found)",
+      "files": [
+        "frontend/src/utils/regionColors.ts"
+      ],
+      "tests": [
+        "src/components/SegmentationCanvasLocal.prb031.test.tsx"
+      ],
+      "executed": "2026-10-31T10:53:58",
       "detected": true
     }
   },
@@ -1303,7 +1646,7 @@
       "suite": "backend",
       "exit": 0,
       "failed": 0,
-      "passed": 195,
+      "passed": 205,
       "errors": 0,
       "failing_tests": []
     },
@@ -1311,20 +1654,22 @@
       "suite": "frontend",
       "exit": 0,
       "failed": 0,
-      "passed": 65,
+      "passed": 95,
       "errors": 0,
       "failing_tests": [],
       "error_files": []
     }
   },
   "summary": {
-    "mutations": 49,
-    "detected": 49,
+    "mutations": 62,
+    "detected": 62,
     "undetected": []
   },
   "worktree": {
     "run_in": "throwaway detached worktree of the commit, removed after the run",
-    "commit": "05cdf37eb7e3cfe5fd6b893e23cf554ec8c4412a",
-    "stale_worktrees_removed_first": []
+    "commit": "5cc88b9e62b4175f1361a86fbaae8c8db1928bc5",
+    "stale_worktrees_removed_first": [
+      "C:/Users/Nicolas/AppData/Local/Temp/prb004-safety-run-31484-1793438096"
+    ]
   }
 }
