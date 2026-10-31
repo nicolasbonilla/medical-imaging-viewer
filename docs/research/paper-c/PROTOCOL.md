@@ -236,6 +236,24 @@ identically; gate G1 passed on all 20 open_ms patients. `posthoc.py` was extende
 (post hoc, labelled as such in RESULTS.md §2b). The pre-registered go/no-go (primary cells A1/A2)
 is unchanged; A4's informative result is reported as a secondary, pre-registered arm.
 
+**2026-10-31, entry 5 — preparation of the confirmatory study (no pilot analysis changed).**
+(a) *MSSEG-2 facts corrected.* Reading the official pages and the MSSEG-2 paper (Masson et al.,
+Sci Rep 2026) showed that only the **40 training patients** are distributed (≈ 11 without new
+lesions, inferred 36 − 25), not the 60 test patients; the "28 stable patients" of §2.3, §5,
+RESULTS §7 and APP-FEATURE §5 are the test set under the original ground truth (Valencia et al.
+2022, Table 3). MSSEG-2 annotates **new lesions only** (growth omitted). Its data use agreement
+forbids commercial use of the data or of any derivative (clause 8). See `MSSEG2_ACCESS_REQUEST.md`.
+(b) *Citation corrected.* The MSLesSeg dataset paper is Guarnera F, Rondinella A, et al., Sci Data
+2025;12:920 (first author Guarnera, not Rondinella). (c) *§9 wording.* The 0.2 bar for Q3 is not
+"the upper end" of the MSSEG-2 systems' range: Valencia 2022 Table 3 gives 0–11 % for experts and
+11–36 % for systems (stable patients with ≥ 1 false positive). The pilot verdict does not depend on
+it (25/25, lower bound 0.86). (d) *Stage 0 and power, post hoc on pilot data, before any MSSEG-2
+access:* `stage0_score_v2.py` (a frozen learned score S_v2; no gain over S_sub) and
+`power_msseg2.py` (simulated power of the confirmatory study); records
+`docs/research/records/2026-10-31_paper_c_{stage0_score_v2,power_msseg2}.*`. The confirmatory design
+is pre-registered separately in `PREREGISTRATION_C.md` (primary: stable-conditional CF-M,
+new-lesion candidates of the app rule on FLAMeS, score S_sub).
+
 ## 13. Compute and records
 
 Local CPU only. Code: `research/paper_c/*.py`; tests `research/paper_c/test_paper_c.py`.

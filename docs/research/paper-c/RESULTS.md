@@ -210,5 +210,8 @@ would produce false activity in a stable patient.
    a small learned change classifier with patient-level cross-fitting) on this pilot's data as
    development data, then test it on MSSEG-2.
 4. MSSEG-2 access (Shanoir + OFSEP agreement; non-commercial): 28 stable patients make the
-   stable-conditional calibration and the direct false-activity measurement possible. FLAMeS saw
+   stable-conditional calibration and the direct false-activity measurement possible.
+   **Correction 2026-10-31 (PROTOCOL entry 5):** only the 40 training patients are distributed
+   (≈ 11 stable); the 28 (25 after revision) stable patients are in the undistributed test set,
+   requested in `MSSEG2_ACCESS_REQUEST.md`. Confirmatory plan: `PREREGISTRATION_C.md`. FLAMeS saw
    14 MSSEG-2 cases only as *test* data (FLAMeS paper), so it is usable there.

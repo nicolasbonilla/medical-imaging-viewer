@@ -1,5 +1,7 @@
 # A per-patient guarantee on false "new lesion" calls in longitudinal MS MRI — manuscript skeleton (pilot)
 
+> **Superseded 2026-10-31 by `manuscript/manuscript.md` (v0.2).** Kept for the record.
+
 *Research draft, not the medical device. Skeleton written 2026-10-21 from the pilot; numbers are
 from `RESULTS.md` (record `docs/research/records/2026-10-21_paper_c_pilot.json`). The confirmatory
 study is planned on MSSEG-2 (access pending); this pilot is the methods and feasibility part.*
