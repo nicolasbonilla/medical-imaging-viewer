@@ -1,0 +1,90 @@
+{
+  "executed": "2026-10-31T09:51:03",
+  "base": "290e407 (PR #74 head reviewed)",
+  "tree": "77770b6a1a63ff3accbdbd201f50bd2b65f93774",
+  "method": "source files that differ from the base commit restored to it, files it did not have removed; the PRB test files run unchanged; working tree restored byte for byte",
+  "swapped": {
+    "restored_to_base": [],
+    "removed": []
+  },
+  "test_sha256": {
+    "backend/tests/unit/test_prb028_031_review_findings.py": "1eede891916f6ca913edc600973fe86fc9e517ba4a9b48f76ab3759790c668a9",
+    "frontend/src/components/AiDraftBanner.prb029.review.test.tsx": "545fd81c0d4f19957a53d41376a5c5046d5e82090204f5c6b9b6bbc4936db449",
+    "frontend/src/components/LesionDashboard.prb028.review.test.tsx": "a742b8d602c5f047aadb8c6c4b42b75e86542a324d0728b17a0fff203973eb63",
+    "frontend/src/components/SegmentationCanvasLocal.prb031.test.tsx": "48b2f5513695e6a7d7c9044466c2be45b93e49b5091bd82789d03169b6e438db",
+    "frontend/src/components/LongitudinalOverlayLegend.prb031.test.tsx": "46c0335dbf5ac2f1fcff1bc0c413a2dbb0d063d42dd5d21fecbb4f83ca2f2419"
+  },
+  "backend": {
+    "passed": 1,
+    "failed": 6,
+    "errors": 0,
+    "results": {
+      "test_rc090_review_m4_the_geometric_binding_still_holds_while_geometric_lesions_exist": {
+        "status": "passed",
+        "reason": ""
+      },
+      "test_rc090_review_m4_an_atlas_rerun_on_the_same_mask_keeps_the_confirmation": {
+        "status": "failed",
+        "reason": "AssertionError: The regions come from the geometric fallback (coordinate rules, not anatomy) and the confirmation does not state that each lesion's region was checked one by one. Check (or correct) the region of every lesion listed, then co"
+      },
+      "test_rc091_review_m7_a_viewer_from_before_the_update_is_told_to_reload[ai]": {
+        "status": "failed",
+        "reason": "AssertionError: assert ('out of date' in 'the labels the mask was drawn with on your screen are not the labels stored for this segmentation (another label pres...labels changed since it was opened). reopen the segmentation, check every lesi"
+      },
+      "test_rc091_review_m7_a_viewer_from_before_the_update_is_told_to_reload[dis]": {
+        "status": "failed",
+        "reason": "AssertionError: assert ('out of date' in 'the labels the mask was drawn with on your screen are not the labels stored for this segmentation (another label pres...labels changed since it was opened). reopen the segmentation, check every lesi"
+      },
+      "test_rc092_review_m9_only_the_header_of_the_image_under_the_mask_is_read[False]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_409\",\"message\":\"The image under the segmentation on screen could not be read, so it cannot be checked that it lies on the mask's grid. Show the segmentation's own image under it, check it, then confirm"
+      },
+      "test_rc092_review_m9_only_the_header_of_the_image_under_the_mask_is_read[True]": {
+        "status": "failed",
+        "reason": "AssertionError: {\"error\":{\"code\":\"HTTP_409\",\"message\":\"The image under the segmentation on screen could not be read, so it cannot be checked that it lies on the mask's grid. Show the segmentation's own image under it, check it, then confirm"
+      },
+      "test_rc092_review_m9_the_gcs_storage_reads_a_byte_range": {
+        "status": "failed",
+        "reason": "AttributeError: 'GCSStorageService' object has no attribute 'download_file_range'"
+      }
+    }
+  },
+  "frontend": {
+    "passed": 5,
+    "failed": 7,
+    "file_errors": [
+      "/src/components/LongitudinalOverlayLegend.prb031.test.tsx"
+    ],
+    "not_passing": {
+      "rc091 review m1 an AI draft (\"Lesion\", value 1) drawn in zone colours is refused": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"ai-draft-confirm-refused\"]"
+      },
+      "rc091 review m1 a value-5 (Active Gd+) lesion, which zone colouring does not draw, is refused": {
+        "status": "failed",
+        "reason": "Error: Unable to find an element by: [data-testid=\"ai-draft-confirm-refused\"]"
+      },
+      "rc090 review m2 the card of a segmentation that is not open offers no tick": {
+        "status": "failed",
+        "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31melement\u001b[39m\u001b[2m).toBeDisabled()\u001b[22m"
+      },
+      "rc090 review m2 no tick while the open segmentation is not drawn in the standard view": {
+        "status": "failed",
+        "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31melement\u001b[39m\u001b[2m).toBeDisabled()\u001b[22m"
+      },
+      "rc090 review m2 a tick is given only after its \"open slice\" was pressed": {
+        "status": "failed",
+        "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31melement\u001b[39m\u001b[2m).toBeDisabled()\u001b[22m"
+      },
+      "rc090 review m2 another segmentation opened: no tick on this card, and the ticks are gone when it is opened again": {
+        "status": "failed",
+        "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31melement\u001b[39m\u001b[2m).toBeDisabled()\u001b[22m"
+      },
+      "rc093 review m6 \"new\" is drawn in a colour no region and no lesion label uses (it was the deep-white-matter vermillion)": {
+        "status": "failed",
+        "reason": "AssertionError: expected [ '#E69F00', '#56B4E9', …(8) ] to not include '#D55E00'"
+      }
+    }
+  },
+  "note": "Run on the commit that adds the review tests to 290e407 (no source file differs from 290e407). Passing tests are positive controls (zone colouring off, or a classified segmentation drawn in zone colours; the geometric binding still holds while geometric lesions exist) or regression tests of behaviour that already held (m5: a re-served list clears every tick; the earlier PRB-031 canvas cases). LongitudinalOverlayLegend.prb031.test.tsx cannot load on 290e407 (the component does not exist): counted as a file error."
+}
