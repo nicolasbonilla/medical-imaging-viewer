@@ -33,6 +33,10 @@ from app.services.segmentation_service import SegmentationService
 
 # RC-039: two voxel-to-scanner transforms describe the same grid when every element agrees within this tolerance.
 GRID_TOLERANCE = 1e-3
+# Review of PR #74 (m9): the header is read from the first bytes of the file; a compressed header that is not complete
+# in them is read again with four times as many, up to HEADER_READ_MAX.
+HEADER_READ = 64 * 1024
+HEADER_READ_MAX = 16 * 1024 * 1024
 
 NOT_STATED = ("The confirmation does not say which image was under the segmentation on screen, so it cannot be "
               "checked that the mask was drawn on its own grid. Reload the viewer and confirm in the Standard view.")
@@ -53,8 +57,26 @@ def _mask_text(mask_shape: Sequence[int]) -> str:
     return f"{mask_shape[2]} × {mask_shape[1]} × {mask_shape[0]}"
 
 
+async def _header_bytes(storage_service: Any, bucket: str, file_id: str) -> bytes:
+    """The first bytes of the image, enough for its NIfTI header (1 KB once decompressed), or the whole file from a
+    storage that cannot read a range."""
+    import zlib
+
+    ranged = getattr(storage_service, "download_file_range", None)
+    if ranged is None:
+        return await storage_service.download_file(bucket, file_id)
+    size = HEADER_READ
+    while True:
+        raw = await ranged(bucket, file_id, 0, size - 1)
+        complete = (raw[:2] != b"\x1f\x8b"
+                    or len(zlib.decompressobj(16 + zlib.MAX_WBITS).decompress(raw, 1024)) >= 1024)
+        if complete or len(raw) < size or size >= HEADER_READ_MAX:
+            return raw
+        size *= 4
+
+
 async def _header(storage_service: Any, bucket: str, file_id: str):
-    shape, affine, _hdr = SegmentationService.nifti_header_grid(await storage_service.download_file(bucket, file_id))
+    shape, affine, _hdr = SegmentationService.nifti_header_grid(await _header_bytes(storage_service, bucket, file_id))
     if len(shape) < 3 or np.shape(affine) != (4, 4):
         raise ValueError("not a 3D image")
     return tuple(int(v) for v in shape[:3]), np.asarray(affine, dtype=float)

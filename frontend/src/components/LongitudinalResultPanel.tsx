@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { segmentationAPI } from '@/api/segmentation';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
+import { LongitudinalOverlayLegend } from './LongitudinalOverlayLegend';
 import type { LongitudinalResult, LesionChange } from '@/types';
 
 const REGION_CODES: Record<string, string> = {
@@ -373,21 +374,9 @@ export function LongitudinalResultPanel({
       )}
 
       {/* Legend of the fused overlay on the 2D viewport (SegmentationCanvasLocal). Kept when the
-          comparison abstains: the overlay is what the reader compares visually. */}
-      <div data-testid="longitudinal-legend" className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] text-gray-500 dark:text-gray-400">
-        <span className="flex items-center gap-1">
-          <span className="inline-block h-2 w-2 rounded-sm" style={{ background: 'rgb(65,135,245)' }} />
-          {t('longitudinal.legendTp1')}
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="inline-block h-2 w-2 rounded-sm" style={{ background: 'rgb(50,205,50)' }} />
-          {t('longitudinal.legendBoth')}
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="inline-block h-2 w-2 rounded-sm" style={{ background: 'rgb(245,70,70)' }} />
-          {t('longitudinal.legendTp2')}
-        </span>
-      </div>
+          comparison abstains: the overlay is what the reader compares visually. Review of PR #74 (m6): in the
+          colours the canvas draws (it hard-coded the former blue / green / red). */}
+      <LongitudinalOverlayLegend />
 
       {!abstained && (
         <>

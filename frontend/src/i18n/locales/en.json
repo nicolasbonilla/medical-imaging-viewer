@@ -1195,6 +1195,7 @@
     "underlayLongitudinal": "The longitudinal overlay",
     "underlaySubtraction": "The FLAIR subtraction heat map",
     "underlayConformal": "The conformal tier overlay",
+    "undrawnZoneColorized": "The lesions are coloured by MAGNIMS zone (\"Colorize by zone\"), not drawn with their stored labels: a value other than the four regions is not drawn, and a lesion is painted in its zone's colour. Switch zone colouring off (palette button of the zone map), then confirm.",
     "geometricRegionsTitle": "The regions of these {{count}} lesion(s) come from the geometric fallback (coordinate rules, not anatomy): open each lesion, check its region (correct it with the brush and save if it is wrong) and tick it.",
     "geometricRegionItem": "Lesion {{n}} (slice {{slice}}, {{voxels}} voxels): {{region}}",
     "geometricSmallComponentItem": "Small component ({{voxels}} voxels, slice {{slice}}): {{region}}",

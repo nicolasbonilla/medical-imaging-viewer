@@ -68,6 +68,8 @@ export function confirmDrawCheck(segmentationId: string, storedLabels: StoredLab
     storedLabels,
     grid: imageHere ? { image: imageHere.image, mask: imageHere.mask } : null,
     underlays: underlaysOnScreen(state),
+    // review of PR #74 (m1): the condition under which the 2D overlay colours lesions by zone
+    zoneColorized: !!(state.zoneColorizeEnabled && state.zoneMapMask && state.zoneMapDims),
   });
   return {
     problems,
@@ -128,6 +130,8 @@ export function undrawnText(t: TFunction, problems: UndrawnReason[] | null, stor
         const vals = { image: gridText(p.image), mask: gridText(p.mask) };
         return fill(t('disReview.undrawnGridMismatch', { defaultValue: 'The image under the segmentation is on another grid than the mask (image {{image}}, mask {{mask}}, columns × rows × slices): the mask is drawn sheared or cut off. Show the segmentation\'s own image (or one on its grid) under it, then confirm.', ...vals }), vals);
       }
+      case 'zone_colorized':
+        return t('disReview.undrawnZoneColorized', 'The lesions are coloured by MAGNIMS zone ("Colorize by zone"), not drawn with their stored labels: a value other than the four regions is not drawn, and a lesion is painted in its zone\'s colour. Switch zone colouring off (palette button of the zone map), then confirm.');
       case 'underlay_opaque': {
         const vals = {
           layer: t(UNDERLAY_NAMES[p.layer][0], UNDERLAY_NAMES[p.layer][1]),

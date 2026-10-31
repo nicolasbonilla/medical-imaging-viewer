@@ -434,8 +434,10 @@ def review_state(metadata: Any, masks_3d) -> Dict[str, Any]:
                      and getattr(record, "reviewed_labels_sha256", None) == labels_digest
                      and acknowledged == regions["corrections_sha256"])
     # PRB-028 (RC-090): on a geometric classification the record must also cover each region checked one by one.
+    # Review of PR #74 (m4): compared only while there ARE geometric-fallback lesions — the same mask classified again
+    # with the atlas keeps a confirmation given with ticks (with the same mask, labels and method the list is the same).
     checked = getattr(record, "reviewed_geometric_regions_sha256", None) or NO_GEOMETRIC_REGIONS_SHA256
-    geometric_ok = checked == regions["geometric_regions_sha256"]
+    geometric_ok = regions["geometric_region_count"] == 0 or checked == regions["geometric_regions_sha256"]
     bound = bound_to_mask and geometric_ok
     regions_ok = bool(regions["classified"] and regions["lesions_valid"])
     confirmed = bool(regions_ok and ai_review_ok and bound)

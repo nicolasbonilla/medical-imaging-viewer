@@ -146,9 +146,19 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
   const geometricDigest = pendingRegions?.geometric_region_count ? pendingRegions.geometric_regions_sha256 ?? null : null;
   const geometricListed = pendingRegions?.geometric_regions ?? [];
   const geometricTooMany = (pendingRegions?.geometric_region_count ?? 0) > geometricListed.length;
-  const geometricKey = (g: DISGeometricRegion) => g.first_voxel.join(',');
+  // Review of PR #74: a tick is keyed by the lesion's first voxel AND its region (m5) — and the ticks are cleared when
+  // the served list changes; a tick can be given only while THIS segmentation is open and drawn in the standard view,
+  // after its "open slice" was pressed (m2); ticks and opened slices are cleared when the segmentation is closed or
+  // another one is opened. A tick is the radiologist's statement; it cannot prove the slice was read (RMF-001, RC-090).
+  const geometricKey = (g: DISGeometricRegion) => `${g.first_voxel.join(',')}:${g.region}`;
   const [checkedGeometric, setCheckedGeometric] = useState<ReadonlySet<string>>(new Set());
-  useEffect(() => { setCheckedGeometric(new Set()); }, [geometricDigest]);
+  const [openedGeometric, setOpenedGeometric] = useState<ReadonlySet<string>>(new Set());
+  const drawnOnScreen = useSegmentationStore((s) => s.overlayOnScreen) === segmentationId;
+  const ticksAllowed = isOpen && drawnOnScreen;
+  useEffect(() => { setCheckedGeometric(new Set()); setOpenedGeometric(new Set()); }, [geometricDigest]);
+  useEffect(() => {
+    if (!isOpen) { setCheckedGeometric(new Set()); setOpenedGeometric(new Set()); }
+  }, [isOpen]);
   const allGeometricChecked = !geometricDigest
     || (!geometricTooMany && geometricListed.every((g) => checkedGeometric.has(geometricKey(g))));
   // Third review of PR #68 (m-1): every list names a lesion as the lesion table does (its number and the slice its row
@@ -1000,6 +1010,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                                 type="checkbox"
                                 aria-label={fill(t('disReview.acknowledgeGeometricRegion', { defaultValue: 'I have checked the region of lesion {{n}} (slice {{slice}})', ...vals }), vals)}
                                 checked={checkedGeometric.has(geometricKey(g))}
+                                disabled={!ticksAllowed || !openedGeometric.has(geometricKey(g))}
                                 onChange={(e) => {
                                   const next = new Set(checkedGeometric);
                                   if (e.target.checked) next.add(geometricKey(g)); else next.delete(geometricKey(g));
@@ -1011,7 +1022,10 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                                 <button
                                   type="button"
                                   className="underline text-amber-300 hover:text-amber-200"
-                                  onClick={() => onNavigateToSlice(g.slice)}
+                                  onClick={() => {
+                                    setOpenedGeometric((prev) => new Set(prev).add(geometricKey(g)));
+                                    onNavigateToSlice(g.slice);
+                                  }}
                                 >
                                   {fill(t('disReview.openSlice', { defaultValue: 'open slice {{slice}}', slice: g.slice + 1 }), { slice: g.slice + 1 })}
                                 </button>

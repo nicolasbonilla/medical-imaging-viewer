@@ -1206,6 +1206,7 @@
     "underlayLongitudinal": "La superposición longitudinal",
     "underlaySubtraction": "El mapa de calor de sustracción FLAIR",
     "underlayConformal": "La superposición de niveles conformes",
+    "undrawnZoneColorized": "Las lesiones están coloreadas por zona MAGNIMS (\"Colorear por zona\"), no dibujadas con sus etiquetas guardadas: un valor distinto de las cuatro regiones no se dibuja y una lesión se pinta del color de su zona. Desactive el coloreado por zona (botón de paleta del mapa de zonas) y confirme.",
     "geometricRegionsTitle": "Las regiones de estas {{count}} lesiones proceden del respaldo geométrico (reglas de coordenadas, no anatomía): abra cada lesión, compruebe su región (corríjala con el pincel y guarde si es incorrecta) y márquela.",
     "geometricRegionItem": "Lesión {{n}} (corte {{slice}}, {{voxels}} vóxeles): {{region}}",
     "geometricSmallComponentItem": "Componente pequeño ({{voxels}} vóxeles, corte {{slice}}): {{region}}",

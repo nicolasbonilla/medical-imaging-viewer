@@ -681,7 +681,9 @@ async def confirm_ai_review(
             detail=("The stored mask is not the one you reviewed (unsaved corrections, or the mask changed "
                     "since you opened it). Save or reload, check it again, then confirm."),
         )
-    problem = _drawn_labels_problem(body, metadata)                              # PRB-029 (RC-091)
+    problem = _outdated_viewer_problem(body)                                     # review of PR #74, m7
+    if problem is None:
+        problem = _drawn_labels_problem(body, metadata)                          # PRB-029 (RC-091)
     if problem is None:
         problem = await _displayed_image_problem(body, metadata, entry["masks_3d"], storage_service,
                                                  current_user)                   # PRB-030 (RC-092)
@@ -704,6 +706,19 @@ async def confirm_ai_review(
 def _radiologist(user) -> bool:
     from app.security.models import UserRole
     return getattr(user, "role", None) == UserRole.RADIOLOGIST
+
+
+OUTDATED_VIEWER = ("This viewer is out of date: the confirmation does not state the labels the mask was drawn with or "
+                   "the image under it. Reload the page in the browser, check the segmentation again, then confirm.")
+
+
+def _outdated_viewer_problem(body) -> Optional[str]:
+    """Review of PR #74 (m7): a viewer opened before this version sends neither the drawn label table nor the image
+    under the mask; it gets one clear answer (reload) instead of the label-table or grid message."""
+    b = body or {}
+    if not str(b.get("drawn_labels_sha256") or "").strip() or not str(b.get("displayed_image_file_id") or "").strip():
+        return OUTDATED_VIEWER
+    return None
 
 
 def _drawn_labels_problem(body, metadata) -> Optional[str]:
@@ -829,7 +844,7 @@ async def confirm_segmentation_review(
     # (RMF-001, RC-071 residual risk). Release 2026-10-30 (merge with PR #71): compared with the stored table AS THE
     # VIEWER DRAWS IT (region names in the shared region colours), the table the client can have drawn. PRB-029: the
     # same check serves the AI-draft review (`_drawn_labels_problem`).
-    problem = _drawn_labels_problem(body, metadata)
+    problem = _outdated_viewer_problem(body) or _drawn_labels_problem(body, metadata)   # review of PR #74, m7
     if problem is None:   # PRB-030 (RC-092): the image under the mask on screen lies on the mask's grid
         problem = await _displayed_image_problem(body, metadata, entry["masks_3d"], storage_service, current_user)
     if problem:

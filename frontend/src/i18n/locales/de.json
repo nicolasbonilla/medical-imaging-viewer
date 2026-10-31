@@ -1195,6 +1195,7 @@
     "underlayLongitudinal": "Die Verlaufsüberlagerung",
     "underlaySubtraction": "Die FLAIR-Subtraktions-Heatmap",
     "underlayConformal": "Die konforme Stufenüberlagerung",
+    "undrawnZoneColorized": "Die Läsionen sind nach MAGNIMS-Zone eingefärbt („Nach Zone einfärben“), nicht mit ihren gespeicherten Bezeichnungen gezeichnet: Ein Wert außerhalb der vier Regionen wird nicht gezeichnet, und eine Läsion erscheint in der Farbe ihrer Zone. Schalten Sie die Zonenfärbung aus (Palettenschaltfläche der Zonenkarte) und bestätigen Sie dann.",
     "geometricRegionsTitle": "Die Regionen dieser {{count}} Läsion(en) stammen aus dem geometrischen Ersatz (Koordinatenregeln, keine Anatomie): Öffnen Sie jede Läsion, prüfen Sie ihre Region (bei Fehler mit dem Pinsel korrigieren und speichern) und haken Sie sie ab.",
     "geometricRegionItem": "Läsion {{n}} (Schicht {{slice}}, {{voxels}} Voxel): {{region}}",
     "geometricSmallComponentItem": "Kleine Komponente ({{voxels}} Voxel, Schicht {{slice}}): {{region}}",

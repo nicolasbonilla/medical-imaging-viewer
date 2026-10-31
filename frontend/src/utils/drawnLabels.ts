@@ -19,6 +19,7 @@
  * The check is run, for both confirmations (DIS and AI draft), by utils/confirmDrawCheck.ts.
  */
 import type { LabelInfo } from '@/types';
+import { MAGNIMS_REGIONS } from './regionColors';
 
 /** The lesion-opacity slider below which lesions count as not drawn (the confirmation is refused). */
 export const MIN_VISIBLE_LESION_OPACITY = 0.25;
@@ -80,7 +81,8 @@ export type UndrawnReason =
   | { kind: 'faint'; value: number; name: string }
   | { kind: 'grid_unknown' }
   | { kind: 'grid_mismatch'; image: GridDims; mask: GridDims }
-  | { kind: 'underlay_opaque'; layer: UnderlayLayer; opacity: number };
+  | { kind: 'underlay_opaque'; layer: UnderlayLayer; opacity: number }
+  | { kind: 'zone_colorized' };
 
 export interface DrawCheckInput {
   /** distinct non-zero values present in the open mask */
@@ -97,6 +99,9 @@ export interface DrawCheckInput {
   grid?: { image: GridDims; mask: GridDims | null } | null;
   /** PRB-031: the layers drawn under the lesions now, with the opacity each is drawn at (omitted: not checked). */
   underlays?: ReadonlyArray<{ layer: UnderlayLayer; opacity: number }>;
+  /** Review of PR #74 (m1): the lesions are drawn coloured by MAGNIMS zone ("Colorize by zone"): values 1-4 in the
+   *  region palette whatever their label, other values not drawn on a slice that has any 1-4. */
+  zoneColorized?: boolean;
 }
 
 const sameGrid = (a: GridDims, b: GridDims) => a.width === b.width && a.height === b.height && a.depth === b.depth;
@@ -112,6 +117,12 @@ export function undrawnMaskValues(input: DrawCheckInput): UndrawnReason[] {
     out.push({ kind: 'grid_unknown' });
   } else if (input.grid?.mask && !sameGrid(input.grid.image, input.grid.mask)) {
     out.push({ kind: 'grid_mismatch', image: input.grid.image, mask: input.grid.mask });
+  }
+  // m1: zone colouring draws exactly the stored labels only when every value present is a MAGNIMS region id drawn with
+  // that region's label (a classified segmentation); anything else (an AI draft "Lesion", a value 5 or 6) is refused.
+  if (input.zoneColorized && input.values.some((v) => v !== 0
+      && !(v >= 1 && v <= 4 && input.labels.find((l) => l.id === v)?.name === MAGNIMS_REGIONS[v - 1]))) {
+    out.push({ kind: 'zone_colorized' });
   }
   for (const u of input.underlays ?? []) {
     // compared in whole percent, as the slider sets it (0.3 is 30 %, accepted)
