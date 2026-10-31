@@ -1,18 +1,34 @@
 {
-  "executed": "2026-10-31T09:51:03",
+  "executed": "2026-10-31T10:14:45",
   "base": "290e407 (PR #74 head reviewed)",
-  "tree": "77770b6a1a63ff3accbdbd201f50bd2b65f93774",
+  "tree": "65d976a83b9be58f436e9be3098f98de89f5a00a",
   "method": "source files that differ from the base commit restored to it, files it did not have removed; the PRB test files run unchanged; working tree restored byte for byte",
   "swapped": {
-    "restored_to_base": [],
-    "removed": []
+    "restored_to_base": [
+      "backend/app/api/routes/segmentation.py",
+      "backend/app/core/interfaces/storage_interface.py",
+      "backend/app/services/dis_review_gate.py",
+      "backend/app/services/displayed_image_check.py",
+      "backend/app/services/storage_service.py",
+      "frontend/src/components/LesionDashboard.tsx",
+      "frontend/src/components/LongitudinalResultPanel.tsx",
+      "frontend/src/i18n/locales/de.json",
+      "frontend/src/i18n/locales/en.json",
+      "frontend/src/i18n/locales/es.json",
+      "frontend/src/utils/confirmDrawCheck.ts",
+      "frontend/src/utils/drawnLabels.ts",
+      "frontend/src/utils/regionColors.ts"
+    ],
+    "removed": [
+      "frontend/src/components/LongitudinalOverlayLegend.tsx"
+    ]
   },
   "test_sha256": {
-    "backend/tests/unit/test_prb028_031_review_findings.py": "1eede891916f6ca913edc600973fe86fc9e517ba4a9b48f76ab3759790c668a9",
+    "backend/tests/unit/test_prb028_031_review_findings.py": "512d907901ad774013b0382adab8c9273522112b6a0b9b71b70ab0906df96a3b",
     "frontend/src/components/AiDraftBanner.prb029.review.test.tsx": "545fd81c0d4f19957a53d41376a5c5046d5e82090204f5c6b9b6bbc4936db449",
     "frontend/src/components/LesionDashboard.prb028.review.test.tsx": "a742b8d602c5f047aadb8c6c4b42b75e86542a324d0728b17a0fff203973eb63",
     "frontend/src/components/SegmentationCanvasLocal.prb031.test.tsx": "48b2f5513695e6a7d7c9044466c2be45b93e49b5091bd82789d03169b6e438db",
-    "frontend/src/components/LongitudinalOverlayLegend.prb031.test.tsx": "46c0335dbf5ac2f1fcff1bc0c413a2dbb0d063d42dd5d21fecbb4f83ca2f2419"
+    "frontend/src/components/LongitudinalOverlayLegend.prb031.test.tsx": "7e07d722c872c666e7eecb86a5e55102063d5bdf5b05260cc283a3b3300c9913"
   },
   "backend": {
     "passed": 1,
@@ -86,5 +102,5 @@
       }
     }
   },
-  "note": "Run on the commit that adds the review tests to 290e407 (no source file differs from 290e407). Passing tests are positive controls (zone colouring off, or a classified segmentation drawn in zone colours; the geometric binding still holds while geometric lesions exist) or regression tests of behaviour that already held (m5: a re-served list clears every tick; the earlier PRB-031 canvas cases). LongitudinalOverlayLegend.prb031.test.tsx cannot load on 290e407 (the component does not exist): counted as a file error."
+  "note": "Re-run on 65d976a after the corrections, with the final review test files: every source file of backend/app and frontend/src that differs from 290e407 restored to it, files 290e407 did not have removed (LongitudinalOverlayLegend.tsx: its test file cannot load - a file error), working tree restored byte for byte. Passing tests are positive controls (zone colouring off; a classified segmentation drawn in zone colours; the geometric binding still holds while geometric lesions exist) or regression tests of behaviour that already held (m5, a re-served list clears every tick; the earlier PRB-031 canvas cases). The first run (f6eddce, review tests only) gave backend 6 of 7 and frontend 7 of 12 failing, the legend file not loadable."
 }
