@@ -33,9 +33,12 @@ region colours).
 - A stored zone-map opacity above 30 % (or not a number) is not restored in a new session; the default (30 %) is used.
   Within a session the slider still goes to 100 % for looking at the zones.
 - The 2D longitudinal overlay uses the shared Okabe-Ito palette (`LONGITUDINAL_OVERLAY_COLORS` in `regionColors.ts`):
-  persistent yellow #F0E442, resolved blue #0072B2, new vermillion #D55E00; as drawn (55 % over mid and bright grey)
-  every pair stays more than ΔE76 19 apart for normal, deutan, protan and tritan vision (worst pair), against 12.2 for
-  the old colours. The 3D view (each visit in one colour, blue / red) is unchanged.
+  persistent yellow #F0E442, resolved blue #0072B2, new reddish purple #CC79A7 (since the review of PR #74, m6; first
+  vermillion #D55E00, the deep-white-matter colour); as drawn (55 % over mid and bright grey) every pair stays more than
+  ΔE76 12.9 apart for normal, deutan, protan and tritan vision (worst pair; 12.2 for the old colours, more than 9
+  required), opaque more than 22 for the colour-blind simulations, and "new" more than 15 from every region and lesion
+  label colour. The legend of the comparison result takes the same colours (review m6). The 3D view (each visit in one
+  colour, blue / red) is unchanged.
 
 Requirement **REQ-SAFE-047**; risk control **RC-093** (HAZ-005, HAZ-008, HAZ-007).
 
@@ -48,13 +51,25 @@ Requirement **REQ-SAFE-047**; risk control **RC-093** (HAZ-005, HAZ-008, HAZ-007
   — record `PRB-028-031_negative_controls_2026-10-31.json`.
 
 ## 4. Limits
-- Vermillion is also the deep-white-matter region colour; the longitudinal overlay is drawn under the lesions and is
-  refused at confirmation, so the two are not used together for a decision.
-- There is still no legend for the 2D longitudinal colours (pre-existing).
+- ~~Vermillion is also the deep-white-matter region colour~~ — corrected (review m6): "new" is reddish purple, used by
+  no region and no lesion label.
+- *Corrected (review m6):* this report first said there was no legend. There is one, in the comparison result
+  (`LongitudinalResultPanel`), and it hard-coded the former blue / green / red: after the first round of this PR changed
+  the overlay colours, the legend no longer matched the image. It now takes its colours from the constant the canvas
+  draws with (`LongitudinalOverlayLegend`), with CAPA-013's neutral words.
+- Zone colouring (switched on with the zone map) is refused at confirmation unless it draws exactly the stored region
+  labels (review m1, PRB-029 §6).
 
 ## 5. Owner decisions (PENDING)
 1. Severity Minor.
 2. The 30 % threshold (§2) and that the longitudinal overlay, the subtraction heat map and the conformal tiers refuse
    Confirm whenever shown (rather than being drawn lighter).
-3. The longitudinal colours (yellow / blue / vermillion).
+3. The longitudinal colours (yellow / blue / reddish purple).
+
+## 6. Independent review of PR #74 (`290e407`) — corrections (2026-10-31, DRAFT, PENDING owner approval)
+No blocker and no major issue; the claims hold. Tests written first (on `290e407` they fail except their positive controls: `records/risk_verification/PRB-028-031_review1_tests_on_290e407_2026-10-31.json`), then the corrections, then the negative controls (`PRB-028-031_negative_controls_2026-10-31.json`, re-run).
+| # | Finding | Correction | Tests / controls |
+|---|---|---|---|
+| m6 | Longitudinal "new" = the deep-white-matter vermillion; "no 2D legend" (in fact the existing legend of the comparison result still showed the former blue / green / red after this PR's first round) | "new" reddish purple #CC79A7 (checked against persistent, resolved and every region and lesion label colour); the result panel's legend is one component coloured from the canvas's constant, neutral words kept | `SegmentationCanvasLocal.prb031.test.tsx` (m6), `LongitudinalOverlayLegend.prb031.test.tsx` (2), `LongitudinalCompare.capa013.test.tsx` (legend kept); L3, L4, L5 |
+| m1 | Zone colouring not seen by the check | See PRB-029 §6 | Z1, Z2 |
 4. Raise a GitHub Issue (SPR-001).

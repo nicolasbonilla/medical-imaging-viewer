@@ -51,13 +51,31 @@ Requirement **REQ-SAFE-044**; risk control **RC-090** (HAZ-005, HAZ-008).
   instead of "geometric", so those tests keep testing their own rule.
 
 ## 4. Residual risk and limits
-- The tick states that the radiologist checked a region; it cannot show that he looked at the right slice (the button
-  opens it). As for the DIS confirmation itself, a direct API call can send the digest served in the DIS state
-  (RMF-001, residual risk of RC-071).
-- The ticks live in the open card: closing the segmentation or reloading the page clears them.
+- A tick is the radiologist's attestation that he checked the region. Since the review of PR #74 (m2) a tick can be
+  given only after its "open slice" was pressed, and only while this segmentation is open and drawn in the Standard
+  view; this shows that the slice was put on screen, **not that it was read**. The server checks only that the request
+  echoes the digest the DIS state served: a direct API call or another client can send it without any tick (RMF-001,
+  residual risk of RC-071 and RC-090).
+- The ticks live in the card: they are cleared when the served list changes, when the segmentation is closed or another
+  one is opened, and when the page is reloaded.
 - The usability cost falls on native-space clinical images, where the atlas is refused: every lesion must be ticked
   (about one click and one slice per lesion; 45 for P51), and more than 100 lesions cannot be confirmed on a geometric
   classification at all. A parcellation of the image (FreeSurfer labels) or MNI registration avoids it.
+
+## 6. Independent review of PR #74 (`290e407`) — corrections (2026-10-31, DRAFT, PENDING owner approval)
+No blocker and no major issue; the claims hold. Tests written first (on `290e407` they fail except their positive controls: `records/risk_verification/PRB-028-031_review1_tests_on_290e407_2026-10-31.json`), then the corrections, then the negative controls (`PRB-028-031_negative_controls_2026-10-31.json`, re-run).
+| # | Finding | Correction | Tests / controls |
+|---|---|---|---|
+| m2 | Ticks could be given on an expanded card whose segmentation was not open (another one on screen) and survived opening another one | A tick only while THIS segmentation is open and drawn (`overlayOnScreen`), only after its "open slice"; ticks and opened slices cleared when it is closed or another one is opened; §4 corrected | `LesionDashboard.prb028.review.test.tsx` (m2, 4); U7, U8 |
+| m3 | The honest limit of the tick was in this report only | Stated in RMF-001 (RC-090 row) and §4 above | — (document) |
+| m4 | After a confirmation with ticks, the same mask classified again with the atlas gave "geometric_regions_not_reviewed" | The geometric binding is compared only while there are geometric-fallback lesions (`dis_review_gate.review_state`) | `test_prb028_031_review_findings.py` (m4, 2); G9 |
+| m5 | The reset of the ticks on a changed list had no test | Ticks keyed by first voxel AND region; regression test; negative control | `LesionDashboard.prb028.review.test.tsx` (m5); U6 |
+
+**Known limits recorded (review m10, not changed here):** region *corrections* above 100 can still be acknowledged while
+only 100 are listed (unlike the geometric list, refused above 100); the atlas path's default deep white matter for a
+lesion outside atlas coverage is not offered for a per-lesion check (deep white matter does not count for DIS: a possible
+false negative, not a false DIS); the confirmation history event does not record that a per-lesion check was part of the
+confirmation (the confirmation record itself does).
 
 ## 5. Owner decisions (PENDING)
 1. Severity Major.

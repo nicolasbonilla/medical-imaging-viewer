@@ -47,7 +47,18 @@ Requirement **REQ-SAFE-046**; risk control **RC-092** (HAZ-006, HAZ-008).
   geometry; for the AI draft (in-browser FLAMeS on NIfTI) nothing changes in practice.
 - The server relies on the client stating which image it drew (as the drawn-label digest; RMF-001, RC-071 residual
   risk).
-- Deployment order: the viewer first, then the backend (an older viewer does not send the image and would be refused).
+- Deployment order: the viewer first, then the backend (an older viewer does not send the image and would be refused;
+  since the review of PR #74, m7, it is told to reload).
+- *Review m8 (recorded, not changed):* the "same study" rule assumes that a study is one visit and that file ids follow
+  `patients/{patient}/studies/{study}/series/{series}/{file}`: series of different dates uploaded into ONE study are not
+  told apart on an MNI grid, and a segmentation whose own file id does not follow the convention accepts only its own
+  image (fail closed).
+
+## 6. Independent review of PR #74 (`290e407`) — corrections (2026-10-31, DRAFT, PENDING owner approval)
+No blocker and no major issue; the claims hold. Tests written first (on `290e407` they fail except their positive controls: `records/risk_verification/PRB-028-031_review1_tests_on_290e407_2026-10-31.json`), then the corrections, then the negative controls (`PRB-028-031_negative_controls_2026-10-31.json`, re-run).
+| # | Finding | Correction | Tests / controls |
+|---|---|---|---|
+| m9 | Two whole images were downloaded on every confirmation to read a header of a few hundred bytes | The header is read from a byte range (`download_file_range`: a ranged GCS read; 64 KB, grown only while a compressed header is not complete); a storage without ranges still works (whole download) | `test_prb028_031_review_findings.py` (m9, 3); R10 |
 
 ## 5. Owner decisions (PENDING)
 Severity Minor; the same-study condition (an image of another visit is refused even on the same grid); raise a GitHub

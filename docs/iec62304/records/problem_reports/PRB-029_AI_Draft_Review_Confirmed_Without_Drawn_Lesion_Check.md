@@ -46,5 +46,12 @@ Requirement **REQ-SAFE-045**; risk control **RC-091** (HAZ-001, HAZ-003).
 As for the DIS confirmation: the drawn-lesion check runs in the browser; a direct API call or another client can state
 the stored table without drawing it (RMF-001, residual risk of RC-071).
 
+## 6. Independent review of PR #74 (`290e407`) — corrections (2026-10-31, DRAFT, PENDING owner approval)
+No blocker and no major issue; the claims hold. Tests written first (on `290e407` they fail except their positive controls: `records/risk_verification/PRB-028-031_review1_tests_on_290e407_2026-10-31.json`), then the corrections, then the negative controls (`PRB-028-031_negative_controls_2026-10-31.json`, re-run).
+| # | Finding | Correction | Tests / controls |
+|---|---|---|---|
+| m1 | "Colorize by zone" (switched on with the zone map) draws values 1-4 in the region palette whatever their label, and does not draw a value 5 or 6 on a slice that has any 1-4; the shared check did not see it — an AI draft drawn orange as "periventricular", a value-5 lesion invisible, Confirm accepted | Both confirmations are refused while zone colouring is drawn, unless every value present is a region id 1-4 drawn with that region's label (a classified segmentation, where zone colouring draws exactly the stored labels) | `AiDraftBanner.prb029.review.test.tsx` (4, 2 positive controls); Z1, Z2 |
+| m7 | A tab opened before the update sends only the mask digest and got the label-table message | A request that states neither the drawn label table nor the image under the mask gets one answer on both routes: "This viewer is out of date … Reload the page". (An old AI-draft banner shows only the status code; the old DIS card shows the server's message.) | `test_prb028_031_review_findings.py` (m7, 2); A3 |
+
 ## 5. Owner decisions (PENDING)
 Severity Major; raise a GitHub Issue (SPR-001).
