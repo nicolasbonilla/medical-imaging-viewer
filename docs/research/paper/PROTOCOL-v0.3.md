@@ -292,3 +292,19 @@ pre-registered bands were defined from the header spacing of the files analysed,
 Ljubljana scans. No pre-registered number changes; the labels and limitations of the result
 documents are corrected, and a post-hoc stratification of MSLesSeg by native thickness is recorded
 (`v03_mslesseg_native.py`).
+
+**2026-10-31, entry 10 — manuscript-stage post-hoc analyses (written before they were run; after
+every v0.3 and addendum result had been seen).** Requested while writing the journal manuscript
+(`docs/research/paper/manuscript/`). (a) *Site-seen sensitivity:* Ljubljana is a FLAMeS training
+site (20 of its 30 patients are training data), so its 10 never-trained patients are patient-clean
+but not site-naive. The primary P1/P2 cells are recomputed with Ljubljana removed from every
+calibration pool (D3 calibrated on MSLesSeg only; leave-one-site-out over the other four sites), and
+the two leave-one-site-out Ljubljana cells are reported in the manuscript as "site seen in
+segmenter training", not as unseen-site evidence. (b) *Scan-aware baselines not carried into v0.3*
+(§5): one false candidate subsampled per calibration patient with BH (Dunn–Wasserman–Ramdas-style,
+200 draws) and Lee & Ren hierarchical conformal e-values with e-BH over the test batch, both with the
+committed v0.2 implementations (`baselines.py`), on the pre-registered D3 and D2 pools. Learn-then-Test
+with the per-scan FDP as loss is the pre-registered B3 and is not recomputed. Script
+`research/paper_a/v03m_manuscript_posthoc.py`, record
+`docs/research/records/2026-10-31_paper_a_manuscript_posthoc.json`. Same classification rule as §9.
+No pre-registered number changes; every use is labelled post hoc.
